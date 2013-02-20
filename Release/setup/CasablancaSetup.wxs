@@ -1,0 +1,449 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
+  <?if $(var.VSTargetVersion) = 10 ?>
+    <?include VS10\guiddefs.wxi ?>
+    <?define VSTargetLong = "Visual Studio 2010" ?>
+    <?define VSTargetShort = "VS 2010" ?>
+    <?define FileSuffix = "100" ?>
+    <?define SDK_RegKeyName = "100" ?>
+  <?else ?>
+    <?include VS11\guiddefs.wxi ?>
+    <?if $(var.VSEdition) = "VSWinExpress" ?>
+      <?define VSTargetLong = "Visual Studio 2012 Express for Windows 8" ?>
+    <?elseif $(var.VSEdition) = "WDExpress" ?>
+      <?define VSTargetLong = "Visual Studio 2012 Express for Windows Desktop" ?>
+    <?else?>
+      <?define VSTargetLong = "Visual Studio 2012" ?>
+    <?endif?>
+    <?define VSTargetShort = "VS 2012" ?>
+    <?define FileSuffix = "110" ?>
+    <?define SDK_RegKeyName = "110" ?>
+  <?endif ?>
+
+  <!-- last GUID used:
+  GUID048
+  -->
+
+  <Product Name='Microsoft C++ REST SDK for $(var.VSTargetShort)' Id='$(var.GUID031)' UpgradeCode='$(var.GUID032)'
+    Language='1033' Codepage='1252' Version='$(var.ProductVersion)' Manufacturer='Microsoft Corporation'>
+
+    <Package Id='*' Keywords='Installer' Description="Microsoft C++ REST SDK Installer" Manufacturer='Microsoft Corporation'
+      InstallerVersion='300' Languages='1033' Compressed='yes' SummaryCodepage='1252'/>
+
+      <Media Id="1" Cabinet="media1.cab" EmbedCab="yes" />
+
+      <!-- By default we install for all users, users can change this -->
+      <Property Id="ALLUSERS" Value="1"/>
+
+      <Property Id="INSTALLLEVEL" Value="1"/>
+      <Property Id="ApplicationFolderName" Value="Microsoft Cpp REST SDK for $(var.VSTargetShort)" />
+
+      <?define SDK_casablanca_inc_src = "$(var.SetupDir)\..\Include" ?>
+
+      <?ifdef x86rbin ?>
+        <?define SDK_bin_x86r_src = "$(var.x86rbin)" ?>
+      <?else ?>
+        <?define SDK_bin_x86r_src = "$(var.OutDir)\..\..\Win32\Release" ?>
+      <?endif ?>
+      <?ifdef x86dbin ?>
+        <?define SDK_bin_x86d_src = "$(var.x86dbin)" ?>
+      <?else ?>
+        <?define SDK_bin_x86d_src = "$(var.OutDir)\..\..\Win32\Debug" ?>
+      <?endif ?>
+
+      <?ifdef x64rbin ?>
+        <?define SDK_bin_x64r_src = "$(var.x64rbin)" ?>
+      <?else ?>
+        <?define SDK_bin_x64r_src = "$(var.OutDir)\..\..\x64\Release" ?>
+      <?endif ?>
+      <?ifdef x64dbin ?>
+        <?define SDK_bin_x64d_src = "$(var.x64dbin)" ?>
+      <?else ?>
+        <?define SDK_bin_x64d_src = "$(var.OutDir)\..\..\x64\Debug" ?>
+      <?endif ?>
+
+      <?ifdef armrbin ?>
+        <?define SDK_bin_armr_src = "$(var.armrbin)" ?>
+      <?else ?>
+        <?define SDK_bin_armr_src = "$(var.OutDir)\..\..\arm\Release" ?>
+      <?endif ?>
+      <?ifdef armdbin ?>
+        <?define SDK_bin_armd_src = "$(var.armdbin)" ?>
+      <?else ?>
+        <?define SDK_bin_armd_src = "$(var.OutDir)\..\..\arm\Debug" ?>
+      <?endif ?>
+
+      <?define SDK_pdb_x86r_src = "$(var.OutDir)\..\..\Win32\Release" ?>
+      <?define SDK_pdb_x64r_src = "$(var.OutDir)\..\..\x64\Release" ?>
+      <?define SDK_lib_x86r_src = "$(var.OutDir)\..\..\Win32\Release" ?>
+      <?define SDK_lib_x64r_src = "$(var.OutDir)\..\..\x64\Release" ?>
+      <?define SDK_pdb_x86d_src = "$(var.OutDir)\..\..\Win32\Debug" ?>
+      <?define SDK_pdb_x64d_src = "$(var.OutDir)\..\..\x64\Debug" ?>
+      <?define SDK_lib_x86d_src = "$(var.OutDir)\..\..\Win32\Debug" ?>
+      <?define SDK_lib_x64d_src = "$(var.OutDir)\..\..\x64\Debug" ?>
+      
+      <?define Collateral_src = "$(var.SetupDir)\..\Collateral\MakeZip" ?>
+      <?if $(var.VSTargetVersion) > 10 ?>
+        <?define SDK_pdb_armr_src = "$(var.OutDir)\..\..\ARM\Release" ?>
+        <?define SDK_lib_armr_src = "$(var.OutDir)\..\..\ARM\Release" ?>
+        <?define SDK_pdb_armd_src = "$(var.OutDir)\..\..\arm\Debug" ?>
+        <?define SDK_lib_armd_src = "$(var.OutDir)\..\..\arm\Debug" ?>
+      <?endif ?>
+
+      <Property Id="VSLAUNCHER" >
+          <DirectorySearch Path="[ProgramFilesFolder]\Common Files\Microsoft Shared\MSEnv" Depth="4" Id="FindVSLauncher">
+              <FileSearch Name="VSLauncher.exe" />
+          </DirectorySearch>
+      </Property>
+
+      <Property Id="VS_ROOT">
+        <RegistrySearch Id="VS_root_folder"
+                        Root="HKCU"
+                        Key="Software\Microsoft\$(var.VSEdition)\$(var.VSTargetVersion).0_Config"
+                 Name="ShellFolder" Type="directory" />
+      </Property>
+
+      <!-- Conditions for install -->
+
+      <Condition Message="This version of C++ REST SDK requires $(var.VSTargetLong) to be installed!">
+        <![CDATA[Installed OR VS_ROOT]]>
+      </Condition>
+      <!-- Vista or later -->
+      <Condition Message="C++ REST SDK requires Vista or later.">
+        <![CDATA[Installed OR (VersionNT >= 600)]]>
+      </Condition>
+
+      <Directory Id="TARGETDIR" Name="SourceDir">
+
+        <Component Id="RegistryEntries" Guid="$(var.GUID040)">
+          <RegistryKey Root="HKLM"
+                       Key="Software\Microsoft\Casablanca\$(var.SDK_RegKeyName)\SDK">
+            <RegistryValue Type="string" Name="InstallDir" Value="[APPLICATIONFOLDER]SDK" KeyPath="yes"/>
+          </RegistryKey>
+        </Component>
+
+        <Directory Id="VS_ROOT">
+          <?if $(var.VSTargetVersion) != 10 ?>
+            <!-- Common7\Packages\Debugger\Visualizers -->
+            <Directory Id="Common7" Name="Common7">
+              <Directory Id="Packages" Name="Packages">
+                <Directory Id="Debugger" Name="Debugger">
+                  <Directory Id="Visualizers" Name="Visualizers">
+                    <Component Id="type_visualizers" DiskId="1" Guid="$(var.GUID038)">
+                      <File Id="File_Casablanca.natvis" Name="Casablanca.natvis" Source="$(var.SetupDir)\Casablanca.natvis" />
+                    </Component>
+                  </Directory>
+                </Directory>
+              </Directory>
+            </Directory>
+          <?endif ?>
+        </Directory>
+
+        <Directory Id="ProgramFilesFolder" Name="PFILES">
+        
+          <!-- Only install Metro SDK on Dev11 if Win8 is installed-->
+          <?if $(var.VSTargetVersion) > 10 ?>
+          <Directory Id="Microsoft_SDKs" Name="Microsoft SDKs">
+            <Directory Id="Windows" Name="Windows">
+              <Directory Id="v8.0" Name="v8.0">
+                <Directory Id="ExtensionSDKs" Name="ExtensionSDKs">
+                  <Directory Id="CppRESTWindowsSDK" Name="CppRESTWindowsSDK">
+                    <Directory Id="v1.0" Name="1.0">
+                      <Component Id="WinRTSDK" DiskId="1" Guid="$(var.GUID016)">
+                        <File Id="File_SDKManifest.xml" Name="SDKManifest.xml" Source="$(var.SetupDir)\WindowsSDK\SDKManifest.xml" />
+                        <Condition>(VersionNT >= 602)</Condition>
+                      </Component>
+                      <Directory Id="designtime" Name="designtime">
+                        <Directory Id="Debug01" Name="Debug">
+                          <Directory Id="x8601" Name="x86">
+                            <Component Id="props_01" DiskId="1" Guid="$(var.GUID017)">
+                              <File Id="File_CasablancaWindowsSDK.props_01" Name="CasablancaWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\x86\CasablancaWindowsSDK.props" />
+                              <Condition>(VersionNT >= 602)</Condition>
+                            </Component>
+                          </Directory>
+                        </Directory>
+                        <Directory Id="Retail01" Name="Retail">
+                          <Directory Id="x8602" Name="x86">
+                            <Component Id="props_02" DiskId="1" Guid="$(var.GUID018)">
+                              <File Id="File_CasablancaWindowsSDK.props_02" Name="CasablancaWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\x86\CasablancaWindowsSDK.props" />
+                              <Condition>(VersionNT >= 602)</Condition>
+                            </Component>
+                          </Directory>
+                        </Directory>
+                        <Directory Id="Debug02" Name="Debug">
+                          <Directory Id="x6401" Name="x64">
+                            <Component Id="props_03" DiskId="1" Guid="$(var.GUID019)">
+                              <File Id="File_CasablancaWindowsSDK.props_03" Name="CasablancaWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\x64\CasablancaWindowsSDK.props" />
+                              <Condition>(VersionNT >= 602)</Condition>
+                            </Component>
+                          </Directory>
+                        </Directory>
+                        <Directory Id="Retail02" Name="Retail">
+                          <Directory Id="x6402" Name="x64">
+                            <Component Id="props_04" DiskId="1" Guid="$(var.GUID020)">
+                              <File Id="File_CasablancaWindowsSDK.props_04" Name="CasablancaWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\x64\CasablancaWindowsSDK.props" />
+                              <Condition>(VersionNT >= 602)</Condition>
+                            </Component>
+                          </Directory>
+                        </Directory>
+
+                        <Directory Id="Debug04" Name="Debug">
+                          <Directory Id="arm01" Name="arm">
+                            <Component Id="props_05" DiskId="1" Guid="$(var.GUID041)">
+                              <File Id="File_CasablancaWindowsSDK.props_05" Name="CasablancaWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\arm\CasablancaWindowsSDK.props" />
+                              <Condition>(VersionNT >= 602)</Condition>
+                            </Component>
+                          </Directory>
+                        </Directory>
+                        <Directory Id="Retail04" Name="Retail">
+                          <Directory Id="arm02" Name="arm">
+                            <Component Id="props_06" DiskId="1" Guid="$(var.GUID042)">
+                              <File Id="File_CasablancaWindowsSDK.props_06" Name="CasablancaWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\arm\CasablancaWindowsSDK.props" />
+                              <Condition>(VersionNT >= 602)</Condition>
+                            </Component>
+                          </Directory>
+                        </Directory>
+
+                      </Directory>  
+                    </Directory>
+                  </Directory>
+                </Directory>
+              </Directory>
+            </Directory>
+          </Directory>
+          <?endif ?>
+
+          <Directory Id="APPLICATIONFOLDER" Name="Microsoft Cpp REST SDK for $(var.VSTargetShort)" FileSource="$(var.TargetDir)">
+            <Component Id="Comp_InstallDirItems" DiskId="1" Guid="$(var.GUID025)">
+                <File Id="File_License.rtf" Name="license.rtf" Source="$(var.SetupDir)\license.rtf" />
+                <RemoveFolder Id='Comp_InstallDirItems' On='uninstall'/>
+            </Component>
+
+            <Directory Id="SDK" Name="SDK" FileSource="$(var.TargetDir)">
+              
+              <Directory Id="SDK_samples" Name="samples" FileSource="$(var.TargetDir)">
+                <Component Id="SDK_samples" DiskId="1" Guid="$(var.GUID033)">
+                  <File Id="File_Casablanca_Samples.zip.txt" Name="Casablanca_Samples.zip" Source="$(var.Collateral_src)\Casablanca_Samples.zip" />
+                </Component>
+              </Directory>
+              
+              <Directory Id="SDK_inc" Name="include" FileSource="$(var.TargetDir)">
+                <Component Id="SDK_xplat_items" DiskId="1" Guid="$(var.GUID039)">
+                  <File Id="File_windows_compat.h"           Name="windows_compat.h"             Source="$(var.SDK_casablanca_inc_src)\windows_compat.h" />
+                <?if $(var.VSTargetVersion) = 10 ?>
+                  <File Id="File_nosal.h"               Name="nosal.h"             Source="$(var.SDK_casablanca_inc_src)\nosal.h" />
+                <?endif ?>
+                </Component>
+                <Component Id="SDK_inc_items" DiskId="1" Guid="$(var.GUID026)">
+                  <!-- pplx headers: -->
+                  <File Id="File_pplx.h"               Name="pplx.h"                 Source="$(var.SDK_casablanca_inc_src)\pplx.h" />
+                  <File Id="File_pplxatomics.h"        Name="pplxatomics.h"          Source="$(var.SDK_casablanca_inc_src)\pplxatomics.h" />
+                  <File Id="File_pplxconv.h"           Name="pplxconv.h"             Source="$(var.SDK_casablanca_inc_src)\pplxconv.h" />
+                  <File Id="File_pplxwin.h"            Name="pplxwin.h"              Source="$(var.SDK_casablanca_inc_src)\pplxwin.h" />
+                  <File Id="File_pplxdefs.h"           Name="pplxdefs.h"             Source="$(var.SDK_casablanca_inc_src)\pplxdefs.h" />
+                  <File Id="File_pplxinterface.h"      Name="pplxinterface.h"        Source="$(var.SDK_casablanca_inc_src)\pplxinterface.h" />
+                  <File Id="File_pplxtasks.h"          Name="pplxtasks.h"            Source="$(var.SDK_casablanca_inc_src)\pplxtasks.h" />
+                  <File Id="File_cancellation_token.h" Name="cancellation_token.h"   Source="$(var.SDK_casablanca_inc_src)\cancellation_token.h" />
+                  <!-- casablanca headers: -->
+                  <File Id="File_streams.h"                   Name="streams.h"          Source="$(var.SDK_casablanca_inc_src)\streams.h" />
+                  <File Id="File_astreambuf.h"                Name="astreambuf.h"       Source="$(var.SDK_casablanca_inc_src)\astreambuf.h" />
+                  <File Id="File_rawptrstream.h"              Name="rawptrstream.h"     Source="$(var.SDK_casablanca_inc_src)\rawptrstream.h" />
+                  <File Id="File_containerstream.h"           Name="containerstream.h"  Source="$(var.SDK_casablanca_inc_src)\containerstream.h" />
+                  <File Id="File_producerconsumerstream.h"    Name="producerconsumerstream.h"   Source="$(var.SDK_casablanca_inc_src)\producerconsumerstream.h" />
+                  <File Id="File_filestream.h"                Name="filestream.h"       Source="$(var.SDK_casablanca_inc_src)\filestream.h" />
+                  <File Id="File_interopstream.h"             Name="interopstream.h"    Source="$(var.SDK_casablanca_inc_src)\interopstream.h" />
+                  <File Id="File_asyncrt_utils.h"             Name="asyncrt_utils.h"    Source="$(var.SDK_casablanca_inc_src)\asyncrt_utils.h" />
+                  <File Id="File_http_client.h"               Name="http_client.h"      Source="$(var.SDK_casablanca_inc_src)\http_client.h" />
+                  <File Id="File_http_msg.h"                  Name="http_msg.h"         Source="$(var.SDK_casablanca_inc_src)\http_msg.h" />
+                  <File Id="File_http_constants.dat"          Name="http_constants.dat" Source="$(var.SDK_casablanca_inc_src)\http_constants.dat" />
+                  <File Id="File_json.h"                      Name="json.h"             Source="$(var.SDK_casablanca_inc_src)\json.h" />
+                  <File Id="File_basic_types.h"               Name="basic_types.h"      Source="$(var.SDK_casablanca_inc_src)\basic_types.h" />
+                  <File Id="File_uri.h"                       Name="uri.h"              Source="$(var.SDK_casablanca_inc_src)\uri.h" />
+                  <File Id="File_base_uri.h"                  Name="base_uri.h"         Source="$(var.SDK_casablanca_inc_src)\base_uri.h" />
+                  <File Id="File_uri_builder.h"               Name="uri_builder.h"      Source="$(var.SDK_casablanca_inc_src)\uri_builder.h" />
+                  <File Id="File_fileio.h"                    Name="fileio.h"           Source="$(var.SDK_casablanca_inc_src)\fileio.h" />
+                  <File Id="File_xxpublic.h"                  Name="xxpublic.h"         Source="$(var.SDK_casablanca_inc_src)\xxpublic.h" />
+                </Component>
+              </Directory>
+              
+              <Directory Id="SDK_bin" Name="bin" FileSource="$(var.TargetDir)">  
+                <Directory Id="x8603" Name="x86" FileSource="$(var.TargetDir)">
+                  <Directory Id="Binx86Debug" Name="Debug" FileSource="$(var.TargetDir)">
+                    <Component Id="x86_dll_d" DiskId="1" Guid="$(var.GUID021)">
+                      <File Id="File_x86d_casablanca$(var.FileSuffix).dll"   Name="casablanca$(var.FileSuffix).dll" Source="$(var.SDK_bin_x86d_src)\casablanca$(var.FileSuffix).dll" />
+                      <File Id="File_x86d_casablanca$(var.FileSuffix).pdb"   Name="casablanca$(var.FileSuffix).pdb" Source="$(var.SDK_bin_x86d_src)\casablanca$(var.FileSuffix).pub.pdb" />
+                      <?if $(var.VSTargetVersion) > 10 ?>
+                        <File Id="File_x86d_casablanca$(var.FileSuffix).winrt.dll"   Name="casablanca$(var.FileSuffix).winrt.dll" Source="$(var.SDK_bin_x86d_src)\casablanca$(var.FileSuffix).winrt.dll" />
+                        <File Id="File_x86d_casablanca$(var.FileSuffix).winrt.pdb"   Name="casablanca$(var.FileSuffix).winrt.pdb" Source="$(var.SDK_bin_x86d_src)\casablanca$(var.FileSuffix).winrt.pub.pdb" />
+                      <?endif ?>
+                    </Component>
+                   </Directory>
+                   <Directory Id="Binx86Retail" Name="Release" FileSource="$(var.TargetDir)">
+                     <Component Id="x86_dll_r" DiskId="1" Guid="$(var.GUID023)">
+                       <File Id="File_x86r_casablanca$(var.FileSuffix).dll"   Name="casablanca$(var.FileSuffix).dll" Source="$(var.SDK_bin_x86r_src)\casablanca$(var.FileSuffix).dll" />
+                       <File Id="File_x86r_casablanca$(var.FileSuffix).pdb"   Name="casablanca$(var.FileSuffix).pdb" Source="$(var.SDK_bin_x86r_src)\casablanca$(var.FileSuffix).pub.pdb" />
+                       <?if $(var.VSTargetVersion) > 10 ?>
+                         <File Id="File_x86r_casablanca$(var.FileSuffix).winrt.dll"   Name="casablanca$(var.FileSuffix).winrt.dll" Source="$(var.SDK_bin_x86r_src)\casablanca$(var.FileSuffix).winrt.dll" />
+                         <File Id="File_x86r_casablanca$(var.FileSuffix).winrt.pdb"   Name="casablanca$(var.FileSuffix).winrt.pdb" Source="$(var.SDK_bin_x86r_src)\casablanca$(var.FileSuffix).winrt.pub.pdb" />
+                       <?endif ?>
+                    </Component>
+                  </Directory>
+                </Directory>
+                          
+                <Directory Id="x6403" Name="x64" FileSource="$(var.TargetDir)">
+                  <Directory Id="Binx64Debug" Name="Debug" FileSource="$(var.TargetDir)">
+                    <Component Id="x64_dll_d" DiskId="1" Guid="$(var.GUID022)">
+                      <File Id="File_x64d_casablanca$(var.FileSuffix).dll"   Name="casablanca$(var.FileSuffix).dll" Source="$(var.SDK_bin_x64d_src)\casablanca$(var.FileSuffix).dll" />
+                      <File Id="File_x64d_casablanca$(var.FileSuffix).pdb"   Name="casablanca$(var.FileSuffix).pdb" Source="$(var.SDK_bin_x64d_src)\casablanca$(var.FileSuffix).pub.pdb" />
+                      <?if $(var.VSTargetVersion) > 10 ?>
+                        <File Id="File_x64d_casablanca$(var.FileSuffix).winrt.dll"   Name="casablanca$(var.FileSuffix).winrt.dll" Source="$(var.SDK_bin_x64d_src)\casablanca$(var.FileSuffix).winrt.dll" />
+                        <File Id="File_x64d_casablanca$(var.FileSuffix).winrt.pdb"   Name="casablanca$(var.FileSuffix).winrt.pdb" Source="$(var.SDK_bin_x64d_src)\casablanca$(var.FileSuffix).winrt.pub.pdb" />
+                      <?endif ?>
+                    </Component>
+                  </Directory>
+                  <Directory Id="Binx64Retail" Name="Release" FileSource="$(var.TargetDir)">
+                    <Component Id="x64_dll_r" DiskId="1" Guid="$(var.GUID024)">
+                      <File Id="File_x64r_casablanca$(var.FileSuffix).dll"   Name="casablanca$(var.FileSuffix).dll" Source="$(var.SDK_bin_x64r_src)\casablanca$(var.FileSuffix).dll" />
+                      <File Id="File_x64r_casablanca$(var.FileSuffix).pdb"   Name="casablanca$(var.FileSuffix).pdb" Source="$(var.SDK_bin_x64r_src)\casablanca$(var.FileSuffix).pub.pdb" />
+                      <?if $(var.VSTargetVersion) > 10 ?>
+                        <File Id="File_x64r_casablanca$(var.FileSuffix).winrt.dll"   Name="casablanca$(var.FileSuffix).winrt.dll" Source="$(var.SDK_bin_x64r_src)\casablanca$(var.FileSuffix).winrt.dll" />
+                        <File Id="File_x64r_casablanca$(var.FileSuffix).winrt.pdb"   Name="casablanca$(var.FileSuffix).winrt.pdb" Source="$(var.SDK_bin_x64r_src)\casablanca$(var.FileSuffix).winrt.pub.pdb" />
+                      <?endif ?>
+                    </Component>
+                  </Directory>
+                </Directory>
+                        
+                <?if $(var.VSTargetVersion) > 10 ?>
+                  <Directory Id="arm03" Name="arm" FileSource="$(var.TargetDir)">
+                    <Directory Id="BinArmDebug" Name="Debug" FileSource="$(var.TargetDir)">
+                      <Component Id="arm_dll_d" DiskId="1" Guid="$(var.GUID043)">
+                        <File Id="File_armd_casablanca$(var.FileSuffix).winrt.dll"   Name="casablanca$(var.FileSuffix).winrt.dll" Source="$(var.SDK_bin_armd_src)\casablanca110.winrt\casablanca$(var.FileSuffix).winrt.dll" />
+                        <File Id="File_armd_casablanca$(var.FileSuffix).pdb"   Name="casablanca$(var.FileSuffix).winrt.pdb" Source="$(var.SDK_bin_armd_src)\casablanca110.winrt\casablanca$(var.FileSuffix).winrt.pub.pdb" />
+                      </Component>
+                    </Directory>
+                    <Directory Id="BinArmRetail" Name="Release" FileSource="$(var.TargetDir)">
+                      <Component Id="arm_dll_r" DiskId="1" Guid="$(var.GUID044)">
+                        <File Id="File_armr_casablanca$(var.FileSuffix)_winrt.dll"   Name="casablanca$(var.FileSuffix).winrt.dll" Source="$(var.SDK_bin_armr_src)\casablanca$(var.FileSuffix).winrt\casablanca$(var.FileSuffix).winrt.dll" />
+                        <File Id="File_armr_casablanca$(var.FileSuffix)_winrt.pdb"   Name="casablanca$(var.FileSuffix).winrt.pdb" Source="$(var.SDK_bin_armr_src)\casablanca$(var.FileSuffix).winrt\casablanca$(var.FileSuffix).winrt.pub.pdb" />
+                      </Component>
+                    </Directory>
+                  </Directory>
+                <?endif ?>
+              
+              </Directory>
+                
+              <Directory Id="SDK_lib" Name="lib" FileSource="$(var.TargetDir)">
+                <Directory Id="SDK_lib_x86" Name="x86" FileSource="$(var.TargetDir)">
+                  <Directory Id="SDK_lib_x86r" Name="Release" FileSource="$(var.TargetDir)">
+                    <Component Id="SDK_lib_x86r_items" DiskId="1" Guid="$(var.GUID027)">
+                      <File Id="File_x86r_casablanca$(var.FileSuffix).lib"  Name="casablanca$(var.FileSuffix).lib"    Source="$(var.SDK_lib_x86r_src)\casablanca$(var.FileSuffix).lib" />
+                      <?if $(var.VSTargetVersion) > 10 ?>
+                        <File Id="File_x86r_casablanca$(var.FileSuffix)_winrt.lib"   Name="casablanca$(var.FileSuffix).winrt.lib"   Source="$(var.SDK_bin_x86r_src)\casablanca$(var.FileSuffix).winrt\casablanca$(var.FileSuffix).winrt.lib" />
+                      <?endif ?>
+                    </Component>
+                  </Directory>
+                  <Directory Id="SDK_lib_x86d" Name="Debug" FileSource="$(var.TargetDir)">
+                    <Component Id="SDK_lib_x86d_items" DiskId="1" Guid="$(var.GUID036)">
+                      <File Id="File_x86d_casablanca$(var.FileSuffix).lib"  Name="casablanca$(var.FileSuffix).lib"    Source="$(var.SDK_lib_x86d_src)\casablanca$(var.FileSuffix).lib" />
+                      <?if $(var.VSTargetVersion) > 10 ?>
+                        <File Id="File_x86d_casablanca$(var.FileSuffix)_winrt.lib"   Name="casablanca$(var.FileSuffix).winrt.lib"   Source="$(var.SDK_bin_x86d_src)\casablanca$(var.FileSuffix).winrt\casablanca$(var.FileSuffix).winrt.lib" />
+                      <?endif ?>
+                    </Component>
+                  </Directory>
+                </Directory>
+                <Directory Id="SDK_lib_x64" Name="x64" FileSource="$(var.TargetDir)">
+                  <Directory Id="SDK_lib_x64r" Name="Release" FileSource="$(var.TargetDir)">
+                    <Component Id="SDK_lib_x64r_items" DiskId="1" Guid="$(var.GUID028)">
+                      <File Id="File_x64r_casablanca$(var.FileSuffix).lib"  Name="casablanca$(var.FileSuffix).lib"    Source="$(var.SDK_lib_x64r_src)\casablanca$(var.FileSuffix).lib" />
+                      <?if $(var.VSTargetVersion) > 10 ?>
+                        <File Id="File_x64r_casablanca$(var.FileSuffix)_winrt.lib"   Name="casablanca$(var.FileSuffix).winrt.lib"   Source="$(var.SDK_bin_x64r_src)\casablanca$(var.FileSuffix).winrt\casablanca110.winrt.lib" />
+                      <?endif ?>
+                    </Component>
+                  </Directory>
+                  <Directory Id="SDK_lib_x64d" Name="Debug" FileSource="$(var.TargetDir)">
+                    <Component Id="SDK_lib_x64d_items" DiskId="1" Guid="$(var.GUID037)">
+                      <File Id="File_x64d_casablanca$(var.FileSuffix).lib"  Name="casablanca$(var.FileSuffix).lib"    Source="$(var.SDK_lib_x64d_src)\casablanca$(var.FileSuffix).lib" />
+                      <?if $(var.VSTargetVersion) > 10 ?>
+                        <File Id="File_x64d_casablanca$(var.FileSuffix)_winrt.lib"   Name="casablanca$(var.FileSuffix).winrt.lib"   Source="$(var.SDK_bin_x64d_src)\casablanca$(var.FileSuffix).winrt\casablanca$(var.FileSuffix).winrt.lib" />
+                      <?endif ?>
+                    </Component>
+                  </Directory>
+                </Directory>
+                <!-- Only install ARM SDK for VS11 /-->
+                <?if $(var.VSTargetVersion) > 10 ?>
+                <Directory Id="SDK_lib_arm" Name="arm" FileSource="$(var.TargetDir)">
+                  <Directory Id="SDK_lib_armr" Name="Release" FileSource="$(var.TargetDir)">
+                    <Component Id="SDK_lib_armr_items" DiskId="1" Guid="$(var.GUID045)">
+                      <File Id="File_armr_casablanca$(var.FileSuffix).lib"  Name="casablanca$(var.FileSuffix).lib"    Source="$(var.SDK_lib_armr_src)\casablanca$(var.FileSuffix).lib" />
+                      <File Id="File_armr_casablanca$(var.FileSuffix)_winrt.lib"   Name="casablanca$(var.FileSuffix).winrt.lib"   Source="$(var.SDK_bin_armr_src)\casablanca$(var.FileSuffix).winrt\casablanca$(var.FileSuffix).winrt.lib" />
+                    </Component>
+                  </Directory>
+                  <Directory Id="SDK_lib_armd" Name="Debug" FileSource="$(var.TargetDir)">
+                    <Component Id="SDK_lib_armd_items" DiskId="1" Guid="$(var.GUID046)">
+                      <File Id="File_armd_casablanca$(var.FileSuffix).lib"  Name="casablanca$(var.FileSuffix).lib"    Source="$(var.SDK_lib_armd_src)\casablanca$(var.FileSuffix).lib" />
+                      <File Id="File_armd_casablanca$(var.FileSuffix)_winrt.lib"   Name="casablanca$(var.FileSuffix).winrt.lib"   Source="$(var.SDK_bin_armd_src)\casablanca$(var.FileSuffix).winrt\casablanca$(var.FileSuffix).winrt.lib" />
+                    </Component>
+                  </Directory>
+                </Directory>
+              <?endif ?>
+              </Directory>
+            </Directory>
+          </Directory>
+        </Directory>
+      </Directory>
+
+      <!-- Features to install -->
+      <Feature Id="ProductFeature1" Title="C++ REST SDK" Description="C++ REST SDK" Display="expand" Level="1" AllowAdvertise="no" Absent="disallow"  >
+        <ComponentRef Id="Comp_InstallDirItems" Primary="yes" />
+        <ComponentRef Id="SDK_inc_items" Primary="yes" />
+        <ComponentRef Id="SDK_xplat_items" Primary="yes" />
+        <ComponentRef Id="SDK_samples" Primary="yes" />
+        <ComponentRef Id="SDK_lib_x86r_items" Primary="yes" />
+        <ComponentRef Id="SDK_lib_x64r_items" Primary="yes" />
+        <ComponentRef Id="SDK_lib_x86d_items" Primary="yes" />
+        <ComponentRef Id="SDK_lib_x64d_items" Primary="yes" />
+        <!-- Only install ARM SDK for VS11 /-->
+        <?if $(var.VSTargetVersion) > 10 ?>
+          <ComponentRef Id="SDK_lib_armr_items" Primary="yes" />
+          <ComponentRef Id="SDK_lib_armd_items" Primary="yes" />
+        <?endif?>
+        <ComponentRef Id="RegistryEntries" Primary="yes" />
+      </Feature>
+
+      <Feature Id="ProductFeature2" Title="C++ REST SDK Visual Studio Integration" Description="C++ REST SDK Visual Studio Integration" Display="expand" Level="1" AllowAdvertise="no" Absent="disallow"  >
+        <ComponentRef Id="Comp_InstallDirItems" Primary="no" />
+        <ComponentRef Id="x86_dll_d" Primary="yes" />
+        <ComponentRef Id="x64_dll_d" Primary="yes" />
+        <ComponentRef Id="x86_dll_r" Primary="yes" />
+        <ComponentRef Id="x64_dll_r" Primary="yes" />
+        <?if $(var.VSTargetVersion) > 10 ?>
+          <ComponentRef Id="WinRTSDK" Primary="yes" />
+          <ComponentRef Id="props_01" Primary="yes" />
+          <ComponentRef Id="props_02" Primary="yes" />
+          <ComponentRef Id="props_03" Primary="yes" />
+          <ComponentRef Id="props_04" Primary="yes" />
+          <ComponentRef Id="props_05" Primary="yes" />
+          <ComponentRef Id="props_06" Primary="yes" />
+          <ComponentRef Id="arm_dll_d" Primary="yes" />
+          <ComponentRef Id="arm_dll_r" Primary="yes" />
+          <ComponentRef Id="type_visualizers" Primary="yes" />
+        <?endif ?>
+      </Feature>
+
+      <!-- User interface elements -->
+      <WixVariable Id="WixUISupportPerUser" Value="1" Overridable="yes" />
+      <WixVariable Id="WixUISupportPerMachine" Value="1" Overridable="yes" />
+      <WixVariable Id="WixUIBannerBmp" Value="$(var.SetupDir)\Bitmaps\bannrbmp.bmp" />
+      <WixVariable Id="WixUIDialogBmp" Value="$(var.SetupDir)\Bitmaps\UIDlg.bmp" />
+
+      <Property Id="WIXUI_EXITDIALOGOPTIONALTEXT" Value="Thank you for installing C++ REST SDK! The best place to go for the latest information and documentation is our CodePlex project at http://casablanca.codeplex.com." />
+
+      <Property Id="WIXUI_INSTALLDIR" Value="APPLICATIONFOLDER" />
+      <Property Id="EasyInstall" Value="0" />
+      <UIRef Id="WixUI_InstallDir" />
+
+      <WixVariable Id="WixUILicenseRtf" Value="$(var.SetupDir)\license.rtf" />
+      <Property Id="WixAppFolder" Value="WixPerMachineFolder" />
+
+  </Product>
+</Wix>

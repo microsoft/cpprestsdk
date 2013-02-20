@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Common.Build.settings" />
+
+  <Import Project="$(MSBuildCommunityTasksPath)\MSBuild.Community.Tasks.Targets"/>
+  <PropertyGroup>
+    <RootFolder>..</RootFolder>
+    <SamplesFolder>..\Samples</SamplesFolder>
+    <ZipFileName>Casablanca_Samples.zip</ZipFileName>
+  </PropertyGroup>
+
+  <Target Name="Clean">
+    <Message Text="Deleting file $(ZipFileName)"/>
+    <Delete Files="$(BuildRoot)\Release\Collateral\MakeZip\$(ZipFileName)" />
+  </Target>
+  <Target Name="Build">
+    <ItemGroup>
+      <DefaultExclude Include="$(SamplesFolder)\**\bin\**" />
+      <DefaultExclude Include="$(SamplesFolder)\**\ipch\**" />
+      <DefaultExclude Include="$(SamplesFolder)\**\obj\**" />
+      <DefaultExclude Include="$(SamplesFolder)\**\Release\**" />
+      <DefaultExclude Include="$(SamplesFolder)\**\Debug\**" />
+      <DefaultExclude Include="$(SamplesFolder)\**\*.suo" />
+      <DefaultExclude Include="$(SamplesFolder)\**\*.opensdf" />
+      <DefaultExclude Include="$(SamplesFolder)\**\*.sdf" />
+      <DefaultExclude Include="$(SamplesFolder)\**\*.obj" />
+      <DefaultExclude Include="$(SamplesFolder)\**\*.exp" />
+      <DefaultExclude Include="$(SamplesFolder)\**\*.ilk" />
+      <DefaultExclude Include="$(SamplesFolder)\**\*.pch" />
+      <DefaultExclude Include="$(SamplesFolder)\**\*.zip" />
+      <DefaultExclude Include="$(SamplesFolder)\**\*.vspscc" />
+      <DefaultExclude Include="$(SamplesFolder)\**\*.log" />
+      <DefaultExclude Include="$(SamplesFolder)\**\*.unsuccessfulbuild" />
+      <DefaultExclude Include="$(SamplesFolder)\**\*.intermediate.manifest" />
+      <DefaultExclude Include="$(SamplesFolder)\**\*.lastbuildstate" />
+      <DefaultExclude Include="$(SamplesFolder)\**\*.cache" />
+      <DefaultExclude Include="$(SamplesFolder)\**\*.lib" />
+      <DefaultExclude Include="$(SamplesFolder)\**\*.pdb" />
+      <DefaultExclude Include="$(SamplesFolder)\**\*.dll" />
+      <DefaultExclude Include="$(SamplesFolder)\**\*.tlog" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <!-- All files from build -->
+      <ZipFiles Include="$(SamplesFolder)\**\*.*" Exclude="@(DefaultExclude)" />
+    </ItemGroup>
+    <Zip Files="@(ZipFiles)"
+       WorkingDirectory=".." 
+       ZipFileName="$(ZipFileName)"
+       ZipLevel="9" /> 
+
+    <Message Text="*************************************************************************************" Importance="High"/>
+    <Message Text="Produced file $([MSBuild]::GetDirectoryNameOfFileAbove($(ZipFileName), $(ZipFileName)))\$(ZipFileName)" Importance="High"/>
+    <Message Text="*************************************************************************************" Importance="High"/>
+
+  </Target>
+
+</Project>

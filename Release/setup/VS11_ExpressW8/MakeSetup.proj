@@ -1,0 +1,10 @@
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <VSTargetVersion>11</VSTargetVersion>
+    <OutputName>Casablanca_setup110_Express_Win8</OutputName>
+    <VSEdition>VSWinExpress</VSEdition>
+    <!-- In Foxtrot, we never install any VS Wizards in this directory for VS Express for Win8 -->
+    <VCProjectDir>VCprojects</VCProjectDir>
+  </PropertyGroup>
+  <Import Project="..\CasablancaSetup.wixproj" />
+</Project>

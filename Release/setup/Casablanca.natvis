@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?> 
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010"> 
+
+  <Type Name="web::http::uri"> 
+    <DisplayString>({m_uri._Ptr->m_full_uri.m_encoded})</DisplayString>
+    <Expand>
+      <Item Name="host">m_uri._Ptr->m_host</Item>
+      <Item Name="path">m_uri._Ptr->m_path</Item>
+      <Item Name="port">m_uri._Ptr->m_port</Item>
+    </Expand>
+  </Type>   
+
+  <Type Name="web::http::client::web_proxy">
+    <DisplayString Condition="m_mode==0">{"default"}</DisplayString>
+    <DisplayString Condition="m_mode==1">{"disabled"}</DisplayString>
+    <DisplayString Condition="m_mode==2">{m_address}</DisplayString>
+  </Type>
+
+  <Type Name="web::http::http_request">
+    <DisplayString>[{_m_impl._Ptr->m_method}, {_m_impl._Ptr->m_uri}]</DisplayString>
+    <Expand>
+      <Item Name="headers">((*((http::details::_http_msg_base*)(_m_impl._Ptr))).m_headers).m_headers</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="web::http::http_response">
+    <DisplayString>[{_m_impl._Ptr->m_status_code}, {_m_impl._Ptr->m_reason_phrase}]</DisplayString>
+    <Expand>
+      <Item Name="status code">_m_impl._Ptr->m_status_code</Item>
+      <Item Name="reason phrase">_m_impl._Ptr->m_reason_phrase</Item>
+      <Item Name="headers">((http::details::_http_msg_base*)((_m_impl)._Ptr))->m_headers.m_headers</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="web::json::value">
+
+    <DisplayString Condition="(m_kind==0) &amp;&amp; ((*((web::json::details::_Number*)((m_value)._Myptr))).m_was_int)">
+      Number {(*((web::json::details::_Number*)((m_value)._Myptr))).m_intval}
+    </DisplayString>
+    <DisplayString Condition="(m_kind==0) &amp;&amp; (!(*((web::json::details::_Number*)((m_value)._Myptr))).m_was_int)">
+      Number {(*((web::json::details::_Number*)((m_value)._Myptr))).m_value}
+    </DisplayString>
+
+    <DisplayString Condition="m_kind==1">
+      Boolean {(*((web::json::details::_Boolean*)(m_value._Myptr))).m_value}
+    </DisplayString>
+
+    <DisplayString Condition="(m_kind==2) &amp;&amp; (((&amp;((*((web::json::details::_String*)(m_value._Myptr))).m_string))))->_Myptr==0x00000000">
+      String {((((&amp;((*((web::json::details::_String*)(m_value._Myptr))).m_wstring)))))->_Myptr}
+    </DisplayString>
+
+    <DisplayString Condition="(m_kind==2) &amp;&amp; (((&amp;((*((web::json::details::_String*)(m_value._Myptr))).m_wstring))))->_Myptr==0x00000000">
+      String {((((&amp;((*((web::json::details::_String*)(m_value._Myptr))).m_string)))))->_Myptr}
+    </DisplayString>
+
+    <DisplayString Condition="m_kind==3">
+      Object {(*((web::json::details::_Value*)(m_value._Myptr))).m_elements}
+    </DisplayString>
+
+    <DisplayString Condition="m_kind==4">
+      Array {(*((web::json::details::_Value*)(m_value._Myptr))).m_elements}
+    </DisplayString>
+
+    <DisplayString Condition="m_kind==5">Null</DisplayString>
+
+    <DisplayString Condition="m_kind==0xcccccccc">not initialized</DisplayString>
+    <Expand>
+      <ArrayItems Condition="m_kind==3">
+          <Size>(*((web::json::details::_Value*)((m_value)._Myptr))).m_elements._Mylast - (*((web::json::details::_Value*)((m_value)._Myptr))).m_elements._Myfirst</Size>
+          <ValuePointer>(*((web::json::details::_Value*)((m_value)._Myptr))).m_elements._Myfirst</ValuePointer>
+      </ArrayItems>
+
+      <ArrayItems Condition="m_kind==4">
+          <Size>(*((web::json::details::_Value*)((m_value)._Myptr))).m_elements._Mylast - (*((web::json::details::_Value*)((m_value)._Myptr))).m_elements._Myfirst</Size>
+          <ValuePointer>(*((web::json::details::_Value*)((m_value)._Myptr))).m_elements._Myfirst</ValuePointer>
+      </ArrayItems>
+
+    </Expand>
+  </Type>
+
+</AutoVisualizer> 

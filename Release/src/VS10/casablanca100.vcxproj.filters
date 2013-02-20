@@ -1,0 +1,100 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(CasablancaIncludeDir)\pch\stdafx.h"> <Filter>Header Files</Filter> </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\astreambuf.h"> <Filter>Header Files</Filter> </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\asyncrt_utils.h"> <Filter>Header Files</Filter> </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\base_uri.h"> <Filter>Header Files</Filter> </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\basic_types.h"> <Filter>Header Files</Filter> </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\cancellation_token.h"> <Filter>Header Files</Filter> </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\containerstream.h"> <Filter>Header Files</Filter> </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\fileio.h"> <Filter>Header Files</Filter> </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\filestream.h"> <Filter>Header Files</Filter> </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\globals.h"> <Filter>Header Files</Filter> </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\http_client.h"> <Filter>Header Files</Filter> </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\http_constants.dat"> <Filter>Header Files</Filter> </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\http_helpers.h"> <Filter>Header Files</Filter> </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\http_msg.h"> <Filter>Header Files</Filter> </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\interopstream.h"> <Filter>Header Files</Filter> </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\ioscheduler.h"> <Filter>Header Files</Filter> </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\json.h"> <Filter>Header Files</Filter> </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\linux_compat.h"> <Filter>Header Files</Filter> </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\nosal.h"> <Filter>Header Files</Filter> </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\pplx.h"> <Filter>Header Files</Filter> </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\pplxatomics.h"> <Filter>Header Files</Filter> </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\pplxconv.h"> <Filter>Header Files</Filter> </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\pplxdefs.h"> <Filter>Header Files</Filter> </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\pplxinterface.h"> <Filter>Header Files</Filter> </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\pplxlinux.h"> <Filter>Header Files</Filter> </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\pplxtasks.h"> <Filter>Header Files</Filter> </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\pplxwin.h"> <Filter>Header Files</Filter> </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\producerconsumerstream.h"> <Filter>Header Files</Filter> </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\rawptrstream.h"> <Filter>Header Files</Filter> </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\SafeInt3.hpp"> <Filter>Header Files</Filter> </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\streams.h"> <Filter>Header Files</Filter> </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\targetver.h"> <Filter>Header Files</Filter> </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\threadpool.h"> <Filter>Header Files</Filter> </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\uri.h"> <Filter>Header Files</Filter> </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\uri_builder.h"> <Filter>Header Files</Filter> </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\uri_parser.h"> <Filter>Header Files</Filter> </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\windows_compat.h"> <Filter>Header Files</Filter> </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\xxpublic.h"> <Filter>Header Files</Filter> </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="$(CasablancaSrcDir)\http\client\http_client.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CasablancaSrcDir)\http\client\http_msg_client.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CasablancaSrcDir)\json\json.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CasablancaSrcDir)\http\uri\uri.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CasablancaSrcDir)\http\uri\uri_builder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CasablancaSrcDir)\http\uri\uri_parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CasablancaSrcDir)\pplx\pplx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CasablancaSrcDir)\utilities\asyncrt_utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CasablancaSrcDir)\utilities\dllmain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CasablancaSrcDir)\http\common\http_helpers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CasablancaSrcDir)\http\common\http_msg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CasablancaSrcDir)\pplx\windows\pplxwin.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CasablancaSrcDir)\pch\stdafx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CasablancaSrcDir)\streams\windows\ioscheduler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CasablancaSrcDir)\streams\windows\fileio.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

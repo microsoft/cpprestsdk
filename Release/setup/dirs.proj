@@ -1,0 +1,22 @@
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Common.Build.settings" />
+  <PropertyGroup>
+    <Configuration Condition="'$(Configuration)'==''">Release</Configuration>
+  </PropertyGroup>
+  
+  <ItemGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      <ProjectFile Include="$(BuildRoot)\Release\Collateral\MakeZip\MakeZip.proj"/>
+  </ItemGroup>
+  
+  <ItemGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32' AND '$(DevToolsVersion)' == '100'">
+      <ProjectFile Include="VS10\MakeSetup.proj"/>
+  </ItemGroup>
+  
+  <ItemGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32' AND '$(DevToolsVersion)' == '110'">
+      <ProjectFile Include="VS11\MakeSetup.proj"/>
+      <ProjectFile Include="VS11_ExpressWD\MakeSetup.proj"/>
+      <ProjectFile Include="VS11_ExpressW8\MakeSetup.proj"/>
+  </ItemGroup>
+  
+  <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
+</Project>

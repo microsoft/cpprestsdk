@@ -1,0 +1,9 @@
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <VSTargetVersion>11</VSTargetVersion>
+    <OutputName>Casablanca_setup110_Express_Desktop</OutputName>
+    <VSEdition>WDExpress</VSEdition>
+    <VCProjectDir>VCprojects_WDExpress</VCProjectDir>
+  </PropertyGroup>
+  <Import Project="..\CasablancaSetup.wixproj" />
+</Project>
