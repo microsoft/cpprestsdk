@@ -9,19 +9,46 @@
     </MSBuildAllProjects>
   </PropertyGroup>
 
+  <!-- for root paths -->
   <PropertyGroup>
     <BuildRoot>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))</BuildRoot>
     <TargetsPath>$(BuildRoot)\Build</TargetsPath>
     <OsVersion>$(registry:HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion@CurrentVersion)</OsVersion>
+    <!--If Dev10 and Dev11 are both installed, the default is to build Dev11. This can be overridden by setting the DevToolsVersion variable in powershell-->
+    <DevToolsVersion Condition="'$(DevToolsVersion)' == '' And '$(VS110COMNTOOLS)' != ''">110</DevToolsVersion>
+    <DevToolsVersion Condition="'$(DevToolsVersion)' == '' And '$(VS100COMNTOOLS)' != ''">100</DevToolsVersion>
   </PropertyGroup>
 
-  <Target Name="CopyToOutputDirectoryAlwaysError"
-          Condition="'@(Content)'!='' or '@(None)'!=''">
-    <Error Condition="'%(Content.CopyToOutputDirectory)'=='Always'" Text="CopyToOutputDirectory is not allowed to be 'Always'.  Use 'PreserveNewest' instead." File="$(MSBuildProjectFile)" />
-    <Error Condition="'%(None.CopyToOutputDirectory)'=='Always'" Text="CopyToOutputDirectory is not allowed to be 'Always'.  Use 'PreserveNewest' instead." File="$(MSBuildProjectFile)" />
-  </Target>
 
+  <!-- paths can be overriden by configuration -->
+  <PropertyGroup>
+    <OutputPath>$(BuildRoot)\Binaries\$(Platform)\$(Configuration)\</OutputPath>
+	<OutDir>$(OutputPath)</OutDir>
+    <MSBuildCommunityTasksPath Condition="'$(MSBuildCommunityTasksPath)'==''">$(BuildRoot)\Build\MSBuild.Community.Tasks</MSBuildCommunityTasksPath>
+    <WixToolPath Condition="'$(WixToolPath)'==''">$(BuildRoot)\Build\Wix\3.6\</WixToolPath>
+    <WixExtDir Condition="'$(WixExtDir)'==''">$(WixToolPath)</WixExtDir>
+    <TestRoot>$(BuildRoot)\Release\Tests</TestRoot>
+    <CasablancaSrcDir>$(BuildRoot)\Release\src</CasablancaSrcDir>
+    <CasablancaIncludeDir>$(BuildRoot)\Release\include</CasablancaIncludeDir>
+    <CollateralsDir>$(BuildRoot)\Release\Collateral</CollateralsDir>
+  </PropertyGroup>
+  
+  <!-- try locating configuration file -->
   <Import Condition="Exists('$(BuildRoot)\..\Build\environment.casablanca.settings')" Project="$(BuildRoot)\..\Build\environment.casablanca.settings"/>
+  
+  <!-- paths will not be overriden -->
+  <PropertyGroup>
+    <OutDir Condition="'$(OutDir)' != '' and !HasTrailingSlash('$(OutDir)')">$(OutDir)\</OutDir>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(DevToolsVersion)' == '100'">    <PlatformToolset>v100</PlatformToolset>
+    <DevEnvDir>$(VS100COMNTOOLS)..\IDE</DevEnvDir>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(DevToolsVersion)' == '110'">
+    <DevEnvDir>$(VS110COMNTOOLS)..\IDE</DevEnvDir>
+  </PropertyGroup>
+
   <PropertyGroup>
     <BinaryDependencies>$(TargetsPath)\BinaryDependencies</BinaryDependencies>
     <Configuration Condition="'$(Configuration)'==''">Debug</Configuration>
@@ -29,22 +56,11 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
 
-    <MSBuildCommunityTasksPath Condition="'$(MSBuildCommunityTasksPath)'==''">$(BuildRoot)\Build\MSBuild.Community.Tasks</MSBuildCommunityTasksPath>
-    <WixToolPath Condition="'$(WixToolPath)'==''">$(BuildRoot)\Build\Wix\3.6\</WixToolPath>
-    <WixExtDir Condition="'$(WixExtDir)'==''">$(WixToolPath)</WixExtDir>
     <WixTargetsPath>$(WixToolPath)Wix.targets</WixTargetsPath>
     <WixTasksPath >$(WixToolPath)WixTasks.dll</WixTasksPath>
     <LuxTargetsPath>$(WixToolPath)Lux.targets</LuxTargetsPath>
     <LuxTasksPath >$(WixToolPath)LuxTasks.dll</LuxTasksPath>
 
-    <!--If Dev10 and Dev11 are both installed, the default is to build Dev11. This can be overridden by setting the DevToolsVersion variable in powershell-->
-    <DevToolsVersion Condition="'$(DevToolsVersion)' == '' And '$(VS110COMNTOOLS)' != ''">110</DevToolsVersion>
-    <DevToolsVersion Condition="'$(DevToolsVersion)' == '' And '$(VS100COMNTOOLS)' != ''">100</DevToolsVersion>
-
-    <TestRoot>$(BuildRoot)\Release\Tests</TestRoot>
-    <CasablancaSrcDir>$(BuildRoot)\Release\src</CasablancaSrcDir>
-    <CasablancaIncludeDir>$(BuildRoot)\Release\include</CasablancaIncludeDir>
-    <CollateralsDir>$(BuildRoot)\Release\Collateral</CollateralsDir>
 
     <!--For C#:-->
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
@@ -63,20 +79,7 @@
     <WholeProgramOptimization Condition="'$(WholeProgramOptimization)'=='' And '$(Configuration)'!='Debug'">true</WholeProgramOptimization>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(DevToolsVersion)' == '100'">    <PlatformToolset>v100</PlatformToolset>
-    <DevEnvDir>$(VS100COMNTOOLS)..\IDE</DevEnvDir>
-  </PropertyGroup>
 
-  <PropertyGroup Condition="'$(DevToolsVersion)' == '110'">
-    <DevEnvDir>$(VS110COMNTOOLS)..\IDE</DevEnvDir>
-  </PropertyGroup>
-
-  <!--For Incubation only:-->
-  <PropertyGroup>
-    <ActorsIncludeDir>$(BuildRoot)\Incubation\Actors\include</ActorsIncludeDir>
-    <ActorsInternalIncludeDir>$(BuildRoot)\Incubation\Actors\internalinc</ActorsInternalIncludeDir>
-  </PropertyGroup>
-  
   <ItemDefinitionGroup>
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
@@ -146,7 +149,6 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>$(BuildRoot)\Binaries\Win32\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <InstallerPlatform>x86</InstallerPlatform>
   </PropertyGroup>
@@ -155,14 +157,12 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>$(BuildRoot)\Binaries\x64\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE;X64</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|Win32' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>$(BuildRoot)\Binaries\Win32\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <InstallerPlatform>x86</InstallerPlatform>
   </PropertyGroup>
@@ -170,7 +170,6 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>$(BuildRoot)\Binaries\x64\Release\</OutputPath>
     <DefineConstants>TRACE;X64</DefineConstants>
   </PropertyGroup>
 
@@ -178,29 +177,23 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>$(BuildRoot)\Binaries\ARM\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE;ARM</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|ARM' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>$(BuildRoot)\Binaries\ARM\Release\</OutputPath>
     <DefineConstants>TRACE;ARM</DefineConstants>
   </PropertyGroup>
   
-  <PropertyGroup>
-    <OutDir Condition="'$(OutDir)' == ''">$(OutputPath)</OutDir>
-  </PropertyGroup>
+
   
-  <PropertyGroup>
-    <OutDir Condition="'$(OutDir)' != '' and !HasTrailingSlash('$(OutDir)')">$(OutDir)\</OutDir>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <CodeAnalysisDictionary Include="$(BuildRoot)\Build\CustomDictionary.xml" />
-  </ItemGroup>
-
+  <!--end paths configuration -->
+  <Target Name="CopyToOutputDirectoryAlwaysError"
+          Condition="'@(Content)'!='' or '@(None)'!=''">
+    <Error Condition="'%(Content.CopyToOutputDirectory)'=='Always'" Text="CopyToOutputDirectory is not allowed to be 'Always'.  Use 'PreserveNewest' instead." File="$(MSBuildProjectFile)" />
+    <Error Condition="'%(None.CopyToOutputDirectory)'=='Always'" Text="CopyToOutputDirectory is not allowed to be 'Always'.  Use 'PreserveNewest' instead." File="$(MSBuildProjectFile)" />
+  </Target>
   <!-- BEGIN: Workaround for MSBuild.exe bug that will be fixed in v4.5 -->
   <!-- Bug Symptom:  -->
   <!--    Multi-proc build returns "CSC : fatal error CS0009: Metadata file '(FilePath)' could not be opened == 'File is corrupt.' -->
