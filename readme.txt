@@ -13,6 +13,3 @@
  limitations under the License.
 
  ==--==
-
-
-Source Code Coming Soon!
