@@ -148,7 +148,7 @@
               <Directory Id="v8.0" Name="v8.0">
                 <Directory Id="ExtensionSDKs" Name="ExtensionSDKs">
                   <Directory Id="CppRESTWindowsSDK" Name="CppRESTWindowsSDK">
-                    <Directory Id="v1.0" Name="1.0">
+                    <Directory Id="dir_ver" Name="$(var.ProductVersion)">
                       <Component Id="WinRTSDK" DiskId="1" Guid="$(var.GUID016)">
                         <File Id="File_SDKManifest.xml" Name="SDKManifest.xml" Source="$(var.SetupDir)\WindowsSDK\SDKManifest.xml" />
                         <Condition>(VersionNT >= 602)</Condition>
@@ -157,7 +157,7 @@
                         <Directory Id="Debug01" Name="Debug">
                           <Directory Id="x8601" Name="x86">
                             <Component Id="props_01" DiskId="1" Guid="$(var.GUID017)">
-                              <File Id="File_CasablancaWindowsSDK.props_01" Name="CasablancaWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\x86\CasablancaWindowsSDK.props" />
+                              <File Id="File_CppRESTWindowsSDK.props_01" Name="CppRESTWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\x86\CppRESTWindowsSDK.props" />
                               <Condition>(VersionNT >= 602)</Condition>
                             </Component>
                           </Directory>
@@ -165,7 +165,7 @@
                         <Directory Id="Retail01" Name="Retail">
                           <Directory Id="x8602" Name="x86">
                             <Component Id="props_02" DiskId="1" Guid="$(var.GUID018)">
-                              <File Id="File_CasablancaWindowsSDK.props_02" Name="CasablancaWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\x86\CasablancaWindowsSDK.props" />
+                              <File Id="File_CppRESTWindowsSDK.props_02" Name="CppRESTWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\x86\CppRESTWindowsSDK.props" />
                               <Condition>(VersionNT >= 602)</Condition>
                             </Component>
                           </Directory>
@@ -173,7 +173,7 @@
                         <Directory Id="Debug02" Name="Debug">
                           <Directory Id="x6401" Name="x64">
                             <Component Id="props_03" DiskId="1" Guid="$(var.GUID019)">
-                              <File Id="File_CasablancaWindowsSDK.props_03" Name="CasablancaWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\x64\CasablancaWindowsSDK.props" />
+                              <File Id="File_CppRESTWindowsSDK.props_03" Name="CppRESTWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\x64\CppRESTWindowsSDK.props" />
                               <Condition>(VersionNT >= 602)</Condition>
                             </Component>
                           </Directory>
@@ -181,7 +181,7 @@
                         <Directory Id="Retail02" Name="Retail">
                           <Directory Id="x6402" Name="x64">
                             <Component Id="props_04" DiskId="1" Guid="$(var.GUID020)">
-                              <File Id="File_CasablancaWindowsSDK.props_04" Name="CasablancaWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\x64\CasablancaWindowsSDK.props" />
+                              <File Id="File_CppRESTWindowsSDK.props_04" Name="CppRESTWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\x64\CppRESTWindowsSDK.props" />
                               <Condition>(VersionNT >= 602)</Condition>
                             </Component>
                           </Directory>
@@ -190,7 +190,7 @@
                         <Directory Id="Debug04" Name="Debug">
                           <Directory Id="arm01" Name="arm">
                             <Component Id="props_05" DiskId="1" Guid="$(var.GUID041)">
-                              <File Id="File_CasablancaWindowsSDK.props_05" Name="CasablancaWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\arm\CasablancaWindowsSDK.props" />
+                              <File Id="File_CppRESTWindowsSDK.props_05" Name="CppRESTWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\arm\CppRESTWindowsSDK.props" />
                               <Condition>(VersionNT >= 602)</Condition>
                             </Component>
                           </Directory>
@@ -198,7 +198,7 @@
                         <Directory Id="Retail04" Name="Retail">
                           <Directory Id="arm02" Name="arm">
                             <Component Id="props_06" DiskId="1" Guid="$(var.GUID042)">
-                              <File Id="File_CasablancaWindowsSDK.props_06" Name="CasablancaWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\arm\CasablancaWindowsSDK.props" />
+                              <File Id="File_CppRESTWindowsSDK.props_06" Name="CppRESTWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\arm\CppRESTWindowsSDK.props" />
                               <Condition>(VersionNT >= 602)</Condition>
                             </Component>
                           </Directory>
@@ -273,8 +273,8 @@
                       <File Id="File_x86d_casablanca$(var.FileSuffix).dll"   Name="casablanca$(var.FileSuffix).dll" Source="$(var.SDK_bin_x86d_src)\casablanca$(var.FileSuffix).dll" />
                       <File Id="File_x86d_casablanca$(var.FileSuffix).pdb"   Name="casablanca$(var.FileSuffix).pdb" Source="$(var.SDK_bin_x86d_src)\casablanca$(var.FileSuffix).pub.pdb" />
                       <?if $(var.VSTargetVersion) > 10 ?>
-                        <File Id="File_x86d_casablanca$(var.FileSuffix).winrt.dll"   Name="casablanca$(var.FileSuffix).winrt.dll" Source="$(var.SDK_bin_x86d_src)\casablanca$(var.FileSuffix).winrt.dll" />
-                        <File Id="File_x86d_casablanca$(var.FileSuffix).winrt.pdb"   Name="casablanca$(var.FileSuffix).winrt.pdb" Source="$(var.SDK_bin_x86d_src)\casablanca$(var.FileSuffix).winrt.pub.pdb" />
+                        <File Id="File_x86d_casablanca$(var.FileSuffix).winrt.dll"   Name="casablanca$(var.FileSuffix).winrt.dll" Source="$(var.SDK_bin_x86d_src)\casablanca$(var.FileSuffix).winrt\casablanca$(var.FileSuffix).winrt.dll" />
+                        <File Id="File_x86d_casablanca$(var.FileSuffix).winrt.pdb"   Name="casablanca$(var.FileSuffix).winrt.pdb" Source="$(var.SDK_bin_x86d_src)\casablanca$(var.FileSuffix).winrt\casablanca$(var.FileSuffix).winrt.pub.pdb" />
                       <?endif ?>
                     </Component>
                    </Directory>
@@ -283,8 +283,8 @@
                        <File Id="File_x86r_casablanca$(var.FileSuffix).dll"   Name="casablanca$(var.FileSuffix).dll" Source="$(var.SDK_bin_x86r_src)\casablanca$(var.FileSuffix).dll" />
                        <File Id="File_x86r_casablanca$(var.FileSuffix).pdb"   Name="casablanca$(var.FileSuffix).pdb" Source="$(var.SDK_bin_x86r_src)\casablanca$(var.FileSuffix).pub.pdb" />
                        <?if $(var.VSTargetVersion) > 10 ?>
-                         <File Id="File_x86r_casablanca$(var.FileSuffix).winrt.dll"   Name="casablanca$(var.FileSuffix).winrt.dll" Source="$(var.SDK_bin_x86r_src)\casablanca$(var.FileSuffix).winrt.dll" />
-                         <File Id="File_x86r_casablanca$(var.FileSuffix).winrt.pdb"   Name="casablanca$(var.FileSuffix).winrt.pdb" Source="$(var.SDK_bin_x86r_src)\casablanca$(var.FileSuffix).winrt.pub.pdb" />
+                         <File Id="File_x86r_casablanca$(var.FileSuffix).winrt.dll"   Name="casablanca$(var.FileSuffix).winrt.dll" Source="$(var.SDK_bin_x86r_src)\casablanca$(var.FileSuffix).winrt\casablanca$(var.FileSuffix).winrt.dll" />
+                         <File Id="File_x86r_casablanca$(var.FileSuffix).winrt.pdb"   Name="casablanca$(var.FileSuffix).winrt.pdb" Source="$(var.SDK_bin_x86r_src)\casablanca$(var.FileSuffix).winrt\casablanca$(var.FileSuffix).winrt.pub.pdb" />
                        <?endif ?>
                     </Component>
                   </Directory>
@@ -296,8 +296,8 @@
                       <File Id="File_x64d_casablanca$(var.FileSuffix).dll"   Name="casablanca$(var.FileSuffix).dll" Source="$(var.SDK_bin_x64d_src)\casablanca$(var.FileSuffix).dll" />
                       <File Id="File_x64d_casablanca$(var.FileSuffix).pdb"   Name="casablanca$(var.FileSuffix).pdb" Source="$(var.SDK_bin_x64d_src)\casablanca$(var.FileSuffix).pub.pdb" />
                       <?if $(var.VSTargetVersion) > 10 ?>
-                        <File Id="File_x64d_casablanca$(var.FileSuffix).winrt.dll"   Name="casablanca$(var.FileSuffix).winrt.dll" Source="$(var.SDK_bin_x64d_src)\casablanca$(var.FileSuffix).winrt.dll" />
-                        <File Id="File_x64d_casablanca$(var.FileSuffix).winrt.pdb"   Name="casablanca$(var.FileSuffix).winrt.pdb" Source="$(var.SDK_bin_x64d_src)\casablanca$(var.FileSuffix).winrt.pub.pdb" />
+                        <File Id="File_x64d_casablanca$(var.FileSuffix).winrt.dll"   Name="casablanca$(var.FileSuffix).winrt.dll" Source="$(var.SDK_bin_x64d_src)\casablanca$(var.FileSuffix).winrt\casablanca$(var.FileSuffix).winrt.dll" />
+                        <File Id="File_x64d_casablanca$(var.FileSuffix).winrt.pdb"   Name="casablanca$(var.FileSuffix).winrt.pdb" Source="$(var.SDK_bin_x64d_src)\casablanca$(var.FileSuffix).winrt\casablanca$(var.FileSuffix).winrt.pub.pdb" />
                       <?endif ?>
                     </Component>
                   </Directory>
@@ -306,19 +306,19 @@
                       <File Id="File_x64r_casablanca$(var.FileSuffix).dll"   Name="casablanca$(var.FileSuffix).dll" Source="$(var.SDK_bin_x64r_src)\casablanca$(var.FileSuffix).dll" />
                       <File Id="File_x64r_casablanca$(var.FileSuffix).pdb"   Name="casablanca$(var.FileSuffix).pdb" Source="$(var.SDK_bin_x64r_src)\casablanca$(var.FileSuffix).pub.pdb" />
                       <?if $(var.VSTargetVersion) > 10 ?>
-                        <File Id="File_x64r_casablanca$(var.FileSuffix).winrt.dll"   Name="casablanca$(var.FileSuffix).winrt.dll" Source="$(var.SDK_bin_x64r_src)\casablanca$(var.FileSuffix).winrt.dll" />
-                        <File Id="File_x64r_casablanca$(var.FileSuffix).winrt.pdb"   Name="casablanca$(var.FileSuffix).winrt.pdb" Source="$(var.SDK_bin_x64r_src)\casablanca$(var.FileSuffix).winrt.pub.pdb" />
+                        <File Id="File_x64r_casablanca$(var.FileSuffix).winrt.dll"   Name="casablanca$(var.FileSuffix).winrt.dll" Source="$(var.SDK_bin_x64r_src)\casablanca$(var.FileSuffix).winrt\casablanca$(var.FileSuffix).winrt.dll" />
+                        <File Id="File_x64r_casablanca$(var.FileSuffix).winrt.pdb"   Name="casablanca$(var.FileSuffix).winrt.pdb" Source="$(var.SDK_bin_x64r_src)\casablanca$(var.FileSuffix).winrt\casablanca$(var.FileSuffix).winrt.pub.pdb" />
                       <?endif ?>
                     </Component>
                   </Directory>
                 </Directory>
-                        
+
                 <?if $(var.VSTargetVersion) > 10 ?>
                   <Directory Id="arm03" Name="arm" FileSource="$(var.TargetDir)">
                     <Directory Id="BinArmDebug" Name="Debug" FileSource="$(var.TargetDir)">
                       <Component Id="arm_dll_d" DiskId="1" Guid="$(var.GUID043)">
-                        <File Id="File_armd_casablanca$(var.FileSuffix).winrt.dll"   Name="casablanca$(var.FileSuffix).winrt.dll" Source="$(var.SDK_bin_armd_src)\casablanca110.winrt\casablanca$(var.FileSuffix).winrt.dll" />
-                        <File Id="File_armd_casablanca$(var.FileSuffix).pdb"   Name="casablanca$(var.FileSuffix).winrt.pdb" Source="$(var.SDK_bin_armd_src)\casablanca110.winrt\casablanca$(var.FileSuffix).winrt.pub.pdb" />
+                        <File Id="File_armd_casablanca$(var.FileSuffix).winrt.dll"   Name="casablanca$(var.FileSuffix).winrt.dll" Source="$(var.SDK_bin_armd_src)\casablanca$(var.FileSuffix).winrt\casablanca$(var.FileSuffix).winrt.dll" />
+                        <File Id="File_armd_casablanca$(var.FileSuffix).pdb"   Name="casablanca$(var.FileSuffix).winrt.pdb" Source="$(var.SDK_bin_armd_src)\casablanca$(var.FileSuffix).winrt\casablanca$(var.FileSuffix).winrt.pub.pdb" />
                       </Component>
                     </Directory>
                     <Directory Id="BinArmRetail" Name="Release" FileSource="$(var.TargetDir)">
@@ -329,7 +329,7 @@
                     </Directory>
                   </Directory>
                 <?endif ?>
-              
+
               </Directory>
                 
               <Directory Id="SDK_lib" Name="lib" FileSource="$(var.TargetDir)">
@@ -356,7 +356,7 @@
                     <Component Id="SDK_lib_x64r_items" DiskId="1" Guid="$(var.GUID028)">
                       <File Id="File_x64r_casablanca$(var.FileSuffix).lib"  Name="casablanca$(var.FileSuffix).lib"    Source="$(var.SDK_lib_x64r_src)\casablanca$(var.FileSuffix).lib" />
                       <?if $(var.VSTargetVersion) > 10 ?>
-                        <File Id="File_x64r_casablanca$(var.FileSuffix)_winrt.lib"   Name="casablanca$(var.FileSuffix).winrt.lib"   Source="$(var.SDK_bin_x64r_src)\casablanca$(var.FileSuffix).winrt\casablanca110.winrt.lib" />
+                        <File Id="File_x64r_casablanca$(var.FileSuffix)_winrt.lib"   Name="casablanca$(var.FileSuffix).winrt.lib"   Source="$(var.SDK_bin_x64r_src)\casablanca$(var.FileSuffix).winrt\casablanca$(var.FileSuffix).winrt.lib" />
                       <?endif ?>
                     </Component>
                   </Directory>
@@ -374,13 +374,11 @@
                 <Directory Id="SDK_lib_arm" Name="arm" FileSource="$(var.TargetDir)">
                   <Directory Id="SDK_lib_armr" Name="Release" FileSource="$(var.TargetDir)">
                     <Component Id="SDK_lib_armr_items" DiskId="1" Guid="$(var.GUID045)">
-                      <File Id="File_armr_casablanca$(var.FileSuffix).lib"  Name="casablanca$(var.FileSuffix).lib"    Source="$(var.SDK_lib_armr_src)\casablanca$(var.FileSuffix).lib" />
                       <File Id="File_armr_casablanca$(var.FileSuffix)_winrt.lib"   Name="casablanca$(var.FileSuffix).winrt.lib"   Source="$(var.SDK_bin_armr_src)\casablanca$(var.FileSuffix).winrt\casablanca$(var.FileSuffix).winrt.lib" />
                     </Component>
                   </Directory>
                   <Directory Id="SDK_lib_armd" Name="Debug" FileSource="$(var.TargetDir)">
                     <Component Id="SDK_lib_armd_items" DiskId="1" Guid="$(var.GUID046)">
-                      <File Id="File_armd_casablanca$(var.FileSuffix).lib"  Name="casablanca$(var.FileSuffix).lib"    Source="$(var.SDK_lib_armd_src)\casablanca$(var.FileSuffix).lib" />
                       <File Id="File_armd_casablanca$(var.FileSuffix)_winrt.lib"   Name="casablanca$(var.FileSuffix).winrt.lib"   Source="$(var.SDK_bin_armd_src)\casablanca$(var.FileSuffix).winrt\casablanca$(var.FileSuffix).winrt.lib" />
                     </Component>
                   </Directory>

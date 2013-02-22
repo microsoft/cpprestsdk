@@ -684,7 +684,7 @@ unsigned long test_request::reply_impl(
     unsigned long error_code = HttpSendHttpResponse(
         m_p_server->m_request_queue,
         m_request_id,
-        NULL,
+        HTTP_SEND_RESPONSE_FLAG_DISCONNECT,
         &response,
         NULL,
         NULL,

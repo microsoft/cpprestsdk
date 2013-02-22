@@ -600,7 +600,7 @@ private:
 class _http_response : public http::details::http_msg_base
 {
 public:
-    _http_response() : m_status_code(std::numeric_limits<uint16_t>::max()) { }
+    _http_response() : m_status_code((std::numeric_limits<uint16_t>::max)()) { }
 
     _http_response(http::status_code code) : m_status_code(code) {}
 

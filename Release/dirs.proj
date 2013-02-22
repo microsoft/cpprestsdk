@@ -4,8 +4,8 @@
 
   <ItemGroup>
       <ProjectFile Include="src\dirs.proj"/>
-      <ProjectFile Include="samples\dirs.proj"/>
-      <ProjectFile Include="tests\dirs.proj"/>
+      <ProjectFile Include="samples\dirs.proj" Condition="'$(Platform)'!='ARM' or '$(WindowsSDKDesktopARMSupport)' == 'true'"/> 
+      <ProjectFile Include="tests\dirs.proj" Condition="'$(Platform)'!='ARM' or '$(WindowsSDKDesktopARMSupport)' == 'true'"/>
   </ItemGroup>
 
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />

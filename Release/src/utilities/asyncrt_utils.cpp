@@ -99,11 +99,11 @@ std::string windows_category_impl::message(int errorCode) const
     }
 #endif
 
-    std::string buffer;
+    std::wstring buffer;
     buffer.resize(buffer_size);
     unsigned long result;
 
-    result = ::FormatMessageA(
+    result = ::FormatMessageW(
         dwFlags,
         lpSource,
         errorCode,
@@ -119,7 +119,7 @@ std::string windows_category_impl::message(int errorCode) const
         return os.str();
     }
 
-    return buffer;
+    return utility::conversions::to_utf8string(buffer);
 }
 
 #else

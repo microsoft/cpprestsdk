@@ -108,21 +108,22 @@ static pplx::task<void> find_matches_in_file(const string_t &fileName, const std
 		auto lineNumber = std::make_shared<int>(1);
 		return ::do_while([=]()
 		{
-			container_buffer<std::string> line;
-			return inFile.read_line(line).then([=](size_t bytesRead)
+			container_buffer<std::string> inLine;
+			return inFile.read_line(inLine).then([=](size_t bytesRead)
 			{
 				if(bytesRead == 0 && inFile.is_eof())
 				{
 					return pplx::task_from_result(false);
 				}
 
-				else if(line.collection().find(searchString) != std::string::npos)
+				else if(inLine.collection().find(searchString) != std::string::npos)
 				{
 					results.print("line ");
 					results.print((*lineNumber)++);
 					return results.print(":").then([=](size_t)
 					{
-						return results.write(line, line.collection().size());
+						container_buffer<std::string> outLine(std::move(inLine.collection()));
+						return results.write(outLine, outLine.collection().size());
 					}).then([=](size_t)
 					{
 						return results.print("\r\n");
