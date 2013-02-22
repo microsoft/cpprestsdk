@@ -27,6 +27,9 @@
 *.lastbuildstate
 *.tlog
 *.intermediate
+*.dll
+*.exp
+*.exe
 ipch/
 obj/
 *.resfiles
