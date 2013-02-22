@@ -8,15 +8,18 @@ bad:
 CXX=g++-4.7
 export CXX
 
+mk_out_dir:
+	mkdir -p $(OUTPUT_DIR)
+
 release: OPTIMIZATION_LEVEL = -O2
 release: MODE = Release$(shell getconf LONG_BIT)
 release: OUTPUT_DIR = $(PWD)/../Binaries/$(MODE)
-release: tests samples
+release: mk_out_dir tests samples
 
 debug: OPTIMIZATION_LEVEL = -O0 -ggdb
 debug: MODE = Debug$(shell getconf LONG_BIT)
 debug: OUTPUT_DIR = $(PWD)/../Binaries/$(MODE)
-debug: tests samples
+debug: mk_out_dir tests samples
 
 clean: RMODE = Release$(shell getconf LONG_BIT)
 clean: DMODE = Debug$(shell getconf LONG_BIT)
@@ -57,7 +60,7 @@ export CASABLANCA_TESTS_DIR
 tests: src
 samples: src
 
-.PHONY: test $(SUBDIRS) all clean release debug
+.PHONY: test $(SUBDIRS) all clean release debug mk_out_dir
 
 $(SUBDIRS):
 	$(MAKE) -C $@
