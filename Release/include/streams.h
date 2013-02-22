@@ -350,8 +350,8 @@ namespace Concurrency { namespace streams
     _UINT_TRAIT(unsigned short,UINT16_MIN,UINT16_MAX)
     _UINT_TRAIT(unsigned int,UINT32_MIN,UINT32_MAX)
 #else
-#define _INT_TRAIT(_t)  template<> struct _type_parser_integral_traits<_t>{typedef std::true_type _is_integral;typedef std::false_type _is_unsigned;static const int64_t _min = std::numeric_limits<_t>::min();static const int64_t _max = std::numeric_limits<_t>::max();};
-#define _UINT_TRAIT(_t) template<> struct _type_parser_integral_traits<_t>{typedef std::true_type _is_integral;typedef std::true_type  _is_unsigned;static const uint64_t _max = std::numeric_limits<_t>::max();};
+#define _INT_TRAIT(_t)  template<> struct _type_parser_integral_traits<_t>{typedef std::true_type _is_integral;typedef std::false_type _is_unsigned;static const int64_t _min = std::numeric_limits<_t>::min();static const int64_t _max = (std::numeric_limits<_t>::max)();};
+#define _UINT_TRAIT(_t) template<> struct _type_parser_integral_traits<_t>{typedef std::true_type _is_integral;typedef std::true_type  _is_unsigned;static const uint64_t _max = (std::numeric_limits<_t>::max)();};
 
     _INT_TRAIT(char)
     _INT_TRAIT(signed char)

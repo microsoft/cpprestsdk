@@ -1,6 +1,6 @@
 <FileList
   MinVSVersion = "11.0"
-  DisplayName = "Casablanca Extension SDK for Windows Store apps"
+  DisplayName = "C++ REST Extension SDK for Windows Store apps"
   MinToolsVersion = "4.0"
   AppliesTo = "VisualC">  
 </FileList>

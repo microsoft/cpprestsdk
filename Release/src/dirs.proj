@@ -7,11 +7,10 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(DevToolsVersion)'=='110'">
-      <ProjectFile Include="vs11\casablanca110.vcxproj" />
+      <ProjectFile Include="vs11\casablanca110.vcxproj" Condition="'$(Platform)'!='ARM' or '$(WindowsSDKDesktopARMSupport)' == 'true'" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.2|110'">
-      <ProjectFile Include="vs11\casablanca110.vcxproj" />
       <ProjectFile Include="vs11.winrt\casablanca110.winrt.vcxproj" />
   </ItemGroup>
 
