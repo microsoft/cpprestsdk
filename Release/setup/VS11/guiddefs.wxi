@@ -50,4 +50,14 @@
 <?define GUID048 = "19e1e278-1af0-4283-ac87-0975e8d97f56" ?>
 <?define GUID049 = "0ef3cdaf-368c-473d-b2f9-6a2203a0a709" ?>
 <?define GUID050 = "1b53d33e-343e-4bd0-b681-95763e428a20" ?>
+<?define GUID051 = "ee7cfd11-7d2f-11e2-be8b-002713704f7b" ?>
+<?define GUID052 = "ee7cfd12-7d2f-11e2-be8b-002713704f7b" ?>
+<?define GUID053 = "ee7cfd13-7d2f-11e2-be8b-002713704f7b" ?>
+<?define GUID054 = "ee7cfd14-7d2f-11e2-be8b-002713704f7b" ?>
+<?define GUID055 = "ee7cfd15-7d2f-11e2-be8b-002713704f7b" ?>
+<?define GUID056 = "ee7cfd16-7d2f-11e2-be8b-002713704f7b" ?>
+<?define GUID057 = "ee7cfd17-7d2f-11e2-be8b-002713704f7b" ?>
+<?define GUID058 = "ee7cfd18-7d2f-11e2-be8b-002713704f7b" ?>
+<?define GUID059 = "ee7cfd19-7d2f-11e2-be8b-002713704f7b" ?>
+<?define GUID060 = "ee7cfd1a-7d2f-11e2-be8b-002713704f7b" ?>
 </Include>
