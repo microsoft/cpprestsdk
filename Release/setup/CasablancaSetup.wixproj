@@ -1,5 +1,8 @@
-<Project DefaultTargets="CheckVSTargetVersion;Build;Report" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="CheckVSTargetVersion;MakeZip;Build;Report" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
+        <Target Name="MakeZip">
+		    <MSBuild Projects="$(CollateralsDir)\MakeZip\MakeZip.proj"/>
+        </Target>
         <Target Name="CheckVSTargetVersion">
             <Message Text="Checking VSTargetVersion..."/>
             <Error
@@ -82,6 +85,5 @@
             <Name>WixUtilExtension</Name>
           </WixExtension>
         </ItemGroup>
-
         <Import Project="$(WixTargetsPath)" />
 </Project>
