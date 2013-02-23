@@ -242,7 +242,7 @@ TEST(iostream_container_buffer2)
         }).wait();
     }
 }
-TEST(FileSequentialWrite, "Ignore:Linux", "TFS#623951")
+TEST(FileSequentialWrite, "Ignore", "TFS#626173")
 { 
     auto open = OPENSTR_W<uint8_t>(U("WriteFileSequential.txt"), std::ios::app | std::ios::out);
     auto stream = open.get();
