@@ -9,6 +9,12 @@
     </MSBuildAllProjects>
   </PropertyGroup>
 
+  <!-- default configuration -->
+  <PropertyGroup>
+    <Configuration Condition="'$(Configuration)'==''">Debug</Configuration>
+    <Platform Condition="'$(Platform)'==''">Win32</Platform>
+  </PropertyGroup>
+  
   <!-- for root paths -->
   <PropertyGroup>
     <BuildRoot>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))</BuildRoot>
@@ -51,8 +57,6 @@
 
   <PropertyGroup>
     <BinaryDependencies>$(TargetsPath)\BinaryDependencies</BinaryDependencies>
-    <Configuration Condition="'$(Configuration)'==''">Debug</Configuration>
-    <Platform Condition="'$(Platform)'==''">Win32</Platform>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
 
