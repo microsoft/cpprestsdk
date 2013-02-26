@@ -1,4 +1,4 @@
-SUBDIRS = SearchFile BingRequest
+SUBDIRS = SearchFile
 
 .PHONY: subdirs $(SUBDIRS) all
 

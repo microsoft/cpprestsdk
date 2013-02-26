@@ -5,7 +5,7 @@
   </PropertyGroup>
   
   <ItemGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      <ProjectFile Include="$(CollateralsDir)\MakeZip\MakeZip.proj"/>
+      <ProjectFile Include="$(BuildRoot)\Release\Collateral\MakeZip\MakeZip.proj"/>
   </ItemGroup>
   
   <ItemGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32' AND '$(DevToolsVersion)' == '100'">
