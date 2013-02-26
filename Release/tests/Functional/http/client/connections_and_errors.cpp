@@ -86,7 +86,8 @@ TEST_FIXTURE(uri_address, pending_requests_after_client)
     pending_requests_after_client_impl(m_uri, false);
 }
 
-TEST_FIXTURE(uri_address, server_doesnt_exist)
+TEST_FIXTURE(uri_address, server_doesnt_exist,
+             "Ignore:Linux", "627642")
 {
     http_client client(m_uri);
 
@@ -101,7 +102,8 @@ TEST_FIXTURE(uri_address, server_doesnt_exist)
     }
 }
 
-TEST_FIXTURE(uri_address, server_close_without_responding)
+TEST_FIXTURE(uri_address, server_close_without_responding,
+             "Ignore:Linux", "627612")
 {
     test_http_server server(m_uri);
     VERIFY_ARE_EQUAL(0u, server.open());

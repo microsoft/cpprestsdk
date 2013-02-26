@@ -117,7 +117,8 @@ TEST_FIXTURE(uri_address, proxy_auth_known_contentlength, "Ignore:Linux", "no pr
     http_asserts::assert_response_equals(client.request(msg).get(), status_codes::OK);
 }
 
-TEST_FIXTURE(uri_address, proxy_auth_noseek)
+TEST_FIXTURE(uri_address, proxy_auth_noseek,
+             "Ignore:Linux", "627612")
 {
     test_http_server::scoped_server scoped(m_uri);
     http_client client(m_uri); // In this test, the request cannot be resent, so the username and password are not required
