@@ -237,17 +237,9 @@ TEST_FIXTURE(uri_address, set_body_with_charset)
     http_client client(m_uri);
 
     http_request msg(methods::PUT);
-    try
-    {
-        msg.set_body(U("datadatadata"), U("text/plain;charset=us-ascii"));
-        VERIFY_IS_TRUE(false);
-    }
-    catch(std::invalid_argument &)
-    {
-        // expected
-    }
+    VERIFY_THROWS(msg.set_body(U("datadatadata"), U("text/plain;charset=us-ascii")), std::invalid_argument);
 }
 
-} // SUITE(building_request_tests)
+}
 
 }}}}

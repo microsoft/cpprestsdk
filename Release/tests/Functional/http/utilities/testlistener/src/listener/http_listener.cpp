@@ -33,8 +33,7 @@ namespace listener
 
 http_listener::http_listener(const http::uri &address) : m_uri(address), m_closed(true)
 {
-    m_pipeline_stage = new _listener_stage(this);
-    set_last_stage(std::shared_ptr<http::http_pipeline_stage>(m_pipeline_stage));
+    m_pipeline = http::http_pipeline::create_pipeline(std::make_shared<_listener_stage>(this));
 
     // Somethings like proper URI schema are verified by the URI class.
     // We only need to check certain things specific to HTTP.
@@ -97,7 +96,7 @@ unsigned long http_listener::close()
 
 pplx::task<http_response> http_listener::handle_request(http_request msg)
 {
-    return propagate(msg);
+    return m_pipeline->propagate(msg);
 }
 
 pplx::task<http_response> http_listener::dispatch_request(http_request msg)

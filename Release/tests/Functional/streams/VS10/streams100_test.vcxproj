@@ -122,6 +122,7 @@
     <ClCompile Include="..\stdstream_tests.cpp" />
     <ClCompile Include="..\memstream_tests.cpp" />
     <ClCompile Include="..\istream_tests.cpp" />
+    <ClCompile Include="..\fuzz_tests.cpp" />
     <ClCompile Include="..\stdafx.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>

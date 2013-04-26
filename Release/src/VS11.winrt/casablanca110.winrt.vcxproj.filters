@@ -33,13 +33,7 @@
     <ClCompile Include="$(CasablancaSrcDir)\pplx\pplx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="$(CasablancaSrcDir)\stdafx.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="$(CasablancaSrcDir)\http\uri\uri.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(CasablancaSrcDir)\azure\servicebus\topic.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(CasablancaSrcDir)\http\uri\uri_builder.cpp">
@@ -51,7 +45,12 @@
     <ClCompile Include="$(CasablancaSrcDir)\streams\windows\fileio_winrt.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="$(CasablancaSrcDir)\pplx\windows\pplxwin.cpp" />
+    <ClCompile Include="$(CasablancaSrcDir)\pplx\windows\pplxwin.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CasablancaSrcDir)\pch\stdafx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(CasablancaIncludeDir)\streams.h">
@@ -70,6 +69,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="$(CasablancaIncludeDir)\producerconsumerstream.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\filestream.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="$(CasablancaIncludeDir)\globals.h">
@@ -117,8 +119,15 @@
     <ClInclude Include="$(CasablancaIncludeDir)\xxpublic.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="$(CasablancaIncludeDir)\pplxatomics.h" />
-    <ClInclude Include="$(CasablancaIncludeDir)\pplxwin.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\pplxatomics.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\pplxinterface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\pplxwin.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="$(CasablancaIncludeDir)\rawptrstream.h">
       <Filter>Header Files</Filter>
     </ClInclude>

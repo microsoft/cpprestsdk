@@ -17,7 +17,31 @@
   <PropertyGroup>
     <CommonTestIncludeDir>$(TestRoot)\Common\utilities\include;$(TestRoot)\Common\UnitTestpp</CommonTestIncludeDir>
     <TestListenerPath>$(TestRoot)\Functional\http\utilities\testlistener</TestListenerPath>
-	<CasablancaIncludeDir>$(CasablancaIncludeDir);$(TestListenerPath)\include</CasablancaIncludeDir>
+    <CasablancaIncludeDir>$(BinariesDirectory)\inc;$(CasablancaIncludeDir);$(TestListenerPath)\include;</CasablancaIncludeDir>
+  </PropertyGroup>
+  
+  <!-- Keeping the paths for Casablanca in VS installation in one common place instead of hardcoded in each test. -->
+  <PropertyGroup Condition="'$(BuildAgainstVSInstallation)'!=''">
+    <CasablancaVSSdkDir>$([MSBuild]::GetRegistryValue(`HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Casablanca\120\SDK`, `InstallDir`))</CasablancaVSSdkDir>
+	<CasablancaVSExtentionSDKDir>C:\Program Files (x86)\Microsoft SDKs\Windows\v8.1\ExtensionSDKs\CppRESTWindowsSDK\1.0</CasablancaVSExtentionSDKDir>
+    <CasablancaIncludeDir>$(CasablancaIncludeDir);$(CasablancaVSSdkDir)\include</CasablancaIncludeDir>
+    <CasablancaVSLibDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(CasablancaVSSdkDir)\lib\x86\Debug\</CasablancaVSLibDir>
+    <CasablancaVSLibDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(CasablancaVSSdkDir)\lib\x86\Release\</CasablancaVSLibDir>
+    <CasablancaVSLibDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(CasablancaVSSdkDir)\lib\x64\Debug\</CasablancaVSLibDir>
+    <CasablancaVSLibDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(CasablancaVSSdkDir)\lib\x64\Release\</CasablancaVSLibDir>
+    <CasablancaVSLibDir Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">$(CasablancaVSSdkDir)\lib\arm\Debug\</CasablancaVSLibDir>
+    <CasablancaVSLibDir Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">$(CasablancaVSSdkDir)\lib\arm\Release\</CasablancaVSLibDir>
   </PropertyGroup>
 
+  <!-- Target that can be used to easily strip the AppContainer requirement from a dll -->
+  <Target Name="StripAppContainerOnProjectDll">
+    <Exec Command="link /edit /appcontainer:no $(OutDir)\$(ProjectName).dll" />
+    
+    <!-- In razzle for some reason the output is in sub directory. -->
+    <ItemGroup Condition="'$(BuildInRazzle)'!=''">
+      <ProjectBinaries Include="$(OutDir)\*" />
+    </ItemGroup>
+    <Copy Condition="'$(BuildInRazzle)'!=''" SourceFiles="@(ProjectBinaries)" DestinationFolder="$(OutDir)..\" />
+  </Target>
+  
 </Project>

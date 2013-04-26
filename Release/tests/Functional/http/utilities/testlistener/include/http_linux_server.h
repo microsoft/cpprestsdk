@@ -64,7 +64,7 @@ private:
     size_t m_read, m_write;
     size_t m_read_size, m_write_size;
     bool m_close;
-	bool m_chunked;
+    bool m_chunked;
     std::atomic<int> m_refs; // track how many threads are still referring to this
     
 public:
@@ -111,10 +111,10 @@ private:
 
     std::unique_ptr<tcp::acceptor> m_acceptor;
     std::map<std::string, http_listener_interface* > m_listeners;
-    pplx::reader_writer_lock m_listeners_lock;
+    pplx::extensibility::reader_writer_lock_t m_listeners_lock;
 
-    pplx::recursive_lock m_connections_lock;
-    pplx::notification_event m_all_connections_complete;
+    pplx::extensibility::recursive_lock_t m_connections_lock;
+    pplx::extensibility::event_t m_all_connections_complete;
     std::set<connection*> m_connections;
 
     http_linux_server* m_p_server;
@@ -173,9 +173,9 @@ class http_linux_server : public http_server
 private:
     friend class http::listener::details::connection;
 
-    pplx::reader_writer_lock m_listeners_lock;
+    pplx::extensibility::reader_writer_lock_t m_listeners_lock;
     std::map<std::string, std::unique_ptr<hostport_listener>, iequal_to> m_listeners;
-    std::unordered_map<http_listener_interface*, std::unique_ptr<pplx::reader_writer_lock>> m_registered_listeners;
+    std::unordered_map<http_listener_interface*, std::unique_ptr<pplx::extensibility::reader_writer_lock_t>> m_registered_listeners;
     bool m_started;
 
 public:

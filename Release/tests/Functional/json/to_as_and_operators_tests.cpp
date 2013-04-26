@@ -94,6 +94,23 @@ TEST(to_string)
     VERIFY_ARE_EQUAL(U("[ \"Here\", true ]"), stream.str());
 }
 
+TEST(to_string_escaped_chars)
+{
+    json::value s1 = json::value::string(U(" \" "));
+    json::value s2 = json::value::string(U(" \b "));
+    json::value s3 = json::value::string(U(" \f "));
+    json::value s4 = json::value::string(U(" \n "));
+    json::value s5 = json::value::string(U(" \r "));
+    json::value s6 = json::value::string(U(" \t "));
+
+	VERIFY_ARE_EQUAL(U("\" \\\" \""), s1.to_string());
+    VERIFY_ARE_EQUAL(U("\" \\b \""), s2.to_string());
+    VERIFY_ARE_EQUAL(U("\" \\f \""), s3.to_string());
+    VERIFY_ARE_EQUAL(U("\" \\n \""), s4.to_string());
+    VERIFY_ARE_EQUAL(U("\" \\r \""), s5.to_string());
+    VERIFY_ARE_EQUAL(U("\" \\t \""), s6.to_string());
+}
+
 TEST(as_string)
 {
     json::value b(false);

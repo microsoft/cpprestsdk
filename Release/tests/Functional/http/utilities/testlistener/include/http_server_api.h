@@ -80,7 +80,7 @@ public:
 private:
 
     /// Used to lock access to the server api registration
-    static pplx::critical_section s_lock;
+    static pplx::extensibility::critical_section_t s_lock;
 
     /// Registers a server API set -- this assumes the lock has already been taken
     static void unsafe_register_server_api(std::unique_ptr<http_server> server_api);

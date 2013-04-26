@@ -35,22 +35,22 @@
 namespace pplx 
 { 
 
-namespace platform
-{
-    long GetCurrentThreadId()
-    {
-        return (long)syscall(SYS_gettid);
-    }
-
-    void YieldExecution()
-    {
-        boost::this_thread::yield();
-    }
-}
-
 namespace details {
 
-    void linux_scheduler::schedule( TaskProc proc, void* param)
+    namespace platform
+    {
+        _PPLXIMP long GetCurrentThreadId()
+        {
+            return (long)syscall(SYS_gettid);
+        }
+
+        _PPLXIMP void YieldExecution()
+        {
+            boost::this_thread::yield();
+        }
+    }
+
+    _PPLXIMP void linux_scheduler::schedule( TaskProc_t proc, void* param)
     {
         crossplat::threadpool::shared_instance().schedule(boost::bind(proc, param));
     }
@@ -78,11 +78,11 @@ namespace details {
         unsigned int _ms;
         bool _repeat;
         boost::asio::deadline_timer _timer;
-        TaskProc _proc;
+        TaskProc_t _proc;
         void * _ctx;
         std::atomic_bool _in_callback;
         std::atomic_bool _orphan;
-        pplx::notification_event _completed;
+        pplx::extensibility::event_t _completed;
 
         void callback(const boost::system::error_code& ec)
         {
@@ -107,7 +107,7 @@ namespace details {
         }
 
     public:
-        linux_timer(unsigned int ms, bool repeating, TaskProc proc, void * context)
+        linux_timer(unsigned int ms, bool repeating, TaskProc_t proc, void * context)
             : _ms(ms)
             , _repeat(repeating)
             , _timer(crossplat::threadpool::shared_instance().service(), boost::posix_time::milliseconds(ms))
@@ -139,13 +139,13 @@ namespace details {
         }
     };
 
-    void timer_impl::start(unsigned int ms, bool repeating, TaskProc proc, void * context)
+    _PPLXIMP void timer_impl::start(unsigned int ms, bool repeating, TaskProc_t proc, void * context)
     {
-        _PPLX_ASSERT(m_timerImpl == nullptr);
+        _ASSERTE(m_timerImpl == nullptr);
         m_timerImpl = new linux_timer(ms, repeating, proc, context); 
     }
 
-    void timer_impl::stop(bool waitForCallbacks)
+    _PPLXIMP void timer_impl::stop(bool waitForCallbacks)
     {
         if( m_timerImpl != nullptr )
         {

@@ -46,7 +46,7 @@ io_scheduler::~io_scheduler()
 /// We keep a single instance of the I/O scheduler. In order to create it on first
 /// demand, it's referenced through a shared_ptr<T> and retrieved through function call.
 /// </summary>
-pplx::critical_section _g_lock;
+pplx::extensibility::critical_section_t _g_lock;
 std::shared_ptr<io_scheduler> _g_scheduler;
 
 /// <summary>
@@ -54,7 +54,7 @@ std::shared_ptr<io_scheduler> _g_scheduler;
 /// </summary>
 std::shared_ptr<io_scheduler> __cdecl io_scheduler::get_scheduler()
 {
-    pplx::scoped_critical_section lck(_g_lock);
+    pplx::extensibility::scoped_critical_section_t lck(_g_lock);
     if ( !_g_scheduler )
     {
         _g_scheduler = std::shared_ptr<io_scheduler>(new io_scheduler());

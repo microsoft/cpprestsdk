@@ -113,17 +113,9 @@ TEST_FIXTURE(uri_address, empty_method)
 {
     test_http_server::scoped_server scoped(m_uri);
     http_client client(m_uri);
-
-    try
-    {
-        client.request(U(""));
-        VERIFY_IS_TRUE(false);
-    } catch(std::invalid_argument &)
-    {
-        // Expected.
-    }
+    VERIFY_THROWS(client.request(U("")), std::invalid_argument);
 }
 
-} // SUITE(http_methods_tests)
+}
 
 }}}}

@@ -24,6 +24,11 @@
 ****/
 
 #include "stdafx.h"
+
+#if defined(_MSC_VER) && (_MSC_VER >= 1800)
+#error This file must not be compiled for Visual Studio 12 or later
+#endif
+
 #include "pplx.h"
 
 // Disable false alarm code analyze warning 
@@ -31,22 +36,51 @@
 namespace pplx 
 {
 
-#if defined(__cplusplus_winrt)
-namespace details {
 
-volatile long s_asyncId = 0;
-
-_PPLXIMP unsigned int __cdecl _GetNextAsyncId()
+namespace details 
 {
-    return static_cast<unsigned int>(_InterlockedIncrement(&s_asyncId));
-}
-} // namespace details
-#endif
+    /// <summary>
+    /// Spin lock to allow for locks to be used in global scope
+    /// </summary>
+    class _Spin_lock
+    {
+    public:
 
-static std::shared_ptr<pplx::scheduler> _M_Scheduler;
+        _Spin_lock()
+            : _M_lock(0)
+        {
+        }
+
+        void lock()
+        {
+            if ( details::atomic_compare_exchange(_M_lock, 1l, 0l) != 0l )
+            {
+                do 
+                {
+                    pplx::details::platform::YieldExecution();
+
+                } while ( details::atomic_compare_exchange(_M_lock, 1l, 0l) != 0l );
+            }
+        }
+
+        void unlock()
+        {
+            // fence for release semantics
+            details::atomic_exchange(_M_lock, 0l);
+        }
+
+    private:
+        atomic_long _M_lock;
+    };
+
+    typedef ::pplx::scoped_lock<_Spin_lock> _Scoped_spin_lock;
+} // namespace details
+
+
+static std::shared_ptr<pplx::scheduler_interface> _M_Scheduler;
 static pplx::details::_Spin_lock _M_SpinLock;
 
-_PPLXIMP std::shared_ptr<pplx::scheduler> __cdecl get_ambient_scheduler()
+_PPLXIMP std::shared_ptr<pplx::scheduler_interface> __cdecl get_ambient_scheduler()
 {
     if ( !_M_Scheduler)
     {
@@ -60,7 +94,7 @@ _PPLXIMP std::shared_ptr<pplx::scheduler> __cdecl get_ambient_scheduler()
     return _M_Scheduler;
 }
 
-_PPLXIMP void __cdecl set_ambient_scheduler(std::shared_ptr<pplx::scheduler> _Scheduler)
+_PPLXIMP void __cdecl set_ambient_scheduler(std::shared_ptr<pplx::scheduler_interface> _Scheduler)
 {
     ::pplx::details::_Scoped_spin_lock _Lock(_M_SpinLock);
 

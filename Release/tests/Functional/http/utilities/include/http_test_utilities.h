@@ -23,38 +23,8 @@
 
 #pragma once
 
-#ifndef _WINDOWS_
-#define _LETS_SEE_IF_WE_INCLUDED_WINDOWS
-#endif
-
-#ifndef _WINSOCK2API_
-#define _LETS_SEE_IF_WE_INCLUDED_WINSOCK
-#endif
-
-#ifndef __HTTP_H__
-#define _LETS_SEE_IF_WE_INCLUDED_WINHTTP
-#endif
-
 #include "http_test_utilities_public.h"
 #include "http_asserts.h"
 #include "test_http_server.h"
 #include "test_server_utilities.h"
 #include "test_http_client.h"
-
-#ifdef _WINDOWS_
-#ifdef _LETS_SEE_IF_WE_INCLUDED_WINDOWS
-#error "Don't include windows.h in our public headers"
-#endif
-#endif
-
-#ifdef _WINSOCK2API_
-#ifdef _LETS_SEE_IF_WE_INCLUDED_WINSOCK
-#error "Don't include winsock2.h in our public headers"
-#endif
-#endif
-
-#ifdef __HTTP_H__
-#ifdef _LETS_SEE_IF_WE_INCLUDED_WINHTTP
-#error "Don't include http.h in our public headers"
-#endif
-#endif

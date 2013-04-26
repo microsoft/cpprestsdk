@@ -27,7 +27,6 @@
 #include "http_server.h"
 #include "http_server_api.h"
 #include "http_windows_server.h"
-#include "http_helpers.h"
 #include "rawptrstream.h"
 
 using namespace web; 
@@ -38,6 +37,70 @@ using namespace http::details;
 using namespace http::listener::details;
 using namespace logging;
 using namespace logging::log::details;
+
+// TFS 655524
+// We can't have the test code depend on private headers.
+// Temporarily this small bit will be duplicated.
+namespace web { namespace http
+{
+namespace details
+{
+namespace chunked_encoding
+{
+
+// Transfer-Encoding: chunked support
+static const size_t additional_encoding_space = 12;
+static const size_t data_offset               = additional_encoding_space-2;
+
+// Add the data necessary for properly sending data with transfer-encoding: chunked.
+//
+// There are up to 12 additional bytes needed for each chunk:
+//
+// The last chunk requires 7 bytes, and is fixed.
+// All other chunks require up to 8 bytes for the length, and four for the two CRLF
+// delimiters.
+//
+size_t add_chunked_delimiters(_Out_writes_ (buffer_size) uint8_t *data, _In_ size_t buffer_size, size_t bytes_read)
+{
+    size_t offset = 0;
+
+    if(buffer_size < bytes_read + http::details::chunked_encoding::additional_encoding_space)
+    {
+        throw http_exception(U("Insufficient buffer size."));
+    }
+
+    if ( bytes_read == 0 )
+    {
+        offset = 5;
+        data[5] = '0';
+        data[6] = '\r';  data[7] = '\n'; // The end of the size.
+        data[8] = '\r';  data[9] = '\n'; // The end of the (empty) trailer.
+        data[10] = '\r'; data[11] = '\n'; // The end of the message.
+    }
+    else
+    {
+        char buffer[9];
+#ifdef _MS_WINDOWS
+        sprintf_s(buffer, 9, "%8IX", bytes_read);
+#else
+# if __x86_64__
+        sprintf(buffer, "%8lX", bytes_read);
+# else
+        sprintf(buffer, "%8X", bytes_read);
+# endif
+#endif
+        memcpy(&data[0], buffer, 8);
+        while (data[offset] == ' ') ++offset;
+        data[8] = '\r'; data[9] = '\n'; // The end of the size.
+        data[10+bytes_read] = '\r'; data[11+bytes_read] = '\n'; // The end of the chunk.
+    }
+
+    return offset;
+}
+
+}
+} // namespace details
+}} // namespace web::http
 
 
 namespace web { namespace http
@@ -232,7 +295,7 @@ void http_windows_server::connection_reference()
 void http_windows_server::connection_release()
 {
     auto count = _InterlockedDecrement(&m_connectionCount);
-    _PPLX_ASSERT(count >= 0);
+    _ASSERTE(count >= 0);
     if (count == 0)
     {
         m_connections_tce.set();
@@ -247,12 +310,12 @@ unsigned long http_windows_server::register_listener(_In_ http_listener_interfac
 
     // Add listener registration.
     {
-        pplx::scoped_rw_lock lock(_M_listenersLock);
+        pplx::extensibility::scoped_rw_lock_t lock(_M_listenersLock);
         if(_M_registeredListeners.find(pListener) != _M_registeredListeners.end())
         {
             throw std::invalid_argument("Error: http_listener is already registered");
         }
-        _M_registeredListeners[pListener] = std::unique_ptr<pplx::reader_writer_lock>(new pplx::reader_writer_lock());
+        _M_registeredListeners[pListener] = std::unique_ptr<pplx::extensibility::reader_writer_lock_t>(new pplx::extensibility::reader_writer_lock_t());
     }
 
     uri u = pListener->uri();
@@ -313,9 +376,9 @@ unsigned long http_windows_server::unregister_listener(_In_ http_listener_interf
     const unsigned long error_code = HttpRemoveUrlFromUrlGroup(m_urlGroupId, host_uri.c_str(), 0);
 
     // First remove listener registration.
-    std::unique_ptr<pplx::reader_writer_lock> pListenerLock;
+    std::unique_ptr<pplx::extensibility::reader_writer_lock_t> pListenerLock;
     {
-        pplx::scoped_rw_lock lock(_M_listenersLock);
+        pplx::extensibility::scoped_rw_lock_t lock(_M_listenersLock);
         pListenerLock = std::move(_M_registeredListeners[pListener]);
         _M_registeredListeners[pListener] = nullptr;
         _M_registeredListeners.erase(pListener);
@@ -324,7 +387,7 @@ unsigned long http_windows_server::unregister_listener(_In_ http_listener_interf
     // Then take the listener write lock to make sure there are no calls into the listener's
     // request handler.
     {
-        pplx::scoped_rw_lock lock(*pListenerLock);
+        pplx::extensibility::scoped_rw_lock_t lock(*pListenerLock);
     }
 
     return error_code;
@@ -407,7 +470,7 @@ unsigned long http_windows_server::stop()
 
         // Now that the receiving task is shutdown, no new connections can be made.
         // There shall be no outstanding conncections at this point
-        _PPLX_ASSERT(m_connections.size() == 0);
+        _ASSERTE(m_connections.size() == 0);
     }
 
     // Release resources.
@@ -432,7 +495,7 @@ void http_windows_server::close_connections()
 {
     {
         // Take the exclusive lock and remove all the connections
-        pplx::scoped_rw_lock lock(m_connections_lock);
+        pplx::extensibility::scoped_rw_lock_t lock(m_connections_lock);
 
         // Reset the TCE. The connections are actually closed asynchronously. When
         // all the connections closed it will set the task_completion_event
@@ -475,7 +538,7 @@ std::shared_ptr<connection> http_windows_server::add_connection(HTTP_CONNECTION_
     if (!m_shuttingDown)
     {
         // Insert new connection into the map before we register completion notification
-        pplx::scoped_rw_lock lock(m_connections_lock);
+        pplx::extensibility::scoped_rw_lock_t lock(m_connections_lock);
 
         // Make the check again holding the lock to resolve the race with server::stop.
         // The stop() routine sets the flag and then acquires the lock
@@ -517,7 +580,7 @@ std::shared_ptr<connection> http_windows_server::find_connection(HTTP_CONNECTION
 
     std::shared_ptr<connection> pConnection;
 
-    pplx::scoped_read_lock lock(m_connections_lock);
+    pplx::extensibility::scoped_read_lock_t lock(m_connections_lock);
             
     
     auto iter = m_connections.find(connection_id);
@@ -534,7 +597,7 @@ std::shared_ptr<connection> http_windows_server::find_connection(HTTP_CONNECTION
 ///</summary>
 void http_windows_server::remove_connection(HTTP_CONNECTION_ID connection_id)
 {
-    pplx::scoped_rw_lock lock(m_connections_lock);
+    pplx::extensibility::scoped_rw_lock_t lock(m_connections_lock);
     m_connections.erase(connection_id);
 }
 
@@ -677,7 +740,7 @@ void connection::read_request_body_chunk(_In_ HTTP_REQUEST *p_request, http_requ
 
     // Once we allow users to set the output stream the following assert could fail.
     // At that time we would need compensation code that would allocate a buffer from the heap instead.
-    _PPLX_ASSERT(body != nullptr);
+    _ASSERTE(body != nullptr);
 
     StartThreadpoolIo(m_p_server->m_threadpool_io);
     const ULONG error_code = HttpReceiveRequestEntityBody(
@@ -770,9 +833,9 @@ void connection::dispatch_request_to_listener(http_request &request, _In_ http_l
         });
 
     // Look up the lock for the http_listener.
-    pplx::reader_writer_lock *pListenerLock;
+    pplx::extensibility::reader_writer_lock_t *pListenerLock;
     {
-        pplx::scoped_read_lock lock(m_p_server->_M_listenersLock);
+        pplx::extensibility::scoped_read_lock_t lock(m_p_server->_M_listenersLock);
 
         // It is possible the listener could have unregistered.
         if(m_p_server->_M_registeredListeners.find(pListener) == m_p_server->_M_registeredListeners.end())
@@ -889,7 +952,7 @@ void connection::async_process_response(http_response &response)
     }
 
     // OK, so we need to chunk it up.
-    _PPLX_ASSERT(content_length > 0);
+    _ASSERTE(content_length > 0);
     p_context->m_sending_in_chunks = (content_length != std::numeric_limits<size_t>::max());
     p_context->m_transfer_encoding = (content_length == std::numeric_limits<size_t>::max());
 

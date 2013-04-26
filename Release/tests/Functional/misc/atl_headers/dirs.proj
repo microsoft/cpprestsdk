@@ -10,6 +10,10 @@
       <ProjectFile Include="VS11\header_test110.vcxproj" />
   </ItemGroup>
   
+  <ItemGroup Condition="'$(DevToolsVersion)'=='120'">
+      <ProjectFile Include="VS12\header_test120.vcxproj" />
+  </ItemGroup>
+  
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
 
 </Project>

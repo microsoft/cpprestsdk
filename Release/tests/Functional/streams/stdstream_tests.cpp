@@ -21,6 +21,8 @@
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 #include "stdafx.h"
+
+#include "rawptrstream.h"
 #include "filestream.h"
 #include "producerconsumerstream.h"
 
@@ -72,17 +74,10 @@ pplx::task<Concurrency::streams::streambuf<_CharType>> OPEN_R(const utility::str
 #if !defined(__cplusplus_winrt)
     return Concurrency::streams::file_buffer<_CharType>::open(name, std::ios_base::in);
 #else
-    try
-    {
-        auto file = pplx::create_task(
-            KnownFolders::DocumentsLibrary->GetFileAsync(ref new Platform::String(name.c_str()))).get();
+    auto file = pplx::create_task(
+        KnownFolders::DocumentsLibrary->GetFileAsync(ref new Platform::String(name.c_str()))).get();
 
-        return Concurrency::streams::file_buffer<_CharType>::open(file, std::ios_base::in);
-    }
-    catch(Platform::Exception^ exc) 
-    { 
-        throw utility::details::create_system_error(exc->HResult);
-    }
+    return Concurrency::streams::file_buffer<_CharType>::open(file, std::ios_base::in);
 #endif
 }
 
@@ -680,8 +675,86 @@ TEST(istream_extract_string)
     is.close().get();
 }
 
+TEST(stdio_istream_error)
+{
+    std::ifstream inFile;
+    inFile.open("stdio_istream_error.txt");
+    concurrency::streams::stdio_istream<char> is(inFile);
 
-} // SUITE(stdstreambuf_tests)
+    concurrency::streams::container_buffer<std::string> buffer;
+    VERIFY_ARE_EQUAL(0, is.read_to_end(buffer).get());
+    VERIFY_IS_TRUE(is.is_eof());
+    VERIFY_IS_TRUE(is.is_open());
 
+    is.close().wait();
+}
+
+TEST(stdio_istream_setstate)
+{
+    std::ifstream inFile;
+    inFile.open("stdio_istream_setstate.txt");
+    concurrency::streams::stdio_istream<char> is(inFile);
+    inFile.setstate(std::ios::failbit);
+
+    concurrency::streams::container_buffer<std::string> buffer;
+    VERIFY_ARE_EQUAL(0, is.read_to_end(buffer).get());
+    VERIFY_IS_TRUE(is.is_eof());
+    VERIFY_IS_TRUE(is.is_open());
+
+    is.close().wait();
+}
+
+TEST(stdio_istream_close,
+     "Ignore", "639208")
+{
+    std::ifstream inFile;
+    inFile.open("stdio_istream_close.txt");
+    concurrency::streams::stdio_istream<char> is(inFile);
+    inFile.close();
+
+    concurrency::streams::container_buffer<std::string> buffer;
+    VERIFY_ARE_EQUAL(0, is.read_to_end(buffer).get());
+    VERIFY_IS_FALSE(is.is_open());
+    VERIFY_IS_TRUE(is.is_eof());
+}
+
+TEST(sync_on_async_close_early)
+{
+    concurrency::streams::container_buffer<std::string> buffer;
+	concurrency::streams::async_ostream<char> os(buffer);
+	buffer.close();
+
+	os << 10 << std::endl;
+    VERIFY_ARE_EQUAL(std::ios::badbit, os.rdstate());
+}
+
+TEST(sync_on_async_close_with_exception)
+{
+    const std::string &data("abc123");
+    
+    // Try with a read.
+    {
+        concurrency::streams::container_buffer<std::string> buffer(data);
+        concurrency::streams::async_istream<char> inputStream(buffer);
+        buffer.close(std::ios::in, std::make_exception_ptr(std::invalid_argument("test exception"))).wait();
+        const size_t tempBufSize = 4;
+        char tempBuf[tempBufSize];
+        inputStream.read(&tempBuf[0], tempBufSize);
+        VERIFY_ARE_EQUAL(std::ios::failbit | std::ios::eofbit, inputStream.rdstate());
+    }
+
+    // Try with a write.
+    {
+        concurrency::streams::container_buffer<std::string> buffer(data);
+        concurrency::streams::async_ostream<char> outputStream(buffer);
+        buffer.close(std::ios::in, std::make_exception_ptr(std::invalid_argument("test exception"))).wait();
+        const size_t tempBufSize = 4;
+        char tempBuf[tempBufSize];
+        outputStream.write(&tempBuf[0], tempBufSize);
+        VERIFY_ARE_EQUAL(std::ios::badbit, outputStream.rdstate());
+    }
+}
+
+}
 }}}
 

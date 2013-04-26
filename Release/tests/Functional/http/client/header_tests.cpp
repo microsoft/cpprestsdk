@@ -265,7 +265,7 @@ TEST_FIXTURE(uri_address, response_headers)
     headers[U("H5")] = U("asb");
     headers[U("H6")] = U("abc");
     headers[U("H7")] = U("eds");
-    headers[U("H8")] = U("red");
+    headers[U("H8")] = U("blue");
     headers[U("H9")] = U("sd");
     headers[U("H10")] = U("res");
     test_server_utilities::verify_request(&client, methods::GET, U("/"), scoped.server(), status_codes::OK, headers);

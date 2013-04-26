@@ -334,15 +334,15 @@ void http_asserts::assert_test_response_equals(
     }
     else
     {
-        auto data = (char*)&p_response->m_data[0];
-        if(p_response->m_data.size() > 1 && *(data+1) == '\0' )
+        auto actualRawData = (char*)&p_response->m_data[0];
+        if(p_response->m_data.size() > 1 && *(actualRawData+1) == '\0' )
         {
             // We have more than one byte of data, but it's null-terminated at byte 1.
             // Therefore, this is a wide string
-            extracted_body.assign((utility::char_t*)data, p_response->m_data.size()/sizeof(utility::char_t));
+            extracted_body.assign((utility::char_t*)actualRawData, p_response->m_data.size()/sizeof(utility::char_t));
         }
         else{
-            std::string s(data, p_response->m_data.size());
+            std::string s(actualRawData, p_response->m_data.size());
             extracted_body = to_string_t(s);
         }
     }

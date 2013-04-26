@@ -25,8 +25,8 @@
 
 #ifndef __STDAFX_H
 
-// This include defines _MS_WINDOWS
-#include "pplxdefs.h"
+#include "xxpublic.h"
+#include "basic_types.h"
 
 #ifdef _MS_WINDOWS
 #include "targetver.h"
@@ -86,12 +86,12 @@
 #include <assert.h>
 #include <streambuf>
 
-#include "xxpublic.h"
-#include "basic_types.h"
-
-// Dev10Extras
-#include "pplx.h"
+#if defined(_MSC_VER) && (_MSC_VER >= 1800)
+#include <ppltasks.h>
+namespace pplx = Concurrency;
+#else 
 #include "pplxtasks.h"
+#endif
 
 // Stream
 #include "streams.h"

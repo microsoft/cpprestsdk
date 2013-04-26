@@ -88,7 +88,7 @@ pplx::task<void> details::_http_request::_reply_if_not_already(status_code statu
 {
     long expected = 0;
     long desired = 1;
-    if (pplx::atomic_compare_exchange(m_initiated_response, desired, expected) == expected)
+    if (pplx::details::atomic_compare_exchange(m_initiated_response, desired, expected) == expected)
     {
         return _reply_impl(http_response(status));
     }
@@ -97,7 +97,7 @@ pplx::task<void> details::_http_request::_reply_if_not_already(status_code statu
 
 pplx::task<void> details::_http_request::reply(http_response response)
 {
-    if(pplx::atomic_increment(m_initiated_response) != 1l)
+    if(pplx::details::atomic_increment(m_initiated_response) != 1l)
     {
         throw http_exception(U("Error: trying to send multiple responses to an HTTP request"));
     }

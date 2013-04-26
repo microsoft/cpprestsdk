@@ -139,11 +139,44 @@ namespace helpers
             ObserveException(*it);
         }
     }
- } // namespace helpers
+} // namespace helpers
 
  SUITE(pplxtask_tests)
  {
 
+TEST(TestCancellationTokenRegression)
+{
+    for (int i=0; i < 50000; i++)
+    {
+        task_completion_event<void> tce;
+        task<void> starter(tce);
+
+        cancellation_token_source ct;
+
+        task<int> t1 = starter.then([]() -> int {
+            return 47;
+        }, ct.get_token());
+
+        task<int> t2 ([]() -> int {
+            return 82;
+        });
+
+        task<int> t3 ([]() -> int {
+            return 147;
+        });
+
+        auto t4 = (t1 && t2 && t3).then([=](std::vector<int> vec) -> int {
+            return vec[0] + vec[1] + vec[3];
+        });
+        
+        ct.cancel();
+
+        tce.set();
+        // this should not hang
+        task_status t4Status = t4.wait();
+        IsTrue(t4Status == canceled, L"operator && did not properly cancel. Expected: %d, Actual: %d", canceled, t4Status);
+    }
+}
 TEST(TestTasks)
 {
     LogMessage(L"- * Testing basic ppl tasks functionality");
@@ -293,7 +326,7 @@ TEST(TestTasks)
 
     {
         // Test Fire-and-forget behavior
-        notification_event evt;
+        extensibility::event_t evt;
         bool flag = false;
         {
             task<int> t1([&flag, &evt]() -> int{
@@ -635,7 +668,7 @@ TEST(TestTaskOperators)
     }
 
     {
-        notification_event evt;
+        extensibility::event_t evt;
 
         task<int> t1 ([&evt]() -> int {
             evt.wait();
@@ -658,7 +691,7 @@ TEST(TestTaskOperators)
     }
 
     {
-        notification_event evt;
+        extensibility::event_t evt;
 
         task<int> t1 ([&evt]() -> int {
             evt.wait();
@@ -694,7 +727,7 @@ TEST(TestTaskOperators)
 
     {
         // testing ( t1 && t2 ) || t3, operator&& finishes first
-        notification_event evt;
+        extensibility::event_t evt;
 
         task<int> t1 ([]() -> int {
             return 47;
@@ -725,7 +758,7 @@ TEST(TestTaskOperators)
 
     {
         // testing ( t1 && t2 ) || t3, operator|| finishes first
-        notification_event evt;
+        extensibility::event_t evt;
 
         task<int> t1 ([&evt]() -> int {
             evt.wait();
@@ -757,7 +790,7 @@ TEST(TestTaskOperators)
 
     {
         // testing t1 && (t2 || t3)
-        notification_event evt;
+        extensibility::event_t evt;
 
         task<int> t1 ([]() -> int {
             return 47;
@@ -907,38 +940,38 @@ TEST(TestTaskOperators)
     }
 
     {
-        notification_event evt1, evt2;
-        pplx::atomic_long n(0);
+        extensibility::event_t evt1, evt2;
+        pplx::details::atomic_long n(0);
 
         cancellation_token_source ct;
 
         task<void> t1([&n, &evt1, &evt2](){
-            pplx::atomic_add(n, 1L); // this should execute
+            pplx::details::atomic_add(n, 1L); // this should execute
             evt2.set();
             evt1.wait();
         }, ct.get_token());
 
         task<void> t2 = t1.then([&n](){
-            pplx::atomic_add(n, 10L); // this should NOT execute
+            pplx::details::atomic_add(n, 10L); // this should NOT execute
         });
 
         task<void> t3 = t1.then([&n](){
-            pplx::atomic_add(n, 100L); // this should NOT execute
+            pplx::details::atomic_add(n, 100L); // this should NOT execute
         });
 
         task<void> t4 = t1.then([&n](task<void> taskResult){
-            pplx::atomic_add(n, 1000L); // this should execute
+            pplx::details::atomic_add(n, 1000L); // this should execute
         });
 
         task<void> t5 = t1.then([&n](task<void> taskResult){
             try
             {
                 taskResult.get();
-                pplx::atomic_add(n, 10000L); // this should execute
+                pplx::details::atomic_add(n, 10000L); // this should execute
             }
             catch(task_canceled&)
             {
-                pplx::atomic_add(n, 100000L); // this should NOT execute
+                pplx::details::atomic_add(n, 100000L); // this should NOT execute
             }
         });
 
@@ -986,8 +1019,8 @@ TEST(TestTaskOperators)
     }
 
     {
-        notification_event evt1, evt2;
-        pplx::atomic_long n(0);
+        extensibility::event_t evt1, evt2;
+        pplx::details::atomic_long n(0);
 
         cancellation_token_source ct;
 
@@ -1035,33 +1068,33 @@ TEST(TestTaskOperators)
         }
 
         task<void> t3 = t1.then([&n](){
-            pplx::atomic_add(n, 1L); // this should NOT execute, 
+            pplx::details::atomic_add(n, 1L); // this should NOT execute, 
         });
 
         task<void> t4 = t1.then([&n](task<void> taskResult){
-            pplx::atomic_add(n, 10L); // this should execute
+            pplx::details::atomic_add(n, 10L); // this should execute
         });
 
         task<void> t5 = t2.then([&n](){
-            pplx::atomic_add(n, 100L); // this should NOT execute
+            pplx::details::atomic_add(n, 100L); // this should NOT execute
         });
 
         task<void> t6 = t2.then([&n](task<void> taskResult){
-            pplx::atomic_add(n, 1000L); // this should execute
+            pplx::details::atomic_add(n, 1000L); // this should execute
             taskResult.get(); // should throw 42
-            pplx::atomic_add(n, 10000L); // this should NOT execute
+            pplx::details::atomic_add(n, 10000L); // this should NOT execute
         });
 
         task<void> t7 = t2.then([&n, this](task<void> taskResult){
             try
             {
                 taskResult.get();
-                pplx::atomic_add(n, 100000L); // this should NOT execute
+                pplx::details::atomic_add(n, 100000L); // this should NOT execute
             }
             catch(int x)
             {
                 IsTrue(x == 42, L"Incorrect integer exception was received in t7 from taskresult.get(). Expected: 42, Actual: %d", x);
-                pplx::atomic_add(n, 1000000L); // this should execute
+                pplx::details::atomic_add(n, 1000000L); // this should execute
             }
             catch(task_canceled)
             {
@@ -1079,12 +1112,12 @@ TEST(TestTaskOperators)
             try
             {
                 taskResult.get();
-                pplx::atomic_add(n, 1000000L); // this should NOT execute
+                pplx::details::atomic_add(n, 1000000L); // this should NOT execute
             }
             catch(int x)
             {
                 IsTrue((x == 42 || x ==96), L"Incorrect integer exception was received in t7 from taskresult.get(). Expected: 42 or 96, Actual: %d", x);
-                pplx::atomic_add(n, 100000000L); // this should execute
+                pplx::details::atomic_add(n, 100000000L); // this should execute
             }
             catch(task_canceled)
             {
@@ -1170,7 +1203,7 @@ TEST(TestTaskOperators)
     {
         // A task that participates in a 'when all' operation is canceled and then throws an exception. Verify that value and task based continuations of the when
         // all task see the exception.
-        notification_event evt1, evt2;
+        extensibility::event_t evt1, evt2;
 
         cancellation_token_source ct;
 
@@ -1212,7 +1245,7 @@ TEST(TestTaskOperators)
     {
         // A task that participates in a 'when all' operation throws an exception, but a continuation of the when all task is canceled before this point.
         // Ensure that continuation does not get the exception but others do.
-        notification_event evt1, evt2;
+        extensibility::event_t evt1, evt2;
 
         cancellation_token_source ct;
 
@@ -1281,7 +1314,7 @@ TEST(TestTaskOperators)
 
         auto t5 = t1 && t2 && t3 && t4;
 
-        notification_event ev1, ev2;
+        extensibility::event_t ev1, ev2;
 
         auto t6 = t5.then( [&ev1, &ev2](std::vector<int> iVec) -> int {
             ev2.set();
@@ -1424,7 +1457,7 @@ TEST(TestContinuationsWithTask)
     }
 
     { 
-        pplx::atomic_long hit(0);
+        pplx::details::atomic_long hit(0);
         auto * hitptr = &hit;
         task<int> t([](){
             return 10;
@@ -1434,7 +1467,7 @@ TEST(TestContinuationsWithTask)
             auto hitptr1 = hitptr;
             task<int> it([n, hitptr1]() -> int {
                 os_utilities::sleep(100);
-                pplx::atomic_exchange(*hitptr1, 1L);
+                pplx::details::atomic_exchange(*hitptr1, 1L);
                 return n * 2;
             });
 
@@ -1461,9 +1494,12 @@ TEST(TestContinuationsWithTask)
                 return n * 3;
             });
 
-            throw TestException1();
+            // This test is needed to disable an optimizer dead-code check that
+            // winds up generating errors in VS 2010.
+            if ( n == 10 )
+                throw TestException1();
 
-            //return it;
+            return it;
         });
 
         VERIFY_IS_TRUE(helpers::VerifyException<TestException1>(ot));
@@ -1483,9 +1519,12 @@ TEST(TestContinuationsWithTask)
                 os_utilities::sleep(100);
                 os_utilities::interlocked_exchange(hitptr1, 1);
 
-                throw TestException2();
+                // This test is needed to disable an optimizer dead-code check that
+                // winds up generating errors in VS 2010.
+                if ( n == 10 )
+                    throw TestException2();
 
-                //return n * 3;
+                return n * 3;
             });
 
             return it;
@@ -1498,7 +1537,7 @@ TEST(TestContinuationsWithTask)
     {
         volatile long hit = 0;
         volatile long * hitptr = &hit;
-        notification_event e;
+        extensibility::event_t e;
         task<int> it;
 
         task<int> t([](){
@@ -1509,14 +1548,20 @@ TEST(TestContinuationsWithTask)
             volatile long * hitptr1 = hitptr;
             it = task<int>([hitptr1, n]() -> int {
                 os_utilities::interlocked_exchange(hitptr1, 1);
-                throw TestException1();
-                //return n * 5;
+                // This test is needed to disable an optimizer dead-code check that
+                // winds up generating errors in VS 2010.
+                if ( n == 10 )
+                    throw TestException1();
+                return n * 5;
             });
 
             e.set();
             os_utilities::sleep(100);
-            throw TestException2();
-            //return it;
+            // This test is needed to disable an optimizer dead-code check that
+            // winds up generating errors in VS 2010.
+            if ( n == 10 )
+                throw TestException2();
+            return it;
         });
 
         e.wait();
@@ -1536,8 +1581,11 @@ TEST(TestContinuationsWithTask)
         auto ot = t.then( [&](int n) -> task<int> {
             task<int> it([&, n]() -> int {
                 os_utilities::sleep(100);
-                throw TestException1();
-                //return n * 6;
+                // This test is needed to disable an optimizer dead-code check that
+                // winds up generating errors in VS 2010.
+                if ( n == 10 )
+                    throw TestException1();
+                return n * 6;
             });
             return it;
         });
@@ -1656,7 +1704,7 @@ TEST(TestUnwrappingCtors)
     }
 
     {
-        int res = create_task([]() -> task<int> {
+        res = create_task([]() -> task<int> {
             return create_task([]() -> int {
                 return 1;
             });
@@ -1798,7 +1846,7 @@ TEST(TestInlineChunker)
     VERIFY_IS_TRUE(sum == numiter, "TestInlineChunker: async_for did not return correct result.");
 }
 
-#if defined(_MS_WINDOWS) && (_MSC_VER >= 1700)
+#if defined(_MS_WINDOWS) && (_MSC_VER >= 1700) && (_MSC_VER < 1800)
 
 TEST(PPL_Conversions_basic)
 {
@@ -1886,15 +1934,14 @@ TEST(PPL_Conversions_Exceptions_void)
 
 TEST(TestDelayedTask_simple)
 {
-    VERIFY_IS_TRUE(pplx::create_delayed_task(1, []() { return true;}).get());
+    VERIFY_IS_TRUE(tests::common::utilities::create_delayed_task(1, []() { return true;}).get());
 }
 
 TEST(TestDelayedTask_FireAndForget)
 {
-    pplx::notification_event ev;
+    pplx::extensibility::event_t ev;
     {
-        pplx::create_delayed_task(2, [&ev]() { ev.set(); });
-
+        tests::common::utilities::create_delayed_task(2, [&ev]() { ev.set(); });
         // Let the task be destroyed. The timer should still fire
     }
 
@@ -1903,9 +1950,9 @@ TEST(TestDelayedTask_FireAndForget)
 
 TEST(TestDelayedTask_TaskUnwrapping)
 {
-    auto t1 = pplx::create_delayed_task(1, []() -> pplx::task<int>
+    auto t1 = tests::common::utilities::create_delayed_task(1, []() -> pplx::task<int>
     {
-        return pplx::create_delayed_task(1, []() { return 10; });
+        return tests::common::utilities::create_delayed_task(1, []() { return 10; });
     });
 
     VERIFY_ARE_EQUAL(t1.get(), 10);
@@ -1913,8 +1960,8 @@ TEST(TestDelayedTask_TaskUnwrapping)
 
 TEST(TestDelayedTask_join)
 {
-    auto t1 = pplx::create_delayed_task(1, []() {});
-    auto t2 = pplx::create_delayed_task(4, []() {});
+    auto t1 = tests::common::utilities::create_delayed_task(1, []() {});
+    auto t2 = tests::common::utilities::create_delayed_task(4, []() {});
 
     auto t3 = t1 && t2;
     auto t4 = t1 || t2;

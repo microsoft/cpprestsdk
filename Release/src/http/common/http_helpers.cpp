@@ -498,7 +498,7 @@ size_t chunked_encoding::add_chunked_delimiters(_Out_writes_ (buffer_size) uint8
     {
         char buffer[9];
 #ifdef _MS_WINDOWS
-        sprintf_s(buffer, 9, "%8X", bytes_read);
+        sprintf_s(buffer, 9, "%8IX", bytes_read);
 #else
 # if __x86_64__
         sprintf(buffer, "%8lX", bytes_read);

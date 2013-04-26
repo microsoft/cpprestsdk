@@ -25,8 +25,12 @@
 
 #pragma once
 
+// Compiler bug causes unreachable code warning. TFS 601014.
+#pragma warning(push)
+#pragma warning(disable : 4702)
 // This header is required to define _MS_WINDOWS
 #include "xxpublic.h"
+#pragma warning(pop)
 
 #ifdef _MS_WINDOWS
 #define NOMINMAX
@@ -39,15 +43,21 @@
 #include <stdio.h>
 #include <time.h>
 
-
-#include "pplx.h"
-#ifndef _MS_WINDOWS
-#  include "threadpool.h"
-#endif
+#if defined(_MSC_VER) && (_MSC_VER >= 1800)
+#include <ppltasks.h>
+namespace pplx = Concurrency;
+#else 
+#include "pplxtasks.h"
 #if defined(_MS_WINDOWS) && _MSC_VER >= 1700
 #include "pplxconv.h"
 #endif
+#endif
+
+#ifndef _MS_WINDOWS
+#  include "threadpool.h"
+#endif
+
 #include "asyncrt_utils.h"
-#include "pplxtasks.h"
 #include "unittestpp.h"
 #include "os_utilities.h"
+

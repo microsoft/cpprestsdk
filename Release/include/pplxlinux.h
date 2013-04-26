@@ -28,12 +28,13 @@
 #ifndef _PPLXLINUX_H
 #define _PPLXLINUX_H
 
-#include "pplxdefs.h"
+#if (defined(_MSC_VER))
+#error This file must not be included for Visual Studio
+#endif
 
 #ifndef _MS_WINDOWS
 
 #include "linux_compat.h"
-#include "pplxatomics.h"
 #include "pplxinterface.h"
 
 #include <signal.h>
@@ -45,9 +46,11 @@
 #include "boost/thread/condition_variable.hpp"
 #include "boost/date_time/posix_time/posix_time_types.hpp"
 #include "boost/bind/bind.hpp"
+
 namespace pplx
 {
-
+namespace details
+{
 namespace platform
 {
     /// <summary>
@@ -59,10 +62,16 @@ namespace platform
     /// Yields the execution of the current execution thread - typically when spin-waiting
     /// </summary>
     _PPLXIMP void __cdecl YieldExecution();
+
+    /// <summary>
+    /// Caputeres the callstack
+    /// </summary>
+    __declspec(noinline) inline static size_t CaptureCallstack(void **, size_t, size_t)
+    {
+        return 0;
+    }
 }
 
-namespace details
-{
     /// <summary>
     /// Manual reset event
     /// </summary>
@@ -108,7 +117,7 @@ namespace details
             {
                 std::chrono::milliseconds period(timeout);
                 auto status = _condition.wait_for(lock, period, [this]() -> bool { return _signaled; });
-                _PPLX_ASSERT(status == _signaled);
+                _ASSERTE(status == _signaled);
                 // Return 0 if the wait completed as a result of signaling the event. Otherwise, return timeout_infinite
                 // Note: this must be consistent with the behavior of the Windows version, which is based on WaitForSingleObjectEx
                 return status ? 0: event_impl::timeout_infinite;
@@ -191,13 +200,13 @@ namespace details
 
         ~recursive_lock_impl()
         {
-            _PPLX_ASSERT(_M_owner == -1);
-            _PPLX_ASSERT(_M_recursionCount == 0);
+            _ASSERTE(_M_owner == -1);
+            _ASSERTE(_M_recursionCount == 0);
         }
 
         void lock()
         {
-            auto id = ::pplx::platform::GetCurrentThreadId();
+            auto id = ::pplx::details::platform::GetCurrentThreadId();
 
             if ( _M_owner == id )
             {
@@ -213,8 +222,8 @@ namespace details
 
         void unlock()
         {
-            _PPLX_ASSERT(_M_owner == ::pplx::platform::GetCurrentThreadId());
-            _PPLX_ASSERT(_M_recursionCount >= 1);
+            _ASSERTE(_M_owner == ::pplx::details::platform::GetCurrentThreadId());
+            _ASSERTE(_M_recursionCount >= 1);
 
             _M_recursionCount--;
 
@@ -249,38 +258,18 @@ namespace details
         linux_timer * m_timerImpl;
     };
 
-    class linux_scheduler : public pplx::scheduler
+    class linux_scheduler : public pplx::scheduler_interface
     {
     public:
         _PPLXIMP virtual void schedule( TaskProc proc, _In_ void* param);
     };
 
+    /// <summary>
+    /// Timer
+    /// </summary>
+    typedef details::timer_impl timer_t;
+
 } // namespace details
-
-/// <summary>
-/// Timer
-/// </summary>
-typedef details::timer_impl timer_t;
-
-/// <summary>
-/// Events
-/// </summary>
-typedef details::event_impl notification_event;
-
-/// <summary>
-/// Reader writer lock
-/// </summary>
-typedef details::reader_writer_lock_impl reader_writer_lock;
-
-/// <summary>
-/// std::mutex
-/// </summary>
-typedef boost::mutex critical_section;
-
-/// <summary>
-/// std::recursive_mutex
-/// </summary>
-typedef details::recursive_lock_impl recursive_lock;
 
 /// <summary>
 ///  A generic RAII wrapper for locks that implement the critical_section interface
@@ -307,24 +296,44 @@ private:
     scoped_lock const & operator=(const scoped_lock&);  // no assignment operator
 };
 
-typedef scoped_lock<pplx::critical_section> scoped_critical_section;
-typedef scoped_lock<pplx::recursive_lock> scoped_recursive_lock;
-typedef scoped_lock<pplx::reader_writer_lock> scoped_rw_lock;
-typedef pplx::reader_writer_lock::scoped_lock_read scoped_read_lock;
+// The extensibility namespace contains the type definitions that are used internally
+namespace extensibility
+{
+    typedef ::pplx::details::event_impl event_t;
+
+    typedef ::boost::mutex critical_section_t;
+    typedef scoped_lock<critical_section_t> scoped_critical_section_t;
+
+    typedef ::pplx::details::reader_writer_lock_impl reader_writer_lock_t;
+    typedef scoped_lock<reader_writer_lock_t> scoped_rw_lock_t;
+    typedef ::pplx::reader_writer_lock::scoped_lock_read scoped_read_lock_t;
+
+    typedef ::pplx::details::recursive_lock_impl recursive_lock_t;
+    typedef scoped_lock<recursive_lock_t> scoped_recursive_lock_t;
+}
 
 /// <summary>
 /// Default scheduler type
 /// </summary>
 typedef details::linux_scheduler default_scheduler_t;
 
-/// <summary>
-/// Terminate the process due to unhandled exception
-/// </summary>
-inline void report_unobserved_exception()
+namespace details
 {
-    raise(SIGTRAP);
-    std::terminate();
+    /// <summary>
+    /// Terminate the process due to unhandled exception
+    /// </summary>
+    #ifndef _REPORT_PPLTASK_UNOBSERVED_EXCEPTION
+    #define _REPORT_PPLTASK_UNOBSERVED_EXCEPTION() do { \
+        raise(SIGTRAP); \
+        std::terminate(); \
+    } while(false)
+    #endif //_REPORT_PPLTASK_UNOBSERVED_EXCEPTION
 }
+
+//see: http://gcc.gnu.org/onlinedocs/gcc/Return-Address.html
+// this is critical to inline
+__attribute__ ((always_inline))
+inline void* _ReturnAddress() { return __builtin_return_address(0); }
 
 } // namespace pplx
 

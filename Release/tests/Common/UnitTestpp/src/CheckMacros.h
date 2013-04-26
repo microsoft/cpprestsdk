@@ -204,8 +204,8 @@
             try { \
                 expression; \
             } catch(const std::exception & _exc) { \
-                std::string msg(_exc.what()); \
-                VERIFY_IS_TRUE(msg.size() > 0); \
+                std::string _msg(_exc.what()); \
+                VERIFY_IS_TRUE(_msg.size() > 0); \
                 throw; \
             } \
         } \

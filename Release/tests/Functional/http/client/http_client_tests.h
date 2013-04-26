@@ -48,17 +48,21 @@ void test_connection(tests::functional::http::utilities::test_http_server *p_ser
 void test_connection(tests::functional::http::utilities::test_http_server *p_server, web::http::client::http_client *p_client, const utility::string_t &request_path, const utility::string_t &expected_path);
 
 // Helper function to verify http_exception is thrown with correct error code
-// TFS 578058 - should have VERIFY_ARE_EQUAL(code, _exc.error_code()); below.
-#define VERIFY_THROWS_HTTP_ERROR_CODE(expression, code)                                 \
+#define VERIFY_THROWS_HTTP_ERROR_CODE(__expression, __code)                             \
     UNITTEST_MULTILINE_MACRO_BEGIN                                                      \
         try                                                                             \
         {                                                                               \
-            expression;                                                                 \
+            __expression;                                                               \
             VERIFY_IS_TRUE(false, "Expected http_exception not thrown");                \
         }                                                                               \
-        catch (const web::http::http_exception & _exc)	                        \
+        catch (const web::http::http_exception & _exc)	                                \
         {                                                                               \
             VERIFY_IS_TRUE(std::string(_exc.what()).size() > 0);                        \
+            /* The reason we can't directly compare with the given std::errc code is because*/      \
+            /* on Windows the STL implementation of error categories are NOT unique across*/        \
+            /* dll boundaries.*/                                                        \
+            const std::error_condition _condFound = _exc.error_code().default_error_condition();    \
+            VERIFY_ARE_EQUAL(static_cast<int>(__code), _condFound.value());                               \
         }                                                                               \
         catch(...)                                                                      \
         {                                                                               \

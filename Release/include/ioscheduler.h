@@ -90,7 +90,7 @@ public:
     /// <summary>
     /// Disassociate a handle from the scheduler.
     /// </summary>
-    void Disassociate(HANDLE fHandle, void *ctxt)
+    void Disassociate(HANDLE fHandle, void *ctxt) const
     {
         UNREFERENCED_PARAMETER(fHandle);
         CloseThreadpoolIo((PTP_IO)ctxt);

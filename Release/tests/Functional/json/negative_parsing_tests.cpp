@@ -184,11 +184,11 @@ void garbage_impl(wchar_t ch)
     QueryPerformanceCounter(&li);
 
     std::mt19937 eng(li.LowPart);
-    std::uniform_int_distribution<wchar_t> dist(0, ch);
+    std::uniform_int_distribution<unsigned int> dist(0, ch);
 
     for (int i = 25; i < 2550; i++)
     {
-        ss.push_back(dist(eng));
+        ss.push_back(static_cast<wchar_t>(dist(eng)));
     }
 
     VERIFY_THROWS(json::value::parse(ss.c_str()), json::json_exception);

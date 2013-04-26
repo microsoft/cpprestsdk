@@ -28,32 +28,45 @@
 #ifndef _PPLXWIN_H
 #define _PPLXWIN_H
 
-#include "pplxdefs.h"
+#if (defined(_MSC_VER) && (_MSC_VER >= 1800)) 
+#error This file must not be included for Visual Studio 12 or later
+#endif
 
 #ifdef _MS_WINDOWS
 
 #include "windows_compat.h"
-#include "pplxatomics.h"
 #include "pplxinterface.h"
 
 namespace pplx
 {
 
-namespace platform
-{
-    /// <summary>
-    /// Returns a unique identifier for the execution thread where this routine in invoked
-    /// </summary>
-    _PPLXIMP long __cdecl GetCurrentThreadId();
-
-    /// <summary>
-    /// Yields the execution of the current execution thread - typically when spin-waiting
-    /// </summary>
-    _PPLXIMP void __cdecl YieldExecution();
-};
-
 namespace details
 {
+    namespace platform
+    {
+        /// <summary>
+        /// Returns a unique identifier for the execution thread where this routine in invoked
+        /// </summary>
+        _PPLXIMP long __cdecl GetCurrentThreadId();
+
+        /// <summary>
+        /// Yields the execution of the current execution thread - typically when spin-waiting
+        /// </summary>
+        _PPLXIMP void __cdecl YieldExecution();
+
+        /// <summary>
+        /// Caputeres the callstack
+        /// </summary>
+        __declspec(noinline) _PPLXIMP size_t __cdecl CaptureCallstack(void **, size_t, size_t);
+
+#if defined(__cplusplus_winrt)
+        /// <summary>
+        // Internal API which retrieves the next async id.
+        /// </summary>
+        _PPLXIMP unsigned int __cdecl GetNextAsyncId();
+#endif
+    }
+
     /// <summary>
     /// Manual reset event
     /// </summary>
@@ -172,13 +185,13 @@ namespace details
 
         ~recursive_lock_impl()
         {
-            _PPLX_ASSERT(_M_owner == -1);
-            _PPLX_ASSERT(_M_recursionCount == 0);
+            _ASSERTE(_M_owner == -1);
+            _ASSERTE(_M_recursionCount == 0);
         }
 
         void recursive_lock_impl::lock()
         {
-            auto id = ::pplx::platform::GetCurrentThreadId();
+            auto id = ::pplx::details::platform::GetCurrentThreadId();
 
             if ( _M_owner == id )
             {
@@ -194,8 +207,8 @@ namespace details
 
         void recursive_lock_impl::unlock()
         {
-            _PPLX_ASSERT(_M_owner == ::pplx::platform::GetCurrentThreadId());
-            _PPLX_ASSERT(_M_recursionCount >= 1);
+            _ASSERTE(_M_owner == ::pplx::details::platform::GetCurrentThreadId());
+            _ASSERTE(_M_recursionCount >= 1);
 
             _M_recursionCount--;
 
@@ -220,7 +233,7 @@ namespace details
         {
         }
 
-        _PPLXIMP void start(unsigned int ms, bool repeat, TaskProc userFunc, _In_ void * context);
+        _PPLXIMP void start(unsigned int ms, bool repeat, TaskProc_t userFunc, _In_ void * context);
         _PPLXIMP void stop(bool waitForCallbacks);
 
         class _Timer_interface
@@ -238,38 +251,18 @@ namespace details
         _Timer_interface * m_timerImpl;
     };
 
-    class windows_scheduler : public pplx::scheduler
+    class windows_scheduler : public pplx::scheduler_interface
     {
     public:
-        _PPLXIMP virtual void schedule( TaskProc proc, _In_ void* param);
+        _PPLXIMP virtual void schedule( TaskProc_t proc, _In_ void* param);
     };
 
+    /// <summary>
+    /// Timer
+    /// </summary>
+    typedef details::timer_impl timer_t;
+
 } // namespace details
-
-/// <summary>
-/// Timer
-/// </summary>
-typedef details::timer_impl timer_t;
-
-/// <summary>
-/// Events
-/// </summary>
-typedef details::event_impl notification_event;
-
-/// <summary>
-/// Reader writer lock
-/// </summary>
-typedef details::reader_writer_lock_impl reader_writer_lock;
-
-/// <summary>
-/// std::mutex
-/// </summary>
-typedef details::critical_section_impl critical_section;
-
-/// <summary>
-/// std::recursive_mutex
-/// </summary>
-typedef details::recursive_lock_impl recursive_lock;
 
 /// <summary>
 ///  A generic RAII wrapper for locks that implement the critical_section interface
@@ -296,24 +289,41 @@ private:
     scoped_lock const & operator=(const scoped_lock&);  // no assignment operator
 };
 
-typedef scoped_lock<pplx::critical_section> scoped_critical_section;
-typedef scoped_lock<pplx::recursive_lock> scoped_recursive_lock;
-typedef scoped_lock<pplx::reader_writer_lock> scoped_rw_lock;
-typedef pplx::reader_writer_lock::scoped_lock_read scoped_read_lock;
+// The extensibility namespace contains the type definitions that are used internally
+namespace extensibility
+{
+    typedef ::pplx::details::event_impl event_t;
+
+    typedef ::pplx::details::critical_section_impl critical_section_t;
+    typedef scoped_lock<critical_section_t> scoped_critical_section_t;
+
+    typedef ::pplx::details::reader_writer_lock_impl reader_writer_lock_t;
+    typedef scoped_lock<reader_writer_lock_t> scoped_rw_lock_t;
+    typedef reader_writer_lock_t::scoped_lock_read scoped_read_lock_t;
+
+    typedef ::pplx::details::recursive_lock_impl recursive_lock_t;
+    typedef scoped_lock<recursive_lock_t> scoped_recursive_lock_t;
+}
 
 /// <summary>
 /// Default scheduler type
 /// </summary>
 typedef details::windows_scheduler default_scheduler_t;
 
-/// <summary>
-/// Terminate the process due to unhandled exception
-/// </summary>
-inline void report_unobserved_exception()
+namespace details
 {
-    __debugbreak();
-    std::terminate();
-}
+    /// <summary>
+    /// Terminate the process due to unhandled exception
+    /// </summary>
+
+    #ifndef _REPORT_PPLTASK_UNOBSERVED_EXCEPTION
+    #define _REPORT_PPLTASK_UNOBSERVED_EXCEPTION() do { \
+        __debugbreak(); \
+        std::terminate(); \
+    } while(false)
+    #endif // _REPORT_PPLTASK_UNOBSERVED_EXCEPTION
+
+} // namespace details
 
 } // namespace pplx
 

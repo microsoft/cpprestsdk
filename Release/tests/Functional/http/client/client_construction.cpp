@@ -99,6 +99,23 @@ TEST_FIXTURE(uri_address, client_construction_error_cases)
     verify_client_invalid_argument(address);
 }
 
+TEST_FIXTURE(uri_address, copy_assignment)
+{
+	test_http_server::scoped_server scoped(m_uri);
+    
+	// copy constructor
+	http_client original(m_uri);
+	http_client new_client(original);
+	test_connection(scoped.server(), &new_client, U("/"));
+	test_connection(scoped.server(), &original, U("/"));
+
+	// assignment
+	http_client new_client2(U("http://bad:-1"));
+	new_client2 = original;
+	test_connection(scoped.server(), &new_client2, U("/"));
+	test_connection(scoped.server(), &original, U("/"));
+}
+
 TEST_FIXTURE(uri_address, move_not_init)
 {
     test_http_server::scoped_server scoped(m_uri);
@@ -134,12 +151,18 @@ TEST_FIXTURE(uri_address, get_client_config)
     test_http_server::scoped_server scoped(m_uri);
 
     http_client_config config;
-    utility::seconds timeout(100);
+	
+	VERIFY_ARE_EQUAL(config.chunksize(), 64*1024);
+	config.set_chunksize(1024);
+	VERIFY_ARE_EQUAL(config.chunksize(), 1024);
+
+	utility::seconds timeout(100);
     config.set_timeout(timeout);
     http_client client(m_uri, config);
 
     const http_client_config& config2 = client.client_config();
     VERIFY_ARE_EQUAL(config2.timeout().count(), timeout.count());
+	VERIFY_ARE_EQUAL(config2.chunksize(), 1024);
 }
 
 } // SUITE(client_construction)

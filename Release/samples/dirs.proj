@@ -2,12 +2,16 @@
 
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Common.Build.settings" />
 
+  <ItemGroup>
+    <ProjectFile Include="BingRequest\dirs.proj"/>
+  </ItemGroup>
+
   <ItemGroup Condition="'$(DevToolsVersion)'=='110'">
     <ProjectFile Include="SearchFile\dirs.proj"/>
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectFile Include="BingRequest\dirs.proj"/>
+  <ItemGroup Condition="'$(DevToolsVersion)'=='120'">
+    <ProjectFile Include="SearchFile\dirs.proj"/>
   </ItemGroup>
 
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />

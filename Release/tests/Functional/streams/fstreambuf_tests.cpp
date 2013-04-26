@@ -67,7 +67,7 @@ pplx::task<concurrency::streams::streambuf<_CharType>> OPEN(const utility::strin
         {
             auto file = pplx::create_task(
                 KnownFolders::DocumentsLibrary->CreateFileAsync(
-                    ref new Platform::String(name.c_str()), CreationCollisionOption::ReplaceExisting)).get();
+                ref new Platform::String(name.c_str()), CreationCollisionOption::ReplaceExisting)).get();
 
             return concurrency::streams::file_buffer<_CharType>::open(file, mode);
         }
@@ -81,7 +81,19 @@ pplx::task<concurrency::streams::streambuf<_CharType>> OPEN(const utility::strin
     }
     catch(Platform::Exception^ exc) 
     { 
-        throw utility::details::create_system_error(exc->HResult);
+        // The create_system_error API expects a WIN32 error code NOT an HRESULT.
+        if(exc->HResult == 0x80070002)
+        {
+            throw utility::details::create_system_error(ERROR_FILE_NOT_FOUND);
+        }
+        else
+        {
+            // Some other unexpected error code was encountered, fail immediately.
+            // Throw statement is still included after because compiler warns about not
+            // all paths returning a value.
+            VERIFY_IS_TRUE(false);
+            throw utility::details::create_system_error(exc->HResult);
+        }
     }
 #endif
 }
@@ -89,7 +101,7 @@ pplx::task<concurrency::streams::streambuf<_CharType>> OPEN(const utility::strin
 template<typename _CharType>
 pplx::task<concurrency::streams::streambuf<_CharType>> OPEN_W(const utility::string_t &name, int _Prot = DEFAULT_PROT)
 {
-    return OPEN<_CharType>(name, std::ios_base::out, _Prot);
+    return OPEN<_CharType>(name, std::ios_base::out | std::ios_base::trunc, _Prot);
 }
 
 template<typename _CharType>
@@ -114,10 +126,9 @@ TEST(OpenCloseTest1)
     VERIFY_IS_TRUE(stream.is_open());
 
     auto close = stream.close();
-    auto closed = close.get();
+    close.get();
 
     VERIFY_IS_TRUE(close.is_done());
-    VERIFY_IS_TRUE(closed);
     VERIFY_IS_FALSE(stream.is_open());
 }
 
@@ -158,10 +169,9 @@ TEST(WriteSingleCharTest1)
     VERIFY_IS_TRUE(elements_equal);
 
     auto close = stream.close();
-    auto closed = close.get();
+    close.get();
 
     VERIFY_IS_TRUE(close.is_done());
-    VERIFY_IS_TRUE(closed);
     VERIFY_IS_FALSE(stream.is_open());
 }
 #ifdef _MS_WINDOWS
@@ -182,10 +192,9 @@ TEST(WriteSingleCharTest1w)
     VERIFY_IS_TRUE(elements_equal);
 
     auto close = stream.close();
-    auto closed = close.get();
+    close.get();
 
     VERIFY_IS_TRUE(close.is_done());
-    VERIFY_IS_TRUE(closed);
     VERIFY_IS_FALSE(stream.is_open());
 }
 #endif
@@ -208,10 +217,9 @@ TEST(WriteBufferTest1)
     VERIFY_ARE_EQUAL(stream.putn(&vect[0], vect.size()).get(), vect.size());
 
     auto close = stream.close();
-    auto closed = close.get();
+    close.get();
 
     VERIFY_IS_TRUE(close.is_done());
-    VERIFY_IS_TRUE(closed);
     VERIFY_IS_FALSE(stream.is_open());
 }
 #ifdef _MS_WINDOWS
@@ -233,10 +241,9 @@ TEST(WriteBufferTest1w)
     VERIFY_ARE_EQUAL(stream.putn(&vect[0], vect.size()).get(), vect.size());
 
     auto close = stream.close();
-    auto closed = close.get();
+    close.get();
 
     VERIFY_IS_TRUE(close.is_done());
-    VERIFY_IS_TRUE(closed);
     VERIFY_IS_FALSE(stream.is_open());
 }
 #endif
@@ -258,18 +265,15 @@ TEST(WriteBufferAndSyncTest1, "Ignore", "478760")
 
     auto write = stream.putn(&vect[0], vect.size());
 
-    auto sync = stream.sync().get();
-
-    VERIFY_IS_TRUE(sync);
+    stream.sync().get();
 
     VERIFY_IS_TRUE(write.is_done());
     VERIFY_ARE_EQUAL(write.get(), vect.size());
 
     auto close = stream.close();
-    auto closed = close.get();
+    close.get();
 
     VERIFY_IS_TRUE(close.is_done());
-    VERIFY_IS_TRUE(closed);
     VERIFY_IS_FALSE(stream.is_open());
 }
 
@@ -294,6 +298,50 @@ TEST(ReadSingleChar_bumpc1)
     stream.close().get();
 
     VERIFY_IS_FALSE(stream.is_open());
+}
+
+TEST(SequentialReadWrite, "Ignore", "650570")
+{
+    utility::string_t fname = U("SequentialReadWrite.txt");
+
+    auto ostreamBuf = OPEN_W<char>(fname).get();
+
+    VERIFY_IS_TRUE(ostreamBuf.is_open());
+
+    for (int i = 0; i < 1000; i++)
+    {
+        ostreamBuf.putc(i % 26 + 'a');
+        ostreamBuf.putn("ABCDEFGHIJ", 10);
+    }
+    ostreamBuf.close().wait();
+    VERIFY_IS_FALSE(ostreamBuf.is_open());
+
+    auto istreamBuf = OPEN_R<char>(fname).get();
+    std::vector<pplx::task<void>> t;
+
+    for (int k = 0; k < 2; k++)
+    {
+        for (int i = 0; i < 1000; i++)
+        {
+            t.push_back(istreamBuf.getc().then([i, this](char c) {
+                VERIFY_ARE_EQUAL(i % 26 + 'a', c);
+            }));
+            t.push_back(istreamBuf.bumpc().then([i, this](char c) {
+                VERIFY_ARE_EQUAL(i % 26 + 'a', c);
+            }));
+            char *buffer = new char[11];
+            t.push_back(istreamBuf.getn(buffer, 10).then([=](size_t n) {
+                VERIFY_ARE_EQUAL(10u, n);
+                VERIFY_ARE_EQUAL(std::string("ABCDEFGHIJ"), std::string(buffer, 10));
+                delete[] buffer;
+            }));
+        }
+        istreamBuf.seekpos(0, std::ios::in);
+    }
+    istreamBuf.close().wait();
+    VERIFY_IS_FALSE(istreamBuf.is_open());
+    for (size_t i = 0; i < t.size(); i++)
+        t[i].wait();
 }
 
 #ifdef _MS_WINDOWS
@@ -769,7 +817,6 @@ TEST(SeekEnd1)
     VERIFY_ARE_EQUAL(30*26, pos);
 }
 
-#ifndef __cplusplus_winrt // Deisabled for bug TFS 600500
 TEST(IsEOFTest)
 {
     utility::string_t fname = U("IsEOFTest.txt");
@@ -788,7 +835,6 @@ TEST(IsEOFTest)
     stream.getc().wait();
     VERIFY_IS_FALSE(stream.is_eof());
 }
-#endif
 
 TEST(CloseWithException)
 {
@@ -825,6 +871,56 @@ TEST(inout_regression_test)
     data_read = file_buf.getn(&readdata[0], 3).get(); // reads 'efg'. File contains org string 'abcdef..'.
 
     file_buf.close().wait();
+}
+
+TEST(seek_read_regression_test)
+{
+    utility::string_t fname = U("seek_read_regression_test.txt");
+    fill_file(fname,100);
+
+    char readdata[256];
+
+    auto istream = OPEN_R<char>(fname, _SH_DENYRW).get().create_istream();
+    istream.streambuf().set_buffer_size(128);
+
+    {
+        istream.seek(50, std::ios_base::beg);
+        concurrency::streams::rawptr_buffer<char> block(readdata, sizeof(readdata));
+        istream.read(block, 50).get();
+    }
+
+    {
+        istream.seek(256, std::ios_base::beg);
+        concurrency::streams::rawptr_buffer<char> block(readdata, sizeof(readdata));
+        istream.read(block, 256).get();
+    }
+
+    istream.close().get();
+}
+
+#ifdef _MS_WINDOWS
+TEST(file_with_one_byte_size)
+{
+    // Create a file with one byte.
+    concurrency::streams::streambuf<char> file_buf = OPEN<char>(U("one_byte_file.txt"), std::ios_base::out).get();
+    file_buf.putc('a').wait();
+    file_buf.close().wait();
+
+    // Try to read from file with a 2 byte character.
+    concurrency::streams::basic_istream<wchar_t> inFile(OPEN<wchar_t>(U("one_byte_file.txt"), std::ios::in).get());
+    concurrency::streams::container_buffer<std::wstring> buffer;
+    VERIFY_ARE_EQUAL(inFile.read(buffer, 1).get(), 0);
+    VERIFY_IS_TRUE(inFile.is_eof());
+}
+#endif
+
+TEST(alloc_acquire_not_supported)
+{
+    concurrency::streams::streambuf<char> file_buf = OPEN<char>(U("alloc_not_supported.txt"), std::ios::out | std::ios::in).get();
+    VERIFY_IS_TRUE(file_buf.alloc(1) == nullptr);
+    char *temp;
+    size_t size;
+    VERIFY_IS_FALSE(file_buf.acquire(temp, size));
 }
 
 } // SUITE(file_buffer_tests)

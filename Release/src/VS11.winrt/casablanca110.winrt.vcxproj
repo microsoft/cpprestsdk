@@ -235,6 +235,7 @@
     <ClInclude Include="$(CasablancaIncludeDir)\producerconsumerstream.h" />
     <ClInclude Include="$(CasablancaIncludeDir)\xxpublic.h" />
     <ClInclude Include="$(CasablancaIncludeDir)\fileio.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\filestream.h" />
     <ClInclude Include="$(CasablancaIncludeDir)\http_msg.h" />
     <ClInclude Include="$(CasablancaIncludeDir)\json.h" />
     <ClInclude Include="$(CasablancaIncludeDir)\uri.h" />
@@ -248,7 +249,6 @@
     <ClInclude Include="$(CasablancaIncludeDir)\pplxinterface.h" />
     <ClInclude Include="$(CasablancaIncludeDir)\pplxdefs.h" />
     <ClInclude Include="$(CasablancaIncludeDir)\pplxtasks.h" />
-    <ClInclude Include="$(CasablancaIncludeDir)\servicebus.h" />
     <ClInclude Include="$(CasablancaIncludeDir)\globals.h" />
     <ClInclude Include="$(CasablancaIncludeDir)\interopstream.h" />
     <ClInclude Include="$(CasablancaIncludeDir)\rawptrstream.h" />

@@ -28,7 +28,13 @@
 #include <vector>
 
 #include "xxpublic.h"
+
+#if defined(_MSC_VER) && (_MSC_VER >= 1800)
+#include <ppltasks.h>
+namespace pplx = Concurrency;
+#else 
 #include "pplxtasks.h"
+#endif
 
 namespace web 
 {
@@ -82,7 +88,6 @@ namespace logging
         /// <param name="message">The text of the message</param>
         virtual void post(log_level level, int code, const utility::string_t &message) = 0;
 
-#if !defined(__cplusplus_winrt)
         /// <summary>
         /// Log a message related to a particular http request.
         /// </summary>
@@ -96,7 +101,7 @@ namespace logging
         /// related to the http request.
         /// </remarks>        
         virtual _ASYNCRTIMP void post(log_level level, int code, const utility::string_t &message, http::http_request http_msg);
-#endif         
+         
         /// <summary>
         /// Set the current significance level at which messages are propagated. Messages at levels
         /// below the threshold will be ignored in subsequent calls to 'log'
@@ -149,7 +154,7 @@ namespace logging
             {
                 _TaskType _Task(_Param);
                 {
-                    pplx::scoped_critical_section _Lock(_M_lock);
+                    pplx::extensibility::scoped_critical_section_t _Lock(_M_lock);
                     _M_tasks.push_back(_Task);
                 }
             }
@@ -161,7 +166,7 @@ namespace logging
                     std::vector<_TaskType> _TaskList;
 
                     {
-                        pplx::scoped_critical_section _Lock(_M_lock);
+                        pplx::extensibility::scoped_critical_section_t _Lock(_M_lock);
                         _TaskList.swap(_M_tasks);
                     }
 
@@ -171,7 +176,7 @@ namespace logging
             }
         private:
 
-            pplx::critical_section _M_lock;
+            pplx::extensibility::critical_section_t _M_lock;
             std::vector<_TaskType> _M_tasks;
         };
 

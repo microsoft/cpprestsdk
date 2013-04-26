@@ -132,10 +132,10 @@ void _finish_create(StorageFile^ file, Streams::IRandomAccessStream^ stream, _In
 /// True does not signal that the file will eventually be successfully opened, just that the process was started.
 /// This is only available for WinRT.
 /// </remarks>
-bool _open_fsb_stf_str(_In_ Concurrency::streams::details::_filestream_callback *callback, ::Windows::Storage::StorageFile^ file, std::ios_base::openmode mode, int prot)
+bool __cdecl _open_fsb_stf_str(_In_ Concurrency::streams::details::_filestream_callback *callback, ::Windows::Storage::StorageFile^ file, std::ios_base::openmode mode, int prot)
 {
-    _PPLX_ASSERT(callback != nullptr);
-    _PPLX_ASSERT(file != nullptr);
+    _ASSERTE(callback != nullptr);
+    _ASSERTE(file != nullptr);
 
     CreationCollisionOption options;
     FileAccessMode acc_mode;
@@ -153,7 +153,7 @@ bool _open_fsb_stf_str(_In_ Concurrency::streams::details::_filestream_callback 
             }
             catch(Platform::Exception^ exc) 
             { 
-				callback->on_error(std::make_exception_ptr(utility::details::create_system_error(exc->HResult)));
+                callback->on_error(std::make_exception_ptr(utility::details::create_system_error(exc->HResult)));
             }
         });
 
@@ -170,25 +170,25 @@ bool _open_fsb_stf_str(_In_ Concurrency::streams::details::_filestream_callback 
 /// <remarks>
 /// True does not signal that the file will eventually be successfully closed, just that the process was started.
 /// </remarks>
-bool _close_fsb_nolock(_In_ _file_info **info, _In_ Concurrency::streams::details::_filestream_callback *callback)
+bool __cdecl _close_fsb_nolock(_In_ _file_info **info, _In_ Concurrency::streams::details::_filestream_callback *callback)
 {
-    _PPLX_ASSERT(callback != nullptr);
-    _PPLX_ASSERT(info != nullptr);
-    _PPLX_ASSERT(*info != nullptr);
+    _ASSERTE(callback != nullptr);
+    _ASSERTE(info != nullptr);
+    _ASSERTE(*info != nullptr);
 
     _file_info_impl *fInfo = (_file_info_impl *)*info;
 
     fInfo->m_stream = nullptr;
     fInfo->m_file = nullptr;
 
-    callback->on_closed(true);
+    callback->on_closed();
     
     *info = nullptr;
 
     return true;
 }
 
-bool _close_fsb(_In_ _file_info **info, _In_ Concurrency::streams::details::_filestream_callback *callback)
+bool __cdecl _close_fsb(_In_ _file_info **info, _In_ Concurrency::streams::details::_filestream_callback *callback)
 {
     return _close_fsb_nolock(info, callback);
 }
@@ -201,13 +201,13 @@ bool _close_fsb(_In_ _file_info **info, _In_ Concurrency::streams::details::_fil
 /// <param name="ptr">A pointer to the data to write</param>
 /// <param name="count">The size (in bytes) of the data</param>
 /// <returns>0 if the write request is still outstanding, -1 if the request failed, otherwise the size of the data written</returns>
-size_t _write_file_async(_In_ Concurrency::streams::details::_file_info_impl *fInfo, _In_ Concurrency::streams::details::_filestream_callback *callback, const unsigned char *ptr, size_t count, size_t position)
+size_t __cdecl _write_file_async(_In_ Concurrency::streams::details::_file_info_impl *fInfo, _In_ Concurrency::streams::details::_filestream_callback *callback, const unsigned char *ptr, size_t count, size_t position)
 {
     if ( fInfo->m_file == nullptr || fInfo->m_stream == nullptr )
     {
         if ( callback != nullptr )
             // I don't know of a better error code, so this will have to do.
-			callback->on_error(std::make_exception_ptr(utility::details::create_system_error(ERROR_INVALID_ADDRESS)));
+            callback->on_error(std::make_exception_ptr(utility::details::create_system_error(ERROR_INVALID_ADDRESS)));
         return 0;
     }
 
@@ -227,7 +227,7 @@ size_t _write_file_async(_In_ Concurrency::streams::details::_file_info_impl *fI
             }
             catch (Platform::Exception^ exc)
             {
-				callback->on_error(std::make_exception_ptr(utility::details::create_system_error(exc->HResult)));
+                callback->on_error(std::make_exception_ptr(utility::details::create_system_error(exc->HResult)));
             }
         });
 
@@ -244,7 +244,7 @@ size_t _write_file_async(_In_ Concurrency::streams::details::_file_info_impl *fI
 /// <param name="count">The size (in bytes) of the buffer</param>
 /// <param name="offset">The offset in the file to read from</param>
 /// <returns>0 if the read request is still outstanding, -1 if the request failed, otherwise the size of the data read into the buffer</returns>
-size_t _read_file_async(_In_ Concurrency::streams::details::_file_info_impl *fInfo, _In_ Concurrency::streams::details::_filestream_callback *callback, _Out_writes_ (count) void *ptr, _In_ size_t count, size_t offset)
+size_t __cdecl _read_file_async(_In_ Concurrency::streams::details::_file_info_impl *fInfo, _In_ Concurrency::streams::details::_filestream_callback *callback, _Out_writes_ (count) void *ptr, _In_ size_t count, size_t offset)
 {
     if ( fInfo->m_file == nullptr || fInfo->m_stream == nullptr )
     {
@@ -309,8 +309,11 @@ size_t _fill_buffer_fsb(_In_ _file_info_impl *fInfo, _In_ _filestream_callback *
 {
     msl::utilities::SafeInt<size_t> safeCount = count;
 
-    if ( fInfo->m_buffer == nullptr )
+    if ( fInfo->m_buffer == nullptr || safeCount > fInfo->m_bufsize )
     {
+        if ( fInfo->m_buffer != nullptr )
+            delete fInfo->m_buffer;
+
         fInfo->m_bufsize = safeCount.Max(fInfo->m_buffer_size);
         fInfo->m_buffer = new char[fInfo->m_bufsize*char_size];
         fInfo->m_bufoff = fInfo->m_rdpos;
@@ -318,7 +321,7 @@ size_t _fill_buffer_fsb(_In_ _file_info_impl *fInfo, _In_ _filestream_callback *
         auto cb = create_callback(fInfo,
             [=] (size_t result) 
             { 
-                pplx::scoped_recursive_lock lck(fInfo->m_lock);
+                pplx::extensibility::scoped_recursive_lock_t lck(fInfo->m_lock);
                 fInfo->m_buffill = result/char_size; 
                 callback->on_completed(result); 
             });
@@ -353,7 +356,13 @@ size_t _fill_buffer_fsb(_In_ _file_info_impl *fInfo, _In_ _filestream_callback *
     size_t bufpos = fInfo->m_rdpos - fInfo->m_bufoff;
     size_t bufrem = fInfo->m_buffill - bufpos;
 
-    if ( fInfo->m_rdpos < fInfo->m_bufoff )
+    // We have four different scenarios:
+    //  1. The read position is before the start of the buffer, in which case we will just reuse the buffer.
+    //  2. The read position is in the middle of the buffer, and we need to read some more.
+    //  3. The read position is beyond the end of the buffer. Do as in #1.
+    //  4. We have everything we need.
+
+    if ( (fInfo->m_rdpos < fInfo->m_bufoff) || (fInfo->m_rdpos >= (fInfo->m_bufoff+fInfo->m_buffill)) )
     {
         // Reuse the existing buffer.
 
@@ -362,7 +371,7 @@ size_t _fill_buffer_fsb(_In_ _file_info_impl *fInfo, _In_ _filestream_callback *
         auto cb = create_callback(fInfo,
             [=] (size_t result) 
             { 
-                pplx::scoped_recursive_lock lck(fInfo->m_lock);
+                pplx::extensibility::scoped_recursive_lock_t lck(fInfo->m_lock);
                 fInfo->m_buffill = result/char_size; 
                 callback->on_completed(bufrem*char_size+result); 
             });
@@ -412,7 +421,7 @@ size_t _fill_buffer_fsb(_In_ _file_info_impl *fInfo, _In_ _filestream_callback *
         auto cb = create_callback(fInfo,
             [=] (size_t result) 
             { 
-                pplx::scoped_recursive_lock lck(fInfo->m_lock);
+                pplx::extensibility::scoped_recursive_lock_t lck(fInfo->m_lock);
                 fInfo->m_buffill = result/char_size; 
                 callback->on_completed(bufrem*char_size+result); 
             });
@@ -455,14 +464,14 @@ size_t _fill_buffer_fsb(_In_ _file_info_impl *fInfo, _In_ _filestream_callback *
 /// <param name="ptr">A pointer to a buffer where the data should be placed</param>
 /// <param name="count">The size (in characters) of the buffer</param>
 /// <returns>0 if the read request is still outstanding, -1 if the request failed, otherwise the size of the data read into the buffer</returns>
-size_t _getn_fsb(_In_ Concurrency::streams::details::_file_info *info, _In_ Concurrency::streams::details::_filestream_callback *callback, _Out_writes_ (count) void *ptr, _In_ size_t count, size_t char_size)
+size_t __cdecl _getn_fsb(_In_ Concurrency::streams::details::_file_info *info, _In_ Concurrency::streams::details::_filestream_callback *callback, _Out_writes_ (count) void *ptr, _In_ size_t count, size_t char_size)
 {
-    _PPLX_ASSERT(callback != nullptr);
-    _PPLX_ASSERT(info != nullptr);
+    _ASSERTE(callback != nullptr);
+    _ASSERTE(info != nullptr);
     
     _file_info_impl *fInfo = (_file_info_impl *)info;
 
-    pplx::scoped_recursive_lock lck(info->m_lock);
+    pplx::extensibility::scoped_recursive_lock_t lck(info->m_lock);
 
     if ( fInfo->m_buffer_size > 0 )
     {
@@ -505,14 +514,14 @@ size_t _getn_fsb(_In_ Concurrency::streams::details::_file_info *info, _In_ Conc
 /// <param name="ptr">A pointer to a buffer where the data should be placed</param>
 /// <param name="count">The size (in characters) of the buffer</param>
 /// <returns>0 if the read request is still outstanding, -1 if the request failed, otherwise the size of the data read into the buffer</returns>
-size_t _putn_fsb(_In_ Concurrency::streams::details::_file_info *info, _In_ Concurrency::streams::details::_filestream_callback *callback, const void *ptr, size_t count, size_t char_size)
+size_t __cdecl _putn_fsb(_In_ Concurrency::streams::details::_file_info *info, _In_ Concurrency::streams::details::_filestream_callback *callback, const void *ptr, size_t count, size_t char_size)
 {
-    _PPLX_ASSERT(callback != nullptr);
-    _PPLX_ASSERT(info != nullptr);
+    _ASSERTE(callback != nullptr);
+    _ASSERTE(info != nullptr);
     
     _file_info_impl *fInfo = (_file_info_impl *)info;
 
-    pplx::scoped_recursive_lock lck(fInfo->m_lock);
+    pplx::extensibility::scoped_recursive_lock_t lck(fInfo->m_lock);
     
     // To preserve the async write order, we have to move the write head before read.
     auto lastPos = fInfo->m_wrpos;
@@ -532,7 +541,7 @@ size_t _putn_fsb(_In_ Concurrency::streams::details::_file_info *info, _In_ Conc
 /// <param name="callback">A pointer to the callback interface to invoke when the write request is completed.</param>
 /// <param name="ptr">A pointer to a buffer where the data should be placed</param>
 /// <returns>0 if the read request is still outstanding, -1 if the request failed, otherwise the size of the data read into the buffer</returns>
-size_t _putc_fsb(_In_ Concurrency::streams::details::_file_info *info, _In_ Concurrency::streams::details::_filestream_callback *callback, int ch, size_t char_size)
+size_t __cdecl _putc_fsb(_In_ Concurrency::streams::details::_file_info *info, _In_ Concurrency::streams::details::_filestream_callback *callback, int ch, size_t char_size)
 {
     return _putn_fsb(info, callback, &ch, 1, char_size);
 }
@@ -543,14 +552,14 @@ size_t _putc_fsb(_In_ Concurrency::streams::details::_file_info *info, _In_ Conc
 /// <param name="info">The file info record of the file</param>
 /// <param name="callback">A pointer to the callback interface to invoke when the write request is completed.</param>
 /// <returns>True if the request was initiated</returns>
-bool _sync_fsb(_In_ Concurrency::streams::details::_file_info *info, _In_ Concurrency::streams::details::_filestream_callback *callback)
+bool __cdecl _sync_fsb(_In_ Concurrency::streams::details::_file_info *info, _In_ Concurrency::streams::details::_filestream_callback *callback)
 {
-    _PPLX_ASSERT(callback != nullptr);
-    _PPLX_ASSERT(info != nullptr);
+    _ASSERTE(callback != nullptr);
+    _ASSERTE(info != nullptr);
     
     _file_info_impl *fInfo = (_file_info_impl *)info;
 
-    pplx::scoped_recursive_lock lck(fInfo->m_lock);
+    pplx::extensibility::scoped_recursive_lock_t lck(fInfo->m_lock);
 
     if ( fInfo->m_file == nullptr || fInfo->m_stream == nullptr ) return false;
 
@@ -578,15 +587,22 @@ bool _sync_fsb(_In_ Concurrency::streams::details::_file_info *info, _In_ Concur
 /// <param name="info">The file info record of the file</param>
 /// <param name="pos">The new position (offset from the start) in the file stream</param>
 /// <returns>New file position or -1 if error</returns>
-size_t _seekrdpos_fsb(_In_ Concurrency::streams::details::_file_info *info, size_t pos, size_t char_size)
+size_t __cdecl _seekrdpos_fsb(_In_ Concurrency::streams::details::_file_info *info, size_t pos, size_t char_size)
 {
-    _PPLX_ASSERT(info != nullptr);
+    _ASSERTE(info != nullptr);
     
     _file_info_impl *fInfo = (_file_info_impl *)info;
 
-    pplx::scoped_recursive_lock lck(info->m_lock);
+    pplx::extensibility::scoped_recursive_lock_t lck(info->m_lock);
 
     if ( fInfo->m_file == nullptr || fInfo->m_stream == nullptr ) return (size_t)-1;;
+
+    if ( pos < fInfo->m_bufoff || pos > (fInfo->m_bufoff+fInfo->m_buffill) )
+    {
+        delete fInfo->m_buffer;
+        fInfo->m_buffer = nullptr;
+        fInfo->m_bufoff = fInfo->m_buffill = fInfo->m_bufsize = 0;
+    }
 
     fInfo->m_rdpos = pos;
 
@@ -600,18 +616,25 @@ size_t _seekrdpos_fsb(_In_ Concurrency::streams::details::_file_info *info, size
 /// <param name="offset">The new position (offset from the end of the stream) in the file stream</param>
 /// <param name="char_size">The size of the character type used for this stream</param>
 /// <returns>New file position or -1 if error</returns>
-_ASYNCRTIMP size_t _seekrdtoend_fsb(_In_ Concurrency::streams::details::_file_info *info, int64_t offset, size_t char_size)
+_ASYNCRTIMP size_t __cdecl _seekrdtoend_fsb(_In_ Concurrency::streams::details::_file_info *info, int64_t offset, size_t char_size)
 {
-    _PPLX_ASSERT(info != nullptr);
+    _ASSERTE(info != nullptr);
     
     _file_info_impl *fInfo = (_file_info_impl *)info;
 
-    pplx::scoped_recursive_lock lck(info->m_lock);
+    pplx::extensibility::scoped_recursive_lock_t lck(info->m_lock);
 
     if ( fInfo->m_file == nullptr || fInfo->m_stream == nullptr ) return (size_t)-1;;
 
-    auto size = fInfo->m_stream->Size/char_size;
+    if ( fInfo->m_buffer != nullptr )
+    {
+        // Clear the internal buffer.
+        delete fInfo->m_buffer;
+        fInfo->m_buffer = nullptr;
+        fInfo->m_bufoff = fInfo->m_buffill = fInfo->m_bufsize = 0;
+    }
 
+    auto size = fInfo->m_stream->Size/char_size;
     fInfo->m_rdpos = (size_t)((int64_t)size + offset);
 
     return fInfo->m_rdpos;
@@ -624,13 +647,13 @@ _ASYNCRTIMP size_t _seekrdtoend_fsb(_In_ Concurrency::streams::details::_file_in
 /// <param name="info">The file info record of the file</param>
 /// <param name="pos">The new position (offset from the start) in the file stream</param>
 /// <returns>New file position or -1 if error</returns>
-size_t _seekwrpos_fsb(_In_ Concurrency::streams::details::_file_info *info, size_t pos, size_t char_size)
+size_t __cdecl _seekwrpos_fsb(_In_ Concurrency::streams::details::_file_info *info, size_t pos, size_t char_size)
 {
-    _PPLX_ASSERT(info != nullptr);
+    _ASSERTE(info != nullptr);
     
     _file_info_impl *fInfo = (_file_info_impl *)info;
 
-    pplx::scoped_recursive_lock lck(info->m_lock);
+    pplx::extensibility::scoped_recursive_lock_t lck(info->m_lock);
 
     if ( fInfo->m_file == nullptr || fInfo->m_stream == nullptr ) return (size_t)-1;;
 

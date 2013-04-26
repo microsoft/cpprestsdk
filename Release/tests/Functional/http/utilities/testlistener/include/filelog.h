@@ -129,11 +129,11 @@ namespace utility { namespace logging
 
             std::string m_path;
 
-            pplx::atomic_long m_processing_flag;
+            pplx::details::atomic_long m_processing_flag;
 
             std::queue<_LogEntry *> m_queue;
 
-            pplx::critical_section m_lock;
+            pplx::extensibility::critical_section_t m_lock;
         };
 
         /// <summary>
@@ -206,11 +206,11 @@ namespace utility { namespace logging
 
             utility::string_t m_path;
 
-            pplx::atomic_long m_processing_flag;
+           pplx::details::atomic_long m_processing_flag;
 
             std::queue<_LogEntry *> m_queue;
 
-            pplx::critical_section m_lock;
+            pplx::extensibility::critical_section_t m_lock;
         };
     }
 }}

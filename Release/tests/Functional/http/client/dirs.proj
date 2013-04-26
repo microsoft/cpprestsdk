@@ -2,6 +2,10 @@
 
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Common.Build.settings" />
 
+  <ItemGroup>
+    <ProjectFile Include="AuthListener\dirs.proj" />
+  </ItemGroup>
+
   <ItemGroup Condition="'$(DevToolsVersion)'=='100'">
       <ProjectFile Include="VS10\HttpClient100_test.vcxproj" />
   </ItemGroup>
@@ -14,6 +18,14 @@
       <ProjectFile Include="VS11.winrt\HttpClient110_test.winrt.vcxproj" />
   </ItemGroup>
 
+  <ItemGroup Condition="'$(DevToolsVersion)'=='120'">
+      <ProjectFile Include="VS12\HttpClient120_test.vcxproj" />
+  </ItemGroup>
+  
+  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.2|120' or '$(OsVersion)|$(DevToolsVersion)'=='6.3|120'">
+      <ProjectFile Include="VS12.winrt\HttpClient120_test.winrt.vcxproj" />
+  </ItemGroup>
+  
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
 
 </Project>

@@ -32,6 +32,8 @@
 #include "test_http_server.h"
 #include "http_listener.h"
 
+#include <os_utilities.h>
+
 using namespace web; using namespace utility;
 using namespace utility::conversions;
 
@@ -168,8 +170,12 @@ static std::map<utility::string_t, utility::string_t> parse_http_headers(const H
 
 class _test_http_server
 {
+    inline bool is_error_code(ULONG error_code)
+    {
+        return error_code == ERROR_OPERATION_ABORTED || error_code == ERROR_CONNECTION_INVALID || error_code == ERROR_NETNAME_DELETED;
+    }
 public:
-    _test_http_server(const utility::string_t &uri) 
+    _test_http_server(const utility::string_t &uri)
         : m_uri(uri), m_session(0), m_url_group(0), m_request_queue(nullptr)
     {
         HTTPAPI_VERSION httpApiVersion = HTTPAPI_VERSION_2;
@@ -276,7 +282,10 @@ public:
                             content_length,
                             &bytes_received,
                             NULL);
-                    VERIFY_ARE_EQUAL(0, result);
+                    if (is_error_code(result))
+                        break;
+                    else
+                        VERIFY_ARE_EQUAL(0, result);
                 }
 
                 utility::string_t transfer_encoding;
@@ -312,9 +321,11 @@ public:
                                 NULL);
                     }
 
-                    VERIFY_ARE_EQUAL(ERROR_HANDLE_EOF, result);
+                    if (is_error_code(result))
+                        break;
+                    else
+                        VERIFY_ARE_EQUAL(ERROR_HANDLE_EOF, result);
                 }
-
 
                 // Place request buffer.
                 Concurrency::asend(m_requests, p_test_request);
@@ -340,11 +351,12 @@ public:
                 allRequestsSatisfied = false;
             }
         });
+
         if(!allRequestsSatisfied)
         {
             // Just wait for either all the requests to finish or for the timer task, it doesn't matter which one.
             auto allRequestsTask = pplx::when_all(m_all_next_request_tasks.begin(), m_all_next_request_tasks.end()).then([](const std::vector<test_request *> &){});
-            auto timerTask = pplx::create_delayed_task(30000, [](){});
+            auto timerTask = tests::common::utilities::create_delayed_task(30000, []() {});
             (timerTask || allRequestsTask).wait();
             VERIFY_IS_TRUE(false, "HTTP test case didn't properly wait for all requests to be satisfied.");
         }
@@ -456,7 +468,7 @@ class _test_http_server
 private:
     const std::string m_uri;
     typename web::http::listener::http_listener m_listener;
-    pplx::critical_section m_lock;
+    pplx::extensibility::critical_section_t m_lock;
     std::vector<pplx::task_completion_event<test_request*>> m_requests;
     std::atomic<unsigned long long> m_last_request_id;
 
@@ -473,7 +485,7 @@ public:
     {
         m_listener.support([&](web::http::http_request result) -> void
         {
-            pplx::critical_section::scoped_lock listen_lock(m_listen_lock); // try to serialize requests
+            pplx::extensibility::critical_section_t::scoped_lock listen_lock(m_listen_lock); // try to serialize requests
             auto tr = new test_request();
             tr->m_method = result.method();
             tr->m_path = result.request_uri().resource().to_string();
@@ -556,7 +568,7 @@ public:
         return 0;
     }
 
-    pplx::critical_section m_next_request_lock;
+    pplx::extensibility::critical_section_t m_next_request_lock;
     pplx::task<test_request *> next_request()
     {
         pplx::task_completion_event<test_request*> tce;
@@ -661,7 +673,13 @@ unsigned long test_request::reply_impl(
         {
             headers_buffer[headerIndex * 2] = utf16_to_utf8(iter->first);
             headers_buffer[headerIndex * 2 + 1] = utf16_to_utf8(iter->second);
+
+// TFS 624150
+#pragma warning (push)
+#pragma warning (disable : 6386)
             response.Headers.pUnknownHeaders[headerIndex].NameLength = (USHORT)headers_buffer[headerIndex * 2].size();
+#pragma warning (pop)
+
             response.Headers.pUnknownHeaders[headerIndex].pName = headers_buffer[headerIndex * 2].c_str();
             response.Headers.pUnknownHeaders[headerIndex].RawValueLength = (USHORT)headers_buffer[headerIndex * 2 + 1].size();
             response.Headers.pUnknownHeaders[headerIndex].pRawValue = headers_buffer[headerIndex * 2 + 1].c_str();

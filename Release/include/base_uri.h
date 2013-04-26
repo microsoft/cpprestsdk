@@ -16,7 +16,7 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* uri.h
+* base_uri.h
 *
 * Protocol independent support for URIs.
 *
@@ -74,7 +74,7 @@ namespace web { namespace http
         {
             return m_msg.c_str();
         }
-        
+
     private:
         std::string m_msg;
     };
@@ -141,7 +141,7 @@ namespace web { namespace http
         /// Encodes a string by converting all characters except for RFC 3986 unreserved characters to their 
         /// hexadecimal representation.
         /// </summary>
-        /// <param name="raw">The string data.</param>
+        /// <param name="utf8data">The UTF-8 string data.</param>
         /// <returns>The encoded string.</returns>
         _ASYNCRTIMP static utility::string_t __cdecl encode_data_string(const utility::string_t &utf8data);
 
@@ -152,32 +152,38 @@ namespace web { namespace http
         /// <returns>The decoded string.</returns>
         _ASYNCRTIMP static utility::string_t __cdecl decode(const utility::string_t &encoded);
 
-        #pragma endregion
+#pragma endregion
 
-        #pragma region splitting
+#pragma region splitting
 
         /// <summary>
         /// Splits a path into its hierarchical components.
         /// </summary>
+        /// <param name="path">The path as a string</param>
+        /// <returns>A <c>std::vector&lt;utility::string_t&gt;</c> containing the segments in the path.</returns>
         _ASYNCRTIMP static std::vector<utility::string_t> __cdecl split_path(const utility::string_t &path);
 
         /// <summary>
         /// Splits a query into its key-value components.
         /// </summary>
+        /// <param name="query">The query string</param>
+        /// <returns>A <c>std::map&lt;utility::string_t, utility::string_t&gt;</c> containing the key-value components of the query.</returns>
         _ASYNCRTIMP static std::map<utility::string_t, utility::string_t> __cdecl split_query(const utility::string_t &query);
 
-        #pragma endregion
+#pragma endregion
 
-        #pragma region validation
+#pragma region validation
 
         /// <summary>
         /// Validates a string as a uri.
         /// </summary>
+        /// <param name="uri_string">The uri string to be validated.</param>
+        /// <returns><c>true</c> if the given string represents a valid URI, <c>false</c> otherwise.</returns>
         _ASYNCRTIMP static bool __cdecl validate(const utility::string_t &uri_string);
 
-        #pragma endregion
+#pragma endregion
 
-        #pragma region constructors
+#pragma region constructors
 
         /// <summary>
         /// Creates an empty uri
@@ -188,17 +194,19 @@ namespace web { namespace http
         /// Creates a uri from the given encoded string. This will throw an exception if the string 
         /// does not contain a valid uri. Use uri::validate if processing user-input.
         /// </summary>
+        /// <param name="uri_string">A pointer to an encoded string to create the URI instance.</param>
         _ASYNCRTIMP uri(const utility::char_t *uri_string);
 
         /// <summary>
         /// Creates a uri from the given encoded string. This will throw an exception if the string 
         /// does not contain a valid uri. Use uri::validate if processing user-input.
         /// </summary>
+        /// <param name="uri_string">An encoded uri string to create the URI instance.</param>
         _ASYNCRTIMP uri(const utility::string_t &uri_string);
 
-        #pragma endregion
+#pragma endregion
 
-        #pragma region accessors
+#pragma region accessors
 
         /// <summary>
         /// Get the scheme component of the URI as an encoded string.
@@ -245,16 +253,18 @@ namespace web { namespace http
         /// <summary>
         /// Creates a new uri object with the same authority portion as this one, omitting the resource and query portions.
         /// </summary>
+        /// <returns>The new uri object with the same authority.</returns>
         _ASYNCRTIMP uri authority() const;
 
         /// <summary>
         /// Gets the path, query, and fragment portion of this uri, which may be empty.
         /// </summary>
+        /// <returns>The new uri object with the path, query and fragment portion of this uri.</returns>
         _ASYNCRTIMP uri resource() const;
 
-        #pragma endregion
+#pragma endregion
 
-        #pragma region diagnostics
+#pragma region diagnostics
 
         /// <summary>
         /// An empty uri specifies no components, and serves as a default value
@@ -265,11 +275,12 @@ namespace web { namespace http
         }
 
         /// <summary>
-        /// A loopback URI is one which refers to a hostname or ip address with meaning only on the local machine
+        /// A loopback URI is one which refers to a hostname or ip address with meaning only on the local machine.
         /// </summary>
         /// <remarks>
-        /// Examples include "locahost", or ip addresses in the loopback range (127.0.0.0/24)
+        /// Examples include "locahost", or ip addresses in the loopback range (127.0.0.0/24).
         /// </remarks>
+        /// <returns><c>true</c> if this URI references the local host, <c>false</c> otherwise.</returns>
         bool is_host_loopback() const
         {
             return !is_empty() && ((host() == U("localhost")) || (host().size() > 4 && host().substr(0,4) == U("127.")));
@@ -289,6 +300,7 @@ namespace web { namespace http
         /// <summary>
         /// A portable URI is one with a hostname that can be resolved globally (used from another machine).
         /// </summary>
+        /// <returns><c>true</c> if this URI can be resolved globally (used from another machine), <c>false</c> otherwise.</returns>
         /// <remarks>
         /// The hostname "localhost" is a reserved name that is guaranteed to resolve to the local machine,
         /// and cannot be used for inter-machine communication. Likewise the hostnames "*" and "+" on Windows
@@ -311,6 +323,7 @@ namespace web { namespace http
         /// <summary>
         /// An "authority" uri is one with only a scheme, optional userinfo, hostname, and (optional) port.
         /// </summary>
+        /// <returns><c>true</c> if this is an "authority" uri, <c>false</c> otherwise.</returns>
         bool is_authority() const
         {
             return !is_empty() && is_path_empty() && query().empty() && fragment().empty();
@@ -319,6 +332,8 @@ namespace web { namespace http
         /// <summary>
         /// Returns whether the other uri has the same authority as this one
         /// </summary>
+        /// <param name="other">The uri to compare the authority with.</param>
+        /// <returns><c>true</c> if both the uri's have the same authority, <c>false</c> otherwise.</returns>
         bool has_same_authority(const uri &other) const
         {
             return !is_empty() && this->authority() == other.authority();
@@ -327,26 +342,28 @@ namespace web { namespace http
         /// <summary>
         /// Returns whether the path portion of this uri is empty
         /// </summary>
+        /// <returns><c>true</c> if the path portion of this uri is empty, <c>false</c> otherwise.</returns>
         bool is_path_empty() const
         {
             return path().empty() || path() == U("/");
         }
 
-        #pragma endregion
+#pragma endregion
 
-        #pragma region conversion
+#pragma region conversion
 
-         /// <summary>
-        /// Returns the full (encoded) uri as a string
+        /// <summary>
+        /// Returns the full (encoded) uri as a string.
         /// </summary>
+         /// <returns>The full encoded uri string.</returns>
         utility::string_t to_string() const
         {
             return m_uri;
         }
 
-        #pragma endregion
+#pragma endregion
 
-        #pragma region operators
+#pragma region operators
 
         _ASYNCRTIMP bool operator == (const uri &other) const;
 
@@ -360,7 +377,7 @@ namespace web { namespace http
             return !(this->operator == (other));
         }
 
-        #pragma endregion
+#pragma endregion
 
     private:
         friend class uri_builder;

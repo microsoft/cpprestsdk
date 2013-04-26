@@ -28,14 +28,18 @@
 #ifndef _PPLXCONV_H
 #define _PPLXCONV_H
 
-#if defined(_MS_WINDOWS) && (_MSC_VER >= 1700)
-
-#include <ppltasks.h>
-#include <pplxtasks.h>
-
 #ifndef _MS_WINDOWS
 #error This is only supported on Windows
 #endif
+
+#if defined(_MSC_VER) && (_MSC_VER >= 1700)
+
+#if (_MSC_VER >= 1800)
+#error This file must not be included for Visual Studio 12 or later
+#endif
+
+#include <ppltasks.h>
+#include <pplxtasks.h>
 
 namespace pplx
 {

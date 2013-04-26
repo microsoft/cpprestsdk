@@ -225,12 +225,8 @@ static int parse_command_line(int argc, char **argv)
         else if(arg.find("/debug") == 0)
         {
             printf("Attach debugger now...\n");
-#ifdef WIN32
-            _getch();
-#else
-            char s[10];
-            scanf("%9s", s, 10);
-#endif
+            int temp;
+            std::cin >> temp;
         }
         else
         {
@@ -243,6 +239,16 @@ static int parse_command_line(int argc, char **argv)
 
 static bool matched_properties(const UnitTest::TestProperties& test_props)
 {
+    // TestRunner can only execute either desktop or winrt tests, but not both.
+	// This starts with visual studio versions after VS 2012.
+#if defined (_MSC_VER) && (_MSC_VER >= 1800)
+#ifdef WINRT_TEST_RUNNER
+    UnitTest::GlobalSettings::Add("winrt", "");
+#elif defined DESKTOP_TEST_RUNNER
+    UnitTest::GlobalSettings::Add("desktop", "");
+#endif
+#endif
+
     // The 'Require' property on a test case is special.
     // It requires a certain global setting to be fulfilled to execute.
     if(test_props.Has("Requires"))
@@ -288,7 +294,7 @@ static bool matched_properties(const UnitTest::TestProperties& test_props)
 // Functions to list all the test cases and their properties.
 static void handle_list_option(bool listProperties, const UnitTest::TestList &tests, const std::regex &nameRegex)
 {
-    UnitTest::Test *pTest = tests.GetHead();
+    UnitTest::Test *pTest = tests.GetFirst();
     while(pTest != nullptr)
     {
         std::string fullTestName = pTest->m_details.suiteName;
@@ -482,6 +488,7 @@ int main(int argc, char* argv[])
                 if(!listOption)
                 {
                     std::cout << "Running test cases in " << *binary << "..." << std::endl;
+                    std::fflush(stdout);
                 }
 
                 UnitTest::TestRunner testRunner(testReporter, breakOnError);
@@ -548,9 +555,10 @@ int main(int argc, char* argv[])
                         {
                             ChangeConsoleTextColorToRed();
                             const std::vector<std::string> & failed = testRunner.GetTestResults()->GetFailedTests();
-                            std::for_each(failed.end(), failed.end(), [](const std::string &failedTest)
+                            std::for_each(failed.begin(), failed.end(), [](const std::string &failedTest)
                             {
                                 std::cout << "**** " << failedTest << " FAILED ****" << std::endl << std::endl;
+                                std::fflush(stdout);
                             });
                             ChangeConsoleTextColorToGrey();
                         }

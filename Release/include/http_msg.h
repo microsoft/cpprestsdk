@@ -30,7 +30,13 @@
 #include <vector>
 #include <system_error>
 
+#if defined(_MSC_VER) && (_MSC_VER >= 1800)
+#include <ppltasks.h>
+namespace pplx = Concurrency;
+#else 
 #include "pplxtasks.h"
+#endif
+
 #include "json.h"
 #include "uri.h"
 #include "xxpublic.h"
@@ -100,6 +106,11 @@ struct http_status_to_phrase
 /// <summary>
 /// Binds an individual reference to a string value.
 /// </summary>
+        /// <typeparam name="key_type">The type of string value.</typeparam>
+        /// <typeparam name="_t">The type of the value to bind to.</typeparam>
+        /// <param name="text">The string value.</param>
+        /// <param name="ref">The value to bind to.</param>
+        /// <returns><c>true</c> if the binding succeeds, <c>false</c> otherwise.</returns>
 template<typename key_type, typename _t>
 bool bind(const key_type &text, _t &ref) // const
 {
@@ -113,7 +124,14 @@ bool bind(const key_type &text, _t &ref) // const
     return true;
 }
 
-// This specialization is need because istringstream '>>' delimits on whitespace.
+        /// <summary>
+        /// Binds an individual reference to a string value.
+        /// This specialization is need because <c>istringstream::&gt;&gt;</c> delimits on whitespace.
+        /// </summary>
+        /// <typeparam name="key_type">The type of the string value.</typeparam>
+        /// <param name="text">The string value.</param>
+        /// <param name="ref">The value to bind to.</param>
+        /// <returns><c>true</c> if the binding succeeds, <c>false</c> otherwise.</returns>
 template <typename key_type>
 bool bind(const key_type &text, utility::string_t &ref) //const 
 { 
@@ -316,8 +334,9 @@ public:
         }
         return *this;
     }
+
     /// <summary>
-    /// Add a header field using the '<<' operator.
+            /// Adds a header field using the '&lt;&lt;' operator.
     /// </summary>
     /// <param name="name">The name of the header field.</param>
     /// <param name="value">The value of the header field.</param>
@@ -328,7 +347,7 @@ public:
     }
 
     /// <summary>
-    /// Add a header field.
+    /// Adds a header field.
     /// </summary>
     /// <param name="name">The name of the header field.</param>
     /// <param name="value">The value of the header field.</param>
@@ -338,7 +357,7 @@ public:
     }
 
     /// <summary>
-    /// Add a header field.
+    /// Adds a header field.
     /// </summary>
     /// <param name="name">The name of the header field.</param>
     /// <param name="value">The value of the header field.</param>
@@ -360,7 +379,7 @@ public:
     /// Checks if there is a header with the given key.
     /// </summary>
     /// <param name="name">The name of the header field.</param>
-    /// <returns>True if there is a header with the given name, false otherwise.</returns>
+    /// <returns><c>true</c> if there is a header with the given name, <c>false</c> otherwise.</returns>
     bool has(const key_type& name) const { return m_headers.find(name) != m_headers.end(); }
 
     /// <summary>
@@ -372,6 +391,7 @@ public:
     /// <summary>
     /// Tests to see if there are any header fields.
     /// </summary>
+            /// <returns><c>true</c> if there are no headers, <c>false</c> otherwise.</returns>
     bool empty() const { return m_headers.empty(); }
 
     /// <summary>
@@ -383,6 +403,8 @@ public:
     /// Checks if a header field exists with given name and returns an iterator if found. Otherwise
     /// and iterator to end is returned.
     /// </summary>
+            /// <param name="name">The name of the header field.</param>
+            /// <returns>An iterator to where the HTTP header is found.</returns>
     iterator find(const key_type &name) { return m_headers.find(name); }
     const_iterator find(const key_type &name) const { return m_headers.find(name); }
 
@@ -391,7 +413,7 @@ public:
     /// </summary>
     /// <param name="name">The name of the header field.</param>
     /// <param name="value">The value of the header field.</param>
-    /// <returns>True if header field was found and successfully stored in value parameter.</returns>
+    /// <returns><c>true</c> if header field was found and successfully stored in value parameter.</returns>
     template<typename _t1>
     bool match(const key_type &name, _t1 &value) const
     {
@@ -415,65 +437,66 @@ public:
     /// <summary>
     /// Returns an iterator refering to the first header field.
     /// </summary>
+            /// <returns>An iterator to the beginning of the HTTP headers</returns>
     iterator begin() { return m_headers.begin(); }
     const_iterator begin() const { return m_headers.begin(); }
 
     /// <summary>
     /// Returns an iterator referring to the past-the-end header field.
     /// </summary>
+            /// <returns>An iterator to the element past the end of the HTTP headers</returns>
     iterator end() { return m_headers.end(); }
     const_iterator end() const { return m_headers.end(); }
 
     /// <summary>
-    /// Get the content type of the message.
+            /// Gets the content length of the message.
     /// </summary>
-    /// <returns>The content type of the body.</returns>
+            /// <returns>The length of the content.</returns>
     _ASYNCRTIMP size_t content_length() const;
 
     /// <summary>
-    /// Set the content type of the message.
+            /// Sets the content length of the message.
     /// </summary>
-    /// <param name="type">The content type of the body.</param>
+            /// <param name="length">The length of the content.</param>
     _ASYNCRTIMP void set_content_length(size_t length);
 
     /// <summary>
-    /// Get the content type of the message.
+    /// Gets the content type of the message.
     /// </summary>
     /// <returns>The content type of the body.</returns>
     _ASYNCRTIMP utility::string_t content_type() const;
 
     /// <summary>
-    /// Set the content type of the message.
+    /// Sets the content type of the message.
     /// </summary>
     /// <param name="type">The content type of the body.</param>
     _ASYNCRTIMP void set_content_type(utility::string_t type);
 
     /// <summary>
-    /// Get the cache control header of the message.
+    /// Gets the cache control header of the message.
     /// </summary>
     /// <returns>The cache control header value.</returns>
     _ASYNCRTIMP utility::string_t cache_control() const;
 
     /// <summary>
-    /// Set the cache control header of the message.
+    /// Sets the cache control header of the message.
     /// </summary>
     /// <param name="control">The cache control header value.</param>
     _ASYNCRTIMP void set_cache_control(utility::string_t control);
 
     /// <summary>
-    /// Get the date header of the message.
+    /// Gets the date header of the message.
     /// </summary>
     /// <returns>The date header value.</returns>
     _ASYNCRTIMP utility::string_t date() const;
 
     /// <summary>
-    /// Set the date header of the message.
+    /// Sets the date header of the message.
     /// </summary>
     /// <param name="date">The date header value.</param>
     _ASYNCRTIMP void set_date(const utility::datetime& date);
 
 private:
-
 
     // Headers are stored in a map with case insensitive key.
     std::map<utility::string_t, utility::string_t, _case_insensitive_cmp> m_headers;
@@ -483,7 +506,7 @@ namespace details
 {
 
 /// <summary>
-/// Base class for http messages.
+            /// Base class for HTTP messages.
 /// This class is to store common functionality so it isn't duplicated on
 /// both the request and response side.
 /// </summary>
@@ -526,7 +549,7 @@ public:
     /// <summary>
     /// Set the stream through which the message body could be written
     /// </summary>
-    void set_outstream(concurrency::streams::ostream outstream)  { m_outStream = outstream; }
+    void set_outstream(concurrency::streams::ostream outstream, bool is_default)  { m_outStream = outstream; m_default_outstream = is_default; }
 
     /// <summary>
     /// Get the stream through which the message body could be written
@@ -575,6 +598,8 @@ protected:
     /// the data from the network into the message body.
     /// </summary>
     concurrency::streams::ostream m_outStream;
+
+	bool m_default_outstream;
 
     /// <summary> The TCE is used to signal the availability of the message body. </summary>
     pplx::task_completion_event<size_t> m_data_available;
@@ -648,14 +673,14 @@ public:
     /// <summary>
     /// Constructs a response with an empty status code, no headers, and no body.
     /// </summary>
-    /// <returns>A new http response.</returns>
+            /// <returns>A new HTTP response.</returns>
     http_response() : _m_impl(std::make_shared<details::_http_response>()) { }
 
     /// <summary>
     /// Constructs a response with given status code, no headers, and no body.
     /// </summary>
-    /// <param name="status_code">HTTP status code to use in response.</param>
-    /// <returns>A new http response.</returns>
+            /// <param name="code">HTTP status code to use in response.</param>
+            /// <returns>A new HTTP response.</returns>
     http_response(http::status_code code) 
         : _m_impl(std::make_shared<details::_http_response>(code)) { }
 
@@ -678,16 +703,16 @@ public:
     /// Gets the status code of the response message.
     /// </summary>
     /// <returns>status code.</returns>
-    http::status_code status_code() const { return _m_impl->status_code(); } 
+    http::status_code status_code() const { return _m_impl->status_code(); }
 
     /// <summary>
     /// Sets the status code of the response message.
     /// </summary>
-    /// <param name="status_code">Status code to set.</param>
+            /// <param name="code">Status code to set.</param>
     /// <remarks>
     /// This will overwrite any previously set status code.
     /// </remarks>
-    void set_status_code(http::status_code code) { _m_impl->set_status_code(code); }
+    void set_status_code(http::status_code code) const { _m_impl->set_status_code(code); }
 
     /// <summary>
     /// Gets the reason phrase of the response message.
@@ -701,7 +726,7 @@ public:
     /// If no reason phrase is set it will default to the standard one corresponding to the status code.
     /// </summary>
     /// <param name="reason">The reason phrase to set.</param>
-    void set_reason_phrase(http::reason_phrase reason) { _m_impl->set_reason_phrase(std::move(reason)); }
+    void set_reason_phrase(http::reason_phrase reason) const { _m_impl->set_reason_phrase(std::move(reason)); }
 
     /// <summary>
     /// Gets the headers of the response message.
@@ -724,7 +749,7 @@ public:
     /// A body can only be extracted once because in some cases an optimization is made where the data is 'moved' out.
     /// </summary>
     /// <returns>String containing body of the message.</returns>
-    pplx::task<utility::string_t> extract_string() 
+    pplx::task<utility::string_t> extract_string() const
     {
         auto impl = _m_impl;
         return pplx::create_task(_m_impl->_get_data_available()).then([impl](size_t) { return impl->_extract_string(); });
@@ -735,7 +760,7 @@ public:
     /// A body can only be extracted once because in some cases an optimization is made where the data is 'moved' out.
     /// </summary>
     /// <returns>JSON value from the body of this message.</returns>
-    pplx::task<json::value> extract_json() 
+    pplx::task<json::value> extract_json() const
     {
         auto impl = _m_impl;
         return pplx::create_task(_m_impl->_get_data_available()).then([impl](size_t) { return impl->_extract_json(); });
@@ -745,7 +770,7 @@ public:
     /// Extracts the body of the response message into a vector of bytes.
     /// </summary>
     /// <returns>The body of the message as a vector of bytes.</returns>
-    pplx::task<std::vector<unsigned char>> extract_vector()
+    pplx::task<std::vector<unsigned char>> extract_vector() const
     {
         auto impl = _m_impl;
         return pplx::create_task(_m_impl->_get_data_available()).then([impl](size_t) { return impl->_extract_vector(); });
@@ -761,7 +786,7 @@ public:
     /// <remarks>
     /// This will overwrite any previously set body data and "Content-Type" header.
     /// </remarks>
-    void set_body(const utility::string_t &body_text, utility::string_t content_type = utility::string_t(U("text/plain"))) 
+    void set_body(const utility::string_t &body_text, utility::string_t content_type = utility::string_t(U("text/plain")))
     { 
         if(content_type.find(U("charset=")) != content_type.npos)
         {
@@ -776,7 +801,7 @@ public:
 
 #ifdef _MS_WINDOWS
     /// <summary>
-    /// Sets the body of the message to contain a utf8 string. If the 'Content-Type'
+            /// Sets the body of the message to contain a UTF-8 string. If the 'Content-Type'
     /// header hasn't already been set it will be set to 'text/plain; charset=utf-8'.
     /// </summary>
     /// <param name="body_text">String containing body text as a UTF-8 string.</param>
@@ -838,6 +863,8 @@ public:
     /// sent.
     /// </summary>
     /// <param name="stream">A readable, open asynchronous stream.</param>
+            /// <param name="content_length">The size of the data to be sent in the body.</param>
+            /// <param name="content_type">A string holding the MIME type of the message body.</param>
     /// <remarks>
     /// This cannot be used in conjunction with any other means of setting the body of the request.
     /// The stream will not be read until the message is sent.
@@ -857,7 +884,7 @@ public:
     /// stream, but it is advisable to do so, since it will allow the network I/O to start earlier
     /// and the work of sending data can be overlapped with the production of more data.
     /// </remarks>
-    concurrency::streams::istream body()
+    concurrency::streams::istream body() const
     {
         return  _m_impl->instream();
     }
@@ -865,8 +892,8 @@ public:
     /// <summary>
     /// Signals the user (client) when all the data for this response message has been received.
     /// </summary>
-    /// <returns>Returns a task which is completed when all of the response body has been received</returns>
-    pplx::task<http::http_response> content_ready() 
+            /// <returns>A <c>task</c> which is completed when all of the response body has been received.</returns>
+    pplx::task<http::http_response> content_ready() const
     {
         auto impl = _get_impl();
         return pplx::create_task(impl->_get_data_available()).then([impl](size_t) -> http_response { return http_response(impl); });
@@ -876,13 +903,13 @@ public:
     /// Gets the error code of the response. This is used for errors other than HTTP status codes.
     /// </summary>
     /// <returns>The error code.</returns>
-    unsigned long error_code() const { return _m_impl->error_code(); } 
+    unsigned long error_code() const { return _m_impl->error_code(); }
 
     /// <summary>
     /// Sets the error code of the response. This is used for errors other than HTTP status codes.
     /// </summary>
     /// <param name="code">The error code</param>
-    void set_error_code(unsigned long code) { _m_impl->set_error_code(code); }
+    void set_error_code(unsigned long code) const { _m_impl->set_error_code(code); }
 
     std::shared_ptr<http::details::_http_response> _get_impl() const { return _m_impl; }
 
@@ -964,7 +991,7 @@ private:
     pplx::task<void> _reply_impl(http_response response);
 
     // Tracks whether or not a response has already been started for this message.
-    pplx::atomic_long m_initiated_response;
+    pplx::details::atomic_long m_initiated_response;
 
     http::method m_method;
 
@@ -1030,7 +1057,7 @@ public:
     /// <summary>
     /// Get the method (GET/PUT/POST/DELETE) of the request message.
     /// </summary>
-    /// <returns>Request method of this HTTP request.</returns>
+            /// <param name="method">Request method of this HTTP request.</param>
     void set_method(http::method method) const { _m_impl->method() = std::move(method); }
 
     /// <summary>
@@ -1057,7 +1084,7 @@ public:
     uri relative_uri() const { return _m_impl->relative_uri(); }
 
     /// <summary>
-    /// Get a reference to the headers of the response message.
+    /// Gets a reference to the headers of the response message.
     /// </summary>
     /// <returns>HTTP headers for this response.</returns>
     /// <remarks>
@@ -1078,11 +1105,11 @@ public:
     }
 
     /// <summary>
-    /// Extract the body of the request message into a json value, checking that the content type is application\json.
+    /// Extracts the body of the request message into a json value, checking that the content type is application\json.
     /// A body can only be extracted once because in some cases an optimization is made where the data is 'moved' out.
     /// </summary>
     /// <returns>JSON value from the body of this message.</returns>
-    pplx::task<json::value> extract_json() 
+    pplx::task<json::value> extract_json() const
     {
         auto impl = _m_impl;
         return pplx::create_task(_m_impl->_get_data_available()).then([impl](size_t) { return impl->_extract_json(); });
@@ -1092,14 +1119,14 @@ public:
     /// Extract the body of the response message into a vector of bytes. Extracting a vector can be done on 
     /// </summary>
     /// <returns>The body of the message as a vector of bytes.</returns>
-    pplx::task<std::vector<unsigned char>> extract_vector() 
+    pplx::task<std::vector<unsigned char>> extract_vector() const
     {
         auto impl = _m_impl;
         return pplx::create_task(_m_impl->_get_data_available()).then([impl](size_t) { return impl->_extract_vector(); });
     }
 
     /// <summary>
-    /// Set the body of the message to a textual string and set the "Content-Type" header. Assumes
+    /// Sets the body of the message to a textual string and set the "Content-Type" header. Assumes
     /// the character encoding of the string is the OS's default code page and will perform appropriate
     /// conversions to UTF-8.
     /// </summary>
@@ -1108,7 +1135,7 @@ public:
     /// <remarks>
     /// This will overwrite any previously set body data and "Content-Type" header.
     /// </remarks>
-    void set_body(const utility::string_t &body_text, utility::string_t content_type = utility::string_t(U("text/plain"))) 
+    void set_body(const utility::string_t &body_text, utility::string_t content_type = utility::string_t(U("text/plain")))
     { 
         if(content_type.find(U("charset=")) != content_type.npos)
         {
@@ -1123,7 +1150,7 @@ public:
 
 #ifdef _MS_WINDOWS
     /// <summary>
-    /// Sets the body of the message to contain a utf8 string. If the 'Content-Type'
+            /// Sets the body of the message to contain a UTF-8 string. If the 'Content-Type'
     /// header hasn't already been set it will be set to 'text/plain; charset=utf-8'.
     /// </summary>
     /// <param name="body_text">String containing body text as a UTF-8 string.</param>
@@ -1185,6 +1212,8 @@ public:
     /// sent.
     /// </summary>
     /// <param name="stream">A readable, open asynchronous stream.</param>
+            /// <param name="content_length">The size of the data to be sent in the body.</param>
+            /// <param name="content_type">A string holding the MIME type of the message body.</param>
     /// <remarks>
     /// This cannot be used in conjunction with any other means of setting the body of the request.
     /// The stream will not be read until the message is sent.
@@ -1204,9 +1233,9 @@ public:
     /// stream, but it is advisable to do so, since it will allow the network I/O to start earlier
     /// and the work of sending data can be overlapped with the production of more data.
     /// </remarks>
-    concurrency::streams::istream body()
+    concurrency::streams::istream body() const
     {
-        return  _m_impl->instream();
+        return _m_impl->instream();
     }
 
     /// <summary>
@@ -1228,14 +1257,14 @@ public:
     /// </summary>
     /// <param name="response">Response to send.</param>
     /// <returns>An asynchronous operation that is completed once response is sent.</returns>
-    pplx::task<void> reply(http_response response) { return _m_impl->reply(response); }
+    pplx::task<void> reply(http_response response) const { return _m_impl->reply(response); }
 
     /// <summary>
     /// Asynchronously responses to this HTTP request.
     /// </summary>
     /// <param name="status">Response status code.</param>
     /// <returns>An asynchronous operation that is completed once response is sent.</returns>
-    pplx::task<void> reply(http::status_code status) 
+    pplx::task<void> reply(http::status_code status) const
     { 
         return reply(http_response(status)); 
     }
@@ -1246,7 +1275,7 @@ public:
     /// <param name="status">Response status code.</param>
     /// <param name="body_data">Json value to use in the response body.</param>
     /// <returns>An asynchronous operation that is completed once response is sent.</returns>
-    pplx::task<void> reply(http::status_code status, const json::value &body_data)
+    pplx::task<void> reply(http::status_code status, const json::value &body_data) const
     {
         http_response response(status);
         response.set_body(body_data);
@@ -1266,8 +1295,8 @@ public:
     /// need to block waiting for the response to be sent to before the body data is destroyed or goes
     /// out of scope.
     /// </remarks>
-    pplx::task<void> reply(http::status_code status, utility::string_t body_data, utility::string_t content_type = U("text/plain")) 
-    { 
+    pplx::task<void> reply(http::status_code status, utility::string_t body_data, utility::string_t content_type = U("text/plain")) const
+    {
         http_response response(status);
         response.set_body(body_data, content_type);
         return reply(response);  
@@ -1280,7 +1309,7 @@ public:
     /// <param name="content_type">A string holding the MIME type of the message body.</param>
     /// <param name="body">An asynchronous stream representing the body data.</param>
     /// <returns>A task that is completed once a response from the request is received.</returns>
-    pplx::task<void> reply(status_code status, concurrency::streams::istream body, utility::string_t content_type = U("application/octet-stream"))
+    pplx::task<void> reply(status_code status, concurrency::streams::istream body, utility::string_t content_type = U("application/octet-stream")) const
     {
         http_response response(status);
         response.set_body(body, content_type);
@@ -1291,10 +1320,11 @@ public:
     /// Responses to this HTTP request.
     /// </summary>
     /// <param name="status">Response status code.</param>
+            /// <param name="content_length">The size of the data to be sent in the body..</param>
     /// <param name="content_type">A string holding the MIME type of the message body.</param>
     /// <param name="body">An asynchronous stream representing the body data.</param>
     /// <returns>A task that is completed once a response from the request is received.</returns>
-    pplx::task<void> reply(status_code status, concurrency::streams::istream body, size_t content_length, utility::string_t content_type= U("application/octet-stream"))
+    pplx::task<void> reply(status_code status, concurrency::streams::istream body, size_t content_length, utility::string_t content_type= U("application/octet-stream")) const
     {
         http_response response(status);
         response.set_body(body, content_length, content_type);
@@ -1304,30 +1334,30 @@ public:
     /// <summary>
     /// Signals the user (client) when all the data for this request message has been received.
     /// </summary>
-    /// <returns>Returns a task which is completed when all of the response body has been received</returns>
-    pplx::task<http_request> content_ready() 
+            /// <returns>A <c>task</c> which is completed when all of the response body has been received</returns>
+    pplx::task<http_request> content_ready() const
     {
         auto impl = _get_impl();
         return pplx::create_task(_m_impl->_get_data_available()).then([impl](size_t) { return http_request(impl); });
     }
 
     /// <summary>
-    /// Get a task representing the response that will eventually be sent.
+    /// Gets a task representing the response that will eventually be sent.
     /// </summary>
     /// <returns>A task that is completed once response is sent.</returns>
-    pplx::task<http_response> get_response()
+    pplx::task<http_response> get_response() const
     {
         return _m_impl->get_response();
     }
 
     /// <summary>
-    /// Generate a string representation of the message, including the body when possible.
+    /// Generates a string representation of the message, including the body when possible.
     /// </summary>
     /// <returns>A string representation of this HTTP request.</returns>
     utility::string_t to_string() const { return _m_impl->to_string(); }
 
     /// <summary>
-    /// Send a response if one has not already been sent.
+    /// Sends a response if one has not already been sent.
     /// </summary>
     pplx::task<void> _reply_if_not_already(status_code status) { return _m_impl->_reply_if_not_already(status); }
 
@@ -1337,7 +1367,7 @@ public:
     http::details::_http_server_context * _get_server_context() const { return _m_impl->_get_server_context(); }
 
     /// <summary>
-    /// These are used for the initial creation of the http request.
+            /// These are used for the initial creation of the HTTP request.
     /// </summary>
     static http_request _create_request(std::shared_ptr<http::details::_http_server_context> server_context) { return http_request(std::move(server_context)); }
     void _set_server_context(std::shared_ptr<http::details::_http_server_context> server_context) { _m_impl->_set_server_context(std::move(server_context)); }
@@ -1354,9 +1384,9 @@ private:
     http_request(std::shared_ptr<http::details::_http_request> message) : _m_impl(message) {}
 
     /// <summary>
-    /// This constructor overload is only needed because when 'const' functions in _http_request need to log messages (log::post)
-    /// call shared_from_this() then get back a std::shared_ptr<const details::_http_request>. 
-    /// From which we need to create a http_request.
+            /// This constructor overload is only needed when <c>'const'</c> functions in <c>_http_request</c> need to log messages (<c>log::post</c>).
+            /// call <c>shared_from_this()</c> then get back a <c>std::shared_ptr&lt;const details::_http_request&gt;</c>, 
+            /// from which we need to create an <c>http_request</c>.
     /// </summary>
     http_request(std::shared_ptr<const http::details::_http_request> message)
     {
@@ -1376,19 +1406,48 @@ private:
 /// the application and/or libraries. The default stage will interact with lower-level
 /// communication layers to actually send the message on the network. When creating a client
 /// instance, an application may add pipeline stages in front of the already existing
-/// stages. Each stage has a reference to the next stage available in the <seealso cref="http_pipeline_stage::get_next_stage Method"/>
+/// stages. Each stage has a reference to the next stage available in the <seealso cref="http_pipeline_stage::next_stage Method"/>
 /// value.
 /// </remarks>
-class http_pipeline_stage
+class http_pipeline_stage : public std::enable_shared_from_this<http_pipeline_stage>
 {
 public:
+
+    virtual ~http_pipeline_stage()
+    {
+    }
+
+    /// <summary>
+    /// Runs this stage against the given request and passes onto the next stage.
+    /// </summary>
+    /// <param name="request">The HTTP request.</param>
+    /// <returns>A task of the HTTP response.</returns>
     virtual pplx::task<http_response> propagate(http_request request) = 0;
 
 protected:
-    std::shared_ptr<http_pipeline_stage> get_next_stage() const
+
+    http_pipeline_stage()
+    {
+    }
+
+    /// <summary>
+    /// Gets the next stage in the pipeline.
+    /// </summary>
+    /// <returns>A shared pointer to a pipeline stage.</returns>
+    std::shared_ptr<http_pipeline_stage> next_stage() const
     {
         return m_next_stage;
     }
+
+    /// <summary>
+    /// Gets a shared pointer to this pipeline stage.
+    /// </summary>
+    /// <returns>A shared pointer to a pipeline stage.</returns>
+    std::shared_ptr<http_pipeline_stage> current_stage()
+    {
+        return this->shared_from_this();
+    }
+
 private:
     friend class http_pipeline;
 
@@ -1398,36 +1457,70 @@ private:
     }
 
     std::shared_ptr<http_pipeline_stage> m_next_stage;
+
+    // No copy or assignment.
+    http_pipeline_stage & operator=(const http_pipeline_stage &);
+    http_pipeline_stage(const http_pipeline_stage &);
 };
+
+namespace details {
+
+class function_pipeline_wrapper : public http::http_pipeline_stage
+{
+public:
+    function_pipeline_wrapper(std::function<pplx::task<http_response>(http_request, std::shared_ptr<http::http_pipeline_stage>)> handler) : m_handler(handler)
+    {
+    }
+
+    virtual pplx::task<http_response> propagate(http_request request)
+    {
+        return m_handler(request, next_stage());
+    }
+private:
+
+    std::function<pplx::task<http_response>(http_request, std::shared_ptr<http::http_pipeline_stage>)> m_handler;
+};
+
+} // namespace details
 
 class http_pipeline
 {
-protected:
-    http_pipeline() 
+public:
+
+    ~http_pipeline()
     {
+        
+    }
+    /// <summary>
+    /// Create an http pipeline that consists of a linear chain of stages
+    /// </summary>
+    /// <param name="last">The final stage</param>
+    static std::shared_ptr<http_pipeline> create_pipeline(std::shared_ptr<http_pipeline_stage> last)
+    {
+        return std::shared_ptr<http_pipeline>(new http_pipeline(last));
     }
 
-    http_pipeline(std::shared_ptr<http_pipeline_stage> last) : m_last_stage(last) 
-    {
-    }
-
+    /// <summary>
+    /// Initiate an http request into the pipeline
+    /// </summary>
+    /// <param name="request">Http request</param>
     pplx::task<http_response> propagate(http_request request)
     {
         std::shared_ptr<http_pipeline_stage> first;
         {
-            pplx::scoped_recursive_lock l(m_lock);
+            pplx::extensibility::scoped_recursive_lock_t l(m_lock);
             first = (m_stages.size() > 0) ? m_stages[0] : m_last_stage;
         }
         return first->propagate(request);
     }
 
     /// <summary>
-    /// Add an HTTP pipeline stage to the pipeline.
+    /// Adds an HTTP pipeline stage to the pipeline.
     /// </summary>
     /// <param name="stage">A pipeline stage.</param>
     void append(std::shared_ptr<http_pipeline_stage> stage)
     {
-        pplx::scoped_recursive_lock l(m_lock);
+        pplx::extensibility::scoped_recursive_lock_t l(m_lock);
 
         if ( m_stages.size() > 0 )
         {
@@ -1449,26 +1542,13 @@ protected:
         return m_last_stage;
     }
 
-    http_pipeline(const http_pipeline&& other) :
-        m_stages(std::move(other.m_stages)),
-        m_last_stage(std::move(other.m_last_stage))
-    {
-    }
+private:
 
-    http_pipeline &operator=(const http_pipeline &&other)
+    http_pipeline(std::shared_ptr<http_pipeline_stage> last) : m_last_stage(last) 
     {
-        if(this != &other)
-        {
-            m_stages = std::move(other.m_stages);
-            m_last_stage = std::move(other.m_last_stage);
-        }
-        return *this;
     }
 
 private:
-    // No copy or assignment.
-    http_pipeline & operator=(const http_pipeline &);
-    http_pipeline(const http_pipeline &);
 
     // The vector of pipeline stages.
     std::vector<std::shared_ptr<http_pipeline_stage>> m_stages;
@@ -1478,7 +1558,11 @@ private:
     // last stage, which is typically a send or dispatch.
     std::shared_ptr<http_pipeline_stage> m_last_stage;
 
-    pplx::recursive_lock m_lock;
+    pplx::extensibility::recursive_lock_t m_lock;
+
+    // No copy or assignment.
+    http_pipeline & operator=(const http_pipeline &);
+    http_pipeline(const http_pipeline &);
 };
 
 } // namespace http

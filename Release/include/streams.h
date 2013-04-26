@@ -97,6 +97,10 @@ namespace Concurrency { namespace streams
 
         };
 
+		static const char *_in_stream_msg = "stream not set up for input of data";
+		static const char *_in_streambuf_msg = "stream buffer not set up for input of data";
+		static const char *_out_stream_msg = "stream not set up for output of data";
+		static const char *_out_streambuf_msg = "stream buffer not set up for output of data";
     }
 
     template<typename CharType>
@@ -124,45 +128,50 @@ namespace Concurrency { namespace streams
         /// Assignment operator
         /// </summary>
         /// <param name="other">The source object</param>
+        /// <returns>A reference to the stream object that contains the result of the assignment.</returns>
         basic_ostream & operator =(const basic_ostream &other) { m_helper = other.m_helper; return *this; }
 
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="ptr">A stream buffer</param>
+        /// <param name="buffer">A stream buffer.</param>
         basic_ostream(streams::streambuf<CharType> buffer) : 
-            m_helper(std::make_shared<details::basic_ostream_helper<CharType>>(buffer)) 
+            m_helper(std::make_shared<details::basic_ostream_helper<CharType>>(buffer))
 		{
-			_verify_can_write();
+			_verify_and_throw(details::_out_streambuf_msg);
 		}
 
         /// <summary>
         /// Close the stream, preventing further write operations.
         /// </summary>
-        pplx::task<bool> close() const
+        pplx::task<void> close() const
         {
             return is_valid() ?
                 helper()->m_buffer.close(std::ios_base::out) : 
-                pplx::task_from_result(false); 
+                pplx::task_from_result(); 
         }
 
         /// <summary>
         /// Close the stream with exception, preventing further write operations.
         /// </summary>
-        pplx::task<bool> close(std::exception_ptr eptr) const 
+        /// <param name="eptr">Pointer to the exception.</param>
+        pplx::task<void> close(std::exception_ptr eptr) const 
         {
             return is_valid() ? 
                 helper()->m_buffer.close(std::ios_base::out, eptr) : 
-                pplx::task_from_result(false); 
+                pplx::task_from_result(); 
         }
 
         /// <summary>
         /// Put a single character into the stream.
         /// </summary>
         /// <param name="ch">A character</param>
-        pplx::task<int_type> write(CharType ch)const 
+        pplx::task<int_type> write(CharType ch) const
         {
-            return helper()->m_buffer.putc(ch);
+            auto buffer = helper()->m_buffer;
+			pplx::task<int_type> result;
+			if ( !_verify_and_return_task(details::_out_stream_msg, result) ) return result;
+            return buffer.putc(ch);
         }
 
         /// <summary>
@@ -172,13 +181,15 @@ namespace Concurrency { namespace streams
         /// <param name="count">The number of characters to write.</param>
         pplx::task<size_t> write(streams::streambuf<CharType> source, size_t count) const 
         {
-            auto buffer = helper()->m_buffer;
-
-			_verify_can_write();
-
+			pplx::task<size_t> result;
+			if ( !_verify_and_return_task(details::_out_stream_msg, result) ) return result;
 			if ( !source.can_read() )
-				throw std::runtime_error("source buffer not set up for input of data");
+				return pplx::task_from_exception<size_t>(std::make_exception_ptr(std::runtime_error("source buffer not set up for input of data")));
 
+			if (count == 0)
+				return pplx::task_from_result((size_t)0);
+
+            auto buffer = helper()->m_buffer;
             auto data = buffer.alloc(count);
 
             if ( data != nullptr )
@@ -196,7 +207,8 @@ namespace Concurrency { namespace streams
             {
                 size_t available = 0;
 
-                if ( source.acquire(data, available) && available >= count )
+                const bool acquired = source.acquire(data, available);
+                if (available >= count)
                 {
                     auto post_write = 
                         [source,data](pplx::task<size_t> op)-> pplx::task<size_t>
@@ -209,6 +221,12 @@ namespace Concurrency { namespace streams
                 }
                 else
                 {
+                    // Always have to release if acquire returned true.
+                    if(acquired)
+                    {
+                        source.release(data, 0);
+                    }
+
                     std::shared_ptr<CharType> buf(new CharType[count]);
 
                     auto post_write = 
@@ -228,61 +246,81 @@ namespace Concurrency { namespace streams
             }
         }
 
+        /// <summary>
+        /// Write the specified string to the output stream.
+        /// </summary>
+        /// <param name="str">Input string.</param>
         pplx::task<size_t> print(const std::basic_string<CharType>& str) const
         {
+			pplx::task<size_t> result;
+			if ( !_verify_and_return_task(details::_out_stream_msg, result) ) return result;
             return (str.size() == 0) 
                 ? pplx::task_from_result<size_t>((0)) 
-                : streambuf().putn(str.c_str(), str.size());
+                : helper()->m_buffer.putn(str.c_str(), str.size());
         }
 
+        /// <summary>
+        /// Write a value of type <c>T</c> to the output stream.
+        /// </summary>
+        /// <typeparam name="T">
+        /// The data type of the object to be written to the stream
+        /// </typeparam>  
+        /// <param name="val">Input object.</param>
         template<typename T>
         pplx::task<size_t> print(const T& val) const
         {
+			pplx::task<size_t> result;
+			if ( !_verify_and_return_task(details::_out_stream_msg, result) ) return result;
             return print(details::Value2StringFormatter<CharType>::format(val));
         }
 
         /// <summary>
         /// Flush any buffered output data.
         /// </summary>
-        pplx::task<bool> flush() const 
+        pplx::task<void> flush() const 
         {
-			_verify_can_write();
+			pplx::task<void> result;
+			if ( !_verify_and_return_task(details::_out_stream_msg, result) ) return result;
             return helper()->m_buffer.sync();
         }
 
         /// <summary>
-        /// Seek to the specified write position.
+        /// Seeks to the specified write position.
         /// </summary>
         /// <param name="pos">An offset relative to the beginning of the stream.</param>
+        /// <returns>The new position in the stream.</returns>
         pos_type seek(pos_type pos) const 
         {
-			_verify_can_write();
+			_verify_and_throw(details::_out_stream_msg);
             return helper()->m_buffer.seekpos(pos, std::ios_base::out);
         }
 
         /// <summary>
-        /// Seek to the specified write position.
+        /// Seeks to the specified write position.
         /// </summary>
         /// <param name="off">An offset relative to the beginning, current write position, or the end of the stream.</param>
         /// <param name="way">The starting point (beginning, current, end) for the seek.</param>
+        /// <returns>The new position in the stream.</returns>
         pos_type seek(off_type off, std::ios_base::seekdir way) const
         {
-			_verify_can_write();
+			_verify_and_throw(details::_out_stream_msg);
             return helper()->m_buffer.seekoff(off, way, std::ios_base::out);
         }
 
         /// <summary>
         /// Get the current write position, i.e. the offset from the beginning of the stream.
         /// </summary>
+        /// <returns>The current write position.</returns>
         pos_type tell() const
         {
-			_verify_can_write();
-            return helper()->m_buffer.seekoff(0, std::ios_base::cur, std::ios_base::out);
+			_verify_and_throw(details::_out_stream_msg);
+            return helper()->m_buffer.getpos(std::ios_base::out);
         }
 
         /// <summary>
         /// Test whether the stream has been initialized with a valid stream buffer.
         /// </summary>
+        /// <returns><c>true</c> if the stream has been initialized with a valid stream buffer, <c>false</c> otherwise.</returns>
         bool is_valid() const { return (m_helper != nullptr) && ((bool)m_helper->m_buffer); }
 
         /// <summary>
@@ -293,11 +331,13 @@ namespace Concurrency { namespace streams
         /// <summary>
         /// Test whether the stream is open for writing.
         /// </summary>
+        /// <returns><c>true</c> if the stream is open for writing, <c>false</c> otherwise.</returns>
         bool is_open() const { return is_valid() && m_helper->m_buffer.can_write(); }
 
         /// <summary>
         /// Get the underlying stream buffer.
         /// </summary>
+        /// <returns>The underlying stream buffer.</returns>
         concurrency::streams::streambuf<CharType> streambuf() const
         {
             return helper()->m_buffer;
@@ -312,10 +352,30 @@ namespace Concurrency { namespace streams
 
     private:
 
-        void _verify_can_write() const
+		template<typename T>
+		bool _verify_and_return_task(const char *msg, pplx::task<T> &tsk) const
         {
-			if ( !helper()->m_buffer.can_write() )
-				throw std::runtime_error("stream not set up for output of data");
+            auto buffer = helper()->m_buffer;
+            if ( !(buffer.exception() == nullptr) )
+			{
+                tsk = pplx::task_from_exception<T>(buffer.exception());
+				return false;
+			}
+			if ( !buffer.can_write() )
+			{
+				tsk = pplx::task_from_exception<T>(std::make_exception_ptr(std::runtime_error(msg)));
+				return false;
+			}
+			return true;
+		}
+
+		void _verify_and_throw(const char *msg) const
+		{
+            auto buffer = helper()->m_buffer;
+            if ( !(buffer.exception() == nullptr) )
+                std::rethrow_exception(buffer.exception());
+			if ( !buffer.can_write() )
+				throw std::runtime_error(msg);
         }
 
         std::shared_ptr<details::basic_ostream_helper<CharType>> helper() const
@@ -346,9 +406,13 @@ namespace Concurrency { namespace streams
     _INT_TRAIT(short,INT16_MIN,INT16_MAX)
     _INT_TRAIT(utf16char,INT16_MIN,INT16_MAX)
     _INT_TRAIT(int,INT32_MIN,INT32_MAX)
+    _INT_TRAIT(long, LONG_MIN, LONG_MAX)
+    _INT_TRAIT(long long, LLONG_MIN, LLONG_MAX)
     _UINT_TRAIT(unsigned char,UINT8_MIN,UINT8_MAX)
     _UINT_TRAIT(unsigned short,UINT16_MIN,UINT16_MAX)
     _UINT_TRAIT(unsigned int,UINT32_MIN,UINT32_MAX)
+    _UINT_TRAIT(unsigned long, ULONG_MIN, ULONG_MAX)
+    _UINT_TRAIT(unsigned long long, ULLONG_MIN, ULLONG_MAX)
 #else
 #define _INT_TRAIT(_t)  template<> struct _type_parser_integral_traits<_t>{typedef std::true_type _is_integral;typedef std::false_type _is_unsigned;static const int64_t _min = std::numeric_limits<_t>::min();static const int64_t _max = (std::numeric_limits<_t>::max)();};
 #define _UINT_TRAIT(_t) template<> struct _type_parser_integral_traits<_t>{typedef std::true_type _is_integral;typedef std::true_type  _is_unsigned;static const uint64_t _max = (std::numeric_limits<_t>::max)();};
@@ -358,9 +422,13 @@ namespace Concurrency { namespace streams
     _INT_TRAIT(short)
     _INT_TRAIT(utf16char)
     _INT_TRAIT(int)
+    _INT_TRAIT(long)
+    _INT_TRAIT(long long)
     _UINT_TRAIT(unsigned char)
     _UINT_TRAIT(unsigned short)
     _UINT_TRAIT(unsigned int)
+    _UINT_TRAIT(unsigned long)
+    _UINT_TRAIT(unsigned long long)
 #endif
 
     template<typename CharType>
@@ -382,8 +450,12 @@ namespace Concurrency { namespace streams
                                                     std::function<pplx::task<_ReturnType>(std::shared_ptr<_ParseState>)> extract);
     };
 
+    /// <summary>
+    /// Class used to handle asychronous parsing for basic_istream::extract. To support new
+    /// types create a new template specialization and implement the parse function.
+    /// </summary>
     template<typename CharType, typename T>
-    class _type_parser
+    class type_parser
     {
     public:
         static pplx::task<T> parse(streams::streambuf<CharType> buffer)
@@ -413,7 +485,7 @@ namespace Concurrency { namespace streams
 
         static pplx::task<T> _parse(streams::streambuf<CharType> buffer, std::true_type, std::false_type)
         {
-            return _type_parser<CharType,int64_t>::parse(buffer).then(
+            return type_parser<CharType,int64_t>::parse(buffer).then(
                 [] (pplx::task<int64_t> op) -> T
                 {
                     int64_t val = op.get();
@@ -426,7 +498,7 @@ namespace Concurrency { namespace streams
 
         static pplx::task<T> _parse(streams::streambuf<CharType> buffer, std::true_type, std::true_type)
         {
-            return _type_parser<CharType,uint64_t>::parse(buffer).then(
+            return type_parser<CharType,uint64_t>::parse(buffer).then(
                 [] (pplx::task<uint64_t> op) -> T
                 {
                     uint64_t val = op.get();
@@ -459,11 +531,13 @@ namespace Concurrency { namespace streams
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="ptr">A stream buffer</param>
-        basic_istream(streams::streambuf<CharType> buffer) : m_helper(std::make_shared<details::basic_istream_helper<CharType>>(buffer)) 
+        /// <typeparam name="CharType">
+        /// The data type of the basic element of the stream.
+        /// </typeparam>
+        /// <param name="buffer">A stream buffer.</param>
+        basic_istream(streams::streambuf<CharType> buffer) : m_helper(std::make_shared<details::basic_istream_helper<CharType>>(buffer))
         {
-            if ( !buffer.can_read() )
-                throw std::runtime_error("stream buffer not set up for input of data");
+			_verify_and_throw(details::_in_streambuf_msg);
         }
 
         /// <summary>
@@ -476,6 +550,7 @@ namespace Concurrency { namespace streams
         /// Assignment operator
         /// </summary>
         /// <param name="other">The source object</param>
+        /// <returns>A reference to the stream object that contains the result of the assignment.</returns>
         basic_istream & operator =(const basic_istream &other)
         {
             m_helper = other.m_helper; 
@@ -485,26 +560,28 @@ namespace Concurrency { namespace streams
         /// <summary>
         /// Close the stream, preventing further read operations.
         /// </summary>
-        pplx::task<bool> close() const
+        pplx::task<void> close() const
         {
             return is_valid() ?
                 helper()->m_buffer.close(std::ios_base::in) : 
-                pplx::task_from_result(false); 
+                pplx::task_from_result(); 
         }
 
         /// <summary>
         /// Close the stream with exception, preventing further read operations.
         /// </summary>
-        pplx::task<bool> close(std::exception_ptr eptr) const
+        /// <param name="eptr">Pointer to the exception.</param>
+        pplx::task<void> close(std::exception_ptr eptr) const
         {
             return is_valid() ?
                 m_helper->m_buffer.close(std::ios_base::in, eptr) : 
-                pplx::task_from_result(false); 
+                pplx::task_from_result(); 
         }
 
         /// <summary>
         /// Tests whether last read cause the stream reach EOF.
         /// </summary>
+        /// <returns>True if the read head has reached the end of the stream, false otherwise.</returns>
         bool is_eof() const
         {
             return is_valid() ?
@@ -515,24 +592,29 @@ namespace Concurrency { namespace streams
         /// <summary>
         /// Get the next character and return it as an int_type. Advance the read position.
         /// </summary>
-        /// <returns>The character read</returns>
+        /// <returns>A <c>task</c> that holds the next character as an <c>int_type</c> on successful completion.</returns>
         pplx::task<int_type> read() const
         {
-			_verify_can_read();
+			pplx::task<int_type> result;
+			if ( !_verify_and_return_task(details::_in_stream_msg, result) ) return result;
             return helper()->m_buffer.bumpc();
         }
 
         /// <summary>
-        /// Read up to 'count' characters and place into the provided buffer.
+        /// Reads up to <c>count</c> characters and place into the provided buffer.
         /// </summary>
-        /// <param name="str">A block of CharType locations, at least 'count' in size</param>
+        /// <param name="target">An async stream buffer supporting write operations.</param>
         /// <param name="count">The maximum number of characters to read</param>
-        /// <returns>The number of bytes read. EOF if the end of the stream is reached.</returns>
-        pplx::task<size_t> read(streams::streambuf<CharType> target, size_t count) const 
+        /// <returns>A <c>task</c> that holds the number of characters read. This number is 0 if the end of the stream is reached.</returns>
+        pplx::task<size_t> read(streams::streambuf<CharType> target, size_t count) const
         {
-			_verify_can_read();
+			pplx::task<size_t> result;
+			if ( !_verify_and_return_task(details::_in_stream_msg, result) ) return result;
 			if ( !target.can_write() )
-				throw std::runtime_error("target not set up for output of data");
+				return pplx::task_from_exception<size_t>(std::make_exception_ptr(std::runtime_error("target not set up for output of data")));
+
+            // Capture 'buffer' rather than 'helper' here due to VC++ 2010 limitations.
+            auto buffer = helper()->m_buffer;
 
             auto data = target.alloc(count);
 
@@ -545,16 +627,15 @@ namespace Concurrency { namespace streams
                         t.commit(op.get());
                         return op; 
                     };
-                return helper()->m_buffer.getn(data, count).then(post_read);
+                return buffer.getn(data, count).then(post_read);
             }
             else
             {
                 size_t available = 0;
 
-                if ( helper()->m_buffer.acquire(data, available) && available >= count )
+                const bool acquired = buffer.acquire(data, available);
+                if (available >= count)
                 {
-                    auto buffer = m_helper->m_buffer;
-
                     auto post_write = 
                         [buffer,data](pplx::task<size_t> op)-> pplx::task<size_t>
                         {
@@ -566,6 +647,12 @@ namespace Concurrency { namespace streams
                 }
                 else
                 {
+                    // Always have to release if acquire returned true.
+                    if(acquired)
+                    {
+                        buffer.release(data, 0);
+                    }
+
                     std::shared_ptr<CharType> buf(new CharType[count]);
 
                     auto post_write = 
@@ -588,10 +675,12 @@ namespace Concurrency { namespace streams
         /// <summary>
         /// Get the next character and return it as an int_type. Do not advance the read position.
         /// </summary>
-        /// <returns>The character, widened to an integer. EOF if the operation fails.</returns>
+        /// <returns>A <c>task</c> that holds the character, widened to an integer. This character is EOF when the peek operation fails.</returns>
         pplx::task<int_type> peek() const
         {
-			_verify_can_read();
+            auto buffer = helper()->m_buffer;
+			pplx::task<int_type> result;
+			if ( !_verify_and_return_task(details::_in_stream_msg, result) ) return result;
             return helper()->m_buffer.getc();
         }
 
@@ -600,15 +689,17 @@ namespace Concurrency { namespace streams
         /// Proceed past the delimiter, but don't include it in the target buffer.
         /// </summary>
         /// <param name="target">An async stream buffer supporting write operations.</param>
-        /// <returns>The number of bytes read.</returns>
+        /// <param name="delim">The delimiting character to stop the read at.</param>
+        /// <returns>A <c>task</c> that holds the number of characters read.</returns>
         pplx::task<size_t> read_to_delim(streams::streambuf<CharType> target, int_type delim) const
         {
+			pplx::task<size_t> result;
+			if ( !_verify_and_return_task(details::_in_stream_msg, result) ) return result;
+			if ( !target.can_write() )
+				return pplx::task_from_exception<size_t>(std::make_exception_ptr(std::runtime_error("target not set up for output of data")));
+
             // Capture 'buffer' rather than 'helper' here due to VC++ 2010 limitations.
             auto buffer = helper()->m_buffer;
-
-			_verify_can_read();
-			if ( !target.can_write() )
-				throw std::runtime_error("target not set up for receiving data");
 
             int_type req_async = ::concurrency::streams::char_traits<CharType>::requires_async();
 
@@ -647,7 +738,7 @@ namespace Concurrency { namespace streams
                     return true;
                 };
 
-            auto loop = pplx::do_while([=]() mutable -> pplx::task<bool>
+            auto loop = pplx::details::do_while([=]() mutable -> pplx::task<bool>
                 {
                     while ( buffer.in_avail() > 0 )
                     {
@@ -674,15 +765,16 @@ namespace Concurrency { namespace streams
         /// Read until reaching a newline character. The newline is not included in the target.
         /// </summary>
         /// <param name="target">An async stream buffer supporting write operations.</param>
-        /// <returns>The number of bytes read. O if the end of the stream is reached.</returns>
+        /// <returns>A <c>task</c> that holds the number of characters read. This number is 0 if the end of the stream is reached.</returns>
         pplx::task<size_t> read_line(streams::streambuf<CharType> target) const
         {
+			pplx::task<size_t> result;
+			if ( !_verify_and_return_task(details::_in_stream_msg, result) ) return result;
+			if ( !target.can_write() )
+				return pplx::task_from_exception<size_t>(std::make_exception_ptr(std::runtime_error("target not set up for receiving data")));
+
             // Capture 'buffer' rather than 'helper' here due to VC++ 2010 limitations.
             concurrency::streams::streambuf<CharType> buffer = helper()->m_buffer;
-
-			_verify_can_read();
-			if ( !target.can_write() )
-				throw std::runtime_error("target not set up for receiving data");
 
             typename std::char_traits<CharType>::int_type req_async = concurrency::streams::char_traits<CharType>::requires_async();
 
@@ -738,7 +830,7 @@ namespace Concurrency { namespace streams
                     return pplx::task_from_result(false);
                 };
 
-            auto loop = pplx::do_while([=]() mutable -> pplx::task<bool>
+            auto loop = pplx::details::do_while([=]() mutable -> pplx::task<bool>
                 {
                     while ( buffer.in_avail() > 0 )
                     {
@@ -824,21 +916,22 @@ namespace Concurrency { namespace streams
         /// Read until reaching the end of the stream.
         /// </summary>
         /// <param name="target">An async stream buffer supporting write operations.</param>
-        /// <returns>The number of bytes read. O if the end of the stream is reached.</returns>
+        /// <returns>The number of characters read.</returns>
         pplx::task<size_t> read_to_end(streams::streambuf<CharType> target) const
         {
+			pplx::task<size_t> result;
+			if ( !_verify_and_return_task("stream not set up for output of data", result) ) return result;
+			if ( !target.can_write() )
+				return pplx::task_from_exception<size_t>(std::make_exception_ptr(std::runtime_error("source buffer not set up for input of data")));
+
             // Capture 'buffer' rather than 'helper' here due to VC++ 2010 limitations.
             auto buffer = helper()->m_buffer;
-
-			_verify_can_read();
-			if ( !target.can_write() )
-				throw std::runtime_error("target not set up for receiving data");
 
             std::shared_ptr<_read_helper> _locals = std::make_shared<_read_helper>();
 
             _dev10_ice_workaround wrkarnd(buffer, target, _locals, buf_size);
 
-            auto loop = pplx::do_while(wrkarnd);
+            auto loop = pplx::details::do_while(wrkarnd);
 
             return loop.then([=](bool) mutable -> size_t
                 { 
@@ -847,33 +940,36 @@ namespace Concurrency { namespace streams
         }
 
         /// <summary>
-        /// Seek to the specified write position.
+        /// Seeks to the specified write position.
         /// </summary>
         /// <param name="pos">An offset relative to the beginning of the stream.</param>
+        /// <returns>The new position in the stream.</returns>
         pos_type seek(pos_type pos) const
         {
-			_verify_can_read();
+			_verify_and_throw(details::_in_stream_msg);
             return helper()->m_buffer.seekpos(pos, std::ios_base::in);
         }
 
         /// <summary>
-        /// Seek to the specified write position.
+        /// Seeks to the specified write position.
         /// </summary>
         /// <param name="off">An offset relative to the beginning, current write position, or the end of the stream.</param>
         /// <param name="way">The starting point (beginning, current, end) for the seek.</param>
+        /// <returns>The new position in the stream.</returns>
         pos_type seek(off_type off, std::ios_base::seekdir way) const
         {
-			_verify_can_read();
+			_verify_and_throw(details::_in_stream_msg);
             return helper()->m_buffer.seekoff(off, way, std::ios_base::in);
         }
 
         /// <summary>
         /// Get the current write position, i.e. the offset from the beginning of the stream.
         /// </summary>
+        /// <returns>The current write position.</returns>
         pos_type tell() const
         {
-			_verify_can_read();
-            return helper()->m_buffer.seekoff(0, std::ios_base::cur, std::ios_base::in);
+			_verify_and_throw(details::_in_stream_msg);
+            return helper()->m_buffer.getpos(std::ios_base::in);
         }
 
         /// <summary>
@@ -900,27 +996,51 @@ namespace Concurrency { namespace streams
         }
 
         /// <summary>
-        /// Read a value of type T from the stream.
+        /// Read a value of type <c>T</c> from the stream.
         /// </summary>
+        /// <remarks>
+        /// Supports the C++ primitive types. Can be expanded to additional types
+        /// by adding template specializations for <c>type_parser</c>.
+        /// </remarks>
+        /// <typeparam name="T">
+        /// The data type of the element to be read from the stream.
+        /// </typeparam>
+        /// <returns>A <c>task</c> that holds the element read from the stream.</returns>
         template<typename T>
         pplx::task<T> extract() const
         {
-			_verify_can_read();
-            return _type_parser<CharType,T>::parse(helper()->m_buffer);
-        }
-
-    protected:
-        void set_helper(std::shared_ptr<details::basic_istream_helper<CharType>> helper)
-        {
-            m_helper = helper;
+            auto buffer = helper()->m_buffer;
+			pplx::task<T> result;
+			if ( !_verify_and_return_task(details::_in_stream_msg, result) ) return result;
+            return type_parser<CharType,T>::parse(buffer);
         }
 
     private:
 
-        void _verify_can_read() const
+		template<typename T>
+		bool _verify_and_return_task(const char *msg, pplx::task<T> &tsk) const
         {
-			if ( !helper()->m_buffer.can_read() )
-				throw std::runtime_error("stream not set up for input of data");
+            auto buffer = helper()->m_buffer;
+            if ( !(buffer.exception() == nullptr) )
+			{
+                tsk = pplx::task_from_exception<T>(buffer.exception());
+				return false;
+			}
+			if ( !buffer.can_read() )
+			{
+				tsk = pplx::task_from_exception<T>(std::make_exception_ptr(std::runtime_error(msg)));
+				return false;
+			}
+			return true;
+		}
+
+		void _verify_and_throw(const char *msg) const
+		{
+            auto buffer = helper()->m_buffer;
+            if ( !(buffer.exception() == nullptr) )
+                std::rethrow_exception(buffer.exception());
+			if ( !buffer.can_read() )
+				throw std::runtime_error(msg);
         }
 
         std::shared_ptr<details::basic_istream_helper<CharType>> helper() const
@@ -964,18 +1084,19 @@ pplx::task<void> concurrency::streams::_type_parser_base<CharType>::_skip_whites
 {
     int_type req_async = concurrency::streams::char_traits<CharType>::requires_async();
 
-    auto update = [=] (int_type ch) mutable -> bool 
-        { 
-            if (isspace(ch)) 
+    auto update = [=] (int_type ch) mutable -> bool
+        {
+            if (isspace(ch))
             {
-                buffer.sbumpc();
+                if (buffer.sbumpc() == req_async)
+                    buffer.nextc().wait();
                 return true;
             }
 
             return false;
         };
 
-    auto loop = pplx::do_while([=]() mutable -> pplx::task<bool>
+    auto loop = pplx::details::do_while([=]() mutable -> pplx::task<bool>
         {
             while ( buffer.in_avail() > 0 )
             {
@@ -984,8 +1105,9 @@ pplx::task<void> concurrency::streams::_type_parser_base<CharType>::_skip_whites
                 if (  ch == req_async )
                     break;
                         
-                if ( !update(ch) )
+                if ( !update(ch) ) {
                     return pplx::task_from_result(false);
+                }
             }
             return buffer.getc().then(update);
         });
@@ -1051,12 +1173,12 @@ pplx::task<_ReturnType> concurrency::streams::_type_parser_base<CharType>::_pars
         {
             op.wait();
 
-            return pplx::do_while(peek_char).then(finish);
+            return pplx::details::do_while(peek_char).then(finish);
         });
 }
 
 template<typename CharType>
-class _type_parser<CharType,std::basic_string<CharType>> : public _type_parser_base<CharType>
+class type_parser<CharType,std::basic_string<CharType>> : public _type_parser_base<CharType>
 {
     typedef typename _type_parser_base<CharType>::int_type int_type;
 public:
@@ -1078,9 +1200,8 @@ private:
     }
 };
 
-
 template<typename CharType>
-class _type_parser<CharType,int64_t> : public _type_parser_base<CharType>
+class type_parser<CharType,int64_t> : public _type_parser_base<CharType>
 {
 public:
     typedef typename _type_parser_base<CharType>::int_type int_type;
@@ -1153,7 +1274,7 @@ private:
 };
 
 template<typename CharType>
-class _type_parser<CharType,uint64_t> : public _type_parser_base<CharType>
+class type_parser<CharType,uint64_t> : public _type_parser_base<CharType>
 {
 public:
     typedef typename _type_parser_base<CharType>::int_type int_type;
@@ -1192,7 +1313,7 @@ private:
 };
 
 template<typename CharType>
-class _type_parser<CharType,bool> : public _type_parser_base<CharType>
+class type_parser<CharType,bool> : public _type_parser_base<CharType>
 {
 public:
     typedef typename _type_parser_base<CharType>::int_type int_type;
@@ -1264,7 +1385,7 @@ private:
 };
 
 template<typename CharType>
-class _type_parser<CharType,signed char> : public _type_parser_base<CharType>
+class type_parser<CharType,signed char> : public _type_parser_base<CharType>
 {
     typedef typename concurrency::streams::streambuf<CharType>::int_type int_type;
 public:
@@ -1274,7 +1395,7 @@ public:
             [=](pplx::task<void> op) -> pplx::task<signed char>
             {
                 op.wait();
-                return _type_parser<CharType,signed char>::_get_char(buffer);
+                return type_parser<CharType,signed char>::_get_char(buffer);
             });
     }
 private:
@@ -1293,7 +1414,7 @@ private:
 };
 
 template<typename CharType>
-class _type_parser<CharType,unsigned char> : public _type_parser_base<CharType>
+class type_parser<CharType,unsigned char> : public _type_parser_base<CharType>
 {
     typedef typename concurrency::streams::streambuf<CharType>::int_type int_type;
 public:
@@ -1303,7 +1424,7 @@ public:
             [=](pplx::task<void> op) -> pplx::task<unsigned char>
             {
                 op.wait();
-                return _type_parser<CharType,unsigned char>::_get_char(buffer);
+                return type_parser<CharType,unsigned char>::_get_char(buffer);
             });
     }
 private:
@@ -1322,7 +1443,7 @@ private:
 };
 
 template<typename CharType>
-class _type_parser<CharType,char> : public _type_parser_base<CharType>
+class type_parser<CharType,char> : public _type_parser_base<CharType>
 {
     typedef typename concurrency::streams::streambuf<CharType>::int_type int_type;
 public:
@@ -1352,7 +1473,7 @@ private:
 
 #ifdef _MS_WINDOWS
 template<>
-class _type_parser<char,std::basic_string<wchar_t>> : public _type_parser_base<char>
+class type_parser<char,std::basic_string<wchar_t>> : public _type_parser_base<char>
 {
 public:
     static pplx::task<std::wstring> parse(streams::streambuf<char> buffer)
@@ -1374,7 +1495,7 @@ private:
 };
 
 template<>
-class _type_parser<signed char,std::basic_string<wchar_t>> : public _type_parser_base<signed char>
+class type_parser<signed char,std::basic_string<wchar_t>> : public _type_parser_base<signed char>
 {
 public:
     static pplx::task<std::wstring> parse(streams::streambuf<signed char> buffer)
@@ -1396,7 +1517,7 @@ private:
 };
 
 template<>
-class _type_parser<unsigned char,std::basic_string<wchar_t>> : public _type_parser_base<unsigned char>
+class type_parser<unsigned char,std::basic_string<wchar_t>> : public _type_parser_base<unsigned char>
 {
 public:
     static pplx::task<std::wstring> parse(streams::streambuf<unsigned char> buffer)

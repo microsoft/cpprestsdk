@@ -1,10 +1,13 @@
-<Project DefaultTargets="CheckVSTargetVersion;Build;Report" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="CheckVSTargetVersion;MakeZip;Build;Report" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
+        <Target Name="MakeZip">
+		    <MSBuild Projects="$(CollateralsDir)\MakeZip\MakeZip.proj"/>
+        </Target>
         <Target Name="CheckVSTargetVersion">
             <Message Text="Checking VSTargetVersion..."/>
             <Error
-                Text="Error: you must set the VSTargetVersion property. Either build with '/p:VSTargetVersion=XX' command line option (where XX is either 10 or 11) or use other project files"
-                Condition="(('$(VSTargetVersion)' != '10') AND ('$(VSTargetVersion)' != '11'))" />
+                Text="Error: you must set the VSTargetVersion property. Either build with '/p:VSTargetVersion=XX' command line option (where XX is either 10, 11, or 12) or use other project files"
+                Condition="(('$(VSTargetVersion)' != '10') AND ('$(VSTargetVersion)' != '11') AND ('$(VSTargetVersion)' != '12'))" />
         </Target>
 		
 		<Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Common.Build.settings" />
@@ -14,16 +17,16 @@
                 <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
                 <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
                 <!-- Change this for new release: -->
-                <ProductVersion>0.6</ProductVersion>
+                <ProductVersion>1.0</ProductVersion>
                 <SchemaVersion>2.0</SchemaVersion>
                 <OutputType>Package</OutputType>
                 <WixTargetsPath Condition=" '$(WixTargetsPath)' == '' ">Wix.targets</WixTargetsPath>
                 <DefineSolutionProperties>false</DefineSolutionProperties>
         </PropertyGroup>
-		
+
         <PropertyGroup>
           <DefineConstants>
-            $(DefineConstants);VSTargetVersion=$(VSTargetVersion);SetupDir=$(SetupDir);VSEdition=$(VSEdition);VCProjectDir=$(VCProjectDir);ProductVersion=$(ProductVersion)
+            $(DefineConstants);VSTargetVersion=$(VSTargetVersion);SetupDir=$(SetupDir);VCProjectDir=$(VCProjectDir);ProductVersion=$(ProductVersion)
           </DefineConstants>
         </PropertyGroup>
 
@@ -82,6 +85,5 @@
             <Name>WixUtilExtension</Name>
           </WixExtension>
         </ItemGroup>
-
         <Import Project="$(WixTargetsPath)" />
 </Project>

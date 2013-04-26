@@ -2,22 +2,19 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
   <?if $(var.VSTargetVersion) = 10 ?>
     <?include VS10\guiddefs.wxi ?>
-    <?define VSTargetLong = "Visual Studio 2010" ?>
     <?define VSTargetShort = "VS 2010" ?>
     <?define FileSuffix = "100" ?>
     <?define SDK_RegKeyName = "100" ?>
-  <?else ?>
+  <?elseif $(var.VSTargetVersion) = 11 ?>
     <?include VS11\guiddefs.wxi ?>
-    <?if $(var.VSEdition) = "VSWinExpress" ?>
-      <?define VSTargetLong = "Visual Studio 2012 Express for Windows 8" ?>
-    <?elseif $(var.VSEdition) = "WDExpress" ?>
-      <?define VSTargetLong = "Visual Studio 2012 Express for Windows Desktop" ?>
-    <?else?>
-      <?define VSTargetLong = "Visual Studio 2012" ?>
-    <?endif?>
     <?define VSTargetShort = "VS 2012" ?>
     <?define FileSuffix = "110" ?>
     <?define SDK_RegKeyName = "110" ?>
+  <?elseif $(var.VSTargetVersion) = 12 ?>
+    <?include VS12\guiddefs.wxi ?>
+    <?define VSTargetShort = "VS Next" ?>
+    <?define FileSuffix = "120" ?>
+    <?define SDK_RegKeyName = "120" ?>
   <?endif ?>
 
   <!-- last GUID used:
@@ -40,7 +37,7 @@
 
       <?define SDK_casablanca_inc_src = "$(var.SetupDir)\..\Include" ?>
 
-      <!-- Path to the files that are not signed -->
+    <!-- Path to the files that are not signed -->
       <?define SDK_bin_root = "$(var.OutDir)\..\.." ?>
       <?define SDK_bin_x86r_src_nosig = "$(var.SDK_bin_root)\Win32\Release" ?>
       <?define SDK_bin_x86d_src_nosig = "$(var.SDK_bin_root)\Win32\Debug" ?>
@@ -112,31 +109,22 @@
       <?define SDK_lib_x64d_src = "$(var.SDK_bin_root)\x64\Debug" ?>
       
       <?define Collateral_src = "$(var.SetupDir)\..\Collateral\MakeZip" ?>
-      <?if $(var.VSTargetVersion) > 10 ?>
+      <?if $(var.VSTargetVersion) != 10 ?>
         <?define SDK_pdb_armr_src = "$(var.SDK_bin_root)\ARM\Release" ?>
         <?define SDK_lib_armr_src = "$(var.SDK_bin_root)\ARM\Release" ?>
         <?define SDK_pdb_armd_src = "$(var.SDK_bin_root)\arm\Debug" ?>
         <?define SDK_lib_armd_src = "$(var.SDK_bin_root)\arm\Debug" ?>
       <?endif ?>
 
-      <Property Id="VSLAUNCHER" >
-          <DirectorySearch Path="[ProgramFilesFolder]\Common Files\Microsoft Shared\MSEnv" Depth="4" Id="FindVSLauncher">
-              <FileSearch Name="VSLauncher.exe" />
-          </DirectorySearch>
-      </Property>
-
       <Property Id="VS_ROOT">
         <RegistrySearch Id="VS_root_folder"
                         Root="HKCU"
-                        Key="Software\Microsoft\$(var.VSEdition)\$(var.VSTargetVersion).0_Config"
+                        Key="Software\Microsoft\VisualStudio\$(var.VSTargetVersion).0_Config"
                  Name="ShellFolder" Type="directory" />
       </Property>
 
       <!-- Conditions for install -->
 
-      <Condition Message="This version of C++ REST SDK requires $(var.VSTargetLong) to be installed!">
-        <![CDATA[Installed OR VS_ROOT]]>
-      </Condition>
       <!-- Vista or later -->
       <Condition Message="C++ REST SDK requires Vista or later.">
         <![CDATA[Installed OR (VersionNT >= 600)]]>
@@ -159,6 +147,7 @@
                 <Directory Id="Debugger" Name="Debugger">
                   <Directory Id="Visualizers" Name="Visualizers">
                     <Component Id="type_visualizers" DiskId="1" Guid="$(var.GUID038)">
+                      <Condition>VS_ROOT</Condition>
                       <File Id="File_Casablanca.natvis" Name="Casablanca.natvis" Source="$(var.SetupDir)\Casablanca.natvis" />
                     </Component>
                   </Directory>
@@ -171,7 +160,7 @@
         <Directory Id="ProgramFilesFolder" Name="PFILES">
         
           <!-- Only install Metro SDK on Dev11 if Win8 is installed-->
-          <?if $(var.VSTargetVersion) > 10 ?>
+          <?if $(var.VSTargetVersion) != 10 ?>
           <Directory Id="Microsoft_SDKs" Name="Microsoft SDKs">
             <Directory Id="Windows" Name="Windows">
               <Directory Id="v8.0" Name="v8.0">
@@ -186,7 +175,7 @@
                         <Directory Id="Debug01" Name="Debug">
                           <Directory Id="x8601" Name="x86">
                             <Component Id="props_01" DiskId="1" Guid="$(var.GUID017)">
-                              <File Id="File_CppRESTWindowsSDK.props_01" Name="CppRESTWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\x86\CppRESTWindowsSDK.props" />
+                              <File Id="File_CppRESTWindowsSDK.props_01" Name="CppRESTWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\$(var.FileSuffix)\x86\CppRESTWindowsSDK.props" />
                               <Condition>(VersionNT >= 602)</Condition>
                             </Component>
                           </Directory>
@@ -194,7 +183,7 @@
                         <Directory Id="Retail01" Name="Retail">
                           <Directory Id="x8602" Name="x86">
                             <Component Id="props_02" DiskId="1" Guid="$(var.GUID018)">
-                              <File Id="File_CppRESTWindowsSDK.props_02" Name="CppRESTWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\x86\CppRESTWindowsSDK.props" />
+                              <File Id="File_CppRESTWindowsSDK.props_02" Name="CppRESTWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\$(var.FileSuffix)\x86\CppRESTWindowsSDK.props" />
                               <Condition>(VersionNT >= 602)</Condition>
                             </Component>
                           </Directory>
@@ -202,7 +191,7 @@
                         <Directory Id="Debug02" Name="Debug">
                           <Directory Id="x6401" Name="x64">
                             <Component Id="props_03" DiskId="1" Guid="$(var.GUID019)">
-                              <File Id="File_CppRESTWindowsSDK.props_03" Name="CppRESTWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\x64\CppRESTWindowsSDK.props" />
+                              <File Id="File_CppRESTWindowsSDK.props_03" Name="CppRESTWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\$(var.FileSuffix)\x64\CppRESTWindowsSDK.props" />
                               <Condition>(VersionNT >= 602)</Condition>
                             </Component>
                           </Directory>
@@ -210,7 +199,7 @@
                         <Directory Id="Retail02" Name="Retail">
                           <Directory Id="x6402" Name="x64">
                             <Component Id="props_04" DiskId="1" Guid="$(var.GUID020)">
-                              <File Id="File_CppRESTWindowsSDK.props_04" Name="CppRESTWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\x64\CppRESTWindowsSDK.props" />
+                              <File Id="File_CppRESTWindowsSDK.props_04" Name="CppRESTWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\$(var.FileSuffix)\x64\CppRESTWindowsSDK.props" />
                               <Condition>(VersionNT >= 602)</Condition>
                             </Component>
                           </Directory>
@@ -219,7 +208,7 @@
                         <Directory Id="Debug04" Name="Debug">
                           <Directory Id="arm01" Name="arm">
                             <Component Id="props_05" DiskId="1" Guid="$(var.GUID041)">
-                              <File Id="File_CppRESTWindowsSDK.props_05" Name="CppRESTWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\arm\CppRESTWindowsSDK.props" />
+                              <File Id="File_CppRESTWindowsSDK.props_05" Name="CppRESTWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\$(var.FileSuffix)\arm\CppRESTWindowsSDK.props" />
                               <Condition>(VersionNT >= 602)</Condition>
                             </Component>
                           </Directory>
@@ -227,7 +216,7 @@
                         <Directory Id="Retail04" Name="Retail">
                           <Directory Id="arm02" Name="arm">
                             <Component Id="props_06" DiskId="1" Guid="$(var.GUID042)">
-                              <File Id="File_CppRESTWindowsSDK.props_06" Name="CppRESTWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\arm\CppRESTWindowsSDK.props" />
+                              <File Id="File_CppRESTWindowsSDK.props_06" Name="CppRESTWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\$(var.FileSuffix)\arm\CppRESTWindowsSDK.props" />
                               <Condition>(VersionNT >= 602)</Condition>
                             </Component>
                           </Directory>
@@ -323,13 +312,11 @@
                 <Component Id="SDK_inc_items" DiskId="1" Guid="$(var.GUID026)">
                   <!-- pplx headers: -->
                   <File Id="File_pplx.h"               Name="pplx.h"                 Source="$(var.SDK_casablanca_inc_src)\pplx.h" />
-                  <File Id="File_pplxatomics.h"        Name="pplxatomics.h"          Source="$(var.SDK_casablanca_inc_src)\pplxatomics.h" />
                   <File Id="File_pplxconv.h"           Name="pplxconv.h"             Source="$(var.SDK_casablanca_inc_src)\pplxconv.h" />
                   <File Id="File_pplxwin.h"            Name="pplxwin.h"              Source="$(var.SDK_casablanca_inc_src)\pplxwin.h" />
-                  <File Id="File_pplxdefs.h"           Name="pplxdefs.h"             Source="$(var.SDK_casablanca_inc_src)\pplxdefs.h" />
                   <File Id="File_pplxinterface.h"      Name="pplxinterface.h"        Source="$(var.SDK_casablanca_inc_src)\pplxinterface.h" />
                   <File Id="File_pplxtasks.h"          Name="pplxtasks.h"            Source="$(var.SDK_casablanca_inc_src)\pplxtasks.h" />
-                  <File Id="File_cancellation_token.h" Name="cancellation_token.h"   Source="$(var.SDK_casablanca_inc_src)\cancellation_token.h" />
+                  <File Id="File_pplxcancellation_token.h" Name="pplxcancellation_token.h"   Source="$(var.SDK_casablanca_inc_src)\pplxcancellation_token.h" />
                   <!-- casablanca headers: -->
                   <File Id="File_streams.h"                   Name="streams.h"          Source="$(var.SDK_casablanca_inc_src)\streams.h" />
                   <File Id="File_astreambuf.h"                Name="astreambuf.h"       Source="$(var.SDK_casablanca_inc_src)\astreambuf.h" />
@@ -389,7 +376,7 @@
                   <Directory Id="SDK_lib_x86r" Name="Release" FileSource="$(var.TargetDir)">
                     <Component Id="SDK_lib_x86r_items" DiskId="1" Guid="$(var.GUID027)">
                       <File Id="File_x86r_casablanca$(var.FileSuffix).lib"  Name="casablanca$(var.FileSuffix).lib"    Source="$(var.SDK_lib_x86r_src)\casablanca$(var.FileSuffix).lib" />
-                      <?if $(var.VSTargetVersion) > 10 ?>
+                      <?if $(var.VSTargetVersion) != 10 ?>
                         <File Id="File_x86r_casablanca$(var.FileSuffix)_winrt.lib"   Name="casablanca$(var.FileSuffix).winrt.lib"   Source="$(var.SDK_lib_x86r_src)\casablanca$(var.FileSuffix).winrt\casablanca$(var.FileSuffix).winrt.lib" />
                       <?endif ?>
                     </Component>
@@ -397,7 +384,7 @@
                   <Directory Id="SDK_lib_x86d" Name="Debug" FileSource="$(var.TargetDir)">
                     <Component Id="SDK_lib_x86d_items" DiskId="1" Guid="$(var.GUID036)">
                       <File Id="File_x86d_casablanca$(var.FileSuffix).lib"  Name="casablanca$(var.FileSuffix).lib"    Source="$(var.SDK_lib_x86d_src)\\casablanca$(var.FileSuffix).lib" />
-                      <?if $(var.VSTargetVersion) > 10 ?>
+                      <?if $(var.VSTargetVersion) != 10 ?>
                         <File Id="File_x86d_casablanca$(var.FileSuffix)_winrt.lib"   Name="casablanca$(var.FileSuffix).winrt.lib"   Source="$(var.SDK_lib_x86d_src)\casablanca$(var.FileSuffix).winrt\casablanca$(var.FileSuffix).winrt.lib" />
                       <?endif ?>
                     </Component>
@@ -407,7 +394,7 @@
                   <Directory Id="SDK_lib_x64r" Name="Release" FileSource="$(var.TargetDir)">
                     <Component Id="SDK_lib_x64r_items" DiskId="1" Guid="$(var.GUID028)">
                       <File Id="File_x64r_casablanca$(var.FileSuffix).lib"  Name="casablanca$(var.FileSuffix).lib"    Source="$(var.SDK_lib_x64r_src)\casablanca$(var.FileSuffix).lib" />
-                      <?if $(var.VSTargetVersion) > 10 ?>
+                      <?if $(var.VSTargetVersion) != 10 ?>
                         <File Id="File_x64r_casablanca$(var.FileSuffix)_winrt.lib"   Name="casablanca$(var.FileSuffix).winrt.lib"   Source="$(var.SDK_lib_x64r_src)\casablanca$(var.FileSuffix).winrt\casablanca$(var.FileSuffix).winrt.lib" />
                       <?endif ?>
                     </Component>
@@ -415,14 +402,14 @@
                   <Directory Id="SDK_lib_x64d" Name="Debug" FileSource="$(var.TargetDir)">
                     <Component Id="SDK_lib_x64d_items" DiskId="1" Guid="$(var.GUID037)">
                       <File Id="File_x64d_casablanca$(var.FileSuffix).lib"  Name="casablanca$(var.FileSuffix).lib"    Source="$(var.SDK_lib_x64d_src)\casablanca$(var.FileSuffix).lib" />
-                      <?if $(var.VSTargetVersion) > 10 ?>
+                      <?if $(var.VSTargetVersion) != 10 ?>
                         <File Id="File_x64d_casablanca$(var.FileSuffix)_winrt.lib"   Name="casablanca$(var.FileSuffix).winrt.lib"   Source="$(var.SDK_lib_x64d_src)\casablanca$(var.FileSuffix).winrt\casablanca$(var.FileSuffix).winrt.lib" />
                       <?endif ?>
                     </Component>
                   </Directory>
                 </Directory>
                 <!-- Only install ARM SDK for VS11 /-->
-                <?if $(var.VSTargetVersion) > 10 ?>
+                <?if $(var.VSTargetVersion) != 10 ?>
                 <Directory Id="SDK_lib_arm" Name="arm" FileSource="$(var.TargetDir)">
                   <Directory Id="SDK_lib_armr" Name="Release" FileSource="$(var.TargetDir)">
                     <Component Id="SDK_lib_armr_items" DiskId="1" Guid="$(var.GUID045)">
@@ -453,7 +440,7 @@
         <ComponentRef Id="SDK_lib_x86d_items" Primary="yes" />
         <ComponentRef Id="SDK_lib_x64d_items" Primary="yes" />
         <!-- Only install ARM SDK for VS11 /-->
-        <?if $(var.VSTargetVersion) > 10 ?>
+        <?if $(var.VSTargetVersion) != 10 ?>
           <ComponentRef Id="SDK_lib_armr_items" Primary="yes" />
           <ComponentRef Id="SDK_lib_armd_items" Primary="yes" />
         <?endif?>
@@ -466,7 +453,7 @@
         <ComponentRef Id="x64_dll_d" Primary="yes" />
         <ComponentRef Id="x86_dll_r" Primary="yes" />
         <ComponentRef Id="x64_dll_r" Primary="yes" />
-        <?if $(var.VSTargetVersion) > 10 ?>
+        <?if $(var.VSTargetVersion) != 10 ?>
           <ComponentRef Id="WinRTSDK" Primary="yes" />
           <ComponentRef Id="props_01" Primary="yes" />
           <ComponentRef Id="props_02" Primary="yes" />

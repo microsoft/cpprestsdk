@@ -23,9 +23,9 @@
 
 #include "stdafx.h"
 
-pplx::atomic_long s_flag;
+pplx::details::atomic_long s_flag;
 
-pplx::scheduler& get_pplx_dflt_scheduler();
+pplx::scheduler_interface& get_pplx_dflt_scheduler();
 
 namespace tests { namespace functional { namespace pplx_tests {
 
@@ -100,10 +100,10 @@ TEST(task_from_event_is_done)
     pplx::task_completion_event<long> tce;
     auto val = pplx::create_task(tce);
 
-    pplx::atomic_long v(0);
+    pplx::details::atomic_long v(0);
 
     auto t = val.then(
-        [&](long x) { pplx::atomic_exchange(v, x); });
+        [&](long x) { pplx::details::atomic_exchange(v, x); });
 
     // The task should not have started yet.
     bool isDone = t.is_done();
@@ -132,10 +132,10 @@ TEST(task_from_event_with_exception)
     pplx::task_completion_event<long> tce;
     auto val = pplx::create_task(tce);
 
-    pplx::atomic_long v(0);
+    pplx::details::atomic_long v(0);
 
     auto t = val.then(
-        [&](long x) { pplx::atomic_exchange(v, x); });
+        [&](long x) { pplx::details::atomic_exchange(v, x); });
 
     // Start the task
     tce.set_exception(pplx::invalid_operation());
@@ -167,20 +167,20 @@ TEST(task_from_event_with_exception)
 
 TEST(schedule_task_hold_then_release)
 {
-    pplx::atomic_long flag(0);
+    pplx::details::atomic_long flag(0);
 
     pplx::task<void> t1([&flag]() {
         while (flag == 0);
     });
 
-    pplx::atomic_exchange(flag, 1L);
+    pplx::details::atomic_exchange(flag, 1L);
     t1.wait();
 }
 
 // TFS # 521911
 TEST(schedule_two_tasks)
 {
-    pplx::atomic_exchange(s_flag, 0L);
+    pplx::details::atomic_exchange(s_flag, 0L);
 
     auto nowork = [](){};
 
@@ -203,7 +203,7 @@ TEST(schedule_two_tasks)
 
 TEST(task_throws_exception)
 {
-    pplx::notification_event ev;
+    pplx::extensibility::event_t ev;
     bool caught = false;
 
     // Ensure that exceptions thrown from user lambda
@@ -293,18 +293,18 @@ TEST(BugRepro370010)
     auto f = new fcc_370010(result_tce);
 
     pplx::task<void> dummy([f]()
-	{
+    {
         f->on_closed(true);
     });
 
     auto result = pplx::task<bool>(result_tce);
 
-	VERIFY_IS_TRUE(result.get());
+    VERIFY_IS_TRUE(result.get());
 }
 
 TEST(event_set_reset_timeout)
 {
-    pplx::notification_event ev;
+    pplx::extensibility::event_t ev;
 
     ev.set();
 
@@ -316,14 +316,18 @@ TEST(event_set_reset_timeout)
 
     ev.reset();
 
+#if defined(_MSC_VER) && (_MSC_VER >= 1800)
+    VERIFY_IS_TRUE(ev.wait(0) == Concurrency::COOPERATIVE_WAIT_TIMEOUT);
+#else
     // wait should fail as the event is reset (not set)
-    VERIFY_IS_TRUE(ev.wait(0) == pplx::notification_event::timeout_infinite);
+    VERIFY_IS_TRUE(ev.wait(0) == pplx::extensibility::event_t::timeout_infinite);
+#endif
 }
 
 struct TimerCallbackContext
 {
-    pplx::timer_t simpleTimer;
-    pplx::notification_event ev;
+    pplx::details::timer_t simpleTimer;
+    pplx::extensibility::event_t ev;
     volatile long count;
 
     static void __cdecl TimerCallback(void * context)

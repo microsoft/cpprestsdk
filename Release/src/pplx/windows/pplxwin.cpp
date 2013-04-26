@@ -24,6 +24,11 @@
 ****/
 
 #include "stdafx.h"
+
+#if defined(_MSC_VER) && (_MSC_VER >= 1800)
+#error This file must not be compiled for Visual Studio 12 or later
+#endif
+
 #include "pplxwin.h"
 
 #ifndef _MS_WINDOWS
@@ -34,26 +39,50 @@
 #pragma warning (disable : 26165 26110)
 namespace pplx 
 { 
-
-namespace platform
-{
-    long GetCurrentThreadId()
-    {
-        return (long)(::GetCurrentThreadId());
-    }
-
-    void YieldExecution()
-    {
-        YieldProcessor();
-    }
-}
-
 namespace details
 {
+	namespace platform
+	{
+		_PPLXIMP long __cdecl GetCurrentThreadId()
+		{
+			return (long)(::GetCurrentThreadId());
+		}
+
+		_PPLXIMP void __cdecl YieldExecution()
+		{
+			YieldProcessor();
+		}
+
+		_PPLXIMP size_t __cdecl CaptureCallstack(void **stackData, size_t skipFrames, size_t captureFrames)
+		{
+			(stackData);
+			(skipFrames);
+			(captureFrames);
+
+			size_t capturedFrames = 0;
+			// RtlCaptureSTackBackTrace is not available in MSDK, so we only call it under Desktop or _DEBUG MSDK.
+			//  For MSDK unsupported version, we will return zero frame number.
+#if !defined(__cplusplus_winrt)
+			capturedFrames = RtlCaptureStackBackTrace(static_cast<DWORD>(skipFrames + 1), static_cast<DWORD>(captureFrames), stackData, nullptr);
+#endif
+			return capturedFrames;
+		}
+
+#if defined(__cplusplus_winrt)
+		volatile long s_asyncId = 0;
+
+		_PPLXIMP unsigned int __cdecl GetNextAsyncId()
+		{
+			return static_cast<unsigned int>(_InterlockedIncrement(&s_asyncId));
+		}
+
+#endif // defined(__cplusplus_winrt)
+	}
+
     //
     // Event implementation
     //
-    event_impl::event_impl()
+    _PPLXIMP event_impl::event_impl()
     {
         static_assert(sizeof(HANDLE) <= sizeof(_M_impl), "HANDLE version mismatch");
 
@@ -65,26 +94,26 @@ namespace details
         }
     }
 
-    event_impl::~event_impl()
+    _PPLXIMP event_impl::~event_impl()
     {
         CloseHandle(static_cast<HANDLE>(_M_impl));
     }
 
-    void event_impl::set()
+    _PPLXIMP void event_impl::set()
     {
         SetEvent(static_cast<HANDLE>(_M_impl));
     }
 
-    void event_impl::reset()
+    _PPLXIMP void event_impl::reset()
     {
         ResetEvent(static_cast<HANDLE>(_M_impl));
     }
 
-    unsigned int event_impl::wait(unsigned int timeout)
+    _PPLXIMP unsigned int event_impl::wait(unsigned int timeout)
     {
         DWORD waitTime = (timeout == event_impl::timeout_infinite) ?  INFINITE : (DWORD)timeout;
         DWORD status = WaitForSingleObjectEx(static_cast<HANDLE>(_M_impl), waitTime, 0);
-        _PPLX_ASSERT((status == WAIT_OBJECT_0) || (waitTime != INFINITE));
+        _ASSERTE((status == WAIT_OBJECT_0) || (waitTime != INFINITE));
 
         return (status == WAIT_OBJECT_0) ? 0 : event_impl::timeout_infinite;
     }
@@ -93,23 +122,23 @@ namespace details
     // critical_section implementation
     //
     // TFS# 612702 -- this implementation is unnecessariliy recursive. See bug for details.
-    critical_section_impl::critical_section_impl()
+    _PPLXIMP critical_section_impl::critical_section_impl()
     {
         static_assert(sizeof(CRITICAL_SECTION) <= sizeof(_M_impl), "CRITICAL_SECTION version mismatch");
         InitializeCriticalSectionEx(reinterpret_cast<LPCRITICAL_SECTION>(&_M_impl), 0, 0);
     }
 
-    critical_section_impl::~critical_section_impl() 
+    _PPLXIMP critical_section_impl::~critical_section_impl() 
     {
         DeleteCriticalSection(reinterpret_cast<LPCRITICAL_SECTION>(&_M_impl));
     }
 
-    void critical_section_impl::lock()
+    _PPLXIMP void critical_section_impl::lock()
     {
         EnterCriticalSection(reinterpret_cast<LPCRITICAL_SECTION>(&_M_impl));
     }
 
-    void critical_section_impl::unlock()
+    _PPLXIMP void critical_section_impl::unlock()
     {
         LeaveCriticalSection(reinterpret_cast<LPCRITICAL_SECTION>(&_M_impl));
     }
@@ -117,25 +146,25 @@ namespace details
     //
     // reader_writer_lock implementation
     //
-    reader_writer_lock_impl::reader_writer_lock_impl()
+    _PPLXIMP reader_writer_lock_impl::reader_writer_lock_impl()
     : m_locked_exclusive(false)
     {
         static_assert(sizeof(SRWLOCK) <= sizeof(_M_impl), "SRWLOCK version mismatch");
         InitializeSRWLock(reinterpret_cast<PSRWLOCK>(&_M_impl));
     }
 
-    void reader_writer_lock_impl::lock()
+    _PPLXIMP void reader_writer_lock_impl::lock()
     {
         AcquireSRWLockExclusive(reinterpret_cast<PSRWLOCK>(&_M_impl));
         m_locked_exclusive = true;
     }
 
-    void reader_writer_lock_impl::lock_read()
+    _PPLXIMP void reader_writer_lock_impl::lock_read()
     {
         AcquireSRWLockShared(reinterpret_cast<PSRWLOCK>(&_M_impl));
     }
 
-    void reader_writer_lock_impl::unlock()
+    _PPLXIMP void reader_writer_lock_impl::unlock()
     {
         if(m_locked_exclusive)
         {
@@ -154,7 +183,7 @@ namespace details
     class windows_timer : public timer_impl::_Timer_interface
     {
     public:
-        windows_timer(TaskProc userFunc, _In_ void * context)
+        windows_timer(TaskProc_t userFunc, _In_ void * context)
             : m_userFunc(userFunc), m_userContext(context)
         {
         }
@@ -224,18 +253,18 @@ namespace details
     #else
         HANDLE m_hTimer;
     #endif
-        TaskProc m_userFunc;
+        TaskProc_t m_userFunc;
         void * m_userContext;
     };
 
-    void timer_impl::start(unsigned int ms, bool repeat, TaskProc userFunc, _In_ void * context)
+    _PPLXIMP void timer_impl::start(unsigned int ms, bool repeat, TaskProc_t userFunc, _In_ void * context)
     {
-        _PPLX_ASSERT(m_timerImpl == nullptr);
+        _ASSERTE(m_timerImpl == nullptr);
         m_timerImpl = new windows_timer(userFunc, context);
         m_timerImpl->start(ms, repeat);
     }
 
-    void timer_impl::stop(bool waitForCallbacks)
+    _PPLXIMP void timer_impl::stop(bool waitForCallbacks)
     {
         if (m_timerImpl != nullptr)
         {
@@ -249,7 +278,7 @@ namespace details
     //
 #if defined(__cplusplus_winrt)
 
-    void windows_scheduler::schedule( TaskProc proc, _In_ void* param)
+    _PPLXIMP void windows_scheduler::schedule( TaskProc_t proc, _In_ void* param)
     {
         auto workItemHandler = ref new Windows::System::Threading::WorkItemHandler([proc, param](Windows::Foundation::IAsyncAction ^ )
         {
@@ -262,10 +291,10 @@ namespace details
 
     struct _Scheduler_Param
     {
-        TaskProc m_proc;
+        TaskProc_t m_proc;
         void * m_param;
 
-        _Scheduler_Param(TaskProc proc, _In_ void * param)
+        _Scheduler_Param(TaskProc_t proc, _In_ void * param)
             : m_proc(proc), m_param(param)
         {
         }
@@ -280,7 +309,7 @@ namespace details
         }
     };
 
-    void windows_scheduler::schedule( TaskProc proc, _In_ void* param)
+    _PPLXIMP void windows_scheduler::schedule( TaskProc_t proc, _In_ void* param)
     {
         auto schedulerParam = new _Scheduler_Param(proc, param);
         auto work = CreateThreadpoolWork(_Scheduler_Param::DefaultWorkCallback, schedulerParam, NULL);

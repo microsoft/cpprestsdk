@@ -33,7 +33,14 @@
 
 #include "xxpublic.h"
 #include "http_msg.h"
+
+#if defined(_MSC_VER) && (_MSC_VER >= 1800)
+#include <ppltasks.h>
+namespace pplx = Concurrency;
+#else 
 #include "pplxtasks.h"
+#endif
+
 #include "json.h"
 #include "uri.h"
 #include "basic_types.h"
@@ -43,25 +50,6 @@ namespace web { namespace http
 {
 namespace client
 {
-namespace details {
-
-class function_pipeline_wrapper : public http::http_pipeline_stage
-{
-public:
-    function_pipeline_wrapper(std::function<pplx::task<http_response>(http_request, std::shared_ptr<http::http_pipeline_stage>)> handler) : m_handler(handler)
-    {
-    }
-
-    virtual pplx::task<http_response> propagate(http_request request)
-    {
-        return m_handler(request, get_next_stage());
-    }
-private:
-
-    std::function<pplx::task<http_response>(http_request, std::shared_ptr<http::http_pipeline_stage>)> m_handler;
-};
-
-} // namespace details
 
 /// <summary>
 /// credentials represents a set of user credentials (username and password) to be used
@@ -135,7 +123,8 @@ class http_client_config
 public:
     http_client_config() : 
         m_guarantee_order(false),
-        m_timeout(utility::seconds(30)) 
+        m_timeout(utility::seconds(30)),
+		m_chunksize(64 * 1024)
     {
     }
 
@@ -211,18 +200,37 @@ public:
         m_timeout = timeout;
     }
 
+    /// <summary>
+    /// Get the client chunk size
+    /// </summary>
+    /// <returns>The internal buffer size used by the http client when sending and receiving data from the network.</returns>
+    size_t chunksize() const
+    {
+        return m_chunksize;
+    }
+
+    /// <summary>
+    /// Get the client chunk size
+    /// </summary>
+    /// <param name="size">The internal buffer size used by the http client when sending and receiving data from the network.</param>
+    void set_chunksize(size_t size)
+    {
+        m_chunksize = size;
+    }
+
 private:
     web_proxy m_proxy;
     http::client::credentials m_credentials;
     // Whether or not to guarantee ordering, i.e. only using one underlying TCP connection.
     bool m_guarantee_order;
     utility::seconds m_timeout;
+	size_t m_chunksize;
 };
 
 /// <summary>
 /// HTTP client class, used to maintain a connection to an HTTP service for an extended session.
 /// </summary>
-class http_client : public http_pipeline
+class http_client
 {
 public:
     /// <summary>
@@ -235,17 +243,8 @@ public:
     /// Creates a new http_client connected to specified uri.
     /// </summary>
     /// <param name="base_uri">A string representation of the base uri to be used for all requests. Must start with either "http://" or "https://"</param>
+            /// <param name="client_config">The http client configuration object containing the possible configuration options to intitialize the <c>http_client</c>. </param>
     _ASYNCRTIMP http_client(const uri &base_uri, const http_client_config& client_config);
-
-    /// <summary>
-    /// Move constructor.
-    /// </summary>
-    _ASYNCRTIMP http_client(const http_client &&other);
-
-    /// <summary>
-    /// Move assignment operator.
-    /// </summary>
-    _ASYNCRTIMP http_client &operator=(const http_client &&other);
 
     /// <summary>
     /// Note the destructor doesn't necessarily close the connection and release resources.
@@ -259,9 +258,17 @@ public:
     /// <param name="handler">A function object representing the pipeline stage.</param>
     void add_handler(std::function<pplx::task<http_response>(http_request, std::shared_ptr<http::http_pipeline_stage>)> handler)
     {
-        auto hndlr = std::make_shared<details::function_pipeline_wrapper>(handler);
-        append(hndlr);
+        m_pipeline->append(std::make_shared<::web::http::details::function_pipeline_wrapper>(handler));
     }
+
+	/// <summary>
+	/// Add an HTTP pipeline stage to the client.
+	/// </summary>
+	/// <param name="stage">A shared pointer to a pipeline stage.</param>
+	void add_handler(std::shared_ptr<http::http_pipeline_stage> stage)
+	{
+		m_pipeline->append(stage);
+	}
 
     /// <summary>
     /// Asynchronously sends an HTTP request.
@@ -379,9 +386,9 @@ public:
 
 private:
 
-    // No copy or assignment.
-    http_client & operator=(const http_client &);
-    http_client(const http_client &);
+    void build_pipeline(const uri &base_uri, const http_client_config& client_config);
+
+    std::shared_ptr<::web::http::http_pipeline> m_pipeline;
 };
 
 } // namespace client

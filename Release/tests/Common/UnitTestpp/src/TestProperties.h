@@ -47,7 +47,15 @@ namespace UnitTest
 
         void Add(const std::string &key, const std::string &value)
         {
-            m_properties[key] = value;
+            if( !Has( key ) )
+            {
+                m_properties[key] = value;
+            } 
+            else 
+            {
+                m_properties[key] += ";";
+                m_properties[key] += value;
+            }
         }
 
         bool Has(const std::string &key) const

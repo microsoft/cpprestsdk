@@ -25,7 +25,13 @@
 
 #pragma once
 
-#include "pplx.h"
+#if defined(_MSC_VER) && (_MSC_VER >= 1800)
+#include <ppltasks.h>
+namespace pplx = Concurrency;
+#else 
+#include "pplxtasks.h"
+#endif
+
 #include "xxpublic.h"
 #include "basic_types.h"
 #include <string>
@@ -113,7 +119,7 @@ namespace conversions
     _ASYNCRTIMP utf16string __cdecl to_utf16string(const utf16string &value);
 
     /// <summary>
-    /// Decode to utf8 from either a narrow or wide string
+    /// Decode to UTF-8 from either a narrow or wide string.
     /// </summary>
     _ASYNCRTIMP std::string __cdecl to_utf8string(const std::string &value);
     _ASYNCRTIMP std::string __cdecl to_utf8string(const utf16string &value);
@@ -138,7 +144,7 @@ namespace conversions
     _ASYNCRTIMP std::string __cdecl from_base64_str(const std::string& str);
 
     /// <summary>
-    /// Given char type T, convert a string or a wstring to a basic_string<T> 
+    /// Given char type <c>T</c>, convert a <c>string</c> or a <c>wstring</c> to a <c>basic_string&lt;T&gt;</c>.
     /// </summary>
     template <typename CharType>
     struct to_basic_string
@@ -155,7 +161,7 @@ namespace conversions
     };
 
     /// <summary>
-    /// Given char type T, convert a string or a wstring to a basic_string<T> 
+    /// Given char type <c>T</c>, convert a <c>string</c> or a <c>wstring</c> to a <c>basic_string&lt;T&gt;</c>. 
     /// </summary>
     template <>
     struct to_basic_string<char>
@@ -232,7 +238,7 @@ public:
 
     _ASYNCRTIMP virtual std::string message(int errorCode) const;
 
-    _ASYNCRTIMP std::error_condition default_error_condition(int errorCode) const;
+    _ASYNCRTIMP virtual std::error_condition default_error_condition(int errorCode) const;
 };
 
 /// <summary>
@@ -289,7 +295,7 @@ public:
     typedef uint64_t interval_type;
 
     /// <summary>
-    /// Defines the supported date / time string formats.
+    /// Defines the supported date and time string formats.
     /// </summary>
     enum date_format { RFC_1123, ISO_8601 };
 
@@ -303,19 +309,19 @@ public:
     }
 
     /// <summary>
-    /// Creates datetime from a string representing time in UTC in RFC 1123 format.
+    /// Creates <c>datetime</c> from a string representing time in UTC in RFC 1123 format.
     /// </summary>
     static _ASYNCRTIMP datetime __cdecl from_string(const utility::string_t& timestring, date_format format = RFC_1123);
 
     /// <summary>
-    /// Returns a string representation of the datetime.
+    /// Returns a string representation of the <c>datetime</c>.
     /// </summary>
     _ASYNCRTIMP utility::string_t to_string(date_format format = RFC_1123) const;
 
     /// <summary>
     /// Returns the integral time value.
     /// </summary>
-    interval_type to_interval()
+    interval_type to_interval() const
     {
         return m_interval;
     }

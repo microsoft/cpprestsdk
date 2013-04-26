@@ -2,7 +2,6 @@
   <PropertyGroup>
     <VSTargetVersion>10</VSTargetVersion>
     <OutputName>Casablanca_setup100</OutputName>
-    <VSEdition>VisualStudio</VSEdition>
     <VCProjectDir>VCprojects</VCProjectDir>
   </PropertyGroup>
   <Import Project="..\CasablancaSetup.wixproj" />

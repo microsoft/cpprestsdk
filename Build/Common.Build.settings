@@ -9,7 +9,7 @@
     </MSBuildAllProjects>
   </PropertyGroup>
 
-  <!-- default configuration -->
+  <!-- defualt configuration -->
   <PropertyGroup>
     <Configuration Condition="'$(Configuration)'==''">Debug</Configuration>
     <Platform Condition="'$(Platform)'==''">Win32</Platform>
@@ -21,20 +21,29 @@
     <TargetsPath>$(BuildRoot)\Build</TargetsPath>
     <OsVersion>$(registry:HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion@CurrentVersion)</OsVersion>
     <!--If Dev10 and Dev11 are both installed, the default is to build Dev11. This can be overridden by setting the DevToolsVersion variable in powershell-->
+	<DevToolsVersion Condition="'$(DevToolsVersion)' == '' And '$(VS120COMNTOOLS)' != ''">120</DevToolsVersion>
     <DevToolsVersion Condition="'$(DevToolsVersion)' == '' And '$(VS110COMNTOOLS)' != ''">110</DevToolsVersion>
     <DevToolsVersion Condition="'$(DevToolsVersion)' == '' And '$(VS100COMNTOOLS)' != ''">100</DevToolsVersion>
+    <!-- ARM tools are installed in $(FrameworkSdkDir)\DesignTime\CommonConfiguration\Neutral\Windows.desktop.arm.props -->
+    <FrameworkSdkDir Condition="'$(FrameworkSdkDir)'==''">$(WindowsSdkDir)</FrameworkSdkDir>
+	<WindowsSDKDesktopARMSupport Condition="'$(DevToolsVersion)'=='120' AND Exists('$(FrameworkSdkDir)\DesignTime\CommonConfiguration\Neutral\Windows.desktop.arm.props')" >true</WindowsSDKDesktopARMSupport>
+    <WindowsSDKDesktopARMSupport Condition="'$(DevToolsVersion)'=='110' AND Exists('$(FrameworkSdkDir)\DesignTime\CommonConfiguration\Neutral\Windows.desktop.arm.props')" >true</WindowsSDKDesktopARMSupport>
+    <WindowsSDKDesktopARMSupport Condition="'$(DevToolsVersion)'=='110' AND !Exists('$(FrameworkSdkDir)\DesignTime\CommonConfiguration\Neutral\Windows.desktop.arm.props')">false</WindowsSDKDesktopARMSupport>
   </PropertyGroup>
 
 
-  <!-- paths can be overriden by configuration -->
+  <!-- paths can be overridden by configuration -->
   <PropertyGroup>
-    <OutputPath>$(BuildRoot)\Binaries\$(Platform)\$(Configuration)\</OutputPath>
-	<OutDir>$(OutputPath)</OutDir>
+    <OutputPath Condition="'$(OutputPath)' == ''">$(BuildRoot)\Binaries\$(Platform)\$(Configuration)\</OutputPath>
+    <!-- $(Configuration) below is added to place Debug/Release Casablanca bits into different folders when compiled in razzle.
+         It does not affect NativeCloud build, because environment.casablanca.settings overrides OutDir unconditionally -->
+    <OutDir>$(OutputPath)$(Configuration)</OutDir>
     <MSBuildCommunityTasksPath Condition="'$(MSBuildCommunityTasksPath)'==''">$(BuildRoot)\Build\MSBuild.Community.Tasks</MSBuildCommunityTasksPath>
     <WixToolPath Condition="'$(WixToolPath)'==''">$(BuildRoot)\Build\Wix\3.6\</WixToolPath>
     <WixExtDir Condition="'$(WixExtDir)'==''">$(WixToolPath)</WixExtDir>
     <TestRoot>$(BuildRoot)\Release\Tests</TestRoot>
     <CasablancaSrcDir>$(BuildRoot)\Release\src</CasablancaSrcDir>
+    <CasablancaResourceDir>$(BuildRoot)\Release\Resource</CasablancaResourceDir>
     <CasablancaIncludeDir>$(BuildRoot)\Release\include</CasablancaIncludeDir>
     <CollateralsDir>$(BuildRoot)\Release\Collateral</CollateralsDir>
   </PropertyGroup>
@@ -42,12 +51,13 @@
   <!-- try locating configuration file -->
   <Import Condition="Exists('$(BuildRoot)\..\Build\environment.casablanca.settings')" Project="$(BuildRoot)\..\Build\environment.casablanca.settings"/>
   
-  <!-- paths will not be overriden -->
+  <!-- paths will not be overridden -->
   <PropertyGroup>
     <OutDir Condition="'$(OutDir)' != '' and !HasTrailingSlash('$(OutDir)')">$(OutDir)\</OutDir>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(DevToolsVersion)' == '100'">    <PlatformToolset>v100</PlatformToolset>
+  <PropertyGroup Condition="'$(DevToolsVersion)' == '100'">
+    <PlatformToolset>v100</PlatformToolset>
     <DevEnvDir>$(VS100COMNTOOLS)..\IDE</DevEnvDir>
   </PropertyGroup>
 
@@ -65,7 +75,6 @@
     <LuxTargetsPath>$(WixToolPath)Lux.targets</LuxTargetsPath>
     <LuxTasksPath >$(WixToolPath)LuxTasks.dll</LuxTasksPath>
 
-
     <!--For C#:-->
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <!-- RunCodeAnalysis, false by default, is set true as necessary from the msbuild command line. -->
@@ -82,7 +91,6 @@
     <WholeProgramOptimization Condition="'$(WholeProgramOptimization)'=='' And '$(Configuration)'=='Debug'">false</WholeProgramOptimization>
     <WholeProgramOptimization Condition="'$(WholeProgramOptimization)'=='' And '$(Configuration)'!='Debug'">true</WholeProgramOptimization>
   </PropertyGroup>
-
 
   <ItemDefinitionGroup>
     <ClCompile>

@@ -277,6 +277,13 @@ TEST(array_construction)
     VERIFY_THROWS(arr4ref[17], json::json_exception);
 }
 
+// This must not compile on Windows, since the ctor is defined private:
+/*
+TEST(json_from_string)
+{
+    json::value strValue = json::value("str");
+}
+*/
 } // SUITE(construction_tests)
 
 }}}

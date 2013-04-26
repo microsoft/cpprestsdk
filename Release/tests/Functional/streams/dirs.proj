@@ -14,6 +14,14 @@
       <ProjectFile Include="VS11.winrt\streams110_test.winrt.vcxproj" />
   </ItemGroup>
   
+  <ItemGroup Condition="'$(DevToolsVersion)'=='120'">
+      <ProjectFile Include="VS12\streams120_test.vcxproj" />
+  </ItemGroup>
+  
+  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.2|120' or '$(OsVersion)|$(DevToolsVersion)'=='6.3|120'">
+      <ProjectFile Include="VS12.winrt\streams120_test.winrt.vcxproj" />
+  </ItemGroup>
+  
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
 
 </Project>

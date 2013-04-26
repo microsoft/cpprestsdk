@@ -23,16 +23,46 @@
 
 #include "stdafx.h"
 
-class TaskOptionsTestScheduler : public pplx::scheduler
+#if _MSC_VER >= 1800
+// Dev12 doesn't have an in-box ambient scheduler, since all tasks execute on ConcRT.
+// Therefore, we need to provide one. A scheduler that directly executes a functor given to it is
+// a simple and valid implementation of a PPL scheduler
+class direct_executor : public pplx::scheduler_interface
 {
 public:
-    TaskOptionsTestScheduler() : m_scheduler(pplx::get_ambient_scheduler()), m_numTasks(0)
+    virtual void schedule( concurrency::TaskProc_t proc, _In_ void* param)
+    {
+        proc(param);
+    }
+};
+
+static std::shared_ptr<pplx::scheduler_interface> g_executor;
+std::shared_ptr<pplx::scheduler_interface> __cdecl get_scheduler()
+{
+    if ( !g_executor)
+    {
+        g_executor = std::make_shared<direct_executor>();
+    }
+
+    return g_executor;
+}
+#else
+std::shared_ptr<pplx::scheduler_interface> __cdecl get_scheduler()
+{
+    return pplx::get_ambient_scheduler();
+}
+#endif
+
+class TaskOptionsTestScheduler : public pplx::scheduler_interface
+{
+public:
+    TaskOptionsTestScheduler() : m_scheduler(get_scheduler()), m_numTasks(0)
     {
     }
 
-    virtual void schedule(pplx::TaskProc proc, void* param)
+    virtual void schedule(pplx::TaskProc_t proc, void* param)
     {
-        pplx::atomic_increment(m_numTasks);
+        pplx::details::atomic_increment(m_numTasks);
         m_scheduler->schedule(proc, param);
     }
 
@@ -43,18 +73,20 @@ public:
 
 private:
 
-    pplx::atomic_long m_numTasks;
+    pplx::details::atomic_long m_numTasks;
     pplx::scheduler_ptr m_scheduler;
 
-	TaskOptionsTestScheduler(const TaskOptionsTestScheduler &);
-	TaskOptionsTestScheduler & operator=(const TaskOptionsTestScheduler &);
+    TaskOptionsTestScheduler(const TaskOptionsTestScheduler &);
+    TaskOptionsTestScheduler & operator=(const TaskOptionsTestScheduler &);
 };
 
-class CheckLifetimeScheduler : public pplx::scheduler
+#pragma warning(push)
+#pragma warning(disable : 4512)
+class CheckLifetimeScheduler : public pplx::scheduler_interface
 {
 public:
 
-    CheckLifetimeScheduler(pplx::notification_event& ev)
+    CheckLifetimeScheduler(pplx::extensibility::event_t& ev)
         : m_event(ev), m_numTasks(0)
     {
     }
@@ -64,10 +96,10 @@ public:
         m_event.set();
     }
 
-    virtual void schedule(pplx::TaskProc proc, void* param)
+    virtual void schedule(pplx::TaskProc_t proc, void* param)
     {
-		pplx::atomic_increment(m_numTasks);
-        pplx::get_ambient_scheduler()->schedule(proc, param);
+        pplx::details::atomic_increment(m_numTasks);
+        get_scheduler()->schedule(proc, param);
     }
 
     long get_num_tasks()
@@ -75,9 +107,10 @@ public:
         return m_numTasks;
     }
 
-    pplx::notification_event& m_event;
-	pplx::atomic_long m_numTasks;
+    pplx::extensibility::event_t& m_event;
+	pplx::details::atomic_long m_numTasks;
 };
+#pragma warning(pop)
 
 namespace tests { namespace functional { namespace PPLX {
 
@@ -370,7 +403,7 @@ TEST(fromresult_options_test)
 
 TEST(scheduler_lifetime)
 {
-    pplx::notification_event ev;
+    pplx::extensibility::event_t ev;
     {
         auto sched = std::make_shared<CheckLifetimeScheduler>(ev);
 
@@ -386,7 +419,7 @@ TEST(scheduler_lifetime)
 
 TEST(scheduler_lifetime_mixed)
 {
-    pplx::notification_event ev;
+    pplx::extensibility::event_t ev;
     auto t = pplx::create_task([](){}); // use default scheduler
     {
         auto sched = std::make_shared<CheckLifetimeScheduler>(ev);
@@ -403,7 +436,7 @@ TEST(scheduler_lifetime_mixed)
 
 TEST(scheduler_lifetime_nested)
 {
-    pplx::notification_event ev;
+    pplx::extensibility::event_t ev;
     auto t = pplx::create_task([](){}); // use default scheduler
     {
         auto sched = std::make_shared<CheckLifetimeScheduler>(ev);

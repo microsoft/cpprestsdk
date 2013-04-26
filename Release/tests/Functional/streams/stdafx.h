@@ -31,8 +31,14 @@
 #include <stdio.h>
 #include <time.h>
 
-#include "asyncrt_utils.h"
+#if defined(_MSC_VER) && (_MSC_VER >= 1800)
+#include <ppltasks.h>
+namespace pplx = Concurrency;
+#else 
 #include "pplxtasks.h"
+#endif
+
+#include "asyncrt_utils.h"
 #include "producerconsumerstream.h"
 #include "rawptrstream.h"
 #include "containerstream.h"

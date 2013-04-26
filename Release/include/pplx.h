@@ -28,16 +28,37 @@
 #ifndef _PPLX_H
 #define _PPLX_H
 
-#include "pplxdefs.h"
-#include <functional>
+#if (defined(_MSC_VER) && (_MSC_VER >= 1800)) 
+#error This file must not be included for Visual Studio 12 or later
+#endif
 
+#ifndef _MS_WINDOWS
+#if defined(WIN32) || defined(__cplusplus_winrt)
+#define _MS_WINDOWS
+#endif
+#endif // _MS_WINDOWS
+
+#ifdef _PPLX_EXPORT
+#define _PPLXIMP __declspec(dllexport)
+#else
+#define _PPLXIMP __declspec(dllimport)
+#endif
+
+// Use PPLx
 #ifdef _MS_WINDOWS
 #include <windows_compat.h>
 #include "pplxwin.h"
 #else
 #include <linux_compat.h>
 #include "pplxlinux.h"
-#endif
+#endif // _MS_WINDOWS
+
+// Common implementation across all the non-concrt versions
+#include "pplxcancellation_token.h"
+#include <functional>
+
+// conditional expression is constant
+#pragma warning(disable: 4127)
 
 #pragma pack(push,_CRT_PACKING)
 
@@ -52,45 +73,12 @@ namespace pplx
 /// <summary>
 /// Sets the ambient scheduler to be used by the PPL constructs.
 /// </summary>
-_PPLXIMP void __cdecl set_ambient_scheduler(std::shared_ptr< ::pplx::scheduler> _Scheduler);
+_PPLXIMP void __cdecl set_ambient_scheduler(std::shared_ptr<pplx::scheduler_interface> _Scheduler);
 
 /// <summary>
 /// Gets the ambient scheduler to be used by the PPL constructs
 /// </summary>
-_PPLXIMP std::shared_ptr< ::pplx::scheduler> __cdecl get_ambient_scheduler();
-
-/// <summary>
-///     Describes the execution status of a <c>task_group</c> or <c>structured_task_group</c> object.  A value of this type is returned
-///     by numerous methods that wait on tasks scheduled to a task group to complete.
-/// </summary>
-/// <seealso cref="task_group Class"/>
-/// <seealso cref="task_group::wait Method"/>
-/// <seealso cref="task_group::run_and_wait Method"/>
-/// <seealso cref="structured_task_group Class"/>
-/// <seealso cref="structured_task_group::wait Method"/>
-/// <seealso cref="structured_task_group::run_and_wait Method"/>
-/**/
-enum task_group_status
-{
-    /// <summary>
-    ///     The tasks queued to the <c>task_group</c> object have not completed.  Note that this value is not presently returned by
-    ///     the Concurrency Runtime.
-    /// </summary>
-    /**/
-    not_complete,
-
-    /// <summary>
-    ///     The tasks queued to the <c>task_group</c> or <c>structured_task_group</c> object completed successfully.
-    /// </summary>
-    /**/
-    completed,
-
-    /// <summary>
-    ///     The <c>task_group</c> or <c>structured_task_group</c> object was canceled.  One or more tasks may not have executed.
-    /// </summary>
-    /**/
-    canceled
-};
+_PPLXIMP std::shared_ptr<pplx::scheduler_interface> __cdecl get_ambient_scheduler();
 
 /// <summary>
 ///     This class describes an exception thrown by the PPL tasks layer in order to force the current task
@@ -181,57 +169,6 @@ public:
 
 namespace details
 {
-    class _Spin_wait
-    {
-    public:
-        _Spin_wait()
-        {
-        }
-
-        bool spin_once()
-        {
-            ::pplx::platform::YieldExecution();
-            return true;
-        }
-    };
-
-    /// <summary>
-    /// Spin lock to allow for locks to be used in global scope
-    /// </summary>
-    class _Spin_lock
-    {
-    public:
-
-        _Spin_lock()
-            : _M_lock(0)
-        {
-        }
-
-        void lock()
-        {
-            if ( atomic_compare_exchange(_M_lock, 1l, 0l) != 0l )
-            {
-                _Spin_wait spinWait;
-                do 
-                {
-                    spinWait.spin_once();
-
-                } while ( atomic_compare_exchange(_M_lock, 1l, 0l) != 0l );
-            }
-        }
-
-        void unlock()
-        {
-            // fence for release semantics
-            atomic_exchange(_M_lock, 0l);
-        }
-
-    private:
-        atomic_long _M_lock;
-    };
-
-    typedef ::pplx::scoped_lock<_Spin_lock> _Scoped_spin_lock;
-
     //
     // An internal exception that is used for cancellation. Users do not "see" this exception except through the
     // resulting stack unwind. This exception should never be intercepted by user code. It is intended
@@ -243,92 +180,127 @@ namespace details
         _Interruption_exception(){}
     };
 
-    struct _Chore
+    template<typename _T>
+    struct _AutoDeleter
     {
-    protected:
-        // Constructors.
-        explicit _Chore(TaskProc _PFunction) : m_pFunction(_PFunction)
-        {
-        }
-
-        _Chore()
-        {
-        }
-
-        virtual ~_Chore()
-        {
-        }
-
-    public:
-
-        // The function which invokes the work of the chore.
-        TaskProc m_pFunction;
+        _AutoDeleter(_T *_PPtr) : _Ptr(_PPtr) {}
+        ~_AutoDeleter () { delete _Ptr; } 
+        _T *_Ptr;
     };
 
-    // Represents possible results of waiting on a task collection.
-    enum _TaskCollectionStatus
+    struct _TaskProcHandle
     {
-        _NotComplete,
-        _Completed,
-        _Canceled
+        _TaskProcHandle()
+        {
+        }
+
+        virtual ~_TaskProcHandle() {}
+        virtual void invoke() const = 0;
+
+        static void __cdecl _RunChoreBridge(void * _Parameter)
+        {
+            auto _PTaskHandle = static_cast<_TaskProcHandle *>(_Parameter);
+            _AutoDeleter<_TaskProcHandle> _AutoDeleter(_PTaskHandle);
+            _PTaskHandle->invoke();
+        }
     };
 
-    // _UnrealizedChore represents an unrealized chore -- a unit of work that scheduled in a work
-    // stealing capacity. Some higher level construct (language or library) will map atop this to provide
-    // an usable abstraction to clients.
-    class _UnrealizedChore : public _Chore
+    enum _TaskInliningMode
+    {
+        // Disable inline scheduling
+        _NoInline = 0,
+        // Let runtime decide whether to do inline scheduling or not
+        _DefaultAutoInline = 16,
+        // Always do inline scheduling
+        _ForceInline = -1,
+    };
+
+    // This is an abstraction that is built on top of the scheduler to provide these additional functionalities
+    // - Ability to wait on a work item
+    // - Ability to cancel a work item
+    // - Ability to inline work on invocation of RunAndWait
+    class _TaskCollectionImpl 
     {
     public:
-        // Constructor for an unrealized chore.
-        _UnrealizedChore()
+
+        typedef _TaskProcHandle _TaskProcHandle_t;
+
+        _TaskCollectionImpl(scheduler_ptr _PScheduler) 
+            : _M_pScheduler(_PScheduler)
         {
         }
 
-        // Sets the attachment state of the chore at the time of stealing.
-        void _SetDetached(bool _FDetached);
-
-        // Set flag that indicates whether the scheduler owns the lifetime of the object and is responsible for freeing it.
-        // The flag is ignored by _StructuredTaskCollection
-        void _SetRuntimeOwnsLifetime(bool fValue) 
-        { 
-            _M_fRuntimeOwnsLifetime = fValue; 
-        }
-
-        // Returns the flag that indicates whether the scheduler owns the lifetime of the object and is responsible for freeing it.
-        // The flag is ignored by _StructuredTaskCollection
-        bool _GetRuntimeOwnsLifetime() const
+        void _ScheduleTask(_TaskProcHandle_t* _PTaskHandle, _TaskInliningMode _InliningMode)
         {
-            return _M_fRuntimeOwnsLifetime;
+            if (_InliningMode == _ForceInline)
+            {
+                _TaskProcHandle_t::_RunChoreBridge(_PTaskHandle);
+            }
+            else
+            {
+                _M_pScheduler->schedule(_TaskProcHandle_t::_RunChoreBridge, _PTaskHandle);
+            }
         }
 
-        // Allocator to be used when runtime owns lifetime.
-        template <typename _ChoreType, typename _Function>
-        static _ChoreType * _InternalAlloc(const _Function& _Func)
+        void _Cancel()
         {
-            // This is always invoked from the PPL layer by the user and can never be attached to the default scheduler. Therefore '_concrt_new' is not required here
-            _ChoreType * _Chore = new _ChoreType(_Func);
-            _Chore->_M_fRuntimeOwnsLifetime = true;
-            return _Chore;
+            // No cancellation support
         }
 
-    protected:
-         // Invocation bridge between the _UnrealizedChore and PPL.
-        template <typename _ChoreType>
-        static void __cdecl _InvokeBridge(_In_ void * _PContext)
+        void _RunAndWait()
         {
-            auto _PChore = static_cast<_ChoreType *>(_PContext);
-            (*_PChore)();
+            // No inlining support yet
+            _Wait();
         }
 
+        void _Wait()
+        {
+            _M_Completed.wait();
+        }
+
+        void _Complete()
+        {
+            _M_Completed.set();
+        }
+
+        scheduler_ptr _GetScheduler() const
+        {
+            return _M_pScheduler;
+        }
+
+        // Fire and forget
+        static void _RunTask(TaskProc_t _Proc, void * _Parameter, _TaskInliningMode _InliningMode)
+        {
+            if (_InliningMode == _ForceInline)
+            {
+                _Proc(_Parameter);
+            }
+            else
+            {
+                // Schedule the work on the ambient scheduler
+                get_ambient_scheduler()->schedule(_Proc, _Parameter);
+            }
+        }
+
+        static bool __cdecl _Is_cancellation_requested()
+        {
+            // We do not yet have the ability to determine the current task. So return false always
+            return false;
+        }
     private:
 
-        typedef void (__cdecl * CHOREFUNC)(_UnrealizedChore * _PChore);
-
-        // Indicates whether the scheduler owns the lifetime of the object and is responsible for freeing it.
-        // This flag is ignored by _StructuredTaskCollection
-        bool _M_fRuntimeOwnsLifetime;
-
+        extensibility::event_t _M_Completed;
+        scheduler_ptr _M_pScheduler;
     };
+
+    // For create_async lambdas that return a (non-task) result, we oversubscriber the current task for the duration of the
+    // lambda.
+    struct _Task_generator_oversubscriber  {};
+
+    typedef _TaskCollectionImpl _TaskCollection_t;
+    typedef _TaskInliningMode _TaskInliningMode_t;
+    typedef _Task_generator_oversubscriber _Task_generator_oversubscriber_t;
+
 } // namespace details
 
 } // namespace pplx

@@ -16,7 +16,7 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* cancellation_token.h
+* pplxcancellation_token.h
 *
 * Parallel Patterns Library : cancellation_token
 *
@@ -25,16 +25,23 @@
 
 #pragma once
 
-#ifndef _CANCELLATION_TOKEN_H
-#define _CANCELLATION_TOKEN_H
+#ifndef _PPLX_H
+#error This header must not be included directly
+#endif
 
-#include "pplx.h"
-#include "pplxatomics.h"
+#ifndef _PPLXCANCELLATION_TOKEN_H
+#define _PPLXCANCELLATION_TOKEN_H
 
-#include <list>
-#include <algorithm>
+#if (defined(_MSC_VER) && (_MSC_VER >= 1800)) 
+#error This file must not be included for Visual Studio 12 or later
+#endif
+
+#include <pplxinterface.h>
 
 #pragma pack(push,_CRT_PACKING)
+// All header files are required to be protected from the macro new
+#pragma push_macro("new")
+#undef new
 
 namespace pplx
 {
@@ -42,22 +49,23 @@ namespace pplx
 namespace details
 {
     // Base class for all reference counted objects
-    class _RefCounterBase
+    class _RefCounter
     {
     public:
-        virtual ~_RefCounterBase()
+
+        virtual ~_RefCounter()
         {
-            _PPLX_ASSERT(_M_refCount == 0);
+            _ASSERTE(_M_refCount == 0);
         }
 
         // Acquires a reference
         // Returns the new reference count.
         long _Reference()
         {
-            long _Refcount = atomic_increment(_M_refCount);
+            long _Refcount = _InterlockedIncrement(&_M_refCount);
 
             // 0 - 1 transition is illegal
-            _PPLX_ASSERT(_Refcount > 1);
+            _ASSERTE(_Refcount > 1);
             return _Refcount;
         }
 
@@ -65,9 +73,8 @@ namespace details
         // Returns the new reference count
         long _Release()
         {
-            long _Refcount = atomic_decrement(_M_refCount);
-
-            _PPLX_ASSERT(_Refcount >= 0);
+            long _Refcount = _InterlockedDecrement(&_M_refCount);
+            _ASSERTE(_Refcount >= 0);
 
             if (_Refcount == 0)
             {
@@ -86,18 +93,18 @@ namespace details
         }
 
         // Only allow instantiation through derived class
-        _RefCounterBase(long _InitialCount = 1) : _M_refCount(_InitialCount)
+        _RefCounter(long _InitialCount = 1) : _M_refCount(_InitialCount)
         {
-            _PPLX_ASSERT(_M_refCount > 0);
+            _ASSERTE(_M_refCount > 0);
         }
 
         // Reference count
-        atomic_long _M_refCount;
+        volatile long _M_refCount;
     };
 
     class _CancellationTokenState;
 
-    class _CancellationTokenRegistration : public _RefCounterBase
+    class _CancellationTokenRegistration : public _RefCounter
     {
     private:
 
@@ -109,13 +116,13 @@ namespace details
     public:
 
         _CancellationTokenRegistration(long _InitialRefs = 1) :
-            _RefCounterBase(_InitialRefs),
+            _RefCounter(_InitialRefs),
             _M_state(_STATE_CALLED),
             _M_pTokenState(NULL)
         {
         }
 
-        _CancellationTokenState *_GetToken()
+        _CancellationTokenState *_GetToken() const
         {
             return _M_pTokenState;
         }
@@ -124,7 +131,7 @@ namespace details
 
         virtual ~_CancellationTokenRegistration()
         {
-            _PPLX_ASSERT(_M_state != _STATE_CLEAR);
+            _ASSERTE(_M_state != _STATE_CLEAR);
         }
 
         virtual void _Exec() = 0;
@@ -135,9 +142,8 @@ namespace details
 
         void _Invoke()
         {
-            long tid = ::pplx::platform::GetCurrentThreadId();
-            _PPLX_ASSERT((tid & 0x3) == 0); // If this ever fires, we need a different encoding for this.
-
+            long tid = ::pplx::details::platform::GetCurrentThreadId();
+            _ASSERTE((tid & 0x3) == 0); // If this ever fires, we need a different encoding for this.
 
             long result = atomic_compare_exchange(_M_state, tid, _STATE_CLEAR);
 
@@ -156,7 +162,7 @@ namespace details
         }
 
         atomic_long _M_state;
-        pplx::notification_event *_M_pSyncBlock;
+        extensibility::event_t *_M_pSyncBlock;
         _CancellationTokenState *_M_pTokenState;
     };
 
@@ -186,7 +192,7 @@ namespace details
     {
     public:
 
-        CancellationTokenRegistration_TaskProc(TaskProc proc, _In_ void *pData, int initialRefs) :
+        CancellationTokenRegistration_TaskProc(TaskProc_t proc, _In_ void *pData, int initialRefs) :
             _CancellationTokenRegistration(initialRefs), m_proc(proc), m_pData(pData)
         {
         }
@@ -200,15 +206,123 @@ namespace details
 
     private:
 
-        TaskProc m_proc;
+        TaskProc_t m_proc;
         void *m_pData;
 
     };
 
     // The base implementation of a cancellation token.
-    class _CancellationTokenState : public _RefCounterBase
+    class _CancellationTokenState : public _RefCounter
     {
+    protected:
+            class TokenRegistrationContainer
+        {
+        private:
+            typedef struct _Node {
+                _CancellationTokenRegistration* _M_token;
+                _Node *_M_next;
+
+                _Node(_CancellationTokenRegistration* token) : _M_token(token), _M_next(nullptr)
+                {
+                }
+            } Node;
+
+        public:
+            TokenRegistrationContainer() : _M_begin(nullptr), _M_last(nullptr)
+            {
+            }
+
+            ~TokenRegistrationContainer()
+            {
+                auto node = _M_begin;
+                while (node != nullptr) 
+                {
+                    Node* tmp = node;                    
+                    node = node->_M_next;
+                    delete tmp;
+                }
+            }
+
+            void swap(TokenRegistrationContainer& list)
+            {
+                std::swap(list._M_begin, _M_begin);
+                std::swap(list._M_last, _M_last);
+            }
+
+            bool empty()
+            {
+                return _M_begin == nullptr;
+            }
+
+            template<typename T>
+            void for_each(T lambda)
+            {
+                Node* node = _M_begin;
+
+                while (node != nullptr) 
+                {
+                    lambda(node->_M_token);
+                    node = node->_M_next;
+                }
+            }
+
+            void push_back(_CancellationTokenRegistration* token)
+            {
+                auto node = new Node(token);
+                if (_M_begin == nullptr) 
+                {
+                    _M_begin = node;
+                }
+                else
+                {
+                    _M_last->_M_next = node;
+                }
+
+                _M_last = node;
+            }
+
+            void remove(_CancellationTokenRegistration* token)
+            {
+                Node* node = _M_begin;
+                Node* prev = nullptr;
+
+                while (node != nullptr) 
+                {
+                    if (node->_M_token == token) {
+                        if (prev == nullptr)
+                        {
+                            _M_begin = node->_M_next;                            
+                        }
+                        else
+                        {
+                            prev->_M_next = node->_M_next;
+                        }
+
+                        if (node->_M_next == nullptr)
+                        {
+                            _M_last = prev;
+                        }
+
+                        delete node;
+                        break;
+                    }
+                    
+                    prev = node;
+                    node = node->_M_next;
+                }
+            }
+
+        private:
+            Node *_M_begin;
+            Node *_M_last;
+        };
+
     public:
+
+        static _CancellationTokenState * _CancellationTokenState::_NewTokenState()
+        {
+            return new _CancellationTokenState();
+        }
  
         static _CancellationTokenState *_None()
         {
@@ -227,17 +341,20 @@ namespace details
 
         ~_CancellationTokenState()
         {
-            std::list<_CancellationTokenRegistration *> rundownList;
-            _M_registrations.swap(rundownList);
+            TokenRegistrationContainer rundownList;
+            {
+                extensibility::scoped_critical_section_t _Lock(_M_listLock);
+                _M_registrations.swap(rundownList);
+            }
 
-            std::for_each(begin(rundownList), end(rundownList), [](_CancellationTokenRegistration * pRegistration)
+            rundownList.for_each([](_CancellationTokenRegistration * pRegistration)
             {
                 pRegistration->_M_state = _CancellationTokenRegistration::_STATE_SYNCHRONIZE;
                 pRegistration->_Release();
             });
         }
 
-        bool _IsCanceled()
+        bool _IsCanceled() const
         {
             return (_M_stateFlag != 0);
         }
@@ -246,10 +363,13 @@ namespace details
         {
             if (atomic_compare_exchange(_M_stateFlag, 1l, 0l) == 0)
             {
-                std::list<_CancellationTokenRegistration *> rundownList;
-                _M_registrations.swap(rundownList);
+                TokenRegistrationContainer rundownList;
+                {
+                    extensibility::scoped_critical_section_t _Lock(_M_listLock);
+                    _M_registrations.swap(rundownList);
+                }
 
-                std::for_each(begin(rundownList), end(rundownList), [](_CancellationTokenRegistration * pRegistration)
+                rundownList.for_each([](_CancellationTokenRegistration * pRegistration)
                 {
                     pRegistration->_Invoke();
                 });
@@ -259,7 +379,7 @@ namespace details
             }
         }
 
-        _CancellationTokenRegistration *_RegisterCallback(TaskProc _PCallback, _In_ void *_PData, int _InitialRefs = 1)
+        _CancellationTokenRegistration *_RegisterCallback(TaskProc_t _PCallback, _In_ void *_PData, int _InitialRefs = 1)
         {
             _CancellationTokenRegistration *pRegistration = new CancellationTokenRegistration_TaskProc(_PCallback, _PData, _InitialRefs);
             _RegisterCallback(pRegistration);
@@ -276,7 +396,7 @@ namespace details
 
             if (!_IsCanceled())
             {
-                pplx::scoped_critical_section _Lock(_M_listLock);
+                extensibility::scoped_critical_section_t _Lock(_M_listLock);
 
                 if (!_IsCanceled())
                 {
@@ -296,7 +416,7 @@ namespace details
             bool synchronize = false;
 
             {
-                pplx::scoped_critical_section _Lock(_M_listLock);
+                extensibility::scoped_critical_section_t _Lock(_M_listLock);
 
                 //
                 // If a cancellation has occurred, the registration list is guaranteed to be empty if we've observed it under the auspices of the
@@ -338,12 +458,12 @@ namespace details
                         break;
                     case _CancellationTokenRegistration::_STATE_DEFER_DELETE:
                     case _CancellationTokenRegistration::_STATE_SYNCHRONIZE:
-                        _PPLX_ASSERT(false);
+                        _ASSERTE(false);
                         break;
                     default:
                     {
                         long tid = result;
-                        if (tid == ::pplx::platform::GetCurrentThreadId())
+                        if (tid == ::pplx::details::platform::GetCurrentThreadId())
                         {
                             //
                             // It is entirely legal for a caller to Deregister during a callback instead of having to provide their own synchronization
@@ -353,14 +473,14 @@ namespace details
                             break;
                         }
 
-                        pplx::notification_event ev;
+                        extensibility::event_t ev;
                         _PRegistration->_M_pSyncBlock = &ev;
 
                         long result_1 = atomic_exchange(_PRegistration->_M_state, _CancellationTokenRegistration::_STATE_SYNCHRONIZE);
 
                         if (result_1 != _CancellationTokenRegistration::_STATE_CALLED)
                         {
-                            _PRegistration->_M_pSyncBlock->wait(pplx::notification_event::timeout_infinite);
+                            _PRegistration->_M_pSyncBlock->wait(extensibility::event_t::timeout_infinite);
                         }
 
                         break;
@@ -375,14 +495,13 @@ namespace details
         atomic_long _M_stateFlag;
 
         // Notification of completion of cancellation of this token.
-        pplx::notification_event _M_cancelComplete; // Hmm.. where do we wait for it??
+        extensibility::event_t _M_cancelComplete; // Hmm.. where do we wait for it??
 
         // Lock to protect the registrations list
-        pplx::critical_section _M_listLock;
+        extensibility::critical_section_t _M_listLock;
 
         // The protected list of registrations
-        std::list<_CancellationTokenRegistration *> _M_registrations;
-
+        TokenRegistrationContainer _M_registrations;
     };
 
 } // namespace details
@@ -497,7 +616,7 @@ class cancellation_token
 {
 public:
 
-    typedef ::pplx::details::_CancellationTokenState * _ImplType;
+    typedef details::_CancellationTokenState * _ImplType;
 
     /// <summary>
     ///     Returns a cancellation token which can never be subject to cancellation.
@@ -567,10 +686,10 @@ public:
     }
 
     /// <summary>
-    ///     Returns <c>true</c> if the token has been canceled.
+    /// Returns <c>true</c> if the token has been canceled.
     /// </summary>
     /// <returns>
-    ///     The value <c>true</c> if the token has been canceled; otherwise, the value <c>false</c>.
+    /// The value <c>true</c> if the token has been canceled; otherwise, the value <c>false</c>.
     /// </returns>
     bool is_canceled() const
     {
@@ -868,6 +987,7 @@ private:
 
 } // namespace pplx
 
+#pragma pop_macro("new")
 #pragma pack(pop)
 
-#endif // _CANCELLATION_TOKEN_H
+#endif // _PPLXCANCELLATION_TOKEN_H

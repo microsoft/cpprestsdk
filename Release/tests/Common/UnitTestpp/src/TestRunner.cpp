@@ -97,10 +97,33 @@ private:
 };
 #endif
 
-void TestRunner::RunTest(TestResults* const result, Test* const curTest, int const maxTestTimeInMs) const
+// Logic to decide the timeout for individual test
+// 1. If /testtimeout is specified with testrunner arguments, use that timeout.
+// 2. Else, if the test has a Timeout property set, use that timeout.
+// 3. If both the above properties are not specified, use the default timeout value.
+int TestRunner::GetTestTimeout(Test* const curTest, int const defaultTestTimeInMs) const
+{
+    std::stringstream timeoutstream;
+    int timeout = defaultTestTimeInMs;
+    if(UnitTest::GlobalSettings::Has("testtimeout"))
+    {
+        timeoutstream << UnitTest::GlobalSettings::Get("testtimeout");
+        timeoutstream >> timeout;
+    }
+    else if(curTest->m_properties.Has("Timeout"))
+    {
+        timeoutstream << curTest->m_properties.Get("Timeout");
+        timeoutstream >> timeout;
+    }
+    return timeout;
+}
+
+void TestRunner::RunTest(TestResults* const result, Test* const curTest, int const defaultTestTimeInMs) const
 {
 	if (curTest->m_isMockTest == false)
 		CurrentTest::Results() = result;
+
+    int maxTestTimeInMs = GetTestTimeout(curTest, defaultTestTimeInMs);
 
 	Timer testTimer;
 	testTimer.Start();

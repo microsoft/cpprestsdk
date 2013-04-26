@@ -24,7 +24,11 @@
 #pragma once
 
 #ifdef HTTPTESTUTILITY_EXPORTS
+#ifndef TEST_UTILITY_API
 #define TEST_UTILITY_API __declspec(dllexport)
+#endif
 #else
+#ifndef TEST_UTILITY_API
 #define TEST_UTILITY_API __declspec(dllimport)
+#endif
 #endif

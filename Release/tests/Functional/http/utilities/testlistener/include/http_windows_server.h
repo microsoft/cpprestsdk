@@ -28,7 +28,13 @@
 #ifndef _MS_WINDOWS
 #error This file is Windows-specific
 #endif
+
+// Windows Sockets are not code analysis clean.
+#pragma warning(push)
+#pragma warning(disable : 6386)
 #include <http.h>
+#pragma warning(pop)
+
 #include <safeint.h>
 
 #include "http_server.h"
@@ -316,7 +322,7 @@ private:
     };
 
     // Maps connection to correct connection structure.
-    pplx::reader_writer_lock m_connections_lock;
+    pplx::extensibility::reader_writer_lock_t m_connections_lock;
     std::unordered_map<HTTP_CONNECTION_ID, std::shared_ptr<details::connection>> m_connections;
 
     // Reference held by each connection
@@ -324,8 +330,8 @@ private:
     pplx::task_completion_event<void> m_connections_tce;
 
     // Registered listeners
-    pplx::reader_writer_lock _M_listenersLock;
-    std::unordered_map<http::listener::http_listener_interface *, std::unique_ptr<pplx::reader_writer_lock>> _M_registeredListeners;	
+    pplx::extensibility::reader_writer_lock_t _M_listenersLock;
+    std::unordered_map<http::listener::http_listener_interface *, std::unique_ptr<pplx::extensibility::reader_writer_lock_t>> _M_registeredListeners;
 
     // HTTP Server API server session id.
     HTTP_SERVER_SESSION_ID m_serverSessionId;

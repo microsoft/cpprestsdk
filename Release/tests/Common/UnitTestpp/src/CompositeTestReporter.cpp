@@ -50,7 +50,12 @@ bool CompositeTestReporter::AddReporter(TestReporter* reporter)
 	if (m_reporterCount == kMaxReporters)
 		return false;
 
+// Safe to ignore we check the size to make sure no buffer overruns before.
+#pragma warning (push)
+#pragma warning (disable : 6386)
 	m_reporters[m_reporterCount++] = reporter;
+#pragma warning (pop)
+
 	return true;
 }
 

@@ -49,17 +49,10 @@ pplx::task<streams::streambuf<_CharType>> OPENSTR_R(const utility::string_t &nam
 #if !defined(__cplusplus_winrt)
 	return streams::file_buffer<_CharType>::open(name, std::ios_base::in);
 #else
-    try
-    {
-        auto file = pplx::create_task(
-            KnownFolders::DocumentsLibrary->GetFileAsync(ref new Platform::String(name.c_str()))).get();
+    auto file = pplx::create_task(
+        KnownFolders::DocumentsLibrary->GetFileAsync(ref new Platform::String(name.c_str()))).get();
 
-        return streams::file_buffer<_CharType>::open(file, std::ios_base::in);
-    }
-    catch(Platform::Exception^ exc) 
-    { 
-        throw utility::details::create_system_error(exc->HResult);
-    }
+    return streams::file_buffer<_CharType>::open(file, std::ios_base::in);
 #endif
 }
 
@@ -164,7 +157,8 @@ TEST_FIXTURE(uri_address, response_stream_file_stream)
         http_response rsp = client.request(msg).get();
 
         rsp.content_ready().get();
-        VERIFY_IS_TRUE(!fstream.streambuf().is_open());
+        VERIFY_IS_TRUE(fstream.streambuf().is_open());
+        fstream.close().get();
 
         char chars[128];
         memset(chars,0,sizeof(chars));
@@ -177,7 +171,7 @@ TEST_FIXTURE(uri_address, response_stream_file_stream)
         // TFS 579609 - 1207 revisit this merge for Linux
         // VERIFY_ARE_EQUAL(fistream.read_line(reinterpret_cast<uint8_t  *>(chars), sizeof(chars)).get(), 32u);
         VERIFY_ARE_EQUAL(0, strcmp("A world without string is chaos.", chars));
-        VERIFY_IS_TRUE(fistream.close().get());
+        fistream.close().get();
     }
 }
 
@@ -195,7 +189,7 @@ TEST_FIXTURE(uri_address, content_ready)
         request.reply(200, buf.create_istream(), U("text/plain"));
 
         VERIFY_ARE_EQUAL(buf.putn((const uint8_t *)responseData.data(), responseData.size()).get(), responseData.size());
-        VERIFY_IS_TRUE(buf.close(std::ios_base::out).get());
+        buf.close(std::ios_base::out).get();
     });
 
     {
@@ -259,7 +253,7 @@ TEST_FIXTURE(uri_address, get_resp_stream)
         request.reply(200, buf.create_istream(), U("text/plain"));
 
         VERIFY_ARE_EQUAL(buf.putn((const uint8_t *)responseData.data(), responseData.size()).get(), responseData.size());
-        VERIFY_IS_TRUE(buf.close(std::ios_base::out).get());
+        buf.close(std::ios_base::out).get();
     });
 
     {

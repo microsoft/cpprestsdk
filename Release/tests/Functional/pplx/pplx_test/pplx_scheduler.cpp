@@ -24,18 +24,18 @@
 
 using namespace utility;
 
-extern pplx::atomic_long s_flag;
+extern pplx::details::atomic_long s_flag;
 
 #ifdef _MS_WINDOWS
 
-class pplx_dflt_scheduler : public pplx::scheduler
+class pplx_dflt_scheduler : public pplx::scheduler_interface
 {
     struct _Scheduler_Param
     {
-        pplx::TaskProc m_proc;
+        pplx::TaskProc_t m_proc;
         void * m_param;
 
-        _Scheduler_Param(pplx::TaskProc proc, void * param)
+        _Scheduler_Param(pplx::TaskProc_t proc, void * param)
             : m_proc(proc), m_param(param)
         {
         }
@@ -50,9 +50,9 @@ class pplx_dflt_scheduler : public pplx::scheduler
         delete schedulerParam;
     }
 
-    virtual void schedule(pplx::TaskProc proc, void* param)
+    virtual void schedule(pplx::TaskProc_t proc, void* param)
     {
-        pplx::atomic_increment(s_flag);
+        pplx::details::atomic_increment(s_flag);
         auto schedulerParam = new _Scheduler_Param(proc, param);
         auto work = CreateThreadpoolWork(DefaultWorkCallbackTest, schedulerParam, NULL);
 
@@ -71,7 +71,7 @@ class pplx_dflt_scheduler : public pplx::scheduler
 pplx_dflt_scheduler g_pplx_dflt_scheduler;
 
 
-pplx::scheduler& get_pplx_dflt_scheduler()
+pplx::scheduler_interface& get_pplx_dflt_scheduler()
 {
     return g_pplx_dflt_scheduler;
 }
@@ -86,7 +86,7 @@ class pplx_dflt_scheduler : public pplx::scheduler
 
     virtual void schedule(pplx::TaskProc proc, void* param)
     {
-        pplx::atomic_increment(s_flag);
+        pplx::details::atomic_increment(s_flag);
         m_pool.schedule([=]() -> void { proc(param); } );
 
     }

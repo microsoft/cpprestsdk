@@ -216,11 +216,11 @@ int _hexval [] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 
 
 template<typename CharType>
-std::basic_string<CharType> unescape_string(const std::basic_string<CharType>* escaped)
+std::basic_string<CharType> unescape_string(const std::basic_string<CharType>& escaped)
 {
     std::basic_string<CharType> tokenString;
 
-    for (auto iter = escaped->begin(); iter != escaped->end(); iter++ )
+    for (auto iter = escaped.begin(); iter != escaped.end(); iter++ )
     {
         CharType ch = (CharType)*iter;
 
@@ -264,16 +264,75 @@ std::basic_string<CharType> unescape_string(const std::basic_string<CharType>* e
                 throw json::json_exception(U("invalid escape character in string literal"));
             }
         }
-        else if ( ch > CharType(0x0) && ch < CharType(0x20) )
-        {
-            throw json::json_exception(U("invalid character in string literal"));
-        }
 
         tokenString.push_back(ch);
     }
 
     return tokenString;
 }
+
+template<typename CharType>
+std::basic_string<CharType> escape_string(const std::basic_string<CharType>& escaped)
+{
+    std::basic_string<CharType> tokenString;
+
+    for (auto iter = escaped.begin(); iter != escaped.end(); iter++ )
+    {
+        CharType ch = (CharType)*iter;
+
+		switch(ch)
+		{
+			// Insert the escape character.
+            case '\"': 
+				tokenString.push_back('\\');
+				tokenString.push_back('\"');
+                break;
+            case '\\': 
+				tokenString.push_back('\\');
+				tokenString.push_back('\\');
+                break;
+            case '\b':
+				tokenString.push_back('\\');
+				tokenString.push_back('b');
+                break;
+            case '\f':
+				tokenString.push_back('\\');
+				tokenString.push_back('f');
+                break;
+            case '\r':
+				tokenString.push_back('\\');
+				tokenString.push_back('r');
+                break;
+            case '\n':
+				tokenString.push_back('\\');
+				tokenString.push_back('n');
+                break;
+            case '\t':
+				tokenString.push_back('\\');
+				tokenString.push_back('t');
+                break;
+			default:
+				tokenString.push_back(ch);
+				break;
+		}
+    }
+
+    return tokenString;
+}
+
+void web::json::details::_String::format(std::basic_string<char>& stream) const
+{
+    stream.push_back('"');
+    stream.append(escape_string(as_utf8_string())).push_back('"');
+}
+
+#ifdef _MS_WINDOWS
+void web::json::details::_String::format(std::basic_string<wchar_t>& stream) const
+{
+    stream.push_back(L'"');
+    stream.append(escape_string(as_utf16_string())).push_back(L'"');
+}
+#endif
 
 utility::string_t web::json::details::_String::as_string() const
 {
@@ -288,11 +347,11 @@ std::string web::json::details::_String::as_utf8_string() const
 {
     if(is_wide())
     {
-        return utf16_to_utf8(unescape_string<utf16char>(m_wstring.get()));
+        return utf16_to_utf8(*m_wstring.get());
     }
     else
     {
-        return unescape_string<char>(m_string.get());
+        return *m_string.get();
     }
 }
 
@@ -300,11 +359,11 @@ utf16string web::json::details::_String::as_utf16_string() const
 {
     if(is_wide())
     {
-        return unescape_string<utf16char>(m_wstring.get());
+        return *m_wstring.get();
     }
     else
     {
-        return utf8_to_utf16(unescape_string<char>(m_string.get()));
+        return utf8_to_utf16(*m_string.get());
     }
 }
 
@@ -377,9 +436,9 @@ bool json::value::operator==(const json::value &other) const
     case String:
         return this->as_string() == other.as_string();
     case Object:
-        return dynamic_cast<const json::details::_Object*>(this->m_value.get())->is_equal(dynamic_cast<const json::details::_Object*>(other.m_value.get()));
+        return static_cast<const json::details::_Object*>(this->m_value.get())->is_equal(static_cast<const json::details::_Object*>(other.m_value.get()));
     case Array:
-        return dynamic_cast<const json::details::_Array*>(this->m_value.get())->is_equal(dynamic_cast<const json::details::_Array*>(other.m_value.get()));
+        return static_cast<const json::details::_Array*>(this->m_value.get())->is_equal(static_cast<const json::details::_Array*>(other.m_value.get()));
     }
     return false;
 }
@@ -1688,7 +1747,7 @@ std::unique_ptr<web::json::details::_Value> JSON_Parser<CharType>::_ParseValue(t
 
         case JSON_Parser<CharType>::Token::TKN_StringLiteral:
             {
-                auto value = utility::details::make_unique<web::json::details::_String>(std::move(tkn.spelling));
+                auto value = utility::details::make_unique<web::json::details::_String>(unescape_string(tkn.spelling));
                 GetNextToken(tkn);
                 return std::move(value);
             }

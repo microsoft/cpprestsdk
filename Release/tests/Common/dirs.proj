@@ -5,7 +5,7 @@
   <ItemGroup>
       <ProjectFile Include="UnitTestpp\dirs.proj"/>
       <ProjectFile Include="utilities\dirs.proj"/>
-	  <ProjectFile Include="TestRunner\dirs.proj"/>
+      <ProjectFile Include="TestRunner\dirs.proj"/>
   </ItemGroup>
 
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />

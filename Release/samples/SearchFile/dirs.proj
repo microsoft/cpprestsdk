@@ -6,6 +6,10 @@
       <ProjectFile Include="SearchFile$(DevToolsVersion)\SearchFile$(DevToolsVersion).vcxproj"/>
   </ItemGroup>
 
+  <ItemGroup Condition="'$(DevToolsVersion)'=='120'">
+      <ProjectFile Include="SearchFile$(DevToolsVersion)\SearchFile$(DevToolsVersion).vcxproj"/>
+  </ItemGroup>
+
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
 
 </Project>

@@ -2,10 +2,13 @@
 
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Common.Build.settings" />
 
-  <ItemGroup>
-      <ProjectFile Include="src\dirs.proj"/>
-      <ProjectFile Include="samples\dirs.proj" Condition="'$(Platform)'!='ARM' or '$(WindowsSDKDesktopARMSupport)' == 'true'"/> 
-      <ProjectFile Include="tests\dirs.proj" Condition="'$(Platform)'!='ARM' or '$(WindowsSDKDesktopARMSupport)' == 'true'"/>
+  <ItemGroup Condition="'$(BuildInRazzle)'=='' or '$(BuildAgainstVSInstallation)'==''">
+    <ProjectFile Include="src\dirs.proj"/>
+  </ItemGroup>
+  
+  <ItemGroup Condition="'$(BuildInRazzle)'=='' or '$(BuildTests)'!=''">
+    <ProjectFile Include="tests\dirs.proj" Condition="'$(Platform)'!='ARM' or '$(WindowsSDKDesktopARMSupport)' == 'true'"/>
+    <ProjectFile Include="samples\dirs.proj" Condition="'$(Platform)'!='ARM' or '$(WindowsSDKDesktopARMSupport)' == 'true'"/> 
   </ItemGroup>
 
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />

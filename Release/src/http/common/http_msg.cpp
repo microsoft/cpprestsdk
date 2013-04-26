@@ -93,7 +93,8 @@ static const utility::char_t * textual_content_type_missing = U("Content-Type mu
 static const utility::char_t * unsupported_charset = U("Charset must be iso-8859-1, utf-8, utf-16, utf-16le, or utf-16be to be extracted.");
 
 http_msg_base::http_msg_base() 
-    : m_headers()
+    : m_headers(), 
+	  m_default_outstream(false)
 {
 }
 
@@ -108,7 +109,7 @@ void http_msg_base::_prepare_to_receive_data()
         // The user did not specify an outstream.
         // We will create one...
         concurrency::streams::producer_consumer_buffer<uint8_t> buf;
-        set_outstream(buf.create_ostream());
+        set_outstream(buf.create_ostream(), true);
 
         // Since we are creating the streambuffer, set the input stream
         // so that the user can retrieve the data.
@@ -171,10 +172,10 @@ void http_msg_base::_complete(size_t body_size, std::exception_ptr exceptionPtr)
     // Close the write head
     if ((bool)outstream())
     {
-        if (exceptionPtr == nullptr)
-            outstream().close().get();
-        else
-            outstream().close(exceptionPtr).get();
+		if ( !(exceptionPtr == std::exception_ptr()) )
+			outstream().close(exceptionPtr).get();
+		else if ( m_default_outstream )
+			outstream().close().get();
     }
 
     if(exceptionPtr == std::exception_ptr())
@@ -435,9 +436,9 @@ static utility::string_t convert_body_to_string_t(const utility::string_t &conte
 
     concurrency::streams::streambuf<uint8_t>  streambuf = instream.streambuf();
 
-    _PPLX_ASSERT((bool)streambuf);
-    _PPLX_ASSERT(streambuf.is_open());
-    _PPLX_ASSERT(streambuf.can_read());
+    _ASSERTE((bool)streambuf);
+    _ASSERTE(streambuf.is_open());
+    _ASSERTE(streambuf.can_read());
 
     utility::string_t content, charset;
     parse_content_type_and_charset(content_type, content, charset);

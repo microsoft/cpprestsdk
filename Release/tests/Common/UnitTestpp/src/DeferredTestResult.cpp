@@ -47,7 +47,12 @@ DeferredTestFailure::DeferredTestFailure()
 DeferredTestFailure::DeferredTestFailure(int lineNumber_, const char* failureStr_)
 	: lineNumber(lineNumber_)
 {
+// Ignoring warning about possible overrun because we aren't going to entirely
+// change how unittestpp deals with strings.
+#pragma warning (push)
+#pragma warning (disable : 6204)
 	std::strcpy(failureStr, failureStr_);
+#pragma warning (pop)
 }
 
 DeferredTestResult::DeferredTestResult()

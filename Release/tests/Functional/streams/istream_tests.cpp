@@ -72,10 +72,18 @@ void fill_file_with_lines(const utility::string_t &name, const std::string &end,
 }
 
 #ifdef _MS_WINDOWS
+
+// Disabling warning in test because we check for nullptr.
+#pragma warning (push)
+#pragma warning (disable : 6387)
 void fill_file_w(const utility::string_t &name, size_t repetitions = 1)
 {
-    FILE *stream;
+    FILE *stream = nullptr;
     _wfopen_s(&stream, get_full_name(name).c_str(), L"w");
+    if(stream == nullptr)
+    {
+        VERIFY_IS_TRUE(false, "FILE pointer is null");
+    }
 
     for (size_t i = 0; i < repetitions; i++)
         for (wchar_t ch = L'a'; ch <= L'z'; ++ch)
@@ -83,6 +91,8 @@ void fill_file_w(const utility::string_t &name, size_t repetitions = 1)
     
     fclose(stream);
 }
+#pragma warning (pop)
+
 #endif
 
 //
@@ -100,17 +110,10 @@ pplx::task<streams::streambuf<_CharType>> OPEN_R(const utility::string_t &name, 
 #if !defined(__cplusplus_winrt)
 	return streams::file_buffer<_CharType>::open(name, std::ios_base::in, _Prot);
 #else
-    try
-    {
-        auto file = pplx::create_task(
-            KnownFolders::DocumentsLibrary->GetFileAsync(ref new Platform::String(name.c_str()))).get();
+    auto file = pplx::create_task(
+        KnownFolders::DocumentsLibrary->GetFileAsync(ref new Platform::String(name.c_str()))).get();
 
-        return streams::file_buffer<_CharType>::open(file, std::ios_base::in);
-    }
-    catch(Platform::Exception^ exc) 
-    { 
-        throw utility::details::create_system_error(exc->HResult);
-    }
+    return streams::file_buffer<_CharType>::open(file, std::ios_base::in);
 #endif
 }
 #pragma warning(pop)
@@ -163,7 +166,8 @@ TEST(stream_read_1_fail)
 	rbuf.close(std::ios_base::in).get();
 
     VERIFY_THROWS(stream.read().get(), std::runtime_error);
-    stream.close().get();
+	// Closing again should not throw.
+    stream.close().wait();
 }
 
 TEST(stream_read_2)
@@ -646,7 +650,8 @@ TEST(stream_read_to_end_1_fail)
 	VERIFY_THROWS(stream.read_to_end(sbuf).get(), std::runtime_error);
 
     stream.close().get();
-    sbuf.close().get();
+	// This should not throw
+    sbuf.close().wait();
 }
 
 TEST(fstream_read_to_end_1)
@@ -709,7 +714,7 @@ TEST(fstream_read_to_end_3)
             else
                 return pplx::task_from_result(false);
         };
-    pplx::do_while([=]()-> pplx::task<bool> {
+    pplx::details::do_while([=]()-> pplx::task<bool> {
         return stream.read().then(lambda1);
     }).wait();
         
@@ -1176,6 +1181,62 @@ TEST(istream_extract_boolw)
 }
 #endif
 
+template <typename _CharType, typename _LongType>
+void istream_extract_long_impl(streambuf<_CharType> buf)
+{
+    basic_istream<_CharType> is(buf);
+    const _LongType v1 = is.extract<_LongType>().get();
+    const _LongType v2 = is.extract<_LongType>().get();
+
+    VERIFY_ARE_EQUAL(123, v1);
+    VERIFY_ARE_EQUAL(-567, v2);
+    VERIFY_THROWS(is.extract<_LongType>().get(), std::runtime_error);
+}
+
+TEST(istream_extract_long)
+{
+    istream_extract_long_impl<char, long>(container_buffer<std::string>("123 -567 12000000000"));
+#ifdef _MS_WINDOWS
+    istream_extract_long_impl<wchar_t, long>(container_buffer<std::wstring>(L"123 -567 12000000000"));
+#endif
+}
+
+template <typename _CharType, typename _LongType>
+void istream_extract_unsigned_long_impl(streambuf<_CharType> buf)
+{
+    basic_istream<_CharType> is(buf);
+    const _LongType v1 = is.extract<_LongType>().get();
+    const _LongType v2 = is.extract<_LongType>().get();
+
+    VERIFY_ARE_EQUAL(876, v1);
+    VERIFY_ARE_EQUAL(3, v2);
+    VERIFY_THROWS(is.extract<_LongType>().get(), std::runtime_error);
+}
+
+TEST(istream_extract_unsigned_long)
+{
+    istream_extract_unsigned_long_impl<char, unsigned long>(container_buffer<std::string>("876 3 -44"));
+#ifdef _MS_WINDOWS
+    istream_extract_unsigned_long_impl<wchar_t, unsigned long>(container_buffer<std::wstring>(L"876 3 -44"));
+#endif
+}
+
+TEST(istream_extract_long_long)
+{
+    istream_extract_long_impl<char, long long>(container_buffer<std::string>("123 -567 92233720368547758078"));
+#ifdef _MS_WINDOWS
+    istream_extract_long_impl<wchar_t, long long>(container_buffer<std::wstring>(L"123 -567 92233720368547758078"));
+#endif
+}
+
+TEST(istream_extract_unsigned_long_long)
+{
+    istream_extract_unsigned_long_impl<char, unsigned long long>(container_buffer<std::string>("876 3 -44"));
+#ifdef _MS_WINDOWS
+    istream_extract_unsigned_long_impl<wchar_t, unsigned long long>(container_buffer<std::wstring>(L"876 3 -44"));
+#endif
+}
+
 TEST(streambuf_read_delim)
 {
     producer_consumer_buffer<uint8_t> rbuf;
@@ -1264,21 +1325,87 @@ TEST(uninitialized_streambuf)
     // The destructor shall not throw
 }
 
-TEST(memstream_length)
+TEST(create_istream_from_output_only)
 {
-    producer_consumer_buffer<unsigned char> rbuf;
-    auto istr = rbuf.create_istream();
-
-    auto curr = istr.tell();
-    VERIFY_ARE_EQUAL((long long)curr, 0);
+    container_buffer<std::string> sourceBuf;
+    VERIFY_THROWS(sourceBuf.create_istream(), std::runtime_error);
 }
 
-TEST(bytestream_length)
+TEST(extract_close_with_exception)
 {
-    // test byte stream
-    std::string s("12345");
-    auto istr = bytestream::open_istream(s);
-    test_stream_length(istr, s.size());
+    container_buffer<std::string> sourceBuf(std::ios::in);
+    auto inStream = sourceBuf.create_istream();
+    inStream.close(std::make_exception_ptr(std::invalid_argument("test exception"))).wait();
+    auto extractTask = inStream.extract<std::string>();
+    VERIFY_THROWS(extractTask.get(), std::invalid_argument);
+}
+
+TEST(streambuf_close_with_exception_read)
+{
+    container_buffer<std::string> sourceBuf("test data string");
+    sourceBuf.close(std::ios::in, std::make_exception_ptr(std::invalid_argument("custom exception")));
+
+    const size_t size = 4;
+    char targetBuf[size];
+    auto t = sourceBuf.getn(targetBuf, size);
+    VERIFY_THROWS(t.get(), std::invalid_argument);
+}
+
+TEST(stream_close_with_exception_read)
+{
+    container_buffer<std::string> sourceBuf("test data string");
+    auto inStream = sourceBuf.create_istream();
+    inStream.close(std::make_exception_ptr(std::invalid_argument("custom exception")));
+
+    container_buffer<std::string> targetBuf;
+    auto t1 = inStream.read(targetBuf, 4);
+    VERIFY_THROWS(t1.get(), std::invalid_argument);
+    VERIFY_THROWS(inStream.streambuf().sbumpc(), std::invalid_argument);
+    VERIFY_THROWS(inStream.streambuf().sgetc(), std::invalid_argument);
+}
+
+TEST(istream_input_after_close)
+{
+    container_buffer<std::string> sourceBuf("test data");
+    auto inStream = sourceBuf.create_istream();
+    inStream.close().wait();
+
+    container_buffer<std::string> targetBuf;
+    VERIFY_THROWS(inStream.peek().get(), std::runtime_error);
+    VERIFY_THROWS(inStream.read(targetBuf, 1).get(), std::runtime_error);
+    VERIFY_THROWS(inStream.read_line(targetBuf).get(), std::runtime_error);
+    VERIFY_THROWS(inStream.read_to_delim(targetBuf, '-').get(), std::runtime_error);
+    VERIFY_THROWS(inStream.read_to_end(targetBuf).get(), std::runtime_error);
+    VERIFY_THROWS(inStream.seek(0), std::runtime_error);
+    VERIFY_THROWS(inStream.seek(1, std::ios::beg), std::runtime_error);
+    VERIFY_THROWS(inStream.tell(), std::runtime_error);
+    VERIFY_THROWS(inStream.extract<std::string>().get(), std::runtime_error);
+}
+
+TEST(extract_from_empty_stream)
+{
+    container_buffer<std::string> sourceBuf(std::ios::in);
+    auto inStream = sourceBuf.create_istream();
+
+    VERIFY_THROWS(inStream.extract<int64_t>().get(), std::range_error);
+    VERIFY_THROWS(inStream.extract<char>().get(), std::runtime_error);
+    VERIFY_THROWS(inStream.extract<unsigned char>().get(), std::runtime_error);
+    VERIFY_THROWS(inStream.extract<signed char>().get(), std::runtime_error);
+    VERIFY_THROWS(inStream.extract<bool>().get(), std::runtime_error);
+
+    const std::string strValue = inStream.extract<std::string>().get();
+    VERIFY_ARE_EQUAL("", strValue);
+#ifdef _MS_WINDOWS
+    const std::wstring wstrValue = inStream.extract<std::wstring>().get();
+    VERIFY_ARE_EQUAL(L"", wstrValue);
+#endif
+}
+
+
+TEST(seek_after_eof)
+{
+    container_buffer<std::string> sourceBuf(std::ios::in);
+    VERIFY_ARE_EQUAL(basic_istream<char>::traits::eof(), sourceBuf.seekoff(1, std::ios::cur, std::ios::in));
 }
 
 } // SUITE(istream_tests)

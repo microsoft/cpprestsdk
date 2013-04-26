@@ -35,7 +35,7 @@ using namespace UnitTest;
 
 namespace {
 
-TestDetails const details("testname", "suitename", "filename", 123);
+TestDetails const g_testdetails("testname", "suitename", "filename", 123);
 
 
 TEST(StartsWithNoTestsRun)
@@ -47,9 +47,9 @@ TEST(StartsWithNoTestsRun)
 TEST(RecordsNumbersOfTests)
 {
     TestResults results;
-    results.OnTestStart(details);
-    results.OnTestStart(details);
-    results.OnTestStart(details);
+    results.OnTestStart(g_testdetails);
+    results.OnTestStart(g_testdetails);
+    results.OnTestStart(g_testdetails);
     CHECK_EQUAL(3, results.GetTotalTestCount());
 }
 
@@ -62,8 +62,8 @@ TEST(StartsWithNoTestsFailing)
 TEST(RecordsNumberOfFailures)
 {
     TestResults results;
-    results.OnTestFailure(details, "");
-    results.OnTestFailure(details, "");
+    results.OnTestFailure(g_testdetails, "");
+    results.OnTestFailure(g_testdetails, "");
     CHECK_EQUAL(2, results.GetFailureCount());
 }
 
@@ -71,15 +71,15 @@ TEST(RecordsNumberOfFailedTests)
 {
     TestResults results;
 
-    results.OnTestStart(details);
-    results.OnTestFailure(details, "");
-    results.OnTestFinish(details, 0);
+    results.OnTestStart(g_testdetails);
+    results.OnTestFailure(g_testdetails, "");
+    results.OnTestFinish(g_testdetails, 0);
 
-    results.OnTestStart(details);
-    results.OnTestFailure(details, "");
-    results.OnTestFailure(details, "");
-    results.OnTestFailure(details, "");
-    results.OnTestFinish(details, 0);
+    results.OnTestStart(g_testdetails);
+    results.OnTestFailure(g_testdetails, "");
+    results.OnTestFailure(g_testdetails, "");
+    results.OnTestFailure(g_testdetails, "");
+    results.OnTestFinish(g_testdetails, 0);
 
     CHECK_EQUAL (2, results.GetFailedTestCount());
 }
@@ -88,7 +88,7 @@ TEST(NotifiesReporterOfTestStartWithCorrectInfo)
 {
     RecordingReporter reporter;
     TestResults results(&reporter);
-    results.OnTestStart(details);
+    results.OnTestStart(g_testdetails);
 
     CHECK_EQUAL (1, reporter.testRunCount);
     CHECK_EQUAL ("suitename", reporter.lastStartedSuite);
@@ -100,7 +100,7 @@ TEST(NotifiesReporterOfTestFailureWithCorrectInfo)
     RecordingReporter reporter;
     TestResults results(&reporter);
 
-    results.OnTestFailure(details, "failurestring");
+    results.OnTestFailure(g_testdetails, "failurestring");
     CHECK_EQUAL (1, reporter.testFailedCount);
     CHECK_EQUAL ("filename", reporter.lastFailedFile);
     CHECK_EQUAL (123, reporter.lastFailedLine);
@@ -114,7 +114,7 @@ TEST(NotifiesReporterOfCheckFailureWithCorrectInfo)
     RecordingReporter reporter;
     TestResults results(&reporter);
 
-    results.OnTestFailure(details, "failurestring");
+    results.OnTestFailure(g_testdetails, "failurestring");
     CHECK_EQUAL (1, reporter.testFailedCount);
 
     CHECK_EQUAL ("filename", reporter.lastFailedFile);
@@ -129,7 +129,7 @@ TEST(NotifiesReporterOfTestEnd)
     RecordingReporter reporter;
     TestResults results(&reporter);
 
-    results.OnTestFinish(details, 0.1234f);
+    results.OnTestFinish(g_testdetails, 0.1234f);
     CHECK_EQUAL (1, reporter.testFinishedCount);
     CHECK_EQUAL ("testname", reporter.lastFinishedTest);
     CHECK_EQUAL ("suitename", reporter.lastFinishedSuite);

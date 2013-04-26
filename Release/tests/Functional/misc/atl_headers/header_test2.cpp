@@ -32,6 +32,9 @@
 #define VC_EXTRALEAN            // Exclude rarely-used stuff from Windows headers
 #endif
 
+// These MFC headers are not code analysis clean.
+#pragma warning(push)
+#pragma warning(disable : 6387)
 #include <afx.h>
 #include <afxwin.h>         // MFC core and standard components
 #include <afxext.h>         // MFC extensions
@@ -41,6 +44,7 @@
 #ifndef _AFX_NO_AFXCMN_SUPPORT
 #include <afxcmn.h>                     // MFC support for Windows Common Controls
 #endif // _AFX_NO_AFXCMN_SUPPORT
+#pragma warning(pop)
 
 #include <iostream>
 // Windows Header Files:

@@ -60,7 +60,7 @@ void streambuf_putc(StreamBufferType& wbuf)
     size_t count = 10;
     auto seg2 = [&count](typename StreamBufferType::int_type ) { return (--count > 0); };
     auto seg1 = [&s,&wbuf, seg2]() { return wbuf.putc(s[0]).then(seg2); };
-    pplx::do_while(seg1).wait();
+    pplx::details::do_while(seg1).wait();
 
     VERIFY_ARE_EQUAL(s.size() + 10, wbuf.in_avail());
 
@@ -95,7 +95,7 @@ void streambuf_putc(concurrency::streams::rawptr_buffer<CharType>& wbuf)
     size_t count = 10;
     auto seg2 = [&count](typename StreamBufferType::int_type ) { return (--count > 0); };
     auto seg1 = [&s,&wbuf, seg2]() { return wbuf.putc(s[0]).then(seg2); };
-    pplx::do_while(seg1).wait();
+    pplx::details::do_while(seg1).wait();
 
     VERIFY_ARE_EQUAL(s.size() + 10, wbuf.block().size());
 
@@ -131,11 +131,11 @@ void streambuf_putc(concurrency::streams::container_buffer<CollectionType>& wbuf
     size_t count = 10;
     auto seg2 = [&count](typename StreamBufferType::int_type ) { return (--count > 0); };
     auto seg1 = [&s,&wbuf, seg2]() { return wbuf.putc(s[0]).then(seg2); };
-    pplx::do_while(seg1).wait();
+    pplx::details::do_while(seg1).wait();
 
     VERIFY_ARE_EQUAL(s.size() + 10, wbuf.collection().size());
 
-    VERIFY_IS_TRUE(wbuf.close().get());
+    wbuf.close().get();
     VERIFY_IS_FALSE(wbuf.can_write());
 
     // verify putc after close
@@ -162,10 +162,10 @@ void streambuf_putn(StreamBufferType& wbuf)
     int count = 10;
     auto seg2 = [&count](size_t ) { return (--count > 0); };
     auto seg1 = [&s,&wbuf, seg2]() { return wbuf.putn(s.data(), s.size()).then(seg2); };
-    pplx::do_while(seg1).wait();
+    pplx::details::do_while(seg1).wait();
     VERIFY_ARE_EQUAL(s.size() * 12, wbuf.in_avail());
 
-    VERIFY_IS_TRUE(wbuf.close().get());
+    wbuf.close().get();
     VERIFY_IS_FALSE(wbuf.can_write());
 
     // verify putn after close
@@ -192,9 +192,9 @@ void streambuf_putn(concurrency::streams::rawptr_buffer<CharType>& wbuf)
     int count = 10;
     auto seg2 = [&count](size_t ) { return (--count > 0); };
     auto seg1 = [&s,&wbuf, seg2]() { return wbuf.putn(s.data(), s.size()).then(seg2); };
-    pplx::do_while(seg1).wait();
+    pplx::details::do_while(seg1).wait();
 
-    VERIFY_IS_TRUE(wbuf.close().get());
+    wbuf.close().get();
     VERIFY_IS_FALSE(wbuf.can_write());
 
     // verify putn after close
@@ -221,9 +221,9 @@ void streambuf_putn(concurrency::streams::container_buffer<CollectionType>& wbuf
     int count = 10;
     auto seg2 = [&count](size_t ) { return (--count > 0); };
     auto seg1 = [&s,&wbuf, seg2]() { return wbuf.putn(s.data(), s.size()).then(seg2); };
-    pplx::do_while(seg1).wait();
+    pplx::details::do_while(seg1).wait();
 
-    VERIFY_IS_TRUE(wbuf.close().get());
+    wbuf.close().get();
     VERIFY_IS_FALSE(wbuf.can_write());
 
     // verify putn after close
@@ -255,7 +255,7 @@ void streambuf_alloc_commit(StreamBufferType& wbuf)
 
     VERIFY_ARE_EQUAL(allocSize, wbuf.in_avail());
 
-    VERIFY_IS_TRUE(wbuf.close().get());
+    wbuf.close().get();
     VERIFY_IS_FALSE(wbuf.can_write());
 }
 
@@ -284,7 +284,7 @@ void streambuf_alloc_commit(concurrency::streams::container_buffer<CollectionTyp
 
     VERIFY_IS_TRUE(allocSize <= wbuf.collection().size());
 
-    VERIFY_IS_TRUE(wbuf.close().get());
+    wbuf.close().get();
     VERIFY_IS_FALSE(wbuf.can_write());
 }
 
@@ -331,7 +331,7 @@ void streambuf_seek_write(StreamBufferType& wbuf)
     auto end = wbuf.seekoff(0, std::ios_base::end, std::ios_base::out);
     VERIFY_ARE_EQUAL(end, wbuf.seekpos(end, std::ios_base::out));
 
-    VERIFY_IS_TRUE(wbuf.close().get());
+    wbuf.close().get();
     VERIFY_IS_FALSE(wbuf.can_write());
     VERIFY_IS_FALSE(wbuf.can_seek());
 }
@@ -348,8 +348,7 @@ void streambuf_getc(StreamBufferType& rbuf, typename StreamBufferType::char_type
     // Calling getc again should return the same character (getc do not advance read head)
     VERIFY_ARE_EQUAL(c, rbuf.getc().get());
 
-
-    VERIFY_IS_TRUE(rbuf.close().get());
+    rbuf.close().get();
     VERIFY_IS_FALSE(rbuf.can_read());
     
     // getc should return eof after close
@@ -368,8 +367,7 @@ void streambuf_sgetc(StreamBufferType& rbuf, typename StreamBufferType::char_typ
     // Calling getc again should return the same character (getc do not advance read head)
     VERIFY_ARE_EQUAL(c, rbuf.sgetc());
 
-
-    VERIFY_IS_TRUE(rbuf.close().get());
+    rbuf.close().get();
     VERIFY_IS_FALSE(rbuf.can_read());
     
     // sgetc should return eof after close
@@ -398,7 +396,7 @@ void streambuf_bumpc(StreamBufferType& rbuf, const std::vector<typename StreamBu
         index++;
     }
 
-    VERIFY_IS_TRUE(rbuf.close().get());
+    rbuf.close().get();
     VERIFY_IS_FALSE(rbuf.can_read());
     
     // operation should return eof after close
@@ -427,7 +425,7 @@ void streambuf_sbumpc(StreamBufferType& rbuf, const std::vector<typename StreamB
         index++;
     }
 
-    VERIFY_IS_TRUE(rbuf.close().get());
+    rbuf.close().get();
     VERIFY_IS_FALSE(rbuf.can_read());
     
     // operation should return eof after close
@@ -455,9 +453,9 @@ void streambuf_nextc(StreamBufferType& rbuf, const std::vector<typename StreamBu
         index++;
     }
 
-    VERIFY_IS_TRUE(rbuf.close().get());
+    rbuf.close().get();
     VERIFY_IS_FALSE(rbuf.can_read());
-    
+
     // operation should return eof after close
     VERIFY_ARE_EQUAL(StreamBufferType::traits::eof(), rbuf.nextc().get());
 }
@@ -481,7 +479,7 @@ void streambuf_ungetc(StreamBufferType& rbuf, const std::vector<typename StreamB
         VERIFY_ARE_EQUAL(contents[0], c);
     }
 
-    VERIFY_IS_TRUE(rbuf.close().get());
+    rbuf.close().get();
     VERIFY_IS_FALSE(rbuf.can_read());
 }
 
@@ -497,7 +495,7 @@ void streambuf_getn(StreamBufferType& rbuf, const std::vector<typename StreamBuf
     // We shouldn't be able to read any more
     VERIFY_ARE_EQUAL(0, rbuf.getn(ptr, contents.size()).get());
 
-    VERIFY_IS_TRUE(rbuf.close().get());
+    rbuf.close().get();
     VERIFY_IS_FALSE(rbuf.can_read());
     
     // We shouldn't be able to read any more
@@ -529,7 +527,7 @@ void streambuf_acquire_release(StreamBufferType& rbuf, const std::vector<typenam
         rbuf.release(ptr, size);
     }
 
-    VERIFY_IS_TRUE(rbuf.close().get());
+    rbuf.close().get();
     VERIFY_IS_FALSE(rbuf.can_read());
 }
 
@@ -548,7 +546,7 @@ void streambuf_seek_read(StreamBufferType& rbuf)
     auto end = rbuf.seekoff(0, std::ios_base::end, std::ios_base::in);
     VERIFY_ARE_EQUAL(end, rbuf.seekpos(end, std::ios_base::in));
 
-    VERIFY_IS_TRUE(rbuf.close().get());
+    rbuf.close().get();
     VERIFY_IS_FALSE(rbuf.can_read());
     VERIFY_IS_FALSE(rbuf.can_seek());
 }
@@ -591,7 +589,7 @@ void streambuf_putn_getn(StreamBufferType& rwbuf)
     writeTask.wait();
     readTask.wait();
 
-    VERIFY_IS_TRUE(rwbuf.close().get());
+    rwbuf.close().get();
 }
 
 template<class StreamBufferType>
@@ -601,7 +599,6 @@ void streambuf_acquire_alloc(StreamBufferType& rwbuf)
     VERIFY_IS_TRUE(rwbuf.can_read());
     VERIFY_IS_TRUE(rwbuf.can_write());
 
-
     {
         // There should be nothing to read
         typename StreamBufferType::char_type * ptr = nullptr;
@@ -609,7 +606,6 @@ void streambuf_acquire_alloc(StreamBufferType& rwbuf)
         rwbuf.acquire(ptr, count);
         VERIFY_ARE_EQUAL(count, 0);
     }
-
 
     auto writeTask = pplx::create_task([&rwbuf]()
     {
@@ -642,7 +638,7 @@ void streambuf_acquire_alloc(StreamBufferType& rwbuf)
     writeTask.wait();
     readTask.wait();
 
-    VERIFY_IS_TRUE(rwbuf.close().get());
+    rwbuf.close().get();
 }
 
 template<class StreamBufferType>
@@ -656,7 +652,7 @@ void streambuf_close(StreamBufferType& rwbuf)
     if ( can_wr )
     {
         // Close the write head
-        VERIFY_IS_TRUE(rwbuf.close(std::ios_base::out).get());
+        rwbuf.close(std::ios_base::out).get();
         VERIFY_IS_FALSE(rwbuf.can_write());
 
         if ( can_rd )
@@ -667,8 +663,8 @@ void streambuf_close(StreamBufferType& rwbuf)
             // The buffer should still be open for read
             VERIFY_IS_TRUE(rwbuf.is_open());
 
-            // Closing the write head again should return false
-            VERIFY_IS_FALSE(rwbuf.close(std::ios_base::out).get());
+            // Closing the write head again should not throw
+            rwbuf.close(std::ios_base::out).wait();
 
             // The read head should still be open
             VERIFY_IS_TRUE(rwbuf.can_read());
@@ -678,11 +674,11 @@ void streambuf_close(StreamBufferType& rwbuf)
     if ( can_rd )
     {
         // Close the read head
-        VERIFY_IS_TRUE(rwbuf.close(std::ios_base::in).get());
+        rwbuf.close(std::ios_base::in).get();
         VERIFY_IS_FALSE(rwbuf.can_read());
 
-        // Closing the read head again should return false
-        VERIFY_IS_FALSE(rwbuf.close(std::ios_base::in).get());
+        // Closing the read head again should not throw
+        rwbuf.close(std::ios_base::in).wait();
     }
 
     // The buffer should now be closed
@@ -711,7 +707,7 @@ void streambuf_close_read_with_pending_read(StreamBufferType& rwbuf)
     auto readTask = rwbuf.getn(data, 8);
 
     // Close the write head
-    VERIFY_IS_TRUE(rwbuf.close(std::ios_base::out).get());
+    rwbuf.close(std::ios_base::out).get();
     VERIFY_IS_FALSE(rwbuf.can_write());
 
     // The buffer should still be open for read
@@ -724,7 +720,7 @@ void streambuf_close_read_with_pending_read(StreamBufferType& rwbuf)
     VERIFY_ARE_EQUAL(4, readTask.get());
 
     // Close the read head
-    VERIFY_IS_TRUE(rwbuf.close(std::ios_base::in).get());
+    rwbuf.close(std::ios_base::in).get();
     VERIFY_IS_FALSE(rwbuf.can_read());
 
     // The buffer should now be closed
@@ -753,14 +749,14 @@ void streambuf_close_write_with_pending_read(StreamBufferType& rwbuf)
     auto readTask = rwbuf.getn(data, 8);
 
     // Close the read head
-    VERIFY_IS_TRUE(rwbuf.close(std::ios_base::in).get());
+    rwbuf.close(std::ios_base::in).get();
     VERIFY_IS_FALSE(rwbuf.can_read());
 
     // The read task should not be completed
     VERIFY_IS_FALSE(readTask.is_done());
 
     // Close the write head
-    VERIFY_IS_TRUE(rwbuf.close(std::ios_base::out).get());
+    rwbuf.close(std::ios_base::out).get();
     VERIFY_IS_FALSE(rwbuf.can_write());
 
     // Closing the write head should trigger the completion of the read request
@@ -783,11 +779,11 @@ void streambuf_close_parallel(StreamBufferType& rwbuf)
         VERIFY_IS_TRUE(rwbuf.can_read());
 
         // Close the read head
-        VERIFY_IS_TRUE(rwbuf.close(std::ios_base::in).get());
+        rwbuf.close(std::ios_base::in).get();
         VERIFY_IS_FALSE(rwbuf.can_read());
 
-        // Closing the read head again should return false
-        VERIFY_IS_FALSE(rwbuf.close(std::ios_base::in).get());
+        // Closing the read head again should not throw
+        rwbuf.close(std::ios_base::in).wait();
     });
 
     auto closeWriteTask = pplx::create_task([&rwbuf]()
@@ -795,11 +791,11 @@ void streambuf_close_parallel(StreamBufferType& rwbuf)
         VERIFY_IS_TRUE(rwbuf.can_write());
 
         // Close the write head
-        VERIFY_IS_TRUE(rwbuf.close(std::ios_base::out).get());
+        rwbuf.close(std::ios_base::out).get();
         VERIFY_IS_FALSE(rwbuf.can_write());
 
-        // Closing the write head again should return false
-        VERIFY_IS_FALSE(rwbuf.close(std::ios_base::out).get());
+        // Closing the write head again should not throw
+        rwbuf.close(std::ios_base::out).wait();
     });
 
 
@@ -814,7 +810,7 @@ streams::producer_consumer_buffer<uint8_t> create_producer_consumer_buffer_with_
 {
     streams::producer_consumer_buffer<uint8_t> buf;
     VERIFY_ARE_EQUAL(buf.putn(s.data(), s.size()).get(), s.size());
-    VERIFY_IS_TRUE(buf.close(std::ios_base::out).get());
+    buf.close(std::ios_base::out).get();
     return buf;
 }
 
@@ -827,6 +823,13 @@ TEST(string_buffer_putc)
     streambuf_putc(buf);
 }
 
+TEST(charptr_buffer_putc_fail)
+{
+    char chars[26];
+    rawptr_buffer<char> buf(chars, 26);
+    VERIFY_ARE_EQUAL(buf.putn("abcdefghijklmnopqrstuvwxyz", 26).get(), 26);
+	VERIFY_ARE_EQUAL(buf.putc('a').get(), std::char_traits<char>::eof());
+}
 
 TEST(wstring_buffer_putc)
 {
@@ -858,10 +861,19 @@ TEST(charptr_buffer_putn)
     }
     {
         utf16char chars[128];
-        rawptr_buffer<utf16char> buf(chars, sizeof(chars));
+        rawptr_buffer<utf16char> buf(chars, sizeof(chars)/sizeof(utf16char));
         streambuf_putn(buf);
     }
 }
+TEST(charptr_buffer_putn_fail)
+{
+    {
+        char chars[128];
+        rawptr_buffer<char> buf(chars, 12);
+        VERIFY_THROWS(buf.putn("abcdefghijklmnopqrstuvwxyz", 26).get(), std::runtime_error);
+    }
+}
+
 TEST(bytevec_buffer_putn)
 {
     {
@@ -949,7 +961,7 @@ TEST(charptr_buffer_seek_write)
     }
     {
         utf16char chars[128];
-        rawptr_buffer<utf16char> buf(chars, sizeof(chars));
+        rawptr_buffer<utf16char> buf(chars, sizeof(chars)/sizeof(utf16char));
         streambuf_seek_write(buf);
     }
 }
@@ -1002,7 +1014,7 @@ TEST(charptr_buffer_getc)
     }
     {
         utf16char chars[] = {'H', 'e', 'l', 'l', 'o', ' ', 'W', 'o', 'r', 'l', 'd'};
-        rawptr_buffer<utf16char> buf(chars, sizeof(chars), std::ios::in);
+        rawptr_buffer<utf16char> buf(chars, sizeof(chars)/sizeof(utf16char), std::ios::in);
         streambuf_getc(buf, chars[0]);
     }
 }
@@ -1326,7 +1338,7 @@ TEST(mem_buffer_close_parallel)
 
 TEST(mem_buffer_close_destroy)
 {
-    std::vector<pplx::task<bool>> taskVector;
+    std::vector<pplx::task<void>> taskVector;
 
     for (int i = 0; i < 1000; i++)
     {
@@ -1479,10 +1491,8 @@ TEST(write_stream_test_1)
     VERIFY_ARE_EQUAL(strcmp(chars, "abcdefghijklmnopqrstuvwxyz"), 0);
 
     auto close = stream.close();
-    auto closed = close.get();
 
     VERIFY_IS_TRUE(close.is_done());
-    VERIFY_IS_TRUE(closed);
 }
 
 TEST(mem_buffer_large_data)
@@ -1576,7 +1586,7 @@ void IStreamTest1()
   
     VERIFY_ARE_EQUAL(0, strcmp("This is a test - but this is not", buf));
 
-    VERIFY_IS_TRUE(rbuf.close().get());
+    rbuf.close().get();
     VERIFY_IS_FALSE(rbuf.is_open());
 }
 
@@ -1612,7 +1622,7 @@ void IStreamTest2()
   
     VERIFY_ARE_EQUAL(0, strcmp("This is a test - but this is not", buf));
 
-    VERIFY_IS_TRUE(rbuf.close().get());
+    rbuf.close().get();
     VERIFY_IS_FALSE(rbuf.is_open());
 }
 
@@ -1656,7 +1666,7 @@ void IStreamTest3()
         VERIFY_ARE_EQUAL(0, strcmp("This is a test", (char*)buf));
 
 
-    VERIFY_IS_TRUE(rbuf.close().get());
+    rbuf.close().get();
 }
 
 TEST(membuf_IStreamTest3)
@@ -1702,7 +1712,7 @@ void IStreamTest4()
     else
         VERIFY_ARE_EQUAL(0, strcmp("a test", (char*)buf2));
 
-    VERIFY_IS_TRUE(rbuf.close().get());
+    rbuf.close().get();
 }
 
 TEST(membuf_IStreamTest4)
@@ -1732,7 +1742,7 @@ void IStreamTest5()
 
     // We close the stream buffer before enough bytes have been written.
 
-    VERIFY_IS_TRUE(rbuf.close().get());
+    rbuf.close().get();
 
     VERIFY_ARE_EQUAL(len1, read1.get());
     VERIFY_ARE_EQUAL(len1, strlen((char*)buf1));
@@ -1762,9 +1772,9 @@ void IStreamTest6()
     {
         validated = validated && (expected == rbuf.bumpc().get());
     }
-    
-    VERIFY_IS_TRUE(validated);   
-    VERIFY_IS_TRUE(rbuf.close().get());
+
+    VERIFY_IS_TRUE(validated);
+    rbuf.close().get();
 }
 
 TEST(membuf_IStreamTest6)
@@ -1800,7 +1810,7 @@ void IStreamTest7()
     }
     
     VERIFY_IS_TRUE(validated);   
-    VERIFY_IS_TRUE(rbuf.close().get());
+    rbuf.close().get();
 }
 
 TEST(membuf_IStreamTest7)
@@ -1833,7 +1843,7 @@ void IStreamTest8()
     // Make sure that the first read results in fewer bytes than requested
     // and that the second read returns -1.
 
-    VERIFY_IS_TRUE(rbuf.close(std::ios_base::out).get());
+    rbuf.close(std::ios_base::out).get();
 
     VERIFY_ARE_EQUAL(len1, read1.get());
     VERIFY_ARE_EQUAL(-0,   (int)read2.get());
@@ -1859,16 +1869,14 @@ void IStreamTest9()
 
     VERIFY_ARE_EQUAL(4u, rbuf.in_avail());
 
-    char chars[32];
-    memset(chars,0,sizeof(chars));
-
+    std::string chars(32, '\0');
     ULONG pcbRead = 0;
-    VERIFY_ARE_EQUAL(S_OK, stream.Read((void *)chars, 4, &pcbRead));
+    VERIFY_ARE_EQUAL(S_OK, stream.Read(&chars[0], 4, &pcbRead));
     VERIFY_ARE_EQUAL(4u, pcbRead);
 
-    VERIFY_ARE_EQUAL(0, strcmp("anqs", chars));
+    VERIFY_ARE_EQUAL("anqs", chars.c_str());
 
-    VERIFY_IS_TRUE(rbuf.close().get());
+    rbuf.close().get();
     VERIFY_IS_FALSE(rbuf.is_open());
 }
 
@@ -1883,32 +1891,28 @@ void IStreamTest10()
     _StreamBufferType rbuf;
     ISequentialStream_bridge stream(rbuf);
 
-    char text[128];
-    memset(text, 0, sizeof(text));
+	std::string text(128, '\0');
+	strcpy_s(&text[0], 128, "This is a test"); 
+    size_t len1 = strlen(&text[0]);
 
-    strcpy_s<128>(text, "This is a test");
-    size_t len1 = strlen(text);
+    VERIFY_ARE_EQUAL(len1, rbuf.putn(&text[0], len1).get());
 
-    VERIFY_ARE_EQUAL(len1, rbuf.putn((char *)text, len1).get());
+    strcpy_s(&text[0], 128, " - but this is not");
+    size_t len2 = strlen(&text[0]);
 
-    strcpy_s<128>(text, " - but this is not");
-    size_t len2 = strlen(text);
-
-    VERIFY_ARE_EQUAL(len2, rbuf.putn((char *)text, len2).get());
+    VERIFY_ARE_EQUAL(len2, rbuf.putn(&text[0], len2).get());
 
     VERIFY_ARE_EQUAL(len1+len2, rbuf.in_avail());
 
-    char chars[128];
-    memset(chars,0,sizeof(chars));
-
+	std::string chars(128, '\0');
     size_t was_available = rbuf.in_avail();
     ULONG pcbRead = 0;
-    VERIFY_ARE_EQUAL(S_OK, stream.Read((void *)chars, (ULONG)was_available, &pcbRead));
+    VERIFY_ARE_EQUAL(S_OK, stream.Read(&chars[0], (ULONG)was_available, &pcbRead));
     VERIFY_ARE_EQUAL(was_available, pcbRead);
 
-    VERIFY_ARE_EQUAL(0, strcmp("This is a test - but this is not", chars));
+    VERIFY_ARE_EQUAL("This is a test - but this is not", chars.c_str());
 
-    VERIFY_IS_TRUE(rbuf.close().get());
+    rbuf.close().get();
     VERIFY_IS_FALSE(rbuf.is_open());
 }
 
@@ -1928,21 +1932,19 @@ void IStreamTest11()
     auto seg2 = [&ch](int val) { return (val != -1) && (++ch <= 'z'); };
     auto seg1 = [=,&ch,&rbuf]() { return rbuf.putc(ch).then(seg2); };
 
-    pplx::do_while(seg1).wait();
+    pplx::details::do_while(seg1).wait();
 
     VERIFY_ARE_EQUAL(26u, rbuf.in_avail());
 
-    char chars[128];
-    memset(chars,0,sizeof(chars));
-
+    std::string chars(128, '\0');
     size_t was_available = rbuf.in_avail();
     ULONG pcbRead = 0;
-    VERIFY_ARE_EQUAL(S_OK, stream.Read((void *)chars, (ULONG)was_available, &pcbRead));
+    VERIFY_ARE_EQUAL(S_OK, stream.Read(&chars[0], (ULONG)was_available, &pcbRead));
     VERIFY_ARE_EQUAL(was_available, pcbRead);
 
-    VERIFY_ARE_EQUAL(0, strcmp("abcdefghijklmnopqrstuvwxyz", chars));
+    VERIFY_ARE_EQUAL("abcdefghijklmnopqrstuvwxyz", chars.c_str());
 
-    VERIFY_IS_TRUE(rbuf.close().get());
+    rbuf.close().get();
     VERIFY_IS_FALSE(rbuf.is_open());
 }
 
@@ -1957,32 +1959,28 @@ void IStreamTest12()
     _StreamBufferType rbuf;
     ISequentialStream_bridge stream(rbuf);
 
-    char text[128];
-    memset(text, 0, sizeof(text));
+	std::string text(128, '\0');
+    strcpy_s(&text[0], 128, "This is a test");
+    size_t len1 = strlen(&text[0]);
 
-    strcpy_s<128>(text, "This is a test");
-    size_t len1 = strlen(text);
+    VERIFY_ARE_EQUAL(len1, rbuf.putn(&text[0], len1).get());
 
-    VERIFY_ARE_EQUAL(len1, rbuf.putn((char *)text, len1).get());
+    strcpy_s(&text[0], 128, " - but this is not");
+    size_t len2 = strlen(&text[0]);
 
-    strcpy_s<128>(text, " - but this is not");
-    size_t len2 = strlen(text);
-
-    VERIFY_ARE_EQUAL(len2, rbuf.putn((char *)text, len2).get());
+    VERIFY_ARE_EQUAL(len2, rbuf.putn(&text[0], len2).get());
 
     VERIFY_ARE_EQUAL(len1+len2, rbuf.in_avail());
 
-    char chars[128];
-    memset(chars,0,sizeof(chars));
-
+    std::string chars(128, '\0');
     size_t was_available = rbuf.in_avail();
     ULONG pcbRead = 0;
-    VERIFY_ARE_EQUAL(S_OK, stream.Read((void *)chars, (ULONG)was_available, &pcbRead));
+    VERIFY_ARE_EQUAL(S_OK, stream.Read(&chars[0], (ULONG)was_available, &pcbRead));
     VERIFY_ARE_EQUAL(was_available, pcbRead);
 
-    VERIFY_ARE_EQUAL(0, strcmp("This is a test - but this is not", chars));
+    VERIFY_ARE_EQUAL("This is a test - but this is not", chars.c_str());
 
-    VERIFY_IS_TRUE(rbuf.close().get());
+    rbuf.close().get();
     VERIFY_IS_FALSE(rbuf.is_open());
 }
 
@@ -2006,17 +2004,15 @@ void IStreamTest13()
 
     VERIFY_ARE_EQUAL(32u, rbuf.in_avail());
 
-    char chars[128];
-    memset(chars,0,sizeof(chars));
-
+	std::string chars(128, '\0');
     size_t was_available = rbuf.in_avail();
     ULONG pcbRead = 0;
-    VERIFY_ARE_EQUAL(S_OK, stream.Read((void *)chars, (ULONG)was_available, &pcbRead));
+    VERIFY_ARE_EQUAL(S_OK, stream.Read(&chars[0], (ULONG)was_available, &pcbRead));
     VERIFY_ARE_EQUAL(was_available, pcbRead);
 
-    VERIFY_ARE_EQUAL(0, strcmp("This is a test - but this is not", chars));
+    VERIFY_ARE_EQUAL("This is a test - but this is not", chars.c_str());
 
-    VERIFY_IS_TRUE(os.close().get());
+    os.close().get();
 
     // The read end should still be open
     VERIFY_IS_TRUE(rbuf.is_open());
@@ -2064,7 +2060,7 @@ TEST(producer_consumer_buffer_flush_1)
     VERIFY_ARE_EQUAL(read1.get(), len1);
     VERIFY_ARE_EQUAL(read2.get(), len2);
 
-    VERIFY_IS_TRUE(rwbuf.close().get());
+    rwbuf.close().get();
 }
 
 TEST(producer_consumer_buffer_flush_2)
@@ -2093,7 +2089,7 @@ TEST(producer_consumer_buffer_flush_2)
 
     VERIFY_ARE_EQUAL(read1.get(), len1+len2);
 
-    VERIFY_IS_TRUE(rwbuf.close().get());
+    rwbuf.close().get();
 }
 
 TEST(producer_consumer_buffer_flush_3)
@@ -2121,7 +2117,7 @@ TEST(producer_consumer_buffer_flush_3)
 
     VERIFY_ARE_EQUAL(read1.get(), 26);
 
-    VERIFY_IS_TRUE(rwbuf.close().get());
+    rwbuf.close().get();
 
     VERIFY_ARE_EQUAL(read2.get(), 26);
 }
@@ -2150,7 +2146,7 @@ TEST(producer_consumer_buffer_flush_4)
     VERIFY_ARE_EQUAL(read1.get(), 20);
     VERIFY_ARE_EQUAL(read2.get(), 6);
 
-    VERIFY_IS_TRUE(rwbuf.close().get());
+    rwbuf.close().get();
 }
 
 TEST(producer_consumer_buffer_flush_5)
@@ -2182,7 +2178,7 @@ TEST(producer_consumer_buffer_flush_5)
     {
         VERIFY_IS_FALSE(buf1[i].is_done());
     }
-    VERIFY_IS_TRUE(rwbuf.close().get());
+    rwbuf.close().get();
 }
 
 TEST(producer_consumer_buffer_flush_6)
@@ -2214,7 +2210,7 @@ TEST(producer_consumer_buffer_flush_6)
     {
         VERIFY_IS_FALSE(buf1[i].is_done());
     }
-    VERIFY_IS_TRUE(rwbuf.close().get());
+    rwbuf.close().get();
 }
 
 TEST(producer_consumer_buffer_close_reader_early)
@@ -2243,7 +2239,7 @@ TEST(producer_consumer_buffer_close_reader_early)
 
     VERIFY_ARE_EQUAL(size, rwbuf.in_avail());
 
-    VERIFY_IS_TRUE(rwbuf.close().get());
+    rwbuf.close().get();
 }
 
 
@@ -2252,7 +2248,7 @@ TEST(container_buffer_exception_propagation)
     struct MyException {};
     {
         streams::stringstreambuf rwbuf(std::string("this is the test"));
-        rwbuf.close(std::ios::out, std::make_exception_ptr(MyException()));
+        rwbuf.close(std::ios::out, std::make_exception_ptr(MyException())).wait();
         char buffer[100];
         VERIFY_ARE_EQUAL(rwbuf.getn(buffer, 100).get(), 16);
         VERIFY_THROWS(rwbuf.getn(buffer, 100).get(), MyException);
@@ -2312,6 +2308,240 @@ TEST(producer_consumer_buffer_exception_propagation)
     }
 }
 
-} // SUITE(memstream_tests)
+TEST(producer_consumer_alloc_after_close)
+{
+    producer_consumer_buffer<char> buffer;
+    buffer.close().wait();
+    VERIFY_IS_TRUE(buffer.alloc(2) == nullptr);
+
+    buffer = producer_consumer_buffer<char>();
+    buffer.close(std::ios::out);
+    VERIFY_IS_TRUE(buffer.alloc(2) == nullptr);
+}
+
+TEST(producer_consumer_acquire_after_close)
+{
+    char *temp;
+    size_t size;
+    producer_consumer_buffer<char> buffer;
+    buffer.close().wait();
+    VERIFY_IS_FALSE(buffer.acquire(temp, size));
+    VERIFY_IS_TRUE(nullptr == temp);
+    VERIFY_ARE_EQUAL(0, size);
+
+    buffer = producer_consumer_buffer<char>();
+    buffer.close(std::ios::out);
+    temp = (char *)1;
+    size = 1;
+    VERIFY_IS_TRUE(buffer.acquire(temp, size));
+    VERIFY_IS_TRUE(nullptr == temp);
+    VERIFY_ARE_EQUAL(0, size);
+}
+
+TEST(create_buffers_inout_error)
+{
+    VERIFY_THROWS(container_buffer<std::string>(std::ios::in | std::ios::out), std::invalid_argument);
+    VERIFY_THROWS(container_buffer<std::string>("test data", std::ios::in | std::ios::out), std::invalid_argument);
+    char *data = nullptr;
+    VERIFY_THROWS(rawptr_buffer<char>(data, 2, std::ios::in | std::ios::out), std::invalid_argument);
+}
+
+TEST(memstream_length)
+{
+    producer_consumer_buffer<unsigned char> rbuf;
+    auto istr = rbuf.create_istream();
+
+    auto curr = istr.tell();
+    VERIFY_ARE_EQUAL((long long)curr, 0);
+}
+
+TEST(rawptr_alloc_after_close)
+{
+    char data[2];
+    rawptr_buffer<char> buffer(&data[0], sizeof(data), std::ios::out);
+    buffer.close().wait();
+    VERIFY_IS_TRUE(buffer.alloc(2) == nullptr);
+
+    buffer = rawptr_buffer<char>(&data[0], sizeof(data), std::ios::out);
+    buffer.close(std::ios::out);
+    VERIFY_IS_TRUE(buffer.alloc(2) == nullptr);
+}
+
+TEST(rawptr_alloc_too_large)
+{
+    char data[4];
+    rawptr_buffer<char> buffer(&data[0], sizeof(data), std::ios::out);
+    VERIFY_IS_TRUE(buffer.alloc(10) == nullptr);
+}
+
+TEST(rawptr_buffer_acquire_after_close)
+{
+    char *temp;
+    size_t size;
+    char data[2];
+    rawptr_buffer<char> buffer(&data[0], sizeof(data), std::ios::in);
+    buffer.close().wait();
+    VERIFY_IS_FALSE(buffer.acquire(temp, size));
+    VERIFY_IS_TRUE(nullptr == temp);
+    VERIFY_ARE_EQUAL(0, size);
+
+    buffer = rawptr_buffer<char>(nullptr, 0, std::ios::in);
+    temp = (char *)1;
+    size = 1;
+    VERIFY_IS_TRUE(buffer.acquire(temp, size));
+    VERIFY_IS_TRUE(nullptr == temp);
+    VERIFY_ARE_EQUAL(0, size);
+}
+
+TEST(container_buffer_alloc_after_close)
+{
+    container_buffer<std::string> buffer;
+    buffer.close().wait();
+    VERIFY_IS_TRUE(buffer.alloc(2) == nullptr);
+
+    buffer = container_buffer<std::string>();
+    buffer.close(std::ios::out);
+    VERIFY_IS_TRUE(buffer.alloc(2) == nullptr);
+}
+
+TEST(container_buffer_acquire_after_close)
+{
+    char *temp;
+    size_t size;
+    container_buffer<std::string> buffer("test data");
+    buffer.close().wait();
+    VERIFY_IS_FALSE(buffer.acquire(temp, size));
+    VERIFY_IS_TRUE(nullptr == temp);
+    VERIFY_ARE_EQUAL(0, size);
+
+    buffer = container_buffer<std::string>(std::ios::in);
+    temp = (char *)1;
+    size = 1;
+    VERIFY_IS_TRUE(buffer.acquire(temp, size));
+    VERIFY_IS_TRUE(nullptr == temp);
+    VERIFY_ARE_EQUAL(0, size);
+}
+
+TEST(bytestream_length)
+{
+    // test byte stream
+    std::string s("12345");
+    auto istr = bytestream::open_istream(s);
+    test_stream_length(istr, s.size());
+}
+
+TEST(read_pending_close_with_exception)
+{
+    producer_consumer_buffer<char> sourceBuf;
+
+    const size_t size = 4;
+    char buf[size];
+    memset(&buf[0], '0', size);
+    auto firstRead = sourceBuf.getn(buf, size);
+    sourceBuf.putc('a').wait();
+
+    sourceBuf.close(std::ios::in | std::ios::out, std::make_exception_ptr(std::runtime_error("test exception"))).wait();
+    VERIFY_ARE_EQUAL(firstRead.get(), 1);
+    VERIFY_ARE_EQUAL(buf[0], 'a');
+    VERIFY_ARE_EQUAL(buf[1], '0');
+    VERIFY_ARE_EQUAL(buf[2], '0');
+    VERIFY_ARE_EQUAL(buf[3], '0');
+
+    VERIFY_THROWS(sourceBuf.getn(buf, size).get(), std::runtime_error);
+    VERIFY_ARE_EQUAL(buf[0], 'a');
+    VERIFY_ARE_EQUAL(buf[1], '0');
+    VERIFY_ARE_EQUAL(buf[2], '0');
+    VERIFY_ARE_EQUAL(buf[3], '0');
+}
+
+TEST(close_on_one_head_write)
+{
+    producer_consumer_buffer<char> sourceBuf;
+    sourceBuf.putc('a').wait();
+
+	auto ostream = sourceBuf.create_ostream();
+
+	ostream.close().wait();
+
+	// Check that the exception is generated by the 'get(),' not the operation.
+	auto t1 = sourceBuf.putc('b');
+	auto t2 = ostream.write('b');
+    VERIFY_ARE_EQUAL(t1.get(), streams::streambuf<char>::traits::eof());
+    VERIFY_THROWS(t2.get(), std::runtime_error);
+    VERIFY_ARE_EQUAL(sourceBuf.getc().get(), 'a');
+}
+
+TEST(close_on_one_head_read)
+{
+    producer_consumer_buffer<char> sourceBuf;
+    sourceBuf.putc('a').wait();
+
+	auto istream = sourceBuf.create_istream();
+
+	istream.close().wait();
+
+	// Check that the exception is generated by the 'get(),' not the operation.
+	auto t1 = sourceBuf.bumpc();
+	auto t2 = istream.read();
+    VERIFY_ARE_EQUAL(t1.get(), streams::streambuf<char>::traits::eof());
+    VERIFY_THROWS(t2.get(), std::runtime_error);
+    VERIFY_ARE_EQUAL(sourceBuf.putc('a').get(), 'a');
+}
+
+TEST(close_with_exception_on_one_head_write)
+{
+    producer_consumer_buffer<char> sourceBuf;
+    sourceBuf.putc('a').wait();
+
+	auto ostream = sourceBuf.create_ostream();
+
+	ostream.close(std::make_exception_ptr(std::invalid_argument("test exception"))).wait();
+
+	// Check that the exception is generated by the 'get(),' not the operation.
+	auto t1 = sourceBuf.putc('b');
+	auto t2 = ostream.write('b');
+    VERIFY_THROWS(t1.get(), std::invalid_argument);
+    VERIFY_THROWS(t2.get(), std::invalid_argument);
+    VERIFY_ARE_EQUAL(sourceBuf.getc().get(), 'a');
+}
+
+TEST(close_with_exception_on_one_head_read)
+{
+    producer_consumer_buffer<char> sourceBuf;
+    sourceBuf.putc('a').wait();
+
+	auto istream = sourceBuf.create_istream();
+
+	istream.close(std::make_exception_ptr(std::invalid_argument("test exception"))).wait();
+
+	// Check that the exception is generated by the 'get(),' not the operation.
+	auto t1 = sourceBuf.bumpc();
+	auto t2 = istream.read();
+    VERIFY_THROWS(t1.get(), std::invalid_argument);
+    VERIFY_THROWS(t2.get(), std::invalid_argument);
+    VERIFY_ARE_EQUAL(sourceBuf.putc('a').get(), 'a');
+}
+
+TEST(close_twice)
+{
+	// This test passes if it does not generate an exception.
+	{
+		producer_consumer_buffer<char> sourceBuf;
+		sourceBuf.close(std::ios::in).wait();
+		sourceBuf.close(std::ios::in).wait();
+	}
+	{
+		producer_consumer_buffer<char> sourceBuf;
+		sourceBuf.close(std::ios::out).wait();
+		sourceBuf.close(std::ios::out).wait();
+	}
+	{
+		producer_consumer_buffer<char> sourceBuf;
+		sourceBuf.close().wait();
+		sourceBuf.close().wait();
+	}
+}
+
+}
 
 }}}

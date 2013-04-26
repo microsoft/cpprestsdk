@@ -47,25 +47,6 @@ namespace http
 {
 namespace listener
 {
-namespace details {
-
-class _function_pipeline_wrapper : public http::http_pipeline_stage
-{
-public:
-    _function_pipeline_wrapper(std::function<pplx::task<http_response>(http_request, std::shared_ptr<http::http_pipeline_stage>)> handler) : m_handler(handler)
-    {
-    }
-
-    virtual pplx::task<http_response> propagate(http_request request)
-    {
-        return m_handler(request, get_next_stage());
-    }
-private:
-
-    std::function<pplx::task<http_response>(http_request, std::shared_ptr<http::http_pipeline_stage>)> m_handler;
-};
-
-} // namespace details
 
 /// <summary>
 /// Interface a HTTP listener must implement to work with the http_server_api.
@@ -89,7 +70,7 @@ public:
 /// <summary>
 /// A class for listening and processing HTTP requests at a specific URI.
 /// </summary>
-class http_listener : public http_listener_interface, public http_pipeline
+class http_listener : public http_listener_interface
 {
 public:
 
@@ -172,7 +153,7 @@ public:
     /// </summary>
     /// <remarks>The resulting listener cannot be used for anything, but is useful to initialize a variable
     /// that will later be overwritten with a real listener instance.</remarks>
-    http_listener() : m_pipeline_stage(nullptr), m_closed(true) { }
+    http_listener() : m_closed(true) { }
 
     /// <summary>
     /// Destructor frees any held resources.
@@ -220,8 +201,7 @@ public:
     /// <param name="handler">A function object representing the pipeline stage.</param>
     void add_handler(std::function<pplx::task<http_response>(http_request, std::shared_ptr<http::http_pipeline_stage>)> handler)
     {
-        auto hndlr = std::make_shared<details::_function_pipeline_wrapper>(handler);
-        append(hndlr);
+        m_pipeline->append(std::make_shared<::web::http::details::function_pipeline_wrapper>(handler));
     }
 
     /// <summary>
@@ -249,7 +229,6 @@ public:
     /// <returns>The URI this listener is for.</returns>
     http::uri uri() const { return m_uri; }
 
-    /// <summary>
     /// Move constructor.
     /// </summary>
     http_listener(http_listener &&other) : m_closed(true)
@@ -279,30 +258,6 @@ public:
 
 private:
 
-    void _move(http_listener &&other)
-    {
-        if(this != &other)
-        {
-            if(!m_closed)
-            {
-                close();
-            }
-
-            this->m_closed = other.m_closed;
-            this->m_uri = std::move(other.m_uri);
-            this->m_all_requests = std::move(other.m_all_requests);
-            this->m_supported_methods = std::move(other.m_supported_methods);
-
-            this->m_pipeline_stage = other.m_pipeline_stage;
-            other.m_pipeline_stage = nullptr;
-            this->m_pipeline_stage->reset_listener(this);
-
-            other.m_closed = true;
-
-            http_pipeline::operator=(std::move(other));
-        }
-    }
-
     class _listener_stage : public http::http_pipeline_stage
     {
     public:
@@ -325,16 +280,38 @@ private:
         http_listener *m_listener;
     };
 
-    _listener_stage* m_pipeline_stage;
+    void _move(http_listener &&other)
+    {
+        if(this != &other)
+        {
+            // unregister this from the server
+            this->close();
+
+            this->m_uri = std::move(other.m_uri);
+            this->m_all_requests = std::move(other.m_all_requests);
+            this->m_supported_methods = std::move(other.m_supported_methods);
+            this->m_pipeline = std::move(other.m_pipeline);
+
+            std::shared_ptr<::web::http::http_pipeline_stage> lastStage = this->m_pipeline->last_stage();
+            auto listenerStage = static_cast<_listener_stage *>(lastStage.get());
+            listenerStage->reset_listener(this);
+
+            if (!other.m_closed)
+            {
+                // unregister the listener being moved from the server
+                // as the registration is by pointer!
+                other.close();
+
+                // Register with the server
+                this->open();
+            }
+        }
+    }
 
     /// <summary>
     /// Private constructor. Only create_listener functions should access the constructor.
     /// </summary>
     _ASYNCRTIMP http_listener(const http::uri &address);
-
-    http::uri m_uri;
-    std::function<void(http_request)> m_all_requests;
-    std::map<http::method, std::function<void(http_request)>> m_supported_methods;
 
     // Default implementation for TRACE and OPTIONS.
     void handle_trace(http_request message);
@@ -345,12 +322,18 @@ private:
     /// </summary>
     utility::string_t get_supported_methods() const;
 
+    // Http pipeline stages
+    std::shared_ptr<http::http_pipeline> m_pipeline;
+
+    // URI 
+    http::uri m_uri;
+
+    // Handlers
+    std::function<void(http_request)> m_all_requests;
+    std::map<http::method, std::function<void(http_request)>> m_supported_methods;
+
     // Used to record that the listener has already been closed.
     bool m_closed;
-
-    // No copy or assignment.
-    http_listener(const http_listener &);
-    http_listener &operator=(const http_listener &);
 };
 
 } // namespace listen

@@ -43,8 +43,8 @@ TEST_EX(DummyTest, list1)
 
 TEST (TestsAreAddedToTheListThroughMacro)
 {
-    CHECK(list1.GetHead() != 0);
-    CHECK(list1.GetHead()->m_nextTest == 0);
+    CHECK(list1.GetFirst() != 0);
+    CHECK(list1.GetFirst()->m_nextTest == 0);
 }
 
 #ifndef UNITTEST_NO_EXCEPTIONS
@@ -71,7 +71,7 @@ TEST (ExceptionsInFixtureAreReportedAsHappeningInTheFixture)
     TestResults result(&reporter);
 	{
 		ScopedCurrentTest scopedResults(result);
-		list2.GetHead()->Run();
+		list2.GetFirst()->Run();
 	}
 
     CHECK(strstr(reporter.lastFailedMessage, "xception"));
@@ -116,9 +116,9 @@ TEST_EX(MacroTestHelper1, macroTestList1)
 
 TEST(TestAddedWithTEST_EXMacroGetsDefaultSuite)
 {
-    CHECK(macroTestList1.GetHead() != NULL);
-    CHECK_EQUAL ("MacroTestHelper1", macroTestList1.GetHead()->m_details.testName);
-    CHECK_EQUAL ("DefaultSuite", macroTestList1.GetHead()->m_details.suiteName);
+    CHECK(macroTestList1.GetFirst() != NULL);
+    CHECK_EQUAL ("MacroTestHelper1", macroTestList1.GetFirst()->m_details.testName);
+    CHECK_EQUAL ("DefaultSuite", macroTestList1.GetFirst()->m_details.suiteName);
 }
 
 TestList macroTestList2;
@@ -128,9 +128,9 @@ TEST_FIXTURE_EX(DummyFixture, MacroTestHelper2, macroTestList2)
 
 TEST(TestAddedWithTEST_FIXTURE_EXMacroGetsDefaultSuite)
 {
-    CHECK(macroTestList2.GetHead() != NULL);
-    CHECK_EQUAL ("MacroTestHelper2", macroTestList2.GetHead()->m_details.testName);
-    CHECK_EQUAL ("DefaultSuite", macroTestList2.GetHead()->m_details.suiteName);
+    CHECK(macroTestList2.GetFirst() != NULL);
+    CHECK_EQUAL ("MacroTestHelper2", macroTestList2.GetFirst()->m_details.testName);
+    CHECK_EQUAL ("DefaultSuite", macroTestList2.GetFirst()->m_details.suiteName);
 }
 
 #ifndef UNITTEST_NO_EXCEPTIONS
@@ -147,12 +147,12 @@ TEST_FIXTURE_EX(FixtureCtorThrows, FixtureCtorThrowsTestName, throwingFixtureTes
 
 TEST(FixturesWithThrowingCtorsAreFailures)
 {
-	CHECK(throwingFixtureTestList1.GetHead() != NULL);
+	CHECK(throwingFixtureTestList1.GetFirst() != NULL);
 	RecordingReporter reporter;
 	TestResults result(&reporter);
 	{
 		ScopedCurrentTest scopedResult(result);
-		throwingFixtureTestList1.GetHead()->Run();
+		throwingFixtureTestList1.GetFirst()->Run();
 	}
 
 	int const failureCount = result.GetFailedTestCount();
@@ -172,13 +172,13 @@ TEST_FIXTURE_EX(FixtureDtorThrows, FixtureDtorThrowsTestName, throwingFixtureTes
 
 TEST(FixturesWithThrowingDtorsAreFailures)
 {
-	CHECK(throwingFixtureTestList2.GetHead() != NULL);
+	CHECK(throwingFixtureTestList2.GetFirst() != NULL);
 
 	RecordingReporter reporter;
 	TestResults result(&reporter);
 	{
 		ScopedCurrentTest scopedResult(result);
-		throwingFixtureTestList2.GetHead()->Run();
+		throwingFixtureTestList2.GetFirst()->Run();
 	}
 
 	int const failureCount = result.GetFailedTestCount();
@@ -207,7 +207,7 @@ TEST(CorrectlyReportsFixturesWithCtorsThatAssert)
 	TestResults result(&reporter);
 	{
 		ScopedCurrentTest scopedResults(result);
-		ctorAssertFixtureTestList.GetHead()->Run();
+		ctorAssertFixtureTestList.GetFirst()->Run();
 	}
 
 	const int failureCount = result.GetFailedTestCount();

@@ -16,36 +16,16 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* pplxdefs.h
+* pplxtasks.h
 *
-* Parallel Patterns Library
+* Parallel Patterns Library - PPLx Tasks
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 
-#pragma once
-
-#ifndef _PPLXDEFS_H
-#define _PPLXDEFS_H
-
-#ifndef _MS_WINDOWS
-#if defined(WIN32) || defined(__cplusplus_winrt)
-#define _MS_WINDOWS
+#if defined(_MSC_VER) && (_MSC_VER >= 1800)
+#include <ppltasks.h>
+namespace pplx = Concurrency;
+#else 
+#error This file must not be included for Visual Studio 11 and older
 #endif
-#endif // _MS_WINDOWS
-
-#if defined(_DEBUG)
-#define _PPLX_ASSERT(x)   do {_ASSERTE(x); __assume(x);} while(false)
-#else
-#define _PPLX_ASSERT(x)   __assume(x)
-#endif
-
-#pragma warning(disable :4127)
-
-#ifdef _PPLX_EXPORT
-#define _PPLXIMP __declspec(dllexport)
-#else
-#define _PPLXIMP __declspec(dllimport)
-#endif
-
-#endif // _PPLXDEFS_H

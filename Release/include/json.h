@@ -128,8 +128,12 @@ namespace web { namespace json
         /// <param name="value">The C++ value to create a JSON value from</param>
         _ASYNCRTIMP explicit value(bool value);
 
+#ifdef _MS_WINDOWS
+    private:
+        // Constructor from const char* is private, to prevent the bool constructor from taking over
+        explicit value(const char* value);
     public:
-
+#endif //  _MS_WINDOWS
         /// <summary>
         /// Constructor creating a JSON string value
         /// </summary>
@@ -158,17 +162,20 @@ namespace web { namespace json
         /// <summary>
         /// Assignment operator.
         /// </summary>
+        /// <returns>The JSON value object that contains the result of the assignment.</returns>
         _ASYNCRTIMP value &operator=(const value &);
 
         /// <summary>
         /// Move assignment operator.
         /// </summary>
+        /// <returns>The JSON value object that contains the result of the assignment.</returns>
         _ASYNCRTIMP value &operator=(value &&);
 
         /// <summary>
         /// Constructor creating a JSON value from an input stream, by parsing its contents.
         /// </summary>
         /// <param name="input">The stream to read the JSON value from</param>
+        /// <returns>The JSON value object created from the input stream.</returns>
         _ASYNCRTIMP static value parse(utility::istream_t &input);
 
 #ifdef _MS_WINDOWS
@@ -182,13 +189,13 @@ namespace web { namespace json
         // Static factories
 
         /// <summary>
-        /// Create a null value
+        /// Creates a null value
         /// </summary>
         /// <returns>A JSON null value</returns>
         static _ASYNCRTIMP value __cdecl null();
 
         /// <summary>
-        /// Create a number value
+        /// Creates a number value
         /// </summary>
         /// <param name="value">The C++ value to create a JSON value from</param>
         /// <returns>A JSON number value</returns>
@@ -266,37 +273,37 @@ public:
         /// <summary>
         /// Is the current value a null value?
         /// </summary>
-        /// <returns>True if the value is a null value, false otherwise</returns>
+        /// <returns><c>true</c> if the value is a null value, <c>false</c> otherwise</returns>
         bool is_null() const { return type() == Null; };
 
         /// <summary>
         /// Is the current value a number value?
         /// </summary>
-        /// <returns>True if the value is a number value, false otherwise</returns>
+        /// <returns><c>true</c> if the value is a number value, <c>false</c> otherwise</returns>
         bool is_number() const { return type() == Number; }
 
         /// <summary>
         /// Is the current value a Boolean value?
         /// </summary>
-        /// <returns>True if the value is a Boolean value, false otherwise</returns>
+        /// <returns><c>true</c> if the value is a Boolean value, <c>false</c> otherwise</returns>
         bool is_boolean() const { return type() == Boolean; }
 
         /// <summary>
         /// Is the current value a string value?
         /// </summary>
-        /// <returns>True if the value is a string value, false otherwise</returns>
+        /// <returns><c>true</c> if the value is a string value, <c>false</c> otherwise</returns>
         bool is_string() const { return type() == String; }
 
         /// <summary>
         /// Is the current value an array?
         /// </summary>
-        /// <returns>True if the value is an array, false otherwise</returns>
+        /// <returns><c>true</c> if the value is an array, <c>false</c> otherwise</returns>
         bool is_array() const { return type() == Array; }
 
         /// <summary>
         /// Is the current value an object?
         /// </summary>
-        /// <returns>True if the value is an object, false otherwise</returns>
+        /// <returns><c>true</c> if the value is an object, <c>false</c> otherwise</returns>
         bool is_object() const { return type() == Object; }
 
         /// <summary>
@@ -306,7 +313,7 @@ public:
         size_t size() const;
 
         /// <summary>
-        /// Represent the current JSON value as a double-byte string.
+        /// Serialize the current JSON value to a C++ string.
         /// </summary>
         /// <returns>A string representation of the value</returns>
         _ASYNCRTIMP utility::string_t to_string() const;
@@ -360,12 +367,14 @@ public:
         /// <summary>
         /// Compare two JSON values for equality.
         /// </summary>
+        /// <param name="other">The JSON value to compare with.</param>
         /// <returns>True iff the values are equal.</returns>
 		_ASYNCRTIMP bool operator==(const value& other) const;
             
         /// <summary>
         /// Compare two JSON values for inequality.
         /// </summary>
+        /// <param name="other">The JSON value to compare with.</param>
         /// <returns>True iff the values are unequal.</returns>
 		bool operator!=(const value& other) const
         {
@@ -398,57 +407,65 @@ public:
 #endif
         
         /// <summary>
-        /// Access an element of a JSON array.
+        /// Accesses an element of a JSON array.
         /// </summary>
-        /// <param name="key">The name of the field</param>
+        /// <param name="index">The index of an element in the JSON array.</param>
         /// <returns>A reference to the value kept in the field</returns>
         _ASYNCRTIMP value & operator [] (size_t index);
 
         /// <summary>
-        /// Access an element of a JSON array.
+        /// Accesses an element of a JSON array.
         /// </summary>
-        /// <param name="key">The name of the field</param>
+        /// <param name="index">The index of an element in the JSON array.</param>
         /// <returns>A reference to the value kept in the field</returns>
         _ASYNCRTIMP const value & operator [] (size_t index) const;
 
         /// <summary>
-        /// Get the beginning iterator element for a composite value.
+        /// Gets the beginning iterator element for a composite value.
         /// </summary>
+        /// <returns>An iterator to the beginning of the JSON value.</returns>
 		iterator begin();
 
         /// <summary>
-        /// Get the end iterator element for a composite value.
+        /// Gets the end iterator element for a composite value.
         /// </summary>
+        /// <returns>An iterator to the element past the end of the JSON value.</returns>
 		iterator end();
 
         /// <summary>
-        /// Get the beginning reverse iterator element for a composite value.
+        /// Gets the beginning reverse iterator element for a composite value.
         /// </summary>
+        /// <returns>A reverse iterator to the reverse beginning of the JSON value.</returns>
 		reverse_iterator rbegin();
 
         /// <summary>
-        /// Get the end reverse iterator element for a composite value.
+        /// Gets the end reverse iterator element for a composite value.
         /// </summary>
+        /// <returns>A reverse iterator to the reverse end of the JSON value.</returns>
 		reverse_iterator rend();
 
         /// <summary>
-        /// Get the beginning const iterator element for a composite value.
+        /// Gets the beginning const iterator element for a composite value.
         /// </summary>
+        /// <returns>A <c>const_iterator</c> to the beginning of the JSON value.</returns>
 		const_iterator cbegin() const;
 
         /// <summary>
-        /// Get the end const iterator element for a composite value.
+        /// Gets the end const iterator element for a composite value.
         /// </summary>
+        /// <returns>A <c>const_iterator</c> to the element past the end of the JSON value.</returns>
 		const_iterator cend() const;
 
         /// <summary>
         /// Get the beginning const reverse iterator element for a composite value.
         /// </summary>
+        /// <returns>The beginning <c>const_reverse_iterator</c> element of the JSON value.</returns>
 		const_reverse_iterator crbegin() const;
 
         /// <summary>
         /// Get the end const reverse iterator element for a composite value.
         /// </summary>
+        /// <returns>The end <c>const_reverse_iterator</c> element the JSON value.</returns>
 		const_reverse_iterator crend() const;
 
     private:
@@ -520,8 +537,8 @@ public:
             virtual const value &cnst_index(std::vector<value>::size_type) const { throw json_exception(U("not an array")); }
 
             utility::string_t to_string() const
-			{ 
-				utility::string_t result;  
+			{
+				utility::string_t result;
 				format(result); 
 				return result; 
 			}
@@ -695,17 +712,9 @@ public:
             virtual utility::string_t as_string() const;
 
         protected:
-            virtual void format(std::basic_string<char>& stream) const
-            {
-                stream.push_back('"');
-                stream.append(as_utf8_string()).push_back('"');
-            }
+            virtual void format(std::basic_string<char>& stream) const;
 #ifdef _MS_WINDOWS
-            virtual void format(std::basic_string<wchar_t>& stream) const
-            {
-                stream.push_back(L'"');
-                stream.append(as_utf16_string()).push_back(L'"');
-            }
+            virtual void format(std::basic_string<wchar_t>& stream) const;
 #endif
         private:
             template<typename CharType> friend class json::details::JSON_Parser;
@@ -957,13 +966,19 @@ public:
     }
 
     /// <summary>
-    /// A standard std::ostream operator to facilitate writing JSON values to streams.
+    /// A standard <c>std::ostream</c> operator to facilitate writing JSON values to streams.
     /// </summary>
+    /// <param name="os">The output stream to write the JSON value to.</param>
+    /// <param name="val">The JSON value to be written to the stream.</param>
+    /// <returns>The output stream object</returns>
     _ASYNCRTIMP utility::ostream_t& operator << (utility::ostream_t &os, const json::value &val);
 
     /// <summary>
-    /// A standard std::ostream operator to facilitate reading JSON values from streams.
+    /// A standard <c>std::istream</c> operator to facilitate reading JSON values from streams.
     /// </summary>
+    /// <param name="is">The input stream to read the JSON value from.</param>
+    /// <param name="val">The JSON value object read from the stream.</param>
+    /// <returns>The input stream object.</returns>
     _ASYNCRTIMP utility::istream_t& operator >> (utility::istream_t &is, json::value &val);
 
 }} // namespace web::json

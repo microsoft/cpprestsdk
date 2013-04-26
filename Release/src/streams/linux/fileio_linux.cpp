@@ -33,7 +33,7 @@
 using namespace boost::asio;
 
 namespace Concurrency { namespace streams { namespace details {
-	
+
 /***
 * ==++==
 *
@@ -55,7 +55,7 @@ public:
     /// Constructor
     /// </summary>
     io_scheduler()
-	: m_outstanding_work(0)
+    : m_outstanding_work(0)
     {
         m_no_outstanding_work.set();
     }
@@ -88,7 +88,7 @@ public:
     }
 
 private:
-    pplx::notification_event m_no_outstanding_work;
+    pplx::extensibility::event_t m_no_outstanding_work;
 
     volatile std::atomic<long> m_outstanding_work;
 };
@@ -172,10 +172,8 @@ using namespace Concurrency::streams::details;
 /// <param name="callback">The callback interface pointer</param>
 /// <param name="mode">The C++ file open mode</param>
 /// <returns>The error code if there was an error in file creation.</returns>
-bool _finish_create(int fh, _filestream_callback *callback, std::ios_base::openmode mode, int prot)
+bool _finish_create(int fh, _filestream_callback *callback, std::ios_base::openmode mode, int /* prot */)
 {
-    UNUSED_PARAMETER(prot);
-
     if ( fh != -1 ) 
     {
         std::shared_ptr<io_scheduler> sched = get_scheduler();
@@ -302,7 +300,7 @@ bool _close_fsb_nolock(_file_info **info, Concurrency::streams::details::_filest
             bool result = false;
 
             {
-                pplx::scoped_recursive_lock lock(fInfo->m_lock);
+                pplx::extensibility::scoped_recursive_lock_t lock(fInfo->m_lock);
 
                 if ( fInfo->m_handle != -1 )
                 {
@@ -316,11 +314,11 @@ bool _close_fsb_nolock(_file_info **info, Concurrency::streams::details::_filest
             }
 
             delete fInfo;
-			if (result)
+            if (result)
             {
-				callback->on_closed(result);
+                callback->on_closed();
             }
-			else
+            else
             {
                 auto exptr = std::make_exception_ptr(std::ios_base::failure("failed to close file"));
                 callback->on_error(exptr);
@@ -337,7 +335,7 @@ bool _close_fsb(_file_info **info, Concurrency::streams::details::_filestream_ca
     if ( callback == nullptr ) return false;
     if ( info == nullptr || *info == nullptr ) return false;
     
-    pplx::scoped_recursive_lock lock((*info)->m_lock);
+    pplx::extensibility::scoped_recursive_lock_t lock((*info)->m_lock);
 
     return _close_fsb_nolock(info, callback);
 }
@@ -392,7 +390,7 @@ size_t _write_file_async(Concurrency::streams::details::_file_info_impl *fInfo, 
         callback->on_completed(bytes_written);
 
         {
-            pplx::scoped_recursive_lock lock(fInfo->m_lock);
+            pplx::extensibility::scoped_recursive_lock_t lock(fInfo->m_lock);
 
             // Decrement the counter of outstanding write events.
             if ( --fInfo->m_outstanding_writes == 0 )
@@ -411,7 +409,7 @@ size_t _write_file_async(Concurrency::streams::details::_file_info_impl *fInfo, 
         sched->complete_io();
     });
 
-	return 0;
+    return 0;
 }
 
 /// <summary>
@@ -431,14 +429,14 @@ size_t _read_file_async(Concurrency::streams::details::_file_info_impl *fInfo, C
     pplx::create_task([=]() -> void
     {
         auto bytes_read = pread(fInfo->m_handle, ptr, count, offset);
-		if (bytes_read < 0)
+        if (bytes_read < 0)
         {
             auto exptr = std::make_exception_ptr(std::ios_base::failure("failed to read file"));
             callback->on_error(exptr);
         }
-		else
+        else
         {
-			callback->on_completed(bytes_read);
+            callback->on_completed(bytes_read);
         }
         sched->complete_io();
     });
@@ -457,7 +455,7 @@ public:
         m_func(result);
         delete this;
     }
-	//TODO: [HH] this is a merge hack
+    //TODO: [HH] this is a merge hack
     virtual void on_error(const std::exception &e)
     {
         auto exptr = std::make_exception_ptr(e);
@@ -467,7 +465,7 @@ public:
 private:
     _file_info *m_info;
     Func        m_func;
-	_filestream_callback *m_callback;
+    _filestream_callback *m_callback;
 };
 
 template<typename Func>
@@ -480,7 +478,7 @@ static const size_t PageSize = 512;
 
 size_t _fill_buffer_fsb(_file_info_impl *fInfo, _filestream_callback *callback, size_t count, size_t charSize)
 {
-	size_t byteCount = count * charSize;
+    size_t byteCount = count * charSize;
     if ( fInfo->m_buffer == nullptr )
     {
         fInfo->m_bufsize = std::max(PageSize, byteCount);
@@ -490,7 +488,7 @@ size_t _fill_buffer_fsb(_file_info_impl *fInfo, _filestream_callback *callback, 
         auto cb = create_callback(fInfo, callback,
             [=] (size_t result) 
             { 
-                pplx::scoped_recursive_lock lock(fInfo->m_lock);
+                pplx::extensibility::scoped_recursive_lock_t lock(fInfo->m_lock);
                 fInfo->m_buffill = result / charSize;
                 callback->on_completed(result);
             });
@@ -526,7 +524,7 @@ size_t _fill_buffer_fsb(_file_info_impl *fInfo, _filestream_callback *callback, 
         auto cb = create_callback(fInfo, callback,
             [=] (size_t result) 
             { 
-                pplx::scoped_recursive_lock lock(fInfo->m_lock);
+                pplx::extensibility::scoped_recursive_lock_t lock(fInfo->m_lock);
                 fInfo->m_buffill = result / charSize;
                 callback->on_completed(result + bufrem * charSize);
             });
@@ -534,7 +532,7 @@ size_t _fill_buffer_fsb(_file_info_impl *fInfo, _filestream_callback *callback, 
         return _read_file_async(fInfo, cb, (uint8_t*)fInfo->m_buffer + bufrem * charSize, fInfo->m_bufsize - bufrem * charSize, (fInfo->m_rdpos+bufrem)*charSize);
     }
     else
-    	return byteCount;
+        return byteCount;
 }
 
 
@@ -553,7 +551,7 @@ size_t _getn_fsb(Concurrency::streams::details::_file_info *info, Concurrency::s
     
     _file_info_impl *fInfo = (_file_info_impl *)info;
 
-    pplx::scoped_recursive_lock lock(info->m_lock);
+    pplx::extensibility::scoped_recursive_lock_t lock(info->m_lock);
 
     if ( fInfo->m_handle == -1 ) return (size_t)-1;
 
@@ -605,7 +603,7 @@ size_t _putn_fsb(Concurrency::streams::details::_file_info *info, Concurrency::s
     
     _file_info_impl *fInfo = (_file_info_impl *)info;
 
-    pplx::scoped_recursive_lock lock(fInfo->m_lock);
+    pplx::extensibility::scoped_recursive_lock_t lock(fInfo->m_lock);
 
     if ( fInfo->m_handle == -1 ) return (size_t)-1;
 
@@ -633,7 +631,7 @@ size_t _putn_fsb(Concurrency::streams::details::_file_info *info, Concurrency::s
 /// <returns>0 if the read request is still outstanding, -1 if the request failed, otherwise the size of the data read into the buffer</returns>
 size_t _putc_fsb(Concurrency::streams::details::_file_info *info, Concurrency::streams::details::_filestream_callback *callback, int ch, size_t charSize)
 {
-	return _putn_fsb(info, callback, &ch, 1, charSize);
+    return _putn_fsb(info, callback, &ch, 1, charSize);
 }
 
 /// <summary>
@@ -649,7 +647,7 @@ bool _sync_fsb(Concurrency::streams::details::_file_info *info, Concurrency::str
     
     _file_info_impl *fInfo = (_file_info_impl *)info;
 
-    pplx::scoped_recursive_lock lock(fInfo->m_lock);
+    pplx::extensibility::scoped_recursive_lock_t lock(fInfo->m_lock);
 
     if ( fInfo->m_handle == -1 ) return false;
 
@@ -673,7 +671,7 @@ _ASYNCRTIMP size_t _seekrdtoend_fsb(Concurrency::streams::details::_file_info *i
     
     _file_info_impl *fInfo = (_file_info_impl *)info;
 
-    pplx::scoped_recursive_lock lock(info->m_lock);
+    pplx::extensibility::scoped_recursive_lock_t lock(info->m_lock);
 
     if ( fInfo->m_handle == -1 ) return (size_t)-1;
 
@@ -704,7 +702,7 @@ size_t _seekrdpos_fsb(Concurrency::streams::details::_file_info *info, size_t po
     
     _file_info_impl *fInfo = (_file_info_impl *)info;
 
-    pplx::scoped_recursive_lock lock(info->m_lock);
+    pplx::extensibility::scoped_recursive_lock_t lock(info->m_lock);
 
     if ( fInfo->m_handle == -1 ) return (size_t)-1;
 
@@ -731,7 +729,7 @@ size_t _seekwrpos_fsb(Concurrency::streams::details::_file_info *info, size_t po
     
     _file_info_impl *fInfo = (_file_info_impl *)info;
 
-    pplx::scoped_recursive_lock lock(info->m_lock);
+    pplx::extensibility::scoped_recursive_lock_t lock(info->m_lock);
 
     if ( fInfo->m_handle == -1 ) return (size_t)-1;
 

@@ -38,7 +38,7 @@ using namespace utility;
 using namespace logging;
 using namespace pplx;
 
-std::shared_ptr<_Log> s_default;
+std::shared_ptr<::logging::_Log> s_default;
 
 void log::post(log_level level, const utility::string_t &message)
 {
@@ -52,35 +52,33 @@ void log::post(log_level level, int code, const utility::string_t &message)
     if ( log ) log->post(level, code, message);
 }
 
-#if !defined(__cplusplus_winrt)
 void log::post(log_level level, int code, const utility::string_t &message, http::http_request http_msg)
 {
     auto log = get_default();
     if ( log ) log->post(level, code, message, http_msg);
 }
-#endif
 
 volatile unsigned long s_lock = 0;
 
-void log::set_default(_Inout_opt_ _Log *log)
+void log::set_default(_Inout_opt_ ::logging::_Log *log)
 {
     if ( log == nullptr )
         log = new logging::_details::SilentLog;
-    s_default = std::shared_ptr<_Log>(log); 
+    s_default = std::shared_ptr<::logging::_Log>(log); 
 }
 
-void log::set_default(std::shared_ptr<_Log> log)
+void log::set_default(std::shared_ptr<::logging::_Log> log)
 {
     if ( !log )
         log = std::make_shared<logging::_details::SilentLog>();
     s_default = log; 
 }
 
-std::shared_ptr<_Log> log::get_default()
+std::shared_ptr<::logging::_Log> log::get_default()
 { 
     if ( !s_default )
     {
-        s_default = std::shared_ptr<_Log>(new logging::_details::ConsoleLog(true, true));
+        s_default = std::shared_ptr<::logging::_Log>(new logging::_details::ConsoleLog(true, true));
     }
     return s_default; 
 }
@@ -100,12 +98,10 @@ int log::details::report_error(logging::log_level level, const utility::string_t
 }
 #endif
 
-#if !defined(__cplusplus_winrt)
-void _Log::post(log_level level, int code, const utility::string_t &message, http::http_request )
+void ::logging::_Log::post(log_level level, int code, const utility::string_t &message, http::http_request )
 {
     post(level, code, message);
 }
-#endif
 
 logging::_details::ConsoleLog::ConsoleLog(bool suppress_date, bool suppress_time) :
     m_noDate(suppress_date), 
@@ -297,7 +293,7 @@ void logging::_details::ConsoleLog::post(log_level level, const utility::string_
         
         m_queue.push(entry);
 
-        if ( atomic_exchange(m_processing_flag, 1L) == 0 )
+        if ( pplx::details::atomic_exchange(m_processing_flag, 1L) == 0 )
         {
             m_lock.unlock();
 
@@ -315,7 +311,7 @@ void logging::_details::ConsoleLog::post(log_level level, const utility::string_
                     m_lock.lock();
                 }
 
-                atomic_exchange(m_processing_flag, 0L);
+                pplx::details::atomic_exchange(m_processing_flag, 0L);
             
                 m_lock.unlock();
             });
@@ -346,7 +342,7 @@ void logging::_details::ConsoleLog::post(log_level level, int code, const utilit
         
         m_queue.push(entry);
 
-        if ( atomic_exchange(m_processing_flag, 1L) == 0 )
+        if ( pplx::details::atomic_exchange(m_processing_flag, 1L) == 0 )
         {
             m_lock.unlock();
 
@@ -364,7 +360,7 @@ void logging::_details::ConsoleLog::post(log_level level, int code, const utilit
                     m_lock.lock();
                 }
 
-                atomic_exchange(m_processing_flag, 0L);
+                pplx::details::atomic_exchange(m_processing_flag, 0L);
             
                 m_lock.unlock();
             });
@@ -418,7 +414,7 @@ void logging::_details::LocalFileLog::post(log_level level, const utility::strin
         
         m_queue.push(entry);
 
-        if ( atomic_exchange(m_processing_flag, 1L) == 0 )
+        if ( pplx::details::atomic_exchange(m_processing_flag, 1L) == 0 )
         {
             m_lock.unlock();
 
@@ -441,7 +437,7 @@ void logging::_details::LocalFileLog::post(log_level level, const utility::strin
 
                 stream.close();
 
-                atomic_exchange(m_processing_flag, 0L);
+                pplx::details::atomic_exchange(m_processing_flag, 0L);
             
                 m_lock.unlock();
             });
@@ -475,7 +471,7 @@ void logging::_details::LocalFileLog::post(log_level level, int code, const util
         
         m_queue.push(entry);
 
-        if ( atomic_exchange(m_processing_flag, 1L) == 0 )
+        if ( pplx::details::atomic_exchange(m_processing_flag, 1L) == 0 )
         {
             m_lock.unlock();
 
@@ -498,8 +494,8 @@ void logging::_details::LocalFileLog::post(log_level level, int code, const util
 
                 stream.close();
 
-                atomic_exchange(m_processing_flag, 0L);
-            
+                pplx::details::atomic_exchange(m_processing_flag, 0L);
+
                 m_lock.unlock();
             });
         }

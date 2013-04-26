@@ -69,7 +69,7 @@ namespace Concurrency { namespace streams {
 /// Parser implementation for 'matched_lines' type.
 /// </summary>
 template <typename CharType>
-class _type_parser<CharType, matched_lines>
+class type_parser<CharType, matched_lines>
 {
 public:
     static pplx::task<matched_lines> parse(streambuf<CharType> buffer)
@@ -144,10 +144,7 @@ static pplx::task<void> find_matches_in_file(const string_t &fileName, const std
 			// Close the file and results stream.
 			return inFile.close() && results.close();
 		});
-	})
-
-	// Continution to erase the bool and return task of void.
-	.then([](std::vector<bool>) {});
+	});
 }
 
 /// <summary>
@@ -178,10 +175,7 @@ static pplx::task<void> write_matches_to_file(const string_t &fileName, matched_
 		{
 			return outFile.close();
 		});
-	})
-
-	// Continution to erase the bool and return task of void.
-	.then([](bool) {});
+	});
 }
 
 #ifdef _MS_WINDOWS

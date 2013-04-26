@@ -38,9 +38,7 @@ namespace tests { namespace functional { namespace http { namespace client {
 SUITE(authentication_tests)
 {
 
-// TFS 489070
-#ifndef __cplusplus_winrt
-TEST_FIXTURE(uri_address, auth_no_data, "Ignore:Linux", "no proxy support")
+TEST_FIXTURE(uri_address, auth_no_data, "Ignore:Linux", "646268")
 {
     test_http_server::scoped_server scoped(m_uri);
     http_client_config client_config;
@@ -77,7 +75,9 @@ TEST_FIXTURE(uri_address, auth_no_data, "Ignore:Linux", "no proxy support")
     http_asserts::assert_response_equals(client.request(msg).get(), status_codes::OK);
 }
 
-TEST_FIXTURE(uri_address, proxy_auth_known_contentlength, "Ignore:Linux", "no proxy support")
+// TFS 648783
+#ifndef __cplusplus_winrt
+TEST_FIXTURE(uri_address, proxy_auth_known_contentlength, "Ignore:Linux", "646268")
 {
     test_http_server::scoped_server scoped(m_uri);
     http_client_config client_config;
@@ -116,6 +116,7 @@ TEST_FIXTURE(uri_address, proxy_auth_known_contentlength, "Ignore:Linux", "no pr
 
     http_asserts::assert_response_equals(client.request(msg).get(), status_codes::OK);
 }
+#endif
 
 TEST_FIXTURE(uri_address, proxy_auth_noseek,
              "Ignore:Linux", "627612")
@@ -129,7 +130,7 @@ TEST_FIXTURE(uri_address, proxy_auth_noseek,
     buf.close(std::ios_base::out).get();
 
     http_request msg(mtd);
-    msg.set_body(buf.create_istream());
+    msg.set_body(buf.create_istream(), 1);
 
     scoped.server()->next_request().then([&](test_request *p_request)
     {
@@ -146,10 +147,11 @@ TEST_FIXTURE(uri_address, proxy_auth_noseek,
 
     http_asserts::assert_response_equals(client.request(msg).get(), status_codes::Unauthorized);
 }
-#endif
 
+// Must specify content length with winrt client, so this test case isn't possible.
+#ifndef __cplusplus_winrt
 TEST_FIXTURE(uri_address, proxy_auth_unknown_contentlength, 
-            "Ignore", "514781")
+            "Ignore:Linux", "646268")
 {
     test_http_server::scoped_server scoped(m_uri);
     http_client_config client_config;
@@ -158,17 +160,16 @@ TEST_FIXTURE(uri_address, proxy_auth_unknown_contentlength,
     http_client client(m_uri, client_config);
     const method mtd = methods::POST;
 
-    streams::container_buffer<std::vector<uint8_t>> buf;
-    buf.putc('a').get();
-    buf.close(std::ios_base::out).get();
+    std::vector<uint8_t> msg_body;
+    msg_body.push_back('a');
 
     http_request msg(mtd);
-    msg.set_body(buf.create_istream());
+    msg.set_body(streams::container_stream<std::vector<uint8_t>>::open_istream(std::move(msg_body)));
 
     auto replyFunc = [&](test_request *p_request)
         {
             utility::string_t contents(U("a"));
-            http_asserts::assert_test_request_equals(p_request, methods::POST, U("/"), U("text/plain; charset=utf-8"), contents);
+            http_asserts::assert_test_request_equals(p_request, methods::POST, U("/"), U("application/octet-stream"), contents);
 
             p_request->reply(200);
         };
@@ -194,8 +195,7 @@ TEST_FIXTURE(uri_address, proxy_auth_unknown_contentlength,
 }
 
 // Accessing a server that returns 401 with an empty user name should not resend the request with an empty password
-TEST_FIXTURE(uri_address, empty_username_password, 
-             "Ignore", "519033")
+TEST_FIXTURE(uri_address, empty_username_password)
 {
     test_http_server::scoped_server scoped(m_uri);
     http_client client(m_uri);
@@ -218,38 +218,10 @@ TEST_FIXTURE(uri_address, empty_username_password,
     VERIFY_ARE_EQUAL(h1, U("data1"));
 }
 
-// Test is disabled since it relies on having a server with authentication running as localhost:8080
-TEST_FIXTURE(uri_address, successful_authentication,
-             "Ignore", "Manual")
-{
-    credentials cred(U("user"), U("password"));
-    http_client_config config;
-    config.set_credentials(cred);
-    http_client client(U("http://localhost:8080/"), config);
-
-    http_response response = client.request(methods::GET).get();
-    VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
-}
-
-// Fix for 522831 AV after failed authentication attempt
-TEST_FIXTURE(uri_address, failed_authentication_attempt, "Ignore:Linux", "549349")
-{
-    http_client_config config;
-    credentials cred(U("user"),U("schmuser"));
-    config.set_credentials(cred);
-    http_client client(U("https://apis.live.net"),config);
-    http_response response = client.request(methods::GET, U("V5.0/me/skydrive/files")).get();
-    VERIFY_ARE_EQUAL(status_codes::Unauthorized, response.status_code());
-    auto v = response.extract_vector().get();
-    std::string s(v.begin(), v.end());
-    // The resulting data must be non-empty (an error about missing access token)
-    VERIFY_IS_FALSE(s.empty());
-}
-
+// Fails on WinRT due to TFS 648278
 // Accessing a server that supports auth, but returns 401, even after the user has provided valid creds
 // We're making sure the error is reported properly, and the response data from the second response is received
-TEST_FIXTURE(uri_address, error_after_valid_credentials,
-             "Ignore", "519033")
+TEST_FIXTURE(uri_address, error_after_valid_credentials)
 {
     test_http_server::scoped_server scoped(m_uri);
     http_client_config client_config;
@@ -289,6 +261,121 @@ TEST_FIXTURE(uri_address, error_after_valid_credentials,
     VERIFY_ARE_EQUAL(str_body[1], 'e');
     VERIFY_ARE_EQUAL(str_body[2], 'f');
     VERIFY_ARE_EQUAL(h1, U("data2"));
+}
+
+#endif
+
+// These tests are disabled since they require a server with authentication running.
+// The server portion to use is the C# AuthenticationListener.
+#pragma region Manual Server Authentication Tests
+
+class server_address
+{
+public:
+    // ACTION: fill in the machine name and port where the server is.
+    // do NOT use localhost or 127.0.0.1 use the actual machine name.
+    server_address() : m_uri(U("http://mymachinename:8080/")) {}
+    web::http::uri m_uri;
+};
+
+// This test should be executed for NTLM, Negotiate, IntegratedWindowsAuth, and Anonymous.
+TEST_FIXTURE(server_address, successful_auth_no_cred, "Ignore", "Manual")
+{
+	http_client client(m_uri);
+	http_response response = client.request(methods::GET).get();
+    VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
+}
+
+TEST_FIXTURE(server_address, digest_basic_auth_no_cred, "Ignore", "Manual")
+{
+	http_client client(m_uri);
+	http_response response = client.request(methods::GET).get();
+    VERIFY_ARE_EQUAL(status_codes::Unauthorized, response.status_code());
+}
+
+TEST_FIXTURE(server_address, none_auth_no_cred, "Ignore", "Manual")
+{
+	http_client client(m_uri);
+	http_response response = client.request(methods::GET).get();
+    VERIFY_ARE_EQUAL(status_codes::Forbidden, response.status_code());
+}
+
+// This test should be executed for NTLM, Negotiate, IntegratedWindowsAuth, and Digest.
+TEST_FIXTURE(server_address, unsuccessful_auth_with_basic_cred, "Ignore", "Manual")
+{
+	http_client_config config;
+	config.set_credentials(credentials(U("user"), U("password")));
+    
+	http_client client(m_uri, config);
+	http_response response = client.request(methods::GET).get();
+    VERIFY_ARE_EQUAL(status_codes::Unauthorized, response.status_code());
+}
+
+TEST_FIXTURE(server_address, basic_anonymous_auth_with_basic_cred, "Ignore", "Manual")
+{
+	http_client_config config;
+	config.set_credentials(credentials(U("user"), U("password")));
+	http_client client(m_uri, config);
+	http_request req(methods::GET);
+	req.headers().add(U("UserName"), U("user"));
+	req.headers().add(U("Password"), U("password"));
+	http_response response = client.request(req).get();
+    VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
+}
+
+TEST_FIXTURE(server_address, none_auth_with_basic_cred, "Ignore", "Manual")
+{
+	http_client_config config;
+	config.set_credentials(credentials(U("user"), U("password")));
+	http_client client(m_uri, config);
+	http_response response = client.request(methods::GET).get();
+    VERIFY_ARE_EQUAL(status_codes::Forbidden, response.status_code());
+}
+
+// This test should be executed for all authentication schemes except None.
+TEST_FIXTURE(server_address, successful_auth_with_domain_cred, "Ignore", "Manual")
+{
+	// ACTION: fill in your domain credentials here temporarily to run.
+	const string_t userName = U("DOMAIN\username");
+	const string_t password = U("");
+
+	http_client_config config;
+	config.set_credentials(credentials(userName, password));
+	http_client client(m_uri, config);
+	http_request req(methods::GET);
+	req.headers().add(U("UserName"), userName);
+	http_response response = client.request(req).get();
+    VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
+}
+
+TEST_FIXTURE(server_address, none_auth_with_domain_cred, "Ignore", "Manual")
+{
+	// ACTION: fill in your domain credentials here temporarily to run.
+	const string_t userName = U("DOMAIN\username");
+	const string_t password = U("");
+
+	http_client_config config;
+	config.set_credentials(credentials(userName, password));
+	http_client client(m_uri, config);
+	http_response response = client.request(methods::GET).get();
+    VERIFY_ARE_EQUAL(status_codes::Forbidden, response.status_code());
+}
+
+#pragma endregion 
+
+// Fix for 522831 AV after failed authentication attempt
+TEST_FIXTURE(uri_address, failed_authentication_attempt, "Ignore:Linux", "549349")
+{
+    http_client_config config;
+    credentials cred(U("user"),U("schmuser"));
+    config.set_credentials(cred);
+    http_client client(U("https://apis.live.net"),config);
+    http_response response = client.request(methods::GET, U("V5.0/me/skydrive/files")).get();
+    VERIFY_ARE_EQUAL(status_codes::Unauthorized, response.status_code());
+    auto v = response.extract_vector().get();
+    std::string s(v.begin(), v.end());
+    // The resulting data must be non-empty (an error about missing access token)
+    VERIFY_IS_FALSE(s.empty());
 }
 
 } // SUITE(authentication_tests)

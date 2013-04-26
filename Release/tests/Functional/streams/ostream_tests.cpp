@@ -22,6 +22,8 @@
 ****/
 #include "stdafx.h"
 
+using namespace concurrency::streams;
+
 #if defined(__cplusplus_winrt)
 using namespace Windows::Storage;
 #endif
@@ -80,7 +82,7 @@ TEST(BasicTest1)
     (a && b).wait();
     auto cls = basic_stream.close();
 
-    VERIFY_IS_TRUE(cls.get());
+    cls.get();
     VERIFY_IS_TRUE(cls.is_done());
 }
 
@@ -90,7 +92,7 @@ TEST(BasicTest2)
 
     auto cls = 
         open.then(
-        [](pplx::task<concurrency::streams::ostream> op) -> pplx::task<bool>
+        [](pplx::task<concurrency::streams::ostream> op) -> pplx::task<void>
         {
             auto basic_stream = op.get();
             auto a = basic_stream.print(10);
@@ -99,7 +101,7 @@ TEST(BasicTest2)
             return basic_stream.close();
         });
 
-    VERIFY_IS_TRUE(cls.get());
+    cls.get();
 
     VERIFY_IS_TRUE(cls.is_done());
 }
@@ -122,10 +124,9 @@ TEST(WriteSingleCharTest2)
     VERIFY_IS_TRUE(elements_equal);
 
     auto close = stream.close();
-    auto closed = close.get();
+    close.get();
 
     VERIFY_IS_TRUE(close.is_done());
-    VERIFY_IS_TRUE(closed);
 }
 
 TEST(WriteBufferTest1)
@@ -149,10 +150,9 @@ TEST(WriteBufferTest1)
     VERIFY_ARE_EQUAL(stream.write(txtbuf, vsz).get(), vsz);
 
     auto close = stream.close();
-    auto closed = close.get();
+    close.get();
 
     VERIFY_IS_TRUE(close.is_done());
-    VERIFY_IS_TRUE(closed);
 }
 
 TEST(WriteBufferAndSyncTest1, "Ignore", "478760")
@@ -173,17 +173,15 @@ TEST(WriteBufferAndSyncTest1, "Ignore", "478760")
     concurrency::streams::rawptr_buffer<uint8_t> txtbuf(reinterpret_cast<const uint8_t*>(&vect[0]), vsz);
 
     auto write = stream.write(txtbuf, vsz);
-    auto sync  = stream.flush().get();
-    CHECK(sync);
+    stream.flush().get();
 
     VERIFY_IS_TRUE(write.is_done());
     VERIFY_ARE_EQUAL(write.get(), vect.size());
 
     auto close = stream.close();
-    auto closed = close.get();
+    close.get();
 
     VERIFY_IS_TRUE(close.is_done());
-    VERIFY_IS_TRUE(closed);
 }
 
 TEST(tell_bug)
@@ -235,16 +233,37 @@ TEST(iostream_container_buffer2)
         {
             VERIFY_ARE_EQUAL(c, 'a');
             return is.read();
-        }).then([&is](concurrency::streams::basic_ostream<uint8_t>::int_type c) -> pplx::task<bool>
+        }).then([&is](concurrency::streams::basic_ostream<uint8_t>::int_type c) -> pplx::task<void>
         {
             VERIFY_ARE_EQUAL(c, 'b');
             return is.close();
         }).wait();
     }
 }
-TEST(FileSequentialWrite, "Ignore", "TFS#626173")
+
+TEST(extract_on_space)
+{
+    const int number1 = 42;
+    const int number2 = 123;
+    
+    auto open = OPENSTR_W<uint8_t>(U("SpaceWithNumber.txt"), std::ios::trunc);
+    auto stream = open.get();
+    VERIFY_IS_TRUE(open.is_done());
+    stream.print("  \r").wait();
+    stream.print(number1).wait();
+    stream.print("\n \t").wait();
+    stream.print(number2).wait();
+    stream.print("   ").wait();
+    stream.close().wait();
+
+    auto istream = OPENSTR_R<uint8_t>(U("SpaceWithNumber.txt")).get();
+    VERIFY_ARE_EQUAL(number1, istream.extract<int>().get());
+    VERIFY_ARE_EQUAL(number2, istream.extract<long long>().get());
+}
+
+TEST(file_sequential_write)
 { 
-    auto open = OPENSTR_W<uint8_t>(U("WriteFileSequential.txt"), std::ios::app | std::ios::out);
+    auto open = OPENSTR_W<uint8_t>(U("WriteFileSequential.txt"), std::ios::trunc);
     auto stream = open.get();
 
     VERIFY_IS_TRUE(open.is_done());
@@ -260,12 +279,20 @@ TEST(FileSequentialWrite, "Ignore", "TFS#626173")
     auto istream = OPENSTR_R<uint8_t>(U("WriteFileSequential.txt")).get();
     for (int i = 0; i < 100; i++)
     {
-        VERIFY_ARE_EQUAL(istream.extract<int>().get(), i);
+        int int_read = istream.extract<int>().get();
+        if (int_read != i)
+        {
+            // This will fail
+            VERIFY_ARE_EQUAL(int_read, i);
+
+            // This return statment will prevent the test from hanging,
+            // cause if the numbers are merged there will be less than 100 numbers,
+            // and reading from the file will block
+            return;
+        }
         istream.read().get();
     }
-
 }
-
 
 TEST(implied_out_mode)
 {
@@ -280,8 +307,69 @@ TEST(implied_out_mode)
 
     auto cls = ostr.close();
 
-    VERIFY_IS_TRUE(cls.get());
+    cls.get();
     VERIFY_IS_TRUE(cls.is_done());
+}
+
+TEST(create_ostream_from_input_only)
+{
+    container_buffer<std::string> sourceBuf("test data");
+    VERIFY_THROWS(sourceBuf.create_ostream(), std::runtime_error);
+}
+
+TEST(streambuf_close_with_exception_write)
+{
+    container_buffer<std::string> sourceBuf;
+    sourceBuf.close(std::ios::out, std::make_exception_ptr(std::invalid_argument("custom exception"))).wait();
+
+    const size_t size = 4;
+    char targetBuf[size];
+	auto t1 = sourceBuf.putn(targetBuf, size);
+    VERIFY_THROWS(t1.get(), std::invalid_argument);
+}
+
+TEST(stream_close_with_exception_write)
+{
+    container_buffer<std::string> sourceBuf;
+    auto outStream = sourceBuf.create_ostream();
+    outStream.close(std::make_exception_ptr(std::invalid_argument("custom exception"))).wait();
+
+    container_buffer<std::string> targetBuf("test data");
+	auto t1 = outStream.write(targetBuf, 4);
+    VERIFY_THROWS(t1.get(), std::invalid_argument);
+}
+
+TEST(input_after_close)
+{
+    container_buffer<std::string> sourceBuf;
+    auto outStream = sourceBuf.create_ostream();
+    outStream.close().wait();
+
+    container_buffer<std::string> targetBuf;
+
+	auto t1 = outStream.flush();
+	auto t2 = outStream.print('a');
+	auto t3 = outStream.print(std::string("abc"));
+
+    VERIFY_THROWS(t1.get(), std::runtime_error);
+    VERIFY_THROWS(t2.get(), std::runtime_error);
+    VERIFY_THROWS(t3.get(), std::runtime_error);
+    VERIFY_THROWS(outStream.seek(0), std::runtime_error);
+    VERIFY_THROWS(outStream.seek(0, std::ios::beg), std::runtime_error);
+    VERIFY_THROWS(outStream.tell(), std::runtime_error);
+
+	auto t4 = outStream.write('a'); 
+	auto t5 = outStream.write(targetBuf, 1);
+    VERIFY_THROWS(t4.get(), std::runtime_error);
+    VERIFY_THROWS(t5.get(), std::runtime_error);
+}
+
+TEST(write_emptybuffer_to_ostream)
+{
+    auto ofs = OPENSTR_W<char>(U("file.txt")).get();
+    auto sbuf = concurrency::streams::producer_consumer_buffer<char>();
+    auto result = ofs.write(sbuf,0);
+    VERIFY_ARE_EQUAL(result.get(), 0);
 }
 
 } // SUITE(ostream_tests)

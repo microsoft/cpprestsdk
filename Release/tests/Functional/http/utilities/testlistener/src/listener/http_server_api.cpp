@@ -40,7 +40,7 @@ namespace web { namespace http
 namespace listener
 {
 
-pplx::critical_section http_server_api::s_lock;
+pplx::extensibility::critical_section_t http_server_api::s_lock;
 
 std::unique_ptr<http_server> http_server_api::s_server_api((http_server*)nullptr);
 
@@ -53,13 +53,13 @@ bool http_server_api::has_listener()
 
 void http_server_api::register_server_api(std::unique_ptr<http_server> server_api)
 {
-    pplx::scoped_critical_section lock(s_lock);
+    pplx::extensibility::scoped_critical_section_t lock(s_lock);
     http_server_api::unsafe_register_server_api(std::move(server_api));
 }
 
 void http_server_api::unregister_server_api()
 {
-    pplx::scoped_critical_section lock(s_lock);
+    pplx::extensibility::scoped_critical_section_t lock(s_lock);
 
     if (http_server_api::has_listener())
     {
@@ -84,7 +84,7 @@ void http_server_api::unsafe_register_server_api(std::unique_ptr<http_server> se
 
 unsigned long http_server_api::register_listener(_In_ http_listener_interface *listener)
 {
-    pplx::scoped_critical_section lock(s_lock);
+    pplx::extensibility::scoped_critical_section_t lock(s_lock);
     unsigned long error_code = 0;
 
     // the server API was not initialized, register a default
@@ -121,7 +121,7 @@ unsigned long http_server_api::register_listener(_In_ http_listener_interface *l
 
 unsigned long http_server_api::unregister_listener(_In_ http_listener_interface *pListener)
 {
-    pplx::scoped_critical_section lock(s_lock);
+    pplx::extensibility::scoped_critical_section_t lock(s_lock);
     unsigned long error_code = 0;
     
     error_code = server_api()->unregister_listener(pListener);

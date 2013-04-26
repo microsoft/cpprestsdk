@@ -35,6 +35,7 @@
 #include "Test.h"
 #include "TestList.h"
 #include "CurrentTest.h"
+#include "GlobalSettings.h"
 
 namespace UnitTest {
 
@@ -57,21 +58,21 @@ public:
 	UNITTEST_LINKAGE ~TestRunner();
 
     template <class Predicate>
-	int RunTestsIf(TestList const& list, const Predicate& predicate, int maxTestTimeInMs) const
+	int RunTestsIf(TestList const& list, const Predicate& predicate, int defaultTestTimeInMs) const
 	{
-        return RunTestsIf(list, nullptr, predicate, maxTestTimeInMs);
+        return RunTestsIf(list, nullptr, predicate, defaultTestTimeInMs);
     }
 
-	template< class Predicate >
+	template <class Predicate>
 	int RunTestsIf(TestList const& list, char const* suiteName, 
-				   const Predicate& predicate, int maxTestTimeInMs) const
+				   const Predicate& predicate, int defaultTestTimeInMs) const
 	{
-	    Test* curTest = list.GetHead();
+	    Test* curTest = list.GetFirst();
 
 	    while (curTest != 0)
 	    {
 		    if (IsTestInSuite(curTest, suiteName) && predicate(curTest))
-				RunTest(m_result, curTest, maxTestTimeInMs);
+				RunTest(m_result, curTest, defaultTestTimeInMs);
 
 			curTest = curTest->m_nextTest;
 	    }
@@ -79,13 +80,13 @@ public:
 	    return Finish();
 	}
 
-    int RunTests(TestList const& list, char const* suiteName, int maxTestTimeInMs) const
+    int RunTests(TestList const& list, char const* suiteName, int defaultTestTimeInMs) const
     {
-        return RunTestsIf(list, suiteName, True(), maxTestTimeInMs);
+        RunTestsIf(list, suiteName, True(), defaultTestTimeInMs);
     }
-	int RunTests(TestList const& list, int maxTestTimeInMs) const
+	int RunTests(TestList const& list, int defaultTestTimeInMs) const
     {
-        return RunTestsIf(list, nullptr, True(), maxTestTimeInMs);
+        RunTestsIf(list, nullptr, True(), defaultTestTimeInMs);
     }
 
 	UNITTEST_LINKAGE TestResults* GetTestResults();
@@ -95,9 +96,11 @@ private:
 	TestResults* m_result;
 	Timer* m_timer;
 
+    int GetTestTimeout(Test* const curTest, int const defaultTestTimeInMs) const;
+
 	UNITTEST_LINKAGE int Finish() const;
 	UNITTEST_LINKAGE bool IsTestInSuite(const Test* const curTest, char const* suiteName) const;
-	UNITTEST_LINKAGE void RunTest(TestResults* const result, Test* const curTest, int const maxTestTimeInMs) const;
+	UNITTEST_LINKAGE void RunTest(TestResults* const result, Test* const curTest, int const defaultTestTimeInMs) const;
 };
 
 }

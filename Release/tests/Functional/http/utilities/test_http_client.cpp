@@ -132,23 +132,21 @@ static void parse_winhttp_headers(HINTERNET request_handle, utf16char *headersSt
     parse_status_code(request_handle, p_response->m_status_code);
     parse_reason_phrase(request_handle, p_response->m_reason_phrase);
 
-    // First line is status line so ignore it.
-    wchar_t *context = nullptr;
-    wcstok_s(reinterpret_cast<wchar_t*>(headersStr), U("\r\n"), &context);
-    wcstok_s(nullptr, U("\r\n"), &context);
-
-    // Get all the headers.
-    wchar_t *line = wcstok_s(nullptr, U("\r\n"), &context);
+    utf16char *context = nullptr;
+    utf16char *line = wcstok_s(headersStr, U("\r\n"), &context);
     while(line != nullptr)
     {
         const utility::string_t header_line(line);
         const size_t colonIndex = header_line.find_first_of(U(":"));
-        utility::string_t key = header_line.substr(0, colonIndex);
-        utility::string_t value = header_line.substr(colonIndex + 1, header_line.length() - colonIndex - 1);
-        trim_whitespace(key);
-        trim_whitespace(value);
-        p_response->m_headers[key] = value;
-        line = wcstok_s(NULL, U("\r\n"), &context);
+        if(colonIndex != utility::string_t::npos)
+        {
+            utility::string_t key = header_line.substr(0, colonIndex);
+            utility::string_t value = header_line.substr(colonIndex + 1, header_line.length() - colonIndex - 1);
+            trim_whitespace(key);
+            trim_whitespace(value);
+            p_response->m_headers[key] = value;
+        }
+        line = wcstok_s(nullptr, U("\r\n"), &context);
     }
 }
 

@@ -32,7 +32,14 @@
 #include <queue>
 #include <algorithm>
 #include <iterator>
+
+#if defined(_MSC_VER) && (_MSC_VER >= 1800)
+#include <ppltasks.h>
+namespace pplx = Concurrency;
+#else 
 #include "pplxtasks.h"
+#endif
+
 #include "astreambuf.h"
 #ifdef _MS_WINDOWS
 #include <safeint.h>
@@ -86,16 +93,19 @@ namespace Concurrency { namespace streams {
             /// </summary>
             virtual ~basic_producer_consumer_buffer()
             { 
-                // Invoke the synchronous versions since we need to
-                // purge the request queue before deleting the buffer
-                this->close().wait();
+                // Note: there is no need to call 'wait()' on the result of close(),
+                // since we happen to know that close() will return without actually
+                // doing anything asynchronously. Should the implementation of _close_write()
+                // change in that regard, this logic may also have to change.
+                this->_close_read();
+                this->_close_write();
 
-                _PPLX_ASSERT(m_requests.empty());
+                _ASSERTE(m_requests.empty());
                 m_blocks.clear();
             }
 
             /// <summary>
-            /// can_seek is used to determine whether a stream buffer supports seeking.
+            /// <c>can_seek<c/> is used to determine whether a stream buffer supports seeking.
             /// </summary>
             virtual bool can_seek() const { return false; }
 
@@ -110,43 +120,58 @@ namespace Concurrency { namespace streams {
             }
 
             /// <summary>
-            /// Set the stream buffer implementation to buffer or not buffer.
+            /// Sets the stream buffer implementation to buffer or not buffer.
             /// </summary>
-            /// <param name="size">The size to use for internal buffering, 0 to not buffer at all.</param>
+            /// <param name="size">The size to use for internal buffering, 0 if no buffering should be done.</param>
             /// <param name="direction">The direction of buffering (in or out)</param>
-            /// <remarks>An implementation that does not support buffering will silently ignore calls to this function and it will not have
-            ///          any effect on what is returned by subsequent calls to buffer_size().</remarks>
+            /// <remarks>An implementation that does not support buffering will silently ignore calls to this function and it will not have any effect on what is returned by subsequent calls to <see cref="::buffer_size method" />.</remarks>
             virtual void set_buffer_size(size_t , std::ios_base::openmode = std::ios_base::in)
             {
                 return;
             }
 
             /// <summary>
-            /// For any input stream, in_avail returns the number of characters that are immediately available
-            /// to be consumed without blocking. May be used in conjunction with sbumpc() to 
-            /// read data without incurring the overhead of using tasks.
+            /// For any input stream, <c>in_avail</c> returns the number of characters that are immediately available
+            /// to be consumed without blocking. May be used in conjunction with <cref="::sbumpc method"/> to read data without
+            /// incurring the overhead of using tasks.
             /// </summary>
             virtual size_t in_avail() const { return m_total; }
 
 
-            // Seeking is not supported
-            virtual pos_type seekpos(pos_type, std::ios_base::openmode) { return (pos_type)-1; }
-
-            virtual pos_type seekoff(off_type offset, std::ios_base::seekdir whre, std::ios_base::openmode mode)
-			{
-				if (offset == 0 && whre == std::ios_base::cur && mode == std::ios_base::in)
-					return (pos_type)m_total_read;
-				else if (offset == 0 && whre == std::ios_base::cur && mode == std::ios_base::out)
-					return (pos_type)m_total_written;
-				else
-					return (pos_type)-1; 
-			}
-            
-			virtual _CharType* alloc(size_t count)
+            /// <summary>
+            /// Gets the current read or write position in the stream.
+            /// </summary>
+            /// <param name="direction">The I/O direction to seek (see remarks)</param>
+            /// <returns>The current position. EOF if the operation fails.</returns>
+            /// <remarks>Some streams may have separate write and read cursors. 
+            ///          For such streams, the direction parameter defines whether to move the read or the write cursor.</remarks>
+            virtual pos_type getpos(std::ios_base::openmode mode) const
             {
-                if ( !this->can_read() )
+                if ( ((mode & std::ios_base::in) && !this->can_read()) ||
+                     ((mode & std::ios_base::out) && !this->can_write()))
+                     return static_cast<pos_type>(traits::eof());
+
+                if (mode == std::ios_base::in)
+                    return (pos_type)m_total_read;
+                else if (mode == std::ios_base::out)
+                    return (pos_type)m_total_written;
+                else
+                    return (pos_type)traits::eof(); 
+            }
+
+            // Seeking is not supported
+            virtual pos_type seekpos(pos_type, std::ios_base::openmode) { return (pos_type)traits::eof(); }
+            virtual pos_type seekoff(off_type offset, std::ios_base::seekdir whre, std::ios_base::openmode mode) { return (pos_type)traits::eof(); }
+            
+            /// <summary>
+            /// Allocates a contiguous memory block and returns it.
+            /// </summary>
+            /// <param name="count">The number of characters to allocate.</param>
+            /// <returns>A pointer to a block to write to, null if the stream buffer implementation does not support alloc/commit.</returns>
+            virtual _CharType* alloc(size_t count)
+            {
+                if (!this->can_write())
                 {
-                    // No one is reading, so why bother?
                     return nullptr;
                 }
 
@@ -154,20 +179,24 @@ namespace Concurrency { namespace streams {
                 // the current write block. While this does lead to wasted space it allows for
                 // easier book keeping
 
-                _PPLX_ASSERT(!m_allocBlock);
+                _ASSERTE(!m_allocBlock);
                 m_allocBlock = std::make_shared<_block>(count);
                 return m_allocBlock->wbegin();
             }
 
+            /// <summary>
+            /// Submits a block already allocated by the stream buffer.
+            /// </summary>
+            /// <param name="count">The number of characters to be committed.</param>
             virtual void commit(size_t count)
             {
-                pplx::scoped_critical_section l(m_lock);
+                pplx::extensibility::scoped_critical_section_t l(m_lock);
 
                 // The count does not reflect the actual size of the block.
                 // Since we do not allow any more writes to this block it would suffice. 
                 // If we ever change the algorithm to reuse blocks then this needs to be revisited.
 
-                _PPLX_ASSERT((bool)m_allocBlock);
+                _ASSERTE((bool)m_allocBlock);
                 m_allocBlock->update_write_head(count);
                 m_blocks.push_back(m_allocBlock);
                 m_allocBlock = nullptr;
@@ -175,20 +204,33 @@ namespace Concurrency { namespace streams {
                 update_write_head(count);
             }
 
+            /// <summary>
+            /// Gets a pointer to the next already allocated contiguous block of data. 
+            /// </summary>
+            /// <param name="ptr">A reference to a pointer variable that will hold the address of the block on success.</param>
+            /// <param name="count">The number of contiguous characters available at the address in 'ptr.'</param>
+            /// <returns><c>true</c> if the operation succeeded, <c>false</c> otherwise.</returns>
+            /// <remarks>
+            /// A return of false does not necessarily indicate that a subsequent read operation would fail, only that
+            /// there is no block to return immediately or that the stream buffer does not support the operation.
+            /// The stream buffer may not de-allocate the block until <see cref="::release method" /> is called.
+            /// If the end of the stream is reached, the function will return <c>true</c>, a null pointer, and a count of zero;
+            /// a subsequent read will not succeed.
+            /// </remarks>
             virtual bool acquire(_Out_writes_ (count) _CharType*& ptr, _In_ size_t& count)
             {
-                pplx::scoped_critical_section l(m_lock);
+                pplx::extensibility::scoped_critical_section_t l(m_lock);
+
+                if (!this->can_read()) return false;
 
                 if (m_blocks.empty())
                 {
                     count = 0;
                     ptr = nullptr;
 
-                    // If the in_avail is 0, we want to return 'false' if the stream buffer
-                    // is still open, to indicate that a subsequent attempt could
-                    // be successful. If we return true, it will indicate that the end
-                    // of the stream has been reached.
-                    return !this->is_open(); 
+                    // If the write head has been closed then have reached the end of the
+                    // stream (return true), otherwise more data could be written later (return false).
+                    return !can_write();
                 }
                 else
                 {
@@ -197,27 +239,33 @@ namespace Concurrency { namespace streams {
                     count = block->rd_chars_left();
                     ptr = block->rbegin();
 
-                    _PPLX_ASSERT(ptr != nullptr);
+                    _ASSERTE(ptr != nullptr);
                     return true;
                 }
             }
 
+            /// <summary>
+            /// Releases a block of data acquired using <see cref="::acquire method"/>. This frees the stream buffer to de-allocate the
+            /// memory, if it so desires. Move the read position ahead by the count.
+            /// </summary>
+            /// <param name="ptr">A pointer to the block of data to be released.</param>
+            /// <param name="count">The number of characters that were read.</param>
             virtual void release(_Out_writes_ (count) _CharType *, _In_ size_t count)
             {
-                pplx::scoped_critical_section l(m_lock);
+                pplx::extensibility::scoped_critical_section_t l(m_lock);
                 auto block = m_blocks.front();
 
-                _PPLX_ASSERT(block->rd_chars_left() >= count);
+                _ASSERTE(block->rd_chars_left() >= count);
                 block->m_read += count;
 
                 update_read_head(count);
             }
 
-        protected:        
+        protected:
 
             virtual pplx::task<bool> _sync()
             {
-                pplx::scoped_critical_section l(m_lock);
+                pplx::extensibility::scoped_critical_section_t l(m_lock);
 
                 m_synced = in_avail();
 
@@ -251,13 +299,13 @@ namespace Concurrency { namespace streams {
 
             virtual size_t _sgetn(_Out_writes_ (count) _CharType *ptr, _In_ size_t count)
             { 
-                pplx::scoped_critical_section l(m_lock);
+                pplx::extensibility::scoped_critical_section_t l(m_lock);
                 return can_satisfy(count) ? this->read(ptr, count) : (size_t)traits::requires_async();
             }
 
             virtual size_t _scopy(_Out_writes_ (count) _CharType *ptr, _In_ size_t count)
             {
-                pplx::scoped_critical_section l(m_lock);
+                pplx::extensibility::scoped_critical_section_t l(m_lock);
                 return can_satisfy(count) ? this->read(ptr, count, false) : (size_t)traits::requires_async();
             }
 
@@ -273,7 +321,7 @@ namespace Concurrency { namespace streams {
 
             virtual int_type _sbumpc()
             {
-                pplx::scoped_critical_section l(m_lock);
+                pplx::extensibility::scoped_critical_section_t l(m_lock);
                 return can_satisfy(1) ? this->read_byte(true) : traits::requires_async();
             }
 
@@ -289,7 +337,7 @@ namespace Concurrency { namespace streams {
 
             int_type _sgetc()
             {
-                pplx::scoped_critical_section l(m_lock);
+                pplx::extensibility::scoped_critical_section_t l(m_lock);
                 return can_satisfy(1) ? this->read_byte(false) : traits::requires_async();
             }
 
@@ -314,7 +362,7 @@ namespace Concurrency { namespace streams {
             /// <summary>
             /// Close the stream buffer for writing
             /// </summary>
-            pplx::task<bool> _close_write()
+            pplx::task<void> _close_write()
             {
                 // First indicate that there could be no more writes.
                 // Fulfill outstanding relies on that to flush all the
@@ -322,13 +370,13 @@ namespace Concurrency { namespace streams {
                 this->m_stream_can_write = false;
 
                 {
-                    pplx::scoped_critical_section l(this->m_lock);
+                    pplx::extensibility::scoped_critical_section_t l(this->m_lock);
 
                     // This runs on the thread that called close.
                     this->fulfill_outstanding();
                 }
 
-                return pplx::task_from_result(true);
+                return pplx::task_from_result();
             }
 
             /// <summary>
@@ -338,7 +386,7 @@ namespace Concurrency { namespace streams {
             void update_write_head(size_t count)
             {
                 m_total += count;
-				m_total_written += count;
+                m_total_written += count;
                 fulfill_outstanding();
             }
 
@@ -353,7 +401,7 @@ namespace Concurrency { namespace streams {
                 // Just pretend to be writing!
                 if (!this->can_read()) return count;
 
-                pplx::scoped_critical_section l(m_lock);
+                pplx::extensibility::scoped_critical_section_t l(m_lock);
 
                 // Allocate a new block if necessary
                 if ( m_blocks.empty() || m_blocks.back()->wr_chars_left() < count )
@@ -365,7 +413,7 @@ namespace Concurrency { namespace streams {
                 // The block at the back is always the write head
                 auto last = m_blocks.back();
                 auto countWritten = last->write(ptr, count);
-                _PPLX_ASSERT(countWritten == count);
+                _ASSERTE(countWritten == count);
 
                 update_write_head(countWritten);
                 return countWritten;
@@ -522,7 +570,7 @@ namespace Concurrency { namespace streams {
 
             void enqueue_request(_request req)
             {
-                pplx::scoped_critical_section l(m_lock);
+                pplx::extensibility::scoped_critical_section_t l(m_lock);
 
                 if (can_satisfy(req.size()))
                 {
@@ -544,7 +592,7 @@ namespace Concurrency { namespace streams {
                 return (m_synced > 0) || (this->in_avail() >= count) || !this->can_write();
             }
 
-			/// <summary>
+            /// <summary>
             /// Reads a byte from the stream and returns it as int_type.
             /// Note: This routine shall only be called if can_satisfy() returned true.
             /// </summary>
@@ -564,7 +612,7 @@ namespace Concurrency { namespace streams {
             /// <remarks>This should be called with the lock held</remarks>
             size_t read(_Out_writes_ (count) _CharType *ptr, _In_ size_t count, bool advance = true)
             {
-                _PPLX_ASSERT(can_satisfy(count));
+                _ASSERTE(can_satisfy(count));
 
                 size_t read = 0;
 
@@ -575,7 +623,7 @@ namespace Concurrency { namespace streams {
 
                     read += read_from_block;
 
-                    _PPLX_ASSERT(count >= read);
+                    _ASSERTE(count >= read);
                     if (read == count) break;
                 }
 
@@ -594,7 +642,7 @@ namespace Concurrency { namespace streams {
             void update_read_head(size_t count)
             {
                 m_total -= count;
-				m_total_read += count;
+                m_total_read += count;
 
                 if ( m_synced > 0 )
                     m_synced = (m_synced > count) ? (m_synced-count) : 0;
@@ -617,12 +665,12 @@ namespace Concurrency { namespace streams {
             // Total available data
             size_t m_total;
 
-			size_t m_total_read;
-			size_t m_total_written;
+            size_t m_total_read;
+            size_t m_total_written;
 
             // Keeps track of the number of chars that have been flushed but still
             // remain to be consumed by a read operation.
-			size_t m_synced;
+            size_t m_synced;
 
             // Default block size
             SafeSize m_alloc_size;
@@ -633,7 +681,7 @@ namespace Concurrency { namespace streams {
             // against some of the internal data elements against concurrent accesses
             // and the possibility of inconsistent states. A simple non-recursive lock
             // should be sufficient for those purposes.
-            pplx::critical_section m_lock;
+            pplx::extensibility::critical_section_t m_lock;
 
             // Memory blocks
             std::deque<std::shared_ptr<_block>> m_blocks;
@@ -651,6 +699,9 @@ namespace Concurrency { namespace streams {
     /// The producer_consumer_buffer class serves as a memory-based steam buffer that supports both writing and reading
     /// sequences of bytes. It can be used as a consumer/producer buffer.
     /// </summary>
+    /// <typeparam name="_CharType">
+    /// The data type of the basic element of the <c>producer_consumer_buffer</c>.
+    /// </typeparam>
     /// <remarks> 
     /// This is a reference-counted version of basic_producer_consumer_buffer.</remarks>
     template<typename _CharType>

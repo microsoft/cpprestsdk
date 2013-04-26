@@ -68,23 +68,6 @@ const std::error_category & __cdecl windows_category()
 	return instance;
 }
 
-std::error_condition windows_category_impl::default_error_condition(int errorCode) const
-{
-    switch(errorCode)  
-    {  
-#ifndef __cplusplus_winrt
-    case ERROR_WINHTTP_TIMEOUT:
-#endif
-    case ERROR_TIMEOUT:
-        return std::errc::timed_out;
-	case ERROR_FILE_NOT_FOUND:
-	case ERROR_PATH_NOT_FOUND:
-		return std::errc::no_such_file_or_directory;
-    default:    
-        return std::error_condition(errorCode, *this);  
-    }
-}
-
 std::string windows_category_impl::message(int errorCode) const
 {
     const size_t buffer_size = 4096;
@@ -120,6 +103,40 @@ std::string windows_category_impl::message(int errorCode) const
     }
 
     return utility::conversions::to_utf8string(buffer);
+}
+
+std::error_condition windows_category_impl::default_error_condition(int errorCode) const
+{
+    // First see if the STL implementation can handle the mapping for common cases.
+    const std::error_condition errCondition = std::system_category().default_error_condition(errorCode);
+    const std::string errConditionMsg = errCondition.message();
+    if(_stricmp(errConditionMsg.c_str(), "unknown error") != 0)
+    {
+        return errCondition;
+    }
+
+    switch(errorCode)  
+    {  
+#ifndef __cplusplus_winrt
+    case ERROR_WINHTTP_TIMEOUT:
+        return std::errc::timed_out;
+    case ERROR_WINHTTP_CANNOT_CONNECT:
+        return std::errc::host_unreachable;
+    case ERROR_WINHTTP_CONNECTION_ERROR:
+        return std::errc::connection_aborted;
+#endif
+    case INET_E_RESOURCE_NOT_FOUND:
+    case INET_E_CANNOT_CONNECT:
+        return std::errc::host_unreachable;
+    case INET_E_CONNECTION_TIMEOUT:
+        return std::errc::timed_out;
+    case INET_E_DOWNLOAD_FAILURE:
+        return std::errc::connection_aborted;
+    default:    
+        break;
+    }
+
+    return std::error_condition(errorCode, *this);
 }
 
 #else
@@ -342,7 +359,7 @@ utf16string __cdecl conversions::default_code_page_to_utf16(const std::string &s
 #endif
 }
 
-utility::string_t conversions::to_string_t(const std::string &s)
+utility::string_t __cdecl conversions::to_string_t(const std::string &s)
 {
 #ifdef _UTF16_STRINGS
     return utf8_to_utf16(s);
@@ -351,7 +368,7 @@ utility::string_t conversions::to_string_t(const std::string &s)
 #endif
 }
 
-utility::string_t conversions::to_string_t(const utf16string &s)
+utility::string_t __cdecl conversions::to_string_t(const utf16string &s)
 {
 #ifdef _UTF16_STRINGS
     return s;
@@ -392,13 +409,13 @@ std::vector<unsigned char> __cdecl conversions::from_base64(const utility::strin
 #endif
 }
 
-std::string conversions::to_utf8string(const std::string &value) { return value; }
+std::string __cdecl conversions::to_utf8string(const std::string &value) { return value; }
 
-std::string conversions::to_utf8string(const utf16string &value) { return utf16_to_utf8(value); }
+std::string __cdecl conversions::to_utf8string(const utf16string &value) { return utf16_to_utf8(value); }
 
-utf16string conversions::to_utf16string(const std::string &value) { return utf8_to_utf16(value); }
+utf16string __cdecl conversions::to_utf16string(const std::string &value) { return utf8_to_utf16(value); }
 
-utf16string conversions::to_utf16string(const utf16string &value) { return value; }
+utf16string __cdecl conversions::to_utf16string(const utf16string &value) { return value; }
 
 
 utility::string_t __cdecl conversions::to_base64(const std::vector<unsigned char>& input)

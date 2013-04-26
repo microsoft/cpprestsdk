@@ -90,16 +90,17 @@ TEST_FIXTURE(uri_address, server_doesnt_exist,
              "Ignore:Linux", "627642")
 {
     http_client client(m_uri);
+    VERIFY_THROWS_HTTP_ERROR_CODE(client.request(methods::GET).wait(), std::errc::host_unreachable);
+}
 
-    try
-    {
-        client.request(methods::GET).wait();
-        VERIFY_IS_TRUE(false);
-    }
-    catch(std::exception &)
-    {
-        // Expected.
-    }
+TEST_FIXTURE(uri_address, open_failure)
+{
+    http_client client(U("http://localhost323:-1"));
+
+    // This API should not throw. The exception should be surfaced
+    // during task.wait/get
+    auto t = client.request(methods::GET);
+    VERIFY_THROWS(t.wait(), web::http::http_exception);
 }
 
 TEST_FIXTURE(uri_address, server_close_without_responding,
@@ -115,27 +116,10 @@ TEST_FIXTURE(uri_address, server_close_without_responding,
     // Close server connection.
     server.wait_for_request();
     server.close();
-
-    try
-    {
-        request.wait();
-        VERIFY_IS_TRUE(false);
-    }
-    catch(const std::exception &)
-    {
-        // expected
-    }
+    VERIFY_THROWS_HTTP_ERROR_CODE(request.wait(), std::errc::connection_aborted);
 
     // Try sending another request.
-    try
-    {
-        client.request(methods::GET).wait();
-        VERIFY_IS_TRUE(false);
-    }
-    catch(const std::exception &)
-    {
-        // expected
-    }
+    VERIFY_THROWS_HTTP_ERROR_CODE(client.request(methods::GET).wait(), std::errc::host_unreachable);
 }
 
 // This test hangs or crashes intermittently on Linux

@@ -30,6 +30,7 @@
 ***/
 
 #include "stdafx.h"
+#include <vector>
 
 // cstdio doesn't pull in namespace std on VC6, so we do it here.
 #if defined(UNITTEST_WIN32) && (_MSC_VER == 1200)
@@ -38,9 +39,31 @@
 
 namespace UnitTest {
 
+// Function to work around outputing to the console when under WinRT.
+static void PrintfWrapper(const char* format, ...)
+{
+    va_list args;
+    va_start(args, format);
+
+#ifdef __cplusplus_winrt
+    const auto bufSize = _vscprintf(format, args) + 1; // add 1 for null termination
+    std::vector<char> byteArray;
+    byteArray.resize(bufSize);
+    vsnprintf_s(&byteArray[0], bufSize, bufSize, format, args);
+
+    DWORD bytesWritten;
+    HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+    WriteFile(h, &byteArray[0], (DWORD)bufSize, &bytesWritten, NULL);
+#else
+    vfprintf_s(stdout, format, args);
+#endif
+
+    va_end(args);
+}
+
 static void ChangeConsoleTextColorToRed()
 {
-#ifdef WIN32
+#ifdef _MS_WINDOWS
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x0004 | 0x0008);
 #else
     std::cout << "\033[1;31m";
@@ -49,7 +72,7 @@ static void ChangeConsoleTextColorToRed()
 
 static void ChangeConsoleTextColorToGreen()
 {
-#ifdef WIN32
+#ifdef _MS_WINDOWS
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x0002 | 0x0008);
 #else
     std::cout << "\033[1;32m";
@@ -58,7 +81,7 @@ static void ChangeConsoleTextColorToGreen()
 
 static void ChangeConsoleTextColorToGrey()
 {
-#ifdef WIN32
+#ifdef _MS_WINDOWS
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN);
 #else
     std::cout << "\033[0m";
@@ -74,30 +97,36 @@ void TestReporterStdout::ReportFailure(TestDetails const& details, char const* f
 #endif
 
     ChangeConsoleTextColorToRed();
-    printf(errorFormat, details.filename, details.lineNumber, details.testName, failure);
+    PrintfWrapper(errorFormat, details.filename, details.lineNumber, details.testName, failure);
     ChangeConsoleTextColorToGrey();
+    std::fflush(stdout);
 }
 
 void TestReporterStdout::ReportTestStart(TestDetails const& test)
 {
-    printf("Starting test case %s:%s...\n", test.suiteName, test.testName);
+    const char * format = "Starting test case %s:%s...\n";
+    PrintfWrapper(format, test.suiteName, test.testName);
+    std::fflush(stdout);
 }
 
 void TestReporterStdout::ReportTestFinish(TestDetails const& test, bool passed, float)
 {
     if(passed)
     {
-        printf("Test case %s:%s ", test.suiteName, test.testName);
+        const char * format = "Test case %s:%s ";
+        PrintfWrapper(format, test.suiteName, test.testName);
         ChangeConsoleTextColorToGreen();
-        printf("PASSED\n");
+	    PrintfWrapper("PASSED\n");
         ChangeConsoleTextColorToGrey();
     }
     else
     {
         ChangeConsoleTextColorToRed();
-        printf("Test case %s:%s FAILED\n", test.suiteName, test.testName);
+        const char * format = "Test case %s:%s FAILED\n";
+	    PrintfWrapper(format, test.suiteName, test.testName);
         ChangeConsoleTextColorToGrey();
     }
+    std::fflush(stdout);
 }
 
 void TestReporterStdout::ReportSummary(int const, int const,

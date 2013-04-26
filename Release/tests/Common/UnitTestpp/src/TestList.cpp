@@ -57,7 +57,7 @@ void TestList::Add(Test* test)
     }
 }
 
-Test* TestList::GetHead() const
+Test* TestList::GetFirst() const
 {
     return m_head;
 }
@@ -79,6 +79,17 @@ ListAdder::ListAdder(TestList& list, Test* test, ...)
     }                                                                                   
     va_end(argList);
 
+    // If on windows we could be either desktop or winrt. Make a requires property for the correct version.
+    // Only a desktop runner environment can execute a desktop test case and vice versa on winrt.
+    // This starts with visual studio versions after VS 2012.
+#if defined(_MSC_VER) && (_MSC_VER >= 1800)
+#ifdef __cplusplus_winrt
+    test->m_properties.Add("Requires", "winrt");
+#else
+    test->m_properties.Add("Requires", "desktop");
+#endif
+#endif
+	
     list.Add(test);
 }
 
