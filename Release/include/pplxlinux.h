@@ -251,7 +251,7 @@ namespace platform
 
         ~timer_impl();
 
-        _PPLXIMP void start(unsigned int ms, bool repeat, TaskProc userFunc, _In_ void * context);
+        _PPLXIMP void start(unsigned int ms, bool repeat, TaskProc_t userFunc, _In_ void * context);
         _PPLXIMP void stop(bool waitForCallbacks);
 
     private:
@@ -261,7 +261,7 @@ namespace platform
     class linux_scheduler : public pplx::scheduler_interface
     {
     public:
-        _PPLXIMP virtual void schedule( TaskProc proc, _In_ void* param);
+        _PPLXIMP virtual void schedule( TaskProc_t proc, _In_ void* param);
     };
 
     /// <summary>
@@ -306,7 +306,7 @@ namespace extensibility
 
     typedef ::pplx::details::reader_writer_lock_impl reader_writer_lock_t;
     typedef scoped_lock<reader_writer_lock_t> scoped_rw_lock_t;
-    typedef ::pplx::reader_writer_lock::scoped_lock_read scoped_read_lock_t;
+    typedef ::pplx::extensibility::reader_writer_lock_t::scoped_lock_read scoped_read_lock_t;
 
     typedef ::pplx::details::recursive_lock_impl recursive_lock_t;
     typedef scoped_lock<recursive_lock_t> scoped_recursive_lock_t;

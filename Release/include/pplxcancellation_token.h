@@ -62,7 +62,7 @@ namespace details
         // Returns the new reference count.
         long _Reference()
         {
-            long _Refcount = _InterlockedIncrement(&_M_refCount);
+            long _Refcount = atomic_increment(_M_refCount);
 
             // 0 - 1 transition is illegal
             _ASSERTE(_Refcount > 1);
@@ -73,7 +73,7 @@ namespace details
         // Returns the new reference count
         long _Release()
         {
-            long _Refcount = _InterlockedDecrement(&_M_refCount);
+            long _Refcount = atomic_decrement(_M_refCount);
             _ASSERTE(_Refcount >= 0);
 
             if (_Refcount == 0)
@@ -99,7 +99,7 @@ namespace details
         }
 
         // Reference count
-        volatile long _M_refCount;
+        atomic_long _M_refCount;
     };
 
     class _CancellationTokenState;
@@ -319,7 +319,7 @@ namespace details
 
     public:
 
-        static _CancellationTokenState * _CancellationTokenState::_NewTokenState()
+        static _CancellationTokenState * _NewTokenState()
         {
             return new _CancellationTokenState();
         }
@@ -607,6 +607,7 @@ private:
 };
 
 
+class invalid_operation;
 /// <summary>
 ///     The <c>cancellation_token</c> class represents the ability to determine whether some operation has been requested to cancel.  A given token can
 ///     be associated with a <c>task_group</c>, <c>structured_task_group</c>, or <c>task</c> to provide implicit cancellation.  It can also be polled for

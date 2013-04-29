@@ -847,7 +847,7 @@ namespace details
 
     // Specializations to avoid marshaling for strings and arrays.
     template<typename _Type>
-    struct _MarshalHelper<::Platform::Array<_Type^>>
+    struct _MarshalHelper< ::Platform::Array<_Type^>>
     {
         static ::Platform::Array<_Type^>^ _Perform(::Platform::Array<_Type^>^& _ObjInCtx, const _ContextCallback& _Ctx)
         {
@@ -856,7 +856,7 @@ namespace details
     };
 
     template<>
-    struct _MarshalHelper<::Platform::String>
+    struct _MarshalHelper< ::Platform::String>
     {
         static ::Platform::String^ _Perform(::Platform::String^& _ObjInCtx, const _ContextCallback& _Ctx)
         {
