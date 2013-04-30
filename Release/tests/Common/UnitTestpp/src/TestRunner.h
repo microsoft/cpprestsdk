@@ -82,11 +82,11 @@ public:
 
     int RunTests(TestList const& list, char const* suiteName, int defaultTestTimeInMs) const
     {
-        RunTestsIf(list, suiteName, True(), defaultTestTimeInMs);
+        return RunTestsIf(list, suiteName, True(), defaultTestTimeInMs);
     }
 	int RunTests(TestList const& list, int defaultTestTimeInMs) const
     {
-        RunTestsIf(list, nullptr, True(), defaultTestTimeInMs);
+        return RunTestsIf(list, nullptr, True(), defaultTestTimeInMs);
     }
 
 	UNITTEST_LINKAGE TestResults* GetTestResults();

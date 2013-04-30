@@ -373,7 +373,7 @@ namespace Concurrency { namespace streams {
         }
 			catch(...)
 			{
-				return (pos_type(std::_BADOFF));
+				return (pos_type(-1));
 			}
         }
 
@@ -389,7 +389,7 @@ namespace Concurrency { namespace streams {
         }
 			catch(...)
 			{
-				return (pos_type(std::_BADOFF));
+				return (pos_type(-1));
 			}
         }
 

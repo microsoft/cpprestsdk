@@ -78,13 +78,13 @@ pplx::scheduler_interface& get_pplx_dflt_scheduler()
 
 #else
 
-class pplx_dflt_scheduler : public pplx::scheduler
+class pplx_dflt_scheduler : public pplx::scheduler_interface
 {
 
     crossplat::threadpool m_pool;
 
 
-    virtual void schedule(pplx::TaskProc proc, void* param)
+    virtual void schedule(pplx::TaskProc_t proc, void* param)
     {
         pplx::details::atomic_increment(s_flag);
         m_pool.schedule([=]() -> void { proc(param); } );
@@ -97,7 +97,7 @@ public:
 
 pplx_dflt_scheduler g_pplx_dflt_scheduler;
 
-pplx::scheduler& get_pplx_dflt_scheduler()
+pplx::scheduler_interface& get_pplx_dflt_scheduler()
 {
     return g_pplx_dflt_scheduler;
 }

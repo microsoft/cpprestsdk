@@ -243,7 +243,7 @@ namespace Concurrency { namespace streams {
         /// </remarks>
         virtual bool acquire(_CharType*& ptr, size_t& count)
         {
-            if (!can_read()) return false;
+            if (!this->can_read()) return false;
 
             count = in_avail();
 

@@ -1185,12 +1185,12 @@ template <typename _CharType, typename _LongType>
 void istream_extract_long_impl(streambuf<_CharType> buf)
 {
     basic_istream<_CharType> is(buf);
-    const _LongType v1 = is.extract<_LongType>().get();
-    const _LongType v2 = is.extract<_LongType>().get();
+    const _LongType v1 = is.template extract<_LongType>().get();
+    const _LongType v2 = is.template extract<_LongType>().get();
 
     VERIFY_ARE_EQUAL(123, v1);
     VERIFY_ARE_EQUAL(-567, v2);
-    VERIFY_THROWS(is.extract<_LongType>().get(), std::runtime_error);
+    VERIFY_THROWS(is.template extract<_LongType>().get(), std::runtime_error);
 }
 
 TEST(istream_extract_long)
@@ -1205,12 +1205,12 @@ template <typename _CharType, typename _LongType>
 void istream_extract_unsigned_long_impl(streambuf<_CharType> buf)
 {
     basic_istream<_CharType> is(buf);
-    const _LongType v1 = is.extract<_LongType>().get();
-    const _LongType v2 = is.extract<_LongType>().get();
+    const _LongType v1 = is.template extract<_LongType>().get();
+    const _LongType v2 = is.template extract<_LongType>().get();
 
     VERIFY_ARE_EQUAL(876, v1);
     VERIFY_ARE_EQUAL(3, v2);
-    VERIFY_THROWS(is.extract<_LongType>().get(), std::runtime_error);
+    VERIFY_THROWS(is.template extract<_LongType>().get(), std::runtime_error);
 }
 
 TEST(istream_extract_unsigned_long)

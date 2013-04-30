@@ -336,7 +336,7 @@ TEST_FIXTURE(server_address, none_auth_with_basic_cred, "Ignore", "Manual")
 TEST_FIXTURE(server_address, successful_auth_with_domain_cred, "Ignore", "Manual")
 {
 	// ACTION: fill in your domain credentials here temporarily to run.
-	const string_t userName = U("DOMAIN\username");
+	const string_t userName = U("DOMAIN\\username");
 	const string_t password = U("");
 
 	http_client_config config;
@@ -351,7 +351,7 @@ TEST_FIXTURE(server_address, successful_auth_with_domain_cred, "Ignore", "Manual
 TEST_FIXTURE(server_address, none_auth_with_domain_cred, "Ignore", "Manual")
 {
 	// ACTION: fill in your domain credentials here temporarily to run.
-	const string_t userName = U("DOMAIN\username");
+	const string_t userName = U("DOMAIN\\username");
 	const string_t password = U("");
 
 	http_client_config config;
