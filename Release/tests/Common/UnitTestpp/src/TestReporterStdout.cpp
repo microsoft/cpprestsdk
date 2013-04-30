@@ -31,6 +31,7 @@
 
 #include "stdafx.h"
 #include <vector>
+#include <stdarg.h>
 
 // cstdio doesn't pull in namespace std on VC6, so we do it here.
 #if defined(UNITTEST_WIN32) && (_MSC_VER == 1200)
@@ -55,7 +56,11 @@ static void PrintfWrapper(const char* format, ...)
     HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
     WriteFile(h, &byteArray[0], (DWORD)bufSize, &bytesWritten, NULL);
 #else
+#ifdef _MS_WINDOWS
     vfprintf_s(stdout, format, args);
+#else
+    vfprintf(stdout, format, args);
+#endif
 #endif
 
     va_end(args);

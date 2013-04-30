@@ -252,7 +252,7 @@ namespace web { namespace http
             protected:
 
                 request_context(std::shared_ptr<_http_client_communicator> client, http_request &request)
-                    : m_http_client(client), m_request(request), m_total_response_size(0), m_received_hdrs(false), m_exceptionPtr(nullptr)
+                    : m_http_client(client), m_request(request), m_total_response_size(0), m_received_hdrs(false), m_exceptionPtr()
                 {
                     auto responseImpl = m_response._get_impl();
 
@@ -2446,7 +2446,7 @@ namespace web { namespace http
 
                 unsigned long open()
                 {
-                    m_client.reset(new client(crossplat::threadpool::shared_instance().service(), config.chunksize()));
+                    m_client.reset(new client(crossplat::threadpool::shared_instance().service(), client_config().chunksize()));
                     return 0;
                 }
 

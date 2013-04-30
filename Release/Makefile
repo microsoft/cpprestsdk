@@ -29,7 +29,7 @@ clean: DOUTPUT_DIR = $(PWD)/../Binaries/$(DMODE)
 export MODE
 
 WARNINGS=-Wall -Wextra -Wunused-parameter -Wcast-align -Wcast-qual -Wconversion -Wformat=2 -Winit-self -Winvalid-pch -Wmissing-format-attribute -Wmissing-include-dirs -Wpacked -Wredundant-decls -Wunreachable-code
-SUPPRESSIONS=-Wno-deprecated -Wno-unknown-pragmas -Wno-reorder -Wno-unused-function -Wno-char-subscripts -Wno-switch -Wno-unused-but-set-parameter -Wno-deprecated 
+SUPPRESSIONS=-Wno-deprecated -Wno-unknown-pragmas -Wno-reorder -Wno-unused-function -Wno-char-subscripts -Wno-switch -Wno-unused-but-set-parameter -Wno-deprecated -Wno-unused-value
 
 # C++11 excludes GCC < 4.7, which is desired anyway
 OTHER_OPTIONS=-std=c++11 -fno-strict-aliasing

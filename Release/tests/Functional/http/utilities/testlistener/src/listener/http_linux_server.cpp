@@ -208,7 +208,7 @@ void connection::handle_headers()
 
     Concurrency::streams::producer_consumer_buffer<uint8_t> buf;
     m_request._get_impl()->set_instream(buf.create_istream());
-    m_request._get_impl()->set_outstream(buf.create_ostream());
+    m_request._get_impl()->set_outstream(buf.create_ostream(), false);
     if (m_chunked)
     {
         boost::asio::async_read_until(*m_socket, m_request_buf, CRLF, boost::bind(&connection::handle_chunked_header, this, placeholders::error));

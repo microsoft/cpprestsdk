@@ -161,7 +161,7 @@ namespace Concurrency { namespace streams {
 
             // Seeking is not supported
             virtual pos_type seekpos(pos_type, std::ios_base::openmode) { return (pos_type)traits::eof(); }
-            virtual pos_type seekoff(off_type offset, std::ios_base::seekdir whre, std::ios_base::openmode mode) { return (pos_type)traits::eof(); }
+            virtual pos_type seekoff(off_type , std::ios_base::seekdir , std::ios_base::openmode ) { return (pos_type)traits::eof(); }
             
             /// <summary>
             /// Allocates a contiguous memory block and returns it.
@@ -230,7 +230,7 @@ namespace Concurrency { namespace streams {
 
                     // If the write head has been closed then have reached the end of the
                     // stream (return true), otherwise more data could be written later (return false).
-                    return !can_write();
+                    return !this->can_write();
                 }
                 else
                 {
