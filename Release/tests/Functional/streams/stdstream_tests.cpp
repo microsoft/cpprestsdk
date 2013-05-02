@@ -725,7 +725,7 @@ TEST(sync_on_async_close_early)
 	buffer.close();
 
 	os << 10 << std::endl;
-    VERIFY_ARE_EQUAL(std::ios::badbit, os.rdstate());
+    VERIFY_IS_TRUE(std::ios::badbit & os.rdstate());
 }
 
 TEST(sync_on_async_close_with_exception)

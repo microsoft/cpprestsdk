@@ -221,7 +221,7 @@ TEST_FIXTURE(uri_address, empty_username_password)
 // Fails on WinRT due to TFS 648278
 // Accessing a server that supports auth, but returns 401, even after the user has provided valid creds
 // We're making sure the error is reported properly, and the response data from the second response is received
-TEST_FIXTURE(uri_address, error_after_valid_credentials)
+TEST_FIXTURE(uri_address, error_after_valid_credentials, "Ignore:Linux", "646268")
 {
     test_http_server::scoped_server scoped(m_uri);
     http_client_config client_config;

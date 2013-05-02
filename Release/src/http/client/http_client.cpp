@@ -23,8 +23,8 @@
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 #include "stdafx.h"
+#include <iostream>
 #include "http_helpers.h"
-
 #ifdef _MS_WINDOWS
 #if !defined(__cplusplus_winrt)
 #include <winhttp.h>
@@ -2040,7 +2040,10 @@ namespace web { namespace http
 
                 void report_error(const utility::string_t &scope, boost::system::error_code ec)
                 {
-                    request_context::report_error(0x8000000 | ec.value(), scope);
+					if (ec.default_error_condition().value() == boost::system::errc::operation_canceled && m_timedout)
+						request_context::report_error(boost::system::errc::timed_out, scope);
+					else
+						request_context::report_error(ec.default_error_condition().value(), scope);
                 }
 
                 std::unique_ptr<tcp::socket> m_socket;
@@ -2048,10 +2051,11 @@ namespace web { namespace http
                 size_t m_known_size;
                 size_t m_current_size;
                 bool m_needChunked;
+				bool m_timedout;
                 boost::asio::streambuf m_request_buf;
                 boost::asio::streambuf m_response_buf;
                 std::unique_ptr<boost::asio::deadline_timer> m_timer;
-
+				
                 ~linux_request_context()
                 {
                     if (m_timer)
@@ -2071,14 +2075,15 @@ namespace web { namespace http
 
                 void cancel(const boost::system::error_code& ec)
                 {
-                    if(!ec)
-                    {
-                        auto sock = m_socket.get();
-                        if (sock != nullptr)
-                        {
-                            sock->cancel();
-                        }
-                    }
+					if (!ec) 
+					{
+						m_timedout = true;
+						auto sock = m_socket.get();
+						if (sock != nullptr)
+						{
+							sock->cancel();
+						}
+					}
                 }
 
             private:
@@ -2086,6 +2091,7 @@ namespace web { namespace http
                     : request_context(client, request)
                     , m_known_size(0)
                     , m_needChunked(false)
+					, m_timedout(false)
                     , m_current_size(0)
                 {
                 }
