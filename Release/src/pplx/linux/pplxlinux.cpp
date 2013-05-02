@@ -41,7 +41,7 @@ namespace details {
     {
         _PPLXIMP long GetCurrentThreadId()
         {
-            return (long)syscall(SYS_gettid);
+            return (long)syscall(SYS_gettid) * 4;
         }
 
         _PPLXIMP void YieldExecution()
