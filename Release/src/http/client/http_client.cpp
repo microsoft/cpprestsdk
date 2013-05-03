@@ -43,6 +43,7 @@ using namespace concurrency;
 #else
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
+#include <boost/algorithm/string.hpp>
 #include <threadpool.h>
 #endif
 
@@ -2322,6 +2323,9 @@ namespace web { namespace http
                         {
                             auto name = header.substr(0, colon);
                             auto value = header.substr(colon+2, header.size()-(colon+3)); // also exclude '\r'
+							boost::algorithm::trim(name);
+							boost::algorithm::trim(value);
+							
                             ctx->m_response.headers()[name] = value;
 
                             if (boost::iequals(name, header_names::transfer_encoding))
