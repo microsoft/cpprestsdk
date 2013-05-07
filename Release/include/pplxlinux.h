@@ -92,10 +92,8 @@ namespace platform
 
         void set()
         {
-            {
-                std::lock_guard<std::mutex> lock(_lock);
-                _signaled = true;
-            }
+			std::lock_guard<std::mutex> lock(_lock);
+			_signaled = true;
             _condition.notify_all();
         }
 
