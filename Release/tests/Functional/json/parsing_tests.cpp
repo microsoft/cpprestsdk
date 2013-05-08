@@ -254,7 +254,6 @@ TEST(Konnichiwa)
 TEST(Russian)
 {
     utility::string_t ws = U("{ \"results\" : [ { \"id\" : 272655310, \"name\" : \"Андрей Иванов\" } ] }");
-
     json::value v1 = json::value::parse(ws);
     auto s2 = v1.to_string();
 
