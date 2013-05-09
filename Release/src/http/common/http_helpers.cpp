@@ -71,7 +71,7 @@ namespace details
        || _wcsicmp(ct, content_type_application_xjavascript.c_str()) == 0
        )			
 #else
-        if(   boost::iequals(content_type.substr(0,4), content_type_application_json)) 
+        if(   boost::iequals(content_type.substr(), content_type_application_json) 
            || boost::iequals(content_type, content_type_text_json)
            || boost::iequals(content_type, content_type_text_xjson) 
            || boost::iequals(content_type, content_type_text_javascript)
