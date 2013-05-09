@@ -202,9 +202,6 @@ TEST(bug_416116)
 #pragma warning( pop )
 }
 
-// TODO: re-enable some of these for Linux, TFS#535122.
-#ifdef _MS_WINDOWS
-
 TEST(byte_ptr_parsing_array)
 {
     char s[] = "[ \"foo\", true ]";
@@ -235,10 +232,10 @@ TEST(byte_ptr_parsing_object)
     VERIFY_ARE_EQUAL(s2, to_string_t(os.str()));
 }
 
-TEST(Konnichiwa)
+TEST(Japanese)
 {
     utility::string_t ws = U("\"こんにちは\"");
-    std::string s = utf16_to_utf8(ws);
+    std::string s = to_utf8string(ws);
 
     std::stringstream ss;
     ss << s;
@@ -254,14 +251,13 @@ TEST(Konnichiwa)
 
 TEST(Russian)
 {
-    std::wstring ws = L"{ \"results\" : [ { \"id\" : 272655310, \"name\" : \"Андрей Иванов\" } ] }";
-
+    utility::string_t ws = U("{ \"results\" : [ { \"id\" : 272655310, \"name\" : \"Андрей Ив´анов\" } ] }");
     json::value v1 = json::value::parse(ws);
     auto s2 = v1.to_string();
 
     VERIFY_ARE_EQUAL(s2, ws);
 
-    std::string s = utf16_to_utf8(ws);
+    std::string s = to_utf8string(ws);
 
     std::stringstream ss;
     ss << s;
@@ -270,8 +266,6 @@ TEST(Russian)
 
     VERIFY_ARE_EQUAL(s3, ws);
 }
-
-#endif // _MS_WINDOWS
 
 utility::string_t make_deep_json_string(size_t depth)
 {

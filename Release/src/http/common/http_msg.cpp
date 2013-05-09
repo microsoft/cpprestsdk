@@ -308,16 +308,11 @@ json::value details::http_msg_base::_extract_json()
     utility::string_t content, charset;
     parse_content_type_and_charset(headers().content_type(), content, charset);
 
-    // Content-Type must be "application/json".
-#ifdef _MS_WINDOWS
-    if(_wcsicmp(content.c_str(), http::details::content_type_application_json.c_str()) != 0)
+    // Content-Type must be "application/json" or one of the unofficial, but common JSON types.
+    if(!is_content_type_json(content))
     {
-#else
-    if(!boost::iequals(content, http::details::content_type_application_json))
-    {
-#endif
 		const utility::string_t actualContentType = utility::conversions::to_string_t(content);
-        throw http_exception((U("Content-Type must be application/json to extract (is: ") + actualContentType + U(")")).c_str());
+        throw http_exception((U("Content-Type must be JSON to extract (is: ") + actualContentType + U(")")).c_str());
     }
     
     if (!instream())

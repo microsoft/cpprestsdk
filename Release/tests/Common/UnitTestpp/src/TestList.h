@@ -42,9 +42,11 @@ class TestList
 {
 public:
     UNITTEST_LINKAGE TestList();
-    UNITTEST_LINKAGE void Add (Test* test);
+    UNITTEST_LINKAGE void Add(Test* test);
 
     UNITTEST_LINKAGE Test* GetFirst() const;
+
+    UNITTEST_LINKAGE bool IsEmpty() const;
 
 private:
     Test* m_head;

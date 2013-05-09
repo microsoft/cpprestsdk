@@ -145,7 +145,10 @@ TEST_FIXTURE(uri_address, content_ready_timeout)
 
     listener.support([buf](http_request request)
     {
-        request.reply(200, streams::istream(buf), U("text/plain"));
+        http_response response(200);
+        response.set_body(streams::istream(buf), U("text/plain"));
+        response.headers().add(header_names::connection, U("close")); 
+        request.reply(response);
     });
 
     {
@@ -172,7 +175,10 @@ TEST_FIXTURE(uri_address, stream_timeout)
 
     listener.support([buf](http_request request)
     {
-        request.reply(200, streams::istream(buf), U("text/plain"));
+        http_response response(200);
+        response.set_body(streams::istream(buf), U("text/plain"));
+        response.headers().add(header_names::connection, U("close")); 
+        request.reply(response);
     });
 
     {

@@ -156,13 +156,6 @@ unsigned long test_module_loader::load(const std::string &dllName)
         delete pModule;
         return error_code;
     }
-
-    // Check for global exported GetTestList function.
-    if(pModule->get_test_list() == nullptr)
-    {
-        delete pModule;
-        return (unsigned long)-1;
-    }
     else
     {
         m_modules[dllName] = pModule;
@@ -170,8 +163,16 @@ unsigned long test_module_loader::load(const std::string &dllName)
     return 0;
 }
 
-UnitTest::TestList & test_module_loader::get_test_list(const std::string &dllName)
+UnitTest::TestList test_module_loader::get_test_list(const std::string &dllName)
 {
     GetTestsFunc getTestsFunc = m_modules[dllName]->get_test_list();
+
+    // If there is no GetTestList function then it must be a dll without any tests.
+    // Simply return an empty TestList.
+    if(getTestsFunc == nullptr)
+    {
+        return ::UnitTest::TestList();
+    }
+
     return getTestsFunc();
 }

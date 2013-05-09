@@ -62,6 +62,11 @@ Test* TestList::GetFirst() const
     return m_head;
 }
 
+bool TestList::IsEmpty() const
+{
+    return m_head == m_tail;
+}
+
 ListAdder::ListAdder(TestList& list, Test* test, ...)
 {
     char * arg;                                                                         

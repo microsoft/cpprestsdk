@@ -186,7 +186,11 @@ TEST_FIXTURE(uri_address, content_ready)
     listener.support([responseData](http_request request)
     {
         streams::producer_consumer_buffer<uint8_t> buf;
-        request.reply(200, buf.create_istream(), U("text/plain"));
+        http_response response(200);
+        response.set_body(buf.create_istream(), U("text/plain"));
+        response.headers().add(header_names::connection, U("close")); 
+
+        request.reply(response);
 
         VERIFY_ARE_EQUAL(buf.putn((const uint8_t *)responseData.data(), responseData.size()).get(), responseData.size());
         buf.close(std::ios_base::out).get();
@@ -224,6 +228,9 @@ TEST_FIXTURE(uri_address, xfer_chunked_with_length)
         // add chunked transfer encoding
         response.headers().add(header_names::transfer_encoding, U("chunked"));
 
+        // add connection=close header, connection SHOULD NOT be considered `persistent' after the current request/response is complete
+        response.headers().add(header_names::connection, U("close")); 
+
         // respond
         request.reply(response);
     });
@@ -250,7 +257,10 @@ TEST_FIXTURE(uri_address, get_resp_stream)
     {
         streams::producer_consumer_buffer<uint8_t> buf;
 
-        request.reply(200, buf.create_istream(), U("text/plain"));
+        http_response response(200);
+        response.set_body(buf.create_istream(), U("text/plain"));
+        response.headers().add(header_names::connection, U("close")); 
+        request.reply(response);
 
         VERIFY_ARE_EQUAL(buf.putn((const uint8_t *)responseData.data(), responseData.size()).get(), responseData.size());
         buf.close(std::ios_base::out).get();

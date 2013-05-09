@@ -847,7 +847,7 @@ namespace details
 
     // Specializations to avoid marshaling for strings and arrays.
     template<typename _Type>
-    struct _MarshalHelper< ::Platform::Array<_Type^>>
+    struct _MarshalHelper<::Platform::Array<_Type^>>
     {
         static ::Platform::Array<_Type^>^ _Perform(::Platform::Array<_Type^>^& _ObjInCtx, const _ContextCallback& _Ctx)
         {
@@ -856,7 +856,7 @@ namespace details
     };
 
     template<>
-    struct _MarshalHelper< ::Platform::String>
+    struct _MarshalHelper<::Platform::String>
     {
         static ::Platform::String^ _Perform(::Platform::String^& _ObjInCtx, const _ContextCallback& _Ctx)
         {
@@ -7320,15 +7320,19 @@ namespace details
     inline
     task<bool> do_while(std::function<task<bool>(void)> func)
     {
-        task<bool> first = func();
-        return first.then([=](bool guard) -> task<bool> {
-            if (guard)
-                return do_while(func);
-            else
-                return first;
-            });
-    }
+        task<bool> cond = func();
 
+        while ( cond.is_done() )
+        {
+            if ( !cond.get() )
+                return task_from_result(true);
+            cond = func();
+        }
+
+        return cond.then([=](task<bool> guard) {
+            return (guard.get()) ? do_while(func) : task_from_result(true);
+        });
+    }
 } // namespace details
 
 } // namespace pplx

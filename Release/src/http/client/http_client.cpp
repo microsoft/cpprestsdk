@@ -23,7 +23,6 @@
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 #include "stdafx.h"
-#include <iostream>
 #include "http_helpers.h"
 #ifdef _MS_WINDOWS
 #if !defined(__cplusplus_winrt)
@@ -2541,11 +2540,13 @@ namespace web { namespace http
         };
 
         http_client::http_client(const uri &base_uri)
+			:_base_uri(base_uri)
         {
             build_pipeline(base_uri, http_client_config());
         }
 
         http_client::http_client(const uri &base_uri, const http_client_config& client_config)
+			:_base_uri(base_uri)
         {
             build_pipeline(base_uri, client_config);
         }

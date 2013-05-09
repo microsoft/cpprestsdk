@@ -129,6 +129,8 @@ TEST(stream_read_1)
 
     istream stream(rbuf);
 
+    VERIFY_IS_FALSE(stream.can_seek());
+
     for (char c = 'a'; c <= 'z'; c++)
     {
         char ch = (char)stream.read().get();

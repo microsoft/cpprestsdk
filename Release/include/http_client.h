@@ -253,16 +253,27 @@ public:
     ~http_client() {}
 
     /// <summary>
-    /// Add an HTTP pipeline stage to the client.
+    /// Gets the base uri
+    /// </summary>
+    /// <returns>
+    ///	A base uri initialized in constructor
+    ///	</return>
+    const uri& base_uri() const
+    {
+        return _base_uri;
+    }
+
+    /// <summary>
+    /// Adds an HTTP pipeline stage to the client.
     /// </summary>
     /// <param name="handler">A function object representing the pipeline stage.</param>
     void add_handler(std::function<pplx::task<http_response>(http_request, std::shared_ptr<http::http_pipeline_stage>)> handler)
     {
-        m_pipeline->append(std::make_shared< ::web::http::details::function_pipeline_wrapper>(handler));
+        m_pipeline->append(std::make_shared<::web::http::details::function_pipeline_wrapper>(handler));
     }
 
 	/// <summary>
-	/// Add an HTTP pipeline stage to the client.
+	/// Adds an HTTP pipeline stage to the client.
 	/// </summary>
 	/// <param name="stage">A shared pointer to a pipeline stage.</param>
 	void add_handler(std::shared_ptr<http::http_pipeline_stage> stage)
@@ -387,8 +398,10 @@ public:
 private:
 
     void build_pipeline(const uri &base_uri, const http_client_config& client_config);
+	
+    std::shared_ptr<::web::http::http_pipeline> m_pipeline;
 
-    std::shared_ptr< ::web::http::http_pipeline> m_pipeline;
+	uri _base_uri;
 };
 
 } // namespace client

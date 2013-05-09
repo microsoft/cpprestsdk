@@ -627,7 +627,7 @@ TEST(ostream_write_buffer)
     os.close().get();
 }
 
-TEST(ostream_output_1)
+TEST(ostream_output_print_string)
 {
     std::stringstream stream;  
 
@@ -640,7 +640,7 @@ TEST(ostream_output_1)
     os.close().get();
 }
 
-TEST(ostream_output_2)
+TEST(ostream_output_print_types)
 {
     std::stringstream stream;  
 
@@ -653,6 +653,36 @@ TEST(ostream_output_2)
     (a && b && c && d).wait();
 
     VERIFY_ARE_EQUAL(stream.str(), "data: 10,1");
+
+    os.close().get();
+}
+
+TEST(ostream_output_print_line_string)
+{
+    std::stringstream stream;  
+
+    Concurrency::streams::stdio_ostream<char> os(stream);
+
+    os.print_line("abcdefghijklmnopqrstuvwxyz").wait();
+
+    VERIFY_ARE_EQUAL(stream.str(), "abcdefghijklmnopqrstuvwxyz\n");
+
+    os.close().get();
+}
+
+TEST(ostream_output_print_line_types)
+{
+    std::stringstream stream;  
+
+    Concurrency::streams::stdio_ostream<char> os(stream);
+
+    auto a = os.print_line("data: ");
+    auto b = os.print_line(10);
+    auto c = os.print_line(",");
+    auto d = os.print_line(true);
+    (a && b && c && d).wait();
+
+    VERIFY_ARE_EQUAL(stream.str(), "data: \n10\n,\n1\n");
 
     os.close().get();
 }
@@ -725,7 +755,7 @@ TEST(sync_on_async_close_early)
 	buffer.close();
 
 	os << 10 << std::endl;
-    VERIFY_IS_TRUE(std::ios::badbit & os.rdstate());
+    VERIFY_IS_TRUE((std::ios::badbit & os.rdstate()) == std::ios::badbit);
 }
 
 TEST(sync_on_async_close_with_exception)

@@ -40,11 +40,20 @@ namespace details
 {
     // Constants for MIME types.
     const utility::string_t content_type_application_json = U("application/json");
+
     const utility::string_t content_type_application_octetstream = U("application/octet-stream");
     const utility::string_t content_type_text_plain = U("text/plain");
     const utility::string_t content_type_text_plain_utf8 = U("text/plain; charset=utf-8");
     const utility::string_t content_type_text_plain_utf16 = U("text/plain; charset=utf-16");
     const utility::string_t content_type_text_plain_utf16le = U("text/plain; charset=utf-16le");
+
+    // Unofficial JSON MIME types...
+    const utility::string_t content_type_text_json = U("text/json");
+    const utility::string_t content_type_text_xjson = U("text/x-json");
+    const utility::string_t content_type_text_javascript = U("text/javascript");
+    const utility::string_t content_type_text_xjavascript = U("text/x-javascript");
+    const utility::string_t content_type_application_javascript = U("application/javascript");
+    const utility::string_t content_type_application_xjavascript = U("application/x-javascript");
 
     // Constants for differnet charsets.
     const utility::string_t charset_usascii = U("us-ascii");
@@ -55,9 +64,14 @@ namespace details
     const utility::string_t charset_utf16be = U("utf-16be");
 
     /// <summary>
-    /// Determines which or not the given content type is 'textual' according the feature specifications.
+    /// Determines whether or not the given content type is 'textual' according the feature specifications.
     /// </summary>
     bool is_content_type_textual(const utility::string_t &content_type);
+
+    /// <summary>
+    /// Determines whether or not the given content type is JSON according the feature specifications.
+    /// </summary>
+    bool is_content_type_json(const utility::string_t &content_type);
 
     /// <summary>
     /// Parses the given Content-Type header value to get out actual content type and charset.

@@ -58,6 +58,33 @@ namespace details
         return false;
     }
 
+    bool is_content_type_json(const utility::string_t &content_type)
+    {
+#ifdef _MS_WINDOWS
+    auto ct = content_type.c_str();
+    if(   _wcsicmp(ct, content_type_application_json.c_str()) == 0 
+       || _wcsicmp(ct, content_type_text_json.c_str()) == 0
+       || _wcsicmp(ct, content_type_text_xjson.c_str()) == 0
+       || _wcsicmp(ct, content_type_text_javascript.c_str()) == 0
+       || _wcsicmp(ct, content_type_text_xjavascript.c_str()) == 0
+       || _wcsicmp(ct, content_type_application_javascript.c_str()) == 0
+       || _wcsicmp(ct, content_type_application_xjavascript.c_str()) == 0
+       )			
+#else
+        if(   boost::iequals(content_type.substr(0,4), content_type_application_json)) 
+           || boost::iequals(content_type, content_type_text_json)
+           || boost::iequals(content_type, content_type_text_xjson) 
+           || boost::iequals(content_type, content_type_text_javascript)
+           || boost::iequals(content_type, content_type_text_xjavascript)
+           || boost::iequals(content_type, content_type_application_javascript)
+           || boost::iequals(content_type, content_type_application_xjavascript))
+#endif
+        {
+            return true;
+        }
+        return false;
+    }
+
     void parse_content_type_and_charset(const utility::string_t &content_type, utility::string_t &content, utility::string_t &charset)
     {
         const size_t semi_colon_index = content_type.find_first_of(U(";"));
@@ -103,12 +130,8 @@ namespace details
 
     utility::string_t get_default_charset(const utility::string_t &content_type)
     {
-        // We are defaulting everything to Latin1 except application/json which is utf-8.
-#ifdef _MS_WINDOWS
-        if(_wcsicmp(content_type.c_str(), content_type_application_json.c_str()) == 0)
-#else
-        if(boost::iequals(content_type, content_type_application_json))
-#endif
+        // We are defaulting everything to Latin1 except JSON which is utf-8.
+        if(is_content_type_json(content_type))
         {
             return charset_utf8;
         }

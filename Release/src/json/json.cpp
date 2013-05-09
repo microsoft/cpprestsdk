@@ -82,9 +82,9 @@ namespace _literals
 }
 
 #ifdef _MS_WINDOWS
-void web::json::value::serialize(std::basic_ostream<wchar_t> &stream) const 
-{
-	m_value->format(stream); 
+void web::json::value::serialize(std::ostream& stream) const
+{ 
+    m_value->format(stream); 
 }
 void web::json::value::format(std::basic_string<wchar_t> &string) const 
 {
@@ -92,9 +92,9 @@ void web::json::value::format(std::basic_string<wchar_t> &string) const
 }
 #endif
 
-void web::json::value::serialize(std::basic_ostream<char>& stream) const
-{ 
-    m_value->format(stream); 
+void web::json::value::serialize(utility::ostream_t &stream) const 
+{
+	m_value->format(stream); 
 }
 void web::json::value::format(std::basic_string<char>& string) const
 { 
@@ -400,6 +400,18 @@ const json::value& web::json::details::_Object::cnst_index(const utility::string
 
     if ( whre == m_fields.end() )
         throw json::json_exception(U("invalid field name"));
+
+    return m_elements[whre->second].second;
+}
+
+json::value web::json::details::_Object::get_field(const utility::string_t &key) const
+{
+    const_cast<web::json::details::_Object*>(this)->map_fields();
+
+    auto whre = m_fields.find(key);
+
+    if ( whre == m_fields.end() )
+        return json::value();
 
     return m_elements[whre->second].second;
 }

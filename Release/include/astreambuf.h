@@ -152,7 +152,7 @@ namespace Concurrency { namespace streams
         virtual bool can_seek() const = 0;
 
         /// <summary>
-        /// <c>is_eof</c> is used to determine whether a read head has reached the buffer.
+        /// <c>is_eof</c> is used to determine whether a read head has reached the end of the buffer.
         /// </summary>
         virtual bool is_eof() const = 0;
 
@@ -443,7 +443,7 @@ namespace Concurrency { namespace streams
         }
 
         /// <summary>
-        /// <c>is_eof</c> is used to determine whether a read head has reached the buffer.
+        /// <c>is_eof</c> is used to determine whether a read head has reached the end of the buffer.
         /// </summary>
         virtual bool is_eof() const
         {
@@ -911,7 +911,7 @@ namespace Concurrency { namespace streams
         virtual bool is_open() const { return get_base()->is_open(); }
 
 		/// <summary>
-        /// <c>is_eof</c> is used to determine whether a read head has reached the buffer.
+        /// <c>is_eof</c> is used to determine whether a read head has reached the end of the buffer.
         /// </summary>
         virtual bool is_eof() const { return get_base()->is_eof(); }
 

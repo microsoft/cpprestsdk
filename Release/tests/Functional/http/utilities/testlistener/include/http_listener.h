@@ -201,7 +201,7 @@ public:
     /// <param name="handler">A function object representing the pipeline stage.</param>
     void add_handler(std::function<pplx::task<http_response>(http_request, std::shared_ptr<http::http_pipeline_stage>)> handler)
     {
-        m_pipeline->append(std::make_shared< ::web::http::details::function_pipeline_wrapper>(handler));
+        m_pipeline->append(std::make_shared<::web::http::details::function_pipeline_wrapper>(handler));
     }
 
     /// <summary>
@@ -292,7 +292,7 @@ private:
             this->m_supported_methods = std::move(other.m_supported_methods);
             this->m_pipeline = std::move(other.m_pipeline);
 
-            std::shared_ptr< ::web::http::http_pipeline_stage> lastStage = this->m_pipeline->last_stage();
+            std::shared_ptr<::web::http::http_pipeline_stage> lastStage = this->m_pipeline->last_stage();
             auto listenerStage = static_cast<_listener_stage *>(lastStage.get());
             listenerStage->reset_listener(this);
 

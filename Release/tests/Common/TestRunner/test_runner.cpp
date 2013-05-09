@@ -470,7 +470,14 @@ int main(int argc, char* argv[])
                 }
             }
             std::cout << "Loaded " << *binary << "..." << std::endl;
-            UnitTest::TestList &tests = module_loader.get_test_list(*binary);
+            UnitTest::TestList tests = module_loader.get_test_list(*binary);
+
+            // Skip if binary contains no tests.
+            if(tests.IsEmpty())
+            {
+                std::cout << "Skipping " << *binary << " because it contains no test cases" << std::endl;
+                continue;
+            }
 
             // Check to see if running tests multiple times
             int numTimesToRun = 1;

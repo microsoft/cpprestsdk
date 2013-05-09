@@ -171,21 +171,6 @@ namespace web { namespace json
         /// <returns>The JSON value object that contains the result of the assignment.</returns>
         _ASYNCRTIMP value &operator=(value &&);
 
-        /// <summary>
-        /// Constructor creating a JSON value from an input stream, by parsing its contents.
-        /// </summary>
-        /// <param name="input">The stream to read the JSON value from</param>
-        /// <returns>The JSON value object created from the input stream.</returns>
-        _ASYNCRTIMP static value parse(utility::istream_t &input);
-
-#ifdef _MS_WINDOWS
-        /// <summary>
-        /// Constructor creating a JSON value from a byte buffer stream, by parsing its contents.
-        /// </summary>
-        /// <param name="stream">The stream to read the JSON value from</param>
-        _ASYNCRTIMP static value parse(std::istream& stream);
-#endif
-
         // Static factories
 
         /// <summary>
@@ -313,30 +298,43 @@ public:
         size_t size() const;
 
         /// <summary>
+        /// Parse a string and construct a JSON value.
+        /// </summary>
+        /// <param name="value">The C++ value to create a JSON value from, a C++ STL double-byte string</param>
+        _ASYNCRTIMP static value parse(utility::string_t);
+
+        /// <summary>
         /// Serialize the current JSON value to a C++ string.
         /// </summary>
         /// <returns>A string representation of the value</returns>
         _ASYNCRTIMP utility::string_t to_string() const;
 
         /// <summary>
-        /// Parse a string and construct a JSON value.
+        /// Parse a JSON value from the contents of an input stream using the native platform character width.
         /// </summary>
-        /// <param name="value">The C++ value to create a JSON value from, a C++ STL double-byte string</param>
-        _ASYNCRTIMP static value parse(utility::string_t);
+        /// <param name="input">The stream to read the JSON value from</param>
+        /// <returns>The JSON value object created from the input stream.</returns>
+        _ASYNCRTIMP static value parse(utility::istream_t &input);
+
+        /// <summary>
+        /// Write the current JSON value to a stream with the native platform character width.
+        /// </summary>
+        /// <param name="stream">The stream that the JSON string representation should be written to.</param>
+        _ASYNCRTIMP void serialize(utility::ostream_t &stream) const;
 
 #ifdef _MS_WINDOWS
         /// <summary>
-        /// Write the current JSON value as a double-byte string to a stream instance.
+        /// Parse a JSON value from the contents of a single-byte (UTF8) stream.
         /// </summary>
-        /// <param name="stream">The stream that the JSON string representation should be written to.</param>
-        _ASYNCRTIMP void serialize(std::basic_ostream<utf16char> &stream) const;
-#endif
+        /// <param name="stream">The stream to read the JSON value from</param>
+        _ASYNCRTIMP static value parse(std::istream& stream);
 
-        /// <summary>
-        /// Serialize the content of the value into a stream in UTF8 format
+		/// <summary>
+        /// Serialize the content of the value into a single-byte (UTF8) stream.
         /// </summary>
         /// <param name="stream">The stream that the JSON string representation should be written to.</param>
-        _ASYNCRTIMP void serialize(std::basic_ostream<char>& stream) const;
+        _ASYNCRTIMP void serialize(std::ostream& stream) const;
+#endif
 
 		/// <summary>
         /// Convert the JSON value to a C++ double, if and only if it is a number value.
@@ -385,6 +383,13 @@ public:
         /// Access a field of a JSON object.
         /// </summary>
         /// <param name="key">The name of the field</param>
+        /// <returns>The value kept in the field; null if the field does not exist</returns>
+        value get(const utility::string_t &key) const;
+
+        /// <summary>
+        /// Access a field of a JSON object.
+        /// </summary>
+        /// <param name="key">The name of the field</param>
         /// <returns>A reference to the value kept in the field</returns>
         _ASYNCRTIMP value & operator [] (const utility::string_t &key);
 
@@ -406,6 +411,13 @@ private:
 public:
 #endif
         
+        /// <summary>
+        /// Access an element of a JSON array.
+        /// </summary>
+        /// <param name="key">The index of an element in the JSON array</param>
+        /// <returns>The value kept at the array index; null if outside the boundaries of the array</returns>
+        value get(size_t index) const;
+
         /// <summary>
         /// Accesses an element of a JSON array.
         /// </summary>
@@ -529,6 +541,9 @@ public:
 
             virtual const json::value::element_vector &elements() const { throw json_exception(U("not an array")); }
             virtual const json::value::field_map &fields() const { throw json_exception(U("not an object")); }
+
+            virtual value get_field(const utility::string_t &) const { throw json_exception(U("not an object")); }
+            virtual value get_element(std::vector<value>::size_type) const { throw json_exception(U("not an array")); }
 
             virtual value &index(const utility::string_t &) { throw json_exception(U("not an object")); }
             virtual value &index(std::vector<value>::size_type) { throw json_exception(U("not an array")); }
@@ -775,6 +790,7 @@ public:
 
             virtual json::value::value_type type() const { return json::value::Object; }
 
+            _ASYNCRTIMP virtual value get_field(const utility::string_t &) const;
             _ASYNCRTIMP virtual json::value &index(const utility::string_t &key);
             _ASYNCRTIMP virtual const json::value &cnst_index(const utility::string_t &key) const;
 
@@ -842,6 +858,18 @@ public:
             }
 
             virtual json::value::value_type type() const { return json::value::Array; }
+
+            virtual value get_element(std::vector<value>::size_type index) const
+            {
+#ifdef _MS_WINDOWS
+               msl::utilities::SafeInt<std::vector<json::value>::size_type> idx(index);
+               msl::utilities::SafeInt<std::vector<json::value>::size_type> size(m_elements.size());
+#else
+               size_t idx = index;
+               size_t size = m_elements.size();
+#endif
+                return (idx >= size) ? value() : m_elements[index].second; 
+            }
 
             virtual json::value &index(std::vector<json::value>::size_type index)
             {
@@ -924,6 +952,17 @@ public:
     {
         return m_value->size();
     }
+
+    inline json::value json::value::get(const utility::string_t& key) const
+    {
+        return m_value->get_field(key);
+    }
+
+    inline json::value json::value::get(size_t index) const
+    {
+        return m_value->get_element(index);
+    }
+
 
     inline json::value::iterator json::value::begin()
     {

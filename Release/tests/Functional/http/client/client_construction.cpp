@@ -165,6 +165,16 @@ TEST_FIXTURE(uri_address, get_client_config)
 	VERIFY_ARE_EQUAL(config2.chunksize(), 1024);
 }
 
+// Verify that we can get the baseuri from http_client constructors
+TEST_FIXTURE(uri_address, BaseURI_test)
+{
+	http_client baseclient1(m_uri);
+	VERIFY_ARE_EQUAL(baseclient1.base_uri(), m_uri);
+
+	http_client_config config;
+	http_client baseclient2(m_uri, config);
+	VERIFY_ARE_EQUAL(baseclient2.base_uri(), m_uri);
+}
 } // SUITE(client_construction)
 
 }}}}

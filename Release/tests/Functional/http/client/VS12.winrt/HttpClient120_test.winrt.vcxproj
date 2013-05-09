@@ -232,7 +232,8 @@
     <ClInclude Include="..\stdafx.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\authentication_tests.cpp" />
+    <ClCompile Include="..\http_client_fuzz_tests.cpp" />
+    <ClCompile Include="..\authentication_tests.cpp" />	
     <ClCompile Include="..\building_request_tests.cpp" />
     <ClCompile Include="..\client_construction.cpp" />
     <ClCompile Include="..\connections_and_errors.cpp" />

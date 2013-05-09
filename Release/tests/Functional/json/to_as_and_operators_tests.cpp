@@ -205,13 +205,33 @@ TEST(negative_is_tests)
     VERIFY_IS_FALSE(str.is_null());
 }
 
-TEST(negative_index_operator)
+TEST(negative_index_operator_boolean)
 {
     json::value v = json::value::boolean(true);
 
     VERIFY_THROWS(v[0], json::json_exception);
     VERIFY_THROWS(v[U("H")], json::json_exception);
     VERIFY_THROWS(v[U("A")], json::json_exception);
+}
+
+TEST(negative_get_field_object)
+{
+    json::value v;
+    
+    v[U("a")] = json::value::number(1);
+    VERIFY_ARE_EQUAL(v.get(U("a")).as_integer(), 1);
+    VERIFY_IS_TRUE(v.get(U("b")).is_null());
+    VERIFY_THROWS(v.get(0), json::json_exception);
+}
+
+TEST(negative_get_element_array)
+{
+    json::value v;
+    
+    v[0] = json::value::number(1);
+    VERIFY_ARE_EQUAL(v.get(0).as_integer(), 1);
+    VERIFY_IS_TRUE(v.get(1).is_null());
+    VERIFY_THROWS(v.get(U("a")), json::json_exception);
 }
 
 TEST(negative_as_tests)

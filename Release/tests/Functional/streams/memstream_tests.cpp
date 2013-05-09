@@ -1469,8 +1469,16 @@ TEST(charptr_buffer_ctor_3)
     VERIFY_ARE_EQUAL(result, "Hello 10 Again!");
 }
 
+TEST(validate_stream_mode)
+{
+	VERIFY_THROWS(concurrency::streams::container_buffer<std::vector<char>>(std::ios::in | std::ios::out), std::invalid_argument);
+	std::vector<char> vc;
+	VERIFY_THROWS(concurrency::streams::container_buffer<std::vector<char>>(vc, std::ios::in | std::ios::out), std::invalid_argument);
+}
+
 TEST(write_stream_test_1)
 { 
+
     char chars[128];
     memset(chars, 0, sizeof(chars));
 

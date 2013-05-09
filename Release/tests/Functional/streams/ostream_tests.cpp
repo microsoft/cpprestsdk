@@ -77,11 +77,11 @@ TEST(BasicTest1)
 {
     auto open = OPENSTR_W<uint8_t>(U("BasicTest1.txt"));
     auto basic_stream = open.get();
+    VERIFY_IS_TRUE(basic_stream.can_seek());
     auto a = basic_stream.print(10);
     auto b = basic_stream.print("-suffix");
     (a && b).wait();
     auto cls = basic_stream.close();
-
     cls.get();
     VERIFY_IS_TRUE(cls.is_done());
 }
@@ -257,6 +257,7 @@ TEST(extract_on_space)
     stream.close().wait();
 
     auto istream = OPENSTR_R<uint8_t>(U("SpaceWithNumber.txt")).get();
+    VERIFY_IS_TRUE(istream.can_seek());
     VERIFY_ARE_EQUAL(number1, istream.extract<int>().get());
     VERIFY_ARE_EQUAL(number2, istream.extract<long long>().get());
 }

@@ -38,7 +38,7 @@ using namespace utility;
 using namespace logging;
 using namespace pplx;
 
-std::shared_ptr< ::logging::_Log> s_default;
+std::shared_ptr<::logging::_Log> s_default;
 
 void log::post(log_level level, const utility::string_t &message)
 {
@@ -64,21 +64,21 @@ void log::set_default(_Inout_opt_ ::logging::_Log *log)
 {
     if ( log == nullptr )
         log = new logging::_details::SilentLog;
-    s_default = std::shared_ptr< ::logging::_Log>(log); 
+    s_default = std::shared_ptr<::logging::_Log>(log); 
 }
 
-void log::set_default(std::shared_ptr< ::logging::_Log> log)
+void log::set_default(std::shared_ptr<::logging::_Log> log)
 {
     if ( !log )
         log = std::make_shared<logging::_details::SilentLog>();
     s_default = log; 
 }
 
-std::shared_ptr< ::logging::_Log> log::get_default()
+std::shared_ptr<::logging::_Log> log::get_default()
 { 
     if ( !s_default )
     {
-        s_default = std::shared_ptr< ::logging::_Log>(new logging::_details::ConsoleLog(true, true));
+        s_default = std::shared_ptr<::logging::_Log>(new logging::_details::ConsoleLog(true, true));
     }
     return s_default; 
 }

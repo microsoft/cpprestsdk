@@ -152,6 +152,7 @@ TEST_FIXTURE(uri_address, extract_string_endian_uneven_bytes)
 		http_response response(status_codes::OK);
 		response.set_body("uneven1");
 		response.headers().set_content_type(U("text/plain; charset=utf-16be"));
+        response.headers().add(header_names::connection, U("close")); 
 		request.reply(response).wait(); 
 	});
 
@@ -185,8 +186,10 @@ TEST_FIXTURE(uri_address, extract_empty_string)
     {
         auto ResponseStreamBuf = streams::producer_consumer_buffer<uint8_t>();
         ResponseStreamBuf.close(std::ios_base::out).wait();
-
-        msg.reply(status_codes::OK, ResponseStreamBuf.create_istream(), U("text/plain")).wait();
+        http_response response(status_codes::OK);
+        response.set_body(ResponseStreamBuf.create_istream(), U("text/plain"));
+        response.headers().add(header_names::connection, U("close")); 
+        msg.reply(response).wait();
     });
 
     listener.open();
@@ -253,6 +256,20 @@ TEST_FIXTURE(uri_address, extract_json)
     rsp = send_request_response(scoped.server(), &client, U("application/json; charset=utf-16"), modified_data);
     VERIFY_ARE_EQUAL(data.to_string(), rsp.extract_json().get().to_string());
 #endif
+
+    // unofficial JSON MIME types
+    rsp = send_request_response(scoped.server(), &client, U("text/json"), to_utf8string(data.to_string()));
+    VERIFY_ARE_EQUAL(data.to_string(), rsp.extract_json().get().to_string());
+    rsp = send_request_response(scoped.server(), &client, U("text/x-json"), to_utf8string(data.to_string()));
+    VERIFY_ARE_EQUAL(data.to_string(), rsp.extract_json().get().to_string());
+    rsp = send_request_response(scoped.server(), &client, U("text/javascript"), to_utf8string(data.to_string()));
+    VERIFY_ARE_EQUAL(data.to_string(), rsp.extract_json().get().to_string());
+    rsp = send_request_response(scoped.server(), &client, U("text/x-javascript"), to_utf8string(data.to_string()));
+    VERIFY_ARE_EQUAL(data.to_string(), rsp.extract_json().get().to_string());
+    rsp = send_request_response(scoped.server(), &client, U("application/javascript"), to_utf8string(data.to_string()));
+    VERIFY_ARE_EQUAL(data.to_string(), rsp.extract_json().get().to_string());
+    rsp = send_request_response(scoped.server(), &client, U("application/x-javascript"), to_utf8string(data.to_string()));
+    VERIFY_ARE_EQUAL(data.to_string(), rsp.extract_json().get().to_string());
 }
 
 TEST_FIXTURE(uri_address, extract_json_incorrect)
