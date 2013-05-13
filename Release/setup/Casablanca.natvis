@@ -2,7 +2,7 @@
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010"> 
 
   <Type Name="web::http::uri"> 
-    <DisplayString>({m_uri})</DisplayString>
+    <DisplayString>{m_uri}</DisplayString>
   </Type>   
 
   <Type Name="web::http::client::web_proxy">
@@ -14,6 +14,8 @@
   <Type Name="web::http::http_request">
     <DisplayString>[{_m_impl._Ptr->m_method}]</DisplayString>
     <Expand>
+      <Item Name="method">_m_impl._Ptr->m_method</Item>
+      <Item Name="request uri">_m_impl._Ptr->m_uri</Item>
       <Item Name="headers">((*((web::http::details::http_msg_base*)(&amp;(*((web::http::details::_http_request*)((_m_impl)._Ptr)))))).m_headers).m_headers</Item>
     </Expand>
   </Type>
@@ -30,33 +32,33 @@
   <Type Name="web::json::value">
 
     <DisplayString Condition="(m_kind==0) &amp;&amp; ((*((web::json::details::_Number*)((m_value)._Myptr))).m_was_int)">
-      Number {(*((web::json::details::_Number*)((m_value)._Myptr))).m_intval}
+      {(*((web::json::details::_Number*)((m_value)._Myptr))).m_intval}
     </DisplayString>
     <DisplayString Condition="(m_kind==0) &amp;&amp; (!(*((web::json::details::_Number*)((m_value)._Myptr))).m_was_int)">
-      Number {(*((web::json::details::_Number*)((m_value)._Myptr))).m_value}
+      {(*((web::json::details::_Number*)((m_value)._Myptr))).m_value}
     </DisplayString>
 
     <DisplayString Condition="m_kind==1">
-      Boolean {(*((web::json::details::_Boolean*)(m_value._Myptr))).m_value}
+      {(*((web::json::details::_Boolean*)(m_value._Myptr))).m_value}
     </DisplayString>
 
     <DisplayString Condition="(m_kind==2) &amp;&amp; (((&amp;((*((web::json::details::_String*)(m_value._Myptr))).m_string))))->_Myptr==0x00000000">
-      String {((((&amp;((*((web::json::details::_String*)(m_value._Myptr))).m_wstring)))))->_Myptr}
+      {*((((&amp;((*((web::json::details::_String*)(m_value._Myptr))).m_wstring)))))->_Myptr}
     </DisplayString>
 
     <DisplayString Condition="(m_kind==2) &amp;&amp; (((&amp;((*((web::json::details::_String*)(m_value._Myptr))).m_wstring))))->_Myptr==0x00000000">
-      String {((((&amp;((*((web::json::details::_String*)(m_value._Myptr))).m_string)))))->_Myptr}
+      {*((((&amp;((*((web::json::details::_String*)(m_value._Myptr))).m_string)))))->_Myptr}
     </DisplayString>
 
     <DisplayString Condition="m_kind==3">
-      Object {(*((web::json::details::_Value*)(m_value._Myptr))).m_elements}
+      object {(*((web::json::details::_Value*)(m_value._Myptr))).m_elements}
     </DisplayString>
 
     <DisplayString Condition="m_kind==4">
-      Array {(*((web::json::details::_Value*)(m_value._Myptr))).m_elements}
+      array {(*((web::json::details::_Value*)(m_value._Myptr))).m_elements}
     </DisplayString>
 
-    <DisplayString Condition="m_kind==5">Null</DisplayString>
+    <DisplayString Condition="m_kind==5">null</DisplayString>
 
     <DisplayString Condition="m_kind==0xcccccccc">not initialized</DisplayString>
     <Expand>
