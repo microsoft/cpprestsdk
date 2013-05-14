@@ -1197,7 +1197,7 @@ void istream_extract_long_impl(streambuf<_CharType> buf)
 
 TEST(istream_extract_long)
 {
-    istream_extract_long_impl<char, long>(container_buffer<std::string>("123 -567 12000000000"));
+    istream_extract_long_impl<char, long>(container_buffer<std::string>("123 -567 120000000000000000000000000000000000000000000000"));
 #ifdef _MS_WINDOWS
     istream_extract_long_impl<wchar_t, long>(container_buffer<std::wstring>(L"123 -567 12000000000"));
 #endif
