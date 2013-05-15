@@ -216,8 +216,6 @@ namespace web { namespace http
                     auto instream = m_request.body();
 
                     _ASSERTE((bool)instream);
-                    _ASSERTE(instream.is_open());
-
                     return instream.streambuf();
                 }
 
@@ -226,7 +224,6 @@ namespace web { namespace http
                     auto outstream = m_response._get_impl()->outstream();
 
                     _ASSERTE((bool)outstream);
-                    _ASSERTE(outstream.is_open());
 
                     return outstream.streambuf();
                 }
@@ -515,13 +512,10 @@ namespace web { namespace http
 
                         return S_OK;
                     }
-                    catch (const http_exception &exc)
+                    catch(...)
                     {
-                        return (HRESULT)exc.error_code().value();
-                    }
-                    catch(const std::system_error &exc)
-                    {
-                        return (HRESULT)exc.code().value();
+                        m_request->m_exceptionPtr = std::current_exception();
+                        return (HRESULT)STG_E_CANTSAVE;
                     }
                 }
 
@@ -628,7 +622,11 @@ namespace web { namespace http
                     {
                         IXMLHTTPRequest2 * req = m_request->m_hRequest;
 
-                        m_request->complete_request(m_request->m_stream_bridge->total_bytes());
+                        if (m_request->m_exceptionPtr != nullptr)
+                            m_request->report_exception(m_request->m_exceptionPtr);
+                        else    
+                            m_request->complete_request(m_request->m_stream_bridge->total_bytes());
+
                         m_request = nullptr;
 
                         if ( req != nullptr ) req->Release();
@@ -1428,6 +1426,19 @@ namespace web { namespace http
 
             private:
 
+                static bool _check_streambuf(_In_ winhttp_request_context * winhttp_context, concurrency::streams::streambuf<uint8_t> rdbuf, const utility::char_t* msg) 
+                {
+                    if ( !rdbuf.is_open() )
+                    {
+                        auto eptr = rdbuf.exception();
+                        if ( !(eptr == nullptr) )
+                            winhttp_context->report_exception(eptr);
+                        else
+                            winhttp_context->report_error(msg);
+                    }
+                    return rdbuf.is_open();
+                }
+
                 void _start_request_send(_In_ winhttp_request_context * winhttp_context, size_t content_length)
                 {
                     if ( !winhttp_context->m_need_to_chunk && !winhttp_context->m_too_large )
@@ -1446,13 +1457,18 @@ namespace web { namespace http
                             winhttp_context->report_error(U("Error starting to send request"));
                         }
 
-                        winhttp_context->m_readbuf_pos = 0;
                         return;
                     }
 
                     // Capure the current read position of the stream.
 
-                    winhttp_context->m_readbuf_pos = winhttp_context->_get_readbuffer().seekoff(0, std::ios_base::cur, std::ios_base::in);
+                    auto rbuf = winhttp_context->_get_readbuffer();
+                    if ( !_check_streambuf(winhttp_context, rbuf, U("Input stream is not open")) )
+                    {
+                        return;
+                    }
+                    
+                    winhttp_context->m_readbuf_pos = rbuf.getpos(std::ios_base::in);
 
                     // If we find ourselves here, we either don't know how large the message
                     // body is, or it is larger than our threshold.
@@ -1479,6 +1495,10 @@ namespace web { namespace http
                     p_request_context->allocate_request_space(nullptr, chunk_size+http::details::chunked_encoding::additional_encoding_space);
 
                     auto rbuf = p_request_context->_get_readbuffer();
+                    if ( !_check_streambuf(p_request_context, rbuf, U("Input stream is not open")) )
+                    {
+                        return;
+                    }
 
                     rbuf.getn(&p_request_context->request_data.get()[http::details::chunked_encoding::data_offset], chunk_size).then(
                         [p_request_context, chunk_size](pplx::task<size_t> op)
@@ -1514,6 +1534,10 @@ namespace web { namespace http
                 static void _multiple_segment_write_data(_In_ winhttp_request_context * p_request_context)
                 {
                     auto rbuf = p_request_context->_get_readbuffer();
+                    if ( !_check_streambuf(p_request_context, rbuf, U("Input stream is not open")) )
+                    {
+                        return;
+                    }
 
                     msl::utilities::SafeInt<size_t> safeCount = p_request_context->m_remaining_to_write;
 
@@ -1567,8 +1591,7 @@ namespace web { namespace http
                         try { read = op.get(); } catch (...)
                         {
                             p_request_context->report_exception(std::current_exception());
-                            read = 0;
-                            p_request_context->m_remaining_to_write = 0;
+                            return;
                         }
 
                         _ASSERTE(read != static_cast<size_t>(-1));
@@ -1626,6 +1649,10 @@ namespace web { namespace http
                         if (rdpos != (std::char_traits<uint8_t>::pos_type)-1)
                         {
                             auto rbuf = p_request_context->_get_readbuffer();
+                            if ( !rbuf.is_open() )
+                            {
+                                can_resend = false;
+                            }
 
                             // Try to seek back to the saved read position
                             if ( rbuf.seekpos(rdpos, std::ios::ios_base::in) == rdpos )
@@ -1892,6 +1919,8 @@ namespace web { namespace http
                                     _ASSERTE(content_length > 0);
 
                                     concurrency::streams::streambuf<uint8_t> writebuf = p_request_context->_get_writebuffer();
+                                    if ( !_check_streambuf(p_request_context, writebuf, U("Output stream is not open")) )
+                                        break;
 
                                     p_request_context->allocate_reply_space(writebuf.alloc(content_length), content_length);
 
@@ -1915,6 +1944,9 @@ namespace web { namespace http
                                 if(num_bytes > 0)
                                 {
                                     auto writebuf = p_request_context->_get_writebuffer();
+                                    if ( !_check_streambuf(p_request_context, writebuf, U("Output stream is not open")) )
+                                        break;
+                                    
                                     p_request_context->allocate_reply_space(writebuf.alloc(num_bytes), num_bytes);
 
                                     // Read in body all at once.
@@ -1941,6 +1973,8 @@ namespace web { namespace http
                                 if(statusInfoLength > 0)
                                 {
                                     auto writebuf = p_request_context->_get_writebuffer();
+                                    if ( !_check_streambuf(p_request_context, writebuf, U("Output stream is not open")) )
+                                        break;
 
                                     auto after_sync = 
                                         [hRequestHandle, p_request_context]
@@ -1956,6 +1990,7 @@ namespace web { namespace http
                                         if( !WinHttpQueryDataAvailable(hRequestHandle, nullptr))
                                         {
                                             p_request_context->report_error(U("Error querying for http body chunk"));
+                                            return;
                                         }
                                     };
 
@@ -1989,6 +2024,8 @@ namespace web { namespace http
                                             }
 
                                             auto wbuf = p_request_context->_get_writebuffer();
+                                            if ( !_check_streambuf(p_request_context, wbuf, U("Output stream is not open")) )
+                                                return;
 
                                             wbuf.sync().then(after_sync);
                                         });

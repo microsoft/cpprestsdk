@@ -354,7 +354,7 @@ namespace Concurrency { namespace streams
         /// <summary>
         /// Retrieves the stream buffer exception_ptr if it has been set.
         /// </summary>
-        /// <returns>Pointer to the exception, if it has been set; otherwise, <c>nullptr<c> will be returned</returns>
+        /// <returns>Pointer to the exception, if it has been set; otherwise, <c>nullptr</c> will be returned</returns>
         virtual std::exception_ptr exception() const = 0;
     };
 
@@ -1138,7 +1138,7 @@ namespace Concurrency { namespace streams
         /// <summary>
         /// Retrieves the stream buffer exception_ptr if it has been set.
         /// </summary>
-        /// <returns>Pointer to the exception, if it has been set; otherwise, <c>nullptr<c> will be returned</returns>
+        /// <returns>Pointer to the exception, if it has been set; otherwise, <c>nullptr</c> will be returned</returns>
         virtual std::exception_ptr exception() const
         {
             return get_base()->exception();

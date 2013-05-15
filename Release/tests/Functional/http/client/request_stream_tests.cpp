@@ -109,15 +109,16 @@ TEST_FIXTURE(uri_address, ixhr2_transfer_encoding)
 
 TEST_FIXTURE(uri_address, set_body_stream_1)
 {
-    utility::string_t fname = U("request_stream.txt");
+    utility::string_t fname = U("set_body_stream_1.txt");
     fill_file(fname);
 
     test_http_server::scoped_server scoped(m_uri);
     test_http_server * p_server = scoped.server();
     http_client client(m_uri);
 
+    auto stream = OPEN_R<uint8_t>(fname).get();
     http_request msg(methods::POST);
-    msg.set_body(OPEN_R<uint8_t>(fname).get());
+    msg.set_body(stream);
 #if defined(__cplusplus_winrt)
 	msg.headers().set_content_length(26);
 #endif
@@ -130,11 +131,12 @@ TEST_FIXTURE(uri_address, set_body_stream_1)
         p_request->reply(200);
     });
     http_asserts::assert_response_equals(client.request(msg).get(), status_codes::OK);
+    stream.close().wait();
 }
 
 TEST_FIXTURE(uri_address, set_body_stream_2)
 {
-    utility::string_t fname = U("request_stream.txt");
+    utility::string_t fname = U("set_body_stream_2.txt");
     fill_file(fname);
 
 	http_client_config config;
@@ -144,8 +146,9 @@ TEST_FIXTURE(uri_address, set_body_stream_2)
     test_http_server * p_server = scoped.server();
     http_client client(m_uri, config);
 
+    auto stream = OPEN_R<uint8_t>(fname).get();
     http_request msg(methods::POST);
-    msg.set_body(OPEN_R<uint8_t>(fname).get());
+    msg.set_body(stream);
 #if defined(__cplusplus_winrt)
 	msg.headers().set_content_length(26);
 #endif
@@ -158,12 +161,12 @@ TEST_FIXTURE(uri_address, set_body_stream_2)
         p_request->reply(200);
     });
     http_asserts::assert_response_equals(client.request(msg).get(), status_codes::OK);
+    stream.close().wait();
 }
 
 // Implementation for request with stream test case.
-static void stream_request_impl(const uri &address, bool withContentLength, size_t chunksize)
+static void stream_request_impl(const uri &address, bool withContentLength, size_t chunksize, utility::string_t fname)
 {
-    utility::string_t fname = U("request_stream.txt");
     fill_file(fname);
 
 	http_client_config config;
@@ -182,31 +185,35 @@ static void stream_request_impl(const uri &address, bool withContentLength, size
         p_request->reply(200);
     });
 
+    auto stream = OPEN_R<uint8_t>(fname).get();
+
     if(withContentLength)
     {
-        http_asserts::assert_response_equals(client.request(methods::POST, U(""), OPEN_R<uint8_t>(fname).get(), 26, U("text/plain")).get(), status_codes::OK);
+        http_asserts::assert_response_equals(client.request(methods::POST, U(""), stream, 26, U("text/plain")).get(), status_codes::OK);
     }
     else
     {
-        http_asserts::assert_response_equals(client.request(methods::POST, U(""), OPEN_R<uint8_t>(fname).get(), U("text/plain")).get(), status_codes::OK);
+        http_asserts::assert_response_equals(client.request(methods::POST, U(""), stream, U("text/plain")).get(), status_codes::OK);
     }
+
+    stream.close().wait();
 }
 
 #if !defined(__cplusplus_winrt)
 TEST_FIXTURE(uri_address, without_content_length_1)
 {
-    stream_request_impl(m_uri, false, 64*1024);
+    stream_request_impl(m_uri, false, 64*1024, U("without_content_length_1.txt"));
 }
 
 TEST_FIXTURE(uri_address, without_content_length_2)
 {
-    stream_request_impl(m_uri, false, 1024);
+    stream_request_impl(m_uri, false, 1024, U("without_content_length_2.txt"));
 }
 #endif
 
 TEST_FIXTURE(uri_address, with_content_length_1)
 {
-    stream_request_impl(m_uri, true, 64*1024);
+    stream_request_impl(m_uri, true, 64*1024, U("with_content_length_1.txt"));
 }
 
 TEST_FIXTURE(uri_address, producer_consumer_buffer_with_content_length)
@@ -304,6 +311,25 @@ public:
     {
     }
 };
+
+TEST_FIXTURE(uri_address, set_body_stream_exception)
+{
+    utility::string_t fname = U("set_body_stream_exception.txt");
+    fill_file(fname);
+
+    test_http_server::scoped_server scoped(m_uri);
+    scoped.server();
+    http_client client(m_uri);
+
+    auto stream = OPEN_R<uint8_t>(fname).get();
+    http_request msg(methods::POST);
+    msg.set_body(stream);
+	msg.headers().set_content_length(26);
+
+    stream.close(std::ios::in, std::make_exception_ptr(test_exception()));
+
+    VERIFY_THROWS(client.request(msg).get(), test_exception);
+}
 
 #if !defined(__cplusplus_winrt)
 

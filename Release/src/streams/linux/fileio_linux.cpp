@@ -455,7 +455,6 @@ public:
         m_func(result);
         delete this;
     }
-    //TODO: [HH] this is a merge hack
     virtual void on_error(const std::exception &e)
     {
         auto exptr = std::make_exception_ptr(e);

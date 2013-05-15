@@ -175,6 +175,29 @@ TEST_FIXTURE(uri_address, response_stream_file_stream)
     }
 }
 
+TEST_FIXTURE(uri_address, response_stream_file_stream_close_early)
+{
+    test_http_server::scoped_server scoped(m_uri);
+    test_http_server * p_server = scoped.server();
+    http_client client(m_uri);
+
+    p_server->next_request().then([&](test_request *p_request)
+    {
+        std::map<utility::string_t, utility::string_t> headers;
+        headers[U("Content-Type")] = U("text/plain");
+        p_request->reply(200, U(""), headers, "A world without string is chaos.");
+    });
+
+    auto fstream = OPENSTR_W<uint8_t>(U("response_stream_file_stream_close_early.txt")).get();
+
+    http_request msg(methods::GET);
+    msg.set_response_stream(fstream);
+    fstream.close(std::make_exception_ptr(std::exception()));
+
+    auto response = client.request(msg).get();
+    VERIFY_THROWS(response.content_ready().get(), std::exception);
+}
+
 #if !defined(__cplusplus_winrt)
 TEST_FIXTURE(uri_address, content_ready)
 {
