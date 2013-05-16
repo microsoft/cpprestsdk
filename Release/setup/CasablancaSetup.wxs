@@ -134,7 +134,7 @@
 
         <Component Id="RegistryEntries" Guid="$(var.GUID040)">
           <RegistryKey Root="HKLM"
-                       Key="Software\Microsoft\Casablanca\$(var.SDK_RegKeyName)\SDK">
+                       Key="Software\Microsoft\Casablanca\OpenSourceRelease\$(var.SDK_RegKeyName)\SDK">
             <RegistryValue Type="string" Name="InstallDir" Value="[APPLICATIONFOLDER]SDK" KeyPath="yes"/>
           </RegistryKey>
         </Component>

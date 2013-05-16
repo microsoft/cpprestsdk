@@ -1,6 +1,6 @@
 @setlocal
 @SET CASABLANCA_SDK=
-@for /F "tokens=1,2*" %%i in ('reg query "HKEY_LOCAL_MACHINE\Software\Microsoft\Casablanca\110\SDK" /v "InstallDir"') DO (
+@for /F "tokens=1,2*" %%i in ('reg query "HKEY_LOCAL_MACHINE\Software\Microsoft\Casablanca\OpenSourceRelease\110\SDK" /v "InstallDir"') DO (
     if "%%i"=="InstallDir" (
         SET "CASABLANCA_SDK=%%k"
     )

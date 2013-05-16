@@ -80,14 +80,14 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;DEBUG;_CONSOLE</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$([MSBuild]::GetRegistryValue(`HKEY_LOCAL_MACHINE\Software\Microsoft\Casablanca\100\SDK`, `InstallDir`))\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$([MSBuild]::GetRegistryValue(`HKEY_LOCAL_MACHINE\Software\Microsoft\Casablanca\OpenSourceRelease\100\SDK`, `InstallDir`))\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>Async</ExceptionHandling>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>casablanca100.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$([MSBuild]::GetRegistryValue(`HKEY_LOCAL_MACHINE\Software\Microsoft\Casablanca\100\SDK`, `InstallDir`))\lib\x86\Debug\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$([MSBuild]::GetRegistryValue(`HKEY_LOCAL_MACHINE\Software\Microsoft\Casablanca\OpenSourceRelease\100\SDK`, `InstallDir`))\lib\x86\Debug\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>"$(ProjectDir)\copydlls.bat" x86\Debug "$(TargetDir)"</Command>
@@ -98,7 +98,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;DEBUG;_CONSOLE</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$([MSBuild]::GetRegistryValue(`HKEY_LOCAL_MACHINE\Software\Microsoft\Casablanca\100\SDK`, `InstallDir`))\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$([MSBuild]::GetRegistryValue(`HKEY_LOCAL_MACHINE\Software\Microsoft\Casablanca\OpenSourceRelease\100\SDK`, `InstallDir`))\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>Async</ExceptionHandling>
       <AdditionalOptions>-Zm130 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -106,7 +106,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>casablanca100.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$([MSBuild]::GetRegistryValue(`HKEY_LOCAL_MACHINE\Software\Microsoft\Casablanca\100\SDK`, `InstallDir`))\lib\x64\Debug\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$([MSBuild]::GetRegistryValue(`HKEY_LOCAL_MACHINE\Software\Microsoft\Casablanca\OpenSourceRelease\100\SDK`, `InstallDir`))\lib\x64\Debug\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>"$(ProjectDir)\copydlls.bat" x64\Debug "$(TargetDir)"</Command>
@@ -119,7 +119,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$([MSBuild]::GetRegistryValue(`HKEY_LOCAL_MACHINE\Software\Microsoft\Casablanca\100\SDK`, `InstallDir`))\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$([MSBuild]::GetRegistryValue(`HKEY_LOCAL_MACHINE\Software\Microsoft\Casablanca\OpenSourceRelease\100\SDK`, `InstallDir`))\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>Async</ExceptionHandling>
     </ClCompile>
     <Link>
@@ -128,7 +128,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>casablanca100.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$([MSBuild]::GetRegistryValue(`HKEY_LOCAL_MACHINE\Software\Microsoft\Casablanca\100\SDK`, `InstallDir`))\lib\x86\Release\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$([MSBuild]::GetRegistryValue(`HKEY_LOCAL_MACHINE\Software\Microsoft\Casablanca\OpenSourceRelease\100\SDK`, `InstallDir`))\lib\x86\Release\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>"$(ProjectDir)\copydlls.bat" x86\Release "$(TargetDir)"</Command>
@@ -141,7 +141,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$([MSBuild]::GetRegistryValue(`HKEY_LOCAL_MACHINE\Software\Microsoft\Casablanca\100\SDK`, `InstallDir`))\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$([MSBuild]::GetRegistryValue(`HKEY_LOCAL_MACHINE\Software\Microsoft\Casablanca\OpenSourceRelease\100\SDK`, `InstallDir`))\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>Async</ExceptionHandling>
       <AdditionalOptions>-Zm130 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -151,7 +151,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>casablanca100.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$([MSBuild]::GetRegistryValue(`HKEY_LOCAL_MACHINE\Software\Microsoft\Casablanca\100\SDK`, `InstallDir`))\lib\x64\Release\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$([MSBuild]::GetRegistryValue(`HKEY_LOCAL_MACHINE\Software\Microsoft\Casablanca\OpenSourceRelease\100\SDK`, `InstallDir`))\lib\x64\Release\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>"$(ProjectDir)\copydlls.bat" x64\Release "$(TargetDir)"</Command>

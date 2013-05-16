@@ -5,10 +5,10 @@
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>$([MSBuild]::GetRegistryValue(`HKEY_LOCAL_MACHINE\Software\Microsoft\Casablanca\110\SDK`, `InstallDir`))\INCLUDE;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$([MSBuild]::GetRegistryValue(`HKEY_LOCAL_MACHINE\Software\Microsoft\Casablanca\OpenSourceRelease\110\SDK`, `InstallDir`))\INCLUDE;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(AdditionalLibraryDirectories);$([MSBuild]::GetRegistryValue(`HKEY_LOCAL_MACHINE\Software\Microsoft\Casablanca\110\SDK`, `InstallDir`))\LIB\x86\$(Configuration)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(AdditionalLibraryDirectories);$([MSBuild]::GetRegistryValue(`HKEY_LOCAL_MACHINE\Software\Microsoft\Casablanca\OpenSourceRelease\110\SDK`, `InstallDir`))\LIB\x86\$(Configuration)</AdditionalLibraryDirectories>
       <AdditionalDependencies>casablanca110.winrt.lib;$(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>

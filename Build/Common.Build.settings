@@ -34,7 +34,7 @@
 
   <!-- paths can be overridden by configuration -->
   <PropertyGroup>
-    <OutputPath Condition="'$(OutputPath)' == ''">$(BuildRoot)\Binaries\$(Platform)\$(Configuration)\</OutputPath>
+    <OutputPath>$(BuildRoot)\Binaries\$(Platform)\$(Configuration)\</OutputPath>
     <!-- $(Configuration) below is added to place Debug/Release Casablanca bits into different folders when compiled in razzle.
          It does not affect NativeCloud build, because environment.casablanca.settings overrides OutDir unconditionally -->
     <OutDir>$(OutputPath)$(Configuration)</OutDir>
