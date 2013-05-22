@@ -10,6 +10,10 @@
     <ProjectFile Include="SearchFile\dirs.proj"/>
   </ItemGroup>
 
+  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.2|110'">
+    <ProjectFile Include="WindowsLiveAuth\dirs.proj"/>
+  </ItemGroup>
+
   <ItemGroup Condition="'$(DevToolsVersion)'=='120'">
     <ProjectFile Include="SearchFile\dirs.proj"/>
   </ItemGroup>
