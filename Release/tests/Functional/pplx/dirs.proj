@@ -6,7 +6,7 @@
       <ProjectFile Include="pplx_test\dirs.proj"/>
   </ItemGroup>
 
-  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.2|110'">
+  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.2|110' or '$(OsVersion)|$(DevToolsVersion)'=='6.3|110'">
       <ProjectFile Include="pplx_win8_tests\pplx_win8_tests.vcxproj" />
   </ItemGroup>
 

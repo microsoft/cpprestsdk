@@ -26,7 +26,7 @@
 #include "stdafx.h"
 
 #ifndef __cplusplus_winrt
-#include "http_listener.h"
+#include "cpprest/http_listener.h"
 #endif
 
 using namespace web; 
@@ -138,7 +138,7 @@ TEST_FIXTURE(uri_address, request_timeout, "Ignore:Linux", "TFS#612139")
 // This test still sometimes segfaults on Linux, but I'm re-enabling it [AL]
 TEST_FIXTURE(uri_address, content_ready_timeout)
 {
-    auto listener = ::http::listener::http_listener::create(m_uri);
+    auto listener = ::http::experimental::listener::http_listener::create(m_uri);
     VERIFY_ARE_EQUAL(0, listener.open());
 
     streams::producer_consumer_buffer<uint8_t> buf;
@@ -168,7 +168,7 @@ TEST_FIXTURE(uri_address, content_ready_timeout)
 
 TEST_FIXTURE(uri_address, stream_timeout)
 {
-    auto listener = ::http::listener::http_listener::create(m_uri);
+    auto listener = ::http::experimental::listener::http_listener::create(m_uri);
     VERIFY_ARE_EQUAL(0, listener.open());
 
     streams::producer_consumer_buffer<uint8_t> buf;

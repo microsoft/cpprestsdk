@@ -25,7 +25,7 @@
 
 #include <vector>
 #include <map>
-#include "uri.h"
+#include "cpprest/uri.h"
 #include "http_test_utilities_public.h"
 
 namespace tests { namespace functional { namespace http { namespace utilities {

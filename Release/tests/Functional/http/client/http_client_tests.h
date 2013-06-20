@@ -25,8 +25,7 @@
 
 #pragma once
 
-#include <http_client.h>
-
+#include "cpprest/http_client.h"
 #include "unittestpp.h"
 #include "http_test_utilities.h"
 
@@ -55,7 +54,7 @@ void test_connection(tests::functional::http::utilities::test_http_server *p_ser
             __expression;                                                               \
             VERIFY_IS_TRUE(false, "Expected http_exception not thrown");                \
         }                                                                               \
-        catch (const web::http::http_exception & _exc)	                                \
+        catch (const web::http::http_exception& _exc)                                   \
         {                                                                               \
             VERIFY_IS_TRUE(std::string(_exc.what()).size() > 0);                        \
             /* The reason we can't directly compare with the given std::errc code is because*/      \

@@ -57,7 +57,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;HTTPTESTS_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);..\..\utilities\include;$(TestListenerPath)\include</AdditionalIncludeDirectories>
-	  <AdditionalOptions>-Zm200 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-Zm200 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -71,7 +71,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;HTTPTESTS_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);..\..\utilities\include;$(TestListenerPath)\include</AdditionalIncludeDirectories>
-	  <AdditionalOptions>-Zm200 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-Zm200 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -87,7 +87,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;HTTPTESTS_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);..\..\utilities\include;$(TestListenerPath)\include</AdditionalIncludeDirectories>
-	  <AdditionalOptions>-Zm200 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-Zm200 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -105,7 +105,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;HTTPTESTS_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);..\..\utilities\include;$(TestListenerPath)\include</AdditionalIncludeDirectories>
-	  <AdditionalOptions>-Zm200 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-Zm200 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -125,11 +125,8 @@
     <ProjectReference Include="$(CasablancaSrcDir)\vs10\casablanca100.vcxproj">
       <Project>{4A8DDC8B-BF1C-4F5F-B3A4-DD93199F117B}</Project>
     </ProjectReference>
-	<ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs10\UnitTestpp100.vcxproj">
+    <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs10\UnitTestpp100.vcxproj">
       <Project>{b149500c-ffff-463a-8c29-b4ff9b3fd6f9}</Project>
-    </ProjectReference>
-	<ProjectReference Include="$(TestListenerPath)\vs10\testlistener100.vcxproj">
-		<Project>{986d9cd2-26d7-4db0-a1b4-a9734fd9c95d}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
@@ -147,6 +144,7 @@
     <ClCompile Include="..\outside_tests.cpp" />
     <ClCompile Include="..\multiple_requests.cpp" />
     <ClCompile Include="..\pipeline_stage_tests.cpp" />
+    <ClCompile Include="..\progress_handler_tests.cpp" />
     <ClCompile Include="..\proxy_tests.cpp" />
     <ClCompile Include="..\request_helper_tests.cpp" />
     <ClCompile Include="..\request_stream_tests.cpp" />

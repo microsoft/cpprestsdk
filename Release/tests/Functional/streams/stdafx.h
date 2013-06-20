@@ -35,16 +35,16 @@
 #include <ppltasks.h>
 namespace pplx = Concurrency;
 #else 
-#include "pplxtasks.h"
+#include "pplx/pplxtasks.h"
 #endif
 
-#include "asyncrt_utils.h"
-#include "producerconsumerstream.h"
-#include "rawptrstream.h"
-#include "containerstream.h"
-#include "interopstream.h"
-#include "streams.h"
-#include "filestream.h"
+#include "cpprest/asyncrt_utils.h"
+#include "cpprest/producerconsumerstream.h"
+#include "cpprest/rawptrstream.h"
+#include "cpprest/containerstream.h"
+#include "cpprest/interopstream.h"
+#include "cpprest/streams.h"
+#include "cpprest/filestream.h"
 #include "os_utilities.h"
 
 #include "unittestpp.h"

@@ -22,7 +22,7 @@
 ****/
 #define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
 #define NOMINMAX
-#include "http_client.h"
+#include "cpprest/http_client.h"
 
 // Include ATL headers after casablanca headers
 #define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers

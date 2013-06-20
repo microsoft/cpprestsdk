@@ -147,8 +147,8 @@ TEST_FIXTURE(uri_address, body_types)
 
 TEST(set_body_string_with_charset)
 {
-	http_request request;
-	VERIFY_THROWS(request.set_body(U("body_data"), U("text/plain;charset=utf-16")), std::invalid_argument);
+    http_request request;
+    VERIFY_THROWS(request.set_body(U("body_data"), U("text/plain;charset=utf-16")), std::invalid_argument);
 }
 
 TEST_FIXTURE(uri_address, empty_bodies)

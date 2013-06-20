@@ -12,10 +12,10 @@
     <ClCompile Include="$(CasablancaSrcDir)\utilities\asyncrt_utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="$(CasablancaSrcDir)\utilities\dllmain.cpp">
+    <ClCompile Include="$(CasablancaSrcDir)\utilities\base64.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="$(CasablancaSrcDir)\http\client\http_client.cpp">
+    <ClCompile Include="$(CasablancaSrcDir)\utilities\dllmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(CasablancaSrcDir)\http\common\http_helpers.cpp">
@@ -51,79 +51,81 @@
     <ClCompile Include="$(CasablancaSrcDir)\streams\windows\fileio_winrt.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="$(CasablancaSrcDir)\pplx\windows\pplxwin.cpp" />
+    <ClCompile Include="$(CasablancaSrcDir)\pplx\windows\pplxwin.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CasablancaSrcDir)\http\client\http_win8.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CasablancaSrcDir)\http\listener\http_msg_listen.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="$(CasablancaIncludeDir)\streams.h">
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\streams.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="$(CasablancaIncludeDir)\astreambuf.h">
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\astreambuf.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="$(CasablancaIncludeDir)\asyncrt_utils.h">
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\asyncrt_utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="$(CasablancaIncludeDir)\base_uri.h">
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\base_uri.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="$(CasablancaIncludeDir)\cancellation_token.h">
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\producerconsumerstream.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="$(CasablancaIncludeDir)\producerconsumerstream.h">
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\filestream.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="$(CasablancaIncludeDir)\globals.h">
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\globals.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="$(CasablancaIncludeDir)\http_client.h">
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\http_client.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="$(CasablancaIncludeDir)\http_helpers.h">
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\http_helpers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="$(CasablancaIncludeDir)\http_msg.h">
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\http_msg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="$(CasablancaIncludeDir)\json.h">
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\json.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="$(CasablancaIncludeDir)\pplx.h">
+    <ClInclude Include="$(CasablancaSrcDir)\pch\stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="$(CasablancaIncludeDir)\pplxdefs.h">
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\interopstream.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="$(CasablancaIncludeDir)\pplxtasks.h">
+    <ClInclude Include="$(CasablancaSrcDir)\cpprest\targetver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="$(CasablancaSrcDir)\stdafx.h">
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\uri.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="$(CasablancaIncludeDir)\interopstream.h">
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\uri_builder.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="$(CasablancaSrcDir)\targetver.h">
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\fileio.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="$(CasablancaIncludeDir)\uri.h">
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\xxpublic.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="$(CasablancaIncludeDir)\uri_builder.h">
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\rawptrstream.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="$(CasablancaIncludeDir)\fileio.h">
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\containerstream.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="$(CasablancaIncludeDir)\xxpublic.h">
+    <ClInclude Include="$(CasablancaSrcDir)\http\client\http_client_impl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="$(CasablancaIncludeDir)\pplxatomics.h" />
-    <ClInclude Include="$(CasablancaIncludeDir)\pplxwin.h" />
-    <ClInclude Include="$(CasablancaIncludeDir)\rawptrstream.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="$(CasablancaIncludeDir)\containerstream.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\http_client.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\globals.h" />
   </ItemGroup>
 </Project>

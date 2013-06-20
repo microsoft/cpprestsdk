@@ -27,11 +27,11 @@
 #pragma once
 
 #include <collection.h>
-#include <pplxtasks.h>
-#include <basic_types.h>
-#include <http_client.h>
-#include <streams.h>
-#include <filestream.h>
+#include "pplx/pplxtasks.h"
+#include "cpprest/basic_types.h"
+#include "cpprest/http_client.h"
+#include "cpprest/streams.h"
+#include "cpprest/filestream.h"
 
 namespace web { namespace live {
 

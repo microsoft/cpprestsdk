@@ -20,6 +20,8 @@
 *
 * Parallel Patterns Library implementation (common code across platforms)
 *
+* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
+*
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 
@@ -29,7 +31,7 @@
 #error This file must not be compiled for Visual Studio 12 or later
 #endif
 
-#include "pplx.h"
+#include "pplx/pplx.h"
 
 // Disable false alarm code analyze warning 
 #pragma warning (disable : 26165 26110)

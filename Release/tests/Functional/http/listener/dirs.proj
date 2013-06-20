@@ -1,0 +1,19 @@
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Common.Build.settings" />
+  
+  <ItemGroup Condition="'$(DevToolsVersion)'=='100'">
+      <ProjectFile Include="VS10\HttpListener100_test.vcxproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(DevToolsVersion)'=='110'">
+      <ProjectFile Include="VS11\HttpListener110_test.vcxproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(DevToolsVersion)'=='120'">
+      <ProjectFile Include="VS12\HttpListener120_test.vcxproj" />
+  </ItemGroup>
+
+  <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
+
+</Project>

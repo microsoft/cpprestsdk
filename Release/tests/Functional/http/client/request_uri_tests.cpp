@@ -136,7 +136,7 @@ TEST_FIXTURE(uri_address, uri_encoding)
 TEST_FIXTURE(uri_address, append_query_fragment)
 {
     // Try with query.
-	const utility::string_t base_uri_with_query = web::http::uri_builder(m_uri).append(U("/path1?key1=value1")).to_string();
+    const utility::string_t base_uri_with_query = web::http::uri_builder(m_uri).append(U("/path1?key1=value1")).to_string();
     {
         test_http_server::scoped_server scoped(m_uri);
         test_http_server * p_server = scoped.server();

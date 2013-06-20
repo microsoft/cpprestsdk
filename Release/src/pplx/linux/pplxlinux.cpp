@@ -20,12 +20,14 @@
 *
 * Parallel Patterns Library - Linux version
 *
+* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
+*
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 
 #include "stdafx.h"
-#include "pplx.h"
-#include <threadpool.h>
+#include "pplx/pplx.h"
+#include "pplx/threadpool.h"
 #include "sys/syscall.h"
 
 #ifdef _MS_WINDOWS

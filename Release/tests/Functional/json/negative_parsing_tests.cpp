@@ -74,8 +74,8 @@ json::value parse_help(utility::string_t str)
 
 TEST(objects)
 {
-	VERIFY_THROWS(json::value::parse(U("}")), json::json_exception);
-	VERIFY_THROWS(parse_help(U("{")), json::json_exception);
+    VERIFY_THROWS(json::value::parse(U("}")), json::json_exception);
+    VERIFY_THROWS(parse_help(U("{")), json::json_exception);
     VERIFY_THROWS(parse_help(U("{ 1, 10 }")), json::json_exception);
     VERIFY_THROWS(parse_help(U("{ : }")), json::json_exception);
     VERIFY_THROWS(parse_help(U("{ \"}")), json::json_exception);
@@ -92,7 +92,7 @@ TEST(objects)
 
 TEST(arrays)
 {
-	VERIFY_THROWS(json::value::parse(U("]")), json::json_exception);
+    VERIFY_THROWS(json::value::parse(U("]")), json::json_exception);
     VERIFY_THROWS(json::value::parse(U("[")), json::json_exception);
     VERIFY_THROWS(json::value::parse(U("[ 1")), json::json_exception);
     VERIFY_THROWS(json::value::parse(U("[ 1,")), json::json_exception);
@@ -136,60 +136,53 @@ TEST(boundary_chars)
 
 TEST(stream_left_over_chars)
 {
-	std::stringbuf buf;
-	buf.sputn("[false]false", 12);
-	std::istream stream(&buf);
+    std::stringbuf buf;
+    buf.sputn("[false]false", 12);
+    std::istream stream(&buf);
 
-	// TFS 563372
+    // TFS 563372
     //VERIFY_THROWS_JSON_JSON(json::value(stream));
-	try
-	{
-		json::value v = json::value::parse(stream);
-		CHECK(false);
-	} catch(std::exception &)
-	{
-		// expected
-	}
+    try
+    {
+        json::value v = json::value::parse(stream);
+        CHECK(false);
+    } catch(std::exception &)
+    {
+        // expected
+    }
 }
 
 // Test using Windows only API.
 #ifdef _MS_WINDOWS
 TEST(wstream_left_over_chars)
 {
-	std::wstringbuf buf;
-	buf.sputn(L"[false]false", 12);
-	std::wistream stream(&buf);
+    std::wstringbuf buf;
+    buf.sputn(L"[false]false", 12);
+    std::wistream stream(&buf);
 
-	// TFS 563372
+    // TFS 563372
     //VERIFY_THROWS(json::value(stream), json::json_exception);
-	try
-	{
-		json::value v = json::value::parse(stream);
-		CHECK(false);
-	} catch(std::exception &)
-	{
-		// expected
-	}
+    try
+    {
+        json::value v = json::value::parse(stream);
+        CHECK(false);
+    } catch(std::exception &)
+    {
+        // expected
+    }
 }
 #endif
 
-// TODO: re-enable some of these for Linux, TFS#535122.
-#ifdef _MS_WINDOWS
-
 void garbage_impl(wchar_t ch)
 {
-    utility::string_t ss(L"{\"a\" : 10, \"b\":");
+    utility::string_t ss(U("{\"a\" : 10, \"b\":"));
 
-    LARGE_INTEGER li;
-    QueryPerformanceCounter(&li);
-
-    std::mt19937 eng(li.LowPart);
+    std::random_device rd;
+    std::mt19937 eng(rd());
     std::uniform_int_distribution<unsigned int> dist(0, ch);
 
-    for (int i = 25; i < 2550; i++)
-    {
-        ss.push_back(static_cast<wchar_t>(dist(eng)));
-    }
+    for (int i = 0; i < 2500; i++)
+        ss.push_back(static_cast<char_t>(dist(eng)));
 
     VERIFY_THROWS(json::value::parse(ss.c_str()), json::json_exception);
 }
@@ -208,8 +201,6 @@ TEST(garbage_3)
 {
     garbage_impl(0xFFFF);
 }
-
-#endif
 
 }
 

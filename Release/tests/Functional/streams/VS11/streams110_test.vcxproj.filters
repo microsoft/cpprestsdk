@@ -19,6 +19,7 @@
     <ClCompile Include="..\stdstream_tests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\fuzz_tests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header Files">

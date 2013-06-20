@@ -22,9 +22,9 @@
 ****/
 #include "stdafx.h"
 
-#include "rawptrstream.h"
-#include "filestream.h"
-#include "producerconsumerstream.h"
+#include "cpprest/rawptrstream.h"
+#include "cpprest/filestream.h"
+#include "cpprest/producerconsumerstream.h"
 
 #if defined(__cplusplus_winrt)
 using namespace Windows::Storage;
@@ -299,84 +299,84 @@ TEST(sync_on_async_extract_2)
 
 TEST(sync_on_async_prodcons)
 {
-	Concurrency::streams::producer_consumer_buffer<uint8_t> pcbuf;
+    Concurrency::streams::producer_consumer_buffer<uint8_t> pcbuf;
 
-	auto ostream = pcbuf.create_ostream();
-	auto istream = pcbuf.create_istream();
+    auto ostream = pcbuf.create_ostream();
+    auto istream = pcbuf.create_istream();
 
-	const std::streamsize iterations = 100;
+    const std::streamsize iterations = 100;
 
-	const std::string the_alphabet("abcdefghijklmnopqrstuvwxyz");
+    const std::string the_alphabet("abcdefghijklmnopqrstuvwxyz");
 
-	auto writer = pplx::create_task(
-		[ostream,iterations,the_alphabet]()
-		{ 
-			auto os = ostream;
-			for (std::streamsize i = 0; i < iterations; i++)
-			{
-				os.print(the_alphabet).wait();
-				os.flush().wait();
-			}
-			os.close();
-		});
+    auto writer = pplx::create_task(
+        [ostream,iterations,the_alphabet]()
+        { 
+            auto os = ostream;
+            for (std::streamsize i = 0; i < iterations; i++)
+            {
+                os.print(the_alphabet).wait();
+                os.flush().wait();
+            }
+            os.close();
+        });
 
-	Concurrency::streams::async_istream<char> ss(istream.streambuf());
+    Concurrency::streams::async_istream<char> ss(istream.streambuf());
 
-	char chars[1024];
-	std::streamsize count = 0;
+    char chars[1024];
+    std::streamsize count = 0;
 
-	while(!ss.eof())
-	{
-		memset(chars, 0, sizeof(chars));
-		ss.read(chars, sizeof(chars)-1);
-		count += strlen(chars);
-	}
+    while(!ss.eof())
+    {
+        memset(chars, 0, sizeof(chars));
+        ss.read(chars, sizeof(chars)-1);
+        count += strlen(chars);
+    }
 
-	VERIFY_ARE_EQUAL(the_alphabet.size()*iterations, count);
+    VERIFY_ARE_EQUAL(the_alphabet.size()*iterations, count);
 
-	writer.wait();
+    writer.wait();
 }
 
 TEST(sync_on_async_tellg)
 {
-	Concurrency::streams::producer_consumer_buffer<uint8_t> pcbuf;
+    Concurrency::streams::producer_consumer_buffer<uint8_t> pcbuf;
 
-	auto ostream = pcbuf.create_ostream();
-	auto istream = pcbuf.create_istream();
+    auto ostream = pcbuf.create_ostream();
+    auto istream = pcbuf.create_istream();
 
-	const std::streamsize iterations = 100;
+    const std::streamsize iterations = 100;
 
-	const std::string the_alphabet("abcdefghijklmnopqrstuvwxyz");
+    const std::string the_alphabet("abcdefghijklmnopqrstuvwxyz");
 
-	auto writer = pplx::create_task(
-		[ostream,iterations,the_alphabet]()
-		{ 
-			auto os = ostream;
-			for (std::streamsize i = 0; i < iterations; i++)
-			{
-				os.print(the_alphabet).wait();
-				os.flush().wait();
-				VERIFY_ARE_EQUAL((i+1)*the_alphabet.size(), os.tell());
-			}
-			os.close();
-		});
+    auto writer = pplx::create_task(
+        [ostream,iterations,the_alphabet]()
+        { 
+            auto os = ostream;
+            for (std::streamsize i = 0; i < iterations; i++)
+            {
+                os.print(the_alphabet).wait();
+                os.flush().wait();
+                VERIFY_ARE_EQUAL((i+1)*the_alphabet.size(), os.tell());
+            }
+            os.close();
+        });
 
-	Concurrency::streams::async_istream<char> ss(istream.streambuf());
+    Concurrency::streams::async_istream<char> ss(istream.streambuf());
 
-	char chars[1024];
-	std::streamsize count = 0;
+    char chars[1024];
+    std::streamsize count = 0;
 
-	while(!ss.eof())
-	{
-		VERIFY_ARE_EQUAL(count, ss.tellg());
-		memset(chars, 0, sizeof(chars));
-		ss.read(chars, sizeof(chars)-1);
-		count += strlen(chars);
-	}
+    while(!ss.eof())
+    {
+        VERIFY_ARE_EQUAL(count, ss.tellg());
+        memset(chars, 0, sizeof(chars));
+        ss.read(chars, sizeof(chars)-1);
+        count += strlen(chars);
+    }
 
-	VERIFY_ARE_EQUAL(the_alphabet.size()*iterations, count);
+    VERIFY_ARE_EQUAL(the_alphabet.size()*iterations, count);
 
-	writer.wait();
+    writer.wait();
 }
 
 TEST(async_on_sync_read_1)
@@ -751,10 +751,10 @@ TEST(stdio_istream_close,
 TEST(sync_on_async_close_early)
 {
     concurrency::streams::container_buffer<std::string> buffer;
-	concurrency::streams::async_ostream<char> os(buffer);
-	buffer.close();
+    concurrency::streams::async_ostream<char> os(buffer);
+    buffer.close();
 
-	os << 10 << std::endl;
+    os << 10 << std::endl;
     VERIFY_IS_TRUE((std::ios::badbit & os.rdstate()) == std::ios::badbit);
 }
 

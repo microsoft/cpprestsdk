@@ -108,7 +108,7 @@ template<typename _CharType>
 pplx::task<streams::streambuf<_CharType>> OPEN_R(const utility::string_t &name, int _Prot = DEFAULT_PROT)
 {
 #if !defined(__cplusplus_winrt)
-	return streams::file_buffer<_CharType>::open(name, std::ios_base::in, _Prot);
+    return streams::file_buffer<_CharType>::open(name, std::ios_base::in, _Prot);
 #else
     auto file = pplx::create_task(
         KnownFolders::DocumentsLibrary->GetFileAsync(ref new Platform::String(name.c_str()))).get();
@@ -165,10 +165,10 @@ TEST(stream_read_1_fail)
     VERIFY_ARE_EQUAL(26u, rbuf.putn("abcdefghijklmnopqrstuvwxyz", 26).get());
 
     istream stream(rbuf);
-	rbuf.close(std::ios_base::in).get();
+    rbuf.close(std::ios_base::in).get();
 
     VERIFY_THROWS(stream.read().get(), std::runtime_error);
-	// Closing again should not throw.
+    // Closing again should not throw.
     stream.close().wait();
 }
 
@@ -181,7 +181,7 @@ TEST(stream_read_2)
     istream stream(rbuf);
 
     uint8_t buffer[128];
-	streams::rawptr_buffer<uint8_t> tbuf(buffer, 128);
+    streams::rawptr_buffer<uint8_t> tbuf(buffer, 128);
 
     VERIFY_ARE_EQUAL(26u, stream.read(tbuf, 26).get());
 
@@ -206,7 +206,7 @@ TEST(fstream_read_2)
     streams::basic_istream<char> stream = OPEN_R<char>(fname).get().create_istream();
 
     char buffer[128];
-	streams::rawptr_buffer<char> tbuf(buffer, 128);
+    streams::rawptr_buffer<char> tbuf(buffer, 128);
 
     VERIFY_ARE_EQUAL(26u, stream.read(tbuf, 26).get());
 
@@ -234,7 +234,7 @@ TEST(stream_read_3)
     istream stream(rbuf);
 
     uint8_t buffer[128];
-	streams::rawptr_buffer<uint8_t> tbuf(buffer, 128);
+    streams::rawptr_buffer<uint8_t> tbuf(buffer, 128);
 
     VERIFY_ARE_EQUAL(52u, stream.read(tbuf,sizeof(buffer)).get());
 
@@ -265,8 +265,8 @@ TEST(stream_read_3_fail)
     istream stream(rbuf);
 
     uint8_t buffer[128];
-	streams::rawptr_buffer<uint8_t> tbuf(buffer, 128);
-	tbuf.close(std::ios_base::out).get();
+    streams::rawptr_buffer<uint8_t> tbuf(buffer, 128);
+    tbuf.close(std::ios_base::out).get();
 
     VERIFY_THROWS(stream.read(tbuf,sizeof(buffer)).get(), std::runtime_error);
 
@@ -347,7 +347,7 @@ TEST(stream_read_4_fail)
 
     streams::basic_istream<char> stream = rbuf;
 
-	trg.close(std::ios::out).get();
+    trg.close(std::ios::out).get();
 
     VERIFY_THROWS(stream.read_to_delim(trg, '\n').get(), std::runtime_error);
 
@@ -451,11 +451,11 @@ TEST(stream_readline_1_fail)
 
     istream stream(rbuf);
 
-	trg.close(std::ios_base::out).get();
+    trg.close(std::ios_base::out).get();
 
     VERIFY_THROWS(stream.read_line(trg).get(), std::runtime_error);
 
-	stream.close().get();
+    stream.close().get();
 }
 
 TEST(stream_readline_2)
@@ -620,13 +620,13 @@ TEST(stream_read_to_end_1)
     streams::basic_istream<char> stream = rbuf;
 
     streams::stringstreambuf sbuf;
-	auto& target = sbuf.collection();
+    auto& target = sbuf.collection();
 
     VERIFY_ARE_EQUAL(len*4096, stream.read_to_end(sbuf).get());
-	VERIFY_ARE_EQUAL(len*4096, target.size());
+    VERIFY_ARE_EQUAL(len*4096, target.size());
 
     stream.close().get();
-	sbuf.close().get();
+    sbuf.close().get();
 }
 
 TEST(stream_read_to_end_1_fail)
@@ -637,22 +637,22 @@ TEST(stream_read_to_end_1_fail)
     const char *text = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
     size_t len = strlen(text);
 
-	for (int i = 0; i < 4096; ++i)
-	{
-		VERIFY_ARE_EQUAL(len, rbuf.putn(text, len).get());
-	}
+    for (int i = 0; i < 4096; ++i)
+    {
+        VERIFY_ARE_EQUAL(len, rbuf.putn(text, len).get());
+    }
 
     rbuf.close(std::ios_base::out).get();
 
     streams::basic_istream<char> stream = rbuf;
 
-	streams::stringstreambuf sbuf;
-	sbuf.close(std::ios_base::out).get();
+    streams::stringstreambuf sbuf;
+    sbuf.close(std::ios_base::out).get();
 
-	VERIFY_THROWS(stream.read_to_end(sbuf).get(), std::runtime_error);
+    VERIFY_THROWS(stream.read_to_end(sbuf).get(), std::runtime_error);
 
     stream.close().get();
-	// This should not throw
+    // This should not throw
     sbuf.close().wait();
 }
 
@@ -749,10 +749,10 @@ TEST(stream_read_to_delim_flush)
     VERIFY_ARE_EQUAL(26u, stream.read_to_delim(sbuf, '|').get());
     // The read_to_delim() should have flushed, so we should be getting what's there,
     // less than we asked for.
-	VERIFY_ARE_EQUAL(26u, sbuf.getn(chars, 100).get());
+    VERIFY_ARE_EQUAL(26u, sbuf.getn(chars, 100).get());
 
     stream.close().get();
-	sbuf.close().get();
+    sbuf.close().get();
 }
 
 TEST(stream_read_line_flush)
@@ -775,10 +775,10 @@ TEST(stream_read_line_flush)
     VERIFY_ARE_EQUAL(26u, stream.read_line(sbuf).get());
     // The read_line() should have flushed, so we should be getting what's there,
     // less than we asked for.
-	VERIFY_ARE_EQUAL(26u, sbuf.getn(chars, 100).get());
+    VERIFY_ARE_EQUAL(26u, sbuf.getn(chars, 100).get());
 
     stream.close().get();
-	sbuf.close().get();
+    sbuf.close().get();
 }
 
 TEST(stream_read_to_end_flush)
@@ -798,13 +798,13 @@ TEST(stream_read_to_end_flush)
 
     char chars[128];
 
-	VERIFY_ARE_EQUAL(len, stream.read_to_end(sbuf).get());
+    VERIFY_ARE_EQUAL(len, stream.read_to_end(sbuf).get());
     // The read_to_end() should have flushed, so we should be getting what's there,
     // less than we asked for.
-	VERIFY_ARE_EQUAL(len, sbuf.getn(chars, len*2).get());
+    VERIFY_ARE_EQUAL(len, sbuf.getn(chars, len*2).get());
 
     stream.close().get();
-	sbuf.close().get();
+    sbuf.close().get();
 }
 
 TEST(istream_extract_string)
@@ -1164,8 +1164,28 @@ TEST(istream_extract_bool)
     VERIFY_THROWS(is.extract<bool>().get(), std::runtime_error);
 }
 
+TEST(istream_extract_bool_from_number)
+{
+    producer_consumer_buffer<char> rbuf;
+    const char *text = " 1 0 NOT_OK";
+    
+    size_t len = strlen(text);
+    rbuf.putn(text, len).wait();
+    rbuf.close(std::ios_base::out).get();
+
+    streams::istream is(rbuf);
+    bool i1 = is.extract<bool>().get();
+    bool i2 = is.extract<bool>().get();
+
+    VERIFY_IS_TRUE(i1);
+    VERIFY_IS_FALSE(i2);
+    // Make sure parsing consumes just the right amount of characters.
+    VERIFY_ARE_EQUAL(7u, rbuf.in_avail());
+    VERIFY_THROWS(is.extract<bool>().get(), std::runtime_error);
+}
+
 #ifdef _MS_WINDOWS
-TEST(istream_extract_boolw)
+TEST(istream_extract_bool_w)
 {
     producer_consumer_buffer<wchar_t> rbuf;
     const wchar_t *text = L" true false NOT_OK";
@@ -1181,6 +1201,27 @@ TEST(istream_extract_boolw)
     VERIFY_IS_FALSE(i2);
     VERIFY_THROWS(is.extract<bool>().get(), std::runtime_error);
 }
+
+TEST(istream_extract_bool_from_number_w)
+{
+    producer_consumer_buffer<wchar_t> rbuf;
+    const wchar_t *text = L" 1 0 NOT_OK";
+    
+    size_t len = wcslen(text);
+    rbuf.putn(text, len).wait();
+    rbuf.close(std::ios_base::out).get();
+
+    streams::wistream is(rbuf);
+    bool i1 = is.extract<bool>().get();
+    bool i2 = is.extract<bool>().get();
+
+    VERIFY_IS_TRUE(i1);
+    VERIFY_IS_FALSE(i2);
+    // Make sure parsing consumes just the right amount of characters.
+    VERIFY_ARE_EQUAL(7u, rbuf.in_avail());
+    VERIFY_THROWS(is.extract<bool>().get(), std::runtime_error);
+}
+
 #endif
 
 template <typename _CharType, typename _LongType>
@@ -1254,7 +1295,7 @@ TEST(streambuf_read_delim)
         VERIFY_ARE_EQUAL(size, r.size());
         VERIFY_IS_FALSE(is.is_eof());
     
-		auto& s = data.collection();
+        auto& s = data.collection();
         VERIFY_ARE_EQUAL(s, r);
         return is.read_to_delim(data, ' ');
     }).then([&data, is](size_t size) -> pplx::task<size_t> {

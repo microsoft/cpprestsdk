@@ -27,7 +27,7 @@
 #pragma once
 
 // This header is required to define _MS_WINDOWS
-#include "xxpublic.h"
+#include "cpprest/xxpublic.h"
 
 #ifdef _MS_WINDOWS
 #define WIN32_LEAN_AND_MEAN  
@@ -36,11 +36,11 @@
 #include <Windows.h>
 #endif
 
-#include "http_client.h"
+#include "cpprest/http_client.h"
 
-#include "http_msg.h"
-#include "uri.h"
-#include "asyncrt_utils.h"
+#include "cpprest/http_msg.h"
+#include "cpprest/uri.h"
+#include "cpprest/asyncrt_utils.h"
 
 #include "unittestpp.h"
 #include "include/http_asserts.h"

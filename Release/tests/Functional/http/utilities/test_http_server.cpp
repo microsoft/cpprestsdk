@@ -28,9 +28,9 @@
 #endif
 #include <algorithm>
 
-#include "uri.h"
+#include "cpprest/uri.h"
 #include "test_http_server.h"
-#include "http_listener.h"
+#include "cpprest/http_listener.h"
 
 #include <os_utilities.h>
 
@@ -172,11 +172,12 @@ class _test_http_server
 {
     inline bool is_error_code(ULONG error_code)
     {
-        return error_code == ERROR_OPERATION_ABORTED || error_code == ERROR_CONNECTION_INVALID || error_code == ERROR_NETNAME_DELETED;
+        return error_code == ERROR_OPERATION_ABORTED || error_code == ERROR_CONNECTION_INVALID || error_code == ERROR_NETNAME_DELETED
+            || m_isClosing;
     }
 public:
     _test_http_server(const utility::string_t &uri)
-        : m_uri(uri), m_session(0), m_url_group(0), m_request_queue(nullptr)
+        : m_uri(uri), m_session(0), m_url_group(0), m_request_queue(nullptr), m_isClosing(false)
     {
         HTTPAPI_VERSION httpApiVersion = HTTPAPI_VERSION_2;
         HttpInitialize(httpApiVersion, HTTP_INITIALIZE_SERVER, NULL);
@@ -253,10 +254,10 @@ public:
                     buffer_length,
                     &bytes_received,
                     0);
-                if(error_code)
-                {
+                if (is_error_code(error_code))
                     break;
-                }
+                else
+                    VERIFY_ARE_EQUAL(0, error_code);
 
                 // Now create request structure.
                 auto p_test_request = new test_request();
@@ -361,6 +362,9 @@ public:
             VERIFY_IS_TRUE(false, "HTTP test case didn't properly wait for all requests to be satisfied.");
         }
 
+        // Signal shutting down
+        m_isClosing = true;
+
         // Windows HTTP Server API will not accept a uri with an empty path, it must have a '/'.
         utility::string_t host_uri = m_uri.to_string();
         if(m_uri.is_path_empty() && host_uri[host_uri.length() - 1] != '/' && m_uri.query().empty() && m_uri.fragment().empty())
@@ -461,13 +465,14 @@ private:
     HTTP_SERVER_SESSION_ID m_session;
     HTTP_URL_GROUP_ID m_url_group;
     HANDLE m_request_queue;
+    volatile bool m_isClosing;
 };
 #else
 class _test_http_server
 {
 private:
     const std::string m_uri;
-    typename web::http::listener::http_listener m_listener;
+    typename web::http::experimental::listener::http_listener m_listener;
     pplx::extensibility::critical_section_t m_lock;
     std::vector<pplx::task_completion_event<test_request*>> m_requests;
     std::atomic<unsigned long long> m_last_request_id;
@@ -476,11 +481,11 @@ private:
 
     volatile std::atomic<int> m_cancel;
 
-	pplx::extensibility::critical_section_t m_listen_lock;
+    pplx::extensibility::critical_section_t m_listen_lock;
 public:
     _test_http_server(const utility::string_t& uri)
         : m_uri(uri) 
-        , m_listener(web::http::listener::http_listener::create(uri))
+        , m_listener(web::http::experimental::listener::http_listener::create(uri))
         , m_cancel(0)
     {
         m_listener.support([&](web::http::http_request result) -> void

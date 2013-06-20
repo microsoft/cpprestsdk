@@ -10,7 +10,7 @@
       <ProjectFile Include="VS11\JSON110_test.vcxproj" />
   </ItemGroup>
   
-  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.2|110'">
+  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.2|110' or '$(OsVersion)|$(DevToolsVersion)'=='6.3|110'">
       <ProjectFile Include="VS11.winrt\JSON110_test.winrt.vcxproj" />
   </ItemGroup>
 
@@ -18,7 +18,7 @@
       <ProjectFile Include="VS12\JSON120_test.vcxproj" />
   </ItemGroup>
   
-  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.2|120' or '$(OsVersion)|$(DevToolsVersion)'=='6.3|120'">
+  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|120'">
       <ProjectFile Include="VS12.winrt\JSON120_test.winrt.vcxproj" />
   </ItemGroup>
 

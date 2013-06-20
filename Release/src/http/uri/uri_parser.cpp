@@ -18,12 +18,13 @@
 *
 * uri_parser.h - A uri parsing implementation
 *
+* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 #include "stdafx.h"
 #include <locale>
-#include "uri_parser.h"
+#include "cpprest/uri_parser.h"
 
 namespace web { namespace http { namespace details
 {
@@ -147,7 +148,7 @@ bool uri_parser::parse(
         else
         {
             // default path to begin with a slash for easy comparison
-            components.m_path = U("/");
+            components.m_path = _XPLATSTR("/");
         }
 
         if (query_begin)
@@ -210,9 +211,9 @@ bool uri_parser::inner_parse(
 
     bool is_relative_reference = true;
     const utility::char_t *p2 = p;
-    for (;*p2 != U('/') && *p2 != U('\0'); p2++)
+    for (;*p2 != _XPLATSTR('/') && *p2 != _XPLATSTR('\0'); p2++)
     {
-        if (*p2 == U(':'))
+        if (*p2 == _XPLATSTR(':'))
         {
             // found a colon, the first portion is a scheme
             is_relative_reference = false;
@@ -247,7 +248,7 @@ bool uri_parser::inner_parse(
     // later on we'll break up the authority into the port and host
     const utility::char_t *authority_begin = nullptr;
     const utility::char_t *authority_end = nullptr;
-    if (*p == U('/') && p[1] == U('/'))
+    if (*p == _XPLATSTR('/') && p[1] == _XPLATSTR('/'))
     {
         // skip over the slashes
         p += 2;
@@ -255,7 +256,7 @@ bool uri_parser::inner_parse(
 
         // the authority is delimited by a slash (resource), question-mark (query) or octothorpe (fragment)
         // or by EOS. The authority could be empty ('file:///C:\file_name.txt')
-        for (;*p != U('/') && *p != U('?') && *p != U('#') && *p != U('\0'); p++)
+        for (;*p != _XPLATSTR('/') && *p != _XPLATSTR('?') && *p != _XPLATSTR('#') && *p != _XPLATSTR('\0'); p++)
         {
             // We're NOT currently supporting IPv6, IPvFuture or username/password in authority
             if (!is_authority_character(*p))
@@ -273,7 +274,7 @@ bool uri_parser::inner_parse(
             for (;isdigit(*port_begin) && port_begin != authority_begin; port_begin--)
             { }
 
-            if (*port_begin == U(':'))
+            if (*port_begin == _XPLATSTR(':'))
             {
                 // has a port
                 *host_begin = authority_begin;
@@ -299,7 +300,7 @@ bool uri_parser::inner_parse(
             for (;is_user_info_character(*u_end) && u_end != *host_end; u_end++)
             { }
 
-            if (*u_end == U('@'))
+            if (*u_end == _XPLATSTR('@'))
             {
                 *host_begin = u_end+1;
                 *uinfo_begin = authority_begin;
@@ -314,12 +315,12 @@ bool uri_parser::inner_parse(
 
     // if we see a path character or a slash, then the 
     // if we see a slash, or any other legal path character, parse the path next
-    if (*p == U('/') || is_path_character(*p))
+    if (*p == _XPLATSTR('/') || is_path_character(*p))
     {
         *path_begin = p;
 
         // the path is delimited by a question-mark (query) or octothorpe (fragment) or by EOS
-        for (;*p != U('?') && *p != U('#') && *p != U('\0'); p++)
+        for (;*p != _XPLATSTR('?') && *p != _XPLATSTR('#') && *p != _XPLATSTR('\0'); p++)
         {
             if (!is_path_character(*p))
             {
@@ -330,14 +331,14 @@ bool uri_parser::inner_parse(
     }
 
     // if we see a ?, then the query is next
-    if (*p == U('?'))
+    if (*p == _XPLATSTR('?'))
     {
         // skip over the question mark
         p++;
         *query_begin = p;
 
         // the query is delimited by a '#' (fragment) or EOS
-        for (;*p != U('#') && *p != U('\0'); p++)
+        for (;*p != _XPLATSTR('#') && *p != _XPLATSTR('\0'); p++)
         {
             if (!is_query_character(*p))
             {
@@ -348,14 +349,14 @@ bool uri_parser::inner_parse(
     }
 
     // if we see a #, then the fragment is next
-    if (*p == U('#'))
+    if (*p == _XPLATSTR('#'))
     {
         // skip over the hash mark
         p++;
         *fragment_begin = p;
 
         // the fragment is delimited by EOS
-        for (;*p != U('\0'); p++)
+        for (;*p != _XPLATSTR('\0'); p++)
         {
             if (!is_fragment_character(*p))
             {

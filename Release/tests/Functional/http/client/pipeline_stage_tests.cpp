@@ -238,51 +238,51 @@ TEST_FIXTURE(uri_address, http_short_circuit_no_count)
 class modify_count_responses_stage : public http_pipeline_stage
 {
 public:
-	modify_count_responses_stage() : m_Count(0) {}
+    modify_count_responses_stage() : m_Count(0) {}
 
-	virtual pplx::task<http_response> propagate(http_request request) 
-	{
-		request.headers().set_content_type(U("modified content type"));
+    virtual pplx::task<http_response> propagate(http_request request) 
+    {
+        request.headers().set_content_type(U("modified content type"));
 
-		auto currentStage = current_stage();
-		return next_stage()->propagate(request).then([currentStage](http_response response) -> http_response
-		{
-			
-			int prevCount = 0;
-			response.headers().match(U("My Header"), prevCount);
-			utility::stringstream_t data;
-			data << prevCount + ++std::dynamic_pointer_cast<modify_count_responses_stage>(currentStage)->m_Count;
-			response.headers().add(U("My Header"), data.str());
-			return response;
-		});
-	}
+        auto currentStage = current_stage();
+        return next_stage()->propagate(request).then([currentStage](http_response response) -> http_response
+        {
+            
+            int prevCount = 0;
+            response.headers().match(U("My Header"), prevCount);
+            utility::stringstream_t data;
+            data << prevCount + ++std::dynamic_pointer_cast<modify_count_responses_stage>(currentStage)->m_Count;
+            response.headers().add(U("My Header"), data.str());
+            return response;
+        });
+    }
 
 private:
-	int m_Count;
+    int m_Count;
 };
 
 TEST_FIXTURE(uri_address, pipeline_stage_inspect_response)
 {
-	test_http_server::scoped_server scoped(m_uri);
-	http_client client(m_uri);
+    test_http_server::scoped_server scoped(m_uri);
+    http_client client(m_uri);
 
-	scoped.server()->next_request().then([](test_request *request)
-	{
-		http_asserts::assert_test_request_equals(request, methods::GET, U("/"), U("modified content type"));
-		request->reply(status_codes::OK);
-	});
+    scoped.server()->next_request().then([](test_request *request)
+    {
+        http_asserts::assert_test_request_equals(request, methods::GET, U("/"), U("modified content type"));
+        request->reply(status_codes::OK);
+    });
 
-	// Put in nested scope so we lose the reference on the shared pointer.
-	{
-		std::shared_ptr<http_pipeline_stage> countStage = std::make_shared<modify_count_responses_stage>();
-		client.add_handler(countStage);
-		std::shared_ptr<http_pipeline_stage> countStage2 = std::make_shared<modify_count_responses_stage>();
-		client.add_handler(countStage2);
-	}
+    // Put in nested scope so we lose the reference on the shared pointer.
+    {
+        std::shared_ptr<http_pipeline_stage> countStage = std::make_shared<modify_count_responses_stage>();
+        client.add_handler(countStage);
+        std::shared_ptr<http_pipeline_stage> countStage2 = std::make_shared<modify_count_responses_stage>();
+        client.add_handler(countStage2);
+    }
 
-	http_response response = client.request(methods::GET).get();
-	VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
-	VERIFY_ARE_EQUAL(U("2"), response.headers()[U("My Header")]);
+    http_response response = client.request(methods::GET).get();
+    VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
+    VERIFY_ARE_EQUAL(U("2"), response.headers()[U("My Header")]);
 }
 
 } // SUITE(pipeline_stage_tests)

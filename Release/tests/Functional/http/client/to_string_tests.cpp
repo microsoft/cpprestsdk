@@ -71,7 +71,7 @@ TEST_FIXTURE(uri_address, request_to_string_with_body)
 
     // to_string
     http_request msg(mtd);
-	msg.set_request_uri(uri::encode_uri(path, uri::components::path));
+    msg.set_request_uri(uri::encode_uri(path, uri::components::path));
     msg.headers()[U("Content-Type")] = content_type;
     msg.set_body(body);
 
@@ -116,11 +116,11 @@ TEST_FIXTURE(uri_address, response_to_string_without_body)
         U(""));
 
 #ifdef _MS_WINDOWS
-	// Don't verify the values of each of these headers, but make sure they exist.
-	if(!rsp.headers().has(U("Date")) || !rsp.headers().has(U("Cache-Control")) || !rsp.headers().has(U("Server")))
-	{
-		CHECK(false);
-	}
+    // Don't verify the values of each of these headers, but make sure they exist.
+    if(!rsp.headers().has(U("Date")) || !rsp.headers().has(U("Cache-Control")) || !rsp.headers().has(U("Server")))
+    {
+        CHECK(false);
+    }
 #endif
 }
 

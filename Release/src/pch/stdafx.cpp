@@ -14,6 +14,9 @@
 * limitations under the License.
 *
 * ==--==
+*
+* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
+*
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 **/
 // stdafx.cpp : 

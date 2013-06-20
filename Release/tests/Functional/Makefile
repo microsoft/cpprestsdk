@@ -1,4 +1,4 @@
-SUBDIRS = http json misc pplx streams uri 
+SUBDIRS = http json misc pplx streams uri utils
 
 .PHONY: subdirs $(SUBDIRS)
 

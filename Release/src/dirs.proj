@@ -10,15 +10,19 @@
       <ProjectFile Include="vs11\casablanca110.vcxproj" Condition="'$(Platform)'!='ARM' or '$(WindowsSDKDesktopARMSupport)' == 'true'" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.2|110'">
+  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.2|110' or '$(OsVersion)|$(DevToolsVersion)'=='6.3|110'">
       <ProjectFile Include="vs11.winrt\casablanca110.winrt.vcxproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="('$(OsVersion)|$(DevToolsVersion)'=='6.2|110' or '$(OsVersion)|$(DevToolsVersion)'=='6.3|110') and '$(Platform)'!='x64'">
+      <ProjectFile Include="vs11.wp8\casablanca110.wp8.vcxproj" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(DevToolsVersion)'=='120'">
       <ProjectFile Include="vs12\casablanca120.vcxproj" Condition="'$(Platform)'!='ARM' or '$(WindowsSDKDesktopARMSupport)' == 'true'" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.2|120'">
+  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.2|120' or '$(OsVersion)|$(DevToolsVersion)'=='6.3|120'">
       <ProjectFile Include="vs12.winrt\casablanca120.winrt.vcxproj" />
   </ItemGroup>
 

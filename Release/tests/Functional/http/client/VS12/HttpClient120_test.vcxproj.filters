@@ -58,6 +58,10 @@
     <ClCompile Include="..\to_string_tests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\http_client_fuzz_tests.cpp" />
+    <ClCompile Include="..\progress_handler_tests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\http_client_tests.h">

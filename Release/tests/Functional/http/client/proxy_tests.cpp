@@ -46,7 +46,7 @@ TEST_FIXTURE(uri_address, auto_discovery_proxy)
         p_request->reply(200);
     });
     http_client_config config;
-	
+    
     config.set_proxy(web_proxy::use_auto_discovery);
     VERIFY_IS_FALSE(config.proxy().is_disabled());
     VERIFY_IS_FALSE(config.proxy().is_specified());
@@ -80,11 +80,11 @@ TEST_FIXTURE(uri_address, disabled_proxy)
 #ifdef __cplusplus_winrt
 TEST_FIXTURE(uri_address, no_proxy_options_on_winrt)
 {
-    http_client_config config;	
+    http_client_config config;
     config.set_proxy(web_proxy::use_auto_discovery);
     http_client client(m_uri, config);
 
-	VERIFY_THROWS(client.request(methods::GET, U("/")).get(), http_exception);
+    VERIFY_THROWS(client.request(methods::GET, U("/")).get(), http_exception);
 }
 #endif
 

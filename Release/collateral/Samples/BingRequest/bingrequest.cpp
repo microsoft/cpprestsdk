@@ -22,8 +22,8 @@
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 
-#include <http_client.h>
-#include <filestream.h>
+#include <cpprest/http_client.h>
+#include <cpprest/filestream.h>
 
 using namespace utility;
 using namespace web::http;
