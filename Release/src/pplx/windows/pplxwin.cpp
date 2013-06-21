@@ -20,6 +20,8 @@
 *
 * Windows specific implementation of PPL constructs
 *
+* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
+*
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 
@@ -29,7 +31,7 @@
 #error This file must not be compiled for Visual Studio 12 or later
 #endif
 
-#include "pplxwin.h"
+#include "pplx/pplxwin.h"
 
 #ifndef _MS_WINDOWS
 #error "ERROR: This file should only be included in Windows Build"
@@ -41,43 +43,43 @@ namespace pplx
 { 
 namespace details
 {
-	namespace platform
-	{
-		_PPLXIMP long __cdecl GetCurrentThreadId()
-		{
-			return (long)(::GetCurrentThreadId());
-		}
+    namespace platform
+    {
+        _PPLXIMP long __cdecl GetCurrentThreadId()
+        {
+            return (long)(::GetCurrentThreadId());
+        }
 
-		_PPLXIMP void __cdecl YieldExecution()
-		{
-			YieldProcessor();
-		}
+        _PPLXIMP void __cdecl YieldExecution()
+        {
+            YieldProcessor();
+        }
 
-		_PPLXIMP size_t __cdecl CaptureCallstack(void **stackData, size_t skipFrames, size_t captureFrames)
-		{
-			(stackData);
-			(skipFrames);
-			(captureFrames);
+        _PPLXIMP size_t __cdecl CaptureCallstack(void **stackData, size_t skipFrames, size_t captureFrames)
+        {
+            (stackData);
+            (skipFrames);
+            (captureFrames);
 
-			size_t capturedFrames = 0;
-			// RtlCaptureSTackBackTrace is not available in MSDK, so we only call it under Desktop or _DEBUG MSDK.
-			//  For MSDK unsupported version, we will return zero frame number.
+            size_t capturedFrames = 0;
+            // RtlCaptureSTackBackTrace is not available in MSDK, so we only call it under Desktop or _DEBUG MSDK.
+            //  For MSDK unsupported version, we will return zero frame number.
 #if !defined(__cplusplus_winrt)
-			capturedFrames = RtlCaptureStackBackTrace(static_cast<DWORD>(skipFrames + 1), static_cast<DWORD>(captureFrames), stackData, nullptr);
+            capturedFrames = RtlCaptureStackBackTrace(static_cast<DWORD>(skipFrames + 1), static_cast<DWORD>(captureFrames), stackData, nullptr);
 #endif
-			return capturedFrames;
-		}
+            return capturedFrames;
+        }
 
 #if defined(__cplusplus_winrt)
-		volatile long s_asyncId = 0;
+        volatile long s_asyncId = 0;
 
-		_PPLXIMP unsigned int __cdecl GetNextAsyncId()
-		{
-			return static_cast<unsigned int>(_InterlockedIncrement(&s_asyncId));
-		}
+        _PPLXIMP unsigned int __cdecl GetNextAsyncId()
+        {
+            return static_cast<unsigned int>(_InterlockedIncrement(&s_asyncId));
+        }
 
 #endif // defined(__cplusplus_winrt)
-	}
+    }
 
     //
     // Event implementation

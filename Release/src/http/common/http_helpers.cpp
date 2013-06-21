@@ -20,11 +20,13 @@
 *
 * Functions and types for interoperating with http.h from modern C++
 *
+* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
+*
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 
 #include "stdafx.h"
-#include "http_helpers.h"
+#include "cpprest/http_helpers.h"
 
 using namespace web; using namespace utility;
 using namespace utility::conversions;
@@ -36,21 +38,21 @@ namespace details
     bool is_content_type_textual(const utility::string_t &content_type)
     {
 #ifdef _MS_WINDOWS
-        if((content_type.size() >= 4 && _wcsicmp(content_type.substr(0,4).c_str(), U("text")) == 0) 
-            || _wcsicmp(content_type.c_str(), U("message/http")) == 0
+        if((content_type.size() >= 4 && _wcsicmp(content_type.substr(0,4).c_str(), _XPLATSTR("text")) == 0) 
+            || _wcsicmp(content_type.c_str(), _XPLATSTR("message/http")) == 0
             || _wcsicmp(content_type.c_str(), content_type_application_json.c_str()) == 0
-            || _wcsicmp(content_type.c_str(), U("application/xml")) == 0
-            || _wcsicmp(content_type.c_str(), U("application/atom+xml")) == 0
-            || _wcsicmp(content_type.c_str(), U("application/http")) == 0
-            || _wcsicmp(content_type.c_str(), U("application/x-www-form-urlencoded")) == 0)			
+            || _wcsicmp(content_type.c_str(), _XPLATSTR("application/xml")) == 0
+            || _wcsicmp(content_type.c_str(), _XPLATSTR("application/atom+xml")) == 0
+            || _wcsicmp(content_type.c_str(), _XPLATSTR("application/http")) == 0
+            || _wcsicmp(content_type.c_str(), _XPLATSTR("application/x-www-form-urlencoded")) == 0)			
 #else
-        if((content_type.size() >= 4 && boost::iequals(content_type.substr(0,4), U("text"))) 
-            || boost::iequals(content_type, U("message/http"))
+        if((content_type.size() >= 4 && boost::iequals(content_type.substr(0,4), _XPLATSTR("text"))) 
+            || boost::iequals(content_type, _XPLATSTR("message/http"))
             || boost::iequals(content_type, content_type_application_json) 
-            || boost::iequals(content_type, U("application/xml"))
-            || boost::iequals(content_type, U("application/atom+xml"))
-            || boost::iequals(content_type, U("application/http"))
-            || boost::iequals(content_type, U("application/x-www-form-urlencoded")))
+            || boost::iequals(content_type, _XPLATSTR("application/xml"))
+            || boost::iequals(content_type, _XPLATSTR("application/atom+xml"))
+            || boost::iequals(content_type, _XPLATSTR("application/http"))
+            || boost::iequals(content_type, _XPLATSTR("application/x-www-form-urlencoded")))
 #endif
         {
             return true;
@@ -87,7 +89,7 @@ namespace details
 
     void parse_content_type_and_charset(const utility::string_t &content_type, utility::string_t &content, utility::string_t &charset)
     {
-        const size_t semi_colon_index = content_type.find_first_of(U(";"));
+        const size_t semi_colon_index = content_type.find_first_of(_XPLATSTR(";"));
         
         // No charset specified.
         if(semi_colon_index == utility::string_t::npos)
@@ -103,7 +105,7 @@ namespace details
         trim_whitespace(content);
         utility::string_t possible_charset = content_type.substr(semi_colon_index + 1);
         trim_whitespace(possible_charset);
-        const size_t equals_index = possible_charset.find_first_of(U("="));
+        const size_t equals_index = possible_charset.find_first_of(_XPLATSTR("="));
         
         // No charset specified.
         if(equals_index == utility::string_t::npos)
@@ -116,9 +118,9 @@ namespace details
         utility::string_t charset_key = possible_charset.substr(0, equals_index);
         trim_whitespace(charset_key);
 #ifdef _MS_WINDOWS
-        if(_wcsicmp(charset_key.c_str(), U("charset")) != 0)
+        if(_wcsicmp(charset_key.c_str(), _XPLATSTR("charset")) != 0)
 #else
-        if(!boost::iequals(charset_key, U("charset")))
+        if(!boost::iequals(charset_key, _XPLATSTR("charset")))
 #endif
         {
             charset = get_default_charset(content);
@@ -349,7 +351,7 @@ namespace details
         // Make sure even number of bytes.
         if(dest.size() % 2 != 0)
         {
-            throw http_exception(U("Error when changing endian ness there were an uneven number of bytes."));
+            throw http_exception(_XPLATSTR("Error when changing endian ness there were an uneven number of bytes."));
         }
 
         // Need to convert to little endian for Windows.
@@ -390,7 +392,7 @@ namespace details
 #endif
         if(dsz % 2 != 0)
         {
-            throw http_exception(U("Error when changing endian ness there were an uneven number of bytes."));
+            throw http_exception(_XPLATSTR("Error when changing endian ness there were an uneven number of bytes."));
         }
 
         // Need to convert to little endian for Windows.
@@ -506,7 +508,7 @@ size_t chunked_encoding::add_chunked_delimiters(_Out_writes_ (buffer_size) uint8
 
     if(buffer_size < bytes_read + http::details::chunked_encoding::additional_encoding_space)
     {
-        throw http_exception(U("Insufficient buffer size."));
+        throw http_exception(_XPLATSTR("Insufficient buffer size."));
     }
 
     if ( bytes_read == 0 )

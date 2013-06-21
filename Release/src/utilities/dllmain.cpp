@@ -18,12 +18,13 @@
 *
 * dllmain.cpp
 *
+* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 
 #include "stdafx.h"
-#include "globals.h"
+#include "cpprest/globals.h"
 
 #ifdef _MS_WINDOWS
 volatile long g_isProcessTerminating = 0;

@@ -106,7 +106,7 @@ TEST_FIXTURE(uri_address, http_trace_fails_on_winrt)
 
 TEST(http_request_empty_method)
 {
-	VERIFY_THROWS(http_request(U("")), std::invalid_argument);
+    VERIFY_THROWS(http_request(U("")), std::invalid_argument);
 }
 
 TEST_FIXTURE(uri_address, empty_method)

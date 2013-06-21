@@ -32,10 +32,9 @@
 *.exe
 *.manifest
 *.rc
+*~
 ipch/
 obj/
 *.resfiles
 [Bb]in
 Binaries/
-VS11.winrt/
-!*.vcxproj.*

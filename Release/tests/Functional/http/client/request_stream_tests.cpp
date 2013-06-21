@@ -57,7 +57,7 @@ template<typename _CharType>
 pplx::task<streams::streambuf<_CharType>> OPEN_R(const utility::string_t &name)
 {
 #if !defined(__cplusplus_winrt)
-	return streams::file_buffer<_CharType>::open(name, std::ios_base::in);
+    return streams::file_buffer<_CharType>::open(name, std::ios_base::in);
 #else
     auto file = pplx::create_task(
         KnownFolders::DocumentsLibrary->GetFileAsync(ref new Platform::String(name.c_str()))).get();
@@ -103,7 +103,7 @@ TEST_FIXTURE(uri_address, ixhr2_transfer_encoding)
     reqG.set_body(buf.create_istream());
     VERIFY_THROWS(client.request(reqG).get(), http_exception);
 
-    VERIFY_THROWS(client.request(methods::POST, U(""), buf.create_istream()).get(), http_exception);
+    VERIFY_THROWS(client.request(methods::POST, U(""), buf.create_istream(), 1).get(), http_exception);
 }
 #endif
 
@@ -120,7 +120,7 @@ TEST_FIXTURE(uri_address, set_body_stream_1)
     http_request msg(methods::POST);
     msg.set_body(stream);
 #if defined(__cplusplus_winrt)
-	msg.headers().set_content_length(26);
+    msg.headers().set_content_length(26);
 #endif
     p_server->next_request().then([&](test_request *p_request)
     {
@@ -139,8 +139,8 @@ TEST_FIXTURE(uri_address, set_body_stream_2)
     utility::string_t fname = U("set_body_stream_2.txt");
     fill_file(fname);
 
-	http_client_config config;
-	config.set_chunksize(16*1024);
+    http_client_config config;
+    config.set_chunksize(16*1024);
 
     test_http_server::scoped_server scoped(m_uri);
     test_http_server * p_server = scoped.server();
@@ -150,7 +150,7 @@ TEST_FIXTURE(uri_address, set_body_stream_2)
     http_request msg(methods::POST);
     msg.set_body(stream);
 #if defined(__cplusplus_winrt)
-	msg.headers().set_content_length(26);
+    msg.headers().set_content_length(26);
 #endif
     p_server->next_request().then([&](test_request *p_request)
     {
@@ -168,9 +168,9 @@ TEST_FIXTURE(uri_address, set_body_stream_2)
 static void stream_request_impl(const uri &address, bool withContentLength, size_t chunksize, utility::string_t fname)
 {
     fill_file(fname);
-
-	http_client_config config;
-	config.set_chunksize(chunksize);
+    //(withContentLength);
+    http_client_config config;
+    config.set_chunksize(chunksize);
 
     test_http_server::scoped_server scoped(address);
     test_http_server * p_server = scoped.server();
@@ -193,7 +193,11 @@ static void stream_request_impl(const uri &address, bool withContentLength, size
     }
     else
     {
+#if defined __cplusplus_winrt
+        http_asserts::assert_response_equals(client.request(methods::POST, U(""), stream, 26, U("text/plain")).get(), status_codes::OK);
+#else
         http_asserts::assert_response_equals(client.request(methods::POST, U(""), stream, U("text/plain")).get(), status_codes::OK);
+#endif
     }
 
     stream.close().wait();
@@ -324,7 +328,7 @@ TEST_FIXTURE(uri_address, set_body_stream_exception)
     auto stream = OPEN_R<uint8_t>(fname).get();
     http_request msg(methods::POST);
     msg.set_body(stream);
-	msg.headers().set_content_length(26);
+    msg.headers().set_content_length(26);
 
     stream.close(std::ios::in, std::make_exception_ptr(test_exception()));
 

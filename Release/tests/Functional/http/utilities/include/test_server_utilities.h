@@ -23,13 +23,13 @@
 
 #pragma once
 
-#include "http_client.h"
+#include "cpprest/http_client.h"
 #include "test_http_server.h"
 
 #include "http_test_utilities_public.h"
 
 namespace tests { namespace functional { namespace http { namespace utilities {
-	
+    
 class test_server_utilities
 {
 public:

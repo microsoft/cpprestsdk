@@ -20,6 +20,8 @@
 *
 * Builder for constructing URIs.
 *
+* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
+*
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 
@@ -36,32 +38,32 @@ namespace web { namespace http
 
 uri_builder &uri_builder::append_path(const utility::string_t &path, bool is_encode)
 {
-    if(path.empty() || path == U("/"))
+    if(path.empty() || path == _XPLATSTR("/"))
     {
         return *this;
     }
     
     auto encoded_path = is_encode ? uri::encode_uri(path, uri::components::path) : path;
     auto thisPath = this->path();
-    if(thisPath.empty() || thisPath == U("/"))
+    if(thisPath.empty() || thisPath == _XPLATSTR("/"))
     {
-        if(encoded_path.front() != U('/'))
+        if(encoded_path.front() != _XPLATSTR('/'))
         {
-            set_path(U("/") + encoded_path);
+            set_path(_XPLATSTR("/") + encoded_path);
         }
         else
         {
             set_path(encoded_path);
         }
     }   
-    else if(thisPath.back() == U('/') && encoded_path.front() == U('/'))
+    else if(thisPath.back() == _XPLATSTR('/') && encoded_path.front() == _XPLATSTR('/'))
     {
         thisPath.pop_back();
         set_path(thisPath + encoded_path);
     }
-    else if(thisPath.back() != U('/') && encoded_path.front() != U('/'))
+    else if(thisPath.back() != _XPLATSTR('/') && encoded_path.front() != _XPLATSTR('/'))
     {
-        set_path(thisPath + U("/") + encoded_path);
+        set_path(thisPath + _XPLATSTR("/") + encoded_path);
     }
     else
     {
@@ -84,14 +86,14 @@ uri_builder &uri_builder::append_query(const utility::string_t &query, bool is_e
     {
         this->set_query(encoded_query);
     }
-    else if(thisQuery.back() == U('&') && encoded_query.front() == U('&'))
+    else if(thisQuery.back() == _XPLATSTR('&') && encoded_query.front() == _XPLATSTR('&'))
     {
         thisQuery.pop_back();
         this->set_query(thisQuery + encoded_query);
     }
-    else if(thisQuery.back() != U('&') && encoded_query.front() != U('&'))
+    else if(thisQuery.back() != _XPLATSTR('&') && encoded_query.front() != _XPLATSTR('&'))
     {
-        this->set_query(thisQuery + U("&") + encoded_query);
+        this->set_query(thisQuery + _XPLATSTR("&") + encoded_query);
     }
     else
     {

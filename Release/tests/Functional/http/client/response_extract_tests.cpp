@@ -26,7 +26,7 @@
 #include "stdafx.h"
 
 #ifndef __cplusplus_winrt
-#include "http_listener.h"
+#include "cpprest/http_listener.h"
 #endif
 
 using namespace web; 
@@ -141,23 +141,23 @@ TEST_FIXTURE(uri_address, extract_string)
 #ifndef __cplusplus_winrt
 TEST_FIXTURE(uri_address, extract_string_endian_uneven_bytes)
 {
-	// It is really hard to write this test case with our test server infrastructure so we will
-	// have to use our http_listener.
-	listener::http_listener listener = listener::http_listener::create(m_uri);
-	VERIFY_ARE_EQUAL(0L, listener.open());
-	http_client client(m_uri);
+    // It is really hard to write this test case with our test server infrastructure so we will
+    // have to use our http_listener.
+    experimental::listener::http_listener listener = experimental::listener::http_listener::create(m_uri);
+    VERIFY_ARE_EQUAL(0L, listener.open());
+    http_client client(m_uri);
 
-	listener.support([](http_request request)
-	{
-		http_response response(status_codes::OK);
-		response.set_body("uneven1");
-		response.headers().set_content_type(U("text/plain; charset=utf-16be"));
+    listener.support([](http_request request)
+    {
+        http_response response(status_codes::OK);
+        response.set_body("uneven1");
+        response.headers().set_content_type(U("text/plain; charset=utf-16be"));
         response.headers().add(header_names::connection, U("close")); 
-		request.reply(response).wait(); 
-	});
+        request.reply(response).wait(); 
+    });
 
-	http_response response = client.request(methods::GET, U("")).get();
-	VERIFY_THROWS(response.extract_string().get(), std::exception);
+    http_response response = client.request(methods::GET, U("")).get();
+    VERIFY_THROWS(response.extract_string().get(), std::exception);
 }
 #endif
 #endif
@@ -180,7 +180,7 @@ TEST_FIXTURE(uri_address, extract_string_incorrect)
 #ifndef __cplusplus_winrt
 TEST_FIXTURE(uri_address, extract_empty_string)
 {
-    ::http::listener::http_listener listener = listener::http_listener::create(m_uri);
+    experimental::listener::http_listener listener = experimental::listener::http_listener::create(m_uri);
     http_client client(m_uri);
     listener.support([](http_request msg)
     {
@@ -289,21 +289,21 @@ TEST_FIXTURE(uri_address, extract_json_incorrect)
 
 TEST_FIXTURE(uri_address, set_stream_try_extract_json)
 {
-	test_http_server::scoped_server scoped(m_uri);
+    test_http_server::scoped_server scoped(m_uri);
     http_client client(m_uri);
 
-	http_request request(methods::GET);
-	streams::ostream responseStream = streams::bytestream::open_ostream<std::vector<uint8_t>>();
-	request.set_response_stream(responseStream);
-	scoped.server()->next_request().then([](test_request *req)
-	{
-		std::map<utility::string_t, utility::string_t> headers;
-		headers[header_names::content_type] = U("application/json");
-		req->reply(status_codes::OK, U("OK"), headers, U("{true}"));
-	});
-	
-	http_response response = client.request(request).get();
-	VERIFY_THROWS(response.extract_json().get(), http_exception);
+    http_request request(methods::GET);
+    streams::ostream responseStream = streams::bytestream::open_ostream<std::vector<uint8_t>>();
+    request.set_response_stream(responseStream);
+    scoped.server()->next_request().then([](test_request *req)
+    {
+        std::map<utility::string_t, utility::string_t> headers;
+        headers[header_names::content_type] = U("application/json");
+        req->reply(status_codes::OK, U("OK"), headers, U("{true}"));
+    });
+    
+    http_response response = client.request(request).get();
+    VERIFY_THROWS(response.extract_json().get(), http_exception);
 }
 
 TEST_FIXTURE(uri_address, extract_vector)
@@ -352,21 +352,21 @@ TEST_FIXTURE(uri_address, extract_vector)
 
 TEST_FIXTURE(uri_address, set_stream_try_extract_vector)
 {
-	test_http_server::scoped_server scoped(m_uri);
+    test_http_server::scoped_server scoped(m_uri);
     http_client client(m_uri);
 
-	http_request request(methods::GET);
-	streams::ostream responseStream = streams::bytestream::open_ostream<std::vector<uint8_t>>();
-	request.set_response_stream(responseStream);
-	scoped.server()->next_request().then([](test_request *req)
-	{
-		std::map<utility::string_t, utility::string_t> headers;
-		headers[header_names::content_type] = U("text/plain");
-		req->reply(status_codes::OK, U("OK"), headers, U("data"));
-	});
-	
-	http_response response = client.request(request).get();
-	VERIFY_THROWS(response.extract_vector().get(), http_exception);
+    http_request request(methods::GET);
+    streams::ostream responseStream = streams::bytestream::open_ostream<std::vector<uint8_t>>();
+    request.set_response_stream(responseStream);
+    scoped.server()->next_request().then([](test_request *req)
+    {
+        std::map<utility::string_t, utility::string_t> headers;
+        headers[header_names::content_type] = U("text/plain");
+        req->reply(status_codes::OK, U("OK"), headers, U("data"));
+    });
+    
+    http_response response = client.request(request).get();
+    VERIFY_THROWS(response.extract_vector().get(), http_exception);
 }
 
 TEST_FIXTURE(uri_address, head_response)
@@ -374,7 +374,7 @@ TEST_FIXTURE(uri_address, head_response)
     test_http_server::scoped_server scoped(m_uri);
     http_client client(m_uri);
 
-	const method method = methods::HEAD;
+    const method method = methods::HEAD;
     const ::http::status_code code = status_codes::OK;
     std::map<utility::string_t, utility::string_t> headers;
     headers[U("Content-Type")] = U("text/plain");

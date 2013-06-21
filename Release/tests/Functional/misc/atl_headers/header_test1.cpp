@@ -54,7 +54,7 @@
 #include <atlbase.h>
 #include <atlstr.h>
 
-#include "http_client.h"
+#include "cpprest/http_client.h"
 
 #include "unittestpp.h"
 

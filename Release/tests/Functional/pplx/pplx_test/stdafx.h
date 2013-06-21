@@ -29,7 +29,7 @@
 #pragma warning(push)
 #pragma warning(disable : 4702)
 // This header is required to define _MS_WINDOWS
-#include "xxpublic.h"
+#include "cpprest/xxpublic.h"
 #pragma warning(pop)
 
 #ifdef _MS_WINDOWS
@@ -47,17 +47,17 @@
 #include <ppltasks.h>
 namespace pplx = Concurrency;
 #else 
-#include "pplxtasks.h"
+#include "pplx/pplxtasks.h"
 #if defined(_MS_WINDOWS) && _MSC_VER >= 1700
-#include "pplxconv.h"
+#include "pplx/pplxconv.h"
 #endif
 #endif
 
 #ifndef _MS_WINDOWS
-#  include "threadpool.h"
+#  include "pplx/threadpool.h"
 #endif
 
-#include "asyncrt_utils.h"
+#include "cpprest/asyncrt_utils.h"
 #include "unittestpp.h"
 #include "os_utilities.h"
 

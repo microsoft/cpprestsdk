@@ -223,7 +223,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="$(TestRoot)\Common\utilities\vs12.winrt\CommonUtilities120.winrt.vcxproj">
-      <Project>{0c9d50d9-94fb-4732-a4ad-58e068315bb2}</Project>
+      <Project>{ea2d69a1-55c8-4c15-805e-de7e85872484}</Project>
     </ProjectReference>
     <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs12.winrt\UnitTestpp120.winrt.vcxproj">
       <Project>{B341AA9C-F38B-4D59-B6B7-8F22491090B7}</Project>

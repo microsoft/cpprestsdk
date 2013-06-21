@@ -25,10 +25,12 @@
 * files. The supporting functions, which are in this file, use C-like signatures to avoid as many issues as
 * possible.
 *
+* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
+*
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 #include "stdafx.h"
-#include "fileio.h"
+#include "cpprest/fileio.h"
 
 using namespace ::Windows::Foundation;
 using namespace ::Windows::Storage;
@@ -48,19 +50,25 @@ struct _file_info_impl : _file_info
     _file_info_impl(StorageFile^ file, Streams::IRandomAccessStream^ stream, std::ios_base::openmode mode) :
         m_file(file), 
         m_stream(stream),
+        m_writer(nullptr),
         _file_info(mode, 0)
     {
+        m_pendingWrites = pplx::task_from_result();
     }
 
     _file_info_impl(StorageFile^ file, Streams::IRandomAccessStream^ stream, std::ios_base::openmode mode, size_t buffer_size) :
         m_file(file), 
         m_stream(stream),
+        m_writer(nullptr),
         _file_info(mode, buffer_size)
     {
+        m_pendingWrites = pplx::task_from_result();
     }
 
     StorageFile^ m_file;
     Streams::IRandomAccessStream^ m_stream;
+    Streams::IDataWriter^ m_writer;
+    pplx::task<void> m_pendingWrites;
 };
 
 }}}
@@ -100,22 +108,12 @@ void _finish_create(StorageFile^ file, Streams::IRandomAccessStream^ stream, _In
 {
     _file_info_impl *info = nullptr;
     
-    if ( mode == std::ios_base::in )
+    info = new _file_info_impl(file, stream, mode, 512);
+    
+    // Seek to end if it's in appending write mode
+    if ((mode & std::ios_base::out) && (mode & std::ios_base::app || mode & std::ios_base::ate ))
     {
-        info = new _file_info_impl(file, stream, mode, 512);
-    }
-    else
-    {
-        size_t write_pos = 0;
-
-        if ( mode & std::ios_base::app || mode & std::ios_base::ate )
-        {
-            write_pos = (size_t)stream->Size; // Start at the end of the file.
-        }
-
-        info = new _file_info_impl(file, stream, mode);
-
-        info->m_wrpos = (size_t)write_pos;
+        _seekwrpos_fsb(info, static_cast<size_t>(stream->Size), 1);
     }
 
     callback->on_opened(info);
@@ -141,15 +139,13 @@ bool __cdecl _open_fsb_stf_str(_In_ Concurrency::streams::details::_filestream_c
     FileAccessMode acc_mode;
 
     _get_create_flags(mode, prot, acc_mode, options);
-
+    
     pplx::create_task(file->OpenAsync(acc_mode)).then(
         [=](pplx::task<Streams::IRandomAccessStream^> sop)
         {
-            Streams::IRandomAccessStream^ stream = nullptr;
             try
             {
-                stream = sop.get(); 
-                _finish_create(file, stream, callback, mode, prot);
+                _finish_create(file, sop.get(), callback, mode, prot);
             }
             catch(Platform::Exception^ exc) 
             { 
@@ -177,61 +173,36 @@ bool __cdecl _close_fsb_nolock(_In_ _file_info **info, _In_ Concurrency::streams
     _ASSERTE(*info != nullptr);
 
     _file_info_impl *fInfo = (_file_info_impl *)*info;
-
-    fInfo->m_stream = nullptr;
-    fInfo->m_file = nullptr;
-
-    callback->on_closed();
     
     *info = nullptr;
+    
+    auto stream = fInfo->m_stream;
 
+    if (fInfo->m_stream->CanWrite)
+    {
+        _sync_fsb(fInfo, nullptr);
+        fInfo->m_pendingWrites.then([=] (pplx::task<void> t) {
+            try {
+                delete fInfo;
+                t.wait();
+                callback->on_closed();	
+            } 
+            catch (Platform::Exception^ exc) {
+                callback->on_error(std::make_exception_ptr(utility::details::create_system_error(exc->HResult)));
+            }
+        });
+    }
+    else
+    {
+        delete fInfo;
+        callback->on_closed();
+    }
     return true;
 }
 
 bool __cdecl _close_fsb(_In_ _file_info **info, _In_ Concurrency::streams::details::_filestream_callback *callback)
 {
     return _close_fsb_nolock(info, callback);
-}
-
-/// <summary>
-/// Initiate an asynchronous (overlapped) write to the file stream.
-/// </summary>
-/// <param name="info">The file info record of the file</param>
-/// <param name="callback">A pointer to the callback interface to invoke when the write request is completed.</param>
-/// <param name="ptr">A pointer to the data to write</param>
-/// <param name="count">The size (in bytes) of the data</param>
-/// <returns>0 if the write request is still outstanding, -1 if the request failed, otherwise the size of the data written</returns>
-size_t __cdecl _write_file_async(_In_ Concurrency::streams::details::_file_info_impl *fInfo, _In_ Concurrency::streams::details::_filestream_callback *callback, const unsigned char *ptr, size_t count, size_t position)
-{
-    if ( fInfo->m_file == nullptr || fInfo->m_stream == nullptr )
-    {
-        if ( callback != nullptr )
-            // I don't know of a better error code, so this will have to do.
-            callback->on_error(std::make_exception_ptr(utility::details::create_system_error(ERROR_INVALID_ADDRESS)));
-        return 0;
-    }
-
-    auto buffer = ref new Platform::Array<unsigned char>((unsigned int)count);
-    memcpy(buffer->Data, ptr, count);
-
-    auto writer = ref new Streams::DataWriter(fInfo->m_stream->GetOutputStreamAt(position));
-    writer->WriteBytes(buffer);
-
-    pplx::create_task(writer->StoreAsync()).then(
-        [=] (pplx::task<unsigned int> result)
-        {
-            try
-            {
-                auto written = result.get();
-                callback->on_completed(written);
-            }
-            catch (Platform::Exception^ exc)
-            {
-                callback->on_error(std::make_exception_ptr(utility::details::create_system_error(exc->HResult)));
-            }
-        });
-
-    return 0;
 }
 
 
@@ -249,8 +220,10 @@ size_t __cdecl _read_file_async(_In_ Concurrency::streams::details::_file_info_i
     if ( fInfo->m_file == nullptr || fInfo->m_stream == nullptr )
     {
         if ( callback != nullptr )
+        {
             // I don't know of a better error code, so this will have to do.
             callback->on_error(std::make_exception_ptr(utility::details::create_system_error(ERROR_INVALID_ADDRESS)));
+        }
         return 0;
     }
 
@@ -265,9 +238,7 @@ size_t __cdecl _read_file_async(_In_ Concurrency::streams::details::_file_info_i
 
                 if ( read > 0 )
                 {
-                    auto buffer = ref new Platform::Array<unsigned char>(read);
-                    reader->ReadBytes(buffer);
-                    memcpy(ptr, buffer->Data, read);
+                    reader->ReadBytes(Platform::ArrayReference<unsigned char>(static_cast<unsigned char *>(ptr), read));
                 }
 
                 callback->on_completed(read);
@@ -468,6 +439,7 @@ size_t __cdecl _getn_fsb(_In_ Concurrency::streams::details::_file_info *info, _
 {
     _ASSERTE(callback != nullptr);
     _ASSERTE(info != nullptr);
+    _ASSERTE(count > 0);
     
     _file_info_impl *fInfo = (_file_info_impl *)info;
 
@@ -506,6 +478,7 @@ size_t __cdecl _getn_fsb(_In_ Concurrency::streams::details::_file_info *info, _
     }
 }
 
+
 /// <summary>
 /// Write data from a buffer into the file stream.
 /// </summary>
@@ -513,25 +486,64 @@ size_t __cdecl _getn_fsb(_In_ Concurrency::streams::details::_file_info *info, _
 /// <param name="callback">A pointer to the callback interface to invoke when the write request is completed.</param>
 /// <param name="ptr">A pointer to a buffer where the data should be placed</param>
 /// <param name="count">The size (in characters) of the buffer</param>
-/// <returns>0 if the read request is still outstanding, -1 if the request failed, otherwise the size of the data read into the buffer</returns>
+/// <returns>0 if the write request is still outstanding, -1 if the request failed, otherwise the size of the data read into the buffer</returns>
 size_t __cdecl _putn_fsb(_In_ Concurrency::streams::details::_file_info *info, _In_ Concurrency::streams::details::_filestream_callback *callback, const void *ptr, size_t count, size_t char_size)
 {
     _ASSERTE(callback != nullptr);
     _ASSERTE(info != nullptr);
+    _ASSERTE(count > 0);
     
     _file_info_impl *fInfo = (_file_info_impl *)info;
 
     pplx::extensibility::scoped_recursive_lock_t lck(fInfo->m_lock);
+
+    if ( fInfo->m_file == nullptr || fInfo->m_stream == nullptr )
+        return static_cast<size_t>(-1);
     
     // To preserve the async write order, we have to move the write head before read.
-    auto lastPos = fInfo->m_wrpos;
     if (fInfo->m_wrpos != static_cast<size_t>(-1))
-    {
         fInfo->m_wrpos += count;
-        lastPos *= char_size;
-    }
 
-    return _write_file_async(fInfo, callback, (const unsigned char *)ptr, count*char_size, lastPos);
+    msl::utilities::SafeInt<unsigned int> safeWriteSize = count;
+    safeWriteSize *= char_size;
+
+
+    // In most of the time, we preserve the writer so that it would have better performance.
+    // However, after uer call seek, we will despose old writer. By doing so, users could 
+    // write to new writer in new position while the old writer is still flushing data into stream.
+    if (fInfo->m_writer == nullptr)
+    {
+        fInfo->m_writer = ref new Streams::DataWriter(fInfo->m_stream);
+        fInfo->m_buffill = 0;
+    }
+    
+    // It keeps tracking the number of bytes written into m_writer buffer.
+    fInfo->m_buffill += count;
+    
+    // ArrayReference here is for avoiding data copy.
+    fInfo->m_writer->WriteBytes(Platform::ArrayReference<unsigned char>(const_cast<unsigned char *>(static_cast<const unsigned char*>(ptr)), safeWriteSize));
+    
+    // Flush data from m_writer buffer into stream , if the buffer is full
+    if (fInfo->m_buffill >= fInfo->m_buffer_size)
+    {
+        fInfo->m_buffill = 0;
+        fInfo->m_pendingWrites = fInfo->m_pendingWrites.then([=] {
+            return fInfo->m_writer->StoreAsync();
+        }).then([=] (pplx::task<unsigned int> result) {
+            try
+            {
+                result.wait();
+                callback->on_completed(safeWriteSize);
+            }
+            catch (Platform::Exception^ exc)
+            {
+                callback->on_error(std::make_exception_ptr(utility::details::create_system_error(exc->HResult)));
+            }
+        });
+        return 0;
+    }
+    else
+        return safeWriteSize;
 }
 
 /// <summary>
@@ -554,17 +566,28 @@ size_t __cdecl _putc_fsb(_In_ Concurrency::streams::details::_file_info *info, _
 /// <returns>True if the request was initiated</returns>
 bool __cdecl _sync_fsb(_In_ Concurrency::streams::details::_file_info *info, _In_ Concurrency::streams::details::_filestream_callback *callback)
 {
-    _ASSERTE(callback != nullptr);
     _ASSERTE(info != nullptr);
     
     _file_info_impl *fInfo = (_file_info_impl *)info;
 
     pplx::extensibility::scoped_recursive_lock_t lck(fInfo->m_lock);
 
-    if ( fInfo->m_file == nullptr || fInfo->m_stream == nullptr ) return false;
+    if ( fInfo->m_file == nullptr || fInfo->m_stream == nullptr || fInfo->m_writer == nullptr || !fInfo->m_stream->CanWrite)
+        return false;
 
-    pplx::create_task(fInfo->m_stream->FlushAsync()).then(
-        [=] (pplx::task<bool> result)
+    // take a snapshot of current writer, since writer can be replaced during flush
+    auto writer = fInfo->m_writer;
+    // Flush operation will not begin until all previous writes (StoreAsync) finished, thus it could avoid race.
+    fInfo->m_pendingWrites = fInfo->m_pendingWrites.then([=] {
+        return writer->StoreAsync();
+    }).then([=](unsigned int) {
+        fInfo->m_buffill = 0;
+        return writer->FlushAsync();
+    }).then([=] (pplx::task<bool> result) {
+        // Rethrow exception if no callback attatched.
+        if (callback == nullptr)
+            result.wait();
+        else
         {
             try
             {
@@ -575,9 +598,8 @@ bool __cdecl _sync_fsb(_In_ Concurrency::streams::details::_file_info *info, _In
             {
                 callback->on_error(std::make_exception_ptr(utility::details::create_system_error(exc->HResult)));
             }
-
-        });
-
+        }
+    });
     return true;
 }
 
@@ -595,7 +617,7 @@ size_t __cdecl _seekrdpos_fsb(_In_ Concurrency::streams::details::_file_info *in
 
     pplx::extensibility::scoped_recursive_lock_t lck(info->m_lock);
 
-    if ( fInfo->m_file == nullptr || fInfo->m_stream == nullptr ) return (size_t)-1;;
+    if ( fInfo->m_file == nullptr || fInfo->m_stream == nullptr) return (size_t)-1;;
 
     if ( pos < fInfo->m_bufoff || pos > (fInfo->m_bufoff+fInfo->m_buffill) )
     {
@@ -619,25 +641,9 @@ size_t __cdecl _seekrdpos_fsb(_In_ Concurrency::streams::details::_file_info *in
 _ASYNCRTIMP size_t __cdecl _seekrdtoend_fsb(_In_ Concurrency::streams::details::_file_info *info, int64_t offset, size_t char_size)
 {
     _ASSERTE(info != nullptr);
-    
     _file_info_impl *fInfo = (_file_info_impl *)info;
 
-    pplx::extensibility::scoped_recursive_lock_t lck(info->m_lock);
-
-    if ( fInfo->m_file == nullptr || fInfo->m_stream == nullptr ) return (size_t)-1;;
-
-    if ( fInfo->m_buffer != nullptr )
-    {
-        // Clear the internal buffer.
-        delete fInfo->m_buffer;
-        fInfo->m_buffer = nullptr;
-        fInfo->m_bufoff = fInfo->m_buffill = fInfo->m_bufsize = 0;
-    }
-
-    auto size = fInfo->m_stream->Size/char_size;
-    fInfo->m_rdpos = (size_t)((int64_t)size + offset);
-
-    return fInfo->m_rdpos;
+    return _seekrdpos_fsb(info, static_cast<size_t>(fInfo->m_stream->Size / char_size + offset), char_size);
 }
 
 
@@ -655,9 +661,29 @@ size_t __cdecl _seekwrpos_fsb(_In_ Concurrency::streams::details::_file_info *in
 
     pplx::extensibility::scoped_recursive_lock_t lck(info->m_lock);
 
-    if ( fInfo->m_file == nullptr || fInfo->m_stream == nullptr ) return (size_t)-1;;
+    if ( fInfo->m_file == nullptr || fInfo->m_stream == nullptr) return (size_t)-1;;
 
     fInfo->m_wrpos = pos;
+
+    // m_buffill keeps number of chars written into the m_writer buffer. 
+    // We need to flush it into stream before seek the write head of the stream
+    if (fInfo->m_buffill > 0)
+        _sync_fsb(fInfo, nullptr);
+
+    // Moving write head should follow the flush operation. is_done test is for perf optimization.
+    if (fInfo->m_pendingWrites.is_done())
+        fInfo->m_stream->Seek(static_cast<long long>(pos) * char_size);
+    else
+    {
+        auto lastWriter = fInfo->m_writer;
+        fInfo->m_writer = nullptr;
+
+        fInfo->m_pendingWrites = fInfo->m_pendingWrites.then([=] {
+            // Detach stream could avoid stream destruction after writer get destructed.
+            lastWriter->DetachStream();
+            fInfo->m_stream->Seek(static_cast<long long>(pos) * char_size);
+        });
+    }
 
     return fInfo->m_wrpos;
 }

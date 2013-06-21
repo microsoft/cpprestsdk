@@ -20,12 +20,14 @@
 *
 * HTTP Library: Request and reply message definitions.
 *
+* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
+*
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 #include "stdafx.h"
-#include "http_msg.h"
-#include "producerconsumerstream.h"
-#include "http_helpers.h"
+#include "cpprest/http_msg.h"
+#include "cpprest/producerconsumerstream.h"
+#include "cpprest/http_helpers.h"
 
 using namespace web; 
 using namespace utility;
@@ -36,7 +38,7 @@ using namespace http::details;
 namespace web { namespace http
 {
 
-#define CRLF U("\r\n")
+#define CRLF _XPLATSTR("\r\n")
 
 static utility::string_t _g_emptyString;
 
@@ -76,21 +78,21 @@ void http_headers::set_date(const utility::datetime& date)
     add(http::header_names::date, date.to_string(utility::datetime::RFC_1123));
 }
 
-size_t http_headers::content_length() const
+utility::size64_t http_headers::content_length() const
 {
     size_t length = 0;
     match(http::header_names::content_length, length);
     return length;
 }
 
-void http_headers::set_content_length(size_t length)
+void http_headers::set_content_length(utility::size64_t length)
 {
     add(http::header_names::content_length, length);
 }
 
-static const utility::char_t * stream_was_set_explicitly = U("A stream was set on the message and extraction is not possible");
-static const utility::char_t * textual_content_type_missing = U("Content-Type must be textual to extract a string.");
-static const utility::char_t * unsupported_charset = U("Charset must be iso-8859-1, utf-8, utf-16, utf-16le, or utf-16be to be extracted.");
+static const utility::char_t * stream_was_set_explicitly = _XPLATSTR("A stream was set on the message and extraction is not possible");
+static const utility::char_t * textual_content_type_missing = _XPLATSTR("Content-Type must be textual to extract a string.");
+static const utility::char_t * unsupported_charset = _XPLATSTR("Charset must be iso-8859-1, utf-8, utf-16, utf-16le, or utf-16be to be extracted.");
 
 http_msg_base::http_msg_base() 
     : m_headers(), 
@@ -157,7 +159,7 @@ size_t http_msg_base::_get_content_length()
 
         // Neither is set. Assume transfer-encoding for now (until we have the ability to determine
         // the length of the stream).
-        headers().add(header_names::transfer_encoding, U("chunked"));
+        headers().add(header_names::transfer_encoding, _XPLATSTR("chunked"));
         return std::numeric_limits<size_t>::max();
     }
 
@@ -167,7 +169,7 @@ size_t http_msg_base::_get_content_length()
 /// <summary>
 /// Completes this message
 /// </summary>
-void http_msg_base::_complete(size_t body_size, std::exception_ptr exceptionPtr)
+void http_msg_base::_complete(utility::size64_t body_size, std::exception_ptr exceptionPtr)
 {
     // Close the write head
     if ((bool)outstream())
@@ -186,7 +188,7 @@ void http_msg_base::_complete(size_t body_size, std::exception_ptr exceptionPtr)
     {
         _get_data_available().set_exception(exceptionPtr);
         // The exception for body will be observed by default, because read body is not always required.
-        pplx::create_task(_get_data_available()).then([](pplx::task<size_t> t) {
+        pplx::create_task(_get_data_available()).then([](pplx::task<utility::size64_t> t) {
             try {
                 t.get();
             } catch (...) {
@@ -312,7 +314,7 @@ json::value details::http_msg_base::_extract_json()
     if(!is_content_type_json(content))
     {
 		const utility::string_t actualContentType = utility::conversions::to_string_t(content);
-        throw http_exception((U("Content-Type must be JSON to extract (is: ") + actualContentType + U(")")).c_str());
+        throw http_exception((_XPLATSTR("Content-Type must be JSON to extract (is: ") + actualContentType + _XPLATSTR(")")).c_str());
     }
     
     if (!instream())
@@ -447,7 +449,7 @@ static utility::string_t convert_body_to_string_t(const utility::string_t &conte
     std::vector<unsigned char> body((std::vector<unsigned char>::size_type)streambuf.in_avail());
     size_t copied = streambuf.scopy(&body[0], body.size());
     if (copied == 0 || copied == (size_t)-1) 
-        return U("");
+        return _XPLATSTR("");
 
     // Latin1
 #ifdef _MS_WINDOWS
@@ -514,7 +516,7 @@ static utility::string_t http_headers_body_to_string(const http_headers &headers
 
     for (auto iter = headers.begin(); iter != headers.end(); ++iter)
     {
-        buffer << iter->first << U(": ") << iter->second << CRLF;
+        buffer << iter->first << _XPLATSTR(": ") << iter->second << CRLF;
     }
     buffer << CRLF;
 
@@ -547,7 +549,7 @@ void details::http_msg_base::set_body(streams::istream instream, utility::string
     set_instream(instream);
 }
 
-void details::http_msg_base::set_body(streams::istream instream, size_t contentLength, utility::string_t contentType)
+void details::http_msg_base::set_body(streams::istream instream, utility::size64_t contentLength, utility::string_t contentType)
 {
     headers().add(http::header_names::content_length, contentLength);
     set_body(instream, std::move(contentType));
@@ -557,20 +559,20 @@ void details::http_msg_base::set_body(streams::istream instream, size_t contentL
 details::_http_request::_http_request()
   : m_initiated_response(0), 
     m_server_context(), 
-    m_listener_path(U(""))
+    m_listener_path(_XPLATSTR(""))
 {
 }
 
 details::_http_request::_http_request(std::shared_ptr<http::details::_http_server_context> server_context)
   : m_initiated_response(0), 
     m_server_context(std::move(server_context)),
-    m_listener_path(U(""))
+    m_listener_path(_XPLATSTR(""))
 {
 }
 
 #define _METHODS
 #define DAT(a,b) const method methods::a = b;
-#include "http_constants.dat"
+#include "cpprest/http_constants.dat"
 #undef _METHODS
 #undef DAT
 
@@ -578,7 +580,7 @@ details::_http_request::_http_request(std::shared_ptr<http::details::_http_serve
 #ifndef _MS_WINDOWS
 #define _PHRASES
 #define DAT(a,b,c) const status_code status_codes::a;
-#include "http_constants.dat"
+#include "cpprest/http_constants.dat"
 #undef _PHRASES
 #undef DAT
 #endif

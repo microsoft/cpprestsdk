@@ -281,90 +281,90 @@ public:
 // This test should be executed for NTLM, Negotiate, IntegratedWindowsAuth, and Anonymous.
 TEST_FIXTURE(server_address, successful_auth_no_cred, "Ignore", "Manual")
 {
-	http_client client(m_uri);
-	http_response response = client.request(methods::GET).get();
+    http_client client(m_uri);
+    http_response response = client.request(methods::GET).get();
     VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
 }
 
 TEST_FIXTURE(server_address, digest_basic_auth_no_cred, "Ignore", "Manual")
 {
-	http_client client(m_uri);
-	http_response response = client.request(methods::GET).get();
+    http_client client(m_uri);
+    http_response response = client.request(methods::GET).get();
     VERIFY_ARE_EQUAL(status_codes::Unauthorized, response.status_code());
 }
 
 TEST_FIXTURE(server_address, none_auth_no_cred, "Ignore", "Manual")
 {
-	http_client client(m_uri);
-	http_response response = client.request(methods::GET).get();
+    http_client client(m_uri);
+    http_response response = client.request(methods::GET).get();
     VERIFY_ARE_EQUAL(status_codes::Forbidden, response.status_code());
 }
 
 // This test should be executed for NTLM, Negotiate, IntegratedWindowsAuth, and Digest.
 TEST_FIXTURE(server_address, unsuccessful_auth_with_basic_cred, "Ignore", "Manual")
 {
-	http_client_config config;
-	config.set_credentials(credentials(U("user"), U("password")));
+    http_client_config config;
+    config.set_credentials(credentials(U("user"), U("password")));
     
-	http_client client(m_uri, config);
-	http_response response = client.request(methods::GET).get();
+    http_client client(m_uri, config);
+    http_response response = client.request(methods::GET).get();
     VERIFY_ARE_EQUAL(status_codes::Unauthorized, response.status_code());
 }
 
 TEST_FIXTURE(server_address, basic_anonymous_auth_with_basic_cred, "Ignore", "Manual")
 {
-	http_client_config config;
-	config.set_credentials(credentials(U("user"), U("password")));
-	http_client client(m_uri, config);
-	http_request req(methods::GET);
-	req.headers().add(U("UserName"), U("user"));
-	req.headers().add(U("Password"), U("password"));
-	http_response response = client.request(req).get();
+    http_client_config config;
+    config.set_credentials(credentials(U("user"), U("password")));
+    http_client client(m_uri, config);
+    http_request req(methods::GET);
+    req.headers().add(U("UserName"), U("user"));
+    req.headers().add(U("Password"), U("password"));
+    http_response response = client.request(req).get();
     VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
 }
 
 TEST_FIXTURE(server_address, none_auth_with_basic_cred, "Ignore", "Manual")
 {
-	http_client_config config;
-	config.set_credentials(credentials(U("user"), U("password")));
-	http_client client(m_uri, config);
-	http_response response = client.request(methods::GET).get();
+    http_client_config config;
+    config.set_credentials(credentials(U("user"), U("password")));
+    http_client client(m_uri, config);
+    http_response response = client.request(methods::GET).get();
     VERIFY_ARE_EQUAL(status_codes::Forbidden, response.status_code());
 }
 
 // This test should be executed for all authentication schemes except None.
 TEST_FIXTURE(server_address, successful_auth_with_domain_cred, "Ignore", "Manual")
 {
-	// ACTION: fill in your domain credentials here temporarily to run.
-	const string_t userName = U("DOMAIN\\username");
-	const string_t password = U("");
+    // ACTION: fill in your domain credentials here temporarily to run.
+    const string_t userName = U("DOMAIN\\username");
+    const string_t password = U("");
 
-	http_client_config config;
-	config.set_credentials(credentials(userName, password));
-	http_client client(m_uri, config);
-	http_request req(methods::GET);
-	req.headers().add(U("UserName"), userName);
-	http_response response = client.request(req).get();
+    http_client_config config;
+    config.set_credentials(credentials(userName, password));
+    http_client client(m_uri, config);
+    http_request req(methods::GET);
+    req.headers().add(U("UserName"), userName);
+    http_response response = client.request(req).get();
     VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
 }
 
 TEST_FIXTURE(server_address, none_auth_with_domain_cred, "Ignore", "Manual")
 {
-	// ACTION: fill in your domain credentials here temporarily to run.
-	const string_t userName = U("DOMAIN\\username");
-	const string_t password = U("");
+    // ACTION: fill in your domain credentials here temporarily to run.
+    const string_t userName = U("DOMAIN\\username");
+    const string_t password = U("");
 
-	http_client_config config;
-	config.set_credentials(credentials(userName, password));
-	http_client client(m_uri, config);
-	http_response response = client.request(methods::GET).get();
+    http_client_config config;
+    config.set_credentials(credentials(userName, password));
+    http_client client(m_uri, config);
+    http_response response = client.request(methods::GET).get();
     VERIFY_ARE_EQUAL(status_codes::Forbidden, response.status_code());
 }
 
 #pragma endregion 
 
 // Fix for 522831 AV after failed authentication attempt
-TEST_FIXTURE(uri_address, failed_authentication_attempt, "Ignore:Linux", "549349")
+TEST_FIXTURE(uri_address, failed_authentication_attempt, "Ignore:Linux", "549349", "Ignore", "Manual")
 {
     http_client_config config;
     credentials cred(U("user"),U("schmuser"));

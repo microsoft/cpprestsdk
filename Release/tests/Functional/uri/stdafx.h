@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include "uri.h"
-#include "asyncrt_utils.h"
+#include "cpprest/uri.h"
+#include "cpprest/asyncrt_utils.h"
 
 #include "unittestpp.h"
 #include "uri_tests.h"

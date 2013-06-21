@@ -123,7 +123,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CasablancaIncludeDir)\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CasablancaSrcDir)\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>-Zm160 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
@@ -136,7 +136,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Winhttp.lib;crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Winhttp.lib;httpapi.lib;crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ProgramDatabaseFile>$(OutDir)$(TargetName).pdb</ProgramDatabaseFile>
       <StripPrivateSymbols>$(OutDir)$(TargetName).pub.pdb</StripPrivateSymbols>
     </Link>
@@ -150,7 +150,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Winhttp.lib;crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Winhttp.lib;httpapi.lib;crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ProgramDatabaseFile>$(OutDir)$(TargetName).pdb</ProgramDatabaseFile>
       <StripPrivateSymbols>$(OutDir)$(TargetName).pub.pdb</StripPrivateSymbols>
     </Link>
@@ -164,7 +164,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Winhttp.lib;crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Winhttp.lib;httpapi.lib;crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ProgramDatabaseFile>$(OutDir)$(TargetName).pdb</ProgramDatabaseFile>
       <StripPrivateSymbols>$(OutDir)$(TargetName).pub.pdb</StripPrivateSymbols>
     </Link>
@@ -182,7 +182,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>Winhttp.lib;crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Winhttp.lib;httpapi.lib;crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ProgramDatabaseFile>$(OutDir)$(TargetName).pdb</ProgramDatabaseFile>
       <StripPrivateSymbols>$(OutDir)$(TargetName).pub.pdb</StripPrivateSymbols>
     </Link>
@@ -200,7 +200,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>Winhttp.lib;crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Winhttp.lib;httpapi.lib;crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ProgramDatabaseFile>$(OutDir)$(TargetName).pdb</ProgramDatabaseFile>
       <StripPrivateSymbols>$(OutDir)$(TargetName).pub.pdb</StripPrivateSymbols>
     </Link>
@@ -218,52 +218,56 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>Winhttp.lib;crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Winhttp.lib;httpapi.lib;crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ProgramDatabaseFile>$(OutDir)$(TargetName).pdb</ProgramDatabaseFile>
       <StripPrivateSymbols>$(OutDir)$(TargetName).pub.pdb</StripPrivateSymbols>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="$(CasablancaIncludeDir)\pch\stdafx.h" />
-    <ClInclude Include="$(CasablancaIncludeDir)\astreambuf.h" />
-    <ClInclude Include="$(CasablancaIncludeDir)\asyncrt_utils.h" />
-    <ClInclude Include="$(CasablancaIncludeDir)\base_uri.h" />
-    <ClInclude Include="$(CasablancaIncludeDir)\basic_types.h" />
-    <ClInclude Include="$(CasablancaIncludeDir)\cancellation_token.h" />
-    <ClInclude Include="$(CasablancaIncludeDir)\containerstream.h" />
-    <ClInclude Include="$(CasablancaIncludeDir)\fileio.h" />
-    <ClInclude Include="$(CasablancaIncludeDir)\filestream.h" />
-    <ClInclude Include="$(CasablancaIncludeDir)\globals.h" />
-    <ClInclude Include="$(CasablancaIncludeDir)\http_client.h" />
-    <ClInclude Include="$(CasablancaIncludeDir)\http_constants.dat" />
-    <ClInclude Include="$(CasablancaIncludeDir)\http_helpers.h" />
-    <ClInclude Include="$(CasablancaIncludeDir)\http_msg.h" />
-    <ClInclude Include="$(CasablancaIncludeDir)\interopstream.h" />
-    <ClInclude Include="$(CasablancaIncludeDir)\ioscheduler.h" />
-    <ClInclude Include="$(CasablancaIncludeDir)\json.h" />
-    <ClInclude Include="$(CasablancaIncludeDir)\linux_compat.h" />
-    <ClInclude Include="$(CasablancaIncludeDir)\nosal.h" />
-    <ClInclude Include="$(CasablancaIncludeDir)\pplx.h" />
-    <ClInclude Include="$(CasablancaIncludeDir)\pplxatomics.h" />
-    <ClInclude Include="$(CasablancaIncludeDir)\pplxconv.h" />
-    <ClInclude Include="$(CasablancaIncludeDir)\pplxdefs.h" />
-    <ClInclude Include="$(CasablancaIncludeDir)\pplxinterface.h" />
-    <ClInclude Include="$(CasablancaIncludeDir)\pplxlinux.h" />
-    <ClInclude Include="$(CasablancaIncludeDir)\pplxtasks.h" />
-    <ClInclude Include="$(CasablancaIncludeDir)\pplxwin.h" />
-    <ClInclude Include="$(CasablancaIncludeDir)\producerconsumerstream.h" />
-    <ClInclude Include="$(CasablancaIncludeDir)\rawptrstream.h" />
-    <ClInclude Include="$(CasablancaIncludeDir)\SafeInt3.hpp" />
-    <ClInclude Include="$(CasablancaIncludeDir)\streams.h" />
-    <ClInclude Include="$(CasablancaIncludeDir)\targetver.h" />
-    <ClInclude Include="$(CasablancaIncludeDir)\threadpool.h" />
-    <ClInclude Include="$(CasablancaIncludeDir)\uri.h" />
-    <ClInclude Include="$(CasablancaIncludeDir)\uri_parser.h" />
-    <ClInclude Include="$(CasablancaIncludeDir)\windows_compat.h" />
-    <ClInclude Include="$(CasablancaIncludeDir)\xxpublic.h" />
+    <ClInclude Include="$(CasablancaSrcDir)\pch\stdafx.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\astreambuf.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\asyncrt_utils.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\base_uri.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\basic_types.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\containerstream.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\fileio.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\filestream.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\globals.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\http_client.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\http_constants.dat" />
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\http_helpers.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\http_msg.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\interopstream.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\pplx\ioscheduler.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\json.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\compat\linux_compat.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\compat\nosal.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\pplx\pplx.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\pplx\pplxconv.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\pplx\pplxinterface.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\pplx\pplxtasks.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\pplx\pplxwin.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\producerconsumerstream.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\rawptrstream.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\compat\SafeInt3.hpp" />
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\streams.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\targetver.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\pplx\threadpool.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\uri.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\uri_parser.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\compat\windows_compat.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\xxpublic.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\pplx\pplxcancellation_token.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\uri_builder.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\filelog.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\http_listener.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\http_server.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\http_server_api.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\http_windows_server.h" />
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\log.h" />
+    <ClInclude Include="$(CasablancaSrcDir)\http\client\http_client_impl.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="$(CasablancaSrcDir)\http\client\http_client.cpp" />
     <ClCompile Include="$(CasablancaSrcDir)\http\client\http_msg_client.cpp" />
     <ClCompile Include="$(CasablancaSrcDir)\http\common\http_helpers.cpp" />
     <ClCompile Include="$(CasablancaSrcDir)\http\common\http_msg.cpp" />
@@ -274,9 +278,16 @@
     <ClCompile Include="$(CasablancaSrcDir)\http\uri\uri_builder.cpp" />
     <ClCompile Include="$(CasablancaSrcDir)\http\uri\uri_parser.cpp" />
     <ClCompile Include="$(CasablancaSrcDir)\utilities\asyncrt_utils.cpp" />
+    <ClCompile Include="$(CasablancaSrcDir)\utilities\base64.cpp" />
     <ClCompile Include="$(CasablancaSrcDir)\utilities\dllmain.cpp" />
     <ClCompile Include="$(CasablancaSrcDir)\pplx\pplx.cpp" />
     <ClCompile Include="$(CasablancaSrcDir)\pplx\windows\pplxwin.cpp" />
+    <ClCompile Include="$(CasablancaSrcDir)\http\client\http_win7.cpp" />
+    <ClCompile Include="$(CasablancaSrcDir)\http\listener\http_listener.cpp" />
+    <ClCompile Include="$(CasablancaSrcDir)\http\listener\http_msg_listen.cpp" />
+    <ClCompile Include="$(CasablancaSrcDir)\http\listener\http_server_api.cpp" />
+    <ClCompile Include="$(CasablancaSrcDir)\http\listener\http_windows_server.cpp" />
+    <ClCompile Include="$(CasablancaSrcDir)\http\logging\log.cpp" />
     <ClCompile Include="$(CasablancaSrcDir)\pch\stdafx.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>

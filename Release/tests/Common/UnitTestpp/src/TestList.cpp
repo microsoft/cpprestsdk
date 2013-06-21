@@ -64,7 +64,7 @@ Test* TestList::GetFirst() const
 
 bool TestList::IsEmpty() const
 {
-    return m_head == m_tail;
+    return m_head == nullptr;
 }
 
 ListAdder::ListAdder(TestList& list, Test* test, ...)

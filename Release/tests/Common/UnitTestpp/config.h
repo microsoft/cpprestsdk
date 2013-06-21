@@ -84,10 +84,10 @@
 //#define UNITTEST_NO_EXCEPTIONS
 
 #ifdef _MS_WINDOWS
-#include <windows_compat.h>
+#include <compat/windows_compat.h>
 #else
 #include <stdint.h>
-#include <linux_compat.h>
+#include <compat/linux_compat.h>
 #endif
 
 #endif

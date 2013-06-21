@@ -144,7 +144,7 @@ namespace helpers
  SUITE(pplxtask_tests)
  {
 
-TEST(TestCancellationTokenRegression)
+TEST(TestCancellationTokenRegression, "Ignore", "707149")
 {
     for (int i=0; i < 50000; i++)
     {

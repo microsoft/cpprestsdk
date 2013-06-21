@@ -20,6 +20,6 @@
 #include <collection.h>
 #include "App.xaml.h"
 #include "MainPage.xaml.h"
-#include <pplxtasks.h>
-#include <basic_types.h>
+#include <pplx/pplxtasks.h>
+#include <cpprest/basic_types.h>
 #include "live_connect.h"

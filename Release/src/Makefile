@@ -1,19 +1,25 @@
 LIBRARY=libcasablanca.so
 
 SOURCES = \
-	http/client/http_msg_client.cpp \
-	http/client/http_client.cpp \
-	http/common/http_msg.cpp \
-	http/common/http_helpers.cpp \
 	streams/linux/fileio_linux.cpp \
 	json/json.cpp \
 	utilities/asyncrt_utils.cpp \
 	pplx/linux/pplxlinux.cpp \
-    pplx/pplx.cpp \
+        pplx/pplx.cpp \
 	pplx/threadpool.cpp \
 	http/uri/uri.cpp \
 	http/uri/uri_builder.cpp \
-	http/uri/uri_parser.cpp
+	http/uri/uri_parser.cpp \
+	http/common/http_msg.cpp \
+	http/common/http_helpers.cpp \
+	http/client/http_msg_client.cpp \
+	http/client/http_linux.cpp \
+	http/listener/http_linux_server.cpp \
+	http/listener/http_listener.cpp \
+	http/listener/http_msg_listen.cpp \
+	http/listener/http_server_api.cpp \
+	http/logging/log.cpp \
+	utilities/base64.cpp
 
 HEADERS = \
 	../include/astreambuf.h \
@@ -27,8 +33,8 @@ HEADERS = \
 	../include/http_lib.h \
 	../include/http_msg.h \
 	../include/json.h \
-    ../include/pplxatomics.h \
-    ../include/pplxlinux.h \
+	../include/pplxatomics.h \
+	../include/pplxlinux.h \
 	../include/pplxdefs.h \
 	../include/pplx.h \
 	../include/pplxtasks.h \
@@ -41,7 +47,7 @@ HEADERS = \
 	../include/threadpool.h \
 	../include/stdafx.h
 
-PCH = include/stdafx.h
+PCH = ./pch/stdafx.h
 
 PRECOMPILED_HEADERS = $(addsuffix .gch, $(PCH))
 OBJECTS = $(addsuffix .$(MODE).o, $(basename $(SOURCES)))
@@ -53,7 +59,7 @@ PKGCONFIG_LIBS = $(shell pkg-config libxml++-2.6 --libs) $(shell pkg-config libs
 
 #-fpch-deps -MMD not useful with a single monolithic PCH
 
-CXXFLAGS = -fPIC $(STRICT_BASE_CXXFLAGS) -I../include -I../include/pch $(WARNINGS) $(PKGCONFIG_CFLAGS)
+CXXFLAGS = -fPIC -std=c++11 $(STRICT_BASE_CXXFLAGS) -I../include -I./pch $(WARNINGS) $(PKGCONFIG_CFLAGS)
 LIBS = $(PKGCONFIG_LIBS) -lboost_system -lboost_thread -lboost_locale -pthread -lstdc++ -lm # these are explicit for clang
 LDFLAGS = $(BASE_LDFLAGS)
 

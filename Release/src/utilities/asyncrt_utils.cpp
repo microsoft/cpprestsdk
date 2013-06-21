@@ -18,6 +18,8 @@
 *
 * asyncrt_utils.cpp - Utilities
 *
+* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
+*
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 
@@ -25,22 +27,18 @@
 
 #if defined(__cplusplus_winrt)
 using namespace Platform;
-using namespace Windows::Security::Cryptography;
-using namespace Windows::Security::Cryptography::Core;
 using namespace Windows::Storage::Streams;
 #endif // #if !defined(__cplusplus_winrt)
 
-#ifdef _MS_WINDOWS
-#include <WinCrypt.h>
-#else
-#include <glib.h>
+#if !defined(_MS_WINDOWS)
 #include <boost/locale.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/posix_time/posix_time_io.hpp>
 using namespace boost::locale::conv;
 #endif
 
-using namespace web; using namespace utility;
+using namespace web;
+using namespace utility;
 using namespace utility::conversions;
 
 namespace utility
@@ -64,8 +62,8 @@ const std::error_category & __cdecl platform_category()
 
 const std::error_category & __cdecl windows_category()
 {
-	static details::windows_category_impl instance;
-	return instance;
+    static details::windows_category_impl instance;
+    return instance;
 }
 
 std::string windows_category_impl::message(int errorCode) const
@@ -145,7 +143,7 @@ const std::error_category & __cdecl linux_category()
 {
     // On Linux we are using boost error codes which have the exact same
     // mapping and are equivalent with std::generic_category error codes.
-	return std::generic_category();
+    return std::generic_category();
 }
 
 #endif
@@ -377,38 +375,6 @@ utility::string_t __cdecl conversions::to_string_t(const utf16string &s)
 #endif
 }
 
-std::vector<unsigned char> __cdecl conversions::from_base64(const utility::string_t& str)
-{
-#if defined(__cplusplus_winrt)
-
-    Platform::String^ Str = ref new Platform::String(str.c_str());
-    IBuffer^ buffer = CryptographicBuffer::DecodeFromBase64String(Str);
-
-    std::vector<unsigned char> decodedData(static_cast<size_t>(buffer->Length), 0);
-    Platform::Array<unsigned char, 1>^ arr;
-
-    CryptographicBuffer::CopyToByteArray(buffer, &arr);
-    memcpy(&decodedData[0], arr->Data, arr->Length);
-    return decodedData;
-
-#elif defined(WIN32)
-    DWORD outputSize = 0;
-    CryptStringToBinaryW(str.c_str(), (DWORD)str.size(), CRYPT_STRING_BASE64, NULL, &outputSize, NULL, NULL);
-
-    std::vector<unsigned char> decodedData(static_cast<size_t>(outputSize));
-    CryptStringToBinaryW(str.c_str(), (DWORD)str.size(), CRYPT_STRING_BASE64, decodedData.data(), &outputSize, NULL, NULL);
-    return decodedData;
-#else // linux
-    gsize len;
-    auto data = g_base64_decode(str.data(), &len);
-    std::vector<unsigned char> result;
-    for (gsize i = 0; i < len; ++i)
-        result.push_back(data[i]);
-    g_free(data);
-    return result;
-#endif
-}
-
 std::string __cdecl conversions::to_utf8string(const std::string &value) { return value; }
 
 std::string __cdecl conversions::to_utf8string(const utf16string &value) { return utf16_to_utf8(value); }
@@ -418,61 +384,6 @@ utf16string __cdecl conversions::to_utf16string(const std::string &value) { retu
 utf16string __cdecl conversions::to_utf16string(const utf16string &value) { return value; }
 
 
-utility::string_t __cdecl conversions::to_base64(const std::vector<unsigned char>& input)
-{
-    if (input.size() == 0)
-    {
-        // return empty string
-        return utility::string_t();
-    }
-
-#if defined(__cplusplus_winrt)
-    Array<unsigned char, 1>^ arr = ref new Array<unsigned char, 1>((unsigned char*)input.data(), (unsigned int)input.size());
-    IBuffer^ buffer = CryptographicBuffer::CreateFromByteArray(arr);
-
-    Platform::String^ Str = CryptographicBuffer::EncodeToBase64String(buffer);
-    return utility::string_t(Str->Data());
-#elif defined(WIN32)
-    DWORD inputSize = static_cast<DWORD>(input.size() & 0xFFFFFFFF);
-    DWORD outputSize = 0;
-    CryptBinaryToStringW((BYTE*) input.data(), inputSize, CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF, NULL, &outputSize);
-
-    utility::string_t encodedString(outputSize - 1, '\0');
-    CryptBinaryToStringW((BYTE*) input.data(), inputSize, CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF, &encodedString[0], &outputSize);
-
-    return encodedString;
-#else // linux
-    auto data = g_base64_encode(input.data(), input.size());
-    std::string result(data);
-    g_free(data);
-    return result;
-#endif
-}
-
-utility::string_t __cdecl conversions::to_base64(uint64_t input)
-{
-#if defined(__cplusplus_winrt)
-    Array<unsigned char, 1>^ arr = ref new Array<unsigned char, 1>((unsigned char*)&input, (unsigned int)sizeof(input));
-    IBuffer^ buffer = CryptographicBuffer::CreateFromByteArray(arr);
-
-    Platform::String^ Str = CryptographicBuffer::EncodeToBase64String(buffer);
-    return utility::string_t(Str->Data());
-#elif defined(WIN32)
-    DWORD inputSize = static_cast<DWORD>(sizeof(input));
-    DWORD outputSize = 0;
-    CryptBinaryToStringW((BYTE*) &input, inputSize, CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF, NULL, &outputSize);
-
-    utility::string_t encodedString(outputSize - 1, '\0');
-    CryptBinaryToStringW((BYTE*) &input, inputSize, CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF, &encodedString[0], &outputSize);
-
-    return encodedString;
-#else // linux
-    auto data = g_base64_encode(reinterpret_cast<const guchar*>(&input), sizeof(input));
-    std::string result(data);
-    g_free(data);
-    return result;
-#endif
-}
 #pragma endregion
 
 #pragma region datetime
@@ -596,10 +507,10 @@ utility::string_t datetime::to_string(date_format format) const
 datetime __cdecl datetime::from_string(const utility::string_t& dateString, date_format format)
 {
 #ifdef _MS_WINDOWS
-    SYSTEMTIME sysTime = {0};
-    
     if ( format == RFC_1123 )
     {
+        SYSTEMTIME sysTime = {0};
+    
         std::wstring month(3, L'\0');
         std::wstring unused(3, L'\0');
 
@@ -637,26 +548,85 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
     }
     else if ( format == ISO_8601 )
     {
-        const wchar_t * formatString = L"%4d-%2d-%2dT%2d:%2d:%2dZ";
-        auto n = swscanf_s(dateString.c_str(), formatString, 
-            &sysTime.wYear,  
-            &sysTime.wMonth,  
-            &sysTime.wDay, 
-            &sysTime.wHour, 
-            &sysTime.wMinute, 
-            &sysTime.wSecond);
-
-        if (n == 6)
         {
-            FILETIME fileTime;
+            SYSTEMTIME sysTime = {0};
+    
+            const wchar_t * formatString = L"%4d-%2d-%2dT%2d:%2d:%2dZ";
+            auto n = swscanf_s(dateString.c_str(), formatString, 
+                &sysTime.wYear,  
+                &sysTime.wMonth,  
+                &sysTime.wDay, 
+                &sysTime.wHour, 
+                &sysTime.wMinute, 
+                &sysTime.wSecond);
 
-            if (SystemTimeToFileTime(&sysTime, &fileTime))
+            if (n == 3 || n == 6)
             {
-                ULARGE_INTEGER largeInt;
-                largeInt.LowPart = fileTime.dwLowDateTime;
-                largeInt.HighPart = fileTime.dwHighDateTime;
+                FILETIME fileTime;
 
-                return datetime(largeInt.QuadPart);  
+                if (SystemTimeToFileTime(&sysTime, &fileTime))
+                {
+                    ULARGE_INTEGER largeInt;
+                    largeInt.LowPart = fileTime.dwLowDateTime;
+                    largeInt.HighPart = fileTime.dwHighDateTime;
+
+                    return datetime(largeInt.QuadPart);  
+                }
+            }
+        }
+        {
+            SYSTEMTIME sysTime = {0};
+            DWORD date = 0;
+
+            const wchar_t * formatString = L"%8dT%2d:%2d:%2dZ";
+            auto n = swscanf_s(dateString.c_str(), formatString, 
+                &date, 
+                &sysTime.wHour, 
+                &sysTime.wMinute, 
+                &sysTime.wSecond);
+
+            if (n == 1 || n == 4)
+            {
+                FILETIME fileTime;
+
+                sysTime.wDay = date % 100;
+                date /= 100;
+                sysTime.wMonth = date % 100;
+                date /= 100;
+                sysTime.wYear = (WORD)date;
+
+                if (SystemTimeToFileTime(&sysTime, &fileTime))
+                {
+                    ULARGE_INTEGER largeInt;
+                    largeInt.LowPart = fileTime.dwLowDateTime;
+                    largeInt.HighPart = fileTime.dwHighDateTime;
+
+                    return datetime(largeInt.QuadPart);  
+                }
+            }
+        }
+        {
+            SYSTEMTIME sysTime = {0};
+            GetSystemTime(&sysTime);    // Fill date portion with today's information
+    
+            const wchar_t * formatString = L"%2d:%2d:%2dZ";
+            auto n = swscanf_s(dateString.c_str(), formatString, 
+                &sysTime.wHour, 
+                &sysTime.wMinute, 
+                &sysTime.wSecond);
+
+            if (n == 3)
+            {
+                FILETIME fileTime;
+
+                if (SystemTimeToFileTime(&sysTime, &fileTime))
+                {
+                    ULARGE_INTEGER largeInt;
+                    largeInt.LowPart = fileTime.dwLowDateTime;
+                    largeInt.HighPart = fileTime.dwHighDateTime;
+
+                    return datetime(largeInt.QuadPart);  
+                }
             }
         }
     }
@@ -666,9 +636,36 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
     std::string input(dateString);
 
     struct tm output = tm();
-    strptime(input.data(), format == RFC_1123 
-        ? "%a, %d %b %Y %H:%M:%S GMT"
-        : "%Y-%m-%dT%H:%M:%SZ", &output);
+
+    if ( format == RFC_1123 )
+    {
+        strptime(input.data(), "%a, %d %b %Y %H:%M:%S GMT", &output);
+    } 
+    else
+    {
+        auto result = strptime(input.data(), "%Y-%m-%dT%H:%M:%SZ", &output);
+       
+        if ( result == nullptr )
+        {
+            result = strptime(input.data(), "%Y%m%dT%H:%M:%SZ", &output);
+        }
+        if ( result == nullptr )
+        {
+            result = strptime(input.data(), "%H:%M:%SZ", &output);
+        }
+        if ( result == nullptr )
+        {
+            result = strptime(input.data(), "%Y-%m-%d", &output);
+        }
+        if ( result == nullptr )
+        {
+            result = strptime(input.data(), "%Y%m%d", &output);
+        }
+        if ( result == nullptr )
+        {
+            return datetime();
+        }
+    } 
 
     time_t time = timegm(&output);
 
@@ -714,33 +711,33 @@ utility::string_t __cdecl timespan::seconds_to_xml_duration(utility::seconds dur
     // PdaysDThoursHminutesMsecondsS
     utility::ostringstream_t oss;
 
-    oss << U("P");
+    oss << _XPLATSTR("P");
     if (numDays > 0)
     {
-        oss << numDays << U("D");
+        oss << numDays << _XPLATSTR("D");
     }
     
-    oss << U("T");
+    oss << _XPLATSTR("T");
 
     if (numHours > 0)
     {
-        oss << numHours << U("H");
+        oss << numHours << _XPLATSTR("H");
     }
 
     if (numMins > 0)
     {
-        oss << numMins << U("M");
+        oss << numMins << _XPLATSTR("M");
     }
 
     if (numSecs > 0)
     {
-        oss << numSecs << U("S");
+        oss << numSecs << _XPLATSTR("S");
     }
 
     return oss.str();
 }
 
-static bool is_digit(utility::char_t c) { return c >= U('0') && c <= U('9'); }
+static bool is_digit(utility::char_t c) { return c >= _XPLATSTR('0') && c <= _XPLATSTR('9'); }
 
 /// <summary>
 /// Converts an xml duration to timespan/interval in seconds

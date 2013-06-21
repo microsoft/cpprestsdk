@@ -245,7 +245,7 @@ TEST(extract_on_space)
 {
     const int number1 = 42;
     const int number2 = 123;
-    
+
     auto open = OPENSTR_W<uint8_t>(U("SpaceWithNumber.txt"), std::ios::trunc);
     auto stream = open.get();
     VERIFY_IS_TRUE(open.is_done());
@@ -253,7 +253,7 @@ TEST(extract_on_space)
     stream.print(number1).wait();
     stream.print("\n \t").wait();
     stream.print(number2).wait();
-    stream.print("   ").wait();
+    stream.print(" \f \v ").wait();
     stream.close().wait();
 
     auto istream = OPENSTR_R<uint8_t>(U("SpaceWithNumber.txt")).get();
@@ -262,8 +262,103 @@ TEST(extract_on_space)
     VERIFY_ARE_EQUAL(number2, istream.extract<long long>().get());
 }
 
+TEST(extract_floating_point)
+{
+    string_t file_name = U("FloatingNumber.txt");
+
+    auto open = OPENSTR_W<uint8_t>(file_name, std::ios::trunc);
+    auto stream = open.get();
+    VERIFY_IS_TRUE(open.is_done());
+
+    stream.print(" 9.81E05 3.14");
+    stream.print(" 2.71.5");    // two numbers merged after comma
+    stream.print(" 6E+4.5");    // two numbers merged in exponent
+    stream.print(" 6E-4.5");    // two numbers merged in exponent
+    stream.print(" 3.14 -10 +42.0 -1234.567 .01 +0 -0");
+    stream.print(" 12345678901234567890123456789012345678901234567890");    // a big number
+    stream.print(" 9.81E05 6.0221413e+23 1.6e-14");                         // numbers with exponent
+    stream.print(" 6.");                                                    // a number ending with a dot
+    stream.close().wait();
+
+    auto istream_double = OPENSTR_R<uint8_t>(file_name).get();
+    auto istream_float = OPENSTR_R<uint8_t>(file_name).get();
+    std::fstream std_istream(file_name);
+
+    do
+    {
+        double expected=0, actual;
+        std_istream >> expected;
+        
+        VERIFY_ARE_EQUAL(expected, actual = istream_double.extract<double>().get());
+        
+        if (actual <= std::numeric_limits<float>::max())
+            VERIFY_ARE_EQUAL(float(expected), istream_float.extract<float>().get());
+        else
+            VERIFY_THROWS(istream_float.extract<float>().get(), std::exception);
+
+        // Checking positive and negative zero's by dividing 1 with it. They should result in positive and negative infinity.
+        if (expected == 0)
+            VERIFY_ARE_EQUAL(1 / expected, 1 / actual);
+
+    } while (!std_istream.eof());
+}
+
+TEST(extract_floating_point_with_exceptions)
+{
+    string_t file_name = U("FloatingNumberExceptions.txt");
+
+    std::vector<std::pair<std::string, std::string>> tests;
+    
+    tests.push_back(std::pair<std::string, std::string>("a", "Invalid character 'a'"));
+    tests.push_back(std::pair<std::string, std::string>("x", "Invalid character 'x'"));
+    tests.push_back(std::pair<std::string, std::string>("e", "Invalid character 'e'"));
+    tests.push_back(std::pair<std::string, std::string>("E", "Invalid character 'E'"));
+    tests.push_back(std::pair<std::string, std::string>("6.022e+t", "Invalid character 't' in exponent"));
+    tests.push_back(std::pair<std::string, std::string>("9.81e-.", "Invalid character '.' in exponent"));
+    tests.push_back(std::pair<std::string, std::string>("9.81e-", "Incomplete exponent"));
+    tests.push_back(std::pair<std::string, std::string>("1.2e+", "Incomplete exponent"));
+    tests.push_back(std::pair<std::string, std::string>("10E+-23", "The exponent sign already set"));
+    tests.push_back(std::pair<std::string, std::string>("15E-+45", "The exponent sign already set"));
+    tests.push_back(std::pair<std::string, std::string>("5.34e", "Incomplete exponent"));
+    tests.push_back(std::pair<std::string, std::string>("2E+308", "The value is too big"));
+    tests.push_back(std::pair<std::string, std::string>("-2E+308", "The value is too big"));
+	tests.push_back(std::pair<std::string, std::string>("1E-324", "The value is too small"));
+    tests.push_back(std::pair<std::string, std::string>("-1E-324", "The value is too small"));
+
+    for (auto iter = tests.begin(); iter != tests.end(); iter++)
+    {
+        auto open = OPENSTR_W<uint8_t>(file_name, std::ios::trunc);
+        auto stream = open.get();
+        VERIFY_IS_TRUE(open.is_done());
+        stream.print(iter->first);
+        stream.close().wait();
+
+        auto istream_double = OPENSTR_R<uint8_t>(file_name).get();
+        
+        std::fstream std_istream(file_name);
+        double x;
+        VERIFY_IS_TRUE(std_istream.good());
+        std_istream >> x;
+        VERIFY_IS_FALSE(std_istream.good());
+
+        try
+        {
+            istream_double.extract<double>().get();
+            VERIFY_IS_TRUE(false, "No exception has been thrown");
+        }
+        catch (const std::exception& exc)
+        {
+            VERIFY_ARE_EQUAL(std::string(exc.what()), iter->second);
+        }
+        catch (...)
+        {
+            VERIFY_IS_TRUE(false, "A wrong exception has been thrown");
+        }
+    }
+}
+
 TEST(file_sequential_write)
-{ 
+{
     auto open = OPENSTR_W<uint8_t>(U("WriteFileSequential.txt"), std::ios::trunc);
     auto stream = open.get();
 
@@ -325,7 +420,7 @@ TEST(streambuf_close_with_exception_write)
 
     const size_t size = 4;
     char targetBuf[size];
-	auto t1 = sourceBuf.putn(targetBuf, size);
+    auto t1 = sourceBuf.putn(targetBuf, size);
     VERIFY_THROWS(t1.get(), std::invalid_argument);
 }
 
@@ -336,7 +431,7 @@ TEST(stream_close_with_exception_write)
     outStream.close(std::make_exception_ptr(std::invalid_argument("custom exception"))).wait();
 
     container_buffer<std::string> targetBuf("test data");
-	auto t1 = outStream.write(targetBuf, 4);
+    auto t1 = outStream.write(targetBuf, 4);
     VERIFY_THROWS(t1.get(), std::invalid_argument);
 }
 
@@ -348,9 +443,9 @@ TEST(input_after_close)
 
     container_buffer<std::string> targetBuf;
 
-	auto t1 = outStream.flush();
-	auto t2 = outStream.print('a');
-	auto t3 = outStream.print(std::string("abc"));
+    auto t1 = outStream.flush();
+    auto t2 = outStream.print('a');
+    auto t3 = outStream.print(std::string("abc"));
 
     VERIFY_THROWS(t1.get(), std::runtime_error);
     VERIFY_THROWS(t2.get(), std::runtime_error);
@@ -359,8 +454,8 @@ TEST(input_after_close)
     VERIFY_THROWS(outStream.seek(0, std::ios::beg), std::runtime_error);
     VERIFY_THROWS(outStream.tell(), std::runtime_error);
 
-	auto t4 = outStream.write('a'); 
-	auto t5 = outStream.write(targetBuf, 1);
+    auto t4 = outStream.write('a'); 
+    auto t5 = outStream.write(targetBuf, 1);
     VERIFY_THROWS(t4.get(), std::runtime_error);
     VERIFY_THROWS(t5.get(), std::runtime_error);
 }

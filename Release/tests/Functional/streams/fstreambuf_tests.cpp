@@ -300,7 +300,7 @@ TEST(ReadSingleChar_bumpc1)
     VERIFY_IS_FALSE(stream.is_open());
 }
 
-TEST(SequentialReadWrite, "Ignore", "650570")
+TEST(SequentialReadWrite)
 {
     utility::string_t fname = U("SequentialReadWrite.txt");
 
@@ -343,6 +343,7 @@ TEST(SequentialReadWrite, "Ignore", "650570")
     for (size_t i = 0; i < t.size(); i++)
         t[i].wait();
 }
+
 
 #ifdef _MS_WINDOWS
 TEST(ReadSingleChar_bumpcw)
@@ -840,18 +841,18 @@ TEST(CloseWithException)
 {
     struct MyException {};
     auto streambuf = OPEN_W<char>(U("CloseExceptionTest.txt")).get();
-    streambuf.close(std::ios::out, std::make_exception_ptr(MyException()));
+    streambuf.close(std::ios::out, std::make_exception_ptr(MyException())).wait();
     VERIFY_THROWS(streambuf.putn("this is good", 10).get(), MyException);
     VERIFY_THROWS(streambuf.putc('c').get(), MyException);
 
     streambuf = OPEN_R<char>(U("CloseExceptionTest.txt")).get();
-    streambuf.close(std::ios::in, std::make_exception_ptr(MyException()));
+    streambuf.close(std::ios::in, std::make_exception_ptr(MyException())).wait();
     char buf[100];
     VERIFY_THROWS(streambuf.getn(buf, 100).get(), MyException);
     VERIFY_THROWS(streambuf.getc().get(), MyException);
 }
 
-TEST(inout_regression_test)
+TEST(inout_regression_test, "Ignore", "TFS#721097")
 {
     std::string data = "abcdefghijklmn";
     concurrency::streams::streambuf<char> file_buf = OPEN<char>(U("inout_regression_test.txt"), std::ios_base::in|std::ios_base::out).get();

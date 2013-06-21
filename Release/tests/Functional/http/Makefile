@@ -1,4 +1,4 @@
-SUBDIRS = utilities client
+SUBDIRS = utilities client listener
 
 .PHONY: subdirs $(SUBDIRS)
 

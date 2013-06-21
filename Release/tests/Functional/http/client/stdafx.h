@@ -25,12 +25,12 @@
 
 #pragma once
 
-#include "http_client.h"
-#include "asyncrt_utils.h"
-#include "rawptrstream.h"
-#include "containerstream.h"
-#include "producerconsumerstream.h"
-#include "filestream.h"
+#include "cpprest/http_client.h"
+#include "cpprest/asyncrt_utils.h"
+#include "cpprest/rawptrstream.h"
+#include "cpprest/containerstream.h"
+#include "cpprest/producerconsumerstream.h"
+#include "cpprest/filestream.h"
 
 #include "http_client_tests.h"
 #include "http_test_utilities.h"

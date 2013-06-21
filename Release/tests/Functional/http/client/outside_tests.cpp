@@ -24,7 +24,7 @@
 ****/
 
 #include "stdafx.h"
-#include "rawptrstream.h"
+#include "cpprest/rawptrstream.h"
 
 using namespace web; 
 using namespace utility;
@@ -92,7 +92,7 @@ TEST_FIXTURE(uri_address, reading_google_stream,
     uint8_t chars[81];
     memset(chars, 0, sizeof(chars));
 
-	streams::rawptr_buffer<uint8_t> temp(chars, sizeof(chars));
+    streams::rawptr_buffer<uint8_t> temp(chars, sizeof(chars));
     VERIFY_ARE_EQUAL(response.body().read(temp, 80).get(), 80);
     VERIFY_ARE_EQUAL(strcmp((const char *)chars, "<!doctype html><html itemscope=\"itemscope\" itemtype=\"http://schema.org/WebPage\">"), 0);
 }

@@ -57,7 +57,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;HTTPTESTUTILITY_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);..\include;$(TestListenerPath)\include</AdditionalIncludeDirectories>
-	  <AdditionalOptions>-Zm200 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-Zm200 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -72,7 +72,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;HTTPTESTUTILITY_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);..\include;$(TestListenerPath)\include</AdditionalIncludeDirectories>
-	  <AdditionalOptions>-Zm200 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-Zm200 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -89,7 +89,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;HTTPTESTUTILITY_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);..\include;$(TestListenerPath)\include</AdditionalIncludeDirectories>
-	  <AdditionalOptions>-Zm200 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-Zm200 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -108,7 +108,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;HTTPTESTUTILITY_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);..\include;$(TestListenerPath)\include</AdditionalIncludeDirectories>
-	  <AdditionalOptions>-Zm200 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-Zm200 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -126,11 +126,8 @@
     <ProjectReference Include="$(CasablancaSrcDir)\vs10\casablanca100.vcxproj">
       <Project>{4A8DDC8B-BF1C-4F5F-B3A4-DD93199F117B}</Project>
     </ProjectReference>
-	<ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs10\UnitTestpp100.vcxproj">
+    <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs10\UnitTestpp100.vcxproj">
       <Project>{b149500c-ffff-463a-8c29-b4ff9b3fd6f9}</Project>
-    </ProjectReference>
-	<ProjectReference Include="$(TestListenerPath)\vs10\testlistener100.vcxproj">
-		<Project>{986d9cd2-26d7-4db0-a1b4-a9734fd9c95d}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
@@ -138,7 +135,7 @@
     <ClCompile Include="..\test_http_client.cpp" />
     <ClCompile Include="..\test_server_utilities.cpp" />
     <ClCompile Include="..\test_http_server.cpp" />
-	<ClCompile Include="..\stdafx.cpp">
+    <ClCompile Include="..\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

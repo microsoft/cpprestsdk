@@ -23,8 +23,8 @@
 ****/
 
 #include "stdafx.h"
-#include "filestream.h"
-#include "containerstream.h"
+#include "cpprest/filestream.h"
+#include "cpprest/containerstream.h"
 
 using namespace web; 
 

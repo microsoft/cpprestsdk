@@ -149,7 +149,7 @@ void TestRunner::RunTest(TestResults* const result, Test* const curTest, int con
         }
 #else
         // Timed wait requires async execution.
-        std::future<void> testRunnerFuture = std::async(std::launch::async, [&]()
+        auto testRunnerFuture = std::async(std::launch::async, [&]()
 		{
 			curTest->Run();
 		});

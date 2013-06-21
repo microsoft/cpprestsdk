@@ -5,6 +5,7 @@
   <ItemGroup>
       <ProjectFile Include="utilities\dirs.proj"/>
       <ProjectFile Include="client\dirs.proj"/>
+      <ProjectFile Include="listener\dirs.proj"/>
   </ItemGroup>
 
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />

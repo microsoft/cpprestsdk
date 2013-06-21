@@ -20,6 +20,8 @@
 *
 * HTTP Library: Request and reply message definitions (client side).
 *
+* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
+*
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 #include "stdafx.h"
@@ -32,7 +34,7 @@ namespace web { namespace http
 uri details::_http_request::relative_uri() const
 {
     // If the listener path is empty, then just return the request URI.
-    if(m_listener_path.empty() || m_listener_path == U("/"))
+    if(m_listener_path.empty() || m_listener_path == _XPLATSTR("/"))
     {
         return m_uri.resource();
     }
@@ -41,7 +43,7 @@ uri details::_http_request::relative_uri() const
     utility::string_t path = uri::decode(m_uri.resource().to_string());
     if(path.empty())
     {
-        path = U("/");
+        path = _XPLATSTR("/");
     }
 
     auto pos = path.find(prefix);
@@ -51,7 +53,7 @@ uri details::_http_request::relative_uri() const
     }
     else
     {
-        throw http_exception(U("Error: request was not prefixed with listener uri"));
+        throw http_exception(_XPLATSTR("Error: request was not prefixed with listener uri"));
     }    
 }
 
@@ -63,7 +65,7 @@ void details::_http_request::set_request_uri(const uri& relative)
 utility::string_t details::_http_request::to_string() const
 {
     utility::ostringstream_t buffer;
-    buffer << m_method << U(" ") << (this->m_uri.is_empty() ? U("/") : this->m_uri.to_string()) << U(" HTTP/1.1\r\n");
+    buffer << m_method << _XPLATSTR(" ") << (this->m_uri.is_empty() ? _XPLATSTR("/") : this->m_uri.to_string()) << _XPLATSTR(" HTTP/1.1\r\n");
     buffer << http_msg_base::to_string();
     return buffer.str();
 }
@@ -78,7 +80,7 @@ utility::string_t details::_http_response::to_string() const
         static http_status_to_phrase idToPhraseMap[] = {
 #define _PHRASES
 #define DAT(a,b,c) {status_codes::a, c},
-#include "http_constants.dat"
+#include "cpprest/http_constants.dat"
 #undef _PHRASES
 #undef DAT
         };
@@ -94,7 +96,7 @@ utility::string_t details::_http_response::to_string() const
     }
 
     utility::ostringstream_t buffer;
-    buffer << U("HTTP/1.1 ") << m_status_code << U(" ") << reason_phrase << U("\r\n");
+    buffer << _XPLATSTR("HTTP/1.1 ") << m_status_code << _XPLATSTR(" ") << reason_phrase << _XPLATSTR("\r\n");
 
     buffer << http_msg_base::to_string();
     return buffer.str();

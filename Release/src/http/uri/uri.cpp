@@ -20,11 +20,13 @@
 *
 * Protocol independent support for URIs.
 *
+* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
+*
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 
 #include "stdafx.h"
-#include "uri_parser.h"
+#include "cpprest/uri_parser.h"
 
 #define INTERNET_MAX_URL_LENGTH (2048)
 
@@ -51,48 +53,48 @@ namespace details
     // canonicalize the path to have a leading slash if it's a full uri
         if (!m_host.empty() && m_path.empty())
     {
-            m_path = U("/");
+            m_path = _XPLATSTR("/");
     }
-        else if (!m_host.empty() && m_path[0] != U('/'))
+        else if (!m_host.empty() && m_path[0] != _XPLATSTR('/'))
     {
-            m_path.insert(m_path.begin(), 1, U('/'));
+            m_path.insert(m_path.begin(), 1, _XPLATSTR('/'));
     }
 
     utility::ostringstream_t os;
 
         if (!m_scheme.empty())
     {
-            os << m_scheme << U(':');
+            os << m_scheme << _XPLATSTR(':');
     }
 
         if (!m_host.empty())
     {
-            os << U("//") << m_host;
+            os << _XPLATSTR("//") << m_host;
 
             if (m_port > 0)
         {
-                os << U(':') << m_port;
+                os << _XPLATSTR(':') << m_port;
         }
     }
 
         if (!m_path.empty())
     {
         // only add the leading slash when the host is present
-            if (!m_host.empty() && m_path.front() != U('/'))
+            if (!m_host.empty() && m_path.front() != _XPLATSTR('/'))
         {
-            os << U('/');
+            os << _XPLATSTR('/');
         }
             os << m_path;
     }
 
         if (!m_query.empty())
     {
-            os << U('?') << m_query;
+            os << _XPLATSTR('?') << m_query;
     }
 
         if (!m_fragment.empty())
     {
-            os << U('#') << m_fragment;
+            os << _XPLATSTR('#') << m_fragment;
     }
 
         return os.str();
@@ -129,7 +131,7 @@ uri::uri(const utility::char_t *uri_string): m_uri(uri_string)
 
 utility::string_t uri::encode_impl(const utility::string_t &raw, const std::function<bool(int)>& should_encode)
 {
-    const utility::char_t * const hex = U("0123456789ABCDEF");
+    const utility::char_t * const hex = _XPLATSTR("0123456789ABCDEF");
     utility::string_t encoded;
     std::string utf8raw = to_utf8string(raw);
     for (auto iter = utf8raw.begin(); iter != utf8raw.end(); ++iter)
@@ -139,7 +141,7 @@ utility::string_t uri::encode_impl(const utility::string_t &raw, const std::func
         // ch should be same under both utf8 and utf16.
         if(should_encode(ch))
         {
-            encoded.push_back(U('%'));
+            encoded.push_back(_XPLATSTR('%'));
             encoded.push_back(hex[(ch >> 4) & 0xF]);
             encoded.push_back(hex[ch & 0xF]);
         }
@@ -238,7 +240,7 @@ utility::string_t uri::decode(const utility::string_t &encoded)
     std::string utf8raw;
     for(auto iter = encoded.begin(); iter != encoded.end(); ++iter)
     {
-        if(*iter == U('%'))
+        if(*iter == _XPLATSTR('%'))
         {
             if(++iter == encoded.end()) 
             { 
@@ -272,7 +274,7 @@ std::vector<utility::string_t> uri::split_path(const utility::string_t &path)
     utility::istringstream_t iss(path);
     utility::string_t s;
 
-    while (std::getline(iss, s, U('/')))
+    while (std::getline(iss, s, _XPLATSTR('/')))
     {
         if (!s.empty())
         {
@@ -291,16 +293,16 @@ std::map<utility::string_t, utility::string_t> uri::split_query(const utility::s
     size_t prev_amp_index = 0;
     while(prev_amp_index != utility::string_t::npos)
     {
-        size_t amp_index = query.find_first_of(U('&'), prev_amp_index);
+        size_t amp_index = query.find_first_of(_XPLATSTR('&'), prev_amp_index);
         if (amp_index == utility::string_t::npos) 
-            amp_index = query.find_first_of(U(';'), prev_amp_index);
+            amp_index = query.find_first_of(_XPLATSTR(';'), prev_amp_index);
 
         utility::string_t key_value_pair = query.substr(
             prev_amp_index, 
             amp_index == utility::string_t::npos ? query.size() - prev_amp_index : amp_index - prev_amp_index);
         prev_amp_index = amp_index == utility::string_t::npos ? utility::string_t::npos : amp_index + 1;
 
-        size_t equals_index = key_value_pair.find_first_of(U('='));
+        size_t equals_index = key_value_pair.find_first_of(_XPLATSTR('='));
         if(equals_index == utility::string_t::npos) 
         {
             continue;
@@ -308,7 +310,7 @@ std::map<utility::string_t, utility::string_t> uri::split_query(const utility::s
         else if (equals_index == 0)
         {
             utility::string_t value(key_value_pair.begin() + equals_index + 1, key_value_pair.end());
-            results[U("")] = value;
+            results[_XPLATSTR("")] = value;
         }
         else
         {

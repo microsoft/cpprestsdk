@@ -480,6 +480,8 @@ void TestTaskTypeTraits()
 
 void Tests()
 {
+#pragma warning(disable: 4127)
+
     // Compile-only, never run
     if( false )
     {
@@ -504,8 +506,8 @@ namespace unittests
 {
 void compile_tests()
 {
-	TestCreateAsyncAndCreateTaskFromAsync();
-	TestTaskTypeTraits();
-	Tests();
+    TestCreateAsyncAndCreateTaskFromAsync();
+    TestTaskTypeTraits();
+    Tests();
 }
 }

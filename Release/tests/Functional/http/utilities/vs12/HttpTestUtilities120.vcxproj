@@ -197,9 +197,6 @@
 	<ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs12\UnitTestpp120.vcxproj">
       <Project>{3EB86C0D-432C-4FFC-BAD4-8DF4EFC7D0FF}</Project>
     </ProjectReference>
-	<ProjectReference Include="$(TestListenerPath)\vs12\testlistener120.vcxproj">
-		<Project>{5614bafa-7605-41d3-945f-7eeb8116398f}</Project>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup Condition="'$(BuildAgainstVSInstallation)'==''">
   	<ProjectReference Include="$(CasablancaSrcDir)\vs12\casablanca120.vcxproj">

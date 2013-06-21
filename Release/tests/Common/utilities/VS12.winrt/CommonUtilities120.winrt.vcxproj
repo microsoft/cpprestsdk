@@ -28,7 +28,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{0c9d50d9-94fb-4732-a4ad-58e068315bb2}</ProjectGuid>
+    <ProjectGuid>{ea2d69a1-55c8-4c15-805e-de7e85872484}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>CommonUtilities120</RootNamespace>
     <SccProjectName>SAK</SccProjectName>

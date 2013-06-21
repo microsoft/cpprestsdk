@@ -34,6 +34,9 @@
     <ClCompile Include="..\proxy_tests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\progress_handler_tests.cpp" >
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\request_helper_tests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

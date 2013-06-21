@@ -30,7 +30,7 @@ using namespace Windows::Storage;
 #endif
 
 #ifndef __cplusplus_winrt
-#include "http_listener.h"
+#include "cpprest/http_listener.h"
 #endif
 
 using namespace web; 
@@ -47,7 +47,7 @@ template<typename _CharType>
 pplx::task<streams::streambuf<_CharType>> OPENSTR_R(const utility::string_t &name)
 {
 #if !defined(__cplusplus_winrt)
-	return streams::file_buffer<_CharType>::open(name, std::ios_base::in);
+    return streams::file_buffer<_CharType>::open(name, std::ios_base::in);
 #else
     auto file = pplx::create_task(
         KnownFolders::DocumentsLibrary->GetFileAsync(ref new Platform::String(name.c_str()))).get();
@@ -118,7 +118,7 @@ TEST_FIXTURE(uri_address, set_response_stream_container_buffer)
     });
 
     {
-		streams::container_buffer<std::vector<uint8_t>> buf;
+        streams::container_buffer<std::vector<uint8_t>> buf;
 
         http_request msg(methods::GET);
         msg.set_response_stream(buf.create_ostream());
@@ -127,7 +127,7 @@ TEST_FIXTURE(uri_address, set_response_stream_container_buffer)
         rsp.content_ready().get();
         VERIFY_ARE_EQUAL(buf.collection().size(), 30);
 
-		char bufStr[31];
+        char bufStr[31];
         memset(bufStr, 0, sizeof(bufStr));
         memcpy(&bufStr[0], &(buf.collection())[0], 30);
         VERIFY_ARE_EQUAL(bufStr, "This is just a bit of a string");
@@ -163,7 +163,7 @@ TEST_FIXTURE(uri_address, response_stream_file_stream)
         char chars[128];
         memset(chars,0,sizeof(chars));
 
-		streams::rawptr_buffer<uint8_t> buffer(reinterpret_cast<uint8_t *>(chars), sizeof(chars));
+        streams::rawptr_buffer<uint8_t> buffer(reinterpret_cast<uint8_t *>(chars), sizeof(chars));
 
         streams::basic_istream<uint8_t> fistream = OPENSTR_R<uint8_t>(U("response_stream.txt")).get();
 
@@ -177,9 +177,13 @@ TEST_FIXTURE(uri_address, response_stream_file_stream)
 
 TEST_FIXTURE(uri_address, response_stream_file_stream_close_early)
 {
+    // The test needs to be a little different between desktop and WinRT.
+    // In the latter case, the server will not see a message, and so the
+    // test will hang. In order to prevent that from happening, we will 
+    // not have a server listening on WinRT.
+#if !defined(__cplusplus_winrt)
     test_http_server::scoped_server scoped(m_uri);
-    test_http_server * p_server = scoped.server();
-    http_client client(m_uri);
+    test_http_server * p_server =  scoped.server();
 
     p_server->next_request().then([&](test_request *p_request)
     {
@@ -187,15 +191,63 @@ TEST_FIXTURE(uri_address, response_stream_file_stream_close_early)
         headers[U("Content-Type")] = U("text/plain");
         p_request->reply(200, U(""), headers, "A world without string is chaos.");
     });
+#endif
 
     auto fstream = OPENSTR_W<uint8_t>(U("response_stream_file_stream_close_early.txt")).get();
 
+    http_client client(m_uri);
+
     http_request msg(methods::GET);
     msg.set_response_stream(fstream);
-    fstream.close(std::make_exception_ptr(std::exception()));
+    fstream.close(std::make_exception_ptr(std::exception())).wait();
 
-    auto response = client.request(msg).get();
-    VERIFY_THROWS(response.content_ready().get(), std::exception);
+    http_response resp;
+    
+    VERIFY_THROWS((resp = client.request(msg).get(), resp.content_ready().get()), std::exception);
+}
+
+TEST_FIXTURE(uri_address, response_stream_large_file_stream)
+{
+    // Send a 100 KB data in the response body, the server will send this in multiple chunks
+    // This data will get sent with content-length 
+    const size_t workload_size = 100 * 1024;
+    utility::string_t fname(U("response_stream_large_file_stream.txt"));
+    std::string responseData;
+    responseData.resize(workload_size, 'a');
+
+    test_http_server::scoped_server scoped(m_uri);
+    test_http_server * p_server = scoped.server();
+
+    http_client client(m_uri);
+    
+    p_server->next_request().then([&](test_request *p_request)
+    {
+        std::map<utility::string_t, utility::string_t> headers;
+        headers[U("Content-Type")] = U("text/plain");
+       
+        p_request->reply(200, U(""), headers, responseData);
+    });
+
+    {
+        auto fstream = OPENSTR_W<uint8_t>(fname).get();
+
+        http_request msg(methods::GET);
+        msg.set_response_stream(fstream);
+        http_response rsp = client.request(msg).get();
+
+        rsp.content_ready().get();
+        VERIFY_IS_TRUE(fstream.streambuf().is_open());
+        fstream.close().get();
+
+        std::string rsp_string;
+        rsp_string.resize(workload_size, 0);
+        streams::rawptr_buffer<char> buffer(&rsp_string[0], rsp_string.size());
+        streams::basic_istream<char> fistream = OPENSTR_R<char>(fname).get();
+
+        VERIFY_ARE_EQUAL(fistream.read_to_end(buffer).get(), workload_size);
+        VERIFY_ARE_EQUAL(rsp_string, responseData);
+        fistream.close().get();
+    }
 }
 
 #if !defined(__cplusplus_winrt)
@@ -204,7 +256,7 @@ TEST_FIXTURE(uri_address, content_ready)
     http_client client(m_uri);
     std::string responseData("Hello world");
 
-    auto listener = web::http::listener::http_listener::create(m_uri);
+    auto listener = web::http::experimental::listener::http_listener::create(m_uri);
     VERIFY_ARE_EQUAL(0u, listener.open());
     listener.support([responseData](http_request request)
     {
@@ -214,7 +266,7 @@ TEST_FIXTURE(uri_address, content_ready)
         response.headers().add(header_names::connection, U("close")); 
 
         request.reply(response);
-
+        
         VERIFY_ARE_EQUAL(buf.putn((const uint8_t *)responseData.data(), responseData.size()).get(), responseData.size());
         buf.close(std::ios_base::out).get();
     });
@@ -236,7 +288,7 @@ TEST_FIXTURE(uri_address, xfer_chunked_with_length)
     http_client client(m_uri);
     utility::string_t responseData(U("Hello world"));
 
-    auto listener = web::http::listener::http_listener::create(m_uri);
+    auto listener = web::http::experimental::listener::http_listener::create(m_uri);
     VERIFY_ARE_EQUAL(0u, listener.open());
     listener.support([responseData](http_request request)
     {
@@ -274,7 +326,7 @@ TEST_FIXTURE(uri_address, get_resp_stream)
     http_client client(m_uri);
     std::string responseData("Hello world");
 
-    auto listener = web::http::listener::http_listener::create(m_uri);
+    auto listener = web::http::experimental::listener::http_listener::create(m_uri);
     VERIFY_ARE_EQUAL(0, listener.open());
     listener.support([responseData](http_request request)
     {
@@ -305,9 +357,62 @@ TEST_FIXTURE(uri_address, get_resp_stream)
         }).wait();
         rsp.content_ready().wait();
     }
+       
+    VERIFY_ARE_EQUAL(0, listener.close());
+}
+
+TEST_FIXTURE(uri_address, xfer_chunked_multiple_chunks)
+{
+    // With chunked transfer-encoding, send 2 chunks of different sizes in the response
+    http_client client(m_uri);
+
+    // Send two chunks, note: second chunk is bigger than the first. 
+    std::string firstChunk("abcdefghijklmnopqrst");
+    std::string secondChunk("abcdefghijklmnopqrstuvwxyz");
+
+    auto listener = web::http::experimental::listener::http_listener::create(m_uri);
+    VERIFY_ARE_EQUAL(0, listener.open());
+    listener.support([firstChunk, secondChunk](http_request request)
+    {
+        streams::producer_consumer_buffer<uint8_t> buf;
+
+        http_response response(200);
+        response.set_body(buf.create_istream(), U("text/plain"));
+        response.headers().add(header_names::connection, U("close")); 
+        request.reply(response);
+
+        VERIFY_ARE_EQUAL(buf.putn((const uint8_t *)firstChunk.data(), firstChunk.size()).get(), firstChunk.size());
+        buf.sync().get();
+        VERIFY_ARE_EQUAL(buf.putn((const uint8_t *)secondChunk.data(), secondChunk.size()).get(), secondChunk.size());
+        buf.close(std::ios_base::out).get();
+    });
+
+    {
+        utility::string_t fname(U("xfer_chunked_multiple_chunks.txt"));
+        auto fstream = OPENSTR_W<uint8_t>(fname).get();
+
+        http_request msg(methods::GET);
+        msg.set_response_stream(fstream);
+        http_response rsp = client.request(msg).get();
+
+        rsp.content_ready().wait();
+        VERIFY_IS_TRUE(fstream.streambuf().is_open());
+        fstream.close().get();
+
+        std::string rsp_string;
+        size_t workload_size = firstChunk.size() + secondChunk.size();
+        rsp_string.resize(workload_size, 0);
+        streams::rawptr_buffer<uint8_t> buffer(reinterpret_cast<uint8_t *>(&rsp_string[0]), rsp_string.size());
+        streams::basic_istream<uint8_t> fistream = OPENSTR_R<uint8_t>(fname).get();
+
+        VERIFY_ARE_EQUAL(fistream.read_to_end(buffer).get(), workload_size);
+        VERIFY_ARE_EQUAL(rsp_string, firstChunk + secondChunk);
+        fistream.close().get();
+    }
 
     VERIFY_ARE_EQUAL(0, listener.close());
 }
+
 #endif
 
 #pragma endregion

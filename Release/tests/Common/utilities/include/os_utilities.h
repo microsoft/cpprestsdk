@@ -72,7 +72,7 @@ namespace Concurrency
 }
 
 #else 
-#include "pplxtasks.h"
+#include "pplx/pplxtasks.h"
 #endif
 
 #if !defined(_MS_WINDOWS) || (_MSC_VER >= 1700)

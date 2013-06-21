@@ -17,7 +17,7 @@
 
 #include "pch.h"
 #include "MainPage.xaml.h"
-#include <filestream.h>
+#include "cpprest/filestream.h"
 
 using namespace WindowsLiveAuth;
 

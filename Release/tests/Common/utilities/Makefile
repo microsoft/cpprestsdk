@@ -1,4 +1,4 @@
-CXXFLAGS=$(LAX_BASE_CXXFLAGS) -I../../../include/ -I../../Common/UnitTestpp/ -include ../../../include/linux_compat.h -L../../Common/UnitTestpp/lib/linux_gcc/ -L"$(OUTPUT_DIR)" -fPIC -Iinclude
+CXXFLAGS=$(LAX_BASE_CXXFLAGS) -I../../../include/ -I../../Common/UnitTestpp/ -include ../../../include/compat/linux_compat.h -L../../Common/UnitTestpp/lib/linux_gcc/ -L"$(OUTPUT_DIR)" -fPIC -Iinclude
 
 LDLIBS=-lcasablanca -lunittestpp -lboost_system -lboost_thread -lpthread -lstdc++
 

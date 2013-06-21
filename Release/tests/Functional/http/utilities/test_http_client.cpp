@@ -23,7 +23,7 @@
 
 #include "stdafx.h"
 
-#include "uri.h"
+#include "cpprest/uri.h"
 #include "test_http_client.h"
 #ifdef _MS_WINDOWS
 #include <winhttp.h>

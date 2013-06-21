@@ -316,12 +316,8 @@ TEST(event_set_reset_timeout)
 
     ev.reset();
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1800)
-    VERIFY_IS_TRUE(ev.wait(0) == Concurrency::COOPERATIVE_WAIT_TIMEOUT);
-#else
     // wait should fail as the event is reset (not set)
     VERIFY_IS_TRUE(ev.wait(0) == pplx::extensibility::event_t::timeout_infinite);
-#endif
 }
 
 struct TimerCallbackContext

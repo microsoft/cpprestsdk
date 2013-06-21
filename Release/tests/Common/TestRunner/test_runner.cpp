@@ -31,7 +31,6 @@
 #else
 #include <boost/filesystem.hpp>
 #include "unistd.h"
-#include "linux_compat.h"
 #endif
 
 #include "../UnitTestpp/src/TestReporterStdout.h"

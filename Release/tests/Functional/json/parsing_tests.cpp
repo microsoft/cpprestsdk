@@ -180,6 +180,180 @@ TEST(string_t)
     VERIFY_ARE_EQUAL(U("K"), str.as_string());
 }
 
+TEST(comments_string)
+{
+    // Nothing but a comment
+    VERIFY_THROWS(json::value::parse(U(" /* There's nothing but a comment here */  ")), json::json_exception);
+    VERIFY_THROWS(json::value::parse(U(" // There's nothing but a comment here\n")), json::json_exception);
+
+    // Some invalid comments
+    VERIFY_THROWS(json::value::parse(U(" -22 /*/")), json::json_exception);
+    VERIFY_THROWS(json::value::parse(U(" -22 /* /* nested */ */")), json::json_exception);
+
+    // Correctly placed comments
+    json::value num1 = json::value::parse(U("-22 // This is a trailing comment\n"));
+    VERIFY_ARE_EQUAL(-22, num1.as_double());
+    num1 = json::value::parse(U(" -22 /* This is a trailing comment with a // nested\n comment */"));
+    VERIFY_ARE_EQUAL(-22, num1.as_double());
+    json::value num2 = json::value::parse(U("// This is a leading comment\n -22"));
+    VERIFY_ARE_EQUAL(-22, num2.as_double());
+    json::value num3 = json::value::parse(U("-22 /* This is a trailing comment */"));
+    VERIFY_ARE_EQUAL(-22, num3.as_double());
+    json::value num4 = json::value::parse(U("/* This is a leading comment */ -22"));
+    VERIFY_ARE_EQUAL(-22, num4.as_double());
+    json::value num5 = json::value::parse(U("-22 /***/"));
+    VERIFY_ARE_EQUAL(-22, num5.as_double());
+
+    json::value obj1 = json::value::parse(U("{// A comment in the middle of an empty object\n}"));
+    VERIFY_IS_TRUE(obj1.is_object());
+    VERIFY_ARE_EQUAL(0u, obj1.size());
+    json::value obj2 = json::value::parse(U("{/* A comment in the middle of an empty object */}"));
+    VERIFY_IS_TRUE(obj2.is_object());
+    VERIFY_ARE_EQUAL(0u, obj2.size());
+    json::value obj3 = json::value::parse(U("{ \"foo\" : // A comment in the middle of a non-empty object\n 2}"));
+    VERIFY_IS_TRUE(obj3.is_object());
+    VERIFY_ARE_EQUAL(1u, obj3.size());
+    json::value obj4 = json::value::parse(U("{ \"foo\" : /* A comment in the middle of a non-empty object */ 2}"));
+    VERIFY_IS_TRUE(obj4.is_object());
+    VERIFY_ARE_EQUAL(1u, obj4.size());
+
+    json::value arr1 = json::value::parse(U("[// A comment in the middle of an empty array\n]"));
+    VERIFY_IS_TRUE(arr1.is_array());
+    VERIFY_ARE_EQUAL(0u, arr1.size());
+    json::value arr2 = json::value::parse(U("[/* A comment in the middle of an empty array */]"));
+    VERIFY_IS_TRUE(arr2.is_array());
+    VERIFY_ARE_EQUAL(0u, arr2.size());
+    json::value arr3 = json::value::parse(U("[ 1, // A comment in the middle of a non-array\n 2]"));
+    VERIFY_IS_TRUE(arr3.is_array());
+    VERIFY_ARE_EQUAL(2u, arr3.size());
+    json::value arr4 = json::value::parse(U("[ 1, /* A comment in the middle of a non-empty array */ 2]"));
+    VERIFY_IS_TRUE(arr4.is_array());
+    VERIFY_ARE_EQUAL(2u, arr4.size());
+}
+
+TEST(comments_stream)
+{
+    // Nothing but a comment
+    {
+    std::basic_stringstream<utility::char_t> stream;
+    stream << U(" /* There's nothing but a comment here */ ");
+    VERIFY_THROWS(json::value::parse(stream), json::json_exception);
+    }
+    {
+    std::basic_stringstream<utility::char_t> stream;
+    stream << U(" // There's nothing but a comment here\n ");
+    VERIFY_THROWS(json::value::parse(stream), json::json_exception);
+    }
+
+    // Some invalid comments
+    {
+    std::basic_stringstream<utility::char_t> stream;
+    stream << U(" -22 /*/");
+    VERIFY_THROWS(json::value::parse(stream), json::json_exception);
+    }
+    {
+    std::basic_stringstream<utility::char_t> stream;
+    stream << U(" -22 /* /* nested */ */");
+    VERIFY_THROWS(json::value::parse(stream), json::json_exception);
+    }
+
+    // Correctly placed comments
+    {
+    std::basic_stringstream<utility::char_t> stream;
+    stream << U("-22 // This is a trailing comment\n");
+    json::value num1 = json::value::parse(stream);
+    VERIFY_ARE_EQUAL(-22, num1.as_double());
+    }
+    {
+    std::basic_stringstream<utility::char_t> stream;
+    stream << U(" -22 /* This is a trailing comment with a // nested\n comment */");
+    json::value num1 = json::value::parse(stream);
+    VERIFY_ARE_EQUAL(-22, num1.as_double());
+    }
+    {
+    std::basic_stringstream<utility::char_t> stream;
+    stream << U("// This is a leading comment\n -22");
+    json::value num2 = json::value::parse(stream);
+    VERIFY_ARE_EQUAL(-22, num2.as_double());
+    }
+    {
+    std::basic_stringstream<utility::char_t> stream;
+    stream << U("-22 /* This is a trailing comment */");
+    json::value num3 = json::value::parse(stream);
+    VERIFY_ARE_EQUAL(-22, num3.as_double());
+    }
+    {
+    std::basic_stringstream<utility::char_t> stream;
+    stream << U("/* This is a leading comment */ -22");
+    json::value num4 = json::value::parse(stream);
+    VERIFY_ARE_EQUAL(-22, num4.as_double());
+    }
+    {
+    std::basic_stringstream<utility::char_t> stream;
+    stream << U("-22 /***/");
+    json::value num4 = json::value::parse(stream);
+    VERIFY_ARE_EQUAL(-22, num4.as_double());
+    }
+
+    {
+    std::basic_stringstream<utility::char_t> stream;
+    stream << U("{// A comment in the middle of an empty object\n}");
+    json::value obj1 = json::value::parse(stream);
+    VERIFY_IS_TRUE(obj1.is_object());
+    VERIFY_ARE_EQUAL(0u, obj1.size());
+    }
+    {
+    std::basic_stringstream<utility::char_t> stream;
+    stream << U("{/* A comment in the middle of an empty object */}");
+    json::value obj2 = json::value::parse(stream);
+    VERIFY_IS_TRUE(obj2.is_object());
+    VERIFY_ARE_EQUAL(0u, obj2.size());
+    }
+    {
+    std::basic_stringstream<utility::char_t> stream;
+    stream << U("{ \"foo\" : // A comment in the middle of a non-empty object\n 2}");
+    json::value obj3 = json::value::parse(stream);
+    VERIFY_IS_TRUE(obj3.is_object());
+    VERIFY_ARE_EQUAL(1u, obj3.size());
+    }
+    {
+    std::basic_stringstream<utility::char_t> stream;
+    stream << U("{ \"foo\" : /* A comment in the middle of a non-empty object */ 2}");
+    json::value obj4 = json::value::parse(stream);
+    VERIFY_IS_TRUE(obj4.is_object());
+    VERIFY_ARE_EQUAL(1u, obj4.size());
+    }
+
+    {
+    std::basic_stringstream<utility::char_t> stream;
+    stream << U("[// A comment in the middle of an empty array\n]");
+    json::value arr1 = json::value::parse(stream);
+    VERIFY_IS_TRUE(arr1.is_array());
+    VERIFY_ARE_EQUAL(0u, arr1.size());
+    }
+    {
+    std::basic_stringstream<utility::char_t> stream;
+    stream << U("[/* A comment in the middle of an empty array */]");
+    json::value arr2 = json::value::parse(stream);
+    VERIFY_IS_TRUE(arr2.is_array());
+    VERIFY_ARE_EQUAL(0u, arr2.size());
+    }
+    {
+    std::basic_stringstream<utility::char_t> stream;
+    stream << U("[ 1, // A comment in the middle of a non-array\n 2]");
+    json::value arr3 = json::value::parse(stream);
+    VERIFY_IS_TRUE(arr3.is_array());
+    VERIFY_ARE_EQUAL(2u, arr3.size());
+    }
+    {
+    std::basic_stringstream<utility::char_t> stream;
+    stream << U("[ 1, /* A comment in the middle of a non-empty array */ 2]");
+    json::value arr4 = json::value::parse(stream);
+    VERIFY_IS_TRUE(arr4.is_array());
+    VERIFY_ARE_EQUAL(2u, arr4.size());
+    }
+}
+
 TEST(empty_object_array)
 {
     json::value obj = json::value::parse(U("{}"));

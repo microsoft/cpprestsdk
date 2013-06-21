@@ -9,6 +9,7 @@
 	  <ProjectFile Include="pplx\dirs.proj"/>
 	  <ProjectFile Include="streams\dirs.proj"/>
 	  <ProjectFile Include="uri\dirs.proj"/>
+	  <ProjectFile Include="utils\dirs.proj"/>
   </ItemGroup>
 
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
