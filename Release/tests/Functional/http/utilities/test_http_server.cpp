@@ -476,7 +476,6 @@ private:
 
     volatile std::atomic<int> m_cancel;
 
-	pplx::extensibility::critical_section_t m_listen_lock;
 public:
     _test_http_server(const utility::string_t& uri)
         : m_uri(uri) 
@@ -485,7 +484,6 @@ public:
     {
         m_listener.support([&](web::http::http_request result) -> void
         {
-            pplx::extensibility::critical_section_t::scoped_lock listen_lock(m_listen_lock); // try to serialize requests
             auto tr = new test_request();
             tr->m_method = result.method();
             tr->m_path = result.request_uri().resource().to_string();
