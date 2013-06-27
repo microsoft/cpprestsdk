@@ -215,9 +215,9 @@ TEST(object_construction)
     VERIFY_ARE_EQUAL(U("44"), val1[U("A")].to_string());
     VERIFY_ARE_EQUAL(U("true"), val1[U("hahah")].to_string());
 
-	// Construct as null value, then turn into object.
+    // Construct as null value, then turn into object.
     json::value val2;
-	VERIFY_IS_TRUE(val2.is_null());
+    VERIFY_IS_TRUE(val2.is_null());
     val2[U("A")] = 44;
     val2[U("hahah")] = json::value(true);
     VERIFY_ARE_EQUAL(2u, val2.size());
@@ -254,7 +254,7 @@ TEST(array_construction)
 
     // Construct as null value and then add elements.
     json::value arr3;
-	VERIFY_IS_TRUE(arr3.is_null());
+    VERIFY_IS_TRUE(arr3.is_null());
     arr3[1] = json::value(false);
     // Element [0] should already behave as an object.
     arr3[0][U("A")] = json::value::string(U("HE"));
@@ -262,7 +262,7 @@ TEST(array_construction)
     VERIFY_ARE_EQUAL(U("false"), arr3[1].to_string());
     VERIFY_ARE_EQUAL(U("\"HE\""), arr3[0][U("A")].to_string());
 
-	// Test factory which takes a size.
+    // Test factory which takes a size.
     auto arr4 = json::value::array(2);
     VERIFY_IS_TRUE(arr4[0].is_null());
     VERIFY_IS_TRUE(arr4[1].is_null());

@@ -38,8 +38,9 @@ TEST_FIXTURE(uri_address, response_to_string)
 
 TEST_FIXTURE(uri_address, request_to_string)
 {
-    http_listener listener = http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0, listener.open());
+    http_listener listener(m_uri);
+    listener.open().wait();
+    
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
 

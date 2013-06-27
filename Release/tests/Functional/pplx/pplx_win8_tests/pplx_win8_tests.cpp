@@ -30,7 +30,7 @@ SUITE(compile_only_tests)
 
 TEST(tests)
 {
-	unittests::compile_tests();
+    unittests::compile_tests();
 }
 
 } // SUITE(compile_only_tests)

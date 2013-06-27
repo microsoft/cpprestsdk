@@ -71,7 +71,7 @@ void test_stream_length(concurrency::streams::basic_istream<CharType> istr, size
             __expression;                                                               \
             VERIFY_IS_TRUE(false, "Expected std::system_error not thrown");             \
         }                                                                               \
-        catch (const std::system_error &_exc)					                        \
+        catch (const std::system_error &_exc)                                           \
         {                                                                               \
             VERIFY_IS_TRUE(std::string(_exc.what()).size() > 0);                        \
             /* The reason we can't directly compare with the given std::errc code is because*/      \

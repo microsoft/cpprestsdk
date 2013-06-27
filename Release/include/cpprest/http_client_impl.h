@@ -337,7 +337,7 @@ namespace web { namespace http { namespace client { namespace details
                 virtual unsigned long open() = 0;
 
                 // HTTP client implementations must implement send_request.
-                virtual void send_request(request_context *request) = 0;
+                virtual void send_request(_In_ request_context *request) = 0;
 
                 // URI to connect to.
                 const http::uri m_uri;

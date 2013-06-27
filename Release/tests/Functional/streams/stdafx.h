@@ -45,7 +45,6 @@ namespace pplx = Concurrency;
 #include "cpprest/interopstream.h"
 #include "cpprest/streams.h"
 #include "cpprest/filestream.h"
-#include "os_utilities.h"
 
 #include "unittestpp.h"
 #include "streams_tests.h"

@@ -205,7 +205,7 @@ namespace Concurrency { namespace streams {
         /// If the end of the stream is reached, the function will return <c>true</c>, a null pointer, and a count of zero;
         /// a subsequent read will not succeed.
         /// </remarks>
-        virtual bool acquire(_CharType*& ptr, size_t& count)
+        virtual bool acquire(_Out_writes_(count) _CharType*& ptr, _Inout_ size_t& count)
         {
             if (!this->can_read()) return false;
 
@@ -385,7 +385,7 @@ namespace Concurrency { namespace streams {
         }
 
     private:
-        template<typename _CollectionType1> friend class container_buffer;
+        template<typename _CollectionType1> friend class streams::container_buffer;
 
         /// <summary>
         /// Constructor
@@ -557,7 +557,7 @@ namespace Concurrency { namespace streams {
         /// <param name="mode">The I/O mode that the buffer should use (in / out)</param>
         container_buffer(_CollectionType data, std::ios_base::openmode mode = std::ios_base::in) 
             : streambuf<typename _CollectionType::value_type>(
-                std::shared_ptr<details::basic_container_buffer<_CollectionType>>(new details::basic_container_buffer<_CollectionType>(std::move(data), mode)))
+                std::shared_ptr<details::basic_container_buffer<_CollectionType>>(new streams::details::basic_container_buffer<_CollectionType>(std::move(data), mode)))
         {
         }
 

@@ -26,6 +26,7 @@
 #include "cpprest/filelog.h"
 #define CRLF std::string("\r\n")
 
+using namespace utility::experimental::logging;
 namespace web
 {
 namespace http
@@ -307,7 +308,7 @@ void connection::async_read_until_buffersize(size_t size, ReadHandler handler)
 void connection::dispatch_request_to_listener()
 {
     // locate the listener:
-    http_listener_interface* pListener = nullptr;
+    http_listener* pListener = nullptr;
     {
         auto path_segments = uri::split_path(uri::decode(m_request.relative_uri().path()));
         for (auto i = static_cast<long>(path_segments.size()); i >= 0; --i)
@@ -366,15 +367,15 @@ void connection::dispatch_request_to_listener()
         {
             pListenerLock->unlock();
             std::ostringstream str_stream;
-            str_stream << "Error: a std::exception was thrown out of http_listener_interface handle: " << e.what();
-            utility::logging::log::post(utility::logging::LOG_ERROR, 0, str_stream.str(), m_request);
+            str_stream << "Error: a std::exception was thrown out of http_listener handle: " << e.what();
+            utility::experimental::logging::log::post(utility::experimental::logging::LOG_ERROR, 0, str_stream.str(), m_request);
 
             m_request._reply_if_not_already(status_codes::InternalError);
         }
         catch(...)
         {
             pListenerLock->unlock();
-            utility::logging::log::post(utility::logging::LOG_FATAL, 0, "Fatal Error: an unknown exception was thrown out of http_listener_interface handler.", m_request);
+            log::post(LOG_FATAL, 0, "Fatal Error: an unknown exception was thrown out of http_listener handler.", m_request);
 
             m_request._reply_if_not_already(status_codes::InternalError);
         }
@@ -407,12 +408,12 @@ void connection::do_response()
             {
                 std::ostringstream str_stream;
                 str_stream << "Error in listener: " << ex.what() << std::endl;
-                utility::logging::log::post(utility::logging::LOG_ERROR, 0, str_stream.str(), m_request);
+                log::post(LOG_ERROR, 0, str_stream.str(), m_request);
                 response = http::http_response(status_codes::InternalError);
             }
             catch(...)
             {
-                utility::logging::log::post(utility::logging::LOG_FATAL, 0, "Fatal Error: an unknown exception was thrown out of http_listener_interface handler.", m_request);
+                log::post(LOG_FATAL, 0, "Fatal Error: an unknown exception was thrown out of http_listener handler.", m_request);
                 response = http::http_response(status_codes::InternalError);
             }
             // before sending response, the full incoming message need to be processed.
@@ -567,15 +568,15 @@ void hostport_listener::stop()
     m_all_connections_complete.wait();
 }
 
-void hostport_listener::add_listener(const std::string& path, http_listener_interface* listener)
+void hostport_listener::add_listener(const std::string& path, http_listener* listener)
 {
     pplx::extensibility::scoped_read_lock_t lock(m_listeners_lock);
 
-    if (!m_listeners.insert(std::map<std::string,http_listener_interface*>::value_type(path, listener)).second)
+    if (!m_listeners.insert(std::map<std::string,http_listener*>::value_type(path, listener)).second)
         throw std::invalid_argument("Error: http_listener is already registered for this path");
 }
 
-void hostport_listener::remove_listener(const std::string& path, http_listener_interface*)
+void hostport_listener::remove_listener(const std::string& path, http_listener*)
 {
     pplx::extensibility::scoped_read_lock_t lock(m_listeners_lock);
 
@@ -586,7 +587,7 @@ void hostport_listener::remove_listener(const std::string& path, http_listener_i
 
 }
 
-unsigned long http_linux_server::start()
+pplx::task<void> http_linux_server::start()
 {
     pplx::extensibility::reader_writer_lock_t::scoped_lock_read lock(m_listeners_lock);
 
@@ -610,10 +611,10 @@ unsigned long http_linux_server::start()
     }
 
     m_started = true;
-    return 0;
+    return pplx::task_from_result();
 }
 
-unsigned long http_linux_server::stop()
+pplx::task<void> http_linux_server::stop()
 {
     pplx::extensibility::reader_writer_lock_t::scoped_lock_read lock(m_listeners_lock);
 
@@ -623,7 +624,8 @@ unsigned long http_linux_server::stop()
     {
         it->second->stop();
     }
-    return 0;
+
+    return pplx::task_from_result();
 }
 
 std::pair<std::string,std::string> canonical_parts(const http::uri& uri)
@@ -643,7 +645,7 @@ std::pair<std::string,std::string> canonical_parts(const http::uri& uri)
     return std::make_pair(endpoint.str(), path);
 }
 
-unsigned long http_linux_server::register_listener(http_listener_interface* listener)
+pplx::task<void> http_linux_server::register_listener(http_listener* listener)
 {
     auto parts = canonical_parts(listener->uri());
     auto hostport = parts.first;
@@ -669,10 +671,10 @@ unsigned long http_linux_server::register_listener(http_listener_interface* list
         found_hostport_listener->second->add_listener(path, listener);
     }
 
-    return 0;
+    return pplx::task_from_result();
 }
 
-unsigned long http_linux_server::unregister_listener(http_listener_interface* listener)
+pplx::task<void> http_linux_server::unregister_listener(http_listener* listener)
 {
     auto parts = canonical_parts(listener->uri());
     auto hostport = parts.first;
@@ -702,7 +704,7 @@ unsigned long http_linux_server::unregister_listener(http_listener_interface* li
         pplx::extensibility::scoped_read_lock_t lock(*pListenerLock);
     }
 
-    return 0;
+    return pplx::task_from_result();
 }
 
 pplx::task<void> http_linux_server::respond(http::http_response response)

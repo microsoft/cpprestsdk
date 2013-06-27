@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "casablanca110", "src\VS11\casablanca110.vcxproj", "{90D85FF4-F0AE-4816-923F-0EF2758F30AB}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "casablanca110", "src\build\casablanca110.vcxproj", "{90D85FF4-F0AE-4816-923F-0EF2758F30AB}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestRunner110", "tests\Common\TestRunner\VS11\TestRunner110.vcxproj", "{6490C580-DD4A-4F2D-A345-732C5148349F}"
 EndProject
@@ -17,7 +17,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HttpTestUtilities110", "tes
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JSON110_test", "tests\Functional\json\VS11\JSON110_test.vcxproj", "{6F026328-4D10-4EF1-BD6C-8FD3CBE0F530}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "header_test110", "tests\Functional\misc\atl_headers\VS11\header_test110.vcxproj", "{32DB3115-2918-477F-B00A-DAC6277EEFAB}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "atl_header110", "tests\Functional\misc\atl_headers\VS11\header_test110.vcxproj", "{32DB3115-2918-477F-B00A-DAC6277EEFAB}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pplx110_test", "tests\Functional\pplx\pplx_test\VS11\pplx110_test.vcxproj", "{5115840E-A5A8-4044-B595-CDA05C2D65D0}"
 EndProject
@@ -27,76 +27,83 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Uri110_test", "tests\Functi
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "testlistener110", "tests\Functional\http\utilities\testlistener\VS11\testlistener110.vcxproj", "{5614BAFA-7605-41D3-945F-7EEB8116398F}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "casablanca110.winrt", "src\build\casablanca110.winrt.vcxproj", "{198ED804-2655-4D92-8104-C220E3EA9452}"
+EndProject
 Global
 	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 13
+		SccNumberOfProjects = 14
 		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccTeamFoundationServer = http://vstfdevdiv:8080/devdiv2
-		SccProjectUniqueName0 = src\\VS11\\casablanca110.vcxproj
-		SccProjectName0 = src/VS11
-		SccAuxPath0 = http://vstfdevdiv:8080/devdiv2
-		SccLocalPath0 = src\\VS11
+		SccTeamFoundationServer = http://tkbgitvstfat01:8080/devdiv2
+		SccProjectUniqueName0 = src\\build\\casablanca110.vcxproj
+		SccProjectName0 = src/build
+		SccAuxPath0 = http://tkbgitvstfat01:8080/devdiv2
+		SccLocalPath0 = src\\build
 		SccProvider0 = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
 		SccProjectUniqueName1 = tests\\Common\\TestRunner\\VS11\\TestRunner110.vcxproj
 		SccProjectName1 = tests/Common/TestRunner/VS11
-		SccAuxPath1 = http://vstfdevdiv:8080/devdiv2
+		SccAuxPath1 = http://tkbgitvstfat01:8080/devdiv2
 		SccLocalPath1 = tests\\Common\\TestRunner\\VS11
 		SccProvider1 = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
 		SccProjectUniqueName2 = tests\\Common\\UnitTestpp\\VS11\\TestUnitTestpp110.vcxproj
 		SccProjectName2 = tests/Common/UnitTestpp/VS11
-		SccAuxPath2 = http://vstfdevdiv:8080/devdiv2
+		SccAuxPath2 = http://tkbgitvstfat01:8080/devdiv2
 		SccLocalPath2 = tests\\Common\\UnitTestpp\\VS11
 		SccProvider2 = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
 		SccProjectUniqueName3 = tests\\Common\\UnitTestpp\\VS11\\UnitTestpp110.vcxproj
 		SccProjectName3 = tests/Common/UnitTestpp/VS11
-		SccAuxPath3 = http://vstfdevdiv:8080/devdiv2
+		SccAuxPath3 = http://tkbgitvstfat01:8080/devdiv2
 		SccLocalPath3 = tests\\Common\\UnitTestpp\\VS11
 		SccProvider3 = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
 		SccProjectUniqueName4 = tests\\Common\\utilities\\VS11\\CommonUtilities110.vcxproj
 		SccProjectName4 = tests/Common/utilities/VS11
-		SccAuxPath4 = http://vstfdevdiv:8080/devdiv2
+		SccAuxPath4 = http://tkbgitvstfat01:8080/devdiv2
 		SccLocalPath4 = tests\\Common\\utilities\\VS11
 		SccProvider4 = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
 		SccProjectUniqueName5 = tests\\Functional\\http\\client\\VS11\\HttpClient110_test.vcxproj
 		SccProjectName5 = tests/Functional/http/client/VS11
-		SccAuxPath5 = http://vstfdevdiv:8080/devdiv2
+		SccAuxPath5 = http://tkbgitvstfat01:8080/devdiv2
 		SccLocalPath5 = tests\\Functional\\http\\client\\VS11
 		SccProvider5 = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
 		SccProjectUniqueName6 = tests\\Functional\\http\\utilities\\VS11\\HttpTestUtilities110.vcxproj
 		SccProjectName6 = tests/Functional/http/utilities/VS11
-		SccAuxPath6 = http://vstfdevdiv:8080/devdiv2
+		SccAuxPath6 = http://tkbgitvstfat01:8080/devdiv2
 		SccLocalPath6 = tests\\Functional\\http\\utilities\\VS11
 		SccProvider6 = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
 		SccProjectUniqueName7 = tests\\Functional\\json\\VS11\\JSON110_test.vcxproj
 		SccProjectName7 = tests/Functional/json/VS11
-		SccAuxPath7 = http://vstfdevdiv:8080/devdiv2
+		SccAuxPath7 = http://tkbgitvstfat01:8080/devdiv2
 		SccLocalPath7 = tests\\Functional\\json\\VS11
 		SccProvider7 = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
 		SccProjectUniqueName8 = tests\\Functional\\misc\\atl_headers\\VS11\\header_test110.vcxproj
 		SccProjectName8 = tests/Functional/misc/atl_headers/VS11
-		SccAuxPath8 = http://vstfdevdiv:8080/devdiv2
+		SccAuxPath8 = http://tkbgitvstfat01:8080/devdiv2
 		SccLocalPath8 = tests\\Functional\\misc\\atl_headers\\VS11
 		SccProvider8 = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
 		SccProjectUniqueName9 = tests\\Functional\\pplx\\pplx_test\\VS11\\pplx110_test.vcxproj
 		SccProjectName9 = tests/Functional/pplx/pplx_test/VS11
-		SccAuxPath9 = http://vstfdevdiv:8080/devdiv2
+		SccAuxPath9 = http://tkbgitvstfat01:8080/devdiv2
 		SccLocalPath9 = tests\\Functional\\pplx\\pplx_test\\VS11
 		SccProvider9 = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
 		SccProjectUniqueName10 = tests\\Functional\\streams\\VS11\\streams110_test.vcxproj
 		SccProjectName10 = tests/Functional/streams/VS11
-		SccAuxPath10 = http://vstfdevdiv:8080/devdiv2
+		SccAuxPath10 = http://tkbgitvstfat01:8080/devdiv2
 		SccLocalPath10 = tests\\Functional\\streams\\VS11
 		SccProvider10 = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
 		SccProjectUniqueName11 = tests\\Functional\\uri\\VS11\\Uri110_test.vcxproj
 		SccProjectName11 = tests/Functional/uri/VS11
-		SccAuxPath11 = http://vstfdevdiv:8080/devdiv2
+		SccAuxPath11 = http://tkbgitvstfat01:8080/devdiv2
 		SccLocalPath11 = tests\\Functional\\uri\\VS11
 		SccProvider11 = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
 		SccProjectUniqueName12 = tests\\Functional\\http\\utilities\\testlistener\\VS11\\testlistener110.vcxproj
 		SccProjectName12 = tests/Functional/http/utilities/testlistener/VS11
-		SccAuxPath12 = http://vstfdevdiv:8080/devdiv2
+		SccAuxPath12 = http://tkbgitvstfat01:8080/devdiv2
 		SccLocalPath12 = tests\\Functional\\http\\utilities\\testlistener\\VS11
 		SccProvider12 = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccProjectUniqueName13 = src\\build\\casablanca110.winrt.vcxproj
+		SccProjectName13 = src/build
+		SccAuxPath13 = http://tkbgitvstfat01:8080/devdiv2
+		SccLocalPath13 = src\\build
+		SccProvider13 = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM
@@ -261,6 +268,18 @@ Global
 		{5614BAFA-7605-41D3-945F-7EEB8116398F}.Release|Win32.Build.0 = Release|Win32
 		{5614BAFA-7605-41D3-945F-7EEB8116398F}.Release|x64.ActiveCfg = Release|x64
 		{5614BAFA-7605-41D3-945F-7EEB8116398F}.Release|x64.Build.0 = Release|x64
+		{198ED804-2655-4D92-8104-C220E3EA9452}.Debug|ARM.ActiveCfg = Debug|ARM
+		{198ED804-2655-4D92-8104-C220E3EA9452}.Debug|ARM.Build.0 = Debug|ARM
+		{198ED804-2655-4D92-8104-C220E3EA9452}.Debug|Win32.ActiveCfg = Debug|Win32
+		{198ED804-2655-4D92-8104-C220E3EA9452}.Debug|Win32.Build.0 = Debug|Win32
+		{198ED804-2655-4D92-8104-C220E3EA9452}.Debug|x64.ActiveCfg = Debug|x64
+		{198ED804-2655-4D92-8104-C220E3EA9452}.Debug|x64.Build.0 = Debug|x64
+		{198ED804-2655-4D92-8104-C220E3EA9452}.Release|ARM.ActiveCfg = Release|ARM
+		{198ED804-2655-4D92-8104-C220E3EA9452}.Release|ARM.Build.0 = Release|ARM
+		{198ED804-2655-4D92-8104-C220E3EA9452}.Release|Win32.ActiveCfg = Release|Win32
+		{198ED804-2655-4D92-8104-C220E3EA9452}.Release|Win32.Build.0 = Release|Win32
+		{198ED804-2655-4D92-8104-C220E3EA9452}.Release|x64.ActiveCfg = Release|x64
+		{198ED804-2655-4D92-8104-C220E3EA9452}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

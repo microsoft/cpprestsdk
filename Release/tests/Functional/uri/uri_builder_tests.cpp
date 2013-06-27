@@ -337,11 +337,11 @@ TEST(append_string)
 
 TEST(append_empty_string)
 {
-	utility::string_t uri_str(U("http://uribuilder.com/"));
-	uri_builder builder(uri_str);
-	builder.append(U(""));
+    utility::string_t uri_str(U("http://uribuilder.com/"));
+    uri_builder builder(uri_str);
+    builder.append(U(""));
 
-	VERIFY_ARE_EQUAL(builder.to_string(), uri_str);
+    VERIFY_ARE_EQUAL(builder.to_string(), uri_str);
 }
 
 TEST(append_path_encoding)
@@ -433,16 +433,16 @@ TEST(clear)
 
 TEST(to_string_invalid_uri)
 {
-	uri_builder builder(U("http://invaliduri.com"));
-	builder.set_scheme(U("1http"));
-	VERIFY_THROWS(builder.to_string(), uri_exception);
-	VERIFY_THROWS(builder.to_uri(), uri_exception);
+    uri_builder builder(U("http://invaliduri.com"));
+    builder.set_scheme(U("1http"));
+    VERIFY_THROWS(builder.to_string(), uri_exception);
+    VERIFY_THROWS(builder.to_uri(), uri_exception);
 
-	builder.set_scheme(U("ht*ip"));
-	VERIFY_THROWS(builder.to_string(), uri_exception);
+    builder.set_scheme(U("ht*ip"));
+    VERIFY_THROWS(builder.to_string(), uri_exception);
 
-	builder.set_scheme(U("htt%20p"));
-	VERIFY_THROWS(builder.to_string(), uri_exception);
+    builder.set_scheme(U("htt%20p"));
+    VERIFY_THROWS(builder.to_string(), uri_exception);
 }
 
 } // SUITE(uri_builder_tests)

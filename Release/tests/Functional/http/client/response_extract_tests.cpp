@@ -143,8 +143,8 @@ TEST_FIXTURE(uri_address, extract_string_endian_uneven_bytes)
 {
     // It is really hard to write this test case with our test server infrastructure so we will
     // have to use our http_listener.
-    experimental::listener::http_listener listener = experimental::listener::http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0L, listener.open());
+    web::http::experimental::listener::http_listener listener(m_uri);
+    listener.open().wait();
     http_client client(m_uri);
 
     listener.support([](http_request request)
@@ -158,6 +158,7 @@ TEST_FIXTURE(uri_address, extract_string_endian_uneven_bytes)
 
     http_response response = client.request(methods::GET, U("")).get();
     VERIFY_THROWS(response.extract_string().get(), std::exception);
+    listener.close().wait();
 }
 #endif
 #endif
@@ -180,7 +181,7 @@ TEST_FIXTURE(uri_address, extract_string_incorrect)
 #ifndef __cplusplus_winrt
 TEST_FIXTURE(uri_address, extract_empty_string)
 {
-    experimental::listener::http_listener listener = experimental::listener::http_listener::create(m_uri);
+    web::http::experimental::listener::http_listener listener(m_uri);
     http_client client(m_uri);
     listener.support([](http_request msg)
     {
@@ -198,6 +199,7 @@ TEST_FIXTURE(uri_address, extract_empty_string)
     auto data = response.extract_string().get();
 
     VERIFY_ARE_EQUAL(0, data.size());
+    listener.close().wait();
 }
 #endif
 

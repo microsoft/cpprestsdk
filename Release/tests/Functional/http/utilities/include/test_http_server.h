@@ -73,7 +73,7 @@ public:
         auto iter = m_headers.find(header_name);
         if (iter != m_headers.end())
         {
-            std::wistringstream iss(iter->second);
+            utility::istringstream_t iss(iter->second);
             iss >> header_value;
             if (iss.fail() || !iss.eof())
             {

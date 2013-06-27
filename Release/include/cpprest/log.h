@@ -47,8 +47,9 @@ namespace http
 
 namespace utility
 {
-
-namespace logging
+namespace experimental 
+{
+namespace logging 
 {
     using namespace web;
 
@@ -237,29 +238,26 @@ namespace logging
         _ASYNCRTIMP extern void post(log_level level, int code, const utility::string_t &message, http::http_request http_msg);
 
 #ifdef _MS_WINDOWS
-        namespace details
-        {
-            /// <summary>
-            /// Log function which gets the windows error message associated with the specified error code and appends
-            /// it to the given error message before logging.
-            /// </summary>
-            /// <param name="level">The message's signficance level</param>
-            /// <param name="code">An application-specific integer code associated with the message</param>
-            /// <param name="message">The text of the message</param>
-            /// <returns>The error code parameter passed in.</returns>
-            _ASYNCRTIMP int report_error(logging::log_level level, const int error_code, const utility::string_t &error_message);
+        /// <summary>
+        /// Log function which gets the windows error message associated with the specified error code and appends
+        /// it to the given error message before logging.
+        /// </summary>
+        /// <param name="level">The message's signficance level</param>
+        /// <param name="code">An application-specific integer code associated with the message</param>
+        /// <param name="message">The text of the message</param>
+        /// <returns>The error code parameter passed in.</returns>
+        _ASYNCRTIMP int report_error(logging::log_level level, const int error_code, const utility::string_t &error_message);
 
-            /// <summary>
-            /// Log function calls GetLastError() and gets the windows error message associated with the specified error 
-            /// code and appends it to the given error message before logging.
-            /// </summary>
-            /// <param name="level">The message's signficance level</param>
-            /// <param name="message">The text of the message</param>
-            /// <returns>The error code returned from GetLastError()</returns>
-            _ASYNCRTIMP int report_error(logging::log_level level, const utility::string_t &error_message);
-
-        } // namespace details
+        /// <summary>
+        /// Log function calls GetLastError() and gets the windows error message associated with the specified error 
+        /// code and appends it to the given error message before logging.
+        /// </summary>
+        /// <param name="level">The message's signficance level</param>
+        /// <param name="message">The text of the message</param>
+        /// <returns>The error code returned from GetLastError()</returns>
+        _ASYNCRTIMP int report_error(logging::log_level level, const utility::string_t &error_message);
 #endif
     }
+}
 }
 }

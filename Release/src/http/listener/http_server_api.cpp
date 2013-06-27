@@ -33,13 +33,16 @@
 #include "cpprest/log.h"
 #endif
 
-using namespace web; using namespace utility;
-
 namespace web { namespace http
 {
 namespace experimental {
-namespace listener
+namespace details
 {
+
+using namespace web;
+using namespace utility;
+using namespace utility::experimental;
+using namespace web::http::experimental::listener;
 
 pplx::extensibility::critical_section_t http_server_api::s_lock;
 
@@ -64,7 +67,7 @@ void http_server_api::unregister_server_api()
 
     if (http_server_api::has_listener())
     {
-        logging::log::post(logging::LOG_WARNING, U("Server API was cleared while listeners were still attached"));
+        throw http_exception(_XPLATSTR("Server API was cleared while listeners were still attached"));
     }
 
     s_server_api.release();
@@ -76,17 +79,15 @@ void http_server_api::unsafe_register_server_api(std::unique_ptr<http_server> se
 
     if (http_server_api::has_listener())
     {
-        logging::log::post(logging::LOG_FATAL, U("Attempted to register a new server API while listening to requests"));
-        throw http_exception(U("Current server API instance has listeners attached. Register a server API before listening to requests"));
+        throw http_exception(_XPLATSTR("Current server API instance has listeners attached."));
     }
 
     s_server_api.swap(server_api);
 }
 
-unsigned long http_server_api::register_listener(_In_ http_listener_interface *listener)
+pplx::task<void> http_server_api::register_listener(_In_ http_listener *listener)
 {
     pplx::extensibility::scoped_critical_section_t lock(s_lock);
-    unsigned long error_code = 0;
 
     // the server API was not initialized, register a default
     if(s_server_api == nullptr)
@@ -99,49 +100,37 @@ unsigned long http_server_api::register_listener(_In_ http_listener_interface *l
         http_server_api::unsafe_register_server_api(std::move(server_api));
     }
 
+    auto increment = [] () {++s_registrations;};
+    auto regster = 
+        [listener,increment] () -> pplx::task<void> { 
+            // Register listener.
+            return s_server_api->register_listener(listener).then(increment);
+        };
+
     // if nothing is registered yet, start the server.
     if (s_registrations == 0)
     {
-        error_code = s_server_api->start();
-        if (FAILED(error_code))
-        {
-            return error_code;
-        }
+        return s_server_api->start().then(regster);
     }
 
-    // Register listener.
-    error_code = s_server_api->register_listener(listener);
-    if (FAILED(error_code))
-    {
-        return error_code;
-    }
-
-    ++s_registrations;
-    return error_code;
+    return regster();
 }
 
-unsigned long http_server_api::unregister_listener(_In_ http_listener_interface *pListener)
+pplx::task<void> http_server_api::unregister_listener(_In_ http_listener *pListener)
 {
     pplx::extensibility::scoped_critical_section_t lock(s_lock);
-    unsigned long error_code = 0;
     
-    error_code = server_api()->unregister_listener(pListener);
-    if (FAILED(error_code))
-    {
-        return error_code;
-    }
-
-    s_registrations--;
-    if(s_registrations == 0)
-    {
-        error_code = server_api()->stop();
-        if (FAILED(error_code))
-        {
-            return error_code;
-        }
-    }
-
-    return error_code;
+    auto stop = 
+        [] () -> pplx::task<void> {
+            s_registrations--;
+            if(s_registrations == 0)
+            {
+                return server_api()->stop();
+            }
+            return pplx::task_from_result();
+        };
+    
+    return server_api()->unregister_listener(pListener).then(stop);
 }
 
 http_server *http_server_api::server_api() 

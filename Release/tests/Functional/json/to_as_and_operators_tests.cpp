@@ -103,7 +103,7 @@ TEST(to_string_escaped_chars)
     json::value s5 = json::value::string(U(" \r "));
     json::value s6 = json::value::string(U(" \t "));
 
-	VERIFY_ARE_EQUAL(U("\" \\\" \""), s1.to_string());
+    VERIFY_ARE_EQUAL(U("\" \\\" \""), s1.to_string());
     VERIFY_ARE_EQUAL(U("\" \\b \""), s2.to_string());
     VERIFY_ARE_EQUAL(U("\" \\f \""), s3.to_string());
     VERIFY_ARE_EQUAL(U("\" \\n \""), s4.to_string());
@@ -237,22 +237,22 @@ TEST(negative_get_element_array)
 TEST(negative_as_tests)
 {
     json::value b(true);
-	VERIFY_THROWS(b.as_double(), json::json_exception);
-	VERIFY_THROWS(b.as_integer(), json::json_exception);
-	VERIFY_THROWS(b.as_string(), json::json_exception);
+    VERIFY_THROWS(b.as_double(), json::json_exception);
+    VERIFY_THROWS(b.as_integer(), json::json_exception);
+    VERIFY_THROWS(b.as_string(), json::json_exception);
 
     json::value str = json::value::string(U("string"));
     VERIFY_THROWS(str.as_double(), json::json_exception);
-	VERIFY_THROWS(str.as_bool(), json::json_exception);
-	VERIFY_THROWS(str.as_integer(), json::json_exception);
+    VERIFY_THROWS(str.as_bool(), json::json_exception);
+    VERIFY_THROWS(str.as_integer(), json::json_exception);
 
-	json::value d(2.0f);
-	VERIFY_THROWS(d.as_string(), json::json_exception);
-	VERIFY_THROWS(d.as_bool(), json::json_exception);
+    json::value d(2.0f);
+    VERIFY_THROWS(d.as_string(), json::json_exception);
+    VERIFY_THROWS(d.as_bool(), json::json_exception);
 
-	json::value i(11);
-	VERIFY_THROWS(i.as_bool(), json::json_exception);
-	VERIFY_THROWS(i.as_string(), json::json_exception);
+    json::value i(11);
+    VERIFY_THROWS(i.as_bool(), json::json_exception);
+    VERIFY_THROWS(i.as_string(), json::json_exception);
 }
 
 } // SUITE(to_as_and_operators_tests)

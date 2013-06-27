@@ -32,7 +32,7 @@
 namespace web { namespace http
 {
 namespace experimental {
-namespace listener
+namespace details
 {
 
 class http_server;
@@ -66,12 +66,12 @@ public:
     /// <summary>
     /// Registers a listener for HTTP requests and starts receiving.
     /// </summary>
-    _ASYNCRTIMP static unsigned long register_listener(_In_ http_listener_interface *pListener);
+    _ASYNCRTIMP static pplx::task<void> register_listener(_In_ web::http::experimental::listener::http_listener *pListener);
 
     /// <summary>
     /// Unregisters the given listener and stops listening for HTTP requests.
     /// </summary>
-    _ASYNCRTIMP static unsigned long unregister_listener(_In_ http_listener_interface *pListener);
+    _ASYNCRTIMP static pplx::task<void> unregister_listener(_In_ web::http::experimental::listener::http_listener *pListener);
 
     /// <summary>
     /// Gets static HTTP server API. Could be null if no registered listeners.

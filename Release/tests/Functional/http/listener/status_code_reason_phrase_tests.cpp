@@ -27,8 +27,8 @@ SUITE(status_code_reason_phrase_tests)
 
 TEST_FIXTURE(uri_address, status_codes)
 {
-    http_listener listener = http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0u, listener.open());
+    http_listener listener(m_uri);
+    listener.open().wait();
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
 
@@ -57,8 +57,8 @@ TEST_FIXTURE(uri_address, status_codes)
 
 TEST_FIXTURE(uri_address, reason_phrase)
 {
-    http_listener listener = http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0u, listener.open());
+    http_listener listener(m_uri);
+    listener.open().wait();
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
 

@@ -121,11 +121,11 @@ struct http_status_to_phrase
 /// <summary>
 /// Binds an individual reference to a string value.
 /// </summary>
-        /// <typeparam name="key_type">The type of string value.</typeparam>
-        /// <typeparam name="_t">The type of the value to bind to.</typeparam>
-        /// <param name="text">The string value.</param>
-        /// <param name="ref">The value to bind to.</param>
-        /// <returns><c>true</c> if the binding succeeds, <c>false</c> otherwise.</returns>
+/// <typeparam name="key_type">The type of string value.</typeparam>
+/// <typeparam name="_t">The type of the value to bind to.</typeparam>
+/// <param name="text">The string value.</param>
+/// <param name="ref">The value to bind to.</param>
+/// <returns><c>true</c> if the binding succeeds, <c>false</c> otherwise.</returns>
 template<typename key_type, typename _t>
 bool bind(const key_type &text, _t &ref) // const
 {
@@ -139,14 +139,14 @@ bool bind(const key_type &text, _t &ref) // const
     return true;
 }
 
-        /// <summary>
-        /// Binds an individual reference to a string value.
-        /// This specialization is need because <c>istringstream::&gt;&gt;</c> delimits on whitespace.
-        /// </summary>
-        /// <typeparam name="key_type">The type of the string value.</typeparam>
-        /// <param name="text">The string value.</param>
-        /// <param name="ref">The value to bind to.</param>
-        /// <returns><c>true</c> if the binding succeeds, <c>false</c> otherwise.</returns>
+/// <summary>
+/// Binds an individual reference to a string value.
+/// This specialization is need because <c>istringstream::&gt;&gt;</c> delimits on whitespace.
+/// </summary>
+/// <typeparam name="key_type">The type of the string value.</typeparam>
+/// <param name="text">The string value.</param>
+/// <param name="ref">The value to bind to.</param>
+/// <returns><c>true</c> if the binding succeeds, <c>false</c> otherwise.</returns>
 template <typename key_type>
 bool bind(const key_type &text, utility::string_t &ref) //const 
 { 

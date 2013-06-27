@@ -198,13 +198,10 @@
     <ClInclude Include="..\streams_tests.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="$(TestRoot)\Common\utilities\vs11\CommonUtilities110.vcxproj">
-      <Project>{0c9d50d9-94fb-4732-a4ad-58e068315bb2}</Project>
-    </ProjectReference>
     <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs11\UnitTestpp110.vcxproj">
       <Project>{3EB86C0D-432C-4FFC-BAD4-8DF4EFC7D0FF}</Project>
     </ProjectReference>
-    <ProjectReference Include="$(CasablancaSrcDir)\vs11\casablanca110.vcxproj">
+    <ProjectReference Include="$(CasablancaSrcDir)\build\casablanca110.vcxproj">
       <Project>{90D85FF4-F0AE-4816-923F-0EF2758F30AB}</Project>
     </ProjectReference>
   </ItemGroup>

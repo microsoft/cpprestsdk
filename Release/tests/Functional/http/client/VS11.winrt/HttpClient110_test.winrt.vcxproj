@@ -198,7 +198,7 @@
     <ProjectReference Include="..\..\utilities\vs11.winrt\HttpTestUtilities110.winrt.vcxproj">
       <Project>{06F4E6FA-152F-4AA7-B8D0-F3EBC5F11F81}</Project>
     </ProjectReference>
-    <ProjectReference Include="$(CasablancaSrcDir)\VS11.winrt\casablanca110.winrt.vcxproj">
+    <ProjectReference Include="$(CasablancaSrcDir)\build\casablanca110.winrt.vcxproj">
       <Project>{198ED804-2655-4D92-8104-C220E3EA9452}</Project>
     </ProjectReference>
     <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs11\UnitTestpp110.vcxproj">

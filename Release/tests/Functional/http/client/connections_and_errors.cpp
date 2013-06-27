@@ -138,8 +138,8 @@ TEST_FIXTURE(uri_address, request_timeout, "Ignore:Linux", "TFS#612139")
 // This test still sometimes segfaults on Linux, but I'm re-enabling it [AL]
 TEST_FIXTURE(uri_address, content_ready_timeout)
 {
-    auto listener = ::http::experimental::listener::http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0, listener.open());
+    web::http::experimental::listener::http_listener listener(m_uri);
+    listener.open().wait();
 
     streams::producer_consumer_buffer<uint8_t> buf;
 
@@ -163,13 +163,13 @@ TEST_FIXTURE(uri_address, content_ready_timeout)
     }
 
     buf.close(std::ios_base::out).wait();
-    VERIFY_ARE_EQUAL(0, listener.close());
+    listener.close().wait();
 }
 
 TEST_FIXTURE(uri_address, stream_timeout)
 {
-    auto listener = ::http::experimental::listener::http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0, listener.open());
+    web::http::experimental::listener::http_listener listener(m_uri);
+    listener.open().wait();
 
     streams::producer_consumer_buffer<uint8_t> buf;
 
@@ -193,7 +193,7 @@ TEST_FIXTURE(uri_address, stream_timeout)
     }
 
     buf.close(std::ios_base::out).wait();
-    VERIFY_ARE_EQUAL(0, listener.close());
+    listener.close().wait();
 }
 #endif
 

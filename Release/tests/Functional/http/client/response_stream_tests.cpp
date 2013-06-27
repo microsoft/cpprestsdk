@@ -256,8 +256,8 @@ TEST_FIXTURE(uri_address, content_ready)
     http_client client(m_uri);
     std::string responseData("Hello world");
 
-    auto listener = web::http::experimental::listener::http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0u, listener.open());
+    web::http::experimental::listener::http_listener listener(m_uri);
+    listener.open().wait();
     listener.support([responseData](http_request request)
     {
         streams::producer_consumer_buffer<uint8_t> buf;
@@ -280,7 +280,7 @@ TEST_FIXTURE(uri_address, content_ready)
         rsp.content_ready().wait();
     }
 
-    VERIFY_ARE_EQUAL(0u, listener.close());
+    listener.close().wait();
 }
 
 TEST_FIXTURE(uri_address, xfer_chunked_with_length)
@@ -288,8 +288,8 @@ TEST_FIXTURE(uri_address, xfer_chunked_with_length)
     http_client client(m_uri);
     utility::string_t responseData(U("Hello world"));
 
-    auto listener = web::http::experimental::listener::http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0u, listener.open());
+    web::http::experimental::listener::http_listener listener(m_uri);
+    listener.open().wait();
     listener.support([responseData](http_request request)
     {
         http_response response(200);
@@ -318,7 +318,7 @@ TEST_FIXTURE(uri_address, xfer_chunked_with_length)
         VERIFY_ARE_EQUAL(rsp_string, responseData);
     }
 
-    VERIFY_ARE_EQUAL(0u, listener.close());
+    listener.close().wait();
 }
 
 TEST_FIXTURE(uri_address, get_resp_stream)
@@ -326,8 +326,8 @@ TEST_FIXTURE(uri_address, get_resp_stream)
     http_client client(m_uri);
     std::string responseData("Hello world");
 
-    auto listener = web::http::experimental::listener::http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0, listener.open());
+    web::http::experimental::listener::http_listener listener(m_uri);
+    listener.open().wait();
     listener.support([responseData](http_request request)
     {
         streams::producer_consumer_buffer<uint8_t> buf;
@@ -358,7 +358,7 @@ TEST_FIXTURE(uri_address, get_resp_stream)
         rsp.content_ready().wait();
     }
        
-    VERIFY_ARE_EQUAL(0, listener.close());
+    listener.close().wait();
 }
 
 TEST_FIXTURE(uri_address, xfer_chunked_multiple_chunks)
@@ -370,8 +370,8 @@ TEST_FIXTURE(uri_address, xfer_chunked_multiple_chunks)
     std::string firstChunk("abcdefghijklmnopqrst");
     std::string secondChunk("abcdefghijklmnopqrstuvwxyz");
 
-    auto listener = web::http::experimental::listener::http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0, listener.open());
+    web::http::experimental::listener::http_listener listener(m_uri);
+    listener.open().wait();
     listener.support([firstChunk, secondChunk](http_request request)
     {
         streams::producer_consumer_buffer<uint8_t> buf;
@@ -410,7 +410,7 @@ TEST_FIXTURE(uri_address, xfer_chunked_multiple_chunks)
         fistream.close().get();
     }
 
-    VERIFY_ARE_EQUAL(0, listener.close());
+    listener.close().wait();
 }
 
 #endif

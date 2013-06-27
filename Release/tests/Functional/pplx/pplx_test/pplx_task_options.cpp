@@ -108,7 +108,7 @@ public:
     }
 
     pplx::extensibility::event_t& m_event;
-	pplx::details::atomic_long m_numTasks;
+    pplx::details::atomic_long m_numTasks;
 };
 #pragma warning(pop)
 

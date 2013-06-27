@@ -34,15 +34,17 @@ using namespace utility;
 using namespace concurrency;
 using namespace utility::conversions;
 using namespace http::details;
-using namespace http::experimental::listener::details;
+using namespace http::experimental::listener;
+using namespace http::experimental::details;
+using namespace utility::experimental;
 using namespace logging;
-using namespace logging::log::details;
+using namespace logging::log;
 
 
 namespace web { namespace http
 {
 namespace experimental {
-namespace listener
+namespace details
 {
 
 /// <summary>
@@ -108,8 +110,7 @@ static utility::string_t HttpServerAPIKnownHeaders[] =
 
 static void char_to_wstring(utf16string &dest, const char * src)
 {
-    std::string temp(src);
-    dest = utf16string(temp.begin(), temp.end());
+    dest = utility::conversions::to_utf16string(std::string(src));
 }
 
 http::method parse_request_method(const HTTP_REQUEST *p_request)
@@ -208,9 +209,11 @@ void parse_http_headers(const HTTP_REQUEST_HEADERS &headers, http::http_headers 
     }
 }
 
+//
 // Chunk size to use to read request body in.
-// Use size of a page.
-#define CHUNK_SIZE ((size_t)4096)
+// 64KB seems a good number based on previous measurements.
+//
+#define CHUNK_SIZE ((size_t)64*1024)
 
 http_windows_server::http_windows_server()
     : m_connectionCount(0)
@@ -239,11 +242,9 @@ void http_windows_server::connection_release()
     }
 }
 
-unsigned long http_windows_server::register_listener(_In_ http_listener_interface *pListener)
+pplx::task<void> http_windows_server::register_listener(_In_ http_listener *pListener)
 {
     unsigned long errorCode;
-
-    utility::ostringstream_t os;
 
     // Add listener registration.
     {
@@ -279,29 +280,30 @@ unsigned long http_windows_server::register_listener(_In_ http_listener_interfac
     errorCode = HttpAddUrlToUrlGroup(m_urlGroupId, host_uri.c_str(), (HTTP_URL_CONTEXT)pListener, 0);
     if(errorCode)
     {
+        utility::stringstream_t os;
+
         if(errorCode == ERROR_ALREADY_EXISTS || errorCode == ERROR_SHARING_VIOLATION)
         {
-            os.clear();
-            os << U("Address '") << pListener->uri().to_string() << U("' is already in use");
-            log::post(LOG_ERROR, errorCode, os.str());
+
+            os << _XPLATSTR("Address '") << pListener->uri().to_string() << _XPLATSTR("' is already in use");
+            return pplx::task_from_exception<void>(http_exception(errorCode, os.str()));
         }
         else if (errorCode == ERROR_ACCESS_DENIED)
         {
-            os.clear();
-            os << U("Access denied: attempting to add Address '") << pListener->uri().to_string() << U("'. ");
-            os << U("Run as administrator to listen on an hostname other than localhost, or to listen on port 80.");
-            log::post(LOG_ERROR, os.str());
+            os << _XPLATSTR("Access denied: attempting to add Address '") << pListener->uri().to_string() << _XPLATSTR("'. ");
+            os << _XPLATSTR("Run as administrator to listen on an hostname other than localhost, or to listen on port 80.");
+            return pplx::task_from_exception<void>(http_exception(errorCode, os.str()));
         }
         else
         {
-            report_error(LOG_ERROR, errorCode, U("Error adding url to url group"));
+            return pplx::task_from_exception<void>(http_exception(errorCode, _XPLATSTR("Error adding url to url group")));
         }
     }
 
-    return errorCode;
+    return pplx::task_from_result();
 }
 
-unsigned long http_windows_server::unregister_listener(_In_ http_listener_interface *pListener)
+pplx::task<void> http_windows_server::unregister_listener(_In_ http_listener *pListener)
 {
     // Windows HTTP Server API will not accept a uri with an empty path, it must have a '/'.
     const http::uri listener_uri = pListener->uri();
@@ -323,14 +325,18 @@ unsigned long http_windows_server::unregister_listener(_In_ http_listener_interf
 
     // Then take the listener write lock to make sure there are no calls into the listener's
     // request handler.
+    if ( pListenerLock )
     {
         pplx::extensibility::scoped_rw_lock_t lock(*pListenerLock);
     }
 
-    return error_code;
+    if ( error_code != NO_ERROR )
+        return pplx::task_from_exception<void>(http_exception(error_code));
+    else
+        return pplx::task_from_result();
 }
 
-unsigned long http_windows_server::start()
+pplx::task<void> http_windows_server::start()
 {
     // Initialize data.
     m_serverSessionId = 0; 
@@ -348,28 +354,28 @@ unsigned long http_windows_server::start()
     ULONG errorCode = HttpCreateServerSession(httpApiVersion, &m_serverSessionId, 0);
     if(errorCode)
     {
-        return report_error(logging::LOG_ERROR, errorCode, U("Error creating server session"));
+        return pplx::task_from_exception<void>(http_exception(errorCode));
     }
 
     // Create Url group.
     errorCode = HttpCreateUrlGroup(m_serverSessionId, &m_urlGroupId, 0);
     if(errorCode)
     {
-        return report_error(logging::LOG_ERROR, errorCode, U("Error creating url group"));
+        return pplx::task_from_exception<void>(http_exception(errorCode));
     }
 
     // Create request queue.
     errorCode = HttpCreateRequestQueue(httpApiVersion, U("HttpReceiver"), NULL, NULL, &m_hRequestQueue);
     if(errorCode)
     {
-        return report_error(logging::LOG_ERROR, errorCode, U("Error creating request queue"));
+        return pplx::task_from_exception<void>(http_exception(errorCode));
     }
 
     // Create and start ThreadPool I/O so we can process asynchronous I/O.
     m_threadpool_io = CreateThreadpoolIo(m_hRequestQueue, &http_overlapped::io_completion_callback, NULL, NULL);
     if(m_threadpool_io == nullptr)
     {
-        return report_error(logging::LOG_ERROR, U("Error creating Threadpool Io"));
+        return pplx::task_from_exception<void>(http_exception(errorCode));
     }
 
     // Associate Url group with request queue.
@@ -383,17 +389,18 @@ unsigned long http_windows_server::start()
         sizeof(HTTP_BINDING_INFO));
     if(errorCode)
     {
-        return report_error(logging::LOG_ERROR, errorCode, U("Error associating url group with request queue"));
+        return pplx::task_from_exception<void>(http_exception(utility::details::create_error_message(errorCode)));
     }
 
     m_receivingTask = pplx::create_task([this]() { receive_requests(); });
-    return errorCode;
+    return pplx::task_from_result();
 }
 
-unsigned long http_windows_server::stop()
+pplx::task<void> http_windows_server::stop()
 {
     // Prevent new connections
-    _InterlockedExchange(&m_shuttingDown, 1);
+    if (_InterlockedExchange(&m_shuttingDown, 1) == 1)
+        return pplx::task_from_result();
 
     // Close existing connections.
     close_connections();
@@ -425,7 +432,7 @@ unsigned long http_windows_server::stop()
         m_threadpool_io = nullptr;
     }
 
-    return 0;
+    return pplx::task_from_result();
 }
 
 void http_windows_server::close_connections()
@@ -591,9 +598,6 @@ pplx::task<void> http_windows_server::respond(http::http_response response)
     return pplx::create_task(p_context->m_response_completed);
 }
 
-namespace details
-{
-
 connection::connection(_In_ http_windows_server *p_server) 
     : m_p_server(p_server)
 {
@@ -662,8 +666,8 @@ void connection::read_headers_io_completion::http_io_completion(DWORD error_code
 
         auto requestContext = static_cast<windows_request_context *>(m_msg._get_server_context());
         requestContext->m_p_connection->read_request_body_chunk(m_request, m_msg);
-        // Dispatch request to the http_listener_interface.
-        requestContext->m_p_connection->dispatch_request_to_listener(m_msg, (http_listener_interface *)m_request->UrlContext);
+        // Dispatch request to the http_listener.
+        requestContext->m_p_connection->dispatch_request_to_listener(m_msg, (http_listener *)m_request->UrlContext);
     }
 }
 
@@ -727,7 +731,7 @@ void connection::read_body_io_completion::http_io_completion(DWORD error_code, D
     }
 }
 
-void connection::dispatch_request_to_listener(http_request &request, _In_ http_listener_interface *pListener)
+void connection::dispatch_request_to_listener(http_request &request, _In_ http_listener *pListener)
 {
     request._set_listener_path(pListener->uri().path());
 
@@ -745,13 +749,13 @@ void connection::dispatch_request_to_listener(http_request &request, _In_ http_l
             catch(const std::exception &e)
             {
                 utility::ostringstream_t str_stream;
-                str_stream << U("Error: a std::exception was thrown out of http_listener_interface handle: ") << e.what();
+                str_stream << U("Error: a std::exception was thrown out of http_listener handle: ") << e.what();
                 logging::log::post(logging::LOG_ERROR, 0, str_stream.str(), request);
                 response = http::http_response(status_codes::InternalError);
             }
             catch(...)
             {
-                logging::log::post(logging::LOG_FATAL, 0, U("Fatal Error: an unknown exception was thrown out of http_listener_interface handler."), request);
+                logging::log::post(logging::LOG_FATAL, 0, U("Fatal Error: an unknown exception was thrown out of http_listener handler."), request);
                 response = http::http_response(status_codes::InternalError);
             }
             // Workaround the Dev10 Bug on nested lambda
@@ -808,7 +812,7 @@ void connection::dispatch_request_to_listener(http_request &request, _In_ http_l
     catch(const std::exception &e)
     {
         utility::ostringstream_t str_stream;
-        str_stream << U("Error: a std::exception was thrown out of http_listener_interface handle: ") << e.what();
+        str_stream << U("Error: a std::exception was thrown out of http_listener handle: ") << e.what();
         logging::log::post(logging::LOG_ERROR, 0, str_stream.str(), request);
         pListenerLock->unlock();
 
@@ -816,7 +820,7 @@ void connection::dispatch_request_to_listener(http_request &request, _In_ http_l
     }
     catch(...)
     {
-        logging::log::post(logging::LOG_FATAL, 0, U("Fatal Error: an unknown exception was thrown out of http_listener_interface handler."), request);
+        logging::log::post(logging::LOG_ERROR, 0, U("Fatal Error: an unknown exception was thrown out of http_listener handler."), request);
         pListenerLock->unlock();
 
         request._reply_if_not_already(status_codes::InternalError);
@@ -1051,7 +1055,5 @@ void windows_request_context::send_entity_body(http::http_response response, _In
 }
 
 } // namespace details
-
-} // namespace listener
 } // namespace experimental
 }} // namespace web::http

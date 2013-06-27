@@ -31,8 +31,8 @@ SUITE(request_handler_tests)
 
 TEST_FIXTURE(uri_address, support)
 {
-    http_listener listener = http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0, listener.open());
+    http_listener listener(m_uri);
+    listener.open().wait();
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
 
@@ -40,7 +40,8 @@ TEST_FIXTURE(uri_address, support)
     {
         http_asserts::assert_request_equals(request, U("CUSTOM"), U("/"));
         request.reply(status_codes::OK);
-    }).support(methods::PUT, [](http_request request)
+    });
+    listener.support(methods::PUT, [](http_request request)
     {
         http_asserts::assert_request_equals(request, methods::PUT, U("/"));
         request.reply(status_codes::OK);
@@ -89,12 +90,13 @@ TEST_FIXTURE(uri_address, support)
     {
         http_asserts::assert_test_response_equals(p_response, status_codes::Created);
     }).wait();
+    listener.close().wait();
 }
 
 TEST_FIXTURE(uri_address, exceptions_in_handler)
 {
-    http_listener listener = http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0, listener.open());
+    http_listener listener(m_uri);
+    listener.open().wait();
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
 
@@ -122,12 +124,13 @@ TEST_FIXTURE(uri_address, exceptions_in_handler)
     {
         http_asserts::assert_test_response_equals(p_response, status_codes::OK);
     }).wait();
+    listener.close().wait();
 }
 
 TEST_FIXTURE(uri_address, handle_options)
 {
-    http_listener listener = http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0, listener.open());
+    http_listener listener(m_uri);
+    listener.open().wait();
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
 
@@ -151,12 +154,13 @@ TEST_FIXTURE(uri_address, handle_options)
     {
         http_asserts::assert_test_response_equals(p_response, status_codes::NoContent);
     }).wait();
+    listener.close().wait();
 }
 
 TEST_FIXTURE(uri_address, handle_trace)
 {
-    http_listener listener = http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0, listener.open());
+    http_listener listener(m_uri);
+    listener.open().wait();
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
 
@@ -184,11 +188,12 @@ TEST_FIXTURE(uri_address, handle_trace)
     {
         http_asserts::assert_test_response_equals(p_response, status_codes::NoContent);
     }).wait();
+    listener.close().wait();
 }
 
 TEST_FIXTURE(uri_address, async_request_handler)
 {
-    http_listener listener = http_listener::create(m_uri);
+    http_listener listener(m_uri);
     pplx::extensibility::event_t e;
     listener.support([&e](http_request request)
     {
@@ -208,14 +213,15 @@ TEST_FIXTURE(uri_address, async_request_handler)
 }
 
 
-TEST_FIXTURE(uri_address, multiple_listeners, "Ignore:Linux", "TBD")
+TEST_FIXTURE(uri_address, multiple_listeners, "Ignore:Linux", "724744")
 {
-    http_listener listener1 = http_listener::create(U("http://localhost:45678/path1"));
-    VERIFY_ARE_EQUAL(0, listener1.open());
-    http_listener listener2 = http_listener::create(U("http://localhost:45678/path1/path2"));
-    VERIFY_ARE_EQUAL(0, listener2.open());
-    http_listener listener3 = http_listener::create(U("http://localhost:45678/path3"));
-    VERIFY_ARE_EQUAL(0, listener3.open());
+    http_listener listener1(U("http://localhost:45678/path1"));
+    http_listener listener2(U("http://localhost:45678/path1/path2"));
+    http_listener listener3(U("http://localhost:45678/path3"));
+    listener1.open().wait();
+    listener2.open().wait();
+    listener3.open().wait();
+
     test_http_client::scoped_client client(U("http://localhost:45678"));
     test_http_client * p_client = client.client();
 
@@ -256,7 +262,7 @@ TEST_FIXTURE(uri_address, multiple_listeners, "Ignore:Linux", "TBD")
     }).wait();
 
     // Remove the second listener and send a request again.
-    VERIFY_ARE_EQUAL(0, listener2.close());
+    listener2.close().wait();
     listener1.support(methods::GET, [](http_request request)
     {
         http_asserts::assert_request_equals(request, methods::GET, U("/path2/path4"));
@@ -267,17 +273,21 @@ TEST_FIXTURE(uri_address, multiple_listeners, "Ignore:Linux", "TBD")
     {
         http_asserts::assert_test_response_equals(p_response, status_codes::OK);
     }).wait();
+
+    listener3.close().wait();
+    listener1.close().wait();
 }
 
-TEST_FIXTURE(uri_address, unregister_while_processing, "Ignore:Linux", "TBD")
+TEST_FIXTURE(uri_address, unregister_while_processing, "Ignore:Linux", "724744")
 {
-    http_listener listener1 = http_listener::create(U("http://localhost:45678/path1"));
-    VERIFY_ARE_EQUAL(0, listener1.open());
-    http_listener listener2 = http_listener::create(U("http://localhost:45678/path1/path2"));
-    VERIFY_ARE_EQUAL(0, listener2.open());
-    test_http_client::scoped_client client1(U("http://localhost:45678"));
+    http_listener listener1(U("http://localhost:45679/path1"));
+    http_listener listener2(U("http://localhost:45679/path1/path2"));
+    listener1.open().wait();
+    listener2.open().wait();
+
+    test_http_client::scoped_client client1(U("http://localhost:45679"));
     test_http_client * p_client1 = client1.client();
-    test_http_client::scoped_client client2(U("http://localhost:45678"));
+    test_http_client::scoped_client client2(U("http://localhost:45679"));
     test_http_client * p_client2 = client2.client();
 
     // first listener is used to wait until a request comes into the second
@@ -287,7 +297,7 @@ TEST_FIXTURE(uri_address, unregister_while_processing, "Ignore:Linux", "TBD")
     {
         http_asserts::assert_request_equals(request, methods::GET, U("/"));
         secondRequest.wait();
-        VERIFY_ARE_EQUAL(0, listener2.close());
+        listener2.close().wait();
         request.reply(status_codes::OK);
     });
     VERIFY_ARE_EQUAL(0, p_client1->request(methods::GET, U("/path1")));
@@ -307,12 +317,13 @@ TEST_FIXTURE(uri_address, unregister_while_processing, "Ignore:Linux", "TBD")
     {
         http_asserts::assert_test_response_equals(p_response, status_codes::OK);
     }).wait();
+    listener1.close().wait();
 }
 
 TEST_FIXTURE(uri_address, multiple_requests)
 {
-    http_listener listener = http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0, listener.open());
+    http_listener listener(m_uri);
+    listener.open().wait();
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
     test_http_client::scoped_client client2(m_uri);
@@ -346,12 +357,14 @@ TEST_FIXTURE(uri_address, multiple_requests)
     {
         http_asserts::assert_test_response_equals(p_response, status_codes::OK);
     }).wait();
+
+    listener.close().wait();
 }
 
 TEST_FIXTURE(uri_address, multiple_clients_multiple_requests)
 {
-    http_listener listener = http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0, listener.open());
+    http_listener listener(m_uri);
+    listener.open().wait();
     const size_t NUM_CLIENTS = 10;
     std::vector<std::unique_ptr<test_http_client>> clients;
     for(size_t i = 0; i < NUM_CLIENTS; ++i)
@@ -384,12 +397,13 @@ TEST_FIXTURE(uri_address, multiple_clients_multiple_requests)
     {
         VERIFY_ARE_EQUAL(0, clients[i]->close());
     }
+    listener.close().wait();
 }
 
 TEST_FIXTURE(uri_address, test_leaks)
 {
-    http_listener listener = http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0, listener.open());
+    http_listener listener(m_uri);
+    listener.open().wait();
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
 
@@ -433,6 +447,7 @@ TEST_FIXTURE(uri_address, test_leaks)
             http_asserts::assert_test_response_equals(p_response, status_codes::OK);
         }).wait();
     }
+    listener.close().wait();
 }
 
 }

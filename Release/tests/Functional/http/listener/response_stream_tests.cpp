@@ -44,8 +44,8 @@ TEST_FIXTURE(uri_address, set_body_stream_small)
     utility::string_t fname = U("set_response_stream_small.txt");
     fill_file(fname);
 
-    http_listener listener = http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0u, listener.open());
+    http_listener listener(m_uri);
+    listener.open().wait();
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
 
@@ -80,8 +80,8 @@ TEST_FIXTURE(uri_address, set_body_stream_large)
     utility::string_t fname = U("set_response_stream_large.txt");
     fill_file(fname,200);
 
-    http_listener listener = http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0u, listener.open());
+    http_listener listener(m_uri);
+    listener.open().wait();
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
 
@@ -117,8 +117,8 @@ TEST_FIXTURE(uri_address, set_body_stream_partial)
     utility::string_t fname = U("set_response_stream_partial.txt");
     fill_file(fname,200);
 
-    http_listener listener = http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0u, listener.open());
+    http_listener listener(m_uri);
+    listener.open().wait();
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
 
@@ -157,8 +157,8 @@ TEST_FIXTURE(uri_address, set_body_filestream_chunked)
     utility::string_t fname = U("set_response_stream_chunked.txt");
     fill_file(fname,200);
 
-    http_listener listener = http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0u, listener.open());
+    http_listener listener(m_uri);
+    listener.open().wait();
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
 
@@ -191,8 +191,8 @@ TEST_FIXTURE(uri_address, set_body_filestream_chunked)
 
 TEST_FIXTURE(uri_address, set_body_memorystream_chunked)
 {
-    http_listener listener = http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0u, listener.open());
+    http_listener listener(m_uri);
+    listener.open().wait();
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
 
@@ -238,8 +238,8 @@ TEST_FIXTURE(uri_address, set_body_memorystream_chunked)
 TEST_FIXTURE(uri_address, reply_transfer_encoding_4k,
 			 "Ignore", "607204")
 {
-    auto listener = ::http::experimental::listener::http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0, listener.open());
+    web::http::experimental::listener::http_listener listener(m_uri);
+    listener.open().wait();
 
     streams::container_buffer<std::vector<uint8_t>> buf;
 
@@ -264,13 +264,13 @@ TEST_FIXTURE(uri_address, reply_transfer_encoding_4k,
         // Wait for data
         resp.content_ready().wait();
     }
-    VERIFY_ARE_EQUAL(0, listener.close());
+    listener.close().wait();
 }
 
 TEST_FIXTURE(uri_address, reply_chunked_4k)
 {
-    auto listener = ::http::experimental::listener::http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0, listener.open());
+    web::http::experimental::listener::http_listener listener(m_uri);
+    listener.open().wait();
 
     streams::producer_consumer_buffer<uint8_t> buf;
 
@@ -295,7 +295,7 @@ TEST_FIXTURE(uri_address, reply_chunked_4k)
         // Wait for data
         resp.content_ready().wait();
     }
-    VERIFY_ARE_EQUAL(0, listener.close());
+    listener.close().wait();
 }
 
 }

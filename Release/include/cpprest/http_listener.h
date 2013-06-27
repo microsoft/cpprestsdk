@@ -50,104 +50,18 @@ namespace listener
 {
 
 /// <summary>
-/// Interface a HTTP listener must implement to work with the http_server_api.
-/// </summary>
-class http_listener_interface
-{
-public:
-
-    /// <summary>
-    /// Get the URI of the listener.
-    /// </summary>
-    /// <returns>The URI this listener is for.</returns>
-    virtual http::uri uri() const = 0;
-
-    /// <summary>
-    /// Handler for all requests.
-    /// </summary>
-    virtual pplx::task<http::http_response> handle_request(http::http_request msg) = 0;
-};
-
-/// <summary>
 /// A class for listening and processing HTTP requests at a specific URI.
 /// </summary>
-class http_listener : public http_listener_interface
+class http_listener
 {
 public:
-
     /// <summary>
     /// Create a listener from a URI.
     /// </summary>
     /// <remarks>The listener will not have been opened when returned.</remarks>
     /// <param name="uri">URI at which the listener should accept requests.</param>
     /// <returns>An unopened http_listener.</returns>
-    static http_listener create(const http::uri &uri) { return http_listener(uri); }
-
-    /// <summary>
-    /// Create an HTTP listener given a functor (lambda) to handle all GET requests.
-    /// </summary>
-    /// <remarks>The listener will not have been opened when returned.</remarks>
-    /// <param name="uri">URI at which the listener should accept requests.</param>
-    /// <param name="get">Handler to accept all incoming GET requests.</param>
-    /// <returns>An unopened http_listener.</returns>
-    template<typename FunctorGet>
-    static http_listener create(const http::uri &uri, FunctorGet get)
-    {
-        http_listener listener(uri);
-        listener.support(methods::GET, std::move(get));
-        return listener;
-    }
-
-    /// <summary>
-    /// Create an HTTP listener given functors to handle all GET and PUT requests.
-    /// </summary>
-    /// <remarks>The listener will not have been opened when returned.</remarks>
-    /// <param name="uri">URI at which the listener should accept requests.</param>
-    /// <param name="get">Handler to accept all incoming GET requests.</param>
-    /// <param name="put">Handler to accept all incoming PUT requests.</param>
-    /// <returns>An unopened http_listener.</returns>
-    template<typename FunctorGet, typename FunctorPut>
-    static http_listener create(const http::uri &uri, FunctorGet get, FunctorPut put)
-    {
-        http_listener listener(uri);
-        listener.support(methods::GET, std::move(get)).support(methods::PUT, std::move(put));
-        return listener;
-    }
-
-    /// <summary>
-    /// Create an HTTP listener given functors to handle all GET, PUT, and POST requests.
-    /// </summary>
-    /// <remarks>The listener will not have been opened when returned.</remarks>
-    /// <param name="uri">URI at which the listener should accept requests.</param>
-    /// <param name="get">Handler to accept all incoming GET requests.</param>
-    /// <param name="put">Handler to accept all incoming PUT requests.</param>
-    /// <param name="post">Handler to accept all incoming POST requests.</param>
-    /// <returns>An unopened http_listener.</returns>
-    template<typename FunctorGet, typename FunctorPut, typename FunctorPost>
-    static http_listener create(const http::uri &uri, FunctorGet get, FunctorPut put, FunctorPost post)
-    {
-        http_listener listener(uri);
-        listener.support(methods::GET, std::move(get)).support(methods::PUT, std::move(put)).support(methods::POST, std::move(post));
-        return listener;
-    }
-
-    /// <summary>
-    /// Create an HTTP listener given functors to handle all GET, PUT, POST, and DELETE requests.
-    /// </summary>
-    /// <remarks>The listener will not have been opened when returned.</remarks>
-    /// <param name="uri">URI at which the listener should accept requests.</param>
-    /// <param name="get">Handler to accept all incoming GET requests.</param>
-    /// <param name="put">Handler to accept all incoming PUT requests.</param>
-    /// <param name="post">Handler to accept all incoming POST requests.</param>
-    /// <param name="delte">Handler to accept all incoming DELETE requests.</param>
-    /// <returns>An unopened http_listener.</returns>
-    template<typename FunctorGet, typename FunctorPut, typename FunctorPost, typename FunctorDelete>
-    static http_listener create(const http::uri &uri, FunctorGet get, FunctorPut put, FunctorPost post, FunctorDelete delte)
-    {
-        http_listener listener(uri);
-        listener.support(methods::GET, std::move(get)).support(methods::PUT, std::move(put)).support(methods::POST, std::move(post)).support(methods::DEL, std::move(delte));
-        return listener;
-    }
+    _ASYNCRTIMP http_listener(const http::uri &address);
 
     /// <summary>
     /// Default constructor.
@@ -159,69 +73,63 @@ public:
     /// <summary>
     /// Destructor frees any held resources.
     /// </summary>
+    /// <remarks>Call close() before allowing a listener to be destroyed.</remarks>
     _ASYNCRTIMP virtual ~http_listener();
 
     /// <summary>
     /// Open the listener, i.e. start accepting requests.
     /// </summary>
-    _ASYNCRTIMP unsigned long open();
+    _ASYNCRTIMP pplx::task<void> open();
 
     /// <summary>
     /// Stop accepting requests and close all connections.
     /// </summary>
-    _ASYNCRTIMP unsigned long close();
+    /// <remarks>
+    /// This function will stop accepting requests and wait for all outstanding handler calls
+    /// to finish before completing the task. Calling close() from within a handler and blocking
+    /// waiting for its result will result in a deadlock.
+    ///
+    /// Call close() before allowing a listener to be destroyed.
+    /// </remarks>
+    _ASYNCRTIMP pplx::task<void> close();
 
     /// <summary>
     /// Add a general handler to support all requests.
     /// </summary>
     /// <param name="handler">Funtion object to be called for all requests.</param>
     /// <returns>A reference to this http_listener to enable chaining.</returns>
-    template <typename Functor>
-    http_listener &support(Functor handler)  
+    void support(std::function<void(http_request)> handler)  
     {
-        m_all_requests = std::function<void(http_request)>(handler);
-        return *this;
+        m_all_requests = handler;
     }
 
     /// <summary>
     /// Add support for a specific HTTP method.
     /// </summary>
     /// <param name="method">An HTTP method.</param>
-    /// <param name="handler">Funtion object to be called for all requests.</param>
+    /// <param name="handler">Funtion object to be called for all requests for the given HTTP method.</param>
     /// <returns>A reference to this http_listener to enable chaining.</returns>
-    template <typename Functor>
-    http_listener &support(const http::method &method, Functor handler)
+    void support(const http::method &method, std::function<void(http_request)> handler)
     {
-        m_supported_methods[method] = std::function<void(http_request)>(handler);
-        return *this;
+        m_supported_methods[method] = handler;
     }
 
     /// <summary>
-    /// Add an HTTP pipeline stage to the client. It will be invoked after any already existing stages.
+    /// Adds an HTTP pipeline stage to the listener.
     /// </summary>
     /// <param name="handler">A function object representing the pipeline stage.</param>
     void add_handler(std::function<pplx::task<http::http_response>(http::http_request, std::shared_ptr<http::http_pipeline_stage>)> handler)
     {
-        m_pipeline->append(std::make_shared< http::details::function_pipeline_wrapper>(handler));
+        m_pipeline->append(std::make_shared<http::details::function_pipeline_wrapper>(handler));
     }
 
     /// <summary>
-    /// Start listening for for HTTP requests and call the function object.
-    /// Stop listening when the the 'until()' functor returns.
+    /// Adds an HTTP pipeline stage to the listener.
     /// </summary>
-    template<typename Functor>
-    pplx::task<unsigned long> listen(Functor until)
+    /// <param name="stage">A shared pointer to a pipeline stage.</param>
+    void add_handler(std::shared_ptr<http::http_pipeline_stage> stage)
     {
-        return pplx::create_task([=]() -> unsigned long
-        {
-            unsigned long error_code = open();
-            if (error_code == 0)
-            {
-                until();
-                return close();
-            }
-            return error_code;
-        });
+        m_pipeline->append(stage);
     }
 
     /// <summary>
@@ -247,17 +155,17 @@ public:
     }
 
     /// <summary>
-    /// Handler for all requests. The HTTP host uses this to dispatching a message to the pipeline.
+    /// Handler for all requests. The HTTP host uses this to dispatch a message to the pipeline.
     /// </summary>
+    /// <remarks>Only HTTP server implementations should call this API.</remarks>
     _ASYNCRTIMP pplx::task<http::http_response> handle_request(http::http_request msg);
 
-    /// <summary>
-    /// Handler for all requests. This is the last pipeline stage, dispatching messages to 
-    /// application handlers, based on the HTTP method.
-    /// </summary>
-    _ASYNCRTIMP pplx::task<http::http_response> dispatch_request(http::http_request msg);
-
 private:
+    // No copying of listeners.
+    http_listener(const http_listener &other);
+    http_listener &operator=(const http_listener &other);
+
+    _ASYNCRTIMP pplx::task<http::http_response> dispatch_request(http::http_request msg);
 
     class _listener_stage : public http::http_pipeline_stage
     {
@@ -286,7 +194,7 @@ private:
         if(this != &other)
         {
             // unregister this from the server
-            this->close();
+            this->close().wait();
 
             this->m_uri = std::move(other.m_uri);
             this->m_all_requests = std::move(other.m_all_requests);
@@ -301,18 +209,13 @@ private:
             {
                 // unregister the listener being moved from the server
                 // as the registration is by pointer!
-                other.close();
+                other.close().wait();
 
                 // Register with the server
-                this->open();
+                this->open().wait();
             }
         }
     }
-
-    /// <summary>
-    /// Private constructor. Only create_listener functions should access the constructor.
-    /// </summary>
-    _ASYNCRTIMP http_listener(const http::uri &address);
 
     // Default implementation for TRACE and OPTIONS.
     void handle_trace(http::http_request message);

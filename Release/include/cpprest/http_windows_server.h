@@ -42,13 +42,11 @@
 namespace web { namespace http
 {
 namespace experimental {
-namespace listener
-{
-
-class http_windows_server;
 
 namespace details
 {
+
+class http_windows_server;
 
 /// <summary>
 /// Interface for asynchronous HTTP I/O completions.
@@ -156,7 +154,7 @@ public:
     };
 
     // Handles actual dispatching of requests to http_listener.
-    void dispatch_request_to_listener(http::http_request &request, _In_ http_listener_interface *pListener);
+    void dispatch_request_to_listener(http::http_request &request, _In_ web::http::experimental::listener::http_listener *pListener);
 
     // Asychrounously sends response.
     void async_process_response(http::http_response &response);
@@ -182,7 +180,7 @@ public:
     };
 
     // http server this connection belongs to.
-    http::experimental::listener::http_windows_server *m_p_server;
+    http::experimental::details::http_windows_server *m_p_server;
 };
 
 // Handles sending response using overlapped I/O.
@@ -242,8 +240,6 @@ private:
 
 };
 
-} // namespace details;
-
 /// <summary>
 /// Class to implement HTTP server API on Windows.
 /// </summary>
@@ -264,22 +260,22 @@ public:
     /// <summary>
     /// Start listening for incoming requests.
     /// </summary>
-    virtual unsigned long start();
+    virtual pplx::task<void> start();
 
     /// <summary>
     /// Registers an http listener.
     /// </summary>
-    virtual unsigned long register_listener(_In_ http_listener_interface *pListener);
+    virtual pplx::task<void> register_listener(_In_ web::http::experimental::listener::http_listener *pListener);
 
     /// <summary>
     /// Unregisters an http listener.
     /// </summary>
-    virtual unsigned long unregister_listener(_In_ http_listener_interface *pListener);
+    virtual pplx::task<void> unregister_listener(_In_ web::http::experimental::listener::http_listener *pListener);
 
     /// <summary>
     /// Stop processing and listening for incoming requests.
     /// </summary>
-    virtual unsigned long stop();
+    virtual pplx::task<void> stop();
 
     /// <summary>
     /// Asynchronously sends the specified http response.
@@ -332,7 +328,7 @@ private:
 
     // Registered listeners
     pplx::extensibility::reader_writer_lock_t _M_listenersLock;
-    std::unordered_map<http::experimental::listener::http_listener_interface *, std::unique_ptr<pplx::extensibility::reader_writer_lock_t>> _M_registeredListeners;
+    std::unordered_map<web::http::experimental::listener::http_listener *, std::unique_ptr<pplx::extensibility::reader_writer_lock_t>> _M_registeredListeners;
 
     // HTTP Server API server session id.
     HTTP_SERVER_SESSION_ID m_serverSessionId;
@@ -354,6 +350,6 @@ private:
     void receive_requests();
 };
 
-} // namespace listener
+} // namespace details;
 } // namespace experimental
 }} // namespace web::http

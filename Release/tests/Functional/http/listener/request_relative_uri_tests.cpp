@@ -28,8 +28,8 @@ SUITE(request_relative_uri_tests)
 TEST_FIXTURE(uri_address, empty_base_uri)
 {
     // listen on empty, request /path1/path2
-    http_listener listener = http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0, listener.open());
+    http_listener listener(m_uri);
+    listener.open().wait();
     test_http_client client(m_uri);
     VERIFY_ARE_EQUAL(0, client.open());
     listener.support([](http_request request)
@@ -49,8 +49,8 @@ TEST_FIXTURE(uri_address, empty_base_uri)
 TEST_FIXTURE(uri_address, nested_paths)
 {
     // listen on /path1, request /path1/path2
-    http_listener listener = http_listener::create(web::http::uri_builder(m_uri).append_path(U("/path1")).to_uri());
-    VERIFY_ARE_EQUAL(0, listener.open());
+    http_listener listener(web::http::uri_builder(m_uri).append_path(U("/path1")).to_uri());
+    listener.open().wait();
     test_http_client client(m_uri);
     VERIFY_ARE_EQUAL(0, client.open());
     listener.support([](http_request request)
@@ -70,8 +70,8 @@ TEST_FIXTURE(uri_address, nested_paths)
 TEST_FIXTURE(uri_address, nested_paths_encoding)
 {
     // listen on /path1%20/path2%20, request /path1%20/path2%20/path%203
-    http_listener listener = http_listener::create(web::http::uri_builder(m_uri).append_path(U("/path1%20/path2%20")).to_uri());
-    VERIFY_ARE_EQUAL(0, listener.open());
+    http_listener listener(web::http::uri_builder(m_uri).append_path(U("/path1%20/path2%20")).to_uri());
+    listener.open().wait();
     test_http_client client(m_uri);
     VERIFY_ARE_EQUAL(0, client.open());
     listener.support([](http_request request)

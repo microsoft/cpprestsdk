@@ -44,11 +44,11 @@ TEST_FIXTURE(uri_address, http_short_circuit)
             return next_stage->propagate(request);
         };
 
-    http_listener listener = http_listener::create(m_uri);
+    http_listener listener(m_uri);
     listener.add_handler(request_counter);
     listener.add_handler(stopit);
 
-    VERIFY_ARE_EQUAL(0, listener.open());
+    listener.open().wait();
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
 
@@ -79,7 +79,7 @@ TEST_FIXTURE(uri_address, http_short_circuit)
         }).wait();
     }
 
-    VERIFY_ARE_EQUAL(0, listener.close());
+    listener.close().wait();
     VERIFY_ARE_EQUAL(num_methods, count);
 }
 
@@ -96,11 +96,11 @@ TEST_FIXTURE(uri_address, http_short_circuit_no_count)
             return next_stage->propagate(request);
         };
 
-    http_listener listener = http_listener::create(m_uri);
+    http_listener listener(m_uri);
     listener.add_handler(stopit);
     listener.add_handler(request_counter);
 
-    VERIFY_ARE_EQUAL(0, listener.open());
+    listener.open().wait();
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
 
@@ -131,7 +131,7 @@ TEST_FIXTURE(uri_address, http_short_circuit_no_count)
         }).wait();
     }
 
-    VERIFY_ARE_EQUAL(0, listener.close());
+    listener.close().wait();
     VERIFY_ARE_EQUAL(0, count);
 }
 
@@ -152,10 +152,10 @@ TEST_FIXTURE(uri_address, http_counting_methods)
             return next_stage->propagate(request).then(response_counter);
         };
 
-    http_listener listener = http_listener::create(m_uri);
+    http_listener listener(m_uri);
     listener.add_handler(request_counter);
 
-    VERIFY_ARE_EQUAL(0, listener.open());
+    listener.open().wait();
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
 
@@ -195,7 +195,7 @@ TEST_FIXTURE(uri_address, http_counting_methods)
         VERIFY_ARE_EQUAL(recv_methods[i], actual_method);
     }
 
-    VERIFY_ARE_EQUAL(0, listener.close());
+    listener.close().wait();
     VERIFY_ARE_EQUAL(num_methods*2, count);
 }
 

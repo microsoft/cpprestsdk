@@ -58,13 +58,13 @@ pplx::task<void> details::_http_request::_reply_impl(http_response response)
     pplx::task<void> response_completed;
 
 #if !defined(__cplusplus_winrt)
-    auto server_api = experimental::listener::http_server_api::server_api();
+    auto server_api = experimental::details::http_server_api::server_api();
 
     if ( m_server_context && server_api )
     {
         // Add a task-based continuation so no exceptions thrown from the task go 'unobserved'.
         response._set_server_context(m_server_context);
-        response_completed = experimental::listener::http_server_api::server_api()->respond(response); 
+        response_completed = experimental::details::http_server_api::server_api()->respond(response); 
         response_completed.then([](pplx::task<void> t)
         {
             try { t.wait(); } catch(...) {}

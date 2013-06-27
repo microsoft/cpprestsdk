@@ -35,10 +35,11 @@
 
 using namespace web; 
 using namespace utility;
-using namespace logging;
+using namespace utility::experimental;
+using namespace utility::experimental::logging;
 using namespace pplx;
 
-std::shared_ptr< ::logging::_Log> s_default;
+std::shared_ptr< logging::_Log> s_default;
 
 void log::post(log_level level, const utility::string_t &message)
 {
@@ -60,31 +61,31 @@ void log::post(log_level level, int code, const utility::string_t &message, http
 
 volatile unsigned long s_lock = 0;
 
-void log::set_default(_Inout_opt_ ::logging::_Log *log)
+void log::set_default(_Inout_opt_ logging::_Log *log)
 {
     if ( log == nullptr )
-        log = new logging::_details::SilentLog;
-    s_default = std::shared_ptr< ::logging::_Log>(log); 
+        log = new logging::SilentLog;
+    s_default = std::shared_ptr< logging::_Log>(log); 
 }
 
-void log::set_default(std::shared_ptr< ::logging::_Log> log)
+void log::set_default(std::shared_ptr< logging::_Log> log)
 {
     if ( !log )
-        log = std::make_shared<logging::_details::SilentLog>();
+        log = std::make_shared<logging::SilentLog>();
     s_default = log; 
 }
 
-std::shared_ptr< ::logging::_Log> log::get_default()
+std::shared_ptr< logging::_Log> log::get_default()
 { 
     if ( !s_default )
     {
-        s_default = std::shared_ptr< ::logging::_Log>(new logging::_details::ConsoleLog(true, true));
+        s_default = std::shared_ptr< logging::_Log>(new logging::ConsoleLog(true, true));
     }
     return s_default; 
 }
 
 #ifdef _MS_WINDOWS
-int log::details::report_error(logging::log_level level, const int error_code, const utility::string_t &error_message)
+int log::report_error(logging::log_level level, const int error_code, const utility::string_t &error_message)
 {
     utility::string_t msg(error_message);
     msg.append(U(": "));
@@ -92,7 +93,7 @@ int log::details::report_error(logging::log_level level, const int error_code, c
     logging::log::post(level, error_code, msg);
     return error_code;
 }
-int log::details::report_error(logging::log_level level, const utility::string_t &error_message)
+int log::report_error(logging::log_level level, const utility::string_t &error_message)
 {
     return report_error(level, GetLastError(), error_message);
 }
@@ -103,14 +104,14 @@ void ::logging::_Log::post(log_level level, int code, const utility::string_t &m
     post(level, code, message);
 }
 
-logging::_details::ConsoleLog::ConsoleLog(bool suppress_date, bool suppress_time) :
+logging::ConsoleLog::ConsoleLog(bool suppress_date, bool suppress_time) :
     m_noDate(suppress_date), 
     m_noTime(suppress_time), 
     m_processing_flag(0L)
 {
 }
 
-logging::_details::LocalFileLog::LocalFileLog(const utility::string_t &path, bool suppress_date, bool suppress_time) : 
+logging::LocalFileLog::LocalFileLog(const utility::string_t &path, bool suppress_date, bool suppress_time) : 
     m_noDate(suppress_date), 
     m_noTime(suppress_time), 
     m_processing_flag(0L),
@@ -228,17 +229,17 @@ utility::string_t _GetPath(const utility::string_t &base)
 #endif
 }
 
-void logging::_details::SilentLog::post(log_level, const utility::string_t &)
+void logging::SilentLog::post(log_level, const utility::string_t &)
 {
     // Do nothing.
 }
 
-void logging::_details::SilentLog::post(log_level, int, const utility::string_t &)
+void logging::SilentLog::post(log_level, int, const utility::string_t &)
 {
     // Do nothing.
 }
 
-void logging::_details::ConsoleLog::_internal_post(_In_ _LogEntry *entry)
+void logging::ConsoleLog::_internal_post(_In_ _LogEntry *entry)
 {
     int stamp = 0;
 
@@ -274,7 +275,7 @@ void logging::_details::ConsoleLog::_internal_post(_In_ _LogEntry *entry)
     delete entry;
 }
 
-void logging::_details::ConsoleLog::post(log_level level, const utility::string_t &message)
+void logging::ConsoleLog::post(log_level level, const utility::string_t &message)
 {
     if ( level >= m_level )
     {       
@@ -323,7 +324,7 @@ void logging::_details::ConsoleLog::post(log_level level, const utility::string_
     }
 }
 
-void logging::_details::ConsoleLog::post(log_level level, int code, const utility::string_t &message)
+void logging::ConsoleLog::post(log_level level, int code, const utility::string_t &message)
 {
     if ( level >= m_level )
     {       
@@ -372,7 +373,7 @@ void logging::_details::ConsoleLog::post(log_level level, int code, const utilit
     }
 }
 
-void logging::_details::LocalFileLog::_internal_post(utility::ofstream_t &stream, _In_ _LogEntry *entry)
+void logging::LocalFileLog::_internal_post(utility::ofstream_t &stream, _In_ _LogEntry *entry)
 {
     int stamp = 0;
 
@@ -392,7 +393,7 @@ void logging::_details::LocalFileLog::_internal_post(utility::ofstream_t &stream
     delete entry;
 }
 
-void logging::_details::LocalFileLog::post(log_level level, const utility::string_t &message)
+void logging::LocalFileLog::post(log_level level, const utility::string_t &message)
 {
     if ( level >= m_level )
     {       
@@ -449,7 +450,7 @@ void logging::_details::LocalFileLog::post(log_level level, const utility::strin
     }
 }
 
-void logging::_details::LocalFileLog::post(log_level level, int code, const utility::string_t &message)
+void logging::LocalFileLog::post(log_level level, int code, const utility::string_t &message)
 {
     if ( level >= m_level )
     {       

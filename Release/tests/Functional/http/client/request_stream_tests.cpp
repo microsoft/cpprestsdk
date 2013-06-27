@@ -360,7 +360,7 @@ TEST_FIXTURE(uri_address, stream_close_early)
     http_asserts::assert_response_equals(responseTask.get(), status_codes::OK);
 }
 
-TEST_FIXTURE(uri_address, stream_close_early_with_exception)
+ TEST_FIXTURE(uri_address, stream_close_early_with_exception, "Ignore:Linux", "TBD")
 {
     http_client client(m_uri);
     test_http_server::scoped_server scoped(m_uri);
@@ -380,7 +380,7 @@ TEST_FIXTURE(uri_address, stream_close_early_with_exception)
 }
 #endif
 
-TEST_FIXTURE(uri_address, stream_close_early_with_exception_and_contentlength)
+TEST_FIXTURE(uri_address, stream_close_early_with_exception_and_contentlength, "Ignore:Linux", "TBD")
 {
     http_client client(m_uri);
     test_http_server::scoped_server scoped(m_uri);
@@ -399,7 +399,7 @@ TEST_FIXTURE(uri_address, stream_close_early_with_exception_and_contentlength)
     VERIFY_THROWS(responseTask.get(), test_exception);
 }
 
-TEST_FIXTURE(uri_address, stream_close_early_with_contentlength)
+TEST_FIXTURE(uri_address, stream_close_early_with_contentlength, "Ignore:Linux", "TBD")
 {
     http_client client(m_uri);
     test_http_server::scoped_server scoped(m_uri);

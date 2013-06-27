@@ -27,8 +27,8 @@ SUITE(header_tests)
 
 TEST_FIXTURE(uri_address, request_headers)
 {
-    http_listener listener = http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0, listener.open());
+    http_listener listener(m_uri);
+    listener.open().wait();
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
     const utility::string_t mtd = methods::GET;
@@ -104,12 +104,13 @@ TEST_FIXTURE(uri_address, request_headers)
     {
         http_asserts::assert_test_response_equals(p_response, status_codes::OK);
     }).wait();
+    listener.close().wait();
 }
 
 TEST_FIXTURE(uri_address, response_headers)
 {
-    http_listener listener = http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0u, listener.open());
+    http_listener listener(m_uri);
+    listener.open().wait();
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
 

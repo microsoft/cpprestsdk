@@ -24,8 +24,10 @@ $(OUTPUT_DIR)/httpclient_test.so: \
 	progress_handler_tests.cpp \
 	proxy_tests.cpp \
 	request_helper_tests.cpp \
+	request_stream_tests.cpp \
 	request_uri_tests.cpp \
 	response_extract_tests.cpp \
+	response_stream_tests.cpp \
 	status_code_reason_phrase_tests.cpp \
 	to_string_tests.cpp
 	$(CXX) -fPIC -shared $(CXXFLAGS) $(shell pkg-config libxml++-2.6 --cflags) $(LDFLAGS) $^ $(LDLIBS) -o $@ 

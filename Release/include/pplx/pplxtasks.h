@@ -421,7 +421,8 @@ namespace details
     template<typename _Type>
     task<_Type> _To_task(_Type t);
 
-    task<void> _To_task();
+    template<typename _Func>
+    task<void> _To_task_void(_Func f);
 
     struct _BadContinuationParamType{};
 
@@ -432,10 +433,10 @@ namespace details
     template <typename _Function, typename _Type> auto _IsTaskHelper(_Type t, _Function _Func, int, int) -> decltype(_Func(_To_task(t)), std::true_type());
     template <typename _Function, typename _Type> std::false_type _IsTaskHelper(_Type t, _Function _Func, int, ...);
 
-    template <typename _Function> auto _VoidReturnTypeHelper(_Function _Func, int, int) -> decltype(_Func(_To_task()));
+    template <typename _Function> auto _VoidReturnTypeHelper(_Function _Func, int, int) -> decltype(_Func(_To_task_void(_Func)));
     template <typename _Function> auto _VoidReturnTypeHelper(_Function _Func, int, ...) -> decltype(_Func());
 
-    template <typename _Function> auto _VoidIsTaskHelper(_Function _Func, int, int) -> decltype(_Func(_To_task()), std::true_type());
+    template <typename _Function> auto _VoidIsTaskHelper(_Function _Func, int, int) -> decltype(_Func(_To_task_void(_Func)), std::true_type());
     template <typename _Function> std::false_type _VoidIsTaskHelper(_Function _Func, int, ...);
 
     template<typename _Function, typename _ExpectedParameterType>

@@ -29,8 +29,8 @@ SUITE(building_response_tests)
 
 TEST_FIXTURE(uri_address, set_body_with_content_type)
 {
-    http_listener listener = http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0, listener.open());
+    http_listener listener(m_uri);
+    listener.open().wait();
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
 
@@ -50,8 +50,8 @@ TEST_FIXTURE(uri_address, set_body_with_content_type)
 
 TEST_FIXTURE(uri_address, set_body_without_content_type)
 {
-    http_listener listener = http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0, listener.open());
+    http_listener listener(m_uri);
+    listener.open().wait();
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
 
@@ -71,8 +71,8 @@ TEST_FIXTURE(uri_address, set_body_without_content_type)
 
 TEST_FIXTURE(uri_address, set_body_string)
 {
-    http_listener listener = http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0, listener.open());
+    http_listener listener(m_uri);
+    listener.open().wait();
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
 
@@ -99,8 +99,8 @@ TEST(set_body_string_with_charset)
 
 TEST_FIXTURE(uri_address, set_body_vector)
 {
-    http_listener listener = http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0, listener.open());
+    http_listener listener(m_uri);
+    listener.open().wait();
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
 

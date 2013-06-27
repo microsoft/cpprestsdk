@@ -26,10 +26,10 @@ namespace tests { namespace functional { namespace http { namespace listener {
 SUITE(connection_tests)
 {
 
-TEST_FIXTURE(uri_address, close_listener_race)
+  TEST_FIXTURE(uri_address, close_listener_race, "Ignore:Linux", "724744")
 {
-    auto listener = ::http::experimental::listener::http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0, listener.open());
+    ::http::experimental::listener::http_listener listener(m_uri);
+    listener.open().wait();
 
     listener.support([](http_request)
     {
@@ -39,7 +39,7 @@ TEST_FIXTURE(uri_address, close_listener_race)
     // close() racing with a new connection
     auto closeTask = pplx::create_task([&listener]()
     {
-        VERIFY_ARE_EQUAL(0, listener.close());
+        listener.close().wait();
     });
 
     auto clientTask = pplx::create_task([this]
@@ -70,8 +70,8 @@ TEST_FIXTURE(uri_address, close_listener_race)
 
 TEST_FIXTURE(uri_address, send_response_later)
 {
-    http_listener listener = http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0, listener.open());
+    http_listener listener(m_uri);
+    listener.open().wait();
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
 

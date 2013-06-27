@@ -484,7 +484,7 @@ private:
 public:
     _test_http_server(const utility::string_t& uri)
         : m_uri(uri) 
-        , m_listener(web::http::experimental::listener::http_listener::create(uri))
+        , m_listener(uri)
         , m_cancel(0)
     {
         m_listener.support([&](web::http::http_request result) -> void
@@ -525,11 +525,12 @@ public:
         close();
     }
 
-    unsigned long open() { return m_listener.open(); }
+    unsigned long open() { m_listener.open().wait(); return 0;}
     unsigned long close()
     {
         ++m_cancel;
-        return m_listener.close();
+        m_listener.close().wait();
+        return 0;
     }
 
     test_request * wait_for_request()

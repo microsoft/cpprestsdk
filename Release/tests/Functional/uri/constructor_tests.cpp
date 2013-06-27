@@ -136,9 +136,9 @@ TEST(parsing_constructor_invalid)
 {
     VERIFY_THROWS(uri(U("123http://localhost:345/")), uri_exception);
     VERIFY_THROWS(uri(U("h*ttp://localhost:345/")), uri_exception);
-	VERIFY_THROWS(uri(U("http://localhost:345/\"")), uri_exception);
-	VERIFY_THROWS(uri(U("http://localhost:345/path?\"")), uri_exception);
-	VERIFY_THROWS(uri(U("http://local\"host:345/")), uri_exception);
+    VERIFY_THROWS(uri(U("http://localhost:345/\"")), uri_exception);
+    VERIFY_THROWS(uri(U("http://localhost:345/path?\"")), uri_exception);
+    VERIFY_THROWS(uri(U("http://local\"host:345/")), uri_exception);
 }
 
 // Tests a variety of different URIs using the examples in RFC 3986.

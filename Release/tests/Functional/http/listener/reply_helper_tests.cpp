@@ -28,8 +28,8 @@ SUITE(reply_helper_tests)
 
 TEST_FIXTURE(uri_address, json)
 {
-    http_listener listener = http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0u, listener.open());
+    http_listener listener(m_uri);
+    listener.open().wait();
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
 
@@ -46,8 +46,8 @@ TEST_FIXTURE(uri_address, json)
 
 TEST_FIXTURE(uri_address, string)
 {
-    http_listener listener = http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0u, listener.open());
+    http_listener listener(m_uri);
+    listener.open().wait();
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
 
@@ -87,8 +87,8 @@ TEST_FIXTURE(uri_address, string)
 
 TEST_FIXTURE(uri_address, multiple_responses_to_request)
 {
-	http_listener listener = http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0u, listener.open());
+	http_listener listener(m_uri);
+    listener.open().wait();
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
 

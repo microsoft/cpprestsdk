@@ -32,6 +32,8 @@ namespace experimental {
 namespace listener
 {
 
+using namespace web::http::experimental::details;
+
 http_listener::http_listener(const http::uri &address) : m_uri(address), m_closed(true)
 {
     m_pipeline = http::http_pipeline::create_pipeline(std::make_shared<_listener_stage>(this));
@@ -66,30 +68,26 @@ http_listener::http_listener(const http::uri &address) : m_uri(address), m_close
 
 http_listener::~http_listener()
 {
-    close();
+    close().wait();
 }
 
-unsigned long http_listener::open()
+pplx::task<void> http_listener::open()
 {
     // Do nothing if the open operation was already attempted
     // Not thread safe
-    if (!m_closed) return 0;
+    if (!m_closed) return pplx::task_from_result();
 
     if ( m_uri.is_empty() )
-#ifdef _MS_WINDOWS
-        return (unsigned long)E_FAIL;
-#else
-        return -1; // TFS 579616 must have E_FAIL defined for Linux!
-#endif
+        throw std::invalid_argument("No URI defined for listener.");
     m_closed = false;
     return http_server_api::register_listener(this);
 }
 
-unsigned long http_listener::close()
+pplx::task<void> http_listener::close()
 {
     // Do nothing if the close operation was already attempted
     // Not thread safe.
-    if (m_closed) return 0;
+    if (m_closed) return pplx::task_from_result();
 
     m_closed = true;
     return http_server_api::unregister_listener(this);

@@ -31,7 +31,7 @@
 namespace web { namespace http
 {
 namespace experimental {
-namespace listener
+namespace details
 {
 
 /// <summary>
@@ -49,22 +49,22 @@ public:
     /// <summary>
     /// Start listening for incoming requests.
     /// </summary>
-    virtual unsigned long start() = 0;
+    virtual pplx::task<void> start() = 0;
 
     /// <summary>
     /// Registers an http listener.
     /// </summary>
-    virtual unsigned long register_listener(_In_ http_listener_interface *pListener) = 0;
+    virtual pplx::task<void> register_listener(_In_ web::http::experimental::listener::http_listener *pListener) = 0;
 
     /// <summary>
     /// Unregisters an http listener.
     /// </summary>
-    virtual unsigned long unregister_listener(_In_ http_listener_interface *pListener) = 0;
+    virtual pplx::task<void> unregister_listener(_In_ web::http::experimental::listener::http_listener *pListener) = 0;
 
     /// <summary>
     /// Stop processing and listening for incoming requests.
     /// </summary>
-    virtual unsigned long stop() = 0;
+    virtual pplx::task<void> stop() = 0;
 
     /// <summary>
     /// Asynchronously sends the specified http response.
@@ -74,6 +74,6 @@ public:
     virtual pplx::task<void> respond(http::http_response response) = 0;
 };
 
-} // namespace listener
+} // namespace details
 } // namespace experimental
 }} // namespace web::http

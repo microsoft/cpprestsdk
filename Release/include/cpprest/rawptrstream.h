@@ -243,7 +243,7 @@ namespace Concurrency { namespace streams {
         /// If the end of the stream is reached, the function will return <c>true</c>, a null pointer, and a count of zero;
         /// a subsequent read will not succeed.
         /// </remarks>
-        virtual bool acquire(_CharType*& ptr, size_t& count)
+        virtual bool acquire(_Out_writes_(count) _CharType*& ptr, _Inout_ size_t& count)
         {
             if (!this->can_read()) return false;
 

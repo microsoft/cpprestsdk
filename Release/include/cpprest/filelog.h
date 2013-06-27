@@ -34,14 +34,13 @@
 
 #include "cpprest/log.h"
 
-namespace utility { namespace logging
+namespace utility { namespace experimental { 
+namespace logging
 {
-    namespace _details
-    {
         /// <summary>
         /// Silently swallow all messages.
         /// </summary>
-        class SilentLog : public logging::_Log
+        class SilentLog : public _Log
         {
         public:
             /// <summary>
@@ -64,7 +63,7 @@ namespace utility { namespace logging
         /// <summary>
         /// Log messages to stderr.
         /// </summary>
-        class ConsoleLog : public logging::_Log
+        class ConsoleLog : public _Log
         {
         public:
             /// <summary>
@@ -139,7 +138,7 @@ namespace utility { namespace logging
         /// <summary>
         /// Log messages to a file folder.
         /// </summary>
-        class LocalFileLog : public logging::_Log
+        class LocalFileLog : public _Log
         {
         public:
             /// <summary>

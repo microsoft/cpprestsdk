@@ -50,9 +50,9 @@ namespace Concurrency { namespace streams
             ~basic_ostream_helper() { }
 
         private:
-            template<typename CharType1> friend class basic_ostream;
+            template<typename CharType1> friend class streams::basic_ostream;
 
-            streambuf<CharType> m_buffer;
+            concurrency::streams::streambuf<CharType> m_buffer;
         };
 
         template<typename CharType>
@@ -64,7 +64,7 @@ namespace Concurrency { namespace streams
             ~basic_istream_helper() { }
 
         private:
-            template<typename CharType1> friend class basic_istream;
+            template<typename CharType1> friend class streams::basic_istream;
 
             concurrency::streams::streambuf<CharType> m_buffer;
         };
@@ -363,7 +363,7 @@ namespace Concurrency { namespace streams
         /// Get the underlying stream buffer.
         /// </summary>
         /// <returns>The underlying stream buffer.</returns>
-		Concurrency::streams::streambuf<CharType> streambuf() const
+        concurrency::streams::streambuf<CharType> streambuf() const
         {
             return helper()->m_buffer;
         }
@@ -722,7 +722,7 @@ namespace Concurrency { namespace streams
             // Capture 'buffer' rather than 'helper' here due to VC++ 2010 limitations.
             auto buffer = helper()->m_buffer;
 
-            int_type req_async = char_traits<CharType>::requires_async();
+            int_type req_async = ::concurrency::streams::char_traits<CharType>::requires_async();
 
             std::shared_ptr<_read_helper> _locals = std::make_shared<_read_helper>();
 
@@ -797,7 +797,7 @@ namespace Concurrency { namespace streams
             // Capture 'buffer' rather than 'helper' here due to VC++ 2010 limitations.
             concurrency::streams::streambuf<CharType> buffer = helper()->m_buffer;
 
-            typename std::char_traits<CharType>::int_type req_async = char_traits<CharType>::requires_async();
+            typename std::char_traits<CharType>::int_type req_async = concurrency::streams::char_traits<CharType>::requires_async();
 
             std::shared_ptr<_read_helper> _locals = std::make_shared<_read_helper>();
 
@@ -890,48 +890,6 @@ namespace Concurrency { namespace streams
                     return _locals->total; 
                 });
         }
-
-        // To workaround a VS 2010 internal compiler error, we have to do our own
-        // "lambda" here...
-        class _dev10_ice_workaround
-        {
-        public:
-            _dev10_ice_workaround(streams::streambuf<CharType> buffer,
-                                  concurrency::streams::streambuf<CharType> target,
-                                  std::shared_ptr<typename basic_istream::_read_helper> locals,
-                                  size_t buf_size) 
-                : _buffer(buffer), _target(target), _locals(locals), _buf_size(buf_size)
-            {
-            }
-            pplx::task<bool> operator()()
-            {
-                // We need to capture these, because the object itself may go away
-                // before we're done processing the data.
-                auto locs = _locals;
-                auto trg = _target;
-
-                auto after_putn = 
-                    [=](size_t wr) mutable -> bool
-                    {
-                        locs->total += wr;
-                        trg.sync().wait();
-                        return true;
-                    };
-
-                return _buffer.getn(locs->outbuf, buf_size).then(
-                    [=] (size_t rd) mutable -> pplx::task<bool> 
-                    { 
-                        if ( rd == 0 )
-                            return pplx::task_from_result(false);
-                        return trg.putn(locs->outbuf, rd).then(after_putn);
-                    });
-            }
-        private:
-            size_t _buf_size;
-            concurrency::streams::streambuf<CharType> _buffer;
-            concurrency::streams::streambuf<CharType> _target;
-            std::shared_ptr<typename basic_istream::_read_helper> _locals;
-        };
 
         /// <summary>
         /// Read until reaching the end of the stream.
@@ -1097,6 +1055,48 @@ namespace Concurrency { namespace streams
             }
         };
 
+        // To workaround a VS 2010 internal compiler error, we have to do our own
+        // "lambda" here...
+        class _dev10_ice_workaround
+        {
+        public:
+            _dev10_ice_workaround(streams::streambuf<CharType> buffer,
+                                  concurrency::streams::streambuf<CharType> target,
+                                  std::shared_ptr<typename basic_istream::_read_helper> locals,
+                                  size_t buf_size)
+            : _buffer(buffer), _target(target), _locals(locals), _buf_size(buf_size)
+            {
+            }
+            pplx::task<bool> operator()()
+            {
+                // We need to capture these, because the object itself may go away
+                // before we're done processing the data.
+                auto locs = _locals;
+                auto trg = _target;
+                
+                auto after_putn =
+                [=](size_t wr) mutable -> bool
+                {
+                    locs->total += wr;
+                    trg.sync().wait();
+                    return true;
+                };
+                
+                return _buffer.getn(locs->outbuf, buf_size).then(
+                                                                 [=] (size_t rd) mutable -> pplx::task<bool>
+                                                                 {
+                                                                     if ( rd == 0 )
+                                                                         return pplx::task_from_result(false);
+                                                                     return trg.putn(locs->outbuf, rd).then(after_putn);
+                                                                 });
+            }
+        private:
+            size_t _buf_size;
+            concurrency::streams::streambuf<CharType> _buffer;
+            concurrency::streams::streambuf<CharType> _target;
+            std::shared_ptr<typename basic_istream::_read_helper> _locals;
+        };
+        
         std::shared_ptr<details::basic_istream_helper<CharType>> m_helper;
     };
 
@@ -1212,7 +1212,7 @@ class type_parser<CharType,std::basic_string<CharType>> : public _type_parser_ba
 public:
     static pplx::task<std::string> parse(streams::streambuf<CharType> buffer)
     {
-        return _type_parser_base<CharType>::template _parse_input<std::basic_string<CharType>, std::string>(buffer, _accept_char, _extract_result);
+        return concurrency::streams::_type_parser_base<CharType>::template _parse_input<std::basic_string<CharType>, std::string>(buffer, _accept_char, _extract_result);
     }
 
 private:
@@ -1250,7 +1250,6 @@ private:
     static bool _accept_char(std::shared_ptr<_int64_state> state, int_type ch)
     {
         if ( ch == std::char_traits<CharType>::eof()) return false;
-
         if ( state->minus == 0 )
         {
             // OK to find a sign.
@@ -1433,7 +1432,7 @@ static pplx::task<FloatingPoint> _extract_result(std::shared_ptr<_double_state<F
         throw std::runtime_error(state->p_exception_string.c_str());
 
     if (!state->complete && state->exponent)
-        throw std::logic_error("Incomplete exponent");
+        throw std::runtime_error("Incomplete exponent");
     
     FloatingPoint result = static_cast<FloatingPoint>((state->minus == 2) ? -state->result : state->result);
     if (state->exponent_minus == 2)
@@ -1459,10 +1458,10 @@ static pplx::task<FloatingPoint> _extract_result(std::shared_ptr<_double_state<F
 
         result /= pow(FloatingPoint(10.0), -state->exponent_number);
 
-		if (!is_zero && 
-			result > -std::numeric_limits<FloatingPoint>::denorm_min() &&
-			result < std::numeric_limits<FloatingPoint>::denorm_min())
-			throw std::underflow_error("The value is too small");
+        if (!is_zero && 
+            result > -std::numeric_limits<FloatingPoint>::denorm_min() &&
+            result < std::numeric_limits<FloatingPoint>::denorm_min())
+            throw std::underflow_error("The value is too small");
     }
 
     return pplx::task_from_result<FloatingPoint>(result);

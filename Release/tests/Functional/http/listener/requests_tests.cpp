@@ -27,9 +27,9 @@ SUITE(requests_tests)
 
 TEST_FIXTURE(uri_address, http_methods)
 {
-    http_listener listener = http_listener::create(m_uri);
+    http_listener listener(m_uri);
 
-    VERIFY_ARE_EQUAL(0, listener.open());
+    listener.open().wait();
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
 
@@ -78,13 +78,13 @@ TEST_FIXTURE(uri_address, http_methods)
         ev.wait();
     }
 
-    VERIFY_ARE_EQUAL(0, listener.close());
+    listener.close().wait();
 }
 
 TEST_FIXTURE(uri_address, http_body_and_body_size)
 {
-    http_listener listener = http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0, listener.open());
+    http_listener listener(m_uri);
+    listener.open().wait();
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
 
@@ -150,8 +150,8 @@ TEST_FIXTURE(uri_address, http_body_and_body_size)
 
 TEST_FIXTURE(uri_address, large_body)
 {
-    http_listener listener = http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0, listener.open());
+    http_listener listener(m_uri);
+    listener.open().wait();
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
 

@@ -27,7 +27,7 @@
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 #include "stdafx.h"
-#include "http_client_impl.h"
+#include "cpprest/http_client_impl.h"
 
 namespace web { namespace http
 {
@@ -65,7 +65,7 @@ namespace web { namespace http
                 boost::asio::streambuf m_request_buf;
                 boost::asio::streambuf m_response_buf;
                 std::unique_ptr<boost::asio::deadline_timer> m_timer;
-                
+
                 ~linux_request_context()
                 {
                     if (m_timer)
@@ -156,6 +156,8 @@ namespace web { namespace http
                         ctx->m_needChunked = true;
                     }
 
+                    bool has_body = true;
+
                     // Stream without content length is the signal of requiring transcoding.
                     if (!ctx->m_request.headers().match(header_names::content_length, ctx->m_known_size))
                     {
@@ -166,8 +168,14 @@ namespace web { namespace http
                         }
                         else
                         {
+                            has_body = false;
                             ctx->m_request.headers()[header_names::content_length] = U("0");
                         }
+                    }
+
+                    if ( has_body && !_check_streambuf(ctx, ctx->_get_readbuffer(), "Input stream is not open") )
+                    {
+                        return;
                     }
 
                     request_stream << flatten_http_headers(ctx->m_request.headers());
@@ -188,6 +196,23 @@ namespace web { namespace http
                 boost::asio::io_service& m_io_service;
                 tcp::resolver m_resolver;
                 size_t m_chunksize;
+
+                static bool _check_streambuf(linux_request_context * ctx, concurrency::streams::streambuf<uint8_t> rdbuf, const utility::char_t* msg)
+                {
+                    if ( !rdbuf.is_open() )
+                    {
+                        auto eptr = rdbuf.exception();
+                        if ( !(eptr == nullptr) )
+                        {
+                            ctx->report_exception(eptr);
+                        }
+                        else
+                        {
+                            ctx->report_exception(http_exception(msg));
+                        }
+                    }
+                    return rdbuf.is_open();
+                }
 
                 void handle_resolve(const boost::system::error_code& ec, tcp::resolver::iterator endpoints, linux_request_context* ctx)
                 {
@@ -233,10 +258,18 @@ namespace web { namespace http
                     {
                         (*progress)(message_direction::upload, ctx->m_uploaded);
                     }
-                    
+
                     auto readbuf = ctx->_get_readbuffer();
                     uint8_t *buf = boost::asio::buffer_cast<uint8_t *>(ctx->m_request_buf.prepare(m_chunksize + http::details::chunked_encoding::additional_encoding_space));
-                    readbuf.getn(buf + http::details::chunked_encoding::data_offset, m_chunksize).then([=](size_t readSize) {
+                    readbuf.getn(buf + http::details::chunked_encoding::data_offset, m_chunksize).then([=](pplx::task<size_t> op)
+                    {
+                        size_t readSize = 0;
+                        try { readSize = op.get(); }
+                        catch (...)
+                        {
+                            ctx->report_exception(std::current_exception());
+                            return;
+                        }
                         size_t offset = http::details::chunked_encoding::add_chunked_delimiters(buf, m_chunksize+http::details::chunked_encoding::additional_encoding_space, readSize);
                         ctx->m_request_buf.commit(readSize + http::details::chunked_encoding::additional_encoding_space);
                         ctx->m_request_buf.consume(offset);
@@ -259,11 +292,19 @@ namespace web { namespace http
                     {
                         (*progress)(message_direction::upload, ctx->m_uploaded);
                     }
-                    
+
                     auto readbuf = ctx->_get_readbuffer();
                     size_t readSize = std::min(m_chunksize, ctx->m_known_size - ctx->m_current_size);
 
-                    readbuf.getn(boost::asio::buffer_cast<uint8_t *>(ctx->m_request_buf.prepare(readSize)), readSize).then([=](size_t actualSize) {
+                    readbuf.getn(boost::asio::buffer_cast<uint8_t *>(ctx->m_request_buf.prepare(readSize)), readSize).then([=](pplx::task<size_t> op)
+                    {
+                        size_t actualSize = 0;
+                        try { actualSize = op.get(); }
+                        catch (...)
+                        {
+                            ctx->report_exception(std::current_exception());
+                            return;
+                        }
                         ctx->m_uploaded += (size64_t)actualSize;
                         ctx->m_current_size += actualSize;
                         ctx->m_request_buf.commit(actualSize);
@@ -298,7 +339,7 @@ namespace web { namespace http
                         {
                             (*progress)(message_direction::upload, ctx->m_uploaded);
                         }
-                    
+
                         // Read until the end of entire headers
                         boost::asio::async_read_until(*ctx->m_socket, ctx->m_response_buf, CRLF+CRLF,
                             boost::bind(&client::handle_status_line, this, boost::asio::placeholders::error, ctx));
@@ -355,7 +396,7 @@ namespace web { namespace http
                             auto value = header.substr(colon+2, header.size()-(colon+3)); // also exclude '\r'
                             boost::algorithm::trim(name);
                             boost::algorithm::trim(value);
-                            
+
                             ctx->m_response.headers()[name] = value;
 
                             if (boost::iequals(name, header_names::transfer_encoding))
@@ -379,7 +420,7 @@ namespace web { namespace http
                         {
                             (*progress)(message_direction::download, 0);
                         }
-                    
+
                         ctx->complete_request(0);
                     }
                     else
@@ -440,17 +481,33 @@ namespace web { namespace http
                         {
                             (*progress)(message_direction::download, ctx->m_downloaded);
                         }
-                    
+
                         if (to_read == 0)
                         {
                             ctx->m_response_buf.consume(CRLF.size());
-                            ctx->_get_writebuffer().close(std::ios_base::out).get();
-                            ctx->complete_request(ctx->m_current_size);
+                            ctx->_get_writebuffer().sync().then([ctx](pplx::task<void> op)
+                            {
+                                try { 
+                                    op.wait(); 
+                                    ctx->complete_request(ctx->m_current_size);
+                                }
+                                catch (...)
+                                {
+                                    ctx->report_exception(std::current_exception());
+                                }
+                            });
                         }
                         else
                         {
                             auto writeBuffer = ctx->_get_writebuffer();
-                            writeBuffer.putn(boost::asio::buffer_cast<const uint8_t *>(ctx->m_response_buf.data()), to_read).then([=](size_t) {
+                            writeBuffer.putn(boost::asio::buffer_cast<const uint8_t *>(ctx->m_response_buf.data()), to_read).then([=](pplx::task<size_t> op)
+                            {
+                                try { op.wait(); }
+                                catch (...)
+                                {
+                                    ctx->report_exception(std::current_exception());
+                                    return;
+                                }
                                 ctx->m_response_buf.consume(to_read + CRLF.size()); // consume crlf
                                 boost::asio::async_read_until(*ctx->m_socket, ctx->m_response_buf, CRLF,
                                     boost::bind(&client::handle_chunk_header, this, boost::asio::placeholders::error, ctx));
@@ -477,22 +534,44 @@ namespace web { namespace http
                     {
                         (*progress)(message_direction::download, ctx->m_downloaded);
                     }
-                    
+
                     if (ctx->m_current_size < ctx->m_known_size)
                     {
                         // more data need to be read
-                        writeBuffer.putn(boost::asio::buffer_cast<const uint8_t *>(ctx->m_response_buf.data()), std::min(ctx->m_response_buf.size(), ctx->m_known_size - ctx->m_current_size)).then([=](size_t writtenSize) {
-                            ctx->m_downloaded += (size64_t)writtenSize;
-                            ctx->m_current_size += writtenSize;
-                            ctx->m_response_buf.consume(writtenSize);
-                            async_read_until_buffersize(std::min(m_chunksize, ctx->m_known_size - ctx->m_current_size),
-                                boost::bind(&client::handle_read_content, this, boost::asio::placeholders::error, ctx), ctx);
+                        writeBuffer.putn(boost::asio::buffer_cast<const uint8_t *>(ctx->m_response_buf.data()),
+                            std::min(ctx->m_response_buf.size(), ctx->m_known_size - ctx->m_current_size)).then([=](pplx::task<size_t> op)
+                        {
+                            size_t writtenSize = 0;
+                            try 
+                            { 
+                                writtenSize = op.get(); 
+                                ctx->m_downloaded += (size64_t)writtenSize;
+                                ctx->m_current_size += writtenSize;
+                                ctx->m_response_buf.consume(writtenSize);
+                                async_read_until_buffersize(std::min(m_chunksize, ctx->m_known_size - ctx->m_current_size),
+                                    boost::bind(&client::handle_read_content, this, boost::asio::placeholders::error, ctx), ctx);
+                            }
+                            catch (...)
+                            {
+                                ctx->report_exception(std::current_exception());
+                                return;
+                            }
                         });
                     }
                     else
                     {
-                        writeBuffer.close(std::ios_base::out).get();
-                        ctx->complete_request(ctx->m_current_size);
+                        writeBuffer.sync().then([ctx](pplx::task<void> op)
+                        {
+                            try 
+                            {
+                                op.wait(); 
+                                ctx->complete_request(ctx->m_current_size);
+                            }
+                            catch (...)
+                            {
+                                ctx->report_exception(std::current_exception());
+                            }
+                        });
                     }
                 }
             };

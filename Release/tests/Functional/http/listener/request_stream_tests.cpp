@@ -30,8 +30,8 @@ SUITE(request_stream_tests)
 
 TEST_FIXTURE(uri_address, large_body, "Ignore:Linux", "712252")
 {
-    http_listener listener = http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0, listener.open());
+    http_listener listener(m_uri);
+    listener.open().wait();
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
 
@@ -63,7 +63,7 @@ TEST_FIXTURE(uri_address, large_body, "Ignore:Linux", "712252")
 TEST_FIXTURE(uri_address, test_chunked_transfer)
 {
     const size_t num_bytes = 1024 * 1024 * 10;
-    http_listener listener = http_listener::create(m_uri);
+    http_listener listener(m_uri);
     listener.support([num_bytes](http_request request)
     {
         request.reply(status_codes::OK);

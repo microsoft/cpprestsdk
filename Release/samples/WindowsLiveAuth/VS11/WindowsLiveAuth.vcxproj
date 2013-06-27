@@ -181,7 +181,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\VS11.winrt\casablanca110.winrt.vcxproj">
+    <ProjectReference Include="..\..\..\src\build\casablanca110.winrt.vcxproj">
       <Project>{198ed804-2655-4d92-8104-c220e3ea9452}</Project>
     </ProjectReference>
   </ItemGroup>

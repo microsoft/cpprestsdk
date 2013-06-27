@@ -156,6 +156,44 @@ bool __cdecl _open_fsb_stf_str(_In_ Concurrency::streams::details::_filestream_c
     return true;
 }
 
+bool __cdecl _sync_fsb_winrt(_In_ Concurrency::streams::details::_file_info *info, _In_opt_ Concurrency::streams::details::_filestream_callback *callback)
+{
+    _ASSERTE(info != nullptr);
+    
+    _file_info_impl *fInfo = (_file_info_impl *)info;
+
+    pplx::extensibility::scoped_recursive_lock_t lck(fInfo->m_lock);
+
+    if ( fInfo->m_file == nullptr || fInfo->m_stream == nullptr || fInfo->m_writer == nullptr || !fInfo->m_stream->CanWrite)
+        return false;
+
+    // take a snapshot of current writer, since writer can be replaced during flush
+    auto writer = fInfo->m_writer;
+    // Flush operation will not begin until all previous writes (StoreAsync) finished, thus it could avoid race.
+    fInfo->m_pendingWrites = fInfo->m_pendingWrites.then([=] {
+        return writer->StoreAsync();
+    }).then([=](unsigned int) {
+        fInfo->m_buffill = 0;
+        return writer->FlushAsync();
+    }).then([=] (pplx::task<bool> result) {
+        // Rethrow exception if no callback attatched.
+        if (callback == nullptr)
+            result.wait();
+        else
+        {
+            try
+            {
+                result.wait();
+                callback->on_completed(0);
+            }
+            catch (Platform::Exception^ exc)
+            {
+                callback->on_error(std::make_exception_ptr(utility::details::create_system_error(exc->HResult)));
+            }
+        }
+    });
+    return true;
+}
 
 /// <summary>
 /// Close a file stream buffer.
@@ -180,7 +218,7 @@ bool __cdecl _close_fsb_nolock(_In_ _file_info **info, _In_ Concurrency::streams
 
     if (fInfo->m_stream->CanWrite)
     {
-        _sync_fsb(fInfo, nullptr);
+        _sync_fsb_winrt(fInfo, nullptr);
         fInfo->m_pendingWrites.then([=] (pplx::task<void> t) {
             try {
                 delete fInfo;
@@ -566,41 +604,7 @@ size_t __cdecl _putc_fsb(_In_ Concurrency::streams::details::_file_info *info, _
 /// <returns>True if the request was initiated</returns>
 bool __cdecl _sync_fsb(_In_ Concurrency::streams::details::_file_info *info, _In_ Concurrency::streams::details::_filestream_callback *callback)
 {
-    _ASSERTE(info != nullptr);
-    
-    _file_info_impl *fInfo = (_file_info_impl *)info;
-
-    pplx::extensibility::scoped_recursive_lock_t lck(fInfo->m_lock);
-
-    if ( fInfo->m_file == nullptr || fInfo->m_stream == nullptr || fInfo->m_writer == nullptr || !fInfo->m_stream->CanWrite)
-        return false;
-
-    // take a snapshot of current writer, since writer can be replaced during flush
-    auto writer = fInfo->m_writer;
-    // Flush operation will not begin until all previous writes (StoreAsync) finished, thus it could avoid race.
-    fInfo->m_pendingWrites = fInfo->m_pendingWrites.then([=] {
-        return writer->StoreAsync();
-    }).then([=](unsigned int) {
-        fInfo->m_buffill = 0;
-        return writer->FlushAsync();
-    }).then([=] (pplx::task<bool> result) {
-        // Rethrow exception if no callback attatched.
-        if (callback == nullptr)
-            result.wait();
-        else
-        {
-            try
-            {
-                result.wait();
-                callback->on_completed(0);
-            }
-            catch (Platform::Exception^ exc)
-            {
-                callback->on_error(std::make_exception_ptr(utility::details::create_system_error(exc->HResult)));
-            }
-        }
-    });
-    return true;
+    return _sync_fsb_winrt(info, callback);
 }
 
 /// <summary>
@@ -668,7 +672,7 @@ size_t __cdecl _seekwrpos_fsb(_In_ Concurrency::streams::details::_file_info *in
     // m_buffill keeps number of chars written into the m_writer buffer. 
     // We need to flush it into stream before seek the write head of the stream
     if (fInfo->m_buffill > 0)
-        _sync_fsb(fInfo, nullptr);
+        _sync_fsb_winrt(fInfo, nullptr);
 
     // Moving write head should follow the flush operation. is_done test is for perf optimization.
     if (fInfo->m_pendingWrites.is_done())

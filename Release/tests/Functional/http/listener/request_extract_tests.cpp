@@ -30,8 +30,8 @@ SUITE(request_extract_tests)
 
 TEST_FIXTURE(uri_address, extract_string)
 {
-    http_listener listener = http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0, listener.open());
+    http_listener listener(m_uri);
+    listener.open().wait();
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
     std::string data("HEHEHE");
@@ -51,8 +51,8 @@ TEST_FIXTURE(uri_address, extract_string)
 
 TEST_FIXTURE(uri_address, extract_json)
 {
-    http_listener listener = http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0, listener.open());
+    http_listener listener(m_uri);
+    listener.open().wait();
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
     
@@ -75,8 +75,8 @@ TEST_FIXTURE(uri_address, extract_json)
 
 TEST_FIXTURE(uri_address, empty_vector)
 {
-    http_listener listener = http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0, listener.open());
+    http_listener listener(m_uri);
+    listener.open().wait();
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
     std::string data("");
@@ -98,8 +98,8 @@ TEST_FIXTURE(uri_address, empty_vector)
 
 TEST_FIXTURE(uri_address, extract_vector)
 {
-    http_listener listener = http_listener::create(m_uri);
-    VERIFY_ARE_EQUAL(0, listener.open());
+    http_listener listener(m_uri);
+    listener.open().wait();
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
     std::string data("HEHEHE");
