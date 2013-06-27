@@ -363,7 +363,7 @@ namespace Concurrency { namespace streams
         /// Get the underlying stream buffer.
         /// </summary>
         /// <returns>The underlying stream buffer.</returns>
-        streambuf<CharType> streambuf() const
+		Concurrency::streams::streambuf<CharType> streambuf() const
         {
             return helper()->m_buffer;
         }
@@ -1430,10 +1430,10 @@ template <typename FloatingPoint>
 static pplx::task<FloatingPoint> _extract_result(std::shared_ptr<_double_state<FloatingPoint>> state)
 {
     if (state->p_exception_string.length() > 0)
-        throw std::exception(state->p_exception_string.c_str());
+        throw std::runtime_error(state->p_exception_string.c_str());
 
     if (!state->complete && state->exponent)
-        throw std::exception("Incomplete exponent");
+        throw std::logic_error("Incomplete exponent");
     
     FloatingPoint result = static_cast<FloatingPoint>((state->minus == 2) ? -state->result : state->result);
     if (state->exponent_minus == 2)
@@ -1450,7 +1450,7 @@ static pplx::task<FloatingPoint> _extract_result(std::shared_ptr<_double_state<F
         #undef max
 
         if (result > std::numeric_limits<FloatingPoint>::max() || result < -std::numeric_limits<FloatingPoint>::max())
-            throw std::exception("The value is too big");
+            throw std::overflow_error("The value is too big");
         #pragma pop_macro ("max")
     }
     else
@@ -1462,7 +1462,7 @@ static pplx::task<FloatingPoint> _extract_result(std::shared_ptr<_double_state<F
 		if (!is_zero && 
 			result > -std::numeric_limits<FloatingPoint>::denorm_min() &&
 			result < std::numeric_limits<FloatingPoint>::denorm_min())
-			throw std::exception("The value is too small");
+			throw std::underflow_error("The value is too small");
     }
 
     return pplx::task_from_result<FloatingPoint>(result);
