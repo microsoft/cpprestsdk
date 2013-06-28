@@ -89,12 +89,13 @@ void hostport_listener::on_accept(ip::tcp::socket* socket, const boost::system::
             pplx::scoped_lock<pplx::extensibility::recursive_lock_t> lock(m_connections_lock);
             m_connections.insert(new connection(std::unique_ptr<tcp::socket>(std::move(socket)), m_p_server, this));
             m_all_connections_complete.reset();
-        }
-
-        {
-            // spin off another async accept
-            auto newSocket = new ip::tcp::socket(crossplat::threadpool::shared_instance().service());
-            m_acceptor->async_accept(*newSocket, boost::bind(&hostport_listener::on_accept, this, newSocket, placeholders::error));
+            
+			if (m_acceptor)
+			{
+				// spin off another async accept
+				auto newSocket = new ip::tcp::socket(crossplat::threadpool::shared_instance().service());
+				m_acceptor->async_accept(*newSocket, boost::bind(&hostport_listener::on_accept, this, newSocket, placeholders::error));
+			}
         }
 
     }
@@ -554,11 +555,11 @@ void connection::finish_request_response()
 
 void hostport_listener::stop()
 {
-    m_acceptor.reset();
 
     // halt existing connections
     {
         pplx::scoped_lock<pplx::extensibility::recursive_lock_t> lock(m_connections_lock);
+		m_acceptor.reset();
         for (auto it = m_connections.begin(); it != m_connections.end(); ++it)
         {
             (*it)->close();
