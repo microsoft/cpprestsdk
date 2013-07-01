@@ -609,6 +609,7 @@ pplx::task<void> http_linux_server::start()
             --it;
         }
         it->second->stop();
+		return pplx::task_from_exception<void>(std::current_exception());
     }
 
     m_started = true;
