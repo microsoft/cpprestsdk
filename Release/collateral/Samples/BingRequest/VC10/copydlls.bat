@@ -6,5 +6,5 @@
     )
 )
 
-@copy "%CASABLANCA_SDK%\bin\%1\casablanca100.dll" %2
-@copy "%CASABLANCA_SDK%\bin\%1\casablanca100.pdb" %2
+@copy "%CASABLANCA_SDK%\bin\%1\*.dll" %2
+@copy "%CASABLANCA_SDK%\bin\%1\*.pdb" %2

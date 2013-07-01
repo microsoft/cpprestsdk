@@ -115,7 +115,7 @@ namespace web { namespace http
                     }
                 }
 
-                virtual HRESULT STDMETHODCALLTYPE Write( const void *pv, ULONG cb, ULONG *pcbWritten )
+                virtual HRESULT STDMETHODCALLTYPE Write( _In_reads_bytes_(cb) const void *pv, _In_ ULONG cb, _Out_opt_ ULONG *pcbWritten )
                 {
                     if ( pcbWritten != nullptr )
                         *pcbWritten = 0;
@@ -192,12 +192,16 @@ namespace web { namespace http
 
                 Microsoft::WRL::ComPtr<ISequentialStream_bridge> m_stream_bridge;
 
+                ~winrt_request_context()
+                {
+                    cleanup();
+                }
+
                 virtual void cleanup()
                 {
                     // Unlike WinHTTP, we can delete the object right away
                     if ( m_hRequest != nullptr )
                         m_hRequest->Release();
-                    delete this;
                 }
 
             private:
@@ -225,12 +229,12 @@ namespace web { namespace http
                 // IXMLHTTPRequest2Callback methods
 
                 // Called when the HTTP request is being redirected to a new URL.
-                HRESULT STDMETHODCALLTYPE OnRedirect(_In_opt_ IXMLHTTPRequest2*, const WCHAR*) {
+                HRESULT STDMETHODCALLTYPE OnRedirect(_In_opt_ IXMLHTTPRequest2*, __RPC__in_string const WCHAR*) {
                     return S_OK;
                 }
 
                 // Called when HTTP headers have been received and processed.
-                HRESULT STDMETHODCALLTYPE OnHeadersAvailable(_In_ IXMLHTTPRequest2* xmlReq, DWORD dw, const WCHAR* phrase)
+                HRESULT STDMETHODCALLTYPE OnHeadersAvailable(_In_ IXMLHTTPRequest2* xmlReq, DWORD dw, __RPC__in_string const WCHAR* phrase)
                 {
                     http_response response = m_request->m_response;
                     response.set_status_code((http::status_code)dw);
@@ -349,7 +353,7 @@ namespace web { namespace http
                 }
 
                 // Start sending request.
-                void send_request(request_context *request)
+                void send_request(_In_ request_context *request)
                 {
                     http_request &msg = request->m_request;
                     winrt_request_context * winrt_context = static_cast<winrt_request_context *>(request);

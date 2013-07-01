@@ -1,7 +1,8 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\version.props" />
   <PropertyGroup>
     <VSTargetVersion>11</VSTargetVersion>
-    <OutputName>Casablanca_setup110</OutputName>
+    <OutputName>Casablanca_setup110_$(CppRestSDKVersionFileSuffix)</OutputName>
     <VCProjectDir>VCprojects</VCProjectDir>
   </PropertyGroup>
   <Import Project="..\CasablancaSetup.wixproj" />

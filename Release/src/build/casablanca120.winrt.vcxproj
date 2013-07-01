@@ -1,11 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\version.props" />
   <PropertyGroup Label="Globals">
-    <VCTargetsPath Condition="'$(VCTargetsPath11)' != '' and '$(VSVersion)' == '' and '$(VisualStudioVersion)' == ''">$(VCTargetsPath11)</VCTargetsPath>
     <ProjectGuid>{9AD285A2-301E-47A0-A299-14AD5D4F2758}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <ProjectName>casablanca120.winrt</ProjectName>
+    <TargetName>$(CppRestBaseFileName)120_winrt_$(CppRestSDKVersionFileSuffix)</TargetName>
     <RootNamespace>casablanca</RootNamespace>
     <DefaultLanguage>en-US</DefaultLanguage>
     <MinimumVisualStudioVersion>11.0</MinimumVisualStudioVersion>
@@ -13,7 +13,6 @@
     <SccAuxPath>SAK</SccAuxPath>
     <SccLocalPath>SAK</SccLocalPath>
     <SccProvider>SAK</SccProvider>
-    <AzureSDKRoot>..\..\casablanca\Client</AzureSDKRoot>
     <WindowsAppContainer>true</WindowsAppContainer>
     <PostBuildEventUseInBuild>true</PostBuildEventUseInBuild>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
@@ -59,9 +58,9 @@
   <ItemDefinitionGroup>
     <PostBuildEvent>
       <Command>copy /Y $(OutDir)\* $(OutDir)..\
-        link /edit /appcontainer:no $(OutDir)..\Casablanca120.winrt.dll
+        link /edit /appcontainer:no $(OutDir)..\$(TargetName).dll
         exit 0</Command>
-      <Message>Copying casablanca120.winrt binaries to OutDir and removing appcontainer flag</Message>
+      <Message>Copying $(ProjectName).winrt binaries to OutDir and removing appcontainer flag</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
 

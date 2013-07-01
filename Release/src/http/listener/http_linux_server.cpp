@@ -90,12 +90,12 @@ void hostport_listener::on_accept(ip::tcp::socket* socket, const boost::system::
             m_connections.insert(new connection(std::unique_ptr<tcp::socket>(std::move(socket)), m_p_server, this));
             m_all_connections_complete.reset();
             
-			if (m_acceptor)
-			{
-				// spin off another async accept
-				auto newSocket = new ip::tcp::socket(crossplat::threadpool::shared_instance().service());
-				m_acceptor->async_accept(*newSocket, boost::bind(&hostport_listener::on_accept, this, newSocket, placeholders::error));
-			}
+            if (m_acceptor)
+            {
+                // spin off another async accept
+                auto newSocket = new ip::tcp::socket(crossplat::threadpool::shared_instance().service());
+                m_acceptor->async_accept(*newSocket, boost::bind(&hostport_listener::on_accept, this, newSocket, placeholders::error));
+            }
         }
 
     }
@@ -559,7 +559,7 @@ void hostport_listener::stop()
     // halt existing connections
     {
         pplx::scoped_lock<pplx::extensibility::recursive_lock_t> lock(m_connections_lock);
-		m_acceptor.reset();
+        m_acceptor.reset();
         for (auto it = m_connections.begin(); it != m_connections.end(); ++it)
         {
             (*it)->close();
@@ -609,7 +609,7 @@ pplx::task<void> http_linux_server::start()
             --it;
         }
         it->second->stop();
-		return pplx::task_from_exception<void>(std::current_exception());
+        return pplx::task_from_exception<void>(std::current_exception());
     }
 
     m_started = true;
@@ -681,21 +681,21 @@ pplx::task<void> http_linux_server::unregister_listener(http_listener* listener)
     auto parts = canonical_parts(listener->uri());
     auto hostport = parts.first;
     auto path = parts.second;
-	// First remove the listener from hostport listener
+    // First remove the listener from hostport listener
     {
-		pplx::extensibility::scoped_read_lock_t lock(m_listeners_lock);
-		auto itr = m_listeners.find(hostport);
-		if (itr == m_listeners.end())
-		{
-			throw std::invalid_argument("Error: no listener registered for that host");
-		}
+        pplx::extensibility::scoped_read_lock_t lock(m_listeners_lock);
+        auto itr = m_listeners.find(hostport);
+        if (itr == m_listeners.end())
+        {
+            throw std::invalid_argument("Error: no listener registered for that host");
+        }
 
-		itr->second->remove_listener(path, listener);
-	}
+        itr->second->remove_listener(path, listener);
+    }
 
-	// Second remove the listener form listener collection
+    // Second remove the listener form listener collection
     std::unique_ptr<pplx::extensibility::reader_writer_lock_t> pListenerLock = nullptr;
-	{
+    {
         pplx::extensibility::scoped_rw_lock_t lock(m_listeners_lock);
         pListenerLock = std::move(m_registered_listeners[listener]);
         m_registered_listeners[listener] = nullptr;
@@ -704,7 +704,7 @@ pplx::task<void> http_linux_server::unregister_listener(http_listener* listener)
 
     // Then take the listener write lock to make sure there are no calls into the listener's
     // request handler.
-	if (pListenerLock != nullptr)
+    if (pListenerLock != nullptr)
     {
         pplx::extensibility::scoped_rw_lock_t lock(*pListenerLock);
     }

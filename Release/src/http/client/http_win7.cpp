@@ -988,6 +988,9 @@ namespace web { namespace http
                     DWORD statusInfoLength)
                 {
                     UNREFERENCED_PARAMETER(statusInfoLength);
+                    
+                    if ( statusCode == WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING )
+                        return;
 
                     winhttp_request_context * p_request_context = reinterpret_cast<winhttp_request_context *>(context);
 
@@ -1255,13 +1258,6 @@ namespace web { namespace http
                                 }
                                 break;
                             }
-                        case WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING:
-                            {
-                                // Handle must already be closed and nulled out in cleanup
-                                assert(p_request_context->m_request_handle == nullptr);
-                                delete p_request_context;
-                                break;
-                            }
                         }
                     }
                 }
@@ -1302,6 +1298,10 @@ namespace web { namespace http
 
             http_network_handler(const uri &base_uri, const http_client_config& client_config) :
                 m_http_client_impl(std::make_shared<details::winhttp_client>(base_uri, client_config))
+            {
+            }
+
+            ~ http_network_handler()
             {
             }
 

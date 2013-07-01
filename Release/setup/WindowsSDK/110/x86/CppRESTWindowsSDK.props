@@ -1,7 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="version.props" />
   <PropertyGroup>
-    <_PropertySheetDisplayName>CasablancaWindowsSDK, 1.0</_PropertySheetDisplayName>
+    <_PropertySheetDisplayName>CasablancaWindowsSDK, $(CppRestSDKVersionString)</_PropertySheetDisplayName>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
@@ -9,7 +10,7 @@
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$([MSBuild]::GetRegistryValue(`HKEY_LOCAL_MACHINE\Software\Microsoft\Casablanca\OpenSourceRelease\110\SDK`, `InstallDir`))\LIB\x86\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>casablanca110.winrt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(CppRestBaseFileName)110_winrt_$(CppRestSDKVersionFileSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
 </Project>

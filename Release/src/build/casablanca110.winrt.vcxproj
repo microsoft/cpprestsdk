@@ -1,11 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\version.props" />
   <PropertyGroup Label="Globals">
-    <VCTargetsPath Condition="'$(VCTargetsPath11)' != '' and '$(VSVersion)' == '' and '$(VisualStudioVersion)' == ''">$(VCTargetsPath11)</VCTargetsPath>
     <ProjectGuid>{198ED804-2655-4D92-8104-C220E3EA9452}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <ProjectName>casablanca110.winrt</ProjectName>
+    <TargetName>$(CppRestBaseFileName)110_winrt_$(CppRestSDKVersionFileSuffix)</TargetName>
     <RootNamespace>casablanca</RootNamespace>
     <DefaultLanguage>en-US</DefaultLanguage>
     <MinimumVisualStudioVersion>11.0</MinimumVisualStudioVersion>
@@ -57,9 +57,9 @@
   <ItemDefinitionGroup>
     <PostBuildEvent>
       <Command>copy /Y $(OutDir)\* $(OutDir)..\
-        link /edit /appcontainer:no $(OutDir)..\Casablanca110.winrt.dll
+        link /edit /appcontainer:no $(OutDir)..\$(TargetName).dll
         exit 0</Command>
-      <Message>Copying casablanca100.winrt binaries to OutDir and removing appcontainer flag</Message>
+      <Message>Copying $(TargetName).dll binaries to OutDir and removing appcontainer flag</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
 
