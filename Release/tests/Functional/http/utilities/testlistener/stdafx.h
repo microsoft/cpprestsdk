@@ -41,10 +41,10 @@
 #include "cpprest/uri.h"
 #include "cpprest/asyncrt_utils.h"
 
-#include "http_server.h"
-#include "http_listener.h"
-#include "http_server_api.h"
-#include "http_windows_server.h"
+#include "cpprest/http_server.h"
+#include "cpprest/http_listener.h"
+#include "cpprest/http_server_api.h"
+#include "cpprest/http_windows_server.h"
 
-#include "log.h"
-#include "filelog.h"
+#include "cpprest/log.h"
+#include "cpprest/filelog.h"

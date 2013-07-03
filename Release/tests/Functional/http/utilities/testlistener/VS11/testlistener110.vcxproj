@@ -184,12 +184,14 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\logging\log.cpp" />
-    <ClCompile Include="..\src\listener\http_listener.cpp" />
-    <ClCompile Include="..\src\listener\http_msg_listen.cpp" />
-    <ClCompile Include="..\src\listener\http_server_api.cpp" />
-    <ClCompile Include="..\src\listener\http_windows_server.cpp" />
-	<ClCompile Include="..\stdafx.cpp">
+    <ClCompile Include="$(CasablancaSrcDir)\http\logging\log.cpp" />
+    <ClCompile Include="$(CasablancaSrcDir)\http\listener\http_listener.cpp" />
+    <ClCompile Include="$(CasablancaSrcDir)\http\listener\http_msg_listen.cpp" />
+    <ClCompile Include="$(CasablancaSrcDir)\http\listener\http_server_api.cpp" />
+    <ClCompile Include="$(CasablancaSrcDir)\http\listener\http_windows_server.cpp" />
+    <ClCompile Include="$(CasablancaSrcDir)\http\common\http_msg.cpp" />
+    <ClCompile Include="$(CasablancaSrcDir)\http\common\http_helpers.cpp" />
+  <ClCompile Include="..\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -200,13 +202,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\stdafx.h" />
-    <ClInclude Include="..\include\http_linux_server.h" />
-    <ClInclude Include="..\include\http_listener.h" />
-    <ClInclude Include="..\include\http_server.h" />
-    <ClInclude Include="..\include\http_server_api.h" />
-    <ClInclude Include="..\include\http_windows_server.h" />
-    <ClInclude Include="..\include\logr.h" />
-    <ClInclude Include="..\include\filelog.h" />
+    <ClInclude Include="$(CasablancaSrcDir)\..\include\http_listener.h" />
+    <ClInclude Include="$(CasablancaSrcDir)\..\include\http_server.h" />
+    <ClInclude Include="$(CasablancaSrcDir)\..\include\http_server_api.h" />
+    <ClInclude Include="$(CasablancaSrcDir)\..\include\http_windows_server.h" />
+    <ClInclude Include="$(CasablancaSrcDir)\..\include\logr.h" />
+    <ClInclude Include="$(CasablancaSrcDir)\..\include\filelog.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
