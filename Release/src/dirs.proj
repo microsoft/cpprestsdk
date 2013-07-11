@@ -28,4 +28,8 @@
 
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
 
+  <ItemGroup>
+      <ProjectFile Include="version\MakeVersionFile.proj" />
+  </ItemGroup>
+
 </Project>

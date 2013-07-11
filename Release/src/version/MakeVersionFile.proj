@@ -1,0 +1,17 @@
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\version.props" />
+  <PropertyGroup>
+    <VersionFile>..\..\include\cpprest\version.h</VersionFile>
+  </PropertyGroup>
+
+  <Target Name="Clean">
+    <Delete Files="$(VersionFile)" />
+  </Target>
+  <Target Name="Build">
+    <Exec Command="cl version.raw /C /P /EP /Fi$(VersionFile) /D_REVISION=$(CppRestSDKVersionRevision) /D_MINOR=$(CppRestSDKVersionMinor) /D_MAJOR=$(CppRestSDKVersionMajor) /D_DEFINE##define"></Exec>
+  </Target>
+  <Target Name="Rebuild">
+   <CallTarget Targets="Clean;Build"/>
+  </Target>
+
+</Project>
