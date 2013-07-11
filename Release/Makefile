@@ -5,21 +5,28 @@ bad:
 
 #CXX=clang
 #CXX=/usr/lib/gcc-snapshot/bin/g++
-CXX=g++-4.7
+CXX=g++-4.8
 export CXX
 
 mk_out_dir:
 	mkdir -p $(OUTPUT_DIR)
 
+VERSION_REVISION=0
+VERSION_MINOR=1
+VERSION_MAJOR=1
+
+mk_version:
+	cpp src/version/version.raw -oinclude/cpprest/version.h -P -C -D_REVISION=$(VERSION_REVISION) -D_MINOR=$(VERSION_MINOR) -D_MAJOR=$(VERSION_MAJOR) -D_DEFINE=#define
+
 release: OPTIMIZATION_LEVEL = -O2
 release: MODE = Release$(shell getconf LONG_BIT)
 release: OUTPUT_DIR = $(PWD)/../Binaries/$(MODE)
-release: mk_out_dir tests samples
+release: mk_out_dir mk_version tests samples
 
 debug: OPTIMIZATION_LEVEL = -O0 -ggdb
 debug: MODE = Debug$(shell getconf LONG_BIT)
 debug: OUTPUT_DIR = $(PWD)/../Binaries/$(MODE)
-debug: mk_out_dir tests samples
+debug: mk_out_dir mk_version tests samples
 
 clean: RMODE = Release$(shell getconf LONG_BIT)
 clean: DMODE = Debug$(shell getconf LONG_BIT)
@@ -29,7 +36,7 @@ clean: DOUTPUT_DIR = $(PWD)/../Binaries/$(DMODE)
 export MODE
 
 WARNINGS=-Wall -Wextra -Wunused-parameter -Wcast-align -Wcast-qual -Wconversion -Wformat=2 -Winit-self -Winvalid-pch -Wmissing-format-attribute -Wmissing-include-dirs -Wpacked -Wredundant-decls -Wunreachable-code
-SUPPRESSIONS=-Wno-deprecated -Wno-unknown-pragmas -Wno-reorder -Wno-unused-function -Wno-char-subscripts -Wno-switch -Wno-unused-but-set-parameter -Wno-deprecated -Wno-unused-value
+SUPPRESSIONS=-Wno-deprecated -Wno-unknown-pragmas -Wno-reorder -Wno-unused-function -Wno-char-subscripts -Wno-switch -Wno-unused-but-set-parameter -Wno-deprecated -Wno-unused-value -Wno-unused-local-typedefs
 
 # C++11 excludes GCC < 4.7, which is desired anyway
 OTHER_OPTIONS=-std=c++11 -fno-strict-aliasing
