@@ -38,3 +38,4 @@ obj/
 *.resfiles
 [Bb]in
 Binaries/
+Intermediate/
