@@ -1,4 +1,8 @@
+/Release/include/version.h
 #Visual Studio files
+*.o
+*.d
+*.so
 *.[Oo]bj
 *.user
 *.aps
