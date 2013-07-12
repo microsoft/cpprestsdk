@@ -1,4 +1,3 @@
-/Release/include/version.h
 #Visual Studio files
 *.o
 *.d
@@ -43,3 +42,4 @@ obj/
 [Bb]in
 Binaries/
 Intermediate/
+/Release/include/cpprest/version.h
