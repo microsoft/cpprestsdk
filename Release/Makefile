@@ -11,22 +11,15 @@ export CXX
 mk_out_dir:
 	mkdir -p $(OUTPUT_DIR)
 
-VERSION_REVISION=0
-VERSION_MINOR=1
-VERSION_MAJOR=1
-
-mk_version:
-	cpp src/version/version.raw -oinclude/cpprest/version.h -P -C -D_REVISION=$(VERSION_REVISION) -D_MINOR=$(VERSION_MINOR) -D_MAJOR=$(VERSION_MAJOR) -D_DEFINE=#define
-
 release: OPTIMIZATION_LEVEL = -O2
 release: MODE = Release$(shell getconf LONG_BIT)
 release: OUTPUT_DIR = $(PWD)/../Binaries/$(MODE)
-release: mk_out_dir mk_version tests samples
+release: mk_out_dir tests samples
 
 debug: OPTIMIZATION_LEVEL = -O0 -ggdb
 debug: MODE = Debug$(shell getconf LONG_BIT)
 debug: OUTPUT_DIR = $(PWD)/../Binaries/$(MODE)
-debug: mk_out_dir mk_version tests samples
+debug: mk_out_dir tests samples
 
 clean: RMODE = Release$(shell getconf LONG_BIT)
 clean: DMODE = Debug$(shell getconf LONG_BIT)
