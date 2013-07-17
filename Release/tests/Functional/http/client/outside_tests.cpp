@@ -97,6 +97,38 @@ TEST_FIXTURE(uri_address, reading_google_stream,
     VERIFY_ARE_EQUAL(strcmp((const char *)chars, "<!doctype html><html itemscope=\"itemscope\" itemtype=\"http://schema.org/WebPage\">"), 0);
 }
 
+TEST_FIXTURE(uri_address, outside_ssl_json,
+             "Ignore", "Manual")
+{
+    using namespace utility;
+    using namespace web;
+    using namespace web::http;
+    using namespace web::http::client;
+    using namespace concurrency::streams;
+
+    // Create an HTTP request.
+    uri_builder playlistUri("https://www.googleapis.com/youtube/v3/playlistItems?");
+    playlistUri.append_query("part","snippet");
+    playlistUri.append_query("playlistId", "UUF1hMUVwlrvlVMjUGOZExgg");
+    playlistUri.append_query("key","AIzaSyAviHxf_y0SzNoAq3iKqvWVE4KQ0yylsnk");
+    web::http::client::http_client playlistClient(playlistUri.to_uri());
+
+    playlistClient.request(methods::GET).then([=](http_response playlistResponse) -> pplx::task<json::value>
+    {
+        return playlistResponse.extract_json();
+    }).then([=](json::value jsonArray)
+    {
+        int count = 0;
+        for(const auto& i : jsonArray[U("items")])
+        {
+            auto name = i.second[U("snippet")][U("title")].to_string();
+            std::cout << name.c_str() << std::endl;
+            count++;
+        }
+        VERIFY_ARE_EQUAL(3, count);
+    }).wait();
+}
+
 } // SUITE(outside_tests)
 
 }}}}

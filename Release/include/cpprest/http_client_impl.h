@@ -44,6 +44,7 @@ using namespace concurrency;
 #else
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
+#include <boost/asio/ssl.hpp>
 #include <boost/algorithm/string.hpp>
 #include <pplx/threadpool.h>
 #endif
