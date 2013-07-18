@@ -89,12 +89,13 @@ void hostport_listener::on_accept(ip::tcp::socket* socket, const boost::system::
             pplx::scoped_lock<pplx::extensibility::recursive_lock_t> lock(m_connections_lock);
             m_connections.insert(new connection(std::unique_ptr<tcp::socket>(std::move(socket)), m_p_server, this));
             m_all_connections_complete.reset();
-        }
-
-        {
-            // spin off another async accept
-            auto newSocket = new ip::tcp::socket(crossplat::threadpool::shared_instance().service());
-            m_acceptor->async_accept(*newSocket, boost::bind(&hostport_listener::on_accept, this, newSocket, placeholders::error));
+            
+            if (m_acceptor)
+            {
+                // spin off another async accept
+                auto newSocket = new ip::tcp::socket(crossplat::threadpool::shared_instance().service());
+                m_acceptor->async_accept(*newSocket, boost::bind(&hostport_listener::on_accept, this, newSocket, placeholders::error));
+            }
         }
 
     }
@@ -554,11 +555,11 @@ void connection::finish_request_response()
 
 void hostport_listener::stop()
 {
-    m_acceptor.reset();
 
     // halt existing connections
     {
         pplx::scoped_lock<pplx::extensibility::recursive_lock_t> lock(m_connections_lock);
+        m_acceptor.reset();
         for (auto it = m_connections.begin(); it != m_connections.end(); ++it)
         {
             (*it)->close();
@@ -570,7 +571,7 @@ void hostport_listener::stop()
 
 void hostport_listener::add_listener(const std::string& path, http_listener* listener)
 {
-    pplx::extensibility::scoped_read_lock_t lock(m_listeners_lock);
+    pplx::extensibility::scoped_rw_lock_t lock(m_listeners_lock);
 
     if (!m_listeners.insert(std::map<std::string,http_listener*>::value_type(path, listener)).second)
         throw std::invalid_argument("Error: http_listener is already registered for this path");
@@ -578,7 +579,7 @@ void hostport_listener::add_listener(const std::string& path, http_listener* lis
 
 void hostport_listener::remove_listener(const std::string& path, http_listener*)
 {
-    pplx::extensibility::scoped_read_lock_t lock(m_listeners_lock);
+    pplx::extensibility::scoped_rw_lock_t lock(m_listeners_lock);
 
     if (m_listeners.erase(path) != 1)
         throw std::invalid_argument("Error: no http_listener found for this path");
@@ -608,6 +609,7 @@ pplx::task<void> http_linux_server::start()
             --it;
         }
         it->second->stop();
+        return pplx::task_from_exception<void>(std::current_exception());
     }
 
     m_started = true;
@@ -652,7 +654,7 @@ pplx::task<void> http_linux_server::register_listener(http_listener* listener)
     auto path = parts.second;
 
     {
-        pplx::extensibility::scoped_read_lock_t lock(m_listeners_lock);
+        pplx::extensibility::scoped_rw_lock_t lock(m_listeners_lock);
         if (m_registered_listeners.find(listener) != m_registered_listeners.end())
             throw std::invalid_argument("listener already registered");
 
@@ -679,20 +681,22 @@ pplx::task<void> http_linux_server::unregister_listener(http_listener* listener)
     auto parts = canonical_parts(listener->uri());
     auto hostport = parts.first;
     auto path = parts.second;
-    // First remove listener registration.
-    std::unique_ptr<pplx::extensibility::reader_writer_lock_t> pListenerLock;
+    // First remove the listener from hostport listener
     {
         pplx::extensibility::scoped_read_lock_t lock(m_listeners_lock);
+        auto itr = m_listeners.find(hostport);
+        if (itr == m_listeners.end())
         {
-            auto hostport_listeners = m_listeners.find(hostport);
-            if (hostport_listeners == m_listeners.end())
-            {
-                throw std::invalid_argument("Error: no listener registered for that host");
-            }
-
-            hostport_listeners->second->remove_listener(path, listener);
-
+            throw std::invalid_argument("Error: no listener registered for that host");
         }
+
+        itr->second->remove_listener(path, listener);
+    }
+
+    // Second remove the listener form listener collection
+    std::unique_ptr<pplx::extensibility::reader_writer_lock_t> pListenerLock = nullptr;
+    {
+        pplx::extensibility::scoped_rw_lock_t lock(m_listeners_lock);
         pListenerLock = std::move(m_registered_listeners[listener]);
         m_registered_listeners[listener] = nullptr;
         m_registered_listeners.erase(listener);
@@ -700,8 +704,9 @@ pplx::task<void> http_linux_server::unregister_listener(http_listener* listener)
 
     // Then take the listener write lock to make sure there are no calls into the listener's
     // request handler.
+    if (pListenerLock != nullptr)
     {
-        pplx::extensibility::scoped_read_lock_t lock(*pListenerLock);
+        pplx::extensibility::scoped_rw_lock_t lock(*pListenerLock);
     }
 
     return pplx::task_from_result();

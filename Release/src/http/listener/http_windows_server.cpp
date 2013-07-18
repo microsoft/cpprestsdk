@@ -28,6 +28,8 @@
 #include "cpprest/http_server_api.h"
 #include "cpprest/http_windows_server.h"
 #include "cpprest/rawptrstream.h"
+#include "cpprest/http_helpers.h"
+#include "cpprest/http_msg.h"
 
 using namespace web; 
 using namespace utility;
@@ -39,7 +41,6 @@ using namespace http::experimental::details;
 using namespace utility::experimental;
 using namespace logging;
 using namespace logging::log;
-
 
 namespace web { namespace http
 {

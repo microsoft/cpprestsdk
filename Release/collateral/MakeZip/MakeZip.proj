@@ -15,6 +15,11 @@
     <Delete Files="$(BuildRoot)\Release\Collateral\MakeZip\$(ZipFileName)" />
   </Target>
   <Target Name="Build">
+    <Copy SourceFiles="$(BuildRoot)\Build\version.props" DestinationFolder="$(SamplesFolder)\BingRequest\VC10" OverwriteReadOnlyFiles="true"/>
+    <Copy SourceFiles="$(BuildRoot)\Build\version.props" DestinationFolder="$(SamplesFolder)\BingRequest\VC11" OverwriteReadOnlyFiles="true"/>
+    <Copy SourceFiles="$(BuildRoot)\Build\version.props" DestinationFolder="$(SamplesFolder)\SearchFile\VC11" OverwriteReadOnlyFiles="true"/>
+    <Copy SourceFiles="$(BuildRoot)\Build\version.props" DestinationFolder="$(SamplesFolder)\FacebookDemo\FacebookDemo110" OverwriteReadOnlyFiles="true"/>
+    <Copy SourceFiles="$(BuildRoot)\Build\version.props" DestinationFolder="$(SamplesFolder)\WindowsLiveAuth" OverwriteReadOnlyFiles="true"/>
     <ItemGroup>
       <DefaultExclude Include="$(SamplesFolder)\**\bin\**" />
       <DefaultExclude Include="$(SamplesFolder)\**\ipch\**" />

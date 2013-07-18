@@ -1,4 +1,3 @@
-
 /***
 * ==++==
 *
@@ -15,9 +14,9 @@
 * limitations under the License.
 *
 * ==--==
-* =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-**/
-// stdafx.cpp : 
-// Include the standard header and generate the precompiled header.
+*/
+#define CPPREST_VERSION_REVISION 0
+#define CPPREST_VERSION_MINOR 1
+#define CPPREST_VERSION_MAJOR 1
 
-#include "stdafx.h"
+#define CPPREST_VERSION (CPPREST_VERSION_MAJOR*100000+CPPREST_VERSION_MINOR*100+CPPREST_VERSION_REVISION)

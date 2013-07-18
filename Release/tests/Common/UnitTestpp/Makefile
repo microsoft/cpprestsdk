@@ -1,4 +1,4 @@
-CXXFLAGS += -g -Wall -W -Winline -ansi -I. -std=c++0x -fPIC -I$(CASABLANCA_INCLUDE_DIR)
+CXXFLAGS += -g -Wall -Wno-unknown-pragmas -W -Winline -ansi -I. -std=c++0x -fPIC -I$(CASABLANCA_INCLUDE_DIR)
 LDFLAGS ?= 
 SED = sed
 MV = mv

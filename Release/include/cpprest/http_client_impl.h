@@ -121,7 +121,9 @@ namespace web { namespace http { namespace client { namespace details
             public:
 
                 // Destructor to clean up any held resources.
-                virtual ~request_context() {}
+                virtual ~request_context()
+                {
+                }
 
                 // TFS 579619 - 1206: revisit whether error_code is really needed for Linux
                 void complete_headers(const unsigned long error_code = 0)
@@ -161,7 +163,7 @@ namespace web { namespace http { namespace client { namespace details
 
                     finish();
 
-                    cleanup();
+                    delete this;
                 }
 
 #ifdef _MS_WINDOWS
@@ -192,24 +194,28 @@ namespace web { namespace http { namespace client { namespace details
 
                 void report_exception(std::exception_ptr exceptionPtr)
                 {
-                    if ( m_received_hdrs )
+                    auto recvd_hdrs = m_received_hdrs;
+                    auto response_impl = m_response._get_impl();
+                    auto request_completion = m_request_completion;
+
+                    if ( recvd_hdrs )
                     {
                         // Complete the request with an exception
-                        m_response._get_impl()->_complete(0, exceptionPtr);
+                        response_impl->_complete(0, exceptionPtr);
                     }
                     else
                     {
                         // Complete the headers with an exception
-                        m_request_completion.set_exception(exceptionPtr);
+                        request_completion.set_exception(exceptionPtr);
 
                         // Complete the request with no msg body. The exception
                         // should only be propagated to one of the tce.
-                        m_response._get_impl()->_complete(0);
+                        response_impl->_complete(0);
                     }
 
                     finish();
 
-                    cleanup();
+                    delete this;
                 }
 
                 concurrency::streams::streambuf<uint8_t> _get_readbuffer()

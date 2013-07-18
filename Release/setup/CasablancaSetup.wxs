@@ -3,17 +3,17 @@
   <?if $(var.VSTargetVersion) = 10 ?>
     <?include VS10\guiddefs.wxi ?>
     <?define VSTargetShort = "VS 2010" ?>
-    <?define FileSuffix = "100" ?>
+    <?define VSTargetFileSuffix = "100" ?>
     <?define SDK_RegKeyName = "100" ?>
   <?elseif $(var.VSTargetVersion) = 11 ?>
     <?include VS11\guiddefs.wxi ?>
     <?define VSTargetShort = "VS 2012" ?>
-    <?define FileSuffix = "110" ?>
+    <?define VSTargetFileSuffix = "110" ?>
     <?define SDK_RegKeyName = "110" ?>
   <?elseif $(var.VSTargetVersion) = 12 ?>
     <?include VS12\guiddefs.wxi ?>
     <?define VSTargetShort = "VS Next" ?>
-    <?define FileSuffix = "120" ?>
+    <?define VSTargetFileSuffix = "120" ?>
     <?define SDK_RegKeyName = "120" ?>
   <?endif ?>
 
@@ -57,14 +57,14 @@
         <?define SDK_bin_x86r_src_winrt_sig = "$(var.x86rbin)" ?>
       <?else ?>
         <?define SDK_bin_x86r_src_sig = "$(var.SDK_bin_x86r_src_nosig)" ?>
-        <?define SDK_bin_x86r_src_winrt_sig = "$(var.SDK_bin_x86r_src_winrt_nosig)\casablanca$(var.FileSuffix).winrt" ?>
+        <?define SDK_bin_x86r_src_winrt_sig = "$(var.SDK_bin_x86r_src_winrt_nosig)\casablanca$(var.VSTargetFileSuffix).winrt" ?>
       <?endif ?>
       <?ifdef x86dbin ?>
         <?define SDK_bin_x86d_src_sig = "$(var.x86dbin)" ?>
         <?define SDK_bin_x86d_src_winrt_sig = "$(var.x86dbin)" ?>
       <?else ?>
         <?define SDK_bin_x86d_src_sig = "$(var.SDK_bin_x86d_src_nosig)" ?>
-        <?define SDK_bin_x86d_src_winrt_sig = "$(var.SDK_bin_x86d_src_nosig)\casablanca$(var.FileSuffix).winrt" ?>
+        <?define SDK_bin_x86d_src_winrt_sig = "$(var.SDK_bin_x86d_src_nosig)\casablanca$(var.VSTargetFileSuffix).winrt" ?>
       <?endif ?>
 
       <?ifdef x64rbin ?>
@@ -72,7 +72,7 @@
         <?define SDK_bin_x64r_src_winrt_sig = "$(var.x64rbin)" ?>
       <?else ?>
         <?define SDK_bin_x64r_src_sig = "$(var.SDK_bin_x64r_src_nosig)" ?>
-        <?define SDK_bin_x64r_src_winrt_sig = "$(var.SDK_bin_x64r_src_nosig)\casablanca$(var.FileSuffix).winrt" ?>
+        <?define SDK_bin_x64r_src_winrt_sig = "$(var.SDK_bin_x64r_src_nosig)\casablanca$(var.VSTargetFileSuffix).winrt" ?>
       <?endif ?>
 
       <?ifdef x64dbin ?>
@@ -80,7 +80,7 @@
         <?define SDK_bin_x64d_src_winrt_sig = "$(var.x64dbin)" ?>
       <?else ?>
         <?define SDK_bin_x64d_src_sig = "$(var.SDK_bin_x64d_src_nosig)" ?>
-        <?define SDK_bin_x64d_src_winrt_sig = "$(var.SDK_bin_x64d_src_nosig)\casablanca$(var.FileSuffix).winrt" ?>
+        <?define SDK_bin_x64d_src_winrt_sig = "$(var.SDK_bin_x64d_src_nosig)\casablanca$(var.VSTargetFileSuffix).winrt" ?>
       <?endif ?>
 
       <?ifdef armrbin ?>
@@ -88,7 +88,7 @@
         <?define SDK_bin_armr_src_winrt_sig = "$(var.armrbin)" ?>
       <?else ?>
         <?define SDK_bin_armr_src_sig = "$(var.SDK_bin_armr_src_nosig)" ?>
-        <?define SDK_bin_armr_src_winrt_sig = "$(var.SDK_bin_armr_src_nosig)\casablanca$(var.FileSuffix).winrt" ?>
+        <?define SDK_bin_armr_src_winrt_sig = "$(var.SDK_bin_armr_src_nosig)\casablanca$(var.VSTargetFileSuffix).winrt" ?>
       <?endif ?>
 
       <?ifdef armdbin ?>
@@ -96,7 +96,7 @@
         <?define SDK_bin_armd_src_winrt_sig = "$(var.armdbin)" ?>
       <?else ?>
         <?define SDK_bin_armd_src_sig = "$(var.SDK_bin_armd_src_nosig)" ?>
-        <?define SDK_bin_armd_src_winrt_sig = "$(var.SDK_bin_armd_src_nosig)\casablanca$(var.FileSuffix).winrt" ?>
+        <?define SDK_bin_armd_src_winrt_sig = "$(var.SDK_bin_armd_src_nosig)\casablanca$(var.VSTargetFileSuffix).winrt" ?>
       <?endif ?>
 
       <?define SDK_pdb_x86r_src = "$(var.SDK_bin_root)\Win32\Release" ?>
@@ -175,7 +175,8 @@
                         <Directory Id="Debug01" Name="Debug">
                           <Directory Id="x8601" Name="x86">
                             <Component Id="props_01" DiskId="1" Guid="$(var.GUID017)">
-                              <File Id="File_CppRESTWindowsSDK.props_01" Name="CppRESTWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\$(var.FileSuffix)\x86\CppRESTWindowsSDK.props" />
+                              <File Id="File_CppRESTWindowsSDK.props_01" Name="CppRESTWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\$(var.VSTargetFileSuffix)\x86\CppRESTWindowsSDK.props" />
+                              <File Id="File_version.props_01" Name="version.props" Source="$(var.SetupDir)\..\..\Build\version.props" />
                               <Condition>(VersionNT >= 602)</Condition>
                             </Component>
                           </Directory>
@@ -183,7 +184,8 @@
                         <Directory Id="Retail01" Name="Retail">
                           <Directory Id="x8602" Name="x86">
                             <Component Id="props_02" DiskId="1" Guid="$(var.GUID018)">
-                              <File Id="File_CppRESTWindowsSDK.props_02" Name="CppRESTWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\$(var.FileSuffix)\x86\CppRESTWindowsSDK.props" />
+                              <File Id="File_CppRESTWindowsSDK.props_02" Name="CppRESTWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\$(var.VSTargetFileSuffix)\x86\CppRESTWindowsSDK.props" />
+                              <File Id="File_version.props_02" Name="version.props" Source="$(var.SetupDir)\..\..\Build\version.props" />
                               <Condition>(VersionNT >= 602)</Condition>
                             </Component>
                           </Directory>
@@ -191,7 +193,8 @@
                         <Directory Id="Debug02" Name="Debug">
                           <Directory Id="x6401" Name="x64">
                             <Component Id="props_03" DiskId="1" Guid="$(var.GUID019)">
-                              <File Id="File_CppRESTWindowsSDK.props_03" Name="CppRESTWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\$(var.FileSuffix)\x64\CppRESTWindowsSDK.props" />
+                              <File Id="File_CppRESTWindowsSDK.props_03" Name="CppRESTWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\$(var.VSTargetFileSuffix)\x64\CppRESTWindowsSDK.props" />
+                              <File Id="File_version.props_03" Name="version.props" Source="$(var.SetupDir)\..\..\Build\version.props" />
                               <Condition>(VersionNT >= 602)</Condition>
                             </Component>
                           </Directory>
@@ -199,7 +202,8 @@
                         <Directory Id="Retail02" Name="Retail">
                           <Directory Id="x6402" Name="x64">
                             <Component Id="props_04" DiskId="1" Guid="$(var.GUID020)">
-                              <File Id="File_CppRESTWindowsSDK.props_04" Name="CppRESTWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\$(var.FileSuffix)\x64\CppRESTWindowsSDK.props" />
+                              <File Id="File_CppRESTWindowsSDK.props_04" Name="CppRESTWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\$(var.VSTargetFileSuffix)\x64\CppRESTWindowsSDK.props" />
+                              <File Id="File_version.props_04" Name="version.props" Source="$(var.SetupDir)\..\..\Build\version.props" />
                               <Condition>(VersionNT >= 602)</Condition>
                             </Component>
                           </Directory>
@@ -208,7 +212,8 @@
                         <Directory Id="Debug04" Name="Debug">
                           <Directory Id="arm01" Name="arm">
                             <Component Id="props_05" DiskId="1" Guid="$(var.GUID041)">
-                              <File Id="File_CppRESTWindowsSDK.props_05" Name="CppRESTWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\$(var.FileSuffix)\arm\CppRESTWindowsSDK.props" />
+                              <File Id="File_CppRESTWindowsSDK.props_05" Name="CppRESTWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\$(var.VSTargetFileSuffix)\arm\CppRESTWindowsSDK.props" />
+                              <File Id="File_version.props_05" Name="version.props" Source="$(var.SetupDir)\..\..\Build\version.props" />
                               <Condition>(VersionNT >= 602)</Condition>
                             </Component>
                           </Directory>
@@ -216,7 +221,8 @@
                         <Directory Id="Retail04" Name="Retail">
                           <Directory Id="arm02" Name="arm">
                             <Component Id="props_06" DiskId="1" Guid="$(var.GUID042)">
-                              <File Id="File_CppRESTWindowsSDK.props_06" Name="CppRESTWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\$(var.FileSuffix)\arm\CppRESTWindowsSDK.props" />
+                              <File Id="File_CppRESTWindowsSDK.props_06" Name="CppRESTWindowsSDK.props" Source="$(var.SetupDir)\WindowsSDK\$(var.VSTargetFileSuffix)\arm\CppRESTWindowsSDK.props" />
+                              <File Id="File_version.props_06" Name="version.props" Source="$(var.SetupDir)\..\..\Build\version.props" />
                               <Condition>(VersionNT >= 602)</Condition>
                             </Component>
                           </Directory>
@@ -228,8 +234,8 @@
                         <Directory Id="Debug01_winrt_bin" Name="Debug">
                           <Directory Id="x8601_winrt_bin" Name="x86">
                             <Component Id="x86_dll_d_winrt_bin" DiskId="1" Guid="$(var.GUID047)">
-                                <File Id="File_x86d_casablanca$(var.FileSuffix).winrt.dll"   Name="casablanca$(var.FileSuffix).winrt.dll" Source="$(var.SDK_bin_x86d_src_winrt_sig)\casablanca$(var.FileSuffix).winrt.dll" />
-                                <File Id="File_x86d_casablanca$(var.FileSuffix).winrt.pdb"   Name="casablanca$(var.FileSuffix).winrt.pdb" Source="$(var.SDK_bin_x86d_src_winrt_nosig)\casablanca$(var.FileSuffix).winrt.pub.pdb" />
+                                <File Id="File_x86d_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).dll"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).dll" Source="$(var.SDK_bin_x86d_src_winrt_sig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).dll" />
+                                <File Id="File_x86d_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).pdb"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).pdb" Source="$(var.SDK_bin_x86d_src_winrt_nosig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).pub.pdb" />
                                 <Condition>(VersionNT >= 602)</Condition>
                             </Component>
                           </Directory>
@@ -237,8 +243,8 @@
                         <Directory Id="Retail01_winrt_bin" Name="Retail">
                           <Directory Id="x8602_winrt_bin" Name="x86">
                             <Component Id="x86_dll_r_winrt_bin" DiskId="1" Guid="$(var.GUID048)">
-                                <File Id="File_x86r_casablanca$(var.FileSuffix).winrt.dll"   Name="casablanca$(var.FileSuffix).winrt.dll" Source="$(var.SDK_bin_x86r_src_winrt_sig)\casablanca$(var.FileSuffix).winrt.dll" />
-                                <File Id="File_x86r_casablanca$(var.FileSuffix).winrt.pdb"   Name="casablanca$(var.FileSuffix).winrt.pdb" Source="$(var.SDK_bin_x86r_src_winrt_nosig)\casablanca$(var.FileSuffix).winrt.pub.pdb" />
+                                <File Id="File_x86r_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).dll"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).dll" Source="$(var.SDK_bin_x86r_src_winrt_sig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).dll" />
+                                <File Id="File_x86r_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).pdb"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).pdb" Source="$(var.SDK_bin_x86r_src_winrt_nosig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).pub.pdb" />
                                 <Condition>(VersionNT >= 602)</Condition>
                             </Component>
                           </Directory>
@@ -246,8 +252,8 @@
                         <Directory Id="Debug02_winrt_bin" Name="Debug">
                           <Directory Id="x6401_winrt_bin" Name="x64">
                             <Component Id="x64_dll_d_winrt_bin" DiskId="1" Guid="$(var.GUID049)">
-                                <File Id="File_x64d_casablanca$(var.FileSuffix).winrt.dll"   Name="casablanca$(var.FileSuffix).winrt.dll" Source="$(var.SDK_bin_x64d_src_winrt_sig)\casablanca$(var.FileSuffix).winrt.dll" />
-                                <File Id="File_x64d_casablanca$(var.FileSuffix).winrt.pdb"   Name="casablanca$(var.FileSuffix).winrt.pdb" Source="$(var.SDK_bin_x64d_src_winrt_nosig)\casablanca$(var.FileSuffix).winrt.pub.pdb" />
+                                <File Id="File_x64d_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).dll"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).dll" Source="$(var.SDK_bin_x64d_src_winrt_sig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).dll" />
+                                <File Id="File_x64d_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).pdb"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).pdb" Source="$(var.SDK_bin_x64d_src_winrt_nosig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).pub.pdb" />
                                 <Condition>(VersionNT >= 602)</Condition>
                             </Component>
                           </Directory>
@@ -255,8 +261,8 @@
                         <Directory Id="Retail02_winrt_bin" Name="Retail">
                           <Directory Id="x6402_winrt_bin" Name="x64">
                             <Component Id="x64_dll_r_winrt_bin" DiskId="1" Guid="$(var.GUID050)">
-                                <File Id="File_x64r_casablanca$(var.FileSuffix).winrt.dll"   Name="casablanca$(var.FileSuffix).winrt.dll" Source="$(var.SDK_bin_x64r_src_winrt_sig)\casablanca$(var.FileSuffix).winrt.dll" />
-                                <File Id="File_x64r_casablanca$(var.FileSuffix).winrt.pdb"   Name="casablanca$(var.FileSuffix).winrt.pdb" Source="$(var.SDK_bin_x64r_src_winrt_nosig)\casablanca$(var.FileSuffix).winrt.pub.pdb" />
+                                <File Id="File_x64r_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).dll"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).dll" Source="$(var.SDK_bin_x64r_src_winrt_sig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).dll" />
+                                <File Id="File_x64r_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).pdb"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).pdb" Source="$(var.SDK_bin_x64r_src_winrt_nosig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).pub.pdb" />
                                 <Condition>(VersionNT >= 602)</Condition>
                             </Component>
                           </Directory>
@@ -264,8 +270,8 @@
                         <Directory Id="Debug04_winrt_bin" Name="Debug">
                           <Directory Id="arm01_winrt_bin" Name="arm">
                             <Component Id="arm_dll_d_winrt_bin" DiskId="1" Guid="$(var.GUID051)">
-                                <File Id="File_armd_casablanca$(var.FileSuffix).winrt.dll"   Name="casablanca$(var.FileSuffix).winrt.dll" Source="$(var.SDK_bin_armd_src_winrt_sig)\casablanca$(var.FileSuffix).winrt.dll" />
-                                <File Id="File_armd_casablanca$(var.FileSuffix).winrt.pdb"   Name="casablanca$(var.FileSuffix).winrt.pdb" Source="$(var.SDK_bin_armd_src_winrt_nosig)\casablanca$(var.FileSuffix).winrt.pub.pdb" />
+                                <File Id="File_armd_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).dll"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).dll" Source="$(var.SDK_bin_armd_src_winrt_sig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).dll" />
+                                <File Id="File_armd_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).pdb"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).pdb" Source="$(var.SDK_bin_armd_src_winrt_nosig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).pub.pdb" />
                                 <Condition>(VersionNT >= 602)</Condition>
                             </Component>
                           </Directory>
@@ -273,8 +279,8 @@
                         <Directory Id="Retail04_winrt_bin" Name="Retail">
                           <Directory Id="arm02_winrt_bin" Name="arm">
                             <Component Id="arm_dll_r_winrt_bin" DiskId="1" Guid="$(var.GUID052)">
-                                <File Id="File_armr_casablanca$(var.FileSuffix).winrt.dll"   Name="casablanca$(var.FileSuffix).winrt.dll" Source="$(var.SDK_bin_armr_src_winrt_sig)\casablanca$(var.FileSuffix).winrt.dll" />
-                                <File Id="File_armr_casablanca$(var.FileSuffix).winrt.pdb"   Name="casablanca$(var.FileSuffix).winrt.pdb" Source="$(var.SDK_bin_armr_src_winrt_nosig)\casablanca$(var.FileSuffix).winrt.pub.pdb" />
+                                <File Id="File_armr_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).dll"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).dll" Source="$(var.SDK_bin_armr_src_winrt_sig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).dll" />
+                                <File Id="File_armr_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).pdb"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).pdb" Source="$(var.SDK_bin_armr_src_winrt_nosig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).pub.pdb" />
                                 <Condition>(VersionNT >= 602)</Condition>
                             </Component>
                           </Directory>
@@ -299,7 +305,8 @@
                         <Directory Id="Debug01_ph" Name="Debug">
                           <Directory Id="x8601_ph" Name="x86">
                             <Component Id="props_07" DiskId="1" Guid="$(var.GUID055)">
-                              <File Id="File_CppRESTWindowsSDK.props_01_ph" Name="CppRESTWindowsSDK.props" Source="$(var.SetupDir)\WindowsPhoneSDK\$(var.FileSuffix)\x86\CppRESTWindowsSDK.props" />
+                              <File Id="File_CppRESTWindowsSDK.props_01_ph" Name="CppRESTWindowsSDK.props" Source="$(var.SetupDir)\WindowsPhoneSDK\$(var.VSTargetFileSuffix)\x86\CppRESTWindowsSDK.props" />
+                              <File Id="File_version.props_07" Name="version.props" Source="$(var.SetupDir)\..\..\Build\version.props" />
                               <Condition>(VersionNT >= 602)</Condition>
                             </Component>
                           </Directory>
@@ -307,7 +314,8 @@
                         <Directory Id="Retail01_ph" Name="Retail">
                           <Directory Id="x8602_ph" Name="x86">
                             <Component Id="props_08" DiskId="1" Guid="$(var.GUID056)">
-                              <File Id="File_CppRESTWindowsSDK.props_02_ph" Name="CppRESTWindowsSDK.props" Source="$(var.SetupDir)\WindowsPhoneSDK\$(var.FileSuffix)\x86\CppRESTWindowsSDK.props" />
+                              <File Id="File_CppRESTWindowsSDK.props_02_ph" Name="CppRESTWindowsSDK.props" Source="$(var.SetupDir)\WindowsPhoneSDK\$(var.VSTargetFileSuffix)\x86\CppRESTWindowsSDK.props" />
+                              <File Id="File_version.props_08" Name="version.props" Source="$(var.SetupDir)\..\..\Build\version.props" />
                               <Condition>(VersionNT >= 602)</Condition>
                             </Component>
                           </Directory>
@@ -315,7 +323,8 @@
                         <Directory Id="Debug04_ph" Name="Debug">
                           <Directory Id="arm01_ph" Name="arm">
                             <Component Id="props_09" DiskId="1" Guid="$(var.GUID057)">
-                              <File Id="File_CppRESTWindowsSDK.props_05_ph" Name="CppRESTWindowsSDK.props" Source="$(var.SetupDir)\WindowsPhoneSDK\$(var.FileSuffix)\arm\CppRESTWindowsSDK.props" />
+                              <File Id="File_CppRESTWindowsSDK.props_05_ph" Name="CppRESTWindowsSDK.props" Source="$(var.SetupDir)\WindowsPhoneSDK\$(var.VSTargetFileSuffix)\arm\CppRESTWindowsSDK.props" />
+                              <File Id="File_version.props_09" Name="version.props" Source="$(var.SetupDir)\..\..\Build\version.props" />
                               <Condition>(VersionNT >= 602)</Condition>
                             </Component>
                           </Directory>
@@ -323,7 +332,8 @@
                         <Directory Id="Retail04_ph" Name="Retail">
                           <Directory Id="arm02_ph" Name="arm">
                             <Component Id="props_10" DiskId="1" Guid="$(var.GUID058)">
-                              <File Id="File_CppRESTWindowsSDK.props_06_ph" Name="CppRESTWindowsSDK.props" Source="$(var.SetupDir)\WindowsPhoneSDK\$(var.FileSuffix)\arm\CppRESTWindowsSDK.props" />
+                              <File Id="File_CppRESTWindowsSDK.props_06_ph" Name="CppRESTWindowsSDK.props" Source="$(var.SetupDir)\WindowsPhoneSDK\$(var.VSTargetFileSuffix)\arm\CppRESTWindowsSDK.props" />
+                              <File Id="File_version.props_10" Name="version.props" Source="$(var.SetupDir)\..\..\Build\version.props" />
                               <Condition>(VersionNT >= 602)</Condition>
                             </Component>
                           </Directory>
@@ -335,8 +345,8 @@
                         <Directory Id="Debug01_wp8_bin" Name="Debug">
                           <Directory Id="x8601_wp8_bin" Name="x86">
                             <Component Id="x86_dll_d_wp8_bin" DiskId="1" Guid="$(var.GUID059)">
-                              <File Id="File_x86d_casablanca$(var.FileSuffix).wp8.dll"   Name="casablanca$(var.FileSuffix).wp8.dll" Source="$(var.SDK_bin_x86d_src_winrt_nosig)\casablanca$(var.FileSuffix).wp8.dll" />
-                              <File Id="File_x86d_casablanca$(var.FileSuffix).wp8.pdb"   Name="casablanca$(var.FileSuffix).wp8.pdb" Source="$(var.SDK_bin_x86d_src_winrt_nosig)\casablanca$(var.FileSuffix).wp8.pub.pdb" />
+                              <File Id="File_x86d_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).dll"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).dll" Source="$(var.SDK_bin_x86d_src_winrt_nosig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).dll" />
+                              <File Id="File_x86d_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).pdb"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).pdb" Source="$(var.SDK_bin_x86d_src_winrt_nosig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).pub.pdb" />
                               <Condition>(VersionNT >= 602)</Condition>
                             </Component>
                           </Directory>
@@ -344,8 +354,8 @@
                         <Directory Id="Retail01_wp8_bin" Name="Retail">
                           <Directory Id="x8602_wp8_bin" Name="x86">
                             <Component Id="x86_dll_r_wp8_bin" DiskId="1" Guid="$(var.GUID060)">
-                              <File Id="File_x86r_casablanca$(var.FileSuffix).wp8.dll"   Name="casablanca$(var.FileSuffix).wp8.dll" Source="$(var.SDK_bin_x86r_src_winrt_nosig)\casablanca$(var.FileSuffix).wp8.dll" />
-                              <File Id="File_x86r_casablanca$(var.FileSuffix).wp8.pdb"   Name="casablanca$(var.FileSuffix).wp8.pdb" Source="$(var.SDK_bin_x86r_src_winrt_nosig)\casablanca$(var.FileSuffix).wp8.pub.pdb" />
+                              <File Id="File_x86r_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).dll"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).dll" Source="$(var.SDK_bin_x86r_src_winrt_nosig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).dll" />
+                              <File Id="File_x86r_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).pdb"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).pdb" Source="$(var.SDK_bin_x86r_src_winrt_nosig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).pub.pdb" />
                               <Condition>(VersionNT >= 602)</Condition>
                             </Component>
                           </Directory>
@@ -353,8 +363,8 @@
                         <Directory Id="Debug04_wp8_bin" Name="Debug">
                           <Directory Id="arm01_wp8_bin" Name="arm">
                             <Component Id="arm_dll_d_wp8_bin" DiskId="1" Guid="$(var.GUID061)">
-                              <File Id="File_armd_casablanca$(var.FileSuffix).wp8.dll"   Name="casablanca$(var.FileSuffix).wp8.dll" Source="$(var.SDK_bin_armd_src_winrt_nosig)\casablanca$(var.FileSuffix).wp8.dll" />
-                              <File Id="File_armd_casablanca$(var.FileSuffix).wp8.pdb"   Name="casablanca$(var.FileSuffix).wp8.pdb" Source="$(var.SDK_bin_armd_src_winrt_nosig)\casablanca$(var.FileSuffix).wp8.pub.pdb" />
+                              <File Id="File_armd_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).dll"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).dll" Source="$(var.SDK_bin_armd_src_winrt_nosig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).dll" />
+                              <File Id="File_armd_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).pdb"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).pdb" Source="$(var.SDK_bin_armd_src_winrt_nosig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).pub.pdb" />
                               <Condition>(VersionNT >= 602)</Condition>
                             </Component>
                           </Directory>
@@ -362,8 +372,8 @@
                         <Directory Id="Retail04_wp8_bin" Name="Retail">
                           <Directory Id="arm02_wp8_bin" Name="arm">
                             <Component Id="arm_dll_r_wp8_bin" DiskId="1" Guid="$(var.GUID062)">
-                              <File Id="File_armr_casablanca$(var.FileSuffix).wp8.dll"   Name="casablanca$(var.FileSuffix).wp8.dll" Source="$(var.SDK_bin_armr_src_winrt_nosig)\casablanca$(var.FileSuffix).wp8.dll" />
-                              <File Id="File_armr_casablanca$(var.FileSuffix).wp8.pdb"   Name="casablanca$(var.FileSuffix).wp8.pdb" Source="$(var.SDK_bin_armr_src_winrt_nosig)\casablanca$(var.FileSuffix).wp8.pub.pdb" />
+                              <File Id="File_armr_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).dll"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).dll" Source="$(var.SDK_bin_armr_src_winrt_nosig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).dll" />
+                              <File Id="File_armr_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).pdb"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).pdb" Source="$(var.SDK_bin_armr_src_winrt_nosig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).pub.pdb" />
                               <Condition>(VersionNT >= 602)</Condition>
                             </Component>
                           </Directory>
@@ -433,6 +443,7 @@
                     <File Id="File_uri_builder.h"               Name="uri_builder.h"      Source="$(var.SDK_casablanca_inc_src)\cpprest\uri_builder.h" />
                     <File Id="File_fileio.h"                    Name="fileio.h"           Source="$(var.SDK_casablanca_inc_src)\cpprest\fileio.h" />
                     <File Id="File_xxpublic.h"                  Name="xxpublic.h"         Source="$(var.SDK_casablanca_inc_src)\cpprest\xxpublic.h" />
+                    <File Id="File_http_listener.h"             Name="http_listener.h"    Source="$(var.SDK_casablanca_inc_src)\cpprest\http_listener.h" />
                   </Component>
                 </Directory>
               </Directory>
@@ -441,14 +452,14 @@
                 <Directory Id="x8603" Name="x86" FileSource="$(var.TargetDir)">
                   <Directory Id="Binx86Debug" Name="Debug" FileSource="$(var.TargetDir)">
                     <Component Id="x86_dll_d" DiskId="1" Guid="$(var.GUID021)">
-                      <File Id="File_x86d_casablanca$(var.FileSuffix).dll"   Name="casablanca$(var.FileSuffix).dll" Source="$(var.SDK_bin_x86d_src_sig)\casablanca$(var.FileSuffix).dll" />
-                      <File Id="File_x86d_casablanca$(var.FileSuffix).pdb"   Name="casablanca$(var.FileSuffix).pdb" Source="$(var.SDK_bin_x86d_src_nosig)\casablanca$(var.FileSuffix).pub.pdb" />
+                      <File Id="File_x86d_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_$(var.CppRestSDKVersionFileSuffix).dll"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_$(var.CppRestSDKVersionFileSuffix).dll" Source="$(var.SDK_bin_x86d_src_sig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_$(var.CppRestSDKVersionFileSuffix).dll" />
+                      <File Id="File_x86d_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_$(var.CppRestSDKVersionFileSuffix).pdb"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_$(var.CppRestSDKVersionFileSuffix).pdb" Source="$(var.SDK_bin_x86d_src_nosig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_$(var.CppRestSDKVersionFileSuffix).pub.pdb" />
                     </Component>
                    </Directory>
                    <Directory Id="Binx86Retail" Name="Release" FileSource="$(var.TargetDir)">
                      <Component Id="x86_dll_r" DiskId="1" Guid="$(var.GUID023)">
-                       <File Id="File_x86r_casablanca$(var.FileSuffix).dll"   Name="casablanca$(var.FileSuffix).dll" Source="$(var.SDK_bin_x86r_src_sig)\casablanca$(var.FileSuffix).dll" />
-                       <File Id="File_x86r_casablanca$(var.FileSuffix).pdb"   Name="casablanca$(var.FileSuffix).pdb" Source="$(var.SDK_bin_x86r_src_nosig)\casablanca$(var.FileSuffix).pub.pdb" />
+                       <File Id="File_x86r_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_$(var.CppRestSDKVersionFileSuffix).dll"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_$(var.CppRestSDKVersionFileSuffix).dll" Source="$(var.SDK_bin_x86r_src_sig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_$(var.CppRestSDKVersionFileSuffix).dll" />
+                       <File Id="File_x86r_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_$(var.CppRestSDKVersionFileSuffix).pdb"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_$(var.CppRestSDKVersionFileSuffix).pdb" Source="$(var.SDK_bin_x86r_src_nosig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_$(var.CppRestSDKVersionFileSuffix).pub.pdb" />
                     </Component>
                   </Directory>
                 </Directory>
@@ -456,14 +467,14 @@
                 <Directory Id="x6403" Name="x64" FileSource="$(var.TargetDir)">
                   <Directory Id="Binx64Debug" Name="Debug" FileSource="$(var.TargetDir)">
                     <Component Id="x64_dll_d" DiskId="1" Guid="$(var.GUID022)">
-                      <File Id="File_x64d_casablanca$(var.FileSuffix).dll"   Name="casablanca$(var.FileSuffix).dll" Source="$(var.SDK_bin_x64d_src_sig)\casablanca$(var.FileSuffix).dll" />
-                      <File Id="File_x64d_casablanca$(var.FileSuffix).pdb"   Name="casablanca$(var.FileSuffix).pdb" Source="$(var.SDK_bin_x64d_src_nosig)\casablanca$(var.FileSuffix).pub.pdb" />
+                      <File Id="File_x64d_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_$(var.CppRestSDKVersionFileSuffix).dll"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_$(var.CppRestSDKVersionFileSuffix).dll" Source="$(var.SDK_bin_x64d_src_sig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_$(var.CppRestSDKVersionFileSuffix).dll" />
+                      <File Id="File_x64d_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_$(var.CppRestSDKVersionFileSuffix).pdb"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_$(var.CppRestSDKVersionFileSuffix).pdb" Source="$(var.SDK_bin_x64d_src_nosig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_$(var.CppRestSDKVersionFileSuffix).pub.pdb" />
                     </Component>
                   </Directory>
                   <Directory Id="Binx64Retail" Name="Release" FileSource="$(var.TargetDir)">
                     <Component Id="x64_dll_r" DiskId="1" Guid="$(var.GUID024)">
-                      <File Id="File_x64r_casablanca$(var.FileSuffix).dll"   Name="casablanca$(var.FileSuffix).dll" Source="$(var.SDK_bin_x64r_src_sig)\casablanca$(var.FileSuffix).dll" />
-                      <File Id="File_x64r_casablanca$(var.FileSuffix).pdb"   Name="casablanca$(var.FileSuffix).pdb" Source="$(var.SDK_bin_x64r_src_nosig)\casablanca$(var.FileSuffix).pub.pdb" />
+                      <File Id="File_x64r_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_$(var.CppRestSDKVersionFileSuffix).dll"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_$(var.CppRestSDKVersionFileSuffix).dll" Source="$(var.SDK_bin_x64r_src_sig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_$(var.CppRestSDKVersionFileSuffix).dll" />
+                      <File Id="File_x64r_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_$(var.CppRestSDKVersionFileSuffix).pdb"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_$(var.CppRestSDKVersionFileSuffix).pdb" Source="$(var.SDK_bin_x64r_src_nosig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_$(var.CppRestSDKVersionFileSuffix).pub.pdb" />
                     </Component>
                   </Directory>
                 </Directory>
@@ -473,22 +484,22 @@
                 <Directory Id="SDK_lib_x86" Name="x86" FileSource="$(var.TargetDir)">
                   <Directory Id="SDK_lib_x86r" Name="Release" FileSource="$(var.TargetDir)">
                     <Component Id="SDK_lib_x86r_items" DiskId="1" Guid="$(var.GUID027)">
-                      <File Id="File_x86r_casablanca$(var.FileSuffix).lib"  Name="casablanca$(var.FileSuffix).lib"    Source="$(var.SDK_lib_x86r_src)\casablanca$(var.FileSuffix).lib" />
+                      <File Id="File_x86r_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_$(var.CppRestSDKVersionFileSuffix).lib"  Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_$(var.CppRestSDKVersionFileSuffix).lib"    Source="$(var.SDK_lib_x86r_src)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_$(var.CppRestSDKVersionFileSuffix).lib" />
                       <?if $(var.VSTargetVersion) != 10 ?>
-                        <File Id="File_x86r_casablanca$(var.FileSuffix)_winrt.lib"   Name="casablanca$(var.FileSuffix).winrt.lib"   Source="$(var.SDK_lib_x86r_src)\casablanca$(var.FileSuffix).winrt\casablanca$(var.FileSuffix).winrt.lib" />
+                        <File Id="File_x86r_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).lib"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).lib"   Source="$(var.SDK_lib_x86r_src)\casablanca$(var.VSTargetFileSuffix).winrt\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).lib" />
                         <?if $(var.VSTargetVersion) != 12 ?>
-                        <File Id="File_x86r_casablanca$(var.FileSuffix)_wp8.lib"   Name="casablanca$(var.FileSuffix).wp8.lib"   Source="$(var.SDK_lib_x86r_src)\casablanca$(var.FileSuffix).wp8.lib" />
+                        <File Id="File_x86r_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).lib"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).lib"   Source="$(var.SDK_lib_x86r_src)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).lib" />
                         <?endif ?>
                       <?endif ?>
                     </Component>
                   </Directory>
                   <Directory Id="SDK_lib_x86d" Name="Debug" FileSource="$(var.TargetDir)">
                     <Component Id="SDK_lib_x86d_items" DiskId="1" Guid="$(var.GUID036)">
-                      <File Id="File_x86d_casablanca$(var.FileSuffix).lib"  Name="casablanca$(var.FileSuffix).lib"    Source="$(var.SDK_lib_x86d_src)\\casablanca$(var.FileSuffix).lib" />
+                      <File Id="File_x86d_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_$(var.CppRestSDKVersionFileSuffix).lib"  Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_$(var.CppRestSDKVersionFileSuffix).lib"    Source="$(var.SDK_lib_x86d_src)\\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_$(var.CppRestSDKVersionFileSuffix).lib" />
                       <?if $(var.VSTargetVersion) != 10 ?>
-                        <File Id="File_x86d_casablanca$(var.FileSuffix)_winrt.lib" Name="casablanca$(var.FileSuffix).winrt.lib" Source="$(var.SDK_lib_x86d_src)\casablanca$(var.FileSuffix).winrt\casablanca$(var.FileSuffix).winrt.lib" />
+                        <File Id="File_x86d_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).lib" Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).lib" Source="$(var.SDK_lib_x86d_src)\casablanca$(var.VSTargetFileSuffix).winrt\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).lib" />
                         <?if $(var.VSTargetVersion) != 12 ?>
-                        <File Id="File_x86d_casablanca$(var.FileSuffix)_wp8.lib"   Name="casablanca$(var.FileSuffix).wp8.lib"   Source="$(var.SDK_lib_x86d_src)\casablanca$(var.FileSuffix).wp8.lib" />
+                        <File Id="File_x86d_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).lib"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).lib"   Source="$(var.SDK_lib_x86d_src)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).lib" />
                         <?endif ?>
                       <?endif ?>
                     </Component>
@@ -497,17 +508,17 @@
                 <Directory Id="SDK_lib_x64" Name="x64" FileSource="$(var.TargetDir)">
                   <Directory Id="SDK_lib_x64r" Name="Release" FileSource="$(var.TargetDir)">
                     <Component Id="SDK_lib_x64r_items" DiskId="1" Guid="$(var.GUID028)">
-                      <File Id="File_x64r_casablanca$(var.FileSuffix).lib"  Name="casablanca$(var.FileSuffix).lib"    Source="$(var.SDK_lib_x64r_src)\casablanca$(var.FileSuffix).lib" />
+                      <File Id="File_x64r_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_$(var.CppRestSDKVersionFileSuffix).lib"  Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_$(var.CppRestSDKVersionFileSuffix).lib"    Source="$(var.SDK_lib_x64r_src)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_$(var.CppRestSDKVersionFileSuffix).lib" />
                       <?if $(var.VSTargetVersion) != 10 ?>
-                        <File Id="File_x64r_casablanca$(var.FileSuffix)_winrt.lib"   Name="casablanca$(var.FileSuffix).winrt.lib"   Source="$(var.SDK_lib_x64r_src)\casablanca$(var.FileSuffix).winrt\casablanca$(var.FileSuffix).winrt.lib" />
+                        <File Id="File_x64r_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).lib"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).lib"   Source="$(var.SDK_lib_x64r_src)\casablanca$(var.VSTargetFileSuffix).winrt\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).lib" />
                       <?endif ?>
                     </Component>
                   </Directory>
                   <Directory Id="SDK_lib_x64d" Name="Debug" FileSource="$(var.TargetDir)">
                     <Component Id="SDK_lib_x64d_items" DiskId="1" Guid="$(var.GUID037)">
-                      <File Id="File_x64d_casablanca$(var.FileSuffix).lib"  Name="casablanca$(var.FileSuffix).lib"    Source="$(var.SDK_lib_x64d_src)\casablanca$(var.FileSuffix).lib" />
+                      <File Id="File_x64d_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_$(var.CppRestSDKVersionFileSuffix).lib"  Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_$(var.CppRestSDKVersionFileSuffix).lib"    Source="$(var.SDK_lib_x64d_src)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_$(var.CppRestSDKVersionFileSuffix).lib" />
                       <?if $(var.VSTargetVersion) != 10 ?>
-                        <File Id="File_x64d_casablanca$(var.FileSuffix)_winrt.lib"   Name="casablanca$(var.FileSuffix).winrt.lib"   Source="$(var.SDK_lib_x64d_src)\casablanca$(var.FileSuffix).winrt\casablanca$(var.FileSuffix).winrt.lib" />
+                        <File Id="File_x64d_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).lib"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).lib"   Source="$(var.SDK_lib_x64d_src)\casablanca$(var.VSTargetFileSuffix).winrt\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).lib" />
                       <?endif ?>
                     </Component>
                   </Directory>
@@ -517,17 +528,17 @@
                 <Directory Id="SDK_lib_arm" Name="arm" FileSource="$(var.TargetDir)">
                   <Directory Id="SDK_lib_armr" Name="Release" FileSource="$(var.TargetDir)">
                     <Component Id="SDK_lib_armr_items" DiskId="1" Guid="$(var.GUID045)">
-                      <File Id="File_armr_casablanca$(var.FileSuffix)_winrt.lib"   Name="casablanca$(var.FileSuffix).winrt.lib"   Source="$(var.SDK_lib_armr_src)\casablanca$(var.FileSuffix).winrt.lib" />
+                      <File Id="File_armr_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).lib"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).lib"   Source="$(var.SDK_lib_armr_src)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).lib" />
                       <?if $(var.VSTargetVersion) != 12 ?>
-                      <File Id="File_armr_casablanca$(var.FileSuffix)_wp8.lib"   Name="casablanca$(var.FileSuffix).wp8.lib"   Source="$(var.SDK_lib_armr_src)\casablanca$(var.FileSuffix).wp8.lib" />
+                      <File Id="File_armr_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).lib"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).lib"   Source="$(var.SDK_lib_armr_src)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).lib" />
                       <?endif ?>
                     </Component>
                   </Directory>
                   <Directory Id="SDK_lib_armd" Name="Debug" FileSource="$(var.TargetDir)">
                     <Component Id="SDK_lib_armd_items" DiskId="1" Guid="$(var.GUID046)">
-                      <File Id="File_armd_casablanca$(var.FileSuffix)_winrt.lib"   Name="casablanca$(var.FileSuffix).winrt.lib"   Source="$(var.SDK_lib_armd_src)\casablanca$(var.FileSuffix).winrt\casablanca$(var.FileSuffix).winrt.lib" />
+                      <File Id="File_armd_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).lib"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).lib"   Source="$(var.SDK_lib_armd_src)\casablanca$(var.VSTargetFileSuffix).winrt\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_winrt_$(var.CppRestSDKVersionFileSuffix).lib" />
                       <?if $(var.VSTargetVersion) != 12 ?>
-                      <File Id="File_armd_casablanca$(var.FileSuffix)_wp8.lib"   Name="casablanca$(var.FileSuffix).wp8.lib"   Source="$(var.SDK_lib_armd_src)\casablanca$(var.FileSuffix).wp8.lib" />
+                      <File Id="File_armd_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).lib"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).lib"   Source="$(var.SDK_lib_armd_src)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).lib" />
                       <?endif ?>
                     </Component>
                   </Directory>
