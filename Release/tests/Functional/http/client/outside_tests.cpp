@@ -106,13 +106,15 @@ TEST_FIXTURE(uri_address, outside_ssl_json,
     using namespace web::http::client;
     using namespace concurrency::streams;
 
-    // Create an HTTP request.
-    uri_builder playlistUri("https://www.googleapis.com/youtube/v3/playlistItems?");
-    playlistUri.append_query("part","snippet");
-    playlistUri.append_query("playlistId", "UUF1hMUVwlrvlVMjUGOZExgg");
-    playlistUri.append_query("key","AIzaSyAviHxf_y0SzNoAq3iKqvWVE4KQ0yylsnk");
-    web::http::client::http_client playlistClient(playlistUri.to_uri());
+    // Create URI for:
+    // https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=UUF1hMUVwlrvlVMjUGOZExgg&key=AIzaSyAviHxf_y0SzNoAq3iKqvWVE4KQ0yylsnk
+    uri_builder playlistUri(U("https://www.googleapis.com/youtube/v3/playlistItems?"));
+    playlistUri.append_query(U("part"),U("snippet"));
+    playlistUri.append_query(U("playlistId"), U("UUF1hMUVwlrvlVMjUGOZExgg"));
+    playlistUri.append_query(U("key"), U("AIzaSyAviHxf_y0SzNoAq3iKqvWVE4KQ0yylsnk"));
 
+    // Send request
+    web::http::client::http_client playlistClient(playlistUri.to_uri());
     playlistClient.request(methods::GET).then([=](http_response playlistResponse) -> pplx::task<json::value>
     {
         return playlistResponse.extract_json();
@@ -122,10 +124,10 @@ TEST_FIXTURE(uri_address, outside_ssl_json,
         for(const auto& i : jsonArray[U("items")])
         {
             auto name = i.second[U("snippet")][U("title")].to_string();
-            std::cout << name.c_str() << std::endl;
+            casablanca_printf(name.c_str());
             count++;
         }
-        VERIFY_ARE_EQUAL(3, count);
+        VERIFY_ARE_EQUAL(3, count); // Update this accordingly, if the number of items changes
     }).wait();
 }
 
