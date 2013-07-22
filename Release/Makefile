@@ -16,7 +16,7 @@ release: MODE = Release$(shell getconf LONG_BIT)
 release: OUTPUT_DIR = $(PWD)/../Binaries/$(MODE)
 release: mk_out_dir tests samples
 
-debug: OPTIMIZATION_LEVEL = -O0 -ggdb
+debug: OPTIMIZATION_LEVEL = -O0 -g -gdwarf-2
 debug: MODE = Debug$(shell getconf LONG_BIT)
 debug: OUTPUT_DIR = $(PWD)/../Binaries/$(MODE)
 debug: mk_out_dir tests samples
@@ -77,7 +77,7 @@ clean:
 	@find . -iname *.o -exec rm '{}' \;
 	@find ../Binaries -iname *.so -exec rm '{}' \;
 	@find ../Binaries -iname *.txt -exec rm '{}' \;
-	@find ../Binaries -iname blackjackclient -exec rm '{}' \;
-	@find ../Binaries -iname blackjackserver -exec rm '{}' \;
+	@find ../Binaries -iname SearchFile -exec rm '{}' \;
+	@find ../Binaries -iname BingRequest -exec rm '{}' \;
 	@find ../Binaries -iname syncdir -exec rm '{}' \;
 	@find ../Binaries -iname test_runner -exec rm '{}' \;
