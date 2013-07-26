@@ -520,14 +520,14 @@ namespace web { namespace http
                 {
                     if (ctx->m_ssl_stream)
                     {
-                        int size_to_read = 0;
+                        size_t size_to_read = 0;
                         if (ctx->m_response_buf.size() < size)
                             size_to_read = size - ctx->m_response_buf.size();
                         boost::asio::async_read(*ctx->m_ssl_stream, ctx->m_response_buf, boost::asio::transfer_at_least(size_to_read), handler);
                     }
                     else
                     {
-                        int size_to_read = 0;
+                        size_t size_to_read = 0;
                         if (ctx->m_response_buf.size() < size)
                             size_to_read = size - ctx->m_response_buf.size();
                         boost::asio::async_read(*ctx->m_socket, ctx->m_response_buf, boost::asio::transfer_at_least(size_to_read), handler);
