@@ -138,7 +138,7 @@ TEST_FIXTURE(uri_address, invalid_method)
 {
     web::http::uri uri(U("https://www.bing.com/"));
     http_client client(uri);
-    VERIFY_THROWS(client.request("my\rmethod").get(), std::runtime_error);
+    VERIFY_THROWS(client.request("my\rmethod").get(), http_exception);
 }
 
 // This test sends an SSL request to a non-SSL server and should fail on handshaking

@@ -157,7 +157,7 @@ namespace web { namespace http
                     // and host won't resolve
                     if (std::find(method.begin(), method.end(), '\r') != method.end())
                     {
-                        ctx->report_exception(std::runtime_error("invalid method string"));
+                        ctx->report_exception(http_exception("invalid method string"));
                         return;
                     }
 
