@@ -102,10 +102,21 @@ namespace web { namespace http
                     if (!ec)
                     {
                         m_timedout = true;
-                        auto sock = m_socket.get();
-                        if (sock != nullptr)
+                        if (m_ssl_stream)
                         {
-                            sock->cancel();
+                            boost::system::error_code error;
+                            m_ssl_stream->lowest_layer().cancel(error);
+                                
+                            if (error)
+                                report_error("Failed to cancel the socket", error);
+                        }
+                        else
+                        {
+                            auto sock = m_socket.get();
+                            if (sock != nullptr)
+                            {
+                                sock->cancel();
+                            }
                         }
                     }
                 }
@@ -270,11 +281,23 @@ namespace web { namespace http
                     else
                     {
                         boost::system::error_code ignore;
-                        ctx->m_socket->shutdown(tcp::socket::shutdown_both, ignore);
-                        ctx->m_socket->close();
-                        ctx->m_socket.reset(new tcp::socket(m_io_service));
                         auto endpoint = *endpoints;
-                        ctx->m_socket->async_connect(endpoint, boost::bind(&client::handle_connect, this, boost::asio::placeholders::error, ++endpoints, ctx));
+                        if (ctx->m_ssl_stream)
+                        {
+                            ctx->m_ssl_stream->lowest_layer().shutdown(tcp::socket::shutdown_both, ignore);
+                            ctx->m_ssl_stream->lowest_layer().close();
+                            boost::asio::ssl::context context(boost::asio::ssl::context::sslv23);
+                            context.set_verify_mode(boost::asio::ssl::context::verify_none);
+                            ctx->m_ssl_stream.reset(new boost::asio::ssl::stream<boost::asio::ip::tcp::socket>(m_io_service, context));
+                            ctx->m_ssl_stream->lowest_layer().async_connect(endpoint, boost::bind(&client::handle_connect, this, boost::asio::placeholders::error, ++endpoints, ctx));
+                        }
+                        else
+                        {
+                            ctx->m_socket->shutdown(tcp::socket::shutdown_both, ignore);
+                            ctx->m_socket->close();
+                            ctx->m_socket.reset(new tcp::socket(m_io_service));
+                            ctx->m_socket->async_connect(endpoint, boost::bind(&client::handle_connect, this, boost::asio::placeholders::error, ++endpoints, ctx));
+                        }
                     }
                 }
 
@@ -351,11 +374,11 @@ namespace web { namespace http
                         ctx->m_current_size += actualSize;
                         ctx->m_request_buf.commit(actualSize);
                         if (ctx->m_ssl_stream)
-                        boost::asio::async_write(*ctx->m_ssl_stream, ctx->m_request_buf,
-                            boost::bind(&client::handle_write_large_body, this, boost::asio::placeholders::error, ctx));
+                            boost::asio::async_write(*ctx->m_ssl_stream, ctx->m_request_buf,
+                                boost::bind(&client::handle_write_large_body, this, boost::asio::placeholders::error, ctx));
                         else
-                        boost::asio::async_write(*ctx->m_socket, ctx->m_request_buf,
-                            boost::bind(&client::handle_write_large_body, this, boost::asio::placeholders::error, ctx));
+                            boost::asio::async_write(*ctx->m_socket, ctx->m_request_buf,
+                                boost::bind(&client::handle_write_large_body, this, boost::asio::placeholders::error, ctx));
                     });
                 }
 
@@ -497,17 +520,17 @@ namespace web { namespace http
                 {
                     if (ctx->m_ssl_stream)
                     {
-                        if (ctx->m_response_buf.size() >= size)
-                            boost::asio::async_read(*ctx->m_ssl_stream, ctx->m_response_buf, boost::asio::transfer_at_least(0), handler);
-                        else
-                            boost::asio::async_read(*ctx->m_ssl_stream, ctx->m_response_buf, boost::asio::transfer_at_least(size - ctx->m_response_buf.size()), handler);
+                        int size_to_read = 0;
+                        if (ctx->m_response_buf.size() < size)
+                            size_to_read = size - ctx->m_response_buf.size();
+                        boost::asio::async_read(*ctx->m_ssl_stream, ctx->m_response_buf, boost::asio::transfer_at_least(size_to_read), handler);
                     }
                     else
                     {
-                        if (ctx->m_response_buf.size() >= size)
-                            boost::asio::async_read(*ctx->m_socket, ctx->m_response_buf, boost::asio::transfer_at_least(0), handler);
-                        else
-                            boost::asio::async_read(*ctx->m_socket, ctx->m_response_buf, boost::asio::transfer_at_least(size - ctx->m_response_buf.size()), handler);
+                        int size_to_read = 0;
+                        if (ctx->m_response_buf.size() < size)
+                            size_to_read = size - ctx->m_response_buf.size();
+                        boost::asio::async_read(*ctx->m_socket, ctx->m_response_buf, boost::asio::transfer_at_least(size_to_read), handler);
                     }
                 }
 
