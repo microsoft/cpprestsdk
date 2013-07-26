@@ -134,6 +134,27 @@ TEST_FIXTURE(uri_address, request_timeout, "Ignore:Linux", "TFS#612139")
     VERIFY_THROWS_HTTP_ERROR_CODE(client.request(methods::GET).get(), std::errc::timed_out);
 }
 
+TEST_FIXTURE(uri_address, invalid_method)
+{
+    web::http::uri uri(U("https://www.bing.com/"));
+    http_client client(uri);
+    VERIFY_THROWS(client.request("my\rmethod").get(), std::runtime_error);
+}
+
+// This test sends an SSL request to a non-SSL server and should fail on handshaking
+TEST_FIXTURE(uri_address, handshake_fail, "Ignore:Linux", "TFS#747982")
+{
+    web::http::uri ssl_uri(U("https://localhost:34568/"));
+
+    test_http_server server(m_uri);
+    VERIFY_ARE_EQUAL(0u, server.open());
+
+    http_client client(ssl_uri);
+    auto request = client.request(methods::GET);
+
+    VERIFY_THROWS(request.get(), std::exception);
+}
+
 #if !defined(__cplusplus_winrt)
 // This test still sometimes segfaults on Linux, but I'm re-enabling it [AL]
 TEST_FIXTURE(uri_address, content_ready_timeout)

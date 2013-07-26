@@ -115,6 +115,7 @@ TEST_FIXTURE(uri_address, outside_ssl_json,
 
     // Send request
     web::http::client::http_client playlistClient(playlistUri.to_uri());
+    
     playlistClient.request(methods::GET).then([=](http_response playlistResponse) -> pplx::task<json::value>
     {
         return playlistResponse.extract_json();
