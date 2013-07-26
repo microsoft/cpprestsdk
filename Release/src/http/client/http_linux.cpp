@@ -518,16 +518,15 @@ namespace web { namespace http
                 template <typename ReadHandler>
                 void async_read_until_buffersize(size_t size, ReadHandler handler, linux_request_context* ctx)
                 {
+                    size_t size_to_read = 0;
                     if (ctx->m_ssl_stream)
                     {
-                        size_t size_to_read = 0;
                         if (ctx->m_response_buf.size() < size)
                             size_to_read = size - ctx->m_response_buf.size();
                         boost::asio::async_read(*ctx->m_ssl_stream, ctx->m_response_buf, boost::asio::transfer_at_least(size_to_read), handler);
                     }
                     else
                     {
-                        size_t size_to_read = 0;
                         if (ctx->m_response_buf.size() < size)
                             size_to_read = size - ctx->m_response_buf.size();
                         boost::asio::async_read(*ctx->m_socket, ctx->m_response_buf, boost::asio::transfer_at_least(size_to_read), handler);
