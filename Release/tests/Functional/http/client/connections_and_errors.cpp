@@ -123,7 +123,7 @@ TEST_FIXTURE(uri_address, server_close_without_responding,
 }
 
 // This test hangs or crashes intermittently on Linux
-TEST_FIXTURE(uri_address, request_timeout, "Ignore:Linux", "TFS#612139")
+TEST_FIXTURE(uri_address, request_timeout)
 {
     test_http_server::scoped_server scoped(m_uri);
     http_client_config config;
