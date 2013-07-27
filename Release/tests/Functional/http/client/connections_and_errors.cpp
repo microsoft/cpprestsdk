@@ -138,7 +138,7 @@ TEST_FIXTURE(uri_address, invalid_method)
 {
     web::http::uri uri(U("https://www.bing.com/"));
     http_client client(uri);
-    VERIFY_THROWS(client.request("my\rmethod").get(), http_exception);
+    VERIFY_THROWS(client.request(U("my\rmethod")).get(), http_exception);
 }
 
 // This test sends an SSL request to a non-SSL server and should fail on handshaking
@@ -146,13 +146,12 @@ TEST_FIXTURE(uri_address, handshake_fail, "Ignore:Linux", "TFS#747982")
 {
     web::http::uri ssl_uri(U("https://localhost:34568/"));
 
-    test_http_server server(m_uri);
-    VERIFY_ARE_EQUAL(0u, server.open());
+    test_http_server::scoped_server scoped(ssl_uri);
 
     http_client client(ssl_uri);
     auto request = client.request(methods::GET);
 
-    VERIFY_THROWS(request.get(), std::exception);
+    VERIFY_THROWS(request.get(), http_exception);
 }
 
 #if !defined(__cplusplus_winrt)
