@@ -272,8 +272,7 @@ TEST_FIXTURE(uri_address, set_progress_handler_open_failure)
     VERIFY_ARE_EQUAL(0, calls);
 }
 
-// This test hangs or crashes intermittently on Linux
-TEST_FIXTURE(uri_address, set_progress_handler_request_timeout, "Ignore:Linux", "TFS#612139")
+TEST_FIXTURE(uri_address, set_progress_handler_request_timeout)
 {
     test_http_server::scoped_server scoped(m_uri);
     http_client_config config;
