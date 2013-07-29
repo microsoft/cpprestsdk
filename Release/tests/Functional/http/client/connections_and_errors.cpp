@@ -122,8 +122,7 @@ TEST_FIXTURE(uri_address, server_close_without_responding,
     VERIFY_THROWS_HTTP_ERROR_CODE(client.request(methods::GET).wait(), std::errc::host_unreachable);
 }
 
-// This test hangs or crashes intermittently on Linux
-TEST_FIXTURE(uri_address, request_timeout, "Ignore:Linux", "TFS#612139")
+TEST_FIXTURE(uri_address, request_timeout)
 {
     test_http_server::scoped_server scoped(m_uri);
     http_client_config config;
