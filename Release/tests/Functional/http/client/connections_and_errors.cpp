@@ -86,8 +86,7 @@ TEST_FIXTURE(uri_address, pending_requests_after_client)
     pending_requests_after_client_impl(m_uri, false);
 }
 
-TEST_FIXTURE(uri_address, server_doesnt_exist,
-             "Ignore:Linux", "627642")
+TEST_FIXTURE(uri_address, server_doesnt_exist)
 {
     http_client client(m_uri);
     VERIFY_THROWS_HTTP_ERROR_CODE(client.request(methods::GET).wait(), std::errc::host_unreachable);
@@ -103,8 +102,7 @@ TEST_FIXTURE(uri_address, open_failure)
     VERIFY_THROWS(t.wait(), web::http::http_exception);
 }
 
-TEST_FIXTURE(uri_address, server_close_without_responding,
-             "Ignore:Linux", "627612")
+TEST_FIXTURE(uri_address, server_close_without_responding)
 {
     test_http_server server(m_uri);
     VERIFY_ARE_EQUAL(0u, server.open());
@@ -123,7 +121,7 @@ TEST_FIXTURE(uri_address, server_close_without_responding,
 }
 
 // This test hangs or crashes intermittently on Linux
-TEST_FIXTURE(uri_address, request_timeout, "Ignore:Linux", "TFS#612139")
+TEST_FIXTURE(uri_address, request_timeout)
 {
     test_http_server::scoped_server scoped(m_uri);
     http_client_config config;

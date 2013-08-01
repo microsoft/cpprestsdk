@@ -40,20 +40,48 @@ namespace web { namespace http
             class linux_client;
             struct client;
 
+			enum class httpclient_errorcode_context
+			{
+				none = 0,
+				connect,
+				writeheader,
+				writebody,
+				readheader,
+				readbody,
+				close
+			};
             class linux_request_context : public request_context
-            {
+			{
             public:
                 static request_context * create_request_context(std::shared_ptr<_http_client_communicator> &client, http_request &request)
                 {
                     return new linux_request_context(client, request);
                 }
 
-                void report_error(const utility::string_t &scope, boost::system::error_code ec)
+                void report_error(const utility::string_t &message, boost::system::error_code ec, httpclient_errorcode_context context = httpclient_errorcode_context::none)
                 {
-                    if (ec.default_error_condition().value() == boost::system::errc::operation_canceled && m_timedout)
-                        request_context::report_error(boost::system::errc::timed_out, scope);
-                    else
-                        request_context::report_error(ec.default_error_condition().value(), scope);
+					// By default, errorcodeValue don't need to converted
+					long errorcodeValue = ec.value();
+					
+					// map timer cancellation to time_out
+                    if (ec == boost::system::errc::operation_canceled && m_timedout)
+                        errorcodeValue = make_error_code(std::errc::timed_out).value();
+					else
+					{
+						// We need to correct inaccurate ASIO error code base on context information
+						switch (context)
+						{
+						case httpclient_errorcode_context::connect:
+							if (ec == boost::system::errc::connection_refused)
+								errorcodeValue = make_error_code(std::errc::host_unreachable).value();
+							break;
+						case httpclient_errorcode_context::readheader:
+							if (ec.default_error_condition().value() == boost::system::errc::no_such_file_or_directory) // bug in boost error_code mapping
+								errorcodeValue = make_error_code(std::errc::connection_aborted).value();
+							break;
+						}
+					}
+					request_context::report_error(errorcodeValue, message);
                 }
 
                 std::unique_ptr<tcp::socket> m_socket;
@@ -218,7 +246,7 @@ namespace web { namespace http
                 {
                     if (ec)
                     {
-                        ctx->report_error("Error resolving address", ec);
+                        ctx->report_error("Error resolving address", ec, httpclient_errorcode_context::connect);
                     }
                     else
                     {
@@ -235,7 +263,7 @@ namespace web { namespace http
                     }
                     else if (endpoints == tcp::resolver::iterator())
                     {
-                        ctx->report_error("Failed to connect to any resolved endpoint", ec);
+                        ctx->report_error("Failed to connect to any resolved endpoint", ec, httpclient_errorcode_context::connect);
                     }
                     else
                     {
@@ -326,7 +354,7 @@ namespace web { namespace http
                     }
                     else
                     {
-                        ctx->report_error("Failed to write request headers", ec);
+                        ctx->report_error("Failed to write request headers", ec, httpclient_errorcode_context::writeheader);
                     }
                 }
 
@@ -346,7 +374,7 @@ namespace web { namespace http
                     }
                     else
                     {
-                        ctx->report_error("Failed to write request body", ec);
+                        ctx->report_error("Failed to write request body", ec, httpclient_errorcode_context::writebody);
                     }
                 }
 
@@ -370,7 +398,7 @@ namespace web { namespace http
 
                         if (!response_stream || http_version.substr(0, 5) != "HTTP/")
                         {
-                            ctx->report_error("Invalid HTTP status line", ec);
+                            ctx->report_error("Invalid HTTP status line", ec, httpclient_errorcode_context::readheader);
                             return;
                         }
 
@@ -378,7 +406,7 @@ namespace web { namespace http
                     }
                     else
                     {
-                        ctx->report_error("Failed to read HTTP status line", ec);
+                        ctx->report_error("Failed to read HTTP status line", ec, httpclient_errorcode_context::readheader);
                     }
                 }
 
@@ -458,7 +486,7 @@ namespace web { namespace http
 
                         if (octetLine.fail())
                         {
-                            ctx->report_error("Invalid chunked response header", boost::system::error_code());
+                            ctx->report_error("Invalid chunked response header", boost::system::error_code(), httpclient_errorcode_context::readbody);
                         }
                         else
                             async_read_until_buffersize(octets + CRLF.size(), // +2 for crlf
@@ -466,7 +494,7 @@ namespace web { namespace http
                     }
                     else
                     {
-                        ctx->report_error("Retrieving message chunk header", ec);
+                        ctx->report_error("Retrieving message chunk header", ec, httpclient_errorcode_context::readbody);
                     }
                 }
 
@@ -516,7 +544,7 @@ namespace web { namespace http
                     }
                     else
                     {
-                        ctx->report_error("Failed to read chunked response part", ec);
+                        ctx->report_error("Failed to read chunked response part", ec, httpclient_errorcode_context::readbody);
                     }
                 }
 
@@ -526,7 +554,7 @@ namespace web { namespace http
 
                     if (ec)
                     {
-                        ctx->report_error("Failed to read response body", ec);
+                        ctx->report_error("Failed to read response body", ec, httpclient_errorcode_context::readbody);
                         return;
                     }
                     auto progress = ctx->m_request._get_impl()->_progress_handler();
