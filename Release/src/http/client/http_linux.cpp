@@ -166,9 +166,9 @@ namespace web { namespace http
                     // stop injection of headers via method
                     // resource should be ok, since it's been encoded
                     // and host won't resolve
-                    if (std::find(method.begin(), method.end(), '\r') != method.end())
+                    if (!validate_method(method))
                     {
-                        ctx->report_exception(http_exception("invalid method string"));
+                        ctx->report_exception(http_exception("The method string is invalid."));
                         return;
                     }
 

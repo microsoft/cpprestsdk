@@ -358,10 +358,16 @@ namespace web { namespace http
                     http_request &msg = request->m_request;
                     winrt_request_context * winrt_context = static_cast<winrt_request_context *>(request);
 
+                    if (!validate_method(msg.method()))
+                    {
+                        request->report_error(L"The method string is invalid.");
+                        return;
+                    }
+                    
                     if ( msg.method() == http::methods::TRCE )
                     {
                         // Not supported by WinInet. Generate a more specific exception than what WinInet does.
-                        request->m_request_completion.set_exception(http_exception(_XPLATSTR("TRACE is not supported")));
+                        request->report_error(L"TRACE is not supported");
                         return;
                     }
 
@@ -404,7 +410,7 @@ namespace web { namespace http
                     auto proxy = config.proxy();
                     if(!proxy.is_default())
                     {
-                        request->report_exception(http_exception(_XPLATSTR("Only a default proxy server is supported")));
+                        request->report_error(L"Only a default proxy server is supported");
                         xhr->Release();
                         return;
                     }
@@ -457,7 +463,7 @@ namespace web { namespace http
                     // response data directly into the underlying response stream.
 
                     auto writebuf = winrt_context->_get_writebuffer();
-                    if ( !_check_streambuf(winrt_context, writebuf, _XPLATSTR("Output stream is not open")) )
+                    if ( !_check_streambuf(winrt_context, writebuf, L"Output stream is not open") )
                     {
                         xhr->Release();
                         return;
@@ -479,7 +485,7 @@ namespace web { namespace http
                     if (content_length == std::numeric_limits<size_t>::max())
                     {
                         // IXHR2 does not allow transfer encoding chunked. So the user is expected to set the content length
-                        request->report_exception(http_exception(_XPLATSTR("Content length is not specified in the http headers")));
+                        request->report_error(L"Content length is not specified in the http headers");
                         xhr->Release();
                         return;
                     }
@@ -498,7 +504,7 @@ namespace web { namespace http
                         }
 
                         auto readbuf = winrt_context->_get_readbuffer();
-                        if ( !_check_streambuf(winrt_context, readbuf, _XPLATSTR("Input stream is not open")) )
+                        if ( !_check_streambuf(winrt_context, readbuf, L"Input stream is not open") )
                         {
                             xhr->Release();
                             return;
@@ -533,7 +539,7 @@ namespace web { namespace http
         {
             // Somethings like proper URI schema are verified by the URI class.
             // We only need to check certain things specific to HTTP.
-            if( uri.scheme() != _XPLATSTR("http") && uri.scheme() != _XPLATSTR("https") )
+            if( uri.scheme() != L"http" && uri.scheme() != L"https" )
             {
                 throw std::invalid_argument("URI scheme must be 'http' or 'https'");
             }

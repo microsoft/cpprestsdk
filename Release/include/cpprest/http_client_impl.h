@@ -44,7 +44,6 @@ using namespace concurrency;
 #else
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
-#include <boost/asio/ssl.hpp>
 #include <boost/algorithm/string.hpp>
 #include <pplx/threadpool.h>
 #endif
@@ -62,8 +61,39 @@ using namespace web::http::details;
 
 namespace web { namespace http { namespace client { namespace details
 {
+    const bool valid_chars [] =
+    {
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0-15
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //16-31
+        0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, //32-47
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, //48-63
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //64-79
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, //80-95
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //96-111
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0 //112-127
+    };
+
 #ifdef _MS_WINDOWS
             static const utility::char_t * get_with_body = _XPLATSTR("A GET or HEAD request should not have an entity body.");
+#endif
+
+#if (!defined(_MS_WINDOWS) || defined(__cplusplus_winrt))
+            // Checks if the method contains any invalid characters
+            static bool validate_method(const utility::string_t& method)
+            {
+                for (auto iter = method.begin(); iter != method.end(); iter++)
+                {
+                    char_t ch = *iter;
+                        
+                    if (size_t(ch) >= 128)
+                        return false;
+                        
+                    if (!valid_chars[ch])
+                        return false;
+                }
+
+                return true;
+            }
 #endif
 
             // Helper function to trim leading and trailing null characters from a string.
@@ -125,32 +155,14 @@ namespace web { namespace http { namespace client { namespace details
                 {
                 }
 
-                // TFS 579619 - 1206: revisit whether error_code is really needed for Linux
-                void complete_headers(const unsigned long error_code = 0)
+                void complete_headers()
                 {
                     // We have already read (and transmitted) the request body. Should we explicitly close the stream?
                     // Well, there are test cases that assumes that the istream is valid when t receives the response!
                     // For now, we will drop our reference which will close the stream if the user doesn't have one.
                     m_request.set_body(Concurrency::streams::istream());
-
                     m_received_hdrs = true;
-                    m_response.set_error_code(error_code);
-
-                    if(m_response.error_code() == 0)
-                    {
-                        m_request_completion.set(m_response);
-                    }
-#ifdef _MS_WINDOWS
-                    else
-                    {
-                        m_request_completion.set_exception(http_exception(m_response.error_code()));
-                    }
-#else
-                    else
-                    {
-                        m_request_completion.set_exception(http_exception((int)error_code, _XPLATSTR("Error reading headers")));
-                    }
-#endif
+                    m_request_completion.set(m_response);
                 }
 
                 /// <summary>
@@ -169,21 +181,17 @@ namespace web { namespace http { namespace client { namespace details
 #ifdef _MS_WINDOWS
                 // Helper function to report an error, set task completion event, and close the request handle.
 
-                // Note: I'm keeping the message parameter in case we decide to log errors again, or add the message
-                //       to the exception message. For now.
                 void report_error(const utility::string_t & errorMessage)
                 {
-                    report_error(GetLastError(), errorMessage);
+                    report_exception(http_exception(errorMessage));
                 }
 
 #endif
 
                 void report_error(unsigned long error_code, const utility::string_t & errorMessage)
                 {
-                    UNREFERENCED_PARAMETER(errorMessage);
-
                     m_response.set_error_code(error_code);
-                    report_exception(http_exception((int)m_response.error_code()));
+                    report_exception(http_exception((int)m_response.error_code(), errorMessage));
                 }
 
                 template<typename _ExceptionType>
