@@ -120,7 +120,6 @@ TEST_FIXTURE(uri_address, server_close_without_responding)
     VERIFY_THROWS_HTTP_ERROR_CODE(client.request(methods::GET).wait(), std::errc::host_unreachable);
 }
 
-// This test hangs or crashes intermittently on Linux
 TEST_FIXTURE(uri_address, request_timeout)
 {
     test_http_server::scoped_server scoped(m_uri);
@@ -130,6 +129,26 @@ TEST_FIXTURE(uri_address, request_timeout)
     http_client client(m_uri, config);
 
     VERIFY_THROWS_HTTP_ERROR_CODE(client.request(methods::GET).get(), std::errc::timed_out);
+}
+
+TEST_FIXTURE(uri_address, invalid_method)
+{
+    web::http::uri uri(U("https://www.bing.com/"));
+    http_client client(uri);
+    VERIFY_THROWS(client.request(U("my\rmethod")).get(), http_exception);
+}
+
+// This test sends an SSL request to a non-SSL server and should fail on handshaking
+TEST_FIXTURE(uri_address, handshake_fail, "Ignore:Linux", "TFS#747982")
+{
+    web::http::uri ssl_uri(U("https://localhost:34568/"));
+
+    test_http_server::scoped_server scoped(ssl_uri);
+
+    http_client client(ssl_uri);
+    auto request = client.request(methods::GET);
+
+    VERIFY_THROWS(request.get(), http_exception);
 }
 
 #if !defined(__cplusplus_winrt)

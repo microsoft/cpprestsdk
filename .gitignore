@@ -1,4 +1,7 @@
 #Visual Studio files
+*.o
+*.d
+*.so
 *.[Oo]bj
 *.user
 *.aps
@@ -38,3 +41,4 @@ obj/
 *.resfiles
 [Bb]in
 Binaries/
+Intermediate/

@@ -5,7 +5,7 @@ bad:
 
 #CXX=clang
 #CXX=/usr/lib/gcc-snapshot/bin/g++
-CXX=g++-4.7
+CXX=g++-4.8
 export CXX
 
 mk_out_dir:
@@ -16,7 +16,7 @@ release: MODE = Release$(shell getconf LONG_BIT)
 release: OUTPUT_DIR = $(PWD)/../Binaries/$(MODE)
 release: mk_out_dir tests samples
 
-debug: OPTIMIZATION_LEVEL = -O0 -ggdb
+debug: OPTIMIZATION_LEVEL = -O0 -g -gdwarf-2
 debug: MODE = Debug$(shell getconf LONG_BIT)
 debug: OUTPUT_DIR = $(PWD)/../Binaries/$(MODE)
 debug: mk_out_dir tests samples
@@ -29,7 +29,7 @@ clean: DOUTPUT_DIR = $(PWD)/../Binaries/$(DMODE)
 export MODE
 
 WARNINGS=-Wall -Wextra -Wunused-parameter -Wcast-align -Wcast-qual -Wconversion -Wformat=2 -Winit-self -Winvalid-pch -Wmissing-format-attribute -Wmissing-include-dirs -Wpacked -Wredundant-decls -Wunreachable-code
-SUPPRESSIONS=-Wno-deprecated -Wno-unknown-pragmas -Wno-reorder -Wno-unused-function -Wno-char-subscripts -Wno-switch -Wno-unused-but-set-parameter -Wno-deprecated -Wno-unused-value
+SUPPRESSIONS=-Wno-deprecated -Wno-unknown-pragmas -Wno-reorder -Wno-unused-function -Wno-char-subscripts -Wno-switch -Wno-unused-but-set-parameter -Wno-deprecated -Wno-unused-value -Wno-unused-local-typedefs
 
 # C++11 excludes GCC < 4.7, which is desired anyway
 OTHER_OPTIONS=-std=c++11 -fno-strict-aliasing
@@ -77,7 +77,7 @@ clean:
 	@find . -iname *.o -exec rm '{}' \;
 	@find ../Binaries -iname *.so -exec rm '{}' \;
 	@find ../Binaries -iname *.txt -exec rm '{}' \;
-	@find ../Binaries -iname blackjackclient -exec rm '{}' \;
-	@find ../Binaries -iname blackjackserver -exec rm '{}' \;
+	@find ../Binaries -iname SearchFile -exec rm '{}' \;
+	@find ../Binaries -iname BingRequest -exec rm '{}' \;
 	@find ../Binaries -iname syncdir -exec rm '{}' \;
 	@find ../Binaries -iname test_runner -exec rm '{}' \;

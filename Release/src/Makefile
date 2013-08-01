@@ -63,8 +63,6 @@ CXXFLAGS = -fPIC -std=c++11 $(STRICT_BASE_CXXFLAGS) -I../include -I./pch $(WARNI
 LIBS = $(PKGCONFIG_LIBS) -lboost_system -lboost_thread -lboost_locale -pthread -lstdc++ -lm # these are explicit for clang
 LDFLAGS = $(BASE_LDFLAGS)
 
-CXX ?= g++-4.7
-
 ifeq ($(OUTPUT_DIR),)
   LIBRARY_DST=$(MODE)/$(LIBRARY)
 else

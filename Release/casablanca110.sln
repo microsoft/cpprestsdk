@@ -25,8 +25,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "streams110_test", "tests\Fu
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Uri110_test", "tests\Functional\uri\VS11\Uri110_test.vcxproj", "{3D9C3F25-1736-4D39-A31F-6B2DE34E20CF}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "testlistener110", "tests\Functional\http\utilities\testlistener\VS11\testlistener110.vcxproj", "{5614BAFA-7605-41D3-945F-7EEB8116398F}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "casablanca110.winrt", "src\build\casablanca110.winrt.vcxproj", "{198ED804-2655-4D92-8104-C220E3EA9452}"
 EndProject
 Global
@@ -256,18 +254,6 @@ Global
 		{3D9C3F25-1736-4D39-A31F-6B2DE34E20CF}.Release|Win32.Build.0 = Release|Win32
 		{3D9C3F25-1736-4D39-A31F-6B2DE34E20CF}.Release|x64.ActiveCfg = Release|x64
 		{3D9C3F25-1736-4D39-A31F-6B2DE34E20CF}.Release|x64.Build.0 = Release|x64
-		{5614BAFA-7605-41D3-945F-7EEB8116398F}.Debug|ARM.ActiveCfg = Debug|ARM
-		{5614BAFA-7605-41D3-945F-7EEB8116398F}.Debug|ARM.Build.0 = Debug|ARM
-		{5614BAFA-7605-41D3-945F-7EEB8116398F}.Debug|Win32.ActiveCfg = Debug|Win32
-		{5614BAFA-7605-41D3-945F-7EEB8116398F}.Debug|Win32.Build.0 = Debug|Win32
-		{5614BAFA-7605-41D3-945F-7EEB8116398F}.Debug|x64.ActiveCfg = Debug|x64
-		{5614BAFA-7605-41D3-945F-7EEB8116398F}.Debug|x64.Build.0 = Debug|x64
-		{5614BAFA-7605-41D3-945F-7EEB8116398F}.Release|ARM.ActiveCfg = Release|ARM
-		{5614BAFA-7605-41D3-945F-7EEB8116398F}.Release|ARM.Build.0 = Release|ARM
-		{5614BAFA-7605-41D3-945F-7EEB8116398F}.Release|Win32.ActiveCfg = Release|Win32
-		{5614BAFA-7605-41D3-945F-7EEB8116398F}.Release|Win32.Build.0 = Release|Win32
-		{5614BAFA-7605-41D3-945F-7EEB8116398F}.Release|x64.ActiveCfg = Release|x64
-		{5614BAFA-7605-41D3-945F-7EEB8116398F}.Release|x64.Build.0 = Release|x64
 		{198ED804-2655-4D92-8104-C220E3EA9452}.Debug|ARM.ActiveCfg = Debug|ARM
 		{198ED804-2655-4D92-8104-C220E3EA9452}.Debug|ARM.Build.0 = Debug|ARM
 		{198ED804-2655-4D92-8104-C220E3EA9452}.Debug|Win32.ActiveCfg = Debug|Win32
