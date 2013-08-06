@@ -17,6 +17,7 @@
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 */
 #include "stdafx.h"
+#include <boost/algorithm/string/find.hpp>
 #include "cpprest/http_helpers.h"
 #include "cpprest/http_server_api.h"
 #include "cpprest/http_server.h"
@@ -194,19 +195,12 @@ void connection::handle_headers()
     // check if the client has requested we close the connection
     if (m_request.headers().match(U("connection"), name))
     {
-        if (boost::iequals(name, U("close")))
-        {
-            m_close = true;
-        }
+        m_close = boost::iequals(name, U("close"));
     }
 
     if (m_request.headers().match(U("transfer-encoding"), name))
     {
-        // This is not quite right. See details in TFS#549211
-        if (!boost::iequals(name, U("identity")))
-        {
-            m_chunked = true;
-        }
+        m_chunked = boost::ifind_first(name, U("chunked"));
     }
 
     Concurrency::streams::producer_consumer_buffer<uint8_t> buf;
