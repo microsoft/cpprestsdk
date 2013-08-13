@@ -177,6 +177,31 @@ namespace Concurrency { namespace streams
         }
 
         /// <summary>
+        /// Write a single value of "blittable" type T into the stream.
+        /// </summary>
+        /// <param name="value">A value of type T.</param>
+        /// <remarks>
+        /// This is not a replacement for a proper binary serialization solution, but it may
+        /// form the foundation for one. Writing data bit-wise to a stream is a primitive
+        /// operation of binary serialization.
+        /// Currently, no attention is paid to byte order. All data is written in the platform's
+        /// native byte order, which means little-endian on all platforms that have been tested.
+        /// This function is only available for streams using a single-byte character size.
+        /// </remarks>
+        template<typename T>
+        pplx::task<size_t> write(T value) const
+        {
+            static_assert(sizeof(CharType) == 1, "binary write is only supported for single-byte streams");
+
+            auto buffer = helper()->m_buffer;
+            pplx::task<size_t> result;
+            if ( !_verify_and_return_task(details::_out_stream_msg, result) ) return result;
+
+            T *copy = new T(value);
+            return buffer.putn((CharType*)copy, sizeof(T)).then([copy](pplx::task<size_t> op) -> size_t { delete copy; return op.get(); });
+        }
+
+        /// <summary>
         /// Write a number of characters from a given stream buffer into the stream.
         /// </summary>
         /// <param name="source">A source stream buffer.</param>
@@ -619,6 +644,31 @@ namespace Concurrency { namespace streams
             pplx::task<int_type> result;
             if ( !_verify_and_return_task(details::_in_stream_msg, result) ) return result;
             return helper()->m_buffer.bumpc();
+        }
+
+        /// <summary>
+        /// Read a single value of "blittable" type T from the stream.
+        /// </summary>
+        /// <returns>A value of type T.</returns>
+        /// <remarks>
+        /// This is not a replacement for a proper binary serialization solution, but it may
+        /// form the foundation for one. Reading data bit-wise to a stream is a primitive
+        /// operation of binary serialization.
+        /// Currently, no attention is paid to byte order. All data is read in the platform's
+        /// native byte order, which means little-endian on all platforms that have been tested.
+        /// This function is only available for streams using a single-byte character size.
+        /// </remarks>
+        template<typename T>
+        pplx::task<T> read() const
+        {
+            static_assert(sizeof(CharType) == 1, "binary read is only supported for single-byte streams");
+            auto buffer = helper()->m_buffer;
+            pplx::task<T> result;
+            if ( !_verify_and_return_task(details::_in_stream_msg, result) ) return result;
+
+            T *copy = new T;
+            memset(copy, 0, sizeof(T));
+            return buffer.getn((CharType*)copy, sizeof(T)).then([copy](pplx::task<size_t> op) -> T { T tmp = *copy; delete copy; return tmp; });
         }
 
         /// <summary>

@@ -111,6 +111,20 @@ namespace Concurrency { namespace streams {
         virtual bool can_seek() const { return this->is_open(); }
 
         /// <summary>
+        /// <c>has_size<c/> is used to determine whether a stream buffer supports size().
+        /// </summary>
+        virtual bool has_size() const { return this->is_open(); }
+
+        /// <summary>
+        /// Gets the size of the stream, if known. Calls to <c>has_size</c> will determine whether
+        /// the result of <c>size</c> can be relied on.
+        /// </summary>
+        virtual utility::size64_t size() const
+        {
+            return utility::size64_t(m_size);
+        }
+
+        /// <summary>
         /// Get the stream buffer size, if one has been set.
         /// </summary>
         /// <param name="direction">The direction of buffering (in or out)</param>
@@ -171,7 +185,7 @@ namespace Concurrency { namespace streams {
         /// </summary>
         /// <param name="count">The number of characters to allocate.</param>
         /// <returns>A pointer to a block to write to, null if the stream buffer implementation does not support alloc/commit.</returns>
-        _CharType* alloc(size_t count)
+        _CharType* _alloc(size_t count)
         {
             if (!this->can_write()) return nullptr;
 
@@ -186,7 +200,7 @@ namespace Concurrency { namespace streams {
         /// Submits a block already allocated by the stream buffer.
         /// </summary>
         /// <param name="count">The number of characters to be committed.</param>
-        void commit(size_t actual )
+        void _commit(size_t actual )
         {
             // Update the write position and satisfy any pending reads
             update_current_position(m_current_position+actual);
@@ -205,8 +219,11 @@ namespace Concurrency { namespace streams {
         /// If the end of the stream is reached, the function will return <c>true</c>, a null pointer, and a count of zero;
         /// a subsequent read will not succeed.
         /// </remarks>
-        virtual bool acquire(_Out_writes_(count) _CharType*& ptr, _Inout_ size_t& count)
+        virtual bool acquire(_Out_ _CharType*& ptr, _Out_ size_t& count)
         {
+            ptr = nullptr;
+            count = 0;
+
             if (!this->can_read()) return false;
 
             count = in_avail();
@@ -218,8 +235,6 @@ namespace Concurrency { namespace streams {
             }
             else
             {
-                ptr = nullptr;
-
                 // Can only be open for read OR write, not both. If there is no data then
                 // we have reached the end of the stream so indicate such with true.
                 return true;
@@ -232,9 +247,10 @@ namespace Concurrency { namespace streams {
         /// </summary>
         /// <param name="ptr">A pointer to the block of data to be released.</param>
         /// <param name="count">The number of characters that were read.</param>
-        virtual void release(_Out_writes_ (count) _CharType *, _In_ size_t count)
+        virtual void release(_Out_writes_opt_ (count) _CharType *ptr, _In_ size_t count)
         {
-            update_current_position(m_current_position + count);
+            if (ptr != nullptr)
+                update_current_position(m_current_position + count);
         }
 
         virtual pplx::task<size_t> _getn(_Out_writes_ (count) _CharType *ptr, _In_ size_t count)

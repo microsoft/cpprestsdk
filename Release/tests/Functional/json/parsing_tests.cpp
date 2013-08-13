@@ -178,6 +178,8 @@ TEST(string_t)
 
     str = json::value::parse(U("\"\\u004B\""));
     VERIFY_ARE_EQUAL(U("K"), str.as_string());
+
+    VERIFY_THROWS(json::value::parse(U("\"\\u0klB\"")), json::json_exception);
 }
 
 TEST(comments_string)
@@ -378,13 +380,13 @@ TEST(bug_416116)
 
 TEST(byte_ptr_parsing_array)
 {
-    char s[] = "[ \"foo\", true ]";
+    char s[] = "[ \"foo\",true]";
     std::stringstream ss;
     ss << s;
     json::value v = json::value::parse(ss);
     auto s2 = v.to_string();
 
-    VERIFY_ARE_EQUAL(s2, U("[ \"foo\", true ]"));
+    VERIFY_ARE_EQUAL(s2, U("[\"foo\",true]"));
 
     std::stringstream os;
     v.serialize(os);
@@ -393,13 +395,13 @@ TEST(byte_ptr_parsing_array)
 
 TEST(byte_ptr_parsing_object)
 {
-    char s[] = "{ \"foo\" : true }";
+    char s[] = "{\"foo\":true }";
     std::stringstream ss;
     ss << s;
     json::value v = json::value::parse(ss);
     auto s2 = v.to_string();
 
-    VERIFY_ARE_EQUAL(s2, U("{ \"foo\" : true }"));
+    VERIFY_ARE_EQUAL(s2, U("{\"foo\":true}"));
 
     std::stringstream os;
     v.serialize(os);
@@ -425,7 +427,7 @@ TEST(Japanese)
 
 TEST(Russian)
 {
-    utility::string_t ws = U("{ \"results\" : [ { \"id\" : 272655310, \"name\" : \"Андрей Ив´анов\" } ] }");
+    utility::string_t ws = U("{\"results\":[{\"id\":272655310,\"name\":\"Андрей Ив´анов\"}]}");
     json::value v1 = json::value::parse(ws);
     auto s2 = v1.to_string();
 

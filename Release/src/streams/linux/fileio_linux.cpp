@@ -691,6 +691,36 @@ _ASYNCRTIMP size_t _seekrdtoend_fsb(Concurrency::streams::details::_file_info *i
     return fInfo->m_rdpos;
 }
 
+utility::size64_t _get_size(_In_ concurrency::streams::details::_file_info *info, size_t char_size)
+{
+    if ( info == nullptr ) return (size_t)-1;
+    
+    _file_info_impl *fInfo = (_file_info_impl *)info;
+    
+    pplx::extensibility::scoped_recursive_lock_t lock(info->m_lock);
+    
+    if ( fInfo->m_handle == -1 ) return (size_t)-1;
+    
+    if ( fInfo->m_buffer != nullptr )
+    {
+        delete[] fInfo->m_buffer;
+        fInfo->m_buffer = nullptr;
+        fInfo->m_bufoff = fInfo->m_buffill = fInfo->m_bufsize = 0;
+    }
+    
+    auto oldpos = lseek(fInfo->m_handle, 0, SEEK_CUR);
+    
+    if ( oldpos == -1 ) return utility::size64_t(-1);
+    
+    auto newpos = lseek(fInfo->m_handle, 0, SEEK_END);
+    
+    if ( newpos == -1 ) return utility::size64_t(-1);
+    
+    lseek(fInfo->m_handle, oldpos, SEEK_SET);
+    
+    return utility::size64_t(newpos / char_size);
+}
+
 /// <summary>
 /// Adjust the internal buffers and pointers when the application seeks to a new read location in the stream.
 /// </summary>

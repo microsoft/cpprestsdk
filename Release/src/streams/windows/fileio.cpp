@@ -151,8 +151,10 @@ DWORD _finish_create(HANDLE fh, _In_ _filestream_callback *callback, std::ios_ba
     {
         std::shared_ptr<io_scheduler> sched = io_scheduler::get_scheduler();
 
-        io_ctxt = sched->Associate(fh);
+        io_ctxt = sched->Associate(fh);  
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA 
         SetFileCompletionNotificationModes(fh, FILE_SKIP_COMPLETION_PORT_ON_SUCCESS);
+#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA 
 
         // Buffer reads internally if and only if we're just reading (not also writing) and
         // if the file is opened exclusively. If either is false, we're better off just
@@ -244,8 +246,10 @@ bool __cdecl _close_fsb_nolock(_In_ _file_info **info, _In_ streams::details::_f
 
                 if ( fInfo->m_handle != INVALID_HANDLE_VALUE )
                 {
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA 
                     if ( fInfo->m_scheduler != nullptr )
-                        fInfo->m_scheduler->Disassociate(fInfo->m_handle, fInfo->m_io_context);
+                        fInfo->m_scheduler->Disassociate(fInfo->m_handle, fInfo->m_io_context);  
+#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA 
 
                     result = CloseHandle(fInfo->m_handle) != FALSE;
                     if ( !result )
@@ -407,7 +411,9 @@ size_t _write_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ str
 
     pOverlapped->data = req;
 
-    StartThreadpoolIo((PTP_IO)fInfo->m_io_context);
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA 
+    StartThreadpoolIo((PTP_IO)fInfo->m_io_context);  
+#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA 
 
     _InterlockedIncrement(&fInfo->m_outstanding_writes);
 
@@ -419,7 +425,9 @@ size_t _write_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ str
     if ( wrResult == FALSE && error == ERROR_IO_PENDING ) 
         return 0;
 
-    CancelThreadpoolIo((PTP_IO)fInfo->m_io_context);
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA 
+    CancelThreadpoolIo((PTP_IO)fInfo->m_io_context);  
+#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA  
 
     size_t result = (size_t)-1;
 
@@ -474,7 +482,9 @@ size_t _read_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ stre
 
     pOverlapped->data = req;
 
-    StartThreadpoolIo((PTP_IO)fInfo->m_io_context);
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA 
+    StartThreadpoolIo((PTP_IO)fInfo->m_io_context);  
+#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA 
 
     BOOL wrResult = ReadFile(fInfo->m_handle, ptr, (DWORD)count, nullptr, pOverlapped);
     DWORD error = GetLastError();
@@ -489,7 +499,9 @@ size_t _read_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ stre
     // success. Either way, we don't need the thread pool I/O request here, or the request and
     // overlapped structures.
 
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA 
     CancelThreadpoolIo((PTP_IO)fInfo->m_io_context);
+#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA 
 
     size_t result = (size_t)-1;
 
@@ -845,7 +857,7 @@ size_t __cdecl _seekrdpos_fsb(_In_ streams::details::_file_info *info, size_t po
 /// <param name="offset">The new position (offset from the end of the stream) in the file stream</param>
 /// <param name="char_size">The size of the character type used for this stream</param>
 /// <returns>New file position or -1 if error</returns>
-_ASYNCRTIMP size_t __cdecl _seekrdtoend_fsb(_In_ streams::details::_file_info *info, int64_t offset, size_t char_size)
+size_t __cdecl _seekrdtoend_fsb(_In_ streams::details::_file_info *info, int64_t offset, size_t char_size)
 {
     _ASSERTE(info != nullptr);
     
@@ -872,6 +884,23 @@ _ASYNCRTIMP size_t __cdecl _seekrdtoend_fsb(_In_ streams::details::_file_info *i
     return fInfo->m_rdpos;
 }
 
+utility::size64_t __cdecl _get_size(_In_ concurrency::streams::details::_file_info *info, size_t char_size)
+{
+    _ASSERTE(info != nullptr);
+    
+    _file_info_impl *fInfo = (_file_info_impl *)info;
+
+    pplx::extensibility::scoped_recursive_lock_t lck(info->m_lock);
+
+    if ( fInfo->m_handle == INVALID_HANDLE_VALUE ) return (utility::size64_t)-1;
+
+    LARGE_INTEGER size;
+
+    if ( GetFileSizeEx(fInfo->m_handle, &size) == TRUE )
+        return utility::size64_t(size.QuadPart/char_size);
+    else
+        return 0;
+}
 
 /// <summary>
 /// Adjust the internal buffers and pointers when the application seeks to a new write location in the stream.

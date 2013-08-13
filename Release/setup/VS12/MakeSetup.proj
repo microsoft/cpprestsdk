@@ -3,7 +3,6 @@
   <PropertyGroup>
     <VSTargetVersion>12</VSTargetVersion>
     <OutputName>Casablanca_setup120_$(CppRestSDKVersionFileSuffix)</OutputName>
-    <VCProjectDir>VCprojects</VCProjectDir>
   </PropertyGroup>
   <Import Project="..\CasablancaSetup.wixproj" />
 </Project>

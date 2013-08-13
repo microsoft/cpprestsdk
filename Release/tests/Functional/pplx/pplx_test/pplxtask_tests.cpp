@@ -1225,8 +1225,8 @@ TEST(TestTaskOperators)
         task<void> whenAllTask = t1 && t2 && t3;
 
         task<void> t4 = whenAllTask.then([this](task<void> t){
-            IsTrue(helpers::VerifyCanceled(t), L"%ws:%u:t should be canceled by token", __FILE__, __LINE__);
-            IsFalse(helpers::VerifyException<int>(t), L"%ws:%u:exception from t is unexpected", __FILE__, __LINE__);
+            IsFalse(helpers::VerifyCanceled(t), L"%ws:%u:t should be canceled by token", __FILE__, __LINE__);
+            IsTrue(helpers::VerifyException<int>(t), L"%ws:%u:exception from t is unexpected", __FILE__, __LINE__);
         });
 
         task<void> t5 = whenAllTask.then([this]() {
@@ -1237,8 +1237,7 @@ TEST(TestTaskOperators)
         ct.cancel();
         evt1.set();
 
-        IsTrue(helpers::VerifyCanceled(t5), L"%ws:%u:t5 should be canceled", __FILE__, __LINE__);
-        helpers::ObserveException(t1);
+        IsFalse(helpers::VerifyCanceled(t5), L"%ws:%u:t5 should be canceled", __FILE__, __LINE__);
     }
 
 

@@ -40,30 +40,32 @@ namespace web { namespace http
 {
 namespace details
 {
-    // Constants for MIME types.
-    const utility::string_t content_type_application_json = _XPLATSTR("application/json");
 
-    const utility::string_t content_type_application_octetstream = _XPLATSTR("application/octet-stream");
-    const utility::string_t content_type_text_plain = _XPLATSTR("text/plain");
-    const utility::string_t content_type_text_plain_utf8 = _XPLATSTR("text/plain; charset=utf-8");
-    const utility::string_t content_type_text_plain_utf16 = _XPLATSTR("text/plain; charset=utf-16");
-    const utility::string_t content_type_text_plain_utf16le = _XPLATSTR("text/plain; charset=utf-16le");
+    /// <summary>
+    /// Constants for MIME types.
+    /// </summary>
+    class mime_types
+    {
+    public:
+    #define _MIME_TYPES
+    #define DAT(a,b) _ASYNCRTIMP const static utility::string_t a;
+    #include "cpprest/http_constants.dat"
+    #undef _MIME_TYPES
+    #undef DAT
+    };
 
-    // Unofficial JSON MIME types...
-    const utility::string_t content_type_text_json = _XPLATSTR("text/json");
-    const utility::string_t content_type_text_xjson = _XPLATSTR("text/x-json");
-    const utility::string_t content_type_text_javascript = _XPLATSTR("text/javascript");
-    const utility::string_t content_type_text_xjavascript = _XPLATSTR("text/x-javascript");
-    const utility::string_t content_type_application_javascript = _XPLATSTR("application/javascript");
-    const utility::string_t content_type_application_xjavascript = _XPLATSTR("application/x-javascript");
-
-    // Constants for differnet charsets.
-    const utility::string_t charset_usascii = _XPLATSTR("us-ascii");
-    const utility::string_t charset_latin1 = _XPLATSTR("iso-8859-1");
-    const utility::string_t charset_utf8 = _XPLATSTR("utf-8");
-    const utility::string_t charset_utf16 = _XPLATSTR("utf-16");
-    const utility::string_t charset_utf16le = _XPLATSTR("utf-16le");
-    const utility::string_t charset_utf16be = _XPLATSTR("utf-16be");
+    /// <summary>
+    /// Constants for charset types.
+    /// </summary>
+    class charset_types
+    {
+    public:
+    #define _CHARSET_TYPES
+    #define DAT(a,b) _ASYNCRTIMP const static utility::string_t a;
+    #include "cpprest/http_constants.dat"
+    #undef _CHARSET_TYPES
+    #undef DAT
+    };
 
     /// <summary>
     /// Determines whether or not the given content type is 'textual' according the feature specifications.

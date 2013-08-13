@@ -5,7 +5,6 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{198ED804-2655-4D92-8104-C220E3EA9452}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <TargetName>$(CppRestBaseFileName)110_winrt_$(CppRestSDKVersionFileSuffix)</TargetName>
     <RootNamespace>casablanca</RootNamespace>
     <DefaultLanguage>en-US</DefaultLanguage>
     <MinimumVisualStudioVersion>11.0</MinimumVisualStudioVersion>
@@ -18,6 +17,7 @@
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <PlatformToolset>v110</PlatformToolset>
     <WinRTProject>true</WinRTProject>
+    <TargetXP>false</TargetXP>
   </PropertyGroup>
 
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -27,6 +27,13 @@
   <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <DebugFileSuffix>d</DebugFileSuffix>
+  </PropertyGroup>
+  <PropertyGroup>
+    <TargetName>$(CppRestBaseFileName)110$(DebugFileSuffix)_app_$(CppRestSDKVersionFileSuffix)</TargetName>
+  </PropertyGroup>
 
   <!-- Only for WinRT projects: -->
   <PropertyGroup>
@@ -45,7 +52,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>msxml6.lib;kernel32.lib;user32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <GenerateWindowsMetadata>true</GenerateWindowsMetadata>
+      <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
     </Link>
   </ItemDefinitionGroup>
 
@@ -56,9 +63,11 @@
   <!-- This is a workaround until we get the Casablanca110.winrt.dll output directly in binaries folder -->
   <ItemDefinitionGroup>
     <PostBuildEvent>
-      <Command>copy /Y $(OutDir)\* $(OutDir)..\
+      <Command>
+        copy /Y $(OutDir)\* $(OutDir)..\
         link /edit /appcontainer:no $(OutDir)..\$(TargetName).dll
-        exit 0</Command>
+        exit 0
+      </Command>
       <Message>Copying $(TargetName).dll binaries to OutDir and removing appcontainer flag</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>

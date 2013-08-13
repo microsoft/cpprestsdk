@@ -15,7 +15,8 @@
 
 #include "stdafx.h"
 
-using namespace web; using namespace utility;
+using namespace utility;
+using namespace web;
 using namespace web::http;
 using namespace web::http::experimental::listener;
 using namespace utility::conversions;
@@ -66,7 +67,7 @@ TEST_FIXTURE(uri_address, extract_json)
         request.reply(status_codes::OK);
     });
     std::string data = to_utf8string(j.to_string());
-	VERIFY_ARE_EQUAL(0, p_client->request(methods::PUT, U(""), U("application/json"), data));
+    VERIFY_ARE_EQUAL(0, p_client->request(methods::PUT, U(""), U("application/json"), data));
     p_client->next_response().then([](test_response *p_response)
     {
         http_asserts::assert_test_response_equals(p_response, status_codes::OK);

@@ -48,11 +48,11 @@ pplx::extensibility::critical_section_t http_server_api::s_lock;
 
 std::unique_ptr<http_server> http_server_api::s_server_api((http_server*)nullptr);
 
-int http_server_api::s_registrations = 0;
+pplx::details::atomic_long http_server_api::s_registrations(0L);
 
 bool http_server_api::has_listener() 
 { 
-    return s_registrations > 0; 
+    return s_registrations > 0L; 
 }
 
 void http_server_api::register_server_api(std::unique_ptr<http_server> server_api)
@@ -100,7 +100,7 @@ pplx::task<void> http_server_api::register_listener(_In_ http_listener *listener
         http_server_api::unsafe_register_server_api(std::move(server_api));
     }
 
-    auto increment = [] () {++s_registrations;};
+    auto increment = []() { pplx::details::atomic_increment(s_registrations); };
     auto regster = 
         [listener,increment] () -> pplx::task<void> { 
             // Register listener.
@@ -108,7 +108,7 @@ pplx::task<void> http_server_api::register_listener(_In_ http_listener *listener
         };
 
     // if nothing is registered yet, start the server.
-    if (s_registrations == 0)
+    if ( s_registrations == 0L )
     {
         return s_server_api->start().then(regster);
     }
@@ -122,8 +122,7 @@ pplx::task<void> http_server_api::unregister_listener(_In_ http_listener *pListe
     
     auto stop = 
         [] () -> pplx::task<void> {
-            s_registrations--;
-            if(s_registrations == 0)
+            if ( pplx::details::atomic_decrement(s_registrations) == 0L )
             {
                 return server_api()->stop();
             }

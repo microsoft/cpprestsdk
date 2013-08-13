@@ -225,9 +225,9 @@ utility::string_t details::http_msg_base::_extract_string()
     // are of the type corresponding to the charset.
 
 #ifdef _MS_WINDOWS
-    if(_wcsicmp(charset.c_str(), charset_usascii.c_str()) == 0)
+    if(_wcsicmp(charset.c_str(), charset_types::usascii.c_str()) == 0)
 #else
-    if(boost::iequals(charset, charset_usascii))
+    if(boost::iequals(charset, charset_types::usascii))
 #endif
     {
         std::string body;
@@ -238,9 +238,9 @@ utility::string_t details::http_msg_base::_extract_string()
 
     // Latin1
 #ifdef _MS_WINDOWS
-    else if(_wcsicmp(charset.c_str(), charset_latin1.c_str()) == 0)
+    else if(_wcsicmp(charset.c_str(), charset_types::latin1.c_str()) == 0)
 #else
-    else if(boost::iequals(charset, charset_latin1))
+    else if(boost::iequals(charset, charset_types::latin1))
 #endif
     {
         std::string body;
@@ -251,9 +251,9 @@ utility::string_t details::http_msg_base::_extract_string()
 
     // utf-8.
 #ifdef _MS_WINDOWS
-    else if(_wcsicmp(charset.c_str(), charset_utf8.c_str()) == 0)
+    else if(_wcsicmp(charset.c_str(), charset_types::utf8.c_str()) == 0)
 #else
-    else if(boost::iequals(charset, charset_utf8))
+    else if(boost::iequals(charset, charset_types::utf8))
 #endif
     {
         std::string body;
@@ -264,9 +264,9 @@ utility::string_t details::http_msg_base::_extract_string()
 
     // utf-16.
 #ifdef _MS_WINDOWS
-    else if(_wcsicmp(charset.c_str(), charset_utf16.c_str()) == 0)
+    else if(_wcsicmp(charset.c_str(), charset_types::utf16.c_str()) == 0)
 #else
-    else if(boost::iequals(charset, charset_utf16))
+    else if(boost::iequals(charset, charset_types::utf16))
 #endif
     {
         std::vector<uint8_t> body((std::vector<uint8_t>::size_type)buf_r.in_avail());
@@ -276,9 +276,9 @@ utility::string_t details::http_msg_base::_extract_string()
 
     // utf-16le
 #ifdef _MS_WINDOWS
-    else if(_wcsicmp(charset.c_str(), charset_utf16le.c_str()) == 0)
+    else if(_wcsicmp(charset.c_str(), charset_types::utf16le.c_str()) == 0)
 #else
-    else if(boost::iequals(charset, charset_utf16le))
+    else if(boost::iequals(charset, charset_types::utf16le))
 #endif
     {
         utility::string_t body;
@@ -289,9 +289,9 @@ utility::string_t details::http_msg_base::_extract_string()
 
     // utf-16be
 #ifdef _MS_WINDOWS
-    else if(_wcsicmp(charset.c_str(), charset_utf16be.c_str()) == 0)
+    else if(_wcsicmp(charset.c_str(), charset_types::utf16be.c_str()) == 0)
 #else
-    else if(boost::iequals(charset, charset_utf16be))
+    else if(boost::iequals(charset, charset_types::utf16be))
 #endif
     {
         std::vector<uint8_t> body((std::vector<uint8_t>::size_type)buf_r.in_avail());
@@ -334,9 +334,9 @@ json::value details::http_msg_base::_extract_json()
 
     // Latin1
 #ifdef _MS_WINDOWS
-    if(_wcsicmp(charset.c_str(), charset_latin1.c_str()) == 0)
+    if(_wcsicmp(charset.c_str(), charset_types::latin1.c_str()) == 0)
 #else
-    if(boost::iequals(charset, charset_latin1))
+    if(boost::iequals(charset, charset_types::latin1))
 #endif
     {
         std::string body;
@@ -347,9 +347,9 @@ json::value details::http_msg_base::_extract_json()
 
     // utf-8 and usascii
 #ifdef _MS_WINDOWS
-    else if(_wcsicmp(charset.c_str(), charset_utf8.c_str()) == 0 || _wcsicmp(charset.c_str(), charset_usascii.c_str()) == 0)
+    else if(_wcsicmp(charset.c_str(), charset_types::utf8.c_str()) == 0 || _wcsicmp(charset.c_str(), charset_types::usascii.c_str()) == 0)
 #else
-    else if(boost::iequals(charset, charset_utf8) || boost::iequals(charset, charset_usascii))
+    else if(boost::iequals(charset, charset_types::utf8) || boost::iequals(charset, charset_types::usascii))
 #endif
     {
         std::string body;
@@ -360,9 +360,9 @@ json::value details::http_msg_base::_extract_json()
 
     // utf-16.
 #ifdef _MS_WINDOWS
-    else if(_wcsicmp(charset.c_str(), charset_utf16.c_str()) == 0)
+    else if(_wcsicmp(charset.c_str(), charset_types::utf16.c_str()) == 0)
 #else
-    else if(boost::iequals(charset, charset_utf16))
+    else if(boost::iequals(charset, charset_types::utf16))
 #endif
     {
         std::vector<uint8_t> body((std::vector<uint8_t>::size_type)buf_r.in_avail());
@@ -372,9 +372,9 @@ json::value details::http_msg_base::_extract_json()
 
     // utf-16le
 #ifdef _MS_WINDOWS
-    else if(_wcsicmp(charset.c_str(), charset_utf16le.c_str()) == 0)
+    else if(_wcsicmp(charset.c_str(), charset_types::utf16le.c_str()) == 0)
 #else
-    else if(boost::iequals(charset, charset_utf16le))
+    else if(boost::iequals(charset, charset_types::utf16le))
 #endif
     {
         utf16string body;
@@ -385,9 +385,9 @@ json::value details::http_msg_base::_extract_json()
 
     // utf-16be
 #ifdef _MS_WINDOWS
-    else if(_wcsicmp(charset.c_str(), charset_utf16be.c_str()) == 0)
+    else if(_wcsicmp(charset.c_str(), charset_types::utf16be.c_str()) == 0)
 #else
-    else if(boost::iequals(charset, charset_utf16be))
+    else if(boost::iequals(charset, charset_types::utf16be))
 #endif
     {
         std::vector<uint8_t> body((std::vector<uint8_t>::size_type)buf_r.in_avail());
@@ -453,9 +453,9 @@ static utility::string_t convert_body_to_string_t(const utility::string_t &conte
 
     // Latin1
 #ifdef _MS_WINDOWS
-    if(_wcsicmp(charset.c_str(), charset_latin1.c_str()) == 0)
+    if(_wcsicmp(charset.c_str(), charset_types::latin1.c_str()) == 0)
 #else
-    if(boost::iequals(charset, charset_latin1))
+    if(boost::iequals(charset, charset_types::latin1))
 #endif
     {
         return to_string_t(latin1_to_utf16(convert_bytes_to_string(&body[0], body.size())));
@@ -463,9 +463,9 @@ static utility::string_t convert_body_to_string_t(const utility::string_t &conte
 
     // utf-8.
 #ifdef _MS_WINDOWS
-    else if(_wcsicmp(charset.c_str(), charset_utf8.c_str()) == 0)
+    else if(_wcsicmp(charset.c_str(), charset_types::utf8.c_str()) == 0)
 #else
-    else if(boost::iequals(charset, charset_utf8) )
+    else if(boost::iequals(charset, charset_types::utf8) )
 #endif
     {
         return to_string_t(convert_utf8_to_utf16(&body[0], body.size()));
@@ -473,9 +473,9 @@ static utility::string_t convert_body_to_string_t(const utility::string_t &conte
 
     // utf-16.
 #ifdef _MS_WINDOWS
-    else if(_wcsicmp(charset.c_str(), charset_utf16.c_str()) == 0)
+    else if(_wcsicmp(charset.c_str(), charset_types::utf16.c_str()) == 0)
 #else
-    else if(boost::iequals(charset, charset_utf16) )
+    else if(boost::iequals(charset, charset_types::utf16) )
 #endif
     {
         return to_string_t(convert_utf16_to_utf16(&body[0], body.size()));
@@ -483,9 +483,9 @@ static utility::string_t convert_body_to_string_t(const utility::string_t &conte
 
     // utf-16le
 #ifdef _MS_WINDOWS
-    else if(_wcsicmp(charset.c_str(), charset_utf16le.c_str()) == 0)
+    else if(_wcsicmp(charset.c_str(), charset_types::utf16le.c_str()) == 0)
 #else
-    else if(boost::iequals(charset, charset_utf16le) )
+    else if(boost::iequals(charset, charset_types::utf16le) )
 #endif
     {
         return to_string_t(convert_bytes_to_wstring(&body[0], body.size()));
@@ -493,9 +493,9 @@ static utility::string_t convert_body_to_string_t(const utility::string_t &conte
 
     // utf-16be
 #ifdef _MS_WINDOWS
-    else if(_wcsicmp(charset.c_str(), charset_utf16be.c_str()) == 0)
+    else if(_wcsicmp(charset.c_str(), charset_types::utf16be.c_str()) == 0)
 #else
-    else if(boost::iequals(charset, charset_utf16be) )
+    else if(boost::iequals(charset, charset_types::utf16be) )
 #endif
     {
         return to_string_t(convert_utf16be_to_utf16le(&body[0], body.size(), false));
@@ -574,6 +574,24 @@ details::_http_request::_http_request(std::shared_ptr<http::details::_http_serve
 #define DAT(a,b) const method methods::a = b;
 #include "cpprest/http_constants.dat"
 #undef _METHODS
+#undef DAT
+
+#define _HEADER_NAMES
+#define DAT(a,b) const utility::string_t header_names::a = _XPLATSTR(b);
+#include "cpprest/http_constants.dat"
+#undef _HEADER_NAMES
+#undef DAT
+
+#define _MIME_TYPES
+#define DAT(a,b) const utility::string_t mime_types::a = _XPLATSTR(b);
+#include "cpprest/http_constants.dat"
+#undef _MIME_TYPES
+#undef DAT
+
+#define _CHARSET_TYPES
+#define DAT(a,b) const utility::string_t charset_types::a = _XPLATSTR(b);
+#include "cpprest/http_constants.dat"
+#undef _CHARSET_TYPES
 #undef DAT
 
 // This is necessary for Linux because of a bug in GCC 4.7

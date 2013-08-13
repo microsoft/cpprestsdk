@@ -1280,6 +1280,101 @@ TEST(istream_extract_unsigned_long_long)
 #endif
 }
 
+TEST(extract_floating_point)
+{
+    std::string test_string;
+    test_string.append(" 9.81E05 3.14");
+    test_string.append(" 2.71.5");    // two numbers merged after comma
+    test_string.append(" 6E+4.5");    // two numbers merged in exponent
+    test_string.append(" 6E-4.5");    // two numbers merged in exponent
+    test_string.append(" 3.14 -10 +42.0 -1234.567 .01 +0 -0");
+    test_string.append(" 12345678901234567890123456789012345678901234567890");    // a big number
+    test_string.append(" 9.81E05 6.0221413e+23 1.6e-14");                         // numbers with exponent
+    test_string.append(" 6.");                                                    // a number ending with a dot
+
+    std::stringstream std_istream;
+    std_istream << test_string;
+
+    producer_consumer_buffer<uint8_t> buff, bufd;
+    auto ostream_float = buff.create_ostream();
+    auto istream_float = buff.create_istream();
+    auto ostream_double = bufd.create_ostream();
+    auto istream_double = bufd.create_istream();
+
+    ostream_float.print(test_string);
+    ostream_double.print(test_string);
+    ostream_float.close().wait();
+    ostream_double.close().wait();
+
+    do
+    {
+        double expected=0, actual;
+        std_istream >> expected;
+        
+        VERIFY_ARE_EQUAL(expected, actual = istream_double.extract<double>().get());
+        
+        if (actual <= std::numeric_limits<float>::max())
+            VERIFY_ARE_EQUAL(float(expected), istream_float.extract<float>().get());
+        else
+            VERIFY_THROWS(istream_float.extract<float>().get(), std::exception);
+
+        // Checking positive and negative zero's by dividing 1 with it. They should result in positive and negative infinity.
+        if (expected == 0)
+            VERIFY_ARE_EQUAL(1 / expected, 1 / actual);
+    } while (!std_istream.eof());
+}
+
+TEST(extract_floating_point_with_exceptions)
+{
+    std::vector<std::pair<std::string, std::string>> tests;   
+    tests.push_back(std::pair<std::string, std::string>("a", "Invalid character 'a'"));
+    tests.push_back(std::pair<std::string, std::string>("x", "Invalid character 'x'"));
+    tests.push_back(std::pair<std::string, std::string>("e", "Invalid character 'e'"));
+    tests.push_back(std::pair<std::string, std::string>("E", "Invalid character 'E'"));
+    tests.push_back(std::pair<std::string, std::string>("6.022e+t", "Invalid character 't' in exponent"));
+    tests.push_back(std::pair<std::string, std::string>("9.81e-.", "Invalid character '.' in exponent"));
+    tests.push_back(std::pair<std::string, std::string>("9.81e-", "Incomplete exponent"));
+    tests.push_back(std::pair<std::string, std::string>("1.2e+", "Incomplete exponent"));
+    tests.push_back(std::pair<std::string, std::string>("10E+-23", "The exponent sign already set"));
+    tests.push_back(std::pair<std::string, std::string>("15E-+45", "The exponent sign already set"));
+    tests.push_back(std::pair<std::string, std::string>("5.34e", "Incomplete exponent"));
+    tests.push_back(std::pair<std::string, std::string>("2E+308", "The value is too big"));
+    tests.push_back(std::pair<std::string, std::string>("-2E+308", "The value is too big"));
+    tests.push_back(std::pair<std::string, std::string>("1E-324", "The value is too small"));
+    tests.push_back(std::pair<std::string, std::string>("-1E-324", "The value is too small"));
+
+    for (auto iter = tests.begin(); iter != tests.end(); iter++)
+    {
+        std::stringstream std_istream;
+        std_istream << iter->first;
+        VERIFY_IS_TRUE(std_istream.good());
+        double x;
+        std_istream >> x;
+        VERIFY_IS_FALSE(std_istream.good());
+
+        producer_consumer_buffer<uint8_t> buf;
+        auto stream = buf.create_ostream();
+        auto istream_double = buf.create_istream();
+
+        stream.print(iter->first);
+        stream.close().wait();
+
+        try
+        {
+            istream_double.extract<double>().get();
+            VERIFY_IS_TRUE(false, "No exception has been thrown");
+        }
+        catch (const std::exception& exc)
+        {
+            VERIFY_ARE_EQUAL(std::string(exc.what()), iter->second);
+        }
+        catch (...)
+        {
+            VERIFY_IS_TRUE(false, "A wrong exception has been thrown");
+        }
+    }
+}
+
 TEST(streambuf_read_delim)
 {
     producer_consumer_buffer<uint8_t> rbuf;

@@ -168,6 +168,20 @@ static std::map<utility::string_t, utility::string_t> parse_http_headers(const H
     return headers_map;
 }
 
+struct ConcRTOversubscribe
+{
+    ConcRTOversubscribe() {
+#if _MSC_VER >= 1800
+        concurrency::Context::Oversubscribe(true);
+#endif
+    }
+    ~ConcRTOversubscribe() {
+#if _MSC_VER >= 1800
+        concurrency::Context::Oversubscribe(false);
+#endif
+    }
+};
+
 class _test_http_server
 {
     inline bool is_error_code(ULONG error_code)
@@ -238,6 +252,7 @@ public:
         // Spawn a task to handle receiving incoming requests.
         m_request_task = pplx::create_task([this]()
         {
+            ConcRTOversubscribe osubs; // Oversubscription for long running ConcRT tasks
             for(;;)
             {
                 const ULONG buffer_length = 1024 * 4;
@@ -332,7 +347,7 @@ public:
                 Concurrency::asend(m_requests, p_test_request);
             }
         });
-
+        
         return 0;
     }
 
@@ -648,6 +663,7 @@ unsigned long test_request::reply_impl(
         void * data,
         size_t data_length)
 {
+    ConcRTOversubscribe osubs; // Oversubscription for long running ConcRT tasks
     HTTP_RESPONSE response;
     ZeroMemory(&response, sizeof(HTTP_RESPONSE));
     response.StatusCode = status_code;
@@ -701,7 +717,7 @@ unsigned long test_request::reply_impl(
         dataChunk.FromMemory.BufferLength = (ULONG)data_length;
         response.pEntityChunks = &dataChunk;
     }
-
+    
     // Synchronously sending the request.
     unsigned long error_code = HttpSendHttpResponse(
         m_p_server->m_request_queue,

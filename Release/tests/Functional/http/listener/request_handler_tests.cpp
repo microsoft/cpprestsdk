@@ -26,6 +26,8 @@ using namespace tests::functional::http::utilities;
 
 namespace tests { namespace functional { namespace http { namespace listener {
 
+std::shared_ptr<web::http::experimental::listener::http_listener> uri_address::s_dummy_listener;
+
 SUITE(request_handler_tests)
 {
 
@@ -117,7 +119,7 @@ TEST_FIXTURE(uri_address, exceptions_in_handler)
     {
         http_asserts::assert_request_equals(request, U("PUT"), U("/"));
         request.reply(status_codes::OK);
-        throw std::runtime_error("This is expected");
+        throw 55;
     });
     VERIFY_ARE_EQUAL(0, p_client->request(U("PUT"), U("/")));
     p_client->next_response().then([](test_response *p_response)
@@ -209,7 +211,7 @@ TEST_FIXTURE(uri_address, async_request_handler)
     e.wait();
     buf.close(std::ios_base::out).wait();
     response.wait();
-    listener.close();
+    listener.close().wait();
 }
 
 

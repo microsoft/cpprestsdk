@@ -4,7 +4,7 @@
     <ClCompile Include="..\building_response_tests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\connection_tests.cpp">
+    <ClCompile Include="..\connections_and_errors.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\header_tests.cpp">

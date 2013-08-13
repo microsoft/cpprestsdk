@@ -35,56 +35,58 @@ namespace web { namespace http
 {
 namespace details
 {
-    bool is_content_type_textual(const utility::string_t &content_type)
+    bool is_content_type_one_of(const utility::string_t *first, const utility::string_t *last, const utility::string_t &value)
     {
+        while (first != last) {
+            if(
 #ifdef _MS_WINDOWS
-        if((content_type.size() >= 4 && _wcsicmp(content_type.substr(0,4).c_str(), _XPLATSTR("text")) == 0) 
-            || _wcsicmp(content_type.c_str(), _XPLATSTR("message/http")) == 0
-            || _wcsicmp(content_type.c_str(), content_type_application_json.c_str()) == 0
-            || _wcsicmp(content_type.c_str(), _XPLATSTR("application/xml")) == 0
-            || _wcsicmp(content_type.c_str(), _XPLATSTR("application/atom+xml")) == 0
-            || _wcsicmp(content_type.c_str(), _XPLATSTR("application/http")) == 0
-            || _wcsicmp(content_type.c_str(), _XPLATSTR("application/x-www-form-urlencoded")) == 0)			
+                _wcsicmp(first->c_str(), value.c_str()) == 0
 #else
-        if((content_type.size() >= 4 && boost::iequals(content_type.substr(0,4), _XPLATSTR("text"))) 
-            || boost::iequals(content_type, _XPLATSTR("message/http"))
-            || boost::iequals(content_type, content_type_application_json) 
-            || boost::iequals(content_type, _XPLATSTR("application/xml"))
-            || boost::iequals(content_type, _XPLATSTR("application/atom+xml"))
-            || boost::iequals(content_type, _XPLATSTR("application/http"))
-            || boost::iequals(content_type, _XPLATSTR("application/x-www-form-urlencoded")))
+                boost::iequals(*first, value.c_str())
 #endif
-        {
-            return true;
+                )
+                return true;
+            ++first;
         }
         return false;
     }
 
+    bool is_content_type_textual(const utility::string_t &content_type)
+    {
+        static const utility::string_t textual_types[] = {
+            mime_types::message_http,
+            mime_types::application_json,
+            mime_types::application_xml,
+            mime_types::application_atom_xml,
+            mime_types::application_http,
+            mime_types::application_x_www_form_urlencoded
+        };
+
+        if((content_type.size() >= 4 &&
+#ifdef _MS_WINDOWS
+            _wcsicmp(content_type.substr(0,4).c_str(), _XPLATSTR("text")) == 0)
+#else
+            boost::iequals(content_type.substr(0,4), _XPLATSTR("text")))
+#endif
+            )
+            return true;
+
+        return (is_content_type_one_of(std::begin(textual_types), std::end(textual_types), content_type));
+    }
+
     bool is_content_type_json(const utility::string_t &content_type)
     {
-#ifdef _MS_WINDOWS
-    auto ct = content_type.c_str();
-    if(   _wcsicmp(ct, content_type_application_json.c_str()) == 0 
-       || _wcsicmp(ct, content_type_text_json.c_str()) == 0
-       || _wcsicmp(ct, content_type_text_xjson.c_str()) == 0
-       || _wcsicmp(ct, content_type_text_javascript.c_str()) == 0
-       || _wcsicmp(ct, content_type_text_xjavascript.c_str()) == 0
-       || _wcsicmp(ct, content_type_application_javascript.c_str()) == 0
-       || _wcsicmp(ct, content_type_application_xjavascript.c_str()) == 0
-       )			
-#else
-        if(   boost::iequals(content_type.substr(), content_type_application_json) 
-           || boost::iequals(content_type, content_type_text_json)
-           || boost::iequals(content_type, content_type_text_xjson) 
-           || boost::iequals(content_type, content_type_text_javascript)
-           || boost::iequals(content_type, content_type_text_xjavascript)
-           || boost::iequals(content_type, content_type_application_javascript)
-           || boost::iequals(content_type, content_type_application_xjavascript))
-#endif
-        {
-            return true;
-        }
-        return false;
+        static const utility::string_t json_types[] = {
+            mime_types::application_json,
+            mime_types::text_json,
+            mime_types::text_xjson,
+            mime_types::text_javascript,
+            mime_types::text_xjavascript,
+            mime_types::application_javascript,
+            mime_types::application_xjavascript
+        };
+
+        return (is_content_type_one_of(std::begin(json_types), std::end(json_types), content_type));
     }
 
     void parse_content_type_and_charset(const utility::string_t &content_type, utility::string_t &content, utility::string_t &charset)
@@ -135,11 +137,11 @@ namespace details
         // We are defaulting everything to Latin1 except JSON which is utf-8.
         if(is_content_type_json(content_type))
         {
-            return charset_utf8;
+            return charset_types::utf8;
         }
         else
         {
-            return charset_latin1;
+            return charset_types::latin1;
         }
     }
 

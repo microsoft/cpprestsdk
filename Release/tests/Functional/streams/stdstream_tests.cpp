@@ -597,7 +597,7 @@ TEST(ostream_write_single_char)
 
     bool elements_equal = true;
 
-    for (uint8_t ch = 'a'; ch <= 'z'; ch++)
+    for (char ch = 'a'; ch <= 'z'; ch++)
     {
         elements_equal = elements_equal && (ch == os.write(ch).get());
     }

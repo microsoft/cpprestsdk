@@ -526,6 +526,11 @@ void streambuf_acquire_release(StreamBufferType& rbuf, const std::vector<typenam
         VERIFY_IS_TRUE(size > 0);
         rbuf.release(ptr, size);
     }
+    else
+    {
+        // This shouldn't crash
+        rbuf.release(ptr, size);
+    }
 
     rbuf.close().get();
     VERIFY_IS_FALSE(rbuf.can_read());
@@ -605,6 +610,7 @@ void streambuf_acquire_alloc(StreamBufferType& rwbuf)
         size_t count = 0;
         rwbuf.acquire(ptr, count);
         VERIFY_ARE_EQUAL(count, 0);
+        rwbuf.release(ptr, count);
     }
 
     auto writeTask = pplx::create_task([&rwbuf]()
@@ -633,6 +639,7 @@ void streambuf_acquire_alloc(StreamBufferType& rwbuf)
 
         rwbuf.acquire(ptr, count);
         VERIFY_ARE_EQUAL(count, 4);
+        rwbuf.release(ptr, count);
     });
 
     writeTask.wait();
@@ -2336,6 +2343,7 @@ TEST(producer_consumer_acquire_after_close)
     VERIFY_IS_FALSE(buffer.acquire(temp, size));
     VERIFY_IS_TRUE(nullptr == temp);
     VERIFY_ARE_EQUAL(0, size);
+    buffer.release(temp, size);
 
     buffer = producer_consumer_buffer<char>();
     buffer.close(std::ios::out);
@@ -2344,6 +2352,7 @@ TEST(producer_consumer_acquire_after_close)
     VERIFY_IS_TRUE(buffer.acquire(temp, size));
     VERIFY_IS_TRUE(nullptr == temp);
     VERIFY_ARE_EQUAL(0, size);
+    buffer.release(temp, size);
 }
 
 TEST(create_buffers_inout_error)
@@ -2361,6 +2370,30 @@ TEST(memstream_length)
 
     auto curr = istr.tell();
     VERIFY_ARE_EQUAL((long long)curr, 0);
+}
+
+TEST(buffer_size)
+{
+    {
+        container_buffer<std::string> buf("test data");
+        VERIFY_IS_TRUE(buf.has_size());
+        VERIFY_ARE_EQUAL(buf.size(), 9);
+        buf.seekoff(1024, std::ios::beg, std::ios::in);
+        VERIFY_ARE_EQUAL(buf.size(), 9);
+    }
+    {
+        container_buffer<std::string> buf;
+        VERIFY_IS_TRUE(buf.has_size());
+        VERIFY_ARE_EQUAL(buf.size(), 0);
+        buf.seekoff(1024, std::ios::beg, std::ios::out);
+        VERIFY_ARE_EQUAL(buf.size(), 1024);
+        VERIFY_ARE_EQUAL(buf.collection().size(), 1024);
+    }
+    {
+        producer_consumer_buffer<uint8_t> buf;
+        VERIFY_IS_FALSE(buf.has_size());
+        VERIFY_ARE_EQUAL(buf.size(), 0);
+    }
 }
 
 TEST(rawptr_alloc_after_close)
@@ -2392,6 +2425,7 @@ TEST(rawptr_buffer_acquire_after_close)
     VERIFY_IS_FALSE(buffer.acquire(temp, size));
     VERIFY_IS_TRUE(nullptr == temp);
     VERIFY_ARE_EQUAL(0, size);
+    buffer.release(temp, size);
 
     buffer = rawptr_buffer<char>(nullptr, 0, std::ios::in);
     temp = (char *)1;
@@ -2399,6 +2433,7 @@ TEST(rawptr_buffer_acquire_after_close)
     VERIFY_IS_TRUE(buffer.acquire(temp, size));
     VERIFY_IS_TRUE(nullptr == temp);
     VERIFY_ARE_EQUAL(0, size);
+    buffer.release(temp, size);
 }
 
 TEST(container_buffer_alloc_after_close)
@@ -2421,6 +2456,7 @@ TEST(container_buffer_acquire_after_close)
     VERIFY_IS_FALSE(buffer.acquire(temp, size));
     VERIFY_IS_TRUE(nullptr == temp);
     VERIFY_ARE_EQUAL(0, size);
+    buffer.release(temp, size);
 
     buffer = container_buffer<std::string>(std::ios::in);
     temp = (char *)1;
@@ -2428,6 +2464,7 @@ TEST(container_buffer_acquire_after_close)
     VERIFY_IS_TRUE(buffer.acquire(temp, size));
     VERIFY_IS_TRUE(nullptr == temp);
     VERIFY_ARE_EQUAL(0, size);
+    buffer.release(temp, size);
 }
 
 TEST(bytestream_length)

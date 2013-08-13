@@ -28,8 +28,6 @@
 #include "cpprest/http_server_api.h"
 #include "cpprest/http_windows_server.h"
 #include "cpprest/rawptrstream.h"
-#include "cpprest/http_helpers.h"
-#include "cpprest/http_msg.h"
 
 using namespace web; 
 using namespace utility;
@@ -41,6 +39,7 @@ using namespace http::experimental::details;
 using namespace utility::experimental;
 using namespace logging;
 using namespace logging::log;
+
 
 namespace web { namespace http
 {
@@ -285,7 +284,6 @@ pplx::task<void> http_windows_server::register_listener(_In_ http_listener *pLis
 
         if(errorCode == ERROR_ALREADY_EXISTS || errorCode == ERROR_SHARING_VIOLATION)
         {
-
             os << _XPLATSTR("Address '") << pListener->uri().to_string() << _XPLATSTR("' is already in use");
             return pplx::task_from_exception<void>(http_exception(errorCode, os.str()));
         }
@@ -390,7 +388,7 @@ pplx::task<void> http_windows_server::start()
         sizeof(HTTP_BINDING_INFO));
     if(errorCode)
     {
-        return pplx::task_from_exception<void>(http_exception(utility::details::create_error_message(errorCode)));
+        return pplx::task_from_exception<void>(http_exception(errorCode));
     }
 
     m_receivingTask = pplx::create_task([this]() { receive_requests(); });
@@ -736,9 +734,8 @@ void connection::dispatch_request_to_listener(http_request &request, _In_ http_l
 {
     request._set_listener_path(pListener->uri().path());
 
-    // Don't let an exception from user code bring down the server.
+    // Don't let an exception from sending the response bring down the server.
     pplx::task<http_response> response_task = request.get_response();
-
     response_task.then(
         [request](pplx::task<http::http_response> r_task) mutable
         {
@@ -750,13 +747,13 @@ void connection::dispatch_request_to_listener(http_request &request, _In_ http_l
             catch(const std::exception &e)
             {
                 utility::ostringstream_t str_stream;
-                str_stream << U("Error: a std::exception was thrown out of http_listener handle: ") << e.what();
+                str_stream << U("Error: a std::exception was encountered sending the HTTP response: ") << e.what();
                 logging::log::post(logging::LOG_ERROR, 0, str_stream.str(), request);
                 response = http::http_response(status_codes::InternalError);
             }
             catch(...)
             {
-                logging::log::post(logging::LOG_FATAL, 0, U("Fatal Error: an unknown exception was thrown out of http_listener handler."), request);
+                logging::log::post(logging::LOG_FATAL, 0, U("Fatal Error: an unknown exception was encountered sending the HTTP response."), request);
                 response = http::http_response(status_codes::InternalError);
             }
             // Workaround the Dev10 Bug on nested lambda
@@ -948,6 +945,14 @@ void send_response_body_io_completion::http_io_completion(DWORD error_code, DWOR
     p_context->transmit_body(m_response);
 }
 
+void cancel_request_io_completion::http_io_completion(DWORD, DWORD)
+{
+    // Already in an error path so ignore any other error code, we don't want
+    // to mask the original underlying error.
+    windows_request_context * p_context = static_cast<windows_request_context *>(m_response._get_server_context());
+    p_context->m_response_completed.set_exception(m_except_ptr);
+}
+
 // Transmit the response body to the network
 void windows_request_context::transmit_body(http::http_response response)
 {
@@ -958,6 +963,7 @@ void windows_request_context::transmit_body(http::http_response response)
         return;
     }
     
+    // In both cases here we could perform optimizations to try and use acquire on the streams to avoid an extra copy.
     if ( m_sending_in_chunks )
     {
         msl::utilities::SafeInt<size_t> safeCount = m_remaining_to_write;
@@ -966,23 +972,28 @@ void windows_request_context::transmit_body(http::http_response response)
 
         streams::rawptr_buffer<unsigned char> buf(&m_body_data[0], next_chunk_size);
 
-        response.body().read(buf, next_chunk_size).then([this, response](size_t data_length)
+        response.body().read(buf, next_chunk_size).then([this, response](pplx::task<size_t> op)
         {
-            if ( data_length == (size_t)-1)
+            size_t bytes_read = 0;
+            
+            // If an exception occurs surface the error to user on the server side
+            // and cancel the request so the client sees the error.
+            try { bytes_read = op.get(); } catch (...)
             {
-                auto read_error_code = GetLastError();
-                report_error(logging::LOG_ERROR, read_error_code, U("Error reading from stream when sending HTTP response"));
-                m_response_completed.set_exception(http_exception(read_error_code));
+                cancel_request(response, std::current_exception());
+                return;
+            }
+            if ( bytes_read == 0 )
+            {
+                cancel_request(response, std::make_exception_ptr(http_exception(_XPLATSTR("Error unexpectedly encountered the end of the response stream early"))));
                 return;
             }
 
-            m_remaining_to_write = m_remaining_to_write-data_length;
-
             // Check whether this is the last one to send...
+            m_remaining_to_write = m_remaining_to_write-bytes_read;
             m_sending_in_chunks = (m_remaining_to_write > 0);
 
-            auto buffer = data_length > 0 ? &m_body_data[0] : nullptr;
-            send_entity_body(response, buffer, data_length);
+            send_entity_body(response, &m_body_data[0], bytes_read);
         });
     }
     else
@@ -993,46 +1004,43 @@ void windows_request_context::transmit_body(http::http_response response)
 
         streams::rawptr_buffer<unsigned char> buf(&m_body_data[http::details::chunked_encoding::data_offset], body_data_length);
 
-        auto t1 = response.body().read(buf, CHUNK_SIZE).then([this, response, body_data_length](size_t read)
+        auto t1 = response.body().read(buf, CHUNK_SIZE).then([this, response, body_data_length](pplx::task<size_t> op)
         {
-            if ( read == (size_t)-1)
+            size_t bytes_read = 0;
+            
+            // If an exception occurs surface the error to user on the server side
+            // and cancel the request so the client sees the error.
+            try 
+            { 
+                bytes_read = op.get();
+            } catch (...)
             {
-                auto read_error_code = GetLastError();
-                report_error(logging::LOG_ERROR, read_error_code, U("Error reading from stream when sending HTTP response"));
-                m_response_completed.set_exception(http_exception(read_error_code));
+                cancel_request(response, std::current_exception());
                 return;
             }
 
-            size_t offset = http::details::chunked_encoding::add_chunked_delimiters(&m_body_data[0], body_data_length, read);
-
-            auto data_length = read + (http::details::chunked_encoding::additional_encoding_space-offset);
-
-            
             // Check whether this is the last one to send...
-            m_transfer_encoding = (read > 0);
+            m_transfer_encoding = (bytes_read > 0);
+            size_t offset = http::details::chunked_encoding::add_chunked_delimiters(&m_body_data[0], body_data_length, bytes_read);
 
-            auto buffer = data_length > 0 ? &m_body_data[offset] : nullptr;
-            send_entity_body(response, buffer, data_length);
+            auto data_length = bytes_read + (http::details::chunked_encoding::additional_encoding_space-offset);
+            send_entity_body(response, &m_body_data[offset], data_length);
         });
     }
 }
 
-// Send the body through winhttp
+// Send the body through HTTP.sys
 void windows_request_context::send_entity_body(http::http_response response, _In_reads_(data_length) unsigned char * data, _In_ size_t data_length)
 {
     HTTP_DATA_CHUNK dataChunk;
     memset(&dataChunk, 0, sizeof(dataChunk));
-
     dataChunk.DataChunkType = HttpDataChunkFromMemory;
     dataChunk.FromMemory.pBuffer = data;
     dataChunk.FromMemory.BufferLength = (ULONG)data_length;
-
-    auto p_send_response_overlapped = new send_response_body_io_completion(response);
-    http_overlapped *p_overlapped = new http_overlapped(p_send_response_overlapped);
-
-    bool this_is_the_last_chunk = !m_transfer_encoding && !m_sending_in_chunks;
+    const bool this_is_the_last_chunk = !m_transfer_encoding && !m_sending_in_chunks;
 
     // Send response.
+    http_overlapped *p_overlapped = new http_overlapped(new send_response_body_io_completion(response));
     StartThreadpoolIo(m_p_connection->m_p_server->m_threadpool_io);
     auto error_code = HttpSendResponseEntityBody(
         m_p_connection->m_p_server->m_hRequestQueue,
@@ -1052,6 +1060,24 @@ void windows_request_context::send_entity_body(http::http_response response, _In
         delete p_overlapped;
         report_error(logging::LOG_ERROR, error_code, U("Error sending http response (HttpSendResponseEntityBody)"));
         m_response_completed.set_exception(http_exception(error_code));
+    }
+}
+
+void windows_request_context::cancel_request(http_response response, std::exception_ptr except_ptr)
+{
+    http_overlapped *p_overlapped = new http_overlapped(new cancel_request_io_completion(response, except_ptr));
+    StartThreadpoolIo(m_p_connection->m_p_server->m_threadpool_io);
+
+    auto error_code = HttpCancelHttpRequest(
+        m_p_connection->m_p_server->m_hRequestQueue,
+        m_request_id, 
+        p_overlapped);
+    
+    if(error_code != NO_ERROR && error_code != ERROR_IO_PENDING)
+    {
+        CancelThreadpoolIo(m_p_connection->m_p_server->m_threadpool_io);
+        delete p_overlapped;
+        // An error already occurred so don't report here, because it will just hide the initial error.
     }
 }
 

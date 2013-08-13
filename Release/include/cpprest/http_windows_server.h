@@ -29,6 +29,10 @@
 #error This file is Windows-specific
 #endif
 
+#if _WIN32_WINNT < _WIN32_WINNT_VISTA
+#error "Error: http server APIs are not supported in XP"
+#endif //_WIN32_WINNT < _WIN32_WINNT_VISTA
+
 // Windows Sockets are not code analysis clean.
 #pragma warning(push)
 #pragma warning(disable : 6386)
@@ -199,6 +203,22 @@ private:
     http::http_response m_response;
 };
 
+// Handles canceling a request using overlapped I/O.
+class cancel_request_io_completion : public http_overlapped_io_completion
+{
+public:
+    cancel_request_io_completion(http::http_response response, std::exception_ptr except_ptr)
+        : m_response(std::move(response)), m_except_ptr(std::move(except_ptr))
+    {
+    }
+    
+    void http_io_completion(DWORD error_code, DWORD bytes_read);
+
+private:
+    http::http_response m_response;
+    std::exception_ptr m_except_ptr;
+};
+
 /// <summary>
 /// Context for http request through Windows HTTP Server API.
 /// </summary>
@@ -213,7 +233,6 @@ struct windows_request_context : http::details::_http_server_context
     }
 
     void transmit_body(http::http_response response);
-    
 
     // The connection being used
     std::shared_ptr<connection> m_p_connection;
@@ -233,11 +252,13 @@ private:
     windows_request_context(const windows_request_context &);
     windows_request_context& operator=(const windows_request_context &);
 
+    // Sends entity body chunk.
     void send_entity_body(http::http_response response, _In_reads_(data_length) unsigned char * data, _In_ size_t data_length);
+    
+    // Cancels this request.
+    void cancel_request(http::http_response response, std::exception_ptr except_ptr);
 
     std::vector<unsigned char> m_body_data;
-
-
 };
 
 /// <summary>

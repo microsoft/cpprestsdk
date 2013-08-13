@@ -217,6 +217,7 @@
     <ClCompile Include="..\stdstream_tests.cpp" />
     <ClCompile Include="..\memstream_tests.cpp" />
     <ClCompile Include="..\istream_tests.cpp" />
+    <ClCompile Include="..\winrt_interop_tests.cpp" />
     <ClCompile Include="..\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -252,6 +253,8 @@
   
   <Target Name="StripAppContainer" AfterTargets="Build">
     <CallTarget Targets="StripAppContainerOnProjectDll" />
+    <Copy SourceFiles="$(OutDir)\$(TargetName).dll" DestinationFolder="$(OutDir)\.." />
+    <Copy SourceFiles="$(OutDir)\$(TargetName).pdb" DestinationFolder="$(OutDir)\.." />
   </Target>
   
   <!-- Razzle environment uses different targets so we have to trigger our targets different -->

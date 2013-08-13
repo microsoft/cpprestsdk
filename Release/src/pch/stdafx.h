@@ -109,12 +109,18 @@ namespace pplx = Concurrency;
 #include "cpprest/http_helpers.h"
 
 #if !defined(__cplusplus_winrt)
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA 
 #include "cpprest/http_server.h"
 #include "cpprest/http_listener.h"
-#include "cpprest/http_server_api.h"
+#include "cpprest/http_server_api.h"  
+#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA 
+
 
 #ifdef _MS_WINDOWS
-#include "cpprest/http_windows_server.h"
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA 
+#include "cpprest/http_windows_server.h"  
+#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA 
+
 #endif
 
 #include "cpprest/log.h"

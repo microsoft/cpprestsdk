@@ -4,7 +4,6 @@
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\version.props" />
   <PropertyGroup Label="Globals">
     <ProjectGuid>{4BA4E05C-E06B-4D50-948B-6323B411D22A}</ProjectGuid>
-    <TargetName>$(CppRestBaseFileName)110_wp8_$(CppRestSDKVersionFileSuffix)</TargetName>
     <RootNamespace>casablanca</RootNamespace>
     <DefaultLanguage>en-US</DefaultLanguage>
     <TargetPlatformVersion>8.0</TargetPlatformVersion>
@@ -21,6 +20,13 @@
   <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <DebugFileSuffix>d</DebugFileSuffix>
+  </PropertyGroup>
+  <PropertyGroup>
+    <TargetName>$(CppRestBaseFileName)110$(DebugFileSuffix)_wp8_$(CppRestSDKVersionFileSuffix)</TargetName>
+  </PropertyGroup>
 
   <PropertyGroup>
     <GenerateManifest>false</GenerateManifest>

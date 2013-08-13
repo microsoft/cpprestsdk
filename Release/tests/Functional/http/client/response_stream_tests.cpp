@@ -138,6 +138,8 @@ TEST_FIXTURE(uri_address, set_response_stream_container_buffer)
 
 TEST_FIXTURE(uri_address, response_stream_file_stream)
 {
+    std::string message = "A world without string is chaos.";
+
     test_http_server::scoped_server scoped(m_uri);
     test_http_server * p_server = scoped.server();
     http_client client(m_uri);
@@ -146,12 +148,13 @@ TEST_FIXTURE(uri_address, response_stream_file_stream)
     {
         std::map<utility::string_t, utility::string_t> headers;
         headers[U("Content-Type")] = U("text/plain");
-        p_request->reply(200, U(""), headers, "A world without string is chaos.");
+        p_request->reply(200, U(""), headers, message);
     });
 
     {
         auto fstream = OPENSTR_W<uint8_t>(U("response_stream.txt")).get();
 
+        // Write the response into the file
         http_request msg(methods::GET);
         msg.set_response_stream(fstream);
         http_response rsp = client.request(msg).get();
@@ -166,11 +169,8 @@ TEST_FIXTURE(uri_address, response_stream_file_stream)
         streams::rawptr_buffer<uint8_t> buffer(reinterpret_cast<uint8_t *>(chars), sizeof(chars));
 
         streams::basic_istream<uint8_t> fistream = OPENSTR_R<uint8_t>(U("response_stream.txt")).get();
-
-        VERIFY_ARE_EQUAL(fistream.read(buffer, sizeof(chars)).get(), 32u);
-        // TFS 579609 - 1207 revisit this merge for Linux
-        // VERIFY_ARE_EQUAL(fistream.read_line(reinterpret_cast<uint8_t  *>(chars), sizeof(chars)).get(), 32u);
-        VERIFY_ARE_EQUAL(0, strcmp("A world without string is chaos.", chars));
+        VERIFY_ARE_EQUAL(message.length(), fistream.read_line(buffer).get());
+        VERIFY_ARE_EQUAL(message, std::string(chars));
         fistream.close().get();
     }
 }

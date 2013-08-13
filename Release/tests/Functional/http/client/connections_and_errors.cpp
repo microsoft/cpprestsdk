@@ -133,9 +133,16 @@ TEST_FIXTURE(uri_address, request_timeout)
 
 TEST_FIXTURE(uri_address, invalid_method)
 {
-    web::http::uri uri(U("https://www.bing.com/"));
+    web::http::uri uri(U("http://www.bing.com/"));
     http_client client(uri);
-    VERIFY_THROWS(client.request(U("my\rmethod")).get(), http_exception);
+    string_t invalid_chars = U("\a\b\f\v\n\r\t\x20\x7f");
+
+    for (auto iter = invalid_chars.begin(); iter < invalid_chars.end(); iter++)
+    {
+        string_t method = U("my method");
+        method[2] = *iter;
+        VERIFY_THROWS(client.request(method).get(), http_exception);
+    }
 }
 
 // This test sends an SSL request to a non-SSL server and should fail on handshaking

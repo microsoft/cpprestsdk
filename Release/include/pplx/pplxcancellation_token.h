@@ -132,9 +132,9 @@ public:
     }
 };
 
-
 namespace details
 {
+
     // Base class for all reference counted objects
     class _RefCounter
     {
@@ -149,7 +149,7 @@ namespace details
         // Returns the new reference count.
         long _Reference()
         {
-            long _Refcount = atomic_increment(_M_refCount);
+            long _Refcount = _InterlockedIncrement(&_M_refCount);
 
             // 0 - 1 transition is illegal
             _ASSERTE(_Refcount > 1);
@@ -160,7 +160,7 @@ namespace details
         // Returns the new reference count
         long _Release()
         {
-            long _Refcount = atomic_decrement(_M_refCount);
+            long _Refcount = _InterlockedDecrement(&_M_refCount);
             _ASSERTE(_Refcount >= 0);
 
             if (_Refcount == 0)
@@ -186,7 +186,7 @@ namespace details
         }
 
         // Reference count
-        atomic_long _M_refCount;
+        volatile long _M_refCount;
     };
 
     class _CancellationTokenState;
@@ -308,10 +308,6 @@ namespace details
             typedef struct _Node {
                 _CancellationTokenRegistration* _M_token;
                 _Node *_M_next;
-
-                _Node(_CancellationTokenRegistration* token) : _M_token(token), _M_next(nullptr)
-                {
-                }
             } Node;
 
         public:
@@ -321,12 +317,15 @@ namespace details
 
             ~TokenRegistrationContainer()
             {
+#pragma warning(push)
+#pragma warning(disable: 6001)
                 auto node = _M_begin;
+#pragma warning(pop)
                 while (node != nullptr) 
                 {
-                    Node* tmp = node;                    
+                    Node* tmp = node;
                     node = node->_M_next;
-                    delete tmp;
+                    ::free(tmp);
                 }
             }
 
@@ -355,7 +354,15 @@ namespace details
 
             void push_back(_CancellationTokenRegistration* token)
             {
-                auto node = new Node(token);
+                Node* node = reinterpret_cast<Node*>(::malloc(sizeof(Node)));
+                if (node == nullptr)
+                {
+                    throw ::std::bad_alloc();
+                }
+
+                node->_M_token = token;
+                node->_M_next = nullptr;
+
                 if (_M_begin == nullptr) 
                 {
                     _M_begin = node;
@@ -378,7 +385,7 @@ namespace details
                     if (node->_M_token == token) {
                         if (prev == nullptr)
                         {
-                            _M_begin = node->_M_next;                            
+                            _M_begin = node->_M_next;
                         }
                         else
                         {
@@ -390,7 +397,7 @@ namespace details
                             _M_last = prev;
                         }
 
-                        delete node;
+                        ::free(node);
                         break;
                     }
                     
@@ -406,7 +413,7 @@ namespace details
 
     public:
 
-        static _CancellationTokenState * _NewTokenState()
+        static _CancellationTokenState * _CancellationTokenState::_NewTokenState()
         {
             return new _CancellationTokenState();
         }
@@ -567,7 +574,7 @@ namespace details
 
                         if (result_1 != _CancellationTokenRegistration::_STATE_CALLED)
                         {
-                            _PRegistration->_M_pSyncBlock->wait(extensibility::event_t::timeout_infinite);
+                            _PRegistration->_M_pSyncBlock->wait(::pplx::extensibility::event_t::timeout_infinite);
                         }
 
                         break;
@@ -692,6 +699,7 @@ private:
 
     details::_CancellationTokenRegistration *_M_pRegistration;
 };
+
 
 /// <summary>
 ///     The <c>cancellation_token</c> class represents the ability to determine whether some operation has been requested to cancel.  A given token can

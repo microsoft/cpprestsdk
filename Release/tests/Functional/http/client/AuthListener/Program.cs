@@ -30,7 +30,7 @@ class Program
 
             if (requestContext.Request.Headers.AllKeys.Contains("UserName"))
             {
-                if (requestContext.Request.Headers["UserName"] != requestContext.User.Identity.Name)
+                if (string.Compare(requestContext.Request.Headers["UserName"], id.Name, true) != 0)
                 {
                     return false;
                 }
@@ -51,7 +51,7 @@ class Program
                     return false;
                 }
                 HttpListenerBasicIdentity basicId = (HttpListenerBasicIdentity)id;
-                if (basicId.Password != requestContext.Request.Headers["Password"])
+                if (string.Compare(basicId.Password, requestContext.Request.Headers["Password"], true) != 0)
                 {
                     return false;
                 }
@@ -86,36 +86,61 @@ class Program
         return true;
     }
 
-    static void Main()
+    static void Main(string []args)
     {
+        if(args.Length != 2)
+        {
+            Console.WriteLine("Error: please specify URI to listen on and Authentication type to use:\nAuthListener.exe ServerURI AuthenticationScheme");
+            return;
+        }
+        string serverUri = args[0];
+        AuthenticationSchemes authScheme;
+        switch(args[1].ToLower())
+        {
+            case "none":
+                authScheme = AuthenticationSchemes.None;
+                break;
+            case "anonymous":
+                authScheme = AuthenticationSchemes.Anonymous;
+                break;
+            case "basic":
+                authScheme = AuthenticationSchemes.Basic;
+                break;
+            case "digest":
+                authScheme = AuthenticationSchemes.Digest;
+                break;
+            case "ntlm":
+                authScheme = AuthenticationSchemes.Ntlm;
+                break;
+            case "negotiate":
+                authScheme = AuthenticationSchemes.Negotiate;
+                break;
+            case "integrated":
+                authScheme = AuthenticationSchemes.IntegratedWindowsAuthentication;
+                break;
+            default:
+                Console.WriteLine("Error: unrecognized AuthenticationScheme:{0}", args[1]);
+                return;
+        }
+    
         HttpListener listener = new HttpListener();
-        listener.Prefixes.Add("http://*:8080/");
-
-        // ACTION: For each test case enumerate each authentication scheme.
-        listener.AuthenticationSchemes = AuthenticationSchemes.Anonymous;
-        //listener.AuthenticationSchemes = AuthenticationSchemes.None;
-        //listener.AuthenticationSchemes = AuthenticationSchemes.Basic;
-        //listener.AuthenticationSchemes = AuthenticationSchemes.Digest;
-        //listener.AuthenticationSchemes = AuthenticationSchemes.Ntlm;
-        //listener.AuthenticationSchemes = AuthenticationSchemes.Negotiate;
-        //listener.AuthenticationSchemes = AuthenticationSchemes.IntegratedWindowsAuthentication;
+        listener.Prefixes.Add(serverUri);
+        listener.AuthenticationSchemes = authScheme;
 
         listener.Start();
         Console.WriteLine("Listening...");
-        for (;;)
-        {
-            HttpListenerContext context = listener.GetContext();
-            Console.WriteLine("Received request...");
-            StreamWriter writer = new StreamWriter(context.Response.OutputStream);
 
-            // Verify correct authentication scheme was used.
-            if (!VerifyAuthenticationScheme(listener.AuthenticationSchemes, context))
-            {
-                context.Response.StatusCode = (int)HttpStatusCode.ExpectationFailed;
-                writer.Write("Error authentication validation failed");
-            }
+		HttpListenerContext context = listener.GetContext();
+		Console.WriteLine("Received request...");
+		StreamWriter writer = new StreamWriter(context.Response.OutputStream);
 
-            context.Response.Close();
-        }
-    }
+		// Verify correct authentication scheme was used.
+		if (!VerifyAuthenticationScheme(listener.AuthenticationSchemes, context))
+		{
+			context.Response.StatusCode = (int)HttpStatusCode.ExpectationFailed;
+			writer.Write("Error authentication validation failed");
+		}
+
+		context.Response.Close();
+	}
 }

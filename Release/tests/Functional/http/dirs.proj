@@ -7,7 +7,7 @@
       <ProjectFile Include="client\dirs.proj"/>
   </ItemGroup>
 
-  <ItemGroup Condition="'$(DevToolsVersion)'!='120'">
+  <ItemGroup>
       <ProjectFile Include="listener\dirs.proj"/>
   </ItemGroup>
 

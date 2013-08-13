@@ -4,9 +4,6 @@
     <ClCompile Include="..\building_response_tests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\connection_tests.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\header_tests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -44,6 +41,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\to_string_tests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\connections_and_errors.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

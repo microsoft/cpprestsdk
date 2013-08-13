@@ -73,6 +73,11 @@
 #endif
 #define _Out_writes_(x)
 
+#ifdef _Out_writes_opt_
+#undef _Out_writes_opt_
+#endif
+#define _Out_writes_opt_(x)
+
 #ifdef _In_reads_
 #undef _In_reads_
 #endif

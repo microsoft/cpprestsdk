@@ -84,7 +84,7 @@ public:
     unsigned long load(const std::string &dllName);
 
     // Module must have already been loaded.
-    UnitTest::TestList get_test_list(const std::string &dllName);
+    UnitTest::TestList& get_test_list(const std::string &dllName);
 
 private:
     std::map<std::string, test_module *> m_modules;

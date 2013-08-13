@@ -112,6 +112,11 @@ namespace Concurrency { namespace streams {
             virtual bool can_seek() const { return false; }
 
             /// <summary>
+            /// <c>has_size<c/> is used to determine whether a stream buffer supports size().
+            /// </summary>
+            virtual bool has_size() const { return false; }
+
+            /// <summary>
             /// Get the stream buffer size, if one has been set.
             /// </summary>
             /// <param name="direction">The direction of buffering (in or out)</param>
@@ -170,7 +175,7 @@ namespace Concurrency { namespace streams {
             /// </summary>
             /// <param name="count">The number of characters to allocate.</param>
             /// <returns>A pointer to a block to write to, null if the stream buffer implementation does not support alloc/commit.</returns>
-            virtual _CharType* alloc(size_t count)
+            virtual _CharType* _alloc(size_t count)
             {
                 if (!this->can_write())
                 {
@@ -190,7 +195,7 @@ namespace Concurrency { namespace streams {
             /// Submits a block already allocated by the stream buffer.
             /// </summary>
             /// <param name="count">The number of characters to be committed.</param>
-            virtual void commit(size_t count)
+            virtual void _commit(size_t count)
             {
                 pplx::extensibility::scoped_critical_section_t l(m_lock);
 
@@ -219,17 +224,17 @@ namespace Concurrency { namespace streams {
             /// If the end of the stream is reached, the function will return <c>true</c>, a null pointer, and a count of zero;
             /// a subsequent read will not succeed.
             /// </remarks>
-            virtual bool acquire(_Out_writes_ (count) _CharType*& ptr, _In_ size_t& count)
+            virtual bool acquire(_Out_ _CharType*& ptr, _Out_ size_t& count)
             {
-                pplx::extensibility::scoped_critical_section_t l(m_lock);
+                count = 0;
+                ptr = nullptr;
 
                 if (!this->can_read()) return false;
 
+                pplx::extensibility::scoped_critical_section_t l(m_lock);
+
                 if (m_blocks.empty())
                 {
-                    count = 0;
-                    ptr = nullptr;
-
                     // If the write head has been closed then have reached the end of the
                     // stream (return true), otherwise more data could be written later (return false).
                     return !this->can_write();
@@ -252,8 +257,10 @@ namespace Concurrency { namespace streams {
             /// </summary>
             /// <param name="ptr">A pointer to the block of data to be released.</param>
             /// <param name="count">The number of characters that were read.</param>
-            virtual void release(_Out_writes_ (count) _CharType *, _In_ size_t count)
+            virtual void release(_Out_writes_opt_ (count) _CharType *ptr, _In_ size_t count)
             {
+                if (ptr == nullptr) return;
+
                 pplx::extensibility::scoped_critical_section_t l(m_lock);
                 auto block = m_blocks.front();
 

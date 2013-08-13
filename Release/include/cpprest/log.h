@@ -51,8 +51,6 @@ namespace experimental
 {
 namespace logging 
 {
-    using namespace web;
-
     /// <summary>
     /// The set of commands that are sent at the low-level communication layer.   
     /// </summary>
@@ -101,7 +99,7 @@ namespace logging
         /// message. Implementations like IIS logger may choose to override and given pertinent information
         /// related to the http request.
         /// </remarks>        
-        virtual _ASYNCRTIMP void post(log_level level, int code, const utility::string_t &message, http::http_request http_msg);
+        virtual _ASYNCRTIMP void post(log_level level, int code, const utility::string_t &message, ::web::http::http_request http_msg);
          
         /// <summary>
         /// Set the current significance level at which messages are propagated. Messages at levels
@@ -235,7 +233,7 @@ namespace logging
         /// message. Implementations like IIS logger may choose to override and given pertinent information
         /// related to the http request.
         /// </remarks>
-        _ASYNCRTIMP extern void post(log_level level, int code, const utility::string_t &message, http::http_request http_msg);
+        _ASYNCRTIMP extern void post(log_level level, int code, const utility::string_t &message, ::web::http::http_request http_msg);
 
 #ifdef _MS_WINDOWS
         /// <summary>

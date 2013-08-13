@@ -154,6 +154,11 @@ namespace Concurrency { namespace streams
         virtual bool can_seek() const = 0;
 
         /// <summary>
+        /// <c>has_size<c/> is used to determine whether a stream buffer supports size().
+        /// </summary>
+        virtual bool has_size() const = 0;
+
+        /// <summary>
         /// <c>is_eof</c> is used to determine whether a read head has reached the end of the buffer.
         /// </summary>
         virtual bool is_eof() const = 0;
@@ -278,6 +283,12 @@ namespace Concurrency { namespace streams
         /// <remarks>Some streams may have separate write and read cursors. 
         ///          For such streams, the direction parameter defines whether to move the read or the write cursor.</remarks>
         virtual pos_type getpos(std::ios_base::openmode direction) const = 0; 
+
+        /// <summary>
+        /// Gets the size of the stream, if known. Calls to <c>has_size</c> will determine whether
+        /// the result of <c>size</c> can be relied on.
+        /// </summary>
+        virtual utility::size64_t size() const = 0;
 
         /// <summary>
         /// Seeks to the given position.
@@ -631,17 +642,49 @@ namespace Concurrency { namespace streams
             return m_currentException;
         }
 
+        /// <summary>
+        /// Allocates a contiguous memory block and returns it.
+        /// </summary>
+        /// <param name="count">The number of characters to allocate.</param>
+        /// <returns>A pointer to a block to write to, null if the stream buffer implementation does not support alloc/commit.</returns>
+        /// <remarks>This is intended as an advanced API to be used only when it is important to avoid extra copies.</remarks>
+        _CharType* alloc(size_t count)
+        {
+            if (m_alloced)
+                throw std::logic_error("The buffer is already allocated, this maybe caused by overlap of stream read or write");
+
+            _CharType* alloc_result = _alloc(count);
+
+            if (alloc_result)
+                m_alloced = true;
+
+            return alloc_result;
+        }
+
+        /// <summary>
+        /// Submits a block already allocated by the stream buffer.
+        /// </summary>
+        /// <param name="count">The number of characters to be committed.</param>
+        /// <remarks>This is intended as an advanced API to be used only when it is important to avoid extra copies.</remarks>
+        void commit(size_t count)
+        {
+            if (!m_alloced)
+                throw std::logic_error("The buffer needs to allocate first");
+            
+            _commit(count);
+            m_alloced = false;
+        }
 #pragma region dependencies
     public:
         virtual bool can_seek() const = 0;
+        virtual bool has_size() const = 0;
+        virtual utility::size64_t size() const { return 0; }
         virtual size_t buffer_size(std::ios_base::openmode direction = std::ios_base::in) const = 0;
         virtual void set_buffer_size(size_t size, std::ios_base::openmode direction = std::ios_base::in) = 0;
         virtual size_t in_avail() const = 0;
         virtual pos_type getpos(std::ios_base::openmode direction) const = 0; 
         virtual pos_type seekpos(pos_type pos, std::ios_base::openmode direction) = 0; 
         virtual pos_type seekoff(off_type offset, std::ios_base::seekdir way, std::ios_base::openmode mode) = 0;     
-        virtual _CharType* alloc(size_t count) = 0;
-        virtual void commit(size_t count) = 0;
         virtual bool acquire(_Out_writes_(count) _CharType*& ptr, _In_ size_t& count) = 0;
         virtual void release(_Out_writes_(count) _CharType *ptr, _In_ size_t count) = 0;
     protected:
@@ -656,6 +699,8 @@ namespace Concurrency { namespace streams
         virtual pplx::task<size_t> _getn(_Out_writes_(count) _CharType *ptr, _In_ size_t count) = 0;
         virtual size_t _scopy(_Out_writes_(count) _CharType *ptr, _In_ size_t count) = 0;
         virtual pplx::task<bool> _sync() = 0;
+        virtual _CharType* _alloc(size_t count) = 0;
+        virtual void _commit(size_t count) = 0;
 
         /// <summary>
         /// The real read head close operation, implementation should override it if there is any resource to be released.
@@ -683,11 +728,12 @@ namespace Concurrency { namespace streams
             m_stream_can_read = (mode & std::ios_base::in) != 0;
             m_stream_can_write = (mode & std::ios_base::out) != 0;
             m_stream_read_eof = false;
+            m_alloced = false;
         }
             
         std::exception_ptr m_currentException;
         // The in/out mode for the buffer
-        bool m_stream_can_read, m_stream_can_write, m_stream_read_eof;
+        bool m_stream_can_read, m_stream_can_write, m_stream_read_eof, m_alloced;
 
 
     private:
@@ -882,6 +928,17 @@ namespace Concurrency { namespace streams
         /// <c>can_seek<c/> is used to determine whether a stream buffer supports seeking.
         /// </summary>
         virtual bool can_seek() const { return get_base()->can_seek(); }
+
+        /// <summary>
+        /// <c>has_size<c/> is used to determine whether a stream buffer supports size().
+        /// </summary>
+        virtual bool has_size() const { return get_base()->has_size(); }
+
+        /// <summary>
+        /// Gets the size of the stream, if known. Calls to <c>has_size</c> will determine whether
+        /// the result of <c>size</c> can be relied on.
+        /// </summary>
+        virtual utility::size64_t size() const { return get_base()->size(); }
 
         /// <summary>
         /// Gets the stream buffer size, if one has been set.

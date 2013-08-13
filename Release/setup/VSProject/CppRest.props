@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <Import Project="version.props" />
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <DebugFileSuffix>d</DebugFileSuffix>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Platform)' == 'Win32'">
+    <PlatformLibPath>x86</PlatformLibPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Platform)' == 'x64'">
+    <PlatformLibPath>x64</PlatformLibPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Platform)' == 'ARM'">
+    <PlatformLibPath>arm</PlatformLibPath>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <CppRestSDKPath>$([MSBuild]::GetRegistryValue(`HKEY_LOCAL_MACHINE\Software\Microsoft\CppRestSDK\OpenSourceRelease\110\v$(CppRestSDKVersionString)\SDK`, `InstallDir`))</CppRestSDKPath>
+    <CppRestRuntimeBaseFileName>$(CppRestBaseFileName)110$(DebugFileSuffix)_$(CppRestSDKVersionFileSuffix)</CppRestRuntimeBaseFileName>
+  </PropertyGroup>
+
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(CppRestSDKPath)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>$(CppRestRuntimeBaseFileName).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(CppRestSDKPath)\lib\$(PlatformLibPath)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <PostBuildEvent>
+      <Message>Copying C++ REST Runtime</Message>
+      <Command>
+        copy /y "$(CppRestSDKPath)\bin\$(PlatformLibPath)\$(Configuration)\$(CppRestRuntimeBaseFileName).dll" "$(TargetDir)"
+        copy /y "$(CppRestSDKPath)\bin\$(PlatformLibPath)\$(Configuration)\$(CppRestRuntimeBaseFileName).pdb" "$(TargetDir)"
+      </Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+</Project>

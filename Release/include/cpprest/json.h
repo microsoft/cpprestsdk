@@ -293,7 +293,7 @@ public:
         bool is_object() const { return type() == Object; }
 
         /// <summary>
-        /// How many children does the value have?
+        /// Gets the number of children of the value.
         /// </summary>
         /// <returns>The number of children. 0 for all non-composites.</returns>
         size_t size() const;
@@ -379,6 +379,13 @@ public:
         {
             return !((*this) == other);
         }
+
+        /// <summary>
+        /// Test for the presence of a field.
+        /// </summary>
+        /// <param name="key">The name of the field</param>
+        /// <returns>True if the field exists, false otherwise.</returns>
+        bool has_field(const utility::string_t &key) const;
 
         /// <summary>
         /// Access a field of a JSON object.
@@ -542,6 +549,7 @@ public:
             virtual const json::value::element_vector &elements() const { throw json_exception(_XPLATSTR("not an array")); }
             virtual const json::value::field_map &fields() const { throw json_exception(_XPLATSTR("not an object")); }
 
+            virtual bool has_field(const utility::string_t &) const { return false; }
             virtual value get_field(const utility::string_t &) const { throw json_exception(_XPLATSTR("not an object")); }
             virtual value get_element(std::vector<value>::size_type) const { throw json_exception(_XPLATSTR("not an array")); }
 
@@ -765,6 +773,8 @@ public:
             _String(const std::string &value) : m_string(utility::details::make_unique<std::string>(value)) { }
 
         private:
+            friend class _Object;
+
             std::string as_utf8_string() const;
             utf16string as_utf16_string() const;
 
@@ -789,6 +799,8 @@ public:
             }
 
             virtual json::value::value_type type() const { return json::value::Object; }
+
+            virtual bool has_field(const utility::string_t &) const;
 
             _ASYNCRTIMP virtual value get_field(const utility::string_t &) const;
             _ASYNCRTIMP virtual json::value &index(const utility::string_t &key);
@@ -823,11 +835,6 @@ public:
 
         private:
             template<typename CharType> friend class json::details::JSON_Parser;
-
-            template<typename _CharType>
-            void format_impl(std::basic_string<_CharType>& string) const;
-            template<typename _CharType>
-            void format_impl(std::basic_ostream<_CharType>& stream) const;
 
             _ASYNCRTIMP void map_fields();
 
@@ -935,10 +942,6 @@ public:
         private:
             template<typename CharType> friend class json::details::JSON_Parser;
 
-            template<typename _CharType>
-            void format_impl(std::basic_string<_CharType>& string) const;
-            template<typename _CharType>
-            void format_impl(std::basic_ostream<_CharType>& stream) const;
         public:
             _Array() {}
             _Array(std::vector<json::value>::size_type size) : _Value(size) {}
@@ -948,57 +951,113 @@ public:
 
     } // namespace details
 
+    /// <summary>
+    /// Gets the number of children of the value.
+    /// </summary>
+    /// <returns>The number of children. 0 for all non-composites.</returns>
     inline size_t json::value::size() const
     {
         return m_value->size();
     }
 
+    /// <summary>
+    /// Test for the presence of a field.
+    /// </summary>
+    /// <param name="key">The name of the field</param>
+    /// <returns>True if the field exists, false otherwise.</returns>
+    inline bool json::value::has_field(const utility::string_t& key) const
+    {
+        return m_value->has_field(key);
+    }
+
+    /// <summary>
+    /// Access a field of a JSON object.
+    /// </summary>
+    /// <param name="key">The name of the field</param>
+    /// <returns>The value kept in the field; null if the field does not exist</returns>
     inline json::value json::value::get(const utility::string_t& key) const
     {
         return m_value->get_field(key);
     }
 
+    /// <summary>
+    /// Access an element of a JSON array.
+    /// </summary>
+    /// <param name="key">The index of an element in the JSON array</param>
+    /// <returns>The value kept at the array index; null if outside the boundaries of the array</returns>
     inline json::value json::value::get(size_t index) const
     {
         return m_value->get_element(index);
     }
 
 
+    /// <summary>
+    /// Gets the beginning iterator element for a composite value.
+    /// </summary>
+    /// <returns>An iterator to the beginning of the JSON value.</returns>
     inline json::value::iterator json::value::begin()
     {
         return m_value->elements().begin();
     }
 
+    /// <summary>
+    /// Gets the end iterator element for a composite value.
+    /// </summary>
+    /// <returns>An iterator to the element past the end of the JSON value.</returns>
     inline json::value::iterator json::value::end()
     {
         return m_value->elements().end();
     }
 
+    /// <summary>
+    /// Gets the beginning reverse iterator element for a composite value.
+    /// </summary>
+    /// <returns>A reverse iterator to the reverse beginning of the JSON value.</returns>
     inline json::value::reverse_iterator json::value::rbegin()
     {
         return m_value->elements().rbegin();
     }
 
+    /// <summary>
+    /// Gets the end reverse iterator element for a composite value.
+    /// </summary>
+    /// <returns>A reverse iterator to the reverse end of the JSON value.</returns>
     inline json::value::reverse_iterator json::value::rend()
     {
         return m_value->elements().rend();
     }
 
+    /// <summary>
+    /// Gets the beginning const iterator element for a composite value.
+    /// </summary>
+    /// <returns>A <c>const_iterator</c> to the beginning of the JSON value.</returns>
     inline json::value::const_iterator json::value::cbegin() const
     {
         return m_value->elements().cbegin();
     }
 
+    /// <summary>
+    /// Gets the end const iterator element for a composite value.
+    /// </summary>
+    /// <returns>A <c>const_iterator</c> to the element past the end of the JSON value.</returns>
     inline json::value::const_iterator json::value::cend() const
     {
         return m_value->elements().cend();
     }
 
+    /// <summary>
+    /// Get the beginning const reverse iterator element for a composite value.
+    /// </summary>
+    /// <returns>The beginning <c>const_reverse_iterator</c> element of the JSON value.</returns>
     inline json::value::const_reverse_iterator json::value::crbegin() const
     {
         return m_value->elements().crbegin();
     }
 
+    /// <summary>
+    /// Get the end const reverse iterator element for a composite value.
+    /// </summary>
+    /// <returns>The end <c>const_reverse_iterator</c> element the JSON value.</returns>
     inline json::value::const_reverse_iterator json::value::crend() const
     {
         return m_value->elements().crend();

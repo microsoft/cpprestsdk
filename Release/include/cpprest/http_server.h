@@ -26,6 +26,10 @@
 
 #pragma once
 
+#if _WIN32_WINNT < _WIN32_WINNT_VISTA
+#error "Error: http server APIs are not supported in XP"
+#endif //_WIN32_WINNT < _WIN32_WINNT_VISTA
+
 #include "cpprest/http_listener.h"
 
 namespace web { namespace http

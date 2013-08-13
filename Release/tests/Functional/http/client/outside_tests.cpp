@@ -39,13 +39,6 @@ namespace tests { namespace functional { namespace http { namespace client {
 SUITE(outside_tests)
 {
 
-// TFS 553378
-#ifdef _MS_WINDOWS
-# define casablanca_printf wprintf
-#else
-# define casablanca_printf printf
-#endif
-
 TEST_FIXTURE(uri_address, outside_cnn_dot_com,
              "Ignore", "Manual")
 {
@@ -55,13 +48,11 @@ TEST_FIXTURE(uri_address, outside_cnn_dot_com,
     http_response response = client.request(methods::GET).get();
     VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
     while(response.body().streambuf().in_avail() == 0);
-    casablanca_printf(U("CNN Main page: %s\n"), response.to_string().c_str());
 
     // CNN's other pages do use chunked transfer encoding.
     response = client.request(methods::GET, U("US")).get();
     VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
     while(response.body().streambuf().in_avail() == 0);
-    casablanca_printf(U("CNN US page: %s\n"), response.to_string().c_str());
 }
 
 TEST_FIXTURE(uri_address, outside_google_dot_com,
@@ -73,13 +64,11 @@ TEST_FIXTURE(uri_address, outside_google_dot_com,
     http_response response = client.request(methods::GET).get();
     VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
     while(response.body().streambuf().in_avail() == 0);
-    casablanca_printf(U("Google's Main page: %s\n"), response.to_string().c_str());
 
     // Google's maps page.
     response = client.request(methods::GET, U("maps")).get();
     VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
     while(response.body().streambuf().in_avail() == 0);
-    casablanca_printf(U("Google's Maps page: %s\n"), response.to_string().c_str());
 }
 
 TEST_FIXTURE(uri_address, reading_google_stream,
@@ -100,12 +89,6 @@ TEST_FIXTURE(uri_address, reading_google_stream,
 TEST_FIXTURE(uri_address, outside_ssl_json,
              "Ignore", "Manual")
 {
-    using namespace utility;
-    using namespace web;
-    using namespace web::http;
-    using namespace web::http::client;
-    using namespace concurrency::streams;
-
     // Create URI for:
     // https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=UUF1hMUVwlrvlVMjUGOZExgg&key=AIzaSyAviHxf_y0SzNoAq3iKqvWVE4KQ0yylsnk
     uri_builder playlistUri(U("https://www.googleapis.com/youtube/v3/playlistItems?"));
@@ -121,10 +104,11 @@ TEST_FIXTURE(uri_address, outside_ssl_json,
     }).then([=](json::value jsonArray)
     {
         int count = 0;
-        for(const auto& i : jsonArray[U("items")])
+        auto& items = jsonArray[U("items")];
+        for(auto iter = items.cbegin(); iter != items.cend(); ++iter)
         {
+            const auto& i = *iter;
             auto name = i.second[U("snippet")][U("title")].to_string();
-            casablanca_printf(name.c_str());
             count++;
         }
         VERIFY_ARE_EQUAL(3, count); // Update this accordingly, if the number of items changes

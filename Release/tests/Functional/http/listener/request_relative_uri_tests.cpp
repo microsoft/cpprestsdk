@@ -88,6 +88,27 @@ TEST_FIXTURE(uri_address, nested_paths_encoding)
     VERIFY_ARE_EQUAL(0, client.close());
 }
 
+TEST(listener_uri_empty_path)
+{
+    uri address(U("http://localhost:45678"));
+    http_listener listener(address);
+    listener.open().wait();
+    test_http_client::scoped_client client(address);
+    test_http_client * p_client = client.client();
+
+    listener.support([](http_request request)
+    {
+        request.reply(status_codes::OK);
+    });
+    VERIFY_ARE_EQUAL(0, p_client->request(methods::GET, U("/")));
+    p_client->next_response().then([](test_response *p_response)
+    {
+        http_asserts::assert_test_response_equals(p_response, status_codes::OK);
+    }).wait();
+
+    listener.close().wait();
+}
+
 }
 
 }}}}

@@ -102,6 +102,7 @@ namespace Concurrency { namespace streams {
         // See astreambuf.h for further information.
         //     
         virtual bool can_seek() const { return this->is_open(); }
+        virtual bool has_size() const { return false; }
 
         virtual size_t in_avail() const { return (size_t)m_buffer->in_avail(); }
 
@@ -130,8 +131,8 @@ namespace Concurrency { namespace streams {
         virtual pos_type seekpos(pos_type pos, std::ios_base::openmode mode) { return m_buffer->pubseekpos(pos, mode); }
         virtual pos_type seekoff(off_type off, std::ios_base::seekdir dir, std::ios_base::openmode mode) { return m_buffer->pubseekoff(off, dir, mode); }
 
-        virtual _CharType* alloc(size_t count) { return nullptr; }
-        virtual void commit(size_t count) {}
+        virtual _CharType* _alloc(size_t count) { return nullptr; }
+        virtual void _commit(size_t count) {}
 
         virtual bool acquire(_Out_writes_ (count) _CharType*& ptr, _In_ size_t& count) { return false; }
         virtual void release(_Out_writes_ (count) _CharType *ptr, _In_ size_t count) { }
@@ -508,6 +509,56 @@ namespace Concurrency { namespace streams {
     private:
         details::basic_async_streambuf<CharType> m_strbuf;
     };
+#pragma endregion
+
+#if defined(__cplusplus_winrt)
+#pragma region WinRT streams interop
+
+    /// <summary>
+    /// Static class containing factory functions for WinRT streams implemented on top of Casablanca async streams.
+    /// </summary>
+    /// <remarks>WinRT streams are defined in terms of single-byte characters only.</remarks>
+    class winrt_stream
+    {
+    public:
+        /// <summary>
+        /// Creates a WinRT <c>IInputStream</c> reference from an asynchronous stream buffer.
+        /// </summary>
+        /// <param name="buffer">A stream buffer based on a single-byte character.</param>
+        /// <returns>A reference to a WinRT <c>IInputStream</c>.</returns>
+        /// <remarks>
+        /// The stream buffer passed in must allow reading.
+        /// The stream buffer is shared with the caller, allowing data to be passed between the two contexts. For
+        /// example, using a <c>producer_consumer_buffer</c>, a Casablanca-based caller can pass data to a WinRT component.
+        /// </remarks>
+        _ASYNCRTIMP static Windows::Storage::Streams::IInputStream^ create_input_stream(concurrency::streams::streambuf<uint8_t> buffer);
+
+        /// <summary>
+        /// Creates a WinRT <c>IOutputStream</c> reference from an asynchronous stream buffer.
+        /// </summary>
+        /// <param name="buffer">A stream buffer based on a single-byte character.</param>
+        /// <returns>A reference to a WinRT <c>IOutputStream</c>.</returns>
+        /// <remarks>
+        /// The stream buffer passed in must allow writing.
+        /// The stream buffer is shared with the caller, allowing data to be passed between the two contexts. For
+        /// example, using a <c>producer_consumer_buffer</c>, a Casablanca-based caller can retrieve data from a WinRT component.
+        /// </remarks>
+        _ASYNCRTIMP static Windows::Storage::Streams::IOutputStream^ create_output_stream(concurrency::streams::streambuf<uint8_t> buffer);
+
+        /// <summary>
+        /// Creates a WinRT <c>IRandomAccessStream reference from an asynchronous input stream.
+        /// </summary>
+        /// <param name="buffer">A stream based on a single-byte character.</param>
+        /// <returns>A reference to a WinRT <c>IRandomAccessStream</c>.</returns>
+        /// <remarks>
+        /// The stream buffer is shared with the caller, allowing data to be passed between the two contexts. For
+        /// example, using a <c>producer_consumer_buffer</c>, a Casablanca-based caller can pass data to and retrieve data 
+        /// from a WinRT component.
+        /// </remarks>
+        _ASYNCRTIMP static Windows::Storage::Streams::IRandomAccessStream^ create_random_access_stream(concurrency::streams::streambuf<uint8_t> buffer);
+    };
+
+#endif
 #pragma endregion
 
 }} // namespaces

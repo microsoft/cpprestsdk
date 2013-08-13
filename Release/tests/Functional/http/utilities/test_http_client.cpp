@@ -352,6 +352,8 @@ private:
         {
             if(statusCode == WINHTTP_CALLBACK_STATUS_REQUEST_ERROR)
             {
+                WINHTTP_ASYNC_RESULT *pStatusInfo = static_cast<WINHTTP_ASYNC_RESULT *>(statusInfo);
+                pStatusInfo;
                 throw std::exception("Error in WinHTTP callback");
             }
             else if(statusCode == WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE)
@@ -388,40 +390,14 @@ private:
                 }
                 parse_winhttp_headers(hRequestHandle, header_buffer, p_response);
 
-                // Receive content from the request.
-                size_t contentLength = 0;
-                utility::string_t xfer_encoding;
-                if(p_response->match_header(U("Content-Length"), contentLength) && contentLength > 0)
+                // Check to see if the response has a body or not.
+                if(!WinHttpQueryDataAvailable(hRequestHandle, nullptr))
                 {
-                    p_response->m_data.resize(contentLength);
-                    
-                    // Actual WinHTTP call to read in body.
-                    if(!WinHttpReadData(
-                        hRequestHandle,
-                        &p_response->m_data[0],
-                        (DWORD)contentLength,
-                        NULL))
-                    {
-                        throw std::exception("Error reading response body");
-                    }
-                }
-                else if(p_response->match_header(U("Transfer-Encoding"), xfer_encoding) && xfer_encoding == U("chunked"))
-                {
-                    if(!WinHttpQueryDataAvailable(hRequestHandle, nullptr))
-                    {
-                        throw std::exception("Error reading response body");
-                    }
-                }
-                else
-                {
-                    WinHttpCloseHandle(hRequestHandle);
-                    p_response->m_client->m_responses_memory.push_back(p_response);
-                    Concurrency::asend(p_response->m_client->m_responses, p_response);
+                    throw std::exception("Error reading response body");
                 }
             }
             else if(statusCode == WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE)
             {
-                // We must be reading transfer-encoding data...
                 DWORD num_bytes = *(PDWORD)statusInfo;
 
                 if ( num_bytes > 0 )
@@ -448,19 +424,9 @@ private:
             }
             else if(statusCode == WINHTTP_CALLBACK_STATUS_READ_COMPLETE)
             {
-                utility::string_t xfer_encoding;
-                if(p_response->match_header(U("Transfer-Encoding"), xfer_encoding) && xfer_encoding == U("chunked"))
+                if(!WinHttpQueryDataAvailable(hRequestHandle, nullptr))
                 {
-                    if(!WinHttpQueryDataAvailable(hRequestHandle, nullptr))
-                    {
-                        throw std::exception("Error reading response body");
-                    }
-                }               
-                else 
-                {
-                    WinHttpCloseHandle(hRequestHandle);
-                    p_response->m_client->m_responses_memory.push_back(p_response);
-                    Concurrency::asend(p_response->m_client->m_responses, p_response);
+                    throw std::exception("Error reading response body");
                 }
             }
         }

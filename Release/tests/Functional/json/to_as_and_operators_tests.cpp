@@ -69,29 +69,32 @@ TEST(to_string)
 
     // object - with values created from parsing
     stream.str(U(""));
-    const utility::string_t strValue(U("{ \"key\" : true }"));
-    json::value obj = json::value::parse(strValue);
-    VERIFY_ARE_EQUAL(strValue, obj.to_string());
-    obj.serialize(stream);
-    VERIFY_ARE_EQUAL(strValue, stream.str());
+    const utility::string_t strValue1(U("{ \"key\" : true }"));
+    const utility::string_t strValue2(U("{\"key\":true}"));
+    json::value obj1 = json::value::parse(strValue1);
+    VERIFY_ARE_EQUAL(strValue2, obj1.to_string());
+    json::value obj2 = json::value::parse(strValue2);
+    VERIFY_ARE_EQUAL(strValue2, obj2.to_string());
+    obj1.serialize(stream);
+    VERIFY_ARE_EQUAL(strValue2, stream.str());
 
     // object - with values added
     stream.str(U(""));
-    obj = json::value::object();
-    obj[U("key")] = json::value(true);
-    VERIFY_ARE_EQUAL(strValue, obj.to_string());
-    obj.serialize(stream);
-    VERIFY_ARE_EQUAL(strValue, stream.str());
+    json::value obj3 = json::value::object();
+    obj3[U("key")] = json::value(true);
+    VERIFY_ARE_EQUAL(strValue2, obj3.to_string());
+    obj3.serialize(stream);
+    VERIFY_ARE_EQUAL(strValue2, stream.str());
 
     // array
     stream.str(U(""));
     json::value arr = json::value::array();
     arr[0] = json::value::string(U("Here"));
     arr[1] = json::value(true);
-    VERIFY_ARE_EQUAL(U("[ \"Here\", true ]"), arr.to_string());
-    VERIFY_ARE_EQUAL(U("[ \"Here\", true ]"), arr.to_string());
+    VERIFY_ARE_EQUAL(U("[\"Here\",true]"), arr.to_string());
+    VERIFY_ARE_EQUAL(U("[\"Here\",true]"), arr.to_string());
     arr.serialize(stream);
-    VERIFY_ARE_EQUAL(U("[ \"Here\", true ]"), stream.str());
+    VERIFY_ARE_EQUAL(U("[\"Here\",true]"), stream.str());
 }
 
 TEST(to_string_escaped_chars)
@@ -232,6 +235,21 @@ TEST(negative_get_element_array)
     VERIFY_ARE_EQUAL(v.get(0).as_integer(), 1);
     VERIFY_IS_TRUE(v.get(1).is_null());
     VERIFY_THROWS(v.get(U("a")), json::json_exception);
+}
+
+TEST(has_field_object)
+{
+    json::value v1;
+    
+    v1[U("a")] = json::value::number(1);
+    VERIFY_IS_TRUE(v1.has_field(U("a")));
+    VERIFY_IS_FALSE(v1.has_field(U("b")));
+
+    json::value v2;
+    
+    v2[0] = json::value::number(1);
+    VERIFY_IS_FALSE(v2.has_field(U("0")));
+    VERIFY_IS_FALSE(v2.has_field(U("b")));
 }
 
 TEST(negative_as_tests)

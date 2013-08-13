@@ -359,7 +359,7 @@ TEST(std_algorithms)
         size_t count = 0;
         json::value v_array = json::value::parse(U("[44, true, false]"));
         std::for_each(std::begin(v_array), std::end(v_array),
-            [&](json::value::iterator::value_type iter)
+            [&](json::value::iterator::value_type)
             {
                 count++;
             });
@@ -396,7 +396,7 @@ TEST(std_algorithms)
         std::vector<json::value> v_target(v_array.size());
         auto _where = 
             std::transform(std::begin(v_array), std::end(v_array), std::begin(v_target),
-            [&](json::value::iterator::value_type iter) -> json::value
+            [&](json::value::iterator::value_type) -> json::value
             {
                 return json::value::number(17);
             });

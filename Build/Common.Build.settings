@@ -48,7 +48,7 @@
   
   <!-- try locating configuration file -->
   <Import Condition="Exists('$(BuildRoot)\..\Build\environment.casablanca.settings')" Project="$(BuildRoot)\..\Build\environment.casablanca.settings"/>
-  
+
   <!-- paths will not be overridden -->
   <PropertyGroup>
     <OutDir Condition="'$(OutDir)' != '' and !HasTrailingSlash('$(OutDir)')">$(OutDir)\</OutDir>
@@ -61,6 +61,10 @@
 
   <PropertyGroup Condition="'$(DevToolsVersion)' == '110'">
     <DevEnvDir>$(VS110COMNTOOLS)..\IDE</DevEnvDir>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(DevToolsVersion)' == '120'">
+    <DevEnvDir>$(VS120COMNTOOLS)..\IDE</DevEnvDir>
   </PropertyGroup>
 
   <PropertyGroup>

@@ -73,17 +73,6 @@ struct string_literal_comparer<char>
 
 // Serialization
 
-namespace _literals
-{
-    static declare_string_literal(open_object,  "{ ");
-    static declare_string_literal(close_object, " }");
-    static declare_string_literal(open_array,   "[ ");
-    static declare_string_literal(close_array,  " ]");
-    static declare_string_literal(separator,    ", ");
-    static declare_string_literal(quote,        "\"");
-    static declare_string_literal(quote_colon,  "\" : ");
-}
-
 #ifdef _MS_WINDOWS
 void web::json::value::serialize(std::ostream& stream) const
 { 
@@ -104,174 +93,243 @@ void web::json::value::format(std::basic_string<char>& string) const
     m_value->format(string); 
 }
 
-template<typename _CharType>
-void web::json::details::_Object::format_impl(std::basic_string<_CharType>& os) const
-{
-    os.append(string_literal_extractor<_CharType>::get(_literals::open_object));
-    bool first = true;
-    for (auto iter = m_elements.begin(); iter != m_elements.end(); iter++)
-    {
-        if (!first) os.append(string_literal_extractor<_CharType>::get(_literals::separator));
-
-        os.append(string_literal_extractor<_CharType>::get(_literals::quote));
-        os.append(utility::conversions::to_basic_string<_CharType>::perform(iter->first.as_string()));
-        os.append(string_literal_extractor<_CharType>::get(_literals::quote_colon));
-        iter->second.format(os);
-        first = false;
-    }
-    os.append(string_literal_extractor<_CharType>::get(_literals::close_object));
-}
-
-template<typename _CharType>
-void web::json::details::_Object::format_impl(std::basic_ostream<_CharType>& os) const
-{
-    os << string_literal_extractor<_CharType>::get(_literals::open_object);
-    bool first = true;
-    for (auto iter = m_elements.begin(); iter != m_elements.end(); iter++)
-    {
-        if (!first) os << string_literal_extractor<_CharType>::get(_literals::separator);
-        os << string_literal_extractor<_CharType>::get(_literals::quote) 
-            << utility::conversions::to_basic_string<_CharType>::perform(iter->first.as_string())
-            << string_literal_extractor<_CharType>::get(_literals::quote_colon);
-        iter->second.serialize(os);
-        first = false;
-    }
-    os << string_literal_extractor<_CharType>::get(_literals::close_object);
-}
-
-template<typename _CharType>
-void web::json::details::_Array::format_impl(std::basic_string<_CharType>& os) const
-{
-    os.append(string_literal_extractor<_CharType>::get(_literals::open_array));
-    bool first = true;
-    for (auto iter = m_elements.begin(); iter != m_elements.end(); iter++)
-    {
-        if (!first) os.append(string_literal_extractor<_CharType>::get(_literals::separator));
-        iter->second.format(os);
-        first = false;
-    }
-    os.append(string_literal_extractor<_CharType>::get(_literals::close_array));
-}
-
-template<typename _CharType>
-void web::json::details::_Array::format_impl(std::basic_ostream<_CharType>& os) const
-{
-    os << string_literal_extractor<_CharType>::get(_literals::open_array);
-    bool first = true;
-    for (auto iter = m_elements.begin(); iter != m_elements.end(); iter++)
-    {
-        if (!first) os <<string_literal_extractor<_CharType>::get(_literals::separator);
-        iter->second.serialize(os);
-        first = false;
-    }
-    os << string_literal_extractor<_CharType>::get(_literals::close_array);
-}
-
 #ifdef _MS_WINDOWS
 void web::json::details::_Object::format(std::basic_string<wchar_t>& os) const
 {
-    format_impl(os);
+    os.push_back(L'{');
+    bool first = true;
+    for (auto iter = m_elements.begin(); iter != m_elements.end(); iter++)
+    {
+        if (!first) os.push_back(L',');
+
+        os.push_back(L'"');
+        auto _str = reinterpret_cast<web::json::details::_String*>(iter->first.m_value.get());
+        if (_str->is_wide())
+        {
+            os.append(*_str->m_wstring.get());
+        }
+        else
+        {
+            os.append(utility::conversions::to_basic_string<wchar_t>::perform(_str->as_utf16_string()));
+        }
+        os.append(L"\":");
+        iter->second.format(os);
+        first = false;
+    }
+    os.push_back(L'}');
 }
 
 void web::json::details::_Object::format(std::basic_ostream<wchar_t>& os) const
 {
-    format_impl(os);
+    os << L'{';
+    bool first = true;
+    for (auto iter = m_elements.begin(); iter != m_elements.end(); iter++)
+    {
+        if (!first) os << L',';
+        os << L'"'; 
+        auto _str = reinterpret_cast<web::json::details::_String*>(iter->first.m_value.get());
+        if (_str->is_wide())
+        {
+            os << *_str->m_wstring.get();
+        }
+        else
+        {
+            os << utility::conversions::to_basic_string<wchar_t>::perform(_str->as_utf16_string());
+        }
+        os << L"\":";
+        iter->second.serialize(os);
+        first = false;
+    }
+    os << L'}';
 }
 
 void web::json::details::_Array::format(std::basic_string<wchar_t>& os) const
 {
-    format_impl(os);
+    os.push_back(L'[');
+    bool first = true;
+    for (auto iter = m_elements.begin(); iter != m_elements.end(); iter++)
+    {
+        if (!first) os.push_back(L',');
+        iter->second.format(os);
+        first = false;
+    }
+    os.push_back(L']');
 }
 
 void web::json::details::_Array::format(std::basic_ostream<wchar_t>& os) const
 {
-    format_impl(os);
+    os << L'[';
+    bool first = true;
+    for (auto iter = m_elements.begin(); iter != m_elements.end(); iter++)
+    {
+        if (!first) os << L',';
+        iter->second.serialize(os);
+        first = false;
+    }
+    os << L']';
 }
 #endif
 
 void web::json::details::_Object::format(std::basic_string<char>& os) const
 {
-    format_impl(os);
+    os.push_back('{');
+    bool first = true;
+    for (auto iter = m_elements.begin(); iter != m_elements.end(); iter++)
+    {
+        if (!first) os.push_back(',');
+
+        os.push_back('"');
+        auto _str = reinterpret_cast<web::json::details::_String*>(iter->first.m_value.get());
+        if (!_str->is_wide())
+        {
+            os.append(*_str->m_string.get());
+        }
+        else
+        {
+            os.append(utility::conversions::to_basic_string<char>::perform(_str->as_utf8_string()));
+        }
+        os.append("\":");
+        iter->second.format(os);
+        first = false;
+    }
+    os.push_back('}');
 }
 
 void web::json::details::_Object::format(std::basic_ostream<char>& os) const
 {
-    format_impl(os);
+    os << '{';
+    bool first = true;
+    for (auto iter = m_elements.begin(); iter != m_elements.end(); iter++)
+    {
+        if (!first) os << ',';
+        os << '"'; 
+        auto _str = reinterpret_cast<web::json::details::_String*>(iter->first.m_value.get());
+        if (!_str->is_wide())
+        {
+            os << *_str->m_string.get();
+        }
+        else
+        {
+            os << utility::conversions::to_basic_string<char>::perform(_str->as_utf8_string());
+        }
+        os << "\":";
+        iter->second.serialize(os);
+        first = false;
+    }
+    os << '}';
 }
 
 void web::json::details::_Array::format(std::basic_string<char>& os) const
 {
-    format_impl(os);
+    os.push_back('[');
+    bool first = true;
+    for (auto iter = m_elements.begin(); iter != m_elements.end(); iter++)
+    {
+        if (!first) os.push_back(',');
+        iter->second.format(os);
+        first = false;
+    }
+    os.push_back(']');
 }
 
 void web::json::details::_Array::format(std::basic_ostream<char>& os) const
 {
-    format_impl(os);
+    os << '[';
+    bool first = true;
+    for (auto iter = m_elements.begin(); iter != m_elements.end(); iter++)
+    {
+        if (!first) os << ',';
+        iter->second.serialize(os);
+        first = false;
+    }
+    os << ']';
 }
 
-int _hexval [] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                   0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 0, 0, 0, 0, 0,
-                   0,10,11,12,13,14,15, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                   0,10,11,12,13,14,15, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-
+int _hexval [] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 
+                   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                    0,  1,  2,  3,  4,  5,  6,  7,  8,  9, -1, -1, -1, -1, -1, -1,
+                   -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                   -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
 
 template<typename CharType>
-std::basic_string<CharType> unescape_string(const std::basic_string<CharType>& escaped)
+CharType get_unescaped_char(typename std::basic_string<CharType>::iterator & inputIter)
 {
-    std::basic_string<CharType> tokenString;
-
-    for (auto iter = escaped.begin(); iter != escaped.end(); iter++ )
+    CharType ch;
+    switch ( ch = *(++inputIter))
     {
-        CharType ch = (CharType)*iter;
+    case '\"': 
+    case '\\': 
+    case '/': 
+        break;
+    case 'b':
+        ch = '\b';
+        break;
+    case 'f':
+        ch = '\f';
+        break;
+    case 'r':
+        ch = '\r';
+        break;
+    case 'n':
+        ch = '\n';
+        break;
+    case 't':
+        ch = '\t';
+        break;
+    case 'u':
+    {
+        // A four-hexdigit unicode character
+        int decoded = 0;
+        for (int i = 0; i < 4; i++)
+        {
+            CharType c = *(++inputIter);
+            _ASSERTE(isxdigit(c));
+            int val = _hexval[c];
+            decoded |= (val << (4*(3-i)));
+        }
+        ch = static_cast<CharType>(decoded & 0xFFFF);
+        break;
+    }
+    default:
+        throw json::json_exception(_XPLATSTR("invalid escape character in string literal"));
+    }
+    return ch;
+}
 
+// Unescape string in-place
+template<typename CharType>
+void unescape_string(std::basic_string<CharType>& escaped)
+{
+    auto outputIter = escaped.begin();
+
+    // The outer loop advances the iterators until we have found an escape character
+    for(auto inputIter = outputIter; inputIter != escaped.end(); ++inputIter )
+    {
+        CharType ch = (CharType)*inputIter;
         if ( ch == '\\' )
         {
-            switch ( ch = *(++iter) )
+            // We've found an escape character. Unescape it, and copy into the output stream
+            // Scan the rest of the string and copy every character (unscaping it if necessary) into the ouput stream
+            ch = get_unescaped_char<CharType>(inputIter);
+            *outputIter++ = ch;
+            ++inputIter;
+            for(; inputIter != escaped.end(); ++inputIter )
             {
-            case '\"': 
-            case '\\': 
-            case '/': 
-                break;
-            case 'b':
-                ch = '\b';
-                break;
-            case 'f':
-                ch = '\f';
-                break;
-            case 'r':
-                ch = _XPLATSTR('\r');
-                break;
-            case 'n':
-                ch = '\n';
-                break;
-            case 't':
-                ch = '\t';
-                break;
-            case 'u':
-            {
-                // A four-hexdigit unicode character
-                int decoded = 0;
-                for (int i = 0; i < 4; i++)
+                ch = (CharType)*inputIter;
+                if ( ch == '\\' )
                 {
-                    CharType c = *(++iter);
-                    int val = _hexval[c];
-                    decoded |= (val << (4*(3-i)));
+                    ch = get_unescaped_char<CharType>(inputIter);
                 }
-                ch = static_cast<CharType>(decoded & 0xFFFF);
-                break;
+                *outputIter++ = ch;
             }
-            default:
-                throw json::json_exception(_XPLATSTR("invalid escape character in string literal"));
-            }
+            escaped.resize(outputIter - escaped.begin());
+            return;
         }
-
-        tokenString.push_back(ch);
+        ++outputIter;
     }
-
-    return tokenString;
 }
 
 template<typename CharType>
@@ -405,6 +463,12 @@ const json::value& web::json::details::_Object::cnst_index(const utility::string
         throw json::json_exception(_XPLATSTR("invalid field name"));
 
     return m_elements[whre->second].second;
+}
+
+bool web::json::details::_Object::has_field(const utility::string_t &key) const
+{
+    const_cast<web::json::details::_Object*>(this)->map_fields();
+    return m_fields.find(key) != m_fields.end();
 }
 
 json::value web::json::details::_Object::get_field(const utility::string_t &key) const
@@ -798,11 +862,6 @@ public:
     }
 
 protected:
-    virtual bool IsEOF()
-    {
-        return false;
-    }
-
     virtual CharType NextCharacter() = 0;
     virtual CharType PeekCharacter() = 0;
 
@@ -932,7 +991,7 @@ CharType JSON_StreamParser<CharType>::NextCharacter()
 {
     CharType ch = (CharType)m_streambuf->sbumpc();
 
-    if ( this->IsEOF() || ch == this->m_eof ) return (CharType)ch;
+    if ( ch == this->m_eof ) return (CharType)ch;
 
     if ( ch == '\n' )
     {
@@ -992,7 +1051,7 @@ CharType JSON_Parser<CharType>::EatWhitespace()
 {
    CharType ch = NextCharacter();
 
-   while ( !this->IsEOF() && ch != this->m_eof && iswspace((int)ch) )
+   while ( ch != this->m_eof && iswspace((int)ch) )
    {
        ch = NextCharacter();
    }
@@ -1010,7 +1069,7 @@ bool JSON_Parser<CharType>::CompleteKeyword(const CharType *expected, size_t exp
     const CharType *ptr = expected+1;
     CharType ch = NextCharacter();
 
-    while ( !this->IsEOF() && ch != this->m_eof && *ptr != '\0')
+    while ( ch != this->m_eof && *ptr != '\0')
     {
         if ( ch != *ptr ) 
         {
@@ -1036,9 +1095,9 @@ template <typename CharType>
 bool JSON_StringParser<CharType>::CompleteKeyword(const CharType *expected, size_t expected_size, typename JSON_Parser<CharType>::Token::Kind kind, typename JSON_Parser<CharType>::Token &token)
 {
     const CharType *ptr = expected+1;
-    CharType ch = NextCharacter();
+    CharType ch = JSON_StringParser<CharType>::NextCharacter();
 
-    while ( !this->IsEOF() && ch != this->m_eof && *ptr != '\0')
+    while ( ch != this->m_eof && *ptr != '\0')
     {
         if ( ch != *ptr ) 
         {
@@ -1048,7 +1107,7 @@ bool JSON_StringParser<CharType>::CompleteKeyword(const CharType *expected, size
 
         if ( *ptr == '\0' ) break;
 
-        ch = NextCharacter();
+        ch = JSON_StringParser<CharType>::NextCharacter();
     }
 
     token.spelling.resize(expected_size);
@@ -1073,7 +1132,7 @@ bool JSON_Parser<CharType>::CompleteNumberLiteral(CharType first, Token &token)
 
     CharType ch = first;
 
-    while ( !this->IsEOF() && ch != this->m_eof)
+    while ( ch != this->m_eof)
     {
         ch = PeekCharacter();
 
@@ -1263,9 +1322,9 @@ bool JSON_StringParser<CharType>::CompleteNumberLiteral(CharType first, typename
 
     CharType ch = first;
 
-    while ( !this->IsEOF() && ch != this->m_eof)
+    while ( ch != this->m_eof)
     {
-        ch = PeekCharacter();
+        ch = JSON_StringParser<CharType>::PeekCharacter();
 
         switch ( ch )
         {
@@ -1290,7 +1349,7 @@ bool JSON_StringParser<CharType>::CompleteNumberLiteral(CharType first, typename
             break;
         }
 
-        ch = NextCharacter();
+        ch = JSON_StringParser<CharType>::NextCharacter();
     }
 
 boundary_found:
@@ -1454,7 +1513,7 @@ bool JSON_Parser<CharType>::CompleteComment(CharType first, Token &token)
 
     CharType ch = NextCharacter();
 
-    if ( this->IsEOF() || ch == this->m_eof || (ch != '/' && ch != '*') )
+    if ( ch == this->m_eof || (ch != '/' && ch != '*') )
         return false;
 
     if ( ch == '/' )
@@ -1463,7 +1522,7 @@ bool JSON_Parser<CharType>::CompleteComment(CharType first, Token &token)
 
         ch = NextCharacter();
 
-        while ( !this->IsEOF() && ch != this->m_eof && ch != '\n')
+        while ( ch != this->m_eof && ch != '\n')
         {
             token.spelling.push_back(ch);
             ch = NextCharacter();
@@ -1477,14 +1536,14 @@ bool JSON_Parser<CharType>::CompleteComment(CharType first, Token &token)
 
         while ( true )
         {
-            if ( this->IsEOF() || ch == this->m_eof )
+            if ( ch == this->m_eof )
                 return false;
 
             if ( ch == '*' )
             {
                 CharType ch1 = PeekCharacter();
 
-                if ( this->IsEOF() || ch1 == this->m_eof )
+                if ( ch1 == this->m_eof )
                     return false;
 
                 if ( ch1 == '/' )
@@ -1520,9 +1579,9 @@ bool JSON_StringParser<CharType>::CompleteComment(CharType first, typename JSON_
     // first is expected to contain "\""
     UNREFERENCED_PARAMETER(first);
 
-    CharType ch = NextCharacter();
+    CharType ch = JSON_StringParser<CharType>::NextCharacter();
 
-    if ( this->IsEOF() || ch == this->m_eof || (ch != '/' && ch != '*') )
+    if ( ch == this->m_eof || (ch != '/' && ch != '*') )
         return false;
 
     auto start = m_position;
@@ -1532,36 +1591,36 @@ bool JSON_StringParser<CharType>::CompleteComment(CharType first, typename JSON_
     {
         // Line comment -- look for a newline or EOF to terminate.
 
-        ch = NextCharacter();
+        ch = JSON_StringParser<CharType>::NextCharacter();
 
-        while ( !this->IsEOF() && ch != this->m_eof && ch != '\n')
+        while ( ch != this->m_eof && ch != '\n')
         {
             end = m_position;
-            ch = NextCharacter();
+            ch = JSON_StringParser<CharType>::NextCharacter();
         }
     }
     else
     {
         // Block comment -- look for a terminating "*/" sequence.
 
-        ch = NextCharacter();
+        ch = JSON_StringParser<CharType>::NextCharacter();
 
         while ( true )
         {
-            if ( this->IsEOF() || ch == this->m_eof )
+            if ( ch == this->m_eof )
                 return false;
 
             if ( ch == '*' )
             {
-                ch = PeekCharacter();
+                ch = JSON_StringParser<CharType>::PeekCharacter();
 
-                if ( this->IsEOF() || ch == this->m_eof )
+                if ( ch == this->m_eof )
                     return false;
 
                 if ( ch == '/' )
                 {
                     // Consume the character
-                    NextCharacter();
+                    JSON_StringParser<CharType>::NextCharacter();
                     end = m_position-2;
                     break;
                 }
@@ -1569,7 +1628,7 @@ bool JSON_StringParser<CharType>::CompleteComment(CharType first, typename JSON_
             }
 
             end = m_position;
-            ch = NextCharacter();
+            ch = JSON_StringParser<CharType>::NextCharacter();
         }
     }
 
@@ -1591,7 +1650,7 @@ bool JSON_Parser<CharType>::CompleteStringLiteral(CharType first, Token &token)
 
     CharType ch = NextCharacter();
 
-    while ( !this->IsEOF() && ch != this->m_eof && ch != '"')
+    while ( ch != this->m_eof && ch != '"')
     {
         if ( ch == '\\' )
         {          
@@ -1659,9 +1718,9 @@ bool JSON_StringParser<CharType>::CompleteStringLiteral(CharType first, typename
 
     auto start = m_position;
 
-    CharType ch = NextCharacter();
+    CharType ch = JSON_StringParser<CharType>::NextCharacter();
 
-    while ( !this->IsEOF() && ch != this->m_eof && ch != '"')
+    while ( ch != this->m_eof && ch != '"')
     {
         if ( ch == '\\' )
         {
@@ -1673,7 +1732,7 @@ bool JSON_StringParser<CharType>::CompleteStringLiteral(CharType first, typename
             return false;
         }
 
-        ch = NextCharacter();
+        ch = JSON_StringParser<CharType>::NextCharacter();
     }
 
     if ( ch == '"' )
@@ -1702,7 +1761,7 @@ try_again:
 
     CreateToken(result, Token::TKN_EOF);
 
-    if ( this->IsEOF() || ch == this->m_eof ) return;
+    if ( ch == this->m_eof ) return;
 
     switch ( ch )
     {
@@ -1754,7 +1813,6 @@ try_again:
         // For now, we're ignoring comments.
         goto try_again;
     case '"':
-        result.spelling.reserve(32);
         if ( !CompleteStringLiteral(ch, result) ) CreateError(result, _XPLATSTR("Malformed string literal"));
         break;
 
@@ -1909,7 +1967,8 @@ std::unique_ptr<web::json::details::_Value> JSON_Parser<CharType>::_ParseValue(t
 
         case JSON_Parser<CharType>::Token::TKN_StringLiteral:
             {
-                auto value = utility::details::make_unique<web::json::details::_String>(unescape_string(tkn.spelling));
+                unescape_string(tkn.spelling);
+                auto value = utility::details::make_unique<web::json::details::_String>(std::move(tkn.spelling));
                 GetNextToken(tkn);
                 return std::move(value);
             }

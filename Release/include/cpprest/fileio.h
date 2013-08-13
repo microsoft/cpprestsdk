@@ -203,6 +203,13 @@ _ASYNCRTIMP size_t __cdecl _getn_fsb(_In_ concurrency::streams::details::_file_i
 _ASYNCRTIMP bool __cdecl _sync_fsb(_In_ concurrency::streams::details::_file_info *info, _In_ concurrency::streams::details::_filestream_callback *callback);
 
 /// <summary>
+/// Get the size of the underlying file.
+/// </summary>
+/// <param name="info">The file info record of the file</param>
+/// <returns>The file size</returns>
+_ASYNCRTIMP utility::size64_t __cdecl _get_size(_In_ concurrency::streams::details::_file_info *info, size_t char_size);
+
+/// <summary>
 /// Adjust the internal buffers and pointers when the application seeks to a new read location in the stream.
 /// </summary>
 /// <param name="info">The file info record of the file</param>

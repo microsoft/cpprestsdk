@@ -148,7 +148,7 @@
 	<ClInclude Include="..\http_listener_tests.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\connection_tests.cpp" />
+    <ClCompile Include="..\connections_and_errors.cpp" />
     <ClCompile Include="..\header_tests.cpp" />
     <ClCompile Include="..\pipeline_stage_tests.cpp" />
     <ClCompile Include="..\reply_helper_tests.cpp" />

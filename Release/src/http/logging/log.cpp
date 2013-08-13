@@ -144,6 +144,21 @@ const char *LevelText(log_level level)
 #ifdef _MS_WINDOWS
 bool _FormatDate(const SYSTEMTIME& st, utility::ostream_t &outputStream)
 {
+#if _WIN32_WINNT < _WIN32_WINNT_VISTA 
+    int nDateStringLength = GetDateFormat(LOCALE_USER_DEFAULT, 0, &st, NULL, NULL, 0);
+    if(nDateStringLength == 0)
+    {
+        // error condition
+        return false;
+    }
+
+    char * pszDate = new char[nDateStringLength];
+    if(GetDateFormat(LOCALE_USER_DEFAULT, 0, &st, NULL, pszDate, nDateStringLength) == 0)
+    {
+        // error condition
+        return false;
+    }  
+#else
     int nDateStringLength = GetDateFormatEx(LOCALE_NAME_USER_DEFAULT, 0, &st, NULL, NULL, 0, NULL);
     if(nDateStringLength == 0)
     {
@@ -156,7 +171,8 @@ bool _FormatDate(const SYSTEMTIME& st, utility::ostream_t &outputStream)
     {
         // error condition
         return false;
-    }
+    }  
+#endif // _WIN32_WINNT < _WIN32_WINNT_VISTA 
     
     // Append date to the output stream and free resources
     outputStream << pszDate;
@@ -167,6 +183,21 @@ bool _FormatDate(const SYSTEMTIME& st, utility::ostream_t &outputStream)
 
 bool _FormatTime(const SYSTEMTIME& st, utility::ostream_t& outputStream)
 {
+#if _WIN32_WINNT < _WIN32_WINNT_VISTA 
+    int nTimeStringLength = GetTimeFormat(LOCALE_USER_DEFAULT, 0, &st, NULL, NULL, 0);
+    if(nTimeStringLength == 0)
+    {
+        // error condition
+        return false;
+    }
+
+    char * pszTime = new char[nTimeStringLength];
+    if(GetTimeFormat(LOCALE_USER_DEFAULT, 0, &st, NULL, pszTime, nTimeStringLength) == 0)
+    {
+        // error condition
+        return false;
+    }
+#else
     int nTimeStringLength = GetTimeFormatEx(LOCALE_NAME_USER_DEFAULT, 0, &st, NULL, NULL, 0);
     if(nTimeStringLength == 0)
     {
@@ -179,7 +210,8 @@ bool _FormatTime(const SYSTEMTIME& st, utility::ostream_t& outputStream)
     {
         // error condition
         return false;
-    }
+    }  
+#endif // _WIN32_WINNT < _WIN32_WINNT_VISTA 
 
     // Append time to the output stream and free resources
     outputStream << " " << pszTime;

@@ -46,27 +46,4 @@ void test_connection(tests::functional::http::utilities::test_http_server *p_ser
 // Take in the path to request and what path should be received in the server.
 void test_connection(tests::functional::http::utilities::test_http_server *p_server, web::http::client::http_client *p_client, const utility::string_t &request_path, const utility::string_t &expected_path);
 
-// Helper function to verify http_exception is thrown with correct error code
-#define VERIFY_THROWS_HTTP_ERROR_CODE(__expression, __code)                             \
-    UNITTEST_MULTILINE_MACRO_BEGIN                                                      \
-        try                                                                             \
-        {                                                                               \
-            __expression;                                                               \
-            VERIFY_IS_TRUE(false, "Expected http_exception not thrown");                \
-        }                                                                               \
-        catch (const web::http::http_exception& _exc)                                   \
-        {                                                                               \
-            VERIFY_IS_TRUE(std::string(_exc.what()).size() > 0);                        \
-            /* The reason we can't directly compare with the given std::errc code is because*/      \
-            /* on Windows the STL implementation of error categories are NOT unique across*/        \
-            /* dll boundaries.*/                                                        \
-            const std::error_condition _condFound = _exc.error_code().default_error_condition();    \
-            VERIFY_ARE_EQUAL(static_cast<int>(__code), _condFound.value());                               \
-        }                                                                               \
-        catch(...)                                                                      \
-        {                                                                               \
-            VERIFY_IS_TRUE(false, "Exception other than http_exception thrown");        \
-        }                                                                               \
-    UNITTEST_MULTILINE_MACRO_END
-
 }}}}

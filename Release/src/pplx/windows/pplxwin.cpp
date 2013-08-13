@@ -87,8 +87,12 @@ namespace details
     _PPLXIMP event_impl::event_impl()
     {
         static_assert(sizeof(HANDLE) <= sizeof(_M_impl), "HANDLE version mismatch");
-
-        _M_impl = CreateEventEx(NULL, NULL, CREATE_EVENT_MANUAL_RESET, EVENT_ALL_ACCESS);
+        
+#ifndef __cplusplus_winrt
+        _M_impl = CreateEvent(NULL, true, false, NULL);
+#else
+        _M_impl = CreateEventEx(NULL, NULL, CREATE_EVENT_MANUAL_RESET, EVENT_ALL_ACCESS);  
+#endif // !__cplusplus_winrt
 
         if( _M_impl != NULL )
         {
@@ -127,7 +131,12 @@ namespace details
     _PPLXIMP critical_section_impl::critical_section_impl()
     {
         static_assert(sizeof(CRITICAL_SECTION) <= sizeof(_M_impl), "CRITICAL_SECTION version mismatch");
+
+#ifndef __cplusplus_winrt
+        InitializeCriticalSection(reinterpret_cast<LPCRITICAL_SECTION>(&_M_impl));
+#else
         InitializeCriticalSectionEx(reinterpret_cast<LPCRITICAL_SECTION>(&_M_impl), 0, 0);
+#endif // !__cplusplus_winrt
     }
 
     _PPLXIMP critical_section_impl::~critical_section_impl() 
@@ -145,11 +154,12 @@ namespace details
         LeaveCriticalSection(reinterpret_cast<LPCRITICAL_SECTION>(&_M_impl));
     }
 
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA 
     //
     // reader_writer_lock implementation
     //
     _PPLXIMP reader_writer_lock_impl::reader_writer_lock_impl()
-    : m_locked_exclusive(false)
+        : m_locked_exclusive(false)
     {
         static_assert(sizeof(SRWLOCK) <= sizeof(_M_impl), "SRWLOCK version mismatch");
         InitializeSRWLock(reinterpret_cast<PSRWLOCK>(&_M_impl));
@@ -177,8 +187,9 @@ namespace details
         {
             ReleaseSRWLockShared(reinterpret_cast<PSRWLOCK>(&_M_impl));
         }
-    }
-
+    }  
+#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA 
+    
     //
     // Timer implementation
     //
@@ -291,6 +302,41 @@ namespace details
     }
 #else
 
+#if _WIN32_WINNT < _WIN32_WINNT_VISTA 
+     struct _Scheduler_Param
+    {
+        TaskProc_t m_proc;
+        void * m_param;
+
+        _Scheduler_Param(TaskProc_t proc, _In_ void * param)
+            : m_proc(proc), m_param(param)
+        {
+        }
+
+        static DWORD CALLBACK DefaultWorkCallback(LPVOID lpParameter)
+        {
+            auto schedulerParam = (_Scheduler_Param *)(lpParameter);
+
+            schedulerParam->m_proc(schedulerParam->m_param);
+
+            delete schedulerParam;
+
+            return 1;
+        }
+    };
+
+    _PPLXIMP void windows_scheduler::schedule( TaskProc_t proc, _In_ void* param)
+    {
+        auto schedulerParam = new _Scheduler_Param(proc, param);
+        auto work = QueueUserWorkItem(_Scheduler_Param::DefaultWorkCallback, schedulerParam, WT_EXECUTEDEFAULT);
+        
+        if (!work)
+        {
+            delete schedulerParam;
+            throw utility::details::create_system_error(GetLastError());
+        }
+    }
+#else
     struct _Scheduler_Param
     {
         TaskProc_t m_proc;
@@ -325,6 +371,7 @@ namespace details
         SubmitThreadpoolWork(work);
         CloseThreadpoolWork(work);
     }
+#endif // _WIN32_WINNT < _WIN32_WINNT_VISTA 
 
 #endif
 } // namespace details

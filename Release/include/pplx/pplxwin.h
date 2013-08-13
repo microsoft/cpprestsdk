@@ -127,6 +127,7 @@ namespace details
         critical_section_impl const & operator=(const critical_section_impl&); // no assignment operator
     };
 
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA 
     /// <summary>
     /// Reader writer lock
     /// </summary>
@@ -171,7 +172,8 @@ namespace details
         // true - lock exclusive
         // false - lock shared
         bool m_locked_exclusive;
-    };
+    };  
+#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA 
 
     /// <summary>
     /// Recursive mutex
@@ -299,9 +301,12 @@ namespace extensibility
     typedef ::pplx::details::critical_section_impl critical_section_t;
     typedef scoped_lock<critical_section_t> scoped_critical_section_t;
 
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA 
     typedef ::pplx::details::reader_writer_lock_impl reader_writer_lock_t;
     typedef scoped_lock<reader_writer_lock_t> scoped_rw_lock_t;
-    typedef reader_writer_lock_t::scoped_lock_read scoped_read_lock_t;
+    typedef reader_writer_lock_t::scoped_lock_read scoped_read_lock_t;  
+#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA 
+
 
     typedef ::pplx::details::recursive_lock_impl recursive_lock_t;
     typedef scoped_lock<recursive_lock_t> scoped_recursive_lock_t;

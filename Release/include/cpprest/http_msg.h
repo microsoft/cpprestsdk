@@ -154,59 +154,18 @@ bool bind(const key_type &text, utility::string_t &ref) //const
     return true; 
 }
 
-namespace header_names
+/// <summary>
+/// Constants for the HTTP headers mentioned in RFC 2616.
+/// </summary>
+class header_names
 {
-    /// <summary>
-    /// Constants for the HTTP headers mentioned in RFC 2616.
-    /// </summary>
-    const utility::string_t accept = _XPLATSTR("Accept");
-    const utility::string_t accept_charset = _XPLATSTR("Accept-Charset");
-    const utility::string_t accept_encoding = _XPLATSTR("Accept-Encoding");
-    const utility::string_t accept_language = _XPLATSTR("Accept-Language");
-    const utility::string_t accept_ranges = _XPLATSTR("Accept-Ranges");
-    const utility::string_t age = _XPLATSTR("Age");
-    const utility::string_t allow = _XPLATSTR("Allow");
-    const utility::string_t authorization = _XPLATSTR("Authorization");
-    const utility::string_t cache_control = _XPLATSTR("Cache-Control");
-    const utility::string_t connection = _XPLATSTR("Connection");
-    const utility::string_t content_encoding = _XPLATSTR("Content-Encoding");
-    const utility::string_t content_language = _XPLATSTR("Content-Language");
-    const utility::string_t content_length = _XPLATSTR("Content-Length");
-    const utility::string_t content_location = _XPLATSTR("Content-Location");
-    const utility::string_t content_md5 = _XPLATSTR("Content-MD5");
-    const utility::string_t content_range = _XPLATSTR("Content-Range");
-    const utility::string_t content_type = _XPLATSTR("Content-Type");
-    const utility::string_t date = _XPLATSTR("Date");
-    const utility::string_t etag = _XPLATSTR("ETag");
-    const utility::string_t expect = _XPLATSTR("Expect");
-    const utility::string_t expires = _XPLATSTR("Expires");
-    const utility::string_t from = _XPLATSTR("From");
-    const utility::string_t host = _XPLATSTR("Host");
-    const utility::string_t if_match = _XPLATSTR("If-Match");
-    const utility::string_t if_modified_since = _XPLATSTR("If-Modified-Since");
-    const utility::string_t if_none_match = _XPLATSTR("If-None-Match");
-    const utility::string_t if_range = _XPLATSTR("If-Range");
-    const utility::string_t if_unmodified_since = _XPLATSTR("If-Unmodified-Since");
-    const utility::string_t last_modified = _XPLATSTR("Last-Modified");
-    const utility::string_t location = _XPLATSTR("Location");
-    const utility::string_t max_forwards = _XPLATSTR("Max-Forwards");
-    const utility::string_t pragma = _XPLATSTR("Pragma");
-    const utility::string_t proxy_authenticate = _XPLATSTR("Proxy-Authenticate");
-    const utility::string_t proxy_authorization = _XPLATSTR("Proxy-Authorization");
-    const utility::string_t range = _XPLATSTR("Range");
-    const utility::string_t referer = _XPLATSTR("Referer");
-    const utility::string_t retry_after = _XPLATSTR("Retry-After");
-    const utility::string_t server = _XPLATSTR("Server");
-    const utility::string_t te = _XPLATSTR("TE");
-    const utility::string_t trailer = _XPLATSTR("Trailer");
-    const utility::string_t transfer_encoding = _XPLATSTR("Transfer-Encoding");
-    const utility::string_t upgrade = _XPLATSTR("Upgrade");
-    const utility::string_t user_agent = _XPLATSTR("User-Agent");
-    const utility::string_t vary = _XPLATSTR("Vary");
-    const utility::string_t via = _XPLATSTR("Via");
-    const utility::string_t warning = _XPLATSTR("Warning");
-    const utility::string_t www_authenticate = _XPLATSTR("WWW-Authenticate");
-}
+public:
+#define _HEADER_NAMES
+#define DAT(a,b) _ASYNCRTIMP const static utility::string_t a;
+#include "cpprest/http_constants.dat"
+#undef _HEADER_NAMES
+#undef DAT
+};
 
 /// <summary>
 /// Represents an HTTP error. This class holds an error message and an optional error code.
@@ -640,9 +599,9 @@ private:
 class _http_response : public http::details::http_msg_base
 {
 public:
-    _http_response() : m_status_code((std::numeric_limits<uint16_t>::max)()) { }
+    _http_response() : m_status_code((std::numeric_limits<uint16_t>::max)()), m_error_code(0) { }
 
-    _http_response(http::status_code code) : m_status_code(code) {}
+    _http_response(http::status_code code) : m_status_code(code), m_error_code(0) {}
 
     http::status_code status_code() const { return m_status_code; } 
 

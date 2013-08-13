@@ -31,21 +31,30 @@
 
 #include "stdafx.h"
 
+#include <algorithm>
 #include <map>
 #include "GlobalSettings.h"
 
 namespace UnitTest {
 
+static std::string to_lower(const std::string &str)
+{
+	std::string retVal;
+	retVal.resize(str.size());
+	std::transform(str.begin(), str.end(), retVal.begin(), ::tolower);
+	return retVal;
+}
+
 std::map<std::string, std::string> g_settings;
 
 void GlobalSettings::Add(const std::string &key, const std::string &value)
 {
-    g_settings[key] = value;
+    g_settings[to_lower(key)] = value;
 }
 
 bool GlobalSettings::Has(const std::string &key)
 { 
-    return g_settings.find(key) != g_settings.end(); 
+    return g_settings.find(to_lower(key)) != g_settings.end(); 
 }
 
 const std::string & GlobalSettings::Get(const std::string &key)
@@ -54,7 +63,7 @@ const std::string & GlobalSettings::Get(const std::string &key)
     {
         throw std::invalid_argument("Error: property is not found");
     }
-    return g_settings.find(key)->second;
+    return g_settings.find(to_lower(key))->second;
 }
 
 }

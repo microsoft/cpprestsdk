@@ -469,7 +469,7 @@ int main(int argc, char* argv[])
                 }
             }
             std::cout << "Loaded " << *binary << "..." << std::endl;
-            UnitTest::TestList tests = module_loader.get_test_list(*binary);
+            UnitTest::TestList& tests = module_loader.get_test_list(*binary);
 
             // Skip if binary contains no tests.
             if(tests.IsEmpty())
@@ -579,28 +579,30 @@ int main(int argc, char* argv[])
                     }
                 }
             }
-        }
 
-        if( totalTestCount > 0 )
-        {
-            // Print out all failed test cases at the end for easy viewing.
-            const double elapsedTime = timer.GetTimeInMs();
-            std::cout << "Finished running all tests. Took " << elapsedTime << "ms" << std::endl;
-            if(failedTestCount > 0)
-            {
-                ChangeConsoleTextColorToRed();
-                std::for_each(failedTests.begin(), failedTests.end(), [](const std::string &failedTest)
-                {
-                    std::cout << "**** " << failedTest << " FAILED ****" << std::endl;
-                });
-            }
-            else
-            {
-                ChangeConsoleTextColorToGreen();
-                std::cout << "****SUCCESS all " << totalTestCount << " test cases PASSED****" << std::endl;
-            }
-            ChangeConsoleTextColorToGrey();
+            tests.Clear();
         }
+    }
+
+    if( totalTestCount > 0 )
+    {
+        // Print out all failed test cases at the end for easy viewing.
+        const double elapsedTime = timer.GetTimeInMs();
+        std::cout << "Finished running all tests. Took " << elapsedTime << "ms" << std::endl;
+        if(failedTestCount > 0)
+        {
+            ChangeConsoleTextColorToRed();
+            std::for_each(failedTests.begin(), failedTests.end(), [](const std::string &failedTest)
+            {
+                std::cout << "**** " << failedTest << " FAILED ****" << std::endl;
+            });
+        }
+        else
+        {
+            ChangeConsoleTextColorToGreen();
+            std::cout << "****SUCCESS all " << totalTestCount << " test cases PASSED****" << std::endl;
+        }
+        ChangeConsoleTextColorToGrey();
     }
 
 #ifdef WIN32

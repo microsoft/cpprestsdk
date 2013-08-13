@@ -109,18 +109,6 @@
     <ClInclude Include="$(CasablancaIncludeDir)\cpprest\filelog.h">
       <Filter>Header Files\cpprest</Filter>
     </ClInclude>
-    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\http_listener.h">
-      <Filter>Header Files\cpprest</Filter>
-    </ClInclude>
-    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\http_server.h">
-      <Filter>Header Files\cpprest</Filter>
-    </ClInclude>
-    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\http_server_api.h">
-      <Filter>Header Files\cpprest</Filter>
-    </ClInclude>
-    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\http_windows_server.h">
-      <Filter>Header Files\cpprest</Filter>
-    </ClInclude>
     <ClInclude Include="$(CasablancaIncludeDir)\cpprest\log.h">
       <Filter>Header Files\cpprest</Filter>
     </ClInclude>
@@ -159,9 +147,6 @@
     <ClCompile Include="$(CasablancaSrcDir)\utilities\dllmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="$(CasablancaSrcDir)\http\listener\http_msg_listen.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="$(CasablancaSrcDir)\http\logging\log.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -171,6 +156,26 @@
     </ClCompile>
   </ItemGroup>
 
+  <!-- non-TargetXP files go here-->
+  <ItemGroup Condition ="'$(TargetXP)' != 'true'">
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\http_listener.h">
+      <Filter>Header Files\cpprest</Filter>
+    </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\http_server.h">
+      <Filter>Header Files\cpprest</Filter>
+    </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\http_server_api.h">
+      <Filter>Header Files\cpprest</Filter>
+    </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\http_windows_server.h">
+      <Filter>Header Files\cpprest</Filter>
+    </ClInclude>
+    <ClCompile Include="$(CasablancaSrcDir)\http\listener\http_msg_listen.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  
+  
   <!-- PPLX files for pre-Dev12 toolsets go here -->
   <ItemGroup Condition="'$(PlatformToolset)' == 'v100' or '$(PlatformToolset)' == 'v110' or '$(PlatformToolset)' == 'v110_wp80'">
     <ClCompile Include="$(CasablancaSrcDir)\pplx\pplx.cpp">
@@ -191,8 +196,8 @@
     </ClCompile>
   </ItemGroup>
 
-  <!-- non-WinRT files go here -->
-  <ItemGroup Condition="'$(WinRTProject)' != 'true'">
+  <!-- non-WinRT and non-TargetXP files go here -->
+  <ItemGroup Condition="'$(WinRTProject)' != 'true' and '$(TargetXP)' != 'true'" >
     <ClCompile Include="$(CasablancaSrcDir)\http\listener\http_server_api.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -203,6 +208,19 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(CasablancaSrcDir)\http\listener\http_listener.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CasablancaSrcDir)\streams\windows\fileio.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CasablancaSrcDir)\streams\windows\ioscheduler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+
+  <!-- non-WinRT and TargetXP files go here -->
+  <ItemGroup Condition="'$(WinRTProject)' != 'true' and '$(TargetXP)' == 'true'" >
+    <ClCompile Include="$(CasablancaSrcDir)\http\client\http_win7.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(CasablancaSrcDir)\streams\windows\fileio.cpp">

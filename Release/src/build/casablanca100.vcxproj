@@ -31,7 +31,6 @@
     <SccProvider>SAK</SccProvider>
     <PlatformToolset>v100</PlatformToolset>
     <WinRTProject>false</WinRTProject>
-    <TargetName>$(CppRestBaseFileName)100_$(CppRestSDKVersionFileSuffix)</TargetName>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
   </PropertyGroup>
 
@@ -41,6 +40,13 @@
   <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <DebugFileSuffix>d</DebugFileSuffix>
+  </PropertyGroup>
+  <PropertyGroup>
+    <TargetName>$(CppRestBaseFileName)100$(DebugFileSuffix)_$(CppRestSDKVersionFileSuffix)</TargetName>
+  </PropertyGroup>
 
   <ItemDefinitionGroup>
     <ClCompile>

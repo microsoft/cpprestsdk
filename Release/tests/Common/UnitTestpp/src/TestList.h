@@ -48,6 +48,8 @@ public:
 
     UNITTEST_LINKAGE bool IsEmpty() const;
 
+    UNITTEST_LINKAGE void Clear();
+
 private:
     Test* m_head;
     Test* m_tail;

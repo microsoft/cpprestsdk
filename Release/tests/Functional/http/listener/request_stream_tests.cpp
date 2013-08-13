@@ -88,7 +88,7 @@ TEST_FIXTURE(uri_address, test_chunked_transfer)
     buf.close(std::ios_base::out).wait();
 
     response.wait();
-    listener.close();
+    listener.close().wait();
 }
 
 }

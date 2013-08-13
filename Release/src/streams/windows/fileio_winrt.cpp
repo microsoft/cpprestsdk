@@ -31,6 +31,8 @@
 ****/
 #include "stdafx.h"
 #include "cpprest/fileio.h"
+#include "cpprest/interopstream.h"
+#include "robuffer.h"
 
 using namespace ::Windows::Foundation;
 using namespace ::Windows::Storage;
@@ -47,8 +49,7 @@ namespace Concurrency { namespace streams { namespace details {
 /// </summary>
 struct _file_info_impl : _file_info
 {
-    _file_info_impl(StorageFile^ file, Streams::IRandomAccessStream^ stream, std::ios_base::openmode mode) :
-        m_file(file), 
+    _file_info_impl(Streams::IRandomAccessStream^ stream, std::ios_base::openmode mode) :
         m_stream(stream),
         m_writer(nullptr),
         _file_info(mode, 0)
@@ -56,8 +57,7 @@ struct _file_info_impl : _file_info
         m_pendingWrites = pplx::task_from_result();
     }
 
-    _file_info_impl(StorageFile^ file, Streams::IRandomAccessStream^ stream, std::ios_base::openmode mode, size_t buffer_size) :
-        m_file(file), 
+    _file_info_impl(Streams::IRandomAccessStream^ stream, std::ios_base::openmode mode, size_t buffer_size) :
         m_stream(stream),
         m_writer(nullptr),
         _file_info(mode, buffer_size)
@@ -65,7 +65,6 @@ struct _file_info_impl : _file_info
         m_pendingWrites = pplx::task_from_result();
     }
 
-    StorageFile^ m_file;
     Streams::IRandomAccessStream^ m_stream;
     Streams::IDataWriter^ m_writer;
     pplx::task<void> m_pendingWrites;
@@ -104,11 +103,11 @@ void _get_create_flags(std::ios_base::openmode mode, int prot, FileAccessMode &a
 /// <param name="callback">The callback interface pointer</param>
 /// <param name="mode">The C++ file open mode</param>
 /// <returns>The error code if there was an error in file creation.</returns>
-void _finish_create(StorageFile^ file, Streams::IRandomAccessStream^ stream, _In_ _filestream_callback *callback, std::ios_base::openmode mode, int prot)
+void _finish_create(Streams::IRandomAccessStream^ stream, _In_ _filestream_callback *callback, std::ios_base::openmode mode, int prot)
 {
     _file_info_impl *info = nullptr;
     
-    info = new _file_info_impl(file, stream, mode, 512);
+    info = new _file_info_impl(stream, mode, 512);
     
     // Seek to end if it's in appending write mode
     if ((mode & std::ios_base::out) && (mode & std::ios_base::app || mode & std::ios_base::ate ))
@@ -145,7 +144,7 @@ bool __cdecl _open_fsb_stf_str(_In_ Concurrency::streams::details::_filestream_c
         {
             try
             {
-                _finish_create(file, sop.get(), callback, mode, prot);
+                _finish_create(sop.get(), callback, mode, prot);
             }
             catch(Platform::Exception^ exc) 
             { 
@@ -164,7 +163,7 @@ bool __cdecl _sync_fsb_winrt(_In_ Concurrency::streams::details::_file_info *inf
 
     pplx::extensibility::scoped_recursive_lock_t lck(fInfo->m_lock);
 
-    if ( fInfo->m_file == nullptr || fInfo->m_stream == nullptr || fInfo->m_writer == nullptr || !fInfo->m_stream->CanWrite)
+    if ( fInfo->m_stream == nullptr || fInfo->m_writer == nullptr || !fInfo->m_stream->CanWrite)
         return false;
 
     // take a snapshot of current writer, since writer can be replaced during flush
@@ -255,7 +254,7 @@ bool __cdecl _close_fsb(_In_ _file_info **info, _In_ Concurrency::streams::detai
 /// <returns>0 if the read request is still outstanding, -1 if the request failed, otherwise the size of the data read into the buffer</returns>
 size_t __cdecl _read_file_async(_In_ Concurrency::streams::details::_file_info_impl *fInfo, _In_ Concurrency::streams::details::_filestream_callback *callback, _Out_writes_ (count) void *ptr, _In_ size_t count, size_t offset)
 {
-    if ( fInfo->m_file == nullptr || fInfo->m_stream == nullptr )
+    if ( fInfo->m_stream == nullptr )
     {
         if ( callback != nullptr )
         {
@@ -535,7 +534,7 @@ size_t __cdecl _putn_fsb(_In_ Concurrency::streams::details::_file_info *info, _
 
     pplx::extensibility::scoped_recursive_lock_t lck(fInfo->m_lock);
 
-    if ( fInfo->m_file == nullptr || fInfo->m_stream == nullptr )
+    if ( fInfo->m_stream == nullptr )
         return static_cast<size_t>(-1);
     
     // To preserve the async write order, we have to move the write head before read.
@@ -621,7 +620,7 @@ size_t __cdecl _seekrdpos_fsb(_In_ Concurrency::streams::details::_file_info *in
 
     pplx::extensibility::scoped_recursive_lock_t lck(info->m_lock);
 
-    if ( fInfo->m_file == nullptr || fInfo->m_stream == nullptr) return (size_t)-1;;
+    if ( fInfo->m_stream == nullptr) return (size_t)-1;;
 
     if ( pos < fInfo->m_bufoff || pos > (fInfo->m_bufoff+fInfo->m_buffill) )
     {
@@ -650,6 +649,18 @@ _ASYNCRTIMP size_t __cdecl _seekrdtoend_fsb(_In_ Concurrency::streams::details::
     return _seekrdpos_fsb(info, static_cast<size_t>(fInfo->m_stream->Size / char_size + offset), char_size);
 }
 
+utility::size64_t __cdecl _get_size(_In_ concurrency::streams::details::_file_info *info, size_t char_size)
+{
+    _ASSERTE(info != nullptr);
+    
+    _file_info_impl *fInfo = (_file_info_impl *)info;
+
+    pplx::extensibility::scoped_recursive_lock_t lck(info->m_lock);
+
+    if ( fInfo->m_stream == nullptr) return 0;
+
+    return utility::size64_t(fInfo->m_stream->Size/char_size);
+}
 
 /// <summary>
 /// Adjust the internal buffers and pointers when the application seeks to a new write location in the stream.
@@ -665,7 +676,7 @@ size_t __cdecl _seekwrpos_fsb(_In_ Concurrency::streams::details::_file_info *in
 
     pplx::extensibility::scoped_recursive_lock_t lck(info->m_lock);
 
-    if ( fInfo->m_file == nullptr || fInfo->m_stream == nullptr) return (size_t)-1;;
+    if ( fInfo->m_stream == nullptr) return (size_t)-1;;
 
     fInfo->m_wrpos = pos;
 
@@ -690,6 +701,338 @@ size_t __cdecl _seekwrpos_fsb(_In_ Concurrency::streams::details::_file_info *in
     }
 
     return fInfo->m_wrpos;
+}
+
+namespace Concurrency { namespace streams { namespace details
+{
+/// <summary>
+/// This class acts as a bridge between WinRT input streams and Casablanca asynchronous streams.
+/// </summary>
+ref class IRandomAccessStream_bridge sealed : public Windows::Storage::Streams::IRandomAccessStream
+{
+public:
+    virtual property bool CanRead { bool get() { return m_buffer.can_read(); } }
+    
+    virtual property bool CanWrite { bool get() { return m_buffer.can_write(); } }
+    
+    virtual property uint64_t Position { uint64_t get() { return m_position; } }
+
+    virtual property uint64_t Size
+    {
+        uint64_t get()
+        {
+            if (!m_buffer.has_size())
+                return m_remembered_size; 
+            return m_buffer.size();
+        }
+
+        void set(uint64_t sz)
+        {
+            if (!m_buffer.has_size() || !m_buffer.can_write())
+                m_remembered_size = sz;
+            else
+                m_buffer.seekoff(basic_streambuf<uint8_t>::pos_type(sz), std::ios_base::beg, std::ios_base::out);
+        } 
+    } 
+
+    virtual Windows::Storage::Streams::IRandomAccessStream^ CloneStream()
+    {
+        return ref new IRandomAccessStream_bridge(m_buffer); 
+    }
+    
+    virtual Windows::Storage::Streams::IInputStream^ GetInputStreamAt(uint64_t position)
+    { 
+        if ( !m_buffer.can_read() ) return nullptr;
+
+        concurrency::streams::streambuf<uint8_t>::pos_type pos = position;
+
+        if ( m_buffer.can_seek() || pos == m_buffer.getpos(std::ios_base::in) )
+        {
+            return ref new IRandomAccessStream_bridge(m_buffer,position);
+        }
+        return nullptr;
+    }
+    
+    virtual Windows::Storage::Streams::IOutputStream^ GetOutputStreamAt(uint64_t position)
+    {
+        if ( !m_buffer.can_write() ) return nullptr;
+
+        concurrency::streams::streambuf<uint8_t>::pos_type pos = position;
+
+        if ( m_buffer.can_seek() || pos == m_buffer.getpos(std::ios_base::out) )
+        {
+            return ref new IRandomAccessStream_bridge(m_buffer,position);
+        }
+        return nullptr;
+    };
+
+    virtual void Seek(uint64_t position)
+    {
+        if (!m_buffer.can_seek())
+            throw ref new Platform::InvalidArgumentException(L"underlying buffer cannot seek");
+
+        m_position = position;
+
+        m_buffer.seekpos(concurrency::streams::streambuf<uint8_t>::pos_type(m_position),std::ios_base::in);
+        m_buffer.seekpos(concurrency::streams::streambuf<uint8_t>::pos_type(m_position),std::ios_base::out);
+    }
+
+    virtual Windows::Foundation::IAsyncOperationWithProgress<unsigned int, unsigned int>^ WriteAsync(Windows::Storage::Streams::IBuffer^ buffer);
+    virtual Windows::Foundation::IAsyncOperationWithProgress<::Windows::Storage::Streams::IBuffer^, unsigned int>^ ReadAsync(::Windows::Storage::Streams::IBuffer^ buffer, unsigned int count, Windows::Storage::Streams::InputStreamOptions options);
+    virtual Windows::Foundation::IAsyncOperation<bool>^ FlushAsync();
+
+    virtual ~IRandomAccessStream_bridge()
+    {
+    }
+
+internal:
+
+    IRandomAccessStream_bridge(concurrency::streams::streambuf<uint8_t> buffer) : 
+        m_buffer(buffer),
+        m_remembered_size(0),
+        m_position(0)
+    {
+    }
+
+    IRandomAccessStream_bridge(concurrency::streams::streambuf<uint8_t> buffer,
+                               concurrency::streams::streambuf<uint8_t>::pos_type position) : 
+        m_buffer(buffer),
+        m_remembered_size(0),
+        m_position(position)
+    {
+    }
+
+private:
+    uint64_t m_remembered_size;
+    concurrency::streams::streambuf<uint8_t>::pos_type m_position;
+    concurrency::streams::streambuf<uint8_t> m_buffer;               
+};
+
+struct _alloc_protector
+{
+    _alloc_protector(concurrency::streams::streambuf<uint8_t>& buffer) : 
+        m_buffer(buffer), m_size(0)
+    {
+    }
+
+    ~_alloc_protector()
+    {
+        m_buffer.commit(m_size);
+    }
+
+    size_t m_size;
+
+private:
+    _alloc_protector& operator=(const _alloc_protector&);
+
+    concurrency::streams::streambuf<uint8_t>& m_buffer;
+};
+
+struct _acquire_protector
+{
+    _acquire_protector(concurrency::streams::streambuf<uint8_t>& buffer, uint8_t* ptr) : 
+        m_buffer(buffer), m_ptr(ptr), m_size(0)
+    {
+    }
+
+    ~_acquire_protector()
+    {
+        m_buffer.release(m_ptr, m_size);
+    }
+
+    size_t   m_size;
+
+private:
+    _acquire_protector& operator=(const _acquire_protector&);
+
+    uint8_t* m_ptr;
+    concurrency::streams::streambuf<uint8_t>& m_buffer;
+};
+
+// Rather than using ComPtr, which is somewhat complex, a simple RAII class
+// to make sure that Release() is called is useful here.
+struct _IUnknown_protector
+{
+    _IUnknown_protector(IUnknown* unk_ptr) : m_unknown(unk_ptr) {}
+    ~_IUnknown_protector() { if (m_unknown != nullptr) m_unknown->Release(); }
+private:
+    IUnknown* m_unknown;
+};
+
+Windows::Foundation::IAsyncOperationWithProgress<::Windows::Storage::Streams::IBuffer^, unsigned int>^ 
+IRandomAccessStream_bridge::ReadAsync(::Windows::Storage::Streams::IBuffer^ buffer, unsigned int count, Windows::Storage::Streams::InputStreamOptions options)
+{
+    if (!m_buffer.can_read())
+    {
+        return pplx::create_async([buffer](pplx::progress_reporter<uint32> reporter) { return buffer; });
+    }
+
+    if (buffer->Capacity < count)
+        return pplx::create_async([buffer](pplx::progress_reporter<uint32> reporter) { return buffer; });
+
+    m_buffer.seekpos(concurrency::streams::streambuf<uint8_t>::pos_type(m_position),std::ios_base::in);
+
+    concurrency::streams::streambuf<uint8_t> streambuf = m_buffer;
+    
+    return pplx::create_async(
+        [streambuf,buffer,options,count](pplx::progress_reporter<uint32> reporter)
+        {
+            auto sbuf = streambuf;
+            auto local_buf = ref new ::Platform::Array<unsigned char, 1>(count);
+
+            uint8_t* ptr = nullptr;
+            size_t   acquired_size = 0;
+
+            if ( sbuf.acquire(ptr, acquired_size) && acquired_size >= count )
+            {
+                _acquire_protector prot(sbuf, ptr);
+
+                IUnknown* pUnk = reinterpret_cast<IUnknown*>(buffer);
+                ::Windows::Storage::Streams::IBufferByteAccess* pBufferByteAccess = nullptr;
+                HRESULT hr = pUnk->QueryInterface(IID_PPV_ARGS(&pBufferByteAccess));
+                __abi_ThrowIfFailed(hr);
+
+                _IUnknown_protector unkprot(pBufferByteAccess);
+
+                byte* buffer_data = nullptr;
+                hr = pBufferByteAccess->Buffer(&buffer_data);
+                __abi_ThrowIfFailed(hr);
+
+                memcpy(buffer_data,ptr,count);
+
+                prot.m_size = count;    
+                buffer->Length = count;
+
+                return pplx::task_from_result(buffer);
+            }
+            else
+            {
+                if ( acquired_size > 0 )
+                {
+                    sbuf.release(ptr, 0);
+                }
+
+                IUnknown* pUnk = reinterpret_cast<IUnknown*>(buffer);
+                ::Windows::Storage::Streams::IBufferByteAccess* pBufferByteAccess = nullptr;
+                HRESULT hr = pUnk->QueryInterface(IID_PPV_ARGS(&pBufferByteAccess));                       
+                __abi_ThrowIfFailed(hr);
+                        
+                _IUnknown_protector unkprot(pBufferByteAccess);
+
+                byte* buffer_data = nullptr;
+                hr = pBufferByteAccess->Buffer(&buffer_data);
+                __abi_ThrowIfFailed(hr);
+
+                pBufferByteAccess->AddRef();
+
+                return sbuf.getn(buffer_data,count).then(
+                    [buffer,pBufferByteAccess,count](pplx::task<size_t> written)
+                    {
+                        _IUnknown_protector unkprot(pBufferByteAccess);
+                        buffer->Length = (unsigned int)written.get();
+                        return pplx::task_from_result(buffer);
+                    });
+            }
+        });
+}
+
+Windows::Foundation::IAsyncOperationWithProgress<unsigned int, unsigned int>^
+IRandomAccessStream_bridge::WriteAsync(Windows::Storage::Streams::IBuffer^ buffer)
+{
+    if (!m_buffer.can_write())
+    {
+        return pplx::create_async([](pplx::progress_reporter<uint32> reporter) { return 0U; });
+    }
+
+    m_buffer.seekpos(concurrency::streams::streambuf<uint8_t>::pos_type(m_position),std::ios_base::out);
+
+    concurrency::streams::streambuf<uint8_t> streambuf = m_buffer;
+
+    return pplx::create_async(
+        [buffer,streambuf](pplx::progress_reporter<uint32> reporter)
+        {
+            auto size = buffer->Length;
+            auto sbuf = streambuf;
+            uint8_t* ptr = sbuf.alloc(size);
+            
+            if ( ptr != nullptr)
+            {
+                {
+                    _alloc_protector prot(sbuf);
+
+                    IUnknown* pUnk = reinterpret_cast<IUnknown*>(buffer);
+                    ::Windows::Storage::Streams::IBufferByteAccess* pBufferByteAccess = nullptr;
+                    HRESULT hr = pUnk->QueryInterface(IID_PPV_ARGS(&pBufferByteAccess));
+                    __abi_ThrowIfFailed(hr);
+
+                    _IUnknown_protector unkprot(pBufferByteAccess);
+
+                    byte* buffer_data = nullptr;
+                    hr = pBufferByteAccess->Buffer(&buffer_data);
+                    __abi_ThrowIfFailed(hr);
+
+                    memcpy(ptr,buffer_data,size);
+
+                    prot.m_size = size;    
+                }
+                return pplx::task_from_result((unsigned int)size);
+            }
+            else
+            {
+                IUnknown* pUnk = reinterpret_cast<IUnknown*>(buffer);
+                ::Windows::Storage::Streams::IBufferByteAccess* pBufferByteAccess = nullptr;
+                HRESULT hr = pUnk->QueryInterface(IID_PPV_ARGS(&pBufferByteAccess));
+                __abi_ThrowIfFailed(hr);
+
+                _IUnknown_protector unkprot(pBufferByteAccess);
+
+                byte* buffer_data = nullptr;
+                hr = pBufferByteAccess->Buffer(&buffer_data);
+                __abi_ThrowIfFailed(hr);
+
+                pBufferByteAccess->AddRef();
+
+                return sbuf.putn(buffer_data,size).then(
+                    [pBufferByteAccess](pplx::task<size_t> size)
+                    {
+                        pBufferByteAccess->Release();
+                        return (unsigned int)size.get();
+                    });
+            }
+        });
+}
+
+Windows::Foundation::IAsyncOperation<bool>^ 
+IRandomAccessStream_bridge::FlushAsync()
+{
+    concurrency::streams::streambuf<uint8_t> streambuf = m_buffer;
+    return pplx::create_async([streambuf]()
+        {
+            if (!streambuf.can_write())
+            {
+                return pplx::task_from_result(false);
+            }
+
+            auto sbuf = streambuf;
+            return sbuf.sync().then([] { return pplx::task_from_result(true); });
+        });
+}
+
+}}} // namespaces
+
+Windows::Storage::Streams::IInputStream^ Concurrency::streams::winrt_stream::create_input_stream(concurrency::streams::streambuf<uint8_t> buffer)
+{
+    return ref new ::Concurrency::streams::details::IRandomAccessStream_bridge(buffer,0);
+}
+
+Windows::Storage::Streams::IOutputStream^ Concurrency::streams::winrt_stream::create_output_stream(concurrency::streams::streambuf<uint8_t> buffer)
+{
+    return ref new Concurrency::streams::details::IRandomAccessStream_bridge(buffer,0);
+}
+
+Windows::Storage::Streams::IRandomAccessStream^ Concurrency::streams::winrt_stream::create_random_access_stream(concurrency::streams::streambuf<uint8_t> buffer)
+{
+    return ref new Concurrency::streams::details::IRandomAccessStream_bridge(buffer);
 }
 
 #pragma warning(pop)

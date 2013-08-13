@@ -25,6 +25,10 @@
 
 #pragma once
 
+#if _WIN32_WINNT < _WIN32_WINNT_VISTA
+#error "Error: http server APIs are not supported in XP"
+#endif //_WIN32_WINNT < _WIN32_WINNT_VISTA
+
 #include "cpprest/http_listener.h"
 
 #include <memory>
@@ -90,7 +94,7 @@ private:
     static std::unique_ptr<http_server> s_server_api;
 
     /// Number of registered listeners;
-    static int s_registrations;
+    static pplx::details::atomic_long s_registrations;
 
     // Static only class. No creation.
     http_server_api();

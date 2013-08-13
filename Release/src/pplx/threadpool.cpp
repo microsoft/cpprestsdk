@@ -21,6 +21,6 @@
 namespace crossplat
 {
     // initialize the static shared threadpool 
-    threadpool threadpool::_shared(40);
+    threadpool threadpool::s_shared(40);
 
 }

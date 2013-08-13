@@ -45,7 +45,7 @@ namespace Concurrency { namespace streams { namespace details {
 *
 * =-=-=-
 ****/
-
+    
 class io_scheduler;
 
 /// <summary>
@@ -67,6 +67,54 @@ struct EXTENDED_OVERLAPPED : OVERLAPPED
     io_scheduler *m_scheduler;
 };
 
+#if _WIN32_WINNT < _WIN32_WINNT_VISTA 
+class io_scheduler
+{
+public:
+    /// <summary>
+    /// Get the I/O completion key to use with the scheduler.
+    /// </summary>
+    DWORD get_key() const { return (((DWORD)this) & 0xFAFAFA00) + sizeof(EXTENDED_OVERLAPPED); }
+
+    /// <summary>
+    /// Get the I/O scheduler instance.
+    /// </summary>
+     _ASYNCRTIMP static std::shared_ptr<io_scheduler> __cdecl get_scheduler();
+
+    /// <summary>
+    /// Associate a handle use for I/O with the scheduler.
+    /// </summary>
+    void* Associate(HANDLE fHandle)
+    {
+        //The flags parameter must be zero.
+        return (void*) BindIoCompletionCallback(fHandle, FileIOCompletionRoutine, 0);
+    }
+
+private:
+    /// <summary>
+    /// Callback for all I/O completions.
+    /// </summary>
+    static void CALLBACK FileIOCompletionRoutine(
+        DWORD dwErrorCode,
+        DWORD dwNumberOfBytesTransfered,
+        LPOVERLAPPED pOverlapped)
+    {
+        if ( pOverlapped != nullptr )
+        {
+            EXTENDED_OVERLAPPED *pExtOverlapped = (EXTENDED_OVERLAPPED *)pOverlapped;
+
+            ////If dwErrorCode is 0xc0000011, it means STATUS_END_OF_FILE.
+            ////Map this error code to system error code:ERROR_HANDLE_EOF
+            if (dwErrorCode == 0xc0000011)
+                dwErrorCode = ERROR_HANDLE_EOF;
+
+            pExtOverlapped->func(dwErrorCode, dwNumberOfBytesTransfered, pOverlapped);
+
+            delete pOverlapped;
+        }
+    }
+};
+#else
 /// <summary>
 /// Scheduler of I/O completions as well as any asynchronous operations that
 /// are created internally as opposed to operations created by the application.
@@ -155,6 +203,7 @@ private:
     TP_CALLBACK_ENVIRON m_environ;
     PTP_CLEANUP_GROUP m_cleanupGroup;
 };
+#endif // _WIN32_WINNT < _WIN32_WINNT_VISTA 
 
 }}} // namespaces;
 

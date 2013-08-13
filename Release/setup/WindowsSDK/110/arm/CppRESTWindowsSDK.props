@@ -2,15 +2,19 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="version.props" />
   <PropertyGroup>
-    <_PropertySheetDisplayName>CasablancaWindowsSDK, $(CppRestSDKVersionString)</_PropertySheetDisplayName>
+    <_PropertySheetDisplayName>C++ REST SDK, $(CppRestSDKVersionString)</_PropertySheetDisplayName>
+    <CppRestSDKPath>$([MSBuild]::GetRegistryValue(`HKEY_LOCAL_MACHINE\Software\Microsoft\CppRestSDK\OpenSourceRelease\110\v$(CppRestSDKVersionString)\SDK`, `InstallDir`))</CppRestSDKPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <DebugFileSuffix>d</DebugFileSuffix>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>$([MSBuild]::GetRegistryValue(`HKEY_LOCAL_MACHINE\Software\Microsoft\Casablanca\OpenSourceRelease\110\SDK`, `InstallDir`))\INCLUDE;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(CppRestSDKPath)\INCLUDE;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$([MSBuild]::GetRegistryValue(`HKEY_LOCAL_MACHINE\Software\Microsoft\Casablanca\OpenSourceRelease\110\SDK`, `InstallDir`))\LIB\arm\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>$(CppRestBaseFileName)110_winrt_$(CppRestSDKVersionFileSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(CppRestSDKPath)\LIB\arm\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(CppRestBaseFileName)110$(DebugFileSuffix)_app_$(CppRestSDKVersionFileSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
 </Project>

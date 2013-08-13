@@ -163,7 +163,9 @@ unsigned long test_module_loader::load(const std::string &dllName)
     return 0;
 }
 
-UnitTest::TestList test_module_loader::get_test_list(const std::string &dllName)
+UnitTest::TestList g_list;
+
+UnitTest::TestList& test_module_loader::get_test_list(const std::string &dllName)
 {
     GetTestsFunc getTestsFunc = m_modules[dllName]->get_test_list();
 
@@ -171,7 +173,7 @@ UnitTest::TestList test_module_loader::get_test_list(const std::string &dllName)
     // Simply return an empty TestList.
     if(getTestsFunc == nullptr)
     {
-        return ::UnitTest::TestList();
+        return g_list;
     }
 
     return getTestsFunc();

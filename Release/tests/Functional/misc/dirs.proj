@@ -3,11 +3,12 @@
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Common.Build.settings" />
 
   <ItemGroup>
-      <!--
-	      MFC is not available on ARM
-	  -->
-      <ProjectFile Include="atl_headers\dirs.proj" Condition="'$(Platform)' != 'ARM'"/>
-      
+    <!--
+        MFC is not available on ARM
+    -->
+    <ProjectFile Include="atl_headers\dirs.proj" Condition="'$(Platform)' != 'ARM'"/>
+    <ProjectFile Include="version\dirs.proj" Condition="'$(Platform)' != 'ARM'"/>
+
   </ItemGroup>
 
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />

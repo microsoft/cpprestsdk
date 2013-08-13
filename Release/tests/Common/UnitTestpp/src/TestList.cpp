@@ -42,6 +42,12 @@ TestList::TestList()
 {
 }
 
+void TestList::Clear()
+{
+    m_head = 0;
+    m_tail = 0;
+}
+
 void TestList::Add(Test* test)
 {
     if (m_tail == 0)

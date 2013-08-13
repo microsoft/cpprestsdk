@@ -269,96 +269,109 @@ TEST_FIXTURE(uri_address, error_after_valid_credentials, "Ignore:Linux", "646268
 // The server portion to use is the C# AuthenticationListener.
 #pragma region Manual Server Authentication Tests
 
-class server_address
+class server_properties
 {
 public:
-    // ACTION: fill in the machine name and port where the server is.
-    // do NOT use localhost or 127.0.0.1 use the actual machine name.
-    server_address() : m_uri(U("http://mymachinename:8080/")) {}
+    server_properties() {}
+
+    // Helper function to retrieve all parameters necessary for setup tests.
+    void load_parameters()
+    {
+        m_uri = uri(utility::conversions::to_string_t(UnitTest::GlobalSettings::Get("Server")));
+        if(UnitTest::GlobalSettings::Has("UserName"))
+        {
+            m_username = utility::conversions::to_string_t(UnitTest::GlobalSettings::Get("UserName"));
+        }
+        if(UnitTest::GlobalSettings::Has("Password"))
+        {
+            m_password = utility::conversions::to_string_t(UnitTest::GlobalSettings::Get("Password"));
+        }
+    }
+
     web::http::uri m_uri;
+    string_t m_username;
+    string_t m_password;
 };
 
 // This test should be executed for NTLM, Negotiate, IntegratedWindowsAuth, and Anonymous.
-TEST_FIXTURE(server_address, successful_auth_no_cred, "Ignore", "Manual")
+TEST_FIXTURE(server_properties, successful_auth_no_cred, "Requires", "Server")
 {
+    load_parameters();
+
     http_client client(m_uri);
     http_response response = client.request(methods::GET).get();
     VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
 }
 
-TEST_FIXTURE(server_address, digest_basic_auth_no_cred, "Ignore", "Manual")
+TEST_FIXTURE(server_properties, digest_basic_auth_no_cred, "Requires", "Server")
 {
+    load_parameters();
+
     http_client client(m_uri);
     http_response response = client.request(methods::GET).get();
     VERIFY_ARE_EQUAL(status_codes::Unauthorized, response.status_code());
 }
 
-TEST_FIXTURE(server_address, none_auth_no_cred, "Ignore", "Manual")
+TEST_FIXTURE(server_properties, none_auth_no_cred, "Requires", "Server")
 {
+    load_parameters();
+
     http_client client(m_uri);
     http_response response = client.request(methods::GET).get();
     VERIFY_ARE_EQUAL(status_codes::Forbidden, response.status_code());
 }
 
 // This test should be executed for NTLM, Negotiate, IntegratedWindowsAuth, and Digest.
-TEST_FIXTURE(server_address, unsuccessful_auth_with_basic_cred, "Ignore", "Manual")
+TEST_FIXTURE(server_properties, unsuccessful_auth_with_basic_cred, "Requires", "Server;UserName;Password")
 {
+    load_parameters();
+
     http_client_config config;
-    config.set_credentials(credentials(U("user"), U("password")));
+    config.set_credentials(credentials(m_username, m_password));
     
     http_client client(m_uri, config);
     http_response response = client.request(methods::GET).get();
     VERIFY_ARE_EQUAL(status_codes::Unauthorized, response.status_code());
 }
 
-TEST_FIXTURE(server_address, basic_anonymous_auth_with_basic_cred, "Ignore", "Manual")
+TEST_FIXTURE(server_properties, basic_anonymous_auth_with_basic_cred, "Requires", "Server;UserName;Password")
 {
+    load_parameters();
+
     http_client_config config;
-    config.set_credentials(credentials(U("user"), U("password")));
+    config.set_credentials(credentials(m_username, m_password));
     http_client client(m_uri, config);
     http_request req(methods::GET);
-    req.headers().add(U("UserName"), U("user"));
-    req.headers().add(U("Password"), U("password"));
+    req.headers().add(U("UserName"), m_username);
+    req.headers().add(U("Password"), m_password);
     http_response response = client.request(req).get();
     VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
 }
 
-TEST_FIXTURE(server_address, none_auth_with_basic_cred, "Ignore", "Manual")
+TEST_FIXTURE(server_properties, none_auth_with_cred, "Requires", "Server;UserName;Password")
 {
+    load_parameters();
+
     http_client_config config;
-    config.set_credentials(credentials(U("user"), U("password")));
+    config.set_credentials(credentials(m_username, m_password));
     http_client client(m_uri, config);
     http_response response = client.request(methods::GET).get();
     VERIFY_ARE_EQUAL(status_codes::Forbidden, response.status_code());
 }
 
 // This test should be executed for all authentication schemes except None.
-TEST_FIXTURE(server_address, successful_auth_with_domain_cred, "Ignore", "Manual")
+TEST_FIXTURE(server_properties, successful_auth_with_domain_cred, "Requires", "Server;UserName;Password")
 {
-    // ACTION: fill in your domain credentials here temporarily to run.
-    const string_t userName = U("DOMAIN\\username");
-    const string_t password = U("");
+    load_parameters();
 
     http_client_config config;
-    config.set_credentials(credentials(userName, password));
+    config.set_credentials(credentials(m_username, m_password));
     http_client client(m_uri, config);
     http_request req(methods::GET);
-    req.headers().add(U("UserName"), userName);
+    req.headers().add(U("UserName"), m_username);
+	req.headers().add(U("Password"), m_password);
     http_response response = client.request(req).get();
     VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
-}
-
-TEST_FIXTURE(server_address, none_auth_with_domain_cred, "Ignore", "Manual")
-{
-    // ACTION: fill in your domain credentials here temporarily to run.
-    const string_t userName = U("DOMAIN\\username");
-    const string_t password = U("");
-
-    http_client_config config;
-    config.set_credentials(credentials(userName, password));
-    http_client client(m_uri, config);
-    http_response response = client.request(methods::GET).get();
-    VERIFY_ARE_EQUAL(status_codes::Forbidden, response.status_code());
 }
 
 #pragma endregion 

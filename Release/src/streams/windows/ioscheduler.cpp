@@ -31,6 +31,7 @@
 
 namespace Concurrency { namespace streams { namespace details {
 
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA 
 io_scheduler::~io_scheduler()
 {
     if (g_isProcessTerminating != 1)
@@ -43,6 +44,7 @@ io_scheduler::~io_scheduler()
         DestroyThreadpoolEnvironment(&m_environ);
     }
 }
+#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA 
 
 /// <summary>
 /// We keep a single instance of the I/O scheduler. In order to create it on first

@@ -899,7 +899,27 @@ TEST(seek_read_regression_test)
     istream.close().get();
 }
 
+TEST(file_size)
+{
+    utility::string_t fname = U("file_size.txt");
+    fill_file(fname,100);
+    auto istream = OPEN_R<char>(fname).get();
+    VERIFY_IS_TRUE(istream.has_size());
+    VERIFY_ARE_EQUAL(istream.size(), 2600);
+
+}
+
 #ifdef _MS_WINDOWS
+TEST(file_size_w)
+{
+    utility::string_t fname = U("file_size_w.txt");
+    fill_file_w(fname,100);
+    auto istream = OPEN_R<wchar_t>(fname).get();
+    VERIFY_IS_TRUE(istream.has_size());
+    VERIFY_ARE_EQUAL(istream.size(), 2600);
+
+}
+
 TEST(file_with_one_byte_size)
 {
     // Create a file with one byte.

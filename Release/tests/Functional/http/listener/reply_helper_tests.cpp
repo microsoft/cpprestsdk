@@ -15,7 +15,8 @@
 
 #include "stdafx.h"
 
-using namespace web; using namespace utility;
+using namespace utility;
+using namespace web; 
 using namespace web::http;
 using namespace web::http::experimental::listener;
 
@@ -87,20 +88,20 @@ TEST_FIXTURE(uri_address, string)
 
 TEST_FIXTURE(uri_address, multiple_responses_to_request)
 {
-	http_listener listener(m_uri);
+    http_listener listener(m_uri);
     listener.open().wait();
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
 
-	http_response response(status_codes::OK);
-	listener.support([&](http_request request)
-	{
-		request.reply(response).wait();
+    http_response response(status_codes::OK);
+    listener.support([&](http_request request)
+    {
+        request.reply(response).wait();
 
-		// try responding to the request again
-		VERIFY_THROWS(request.reply(response).wait(), http_exception);
-	});
-	VERIFY_ARE_EQUAL(0, p_client->request(methods::GET, U("")));
+        // try responding to the request again
+        VERIFY_THROWS(request.reply(response).wait(), http_exception);
+    });
+    VERIFY_ARE_EQUAL(0, p_client->request(methods::GET, U("")));
     p_client->next_response().then([&](test_response *p_response)
     {
         http_asserts::assert_test_response_equals(p_response, status_codes::OK);

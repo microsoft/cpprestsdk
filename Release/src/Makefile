@@ -22,30 +22,45 @@ SOURCES = \
 	utilities/base64.cpp
 
 HEADERS = \
-	../include/astreambuf.h \
-	../include/astream.h \
-	../include/asyncrt_utils.h \
-	../include/cancellation_token.h \
-	../include/filelog.h \
-	../include/genstreambuf.h \
-	../include/http_client.h \
-	../include/http_constants.dat \
-	../include/http_lib.h \
-	../include/http_msg.h \
-	../include/json.h \
-	../include/pplxatomics.h \
-	../include/pplxlinux.h \
-	../include/pplxdefs.h \
-	../include/pplx.h \
-	../include/pplxtasks.h \
-	../include/serialization.h \
-	../include/uri.h \
-	../include/fileio.h \
-	../include/xxpublic.h \
-	../include/linux_compat.h \
-	../include/SafeInt3.hpp \
-	../include/threadpool.h \
-	../include/stdafx.h
+	../include/cpprest/astreambuf.h \
+	../include/cpprest/streams.h \
+	../include/cpprest/asyncrt_utils.h \
+	../include/cpprest/base_uri.h \
+	../include/cpprest/basic_types.h \
+	../include/cpprest/containerstream.h \
+	../include/cpprest/fileio.h \
+	../include/cpprest/filelog.h \
+	../include/cpprest/filestream.h \
+	../include/cpprest/globals.h \
+	../include/cpprest/genstreambuf.h \
+	../include/cpprest/http_client.h \
+	../include/cpprest/http_client_impl.h \
+	../include/cpprest/http_constants.dat \
+	../include/cpprest/http_helpers.h \
+	../include/cpprest/http_linux_server.h \
+	../include/cpprest/http_listener.h \
+	../include/cpprest/http_msg.h \
+	../include/cpprest/http_server.h \
+	../include/cpprest/http_server_api.h \
+	../include/cpprest/interopstream.h \
+	../include/cpprest/producerconsumerstream.h \
+	../include/cpprest/rawptrstream.h \
+	../include/cpprest/json.h \
+	../include/cpprest/log.h \
+	../include/pplx/pplxconv.h \
+	../include/pplx/pplxlinux.h \
+	../include/pplx/pplxinterface.h \
+	../include/pplx/pplx.h \
+	../include/pplx/pplxtasks.h \
+	../include/pplx/pplxcancellation_token.h \
+	../include/cpprest/uri.h \
+	../include/cpprest/uri_builder.h \
+	../include/cpprest/uri_parser.h \
+	../include/cpprest/xxpublic.h \
+	../include/compat/linux_compat.h \
+	../include/compat/SafeInt3.hpp \
+	../include/pplx/threadpool.h \
+	../src/pch/stdafx.h
 
 PCH = ./pch/stdafx.h
 

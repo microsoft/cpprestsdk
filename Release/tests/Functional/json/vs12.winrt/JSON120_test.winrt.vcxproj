@@ -243,6 +243,8 @@
   
   <Target Name="StripAppContainer" AfterTargets="Build">
     <CallTarget Targets="StripAppContainerOnProjectDll" />
+    <Copy SourceFiles="$(OutDir)\$(TargetName).dll" DestinationFolder="$(OutDir)\.." />
+    <Copy SourceFiles="$(OutDir)\$(TargetName).pdb" DestinationFolder="$(OutDir)\.." />
   </Target>
   
   <!-- Razzle environment uses different targets so we have to trigger our targets different -->

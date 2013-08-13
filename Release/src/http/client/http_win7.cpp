@@ -381,6 +381,7 @@ namespace web { namespace http
                     DWORD access_type;
                     LPCWSTR proxy_name;
                     utility::string_t proxy_str;
+                    http::uri uri;
 
                     auto& config = client_config();
 
@@ -400,7 +401,7 @@ namespace web { namespace http
                         access_type = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
                         // WinHttpOpen cannot handle trailing slash in the name, so here is some string gymnastics to keep WinHttpOpen happy
                         // proxy_str is intentionally declared at the function level to avoid poiinting to the string in the destructed object
-                        auto uri = config.proxy().address();
+                        uri = config.proxy().address();
                         if(uri.is_port_default())
                         {
                             proxy_name = uri.host().c_str();

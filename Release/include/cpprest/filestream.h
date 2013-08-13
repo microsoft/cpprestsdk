@@ -124,6 +124,19 @@ namespace details {
         virtual bool can_seek() const { return this->is_open(); }
 
         /// <summary>
+        /// <c>has_size<c/> is used to determine whether a stream buffer supports size().
+        /// </summary>
+        virtual bool has_size() const { return this->is_open(); }
+
+        virtual utility::size64_t size() const
+        {
+            if (!this->is_open())
+                return 0;
+            return _get_size(m_info, sizeof(_CharType));
+        }
+
+
+        /// <summary>
         /// Gets the stream buffer size, if one has been set.
         /// </summary>
         /// <param name="direction">The direction of buffering (in or out)</param>
@@ -228,10 +241,11 @@ namespace details {
                 }
         }
 
-            pplx::task<void> _close_read()
-            {
-                return m_readOps.enqueue_operation([this] { return _close_read_impl(); });
-            }
+        pplx::task<void> _close_read()
+        {
+            return m_readOps.enqueue_operation([this] { return _close_read_impl(); });
+        }
+
         pplx::task<void> _close_write()
         {
             streambuf_state_manager<_CharType>::_close_write();
@@ -289,7 +303,7 @@ namespace details {
         /// </summary>
         /// <param name="count">The number of characters to allocate.</param>
         /// <returns>A pointer to a block to write to, null if the stream buffer implementation does not support alloc/commit.</returns>
-        _CharType* alloc(size_t)
+        _CharType* _alloc(size_t)
         {
             return nullptr; 
         }
@@ -298,7 +312,7 @@ namespace details {
         /// Submits a block already allocated by the stream buffer.
         /// </summary>
         /// <param name="ptr">Count of characters to be commited.</param>
-        void commit(size_t)
+        void _commit(size_t)
         {
         }
 
@@ -315,7 +329,7 @@ namespace details {
         /// If the end of the stream is reached, the function will return <c>true</c>, a null pointer, and a count of zero;
         /// a subsequent read will not succeed.
         /// </remarks>
-        virtual bool acquire(_Out_writes_ (count) _CharType*& ptr, _In_ size_t& count)
+        virtual bool acquire(_Out_ _CharType*& ptr, _Out_ size_t& count)
         {
             ptr = nullptr;
             count = 0;

@@ -44,39 +44,39 @@
 namespace UnitTest {
 
 TestRunner::TestRunner(TestReporter& reporter, bool breakOnError)
-	: m_reporter(&reporter)
-	, m_result(new TestResults(&reporter, breakOnError))
-	, m_timer(new Timer)
+    : m_reporter(&reporter)
+    , m_result(new TestResults(&reporter, breakOnError))
+    , m_timer(new Timer)
 {
-	m_timer->Start();
+    m_timer->Start();
 }
 
 TestRunner::~TestRunner()
 {
-	delete m_result;
-	delete m_timer;
+    delete m_result;
+    delete m_timer;
 }
 
 TestResults* TestRunner::GetTestResults()
 {
-	return m_result;
+    return m_result;
 }
 
 int TestRunner::Finish() const
 {
     float const secondsElapsed = static_cast<float>(m_timer->GetTimeInMs() / 1000.0);
     m_reporter->ReportSummary(m_result->GetTotalTestCount(), 
-							  m_result->GetFailedTestCount(), 
-							  m_result->GetFailureCount(), 
-							  secondsElapsed);
+                              m_result->GetFailedTestCount(), 
+                              m_result->GetFailureCount(), 
+                              secondsElapsed);
     
-	return m_result->GetFailureCount();
+    return m_result->GetFailureCount();
 }
 
 bool TestRunner::IsTestInSuite(const Test* const curTest, char const* suiteName) const
 {
-	using namespace std;
-	return (suiteName == NULL) || !strcmp(curTest->m_details.suiteName, suiteName);
+    using namespace std;
+    return (suiteName == NULL) || !strcmp(curTest->m_details.suiteName, suiteName);
 }
 
 #if _MSC_VER == 1600
@@ -89,7 +89,9 @@ public:
 protected:
     void run()
     {
+        Concurrency::Context::Oversubscribe(true);
         m_func();
+        Concurrency::Context::Oversubscribe(false);
         done();
     }
 private:
@@ -120,15 +122,15 @@ int TestRunner::GetTestTimeout(Test* const curTest, int const defaultTestTimeInM
 
 void TestRunner::RunTest(TestResults* const result, Test* const curTest, int const defaultTestTimeInMs) const
 {
-	if (curTest->m_isMockTest == false)
-		CurrentTest::Results() = result;
+    if (curTest->m_isMockTest == false)
+        CurrentTest::Results() = result;
 
     int maxTestTimeInMs = GetTestTimeout(curTest, defaultTestTimeInMs);
 
-	Timer testTimer;
-	testTimer.Start();
+    Timer testTimer;
+    testTimer.Start();
 
-	result->OnTestStart(curTest->m_details);
+    result->OnTestStart(curTest->m_details);
 
     if(maxTestTimeInMs > 0)
     {
@@ -150,14 +152,14 @@ void TestRunner::RunTest(TestResults* const result, Test* const curTest, int con
 #else
         // Timed wait requires async execution.
         auto testRunnerFuture = std::async(std::launch::async, [&]()
-		{
-			curTest->Run();
-		});
-		std::chrono::system_clock::time_point totalTime = std::chrono::system_clock::now() + std::chrono::milliseconds(maxTestTimeInMs);
-		if(testRunnerFuture.wait_until(totalTime) == std::future_status::timeout)
-		{
-			timedOut = true;
-		}
+        {
+            curTest->Run();
+        });
+        std::chrono::system_clock::time_point totalTime = std::chrono::system_clock::now() + std::chrono::milliseconds(maxTestTimeInMs);
+        if(testRunnerFuture.wait_until(totalTime) == std::future_status::timeout)
+        {
+            timedOut = true;
+        }
 #endif
         if(timedOut)
         {
@@ -174,8 +176,8 @@ void TestRunner::RunTest(TestResults* const result, Test* const curTest, int con
         curTest->Run();
     }
 
-	double const testTimeInMs = testTimer.GetTimeInMs();
-	result->OnTestFinish(curTest->m_details, static_cast< float >(testTimeInMs / 1000.0));
+    double const testTimeInMs = testTimer.GetTimeInMs();
+    result->OnTestFinish(curTest->m_details, static_cast< float >(testTimeInMs / 1000.0));
 }
 
 }

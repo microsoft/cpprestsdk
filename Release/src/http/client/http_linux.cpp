@@ -51,7 +51,7 @@ namespace web { namespace http
 				close
 			};
             class linux_request_context : public request_context
-			{
+            {
             public:
                 static request_context * create_request_context(std::shared_ptr<_http_client_communicator> &client, http_request &request)
                 {
@@ -66,7 +66,7 @@ namespace web { namespace http
 					// map timer cancellation to time_out
                     if (ec == boost::system::errc::operation_canceled && m_timedout)
                         errorcodeValue = make_error_code(std::errc::timed_out).value();
-					else
+                    else
 					{
 						// We need to correct inaccurate ASIO error code base on context information
 						switch (context)

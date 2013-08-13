@@ -199,13 +199,23 @@ std::string __cdecl conversions::utf16_to_utf8(const utf16string &w)
 {
 #ifdef _MS_WINDOWS
     // first find the size
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA
     int size = ::WideCharToMultiByte(
         CP_UTF8, // convert to utf-8
         WC_ERR_INVALID_CHARS, // fail if any characters can't be translated
         w.c_str(),
         -1, // signals null terminated input
         nullptr, 0, // find the size required
-        nullptr, nullptr); // must be null for utf8
+        nullptr, nullptr); // must be null for utf8  
+#else
+    int size = ::WideCharToMultiByte(
+        CP_UTF8, // convert to utf-8
+        0, // ERROR_INVALID_FLAGS is not supported in XP, set this dwFlags to 0
+        w.c_str(),
+        -1, // signals null terminated input
+        nullptr, 0, // find the size required
+        nullptr, nullptr); // must be null for utf8  
+#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA
 
     if (size == 0)
     {
@@ -216,13 +226,24 @@ std::string __cdecl conversions::utf16_to_utf8(const utf16string &w)
     std::unique_ptr<char[]> buffer(new char[size]);
 
     // now call again to format the string
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA
     int result = ::WideCharToMultiByte(
         CP_UTF8, // convert to utf-8
         WC_ERR_INVALID_CHARS, // fail if any characters can't be translated
         w.c_str(),
         -1, // signals null terminated input
         buffer.get(), size,
-        nullptr, nullptr); // must be null for utf8
+        nullptr, nullptr); // must be null for utf8 
+#else
+    int result = ::WideCharToMultiByte(
+        CP_UTF8, // convert to utf-8
+        0, // ERROR_INVALID_FLAGS is not supported in XP, set this dwFlags to 0
+        w.c_str(),
+        -1, // signals null terminated input
+        buffer.get(), size,
+        nullptr, nullptr); // must be null for utf8 
+#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA
+
         
     if (result == size)
     {
@@ -445,15 +466,25 @@ utility::string_t datetime::to_string(date_format format) const
 
     if ( format == RFC_1123 )
     {
+#if _WIN32_WINNT < _WIN32_WINNT_VISTA 
+        TCHAR dateStr[18] = {0};
+        status = GetDateFormat(LOCALE_INVARIANT, 0, &systemTime, __TEXT("ddd',' dd MMM yyyy"), dateStr, sizeof(dateStr) / sizeof(TCHAR));
+#else
         wchar_t dateStr[18] = {0};
         status = GetDateFormatEx(LOCALE_NAME_INVARIANT, 0, &systemTime, L"ddd',' dd MMM yyyy", dateStr, sizeof(dateStr) / sizeof(wchar_t), NULL);
+#endif // _WIN32_WINNT < _WIN32_WINNT_VISTA 
         if (status == 0)
         {
             throw utility::details::create_system_error(GetLastError());
         }
 
+#if _WIN32_WINNT < _WIN32_WINNT_VISTA 
+        TCHAR timeStr[10] = {0};
+        status = GetTimeFormat(LOCALE_INVARIANT, TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT, &systemTime, "HH':'mm':'ss", timeStr, sizeof(timeStr) / sizeof(TCHAR));
+#else
         wchar_t timeStr[10] = {0};
         status = GetTimeFormatEx(LOCALE_NAME_INVARIANT, TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT, &systemTime, L"HH':'mm':'ss", timeStr, sizeof(timeStr) / sizeof(wchar_t));
+#endif // _WIN32_WINNT < _WIN32_WINNT_VISTA 
         if (status == 0)
         {
             throw utility::details::create_system_error(GetLastError());
@@ -463,15 +494,25 @@ utility::string_t datetime::to_string(date_format format) const
     }
     else if ( format == ISO_8601 )
     {
+#if _WIN32_WINNT < _WIN32_WINNT_VISTA 
+        TCHAR dateStr[18] = {0};
+        status = GetDateFormat(LOCALE_INVARIANT, 0, &systemTime, "yyyy-MM-dd", dateStr, sizeof(dateStr) / sizeof(wchar_t));
+#else
         wchar_t dateStr[18] = {0};
         status = GetDateFormatEx(LOCALE_NAME_INVARIANT, 0, &systemTime, L"yyyy-MM-dd", dateStr, sizeof(dateStr) / sizeof(wchar_t), NULL);
+#endif // _WIN32_WINNT < _WIN32_WINNT_VISTA 
         if (status == 0)
         {
             throw utility::details::create_system_error(GetLastError());
         }
 
+#if _WIN32_WINNT < _WIN32_WINNT_VISTA 
+        TCHAR timeStr[10] = {0};
+        status = GetTimeFormat(LOCALE_INVARIANT, TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT, &systemTime, "HH':'mm':'ss", timeStr, sizeof(timeStr) / sizeof(wchar_t));
+#else
         wchar_t timeStr[10] = {0};
         status = GetTimeFormatEx(LOCALE_NAME_INVARIANT, TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT, &systemTime, L"HH':'mm':'ss", timeStr, sizeof(timeStr) / sizeof(wchar_t));
+#endif // _WIN32_WINNT < _WIN32_WINNT_VISTA 
         if (status == 0)
         {
             throw utility::details::create_system_error(GetLastError());

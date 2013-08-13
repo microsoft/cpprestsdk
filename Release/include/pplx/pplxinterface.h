@@ -1,7 +1,7 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
@@ -63,7 +63,7 @@ typedef void (__cdecl * TaskProc_t)(void *);
 /// </summary>
 struct __declspec(novtable) scheduler_interface
 {
-    virtual void schedule( TaskProc_t, void* ) = 0;
+    virtual void schedule( TaskProc_t, _In_ void* ) = 0;
 };
 
 /// <summary>
