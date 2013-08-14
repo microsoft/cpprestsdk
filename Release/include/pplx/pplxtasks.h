@@ -2505,7 +2505,7 @@ namespace details
         {
             ::pplx::extensibility::scoped_critical_section_t _LockHolder(_M_ContinuationsCritSec);
             // Canceled state could only result from antecedent task's canceled state, but that code path will not reach here.
-            _ASSERT(!_IsCanceled());
+            _ASSERTE(!_IsCanceled());
             if (_IsPendingCancel())
                 return false;
 

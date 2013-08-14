@@ -6,7 +6,7 @@ OUTPUT_DIR?=./$(MODE)
 
 $(OUTPUT_DIR)/httplistener_test.so: \
 	building_response_tests.cpp \
-	connection_tests.cpp \
+	connections_and_errors.cpp \
 	header_tests.cpp \
 	listener_construction_tests.cpp \
 	pipeline_stage_tests.cpp \

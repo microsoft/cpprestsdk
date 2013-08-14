@@ -149,7 +149,7 @@ namespace details
         // Returns the new reference count.
         long _Reference()
         {
-            long _Refcount = _InterlockedIncrement(&_M_refCount);
+            long _Refcount = atomic_increment(_M_refCount);
 
             // 0 - 1 transition is illegal
             _ASSERTE(_Refcount > 1);
@@ -160,7 +160,7 @@ namespace details
         // Returns the new reference count
         long _Release()
         {
-            long _Refcount = _InterlockedDecrement(&_M_refCount);
+            long _Refcount = atomic_decrement(_M_refCount);
             _ASSERTE(_Refcount >= 0);
 
             if (_Refcount == 0)
@@ -186,7 +186,7 @@ namespace details
         }
 
         // Reference count
-        volatile long _M_refCount;
+        atomic_long _M_refCount;
     };
 
     class _CancellationTokenState;
@@ -413,7 +413,7 @@ namespace details
 
     public:
 
-        static _CancellationTokenState * _CancellationTokenState::_NewTokenState()
+        static _CancellationTokenState * _NewTokenState()
         {
             return new _CancellationTokenState();
         }

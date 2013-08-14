@@ -15,7 +15,7 @@
 
 #include "stdafx.h"
 
-#include <cpprest\http_client.h>
+#include <cpprest/http_client.h>
 
 using namespace utility;
 using namespace web;
