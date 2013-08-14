@@ -50,9 +50,15 @@ TEST_FIXTURE(uri_address, outside_cnn_dot_com,
     while(response.body().streambuf().in_avail() == 0);
 
     // CNN's other pages do use chunked transfer encoding.
+#ifdef _MS_WINDOWS
     response = client.request(methods::GET, U("US")).get();
     VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
     while(response.body().streambuf().in_avail() == 0);
+#else
+	// Linux won't handle 301 header automatically 
+    response = client.request(methods::GET, U("US")).get();
+    VERIFY_ARE_EQUAL(status_codes::MovedPermanently, response.status_code());
+#endif
 }
 
 TEST_FIXTURE(uri_address, outside_google_dot_com,
@@ -65,10 +71,16 @@ TEST_FIXTURE(uri_address, outside_google_dot_com,
     VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
     while(response.body().streambuf().in_avail() == 0);
 
+#ifdef _MS_WINDOWS
     // Google's maps page.
     response = client.request(methods::GET, U("maps")).get();
     VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
     while(response.body().streambuf().in_avail() == 0);
+#else
+	// Linux won't handle 302 header automatically 
+    response = client.request(methods::GET, U("maps")).get();
+    VERIFY_ARE_EQUAL(status_codes::Found, response.status_code());
+#endif
 }
 
 TEST_FIXTURE(uri_address, reading_google_stream,

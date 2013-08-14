@@ -28,6 +28,7 @@
 ****/
 #include "stdafx.h"
 #include "cpprest/http_client_impl.h"
+#include <limits>
 
 namespace web { namespace http
 {
@@ -504,12 +505,11 @@ namespace web { namespace http
                             {
                                 ctx->m_needChunked = boost::iequals(value, U("chunked"));
                             }
-
                         }
                     }
                     ctx->complete_headers();
 
-                    ctx->m_known_size = 0;
+                    ctx->m_known_size = std::numeric_limits<size_t>::max(); // Without Content-Length header, size should be same as TCP stream - set it size_t max.
                     ctx->m_response.headers().match(header_names::content_length, ctx->m_known_size);
 
                     // note: need to check for 'chunked' here as well, azure storage sends both
@@ -648,8 +648,13 @@ namespace web { namespace http
 
                     if (ec)
                     {
-                        ctx->report_error("Failed to read response body", ec, httpclient_errorcode_context::readbody);
-                        return;
+						if (ec == boost::asio::error::eof && ctx->m_known_size == std::numeric_limits<size_t>::max())
+							ctx->m_known_size = ctx->m_current_size + ctx->m_response_buf.size();
+						else
+						{
+							ctx->report_error("Failed to read response body", ec, httpclient_errorcode_context::readbody);
+							return;
+						}
                     }
                     auto progress = ctx->m_request._get_impl()->_progress_handler();
                     if ( progress )
