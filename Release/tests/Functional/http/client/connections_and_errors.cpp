@@ -159,6 +159,28 @@ TEST_FIXTURE(uri_address, handshake_fail, "Ignore:Linux", "TFS#747982")
 }
 
 #if !defined(__cplusplus_winrt)
+// Test case needs a server with invalid certificate running.
+TEST(server_cert_invalid, "Ignore", "Manual")
+{
+    http_client client(U("https://localhost"));
+
+    auto requestTask = client.request(methods::GET);
+    VERIFY_THROWS(requestTask.get(), http_exception);
+}
+
+// Test case needs a server with invalid certificate running.
+TEST(ignore_server_cert_invalid, "Ignore", "Manual")
+{
+    http_client_config config;
+    config.set_validate_certificates(false);
+    http_client client(U("https://localhost"), config);
+
+    auto request = client.request(methods::GET).get();
+    VERIFY_ARE_EQUAL(status_codes::OK, request.status_code());
+}
+#endif
+
+#if !defined(__cplusplus_winrt)
 // This test still sometimes segfaults on Linux, but I'm re-enabling it [AL]
 TEST_FIXTURE(uri_address, content_ready_timeout)
 {

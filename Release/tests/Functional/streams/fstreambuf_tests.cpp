@@ -300,7 +300,7 @@ TEST(ReadSingleChar_bumpc1)
     VERIFY_IS_FALSE(stream.is_open());
 }
 
-TEST(SequentialReadWrite)
+TEST(SequentialReadWrite, "Ignore", "759503")
 {
     utility::string_t fname = U("SequentialReadWrite.txt");
 

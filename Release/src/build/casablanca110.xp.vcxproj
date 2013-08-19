@@ -2,7 +2,7 @@
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\version.props" />
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{90D85FF4-F0AE-4816-923F-0EF2758F30AB}</ProjectGuid>
+    <ProjectGuid>{4D9ED383-673B-4E48-A6AF-6BD9F108150E}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>casablanca</RootNamespace>
     <SccProjectName>SAK</SccProjectName>

@@ -364,7 +364,7 @@ pplx::task<void> http_windows_server::start()
     }
 
     // Create request queue.
-    errorCode = HttpCreateRequestQueue(httpApiVersion, U("HttpReceiver"), NULL, NULL, &m_hRequestQueue);
+    errorCode = HttpCreateRequestQueue(httpApiVersion, NULL, NULL, NULL, &m_hRequestQueue);
     if(errorCode)
     {
         return pplx::task_from_exception<void>(http_exception(errorCode));

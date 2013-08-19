@@ -578,8 +578,27 @@ namespace web { namespace http
                         }
                     }
 
-                    size_t content_length = msg._get_impl()->_get_content_length();
+                    // Check to turn off server certificate verification.
+                    if(!client_config().validate_certificates())
+                    {
+                        DWORD data = SECURITY_FLAG_IGNORE_UNKNOWN_CA 
+                            | SECURITY_FLAG_IGNORE_CERT_DATE_INVALID 
+                            | SECURITY_FLAG_IGNORE_CERT_CN_INVALID 
+                            | SECURITY_FLAG_IGNORE_CERT_WRONG_USAGE;
 
+                        auto result = WinHttpSetOption(
+                            winhttp_context->m_request_handle,
+                            WINHTTP_OPTION_SECURITY_FLAGS,
+                            &data,
+                            sizeof(data));
+                        if(!result)
+                        {
+                            request->report_error(U("Error setting WinHttp to ignore server certification validation errors."));
+                            return;
+                        }
+                    }
+
+                    size_t content_length = msg._get_impl()->_get_content_length();
                     if (content_length > 0)
                     {
                         if ( msg.method() == http::methods::GET || msg.method() == http::methods::HEAD )

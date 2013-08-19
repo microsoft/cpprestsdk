@@ -79,6 +79,23 @@ namespace details
         }
 
 #endif // defined(__cplusplus_winrt)
+
+        void InitializeCriticalSection(LPCRITICAL_SECTION _cs)
+        {
+#ifndef __cplusplus_winrt
+            // InitializeCriticalSection can cause STATUS_NO_MEMORY see C28125
+            __try {
+                ::InitializeCriticalSection(_cs);
+            } 
+            __except(GetExceptionCode() == STATUS_NO_MEMORY ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH)
+            {
+                throw ::std::bad_alloc();
+            }
+#else
+            InitializeCriticalSectionEx(_cs, 0, 0);
+#endif // !__cplusplus_winrt
+        }
+
     }
 
     //
@@ -132,11 +149,7 @@ namespace details
     {
         static_assert(sizeof(CRITICAL_SECTION) <= sizeof(_M_impl), "CRITICAL_SECTION version mismatch");
 
-#ifndef __cplusplus_winrt
-        InitializeCriticalSection(reinterpret_cast<LPCRITICAL_SECTION>(&_M_impl));
-#else
-        InitializeCriticalSectionEx(reinterpret_cast<LPCRITICAL_SECTION>(&_M_impl), 0, 0);
-#endif // !__cplusplus_winrt
+        platform::InitializeCriticalSection(reinterpret_cast<LPCRITICAL_SECTION>(&_M_impl));
     }
 
     _PPLXIMP critical_section_impl::~critical_section_impl() 

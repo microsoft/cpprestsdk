@@ -320,13 +320,13 @@ namespace details
 #pragma warning(push)
 #pragma warning(disable: 6001)
                 auto node = _M_begin;
-#pragma warning(pop)
                 while (node != nullptr) 
                 {
                     Node* tmp = node;
                     node = node->_M_next;
                     ::free(tmp);
                 }
+#pragma warning(pop)
             }
 
             void swap(TokenRegistrationContainer& list)

@@ -127,6 +127,9 @@ public:
         m_guarantee_order(false),
         m_timeout(utility::seconds(30)),
         m_chunksize(64 * 1024)
+#if !defined(__cplusplus_winrt)
+        , m_validate_certificates(true)
+#endif
     {
     }
 
@@ -203,7 +206,7 @@ public:
     }
 
     /// <summary>
-    /// Get the client chunk size
+    /// Get the client chunk size.
     /// </summary>
     /// <returns>The internal buffer size used by the http client when sending and receiving data from the network.</returns>
     size_t chunksize() const
@@ -212,7 +215,7 @@ public:
     }
 
     /// <summary>
-    /// Get the client chunk size
+    /// Sets the client chunk size.
     /// </summary>
     /// <param name="size">The internal buffer size used by the http client when sending and receiving data from the network.</param>
     /// <remarks>This is a hint -- an implementation may disregard the setting and use some other chunk size.</remarks>
@@ -221,11 +224,38 @@ public:
         m_chunksize = size;
     }
 
+#if !defined(__cplusplus_winrt)
+    /// <summary>
+    /// Gets the server certificate validation property.
+    /// </summary>
+    /// <returns>True if certificates are to be verified, false otherwise.</returns>
+    bool validate_certificates() const
+    {
+        return m_validate_certificates;
+    }
+
+    /// <summary>
+    /// Sets the server certificate validation property.
+    /// </summary>
+    /// <param name="validate_cert">False to turn ignore all server certificate validation errors, true otherwise.</param>
+    /// <remarks>Note ignoring certificate errors can be dangerous and should be done with caution.</remarks>
+    void set_validate_certificates(bool validate_certs)
+    {
+        m_validate_certificates = validate_certs;
+    }
+#endif
+
 private:
     web_proxy m_proxy;
     http::client::credentials m_credentials;
     // Whether or not to guarantee ordering, i.e. only using one underlying TCP connection.
     bool m_guarantee_order;
+
+    // IXmlHttpRequest2 doesn't allow configuration of certificate verification.
+#if !defined(__cplusplus_winrt)
+    bool m_validate_certificates;
+#endif
+
     utility::seconds m_timeout;
     size_t m_chunksize;
 };

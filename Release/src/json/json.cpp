@@ -286,7 +286,7 @@ CharType get_unescaped_char(typename std::basic_string<CharType>::iterator & inp
         for (int i = 0; i < 4; i++)
         {
             CharType c = *(++inputIter);
-            _ASSERTE(isxdigit(c));
+            _ASSERTE(isxdigit((unsigned char)(c)));
             int val = _hexval[c];
             decoded |= (val << (4*(3-i)));
         }
