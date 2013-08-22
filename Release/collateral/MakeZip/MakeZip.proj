@@ -16,16 +16,16 @@
     <Delete Files="$(BuildRoot)\Release\Collateral\MakeZip\$(ZipFileName)" />
   </Target>
   <Target Name="Build">
-    <Copy SourceFiles="$(BuildRoot)\Build\version.props" DestinationFolder="$(SamplesFolder)\BingRequest\VC10" OverwriteReadOnlyFiles="true"/>
-    <Copy SourceFiles="$(VSProjFolder)\CppRest.props"    DestinationFolder="$(SamplesFolder)\BingRequest\VC10" OverwriteReadOnlyFiles="true"/>
-    <Copy SourceFiles="$(BuildRoot)\Build\version.props" DestinationFolder="$(SamplesFolder)\BingRequest\VC11" OverwriteReadOnlyFiles="true"/>
-    <Copy SourceFiles="$(VSProjFolder)\CppRest.props"    DestinationFolder="$(SamplesFolder)\BingRequest\VC11" OverwriteReadOnlyFiles="true"/>
-    <Copy SourceFiles="$(BuildRoot)\Build\version.props" DestinationFolder="$(SamplesFolder)\SearchFile\VC11" OverwriteReadOnlyFiles="true"/>
-    <Copy SourceFiles="$(VSProjFolder)\CppRest.props"    DestinationFolder="$(SamplesFolder)\SearchFile\VC11" OverwriteReadOnlyFiles="true"/>
-    <Copy SourceFiles="$(BuildRoot)\Build\version.props" DestinationFolder="$(SamplesFolder)\FacebookDemo\FacebookDemo110" OverwriteReadOnlyFiles="true"/>
-    <Copy SourceFiles="$(VSProjFolder)\CppRest.props"    DestinationFolder="$(SamplesFolder)\FacebookDemo\FacebookDemo110" OverwriteReadOnlyFiles="true"/>
-    <Copy SourceFiles="$(BuildRoot)\Build\version.props" DestinationFolder="$(SamplesFolder)\WindowsLiveAuth" OverwriteReadOnlyFiles="true"/>
-    <Copy SourceFiles="$(VSProjFolder)\CppRest.props"    DestinationFolder="$(SamplesFolder)\WindowsLiveAuth" OverwriteReadOnlyFiles="true"/>
+    <Copy SourceFiles="$(VSProjFolder)\CppRestVC10.props" DestinationFiles="$(SamplesFolder)\BingRequest\VC10\CppRest.props" OverwriteReadOnlyFiles="true"/>
+    <Copy SourceFiles="$(BuildRoot)\Build\version.props"  DestinationFolder="$(SamplesFolder)\BingRequest\VC10" OverwriteReadOnlyFiles="true"/>    
+    <Copy SourceFiles="$(BuildRoot)\Build\version.props"  DestinationFolder="$(SamplesFolder)\BingRequest\VC11" OverwriteReadOnlyFiles="true"/>
+    <Copy SourceFiles="$(VSProjFolder)\CppRest.props"     DestinationFolder="$(SamplesFolder)\BingRequest\VC11" OverwriteReadOnlyFiles="true"/>
+    <Copy SourceFiles="$(BuildRoot)\Build\version.props"  DestinationFolder="$(SamplesFolder)\SearchFile\VC11" OverwriteReadOnlyFiles="true"/>
+    <Copy SourceFiles="$(VSProjFolder)\CppRest.props"     DestinationFolder="$(SamplesFolder)\SearchFile\VC11" OverwriteReadOnlyFiles="true"/>
+    <Copy SourceFiles="$(BuildRoot)\Build\version.props"  DestinationFolder="$(SamplesFolder)\FacebookDemo\FacebookDemo110" OverwriteReadOnlyFiles="true"/>
+    <Copy SourceFiles="$(VSProjFolder)\CppRest.props"     DestinationFolder="$(SamplesFolder)\FacebookDemo\FacebookDemo110" OverwriteReadOnlyFiles="true"/>
+    <Copy SourceFiles="$(BuildRoot)\Build\version.props"  DestinationFolder="$(SamplesFolder)\WindowsLiveAuth" OverwriteReadOnlyFiles="true"/>
+    <Copy SourceFiles="$(VSProjFolder)\CppRest.props"     DestinationFolder="$(SamplesFolder)\WindowsLiveAuth" OverwriteReadOnlyFiles="true"/>
     <ItemGroup>
       <DefaultExclude Include="$(SamplesFolder)\**\bin\**" />
       <DefaultExclude Include="$(SamplesFolder)\**\ipch\**" />

@@ -27,7 +27,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{6F026328-4D10-4EF1-BD6C-8FD3CBE0F530}</ProjectGuid>
+    <ProjectGuid>{1CD44176-1F99-4D59-82C5-D07940114533}</ProjectGuid>
     <SccProjectName>SAK</SccProjectName>
     <SccAuxPath>SAK</SccAuxPath>
     <SccLocalPath>SAK</SccLocalPath>
@@ -191,7 +191,7 @@
       <Project>{3EB86C0D-432C-4FFC-BAD4-8DF4EFC7D0FF}</Project>
     </ProjectReference>
     <ProjectReference Include="..\..\..\..\src\build\casablanca110.xp.vcxproj">
-      <Project>{90d85ff4-f0ae-4816-923f-0ef2758f30ab}</Project>
+      <Project>{4d9ed383-673b-4e48-a6af-6bd9f108150e}</Project>
     </ProjectReference>
     <ProjectReference Include="..\..\..\Common\utilities\VS11.xp\CommonUtilities110.xp.vcxproj">
       <Project>{0c9d50d9-94fb-4732-a4ad-58e068315bb2}</Project>

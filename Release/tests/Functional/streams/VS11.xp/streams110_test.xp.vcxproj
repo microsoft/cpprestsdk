@@ -27,7 +27,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{181CCB80-9AE8-4ED7-8B7D-4C0CBC80EEDD}</ProjectGuid>
+    <ProjectGuid>{77683C34-494E-4CB1-96C7-DA035D2E9ED8}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>HttpTests</RootNamespace>
     <SccProjectName>SAK</SccProjectName>
@@ -178,13 +178,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\fstreambuf_tests.cpp" />
-    <ClCompile Include="..\ostream_tests.cpp" />
-    <ClCompile Include="..\stdstream_tests.cpp" />
     <ClCompile Include="..\memstream_tests.cpp" />
-    <ClCompile Include="..\istream_tests.cpp" />
     <ClCompile Include="..\fuzz_tests.cpp" />
     <ClCompile Include="..\stdafx.cpp">
+<!-- Disabled to include following test files for Bug: 759503-->
+<!--    <ClCompile Include="..\fstreambuf_tests.cpp" /> -->
+<!--    <ClCompile Include="..\ostream_tests.cpp" /> -->
+<!--    <ClCompile Include="..\stdstream_tests.cpp" /> -->
+<!--    <ClCompile Include="..\istream_tests.cpp" /> -->
+
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -202,7 +204,7 @@
       <Project>{3EB86C0D-432C-4FFC-BAD4-8DF4EFC7D0FF}</Project>
     </ProjectReference>
     <ProjectReference Include="..\..\..\..\src\build\casablanca110.xp.vcxproj">
-      <Project>{90d85ff4-f0ae-4816-923f-0ef2758f30ab}</Project>
+      <Project>{4d9ed383-673b-4e48-a6af-6bd9f108150e}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

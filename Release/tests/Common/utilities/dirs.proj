@@ -8,6 +8,7 @@
 
   <ItemGroup Condition="'$(DevToolsVersion)'=='110'">
       <ProjectFile Include="VS11\CommonUtilities110.vcxproj" />
+      <ProjectFile Include="VS11.xp\CommonUtilities110.xp.vcxproj" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(DevToolsVersion)'=='120'">

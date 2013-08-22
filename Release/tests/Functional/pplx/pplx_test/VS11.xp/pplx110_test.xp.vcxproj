@@ -27,7 +27,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{5115840E-A5A8-4044-B595-CDA05C2D65D0}</ProjectGuid>
+    <ProjectGuid>{5F853B89-AACA-4A7B-93A8-8F9A74DD73EA}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>HttpTests</RootNamespace>
     <SccProjectName>SAK</SccProjectName>
@@ -198,7 +198,7 @@
       <Project>{3EB86C0D-432C-4FFC-BAD4-8DF4EFC7D0FF}</Project>
     </ProjectReference>
     <ProjectReference Include="..\..\..\..\..\src\build\casablanca110.xp.vcxproj">
-      <Project>{90d85ff4-f0ae-4816-923f-0ef2758f30ab}</Project>
+      <Project>{4d9ed383-673b-4e48-a6af-6bd9f108150e}</Project>
     </ProjectReference>
     <ProjectReference Include="..\..\..\..\Common\utilities\VS11.xp\CommonUtilities110.xp.vcxproj">
       <Project>{0c9d50d9-94fb-4732-a4ad-58e068315bb2}</Project>
