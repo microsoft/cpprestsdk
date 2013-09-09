@@ -203,9 +203,7 @@ void connection::handle_headers()
         m_chunked = boost::ifind_first(name, U("chunked"));
     }
 
-    Concurrency::streams::producer_consumer_buffer<uint8_t> buf;
-    m_request._get_impl()->set_instream(buf.create_istream());
-    m_request._get_impl()->set_outstream(buf.create_ostream(), false);
+    m_request._get_impl()->_prepare_to_receive_data();
     if (m_chunked)
     {
         boost::asio::async_read_until(*m_socket, m_request_buf, CRLF, boost::bind(&connection::handle_chunked_header, this, placeholders::error));
@@ -534,6 +532,7 @@ void connection::handle_response_written(http_response response, const boost::sy
 
 void connection::finish_request_response()
 {
+	//usleep(100000);
     // kill the connection
     {
         pplx::scoped_lock<pplx::extensibility::recursive_lock_t> lock(m_p_parent->m_connections_lock);
