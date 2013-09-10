@@ -194,7 +194,7 @@ static void close_stream_early_with_length_impl(const uri &u, bool useException)
     listener.close().wait();
 }
 
-TEST_FIXTURE(uri_address, close_stream_early_with_length, "Ignore:Linux", "760544")
+TEST_FIXTURE(uri_address, close_stream_early_with_length)
 {
     close_stream_early_with_length_impl(m_uri, true);
     close_stream_early_with_length_impl(m_uri, false);

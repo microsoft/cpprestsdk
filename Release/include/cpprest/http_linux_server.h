@@ -100,6 +100,7 @@ private:
     template <typename ReadHandler>
     void async_read_until_buffersize(size_t size, ReadHandler handler);
     void async_process_response(http_response response);
+	void cancel_sending_response_with_error(http_response response, std::exception_ptr);
     void handle_headers_written(http_response response, const boost::system::error_code& ec);
     void handle_write_large_response(http_response response, const boost::system::error_code& ec);
     void handle_write_chunked_response(http_response response, const boost::system::error_code& ec);
