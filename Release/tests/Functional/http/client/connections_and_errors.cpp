@@ -150,7 +150,7 @@ TEST_FIXTURE(uri_address, handshake_fail, "Ignore:Linux", "TFS#747982")
 {
     web::http::uri ssl_uri(U("https://localhost:34568/"));
 
-    test_http_server::scoped_server scoped(ssl_uri);
+    test_http_server::scoped_server scoped(m_uri);
 
     http_client client(ssl_uri);
     auto request = client.request(methods::GET);
