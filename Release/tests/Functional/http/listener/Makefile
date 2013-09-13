@@ -25,8 +25,8 @@ OBJECTS = $(addsuffix .$(MODE).o, $(FILENAMES))
 
 $(OUTPUT_DIR)/httplistener_test.so: $(OBJECTS)
 	@echo "Building library $@"
-	@$(CXX) -shared $(CXXFLAGS) $(shell pkg-config libxml++-2.6 --cflags) $(LDFLAGS) $^ $(LDLIBS) -o $@
+	@$(CXX) -fPIC -shared $(CXXFLAGS) $(shell pkg-config libxml++-2.6 --cflags) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 $(OBJECTS): %.$(MODE).o: %.cpp
 	@echo "Compiling $< -> $@"
-	@$(CXX) $(CXXFLAGS) -c $< -o $@
+	@$(CXX) -fPIC $(CXXFLAGS) -c $< -o $@
