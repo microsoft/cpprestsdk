@@ -34,7 +34,9 @@ FILENAMES = \
 OBJECTS = $(addsuffix .$(MODE).o, $(FILENAMES))
 
 $(OUTPUT_DIR)/httpclient_test.so: $(OBJECTS)
-	$(CXX) -fPIC -shared $(CXXFLAGS) $(shell pkg-config libxml++-2.6 --cflags) $(LDFLAGS) $^ $(LDLIBS) -o $@
+	@echo "Building library $@"
+	@$(CXX) -shared $(CXXFLAGS) $(shell pkg-config libxml++-2.6 --cflags) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 $(OBJECTS): %.$(MODE).o: %.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	@echo "Compiling $< -> $@"
+	@$(CXX) $(CXXFLAGS) -c $< -o $@
