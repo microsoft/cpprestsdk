@@ -4,22 +4,27 @@ LDLIBS=-lhttptest_utilities -lcommon_utilities -lcasablanca -lunittestpp -lboost
 
 OUTPUT_DIR?=./$(MODE)
 
-$(OUTPUT_DIR)/httplistener_test.so: \
-	building_response_tests.cpp \
-	connections_and_errors.cpp \
-	header_tests.cpp \
-	listener_construction_tests.cpp \
-	pipeline_stage_tests.cpp \
-	reply_helper_tests.cpp \
-	request_extract_tests.cpp \
-	request_handler_tests.cpp \
-	request_relative_uri_tests.cpp \
-	request_stream_tests.cpp \
-	requests_tests.cpp \
-	response_stream_tests.cpp \
-	status_code_reason_phrase_tests.cpp \
-	to_string_tests.cpp \
-	stdafx.cpp
-	$(CXX) -fPIC -shared $(CXXFLAGS) $(shell pkg-config libxml++-2.6 --cflags) $(LDFLAGS) $^ $(LDLIBS) -o $@ 
+FILENAMES = \
+	building_response_tests \
+	connections_and_errors \
+	header_tests \
+	listener_construction_tests \
+	pipeline_stage_tests \
+	reply_helper_tests \
+	request_extract_tests \
+	request_handler_tests \
+	request_relative_uri_tests \
+	request_stream_tests \
+	requests_tests \
+	response_stream_tests \
+	status_code_reason_phrase_tests \
+	to_string_tests \
+	stdafx
 
+OBJECTS = $(addsuffix .$(MODE).o, $(FILENAMES))
 
+$(OUTPUT_DIR)/httplistener_test.so: $(OBJECTS)
+	$(CXX) -fPIC -shared $(CXXFLAGS) $(shell pkg-config libxml++-2.6 --cflags) $(LDFLAGS) $^ $(LDLIBS) -o $@
+
+$(OBJECTS): %.$(MODE).o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
