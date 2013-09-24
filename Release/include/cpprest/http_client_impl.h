@@ -62,41 +62,9 @@ using namespace web::http::details;
 
 namespace web { namespace http { namespace client { namespace details
 {
-    const bool valid_chars [] =
-    {
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0-15
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //16-31
-        0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, //32-47
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, //48-63
-        0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //64-79
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, //80-95
-        0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //96-111
-        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0 //112-127
-    };
-
 #ifdef _MS_WINDOWS
             static const utility::char_t * get_with_body = _XPLATSTR("A GET or HEAD request should not have an entity body.");
 #endif
-
-#if (!defined(_MS_WINDOWS) || defined(__cplusplus_winrt))
-            // Checks if the method contains any invalid characters
-            static bool validate_method(const utility::string_t& method)
-            {
-                for (auto iter = method.begin(); iter != method.end(); iter++)
-                {
-                    char_t ch = *iter;
-                        
-                    if (size_t(ch) >= 128)
-                        return false;
-                        
-                    if (!valid_chars[ch])
-                        return false;
-                }
-
-                return true;
-            }
-#endif
-
             // Helper function to trim leading and trailing null characters from a string.
             static void trim_nulls(utility::string_t &str)
             {

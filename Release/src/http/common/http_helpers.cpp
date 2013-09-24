@@ -542,6 +542,37 @@ size_t chunked_encoding::add_chunked_delimiters(_Out_writes_ (buffer_size) uint8
     return offset;
 }
 
+#if (!defined(_MS_WINDOWS) || defined(__cplusplus_winrt))
+    const bool valid_chars [] =
+    {
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0-15
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //16-31
+        0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, //32-47
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, //48-63
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //64-79
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, //80-95
+        0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //96-111
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0 //112-127
+    };
+
+    // Checks if the method contains any invalid characters
+    bool validate_method(const utility::string_t& method)
+    {
+        for (auto iter = method.begin(); iter != method.end(); iter++)
+        {
+            char_t ch = *iter;
+
+            if (size_t(ch) >= 128)
+                return false;
+                 
+            if (!valid_chars[ch])
+                return false;
+        }
+
+        return true;
+    }
+#endif
+
 
 } // namespace details
 }} // namespace web::http

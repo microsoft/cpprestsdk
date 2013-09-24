@@ -75,7 +75,7 @@ PKGCONFIG_LIBS = $(shell pkg-config libxml++-2.6 --libs) $(shell pkg-config libs
 #-fpch-deps -MMD not useful with a single monolithic PCH
 
 CXXFLAGS = -fPIC -std=c++11 $(STRICT_BASE_CXXFLAGS) -I../include -I./pch $(WARNINGS) $(PKGCONFIG_CFLAGS)
-LIBS = $(PKGCONFIG_LIBS) -lboost_system -lboost_thread -lboost_locale -pthread -lstdc++ -lm # these are explicit for clang
+LIBS = $(PKGCONFIG_LIBS) -lboost_system -lboost_thread -lboost_locale -lboost_regex -pthread -lstdc++ -lm # these are explicit for clang
 LDFLAGS = $(BASE_LDFLAGS)
 
 ifeq ($(OUTPUT_DIR),)

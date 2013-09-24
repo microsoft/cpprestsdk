@@ -16,7 +16,7 @@ release: MODE = Release$(shell getconf LONG_BIT)
 release: OUTPUT_DIR = $(PWD)/../Binaries/$(MODE)
 release: mk_out_dir tests samples
 
-debug: OPTIMIZATION_LEVEL = -O0 -g -gdwarf-2
+debug: OPTIMIZATION_LEVEL = -O0 -g -ggdb
 debug: MODE = Debug$(shell getconf LONG_BIT)
 debug: OUTPUT_DIR = $(PWD)/../Binaries/$(MODE)
 debug: mk_out_dir tests samples

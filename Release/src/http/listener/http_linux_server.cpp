@@ -18,6 +18,7 @@
 */
 #include "stdafx.h"
 #include <boost/algorithm/string/find.hpp>
+#include <boost/regex.hpp>
 #include "cpprest/http_helpers.h"
 #include "cpprest/http_server_api.h"
 #include "cpprest/http_server.h"
@@ -75,7 +76,10 @@ void connection::start_request_response()
 {
     m_read_size = 0; m_read = 0;
     m_request_buf.consume(m_request_buf.size()); // clear the buffer
-    async_read_until(*m_socket, m_request_buf, CRLF + CRLF, boost::bind(&connection::handle_http_line, this, placeholders::error));
+    
+    // Wait for either double newline or a char which is not in the range [32-127] which suggests SSL handshaking.
+    // For the SSL server support this line might need to be changed. Now, this prevents from hanging when SSL client tries to connect.
+    async_read_until(*m_socket, m_request_buf, boost::regex(CRLF+CRLF+"|[\\x00-\\x1F]|[\\x80-\\xFF]"), boost::bind(&connection::handle_http_line, this, placeholders::error));
 }
 
 void hostport_listener::on_accept(ip::tcp::socket* socket, const boost::system::error_code& ec)
@@ -114,6 +118,7 @@ void connection::handle_http_line(const boost::system::error_code& ec)
         }
         else
         {
+            std::cout << "BAD REQUEST1" << std::endl;
             m_request.reply(status_codes::BadRequest);
             do_response();
         }
@@ -125,7 +130,7 @@ void connection::handle_http_line(const boost::system::error_code& ec)
         std::istream request_stream(&m_request_buf);
         std::skipws(request_stream);
 
-        std::string http_verb;
+        std::string http_verb = "";
         request_stream >> http_verb;
 
         if (boost::iequals(http_verb, http::methods::GET))          http_verb = http::methods::GET;
@@ -136,6 +141,18 @@ void connection::handle_http_line(const boost::system::error_code& ec)
         else if (boost::iequals(http_verb, http::methods::TRCE))    http_verb = http::methods::TRCE;
         else if (boost::iequals(http_verb, http::methods::CONNECT)) http_verb = http::methods::CONNECT;
         else if (boost::iequals(http_verb, http::methods::OPTIONS)) http_verb = http::methods::OPTIONS;
+
+		// Check to see if there is not allowed character on the input
+
+        if (!web::http::details::validate_method(http_verb))
+        {
+            std::cout << "BAD REQUEST" << std::endl;
+            m_request.reply(status_codes::BadRequest);
+            do_response(true);
+            finish_request_response();
+            return;
+        }
+
         m_request.set_method(http_verb);
 
         std::string http_path_and_version;
@@ -184,6 +201,7 @@ void connection::handle_headers()
         }
         else
         {
+			std::cout << "BAD REQUEST" << std::endl;
             m_request.reply(status_codes::BadRequest);
             do_response();
             return;
@@ -397,7 +415,7 @@ void connection::request_data_avail(size_t size)
     m_request._get_impl()->_complete(size);
 }
 
-void connection::do_response()
+void connection::do_response(bool bad_request)
 {
     ++m_refs;
     pplx::task<http_response> response_task = m_request.get_response();
@@ -423,9 +441,16 @@ void connection::do_response()
                 response = http::http_response(status_codes::InternalError);
             }
             // before sending response, the full incoming message need to be processed.
-            m_request.content_ready().then([=](pplx::task<http::http_request>) {
-                async_process_response(response);
-            });
+            if (bad_request)
+			{
+				async_process_response(response);
+			}
+			else
+			{
+				m_request.content_ready().then([=](pplx::task<http::http_request>) {
+					async_process_response(response);
+				});
+			}
         });
 }
 

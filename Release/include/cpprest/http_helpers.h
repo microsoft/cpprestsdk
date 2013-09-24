@@ -120,6 +120,9 @@ namespace details
     void ltrim_whitespace(utility::string_t &str);
     void rtrim_whitespace(utility::string_t &str);
     void trim_whitespace(utility::string_t &str);
+    
+    bool validate_method(const utility::string_t& method);
+    
 
     namespace chunked_encoding
     {

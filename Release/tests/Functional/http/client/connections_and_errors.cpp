@@ -146,7 +146,7 @@ TEST_FIXTURE(uri_address, invalid_method)
 }
 
 // This test sends an SSL request to a non-SSL server and should fail on handshaking
-TEST_FIXTURE(uri_address, handshake_fail, "Ignore:Linux", "TFS#747982")
+TEST_FIXTURE(uri_address, handshake_fail)
 {
     web::http::uri ssl_uri(U("https://localhost:34568/"));
 

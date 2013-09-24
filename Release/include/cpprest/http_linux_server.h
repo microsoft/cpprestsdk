@@ -96,7 +96,7 @@ private:
     void handle_chunked_body(const boost::system::error_code& ec, int toWrite);
     void dispatch_request_to_listener();
     void request_data_avail(size_t size);
-    void do_response();
+    void do_response(bool bad_reqiest=false);
     template <typename ReadHandler>
     void async_read_until_buffersize(size_t size, ReadHandler handler);
     void async_process_response(http_response response);
