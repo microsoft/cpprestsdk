@@ -87,8 +87,9 @@ namespace web { namespace http
                 }
 
                 std::unique_ptr<tcp::socket> m_socket;
+#ifndef __APPLE__
                 std::unique_ptr<boost::asio::ssl::stream<tcp::socket>> m_ssl_stream;
-
+#endif
                 uri m_what;
                 size_t m_known_size;
                 size_t m_current_size;
@@ -120,11 +121,13 @@ namespace web { namespace http
                         m_socket.reset();
                     }
                     
+#ifndef __APPLE__
                     if (m_ssl_stream)
                     {
                         shutdown_socket(m_ssl_stream->lowest_layer());
                         m_ssl_stream.reset();
                     }
+#endif
                 }
 
                 void cancel(const boost::system::error_code& ec)
@@ -132,6 +135,7 @@ namespace web { namespace http
                     if (!ec)
                     {
                         m_timedout = true;
+#ifndef __APPLE__
                         if (m_ssl_stream)
                         {
                             boost::system::error_code error;
@@ -141,6 +145,7 @@ namespace web { namespace http
                                 report_error("Failed to cancel the socket", error);
                         }
                         else
+#endif
                         {
                             auto sock = m_socket.get();
                             if (sock != nullptr)
@@ -182,9 +187,14 @@ namespace web { namespace http
 
                     if (what.scheme() == "https")
                     {
+#ifndef __APPLE__
                         boost::asio::ssl::context context(boost::asio::ssl::context::sslv23);
                         context.set_default_verify_paths();
                         ctx->m_ssl_stream.reset(new boost::asio::ssl::stream<boost::asio::ip::tcp::socket>(m_io_service, context));
+#else
+                        ctx->report_exception(http_exception("https is not supported"));
+                        return;
+#endif
                     }
                     else
                         ctx->m_socket.reset(new tcp::socket(m_io_service));
@@ -208,8 +218,14 @@ namespace web { namespace http
                     request_stream << method << " " << resource << " " << "HTTP/1.1" << CRLF << "Host: " << host;
 
                     int port = what.port();
-                    if (port == 0)
+                    if (what.is_port_default())
+                    {
+#ifndef __APPLE__
                         port = (ctx->m_ssl_stream ? 443 : 80);
+#else
+                        port = 80;
+#endif
+                    }
                     request_stream << ":" << port << CRLF;
 
                     // Check user specified transfer-encoding
@@ -243,7 +259,9 @@ namespace web { namespace http
 
                     request_stream << flatten_http_headers(ctx->m_request.headers());
 
+#ifndef __APPLE__
                     if (!ctx->m_ssl_stream)
+#endif
                         request_stream << "Connection: close" << CRLF; // so we can just read to EOF
                     
                     request_stream << CRLF;
@@ -290,6 +308,7 @@ namespace web { namespace http
                     else
                     {
                         auto endpoint = *endpoints;
+#ifndef __APPLE__
                         if (ctx->m_ssl_stream)
                         {
                             // Check to turn off server certificate verification.
@@ -306,6 +325,7 @@ namespace web { namespace http
                             ctx->m_ssl_stream->lowest_layer().async_connect(endpoint, boost::bind(&client::handle_connect, this, boost::asio::placeholders::error, ++endpoints, ctx));
                         }
                         else
+#endif
                             ctx->m_socket->async_connect(endpoint, boost::bind(&client::handle_connect, this, boost::asio::placeholders::error, ++endpoints, ctx));
                     }
                 }
@@ -314,9 +334,11 @@ namespace web { namespace http
                 {
                     if (!ec)
                     {
+#ifndef __APPLE__
                         if (ctx->m_ssl_stream)
                             ctx->m_ssl_stream->async_handshake(boost::asio::ssl::stream_base::client, boost::bind(&client::handle_handshake, this, boost::asio::placeholders::error, ctx));
                         else
+#endif
                             boost::asio::async_write(*ctx->m_socket, ctx->m_request_buf, boost::bind(&client::handle_write_request, this, boost::asio::placeholders::error, ctx));
                     }
                     else if (endpoints == tcp::resolver::iterator())
@@ -327,6 +349,7 @@ namespace web { namespace http
                     {
                         boost::system::error_code ignore;
                         auto endpoint = *endpoints;
+#ifndef __APPLE__
                         if (ctx->m_ssl_stream)
                         {
                             ctx->m_ssl_stream->lowest_layer().shutdown(tcp::socket::shutdown_both, ignore);
@@ -350,6 +373,7 @@ namespace web { namespace http
                             ctx->m_ssl_stream->lowest_layer().async_connect(endpoint, boost::bind(&client::handle_connect, this, boost::asio::placeholders::error, ++endpoints, ctx));
                         }
                         else
+#endif
                         {
                             ctx->m_socket->shutdown(tcp::socket::shutdown_both, ignore);
                             ctx->m_socket->close();
@@ -359,6 +383,7 @@ namespace web { namespace http
                     }
                 }
 
+#ifndef __APPLE__
                 void handle_handshake(const boost::system::error_code& ec, linux_request_context* ctx)
                 {
                     if (!ec)
@@ -366,7 +391,7 @@ namespace web { namespace http
                     else
                         ctx->report_error("Error code in handle_handshake is ", ec, httpclient_errorcode_context::handshake);
                 }
-
+#endif
                 void handle_write_chunked_body(const boost::system::error_code& ec, linux_request_context* ctx)
                 {
                     if (ec)
@@ -394,10 +419,12 @@ namespace web { namespace http
                         ctx->m_request_buf.consume(offset);
                         ctx->m_current_size += readSize;
                         ctx->m_uploaded += (size64_t)readSize;
+#ifndef __APPLE__
                         if (ctx->m_ssl_stream)
                             boost::asio::async_write(*ctx->m_ssl_stream, ctx->m_request_buf,
                                 boost::bind(readSize != 0 ? &client::handle_write_chunked_body : &client::handle_write_body, this, boost::asio::placeholders::error, ctx));
                         else
+#endif
                             boost::asio::async_write(*ctx->m_socket, ctx->m_request_buf,
                                 boost::bind(readSize != 0 ? &client::handle_write_chunked_body : &client::handle_write_body, this, boost::asio::placeholders::error, ctx));
                     });
@@ -431,10 +458,12 @@ namespace web { namespace http
                         ctx->m_uploaded += (size64_t)actualSize;
                         ctx->m_current_size += actualSize;
                         ctx->m_request_buf.commit(actualSize);
+#ifndef __APPLE__
                         if (ctx->m_ssl_stream)
                             boost::asio::async_write(*ctx->m_ssl_stream, ctx->m_request_buf,
                                 boost::bind(&client::handle_write_large_body, this, boost::asio::placeholders::error, ctx));
                         else
+#endif
                             boost::asio::async_write(*ctx->m_socket, ctx->m_request_buf,
                                 boost::bind(&client::handle_write_large_body, this, boost::asio::placeholders::error, ctx));
                     });
@@ -468,10 +497,12 @@ namespace web { namespace http
                         }
                         
                     // Read until the end of entire headers
+#ifndef __APPLE__
                     if (ctx->m_ssl_stream)
                         boost::asio::async_read_until(*ctx->m_ssl_stream, ctx->m_response_buf, CRLF+CRLF,
                             boost::bind(&client::handle_status_line, this, boost::asio::placeholders::error, ctx));
                     else
+#endif
                         boost::asio::async_read_until(*ctx->m_socket, ctx->m_response_buf, CRLF+CRLF,
                             boost::bind(&client::handle_status_line, this, boost::asio::placeholders::error, ctx));
                     }
@@ -562,10 +593,12 @@ namespace web { namespace http
                             boost::bind(&client::handle_read_content, this, boost::asio::placeholders::error, ctx), ctx);
                         else
                         {
+#ifndef __APPLE__
                             if (ctx->m_ssl_stream)
                                 boost::asio::async_read_until(*ctx->m_ssl_stream, ctx->m_response_buf, CRLF,
                                     boost::bind(&client::handle_chunk_header, this, boost::asio::placeholders::error, ctx));
                             else
+#endif
                                 boost::asio::async_read_until(*ctx->m_socket, ctx->m_response_buf, CRLF,
                                     boost::bind(&client::handle_chunk_header, this, boost::asio::placeholders::error, ctx));
                         }
@@ -576,6 +609,7 @@ namespace web { namespace http
                 void async_read_until_buffersize(size_t size, ReadHandler handler, linux_request_context* ctx)
                 {
                     size_t size_to_read = 0;
+#ifndef __APPLE__
                     if (ctx->m_ssl_stream)
                     {
                         if (ctx->m_response_buf.size() < size)
@@ -583,6 +617,7 @@ namespace web { namespace http
                         boost::asio::async_read(*ctx->m_ssl_stream, ctx->m_response_buf, boost::asio::transfer_at_least(size_to_read), handler);
                     }
                     else
+#endif
                     {
                         if (ctx->m_response_buf.size() < size)
                             size_to_read = size - ctx->m_response_buf.size();
@@ -656,10 +691,12 @@ namespace web { namespace http
                                 }
                                 ctx->m_response_buf.consume(to_read + CRLF.size()); // consume crlf
 
+#ifndef __APPLE__
                                 if (ctx->m_ssl_stream)
                                     boost::asio::async_read_until(*ctx->m_ssl_stream, ctx->m_response_buf, CRLF,
                                         boost::bind(&client::handle_chunk_header, this, boost::asio::placeholders::error, ctx));
                                 else
+#endif
                                     boost::asio::async_read_until(*ctx->m_socket, ctx->m_response_buf, CRLF,
                                         boost::bind(&client::handle_chunk_header, this, boost::asio::placeholders::error, ctx));
                             });
@@ -677,13 +714,13 @@ namespace web { namespace http
 
                     if (ec)
                     {
-						if (ec == boost::asio::error::eof && ctx->m_known_size == std::numeric_limits<size_t>::max())
-							ctx->m_known_size = ctx->m_current_size + ctx->m_response_buf.size();
-						else
-						{
-							ctx->report_error("Failed to read response body", ec, httpclient_errorcode_context::readbody);
-							return;
-						}
+                        if (ec == boost::asio::error::eof && ctx->m_known_size == std::numeric_limits<size_t>::max())
+                            ctx->m_known_size = ctx->m_current_size + ctx->m_response_buf.size();
+                        else
+                        {
+                            ctx->report_error("Failed to read response body", ec, httpclient_errorcode_context::readbody);
+                            return;
+                        }
                     }
                     auto progress = ctx->m_request._get_impl()->_progress_handler();
                     if ( progress )

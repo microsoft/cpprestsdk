@@ -515,10 +515,9 @@ size_t chunked_encoding::add_chunked_delimiters(_Out_writes_ (buffer_size) uint8
 
     if ( bytes_read == 0 )
     {
-        offset = 5;
-        data[5] = '0';
-        data[6] = '\r';  data[7] = '\n'; // The end of the size.
-        data[8] = '\r';  data[9] = '\n'; // The end of the (empty) trailer.
+        offset = 7;
+        data[7] = '0';
+        data[8] = '\r';  data[9] = '\n'; // The end of the size.
         data[10] = '\r'; data[11] = '\n'; // The end of the message.
     }
     else

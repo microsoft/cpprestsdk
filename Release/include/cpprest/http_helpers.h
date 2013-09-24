@@ -134,7 +134,7 @@ namespace details
         //
         // There are up to 12 additional bytes needed for each chunk:
         //
-        // The last chunk requires 7 bytes, and is fixed.
+        // The last chunk requires 5 bytes, and is fixed.
         // All other chunks require up to 8 bytes for the length, and four for the two CRLF
         // delimiters.
         //

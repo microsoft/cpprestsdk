@@ -118,7 +118,6 @@ void connection::handle_http_line(const boost::system::error_code& ec)
         }
         else
         {
-            std::cout << "BAD REQUEST1" << std::endl;
             m_request.reply(status_codes::BadRequest);
             do_response();
         }
@@ -126,11 +125,10 @@ void connection::handle_http_line(const boost::system::error_code& ec)
     else
     {
         // read http status line
-
         std::istream request_stream(&m_request_buf);
         std::skipws(request_stream);
 
-        std::string http_verb = "";
+        std::string http_verb;
         request_stream >> http_verb;
 
         if (boost::iequals(http_verb, http::methods::GET))          http_verb = http::methods::GET;
@@ -146,7 +144,6 @@ void connection::handle_http_line(const boost::system::error_code& ec)
 
         if (!web::http::details::validate_method(http_verb))
         {
-            std::cout << "BAD REQUEST" << std::endl;
             m_request.reply(status_codes::BadRequest);
             do_response(true);
             finish_request_response();
@@ -159,12 +156,15 @@ void connection::handle_http_line(const boost::system::error_code& ec)
         std::getline(request_stream, http_path_and_version);
         const size_t VersionPortionSize = sizeof(" HTTP/1.1\r") - 1;
 
-        // Get the host part of the address. This is a bit of a hack, like the Windows one...
-        std::string host_part = "http://" + m_p_parent->m_host + ":" + m_p_parent->m_port;
-        uri request_uri = uri::encode_uri(host_part);
+        // Get the host part of the address. 
+        uri_builder builder;
+        builder.set_scheme("http");
+        builder.set_host(m_p_parent->m_host, true);
+        builder.set_port(m_p_parent->m_port);
+
         // Get the path - remove the version portion and prefix space
-        request_uri = uri_builder(request_uri).append(http_path_and_version.substr(1, http_path_and_version.size() - VersionPortionSize - 1)).to_uri();
-        m_request.set_request_uri(request_uri);
+        builder.append_path(http_path_and_version.substr(1, http_path_and_version.size() - VersionPortionSize - 1));
+        m_request.set_request_uri(builder.to_uri());
 
         // Get the version
         std::string http_version = http_path_and_version.substr(http_path_and_version.size() - VersionPortionSize + 1, VersionPortionSize - 2);
@@ -201,7 +201,6 @@ void connection::handle_headers()
         }
         else
         {
-			std::cout << "BAD REQUEST" << std::endl;
             m_request.reply(status_codes::BadRequest);
             do_response();
             return;
@@ -221,7 +220,9 @@ void connection::handle_headers()
         m_chunked = boost::ifind_first(name, U("chunked"));
     }
 
-    m_request._get_impl()->_prepare_to_receive_data();
+    Concurrency::streams::producer_consumer_buffer<uint8_t> buf;
+    m_request._get_impl()->set_instream(buf.create_istream());
+    m_request._get_impl()->set_outstream(buf.create_ostream(), false);
     if (m_chunked)
     {
         boost::asio::async_read_until(*m_socket, m_request_buf, CRLF, boost::bind(&connection::handle_chunked_header, this, placeholders::error));
@@ -300,13 +301,13 @@ void connection::handle_body(const boost::system::error_code& ec)
     {
         auto writebuf = m_request._get_impl()->outstream().streambuf();
         writebuf.putn(boost::asio::buffer_cast<const uint8_t*>(m_request_buf.data()), std::min(m_request_buf.size(), m_read_size - m_read)).then([=](pplx::task<size_t> writtenSizeTask) {
-			size_t writtenSize = 0;
-			try {
-				writtenSize = writtenSizeTask.get();
-			} catch (...) {
-				m_request._reply_if_not_already(status_codes::InternalError);
-				return;
-			}
+            size_t writtenSize = 0;
+            try {
+                writtenSize = writtenSizeTask.get();
+            } catch (...) {
+                m_request._reply_if_not_already(status_codes::InternalError);
+                return;
+            }
             m_read += writtenSize;
             m_request_buf.consume(writtenSize);
             async_read_until_buffersize(std::min(ChunkSize, m_read_size - m_read), boost::bind(&connection::handle_body, this, placeholders::error));
