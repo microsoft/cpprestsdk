@@ -152,6 +152,24 @@ namespace web { namespace http
         }
 
         /// <summary>
+        /// Set the port component of the URI.
+        /// </summary>
+        /// <param name="port">Port as a string.</param>
+        /// <returns>A reference to this <c>uri_builder</c> to support chaining.</returns>
+        /// <remarks>When string can't be converted to an integer the port is left unchanged.</remarks>
+        uri_builder & set_port(const utility::string_t &port)
+        {
+            utility::istringstream_t portStream(port);
+            portStream >> m_uri.m_port;
+            if(portStream.fail() || portStream.bad())
+            {
+                throw std::invalid_argument("invalid port argument, must be non empty string containing integer value");
+            }
+
+            return *this;
+        }
+
+        /// <summary>
         /// Set the path component of the URI.
         /// </summary>
         /// <param name="path">Path as a decoded string.</param>
