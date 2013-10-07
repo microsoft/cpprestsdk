@@ -1288,7 +1288,9 @@ TEST(extract_floating_point)
     test_string.append(" 6E+4.5");    // two numbers merged in exponent
     test_string.append(" 6E-4.5");    // two numbers merged in exponent
     test_string.append(" 3.14 -10 +42.0 -1234.567 .01 +0 -0");
+#ifndef __APPLE__
     test_string.append(" 12345678901234567890123456789012345678901234567890");    // a big number
+#endif
     test_string.append(" 9.81E05 6.0221413e+23 1.6e-14");                         // numbers with exponent
     test_string.append(" 6.");                                                    // a number ending with a dot
 

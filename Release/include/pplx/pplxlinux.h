@@ -16,7 +16,7 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* pplxwin.h
+* pplxlinux.h
 *
 * Linux specific pplx implementations
 *
@@ -34,18 +34,23 @@
 
 #ifndef _MS_WINDOWS
 
-#include "compat/linux_compat.h"
-#include "pplx/pplxinterface.h"
-
 #include <signal.h>
 #include <mutex>
 #include <condition_variable>
-
 #include "pthread.h"
+
+#if defined(__APPLE__)
+#include "compat/apple_compat.h"
+#else
+#include "compat/linux_compat.h"
 #include "boost/thread/mutex.hpp"
 #include "boost/thread/condition_variable.hpp"
 #include "boost/date_time/posix_time/posix_time_types.hpp"
 #include "boost/bind/bind.hpp"
+#endif
+
+#include "pplx/pplxinterface.h"
+
 
 namespace pplx
 {
@@ -233,7 +238,11 @@ namespace platform
         }
 
     private:
+#if defined(__APPLE__)
+        std::recursive_mutex _M_cs;
+#else
         boost::mutex _M_cs;
+#endif
         long _M_recursionCount;
         volatile long _M_owner;
     };
@@ -243,7 +252,10 @@ namespace platform
     class timer_impl
     {
     public:
-        timer_impl() : m_timerImpl(nullptr)
+        timer_impl()
+#if !defined(__APPLE__)
+        : m_timerImpl(nullptr)
+#endif
         {
         }
 
@@ -252,16 +264,28 @@ namespace platform
         _PPLXIMP void start(unsigned int ms, bool repeat, TaskProc_t userFunc, _In_ void * context);
         _PPLXIMP void stop(bool waitForCallbacks);
 
+#if !defined(__APPLE__)
     private:
         linux_timer * m_timerImpl;
+#endif
     };
 
+#if defined(__APPLE__)
+    class apple_scheduler : public pplx::scheduler_interface
+    {
+    public:
+        _PPLXIMP virtual void schedule( TaskProc_t proc, _In_ void* param);
+        
+        virtual ~apple_scheduler();
+    };
+#else
     class linux_scheduler : public pplx::scheduler_interface
     {
     public:
         _PPLXIMP virtual void schedule( TaskProc_t proc, _In_ void* param);
     };
-
+#endif
+    
     /// <summary>
     /// Timer
     /// </summary>
@@ -299,7 +323,11 @@ namespace extensibility
 {
     typedef ::pplx::details::event_impl event_t;
 
+#if defined(__APPLE__)
+    typedef std::mutex critical_section_t;
+#else
     typedef ::boost::mutex critical_section_t;
+#endif
     typedef scoped_lock<critical_section_t> scoped_critical_section_t;
 
     typedef ::pplx::details::reader_writer_lock_impl reader_writer_lock_t;
@@ -313,8 +341,12 @@ namespace extensibility
 /// <summary>
 /// Default scheduler type
 /// </summary>
-typedef details::linux_scheduler default_scheduler_t;
-
+#if defined(__APPLE__)
+    typedef details::apple_scheduler default_scheduler_t;
+#else
+    typedef details::linux_scheduler default_scheduler_t;
+#endif
+    
 namespace details
 {
     /// <summary>

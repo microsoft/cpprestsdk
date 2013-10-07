@@ -1,4 +1,4 @@
-SUBDIRS = SearchFile BingRequest
+SUBDIRS = SearchFile BingRequest BlackJack
 
 .PHONY: subdirs $(SUBDIRS) all
 

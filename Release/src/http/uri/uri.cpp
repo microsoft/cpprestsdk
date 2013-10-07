@@ -36,69 +36,68 @@ namespace web { namespace http
 {
 namespace details
 {
-    utility::string_t _uri_components::join()
-    {
-        // canonicalize components first
+utility::string_t _uri_components::join()
+{
+    // canonicalize components first
 
     // convert scheme to lowercase
-        std::transform(m_scheme.begin(), m_scheme.end(), m_scheme.begin(), [this](utility::char_t c) {
+    std::transform(m_scheme.begin(), m_scheme.end(), m_scheme.begin(), [this](utility::char_t c) {
         return tolower(c);
     });
 
     // convert host to lowercase
-        std::transform(m_host.begin(), m_host.end(), m_host.begin(), [this](utility::char_t c) {
+    std::transform(m_host.begin(), m_host.end(), m_host.begin(), [this](utility::char_t c) {
         return tolower(c);
     });
 
     // canonicalize the path to have a leading slash if it's a full uri
-        if (!m_host.empty() && m_path.empty())
+    if (!m_host.empty() && m_path.empty())
     {
-            m_path = _XPLATSTR("/");
+        m_path = _XPLATSTR("/");
     }
-        else if (!m_host.empty() && m_path[0] != _XPLATSTR('/'))
+    else if (!m_host.empty() && m_path[0] != _XPLATSTR('/'))
     {
-            m_path.insert(m_path.begin(), 1, _XPLATSTR('/'));
+        m_path.insert(m_path.begin(), 1, _XPLATSTR('/'));
     }
 
     utility::ostringstream_t os;
 
-        if (!m_scheme.empty())
+    if (!m_scheme.empty())
     {
-            os << m_scheme << _XPLATSTR(':');
+        os << m_scheme << _XPLATSTR(':');
     }
 
-        if (!m_host.empty())
+    if (!m_host.empty())
     {
-            os << _XPLATSTR("//") << m_host;
+        os << _XPLATSTR("//") << m_host;
 
-            if (m_port > 0)
+        if (m_port > 0)
         {
-                os << _XPLATSTR(':') << m_port;
+            os << _XPLATSTR(':') << m_port;
         }
     }
 
-        if (!m_path.empty())
+    if (!m_path.empty())
     {
         // only add the leading slash when the host is present
-            if (!m_host.empty() && m_path.front() != _XPLATSTR('/'))
+        if (!m_host.empty() && m_path.front() != _XPLATSTR('/'))
         {
             os << _XPLATSTR('/');
         }
-            os << m_path;
+        os << m_path;
     }
 
-        if (!m_query.empty())
+    if (!m_query.empty())
     {
-            os << _XPLATSTR('?') << m_query;
+        os << _XPLATSTR('?') << m_query;
     }
 
-        if (!m_fragment.empty())
+    if (!m_fragment.empty())
     {
-            os << _XPLATSTR('#') << m_fragment;
+        os << _XPLATSTR('#') << m_fragment;
     }
 
-        return os.str();
-
+    return os.str();
 }
 }
 

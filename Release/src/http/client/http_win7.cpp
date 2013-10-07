@@ -690,7 +690,7 @@ namespace web { namespace http
                         {
                             (*progress)(message_direction::upload, 0);
                         }
-						return;
+                        return;
                     }
 
                     // Capure the current read position of the stream.
@@ -849,16 +849,18 @@ namespace web { namespace http
                     });
                 }
 
-                // Returns true if the request was completed, or false if a new request with credentials was issued
+                // Returns true if we handle successfuly and resending the request
+                // or false if we fail to handle.
                 static bool handle_authentication_failure(
                     HINTERNET hRequestHandle,
-                    _In_ winhttp_request_context * p_request_context
-                    )
+                    _In_ winhttp_request_context * p_request_context,
+                    _In_ DWORD error = 0)
                 {
                     http_response & response = p_request_context->m_response;
                     http_request & request = p_request_context->m_request;
 
-                    _ASSERTE(response.status_code() == status_codes::Unauthorized  || response.status_code() == status_codes::ProxyAuthRequired);
+                    _ASSERTE(response.status_code() == status_codes::Unauthorized  || response.status_code() == status_codes::ProxyAuthRequired
+                        || error == ERROR_WINHTTP_RESEND_REQUEST);
 
                     // If the application set a stream for the request body, we can only resend if the input stream supports
                     // seeking and we are also successful in seeking to the position we started at when the original request
@@ -904,7 +906,12 @@ namespace web { namespace http
                         can_resend = true;
                     }
 
-                    if (can_resend)
+                    if (!can_resend)
+                        return false;
+
+                    //  If we got ERROR_WINHTTP_RESEND_REQUEST, the response header is not available, 
+                    //  we cannot call WinHttpQueryAuthSchemes and WinHttpSetCredentials.
+                    if (error != ERROR_WINHTTP_RESEND_REQUEST)
                     {
                         // The proxy requires authentication.  Sending credentials...
                         // Obtain the supported and preferred schemes.
@@ -916,14 +923,14 @@ namespace web { namespace http
                         if (!results)
                         {
                             // This will return the authentication failure to the user, without reporting fatal errors
-                            return true;
+                            return false;
                         }
 
                         dwSelectedScheme = ChooseAuthScheme( dwSupportedSchemes);
                         if( dwSelectedScheme == 0 )
                         {
                             // This will return the authentication failure to the user, without reporting fatal errors
-                            return true;
+                            return false;
                         }
 
                         if(response.status_code() == status_codes::ProxyAuthRequired /*407*/ && !p_request_context->m_request_data->m_proxy_authentication_tried)
@@ -949,25 +956,25 @@ namespace web { namespace http
                             got_credentials = !username.empty();
                             p_request_context->m_request_data->m_server_authentication_tried = true;
                         }
-                    }
 
-                    if( !(can_resend && got_credentials) )
-                    {
-                        // Either we cannot resend, or the user did not provide non-empty credentials.
-                        // Return the authentication failure to the user.
-                        return true;
-                    }
+                        if( !got_credentials)
+                        {
+                            // Either we cannot resend, or the user did not provide non-empty credentials.
+                            // Return the authentication failure to the user.
+                            return false;
+                        }
 
-                    results = WinHttpSetCredentials( hRequestHandle,
-                        dwTarget, 
-                        dwSelectedScheme,
-                        username.c_str(),
-                        password.c_str(),
-                        nullptr );
-                    if(!results)
-                    {
-                        // This will return the authentication failure to the user, without reporting fatal errors
-                        return true;
+                        results = WinHttpSetCredentials( hRequestHandle,
+                            dwTarget, 
+                            dwSelectedScheme,
+                            username.c_str(),
+                            password.c_str(),
+                            nullptr );
+                        if(!results)
+                        {
+                            // This will return the authentication failure to the user, without reporting fatal errors
+                            return false;
+                        }
                     }
 
                     // Figure out how the data should be sent, if any
@@ -996,7 +1003,7 @@ namespace web { namespace http
                     winclnt->_start_request_send(p_request_context, content_length);
 
                     // We will not complete the request. Instead wait for the response to the request that was resent
-                    return false;
+                    return true;
                 }
 
                 // Callback used with WinHTTP to listen for async completions.
@@ -1008,7 +1015,7 @@ namespace web { namespace http
                     DWORD statusInfoLength)
                 {
                     UNREFERENCED_PARAMETER(statusInfoLength);
-                    
+
                     if ( statusCode == WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING )
                         return;
 
@@ -1021,7 +1028,20 @@ namespace web { namespace http
                         case WINHTTP_CALLBACK_STATUS_REQUEST_ERROR :
                             {
                                 WINHTTP_ASYNC_RESULT *error_result = reinterpret_cast<WINHTTP_ASYNC_RESULT *>(statusInfo);
+                                DWORD error = error_result->dwError;
 
+                                //  Some authentication schemes require multiple transactions.
+                                //  When ERROR_WINHTTP_RESEND_REQUEST is encountered, 
+                                //  we should continue to resend the request until a response is received that does not contain a 401 or 407 status code. 
+                                if (error == ERROR_WINHTTP_RESEND_REQUEST)
+                                {
+                                    bool resending = handle_authentication_failure(hRequestHandle, p_request_context, error);
+                                    if(resending)
+                                    {
+                                        // The request is resending. Wait until we get a new response.
+                                        return;
+                                    }
+                                }
                                 p_request_context->report_error(error_result->dwError, utility::conversions::to_string_t(build_callback_error_msg(error_result)));
                                 break;
                             }
@@ -1112,8 +1132,8 @@ namespace web { namespace http
                                 if(response.status_code() == status_codes::Unauthorized /*401*/ ||
                                     response.status_code() == status_codes::ProxyAuthRequired /*407*/)
                                 {
-                                    bool completed = handle_authentication_failure(hRequestHandle, p_request_context);
-                                    if( !completed )
+                                    bool resending = handle_authentication_failure(hRequestHandle, p_request_context);
+                                    if(resending)
                                     {
                                         // The request was not completed but resent with credentials. Wait until we get a new response
                                         return;
@@ -1230,7 +1250,7 @@ namespace web { namespace http
                                         if( !WinHttpQueryDataAvailable(hRequestHandle, nullptr))
                                         {
                                             p_request_context->report_error(_XPLATSTR("Error querying for http body chunk"));
-											return;
+                                            return;
                                         }
                                     };
 
@@ -1349,13 +1369,13 @@ namespace web { namespace http
         };
 
         http_client::http_client(const uri &base_uri)
-			:_base_uri(base_uri)
+            :_base_uri(base_uri)
         {
             build_pipeline(base_uri, http_client_config());
         }
 
         http_client::http_client(const uri &base_uri, const http_client_config& client_config)
-			:_base_uri(base_uri)
+            :_base_uri(base_uri)
         {
             build_pipeline(base_uri, client_config);
         }

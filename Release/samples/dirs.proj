@@ -4,9 +4,10 @@
 
   <ItemGroup>
     <ProjectFile Include="BingRequest\dirs.proj"/>
+    <ProjectFile Include="BlackJack\dirs.proj"/>
   </ItemGroup>
 
-  <ItemGroup Condition="'$(DevToolsVersion)'=='110'">
+  <ItemGroup Condition="'$(DevToolsVersion)'=='110' or '$(DevToolsVersion)'=='120'">
     <ProjectFile Include="SearchFile\dirs.proj"/>
   </ItemGroup>
 
@@ -16,8 +17,8 @@
   </ItemGroup>
 -->
 
-  <ItemGroup Condition="'$(DevToolsVersion)'=='120'">
-    <ProjectFile Include="SearchFile\dirs.proj"/>
+  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.2|110'">
+    <ProjectFile Include="FacebookDemo\dirs.proj"/>
   </ItemGroup>
 
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />

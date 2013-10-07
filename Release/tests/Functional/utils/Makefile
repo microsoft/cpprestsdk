@@ -4,5 +4,5 @@ LDLIBS=-lcasablanca -lunittestpp -lboost_system -lboost_thread -lpthread
 
 OUTPUT_DIR?=./$(MODE)
 
-$(OUTPUT_DIR)/utils_test.so: datetime.cpp base64.cpp
+$(OUTPUT_DIR)/utils_test.so: datetime.cpp base64.cpp strings.cpp macro_test.cpp
 	$(CXX) -fPIC -shared $(CXXFLAGS) $(shell pkg-config libxml++-2.6 --cflags) $(LDFLAGS) $^ $(LDLIBS) -o $@ 

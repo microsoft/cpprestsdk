@@ -79,7 +79,7 @@ void connection::start_request_response()
     
     // Wait for either double newline or a char which is not in the range [32-127] which suggests SSL handshaking.
     // For the SSL server support this line might need to be changed. Now, this prevents from hanging when SSL client tries to connect.
-    async_read_until(*m_socket, m_request_buf, boost::regex(CRLF+CRLF+"|[^[\\r|\\n|\\x20-\\x7F]"), boost::bind(&connection::handle_http_line, this, placeholders::error));
+    async_read_until(*m_socket, m_request_buf, boost::regex(CRLF+CRLF+"|[\\x00-\\x1F]|[\\x80-\\xFF]"), boost::bind(&connection::handle_http_line, this, placeholders::error));
 }
 
 void hostport_listener::on_accept(ip::tcp::socket* socket, const boost::system::error_code& ec)
@@ -220,7 +220,9 @@ void connection::handle_headers()
         m_chunked = boost::ifind_first(name, U("chunked"));
     }
 
-    m_request._get_impl()->_prepare_to_receive_data();
+    Concurrency::streams::producer_consumer_buffer<uint8_t> buf;
+    m_request._get_impl()->set_instream(buf.create_istream());
+    m_request._get_impl()->set_outstream(buf.create_ostream(), false);
     if (m_chunked)
     {
         boost::asio::async_read_until(*m_socket, m_request_buf, CRLF, boost::bind(&connection::handle_chunked_header, this, placeholders::error));

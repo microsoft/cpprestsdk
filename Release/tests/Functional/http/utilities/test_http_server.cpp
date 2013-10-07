@@ -518,13 +518,13 @@ public:
             tr->m_body = result.extract_vector().get();
 
             {
-                pplx::extensibility::critical_section_t::scoped_lock lock(m_lock);
+                pplx::extensibility::scoped_critical_section_t lock(m_lock);
                 m_responding_requests[tr->m_request_id] = result;
             }
 
             while (!m_cancel)
             {
-                pplx::extensibility::critical_section_t::scoped_lock lock(m_lock);
+                pplx::extensibility::scoped_critical_section_t lock(m_lock);
                 if (m_requests.size() > 0)
                 {
                     m_requests[0].set(tr);
@@ -563,7 +563,7 @@ public:
     {
         web::http::http_request request;
         {
-            pplx::extensibility::critical_section_t::scoped_lock lock(m_lock);
+            pplx::extensibility::scoped_critical_section_t lock(m_lock);
             auto it = m_responding_requests.find(request_id);
             if (it == m_responding_requests.end())
                 throw std::runtime_error("no such request awaiting response");
@@ -591,7 +591,7 @@ public:
     pplx::task<test_request *> next_request()
     {
         pplx::task_completion_event<test_request*> tce;
-        pplx::extensibility::critical_section_t::scoped_lock lock(m_lock);
+        pplx::extensibility::scoped_critical_section_t lock(m_lock);
         m_requests.push_back(tce);
         return pplx::create_task(tce);
     }

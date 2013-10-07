@@ -144,9 +144,9 @@ namespace helpers
  SUITE(pplxtask_tests)
  {
 
-TEST(TestCancellationTokenRegression, "Ignore", "707149")
+TEST(TestCancellationTokenRegression)
 {
-    for (int i=0; i < 50000; i++)
+    for (int i=0; i < 10000; i++)
     {
         task_completion_event<void> tce;
         task<void> starter(tce);

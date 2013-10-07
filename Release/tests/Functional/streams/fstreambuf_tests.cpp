@@ -300,7 +300,7 @@ TEST(ReadSingleChar_bumpc1)
     VERIFY_IS_FALSE(stream.is_open());
 }
 
-TEST(SequentialReadWrite, "Ignore", "759503")
+TEST(SequentialReadWrite)
 {
     utility::string_t fname = U("SequentialReadWrite.txt");
 
@@ -852,7 +852,7 @@ TEST(CloseWithException)
     VERIFY_THROWS(streambuf.getc().get(), MyException);
 }
 
-TEST(inout_regression_test, "Ignore", "TFS#721097")
+TEST(inout_regression_test)
 {
     std::string data = "abcdefghijklmn";
     concurrency::streams::streambuf<char> file_buf = OPEN<char>(U("inout_regression_test.txt"), std::ios_base::in|std::ios_base::out).get();

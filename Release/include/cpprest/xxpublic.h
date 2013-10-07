@@ -49,11 +49,15 @@ typedef UINT_PTR SOCKET;
 #endif
 
 // for guids, used in comm.h
+#ifdef MS_TARGET_APPLE
+#include "compat/apple_compat.h"
+#else
 #ifdef _MS_WINDOWS
 #include <Guiddef.h>
-#include <compat/windows_compat.h>
+#include "compat/windows_compat.h"
 #else
 #include "boost/uuid/uuid.hpp"
+#endif
 #endif
 
 // for winhttp.h

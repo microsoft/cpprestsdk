@@ -31,6 +31,9 @@
 #ifndef _MS_WINDOWS
 #include <sys/stat.h> // for mkdir
 #include "boost/locale.hpp"
+#ifdef __APPLE__
+#include <time.h>
+#endif
 #endif
 
 using namespace web; 
@@ -221,6 +224,36 @@ bool _FormatTime(const SYSTEMTIME& st, utility::ostream_t& outputStream)
 
     return true;
 }
+#elif defined(__APPLE__)
+bool _FormatDate(const time_t& pt, std::ostream &outputStream)
+{
+    struct tm tm;
+    localtime_r(&pt, &tm);
+    outputStream << tm.tm_year << U("-");
+    if ( tm.tm_mon < 10 )
+        outputStream << U("0");
+    outputStream << tm.tm_mon << U("-");
+    if ( tm.tm_mday < 10 )
+        outputStream << U("0");
+    outputStream << tm.tm_mday;
+    return true;
+}
+
+bool _FormatTime(const time_t& pt, std::ostream &outputStream)
+{
+    struct tm tm;
+    localtime_r(&pt, &tm);
+    if ( tm.tm_hour < 10 )
+        outputStream << U("0");
+    outputStream << tm.tm_hour << U(":");
+    if ( tm.tm_min < 10 )
+        outputStream << U("0");
+    outputStream << tm.tm_min << U(":");
+    if ( tm.tm_sec < 10 )
+        outputStream << U("0");
+    outputStream << tm.tm_sec;
+    return true;
+}
 #else
 bool _FormatDate(const time_t& pt, std::ostream &outputStream)
 {
@@ -237,13 +270,14 @@ bool _FormatTime(const time_t& pt, std::ostream &outputStream)
 
 utility::string_t _GetPath(const utility::string_t &base)
 {
+    utility::ostringstream_t outputStream;
+    outputStream << base << U("\\");
+    
 #ifdef _MS_WINDOWS
+    
     SYSTEMTIME st;
     GetLocalTime(&st);
-
-    utility::ostringstream_t outputStream;
-
-    outputStream << base << U("\\");
+    
     outputStream << st.wYear << U("-");
     if ( st.wMonth < 10 ) 
         outputStream << U("0");
@@ -253,11 +287,31 @@ utility::string_t _GetPath(const utility::string_t &base)
     outputStream << st.wDay << U(".log");
 
     return outputStream.str();
+
+#elif defined(__APPLE__)
+    
+    struct timeval tval;
+    struct timezone tz;
+    struct tm tm;
+    if ( gettimeofday(&tval, &tz) == 0 && localtime_r(&tval.tv_sec, &tm) != nullptr )
+    {
+        outputStream << tm.tm_year << U("-");
+        if ( tm.tm_mon < 10 )
+            outputStream << U("0");
+        outputStream << tm.tm_mon << U("-");
+        if ( tm.tm_mday < 10 )
+            outputStream << U("0");
+        outputStream << tm.tm_mday << U(".log");
+    }
+        
+    return outputStream.str();
+
 #else
+
     time_t now = time(nullptr);
-    std::ostringstream outputStream;
     outputStream << base << boost::locale::as::ftime("\\%Y-%m-%d.log") << now;
     return outputStream.str();
+
 #endif
 }
 

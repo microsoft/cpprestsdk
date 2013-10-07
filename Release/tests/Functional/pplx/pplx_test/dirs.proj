@@ -8,11 +8,20 @@
 
   <ItemGroup Condition="'$(DevToolsVersion)'=='110'">
       <ProjectFile Include="VS11\pplx110_test.vcxproj" />
-      <ProjectFile Include="VS11.xp\pplx110_test.xp.vcxproj" />
+      <ProjectFile Include="VS11.xp\pplx110_test.xp.vcxproj" Condition="'$(Platform)'!='ARM'" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(DevToolsVersion)'=='120'">
+      <ProjectFile Include="VS12\pplx120_test.vcxproj" />
+      <ProjectFile Include="VS12.xp\pplx120_test.xp.vcxproj" Condition="'$(Platform)'!='ARM'" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.2|110' or '$(OsVersion)|$(DevToolsVersion)'=='6.3|110'">
       <ProjectFile Include="VS11.winrt\pplx110_test.winrt.vcxproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.2|120' or '$(OsVersion)|$(DevToolsVersion)'=='6.3|110'">
+      <ProjectFile Include="VS12.winrt\pplx120_test.winrt.vcxproj" />
   </ItemGroup>
 
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />

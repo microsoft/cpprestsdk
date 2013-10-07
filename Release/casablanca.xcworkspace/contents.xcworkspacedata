@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workspace
+   version = "1.0">
+   <FileRef
+      location = "group:tests/Functional/http/client/OSX/httpclient_test/httpclient_test.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:tests/Functional/pplx/pplx_test/OSX/pplx_test/pplx_test.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:tests/Functional/streams/OSX/stream_test/stream_test.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:tests/Functional/json/OSX/json_test/json_test.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:tests/Functional/uri/OSX/uri_test/uri_test.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:tests/Functional/utils/OSX/utils_test/utils_test.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:tests/Common/TestRunner/OSX/test_runner/test_runner.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:tests/Common/utilities/OSX/utilities/utilities.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:tests/Common/UnitTestpp/UnitTestpp/UnitTestpp.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:src/OSX/casablanca/casablanca.osx.xcodeproj">
+   </FileRef>
+</Workspace>

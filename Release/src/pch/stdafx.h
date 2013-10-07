@@ -25,7 +25,7 @@
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 
-#ifndef __STDAFX_H
+#pragma once
 
 #include "cpprest/xxpublic.h"
 #include "cpprest/basic_types.h"
@@ -52,9 +52,13 @@
 #include <winhttp.h>
 
 #endif // #if !defined(__cplusplus_winrt)
-#else // LINUX
+#else // LINUX or APPLE
+#ifdef __APPLE__
+#include <compat/apple_compat.h>
+#else
 #include <compat/linux_compat.h>
 #define FAILED(x) ((x) != 0)
+#endif
 #define __STDC_LIMIT_MACROS
 #include <stdint.h>
 #include <cstdint>
@@ -133,5 +137,3 @@ namespace pplx = Concurrency;
 #if defined(min)
 #error: min macro defined -- make sure to #define NOMINMAX before including windows.h
 #endif
-
-#endif // #if defined(__STDAFX_H)

@@ -13,9 +13,10 @@
 
   <ItemGroup Condition="'$(DevToolsVersion)'=='120'">
       <ProjectFile Include="VS12\CommonUtilities120.vcxproj" />
+      <ProjectFile Include="VS12.xp\CommonUtilities120.xp.vcxproj" />
   </ItemGroup>
   
-  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|120'">
+  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.2|120' or '$(OsVersion)|$(DevToolsVersion)'=='6.3|120'">
       <ProjectFile Include="VS12.winrt\CommonUtilities120.winrt.vcxproj" />
   </ItemGroup>
 

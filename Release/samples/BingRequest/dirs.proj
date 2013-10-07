@@ -6,9 +6,10 @@
       <ProjectFile Include="BingRequest$(DevToolsVersion)\BingRequest$(DevToolsVersion).vcxproj"/>
   </ItemGroup>
 
-  <ItemGroup Condition="'$(DevToolsVersion)'=='110'">
+  <ItemGroup Condition="'$(DevToolsVersion)'!='100' and '$(Platform)' != 'ARM'">
     <ProjectFile Include="BingRequest$(DevToolsVersion).xp\BingRequest$(DevToolsVersion).xp.vcxproj"/>
   </ItemGroup>
+
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
 
 </Project>

@@ -1,0 +1,298 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		EB152F4417698D8800A5F835 /* accessor_tests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EB152F3817698D8800A5F835 /* accessor_tests.cpp */; };
+		EB152F4517698D8800A5F835 /* combining_tests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EB152F3917698D8800A5F835 /* combining_tests.cpp */; };
+		EB152F4617698D8800A5F835 /* constructor_tests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EB152F3A17698D8800A5F835 /* constructor_tests.cpp */; };
+		EB152F4717698D8800A5F835 /* conversions_tests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EB152F3B17698D8800A5F835 /* conversions_tests.cpp */; };
+		EB152F4817698D8800A5F835 /* diagnostic_tests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EB152F3C17698D8800A5F835 /* diagnostic_tests.cpp */; };
+		EB152F4917698D8800A5F835 /* encoding_tests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EB152F3D17698D8800A5F835 /* encoding_tests.cpp */; };
+		EB152F4A17698D8800A5F835 /* operator_tests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EB152F3E17698D8800A5F835 /* operator_tests.cpp */; };
+		EB152F4B17698D8800A5F835 /* splitting_tests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EB152F3F17698D8800A5F835 /* splitting_tests.cpp */; };
+		EB152F4C17698D8800A5F835 /* stdafx.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EB152F4017698D8800A5F835 /* stdafx.cpp */; };
+		EB152F4D17698D8800A5F835 /* stdafx.h in Headers */ = {isa = PBXBuildFile; fileRef = EB152F4117698D8800A5F835 /* stdafx.h */; };
+		EB152F4E17698D8800A5F835 /* uri_builder_tests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EB152F4217698D8800A5F835 /* uri_builder_tests.cpp */; };
+		EB152F4F17698D8800A5F835 /* uri_tests.h in Headers */ = {isa = PBXBuildFile; fileRef = EB152F4317698D8800A5F835 /* uri_tests.h */; };
+		EB3F021C176AB37B0064D425 /* libcasablanca.dyn.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = EB3F021B176AB37B0064D425 /* libcasablanca.dyn.dylib */; };
+		EB3F021E176AB3840064D425 /* libUnitTestpp.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = EB3F021D176AB3840064D425 /* libUnitTestpp.dylib */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		EB152F3117698D4600A5F835 /* liburi_test.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = liburi_test.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
+		EB152F3817698D8800A5F835 /* accessor_tests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = accessor_tests.cpp; path = ../../accessor_tests.cpp; sourceTree = "<group>"; };
+		EB152F3917698D8800A5F835 /* combining_tests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = combining_tests.cpp; path = ../../combining_tests.cpp; sourceTree = "<group>"; };
+		EB152F3A17698D8800A5F835 /* constructor_tests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = constructor_tests.cpp; path = ../../constructor_tests.cpp; sourceTree = "<group>"; };
+		EB152F3B17698D8800A5F835 /* conversions_tests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = conversions_tests.cpp; path = ../../conversions_tests.cpp; sourceTree = "<group>"; };
+		EB152F3C17698D8800A5F835 /* diagnostic_tests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = diagnostic_tests.cpp; path = ../../diagnostic_tests.cpp; sourceTree = "<group>"; };
+		EB152F3D17698D8800A5F835 /* encoding_tests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = encoding_tests.cpp; path = ../../encoding_tests.cpp; sourceTree = "<group>"; };
+		EB152F3E17698D8800A5F835 /* operator_tests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = operator_tests.cpp; path = ../../operator_tests.cpp; sourceTree = "<group>"; };
+		EB152F3F17698D8800A5F835 /* splitting_tests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = splitting_tests.cpp; path = ../../splitting_tests.cpp; sourceTree = "<group>"; };
+		EB152F4017698D8800A5F835 /* stdafx.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = stdafx.cpp; path = ../../stdafx.cpp; sourceTree = "<group>"; };
+		EB152F4117698D8800A5F835 /* stdafx.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = stdafx.h; path = ../../stdafx.h; sourceTree = "<group>"; };
+		EB152F4217698D8800A5F835 /* uri_builder_tests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = uri_builder_tests.cpp; path = ../../uri_builder_tests.cpp; sourceTree = "<group>"; };
+		EB152F4317698D8800A5F835 /* uri_tests.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = uri_tests.h; path = ../../uri_tests.h; sourceTree = "<group>"; };
+		EB3F021B176AB37B0064D425 /* libcasablanca.dyn.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libcasablanca.dyn.dylib; path = "../../../../../../../../Library/Developer/Xcode/DerivedData/casablanca-dsizxvnszpogyxcgnjjddmqvfvaa/Build/Products/Debug/libcasablanca.dyn.dylib"; sourceTree = "<group>"; };
+		EB3F021D176AB3840064D425 /* libUnitTestpp.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libUnitTestpp.dylib; path = "../../../../../../../../Library/Developer/Xcode/DerivedData/casablanca-dsizxvnszpogyxcgnjjddmqvfvaa/Build/Products/Debug/libUnitTestpp.dylib"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		EB152F2E17698D4600A5F835 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				EB3F021C176AB37B0064D425 /* libcasablanca.dyn.dylib in Frameworks */,
+				EB3F021E176AB3840064D425 /* libUnitTestpp.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		EB152F2817698D4600A5F835 = {
+			isa = PBXGroup;
+			children = (
+				EB3F021D176AB3840064D425 /* libUnitTestpp.dylib */,
+				EB3F021B176AB37B0064D425 /* libcasablanca.dyn.dylib */,
+				EB152F3817698D8800A5F835 /* accessor_tests.cpp */,
+				EB152F3917698D8800A5F835 /* combining_tests.cpp */,
+				EB152F3A17698D8800A5F835 /* constructor_tests.cpp */,
+				EB152F3B17698D8800A5F835 /* conversions_tests.cpp */,
+				EB152F3C17698D8800A5F835 /* diagnostic_tests.cpp */,
+				EB152F3D17698D8800A5F835 /* encoding_tests.cpp */,
+				EB152F3E17698D8800A5F835 /* operator_tests.cpp */,
+				EB152F3F17698D8800A5F835 /* splitting_tests.cpp */,
+				EB152F4017698D8800A5F835 /* stdafx.cpp */,
+				EB152F4117698D8800A5F835 /* stdafx.h */,
+				EB152F4217698D8800A5F835 /* uri_builder_tests.cpp */,
+				EB152F4317698D8800A5F835 /* uri_tests.h */,
+				EB152F3217698D4600A5F835 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		EB152F3217698D4600A5F835 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				EB152F3117698D4600A5F835 /* liburi_test.dylib */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		EB152F2F17698D4600A5F835 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				EB152F4D17698D8800A5F835 /* stdafx.h in Headers */,
+				EB152F4F17698D8800A5F835 /* uri_tests.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		EB152F3017698D4600A5F835 /* uri_test */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = EB152F3517698D4600A5F835 /* Build configuration list for PBXNativeTarget "uri_test" */;
+			buildPhases = (
+				EB152F2D17698D4600A5F835 /* Sources */,
+				EB152F2E17698D4600A5F835 /* Frameworks */,
+				EB152F2F17698D4600A5F835 /* Headers */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = uri_test;
+			productName = uri_test;
+			productReference = EB152F3117698D4600A5F835 /* liburi_test.dylib */;
+			productType = "com.apple.product-type.library.dynamic";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		EB152F2917698D4600A5F835 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0460;
+				ORGANIZATIONNAME = "Niklas Gustafsson";
+			};
+			buildConfigurationList = EB152F2C17698D4600A5F835 /* Build configuration list for PBXProject "uri_test" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = EB152F2817698D4600A5F835;
+			productRefGroup = EB152F3217698D4600A5F835 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				EB152F3017698D4600A5F835 /* uri_test */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		EB152F2D17698D4600A5F835 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				EB152F4417698D8800A5F835 /* accessor_tests.cpp in Sources */,
+				EB152F4517698D8800A5F835 /* combining_tests.cpp in Sources */,
+				EB152F4617698D8800A5F835 /* constructor_tests.cpp in Sources */,
+				EB152F4717698D8800A5F835 /* conversions_tests.cpp in Sources */,
+				EB152F4817698D8800A5F835 /* diagnostic_tests.cpp in Sources */,
+				EB152F4917698D8800A5F835 /* encoding_tests.cpp in Sources */,
+				EB152F4A17698D8800A5F835 /* operator_tests.cpp in Sources */,
+				EB152F4B17698D8800A5F835 /* splitting_tests.cpp in Sources */,
+				EB152F4C17698D8800A5F835 /* stdafx.cpp in Sources */,
+				EB152F4E17698D8800A5F835 /* uri_builder_tests.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		EB152F3317698D4600A5F835 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		EB152F3417698D4600A5F835 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		EB152F3617698D4600A5F835 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = YES;
+				EXECUTABLE_PREFIX = lib;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					MS_TARGET_APPLE,
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = NO;
+				GCC_WARN_SIGN_COMPARE = YES;
+				GCC_WARN_UNUSED_VALUE = NO;
+				GCC_WARN_UNUSED_VARIABLE = NO;
+				HEADER_SEARCH_PATHS = (
+					/opt/local/include,
+					../../../../../include,
+					../../../../Common/UnitTestpp,
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/../../../../../../../../Library/Developer/Xcode/DerivedData/casablanca-dsizxvnszpogyxcgnjjddmqvfvaa/Build/Products/Debug\"",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				WARNING_CFLAGS = "-Wno-return-type-c-linkage";
+			};
+			name = Debug;
+		};
+		EB152F3717698D4600A5F835 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = YES;
+				EXECUTABLE_PREFIX = lib;
+				GCC_PREPROCESSOR_DEFINITIONS = MS_TARGET_APPLE;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = NO;
+				GCC_WARN_SIGN_COMPARE = YES;
+				GCC_WARN_UNUSED_VALUE = NO;
+				GCC_WARN_UNUSED_VARIABLE = NO;
+				HEADER_SEARCH_PATHS = (
+					/opt/local/include,
+					../../../../../include,
+					../../../../Common/UnitTestpp,
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/../../../../../../../../Library/Developer/Xcode/DerivedData/casablanca-dsizxvnszpogyxcgnjjddmqvfvaa/Build/Products/Debug\"",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				WARNING_CFLAGS = "-Wno-return-type-c-linkage";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		EB152F2C17698D4600A5F835 /* Build configuration list for PBXProject "uri_test" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				EB152F3317698D4600A5F835 /* Debug */,
+				EB152F3417698D4600A5F835 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		EB152F3517698D4600A5F835 /* Build configuration list for PBXNativeTarget "uri_test" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				EB152F3617698D4600A5F835 /* Debug */,
+				EB152F3717698D4600A5F835 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = EB152F2917698D4600A5F835 /* Project object */;
+}

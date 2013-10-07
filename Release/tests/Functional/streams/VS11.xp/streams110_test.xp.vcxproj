@@ -180,13 +180,12 @@
   <ItemGroup>
     <ClCompile Include="..\memstream_tests.cpp" />
     <ClCompile Include="..\fuzz_tests.cpp" />
-    <ClCompile Include="..\stdafx.cpp">
 <!-- Disabled to include following test files for Bug: 759503-->
-<!--    <ClCompile Include="..\fstreambuf_tests.cpp" /> -->
-<!--    <ClCompile Include="..\ostream_tests.cpp" /> -->
-<!--    <ClCompile Include="..\stdstream_tests.cpp" /> -->
-<!--    <ClCompile Include="..\istream_tests.cpp" /> -->
-
+    <ClCompile Include="..\fstreambuf_tests.cpp" /> 
+    <ClCompile Include="..\ostream_tests.cpp" /> 
+    <ClCompile Include="..\stdstream_tests.cpp" /> 
+    <ClCompile Include="..\istream_tests.cpp" /> 
+    <ClCompile Include="..\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>

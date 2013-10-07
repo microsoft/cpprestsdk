@@ -22,7 +22,7 @@
       <ProjectFile Include="VS12\HttpClient120_test.vcxproj" />
   </ItemGroup>
   
-  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|120'">
+  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.2|120' or '$(OsVersion)|$(DevToolsVersion)'=='6.3|120'">
       <ProjectFile Include="VS12.winrt\HttpClient120_test.winrt.vcxproj" />
   </ItemGroup>
   

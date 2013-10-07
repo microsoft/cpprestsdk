@@ -29,8 +29,14 @@
 #include <Windows.h>
 #include <conio.h>
 #else
+#include <unistd.h>
+#ifdef __APPLE__
+#include "compat/apple_compat.h"
+#include <dirent.h>
+#else
 #include <boost/filesystem.hpp>
-#include "unistd.h"
+#include "compat/linux_compat.h"
+#endif
 #endif
 
 #include "../UnitTestpp/src/TestReporterStdout.h"
@@ -103,7 +109,7 @@ static std::vector<std::string> get_files_in_directory()
     }
     FindClose(hFind);
 
-#else
+#elif !defined(__APPLE__)
     using namespace boost::filesystem;
     
     auto exe_directory = initial_path().string();
@@ -113,6 +119,25 @@ static std::vector<std::string> get_files_in_directory()
         {
             files.push_back(it->path().filename().string());
         }
+    }
+#else
+    auto exe_directory = getcwd(nullptr, 0);
+    
+    DIR *dir = opendir(exe_directory);
+    free(exe_directory);
+    
+    if (dir != nullptr)
+    {
+        struct dirent *ent = readdir(dir);
+        while (ent != nullptr)
+        {
+            if (ent->d_type == DT_REG)
+            {
+                files.push_back(ent->d_name);
+            }
+            ent = readdir(dir);
+    }
+        closedir(dir);
     }
 #endif
 
@@ -135,7 +160,7 @@ static std::string replace_wildcard_for_regex(const std::string &str)
 
 static std::vector<std::string> get_matching_binaries(const std::string &dllName)
 {
-    std::vector<std::string> allFiles = get_files_in_directory();
+    std::vector<std::string> matchingFiles;
     
     // If starts with .\ remove it.
     std::string expandedDllName(dllName);
@@ -157,9 +182,11 @@ static std::vector<std::string> get_matching_binaries(const std::string &dllName
     // Replace all '*' in dllName with '.*'
     expandedDllName = replace_wildcard_for_regex(expandedDllName);
 
+    std::vector<std::string> allFiles = get_files_in_directory();
+    
     // Filter out any files that don't match.
     std::regex dllRegex(expandedDllName, std::regex_constants::icase);
-    std::vector<std::string> matchingFiles;
+
     for(auto iter = allFiles.begin(); iter != allFiles.end(); ++iter)
     {
         if(std::regex_match(*iter, dllRegex))
@@ -167,6 +194,7 @@ static std::vector<std::string> get_matching_binaries(const std::string &dllName
             matchingFiles.push_back(*iter);
         }
     }
+
     return matchingFiles;
 }
 
@@ -351,6 +379,8 @@ bool IsTestIgnored(UnitTest::Test *pTest)
     if(pTest->m_properties.Has("Ignore")) return true;
 #ifdef WIN32
     if(pTest->m_properties.Has("Ignore:Windows")) return true;
+#elif defined(__APPLE__)
+    if(pTest->m_properties.Has("Ignore:Apple")) return true;
 #else
 if(pTest->m_properties.Has("Ignore:Linux")) return true;
 #endif
@@ -422,6 +452,7 @@ int main(int argc, char* argv[])
     int totalTestCount = 0, failedTestCount = 0;
     std::vector<std::string> failedTests;
     UnitTest::TestReporterStdout testReporter;
+    
     bool breakOnError = false;
     if(UnitTest::GlobalSettings::Has("breakonerror"))
     {
@@ -445,6 +476,7 @@ int main(int argc, char* argv[])
     timer.Start();
 
     // Cycle through all the test binaries, load them, and perform the specified action.
+    
     for(auto iter = g_test_binaries.begin(); iter != g_test_binaries.end(); ++iter)
     {
         std::vector<std::string> matchingBinaries = get_matching_binaries(*iter);
@@ -581,29 +613,29 @@ int main(int argc, char* argv[])
             }
 
             tests.Clear();
+            }
         }
-    }
 
-    if( totalTestCount > 0 )
-    {
-        // Print out all failed test cases at the end for easy viewing.
-        const double elapsedTime = timer.GetTimeInMs();
-        std::cout << "Finished running all tests. Took " << elapsedTime << "ms" << std::endl;
-        if(failedTestCount > 0)
+        if( totalTestCount > 0 )
         {
-            ChangeConsoleTextColorToRed();
-            std::for_each(failedTests.begin(), failedTests.end(), [](const std::string &failedTest)
+            // Print out all failed test cases at the end for easy viewing.
+            const double elapsedTime = timer.GetTimeInMs();
+            std::cout << "Finished running all tests. Took " << elapsedTime << "ms" << std::endl;
+            if(failedTestCount > 0)
             {
-                std::cout << "**** " << failedTest << " FAILED ****" << std::endl;
-            });
+                ChangeConsoleTextColorToRed();
+                std::for_each(failedTests.begin(), failedTests.end(), [](const std::string &failedTest)
+                {
+                    std::cout << "**** " << failedTest << " FAILED ****" << std::endl;
+                });
+            }
+            else
+            {
+                ChangeConsoleTextColorToGreen();
+                std::cout << "****SUCCESS all " << totalTestCount << " test cases PASSED****" << std::endl;
+            }
+            ChangeConsoleTextColorToGrey();
         }
-        else
-        {
-            ChangeConsoleTextColorToGreen();
-            std::cout << "****SUCCESS all " << totalTestCount << " test cases PASSED****" << std::endl;
-        }
-        ChangeConsoleTextColorToGrey();
-    }
 
 #ifdef WIN32
     if(hComBase != nullptr)

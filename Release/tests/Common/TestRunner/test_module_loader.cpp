@@ -87,7 +87,11 @@ public:
         auto ptr = dlsym(m_handle, "GetTestList");
         if (ptr == nullptr)
         {
-            std::cerr << "couldn't find GetTestList" << std::endl;
+            std::cerr << "couldn't find GetTestList" <<
+#ifdef __APPLE__
+                " " << dlerror() <<
+#endif
+                std::endl;
         }
         return (GetTestsFunc)ptr;
     }
@@ -96,7 +100,13 @@ protected:
 
     virtual unsigned long load_impl()
     {
+#ifdef __APPLE__
+        auto exe_directory = getcwd(nullptr, 0);
+        auto path = std::string(exe_directory) + "/" + m_dllName;
+        free(exe_directory);
+#else
         auto path = boost::filesystem::initial_path().string() + "/" + m_dllName;
+#endif
 
         m_handle = dlopen(path.c_str(), RTLD_LAZY|RTLD_GLOBAL);
         if (m_handle == nullptr)

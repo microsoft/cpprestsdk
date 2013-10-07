@@ -151,7 +151,7 @@ DWORD _finish_create(HANDLE fh, _In_ _filestream_callback *callback, std::ios_ba
     {
         std::shared_ptr<io_scheduler> sched = io_scheduler::get_scheduler();
 
-        io_ctxt = sched->Associate(fh);  
+        io_ctxt = sched->Associate(fh); 
 #if _WIN32_WINNT >= _WIN32_WINNT_VISTA 
         SetFileCompletionNotificationModes(fh, FILE_SKIP_COMPLETION_PORT_ON_SUCCESS);
 #endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA 
@@ -413,7 +413,6 @@ size_t _write_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ str
 
 #if _WIN32_WINNT >= _WIN32_WINNT_VISTA 
     StartThreadpoolIo((PTP_IO)fInfo->m_io_context);  
-#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA 
 
     _InterlockedIncrement(&fInfo->m_outstanding_writes);
 
@@ -425,9 +424,7 @@ size_t _write_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ str
     if ( wrResult == FALSE && error == ERROR_IO_PENDING ) 
         return 0;
 
-#if _WIN32_WINNT >= _WIN32_WINNT_VISTA 
     CancelThreadpoolIo((PTP_IO)fInfo->m_io_context);  
-#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA  
 
     size_t result = (size_t)-1;
 
@@ -447,6 +444,35 @@ size_t _write_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ str
         callback->on_error(std::make_exception_ptr(utility::details::create_system_error(error)));
 
     return result;
+#else
+    _InterlockedIncrement(&fInfo->m_outstanding_writes);
+    BOOL wrResult = WriteFile(fInfo->m_handle, ptr.get(), (DWORD)count, nullptr, pOverlapped);
+    DWORD error = GetLastError();
+
+    // 1. If WriteFile returned true, it must be because the operation completed immediately.
+    // The xp threadpool immediatly creates a workerthread to run "_WriteFileCompletionRoutine".
+    // If this function return value > 0, the condition "if (written == sizeof(_CharType))" in the filestreams.h "_getcImpl()" function will be satisfied. 
+    // The main thread will delete the input "callback", while the threadpool workerthread is accessing this "callback"; there will be a race condition and AV error.
+    // We directly return 0 and leave all the completion callbacks working on the workerthread. 
+    // We do not need to call GetOverlappedResult, the workerthread will call the "on_error()" if the WriteFaile falied.
+    // "req" is deleted in "_WriteFileCompletionRoutine, "pOverlapped" is deleted in io_scheduler::FileIOCompletionRoutine.
+    if (wrResult == TRUE)
+        return 0;
+
+    // 2. If WriteFile returned false and GetLastError is ERROR_IO_PENDING, return 0, 
+    //    The xp threadpool will create a workerthread to run "_WriteFileCompletionRoutine" after the operation completed.
+    if (wrResult == FALSE && error == ERROR_IO_PENDING)
+        return 0;
+
+    // 3. If ReadFile returned false and GetLastError is not ERROR_IO_PENDING, we must call "callback->on_error()" and delete.
+    //    The threadpools will not start the workerthread.
+    delete req;
+    delete pOverlapped;
+    callback->on_error(std::make_exception_ptr(utility::details::create_system_error(error)));
+
+    return (size_t)-1;
+#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA  
+
 }
 
 /// <summary>
@@ -484,11 +510,10 @@ size_t _read_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ stre
 
 #if _WIN32_WINNT >= _WIN32_WINNT_VISTA 
     StartThreadpoolIo((PTP_IO)fInfo->m_io_context);  
-#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA 
 
     BOOL wrResult = ReadFile(fInfo->m_handle, ptr, (DWORD)count, nullptr, pOverlapped);
     DWORD error = GetLastError();
-
+    
     // ReadFile will return false when a) the operation failed, or b) when the request is still
     // pending. The error code will tell us which is which.
 
@@ -499,9 +524,7 @@ size_t _read_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ stre
     // success. Either way, we don't need the thread pool I/O request here, or the request and
     // overlapped structures.
 
-#if _WIN32_WINNT >= _WIN32_WINNT_VISTA 
     CancelThreadpoolIo((PTP_IO)fInfo->m_io_context);
-#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA 
 
     size_t result = (size_t)-1;
 
@@ -525,8 +548,45 @@ size_t _read_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ stre
     
     if ( result == (size_t)-1 )
         callback->on_error(std::make_exception_ptr(utility::details::create_system_error(error)));
-
+  
     return result;
+#else
+    BOOL wrResult = ReadFile(fInfo->m_handle, ptr, (DWORD)count, nullptr, pOverlapped);
+    DWORD error = GetLastError();
+
+    // 1. If ReadFile returned true, it must be because the operation completed immediately.
+    // The xp threadpool immediatly creates a workerthread to run "_WriteFileCompletionRoutine".
+    // If this function return value > 0, the condition "if ( ch == sizeof(_CharType) )" in the filestreams.h "_getcImpl()" function will be satisfied. 
+    // The main thread will delete the input "callback", while the threadpool workerthread is accessing this "callback"; there will be a race condition and AV error.
+    // We can directly return 0 and leave all the completion callbacks working on the workerthread.
+    // We do not need to call GetOverlappedResult, the workerthread will call the "on_error()" if the ReadFile falied.
+    // "req" is deleted in "_ReadFileCompletionRoutine, "pOverlapped" is deleted in io_scheduler::FileIOCompletionRoutine.
+    if (wrResult == TRUE)
+        return 0;
+
+    // 2. If ReadFile returned false and GetLastError is ERROR_IO_PENDING, return 0. 
+    //    The xp threadpool will create a workerthread to run "_WriteFileCompletionRoutine" after the operation completed.
+    if (wrResult == FALSE && error == ERROR_IO_PENDING)
+        return 0;
+
+    // 3. If ReadFile returned false and GetLastError is ERROR_HANDLE_EOF, we must call "callback->on_completed(0)" and delete.
+    //    The threadpool will not start the workerthread. 
+    if ( wrResult == FALSE && error == ERROR_HANDLE_EOF )
+    {
+        delete req;
+        delete pOverlapped;
+        callback->on_completed(0);
+        return 0;
+    }
+
+    // 4. If ReadFile returned false and GetLastError is not a valid error code, we must call "callback->on_error()" and delete.
+    //    The threadpool will not start the workerthread.
+    delete req;
+    delete pOverlapped;
+    callback->on_error(std::make_exception_ptr(utility::details::create_system_error(error)));
+
+    return (size_t)-1;
+#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA 
 }
 
 template<typename Func>

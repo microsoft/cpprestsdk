@@ -918,8 +918,11 @@ protected:
     size_t m_currentLine;
     size_t m_currentColumn;
     size_t m_currentParsingDepth;
+#ifndef __APPLE__
     static const size_t maxParsingDepth = 128;
-
+#else
+    static const size_t maxParsingDepth = 32;
+#endif
     typename std::char_traits<CharType>::int_type m_eof;
 
 private:

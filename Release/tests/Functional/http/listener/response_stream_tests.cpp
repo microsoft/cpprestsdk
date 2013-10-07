@@ -235,8 +235,7 @@ TEST_FIXTURE(uri_address, set_body_memorystream_chunked)
     }).wait();
 }
 
-TEST_FIXTURE(uri_address, reply_transfer_encoding_4k,
-			 "Ignore", "607204")
+TEST_FIXTURE(uri_address, reply_transfer_encoding_4k)
 {
     web::http::experimental::listener::http_listener listener(m_uri);
     listener.open().wait();
@@ -244,13 +243,15 @@ TEST_FIXTURE(uri_address, reply_transfer_encoding_4k,
     streams::container_buffer<std::vector<uint8_t>> buf;
 
     // Write 4K - the exact internal chunk size
-    unsigned char ptr[4* 1024];
+    unsigned char ptr[4* 1024] = {'a', 'b', 'c'};
     VERIFY_ARE_EQUAL(buf.putn(ptr, sizeof(ptr)).get(), sizeof(ptr));
 
     listener.support([&buf](http_request request)
     {
         // Ensure that it is transfer-encoded
-        request.reply(200, streams::istream(buf), U("text/plain"));
+        auto collection = buf.collection();
+        streams::container_buffer<std::vector<uint8_t>> buf2(std::move(collection), std::ios_base::in);
+        request.reply(200, streams::istream(buf2), U("text/plain"));
         buf.close(std::ios_base::out);
     });
 
@@ -263,6 +264,10 @@ TEST_FIXTURE(uri_address, reply_transfer_encoding_4k,
 
         // Wait for data
         resp.content_ready().wait();
+
+        // Now verify that we've got the right data
+        auto s = resp.extract_string().get();
+        VERIFY_ARE_EQUAL(s.c_str(), U("abc"));
     }
     listener.close().wait();
 }

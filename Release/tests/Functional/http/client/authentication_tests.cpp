@@ -33,12 +33,20 @@ using namespace web::http::client;
 
 using namespace tests::functional::http::utilities;
 
+#ifdef __APPLE__
+extern "C" UnitTest::TestList& UnitTest::GetTestList()
+{
+    static TestList s_list;
+    return s_list;
+}
+#endif
+
 namespace tests { namespace functional { namespace http { namespace client {
 
 SUITE(authentication_tests)
 {
 
-TEST_FIXTURE(uri_address, auth_no_data, "Ignore:Linux", "646268")
+TEST_FIXTURE(uri_address, auth_no_data, "Ignore:Linux", "646268", "Ignore:Apple", "646268")
 {
     test_http_server::scoped_server scoped(m_uri);
     http_client_config client_config;
@@ -77,7 +85,7 @@ TEST_FIXTURE(uri_address, auth_no_data, "Ignore:Linux", "646268")
 
 // TFS 648783
 #ifndef __cplusplus_winrt
-TEST_FIXTURE(uri_address, proxy_auth_known_contentlength, "Ignore:Linux", "646268")
+TEST_FIXTURE(uri_address, proxy_auth_known_contentlength, "Ignore:Linux", "646268", "Ignore:Apple", "646268")
 {
     test_http_server::scoped_server scoped(m_uri);
     http_client_config client_config;
@@ -119,7 +127,8 @@ TEST_FIXTURE(uri_address, proxy_auth_known_contentlength, "Ignore:Linux", "64626
 #endif
 
 TEST_FIXTURE(uri_address, proxy_auth_noseek,
-             "Ignore:Linux", "627612")
+             "Ignore:Linux", "627612",
+             "Ignore:Apple", "646268")
 {
     test_http_server::scoped_server scoped(m_uri);
     http_client client(m_uri); // In this test, the request cannot be resent, so the username and password are not required
@@ -151,7 +160,8 @@ TEST_FIXTURE(uri_address, proxy_auth_noseek,
 // Must specify content length with winrt client, so this test case isn't possible.
 #ifndef __cplusplus_winrt
 TEST_FIXTURE(uri_address, proxy_auth_unknown_contentlength, 
-            "Ignore:Linux", "646268")
+            "Ignore:Linux", "646268",
+            "Ignore:Apple", "646268")
 {
     test_http_server::scoped_server scoped(m_uri);
     http_client_config client_config;
@@ -221,7 +231,7 @@ TEST_FIXTURE(uri_address, empty_username_password)
 // Fails on WinRT due to TFS 648278
 // Accessing a server that supports auth, but returns 401, even after the user has provided valid creds
 // We're making sure the error is reported properly, and the response data from the second response is received
-TEST_FIXTURE(uri_address, error_after_valid_credentials, "Ignore:Linux", "646268")
+TEST_FIXTURE(uri_address, error_after_valid_credentials, "Ignore:Linux", "646268", "Ignore:Apple", "646268")
 {
     test_http_server::scoped_server scoped(m_uri);
     http_client_config client_config;
@@ -369,15 +379,40 @@ TEST_FIXTURE(server_properties, successful_auth_with_domain_cred, "Requires", "S
     http_client client(m_uri, config);
     http_request req(methods::GET);
     req.headers().add(U("UserName"), m_username);
-	req.headers().add(U("Password"), m_password);
+    req.headers().add(U("Password"), m_password);
     http_response response = client.request(req).get();
     VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
+}
+
+TEST_FIXTURE(server_properties, failed_authentication_resend_request_error, "Requires", "Server;UserName;Password")
+{
+    load_parameters();
+
+    http_client_config config;
+    config.set_credentials(credentials(m_username, m_password));
+    http_client client(m_uri, config);
+
+    const size_t rawDataSize = 8;
+
+    std::vector<unsigned char> data(rawDataSize);
+    memcpy(&data[0], "raw data", rawDataSize);
+
+    http_request request;
+    request.set_method(methods::POST);
+    request.set_body(data);
+    auto responseTask = client.request(request);
+
+    http_response response;
+
+    response = responseTask.get();
+
+    VERIFY_ARE_EQUAL(200, response.status_code());
 }
 
 #pragma endregion 
 
 // Fix for 522831 AV after failed authentication attempt
-TEST_FIXTURE(uri_address, failed_authentication_attempt, "Ignore:Linux", "549349", "Ignore", "Manual")
+TEST_FIXTURE(uri_address, failed_authentication_attempt, "Ignore:Linux", "549349", "Ignore:Apple", "646268")
 {
     http_client_config config;
     credentials cred(U("user"),U("schmuser"));
@@ -390,6 +425,7 @@ TEST_FIXTURE(uri_address, failed_authentication_attempt, "Ignore:Linux", "549349
     // The resulting data must be non-empty (an error about missing access token)
     VERIFY_IS_FALSE(s.empty());
 }
+
 
 } // SUITE(authentication_tests)
 

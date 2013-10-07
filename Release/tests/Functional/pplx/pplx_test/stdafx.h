@@ -60,4 +60,3 @@ namespace pplx = Concurrency;
 #include "cpprest/asyncrt_utils.h"
 #include "unittestpp.h"
 #include "os_utilities.h"
-

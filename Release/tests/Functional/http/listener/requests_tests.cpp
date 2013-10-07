@@ -14,6 +14,7 @@
 ****/
 
 #include "stdafx.h"
+#include <cpprest/http_client.h>
 
 using namespace web::http;
 using namespace web::http::experimental::listener;
@@ -125,12 +126,6 @@ TEST_FIXTURE(uri_address, http_body_and_body_size)
         auto buf = stream.streambuf();
         VERIFY_IS_TRUE(buf);
 
-        // Can't extract once you have the request stream. From here, it's
-        // stream reading that counts.
-#ifndef _MS_WINDOWS
-		// TFS#535124 the assert below is temporarily disabled
-		//VERIFY_THROWS(request.extract_string().get(), pplx::invalid_operation);
-#endif
         request.content_ready().wait();
         
         VERIFY_ARE_EQUAL(data.size(), buf.in_avail());
@@ -175,6 +170,48 @@ TEST_FIXTURE(uri_address, large_body)
     }).wait();
 }
 
+TEST_FIXTURE(uri_address, response_order)
+{
+    http_listener listener(m_uri);
+    listener.open().wait();
+
+    client::http_client_config config;
+    // our product client would be able to pipe multiple requests on one connection
+    client::http_client client(m_uri, config);
+
+    const int num_requests = 50;
+
+    listener.support([](http_request request)
+    {
+        auto str = request.extract_string().get();
+        // intentionally break order
+        if (str == U("0"))
+            tests::common::utilities::os_utilities::sleep(500);
+        request.reply(status_codes::OK, str);
+    });
+
+    std::vector<pplx::task<web::http::http_response>> responses;
+
+    for (int i = 0; i < num_requests; ++i)
+    {
+        utility::ostringstream_t ss;
+        ss << i;
+        responses.push_back(client.request(web::http::methods::PUT, U(""), ss.str()));
     }
+
+    // wait for requests.
+    for(size_t i = 0; i < num_requests; ++i)
+    {
+        utility::ostringstream_t ss;
+        ss << i;
+        auto response = responses[i].get();
+
+        // verify the requests and responses are still match
+        VERIFY_ARE_EQUAL(response.status_code(), status_codes::OK);
+        VERIFY_ARE_EQUAL(response.extract_string().get(), ss.str());
+    }
+}
+
+}
 
 }}}}

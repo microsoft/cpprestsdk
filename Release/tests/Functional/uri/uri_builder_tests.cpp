@@ -120,6 +120,26 @@ TEST(assignment_operators)
     VERIFY_URI_BUILDER(assign, scheme, utility::string_t(host), port);
 }
 
+TEST(set_port_as_string)
+{
+    uri_builder builder;
+
+    VERIFY_THROWS(builder.set_port(U("")), std::invalid_argument);
+    VERIFY_ARE_EQUAL(-1, builder.port());
+
+    builder.set_port(U("987"));
+    VERIFY_ARE_EQUAL(987, builder.port());
+
+    VERIFY_THROWS(builder.set_port(U("abc")), std::invalid_argument);
+    VERIFY_ARE_EQUAL(987, builder.port());
+
+    builder.set_port(U(" 44 "));
+    VERIFY_ARE_EQUAL(44, builder.port());
+
+    builder.set_port(U("99"));
+    VERIFY_ARE_EQUAL(99, builder.port());
+}
+
 TEST(component_assignment)
 {
     uri_builder builder;

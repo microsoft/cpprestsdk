@@ -31,10 +31,13 @@ using namespace Windows::Storage::Streams;
 #endif // #if !defined(__cplusplus_winrt)
 
 #if !defined(_MS_WINDOWS)
-#include <boost/locale.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/posix_time/posix_time_io.hpp>
 using namespace boost::locale::conv;
+#endif
+
+#ifdef __APPLE__
+#include <CoreFoundation/CoreFoundation.h>
 #endif
 
 using namespace web;
@@ -294,6 +297,25 @@ utf16string __cdecl conversions::usascii_to_utf16(const std::string &s)
     {
         throw utility::details::create_system_error(GetLastError());
     }
+#elif defined(__APPLE__)
+
+    CFStringRef str = CFStringCreateWithCStringNoCopy(
+        nullptr,
+        s.c_str(),
+        kCFStringEncodingASCII,
+        kCFAllocatorNull);
+    
+    if ( str == nullptr )
+        throw utility::details::create_system_error(0);
+    
+    size_t size = CFStringGetLength(str);
+    
+    // this length includes the terminating null
+    std::unique_ptr<utf16char[]> buffer(new utf16char[size]);
+    
+    CFStringGetCharacters(str, CFRangeMake(0, size), (UniChar*)buffer.get());
+    
+    return utf16string(buffer.get(), buffer.get() + size);
 #else
     return utf_to_utf<utf16char>(to_utf<char>(s, "ascii", stop));
 #endif
@@ -334,6 +356,24 @@ utf16string __cdecl conversions::latin1_to_utf16(const std::string &s)
     {
         throw utility::details::create_system_error(GetLastError());
     }
+#elif defined(__APPLE__)
+    CFStringRef str = CFStringCreateWithCStringNoCopy(
+        nullptr,
+        s.c_str(),
+        kCFStringEncodingWindowsLatin1,
+        kCFAllocatorNull);
+    
+    if ( str == nullptr )
+        throw utility::details::create_system_error(0);
+    
+    size_t size = CFStringGetLength(str);
+    
+    // this length includes the terminating null
+    std::unique_ptr<utf16char[]> buffer(new utf16char[size]);
+    
+    CFStringGetCharacters(str, CFRangeMake(0, size), (UniChar*)buffer.get());
+    
+    return utf16string(buffer.get(), buffer.get() + size);
 #else
     return utf_to_utf<utf16char>(to_utf<char>(s, "Latin1", stop));
 #endif
@@ -373,6 +413,24 @@ utf16string __cdecl conversions::default_code_page_to_utf16(const std::string &s
     {
         throw utility::details::create_system_error(GetLastError());
     }
+#elif defined(__APPLE__)
+    CFStringRef str = CFStringCreateWithCStringNoCopy(
+        nullptr,
+        s.c_str(),
+        kCFStringEncodingMacRoman,
+        kCFAllocatorNull);
+    
+    if ( str == nullptr )
+        throw utility::details::create_system_error(0);
+    
+    size_t size = CFStringGetLength(str);
+    
+    // this length includes the terminating null
+    std::unique_ptr<utf16char[]> buffer(new utf16char[size]);
+    
+    CFStringGetCharacters(str, CFRangeMake(0, size), (UniChar*)buffer.get());
+    
+    return utf16string(buffer.get(), buffer.get() + size);
 #else // LINUX
     return utf_to_utf<utf16char>(to_utf<char>(s, std::locale(""), stop));
 #endif
@@ -523,8 +581,6 @@ utility::string_t datetime::to_string(date_format format) const
 
     return outStream.str();
 #else //LINUX
-    using namespace boost::posix_time;
-
     uint64_t input = m_interval; 
     input /= 10000000LL; // convert to seconds
     time_t time = (time_t)input - (time_t)11644473600LL;// diff between windows and unix epochs (seconds)

@@ -412,35 +412,20 @@ namespace Concurrency { namespace streams
         /// <param name="mode">The I/O mode (in or out) to close for.</param>
         virtual pplx::task<void> close(std::ios_base::openmode mode = std::ios_base::in | std::ios_base::out)
         {
-            pplx::task<void> readClosed = pplx::task_from_result();
-            pplx::task<void> writeClosed = readClosed;
-
-            bool already_closed = true;
-            bool closed_read_or_write = false;
+            pplx::task<void> closeOp = pplx::task_from_result();
 
             if (mode & std::ios_base::in && can_read()) {
-                already_closed = false;
-                readClosed = _close_read();
-                closed_read_or_write = true;
+                closeOp = _close_read();
             }
 
             if (mode & std::ios_base::out && can_write()) {
-                already_closed = false;
-                writeClosed = _close_write();
-                closed_read_or_write = true;
+                if (closeOp.is_done())
+                    closeOp = closeOp && _close_write(); // passing down exceptions from closeOp
+                else
+                    closeOp = closeOp.then([this] { return _close_write();});
             }
-
-            if ( already_closed ) 
-                return pplx::task_from_result();
-
-            if( closed_read_or_write ) {
-                // We will return true if read or write operations succeeded
-                return (readClosed && writeClosed);
-            }
-            else
-            {
-                return pplx::task_from_exception<void>(std::runtime_error("failure to close stream"));
-            }
+            
+            return closeOp;
         }
 
         /// <summary>

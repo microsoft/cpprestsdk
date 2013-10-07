@@ -34,6 +34,14 @@
 using namespace UnitTest;
 using namespace std;
 
+#ifdef __APPLE__
+extern "C" UnitTest::TestList& UnitTest::GetTestList()
+{
+    static TestList s_list;
+    return s_list;
+}
+#endif
+
 namespace {
 
 TestList list1;

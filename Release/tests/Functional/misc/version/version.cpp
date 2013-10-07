@@ -23,6 +23,14 @@
 #include "cpprest/version.h"
 #include "unittestpp.h"
 
+#ifdef __APPLE__
+extern "C" UnitTest::TestList& UnitTest::GetTestList()
+{
+    static TestList s_list;
+    return s_list;
+}
+#endif
+
 namespace tests { namespace functional { namespace misc { namespace versioning {
 
 SUITE(version_test1)

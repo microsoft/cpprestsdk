@@ -50,6 +50,11 @@
 #ifdef _MS_WINDOWS
 #include "compat/windows_compat.h"
 #include "pplx/pplxwin.h"
+#elif defined(__APPLE__)
+#undef _PPLXIMP
+#define _PPLXIMP
+#include "compat/apple_compat.h"
+#include "pplx/pplxlinux.h"
 #else
 #include "compat/linux_compat.h"
 #include "pplx/pplxlinux.h"

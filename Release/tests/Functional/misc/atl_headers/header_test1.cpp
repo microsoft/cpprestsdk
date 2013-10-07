@@ -58,6 +58,14 @@
 
 #include "unittestpp.h"
 
+#ifdef __APPLE__
+extern "C" UnitTest::TestList& UnitTest::GetTestList()
+{
+    static TestList s_list;
+    return s_list;
+}
+#endif
+
 namespace tests { namespace functional { namespace misc { namespace atl_headers {
 
 SUITE(header_test1)

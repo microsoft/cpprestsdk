@@ -27,6 +27,14 @@
 
 using namespace web; using namespace utility;
 
+#ifdef __APPLE__
+extern "C" UnitTest::TestList& UnitTest::GetTestList()
+{
+    static TestList s_list;
+    return s_list;
+}
+#endif
+
 namespace tests { namespace functional { namespace json_tests {
 
 SUITE(construction_tests)

@@ -23,6 +23,14 @@
 
 #include "stdafx.h"
 
+#ifdef __APPLE__
+extern "C" UnitTest::TestList& UnitTest::GetTestList()
+{
+    static TestList s_list;
+    return s_list;
+}
+#endif
+
 pplx::details::atomic_long s_flag;
 
 pplx::scheduler_interface& get_pplx_dflt_scheduler();
@@ -302,7 +310,7 @@ TEST(BugRepro370010)
     VERIFY_IS_TRUE(result.get());
 }
 
-TEST(event_set_reset_timeout)
+TEST(event_set_reset_timeout, "Ignore", "785846")
 {
     pplx::extensibility::event_t ev;
 
@@ -354,7 +362,7 @@ struct TimerCallbackContext
     }
 };
 
-TEST(timer_oneshot)
+TEST(timer_oneshot, "Ignore:Apple", "Not yet implemented")
 {
     TimerCallbackContext context;
     context.count = 1234;
@@ -366,7 +374,7 @@ TEST(timer_oneshot)
     context.simpleTimer.stop(true);
 }
 
-TEST(timer_start_stop)
+TEST(timer_start_stop, "Ignore:Apple", "Not yet implemented")
 {
     TimerCallbackContext context;
     context.count = 1234;
@@ -383,7 +391,7 @@ TEST(timer_start_stop)
     context.simpleTimer.stop(false);
 }
 
-TEST(timer_repeat)
+TEST(timer_repeat, "Ignore:Apple", "Not yet implemented")
 {
     TimerCallbackContext context;
     context.count = 10;

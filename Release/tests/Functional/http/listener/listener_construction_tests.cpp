@@ -35,7 +35,7 @@ TEST_FIXTURE(uri_address, default_constructor)
     VERIFY_THROWS(listener.open().wait(), std::invalid_argument);
 }
 
-TEST_FIXTURE(uri_address, move_constructor_assignment, "Ignore:Linux", "724744")
+TEST_FIXTURE(uri_address, move_constructor_assignment, "Ignore:Linux", "724744", "Ignore", "750539")
 {
     http_listener listener(m_uri);
     listener.open().wait();

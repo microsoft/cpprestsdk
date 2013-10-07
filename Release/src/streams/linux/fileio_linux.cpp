@@ -204,7 +204,11 @@ bool _finish_create(int fh, _filestream_callback *callback, std::ios_base::openm
     }
     else
     {
+#ifdef __APPLE__
+        auto exptr = std::make_exception_ptr(std::ios_base::failure("failed to create file", std::make_error_code(std::errc::no_such_file_or_directory)));
+#else
         auto exptr = std::make_exception_ptr(std::ios_base::failure("failed to create file"));
+#endif
         callback->on_error(exptr);
         return false;
     }
@@ -666,7 +670,7 @@ bool _sync_fsb(Concurrency::streams::details::_file_info *info, Concurrency::str
 /// <param name="info">The file info record of the file</param>
 /// <param name="pos">The new position (offset from the start) in the file stream</param>
 /// <returns>New file position or -1 if error</returns>
-_ASYNCRTIMP size_t _seekrdtoend_fsb(Concurrency::streams::details::_file_info *info, int64_t offset, size_t char_size)
+size_t _seekrdtoend_fsb(Concurrency::streams::details::_file_info *info, int64_t offset, size_t char_size)
 {
     if ( info == nullptr ) return (size_t)-1;
     
@@ -683,7 +687,7 @@ _ASYNCRTIMP size_t _seekrdtoend_fsb(Concurrency::streams::details::_file_info *i
         fInfo->m_bufoff = fInfo->m_buffill = fInfo->m_bufsize = 0;
     }
     
-    auto newpos = lseek(fInfo->m_handle, static_cast<__off_t>(offset * char_size), SEEK_END);
+    auto newpos = lseek(fInfo->m_handle, static_cast<off_t>(offset * char_size), SEEK_END);
 
     if ( newpos == -1 ) return (size_t)-1;
 
