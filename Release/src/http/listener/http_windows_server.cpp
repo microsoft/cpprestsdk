@@ -304,10 +304,21 @@ pplx::task<void> http_windows_server::register_listener(_In_ http_listener *pLis
 
 pplx::task<void> http_windows_server::unregister_listener(_In_ http_listener *pListener)
 {
+    http::uri listener_uri = pListener->uri();
+    if (listener_uri.is_port_default())
+    {
+        // Windows HTTP Server API has issues when the port isn't set to 80 here -- it expects a url prefix string
+        // which always includes the port number
+        // http://msdn.microsoft.com/en-us/library/windows/desktop/aa364698(v=vs.85).aspx
+        http::uri_builder builder(listener_uri);
+        builder.set_port(80);
+        listener_uri = builder.to_uri();
+    }
+
     // Windows HTTP Server API will not accept a uri with an empty path, it must have a '/'.
-    const http::uri listener_uri = pListener->uri();
+    // Windows HTTP Server API will only accept decoded uri strings.
     utility::string_t host_uri = web::http::uri::decode(listener_uri.to_string());
-    if(listener_uri.is_path_empty() && host_uri[host_uri.length() - 1] != '/' && listener_uri.query().empty() && listener_uri.fragment().empty())
+    if(host_uri.back() != U('/') && listener_uri.query().empty() && listener_uri.fragment().empty())
     {
         host_uri.append(U("/"));
     }

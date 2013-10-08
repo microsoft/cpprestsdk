@@ -71,6 +71,27 @@ SUITE(connections_and_errors)
     (closeTask && clientTask).wait();
 }
 
+// Note: Run with admin privileges to listen on default port.
+// This test will fail with "Access denied: attempting to add Address.." exception if it is not run as admin.
+TEST(default_port_close, "Ignore", "Manual")
+{
+    uri address(U("http://localhost/portnotspecified"));
+    http_listener listener(address);
+
+    try
+    {
+        listener.open().wait();
+    }
+    catch(const http_exception& ex)
+    {
+        VERIFY_IS_FALSE(true, ex.what());
+        return;
+    }
+
+    // Verify close does not throw an exception while listening on default port
+    listener.close().wait();
+}
+
 TEST_FIXTURE(uri_address, send_response_later)
 {
     http_listener listener(m_uri);
@@ -252,6 +273,8 @@ TEST_FIXTURE(uri_address, close_stream_with_exception, "Ignore:Linux", "760544")
     close_stream_early_impl(m_uri, true);
     close_stream_early_impl(m_uri, false);
 }
+
+
 
 }
 
