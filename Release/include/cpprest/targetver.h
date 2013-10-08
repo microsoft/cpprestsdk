@@ -34,7 +34,9 @@
 #ifdef WIN32
 #ifdef CPPREST_TARGET_XP
 #include <winsdkver.h>
+#ifndef _WIN32_WINNT
 #define _WIN32_WINNT _WIN32_WINNT_WS03 //Windows XP with SP2
+#endif
 #endif
 #include <SDKDDKVer.h>
 #endif
