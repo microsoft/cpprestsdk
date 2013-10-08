@@ -160,12 +160,13 @@ namespace web { namespace http
         uri_builder & set_port(const utility::string_t &port)
         {
             utility::istringstream_t portStream(port);
-            portStream >> m_uri.m_port;
+            int port_tmp;
+            portStream >> port_tmp;
             if(portStream.fail() || portStream.bad())
             {
                 throw std::invalid_argument("invalid port argument, must be non empty string containing integer value");
             }
-
+            m_uri.m_port = port_tmp;
             return *this;
         }
 
