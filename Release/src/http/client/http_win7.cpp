@@ -644,6 +644,17 @@ namespace web { namespace http
 
                     winhttp_context->m_request_data = &m_request_data;
 
+                    //call the callback function of user customized options
+                    try
+                    {
+                        client_config().call_user_nativehandle_options(winhttp_context->m_request_handle);
+                    }
+                    catch (...)
+                    {
+                        request->report_exception(std::current_exception());
+                        return;
+                    }
+
                     _start_request_send(winhttp_context, content_length);
 
                     return;

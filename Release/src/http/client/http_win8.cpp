@@ -77,15 +77,15 @@ namespace web { namespace http
                         // Do not read more than the specified read_length
                         msl::utilities::SafeInt<size_t> safe_count = static_cast<size_t>(cb);
                         size_t size_to_read = safe_count.Min(m_read_length);
-                        
+
                         size_t count = m_buffer.getn((uint8_t *)pv, size_to_read).get();
-                        
+
                         if (count == 0 && size_to_read != 0)
                         {
                             *pcbRead = (ULONG)count;
                             return (HRESULT)STG_E_READFAULT;
                         }
-                        
+
                         _ASSERTE(count != static_cast<size_t>(-1));
 
                         if (pcbRead != nullptr)
@@ -162,7 +162,7 @@ namespace web { namespace http
 
             private:
                 concurrency::streams::streambuf<uint8_t> m_buffer;
-                
+
                 request_context *m_request;
 
                 // Total count of bytes read
@@ -303,7 +303,7 @@ namespace web { namespace http
                     {
                         IXMLHTTPRequest2 * req = m_request->m_hRequest;
                         if ( req != nullptr ) req->AddRef();
-                            
+
                         if (m_request->m_exceptionPtr != nullptr)
                             m_request->report_exception(m_request->m_exceptionPtr);
                         else    
@@ -363,7 +363,7 @@ namespace web { namespace http
                         request->report_error(L"The method string is invalid.");
                         return;
                     }
-                    
+
                     if ( msg.method() == http::methods::TRCE )
                     {
                         // Not supported by WinInet. Generate a more specific exception than what WinInet does.
@@ -486,6 +486,18 @@ namespace web { namespace http
                     {
                         // IXHR2 does not allow transfer encoding chunked. So the user is expected to set the content length
                         request->report_error(L"Content length is not specified in the http headers");
+                        xhr->Release();
+                        return;
+                    }
+
+                    //call the callback function of user customized options
+                    try
+                    {
+                        config.call_user_nativehandle_options(xhr);
+                    }
+                    catch (...)
+                    {
+                        request->report_exception(std::current_exception());
                         xhr->Release();
                         return;
                     }
