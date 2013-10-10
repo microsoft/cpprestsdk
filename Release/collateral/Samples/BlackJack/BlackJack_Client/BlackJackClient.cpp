@@ -127,7 +127,8 @@ void PrintTable(const http_response &response, bool &refresh)
                 if ( suppressMoney )
                     ucout << "'" << name.as_string() << "'" ;
                 else
-                    fprintf(stdout, "'%s' Balance = $%02g ", name.as_string().c_str(), bet.as_double());
+                    ucout << "'" << name.as_string() << "' Balance = $" << bet.as_double() << " ";
+
                 PrintHand(suppressMoney, BJHand::FromJSON(player[HAND]));
                 ucout << std::endl;
             }
