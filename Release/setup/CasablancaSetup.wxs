@@ -10,11 +10,13 @@
     <?define VSTargetShort = "VS 2012" ?>
     <?define VSTargetFileSuffix = "110" ?>
     <?define SDK_RegKeyName = "110" ?>
+    <?define ExtSDKWinVer = "v8.0" ?>
   <?elseif $(var.VSTargetVersion) = 12 ?>
     <?include VS12\guiddefs.wxi ?>
     <?define VSTargetShort = "VS 2013" ?>
     <?define VSTargetFileSuffix = "120" ?>
     <?define SDK_RegKeyName = "120" ?>
+    <?define ExtSDKWinVer = "v8.1" ?>
   <?endif ?>
 
   <!-- last GUID used:
@@ -163,7 +165,7 @@
           <?if $(var.VSTargetVersion) != 10 ?>
           <Directory Id="Microsoft_SDKs" Name="Microsoft SDKs">
             <Directory Id="Windows" Name="Windows">
-              <Directory Id="v8.0" Name="v8.0">
+              <Directory Id="winver" Name="$(var.ExtSDKWinVer)">
                 <Directory Id="ExtensionSDKs" Name="ExtensionSDKs">
                   <Directory Id="CppRESTWindowsSDK" Name="CppRESTWindowsSDK">
                     <Directory Id="dir_ver" Name="$(var.ProductVersion)">

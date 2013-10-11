@@ -24,6 +24,18 @@
 ****/
 
 #include "stdafx.h"
+#include <stdexcept>
+
+#ifdef _MS_WINDOWS
+#ifdef __cplusplus_winrt
+#define __WRL_NO_DEFAULT_LIB__
+#include <wrl.h>
+#include <msxml6.h>
+#else
+#include <windows.h>
+#include <winhttp.h>
+#endif
+#endif
 
 using namespace web; 
 using namespace utility;
@@ -409,6 +421,75 @@ TEST_FIXTURE(server_properties, failed_authentication_resend_request_error, "Req
     VERIFY_ARE_EQUAL(200, response.status_code());
 }
 
+#ifdef __cplusplus_winrt
+TEST_FIXTURE(uri_address, set_user_options_winrt)
+{
+    test_http_server::scoped_server scoped(m_uri);
+    scoped.server()->next_request().then([](test_request *p_request)
+    {
+        p_request->reply(status_codes::OK); 
+    });
+
+    http_client_config config;
+    config.set_nativehandle_options([](native_handle handle)->void{
+        auto hr = handle->SetProperty(XHR_PROP_TIMEOUT, 1000);
+        if(!SUCCEEDED(hr))
+            throw std::runtime_error("The Test Exception");
+    });
+    http_client client(m_uri, config);
+    auto response = client.request(methods::GET).get();
+    VERIFY_ARE_EQUAL(200, response.status_code());
+}
+#endif // __cplusplus_winrt
+
+#ifdef _MS_WINDOWS
+#if !defined(__cplusplus_winrt)
+TEST_FIXTURE(server_properties, set_user_options, "Requires", "Server;UserName;Password")
+{
+    load_parameters();
+
+    http_client_config config;
+    config.set_credentials(credentials(m_username, m_password));
+
+    config.set_nativehandle_options([&](native_handle handle)->void{
+        DWORD policy = WINHTTP_AUTOLOGON_SECURITY_LEVEL_LOW;
+        if (!WinHttpSetOption(handle,
+                         WINHTTP_OPTION_AUTOLOGON_POLICY,
+                         &policy, 
+                         sizeof(policy)))
+        {
+            throw std::runtime_error("The Test Error");
+        }
+    });
+
+    http_client client(m_uri, config);
+
+    const size_t rawDataSize = 8;
+
+    std::vector<unsigned char> data(rawDataSize);
+    memcpy(&data[0], "raw data", rawDataSize);
+
+    http_request request;
+    request.set_method(methods::POST);
+    request.set_body(data);
+
+    VERIFY_ARE_EQUAL(200, client.request(request).get().status_code());
+}
+#endif
+
+TEST_FIXTURE(uri_address, set_user_options_exceptions)
+{
+    test_http_server::scoped_server scoped(m_uri);
+    http_client_config config;
+    class TestException;
+    config.set_nativehandle_options([](native_handle handle)->void{
+        (handle);
+        throw std::runtime_error("The Test exception");
+    });
+    http_client client(m_uri, config);
+    VERIFY_THROWS(client.request(methods::GET).get(), std::runtime_error);
+}
+#endif // _MS_WINDOWS
 #pragma endregion 
 
 // Fix for 522831 AV after failed authentication attempt

@@ -29,6 +29,16 @@
 #ifndef _CASA_HTTP_CLIENT_H
 #define _CASA_HTTP_CLIENT_H
 
+#if defined (__cplusplus_winrt)
+#define __WRL_NO_DEFAULT_LIB__
+#include <wrl.h>
+#include <msxml6.h>
+namespace web { namespace http{namespace client{
+typedef IXMLHTTPRequest2* native_handle;}}}
+#else
+namespace web { namespace http{namespace client{
+typedef void* native_handle;}}}
+#endif // __cplusplus_winrt
 
 #include <memory>
 #include <limits>
@@ -52,6 +62,16 @@ namespace web { namespace http
 {
 namespace client
 {
+
+#ifdef _MS_WINDOWS
+namespace details {
+#ifdef __cplusplus_winrt
+        class winrt_client ;
+#else
+        class winhttp_client;
+#endif // __cplusplus_winrt
+}  
+#endif // _MS_WINDOWS
 
 /// <summary>
 /// credentials represents a set of user credentials (username and password) to be used
@@ -130,6 +150,7 @@ public:
 #if !defined(__cplusplus_winrt)
         , m_validate_certificates(true)
 #endif
+        ,m_set_user_nativehandle_options([](native_handle)->void{})
     {
     }
 
@@ -245,6 +266,15 @@ public:
     }
 #endif
 
+    /// <summary>
+    /// Sets a callback to enable custom setting of winhttp options
+    /// </summary>
+    /// <param name="callback">A user callback allowing for customization of the request</param>
+    void set_nativehandle_options(std::function<void(native_handle)> callback)
+    {
+         m_set_user_nativehandle_options = callback;
+    }
+
 private:
     web_proxy m_proxy;
     http::client::credentials m_credentials;
@@ -255,9 +285,29 @@ private:
 #if !defined(__cplusplus_winrt)
     bool m_validate_certificates;
 #endif
+    std::function<void(native_handle)> m_set_user_nativehandle_options;
 
     utility::seconds m_timeout;
     size_t m_chunksize;
+
+#ifdef _MS_WINDOWS
+#ifdef __cplusplus_winrt
+    friend class details::winrt_client;
+#else
+    friend class details::winhttp_client;
+#endif // __cplusplus_winrt  
+#endif // _MS_WINDOWS
+
+
+    /// <summary>
+    /// Invokes a user callback to allow for customization of the requst
+    /// </summary>
+    /// <param name="handle">The internal http_request handle</param>
+    /// <returns>True if users set WinHttp/IXAMLHttpRequest2 options correctly, false otherwise.</returns>
+    void call_user_nativehandle_options(native_handle handle) const
+    {
+         m_set_user_nativehandle_options(handle);
+    }
 };
 
 /// <summary>
