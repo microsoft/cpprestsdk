@@ -140,13 +140,12 @@ void connection::handle_http_line(const boost::system::error_code& ec)
         else if (boost::iequals(http_verb, http::methods::CONNECT)) http_verb = http::methods::CONNECT;
         else if (boost::iequals(http_verb, http::methods::OPTIONS)) http_verb = http::methods::OPTIONS;
 
-		// Check to see if there is not allowed character on the input
-
+        // Check to see if there is not allowed character on the input
         if (!web::http::details::validate_method(http_verb))
         {
             m_request.reply(status_codes::BadRequest);
+            m_close = true;
             do_response(true);
-            finish_request_response();
             return;
         }
 
@@ -443,15 +442,15 @@ void connection::do_response(bool bad_request)
             }
             // before sending response, the full incoming message need to be processed.
             if (bad_request)
-			{
-				async_process_response(response);
-			}
-			else
-			{
-				m_request.content_ready().then([=](pplx::task<http::http_request>) {
-					async_process_response(response);
-				});
-			}
+            {
+                async_process_response(response);
+            }
+            else
+            {
+                m_request.content_ready().then([=](pplx::task<http::http_request>) {
+                    async_process_response(response);
+                });
+            }
         });
 }
 

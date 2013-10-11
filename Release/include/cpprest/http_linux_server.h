@@ -96,11 +96,11 @@ private:
     void handle_chunked_body(const boost::system::error_code& ec, int toWrite);
     void dispatch_request_to_listener();
     void request_data_avail(size_t size);
-    void do_response(bool bad_reqiest=false);
+    void do_response(bool bad_request=false);
     template <typename ReadHandler>
     void async_read_until_buffersize(size_t size, ReadHandler handler);
     void async_process_response(http_response response);
-	void cancel_sending_response_with_error(http_response response, std::exception_ptr);
+    void cancel_sending_response_with_error(http_response response, std::exception_ptr);
     void handle_headers_written(http_response response, const boost::system::error_code& ec);
     void handle_write_large_response(http_response response, const boost::system::error_code& ec);
     void handle_write_chunked_response(http_response response, const boost::system::error_code& ec);
