@@ -212,14 +212,14 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="$(TestRoot)\Common\utilities\vs12\CommonUtilities120.vcxproj">
-      <Project>{0c9d50d9-94fb-4732-a4ad-58e068315bb2}</Project>
+    <ProjectReference Include="$(TestRoot)\Common\utilities\vs12.winrt\CommonUtilities120.winrt.vcxproj">
+      <Project>{ea2d69a1-55c8-4c15-805e-de7e85872484}</Project>
+    </ProjectReference>
+    <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs12.winrt\UnitTestpp120.winrt.vcxproj">
+      <Project>{B341AA9C-F38B-4D59-B6B7-8F22491090B7}</Project>
     </ProjectReference>
     <ProjectReference Include="$(CasablancaSrcDir)\build\casablanca120.winrt.vcxproj">
-      <Project>{9AD285A2-301E-47A0-A299-14AD5D4F2758}</Project>
-    </ProjectReference>
-    <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs11\UnitTestpp120.vcxproj">
-      <Project>{3EB86C0D-432C-4FFC-BAD4-8DF4EFC7D0FF}</Project>
+      <Project>{198ED804-2655-4D92-8104-C220E3EA9452}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

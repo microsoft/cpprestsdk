@@ -17,7 +17,7 @@
       <ProjectFile Include="VS12\TestUnitTestpp120.vcxproj"/>
   </ItemGroup>
   
-  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.2|120' or '$(OsVersion)|$(DevToolsVersion)'=='6.3|120'">
+  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|120'">
     <ProjectFile Include="VS12.winrt\UnitTestpp120.winrt.vcxproj" />
   </ItemGroup>
 

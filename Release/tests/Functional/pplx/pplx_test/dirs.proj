@@ -20,7 +20,7 @@
       <ProjectFile Include="VS11.winrt\pplx110_test.winrt.vcxproj" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.2|120' or '$(OsVersion)|$(DevToolsVersion)'=='6.3|110'">
+  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|120'">
       <ProjectFile Include="VS12.winrt\pplx120_test.winrt.vcxproj" />
   </ItemGroup>
 

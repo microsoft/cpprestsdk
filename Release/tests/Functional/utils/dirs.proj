@@ -20,7 +20,7 @@
       <ProjectFile Include="VS12.xp\Utils120_test.xp.vcxproj" Condition="'$(Platform)'!='ARM'" />
   </ItemGroup>
   
-  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.2|120' or '$(OsVersion)|$(DevToolsVersion)'=='6.3|120'">
+  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|120'">
       <ProjectFile Include="VS12.winrt\Utils120_test.winrt.vcxproj" />
   </ItemGroup>
 
