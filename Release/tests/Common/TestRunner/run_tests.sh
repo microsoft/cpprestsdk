@@ -7,7 +7,7 @@ if [ "$1" = "--debug" ]; then
     ENABLE_DEBUG_MODE="/breakonerror"
 fi
 
-export LD_LIBRARY_PATH=.
+export LD_LIBRARY_PATH=".:$LD_LIBRARY_PATH"
 
 exit_code=0
 
