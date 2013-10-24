@@ -4,7 +4,13 @@ LDLIBS=-lcasablanca -lunittestpp -lboost_system -lboost_thread -lpthread -lstdc+
 
 OUTPUT_DIR?=./$(MODE)
 
-$(OUTPUT_DIR)/json_test.so: construction_tests.cpp negative_parsing_tests.cpp parsing_tests.cpp to_as_and_operators_tests.cpp
-	$(CXX) -fPIC -shared $(CXXFLAGS) $(shell pkg-config libxml++-2.6 --cflags) $(LDFLAGS) $^ $(LDLIBS) -o $@ 
+FILENAME = $(OUTPUT_DIR)/json_test
+
+$(FILENAME).so: \
+	construction_tests.cpp \
+	negative_parsing_tests.cpp \
+	parsing_tests.cpp \
+	to_as_and_operators_tests.cpp
+	$(CXX) -fPIC -shared $(CXXFLAGS) $(shell pkg-config libxml++-2.6 --cflags) $(LDFLAGS) -MMD -MF $(FILENAME).d $(filter %.cpp, $^) $(LDLIBS) -o $@ 
 
 

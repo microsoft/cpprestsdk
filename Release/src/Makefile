@@ -66,6 +66,7 @@ PCH = ./pch/stdafx.h
 
 PRECOMPILED_HEADERS = $(addsuffix .gch, $(PCH))
 OBJECTS = $(addsuffix .$(MODE).o, $(basename $(SOURCES)))
+CPP_DEPENDENCIES = $(addsuffix .d, $(basename $(SOURCES)))
 
 # flags for the C++ compiler
 
@@ -90,9 +91,11 @@ all:  $(LIBRARY_DST)
 	@echo "Building precompiled header $(@)"
 	@$(CXX) -x c++-header $(CXXFLAGS) -c $< -o $@
 
+-include $(CPP_DEPENDENCIES)
+
 %.$(MODE).o: %.cpp
 	@echo "Compiling $< -> $@"
-	@$(CXX) $(CXXFLAGS) -c $< -o $@
+	@$(CXX) -MMD -MF $*.d $(CXXFLAGS) -c $< -o $@
 
 $(PRECOMPILED_HEADERS): $(HEADERS)
 

@@ -4,9 +4,11 @@ LDLIBS=-lcasablanca -lunittestpp -lboost_system -lboost_thread -lboost_locale -l
 
 OUTPUT_DIR?=./$(MODE)
 
-$(OUTPUT_DIR)/libhttptest_utilities.so: \
+FILENAME = $(OUTPUT_DIR)/libhttptest_utilities
+
+$(FILENAME).so: \
 	http_asserts.cpp \
 	test_http_client.cpp \
 	test_http_server.cpp \
 	test_server_utilities.cpp
-	$(CXX) $(CXXFLAGS) -fPIC -shared $(shell pkg-config libxml++-2.6 --cflags) $(LDFLAGS) $^ $(LDLIBS) -o $@
+	$(CXX) $(CXXFLAGS) -fPIC -shared $(shell pkg-config libxml++-2.6 --cflags) $(LDFLAGS) -MMD -MF $(FILENAME).d $(filter %.cpp, $^) $(LDLIBS) -o $@
