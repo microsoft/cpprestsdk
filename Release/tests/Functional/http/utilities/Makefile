@@ -6,6 +6,8 @@ OUTPUT_DIR?=./$(MODE)
 
 FILENAME = $(OUTPUT_DIR)/libhttptest_utilities
 
+-include $(FILENAME).d
+
 $(FILENAME).so: \
 	http_asserts.cpp \
 	test_http_client.cpp \

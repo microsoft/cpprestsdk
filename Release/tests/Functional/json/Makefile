@@ -6,6 +6,8 @@ OUTPUT_DIR?=./$(MODE)
 
 FILENAME = $(OUTPUT_DIR)/json_test
 
+-include $(FILENAME).d
+
 $(FILENAME).so: \
 	construction_tests.cpp \
 	negative_parsing_tests.cpp \
