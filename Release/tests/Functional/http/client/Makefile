@@ -37,6 +37,8 @@ $(OUTPUT_DIR)/httpclient_test.so: $(OBJECTS)
 	@echo "Building library $@"
 	@$(CXX) -fPIC -shared $(CXXFLAGS) $(shell pkg-config libxml++-2.6 --cflags) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
+-include *.$(MODE).d
+
 $(OBJECTS): %.$(MODE).o: %.cpp
 	@echo "Compiling $< -> $@"
-	@$(CXX) -fPIC $(CXXFLAGS) -c $< -o $@
+	@$(CXX) -fPIC $(CXXFLAGS) -MMD -MF $*.$(MODE).d -c $< -o $@
