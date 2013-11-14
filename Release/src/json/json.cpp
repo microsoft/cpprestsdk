@@ -435,6 +435,24 @@ web::json::details::_Object::_Object(const _Object& other):web::json::details::_
 
 web::json::value::value_type json::value::type() const { return m_value->type(); }
 
+bool json::value::is_integer() const 
+{
+	if(!is_number()) 
+	{
+		return false;
+	}
+	return m_value->is_integer();
+}
+
+bool json::value::is_double() const 
+{
+	if(!is_number())
+	{
+		return false;
+	}
+	return m_value->is_double();
+}
+
 json::value& web::json::details::_Object::index(const utility::string_t &key)
 {
     map_fields();

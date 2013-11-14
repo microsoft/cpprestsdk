@@ -157,8 +157,12 @@ TEST(constructor_overloads)
     VERIFY_IS_TRUE(v0.is_null());
     VERIFY_ARE_EQUAL(v1.type(), json::value::Number);
     VERIFY_IS_TRUE(v1.is_number());
+	VERIFY_IS_TRUE(v1.is_integer());
+	VERIFY_IS_FALSE(v1.is_double());
     VERIFY_ARE_EQUAL(v2.type(), json::value::Number);
     VERIFY_IS_TRUE(v2.is_number());
+	VERIFY_IS_TRUE(v2.is_double());
+	VERIFY_IS_FALSE(v2.is_integer());
     VERIFY_ARE_EQUAL(v3.type(), json::value::Boolean);
     VERIFY_IS_TRUE(v3.is_boolean());
     VERIFY_ARE_EQUAL(v4.type(), json::value::String);
