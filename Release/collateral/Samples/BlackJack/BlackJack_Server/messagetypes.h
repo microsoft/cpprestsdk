@@ -169,7 +169,7 @@ struct BJHand
     {
         web::json::value result = web::json::value::object();
         result[STATE] = web::json::value::number(state);
-        result[RESULT] = web::json::value::number(this->result);   
+        result[RESULT] = web::json::value::number(this->result);
         result[BET] = web::json::value::number(bet);
         result[INSURANCE] = web::json::value::number(insurance);
 
@@ -186,7 +186,7 @@ struct BJHand
         else
         {
             int idx = 0;
-            for (auto iter = cards.begin(); iter != cards.end(); ++iter)
+            for (auto iter = cards.begin(); iter != cards.end();)
             {
                 jCards[idx++] = iter->AsJSON();
                 break;

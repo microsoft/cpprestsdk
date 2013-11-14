@@ -519,7 +519,6 @@ bool json::value::operator==(const json::value &other) const
     case Array:
         return static_cast<const json::details::_Array*>(this->m_value.get())->is_equal(static_cast<const json::details::_Array*>(other.m_value.get()));
     }
-    return false;
 }
             
 web::json::value& web::json::value::operator [] (const utility::string_t &key)

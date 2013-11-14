@@ -341,7 +341,6 @@ namespace web { namespace http { namespace client { namespace details
                 {
                     // First see if client needs to be opened.
                     auto error = open_if_required();
-
                     if (error != S_OK)
                     {
                         // Failed to open
@@ -359,7 +358,7 @@ namespace web { namespace http { namespace client { namespace details
                 unsigned long open_if_required()
                 {
                     unsigned long error = S_OK;
-
+                    
                     if( !m_opened )
                     {
                         pplx::extensibility::scoped_critical_section_t l(m_open_lock);
@@ -368,7 +367,6 @@ namespace web { namespace http { namespace client { namespace details
                         if ( !m_opened )
                         {
                             error = open();
-
                             if (error == S_OK)
                             {
                                 m_opened = true;

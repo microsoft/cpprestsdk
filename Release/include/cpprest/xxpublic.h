@@ -60,6 +60,8 @@ typedef UINT_PTR SOCKET;
 #endif
 #endif
 
+#define UNREACHABLE __assume(0)
+
 // for winhttp.h
 typedef void * HINTERNET;
 

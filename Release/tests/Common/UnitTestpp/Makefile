@@ -1,5 +1,5 @@
-CXXFLAGS += -g -Wall -Wno-unknown-pragmas -W -Winline -ansi -I. -std=c++0x -fPIC -I$(CASABLANCA_INCLUDE_DIR)
-LDFLAGS ?= 
+CXXFLAGS += -g -Wall -Wno-unknown-pragmas -W -Winline -ansi -I. -stdlib=libc++ -std=c++11 -fPIC -I$(CASABLANCA_INCLUDE_DIR)
+# LDFLAGS ?= 
 SED = sed
 MV = mv
 RM = rm
@@ -68,12 +68,11 @@ endef
 #all: $(test)
 
 all: $(lib)
-	cp lib/linux_gcc/libunittestpp.so $(OUTPUT_DIR)
+	cp libunittestpp.so $(OUTPUT_DIR)
 
-$(lib): $(objects) 
-	@mkdir -p lib/linux_gcc
+$(lib): $(objects)
 	@echo Creating $(lib) library...
-	@$(CXX) -shared -o lib/linux_gcc/$(lib) $(objects)
+	@$(CXX) -stdlib=libc++ -shared -o $(lib) $(objects) -lstdc++ -lm 
 
 $(test): $(lib) $(test_objects)
 	@mkdir -p bin/win32_gcc_static_debug

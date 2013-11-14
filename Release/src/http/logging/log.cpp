@@ -141,7 +141,7 @@ const char *LevelText(log_level level)
     case LOG_FATAL: return "Fatal Error";
     case LOG_ERROR: return "Error";
     }
-    return "LOG ERROR";
+    UNREACHABLE;
 }
 
 #ifdef _MS_WINDOWS
