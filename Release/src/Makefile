@@ -23,7 +23,7 @@ SOURCES = \
 ifeq ($(UNAME),APPLE)
 	SOURCES += pplx/apple/pplxapple.cpp
 else
-	SOURCES += pplx/apple/pplxlinux.cpp
+	SOURCES += pplx/linux/pplxlinux.cpp
 endif
 
 
@@ -86,11 +86,17 @@ PKGCONFIG_CFLAGS = $(shell pkg-config libxml++-2.6 --cflags)
 PKGCONFIG_LIBS = $(shell pkg-config libxml++-2.6 --libs) $(shell pkg-config libssl --libs)
 endif
 
+ifeq ($(UNAME),APPLE)
+PLATFORM_FLAGS = -framework CoreFoundation
+endif
+ifeq ($(UNAME),LINUX)
+PLATFORM_FLAGS = -pthread
+endif
+
 #-fpch-deps -MMD not useful with a single monolithic PCH
 
 CXXFLAGS = -fPIC -std=c++11 $(STRICT_BASE_CXXFLAGS) -I../include -I./pch $(WARNINGS) $(PKGCONFIG_CFLAGS)
-# Use "mt" version of boost for Apple, and no-mt for Linux 
-LIBS = $(PKGCONFIG_LIBS) -framework CoreFoundation -l$(BOOST_SYSTEM) -l$(BOOST_THREAD) -l$(BOOST_LOCALE) -l$(BOOST_REGEX) -lstdc++ -lm # these are explicit for clang
+LIBS = $(PKGCONFIG_LIBS) $(PLATFORM_FLAGS) -l$(BOOST_SYSTEM) -l$(BOOST_THREAD) -l$(BOOST_LOCALE) -l$(BOOST_REGEX) -lstdc++ -lm # these are explicit for clang
 LDFLAGS = $(BASE_LDFLAGS)
 
 ifeq ($(OUTPUT_DIR),)

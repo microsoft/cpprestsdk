@@ -82,12 +82,14 @@ export BOOST_SYSTEM=boost_system
 export BOOST_THREAD=boost_thread
 export BOOST_LOCALE=boost_locale
 export BOOST_REGEX=boost_regex
+export BOOST_FILE_SYSTEM=boost_filesystem
 endif
 ifeq ($(UNAME),APPLE)
 export BOOST_SYSTEM=boost_system-mt
 export BOOST_THREAD=boost_thread-mt
 export BOOST_LOCALE=boost_locale-mt
 export BOOST_REGEX=boost_regex-mt
+export BOOST_FILE_SYSTEM=boost_filesystem-mt
 endif
 
 tests: src
