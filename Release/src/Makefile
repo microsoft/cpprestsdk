@@ -4,7 +4,6 @@ SOURCES = \
 	streams/linux/fileio_linux.cpp \
 	json/json.cpp \
 	utilities/asyncrt_utils.cpp \
-	pplx/linux/pplxlinux.cpp \
 	pplx/pplx.cpp \
 	pplx/threadpool.cpp \
 	http/uri/uri.cpp \
@@ -20,6 +19,13 @@ SOURCES = \
 	http/listener/http_server_api.cpp \
 	http/logging/log.cpp \
 	utilities/base64.cpp
+
+ifeq ($(UNAME),APPLE)
+	SOURCES += pplx/apple/pplxapple.cpp
+else
+	SOURCES += pplx/linux/pplxlinux.cpp
+endif
+
 
 HEADERS = \
 	../include/cpprest/astreambuf.h \
@@ -57,10 +63,15 @@ HEADERS = \
 	../include/cpprest/uri_builder.h \
 	../include/cpprest/uri_parser.h \
 	../include/cpprest/xxpublic.h \
-	../include/compat/linux_compat.h \
 	../include/compat/SafeInt3.hpp \
 	../include/pplx/threadpool.h \
 	../src/pch/stdafx.h
+
+ifeq ($(UNAME),APPLE)
+	HEADERS += ../include/compat/apple_compat.h
+else
+	HEADERS += ../include/compat/linux_compat.h
+endif
 
 PCH = ./pch/stdafx.h
 
@@ -70,13 +81,22 @@ CPP_DEPENDENCIES = $(addsuffix .d, $(basename $(SOURCES)))
 
 # flags for the C++ compiler
 
-PKGCONFIG_CFLAGS = $(shell pkg-config libxml++-2.6 --cflags) 
+ifeq ($(UNAME),LINUX)
+PKGCONFIG_CFLAGS = $(shell pkg-config libxml++-2.6 --cflags)
 PKGCONFIG_LIBS = $(shell pkg-config libxml++-2.6 --libs) $(shell pkg-config libssl --libs)
+endif
+
+ifeq ($(UNAME),APPLE)
+PLATFORM_FLAGS = -framework CoreFoundation
+endif
+ifeq ($(UNAME),LINUX)
+PLATFORM_FLAGS = -pthread
+endif
 
 #-fpch-deps -MMD not useful with a single monolithic PCH
 
 CXXFLAGS = -fPIC -std=c++11 $(STRICT_BASE_CXXFLAGS) -I../include -I./pch $(WARNINGS) $(PKGCONFIG_CFLAGS)
-LIBS = $(PKGCONFIG_LIBS) -lboost_system -lboost_thread -lboost_locale -lboost_regex -pthread -lstdc++ -lm # these are explicit for clang
+LIBS = $(PKGCONFIG_LIBS) $(PLATFORM_FLAGS) -l$(BOOST_SYSTEM) -l$(BOOST_THREAD) -l$(BOOST_LOCALE) -l$(BOOST_REGEX) -lstdc++ -lm # these are explicit for clang
 LDFLAGS = $(BASE_LDFLAGS)
 
 ifeq ($(OUTPUT_DIR),)

@@ -224,8 +224,7 @@ namespace details
             return convert_utf16be_to_utf8(src, false);
         }
         
-        // Compiler complains about not returning in all cases.
-        throw std::runtime_error("Better never hit here.");
+        UNREACHABLE;
     }
 
     utf16string convert_utf8_to_utf16(const unsigned char *src, size_t src_size)
@@ -247,8 +246,7 @@ namespace details
             return convert_utf16be_to_utf8(convert_bytes_to_wstring(src), false);
         }
 
-        // Compiler complains about not returning in all cases.
-        throw std::runtime_error("Better never hit here.");
+        UNREACHABLE;
     }
 
     utf16string convert_utf16_to_utf16(const unsigned char *src, size_t src_size)
@@ -273,8 +271,7 @@ namespace details
             return convert_utf16be_to_utf16le(src, false);
         }
 
-        // Compiler complains about not returning in all cases.
-        throw std::runtime_error("Better never hit here.");
+        UNREACHABLE;
     }
 
     utf16string convert_utf16_to_utf16(const std::vector<unsigned char> &src)
@@ -296,9 +293,8 @@ namespace details
             // unknown defaults to big endian.
             return convert_utf16be_to_utf16le(src, false);
         }
-
-        // Compiler complains about not returning in all cases.
-        throw std::runtime_error("Better never hit here.");
+        
+        UNREACHABLE;
     }
 
     utf16string convert_utf8_to_utf16(const std::vector<unsigned char> &src)

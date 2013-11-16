@@ -1,6 +1,6 @@
-CXXFLAGS=$(LAX_BASE_CXXFLAGS) -I../../../include/ -I../UnitTestpp/
-LDFLAGS=-L../UnitTestpp/lib/linux_gcc/
-LDLIBS=-lboost_system -lboost_filesystem -lunittestpp -ldl
+CXXFLAGS=$(LAX_BASE_CXXFLAGS) -I../../../include/ -I../UnitTestpp/ 
+LDFLAGS=-L$(OUTPUT_DIR)
+LDLIBS=-l$(BOOST_SYSTEM) -l$(BOOST_FILE_SYSTEM) -lunittestpp -ldl
 
 .PHONY: all
 
