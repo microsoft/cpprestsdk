@@ -200,7 +200,7 @@ static std::vector<std::string> get_matching_binaries(const std::string &dllName
 
 static std::multimap<std::string, std::string> g_properties;
 static std::vector<std::string> g_test_binaries;
-static int g_individual_test_timeout = 100 * 60000 * 3;
+static int g_individual_test_timeout = 60000 * 3;
 
 static int parse_command_line(int argc, char **argv)
 {
