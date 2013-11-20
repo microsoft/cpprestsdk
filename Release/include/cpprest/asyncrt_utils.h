@@ -389,7 +389,10 @@ private:
     static const interval_type _dayTicks    = 24*60*60*_secondTicks;
 
 
-#ifndef _MS_WINDOWS
+#ifdef _MS_WINDOWS
+    // void* to avoid pulling in windows.h
+    static _ASYNCRTIMP bool __cdecl datetime::system_type_to_datetime(/*SYSTEMTIME*/ void* psysTime, double seconds, datetime * pdt);
+#else
     static datetime timeval_to_datetime(struct timeval time);
 #endif
 

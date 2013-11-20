@@ -93,6 +93,57 @@ TEST(parsing_time_extended)
     }
 }
 
+TEST(parsing_time_roundtrip_datetime)
+{
+    // Preserve all 7 digits after the comma:
+    {
+        utility::string_t str = _XPLATSTR("2013-11-19T14:30:59.1234567Z");
+        auto dt = utility::datetime::from_string(str, utility::datetime::ISO_8601);
+        utility::string_t str2 = dt.to_string(utility::datetime::ISO_8601);
+        VERIFY_ARE_EQUAL(str2, str);
+    }
+    // lose the last '999' without rounding up
+    {
+    utility::string_t str = _XPLATSTR("2013-11-19T14:30:59.1234567999Z");
+    auto dt = utility::datetime::from_string(str, utility::datetime::ISO_8601);
+    utility::string_t str2 = dt.to_string(utility::datetime::ISO_8601);
+    VERIFY_ARE_EQUAL(str2, _XPLATSTR("2013-11-19T14:30:59.1234567Z"));
+    }
+    // leading 0-s after the comma, tricky to parse correctly
+    {
+        utility::string_t str = _XPLATSTR("2013-11-19T14:30:59.00123Z");
+        auto dt = utility::datetime::from_string(str, utility::datetime::ISO_8601);
+        utility::string_t str2 = dt.to_string(utility::datetime::ISO_8601);
+        VERIFY_ARE_EQUAL(str2, str);
+    }
+    // another leading 0 test
+    {
+        utility::string_t str = _XPLATSTR("2013-11-19T14:30:59.0000001Z");
+        auto dt = utility::datetime::from_string(str, utility::datetime::ISO_8601);
+        utility::string_t str2 = dt.to_string(utility::datetime::ISO_8601);
+        VERIFY_ARE_EQUAL(str2, str);
+    }
+    // this is going to be truncated
+    {
+        utility::string_t str = _XPLATSTR("2013-11-19T14:30:59.00000001Z");
+        auto dt = utility::datetime::from_string(str, utility::datetime::ISO_8601);
+        utility::string_t str2 = dt.to_string(utility::datetime::ISO_8601);
+        VERIFY_ARE_EQUAL(str2, _XPLATSTR("2013-11-19T14:30:59Z"));
+    }
+}
+
+TEST(parsing_time_roundtrip_time)
+{
+    // time only without date
+    {
+        utility::string_t str = _XPLATSTR("14:30:59.1234567Z");
+        auto dt = utility::datetime::from_string(str, utility::datetime::ISO_8601);
+        utility::string_t str2 = dt.to_string(utility::datetime::ISO_8601);
+        // Must look for a substring now, since the date part is filled with today's date
+        VERIFY_IS_TRUE(str2.find(str) != std::string::npos);
+    }
+}
+
 } // SUITE(datetime)
 
 }}}

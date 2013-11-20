@@ -576,7 +576,19 @@ utility::string_t datetime::to_string(date_format format) const
             throw utility::details::create_system_error(GetLastError());
         }
 
-        outStream << dateStr << "T" << timeStr << "Z";
+        outStream << dateStr << "T" << timeStr;
+        uint64_t frac_sec = largeInt.QuadPart % _secondTicks;
+        if (frac_sec > 0)
+        {
+            // Append fractional second, which is a 7-digit value with no trailing zeros
+            // This way, '1200' becomes '00012'
+            char buf[9] = { 0 };
+            sprintf_s(buf, sizeof(buf), ".%07d", frac_sec);
+            // trim trailing zeros
+            for (int i = 7; buf[i] == '0'; i--) buf[i] = '\0';
+            outStream << buf;
+        }
+        outStream << "Z";
     }
 
     return outStream.str();
@@ -598,12 +610,36 @@ utility::string_t datetime::to_string(date_format format) const
 #endif
 }
 
+#ifdef _MS_WINDOWS
+bool __cdecl datetime::system_type_to_datetime(void* pvsysTime, double seconds, datetime * pdt)
+{
+    SYSTEMTIME* psysTime = (SYSTEMTIME*)pvsysTime;
+    FILETIME fileTime;
+
+    if (SystemTimeToFileTime(psysTime, &fileTime))
+    {
+        ULARGE_INTEGER largeInt;
+        largeInt.LowPart = fileTime.dwLowDateTime;
+        largeInt.HighPart = fileTime.dwHighDateTime;
+
+        // Add hundredths of nanoseconds
+        uint64_t hn = (uint64_t)(seconds * _secondTicks);
+        largeInt.QuadPart += hn;
+
+        *pdt = datetime(largeInt.QuadPart);
+        return true;
+    }
+    return false;
+}
+#endif
+
 /// <summary>
 /// Returns a string representation of the datetime. The string is formatted based on RFC 1123 or ISO 8601
 /// </summary>
 datetime __cdecl datetime::from_string(const utility::string_t& dateString, date_format format)
 {
 #ifdef _MS_WINDOWS
+    datetime result;
     if ( format == RFC_1123 )
     {
         SYSTEMTIME sysTime = {0};
@@ -629,45 +665,37 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
 
             if (loc != monthnames+12)
             {
-                FILETIME fileTime;
                 sysTime.wMonth = (short) ((loc - monthnames) + 1);
-
-                if (SystemTimeToFileTime(&sysTime, &fileTime))
+                if (system_type_to_datetime(&sysTime, 0.0, &result))
                 {
-                    ULARGE_INTEGER largeInt;
-                    largeInt.LowPart = fileTime.dwLowDateTime;
-                    largeInt.HighPart = fileTime.dwHighDateTime;
-
-                    return datetime(largeInt.QuadPart);  
+                    return result;
                 }
             }
         }
     }
     else if ( format == ISO_8601 )
     {
+        // Unlike FILETIME, SYSTEMTIME does not have enough precision to hold seconds in 100 nanosecond
+        // increments. Therefore, start with seconds and milliseconds set to 0, then add them separately
+        // from this double:
+        double seconds;
+
         {
-            SYSTEMTIME sysTime = {0};
-    
-            const wchar_t * formatString = L"%4d-%2d-%2dT%2d:%2d:%2dZ";
+            SYSTEMTIME sysTime = { 0 };
+            const wchar_t * formatString = L"%4d-%2d-%2dT%2d:%2d:%lfZ";
             auto n = swscanf_s(dateString.c_str(), formatString, 
                 &sysTime.wYear,  
                 &sysTime.wMonth,  
                 &sysTime.wDay, 
                 &sysTime.wHour, 
                 &sysTime.wMinute, 
-                &sysTime.wSecond);
+                &seconds);
 
             if (n == 3 || n == 6)
             {
-                FILETIME fileTime;
-
-                if (SystemTimeToFileTime(&sysTime, &fileTime))
+                if (system_type_to_datetime(&sysTime, seconds, &result))
                 {
-                    ULARGE_INTEGER largeInt;
-                    largeInt.LowPart = fileTime.dwLowDateTime;
-                    largeInt.HighPart = fileTime.dwHighDateTime;
-
-                    return datetime(largeInt.QuadPart);  
+                    return result;
                 }
             }
         }
@@ -675,54 +703,45 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
             SYSTEMTIME sysTime = {0};
             DWORD date = 0;
 
-            const wchar_t * formatString = L"%8dT%2d:%2d:%2dZ";
+            const wchar_t * formatString = L"%8dT%2d:%2d:%lfZ";
             auto n = swscanf_s(dateString.c_str(), formatString, 
                 &date, 
                 &sysTime.wHour, 
                 &sysTime.wMinute, 
-                &sysTime.wSecond);
+                &seconds);
 
             if (n == 1 || n == 4)
             {
-                FILETIME fileTime;
-
                 sysTime.wDay = date % 100;
                 date /= 100;
                 sysTime.wMonth = date % 100;
                 date /= 100;
                 sysTime.wYear = (WORD)date;
 
-                if (SystemTimeToFileTime(&sysTime, &fileTime))
+                if (system_type_to_datetime(&sysTime, seconds, &result))
                 {
-                    ULARGE_INTEGER largeInt;
-                    largeInt.LowPart = fileTime.dwLowDateTime;
-                    largeInt.HighPart = fileTime.dwHighDateTime;
-
-                    return datetime(largeInt.QuadPart);  
+                    return result;
                 }
             }
         }
         {
             SYSTEMTIME sysTime = {0};
             GetSystemTime(&sysTime);    // Fill date portion with today's information
+            // Zero out second -- we will use the double for that
+            sysTime.wSecond = 0;
+            sysTime.wMilliseconds = 0;
     
-            const wchar_t * formatString = L"%2d:%2d:%2dZ";
+            const wchar_t * formatString = L"%2d:%2d:%lfZ";
             auto n = swscanf_s(dateString.c_str(), formatString, 
                 &sysTime.wHour, 
                 &sysTime.wMinute, 
-                &sysTime.wSecond);
+                &seconds);
 
             if (n == 3)
             {
-                FILETIME fileTime;
-
-                if (SystemTimeToFileTime(&sysTime, &fileTime))
+                if (system_type_to_datetime(&sysTime, seconds, &result))
                 {
-                    ULARGE_INTEGER largeInt;
-                    largeInt.LowPart = fileTime.dwLowDateTime;
-                    largeInt.HighPart = fileTime.dwHighDateTime;
-
-                    return datetime(largeInt.QuadPart);  
+                    return result;
                 }
             }
         }
