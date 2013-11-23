@@ -30,7 +30,9 @@ using namespace Platform;
 using namespace Windows::Storage::Streams;
 #endif // #if !defined(__cplusplus_winrt)
 
-#if !defined(_MS_WINDOWS)
+#if defined(_MS_WINDOWS)
+#include <regex>
+#else
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/posix_time/posix_time_io.hpp>
 // GCC 4.8 does not support regex, use boost. TODO: switch to std::regex in GCC 4.9
@@ -554,12 +556,13 @@ utility::string_t datetime::to_string(date_format format) const
     }
     else if ( format == ISO_8601 )
     {
+        const size_t buffSize = 64;
 #if _WIN32_WINNT < _WIN32_WINNT_VISTA 
-        TCHAR dateStr[18] = {0};
-        status = GetDateFormat(LOCALE_INVARIANT, 0, &systemTime, "yyyy-MM-dd", dateStr, sizeof(dateStr) / sizeof(wchar_t));
+        TCHAR dateStr[buffSize] = {0};
+        status = GetDateFormat(LOCALE_INVARIANT, 0, &systemTime, "yyyy-MM-dd", dateStr, buffSize);
 #else
-        wchar_t dateStr[18] = {0};
-        status = GetDateFormatEx(LOCALE_NAME_INVARIANT, 0, &systemTime, L"yyyy-MM-dd", dateStr, sizeof(dateStr) / sizeof(wchar_t), NULL);
+        wchar_t dateStr[buffSize] = {0};
+        status = GetDateFormatEx(LOCALE_NAME_INVARIANT, 0, &systemTime, L"yyyy-MM-dd", dateStr, buffSize, NULL);
 #endif // _WIN32_WINNT < _WIN32_WINNT_VISTA 
         if (status == 0)
         {
@@ -567,11 +570,11 @@ utility::string_t datetime::to_string(date_format format) const
         }
 
 #if _WIN32_WINNT < _WIN32_WINNT_VISTA 
-        TCHAR timeStr[10] = {0};
-        status = GetTimeFormat(LOCALE_INVARIANT, TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT, &systemTime, "HH':'mm':'ss", timeStr, sizeof(timeStr) / sizeof(wchar_t));
+        TCHAR timeStr[buffSize] = {0};
+        status = GetTimeFormat(LOCALE_INVARIANT, TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT, &systemTime, "HH':'mm':'ss", timeStr, buffSize);
 #else
-        wchar_t timeStr[10] = {0};
-        status = GetTimeFormatEx(LOCALE_NAME_INVARIANT, TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT, &systemTime, L"HH':'mm':'ss", timeStr, sizeof(timeStr) / sizeof(wchar_t));
+        wchar_t timeStr[buffSize] = {0};
+        status = GetTimeFormatEx(LOCALE_NAME_INVARIANT, TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT, &systemTime, L"HH':'mm':'ss", timeStr, buffSize);
 #endif // _WIN32_WINNT < _WIN32_WINNT_VISTA 
         if (status == 0)
         {
@@ -632,7 +635,7 @@ utility::string_t datetime::to_string(date_format format) const
 }
 
 #ifdef _MS_WINDOWS
-bool __cdecl datetime::system_type_to_datetime(void* pvsysTime, double seconds, datetime * pdt)
+bool __cdecl datetime::system_type_to_datetime(void* pvsysTime, uint64_t seconds, datetime * pdt)
 {
     SYSTEMTIME* psysTime = (SYSTEMTIME*)pvsysTime;
     FILETIME fileTime;
@@ -644,8 +647,7 @@ bool __cdecl datetime::system_type_to_datetime(void* pvsysTime, double seconds, 
         largeInt.HighPart = fileTime.dwHighDateTime;
 
         // Add hundredths of nanoseconds
-        uint64_t hn = (uint64_t)(seconds * _secondTicks);
-        largeInt.QuadPart += hn;
+        largeInt.QuadPart += seconds;
 
         *pdt = datetime(largeInt.QuadPart);
         return true;
@@ -676,6 +678,9 @@ uint64_t timeticks_from_second(const utility::string_t& str)
 /// </summary>
 datetime __cdecl datetime::from_string(const utility::string_t& dateString, date_format format)
 {
+    // avoid floating point math to preserve precision
+    uint64_t ufrac_second = 0;
+
 #ifdef _MS_WINDOWS
     datetime result;
     if ( format == RFC_1123 )
@@ -704,7 +709,7 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
             if (loc != monthnames+12)
             {
                 sysTime.wMonth = (short) ((loc - monthnames) + 1);
-                if (system_type_to_datetime(&sysTime, 0.0, &result))
+                if (system_type_to_datetime(&sysTime, ufrac_second, &result))
                 {
                     return result;
                 }
@@ -715,23 +720,33 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
     {
         // Unlike FILETIME, SYSTEMTIME does not have enough precision to hold seconds in 100 nanosecond
         // increments. Therefore, start with seconds and milliseconds set to 0, then add them separately
-        // from this double:
-        double seconds;
+
+        // Try to extract the fractional second from the timestamp
+        std::wregex r_frac_second(L"(.+)(\\.\\d+)(Z$)");
+        std::wsmatch m;
+
+        std::wstring input(dateString);
+        if (std::regex_search(dateString, m, r_frac_second))
+        {
+            auto frac = m[2].str(); // this is the fractional second
+            ufrac_second = timeticks_from_second(frac);
+            input = m[1].str() + m[3].str();
+        }
 
         {
             SYSTEMTIME sysTime = { 0 };
-            const wchar_t * formatString = L"%4d-%2d-%2dT%2d:%2d:%lfZ";
-            auto n = swscanf_s(dateString.c_str(), formatString, 
+            const wchar_t * formatString = L"%4d-%2d-%2dT%2d:%2d:%2dZ";
+            auto n = swscanf_s(input.c_str(), formatString,
                 &sysTime.wYear,  
                 &sysTime.wMonth,  
                 &sysTime.wDay, 
                 &sysTime.wHour, 
                 &sysTime.wMinute, 
-                &seconds);
+                &sysTime.wSecond);
 
             if (n == 3 || n == 6)
             {
-                if (system_type_to_datetime(&sysTime, seconds, &result))
+                if (system_type_to_datetime(&sysTime, ufrac_second, &result))
                 {
                     return result;
                 }
@@ -741,12 +756,12 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
             SYSTEMTIME sysTime = {0};
             DWORD date = 0;
 
-            const wchar_t * formatString = L"%8dT%2d:%2d:%lfZ";
-            auto n = swscanf_s(dateString.c_str(), formatString, 
+            const wchar_t * formatString = L"%8dT%2d:%2d:%2dZ";
+            auto n = swscanf_s(input.c_str(), formatString,
                 &date, 
                 &sysTime.wHour, 
                 &sysTime.wMinute, 
-                &seconds);
+                &sysTime.wSecond);
 
             if (n == 1 || n == 4)
             {
@@ -756,7 +771,7 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
                 date /= 100;
                 sysTime.wYear = (WORD)date;
 
-                if (system_type_to_datetime(&sysTime, seconds, &result))
+                if (system_type_to_datetime(&sysTime, ufrac_second, &result))
                 {
                     return result;
                 }
@@ -765,19 +780,18 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
         {
             SYSTEMTIME sysTime = {0};
             GetSystemTime(&sysTime);    // Fill date portion with today's information
-            // Zero out second -- we will use the double for that
             sysTime.wSecond = 0;
             sysTime.wMilliseconds = 0;
     
-            const wchar_t * formatString = L"%2d:%2d:%lfZ";
-            auto n = swscanf_s(dateString.c_str(), formatString, 
+            const wchar_t * formatString = L"%2d:%2d:%2dZ";
+            auto n = swscanf_s(input.c_str(), formatString,
                 &sysTime.wHour, 
                 &sysTime.wMinute, 
-                &seconds);
+                &sysTime.wSecond);
 
             if (n == 3)
             {
-                if (system_type_to_datetime(&sysTime, seconds, &result))
+                if (system_type_to_datetime(&sysTime, ufrac_second, &result))
                 {
                     return result;
                 }
@@ -790,9 +804,6 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
     std::string input(dateString);
 
     struct tm output = tm();
-
-    // avoid floating point math to preserve precision
-    uint64_t ufrac_second = 0;
 
     if ( format == RFC_1123 )
     {
@@ -810,7 +821,7 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
             ufrac_second = timeticks_from_second(frac);
             input = m[1].str() + m[3].str();
         }
-        
+
         auto result = strptime(input.data(), "%Y-%m-%dT%H:%M:%SZ", &output);
        
         if ( result == nullptr )
