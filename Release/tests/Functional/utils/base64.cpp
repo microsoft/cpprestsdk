@@ -245,12 +245,12 @@ TEST(bad_decode, "Ignore:Linux", "glib does not reject any of these inputs")
 
 TEST(large_string)
 {
-    size_t size = 128*1024;
+    const size_t size = 64*1024;
 
-    std::vector<unsigned char> data;
+    std::vector<unsigned char> data(size);
     for (auto i = 0u; i < size; ++i)
     {
-      data.push_back((unsigned char)(rand() & 0xFF));
+        data[i] = (unsigned char)(rand() & 0xFF);
     }
 
     auto string = utility::conversions::to_base64(data);
