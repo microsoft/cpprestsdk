@@ -826,7 +826,6 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
             input = m[1].str() + m[3].str();
         }
 #else
-        std::regex r_frac_second2("(.+)(\\.\\d+)(Z$)");
         // Try to extract the fractional second from the timestamp
         boost::regex r_frac_second("(.+)(\\.\\d+)(Z$)");
         boost::smatch m;
@@ -836,7 +835,7 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
             ufrac_second = timeticks_from_second(frac);
             input = m[1].str() + m[3].str();
         }
-
+#endif
         auto result = strptime(input.data(), "%Y-%m-%dT%H:%M:%SZ", &output);
        
         if ( result == nullptr )
