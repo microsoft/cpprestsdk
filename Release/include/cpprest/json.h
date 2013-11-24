@@ -269,6 +269,26 @@ public:
         bool is_number() const { return type() == Number; }
 
         /// <summary>
+		/// Is the current value represented as an integer number value?
+		/// </summary>
+		/// <remarks>
+		/// Note that if a json value is a number but represented as a double it can still
+		/// be retrieved as a integer using as_integer(), however the value will be truncated.
+		/// </remarks>
+		/// <returns><c>true</c> if the value is an integer value, <c>false</c> otherwise.</returns>
+		_ASYNCRTIMP bool is_integer() const ;
+
+		/// <summary>
+		/// Is the current value represented as an double number value?
+		/// </summary>
+		/// <remarks>
+		/// Note that if a json value is a number but represented as a int it can still
+		/// be retrieved as a double using as_double().
+		/// </remarks>
+		/// <returns><c>true</c> if the value is an double value, <c>false</c> otherwise.</returns>
+		_ASYNCRTIMP bool is_double() const ;
+
+        /// <summary>
         /// Is the current value a Boolean value?
         /// </summary>
         /// <returns><c>true</c> if the value is a Boolean value, <c>false</c> otherwise</returns>
@@ -568,6 +588,9 @@ public:
 
             virtual json::value::value_type type() const { return json::value::Null; }
 
+			virtual bool is_integer() const { throw json_exception(_XPLATSTR("not a number")); }
+			virtual bool is_double() const { throw json_exception(_XPLATSTR("not a number")); }
+
             virtual double as_double() const { throw json_exception(_XPLATSTR("not a number")); }
             virtual int32_t as_integer() const { throw json_exception(_XPLATSTR("not a number")); }
             virtual bool as_bool() const { throw json_exception(_XPLATSTR("not a boolean")); }
@@ -646,6 +669,9 @@ public:
             }
 
             virtual json::value::value_type type() const { return json::value::Number; }
+
+			virtual bool is_integer() const { return m_was_int; }
+			virtual bool is_double() const { return !m_was_int; }
 
             virtual double  as_double() const { return m_was_int ? static_cast<double>(m_intval) : m_value; }
             virtual int32_t as_integer() const { return m_was_int ? m_intval : static_cast<int32_t>(m_value); }
