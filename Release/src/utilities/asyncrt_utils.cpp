@@ -33,13 +33,17 @@ using namespace Windows::Storage::Streams;
 #if !defined(_MS_WINDOWS)
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/posix_time/posix_time_io.hpp>
+#ifdef __APPLE__
 // GCC 4.8 does not support regex, use boost. TODO: switch to std::regex in GCC 4.9
+// Clang already supports std::regex
 #include <boost/regex.hpp>
+#endif
 using namespace boost::locale::conv;
 #endif
 
 #ifdef __APPLE__
 #include <CoreFoundation/CoreFoundation.h>
+#include <regex>
 #endif
 
 using namespace web;
@@ -800,16 +804,28 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
     } 
     else
     {
+#ifdef __APPLE__
+        // Try to extract the fractional second from the timestamp
+        std::regex r_frac_second("(.+)(\\.\\d+)(Z$)");
+        std::smatch m;
+        if(std::regex_search(input,m,r_frac_second))
+        {
+            auto frac = m[2].str(); // this is the fractional second
+            ufrac_second = timeticks_from_second(frac);
+            input = m[1].str() + m[3].str();
+        }
+#else
+        std::regex r_frac_second2("(.+)(\\.\\d+)(Z$)");
         // Try to extract the fractional second from the timestamp
         boost::regex r_frac_second("(.+)(\\.\\d+)(Z$)");
         boost::smatch m;
-
         if(boost::regex_search(input,m,r_frac_second))
         {
             auto frac = m[2].str(); // this is the fractional second
             ufrac_second = timeticks_from_second(frac);
             input = m[1].str() + m[3].str();
         }
+#endif
         
         auto result = strptime(input.data(), "%Y-%m-%dT%H:%M:%SZ", &output);
        
@@ -845,7 +861,7 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
 
     struct timeval tv = timeval();
     tv.tv_sec = time;
-    tv.tv_usec = (__suseconds_t)ufrac_second;
+    tv.tv_usec = (unsigned int)ufrac_second;
     return timeval_to_datetime(tv);
 #endif
 }
