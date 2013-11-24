@@ -362,7 +362,7 @@ struct TimerCallbackContext
     }
 };
 
-TEST(timer_oneshot, "Ignore:Apple", "Not yet implemented")
+TEST(timer_oneshot)
 {
     TimerCallbackContext context;
     context.count = 1234;
@@ -374,7 +374,7 @@ TEST(timer_oneshot, "Ignore:Apple", "Not yet implemented")
     context.simpleTimer.stop(true);
 }
 
-TEST(timer_start_stop, "Ignore:Apple", "Not yet implemented")
+TEST(timer_start_stop)
 {
     TimerCallbackContext context;
     context.count = 1234;
@@ -391,7 +391,7 @@ TEST(timer_start_stop, "Ignore:Apple", "Not yet implemented")
     context.simpleTimer.stop(false);
 }
 
-TEST(timer_repeat, "Ignore:Apple", "Not yet implemented")
+TEST(timer_repeat)
 {
     TimerCallbackContext context;
     context.count = 10;

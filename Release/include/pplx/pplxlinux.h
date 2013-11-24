@@ -41,6 +41,7 @@
 
 #if defined(__APPLE__)
 #include "compat/apple_compat.h"
+#include <dispatch/dispatch.h>
 #else
 #include "compat/linux_compat.h"
 #include "boost/thread/mutex.hpp"
@@ -97,8 +98,8 @@ namespace platform
 
         void set()
         {
-			std::lock_guard<std::mutex> lock(_lock);
-			_signaled = true;
+            std::lock_guard<std::mutex> lock(_lock);
+            _signaled = true;
             _condition.notify_all();
         }
 
@@ -248,14 +249,13 @@ namespace platform
     };
 
     class linux_timer;
+    class apple_timer;
 
     class timer_impl
     {
     public:
         timer_impl()
-#if !defined(__APPLE__)
         : m_timerImpl(nullptr)
-#endif
         {
         }
 
@@ -264,8 +264,10 @@ namespace platform
         _PPLXIMP void start(unsigned int ms, bool repeat, TaskProc_t userFunc, _In_ void * context);
         _PPLXIMP void stop(bool waitForCallbacks);
 
-#if !defined(__APPLE__)
     private:
+#if defined(__APPLE__)
+        apple_timer * m_timerImpl;
+#else
         linux_timer * m_timerImpl;
 #endif
     };
