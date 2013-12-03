@@ -29,7 +29,7 @@ namespace tests { namespace functional { namespace http { namespace listener {
 SUITE(connections_and_errors)
 {
 
-  TEST_FIXTURE(uri_address, close_listener_race, "Ignore:Linux", "724744")
+  TEST_FIXTURE(uri_address, close_listener_race, "Ignore:Linux", "724744", "Ignore", "825350")
 {
     ::http::experimental::listener::http_listener listener(m_uri);
     listener.open().wait();
@@ -274,7 +274,50 @@ TEST_FIXTURE(uri_address, close_stream_with_exception, "Ignore:Linux", "760544")
     close_stream_early_impl(m_uri, false);
 }
 
+// Helper function to verify http_exception and return the error code value.
+template <typename Func>
+int verify_http_exception(Func f)
+{
+    int errorCode = 0;
+    try
+    {
+        f();
+        VERIFY_IS_TRUE(false);
+    } catch (const http_exception &e)
+    {
+        errorCode = e.error_code().value();
+    }
+    return errorCode;
+}
 
+TEST_FIXTURE(uri_address, request_content_ready_timeout, "Ignore:Linux", "NYI")
+{
+    http_listener_config config;
+    config.set_timeout(utility::seconds(1));
+    http_listener listener(m_uri, config);
+    pplx::extensibility::event_t timedOutEvent;
+    listener.support([&](http_request req)
+    {
+        const int e1 = verify_http_exception([=](){ req.content_ready().wait(); });
+        const int e2 = verify_http_exception([=](){ req.body().read().wait(); });
+        const int e3 = verify_http_exception([=](){ req.reply(status_codes::OK).wait(); });
+        VERIFY_ARE_EQUAL(e1, e2);
+        VERIFY_ARE_EQUAL(e2, e3);
+        timedOutEvent.set();
+    });
+    listener.open().wait();
+
+    // Using our production http_client here because it
+    // allows separation of sending headers and body.
+    ::web::http::client::http_client client(m_uri);
+    concurrency::streams::producer_consumer_buffer<unsigned char> body;
+    auto responseTask = client.request(methods::PUT, U(""), body.create_istream());
+    timedOutEvent.wait();
+    body.close().wait();
+    VERIFY_THROWS(responseTask.get(), http_exception);
+
+    listener.close().wait();
+}
 
 }
 

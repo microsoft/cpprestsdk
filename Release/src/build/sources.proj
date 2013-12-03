@@ -106,12 +106,6 @@
     <ClInclude Include="$(CasablancaIncludeDir)\cpprest\uri_builder.h">
       <Filter>Header Files\cpprest</Filter>
     </ClInclude>
-    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\filelog.h">
-      <Filter>Header Files\cpprest</Filter>
-    </ClInclude>
-    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\log.h">
-      <Filter>Header Files\cpprest</Filter>
-    </ClInclude>
     <ClInclude Include="$(CasablancaIncludeDir)\cpprest\http_client_impl.h">
       <Filter>Header Files\cpprest</Filter>
     </ClInclude>
@@ -127,6 +121,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(CasablancaSrcDir)\json\json.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CasablancaSrcDir)\json\json_parsing.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CasablancaSrcDir)\json\json_serialization.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(CasablancaSrcDir)\http\uri\uri.cpp">
@@ -145,9 +145,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(CasablancaSrcDir)\utilities\dllmain.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="$(CasablancaSrcDir)\http\logging\log.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(CasablancaSrcDir)\pch\stdafx.cpp">

@@ -55,9 +55,9 @@ namespace web { namespace http
             class linux_request_context : public request_context
             {
             public:
-                static request_context * create_request_context(std::shared_ptr<_http_client_communicator> &client, http_request &request)
+                static std::shared_ptr<request_context> create_request_context(std::shared_ptr<_http_client_communicator> &client, http_request &request)
                 {
-                    return new linux_request_context(client, request);
+                    return std::make_shared<linux_request_context>(client, request);
                 }
 
                 void report_error(const utility::string_t &message, boost::system::error_code ec, httpclient_errorcode_context context = httpclient_errorcode_context::none)
@@ -186,7 +186,7 @@ namespace web { namespace http
                     , m_io_service(io_service)
                     , m_config(config) {}
 
-                void send_request(linux_request_context* ctx)
+                void send_request(std::shared_ptr<linux_request_context> ctx)
                 {
                     auto what = ctx->m_what;
                     auto resource = what.resource().to_string();
@@ -288,7 +288,7 @@ namespace web { namespace http
                 tcp::resolver m_resolver;
                 http_client_config m_config;
 
-                static bool _check_streambuf(linux_request_context * ctx, concurrency::streams::streambuf<uint8_t> rdbuf, const utility::char_t* msg)
+                static bool _check_streambuf(std::shared_ptr<linux_request_context> ctx, concurrency::streams::streambuf<uint8_t> rdbuf, const utility::char_t* msg)
                 {
                     if ( !rdbuf.is_open() )
                     {
@@ -305,7 +305,7 @@ namespace web { namespace http
                     return rdbuf.is_open();
                 }
 
-                void handle_resolve(const boost::system::error_code& ec, tcp::resolver::iterator endpoints, linux_request_context* ctx)
+                void handle_resolve(const boost::system::error_code& ec, tcp::resolver::iterator endpoints, std::shared_ptr<linux_request_context> ctx)
                 {
                     if (ec)
                     {
@@ -336,7 +336,7 @@ namespace web { namespace http
                     }
                 }
 
-                void handle_connect(const boost::system::error_code& ec, tcp::resolver::iterator endpoints, linux_request_context* ctx)
+                void handle_connect(const boost::system::error_code& ec, tcp::resolver::iterator endpoints, std::shared_ptr<linux_request_context> ctx)
                 {
                     if (!ec)
                     {
@@ -390,7 +390,7 @@ namespace web { namespace http
                 }
 
 #ifndef __APPLE__
-                void handle_handshake(const boost::system::error_code& ec, linux_request_context* ctx)
+                void handle_handshake(const boost::system::error_code& ec, std::shared_ptr<linux_request_context> ctx)
                 {
                     if (!ec)
                         boost::asio::async_write(*ctx->m_ssl_stream, ctx->m_request_buf, boost::bind(&client::handle_write_request, this, boost::asio::placeholders::error, ctx));
@@ -398,7 +398,7 @@ namespace web { namespace http
                         ctx->report_error("Error code in handle_handshake is ", ec, httpclient_errorcode_context::handshake);
                 }
 #endif
-                void handle_write_chunked_body(const boost::system::error_code& ec, linux_request_context* ctx)
+                void handle_write_chunked_body(const boost::system::error_code& ec, std::shared_ptr<linux_request_context> ctx)
                 {
                     if (ec)
                         return handle_write_body(ec, ctx);
@@ -436,7 +436,7 @@ namespace web { namespace http
                     });
                 }
 
-                void handle_write_large_body(const boost::system::error_code& ec, linux_request_context* ctx)
+                void handle_write_large_body(const boost::system::error_code& ec, std::shared_ptr<linux_request_context> ctx)
                 {
                     if (ec || ctx->m_current_size >= ctx->m_known_size)
                     {
@@ -475,7 +475,7 @@ namespace web { namespace http
                     });
                 }
 
-                void handle_write_request(const boost::system::error_code& ec, linux_request_context* ctx)
+                void handle_write_request(const boost::system::error_code& ec, std::shared_ptr<linux_request_context> ctx)
                 {
                     if (!ec)
                     {
@@ -492,7 +492,7 @@ namespace web { namespace http
                     }
                 }
 
-                void handle_write_body(const boost::system::error_code& ec, linux_request_context* ctx)
+                void handle_write_body(const boost::system::error_code& ec, std::shared_ptr<linux_request_context> ctx)
                 {
                     if (!ec)
                     {
@@ -518,7 +518,7 @@ namespace web { namespace http
                     }
                 }
 
-                void handle_status_line(const boost::system::error_code& ec, linux_request_context* ctx)
+                void handle_status_line(const boost::system::error_code& ec, std::shared_ptr<linux_request_context> ctx)
                 {
                     if (!ec)
                     {
@@ -550,7 +550,7 @@ namespace web { namespace http
                     }
                 }
 
-                void read_headers(linux_request_context* ctx)
+                void read_headers(std::shared_ptr<linux_request_context> ctx)
                 {
                     ctx->m_needChunked = false;
                     std::istream response_stream(&ctx->m_response_buf);
@@ -565,7 +565,7 @@ namespace web { namespace http
                             boost::algorithm::trim(name);
                             boost::algorithm::trim(value);
 
-                            ctx->m_response.headers()[name] = value;
+                            ctx->m_response.headers().add(name, value);
 
                             if (boost::iequals(name, header_names::transfer_encoding))
                             {
@@ -612,7 +612,7 @@ namespace web { namespace http
                 }
 
                 template <typename ReadHandler>
-                void async_read_until_buffersize(size_t size, ReadHandler handler, linux_request_context* ctx)
+                void async_read_until_buffersize(size_t size, ReadHandler handler, std::shared_ptr<linux_request_context> ctx)
                 {
                     size_t size_to_read = 0;
 #ifndef __APPLE__
@@ -631,7 +631,7 @@ namespace web { namespace http
                     }
                 }
 
-                void handle_chunk_header(const boost::system::error_code& ec, linux_request_context* ctx)
+                void handle_chunk_header(const boost::system::error_code& ec, std::shared_ptr<linux_request_context> ctx)
                 {
                     if (!ec)
                     {
@@ -657,7 +657,7 @@ namespace web { namespace http
                     }
                 }
 
-                void handle_chunk(const boost::system::error_code& ec, int to_read, linux_request_context* ctx)
+                void handle_chunk(const boost::system::error_code& ec, int to_read, std::shared_ptr<linux_request_context> ctx)
                 {
                     if (!ec)
                     {
@@ -714,7 +714,7 @@ namespace web { namespace http
                     }
                 }
 
-                void handle_read_content(const boost::system::error_code& ec, linux_request_context* ctx)
+                void handle_read_content(const boost::system::error_code& ec, std::shared_ptr<linux_request_context> ctx)
                 {
                     auto writeBuffer = ctx->_get_writebuffer();
 
@@ -779,7 +779,7 @@ namespace web { namespace http
             {
             private:
                 std::unique_ptr<client> m_client;
-                http::uri m_address;
+                const http::uri m_address;
 
             public:
                 linux_client(const http::uri &address, const http_client_config& client_config) 
@@ -792,9 +792,9 @@ namespace web { namespace http
                     return 0;
                 }
 
-                void send_request(request_context* request_ctx)
+                void send_request(std::shared_ptr<request_context> request_ctx)
                 {
-                    auto linux_ctx = static_cast<linux_request_context*>(request_ctx);
+                    auto linux_ctx = std::static_pointer_cast<linux_request_context>(request_ctx);
 
                     auto encoded_resource = uri_builder(m_address).append(linux_ctx->m_request.relative_uri()).to_uri();
                     linux_ctx->m_what = encoded_resource;
@@ -831,7 +831,7 @@ namespace web { namespace http
 
             virtual pplx::task<http_response> propagate(http_request request)
             {
-                details::request_context * context = details::linux_request_context::create_request_context(m_http_client_impl, request);
+                auto context = details::linux_request_context::create_request_context(m_http_client_impl, request);
 
                 // Use a task to externally signal the final result and completion of the task.
                 auto result_task = pplx::create_task(context->m_request_completion);

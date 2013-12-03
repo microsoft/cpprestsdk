@@ -26,44 +26,61 @@
 #include "stdafx.h"
 #include "cpprest/http_server_api.h"
 
+using namespace web::http::experimental;
+
 namespace web { namespace http
 {
 namespace experimental {
 namespace listener
 {
 
-using namespace web::http::experimental::details;
-
-http_listener::http_listener(const http::uri &address) : m_uri(address), m_closed(true)
+// Helper function to check URI components.
+static void check_listener_uri(const http::uri &address)
 {
-    m_pipeline = http::http_pipeline::create_pipeline(std::make_shared<_listener_stage>(this));
-
     // Somethings like proper URI schema are verified by the URI class.
     // We only need to check certain things specific to HTTP.
-    if(m_uri.scheme() == U("https"))
+    if(address.scheme() == U("https"))
     {
         throw std::invalid_argument("Listeners using 'https' are not yet supported");
     }
 
-    if(m_uri.scheme() != U("http"))
+    if(address.scheme() != U("http"))
     {
         throw std::invalid_argument("URI scheme must be 'http'");
     }
 
-    if(m_uri.host().empty())
+    if(address.host().empty())
     {
         throw std::invalid_argument("URI must contain a hostname.");
     }
 
-    if(!m_uri.query().empty())
+    if(!address.query().empty())
     {
         throw std::invalid_argument("URI can't contain a query.");
     }
 
-    if(!m_uri.fragment().empty())
+    if(!address.fragment().empty())
     {
         throw std::invalid_argument("URI can't contain a fragment.");
     }
+}
+
+http_listener::http_listener(http::uri address) 
+    : m_uri(std::move(address)), 
+      m_config(), 
+      m_closed(true)
+{
+    m_pipeline = http::http_pipeline::create_pipeline(std::make_shared<_listener_stage>(this));
+    check_listener_uri(m_uri);
+}
+
+http_listener::http_listener(http::uri address, http_listener_config config)
+    : m_uri(std::move(address)),
+      m_config(std::move(config)),
+      m_closed(true)
+{
+    m_pipeline = http::http_pipeline::create_pipeline(std::make_shared<_listener_stage>(this));
+    check_listener_uri(m_uri);
 }
 
 http_listener::~http_listener()
@@ -80,7 +97,7 @@ pplx::task<void> http_listener::open()
     if ( m_uri.is_empty() )
         throw std::invalid_argument("No URI defined for listener.");
     m_closed = false;
-    return http_server_api::register_listener(this);
+    return details::http_server_api::register_listener(this);
 }
 
 pplx::task<void> http_listener::close()
@@ -90,7 +107,7 @@ pplx::task<void> http_listener::close()
     if (m_closed) return pplx::task_from_result();
 
     m_closed = true;
-    return http_server_api::unregister_listener(this);
+    return details::http_server_api::unregister_listener(this);
 }
 
 pplx::task<http_response> http_listener::handle_request(http_request msg)

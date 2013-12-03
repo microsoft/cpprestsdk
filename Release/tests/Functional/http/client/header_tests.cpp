@@ -24,6 +24,7 @@
 ****/
 
 #include "stdafx.h"
+#include "cpprest/http_helpers.h"
 
 using namespace web::http;
 using namespace web::http::client;
@@ -100,6 +101,51 @@ TEST_FIXTURE(uri_address, field_name_casing)
     http_asserts::assert_response_equals(client.request(msg).get(), status_codes::OK);
 }
 
+
+TEST_FIXTURE(uri_address, field_name_duplicate)
+{
+    test_http_server::scoped_server scoped(m_uri);
+    http_client client(m_uri);
+    const method mtd = methods::GET;
+    const utility::string_t field_name1 = U("CUSTOMHEADER");
+    const utility::string_t value1 = U("value1");
+    const utility::string_t value2 = U("value2");
+
+    http_request msg(mtd);
+    msg.headers().add(field_name1, value1);
+    msg.headers().add(field_name1, value2);
+    scoped.server()->next_request().then([&](test_request *p_request)
+    {
+        http_asserts::assert_test_request_equals(p_request, mtd, U("/"));
+        std::map<utility::string_t, utility::string_t> expected_headers;
+        expected_headers[field_name1] = value1 + U(", ") + value2;
+        http_asserts::assert_test_request_contains_headers(p_request, expected_headers);
+        p_request->reply(200);
+    });
+    http_asserts::assert_response_equals(client.request(msg).get(), status_codes::OK);
+}
+
+TEST_FIXTURE(uri_address, field_name_no_multivalue_allowed)
+{
+    test_http_server::scoped_server scoped(m_uri);
+    http_client client(m_uri);
+    const method mtd = methods::GET;
+
+    http_request msg(mtd);
+
+    msg.headers().set_content_type(web::http::details::mime_types::text_plain);
+    msg.headers().set_content_type(web::http::details::mime_types::application_json);
+
+    scoped.server()->next_request().then([&](test_request *p_request)
+    {
+        http_asserts::assert_test_request_equals(p_request, mtd, U("/"));
+        std::map<utility::string_t, utility::string_t> expected_headers;
+        expected_headers[U("Content-Type")] = web::http::details::mime_types::application_json;
+        http_asserts::assert_test_request_contains_headers(p_request, expected_headers);
+        p_request->reply(200);
+    });
+    http_asserts::assert_response_equals(client.request(msg).get(), status_codes::OK);
+}
 TEST_FIXTURE(uri_address, copy_move)
 {
     // copy constructor
@@ -197,11 +243,11 @@ TEST_FIXTURE(uri_address, headers_add)
 
     // Add one that already exists
     h.add(U("key2"), U("str3"));
-    VERIFY_ARE_EQUAL(U("str3"), h[U("key2")]);
+    VERIFY_ARE_EQUAL(U("str2, str3"), h[U("key2")]);
 
     // Add with different case
     h.add(U("KEY2"), U("str4"));
-    VERIFY_ARE_EQUAL(U("str4"), h[U("keY2")]);
+    VERIFY_ARE_EQUAL(U("str2, str3, str4"), h[U("keY2")]);
 
     // Add with spaces in string
     h.add(U("key3"), U("value with spaces"));

@@ -53,7 +53,7 @@ namespace web { namespace http
                 : public Microsoft::WRL::RuntimeClass<Microsoft::WRL::RuntimeClassFlags<ClassicCom>, ISequentialStream>
             {
             public:
-                ISequentialStream_bridge(streams::streambuf<uint8_t> buf, request_context *request, size_t read_length = std::numeric_limits<size_t>::max())
+                ISequentialStream_bridge(streams::streambuf<uint8_t> buf, std::shared_ptr<request_context> request, size_t read_length = std::numeric_limits<size_t>::max())
                     : m_buffer(buf),
                     m_request(request),
                     m_read_length(read_length),
@@ -163,7 +163,7 @@ namespace web { namespace http
             private:
                 concurrency::streams::streambuf<uint8_t> m_buffer;
 
-                request_context *m_request;
+                std::shared_ptr<request_context> m_request;
 
                 // Total count of bytes read
                 size_t m_bytes_read;
@@ -183,9 +183,9 @@ namespace web { namespace http
             public:
 
                 // Factory function to create requests on the heap.
-                static request_context * create_request_context(std::shared_ptr<_http_client_communicator> client, http_request &request)
+                static std::shared_ptr<request_context> create_request_context(std::shared_ptr<_http_client_communicator> client, http_request &request)
                 {
-                    return new winrt_request_context(client, request);
+                    return std::make_shared<winrt_request_context>(client, request);
                 }
 
                 IXMLHTTPRequest2 *m_hRequest;
@@ -204,14 +204,12 @@ namespace web { namespace http
                         m_hRequest->Release();
                 }
 
-            private:
-
                 // Request contexts must be created through factory function.
+				// But constructor needs to be public for make_shared to access.
                 winrt_request_context(std::shared_ptr<_http_client_communicator> client, http_request &request) 
                     : request_context(client, request), m_hRequest(nullptr) 
                 {
                 }
-
             };
 
             // Implementation of IXMLHTTPRequest2Callback.
@@ -219,7 +217,7 @@ namespace web { namespace http
                 public RuntimeClass<RuntimeClassFlags<ClassicCom>, IXMLHTTPRequest2Callback, FtmBase>
             {
             public:
-                HttpRequestCallback(winrt_request_context *request)
+                HttpRequestCallback(std::shared_ptr<winrt_request_context> request)
                     : m_request(request)
                 {
                     AddRef();
@@ -242,24 +240,21 @@ namespace web { namespace http
 
                     utf16char *hdrStr = nullptr;
                     HRESULT hr = xmlReq->GetAllResponseHeaders(&hdrStr);
+					if(hr != S_OK)
+					{
+						return hr;
+					}
 
-                    if ( hr == S_OK )
-                    {
-                        auto progress = m_request->m_request._get_impl()->_progress_handler();
-                        if ( progress && m_request->m_uploaded == 0)
-                        {
-                            (*progress)(message_direction::upload, 0);
-                        }
+					auto progress = m_request->m_request._get_impl()->_progress_handler();
+					if ( progress && m_request->m_uploaded == 0)
+					{
+						(*progress)(message_direction::upload, 0);
+					}
 
-                        parse_headers_string(hdrStr, response.headers());
-                        m_request->complete_headers();
-                    }
-                    else
-                    {
-                        m_request->report_error(hr, L"Failure getting response headers");
-                    }
+					parse_headers_string(hdrStr, response.headers());
+					m_request->complete_headers();
 
-                    return hr;
+					return hr;
                 }
 
                 // Called when a portion of the entity body has been received.
@@ -320,7 +315,7 @@ namespace web { namespace http
                 }
 
             private:
-                winrt_request_context *m_request;
+                std::shared_ptr<winrt_request_context> m_request;
             };
 
             // WinRT client.
@@ -331,7 +326,7 @@ namespace web { namespace http
                     : _http_client_communicator(address, client_config) { }
 
             private:
-                static bool _check_streambuf(winrt_request_context * winhttp_context, concurrency::streams::streambuf<uint8_t> rdbuf, const utility::char_t* msg) 
+                static bool _check_streambuf(std::shared_ptr<winrt_request_context> winhttp_context, concurrency::streams::streambuf<uint8_t> rdbuf, const utility::char_t* msg) 
                 {
                     if ( !rdbuf.is_open() )
                     {
@@ -339,7 +334,7 @@ namespace web { namespace http
                         if ( eptr )
                             winhttp_context->report_exception(eptr);
                         else
-                            winhttp_context->report_error(msg);
+                            winhttp_context->report_exception(http_exception(msg));
                     }
                     return rdbuf.is_open();
                 }
@@ -353,21 +348,21 @@ namespace web { namespace http
                 }
 
                 // Start sending request.
-                void send_request(_In_ request_context *request)
+                void send_request(_In_ std::shared_ptr<request_context> request)
                 {
                     http_request &msg = request->m_request;
-                    winrt_request_context * winrt_context = static_cast<winrt_request_context *>(request);
+                    auto winrt_context = std::static_pointer_cast<winrt_request_context>(request);
 
                     if (!validate_method(msg.method()))
                     {
-                        request->report_error(L"The method string is invalid.");
+                        request->report_exception(http_exception(L"The method string is invalid."));
                         return;
                     }
 
                     if ( msg.method() == http::methods::TRCE )
                     {
                         // Not supported by WinInet. Generate a more specific exception than what WinInet does.
-                        request->report_error(L"TRACE is not supported");
+                        request->report_exception(http_exception(L"TRACE is not supported"));
                         return;
                     }
 
@@ -410,7 +405,7 @@ namespace web { namespace http
                     auto proxy = config.proxy();
                     if(!proxy.is_default())
                     {
-                        request->report_error(L"Only a default proxy server is supported");
+                        request->report_exception(http_exception(L"Only a default proxy server is supported"));
                         xhr->Release();
                         return;
                     }
@@ -485,7 +480,7 @@ namespace web { namespace http
                     if (content_length == std::numeric_limits<size_t>::max())
                     {
                         // IXHR2 does not allow transfer encoding chunked. So the user is expected to set the content length
-                        request->report_error(L"Content length is not specified in the http headers");
+                        request->report_exception(http_exception(L"Content length is not specified in the http headers"));
                         xhr->Release();
                         return;
                     }
@@ -573,7 +568,7 @@ namespace web { namespace http
 
             virtual pplx::task<http_response> propagate(http_request request)
             {
-                details::request_context * context = details::winrt_request_context::create_request_context(m_http_client_impl, request);
+                auto context = details::winrt_request_context::create_request_context(m_http_client_impl, request);
 
                 // Use a task to externally signal the final result and completion of the task.
                 auto result_task = pplx::create_task(context->m_request_completion);

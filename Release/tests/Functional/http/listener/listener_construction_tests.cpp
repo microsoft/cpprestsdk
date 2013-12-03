@@ -361,6 +361,65 @@ TEST_FIXTURE(uri_address, create_listener_get_put_post_delete)
     listener.close().wait();
 }
 
+TEST_FIXTURE(uri_address, get_listener_config)
+{
+    // Verify default configuration.
+    {
+        http_listener listener(m_uri);
+        VERIFY_ARE_EQUAL(utility::seconds(120), listener.configuration().timeout());
+        listener.open().wait();
+        listener.close().wait();
+    }
+
+    // Verify specified config values.
+    {
+        http_listener_config config;
+        utility::seconds t(1);
+        config.set_timeout(t);
+        http_listener listener(m_uri, config);
+        listener.open().wait();
+        listener.close().wait();
+        VERIFY_ARE_EQUAL(t, listener.configuration().timeout());
+    }
+}
+
+TEST_FIXTURE(uri_address, listener_config_creation)
+{
+    // copy constructor
+    {
+        http_listener_config config;
+        config.set_timeout(utility::seconds(2));
+        http_listener_config copy(config);
+        VERIFY_ARE_EQUAL(utility::seconds(2), copy.timeout());
+    }
+
+    // move constructor
+    {
+        http_listener_config config;
+        config.set_timeout(utility::seconds(2));
+        http_listener_config ctorMove(std::move(config));
+        VERIFY_ARE_EQUAL(utility::seconds(2), ctorMove.timeout());
+    }
+
+    // assignment
+    {
+        http_listener_config config;
+        config.set_timeout(utility::seconds(2));
+        http_listener_config assign;
+        assign = config;
+        VERIFY_ARE_EQUAL(utility::seconds(2), assign.timeout());
+    }
+
+    // move assignment
+    {
+        http_listener_config config;
+        config.set_timeout(utility::seconds(2));
+        http_listener_config assignMove;
+        assignMove = std::move(config);
+        VERIFY_ARE_EQUAL(utility::seconds(2), assignMove.timeout());
+    }
+}
+
 }
 
 }}}}

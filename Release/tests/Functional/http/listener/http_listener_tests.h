@@ -16,7 +16,6 @@
 #pragma once
 
 #include "cpprest/http_listener.h"
-#include "cpprest/log.h"
 
 namespace tests { namespace functional { namespace http { namespace listener {
 
@@ -25,7 +24,6 @@ class uri_address
 public:
     uri_address() : m_uri(U("http://localhost:34567/"))
     {
-        utility::experimental::logging::log::get_default()->set_synchronous(true);
         if (!s_dummy_listener)
             s_dummy_listener = std::make_shared<web::http::experimental::listener::http_listener>(U("http://localhost:30000/"));
     }

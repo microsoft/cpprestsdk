@@ -107,7 +107,7 @@ namespace web { namespace http { namespace client { namespace details
                         utility::string_t value = header_line.substr(colonIndex + 1, header_line.length() - colonIndex - 1);
                         http::details::trim_whitespace(key);
                         http::details::trim_whitespace(value);
-                        headers[key] = value;
+                        headers.add(key, value);
                     }
                     line = wcstok_s(nullptr, CRLF, &context);
                 }
@@ -145,19 +145,7 @@ namespace web { namespace http { namespace client { namespace details
                     m_response._get_impl()->_complete(body_size);
 
                     finish();
-
-                    delete this;
                 }
-
-#ifdef _MS_WINDOWS
-                // Helper function to report an error, set task completion event, and close the request handle.
-
-                void report_error(const utility::string_t & errorMessage)
-                {
-                    report_exception(http_exception(errorMessage));
-                }
-
-#endif
 
                 void report_error(unsigned long error_code, const utility::string_t & errorMessage)
                 {
@@ -193,8 +181,6 @@ namespace web { namespace http { namespace client { namespace details
                     }
 
                     finish();
-
-                    delete this;
                 }
 
                 concurrency::streams::streambuf<uint8_t> _get_readbuffer()
@@ -257,7 +243,7 @@ namespace web { namespace http { namespace client { namespace details
                     responseImpl->_prepare_to_receive_data();
                 }
 
-                void finish();
+                virtual void finish();
             };
 
             //
@@ -272,7 +258,7 @@ namespace web { namespace http { namespace client { namespace details
                 virtual ~_http_client_communicator() {}
 
                 // Asychronously send a HTTP request and process the response.
-                void async_send_request(request_context *request)
+                void async_send_request(std::shared_ptr<request_context> request)
                 {
                     if(m_client_config.guarantee_order())
                     {
@@ -297,7 +283,7 @@ namespace web { namespace http { namespace client { namespace details
 
                     if( !m_requests_queue.empty())
                     {
-                        request_context *request = m_requests_queue.front();
+                        auto request = m_requests_queue.front();
                         m_requests_queue.pop();
 
                         // Schedule a task to start sending.
@@ -323,7 +309,7 @@ namespace web { namespace http { namespace client { namespace details
                 virtual unsigned long open() = 0;
 
                 // HTTP client implementations must implement send_request.
-                virtual void send_request(_In_ request_context *request) = 0;
+                virtual void send_request(_In_ std::shared_ptr<request_context> request) = 0;
 
                 // URI to connect to.
                 const http::uri m_uri;
@@ -337,10 +323,11 @@ namespace web { namespace http { namespace client { namespace details
                 pplx::extensibility::critical_section_t m_open_lock;
 
                 // Wraps opening the client around sending a request.
-                void open_and_send_request(request_context *request)
+                void open_and_send_request(std::shared_ptr<request_context> request)
                 {
                     // First see if client needs to be opened.
                     auto error = open_if_required();
+
                     if (error != S_OK)
                     {
                         // Failed to open
@@ -367,6 +354,7 @@ namespace web { namespace http { namespace client { namespace details
                         if ( !m_opened )
                         {
                             error = open();
+
                             if (error == S_OK)
                             {
                                 m_opened = true;
@@ -377,7 +365,7 @@ namespace web { namespace http { namespace client { namespace details
                     return error;
                 }
 
-                void push_request(_In_opt_ request_context *request)
+                void push_request(_In_opt_ std::shared_ptr<request_context> request)
                 {
                     if (request == nullptr) return;
 
@@ -398,7 +386,7 @@ namespace web { namespace http { namespace client { namespace details
                 }
 
                 // Queue used to guarantee ordering of requests, when appliable.
-                std::queue<request_context *> m_requests_queue;
+                std::queue<std::shared_ptr<request_context>> m_requests_queue;
                 int                           m_scheduled;
             };
 

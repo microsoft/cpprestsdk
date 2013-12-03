@@ -282,7 +282,7 @@ TEST_FIXTURE(uri_address, pipeline_stage_inspect_response)
 
     http_response response = client.request(methods::GET).get();
     VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
-    VERIFY_ARE_EQUAL(U("2"), response.headers()[U("My Header")]);
+    VERIFY_ARE_EQUAL(U("1, 2"), response.headers()[U("My Header")]);
 }
 
 } // SUITE(pipeline_stage_tests)

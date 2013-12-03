@@ -220,9 +220,10 @@ bool __cdecl _close_fsb_nolock(_In_ _file_info **info, _In_ Concurrency::streams
         _sync_fsb_winrt(fInfo, nullptr);
         fInfo->m_pendingWrites.then([=] (pplx::task<void> t) {
             try {
+                // The lock fInfo->m_lock must not be held at this point
                 delete fInfo;
                 t.wait();
-                callback->on_closed();	
+                callback->on_closed();
             } 
             catch (Platform::Exception^ exc) {
                 callback->on_error(std::make_exception_ptr(utility::details::create_system_error(exc->HResult)));
@@ -231,6 +232,7 @@ bool __cdecl _close_fsb_nolock(_In_ _file_info **info, _In_ Concurrency::streams
     }
     else
     {
+        // The lock fInfo->m_lock must not be held at this point
         delete fInfo;
         callback->on_closed();
     }
@@ -328,10 +330,13 @@ size_t _fill_buffer_fsb(_In_ _file_info_impl *fInfo, _In_ _filestream_callback *
 
         auto cb = create_callback(fInfo,
             [=] (size_t result) 
-            { 
-                pplx::extensibility::scoped_recursive_lock_t lck(fInfo->m_lock);
-                fInfo->m_buffill = result/char_size; 
+            {
+                {
+                    pplx::extensibility::scoped_recursive_lock_t lck(fInfo->m_lock);
+                    fInfo->m_buffill = result / char_size;
+                }
                 callback->on_completed(result); 
+
             });
 
         auto read =  _read_file_async(fInfo, cb, (uint8_t *)fInfo->m_buffer, fInfo->m_bufsize*char_size, fInfo->m_rdpos*char_size);
@@ -378,9 +383,11 @@ size_t _fill_buffer_fsb(_In_ _file_info_impl *fInfo, _In_ _filestream_callback *
 
         auto cb = create_callback(fInfo,
             [=] (size_t result) 
-            { 
-                pplx::extensibility::scoped_recursive_lock_t lck(fInfo->m_lock);
-                fInfo->m_buffill = result/char_size; 
+            {
+                {
+                    pplx::extensibility::scoped_recursive_lock_t lck(fInfo->m_lock);
+                    fInfo->m_buffill = result / char_size;
+                }
                 callback->on_completed(bufrem*char_size+result); 
             });
 
@@ -428,9 +435,11 @@ size_t _fill_buffer_fsb(_In_ _file_info_impl *fInfo, _In_ _filestream_callback *
 
         auto cb = create_callback(fInfo,
             [=] (size_t result) 
-            { 
-                pplx::extensibility::scoped_recursive_lock_t lck(fInfo->m_lock);
-                fInfo->m_buffill = result/char_size; 
+            {
+                {
+                    pplx::extensibility::scoped_recursive_lock_t lck(fInfo->m_lock);
+                    fInfo->m_buffill = result / char_size;
+                }
                 callback->on_completed(bufrem*char_size+result); 
             });
 

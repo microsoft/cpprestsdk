@@ -36,14 +36,15 @@ using namespace utility::conversions;
 using namespace http::details;
 using namespace http::experimental::listener;
 using namespace http::experimental::details;
-using namespace utility::experimental;
-using namespace logging;
-using namespace logging::log;
 
+#define CHUNK_SIZE 64 * 1024
 
-namespace web { namespace http
+namespace web 
+{ 
+namespace http
 {
-namespace experimental {
+namespace experimental 
+{
 namespace details
 {
 
@@ -193,7 +194,7 @@ void parse_http_headers(const HTTP_REQUEST_HEADERS &headers, http::http_headers 
         // header value can be empty
         if(headers.pUnknownHeaders[i].RawValueLength > 0)
         {
-            char_to_wstring(msgHeaders[unknown_header_name], headers.pUnknownHeaders[i].pRawValue);
+            msgHeaders.add(unknown_header_name, utility::conversions::to_utf16string(headers.pUnknownHeaders[i].pRawValue));
         }
         else
         {
@@ -204,19 +205,12 @@ void parse_http_headers(const HTTP_REQUEST_HEADERS &headers, http::http_headers 
     {
         if(headers.KnownHeaders[i].RawValueLength > 0)
         {
-            char_to_wstring(msgHeaders[HttpServerAPIKnownHeaders[i]], headers.KnownHeaders[i].pRawValue);
+            msgHeaders.add(HttpServerAPIKnownHeaders[i], utility::conversions::to_utf16string(headers.KnownHeaders[i].pRawValue));
         }
     }
 }
 
-//
-// Chunk size to use to read request body in.
-// 64KB seems a good number based on previous measurements.
-//
-#define CHUNK_SIZE ((size_t)64*1024)
-
 http_windows_server::http_windows_server()
-    : m_connectionCount(0)
 {
     HTTPAPI_VERSION httpApiVersion = HTTPAPI_VERSION_2;
     HttpInitialize(httpApiVersion, HTTP_INITIALIZE_SERVER, NULL);
@@ -227,35 +221,19 @@ http_windows_server::~http_windows_server()
     HttpTerminate(HTTP_INITIALIZE_SERVER, NULL);
 }
 
-void http_windows_server::connection_reference()
-{
-    _InterlockedIncrement(&m_connectionCount);
-}
-
-void http_windows_server::connection_release()
-{
-    auto count = _InterlockedDecrement(&m_connectionCount);
-    _ASSERTE(count >= 0);
-    if (count == 0)
-    {
-        m_connections_tce.set();
-    }
-}
-
 pplx::task<void> http_windows_server::register_listener(_In_ http_listener *pListener)
 {
     unsigned long errorCode;
 
-    // Add listener registration.
+    // Create a url group for this listener.
+    HTTP_URL_GROUP_ID urlGroupId;
+    errorCode = HttpCreateUrlGroup(m_serverSessionId, &urlGroupId, 0);
+    if(errorCode != NO_ERROR)
     {
-        pplx::extensibility::scoped_rw_lock_t lock(_M_listenersLock);
-        if(_M_registeredListeners.find(pListener) != _M_registeredListeners.end())
-        {
-            throw std::invalid_argument("Error: http_listener is already registered");
+        return pplx::task_from_exception<void>(http_exception(errorCode));
         }
-        _M_registeredListeners[pListener] = std::unique_ptr<pplx::extensibility::reader_writer_lock_t>(new pplx::extensibility::reader_writer_lock_t());
-    }
 
+    // Add listener's URI to the new group.
     http::uri u = pListener->uri();
     if (u.is_port_default())
     {
@@ -275,11 +253,12 @@ pplx::task<void> http_windows_server::register_listener(_In_ http_listener *pLis
         host_uri.append(U("/"));
     }
 
-    // inside here we check for and log a few specific error types that know about
+    // inside here we check for a few specific error types that know about
     // there may be more possibilities for windows to return a different error
-    errorCode = HttpAddUrlToUrlGroup(m_urlGroupId, host_uri.c_str(), (HTTP_URL_CONTEXT)pListener, 0);
+    errorCode = HttpAddUrlToUrlGroup(urlGroupId, host_uri.c_str(), (HTTP_URL_CONTEXT)pListener, 0);
     if(errorCode)
     {
+        HttpCloseUrlGroup(urlGroupId);
         utility::stringstream_t os;
 
         if(errorCode == ERROR_ALREADY_EXISTS || errorCode == ERROR_SHARING_VIOLATION)
@@ -299,45 +278,73 @@ pplx::task<void> http_windows_server::register_listener(_In_ http_listener *pLis
         }
     }
 
+    // Set timeouts.
+    HTTP_TIMEOUT_LIMIT_INFO timeouts;
+    const USHORT secs = static_cast<USHORT>(pListener->configuration().timeout().count());
+    timeouts.EntityBody = secs;
+    timeouts.DrainEntityBody = secs;
+    timeouts.RequestQueue = secs;
+    timeouts.IdleConnection = secs;
+    timeouts.HeaderWait = secs;
+    timeouts.Flags.Present = 1;
+    errorCode = HttpSetUrlGroupProperty(
+        urlGroupId, 
+        HttpServerTimeoutsProperty,
+        &timeouts,
+        sizeof(HTTP_TIMEOUT_LIMIT_INFO));
+    if(errorCode)
+    {
+        HttpCloseUrlGroup(urlGroupId);
+        return pplx::task_from_exception<void>(http_exception(errorCode));
+    }
+
+    // Add listener registration.
+    {
+        pplx::extensibility::scoped_rw_lock_t lock(_M_listenersLock);
+        if(_M_registeredListeners.find(pListener) != _M_registeredListeners.end())
+        {
+            HttpCloseUrlGroup(urlGroupId);
+            throw std::invalid_argument("Error: http_listener is already registered");
+        }
+        _M_registeredListeners[pListener] = std::unique_ptr<listener_registration>(new listener_registration(urlGroupId));
+    }
+
+    // Associate Url group with request queue.
+    HTTP_BINDING_INFO bindingInfo;
+    bindingInfo.RequestQueueHandle = m_hRequestQueue;
+    bindingInfo.Flags.Present = 1;
+    errorCode = HttpSetUrlGroupProperty(
+        urlGroupId,
+        HttpServerBindingProperty,
+        &bindingInfo,
+        sizeof(HTTP_BINDING_INFO));
+    if(errorCode)
+    {
+        HttpCloseUrlGroup(urlGroupId);
+        return pplx::task_from_exception<void>(http_exception(errorCode));
+    }
+
     return pplx::task_from_result();
 }
 
 pplx::task<void> http_windows_server::unregister_listener(_In_ http_listener *pListener)
 {
-    http::uri listener_uri = pListener->uri();
-    if (listener_uri.is_port_default())
-    {
-        // Windows HTTP Server API has issues when the port isn't set to 80 here -- it expects a url prefix string
-        // which always includes the port number
-        // http://msdn.microsoft.com/en-us/library/windows/desktop/aa364698(v=vs.85).aspx
-        http::uri_builder builder(listener_uri);
-        builder.set_port(80);
-        listener_uri = builder.to_uri();
-    }
-
-    // Windows HTTP Server API will not accept a uri with an empty path, it must have a '/'.
-    // Windows HTTP Server API will only accept decoded uri strings.
-    utility::string_t host_uri = web::http::uri::decode(listener_uri.to_string());
-    if(host_uri.back() != U('/') && listener_uri.query().empty() && listener_uri.fragment().empty())
-    {
-        host_uri.append(U("/"));
-    }
-    const unsigned long error_code = HttpRemoveUrlFromUrlGroup(m_urlGroupId, host_uri.c_str(), 0);
-
     // First remove listener registration.
-    std::unique_ptr<pplx::extensibility::reader_writer_lock_t> pListenerLock;
+    std::unique_ptr<listener_registration> registration;
     {
         pplx::extensibility::scoped_rw_lock_t lock(_M_listenersLock);
-        pListenerLock = std::move(_M_registeredListeners[pListener]);
+        registration = std::move(_M_registeredListeners[pListener]);
         _M_registeredListeners[pListener] = nullptr;
         _M_registeredListeners.erase(pListener);
     }
 
+    // Next close Url group, no need to remove individual Urls.
+    const unsigned long error_code = HttpCloseUrlGroup(registration->m_urlGroupId);
+
     // Then take the listener write lock to make sure there are no calls into the listener's
     // request handler.
-    if ( pListenerLock )
     {
-        pplx::extensibility::scoped_rw_lock_t lock(*pListenerLock);
+        pplx::extensibility::scoped_rw_lock_t lock(registration->m_requestHandlerLock);
     }
 
     if ( error_code != NO_ERROR )
@@ -350,25 +357,14 @@ pplx::task<void> http_windows_server::start()
 {
     // Initialize data.
     m_serverSessionId = 0; 
-    m_urlGroupId = 0;
     m_hRequestQueue = nullptr;
     m_threadpool_io = nullptr;
-    m_shuttingDown = 0;
-
-    // Take a connection reference such that its release in stop() would
-    // indicate if all connections has been released.
-    connection_reference();
+    m_numOutstandingRequests = 0;
+    m_zeroOutstandingRequests.set();
 
     // Open server session.
     HTTPAPI_VERSION httpApiVersion = HTTPAPI_VERSION_2;
     ULONG errorCode = HttpCreateServerSession(httpApiVersion, &m_serverSessionId, 0);
-    if(errorCode)
-    {
-        return pplx::task_from_exception<void>(http_exception(errorCode));
-    }
-
-    // Create Url group.
-    errorCode = HttpCreateUrlGroup(m_serverSessionId, &m_urlGroupId, 0);
     if(errorCode)
     {
         return pplx::task_from_exception<void>(http_exception(errorCode));
@@ -388,50 +384,27 @@ pplx::task<void> http_windows_server::start()
         return pplx::task_from_exception<void>(http_exception(errorCode));
     }
 
-    // Associate Url group with request queue.
-    HTTP_BINDING_INFO bindingInfo;
-    bindingInfo.RequestQueueHandle = m_hRequestQueue;
-    bindingInfo.Flags.Present = 1;
-    errorCode = HttpSetUrlGroupProperty(
-        m_urlGroupId,
-        HttpServerBindingProperty,
-        &bindingInfo,
-        sizeof(HTTP_BINDING_INFO));
-    if(errorCode)
-    {
-        return pplx::task_from_exception<void>(http_exception(errorCode));
-    }
-
+    // Start request receiving task.
     m_receivingTask = pplx::create_task([this]() { receive_requests(); });
+
     return pplx::task_from_result();
 }
 
 pplx::task<void> http_windows_server::stop()
 {
-    // Prevent new connections
-    if (_InterlockedExchange(&m_shuttingDown, 1) == 1)
-        return pplx::task_from_result();
-
-    // Close existing connections.
-    close_connections();
-
     // Shutdown request queue.
     if(m_hRequestQueue != nullptr)
     {
         HttpShutdownRequestQueue(m_hRequestQueue);
         m_receivingTask.wait();
-        HttpCloseRequestQueue(m_hRequestQueue);
 
-        // Now that the receiving task is shutdown, no new connections can be made.
-        // There shall be no outstanding conncections at this point
-        _ASSERTE(m_connections.size() == 0);
+        // Wait for all requests to be finished processing.
+        m_zeroOutstandingRequests.wait();
+
+        HttpCloseRequestQueue(m_hRequestQueue);
     }
 
     // Release resources.
-    if(m_urlGroupId != 0) 
-    {
-        HttpCloseUrlGroup(m_urlGroupId);
-    }
     if(m_serverSessionId != 0) 
     {
         HttpCloseServerSession(m_serverSessionId);
@@ -443,116 +416,6 @@ pplx::task<void> http_windows_server::stop()
     }
 
     return pplx::task_from_result();
-}
-
-void http_windows_server::close_connections()
-{
-    {
-        // Take the exclusive lock and remove all the connections
-        pplx::extensibility::scoped_rw_lock_t lock(m_connections_lock);
-
-        // Reset the TCE. The connections are actually closed asynchronously. When
-        // all the connections closed it will set the task_completion_event
-        m_connections_tce = pplx::task_completion_event<void>();
-
-        // Remove all the connections from the map
-        m_connections.clear();
-
-        // Drop the reference the server keeps (in the constructor).
-        // This reference ensures that the right TCE is in place before
-        // the reference goes down to 0.
-        connection_release();
-    }
-
-    // Wait on the TCE after the lock is released
-    {
-        pplx::create_task(m_connections_tce).wait();
-    }
-}
-
-void http_windows_server::connection_closed_completion::http_io_completion(DWORD error_code, DWORD)
-{
-    if ( error_code == NO_ERROR || (error_code == ERROR_OPERATION_ABORTED && m_p_server->m_shuttingDown) )
-    {
-        m_p_server->remove_connection(m_connection_id);
-    }
-    else
-    {
-        report_error(logging::LOG_ERROR, error_code, U("Error: listening for HTTP connection close"));
-    }
-}
-
-///<summary>
-/// Creates a new connection and add it to the map
-///</summary>
-std::shared_ptr<connection> http_windows_server::add_connection(HTTP_CONNECTION_ID connection_id)
-{
-    std::shared_ptr<connection> pConnection;
-
-    if (!m_shuttingDown)
-    {
-        // Insert new connection into the map before we register completion notification
-        pplx::extensibility::scoped_rw_lock_t lock(m_connections_lock);
-
-        // Make the check again holding the lock to resolve the race with server::stop.
-        // The stop() routine sets the flag and then acquires the lock
-        if (!m_shuttingDown)
-        {
-            pConnection = std::make_shared<connection>(this);
-            m_connections[connection_id] = pConnection;
-        }
-    }
-
-    if (pConnection)
-    {
-
-        // Register for completion notification when connection closes.
-        http_overlapped *p_overlapped = new http_overlapped(new http_windows_server::connection_closed_completion(this, connection_id));
-        StartThreadpoolIo(m_threadpool_io);
-        auto error_code = HttpWaitForDisconnect(m_hRequestQueue, connection_id, p_overlapped);
-        if(error_code != NO_ERROR && error_code != ERROR_IO_PENDING)
-        {
-            CancelThreadpoolIo(m_threadpool_io);
-            delete p_overlapped;
-            report_error(logging::LOG_ERROR, error_code, U("Error registering for HTTP server disconnect."));
-
-            // Failed to register for completion. Remove the connection
-            remove_connection(connection_id);
-            pConnection = nullptr;
-        }
-    }
-
-    return pConnection;
-}
-
-///<summary>
-/// Retrieves an existing connection if any from the map. 
-///</summary>
-std::shared_ptr<connection> http_windows_server::find_connection(HTTP_CONNECTION_ID connection_id)
-{
-    // Return an existing connection.
-
-    std::shared_ptr<connection> pConnection;
-
-    pplx::extensibility::scoped_read_lock_t lock(m_connections_lock);
-            
-    
-    auto iter = m_connections.find(connection_id);
-    if(iter != m_connections.end())
-    {
-        pConnection = iter->second;
-    }
-
-    return pConnection;
-}
-
-///<summary>
-/// Removes the connection from the map
-///</summary>
-void http_windows_server::remove_connection(HTTP_CONNECTION_ID connection_id)
-{
-    pplx::extensibility::scoped_rw_lock_t lock(m_connections_lock);
-    m_connections.erase(connection_id);
 }
 
 void http_windows_server::receive_requests()
@@ -572,33 +435,14 @@ void http_windows_server::receive_requests()
 
         if(error_code != NO_ERROR && error_code != ERROR_MORE_DATA)
         {
-            if(!m_shuttingDown)
-            {
-                report_error(logging::LOG_ERROR, error_code, U("Error receiving HTTP request."));
-            }
             break;
         }
 
-        // Handle existing connection.
-        auto pConnection = find_connection(p_request.ConnectionId);
-
-        if (!pConnection)
-        {
-            // Handle new connection
-            pConnection = add_connection(p_request.ConnectionId);
-        }
-
-        if (pConnection)
-        {
-            // Process the request
-            http::http_request msg = http::http_request::_create_request(std::unique_ptr<_http_server_context>(new windows_request_context(pConnection)));
-            pConnection->async_process_request(p_request.RequestId, msg, bytes_received);
-        }
-        else
-        {
-            // Failed to process the request. Cancel and continue
-            HttpCancelHttpRequest(m_hRequestQueue, p_request.RequestId, NULL);            
-        }
+        // Start processing the request
+        auto pContext = new windows_request_context();
+        auto pRequestContext = std::unique_ptr<_http_server_context>(pContext);
+        http::http_request msg = http::http_request::_create_request(std::move(pRequestContext));
+        pContext->async_process_request(p_request.RequestId, msg, bytes_received);
     }
 }
 
@@ -608,33 +452,41 @@ pplx::task<void> http_windows_server::respond(http::http_response response)
     return pplx::create_task(p_context->m_response_completed);
 }
 
-connection::connection(_In_ http_windows_server *p_server) 
-    : m_p_server(p_server)
+windows_request_context::windows_request_context() 
+    : m_sending_in_chunks(false),
+      m_transfer_encoding(false),
+      m_remaining_to_write(0)
 {
-    // Indicate that there is an open connection
-    m_p_server->connection_reference();
+    auto *pServer = static_cast<http_windows_server *>(http_server_api::server_api());
+    if(++pServer->m_numOutstandingRequests == 1)
+    {
+        pServer->m_zeroOutstandingRequests.reset();
+    }
 }
 
-connection::~connection()
+windows_request_context::~windows_request_context()
 {
-    // Indicates that the connection has been closed/deleted
-    m_p_server->connection_release();
+    auto *pServer = static_cast<http_windows_server *>(http_server_api::server_api());
+    if(--pServer->m_numOutstandingRequests == 0)
+    {
+        pServer->m_zeroOutstandingRequests.set();
+    }
 }
 
-void connection::async_process_request(HTTP_REQUEST_ID request_id, http_request msg, const unsigned long headers_size)
+void windows_request_context::async_process_request(HTTP_REQUEST_ID request_id, http_request msg, const unsigned long headers_size)
 {
-    windows_request_context * p_context = static_cast<windows_request_context *>(msg._get_server_context());
-    p_context->m_request_id = request_id;
+    auto *pServer = static_cast<http_windows_server *>(http_server_api::server_api());
+    m_request_id = request_id;
 
     // Asynchronously read in request headers.
     auto p_io_completion = new read_headers_io_completion(msg, headers_size);
     http_overlapped *p_overlapped = new http_overlapped(p_io_completion);
 
-    StartThreadpoolIo(m_p_server->m_threadpool_io);
+    StartThreadpoolIo(pServer->m_threadpool_io);
 
     const unsigned long error_code = HttpReceiveHttpRequest(
-            m_p_server->m_hRequestQueue,
-            p_context->m_request_id,
+            pServer->m_hRequestQueue,
+            m_request_id,
             0,
             p_io_completion->m_request,
             headers_size,
@@ -643,19 +495,16 @@ void connection::async_process_request(HTTP_REQUEST_ID request_id, http_request 
     
     if(error_code != NO_ERROR && error_code != ERROR_IO_PENDING)
     {
-        CancelThreadpoolIo(m_p_server->m_threadpool_io);
+        CancelThreadpoolIo(pServer->m_threadpool_io);
         delete p_overlapped;
-        report_error(logging::LOG_ERROR, error_code, U("Error receiving HTTP headers (HttpReceiveHttpRequest)"));
-
         msg.reply(status_codes::InternalError);
     }
 }
 
-void connection::read_headers_io_completion::http_io_completion(DWORD error_code, DWORD)
+void windows_request_context::read_headers_io_completion::http_io_completion(DWORD error_code, DWORD)
 {
     if(error_code != NO_ERROR)
     {
-        report_error(logging::LOG_ERROR, error_code, U("Error receiving HTTP headers (HttpReceiveHttpRequest)"));
         m_msg.reply(status_codes::InternalError);
     }
     else
@@ -671,18 +520,19 @@ void connection::read_headers_io_completion::http_io_completion(DWORD error_code
         m_msg.set_method(parse_request_method(m_request));
         parse_http_headers(m_request->Headers, m_msg.headers());
 
-        // Read in body from the network
+        // Start reading in body from the network.
         m_msg._get_impl()->_prepare_to_receive_data();
-
-        auto requestContext = static_cast<windows_request_context *>(m_msg._get_server_context());
-        requestContext->m_p_connection->read_request_body_chunk(m_request, m_msg);
+        auto pContext = static_cast<windows_request_context *>(m_msg._get_server_context());
+        pContext->read_request_body_chunk(m_request, m_msg);
+        
         // Dispatch request to the http_listener.
-        requestContext->m_p_connection->dispatch_request_to_listener(m_msg, (http_listener *)m_request->UrlContext);
+        pContext->dispatch_request_to_listener(m_msg, (http_listener *)m_request->UrlContext);
     }
 }
 
-void connection::read_request_body_chunk(_In_ HTTP_REQUEST *p_request, http_request &msg)
+void windows_request_context::read_request_body_chunk(_In_ HTTP_REQUEST *p_request, http_request &msg)
 {
+    auto *pServer = static_cast<http_windows_server *>(http_server_api::server_api());
     read_body_io_completion *p_read_body_io_completion = new read_body_io_completion(*p_request, msg);
     http_overlapped *p_overlapped = new http_overlapped(p_read_body_io_completion);
 
@@ -693,9 +543,9 @@ void connection::read_request_body_chunk(_In_ HTTP_REQUEST *p_request, http_requ
     // At that time we would need compensation code that would allocate a buffer from the heap instead.
     _ASSERTE(body != nullptr);
 
-    StartThreadpoolIo(m_p_server->m_threadpool_io);
+    StartThreadpoolIo(pServer->m_threadpool_io);
     const ULONG error_code = HttpReceiveRequestEntityBody(
-        m_p_server->m_hRequestQueue,
+        pServer->m_hRequestQueue,
         p_request->RequestId,
         HTTP_RECEIVE_REQUEST_ENTITY_BODY_FLAG_FILL_BUFFER,
         (PVOID)body,
@@ -706,42 +556,44 @@ void connection::read_request_body_chunk(_In_ HTTP_REQUEST *p_request, http_requ
     if(error_code != ERROR_IO_PENDING && error_code != NO_ERROR)
     {
         // There was no more data to read.
-        CancelThreadpoolIo(m_p_server->m_threadpool_io);
+        CancelThreadpoolIo(pServer->m_threadpool_io);
         delete p_overlapped;
 
+        request_body_buf.commit(0);
         if(error_code == ERROR_HANDLE_EOF)
         {
-            request_body_buf.commit(0);
             msg._get_impl()->_complete(request_body_buf.in_avail());
         } 
         else
         {
-            report_error(logging::LOG_ERROR, error_code, U("Error receiving HTTP request body (HttpReceiveRequestEntityBody)"));
-            msg.reply(status_codes::InternalError);
+            msg._get_impl()->_complete(0, std::make_exception_ptr(http_exception(error_code)));
         }
     }
 }
 
-void connection::read_body_io_completion::http_io_completion(DWORD error_code, DWORD bytes_read)
+void windows_request_context::read_body_io_completion::http_io_completion(DWORD error_code, DWORD bytes_read)
 {
-    if (error_code == NO_ERROR || error_code == ERROR_HANDLE_EOF)
-    {
-        auto request_body_buf = m_msg._get_impl()->outstream().streambuf();
-        request_body_buf.commit(bytes_read);
+    auto request_body_buf = m_msg._get_impl()->outstream().streambuf();
 
+    if (error_code == NO_ERROR)
+    {
+        request_body_buf.commit(bytes_read);
         auto requestContext = static_cast<windows_request_context *>(m_msg._get_server_context());
-        requestContext->m_p_connection->read_request_body_chunk(&m_request, m_msg);
+        requestContext->read_request_body_chunk(&m_request, m_msg);
+    }
+    else if(error_code == ERROR_HANDLE_EOF)
+    {
+        request_body_buf.commit(0);
+        m_msg._get_impl()->_complete(request_body_buf.in_avail());
     }
     else
     {
-        // Signal that this message should be dropped in the DispatchRequest and send a response
-        // to the client.
-        report_error(logging::LOG_ERROR, error_code, U("Error receiving HTTP request body (HttpReceiveRequestEntityBody)"));
-        m_msg.reply(status_codes::InternalError);
+        request_body_buf.commit(0);    
+        m_msg._get_impl()->_complete(0, std::make_exception_ptr(http_exception(error_code)));
     }
 }
 
-void connection::dispatch_request_to_listener(http_request &request, _In_ http_listener *pListener)
+void windows_request_context::dispatch_request_to_listener(http_request &request, _In_ http_listener *pListener)
 {
     request._set_listener_path(pListener->uri().path());
 
@@ -750,50 +602,46 @@ void connection::dispatch_request_to_listener(http_request &request, _In_ http_l
     response_task.then(
         [request](pplx::task<http::http_response> r_task) mutable
         {
-            http::http_response response;
+            http_response response;
             try
             {
                 response = r_task.get();
             }
-            catch(const std::exception &e)
-            {
-                utility::ostringstream_t str_stream;
-                str_stream << U("Error: a std::exception was encountered sending the HTTP response: ") << e.what();
-                logging::log::post(logging::LOG_ERROR, 0, str_stream.str(), request);
-                response = http::http_response(status_codes::InternalError);
-            }
             catch(...)
             {
-                logging::log::post(logging::LOG_FATAL, 0, U("Fatal Error: an unknown exception was encountered sending the HTTP response."), request);
                 response = http::http_response(status_codes::InternalError);
             }
-            // Workaround the Dev10 Bug on nested lambda
-            struct LambdaDoProcessResponse
+
+            request.content_ready().then([response](pplx::task<http_request> request) mutable
             {
-                http::http_response response;
-                LambdaDoProcessResponse (const http::http_response & response) : response(response) { }
-                void operator ()(pplx::task<http_request>) 
+                windows_request_context * p_context = static_cast<windows_request_context *>(response._get_server_context());
+
+                // Wait until the content download finished before replying.
+                // If an exception already occurred then no reason to try sending response just re-surface same exception.
+                try
                 {
-                    // Wait until the content download finished before replying.
-                    windows_request_context * p_context = static_cast<windows_request_context *>(response._get_server_context());
-                    p_context->m_p_connection->async_process_response(response);
+                    request.wait();
+                    p_context->async_process_response(response);
+                } catch(...)
+                {
+                    p_context->cancel_request(response, std::current_exception());
                 }
-            };
-            request.content_ready().then(LambdaDoProcessResponse(response));
+            });
         });
 
     // Look up the lock for the http_listener.
+    auto *pServer = static_cast<http_windows_server *>(http_server_api::server_api());
     pplx::extensibility::reader_writer_lock_t *pListenerLock;
     {
-        pplx::extensibility::scoped_read_lock_t lock(m_p_server->_M_listenersLock);
+        pplx::extensibility::scoped_read_lock_t lock(pServer->_M_listenersLock);
 
         // It is possible the listener could have unregistered.
-        if(m_p_server->_M_registeredListeners.find(pListener) == m_p_server->_M_registeredListeners.end())
+        if(pServer->_M_registeredListeners.find(pListener) == pServer->_M_registeredListeners.end())
         {
             request.reply(status_codes::NotFound);
             return;
         }
-        pListenerLock = m_p_server->_M_registeredListeners[pListener].get();
+        pListenerLock = &pServer->_M_registeredListeners[pListener]->m_requestHandlerLock;
 
         // We need to acquire the listener's lock before releasing the registered listeners lock.
         // But we don't need to hold the registered listeners lock when calling into the user's code.
@@ -818,26 +666,18 @@ void connection::dispatch_request_to_listener(http_request &request, _In_ http_l
 
         pListenerLock->unlock();
     } 
-    catch(const std::exception &e)
-    {
-        utility::ostringstream_t str_stream;
-        str_stream << U("Error: a std::exception was thrown out of http_listener handle: ") << e.what();
-        logging::log::post(logging::LOG_ERROR, 0, str_stream.str(), request);
-        pListenerLock->unlock();
-
-        request._reply_if_not_already(status_codes::InternalError);
-    }
     catch(...)
     {
-        logging::log::post(logging::LOG_ERROR, 0, U("Fatal Error: an unknown exception was thrown out of http_listener handler."), request);
         pListenerLock->unlock();
 
         request._reply_if_not_already(status_codes::InternalError);
     }
 }
 
-void connection::async_process_response(http_response &response)
+void windows_request_context::async_process_response(http_response &response)
 {
+    auto *pServer = static_cast<http_windows_server *>(http_server_api::server_api());
+
     HTTP_RESPONSE win_api_response;
     ZeroMemory(&win_api_response, sizeof(win_api_response));
     win_api_response.StatusCode = response.status_code();
@@ -866,21 +706,18 @@ void connection::async_process_response(http_response &response)
     }
 
     // Setup any data.
-    windows_request_context * p_context = static_cast<windows_request_context *>(response._get_server_context());
     http_overlapped *p_overlapped = new http_overlapped(p_send_response_overlapped);
 
-    p_context->m_remaining_to_write = content_length;
+    m_remaining_to_write = content_length;
 
     // Figure out how to send the entity body of the message.
-
     if (content_length == 0)
     {
         // There's no data. This is easy!
-
-        StartThreadpoolIo(m_p_server->m_threadpool_io);
+        StartThreadpoolIo(pServer->m_threadpool_io);
         const unsigned long error_code = HttpSendHttpResponse(
-            m_p_server->m_hRequestQueue,
-            p_context->m_request_id,
+            pServer->m_hRequestQueue,
+            m_request_id,
             NULL,
             &win_api_response,
             NULL,
@@ -892,10 +729,9 @@ void connection::async_process_response(http_response &response)
 
         if(error_code != NO_ERROR && error_code != ERROR_IO_PENDING)
         {
-            CancelThreadpoolIo(m_p_server->m_threadpool_io);
+            CancelThreadpoolIo(pServer->m_threadpool_io);
             delete p_overlapped;
-            report_error(logging::LOG_ERROR, error_code, U("Error sending http response (HttpSendHttpResponse)"));
-            p_context->m_response_completed.set_exception(http_exception(error_code));
+            cancel_request(response, std::make_exception_ptr(http_exception(error_code)));
         }
 
         return;
@@ -903,13 +739,13 @@ void connection::async_process_response(http_response &response)
 
     // OK, so we need to chunk it up.
     _ASSERTE(content_length > 0);
-    p_context->m_sending_in_chunks = (content_length != std::numeric_limits<size_t>::max());
-    p_context->m_transfer_encoding = (content_length == std::numeric_limits<size_t>::max());
+    m_sending_in_chunks = (content_length != std::numeric_limits<size_t>::max());
+    m_transfer_encoding = (content_length == std::numeric_limits<size_t>::max());
 
-    StartThreadpoolIo(m_p_server->m_threadpool_io);
+    StartThreadpoolIo(pServer->m_threadpool_io);
     const unsigned long error_code = HttpSendHttpResponse(
-        m_p_server->m_hRequestQueue,
-        p_context->m_request_id,
+        pServer->m_hRequestQueue,
+        m_request_id,
         HTTP_SEND_RESPONSE_FLAG_MORE_DATA,
         &win_api_response,
         NULL,
@@ -921,42 +757,39 @@ void connection::async_process_response(http_response &response)
 
     if(error_code != NO_ERROR && error_code != ERROR_IO_PENDING)
     {
-        CancelThreadpoolIo(m_p_server->m_threadpool_io);
+        CancelThreadpoolIo(pServer->m_threadpool_io);
         delete p_overlapped;
-        report_error(logging::LOG_ERROR, error_code, U("Error sending http response (HttpSendHttpResponse)"));
-        p_context->m_response_completed.set_exception(http_exception(error_code));
+        cancel_request(response, std::make_exception_ptr(http_exception(error_code)));
     }
 }
 
-void connection::send_response_io_completion::http_io_completion(DWORD error_code, DWORD)
+void windows_request_context::send_response_io_completion::http_io_completion(DWORD error_code, DWORD)
 {
     windows_request_context * p_context = static_cast<windows_request_context *>(m_response._get_server_context());
 
     if(error_code != NO_ERROR)
     {
-        report_error(logging::LOG_ERROR, error_code, U("Error sending http response (HttpSendHttpResponse)"));
-        p_context->m_response_completed.set_exception(http_exception(error_code));
+        p_context->cancel_request(m_response, std::make_exception_ptr(http_exception(error_code)));
         return;
     }
 
     p_context->transmit_body(m_response);
 }
 
-void send_response_body_io_completion::http_io_completion(DWORD error_code, DWORD)
+void windows_request_context::send_response_body_io_completion::http_io_completion(DWORD error_code, DWORD)
 {
     windows_request_context * p_context = static_cast<windows_request_context *>(m_response._get_server_context());
 
     if(error_code != NO_ERROR)
     {
-        report_error(logging::LOG_ERROR, error_code, U("Error sending http response (HttpSendResponseEntityBody)"));
-        p_context->m_response_completed.set_exception(http_exception(error_code));
+        p_context->cancel_request(m_response, std::make_exception_ptr(http_exception(error_code)));
         return;
     }
 
     p_context->transmit_body(m_response);
 }
 
-void cancel_request_io_completion::http_io_completion(DWORD, DWORD)
+void windows_request_context::cancel_request_io_completion::http_io_completion(DWORD, DWORD)
 {
     // Already in an error path so ignore any other error code, we don't want
     // to mask the original underlying error.
@@ -1051,10 +884,11 @@ void windows_request_context::send_entity_body(http::http_response response, _In
     const bool this_is_the_last_chunk = !m_transfer_encoding && !m_sending_in_chunks;
 
     // Send response.
+    auto *pServer = static_cast<http_windows_server *>(http_server_api::server_api());
     http_overlapped *p_overlapped = new http_overlapped(new send_response_body_io_completion(response));
-    StartThreadpoolIo(m_p_connection->m_p_server->m_threadpool_io);
+    StartThreadpoolIo(pServer->m_threadpool_io);
     auto error_code = HttpSendResponseEntityBody(
-        m_p_connection->m_p_server->m_hRequestQueue,
+        pServer->m_hRequestQueue,
         m_request_id,
         this_is_the_last_chunk ? NULL : HTTP_SEND_RESPONSE_FLAG_MORE_DATA,
         1,
@@ -1067,28 +901,28 @@ void windows_request_context::send_entity_body(http::http_response response, _In
 
     if(error_code != NO_ERROR && error_code != ERROR_IO_PENDING)
     {
-        CancelThreadpoolIo(m_p_connection->m_p_server->m_threadpool_io);
+        CancelThreadpoolIo(pServer->m_threadpool_io);
         delete p_overlapped;
-        report_error(logging::LOG_ERROR, error_code, U("Error sending http response (HttpSendResponseEntityBody)"));
-        m_response_completed.set_exception(http_exception(error_code));
+        cancel_request(response, std::make_exception_ptr(http_exception(error_code)));
     }
 }
 
 void windows_request_context::cancel_request(http_response response, std::exception_ptr except_ptr)
 {
+    auto *pServer = static_cast<http_windows_server *>(http_server_api::server_api());
     http_overlapped *p_overlapped = new http_overlapped(new cancel_request_io_completion(response, except_ptr));
-    StartThreadpoolIo(m_p_connection->m_p_server->m_threadpool_io);
+    StartThreadpoolIo(pServer->m_threadpool_io);
 
     auto error_code = HttpCancelHttpRequest(
-        m_p_connection->m_p_server->m_hRequestQueue,
+        pServer->m_hRequestQueue,
         m_request_id, 
         p_overlapped);
     
     if(error_code != NO_ERROR && error_code != ERROR_IO_PENDING)
     {
-        CancelThreadpoolIo(m_p_connection->m_p_server->m_threadpool_io);
+        CancelThreadpoolIo(pServer->m_threadpool_io);
         delete p_overlapped;
-        // An error already occurred so don't report here, because it will just hide the initial error.
+        m_response_completed.set_exception(except_ptr);
     }
 }
 

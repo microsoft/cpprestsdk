@@ -52,16 +52,20 @@ TEST(string_t)
 
 TEST(numbers)
 {
+    VERIFY_THROWS(json::value::parse(U("-")), json::json_exception);
     VERIFY_THROWS(json::value::parse(U("-.")), json::json_exception);
+    VERIFY_THROWS(json::value::parse(U("-e1")), json::json_exception);
     VERIFY_THROWS(json::value::parse(U("-1e")), json::json_exception);
     VERIFY_THROWS(json::value::parse(U("+1.1")), json::json_exception);
     VERIFY_THROWS(json::value::parse(U("1.1 E")), json::json_exception);
     VERIFY_THROWS(json::value::parse(U("1.1E-")), json::json_exception);
     VERIFY_THROWS(json::value::parse(U("1.1E.1")), json::json_exception);
     VERIFY_THROWS(json::value::parse(U("1.1E1.1")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U("00001.1")), json::json_exception);
+    VERIFY_THROWS(json::value::parse(U("001.1")), json::json_exception);
     VERIFY_THROWS(json::value::parse(U("-.100")), json::json_exception);
     VERIFY_THROWS(json::value::parse(U("-.001")), json::json_exception);
+    VERIFY_THROWS(json::value::parse(U(".1")), json::json_exception);
+    VERIFY_THROWS(json::value::parse(U("0.1.1")), json::json_exception);
 }
 
 // TFS 535589
@@ -109,6 +113,13 @@ TEST(literals_not_lower_case)
     VERIFY_THROWS(json::value::parse(U("NULL")), json::json_exception);
     VERIFY_THROWS(json::value::parse(U("FAlse")), json::json_exception);
     VERIFY_THROWS(json::value::parse(U("TRue")), json::json_exception);
+}
+
+TEST(incomplete_literals)
+{
+    VERIFY_THROWS(json::value::parse(U("nul")), json::json_exception);
+    VERIFY_THROWS(json::value::parse(U("fal")), json::json_exception);
+    VERIFY_THROWS(json::value::parse(U("tru")), json::json_exception);
 }
 
 // TFS#501321

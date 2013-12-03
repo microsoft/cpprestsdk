@@ -142,8 +142,9 @@ TEST_FIXTURE(uri_address, proxy_auth_noseek,
              "Ignore:Linux", "627612",
              "Ignore:Apple", "646268")
 {
-    test_http_server::scoped_server scoped(m_uri);
-    http_client client(m_uri); // In this test, the request cannot be resent, so the username and password are not required
+    web::http::uri uri(U("http://localhost:34567/"));
+    test_http_server::scoped_server scoped(uri);
+    http_client client(uri); // In this test, the request cannot be resent, so the username and password are not required
     const method mtd = methods::POST;
 
     auto buf = streams::producer_consumer_buffer<unsigned char>();
@@ -239,17 +240,19 @@ TEST_FIXTURE(uri_address, empty_username_password)
     VERIFY_ARE_EQUAL(str_body[0], 'a');
     VERIFY_ARE_EQUAL(h1, U("data1"));
 }
+#endif
 
 // Fails on WinRT due to TFS 648278
 // Accessing a server that supports auth, but returns 401, even after the user has provided valid creds
 // We're making sure the error is reported properly, and the response data from the second response is received
 TEST_FIXTURE(uri_address, error_after_valid_credentials, "Ignore:Linux", "646268", "Ignore:Apple", "646268")
 {
-    test_http_server::scoped_server scoped(m_uri);
+    web::http::uri uri(U("http://localhost:34569/"));
+    test_http_server::scoped_server scoped(uri);
     http_client_config client_config;
     credentials cred(U("some_user"), U("some_password"));
     client_config.set_credentials(cred);
-    http_client client(m_uri, client_config);
+    http_client client(uri, client_config);
 
     auto replyFunc = [&](test_request *p_request)
         {
@@ -273,7 +276,15 @@ TEST_FIXTURE(uri_address, error_after_valid_credentials, "Ignore:Linux", "646268
     {
         // Client resent the request
         scoped.server()->next_request().then(replyFunc);
-    });
+    })
+#ifdef __cplusplus_winrt
+        .then([&scoped, &replyFunc]()
+    {
+        // in winrt, client resent the request again
+        scoped.server()->next_request().then(replyFunc);
+    })
+#endif
+    ;
 
     http_response response = client.request(methods::GET).get();
     auto str_body = response.extract_vector().get();
@@ -285,7 +296,6 @@ TEST_FIXTURE(uri_address, error_after_valid_credentials, "Ignore:Linux", "646268
     VERIFY_ARE_EQUAL(h1, U("data2"));
 }
 
-#endif
 
 // These tests are disabled since they require a server with authentication running.
 // The server portion to use is the C# AuthenticationListener.

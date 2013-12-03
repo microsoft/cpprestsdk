@@ -101,6 +101,10 @@ TEST_FIXTURE(uri_address, extract_string)
     rsp = send_request_response(scoped.server(), &client, U("text/plain; charset  =  UTF-8"), data);
     VERIFY_ARE_EQUAL(to_string_t(data), rsp.extract_string().get());
 
+    // "utf-8" - quoted charset
+    rsp = send_request_response(scoped.server(), &client, U("text/plain;charset=\"utf-8\""), data);
+    VERIFY_ARE_EQUAL(to_string_t(data), rsp.extract_string().get());
+
 #ifdef _MS_WINDOWS
     // utf-16le
     utf16string wdata(utf8_to_utf16("YES NOW, HERHEHE****"));

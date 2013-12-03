@@ -130,6 +130,11 @@ namespace details
         }
         charset = possible_charset.substr(equals_index + 1);
         trim_whitespace(charset);
+        if (charset.front() == _XPLATSTR('"') && charset.back() == _XPLATSTR('"')) 
+        {
+            charset = charset.substr(1, charset.size() - 2);
+            trim_whitespace(charset);
+        }
     }
 
     utility::string_t get_default_charset(const utility::string_t &content_type)

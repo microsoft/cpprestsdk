@@ -39,30 +39,40 @@ TEST(to_string)
     // null
     json::value n;
     VERIFY_ARE_EQUAL(U("null"), n.to_string());
-    VERIFY_ARE_EQUAL(U("null"), n.to_string());
     n.serialize(stream);
     VERIFY_ARE_EQUAL(U("null"), stream.str());
 
-    // bool
+    // bool - true
     stream.str(U(""));
     json::value b(true);
-    VERIFY_ARE_EQUAL(U("true"), b.to_string());
     VERIFY_ARE_EQUAL(U("true"), b.to_string());
     b.serialize(stream);
     VERIFY_ARE_EQUAL(U("true"), stream.str());
 
-    // number
+	// bool - false
+	stream.str(U(""));
+    json::value b2(false);
+    VERIFY_ARE_EQUAL(U("false"), b2.to_string());
+    b2.serialize(stream);
+    VERIFY_ARE_EQUAL(U("false"), stream.str());
+
+    // number - int
     stream.str(U(""));
     json::value num(44);
-    VERIFY_ARE_EQUAL(U("44"), num.to_string());
     VERIFY_ARE_EQUAL(U("44"), num.to_string());
     num.serialize(stream);
     VERIFY_ARE_EQUAL(U("44"), stream.str());
 
+    // number - double
+    stream.str(U(""));
+    json::value dNum(11.5);
+    VERIFY_ARE_EQUAL(U("11.5"), dNum.to_string());
+    dNum.serialize(stream);
+    VERIFY_ARE_EQUAL(U("11.5"), stream.str());
+
     // string
     stream.str(U(""));
     json::value string = json::value::string(U("hehehe"));
-    VERIFY_ARE_EQUAL(U("\"hehehe\""), string.to_string());
     VERIFY_ARE_EQUAL(U("\"hehehe\""), string.to_string());
     string.serialize(stream);
     VERIFY_ARE_EQUAL(U("\"hehehe\""), stream.str());
@@ -97,21 +107,34 @@ TEST(to_string)
     VERIFY_ARE_EQUAL(U("[\"Here\",true]"), stream.str());
 }
 
+void verify_escaped_chars(const utility::string_t& str1, const utility::string_t& str2)
+{
+    json::value j1 = json::value::string(str1);
+    VERIFY_ARE_EQUAL(str2, j1.to_string());
+}
+
 TEST(to_string_escaped_chars)
 {
-    json::value s1 = json::value::string(U(" \" "));
-    json::value s2 = json::value::string(U(" \b "));
-    json::value s3 = json::value::string(U(" \f "));
-    json::value s4 = json::value::string(U(" \n "));
-    json::value s5 = json::value::string(U(" \r "));
-    json::value s6 = json::value::string(U(" \t "));
+    verify_escaped_chars(U(" \" "), U("\" \\\" \""));
+    verify_escaped_chars(U(" \b "), U("\" \\b \""));
+    verify_escaped_chars(U(" \f "), U("\" \\f \""));
+    verify_escaped_chars(U(" \n "), U("\" \\n \""));
+    verify_escaped_chars(U(" \r "), U("\" \\r \""));
+    verify_escaped_chars(U(" \t "), U("\" \\t \""));
 
-    VERIFY_ARE_EQUAL(U("\" \\\" \""), s1.to_string());
-    VERIFY_ARE_EQUAL(U("\" \\b \""), s2.to_string());
-    VERIFY_ARE_EQUAL(U("\" \\f \""), s3.to_string());
-    VERIFY_ARE_EQUAL(U("\" \\n \""), s4.to_string());
-    VERIFY_ARE_EQUAL(U("\" \\r \""), s5.to_string());
-    VERIFY_ARE_EQUAL(U("\" \\t \""), s6.to_string());
+	json::value obj = json::value::object();
+	obj[U(" \t ")] = json::value::string(U(" \b "));
+
+	json::value arr = json::value::array();
+	arr[0] = json::value::string(U(" \f "));
+
+	VERIFY_ARE_EQUAL(U("{\" \\t \":\" \\b \"}"), obj.to_string());
+	VERIFY_ARE_EQUAL(U("[\" \\f \"]"), arr.to_string());
+
+    utility::string_t str(U("{\"hello\":\" \\\"here's looking at you kid\\\" \\r \"}"));
+    json::value obj2 = json::value::parse(str);
+
+    VERIFY_ARE_EQUAL(str, obj2.to_string());
 }
 
 TEST(as_string)
@@ -271,6 +294,49 @@ TEST(negative_as_tests)
     json::value i(11);
     VERIFY_THROWS(i.as_bool(), json::json_exception);
     VERIFY_THROWS(i.as_string(), json::json_exception);
+}
+
+TEST(int_double_limits)
+{
+    utility::stringstream_t stream(utility::stringstream_t::in | utility::stringstream_t::out);
+    utility::stringstream_t oracleStream(utility::stringstream_t::in | utility::stringstream_t::out);
+
+    // int max
+    oracleStream.precision(std::numeric_limits<int>::digits10 + 2);
+    oracleStream << std::numeric_limits<int>::max();
+    json::value iMax(std::numeric_limits<int>::max());
+    VERIFY_ARE_EQUAL(oracleStream.str(), iMax.to_string());
+    iMax.serialize(stream);
+    VERIFY_ARE_EQUAL(oracleStream.str(), stream.str());
+
+    // int min
+    stream.str(U(""));
+    oracleStream.str(U(""));
+    oracleStream.clear();
+    oracleStream << std::numeric_limits<int>::min();
+    json::value iMin(std::numeric_limits<int>::min());
+    VERIFY_ARE_EQUAL(oracleStream.str(), iMin.to_string());
+    iMin.serialize(stream);
+    VERIFY_ARE_EQUAL(oracleStream.str(), stream.str());
+
+    // double max
+    stream.str(U(""));
+    oracleStream.str(U(""));
+    oracleStream.precision(std::numeric_limits<double>::digits10);
+    oracleStream << std::numeric_limits<double>::max();
+    json::value dMax(std::numeric_limits<double>::max());
+    VERIFY_ARE_EQUAL(oracleStream.str(), dMax.to_string());
+    dMax.serialize(stream);
+    VERIFY_ARE_EQUAL(oracleStream.str(), stream.str());
+
+    // double min
+    stream.str(U(""));
+    oracleStream.str(U(""));
+    oracleStream << std::numeric_limits<double>::min();
+    json::value dMin(std::numeric_limits<double>::min());
+    VERIFY_ARE_EQUAL(oracleStream.str(), dMin.to_string());
+    dMin.serialize(stream);
+    VERIFY_ARE_EQUAL(oracleStream.str(), stream.str());
 }
 
 } // SUITE(to_as_and_operators_tests)

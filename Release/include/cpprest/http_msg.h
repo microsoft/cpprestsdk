@@ -310,34 +310,22 @@ public:
     }
 
     /// <summary>
-            /// Adds a header field using the '&lt;&lt;' operator.
+    /// Adds a header field using the '&lt;&lt;' operator.
     /// </summary>
     /// <param name="name">The name of the header field.</param>
     /// <param name="value">The value of the header field.</param>
+    /// <remark>If the header field exists, the value will be combined as comma separated string.</remark>
     template<typename _t1>
     void add(const key_type& name, const _t1& value)
     {
-        m_headers[name] = utility::conversions::print_string(value);
-    }
-
-    /// <summary>
-    /// Adds a header field.
-    /// </summary>
-    /// <param name="name">The name of the header field.</param>
-    /// <param name="value">The value of the header field.</param>
-    void add(const key_type& name, utility::string_t value)
-    {
-        m_headers[name] = std::move(value);
-    }
-
-    /// <summary>
-    /// Adds a header field.
-    /// </summary>
-    /// <param name="name">The name of the header field.</param>
-    /// <param name="value">The value of the header field.</param>
-    void add(const key_type& name, const utility::char_t* const value)
-    {
-        add(name, utility::string_t(value));
+        if (has(name))
+        {
+            m_headers[name] =  m_headers[name].append(_XPLATSTR(", ") + utility::conversions::print_string(value));
+        }
+        else
+        {
+            m_headers[name] = utility::conversions::print_string(value);
+        }
     }
 
     /// <summary>
@@ -348,6 +336,11 @@ public:
     {
         m_headers.erase(name);
     }
+
+    /// <summary>
+    /// Removes all elements from the hearders
+    /// </summary>
+    void clear() { m_headers.clear(); }
 
     /// <summary>
     /// Checks if there is a header with the given key.
@@ -365,7 +358,7 @@ public:
     /// <summary>
     /// Tests to see if there are any header fields.
     /// </summary>
-            /// <returns><c>true</c> if there are no headers, <c>false</c> otherwise.</returns>
+    /// <returns><c>true</c> if there are no headers, <c>false</c> otherwise.</returns>
     bool empty() const { return m_headers.empty(); }
 
     /// <summary>
@@ -377,8 +370,8 @@ public:
     /// Checks if a header field exists with given name and returns an iterator if found. Otherwise
     /// and iterator to end is returned.
     /// </summary>
-            /// <param name="name">The name of the header field.</param>
-            /// <returns>An iterator to where the HTTP header is found.</returns>
+    /// <param name="name">The name of the header field.</param>
+    /// <returns>An iterator to where the HTTP header is found.</returns>
     iterator find(const key_type &name) { return m_headers.find(name); }
     const_iterator find(const key_type &name) const { return m_headers.find(name); }
 
@@ -411,7 +404,7 @@ public:
     /// <summary>
     /// Returns an iterator refering to the first header field.
     /// </summary>
-            /// <returns>An iterator to the beginning of the HTTP headers</returns>
+    /// <returns>An iterator to the beginning of the HTTP headers</returns>
     iterator begin() { return m_headers.begin(); }
     const_iterator begin() const { return m_headers.begin(); }
 
@@ -423,15 +416,15 @@ public:
     const_iterator end() const { return m_headers.end(); }
 
     /// <summary>
-            /// Gets the content length of the message.
+    /// Gets the content length of the message.
     /// </summary>
-            /// <returns>The length of the content.</returns>
+    /// <returns>The length of the content.</returns>
     _ASYNCRTIMP utility::size64_t content_length() const;
 
     /// <summary>
-            /// Sets the content length of the message.
+    /// Sets the content length of the message.
     /// </summary>
-            /// <param name="length">The length of the content.</param>
+    /// <param name="length">The length of the content.</param>
     _ASYNCRTIMP void set_content_length(utility::size64_t length);
 
     /// <summary>
@@ -480,7 +473,7 @@ namespace details
 {
 
 /// <summary>
-            /// Base class for HTTP messages.
+/// Base class for HTTP messages.
 /// This class is to store common functionality so it isn't duplicated on
 /// both the request and response side.
 /// </summary>
@@ -773,7 +766,7 @@ public:
 
 #ifdef _MS_WINDOWS
     /// <summary>
-            /// Sets the body of the message to contain a UTF-8 string. If the 'Content-Type'
+    /// Sets the body of the message to contain a UTF-8 string. If the 'Content-Type'
     /// header hasn't already been set it will be set to 'text/plain; charset=utf-8'.
     /// </summary>
     /// <param name="body_text">String containing body text as a UTF-8 string.</param>
@@ -835,8 +828,8 @@ public:
     /// sent.
     /// </summary>
     /// <param name="stream">A readable, open asynchronous stream.</param>
-            /// <param name="content_length">The size of the data to be sent in the body.</param>
-            /// <param name="content_type">A string holding the MIME type of the message body.</param>
+    /// <param name="content_length">The size of the data to be sent in the body.</param>
+    /// <param name="content_type">A string holding the MIME type of the message body.</param>
     /// <remarks>
     /// This cannot be used in conjunction with any other means of setting the body of the request.
     /// The stream will not be read until the message is sent.
@@ -864,7 +857,7 @@ public:
     /// <summary>
     /// Signals the user (client) when all the data for this response message has been received.
     /// </summary>
-            /// <returns>A <c>task</c> which is completed when all of the response body has been received.</returns>
+    /// <returns>A <c>task</c> which is completed when all of the response body has been received.</returns>
     pplx::task<http::http_response> content_ready() const
     {
         auto impl = _get_impl();
@@ -1038,7 +1031,7 @@ public:
     /// <summary>
     /// Get the method (GET/PUT/POST/DELETE) of the request message.
     /// </summary>
-            /// <param name="method">Request method of this HTTP request.</param>
+    /// <param name="method">Request method of this HTTP request.</param>
     void set_method(http::method method) const { _m_impl->method() = std::move(method); }
 
     /// <summary>
@@ -1072,6 +1065,14 @@ public:
     /// Use the http_headers::add to fill in desired headers.
     /// </remarks>
     http_headers &headers() { return _m_impl->headers(); }
+    
+    /// <summary>
+    /// Gets a const reference to the headers of the response message.
+    /// </summary>
+    /// <returns>HTTP headers for this response.</returns>
+    /// <remarks>
+    /// Use the http_headers::add to fill in desired headers.
+    /// </remarks>
     const http_headers &headers() const { return _m_impl->headers(); }
 
     /// <summary>
@@ -1131,7 +1132,7 @@ public:
 
 #ifdef _MS_WINDOWS
     /// <summary>
-            /// Sets the body of the message to contain a UTF-8 string. If the 'Content-Type'
+    /// Sets the body of the message to contain a UTF-8 string. If the 'Content-Type'
     /// header hasn't already been set it will be set to 'text/plain; charset=utf-8'.
     /// </summary>
     /// <param name="body_text">String containing body text as a UTF-8 string.</param>
@@ -1193,8 +1194,8 @@ public:
     /// sent.
     /// </summary>
     /// <param name="stream">A readable, open asynchronous stream.</param>
-            /// <param name="content_length">The size of the data to be sent in the body.</param>
-            /// <param name="content_type">A string holding the MIME type of the message body.</param>
+    /// <param name="content_length">The size of the data to be sent in the body.</param>
+    /// <param name="content_type">A string holding the MIME type of the message body.</param>
     /// <remarks>
     /// This cannot be used in conjunction with any other means of setting the body of the request.
     /// The stream will not be read until the message is sent.
@@ -1337,7 +1338,7 @@ public:
     /// Responses to this HTTP request.
     /// </summary>
     /// <param name="status">Response status code.</param>
-            /// <param name="content_length">The size of the data to be sent in the body..</param>
+    /// <param name="content_length">The size of the data to be sent in the body..</param>
     /// <param name="content_type">A string holding the MIME type of the message body.</param>
     /// <param name="body">An asynchronous stream representing the body data.</param>
     /// <returns>A task that is completed once a response from the request is received.</returns>
@@ -1349,9 +1350,9 @@ public:
     }
 
     /// <summary>
-    /// Signals the user (client) when all the data for this request message has been received.
+    /// Signals the user (listener) when all the data for this request message has been received.
     /// </summary>
-            /// <returns>A <c>task</c> which is completed when all of the response body has been received</returns>
+    /// <returns>A <c>task</c> which is completed when all of the response body has been received</returns>
     pplx::task<http_request> content_ready() const
     {
         auto impl = _get_impl();
@@ -1384,7 +1385,7 @@ public:
     http::details::_http_server_context * _get_server_context() const { return _m_impl->_get_server_context(); }
 
     /// <summary>
-            /// These are used for the initial creation of the HTTP request.
+    /// These are used for the initial creation of the HTTP request.
     /// </summary>
     static http_request _create_request(std::shared_ptr<http::details::_http_server_context> server_context) { return http_request(std::move(server_context)); }
     void _set_server_context(std::shared_ptr<http::details::_http_server_context> server_context) { _m_impl->_set_server_context(std::move(server_context)); }
@@ -1401,9 +1402,9 @@ private:
     http_request(std::shared_ptr<http::details::_http_request> message) : _m_impl(message) {}
 
     /// <summary>
-            /// This constructor overload is only needed when <c>'const'</c> functions in <c>_http_request</c> need to log messages (<c>log::post</c>).
-            /// call <c>shared_from_this()</c> then get back a <c>std::shared_ptr&lt;const details::_http_request&gt;</c>, 
-            /// from which we need to create an <c>http_request</c>.
+    /// This constructor overload is only needed when <c>'const'</c> functions in <c>_http_request</c> need to log messages (<c>log::post</c>).
+    /// call <c>shared_from_this()</c> then get back a <c>std::shared_ptr&lt;const details::_http_request&gt;</c>, 
+    /// from which we need to create an <c>http_request</c>.
     /// </summary>
     http_request(std::shared_ptr<const http::details::_http_request> message)
     {

@@ -8,7 +8,7 @@
 
   <ItemGroup Condition="'$(DevToolsVersion)'=='110'">
       <ProjectFile Include="build\casablanca110.vcxproj" Condition="'$(Platform)'!='ARM' or '$(WindowsSDKDesktopARMSupport)' == 'true'" />
-      <ProjectFile Include="build\casablanca110.xp.vcxproj" Condition="'$(Platform)'!='ARM'" />
+      <ProjectFile Include="build\casablanca110.xp.vcxproj" Condition="'$(Platform)'!='ARM' and '$(RunCodeAnalysis)'!='true'" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.2|110' or '$(OsVersion)|$(DevToolsVersion)'=='6.3|110'">
@@ -21,7 +21,7 @@
 
   <ItemGroup Condition="'$(DevToolsVersion)'=='120'">
       <ProjectFile Include="build\casablanca120.vcxproj" Condition="'$(Platform)'!='ARM' or '$(WindowsSDKDesktopARMSupport)' == 'true'" />
-      <ProjectFile Include="build\casablanca120.xp.vcxproj" Condition="'$(Platform)'!='ARM'" />
+      <ProjectFile Include="build\casablanca120.xp.vcxproj" Condition="'$(Platform)'!='ARM' and '$(RunCodeAnalysis)'!='true'" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.2|120' or '$(OsVersion)|$(DevToolsVersion)'=='6.3|120'">

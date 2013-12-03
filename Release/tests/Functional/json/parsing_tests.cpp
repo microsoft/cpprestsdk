@@ -24,17 +24,43 @@
 ****/
 
 #include "stdafx.h"
+#include <regex>
 
 using namespace web; using namespace utility;
 using namespace utility::conversions;
 
 namespace tests { namespace functional { namespace json_tests {
 
+    inline bool verify_parsing_error_msg(const std::string &str)
+    {
+        static std::regex pattern("^\\* Line \\d+, Column \\d+ Syntax error: .+");
+        return std::regex_match(str, pattern, std::regex_constants::match_flag_type::match_not_null);
+    }
+
+#pragma warning (disable: 4127) // const expression
+#define VERIFY_PARSING_THROW(target) \
+do { \
+    try { \
+        target; \
+        VERIFY_IS_TRUE(false); \
+    } \
+    catch (const json::json_exception &e) { \
+        VERIFY_IS_TRUE(verify_parsing_error_msg(e.what())); \
+    } \
+    catch (...) { \
+        VERIFY_IS_TRUE(false); \
+    } \
+} while (false)
+
 SUITE(parsing_tests)
 {
 
 TEST(stringstream_t)
 {
+    utility::stringstream_t ss0;
+    ss0 << U("null");
+    json::value v0 = json::value::parse(ss0);
+
     utility::stringstream_t ss1;
     ss1 << U("17");
     json::value v1 = json::value::parse(ss1);
@@ -69,7 +95,7 @@ TEST(stringstream_t)
 
 TEST(whitespace)
 {
-    VERIFY_THROWS(json::value::parse(U("  ")), json::json_exception);
+    VERIFY_PARSING_THROW(json::value::parse(U("  ")));
 
     // Try all the whitespace characters before/after all the structural characters
     // whitespace characters according to RFC4627: space, horizontal tab, line feed or new line, carriage return
@@ -179,18 +205,18 @@ TEST(string_t)
     str = json::value::parse(U("\"\\u004B\""));
     VERIFY_ARE_EQUAL(U("K"), str.as_string());
 
-    VERIFY_THROWS(json::value::parse(U("\"\\u0klB\"")), json::json_exception);
+    VERIFY_PARSING_THROW(json::value::parse(U("\"\\u0klB\"")));
 }
 
 TEST(comments_string)
 {
     // Nothing but a comment
-    VERIFY_THROWS(json::value::parse(U(" /* There's nothing but a comment here */  ")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U(" // There's nothing but a comment here\n")), json::json_exception);
+    VERIFY_PARSING_THROW(json::value::parse(U(" /* There's nothing but a comment here */  ")));
+    VERIFY_PARSING_THROW(json::value::parse(U(" // There's nothing but a comment here\n")));
 
     // Some invalid comments
-    VERIFY_THROWS(json::value::parse(U(" -22 /*/")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U(" -22 /* /* nested */ */")), json::json_exception);
+    VERIFY_PARSING_THROW(json::value::parse(U(" -22 /*/")));
+    VERIFY_PARSING_THROW(json::value::parse(U(" -22 /* /* nested */ */")));
 
     // Correctly placed comments
     json::value num1 = json::value::parse(U("-22 // This is a trailing comment\n"));
@@ -239,24 +265,24 @@ TEST(comments_stream)
     {
     std::basic_stringstream<utility::char_t> stream;
     stream << U(" /* There's nothing but a comment here */ ");
-    VERIFY_THROWS(json::value::parse(stream), json::json_exception);
+    VERIFY_PARSING_THROW(json::value::parse(stream));
     }
     {
     std::basic_stringstream<utility::char_t> stream;
     stream << U(" // There's nothing but a comment here\n ");
-    VERIFY_THROWS(json::value::parse(stream), json::json_exception);
+    VERIFY_PARSING_THROW(json::value::parse(stream));
     }
 
     // Some invalid comments
     {
     std::basic_stringstream<utility::char_t> stream;
     stream << U(" -22 /*/");
-    VERIFY_THROWS(json::value::parse(stream), json::json_exception);
+    VERIFY_PARSING_THROW(json::value::parse(stream));
     }
     {
     std::basic_stringstream<utility::char_t> stream;
     stream << U(" -22 /* /* nested */ */");
-    VERIFY_THROWS(json::value::parse(stream), json::json_exception);
+    VERIFY_PARSING_THROW(json::value::parse(stream));
     }
 
     // Correctly placed comments
@@ -461,21 +487,21 @@ utility::string_t make_deep_json_string(size_t depth)
 TEST(deeply_nested)
 {
 #ifdef __APPLE__
-    auto strGood = make_deep_json_string(31);
+    auto strGood = make_deep_json_string(32);
 #else
-    auto strGood = make_deep_json_string(127);
+    auto strGood = make_deep_json_string(128);
 #endif
     // This should parse without issues:
     json::value::parse(strGood);
 
 #ifdef __APPLE__
-    auto strBad = make_deep_json_string(32);
+    auto strBad = make_deep_json_string(33);
 #else
-    auto strBad = make_deep_json_string(128);
+    auto strBad = make_deep_json_string(129);
 #endif
 
     // But this one should throw:
-    VERIFY_THROWS(json::value::parse(strBad), json::json_exception);
+    VERIFY_PARSING_THROW(json::value::parse(strBad));
 }
 
 } // SUITE(parsing_tests)

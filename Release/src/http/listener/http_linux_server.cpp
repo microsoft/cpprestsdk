@@ -24,11 +24,8 @@
 #include "cpprest/http_server.h"
 #include "cpprest/http_linux_server.h"
 #include "cpprest/producerconsumerstream.h"
-#include "cpprest/log.h"
-#include "cpprest/filelog.h"
 #define CRLF std::string("\r\n")
 
-using namespace utility::experimental::logging;
 namespace web
 {
 namespace http
@@ -392,14 +389,12 @@ void connection::dispatch_request_to_listener()
             pListenerLock->unlock();
             std::ostringstream str_stream;
             str_stream << "Error: a std::exception was thrown out of http_listener handle: " << e.what();
-            utility::experimental::logging::log::post(utility::experimental::logging::LOG_ERROR, 0, str_stream.str(), m_request);
 
             m_request._reply_if_not_already(status_codes::InternalError);
         }
         catch(...)
         {
             pListenerLock->unlock();
-            log::post(LOG_FATAL, 0, "Fatal Error: an unknown exception was thrown out of http_listener handler.", m_request);
 
             m_request._reply_if_not_already(status_codes::InternalError);
         }
@@ -432,12 +427,10 @@ void connection::do_response(bool bad_request)
             {
                 std::ostringstream str_stream;
                 str_stream << "Error in listener: " << ex.what() << std::endl;
-                log::post(LOG_ERROR, 0, str_stream.str(), m_request);
                 response = http::http_response(status_codes::InternalError);
             }
             catch(...)
             {
-                log::post(LOG_FATAL, 0, "Fatal Error: an unknown exception was thrown out of http_listener handler.", m_request);
                 response = http::http_response(status_codes::InternalError);
             }
             // before sending response, the full incoming message need to be processed.

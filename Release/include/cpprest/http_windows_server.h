@@ -40,13 +40,16 @@
 #pragma warning(pop)
 
 #include <safeint.h>
+#include <atomic>
 
 #include "cpprest/http_server.h"
 
-namespace web { namespace http
+namespace web 
 {
-namespace experimental {
-
+namespace http
+{
+namespace experimental 
+{
 namespace details
 {
 
@@ -105,15 +108,12 @@ private:
 };
 
 /// <summary>
-/// Structure which represents a connection and handles
-/// the processing of incoming requests and outgoing responses.
+/// Context for http request through Windows HTTP Server API.
 /// </summary>
-class connection
+struct windows_request_context : http::details::_http_server_context
 {
-public:
-    connection(_In_ http_windows_server *p_server);
-
-    ~connection();
+    windows_request_context(); 
+    virtual ~windows_request_context();
 
     // Asynchronously starts processing the current request.
     void async_process_request(HTTP_REQUEST_ID request_id, http::http_request msg, const unsigned long headers_size);
@@ -135,33 +135,14 @@ public:
         std::unique_ptr<unsigned char[]> m_request_buffer;
     };
 
-    // Helper function to asynchronously read in a request body chunk.
-    // Returns true if the entire body has been read in.
-    void read_request_body_chunk(_In_ HTTP_REQUEST *p_request, http::http_request &msg);
+    // Dispatch request to the provided http_listener.
+    void dispatch_request_to_listener(http_request &request, _In_ web::http::experimental::listener::http_listener *pListener);
 
-    // Handles reading request body using overlapped I/O.
-    class read_body_io_completion : public http_overlapped_io_completion
-    {
-    public:
-        read_body_io_completion(HTTP_REQUEST request, const http::http_request &msg)
-            : m_request(request), m_msg(msg), m_total_body_size(0) {}
+    // Read in a portion of the request body.
+    void read_request_body_chunk(_In_ HTTP_REQUEST *p_request, http_request &msg);
 
-        void http_io_completion(DWORD error_code, DWORD bytes_read);
-
-        std::vector<unsigned char> m_body_data;
-
-        size_t m_total_body_size;
-
-    private:
-        HTTP_REQUEST m_request;
-        http::http_request m_msg;
-    };
-
-    // Handles actual dispatching of requests to http_listener.
-    void dispatch_request_to_listener(http::http_request &request, _In_ web::http::experimental::listener::http_listener *pListener);
-
-    // Asychrounously sends response.
-    void async_process_response(http::http_response &response);
+    // Start processing the response.
+    void async_process_response(http_response &response);
 
     // Handles sending response using overlapped I/O.
     class send_response_io_completion : public http_overlapped_io_completion
@@ -183,59 +164,57 @@ public:
         http::http_response m_response;
     };
 
-    // http server this connection belongs to.
-    http::experimental::details::http_windows_server *m_p_server;
-};
-
-// Handles sending response using overlapped I/O.
-class send_response_body_io_completion : public http_overlapped_io_completion
-{
-public:
-    send_response_body_io_completion(http::http_response &response)
-        : m_response(response) 
-    {
-    }
-
-    void http_io_completion(DWORD error_code, DWORD bytes_read);
-
-private:
-
-    http::http_response m_response;
-};
-
-// Handles canceling a request using overlapped I/O.
-class cancel_request_io_completion : public http_overlapped_io_completion
-{
-public:
-    cancel_request_io_completion(http::http_response response, std::exception_ptr except_ptr)
-        : m_response(std::move(response)), m_except_ptr(std::move(except_ptr))
-    {
-    }
-    
-    void http_io_completion(DWORD error_code, DWORD bytes_read);
-
-private:
-    http::http_response m_response;
-    std::exception_ptr m_except_ptr;
-};
-
-/// <summary>
-/// Context for http request through Windows HTTP Server API.
-/// </summary>
-struct windows_request_context : http::details::_http_server_context
-{
-    windows_request_context(std::shared_ptr<connection> p_connection) 
-        : m_p_connection(p_connection),
-          m_sending_in_chunks(false),
-          m_transfer_encoding(false),
-          m_remaining_to_write(0)
-    {
-    }
-
     void transmit_body(http::http_response response);
 
-    // The connection being used
-    std::shared_ptr<connection> m_p_connection;
+    // Handles reading request body using overlapped I/O.
+    class read_body_io_completion : public http_overlapped_io_completion
+    {
+    public:
+        read_body_io_completion(HTTP_REQUEST request, const http::http_request &msg)
+            : m_request(request), m_msg(msg), m_total_body_size(0) {}
+
+        void http_io_completion(DWORD error_code, DWORD bytes_read);
+
+        std::vector<unsigned char> m_body_data;
+
+        size_t m_total_body_size;
+
+    private:
+        HTTP_REQUEST m_request;
+        http::http_request m_msg;
+    };
+
+    // Handles sending response using overlapped I/O.
+    class send_response_body_io_completion : public http_overlapped_io_completion
+    {
+    public:
+        send_response_body_io_completion(http::http_response &response)
+            : m_response(response) 
+        {
+        }
+
+        void http_io_completion(DWORD error_code, DWORD bytes_read);
+
+    private:
+
+        http::http_response m_response;
+    };
+
+    // Handles canceling a request using overlapped I/O.
+    class cancel_request_io_completion : public http_overlapped_io_completion
+    {
+    public:
+        cancel_request_io_completion(http::http_response response, std::exception_ptr except_ptr)
+            : m_response(std::move(response)), m_except_ptr(std::move(except_ptr))
+        {
+        }
+
+        void http_io_completion(DWORD error_code, DWORD bytes_read);
+
+    private:
+        http::http_response m_response;
+        std::exception_ptr m_except_ptr;
+    };
 
     // TCE that indicates the completion of response
     pplx::task_completion_event<void> m_response_completed;
@@ -306,59 +285,34 @@ public:
     virtual pplx::task<void> respond(http::http_response response);
 
 private:
-    friend class details::connection;
     friend struct details::windows_request_context;
-
-    // Creates a new connection and adds it to m_connections map
-    std::shared_ptr<details::connection> add_connection(HTTP_CONNECTION_ID connection_id);
-
-    // Get an existing connection from the m_connections map
-    std::shared_ptr<details::connection> find_connection(HTTP_CONNECTION_ID connection_id);
-
-    // Removes a connection from the m_connections map
-    void remove_connection(HTTP_CONNECTION_ID connection_id);
-
-    // Indicates that there is an outstanding connection
-    void connection_reference();
-
-    // Releases the reference for a connection
-    void connection_release();
-
-    // Closes all connections
-    void close_connections();
-
-    // Completion callback to handle a connection being closed.
-    class connection_closed_completion : public details::http_overlapped_io_completion
+    
+    // Structure to hold each registered listener.
+    class listener_registration
     {
     public:
-        connection_closed_completion(_In_ http_windows_server *p_server, HTTP_CONNECTION_ID connection_id)
-            : m_p_server(p_server), m_connection_id(connection_id) {}
-        void http_io_completion(DWORD error_code, DWORD num_bytes);
-    private:
-        http_windows_server *m_p_server;
-        HTTP_CONNECTION_ID m_connection_id;
+        listener_registration(HTTP_URL_GROUP_ID urlGroupId)
+            : m_urlGroupId(urlGroupId)
+        {}
+
+        // URL group id for this listener. Each listener needs it own URL group
+        // because configuration like timeouts, authentication, etc...
+        HTTP_URL_GROUP_ID m_urlGroupId;
+
+        // Request handler lock to guard against removing a listener while in user code.
+        pplx::extensibility::reader_writer_lock_t m_requestHandlerLock;
     };
-
-    // Maps connection to correct connection structure.
-    pplx::extensibility::reader_writer_lock_t m_connections_lock;
-    std::unordered_map<HTTP_CONNECTION_ID, std::shared_ptr<details::connection>> m_connections;
-
-    // Reference held by each connection
-    volatile long m_connectionCount;
-    pplx::task_completion_event<void> m_connections_tce;
 
     // Registered listeners
     pplx::extensibility::reader_writer_lock_t _M_listenersLock;
-    std::unordered_map<web::http::experimental::listener::http_listener *, std::unique_ptr<pplx::extensibility::reader_writer_lock_t>> _M_registeredListeners;
+    std::unordered_map<web::http::experimental::listener::http_listener *, std::unique_ptr<listener_registration>> _M_registeredListeners;
 
     // HTTP Server API server session id.
     HTTP_SERVER_SESSION_ID m_serverSessionId;
 
-    // HTTP Server API url group id.
-    HTTP_URL_GROUP_ID m_urlGroupId;
-
-    // Flag used to signal the HTTP server is being shutdown.
-    volatile long m_shuttingDown;
+    // Tracks the number of outstanding requests being processed.
+    std::atomic<int> m_numOutstandingRequests;
+    pplx::extensibility::event_t m_zeroOutstandingRequests;
 
     // Handle to HTTP Server API request queue.
     HANDLE m_hRequestQueue;

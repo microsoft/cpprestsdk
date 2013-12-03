@@ -30,7 +30,6 @@
 #include "cpprest/http_windows_server.h"
 #else
 #include "cpprest/http_linux_server.h"
-#include "cpprest/log.h"
 #endif
 
 namespace web { namespace http
@@ -41,7 +40,6 @@ namespace details
 
 using namespace web;
 using namespace utility;
-using namespace utility::experimental;
 using namespace web::http::experimental::listener;
 
 pplx::extensibility::critical_section_t http_server_api::s_lock;

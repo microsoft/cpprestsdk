@@ -130,11 +130,6 @@ namespace web { namespace json
         /// <param name="value">The C++ value to create a JSON value from</param>
         _ASYNCRTIMP explicit value(bool value);
 
-#ifdef _MS_WINDOWS
-    private:
-        explicit value(const char* value);
-    public:
-#endif //  _MS_WINDOWS
         /// <summary>
         /// Constructor creating a JSON string value
         /// </summary>
@@ -269,24 +264,24 @@ public:
         bool is_number() const { return type() == Number; }
 
         /// <summary>
-		/// Is the current value represented as an integer number value?
-		/// </summary>
-		/// <remarks>
-		/// Note that if a json value is a number but represented as a double it can still
-		/// be retrieved as a integer using as_integer(), however the value will be truncated.
-		/// </remarks>
-		/// <returns><c>true</c> if the value is an integer value, <c>false</c> otherwise.</returns>
-		_ASYNCRTIMP bool is_integer() const ;
+        /// Is the current value represented as an integer number value?
+        /// </summary>
+        /// <remarks>
+        /// Note that if a json value is a number but represented as a double it can still
+        /// be retrieved as a integer using as_integer(), however the value will be truncated.
+        /// </remarks>
+        /// <returns><c>true</c> if the value is an integer value, <c>false</c> otherwise.</returns>
+        _ASYNCRTIMP bool is_integer() const;
 
-		/// <summary>
-		/// Is the current value represented as an double number value?
-		/// </summary>
-		/// <remarks>
-		/// Note that if a json value is a number but represented as a int it can still
-		/// be retrieved as a double using as_double().
-		/// </remarks>
-		/// <returns><c>true</c> if the value is an double value, <c>false</c> otherwise.</returns>
-		_ASYNCRTIMP bool is_double() const ;
+        /// <summary>
+        /// Is the current value represented as an double number value?
+        /// </summary>
+        /// <remarks>
+        /// Note that if a json value is a number but represented as a int it can still
+        /// be retrieved as a double using as_double().
+        /// </remarks>
+        /// <returns><c>true</c> if the value is an double value, <c>false</c> otherwise.</returns>
+        _ASYNCRTIMP bool is_double() const;
 
         /// <summary>
         /// Is the current value a Boolean value?
@@ -319,10 +314,10 @@ public:
         size_t size() const;
 
         /// <summary>
-        /// Parse a string and construct a JSON value.
+        /// Parses a string and construct a JSON value.
         /// </summary>
         /// <param name="value">The C++ value to create a JSON value from, a C++ STL double-byte string</param>
-        _ASYNCRTIMP static value parse(utility::string_t);
+        _ASYNCRTIMP static value parse(const utility::string_t&);
 
         /// <summary>
         /// Serialize the current JSON value to a C++ string.
@@ -497,13 +492,13 @@ public:
         const_iterator cend() const;
 
         /// <summary>
-        /// Get the beginning const reverse iterator element for a composite value.
+        /// Gets the beginning const reverse iterator element for a composite value.
         /// </summary>
         /// <returns>The beginning <c>const_reverse_iterator</c> element of the JSON value.</returns>
         const_reverse_iterator crbegin() const;
 
         /// <summary>
-        /// Get the end const reverse iterator element for a composite value.
+        /// Gets the end const reverse iterator element for a composite value.
         /// </summary>
         /// <returns>The end <c>const_reverse_iterator</c> element the JSON value.</returns>
         const_reverse_iterator crend() const;
@@ -538,7 +533,7 @@ public:
         value_type m_kind;
 #endif
     };
-    
+
     /// <summary>
     /// A single exception type to represent errors in parsing, converting, and accessing
     /// elements of JSON values.
@@ -567,7 +562,6 @@ public:
             virtual std::unique_ptr<_Value> _copy_value() = 0;
 
             virtual const json::value::element_vector &elements() const { throw json_exception(_XPLATSTR("not an array")); }
-            virtual const json::value::field_map &fields() const { throw json_exception(_XPLATSTR("not an object")); }
 
             virtual bool has_field(const utility::string_t &) const { return false; }
             virtual value get_field(const utility::string_t &) const { throw json_exception(_XPLATSTR("not an object")); }
@@ -579,50 +573,44 @@ public:
             virtual const value &cnst_index(const utility::string_t &) const { throw json_exception(_XPLATSTR("not an object")); }
             virtual const value &cnst_index(std::vector<value>::size_type) const { throw json_exception(_XPLATSTR("not an array")); }
 
-            utility::string_t to_string() const
+            // Common function used for serialization to strings and streams.
+            virtual void serialize_impl(std::string& str) const
             {
-                utility::string_t result;
-                format(result); 
-                return result; 
+                format(str); 
+            }
+#ifdef _MS_WINDOWS
+            virtual void serialize_impl(std::wstring& str) const
+            {
+                format(str); 
+            }
+#endif
+
+            virtual utility::string_t to_string() const
+            {
+                utility::string_t str;
+                serialize_impl(str);
+                return str;
             }
 
             virtual json::value::value_type type() const { return json::value::Null; }
 
-			virtual bool is_integer() const { throw json_exception(_XPLATSTR("not a number")); }
-			virtual bool is_double() const { throw json_exception(_XPLATSTR("not a number")); }
+            virtual bool is_integer() const { throw json_exception(_XPLATSTR("not a number")); }
+            virtual bool is_double() const { throw json_exception(_XPLATSTR("not a number")); }
 
             virtual double as_double() const { throw json_exception(_XPLATSTR("not a number")); }
             virtual int32_t as_integer() const { throw json_exception(_XPLATSTR("not a number")); }
             virtual bool as_bool() const { throw json_exception(_XPLATSTR("not a boolean")); }
             virtual utility::string_t as_string() const { throw json_exception(_XPLATSTR("not a string")); }
 
-            virtual size_t size() const { return m_elements.size(); }
+            virtual size_t size() const { return 0; }
 
             virtual ~_Value() {}
 
-            virtual json::value::element_vector &elements() { return m_elements; }
+            virtual json::value::element_vector &elements() { return s_elements; }
 
         protected:
             _Value() {}
-            _Value(std::vector<json::value>::size_type size) : m_elements(size) {}
-            _Value(const json::value::element_vector &elements) : m_elements(elements) { }
 
-#ifdef _MS_WINDOWS
-            virtual void format(std::basic_ostream<wchar_t> &stream) const
-            {
-                // Default implementation: just get a string and send it to the stream.
-                utility::string_t result;  
-                format(result); 
-                stream << result;
-            }
-#endif
-            virtual void format(std::basic_ostream<char>& stream) const
-            {
-                // Default implementation: just get a string and send it to the stream.
-                std::string result;  
-                format(result); 
-                stream << result;
-            }
 
             virtual void format(std::basic_string<char>& stream) const
             {
@@ -634,12 +622,10 @@ public:
                 stream.append(L"null");
             }
 #endif
-            mutable json::value::element_vector m_elements;
         private:
+            static json::value::element_vector s_elements;
 
             friend class web::json::value;
-            friend class web::json::details::_Object;
-            friend class web::json::details::_Array;
         };
 
         class _Null : public _Value
@@ -648,7 +634,7 @@ public:
 
             virtual std::unique_ptr<_Value> _copy_value()
             {
-                return utility::details::make_unique<_Null>(*this);
+                return utility::details::make_unique<_Null>();
             }
 
             virtual json::value::value_type type() const { return json::value::Null; }
@@ -663,6 +649,9 @@ public:
         {
         public:
 
+            _Number(double value)  : m_value(value), m_was_int(false) { }
+            _Number(int32_t value) : m_intval(value), m_was_int(true) { }
+
             virtual std::unique_ptr<_Value> _copy_value()
             {
                 return utility::details::make_unique<_Number>(*this);
@@ -670,40 +659,19 @@ public:
 
             virtual json::value::value_type type() const { return json::value::Number; }
 
-			virtual bool is_integer() const { return m_was_int; }
-			virtual bool is_double() const { return !m_was_int; }
+            virtual bool is_integer() const { return m_was_int; }
+            virtual bool is_double() const { return !m_was_int; }
 
             virtual double  as_double() const { return m_was_int ? static_cast<double>(m_intval) : m_value; }
             virtual int32_t as_integer() const { return m_was_int ? m_intval : static_cast<int32_t>(m_value); }
 
         protected:
-            virtual void format(std::basic_string<char>& stream) const
-            {
-                format_impl(stream);
-            }
+            virtual void format(std::basic_string<char>& stream) const ;
 #ifdef _MS_WINDOWS
-            virtual void format(std::basic_string<wchar_t>& stream) const
-            {
-                format_impl(stream);
-            }
+            virtual void format(std::basic_string<wchar_t>& stream) const;
 #endif
         private:
             template<typename CharType> friend class json::details::JSON_Parser;
-        public:
-            _Number(double value)  : m_value(value), m_was_int(false) { }
-            _Number(int32_t value) : m_intval(value), m_was_int(true) { }
-        private:
-            template<typename CharType>
-            void format_impl(std::basic_string<CharType>& stream) const
-            {
-                std::basic_stringstream<CharType> strbuf;
-                if ( m_was_int ) {
-                    strbuf << m_intval; 
-                }else{
-                    strbuf << m_value;
-                }
-                stream.append(strbuf.str());
-            }
 
             union
             {
@@ -751,36 +719,23 @@ public:
         {
         public:
 
-            virtual std::unique_ptr<_Value> _copy_value()
+            _String(const utf16string &value) : m_wstring(utility::details::make_unique<utf16string>(value))
             {
-                return utility::details::make_unique<_String>(*this);
+                m_has_escape_char = has_escape_chars(*this);
             }
+            _String(const utf16string &value, bool escaped_chars)
+                : m_wstring(utility::details::make_unique<utf16string>(value)),
+                m_has_escape_char(escaped_chars)
+            { }
 
-            virtual json::value::value_type type() const { return json::value::String; }
-
-            virtual utility::string_t as_string() const;
-
-        protected:
-            virtual void format(std::basic_string<char>& stream) const;
-#ifdef _MS_WINDOWS
-            virtual void format(std::basic_string<wchar_t>& stream) const;
-#endif
-        private:
-            template<typename CharType> friend class json::details::JSON_Parser;
-
-            void copy_from(const _String& other)
+            _String(const std::string &value) : m_string(utility::details::make_unique<std::string>(value))
             {
-                if(other.is_wide())
-                {
-                    m_wstring.reset(new utf16string(*other.m_wstring));
-                }
-                else
-                {
-                    m_string.reset(new std::string(*other.m_string));
-                }
+                m_has_escape_char = has_escape_chars(*this);
             }
-
-        public:
+            _String(const std::string &value, bool escaped_chars)
+                : m_string(utility::details::make_unique<std::string>(value)),
+                m_has_escape_char(escaped_chars)
+            { }
 
             _String(const _String& other) : web::json::details::_Value(other)
             {
@@ -795,11 +750,69 @@ public:
                 return *this;
             }
 
-            _String(const utf16string &value) : m_wstring(utility::details::make_unique<utf16string>(value)) { }
-            _String(const std::string &value) : m_string(utility::details::make_unique<std::string>(value)) { }
+            virtual std::unique_ptr<_Value> _copy_value()
+            {
+                return utility::details::make_unique<_String>(*this);
+            }
+
+            virtual json::value::value_type type() const { return json::value::String; }
+
+            virtual utility::string_t as_string() const;
+
+            virtual void serialize_impl(std::string& str) const
+            {
+                 serialize_impl_char_type(str);
+            }
+#ifdef _MS_WINDOWS
+            virtual void serialize_impl(std::wstring& str) const
+            {
+                serialize_impl_char_type(str);
+            }
+            
+#endif
+
+        protected:
+            virtual void format(std::basic_string<char>& str) const;
+#ifdef _MS_WINDOWS
+            virtual void format(std::basic_string<wchar_t>& str) const;
+#endif
 
         private:
             friend class _Object;
+            friend class _Array;
+
+            size_t get_reserve_size() const
+            {
+                if(is_wide())
+                {
+                    return m_wstring->size() + 2; 
+                }
+                else
+                {
+                    return m_string->size() + 2;
+                }
+            }
+
+            template <typename CharType>
+            void serialize_impl_char_type(std::basic_string<CharType>& str) const
+            {
+                // To avoid repeated allocations reserve some space all up front.
+                // size of string + 2 for quotes
+                str.reserve(get_reserve_size());
+                format(str);
+            }
+
+            void copy_from(const _String& other)
+            {
+                if(other.is_wide())
+                {
+                    m_wstring.reset(new utf16string(*other.m_wstring));
+                }
+                else
+                {
+                    m_string.reset(new std::string(*other.m_string));
+                }
+            }
 
             std::string as_utf8_string() const;
             utf16string as_utf16_string() const;
@@ -813,11 +826,26 @@ public:
             {
                 return m_wstring.get() != nullptr;
             }
+
+            // There are significant performance gains that can be made by knowning whether
+            // or not a character that requires escaping is present.
+            bool m_has_escape_char;
+            static bool has_escape_chars(const _String &str);
         };
 
         class _Object : public _Value
         {
         public:
+
+            _Object()
+            {
+            }
+            
+            _Object(const json::value::field_map& fields) : m_elements(fields) { }
+
+            _ASYNCRTIMP _Object(const _Object& other);
+
+            virtual ~_Object() {}
 
             virtual std::unique_ptr<_Value> _copy_value()
             {
@@ -851,31 +879,86 @@ public:
                 return true;
             }
 
-        protected:
-            virtual void format(std::basic_string<char>& string) const;
-            virtual void format(std::basic_ostream<char>& stream) const;
+            virtual void serialize_impl(std::string& str) const
+            {
+                // To avoid repeated allocations reserve some space all up front.
+                str.reserve(get_reserve_size());
+                format(str); 
+            }
 #ifdef _MS_WINDOWS
-            virtual void format(std::basic_string<wchar_t>& string) const;
-            virtual void format(std::basic_ostream<wchar_t>& stream) const;
+            virtual void serialize_impl(std::wstring& str) const
+            {
+                // To avoid repeated allocations reserve some space all up front.
+                str.reserve(get_reserve_size());
+                format(str); 
+            }
+#endif
+            size_t size() const { return m_elements.size(); }
+
+            virtual json::value::element_vector &elements()
+            {
+                return m_elements;
+            }
+
+        protected:
+            virtual void format(std::basic_string<char>& str) const
+            {
+                format_impl(str);
+            }
+#ifdef _MS_WINDOWS
+            virtual void format(std::basic_string<wchar_t>& str) const
+            {
+                format_impl(str);
+            }
 #endif
 
         private:
+            json::value::element_vector m_elements;
+
             template<typename CharType> friend class json::details::JSON_Parser;
 
             _ASYNCRTIMP void map_fields();
 
-        public:
-            _Object()
+            template<typename CharType>
+            void format_impl(std::basic_string<CharType>& str) const
             {
+                str.push_back('{');
+                for (auto iter = m_elements.begin(); iter != m_elements.end(); ++iter)
+                {
+                    iter->first.format(str);
+                    str.push_back(':');
+                    iter->second.format(str);
+                    str.push_back(',');
+                }
+                str[str.size() - 1] = '}';
             }
-            
-            _Object(const json::value::field_map& fields) : _Value(fields) { }
 
-            _ASYNCRTIMP _Object(const _Object& other);
+            size_t get_reserve_size() const
+            {
+                // This is a heuristic we can tune more in the future:
+                // Basically size of string plus 
+                // sum size of value if an object, array, or string.
+                size_t reserveSize = 2; // For brackets {}
+                for(auto iter = m_elements.begin(); iter != m_elements.end(); ++iter)
+                {
+                    reserveSize += static_cast<_String *>(iter->first.m_value.get())->get_reserve_size();
+                    size_t valueSize = iter->second.size() * 20; // Multipler by each object/array element 
+                    if(valueSize == 0)
+                    {
+                        if(iter->second.type() == json::value::String)
+                        {
+                            valueSize = static_cast<_String *>(iter->second.m_value.get())->get_reserve_size();
+                        }
+                        else
+                        {
+                            valueSize = 5; // true, false, or null
+                        }
+                    }
+                    reserveSize += valueSize;
+                }
+                return reserveSize;
+            }
 
-            virtual ~_Object() {}
-
-        private:
             // In order to speed up field lookups, we keep a map that is
             // filled on demand at the first lookup.
             std::unordered_map<utility::string_t, size_t> m_fields;
@@ -884,6 +967,10 @@ public:
         class _Array : public _Value
         {
         public:
+
+            _Array() {}
+            _Array(std::vector<json::value>::size_type size) : m_elements(size) {}
+            _Array(const json::value::element_vector &elements) : m_elements(elements) { }
 
             virtual std::unique_ptr<_Value> _copy_value()
             {
@@ -901,7 +988,7 @@ public:
                size_t idx = index;
                size_t size = m_elements.size();
 #endif
-                return (idx >= size) ? value() : m_elements[index].second; 
+               return (idx >= size) ? value() : m_elements[index].second; 
             }
 
             virtual json::value &index(std::vector<json::value>::size_type index)
@@ -917,12 +1004,12 @@ public:
                if (nlastSize < nMinSize)
                {
                   m_elements.resize(nMinSize);
-                  for (size_t i = nlastSize; i < nMinSize; i++)
+                  for (size_t i = nlastSize; i < nMinSize; ++i)
                   {
                       m_elements[i].first = json::value(static_cast<int32_t>(i));
                   }
                }
-               return m_elements[index].second; 
+               return m_elements[index].second;
             }
 
             virtual const json::value &cnst_index(std::vector<json::value>::size_type index) const
@@ -958,23 +1045,73 @@ public:
                 return true;
             }
 
-        protected:
-            virtual void format(std::basic_string<char>& stream) const;
-            virtual void format(std::basic_ostream<char>& stream) const;
+            virtual void serialize_impl(std::string& str) const
+            {
+                // To avoid repeated allocations reserve some space all up front.
+                str.reserve(get_reserve_size());
+                format(str);  
+            }
 #ifdef _MS_WINDOWS
-            virtual void format(std::basic_string<wchar_t>& stream) const;
-            virtual void format(std::basic_ostream<wchar_t>& stream) const;
+            virtual void serialize_impl(std::wstring& str) const
+            {
+                // To avoid repeated allocations reserve some space all up front.
+                str.reserve(get_reserve_size());
+                format(str); 
+            }
+#endif
+            size_t size() const { return m_elements.size(); }
+
+            virtual json::value::element_vector &elements()
+            {
+                return m_elements;
+            }
+
+
+        protected:
+            virtual void format(std::basic_string<char>& str) const
+            {
+                format_impl(str);
+            }
+#ifdef _MS_WINDOWS
+            virtual void format(std::basic_string<wchar_t>& str) const
+            {
+                format_impl(str);
+            }
 #endif
         private:
+            mutable value::element_vector m_elements;
+
             template<typename CharType> friend class json::details::JSON_Parser;
 
-        public:
-            _Array() {}
-            _Array(std::vector<json::value>::size_type size) : _Value(size) {}
-            _Array(const json::value::element_vector &elements) : _Value(elements) { }
-        private:
-        };
+            template<typename CharType>
+            void format_impl(std::basic_string<CharType>& str) const
+            {
+                str.push_back('[');
+                for (auto iter = m_elements.begin(); iter != m_elements.end(); ++iter)
+                {
+                    iter->second.format(str);
+                    str.push_back(',');
+                }
+                str[str.size() - 1] = ']';
+            }
 
+            size_t get_reserve_size() const
+            {
+                // This is a heuristic we can tune more in the future:
+                // Basically sum size of each value if an object, array, or string by a multiplier.
+                size_t reserveSize = 2; // For brackets []
+                for(auto iter = m_elements.begin(); iter != m_elements.end(); ++iter)
+                {
+                    size_t valueSize = iter->first.size() * 20; // Per each nested array/object
+
+                    if(valueSize == 0)
+                        valueSize = 5; // true, false, or null
+
+                    reserveSize += valueSize;
+                }
+                return reserveSize;
+            }
+        };
     } // namespace details
 
     /// <summary>
@@ -1015,7 +1152,6 @@ public:
     {
         return m_value->get_element(index);
     }
-
 
     /// <summary>
     /// Gets the beginning iterator element for a composite value.

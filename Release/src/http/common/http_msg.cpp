@@ -51,7 +51,7 @@ utility::string_t http_headers::content_type() const
 
 void http_headers::set_content_type(utility::string_t type)
 {
-    add(http::header_names::content_type, std::move(type));
+    m_headers[http::header_names::content_type] = std::move(type);
 }
 
 utility::string_t http_headers::cache_control() const
@@ -75,7 +75,7 @@ utility::string_t http_headers::date() const
 
 void http_headers::set_date(const utility::datetime& date)
 {
-    add(http::header_names::date, date.to_string(utility::datetime::RFC_1123));
+    m_headers[http::header_names::date] = date.to_string(utility::datetime::RFC_1123);
 }
 
 utility::size64_t http_headers::content_length() const
@@ -87,7 +87,7 @@ utility::size64_t http_headers::content_length() const
 
 void http_headers::set_content_length(utility::size64_t length)
 {
-    add(http::header_names::content_length, length);
+    m_headers[http::header_names::content_length] = utility::conversions::print_string(length);
 }
 
 static const utility::char_t * stream_was_set_explicitly = _XPLATSTR("A stream was set on the message and extraction is not possible");
@@ -551,7 +551,7 @@ void details::http_msg_base::set_body(streams::istream instream, utility::string
 
 void details::http_msg_base::set_body(streams::istream instream, utility::size64_t contentLength, utility::string_t contentType)
 {
-    headers().add(http::header_names::content_length, contentLength);
+    headers().set_content_length(contentLength);
     set_body(instream, std::move(contentType));
     m_data_available.set(contentLength);
 }

@@ -27,9 +27,7 @@
 
 #include "unittestpp.h"
 
-#ifdef _MS_WINDOWS
-#include <windows.h> // for LARGE_INTEGER and QueryPerformanceCounter
-#endif
 #include <random>
 
+#define NOMINMAX
 #include "json_tests.h"

@@ -8,7 +8,7 @@
 
   <ItemGroup Condition="'$(DevToolsVersion)'=='110'">
       <ProjectFile Include="VS11\Utils110_test.vcxproj" />
-      <ProjectFile Include="VS11.xp\Utils110_test.xp.vcxproj" Condition="'$(Platform)'!='ARM'" />
+      <ProjectFile Include="VS11.xp\Utils110_test.xp.vcxproj" Condition="'$(Platform)'!='ARM' and '$(RunCodeAnalysis)'!='true'"/>
   </ItemGroup>
   
   <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.2|110' or '$(OsVersion)|$(DevToolsVersion)'=='6.3|110'">
@@ -17,7 +17,7 @@
 
   <ItemGroup Condition="'$(DevToolsVersion)'=='120'">
       <ProjectFile Include="VS12\Utils120_test.vcxproj" />
-      <ProjectFile Include="VS12.xp\Utils120_test.xp.vcxproj" Condition="'$(Platform)'!='ARM'" />
+      <ProjectFile Include="VS12.xp\Utils120_test.xp.vcxproj" Condition="'$(Platform)'!='ARM' and '$(RunCodeAnalysis)'!='true'"/>
   </ItemGroup>
   
   <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|120'">

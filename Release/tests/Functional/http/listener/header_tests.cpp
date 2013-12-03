@@ -168,6 +168,21 @@ TEST_FIXTURE(uri_address, response_headers)
     {
         http_asserts::assert_test_response_equals(p_response, status_codes::BadGateway, response.headers());
     }).wait();
+
+    // duplicate headers fields
+    response = http_response(status_codes::BadGateway);
+    response.headers().add(U("Key1"), U("value1"));
+    response.headers().add(U("Key1"), U("value2"));
+    listener.support([&](http_request request)
+    {
+        http_asserts::assert_request_equals(request, methods::POST, U("/"));
+        request.reply(response).wait();
+    });
+    VERIFY_ARE_EQUAL(0u, p_client->request(methods::POST, U("")));
+    p_client->next_response().then([&](test_response *p_response)
+    {
+        http_asserts::assert_test_response_equals(p_response, status_codes::BadGateway, response.headers());
+    }).wait();
 }
 
 }

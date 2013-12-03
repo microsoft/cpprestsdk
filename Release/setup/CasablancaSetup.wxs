@@ -347,7 +347,7 @@
                         <Directory Id="Debug01_wp8_bin" Name="Debug">
                           <Directory Id="x8601_wp8_bin" Name="x86">
                             <Component Id="x86_dll_d_wp8_bin" DiskId="1" Guid="$(var.GUID059)">
-                              <File Id="File_x86d_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)d_wp8_$(var.CppRestSDKVersionFileSuffix).dll"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)d_wp8_$(var.CppRestSDKVersionFileSuffix).dll" Source="$(var.SDK_bin_x86d_src_winrt_nosig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)d_wp8_$(var.CppRestSDKVersionFileSuffix).dll" />
+                              <File Id="File_x86d_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)d_wp8_$(var.CppRestSDKVersionFileSuffix).dll"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)d_wp8_$(var.CppRestSDKVersionFileSuffix).dll" Source="$(var.SDK_bin_x86d_src_sig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)d_wp8_$(var.CppRestSDKVersionFileSuffix).dll" />
                               <File Id="File_x86d_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)d_wp8_$(var.CppRestSDKVersionFileSuffix).pdb"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)d_wp8_$(var.CppRestSDKVersionFileSuffix).pdb" Source="$(var.SDK_bin_x86d_src_winrt_nosig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)d_wp8_$(var.CppRestSDKVersionFileSuffix).pub.pdb" />
                               <Condition>(VersionNT >= 602)</Condition>
                             </Component>
@@ -356,7 +356,7 @@
                         <Directory Id="Retail01_wp8_bin" Name="Retail">
                           <Directory Id="x8602_wp8_bin" Name="x86">
                             <Component Id="x86_dll_r_wp8_bin" DiskId="1" Guid="$(var.GUID060)">
-                              <File Id="File_x86r_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).dll"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).dll" Source="$(var.SDK_bin_x86r_src_winrt_nosig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).dll" />
+                              <File Id="File_x86r_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).dll"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).dll" Source="$(var.SDK_bin_x86r_src_sig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).dll" />
                               <File Id="File_x86r_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).pdb"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).pdb" Source="$(var.SDK_bin_x86r_src_winrt_nosig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).pub.pdb" />
                               <Condition>(VersionNT >= 602)</Condition>
                             </Component>
@@ -365,7 +365,7 @@
                         <Directory Id="Debug04_wp8_bin" Name="Debug">
                           <Directory Id="arm01_wp8_bin" Name="arm">
                             <Component Id="arm_dll_d_wp8_bin" DiskId="1" Guid="$(var.GUID061)">
-                              <File Id="File_armd_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)d_wp8_$(var.CppRestSDKVersionFileSuffix).dll"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)d_wp8_$(var.CppRestSDKVersionFileSuffix).dll" Source="$(var.SDK_bin_armd_src_winrt_nosig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)d_wp8_$(var.CppRestSDKVersionFileSuffix).dll" />
+                              <File Id="File_armd_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)d_wp8_$(var.CppRestSDKVersionFileSuffix).dll"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)d_wp8_$(var.CppRestSDKVersionFileSuffix).dll" Source="$(var.SDK_bin_armd_src_sig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)d_wp8_$(var.CppRestSDKVersionFileSuffix).dll" />
                               <File Id="File_armd_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)d_wp8_$(var.CppRestSDKVersionFileSuffix).pdb"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)d_wp8_$(var.CppRestSDKVersionFileSuffix).pdb" Source="$(var.SDK_bin_armd_src_winrt_nosig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)d_wp8_$(var.CppRestSDKVersionFileSuffix).pub.pdb" />
                               <Condition>(VersionNT >= 602)</Condition>
                             </Component>
@@ -374,7 +374,7 @@
                         <Directory Id="Retail04_wp8_bin" Name="Retail">
                           <Directory Id="arm02_wp8_bin" Name="arm">
                             <Component Id="arm_dll_r_wp8_bin" DiskId="1" Guid="$(var.GUID062)">
-                              <File Id="File_armr_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).dll"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).dll" Source="$(var.SDK_bin_armr_src_winrt_nosig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).dll" />
+                              <File Id="File_armr_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).dll"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).dll" Source="$(var.SDK_bin_armr_src_sig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).dll" />
                               <File Id="File_armr_$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).pdb"   Name="$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).pdb" Source="$(var.SDK_bin_armr_src_winrt_nosig)\$(var.CppRestBaseFileName)$(var.VSTargetFileSuffix)_wp8_$(var.CppRestSDKVersionFileSuffix).pub.pdb" />
                               <Condition>(VersionNT >= 602)</Condition>
                             </Component>

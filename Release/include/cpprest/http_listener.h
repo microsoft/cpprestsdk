@@ -17,13 +17,16 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* http_listen.h
+* http_listener.h
 *
 * HTTP Library: HTTP listener (server-side) APIs
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 #pragma once
+
+#ifndef _CASA_HTTP_LISTENER_H
+#define _CASA_HTTP_LISTENER_H
 
 #if _WIN32_WINNT < _WIN32_WINNT_VISTA
 #error "Error: http server APIs are not supported in XP"
@@ -51,18 +54,104 @@ namespace listener
 {
 
 /// <summary>
+/// Configuration class used to set various options when constructing and http_listener instance.
+/// </summary>
+class http_listener_config
+{
+public:
+
+    /// <summary>
+    /// Create an http_listener configuration with default options.
+    /// </summary>
+    http_listener_config()
+        : m_timeout(utility::seconds(120))
+    {}
+
+    /// <summary>
+    /// Copy constructor.
+    /// </summary>
+    /// <param name="other">http_listener_config to copy.</param>
+    http_listener_config(const http_listener_config &other)
+        : m_timeout(other.m_timeout)
+    {}
+
+    /// <summary>
+    /// Move constructor.
+    /// <summary>
+    /// <param name="other">http_listener_config to move from.</param>
+    http_listener_config(http_listener_config &&other)
+        : m_timeout(std::move(other.m_timeout))
+    {}
+
+    /// <summary>
+    /// Assignment operator.
+    /// </summary>
+    /// <returns>http_listener_config instance.</returns>
+    http_listener_config & operator=(const http_listener_config &rhs)
+    {
+        if(this != &rhs)
+        {
+            m_timeout = rhs.m_timeout;
+        }
+        return *this;
+    }
+
+    /// <summary>
+    /// Assignment operator.
+    /// </summary>
+    /// <returns>http_listener_config instance.</returns>
+    http_listener_config & operator=(http_listener_config &&rhs)
+    {
+        if(this != &rhs)
+        {
+            m_timeout = std::move(rhs.m_timeout);
+        }
+        return *this;
+    }
+
+    /// <summary>
+    /// Get the timeout
+    /// </summary>
+    /// <returns>The timeout (in seconds).</returns>
+    utility::seconds timeout() const
+    {
+        return m_timeout;
+    }
+
+    /// <summary>
+    /// Set the timeout
+    /// </summary>
+    /// <param name="timeout">The timeout (in seconds) used for each send and receive operation on the client.</param>
+    void set_timeout(utility::seconds timeout)
+    {
+        m_timeout = std::move(timeout);
+    }
+
+private:
+
+    utility::seconds m_timeout;
+};
+
+/// <summary>
 /// A class for listening and processing HTTP requests at a specific URI.
 /// </summary>
 class http_listener
 {
 public:
+
     /// <summary>
     /// Create a listener from a URI.
     /// </summary>
     /// <remarks>The listener will not have been opened when returned.</remarks>
-    /// <param name="uri">URI at which the listener should accept requests.</param>
-    /// <returns>An unopened http_listener.</returns>
-    _ASYNCRTIMP http_listener(const http::uri &address);
+    /// <param name="address">URI at which the listener should accept requests.</param>
+    _ASYNCRTIMP http_listener(http::uri address);
+
+    /// <summary>
+    /// Create a listener with specified URI and configuration.
+    /// </summary>
+    /// <param name="address">URI at which the listener should accept requests.</param>
+    /// <param name="config">Configuration to create listener with.</param>
+    _ASYNCRTIMP http_listener(http::uri address, http_listener_config config);
 
     /// <summary>
     /// Default constructor.
@@ -137,7 +226,13 @@ public:
     /// Get the URI of the listener.
     /// </summary>
     /// <returns>The URI this listener is for.</returns>
-    http::uri uri() const { return m_uri; }
+    const http::uri & uri() const { return m_uri; }
+
+    /// <summary>
+    /// Get the configuration of this listener.
+    /// </summary>
+    /// <returns>Configuration this listener was constructed with.</returns>
+    const http_listener_config & configuration() const { return m_config; }
 
     /// Move constructor.
     /// </summary>
@@ -233,6 +328,9 @@ private:
     // URI 
     http::uri m_uri;
 
+    // Configuration
+    http_listener_config m_config;
+
     // Handlers
     std::function<void(http::http_request)> m_all_requests;
     std::map<http::method, std::function<void(http::http_request)>> m_supported_methods;
@@ -245,3 +343,5 @@ private:
 } // namespace experimental
 } // namespace http
 } // namespace web
+
+#endif  /* _CASA_HTTP_LISTENER_H */

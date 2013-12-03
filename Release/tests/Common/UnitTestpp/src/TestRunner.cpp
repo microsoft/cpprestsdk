@@ -164,7 +164,7 @@ void TestRunner::RunTest(TestResults* const result, Test* const curTest, int con
         if(timedOut)
         {
             MemoryOutStream stream;
-            stream << "Test case timed out and is hung. Aborting all remaining test cases.";
+            stream << "Test case timed out and is hung. Aborting all remaining test cases. ";
             stream << "Expected under " << maxTestTimeInMs << "ms.";
             result->OnTestFailure(curTest->m_details, stream.GetText());
 

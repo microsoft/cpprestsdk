@@ -391,7 +391,7 @@ private:
 
 #ifdef _MS_WINDOWS
     // void* to avoid pulling in windows.h
-    static _ASYNCRTIMP bool __cdecl datetime::system_type_to_datetime(/*SYSTEMTIME*/ void* psysTime, double seconds, datetime * pdt);
+    static _ASYNCRTIMP bool __cdecl datetime::system_type_to_datetime(/*SYSTEMTIME*/ void* psysTime, uint64_t seconds, datetime * pdt);
 #else
     static datetime timeval_to_datetime(struct timeval time);
 #endif

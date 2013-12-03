@@ -127,8 +127,6 @@ namespace pplx = Concurrency;
 
 #endif
 
-#include "cpprest/log.h"
-#include "cpprest/filelog.h"
 #endif
 
 #if defined(max)

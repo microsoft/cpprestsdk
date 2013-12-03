@@ -8,12 +8,12 @@
 
   <ItemGroup Condition="'$(DevToolsVersion)'=='110'">
       <ProjectFile Include="VS11\pplx110_test.vcxproj" />
-      <ProjectFile Include="VS11.xp\pplx110_test.xp.vcxproj" Condition="'$(Platform)'!='ARM'" />
+      <ProjectFile Include="VS11.xp\pplx110_test.xp.vcxproj" Condition="'$(Platform)'!='ARM' and '$(RunCodeAnalysis)'!='true'"/>
   </ItemGroup>
 
   <ItemGroup Condition="'$(DevToolsVersion)'=='120'">
       <ProjectFile Include="VS12\pplx120_test.vcxproj" />
-      <ProjectFile Include="VS12.xp\pplx120_test.xp.vcxproj" Condition="'$(Platform)'!='ARM'" />
+      <ProjectFile Include="VS12.xp\pplx120_test.xp.vcxproj" Condition="'$(Platform)'!='ARM' and '$(RunCodeAnalysis)'!='true'"/>
   </ItemGroup>
 
   <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.2|110' or '$(OsVersion)|$(DevToolsVersion)'=='6.3|110'">
