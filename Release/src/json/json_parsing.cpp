@@ -810,21 +810,21 @@ bool JSON_StringParser<CharType>::CompleteStringLiteral(typename JSON_Parser<Cha
 }
 
 template <typename CharType>
-bool JSON_StringParser<CharType>::finish_parsing_string_with_unescape_char(Token &token)
+bool JSON_StringParser<CharType>::finish_parsing_string_with_unescape_char(typename JSON_Parser<CharType>::Token &token)
 {
     // This function handles parsing the string when an unescape character is encountered.
     // It is called once the part before the unescape char is copied to the token.spelling string
 
     CharType ch;
 
-    if (!handle_unescape_char(token))
+    if (!JSON_StringParser<CharType>::handle_unescape_char(token))
         return false;
 
     while ((ch = JSON_StringParser<CharType>::NextCharacter()) != '"')
     {
         if (ch == '\\')
         {
-            if (!handle_unescape_char(token))
+            if (!JSON_StringParser<CharType>::handle_unescape_char(token))
                 return false;
         }
         else
@@ -836,7 +836,7 @@ bool JSON_StringParser<CharType>::finish_parsing_string_with_unescape_char(Token
         }
     }
 
-    token.kind = Token::TKN_StringLiteral;
+    token.kind = JSON_StringParser<CharType>::Token::TKN_StringLiteral;
     token.end.m_column = this->m_currentColumn;
     token.end.m_line = this->m_currentLine;
 

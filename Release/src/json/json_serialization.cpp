@@ -154,7 +154,7 @@ void web::json::details::_Number::format(std::basic_string<char>& stream) const
         _itoa_s(m_intval, tempBuffer, tempSize, 10);
         const auto numChars = strnlen_s(tempBuffer, tempSize);
 #else
-        const auto numChars = std::snprintf(tempBuffer, tempSize, "i", m_value);
+        const auto numChars = std::snprintf(tempBuffer, tempSize, "%i", m_intval);
 #endif
         stream.append(tempBuffer, numChars);
     }
@@ -263,7 +263,7 @@ bool web::json::details::_String::has_escape_chars(const _String &str)
 {
 	if (str.is_wide())
 	{
-		const wchar_t *escapes = L"\"\\\b\f\r\n\t";
+		const utf16char *escapes = u"\"\\\b\f\r\n\t";
 		return str.m_wstring->find_first_of(escapes) != std::wstring::npos;
 	}
 	else
@@ -382,7 +382,7 @@ bool json::value::operator==(const json::value &other) const
     case Array:
         return static_cast<const json::details::_Array*>(this->m_value.get())->is_equal(static_cast<const json::details::_Array*>(other.m_value.get()));
     }
-    return false;
+    UNREACHABLE;
 }
             
 web::json::value& web::json::value::operator [] (const utility::string_t &key)
