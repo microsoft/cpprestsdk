@@ -3,6 +3,8 @@ LIBRARY=libcasablanca.so
 SOURCES = \
 	streams/linux/fileio_linux.cpp \
 	json/json.cpp \
+	json/json_parsing.cpp \
+	json/json_serialization.cpp \
 	utilities/asyncrt_utils.cpp \
 	pplx/pplx.cpp \
 	pplx/threadpool.cpp \
@@ -51,7 +53,6 @@ HEADERS = \
 	../include/cpprest/producerconsumerstream.h \
 	../include/cpprest/rawptrstream.h \
 	../include/cpprest/json.h \
-	../include/cpprest/log.h \
 	../include/pplx/pplxconv.h \
 	../include/pplx/pplxlinux.h \
 	../include/pplx/pplxinterface.h \
@@ -126,6 +127,6 @@ $(LIBRARY_DST): $(OBJECTS)
 #-include $(DEPS)
 
 clean:
-	rm $(OBJECTS) $(PRECOMPILED_HEADERS) $(LIBRARY)
+	rm $(OBJECTS) $(PRECOMPILED_HEADERS) $(LIBRARY) $(CPP_DEPENDENCIES)
 
 .SILENT:clean
