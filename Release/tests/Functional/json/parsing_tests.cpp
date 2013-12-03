@@ -1,4 +1,4 @@
-﻿/***
+/***
 * ==++==
 *
 * Copyright (c) Microsoft Corporation. All rights reserved. 
@@ -24,7 +24,13 @@
 ****/
 
 #include "stdafx.h"
+
+#if defined(_MS_WINDOWS) || defined(__APPLE__)
 #include <regex>
+#else
+// GCC 4.8 doesn't support regex very well, fall back to Boost. Revist in GCC 4.9.
+#include <boost/regex.hpp>
+#endif
 
 using namespace web; using namespace utility;
 using namespace utility::conversions;
@@ -33,8 +39,14 @@ namespace tests { namespace functional { namespace json_tests {
 
     inline bool verify_parsing_error_msg(const std::string &str)
     {
-        static std::regex pattern("^\\* Line \\d+, Column \\d+ Syntax error: .+");
+        auto spattern = "^\\* Line \\d+, Column \\d+ Syntax error: .+";
+#if defined(_MS_WINDOWS) || defined(__APPLE__)
+        static std::regex pattern(spattern);
         return std::regex_match(str, pattern, std::regex_constants::match_flag_type::match_not_null);
+#else
+        static boost::regex pattern(spattern);
+        return boost::regex_match(str, pattern, boost::regex_constants::match_flag_type::match_not_null);
+#endif
     }
 
 #pragma warning (disable: 4127) // const expression

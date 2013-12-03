@@ -1,6 +1,6 @@
 CXXFLAGS=$(BASE_CXXFLAGS) -I"$(CASABLANCA_INCLUDE_DIR)" -I$(CASABLANCA_TESTS_DIR)/Common/UnitTestpp/
 LDFLAGS=-L"$(OUTPUT_DIR)" $(BASE_LDFLAGS)
-LDLIBS=-lcasablanca -lunittestpp -l$(BOOST_SYSTEM) -l$(BOOST_THREAD) -lpthread -lstdc++ -lm
+LDLIBS=-lcasablanca -lunittestpp -l$(BOOST_SYSTEM) -l$(BOOST_THREAD) -l$(BOOST_REGEX) -lpthread -lstdc++ -lm
 
 OUTPUT_DIR?=./$(MODE)
 
