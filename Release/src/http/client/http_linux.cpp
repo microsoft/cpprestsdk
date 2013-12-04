@@ -278,7 +278,7 @@ namespace web { namespace http
                     auto timeout = m_config.timeout();
                     int secs = static_cast<int>(timeout.count());
                     ctx->m_timer->expires_from_now(boost::posix_time::milliseconds(secs * 1000));
-                    ctx->m_timer->async_wait(boost::bind(&linux_request_context::cancel, ctx, boost::asio::placeholders::error));
+                    ctx->m_timer->async_wait(boost::bind(&linux_request_context::cancel, ctx.get(), boost::asio::placeholders::error));
 
                     m_resolver.async_resolve(query, boost::bind(&client::handle_resolve, this, boost::asio::placeholders::error, boost::asio::placeholders::iterator, ctx));
                 }
