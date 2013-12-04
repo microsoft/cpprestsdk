@@ -131,11 +131,11 @@ void web::json::details::_String::format(std::basic_string<char>& str) const
     {
         if(m_has_escape_char)
         {
-            str.append(*m_string);
+            str.append(escape_string(*m_string));
         }
         else
         {
-            str.append(escape_string(*m_string));
+            str.append(*m_string);
         }
     }
 

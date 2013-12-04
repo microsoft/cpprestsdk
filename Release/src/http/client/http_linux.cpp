@@ -57,7 +57,7 @@ namespace web { namespace http
             public:
                 static std::shared_ptr<request_context> create_request_context(std::shared_ptr<_http_client_communicator> &client, http_request &request)
                 {
-                    return std::make_shared<linux_request_context>(client, request, creation_type_tag{});
+                    return std::make_shared<linux_request_context>(client, request);
                 }
 
                 void report_error(const utility::string_t &message, boost::system::error_code ec, httpclient_errorcode_context context = httpclient_errorcode_context::none)
@@ -162,11 +162,8 @@ namespace web { namespace http
                     }
                 }
 
-            private:
-                // Allow make_shared to create linux_request_context internally, but not to anyone else outside the class
-                class creation_type_tag {};
             public:
-                linux_request_context(std::shared_ptr<_http_client_communicator> &client, http_request request, creation_type_tag) 
+                linux_request_context(std::shared_ptr<_http_client_communicator> &client, http_request request) 
                     : request_context(client, request)
                     , m_known_size(0)
                     , m_needChunked(false)
