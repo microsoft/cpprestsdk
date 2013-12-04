@@ -199,35 +199,35 @@ TEST_FIXTURE(uri_address, set_body_memorystream_chunked)
     // Try sending data straight from a file.
     http_response response(status_codes::OK);
 
-	std::string text1 = "This is a test";
-	size_t length = text1.size();
+    std::string text1 = "This is a test";
+    size_t length = text1.size();
 
     response.headers().set_content_type(U("text/plain; charset=utf-8"));
     // Not setting the content length forces "transfer-encoding: chunked"
 
     listener.support([&](http_request request)
     {
-		http_asserts::assert_request_equals(request, methods::POST, U("/"));
+        http_asserts::assert_request_equals(request, methods::POST, U("/"));
 
-		streams::producer_consumer_buffer<char> rwbuf;
-	
-		streams::basic_istream<uint8_t> stream(rwbuf);
-		response.set_body(stream);
+        streams::producer_consumer_buffer<char> rwbuf;
+    
+        streams::basic_istream<uint8_t> stream(rwbuf);
+        response.set_body(stream);
 
         auto rep = request.reply(response);
 
-		os_utilities::sleep(100);
+        os_utilities::sleep(100);
 
-		rwbuf.putn(&text1[0], length).wait();
-		rwbuf.putn(&text1[0], length).wait();
-		rwbuf.sync().wait();
-		rwbuf.putn(&text1[0], length).wait();
-		rwbuf.close(std::ios_base::out).wait();
+        rwbuf.putn(&text1[0], length).wait();
+        rwbuf.putn(&text1[0], length).wait();
+        rwbuf.sync().wait();
+        rwbuf.putn(&text1[0], length).wait();
+        rwbuf.close(std::ios_base::out).wait();
 
-		rep.wait();
+        rep.wait();
     });
 
-	VERIFY_ARE_EQUAL(0u, p_client->request(methods::POST, U("")));
+    VERIFY_ARE_EQUAL(0u, p_client->request(methods::POST, U("")));
     p_client->next_response().then([&](test_response *p_response)
     {
         http_asserts::assert_test_response_equals(p_response, status_codes::OK);

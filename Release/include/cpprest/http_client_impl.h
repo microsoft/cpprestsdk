@@ -345,7 +345,7 @@ namespace web { namespace http { namespace client { namespace details
                 unsigned long open_if_required()
                 {
                     unsigned long error = S_OK;
-                    
+
                     if( !m_opened )
                     {
                         pplx::extensibility::scoped_critical_section_t l(m_open_lock);

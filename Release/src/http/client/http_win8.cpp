@@ -53,7 +53,7 @@ namespace web { namespace http
                 : public Microsoft::WRL::RuntimeClass<Microsoft::WRL::RuntimeClassFlags<ClassicCom>, ISequentialStream>
             {
             public:
-                ISequentialStream_bridge(streams::streambuf<uint8_t> buf, std::shared_ptr<request_context> request, size_t read_length = std::numeric_limits<size_t>::max())
+                ISequentialStream_bridge(streams::streambuf<uint8_t> buf, request_context *request, size_t read_length = std::numeric_limits<size_t>::max())
                     : m_buffer(buf),
                     m_request(request),
                     m_read_length(read_length),
@@ -163,7 +163,10 @@ namespace web { namespace http
             private:
                 concurrency::streams::streambuf<uint8_t> m_buffer;
 
-                std::shared_ptr<request_context> m_request;
+                // The request context controls the lifetime of this class so directly take a
+                // raw pointer. We could use std::weak_ptr but the extra code and overhead of lock
+                // is unecessary since we completely know the lifetime guarantee here.
+                request_context *m_request;
 
                 // Total count of bytes read
                 size_t m_bytes_read;
@@ -464,7 +467,7 @@ namespace web { namespace http
                         return;
                     }
 
-                    winrt_context->m_stream_bridge = Make<ISequentialStream_bridge>(writebuf, request);
+                    winrt_context->m_stream_bridge = Make<ISequentialStream_bridge>(writebuf, request.get());
 
                     hr = xhr->SetCustomResponseStream(winrt_context->m_stream_bridge.Get());
 
@@ -516,7 +519,7 @@ namespace web { namespace http
                             xhr->Release();
                             return;
                         }
-                        auto str = Make<ISequentialStream_bridge>(readbuf, request, content_length);
+                        auto str = Make<ISequentialStream_bridge>(readbuf, request.get(), content_length);
 
                         hr = xhr->Send(str.Get(), content_length);
                     }

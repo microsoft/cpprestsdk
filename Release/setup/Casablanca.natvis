@@ -100,34 +100,34 @@
     <DisplayString Condition="(m_kind==web::json::value::String) &amp;&amp; (((&amp;((*((web::json::details::_String*)(m_value._Myptr))).m_string))))->_Myptr==0x00000000">
       {*((((&amp;((*((web::json::details::_String*)(m_value._Myptr))).m_wstring)))))->_Myptr}
     </DisplayString>
-
     <DisplayString Condition="(m_kind==web::json::value::String) &amp;&amp; (((&amp;((*((web::json::details::_String*)(m_value._Myptr))).m_wstring))))->_Myptr==0x00000000">
       {*((((&amp;((*((web::json::details::_String*)(m_value._Myptr))).m_string)))))->_Myptr}
     </DisplayString>
-
+    
+    <DisplayString Condition="m_kind==web::json::value::Null">null</DisplayString>
+       
+    <DisplayString Condition="m_kind==0xcccccccc">not initialized</DisplayString>
+ 
     <DisplayString Condition="m_kind==web::json::value::Object">
-      object {(*((web::json::details::_Value*)(m_value._Myptr))).m_elements}
+      object {(*((web::json::details::_Object*)(m_value._Myptr))).m_elements}
     </DisplayString>
 
     <DisplayString Condition="m_kind==web::json::value::Array">
-      array {(*((web::json::details::_Value*)(m_value._Myptr))).m_elements}
+      array {(*((web::json::details::_Array*)(m_value._Myptr))).m_elements}
     </DisplayString>
 
-    <DisplayString Condition="m_kind==web::json::value::Null">null</DisplayString>
-
-    <DisplayString Condition="m_kind==0xcccccccc">not initialized</DisplayString>
     <Expand>
       <ArrayItems Condition="m_kind==web::json::value::Object">
-          <Size>(*((web::json::details::_Value*)((m_value)._Myptr))).m_elements._Mylast - (*((web::json::details::_Value*)((m_value)._Myptr))).m_elements._Myfirst</Size>
-          <ValuePointer>(*((web::json::details::_Value*)((m_value)._Myptr))).m_elements._Myfirst</ValuePointer>
+          <Size>(*((web::json::details::_Object*)((m_value)._Myptr))).m_elements._Mylast - (*((web::json::details::_Object*)((m_value)._Myptr))).m_elements._Myfirst</Size>
+          <ValuePointer>(*((web::json::details::_Object*)((m_value)._Myptr))).m_elements._Myfirst</ValuePointer>
       </ArrayItems>
 
       <ArrayItems Condition="m_kind==web::json::value::Array">
-          <Size>(*((web::json::details::_Value*)((m_value)._Myptr))).m_elements._Mylast - (*((web::json::details::_Value*)((m_value)._Myptr))).m_elements._Myfirst</Size>
-          <ValuePointer>(*((web::json::details::_Value*)((m_value)._Myptr))).m_elements._Myfirst</ValuePointer>
+          <Size>(*((web::json::details::_Array*)((m_value)._Myptr))).m_elements._Mylast - (*((web::json::details::_Array*)((m_value)._Myptr))).m_elements._Myfirst</Size>
+          <ValuePointer>(*((web::json::details::_Array*)((m_value)._Myptr))).m_elements._Myfirst</ValuePointer>
       </ArrayItems>
-
     </Expand>
+ 
   </Type>
 
 </AutoVisualizer> 

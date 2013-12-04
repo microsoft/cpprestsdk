@@ -263,7 +263,11 @@ bool web::json::details::_String::has_escape_chars(const _String &str)
 {
 	if (str.is_wide())
 	{
-		const utf16char *escapes = u"\"\\\b\f\r\n\t";
+#ifdef _MS_WINDOWS
+        const wchar_t *escapes = L"\"\\\b\f\r\n\t";
+#else
+        const utf16char *escapes = u"\"\\\b\f\r\n\t";
+#endif
 		return str.m_wstring->find_first_of(escapes) != std::wstring::npos;
 	}
 	else

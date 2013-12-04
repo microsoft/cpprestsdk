@@ -29,9 +29,13 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "casablanca110.winrt", "src\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HttpListener110_test", "tests\Functional\http\listener\VS11\HttpListener110_test.vcxproj", "{2853EC0B-1B8E-4D9D-8436-4EF6DDED5378}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "utils110_test.xp", "tests\Functional\utils\VS11.xp\utils110_test.xp.vcxproj", "{0A9F1C3A-A8F4-417B-AD25-DF0E2CE9B299}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "utils110_test", "tests\Functional\utils\VS11\utils110_test.vcxproj", "{77BD8C21-0E78-46AD-8420-09F36FC192AA}"
+EndProject
 Global
 	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 14
+		SccNumberOfProjects = 16
 		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
 		SccTeamFoundationServer = http://tkbgitvstfat01:8080/devdiv2
 		SccProjectUniqueName0 = src\\build\\casablanca110.vcxproj
@@ -104,6 +108,16 @@ Global
 		SccAuxPath13 = http://tkbgitvstfat01:8080/devdiv2
 		SccLocalPath13 = tests\\Functional\\http\\listener\\VS11
 		SccProvider13 = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccProjectUniqueName14 = tests\\Functional\\utils\\VS11.xp\\utils110_test.xp.vcxproj
+		SccProjectName14 = tests/Functional/utils/VS11.xp
+		SccAuxPath14 = http://tkbgitvstfat01:8080/devdiv2
+		SccLocalPath14 = tests\\Functional\\utils\\VS11.xp
+		SccProvider14 = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccProjectUniqueName15 = tests\\Functional\\utils\\VS11\\utils110_test.vcxproj
+		SccProjectName15 = tests/Functional/utils/VS11
+		SccAuxPath15 = http://tkbgitvstfat01:8080/devdiv2
+		SccLocalPath15 = tests\\Functional\\utils\\VS11
+		SccProvider15 = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM
@@ -280,6 +294,30 @@ Global
 		{2853EC0B-1B8E-4D9D-8436-4EF6DDED5378}.Release|Win32.Build.0 = Release|Win32
 		{2853EC0B-1B8E-4D9D-8436-4EF6DDED5378}.Release|x64.ActiveCfg = Release|x64
 		{2853EC0B-1B8E-4D9D-8436-4EF6DDED5378}.Release|x64.Build.0 = Release|x64
+		{0A9F1C3A-A8F4-417B-AD25-DF0E2CE9B299}.Debug|ARM.ActiveCfg = Debug|ARM
+		{0A9F1C3A-A8F4-417B-AD25-DF0E2CE9B299}.Debug|ARM.Build.0 = Debug|ARM
+		{0A9F1C3A-A8F4-417B-AD25-DF0E2CE9B299}.Debug|Win32.ActiveCfg = Debug|Win32
+		{0A9F1C3A-A8F4-417B-AD25-DF0E2CE9B299}.Debug|Win32.Build.0 = Debug|Win32
+		{0A9F1C3A-A8F4-417B-AD25-DF0E2CE9B299}.Debug|x64.ActiveCfg = Debug|x64
+		{0A9F1C3A-A8F4-417B-AD25-DF0E2CE9B299}.Debug|x64.Build.0 = Debug|x64
+		{0A9F1C3A-A8F4-417B-AD25-DF0E2CE9B299}.Release|ARM.ActiveCfg = Release|ARM
+		{0A9F1C3A-A8F4-417B-AD25-DF0E2CE9B299}.Release|ARM.Build.0 = Release|ARM
+		{0A9F1C3A-A8F4-417B-AD25-DF0E2CE9B299}.Release|Win32.ActiveCfg = Release|Win32
+		{0A9F1C3A-A8F4-417B-AD25-DF0E2CE9B299}.Release|Win32.Build.0 = Release|Win32
+		{0A9F1C3A-A8F4-417B-AD25-DF0E2CE9B299}.Release|x64.ActiveCfg = Release|x64
+		{0A9F1C3A-A8F4-417B-AD25-DF0E2CE9B299}.Release|x64.Build.0 = Release|x64
+		{77BD8C21-0E78-46AD-8420-09F36FC192AA}.Debug|ARM.ActiveCfg = Debug|ARM
+		{77BD8C21-0E78-46AD-8420-09F36FC192AA}.Debug|ARM.Build.0 = Debug|ARM
+		{77BD8C21-0E78-46AD-8420-09F36FC192AA}.Debug|Win32.ActiveCfg = Debug|Win32
+		{77BD8C21-0E78-46AD-8420-09F36FC192AA}.Debug|Win32.Build.0 = Debug|Win32
+		{77BD8C21-0E78-46AD-8420-09F36FC192AA}.Debug|x64.ActiveCfg = Debug|x64
+		{77BD8C21-0E78-46AD-8420-09F36FC192AA}.Debug|x64.Build.0 = Debug|x64
+		{77BD8C21-0E78-46AD-8420-09F36FC192AA}.Release|ARM.ActiveCfg = Release|ARM
+		{77BD8C21-0E78-46AD-8420-09F36FC192AA}.Release|ARM.Build.0 = Release|ARM
+		{77BD8C21-0E78-46AD-8420-09F36FC192AA}.Release|Win32.ActiveCfg = Release|Win32
+		{77BD8C21-0E78-46AD-8420-09F36FC192AA}.Release|Win32.Build.0 = Release|Win32
+		{77BD8C21-0E78-46AD-8420-09F36FC192AA}.Release|x64.ActiveCfg = Release|x64
+		{77BD8C21-0E78-46AD-8420-09F36FC192AA}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

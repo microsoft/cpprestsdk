@@ -96,7 +96,7 @@ static const utility::char_t * unsupported_charset = _XPLATSTR("Charset must be 
 
 http_msg_base::http_msg_base() 
     : m_headers(), 
-	  m_default_outstream(false)
+      m_default_outstream(false)
 {
 }
 
@@ -174,10 +174,10 @@ void http_msg_base::_complete(utility::size64_t body_size, std::exception_ptr ex
     // Close the write head
     if ((bool)outstream())
     {
-		if ( !(exceptionPtr == std::exception_ptr()) )
-			outstream().close(exceptionPtr).get();
-		else if ( m_default_outstream )
-			outstream().close().get();
+        if ( !(exceptionPtr == std::exception_ptr()) )
+            outstream().close(exceptionPtr).get();
+        else if ( m_default_outstream )
+            outstream().close().get();
     }
 
     if(exceptionPtr == std::exception_ptr())
@@ -202,6 +202,12 @@ utility::string_t details::http_msg_base::_extract_string()
 {
     utility::string_t content, charset;
     parse_content_type_and_charset(headers().content_type(), content, charset);
+
+    // If no Content-Type then just return an empty string.
+    if(content.empty())
+    {
+        return utility::string_t();
+    }
 
     // Content-Type must have textual type.
     if(!is_content_type_textual(content))
@@ -310,10 +316,16 @@ json::value details::http_msg_base::_extract_json()
     utility::string_t content, charset;
     parse_content_type_and_charset(headers().content_type(), content, charset);
 
+    // If no Content-Type then just return a null json value.
+    if(content.empty())
+    {
+        return json::value();
+    }
+
     // Content-Type must be "application/json" or one of the unofficial, but common JSON types.
     if(!is_content_type_json(content))
     {
-		const utility::string_t actualContentType = utility::conversions::to_string_t(content);
+        const utility::string_t actualContentType = utility::conversions::to_string_t(content);
         throw http_exception((_XPLATSTR("Content-Type must be JSON to extract (is: ") + actualContentType + _XPLATSTR(")")).c_str());
     }
     
@@ -410,14 +422,14 @@ std::vector<uint8_t> details::http_msg_base::_extract_vector()
 
     std::vector<uint8_t> body;
     auto buf_r = instream().streambuf();	
-	size_t size = buf_r.in_avail();
+    size_t size = buf_r.in_avail();
 
     body.resize((std::vector<uint8_t>::size_type)buf_r.in_avail());
-	if (size > 0)
-	{
-		body.resize(size);
-		buf_r.getn((uint8_t*)&body[0], body.size()).get(); // There is no risk of blocking.
-	}
+    if (size > 0)
+    {
+        body.resize(size);
+        buf_r.getn((uint8_t*)&body[0], body.size()).get(); // There is no risk of blocking.
+    }
 
     return body;
 }

@@ -54,7 +54,10 @@ static http_response send_request_response(
     const method method = methods::GET;
     const ::http::status_code code = status_codes::OK;
     std::map<utility::string_t, utility::string_t> headers;
-    headers[U("Content-Type")] = content_type;
+    if(!content_type.empty())
+    {
+        headers[U("Content-Type")] = content_type;
+    }
     p_server->next_request().then([&](test_request *p_request)
     {
         http_asserts::assert_test_request_equals(p_request, method, U("/"));
@@ -104,6 +107,10 @@ TEST_FIXTURE(uri_address, extract_string)
     // "utf-8" - quoted charset
     rsp = send_request_response(scoped.server(), &client, U("text/plain;charset=\"utf-8\""), data);
     VERIFY_ARE_EQUAL(to_string_t(data), rsp.extract_string().get());
+
+    // no content length
+    rsp = send_request_response(scoped.server(), &client, U(""), utility::string_t());
+    VERIFY_ARE_EQUAL(utility::string_t(U("")), rsp.extract_string().get());
 
 #ifdef _MS_WINDOWS
     // utf-16le
@@ -228,6 +235,9 @@ TEST_FIXTURE(uri_address, extract_json)
     // utf-8
     rsp = send_request_response(scoped.server(), &client, U("application/json; charset  =  UTF-8"), to_utf8string((data.to_string())));
     VERIFY_ARE_EQUAL(data.to_string(), rsp.extract_json().get().to_string());
+
+    rsp = send_request_response(scoped.server(), &client, U(""), utility::string_t());
+    VERIFY_ARE_EQUAL(utility::string_t(U("null")), rsp.extract_json().get().to_string());
 
 #ifdef _MS_WINDOWS
     // utf-16le

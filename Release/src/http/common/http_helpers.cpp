@@ -298,7 +298,7 @@ namespace details
             // unknown defaults to big endian.
             return convert_utf16be_to_utf16le(src, false);
         }
-        
+
         UNREACHABLE;
     }
 

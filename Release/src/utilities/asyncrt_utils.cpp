@@ -592,7 +592,7 @@ utility::string_t datetime::to_string(date_format format) const
             // Append fractional second, which is a 7-digit value with no trailing zeros
             // This way, '1200' becomes '00012'
             char buf[9] = { 0 };
-            sprintf_s(buf, sizeof(buf), ".%07d", frac_sec);
+            sprintf_s(buf, sizeof(buf), ".%07ld", (long int)frac_sec);
             // trim trailing zeros
             for (int i = 7; buf[i] == '0'; i--) buf[i] = '\0';
             outStream << buf;
