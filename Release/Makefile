@@ -110,8 +110,10 @@ clean:
 	@[ -e src ] # sanity check directory
 	@find . -iname *.so -exec rm '{}' \;
 	@find . -iname *.o -exec rm '{}' \;
+	@find . -iname *.d -exec rm '{}' \;
 	@find ../Binaries -iname *.so -exec rm '{}' \;
 	@find ../Binaries -iname *.txt -exec rm '{}' \;
+	@find ../Binaries -iname *.d -exec rm '{}' \;
 	@find ../Binaries -iname SearchFile -exec rm '{}' \;
 	@find ../Binaries -iname BingRequest -exec rm '{}' \;
 	@find ../Binaries -iname syncdir -exec rm '{}' \;
