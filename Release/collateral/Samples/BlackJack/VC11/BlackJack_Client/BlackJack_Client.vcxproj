@@ -149,5 +149,5 @@
     </ClCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <Import Project="CppRest.props" />
+  <Import Project="CppRest110.props" />
 </Project>

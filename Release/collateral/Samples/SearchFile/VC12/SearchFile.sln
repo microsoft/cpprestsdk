@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{F0BBD44F-3344-46E7-A87F-3816339F1384}") = "SearchFile", "SearchFile.vcxproj", "{99F16455-0590-430A-9CAD-DA29AB519348}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|Win32 = Debug|Win32
+		Release|x64 = Release|x64
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{99F16455-0590-430A-9CAD-DA29AB519348}.Debug|x64.ActiveCfg = Debug|x64
+		{99F16455-0590-430A-9CAD-DA29AB519348}.Debug|x64.Build.0 = Debug|x64
+		{99F16455-0590-430A-9CAD-DA29AB519348}.Release|x64.ActiveCfg = Release|x64
+		{99F16455-0590-430A-9CAD-DA29AB519348}.Release|x64.Build.0 = Release|x64
+		{99F16455-0590-430A-9CAD-DA29AB519348}.Debug|Win32.ActiveCfg = Debug|Win32
+		{99F16455-0590-430A-9CAD-DA29AB519348}.Debug|Win32.Build.0 = Debug|Win32
+		{99F16455-0590-430A-9CAD-DA29AB519348}.Release|Win32.ActiveCfg = Release|Win32
+		{99F16455-0590-430A-9CAD-DA29AB519348}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

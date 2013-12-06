@@ -1,0 +1,194 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{31C2DFBB-159D-4EEE-A067-3ED0A287B7C2}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <VCTargetsPath Condition="'$(VCTargetsPath11)' != '' and '$(VSVersion)' == '' and $(VisualStudioVersion) == ''">$(VCTargetsPath11)</VCTargetsPath>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>NotSet</CharacterSet>
+    <PlatformToolset>v110</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>NotSet</CharacterSet>
+    <PlatformToolset>v110</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>NotSet</CharacterSet>
+    <PlatformToolset>v110</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>NotSet</CharacterSet>
+    <PlatformToolset>v110</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(ProjectDir)\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)\$(Configuration)\</IntDir>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules />
+    <CodeAnalysisRuleAssemblies />
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(ProjectDir)\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)\$(Configuration)\</IntDir>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules />
+    <CodeAnalysisRuleAssemblies />
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(ProjectDir)\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)\$(Configuration)\</IntDir>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules />
+    <CodeAnalysisRuleAssemblies />
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(ProjectDir)\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)\$(Configuration)\</IntDir>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules />
+    <CodeAnalysisRuleAssemblies />
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;DEBUG;_CONSOLE</PreprocessorDefinitions>
+      <ExceptionHandling>Async</ExceptionHandling>
+      <AdditionalOptions>-Zm130 %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;DEBUG;_CONSOLE</PreprocessorDefinitions>
+      <ExceptionHandling>Async</ExceptionHandling>
+      <AdditionalOptions>-Zm130 %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE</PreprocessorDefinitions>
+      <ExceptionHandling>Async</ExceptionHandling>
+      <AdditionalOptions>-Zm130 %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE</PreprocessorDefinitions>
+      <ExceptionHandling>Async</ExceptionHandling>
+      <AdditionalOptions>-Zm130 %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <Text Include="..\ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\casalens.h" />
+    <ClInclude Include="..\stdafx.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\stdafx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\casalens.cpp" />
+    <ClCompile Include="..\datafetcher.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\AppCode.html" />
+    <None Include="..\css\default.css" />
+    <None Include="..\js\default.js" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\image\logo.png" />
+    <Image Include="..\image\wall.jpg" />
+    <Image Include="..\image\bing-logo.jpg" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <Import Project="CppRest110.props" />
+  <Target Name="PostBuildEvent">
+    <MakeDir Directories="$(OutDir)\css" />
+    <MakeDir Directories="$(OutDir)\js" />
+    <MakeDir Directories="$(OutDir)\image" />
+    <Copy SourceFiles="..\css\default.css" DestinationFolder="$(OutDir)\css\" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
+    <Copy SourceFiles="..\js\default.js" DestinationFolder="$(OutDir)\js\" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
+    <Copy SourceFiles="..\AppCode.html" DestinationFolder="$(OutDir)" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
+    <Copy SourceFiles="..\image\wall.jpg" DestinationFolder="$(OutDir)\image\" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
+    <Copy SourceFiles="..\image\logo.png" DestinationFolder="$(OutDir)\image\" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
+    <Copy SourceFiles="..\image\bing-logo.jpg" DestinationFolder="$(OutDir)\image\" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
+    <Copy SourceFiles="$(CppRestSDKPath)\bin\$(PlatformLibPath)\$(Configuration)\$(CppRestRuntimeBaseFileName).dll" DestinationFolder="$(OutDir)\" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
+    <Copy SourceFiles="$(CppRestSDKPath)\bin\$(PlatformLibPath)\$(Configuration)\$(CppRestRuntimeBaseFileName).pdb" DestinationFolder="$(OutDir)\" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
+    <MakeDir Directories="$(MSBuildProjectDirectory )\css" />
+    <MakeDir Directories="$(MSBuildProjectDirectory )\js" />
+    <MakeDir Directories="$(MSBuildProjectDirectory )\image" />
+    <Copy SourceFiles="..\css\default.css" DestinationFolder="$(MSBuildProjectDirectory)\css\" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
+    <Copy SourceFiles="..\js\default.js" DestinationFolder="$(MSBuildProjectDirectory)\js\" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
+    <Copy SourceFiles="..\AppCode.html" DestinationFolder="$(MSBuildProjectDirectory)" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
+    <Copy SourceFiles="..\image\wall.jpg" DestinationFolder="$(MSBuildProjectDirectory)\image\" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
+    <Copy SourceFiles="..\image\logo.png" DestinationFolder="$(MSBuildProjectDirectory)\image\" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
+    <Copy SourceFiles="..\image\bing-logo.jpg" DestinationFolder="$(MSBuildProjectDirectory)\image\" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
+  </Target>
+</Project>

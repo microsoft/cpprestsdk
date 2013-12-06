@@ -16,22 +16,38 @@
     <Delete Files="$(BuildRoot)\Release\Collateral\MakeZip\$(ZipFileName)" />
   </Target>
   <Target Name="Build">
-    <Copy SourceFiles="$(VSProjFolder)\CppRestVC10.props" DestinationFiles="$(SamplesFolder)\BingRequest\VC10\CppRest.props" OverwriteReadOnlyFiles="true"/>
-    <Copy SourceFiles="$(BuildRoot)\Build\version.props"  DestinationFolder="$(SamplesFolder)\BingRequest\VC10" OverwriteReadOnlyFiles="true"/>    
     <Copy SourceFiles="$(BuildRoot)\Build\version.props"  DestinationFolder="$(SamplesFolder)\BingRequest\VC11" OverwriteReadOnlyFiles="true"/>
-    <Copy SourceFiles="$(VSProjFolder)\CppRest.props"     DestinationFolder="$(SamplesFolder)\BingRequest\VC11" OverwriteReadOnlyFiles="true"/>
+    <Copy SourceFiles="$(VSProjFolder)\CppRest110.props"     DestinationFolder="$(SamplesFolder)\BingRequest\VC11" OverwriteReadOnlyFiles="true"/>
     <Copy SourceFiles="$(BuildRoot)\Build\version.props"  DestinationFolder="$(SamplesFolder)\BlackJack\VC11\BlackJack_Client" OverwriteReadOnlyFiles="true"/>
-    <Copy SourceFiles="$(VSProjFolder)\CppRest.props"     DestinationFolder="$(SamplesFolder)\BlackJack\VC11\BlackJack_Client" OverwriteReadOnlyFiles="true"/>
+    <Copy SourceFiles="$(VSProjFolder)\CppRest110.props"     DestinationFolder="$(SamplesFolder)\BlackJack\VC11\BlackJack_Client" OverwriteReadOnlyFiles="true"/>
     <Copy SourceFiles="$(BuildRoot)\Build\version.props"  DestinationFolder="$(SamplesFolder)\BlackJack\VC11\BlackJack_Server" OverwriteReadOnlyFiles="true"/>
-    <Copy SourceFiles="$(VSProjFolder)\CppRest.props"     DestinationFolder="$(SamplesFolder)\BlackJack\VC11\BlackJack_Server" OverwriteReadOnlyFiles="true"/>
+    <Copy SourceFiles="$(VSProjFolder)\CppRest110.props"     DestinationFolder="$(SamplesFolder)\BlackJack\VC11\BlackJack_Server" OverwriteReadOnlyFiles="true"/>
     <Copy SourceFiles="$(BuildRoot)\Build\version.props"  DestinationFolder="$(SamplesFolder)\BlackJack_UIClient\VC11" OverwriteReadOnlyFiles="true"/>
-    <Copy SourceFiles="$(VSProjFolder)\CppRest.props"     DestinationFolder="$(SamplesFolder)\BlackJack_UIClient\VC11" OverwriteReadOnlyFiles="true"/>
+    <Copy SourceFiles="$(VSProjFolder)\CppRest110.props"     DestinationFolder="$(SamplesFolder)\BlackJack_UIClient\VC11" OverwriteReadOnlyFiles="true"/>
     <Copy SourceFiles="$(BuildRoot)\Build\version.props"  DestinationFolder="$(SamplesFolder)\SearchFile\VC11" OverwriteReadOnlyFiles="true"/>
-    <Copy SourceFiles="$(VSProjFolder)\CppRest.props"     DestinationFolder="$(SamplesFolder)\SearchFile\VC11" OverwriteReadOnlyFiles="true"/>
+    <Copy SourceFiles="$(VSProjFolder)\CppRest110.props"     DestinationFolder="$(SamplesFolder)\SearchFile\VC11" OverwriteReadOnlyFiles="true"/>
     <Copy SourceFiles="$(BuildRoot)\Build\version.props"  DestinationFolder="$(SamplesFolder)\FacebookDemo\FacebookDemo110" OverwriteReadOnlyFiles="true"/>
-    <Copy SourceFiles="$(VSProjFolder)\CppRest.props"     DestinationFolder="$(SamplesFolder)\FacebookDemo\FacebookDemo110" OverwriteReadOnlyFiles="true"/>
-    <Copy SourceFiles="$(BuildRoot)\Build\version.props"  DestinationFolder="$(SamplesFolder)\WindowsLiveAuth" OverwriteReadOnlyFiles="true"/>
-    <Copy SourceFiles="$(VSProjFolder)\CppRest.props"     DestinationFolder="$(SamplesFolder)\WindowsLiveAuth" OverwriteReadOnlyFiles="true"/>
+    <Copy SourceFiles="$(VSProjFolder)\CppRest110.props"     DestinationFolder="$(SamplesFolder)\FacebookDemo\FacebookDemo110" OverwriteReadOnlyFiles="true"/>
+    <Copy SourceFiles="$(BuildRoot)\Build\version.props"  DestinationFolder="$(SamplesFolder)\WindowsLiveAuth\VC11" OverwriteReadOnlyFiles="true"/>
+    <Copy SourceFiles="$(VSProjFolder)\CppRest110.props"     DestinationFolder="$(SamplesFolder)\WindowsLiveAuth\VC11" OverwriteReadOnlyFiles="true"/>
+    <Copy SourceFiles="$(BuildRoot)\Build\version.props"  DestinationFolder="$(SamplesFolder)\CasaLens\VC11" OverwriteReadOnlyFiles="true"/>
+    <Copy SourceFiles="$(VSProjFolder)\CppRest110.props"     DestinationFolder="$(SamplesFolder)\CasaLens\VC11" OverwriteReadOnlyFiles="true"/>
+    <Copy SourceFiles="$(BuildRoot)\Build\version.props"  DestinationFolder="$(SamplesFolder)\BingRequest\VC12" OverwriteReadOnlyFiles="true"/>
+    <Copy SourceFiles="$(VSProjFolder)\CppRest120.props"     DestinationFolder="$(SamplesFolder)\BingRequest\VC12" OverwriteReadOnlyFiles="true"/>
+    <Copy SourceFiles="$(BuildRoot)\Build\version.props"  DestinationFolder="$(SamplesFolder)\BlackJack\VC12\BlackJack_Client" OverwriteReadOnlyFiles="true"/>
+    <Copy SourceFiles="$(VSProjFolder)\CppRest120.props"     DestinationFolder="$(SamplesFolder)\BlackJack\VC12\BlackJack_Client" OverwriteReadOnlyFiles="true"/>
+    <Copy SourceFiles="$(BuildRoot)\Build\version.props"  DestinationFolder="$(SamplesFolder)\BlackJack\VC12\BlackJack_Server" OverwriteReadOnlyFiles="true"/>
+    <Copy SourceFiles="$(VSProjFolder)\CppRest120.props"     DestinationFolder="$(SamplesFolder)\BlackJack\VC12\BlackJack_Server" OverwriteReadOnlyFiles="true"/>
+    <Copy SourceFiles="$(BuildRoot)\Build\version.props"  DestinationFolder="$(SamplesFolder)\BlackJack_UIClient\VC12" OverwriteReadOnlyFiles="true"/>
+    <Copy SourceFiles="$(VSProjFolder)\CppRest120.props"     DestinationFolder="$(SamplesFolder)\BlackJack_UIClient\VC12" OverwriteReadOnlyFiles="true"/>
+    <Copy SourceFiles="$(BuildRoot)\Build\version.props"  DestinationFolder="$(SamplesFolder)\SearchFile\VC12" OverwriteReadOnlyFiles="true"/>
+    <Copy SourceFiles="$(VSProjFolder)\CppRest120.props"     DestinationFolder="$(SamplesFolder)\SearchFile\VC12" OverwriteReadOnlyFiles="true"/>
+    <Copy SourceFiles="$(BuildRoot)\Build\version.props"  DestinationFolder="$(SamplesFolder)\FacebookDemo\FacebookDemo120" OverwriteReadOnlyFiles="true"/>
+    <Copy SourceFiles="$(VSProjFolder)\CppRest120.props"     DestinationFolder="$(SamplesFolder)\FacebookDemo\FacebookDemo120" OverwriteReadOnlyFiles="true"/>
+    <Copy SourceFiles="$(BuildRoot)\Build\version.props"  DestinationFolder="$(SamplesFolder)\WindowsLiveAuth\VC12" OverwriteReadOnlyFiles="true"/>
+    <Copy SourceFiles="$(VSProjFolder)\CppRest120.props"     DestinationFolder="$(SamplesFolder)\WindowsLiveAuth\VC12" OverwriteReadOnlyFiles="true"/>
+    <Copy SourceFiles="$(BuildRoot)\Build\version.props"  DestinationFolder="$(SamplesFolder)\CasaLens\VC12" OverwriteReadOnlyFiles="true"/>
+    <Copy SourceFiles="$(VSProjFolder)\CppRest120.props"     DestinationFolder="$(SamplesFolder)\CasaLens\VC12" OverwriteReadOnlyFiles="true"/>
     <ItemGroup>
       <DefaultExclude Include="$(SamplesFolder)\**\bin\**" />
       <DefaultExclude Include="$(SamplesFolder)\**\ipch\**" />

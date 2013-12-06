@@ -8,10 +8,6 @@
       <ProjectFile Include="$(CollateralsDir)\MakeZip\MakeZip.proj"/>
   </ItemGroup>
 
-  <ItemGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32' AND '$(DevToolsVersion)' == '100'">
-      <ProjectFile Include="VS10\MakeSetup.proj"/>
-  </ItemGroup>
-
   <ItemGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32' AND '$(DevToolsVersion)' == '110'">
       <ProjectFile Include="VS11\MakeSetup.proj"/>
   </ItemGroup>

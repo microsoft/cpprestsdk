@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\stdafx.cpp" />
+    <ClCompile Include="..\casalens.cpp" />
+    <ClCompile Include="..\datafetcher.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\casalens.h" />
+    <ClInclude Include="..\stdafx.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="css">
+      <UniqueIdentifier>{533be0b0-b498-43fb-84df-f6ab98cac4c5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="js">
+      <UniqueIdentifier>{4a5308b5-e4a1-4632-80c6-3b3150fa32b4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="image">
+      <UniqueIdentifier>{19c36670-919d-4a7a-b7ab-12aa48a36865}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\css\default.css">
+      <Filter>css</Filter>
+    </None>
+    <None Include="..\js\default.js">
+      <Filter>js</Filter>
+    </None>
+    <None Include="..\AppCode.html" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\image\logo.png">
+      <Filter>image</Filter>
+    </Image>
+    <Image Include="..\image\wall.jpg">
+      <Filter>image</Filter>
+    </Image>
+  </ItemGroup>
+</Project>

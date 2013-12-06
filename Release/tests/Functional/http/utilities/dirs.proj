@@ -2,10 +2,6 @@
 
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Common.Build.settings" />
   
-  <ItemGroup Condition="'$(DevToolsVersion)'=='100'">
-      <ProjectFile Include="VS10\HttpTestUtilities100.vcxproj" />
-  </ItemGroup>
-
   <ItemGroup Condition="'$(DevToolsVersion)'=='110'">
       <ProjectFile Include="VS11\HttpTestUtilities110.vcxproj" />
   </ItemGroup>

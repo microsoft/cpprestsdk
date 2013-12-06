@@ -27,7 +27,6 @@
 #pragma once
 
 #include <collection.h>
-#include "pplx/pplxtasks.h"
 #include "cpprest/basic_types.h"
 #include "cpprest/http_client.h"
 #include "cpprest/streams.h"

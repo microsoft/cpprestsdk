@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{cac70ed0-f5bc-4fd2-a130-ddde51adff8f}</UniqueIdentifier>
+      <Extensions>.cpp;.cxx;.c</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{5ce05162-33b0-49d2-8d0b-f86f26442541}</UniqueIdentifier>
+      <Extensions>.h;.hpp</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\BlackJack_Server\BlackJack_Server.cpp" />
+    <ClCompile Include="..\..\BlackJack_Server\Dealer.cpp" />
+    <ClCompile Include="..\..\BlackJack_Server\stdafx.cpp" />
+    <ClCompile Include="..\..\BlackJack_Server\Table.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\BlackJack_Server\messagetypes.h" />
+    <ClInclude Include="..\..\BlackJack_Server\stdafx.h" />
+    <ClInclude Include="..\..\BlackJack_Server\Table.h" />
+  </ItemGroup>
+</Project>

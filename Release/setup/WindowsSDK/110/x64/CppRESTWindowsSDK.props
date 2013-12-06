@@ -2,7 +2,7 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="version.props" />
   <PropertyGroup>
-    <_PropertySheetDisplayName>C++ REST SDK, $(CppRestSDKVersionString)</_PropertySheetDisplayName>
+    <_PropertySheetDisplayName>C++ REST SDK</_PropertySheetDisplayName>
     <CppRestSDKPath>$([MSBuild]::GetRegistryValue(`HKEY_LOCAL_MACHINE\Software\Microsoft\CppRestSDK\OpenSourceRelease\110\v$(CppRestSDKVersionString)\SDK`, `InstallDir`))</CppRestSDKPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">

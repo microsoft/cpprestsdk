@@ -174,7 +174,7 @@
   
   
   <!-- PPLX files for pre-Dev12 toolsets go here -->
-  <ItemGroup Condition="'$(PlatformToolset)' == 'v100' or '$(PlatformToolset)' == 'v110' or '$(PlatformToolset)' == 'v110_xp' or '$(PlatformToolset)' == 'v110_wp80'">
+  <ItemGroup Condition="'$(PlatformToolset)' == 'v110' or '$(PlatformToolset)' == 'v110_xp' or '$(PlatformToolset)' == 'v110_wp80'">
     <ClCompile Include="$(CasablancaSrcDir)\pplx\pplx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

@@ -21,6 +21,10 @@
     <ProjectFile Include="FacebookDemo\dirs.proj"/>
   </ItemGroup>
 
+  <ItemGroup Condition="'$(Platform)' != 'ARM'">
+    <ProjectFile Include="CasaLens\dirs.proj"/>
+  </ItemGroup>
+
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
 
 </Project>

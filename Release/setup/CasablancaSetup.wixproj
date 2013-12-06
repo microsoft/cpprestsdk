@@ -6,8 +6,8 @@
     <Target Name="CheckVSTargetVersion">
         <Message Text="Checking VSTargetVersion..."/>
         <Error
-            Text="Error: you must set the VSTargetVersion property. Either build with '/p:VSTargetVersion=XX' command line option (where XX is either 10, 11, or 12) or use other project files"
-            Condition="(('$(VSTargetVersion)' != '10') AND ('$(VSTargetVersion)' != '11') AND ('$(VSTargetVersion)' != '12'))" />
+            Text="Error: you must set the VSTargetVersion property. Either build with '/p:VSTargetVersion=XX' command line option (where XX is either 11, or 12) or use other project files"
+            Condition="(('$(VSTargetVersion)' != '11') AND ('$(VSTargetVersion)' != '12'))" />
     </Target>
 
     <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Common.Build.settings" />

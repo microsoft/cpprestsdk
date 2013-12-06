@@ -107,7 +107,7 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <PropertyGroup>
-    <DevLabSampleProjectRoot>$(CollateralsDir)\Samples\BlackJack_UIClient\VC11</DevLabSampleProjectRoot>
+    <DevLabSampleProjectRoot>$(CollateralsDir)\Samples\BlackJack_UIClient</DevLabSampleProjectRoot>
     <OutDir>$(OutDir)\$(MSBuildProjectName)\</OutDir>
     <PackageCertificateThumbprint>5C945ED108BF1723994A90F9BAA4B7D93FBE0E47</PackageCertificateThumbprint>
   </PropertyGroup>

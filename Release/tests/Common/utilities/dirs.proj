@@ -2,10 +2,6 @@
 
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Common.Build.settings" />
 
-  <ItemGroup Condition="'$(DevToolsVersion)'=='100'">
-      <ProjectFile Include="VS10\CommonUtilities100.vcxproj" />
-  </ItemGroup>
-
   <ItemGroup Condition="'$(DevToolsVersion)'=='110'">
       <ProjectFile Include="VS11\CommonUtilities110.vcxproj" />
       <ProjectFile Include="VS11.xp\CommonUtilities110.xp.vcxproj"  Condition="'$(Platform)'!='ARM' and '$(RunCodeAnalysis)'!='true'"/>
