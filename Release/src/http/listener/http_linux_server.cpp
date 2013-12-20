@@ -152,6 +152,15 @@ void connection::handle_http_line(const boost::system::error_code& ec)
         std::getline(request_stream, http_path_and_version);
         const size_t VersionPortionSize = sizeof(" HTTP/1.1\r") - 1;
 
+        // Make sure path and version is long enough to contain the HTTP version
+        if(http_path_and_version.size() < VersionPortionSize + 2)
+        {
+            m_request.reply(status_codes::BadRequest);
+            m_close = true;
+            do_response(true);
+            return;
+        }
+
         // Get the host part of the address. 
         uri_builder builder;
         builder.set_scheme("http");
