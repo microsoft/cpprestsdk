@@ -23,14 +23,6 @@
 
 #include "stdafx.h"
 
-#ifdef __APPLE__
-extern "C" UnitTest::TestList& UnitTest::GetTestList()
-{
-    static TestList s_list;
-    return s_list;
-}
-#endif
-
 pplx::details::atomic_long s_flag;
 
 pplx::scheduler_interface& get_pplx_dflt_scheduler();

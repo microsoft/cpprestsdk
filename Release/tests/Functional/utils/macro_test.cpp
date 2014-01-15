@@ -31,14 +31,6 @@
 #include "cpprest/json.h"
 #include "cpprest/uri_builder.h"
 
-#ifdef __APPLE__
-extern "C" UnitTest::TestList& UnitTest::GetTestList()
-{
-    static TestList s_list;
-    return s_list;
-}
-#endif
-
 namespace tests { namespace functional { namespace utils_tests {
 
     template<typename U>

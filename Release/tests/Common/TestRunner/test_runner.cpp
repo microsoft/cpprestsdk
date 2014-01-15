@@ -204,17 +204,12 @@ static int g_individual_test_timeout = 60000 * 3;
 
 static int parse_command_line(int argc, char **argv)
 {
-    if(argc < 2)
-    {
-        print_help();
-        return -1;
-    }
 
     for(int i = 1; i < argc; ++i)
     {
         std::string arg(argv[i]);
         arg = to_lower(arg);
-
+        
         if(arg.compare("/?") == 0)
         {
             print_help();
@@ -267,7 +262,7 @@ static int parse_command_line(int argc, char **argv)
 static bool matched_properties(const UnitTest::TestProperties& test_props)
 {
     // TestRunner can only execute either desktop or winrt tests, but not both.
-	// This starts with visual studio versions after VS 2012.
+    // This starts with visual studio versions after VS 2012.
 #if defined (_MSC_VER) && (_MSC_VER >= 1800)
 #ifdef WINRT_TEST_RUNNER
     UnitTest::GlobalSettings::Add("winrt", "");
@@ -443,9 +438,7 @@ int main(int argc, char* argv[])
 
     if(g_test_binaries.empty())
     {
-        std::cout << "Error: no test binaries were specified" << std::endl;
-        print_help();
-        return -1;
+        std::cout << "Warning: no test binaries were specified" << std::endl;
     }
 
     test_module_loader module_loader;
@@ -501,14 +494,9 @@ int main(int argc, char* argv[])
                 }
             }
             std::cout << "Loaded " << *binary << "..." << std::endl;
-            UnitTest::TestList& tests = module_loader.get_test_list(*binary);
-
-            // Skip if binary contains no tests.
-            if(tests.IsEmpty())
-            {
-                std::cout << "Skipping " << *binary << " because it contains no test cases" << std::endl;
-                continue;
-            }
+        }
+    }
+    UnitTest::TestList& tests = UnitTest::GetTestList();
 
             // Check to see if running tests multiple times
             int numTimesToRun = 1;
@@ -523,12 +511,6 @@ int main(int argc, char* argv[])
             // Run test cases
             for(int i = 0; i < numTimesToRun; ++i)
             {
-                if(!listOption)
-                {
-                    std::cout << "Running test cases in " << *binary << "..." << std::endl;
-                    std::fflush(stdout);
-                }
-
                 UnitTest::TestRunner testRunner(testReporter, breakOnError);
                 if(UnitTest::GlobalSettings::Has("name"))
                 {
@@ -603,17 +585,15 @@ int main(int argc, char* argv[])
                         else
                         {
                             ChangeConsoleTextColorToGreen();
-                            std::cout << "All test cases in " << *binary << " PASSED" << std::endl << std::endl;
+                            std::cout << "All test cases PASSED" << std::endl << std::endl;
                             ChangeConsoleTextColorToGrey();
                         }
                         const std::vector<std::string> &newFailedTests = testRunner.GetTestResults()->GetFailedTests();
                         failedTests.insert(failedTests.end(), newFailedTests.begin(), newFailedTests.end());
                     }
                 }
-            }
 
             tests.Clear();
-            }
         }
 
         if( totalTestCount > 0 )

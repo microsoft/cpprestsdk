@@ -104,4 +104,12 @@ ListAdder::ListAdder(TestList& list, Test* test, ...)
     list.Add(test);
 }
 
+    UNITTEST_LINKAGE TestList GLOBAL_TESTLIST;
+
+    extern "C"
+    UNITTEST_LINKAGE TestList& GetTestList()
+    {
+        return GLOBAL_TESTLIST;
+    }
+
 }
