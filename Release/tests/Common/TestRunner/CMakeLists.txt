@@ -8,16 +8,29 @@ set(TR_SOURCES
   test_module_loader.cpp
   )
 
-if(WIN32)
-  add_definitions(-DDESKTOP_TEST_RUNNER -DWIN32 -DNDEBUG -D_CONSOLE)
-endif()
-
 if(NOT IOS)
   add_executable(test_runner
     test_runner.cpp
     test_module_loader.cpp
   )
-  if(NOT BUILD_SHARED_LIBS)
+
+  add_custom_target(run_tests ALL DEPENDS run_tests.sh)
+  add_custom_command(
+    OUTPUT run_tests.sh
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/run_tests.sh $<TARGET_FILE_DIR:test_runner>
+    DEPENDS run_tests.sh
+    )
+
+
+  if(BUILD_SHARED_LIBS)
+    target_link_libraries(test_runner
+      ${Boost_FRAMEWORK}
+      ${Boost_SYSTEM_LIBRARY}
+      ${Boost_FILESYSTEM_LIBRARY}
+      ${LIB}unittestpp
+      ${CMAKE_DL_LIBS}
+      )
+  else()
     if (APPLE)
       target_link_libraries(test_runner
         ${Boost_FRAMEWORK}
@@ -64,13 +77,5 @@ if(NOT IOS)
         -Wl,--no-whole-archive
         )
     endif()
-  else()
-    target_link_libraries(test_runner
-      ${Boost_FRAMEWORK}
-      ${Boost_SYSTEM_LIBRARY}
-      ${Boost_FILESYSTEM_LIBRARY}
-      ${LIB}unittestpp
-      ${CMAKE_DL_LIBS}
-      )
   endif()
 endif()	
