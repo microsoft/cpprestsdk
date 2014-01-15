@@ -71,4 +71,6 @@ include_directories(${Boost_INCLUDE_DIR})
 
 add_subdirectory(src)
 add_subdirectory(tests)
-# add_subdirecotry(samples)
+if(NOT IOS)
+  add_subdirectory(samples EXCLUDE_FROM_ALL)
+endif()
