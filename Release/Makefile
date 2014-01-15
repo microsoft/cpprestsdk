@@ -2,11 +2,11 @@ MODE = $(shell getconf LONG_BIT)
 
 debug:
 	mkdir -vp build.debug$(MODE)
-	cd build.debug$(MODE) && cmake .. -DCMAKE_BUILD_TYPE=Debug && cmake --build .
+	cd build.debug$(MODE) && CXX=g++-4.8 cmake .. -DCMAKE_BUILD_TYPE=Debug && cmake --build .
 
 release:
 	mkdir -vp build.release$(MODE)
-	cd build.release$(MODE) && cmake .. -DCMAKE_BUILD_TYPE=Release && cmake --build .
+	cd build.release$(MODE) && CXX=g++-4.8 cmake .. -DCMAKE_BUILD_TYPE=Release && cmake --build .
 
 clean:
 	@[ -e src ] # sanity check directory
