@@ -51,15 +51,22 @@ Galbraith.
 
 The script `boost.sh` provided by the boostoniphone project has a variable at
 the top of the file to specify which parts of boost need be compiled. This
-variable must be changed to include the parts needed for Casablanca: threads,
+variable must be changed to include the parts needed for Casablanca: thread,
 signals, filesystem, regex, program_options, system.
 
-    $ sed -e 's/\${BOOST_LIBS:=".*"}/\${BOOST_LIBS:="threads signals filesystem regex program_options system"}/g' -i .bak boost.sh
+    $ sed -e 's/\${BOOST_LIBS:=".*"}/\${BOOST_LIBS:="thread filesystem regex locale system"}/g' -i .bak boost.sh
     $ ./boost.sh
-    $ cd ..
+
+The headers need to be moved to allow inclusion via `"boost/foo.h"`.
+
+    $ cd ios/framework/boost.framework/Versions/A
+    $ mkdir Headers2
+    $ mv Headers Headers2/boost
+    $ mv Headers2 Headers
 
 Finally, the product framework must be moved into place.
 
+    $ cd ..
     $ mv boostoniphone/ios/framework/boost.framework .
 
 This completes building Boost.
@@ -111,6 +118,7 @@ You will need to add/reference the following from your project:
   * openssl-ios/lib/libcrypto.a
   * openssl-ios/lib/libssl.a
   * Release/include
+  * libiconv.dylib
 
 This should allow you to reference and use casablanca from your C++ and
 Objective-C++ source files. Note: you should change all .m files in your project
