@@ -46,7 +46,7 @@ project author seems to have not continued maintaining the project, however
 there are a few actively maintained forks. We recommend using the fork by Joseph
 Galbraith.
 
-    $ git clone --depth=1 https://git.gitorious.org/boostoniphone/galbraithjosephs-boostoniphone.git boostoniphone
+    $ git clone https://git.gitorious.org/boostoniphone/galbraithjosephs-boostoniphone.git boostoniphone
     $ cd boostoniphone
 
 The script `boost.sh` provided by the boostoniphone project has a variable at
