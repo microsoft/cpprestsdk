@@ -315,8 +315,8 @@ bool web::json::number::is_int64() const
 
 bool web::json::details::_String::has_escape_chars(const _String &str)
 {
-    const wchar_t *escapes = L"\"\\\b\f\r\n\t";
-    return str.m_string.find_first_of(escapes) != std::wstring::npos;
+    const utility::string_t escapes = "\"\\\b\f\r\n\t";
+    return str.m_string.find_first_of(escapes) != utility::string_t::npos;
 }
 
 web::json::details::_Object::_Object(const _Object& other):web::json::details::_Value(other)

@@ -152,7 +152,7 @@ namespace details
         {
             return unknown;
         }
-        const unsigned char *src = (unsigned char *)&str[0];
+        const unsigned char *src = (const unsigned char *)&str[0];
         
         // little endian
         if(src[0] == 0xFF && src[1] == 0xFE)
@@ -229,7 +229,7 @@ namespace details
 #ifdef _UTF16_STRINGS
         return std::move(src);
 #else
-        utf16_to_utf8(std::move(src));
+        return utf16_to_utf8(std::move(src));
 #endif
     }
 

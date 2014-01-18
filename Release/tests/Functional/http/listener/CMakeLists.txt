@@ -7,7 +7,6 @@ set (SOURCES
   connections_and_errors.cpp
   header_tests.cpp
   listener_construction_tests.cpp
-  pipeline_stage_tests.cpp
   reply_helper_tests.cpp
   request_extract_tests.cpp
   request_handler_tests.cpp

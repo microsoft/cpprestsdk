@@ -64,7 +64,7 @@ elseif(WIN32)
     )
 endif()
 
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNINGS}")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNINGS} -Werror -pedantic")
 
 add_library(${LIB}casablanca ${SOURCES})
 

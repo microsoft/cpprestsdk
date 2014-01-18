@@ -2400,6 +2400,9 @@ namespace details
                     // We should not be canceled with an exception more than once.
                     _ASSERTE(!_HasUserException());
 
+                    // Mark _PropagatedFromAncestor as used.
+                    (void)_PropagatedFromAncestor;
+
                     if (_M_TaskState == _Canceled)
                     {
                         // If the task has finished cancelling there should not be any continuation records in the array.
