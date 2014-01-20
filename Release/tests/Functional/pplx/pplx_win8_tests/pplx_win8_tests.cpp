@@ -23,14 +23,6 @@
 
 #include "pch.h"
 
-#ifdef __APPLE__
-extern "C" UnitTest::TestList& UnitTest::GetTestList()
-{
-    static TestList s_list;
-    return s_list;
-}
-#endif
-
 namespace tests { namespace functional { namespace pplx { namespace pplx_win8_tests {
 
 SUITE(compile_only_tests)

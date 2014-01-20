@@ -258,7 +258,7 @@ TEST_FIXTURE(uri_address, cancel_before_request)
 
 // This test can't be implemented with our test server so isn't avaliable on WinRT.
 #ifndef __cplusplus_winrt
-TEST_FIXTURE(uri_address, cancel_after_headers)
+TEST_FIXTURE(uri_address, cancel_after_headers, "Ignore:Linux", "NYI")
 {
     web::http::experimental::listener::http_listener listener(m_uri);  
     listener.open().wait();
@@ -290,7 +290,7 @@ TEST_FIXTURE(uri_address, cancel_after_headers)
 }
 #endif
 
-TEST_FIXTURE(uri_address, cancel_after_body)
+TEST_FIXTURE(uri_address, cancel_after_body, "Ignore:Linux", "NYI")
 {
     test_http_server::scoped_server scoped(m_uri);
     test_http_server * p_server = scoped.server();
@@ -311,7 +311,7 @@ TEST_FIXTURE(uri_address, cancel_after_body)
     response.content_ready().wait();
 }
 
-TEST_FIXTURE(uri_address, cancel_with_error)
+TEST_FIXTURE(uri_address, cancel_with_error, "Ignore:Linux", "NYI")
 {
     test_http_server server(m_uri);
     VERIFY_ARE_EQUAL(0, server.open());
@@ -343,7 +343,7 @@ TEST_FIXTURE(uri_address, cancel_while_uploading_data)
 
 // This test can't be implemented with our test server since it doesn't stream data so isn't avaliable on WinRT.
 #ifndef __cplusplus_winrt
-TEST_FIXTURE(uri_address, cancel_while_downloading_data)
+TEST_FIXTURE(uri_address, cancel_while_downloading_data, "Ignore:Linux", "NYI")
 {
     web::http::experimental::listener::http_listener listener(m_uri);
     listener.open().wait();

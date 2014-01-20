@@ -45,13 +45,13 @@ std::string get_fuzzed_file_path(std::string requires_str)
 
 concurrency::streams::basic_istream<char> get_input_stream(std::string requires_str)
 {
-    std::wstring ipfile = utility::conversions::utf8_to_utf16(get_fuzzed_file_path(requires_str));
+    utility::string_t ipfile = utility::conversions::to_string_t(get_fuzzed_file_path(requires_str));
     concurrency::streams::basic_istream<char> ifs;
 
     if (true == ipfile.empty())
     {
         VERIFY_IS_TRUE(false, "Input file is empty");
-        return ifs; 
+        return ifs;
     }
 
     ifs = concurrency::streams::file_stream<char>::open_istream(ipfile, std::ios::in).get();

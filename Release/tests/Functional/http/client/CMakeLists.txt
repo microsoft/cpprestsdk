@@ -23,6 +23,7 @@ set(SOURCES
   response_stream_tests.cpp
   status_code_reason_phrase_tests.cpp
   to_string_tests.cpp
+  http_client_fuzz_tests.cpp
 )
 
 set(LINKS

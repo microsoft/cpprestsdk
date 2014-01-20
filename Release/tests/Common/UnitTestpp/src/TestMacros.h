@@ -72,7 +72,7 @@
 
 namespace UnitTest
 {
-#ifdef __APPLE__
+    // #ifdef __APPLE__
     //
     // The body of this function needs to be defined in exactly one CPP file in
     // each unit test binary (shared object or DLL).
@@ -86,14 +86,14 @@ namespace UnitTest
     //     static TestList s_list;
     //     return s_list;
     // }    
-#else
+    // #else
     // extern "C"
     // inline _DLL_EXPORT TestList& GetTestList()
     // {
     // static TestList s_list;
     // return s_list;
     // }    
-#endif
+    // #endif
 
     extern "C"
     _DLL_EXPORT TestList& GetTestList();

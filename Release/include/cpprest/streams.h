@@ -1762,7 +1762,7 @@ private:
     }
     static pplx::task<std::basic_string<wchar_t>> _extract_result(std::shared_ptr<std::basic_string<char>> state)
     {
-        return pplx::task_from_result(utility::conversions::utf8_to_utf16(*state));
+        return pplx::task_from_result(utility::conversions::to_string_t(*state));
     }
 };
 

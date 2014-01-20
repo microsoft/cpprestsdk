@@ -218,7 +218,7 @@ static int parse_command_line(int argc, char **argv)
     {
         std::string arg(argv[i]);
         arg = to_lower(arg);
-        
+
         if(arg.compare("/?") == 0)
         {
             print_help();
@@ -507,124 +507,124 @@ int main(int argc, char* argv[])
     }
     UnitTest::TestList& tests = UnitTest::GetTestList();
 
-            // Check to see if running tests multiple times
-            int numTimesToRun = 1;
-            if(UnitTest::GlobalSettings::Has("loop"))
-            {
-                std::istringstream strstream(UnitTest::GlobalSettings::Get("loop"));
-                strstream >> numTimesToRun;
-            }
+    // Check to see if running tests multiple times
+    int numTimesToRun = 1;
+    if(UnitTest::GlobalSettings::Has("loop"))
+    {
+        std::istringstream strstream(UnitTest::GlobalSettings::Get("loop"));
+        strstream >> numTimesToRun;
+    }
 
-            const bool include_ignored_tests = UnitTest::GlobalSettings::Has("noignore");
+    const bool include_ignored_tests = UnitTest::GlobalSettings::Has("noignore");
 
-            // Run test cases
-            for(int i = 0; i < numTimesToRun; ++i)
-            {
-                UnitTest::TestRunner testRunner(testReporter, breakOnError);
-                if(UnitTest::GlobalSettings::Has("name"))
-                {
-                    std::regex nameRegex(replace_wildcard_for_regex(UnitTest::GlobalSettings::Get("name")));
-
-                    if(listOption)
-                    {
-                        handle_list_option(listPropertiesOption, tests, nameRegex);
-                    }
-                    else
-                    {
-                        testRunner.RunTestsIf(
-                            tests, 
-                            [&](UnitTest::Test *pTest) -> bool
-                        {
-                            // Combine suite and test name
-                            std::string fullTestName = pTest->m_details.suiteName;
-                            fullTestName.append(":");
-                            fullTestName.append(pTest->m_details.testName);
-
-                            if(IsTestIgnored(pTest) && !include_ignored_tests)
-                                return false;
-                            else
-                                return matched_properties(pTest->m_properties) && 
-                                std::regex_match(fullTestName, nameRegex);
-                        },
-                            g_individual_test_timeout);
-                    }
-                }
-                else
-                {
-                    if(listOption)
-                    {
-                        handle_list_option(listPropertiesOption, tests);
-                    }
-                    else
-                    {
-                        testRunner.RunTestsIf(
-                            tests,
-                            [&](UnitTest::Test *pTest) -> bool
-                        {
-                            if(IsTestIgnored(pTest) && !include_ignored_tests)
-                                return false;
-                            else
-                                return matched_properties(pTest->m_properties);
-                        },
-                            g_individual_test_timeout);
-                    }
-                }
-
-                if(!listOption)
-                {
-                    totalTestCount += testRunner.GetTestResults()->GetTotalTestCount();
-                    failedTestCount += testRunner.GetTestResults()->GetFailedTestCount();
-                    if( totalTestCount == 0 )
-                    {
-                        std::cout << "No tests were run. Check the command line syntax (must be 'TestRunner.exe SomeTestDll.dll /name:suite_name:test_name')" << std::endl;
-                    }
-                    else
-                    {
-                        if(testRunner.GetTestResults()->GetFailedTestCount() > 0)
-                        {
-                            ChangeConsoleTextColorToRed();
-                            const std::vector<std::string> & failed = testRunner.GetTestResults()->GetFailedTests();
-                            std::for_each(failed.begin(), failed.end(), [](const std::string &failedTest)
-                            {
-                                std::cout << "**** " << failedTest << " FAILED ****" << std::endl << std::endl;
-                                std::fflush(stdout);
-                            });
-                            ChangeConsoleTextColorToGrey();
-                        }
-                        else
-                        {
-                            ChangeConsoleTextColorToGreen();
-                            std::cout << "All test cases PASSED" << std::endl << std::endl;
-                            ChangeConsoleTextColorToGrey();
-                        }
-                        const std::vector<std::string> &newFailedTests = testRunner.GetTestResults()->GetFailedTests();
-                        failedTests.insert(failedTests.end(), newFailedTests.begin(), newFailedTests.end());
-                    }
-                }
-
-            tests.Clear();
-        }
-
-        if( totalTestCount > 0 )
+    // Run test cases
+    for(int i = 0; i < numTimesToRun; ++i)
+    {
+        UnitTest::TestRunner testRunner(testReporter, breakOnError);
+        if(UnitTest::GlobalSettings::Has("name"))
         {
-            // Print out all failed test cases at the end for easy viewing.
-            const double elapsedTime = timer.GetTimeInMs();
-            std::cout << "Finished running all tests. Took " << elapsedTime << "ms" << std::endl;
-            if(failedTestCount > 0)
+            std::regex nameRegex(replace_wildcard_for_regex(UnitTest::GlobalSettings::Get("name")));
+
+            if(listOption)
             {
-                ChangeConsoleTextColorToRed();
-                std::for_each(failedTests.begin(), failedTests.end(), [](const std::string &failedTest)
-                {
-                    std::cout << "**** " << failedTest << " FAILED ****" << std::endl;
-                });
+                handle_list_option(listPropertiesOption, tests, nameRegex);
             }
             else
             {
-                ChangeConsoleTextColorToGreen();
-                std::cout << "****SUCCESS all " << totalTestCount << " test cases PASSED****" << std::endl;
+                testRunner.RunTestsIf(
+                    tests, 
+                    [&](UnitTest::Test *pTest) -> bool
+                    {
+                        // Combine suite and test name
+                        std::string fullTestName = pTest->m_details.suiteName;
+                        fullTestName.append(":");
+                        fullTestName.append(pTest->m_details.testName);
+
+                        if(IsTestIgnored(pTest) && !include_ignored_tests)
+                            return false;
+                        else
+                            return matched_properties(pTest->m_properties) && 
+                                std::regex_match(fullTestName, nameRegex);
+                    },
+                    g_individual_test_timeout);
             }
-            ChangeConsoleTextColorToGrey();
         }
+        else
+        {
+            if(listOption)
+            {
+                handle_list_option(listPropertiesOption, tests);
+            }
+            else
+            {
+                testRunner.RunTestsIf(
+                    tests,
+                    [&](UnitTest::Test *pTest) -> bool
+                    {
+                        if(IsTestIgnored(pTest) && !include_ignored_tests)
+                            return false;
+                        else
+                            return matched_properties(pTest->m_properties);
+                    },
+                    g_individual_test_timeout);
+            }
+        }
+
+        if(!listOption)
+        {
+            totalTestCount += testRunner.GetTestResults()->GetTotalTestCount();
+            failedTestCount += testRunner.GetTestResults()->GetFailedTestCount();
+            if( totalTestCount == 0 )
+            {
+                std::cout << "No tests were run. Check the command line syntax (must be 'TestRunner.exe SomeTestDll.dll /name:suite_name:test_name')" << std::endl;
+            }
+            else
+            {
+                if(testRunner.GetTestResults()->GetFailedTestCount() > 0)
+                {
+                    ChangeConsoleTextColorToRed();
+                    const std::vector<std::string> & failed = testRunner.GetTestResults()->GetFailedTests();
+                    std::for_each(failed.begin(), failed.end(), [](const std::string &failedTest)
+                                  {
+                                      std::cout << "**** " << failedTest << " FAILED ****" << std::endl << std::endl;
+                                      std::fflush(stdout);
+                                  });
+                    ChangeConsoleTextColorToGrey();
+                }
+                else
+                {
+                    ChangeConsoleTextColorToGreen();
+                    std::cout << "All test cases PASSED" << std::endl << std::endl;
+                    ChangeConsoleTextColorToGrey();
+                }
+                const std::vector<std::string> &newFailedTests = testRunner.GetTestResults()->GetFailedTests();
+                failedTests.insert(failedTests.end(), newFailedTests.begin(), newFailedTests.end());
+            }
+        }
+
+        tests.Clear();
+    }
+
+    if( totalTestCount > 0 )
+    {
+        // Print out all failed test cases at the end for easy viewing.
+        const double elapsedTime = timer.GetTimeInMs();
+        std::cout << "Finished running all " << totalTestCount << " tests. Took " << elapsedTime << "ms" << std::endl;
+        if(failedTestCount > 0)
+        {
+            ChangeConsoleTextColorToRed();
+            std::for_each(failedTests.begin(), failedTests.end(), [](const std::string &failedTest)
+                          {
+                              std::cout << "**** " << failedTest << " FAILED ****" << std::endl;
+                          });
+        }
+        else
+        {
+            ChangeConsoleTextColorToGreen();
+            std::cout << "****SUCCESS all test cases PASSED****" << std::endl;
+        }
+        ChangeConsoleTextColorToGrey();
+    }
 
 #ifdef WIN32
     if(hComBase != nullptr)
