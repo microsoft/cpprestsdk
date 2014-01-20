@@ -806,10 +806,10 @@ namespace web { namespace http
 
             http_network_handler::http_network_handler(uri base_uri, http_client_config client_config) :
                 m_http_client_impl(std::make_shared<details::linux_client>(std::move(base_uri), std::move(client_config)))
-        {
+            {
             }
 
-            pplx::task<http_response> http_network_handler:propagate(http_request request)
+            pplx::task<http_response> http_network_handler::propagate(http_request request)
             {
                 auto context = details::linux_request_context::create_request_context(m_http_client_impl, request);
 

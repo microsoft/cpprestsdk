@@ -1256,7 +1256,7 @@ public:
                msl::utilities::SafeInt<std::vector<json::value>::size_type> size(m_array.size());
 #else
                size_t idx = index;
-               size_t size = m_elements.size();
+               size_t size = m_array.size();
 #endif
                return (idx >= size) ? value() : m_array[index];
             }
@@ -1268,7 +1268,7 @@ public:
                msl::utilities::SafeInt<json::array::size_type> nlastSize(m_array.size());
 #else
                size_t nMinSize  = index + 1;
-               size_t nlastSize = m_elements.size();
+               size_t nlastSize = m_array.size();
 #endif
                if (nlastSize < nMinSize)
                   m_array.m_elements.resize(nMinSize);
@@ -1283,7 +1283,7 @@ public:
                msl::utilities::SafeInt<json::value::array_vector::size_type> size(m_array.size());
 #else
                size_t idx = index;
-               size_t size = m_elements.size();
+               size_t size = m_array.size();
 #endif
                 if ( idx >= size )
                     throw json_exception(_XPLATSTR("index out of bounds"));
@@ -1374,8 +1374,6 @@ public:
                 }
                 return reserveSize;
             }
-            
-            template<typename CharType> friend class web::json::details::JSON_Parser;
         };
     } // namespace details
 
