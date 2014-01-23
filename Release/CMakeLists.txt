@@ -40,22 +40,20 @@ if(("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang") OR IOS)
   message("-- Setting clang options")
 
   set(WARNINGS "${WARNINGS} ${OSX_SUPPRESSIONS}")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fno-strict-aliasing -stdlib=libc++")
+
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -Wno-return-type-c-linkage")
   set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++")
   set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++11")
 elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
   message("-- Setting gcc options")
 
   set(WARNINGS "${WARNINGS} ${LINUX_SUPPRESSIONS}")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fno-strict-aliasing")
   set(LD_FLAGS "${LD_FLAGS} -Wl,-z,defs")
 else()
-  message("-- Setting unknown compiler options")
-
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fno-strict-aliasing")
+  message("-- Unknown compiler, success is doubtful.")
 endif()
 
-# set(CMAKE_SKIP_BUILD_RPATH TRUE)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fno-strict-aliasing")
 
 set(STRICT_CXX_FLAGS ${WARNINGS} "-Werror -pedantic")
 

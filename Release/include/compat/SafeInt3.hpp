@@ -81,7 +81,11 @@ Version 3.0
 // Various things needed for GCC
 #if defined __GNUC__
 
+#if !defined __clang__
+
 #pragma GCC diagnostic ignored "-Wunused-local-typedefs"
+
+#endif
 
 #define NEEDS_INT_DEFINED
 

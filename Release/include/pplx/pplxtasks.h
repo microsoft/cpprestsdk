@@ -408,7 +408,7 @@ namespace details
     };
 #endif  /* defined (__cplusplus_winrt) */
 
-    template <typename _Function> auto _IsCallable(_Function _Func, int) -> decltype(_Func(), std::true_type()) { (_Func); return std::true_type(); }
+    template <typename _Function> auto _IsCallable(_Function _Func, int) -> decltype(_Func(), std::true_type()) { (void)(_Func); return std::true_type(); }
     template <typename _Function> std::false_type _IsCallable(_Function, ...) { return std::false_type(); }
 
     template <>

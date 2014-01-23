@@ -87,6 +87,8 @@ namespace web { namespace http
                             if (ec.default_error_condition().value() == boost::system::errc::no_such_file_or_directory) // bug in boost error_code mapping
                                 errorcodeValue = make_error_code(std::errc::connection_aborted).value();
                             break;
+                        default:
+                            break;
                         }
                     }
                     request_context::report_error(errorcodeValue, message);

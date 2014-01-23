@@ -344,7 +344,7 @@ namespace details {
         /// <param name="count">The number of characters that were read.</param>
         virtual void release(_Out_writes_ (count) _CharType *, _In_ size_t count)
         {
-            (count);
+            (void)(count);
         }
 
         /// <summary>

@@ -36,7 +36,7 @@ namespace tests { namespace functional { namespace utils_tests {
     template<typename U>
     void macro_U_Test()
     {
-        U();
+        (void)U();
     }
 
     SUITE(macro_test)

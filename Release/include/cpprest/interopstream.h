@@ -115,7 +115,7 @@ namespace Concurrency { namespace streams {
         virtual pplx::task<size_t> _putn(const _CharType *ptr, size_t size) { return pplx::task_from_result((size_t)m_buffer->sputn(ptr, size)); }
 
         size_t _sgetn(_Out_writes_ (size) _CharType *ptr, _In_ size_t size) const { return m_buffer->sgetn(ptr, size); }
-        virtual size_t _scopy(_Out_writes_ (size) _CharType *, _In_ size_t size) { (size); return (size_t)-1; }
+        virtual size_t _scopy(_Out_writes_ (size) _CharType *, _In_ size_t size) { (void)(size); return (size_t)-1; }
 
         virtual pplx::task<size_t> _getn(_Out_writes_ (size) _CharType *ptr, _In_ size_t size) { return pplx::task_from_result((size_t)m_buffer->sgetn(ptr, size)); }
 
