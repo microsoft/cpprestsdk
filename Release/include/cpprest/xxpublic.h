@@ -49,7 +49,7 @@ typedef UINT_PTR SOCKET;
 #endif
 
 // for guids, used in comm.h
-#ifdef MS_TARGET_APPLE
+#ifdef __APPLE__
 #include "compat/apple_compat.h"
 #else
 #ifdef _MS_WINDOWS

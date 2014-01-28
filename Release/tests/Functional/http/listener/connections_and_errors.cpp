@@ -290,7 +290,7 @@ int verify_http_exception(Func f)
     return errorCode;
 }
 
-TEST_FIXTURE(uri_address, request_content_ready_timeout, "Ignore:Linux", "NYI")
+ TEST_FIXTURE(uri_address, request_content_ready_timeout, "Ignore:Linux", "NYI", "Ignore:Apple", "NYI")
 {
     http_listener_config config;
     config.set_timeout(utility::seconds(1));
