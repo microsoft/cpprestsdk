@@ -8,21 +8,15 @@ set(TR_SOURCES
   test_module_loader.cpp
   )
 
+add_definitions(-DDESKTOP_TEST_RUNNER)
+
 if(NOT IOS)
-  add_executable(test_runner
-    test_runner.cpp
-    test_module_loader.cpp
-  )
-
-  add_custom_target(run_tests ALL DEPENDS run_tests.sh)
-  add_custom_command(
-    OUTPUT run_tests.sh
-    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/run_tests.sh $<TARGET_FILE_DIR:test_runner>
-    DEPENDS run_tests.sh
-    )
-
-
   if(BUILD_SHARED_LIBS)
+    add_executable(test_runner
+      test_runner.cpp
+      test_module_loader.cpp
+      )
+
     target_link_libraries(test_runner
       ${Boost_FRAMEWORK}
       ${Boost_SYSTEM_LIBRARY}
@@ -32,6 +26,11 @@ if(NOT IOS)
       )
   else()
     if (APPLE)
+      add_executable(test_runner
+        test_runner.cpp
+        test_module_loader.cpp
+        )
+
       target_link_libraries(test_runner
         ${Boost_FRAMEWORK}
         ${Boost_SYSTEM_LIBRARY}
@@ -59,7 +58,12 @@ if(NOT IOS)
         -Wl,-force_load
         ${LIB}utils_test
         )
-    else()
+    elseif(UNIX)
+      add_executable(test_runner
+        test_runner.cpp
+        test_module_loader.cpp
+        )
+
       target_link_libraries(test_runner
         ${Boost_FRAMEWORK}
         ${Boost_SYSTEM_LIBRARY}
@@ -76,6 +80,31 @@ if(NOT IOS)
         ${LIB}utils_test
         -Wl,--no-whole-archive
         )
+    else()
+      # In order to achieve --whole-archive on windows, we link all the test files into the test_runner directly
+      # This means that the tests themselves must be created as "OBJECT" libraries
+      add_executable(test_runner
+        test_runner.cpp
+        test_module_loader.cpp
+        $<TARGET_OBJECTS:${LIB}httpclient_test>
+        $<TARGET_OBJECTS:${LIB}json_test>
+        $<TARGET_OBJECTS:${LIB}uri_test>
+        $<TARGET_OBJECTS:${LIB}pplx_test>
+        $<TARGET_OBJECTS:${LIB}httplistener_test>
+        $<TARGET_OBJECTS:${LIB}asyncop_test>
+        $<TARGET_OBJECTS:${LIB}utils_test>
+        )
+      target_link_libraries(test_runner
+        ${LIB}unittestpp
+        ${CMAKE_DL_LIBS}
+        )
     endif()
   endif()
+
+  add_custom_target(run_tests ALL DEPENDS run_tests.sh)
+  add_custom_command(
+    OUTPUT run_tests.sh
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/run_tests.sh $<TARGET_FILE_DIR:test_runner>
+    DEPENDS run_tests.sh
+    )
 endif()	

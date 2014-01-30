@@ -1,23 +1,6 @@
 include_directories(../include pch ${Boost_INCLUDE_DIR} ${OPENSSL_INCLUDE_DIR})
 
 # THE ORDER OF FILES IS VERY /VERY/ IMPORTANT
-set(SOURCES
-  json/json.cpp
-  json/json_parsing.cpp
-  json/json_serialization.cpp
-  utilities/asyncrt_utils.cpp
-  http/uri/uri.cpp
-  http/uri/uri_builder.cpp
-  http/uri/uri_parser.cpp
-  http/common/http_msg.cpp
-  http/common/http_helpers.cpp
-  http/client/http_msg_client.cpp
-  http/listener/http_listener.cpp
-  http/listener/http_msg_listen.cpp
-  http/listener/http_server_api.cpp
-  utilities/base64.cpp
-  )
-
 if(UNIX)
   set(SOURCES
     streams/linux/fileio_linux.cpp
@@ -43,11 +26,26 @@ if(UNIX)
   if(APPLE)
     set(SOURCES ${SOURCES} pplx/apple/pplxapple.cpp)
     find_library(COREFOUNDATION CoreFoundation "/")
+    set(EXTRALINKS ${COREFOUNDATION})
   else()
     set(SOURCES ${SOURCES} pplx/linux/pplxlinux.cpp)
   endif()
 elseif(WIN32)
-  set(SOURCES ${SOURCES}
+  set(SOURCES
+    json/json.cpp
+    json/json_parsing.cpp
+    json/json_serialization.cpp
+    utilities/asyncrt_utils.cpp
+    http/uri/uri.cpp
+    http/uri/uri_builder.cpp
+    http/uri/uri_parser.cpp
+    http/common/http_msg.cpp
+    http/common/http_helpers.cpp
+    http/client/http_msg_client.cpp
+    http/listener/http_listener.cpp
+    http/listener/http_msg_listen.cpp
+    http/listener/http_server_api.cpp
+    utilities/base64.cpp
     http/client/http_win7.cpp
     http/listener/http_windows_server.cpp
     streams/windows/fileio.cpp
@@ -62,6 +60,7 @@ elseif(WIN32)
     -D_MBCS
     -D_USRDLL
     )
+  set(EXTRALINKS Httpapi.lib Winhttp.dll)
 endif()
 
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNINGS}")
@@ -77,4 +76,5 @@ target_link_libraries(${LIB}casablanca
   ${Boost_LOCALE_LIBRARY}
   ${Boost_REGEX_LIBRARY}
   ${COREFOUNDATION}
+  ${EXTRALINKS}
   )

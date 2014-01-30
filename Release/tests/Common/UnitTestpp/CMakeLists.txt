@@ -43,17 +43,9 @@ if(UNIX)
     src/Posix/TimeHelpers.cpp
     )
 elseif(WIN32)
-  add_definitions(-DWIN32 -D_USRDLL -D_CRT_SECURE_NO_DEPRECATE)
-  set_target_properties(${LIB}unittestpp PROPERTIES COMPILE_FLAGS "-DUNITTEST_DLL_EXPORT -D_DEBUG")
-#  set_target_properties(test-unittestpp PROPERTIES COMPILE_FLAGS "-D_WINDOWS -DNDEBUG")
-
   set(UT_SOURCES ${UT_SOURCES} src/Win32/TimeHelpers.cpp)
+
+  add_definitions(-DWIN32 -D_USRDLL -D_CRT_SECURE_NO_DEPRECATE -DUNITTEST_DLL_EXPORT)
 endif()
 
 add_library(${LIB}unittestpp ${UT_SOURCES})
-#  add_library(test-unittestpp ${TEST_SOURCES})
-
-#target_link_libraries(test-unittestpp
-#  ${Casablanca_LIBRARIES}
-#  ${LIB}unittestpp
-#  )

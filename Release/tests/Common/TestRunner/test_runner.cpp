@@ -91,8 +91,17 @@ static std::vector<std::string> get_files_in_directory()
     char exe_directory_buffer[MAX_PATH]; 
     GetModuleFileNameA(NULL, exe_directory_buffer, MAX_PATH); 
     std::string exe_directory = to_lower(exe_directory_buffer);
-    auto location = exe_directory.rfind("testrunner");
-    exe_directory.erase(location);
+    auto location = exe_directory.rfind("\\");
+    if (location != std::string::npos)
+    {
+        exe_directory.erase(location + 1);
+    }
+    else
+    {
+      std::cout << "Could not determine execution directory" << std::endl;
+      exit(-1);
+    }
+        
     exe_directory.append("*");
     WIN32_FIND_DATAA findFileData;
     HANDLE hFind = FindFirstFileA(exe_directory.c_str(), &findFileData);
