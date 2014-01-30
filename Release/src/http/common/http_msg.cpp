@@ -25,6 +25,7 @@
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 #include "stdafx.h"
+
 #include "cpprest/http_msg.h"
 #include "cpprest/producerconsumerstream.h"
 #include "cpprest/http_helpers.h"
@@ -39,8 +40,6 @@ namespace web { namespace http
 {
 
 #define CRLF _XPLATSTR("\r\n")
-
-static utility::string_t _g_emptyString;
 
 utility::string_t http_headers::content_type() const
 {
@@ -194,7 +193,6 @@ void http_msg_base::_complete(utility::size64_t body_size, std::exception_ptr ex
             } catch (...) {
             }
         });
-
     }
 }
 
@@ -227,82 +225,59 @@ utility::string_t details::http_msg_base::_extract_string()
         return utility::string_t();
     }
 
-    // static_casts are used because we allocated these buffers and I know with certainly they
-    // are of the type corresponding to the charset.
-
-#ifdef _MS_WINDOWS
-    if(_wcsicmp(charset.c_str(), charset_types::usascii.c_str()) == 0)
-#else
-    if(boost::iequals(charset, charset_types::usascii))
-#endif
+    // Perform the correct character set conversion if one is necessary.
+    if(utility::details::str_icmp(charset, charset_types::usascii))
     {
         std::string body;
         body.resize((std::string::size_type)buf_r.in_avail());
         buf_r.getn((uint8_t*)&body[0], body.size()).get(); // There is no risk of blocking.
-        return to_string_t(usascii_to_utf16(body));
+        return to_string_t(std::move(body));
     }
 
     // Latin1
-#ifdef _MS_WINDOWS
-    else if(_wcsicmp(charset.c_str(), charset_types::latin1.c_str()) == 0)
-#else
-    else if(boost::iequals(charset, charset_types::latin1))
-#endif
+    if(utility::details::str_icmp(charset, charset_types::latin1))
     {
         std::string body;
         body.resize((std::string::size_type)buf_r.in_avail());
         buf_r.getn((uint8_t*)&body[0], body.size()).get(); // There is no risk of blocking.
-        return to_string_t(latin1_to_utf16(body));
+        // Could optimize for linux in the future if a latin1_to_utf8 function was written.
+        return to_string_t(latin1_to_utf16(std::move(body)));
     }
 
     // utf-8.
-#ifdef _MS_WINDOWS
-    else if(_wcsicmp(charset.c_str(), charset_types::utf8.c_str()) == 0)
-#else
-    else if(boost::iequals(charset, charset_types::utf8))
-#endif
+    else if(utility::details::str_icmp(charset, charset_types::utf8))
     {
         std::string body;
         body.resize((std::string::size_type)buf_r.in_avail());
         buf_r.getn((uint8_t*)&body[0], body.size()).get(); // There is no risk of blocking.
-        return to_string_t(body);
+        return to_string_t(std::move(body));
     }
 
     // utf-16.
-#ifdef _MS_WINDOWS
-    else if(_wcsicmp(charset.c_str(), charset_types::utf16.c_str()) == 0)
-#else
-    else if(boost::iequals(charset, charset_types::utf16))
-#endif
+    else if(utility::details::str_icmp(charset, charset_types::utf16))
     {
-        std::vector<uint8_t> body((std::vector<uint8_t>::size_type)buf_r.in_avail());
-        buf_r.getn((uint8_t*)&body[0], body.size()).get(); // There is no risk of blocking.
-        return to_string_t(convert_utf16_to_utf16(body));
+        utf16string body;
+        body.resize(buf_r.in_avail() / sizeof(utf16string::value_type));
+        buf_r.getn((uint8_t*)&body[0], body.size() * sizeof(utf16string::value_type)); // There is no risk of blocking.
+        return convert_utf16_to_string_t(std::move(body));
     }
 
     // utf-16le
-#ifdef _MS_WINDOWS
-    else if(_wcsicmp(charset.c_str(), charset_types::utf16le.c_str()) == 0)
-#else
-    else if(boost::iequals(charset, charset_types::utf16le))
-#endif
+    else if(utility::details::str_icmp(charset, charset_types::utf16le))
     {
-        utility::string_t body;
-        body.resize(buf_r.in_avail()/sizeof(utf16char));
-        buf_r.getn((uint8_t*)&body[0], body.size()*sizeof(utf16char)); // There is no risk of blocking.
-        return body;
+        utf16string body;
+        body.resize(buf_r.in_avail() / sizeof(utf16string::value_type));
+        buf_r.getn((uint8_t*)&body[0], body.size() * sizeof(utf16string::value_type)); // There is no risk of blocking.
+        return convert_utf16le_to_string_t(std::move(body), false);        
     }
 
     // utf-16be
-#ifdef _MS_WINDOWS
-    else if(_wcsicmp(charset.c_str(), charset_types::utf16be.c_str()) == 0)
-#else
-    else if(boost::iequals(charset, charset_types::utf16be))
-#endif
+    else if(utility::details::str_icmp(charset, charset_types::utf16be))
     {
-        std::vector<uint8_t> body((std::vector<uint8_t>::size_type)buf_r.in_avail());
-        buf_r.getn((uint8_t*)&body[0], body.size()).get(); // There is no risk of blocking.
-        return to_string_t(convert_utf16be_to_utf16le(body, false));
+        utf16string body;
+        body.resize(buf_r.in_avail() / sizeof(utf16string::value_type));
+        buf_r.getn((uint8_t*)&body[0], body.size() * sizeof(utf16string::value_type)); // There is no risk of blocking.
+        return convert_utf16be_to_string_t(std::move(body), false);
     }
     
     else
@@ -326,7 +301,7 @@ json::value details::http_msg_base::_extract_json()
     if(!is_content_type_json(content))
     {
         const utility::string_t actualContentType = utility::conversions::to_string_t(content);
-        throw http_exception((_XPLATSTR("Content-Type must be JSON to extract (is: ") + actualContentType + _XPLATSTR(")")).c_str());
+        throw http_exception((_XPLATSTR("Content-Type must be JSON to extract (is: ") + actualContentType + _XPLATSTR(")")));
     }
     
     if (!instream())
@@ -341,70 +316,50 @@ json::value details::http_msg_base::_extract_json()
         return json::value::parse(utility::string_t());
     }
 
-    // static_casts are used because we allocated these buffers and I know with certainly they
-    // are of the type corresponding to the charset.
-
     // Latin1
-#ifdef _MS_WINDOWS
-    if(_wcsicmp(charset.c_str(), charset_types::latin1.c_str()) == 0)
-#else
-    if(boost::iequals(charset, charset_types::latin1))
-#endif
+    if(utility::details::str_icmp(charset, charset_types::latin1))
     {
         std::string body;
         body.resize(buf_r.in_avail());
         buf_r.getn((uint8_t*)&body[0], body.size()).get(); // There is no risk of blocking.
-        return json::value::parse(to_string_t(latin1_to_utf16(body)));
+        // On Linux could optimize in the future if a latin1_to_utf8 function is written.
+        return json::value::parse(to_string_t(latin1_to_utf16(std::move(body))));
     }
 
     // utf-8 and usascii
-#ifdef _MS_WINDOWS
-    else if(_wcsicmp(charset.c_str(), charset_types::utf8.c_str()) == 0 || _wcsicmp(charset.c_str(), charset_types::usascii.c_str()) == 0)
-#else
-    else if(boost::iequals(charset, charset_types::utf8) || boost::iequals(charset, charset_types::usascii))
-#endif
+    else if(utility::details::str_icmp(charset, charset_types::utf8) || utility::details::str_icmp(charset, charset_types::usascii))
     {
         std::string body;
         body.resize(buf_r.in_avail());
         buf_r.getn((uint8_t*)&body[0], body.size()).get(); // There is no risk of blocking.
-        return json::value::parse(to_string_t(body));
+        return json::value::parse(to_string_t(std::move(body)));
     }
 
     // utf-16.
-#ifdef _MS_WINDOWS
-    else if(_wcsicmp(charset.c_str(), charset_types::utf16.c_str()) == 0)
-#else
-    else if(boost::iequals(charset, charset_types::utf16))
-#endif
+    else if(utility::details::str_icmp(charset, charset_types::utf16))
     {
-        std::vector<uint8_t> body((std::vector<uint8_t>::size_type)buf_r.in_avail());
-        buf_r.getn((uint8_t*)&body[0], body.size()).get(); // There is no risk of blocking.
-        return json::value::parse(to_string_t(convert_utf16_to_utf16(body)));
+        utf16string body;
+        body.resize(buf_r.in_avail() / sizeof(utf16string::value_type));
+        buf_r.getn((uint8_t*)&body[0], body.size() * sizeof(utf16string::value_type)); // There is no risk of blocking.
+        return json::value::parse(convert_utf16_to_string_t(std::move(body)));
     }
 
     // utf-16le
-#ifdef _MS_WINDOWS
-    else if(_wcsicmp(charset.c_str(), charset_types::utf16le.c_str()) == 0)
-#else
-    else if(boost::iequals(charset, charset_types::utf16le))
-#endif
+    else if(utility::details::str_icmp(charset, charset_types::utf16le))
     {
         utf16string body;
-        body.resize((utf16string::size_type)buf_r.in_avail()/sizeof(utf16char));
-        buf_r.getn((uint8_t*)&body[0], body.size()*sizeof(utf16char)).get(); // There is no risk of blocking.
-        return json::value::parse(to_string_t(body));
+        body.resize(buf_r.in_avail() / sizeof(utf16string::value_type));
+        buf_r.getn((uint8_t*)&body[0], body.size() * sizeof(utf16string::value_type)); // There is no risk of blocking.
+        return json::value::parse(convert_utf16le_to_string_t(std::move(body), false));
     }
 
     // utf-16be
-#ifdef _MS_WINDOWS
-    else if(_wcsicmp(charset.c_str(), charset_types::utf16be.c_str()) == 0)
-#else
-    else if(boost::iequals(charset, charset_types::utf16be))
-#endif
+    else if(utility::details::str_icmp(charset, charset_types::utf16be))
     {
-        std::vector<uint8_t> body((std::vector<uint8_t>::size_type)buf_r.in_avail());
-        buf_r.getn((uint8_t*)&body[0], body.size()).get(); // There is no risk of blocking.
-        return json::value::parse(to_string_t(convert_utf16be_to_utf16le(body, false)));
+        utf16string body;
+        body.resize(buf_r.in_avail() / sizeof(utf16string::value_type));
+        buf_r.getn((uint8_t*)&body[0], body.size() * sizeof(utf16string::value_type)); // There is no risk of blocking.
+        return json::value::parse(convert_utf16be_to_string_t(std::move(body), false));
     }
     
     else
@@ -422,13 +377,12 @@ std::vector<uint8_t> details::http_msg_base::_extract_vector()
 
     std::vector<uint8_t> body;
     auto buf_r = instream().streambuf();	
-    size_t size = buf_r.in_avail();
+    const size_t size = buf_r.in_avail();
 
-    body.resize((std::vector<uint8_t>::size_type)buf_r.in_avail());
     if (size > 0)
     {
         body.resize(size);
-        buf_r.getn((uint8_t*)&body[0], body.size()).get(); // There is no risk of blocking.
+        buf_r.getn((uint8_t*)&body[0], size).get(); // There is no risk of blocking.
     }
 
     return body;
@@ -458,59 +412,49 @@ static utility::string_t convert_body_to_string_t(const utility::string_t &conte
         return utility::string_t();
     }
 
-    std::vector<unsigned char> body((std::vector<unsigned char>::size_type)streambuf.in_avail());
-    size_t copied = streambuf.scopy(&body[0], body.size());
-    if (copied == 0 || copied == (size_t)-1) 
-        return _XPLATSTR("");
-
     // Latin1
-#ifdef _MS_WINDOWS
-    if(_wcsicmp(charset.c_str(), charset_types::latin1.c_str()) == 0)
-#else
-    if(boost::iequals(charset, charset_types::latin1))
-#endif
+    if(utility::details::str_icmp(charset, charset_types::latin1))
     {
-        return to_string_t(latin1_to_utf16(convert_bytes_to_string(&body[0], body.size())));
+        std::string body;
+        body.resize(streambuf.in_avail());
+        if(streambuf.scopy((unsigned char *)&body[0], body.size()) == 0) return string_t();
+        return to_string_t(latin1_to_utf16(std::move(body)));
     }
 
     // utf-8.
-#ifdef _MS_WINDOWS
-    else if(_wcsicmp(charset.c_str(), charset_types::utf8.c_str()) == 0)
-#else
-    else if(boost::iequals(charset, charset_types::utf8) )
-#endif
+    else if(utility::details::str_icmp(charset, charset_types::utf8))
     {
-        return to_string_t(convert_utf8_to_utf16(&body[0], body.size()));
+        std::string body;
+        body.resize(streambuf.in_avail());
+        if(streambuf.scopy((unsigned char *)&body[0], body.size()) == 0) return string_t();
+        return to_string_t(std::move(body));
     }
 
     // utf-16.
-#ifdef _MS_WINDOWS
-    else if(_wcsicmp(charset.c_str(), charset_types::utf16.c_str()) == 0)
-#else
-    else if(boost::iequals(charset, charset_types::utf16) )
-#endif
+    else if(utility::details::str_icmp(charset, charset_types::utf16))
     {
-        return to_string_t(convert_utf16_to_utf16(&body[0], body.size()));
+        utf16string body;
+        body.resize(streambuf.in_avail() / sizeof(utf16string::value_type));
+        if(streambuf.scopy((unsigned char *)&body[0], body.size() * sizeof(utf16string::value_type)) == 0) return string_t();
+        return convert_utf16_to_string_t(std::move(body));
     }
 
     // utf-16le
-#ifdef _MS_WINDOWS
-    else if(_wcsicmp(charset.c_str(), charset_types::utf16le.c_str()) == 0)
-#else
-    else if(boost::iequals(charset, charset_types::utf16le) )
-#endif
+    else if(utility::details::str_icmp(charset, charset_types::utf16le))
     {
-        return to_string_t(convert_bytes_to_wstring(&body[0], body.size()));
+        utf16string body;
+        body.resize(streambuf.in_avail() / sizeof(utf16string::value_type));
+        if(streambuf.scopy((unsigned char *)&body[0], body.size() * sizeof(utf16string::value_type)) == 0) return string_t();
+        return convert_utf16le_to_string_t(std::move(body), false);
     }
 
     // utf-16be
-#ifdef _MS_WINDOWS
-    else if(_wcsicmp(charset.c_str(), charset_types::utf16be.c_str()) == 0)
-#else
-    else if(boost::iequals(charset, charset_types::utf16be) )
-#endif
+    else if(utility::details::str_icmp(charset, charset_types::utf16be))
     {
-        return to_string_t(convert_utf16be_to_utf16le(&body[0], body.size(), false));
+        utf16string body;
+        body.resize(streambuf.in_avail() / sizeof(utf16string::value_type));
+        if(streambuf.scopy((unsigned char *)&body[0], body.size() * sizeof(utf16string::value_type)) == 0) return string_t();
+        return convert_utf16be_to_string_t(std::move(body), false);
     }
     
     else
@@ -571,14 +515,16 @@ void details::http_msg_base::set_body(streams::istream instream, utility::size64
 details::_http_request::_http_request()
   : m_initiated_response(0), 
     m_server_context(), 
-    m_listener_path(_XPLATSTR(""))
+    m_listener_path(_XPLATSTR("")),
+    m_cancellationToken(pplx::cancellation_token::none())
 {
 }
 
 details::_http_request::_http_request(std::shared_ptr<http::details::_http_server_context> server_context)
   : m_initiated_response(0), 
     m_server_context(std::move(server_context)),
-    m_listener_path(_XPLATSTR(""))
+    m_listener_path(_XPLATSTR("")),
+    m_cancellationToken(pplx::cancellation_token::none())
 {
 }
 

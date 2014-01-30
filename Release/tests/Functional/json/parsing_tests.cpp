@@ -1,4 +1,4 @@
-/***
+﻿/***
 * ==++==
 *
 * Copyright (c) Microsoft Corporation. All rights reserved. 
@@ -155,24 +155,6 @@ TEST(whitespace)
         VERIFY_IS_TRUE(val.is_object());
         VERIFY_ARE_EQUAL(U("2"), val[U("1"]).to_string());
     }
-}
-
-TEST(numbers)
-{
-    json::value num = json::value::parse(U("-22"));
-    VERIFY_ARE_EQUAL(-22, num.as_double());
-
-    num = json::value::parse(U("-1.45E2"));
-    VERIFY_IS_TRUE(num.is_number());
-
-    num = json::value::parse(U("-1.45E+1"));
-    VERIFY_IS_TRUE(num.is_number());
-
-    num = json::value::parse(U("-1.45E-10"));
-    VERIFY_IS_TRUE(num.is_number());
-
-    num = json::value::parse(U("1e01"));
-    VERIFY_IS_TRUE(num.is_number());
 }
 
 TEST(string_t)

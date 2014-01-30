@@ -115,14 +115,14 @@ void PrintTable(const http_response &response, bool &refresh)
 
             refresh = answer.Status == ST_Refresh;
 
-            for (auto iter = players.begin(); iter != players.end(); ++iter)
+            for (auto iter = players.as_array().begin(); iter != players.as_array().end(); ++iter)
             {
-                auto& player = iter->second;
+                auto& player = *iter;
 
                 json::value name = player[NAME];
                 json::value bet  = player[BALANCE];
 
-                bool suppressMoney = iter == players.begin();
+                bool suppressMoney = iter == players.as_array().begin();
 
                 if ( suppressMoney )
                     ucout << "'" << name.as_string() << "'" ;
@@ -262,9 +262,9 @@ int main(int argc, char *argv[])
             if ( response.status_code() == status_codes::OK )
             {
                 availableTables = response.extract_json().get();
-                for (auto iter = availableTables.begin(); iter != availableTables.end(); ++iter)
+                for (auto iter = availableTables.as_array().begin(); iter != availableTables.as_array().end(); ++iter)
                 {
-                    BJTable bj_table = BJTable::FromJSON(iter->second);
+                    BJTable bj_table = BJTable::FromJSON(*iter);
                     json::value id = json::value::number(bj_table.Id);
 
                     ucout << "table " << bj_table.Id << ": {capacity: " << (long unsigned int)bj_table.Capacity << " no. players: " << (long unsigned int)bj_table.Players.size() << " }\n";

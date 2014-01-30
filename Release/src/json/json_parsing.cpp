@@ -114,9 +114,13 @@ public:
         union
         {
             double double_val;
+            int64_t int64_val;
+            uint64_t uint64_val;
             bool boolean_val;
             bool has_unescape_symbol;
         };
+
+        bool signed_number;
     };
 
     void GetNextToken(Token &);
@@ -145,6 +149,7 @@ protected:
 private:
 
     bool CompleteNumberLiteral(CharType first, Token &token);
+    bool ParseInt64(CharType first, uint64_t& value);
     bool CompleteKeyword(const CharType *expected, typename Token::Kind kind, Token &token);
     bool CompleteKeywordTrue(Token &token);
     bool CompleteKeywordFalse(Token &token);
@@ -382,42 +387,95 @@ bool JSON_Parser<CharType>::CompleteKeywordNull(Token &token)
     return true;
 }
 
+// Returns false only on overflow
+template <typename CharType>
+inline bool JSON_Parser<CharType>::ParseInt64(CharType first, uint64_t& value)
+{
+    value = first - CharType('0');
+    CharType ch = PeekCharacter();
+    while (ch >= CharType('0') && ch <= CharType('9'))
+    {
+        int next_digit = ch - CharType('0');
+        if (value > (ULLONG_MAX / 10) || (value == ULLONG_MAX/10 && next_digit > ULLONG_MAX%10))
+            return false;
+
+        NextCharacter();
+
+        value *= 10;
+        value += next_digit;
+        ch = PeekCharacter();
+    }
+    return true;
+}
 
 template <typename CharType>
 bool JSON_Parser<CharType>::CompleteNumberLiteral(CharType first, Token &token)
 {
-    bool minus;
-    double value;
-    bool decimal = false;
-    bool could_be_integer = true;
-    int after_decimal = 0;    // counts digits after the decimal
-
-    // Exponent and related flags
-    int exponent = 0;
-    bool has_exponent = false;
-    bool exponent_minus = false;
+    bool minus_sign;
 
     if (first == CharType('-'))
     {
-        minus = true;
+        minus_sign = true;
 
         first = NextCharacter();
     }
     else
     {
-        minus = false;
+        minus_sign = false;
     }
 
     if (first < CharType('0') || first > CharType('9'))
         return false;
-
-    value = first - CharType('0');
 
     CharType ch = PeekCharacter();
 
     //Check for two (or more) zeros at the begining
     if (first == CharType('0') && ch == CharType('0'))
         return false;
+
+    // Parse the number assuming its integer
+    uint64_t val64;
+    bool complete = ParseInt64(first, val64);
+
+    ch = PeekCharacter();
+    if (complete && ch!=CharType('.') && ch!=CharType('E') && ch!=CharType('e'))
+    {
+        token.end.m_column = this->m_currentColumn;
+        token.end.m_line = this->m_currentLine;
+
+        if (minus_sign)
+        {
+            if (val64 > static_cast<uint64_t>(1) << 63 )
+            {
+                // It is negative and cannot be represented in int64, so we resort to double
+                token.double_val = 0 - static_cast<double>(val64);
+                token.signed_number = true;
+                token.kind = JSON_Parser<CharType>::Token::TKN_NumberLiteral;
+                return true;
+            }
+
+            // It is negative, but fits into int64
+            token.int64_val = 0 - static_cast<int64_t>(val64);
+            token.kind = JSON_Parser<CharType>::Token::TKN_IntegerLiteral;
+            token.signed_number = true;
+            return true;
+        }
+
+        // It is positive so we use unsigned int64
+        token.uint64_val = val64;
+        token.kind = JSON_Parser<CharType>::Token::TKN_IntegerLiteral;
+        token.signed_number = false;
+        return true;
+    }
+
+    double value = static_cast<double>(val64);
+    bool decimal = false;
+    int after_decimal = 0;    // counts digits after the decimal
+
+    // Exponent and related flags
+    int exponent = 0;
+    bool has_exponent = false;
+    bool exponent_minus = false;
 
     while (ch != this->m_eof)
     {
@@ -432,6 +490,7 @@ bool JSON_Parser<CharType>::CompleteNumberLiteral(CharType first, Token &token)
             NextCharacter();
             ch = PeekCharacter();
         }
+
         // Decimal dot?
         else if (ch == CharType('.'))
         {
@@ -439,7 +498,6 @@ bool JSON_Parser<CharType>::CompleteNumberLiteral(CharType first, Token &token)
                 return false;
 
             decimal = true;
-            could_be_integer = false;
 
             NextCharacter();
             ch = PeekCharacter();
@@ -456,11 +514,11 @@ bool JSON_Parser<CharType>::CompleteNumberLiteral(CharType first, Token &token)
             NextCharacter();
             ch = PeekCharacter();
         }
+
         // Exponent?
         else if (ch == CharType('E') || ch == CharType('e'))
         {
-            could_be_integer = false;
-
+            has_exponent = true;
             NextCharacter();
             ch = PeekCharacter();
 
@@ -507,7 +565,7 @@ bool JSON_Parser<CharType>::CompleteNumberLiteral(CharType first, Token &token)
         }
     };
 
-    if (minus)
+    if (minus_sign)
         value = -value;
 
     if (has_exponent)
@@ -525,7 +583,7 @@ bool JSON_Parser<CharType>::CompleteNumberLiteral(CharType first, Token &token)
         token.double_val = value / pow(double(10), after_decimal);
     }
 
-    token.kind = could_be_integer ? (JSON_Parser<CharType>::Token::TKN_IntegerLiteral) : (JSON_Parser<CharType>::Token::TKN_NumberLiteral);
+    token.kind = (JSON_Parser<CharType>::Token::TKN_NumberLiteral);
     token.end.m_column = this->m_currentColumn;
     token.end.m_line = this->m_currentLine;
 
@@ -958,19 +1016,12 @@ std::unique_ptr<web::json::details::_Object> JSON_Parser<CharType>::_ParseObject
             GetNextToken(tkn);
 
             // State 3: Looking for an expression.
-
+#ifdef ENABLE_JSON_VALUE_VISUALIZER
             auto fieldValue = _ParseValue(tkn);
-
-#ifdef ENABLE_JSON_VALUE_VISUALIZER
             auto type = fieldValue->type();
-#endif
-
-            obj->m_elements.push_back(std::make_pair(
-                json::value::string(to_string_t(fieldName)),
-#ifdef ENABLE_JSON_VALUE_VISUALIZER
-                json::value(std::move(fieldValue), type)));
+            obj->m_elements.emplace_back(json::value::string(std::move(fieldName)), json::value(std::move(fieldValue), type));
 #else
-                json::value(std::move(fieldValue))));
+            obj->m_elements.emplace_back(json::value::string(std::move(fieldName)), json::value(_ParseValue(tkn)));      
 #endif
 
             // State 4: Looking for a comma or a closing brace
@@ -1008,15 +1059,10 @@ std::unique_ptr<web::json::details::_Array> JSON_Parser<CharType>::_ParseArray(t
 
     if ( tkn.kind != JSON_Parser<CharType>::Token::TKN_CloseBracket ) 
     {
-        int index = 0;
-
         while ( true )
         {
             // State 1: Looking for an expression.
-
-            json::value elementValue = ParseValue(tkn);
-
-            result->m_elements.push_back(std::make_pair<json::value,json::value>(json::value::number(index++), std::move(elementValue)));
+            result->m_array.m_elements.emplace_back(ParseValue(tkn));
 
             // State 4: Looking for a comma or a closing bracket
 
@@ -1060,7 +1106,12 @@ std::unique_ptr<web::json::details::_Value> JSON_Parser<CharType>::_ParseValue(t
 
         case JSON_Parser<CharType>::Token::TKN_IntegerLiteral:
             {
-                auto value = utility::details::make_unique<web::json::details::_Number>(int32_t(tkn.double_val));
+                std::unique_ptr<web::json::details::_Number> value;
+                if (tkn.signed_number)
+                    value = utility::details::make_unique<web::json::details::_Number>(tkn.int64_val);
+                else
+                    value = utility::details::make_unique<web::json::details::_Number>(tkn.uint64_val);
+
                 GetNextToken(tkn);
                 return std::move(value);
             }
@@ -1080,7 +1131,7 @@ std::unique_ptr<web::json::details::_Value> JSON_Parser<CharType>::_ParseValue(t
         case JSON_Parser<CharType>::Token::TKN_NullLiteral:
             {
                 GetNextToken(tkn);
-                return std::move(utility::details::make_unique<web::json::details::_Null>());
+                return utility::details::make_unique<web::json::details::_Null>();
             }
 
         default:

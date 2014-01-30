@@ -93,9 +93,8 @@ std::string windows_category_impl::message(int errorCode) const
 
     std::wstring buffer;
     buffer.resize(buffer_size);
-    unsigned long result;
-
-    result = ::FormatMessageW(
+    
+    const auto result = ::FormatMessageW(
         dwFlags,
         lpSource,
         errorCode,
@@ -167,13 +166,18 @@ const std::error_category & __cdecl linux_category()
 
 utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
 {
+    if(s.empty())
+    {
+        return utf16string();
+    }
+
 #ifdef _MS_WINDOWS
     // first find the size
     int size = ::MultiByteToWideChar(
         CP_UTF8, // convert to utf-8
         MB_ERR_INVALID_CHARS, // fail if any characters can't be translated
         s.c_str(),
-        -1, // signals null terminated input
+        (int)s.size(),
         nullptr, 0); // must be null for utf8
 
     if (size == 0)
@@ -181,26 +185,23 @@ utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
         throw utility::details::create_system_error(GetLastError());
     }
         
-    // this length includes the terminating null
-    std::unique_ptr<wchar_t[]> buffer(new wchar_t[size]);
+    utf16string buffer;
+    buffer.resize(size);
 
     // now call again to format the string
-    int result = ::MultiByteToWideChar(
+    const int result = ::MultiByteToWideChar(
         CP_UTF8, // convert to utf-8
         MB_ERR_INVALID_CHARS, // fail if any characters can't be translated
         s.c_str(),
-        -1, // signals null terminated input
-        buffer.get(), size); // must be null for utf8
+        (int)s.size(),
+        &buffer[0], size); // must be null for utf8
         
-    if (result == size)
-    {
-        // success!
-        return utf16string(buffer.get(), buffer.get() + size - 1);
-    }
-    else
+    if (result != size)
     {
         throw utility::details::create_system_error(GetLastError());
     }
+
+    return buffer;
 #else
     return utf_to_utf<utf16char>(s, stop);
 #endif
@@ -208,63 +209,52 @@ utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
 
 std::string __cdecl conversions::utf16_to_utf8(const utf16string &w)
 {
+    if(w.empty())
+    {
+        return std::string();
+    }
+
 #ifdef _MS_WINDOWS
     // first find the size
+    const int size = ::WideCharToMultiByte(
+        CP_UTF8, // convert to utf-8
 #if _WIN32_WINNT >= _WIN32_WINNT_VISTA
-    int size = ::WideCharToMultiByte(
-        CP_UTF8, // convert to utf-8
         WC_ERR_INVALID_CHARS, // fail if any characters can't be translated
-        w.c_str(),
-        -1, // signals null terminated input
-        nullptr, 0, // find the size required
-        nullptr, nullptr); // must be null for utf8  
 #else
-    int size = ::WideCharToMultiByte(
-        CP_UTF8, // convert to utf-8
         0, // ERROR_INVALID_FLAGS is not supported in XP, set this dwFlags to 0
+#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA
         w.c_str(),
-        -1, // signals null terminated input
+        (int)w.size(),
         nullptr, 0, // find the size required
         nullptr, nullptr); // must be null for utf8  
-#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA
 
     if (size == 0)
     {
         throw utility::details::create_system_error(GetLastError());
     }
-        
-    // this length includes the terminating null
-    std::unique_ptr<char[]> buffer(new char[size]);
 
+    std::string buffer;
+    buffer.resize(size);
+    
     // now call again to format the string
+    const int result = ::WideCharToMultiByte(
+        CP_UTF8, // convert to utf-8
 #if _WIN32_WINNT >= _WIN32_WINNT_VISTA
-    int result = ::WideCharToMultiByte(
-        CP_UTF8, // convert to utf-8
         WC_ERR_INVALID_CHARS, // fail if any characters can't be translated
-        w.c_str(),
-        -1, // signals null terminated input
-        buffer.get(), size,
-        nullptr, nullptr); // must be null for utf8 
 #else
-    int result = ::WideCharToMultiByte(
-        CP_UTF8, // convert to utf-8
         0, // ERROR_INVALID_FLAGS is not supported in XP, set this dwFlags to 0
-        w.c_str(),
-        -1, // signals null terminated input
-        buffer.get(), size,
-        nullptr, nullptr); // must be null for utf8 
 #endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA
-
+        w.c_str(),
+        (int)w.size(),
+        &buffer[0], size,
+        nullptr, nullptr); // must be null for utf8 
         
-    if (result == size)
-    {
-        // success!
-        return std::string(buffer.get(), buffer.get() + size - 1);
-    }
-    else
+    if (result != size)
     {
         throw utility::details::create_system_error(GetLastError());
     }
+
+    return buffer;
 #else
     return utf_to_utf<char>(w, stop);
 #endif
@@ -272,13 +262,18 @@ std::string __cdecl conversions::utf16_to_utf8(const utf16string &w)
 
 utf16string __cdecl conversions::usascii_to_utf16(const std::string &s)
 {
+    if(s.empty())
+    {
+        return utf16string();
+    }
+
 #ifdef _MS_WINDOWS
     int size = ::MultiByteToWideChar(
         20127, // convert from us-ascii
         MB_ERR_INVALID_CHARS, // fail if any characters can't be translated
         s.c_str(),
-        -1, // signals null terminated input
-        nullptr, 0); // must be null for utf8
+        (int)s.size(),
+        nullptr, 0);
 
     if (size == 0)
     {
@@ -286,25 +281,23 @@ utf16string __cdecl conversions::usascii_to_utf16(const std::string &s)
     }
 
     // this length includes the terminating null
-    std::unique_ptr<wchar_t[]> buffer(new wchar_t[size]);
-
+    std::wstring buffer;
+    buffer.resize(size);
+    
     // now call again to format the string
     int result = ::MultiByteToWideChar(
         20127, // convert from us-ascii
         MB_ERR_INVALID_CHARS, // fail if any characters can't be translated
         s.c_str(),
-        -1, // signals null terminated input
-        buffer.get(), size); // must be null for utf8
+        (int)s.size(),
+        &buffer[0], size);
 
-    if (result == size)
-    {
-        // success!
-        return utf16string(buffer.get(), buffer.get() + size - 1);
-    }
-    else
+    if (result != size)
     {
         throw utility::details::create_system_error(GetLastError());
     }
+
+    return buffer;
 #elif defined(__APPLE__)
 
     CFStringRef str = CFStringCreateWithCStringNoCopy(
@@ -331,13 +324,18 @@ utf16string __cdecl conversions::usascii_to_utf16(const std::string &s)
 
 utf16string __cdecl conversions::latin1_to_utf16(const std::string &s)
 {
+    if(s.empty())
+    {
+        return utf16string();
+    }
+
 #ifdef _MS_WINDOWS
     int size = ::MultiByteToWideChar(
         28591, // convert from Latin1
         MB_ERR_INVALID_CHARS, // fail if any characters can't be translated
         s.c_str(),
-        -1, // signals null terminated input
-        nullptr, 0); // must be null for utf8
+        (int)s.size(),
+        nullptr, 0);
 
     if (size == 0)
     {
@@ -345,25 +343,23 @@ utf16string __cdecl conversions::latin1_to_utf16(const std::string &s)
     }
 
     // this length includes the terminating null
-    std::unique_ptr<wchar_t[]> buffer(new wchar_t[size]);
+    std::wstring buffer;
+    buffer.resize(size);
 
     // now call again to format the string
     int result = ::MultiByteToWideChar(
         28591, // convert from Latin1
         MB_ERR_INVALID_CHARS, // fail if any characters can't be translated
         s.c_str(),
-        -1, // signals null terminated input
-        buffer.get(), size); // must be null for utf8
+        (int)s.size(),
+        &buffer[0], size);
 
-    if (result == size)
-    {
-        // success!
-        return std::wstring(buffer.get(), buffer.get() + size - 1);
-    }
-    else
+    if (result != size)
     {
         throw utility::details::create_system_error(GetLastError());
     }
+
+    return buffer;
 #elif defined(__APPLE__)
     CFStringRef str = CFStringCreateWithCStringNoCopy(
         nullptr,
@@ -389,33 +385,38 @@ utf16string __cdecl conversions::latin1_to_utf16(const std::string &s)
 
 utf16string __cdecl conversions::default_code_page_to_utf16(const std::string &s)
 {
+    if(s.empty())
+    {
+        return utf16string();
+    }
+
 #ifdef _MS_WINDOWS
     // First have to convert to UTF-16.
     int size = ::MultiByteToWideChar(
         CP_ACP, // convert from Windows system default
         MB_ERR_INVALID_CHARS, // fail if any characters can't be translated
         s.c_str(),
-        -1, // signals null terminated input
-        nullptr, 0); // must be null for utf8
-
+        (int)s.size(),
+        nullptr, 0); 
     if (size == 0)
     {
         throw utility::details::create_system_error(GetLastError());
     }
 
     // this length includes the terminating null
-    std::unique_ptr<wchar_t[]> buffer(new wchar_t[size]);
+    std::wstring buffer;
+    buffer.resize(size);
 
     // now call again to format the string
     int result = ::MultiByteToWideChar(
         CP_ACP, // convert from Windows system default
         MB_ERR_INVALID_CHARS, // fail if any characters can't be translated
         s.c_str(),
-        -1, // signals null terminated input
-        buffer.get(), size); // must be null for utf8
+        (int)s.size(), 
+        &buffer[0], size);
     if(result == size)
     {
-        return std::wstring(buffer.get(), buffer.get() + size - 1);
+        return buffer;
     }
     else
     {
@@ -444,6 +445,33 @@ utf16string __cdecl conversions::default_code_page_to_utf16(const std::string &s
 #endif
 }
 
+utility::string_t __cdecl conversions::to_string_t(utf16string &&s)
+{
+#ifdef _UTF16_STRINGS
+    return std::move(s);
+#else
+    return utf16_to_utf8(std::move(s));
+#endif
+}
+
+utility::string_t __cdecl conversions::to_string_t(std::string &&s)
+{
+#ifdef _UTF16_STRINGS
+    return utf8_to_utf16(std::move(s));
+#else
+    return std::move(s);
+#endif
+}
+
+utility::string_t __cdecl conversions::to_string_t(const utf16string &s)
+{
+#ifdef _UTF16_STRINGS
+    return s;
+#else
+    return utf16_to_utf8(s);
+#endif
+}
+
 utility::string_t __cdecl conversions::to_string_t(const std::string &s)
 {
 #ifdef _UTF16_STRINGS
@@ -453,22 +481,13 @@ utility::string_t __cdecl conversions::to_string_t(const std::string &s)
 #endif
 }
 
-utility::string_t __cdecl conversions::to_string_t(const utf16string &s)
-{
-#ifdef _UTF16_STRINGS
-    return s;
-#else
-    return conversions::utf16_to_utf8(s);
-#endif
-}
-
-std::string __cdecl conversions::to_utf8string(const std::string &value) { return value; }
+std::string __cdecl conversions::to_utf8string(std::string value) { return std::move(value); }
 
 std::string __cdecl conversions::to_utf8string(const utf16string &value) { return utf16_to_utf8(value); }
 
 utf16string __cdecl conversions::to_utf16string(const std::string &value) { return utf8_to_utf16(value); }
 
-utf16string __cdecl conversions::to_utf16string(const utf16string &value) { return value; }
+utf16string __cdecl conversions::to_utf16string(utf16string value) { return std::move(value); }
 
 
 #pragma endregion

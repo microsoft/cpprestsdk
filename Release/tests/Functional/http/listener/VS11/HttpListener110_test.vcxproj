@@ -210,7 +210,6 @@
   <ItemGroup>
     <ClCompile Include="..\connections_and_errors.cpp" />
     <ClCompile Include="..\header_tests.cpp" />
-    <ClCompile Include="..\pipeline_stage_tests.cpp" />
     <ClCompile Include="..\reply_helper_tests.cpp" />
     <ClCompile Include="..\request_extract_tests.cpp" />
     <ClCompile Include="..\request_handler_tests.cpp" />

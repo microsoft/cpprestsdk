@@ -78,9 +78,9 @@ pplx::task<json::value> CasaLens::get_events(const utility::string_t& postal_cod
             event_result_node[U("events")] = json::value::array();
 
             int i = 0;
-            for(auto& iter:event_json[U("events")][U("event")])
+            for(auto& iter : event_json[U("events")][U("event")].as_array())
             {
-                auto event = iter.second;
+                const auto &event = iter;
                 event_result_node[events_json_key][i][U("title")] = event[U("title")];
                 event_result_node[events_json_key][i][U("url")] = event[U("url")];
                 event_result_node[events_json_key][i][U("starttime")] = event[U("start_time")];
@@ -168,9 +168,9 @@ pplx::task<json::value> CasaLens::get_pictures(const utility::string_t& location
         image_result_node[images_json_key] = json::value::array();
 
         int i = 0;
-        for(auto& iter:image_json[U("d")][U("results")])
+        for(auto& iter : image_json[U("d")][U("results")].as_object())
         {
-            auto image = iter.second;
+            const json::value &image = iter.second;
             image_result_node[images_json_key][i] = image[U("MediaUrl")];
             if (i++ > num_images)
                 break;
@@ -225,26 +225,26 @@ pplx::task<json::value> CasaLens::get_movies(const utility::string_t& postal_cod
         {
             auto temp = json::value::array();
             int i = 0;
-            for(auto iter = movie_json.cbegin(); iter != movie_json.cend() && i < num_movies; iter++, i++)
+            for(auto iter = movie_json.as_array().cbegin(); iter != movie_json.as_array().cend() && i < num_movies; iter++, i++)
             {
-                auto& showtimes = iter->second[U("showtimes")];
+                auto& showtimes = (*iter)[U("showtimes")];
 
                 int j = 0;
                 int showtime_index = 0;
                 int theater_index = -1;
                 utility::string_t current_theater;
-                temp[i][U("title")] =  iter->second[U("title")];
-
-                for (auto iter2 = showtimes.cbegin(); iter2 != showtimes.cend() &&  j < num_movies; iter2++,j++)
+                temp[i][U("title")] =  (*iter)[U("title")];
+                
+                for (auto iter2 = showtimes.as_array().cbegin(); iter2 != showtimes.as_array().cend() &&  j < num_movies; iter2++,j++)
                 {
-                    auto theater = iter2->second[U("theatre")][U("name")].as_string();
+                    auto theater = (*iter2)[U("theatre")][U("name")].as_string();
                     if (0 != theater.compare(current_theater)) // new theater
                     {
                         temp[i][U("theatre")][++theater_index][U("name")] = json::value::string(theater); // Add theater entry
                         showtime_index = 0;
                         current_theater = theater;
                     }
-                    temp[i][U("theatre")][theater_index][U("datetime")][showtime_index++] = iter2->second[U("dateTime")]; // Update the showtime for same theater
+                    temp[i][U("theatre")][theater_index][U("datetime")][showtime_index++] = (*iter2)[U("dateTime")]; // Update the showtime for same theater
                 }
             }
             movie_result_node[movies_json_key] = std::move(temp);
@@ -266,7 +266,7 @@ pplx::task<json::value> CasaLens::get_movies(const utility::string_t& postal_cod
             auto date = get_date();
             std::wstring year = date.substr(0, date.find(U("-"))); 
 
-            for(auto& iter:movie_result[movies_json_key])
+            for(auto& iter : movie_result[movies_json_key].as_object())
             {
                 auto title = iter.second[U("title")].as_string();
                 auto searchStr = title + U(" ") + year + U(" new movie poster");
@@ -280,7 +280,7 @@ pplx::task<json::value> CasaLens::get_movies(const utility::string_t& postal_cod
             for(unsigned int i = 0; i < poster_tasks.size(); i++)
             {
                 auto jval = poster_tasks[i].get();
-                auto poster_url = jval.begin()->second[0];
+                auto poster_url = jval.as_array().begin()[0];
                 movie_result[movies_json_key][i][U("poster")] = poster_url;
             }
         }
@@ -327,8 +327,8 @@ void CasaLens::fetch_data(http_request message, const std::wstring& postal_code,
             for(auto& iter:tasks)
             {
                 auto jval = iter.get();
-                auto key = jval.begin()->first.as_string();
-                resp_data[key] = jval.begin()->second;
+                auto key = jval.as_object().begin()->first.as_string();
+                resp_data[key] = jval.as_object().begin()->second;
             }
 
             m_rwlock.lock();

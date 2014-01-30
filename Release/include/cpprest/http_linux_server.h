@@ -114,7 +114,7 @@ private:
     friend class connection;
 
     std::unique_ptr<tcp::acceptor> m_acceptor;
-    std::map<std::string, http_listener* > m_listeners;
+    std::map<std::string, web::http::experimental::listener::details::http_listener_impl* > m_listeners;
     pplx::extensibility::reader_writer_lock_t m_listeners_lock;
 
     pplx::extensibility::recursive_lock_t m_connections_lock;
@@ -151,14 +151,13 @@ public:
     void start();
     void stop();
 
-    void add_listener(const std::string& path, http_listener* listener);
-    void remove_listener(const std::string& path, http_listener* listener);
+    void add_listener(const std::string& path, web::http::experimental::listener::details::http_listener_impl* listener);
+    void remove_listener(const std::string& path, web::http::experimental::listener::details::http_listener_impl* listener);
 
 private:
     void on_accept(ip::tcp::socket* socket, const boost::system::error_code& ec);
     
 };
-
 
 }
 
@@ -179,7 +178,7 @@ private:
 
     pplx::extensibility::reader_writer_lock_t m_listeners_lock;
     std::map<std::string, std::unique_ptr<hostport_listener>, iequal_to> m_listeners;
-    std::unordered_map<http_listener*, std::unique_ptr<pplx::extensibility::reader_writer_lock_t>> m_registered_listeners;
+    std::unordered_map<web::http::experimental::listener::details::http_listener_impl *, std::unique_ptr<pplx::extensibility::reader_writer_lock_t>> m_registered_listeners;
     bool m_started;
 
 public:
@@ -197,8 +196,8 @@ public:
     virtual pplx::task<void> start();
     virtual pplx::task<void> stop();
 
-    virtual pplx::task<void> register_listener(http_listener* listener);
-    virtual pplx::task<void> unregister_listener(http_listener* listener);
+    virtual pplx::task<void> register_listener(web::http::experimental::listener::details::http_listener_impl* listener);
+    virtual pplx::task<void> unregister_listener(web::http::experimental::listener::details::http_listener_impl* listener);
 
     pplx::task<void> respond(http::http_response response);
 };

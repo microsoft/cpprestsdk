@@ -74,7 +74,6 @@ void http_server_api::unregister_server_api()
 void http_server_api::unsafe_register_server_api(std::unique_ptr<http_server> server_api)
 {
     // we assume that the lock has been taken here. 
-
     if (http_server_api::has_listener())
     {
         throw http_exception(_XPLATSTR("Current server API instance has listeners attached."));
@@ -83,51 +82,95 @@ void http_server_api::unsafe_register_server_api(std::unique_ptr<http_server> se
     s_server_api.swap(server_api);
 }
 
-pplx::task<void> http_server_api::register_listener(_In_ http_listener *listener)
+pplx::task<void> http_server_api::register_listener(_In_ web::http::experimental::listener::details::http_listener_impl *listener)
 {
-    pplx::extensibility::scoped_critical_section_t lock(s_lock);
-
-    // the server API was not initialized, register a default
-    if(s_server_api == nullptr)
+    return pplx::create_task([listener]()
     {
+        pplx::extensibility::scoped_critical_section_t lock(s_lock);
+
+        // the server API was not initialized, register a default
+        if(s_server_api == nullptr)
+        {
 #ifdef _MS_WINDOWS
-        std::unique_ptr<http_windows_server> server_api(new http_windows_server());
+            std::unique_ptr<http_windows_server> server_api(new http_windows_server());
 #else
-        std::unique_ptr<http_linux_server> server_api(new http_linux_server());
+            std::unique_ptr<http_linux_server> server_api(new http_linux_server());
 #endif
-        http_server_api::unsafe_register_server_api(std::move(server_api));
-    }
+            http_server_api::unsafe_register_server_api(std::move(server_api));
+        }
 
-    auto increment = []() { pplx::details::atomic_increment(s_registrations); };
-    auto regster = 
-        [listener,increment] () -> pplx::task<void> { 
-            // Register listener.
-            return s_server_api->register_listener(listener).then(increment);
-        };
+        std::exception_ptr except;
+        try
+        {
+            // start the server if necessary
+            if (pplx::details::atomic_increment(s_registrations) == 1L)
+            {
+                s_server_api->start().wait();
+            }
 
-    // if nothing is registered yet, start the server.
-    if ( s_registrations == 0L )
-    {
-        return s_server_api->start().then(regster);
-    }
+            // register listener
+            s_server_api->register_listener(listener).wait();
+        } catch(...)
+        {
+            except = std::current_exception();
+        }
 
-    return regster();
+        // Registration failed, need to decrement registration count.
+        if(except != nullptr)
+        {
+            if (pplx::details::atomic_decrement(s_registrations) == 0L)
+            {
+                try
+                {
+                    server_api()->stop().wait();
+                } catch(...)
+                {
+                    // ignore this exception since we want to report the original one
+                }
+            }
+            std::rethrow_exception(except);
+        }
+    });
 }
 
-pplx::task<void> http_server_api::unregister_listener(_In_ http_listener *pListener)
+pplx::task<void> http_server_api::unregister_listener(_In_ web::http::experimental::listener::details::http_listener_impl *pListener)
 {
-    pplx::extensibility::scoped_critical_section_t lock(s_lock);
-    
-    auto stop = 
-        [] () -> pplx::task<void> {
-            if ( pplx::details::atomic_decrement(s_registrations) == 0L )
+    return pplx::create_task([pListener]()
+    {
+        pplx::extensibility::scoped_critical_section_t lock(s_lock);
+
+        // unregister listener
+        std::exception_ptr except;
+        try
+        {
+            server_api()->unregister_listener(pListener).wait();
+        } catch(...)
+        {
+            except = std::current_exception();
+        }
+
+        // stop server if necessary
+        try
+        {
+            if (pplx::details::atomic_decrement(s_registrations) == 0L)
             {
-                return server_api()->stop();
+                server_api()->stop().wait();
             }
-            return pplx::task_from_result();
-        };
-    
-    return server_api()->unregister_listener(pListener).then(stop);
+        } catch(...)
+        {
+            // save the original exception from unregister listener
+            if(except != nullptr)
+            {
+                except = std::current_exception();
+            }
+        }
+        
+        // rethrow exception if one occurred
+        if(except != nullptr)
+        {
+            std::rethrow_exception(except);
+        }
+    });
 }
 
 http_server *http_server_api::server_api() 

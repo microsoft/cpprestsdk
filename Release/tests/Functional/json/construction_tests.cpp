@@ -107,6 +107,15 @@ TEST(copy_ctor_string)
     VERIFY_ARE_EQUAL(U("teststr2"), str.as_string());
 }
 
+TEST(copy_ctor_with_escaped)
+{
+    auto str = json::value::parse(U("\"\\n\""));
+    VERIFY_ARE_EQUAL(U("\n"), str.as_string());
+
+    auto copy = str;
+    VERIFY_ARE_EQUAL(U("\n"), copy.as_string());
+}
+
 TEST(move_ctor)
 {
     json::value obj;
@@ -237,9 +246,9 @@ TEST(object_construction)
 TEST(array_construction)
 {
     // Constructor which takes a vector.
-    json::value::element_vector e;
-    e.push_back(std::make_pair(json::value(0), json::value(false)));
-    e.push_back(std::make_pair(json::value(1), json::value::string(U("hehe"))));
+    json::value::array_vector e;
+    e.push_back(json::value(false));
+    e.push_back(json::value::string(U("hehe")));
     json::value arr = json::value::array(e);
     VERIFY_ARE_EQUAL(e.size(), arr.size());
     VERIFY_ARE_EQUAL(U("false"), arr[0].to_string());
@@ -279,6 +288,69 @@ TEST(array_construction)
     VERIFY_ARE_EQUAL(U("false"), arr4ref[0].to_string());
     VERIFY_ARE_EQUAL(U("true"), arr4ref[2].to_string());
     VERIFY_THROWS(arr4ref[17], json::json_exception);
+}
+
+TEST(array_test)
+{
+    json::value arr = json::value::array();
+    arr[0] = json::value(3.14);
+    arr[1] = json::value(true);
+    arr[2] = json::value("Yes");
+    int count;
+    json::array& array = arr.as_array();
+    const json::array& carray = arr.as_array();
+
+    // The begin and end iterators on non-const instances
+    count = 0;
+    for(auto iter = array.begin(); iter != array.end(); ++iter)
+    {
+        VERIFY_IS_TRUE((*iter) == array[count]);
+        VERIFY_IS_TRUE((*iter) == carray[count]);
+        count++;
+    }
+    VERIFY_ARE_EQUAL(array.size(), count);
+
+    count = 0;
+    for(auto iter = array.cbegin(); iter != array.cend(); ++iter)
+    {
+        VERIFY_IS_TRUE((*iter) == array[count]);
+        count++;
+    }
+    VERIFY_ARE_EQUAL(array.size(), count);
+
+    count = 0;
+    for(auto iter = array.rbegin(); iter != array.rend(); ++iter)
+    {
+        VERIFY_IS_TRUE((*iter) == array[array.size()-1-count]);
+        VERIFY_IS_TRUE((*iter) == carray[array.size()-1-count]);
+        count++;
+    }
+    VERIFY_ARE_EQUAL(array.size(), count);
+
+    count = 0;
+    for(auto iter = array.crbegin(); iter != array.crend(); ++iter)
+    {
+        VERIFY_IS_TRUE((*iter) == array[array.size()-1-count]);
+        count++;
+    }
+    VERIFY_ARE_EQUAL(array.size(), count);
+
+    // The begin and end iterators on non-const instances
+    count = 0;
+    for(auto iter = carray.begin(); iter != carray.end(); ++iter)
+    {
+        VERIFY_IS_TRUE((*iter) == carray[count]);
+        count++;
+    }
+    VERIFY_ARE_EQUAL(array.size(), count);
+
+    count = 0;
+    for(auto iter = carray.rbegin(); iter != carray.rend(); ++iter)
+    {
+        VERIFY_IS_TRUE((*iter) == carray[array.size()-1-count]);
+        count++;
+    }
+    VERIFY_ARE_EQUAL(array.size(), count);
 }
 
 // This must not compile on Windows, since the ctor is defined private:

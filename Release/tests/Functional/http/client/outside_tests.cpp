@@ -118,10 +118,10 @@ TEST_FIXTURE(uri_address, outside_ssl_json,
     {
         int count = 0;
         auto& items = jsonArray[U("items")];
-        for(auto iter = items.cbegin(); iter != items.cend(); ++iter)
+        for(auto iter = items.as_array().cbegin(); iter != items.as_array().cend(); ++iter)
         {
             const auto& i = *iter;
-            auto name = i.second[U("snippet")][U("title")].to_string();
+            auto name = i[U("snippet")][U("title")].to_string();
             count++;
         }
         VERIFY_ARE_EQUAL(3, count); // Update this accordingly, if the number of items changes

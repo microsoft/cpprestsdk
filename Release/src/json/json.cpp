@@ -27,6 +27,8 @@
 
 #include "stdafx.h"
 
+using namespace web;
+
 utility::ostream_t& web::json::operator << (utility::ostream_t &os, const web::json::value &val)
 {
     val.serialize(os);
@@ -48,7 +50,28 @@ web::json::value::value() :
 #endif
     { }
 
-web::json::value::value(int value) : 
+web::json::value::value(int32_t value) : 
+    m_value(utility::details::make_unique<web::json::details::_Number>(value))
+#ifdef ENABLE_JSON_VALUE_VISUALIZER
+    ,m_kind(value::Number)
+#endif
+    { }
+
+web::json::value::value(uint32_t value) : 
+    m_value(utility::details::make_unique<web::json::details::_Number>(value))
+#ifdef ENABLE_JSON_VALUE_VISUALIZER
+    ,m_kind(value::Number)
+#endif
+    { }
+
+web::json::value::value(int64_t value) : 
+    m_value(utility::details::make_unique<web::json::details::_Number>(value))
+#ifdef ENABLE_JSON_VALUE_VISUALIZER
+    ,m_kind(value::Number)
+#endif
+    { }
+
+web::json::value::value(uint64_t value) : 
     m_value(utility::details::make_unique<web::json::details::_Number>(value))
 #ifdef ENABLE_JSON_VALUE_VISUALIZER
     ,m_kind(value::Number)
@@ -120,6 +143,340 @@ web::json::value &web::json::value::operator=(web::json::value &&other)
     return *this;
 }
 
-web::json::value::element_vector web::json::details::_Value::s_elements;
+#pragma endregion
+
+
+#pragma region Static Factories
+
+web::json::value web::json::value::null()
+{
+    return web::json::value();
+}
+
+web::json::value web::json::value::number(double value)
+{
+    return web::json::value(value);
+}
+
+web::json::value web::json::value::number(int32_t value)
+{
+    return web::json::value(value);
+}
+
+web::json::value web::json::value::boolean(bool value)
+{
+    return web::json::value(value);
+}
+
+web::json::value web::json::value::string(utility::string_t value)
+{
+    std::unique_ptr<details::_Value> ptr = utility::details::make_unique<details::_String>(std::move(value));
+    return web::json::value(std::move(ptr)
+#ifdef ENABLE_JSON_VALUE_VISUALIZER
+            ,value::String
+#endif
+            );
+}
+
+#ifdef _MS_WINDOWS
+web::json::value web::json::value::string(const std::string &value)
+{
+    std::unique_ptr<details::_Value> ptr = utility::details::make_unique<details::_String>(utility::conversions::to_utf16string(value));
+    return web::json::value(std::move(ptr)
+#ifdef ENABLE_JSON_VALUE_VISUALIZER
+            ,value::String
+#endif
+            );
+}
+#endif
+
+web::json::value web::json::value::object()
+{
+    std::unique_ptr<details::_Value> ptr = utility::details::make_unique<details::_Object>();
+    return web::json::value(std::move(ptr)
+#ifdef ENABLE_JSON_VALUE_VISUALIZER
+            ,value::Object
+#endif
+            );
+}
+
+web::json::value web::json::value::object(web::json::value::field_map fields)
+{
+    std::unique_ptr<details::_Value> ptr = utility::details::make_unique<details::_Object>(std::move(fields));
+    return web::json::value(std::move(ptr)
+#ifdef ENABLE_JSON_VALUE_VISUALIZER
+            ,value::Object
+#endif
+            );
+}
+
+web::json::value web::json::value::array()
+{
+    std::unique_ptr<details::_Value> ptr = utility::details::make_unique<details::_Array>();
+    return web::json::value(std::move(ptr)
+#ifdef ENABLE_JSON_VALUE_VISUALIZER
+            ,value::Array
+#endif
+            );
+}
+
+web::json::value web::json::value::array(size_t size)
+{
+    std::unique_ptr<details::_Value> ptr = utility::details::make_unique<details::_Array>(size);
+    return web::json::value(std::move(ptr)
+#ifdef ENABLE_JSON_VALUE_VISUALIZER
+            ,value::Array
+#endif
+            );
+}
+
+web::json::value web::json::value::array(json::value::array_vector elements)
+{
+    std::unique_ptr<details::_Value> ptr = utility::details::make_unique<details::_Array>(std::move(elements));
+    return web::json::value(std::move(ptr)
+#ifdef ENABLE_JSON_VALUE_VISUALIZER
+            ,value::Array
+#endif
+            );
+}
 
 #pragma endregion
+
+web::json::number web::json::value::as_number() const
+{
+    return m_value->as_number();
+}
+
+double web::json::value::as_double() const
+{
+    return m_value->as_double();
+}
+ 
+int web::json::value::as_integer() const
+{
+    return m_value->as_integer();
+}
+
+bool web::json::value::as_bool() const
+{
+    return m_value->as_bool();
+}
+
+json::array& web::json::value::as_array()
+{
+    return m_value->as_array();
+}
+
+const json::array& web::json::value::as_array() const
+{
+    return m_value->as_array();
+}
+
+const json::value::object_vector& web::json::value::as_object() const
+{
+    return m_value->as_object();
+}
+
+bool web::json::number::is_int32() const
+{
+    switch (m_type)
+    {
+    case signed_type : return m_intval >= std::numeric_limits<int32_t>::min() && m_intval <= std::numeric_limits<int32_t>::max();
+    case unsigned_type : return m_uintval <= std::numeric_limits<int32_t>::max();
+    case double_type :
+    default :
+        return false;
+    }
+}
+
+bool web::json::number::is_uint32() const
+{
+    switch (m_type)
+    {
+    case signed_type : return m_intval >= 0 && m_intval <= std::numeric_limits<uint32_t>::max();
+    case unsigned_type : return m_uintval <= std::numeric_limits<uint32_t>::max();
+    case double_type :
+    default : 
+        return false;
+    }
+}
+
+bool web::json::number::is_int64() const
+{
+    switch (m_type)
+    {
+    case signed_type : return true;
+    case unsigned_type : return m_uintval <= static_cast<uint64_t>(std::numeric_limits<int64_t>::max());
+    case double_type :
+    default :
+        return false;
+    }
+}
+
+bool web::json::details::_String::has_escape_chars(const _String &str)
+{
+    const wchar_t *escapes = L"\"\\\b\f\r\n\t";
+    return str.m_string.find_first_of(escapes) != std::wstring::npos;
+}
+
+web::json::details::_Object::_Object(const _Object& other):web::json::details::_Value(other)
+{
+    m_elements = other.m_elements;
+}
+
+web::json::value::value_type json::value::type() const { return m_value->type(); }
+
+bool json::value::is_integer() const
+{
+    if(!is_number()) 
+    {
+        return false;
+    }
+    return m_value->is_integer();
+}
+
+bool json::value::is_double() const
+{
+    if(!is_number())
+    {
+        return false;
+    }
+    return m_value->is_double();
+}
+
+json::value& web::json::details::_Object::index(const utility::string_t &key)
+{
+    map_fields();
+
+    auto whre = m_fields.find(key);
+
+    if ( whre == m_fields.end() )
+    {
+        // Insert a new entry.
+        m_elements.emplace_back(json::value::string(key), json::value::null());
+        const size_t index = m_elements.size() - 1;
+        m_fields.emplace(key, index);
+        return m_elements[index].second;
+    }
+
+    return m_elements[whre->second].second;
+}
+
+const json::value& web::json::details::_Object::cnst_index(const utility::string_t &key) const
+{
+    const_cast<web::json::details::_Object*>(this)->map_fields();
+
+    auto whre = m_fields.find(key);
+
+    if ( whre == m_fields.end() )
+        throw json::json_exception(_XPLATSTR("invalid field name"));
+
+    return m_elements[whre->second].second;
+}
+
+bool web::json::details::_Object::has_field(const utility::string_t &key) const
+{
+    const_cast<web::json::details::_Object*>(this)->map_fields();
+    return m_fields.find(key) != m_fields.end();
+}
+
+json::value web::json::details::_Object::get_field(const utility::string_t &key) const
+{
+    const_cast<web::json::details::_Object*>(this)->map_fields();
+
+    auto whre = m_fields.find(key);
+
+    if ( whre == m_fields.end() )
+        return json::value();
+
+    return m_elements[whre->second].second;
+}
+
+void web::json::details::_Object::map_fields()
+{
+    if ( m_fields.size() == 0 )
+    {
+        size_t index = 0;
+        for (auto iter = m_elements.begin(); iter != m_elements.end(); ++iter, ++index)
+        {
+            m_fields.emplace(iter->first.as_string(), index);
+        }
+    }
+}
+
+utility::string_t json::value::to_string() const { return m_value->to_string(); }
+
+bool json::value::operator==(const json::value &other) const
+{
+    if (this->m_value.get() == other.m_value.get())
+        return true;
+    if (this->type() != other.type())
+        return false;
+    
+    switch(this->type())
+    {
+    case Null:
+        return true;
+    case Number:
+        return this->as_double() == other.as_double();
+    case Boolean:
+        return this->as_bool() == other.as_bool();
+    case String:
+        return this->as_string() == other.as_string();
+    case Object:
+        return static_cast<const json::details::_Object*>(this->m_value.get())->is_equal(static_cast<const json::details::_Object*>(other.m_value.get()));
+    case Array:
+        return static_cast<const json::details::_Array*>(this->m_value.get())->is_equal(static_cast<const json::details::_Array*>(other.m_value.get()));
+    }
+    UNREACHABLE;
+}
+
+web::json::value& web::json::value::operator [] (const utility::string_t &key)
+{
+    if ( this->is_null() )
+    {
+        m_value.reset(new web::json::details::_Object());
+#ifdef ENABLE_JSON_VALUE_VISUALIZER
+        m_kind = value::Object;
+#endif
+    }
+    return m_value->index(key);
+}
+
+const web::json::value& web::json::value::operator [] (const utility::string_t &key) const
+{
+    if ( this->is_null() )
+    {
+        auto _nc_this = const_cast<web::json::value*>(this);
+        _nc_this->m_value.reset(new web::json::details::_Object());
+#ifdef ENABLE_JSON_VALUE_VISUALIZER
+        _nc_this->m_kind = value::Object;
+#endif
+    }
+    return m_value->cnst_index(key);
+}
+
+web::json::value& web::json::value::operator[](size_t index)
+{
+    if ( this->is_null() )
+    {
+        m_value.reset(new web::json::details::_Array());
+#ifdef ENABLE_JSON_VALUE_VISUALIZER
+        m_kind = value::Array;
+#endif
+    }
+    return m_value->index(index);
+}
+
+const web::json::value& web::json::value::operator[](size_t index) const
+{
+    if ( this->is_null() )
+    {
+        auto _nc_this = const_cast<web::json::value*>(this);
+        _nc_this->m_value.reset(new web::json::details::_Array());
+#ifdef ENABLE_JSON_VALUE_VISUALIZER
+        _nc_this->m_kind = value::Array;
+#endif
+    }
+    return m_value->cnst_index(index);
+}

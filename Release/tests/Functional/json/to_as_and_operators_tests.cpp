@@ -107,6 +107,17 @@ TEST(to_string)
     VERIFY_ARE_EQUAL(U("[\"Here\",true]"), stream.str());
 }
 
+TEST(empty_arrays_objects)
+{
+    // array
+    auto arr = json::value::parse(U("[   ]"));
+    VERIFY_ARE_EQUAL(U("[]"), arr.to_string());
+
+    // object
+    auto obj = json::value::parse(U("{   }"));
+    VERIFY_ARE_EQUAL(U("{}"), obj.to_string());
+}
+
 void verify_escaped_chars(const utility::string_t& str1, const utility::string_t& str2)
 {
     json::value j1 = json::value::string(str1);
@@ -296,47 +307,11 @@ TEST(negative_as_tests)
     VERIFY_THROWS(i.as_string(), json::json_exception);
 }
 
-TEST(int_double_limits)
+TEST(floating_number_serialize, "Ignore", "864834")
 {
-    utility::stringstream_t stream(utility::stringstream_t::in | utility::stringstream_t::out);
-    utility::stringstream_t oracleStream(utility::stringstream_t::in | utility::stringstream_t::out);
-
-    // int max
-    oracleStream.precision(std::numeric_limits<int>::digits10 + 2);
-    oracleStream << std::numeric_limits<int>::max();
-    json::value iMax(std::numeric_limits<int>::max());
-    VERIFY_ARE_EQUAL(oracleStream.str(), iMax.to_string());
-    iMax.serialize(stream);
-    VERIFY_ARE_EQUAL(oracleStream.str(), stream.str());
-
-    // int min
-    stream.str(U(""));
-    oracleStream.str(U(""));
-    oracleStream.clear();
-    oracleStream << std::numeric_limits<int>::min();
-    json::value iMin(std::numeric_limits<int>::min());
-    VERIFY_ARE_EQUAL(oracleStream.str(), iMin.to_string());
-    iMin.serialize(stream);
-    VERIFY_ARE_EQUAL(oracleStream.str(), stream.str());
-
-    // double max
-    stream.str(U(""));
-    oracleStream.str(U(""));
-    oracleStream.precision(std::numeric_limits<double>::digits10);
-    oracleStream << std::numeric_limits<double>::max();
-    json::value dMax(std::numeric_limits<double>::max());
-    VERIFY_ARE_EQUAL(oracleStream.str(), dMax.to_string());
-    dMax.serialize(stream);
-    VERIFY_ARE_EQUAL(oracleStream.str(), stream.str());
-
-    // double min
-    stream.str(U(""));
-    oracleStream.str(U(""));
-    oracleStream << std::numeric_limits<double>::min();
-    json::value dMin(std::numeric_limits<double>::min());
-    VERIFY_ARE_EQUAL(oracleStream.str(), dMin.to_string());
-    dMin.serialize(stream);
-    VERIFY_ARE_EQUAL(oracleStream.str(), stream.str());
+    auto value = json::value(-3.14E-12);
+    std::stringstream ss;
+    value.serialize(ss);
 }
 
 } // SUITE(to_as_and_operators_tests)

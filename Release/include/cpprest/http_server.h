@@ -58,12 +58,12 @@ public:
     /// <summary>
     /// Registers an http listener.
     /// </summary>
-    virtual pplx::task<void> register_listener(_In_ web::http::experimental::listener::http_listener *pListener) = 0;
+    virtual pplx::task<void> register_listener(_In_ web::http::experimental::listener::details::http_listener_impl *pListener) = 0;
 
     /// <summary>
     /// Unregisters an http listener.
     /// </summary>
-    virtual pplx::task<void> unregister_listener(_In_ web::http::experimental::listener::http_listener *pListener) = 0;
+    virtual pplx::task<void> unregister_listener(_In_ web::http::experimental::listener::details::http_listener_impl *pListener) = 0;
 
     /// <summary>
     /// Stop processing and listening for incoming requests.

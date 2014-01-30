@@ -45,6 +45,10 @@ namespace pplx = Concurrency;
 #include <chrono>
 #endif
 
+#ifndef _MS_WINDOWS
+#include <boost/algorithm/string.hpp>
+#endif
+
 namespace utility
 {
 
@@ -111,6 +115,8 @@ namespace conversions
     /// <summary>
     /// Decode to string_t from either a utf-16 or utf-8 string
     /// </summary>
+    _ASYNCRTIMP utility::string_t __cdecl to_string_t(std::string &&s);
+    _ASYNCRTIMP utility::string_t __cdecl to_string_t(utf16string &&s);
     _ASYNCRTIMP utility::string_t __cdecl to_string_t(const std::string &s);
     _ASYNCRTIMP utility::string_t __cdecl to_string_t(const utf16string &s);
 
@@ -118,12 +124,12 @@ namespace conversions
     /// Decode to utf16 from either a narrow or wide string
     /// </summary>
     _ASYNCRTIMP utf16string __cdecl to_utf16string(const std::string &value);
-    _ASYNCRTIMP utf16string __cdecl to_utf16string(const utf16string &value);
+    _ASYNCRTIMP utf16string __cdecl to_utf16string(utf16string value);
 
     /// <summary>
     /// Decode to UTF-8 from either a narrow or wide string.
     /// </summary>
-    _ASYNCRTIMP std::string __cdecl to_utf8string(const std::string &value);
+    _ASYNCRTIMP std::string __cdecl to_utf8string(std::string value);
     _ASYNCRTIMP std::string __cdecl to_utf8string(const utf16string &value);
 
     /// <summary>
@@ -140,44 +146,6 @@ namespace conversions
     /// Decode the given base64 string to a byte array
     /// </summary>
     _ASYNCRTIMP std::vector<unsigned char> __cdecl from_base64(const utility::string_t& str);
-    /// <summary>
-    /// Decode the given base64 string to a byte array
-    /// </summary>
-    _ASYNCRTIMP std::string __cdecl from_base64_str(const std::string& str);
-
-    /// <summary>
-    /// Given char type <c>T</c>, convert a <c>string</c> or a <c>wstring</c> to a <c>basic_string&lt;T&gt;</c>.
-    /// </summary>
-    template <typename CharType>
-    struct to_basic_string
-    {
-        static std::basic_string<CharType> perform(const std::string& str)
-        {
-            return utf8_to_utf16(str);
-        }
-
-        static std::basic_string<CharType> perform(const utf16string& str)
-        {
-            return str;
-        }
-    };
-
-    /// <summary>
-    /// Given char type <c>T</c>, convert a <c>string</c> or a <c>wstring</c> to a <c>basic_string&lt;T&gt;</c>. 
-    /// </summary>
-    template <>
-    struct to_basic_string<char>
-    {
-        static std::basic_string<char> perform(const std::string& str)
-        {
-            return str;
-        }
-
-        static std::basic_string<char> perform(const utf16string& str)
-        {
-            return utf16_to_utf8(str);
-        }
-    };
 
     template <typename Source>
     utility::string_t print_string(const Source &val)
@@ -198,7 +166,6 @@ namespace conversions
             throw std::bad_cast();
         return t;
     }
-
 }
 
 namespace details
@@ -226,6 +193,21 @@ namespace details
     template <typename _Type, typename _Arg1, typename _Arg2, typename _Arg3>
     std::unique_ptr<_Type> make_unique(_Arg1&& arg1, _Arg2&& arg2, _Arg3&& arg3) {
         return std::unique_ptr<_Type>(new _Type(std::forward<_Arg1>(arg1), std::forward<_Arg2>(arg2), std::forward<_Arg3>(arg3)));
+    }
+
+    /// <summary>
+    /// Cross platform utility function for performing case insensitive string comparision.
+    /// </summary>
+    /// <param name="left">First string to compare.</param>
+    /// <param name="right">Second strong to compare.</param>
+    /// <returns>true if the strings are equivalent, false otherwise</returns>
+    inline bool str_icmp(const utility::string_t &left, const utility::string_t &right)
+    {
+#ifdef _MS_WINDOWS
+        return _wcsicmp(left.c_str(), right.c_str()) == 0;
+#else
+        return boost::iequals(left, right);
+#endif
     }
 
 #ifdef _MS_WINDOWS

@@ -174,9 +174,9 @@ void BlackjackClient::PlayingTable::InterpretResponse(json::value jsonResponse)
 
     size_t i = 0;
 
-    for (auto iter = players.begin(); iter != players.end() && i < _playerSpaces.size(); ++iter,i++)
+    for (auto iter = players.as_array().begin(); iter != players.as_array().end() && i < _playerSpaces.size(); ++iter,i++)
     {
-        Player player = Player::FromJSON(iter->second);
+        Player player = Player::FromJSON(*iter);
 
         if ( player.Name == DEALER )
         {

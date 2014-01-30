@@ -84,15 +84,15 @@
       <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
-  
+
   <!-- If testing against a VS installation, need to include the libs. -->
   <ItemDefinitionGroup Condition="'$(BuildAgainstVSInstallation)'!=''">
-	<Link>
-	  <AdditionalLibraryDirectories>$(CasablancaVSLibDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-	</Link>
-	<Link>
-	  <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
-	</Link>
+    <Link>
+      <AdditionalLibraryDirectories>$(CasablancaVSLibDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <Link>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
   </ItemDefinitionGroup>
 
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -185,6 +185,7 @@
     <ClCompile Include="..\iterator_tests.cpp" />
     <ClCompile Include="..\negative_parsing_tests.cpp" />
     <ClCompile Include="..\parsing_tests.cpp" />
+    <ClCompile Include="..\json_numbers_tests.cpp" />
     <ClCompile Include="..\to_as_and_operators_tests.cpp" />
     <ClCompile Include="..\fuzz_tests.cpp" />
     <ClCompile Include="..\stdafx.cpp">
@@ -209,7 +210,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup Condition="'$(BuildAgainstVSInstallation)'==''">
-  	<ProjectReference Include="$(CasablancaSrcDir)\build\casablanca120.vcxproj">
+    <ProjectReference Include="$(CasablancaSrcDir)\build\casablanca120.vcxproj">
       <Project>{90D85FF4-F0AE-4816-923F-0EF2758F30AB}</Project>
     </ProjectReference>
   </ItemGroup>

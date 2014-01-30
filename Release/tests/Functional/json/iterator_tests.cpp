@@ -33,104 +33,18 @@ namespace tests { namespace functional { namespace json_tests {
 SUITE(iterator_tests)
 {
 
-void validate_empty_preincrement(json::value value)
+void validate_array_and_object_throw(json::value value)
 {
-    VERIFY_ARE_EQUAL(0, value.size());
-    size_t count = 0;
-    for (auto iter = value.begin(); iter != value.end(); ++iter)
-    {
-        count++;
-    }
-    VERIFY_ARE_EQUAL(0, count);
-}
-
-void validate_empty_reverse(json::value value)
-{
-    VERIFY_ARE_EQUAL(0, value.size());
-    size_t count = 0;
-    for (auto iter = value.rbegin(); iter != value.rend(); ++iter)
-    {
-        count++;
-    }
-    VERIFY_ARE_EQUAL(0, count);
-}
-
-void validate_empty_global(json::value value)
-{
-    VERIFY_ARE_EQUAL(0, value.size());
-    size_t count = 0;
-    for (auto iter = std::begin(value); iter != std::end(value); ++iter)
-    {
-        count++;
-    }
-    VERIFY_ARE_EQUAL(0, count);
-}
-
-void validate_empty_const(const json::value& value)
-{
-    VERIFY_ARE_EQUAL(0, value.size());
-    size_t count = 0;
-    for (auto iter = value.cbegin(); iter != value.cend(); ++iter)
-    {
-        count++;
-    }
-    VERIFY_ARE_EQUAL(0, count);
-}
-
-void validate_empty_postincrement(json::value value)
-{
-    VERIFY_ARE_EQUAL(0, value.size());
-    size_t count = 0;
-    for (auto iter = value.begin(); iter != value.end(); iter++)
-    {
-        count++;
-    }
-    VERIFY_ARE_EQUAL(0, count);
+    VERIFY_THROWS(value.as_array(), web::json::json_exception);
+    VERIFY_THROWS(value.as_object(), web::json::json_exception);
 }
 
 TEST(non_composites_member_preincrement)
 {
-    validate_empty_preincrement(json::value::null());
-    validate_empty_preincrement(json::value::number(17));
-    validate_empty_preincrement(json::value::boolean(true));
-    validate_empty_preincrement(json::value::string(U("Hello!")));
-}
-
-TEST(non_composites_member_reverse)
-{
-    validate_empty_reverse(json::value::null());
-    validate_empty_reverse(json::value::number(17));
-    validate_empty_reverse(json::value::boolean(true));
-    validate_empty_reverse(json::value::string(U("Hello!")));
-}
-
-TEST(non_composites_member_postincrement)
-{
-    validate_empty_postincrement(json::value::null());
-    validate_empty_postincrement(json::value::number(17));
-    validate_empty_postincrement(json::value::boolean(true));
-    validate_empty_postincrement(json::value::string(U("Hello!")));
-}
-
-TEST(non_composites_global_function)
-{
-    validate_empty_global(json::value::null());
-    validate_empty_global(json::value::number(17));
-    validate_empty_global(json::value::boolean(true));
-    validate_empty_global(json::value::string(U("Hello!")));
-}
-
-TEST(non_composites_const)
-{
-    json::value v_null = json::value::null();
-    json::value v_number = json::value::number(17);
-    json::value v_bool = json::value::boolean(true);
-    json::value v_string = json::value::string(U("Hello!"));
-
-    validate_empty_const(v_null);
-    validate_empty_const(v_number);
-    validate_empty_const(v_bool);
-    validate_empty_const(v_string);
+    validate_array_and_object_throw(json::value::null());
+    validate_array_and_object_throw(json::value::number(17));
+    validate_array_and_object_throw(json::value::boolean(true));
+    validate_array_and_object_throw(json::value::string(U("Hello!")));
 }
 
 TEST(objects_constructed)
@@ -143,7 +57,7 @@ TEST(objects_constructed)
     VERIFY_ARE_EQUAL(3, val1.size());
 
     size_t count = 0;
-    for (auto iter = std::begin(val1); iter != std::end(val1); ++iter)
+    for (auto iter = std::begin(val1.as_object()); iter != std::end(val1.as_object()); ++iter)
     {
         auto key = iter->first;
         auto& value = iter->second;
@@ -174,7 +88,7 @@ TEST(objects_parsed)
     VERIFY_ARE_EQUAL(3, val1.size());
 
     size_t count = 0;
-    for (auto iter = std::begin(val1); iter != std::end(val1); ++iter)
+    for (auto iter = std::begin(val1.as_object()); iter != std::end(val1.as_object()); ++iter)
     {
         auto key = iter->first;
         auto& value = iter->second;
@@ -211,7 +125,7 @@ TEST(objects_reverse)
     VERIFY_ARE_EQUAL(3, val1.size());
 
     size_t count = 0;
-    for (auto iter = val1.rbegin(); iter != val1.rend(); ++iter)
+    for (auto iter = val1.as_object().rbegin(); iter != val1.as_object().rend(); ++iter)
     {
         auto key = iter->first;
         auto& value = iter->second;
@@ -248,11 +162,8 @@ TEST(arrays_constructed)
     VERIFY_ARE_EQUAL(6, val1.size());
 
     size_t count = 0;
-    for (auto iter = std::begin(val1); iter != std::end(val1); ++iter)
+    for (auto&& value : val1.as_array())
     {
-        auto key = iter->first;
-        auto& value = iter->second;
-        VERIFY_ARE_EQUAL(count, key.as_integer());
         switch(count)
         {
         case 0:
@@ -280,11 +191,9 @@ TEST(arrays_parsed)
     VERIFY_ARE_EQUAL(3, val1.size());
 
     size_t count = 0;
-    for (auto iter = std::begin(val1); iter != std::end(val1); ++iter)
+    //for (auto iter = std::begin(val1.as_array()); iter != std::end(val1.as_array()); ++iter)
+    for (auto &&value : val1.as_array())
     {
-        auto key = iter->first;
-        auto value = iter->second;
-        VERIFY_ARE_EQUAL(count, key.as_integer());
         switch(count)
         {
         case 0:
@@ -312,10 +221,9 @@ TEST(arrays_reversed)
     VERIFY_ARE_EQUAL(3, val1.size());
 
     size_t count = 0;
-    for (auto iter = val1.rbegin(); iter != val1.rend(); ++iter)
+    for (auto iter = val1.as_array().rbegin(); iter != val1.as_array().rend(); ++iter)
     {
-        auto key = iter->first;
-        auto value = iter->second;
+        auto value = *iter;
         switch(count)
         {
         case 2:
@@ -343,7 +251,7 @@ TEST(comparison)
     val1[U("b")] = json::value(true);
     val1[U("c")] = json::value(false);
 
-    auto first = std::begin(val1);
+    auto first = std::begin(val1.as_object());
     auto f     = first;
     auto f_1   = first++;
     auto f_2   = ++first;
@@ -358,8 +266,8 @@ TEST(std_algorithms)
         // for_each
         size_t count = 0;
         json::value v_array = json::value::parse(U("[44, true, false]"));
-        std::for_each(std::begin(v_array), std::end(v_array),
-            [&](json::value::iterator::value_type)
+        std::for_each(std::begin(v_array.as_array()), std::end(v_array.as_array()),
+            [&](json::array::iterator::value_type)
             {
                 count++;
             });
@@ -369,34 +277,36 @@ TEST(std_algorithms)
         // find_if
         json::value v_array = json::value::parse(U("[44, true, false]"));
         auto _where = 
-            std::find_if(std::begin(v_array), std::end(v_array),
-            [&](json::value::iterator::value_type iter)
+            std::find_if(std::begin(v_array.as_array()), std::end(v_array.as_array()),
+            [&](json::value::array_vector::iterator::value_type value)
             {
-                return iter.second.is_boolean();
+                return value.is_boolean();
             });
-        VERIFY_ARE_NOT_EQUAL(_where, std::end(v_array));
-        VERIFY_ARE_EQUAL(_where->first.as_integer(), 1);
+
+        VERIFY_ARE_NOT_EQUAL(_where, std::end(v_array.as_array()));
+
+        VERIFY_ARE_EQUAL(_where->as_bool(), true);
     }
     {
         // copy_if
         json::value v_array = json::value::parse(U("[44, true, false]"));
-        std::vector<json::value::iterator::value_type> v_target(v_array.size());
+        std::vector<json::value::array_vector::iterator::value_type> v_target(v_array.size());
         auto _where = 
-            std::copy_if(std::begin(v_array), std::end(v_array), std::begin(v_target),
-            [&](json::value::iterator::value_type iter)
+            std::copy_if(std::begin(v_array.as_array()), std::end(v_array.as_array()), std::begin(v_target),
+            [&](json::value::array_vector::iterator::value_type value)
             {
-                return iter.second.is_boolean();
+                return value.is_boolean();
             });
         VERIFY_ARE_EQUAL(2, _where-std::begin(v_target));
-        VERIFY_IS_FALSE(v_array.begin()[1].second.is_number());
+        VERIFY_IS_FALSE(v_array.as_array().begin()[1].is_number());
     }
     {
         // transform
         json::value v_array = json::value::parse(U("[44, true, false]"));
         std::vector<json::value> v_target(v_array.size());
         auto _where = 
-            std::transform(std::begin(v_array), std::end(v_array), std::begin(v_target),
-            [&](json::value::iterator::value_type) -> json::value
+            std::transform(std::begin(v_array.as_array()), std::end(v_array.as_array()), std::begin(v_target),
+            [&](json::value::array_vector::iterator::value_type) -> json::value
             {
                 return json::value::number(17);
             });

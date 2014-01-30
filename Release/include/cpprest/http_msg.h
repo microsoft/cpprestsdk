@@ -820,7 +820,7 @@ public:
     /// </remarks>
     void set_body(concurrency::streams::istream stream, utility::string_t content_type = _XPLATSTR("application/octet-stream"))
     {
-        _m_impl->set_body(stream, content_type);
+        _m_impl->set_body(stream, std::move(content_type));
     }
 
     /// <summary>
@@ -836,7 +836,7 @@ public:
     /// </remarks>
     void set_body(concurrency::streams::istream stream, utility::size64_t content_length, utility::string_t content_type = _XPLATSTR("application/octet-stream"))
     {
-        _m_impl->set_body(stream, content_length, content_type);
+        _m_impl->set_body(stream, content_length, std::move(content_type));
     }
 
     /// <summary>
@@ -905,7 +905,11 @@ public:
     _ASYNCRTIMP _http_request();
 
     _http_request(const http::method& mtd)
-        :  m_method(mtd), m_initiated_response(0), m_server_context(), m_listener_path(_XPLATSTR(""))
+        :  m_method(mtd), 
+        m_initiated_response(0),
+        m_server_context(), 
+        m_listener_path(_XPLATSTR("")),
+        m_cancellationToken(pplx::cancellation_token::none())
     {
         if(mtd.empty())
         {
@@ -924,6 +928,13 @@ public:
     _ASYNCRTIMP uri relative_uri() const;
 
     _ASYNCRTIMP void set_request_uri(const uri&);
+
+    pplx::cancellation_token cancellation_token() { return m_cancellationToken; }
+
+    void set_cancellation_token(pplx::cancellation_token token)
+    {
+        m_cancellationToken = token;
+    }
 
     _ASYNCRTIMP utility::string_t to_string() const;
 
@@ -964,6 +975,8 @@ private:
 
     // Tracks whether or not a response has already been started for this message.
     pplx::details::atomic_long m_initiated_response;
+
+    pplx::cancellation_token m_cancellationToken;
 
     http::method m_method;
 
@@ -1186,7 +1199,7 @@ public:
     /// </remarks>
     void set_body(concurrency::streams::istream stream, utility::string_t content_type = _XPLATSTR("application/octet-stream"))
     {
-        _m_impl->set_body(stream, content_type);
+        _m_impl->set_body(stream, std::move(content_type));
     }
 
     /// <summary>
@@ -1202,7 +1215,7 @@ public:
     /// </remarks>
     void set_body(concurrency::streams::istream stream, utility::size64_t content_length, utility::string_t content_type = _XPLATSTR("application/octet-stream"))
     {
-        _m_impl->set_body(stream, content_length, content_type);
+        _m_impl->set_body(stream, content_length, std::move(content_type));
     }
 
     /// <summary>
@@ -1313,10 +1326,10 @@ public:
     /// need to block waiting for the response to be sent to before the body data is destroyed or goes
     /// out of scope.
     /// </remarks>
-    pplx::task<void> reply(http::status_code status, utility::string_t body_data, utility::string_t content_type = _XPLATSTR("text/plain")) const
+    pplx::task<void> reply(http::status_code status, const utility::string_t &body_data, utility::string_t content_type = _XPLATSTR("text/plain")) const
     {
         http_response response(status);
-        response.set_body(body_data, content_type);
+        response.set_body(body_data, std::move(content_type));
         return reply(response);  
     }
 
@@ -1330,7 +1343,7 @@ public:
     pplx::task<void> reply(status_code status, concurrency::streams::istream body, utility::string_t content_type = _XPLATSTR("application/octet-stream")) const
     {
         http_response response(status);
-        response.set_body(body, content_type);
+        response.set_body(body, std::move(content_type));
         return reply(response);  
     }
 
@@ -1342,10 +1355,10 @@ public:
     /// <param name="content_type">A string holding the MIME type of the message body.</param>
     /// <param name="body">An asynchronous stream representing the body data.</param>
     /// <returns>A task that is completed once a response from the request is received.</returns>
-    pplx::task<void> reply(status_code status, concurrency::streams::istream body, utility::size64_t content_length, utility::string_t content_type= _XPLATSTR("application/octet-stream")) const
+    pplx::task<void> reply(status_code status, concurrency::streams::istream body, utility::size64_t content_length, utility::string_t content_type = _XPLATSTR("application/octet-stream")) const
     {
         http_response response(status);
-        response.set_body(body, content_length, content_type);
+        response.set_body(body, content_length, std::move(content_type));
         return reply(response);  
     }
 
@@ -1393,6 +1406,16 @@ public:
     void _set_listener_path(const utility::string_t &path) { _m_impl->_set_listener_path(path); }
 
     std::shared_ptr<http::details::_http_request> _get_impl() const { return _m_impl; }
+
+    void _set_cancellation_token(pplx::cancellation_token token)
+    {
+        _m_impl->set_cancellation_token(token);
+    }
+
+    pplx::cancellation_token _cancellation_token()
+    {
+        return _m_impl->cancellation_token();
+    }
 
 private:
     friend class http::details::_http_request;

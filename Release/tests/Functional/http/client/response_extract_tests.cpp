@@ -153,32 +153,6 @@ TEST_FIXTURE(uri_address, extract_string)
 #endif
 }
 
-#ifdef _MS_WINDOWS
-#ifndef __cplusplus_winrt
-TEST_FIXTURE(uri_address, extract_string_endian_uneven_bytes)
-{
-    // It is really hard to write this test case with our test server infrastructure so we will
-    // have to use our http_listener.
-    web::http::experimental::listener::http_listener listener(m_uri);
-    listener.open().wait();
-    http_client client(m_uri);
-
-    listener.support([](http_request request)
-    {
-        http_response response(status_codes::OK);
-        response.set_body("uneven1");
-        response.headers().set_content_type(U("text/plain; charset=utf-16be"));
-        response.headers().add(header_names::connection, U("close")); 
-        request.reply(response).wait(); 
-    });
-
-    http_response response = client.request(methods::GET, U("")).get();
-    VERIFY_THROWS(response.extract_string().get(), std::exception);
-    listener.close().wait();
-}
-#endif
-#endif
-
 TEST_FIXTURE(uri_address, extract_string_incorrect)
 {
     test_http_server::scoped_server scoped(m_uri);

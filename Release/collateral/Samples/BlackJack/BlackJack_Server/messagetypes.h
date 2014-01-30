@@ -148,12 +148,12 @@ struct BJHand
 
         web::json::value cards = object[CARDS];
 
-        for (auto iter = cards.begin(); iter != cards.end(); ++iter)
+        for (auto iter = cards.as_array().begin(); iter != cards.as_array().end(); ++iter)
         {
-            if ( !iter->second.is_null() )
+            if ( !iter->is_null() )
             {
                 Card card;
-                card = Card::FromJSON(iter->second);
+                card = Card::FromJSON(*iter);
                 result.cards.push_back(card);
             }
         }
@@ -248,9 +248,9 @@ struct BJTable
         web::json::value players = object[PLAYERS];
         int i = 0;
 
-        for (auto iter = players.begin(); iter != players.end(); ++iter, i++)
+        for (auto iter = players.as_array().begin(); iter != players.as_array().end(); ++iter, i++)
         {
-            result.Players.push_back(Player::FromJSON(iter->second));
+            result.Players.push_back(Player::FromJSON(*iter));
         }
 
         return result;

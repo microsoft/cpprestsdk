@@ -84,13 +84,23 @@
     </Expand>
   </Type>
 
-  <Type Name="web::json::value">
-
-    <DisplayString Condition="(m_kind==web::json::value::Number) &amp;&amp; ((*((web::json::details::_Number*)((m_value)._Myptr))).m_was_int)">
-      {(*((web::json::details::_Number*)((m_value)._Myptr))).m_intval}
+  <Type Name="web::json::number">
+    <DisplayString Condition="(m_type==type::signed_type)">
+      {m_intval}
     </DisplayString>
-    <DisplayString Condition="(m_kind==web::json::value::Number) &amp;&amp; (!(*((web::json::details::_Number*)((m_value)._Myptr))).m_was_int)">
-      {(*((web::json::details::_Number*)((m_value)._Myptr))).m_value}
+
+    <DisplayString Condition="(m_type==type::unsigned_type)">
+      {m_uintval}
+    </DisplayString>
+
+    <DisplayString Condition="(m_type==type::double_type)">
+      {m_value}
+    </DisplayString>
+  </Type>
+
+  <Type Name="web::json::value">
+    <DisplayString Condition="(m_kind==web::json::value::Number)">
+      {(*((web::json::details::_Number*)((m_value)._Myptr))).m_number}
     </DisplayString>
 
     <DisplayString Condition="m_kind==web::json::value::Boolean">

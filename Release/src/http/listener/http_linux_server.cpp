@@ -338,7 +338,7 @@ void connection::async_read_until_buffersize(size_t size, ReadHandler handler)
 void connection::dispatch_request_to_listener()
 {
     // locate the listener:
-    http_listener* pListener = nullptr;
+    web::http::experimental::listener::details::http_listener_impl* pListener = nullptr;
     {
         auto path_segments = uri::split_path(uri::decode(m_request.relative_uri().path()));
         for (auto i = static_cast<long>(path_segments.size()); i >= 0; --i)
@@ -621,15 +621,15 @@ void hostport_listener::stop()
     m_all_connections_complete.wait();
 }
 
-void hostport_listener::add_listener(const std::string& path, http_listener* listener)
+void hostport_listener::add_listener(const std::string& path, web::http::experimental::listener::details::http_listener_impl* listener)
 {
     pplx::extensibility::scoped_rw_lock_t lock(m_listeners_lock);
 
-    if (!m_listeners.insert(std::map<std::string,http_listener*>::value_type(path, listener)).second)
+    if (!m_listeners.insert(std::map<std::string,web::http::experimental::listener::details::http_listener_impl*>::value_type(path, listener)).second)
         throw std::invalid_argument("Error: http_listener is already registered for this path");
 }
 
-void hostport_listener::remove_listener(const std::string& path, http_listener*)
+void hostport_listener::remove_listener(const std::string& path, web::http::experimental::listener::details::http_listener_impl*)
 {
     pplx::extensibility::scoped_rw_lock_t lock(m_listeners_lock);
 
@@ -699,7 +699,7 @@ std::pair<std::string,std::string> canonical_parts(const http::uri& uri)
     return std::make_pair(endpoint.str(), path);
 }
 
-pplx::task<void> http_linux_server::register_listener(http_listener* listener)
+pplx::task<void> http_linux_server::register_listener(web::http::experimental::listener::details::http_listener_impl* listener)
 {
     auto parts = canonical_parts(listener->uri());
     auto hostport = parts.first;
@@ -728,7 +728,7 @@ pplx::task<void> http_linux_server::register_listener(http_listener* listener)
     return pplx::task_from_result();
 }
 
-pplx::task<void> http_linux_server::unregister_listener(http_listener* listener)
+pplx::task<void> http_linux_server::unregister_listener(web::http::experimental::listener::details::http_listener_impl* listener)
 {
     auto parts = canonical_parts(listener->uri());
     auto hostport = parts.first;

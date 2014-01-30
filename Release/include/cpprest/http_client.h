@@ -58,7 +58,9 @@ namespace pplx = Concurrency;
 #include "cpprest/basic_types.h"
 #include "cpprest/asyncrt_utils.h"
 
-namespace web { namespace http
+namespace web 
+{ 
+namespace http
 {
 namespace client
 {
@@ -320,14 +322,14 @@ public:
     /// Creates a new http_client connected to specified uri.
     /// </summary>
     /// <param name="base_uri">A string representation of the base uri to be used for all requests. Must start with either "http://" or "https://"</param>
-    _ASYNCRTIMP http_client(const uri &base_uri);
+    _ASYNCRTIMP http_client(uri base_uri);
 
     /// <summary>
     /// Creates a new http_client connected to specified uri.
     /// </summary>
     /// <param name="base_uri">A string representation of the base uri to be used for all requests. Must start with either "http://" or "https://"</param>
-            /// <param name="client_config">The http client configuration object containing the possible configuration options to intitialize the <c>http_client</c>. </param>
-    _ASYNCRTIMP http_client(const uri &base_uri, const http_client_config& client_config);
+    /// <param name="client_config">The http client configuration object containing the possible configuration options to intitialize the <c>http_client</c>. </param>
+    _ASYNCRTIMP http_client(uri base_uri, http_client_config client_config);
 
     /// <summary>
     /// Note the destructor doesn't necessarily close the connection and release resources.
@@ -345,6 +347,12 @@ public:
     {
         return _base_uri;
     }
+
+    /// <summary>
+    /// Get client configuration object
+    /// </summary>
+    /// <returns>A reference to the client configuration object.</returns>
+    _ASYNCRTIMP const http_client_config& client_config() const;
 
     /// <summary>
     /// Adds an HTTP pipeline stage to the client.
@@ -368,37 +376,37 @@ public:
     /// Asynchronously sends an HTTP request.
     /// </summary>
     /// <param name="request">Request to send.</param>
+    /// <param name="token">Cancellation token for cancellation of this request operation.</param>
     /// <returns>An asynchronous operation that is completed once a response from the request is received.</returns>
-    _ASYNCRTIMP pplx::task<http_response> request(http_request request);
+    _ASYNCRTIMP pplx::task<http_response> request(http_request request, pplx::cancellation_token token = pplx::cancellation_token::none());
 
     /// <summary>
     /// Asynchronously sends an HTTP request.
     /// </summary>
     /// <param name="mtd">HTTP request method.</param>
+    /// <param name="token">Cancellation token for cancellation of this request operation.</param>
     /// <returns>An asynchronous operation that is completed once a response from the request is received.</returns>
-    pplx::task<http_response> request(method mtd)
+    pplx::task<http_response> request(method mtd, pplx::cancellation_token token = pplx::cancellation_token::none())
     {
         http_request msg(std::move(mtd));
-        return request(msg);
+        return request(msg, token);
     }
-
-    /// <summary>
-    /// Get client configuration object
-    /// </summary>
-    /// <returns>A reference to the client configuration object.</returns>
-    _ASYNCRTIMP const http_client_config& client_config() const;
 
     /// <summary>
     /// Asynchronously sends an HTTP request.
     /// </summary>
     /// <param name="mtd">HTTP request method.</param>
     /// <param name="path_query_fragment">String containing the path, query, and fragment, relative to the http_client's base URI.</param>
+    /// <param name="token">Cancellation token for cancellation of this request operation.</param>
     /// <returns>An asynchronous operation that is completed once a response from the request is received.</returns>
-    pplx::task<http_response> request(method mtd, const utility::string_t &path_query_fragment)
+    pplx::task<http_response> request(
+        method mtd, 
+        const utility::string_t &path_query_fragment,
+        pplx::cancellation_token token = pplx::cancellation_token::none())
     {
         http_request msg(std::move(mtd));
         msg.set_request_uri(path_query_fragment);
-        return request(msg);
+        return request(msg, token);
     }
 
     /// <summary>
@@ -407,13 +415,18 @@ public:
     /// <param name="mtd">HTTP request method.</param>
     /// <param name="path_query_fragment">String containing the path, query, and fragment, relative to the http_client's base URI.</param>
     /// <param name="body_data">The data to be used as the message body, represented using the json object library.</param>
+    /// <param name="token">Cancellation token for cancellation of this request operation.</param>
     /// <returns>An asynchronous operation that is completed once a response from the request is received.</returns>
-    pplx::task<http_response> request(method mtd, const utility::string_t &path_query_fragment, const json::value &body_data)
+    pplx::task<http_response> request(
+        method mtd, 
+        const utility::string_t &path_query_fragment, 
+        const json::value &body_data,
+        pplx::cancellation_token token = pplx::cancellation_token::none())
     {
         http_request msg(std::move(mtd));
         msg.set_request_uri(path_query_fragment);
         msg.set_body(body_data);
-        return request(msg);
+        return request(msg, token);
     }
 
     /// <summary>
@@ -423,17 +436,36 @@ public:
     /// <param name="path_query_fragment">String containing the path, query, and fragment, relative to the http_client's base URI.</param>
     /// <param name="content_type">A string holding the MIME type of the message body.</param>
     /// <param name="body_data">String containing the text to use in the message body.</param>
+    /// <param name="token">Cancellation token for cancellation of this request operation.</param>
     /// <returns>An asynchronous operation that is completed once a response from the request is received.</returns>
     pplx::task<http_response> request(
         method mtd, 
         const utility::string_t &path_query_fragment,
         const utility::string_t &body_data,
-        utility::string_t content_type = _XPLATSTR("text/plain"))
+        utility::string_t content_type = _XPLATSTR("text/plain"),
+        pplx::cancellation_token token = pplx::cancellation_token::none())
     {
         http_request msg(std::move(mtd));
         msg.set_request_uri(path_query_fragment);
         msg.set_body(body_data, std::move(content_type));
-        return request(msg);
+        return request(msg, token);
+    }
+
+    /// <summary>
+    /// Asynchronously sends an HTTP request.
+    /// </summary>
+    /// <param name="mtd">HTTP request method.</param>
+    /// <param name="path_query_fragment">String containing the path, query, and fragment, relative to the http_client's base URI.</param>
+    /// <param name="body_data">String containing the text to use in the message body.</param>
+    /// <param name="token">Cancellation token for cancellation of this request operation.</param>
+    /// <returns>An asynchronous operation that is completed once a response from the request is received.</returns>
+    pplx::task<http_response> request(
+        method mtd, 
+        const utility::string_t &path_query_fragment,
+        const utility::string_t &body_data,
+        pplx::cancellation_token token)
+    {
+        return request(mtd, path_query_fragment, body_data, _XPLATSTR("text/plain"), token);
     }
 
 #if !defined (__cplusplus_winrt)
@@ -444,20 +476,38 @@ public:
     /// <param name="path_query_fragment">String containing the path, query, and fragment, relative to the http_client's base URI.</param>
     /// <param name="body">An asynchronous stream representing the body data.</param>
     /// <param name="content_type">A string holding the MIME type of the message body.</param>
+    /// <param name="token">Cancellation token for cancellation of this request operation.</param>
     /// <returns>A task that is completed once a response from the request is received.</returns>
     pplx::task<http_response> request(
         method mtd, 
         const utility::string_t &path_query_fragment,
         concurrency::streams::istream body,
-        utility::string_t content_type = _XPLATSTR("application/octet-stream"))
+        utility::string_t content_type = _XPLATSTR("application/octet-stream"),
+        pplx::cancellation_token token = pplx::cancellation_token::none())
     {
         http_request msg(std::move(mtd));
         msg.set_request_uri(path_query_fragment);
         msg.set_body(body, std::move(content_type));
-        return request(msg);
-    }  
-#endif // __cplusplus_winrt
+        return request(msg, token);
+    }
 
+    /// <summary>
+    /// Asynchronously sends an HTTP request.
+    /// </summary>
+    /// <param name="mtd">HTTP request method.</param>
+    /// <param name="path_query_fragment">String containing the path, query, and fragment, relative to the http_client's base URI.</param>
+    /// <param name="body">An asynchronous stream representing the body data.</param>
+    /// <param name="token">Cancellation token for cancellation of this request operation.</param>
+    /// <returns>A task that is completed once a response from the request is received.</returns>
+    pplx::task<http_response> request(
+        method mtd, 
+        const utility::string_t &path_query_fragment,
+        concurrency::streams::istream body,
+        pplx::cancellation_token token)
+    {
+        return request(mtd, path_query_fragment, body, _XPLATSTR("application/octet-stream"), token);
+    }
+#endif // __cplusplus_winrt
 
     /// <summary>
     /// Asynchronously sends an HTTP request.
@@ -467,6 +517,7 @@ public:
     /// <param name="body">An asynchronous stream representing the body data.</param>
     /// <param name="content_length">Size of the message body.</param>
     /// <param name="content_type">A string holding the MIME type of the message body.</param>
+    /// <param name="token">Cancellation token for cancellation of this request operation.</param>
     /// <returns>A task that is completed once a response from the request is received.</returns>
     /// <remarks>Winrt requires to provide content_length.</remarks>
     pplx::task<http_response> request(
@@ -474,19 +525,40 @@ public:
         const utility::string_t &path_query_fragment,
         concurrency::streams::istream body,
         size_t content_length,
-        utility::string_t content_type= _XPLATSTR("application/octet-stream"))
+        utility::string_t content_type= _XPLATSTR("application/octet-stream"),
+        pplx::cancellation_token token = pplx::cancellation_token::none())
     {
         http_request msg(std::move(mtd));
         msg.set_request_uri(path_query_fragment);
         msg.set_body(body, content_length, std::move(content_type));
-        return request(msg);
+        return request(msg, token);
+    }
+
+    /// <summary>
+    /// Asynchronously sends an HTTP request.
+    /// </summary>
+    /// <param name="mtd">HTTP request method.</param>
+    /// <param name="path_query_fragment">String containing the path, query, and fragment, relative to the http_client's base URI.</param>
+    /// <param name="body">An asynchronous stream representing the body data.</param>
+    /// <param name="content_length">Size of the message body.</param>
+    /// <param name="token">Cancellation token for cancellation of this request operation.</param>
+    /// <returns>A task that is completed once a response from the request is received.</returns>
+    /// <remarks>Winrt requires to provide content_length.</remarks>
+    pplx::task<http_response> request(
+        method mtd, 
+        const utility::string_t &path_query_fragment,
+        concurrency::streams::istream body,
+        size_t content_length,
+        pplx::cancellation_token token)
+    {
+        return request(mtd, path_query_fragment, body, content_length, _XPLATSTR("application/octet-stream"), token);
     }
 
 private:
 
-    void build_pipeline(const uri &base_uri, const http_client_config& client_config);
+    void build_pipeline(uri base_uri, http_client_config client_config);
     
-    std::shared_ptr< ::web::http::http_pipeline> m_pipeline;
+    std::shared_ptr<::web::http::http_pipeline> m_pipeline;
 
     uri _base_uri;
 };

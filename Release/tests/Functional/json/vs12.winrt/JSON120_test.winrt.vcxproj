@@ -207,6 +207,7 @@
     <ClCompile Include="..\iterator_tests.cpp" />
     <ClCompile Include="..\negative_parsing_tests.cpp" />
     <ClCompile Include="..\parsing_tests.cpp" />
+    <ClCompile Include="..\json_numbers_tests.cpp" />
     <ClCompile Include="..\to_as_and_operators_tests.cpp" />
     <ClCompile Include="..\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

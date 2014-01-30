@@ -243,6 +243,144 @@ TEST_FIXTURE(uri_address, content_ready_timeout)
 }
 #endif
 
+#pragma region Cancellation tests
+
+TEST_FIXTURE(uri_address, cancel_before_request)
+{
+    test_http_server::scoped_server scoped(m_uri);
+    http_client c(m_uri);
+    pplx::cancellation_token_source source;
+    source.cancel();
+
+    auto responseTask = c.request(methods::PUT, U("/"), source.get_token());
+    VERIFY_THROWS_HTTP_ERROR_CODE(responseTask.get(), std::errc::operation_canceled);
+}
+
+// This test can't be implemented with our test server so isn't avaliable on WinRT.
+#ifndef __cplusplus_winrt
+TEST_FIXTURE(uri_address, cancel_after_headers)
+{
+    web::http::experimental::listener::http_listener listener(m_uri);  
+    listener.open().wait();
+    http_client c(m_uri);
+    pplx::cancellation_token_source source;
+    pplx::extensibility::event_t ev;
+
+    listener.support([&](http_request request)
+    {
+        streams::producer_consumer_buffer<uint8_t> buf;
+        http_response response(200);
+        response.set_body(streams::istream(buf), U("text/plain"));
+        request.reply(response);
+        ev.wait();
+        buf.putc('a').wait();
+        buf.putc('b').wait();
+        buf.putc('c').wait();
+        buf.putc('d').wait();
+        buf.close(std::ios::out).wait();
+    });
+
+    auto responseTask = c.request(methods::GET, source.get_token());
+    http_response response = responseTask.get();
+    source.cancel();
+    ev.set();
+
+    VERIFY_THROWS_HTTP_ERROR_CODE(response.extract_string().get(), std::errc::operation_canceled);
+    listener.close().wait();
+}
+#endif
+
+TEST_FIXTURE(uri_address, cancel_after_body)
+{
+    test_http_server::scoped_server scoped(m_uri);
+    test_http_server * p_server = scoped.server();
+    http_client c(m_uri);
+    pplx::cancellation_token_source source;
+    std::map<utility::string_t, utility::string_t> headers;
+    headers[U("Content-Type")] = U("text/plain; charset=utf-8");
+    std::string bodyData("Hello");
+
+    p_server->next_request().then([&](test_request *r)
+    {
+        VERIFY_ARE_EQUAL(0u, r->reply(status_codes::OK, U("OK"), headers, bodyData)); 
+    });
+
+    auto response = c.request(methods::PUT, U("/"), U("data"), source.get_token()).get();
+    VERIFY_ARE_EQUAL(utility::conversions::to_string_t(bodyData), response.extract_string().get());
+    source.cancel();
+    response.content_ready().wait();
+}
+
+TEST_FIXTURE(uri_address, cancel_with_error)
+{
+    test_http_server server(m_uri);
+    VERIFY_ARE_EQUAL(0, server.open());
+    http_client c(m_uri);
+    pplx::cancellation_token_source source;
+       
+    auto responseTask = c.request(methods::GET, U("/"), source.get_token());
+    source.cancel();
+    VERIFY_ARE_EQUAL(0, server.close());
+    
+    // All errors after cancellation are ignored.
+    VERIFY_THROWS_HTTP_ERROR_CODE(responseTask.get(), std::errc::operation_canceled);
+}
+
+TEST_FIXTURE(uri_address, cancel_while_uploading_data)
+{
+    test_http_server::scoped_server scoped(m_uri);
+    http_client c(m_uri);
+    pplx::cancellation_token_source source;
+
+    auto buf = streams::producer_consumer_buffer<uint8_t>();
+    buf.putc('A').wait();
+    auto responseTask = c.request(methods::PUT, U("/"), buf.create_istream(), 2, source.get_token());
+    source.cancel();
+    buf.putc('B').wait();
+    buf.close(std::ios::out).wait();
+    VERIFY_THROWS_HTTP_ERROR_CODE(responseTask.get(), std::errc::operation_canceled);
+}
+
+// This test can't be implemented with our test server since it doesn't stream data so isn't avaliable on WinRT.
+#ifndef __cplusplus_winrt
+TEST_FIXTURE(uri_address, cancel_while_downloading_data)
+{
+    web::http::experimental::listener::http_listener listener(m_uri);
+    listener.open().wait();
+    http_client c(m_uri);
+    pplx::cancellation_token_source source;
+
+    pplx::extensibility::event_t ev;
+    pplx::extensibility::event_t ev2;
+
+    listener.support([&](http_request request)
+    {
+        streams::producer_consumer_buffer<uint8_t> buf;
+        http_response response(200);
+        response.set_body(streams::istream(buf), U("text/plain"));
+        request.reply(response);
+        buf.putc('a').wait();
+        buf.putc('b').wait();
+        ev.set();
+        ev2.wait();
+        buf.putc('c').wait();
+        buf.putc('d').wait();
+        buf.close(std::ios::out).wait();
+    });
+
+    auto response = c.request(methods::GET, source.get_token()).get();
+    ev.wait();
+    source.cancel();
+    ev2.set();
+
+    VERIFY_THROWS_HTTP_ERROR_CODE(response.extract_string().get(), std::errc::operation_canceled);
+
+    listener.close().wait();
+}
+#endif
+
+#pragma endregion
+
 } // SUITE(connections_and_errors)
 
 }}}}

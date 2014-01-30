@@ -90,31 +90,16 @@ namespace details
 
     /// <summary>
     /// Helper functions to convert a series of bytes from a charset to utf-8 or utf-16.
+    /// These APIs deal with checking for and handling byte order marker (BOM).
     /// </summary>
-    std::string convert_latin1_to_utf8(const std::vector<unsigned char> &src);
-    std::string convert_latin1_to_utf8(const unsigned char *src, size_t src_size);
-    utf16string convert_latin1_to_utf16(const std::vector<unsigned char> &src);
-    utf16string convert_latin1_to_utf16(const unsigned char *src, size_t src_size);
-    std::string convert_utf16_to_utf8(const utf16string &src);
-    utf16string convert_utf8_to_utf16(const unsigned char *src, size_t src_size);
-    std::string convert_utf16_to_utf8(const std::vector<unsigned char> &src);
-    utf16string convert_utf16_to_utf16(utf16string &&src);
-    utf16string convert_utf16_to_utf16(const unsigned char *src, size_t src_size);
-    utf16string convert_utf16_to_utf16(const std::vector<unsigned char> &src);
-    utf16string convert_utf8_to_utf16(const std::vector<unsigned char> &src);
-    std::string convert_utf16le_to_utf8(const utf16string &src, bool erase_bom);
-    std::string convert_utf16le_to_utf8(const std::vector<unsigned char> &src, bool erase_bom);
-    std::string convert_utf16be_to_utf8(const utf16string &src, bool erase_bom);
-    std::string convert_utf16be_to_utf8(const std::vector<unsigned char> &src, bool erase_bom);
-    utf16string convert_utf16be_to_utf16le(const utf16string &src, bool erase_bom);
-    utf16string convert_utf16be_to_utf16le(const unsigned char *src, size_t src_size, bool erase_bom);
-    utf16string convert_utf16be_to_utf16le(const std::vector<unsigned char> &src, bool erase_bom);
-
-    // Helper functions to extract a string from a series of bytes.
-    std::string convert_bytes_to_string(const std::vector<unsigned char> &src);
-    utf16string convert_bytes_to_wstring(const std::vector<unsigned char> &src);
-    std::string convert_bytes_to_string(const unsigned char *src, size_t src_size);
-    utf16string convert_bytes_to_wstring(const unsigned char *src, size_t src_size);
+    utility::string_t convert_utf16_to_string_t(utf16string src);
+    utf16string convert_utf16_to_utf16(utf16string src);
+    std::string convert_utf16_to_utf8(utf16string src);
+    utility::string_t convert_utf16le_to_string_t(utf16string src, bool erase_bom);
+    std::string convert_utf16le_to_utf8(utf16string src, bool erase_bom);
+    utility::string_t convert_utf16be_to_string_t(utf16string src, bool erase_bom);
+    std::string convert_utf16be_to_utf8(utf16string src, bool erase_bom);
+    utf16string convert_utf16be_to_utf16le(utf16string src, bool erase_bom);
 
     // simple helper functions to trim whitespace.
     void ltrim_whitespace(utility::string_t &str);

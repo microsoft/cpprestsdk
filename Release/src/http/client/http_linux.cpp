@@ -80,7 +80,7 @@ namespace web { namespace http
                             break;
 #endif
                         case httpclient_errorcode_context::connect:
-                            if (ec == boost::system::errc::connection_refused) 
+                            if (ec == boost::system::errc::connection_refused)
                                 errorcodeValue = make_error_code(std::errc::host_unreachable).value();
                             break;
                         case httpclient_errorcode_context::readheader:
@@ -781,12 +781,11 @@ namespace web { namespace http
             {
             private:
                 std::unique_ptr<client> m_client;
-                const http::uri m_address;
 
             public:
-                linux_client(const http::uri &address, const http_client_config& client_config) 
-                    : _http_client_communicator(address, client_config)
-                    , m_address(address) {}
+                linux_client(http::uri address, http_client_config client_config) 
+                    : _http_client_communicator(std::move(address), std::move(client_config))
+				{}
 
                 unsigned long open()
                 {
@@ -798,40 +797,19 @@ namespace web { namespace http
                 {
                     auto linux_ctx = std::static_pointer_cast<linux_request_context>(request_ctx);
 
-                    auto encoded_resource = uri_builder(m_address).append(linux_ctx->m_request.relative_uri()).to_uri();
+                    auto encoded_resource = uri_builder(m_uri).append(linux_ctx->m_request.relative_uri()).to_uri();
                     linux_ctx->m_what = encoded_resource;
 
                     m_client->send_request(linux_ctx);
                 }
             };
-        } // namespace details
 
-        // Helper function to check to make sure the uri is valid.
-        static void verify_uri(const uri &uri)
+            http_network_handler::http_network_handler(uri base_uri, http_client_config client_config) :
+                m_http_client_impl(std::make_shared<details::linux_client>(std::move(base_uri), std::move(client_config)))
         {
-            // Somethings like proper URI schema are verified by the URI class.
-            // We only need to check certain things specific to HTTP.
-            if( uri.scheme() != U("http") && uri.scheme() != U("https") )
-            {
-                throw std::invalid_argument("URI scheme must be 'http' or 'https'");
             }
 
-            if(uri.host().empty())
-            {
-                throw std::invalid_argument("URI must contain a hostname.");
-            }
-        }
-
-        class http_network_handler : public http_pipeline_stage
-        {
-        public:
-
-            http_network_handler(const uri &base_uri, const http_client_config& client_config) :
-                m_http_client_impl(std::make_shared<details::linux_client>(base_uri, client_config))
-            {
-            }
-
-            virtual pplx::task<http_response> propagate(http_request request)
+            pplx::task<http_response> http_network_handler:propagate(http_request request)
             {
                 auto context = details::linux_request_context::create_request_context(m_http_client_impl, request);
 
@@ -844,43 +822,4 @@ namespace web { namespace http
                 return result_task;
             }
 
-            const std::shared_ptr<details::_http_client_communicator>& http_client_impl() const
-            {
-                return m_http_client_impl;
-            }
-
-        private:
-            std::shared_ptr<details::_http_client_communicator> m_http_client_impl;
-        };
-
-        http_client::http_client(const uri &base_uri)
-            :_base_uri(base_uri)
-        {
-            build_pipeline(base_uri, http_client_config());
-        }
-
-        http_client::http_client(const uri &base_uri, const http_client_config& client_config)
-            :_base_uri(base_uri)
-        {
-            build_pipeline(base_uri, client_config);
-        }
-
-        void http_client::build_pipeline(const uri &base_uri, const http_client_config& client_config)
-        {
-            verify_uri(base_uri);
-            m_pipeline = ::web::http::http_pipeline::create_pipeline(std::make_shared<http_network_handler>(base_uri, client_config));
-        }
-
-        pplx::task<http_response> http_client::request(http_request request)
-        {
-            return m_pipeline->propagate(request);
-        }
-
-        const http_client_config& http_client::client_config() const
-        {
-            http_network_handler* ph = static_cast<http_network_handler*>(m_pipeline->last_stage().get());
-            return ph->http_client_impl()->client_config();
-        }
-
-    } // namespace client
-}} // namespace casablanca::http
+}}}} // namespaces

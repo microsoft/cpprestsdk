@@ -29,7 +29,7 @@ namespace tests { namespace functional { namespace http { namespace listener {
 SUITE(connections_and_errors)
 {
 
-  TEST_FIXTURE(uri_address, close_listener_race, "Ignore:Linux", "724744", "Ignore", "825350")
+TEST_FIXTURE(uri_address, close_listener_race, "Ignore:Linux", "724744", "Ignore", "825350")
 {
     ::http::experimental::listener::http_listener listener(m_uri);
     listener.open().wait();
@@ -136,41 +136,35 @@ TEST_FIXTURE(uri_address, reply_twice)
     listener.close().wait();
 }
 
-TEST(default_port_admin_access, "Ignore", "750539")
+// This test case is manual becuase it requires to be run under and account without admin access.
+TEST(default_port_admin_access, "Ignore", "Manual")
 {
     uri address(U("http://localhost/"));
     http_listener listener(address);
-    VERIFY_THROWS_HTTP_ERROR_CODE(listener.open().wait(), std::errc::io_error);
+    VERIFY_THROWS(listener.open().wait(), http_exception);
 }
 
-TEST_FIXTURE(uri_address, try_port_already_in_use, "Ignore", "750539")
+TEST_FIXTURE(uri_address, try_port_already_in_use)
 {
     test_http_server::scoped_server scoped(m_uri);
     http_listener listener(m_uri);
     VERIFY_THROWS(listener.open().wait(), http_exception);
 }
 
-TEST_FIXTURE(uri_address, reply_after_starting_close, "Ignore", "750539")
+TEST_FIXTURE(uri_address, reply_after_starting_close)
 {
     http_listener listener(m_uri);
     listener.open().wait();
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
 
-    pplx::task_completion_event<http_request> requestReceivedEvent;
     listener.support([&](http_request request)
     {
-        requestReceivedEvent.set(request);
-    });
-    VERIFY_ARE_EQUAL(0, p_client->request(methods::GET, U("/path")));
-    
-    // Once the request has been received, start closing the listener and send response.
-    pplx::task<http_request> requestReceivedTask(requestReceivedEvent);
-    requestReceivedTask.then([&](http_request request)
-    {
+        // Start closing the listener and then send reply.
         listener.close();
         request.reply(status_codes::OK).wait();
     });
+    VERIFY_ARE_EQUAL(0, p_client->request(methods::GET, U("/path")));
     
     p_client->next_response().then([](test_response *p_response)
     {
@@ -215,7 +209,7 @@ static void close_stream_early_with_length_impl(const uri &u, bool useException)
     listener.close().wait();
 }
 
-TEST_FIXTURE(uri_address, close_stream_early_with_length, "Ignore:Linux", "760544")
+TEST_FIXTURE(uri_address, close_stream_early_with_length)
 {
     close_stream_early_with_length_impl(m_uri, true);
     close_stream_early_with_length_impl(m_uri, false);
@@ -268,7 +262,7 @@ static void close_stream_early_impl(const uri &u, bool useException)
     listener.close().wait();
 }
 
-TEST_FIXTURE(uri_address, close_stream_with_exception, "Ignore:Linux", "760544")
+TEST_FIXTURE(uri_address, close_stream_with_exception)
 {
     close_stream_early_impl(m_uri, true);
     close_stream_early_impl(m_uri, false);

@@ -3,7 +3,7 @@
   <PropertyGroup>
     <CppRestBaseFileName>cpprest</CppRestBaseFileName>
     <CppRestSDKVersionMajor>1</CppRestSDKVersionMajor>
-    <CppRestSDKVersionMinor>4</CppRestSDKVersionMinor>
+    <CppRestSDKVersionMinor>5</CppRestSDKVersionMinor>
     <CppRestSDKVersionRevision>0</CppRestSDKVersionRevision>
     <CppRestSDKVersionFileSuffix>$(CppRestSDKVersionMajor)_$(CppRestSDKVersionMinor)</CppRestSDKVersionFileSuffix>
     <CppRestSDKVersionString>$(CppRestSDKVersionMajor).$(CppRestSDKVersionMinor)</CppRestSDKVersionString>

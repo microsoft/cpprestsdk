@@ -70,12 +70,12 @@ public:
     /// <summary>
     /// Registers a listener for HTTP requests and starts receiving.
     /// </summary>
-    _ASYNCRTIMP static pplx::task<void> register_listener(_In_ web::http::experimental::listener::http_listener *pListener);
+    _ASYNCRTIMP static pplx::task<void> register_listener(_In_ web::http::experimental::listener::details::http_listener_impl *pListener);
 
     /// <summary>
     /// Unregisters the given listener and stops listening for HTTP requests.
     /// </summary>
-    _ASYNCRTIMP static pplx::task<void> unregister_listener(_In_ web::http::experimental::listener::http_listener *pListener);
+    _ASYNCRTIMP static pplx::task<void> unregister_listener(_In_ web::http::experimental::listener::details::http_listener_impl *pListener);
 
     /// <summary>
     /// Gets static HTTP server API. Could be null if no registered listeners.
@@ -100,6 +100,4 @@ private:
     http_server_api();
 };
 
-} // namespace listener
-} // namespace experimental
-}} // namespace web::http
+}}}} // namespaces

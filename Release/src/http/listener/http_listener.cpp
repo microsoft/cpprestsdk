@@ -65,30 +65,34 @@ static void check_listener_uri(const http::uri &address)
     }
 }
 
-http_listener::http_listener(http::uri address) 
-    : m_uri(std::move(address)), 
-      m_config(), 
-      m_closed(true)
+details::http_listener_impl::http_listener_impl(http::uri address)
+    : m_uri(std::move(address)), m_closed(true)
 {
-    m_pipeline = http::http_pipeline::create_pipeline(std::make_shared<_listener_stage>(this));
     check_listener_uri(m_uri);
 }
 
-http_listener::http_listener(http::uri address, http_listener_config config)
-    : m_uri(std::move(address)),
-      m_config(std::move(config)),
-      m_closed(true)
+details::http_listener_impl::http_listener_impl(http::uri address, http_listener_config config)
+    : m_uri(std::move(address)), m_config(std::move(config)), m_closed(true)
 {
-    m_pipeline = http::http_pipeline::create_pipeline(std::make_shared<_listener_stage>(this));
     check_listener_uri(m_uri);
 }
 
 http_listener::~http_listener()
 {
-    close().wait();
+    if(m_impl)
+    {
+        // As a safe guard close the listener if not already done.
+        // Users are required to call close, but this is just a safeguard.
+        try
+        {
+            close().wait();
+        } catch(...)
+        {
+        }
+    }
 }
 
-pplx::task<void> http_listener::open()
+pplx::task<void> details::http_listener_impl::open()
 {
     // Do nothing if the open operation was already attempted
     // Not thread safe
@@ -97,25 +101,34 @@ pplx::task<void> http_listener::open()
     if ( m_uri.is_empty() )
         throw std::invalid_argument("No URI defined for listener.");
     m_closed = false;
-    return details::http_server_api::register_listener(this);
+
+    return web::http::experimental::details::http_server_api::register_listener(this).then([this](pplx::task<void> openOp)
+    {
+        try
+        {
+            // If failed to open need to mark as closed.
+            openOp.wait();
+        }
+        catch(...)
+        {
+            m_closed = true;
+            throw;
+        }
+        return openOp;
+    });
 }
 
-pplx::task<void> http_listener::close()
+pplx::task<void> details::http_listener_impl::close()
 {
     // Do nothing if the close operation was already attempted
     // Not thread safe.
     if (m_closed) return pplx::task_from_result();
 
     m_closed = true;
-    return details::http_server_api::unregister_listener(this);
+    return web::http::experimental::details::http_server_api::unregister_listener(this);
 }
 
-pplx::task<http_response> http_listener::handle_request(http_request msg)
-{
-    return m_pipeline->propagate(msg);
-}
-
-pplx::task<http_response> http_listener::dispatch_request(http_request msg)
+pplx::task<http_response> details::http_listener_impl::handle_request(http_request msg)
 {
     // Specific method handler takes priority over general.
     const method &mtd = msg.method();
@@ -147,7 +160,7 @@ pplx::task<http_response> http_listener::dispatch_request(http_request msg)
     return msg.get_response();
 }
 
-utility::string_t http_listener::get_supported_methods() const 
+utility::string_t details::http_listener_impl::get_supported_methods() const 
 {
     utility::string_t allowed;
     bool first = true;
@@ -166,13 +179,13 @@ utility::string_t http_listener::get_supported_methods() const
     return allowed;
 }
 
-void http_listener::handle_trace(http_request message)
+void details::http_listener_impl::handle_trace(http_request message)
 {
     utility::string_t data = message.to_string();
     message.reply(status_codes::OK, data, U("message/http"));
 }
 
-void http_listener::handle_options(http_request message)
+void details::http_listener_impl::handle_options(http_request message)
 {
     http_response response(status_codes::OK);
     response.headers().add(U("Allow"), get_supported_methods());

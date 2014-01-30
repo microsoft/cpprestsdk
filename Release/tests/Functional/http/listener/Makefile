@@ -9,7 +9,6 @@ FILENAMES = \
 	connections_and_errors \
 	header_tests \
 	listener_construction_tests \
-	pipeline_stage_tests \
 	reply_helper_tests \
 	request_extract_tests \
 	request_handler_tests \

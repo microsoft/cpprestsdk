@@ -95,7 +95,7 @@ TEST_FIXTURE(uri_address, support)
     listener.close().wait();
 }
 
-TEST_FIXTURE(uri_address, exceptions_in_handler)
+TEST_FIXTURE(uri_address, exceptions_in_handler, "Ignore", "850486")
 {
     http_listener listener(m_uri);
     listener.open().wait();

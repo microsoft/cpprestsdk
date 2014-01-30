@@ -54,16 +54,7 @@ namespace details
 {
 
 class http_windows_server;
-
-/// <summary>
-/// Interface for asynchronous HTTP I/O completions.
-/// </summary>
-class http_overlapped_io_completion
-{
-public:
-    virtual ~http_overlapped_io_completion() {}
-    virtual void http_io_completion(DWORD error_code, DWORD num_bytes) = 0;
-};
+struct windows_request_context;
 
 /// <summary>
 /// Class used to wrap OVERLAPPED I/O with any HTTP I/O.
@@ -71,16 +62,10 @@ public:
 class http_overlapped : public OVERLAPPED
 {
 public:
-    // Caller beware:
-    // the ctor takes ownership of the object that is deleted at the end of http_overlapped lifetime
-    http_overlapped(_In_ http_overlapped_io_completion* completion) : m_completion(completion) 
+    void set_http_io_completion(std::function<void(DWORD, DWORD)> http_io_completion)
     {
         ZeroMemory(this, sizeof(OVERLAPPED)); 
-    }
-
-    ~http_overlapped()
-    {
-        delete m_completion;
+        m_http_io_completion = http_io_completion;
     }
 
     /// <summary>
@@ -99,12 +84,11 @@ public:
         UNREFERENCED_PARAMETER(instance);
 
         http_overlapped *p_http_overlapped = (http_overlapped *)pOverlapped;
-        p_http_overlapped->m_completion->http_io_completion(result, (DWORD)numberOfBytesTransferred);
-        delete p_http_overlapped;
+        p_http_overlapped->m_http_io_completion(result, (DWORD) numberOfBytesTransferred);
     }
 
 private:
-    http_overlapped_io_completion* m_completion;
+    std::function<void(DWORD, DWORD)> m_http_io_completion;
 };
 
 /// <summary>
@@ -118,103 +102,31 @@ struct windows_request_context : http::details::_http_server_context
     // Asynchronously starts processing the current request.
     void async_process_request(HTTP_REQUEST_ID request_id, http::http_request msg, const unsigned long headers_size);
 
-    // Handles reading in request headers using overlapped I/O.
-    class read_headers_io_completion : public http_overlapped_io_completion
-    {
-    public:
-        read_headers_io_completion(const http::http_request &msg, const unsigned long headers_size) 
-            : m_msg(msg), m_request_buffer(new unsigned char[msl::utilities::SafeInt<unsigned long>(headers_size)]) 
-        {
-            m_request = (HTTP_REQUEST *)m_request_buffer.get();
-        }
-        void http_io_completion(DWORD error_code, DWORD bytes_read);
-
-        HTTP_REQUEST *m_request;
-    private:
-        http::http_request m_msg;
-        std::unique_ptr<unsigned char[]> m_request_buffer;
-    };
-
     // Dispatch request to the provided http_listener.
-    void dispatch_request_to_listener(http_request &request, _In_ web::http::experimental::listener::http_listener *pListener);
+    void dispatch_request_to_listener(http_request& request, _In_ web::http::experimental::listener::details::http_listener_impl *pListener);
 
     // Read in a portion of the request body.
-    void read_request_body_chunk(_In_ HTTP_REQUEST *p_request, http_request &msg);
+    void read_request_body_chunk();
 
     // Start processing the response.
-    void async_process_response(http_response &response);
+    void async_process_response();
 
-    // Handles sending response using overlapped I/O.
-    class send_response_io_completion : public http_overlapped_io_completion
-    {
-    public:
-        send_response_io_completion(http::http_response &response)
-            : m_response(response), 
-              m_headers(new HTTP_UNKNOWN_HEADER[msl::utilities::SafeInt<size_t>(response.headers().size())]) 
-        {
-            m_headers_buffer.resize(msl::utilities::SafeInt<size_t>(response.headers().size()) * 2);
-        }
-        void http_io_completion(DWORD error_code, DWORD bytes_read);
+    void transmit_body();
 
-        std::unique_ptr<HTTP_UNKNOWN_HEADER []> m_headers;
-        std::vector<std::string> m_headers_buffer;
+    // Read request headers io completion callback function .
+    void read_headers_io_completion(DWORD error_code, DWORD bytes_read);
 
-    private:
+    // Read request body io completion callback function.
+    void read_body_io_completion(DWORD error_code, DWORD bytes_read);
 
-        http::http_response m_response;
-    };
+    // Send response io completion callback function .
+    void send_response_io_completion(DWORD error_code, DWORD bytes_read);
+    
+    // Send response body io completion callback function.
+    void send_response_body_io_completion(DWORD error_code, DWORD bytes_read);
 
-    void transmit_body(http::http_response response);
-
-    // Handles reading request body using overlapped I/O.
-    class read_body_io_completion : public http_overlapped_io_completion
-    {
-    public:
-        read_body_io_completion(HTTP_REQUEST request, const http::http_request &msg)
-            : m_request(request), m_msg(msg), m_total_body_size(0) {}
-
-        void http_io_completion(DWORD error_code, DWORD bytes_read);
-
-        std::vector<unsigned char> m_body_data;
-
-        size_t m_total_body_size;
-
-    private:
-        HTTP_REQUEST m_request;
-        http::http_request m_msg;
-    };
-
-    // Handles sending response using overlapped I/O.
-    class send_response_body_io_completion : public http_overlapped_io_completion
-    {
-    public:
-        send_response_body_io_completion(http::http_response &response)
-            : m_response(response) 
-        {
-        }
-
-        void http_io_completion(DWORD error_code, DWORD bytes_read);
-
-    private:
-
-        http::http_response m_response;
-    };
-
-    // Handles canceling a request using overlapped I/O.
-    class cancel_request_io_completion : public http_overlapped_io_completion
-    {
-    public:
-        cancel_request_io_completion(http::http_response response, std::exception_ptr except_ptr)
-            : m_response(std::move(response)), m_except_ptr(std::move(except_ptr))
-        {
-        }
-
-        void http_io_completion(DWORD error_code, DWORD bytes_read);
-
-    private:
-        http::http_response m_response;
-        std::exception_ptr m_except_ptr;
-    };
+    // Cancel request io completion callback function.
+    void cancel_request_io_completion(DWORD error_code, DWORD bytes_read);
 
     // TCE that indicates the completion of response
     pplx::task_completion_event<void> m_response_completed;
@@ -227,15 +139,27 @@ struct windows_request_context : http::details::_http_server_context
 
     size_t m_remaining_to_write;
 
+    HTTP_REQUEST *m_request;
+    std::unique_ptr<unsigned char[]> m_request_buffer;
+
+    std::unique_ptr<HTTP_UNKNOWN_HEADER []> m_headers;
+    std::vector<std::string> m_headers_buffer;
+    
+    http_overlapped m_overlapped;
+
+    http_request m_msg;
+    http_response m_response;
+
+    std::exception_ptr m_except_ptr;
 private:
     windows_request_context(const windows_request_context &);
     windows_request_context& operator=(const windows_request_context &);
 
     // Sends entity body chunk.
-    void send_entity_body(http::http_response response, _In_reads_(data_length) unsigned char * data, _In_ size_t data_length);
+    void send_entity_body(_In_reads_(data_length) unsigned char * data, _In_ size_t data_length);
     
     // Cancels this request.
-    void cancel_request(http::http_response response, std::exception_ptr except_ptr);
+    void cancel_request(std::exception_ptr except_ptr);
 
     std::vector<unsigned char> m_body_data;
 };
@@ -265,12 +189,12 @@ public:
     /// <summary>
     /// Registers an http listener.
     /// </summary>
-    virtual pplx::task<void> register_listener(_In_ web::http::experimental::listener::http_listener *pListener);
+    virtual pplx::task<void> register_listener(_In_ web::http::experimental::listener::details::http_listener_impl *pListener);
 
     /// <summary>
     /// Unregisters an http listener.
     /// </summary>
-    virtual pplx::task<void> unregister_listener(_In_ web::http::experimental::listener::http_listener *pListener);
+    virtual pplx::task<void> unregister_listener(_In_ web::http::experimental::listener::details::http_listener_impl *pListener);
 
     /// <summary>
     /// Stop processing and listening for incoming requests.
@@ -305,7 +229,7 @@ private:
 
     // Registered listeners
     pplx::extensibility::reader_writer_lock_t _M_listenersLock;
-    std::unordered_map<web::http::experimental::listener::http_listener *, std::unique_ptr<listener_registration>> _M_registeredListeners;
+    std::unordered_map<web::http::experimental::listener::details::http_listener_impl *, std::unique_ptr<listener_registration>> _M_registeredListeners;
 
     // HTTP Server API server session id.
     HTTP_SERVER_SESSION_ID m_serverSessionId;

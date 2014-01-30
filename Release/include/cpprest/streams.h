@@ -170,10 +170,9 @@ namespace Concurrency { namespace streams
         /// <param name="ch">A character</param>
         pplx::task<int_type> write(CharType ch) const
         {
-            auto buffer = helper()->m_buffer;
             pplx::task<int_type> result;
             if ( !_verify_and_return_task(details::_out_stream_msg, result) ) return result;
-            return buffer.putc(ch);
+            return helper()->m_buffer.putc(ch);
         }
 
         /// <summary>
@@ -192,13 +191,13 @@ namespace Concurrency { namespace streams
         pplx::task<size_t> write(T value) const
         {
             static_assert(sizeof(CharType) == 1, "binary write is only supported for single-byte streams");
+            static_assert(std::is_trivial<T>::value, "unsafe to use with non-trivial types");
 
-            auto buffer = helper()->m_buffer;
             pplx::task<size_t> result;
             if ( !_verify_and_return_task(details::_out_stream_msg, result) ) return result;
 
-            T *copy = new T(value);
-            return buffer.putn((CharType*)copy, sizeof(T)).then([copy](pplx::task<size_t> op) -> size_t { delete copy; return op.get(); });
+            auto copy = std::make_shared<T>(std::move(value));
+            return helper()->m_buffer.putn((CharType*)copy.get(), sizeof(T)).then([copy](pplx::task<size_t> op) -> size_t { return op.get(); });
         }
 
         /// <summary>
@@ -662,13 +661,16 @@ namespace Concurrency { namespace streams
         pplx::task<T> read() const
         {
             static_assert(sizeof(CharType) == 1, "binary read is only supported for single-byte streams");
-            auto buffer = helper()->m_buffer;
+            static_assert(std::is_trivial<T>::value, "unsafe to use with non-trivial types");
+
             pplx::task<T> result;
             if ( !_verify_and_return_task(details::_in_stream_msg, result) ) return result;
 
-            T *copy = new T;
-            memset(copy, 0, sizeof(T));
-            return buffer.getn((CharType*)copy, sizeof(T)).then([copy](pplx::task<size_t> op) -> T { T tmp = *copy; delete copy; return tmp; });
+            auto copy = std::make_shared<T>();
+            return helper()->m_buffer.getn((CharType*)copy.get(), sizeof(T)).then([copy](pplx::task<size_t> op) -> T 
+            {
+                return std::move(*copy); 
+            });
         }
 
         /// <summary>
@@ -749,7 +751,6 @@ namespace Concurrency { namespace streams
         /// <returns>A <c>task</c> that holds the character, widened to an integer. This character is EOF when the peek operation fails.</returns>
         pplx::task<int_type> peek() const
         {
-            auto buffer = helper()->m_buffer;
             pplx::task<int_type> result;
             if ( !_verify_and_return_task(details::_in_stream_msg, result) ) return result;
             return helper()->m_buffer.getc();
@@ -1045,10 +1046,9 @@ namespace Concurrency { namespace streams
         template<typename T>
         pplx::task<T> extract() const
         {
-            auto buffer = helper()->m_buffer;
             pplx::task<T> result;
             if ( !_verify_and_return_task(details::_in_stream_msg, result) ) return result;
-            return type_parser<CharType,T>::parse(buffer);
+            return type_parser<CharType,T>::parse(helper()->m_buffer);
         }
 
     private:

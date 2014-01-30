@@ -20,10 +20,9 @@
     <BuildRoot>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))</BuildRoot>
     <TargetsPath>$(BuildRoot)\Build</TargetsPath>
     <OsVersion>$(registry:HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion@CurrentVersion)</OsVersion>
-    <!--If Dev10 and Dev11 are both installed, the default is to build Dev11. This can be overridden by setting the DevToolsVersion variable in powershell-->
+    <!--If Dev11 and Dev12 are both installed, the default is to build Dev12. This can be overridden by setting the DevToolsVersion variable in powershell-->
 	<DevToolsVersion Condition="'$(DevToolsVersion)' == '' And '$(VS120COMNTOOLS)' != ''">120</DevToolsVersion>
     <DevToolsVersion Condition="'$(DevToolsVersion)' == '' And '$(VS110COMNTOOLS)' != ''">110</DevToolsVersion>
-    <DevToolsVersion Condition="'$(DevToolsVersion)' == '' And '$(VS100COMNTOOLS)' != ''">100</DevToolsVersion>
     <!-- ARM tools are installed in $(FrameworkSdkDir)\DesignTime\CommonConfiguration\Neutral\Windows.desktop.arm.props -->
     <FrameworkSdkDir Condition="'$(FrameworkSdkDir)'==''">$(WindowsSdkDir)</FrameworkSdkDir>
 	<WindowsSDKDesktopARMSupport Condition="'$(DevToolsVersion)'=='120' AND Exists('$(FrameworkSdkDir)\DesignTime\CommonConfiguration\Neutral\Windows.desktop.arm.props')" >true</WindowsSDKDesktopARMSupport>
@@ -52,11 +51,6 @@
   <!-- paths will not be overridden -->
   <PropertyGroup>
     <OutDir Condition="'$(OutDir)' != '' and !HasTrailingSlash('$(OutDir)')">$(OutDir)\</OutDir>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(DevToolsVersion)' == '100'">
-    <PlatformToolset>v100</PlatformToolset>
-    <DevEnvDir>$(VS100COMNTOOLS)..\IDE</DevEnvDir>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(DevToolsVersion)' == '110'">
