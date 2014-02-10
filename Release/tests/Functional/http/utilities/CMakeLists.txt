@@ -9,7 +9,7 @@ set(SOURCES
   test_server_utilities.cpp
 )
 
-add_library(${LIB}httptest_utilities ${TEST_LIBRARY_TARGET_TYPE} ${SOURCES})
+add_library(${LIB}httptest_utilities ${SOURCES})
 target_link_libraries(${LIB}httptest_utilities
   ${LIB}unittestpp
   ${LIB}common_utilities

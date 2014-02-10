@@ -10,4 +10,4 @@ set(SOURCES
   uri_builder_tests.cpp
 )
 
-add_casablanca_test(uri_test SOURCES)
+add_casablanca_test(${LIB}uri_test SOURCES)

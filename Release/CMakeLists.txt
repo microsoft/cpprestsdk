@@ -30,7 +30,7 @@ elseif(WIN32)
 
   add_definitions(-DUNICODE)
 
-  if(!BUILD_SHARED_LIBS)
+  if(NOT BUILD_SHARED_LIBS)
     # This causes cmake to not link the test libraries separately, but instead hold onto their object files.
     set(TEST_LIBRARY_TARGET_TYPE OBJECT)
   endif()
@@ -85,16 +85,22 @@ include_directories(${Boost_INCLUDE_DIR})
 # Finally, the tests all use the same style declaration to build themselves, so we use a function
 function(add_casablanca_test NAME SOURCES_VAR)
   add_library(${NAME} ${TEST_LIBRARY_TARGET_TYPE} ${${SOURCES_VAR}})
-  target_link_libraries(${NAME}
-    ${LIB}unittestpp
-    ${Boost_LIBRARIES}
-    ${Boost_FRAMEWORK}
-    ${Casablanca_LIBRARIES}
-    )
-  add_test(NAME ${NAME}
-    WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
-    COMMAND test_runner lib${NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
-    )
+  message("-- Added test library ${NAME}")
+  if (NOT TEST_LIBRARY_TARGET_TYPE STREQUAL "OBJECT")
+    target_link_libraries(${NAME}
+      ${LIB}unittestpp
+      ${LIB}httptest_utilities
+      ${LIB}common_utilities
+      ${Boost_LIBRARIES}
+      ${Boost_FRAMEWORK}
+      ${Casablanca_LIBRARIES}
+      )
+
+    add_test(NAME ${NAME}
+      WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+      COMMAND test_runner lib${NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
+      )
+  endif()
 endfunction()
 
 add_subdirectory(src)

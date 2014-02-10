@@ -16,10 +16,5 @@ set (SOURCES
   to_string_tests.cpp
   stdafx.cpp
 )
-set(LINKS
-  ${LIB}httptest_utilities
-  ${LIB}common_utilities
-)
 
 add_casablanca_test(${LIB}httplistener_test SOURCES)
-target_link_libraries(${LIB}httplistener_test ${LINKS})

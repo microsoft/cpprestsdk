@@ -26,10 +26,4 @@ set(SOURCES
   http_client_fuzz_tests.cpp
 )
 
-set(LINKS
-  ${LIB}httptest_utilities
-  ${LIB}common_utilities
-)
-
 add_casablanca_test(${LIB}httpclient_test SOURCES)
-target_link_libraries(${LIB}httpclient_test ${LINKS})
