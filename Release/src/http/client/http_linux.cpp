@@ -73,12 +73,10 @@ namespace web { namespace http
                         // We need to correct inaccurate ASIO error code base on context information
                         switch (context)
                         {
-#if defined(__APPLE__)                      
                         case httpclient_errorcode_context::writeheader:
-                            if (ec == boost::system::errc::broken_pipe) 
+                            if (ec == boost::system::errc::broken_pipe)
                                 errorcodeValue = make_error_code(std::errc::host_unreachable).value();
                             break;
-#endif
                         case httpclient_errorcode_context::connect:
                             if (ec == boost::system::errc::connection_refused)
                                 errorcodeValue = make_error_code(std::errc::host_unreachable).value();
