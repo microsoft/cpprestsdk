@@ -144,11 +144,11 @@ TEST(default_port_admin_access, "Ignore", "Manual")
     VERIFY_THROWS(listener.open().wait(), http_exception);
 }
 
-TEST_FIXTURE(uri_address, try_port_already_in_use)
+TEST_FIXTURE(uri_address, try_port_already_in_use, "Ignore:Linux", "Bug 879077")
 {
     test_http_server::scoped_server scoped(m_uri);
     http_listener listener(m_uri);
-    VERIFY_THROWS(listener.open().wait(), std::exception);
+    VERIFY_THROWS(listener.open().wait(), http_exception);
 }
 
 TEST_FIXTURE(uri_address, reply_after_starting_close)
