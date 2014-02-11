@@ -40,10 +40,14 @@
 #endif
 #endif // _MS_WINDOWS
 
+#ifdef _NO_PPLXIMP
+#define _PPLXIMP
+#else
 #ifdef _PPLX_EXPORT
 #define _PPLXIMP __declspec(dllexport)
 #else
 #define _PPLXIMP __declspec(dllimport)
+#endif
 #endif
 
 // Use PPLx

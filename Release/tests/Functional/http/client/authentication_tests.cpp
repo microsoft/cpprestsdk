@@ -477,6 +477,111 @@ TEST_FIXTURE(server_properties, set_user_options, "Requires", "Server;UserName;P
 
     VERIFY_ARE_EQUAL(200, client.request(request).get().status_code());
 }
+
+TEST_FIXTURE(uri_address, auth_producer_comsumer_buffer)
+{
+    auto buf = streams::producer_consumer_buffer<unsigned char>();
+    buf.putc('a').get();
+    buf.putc('a').get();
+    buf.putc('a').get();
+    buf.putc('a').get();
+    buf.close(std::ios_base::out).get();
+    http_request msg(methods::POST);
+    msg.set_body(buf.create_istream());
+
+    http_client_config config;
+    config.set_credentials(credentials(U("USERNAME"), U("PASSWORD")));
+
+    http_client client(m_uri, config);
+
+    test_http_server::scoped_server scoped(m_uri);
+
+    auto replyFunc = [&](test_request *p_request)
+    {
+        http_asserts::assert_test_request_equals(p_request, methods::POST, U("/"), U("application/octet-stream"), U("aaaa"));
+        p_request->reply(200);
+    };
+
+    scoped.server()->next_request().then([&](test_request *p_request)
+    {
+        http_asserts::assert_test_request_equals(p_request, methods::POST, U("/"), U("application/octet-stream"), U("aaaa"));
+        std::map<utility::string_t, utility::string_t> headers;
+        headers[U("WWW-Authenticate")] = U("Basic realm = \"WallyWorld\"");
+
+        p_request->reply(status_codes::Unauthorized, U("Authentication Failed"), headers);
+    })
+        .then([&scoped, replyFunc](){
+        scoped.server()->next_request().then(replyFunc);
+    });
+
+    http_asserts::assert_response_equals(client.request(msg).get(), status_codes::OK);
+}
+
+TEST_FIXTURE(uri_address, auth_producer_comsumer_buffer_fail_no_cred)
+{
+    auto buf = streams::producer_consumer_buffer<unsigned char>();
+    buf.putc('a').get();
+    buf.putc('a').get();
+    buf.putc('a').get();
+    buf.putc('a').get();
+    buf.close(std::ios_base::out).get();
+    http_request msg(methods::POST);
+    msg.set_body(buf.create_istream());
+
+    http_client client(m_uri);
+
+    test_http_server::scoped_server scoped(m_uri);
+
+    scoped.server()->next_request().then([&](test_request *p_request)
+    {
+        http_asserts::assert_test_request_equals(p_request, methods::POST, U("/"), U("application/octet-stream"), U("aaaa"));
+        std::map<utility::string_t, utility::string_t> headers;
+        headers[U("WWW-Authenticate")] = U("Basic realm = \"WallyWorld\"");
+
+        p_request->reply(status_codes::Unauthorized, U("Authentication Failed"), headers);
+    });
+
+    http_asserts::assert_response_equals(client.request(msg).get(), status_codes::Unauthorized);
+}
+
+TEST_FIXTURE(uri_address, auth_producer_comsumer_buffer_fail)
+{
+    auto buf = streams::producer_consumer_buffer<unsigned char>();
+    buf.putc('a').get();
+    buf.close(std::ios_base::out).get();
+    http_request msg(methods::POST);
+    msg.set_body(buf.create_istream());
+
+    http_client_config config;
+    config.set_credentials(credentials(U("USERNAME"), U("PASSWORD")));
+
+    http_client client(m_uri, config);
+
+    test_http_server::scoped_server scoped(m_uri);
+
+    auto replyFunc = [&](test_request *p_request)
+    {
+        http_asserts::assert_test_request_equals(p_request, methods::POST, U("/"), U("application/octet-stream"), U("a"));
+        std::map<utility::string_t, utility::string_t> headers;
+        headers[U("WWW-Authenticate")] = U("Basic realm = \"WallyWorld2\"");
+
+        p_request->reply(status_codes::Unauthorized, U("Authentication Failed"), headers);
+    };
+
+    scoped.server()->next_request().then([&](test_request *p_request)
+    {
+        http_asserts::assert_test_request_equals(p_request, methods::POST, U("/"), U("application/octet-stream"), U("a"));
+        std::map<utility::string_t, utility::string_t> headers;
+        headers[U("WWW-Authenticate")] = U("Basic realm = \"WallyWorld\"");
+
+        p_request->reply(status_codes::Unauthorized, U("Authentication Failed"), headers);
+    })
+        .then([&scoped, replyFunc](){
+        scoped.server()->next_request().then(replyFunc);
+    });
+
+    http_asserts::assert_response_equals(client.request(msg).get(), status_codes::Unauthorized);
+}
 #endif
 
 TEST_FIXTURE(uri_address, set_user_options_exceptions)

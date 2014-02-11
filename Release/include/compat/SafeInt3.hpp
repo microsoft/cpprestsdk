@@ -650,13 +650,13 @@ namespace SafeIntInternal
         static __declspec(noreturn) void __stdcall SafeIntOnOverflow()
         {
             SafeIntExceptionAssert();
-            SafeIntWin32Exception( EXCEPTION_INT_OVERFLOW );
+            SafeIntWin32Exception( (DWORD)EXCEPTION_INT_OVERFLOW );
         }
 
         static __declspec(noreturn) void __stdcall SafeIntOnDivZero()
         {
             SafeIntExceptionAssert();
-            SafeIntWin32Exception( EXCEPTION_INT_DIVIDE_BY_ZERO );
+            SafeIntWin32Exception( (DWORD)EXCEPTION_INT_DIVIDE_BY_ZERO );
         }
     };
 #endif

@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,15 +38,12 @@
 #if defined(_MSC_VER) && (_MSC_VER >= 1800)
 #include <ppltasks.h>
 namespace pplx = Concurrency;
-#else 
+#else
 #include "pplx/pplxtasks.h"
 #endif
 
 #include "cpprest/astreambuf.h"
 #include "cpprest/streams.h"
-#ifdef _MS_WINDOWS
-#include <safeint.h>
-#endif
 
 #ifndef _CONCRT_H
 #ifndef _LWRCASE_CNCRRNCY
@@ -87,7 +84,7 @@ namespace Concurrency { namespace streams {
         /// <summary>
         /// Constructor
         /// </summary>
-        basic_rawptr_buffer() 
+        basic_rawptr_buffer()
             : streambuf_state_manager<_CharType>(std::ios_base::in | std::ios_base::out),
               m_data(nullptr),
               m_current_position(0),
@@ -99,7 +96,7 @@ namespace Concurrency { namespace streams {
         /// Destructor
         /// </summary>
         virtual ~basic_rawptr_buffer()
-        { 
+        {
             this->_close_read();
             this->_close_write();
         }
@@ -149,21 +146,18 @@ namespace Concurrency { namespace streams {
 
         /// <summary>
         /// For any input stream, in_avail returns the number of characters that are immediately available
-        /// to be consumed without blocking. May be used in conjunction with <cref="::sbumpc method"/> and sgetn() to 
+        /// to be consumed without blocking. May be used in conjunction with <cref="::sbumpc method"/> and sgetn() to
         /// read data without incurring the overhead of using tasks.
         /// </summary>
         virtual size_t in_avail() const
         {
-            // See the comment in seek around the restiction that we do not allow read head to 
+            // See the comment in seek around the restiction that we do not allow read head to
             // seek beyond the current size.
             _ASSERTE(m_current_position <= m_size);
-#ifdef _MS_WINDOWS
-            msl::utilities::SafeInt<size_t> readhead(m_current_position);
-            msl::utilities::SafeInt<size_t> writeend(m_size);
-            return (size_t)(writeend - readhead); 
-#else
-            return m_size - m_current_position;
-#endif
+
+            SafeSize readhead(m_current_position);
+            SafeSize writeend(m_size);
+            return (size_t)(writeend - readhead);
         }
 
         /// <summary>
@@ -198,7 +192,7 @@ namespace Concurrency { namespace streams {
 
         virtual pplx::task<int_type> _putc(_CharType ch)
         {
-            if (m_current_position >= m_size) 
+            if (m_current_position >= m_size)
                 return pplx::task_from_result<int_type>(traits::eof());
             int_type retVal = (this->write(&ch, 1) == 1) ? static_cast<int_type>(ch) : traits::eof();
             return pplx::task_from_result<int_type>(retVal);
@@ -221,13 +215,10 @@ namespace Concurrency { namespace streams {
         {
             if (!this->can_write()) return nullptr;
 
-#ifdef _MS_WINDOWS
-            msl::utilities::SafeInt<size_t> readhead(m_current_position);
-            msl::utilities::SafeInt<size_t> writeend(m_size);
-            size_t space_left = (size_t)(writeend - readhead); 
-#else
-            size_t space_left = m_size - m_current_position;
-#endif
+            SafeSize readhead(m_current_position);
+            SafeSize writeend(m_size);
+            size_t space_left = (size_t)(writeend - readhead);
+
             if (space_left < count) return nullptr;
 
             // Let the caller copy the data
@@ -245,7 +236,7 @@ namespace Concurrency { namespace streams {
         }
 
         /// <summary>
-        /// Gets a pointer to the next already allocated contiguous block of data. 
+        /// Gets a pointer to the next already allocated contiguous block of data.
         /// </summary>
         /// <param name="ptr">A reference to a pointer variable that will hold the address of the block on success.</param>
         /// <param name="count">The number of contiguous characters available at the address in 'ptr.'</param>
@@ -299,7 +290,7 @@ namespace Concurrency { namespace streams {
         }
 
         size_t _sgetn(_Out_writes_ (count) _CharType *ptr, _In_ size_t count)
-        { 
+        {
             return this->read(ptr, count);
         }
 
@@ -312,7 +303,7 @@ namespace Concurrency { namespace streams {
         {
             return pplx::task_from_result(this->read_byte(true));
         }
-        
+
         virtual int_type _sbumpc()
         {
             return this->read_byte(true);
@@ -322,7 +313,7 @@ namespace Concurrency { namespace streams {
         {
             return pplx::task_from_result(this->read_byte(false));
         }
-        
+
         int_type _sgetc()
         {
             return this->read_byte(false);
@@ -330,13 +321,13 @@ namespace Concurrency { namespace streams {
 
         virtual pplx::task<int_type> _nextc()
         {
-            if (m_current_position >= m_size-1) 
+            if (m_current_position >= m_size-1)
                 return pplx::task_from_result(basic_streambuf<_CharType>::traits::eof());
 
             this->read_byte(true);
             return pplx::task_from_result(this->read_byte(false));
         }
-        
+
         virtual pplx::task<int_type> _ungetc()
         {
             auto pos = seekoff(-1, std::ios_base::cur, std::ios_base::in);
@@ -350,7 +341,7 @@ namespace Concurrency { namespace streams {
         /// </summary>
         /// <param name="direction">The I/O direction to seek (see remarks)</param>
         /// <returns>The current position. EOF if the operation fails.</returns>
-        /// <remarks>Some streams may have separate write and read cursors. 
+        /// <remarks>Some streams may have separate write and read cursors.
         ///          For such streams, the direction parameter defines whether to move the read or the write cursor.</remarks>
         virtual pos_type getpos(std::ios_base::openmode mode) const
         {
@@ -363,7 +354,7 @@ namespace Concurrency { namespace streams {
             else if (mode == std::ios_base::out)
                 return (pos_type)m_current_position;
             else
-                return (pos_type)traits::eof(); 
+                return (pos_type)traits::eof();
         }
 
         /// <summary>
@@ -383,7 +374,7 @@ namespace Concurrency { namespace streams {
                 auto pos = static_cast<size_t>(position);
 
                 // Read head
-                if ((mode & std::ios_base::in) && this->can_read()) 
+                if ((mode & std::ios_base::in) && this->can_read())
                 {
                     if (position <= end)
                     {
@@ -394,7 +385,7 @@ namespace Concurrency { namespace streams {
                 }
 
                 // Write head
-                if ((mode & std::ios_base::out) && this->can_write()) 
+                if ((mode & std::ios_base::out) && this->can_write())
                 {
                     // Update write head and satisfy read requests if any
                     update_current_position(pos);
@@ -405,7 +396,7 @@ namespace Concurrency { namespace streams {
 
             return static_cast<pos_type>(traits::eof());
         }
-        
+
         /// <summary>
         /// Seeks to a position given by a relative offset.
         /// </summary>
@@ -413,9 +404,9 @@ namespace Concurrency { namespace streams {
         /// <param name="way">The starting point (beginning, end, current) for the seek.</param>
         /// <param name="mode">The I/O direction to seek (see remarks)</param>
         /// <returns>The position. EOF if the operation fails.</returns>
-        /// <remarks>Some streams may have separate write and read cursors. 
+        /// <remarks>Some streams may have separate write and read cursors.
         ///          For such streams, the mode parameter defines whether to move the read or the write cursor.</remarks>
-        virtual pos_type seekoff(off_type offset, std::ios_base::seekdir way, std::ios_base::openmode mode) 
+        virtual pos_type seekoff(off_type offset, std::ios_base::seekdir way, std::ios_base::openmode mode)
         {
             pos_type beg = 0;
             pos_type cur = static_cast<pos_type>(m_current_position);
@@ -445,7 +436,7 @@ namespace Concurrency { namespace streams {
         /// </summary>
         /// <param name="data">The address (pointer to) the memory block.</param>
         /// <param name="size">The memory block size, measured in number of characters.</param>
-        basic_rawptr_buffer(const _CharType* data, size_t size) 
+        basic_rawptr_buffer(const _CharType* data, size_t size)
             : streambuf_state_manager<_CharType>(std::ios_base::in),
               m_data(const_cast<_CharType*>(data)),
               m_current_position(0),
@@ -460,7 +451,7 @@ namespace Concurrency { namespace streams {
         /// <param name="data">The address (pointer to) the memory block.</param>
         /// <param name="size">The memory block size, measured in number of characters.</param>
         /// <param name="mode">The stream mode (in, out, etc.).</param>
-        basic_rawptr_buffer(_CharType* data, size_t size, std::ios_base::openmode mode) 
+        basic_rawptr_buffer(_CharType* data, size_t size, std::ios_base::openmode mode)
             : streambuf_state_manager<_CharType>(mode),
               m_data(data),
               m_current_position(0),
@@ -514,7 +505,7 @@ namespace Concurrency { namespace streams {
 
             auto readBegin = m_data + m_current_position;
             auto readEnd = m_data + newPos;
-            
+
 #ifdef _MS_WINDOWS
             // Avoid warning C4996: Use checked iterators under SECURE_SCL
             std::copy(readBegin, readEnd, stdext::checked_array_iterator<_CharType *>(ptr, count));
@@ -597,7 +588,7 @@ namespace Concurrency { namespace streams {
         /// </summary>
         /// <param name="data">The address (pointer to) the memory block.</param>
         /// <param name="size">The memory block size, measured in number of characters.</param>
-        rawptr_buffer(const char_type* data, size_t size) 
+        rawptr_buffer(const char_type* data, size_t size)
             : streambuf<char_type>(std::shared_ptr<details::basic_rawptr_buffer<char_type>>(new details::basic_rawptr_buffer<char_type>(data, size)))
         {
         }
@@ -607,7 +598,7 @@ namespace Concurrency { namespace streams {
         /// </summary>
         /// <param name="data">The address (pointer to) the memory block.</param>
         /// <param name="size">The memory block size, measured in number of characters.</param>
-        rawptr_buffer(char_type* data, size_t size, std::ios_base::openmode mode = std::ios::out) 
+        rawptr_buffer(char_type* data, size_t size, std::ios_base::openmode mode = std::ios::out)
             : streambuf<char_type>(std::shared_ptr<details::basic_rawptr_buffer<char_type>>(new details::basic_rawptr_buffer<char_type>(data, size, mode)))
         {
         }
@@ -618,7 +609,7 @@ namespace Concurrency { namespace streams {
         rawptr_buffer()
         {
         }
-    };   
+    };
 
     /// <summary>
     /// The rawptr_stream class is used to create memory-backed streams that support writing or reading
@@ -628,7 +619,7 @@ namespace Concurrency { namespace streams {
     /// The data type of the basic element of the <c>rawptr_stream</c>.
     /// </typeparam>
     template<typename _CharType>
-    class rawptr_stream 
+    class rawptr_stream
     {
     public:
         typedef _CharType char_type;
@@ -666,7 +657,7 @@ namespace Concurrency { namespace streams {
         {
             return concurrency::streams::basic_ostream<char_type>(buffer_type(data, size, std::ios::out));
         }
-    }; 
+    };
 
 }} // namespaces
 

@@ -160,8 +160,8 @@ void web::json::details::_Number::format(std::basic_string<char>& stream) const
     }
     else
     {
-        // #digits + 2 to avoid loss + 1 for the sign + 1 for decimal point + 5 for exponent (e+xxx)
-        const size_t tempSize = std::numeric_limits<double>::digits10 + 9;
+        // #digits + 2 to avoid loss + 1 for the sign + 1 for decimal point + 5 for exponent (e+xxx) + 1 for null terminator
+        const size_t tempSize = std::numeric_limits<double>::digits10 + 10;
         char tempBuffer[tempSize];
 #ifdef _MS_WINDOWS
         const auto numChars = sprintf_s(tempBuffer, tempSize, "%.*g", std::numeric_limits<double>::digits10 + 2, m_number.m_value);
@@ -207,8 +207,8 @@ void web::json::details::_Number::format(std::basic_string<wchar_t>& stream) con
     }
     else
     {
-        // #digits + 2 to avoid loss + 1 for the sign + 1 for decimal point + 5 for exponent (e+xxx)
-        const size_t tempSize = std::numeric_limits<double>::digits10 + 9;
+        // #digits + 2 to avoid loss + 1 for the sign + 1 for decimal point + 5 for exponent (e+xxx) + 1 for null terminator
+        const size_t tempSize = std::numeric_limits<double>::digits10 + 10;
         wchar_t tempBuffer[tempSize];
         const int numChars = swprintf_s(tempBuffer, tempSize, L"%.*g", std::numeric_limits<double>::digits10 + 2, m_number.m_value);
         stream.append(tempBuffer, numChars);

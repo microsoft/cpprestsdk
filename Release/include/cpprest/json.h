@@ -683,14 +683,18 @@ public:
     /// </summary>
     class number
     {
+        // Note that these constructors make sure that only negative integers are stored as signed int64 (while others convert to unsigned int64).
+        // This helps handling number objects e.g. comparing two numbers.
+
         number(double value)  : m_value(value), m_type(double_type) { }
-        number(int32_t value) : m_intval(value), m_type(signed_type) { }
-        number(uint32_t value) : m_intval(value), m_type(signed_type) { }
-        number(int64_t value) : m_intval(value), m_type(signed_type) { }
+        number(int32_t value) : m_intval(value), m_type(value < 0 ? signed_type : unsigned_type) { }
+        number(uint32_t value) : m_intval(value), m_type(unsigned_type) { }
+        number(int64_t value) : m_intval(value), m_type(value < 0 ? signed_type : unsigned_type) { }
         number(uint64_t value) : m_uintval(value), m_type(unsigned_type) { }
 
     public:
 
+#pragma region "is" checkers
         /// <summary>
         /// Does the number fit into int32?
         /// </summary>
@@ -724,7 +728,9 @@ public:
                 return false;
             }
         }
+#pragma endregion
 
+#pragma region "to" converters
         /// <summary>
         /// Converts the JSON number to a C++ double.
         /// </summary>
@@ -787,6 +793,7 @@ public:
             else
                 return static_cast<uint64_t>(m_intval);
         }
+#pragma endregion
 
         /// <summary>
         /// Is the number represented internally as an integral type?
@@ -795,6 +802,28 @@ public:
         bool is_integral() const
         {
             return m_type != double_type;
+        }
+
+        /// <summary>
+        /// Compares two JSON numbers for equality.
+        /// </summary>
+        /// <param name="other">The JSON number to compare with.</param>
+        /// <returns>True iff the numbers are equal.</returns>
+        bool operator==(const number &other) const
+        {
+            if (m_type != other.m_type)
+                return false;
+
+            switch (m_type)
+            {
+            case json::number::type::signed_type :
+                return m_intval == other.m_intval;
+            case json::number::type::unsigned_type :
+                return m_uintval == other.m_uintval;
+            case json::number::type::double_type :
+                return m_value == other.m_value;
+            }
+            UNREACHABLE;
         }
 
     private:
@@ -1251,25 +1280,16 @@ public:
 
             virtual value get_element(std::vector<value>::size_type index) const
             {
-#ifdef _MS_WINDOWS
-               msl::utilities::SafeInt<std::vector<json::value>::size_type> idx(index);
-               msl::utilities::SafeInt<std::vector<json::value>::size_type> size(m_array.size());
-#else
-               size_t idx = index;
-               size_t size = m_array.size();
-#endif
-               return (idx >= size) ? value() : m_array[index];
+                SafeInt<std::vector<json::value>::size_type> idx(index);
+                SafeInt<std::vector<json::value>::size_type> size(m_array.size());
+               return (idx >= size) ? value() : m_array[index]; 
             }
 
             virtual json::value &index(json::array::size_type index)
             {
-#ifdef _MS_WINDOWS
-               msl::utilities::SafeInt<json::array::size_type> nMinSize(index+1);
-               msl::utilities::SafeInt<json::array::size_type> nlastSize(m_array.size());
-#else
-               size_t nMinSize  = index + 1;
-               size_t nlastSize = m_array.size();
-#endif
+                SafeInt<json::array::size_type> nMinSize(index);
+                nMinSize += 1;
+                SafeInt<json::array::size_type> nlastSize(m_array.size());
                if (nlastSize < nMinSize)
                   m_array.m_elements.resize(nMinSize);
 
@@ -1278,13 +1298,8 @@ public:
 
             virtual const json::value &cnst_index(json::value::array_vector::size_type index) const
             {
-#ifdef _MS_WINDOWS
-               msl::utilities::SafeInt<json::value::array_vector::size_type> idx(index);
-               msl::utilities::SafeInt<json::value::array_vector::size_type> size(m_array.size());
-#else
-               size_t idx = index;
-               size_t size = m_array.size();
-#endif
+                SafeInt<json::value::array_vector::size_type> idx(index);
+                SafeInt<json::value::array_vector::size_type> size(m_array.size());
                 if ( idx >= size )
                     throw json_exception(_XPLATSTR("index out of bounds"));
                 return m_array[index];
@@ -1374,6 +1389,8 @@ public:
                 }
                 return reserveSize;
             }
+            
+            template<typename CharType> friend class web::json::details::JSON_Parser;
         };
     } // namespace details
 

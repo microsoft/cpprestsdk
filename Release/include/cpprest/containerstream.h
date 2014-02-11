@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,15 +35,12 @@
 #if defined(_MSC_VER) && (_MSC_VER >= 1800)
 #include <ppltasks.h>
 namespace pplx = Concurrency;
-#else 
+#else
 #include "pplx/pplxtasks.h"
 #endif
 
 #include "cpprest/astreambuf.h"
 #include "cpprest/streams.h"
-#ifdef _MS_WINDOWS
-#include <safeint.h>
-#endif
 
 #ifndef _CONCRT_H
 #ifndef _LWRCASE_CNCRRNCY
@@ -96,7 +93,7 @@ namespace Concurrency { namespace streams {
         /// Destructor
         /// </summary>
         virtual ~basic_container_buffer()
-        { 
+        {
             // Invoke the synchronous versions since we need to
             // purge the request queue before deleting the buffer
             this->_close_read();
@@ -140,7 +137,7 @@ namespace Concurrency { namespace streams {
         /// <param name="size">The size to use for internal buffering, 0 if no buffering should be done.</param>
         /// <param name="direction">The direction of buffering (in or out)</param>
         /// <remarks>An implementation that does not support buffering will silently ignore calls to this function and it will not have any effect on what is returned by subsequent calls to <see cref="::buffer_size method" />.</remarks>
-        virtual void set_buffer_size(size_t , std::ios_base::openmode = std::ios_base::in) 
+        virtual void set_buffer_size(size_t , std::ios_base::openmode = std::ios_base::in)
         {
             return;
         }
@@ -152,16 +149,13 @@ namespace Concurrency { namespace streams {
         /// </summary>
         virtual size_t in_avail() const
         {
-            // See the comment in seek around the restiction that we do not allow read head to 
+            // See the comment in seek around the restriction that we do not allow read head to
             // seek beyond the current write_end.
             _ASSERTE(m_current_position <= m_size);
-#ifdef _MS_WINDOWS
-            msl::utilities::SafeInt<size_t> readhead(m_current_position);
-            msl::utilities::SafeInt<size_t> writeend(m_size);
-            return (size_t)(writeend - readhead); 
-#else
-            return m_size - m_current_position;
-#endif
+
+            SafeSize readhead(m_current_position);
+            SafeSize writeend(m_size);
+            return (size_t)(writeend - readhead);
         }
 
         virtual pplx::task<bool> _sync()
@@ -207,7 +201,7 @@ namespace Concurrency { namespace streams {
         }
 
         /// <summary>
-        /// Gets a pointer to the next already allocated contiguous block of data. 
+        /// Gets a pointer to the next already allocated contiguous block of data.
         /// </summary>
         /// <param name="ptr">A reference to a pointer variable that will hold the address of the block on success.</param>
         /// <param name="count">The number of contiguous characters available at the address in 'ptr.'</param>
@@ -259,7 +253,7 @@ namespace Concurrency { namespace streams {
         }
 
         size_t _sgetn(_Out_writes_ (count) _CharType *ptr, _In_ size_t count)
-        { 
+        {
             return this->read(ptr, count);
         }
 
@@ -272,7 +266,7 @@ namespace Concurrency { namespace streams {
         {
             return pplx::task_from_result(this->read_byte(true));
         }
-        
+
         virtual int_type _sbumpc()
         {
             return this->read_byte(true);
@@ -282,7 +276,7 @@ namespace Concurrency { namespace streams {
         {
             return pplx::task_from_result(this->read_byte(false));
         }
-        
+
         int_type _sgetc()
         {
             return this->read_byte(false);
@@ -293,7 +287,7 @@ namespace Concurrency { namespace streams {
             this->read_byte(true);
             return pplx::task_from_result(this->read_byte(false));
         }
-        
+
         virtual pplx::task<int_type> _ungetc()
         {
             auto pos = seekoff(-1, std::ios_base::cur, std::ios_base::in);
@@ -307,7 +301,7 @@ namespace Concurrency { namespace streams {
         /// </summary>
         /// <param name="direction">The I/O direction to seek (see remarks)</param>
         /// <returns>The current position. EOF if the operation fails.</returns>
-        /// <remarks>Some streams may have separate write and read cursors. 
+        /// <remarks>Some streams may have separate write and read cursors.
         ///          For such streams, the direction parameter defines whether to move the read or the write cursor.</remarks>
         virtual pos_type getpos(std::ios_base::openmode mode) const
         {
@@ -332,7 +326,7 @@ namespace Concurrency { namespace streams {
             // Inorder to support relative seeking from the end postion we need to fix an end position.
             // Technically, there is no end for the stream buffer as new writes would just expand the buffer.
             // For now, we assume that the current write_end is the end of the buffer. We use this aritifical
-            // end to restrict the read head from seeking beyond what is available. 
+            // end to restrict the read head from seeking beyond what is available.
 
             pos_type end(m_size);
 
@@ -341,7 +335,7 @@ namespace Concurrency { namespace streams {
                 auto pos = static_cast<size_t>(position);
 
                 // Read head
-                if ((mode & std::ios_base::in) && this->can_read()) 
+                if ((mode & std::ios_base::in) && this->can_read())
                 {
                     if (position <= end)
                     {
@@ -352,7 +346,7 @@ namespace Concurrency { namespace streams {
                 }
 
                 // Write head
-                if ((mode & std::ios_base::out) && this->can_write()) 
+                if ((mode & std::ios_base::out) && this->can_write())
                 {
                     // Allocate space
                     resize_for_write(pos);
@@ -368,7 +362,7 @@ namespace Concurrency { namespace streams {
 
             return static_cast<pos_type>(traits::eof());
         }
-        
+
         /// <summary>
         /// Seeks to a position given by a relative offset.
         /// </summary>
@@ -376,9 +370,9 @@ namespace Concurrency { namespace streams {
         /// <param name="way">The starting point (beginning, end, current) for the seek.</param>
         /// <param name="mode">The I/O direction to seek (see remarks)</param>
         /// <returns>The position. EOF if the operation fails.</returns>
-        /// <remarks>Some streams may have separate write and read cursors. 
+        /// <remarks>Some streams may have separate write and read cursors.
         ///          For such streams, the mode parameter defines whether to move the read or the write cursor.</remarks>
-        virtual pos_type seekoff(off_type offset, std::ios_base::seekdir way, std::ios_base::openmode mode) 
+        virtual pos_type seekoff(off_type offset, std::ios_base::seekdir way, std::ios_base::openmode mode)
         {
             pos_type beg = 0;
             pos_type cur = static_cast<pos_type>(m_current_position);
@@ -406,7 +400,7 @@ namespace Concurrency { namespace streams {
         /// <summary>
         /// Constructor
         /// </summary>
-        basic_container_buffer(std::ios_base::openmode mode) 
+        basic_container_buffer(std::ios_base::openmode mode)
             : streambuf_state_manager<typename _CollectionType::value_type>(mode),
               m_current_position(0),
               m_size(0)
@@ -417,7 +411,7 @@ namespace Concurrency { namespace streams {
         /// <summary>
         /// Constructor
         /// </summary>
-        basic_container_buffer(_CollectionType data, std::ios_base::openmode mode) 
+        basic_container_buffer(_CollectionType data, std::ios_base::openmode mode)
             : streambuf_state_manager<typename _CollectionType::value_type>(mode),
               m_data(std::move(data)),
               m_current_position((mode & std::ios_base::in) ? 0 : m_data.size()),
@@ -471,7 +465,7 @@ namespace Concurrency { namespace streams {
 
             auto readBegin = begin(m_data) + m_current_position;
             auto readEnd = begin(m_data) + newPos;
-            
+
 #ifdef _MS_WINDOWS
             // Avoid warning C4996: Use checked iterators under SECURE_SCL
             std::copy(readBegin, readEnd, stdext::checked_array_iterator<_CharType *>(ptr, count));
@@ -495,7 +489,7 @@ namespace Concurrency { namespace streams {
             if (!this->can_write() || (count == 0)) return 0;
 
             auto newSize = m_current_position + count;
-            
+
             // Allocate space
             resize_for_write(newSize);
 
@@ -557,7 +551,7 @@ namespace Concurrency { namespace streams {
     /// <typeparam name="_CollectionType">
     /// The type of the container.
     /// </typeparam>
-    /// <remarks> 
+    /// <remarks>
     /// This is a reference-counted version of <c>basic_container_buffer</c>.
     /// </remarks>
     template<typename _CollectionType>
@@ -571,7 +565,7 @@ namespace Concurrency { namespace streams {
         /// </summary>
         /// <param name="data">The collection that is the starting point for the buffer</param>
         /// <param name="mode">The I/O mode that the buffer should use (in / out)</param>
-        container_buffer(_CollectionType data, std::ios_base::openmode mode = std::ios_base::in) 
+        container_buffer(_CollectionType data, std::ios_base::openmode mode = std::ios_base::in)
             : streambuf<typename _CollectionType::value_type>(
                 std::shared_ptr<details::basic_container_buffer<_CollectionType>>(new streams::details::basic_container_buffer<_CollectionType>(std::move(data), mode)))
         {
@@ -581,7 +575,7 @@ namespace Concurrency { namespace streams {
         /// Creates a container_buffer starting from an empty collection.
         /// </summary>
         /// <param name="mode">The I/O mode that the buffer should use (in / out)</param>
-        container_buffer(std::ios_base::openmode mode = std::ios_base::out) 
+        container_buffer(std::ios_base::openmode mode = std::ios_base::out)
             : streambuf<typename _CollectionType::value_type>(
                 std::shared_ptr<details::basic_container_buffer<_CollectionType>>(new details::basic_container_buffer<_CollectionType>(mode)))
         {
@@ -609,7 +603,7 @@ namespace Concurrency { namespace streams {
 
         typedef typename _CollectionType::value_type char_type;
         typedef container_buffer<_CollectionType> buffer_type;
-       
+
         static concurrency::streams::basic_istream<char_type> open_istream(_CollectionType data)
         {
             return concurrency::streams::basic_istream<char_type>(buffer_type(std::move(data), std::ios_base::in));
@@ -637,7 +631,7 @@ namespace Concurrency { namespace streams {
     class bytestream
     {
     public:
-       
+
         template<typename _CollectionType>
         static concurrency::streams::istream open_istream(_CollectionType data)
         {
@@ -651,7 +645,7 @@ namespace Concurrency { namespace streams {
         }
 };
 
-    
+
 }} // namespaces
 
 #pragma warning(pop) // 4100

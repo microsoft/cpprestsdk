@@ -271,7 +271,7 @@ static int parse_command_line(int argc, char **argv)
 static bool matched_properties(const UnitTest::TestProperties& test_props)
 {
     // TestRunner can only execute either desktop or winrt tests, but not both.
-    // This starts with visual studio versions after VS 2012.
+	// This starts with visual studio versions after VS 2012.
 #if defined (_MSC_VER) && (_MSC_VER >= 1800)
 #ifdef WINRT_TEST_RUNNER
     UnitTest::GlobalSettings::Add("winrt", "");

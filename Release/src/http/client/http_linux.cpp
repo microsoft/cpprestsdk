@@ -74,7 +74,7 @@ namespace web { namespace http
                         switch (context)
                         {
                         case httpclient_errorcode_context::writeheader:
-                            if (ec == boost::system::errc::broken_pipe)
+                            if (ec == boost::system::errc::broken_pipe) 
                                 errorcodeValue = make_error_code(std::errc::host_unreachable).value();
                             break;
                         case httpclient_errorcode_context::connect:
@@ -541,7 +541,7 @@ namespace web { namespace http
                             ctx->report_error("Invalid HTTP status line", ec, httpclient_errorcode_context::readheader);
                             return;
                         }
-
+                        
                         read_headers(ctx);
                     }
                     else

@@ -72,29 +72,6 @@
 
 namespace UnitTest
 {
-    // #ifdef __APPLE__
-    //
-    // The body of this function needs to be defined in exactly one CPP file in
-    // each unit test binary (shared object or DLL).
-    //
-    // extern "C"
-    // _DLL_EXPORT TestList& GetTestList();
-    // This is what the implementation should look like in each instance:
-    //
-    // extern "C" UnitTest::TestList& UnitTest::GetTestList()
-    // {
-    //     static TestList s_list;
-    //     return s_list;
-    // }    
-    // #else
-    // extern "C"
-    // inline _DLL_EXPORT TestList& GetTestList()
-    // {
-    // static TestList s_list;
-    // return s_list;
-    // }    
-    // #endif
-
     extern "C"
     _DLL_EXPORT TestList& GetTestList();
 }

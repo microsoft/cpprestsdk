@@ -71,7 +71,7 @@ void MainPage::Button_Click_1(Platform::Object^ sender, Windows::UI::Xaml::Route
                 this->LogOutButton->Visibility =  Windows::UI::Xaml::Visibility::Visible;
                 this->LogInButton->Visibility =  Windows::UI::Xaml::Visibility::Collapsed;
 
-                this->Block1->Text = ref new Platform::String((L"auth_token = \n" + lv_client.authentication_token()).c_str());
+                this->Block1->Text = ref new Platform::String((L"access_token = \n" + lv_client.access_token()).c_str());
             }
         }, ui_ctx);
     }

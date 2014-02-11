@@ -75,8 +75,7 @@ void MainPage::AlbumButton_Click_1(Platform::Object^ sender, Windows::UI::Xaml::
 	.then([](web::json::value v){
 		std::vector<FacebookAlbum^> albums;
 
-		for(const auto& it : v[L"data"]){
-			auto& elem = it.second;
+		for(const auto& elem : v[L"data"].as_array()){
 
 			albums.push_back(ref new FacebookAlbum(
 				elem[L"name"].as_string(),

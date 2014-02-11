@@ -315,8 +315,18 @@ bool web::json::number::is_int64() const
 
 bool web::json::details::_String::has_escape_chars(const _String &str)
 {
-    const utility::string_t escapes = "\"\\\b\f\r\n\t";
-    return str.m_string.find_first_of(escapes) != utility::string_t::npos;
+    struct escapes {
+        static const char* escapes8 = "\"\\\b\f\r\n\t";
+        static const wchar_t* escapes16 = L"\"\\\b\f\r\n\t";
+
+        static bool impl(const std::string& s) {
+            return s.find_first_of(escapes8) != std::string::npos;
+        }
+        static bool impl(const std::wstring& s) {
+            return s.find_first_of(escapes16) != std::wstring::npos;
+        }
+    };
+    return escapes::impl(str.m_string);
 }
 
 web::json::details::_Object::_Object(const _Object& other):web::json::details::_Value(other)
@@ -412,13 +422,13 @@ bool json::value::operator==(const json::value &other) const
         return true;
     if (this->type() != other.type())
         return false;
-    
+
     switch(this->type())
     {
     case Null:
         return true;
     case Number:
-        return this->as_double() == other.as_double();
+        return this->as_number() == other.as_number();
     case Boolean:
         return this->as_bool() == other.as_bool();
     case String:

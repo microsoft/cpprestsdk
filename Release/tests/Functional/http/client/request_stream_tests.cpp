@@ -361,6 +361,7 @@ TEST_FIXTURE(uri_address, stream_close_early)
 }
 
  TEST_FIXTURE(uri_address, stream_close_early_with_exception, 
+              "Ignore", "825361",
               "Ignore:Linux", "TBD",
               "Ignore:Apple", "The test server has trouble closing.")
 {
@@ -383,8 +384,9 @@ TEST_FIXTURE(uri_address, stream_close_early)
 #endif
 
 TEST_FIXTURE(uri_address, stream_close_early_with_exception_and_contentlength, 
-             "Ignore:Linux", "TBD", 
-             "Ignore:Apple", "The test server has trouble closing.")
+            "Ignore", "825361",
+            "Ignore:Linux", "TBD", 
+            "Ignore:Apple", "The test server has trouble closing.")
 {
     http_client client(m_uri);
     test_http_server::scoped_server scoped(m_uri);

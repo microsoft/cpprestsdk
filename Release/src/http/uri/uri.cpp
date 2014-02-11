@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@
 
 using namespace utility::conversions;
 
-namespace web { namespace http 
+namespace web { namespace http
 {
 namespace details
 {
@@ -42,12 +42,12 @@ utility::string_t _uri_components::join()
 
     // convert scheme to lowercase
     std::transform(m_scheme.begin(), m_scheme.end(), m_scheme.begin(), [this](utility::char_t c) {
-        return tolower(c);
+        return (utility::char_t)tolower(c);
     });
 
     // convert host to lowercase
     std::transform(m_host.begin(), m_host.end(), m_host.begin(), [this](utility::char_t c) {
-        return tolower(c);
+        return (utility::char_t)tolower(c);
     });
 
     // canonicalize the path to have a leading slash if it's a full uri
@@ -154,7 +154,7 @@ utility::string_t uri::encode_impl(const utility::string_t &raw, const std::func
 }
 
 /// </summary>
-/// Encodes a string by converting all characters except for RFC 3986 unreserved characters to their 
+/// Encodes a string by converting all characters except for RFC 3986 unreserved characters to their
 /// hexadecimal representation.
 /// </summary>
 utility::string_t uri::encode_data_string(const utility::string_t &raw)
@@ -179,7 +179,7 @@ utility::string_t uri::encode_uri(const utility::string_t &raw, uri::components:
         return uri::encode_impl(raw, [](int ch) -> bool
         {
             // No encoding of ASCII characters in host name (RFC 3986 3.2.2)
-            return ch > 127; 
+            return ch > 127;
         });
     case components::path:
         return uri::encode_impl(raw, [](int ch) -> bool
@@ -215,19 +215,19 @@ utility::string_t uri::encode_uri(const utility::string_t &raw, uri::components:
 static int hex_char_digit_to_decimal_char(int hex)
 {
     int decimal;
-    if(hex >= '0' && hex <= '9') 
-    { 
-        decimal = hex - '0'; 
+    if(hex >= '0' && hex <= '9')
+    {
+        decimal = hex - '0';
     }
-    else if(hex >= 'A' && hex <= 'F') 
-    { 
-        decimal = 10 + (hex - 'A'); 
+    else if(hex >= 'A' && hex <= 'F')
+    {
+        decimal = 10 + (hex - 'A');
     }
-    else if(hex >= 'a' && hex <= 'f') 
-    { 
-        decimal = 10 + (hex - 'a'); 
+    else if(hex >= 'a' && hex <= 'f')
+    {
+        decimal = 10 + (hex - 'a');
     }
-    else 
+    else
     {
         throw uri_exception("Invalid hexidecimal digit");
     }
@@ -241,13 +241,13 @@ utility::string_t uri::decode(const utility::string_t &encoded)
     {
         if(*iter == _XPLATSTR('%'))
         {
-            if(++iter == encoded.end()) 
-            { 
+            if(++iter == encoded.end())
+            {
                 throw uri_exception("Invalid URI string, two hexidecimal digits must follow '%'");
             }
             int decimal_value = hex_char_digit_to_decimal_char(static_cast<int>(*iter)) << 4;
-            if(++iter == encoded.end()) 
-            { 
+            if(++iter == encoded.end())
+            {
                 throw uri_exception("Invalid URI string, two hexidecimal digits must follow '%'");
             }
             decimal_value += hex_char_digit_to_decimal_char(static_cast<int>(*iter));
@@ -293,16 +293,16 @@ std::map<utility::string_t, utility::string_t> uri::split_query(const utility::s
     while(prev_amp_index != utility::string_t::npos)
     {
         size_t amp_index = query.find_first_of(_XPLATSTR('&'), prev_amp_index);
-        if (amp_index == utility::string_t::npos) 
+        if (amp_index == utility::string_t::npos)
             amp_index = query.find_first_of(_XPLATSTR(';'), prev_amp_index);
 
         utility::string_t key_value_pair = query.substr(
-            prev_amp_index, 
+            prev_amp_index,
             amp_index == utility::string_t::npos ? query.size() - prev_amp_index : amp_index - prev_amp_index);
         prev_amp_index = amp_index == utility::string_t::npos ? utility::string_t::npos : amp_index + 1;
 
         size_t equals_index = key_value_pair.find_first_of(_XPLATSTR('='));
-        if(equals_index == utility::string_t::npos) 
+        if(equals_index == utility::string_t::npos)
         {
             continue;
         }
@@ -390,7 +390,7 @@ bool uri::operator == (const uri &other) const
     {
         return false;
     }
-    
+
     return true;
 }
 

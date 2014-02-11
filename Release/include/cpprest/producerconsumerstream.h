@@ -43,9 +43,6 @@ namespace pplx = Concurrency;
 #endif
 
 #include "cpprest/astreambuf.h"
-#ifdef _MS_WINDOWS
-#include <safeint.h>
-#endif
 
 #ifndef _CONCRT_H
 #ifndef _LWRCASE_CNCRRNCY

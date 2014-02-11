@@ -106,10 +106,9 @@ public:
         Token() : kind(TKN_EOF) {}
 
         Kind kind;
-        std::basic_string<CharType> spelling;
+        std::basic_string<CharType> string_val;
 
         typename JSON_Parser<CharType>::Location start;
-        typename JSON_Parser<CharType>::Location end;
 
         union
         {
@@ -150,7 +149,6 @@ private:
 
     bool CompleteNumberLiteral(CharType first, Token &token);
     bool ParseInt64(CharType first, uint64_t& value);
-    bool CompleteKeyword(const CharType *expected, typename Token::Kind kind, Token &token);
     bool CompleteKeywordTrue(Token &token);
     bool CompleteKeywordFalse(Token &token);
     bool CompleteKeywordNull(Token &token);
@@ -166,9 +164,7 @@ private:
     {
         tk.kind = kind;
         tk.start = start; 
-        tk.end = start; 
-        tk.end.m_column++;
-        tk.spelling.clear();
+        tk.string_val.clear();
     }
 
     void CreateToken(typename JSON_Parser<CharType>::Token& tk, typename Token::Kind kind)
@@ -176,8 +172,7 @@ private:
         tk.kind = kind;
         tk.start.m_line = m_currentLine; 
         tk.start.m_column = m_currentColumn; 
-        tk.end = tk.start; 
-        tk.spelling.clear();
+        tk.string_val.clear();
     }
 
 protected:
@@ -190,7 +185,7 @@ protected:
 #else
     static const size_t maxParsingDepth = 32;
 #endif
-    typename std::char_traits<CharType>::int_type m_eof;
+    const typename std::char_traits<CharType>::int_type m_eof;
 };
 
 template <typename CharType>
@@ -309,36 +304,6 @@ CharType JSON_Parser<CharType>::EatWhitespace()
 }
 
 template <typename CharType>
-bool JSON_Parser<CharType>::CompleteKeyword(const CharType *expected, typename Token::Kind kind, Token &token)
-{
-    token.spelling = expected[0];   // We need only the first char to tell literals apart (true, false and null)
-
-    const CharType *ptr = expected+1;
-    CharType ch = NextCharacter();
-
-    while ( ch != this->m_eof )
-    {
-        if ( ch != *ptr )
-        {
-            return false;
-        }
-        ++ptr;
-
-        if ( *ptr == '\0' )
-        {
-            token.kind = kind;
-            token.end.m_column = m_currentColumn;
-            token.end.m_line = m_currentLine;
-
-            return true;
-        }
-
-        ch = NextCharacter();
-    }
-    return false;
-}
-
-template <typename CharType>
 bool JSON_Parser<CharType>::CompleteKeywordTrue(Token &token)
 {
     if (NextCharacter() != 'r')
@@ -348,8 +313,6 @@ bool JSON_Parser<CharType>::CompleteKeywordTrue(Token &token)
     if (NextCharacter() != 'e')
         return false;
     token.kind = Token::TKN_BooleanLiteral;
-    token.end.m_column = m_currentColumn;
-    token.end.m_line = m_currentLine;
     token.boolean_val = true;
     return true;
 }
@@ -366,8 +329,6 @@ bool JSON_Parser<CharType>::CompleteKeywordFalse(Token &token)
     if (NextCharacter() != 'e')
         return false;
     token.kind = Token::TKN_BooleanLiteral;
-    token.end.m_column = m_currentColumn;
-    token.end.m_line = m_currentLine;
     token.boolean_val = false;
     return true;
 }
@@ -382,8 +343,6 @@ bool JSON_Parser<CharType>::CompleteKeywordNull(Token &token)
     if (NextCharacter() != 'l')
         return false;
     token.kind = Token::TKN_NullLiteral;
-    token.end.m_column = m_currentColumn;
-    token.end.m_line = m_currentLine;
     return true;
 }
 
@@ -440,9 +399,6 @@ bool JSON_Parser<CharType>::CompleteNumberLiteral(CharType first, Token &token)
     ch = PeekCharacter();
     if (complete && ch!=CharType('.') && ch!=CharType('E') && ch!=CharType('e'))
     {
-        token.end.m_column = this->m_currentColumn;
-        token.end.m_line = this->m_currentLine;
-
         if (minus_sign)
         {
             if (val64 > static_cast<uint64_t>(1) << 63 )
@@ -584,8 +540,6 @@ bool JSON_Parser<CharType>::CompleteNumberLiteral(CharType first, Token &token)
     }
 
     token.kind = (JSON_Parser<CharType>::Token::TKN_NumberLiteral);
-    token.end.m_column = this->m_currentColumn;
-    token.end.m_line = this->m_currentLine;
 
     return true;
 }
@@ -608,7 +562,6 @@ bool JSON_Parser<CharType>::CompleteComment(Token &token)
 
         while ( ch != this->m_eof && ch != '\n')
         {
-            token.spelling.push_back(ch);
             ch = NextCharacter();
         }
     }
@@ -637,18 +590,14 @@ bool JSON_Parser<CharType>::CompleteComment(Token &token)
                     break;
                 }
 
-                token.spelling.push_back(ch);
                 ch = ch1;
             }
 
-            token.spelling.push_back(ch);
             ch = NextCharacter();
         }
     }
 
     token.kind = Token::TKN_Comment;
-    token.end.m_column = m_currentColumn;
-    token.end.m_line = m_currentLine;
 
     return true;
 }
@@ -665,9 +614,6 @@ bool JSON_StringParser<CharType>::CompleteComment(typename JSON_Parser<CharType>
     if ( ch == this->m_eof || (ch != '/' && ch != '*') )
         return false;
 
-    auto start = m_position;
-    auto end   = m_position;
-
     if ( ch == '/' )
     {
         // Line comment -- look for a newline or EOF to terminate.
@@ -676,7 +622,6 @@ bool JSON_StringParser<CharType>::CompleteComment(typename JSON_Parser<CharType>
 
         while ( ch != this->m_eof && ch != '\n')
         {
-            end = m_position;
             ch = JSON_StringParser<CharType>::NextCharacter();
         }
     }
@@ -702,24 +647,16 @@ bool JSON_StringParser<CharType>::CompleteComment(typename JSON_Parser<CharType>
                 {
                     // Consume the character
                     JSON_StringParser<CharType>::NextCharacter();
-                    end = m_position-2;
                     break;
                 }
 
             }
 
-            end = m_position;
             ch = JSON_StringParser<CharType>::NextCharacter();
         }
     }
 
-    token.spelling.resize(end-start);
-    if ( token.spelling.size() > 0 )
-        memcpy(&token.spelling[0], start, (end-start)*sizeof(CharType));
-
     token.kind = JSON_Parser<CharType>::Token::TKN_Comment;
-    token.end.m_column = this->m_currentColumn;
-    token.end.m_line = this->m_currentLine;
 
     return true;
 }
@@ -733,28 +670,28 @@ inline bool JSON_Parser<CharType>::handle_unescape_char(Token &token)
     switch (ch)
     {
         case '\"':
-            token.spelling.push_back('\"');
+            token.string_val.push_back('\"');
             return true;
         case '\\':
-            token.spelling.push_back('\\');
+            token.string_val.push_back('\\');
             return true;
         case '/':
-            token.spelling.push_back('/');
+            token.string_val.push_back('/');
             return true;
         case 'b':
-            token.spelling.push_back('\b');
+            token.string_val.push_back('\b');
             return true;
         case 'f':
-            token.spelling.push_back('\f');
+            token.string_val.push_back('\f');
             return true;
         case 'r':
-            token.spelling.push_back('\r');
+            token.string_val.push_back('\r');
             return true;
         case 'n':
-            token.spelling.push_back('\n');
+            token.string_val.push_back('\n');
             return true;
         case 't':
-            token.spelling.push_back('\t');
+            token.string_val.push_back('\t');
             return true;
         case 'u':
         {
@@ -775,7 +712,7 @@ inline bool JSON_Parser<CharType>::handle_unescape_char(Token &token)
 
             // Construct the character based on the decoded number
             ch = static_cast<CharType>(decoded & 0xFFFF);
-            token.spelling.push_back(ch);
+            token.string_val.push_back(ch);
             return true;
         }
         default:
@@ -802,7 +739,7 @@ bool JSON_Parser<CharType>::CompleteStringLiteral(Token &token)
             if (ch == this->m_eof)
                 return false;
 
-            token.spelling.push_back(ch);
+            token.string_val.push_back(ch);
         }
         ch = NextCharacter();
     }
@@ -810,8 +747,6 @@ bool JSON_Parser<CharType>::CompleteStringLiteral(Token &token)
     if ( ch == '"' )
     {
         token.kind = Token::TKN_StringLiteral;
-        token.end.m_column = m_currentColumn;
-        token.end.m_line = m_currentLine;
     }
     else
     {
@@ -840,9 +775,9 @@ bool JSON_StringParser<CharType>::CompleteStringLiteral(typename JSON_Parser<Cha
 
         if (ch == '\\')
         {
-            token.spelling.resize(m_position - start - 1);
-            if (token.spelling.size() > 0)
-                memcpy(&token.spelling[0], start, (m_position - start - 1)*sizeof(CharType));
+            token.string_val.resize(m_position - start - 1);
+            if (token.string_val.size() > 0)
+                memcpy(&token.string_val[0], start, (m_position - start - 1)*sizeof(CharType));
 
             token.has_unescape_symbol = true;
 
@@ -856,13 +791,11 @@ bool JSON_StringParser<CharType>::CompleteStringLiteral(typename JSON_Parser<Cha
         ch = JSON_StringParser<CharType>::NextCharacter();
     }
 
-    token.spelling.resize(m_position - start - 1);
-    if (token.spelling.size() > 0)
-        memcpy(&token.spelling[0], start, (m_position - start - 1)*sizeof(CharType));
+    token.string_val.resize(m_position - start - 1);
+    if (token.string_val.size() > 0)
+        memcpy(&token.string_val[0], start, (m_position - start - 1)*sizeof(CharType));
 
     token.kind = JSON_Parser<CharType>::Token::TKN_StringLiteral;
-    token.end.m_column = this->m_currentColumn;
-    token.end.m_line = this->m_currentLine;
 
     return true;
 }
@@ -871,7 +804,7 @@ template <typename CharType>
 bool JSON_StringParser<CharType>::finish_parsing_string_with_unescape_char(typename JSON_Parser<CharType>::Token &token)
 {
     // This function handles parsing the string when an unescape character is encountered.
-    // It is called once the part before the unescape char is copied to the token.spelling string
+    // It is called once the part before the unescape char is copied to the token.string_val string
 
     CharType ch;
 
@@ -890,13 +823,11 @@ bool JSON_StringParser<CharType>::finish_parsing_string_with_unescape_char(typen
             if (ch == this->m_eof)
                 return false;
 
-            token.spelling.push_back(ch);
+            token.string_val.push_back(ch);
         }
     }
 
     token.kind = JSON_StringParser<CharType>::Token::TKN_StringLiteral;
-    token.end.m_column = this->m_currentColumn;
-    token.end.m_line = this->m_currentLine;
 
     return true;
 }
@@ -1001,7 +932,7 @@ std::unique_ptr<web::json::details::_Object> JSON_Parser<CharType>::_ParseObject
             switch ( tkn.kind )
             {
             case JSON_Parser<CharType>::Token::TKN_StringLiteral:
-                fieldName = std::move(tkn.spelling);
+                fieldName = std::move(tkn.string_val);
                 break;
             default:
                 goto error;
@@ -1099,7 +1030,7 @@ std::unique_ptr<web::json::details::_Value> JSON_Parser<CharType>::_ParseValue(t
 
         case JSON_Parser<CharType>::Token::TKN_StringLiteral:
             {
-                auto value = utility::details::make_unique<web::json::details::_String>(std::move(tkn.spelling), tkn.has_unescape_symbol);
+                auto value = utility::details::make_unique<web::json::details::_String>(std::move(tkn.string_val), tkn.has_unescape_symbol);
                 GetNextToken(tkn);
                 return std::move(value);
             }

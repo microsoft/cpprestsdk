@@ -160,7 +160,7 @@ namespace web { namespace live {
         /// <returns><c>true</c> if logout succeeded, <c>false</c> otherwise.</returns>
         /// <remarks>
         ///   Whether the logout attempt was successful or not, the application will
-        ///   be required to log in again, since the authentication token will be cleared.
+        ///   be required to log in again, since the access token will be cleared.
         /// </remarks>
         pplx::task<bool> logout()
         {
@@ -176,10 +176,10 @@ namespace web { namespace live {
         }
 
         /// <summary>
-        /// Retrieves the authentication token in use by this client instance.
+        /// Retrieves the access token in use by this client instance.
         /// </summary>
         /// <returns>The current token: a string. An invalid token is indicated by an empty string.</returns>
-        utility::string_t authentication_token() const 
+        const utility::string_t& access_token() const 
         {
                 return m_token;
         }
@@ -322,11 +322,15 @@ namespace web { namespace live {
                             }
                             return response.body().read_to_end(stream.streambuf());
                         })
-                        .then([stream](pplx::task<size_t> response)
+                        .then([stream](pplx::task<size_t> ret_task)
                         {
-                            stream.flush();
-                            stream.close();
-                            return response;
+                            return stream.flush().then([stream, ret_task]()
+                            {
+                                return stream.close();
+                            }).then([ret_task]()
+                            {
+                                return ret_task;    
+                            });
                         });
                 });
         }
@@ -394,8 +398,10 @@ namespace web { namespace live {
                                 })
                                 .then([stream](pplx::task<web::http::http_response> response)
                                 {
-                                    stream.close();
-                                    return _json_extract(response.get());
+                                    return stream.close().then([response]()
+                                    {
+                                        return _json_extract(response.get());
+                                    });
                                 });
                         });
                 });

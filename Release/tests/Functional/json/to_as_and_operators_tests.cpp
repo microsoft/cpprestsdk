@@ -307,11 +307,24 @@ TEST(negative_as_tests)
     VERIFY_THROWS(i.as_string(), json::json_exception);
 }
 
-TEST(floating_number_serialize, "Ignore", "864834")
+TEST(floating_number_serialize)
 {
-    auto value = json::value(-3.14E-12);
+    // This number will have the longest serializaton possible (lenght of the string):
+    // Sign, exponent, decimal comma, longest mantisa and exponent make so.
+    auto value = json::value(-3.123456789012345678901234567890E-123);
+
+    // #digits + 2 to avoid loss + 1 for the sign + 1 for decimal point + 5 for exponent (e+xxx)
+    const auto len = std::numeric_limits<double>::digits10 + 9;
+
+    // Check narrow string implementation
     std::stringstream ss;
     value.serialize(ss);
+    VERIFY_ARE_EQUAL(len, ss.str().length());
+
+    // Check wide string implementation
+    std::basic_stringstream<wchar_t> wss;
+    value.serialize(wss);
+    VERIFY_ARE_EQUAL(len, wss.str().length());
 }
 
 } // SUITE(to_as_and_operators_tests)

@@ -173,7 +173,7 @@ public:
             auto buffer = context->_get_readbuffer();
             
             // Do not read more than the specified read_length
-            msl::utilities::SafeInt<size_t> safe_count = static_cast<size_t>(cb);
+            SafeSize safe_count = static_cast<size_t>(cb);
             size_t size_to_read = safe_count.Min(m_read_length);
 
             const size_t count = buffer.getn((uint8_t *)pv, size_to_read).get();

@@ -173,7 +173,6 @@ TEST_FIXTURE(uri_address, extract_empty_string)
 {
     web::http::experimental::listener::http_listener listener(m_uri);
     http_client client(m_uri);
-
     listener.support([](http_request msg)
     {
         auto ResponseStreamBuf = streams::producer_consumer_buffer<uint8_t>();

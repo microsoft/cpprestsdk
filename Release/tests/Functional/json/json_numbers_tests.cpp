@@ -240,6 +240,27 @@ TEST(int_double_limits)
     VERIFY_ARE_EQUAL(oracleStream.str(), stream.str());
 }
 
+TEST(compare_numbers)
+{
+    // Make sure these are equal
+    VERIFY_ARE_EQUAL(json::value(3.14), json::value::parse(U("3.14")));
+    VERIFY_ARE_EQUAL(json::value(uint64_t(1234)), json::value::parse(U("1234")));
+    VERIFY_ARE_EQUAL(json::value(uint32_t(10)), json::value::parse(U("10")));
+
+    // These two are to verify that explicitly stated signed int was stored as unsigned int as we store all non-negative numbers as unsigned int
+    VERIFY_ARE_EQUAL(json::value(int32_t(10)), json::value::parse(U("10")));
+    VERIFY_ARE_EQUAL(json::value(int64_t(1234)), json::value::parse(U("1234")));
+
+    // These numbers would be equal if converted to double first. That is how we compared them before we had int64 support.
+    VERIFY_ARE_NOT_EQUAL(json::value(int64_t(LLONG_MIN)), json::value(int64_t(LLONG_MIN+1)));
+    VERIFY_ARE_NOT_EQUAL(json::value(uint64_t(ULLONG_MAX)), json::value(uint64_t(ULLONG_MAX-1)));
+
+    // Checking boundary condition - zero
+    VERIFY_ARE_EQUAL(json::value(int32_t(0)), json::value::parse(U("-0")));
+    VERIFY_ARE_EQUAL(json::value(int64_t(0)), json::value::parse(U("-0")));
+    VERIFY_ARE_EQUAL(json::value::parse(U("0")), json::value::parse(U("-0")));
+}
+
 } // SUITE(json_numbers_tests)
 
 }}}

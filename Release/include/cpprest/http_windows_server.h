@@ -39,7 +39,6 @@
 #include <http.h>
 #pragma warning(pop)
 
-#include <safeint.h>
 #include <atomic>
 
 #include "cpprest/http_server.h"

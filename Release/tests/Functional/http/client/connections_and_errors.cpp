@@ -212,7 +212,7 @@ TEST_FIXTURE(uri_address, content_ready_timeout)
     listener.close().wait();
 }
 
- TEST_FIXTURE(uri_address, stream_timeout, "Ignore:Apple", "NYI")
+TEST_FIXTURE(uri_address, stream_timeout, "Ignore:Apple", "NYI")
 {
     web::http::experimental::listener::http_listener listener(m_uri);
     listener.open().wait();

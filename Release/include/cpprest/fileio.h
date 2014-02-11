@@ -42,7 +42,6 @@ namespace pplx = Concurrency;
 
 #ifdef WIN32
 #include <cstdint>
-#include <safeint.h>
 #endif
 
 #include "cpprest/basic_types.h"

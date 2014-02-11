@@ -483,7 +483,7 @@ void windows_request_context::async_process_request(HTTP_REQUEST_ID request_id, 
     // Save the http_request as the member of windows_request_context for the callback use.
     m_msg = msg;
 
-    m_request_buffer = std::unique_ptr<unsigned char[]>(new unsigned char[msl::utilities::SafeInt<unsigned long>(headers_size)]);
+    m_request_buffer = std::unique_ptr<unsigned char[]>(new unsigned char[SafeInt<unsigned long>(headers_size)]);
     m_request = (HTTP_REQUEST *) m_request_buffer.get();
 
     // The read_headers_io_completion callback function.
@@ -513,29 +513,29 @@ void windows_request_context::async_process_request(HTTP_REQUEST_ID request_id, 
 void windows_request_context::read_headers_io_completion(DWORD error_code, DWORD)
 {
     if(error_code != NO_ERROR)
-    {
-        m_msg.reply(status_codes::InternalError);
-    }
-    else
-    {
-        // Parse headers.
-        // We have no way of getting at the full raw encoded URI that was sent across the wire
-        // so we have to access a already decoded version and re-encode it. But since we are dealing
-        // with a full URI we won't handle encoding all possible cases. I don't see any way around this
-        // right now.
-        // TFS # 392606
-        uri encoded_uri = uri::encode_uri(m_request->CookedUrl.pFullUrl);
-        m_msg.set_request_uri(encoded_uri);
-        m_msg.set_method(parse_request_method(m_request));
-        parse_http_headers(m_request->Headers, m_msg.headers());
+        {
+            m_msg.reply(status_codes::InternalError);
+        }
+        else
+        {
+            // Parse headers.
+            // We have no way of getting at the full raw encoded URI that was sent across the wire
+            // so we have to access a already decoded version and re-encode it. But since we are dealing
+            // with a full URI we won't handle encoding all possible cases. I don't see any way around this
+            // right now.
+            // TFS # 392606
+            uri encoded_uri = uri::encode_uri(m_request->CookedUrl.pFullUrl);
+            m_msg.set_request_uri(encoded_uri);
+            m_msg.set_method(parse_request_method(m_request));
+            parse_http_headers(m_request->Headers, m_msg.headers());
 
-        // Start reading in body from the network.
-        m_msg._get_impl()->_prepare_to_receive_data();
-        read_request_body_chunk();
+            // Start reading in body from the network.
+            m_msg._get_impl()->_prepare_to_receive_data();
+            read_request_body_chunk();
 
-        // Dispatch request to the http_listener.
-        dispatch_request_to_listener(m_msg, (web::http::experimental::listener::details::http_listener_impl *)m_request->UrlContext);
-    }
+            // Dispatch request to the http_listener.
+            dispatch_request_to_listener(m_msg, (web::http::experimental::listener::details::http_listener_impl *)m_request->UrlContext);
+        }
 }
 
 void windows_request_context::read_request_body_chunk()
@@ -585,21 +585,21 @@ void windows_request_context::read_body_io_completion(DWORD error_code, DWORD by
 {
     auto request_body_buf = m_msg._get_impl()->outstream().streambuf();
 
-    if (error_code == NO_ERROR)
-    {
-        request_body_buf.commit(bytes_read);
-        read_request_body_chunk();
-    }
-    else if(error_code == ERROR_HANDLE_EOF)
-    {
-        request_body_buf.commit(0);
-        m_msg._get_impl()->_complete(request_body_buf.in_avail());
-    }
-    else
-    {
-        request_body_buf.commit(0);    
-        m_msg._get_impl()->_complete(0, std::make_exception_ptr(http_exception(error_code)));
-    }
+        if (error_code == NO_ERROR)
+        {
+            request_body_buf.commit(bytes_read);
+            read_request_body_chunk();
+        }
+        else if(error_code == ERROR_HANDLE_EOF)
+        {
+            request_body_buf.commit(0);
+            m_msg._get_impl()->_complete(request_body_buf.in_avail());
+        }
+        else
+        {
+            request_body_buf.commit(0);    
+            m_msg._get_impl()->_complete(0, std::make_exception_ptr(http_exception(error_code)));
+        }
 }
 
 void windows_request_context::dispatch_request_to_listener(http_request& request, _In_ web::http::experimental::listener::details::http_listener_impl *pListener)
@@ -696,8 +696,8 @@ void windows_request_context::async_process_response()
 
     size_t content_length = m_response._get_impl()->_get_content_length();
 
-    m_headers = std::unique_ptr<HTTP_UNKNOWN_HEADER []>(new HTTP_UNKNOWN_HEADER[msl::utilities::SafeInt<size_t>(m_response.headers().size())]);
-    m_headers_buffer.resize(msl::utilities::SafeInt<size_t>(m_response.headers().size()) * 2);
+    m_headers = std::unique_ptr<HTTP_UNKNOWN_HEADER []>(new HTTP_UNKNOWN_HEADER[SafeSize(m_response.headers().size())]);
+    m_headers_buffer.resize(SafeSize(m_response.headers().size()) * 2);
 
     win_api_response.Headers.UnknownHeaderCount = (USHORT)m_response.headers().size();
     win_api_response.Headers.pUnknownHeaders = m_headers.get();
@@ -804,7 +804,7 @@ void windows_request_context::transmit_body()
     // In both cases here we could perform optimizations to try and use acquire on the streams to avoid an extra copy.
     if ( m_sending_in_chunks )
     {
-        msl::utilities::SafeInt<size_t> safeCount = m_remaining_to_write;
+        SafeSize safeCount = m_remaining_to_write;
         size_t next_chunk_size = safeCount.Min(CHUNK_SIZE);
         m_body_data.resize(CHUNK_SIZE);
 

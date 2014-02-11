@@ -34,10 +34,14 @@
 #endif
 #endif // _MS_WINDOWS
 
+#ifdef _NO_ASYNCRTIMP
+#define _ASYNCRTIMP
+#else
 #ifdef _ASYNCRT_EXPORT
 #define _ASYNCRTIMP __declspec(dllexport)
 #else
 #define _ASYNCRTIMP __declspec(dllimport)
+#endif
 #endif
 
 // forward declarations of windows types
@@ -49,7 +53,7 @@ typedef UINT_PTR SOCKET;
 #endif
 
 // for guids, used in comm.h
-#ifdef __APPLE__
+#ifdef MS_TARGET_APPLE
 #include "compat/apple_compat.h"
 #else
 #ifdef _MS_WINDOWS

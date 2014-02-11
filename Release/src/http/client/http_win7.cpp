@@ -28,6 +28,7 @@
 ****/
 #include "stdafx.h"
 #include "cpprest/http_client_impl.h"
+#include "cpprest/producerconsumerstream.h"
 
 namespace web 
 { 
@@ -227,6 +228,10 @@ public:
     size64_t m_remaining_to_write;
 
     std::char_traits<uint8_t>::pos_type m_readbuf_pos;
+
+    // The read-write buffer used to save the outgoing body data,
+    // if the authentication chanllenges failed, resend the body data from this buffer.
+    std::shared_ptr<streams::producer_consumer_buffer<uint8_t>> m_rwbuf_copy;
 
     memory_holder m_body_data;
 
@@ -609,7 +614,7 @@ protected:
             });
         }
 
-        //call the callback function of user customized options
+        // Call the callback function of user customized options.
         try
         {
             client_config().call_user_nativehandle_options(winhttp_context->m_request_handle);
@@ -618,6 +623,12 @@ protected:
         {
             request->report_exception(std::current_exception());
             return;
+        }
+
+        // Initialize the local producer_consumer buffer.
+        if (winhttp_context->m_bodyType == transfer_encoding_chunked && !winhttp_context->_get_readbuffer().can_seek() && has_credentials(winhttp_context))
+        {
+            winhttp_context->m_rwbuf_copy = std::make_shared<streams::producer_consumer_buffer<uint8_t>>();
         }
 
         _start_request_send(winhttp_context, content_length);
@@ -692,51 +703,104 @@ private:
         }
     }
 
+    static bool has_credentials(winhttp_request_context * p_request_context)
+    {
+        auto has_proxy_credentials = !p_request_context->m_http_client->client_config().proxy().credentials().username().empty() 
+            && !p_request_context->m_http_client->client_config().proxy().credentials().password().empty();
+
+        auto has_server_credentials = !p_request_context->m_http_client->client_config().credentials().username().empty() 
+            && !p_request_context->m_http_client->client_config().credentials().password().empty();
+
+        return has_proxy_credentials || has_server_credentials;
+    }
+
     static void _transfer_encoding_chunked_write_data(_In_ winhttp_request_context * p_request_context)
     {
         const size_t chunk_size = p_request_context->m_http_client->client_config().chunksize();
 
         p_request_context->allocate_request_space(nullptr, chunk_size+http::details::chunked_encoding::additional_encoding_space);
 
-        auto rbuf = p_request_context->_get_readbuffer();
-        if ( !_check_streambuf(p_request_context, rbuf, _XPLATSTR("Input stream is not open")) )
+        auto after_read = [p_request_context, chunk_size](pplx::task<size_t> op)
         {
-            return;
-        }
-
-        rbuf.getn(&p_request_context->m_body_data.get()[http::details::chunked_encoding::data_offset], chunk_size).then(
-            [p_request_context, chunk_size](pplx::task<size_t> op)
-        {
-            size_t read;
-            try { read = op.get(); }
+            size_t bytes_read;
+            try
+            {
+                bytes_read = op.get();
+                if (!p_request_context->_get_readbuffer().can_seek() && has_credentials(p_request_context)
+                    && !p_request_context->m_server_authentication_tried && !p_request_context->m_proxy_authentication_tried)
+                {
+                    // If the user buffer is not seekable, the credentials are provided and the authentication challenges are not tried,
+                    // copy the user buffer to a local producer_consumer buffer for resending if authentication failed.
+                    try
+                    {
+                        p_request_context->m_rwbuf_copy->putn(&p_request_context->m_body_data.get()[http::details::chunked_encoding::data_offset], bytes_read).wait();
+                    }
+                    catch (...)
+                    {
+                        p_request_context->report_exception(std::current_exception());
+                    }
+                    
+                }
+            }
             catch (...)
             {
                 p_request_context->report_exception(std::current_exception());
                 return;
             }
 
-            _ASSERTE(read != static_cast<size_t>(-1));
+            _ASSERTE(bytes_read != static_cast<size_t>(-1));
 
-            size_t offset = http::details::chunked_encoding::add_chunked_delimiters(p_request_context->m_body_data.get(), chunk_size+http::details::chunked_encoding::additional_encoding_space, read);
+            size_t offset = http::details::chunked_encoding::add_chunked_delimiters(p_request_context->m_body_data.get(), chunk_size + http::details::chunked_encoding::additional_encoding_space, bytes_read);
 
             // Stop writing chunks if we reached the end of the stream.
-            if ( read == 0 )
+            if (bytes_read == 0)
             {
                 p_request_context->m_bodyType = no_body;
+                if (!p_request_context->_get_readbuffer().can_seek() && has_credentials(p_request_context)
+                    && !p_request_context->m_server_authentication_tried && !p_request_context->m_proxy_authentication_tried)
+                {
+                    try
+                    {
+                        p_request_context->m_rwbuf_copy->close(std::ios_base::out).wait();
+
+                    }
+                    catch (...)
+                    {
+                        p_request_context->report_exception(std::current_exception());
+                    }
+                }
             }
 
-            auto length = read+(http::details::chunked_encoding::additional_encoding_space-offset);
+            auto length = bytes_read + (http::details::chunked_encoding::additional_encoding_space - offset);
 
-            if(!WinHttpWriteData(
+            if (!WinHttpWriteData(
                 p_request_context->m_request_handle,
                 &p_request_context->m_body_data.get()[offset],
-                (DWORD)length,
+                (DWORD) length,
                 nullptr))
             {
                 p_request_context->report_error(GetLastError(), _XPLATSTR("Error writing data"));
             }
+        };
 
-        });
+        if ((!p_request_context->m_server_authentication_tried && !p_request_context->m_proxy_authentication_tried) || p_request_context->_get_readbuffer().can_seek())
+        {
+            if (!_check_streambuf(p_request_context, p_request_context->_get_readbuffer(), _XPLATSTR("Input stream is not open")))
+            {
+                return;
+            }
+
+            p_request_context->_get_readbuffer().getn(&p_request_context->m_body_data.get()[http::details::chunked_encoding::data_offset], chunk_size).then(after_read);
+        }
+        else
+        {
+            if (!_check_streambuf(p_request_context, *p_request_context->m_rwbuf_copy, _XPLATSTR("Locally copied input stream is not open")))
+            {
+                return;
+            }
+            // Resending the request after authentication failed, we need to read the body data from the copied buffer.
+            p_request_context->m_rwbuf_copy->getn(&p_request_context->m_body_data.get()[http::details::chunked_encoding::data_offset], chunk_size).then(after_read);
+        }
     }
 
     static void _multiple_segment_write_data(_In_ winhttp_request_context * p_request_context)
@@ -747,7 +811,7 @@ private:
             return;
         }
 
-        msl::utilities::SafeInt<size64_t> safeCount = p_request_context->m_remaining_to_write;
+        SafeInt<size64_t> safeCount = p_request_context->m_remaining_to_write;
         safeCount = safeCount.Min(p_request_context->m_http_client->client_config().chunksize());
 
         uint8_t*  block = nullptr; 
@@ -846,7 +910,6 @@ private:
         // seeking and we are also successful in seeking to the position we started at when the original request
         // was sent.
 
-        bool can_resend = false;
         bool got_credentials = false;
         BOOL results;
         DWORD dwSupportedSchemes;
@@ -863,31 +926,17 @@ private:
             auto rdpos = p_request_context->m_readbuf_pos;
 
             // Check if the saved read position is valid
-            if (rdpos != (std::char_traits<uint8_t>::pos_type)-1)
+            if (rdpos != (std::char_traits<uint8_t>::pos_type) - 1)
             {
                 auto rbuf = p_request_context->_get_readbuffer();
 
-                if ( !rbuf.is_open() )
+                if (rbuf.is_open())
                 {
-                    can_resend = false;
-                }
-
-                // Try to seek back to the saved read position
-                if ( rbuf.seekpos(rdpos, std::ios::ios_base::in) == rdpos )
-                {
-                    // Success.
-                    can_resend = true;
+                    // Try to seek back to the saved read position
+                    rbuf.seekpos(rdpos, std::ios::ios_base::in);
                 }
             }
         }
-        else
-        {
-            // There is no msg body
-            can_resend = true;
-        }
-
-        if (!can_resend)
-            return false;
 
         //  If we got ERROR_WINHTTP_RESEND_REQUEST, the response header is not available, 
         //  we cannot call WinHttpQueryAuthSchemes and WinHttpSetCredentials.

@@ -187,16 +187,10 @@ namespace details {
 
             if ( m_info->m_buffer == nullptr || m_info->m_buffill == 0 ) return 0;
             if ( m_info->m_bufoff > m_info->m_rdpos || (m_info->m_bufoff+m_info->m_buffill) < m_info->m_rdpos ) return 0;
-#ifdef _MS_WINDOWS
-            msl::utilities::SafeInt<size_t> rdpos(m_info->m_rdpos);
-            msl::utilities::SafeInt<size_t> buffill(m_info->m_buffill);
-            msl::utilities::SafeInt<size_t> bufpos = rdpos - m_info->m_bufoff;
-#else
 
-            size_t rdpos(m_info->m_rdpos);
-            size_t buffill(m_info->m_buffill);
-            size_t bufpos = rdpos - m_info->m_bufoff;
-#endif
+            SafeInt<size_t> rdpos(m_info->m_rdpos);
+            SafeInt<size_t> buffill(m_info->m_buffill);
+            SafeInt<size_t> bufpos = rdpos - m_info->m_bufoff;
 
             return buffill - bufpos;
         }
