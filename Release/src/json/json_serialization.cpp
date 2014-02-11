@@ -145,9 +145,16 @@ void web::json::details::_Number::format(std::basic_string<char>& stream) const
 
         const auto numChars = strnlen_s(tempBuffer, tempSize);
 #else
-        const auto numChars = m_number.m_type == number::type::signed_type ?
-            std::snprintf(tempBuffer, tempSize, "%lli", m_number.m_intval) :
-            std::snprintf(tempBuffer, tempSize, "%llu", m_number.m_uintval);
+        std::stringstream ss;
+        if (m_number.m_type == number::type::signed_type)
+            ss << m_number.m_intval;
+        else
+            ss << m_number.m_uintval;
+
+        std::string s = ss.str();
+        strncpy(tempBuffer, s.c_str(), tempSize - 1);
+        tempBuffer[tempSize - 1] = '\0';
+        const auto numChars = strlen(tempBuffer);
 #endif
         stream.append(tempBuffer, numChars);
     }
