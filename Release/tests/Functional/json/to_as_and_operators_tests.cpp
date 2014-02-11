@@ -321,10 +321,12 @@ TEST(floating_number_serialize)
     value.serialize(ss);
     VERIFY_ARE_EQUAL(len, ss.str().length());
 
+#ifdef _MS_WINDOWS
     // Check wide string implementation
     std::basic_stringstream<wchar_t> wss;
     value.serialize(wss);
     VERIFY_ARE_EQUAL(len, wss.str().length());
+#endif
 }
 
 } // SUITE(to_as_and_operators_tests)

@@ -1389,8 +1389,6 @@ public:
                 }
                 return reserveSize;
             }
-            
-            template<typename CharType> friend class web::json::details::JSON_Parser;
         };
     } // namespace details
 
