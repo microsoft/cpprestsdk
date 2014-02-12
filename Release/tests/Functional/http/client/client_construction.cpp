@@ -99,6 +99,16 @@ TEST_FIXTURE(uri_address, client_construction_error_cases)
     verify_client_invalid_argument(address);
 }
 
+TEST_FIXTURE(uri_address, client_construction_no_scheme)
+{
+
+    uri address(U("//localhost:34568/p/g"));
+    test_http_server::scoped_server scoped(m_uri);
+
+    http_client client(address);
+    test_connection(scoped.server(), &client, U("/p/g"));
+}
+
 TEST_FIXTURE(uri_address, copy_assignment)
 {
     test_http_server::scoped_server scoped(m_uri);
