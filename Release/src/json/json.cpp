@@ -313,24 +313,10 @@ bool web::json::number::is_int64() const
     }
 }
 
-struct has_escape_chars_impl {
-  static const char* escapes8;
-  static const wchar_t* escapes16;
-
-  static bool impl(const std::string& s) {
-    return s.find_first_of(escapes8) != std::string::npos;
-  }
-  static bool impl(const std::wstring& s) {
-    return s.find_first_of(escapes16) != std::wstring::npos;
-  }
-};
-
-const char* has_escape_chars_impl::escapes8 = "\"\\\b\f\r\n\t";
-const wchar_t* has_escape_chars_impl::escapes16 = L"\"\\\b\f\r\n\t";
-
 bool web::json::details::_String::has_escape_chars(const _String &str)
 {
-    return has_escape_chars_impl::impl(str.m_string);
+    static const auto escapes = U("\"\\\b\f\r\n\t");
+    return str.m_string.find_first_of(escapes) != utility::string_t::npos;
 }
 
 web::json::details::_Object::_Object(const _Object& other):web::json::details::_Value(other)

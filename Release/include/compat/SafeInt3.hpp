@@ -56,7 +56,7 @@ Version 3.0
 #ifndef SAFEINT_HPP
 #define SAFEINT_HPP
 
-// Enable compiling with /Wall under VC 
+// Enable compiling with /Wall under VC
 #if !defined __GNUC__
 #pragma warning( push )
 // Disable warnings coming from headers
@@ -78,14 +78,9 @@ Version 3.0
 #pragma warning( pop )
 #endif
 
-// Various things needed for GCC
+// Various things needed for GCC & clang
+// Note: Clang is clever and claims to be GCC by defining __GNUC__
 #if defined __GNUC__
-
-#if !defined __clang__
-
-#pragma GCC diagnostic ignored "-Wunused-local-typedefs"
-
-#endif
 
 #define NEEDS_INT_DEFINED
 
@@ -97,7 +92,13 @@ Version 3.0
 
 #endif
 
-// If the user made a choice, respect it #if !defined 
+// This is only for GCC, not Clang.
+#if defined __GNUC__ && !defined __clang__
+#pragma GCC diagnostic ignored "-Wunused-local-typedefs"
+#endif
+
+
+// If the user made a choice, respect it #if !defined
 #if !defined NEEDS_NULLPTR_DEFINED
 // Visual Studio 2010 and higher support this
 #if defined(_MSC_VER)

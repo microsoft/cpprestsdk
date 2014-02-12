@@ -100,16 +100,16 @@ ListAdder::ListAdder(TestList& list, Test* test, ...)
     test->m_properties.Add("Requires", "desktop");
 #endif
 #endif
-	
+
     list.Add(test);
 }
 
-    UNITTEST_LINKAGE TestList GLOBAL_TESTLIST;
+UNITTEST_LINKAGE TestList GLOBAL_TESTLIST;
 
-    extern "C"
-    UNITTEST_LINKAGE TestList& GetTestList()
-    {
-        return GLOBAL_TESTLIST;
-    }
+extern "C"
+UNITTEST_LINKAGE TestList& GetTestList()
+{
+    return GLOBAL_TESTLIST;
+}
 
 }
