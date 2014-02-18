@@ -23,14 +23,14 @@
 
 #pragma once
 
-#ifndef _MS_WINDOWS
+#if !defined(_WIN32) && !defined(__cplusplus_winrt)
 #define TEST_UTILITY_API
-#endif // _MS_WINDOWS
+#endif // !_WIN32 && !__cplusplus_winrt
 
 #ifndef TEST_UTILITY_API
 #ifdef COMMONUTILITIES_EXPORTS
-    #define TEST_UTILITY_API __declspec(dllexport)
+#define TEST_UTILITY_API __declspec(dllexport)
 #else // COMMONUTILITIES_EXPORTS
-    #define TEST_UTILITY_API __declspec(dllimport)
+#define TEST_UTILITY_API __declspec(dllimport)
 #endif // COMMONUTILITIES_EXPORTS
 #endif // TEST_UTILITY_API
