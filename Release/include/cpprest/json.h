@@ -851,17 +851,22 @@ public:
             if (!m_sorted)
             {
                 sort(m_elements.begin(), m_elements.end(),
-                    [] (std::pair<utility::string_t,value>& a, std::pair<utility::string_t, value>& b)  {  return a.first < b.first;});
+                     [] (const std::pair<utility::string_t,value>& a,
+                         const std::pair<utility::string_t, value>& b)
+                     {
+                         return a.first < b.first;
+                     });
                 m_sorted = true;
             }
 
             std::pair<utility::string_t, value> val = std::pair<utility::string_t, value>(key, value());
 
             auto iter = std::lower_bound(m_elements.begin(), m_elements.end(), val,
-            [] (const std::pair<utility::string_t, value>& p1, const std::pair<utility::string_t, value>& p2)
-            {
-                return p1.first < p2.first;
-            });
+                                         [] (const std::pair<utility::string_t, value>& p1,
+                                             const std::pair<utility::string_t, value>& p2)
+                                         {
+                                             return p1.first < p2.first;
+                                         });
 
             if (iter == m_elements.end() || key != (iter->first))
                 return m_elements.insert(iter, val)->second;
