@@ -75,6 +75,9 @@ typedef void * HANDLE;
 #ifdef _MS_WINDOWS
 typedef void* FILE_HANDLE;
 #else
+#ifdef __clang__
+#include <cstdio>
+#endif
 typedef FILE* FILE_HANDLE;
 #endif
 

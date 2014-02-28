@@ -315,11 +315,7 @@ namespace details
 #ifdef _MS_WINDOWS
             sprintf_s(buffer, 9, "%8IX", bytes_read);
 #else
-# if __x86_64__
-            sprintf(buffer, "%8lX", bytes_read);
-# else
-            sprintf(buffer, "%8X", bytes_read);
-# endif
+            sprintf(buffer, "%8zX", bytes_read);
 #endif
             memcpy(&data[0], buffer, 8);
             while (data[offset] == ' ') ++offset;

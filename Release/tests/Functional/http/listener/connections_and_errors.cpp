@@ -144,7 +144,7 @@ TEST(default_port_admin_access, "Ignore", "Manual")
     VERIFY_THROWS(listener.open().wait(), http_exception);
 }
 
-TEST_FIXTURE(uri_address, try_port_already_in_use, "Ignore:Linux", "Bug 879077")
+TEST_FIXTURE(uri_address, try_port_already_in_use, "Ignore:Linux", "Bug 879077", "Ignore:Apple", "Bug 879077")
 {
     test_http_server::scoped_server scoped(m_uri);
     http_listener listener(m_uri);
@@ -165,7 +165,7 @@ TEST_FIXTURE(uri_address, reply_after_starting_close)
         request.reply(status_codes::OK).wait();
     });
     VERIFY_ARE_EQUAL(0, p_client->request(methods::GET, U("/path")));
-    
+
     p_client->next_response().then([](test_response *p_response)
     {
         http_asserts::assert_test_response_equals(p_response, status_codes::OK);
@@ -203,7 +203,7 @@ static void close_stream_early_with_length_impl(const uri &u, bool useException)
         return response.extract_vector();
     }).then([=](pplx::task<std::vector<unsigned char>> bodyTask)
     {
-        VERIFY_THROWS(bodyTask.get(), http_exception);    
+        VERIFY_THROWS(bodyTask.get(), http_exception);
     }).wait();
 
     listener.close().wait();

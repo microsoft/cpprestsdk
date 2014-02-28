@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,11 +44,12 @@
 #include <dispatch/dispatch.h>
 #else
 #include "compat/linux_compat.h"
+#endif
+
 #include "boost/thread/mutex.hpp"
 #include "boost/thread/condition_variable.hpp"
 #include "boost/date_time/posix_time/posix_time_types.hpp"
 #include "boost/bind/bind.hpp"
-#endif
 
 #include "pplx/pplxinterface.h"
 
@@ -92,7 +93,7 @@ namespace platform
         static const unsigned int timeout_infinite = 0xFFFFFFFF;
 
         event_impl()
-            : _signaled(false) 
+            : _signaled(false)
         {
         }
 
@@ -221,7 +222,7 @@ namespace platform
                 _M_cs.lock();
                 _M_owner = id;
                 _M_recursionCount = 1;
-            }            
+            }
         }
 
         void unlock()
@@ -235,14 +236,14 @@ namespace platform
             {
                 _M_owner = -1;
                 _M_cs.unlock();
-            }           
+            }
         }
 
     private:
 #if defined(__APPLE__)
-        std::recursive_mutex _M_cs;
+        std::mutex _M_cs;
 #else
-        boost::mutex _M_cs;
+        ::boost::mutex _M_cs;
 #endif
         long _M_recursionCount;
         volatile long _M_owner;
@@ -277,7 +278,7 @@ namespace platform
     {
     public:
         _PPLXIMP virtual void schedule( TaskProc_t proc, _In_ void* param);
-        
+
         virtual ~apple_scheduler();
     };
 #else
@@ -287,7 +288,7 @@ namespace platform
         _PPLXIMP virtual void schedule( TaskProc_t proc, _In_ void* param);
     };
 #endif
-    
+
     /// <summary>
     /// Timer
     /// </summary>
@@ -325,11 +326,11 @@ namespace extensibility
 {
     typedef ::pplx::details::event_impl event_t;
 
-#if defined(__APPLE__)
-    typedef std::mutex critical_section_t;
-#else
+//#if defined(__APPLE__)
+//    typedef std::mutex critical_section_t;
+//#else
     typedef ::boost::mutex critical_section_t;
-#endif
+//#endif
     typedef scoped_lock<critical_section_t> scoped_critical_section_t;
 
     typedef ::pplx::details::reader_writer_lock_impl reader_writer_lock_t;
@@ -348,7 +349,7 @@ namespace extensibility
 #else
     typedef details::linux_scheduler default_scheduler_t;
 #endif
-    
+
 namespace details
 {
     /// <summary>

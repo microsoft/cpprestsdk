@@ -532,7 +532,7 @@ int main(int argc, char* argv[])
             else
             {
                 testRunner.RunTestsIf(
-                    tests, 
+                    tests,
                     [&](UnitTest::Test *pTest) -> bool
                     {
                         // Combine suite and test name
@@ -543,7 +543,7 @@ int main(int argc, char* argv[])
                         if(IsTestIgnored(pTest) && !include_ignored_tests)
                             return false;
                         else
-                            return matched_properties(pTest->m_properties) && 
+                            return matched_properties(pTest->m_properties) &&
                                 std::regex_match(fullTestName, nameRegex);
                     },
                     g_individual_test_timeout);
@@ -602,7 +602,6 @@ int main(int argc, char* argv[])
             }
         }
 
-        tests.Clear();
     }
 
     if( totalTestCount > 0 )

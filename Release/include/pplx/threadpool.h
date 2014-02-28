@@ -28,7 +28,11 @@
 #include <pthread.h>
 #include <vector>
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconversion"
+#pragma clang diagnostic ignored "-Wunreachable-code"
 #include "boost/asio.hpp"
+#pragma clang diagnostic pop
 
 namespace crossplat {
 

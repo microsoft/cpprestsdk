@@ -498,7 +498,7 @@ private:
 
 public:
     _test_http_server(const utility::string_t& uri)
-        : m_uri(uri) 
+        : m_uri(uri)
         , m_listener(uri)
         , m_last_request_id(0)
         , m_cancel(0)
@@ -515,7 +515,7 @@ public:
             tr->m_request_id = ++m_last_request_id;
             for (auto it = result.headers().begin(); it != result.headers().end(); ++it)
                 tr->m_headers[it->first] = it->second;
-        
+
             tr->m_body = result.extract_vector().get();
 
             {

@@ -202,12 +202,12 @@ TEST_FIXTURE(uri_address, async_request_handler)
         e.set();
         request.reply(status_codes::OK).wait();
     });
-    listener.open();
+    listener.open().wait();
 
     client::http_client client(m_uri);
     auto buf = streams::producer_consumer_buffer<uint8_t>();
     pplx::task<http_response> response = client.request(methods::PUT, U("/"), buf.create_istream(), U("text/plain"));
-    
+
     e.wait();
     buf.close(std::ios_base::out).wait();
     response.wait();

@@ -18,7 +18,10 @@
 */
 #include "stdafx.h"
 #include <boost/algorithm/string/find.hpp>
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wcast-align"
 #include <boost/regex.hpp>
+#pragma clang diagnostic pop
 #include "cpprest/http_helpers.h"
 #include "cpprest/http_server_api.h"
 #include "cpprest/http_server.h"

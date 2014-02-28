@@ -364,9 +364,9 @@ size_t _write_file_async(Concurrency::streams::details::_file_info_impl *fInfo, 
 
     pplx::create_task([=]() -> void
     {
-        size_t abs_position;
+        off_t abs_position;
         bool must_restore_pos;
-        size_t orig_pos;
+        off_t orig_pos;
         if( position == (size_t)-1 )
         {
             orig_pos = lseek(fInfo->m_handle, 0, SEEK_CUR);
