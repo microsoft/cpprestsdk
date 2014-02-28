@@ -350,11 +350,11 @@ bool JSON_Parser<CharType>::CompleteKeywordNull(Token &token)
 template <typename CharType>
 inline bool JSON_Parser<CharType>::ParseInt64(CharType first, uint64_t& value)
 {
-    value = first - CharType('0');
+    value = first - '0';
     CharType ch = PeekCharacter();
-    while (ch >= CharType('0') && ch <= CharType('9'))
+    while (ch >= '0' && ch <= '9')
     {
-        int next_digit = ch - CharType('0');
+        int next_digit = ch - '0';
         if (value > (ULLONG_MAX / 10) || (value == ULLONG_MAX/10 && next_digit > ULLONG_MAX%10))
             return false;
 
@@ -372,7 +372,7 @@ bool JSON_Parser<CharType>::CompleteNumberLiteral(CharType first, Token &token)
 {
     bool minus_sign;
 
-    if (first == CharType('-'))
+    if (first == '-')
     {
         minus_sign = true;
 
@@ -383,13 +383,13 @@ bool JSON_Parser<CharType>::CompleteNumberLiteral(CharType first, Token &token)
         minus_sign = false;
     }
 
-    if (first < CharType('0') || first > CharType('9'))
+    if (first < '0' || first > '9')
         return false;
 
     CharType ch = PeekCharacter();
 
     //Check for two (or more) zeros at the begining
-    if (first == CharType('0') && ch == CharType('0'))
+    if (first == '0' && ch == '0')
         return false;
 
     // Parse the number assuming its integer
@@ -397,7 +397,7 @@ bool JSON_Parser<CharType>::CompleteNumberLiteral(CharType first, Token &token)
     bool complete = ParseInt64(first, val64);
 
     ch = PeekCharacter();
-    if (complete && ch!=CharType('.') && ch!=CharType('E') && ch!=CharType('e'))
+    if (complete && ch!='.' && ch!='E' && ch!='e')
     {
         if (minus_sign)
         {
@@ -436,10 +436,10 @@ bool JSON_Parser<CharType>::CompleteNumberLiteral(CharType first, Token &token)
     while (ch != this->m_eof)
     {
         // Digit encountered?
-        if (ch >= CharType('0') && ch <= CharType('9'))
+        if (ch >= '0' && ch <= '9')
         {
             value *= 10;
-            value += ch - CharType('0');
+            value += ch - '0';
             if (decimal)
                 after_decimal++;
 
@@ -448,7 +448,7 @@ bool JSON_Parser<CharType>::CompleteNumberLiteral(CharType first, Token &token)
         }
 
         // Decimal dot?
-        else if (ch == CharType('.'))
+        else if (ch == '.')
         {
             if (decimal)
                 return false;
@@ -459,12 +459,12 @@ bool JSON_Parser<CharType>::CompleteNumberLiteral(CharType first, Token &token)
             ch = PeekCharacter();
 
             // Check that the following char is a digit
-            if (ch < CharType('0') || ch > CharType('9'))
+            if (ch < '0' || ch > '9')
             return false;
 
             // Parse it
             value *= 10;
-            value += ch - CharType('0');
+            value += ch - '0';
             after_decimal = 1;
 
             NextCharacter();
@@ -472,19 +472,19 @@ bool JSON_Parser<CharType>::CompleteNumberLiteral(CharType first, Token &token)
         }
 
         // Exponent?
-        else if (ch == CharType('E') || ch == CharType('e'))
+        else if (ch == 'E' || ch == 'e')
         {
             has_exponent = true;
             NextCharacter();
             ch = PeekCharacter();
 
             // Check for the exponent sign
-            if (ch == CharType('+'))
+            if (ch == '+')
             {
                 NextCharacter();
                 ch = PeekCharacter();
             }
-            else if (ch == CharType('-'))
+            else if (ch == '-')
             {
                 exponent_minus = true;
                 NextCharacter();
@@ -492,9 +492,9 @@ bool JSON_Parser<CharType>::CompleteNumberLiteral(CharType first, Token &token)
             }
 
             // First number of the exponent
-            if (ch >= CharType('0') && ch <= CharType('9'))
+            if (ch >= '0' && ch <= '9')
             {
-                exponent = ch - CharType('0');
+                exponent = ch - '0';
 
                 NextCharacter();
                 ch = PeekCharacter();
@@ -502,10 +502,10 @@ bool JSON_Parser<CharType>::CompleteNumberLiteral(CharType first, Token &token)
             else return false;
 
             // The rest of the exponent
-            while (ch >= CharType('0') && ch <= CharType('9'))
+            while (ch >= '0' && ch <= '9')
             {
                 exponent *= 10;
-                exponent += ch - CharType('0');
+                exponent += ch - '0';
 
                 NextCharacter();
                 ch = PeekCharacter();
@@ -950,9 +950,10 @@ std::unique_ptr<web::json::details::_Object> JSON_Parser<CharType>::_ParseObject
 #ifdef ENABLE_JSON_VALUE_VISUALIZER
             auto fieldValue = _ParseValue(tkn);
             auto type = fieldValue->type();
-            obj->m_elements.emplace_back(json::value::string(std::move(fieldName)), json::value(std::move(fieldValue), type));
+
+            obj->m_object.m_elements.emplace_back(utility::conversions::to_string_t(fieldName), json::value(std::move(fieldValue), type));
 #else
-            obj->m_elements.emplace_back(json::value::string(std::move(fieldName)), json::value(_ParseValue(tkn)));      
+            obj->m_object.m_elements.emplace_back(utility::conversions::to_string_t(fieldName), json::value(_ParseValue(tkn)));
 #endif
 
             // State 4: Looking for a comma or a closing brace
@@ -996,7 +997,6 @@ std::unique_ptr<web::json::details::_Array> JSON_Parser<CharType>::_ParseArray(t
             result->m_array.m_elements.emplace_back(ParseValue(tkn));
 
             // State 4: Looking for a comma or a closing bracket
-
             switch (tkn.kind)
             {
             case JSON_Parser<CharType>::Token::TKN_Comma:

@@ -64,15 +64,15 @@ TEST(objects_constructed)
         switch(count)
         {
         case 0:
-            VERIFY_ARE_EQUAL(U("a"), key.as_string());
+            VERIFY_ARE_EQUAL(U("a"), key);
             VERIFY_IS_TRUE(value.is_number());
             break;
         case 1:
-            VERIFY_ARE_EQUAL(U("b"), key.as_string());
+            VERIFY_ARE_EQUAL(U("b"), key);
             VERIFY_IS_TRUE(value.is_boolean());
             break;
         case 2:
-            VERIFY_ARE_EQUAL(U("c"), key.as_string());
+            VERIFY_ARE_EQUAL(U("c"), key);
             VERIFY_IS_TRUE(value.is_boolean());
             break;
         }
@@ -98,17 +98,17 @@ TEST(objects_parsed)
             VERIFY_IS_TRUE(value.is_null());
             break;
         case 0:
-            VERIFY_ARE_EQUAL(U("a"), key.as_string());
+            VERIFY_ARE_EQUAL(U("a"), key);
             VERIFY_IS_TRUE(value.is_number());
             VERIFY_ARE_EQUAL(44, value.as_integer());
             break;
         case 1:
-            VERIFY_ARE_EQUAL(U("b"), key.as_string());
+            VERIFY_ARE_EQUAL(U("b"), key);
             VERIFY_IS_TRUE(value.is_boolean());
             VERIFY_IS_TRUE(value.as_bool());
             break;
         case 2:
-            VERIFY_ARE_EQUAL(U("c"), key.as_string());
+            VERIFY_ARE_EQUAL(U("c"), key);
             VERIFY_IS_TRUE(value.is_boolean());
             VERIFY_IS_FALSE(value.as_bool());
             break;
@@ -123,6 +123,7 @@ TEST(objects_reverse)
     json::value val1 = json::value::parse(U("{\"a\": 44, \"b\": true, \"c\": false}"));
 
     VERIFY_ARE_EQUAL(3, val1.size());
+    VERIFY_ARE_EQUAL(3, val1.as_object().size());
 
     size_t count = 0;
     for (auto iter = val1.as_object().rbegin(); iter != val1.as_object().rend(); ++iter)
@@ -132,17 +133,17 @@ TEST(objects_reverse)
         switch(count)
         {
         case 2:
-            VERIFY_ARE_EQUAL(U("a"), key.as_string());
+            VERIFY_ARE_EQUAL(U("a"), key);
             VERIFY_IS_TRUE(value.is_number());
             VERIFY_ARE_EQUAL(44, value.as_integer());
             break;
         case 1:
-            VERIFY_ARE_EQUAL(U("b"), key.as_string());
+            VERIFY_ARE_EQUAL(U("b"), key);
             VERIFY_IS_TRUE(value.is_boolean());
             VERIFY_IS_TRUE(value.as_bool());
             break;
         case 0:
-            VERIFY_ARE_EQUAL(U("c"), key.as_string());
+            VERIFY_ARE_EQUAL(U("c"), key);
             VERIFY_IS_TRUE(value.is_boolean());
             VERIFY_IS_FALSE(value.as_bool());
             break;
@@ -162,7 +163,7 @@ TEST(arrays_constructed)
     VERIFY_ARE_EQUAL(6, val1.size());
 
     size_t count = 0;
-    for (auto&& value : val1.as_array())
+    for (auto value : val1.as_array())
     {
         switch(count)
         {
@@ -191,8 +192,7 @@ TEST(arrays_parsed)
     VERIFY_ARE_EQUAL(3, val1.size());
 
     size_t count = 0;
-    //for (auto iter = std::begin(val1.as_array()); iter != std::end(val1.as_array()); ++iter)
-    for (auto &&value : val1.as_array())
+    for (auto &value : val1.as_array())
     {
         switch(count)
         {

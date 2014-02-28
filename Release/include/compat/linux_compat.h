@@ -88,6 +88,12 @@ typedef struct _SYSTEMTIME {
 #define UNREFERENCED_PARAMETER(x) (void)x
 #define _ASSERTE(x) assert(x)
 
+#ifdef CASABLANCA_DEPRECATION_NO_WARNINGS
+#define CASABLANCA_DEPRECATED(x)
+#else
+#define CASABLANCA_DEPRECATED(x) __attribute__((deprecated(x)))
+#endif
+
 #include <string>
 
 typedef char16_t utf16char;

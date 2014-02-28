@@ -132,8 +132,8 @@ TEST(whitespace)
         input.append(2, whitespace_chars[i]);
         json::value val = json::value::parse(input);
         VERIFY_IS_TRUE(val.is_array());
-        VERIFY_ARE_EQUAL(U("1"), val[0].to_string());
-        VERIFY_ARE_EQUAL(U("2"), val[1].to_string());
+        VERIFY_ARE_EQUAL(U("1"), val[0].serialize());
+        VERIFY_ARE_EQUAL(U("2"), val[1].serialize());
     }
 
     // {:}
@@ -153,7 +153,7 @@ TEST(whitespace)
         input.append(2, whitespace_chars[i]);
         json::value val = json::value::parse(input);
         VERIFY_IS_TRUE(val.is_object());
-        VERIFY_ARE_EQUAL(U("2"), val[U("1"]).to_string());
+        VERIFY_ARE_EQUAL(U("2"), val[U("1"]).serialize());
     }
 }
 
@@ -390,7 +390,7 @@ TEST(empty_object_array)
 TEST(bug_416116)
 {
     json::value data2 = json::value::parse(U("\"δοκιμή\""));
-    auto s = data2.to_string();
+    auto s = data2.serialize();
 
 #pragma warning( push )
 #pragma warning( disable : 4566 )
@@ -404,7 +404,7 @@ TEST(byte_ptr_parsing_array)
     std::stringstream ss;
     ss << s;
     json::value v = json::value::parse(ss);
-    auto s2 = v.to_string();
+    auto s2 = v.serialize();
 
     VERIFY_ARE_EQUAL(s2, U("[\"foo\",true]"));
 
@@ -419,7 +419,7 @@ TEST(byte_ptr_parsing_object)
     std::stringstream ss;
     ss << s;
     json::value v = json::value::parse(ss);
-    auto s2 = v.to_string();
+    auto s2 = v.serialize();
 
     VERIFY_ARE_EQUAL(s2, U("{\"foo\":true}"));
 
@@ -436,7 +436,7 @@ TEST(Japanese)
     std::stringstream ss;
     ss << s;
     json::value v = json::value::parse(ss);
-    auto s2 = v.to_string();
+    auto s2 = v.serialize();
 
     VERIFY_ARE_EQUAL(s2, ws);
 
@@ -449,7 +449,7 @@ TEST(Russian)
 {
     utility::string_t ws = U("{\"results\":[{\"id\":272655310,\"name\":\"Андрей Ив´анов\"}]}");
     json::value v1 = json::value::parse(ws);
-    auto s2 = v1.to_string();
+    auto s2 = v1.serialize();
 
     VERIFY_ARE_EQUAL(s2, ws);
 
@@ -458,7 +458,7 @@ TEST(Russian)
     std::stringstream ss;
     ss << s;
     json::value v2 = json::value::parse(ss);
-    auto s3 = v2.to_string();
+    auto s3 = v2.serialize();
 
     VERIFY_ARE_EQUAL(s3, ws);
 }

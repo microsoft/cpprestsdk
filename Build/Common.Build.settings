@@ -35,9 +35,6 @@
   <PropertyGroup>
     <OutputPath>$(BuildRoot)\Binaries\$(Platform)\$(Configuration)\</OutputPath>
     <OutDir>$(OutputPath)</OutDir>
-    <MSBuildCommunityTasksPath Condition="'$(MSBuildCommunityTasksPath)'==''">$(BuildRoot)\Build\MSBuild.Community.Tasks</MSBuildCommunityTasksPath>
-    <WixToolPath Condition="'$(WixToolPath)'==''">$(BuildRoot)\Build\Wix\3.6\</WixToolPath>
-    <WixExtDir Condition="'$(WixExtDir)'==''">$(WixToolPath)</WixExtDir>
     <TestRoot>$(BuildRoot)\Release\Tests</TestRoot>
     <CasablancaSrcDir>$(BuildRoot)\Release\src</CasablancaSrcDir>
     <CasablancaResourceDir>$(BuildRoot)\Release\Resource</CasablancaResourceDir>
@@ -65,11 +62,6 @@
     <BinaryDependencies>$(TargetsPath)\BinaryDependencies</BinaryDependencies>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-
-    <WixTargetsPath>$(WixToolPath)Wix.targets</WixTargetsPath>
-    <WixTasksPath >$(WixToolPath)WixTasks.dll</WixTasksPath>
-    <LuxTargetsPath>$(WixToolPath)Lux.targets</LuxTargetsPath>
-    <LuxTasksPath >$(WixToolPath)LuxTasks.dll</LuxTasksPath>
 
     <!--For C#:-->
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
@@ -193,8 +185,6 @@
     <Optimize>true</Optimize>
     <DefineConstants>TRACE;ARM</DefineConstants>
   </PropertyGroup>
-  
-
   
   <!--end paths configuration -->
   <Target Name="CopyToOutputDirectoryAlwaysError"

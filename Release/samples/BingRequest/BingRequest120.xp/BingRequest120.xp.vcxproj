@@ -122,10 +122,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="$(CollateralsDir)\Samples\BingRequest\bingrequest.cpp" />
+    <ClCompile Include="..\bingrequest.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\build\casablanca120.xp.vcxproj">
+    <ProjectReference Include="$(CasablancaSrcDir)\build\casablanca120.xp.vcxproj">
       <Project>{15f3b200-1aed-4b57-af37-b21cd67914b1}</Project>
     </ProjectReference>
   </ItemGroup>

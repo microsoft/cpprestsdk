@@ -326,11 +326,7 @@ namespace extensibility
 {
     typedef ::pplx::details::event_impl event_t;
 
-//#if defined(__APPLE__)
-//    typedef std::mutex critical_section_t;
-//#else
     typedef ::boost::mutex critical_section_t;
-//#endif
     typedef scoped_lock<critical_section_t> scoped_critical_section_t;
 
     typedef ::pplx::details::reader_writer_lock_impl reader_writer_lock_t;

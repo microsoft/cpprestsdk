@@ -79,7 +79,7 @@
     <OutDir>$(OutDir)\$(MSBuildProjectName)\</OutDir>
   </PropertyGroup>
   <PropertyGroup>
-    <DevLabSampleProjectRoot>$(CollateralsDir)\Samples\FacebookDemo</DevLabSampleProjectRoot>
+    <DevLabSampleProjectRoot>..\</DevLabSampleProjectRoot>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <ClCompile>

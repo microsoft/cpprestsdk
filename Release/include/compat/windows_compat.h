@@ -38,6 +38,12 @@
 
 #define _noexcept 
 
+#ifdef CASABLANCA_DEPRECATION_NO_WARNINGS
+#define CASABLANCA_DEPRECATED(x)
+#else
+#define CASABLANCA_DEPRECATED(x) __declspec(deprecated(x))
+#endif
+
 typedef wchar_t utf16char;
 typedef std::wstring utf16string;
 typedef std::wstringstream utf16stringstream;

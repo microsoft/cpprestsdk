@@ -112,13 +112,39 @@ class web_proxy
 public:
     enum web_proxy_mode{ use_default = use_default_, use_auto_discovery = use_auto_discovery_, disabled  = disabled_};
 
+    /// <summary>
+    /// Constructs a proxy with the default settings.
+    /// </summary>
     web_proxy() : m_address(_XPLATSTR("")), m_mode(use_default_) {}
+    
+    /// <summary>
+    /// Creates a proxy with specified mode.
+    /// </summary>
+    /// <param name="mode">Mode to use.</param>
     web_proxy( web_proxy_mode mode ) : m_address(_XPLATSTR("")), m_mode(static_cast<web_proxy_mode_internal>(mode)) {}
+    
+    /// <summary>
+    /// Creates a proxy explicitly with provided address.
+    /// </summary>
+    /// <param name="address">Proxy URI to use.</param>
     web_proxy( http::uri address ) : m_address(address), m_mode(user_provided_) {}
 
+    /// <summary>
+    /// Gets this proxy's URI address. Returns an empty URI if not explicitly set by user.
+    /// </summary>
+    /// <returns>A reference to this proxy's URI.</returns>
     const http::uri& address() const { return m_address; }
 
+    /// <summary>
+    /// Gets the credentials used for authentication with this proxy.
+    /// </summary>
+    /// <returns>Credentials to for this proxy.</returns>
     const http::client::credentials& credentials() const { return m_credentials; }
+    
+    /// <summary>
+    /// Sets the credentials to use for authentication with this proxy.
+    /// </summary>
+    /// <param name="cred">Credentials to use for this proxy.</param>
     void set_credentials(http::client::credentials cred) {
         if( m_mode == disabled_ )
         {
@@ -127,9 +153,28 @@ public:
         m_credentials = std::move(cred);
     }
 
+    /// <summary>
+    /// Checks if this proxy was constructed with default settings.
+    /// </summary>
+    /// <returns>True if default, false otherwise.</param>
     bool is_default() const { return m_mode == use_default_; }
+
+    /// <summary>
+    /// Checks if using a proxy is disabled.
+    /// </summary>
+    /// <returns>True if disabled, false otherwise.</returns>
     bool is_disabled() const { return m_mode == disabled_; }
+
+    /// <summary>
+    /// Checks if the auto discovery protocol, WPAD, is to be used.
+    /// </summary>
+    /// <returns>True if auto discovery enabled, false otherwise.</returns>
     bool is_auto_discovery() const { return m_mode == use_auto_discovery_; }
+    
+    /// <summary>
+    /// Checks if a proxy address is explicitly specified by the user.
+    /// </summary>
+    /// <returns>True if a proxy address was explicitly specified, false otherwise.</returns> 
     bool is_specified() const { return m_mode == user_provided_; }
 
 private:

@@ -126,7 +126,7 @@
     <OutDir>$(OutDir)\$(MSBuildProjectName)\</OutDir>
   </PropertyGroup>
   <PropertyGroup>
-    <DevLabSampleProjectRoot>$(CollateralsDir)\Samples\WindowsLiveAuth</DevLabSampleProjectRoot>
+    <DevLabSampleProjectRoot>..\</DevLabSampleProjectRoot>
   </PropertyGroup>
   <PropertyGroup>
     <PackageCertificateKeyFile>WindowsLiveAuth_TemporaryKey.pfx</PackageCertificateKeyFile>

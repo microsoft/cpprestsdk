@@ -59,58 +59,68 @@ void web::json::value::serialize(utility::ostream_t &stream) const
     m_value->serialize_impl(str);
     stream << str;  
 }
+
 void web::json::value::format(std::basic_string<char>& string) const
-{ 
-    m_value->format(string); 
+{
+    m_value->format(string);
 }
 
 template<typename CharType>
-std::basic_string<CharType> escape_string(const std::basic_string<CharType>& escaped)
+void web::json::details::append_escape_string(std::basic_string<CharType>& str, const std::basic_string<CharType>& escaped)
 {
-    // Another opportunity for potentially better performance here is to
-    // loop looking for the first character that needs to be escaped. Then
-    // copy over the portion before, escape the character, and then continue searching.
-    // This could be done using find_first_of.
-    std::basic_string<CharType> tokenString = escaped;
-
-    for (auto iter = tokenString.begin(); iter != tokenString.end(); ++iter)
+    for (auto iter = escaped.begin(); iter != escaped.end(); ++iter)
     {
-        switch(*iter)
+        switch (*iter)
         {
-            // Insert the escape character.
-        case '\"': 
-            tokenString.replace(iter, iter + 1, 1, '\\');
-            iter = tokenString.insert(++iter, '\"');
-            break;
-        case '\\': 
-            tokenString.replace(iter, iter + 1, 1, '\\');
-            iter = tokenString.insert(++iter, '\\');
-            break;
-        case '\b':
-            tokenString.replace(iter, iter + 1, 1, '\\');
-            iter = tokenString.insert(++iter, 'b');
-            break;
-        case '\f':
-            tokenString.replace(iter, iter + 1, 1, '\\');
-            iter = tokenString.insert(++iter, 'f');
-            break;
-        case '\r':
-            tokenString.replace(iter, iter + 1, 1, '\\');
-            iter = tokenString.insert(++iter, 'r');
-            break;
-        case '\n':
-            tokenString.replace(iter, iter + 1, 1, '\\');
-            iter = tokenString.insert(++iter, 'n');
-            break;
-        case '\t':
-            tokenString.replace(iter, iter + 1, 1, '\\');
-            iter = tokenString.insert(++iter, 't');
-            break;
+            case '\"': 
+                str += '\\';
+                str += '\"';
+                break;
+            case '\\': 
+                str += '\\';
+                str += '\\';
+                break;
+            case '\b':
+                str += '\\';
+                str += 'b';
+                break;
+            case '\f':
+                str += '\\';
+                str += 'f';
+                break;
+            case '\r':
+                str += '\\';
+                str += 'r';
+                break;
+            case '\n':
+                str += '\\';
+                str += 'n';
+                break;
+            case '\t':
+                str += '\\';
+                str += 't';
+                break;
+            default:
+                str += *iter;
         }
     }
-
-    return tokenString;
 }
+
+void web::json::details::format_string(const utility::string_t& key, utility::string_t& str)
+{
+    str.push_back('"');
+    append_escape_string(str, key);
+    str.push_back('"');
+}
+
+#ifdef _MS_WINDOWS
+void web::json::details::format_string(const utility::string_t& key, std::string& str)
+{
+    str.push_back('"');
+    append_escape_string(str, utility::conversions::to_utf8string(key));
+    str.push_back('"');
+}
+#endif
 
 void web::json::details::_String::format(std::basic_string<char>& str) const
 {
@@ -118,11 +128,11 @@ void web::json::details::_String::format(std::basic_string<char>& str) const
 
     if(m_has_escape_char)
     {
-        str.append(escape_string(utility::conversions::to_utf8string(m_string)));
+        append_escape_string(str, utility::conversions::to_utf8string(m_string));
     }
     else
     {
-        str.append(utility::conversions::to_utf8string((m_string)));   
+        str.append(utility::conversions::to_utf8string(m_string));
     }
 
     str.push_back('"');
@@ -177,7 +187,7 @@ void web::json::details::_String::format(std::basic_string<wchar_t>& str) const
 
     if(m_has_escape_char)
     {
-        str.append(escape_string(m_string));
+        append_escape_string(str, m_string);
     }
     else
     {
@@ -223,3 +233,5 @@ utility::string_t web::json::value::as_string() const
 {
     return m_value->as_string();
 }
+
+utility::string_t json::value::serialize() const { return m_value->to_string(); }

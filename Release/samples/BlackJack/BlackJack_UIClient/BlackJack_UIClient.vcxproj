@@ -107,7 +107,6 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <PropertyGroup>
-    <DevLabSampleProjectRoot>$(CollateralsDir)\Samples\BlackJack_UIClient</DevLabSampleProjectRoot>
     <OutDir>$(OutDir)\$(MSBuildProjectName)\</OutDir>
     <PackageCertificateThumbprint>5C945ED108BF1723994A90F9BAA4B7D93FBE0E47</PackageCertificateThumbprint>
   </PropertyGroup>
@@ -138,10 +137,9 @@
     <Page Include="PlayingTable.xaml" />
   </ItemGroup>
   <ItemGroup>
-    <AppxManifest Include="$(DevLabSampleProjectRoot)\Package.appxmanifest">
+    <AppxManifest Include="Package.appxmanifest">
       <SubType>Designer</SubType>
     </AppxManifest>
-    <None Include="$(DevLabSampleProjectRoot)\Blackjack Client_TemporaryKey.pfx" />
     <None Include="BlackJack_UIClient_TemporaryKey.pfx" />
   </ItemGroup>
   <ItemGroup>
@@ -179,38 +177,4 @@
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <Target Name="PreBuildEvent">
-    <CreateItem Include="$(DevLabSampleProjectRoot)\*.xaml">
-      <Output TaskParameter="Include" ItemName="Xmlfiles" />
-    </CreateItem>
-    <CreateItem Include="$(DevLabSampleProjectRoot)\*.cpp">
-      <Output TaskParameter="Include" ItemName="Cppfiles" />
-    </CreateItem>
-    <CreateItem Include="$(DevLabSampleProjectRoot)\*.h">
-      <Output TaskParameter="Include" ItemName="Headerfiles" />
-    </CreateItem>
-    <Copy SourceFiles="@(Xmlfiles)" DestinationFolder="$(MSBuildProjectDirectory)" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
-    <Copy SourceFiles="@(Cppfiles)" DestinationFolder="$(MSBuildProjectDirectory)" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
-    <Copy SourceFiles="@(Headerfiles)" DestinationFolder="$(MSBuildProjectDirectory)" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
-    <Copy SourceFiles="$(DevLabSampleProjectRoot)\Common\StandardStyles.xaml" DestinationFolder="$(MSBuildProjectDirectory)\Common" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
-    <Copy SourceFiles="$(DevLabSampleProjectRoot)\Package.appxmanifest" DestinationFolder="$(MSBuildProjectDirectory)" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
-    <Copy SourceFiles="$(DevLabSampleProjectRoot)\Blackjack Client_TemporaryKey.pfx" DestinationFolder="$(MSBuildProjectDirectory)" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
-  </Target>
-  <Target Name="PostBuildEvent">
-    <CreateItem Include="$(MSBuildProjectDirectory)\**\*.xaml">
-      <Output TaskParameter="Include" ItemName="DXmlfiles" />
-    </CreateItem>
-    <CreateItem Include="$(MSBuildProjectDirectory)\*.cpp">
-      <Output TaskParameter="Include" ItemName="DCppfiles" />
-    </CreateItem>
-    <CreateItem Include="$(MSBuildProjectDirectory)\*.h">
-      <Output TaskParameter="Include" ItemName="DHeaderfiles" />
-    </CreateItem>
-    <Delete Files="@(DXmlfiles)" ContinueOnError="true" />
-    <Delete Files="@(DCppfiles)" ContinueOnError="true" />
-    <Delete Files="@(DHeaderfiles)" ContinueOnError="true" />
-    <RemoveDir Directories="$(MSBuildProjectDirectory)\Common" ContinueOnError="true" />
-    <Delete Files="$(MSBuildProjectDirectory)\Package.appxmanifest" ContinueOnError="true" />
-    <Delete Files="$(MSBuildProjectDirectory)\Blackjack Client_TemporaryKey.pfx" ContinueOnError="true" />
-  </Target>
 </Project>

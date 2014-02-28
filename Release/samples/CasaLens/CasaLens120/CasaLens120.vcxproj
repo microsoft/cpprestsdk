@@ -127,33 +127,33 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="$(CollateralsDir)\Samples\CasaLens\ReadMe.txt" />
+    <Text Include="..\ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="$(CollateralsDir)\Samples\CasaLens\casalens.h" />
-    <ClInclude Include="$(CollateralsDir)\Samples\CasaLens\stdafx.h" />
+    <ClInclude Include="..\casalens.h" />
+    <ClInclude Include="..\stdafx.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="$(CollateralsDir)\Samples\CasaLens\stdafx.cpp" >
+    <ClCompile Include="..\stdafx.cpp" >
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="$(CollateralsDir)\Samples\CasaLens\casalens.cpp" />
-    <ClCompile Include="$(CollateralsDir)\Samples\CasaLens\datafetcher.cpp" />
+    <ClCompile Include="..\casalens.cpp" />
+    <ClCompile Include="..\datafetcher.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <Target Name="PreBuildEvent">
     <MakeDir Directories="$(MSBuildProjectDirectory)\css"/>
     <MakeDir Directories="$(MSBuildProjectDirectory)\js"/>
     <MakeDir Directories="$(MSBuildProjectDirectory)\image"/>
-    <Copy SourceFiles="$(CollateralsDir)\Samples\CasaLens\css\default.css" DestinationFolder="$(MSBuildProjectDirectory)\css\" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
-    <Copy SourceFiles="$(CollateralsDir)\Samples\CasaLens\js\default.js" DestinationFolder="$(MSBuildProjectDirectory)\js\" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
-    <Copy SourceFiles="$(CollateralsDir)\Samples\CasaLens\AppCode.html" DestinationFolder="$(MSBuildProjectDirectory)" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
-    <Copy SourceFiles="$(CollateralsDir)\Samples\CasaLens\image\wall.jpg" DestinationFolder="$(MSBuildProjectDirectory)\image\" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
-    <Copy SourceFiles="$(CollateralsDir)\Samples\CasaLens\image\logo.png" DestinationFolder="$(MSBuildProjectDirectory)\image\" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
-    <Copy SourceFiles="$(CollateralsDir)\Samples\CasaLens\image\bing-logo.jpg" DestinationFolder="$(MSBuildProjectDirectory)\image\" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
+    <Copy SourceFiles="..\css\default.css" DestinationFolder="$(MSBuildProjectDirectory)\css\" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
+    <Copy SourceFiles="..\js\default.js" DestinationFolder="$(MSBuildProjectDirectory)\js\" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
+    <Copy SourceFiles="..\AppCode.html" DestinationFolder="$(MSBuildProjectDirectory)" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
+    <Copy SourceFiles="..\image\wall.jpg" DestinationFolder="$(MSBuildProjectDirectory)\image\" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
+    <Copy SourceFiles="..\image\logo.png" DestinationFolder="$(MSBuildProjectDirectory)\image\" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
+    <Copy SourceFiles="..\image\bing-logo.jpg" DestinationFolder="$(MSBuildProjectDirectory)\image\" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
   </Target>
   <Target Name="PostBuildEvent">
     <MakeDir Directories="$(OutDir)\css"/>

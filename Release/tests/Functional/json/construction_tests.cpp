@@ -39,7 +39,7 @@ TEST(winrt_platform_string)
     Platform::String ^platformStr = "Hello!";
     json::value jstr = json::value::string(platformStr->Data());
     CHECK(jstr.is_string());
-    CHECK_EQUAL(jstr.to_string(), U("\"Hello!\""));
+    CHECK_EQUAL(jstr.serialize(), U("\"Hello!\""));
 }
 
 #endif
@@ -51,10 +51,10 @@ TEST(assignment_op)
 
     json::value ass_copy = arr;
     VERIFY_IS_TRUE(ass_copy.is_array());
-    VERIFY_ARE_EQUAL(U("true"), ass_copy[0].to_string());
+    VERIFY_ARE_EQUAL(U("true"), ass_copy[0].serialize());
     ass_copy[1] = json::value(false);
-    VERIFY_ARE_EQUAL(U("false"), ass_copy[1].to_string());
-    VERIFY_ARE_EQUAL(U("null"), arr[1].to_string());
+    VERIFY_ARE_EQUAL(U("false"), ass_copy[1].serialize());
+    VERIFY_ARE_EQUAL(U("null"), arr[1].serialize());
 }
 
 TEST(copy_ctor_array)
@@ -64,10 +64,10 @@ TEST(copy_ctor_array)
 
     json::value copy(arr);
     VERIFY_IS_TRUE(copy.is_array());
-    VERIFY_ARE_EQUAL(U("true"), copy[0].to_string());
+    VERIFY_ARE_EQUAL(U("true"), copy[0].serialize());
     copy[1] = json::value(false);
-    VERIFY_ARE_EQUAL(U("false"), copy[1].to_string());
-    VERIFY_ARE_EQUAL(U("null"), arr[1].to_string());
+    VERIFY_ARE_EQUAL(U("false"), copy[1].serialize());
+    VERIFY_ARE_EQUAL(U("null"), arr[1].serialize());
 }
 
 TEST(copy_ctor_object)
@@ -79,10 +79,10 @@ TEST(copy_ctor_object)
     // Copy object that has values added.
     json::value copy(obj);
     VERIFY_IS_TRUE(copy.is_object());
-    VERIFY_ARE_EQUAL(U("false"), copy[keyName].to_string());
+    VERIFY_ARE_EQUAL(U("false"), copy[keyName].serialize());
     obj[keyName] = json::value(true);
-    VERIFY_ARE_EQUAL(U("false"), copy[keyName].to_string());
-    VERIFY_ARE_EQUAL(U("true"), obj[keyName].to_string());
+    VERIFY_ARE_EQUAL(U("false"), copy[keyName].serialize());
+    VERIFY_ARE_EQUAL(U("true"), obj[keyName].serialize());
 
     // Copy object that parses with value, but none additional added.
     obj = json::value::parse(U("{\"key\": true}"));
@@ -90,8 +90,8 @@ TEST(copy_ctor_object)
     VERIFY_IS_TRUE(copy2.is_object());
     obj[keyName] = json::value(false);
     VERIFY_IS_TRUE(copy2.size() == 1);
-    VERIFY_ARE_EQUAL(U("false"), obj[keyName].to_string());
-    VERIFY_ARE_EQUAL(U("true"), copy2[keyName].to_string());
+    VERIFY_ARE_EQUAL(U("false"), obj[keyName].serialize());
+    VERIFY_ARE_EQUAL(U("true"), copy2[keyName].serialize());
 }
 
 TEST(copy_ctor_string)
@@ -123,9 +123,9 @@ TEST(move_ctor)
 
     json::value moved(std::move(obj));
     VERIFY_IS_TRUE(moved.is_object());
-    VERIFY_ARE_EQUAL(U("true"), moved[U("A")].to_string());
+    VERIFY_ARE_EQUAL(U("true"), moved[U("A")].serialize());
     moved[U("B")] = json::value(false);
-    VERIFY_ARE_EQUAL(U("false"), moved[U("B")].to_string());
+    VERIFY_ARE_EQUAL(U("false"), moved[U("B")].serialize());
 }
 
 TEST(move_assignment_op)
@@ -136,9 +136,9 @@ TEST(move_assignment_op)
     json::value moved;
     moved = std::move(obj);
     VERIFY_IS_TRUE(moved.is_object());
-    VERIFY_ARE_EQUAL(U("true"), moved[U("A")].to_string());
+    VERIFY_ARE_EQUAL(U("true"), moved[U("A")].serialize());
     moved[U("B")] = json::value(false);
-    VERIFY_ARE_EQUAL(U("false"), moved[U("B")].to_string());
+    VERIFY_ARE_EQUAL(U("false"), moved[U("B")].serialize());
 }
 
 TEST(constructor_overloads)
@@ -207,8 +207,8 @@ TEST(object_construction)
 {
     // Factory which takes a map.
     json::value::field_map f;
-    f.push_back(std::make_pair(json::value(U("abc")), json::value(true)));
-    f.push_back(std::make_pair(json::value(U("xyz")), json::value(44)));
+    f.push_back(std::make_pair(U("abc"), json::value(true)));
+    f.push_back(std::make_pair(U("xyz"), json::value(44)));
     json::value obj = json::value::object(f);
     
     VERIFY_ARE_EQUAL(f.size(), obj.size());
@@ -217,16 +217,16 @@ TEST(object_construction)
     obj[U("123")] = json::value(false);
 
     VERIFY_ARE_NOT_EQUAL(f.size(), obj.size());
-    VERIFY_ARE_EQUAL(json::value::string(U("str")).to_string(), obj[U("abc")].to_string());
-    VERIFY_ARE_EQUAL(json::value(false).to_string(), obj[U("123")].to_string());
+    VERIFY_ARE_EQUAL(json::value::string(U("str")).serialize(), obj[U("abc")].serialize());
+    VERIFY_ARE_EQUAL(json::value(false).serialize(), obj[U("123")].serialize());
 
     // Tests constructing empty and adding.
     auto val1 = json::value::object();
     val1[U("A")] = 44;
     val1[U("hahah")] = json::value(true);
     VERIFY_ARE_EQUAL(2u, val1.size());
-    VERIFY_ARE_EQUAL(U("44"), val1[U("A")].to_string());
-    VERIFY_ARE_EQUAL(U("true"), val1[U("hahah")].to_string());
+    VERIFY_ARE_EQUAL(U("44"), val1[U("A")].serialize());
+    VERIFY_ARE_EQUAL(U("true"), val1[U("hahah")].serialize());
 
     // Construct as null value, then turn into object.
     json::value val2;
@@ -234,12 +234,12 @@ TEST(object_construction)
     val2[U("A")] = 44;
     val2[U("hahah")] = json::value(true);
     VERIFY_ARE_EQUAL(2u, val2.size());
-    VERIFY_ARE_EQUAL(U("44"), val2[U("A")].to_string());
-    VERIFY_ARE_EQUAL(U("true"), val2[U("hahah")].to_string());
+    VERIFY_ARE_EQUAL(U("44"), val2[U("A")].serialize());
+    VERIFY_ARE_EQUAL(U("true"), val2[U("hahah")].serialize());
 
     const json::value& val2ref = val2;
-    VERIFY_ARE_EQUAL(U("44"), val2ref[U("A")].to_string());
-    VERIFY_ARE_EQUAL(U("true"), val2ref[U("hahah")].to_string());
+    VERIFY_ARE_EQUAL(U("44"), val2ref[U("A")].serialize());
+    VERIFY_ARE_EQUAL(U("true"), val2ref[U("hahah")].serialize());
     VERIFY_THROWS(val2ref[U("NOTTHERE")], json::json_exception);
 }
 
@@ -251,10 +251,10 @@ TEST(array_construction)
     e.push_back(json::value::string(U("hehe")));
     json::value arr = json::value::array(e);
     VERIFY_ARE_EQUAL(e.size(), arr.size());
-    VERIFY_ARE_EQUAL(U("false"), arr[0].to_string());
+    VERIFY_ARE_EQUAL(U("false"), arr[0].serialize());
     arr[3] = json::value(22);
     VERIFY_ARE_NOT_EQUAL(e.size(), arr.size());
-    VERIFY_ARE_EQUAL(U("22"), arr[3].to_string());
+    VERIFY_ARE_EQUAL(U("22"), arr[3].serialize());
 
     // Test empty factory and adding.
     auto arr2 = json::value::array();
@@ -262,8 +262,8 @@ TEST(array_construction)
     arr2[0] = json::value::object();
     arr2[0][U("A")] = json::value::string(U("HE"));
     VERIFY_ARE_EQUAL(2u, arr2.size());
-    VERIFY_ARE_EQUAL(U("false"), arr2[1].to_string());
-    VERIFY_ARE_EQUAL(U("\"HE\""), arr2[0][U("A")].to_string());
+    VERIFY_ARE_EQUAL(U("false"), arr2[1].serialize());
+    VERIFY_ARE_EQUAL(U("\"HE\""), arr2[0][U("A")].serialize());
 
     // Construct as null value and then add elements.
     json::value arr3;
@@ -272,8 +272,8 @@ TEST(array_construction)
     // Element [0] should already behave as an object.
     arr3[0][U("A")] = json::value::string(U("HE"));
     VERIFY_ARE_EQUAL(2u, arr3.size());
-    VERIFY_ARE_EQUAL(U("false"), arr3[1].to_string());
-    VERIFY_ARE_EQUAL(U("\"HE\""), arr3[0][U("A")].to_string());
+    VERIFY_ARE_EQUAL(U("false"), arr3[1].serialize());
+    VERIFY_ARE_EQUAL(U("\"HE\""), arr3[0][U("A")].serialize());
 
     // Test factory which takes a size.
     auto arr4 = json::value::array(2);
@@ -281,12 +281,12 @@ TEST(array_construction)
     VERIFY_IS_TRUE(arr4[1].is_null());
     arr4[2] = json::value(true);
     arr4[0] = json::value(false);
-    VERIFY_ARE_EQUAL(U("false"), arr4[0].to_string());
-    VERIFY_ARE_EQUAL(U("true"), arr4[2].to_string());
+    VERIFY_ARE_EQUAL(U("false"), arr4[0].serialize());
+    VERIFY_ARE_EQUAL(U("true"), arr4[2].serialize());
 
     const json::value& arr4ref = arr4;
-    VERIFY_ARE_EQUAL(U("false"), arr4ref[0].to_string());
-    VERIFY_ARE_EQUAL(U("true"), arr4ref[2].to_string());
+    VERIFY_ARE_EQUAL(U("false"), arr4ref[0].serialize());
+    VERIFY_ARE_EQUAL(U("true"), arr4ref[2].serialize());
     VERIFY_THROWS(arr4ref[17], json::json_exception);
 }
 
@@ -335,7 +335,7 @@ TEST(array_test)
     }
     VERIFY_ARE_EQUAL(array.size(), count);
 
-    // The begin and end iterators on non-const instances
+    // The begin and end iterators on const instances
     count = 0;
     for(auto iter = carray.begin(); iter != carray.end(); ++iter)
     {
@@ -353,13 +353,73 @@ TEST(array_test)
     VERIFY_ARE_EQUAL(array.size(), count);
 }
 
-// This must not compile on Windows, since the ctor is defined private:
-/*
-TEST(json_from_string)
+TEST(object_test)
 {
-    json::value strValue = json::value("str");
+    json::value obj = json::value::object();
+    json::object& object = obj.as_object();
+    const json::object& cobject = obj.as_object();
+
+    VERIFY_IS_TRUE(object.empty());
+
+    obj[U("name")] = json::value("John");
+    obj[U("surname")] = json::value("Smith");
+    obj[U("height")] = json::value(5.9);
+    obj[U("vegetarian")] = json::value(true);
+    int count;
+
+    VERIFY_IS_FALSE(object.empty());
+
+    // The begin and end iterators on non-const instances
+    count = 0;
+    for(auto iter = object.begin(); iter != object.end(); ++iter)
+    {
+        VERIFY_ARE_EQUAL(object[iter->first], iter->second);
+        count++;
+    }
+    VERIFY_ARE_EQUAL(object.size(), count);
+
+    count = 0;
+    for(auto iter = object.rbegin(); iter != object.rend(); ++iter)
+    {
+        VERIFY_ARE_EQUAL(object[iter->first], iter->second);
+        count++;
+    }
+    VERIFY_ARE_EQUAL(object.size(), count);
+
+    count = 0;
+    for(auto iter = object.cbegin(); iter != object.cend(); ++iter)
+    {
+        VERIFY_ARE_EQUAL(object[iter->first], iter->second);
+        count++;
+    }
+    VERIFY_ARE_EQUAL(object.size(), count);
+
+    count = 0;
+    for(auto iter = object.crbegin(); iter != object.crend(); ++iter)
+    {
+        VERIFY_ARE_EQUAL(object[iter->first], iter->second);
+        count++;
+    }
+    VERIFY_ARE_EQUAL(object.size(), count);
+
+    // The begin and end iterators on const instances
+    count = 0;
+    for(auto iter = cobject.begin(); iter != cobject.end(); ++iter)
+    {
+        VERIFY_ARE_EQUAL(cobject[iter->first], iter->second);
+        count++;
+    }
+    VERIFY_ARE_EQUAL(cobject.size(), count);
+
+    count = 0;
+    for(auto iter = cobject.rbegin(); iter != cobject.rend(); ++iter)
+    {
+        VERIFY_ARE_EQUAL(cobject[iter->first], iter->second);
+        count++;
+    }
+    VERIFY_ARE_EQUAL(cobject.size(), count);
 }
-*/
+
 } // SUITE(construction_tests)
 
 }}}

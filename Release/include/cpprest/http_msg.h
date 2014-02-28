@@ -790,7 +790,7 @@ public:
     /// </remarks>
     void set_body(const json::value &body_data)
     {
-        auto body_text = utility::conversions::to_utf8string(body_data.to_string());
+        auto body_text = utility::conversions::to_utf8string(body_data.serialize());
         auto length = body_text.size();
         set_body(concurrency::streams::bytestream::open_istream(std::move(body_text)), length, _XPLATSTR("application/json"));
     }
@@ -1169,7 +1169,7 @@ public:
     /// </remarks>
     void set_body(const json::value &body_data)
     {
-        auto body_text = utility::conversions::to_utf8string(body_data.to_string());
+        auto body_text = utility::conversions::to_utf8string(body_data.serialize());
         auto length = body_text.size();
         set_body(concurrency::streams::bytestream::open_istream(std::move(body_text)), length, _XPLATSTR("application/json"));
     }

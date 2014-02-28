@@ -200,44 +200,44 @@ TEST_FIXTURE(uri_address, extract_json)
 
     // default encoding (Latin1)
     json::value data = json::value::string(U("JSON string object"));
-    http_response rsp = send_request_response(scoped.server(), &client, U("application/json"), to_utf8string(data.to_string()));
-    VERIFY_ARE_EQUAL(data.to_string(), rsp.extract_json().get().to_string());
+    http_response rsp = send_request_response(scoped.server(), &client, U("application/json"), to_utf8string(data.serialize()));
+    VERIFY_ARE_EQUAL(data.serialize(), rsp.extract_json().get().serialize());
 
     // us-ascii
-    rsp = send_request_response(scoped.server(), &client, U("application/json;  charset=  us-AscIi"), to_utf8string(data.to_string()));
-    VERIFY_ARE_EQUAL(data.to_string(), rsp.extract_json().get().to_string());
+    rsp = send_request_response(scoped.server(), &client, U("application/json;  charset=  us-AscIi"), to_utf8string(data.serialize()));
+    VERIFY_ARE_EQUAL(data.serialize(), rsp.extract_json().get().serialize());
 
     // Latin1
-    rsp = send_request_response(scoped.server(), &client, U("application/json;charset=iso-8859-1"), to_utf8string(data.to_string()));
-    VERIFY_ARE_EQUAL(data.to_string(), rsp.extract_json().get().to_string());
+    rsp = send_request_response(scoped.server(), &client, U("application/json;charset=iso-8859-1"), to_utf8string(data.serialize()));
+    VERIFY_ARE_EQUAL(data.serialize(), rsp.extract_json().get().serialize());
 
     // utf-8
-    rsp = send_request_response(scoped.server(), &client, U("application/json; charset  =  UTF-8"), to_utf8string((data.to_string())));
-    VERIFY_ARE_EQUAL(data.to_string(), rsp.extract_json().get().to_string());
+    rsp = send_request_response(scoped.server(), &client, U("application/json; charset  =  UTF-8"), to_utf8string((data.serialize())));
+    VERIFY_ARE_EQUAL(data.serialize(), rsp.extract_json().get().serialize());
 
     rsp = send_request_response(scoped.server(), &client, U(""), utility::string_t());
     auto str = rsp.to_string();
     // If there is no Content-Type in the response, make sure it won't throw when we ask for json
     if(str.find(U("Content-Type")) == std::string::npos)
     {
-        VERIFY_ARE_EQUAL(utility::string_t(U("null")), rsp.extract_json().get().to_string());
+        VERIFY_ARE_EQUAL(utility::string_t(U("null")), rsp.extract_json().get().serialize());
     }
 
 #ifdef _MS_WINDOWS
     // utf-16le
-    auto utf16str = data.to_string();
+    auto utf16str = data.serialize();
     rsp = send_request_response(scoped.server(), &client, U("application/json; charset=utf-16le"), utf16str);
-    VERIFY_ARE_EQUAL(data.to_string(), rsp.extract_json().get().to_string());
+    VERIFY_ARE_EQUAL(data.serialize(), rsp.extract_json().get().serialize());
 
     // utf-16be
-    utf16string modified_data = data.to_string();
+    utf16string modified_data = data.serialize();
     modified_data = switch_endian_ness(modified_data);
     rsp = send_request_response(scoped.server(), &client, U("application/json; charset=utf-16be"), modified_data);
-    VERIFY_ARE_EQUAL(data.to_string(), rsp.extract_json().get().to_string());
+    VERIFY_ARE_EQUAL(data.serialize(), rsp.extract_json().get().serialize());
 
     // utf-16 no BOM (utf-16be)
     rsp = send_request_response(scoped.server(), &client, U("application/json; charset=utf-16"), modified_data);
-    VERIFY_ARE_EQUAL(data.to_string(), rsp.extract_json().get().to_string());
+    VERIFY_ARE_EQUAL(data.serialize(), rsp.extract_json().get().serialize());
 
     // utf-16 big endian BOM.
     modified_data.insert(modified_data.begin(), U('\0'));
@@ -245,31 +245,31 @@ TEST_FIXTURE(uri_address, extract_json)
     start[0] = 0xFE;
     start[1] = 0xFF;
     rsp = send_request_response(scoped.server(), &client, U("application/json; charset=utf-16"), modified_data);
-    VERIFY_ARE_EQUAL(data.to_string(), rsp.extract_json().get().to_string());
+    VERIFY_ARE_EQUAL(data.serialize(), rsp.extract_json().get().serialize());
 
     // utf-16 little endian BOM.
-    modified_data = data.to_string();
+    modified_data = data.serialize();
     modified_data.insert(modified_data.begin(), U('\0'));
     start = (unsigned char *)&modified_data[0];
     start[0] = 0xFF;
     start[1] = 0xFE;
     rsp = send_request_response(scoped.server(), &client, U("application/json; charset=utf-16"), modified_data);
-    VERIFY_ARE_EQUAL(data.to_string(), rsp.extract_json().get().to_string());
+    VERIFY_ARE_EQUAL(data.serialize(), rsp.extract_json().get().serialize());
 #endif
 
     // unofficial JSON MIME types
-    rsp = send_request_response(scoped.server(), &client, U("text/json"), to_utf8string(data.to_string()));
-    VERIFY_ARE_EQUAL(data.to_string(), rsp.extract_json().get().to_string());
-    rsp = send_request_response(scoped.server(), &client, U("text/x-json"), to_utf8string(data.to_string()));
-    VERIFY_ARE_EQUAL(data.to_string(), rsp.extract_json().get().to_string());
-    rsp = send_request_response(scoped.server(), &client, U("text/javascript"), to_utf8string(data.to_string()));
-    VERIFY_ARE_EQUAL(data.to_string(), rsp.extract_json().get().to_string());
-    rsp = send_request_response(scoped.server(), &client, U("text/x-javascript"), to_utf8string(data.to_string()));
-    VERIFY_ARE_EQUAL(data.to_string(), rsp.extract_json().get().to_string());
-    rsp = send_request_response(scoped.server(), &client, U("application/javascript"), to_utf8string(data.to_string()));
-    VERIFY_ARE_EQUAL(data.to_string(), rsp.extract_json().get().to_string());
-    rsp = send_request_response(scoped.server(), &client, U("application/x-javascript"), to_utf8string(data.to_string()));
-    VERIFY_ARE_EQUAL(data.to_string(), rsp.extract_json().get().to_string());
+    rsp = send_request_response(scoped.server(), &client, U("text/json"), to_utf8string(data.serialize()));
+    VERIFY_ARE_EQUAL(data.serialize(), rsp.extract_json().get().serialize());
+    rsp = send_request_response(scoped.server(), &client, U("text/x-json"), to_utf8string(data.serialize()));
+    VERIFY_ARE_EQUAL(data.serialize(), rsp.extract_json().get().serialize());
+    rsp = send_request_response(scoped.server(), &client, U("text/javascript"), to_utf8string(data.serialize()));
+    VERIFY_ARE_EQUAL(data.serialize(), rsp.extract_json().get().serialize());
+    rsp = send_request_response(scoped.server(), &client, U("text/x-javascript"), to_utf8string(data.serialize()));
+    VERIFY_ARE_EQUAL(data.serialize(), rsp.extract_json().get().serialize());
+    rsp = send_request_response(scoped.server(), &client, U("application/javascript"), to_utf8string(data.serialize()));
+    VERIFY_ARE_EQUAL(data.serialize(), rsp.extract_json().get().serialize());
+    rsp = send_request_response(scoped.server(), &client, U("application/x-javascript"), to_utf8string(data.serialize()));
+    VERIFY_ARE_EQUAL(data.serialize(), rsp.extract_json().get().serialize());
 }
 
 TEST_FIXTURE(uri_address, extract_json_incorrect)
@@ -279,11 +279,11 @@ TEST_FIXTURE(uri_address, extract_json_incorrect)
 
     // with non matching content type.
     json::value json_data = json::value::string(U("JSON string object"));
-    http_response rsp = send_request_response(scoped.server(), &client, U("bad guy"), json_data.to_string());
+    http_response rsp = send_request_response(scoped.server(), &client, U("bad guy"), json_data.serialize());
     VERIFY_THROWS(rsp.extract_json().get(), http_exception);
 
     // with unknown charset.
-    rsp = send_request_response(scoped.server(), &client, U("application/json; charset=us-askjhcii"), json_data.to_string());
+    rsp = send_request_response(scoped.server(), &client, U("application/json; charset=us-askjhcii"), json_data.serialize());
     VERIFY_THROWS(rsp.extract_json().get(), http_exception);
 }
 

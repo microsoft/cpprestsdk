@@ -206,7 +206,7 @@ TEST(int_double_limits)
     oracleStream.precision(std::numeric_limits<uint64_t>::digits10 + 2);
     oracleStream << std::numeric_limits<uint64_t>::max();
     json::value iMax(std::numeric_limits<uint64_t>::max());
-    VERIFY_ARE_EQUAL(oracleStream.str(), iMax.to_string());
+    VERIFY_ARE_EQUAL(oracleStream.str(), iMax.serialize());
     iMax.serialize(stream);
     VERIFY_ARE_EQUAL(oracleStream.str(), stream.str());
 
@@ -216,7 +216,7 @@ TEST(int_double_limits)
     oracleStream.clear();
     oracleStream << std::numeric_limits<int64_t>::min();
     json::value iMin(std::numeric_limits<int64_t>::min());
-    VERIFY_ARE_EQUAL(oracleStream.str(), iMin.to_string());
+    VERIFY_ARE_EQUAL(oracleStream.str(), iMin.serialize());
     iMin.serialize(stream);
     VERIFY_ARE_EQUAL(oracleStream.str(), stream.str());
 
@@ -226,7 +226,7 @@ TEST(int_double_limits)
     oracleStream.precision(std::numeric_limits<double>::digits10 + 2);
     oracleStream << std::numeric_limits<double>::max();
     json::value dMax(std::numeric_limits<double>::max());
-    VERIFY_ARE_EQUAL(oracleStream.str(), dMax.to_string());
+    VERIFY_ARE_EQUAL(oracleStream.str(), dMax.serialize());
     dMax.serialize(stream);
     VERIFY_ARE_EQUAL(oracleStream.str(), stream.str());
 
@@ -235,7 +235,7 @@ TEST(int_double_limits)
     oracleStream.str(U(""));
     oracleStream << std::numeric_limits<double>::min();
     json::value dMin(std::numeric_limits<double>::min());
-    VERIFY_ARE_EQUAL(oracleStream.str(), dMin.to_string());
+    VERIFY_ARE_EQUAL(oracleStream.str(), dMin.serialize());
     dMin.serialize(stream);
     VERIFY_ARE_EQUAL(oracleStream.str(), stream.str());
 }

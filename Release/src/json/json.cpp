@@ -272,7 +272,12 @@ const json::array& web::json::value::as_array() const
     return m_value->as_array();
 }
 
-const json::value::object_vector& web::json::value::as_object() const
+json::object& web::json::value::as_object()
+{
+    return m_value->as_object();
+}
+
+const json::object& web::json::value::as_object() const
 {
     return m_value->as_object();
 }
@@ -321,7 +326,7 @@ bool web::json::details::_String::has_escape_chars(const _String &str)
 
 web::json::details::_Object::_Object(const _Object& other):web::json::details::_Value(other)
 {
-    m_elements = other.m_elements;
+    m_object = other.m_object;
 }
 
 web::json::value::value_type json::value::type() const { return m_value->type(); }
@@ -346,62 +351,24 @@ bool json::value::is_double() const
 
 json::value& web::json::details::_Object::index(const utility::string_t &key)
 {
-    map_fields();
-
-    auto whre = m_fields.find(key);
-
-    if ( whre == m_fields.end() )
-    {
-        // Insert a new entry.
-        m_elements.emplace_back(json::value::string(key), json::value::null());
-        const size_t index = m_elements.size() - 1;
-        m_fields.emplace(key, index);
-        return m_elements[index].second;
-    }
-
-    return m_elements[whre->second].second;
+    return m_object[key];
 }
 
 const json::value& web::json::details::_Object::cnst_index(const utility::string_t &key) const
 {
-    const_cast<web::json::details::_Object*>(this)->map_fields();
-
-    auto whre = m_fields.find(key);
-
-    if ( whre == m_fields.end() )
-        throw json::json_exception(_XPLATSTR("invalid field name"));
-
-    return m_elements[whre->second].second;
+    return m_object[key];
 }
 
 bool web::json::details::_Object::has_field(const utility::string_t &key) const
 {
-    const_cast<web::json::details::_Object*>(this)->map_fields();
-    return m_fields.find(key) != m_fields.end();
+    auto lambda = [&key] (const std::pair<utility::string_t, web::json::value>& p)->bool { return p.first == key;   };
+    auto iter = std::find_if(m_object.begin(), m_object.end(), lambda);
+    return (iter != m_object.end());
 }
 
 json::value web::json::details::_Object::get_field(const utility::string_t &key) const
 {
-    const_cast<web::json::details::_Object*>(this)->map_fields();
-
-    auto whre = m_fields.find(key);
-
-    if ( whre == m_fields.end() )
-        return json::value();
-
-    return m_elements[whre->second].second;
-}
-
-void web::json::details::_Object::map_fields()
-{
-    if ( m_fields.size() == 0 )
-    {
-        size_t index = 0;
-        for (auto iter = m_elements.begin(); iter != m_elements.end(); ++iter, ++index)
-        {
-            m_fields.emplace(iter->first.as_string(), index);
-        }
-    }
+    return m_object[key];
 }
 
 utility::string_t json::value::to_string() const { return m_value->to_string(); }
@@ -480,3 +447,5 @@ const web::json::value& web::json::value::operator[](size_t index) const
     }
     return m_value->cnst_index(index);
 }
+
+const web::json::value web::json::object::m_null_value;

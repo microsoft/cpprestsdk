@@ -23,6 +23,8 @@
 #include "stdafx.h"
 
 using namespace concurrency::streams;
+using namespace utility;
+using namespace ::pplx;
 
 #if defined(__cplusplus_winrt)
 using namespace Windows::Storage;
@@ -30,18 +32,15 @@ using namespace Windows::Storage;
 
 namespace tests { namespace functional { namespace streams {
 
-using namespace utility;
-using namespace ::pplx;
-
-
 SUITE(winrt_interop_tests)
 {
 
 TEST(read_in)
 {
-    producer_consumer_buffer<uint8_t> buf;
+    producer_consumer_buffer<char> buf;
     auto ostream = buf.create_ostream();
-    ostream.print(utility::string_t(U("abcdefghij")));
+    std::string strData("abcdefghij");
+    buf.putn((char *)&strData[0], strData.size() * sizeof(char)).wait();
 
     auto dr = ref new Windows::Storage::Streams::DataReader(winrt_stream::create_input_stream(buf));
     dr->ByteOrder = Windows::Storage::Streams::ByteOrder::LittleEndian;
@@ -55,8 +54,8 @@ TEST(read_in)
         VERIFY_ARE_EQUAL(utility::string_t(value->Data()), U("fghij"));
     }
     {
-        ostream.write<int8_t>(11).wait();
-        ostream.write<int8_t>(17).wait();
+        ostream.write(char(11)).wait();
+        ostream.write(char(17)).wait();
 
         VERIFY_ARE_EQUAL(2, pplx::create_task(dr->LoadAsync(2)).get());
 
@@ -66,31 +65,9 @@ TEST(read_in)
         VERIFY_ARE_EQUAL(ival, 17);
     }
     {
-        ostream.write<int16_t>(13).wait();
-        ostream.write<int16_t>(4711).wait();
-
-        VERIFY_ARE_EQUAL(4, pplx::create_task(dr->LoadAsync(4)).get());
-
-        auto ival = dr->ReadInt16();
-        VERIFY_ARE_EQUAL(ival, 13);
-        ival = dr->ReadInt16();
-        VERIFY_ARE_EQUAL(ival, 4711);
-    }
-    {
-        ostream.write<int32_t>(17).wait();
-        ostream.write<int32_t>(456231987).wait();
-
-        VERIFY_ARE_EQUAL(8, pplx::create_task(dr->LoadAsync(8)).get());
-
-        auto ival = dr->ReadInt32();
-        VERIFY_ARE_EQUAL(ival, 17);
-        ival = dr->ReadInt32();
-        VERIFY_ARE_EQUAL(ival, 456231987);
-    }
-    {
         for (int i = 0; i < 100; i++)
         {
-            ostream.write<int8_t>(int8_t(i)).wait();
+            ostream.write(char(i)).wait();
         }
 
         VERIFY_ARE_EQUAL(100, pplx::create_task(dr->LoadAsync(100)).get());
@@ -108,9 +85,10 @@ TEST(read_in)
 
 TEST(read_rand)
 {
-    producer_consumer_buffer<uint8_t> buf;
+    producer_consumer_buffer<char> buf;
     auto ostream = buf.create_ostream();
-    ostream.print(utility::string_t(U("abcdefghij")));
+    std::string strData("abcdefghij");
+    buf.putn((char *)&strData[0], strData.size() * sizeof(char)).wait();
 
     auto dr = ref new Windows::Storage::Streams::DataReader(winrt_stream::create_random_access_stream(buf));
     dr->ByteOrder = Windows::Storage::Streams::ByteOrder::LittleEndian;
@@ -124,8 +102,8 @@ TEST(read_rand)
         VERIFY_ARE_EQUAL(utility::string_t(value->Data()), U("fghij"));
     }
     {
-        ostream.write<int8_t>(11).wait();
-        ostream.write<int8_t>(17).wait();
+        ostream.write(char(11)).wait();
+        ostream.write(char(17)).wait();
 
         VERIFY_ARE_EQUAL(2, pplx::create_task(dr->LoadAsync(2)).get());
 
@@ -135,31 +113,9 @@ TEST(read_rand)
         VERIFY_ARE_EQUAL(ival, 17);
     }
     {
-        ostream.write<int16_t>(13).wait();
-        ostream.write<int16_t>(4711).wait();
-
-        VERIFY_ARE_EQUAL(4, pplx::create_task(dr->LoadAsync(4)).get());
-
-        auto ival = dr->ReadInt16();
-        VERIFY_ARE_EQUAL(ival, 13);
-        ival = dr->ReadInt16();
-        VERIFY_ARE_EQUAL(ival, 4711);
-    }
-    {
-        ostream.write<int32_t>(17).wait();
-        ostream.write<int32_t>(456231987).wait();
-
-        VERIFY_ARE_EQUAL(8, pplx::create_task(dr->LoadAsync(8)).get());
-
-        auto ival = dr->ReadInt32();
-        VERIFY_ARE_EQUAL(ival, 17);
-        ival = dr->ReadInt32();
-        VERIFY_ARE_EQUAL(ival, 456231987);
-    }
-    {
         for (int i = 0; i < 100; i++)
         {
-            ostream.write<int8_t>(int8_t(i)).wait();
+            ostream.write(char(i)).wait();
         }
 
         VERIFY_ARE_EQUAL(100, pplx::create_task(dr->LoadAsync(100)).get());
@@ -182,7 +138,7 @@ pplx::task<bool> StoreAndFlush(Windows::Storage::Streams::DataWriter^ dw)
 
 TEST(write_out)
 {
-    producer_consumer_buffer<uint8_t> buf;
+    producer_consumer_buffer<char> buf;
 
     auto dw = ref new Windows::Storage::Streams::DataWriter(winrt_stream::create_output_stream(buf));
     dw->ByteOrder = Windows::Storage::Streams::ByteOrder::LittleEndian;
@@ -200,14 +156,18 @@ TEST(write_out)
     VERIFY_ARE_EQUAL(4711, istream.extract<int>().get());
     VERIFY_ARE_EQUAL(-10.0, istream.extract<double>().get());
     VERIFY_ARE_EQUAL(utility::string_t(U("hello!")), istream.extract<utility::string_t>().get());
-    VERIFY_ARE_EQUAL(11, istream.read<uint8_t>().get());
-    VERIFY_ARE_EQUAL(17, istream.read<uint16_t>().get());
-    VERIFY_ARE_EQUAL(4711, istream.read<uint32_t>().get());
+    VERIFY_ARE_EQUAL(11, istream.read().get());
+    uint16_t int16;
+    buf.getn((char *)&int16, sizeof(int16)).wait();
+    VERIFY_ARE_EQUAL(17, int16);
+    uint32_t int32;
+    buf.getn((char *)&int32, sizeof(int32)).wait();
+    VERIFY_ARE_EQUAL(4711, int32);
 }
 
 TEST(write_rand)
 {
-    producer_consumer_buffer<uint8_t> buf;
+    producer_consumer_buffer<char> buf;
 
     auto dw = ref new Windows::Storage::Streams::DataWriter(winrt_stream::create_random_access_stream(buf));
     dw->ByteOrder = Windows::Storage::Streams::ByteOrder::LittleEndian;
@@ -225,9 +185,13 @@ TEST(write_rand)
     VERIFY_ARE_EQUAL(4711, istream.extract<int>().get());
     VERIFY_ARE_EQUAL(-10.0, istream.extract<double>().get());
     VERIFY_ARE_EQUAL(utility::string_t(U("hello!")), istream.extract<utility::string_t>().get());
-    VERIFY_ARE_EQUAL(11, istream.read<uint8_t>().get());
-    VERIFY_ARE_EQUAL(17, istream.read<uint16_t>().get());
-    VERIFY_ARE_EQUAL(4711, istream.read<uint32_t>().get());
+    VERIFY_ARE_EQUAL(11, istream.read().get());
+    uint16_t int16;
+    buf.getn((char *)&int16, sizeof(int16)).wait();
+    VERIFY_ARE_EQUAL(17, int16);
+    uint32_t int32;
+    buf.getn((char *)&int32, sizeof(int32)).wait();
+    VERIFY_ARE_EQUAL(4711, int32);
 }
 
 TEST(read_write_attributes)

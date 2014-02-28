@@ -63,10 +63,10 @@ TEST_FIXTURE(uri_address, extract_json)
         http_asserts::assert_request_equals(request, U("PUT"), U("/"));
         VERIFY_ARE_EQUAL(U("application/json"), request.headers().content_type());
         const json::value j_found = request.extract_json().get();
-        VERIFY_ARE_EQUAL(j.to_string(), j_found.to_string());
+        VERIFY_ARE_EQUAL(j.serialize(), j_found.serialize());
         request.reply(status_codes::OK);
     });
-    std::string data = to_utf8string(j.to_string());
+    std::string data = to_utf8string(j.serialize());
     VERIFY_ARE_EQUAL(0, p_client->request(methods::PUT, U(""), U("application/json"), data));
     p_client->next_response().then([](test_response *p_response)
     {

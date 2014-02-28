@@ -200,40 +200,37 @@ TEST(tell_bug)
 
 TEST(iostream_container_buffer1)
 {
-    concurrency::streams::container_buffer<std::vector<uint8_t>> buf;
+    concurrency::streams::container_buffer<std::vector<char>> buf;
 
-    concurrency::streams::ostream os = buf.create_ostream();
+    auto os = buf.create_ostream();
     os.write('a');
     os.write('b');
     os.close();
 
-    concurrency::streams::istream is = 
-        concurrency::streams::container_stream<std::vector<uint8_t>>::open_istream(std::move(buf.collection()));
+    auto is = concurrency::streams::container_stream<std::vector<char>>::open_istream(std::move(buf.collection()));
     VERIFY_ARE_EQUAL(is.read().get(), 'a');
     VERIFY_ARE_EQUAL(is.read().get(), 'b');
 }
 
 TEST(iostream_container_buffer2)
 {
-    concurrency::streams::container_buffer<std::vector<uint8_t>> buf;
+    concurrency::streams::container_buffer<std::vector<char>> buf;
 
     {
-        concurrency::streams::ostream os = buf.create_ostream();
-
+        auto os = buf.create_ostream();
         os.write('a');
         os.write('b');
         os.close();
     }
 
     {
-        concurrency::streams::istream is = 
-            concurrency::streams::container_stream<std::vector<uint8_t>>::open_istream(std::move(buf.collection()));
+        auto is = concurrency::streams::container_stream<std::vector<char>>::open_istream(std::move(buf.collection()));
 
-        is.read().then([&is](concurrency::streams::basic_ostream<uint8_t>::int_type c) -> pplx::task<concurrency::streams::basic_ostream<uint8_t>::int_type>
+        is.read().then([&is](concurrency::streams::basic_ostream<char>::int_type c)
         {
             VERIFY_ARE_EQUAL(c, 'a');
             return is.read();
-        }).then([&is](concurrency::streams::basic_ostream<uint8_t>::int_type c) -> pplx::task<void>
+        }).then([&is](concurrency::streams::basic_ostream<char>::int_type c) -> pplx::task<void>
         {
             VERIFY_ARE_EQUAL(c, 'b');
             return is.close();

@@ -185,6 +185,7 @@ namespace Concurrency { namespace streams
         /// This function is only available for streams using a single-byte character size.
         /// </remarks>
         template<typename T>
+        CASABLANCA_DEPRECATED("Unsafe API that will be removed in future releases, use one of the other write overloads instead.")
         pplx::task<size_t> write(T value) const
         {
             static_assert(sizeof(CharType) == 1, "binary write is only supported for single-byte streams");
@@ -626,9 +627,7 @@ namespace Concurrency { namespace streams
         /// <returns>True if the read head has reached the end of the stream, false otherwise.</returns>
         bool is_eof() const
         {
-            return is_valid() ?
-                m_helper->m_buffer.is_eof() : 
-                false;
+            return is_valid() ? m_helper->m_buffer.is_eof() : false;
         }
 
         /// <summary>
@@ -655,6 +654,7 @@ namespace Concurrency { namespace streams
         /// This function is only available for streams using a single-byte character size.
         /// </remarks>
         template<typename T>
+        CASABLANCA_DEPRECATED("Unsafe API that will be removed in future releases, use one of the other read overloads instead.")
         pplx::task<T> read() const
         {
             static_assert(sizeof(CharType) == 1, "binary read is only supported for single-byte streams");

@@ -180,7 +180,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="$(CollateralsDir)\Samples\SearchFile\searchfile.cpp" />
+    <ClCompile Include="..\searchfile.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>
