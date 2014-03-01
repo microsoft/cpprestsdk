@@ -76,18 +76,6 @@ namespace web { namespace json
         enum value_type { Number, Boolean, String, Object, Array, Null };
 
         /// <summary>
-        /// Typedef for the standard container holding fields. This is used when constructing an
-        /// object from existing objects.
-        /// </summary>
-        typedef std::vector<std::pair<utility::string_t,json::value>> field_map;
-
-        /// <summary>
-        /// Typedef for the standard container holding array elements. This is used when constructing an
-        /// array from existing objects.
-        /// </summary>
-        typedef std::vector<json::value> array_vector;
-
-        /// <summary>
         /// Constructor creating a null value
         /// </summary>
         _ASYNCRTIMP value();
@@ -215,11 +203,11 @@ public:
         static _ASYNCRTIMP json::value __cdecl object();
 
         /// <summary>
-        /// Creates an object value from a map of field/values
+        /// Creates an object value from a collection of field/values
         /// </summary>
-        /// <param name="fields">A map of field names associated with JSON values</param>
+        /// <param name="fields">Field names associated with JSON values</param>
         /// <returns>A non-empty JSON object value</returns>
-        static _ASYNCRTIMP json::value __cdecl object(json::value::field_map fields);
+        static _ASYNCRTIMP json::value __cdecl object(std::vector<std::pair<::utility::string_t, value>> fields);
 
         /// <summary>
         /// Creates an empty JSON array
@@ -237,9 +225,9 @@ public:
         /// <summary>
         /// Creates a JSON array
         /// </summary>
-        /// <param name="elements">A vector of JSON values, </param>
+        /// <param name="elements">A vector of JSON values</param>
         /// <returns>A JSON array value</returns>
-        static _ASYNCRTIMP json::value __cdecl array(array_vector elements);
+        static _ASYNCRTIMP json::value __cdecl array(std::vector<value> elements);
 
         /// <summary>
         /// Accesses the type of JSON value the current value instance is
@@ -724,7 +712,7 @@ public:
 
     private:
         object() : m_elements(), m_sorted(false) { }
-        object(json::value::field_map elements) : m_elements(std::move(elements)), m_sorted(false) { }
+        object(storage_type elements) : m_elements(std::move(elements)), m_sorted(false) { }
         object(const object& obj); // non copyable
         object& operator=(const object& obj) // non copyable
         {
@@ -1360,7 +1348,7 @@ public:
             {
             }
 
-            _Object(json::value::field_map fields) : m_object(std::move(fields)) { }
+            _Object(object::storage_type fields) : m_object(std::move(fields)) { }
 
             _ASYNCRTIMP _Object(const _Object& other);
 

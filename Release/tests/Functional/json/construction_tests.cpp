@@ -205,8 +205,8 @@ TEST(factory_overloads)
 
 TEST(object_construction)
 {
-    // Factory which takes a map.
-    json::value::field_map f;
+    // Factory which takes a vector.
+    std::vector<std::pair<string_t, json::value>> f;
     f.push_back(std::make_pair(U("abc"), json::value(true)));
     f.push_back(std::make_pair(U("xyz"), json::value(44)));
     json::value obj = json::value::object(f);
@@ -246,7 +246,7 @@ TEST(object_construction)
 TEST(array_construction)
 {
     // Constructor which takes a vector.
-    json::value::array_vector e;
+    std::vector<json::value> e;
     e.push_back(json::value(false));
     e.push_back(json::value::string(U("hehe")));
     json::value arr = json::value::array(e);

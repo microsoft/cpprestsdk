@@ -200,7 +200,7 @@ web::json::value web::json::value::object()
             );
 }
 
-web::json::value web::json::value::object(web::json::value::field_map fields)
+web::json::value web::json::value::object(std::vector<std::pair<::utility::string_t, value>> fields)
 {
     std::unique_ptr<details::_Value> ptr = utility::details::make_unique<details::_Object>(std::move(fields));
     return web::json::value(std::move(ptr)
@@ -230,7 +230,7 @@ web::json::value web::json::value::array(size_t size)
             );
 }
 
-web::json::value web::json::value::array(json::value::array_vector elements)
+web::json::value web::json::value::array(std::vector<value> elements)
 {
     std::unique_ptr<details::_Value> ptr = utility::details::make_unique<details::_Array>(std::move(elements));
     return web::json::value(std::move(ptr)

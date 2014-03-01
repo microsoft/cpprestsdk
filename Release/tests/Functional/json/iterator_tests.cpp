@@ -278,7 +278,7 @@ TEST(std_algorithms)
         json::value v_array = json::value::parse(U("[44, true, false]"));
         auto _where = 
             std::find_if(std::begin(v_array.as_array()), std::end(v_array.as_array()),
-            [&](json::value::array_vector::iterator::value_type value)
+            [&](json::array::iterator::value_type value)
             {
                 return value.is_boolean();
             });
@@ -290,10 +290,10 @@ TEST(std_algorithms)
     {
         // copy_if
         json::value v_array = json::value::parse(U("[44, true, false]"));
-        std::vector<json::value::array_vector::iterator::value_type> v_target(v_array.size());
+        std::vector<json::array::iterator::value_type> v_target(v_array.size());
         auto _where = 
             std::copy_if(std::begin(v_array.as_array()), std::end(v_array.as_array()), std::begin(v_target),
-            [&](json::value::array_vector::iterator::value_type value)
+            [&](json::array::iterator::value_type value)
             {
                 return value.is_boolean();
             });
@@ -306,7 +306,7 @@ TEST(std_algorithms)
         std::vector<json::value> v_target(v_array.size());
         auto _where = 
             std::transform(std::begin(v_array.as_array()), std::end(v_array.as_array()), std::begin(v_target),
-            [&](json::value::array_vector::iterator::value_type) -> json::value
+            [&](json::array::iterator::value_type) -> json::value
             {
                 return json::value::number(17);
             });
