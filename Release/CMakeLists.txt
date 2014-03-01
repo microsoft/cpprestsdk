@@ -79,11 +79,13 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/Binaries)
 
 # These settings can be used by the test targets
 set(Casablanca_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
-set(Casablanca_LIBRARIES ${LIB}casablanca)
+set(Casablanca_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include ${Boost_INCLUDE_DIRS})
+set(Casablanca_LIBRARY ${LIB}casablanca)
+set(Casablanca_LIBRARIES ${Casablanca_LIBRARY} ${Boost_LIBRARIES} ${Boost_FRAMEWORK})
 
-# Everything in the project needs access to the casablanca include directory
-include_directories(${Casablanca_INCLUDE_DIR})
-include_directories(${Boost_INCLUDE_DIR})
+
+# Everything in the project needs access to the casablanca include directories
+include_directories(${Casablanca_INCLUDE_DIRS})
 
 # Finally, the tests all use the same style declaration to build themselves, so we use a function
 function(add_casablanca_test NAME SOURCES_VAR)
@@ -94,8 +96,6 @@ function(add_casablanca_test NAME SOURCES_VAR)
       ${LIB}unittestpp
       ${LIB}httptest_utilities
       ${LIB}common_utilities
-      ${Boost_LIBRARIES}
-      ${Boost_FRAMEWORK}
       ${Casablanca_LIBRARIES}
       )
 
@@ -108,8 +108,8 @@ endfunction()
 
 add_subdirectory(src)
 add_subdirectory(tests)
+
 # If we aren't on iOS, we can build samples.
-# These are also excluded from the "all" or default target
 if(NOT IOS)
-  add_subdirectory(samples EXCLUDE_FROM_ALL)
+  add_subdirectory(samples)
 endif()
