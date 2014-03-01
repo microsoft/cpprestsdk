@@ -46,11 +46,6 @@
 #include "compat/linux_compat.h"
 #endif
 
-#include "boost/thread/mutex.hpp"
-#include "boost/thread/condition_variable.hpp"
-#include "boost/date_time/posix_time/posix_time_types.hpp"
-#include "boost/bind/bind.hpp"
-
 #include "pplx/pplxinterface.h"
 
 
@@ -240,11 +235,7 @@ namespace platform
         }
 
     private:
-#if defined(__APPLE__)
-        std::mutex _M_cs;
-#else
-        ::boost::mutex _M_cs;
-#endif
+        ::std::mutex _M_cs;
         long _M_recursionCount;
         volatile long _M_owner;
     };
@@ -326,7 +317,7 @@ namespace extensibility
 {
     typedef ::pplx::details::event_impl event_t;
 
-    typedef ::boost::mutex critical_section_t;
+    typedef ::std::mutex critical_section_t;
     typedef scoped_lock<critical_section_t> scoped_critical_section_t;
 
     typedef ::pplx::details::reader_writer_lock_impl reader_writer_lock_t;

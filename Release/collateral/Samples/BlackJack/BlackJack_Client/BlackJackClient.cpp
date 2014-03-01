@@ -35,7 +35,7 @@
 #endif
 
 using namespace std;
-using namespace web; 
+using namespace web;
 using namespace utility;
 using namespace http;
 using namespace http::client;
@@ -62,6 +62,7 @@ void PrintResult(BJHandResult result)
     case HR_PlayerWin: ucout << "Player wins"; break;
     case HR_ComputerWin: ucout << "Computer Wins"; break;
     case HR_Push:ucout << "Push"; break;
+    default: std::abort();
     }
 }
 
@@ -141,6 +142,8 @@ void PrintTable(const http_response &response, bool &refresh)
             case ST_YourTurn:
                 ucout << "Your turn!\n";
                 break;
+            default:
+                std::abort();
             }
         }
     }
