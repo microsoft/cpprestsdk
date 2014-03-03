@@ -73,7 +73,7 @@ public:
     void submit_io()
     {
         m_no_outstanding_work.reset();
-        ++m_outstanding_work; 
+        ++m_outstanding_work;
     }
 
     void complete_io()
@@ -176,7 +176,7 @@ using namespace Concurrency::streams::details;
 /// <returns>The error code if there was an error in file creation.</returns>
 bool _finish_create(int fh, _filestream_callback *callback, std::ios_base::openmode mode, int /* prot */)
 {
-    if ( fh != -1 ) 
+    if ( fh != -1 )
     {
         std::shared_ptr<io_scheduler> sched = get_scheduler();
 
@@ -185,7 +185,7 @@ bool _finish_create(int fh, _filestream_callback *callback, std::ios_base::openm
         // letting the OS do its buffering, even if it means that prompt reads won't
         // happen.
         bool buffer = (mode == std::ios_base::in);
-        
+
         // seek to end if requested
         if (mode & std::ios_base::ate)
         {
