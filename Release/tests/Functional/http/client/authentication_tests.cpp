@@ -50,7 +50,7 @@ namespace tests { namespace functional { namespace http { namespace client {
 SUITE(authentication_tests)
 {
 
-TEST_FIXTURE(uri_address, auth_no_data, "Ignore:Linux", "646268", "Ignore:Apple", "646268")
+TEST_FIXTURE(uri_address, auth_no_data, "Ignore:Linux", "698420", "Ignore:Apple", "698420")
 {
     test_http_server::scoped_server scoped(m_uri);
     http_client_config client_config;
@@ -131,7 +131,7 @@ TEST_FIXTURE(uri_address, proxy_auth_known_contentlength, "Ignore:Linux", "64626
 #endif
 
 TEST_FIXTURE(uri_address, proxy_auth_noseek,
-             "Ignore:Linux", "627612",
+             "Ignore:Linux", "646268",
              "Ignore:Apple", "646268")
 {
     web::http::uri uri(U("http://localhost:34567/"));
@@ -600,7 +600,7 @@ TEST_FIXTURE(uri_address, set_user_options_exceptions)
 #pragma endregion 
 
 // Fix for 522831 AV after failed authentication attempt
-TEST_FIXTURE(uri_address, failed_authentication_attempt, "Ignore:Linux", "549349", "Ignore:Apple", "646268")
+TEST_FIXTURE(uri_address, failed_authentication_attempt, "Ignore:Linux", "698420", "Ignore:Apple", "698420")
 {
     http_client_config config;
     credentials cred(U("user"),U("schmuser"));

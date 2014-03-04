@@ -29,7 +29,7 @@ namespace tests { namespace functional { namespace http { namespace listener {
 SUITE(connections_and_errors)
 {
 
-TEST_FIXTURE(uri_address, close_listener_race, "Ignore:Linux", "724744", "Ignore", "825350")
+TEST_FIXTURE(uri_address, close_listener_race, "Ignore", "825350")
 {
     ::http::experimental::listener::http_listener listener(m_uri);
     listener.open().wait();
@@ -284,12 +284,14 @@ int verify_http_exception(Func f)
     return errorCode;
 }
 
- TEST_FIXTURE(uri_address, request_content_ready_timeout, "Ignore:Linux", "NYI", "Ignore:Apple", "NYI")
+TEST_FIXTURE(uri_address, request_content_ready_timeout, "Ignore:Linux", "Unsuitable until 813276", "Ignore:Apple", "Unsuitable until 813276")
 {
     http_listener_config config;
     config.set_timeout(utility::seconds(1));
+
     http_listener listener(m_uri, config);
     pplx::extensibility::event_t timedOutEvent;
+
     listener.support([&](http_request req)
     {
         const int e1 = verify_http_exception([=](){ req.content_ready().wait(); });

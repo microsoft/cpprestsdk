@@ -35,7 +35,7 @@ TEST_FIXTURE(uri_address, default_constructor)
     VERIFY_THROWS(listener.open().wait(), std::invalid_argument);
 }
 
-TEST_FIXTURE(uri_address, move_operations, "Ignore:Linux", "724744")
+TEST_FIXTURE(uri_address, move_operations)
 {
     http_listener listener(m_uri);
     listener.open().wait();
@@ -69,7 +69,7 @@ TEST_FIXTURE(uri_address, move_operations, "Ignore:Linux", "724744")
     }).wait();
 }
 
-TEST_FIXTURE(uri_address, various_uris, "Ignore:Linux", "724744")
+TEST_FIXTURE(uri_address, various_uris)
 {
     http_listener listener(web::http::uri_builder(m_uri).append_path(U("path1")).to_uri());
     listener.open().wait();
@@ -108,7 +108,7 @@ TEST_FIXTURE(uri_address, various_uris, "Ignore:Linux", "724744")
     }).wait();
 }
 
-TEST_FIXTURE(uri_address, uri_routing, "Ignore:Linux", "724744")
+TEST_FIXTURE(uri_address, uri_routing)
 {
     http_listener listener1(web::http::uri_builder(m_uri).append_path(U("path1")).to_uri());
     listener1.open().wait();

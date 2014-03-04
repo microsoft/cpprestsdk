@@ -215,7 +215,7 @@ TEST_FIXTURE(uri_address, async_request_handler)
 }
 
 
-TEST_FIXTURE(uri_address, multiple_listeners, "Ignore:Linux", "724744")
+TEST_FIXTURE(uri_address, multiple_listeners)
 {
     http_listener listener1(U("http://localhost:45678/path1"));
     http_listener listener2(U("http://localhost:45678/path1/path2"));
@@ -280,7 +280,7 @@ TEST_FIXTURE(uri_address, multiple_listeners, "Ignore:Linux", "724744")
     listener1.close().wait();
 }
 
-TEST_FIXTURE(uri_address, unregister_while_processing, "Ignore:Linux", "724744")
+TEST_FIXTURE(uri_address, unregister_while_processing)
 {
     http_listener listener1(U("http://localhost:45679/path1"));
     http_listener listener2(U("http://localhost:45679/path1/path2"));

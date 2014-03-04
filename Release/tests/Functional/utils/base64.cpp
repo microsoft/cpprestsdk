@@ -221,7 +221,7 @@ TEST(additional_decode)
     }
 }
 
-TEST(bad_decode, "Ignore:Linux", "glib does not reject any of these inputs")
+TEST(bad_decode)
 {
     // These tests are for input that should be disallowed by a very strict decoder, but
     // the available APIs on Windows accept them, as does glib, which is used on Linux.
