@@ -9,11 +9,11 @@ these libraries are Boost and OpenSSL.
 This document will walk through the steps to build casablanca and its
 dependencies into a form suitable for use with iOS applications.
 
-For this walkthrough, we assume you are working within the root directory of the
-casablanca project.
+For this walkthrough, we assume you are working within the 'Build_iOS'
+directory of the casablanca project.
 
     $ git clone https://git01.codeplex.com/casablanca
-    $ cd casablanca
+    $ pushd casablanca/Build_iOS
 
 
 Building OpenSSL
@@ -22,16 +22,16 @@ Building OpenSSL
 To build OpenSSL, use the script provided by the OpenSSL-for-iPhone project.
 
     $ git clone --depth=1 https://github.com/x2on/OpenSSL-for-iPhone.git
-    $ cd OpenSSL-for-iPhone
+    $ pushd OpenSSL-for-iPhone
     $ ./build-libssl.sh
-    $ cd ..
+    $ popd
 
 After building the library, move the include files and libraries to
-`casablanca/openssl-include` and `casablanca/openssl-ios/lib` respectively.
+`Build iOS/openssl/include` and `Build iOS/openssl/lib` respectively.
 
-    $ mv OpenSSL-for-iPhone/include openssl-include
-    $ mkdir openssl-ios
-    $ mv OpenSSL-for-iPhone/lib openssl-ios/lib
+    $ mkdir openssl
+    $ mv OpenSSL-for-iPhone/include openssl
+    $ mv OpenSSL-for-iPhone/lib openssl
 
 This completes building OpenSSL.
 
@@ -47,7 +47,7 @@ there are a few actively maintained forks. We recommend using the fork by Joseph
 Galbraith.
 
     $ git clone https://git.gitorious.org/boostoniphone/galbraithjosephs-boostoniphone.git boostoniphone
-    $ cd boostoniphone
+    $ pushd boostoniphone
 
 The script `boost.sh` provided by the boostoniphone project has a variable at
 the top of the file to specify which parts of boost need be compiled. This
@@ -59,14 +59,15 @@ signals, filesystem, regex, program_options, system.
 
 The headers need to be moved to allow inclusion via `"boost/foo.h"`.
 
-    $ cd ios/framework/boost.framework/Versions/A
+    $ pushd ios/framework/boost.framework/Versions/A
     $ mkdir Headers2
     $ mv Headers Headers2/boost
     $ mv Headers2 Headers
+    $ popd
 
 Finally, the product framework must be moved into place.
 
-    $ cd ..
+    $ popd
     $ mv boostoniphone/ios/framework/boost.framework .
 
 This completes building Boost.
@@ -81,9 +82,7 @@ Preparing the Casablanca build
 Casablanca uses CMake for cross-platform compatibility. To build on iOS, we
 specifically use the toolchain file provided by the ios-cmake project.
 
-    $ cd ios
-    $ hg clone https://code.google.com/p/ios-cmake/ 
-    $ cd ..
+    $ hg clone https://code.google.com/p/ios-cmake/
 
 This completes the preparation for building Casablanca.
 
@@ -97,28 +96,31 @@ Building Casablanca
 Now we are ready to build Casablanca for iOS. Invoke the ios-buildscripts
 subproject in the usual CMake fashion:
 
-    $ cd ios
     $ mkdir build.ios
-    $ cd build.ios
+    $ pushd build.ios
     $ cmake .. -DCMAKE_BUILD_TYPE=Release
     $ make
-    $ cd ..
-    $ cd ..
+    $ popd
 
-This will take a while and produce appropriately lipo'd static libraries.
+This will take a while and produce universal static libraries inside
+the 'build.ios' directory.
 
 
 Using Casablanca
 ----------------
-You will need to add/reference the following from your project:
+You will need to link against the following from your project:
 
-  * ios/build.ios/libcasablanca.a
+  * build.ios/libcasablanca.a
   * boost.framework
-  * openssl-include
-  * openssl-ios/lib/libcrypto.a
-  * openssl-ios/lib/libssl.a
-  * Release/include
+  * openssl/lib/libcrypto.a
+  * openssl/lib/libssl.a
   * libiconv.dylib
+
+You will also need to add the following paths as additional include directories:
+
+  * ../Release/include
+  * boost.framework/Headers
+  * openssl/include
 
 This should allow you to reference and use casablanca from your C++ and
 Objective-C++ source files. Note: you should change all .m files in your project

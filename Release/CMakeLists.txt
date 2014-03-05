@@ -8,23 +8,24 @@ set(WARNINGS)
 
 # Platform (not compiler) specific settings
 if(IOS)
-  set(Boost_FRAMEWORK "-F ${CMAKE_SOURCE_DIR}/.. -framework boost")
-  set(Boost_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/../boost.framework/Headers")
+  set(IOS_SOURCE_DIR "${CMAKE_SOURCE_DIR}/../Build_iOS")
+  set(Boost_FRAMEWORK "-F ${IOS_SOURCE_DIR} -framework boost")
+  set(Boost_INCLUDE_DIR "${IOS_SOURCE_DIR}/boost.framework/Headers")
 
   set(OPENSSL_FOUND 1)
-  set(OPENSSL_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/../openssl-include")
+  set(OPENSSL_INCLUDE_DIR "${IOS_SOURCE_DIR}/openssl/include")
   set(OPENSSL_LIBRARIES
-    "${CMAKE_SOURCE_DIR}/../openssl-ios/lib/libcrypto.a"
-    "${CMAKE_SOURCE_DIR}/../openssl-ios/lib/libssl.a"
+    "${IOS_SOURCE_DIR}/openssl/lib/libcrypto.a"
+    "${IOS_SOURCE_DIR}/openssl/lib/libssl.a"
     )
 
   # The cxx_flags must be set here, because the ios-cmake toolchain file unfortunately sets "-headerpad_max_install_names" which is not a valid clang flag.
   set(CMAKE_CXX_FLAGS "-fvisibility=hidden -fvisibility-inlines-hidden")
 
   set(BUILD_SHARED_LIBS OFF)
-elseif(UNIX)
+elseif(UNIX) # This includes OSX
   find_package(Boost COMPONENTS system thread locale regex filesystem REQUIRED)
-  find_package(Threads)
+  find_package(Threads REQUIRED)
   find_package(OpenSSL REQUIRED)
 
   option(BUILD_SHARED_LIBS "Build shared Libraries." ON)
@@ -48,7 +49,7 @@ if(("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang") OR IOS)
   message("-- Setting clang options")
 
   set(WARNINGS "-Wall -Wextra -Wcast-qual -Wconversion -Wformat=2 -Winit-self -Winvalid-pch -Wmissing-format-attribute -Wmissing-include-dirs -Wpacked -Wredundant-decls")
-  set(OSX_SUPPRESSIONS "-Wno-overloaded-virtual -Wno-sign-conversion -Wno-deprecated -Wno-unknown-pragmas -Wno-reorder -Wno-char-subscripts -Wno-switch -Wno-unused-parameter -Wno-unused-variable -Wno-deprecated -Wno-unused-value -Wno-unknown-warning-option -Wno-return-type-c-linkage -Wno-unused-function -Wno-sign-compare -Wno-shorten-64-to-32")
+  set(OSX_SUPPRESSIONS "-Wno-overloaded-virtual -Wno-sign-conversion -Wno-deprecated -Wno-unknown-pragmas -Wno-reorder -Wno-char-subscripts -Wno-switch -Wno-unused-parameter -Wno-unused-variable -Wno-deprecated -Wno-unused-value -Wno-unknown-warning-option -Wno-return-type-c-linkage -Wno-unused-function -Wno-sign-compare -Wno-shorten-64-to-32 -Wno-reorder")
   set(WARNINGS "${WARNINGS} ${OSX_SUPPRESSIONS}")
 
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -Wno-return-type-c-linkage -Wno-unneeded-internal-declaration")
