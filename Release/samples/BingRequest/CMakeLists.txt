@@ -1,2 +1,2 @@
-add_executable(BingRequest ../../collateral/Samples/BingRequest/bingrequest.cpp)
+add_executable(BingRequest bingrequest.cpp)
 target_link_libraries(BingRequest ${Casablanca_LIBRARIES})

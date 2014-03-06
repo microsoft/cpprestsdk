@@ -255,14 +255,14 @@ public:
     /// Creates a new websocket_client to connect to the specified uri.
     /// </summary>
     /// <param name="base_uri">A string representation of the base uri to be used for all messages. Must start with either "ws://" or "wss://"</param>
-    _ASYNCRTIMP websocket_client(uri base_uri);
+    _ASYNCRTIMP websocket_client(web::uri base_uri);
 
     /// <summary>
     /// Creates a new websocket_client to connect to the specified uri.
     /// </summary>
     /// <param name="base_uri">A string representation of the base uri to be used for all requests. Must start with either "ws://" or "wss://"</param>
     /// <param name="client_config">The client configuration object containing the possible configuration options to intitialize the <c>websocket_client</c>. </param>
-    _ASYNCRTIMP websocket_client(uri base_uri, websocket_client_config client_config);
+    _ASYNCRTIMP websocket_client(web::uri base_uri, websocket_client_config client_config);
 
     /// <summary>
     /// </summary>
@@ -319,7 +319,7 @@ public:
     /// <param name="close_status">Endpoint MAY use the following pre-defined status codes when sending a Close frame.</param>
     /// <param name="close_reason">While closing an established connection, an endpoint may indicate the reason for closure.</param>
     /// <returns>An asynchronous operation that is completed the connection has been successfully closed.</returns>
-    pplx::task<void> websocket_client::close(websocket_close_status close_status, const utility::string_t& close_reason=_XPLATSTR(""))
+    pplx::task<void> close(websocket_close_status close_status, const utility::string_t& close_reason=_XPLATSTR(""))
     { 
         return m_client->close(close_status, close_reason); 
     }
@@ -330,7 +330,7 @@ public:
     /// <returns>
     /// A base uri initialized in constructor
     /// </return>
-    const uri& uri() const
+    const web::uri& uri() const
     {
         return m_client->uri();
     }
