@@ -711,8 +711,11 @@ public:
         typedef storage_type::size_type size_type;
 
     private:
-        object() : m_elements(), m_sorted(false) { }
-        object(storage_type elements) : m_elements(std::move(elements)), m_sorted(false) { }
+        object() : m_elements() { }
+        object(storage_type elements) : m_elements(std::move(elements))
+        {
+            sort(m_elements.begin(), m_elements.end(), compare_pairs);
+        }
         object(const object& obj); // non copyable
         object& operator=(const object& obj) // non copyable
         {
@@ -836,45 +839,42 @@ public:
         /// <returns>If the key exists, a reference to the value kept in the field, otherwise a newly created null value that will be stored for the given key.</returns>
         json::value& operator[](const utility::string_t& key)
         {
-            if (!m_sorted)
-            {
-                sort(m_elements.begin(), m_elements.end(),
-                     [] (const std::pair<utility::string_t,value>& a,
-                         const std::pair<utility::string_t, value>& b)
-                     {
-                         return a.first < b.first;
-                     });
-                m_sorted = true;
-            }
-
-            std::pair<utility::string_t, value> val = std::pair<utility::string_t, value>(key, value());
-
-            auto iter = std::lower_bound(m_elements.begin(), m_elements.end(), val,
-                                         [] (const std::pair<utility::string_t, value>& p1,
-                                             const std::pair<utility::string_t, value>& p2)
-                                         {
-                                             return p1.first < p2.first;
-                                         });
+            auto iter = std::lower_bound(m_elements.begin(), m_elements.end(), key, compare_with_key);
 
             if (iter == m_elements.end() || key != (iter->first))
-                return m_elements.insert(iter, val)->second;
+                return m_elements.insert(iter, std::pair<utility::string_t, value>(key, value()))->second;
 
             return iter->second;
         }
 
         /// <summary>
-        /// Accesses an element of a JSON object.
+        /// Gets an iterator to an element of a JSON object.
         /// </summary>
-        /// <param name="index">The key of an element in the JSON object.</param>
-        /// <returns>A reference to the value kept in the field</returns>
-        const json::value& operator[](const utility::string_t& key) const
+        /// <param name="key">The key of an element in the JSON object.</param>
+        /// <returns>A const iterator to the value kept in the field</returns>
+        const_iterator find(const utility::string_t& key) const
         {
-            for (auto& pair : m_elements)
-            {
-                if (pair.first == key)
-                    return pair.second;
-            }
-            throw web::json::json_exception(_XPLATSTR("No such a key"));
+            auto iter = std::lower_bound(m_elements.begin(), m_elements.end(), key, compare_with_key);
+
+            if (iter != m_elements.end() && key != (iter->first))
+                return m_elements.end();
+
+            return iter;
+        }
+
+        /// <summary>
+        /// Gets an iterator to an element of a JSON object.
+        /// </summary>
+        /// <param name="key">The key of an element in the JSON object.</param>
+        /// <returns>An iterator to the value kept in the field</returns>
+        iterator find(const utility::string_t& key)
+        {
+            auto iter = std::lower_bound(m_elements.begin(), m_elements.end(), key, compare_with_key);
+
+            if (iter != m_elements.end() && key != (iter->first))
+                return m_elements.end();
+
+            return iter;
         }
 
         /// <summary>
@@ -895,9 +895,15 @@ public:
             return m_elements.empty();
         }
     private:
+        static bool compare_pairs(const std::pair<utility::string_t, value>& p1, const std::pair<utility::string_t, value>& p2)
+        {
+            return p1.first < p2.first;
+        }
+        static bool compare_with_key(const std::pair<utility::string_t, value>& p1, const utility::string_t& key)
+        {
+            return p1.first < key;
+        }
         storage_type m_elements;
-        bool m_sorted;
-        static _ASYNCRTIMP const value m_null_value;
         friend class details::_Object;
         
         template<typename CharType> friend class json::details::JSON_Parser;
@@ -1367,9 +1373,7 @@ public:
 
             virtual bool has_field(const utility::string_t &) const;
 
-            _ASYNCRTIMP virtual value get_field(const utility::string_t &) const;
             _ASYNCRTIMP virtual json::value &index(const utility::string_t &key);
-            _ASYNCRTIMP virtual const json::value &cnst_index(const utility::string_t &key) const;
 
             bool is_equal(const _Object* other) const
             {
@@ -1494,7 +1498,7 @@ public:
                if (nlastSize < nMinSize)
                   m_array.m_elements.resize(nMinSize);
 
-               return m_array.m_elements[index];
+                return m_array.m_elements[index];
             }
 
             virtual const json::value &cnst_index(array::size_type index) const

@@ -26,7 +26,7 @@
 #include <locale>
 #include "cpprest/uri_parser.h"
 
-namespace web { namespace http { namespace details
+namespace web { namespace details
 {
 
 const std::locale uri_parser::loc("C"); // use the C local to force the ASCII definitions of isalpha and friends
@@ -369,4 +369,4 @@ bool uri_parser::inner_parse(
     return true;
 }
 
-}}}
+}}

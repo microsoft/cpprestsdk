@@ -25,7 +25,8 @@
 
 #include "stdafx.h"
 
-using namespace web; using namespace utility;
+using namespace web;
+using namespace utility;
 
 namespace tests { namespace functional { namespace uri_tests {
 
@@ -34,26 +35,26 @@ SUITE(accessor_tests)
 
 TEST(authority_string)
 {
-    http::uri u(U("http://testname.com:81/path?baz"));
-    http::uri a = u.authority();
+    uri u(U("http://testname.com:81/path?baz"));
+    uri a = u.authority();
 
     VERIFY_ARE_EQUAL(U("/path"), u.path());
     VERIFY_ARE_EQUAL(U("http"), a.scheme());
     VERIFY_ARE_EQUAL(U("testname.com"), a.host());
     VERIFY_ARE_EQUAL(81, a.port());
-    VERIFY_ARE_EQUAL(http::uri(U("http://testname.com:81")), a);
+    VERIFY_ARE_EQUAL(uri(U("http://testname.com:81")), a);
 }
 
 TEST(authority_wstring)
 {
-    http::uri u(U("http://testname.com:81/path?baz"));
-    http::uri a = u.authority();
+    uri u(U("http://testname.com:81/path?baz"));
+    uri a = u.authority();
 
     VERIFY_ARE_EQUAL(U("/path"), u.path());
     VERIFY_ARE_EQUAL(U("http"), a.scheme());
     VERIFY_ARE_EQUAL(U("testname.com"), a.host());
     VERIFY_ARE_EQUAL(81, a.port());
-    VERIFY_ARE_EQUAL(http::uri(U("http://testname.com:81")), a);
+    VERIFY_ARE_EQUAL(uri(U("http://testname.com:81")), a);
 }
 
 } // SUITE(accessor_tests)

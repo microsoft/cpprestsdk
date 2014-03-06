@@ -406,7 +406,11 @@ namespace web { namespace http
                     auto progress = ctx->m_request._get_impl()->_progress_handler();
                     if ( progress )
                     {
-                        (*progress)(message_direction::upload, ctx->m_uploaded);
+                        try { (*progress)(message_direction::upload, ctx->m_uploaded); } catch(...)
+                        {
+                            ctx->report_exception(std::current_exception());
+                            return;
+                        }
                     }
 
                     auto readbuf = ctx->_get_readbuffer();
@@ -446,7 +450,11 @@ namespace web { namespace http
                     auto progress = ctx->m_request._get_impl()->_progress_handler();
                     if ( progress )
                     {
-                        (*progress)(message_direction::upload, ctx->m_uploaded);
+                        try { (*progress)(message_direction::upload, ctx->m_uploaded); } catch(...)
+                        {
+                            ctx->report_exception(std::current_exception());
+                            return;
+                        }
                     }
 
                     auto readbuf = ctx->_get_readbuffer();
@@ -499,7 +507,11 @@ namespace web { namespace http
                         auto progress = ctx->m_request._get_impl()->_progress_handler();
                         if ( progress )
                         {
-                            (*progress)(message_direction::upload, ctx->m_uploaded);
+                            try { (*progress)(message_direction::upload, ctx->m_uploaded); } catch(...)
+                            {
+                                ctx->report_exception(std::current_exception());
+                                return;
+                            }
                         }
                         
                     // Read until the end of entire headers
@@ -586,7 +598,11 @@ namespace web { namespace http
                         auto progress = ctx->m_request._get_impl()->_progress_handler();
                         if ( progress )
                         {
-                            (*progress)(message_direction::download, 0);
+                            try { (*progress)(message_direction::download, 0); } catch(...)
+                            {
+                                ctx->report_exception(std::current_exception());
+                                return;
+                            }
                         }
 
                         ctx->complete_request(0);
@@ -666,7 +682,11 @@ namespace web { namespace http
                         auto progress = ctx->m_request._get_impl()->_progress_handler();
                         if ( progress )
                         {
-                            (*progress)(message_direction::download, ctx->m_downloaded);
+                            try { (*progress)(message_direction::download, ctx->m_downloaded); } catch(...)
+                            {
+                                ctx->report_exception(std::current_exception());
+                                return;
+                            }
                         }
 
                         if (to_read == 0)
@@ -731,7 +751,11 @@ namespace web { namespace http
                     auto progress = ctx->m_request._get_impl()->_progress_handler();
                     if ( progress )
                     {
-                        (*progress)(message_direction::download, ctx->m_downloaded);
+                        try { (*progress)(message_direction::download, ctx->m_downloaded); } catch(...)
+                        {
+                            ctx->report_exception(std::current_exception());
+                            return;
+                        }
                     }
 
                     if (ctx->m_current_size < ctx->m_known_size)

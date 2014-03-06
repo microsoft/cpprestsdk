@@ -18,15 +18,15 @@
 *
 * encoding_tests.cpp
 *
-* Tests for encoding features of the http::uri class.
+* Tests for encoding features of the uri class.
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 
 #include "stdafx.h"
 
-using namespace web; using namespace utility;
-using namespace http;
+using namespace web;
+using namespace utility;
 
 namespace tests { namespace functional { namespace uri_tests {
 
@@ -114,7 +114,7 @@ TEST(decode_invalid_hex)
 TEST(bug_417601)
 {
     utility::ostringstream_t ss1;
-    auto enc1 = http::uri::encode_data_string(U("!"));
+    auto enc1 = uri::encode_data_string(U("!"));
     ss1 << enc1;
 
     VERIFY_ARE_EQUAL(U("%21"), ss1.str());

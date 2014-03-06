@@ -18,7 +18,7 @@
 *
 * splitting_tests.cpp
 *
-* Tests for path and query splitting features of the http::uri class.
+* Tests for path and query splitting features of the uri class.
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
@@ -27,14 +27,15 @@
 
 namespace tests { namespace functional { namespace uri_tests {
 
-using namespace web; using namespace utility;
+using namespace web;
+using namespace utility;
 
 SUITE(splitting_tests)
 {
 
 TEST(split_string)
 {
-    std::vector<utility::string_t> s = http::uri::split_path(U("/first/second/third"));
+    std::vector<utility::string_t> s = uri::split_path(U("/first/second/third"));
     VERIFY_ARE_EQUAL(3u, s.size());
     VERIFY_ARE_EQUAL(U("first"), s[0]);
     VERIFY_ARE_EQUAL(U("second"), s[1]);
@@ -43,7 +44,7 @@ TEST(split_string)
 
 TEST(split_encoded_string)
 {
-    std::vector<utility::string_t> s = http::uri::split_path(utility::string_t(U("heh%2Ffirst/second/third")));
+    std::vector<utility::string_t> s = uri::split_path(utility::string_t(U("heh%2Ffirst/second/third")));
     VERIFY_ARE_EQUAL(3u, s.size());
     VERIFY_ARE_EQUAL(U("heh%2Ffirst"), s[0]);
     VERIFY_ARE_EQUAL(U("second"), s[1]);
@@ -52,7 +53,7 @@ TEST(split_encoded_string)
 
 TEST(split_no_slash)
 {
-    std::vector<utility::string_t> s = http::uri::split_path(utility::string_t(U("noslash")));
+    std::vector<utility::string_t> s = uri::split_path(utility::string_t(U("noslash")));
     VERIFY_ARE_EQUAL(1u, s.size());
     VERIFY_ARE_EQUAL(U("noslash"), s[0]);
 }
@@ -61,7 +62,7 @@ TEST(split_query_basic)
 {
     {
         // Separating with '&'
-        std::map<utility::string_t, utility::string_t> keyMap = http::uri::split_query(U("key1=value1&key2=value2&key3=value3"));
+        std::map<utility::string_t, utility::string_t> keyMap = uri::split_query(U("key1=value1&key2=value2&key3=value3"));
         VERIFY_ARE_EQUAL(3u, keyMap.size());
         auto iter = keyMap.begin();
         VERIFY_ARE_EQUAL(U("key1"), iter->first);
@@ -75,7 +76,7 @@ TEST(split_query_basic)
     }
     {
         // Separating with ';'
-        std::map<utility::string_t, utility::string_t> keyMap = http::uri::split_query(U("key1=value1;key2=value2;key3=value3"));
+        std::map<utility::string_t, utility::string_t> keyMap = uri::split_query(U("key1=value1;key2=value2;key3=value3"));
         VERIFY_ARE_EQUAL(3u, keyMap.size());
         auto iter = keyMap.begin();
         VERIFY_ARE_EQUAL(U("key1"), iter->first);
@@ -93,7 +94,7 @@ TEST(split_encoded_query)
 {
     {
         // Separating with '&'
-        std::map<utility::string_t, utility::string_t> keyMap = http::uri::split_query(utility::string_t(U("key=value%26key1%20=value1&key2=%5Evalue2&key3=value3%20")));
+        std::map<utility::string_t, utility::string_t> keyMap = uri::split_query(utility::string_t(U("key=value%26key1%20=value1&key2=%5Evalue2&key3=value3%20")));
         VERIFY_ARE_EQUAL(3u, keyMap.size());
         auto iter = keyMap.begin();
         VERIFY_ARE_EQUAL(U("key"), iter->first);
@@ -107,7 +108,7 @@ TEST(split_encoded_query)
     }
     {
         // Separating with ';'
-        std::map<utility::string_t, utility::string_t> keyMap = http::uri::split_query(utility::string_t(U("key=value%26key1%20=value1;key2=%5Evalue2;key3=value3%20")));
+        std::map<utility::string_t, utility::string_t> keyMap = uri::split_query(utility::string_t(U("key=value%26key1%20=value1;key2=%5Evalue2;key3=value3%20")));
         VERIFY_ARE_EQUAL(3u, keyMap.size());
         auto iter = keyMap.begin();
         VERIFY_ARE_EQUAL(U("key"), iter->first);
@@ -123,13 +124,13 @@ TEST(split_encoded_query)
 
 TEST(split_query_empty)
 {
-    std::map<utility::string_t, utility::string_t> keyMap = http::uri::split_query(U(""));
+    std::map<utility::string_t, utility::string_t> keyMap = uri::split_query(U(""));
     VERIFY_ARE_EQUAL(0u, keyMap.size());
 }
 
 TEST(split_query_single)
 {
-    std::map<utility::string_t, utility::string_t> keyMap = http::uri::split_query(U("key1=44"));
+    std::map<utility::string_t, utility::string_t> keyMap = uri::split_query(U("key1=44"));
     VERIFY_ARE_EQUAL(1u, keyMap.size());
     auto iter = keyMap.begin();
     VERIFY_ARE_EQUAL(U("key1"), iter->first);
@@ -138,20 +139,20 @@ TEST(split_query_single)
 
 TEST(split_query_no_value)
 {
-    std::map<utility::string_t, utility::string_t> keyMap = http::uri::split_query(U("key1"));
+    std::map<utility::string_t, utility::string_t> keyMap = uri::split_query(U("key1"));
     VERIFY_ARE_EQUAL(0u, keyMap.size());
-    keyMap = http::uri::split_query(U("key1="));
+    keyMap = uri::split_query(U("key1="));
     VERIFY_ARE_EQUAL(1u, keyMap.size());
     auto iter = keyMap.begin();
     VERIFY_ARE_EQUAL(U("key1"), iter->first);
     VERIFY_ARE_EQUAL(U(""), iter->second);
-    keyMap = http::uri::split_query(U("key1&"));
+    keyMap = uri::split_query(U("key1&"));
     VERIFY_ARE_EQUAL(0u, keyMap.size());
 }
 
 TEST(split_query_no_key)
 {
-    std::map<utility::string_t, utility::string_t> keyMap = http::uri::split_query(U("=value1"));
+    std::map<utility::string_t, utility::string_t> keyMap = uri::split_query(U("=value1"));
     VERIFY_ARE_EQUAL(1u, keyMap.size());
     auto iter = keyMap.begin();
     VERIFY_ARE_EQUAL(U(""), iter->first);
@@ -162,7 +163,7 @@ TEST(split_query_end_with_amp)
 {
     {
         // Separating with '&'
-        std::map<utility::string_t, utility::string_t> keyMap = http::uri::split_query(U("key1=44&"));
+        std::map<utility::string_t, utility::string_t> keyMap = uri::split_query(U("key1=44&"));
         VERIFY_ARE_EQUAL(1u, keyMap.size());
         auto iter = keyMap.begin();
         VERIFY_ARE_EQUAL(U("key1"), iter->first);
@@ -170,7 +171,7 @@ TEST(split_query_end_with_amp)
     }
     {
         // Separating with ';'
-        std::map<utility::string_t, utility::string_t> keyMap = http::uri::split_query(U("key1=44;"));
+        std::map<utility::string_t, utility::string_t> keyMap = uri::split_query(U("key1=44;"));
         VERIFY_ARE_EQUAL(1u, keyMap.size());
         auto iter = keyMap.begin();
         VERIFY_ARE_EQUAL(U("key1"), iter->first);

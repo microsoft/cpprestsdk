@@ -354,21 +354,9 @@ json::value& web::json::details::_Object::index(const utility::string_t &key)
     return m_object[key];
 }
 
-const json::value& web::json::details::_Object::cnst_index(const utility::string_t &key) const
-{
-    return m_object[key];
-}
-
 bool web::json::details::_Object::has_field(const utility::string_t &key) const
 {
-    auto lambda = [&key] (const std::pair<utility::string_t, web::json::value>& p)->bool { return p.first == key;   };
-    auto iter = std::find_if(m_object.begin(), m_object.end(), lambda);
-    return (iter != m_object.end());
-}
-
-json::value web::json::details::_Object::get_field(const utility::string_t &key) const
-{
-    return m_object[key];
+    return m_object.find(key) != m_object.end();
 }
 
 utility::string_t json::value::to_string() const { return m_value->to_string(); }
@@ -410,19 +398,6 @@ web::json::value& web::json::value::operator [] (const utility::string_t &key)
     return m_value->index(key);
 }
 
-const web::json::value& web::json::value::operator [] (const utility::string_t &key) const
-{
-    if ( this->is_null() )
-    {
-        auto _nc_this = const_cast<web::json::value*>(this);
-        _nc_this->m_value.reset(new web::json::details::_Object());
-#ifdef ENABLE_JSON_VALUE_VISUALIZER
-        _nc_this->m_kind = value::Object;
-#endif
-    }
-    return m_value->cnst_index(key);
-}
-
 web::json::value& web::json::value::operator[](size_t index)
 {
     if ( this->is_null() )
@@ -448,4 +423,3 @@ const web::json::value& web::json::value::operator[](size_t index) const
     return m_value->cnst_index(index);
 }
 
-const web::json::value web::json::object::m_null_value;

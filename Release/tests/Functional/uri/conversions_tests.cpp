@@ -25,8 +25,8 @@
 
 #include "stdafx.h"
 
-using namespace web; using namespace utility;
-using namespace http;
+using namespace web;
+using namespace utility;
 
 namespace tests { namespace functional { namespace uri_tests {
 

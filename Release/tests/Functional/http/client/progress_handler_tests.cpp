@@ -36,7 +36,7 @@ using namespace tests::functional::http::utilities;
 
 namespace tests { namespace functional { namespace http { namespace client {
 
-SUITE(building_request_tests)
+SUITE(progress_handler_tests)
 {
 
 TEST_FIXTURE(uri_address, set_progress_handler_no_bodies)
@@ -315,6 +315,92 @@ TEST_FIXTURE(uri_address, set_progress_handler_request_timeout, "Ignore:Apple", 
     // We don't have very precise control over how much of the message is transferred
     // before the exception occurs, so we can't make an exact comparison here.
     VERIFY_IS_TRUE(calls >= 2);
+}
+
+TEST_FIXTURE(uri_address, upload_nobody_exception)
+{
+    test_http_server::scoped_server scoped(m_uri);
+    http_client client(m_uri);
+    http_request msg(methods::GET);
+
+    scoped.server()->next_request().then([&](test_request *p_request)
+    {
+        p_request->reply(200, utility::string_t(U("OK")));
+    });
+
+    msg.set_progress_handler([](message_direction::direction, utility::size64_t)
+    {
+        // First all is for data upload completion
+        throw std::invalid_argument("fake error");
+    });
+
+    VERIFY_THROWS(client.request(msg).get(), std::invalid_argument);
+}
+
+TEST_FIXTURE(uri_address, download_nobody_exception)
+{
+    test_http_server::scoped_server scoped(m_uri);
+    http_client client(m_uri);
+    http_request msg(methods::GET);
+
+    scoped.server()->next_request().then([&](test_request *p_request)
+    {
+        p_request->reply(200, utility::string_t(U("OK")));
+    });
+
+    int numCalls = 0;
+    msg.set_progress_handler([&](message_direction::direction, utility::size64_t)
+    {
+        if(++numCalls == 2)
+        {
+            // second is for data download
+            throw std::invalid_argument("fake error");
+        }
+    });
+
+    VERIFY_THROWS(client.request(msg).get().content_ready().get(), std::invalid_argument);
+}
+
+TEST_FIXTURE(uri_address, data_upload_exception)
+{
+    test_http_server::scoped_server scoped(m_uri);
+    http_client client(m_uri);
+    http_request msg(methods::PUT);
+    msg.set_body(U("A"));
+
+    msg.set_progress_handler([&](message_direction::direction, utility::size64_t)
+    {    
+        throw std::invalid_argument("fake error");
+    });
+
+    VERIFY_THROWS(client.request(msg).get(), std::invalid_argument);
+}
+
+TEST_FIXTURE(uri_address, data_download_exception)
+{
+    test_http_server::scoped_server scoped(m_uri);
+    http_client client(m_uri);
+    http_request msg(methods::GET);
+
+    scoped.server()->next_request().then([&](test_request *p_request)
+    {
+        std::string resp_data("abc");
+        std::map<utility::string_t, utility::string_t> headers;
+        headers[U("Content-Type")] = U("text/plain");
+        p_request->reply(200, utility::string_t(U("OK")), headers, resp_data);
+    });
+
+    int numCalls = 0;
+    msg.set_progress_handler([&](message_direction::direction, utility::size64_t)
+    {
+        if(++numCalls == 2)
+        {
+            // 2rd is for data download
+            throw std::invalid_argument("fake error");
+        }
+    });
+
+    VERIFY_THROWS(client.request(msg).get().content_ready().get(), std::invalid_argument);
 }
 
 }

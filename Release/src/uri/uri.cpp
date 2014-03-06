@@ -32,9 +32,7 @@
 
 using namespace utility::conversions;
 
-namespace web { namespace http
-{
-namespace details
+namespace web { namespace details
 {
 utility::string_t _uri_components::join()
 {
@@ -396,4 +394,4 @@ bool uri::operator == (const uri &other) const
 
 #pragma endregion
 
-}}
+}

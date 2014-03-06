@@ -121,7 +121,17 @@ TEST_FIXTURE(uri_address, outside_ssl_json,
         for(auto iter = items.as_array().cbegin(); iter != items.as_array().cend(); ++iter)
         {
             const auto& i = *iter;
-            auto name = i[U("snippet")][U("title")].serialize();
+            auto iSnippet = i.as_object().find(U("snippet"));
+            if (iSnippet == i.as_object().end())
+            {
+                throw std::exception("snippet key not found");
+            }
+            auto iTitle = iSnippet->second.as_object().find(U("title"));
+            if (iTitle == iSnippet->second.as_object().end())
+            {
+                throw std::exception("title key not found");
+            }
+            auto name = iTitle->second.serialize();
             count++;
         }
         VERIFY_ARE_EQUAL(3, count); // Update this accordingly, if the number of items changes

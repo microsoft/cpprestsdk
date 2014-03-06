@@ -8,9 +8,9 @@ SOURCES = \
 	utilities/asyncrt_utils.cpp \
 	pplx/pplx.cpp \
 	pplx/threadpool.cpp \
-	http/uri/uri.cpp \
-	http/uri/uri_builder.cpp \
-	http/uri/uri_parser.cpp \
+	uri/uri.cpp \
+	uri/uri_builder.cpp \
+	uri/uri_parser.cpp \
 	http/common/http_msg.cpp \
 	http/common/http_helpers.cpp \
 	http/client/http_msg_client.cpp \

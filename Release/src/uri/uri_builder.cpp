@@ -27,7 +27,7 @@
 
 #include "stdafx.h"
 
-namespace web { namespace http
+namespace web 
 {
 
 #pragma region Validation
@@ -133,5 +133,5 @@ bool uri_builder::is_valid()
 
 #pragma endregion
 
-}} // namespace web::http
+} // namespace web
 

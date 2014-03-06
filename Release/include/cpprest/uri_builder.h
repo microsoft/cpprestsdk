@@ -34,7 +34,7 @@
 #include "cpprest/base_uri.h"
 #include "cpprest/xxpublic.h"
 
-namespace web { namespace http
+namespace web
 {
     /// <summary>
     /// Builder for constructing URIs incrementally.
@@ -239,7 +239,7 @@ namespace web { namespace http
         /// </summary>
         /// <param name="relative_uri">The relative uri to append.</param>
         /// <returns>A reference to this uri_builder to support chaining.</returns>
-        _ASYNCRTIMP uri_builder &append(const http::uri &relative_uri);
+        _ASYNCRTIMP uri_builder &append(const uri &relative_uri);
 
         /// <summary>
         /// Appends another query to the query of this uri_builder, encoding it first. This overload is useful when building a query segment of
@@ -281,4 +281,4 @@ namespace web { namespace http
     private:
         details::_uri_components m_uri;
     };
-}} // namespace web::http
+} // namespace web

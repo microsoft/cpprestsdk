@@ -62,6 +62,12 @@ namespace iis_host
 
 namespace http
 {
+// URI class has been moved from web::http namespace to web namespace.
+// The below using declarations ensure we dont break existing code.
+// Please use the web::uri class going forward.
+using web::uri;
+using web::uri_builder;
+
 namespace client
 {
     class http_client;

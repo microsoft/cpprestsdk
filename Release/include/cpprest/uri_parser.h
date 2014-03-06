@@ -28,7 +28,7 @@
 #include <locale>
 #include <string>
 
-namespace web { namespace http { namespace details
+namespace web { namespace details
 {
     class uri_parser
     {
@@ -220,4 +220,4 @@ namespace web { namespace http { namespace details
 
         static const std::locale loc;
     };
-}}}
+}}

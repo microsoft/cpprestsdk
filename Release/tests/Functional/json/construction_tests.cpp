@@ -236,11 +236,6 @@ TEST(object_construction)
     VERIFY_ARE_EQUAL(2u, val2.size());
     VERIFY_ARE_EQUAL(U("44"), val2[U("A")].serialize());
     VERIFY_ARE_EQUAL(U("true"), val2[U("hahah")].serialize());
-
-    const json::value& val2ref = val2;
-    VERIFY_ARE_EQUAL(U("44"), val2ref[U("A")].serialize());
-    VERIFY_ARE_EQUAL(U("true"), val2ref[U("hahah")].serialize());
-    VERIFY_THROWS(val2ref[U("NOTTHERE")], json::json_exception);
 }
 
 TEST(array_construction)
@@ -283,16 +278,12 @@ TEST(array_construction)
     arr4[0] = json::value(false);
     VERIFY_ARE_EQUAL(U("false"), arr4[0].serialize());
     VERIFY_ARE_EQUAL(U("true"), arr4[2].serialize());
-
-    const json::value& arr4ref = arr4;
-    VERIFY_ARE_EQUAL(U("false"), arr4ref[0].serialize());
-    VERIFY_ARE_EQUAL(U("true"), arr4ref[2].serialize());
-    VERIFY_THROWS(arr4ref[17], json::json_exception);
 }
 
 TEST(array_test)
 {
     json::value arr = json::value::array();
+    const json::value& carr = arr; 
     arr[0] = json::value(3.14);
     arr[1] = json::value(true);
     arr[2] = json::value("Yes");
@@ -331,6 +322,7 @@ TEST(array_test)
     for(auto iter = array.crbegin(); iter != array.crend(); ++iter)
     {
         VERIFY_IS_TRUE((*iter) == array[array.size()-1-count]);
+        VERIFY_IS_TRUE((*iter) == arr[array.size()-1-count]);
         count++;
     }
     VERIFY_ARE_EQUAL(array.size(), count);
@@ -340,6 +332,7 @@ TEST(array_test)
     for(auto iter = carray.begin(); iter != carray.end(); ++iter)
     {
         VERIFY_IS_TRUE((*iter) == carray[count]);
+        VERIFY_IS_TRUE((*iter) == carr[count]);
         count++;
     }
     VERIFY_ARE_EQUAL(array.size(), count);
@@ -348,6 +341,7 @@ TEST(array_test)
     for(auto iter = carray.rbegin(); iter != carray.rend(); ++iter)
     {
         VERIFY_IS_TRUE((*iter) == carray[array.size()-1-count]);
+        VERIFY_IS_TRUE((*iter) == carr[array.size()-1-count]);
         count++;
     }
     VERIFY_ARE_EQUAL(array.size(), count);
@@ -366,6 +360,20 @@ TEST(object_test)
     obj[U("height")] = json::value(5.9);
     obj[U("vegetarian")] = json::value(true);
     int count;
+
+    //Test find()
+    auto iter = object.find(U("height"));
+    VERIFY_ARE_NOT_EQUAL(object.end(), iter);
+    VERIFY_IS_TRUE(iter->second.is_number());
+    VERIFY_ARE_EQUAL(5.9, iter->second.as_number().to_double());
+    VERIFY_ARE_EQUAL(object.end(), object.find(U("wrong_key")));
+
+    //Test find() const
+    auto citer = cobject.find(U("height"));
+    VERIFY_ARE_NOT_EQUAL(cobject.end(), citer);
+    VERIFY_IS_TRUE(citer->second.is_number());
+    VERIFY_ARE_EQUAL(5.9, citer->second.as_number().to_double());
+    VERIFY_ARE_EQUAL(cobject.end(), cobject.find(U("wrong_key")));
 
     VERIFY_IS_FALSE(object.empty());
 
@@ -406,7 +414,7 @@ TEST(object_test)
     count = 0;
     for(auto iter = cobject.begin(); iter != cobject.end(); ++iter)
     {
-        VERIFY_ARE_EQUAL(cobject[iter->first], iter->second);
+        VERIFY_ARE_EQUAL(cobject.find(iter->first)->second, iter->second);
         count++;
     }
     VERIFY_ARE_EQUAL(cobject.size(), count);
@@ -414,7 +422,7 @@ TEST(object_test)
     count = 0;
     for(auto iter = cobject.rbegin(); iter != cobject.rend(); ++iter)
     {
-        VERIFY_ARE_EQUAL(cobject[iter->first], iter->second);
+        VERIFY_ARE_EQUAL(cobject.find(iter->first)->second, iter->second);
         count++;
     }
     VERIFY_ARE_EQUAL(cobject.size(), count);

@@ -129,13 +129,13 @@
     <ClCompile Include="$(CasablancaSrcDir)\json\json_serialization.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="$(CasablancaSrcDir)\http\uri\uri.cpp">
+    <ClCompile Include="$(CasablancaSrcDir)\uri\uri.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="$(CasablancaSrcDir)\http\uri\uri_builder.cpp">
+    <ClCompile Include="$(CasablancaSrcDir)\uri\uri_builder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="$(CasablancaSrcDir)\http\uri\uri_parser.cpp">
+    <ClCompile Include="$(CasablancaSrcDir)\uri\uri_parser.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(CasablancaSrcDir)\utilities\asyncrt_utils.cpp">
@@ -185,10 +185,22 @@
 
   <!-- WinRT-only files go here -->
   <ItemGroup Condition="'$(WinRTProject)' == 'true'">
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\ws_client.h">
+      <Filter>Header Files\cpprest</Filter>
+    </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\ws_msg.h">
+      <Filter>Header Files\cpprest</Filter>
+    </ClInclude>
     <ClCompile Include="$(CasablancaSrcDir)\http\client\http_win8.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(CasablancaSrcDir)\streams\windows\fileio_winrt.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CasablancaSrcDir)\websockets\client\ws_winrt.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CasablancaSrcDir)\websockets\client\ws_msg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

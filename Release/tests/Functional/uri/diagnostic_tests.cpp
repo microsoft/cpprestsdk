@@ -18,15 +18,15 @@
 *
 * diagnostic_tests.cpp
 *
-* Tests for diagnostic functions like is_host_loopback of the http::uri class.
+* Tests for diagnostic functions like is_host_loopback of the uri class.
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 
 #include "stdafx.h"
 
-using namespace web; using namespace utility;
-using namespace http;
+using namespace web;
+using namespace utility;
 
 namespace tests { namespace functional { namespace uri_tests {
 

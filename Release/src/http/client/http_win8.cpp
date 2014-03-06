@@ -91,13 +91,17 @@ public:
         auto progress = m_request->m_request._get_impl()->_progress_handler();
         if ( progress && m_request->m_uploaded == 0)
         {
-            (*progress)(message_direction::upload, 0);
+            try { (*progress)(message_direction::upload, 0); } catch(...)
+            {
+                m_request->m_exceptionPtr = std::current_exception();
+                return ERROR_UNHANDLED_EXCEPTION;
+            }
         }
 
         parse_headers_string(hdrStr, response.headers());
         m_request->complete_headers();
 
-        return hr;
+        return S_OK;
     }
 
     // Called when a portion of the entity body has been received.
@@ -111,7 +115,10 @@ public:
         auto progress = m_request->m_request._get_impl()->_progress_handler();
         if ( progress && m_request->m_downloaded == 0)
         {
-            (*progress)(message_direction::download, 0);
+            try { (*progress)(message_direction::download, 0); } catch(...)
+            {
+                m_request->m_exceptionPtr = std::current_exception();
+            }
         }
 
         if (m_request->m_exceptionPtr != nullptr)
@@ -191,7 +198,11 @@ public:
             if ( progress && count > 0 )
             {
                 context->m_uploaded += count;
-                (*progress)(message_direction::upload, context->m_uploaded);
+                try { (*progress)(message_direction::upload, context->m_uploaded); } catch(...)
+                {
+                    context->m_exceptionPtr = std::current_exception();
+                    return STG_E_READFAULT;
+                }
             }
 
             return S_OK;
@@ -271,7 +282,11 @@ public:
             auto progress = context->m_request._get_impl()->_progress_handler();
             if ( progress && count > 0 )
             {
-                (*progress)(message_direction::download, context->m_downloaded);
+                try { (*progress)(message_direction::download, context->m_downloaded); } catch(...)
+                {
+                    context->m_exceptionPtr = std::current_exception();
+                    return STG_E_CANTSAVE;
+                }
             }
 
             return S_OK;

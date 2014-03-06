@@ -222,9 +222,6 @@ public:
 
     msg_body_type m_bodyType;
 
-    // Set false if the response message does not specify Transfer-Encoding and Content-Length.
-    // Default is true.
-    bool m_transerencoding_contentlength_spceified;
     size64_t m_remaining_to_write;
 
     std::char_traits<uint8_t>::pos_type m_readbuf_pos;
@@ -260,7 +257,6 @@ private:
         : request_context(client, request), 
         m_request_handle(nullptr), 
         m_bodyType(no_body),
-        m_transerencoding_contentlength_spceified(true),
         m_readbuf_pos(0),
         m_body_data(),
         m_remaining_to_write(0),
@@ -305,28 +301,19 @@ public:
     {
         if(m_hConnection != nullptr)
         {
-            if(WinHttpCloseHandle(m_hConnection) == NULL)
-            {
-                report_failure(_XPLATSTR("Error closing connection"));
-            }
+            WinHttpCloseHandle(m_hConnection);
         }
 
         if(m_hSession != nullptr)
         {
             // Unregister the callback.
-            if(!WinHttpSetStatusCallback(
+            WinHttpSetStatusCallback(
                 m_hSession,
                 nullptr,
                 WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS,
-                NULL))
-            {
-                report_failure(_XPLATSTR("Error unregistering callback"));
-            }
+                NULL);
 
-            if(WinHttpCloseHandle(m_hSession) == NULL)
-            {
-                report_failure(_XPLATSTR("Error closing session"));
-            }
+            WinHttpCloseHandle(m_hSession);
         }
     }
 
@@ -656,10 +643,6 @@ private:
     {
         if (winhttp_context->m_bodyType == no_body)
         {
-            // Note: the contect object will go away as a side-effect of the WinHttpSendRequest() call,
-            // so we have to save the progress handler pointer.
-            auto progress = winhttp_context->m_request._get_impl()->_progress_handler();
-
             if(!WinHttpSendRequest(
                 winhttp_context->m_request_handle,
                 WINHTTP_NO_ADDITIONAL_HEADERS,
@@ -672,10 +655,6 @@ private:
                 winhttp_context->report_error(GetLastError(), _XPLATSTR("Error starting to send request"));
             }
 
-            if ( progress )
-            {
-                (*progress)(message_direction::upload, 0);
-            }
             return;
         }
 
@@ -739,7 +718,6 @@ private:
                     {
                         p_request_context->report_exception(std::current_exception());
                     }
-                    
                 }
             }
             catch (...)
@@ -1079,6 +1057,20 @@ private:
                 }
             case WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE :
                 {
+                    if (!p_request_context->m_request.body())
+                    {
+                        // Report progress finished uploading with no message body.
+                        auto progress = p_request_context->m_request._get_impl()->_progress_handler();
+                        if ( progress )
+                        {
+                            try { (*progress)(message_direction::upload, 0); } catch(...)
+                            {
+                                p_request_context->report_exception(std::current_exception());
+                                return;
+                            }
+                        }
+                    }
+
                     if ( p_request_context->m_bodyType == transfer_encoding_chunked )
                     {
                         _transfer_encoding_chunked_write_data(p_request_context);
@@ -1107,7 +1099,11 @@ private:
                         if ( progress )
                         {
                             p_request_context->m_uploaded += (size64_t)bytesWritten;
-                            (*progress)(message_direction::upload, p_request_context->m_uploaded);
+                            try { (*progress)(message_direction::upload, p_request_context->m_uploaded); } catch(...)
+                            {
+                                p_request_context->report_exception(std::current_exception());
+                                return;
+                            }
                         }
                     }
 
@@ -1195,7 +1191,11 @@ private:
                         auto progress = p_request_context->m_request._get_impl()->_progress_handler();
                         if ( progress )
                         {
-                            (*progress)(message_direction::download, 0);
+                            try { (*progress)(message_direction::download, 0); } catch(...)
+                            {
+                                p_request_context->report_exception(std::current_exception());
+                                return;
+                            }
                         }
 
                         p_request_context->complete_request(0);
@@ -1257,7 +1257,11 @@ private:
                         p_request_context->m_downloaded += (size64_t)statusInfoLength;
                         if ( progress )
                         {
-                            (*progress)(message_direction::download, p_request_context->m_downloaded);
+                            try { (*progress)(message_direction::download, p_request_context->m_downloaded); } catch(...)
+                            {
+                                p_request_context->report_exception(std::current_exception());
+                                return;
+                            }
                         }
 
                         auto writebuf = p_request_context->_get_writebuffer();

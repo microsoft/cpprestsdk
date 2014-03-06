@@ -37,8 +37,7 @@
 #include "cpprest/xxpublic.h"
 #include "cpprest/basic_types.h"
 
-namespace web { namespace http
-{
+namespace web {
     namespace details
     {
         struct _uri_components
@@ -391,4 +390,4 @@ namespace web { namespace http
         details::_uri_components m_components;
     };
 
-}} // namespace web::http
+} // namespace web

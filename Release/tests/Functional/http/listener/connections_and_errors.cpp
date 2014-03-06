@@ -288,10 +288,8 @@ TEST_FIXTURE(uri_address, request_content_ready_timeout, "Ignore:Linux", "Unsuit
 {
     http_listener_config config;
     config.set_timeout(utility::seconds(1));
-
     http_listener listener(m_uri, config);
     pplx::extensibility::event_t timedOutEvent;
-
     listener.support([&](http_request req)
     {
         const int e1 = verify_http_exception([=](){ req.content_ready().wait(); });
