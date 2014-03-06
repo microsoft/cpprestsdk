@@ -361,7 +361,9 @@ TEST_FIXTURE(uri_address, download_nobody_exception)
     VERIFY_THROWS(client.request(msg).get().content_ready().get(), std::invalid_argument);
 }
 
-TEST_FIXTURE(uri_address, data_upload_exception)
+TEST_FIXTURE(uri_address, data_upload_exception,
+             "Ignore:Linux", "898953",
+             "Ignore:Apple", "898953")
 {
     test_http_server::scoped_server scoped(m_uri);
     http_client client(m_uri);
@@ -369,7 +371,7 @@ TEST_FIXTURE(uri_address, data_upload_exception)
     msg.set_body(U("A"));
 
     msg.set_progress_handler([&](message_direction::direction, utility::size64_t)
-    {    
+    {
         throw std::invalid_argument("fake error");
     });
 
