@@ -25,6 +25,7 @@
 
 #include "stdafx.h"
 #include "cpprest/rawptrstream.h"
+#include <stdexcept>
 
 using namespace web; 
 using namespace utility;
@@ -124,12 +125,12 @@ TEST_FIXTURE(uri_address, outside_ssl_json,
             auto iSnippet = i.as_object().find(U("snippet"));
             if (iSnippet == i.as_object().end())
             {
-                throw std::exception("snippet key not found");
+                throw std::runtime_error("snippet key not found");
             }
             auto iTitle = iSnippet->second.as_object().find(U("title"));
             if (iTitle == iSnippet->second.as_object().end())
             {
-                throw std::exception("title key not found");
+                throw std::runtime_error("title key not found");
             }
             auto name = iTitle->second.serialize();
             count++;
