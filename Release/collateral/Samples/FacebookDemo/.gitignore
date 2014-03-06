@@ -1,4 +1,0 @@
-# ignore generated files for Windows Store Apps
-*.g.h
-*.g.hpp
-*.g.cpp

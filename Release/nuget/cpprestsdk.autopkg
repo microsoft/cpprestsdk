@@ -1,0 +1,222 @@
+nuget {
+	nuspec {
+		id = cpprestsdk;
+		version : 1.4.0;
+		title: C++ REST SDK;
+		authors: {casablancacore};
+		owners: {Microsoft, Visual C++};
+		licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0";
+		projectUrl: "https://casablanca.codeplex.com/";
+		iconUrl: "https://download-codeplex.sec.s-msft.com/Download?ProjectName=casablanca&DownloadId=630102&Build=20425";
+		requireLicenseAcceptance: true;
+		summary: "The C++ REST SDK is a cross-platform, modern, and asynchronous library that enables developers to access and author connected applications";
+		description: "This library is a Microsoft effort to support cloud-based client-server communication in native code using a modern asynchronous C++ API design. The C++ REST SDK (codename "Casablanca") is a project to start exploring how to best support C++ developers who want to take advantage of the radical shift in software architecture that cloud computing represents.";
+		releaseNotes: "Release of C++ Rest SDK 1.4.0 libraries.";
+		copyright: Copyright 2013;
+		tags: {REST, native, C++, JSON, Casablanca, Http, Uri};
+	};
+	
+		files {
+	
+		#defines {
+            VER_WDOTS = 1.4;
+            VER_WUNDERSCORE = 1_4;
+        
+			SDK_RT110 = 110\CppRESTWindowsSDK\1.4\redist\;
+            SDK_RT110Phone = 110\WindowsPhone8\CppRESTWindowsSDK\1.4\redist\;
+			SDK_2012  = 110\Microsoft Cpp REST SDK for VS 2012 v1.4\SDK\;
+			SDK_RT120 = 120\CppRESTWindowsSDK\1.4\redist\;
+			SDK_2013  = 120\Microsoft Cpp REST SDK for VS 2013 v1.4\SDK\;
+		}
+	
+		// grab all the files in the include folder
+		// the folder that contains all the .h files will 
+		// automatically get added to the Includes path.
+		include: { "110\Microsoft Cpp REST SDK for VS 2012 v${VER_WDOTS}\SDK\include\**\*"  };
+
+		// Documents that we want to ship with the package. 
+		docs: {  110\Microsoft Cpp REST SDK for VS 2012 v${VER_WDOTS}\license.rtf };
+	
+        // init.ps1 script to install VS natvis file
+        tools_content = {
+            #destination : \tools\${conditionFolder};  
+        }
+        tools_content : { init.ps1, cpprest.natvis };
+	
+        // Windows Phone 8
+        [arm,v110_wp80 ,debug,phone8] {
+			bin: ${SDK_RT110Phone}Debug\arm\cpprest110d_wp8_${VER_WUNDERSCORE}.dll;
+			symbols: ${SDK_RT110Phone}Debug\arm\cpprest110d_wp8_${VER_WUNDERSCORE}.pdb;
+			lib:${SDK_2012}lib\arm\Debug\cpprest110d_wp8_${VER_WUNDERSCORE}.lib;
+		}
+		
+		[x86,v110_wp80 ,debug,phone8] {
+			bin:${SDK_RT110Phone}Debug\x86\cpprest110d_wp8_${VER_WUNDERSCORE}.dll;
+			symbols:${SDK_RT110Phone}Debug\x86\cpprest110d_wp8_${VER_WUNDERSCORE}.pdb;
+			lib:${SDK_2012}lib\x86\Debug\cpprest110d_wp8_${VER_WUNDERSCORE}.lib;
+		}			
+		
+		[arm,v110_wp80 ,release,phone8] {
+			bin:${SDK_RT110Phone}Retail\arm\cpprest110_wp8_${VER_WUNDERSCORE}.dll;
+			symbols:${SDK_RT110Phone}Retail\arm\cpprest110_wp8_${VER_WUNDERSCORE}.pdb;
+			lib:${SDK_2012}lib\arm\Release\cpprest110_wp8_${VER_WUNDERSCORE}.lib;
+		}
+		
+		[x86,v110_wp80 ,release,phone8] {
+			bin:${SDK_RT110Phone}Retail\x86\cpprest110_wp8_${VER_WUNDERSCORE}.dll;
+			symbols:${SDK_RT110Phone}Retail\x86\cpprest110_wp8_${VER_WUNDERSCORE}.pdb;
+			lib:${SDK_2012}lib\x86\Release\cpprest110_wp8_${VER_WUNDERSCORE}.lib;
+		}
+        
+        // XP
+        [x64,v110_xp,debug,desktop] { 
+			lib: ${SDK_2012}lib\x64\Debug\cpprest110d_xp_${VER_WUNDERSCORE}.lib;
+			symbols: ${SDK_2012}bin\x64\Debug\cpprest110d_xp_${VER_WUNDERSCORE}.pdb;
+			bin: ${SDK_2012}bin\x64\Debug\cpprest110d_xp_${VER_WUNDERSCORE}.dll;
+		}
+		
+		[x86,v110_xp,debug,desktop] { 
+			lib: ${SDK_2012}lib\x86\Debug\cpprest110d_xp_${VER_WUNDERSCORE}.lib;
+			symbols: ${SDK_2012}bin\x86\Debug\cpprest110d_xp_${VER_WUNDERSCORE}.pdb;
+			bin: ${SDK_2012}bin\x86\Debug\cpprest110d_xp_${VER_WUNDERSCORE}.dll;
+		}
+		
+		[x64,v110_xp,release,desktop] { 
+			lib: ${SDK_2012}lib\x64\Release\cpprest110_xp_${VER_WUNDERSCORE}.lib;
+			symbols: ${SDK_2012}bin\x64\Release\cpprest110_xp_${VER_WUNDERSCORE}.pdb;
+			bin: ${SDK_2012}bin\x64\Release\cpprest110_xp_${VER_WUNDERSCORE}.dll;
+		}	
+
+		[x86,v110_xp,release,desktop] { 
+			lib: ${SDK_2012}lib\x86\Release\cpprest110_xp_${VER_WUNDERSCORE}.lib;
+			symbols: ${SDK_2012}bin\x86\Release\cpprest110_xp_${VER_WUNDERSCORE}.pdb;
+			bin: ${SDK_2012}bin\x86\Release\cpprest110_xp_${VER_WUNDERSCORE}.dll;
+		}
+        
+		[x64,v110,debug,desktop] { 
+			lib: ${SDK_2012}lib\x64\Debug\cpprest110d_${VER_WUNDERSCORE}.lib;
+			symbols: ${SDK_2012}bin\x64\Debug\cpprest110d_${VER_WUNDERSCORE}.pdb;
+			bin: ${SDK_2012}bin\x64\Debug\cpprest110d_${VER_WUNDERSCORE}.dll;
+		}
+		
+		[x86,v110,debug,desktop] { 
+			lib: ${SDK_2012}lib\x86\Debug\cpprest110d_${VER_WUNDERSCORE}.lib;
+			symbols: ${SDK_2012}bin\x86\Debug\cpprest110d_${VER_WUNDERSCORE}.pdb;
+			bin: ${SDK_2012}bin\x86\Debug\cpprest110d_${VER_WUNDERSCORE}.dll;
+		}
+		
+		[x64,v110,release,desktop] { 
+			lib: ${SDK_2012}lib\x64\Release\cpprest110_${VER_WUNDERSCORE}.lib;
+			symbols: ${SDK_2012}bin\x64\Release\cpprest110_${VER_WUNDERSCORE}.pdb;
+			bin: ${SDK_2012}bin\x64\Release\cpprest110_${VER_WUNDERSCORE}.dll;
+		}	
+
+		[x86,v110,release,desktop] { 
+			lib: ${SDK_2012}lib\x86\Release\cpprest110_${VER_WUNDERSCORE}.lib;
+			symbols: ${SDK_2012}bin\x86\Release\cpprest110_${VER_WUNDERSCORE}.pdb;
+			bin: ${SDK_2012}bin\x86\Release\cpprest110_${VER_WUNDERSCORE}.dll;
+		}
+		
+		[arm,v110,debug,winrt] {
+			bin: ${SDK_RT110}Debug\arm\cpprest110d_app_${VER_WUNDERSCORE}.dll;
+			symbols: ${SDK_RT110}Debug\arm\cpprest110d_app_${VER_WUNDERSCORE}.pdb;
+			lib:${SDK_2012}lib\arm\Debug\cpprest110d_app_${VER_WUNDERSCORE}.lib;
+		}
+		
+		[x64,v110,debug,winrt] {
+			bin:${SDK_RT110}Debug\x64\cpprest110d_app_${VER_WUNDERSCORE}.dll;
+			symbols:${SDK_RT110}Debug\x64\cpprest110d_app_${VER_WUNDERSCORE}.pdb;
+			lib:${SDK_2012}lib\x64\Debug\cpprest110d_app_${VER_WUNDERSCORE}.lib;
+		}
+		
+		[x86,v110,debug,winrt] {
+			bin:${SDK_RT110}Debug\x86\cpprest110d_app_${VER_WUNDERSCORE}.dll;
+			symbols:${SDK_RT110}Debug\x86\cpprest110d_app_${VER_WUNDERSCORE}.pdb;
+			lib:${SDK_2012}lib\x86\Debug\cpprest110d_app_${VER_WUNDERSCORE}.lib;
+		}			
+		
+		[arm,v110,release,winrt] {
+			bin:${SDK_RT110}Retail\arm\cpprest110_app_${VER_WUNDERSCORE}.dll;
+			symbols:${SDK_RT110}Retail\arm\cpprest110_app_${VER_WUNDERSCORE}.pdb;
+			lib:${SDK_2012}lib\arm\Release\cpprest110_app_${VER_WUNDERSCORE}.lib;
+		}
+		
+		[x64,v110,release,winrt] {
+			bin:${SDK_RT110}Retail\x64\cpprest110_app_${VER_WUNDERSCORE}.dll;
+			symbols:${SDK_RT110}Retail\x64\cpprest110_app_${VER_WUNDERSCORE}.pdb;
+			lib:${SDK_2012}lib\x64\Release\cpprest110_app_${VER_WUNDERSCORE}.lib;
+		}
+		
+		[x86,v110,release,winrt] {
+			bin:${SDK_RT110}Retail\x86\cpprest110_app_${VER_WUNDERSCORE}.dll;
+			symbols:${SDK_RT110}Retail\x86\cpprest110_app_${VER_WUNDERSCORE}.pdb;
+			lib:${SDK_2012}lib\x86\Release\cpprest110_app_${VER_WUNDERSCORE}.lib;
+		}
+		
+		[x64,v120,debug,desktop] { 
+			lib: ${SDK_2013}lib\x64\Debug\cpprest120d_${VER_WUNDERSCORE}.lib;
+			symbols: ${SDK_2013}bin\x64\Debug\cpprest120d_${VER_WUNDERSCORE}.pdb;
+			bin: ${SDK_2013}bin\x64\Debug\cpprest120d_${VER_WUNDERSCORE}.dll;
+		}
+		
+		[x86,v120,debug,desktop] { 
+			lib: ${SDK_2013}lib\x86\Debug\cpprest120d_${VER_WUNDERSCORE}.lib;
+			symbols: ${SDK_2013}bin\x86\Debug\cpprest120d_${VER_WUNDERSCORE}.pdb;
+			bin: ${SDK_2013}bin\x86\Debug\cpprest120d_${VER_WUNDERSCORE}.dll;
+		}
+		
+		[x64,v120,release,desktop] { 
+			lib: ${SDK_2013}lib\x64\Release\cpprest120_${VER_WUNDERSCORE}.lib;
+			symbols: ${SDK_2013}bin\x64\Release\cpprest120_${VER_WUNDERSCORE}.pdb;
+			bin: ${SDK_2013}bin\x64\Release\cpprest120_${VER_WUNDERSCORE}.dll;
+		}	
+
+		[x86,v120,release,desktop] { 
+			lib: ${SDK_2013}lib\x86\Release\cpprest120_${VER_WUNDERSCORE}.lib;
+			symbols: ${SDK_2013}bin\x86\Release\cpprest120_${VER_WUNDERSCORE}.pdb;
+			bin: ${SDK_2013}bin\x86\Release\cpprest120_${VER_WUNDERSCORE}.dll;
+		}
+		
+		[arm,v120,debug,winrt] {
+			bin: ${SDK_RT120}Debug\arm\cpprest120d_app_${VER_WUNDERSCORE}.dll;
+			symbols: ${SDK_RT120}Debug\arm\cpprest120d_app_${VER_WUNDERSCORE}.pdb;
+			lib:${SDK_2013}lib\arm\Debug\cpprest120d_app_${VER_WUNDERSCORE}.lib;
+		}
+		
+		[x64,v120,debug,winrt] {
+			bin:${SDK_RT120}Debug\x64\cpprest120d_app_${VER_WUNDERSCORE}.dll;
+			symbols:${SDK_RT120}Debug\x64\cpprest120d_app_${VER_WUNDERSCORE}.pdb;
+			lib:${SDK_2013}lib\x64\Debug\cpprest120d_app_${VER_WUNDERSCORE}.lib;
+		}
+		
+		[x86,v120,debug,winrt] {
+			bin:${SDK_RT120}Debug\x86\cpprest120d_app_${VER_WUNDERSCORE}.dll;
+			symbols:${SDK_RT120}Debug\x86\cpprest120d_app_${VER_WUNDERSCORE}.pdb;
+			lib:${SDK_2013}lib\x86\Debug\cpprest120d_app_${VER_WUNDERSCORE}.lib;
+		}			
+		
+		[arm,v120,release,winrt] {
+			bin:${SDK_RT120}Retail\arm\cpprest120_app_${VER_WUNDERSCORE}.dll;
+			symbols:${SDK_RT120}Retail\arm\cpprest120_app_${VER_WUNDERSCORE}.pdb;
+			lib:${SDK_2013}lib\arm\Release\cpprest120_app_${VER_WUNDERSCORE}.lib;
+		}
+		
+		[x64,v120,release,winrt] {
+			bin:${SDK_RT120}Retail\x64\cpprest120_app_${VER_WUNDERSCORE}.dll;
+			symbols:${SDK_RT120}Retail\x64\cpprest120_app_${VER_WUNDERSCORE}.pdb;
+			lib:${SDK_2013}lib\x64\Release\cpprest120_app_${VER_WUNDERSCORE}.lib;
+		}
+		
+		[x86,v120,release,winrt] {
+			bin:${SDK_RT120}Retail\x86\cpprest120_app_${VER_WUNDERSCORE}.dll;
+			symbols:${SDK_RT120}Retail\x86\cpprest120_app_${VER_WUNDERSCORE}.pdb;
+			lib:${SDK_2013}lib\x86\Release\cpprest120_app_${VER_WUNDERSCORE}.lib;
+		}
+	};
+	
+	targets {
+		// We're trying to be standard about these sorts of thing. (Will help with config.h later :D)
+		Defines += HAS_CPPRESTSDK;
+	};	
+
+}
