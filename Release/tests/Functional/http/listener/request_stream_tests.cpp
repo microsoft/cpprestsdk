@@ -68,7 +68,7 @@ TEST_FIXTURE(uri_address, test_chunked_transfer)
     {
         request.reply(status_codes::OK);
     });
-    listener.open();
+    listener.open().wait();
 
     ::http::client::http_client client(m_uri);
     auto buf = streams::producer_consumer_buffer<uint8_t>();
