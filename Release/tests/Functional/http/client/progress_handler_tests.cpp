@@ -317,7 +317,7 @@ TEST_FIXTURE(uri_address, set_progress_handler_request_timeout, "Ignore:Apple", 
     VERIFY_IS_TRUE(calls >= 2);
 }
 
-TEST_FIXTURE(uri_address, upload_nobody_exception)
+TEST_FIXTURE(uri_address, upload_nobody_exception, "Ignore:Apple", "900236", "Ignore:Linux", "900236")
 {
     test_http_server::scoped_server scoped(m_uri);
     http_client client(m_uri);
@@ -361,9 +361,7 @@ TEST_FIXTURE(uri_address, download_nobody_exception)
     VERIFY_THROWS(client.request(msg).get().content_ready().get(), std::invalid_argument);
 }
 
-TEST_FIXTURE(uri_address, data_upload_exception,
-             "Ignore:Linux", "898953",
-             "Ignore:Apple", "898953")
+TEST_FIXTURE(uri_address, data_upload_exception, "Ignore:Linux", "898953", "Ignore:Apple", "898953")
 {
     test_http_server::scoped_server scoped(m_uri);
     http_client client(m_uri);
