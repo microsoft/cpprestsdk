@@ -78,8 +78,7 @@ namespace details
     typedef ::pplx::scoped_lock<_Spin_lock> _Scoped_spin_lock;
 } // namespace details
 
-
-static std::shared_ptr<pplx::scheduler_interface> _M_Scheduler;
+static std::shared_ptr<pplx::scheduler_interface> *_M_Scheduler;
 static pplx::details::_Spin_lock _M_SpinLock;
 
 _PPLXIMP std::shared_ptr<pplx::scheduler_interface> __cdecl get_ambient_scheduler()
@@ -89,11 +88,11 @@ _PPLXIMP std::shared_ptr<pplx::scheduler_interface> __cdecl get_ambient_schedule
         ::pplx::details::_Scoped_spin_lock _Lock(_M_SpinLock);
         if (!_M_Scheduler)
         {
-            _M_Scheduler = std::make_shared< ::pplx::default_scheduler_t>();
+            _M_Scheduler = new std::shared_ptr<pplx::scheduler_interface>(std::make_shared< ::pplx::default_scheduler_t>());
         }
     }
 
-    return _M_Scheduler;
+    return *_M_Scheduler;
 }
 
 _PPLXIMP void __cdecl set_ambient_scheduler(std::shared_ptr<pplx::scheduler_interface> _Scheduler)
@@ -105,7 +104,7 @@ _PPLXIMP void __cdecl set_ambient_scheduler(std::shared_ptr<pplx::scheduler_inte
         throw invalid_operation("Scheduler is already initialized");
     }
 
-    _M_Scheduler = _Scheduler;
+    _M_Scheduler = new std::shared_ptr<pplx::scheduler_interface>(std::move(_Scheduler));
 }
 
 } // namespace pplx
