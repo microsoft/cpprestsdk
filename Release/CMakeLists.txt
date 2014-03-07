@@ -94,16 +94,17 @@ function(add_casablanca_test NAME SOURCES_VAR)
   message("-- Added test library ${NAME}")
   if (NOT TEST_LIBRARY_TARGET_TYPE STREQUAL "OBJECT")
     target_link_libraries(${NAME}
-      ${LIB}unittestpp
       ${LIB}httptest_utilities
       ${LIB}common_utilities
+      ${LIB}unittestpp
       ${Casablanca_LIBRARIES}
       )
-
-    add_test(NAME ${NAME}
-      WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
-      COMMAND test_runner lib${NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
-      )
+    if (BUILD_SHARED_LIBS)
+      add_test(NAME ${NAME}
+        WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+        COMMAND test_runner lib${NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
+        )
+    endif()
   endif()
 endfunction()
 
