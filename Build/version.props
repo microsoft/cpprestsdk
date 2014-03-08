@@ -2,8 +2,8 @@
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <CppRestBaseFileName>cpprest</CppRestBaseFileName>
-    <CppRestSDKVersionMajor>1</CppRestSDKVersionMajor>
-    <CppRestSDKVersionMinor>5</CppRestSDKVersionMinor>
+    <CppRestSDKVersionMajor>2</CppRestSDKVersionMajor>
+    <CppRestSDKVersionMinor>0</CppRestSDKVersionMinor>
     <CppRestSDKVersionRevision>0</CppRestSDKVersionRevision>
     <CppRestSDKVersionFileSuffix>$(CppRestSDKVersionMajor)_$(CppRestSDKVersionMinor)</CppRestSDKVersionFileSuffix>
     <CppRestSDKVersionString>$(CppRestSDKVersionMajor).$(CppRestSDKVersionMinor)</CppRestSDKVersionString>
