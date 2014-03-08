@@ -111,6 +111,24 @@ TEST(decode_invalid_hex)
     VERIFY_THROWS(uri::decode(U("he%kkhe")), uri_exception);
 }
 
+// Tests making sure '+' is encoded even though nonstandard, so it doesn't
+// get mistaken later by some implementations as a space.
+TEST(encode_plus_char)
+{
+    const utility::string_t encodedPlus(U("%2B"));
+
+    uri_builder builder;
+    builder.set_user_info(U("+"), true);
+    builder.set_path(U("+"), true);
+    builder.set_query(U("+"), true);
+    builder.set_fragment(U("+"), true);
+
+    VERIFY_ARE_EQUAL(builder.user_info(), encodedPlus);
+    VERIFY_ARE_EQUAL(builder.path(), encodedPlus);
+    VERIFY_ARE_EQUAL(builder.query(), encodedPlus);
+    VERIFY_ARE_EQUAL(builder.fragment(), encodedPlus);
+}
+
 TEST(bug_417601)
 {
     utility::ostringstream_t ss1;

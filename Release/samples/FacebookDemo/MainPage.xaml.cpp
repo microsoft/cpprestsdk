@@ -73,17 +73,17 @@ void MainPage::AlbumButton_Click_1(Platform::Object^ sender, Windows::UI::Xaml::
 
 	facebook_client::instance().get(L"/me/albums")
 	.then([](web::json::value v){
-		std::vector<FacebookAlbum^> albums;
+        web::json::object& obj = v.as_object();
+        std::vector<FacebookAlbum^> albums;
 
-		for(const auto& elem : v[L"data"].as_array()){
-
-			albums.push_back(ref new FacebookAlbum(
-				elem[L"name"].as_string(),
-				elem[L"count"].as_integer(),
-				elem[L"id"].as_string(),
-				elem[L"cover_photo"].as_string()
-			));
-		}
+        for(auto& elem : obj[L"data"].as_array()){
+            albums.push_back(ref new FacebookAlbum(
+            	elem[L"name"].as_string(),
+            	elem[L"count"].as_integer(),
+            	elem[L"id"].as_string(),
+            	elem[L"cover_photo"].as_string()
+            ));
+        }
 
 		return task_from_result(std::move(albums));
 	}).then([=](std::vector<FacebookAlbum^> albums){

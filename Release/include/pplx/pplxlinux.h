@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved.
+* Copyright (c) Microsoft Corporation. All rights reserved. 
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-*
+* 
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -88,7 +88,7 @@ namespace platform
         static const unsigned int timeout_infinite = 0xFFFFFFFF;
 
         event_impl()
-            : _signaled(false)
+            : _signaled(false) 
         {
         }
 
@@ -217,7 +217,7 @@ namespace platform
                 _M_cs.lock();
                 _M_owner = id;
                 _M_recursionCount = 1;
-            }
+            }            
         }
 
         void unlock()
@@ -231,7 +231,7 @@ namespace platform
             {
                 _M_owner = -1;
                 _M_cs.unlock();
-            }
+            }           
         }
 
     private:
@@ -240,36 +240,12 @@ namespace platform
         volatile long _M_owner;
     };
 
-    class linux_timer;
-    class apple_timer;
-
-    class timer_impl
-    {
-    public:
-        timer_impl()
-        : m_timerImpl(nullptr)
-        {
-        }
-
-        ~timer_impl();
-
-        _PPLXIMP void start(unsigned int ms, bool repeat, TaskProc_t userFunc, _In_ void * context);
-        _PPLXIMP void stop(bool waitForCallbacks);
-
-    private:
-#if defined(__APPLE__)
-        apple_timer * m_timerImpl;
-#else
-        linux_timer * m_timerImpl;
-#endif
-    };
-
 #if defined(__APPLE__)
     class apple_scheduler : public pplx::scheduler_interface
     {
     public:
         _PPLXIMP virtual void schedule( TaskProc_t proc, _In_ void* param);
-
+        
         virtual ~apple_scheduler();
     };
 #else
@@ -279,12 +255,7 @@ namespace platform
         _PPLXIMP virtual void schedule( TaskProc_t proc, _In_ void* param);
     };
 #endif
-
-    /// <summary>
-    /// Timer
-    /// </summary>
-    typedef details::timer_impl timer_t;
-
+    
 } // namespace details
 
 /// <summary>
@@ -336,7 +307,7 @@ namespace extensibility
 #else
     typedef details::linux_scheduler default_scheduler_t;
 #endif
-
+    
 namespace details
 {
     /// <summary>

@@ -386,6 +386,28 @@ bool json::value::operator==(const json::value &other) const
     UNREACHABLE;
 }
 
+// at() overloads
+web::json::value& web::json::value::at(size_t index)
+{
+    return this->as_array().at(index);
+}
+
+const web::json::value& web::json::value::at(size_t index) const
+{
+    return this->as_array().at(index);
+}
+
+web::json::value& web::json::value::at(const utility::string_t& key)
+{
+    return this->as_object().at(key);
+}
+
+const web::json::value& web::json::value::at(const utility::string_t& key) const
+{
+    return this->as_object().at(key);
+}
+
+
 web::json::value& web::json::value::operator [] (const utility::string_t &key)
 {
     if ( this->is_null() )
@@ -409,17 +431,3 @@ web::json::value& web::json::value::operator[](size_t index)
     }
     return m_value->index(index);
 }
-
-const web::json::value& web::json::value::operator[](size_t index) const
-{
-    if ( this->is_null() )
-    {
-        auto _nc_this = const_cast<web::json::value*>(this);
-        _nc_this->m_value.reset(new web::json::details::_Array());
-#ifdef ENABLE_JSON_VALUE_VISUALIZER
-        _nc_this->m_kind = value::Array;
-#endif
-    }
-    return m_value->cnst_index(index);
-}
-

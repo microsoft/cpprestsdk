@@ -291,12 +291,18 @@ TEST(array_test)
     json::array& array = arr.as_array();
     const json::array& carray = arr.as_array();
 
+    VERIFY_THROWS(array.at(4), json::json_exception);
+    VERIFY_THROWS(carray.at(5), json::json_exception);
+    VERIFY_THROWS(arr.at(6), json::json_exception);
+    VERIFY_THROWS(carr.at(7), json::json_exception);
+
     // The begin and end iterators on non-const instances
     count = 0;
     for(auto iter = array.begin(); iter != array.end(); ++iter)
     {
         VERIFY_IS_TRUE((*iter) == array[count]);
-        VERIFY_IS_TRUE((*iter) == carray[count]);
+        VERIFY_IS_TRUE((*iter) == array.at(count));
+        VERIFY_IS_TRUE((*iter) == carray.at(count));
         count++;
     }
     VERIFY_ARE_EQUAL(array.size(), count);
@@ -305,6 +311,7 @@ TEST(array_test)
     for(auto iter = array.cbegin(); iter != array.cend(); ++iter)
     {
         VERIFY_IS_TRUE((*iter) == array[count]);
+        VERIFY_IS_TRUE((*iter) == array.at(count));
         count++;
     }
     VERIFY_ARE_EQUAL(array.size(), count);
@@ -313,7 +320,8 @@ TEST(array_test)
     for(auto iter = array.rbegin(); iter != array.rend(); ++iter)
     {
         VERIFY_IS_TRUE((*iter) == array[array.size()-1-count]);
-        VERIFY_IS_TRUE((*iter) == carray[array.size()-1-count]);
+        VERIFY_IS_TRUE((*iter) == array.at(array.size()-1-count));
+        VERIFY_IS_TRUE((*iter) == carray.at(array.size()-1-count));
         count++;
     }
     VERIFY_ARE_EQUAL(array.size(), count);
@@ -323,6 +331,8 @@ TEST(array_test)
     {
         VERIFY_IS_TRUE((*iter) == array[array.size()-1-count]);
         VERIFY_IS_TRUE((*iter) == arr[array.size()-1-count]);
+        VERIFY_IS_TRUE((*iter) == array.at(array.size()-1-count));
+        VERIFY_IS_TRUE((*iter) == arr.at(array.size()-1-count));
         count++;
     }
     VERIFY_ARE_EQUAL(array.size(), count);
@@ -331,8 +341,8 @@ TEST(array_test)
     count = 0;
     for(auto iter = carray.begin(); iter != carray.end(); ++iter)
     {
-        VERIFY_IS_TRUE((*iter) == carray[count]);
-        VERIFY_IS_TRUE((*iter) == carr[count]);
+        VERIFY_IS_TRUE((*iter) == carray.at(count));
+        VERIFY_IS_TRUE((*iter) == carr.at(count));
         count++;
     }
     VERIFY_ARE_EQUAL(array.size(), count);
@@ -340,8 +350,8 @@ TEST(array_test)
     count = 0;
     for(auto iter = carray.rbegin(); iter != carray.rend(); ++iter)
     {
-        VERIFY_IS_TRUE((*iter) == carray[array.size()-1-count]);
-        VERIFY_IS_TRUE((*iter) == carr[array.size()-1-count]);
+        VERIFY_IS_TRUE((*iter) == carray.at(array.size()-1-count));
+        VERIFY_IS_TRUE((*iter) == carr.at(array.size()-1-count));
         count++;
     }
     VERIFY_ARE_EQUAL(array.size(), count);
@@ -350,16 +360,25 @@ TEST(array_test)
 TEST(object_test)
 {
     json::value obj = json::value::object();
+    const json::value& cobj = obj;
     json::object& object = obj.as_object();
     const json::object& cobject = obj.as_object();
 
     VERIFY_IS_TRUE(object.empty());
 
-    obj[U("name")] = json::value("John");
-    obj[U("surname")] = json::value("Smith");
+    obj[U("name")] = json::value(U("John"));
+    obj[U("surname")] = json::value(U("Smith"));
     obj[U("height")] = json::value(5.9);
     obj[U("vegetarian")] = json::value(true);
     int count;
+
+    //Test at()
+    VERIFY_ARE_EQUAL(U("John"), obj.at(U("name")).as_string());
+    VERIFY_ARE_EQUAL(U("John"), cobj.at(U("name")).as_string());
+    VERIFY_ARE_EQUAL(U("Smith"), object.at(U("surname")).as_string());
+    VERIFY_ARE_EQUAL(U("Smith"), cobject.at(U("surname")).as_string());
+    VERIFY_THROWS(obj.at(U("wrong key")), json::json_exception);
+    VERIFY_THROWS(cobj.at(U("wrong key")), json::json_exception);
 
     //Test find()
     auto iter = object.find(U("height"));

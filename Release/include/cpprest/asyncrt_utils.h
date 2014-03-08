@@ -170,6 +170,16 @@ namespace conversions
 
 namespace details
 {
+    /// <summary>
+    /// Our own implementation of alpha numeric instead of std::isalnum to avoid
+    /// taking global lock for performance reasons.
+    /// </summary>
+    inline bool __cdecl is_alnum(char ch)
+    {
+        return (ch >= '0' && ch <= '9')
+            || (ch >= 'A' && ch <= 'Z')
+            || (ch >= 'a' && ch <= 'z');
+    }
 
     /// <summary>
     /// Simplistic implementation of make_unique. A better implementation would be based on variadic templates

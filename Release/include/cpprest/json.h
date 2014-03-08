@@ -435,17 +435,45 @@ public:
         value get(const utility::string_t &key) const;
 
         /// <summary>
+        /// Accesses an element of a JSON array. Throws when index out of bounds.
+        /// </summary>
+        /// <param name="index">The index of an element in the JSON array.</param>
+        /// <returns>A reference to the value.</returns>
+        _ASYNCRTIMP json::value& at(size_t index);
+
+        /// <summary>
+        /// Accesses an element of a JSON array. Throws when index out of bounds.
+        /// </summary>
+        /// <param name="index">The index of an element in the JSON array.</param>
+        /// <returns>A reference to the value.</returns>
+        _ASYNCRTIMP const json::value& at(size_t index) const;
+
+        /// <summary>
+        /// Accesses an element of a JSON object. If the key doesn't exist, this method throws.
+        /// </summary>
+        /// <param name="key">The key of an element in the JSON object.</param>
+        /// <returns>If the key exists, a reference to the value.</returns>
+        _ASYNCRTIMP json::value& at(const utility::string_t& key);
+        
+        /// <summary>
+        /// Accesses an element of a JSON object. If the key doesn't exist, this method throws.
+        /// </summary>
+        /// <param name="key">The key of an element in the JSON object.</param>
+        /// <returns>If the key exists, a reference to the value.</returns>
+        _ASYNCRTIMP const json::value& at(const utility::string_t& key) const;
+
+        /// <summary>
         /// Accesses a field of a JSON object.
         /// </summary>
         /// <param name="key">The name of the field</param>
-        /// <returns>A reference to the value kept in the field</returns>
+        /// <returns>A reference to the value kept in the field.</returns>
         _ASYNCRTIMP value & operator [] (const utility::string_t &key);
 
         /// <summary>
         /// Accesses a field of a JSON object.
         /// </summary>
         /// <param name="key">The name of the field</param>
-        /// <returns>A reference to the value kept in the field</returns>
+        /// <returns>A reference to the value kept in the field.</returns>
         _ASYNCRTIMP const value & operator [] (const utility::string_t &key) const;
 
 #ifdef _MS_WINDOWS
@@ -471,15 +499,8 @@ public:
         /// Accesses an element of a JSON array.
         /// </summary>
         /// <param name="index">The index of an element in the JSON array.</param>
-        /// <returns>A reference to the value kept in the field</returns>
+        /// <returns>A reference to the value kept in the field.</returns>
         _ASYNCRTIMP value & operator [] (size_t index);
-
-        /// <summary>
-        /// Accesses an element of a JSON array.
-        /// </summary>
-        /// <param name="index">The index of an element in the JSON array.</param>
-        /// <returns>A reference to the value kept in the field</returns>
-        _ASYNCRTIMP const value & operator [] (size_t index) const;
 
     private:
         friend class web::json::details::_Object;
@@ -510,6 +531,26 @@ public:
 #ifdef ENABLE_JSON_VALUE_VISUALIZER
         value_type m_kind;
 #endif
+    };
+
+    /// <summary>
+    /// A single exception type to represent errors in parsing, converting, and accessing
+    /// elements of JSON values.
+    /// </summary>
+    class json_exception : public std::exception
+    { 
+    private:
+        std::string _message;
+    public:
+        json_exception() {}
+        json_exception(const utility::char_t * const &message) : _message(utility::conversions::to_utf8string(message)) { }
+
+        // Must be narrow string because it derives from std::exception
+        const char* what() const _noexcept
+        {
+            return _message.c_str();
+        }
+        ~json_exception() _noexcept {}
     };
 
     /// <summary>
@@ -641,12 +682,28 @@ public:
         }
 
         /// <summary>
-        /// Accesses an element of a JSON array.
+        /// Accesses an element of a JSON array. Throws when index out of bounds.
         /// </summary>
         /// <param name="index">The index of an element in the JSON array.</param>
-        /// <returns>A reference to the value kept in the field</returns>
-        json::value& operator[](size_type index)
+        /// <returns>A reference to the value kept in the field.</returns>
+        json::value& at(size_type index)
         {
+            if (index >= m_elements.size())
+                throw json_exception(_XPLATSTR("index out of bounds"));
+
+            return m_elements[index];
+        }
+
+        /// <summary>
+        /// Accesses an element of a JSON array. Throws when index out of bounds.
+        /// </summary>
+        /// <param name="index">The index of an element in the JSON array.</param>
+        /// <returns>A reference to the value kept in the field.</returns>
+        const json::value& at(size_type index) const
+        {
+            if (index >= m_elements.size())
+                throw json_exception(_XPLATSTR("index out of bounds"));
+
             return m_elements[index];
         }
 
@@ -654,9 +711,15 @@ public:
         /// Accesses an element of a JSON array.
         /// </summary>
         /// <param name="index">The index of an element in the JSON array.</param>
-        /// <returns>A const reference to the value kept in the field</returns>
-        const json::value& operator[](size_type index) const
+        /// <returns>A reference to the value kept in the field.</returns>
+        json::value& operator[](size_type index)
         {
+            SafeInt<size_type> nMinSize(index);
+            nMinSize += 1;
+            SafeInt<size_type> nlastSize(m_elements.size());
+            if (nlastSize < nMinSize)
+                m_elements.resize(nMinSize);
+
             return m_elements[index];
         }
 
@@ -674,26 +737,6 @@ public:
 
         friend class details::_Array;
         template<typename CharType> friend class json::details::JSON_Parser;
-    };
-
-    /// <summary>
-    /// A single exception type to represent errors in parsing, converting, and accessing
-    /// elements of JSON values.
-    /// </summary>
-    class json_exception : public std::exception
-    { 
-    private:
-        std::string _message;
-    public:
-        json_exception() {}
-        json_exception(const utility::char_t * const &message) : _message(utility::conversions::to_utf8string(message)) { }
-
-        // Must be narrow string because it derives from std::exception
-        const char* what() const _noexcept
-        {
-            return _message.c_str();
-        }
-        ~json_exception() _noexcept {}
     };
 
     /// <summary>
@@ -833,9 +876,39 @@ public:
         }
 
         /// <summary>
+        /// Accesses an element of a JSON object. If the key doesn't exist, this method throws.
+        /// </summary>
+        /// <param name="key">The key of an element in the JSON object.</param>
+        /// <returns>If the key exists, a reference to the value kept in the field.</returns>
+        json::value& at(const utility::string_t& key)
+        {
+            auto iter = std::lower_bound(m_elements.begin(), m_elements.end(), key, compare_with_key);
+
+            if (iter == m_elements.end() || key != (iter->first))
+                throw web::json::json_exception(_XPLATSTR("Key not found"));
+
+            return iter->second;
+        }
+        
+        /// <summary>
+        /// Accesses an element of a JSON object. If the key doesn't exist, this method throws.
+        /// </summary>
+        /// <param name="key">The key of an element in the JSON object.</param>
+        /// <returns>If the key exists, a reference to the value kept in the field.</returns>
+        const json::value& at(const utility::string_t& key) const
+        {
+            auto iter = std::lower_bound(m_elements.begin(), m_elements.end(), key, compare_with_key);
+
+            if (iter == m_elements.end() || key != (iter->first))
+                throw web::json::json_exception(_XPLATSTR("Key not found"));
+
+            return iter->second;
+        }
+        
+        /// <summary>
         /// Accesses an element of a JSON object.
         /// </summary>
-        /// <param name="index">The key of an element in the JSON object.</param>
+        /// <param name="key">The key of an element in the JSON object.</param>
         /// <returns>If the key exists, a reference to the value kept in the field, otherwise a newly created null value that will be stored for the given key.</returns>
         json::value& operator[](const utility::string_t& key)
         {
@@ -851,7 +924,7 @@ public:
         /// Gets an iterator to an element of a JSON object.
         /// </summary>
         /// <param name="key">The key of an element in the JSON object.</param>
-        /// <returns>A const iterator to the value kept in the field</returns>
+        /// <returns>A const iterator to the value kept in the field.</returns>
         const_iterator find(const utility::string_t& key) const
         {
             auto iter = std::lower_bound(m_elements.begin(), m_elements.end(), key, compare_with_key);
@@ -866,7 +939,7 @@ public:
         /// Gets an iterator to an element of a JSON object.
         /// </summary>
         /// <param name="key">The key of an element in the JSON object.</param>
-        /// <returns>An iterator to the value kept in the field</returns>
+        /// <returns>An iterator to the value kept in the field.</returns>
         iterator find(const utility::string_t& key)
         {
             auto iter = std::lower_bound(m_elements.begin(), m_elements.end(), key, compare_with_key);
@@ -1483,30 +1556,8 @@ public:
             virtual json::array& as_array() { return m_array; }
             virtual const json::array& as_array() const { return m_array; }
 
-            virtual value get_element(array::size_type index) const
-            {
-                SafeInt<array::size_type> idx(index);
-                SafeInt<array::size_type> size(m_array.size());
-               return (idx >= size) ? value() : m_array[index]; 
-            }
-
             virtual json::value &index(json::array::size_type index)
             {
-                SafeInt<json::array::size_type> nMinSize(index);
-                nMinSize += 1;
-                SafeInt<json::array::size_type> nlastSize(m_array.size());
-               if (nlastSize < nMinSize)
-                  m_array.m_elements.resize(nMinSize);
-
-                return m_array.m_elements[index];
-            }
-
-            virtual const json::value &cnst_index(array::size_type index) const
-            {
-                SafeInt<array::size_type> idx(index);
-                SafeInt<array::size_type> size(m_array.size());
-                if ( idx >= size )
-                    throw json_exception(_XPLATSTR("index out of bounds"));
                 return m_array[index];
             }
 

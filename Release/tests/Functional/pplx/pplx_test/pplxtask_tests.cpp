@@ -1931,44 +1931,6 @@ TEST(PPL_Conversions_Exceptions_void)
 
 #endif
 
-TEST(TestDelayedTask_simple)
-{
-    VERIFY_IS_TRUE(tests::common::utilities::create_delayed_task(1, []() { return true;}).get());
-}
-
-TEST(TestDelayedTask_FireAndForget)
-{
-    pplx::extensibility::event_t ev;
-    {
-        tests::common::utilities::create_delayed_task(2, [&ev]() { ev.set(); });
-        // Let the task be destroyed. The timer should still fire
-    }
-
-    VERIFY_ARE_EQUAL(ev.wait(1000), 0);
-}
-
-TEST(TestDelayedTask_TaskUnwrapping)
-{
-    auto t1 = tests::common::utilities::create_delayed_task(1, []() -> pplx::task<int>
-    {
-        return tests::common::utilities::create_delayed_task(1, []() { return 10; });
-    });
-
-    VERIFY_ARE_EQUAL(t1.get(), 10);
-}
-
-TEST(TestDelayedTask_join)
-{
-    auto t1 = tests::common::utilities::create_delayed_task(1, []() {});
-    auto t2 = tests::common::utilities::create_delayed_task(4, []() {});
-
-    auto t3 = t1 && t2;
-    auto t4 = t1 || t2;
-
-    VERIFY_ARE_EQUAL(t4.wait(), completed);
-    VERIFY_ARE_EQUAL(t3.wait(), completed);
-}
-
 } // SUITE(pplxtask_tests)
 
 }}}   // namespaces

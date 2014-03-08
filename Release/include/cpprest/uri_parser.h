@@ -65,7 +65,7 @@ namespace web { namespace details
         /// </summary>
         static bool is_unreserved(int c)
         {
-            return std::isalnum((char)c, loc) || c == '-' || c == '.' || c == '_' || c == '~';
+            return ::utility::details::is_alnum((char)c) || c == '-' || c == '.' || c == '_' || c == '~';
         }
 
         /// <summary>
@@ -125,7 +125,7 @@ namespace web { namespace details
         /// </summary> 
         static bool is_scheme_character(int c)
         {
-            return std::isalnum((char)c, loc) || c == '+' || c == '-' || c == '.';
+            return ::utility::details::is_alnum((char)c) || c == '+' || c == '-' || c == '.';
         }
 
         /// <summary>

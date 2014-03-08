@@ -34,7 +34,8 @@
 
 #include <os_utilities.h>
 
-using namespace web; using namespace utility;
+using namespace web; 
+using namespace utility;
 using namespace utility::conversions;
 
 namespace tests { namespace functional { namespace http { namespace utilities {
@@ -372,7 +373,7 @@ public:
         {
             // Just wait for either all the requests to finish or for the timer task, it doesn't matter which one.
             auto allRequestsTask = pplx::when_all(m_all_next_request_tasks.begin(), m_all_next_request_tasks.end()).then([](const std::vector<test_request *> &){});
-            auto timerTask = tests::common::utilities::create_delayed_task(30000, []() {});
+            auto timerTask = pplx::create_task([]() { ::tests::common::utilities::os_utilities::sleep(30000); });
             (timerTask || allRequestsTask).wait();
             VERIFY_IS_TRUE(false, "HTTP test case didn't properly wait for all requests to be satisfied.");
         }

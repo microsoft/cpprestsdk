@@ -69,18 +69,8 @@ struct Card
     static Card FromJSON(const web::json::object & object)
     {
         Card result;
-        auto iterCardSuit = object.find(SUIT);
-        if (iterCardSuit == object.end())
-        {
-            throw web::json::json_exception(U("SUIT key not found"));
-        }
-        result.suit = (CardSuit)(int)iterCardSuit->second.as_double();
-        auto iterCardValue = object.find(VALUE);
-        if (iterCardValue == object.end())
-        {
-            throw web::json::json_exception(U("VALUE key not found"));
-        }
-        result.value = (CardValue)(int)iterCardValue->second.as_double();
+        result.suit = (CardSuit)object.at(SUIT).as_integer();
+        result.value = (CardValue)object.at(VALUE).as_integer();
         return result;
     }
 
@@ -156,12 +146,7 @@ struct BJHand
     {
         BJHand result;
 
-        auto iterCards = object.find(CARDS);
-        if (iterCards == object.end())
-        {
-            throw web::json::json_exception(U("CARDS key not found"));
-        }
-        web::json::value cards = iterCards->second;
+        web::json::value cards = object.at(CARDS);
 
         for (auto iter = cards.as_array().begin(); iter != cards.as_array().end(); ++iter)
         {

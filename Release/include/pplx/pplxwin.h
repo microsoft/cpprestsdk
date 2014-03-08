@@ -229,42 +229,11 @@ namespace details
         volatile long _M_owner;
     };
 
-    class timer_impl
-    {
-    public:
-        timer_impl()
-            : m_timerImpl(nullptr)
-        {
-        }
-
-        _PPLXIMP void start(unsigned int ms, bool repeat, TaskProc_t userFunc, _In_ void * context);
-        _PPLXIMP void stop(bool waitForCallbacks);
-
-        class _Timer_interface
-        {
-        public:
-            virtual ~_Timer_interface()
-            {
-            }
-
-            virtual void start(unsigned int ms, bool repeat) = 0;
-            virtual void stop(bool waitForCallbacks) = 0;
-        };
-
-    private:
-        _Timer_interface * m_timerImpl;
-    };
-
     class windows_scheduler : public pplx::scheduler_interface
     {
     public:
         _PPLXIMP virtual void schedule( TaskProc_t proc, _In_ void* param);
     };
-
-    /// <summary>
-    /// Timer
-    /// </summary>
-    typedef details::timer_impl timer_t;
 
 } // namespace details
 

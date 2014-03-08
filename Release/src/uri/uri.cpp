@@ -165,13 +165,16 @@ utility::string_t uri::encode_data_string(const utility::string_t &raw)
 
 utility::string_t uri::encode_uri(const utility::string_t &raw, uri::components::component component)
 {
+    // Note: we also encode the '+' character because some non-standard implementations
+    // encode the space character as a '+' instead of %20. To better interoperate we encode
+    // '+' to avoid any confusion and be mistaken as a space.
     switch(component)
     {
     case components::user_info:
         return uri::encode_impl(raw, [](int ch) -> bool
         {
-            return ch == '%'
-                || !uri_parser::is_user_info_character(ch);
+            return !uri_parser::is_user_info_character(ch)
+                || ch == '%' || ch == '+';
         });
     case components::host:
         return uri::encode_impl(raw, [](int ch) -> bool
@@ -182,20 +185,20 @@ utility::string_t uri::encode_uri(const utility::string_t &raw, uri::components:
     case components::path:
         return uri::encode_impl(raw, [](int ch) -> bool
         {
-            return ch == '%'
-                || !uri_parser::is_path_character(ch);
+            return !uri_parser::is_path_character(ch)
+                || ch == '%' || ch == '+';
         });
     case components::query:
         return uri::encode_impl(raw, [](int ch) -> bool
         {
-            return ch == '%'
-                || !uri_parser::is_query_character(ch);
+            return !uri_parser::is_query_character(ch)
+                || ch == '%' || ch == '+';
         });
     case components::fragment:
         return uri::encode_impl(raw, [](int ch) -> bool
         {
-            return ch == '%'
-                || !uri_parser::is_fragment_character(ch);
+            return !uri_parser::is_fragment_character(ch)
+                || ch == '%' || ch == '+';
         });
     case components::full_uri:
     default:
