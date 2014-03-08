@@ -245,8 +245,6 @@ namespace platform
     {
     public:
         _PPLXIMP virtual void schedule( TaskProc_t proc, _In_ void* param);
-        
-        virtual ~apple_scheduler();
     };
 #else
     class linux_scheduler : public pplx::scheduler_interface
@@ -255,7 +253,7 @@ namespace platform
         _PPLXIMP virtual void schedule( TaskProc_t proc, _In_ void* param);
     };
 #endif
-    
+
 } // namespace details
 
 /// <summary>
