@@ -78,7 +78,8 @@ namespace details
     typedef ::pplx::scoped_lock<_Spin_lock> _Scoped_spin_lock;
 } // namespace details
 
-static struct _pplx_g_sched_t {
+static struct _pplx_g_sched_t
+{
     typedef std::shared_ptr<pplx::scheduler_interface> sched_ptr;
 
     _pplx_g_sched_t()
@@ -108,8 +109,6 @@ static struct _pplx_g_sched_t {
             }
 
             return m_scheduler;
-        case pre_ctor:
-        case post_dtor:
         default:
             // This case means the global m_scheduler is not available.
             // We spin off an individual scheduler instead.
@@ -133,7 +132,8 @@ static struct _pplx_g_sched_t {
         m_scheduler = std::move(scheduler);
     }
 
-    enum {
+    enum
+    {
         pre_ctor = 0,
         post_ctor = 1,
         post_dtor = 2
