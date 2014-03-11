@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -88,8 +88,8 @@ static std::vector<std::string> get_files_in_directory()
 
 #ifdef WIN32
 
-    char exe_directory_buffer[MAX_PATH]; 
-    GetModuleFileNameA(NULL, exe_directory_buffer, MAX_PATH); 
+    char exe_directory_buffer[MAX_PATH];
+    GetModuleFileNameA(NULL, exe_directory_buffer, MAX_PATH);
     std::string exe_directory = to_lower(exe_directory_buffer);
     auto location = exe_directory.rfind("\\");
     if (location != std::string::npos)
@@ -101,7 +101,7 @@ static std::vector<std::string> get_files_in_directory()
       std::cout << "Could not determine execution directory" << std::endl;
       exit(-1);
     }
-        
+
     exe_directory.append("*");
     WIN32_FIND_DATAA findFileData;
     HANDLE hFind = FindFirstFileA(exe_directory.c_str(), &findFileData);
@@ -118,23 +118,12 @@ static std::vector<std::string> get_files_in_directory()
     }
     FindClose(hFind);
 
-#elif !defined(__APPLE__)
-    using namespace boost::filesystem;
-    
-    auto exe_directory = initial_path().string();
-    for (auto it = directory_iterator(path(exe_directory)); it != directory_iterator(); ++it)
-    {
-        if (is_regular_file(*it))
-        {
-            files.push_back(it->path().filename().string());
-        }
-    }
-#else
+#elif defined(__APPLE__)
     auto exe_directory = getcwd(nullptr, 0);
-    
+
     DIR *dir = opendir(exe_directory);
     free(exe_directory);
-    
+
     if (dir != nullptr)
     {
         struct dirent *ent = readdir(dir);
@@ -147,6 +136,17 @@ static std::vector<std::string> get_files_in_directory()
             ent = readdir(dir);
     }
         closedir(dir);
+    }
+#else
+    using namespace boost::filesystem;
+
+    auto exe_directory = initial_path().string();
+    for (auto it = directory_iterator(path(exe_directory)); it != directory_iterator(); ++it)
+    {
+        if (is_regular_file(*it))
+        {
+            files.push_back(it->path().filename().string());
+        }
     }
 #endif
 
@@ -170,7 +170,7 @@ static std::string replace_wildcard_for_regex(const std::string &str)
 static std::vector<std::string> get_matching_binaries(const std::string &dllName)
 {
     std::vector<std::string> matchingFiles;
-    
+
     // If starts with .\ remove it.
     std::string expandedDllName(dllName);
     if(expandedDllName.size() > 2 && expandedDllName[0] == '.' && expandedDllName[1] == '\\')
@@ -192,7 +192,7 @@ static std::vector<std::string> get_matching_binaries(const std::string &dllName
     expandedDllName = replace_wildcard_for_regex(expandedDllName);
 
     std::vector<std::string> allFiles = get_files_in_directory();
-    
+
     // Filter out any files that don't match.
     std::regex dllRegex(expandedDllName, std::regex_constants::icase);
 
@@ -271,7 +271,7 @@ static int parse_command_line(int argc, char **argv)
 static bool matched_properties(const UnitTest::TestProperties& test_props)
 {
     // TestRunner can only execute either desktop or winrt tests, but not both.
-	// This starts with visual studio versions after VS 2012.
+    // This starts with visual studio versions after VS 2012.
 #if defined (_MSC_VER) && (_MSC_VER >= 1800)
 #ifdef WINRT_TEST_RUNNER
     UnitTest::GlobalSettings::Add("winrt", "");
@@ -346,10 +346,6 @@ static void handle_list_option(bool listProperties, const UnitTest::TestList &te
         pTest = pTest->m_nextTest;
     }
 }
-static void handle_list_option(bool listProperties, const UnitTest::TestList &tests)
-{
-    handle_list_option(listProperties, tests, std::regex(".*"));
-}
 
 static void ChangeConsoleTextColorToRed()
 {
@@ -386,7 +382,7 @@ bool IsTestIgnored(UnitTest::Test *pTest)
 #elif defined(__APPLE__)
     if(pTest->m_properties.Has("Ignore:Apple")) return true;
 #else
-if(pTest->m_properties.Has("Ignore:Linux")) return true;
+    if(pTest->m_properties.Has("Ignore:Linux")) return true;
 #endif
     return false;
 }
@@ -401,13 +397,131 @@ if(pTest->m_properties.Has("Ignore:Linux")) return true;
 int CrtReportHandler(int reportType, char *message, int *returnValue)
 {
     std::cerr << "In CRT Report Handler. ReportType:" << reportType << ", message:" << message << std::endl;
-    
+
     // Cause break into debugger.
     *returnValue = 1;
     return TRUE;
 }
 
 #endif
+
+typedef std::map<std::string, UnitTest::TestList> testlist_t;
+
+void list_test_options(testlist_t& testlists)
+{
+    std::regex nameRegex;
+
+    if (UnitTest::GlobalSettings::Has("name"))
+    {
+        nameRegex = replace_wildcard_for_regex(UnitTest::GlobalSettings::Get("name"));
+    }
+    else
+    {
+        nameRegex = std::regex(".*");
+    }
+
+    bool listProperties = UnitTest::GlobalSettings::Has("listproperties");
+
+    for (auto& test_p : testlists)
+    {
+        std::cout << "=== Showing options for " << test_p.first << " ===" << std::endl;
+        handle_list_option(listProperties, test_p.second, nameRegex);
+    }
+}
+
+testlist_t load_all_tests(test_module_loader& module_loader)
+{
+    // Remember where each list of tests came from.
+    testlist_t testlists;
+
+    // Retrieve the static tests and clear for dll loading.
+    testlists.emplace("<static>", UnitTest::GetTestList());
+    UnitTest::GetTestList().Clear();
+
+    // Cycle through all the test binaries and load them
+    for (auto& binary_names : g_test_binaries)
+    {
+        std::vector<std::string> matchingBinaries = get_matching_binaries(binary_names);
+        if (matchingBinaries.empty())
+        {
+            ChangeConsoleTextColorToRed();
+            std::cout << "Pattern '" << binary_names << "' not found." << std::endl;
+            ChangeConsoleTextColorToGrey();
+        }
+        for (auto& binary : matchingBinaries)
+        {
+            unsigned long error_code = module_loader.load(binary);
+            if(error_code != 0)
+            {
+                // Only omit an error if a wildcard wasn't used.
+                if(binary_names.find('*') == std::string::npos)
+                {
+                    ChangeConsoleTextColorToRed();
+                    std::cout << "Error loading " << binary << ": "
+                              << error_code << std::endl;
+                    ChangeConsoleTextColorToGrey();
+
+                    std::exit(error_code);
+                }
+                else
+                {
+                    continue;
+                }
+            }
+            std::cout << "Loaded " << binary << "..." << std::endl;
+
+            // Store the loaded binary into the test list map
+            testlists.emplace(binary, UnitTest::GetTestList());
+            UnitTest::GetTestList().Clear();
+        }
+    }
+
+    return testlists;
+}
+
+void run_all_tests(UnitTest::TestRunner& testRunner, testlist_t& testlists)
+{
+    int numTimesToRun = 1;
+    if(UnitTest::GlobalSettings::Has("loop"))
+    {
+        std::istringstream strstream(UnitTest::GlobalSettings::Get("loop"));
+        strstream >> numTimesToRun;
+    }
+
+    const bool include_ignored_tests = UnitTest::GlobalSettings::Has("noignore");
+
+    for(int i = 0; i < numTimesToRun; ++i)
+    {
+        for (auto& test_p : testlists)
+        {
+            std::cout << "=== Running tests from: " << test_p.first << " ===" << std::endl;
+            UnitTest::TestList& tests = test_p.second;
+
+            std::regex nameRegex(".*");
+
+            if(UnitTest::GlobalSettings::Has("name"))
+            {
+                nameRegex = replace_wildcard_for_regex(UnitTest::GlobalSettings::Get("name"));
+            }
+            testRunner.RunTestsIf(
+                tests,
+                [&](UnitTest::Test *pTest) -> bool
+                {
+                    // Combine suite and test name
+                    std::string fullTestName = pTest->m_details.suiteName;
+                    fullTestName.append(":");
+                    fullTestName.append(pTest->m_details.testName);
+
+                    if(IsTestIgnored(pTest) && !include_ignored_tests)
+                        return false;
+                    else
+                        return matched_properties(pTest->m_properties) &&
+                            std::regex_match(fullTestName, nameRegex);
+                },
+                g_individual_test_timeout);
+        }
+    }
+}
 
 int main(int argc, char* argv[])
 {
@@ -450,11 +564,10 @@ int main(int argc, char* argv[])
         std::cout << "Warning: no test binaries were specified" << std::endl;
     }
 
-    test_module_loader module_loader;
     int totalTestCount = 0, failedTestCount = 0;
     std::vector<std::string> failedTests;
     UnitTest::TestReporterStdout testReporter;
-    
+
     bool breakOnError = false;
     if(UnitTest::GlobalSettings::Has("breakonerror"))
     {
@@ -477,152 +590,53 @@ int main(int argc, char* argv[])
     UnitTest::Timer timer;
     timer.Start();
 
-    // Cycle through all the test binaries, load them, and perform the specified action.
-    
-    for(auto iter = g_test_binaries.begin(); iter != g_test_binaries.end(); ++iter)
-    {
-        std::vector<std::string> matchingBinaries = get_matching_binaries(*iter);
-        if(matchingBinaries.empty())
-        {
-            std::cout << "File '" << *iter << "' not found." << std::endl;
-        }
-        for(auto binary = matchingBinaries.begin(); binary != matchingBinaries.end(); ++binary)
-        {
-            unsigned long error_code = module_loader.load(*binary);
-            if(error_code != 0)
-            {
-                // Only omit an error if a wildcard wasn't used.
-                if(iter->find('*') == std::string::npos)
-                {
-                    std::cout << "Error loading " << *binary << ": " << error_code << std::endl;
-                    return error_code;
-                }
-                else
-                {
-                    continue;
-                }
-            }
-            std::cout << "Loaded " << *binary << "..." << std::endl;
-        }
-    }
-    UnitTest::TestList& tests = UnitTest::GetTestList();
+    test_module_loader module_loader;
 
-    // Check to see if running tests multiple times
-    int numTimesToRun = 1;
-    if(UnitTest::GlobalSettings::Has("loop"))
+    testlist_t testlists = load_all_tests(module_loader);
+
+    if (listOption)
     {
-        std::istringstream strstream(UnitTest::GlobalSettings::Get("loop"));
-        strstream >> numTimesToRun;
+        list_test_options(testlists);
+        return 0;
     }
 
-    const bool include_ignored_tests = UnitTest::GlobalSettings::Has("noignore");
 
     // Run test cases
-    for(int i = 0; i < numTimesToRun; ++i)
+    UnitTest::TestRunner testRunner(testReporter, breakOnError);
+
+    run_all_tests(testRunner, testlists);
+
+    totalTestCount += testRunner.GetTestResults()->GetTotalTestCount();
+    failedTestCount += testRunner.GetTestResults()->GetFailedTestCount();
+    if( totalTestCount == 0 )
     {
-        UnitTest::TestRunner testRunner(testReporter, breakOnError);
-        if(UnitTest::GlobalSettings::Has("name"))
-        {
-            std::regex nameRegex(replace_wildcard_for_regex(UnitTest::GlobalSettings::Get("name")));
-
-            if(listOption)
-            {
-                handle_list_option(listPropertiesOption, tests, nameRegex);
-            }
-            else
-            {
-                testRunner.RunTestsIf(
-                    tests,
-                    [&](UnitTest::Test *pTest) -> bool
-                    {
-                        // Combine suite and test name
-                        std::string fullTestName = pTest->m_details.suiteName;
-                        fullTestName.append(":");
-                        fullTestName.append(pTest->m_details.testName);
-
-                        if(IsTestIgnored(pTest) && !include_ignored_tests)
-                            return false;
-                        else
-                            return matched_properties(pTest->m_properties) &&
-                                std::regex_match(fullTestName, nameRegex);
-                    },
-                    g_individual_test_timeout);
-            }
-        }
-        else
-        {
-            if(listOption)
-            {
-                handle_list_option(listPropertiesOption, tests);
-            }
-            else
-            {
-                testRunner.RunTestsIf(
-                    tests,
-                    [&](UnitTest::Test *pTest) -> bool
-                    {
-                        if(IsTestIgnored(pTest) && !include_ignored_tests)
-                            return false;
-                        else
-                            return matched_properties(pTest->m_properties);
-                    },
-                    g_individual_test_timeout);
-            }
-        }
-
-        if(!listOption)
-        {
-            totalTestCount += testRunner.GetTestResults()->GetTotalTestCount();
-            failedTestCount += testRunner.GetTestResults()->GetFailedTestCount();
-            if( totalTestCount == 0 )
-            {
-                std::cout << "No tests were run. Check the command line syntax (must be 'TestRunner.exe SomeTestDll.dll /name:suite_name:test_name')" << std::endl;
-            }
-            else
-            {
-                if(testRunner.GetTestResults()->GetFailedTestCount() > 0)
-                {
-                    ChangeConsoleTextColorToRed();
-                    const std::vector<std::string> & failed = testRunner.GetTestResults()->GetFailedTests();
-                    std::for_each(failed.begin(), failed.end(), [](const std::string &failedTest)
-                                  {
-                                      std::cout << "**** " << failedTest << " FAILED ****" << std::endl << std::endl;
-                                      std::fflush(stdout);
-                                  });
-                    ChangeConsoleTextColorToGrey();
-                }
-                else
-                {
-                    ChangeConsoleTextColorToGreen();
-                    std::cout << "All test cases PASSED" << std::endl << std::endl;
-                    ChangeConsoleTextColorToGrey();
-                }
-                const std::vector<std::string> &newFailedTests = testRunner.GetTestResults()->GetFailedTests();
-                failedTests.insert(failedTests.end(), newFailedTests.begin(), newFailedTests.end());
-            }
-        }
-
+        std::cout << "No tests were run. Check the command line syntax (try 'TestRunner.exe /help')" << std::endl;
     }
-
-    if( totalTestCount > 0 )
+    else
     {
-        // Print out all failed test cases at the end for easy viewing.
-        const double elapsedTime = timer.GetTimeInMs();
-        std::cout << "Finished running all " << totalTestCount << " tests. Took " << elapsedTime << "ms" << std::endl;
-        if(failedTestCount > 0)
+        if(testRunner.GetTestResults()->GetFailedTestCount() > 0)
         {
             ChangeConsoleTextColorToRed();
-            std::for_each(failedTests.begin(), failedTests.end(), [](const std::string &failedTest)
+            const std::vector<std::string> & failed = testRunner.GetTestResults()->GetFailedTests();
+            std::for_each(failed.begin(), failed.end(), [](const std::string &failedTest)
                           {
-                              std::cout << "**** " << failedTest << " FAILED ****" << std::endl;
+                              std::cout << "**** " << failedTest << " FAILED ****" << std::endl << std::endl;
+                              std::fflush(stdout);
                           });
+            ChangeConsoleTextColorToGrey();
         }
         else
         {
             ChangeConsoleTextColorToGreen();
-            std::cout << "****SUCCESS all test cases PASSED****" << std::endl;
+            std::cout << "All test cases PASSED" << std::endl << std::endl;
+            ChangeConsoleTextColorToGrey();
         }
-        ChangeConsoleTextColorToGrey();
+        const std::vector<std::string> &newFailedTests = testRunner.GetTestResults()->GetFailedTests();
+        failedTests.insert(failedTests.end(), newFailedTests.begin(), newFailedTests.end());
+
+        const double elapsedTime = timer.GetTimeInMs();
+        std::cout << "Finished running all " << totalTestCount << " tests." << std::endl
+                  << "Took " << elapsedTime << "ms" << std::endl;
     }
 
 #ifdef WIN32
