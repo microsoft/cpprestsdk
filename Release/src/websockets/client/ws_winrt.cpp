@@ -72,7 +72,7 @@ class winrt_client : public _websocket_client_impl
 {
 public:
     winrt_client(web::uri address, websocket_client_config client_config)
-        : _websocket_client_impl(std::move(address), std::move(client_config)), m_scheduled(0)
+        : _websocket_client_impl(std::move(address), std::move(client_config)), m_scheduled(0), m_client_closed(false)
     {
         verify_uri(m_uri);
         m_msg_websocket = ref new MessageWebSocket();
@@ -91,22 +91,53 @@ public:
 
         m_context = ref new ReceiveContext([=](std::shared_ptr<websocket_incoming_message> msg)
         {
-            std::unique_lock<std::mutex> lock(m_receive_queue_lock);
+            pplx::task_completion_event<websocket_incoming_message> tce; // This will be set if there are any tasks waiting to receive a message
+            {
+                std::unique_lock<std::mutex> lock(m_receive_queue_lock);
+                if (m_receive_task_queue.empty()) // Push message to the queue as no one is waiting to receive
+                {
+                    m_receive_msg_queue.push(std::move(*msg));
+                    return;
+                }
+                else // There are tasks waiting to receive a message.
+                {
+                    tce = m_receive_task_queue.front();
+                    m_receive_task_queue.pop();
+                }
+            }
+            // Setting the tce outside the receive lock for better performance
             if (msg != nullptr)
-                m_receive_msg_queue.push(std::move(*msg));
-            m_receive_msg_cv.notify_one();
+            {
+                tce.set(*msg);
+            }
+            else
+            {
+                tce.set_exception(std::make_exception_ptr(websocket_exception(_XPLATSTR("Error occured during receive."))));
+            }
         }, 
         [=]()
         {
-            m_receive_msg_cv.notify_all();
+            close_pending_tasks_with_error();           
             m_close_tce.set();
         }); 
     }
 
     ~winrt_client()
     {
-        m_receive_msg_cv.notify_all();
+        close_pending_tasks_with_error();
     }
+
+    void close_pending_tasks_with_error()
+    {
+        std::unique_lock<std::mutex> lock(m_receive_queue_lock);
+        m_client_closed = true;
+        while(!m_receive_task_queue.empty()) // There are tasks waiting to receive a message, signal them
+        {
+            auto tce = m_receive_task_queue.front();
+            m_receive_task_queue.pop();
+            tce.set_exception(std::make_exception_ptr(websocket_exception(_XPLATSTR("Websocket connection has been closed."))));
+        }
+    } 
 
     pplx::task<void> connect()
     {
@@ -124,6 +155,7 @@ public:
             }
             catch(Platform::Exception^ ex)
             {
+                close_pending_tasks_with_error();
                 return pplx::task_from_exception<void>(websocket_exception(ex->HResult));
             }
             return pplx::task_from_result();
@@ -217,18 +249,24 @@ public:
 
     pplx::task<websocket_incoming_message> receive()
     {
-        return pplx::create_task([this]() ->pplx::task<websocket_incoming_message>
+        std::unique_lock<std::mutex> lock(m_receive_queue_lock);
+        if (m_client_closed == true)
         {
-            std::unique_lock<std::mutex> lock(m_receive_queue_lock);
-            m_receive_msg_cv.wait(lock);
-            if (m_receive_msg_queue.empty()) // If queue is empty -> wait was notified by websocket client close or destructor etc.
-            {
-                return pplx::task_from_exception<websocket_incoming_message>(websocket_exception(_XPLATSTR("Error receiving message, websocket client is closing.")));
-            }
-            auto msg = std::move(m_receive_msg_queue.front());
+            return pplx::task_from_exception<websocket_incoming_message>(std::make_exception_ptr(websocket_exception(_XPLATSTR("Websocket connection has closed."))));
+        }
+
+        if (m_receive_msg_queue.empty()) // Push task completion event to the tce queue, so that it gets signaled when we have a message.
+        {
+            pplx::task_completion_event<websocket_incoming_message> tce;
+            m_receive_task_queue.push(tce);
+            return pplx::create_task(tce);
+        }
+        else // Receive message queue is not empty, return a message from the queue.
+        {
+            auto msg = m_receive_msg_queue.front();
             m_receive_msg_queue.pop();
             return pplx::task_from_result<websocket_incoming_message>(msg);
-        });
+        }
     }
 
     pplx::task<void> close()
@@ -260,12 +298,20 @@ private:
     ReceiveContext ^ m_context;
 
     pplx::task_completion_event<void> m_close_tce;
-    
-    // Incoming messages are maintained in a producer consumer queue. 
-    // m_receive_queue_lock and m_receive_msg_cv : synchronization primitives to guard access to the queue
+    // m_client_closed maintains the state of the client. It is set to true when:
+    // 1. the client has not connected 
+    // 2. if it has received a close frame from the server.
+    // We may want to keep an enum to maintain the client state in the future.
+    bool m_client_closed;
+
+    // When a message arrives, if there are tasks waiting for a message, signal the topmost one.
+    // Else enqueue the message in a queue.
+    // m_receive_queue_lock : to guard access to the queue & m_client_closed 
     std::mutex m_receive_queue_lock;
-    std::condition_variable m_receive_msg_cv;
-    std::queue<websocket_incoming_message> m_receive_msg_queue;
+    // Queue to store incoming messages when there are no tasks waiting for a message
+    std::queue<websocket_incoming_message> m_receive_msg_queue; 
+    // Queue to maintain the receive tasks when there are no messages(yet).
+    std::queue<pplx::task_completion_event<websocket_incoming_message>> m_receive_task_queue; 
 
     // The implementation has to ensure ordering of send requests
     std::mutex m_send_lock; 

@@ -10,6 +10,7 @@
 	  <ProjectFile Include="streams\dirs.proj"/>
 	  <ProjectFile Include="uri\dirs.proj"/>
 	  <ProjectFile Include="utils\dirs.proj"/>
+	  <ProjectFile Include="websockets\dirs.proj"  Condition="'$(Platform)'!='ARM'" />
   </ItemGroup>
 
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
