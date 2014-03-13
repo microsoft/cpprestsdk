@@ -1,42 +1,68 @@
 project(casablanca-ios)
 cmake_minimum_required(VERSION 2.6)
 
-file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/build.simulator ${CMAKE_BINARY_DIR}/build.arm)
+set(TOOLCHAIN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/ios-cmake/toolchain/iOS.cmake")
+
+set(SIM_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/build.i386" CACHE INTERNAL "")
+set(SIM_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../Release" CACHE INTERNAL "")
+
+set(ARM_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/build.arm" CACHE INTERNAL "")
+set(ARM_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../Release" CACHE INTERNAL "")
+
+file(MAKE_DIRECTORY ${SIM_BINARY_DIR})
+execute_process(WORKING_DIRECTORY ${SIM_BINARY_DIR}
+  COMMAND ${CMAKE_COMMAND}
+    -GXcode
+    -DCMAKE_TOOLCHAIN_FILE=${TOOLCHAIN_FILE}
+    -DIOS_PLATFORM=SIMULATOR
+    -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+    "${SIM_SOURCE_DIR}"
+    )
+
+file(MAKE_DIRECTORY ${ARM_BINARY_DIR})
+execute_process(WORKING_DIRECTORY ${ARM_BINARY_DIR}
+  COMMAND ${CMAKE_COMMAND}
+    -GXcode
+    -DCMAKE_TOOLCHAIN_FILE=${TOOLCHAIN_FILE}
+    -DIOS_PLATFORM=OS
+    "-DCMAKE_OSX_ARCHITECTURES=armv7s;armv7;arm64"
+    -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+    "${ARM_SOURCE_DIR}"
+    )
+
 
 ## Simulator version
-add_custom_command(
-  OUTPUT build.simulator/CMakeCache.txt
-  COMMAND cmake ${CMAKE_SOURCE_DIR}/../Release/ -DCMAKE_TOOLCHAIN_FILE=${CMAKE_SOURCE_DIR}/ios-cmake/toolchain/iOS.cmake -DIOS_PLATFORM=SIMULATOR -GXcode -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-  WORKING_DIRECTORY build.simulator
-)
-
-add_custom_command(
-  OUTPUT build.simulator/Binaries/Debug/libcasablanca.a
-  COMMAND cmake --build . --target casablanca
-  DEPENDS build.simulator/CMakeCache.txt
-  WORKING_DIRECTORY build.simulator
+add_custom_target(sim
+  COMMAND ${CMAKE_COMMAND}
+    --build ${SIM_BINARY_DIR}
+    --target casablanca
+    --config ${CMAKE_BUILD_TYPE}
+  COMMENT "Building for i386 (simulator)"
+  VERBATIM
 )
 
 ## ARM version
-add_custom_command(
-  OUTPUT build.arm/CMakeCache.txt
-  COMMAND cmake ${CMAKE_SOURCE_DIR}/../Release/ -DCMAKE_TOOLCHAIN_FILE=${CMAKE_SOURCE_DIR}/ios-cmake/toolchain/iOS.cmake -DIOS_PLATFORM=OS -DCMAKE_OSX_ARCHITECTURES='armv7;armv7s;armv6' -GXcode -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-  WORKING_DIRECTORY build.arm
-)
-
-add_custom_command(
-  OUTPUT build.arm/Binaries/Debug/libcasablanca.a
-  COMMAND cmake --build . --target casablanca
-  DEPENDS build.arm/CMakeCache.txt
-  WORKING_DIRECTORY build.arm
+add_custom_target(arm
+  COMMAND ${CMAKE_COMMAND}
+    --build ${ARM_BINARY_DIR}
+    --target casablanca
+    --config ${CMAKE_BUILD_TYPE}
+  COMMENT "Building for armv7, armv7s, arm64"
+  VERBATIM
 )
 
 add_custom_command(
   OUTPUT libcasablanca.a
-  COMMAND lipo -create -output ${CMAKE_CURRENT_BINARY_DIR}/libcasablanca.a
-    ${CMAKE_CURRENT_BINARY_DIR}/build.arm/Binaries/Debug/libcasablanca.a
-    ${CMAKE_CURRENT_BINARY_DIR}/build.simulator/Binaries/Debug/libcasablanca.a
-  DEPENDS build.arm/Binaries/Debug/libcasablanca.a build.simulator/Binaries/Debug/libcasablanca.a
+  COMMAND lipo -create
+    -output "${CMAKE_CURRENT_BINARY_DIR}/libcasablanca.a"
+    ${SIM_BINARY_DIR}/Binaries/${CMAKE_BUILD_TYPE}/libcasablanca.a
+    ${ARM_BINARY_DIR}/Binaries/${CMAKE_BUILD_TYPE}/libcasablanca.a
+  DEPENDS
+    sim
+    arm
+    "${SIM_BINARY_DIR}/Binaries/${CMAKE_BUILD_TYPE}/libcasablanca.a"
+    "${ARM_BINARY_DIR}/Binaries/${CMAKE_BUILD_TYPE}/libcasablanca.a"
+  VERBATIM
 )
 
 add_custom_target(casablanca ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/libcasablanca.a)
