@@ -25,6 +25,7 @@
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 #include "stdafx.h"
+#include <concrt.h>
 
 #if WINAPI_FAMILY == WINAPI_FAMILY_APP
 
@@ -115,16 +116,30 @@ public:
                 tce.set_exception(std::make_exception_ptr(websocket_exception(_XPLATSTR("Error occured during receive."))));
             }
         }, 
-        [=]()
+        [=]() // Close handler called upon receiving a close frame from the server.
         {
-            close_pending_tasks_with_error();           
+            close_pending_tasks_with_error();
             m_close_tce.set();
+            m_server_close_complete.set();
         }); 
     }
 
     ~winrt_client()
     {
-        close_pending_tasks_with_error();
+        // task_completion_event::set() returns false if it has already been set.
+        // In that case, wait on the m_server_close_complete event for the tce::set() to complete.
+        // The websocket client on close handler (upon receiving close frame from server) will 
+        // set this event.
+        // If we have not received a close frame from the server, this set will be a no-op as the 
+        // websocket_client is anyways destructing.
+        if (!m_close_tce.set())
+        {
+            m_server_close_complete.wait(); 
+        }
+        else
+        {
+            close_pending_tasks_with_error();
+        }
     }
 
     void close_pending_tasks_with_error()
@@ -298,6 +313,13 @@ private:
     ReceiveContext ^ m_context;
 
     pplx::task_completion_event<void> m_close_tce;
+    // There is a bug in ppl task_completion_event. The task_completion_event::set() accesses some 
+    // internal data after signalling the event. The waiting thread might go ahead and start destroying the 
+    // websocket_client. Due to this race, set() can cause a crash.
+    // To workaround this bug, maintain another event: m_server_close_complete. We will signal this when the m_close_tce.set() has 
+    // completed. The websocket_client destructor can wait on this event before proceeding.
+    Concurrency::event m_server_close_complete;
+
     // m_client_closed maintains the state of the client. It is set to true when:
     // 1. the client has not connected 
     // 2. if it has received a close frame from the server.
