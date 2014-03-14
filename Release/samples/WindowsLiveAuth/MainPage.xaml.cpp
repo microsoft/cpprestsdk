@@ -110,7 +110,7 @@ void MainPage::Button_Click_2(Platform::Object^ sender, Windows::UI::Xaml::Route
         {
             try
             {
-                auto str = value.get().to_string();
+                auto str = value.get().serialize();
                 this->Block1->Text = ref new Platform::String(str.c_str());
             }
             catch(std::exception& exc)
@@ -156,7 +156,7 @@ void MainPage::UploadButton_Click(Platform::Object^ sender, Windows::UI::Xaml::R
         {
             try
             {
-                auto message = response.get().to_string();
+                auto message = response.get().serialize();
                 this->Block1->Text = ref new Platform::String(message.c_str());
             }
             catch(std::exception& exc)

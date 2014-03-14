@@ -2,8 +2,12 @@
 
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Common.Build.settings" />
 
-  <ItemGroup>
-      <ProjectFile Include="vs11\FacebookDemo.vcxproj"/>
+  <ItemGroup Condition="'$(DevToolsVersion)'=='110'">
+      <ProjectFile Include="FacebookDemo110.vcxproj"/>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(DevToolsVersion)'=='120'">
+      <ProjectFile Include="FacebookDemo120.vcxproj"/>
   </ItemGroup>
 
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />

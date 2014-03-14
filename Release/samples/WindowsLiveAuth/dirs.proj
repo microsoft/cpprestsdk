@@ -3,7 +3,11 @@
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Common.Build.settings" />
 
   <ItemGroup Condition="'$(DevToolsVersion)'=='110'">
-      <ProjectFile Include="VS11\WindowsLiveAuth.vcxproj"/>
+      <ProjectFile Include="WindowsLiveAuth110.vcxproj"/>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(DevToolsVersion)'=='120'">
+      <ProjectFile Include="WindowsLiveAuth120.vcxproj"/>
   </ItemGroup>
 
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />

@@ -40,8 +40,9 @@
     <CasablancaResourceDir>$(BuildRoot)\Release\Resource</CasablancaResourceDir>
     <CasablancaIncludeDir>$(BuildRoot)\Release\include</CasablancaIncludeDir>
     <CollateralsDir>$(BuildRoot)\Release\Collateral</CollateralsDir>
+    <PocoRoot Condition="'$(PocoRoot)'=='' AND Exists('$(BuildRoot)\..\Tools\poco\poco$(DevToolsVersion)')">$(BuildRoot)\..\Tools\poco\poco$(DevToolsVersion)</PocoRoot>
   </PropertyGroup>
-  
+
   <!-- try locating configuration file -->
   <Import Condition="Exists('$(BuildRoot)\..\Build\environment.casablanca.settings')" Project="$(BuildRoot)\..\Build\environment.casablanca.settings"/>
 

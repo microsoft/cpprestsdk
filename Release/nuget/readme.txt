@@ -8,4 +8,3 @@ Here are the steps to follow to generate Casablanca's NuGet package:
         PS C:\NativeCloud\Main\Tools\NuGet> Write-NuGetPackage .\cpprestsdk.autopkg -SplitThreshold 1000
         
 4. Test generated NuGet package ***Important*** on ALL flavors, architectures, platforms(XP, store, phone, desktop), configurations, VS versions
-5. Add this new package to TFS and delete old one.
