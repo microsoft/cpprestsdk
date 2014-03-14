@@ -118,7 +118,13 @@ TEST_FIXTURE(uri_address, outside_ssl_json,
     }).then([=](json::value jsonArray)
     {
         int count = 0;
-        auto& items = jsonArray[U("items")];
+        json::object& obj = jsonArray.as_object();
+
+        VERIFY_ARE_NOT_EQUAL(obj.find(U("pageInfo")), obj.end());
+        VERIFY_ARE_NOT_EQUAL(obj.find(U("items")), obj.end());
+
+        auto& items = obj[U("items")];
+
         for(auto iter = items.as_array().cbegin(); iter != items.as_array().cend(); ++iter)
         {
             const auto& i = *iter;

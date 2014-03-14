@@ -920,6 +920,7 @@ std::unique_ptr<web::json::details::_Object> JSON_Parser<CharType>::_ParseObject
     GetNextToken(tkn);
 
     auto obj = utility::details::make_unique<web::json::details::_Object>();
+    auto& elems = obj->m_object.m_elements;
 
     if ( tkn.kind != JSON_Parser<CharType>::Token::TKN_CloseBrace ) 
     {
@@ -951,9 +952,9 @@ std::unique_ptr<web::json::details::_Object> JSON_Parser<CharType>::_ParseObject
             auto fieldValue = _ParseValue(tkn);
             auto type = fieldValue->type();
 
-            obj->m_object.m_elements.emplace_back(utility::conversions::to_string_t(fieldName), json::value(std::move(fieldValue), type));
+            elems.emplace_back(utility::conversions::to_string_t(fieldName), json::value(std::move(fieldValue), type));
 #else
-            obj->m_object.m_elements.emplace_back(utility::conversions::to_string_t(fieldName), json::value(_ParseValue(tkn)));
+            elems.emplace_back(utility::conversions::to_string_t(fieldName), json::value(_ParseValue(tkn)));
 #endif
 
             // State 4: Looking for a comma or a closing brace
@@ -974,6 +975,8 @@ std::unique_ptr<web::json::details::_Object> JSON_Parser<CharType>::_ParseObject
 done:
 
     GetNextToken(tkn);
+
+    ::std::sort(elems.begin(), elems.end(), json::object::compare_pairs);
 
     return obj;
 

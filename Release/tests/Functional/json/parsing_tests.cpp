@@ -498,6 +498,20 @@ TEST(deeply_nested)
     VERIFY_PARSING_THROW(json::value::parse(strBad));
 }
 
+TEST(parse_object)
+{
+    utility::stringstream_t ss;
+    ss << U("{\"z\":2, \"a\":1}");
+    json::value v = json::value::parse(ss);
+    auto& obj = v.as_object();
+
+    VERIFY_ARE_NOT_EQUAL(obj.find(U("a")), obj.end());
+    VERIFY_ARE_NOT_EQUAL(obj.find(U("z")), obj.end());
+    VERIFY_ARE_EQUAL(obj["a"], 1);
+    VERIFY_ARE_EQUAL(obj["z"], 2);
+    VERIFY_ARE_EQUAL(obj.size(), 2);
+}
+
 } // SUITE(parsing_tests)
 
 }}}
