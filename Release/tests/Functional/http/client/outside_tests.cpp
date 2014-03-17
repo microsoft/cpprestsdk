@@ -115,10 +115,10 @@ TEST_FIXTURE(uri_address, outside_ssl_json,
     playlistClient.request(methods::GET).then([=](http_response playlistResponse) -> pplx::task<json::value>
     {
         return playlistResponse.extract_json();
-    }).then([=](json::value jsonArray)
+    }).then([=](json::value v)
     {
         int count = 0;
-        json::object& obj = jsonArray.as_object();
+        auto& obj = v.as_object();
 
         VERIFY_ARE_NOT_EQUAL(obj.find(U("pageInfo")), obj.end());
         VERIFY_ARE_NOT_EQUAL(obj.find(U("items")), obj.end());

@@ -498,7 +498,13 @@ TEST(deeply_nested)
     VERIFY_PARSING_THROW(json::value::parse(strBad));
 }
 
-TEST(parse_object)
+ static bool compare_pairs(const std::pair<utility::string_t, json::value>& p1,
+                           const std::pair<utility::string_t, json::value>& p2)
+ {
+   return p1.first < p2.first;
+ }
+
+TEST(unsorted_object_parsing)
 {
     utility::stringstream_t ss;
     ss << U("{\"z\":2, \"a\":1}");
@@ -507,9 +513,11 @@ TEST(parse_object)
 
     VERIFY_ARE_NOT_EQUAL(obj.find(U("a")), obj.end());
     VERIFY_ARE_NOT_EQUAL(obj.find(U("z")), obj.end());
-    VERIFY_ARE_EQUAL(obj["a"], 1);
-    VERIFY_ARE_EQUAL(obj["z"], 2);
+    VERIFY_ARE_EQUAL(obj[U("a")], 1);
+    VERIFY_ARE_EQUAL(obj[U("z")], 2);
     VERIFY_ARE_EQUAL(obj.size(), 2);
+
+    VERIFY_IS_TRUE(::std::is_sorted(obj.begin(), obj.end(), compare_pairs));
 }
 
 } // SUITE(parsing_tests)

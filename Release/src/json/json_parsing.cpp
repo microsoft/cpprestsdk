@@ -952,9 +952,9 @@ std::unique_ptr<web::json::details::_Object> JSON_Parser<CharType>::_ParseObject
             auto fieldValue = _ParseValue(tkn);
             auto type = fieldValue->type();
 
-            elems.emplace_back(utility::conversions::to_string_t(fieldName), json::value(std::move(fieldValue), type));
+            elems.emplace_back(utility::conversions::to_string_t(std::move(fieldName)), json::value(std::move(fieldValue), type));
 #else
-            elems.emplace_back(utility::conversions::to_string_t(fieldName), json::value(_ParseValue(tkn)));
+            elems.emplace_back(utility::conversions::to_string_t(std::move(fieldName)), json::value(_ParseValue(tkn)));
 #endif
 
             // State 4: Looking for a comma or a closing brace
