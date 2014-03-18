@@ -272,6 +272,7 @@ TEST_FIXTURE(uri_address, reply_transfer_encoding_4k)
     listener.close().wait();
 }
 
+// Fails sporadically, TFS 906957
 TEST_FIXTURE(uri_address, reply_chunked_4k)
 {
     web::http::experimental::listener::http_listener listener(m_uri);

@@ -431,7 +431,7 @@ public:
         /// </summary>
         /// <param name="key">The name of the field</param>
         /// <returns>The value kept in the field; null if the field does not exist</returns>
-        CASABLANCA_DEPRECATED("This API is deprecated and will be removed in a future release, use operator[] instead.")
+        CASABLANCA_DEPRECATED("This API is deprecated and will be removed in a future release, use json::value::at() instead.")
         value get(const utility::string_t &key) const;
 
         /// <summary>
@@ -469,13 +469,6 @@ public:
         /// <returns>A reference to the value kept in the field.</returns>
         _ASYNCRTIMP value & operator [] (const utility::string_t &key);
 
-        /// <summary>
-        /// Accesses a field of a JSON object.
-        /// </summary>
-        /// <param name="key">The name of the field</param>
-        /// <returns>A reference to the value kept in the field.</returns>
-        _ASYNCRTIMP const value & operator [] (const utility::string_t &key) const;
-
 #ifdef _MS_WINDOWS
 private:
         // Only used internally by JSON parser
@@ -492,7 +485,7 @@ public:
         /// </summary>
         /// <param name="key">The index of an element in the JSON array</param>
         /// <returns>The value kept at the array index; null if outside the boundaries of the array</returns>
-        CASABLANCA_DEPRECATED("This API is deprecated and will be removed in a future release, use operator[] instead.")
+        CASABLANCA_DEPRECATED("This API is deprecated and will be removed in a future release, use json::value::at() instead.")
         value get(size_t index) const;
 
         /// <summary>
