@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|ARM">
       <Configuration>Debug</Configuration>
@@ -27,104 +27,110 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{43DE4DF3-ACAA-429E-B260-CC6D4FE82658}</ProjectGuid>
-    <VCTargetsPath Condition="'$(VCTargetsPath11)' != '' and '$(VSVersion)' == '' and $(VisualStudioVersion) == ''">$(VCTargetsPath11)</VCTargetsPath>
-    <RootNamespace>FacebookDemo</RootNamespace>
+    <ProjectGuid>{1c20f771-3131-46e8-805f-aa1fe44165c0}</ProjectGuid>
+    <RootNamespace>WindowsLiveAuth</RootNamespace>
     <DefaultLanguage>en-US</DefaultLanguage>
-    <MinimumVisualStudioVersion>11.0</MinimumVisualStudioVersion>
+    <MinimumVisualStudioVersion>12.0</MinimumVisualStudioVersion>
     <AppContainerApplication>true</AppContainerApplication>
+    <ApplicationType>Windows Store</ApplicationType>
+    <ApplicationTypeRevision>8.1</ApplicationTypeRevision>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Release.Product.Settings" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
-  <PropertyGroup>
-    <PackageCertificateKeyFile>FacebookDemo_TemporaryKey.pfx</PackageCertificateKeyFile>
-  </PropertyGroup>
-  <PropertyGroup>
-    <OutDir>$(OutDir)\$(MSBuildProjectName)\</OutDir>
-  </PropertyGroup>
-  <PropertyGroup>
-    <DevLabSampleProjectRoot>..\</DevLabSampleProjectRoot>
-  </PropertyGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <ClCompile>
-      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
-      <DisableSpecificWarnings>4453</DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>$(MSBuildProjectDirectory);$(CasablancaIncludeDir);$(DevLabSampleProjectRoot);$(MSBuildProjectDirectory)\Generated Files;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
     <ClCompile>
-      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
-      <DisableSpecificWarnings>4453</DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>$(MSBuildProjectDirectory);$(CasablancaIncludeDir);$(DevLabSampleProjectRoot);$(MSBuildProjectDirectory)\Generated Files;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <AdditionalOptions>/bigobj /Zm137 %(AdditionalOptions)</AdditionalOptions>
-      <DisableSpecificWarnings>4453</DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>$(MSBuildProjectDirectory);$(CasablancaIncludeDir);$(DevLabSampleProjectRoot);$(MSBuildProjectDirectory)\Generated Files;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
-      <DisableSpecificWarnings>4453</DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>$(MSBuildProjectDirectory);$(CasablancaIncludeDir);$(DevLabSampleProjectRoot);$(MSBuildProjectDirectory)\Generated Files;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
-      <DisableSpecificWarnings>4453</DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>$(MSBuildProjectDirectory);$(CasablancaIncludeDir);$(DevLabSampleProjectRoot);$(MSBuildProjectDirectory)\Generated Files;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
-      <DisableSpecificWarnings>4453</DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>$(MSBuildProjectDirectory);$(CasablancaIncludeDir);$(DevLabSampleProjectRoot);$(MSBuildProjectDirectory)\Generated Files;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalOptions>/bigobj /Zm200 %(AdditionalOptions)</AdditionalOptions>
+      <DisableSpecificWarnings>4453</DisableSpecificWarnings>
+      <AdditionalIncludeDirectories>$(MSBuildProjectDirectory);$(CasablancaIncludeDir);$(MSBuildProjectDirectory)\Generated Files;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <PropertyGroup>
+    <OutDir>$(OutDir)\$(MSBuildProjectName)\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PackageCertificateKeyFile>WindowsLiveAuth_TemporaryKey.pfx</PackageCertificateKeyFile>
+  </PropertyGroup>
   <ItemGroup>
-    <ClInclude Include="Facebook.h" />
+    <ClInclude Include="live_connect.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="App.xaml.h">
       <DependentUpon>App.xaml</DependentUpon>
@@ -145,10 +151,10 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <AppxManifest Include="Package.appxmanifest">
+    <AppxManifest Include="Package120.appxmanifest">
       <SubType>Designer</SubType>
     </AppxManifest>
-    <None Include="FacebookDemo_TemporaryKey.pfx" />
+    <None Include="WindowsLiveAuth_TemporaryKey.pfx" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\Logo.png" />
@@ -160,7 +166,6 @@
     <ClCompile Include="App.xaml.cpp">
       <DependentUpon>App.xaml</DependentUpon>
     </ClCompile>
-    <ClCompile Include="Facebook.cpp" />
     <ClCompile Include="MainPage.xaml.cpp">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </ClCompile>
@@ -174,44 +179,11 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\build\casablanca110.winrt.vcxproj">
+    <ProjectReference Include="$(CasablancaSrcDir)\build\casablanca120.winrt.vcxproj">
       <Project>{198ed804-2655-4d92-8104-c220e3ea9452}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
-  <Target Name="PreBuildEvent">
-    <CreateItem Include="$(DevLabSampleProjectRoot)\*.xaml">
-      <Output TaskParameter="Include" ItemName="Xmlfiles" />
-    </CreateItem>
-    <CreateItem Include="$(DevLabSampleProjectRoot)\*.cpp">
-      <Output TaskParameter="Include" ItemName="Cppfiles" />
-    </CreateItem>
-    <CreateItem Include="$(DevLabSampleProjectRoot)\*.h">
-      <Output TaskParameter="Include" ItemName="Headerfiles" />
-    </CreateItem>
-    <Copy SourceFiles="@(Xmlfiles)" DestinationFolder="$(MSBuildProjectDirectory)" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
-    <Copy SourceFiles="@(Cppfiles)" DestinationFolder="$(MSBuildProjectDirectory)" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
-    <Copy SourceFiles="@(Headerfiles)" DestinationFolder="$(MSBuildProjectDirectory)" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
-    <Copy SourceFiles="$(DevLabSampleProjectRoot)\Common\StandardStyles.xaml" DestinationFolder="$(MSBuildProjectDirectory)\Common" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
-    <Copy SourceFiles="$(DevLabSampleProjectRoot)\Package.appxmanifest" DestinationFolder="$(MSBuildProjectDirectory)" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
-    <Copy SourceFiles="$(DevLabSampleProjectRoot)\FacebookDemo_TemporaryKey.pfx" DestinationFolder="$(MSBuildProjectDirectory)" ContinueOnError="true" OverwriteReadOnlyFiles="true" />
-  </Target>
-  <Target Name="PostBuildEvent">
-    <CreateItem Include="$(MSBuildProjectDirectory)\**\*.xaml">
-      <Output TaskParameter="Include" ItemName="DXmlfiles" />
-    </CreateItem>
-    <CreateItem Include="$(MSBuildProjectDirectory)\*.cpp">
-      <Output TaskParameter="Include" ItemName="DCppfiles" />
-    </CreateItem>
-    <CreateItem Include="$(MSBuildProjectDirectory)\*.h">
-      <Output TaskParameter="Include" ItemName="DHeaderfiles" />
-    </CreateItem>
-    <Delete Files="@(DXmlfiles)" ContinueOnError="true" />
-    <Delete Files="@(DCppfiles)" ContinueOnError="true" />
-    <Delete Files="@(DHeaderfiles)" ContinueOnError="true" />
-    <RemoveDir Directories="$(MSBuildProjectDirectory)\Common" ContinueOnError="true" />
-    <Delete Files="$(MSBuildProjectDirectory)\Package.appxmanifest" ContinueOnError="true" />
-  </Target>
 </Project>

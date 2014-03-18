@@ -137,7 +137,7 @@
     <Page Include="PlayingTable.xaml" />
   </ItemGroup>
   <ItemGroup>
-    <AppxManifest Include="Package.appxmanifest">
+    <AppxManifest Include="Package110.appxmanifest">
       <SubType>Designer</SubType>
     </AppxManifest>
     <None Include="BlackJack_UIClient_TemporaryKey.pfx" />
