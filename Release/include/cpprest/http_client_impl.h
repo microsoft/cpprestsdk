@@ -44,9 +44,7 @@ using namespace concurrency;
 #else
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
-#ifndef __APPLE__
 #include <boost/asio/ssl.hpp>
-#endif
 #include <boost/algorithm/string.hpp>
 #include <pplx/threadpool.h>
 #endif
