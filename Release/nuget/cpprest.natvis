@@ -127,11 +127,8 @@
       {(*((web::json::details::_Boolean*)(m_value._Myptr))).m_value}
     </DisplayString>
 
-    <DisplayString Condition="(m_kind==web::json::value::String) &amp;&amp; (((&amp;((*((web::json::details::_String*)(m_value._Myptr))).m_string))))->_Myptr==0x00000000">
-      {*((((&amp;((*((web::json::details::_String*)(m_value._Myptr))).m_wstring)))))->_Myptr}
-    </DisplayString>
-    <DisplayString Condition="(m_kind==web::json::value::String) &amp;&amp; (((&amp;((*((web::json::details::_String*)(m_value._Myptr))).m_wstring))))->_Myptr==0x00000000">
-      {*((((&amp;((*((web::json::details::_String*)(m_value._Myptr))).m_string)))))->_Myptr}
+    <DisplayString Condition="(m_kind==web::json::value::String)">
+      {((((&amp;((*((web::json::details::_String*)(m_value._Myptr))).m_string)))))}
     </DisplayString>
     
     <DisplayString Condition="m_kind==web::json::value::Null">null</DisplayString>
@@ -149,13 +146,13 @@
 
     <Expand>
       <ArrayItems Condition="m_kind==web::json::value::Object">
-        <Size>m_object.m_elements._Mylast - m_object.m_elements._Myfirst</Size>
-        <ValuePointer>m_object.m_elements._Myfirst</ValuePointer>
+        <Size>(*((web::json::details::_Object*)(m_value._Myptr))).m_object.m_elements._Mylast - (*((web::json::details::_Object*)(m_value._Myptr))).m_object.m_elements._Myfirst</Size>
+        <ValuePointer>(*((web::json::details::_Object*)(m_value._Myptr))).m_object.m_elements._Myfirst</ValuePointer>
       </ArrayItems>
-
+    
       <ArrayItems Condition="m_kind==web::json::value::Array">
-        <Size>m_array.m_elements._Mylast - m_array.m_elements._Myfirst</Size>
-        <ValuePointer>m_array.m_elements._Myfirst</ValuePointer>
+        <Size>(*((web::json::details::_Array*)(m_value._Myptr))).m_array.m_elements._Mylast - (*((web::json::details::_Array*)(m_value._Myptr))).m_array.m_elements._Myfirst</Size>
+        <ValuePointer>(*((web::json::details::_Array*)(m_value._Myptr))).m_array.m_elements._Myfirst</ValuePointer>
       </ArrayItems>
     </Expand>
  
