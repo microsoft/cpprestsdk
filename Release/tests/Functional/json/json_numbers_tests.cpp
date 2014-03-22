@@ -140,13 +140,13 @@ void test_double(double number)
 
     // If it is outside the range, these methods should return false.
     // Note that at this point there is no guarantee that the number was stored as double.
-    
+
     if (number < INT_MIN || number > INT_MAX || number!=floor(number))
         VERIFY_IS_FALSE(num.as_number().is_int32());
-    
+
     if (number < 0 || number > UINT_MAX || number!=floor(number))
         VERIFY_IS_FALSE(num.as_number().is_uint32());
-    
+
     if (number < LLONG_MIN || number > LLONG_MAX || number!=floor(number))
         VERIFY_IS_FALSE(num.as_number().is_int64());
 
@@ -167,10 +167,14 @@ TEST(parsing_doubles)
     test_double(pow(2.0, 60.0));
     test_double(pow(2.0, 63.0));
     test_double(0 - pow(2.0, 63.0) * 1.5);  // between 0-ULLONG_MAX and LLONGMIN
+}
 
+TEST(parsing_very_large_doubles, "Ignore:Linux", "Bug 908824")
+{
     test_double(pow(2.0, 64.0));
     test_double(pow(2.0, 70.0));
     test_double(pow(2.0, 80.0));
+    test_double(pow(2.0, 120.0));
 }
 
 void test_integral(int number)
