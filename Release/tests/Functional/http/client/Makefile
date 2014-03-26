@@ -19,6 +19,7 @@ FILENAMES = \
 	http_client_tests \
 	http_methods_tests \
 	multiple_requests \
+	oauth2_tests \
 	outside_tests \
 	pipeline_stage_tests \
 	progress_handler_tests \
