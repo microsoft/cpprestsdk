@@ -18,7 +18,7 @@
 *
 * oauth2_handler.h
 *
-* HTTP Library: Oauth 2.0 protocol handler (http_pipeline_stage)
+* HTTP Library: Oauth 2.0 protocol handler
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
 *
@@ -42,33 +42,37 @@ namespace client
 /// <summary>
 /// Oauth2 configuration.
 /// </summary>
-class oauth2_config
+struct oauth2_config
 {
-public:
     oauth2_config(utility::string_t token) : m_token(std::move(token)) {}
 
-    const utility::string_t& token() const { return m_token; }
-    bool is_set() const { return !m_token.empty(); }
+    bool is_enabled() const { return !m_token.empty(); }
+
+    utility::string_t m_token;
 
 private:
     friend class http_client_config;
     oauth2_config() {}
-
-    utility::string_t m_token;
 };
 
 
 /// <summary>
-/// Oauth 2.0 handler. Specialization of http_pipeline_stage.
+/// Oauth2 handler. Specialization of http_pipeline_stage.
 /// </summary>
 class oauth2_handler : public http_pipeline_stage
 {
 public:
     oauth2_handler(oauth2_config config) : m_config(std::move(config)) {}
 
+    void set_config(oauth2_config config) { m_config = std::move(config); }
+    const oauth2_config& get_config() const { return m_config; }
+
     virtual pplx::task<http_response> propagate(http_request request) override
     {
-        request.headers().add(_XPLATSTR("Authorization"), _XPLATSTR("Bearer ") + m_config.token());
+        if (m_config.is_enabled())
+        {
+            request.headers().add(_XPLATSTR("Authorization"), _XPLATSTR("Bearer ") + m_config.m_token);
+        }
         return next_stage()->propagate(request);
     }
 

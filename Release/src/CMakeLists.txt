@@ -21,6 +21,7 @@ if(UNIX)
     http/listener/http_listener.cpp
     http/listener/http_msg_listen.cpp
     http/listener/http_server_api.cpp
+    http/oauth/oauth1_handler.cpp
     utilities/base64.cpp
     )
   if(APPLE)
@@ -48,6 +49,7 @@ elseif(WIN32)
     utilities/base64.cpp
     http/client/http_win7.cpp
     http/listener/http_windows_server.cpp
+    http/oauth/oauth1_handler.cpp
     streams/windows/fileio.cpp
     streams/windows/ioscheduler.cpp
     utilities/dllmain.cpp

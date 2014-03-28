@@ -57,6 +57,7 @@ namespace pplx = Concurrency;
 #include "cpprest/uri.h"
 #include "cpprest/basic_types.h"
 #include "cpprest/asyncrt_utils.h"
+#include "cpprest/oauth1_handler.h"
 #include "cpprest/oauth2_handler.h"
 
 namespace web 
@@ -203,6 +204,18 @@ public:
     }
 
     /// <summary>
+    /// Get oauth1 configuration
+    /// </summary>
+    /// <returns>Reference to oauth1 config.</returns>
+    const oauth1_config& oauth1() const { return m_oauth1; }
+
+    /// <summary>
+    /// Set oauth1 configuration
+    /// </summary>
+    /// <param name="config">Oauth1 configuration.</param>
+    void set_oauth1(oauth1_config config) { m_oauth1 = std::move(config); }
+
+    /// <summary>
     /// Get oauth2 configuration
     /// </summary>
     /// <returns>Reference to oauth2 config.</returns>
@@ -336,6 +349,7 @@ public:
     }
 
 private:
+    oauth1_config m_oauth1;
     oauth2_config m_oauth2;
     web_proxy m_proxy;
     http::client::credentials m_credentials;

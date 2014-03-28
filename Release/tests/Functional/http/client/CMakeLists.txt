@@ -12,6 +12,7 @@ set(SOURCES
   http_client_tests.cpp
   http_methods_tests.cpp
   multiple_requests.cpp
+  oauth1_tests.cpp
   oauth2_tests.cpp
   outside_tests.cpp
   pipeline_stage_tests.cpp
