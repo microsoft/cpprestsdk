@@ -40,23 +40,42 @@ namespace web { namespace http { namespace client
 {
 
 
-static const int _nonce_length(32);
-static const utility::string_t _nonce_chars("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789");
+static const int s_nonce_length(32);
+static const utility::string_t s_nonce_chars("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789");
+
+
+std::vector<unsigned char> oauth1_handler::_hmac_sha1(const utility::string_t key, const utility::string_t data)
+{
+    // Generate digest with using libcrypto required by libssl.
+    unsigned char digest[HMAC_MAX_MD_CBLOCK];
+    unsigned int digest_len = 0;
+
+    HMAC(EVP_sha1(), key.c_str(), static_cast<int>(key.length()),
+            (const unsigned char*) data.c_str(), data.length(),
+            digest, &digest_len);
+
+    return std::vector<unsigned char>(digest, digest + digest_len);
+}
 
 
 utility::string_t oauth1_handler::_generate_nonce()
 {
-    std::uniform_int_distribution<> distr(0, static_cast<int>(_nonce_chars.length() - 1));
+    std::uniform_int_distribution<> distr(0, static_cast<int>(s_nonce_chars.length() - 1));
     utility::string_t nonce;
-    nonce.reserve(_nonce_length);
-    std::generate_n(std::back_inserter(nonce), _nonce_length, [&]() { return _nonce_chars[distr(m_random)]; } );
+    nonce.reserve(s_nonce_length);
+    std::generate_n(std::back_inserter(nonce), s_nonce_length, [&]() { return s_nonce_chars[distr(m_random)]; } );
     return nonce;
+}
+
+utility::string_t oauth1_handler::_generate_timestamp()
+{
+// FIXME: this only works on Linux
+    return std::to_string(utility::datetime::utc_timestamp() - 11644473600LL);
 }
 
 // Notes:
 // - Doesn't support URIs without scheme or host.
 // - If URI port is unspecified.
-// - If query exists '?' is added. See: _uri_components::join()
 utility::string_t oauth1_handler::_build_base_string_uri(const uri& u)
 {
     utility::ostringstream_t os;
@@ -66,15 +85,16 @@ utility::string_t oauth1_handler::_build_base_string_uri(const uri& u)
         os << ":" << u.port();
     }
     os << u.path();
-    if (!u.query().empty())
-    {
-        os << "?";
-    }
+// TODO: remove, trailing '?' is not added to the uri
+//    if (!u.query().empty())
+//    {
+//        os << "?";
+//    }
     return uri::encode_data_string(os.str());
 }
 
-utility::string_t oauth1_handler::_build_query_string(uri u,
-        utility::string_t timestamp, utility::string_t nonce)
+utility::string_t oauth1_handler::_build_normalized_parameters(uri u,
+        utility::string_t timestamp, utility::string_t nonce) const
 {
     // While map sorts items by keys it doesn't take value into account.
     // We need to sort the query parameters separately.
@@ -102,39 +122,30 @@ utility::string_t oauth1_handler::_build_query_string(uri u,
     return uri::encode_data_string(os.str());
 }
 
+// Builds signature base string according to:
+// http://tools.ietf.org/html/rfc5849#section-3.4.1.1
 utility::string_t oauth1_handler::_build_signature_base_string(http_request request,
-        utility::string_t timestamp, utility::string_t nonce)
+        utility::string_t timestamp, utility::string_t nonce) const
 {
-    uri u(request.request_uri());
+    uri u(request.absolute_uri());
     utility::ostringstream_t os;
-
-    os << request.method() << "&";
-    os << _build_base_string_uri(u) << "&";
-    os << _build_query_string(std::move(u), std::move(timestamp), std::move(nonce));
-
+    os << request.method();
+    os << "&" << _build_base_string_uri(u);
+    os << "&" << _build_normalized_parameters(std::move(u), std::move(timestamp), std::move(nonce));
     return os.str();
 }
 
-static std::vector<unsigned char> _hmac_sha1(const utility::string_t key, const utility::string_t data)
+utility::string_t oauth1_handler::_build_key() const
 {
-    unsigned char digest[HMAC_MAX_MD_CBLOCK];
-    unsigned int digest_len = 0;
-
-    HMAC(EVP_sha1(), key.c_str(), static_cast<int>(key.length()),
-            (const unsigned char*) data.c_str(), data.length(),
-            digest, &digest_len);
-
-    return std::vector<unsigned char>(digest, digest + digest_len);
+    return uri::encode_data_string(m_config.m_secret) + "&" + uri::encode_data_string(m_config.m_token_secret);
 }
 
 // Builds HMAC-SHA1 signature according to:
 // http://tools.ietf.org/html/rfc5849#section-3.4.2
-utility::string_t oauth1_handler::_build_hmac_sha1_signature(http_request request, utility::string_t timestamp, utility::string_t nonce)
+utility::string_t oauth1_handler::_build_hmac_sha1_signature(http_request request, utility::string_t timestamp, utility::string_t nonce) const
 {
     auto text(_build_signature_base_string(std::move(request), std::move(timestamp), std::move(nonce)));
-    // TODO: refactor, same as plaintext signature
-    auto key(uri::encode_data_string(m_config.m_secret) + "&" + uri::encode_data_string(m_config.m_token_secret));
-    auto digest(_hmac_sha1(key, text));
+    auto digest(_hmac_sha1(_build_key(), text));
     auto signature(conversions::to_base64(digest));
     return signature;
 }
@@ -143,7 +154,7 @@ utility::string_t oauth1_handler::_build_hmac_sha1_signature(http_request reques
 /*
 // Builds RSA-SHA1 signature according to:
 // http://tools.ietf.org/html/rfc5849#section-3.4.3
-utility::string_t oauth1_handler::_build_rsa_sha1_signature(http_request request, utility::string_t timestamp, utility::string_t nonce)
+utility::string_t oauth1_handler::_build_rsa_sha1_signature(http_request request, utility::string_t timestamp, utility::string_t nonce) const
 {
     return "";
 }
@@ -151,24 +162,22 @@ utility::string_t oauth1_handler::_build_rsa_sha1_signature(http_request request
 
 // Builds PLAINTEXT signature according to:
 // http://tools.ietf.org/html/rfc5849#section-3.4.4
-utility::string_t oauth1_handler::_build_plaintext_signature()
+utility::string_t oauth1_handler::_build_plaintext_signature() const
 {
-    return uri::encode_data_string(m_config.m_secret) + "&" + uri::encode_data_string(m_config.m_token_secret);
+    return _build_key();
 }
 
-utility::string_t oauth1_handler::_build_signature(http_request request, utility::string_t timestamp, utility::string_t nonce)
+utility::string_t oauth1_handler::_build_signature(http_request request, utility::string_t timestamp, utility::string_t nonce) const
 {
     if (oauth1_methods::hmac_sha1 == m_config.m_method)
     {
         return _build_hmac_sha1_signature(std::move(request), std::move(timestamp), std::move(nonce));
     }
 // TODO: RSA-SHA1
-/*
-    else if (oauth1_methods::rsa_sha1 == m_config.m_method)
-    {
-        return _build_rsa_sha1_signature(std::move(request), std::move(timestamp), std::move(nonce));
-    }
-*/
+//    else if (oauth1_methods::rsa_sha1 == m_config.m_method)
+//    {
+//        return _build_rsa_sha1_signature(std::move(request), std::move(timestamp), std::move(nonce));
+//    }
     else if (oauth1_methods::plaintext == m_config.m_method)
     {
         return _build_plaintext_signature();
@@ -181,21 +190,22 @@ pplx::task<http_response> oauth1_handler::propagate(http_request request)
 {
     if (m_config.is_enabled())
     {
-        utility::string_t timestamp(std::to_string(utility::datetime::utc_timestamp()));
+        utility::string_t timestamp(_generate_timestamp());
         utility::string_t nonce(_generate_nonce());
 
-        utility::ostringstream_t os("Oauth ");
+        utility::ostringstream_t os;
+        os << "OAuth ";
         if (!m_config.m_realm.empty())
         {
             os << "realm=\"" << m_config.m_realm << "\", ";
         }
-        os << "oauth_version=\"1.0\", ";
-        os << "oauth_consumer_key=\"" << m_config.m_key << "\", ";
-        os << "oauth_token=\"" << m_config.m_token << "\", ";
-        os << "oauth_signature_method=\"" << m_config.m_method << "\", ";
-        os << "oauth_timestamp=\"" << timestamp << "\", ";
-        os << "oauth_nonce=\"" << nonce << "\", ";
-        os << "oauth_signature=\"" << _build_signature(request, std::move(timestamp), std::move(nonce)) << "\"";
+        os << "oauth_version=\"1.0\", oauth_consumer_key=\"" << m_config.m_key;
+        os << "\", oauth_token=\"" << m_config.m_token;
+        os << "\", oauth_signature_method=\"" << m_config.m_method;
+        os << "\", oauth_timestamp=\"" << timestamp;
+        os << "\", oauth_nonce=\"" << nonce;
+        os << "\", oauth_signature=\"" << uri::encode_data_string(_build_signature(request, std::move(timestamp), std::move(nonce)));
+        os << "\"";
 
         request.headers().add("Authorization", os.str());
     }

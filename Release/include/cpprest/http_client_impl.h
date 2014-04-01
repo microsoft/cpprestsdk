@@ -467,6 +467,7 @@ void http_client::build_pipeline(uri base_uri, http_client_config client_config)
 
 pplx::task<http_response> http_client::request(http_request request, pplx::cancellation_token token)
 {
+    request._set_base_uri(base_uri());
     request._set_cancellation_token(token);
     return m_pipeline->propagate(request);
 }

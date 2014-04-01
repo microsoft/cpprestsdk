@@ -107,17 +107,23 @@ public:
 
     utility::string_t _generate_nonce();
 
-    utility::string_t _build_base_string_uri(const uri& u);
-    utility::string_t _build_query_string(uri u, utility::string_t timestamp, utility::string_t nonce);
-    utility::string_t _build_signature_base_string(http_request request, utility::string_t timestamp, utility::string_t nonce);
+    utility::string_t _build_signature_base_string(http_request request, utility::string_t timestamp, utility::string_t nonce) const;
 
-    utility::string_t _build_hmac_sha1_signature(http_request request, utility::string_t timestamp, utility::string_t nonce);
+    utility::string_t _build_hmac_sha1_signature(http_request request, utility::string_t timestamp, utility::string_t nonce) const;
 // TODO: RSA-SHA1
-//    utility::string_t _build_rsa_sha1_signature(http_request request, utility::string_t timestamp, utility::string_t nonce);
-    utility::string_t _build_plaintext_signature();
-    utility::string_t _build_signature(http_request request, utility::string_t timestamp, utility::string_t nonce);
+//    utility::string_t _build_rsa_sha1_signature(http_request request, utility::string_t timestamp, utility::string_t nonce) const;
+    utility::string_t _build_plaintext_signature() const;
 
 private:
+    static utility::string_t _generate_timestamp();
+    static std::vector<unsigned char> _hmac_sha1(const utility::string_t key, const utility::string_t data);
+    static utility::string_t _build_base_string_uri(const uri& u);
+
+    utility::string_t _build_normalized_parameters(uri u, utility::string_t timestamp, utility::string_t nonce) const;
+
+    utility::string_t _build_signature(http_request request, utility::string_t timestamp, utility::string_t nonce) const;
+    utility::string_t _build_key() const;
+
     oauth1_config m_config;
     std::mt19937 m_random;
 };
