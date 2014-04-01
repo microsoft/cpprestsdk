@@ -379,6 +379,18 @@ TEST_FIXTURE(uri_address, cancel_while_downloading_data, "Ignore:Linux", "NYI", 
 }
 #endif
 
+TEST_FIXTURE(uri_address, no_transfer_encoding_content_length, "Ignore", "Manual")
+{
+    http_client client(U("http://ws.audioscrobbler.com/2.0/?method=artist.gettoptracks&artist=cher&api_key=6fcd59047568e89b1615975081258990&format=json"));
+
+    client.request(methods::GET).then([](http_response response){
+        VERIFY_IS_FALSE(response.headers().has(header_names::content_length) 
+            && response.headers().has(header_names::transfer_encoding));
+        return response.extract_string();
+    }).then([](string_t result){
+        VERIFY_ARE_EQUAL(result.size(), 34686);  // hardcoded the content size here, need to check the correct number for manual test.
+    }).wait();
+}
 #pragma endregion
 
 } // SUITE(connections_and_errors)

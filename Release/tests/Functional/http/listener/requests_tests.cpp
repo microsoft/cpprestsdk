@@ -212,6 +212,28 @@ TEST_FIXTURE(uri_address, response_order)
     }
 }
 
+TEST_FIXTURE(uri_address, uri_encoding)
+{
+    http_listener listener(m_uri);
+    listener.open().wait();
+    client::http_client client(m_uri);
+    utility::string_t encoded_uri;
+
+    listener.support([&](http_request request)
+    {
+        VERIFY_ARE_EQUAL(encoded_uri, request.relative_uri().to_string());
+        request.reply(status_codes::OK);
+    });
+
+    encoded_uri = uri::encode_uri(U("/path 1/path 2")); // Path component contains encoded characters
+    client.request(methods::GET, encoded_uri).wait();
+    encoded_uri = uri::encode_uri(U("/test?Text=J'ai besoin de trouver un personnage")); // Query string contains encoded characters
+    client.request(methods::GET, encoded_uri).wait();
+    encoded_uri = uri::encode_uri(U("/path 1/path 2#fragment1")); // URI has path and fragment components
+    client.request(methods::GET, encoded_uri).wait();
+    encoded_uri = uri::encode_uri(U("/path 1/path 2?key1=val1 val2#fragment1")); // URI has path, query and fragment components
+    client.request(methods::GET, encoded_uri).wait();
+}
 }
 
 }}}}

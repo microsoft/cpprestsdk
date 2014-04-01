@@ -353,6 +353,37 @@ TEST_FIXTURE(uri_address, date_header)
     VERIFY_ARE_EQUAL(value.to_string(), foundValue);
 }
 
+
+TEST_FIXTURE(uri_address, parsing_content_type_redundantsemicolon_json)
+{
+    test_http_server::scoped_server scoped(m_uri);
+    web::json::value body = web::json::value::string(U("Json body"));
+
+    scoped.server()->next_request().then([&](test_request *p_request){
+        std::map<utility::string_t, utility::string_t> headers;
+        headers[header_names::content_type] = U("application/json; charset=utf-8;;;;");
+        p_request->reply(200, U("OK"), headers, utility::conversions::to_utf8string(body.serialize()));
+    });
+
+    http_client client(m_uri);
+    auto resp = client.request(methods::GET).get();
+    VERIFY_ARE_EQUAL(resp.extract_json().get().serialize(), body.serialize());
+}
+
+TEST_FIXTURE(uri_address, parsing_content_type_redundantsemicolon_string)
+{
+    test_http_server::scoped_server scoped(m_uri);
+    std::string body("Body");
+    scoped.server()->next_request().then([&](test_request *p_request){
+        std::map<utility::string_t, utility::string_t> headers;
+        headers[header_names::content_type] = U("text/plain; charset  =  UTF-8;;;; ");
+        p_request->reply(200, U("OK"), headers, body);
+    });
+
+    http_client client(m_uri);
+    auto resp = client.request(methods::GET).get();
+    VERIFY_ARE_EQUAL(resp.extract_string().get(), utility::conversions::to_string_t(body));
+}
 } // SUITE(header_tests)
 
 }}}}

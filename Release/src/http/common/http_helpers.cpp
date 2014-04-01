@@ -118,6 +118,11 @@ namespace details
             return;
         }
         charset = possible_charset.substr(equals_index + 1);
+        // Remove the redundant ';' at the end of charset.
+        while (charset.back() == ';')
+        {
+            charset.pop_back();
+        }
         trim_whitespace(charset);
         if (charset.front() == _XPLATSTR('"') && charset.back() == _XPLATSTR('"')) 
         {
