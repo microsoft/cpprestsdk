@@ -96,7 +96,7 @@ class oauth1_handler : public http_pipeline_stage
 {
 public:
     oauth1_handler(oauth1_config config) :
-        m_random(utility::datetime::utc_timestamp()),
+        m_random((unsigned int)utility::datetime::utc_timestamp()),
         m_config(std::move(config))
     {}
 
