@@ -8,7 +8,4 @@
     <CppRestSDKVersionFileSuffix>$(CppRestSDKVersionMajor)_$(CppRestSDKVersionMinor)</CppRestSDKVersionFileSuffix>
     <CppRestSDKVersionString>$(CppRestSDKVersionMajor).$(CppRestSDKVersionMinor)</CppRestSDKVersionString>
   </PropertyGroup>
-<!--
-  Note: remember to regenerate guiddefs.wxi files using gen_guids_for_msi.ps1 whenever major or minor version file changes
--->
 </Project>
