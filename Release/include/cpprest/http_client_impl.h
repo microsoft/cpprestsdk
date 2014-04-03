@@ -461,8 +461,8 @@ void http_client::build_pipeline(uri base_uri, http_client_config client_config)
     details::verify_uri(base_uri);
 
     m_pipeline = ::web::http::http_pipeline::create_pipeline(std::make_shared<details::http_network_handler>(std::move(base_uri), client_config));
-    add_handler(std::make_shared<oauth1_handler>(client_config.oauth1()));
-    add_handler(std::make_shared<oauth2_handler>(client_config.oauth2()));
+	add_handler(std::dynamic_pointer_cast<http::http_pipeline_stage>(std::make_shared<oauth1_handler>(client_config.oauth1())));
+	add_handler(std::dynamic_pointer_cast<http::http_pipeline_stage>(std::make_shared<oauth2_handler>(client_config.oauth2())));
 }
 
 pplx::task<http_response> http_client::request(http_request request, pplx::cancellation_token token)

@@ -109,6 +109,12 @@
     <ClInclude Include="$(CasablancaIncludeDir)\cpprest\http_client_impl.h">
       <Filter>Header Files\cpprest</Filter>
     </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\oauth1_handler.h">
+      <Filter>Header Files\cpprest</Filter>
+    </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\oauth2_handler.h">
+      <Filter>Header Files\cpprest</Filter>
+    </ClInclude>    
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(CasablancaSrcDir)\http\client\http_msg_client.cpp">
@@ -118,6 +124,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(CasablancaSrcDir)\http\common\http_msg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CasablancaSrcDir)\http\oauth\oauth1_handler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(CasablancaSrcDir)\json\json.cpp">
