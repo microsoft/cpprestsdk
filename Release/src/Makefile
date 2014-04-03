@@ -19,6 +19,7 @@ SOURCES = \
 	http/listener/http_listener.cpp \
 	http/listener/http_msg_listen.cpp \
 	http/listener/http_server_api.cpp \
+	http/oauth/oauth1_handler.cpp \
 	utilities/base64.cpp
 
 ifeq ($(UNAME),APPLE)
@@ -50,6 +51,8 @@ HEADERS = \
 	../include/cpprest/http_server.h \
 	../include/cpprest/http_server_api.h \
 	../include/cpprest/interopstream.h \
+	../include/cpprest/oauth1_handler.h \
+	../include/cpprest/oauth2_handler.h \
 	../include/cpprest/producerconsumerstream.h \
 	../include/cpprest/rawptrstream.h \
 	../include/cpprest/json.h \

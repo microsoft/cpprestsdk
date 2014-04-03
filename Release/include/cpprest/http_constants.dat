@@ -133,3 +133,9 @@ DAT(utf16,                          "utf-16")
 DAT(utf16le,                        "utf-16le")
 DAT(utf16be,                        "utf-16be")
 #endif // _CHARSET_TYPES
+
+#ifdef _OAUTH1_METHODS
+DAT(hmac_sha1,                      _XPLATSTR("HMAC-SHA1"))
+DAT(rsa_sha1,                       _XPLATSTR("RSA-SHA1"))
+DAT(plaintext,                      _XPLATSTR("PLAINTEXT"))
+#endif // _OAUTH1_METHODS

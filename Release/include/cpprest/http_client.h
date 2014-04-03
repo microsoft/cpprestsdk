@@ -57,6 +57,8 @@ namespace pplx = Concurrency;
 #include "cpprest/uri.h"
 #include "cpprest/basic_types.h"
 #include "cpprest/asyncrt_utils.h"
+#include "cpprest/oauth1_handler.h"
+#include "cpprest/oauth2_handler.h"
 
 namespace web 
 { 
@@ -202,6 +204,30 @@ public:
     }
 
     /// <summary>
+    /// Get oauth1 configuration
+    /// </summary>
+    /// <returns>Reference to oauth1 config.</returns>
+    const oauth1_config& oauth1() const { return m_oauth1; }
+
+    /// <summary>
+    /// Set oauth1 configuration
+    /// </summary>
+    /// <param name="config">Oauth1 configuration.</param>
+    void set_oauth1(oauth1_config config) { m_oauth1 = std::move(config); }
+
+    /// <summary>
+    /// Get oauth2 configuration
+    /// </summary>
+    /// <returns>Reference to oauth2 config.</returns>
+    const oauth2_config& oauth2() const { return m_oauth2; }
+
+    /// <summary>
+    /// Set oauth2 configuration
+    /// </summary>
+    /// <param name="config">Oauth2 configuration.</param>
+    void set_oauth2(oauth2_config config) { m_oauth2 = std::move(config); }
+
+    /// <summary>
     /// Get the web proxy object
     /// </summary>
     /// <returns>A reference to the web proxy object.</returns>
@@ -323,6 +349,8 @@ public:
     }
 
 private:
+    oauth1_config m_oauth1;
+    oauth2_config m_oauth2;
     web_proxy m_proxy;
     http::client::credentials m_credentials;
     // Whether or not to guarantee ordering, i.e. only using one underlying TCP connection.

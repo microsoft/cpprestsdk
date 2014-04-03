@@ -38,6 +38,8 @@
 *~
 ipch/
 obj/
+#OSX files
+.DS_Store
 *.resfiles
 [Bb]in
 Binaries/

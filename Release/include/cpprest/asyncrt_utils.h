@@ -298,6 +298,14 @@ public:
     /// </summary>
     static _ASYNCRTIMP datetime __cdecl utc_now();
 
+    /// <summary>
+    /// Returns seconds since Unix/POSIX time epoch at 01-01-1970 00:00:00.
+    /// </summary>
+    static interval_type utc_timestamp()
+    {
+        return utc_now().to_interval() / _secondTicks;
+    }
+
     datetime() : m_interval(0)
     {
     }
