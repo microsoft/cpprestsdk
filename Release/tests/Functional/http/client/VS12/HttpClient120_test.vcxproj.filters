@@ -25,6 +25,12 @@
     <ClCompile Include="..\multiple_requests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\oauth1_tests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\oauth2_tests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\outside_tests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
