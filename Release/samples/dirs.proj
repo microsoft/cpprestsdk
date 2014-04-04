@@ -5,6 +5,7 @@
   <ItemGroup>
     <ProjectFile Include="BingRequest\dirs.proj"/>
     <ProjectFile Include="BlackJack\dirs.proj"/>
+    <ProjectFile Include="Oauth1Client\dirs.proj"/>
   </ItemGroup>
 
   <ItemGroup Condition="'$(DevToolsVersion)'=='110' or '$(DevToolsVersion)'=='120'">
@@ -24,7 +25,7 @@
   <ItemGroup Condition="'$(Platform)' != 'ARM'">
     <ProjectFile Include="CasaLens\dirs.proj"/>
   </ItemGroup>
-
+  
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
 
 </Project>
