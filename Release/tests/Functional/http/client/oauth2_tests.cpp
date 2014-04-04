@@ -42,7 +42,7 @@ TEST_FIXTURE(uri_address, oauth2_bearer_token)
 {
     test_http_server::scoped_server scoped(m_uri);
     http_client_config config;
-    config.set_oauth2(oauth2_config("12345678"));
+    config.set_oauth2(oauth2_config(U("12345678")));
     http_client client(m_uri, config);
 
     scoped.server()->next_request().then([](test_request *request)
