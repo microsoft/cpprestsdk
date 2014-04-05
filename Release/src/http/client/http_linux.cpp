@@ -97,8 +97,7 @@ namespace web { namespace http
                 size_t m_current_size;
                 bool m_needChunked;
                 bool m_timedout;
-                boost::asio::streambuf m_request_buf;
-                boost::asio::streambuf m_response_buf;
+                boost::asio::streambuf m_body_buf;
                 std::unique_ptr<boost::asio::deadline_timer> m_timer;
 
                 template <typename socket_type>
@@ -216,7 +215,7 @@ namespace web { namespace http
                     }
 
                     const auto &host = m_uri.host();
-                    std::ostream request_stream(&ctx->m_request_buf);
+                    std::ostream request_stream(&ctx->m_body_buf);
 
                     request_stream << method << " " << encoded_resource << " " << "HTTP/1.1" << CRLF << "Host: " << host;
 
@@ -338,7 +337,7 @@ namespace web { namespace http
                         }
                         else
                         {
-                            boost::asio::async_write(*ctx->m_socket, ctx->m_request_buf, boost::bind(&linux_client::handle_write_request, this, boost::asio::placeholders::error, ctx));
+                            boost::asio::async_write(*ctx->m_socket, ctx->m_body_buf, boost::bind(&linux_client::handle_write_request, this, boost::asio::placeholders::error, ctx));
                         }
                     }
                     else if (endpoints == tcp::resolver::iterator())
@@ -384,10 +383,11 @@ namespace web { namespace http
                 void handle_handshake(const boost::system::error_code& ec, std::shared_ptr<linux_request_context> ctx)
                 {
                     if (!ec)
-                        boost::asio::async_write(*ctx->m_ssl_stream, ctx->m_request_buf, boost::bind(&linux_client::handle_write_request, this, boost::asio::placeholders::error, ctx));
+                        boost::asio::async_write(*ctx->m_ssl_stream, ctx->m_body_buf, boost::bind(&linux_client::handle_write_request, this, boost::asio::placeholders::error, ctx));
                     else
                         ctx->report_error("Error code in handle_handshake is ", ec, httpclient_errorcode_context::handshake);
                 }
+
                 void handle_write_chunked_body(const boost::system::error_code& ec, std::shared_ptr<linux_request_context> ctx)
                 {
                     if (ec)
@@ -404,7 +404,7 @@ namespace web { namespace http
                     }
 
                     auto readbuf = ctx->_get_readbuffer();
-                    uint8_t *buf = boost::asio::buffer_cast<uint8_t *>(ctx->m_request_buf.prepare(client_config().chunksize() + http::details::chunked_encoding::additional_encoding_space));
+                    uint8_t *buf = boost::asio::buffer_cast<uint8_t *>(ctx->m_body_buf.prepare(client_config().chunksize() + http::details::chunked_encoding::additional_encoding_space));
                     readbuf.getn(buf + http::details::chunked_encoding::data_offset, client_config().chunksize()).then([=](pplx::task<size_t> op)
                     {
                         size_t readSize = 0;
@@ -415,15 +415,15 @@ namespace web { namespace http
                             return;
                         }
                         size_t offset = http::details::chunked_encoding::add_chunked_delimiters(buf, client_config().chunksize() + http::details::chunked_encoding::additional_encoding_space, readSize);
-                        ctx->m_request_buf.commit(readSize + http::details::chunked_encoding::additional_encoding_space);
-                        ctx->m_request_buf.consume(offset);
+                        ctx->m_body_buf.commit(readSize + http::details::chunked_encoding::additional_encoding_space);
+                        ctx->m_body_buf.consume(offset);
                         ctx->m_current_size += readSize;
                         ctx->m_uploaded += (size64_t)readSize;
                         if (ctx->m_ssl_stream)
-                            boost::asio::async_write(*ctx->m_ssl_stream, ctx->m_request_buf,
+                            boost::asio::async_write(*ctx->m_ssl_stream, ctx->m_body_buf,
                                 boost::bind(readSize != 0 ? &linux_client::handle_write_chunked_body : &linux_client::handle_write_body, this, boost::asio::placeholders::error, ctx));
                         else
-                            boost::asio::async_write(*ctx->m_socket, ctx->m_request_buf,
+                            boost::asio::async_write(*ctx->m_socket, ctx->m_body_buf,
                                 boost::bind(readSize != 0 ? &linux_client::handle_write_chunked_body : &linux_client::handle_write_body, this, boost::asio::placeholders::error, ctx));
                     });
                 }
@@ -448,7 +448,7 @@ namespace web { namespace http
                     auto readbuf = ctx->_get_readbuffer();
                     size_t readSize = std::min(client_config().chunksize(), ctx->m_known_size - ctx->m_current_size);
 
-                    readbuf.getn(boost::asio::buffer_cast<uint8_t *>(ctx->m_request_buf.prepare(readSize)), readSize).then([=](pplx::task<size_t> op)
+                    readbuf.getn(boost::asio::buffer_cast<uint8_t *>(ctx->m_body_buf.prepare(readSize)), readSize).then([=](pplx::task<size_t> op)
                     {
                         size_t actualSize = 0;
                         try { actualSize = op.get(); }
@@ -459,12 +459,12 @@ namespace web { namespace http
                         }
                         ctx->m_uploaded += (size64_t)actualSize;
                         ctx->m_current_size += actualSize;
-                        ctx->m_request_buf.commit(actualSize);
+                        ctx->m_body_buf.commit(actualSize);
                         if (ctx->m_ssl_stream)
-                            boost::asio::async_write(*ctx->m_ssl_stream, ctx->m_request_buf,
+                            boost::asio::async_write(*ctx->m_ssl_stream, ctx->m_body_buf,
                                 boost::bind(&linux_client::handle_write_large_body, this, boost::asio::placeholders::error, ctx));
                         else
-                            boost::asio::async_write(*ctx->m_socket, ctx->m_request_buf,
+                            boost::asio::async_write(*ctx->m_socket, ctx->m_body_buf,
                                 boost::bind(&linux_client::handle_write_large_body, this, boost::asio::placeholders::error, ctx));
                     });
                 }
@@ -502,10 +502,10 @@ namespace web { namespace http
 
                     // Read until the end of entire headers
                     if (ctx->m_ssl_stream)
-                        boost::asio::async_read_until(*ctx->m_ssl_stream, ctx->m_response_buf, CRLF+CRLF,
+                        boost::asio::async_read_until(*ctx->m_ssl_stream, ctx->m_body_buf, CRLF+CRLF,
                             boost::bind(&linux_client::handle_status_line, this, boost::asio::placeholders::error, ctx));
                     else
-                        boost::asio::async_read_until(*ctx->m_socket, ctx->m_response_buf, CRLF+CRLF,
+                        boost::asio::async_read_until(*ctx->m_socket, ctx->m_body_buf, CRLF+CRLF,
                             boost::bind(&linux_client::handle_status_line, this, boost::asio::placeholders::error, ctx));
                     }
                     else
@@ -518,7 +518,7 @@ namespace web { namespace http
                 {
                     if (!ec)
                     {
-                        std::istream response_stream(&ctx->m_response_buf);
+                        std::istream response_stream(&ctx->m_body_buf);
                         std::string http_version;
                         response_stream >> http_version;
                         status_code status_code;
@@ -549,7 +549,7 @@ namespace web { namespace http
                 void read_headers(std::shared_ptr<linux_request_context> ctx)
                 {
                     ctx->m_needChunked = false;
-                    std::istream response_stream(&ctx->m_response_buf);
+                    std::istream response_stream(&ctx->m_body_buf);
                     std::string header;
                     while (std::getline(response_stream, header) && header != "\r")
                     {
@@ -600,10 +600,10 @@ namespace web { namespace http
                         else
                         {
                             if (ctx->m_ssl_stream)
-                                boost::asio::async_read_until(*ctx->m_ssl_stream, ctx->m_response_buf, CRLF,
+                                boost::asio::async_read_until(*ctx->m_ssl_stream, ctx->m_body_buf, CRLF,
                                     boost::bind(&linux_client::handle_chunk_header, this, boost::asio::placeholders::error, ctx));
                             else
-                                boost::asio::async_read_until(*ctx->m_socket, ctx->m_response_buf, CRLF,
+                                boost::asio::async_read_until(*ctx->m_socket, ctx->m_body_buf, CRLF,
                                     boost::bind(&linux_client::handle_chunk_header, this, boost::asio::placeholders::error, ctx));
                         }
                     }
@@ -615,15 +615,15 @@ namespace web { namespace http
                     size_t size_to_read = 0;
                     if (ctx->m_ssl_stream)
                     {
-                        if (ctx->m_response_buf.size() < size)
-                            size_to_read = size - ctx->m_response_buf.size();
-                        boost::asio::async_read(*ctx->m_ssl_stream, ctx->m_response_buf, boost::asio::transfer_at_least(size_to_read), handler);
+                        if (ctx->m_body_buf.size() < size)
+                            size_to_read = size - ctx->m_body_buf.size();
+                        boost::asio::async_read(*ctx->m_ssl_stream, ctx->m_body_buf, boost::asio::transfer_at_least(size_to_read), handler);
                     }
                     else
                     {
-                        if (ctx->m_response_buf.size() < size)
-                            size_to_read = size - ctx->m_response_buf.size();
-                        boost::asio::async_read(*ctx->m_socket, ctx->m_response_buf, boost::asio::transfer_at_least(size_to_read), handler);
+                        if (ctx->m_body_buf.size() < size)
+                            size_to_read = size - ctx->m_body_buf.size();
+                        boost::asio::async_read(*ctx->m_socket, ctx->m_body_buf, boost::asio::transfer_at_least(size_to_read), handler);
                     }
                 }
 
@@ -631,7 +631,7 @@ namespace web { namespace http
                 {
                     if (!ec)
                     {
-                        std::istream response_stream(&ctx->m_response_buf);
+                        std::istream response_stream(&ctx->m_body_buf);
                         std::string line;
                         std::getline(response_stream, line);
 
@@ -671,7 +671,7 @@ namespace web { namespace http
 
                         if (to_read == 0)
                         {
-                            ctx->m_response_buf.consume(CRLF.size());
+                            ctx->m_body_buf.consume(CRLF.size());
                             ctx->_get_writebuffer().sync().then([ctx](pplx::task<void> op)
                             {
                                 try { 
@@ -687,7 +687,7 @@ namespace web { namespace http
                         else
                         {
                             auto writeBuffer = ctx->_get_writebuffer();
-                            writeBuffer.putn(boost::asio::buffer_cast<const uint8_t *>(ctx->m_response_buf.data()), to_read).then([=](pplx::task<size_t> op)
+                            writeBuffer.putn(boost::asio::buffer_cast<const uint8_t *>(ctx->m_body_buf.data()), to_read).then([=](pplx::task<size_t> op)
                             {
                                 try { op.wait(); }
                                 catch (...)
@@ -695,13 +695,13 @@ namespace web { namespace http
                                     ctx->report_exception(std::current_exception());
                                     return;
                                 }
-                                ctx->m_response_buf.consume(to_read + CRLF.size()); // consume crlf
+                                ctx->m_body_buf.consume(to_read + CRLF.size()); // consume crlf
 
                                 if (ctx->m_ssl_stream)
-                                    boost::asio::async_read_until(*ctx->m_ssl_stream, ctx->m_response_buf, CRLF,
+                                    boost::asio::async_read_until(*ctx->m_ssl_stream, ctx->m_body_buf, CRLF,
                                         boost::bind(&linux_client::handle_chunk_header, this, boost::asio::placeholders::error, ctx));
                                 else
-                                    boost::asio::async_read_until(*ctx->m_socket, ctx->m_response_buf, CRLF,
+                                    boost::asio::async_read_until(*ctx->m_socket, ctx->m_body_buf, CRLF,
                                         boost::bind(&linux_client::handle_chunk_header, this, boost::asio::placeholders::error, ctx));
                             });
                         }
@@ -719,7 +719,7 @@ namespace web { namespace http
                     if (ec)
                     {
                         if (ec == boost::asio::error::eof && ctx->m_known_size == std::numeric_limits<size_t>::max())
-                            ctx->m_known_size = ctx->m_current_size + ctx->m_response_buf.size();
+                            ctx->m_known_size = ctx->m_current_size + ctx->m_body_buf.size();
                         else
                         {
                             ctx->report_error("Failed to read response body", ec, httpclient_errorcode_context::readbody);
@@ -739,8 +739,8 @@ namespace web { namespace http
                     if (ctx->m_current_size < ctx->m_known_size)
                     {
                         // more data need to be read
-                        writeBuffer.putn(boost::asio::buffer_cast<const uint8_t *>(ctx->m_response_buf.data()),
-                            std::min(ctx->m_response_buf.size(), ctx->m_known_size - ctx->m_current_size)).then([=](pplx::task<size_t> op)
+                        writeBuffer.putn(boost::asio::buffer_cast<const uint8_t *>(ctx->m_body_buf.data()),
+                            std::min(ctx->m_body_buf.size(), ctx->m_known_size - ctx->m_current_size)).then([=](pplx::task<size_t> op)
                         {
                             size_t writtenSize = 0;
                             try 
@@ -748,7 +748,7 @@ namespace web { namespace http
                                 writtenSize = op.get(); 
                                 ctx->m_downloaded += (size64_t)writtenSize;
                                 ctx->m_current_size += writtenSize;
-                                ctx->m_response_buf.consume(writtenSize);
+                                ctx->m_body_buf.consume(writtenSize);
                                 async_read_until_buffersize(std::min(client_config().chunksize(), ctx->m_known_size - ctx->m_current_size),
                                     boost::bind(&linux_client::handle_read_content, this, boost::asio::placeholders::error, ctx), ctx);
                             }
