@@ -91,14 +91,14 @@ namespace web { namespace http
                     request_context::report_error(errorcodeValue, message);
                 }
 
-                std::unique_ptr<tcp::socket> m_socket;
+                tcp::socket m_socket;
                 std::unique_ptr<boost::asio::ssl::stream<tcp::socket>> m_ssl_stream;
                 size_t m_known_size;
                 size_t m_current_size;
                 bool m_needChunked;
                 bool m_timedout;
                 boost::asio::streambuf m_body_buf;
-                std::unique_ptr<boost::asio::deadline_timer> m_timer;
+                boost::asio::deadline_timer m_timer;
 
                 template <typename socket_type>
                 void shutdown_socket(socket_type &socket)
@@ -110,17 +110,9 @@ namespace web { namespace http
 
                 ~linux_request_context()
                 {
-                    if (m_timer)
-                    {
-                        m_timer->cancel();
-                        m_timer.reset();
-                    }
+                    m_timer.cancel();
 
-                    if (m_socket)
-                    {
-                        shutdown_socket(*m_socket);
-                        m_socket.reset();
-                    }
+                    shutdown_socket(m_socket);
 
                     if (m_ssl_stream)
                     {
@@ -144,11 +136,7 @@ namespace web { namespace http
                         }
                         else
                         {
-                            auto sock = m_socket.get();
-                            if (sock != nullptr)
-                            {
-                                sock->cancel();
-                            }
+                            m_socket.cancel();
                         }
                     }
                 }
@@ -160,6 +148,7 @@ namespace web { namespace http
                     , m_needChunked(false)
                     , m_timedout(false)
                     , m_current_size(0)
+                    , m_timer(crossplat::threadpool::shared_instance().service())
                 {
                 }
 
@@ -267,10 +256,9 @@ namespace web { namespace http
 
                     tcp::resolver::query query(host, utility::conversions::print_string(port));
 
-                    ctx->m_timer.reset(new boost::asio::deadline_timer(m_io_service));
                     const int secs = static_cast<int>(client_config().timeout().count());
-                    ctx->m_timer->expires_from_now(boost::posix_time::milliseconds(secs * 1000));
-                    ctx->m_timer->async_wait(boost::bind(&linux_request_context::cancel, ctx.get(), boost::asio::placeholders::error));
+                    ctx->m_timer.expires_from_now(boost::posix_time::milliseconds(secs * 1000));
+                    ctx->m_timer.async_wait(boost::bind(&linux_request_context::cancel, ctx.get(), boost::asio::placeholders::error));
 
                     m_resolver.async_resolve(query, boost::bind(&linux_client::handle_resolve, this, boost::asio::placeholders::error, boost::asio::placeholders::iterator, ctx));
                 }
