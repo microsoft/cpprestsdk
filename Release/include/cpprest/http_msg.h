@@ -46,10 +46,6 @@ namespace pplx = Concurrency;
 #include "cpprest/streams.h"
 #include "cpprest/containerstream.h"
 
-#ifndef WIN32
-#include <boost/algorithm/string/predicate.hpp>
-#endif
-
 namespace web {
 
 /// <summary>
