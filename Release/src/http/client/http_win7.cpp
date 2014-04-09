@@ -1177,37 +1177,11 @@ private:
                         return;
                     }
 
-                    size_t content_length = 0;
-                    utility::string_t transfer_encoding;
-
-                    bool has_cnt_length = response.headers().match(header_names::content_length, content_length);
-                    bool has_xfr_encode = response.headers().match(header_names::transfer_encoding, transfer_encoding);
-
-                    // Determine if there is a msg body that needs to be read
-                    bool hasMsgBody = (has_cnt_length && (content_length > 0)) || (has_xfr_encode);
-
-                    if (!hasMsgBody)
-                    {
-                        auto progress = p_request_context->m_request._get_impl()->_progress_handler();
-                        if ( progress )
-                        {
-                            try { (*progress)(message_direction::download, 0); } catch(...)
-                            {
-                                p_request_context->report_exception(std::current_exception());
-                                return;
-                            }
-                        }
-
-                        p_request_context->complete_request(0);
-                        return;
-                    }
-
                     // HTTP Specification states:
                     // If a message is received with both a Transfer-Encoding header field 
                     // and a Content-Length header field, the latter MUST be ignored.
-
-                    // At least one of them should be set
-                    _ASSERTE(has_xfr_encode || has_cnt_length);
+                    // If none of them is specified, the message length should be determined by the server closing the connection.
+                    // http://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4.4
 
                     // WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE callback determines whether this function was successful and the value of the parameters.
                     if(!WinHttpQueryDataAvailable(hRequestHandle, nullptr))
@@ -1241,6 +1215,18 @@ private:
                     }
                     else
                     {
+                        // No more data available, complete the request.
+                        auto progress = p_request_context->m_request._get_impl()->_progress_handler();
+                        if (progress)
+                        {
+                            try { (*progress)(message_direction::download, p_request_context->m_downloaded); }
+                            catch (...)
+                            {
+                                p_request_context->report_exception(std::current_exception());
+                                return;
+                            }
+                        }
+
                         p_request_context->complete_request((size_t)p_request_context->m_downloaded);
                     }
                     break;

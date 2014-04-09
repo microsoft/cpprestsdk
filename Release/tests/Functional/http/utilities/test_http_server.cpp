@@ -111,7 +111,7 @@ static utility::string_t HttpServerAPIKnownHeaders[] =
     U("Accept-Charset"),
     U("Accept-Encoding"),
     U("Accept-Language"),
-    U("Accept-Authorization"),
+    U("Authorization"),
     U("Cookie"),
     U("Expect"),
     U("From"),

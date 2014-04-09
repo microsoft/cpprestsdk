@@ -79,7 +79,7 @@ void http_headers::set_date(const utility::datetime& date)
 
 utility::size64_t http_headers::content_length() const
 {
-    size_t length = 0;
+    utility::size64_t length = 0;
     match(http::header_names::content_length, length);
     return length;
 }

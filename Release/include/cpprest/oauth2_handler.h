@@ -46,13 +46,16 @@ struct oauth2_config
 {
     oauth2_config(utility::string_t token) : m_token(std::move(token)) {}
 
-    bool is_enabled() const { return !m_token.empty(); }
+    const utility::string_t& token() const { return m_token; }
+    void set_token(utility::string_t token) { m_token = std::move(token); }
 
-    utility::string_t m_token;
+    bool is_enabled() const { return !m_token.empty(); }
 
 private:
     friend class http_client_config;
     oauth2_config() {}
+
+    utility::string_t m_token;
 };
 
 
@@ -71,7 +74,7 @@ public:
     {
         if (m_config.is_enabled())
         {
-            request.headers().add(_XPLATSTR("Authorization"), _XPLATSTR("Bearer ") + m_config.m_token);
+            request.headers().add(_XPLATSTR("Authorization"), _XPLATSTR("Bearer ") + m_config.token());
         }
         return next_stage()->propagate(request);
     }

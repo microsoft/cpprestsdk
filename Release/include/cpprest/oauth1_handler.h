@@ -48,7 +48,7 @@ class oauth1_methods
 {
 public:
 #define _OAUTH1_METHODS
-#define DAT(a,b) const static oauth1_method a;
+#define DAT(a,b) _ASYNCRTIMP static const oauth1_method a;
 #include "cpprest/http_constants.dat"
 #undef _OAUTH1_METHODS
 #undef DAT
@@ -71,7 +71,29 @@ struct oauth1_config
     {
     }
 
+    const utility::string_t& key() const { return m_key; }
+    void set_key(utility::string_t key) { m_key = std::move(key); }
+
+    const utility::string_t& secret() const { return m_secret; }
+    void set_secret(utility::string_t secret) { m_secret = std::move(secret); }
+
+    const utility::string_t& token() const { return m_token; }
+    void set_token(utility::string_t token) { m_token = std::move(token); }
+
+    const utility::string_t& token_secret() const { return m_token_secret; }
+    void set_token_secret(utility::string_t token_secret) { m_token_secret = std::move(token_secret); }
+
+    const oauth1_method& method() const { return m_method; }
+    void set_method(oauth1_method method) { m_method = std::move(method); }
+
+    const utility::string_t& realm() const { return m_realm; }
+    void set_realm(utility::string_t realm) { m_realm = std::move(realm); }
+
     bool is_enabled() const { return !m_key.empty() && !m_secret.empty() && !m_token.empty() && !m_token_secret.empty(); }
+
+private:
+    friend class http_client_config;
+    oauth1_config() {}
 
     // Required.
     utility::string_t m_key;
@@ -82,10 +104,6 @@ struct oauth1_config
 
     // Optional.
     utility::string_t m_realm;
-
-private:
-    friend class http_client_config;
-    oauth1_config() {}
 };
 
 
@@ -103,16 +121,16 @@ public:
     void set_config(oauth1_config config) { m_config = std::move(config); }
     const oauth1_config& get_config() const { return m_config; }
 
-    virtual pplx::task<http_response> propagate(http_request request) override;
+    _ASYNCRTIMP virtual pplx::task<http_response> propagate(http_request request) override;
 
-    utility::string_t _generate_nonce();
+    _ASYNCRTIMP utility::string_t _generate_nonce();
 
-    utility::string_t _build_signature_base_string(http_request request, utility::string_t timestamp, utility::string_t nonce) const;
+    _ASYNCRTIMP utility::string_t _build_signature_base_string(http_request request, utility::string_t timestamp, utility::string_t nonce) const;
 
-    utility::string_t _build_hmac_sha1_signature(http_request request, utility::string_t timestamp, utility::string_t nonce) const;
+    _ASYNCRTIMP utility::string_t _build_hmac_sha1_signature(http_request request, utility::string_t timestamp, utility::string_t nonce) const;
 // TODO: RSA-SHA1
 //    utility::string_t _build_rsa_sha1_signature(http_request request, utility::string_t timestamp, utility::string_t nonce) const;
-    utility::string_t _build_plaintext_signature() const;
+    _ASYNCRTIMP utility::string_t _build_plaintext_signature() const;
 
 private:
     static utility::string_t _generate_timestamp();

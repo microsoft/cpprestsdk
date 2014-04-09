@@ -26,6 +26,7 @@
 ****/
 
 #include "stdafx.h"
+#include <vector>
 
 #pragma warning(disable : 4127) // allow expressions like while(true) pass 
 using namespace web;
@@ -367,6 +368,34 @@ inline bool JSON_Parser<CharType>::ParseInt64(CharType first, uint64_t& value)
     return true;
 }
 
+// This namespace hides the x-plat helper functions
+namespace
+{
+#ifdef _MS_WINDOWS
+    static int print_llu(char* ptr, size_t n, uint64_t val64)
+    {
+        return _snprintf_s(ptr, n, _TRUNCATE, "%I64u", val64);
+    }
+
+    static int print_llu(wchar_t* ptr, size_t n, uint64_t val64)
+    {
+        return _snwprintf_s(ptr, n, _TRUNCATE, L"%I64u", val64);
+    }
+#else
+    static int print_llu(char* ptr, size_t n, unsigned long long val64)
+    {
+        return snprintf(ptr, n, "%llu", val64);
+    }
+    static int print_llu(char* ptr, size_t n, unsigned long val64)
+    {
+        return snprintf(ptr, n, "%lu", val64);
+    }
+#endif
+
+    static double anystod(const char* str) { return strtod(str, nullptr); }
+    static double anystod(const wchar_t* str) { return wcstod(str, nullptr); }
+}
+
 template <typename CharType>
 bool JSON_Parser<CharType>::CompleteNumberLiteral(CharType first, Token &token)
 {
@@ -424,25 +453,22 @@ bool JSON_Parser<CharType>::CompleteNumberLiteral(CharType first, Token &token)
         return true;
     }
 
-    double value = static_cast<double>(val64);
-    bool decimal = false;
-    int after_decimal = 0;    // counts digits after the decimal
+    // Magic number 5 leaves room for decimal point, null terminator, etc (in most cases)
+    ::std::vector<CharType> buf(::std::numeric_limits<uint64_t>::digits10 + 5);
+    int count = print_llu(buf.data(), buf.size(), val64);
+    _ASSERTE(count >= 0);
+    _ASSERTE((size_t)count < buf.size());
+    // Resize to cut off the null terminator
+    buf.resize(count);
 
-    // Exponent and related flags
-    int exponent = 0;
-    bool has_exponent = false;
-    bool exponent_minus = false;
+    bool decimal = false;
 
     while (ch != this->m_eof)
     {
         // Digit encountered?
         if (ch >= '0' && ch <= '9')
         {
-            value *= 10;
-            value += ch - '0';
-            if (decimal)
-                after_decimal++;
-
+            buf.push_back(ch);
             NextCharacter();
             ch = PeekCharacter();
         }
@@ -454,6 +480,7 @@ bool JSON_Parser<CharType>::CompleteNumberLiteral(CharType first, Token &token)
                 return false;
 
             decimal = true;
+            buf.push_back(ch);
 
             NextCharacter();
             ch = PeekCharacter();
@@ -462,11 +489,7 @@ bool JSON_Parser<CharType>::CompleteNumberLiteral(CharType first, Token &token)
             if (ch < '0' || ch > '9')
             return false;
 
-            // Parse it
-            value *= 10;
-            value += ch - '0';
-            after_decimal = 1;
-
+            buf.push_back(ch);
             NextCharacter();
             ch = PeekCharacter();
         }
@@ -474,19 +497,20 @@ bool JSON_Parser<CharType>::CompleteNumberLiteral(CharType first, Token &token)
         // Exponent?
         else if (ch == 'E' || ch == 'e')
         {
-            has_exponent = true;
+            buf.push_back(ch);
             NextCharacter();
             ch = PeekCharacter();
 
             // Check for the exponent sign
             if (ch == '+')
             {
+                buf.push_back(ch);
                 NextCharacter();
                 ch = PeekCharacter();
             }
             else if (ch == '-')
             {
-                exponent_minus = true;
+                buf.push_back(ch);
                 NextCharacter();
                 ch = PeekCharacter();
             }
@@ -494,8 +518,7 @@ bool JSON_Parser<CharType>::CompleteNumberLiteral(CharType first, Token &token)
             // First number of the exponent
             if (ch >= '0' && ch <= '9')
             {
-                exponent = ch - '0';
-
+                buf.push_back(ch);
                 NextCharacter();
                 ch = PeekCharacter();
             }
@@ -504,9 +527,7 @@ bool JSON_Parser<CharType>::CompleteNumberLiteral(CharType first, Token &token)
             // The rest of the exponent
             while (ch >= '0' && ch <= '9')
             {
-                exponent *= 10;
-                exponent += ch - '0';
-
+                buf.push_back(ch);
                 NextCharacter();
                 ch = PeekCharacter();
             }
@@ -521,24 +542,12 @@ bool JSON_Parser<CharType>::CompleteNumberLiteral(CharType first, Token &token)
         }
     };
 
+    buf.push_back('\0');
+    token.double_val = anystod(buf.data());
     if (minus_sign)
-        value = -value;
-
-    if (has_exponent)
     {
-        if (exponent_minus)
-            exponent = -exponent;
-
-        if (decimal)
-            exponent -= after_decimal;
-
-        token.double_val = value * pow(double(10), exponent);
+        token.double_val = -token.double_val;
     }
-    else
-    {
-        token.double_val = value / pow(double(10), after_decimal);
-    }
-
     token.kind = (JSON_Parser<CharType>::Token::TKN_NumberLiteral);
 
     return true;

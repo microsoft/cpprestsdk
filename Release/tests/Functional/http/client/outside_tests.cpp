@@ -91,13 +91,13 @@ TEST_FIXTURE(uri_address, reading_google_stream,
     utility::string_t path = m_uri.query();
     http_response response = simpleclient.request(::http::methods::GET).get();
  
-    uint8_t chars[81];
+    uint8_t chars[71];
     memset(chars, 0, sizeof(chars));
 
     streams::rawptr_buffer<uint8_t> temp(chars, sizeof(chars));
     
-    VERIFY_ARE_EQUAL(response.body().read(temp, 80).get(), 80);
-    VERIFY_ARE_EQUAL(strcmp((const char *)chars, "<!doctype html><html itemscope=\"\" itemtype=\"http://schema.org/WebPage\"><head><me"), 0);
+    VERIFY_ARE_EQUAL(response.body().read(temp, 70).get(), 70);
+    VERIFY_ARE_EQUAL(strcmp((const char *)chars, "<!doctype html><html itemscope=\"\" itemtype=\"http://schema.org/WebPage\""), 0);
 }
 
 TEST_FIXTURE(uri_address, outside_ssl_json,

@@ -111,11 +111,8 @@ TEST_FIXTURE(uri_address, various_uris)
 TEST_FIXTURE(uri_address, uri_routing)
 {
     http_listener listener1(web::http::uri_builder(m_uri).append_path(U("path1")).to_uri());
-    listener1.open().wait();
     http_listener listener2(web::http::uri_builder(m_uri).append_path(U("path2")).to_uri());
-    listener2.open().wait();
     http_listener listener3(web::http::uri_builder(m_uri).append_path(U("path1/path2")).to_uri());
-    listener3.open().wait();
 
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
@@ -125,14 +122,19 @@ TEST_FIXTURE(uri_address, uri_routing)
     {
         request.reply(status_codes::OK);
     });
+    listener1.open().wait();
+
     listener2.support([](http_request request)
     {
         request.reply(status_codes::Created);
     });
+    listener2.open().wait();
+
     listener3.support([](http_request request)
     {
         request.reply(status_codes::Accepted);
     });
+    listener3.open().wait();
 
     VERIFY_ARE_EQUAL(0, p_client->request(methods::GET, U("/path1/")));
     p_client->next_response().then([](test_response *p_response)
@@ -156,6 +158,10 @@ TEST_FIXTURE(uri_address, uri_routing)
     {
         http_asserts::assert_test_response_equals(p_response, status_codes::NotFound);
     }).wait();
+
+    listener1.close().wait();
+    listener2.close().wait();
+    listener3.close().wait();
 }
 
 TEST_FIXTURE(uri_address, uri_error_cases)

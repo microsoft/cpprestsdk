@@ -513,29 +513,31 @@ void windows_request_context::async_process_request(HTTP_REQUEST_ID request_id, 
 void windows_request_context::read_headers_io_completion(DWORD error_code, DWORD)
 {
     if(error_code != NO_ERROR)
+    {
+        m_msg.reply(status_codes::InternalError);
+    }
+    else
+    {
+        // Parse headers.
+        // CookedUrl.pFullUrl contains the canonicalized URL and it is not encoded
+        // However, Query strings are opaque to http.sys and are passed as-is => CookedUrl.pFullUrl
+        // contains an already encoded version of query string.
+        uri_builder builder(uri::encode_uri(m_request->CookedUrl.pFullUrl));
+        if (m_request->CookedUrl.QueryStringLength != 0)
         {
-            m_msg.reply(status_codes::InternalError);
+            builder.set_query(uri::decode(builder.query()));
         }
-        else
-        {
-            // Parse headers.
-            // We have no way of getting at the full raw encoded URI that was sent across the wire
-            // so we have to access a already decoded version and re-encode it. But since we are dealing
-            // with a full URI we won't handle encoding all possible cases. I don't see any way around this
-            // right now.
-            // TFS # 392606
-            uri encoded_uri = uri::encode_uri(m_request->CookedUrl.pFullUrl);
-            m_msg.set_request_uri(encoded_uri);
-            m_msg.set_method(parse_request_method(m_request));
-            parse_http_headers(m_request->Headers, m_msg.headers());
+        m_msg.set_request_uri(builder.to_uri());
+        m_msg.set_method(parse_request_method(m_request));
+        parse_http_headers(m_request->Headers, m_msg.headers());
 
-            // Start reading in body from the network.
-            m_msg._get_impl()->_prepare_to_receive_data();
-            read_request_body_chunk();
+        // Start reading in body from the network.
+        m_msg._get_impl()->_prepare_to_receive_data();
+        read_request_body_chunk();
 
-            // Dispatch request to the http_listener.
-            dispatch_request_to_listener(m_msg, (web::http::experimental::listener::details::http_listener_impl *)m_request->UrlContext);
-        }
+        // Dispatch request to the http_listener.
+        dispatch_request_to_listener(m_msg, (web::http::experimental::listener::details::http_listener_impl *)m_request->UrlContext);
+    }
 }
 
 void windows_request_context::read_request_body_chunk()

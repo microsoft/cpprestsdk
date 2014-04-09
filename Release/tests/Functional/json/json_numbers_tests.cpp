@@ -25,6 +25,7 @@
 
 #include "stdafx.h"
 #include <iomanip>
+#include <clocale>
 
 using namespace web; using namespace utility;
 
@@ -124,12 +125,12 @@ TEST(parse_uint64)
     test_int64(uint64_t(ULLONG_MAX)-1);
 }
 
-void test_double(double number)
+const int DOUBLE_DIGITS = std::numeric_limits<double>::digits10 + 7;  //7 = length of "1." and "e+123" which is the begining and the end of the double representation
+
+void test_double(double number, string_t str_rep)
 {
-    int precision = std::numeric_limits<double>::digits10 + 7;  //7 = length of "1." and "e+123" which is the begining and the end of the double representation
     stringstream_t ss;
-    ss << std::setprecision(precision);
-    ss << number;
+    ss << str_rep;
 
     json::value num = json::value::parse(ss);
     VERIFY_ARE_EQUAL(number, num.as_double());
@@ -154,23 +155,59 @@ void test_double(double number)
         VERIFY_IS_FALSE(num.as_number().is_uint64());
 }
 
-TEST(parsing_doubles)
+void test_double(double d)
+{
+    ::std::basic_stringstream<string_t::value_type> ss;
+    ss << ::std::setprecision(DOUBLE_DIGITS);
+    ss << d;
+    test_double(d, ss.str());
+}
+
+TEST(parsing_doubles_into_longs)
 {
     test_double(2.0);
-    test_double(3.14);
-    test_double(-9.81);
-    test_double(static_cast<double>(ULLONG_MAX));
-    test_double(0 - static_cast<double>(ULLONG_MAX));
-    test_double(static_cast<double>(ULLONG_MAX)+(2<<(64-52)));  // the lowest number that will be represented as double due to overflowing unsigned int64 (52bits fraction in double-precision)
     test_double(pow(2.0, 10.0));
     test_double(pow(2.0, 20.0));
     test_double(pow(2.0, 60.0));
     test_double(pow(2.0, 63.0));
-    test_double(0 - pow(2.0, 63.0) * 1.5);  // between 0-ULLONG_MAX and LLONGMIN
+}
 
+TEST(parsing_doubles)
+{
+    test_double(3.14);
+    test_double(-9.81);
+
+    // Note: this should not parse to a ullong because of rounding
+    test_double(static_cast<double>(ULLONG_MAX));
+
+    test_double(0 - static_cast<double>(ULLONG_MAX));
+    test_double(static_cast<double>(ULLONG_MAX)+(2<<(64-52)));  // the lowest number that will be represented as double due to overflowing unsigned int64 (52bits fraction in double-precision)
+    test_double(0 - pow(2.0, 63.0) * 1.5);  // between 0-ULLONG_MAX and LLONGMIN
+}
+
+TEST(parsing_doubles_setlocale, "Ignore", "Bug 912803")
+{
+    // JSON uses the C locale always and should therefore not be impacted by the process locale
+    setlocale(LC_ALL, "fr-FR");
+    test_double(1.91563, U("1.91563"));
+    test_double(2.0e93, U("2.0e93"));
+    setlocale(LC_ALL, "C");
+}
+
+TEST(parsing_very_large_doubles)
+{
     test_double(pow(2.0, 64.0));
     test_double(pow(2.0, 70.0));
     test_double(pow(2.0, 80.0));
+    test_double(pow(2.0, 120.0));
+    test_double(pow(2.0, 240.0));
+    test_double(pow(2.0, 300.0));
+}
+
+TEST(parsing_very_small_doubles)
+{
+    test_double(2.34e-308);
+    test_double(1e-308);
 }
 
 void test_integral(int number)

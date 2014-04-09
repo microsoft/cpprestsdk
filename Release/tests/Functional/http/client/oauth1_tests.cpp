@@ -44,10 +44,18 @@ struct oauth1_basic_setup
 {
 // TODO: modify parameters (secret, token secret) to include encodable characters
     oauth1_basic_setup() :
-        m_oauth1_config("test_key", "test_secret", "test_token", "test_token_secret", oauth1_methods::hmac_sha1),
+        m_key(U("test_key")),
+        m_secret(U("test_secret")),
+        m_token(U("test_token")),
+        m_token_secret(U("test_token_secret")),
+        m_oauth1_config(m_key, m_secret, m_token, m_token_secret, oauth1_methods::hmac_sha1),
         m_oauth1_handler(m_oauth1_config)
     {}
 
+    utility::string_t m_key;
+    utility::string_t m_secret;
+    utility::string_t m_token;
+    utility::string_t m_token_secret;
     oauth1_config m_oauth1_config;
     oauth1_handler m_oauth1_handler;
 };
@@ -81,24 +89,24 @@ TEST_FIXTURE(oauth1_basic_setup, oauth1_unique_nonces)
 
 TEST_FIXTURE(oauth1_basic_setup, oauth1_signature_base_string)
 {
-	http_request r;
-	r.set_method(methods::POST);
-	r.set_request_uri("http://example.com:80/request?a=b&c=d"); // Port set to avoid default.
-	utility::string_t base_string = m_oauth1_handler._build_signature_base_string(r, "12345678", "ABCDEFGH");
-	utility::string_t correct_base_string(
-	        "POST&http%3A%2F%2Fexample.com%2Frequest&a%3Db%26c%3Dd%26oauth_consumer_key%3Dtest_key%26oauth_nonce%3DABCDEFGH%26oauth_signature_method%3DHMAC-SHA1%26oauth_timestamp%3D12345678%26oauth_token%3Dtest_token%26oauth_version%3D1.0"
-	);
-	VERIFY_ARE_EQUAL(correct_base_string, base_string);
+    http_request r;
+    r.set_method(methods::POST);
+    r.set_request_uri(U("http://example.com:80/request?a=b&c=d")); // Port set to avoid default.
+    utility::string_t base_string = m_oauth1_handler._build_signature_base_string(r, U("12345678"), U("ABCDEFGH"));
+    utility::string_t correct_base_string(U(
+            "POST&http%3A%2F%2Fexample.com%2Frequest&a%3Db%26c%3Dd%26oauth_consumer_key%3Dtest_key%26oauth_nonce%3DABCDEFGH%26oauth_signature_method%3DHMAC-SHA1%26oauth_timestamp%3D12345678%26oauth_token%3Dtest_token%26oauth_version%3D1.0"
+    ));
+    VERIFY_ARE_EQUAL(correct_base_string, base_string);
 }
 
 TEST_FIXTURE(oauth1_basic_setup, oauth1_hmac_sha1_method)
 {
     http_request r;
     r.set_method(methods::POST);
-    r.set_request_uri("http://example.com:80/request?a=b&c=d"); // Port set to avoid default.
-    utility::string_t signature = m_oauth1_handler._build_hmac_sha1_signature(r, "12345678", "ABCDEFGH");
+    r.set_request_uri(U("http://example.com:80/request?a=b&c=d")); // Port set to avoid default.
+    utility::string_t signature = m_oauth1_handler._build_hmac_sha1_signature(r, U("12345678"), U("ABCDEFGH"));
 
-    utility::string_t correct_signature("iUq3VlP39UNXoJHXlKjgSTmjEs8=");
+    utility::string_t correct_signature(U("iUq3VlP39UNXoJHXlKjgSTmjEs8="));
     VERIFY_ARE_EQUAL(correct_signature, signature);
 }
 
@@ -110,20 +118,20 @@ TEST_FIXTURE(oauth1_basic_setup, oauth1_rsa_sha1_method)
 TEST_FIXTURE(oauth1_basic_setup, oauth1_plaintext_method)
 {
     utility::string_t signature(m_oauth1_handler._build_plaintext_signature());
-    utility::string_t correct_signature("test_secret&test_token_secret");
+    utility::string_t correct_signature(U("test_secret&test_token_secret"));
     VERIFY_ARE_EQUAL(correct_signature, signature);
 }
 
 TEST_FIXTURE(oauth1_server_setup, oauth1_hmac_sha1_request)
 {
     http_client_config client_config;
-    m_oauth1_config.m_method = oauth1_methods::hmac_sha1;
+    m_oauth1_config.set_method(oauth1_methods::hmac_sha1);
     client_config.set_oauth1(m_oauth1_config);
     http_client client(m_server_uri, client_config);
 
     m_server.server()->next_request().then([](test_request *request)
     {
-        const utility::string_t begins_with("OAuth oauth_version=\"1.0\", oauth_consumer_key=\"test_key\", oauth_token=\"test_token\", oauth_signature_method=\"HMAC-SHA1\", oauth_timestamp=\"");
+        const utility::string_t begins_with(U("OAuth oauth_version=\"1.0\", oauth_consumer_key=\"test_key\", oauth_token=\"test_token\", oauth_signature_method=\"HMAC-SHA1\", oauth_timestamp=\""));
         VERIFY_ARE_EQUAL(0, request->m_headers[U("Authorization")].find(begins_with));
         request->reply(status_codes::OK);
     });
@@ -140,13 +148,13 @@ TEST_FIXTURE(oauth1_server_setup, oauth1_rsa_sha1_request)
 TEST_FIXTURE(oauth1_server_setup, oauth1_plaintext_request)
 {
     http_client_config client_config;
-    m_oauth1_config.m_method = oauth1_methods::plaintext;
+    m_oauth1_config.set_method(oauth1_methods::plaintext);
     client_config.set_oauth1(m_oauth1_config);
     http_client client(m_server_uri, client_config);
 
     m_server.server()->next_request().then([](test_request *request)
     {
-        const utility::string_t begins_with("OAuth oauth_version=\"1.0\", oauth_consumer_key=\"test_key\", oauth_token=\"test_token\", oauth_signature_method=\"PLAINTEXT\", oauth_timestamp=\"");
+        const utility::string_t begins_with(U("OAuth oauth_version=\"1.0\", oauth_consumer_key=\"test_key\", oauth_token=\"test_token\", oauth_signature_method=\"PLAINTEXT\", oauth_timestamp=\""));
         VERIFY_ARE_EQUAL(0, request->m_headers[U("Authorization")].find(begins_with));
         request->reply(status_codes::OK);
     });
