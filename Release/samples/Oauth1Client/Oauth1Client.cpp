@@ -48,22 +48,22 @@ static void linkedin_client()
             oauth1_methods::hmac_sha1));
     http_client c(U("http://api.linkedin.com/"), config);
 
-    std::cout << "Requesting user information:" << std::endl;
+    ucout << "Requesting user information:" << std::endl;
     auto user_json = c.request(methods::GET, U("v1/people/~?format=json")).get().extract_json().get();
-    std::cout << "Got following JSON:" << std::endl;
-    std::cout << user_json.as_string().c_str() << std::endl;
+    ucout << "Got following JSON:" << std::endl;
+    ucout << user_json.serialize().c_str() << std::endl;
 }
 
 static int has_key(string_t client_name, string_t key)
 {
     if (key.empty())
     {
-        std::cout << "Skipped " << client_name.c_str() << " client. Please supply tokens for the client." << std::endl;
+        ucout << "Skipped " << client_name.c_str() << " client. Please supply tokens for the client." << std::endl;
         return 0;
     }
     else
     {
-        std::cout << "Running " << client_name.c_str() << " client." << std::endl;
+        ucout << "Running " << client_name.c_str() << " client." << std::endl;
         return 1;
     }
 }
@@ -74,12 +74,12 @@ int wmain(int argc, wchar_t *argv[])
 int main(int argc, char *argv[])
 #endif
 {
-    std::cout << "Running oauth1 sample..." << std::endl;
+    ucout << "Running oauth1 sample..." << std::endl;
     if (has_key(U("LinkedIn"), s_linkedin_key))
     {
         linkedin_client();
     }
-    std::cout << "Done." << std::endl;
+    ucout << "Done." << std::endl;
     return 0;
 }
 
