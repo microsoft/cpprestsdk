@@ -6,6 +6,7 @@
     <ProjectFile Include="BingRequest\dirs.proj"/>
     <ProjectFile Include="BlackJack\dirs.proj"/>
     <ProjectFile Include="Oauth1Client\dirs.proj"/>
+    <ProjectFile Include="Oauth2Client\dirs.proj"/>
   </ItemGroup>
 
   <ItemGroup Condition="'$(DevToolsVersion)'=='110' or '$(DevToolsVersion)'=='120'">
