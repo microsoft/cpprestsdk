@@ -226,7 +226,8 @@ utility::string_t details::http_msg_base::_extract_string()
     }
 
     // Perform the correct character set conversion if one is necessary.
-    if(utility::details::str_icmp(charset, charset_types::usascii))
+    if (utility::details::str_icmp(charset, charset_types::usascii)
+            || utility::details::str_icmp(charset, charset_types::ascii))
     {
         std::string body;
         body.resize((std::string::size_type)buf_r.in_avail());
@@ -326,8 +327,10 @@ json::value details::http_msg_base::_extract_json()
         return json::value::parse(to_string_t(latin1_to_utf16(std::move(body))));
     }
 
-    // utf-8 and usascii
-    else if(utility::details::str_icmp(charset, charset_types::utf8) || utility::details::str_icmp(charset, charset_types::usascii))
+    // utf-8, usascii and ascii
+    else if(utility::details::str_icmp(charset, charset_types::utf8)
+            || utility::details::str_icmp(charset, charset_types::usascii)
+            || utility::details::str_icmp(charset, charset_types::ascii))
     {
         std::string body;
         body.resize(buf_r.in_avail());
