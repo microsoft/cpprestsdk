@@ -54,26 +54,26 @@ static void dropbox_client()
     ucout << "Metadata: " << api.request(methods::GET, U("metadata/sandbox/hello_world.txt")).get().extract_json().get() << std::endl;
 
     ucout << "Downloading 'hello_world.txt' file contents (text):" << std::endl;
-    string_t content_string = content.request(methods::GET, "files/sandbox/hello_world.txt").get().extract_string().get();
+    string_t content_string = content.request(methods::GET, U("files/sandbox/hello_world.txt")).get().extract_string().get();
     ucout << "Contents: '" << content_string << "'" << std::endl;
     ucout << "Downloading 'test_image.jpg' file contents (binary):" << std::endl;
-    std::vector<unsigned char> content_vector = content.request(methods::GET, "files/sandbox/test_image.jpg").get().extract_vector().get();
+    std::vector<unsigned char> content_vector = content.request(methods::GET, U("files/sandbox/test_image.jpg")).get().extract_vector().get();
     ucout << "Contents size: " << (content_vector.size() / 1024) << "KiB" << std::endl;
 
     ucout << "Uploading 'test_put.txt' file with contents 'Testing POST' (text):" << std::endl;
     ucout << "Response: "
-            << content.request(methods::POST, "files_put/sandbox/test_put.txt", "Testing POST").get().extract_string().get()
+            << content.request(methods::POST, U("files_put/sandbox/test_put.txt"), U("Testing POST")).get().extract_string().get()
             << std::endl;
     ucout << "Uploading 'test_image_copy.jpg' (copy of 'test_image.jpg'):" << std::endl;
     ucout << "Response: "
-            << content.request(methods::PUT, "files_put/sandbox/test_image_copy.jpg",
+            << content.request(methods::PUT, U("files_put/sandbox/test_image_copy.jpg"),
                     concurrency::streams::bytestream::open_istream(std::move(content_vector))).get().extract_string().get()
             << std::endl;
 
     ucout << "Deleting uploaded file 'test_put.txt':" << std::endl;
-    ucout << "Response: " << api.request(methods::POST, "fileops/delete?root=sandbox&path=test_put.txt").get().extract_string().get() << std::endl;
+    ucout << "Response: " << api.request(methods::POST, U("fileops/delete?root=sandbox&path=test_put.txt")).get().extract_string().get() << std::endl;
     ucout << "Deleting uploaded file 'test_image_copy.jpg':" << std::endl;
-    ucout << "Response: " << api.request(methods::POST, "fileops/delete?root=sandbox&path=test_image_copy.jpg").get().extract_string().get() << std::endl;
+    ucout << "Response: " << api.request(methods::POST, U("fileops/delete?root=sandbox&path=test_image_copy.jpg")).get().extract_string().get() << std::endl;
 }
 
 static int has_key(string_t client_name, string_t key)
