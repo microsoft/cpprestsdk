@@ -23,6 +23,10 @@
 
 #include "stdafx.h"
 
+#if defined(_MS_WINDOWS) && !defined(__cplusplus_winrt) // Windows desktop
+#include <windows.h>
+#include <Shellapi.h>
+#endif
 
 using namespace utility;
 using namespace web;
@@ -54,7 +58,8 @@ public:
 
     utility::string_t get_authorization_uri(utility::string_t state)
     {
-        const string_t response_type(U("code")); // "token" for implicit flow
+        // TODO: Use "token" here for implicit flow. This would get token directly without auth code.
+        const string_t response_type(U("code"));
         uri_builder u(m_auth_endpoint);
         u.append_query(U("response_type"), response_type);
         u.append_query(U("client_id"), m_client_key);
@@ -65,6 +70,9 @@ public:
 
     pplx::task<utility::string_t> obtain_token(utility::string_t authorization_code, bool do_http_basic_auth=true)
     {
+#if 0
+        // FIXME: Windows http_client cannot determine HTTP auth type for some reason on some hosts.
+        // We don't need to determine it since oauth2 uses HTTP basic auth by default.
         http_client_config config;
         if (do_http_basic_auth)
         {
@@ -81,13 +89,44 @@ public:
         }
 
         return token_client.request(methods::POST, U(""), request_body, mime_types::application_x_www_form_urlencoded)
+#else
+        http_client token_client(m_token_endpoint);
+        http_request request;
+        request.set_method(methods::POST);
+        request.set_request_uri(U(""));
+
+        utility::string_t request_body(U("grant_type=authorization_code&code=") + uri::encode_data_string(authorization_code)
+                + U("&redirect_uri=") + uri::encode_data_string(m_redirect_uri));
+        if (!do_http_basic_auth)
+        {
+            request_body += U("&client_id=") + uri::encode_data_string(m_client_key)
+                + U("&client_secret=") + uri::encode_data_string(m_client_secret);
+        }
+        else
+        {
+            // Add HTTP basic auth header.
+#if defined(_MS_WINDOWS)
+            // On Windows we need to convert utf16 to utf8..
+            std::string creds_str(conversions::utf16_to_utf8(
+                uri::encode_data_string(m_client_key) + U(":") + uri::encode_data_string(m_client_secret)
+            ));
+#else
+            utility::string_t creds_str(uri::encode_data_string(m_client_key) + U(":") + uri::encode_data_string(m_client_secret));
+#endif
+            std::vector<unsigned char> creds_vec(creds_str.c_str(), creds_str.c_str() + creds_str.length());
+            request.headers().add(U("Authorization"), U("Basic ") + conversions::to_base64(std::move(creds_vec)));
+        }
+        request.set_body(request_body, mime_types::application_x_www_form_urlencoded);
+
+        return token_client.request(request)  
+#endif
         .then([](http_response response)
         {
             return response.extract_json();
         })
         .then([](json::value token_json)
         {
-//            ucout << token_json.serialize() << std::endl;
+            ucout << token_json.serialize() << std::endl;
             return token_json[U("access_token")].as_string();
         });
     }
@@ -147,12 +186,6 @@ private:
 };
 
 
-//
-// Token allowing your client to access an associated Dropbox account.
-// Token is obtained following oauth2 authorization process.
-// See Dropbox Core API for information on the oauth2 endpoints:
-// https://www.dropbox.com/developers/core/docs
-//
 static const utility::string_t s_dropbox_key(U(""));
 static const utility::string_t s_dropbox_secret(U(""));
 
@@ -168,11 +201,16 @@ static const utility::string_t s_state(U("1234ABCD"));
 
 static void open_browser(utility::string_t auth_uri)
 {
+#if defined(_MS_WINDOWS) && !defined(__cplusplus_winrt) // Windows desktop
+    auto r = ShellExecute(NULL, "open", conversions::utf16_to_utf8(auth_uri).c_str(), NULL, NULL, SW_SHOWNORMAL);
+#elif defined(_MS_WINDOWS) && defined(__cplusplus_winrt) // Windows RT
+#elif defined(__APPLE__)
     // TODO: This is for Linux/X11 only.
     string_t browser_cmd(U("xdg-open \"") + auth_uri + U("\""));
     ucout << "Opening browser with following command:" << std::endl;
     ucout << browser_cmd << std::endl;
     system(browser_cmd.c_str());
+#endif
 }
 
 static string_t dropbox_authorize()
