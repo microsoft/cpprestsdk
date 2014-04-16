@@ -44,18 +44,32 @@ namespace client
 /// </summary>
 struct oauth2_config
 {
-    oauth2_config(utility::string_t token) : m_token(std::move(token)) {}
+    oauth2_config(utility::string_t token, bool bearer_auth=true,
+            utility::string_t access_token_key=_XPLATSTR("access_token")) :
+        m_token(std::move(token)),
+        m_bearer_auth(bearer_auth),
+        m_access_token_key(access_token_key)
+    {
+    }
 
     const utility::string_t& token() const { return m_token; }
     void set_token(utility::string_t token) { m_token = std::move(token); }
+
+    bool bearer_auth() const { return m_bearer_auth; }
+    void set_bearer_auth(bool enable) { m_bearer_auth = std::move(enable); }
+
+    const utility::string_t&  access_token_key() const { return m_access_token_key; }
+    void set_access_token_key(utility::string_t access_token_key) { m_access_token_key = std::move(access_token_key); }
 
     bool is_enabled() const { return !m_token.empty(); }
 
 private:
     friend class http_client_config;
-    oauth2_config() {}
+    oauth2_config() : m_bearer_auth(true) {}
 
     utility::string_t m_token;
+    bool m_bearer_auth;
+    utility::string_t m_access_token_key;
 };
 
 
@@ -74,7 +88,16 @@ public:
     {
         if (m_config.is_enabled())
         {
-            request.headers().add(_XPLATSTR("Authorization"), _XPLATSTR("Bearer ") + m_config.token());
+            if (m_config.bearer_auth())
+            {
+                request.headers().add(_XPLATSTR("Authorization"), _XPLATSTR("Bearer ") + m_config.token());
+            }
+            else
+            {
+                uri_builder ub(request.request_uri());
+                ub.append_query(m_config.access_token_key(), m_config.token());
+                request.set_request_uri(ub.to_uri());
+            }
         }
         return next_stage()->propagate(request);
     }
