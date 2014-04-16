@@ -126,6 +126,7 @@ DAT(text_xjson,                            "text/x-json")
 #endif // _MIME_TYPES
 
 #ifdef _CHARSET_TYPES
+DAT(ascii,                          "ascii")
 DAT(usascii,                        "us-ascii")
 DAT(latin1,                         "iso-8859-1")
 DAT(utf8,                           "utf-8")
