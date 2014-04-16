@@ -65,33 +65,22 @@ public:
 
     pplx::task<utility::string_t> obtain_token(utility::string_t authorization_code, bool do_http_basic_auth=true)
     {
-        // TODO: Add HTTP Basic authentication to HTTP client?
-//        credentials creds(m_client_key, m_client_secret);
-//        http_client_config cfg;
-//        cfg.set_credentials(creds);
-//        http_client token_client(m_token_endpoint, cfg);
-        http_client token_client(m_token_endpoint);
-
-        http_request req;
-        req.set_method(methods::POST);
-        req.set_request_uri(U(""));
-        utility::string_t body(U("grant_type=authorization_code&code=") + uri::encode_data_string(authorization_code)
-                + U("&redirect_uri=") + uri::encode_data_string(m_redirect_uri));
+        http_client_config config;
         if (do_http_basic_auth)
         {
-            // TODO: HTTP Basic authentication does not work with Linux or OS X, so we make signature here.
-            string_t creds_str(uri::encode_data_string(m_client_key) + U(":") + uri::encode_data_string(m_client_secret));
-            std::vector<unsigned char> creds_vec(creds_str.data(), creds_str.data() + creds_str.size());
-            req.headers().add(U("Authorization"), U("Basic ") + conversions::to_base64(creds_vec));
+            config.set_credentials(credentials(uri::encode_data_string(m_client_key), uri::encode_data_string(m_client_secret)));
         }
-        else
+        http_client token_client(m_token_endpoint, config);
+
+        utility::string_t request_body(U("grant_type=authorization_code&code=") + uri::encode_data_string(authorization_code)
+                + U("&redirect_uri=") + uri::encode_data_string(m_redirect_uri));
+        if (!do_http_basic_auth)
         {
-            body += U("&client_id=") + uri::encode_data_string(m_client_key)
+            request_body += U("&client_id=") + uri::encode_data_string(m_client_key)
                 + U("&client_secret=") + uri::encode_data_string(m_client_secret);
         }
-        req.set_body(body, mime_types::application_x_www_form_urlencoded);
 
-        return token_client.request(req)
+        return token_client.request(methods::POST, U(""), request_body, mime_types::application_x_www_form_urlencoded)
         .then([](http_response response)
         {
             return response.extract_json();
