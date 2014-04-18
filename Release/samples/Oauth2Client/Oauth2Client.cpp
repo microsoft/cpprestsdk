@@ -205,6 +205,7 @@ static void open_browser(utility::string_t auth_uri)
     auto r = ShellExecute(NULL, "open", conversions::utf16_to_utf8(auth_uri).c_str(), NULL, NULL, SW_SHOWNORMAL);
 #elif defined(_MS_WINDOWS) && defined(__cplusplus_winrt) // Windows RT
 #elif defined(__APPLE__)
+#else
     // TODO: This is for Linux/X11 only.
     string_t browser_cmd(U("xdg-open \"") + auth_uri + U("\""));
     ucout << "Opening browser with following command:" << std::endl;
