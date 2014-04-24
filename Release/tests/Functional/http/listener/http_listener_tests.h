@@ -22,7 +22,9 @@ namespace tests { namespace functional { namespace http { namespace listener {
 class uri_address
 {
 public:
-    uri_address() : m_uri(U("http://localhost:34567/"))
+    uri_address() : 
+        m_uri(U("http://localhost:34567/")),
+        m_secure_uri(U("https://localhost:8443/"))
     {
         if (!s_dummy_listener)
             s_dummy_listener = std::make_shared<web::http::experimental::listener::http_listener>(U("http://localhost:30000/"));
@@ -33,6 +35,7 @@ public:
 
     static std::shared_ptr<web::http::experimental::listener::http_listener> s_dummy_listener;
     web::http::uri m_uri;
+    web::http::uri m_secure_uri;
 };
 
 }}}}

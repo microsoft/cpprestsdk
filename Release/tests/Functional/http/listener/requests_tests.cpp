@@ -234,6 +234,22 @@ TEST_FIXTURE(uri_address, uri_encoding)
     encoded_uri = uri::encode_uri(U("/path 1/path 2?key1=val1 val2#fragment1")); // URI has path, query and fragment components
     client.request(methods::GET, encoded_uri).wait();
 }
+
+TEST_FIXTURE(uri_address, https_listener)
+{
+    http_listener listener(m_secure_uri);
+    listener.open().wait();
+    client::http_client client(m_secure_uri);
+
+    listener.support([&](http_request request)
+    {
+        request.reply(status_codes::OK);
+    });
+
+    http_asserts::assert_response_equals(client.request(methods::GET, U("")).get(), status_codes::OK);
+
+    listener.close().wait();
+}
 }
 
 }}}}
