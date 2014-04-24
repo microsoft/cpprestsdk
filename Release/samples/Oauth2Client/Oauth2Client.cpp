@@ -65,6 +65,10 @@ public:
         u.append_query(U("client_id"), m_client_key);
         u.append_query(U("redirect_uri"), m_redirect_uri);
         u.append_query(U("state"), state);
+
+        // Note: this is only needed for Live client
+        u.append_query(U("scope"), "wl.signin");
+
         return u.to_string();
     }
 
@@ -195,6 +199,9 @@ static const utility::string_t s_linkedin_secret(U(""));
 static const utility::string_t s_facebook_key(U(""));
 static const utility::string_t s_facebook_secret(U(""));
 
+static const utility::string_t s_live_key(U(""));
+static const utility::string_t s_live_secret(U(""));
+
 // TODO: Generate state per authorization request?
 static const utility::string_t s_state(U("1234ABCD"));
 
@@ -248,6 +255,23 @@ static string_t linkedin_authorize()
     return authorizer.obtain_token(auth_code, false).get();
 }
 
+static string_t  live_authorize()
+{
+	oauth2_authorizer authorizer(s_live_key, s_live_secret,
+		U("https://login.live.com/oauth20_authorize.srf"),
+		U("https://login.live.com/oauth20_token.srf"),
+		U("http://mydomain987564728.com:80/"));  // must be a real domain name
+
+	utility::string_t auth_code;
+	{
+		oauth2_code_listener listener(authorizer.redirect_uri(), s_state);
+		open_browser(authorizer.get_authorization_uri(s_state));
+		auth_code = listener.listen_for_code().get();
+	}
+
+	return authorizer.obtain_token(auth_code).get();
+}
+
 static void dropbox_client()
 {
     oauth2_config dropbox_cfg(dropbox_authorize());
@@ -267,26 +291,26 @@ static void dropbox_client()
     ucout << "Metadata: " << api.request(methods::GET, U("metadata/sandbox/hello_world.txt")).get().extract_json().get() << std::endl;
 
     ucout << "Downloading 'hello_world.txt' file contents (text):" << std::endl;
-    string_t content_string = content.request(methods::GET, "files/sandbox/hello_world.txt").get().extract_string().get();
+    string_t content_string = content.request(methods::GET, U("files/sandbox/hello_world.txt")).get().extract_string().get();
     ucout << "Contents: '" << content_string << "'" << std::endl;
     ucout << "Downloading 'test_image.jpg' file contents (binary):" << std::endl;
-    std::vector<unsigned char> content_vector = content.request(methods::GET, "files/sandbox/test_image.jpg").get().extract_vector().get();
+    std::vector<unsigned char> content_vector = content.request(methods::GET, U("files/sandbox/test_image.jpg")).get().extract_vector().get();
     ucout << "Contents size: " << (content_vector.size() / 1024) << "KiB" << std::endl;
 
     ucout << "Uploading 'test_put.txt' file with contents 'Testing POST' (text):" << std::endl;
     ucout << "Response: "
-            << content.request(methods::POST, "files_put/sandbox/test_put.txt", "Testing POST").get().extract_string().get()
+            << content.request(methods::POST, U("files_put/sandbox/test_put.txt"), U("Testing POST")).get().extract_string().get()
             << std::endl;
     ucout << "Uploading 'test_image_copy.jpg' (copy of 'test_image.jpg'):" << std::endl;
     ucout << "Response: "
-            << content.request(methods::PUT, "files_put/sandbox/test_image_copy.jpg",
+            << content.request(methods::PUT, U("files_put/sandbox/test_image_copy.jpg"),
                     concurrency::streams::bytestream::open_istream(std::move(content_vector))).get().extract_string().get()
             << std::endl;
 
     ucout << "Deleting uploaded file 'test_put.txt':" << std::endl;
-    ucout << "Response: " << api.request(methods::POST, "fileops/delete?root=sandbox&path=test_put.txt").get().extract_string().get() << std::endl;
+    ucout << "Response: " << api.request(methods::POST, U("fileops/delete?root=sandbox&path=test_put.txt")).get().extract_string().get() << std::endl;
     ucout << "Deleting uploaded file 'test_image_copy.jpg':" << std::endl;
-    ucout << "Response: " << api.request(methods::POST, "fileops/delete?root=sandbox&path=test_image_copy.jpg").get().extract_string().get() << std::endl;
+    ucout << "Response: " << api.request(methods::POST, U("fileops/delete?root=sandbox&path=test_image_copy.jpg")).get().extract_string().get() << std::endl;
 #endif
 }
 
@@ -308,6 +332,17 @@ static void linkedin_client()
 #endif
 }
 
+static void live_client()
+{
+    oauth2_config live_cfg(live_authorize());
+
+    http_client_config config;
+    config.set_oauth2(live_cfg);
+
+    http_client api(U("https://apis.live.net/v5.0"), config);
+    auto x = api.request(methods::GET, U("me?access_token=wl.signin")).get();
+}
+
 #ifdef _MS_WINDOWS
 int wmain(int argc, wchar_t *argv[])
 #else
@@ -316,8 +351,9 @@ int main(int argc, char *argv[])
 {
     ucout << "Running oauth2 sample..." << std::endl;
 
-    linkedin_client();
-    dropbox_client();
+//    linkedin_client();
+//    dropbox_client();
+    live_client();
 
     ucout << "Done." << std::endl;
     return 0;
