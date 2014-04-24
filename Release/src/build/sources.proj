@@ -129,6 +129,9 @@
     <ClCompile Include="$(CasablancaSrcDir)\http\oauth\oauth1_handler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="$(CasablancaSrcDir)\http\oauth\oauth2_handler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="$(CasablancaSrcDir)\json\json.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

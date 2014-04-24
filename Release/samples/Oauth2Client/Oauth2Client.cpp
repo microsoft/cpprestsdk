@@ -125,6 +125,7 @@ static string_t code_from_localhost_listener(oauth2_config cfg)
     utility::string_t auth_code;
     {
         oauth2_code_listener listener(s_listener_uri, s_state);
+//        oauth2_code_listener listener(cfg.redirect_uri(), s_state);
         open_browser(cfg.build_authorization_uri(s_state));
         auth_code = listener.listen_for_code().get();
     }

@@ -51,18 +51,22 @@ struct oauth2_config
                 m_client_secret(client_secret),
                 m_auth_endpoint(auth_endpoint),
                 m_token_endpoint(token_endpoint),
-                m_redirect_uri(redirect_uri)
+                m_redirect_uri(redirect_uri),
+                m_bearer_auth(true),
+                m_access_token_key(_XPLATSTR("access_token"))
     {
     }
 
     oauth2_config(utility::string_t token) :
-        m_token(std::move(token))
+        m_token(std::move(token)),
+        m_bearer_auth(true),
+        m_access_token_key(_XPLATSTR("access_token"))
     {
     }
 
-    utility::string_t build_authorization_uri(utility::string_t state) const;
+    _ASYNCRTIMP utility::string_t build_authorization_uri(utility::string_t state) const;
 
-    pplx::task<void> fetch_token(utility::string_t authorization_code, bool do_http_basic_auth=true);
+    _ASYNCRTIMP pplx::task<void> fetch_token(utility::string_t authorization_code, bool do_http_basic_auth=true);
 
     bool is_enabled() const { return !m_token.empty(); }
 
@@ -103,9 +107,11 @@ private:
     utility::string_t m_token_endpoint;
     utility::string_t m_redirect_uri;
     utility::string_t m_scope;
+
+    bool m_bearer_auth;
+    utility::string_t m_access_token_key;
+
     utility::string_t m_token;
-    bool m_bearer_auth = true;
-    utility::string_t m_access_token_key = _XPLATSTR("access_token");
 };
 
 
@@ -120,7 +126,7 @@ public:
     void set_config(oauth2_config config) { m_config = std::move(config); }
     const oauth2_config& get_config() const { return m_config; }
 
-    virtual pplx::task<http_response> propagate(http_request request) override;
+    _ASYNCRTIMP virtual pplx::task<http_response> propagate(http_request request) override;
 
 private:
     oauth2_config m_config;
