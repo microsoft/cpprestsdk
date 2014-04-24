@@ -46,7 +46,7 @@ class oauth2_code_listener
 {
 public:
     oauth2_code_listener(uri listen_uri, utility::string_t state) :
-        m_listener(new http_listener(listen_uri)),
+        m_listener(utility::details::make_unique<http_listener>(listen_uri)),
         m_state(state)
     {
         m_listener->support([&](http::http_request request) -> void
@@ -72,7 +72,6 @@ public:
     ~oauth2_code_listener()
     {
         m_listener->close().wait();
-        delete m_listener;
     }
 
     pplx::task<utility::string_t> listen_for_code()
@@ -81,7 +80,7 @@ public:
     }
 
 private:
-    http_listener *m_listener;
+    std::unique_ptr<http_listener> m_listener;
     pplx::task_completion_event<utility::string_t> m_tce;
     utility::string_t m_state;
 };
@@ -124,8 +123,8 @@ static string_t code_from_localhost_listener(oauth2_config cfg)
 {
     utility::string_t auth_code;
     {
-        oauth2_code_listener listener(s_listener_uri, s_state);
-//        oauth2_code_listener listener(cfg.redirect_uri(), s_state);
+//        oauth2_code_listener listener(s_listener_uri, s_state);
+        oauth2_code_listener listener(cfg.redirect_uri(), s_state);
         open_browser(cfg.build_authorization_uri(s_state));
         auth_code = listener.listen_for_code().get();
     }
