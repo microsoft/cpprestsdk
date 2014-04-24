@@ -42,109 +42,6 @@ using namespace web::http::experimental::listener;
 #define EXTENSIVE 0
 
 
-class oauth2_authorizer
-{
-public:
-    oauth2_authorizer(utility::string_t client_key, utility::string_t client_secret,
-            utility::string_t auth_endpoint, utility::string_t token_endpoint,
-            utility::string_t redirect_uri) :
-                m_client_key(client_key),
-                m_client_secret(client_secret),
-                m_auth_endpoint(auth_endpoint),
-                m_token_endpoint(token_endpoint),
-                m_redirect_uri(redirect_uri)
-    {
-    }
-
-    utility::string_t get_authorization_uri(utility::string_t state)
-    {
-        // TODO: Use "token" here for implicit flow. This would get token directly without auth code.
-        const string_t response_type(U("code"));
-        uri_builder u(m_auth_endpoint);
-        u.append_query(U("response_type"), response_type);
-        u.append_query(U("client_id"), m_client_key);
-        u.append_query(U("redirect_uri"), m_redirect_uri);
-        u.append_query(U("state"), state);
-
-        // Note: this is only needed for Live client
-        u.append_query(U("scope"), "wl.signin");
-
-        return u.to_string();
-    }
-
-    pplx::task<utility::string_t> obtain_token(utility::string_t authorization_code, bool do_http_basic_auth=true)
-    {
-#if 0
-        // FIXME: Windows http_client cannot determine HTTP auth type for some reason on some hosts.
-        // We don't need to determine it since oauth2 uses HTTP basic auth by default.
-        http_client_config config;
-        if (do_http_basic_auth)
-        {
-            config.set_credentials(credentials(uri::encode_data_string(m_client_key), uri::encode_data_string(m_client_secret)));
-        }
-        http_client token_client(m_token_endpoint, config);
-
-        utility::string_t request_body(U("grant_type=authorization_code&code=") + uri::encode_data_string(authorization_code)
-                + U("&redirect_uri=") + uri::encode_data_string(m_redirect_uri));
-        if (!do_http_basic_auth)
-        {
-            request_body += U("&client_id=") + uri::encode_data_string(m_client_key)
-                + U("&client_secret=") + uri::encode_data_string(m_client_secret);
-        }
-
-        return token_client.request(methods::POST, U(""), request_body, mime_types::application_x_www_form_urlencoded)
-#else
-        http_client token_client(m_token_endpoint);
-        http_request request;
-        request.set_method(methods::POST);
-        request.set_request_uri(U(""));
-
-        utility::string_t request_body(U("grant_type=authorization_code&code=") + uri::encode_data_string(authorization_code)
-                + U("&redirect_uri=") + uri::encode_data_string(m_redirect_uri));
-        if (!do_http_basic_auth)
-        {
-            request_body += U("&client_id=") + uri::encode_data_string(m_client_key)
-                + U("&client_secret=") + uri::encode_data_string(m_client_secret);
-        }
-        else
-        {
-            // Add HTTP basic auth header.
-#if defined(_MS_WINDOWS)
-            // On Windows we need to convert utf16 to utf8..
-            std::string creds_str(conversions::utf16_to_utf8(
-                uri::encode_data_string(m_client_key) + U(":") + uri::encode_data_string(m_client_secret)
-            ));
-#else
-            utility::string_t creds_str(uri::encode_data_string(m_client_key) + U(":") + uri::encode_data_string(m_client_secret));
-#endif
-            std::vector<unsigned char> creds_vec(creds_str.c_str(), creds_str.c_str() + creds_str.length());
-            request.headers().add(U("Authorization"), U("Basic ") + conversions::to_base64(std::move(creds_vec)));
-        }
-        request.set_body(request_body, mime_types::application_x_www_form_urlencoded);
-
-        return token_client.request(request)  
-#endif
-        .then([](http_response response)
-        {
-            return response.extract_json();
-        })
-        .then([](json::value token_json)
-        {
-            ucout << token_json.serialize() << std::endl;
-            return token_json[U("access_token")].as_string();
-        });
-    }
-
-    const utility::string_t& redirect_uri() const { return m_redirect_uri; }
-
-private:
-    utility::string_t m_client_key;
-    utility::string_t m_client_secret;
-    utility::string_t m_auth_endpoint;
-    utility::string_t m_token_endpoint;
-    utility::string_t m_redirect_uri;
-};
-
 class oauth2_code_listener
 {
 public:
@@ -205,6 +102,8 @@ static const utility::string_t s_live_secret(U(""));
 // TODO: Generate state per authorization request?
 static const utility::string_t s_state(U("1234ABCD"));
 
+static const utility::string_t s_listener_uri(U("http://localhost:8888/"));
+
 
 static void open_browser(utility::string_t auth_uri)
 {
@@ -221,61 +120,24 @@ static void open_browser(utility::string_t auth_uri)
 #endif
 }
 
-static string_t dropbox_authorize()
+static string_t code_from_localhost_listener(oauth2_config cfg)
 {
-    oauth2_authorizer authorizer(s_dropbox_key, s_dropbox_secret,
-            U("https://www.dropbox.com/1/oauth2/authorize"),
-            U("https://api.dropbox.com/1/oauth2/token"),
-            U("http://localhost:8888/"));
-
     utility::string_t auth_code;
     {
-        oauth2_code_listener listener(authorizer.redirect_uri(), s_state);
-        open_browser(authorizer.get_authorization_uri(s_state));
+        oauth2_code_listener listener(s_listener_uri, s_state);
+        open_browser(cfg.build_authorization_uri(s_state));
         auth_code = listener.listen_for_code().get();
     }
-
-    return authorizer.obtain_token(auth_code).get();
-}
-
-static string_t linkedin_authorize()
-{
-    oauth2_authorizer authorizer(s_linkedin_key, s_linkedin_secret,
-            U("https://www.linkedin.com/uas/oauth2/authorization"),
-            U("https://www.linkedin.com/uas/oauth2/accessToken"),
-            U("http://localhost:8888/"));
-
-    utility::string_t auth_code;
-    {
-        oauth2_code_listener listener(authorizer.redirect_uri(), s_state);
-        open_browser(authorizer.get_authorization_uri(s_state));
-        auth_code = listener.listen_for_code().get();
-    }
-
-    return authorizer.obtain_token(auth_code, false).get();
-}
-
-static string_t  live_authorize()
-{
-	oauth2_authorizer authorizer(s_live_key, s_live_secret,
-		U("https://login.live.com/oauth20_authorize.srf"),
-		U("https://login.live.com/oauth20_token.srf"),
-		U("http://mydomain987564728.com:80/"));  // must be a real domain name
-
-	utility::string_t auth_code;
-	{
-		oauth2_code_listener listener(authorizer.redirect_uri(), s_state);
-		open_browser(authorizer.get_authorization_uri(s_state));
-		auth_code = listener.listen_for_code().get();
-	}
-
-	return authorizer.obtain_token(auth_code).get();
+    return auth_code;
 }
 
 static void dropbox_client()
 {
-    oauth2_config dropbox_cfg(dropbox_authorize());
-//    ucout << "Dropbox token: " <<  dropbox_cfg.token() << std::endl;
+    oauth2_config dropbox_cfg(s_dropbox_key, s_dropbox_secret,
+            U("https://www.dropbox.com/1/oauth2/authorize"),
+            U("https://api.dropbox.com/1/oauth2/token"),
+            s_listener_uri);
+    dropbox_cfg.fetch_token(code_from_localhost_listener(dropbox_cfg)).wait();
 
     http_client_config config;
     config.set_oauth2(dropbox_cfg);
@@ -316,11 +178,16 @@ static void dropbox_client()
 
 static void linkedin_client()
 {
-    oauth2_config linkedin_cfg(linkedin_authorize());
-    // LinkedIn doesn't use bearer auth header or the standard "access_token" key.
+    oauth2_config linkedin_cfg(s_linkedin_key, s_linkedin_secret,
+            U("https://www.linkedin.com/uas/oauth2/authorization"),
+            U("https://www.linkedin.com/uas/oauth2/accessToken"),
+            s_listener_uri);
+    // LinkedIn doesn't use bearer auth.
     linkedin_cfg.set_bearer_auth(false);
+    // It also uses "oauth2_access_token" instead of the normal "access_token" key.
     linkedin_cfg.set_access_token_key(U("oauth2_access_token"));
-//    ucout << "LinkedIn token: " <<  linkedin_cfg.token() << std::endl;
+
+    linkedin_cfg.fetch_token(code_from_localhost_listener(linkedin_cfg), false).wait();
 
     http_client_config config;
     config.set_oauth2(linkedin_cfg);
@@ -334,13 +201,22 @@ static void linkedin_client()
 
 static void live_client()
 {
-    oauth2_config live_cfg(live_authorize());
+    oauth2_config live_cfg(s_live_key, s_live_secret,
+        U("https://login.live.com/oauth20_authorize.srf"),
+        U("https://login.live.com/oauth20_token.srf"),
+        // Live can't use localhost redirect, so we map localhost to a fake domain name:
+        // 127.0.0.1    www.livetestdummy.com
+        U("http://www.livetestdummy.com:8888/"));
+    // Scope "wl.basic" allows getting user information.
+    live_cfg.set_scope(U("wl.basic"));
+    live_cfg.fetch_token(code_from_localhost_listener(live_cfg)).wait();
 
     http_client_config config;
     config.set_oauth2(live_cfg);
 
-    http_client api(U("https://apis.live.net/v5.0"), config);
-    auto x = api.request(methods::GET, U("me?access_token=wl.signin")).get();
+    http_client api(U("https://apis.live.net/v5.0/"), config);
+    ucout << "Requesting account information:" << std::endl;
+    ucout << api.request(methods::GET, U("me")).get().extract_json().get() << std::endl;
 }
 
 #ifdef _MS_WINDOWS
@@ -351,8 +227,8 @@ int main(int argc, char *argv[])
 {
     ucout << "Running oauth2 sample..." << std::endl;
 
-//    linkedin_client();
-//    dropbox_client();
+    linkedin_client();
+    dropbox_client();
     live_client();
 
     ucout << "Done." << std::endl;
