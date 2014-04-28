@@ -34,7 +34,7 @@ using namespace http;
 using namespace client;
 using namespace utility;
 
-namespace web { namespace http { namespace client
+namespace web { namespace http { namespace client { namespace experimental
 {
 
 
@@ -297,4 +297,4 @@ pplx::task<http_response> oauth1_handler::propagate(http_request request)
 #undef DAT
 
 
-}}} // namespace web::http::client
+}}}} // namespace web::http::client::experimental

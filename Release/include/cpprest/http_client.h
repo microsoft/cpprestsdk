@@ -67,6 +67,8 @@ namespace http
 namespace client
 {
 
+using namespace web::http::client::experimental;
+
 #ifdef _MS_WINDOWS
 namespace details {
 #ifdef __cplusplus_winrt

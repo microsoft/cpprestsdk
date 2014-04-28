@@ -37,6 +37,9 @@ namespace http
 {
 namespace client
 {
+class http_client_config;
+namespace experimental
+{
 
 
 /// <summary>
@@ -98,7 +101,7 @@ struct oauth2_config
     void set_access_token_key(utility::string_t access_token_key) { m_access_token_key = std::move(access_token_key); }
 
 private:
-    friend class http_client_config;
+    friend class web::http::client::http_client_config;
     oauth2_config() {}
 
     utility::string_t m_client_key;
@@ -133,6 +136,6 @@ private:
 };
 
 
-}}} // namespace web::http::client
+}}}} // namespace web::http::client::experimental
 
 #endif  /* _CASA_OAUTH2_HANDLER_H */

@@ -38,6 +38,9 @@ namespace http
 {
 namespace client
 {
+class http_client_config;
+namespace experimental
+{
 
 
 /// <summary>
@@ -92,7 +95,7 @@ struct oauth1_config
     bool is_enabled() const { return !m_key.empty() && !m_secret.empty() && !m_token.empty() && !m_token_secret.empty(); }
 
 private:
-    friend class http_client_config;
+    friend class web::http::client::http_client_config;
     oauth1_config() {}
 
     // Required.
@@ -147,6 +150,6 @@ private:
 };
 
 
-}}} // namespace web::http::client
+}}}} // namespace web::http::client::experimental
 
 #endif  /* _CASA_OAUTH1_HANDLER_H */
