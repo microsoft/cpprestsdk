@@ -101,11 +101,11 @@ static const utility::string_t s_live_secret(U(""));
 // TODO: Generate state per authorization request?
 static const utility::string_t s_state(U("1234ABCD"));
 
-static const utility::string_t s_listener_uri(U("http://localhost:8888/"));
-
 
 static void open_browser(utility::string_t auth_uri)
 {
+    ucout << "Opening browser in URI:" << std::endl;
+    ucout << auth_uri << std::endl;
 #if defined(_MS_WINDOWS) && !defined(__cplusplus_winrt) // Windows desktop
     auto r = ShellExecute(NULL, "open", conversions::utf16_to_utf8(auth_uri).c_str(), NULL, NULL, SW_SHOWNORMAL);
 #elif defined(_MS_WINDOWS) && defined(__cplusplus_winrt) // Windows RT
@@ -113,8 +113,6 @@ static void open_browser(utility::string_t auth_uri)
 #else
     // TODO: This is for Linux/X11 only.
     string_t browser_cmd(U("xdg-open \"") + auth_uri + U("\""));
-    ucout << "Opening browser with following command:" << std::endl;
-    ucout << browser_cmd << std::endl;
     system(browser_cmd.c_str());
 #endif
 }
@@ -123,7 +121,6 @@ static string_t code_from_localhost_listener(oauth2_config cfg)
 {
     utility::string_t auth_code;
     {
-//        oauth2_code_listener listener(s_listener_uri, s_state);
         oauth2_code_listener listener(cfg.redirect_uri(), s_state);
         open_browser(cfg.build_authorization_uri(s_state));
         auth_code = listener.listen_for_code().get();
@@ -136,7 +133,7 @@ static void dropbox_client()
     oauth2_config dropbox_cfg(s_dropbox_key, s_dropbox_secret,
             U("https://www.dropbox.com/1/oauth2/authorize"),
             U("https://api.dropbox.com/1/oauth2/token"),
-            s_listener_uri);
+            U("http://localhost:8889/"));
     dropbox_cfg.fetch_token(code_from_localhost_listener(dropbox_cfg)).wait();
 
     http_client_config config;
@@ -181,7 +178,7 @@ static void linkedin_client()
     oauth2_config linkedin_cfg(s_linkedin_key, s_linkedin_secret,
             U("https://www.linkedin.com/uas/oauth2/authorization"),
             U("https://www.linkedin.com/uas/oauth2/accessToken"),
-            s_listener_uri);
+            U("http://localhost:8888/"));
     // LinkedIn doesn't use bearer auth.
     linkedin_cfg.set_bearer_auth(false);
     // It also uses "oauth2_access_token" instead of the normal "access_token" key.
@@ -206,7 +203,7 @@ static void live_client()
         U("https://login.live.com/oauth20_token.srf"),
         // Live can't use localhost redirect, so we map localhost to a fake domain name:
         // 127.0.0.1    www.livetestdummy.com
-        U("http://www.livetestdummy.com:8888/"));
+        U("http://www.livetestdummy.com:8890/"));
     // Scope "wl.basic" allows getting user information.
     live_cfg.set_scope(U("wl.basic"));
     live_cfg.fetch_token(code_from_localhost_listener(live_cfg)).wait();
