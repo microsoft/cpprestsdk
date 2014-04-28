@@ -72,17 +72,10 @@ pplx::task<void> oauth2_config::fetch_token(utility::string_t authorization_code
     }
     else
     {
-        // Add HTTP basic auth header.
-#if defined(_MS_WINDOWS)
-        // On Windows we need to convert utf16 to utf8..
-        std::string creds_str(conversions::utf16_to_utf8(
-            uri::encode_data_string(m_client_key) + U(":") + uri::encode_data_string(m_client_secret)
-        ));
-#else
-        utility::string_t creds_str(uri::encode_data_string(m_client_key) + U(":") + uri::encode_data_string(m_client_secret));
-#endif
-        std::vector<unsigned char> creds_vec(creds_str.c_str(), creds_str.c_str() + creds_str.length());
-        request.headers().add(U("Authorization"), U("Basic ") + conversions::to_base64(std::move(creds_vec)));
+        std::vector<unsigned char> creds_vec(conversions::to_body_data(
+                uri::encode_data_string(m_client_key) + U(":") + uri::encode_data_string(m_client_secret))
+        );
+        request.headers().add(header_names::authorization, U("Basic ") + conversions::to_base64(std::move(creds_vec)));
     }
     request.set_body(request_body, mime_types::application_x_www_form_urlencoded);
 
@@ -108,7 +101,7 @@ pplx::task<http_response> oauth2_handler::propagate(http_request request)
     {
         if (m_config.bearer_auth())
         {
-            request.headers().add(_XPLATSTR("Authorization"), _XPLATSTR("Bearer ") + m_config.token());
+            request.headers().add(header_names::authorization, _XPLATSTR("Bearer ") + m_config.token());
         }
         else
         {
