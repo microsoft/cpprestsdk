@@ -44,16 +44,72 @@ namespace client
 /// </summary>
 struct oauth2_config
 {
-    oauth2_config(utility::string_t token) : m_token(std::move(token)) {}
+    oauth2_config(utility::string_t client_key, utility::string_t client_secret,
+            utility::string_t auth_endpoint, utility::string_t token_endpoint,
+            utility::string_t redirect_uri) :
+                m_client_key(client_key),
+                m_client_secret(client_secret),
+                m_auth_endpoint(auth_endpoint),
+                m_token_endpoint(token_endpoint),
+                m_redirect_uri(redirect_uri),
+                m_bearer_auth(true),
+                m_access_token_key(_XPLATSTR("access_token"))
+    {
+    }
+
+    oauth2_config(utility::string_t token) :
+        m_token(std::move(token)),
+        m_bearer_auth(true),
+        m_access_token_key(_XPLATSTR("access_token"))
+    {
+    }
+
+    _ASYNCRTIMP utility::string_t build_authorization_uri(utility::string_t state) const;
+
+    _ASYNCRTIMP pplx::task<void> fetch_token(utility::string_t authorization_code, bool do_http_basic_auth=true);
+
+    bool is_enabled() const { return !m_token.empty(); }
+
+    const utility::string_t& client_key() const { return m_client_key; }
+    void set_client_key(utility::string_t client_key) { m_client_key = std::move(client_key); }
+
+    const utility::string_t& client_secret() const { return m_client_secret; }
+    void set_client_secret(utility::string_t client_secret) { m_client_secret = std::move(client_secret); }
+
+    const utility::string_t& auth_endpoint() const { return m_auth_endpoint; }
+    void set_auth_endpoint(utility::string_t auth_endpoint) { m_auth_endpoint = std::move(auth_endpoint); }
+
+    const utility::string_t& token_endpoint() const { return m_token_endpoint; }
+    void set_token_endpoint(utility::string_t token_endpoint) { m_token_endpoint = std::move(token_endpoint); }
+
+    const utility::string_t& redirect_uri() const { return m_redirect_uri; }
+    void set_redirect_uri(utility::string_t redirect_uri) { m_redirect_uri = std::move(redirect_uri); }
+
+    const utility::string_t& scope() const { return m_scope; }
+    void set_scope(utility::string_t scope) { m_scope = std::move(scope); }
 
     const utility::string_t& token() const { return m_token; }
     void set_token(utility::string_t token) { m_token = std::move(token); }
 
-    bool is_enabled() const { return !m_token.empty(); }
+    bool bearer_auth() const { return m_bearer_auth; }
+    void set_bearer_auth(bool enable) { m_bearer_auth = std::move(enable); }
+
+    const utility::string_t&  access_token_key() const { return m_access_token_key; }
+    void set_access_token_key(utility::string_t access_token_key) { m_access_token_key = std::move(access_token_key); }
 
 private:
     friend class http_client_config;
     oauth2_config() {}
+
+    utility::string_t m_client_key;
+    utility::string_t m_client_secret;
+    utility::string_t m_auth_endpoint;
+    utility::string_t m_token_endpoint;
+    utility::string_t m_redirect_uri;
+    utility::string_t m_scope;
+
+    bool m_bearer_auth;
+    utility::string_t m_access_token_key;
 
     utility::string_t m_token;
 };
@@ -70,14 +126,7 @@ public:
     void set_config(oauth2_config config) { m_config = std::move(config); }
     const oauth2_config& get_config() const { return m_config; }
 
-    virtual pplx::task<http_response> propagate(http_request request) override
-    {
-        if (m_config.is_enabled())
-        {
-            request.headers().add(_XPLATSTR("Authorization"), _XPLATSTR("Bearer ") + m_config.token());
-        }
-        return next_stage()->propagate(request);
-    }
+    _ASYNCRTIMP virtual pplx::task<http_response> propagate(http_request request) override;
 
 private:
     oauth2_config m_config;

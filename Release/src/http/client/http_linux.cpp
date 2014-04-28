@@ -248,6 +248,14 @@ namespace web { namespace http
                         return;
                     }
 
+                    if (m_config.credentials().is_set())
+                    {
+                        // Add HTTP Basic authorization header field.
+                        string_t creds_str(m_config.credentials().username() + U(":") + m_config.credentials().password());
+                        std::vector<unsigned char> creds_vec(creds_str.data(), creds_str.data() + creds_str.size());
+                        ctx->m_request.headers().add(U("Authorization"), U("Basic ") + conversions::to_base64(std::move(creds_vec)));
+                    }
+
                     request_stream << flatten_http_headers(ctx->m_request.headers());
 
                     if (!ctx->m_ssl_stream)
