@@ -104,46 +104,6 @@ pplx::task<void> oauth2_config::fetch_token(utility::string_t authorization_code
 
 pplx::task<http_response> oauth2_handler::propagate(http_request request)
 {
-#if 0
-    return pplx::create_task([this, request] ()
-    {
-        http_request r{std::move(request)};
-        if (m_config.is_enabled())
-        {
-            // Fetch token if not exist.
-            if (m_config.token().empty())
-            {
-                /*
-                if (!m_config.auth_code_hook)
-                {
-                    throw some_error(_XPLATSTR("No token, and config auth_code_hook not set. Please set auth_code_hook."));
-                }
-
-                // Fetch token. Throws errors if token not found etc.
-                m_config.set_token(
-                    m_config.finalize_authorization(
-                        m_config.auth_code_hook(
-                            m_config.authorization_uri()
-                        ).get()
-                    ).get()
-                );
-                */
-                ucout << "GET TOKEN" << std::endl;
-            }
-            if (m_config.bearer_auth())
-            {
-                r.headers().add(_XPLATSTR("Authorization"), _XPLATSTR("Bearer ") + m_config.token());
-            }
-            else
-            {
-                uri_builder ub(r.request_uri());
-                ub.append_query(m_config.access_token_key(), m_config.token());
-                r.set_request_uri(ub.to_uri());
-            }
-        }
-        return next_stage()->propagate(r);
-    });
-#else
     if (m_config.is_enabled())
     {
         if (m_config.bearer_auth())
@@ -158,7 +118,6 @@ pplx::task<http_response> oauth2_handler::propagate(http_request request)
         }
     }
     return next_stage()->propagate(request);
-#endif
 }
 
 
