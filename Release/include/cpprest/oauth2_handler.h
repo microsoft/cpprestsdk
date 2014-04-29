@@ -167,7 +167,8 @@ private:
 
 
 /// <summary>
-/// Oauth2 handler. Specialization of http_pipeline_stage.
+/// OAuth 2.0 handler.
+/// Specialization of http_pipeline_stage to perform OAuth 2.0 request authentication.
 /// </summary>
 class oauth2_handler : public http_pipeline_stage
 {
