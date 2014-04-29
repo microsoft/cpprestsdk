@@ -335,7 +335,7 @@ protected:
         utility::string_t proxy_str;
         http::uri uri;
 
-        auto& config = client_config();
+        const auto& config = client_config();
 
         if(config.proxy().is_disabled())
         {
@@ -451,10 +451,6 @@ protected:
         http_request &msg = request->m_request;
         winhttp_request_context * winhttp_context = static_cast<winhttp_request_context *>(request.get());
 
-        // Need to form uri path, query, and fragment for this request.
-        // Make sure to keep any path that was specified with the uri when the http_client was created.
-        utility::string_t encoded_resource = http::uri_builder(m_uri).append(msg.relative_uri()).to_uri().resource().to_string();
-
         WINHTTP_PROXY_INFO info;
         bool proxy_info_required = false;
 
@@ -482,6 +478,10 @@ protected:
                 // Failure to download the auto-configuration script is not fatal. Fall back to the default proxy.
             }
         }
+
+        // Need to form uri path, query, and fragment for this request.
+        // Make sure to keep any path that was specified with the uri when the http_client was created.
+        const utility::string_t encoded_resource = http::uri_builder(m_uri).append(msg.relative_uri()).to_uri().resource().to_string();
 
         // Open the request.
         winhttp_context->m_request_handle = WinHttpOpenRequest(
@@ -551,7 +551,7 @@ protected:
             }
         }
 
-        size_t content_length = msg._get_impl()->_get_content_length();
+        const size_t content_length = msg._get_impl()->_get_content_length();
         if (content_length > 0)
         {
             if ( msg.method() == http::methods::GET || msg.method() == http::methods::HEAD )
@@ -579,7 +579,7 @@ protected:
         // Add headers.
         if(!msg.headers().empty())
         {
-            utility::string_t flattened_headers = flatten_http_headers(msg.headers());
+            const utility::string_t flattened_headers = flatten_http_headers(msg.headers());
             if(!WinHttpAddRequestHeaders(
                 winhttp_context->m_request_handle,
                 flattened_headers.c_str(),
@@ -627,16 +627,17 @@ private:
 
     static bool _check_streambuf(_In_ winhttp_request_context * winhttp_context, concurrency::streams::streambuf<uint8_t> rdbuf, const utility::char_t* msg) 
     {
-        if ( !rdbuf.is_open() )
+        const auto opened = rdbuf.is_open();
+        if (!opened)
         {
             auto eptr = rdbuf.exception();
             if (eptr == nullptr)
             {
                 eptr = std::make_exception_ptr(http_exception(msg));
             }
-                winhttp_context->report_exception(eptr);
+            winhttp_context->report_exception(eptr);
         }
-        return rdbuf.is_open();
+        return opened;
     }
 
     void _start_request_send(_In_ winhttp_request_context * winhttp_context, size_t content_length)
@@ -749,7 +750,7 @@ private:
                 }
             }
 
-            auto length = bytes_read + (http::details::chunked_encoding::additional_encoding_space - offset);
+            const auto length = bytes_read + (http::details::chunked_encoding::additional_encoding_space - offset);
 
             if (!WinHttpWriteData(
                 p_request_context->m_request_handle,
@@ -964,7 +965,7 @@ private:
                 p_request_context->m_server_authentication_tried = true;
             }
 
-            if( !got_credentials)
+            if(!got_credentials)
             {
                 // Either we cannot resend, or the user did not provide non-empty credentials.
                 // Return the authentication failure to the user.
@@ -985,7 +986,7 @@ private:
         }
 
         // Reset the request body type since it might have already started sending.
-        size_t content_length = request._get_impl()->_get_content_length();
+        const size_t content_length = request._get_impl()->_get_content_length();
         if (content_length > 0)
         {
             // There is a request body that needs to be transferred.
@@ -1037,14 +1038,14 @@ private:
             case WINHTTP_CALLBACK_STATUS_REQUEST_ERROR :
                 {
                     WINHTTP_ASYNC_RESULT *error_result = reinterpret_cast<WINHTTP_ASYNC_RESULT *>(statusInfo);
-                    DWORD error = error_result->dwError;
+                    const DWORD errorCode = error_result->dwError;
 
                     //  Some authentication schemes require multiple transactions.
                     //  When ERROR_WINHTTP_RESEND_REQUEST is encountered, 
                     //  we should continue to resend the request until a response is received that does not contain a 401 or 407 status code. 
-                    if (error == ERROR_WINHTTP_RESEND_REQUEST)
+                    if (errorCode == ERROR_WINHTTP_RESEND_REQUEST)
                     {
-                        bool resending = handle_authentication_failure(hRequestHandle, p_request_context, error);
+                        bool resending = handle_authentication_failure(hRequestHandle, p_request_context, errorCode);
                         if(resending)
                         {
                             // The request is resending. Wait until we get a new response.
@@ -1052,7 +1053,7 @@ private:
                         }
                     }
 
-                    p_request_context->report_error(error_result->dwError, utility::conversions::to_string_t(build_callback_error_msg(error_result)));
+                    p_request_context->report_error(errorCode, utility::conversions::to_string_t(build_callback_error_msg(error_result)));
                     break;
                 }
             case WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE :

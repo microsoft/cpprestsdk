@@ -53,6 +53,8 @@ TEST_FIXTURE(uri_address, status_codes)
     {
         http_asserts::assert_test_response_equals(p_response, 867);
     }).wait();
+
+    listener.close().wait();
 }
 
 TEST_FIXTURE(uri_address, reason_phrase)
@@ -99,6 +101,8 @@ TEST_FIXTURE(uri_address, reason_phrase)
         http_asserts::assert_test_response_equals(p_response, 987);
         VERIFY_ARE_EQUAL(U(""), p_response->m_reason_phrase);
     }).wait();
+
+    listener.close().wait();
 }
 
 }

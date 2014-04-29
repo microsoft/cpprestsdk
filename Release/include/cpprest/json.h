@@ -41,6 +41,7 @@
 
 namespace web { namespace json
 {
+
     // Various forward declarations.
     namespace details 
     {
@@ -53,6 +54,16 @@ namespace web { namespace json
         class _Array;
         template <typename CharType> class JSON_Parser;
     }
+
+    namespace details
+    {
+        extern bool g_keep_json_object_unsorted;
+    }
+
+    /// <summary>
+    /// Preserve the order of the name/value pairs when parsing a JSON object
+    /// </summary>
+    void _ASYNCRTIMP keep_object_element_order(bool keep_order);
 
 #ifdef _MS_WINDOWS
 #ifdef _DEBUG
@@ -199,15 +210,17 @@ public:
         /// <summary>
         /// Creates an object value
         /// </summary>
+        /// <param name="keep_order">Whether to preserve the original order of the fields</param>
         /// <returns>An empty JSON object value</returns>
-        static _ASYNCRTIMP json::value __cdecl object();
+        static _ASYNCRTIMP json::value __cdecl object(bool keep_order = false);
 
         /// <summary>
         /// Creates an object value from a collection of field/values
         /// </summary>
         /// <param name="fields">Field names associated with JSON values</param>
+        /// <param name="keep_order">Whether to preserve the original order of the fields</param>
         /// <returns>A non-empty JSON object value</returns>
-        static _ASYNCRTIMP json::value __cdecl object(std::vector<std::pair<::utility::string_t, value>> fields);
+        static _ASYNCRTIMP json::value __cdecl object(std::vector<std::pair<::utility::string_t, value>> fields, bool keep_order = false);
 
         /// <summary>
         /// Creates an empty JSON array
@@ -747,17 +760,15 @@ public:
         typedef storage_type::size_type size_type;
 
     private:
-        object() : m_elements() { }
-        object(storage_type elements) : m_elements(std::move(elements))
+        object(bool keep_order = false) : m_elements(), m_keep_order(keep_order) { }
+        object(storage_type elements, bool keep_order = false) : m_elements(std::move(elements)), m_keep_order(keep_order)
         {
-            sort(m_elements.begin(), m_elements.end(), compare_pairs);
+            if (!keep_order) {
+                sort(m_elements.begin(), m_elements.end(), compare_pairs);
+            }
         }
         object(const object& obj); // non copyable
-        object& operator=(const object& obj) // non copyable
-        {
-            m_elements = obj.m_elements;
-            return *this;
-        }
+        object& operator=(const object& obj); // non copyable
 
     public:
         /// <summary>
@@ -875,12 +886,7 @@ public:
         /// <returns>If the key exists, a reference to the value kept in the field.</returns>
         json::value& at(const utility::string_t& key)
         {
-            auto iter = std::lower_bound(m_elements.begin(), m_elements.end(), key, compare_with_key);
-
-            if (iter == m_elements.end() || key != (iter->first))
-                throw web::json::json_exception(_XPLATSTR("Key not found"));
-
-            return iter->second;
+            return const_cast<json::value&>(at_internal(key));
         }
         
         /// <summary>
@@ -890,12 +896,7 @@ public:
         /// <returns>If the key exists, a reference to the value kept in the field.</returns>
         const json::value& at(const utility::string_t& key) const
         {
-            auto iter = std::lower_bound(m_elements.begin(), m_elements.end(), key, compare_with_key);
-
-            if (iter == m_elements.end() || key != (iter->first))
-                throw web::json::json_exception(_XPLATSTR("Key not found"));
-
-            return iter->second;
+            return at_internal(key);
         }
         
         /// <summary>
@@ -905,12 +906,12 @@ public:
         /// <returns>If the key exists, a reference to the value kept in the field, otherwise a newly created null value that will be stored for the given key.</returns>
         json::value& operator[](const utility::string_t& key)
         {
-            auto iter = std::lower_bound(m_elements.begin(), m_elements.end(), key, compare_with_key);
+            auto iter = find_by_key(key);
 
             if (iter == m_elements.end() || key != (iter->first))
                 return m_elements.insert(iter, std::pair<utility::string_t, value>(key, value()))->second;
 
-            return iter->second;
+            return const_cast<json::value&>(iter->second);
         }
 
         /// <summary>
@@ -920,12 +921,7 @@ public:
         /// <returns>A const iterator to the value kept in the field.</returns>
         const_iterator find(const utility::string_t& key) const
         {
-            auto iter = std::lower_bound(m_elements.begin(), m_elements.end(), key, compare_with_key);
-
-            if (iter != m_elements.end() && key != (iter->first))
-                return m_elements.end();
-
-            return iter;
+            return find_internal(key);
         }
 
         /// <summary>
@@ -935,12 +931,7 @@ public:
         /// <returns>An iterator to the value kept in the field.</returns>
         iterator find(const utility::string_t& key)
         {
-            auto iter = std::lower_bound(m_elements.begin(), m_elements.end(), key, compare_with_key);
-
-            if (iter != m_elements.end() && key != (iter->first))
-                return m_elements.end();
-
-            return iter;
+            return utility::details::remove_iterator_constness(m_elements, find_internal(key));
         }
 
         /// <summary>
@@ -961,6 +952,7 @@ public:
             return m_elements.empty();
         }
     private:
+
         static bool compare_pairs(const std::pair<utility::string_t, value>& p1, const std::pair<utility::string_t, value>& p2)
         {
             return p1.first < p2.first;
@@ -969,6 +961,43 @@ public:
         {
             return p1.first < key;
         }
+
+        storage_type::const_iterator find_by_key(const utility::string_t& key) const
+        {
+            if (m_keep_order)
+            {
+                return std::find_if(m_elements.begin(), m_elements.end(),
+                    [&key](const std::pair<utility::string_t, value>& p) {
+                    return p.first == key;
+                });
+            }
+            else
+            {
+                return std::lower_bound(m_elements.begin(), m_elements.end(), key, compare_with_key);
+            }
+        }
+
+        const json::value& at_internal(const utility::string_t& key) const
+        {
+            auto iter = find_by_key(key);
+
+            if (iter == m_elements.end() || key != (iter->first))
+                throw web::json::json_exception(_XPLATSTR("Key not found"));
+
+            return iter->second;
+        }
+
+        const_iterator find_internal(const utility::string_t& key) const
+        {
+            auto iter = find_by_key(key);
+
+            if (iter != m_elements.end() && key != (iter->first))
+                return m_elements.end();
+
+            return iter;
+        }
+
+        const bool m_keep_order;
         storage_type m_elements;
         friend class details::_Object;
         
@@ -1416,11 +1445,9 @@ public:
         {
         public:
 
-            _Object()
-            {
-            }
+            _Object(bool keep_order) : m_object(keep_order) { }
 
-            _Object(object::storage_type fields) : m_object(std::move(fields)) { }
+            _Object(object::storage_type fields, bool keep_order) : m_object(std::move(fields), keep_order) { }
 
             _ASYNCRTIMP _Object(const _Object& other);
 

@@ -48,6 +48,7 @@
 #include "Poco/Net/ServerSocket.h"
 #include "Poco/Net/WebSocket.h"
 #include "Poco/Net/NetException.h"
+#include "Poco/Net/HTTPBasicCredentials.h"
 
 #pragma warning(pop)
 
@@ -87,6 +88,21 @@ private:
         return msg;
     }
 
+    test_http_request get_http_request_msg(HTTPServerRequest& request)
+    {
+        test_http_request msg;
+        if (request.hasCredentials())
+        {
+            HTTPBasicCredentials cred(request);
+            msg.set_username(cred.getUsername());
+            msg.set_password(cred.getPassword());
+        }
+        for(auto iter = request.begin(); iter != request.end(); iter++)
+        {
+            msg.add_header(iter->first, iter->second); 
+        }
+        return msg;
+    }
     test_websocket_server* m_testserver;
 };
 
@@ -96,13 +112,13 @@ private:
 class RequestHandlerFactory: public Poco::Net::HTTPRequestHandlerFactory
 {
 public:
-    RequestHandlerFactory(WebSocketRequestHandler* ws_handler) { m_ws_handler = ws_handler; }
+    RequestHandlerFactory(test_websocket_server* testserver) { m_testserver = testserver; }
 
     Poco::Net::HTTPRequestHandler* createRequestHandler(const Poco::Net::HTTPServerRequest& request);
 
 private:
 
-    WebSocketRequestHandler* m_ws_handler;
+    test_websocket_server* m_testserver;
 };
 
 // POCO test websocket server.
@@ -111,7 +127,7 @@ class _test_websocket_server
 public:
     // Create RequestHandlerFactory (to handle HTTP requests) and WebSocketRequestHandler to handle websocket requests. 
     // The POCO HTTPServer will manage these objects and ensure they are destroyed upon server exit.
-    _test_websocket_server(test_websocket_server* test_srv): m_svs(9980), m_srv(new RequestHandlerFactory(new WebSocketRequestHandler(test_srv)), m_svs, new Poco::Net::HTTPServerParams)
+    _test_websocket_server(test_websocket_server* test_srv): m_svs(9980), m_srv(new RequestHandlerFactory(test_srv), m_svs, new Poco::Net::HTTPServerParams)
     {
         m_srv.start();
     }
@@ -144,6 +160,27 @@ private:
 
 void WebSocketRequestHandler::handleRequest(HTTPServerRequest& request, HTTPServerResponse& response)
 {
+    // If a handler exists to handle the HTTP handshake request, call the same.
+    if (m_testserver->get_http_handler())
+    {
+        test_http_request req = get_http_request_msg(request);
+        test_http_response resp = m_testserver->get_http_handler()(req);
+        if (resp.status_code() != 200) // send an error code in the HTTP response else continue with the websocket connection
+        {
+            if (!resp.realm().empty())
+            {
+                // Set the realm
+                std::string auth("Basic realm=\"");
+                auth.append(resp.realm());
+                auth.append("\"");
+                response.set("WWW-Authenticate", auth);
+            }
+            response.setStatusAndReason((HTTPResponse::HTTPStatus)resp.status_code());
+            response.send();
+            return;
+        }
+    }
+
     try
     {
         std::shared_ptr<WebSocket> ws = std::make_shared<WebSocket>(request, response);
@@ -192,7 +229,7 @@ void WebSocketRequestHandler::handleRequest(HTTPServerRequest& request, HTTPServ
 HTTPRequestHandler* RequestHandlerFactory::createRequestHandler(const HTTPServerRequest& request)
 {
     VERIFY_ARE_EQUAL(request.getURI(), "/ws");
-    return m_ws_handler;
+    return new WebSocketRequestHandler(m_testserver);
 }
 
 test_websocket_server::test_websocket_server()

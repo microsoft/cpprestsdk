@@ -141,6 +141,8 @@ TEST_FIXTURE(uri_address, http_body_and_body_size)
     {
         http_asserts::assert_test_response_equals(p_response, status_codes::OK);
     }).wait();
+
+    listener.close().wait();
 }
 
 TEST_FIXTURE(uri_address, large_body)
@@ -168,6 +170,8 @@ TEST_FIXTURE(uri_address, large_body)
     {
         http_asserts::assert_test_response_equals(p_response, status_codes::OK);
     }).wait();
+
+    listener.close().wait();
 }
 
 TEST_FIXTURE(uri_address, response_order)
@@ -210,6 +214,8 @@ TEST_FIXTURE(uri_address, response_order)
         VERIFY_ARE_EQUAL(response.status_code(), status_codes::OK);
         VERIFY_ARE_EQUAL(response.extract_string().get(), ss.str());
     }
+
+    listener.close().wait();
 }
 
 TEST_FIXTURE(uri_address, uri_encoding)
@@ -225,14 +231,28 @@ TEST_FIXTURE(uri_address, uri_encoding)
         request.reply(status_codes::OK);
     });
 
-    encoded_uri = uri::encode_uri(U("/path 1/path 2")); // Path component contains encoded characters
-    client.request(methods::GET, encoded_uri).wait();
-    encoded_uri = uri::encode_uri(U("/test?Text=J'ai besoin de trouver un personnage")); // Query string contains encoded characters
-    client.request(methods::GET, encoded_uri).wait();
-    encoded_uri = uri::encode_uri(U("/path 1/path 2#fragment1")); // URI has path and fragment components
-    client.request(methods::GET, encoded_uri).wait();
-    encoded_uri = uri::encode_uri(U("/path 1/path 2?key1=val1 val2#fragment1")); // URI has path, query and fragment components
-    client.request(methods::GET, encoded_uri).wait();
+    // Wrap in try catch to print out more information to help with a sporadic failure.
+    try
+    {
+        encoded_uri = uri::encode_uri(U("/path 1/path 2")); // Path component contains encoded characters
+        client.request(methods::GET, encoded_uri).wait();
+        encoded_uri = uri::encode_uri(U("/test?Text=J'ai besoin de trouver un personnage")); // Query string contains encoded characters
+        client.request(methods::GET, encoded_uri).wait();
+        encoded_uri = uri::encode_uri(U("/path 1/path 2#fragment1")); // URI has path and fragment components
+        client.request(methods::GET, encoded_uri).wait();
+        encoded_uri = uri::encode_uri(U("/path 1/path 2?key1=val1 val2#fragment1")); // URI has path, query and fragment components
+        client.request(methods::GET, encoded_uri).wait();
+    }
+    catch (const http_exception &e)
+    {
+        std::cout << "http_exception caught" << std::endl <<
+            "what():" << e.what() << std::endl <<
+            "error_code msg:" << e.error_code().message() << std::endl <<
+            "error_code value:" << e.error_code().value() << std::endl;
+        VERIFY_IS_TRUE(false);
+    }
+
+    listener.close().wait();
 }
 }
 

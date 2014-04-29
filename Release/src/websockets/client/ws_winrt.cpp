@@ -69,7 +69,7 @@ private:
     std::function<void()> m_close_handler;
 };
 
-class winrt_client : public _websocket_client_impl
+class winrt_client : public _websocket_client_impl, public std::enable_shared_from_this<winrt_client>
 {
 public:
     winrt_client(web::uri address, websocket_client_config client_config)
@@ -78,16 +78,19 @@ public:
         verify_uri(m_uri);
         m_msg_websocket = ref new MessageWebSocket();
 
-        switch(client_config.message_type())
+        // Sets the HTTP request headers to the HTTP request message used in the WebSocket protocol handshake 
+        for (auto iter = client_config.headers().begin(); iter != client_config.headers().end(); ++iter)
         {
-        case websocket_message_type::binary_message :
-            m_msg_websocket->Control->MessageType = SocketMessageType::Binary;
-            break;
-        case websocket_message_type::text_message:
-            m_msg_websocket->Control->MessageType = SocketMessageType::Utf8;
-            break;
-        default:
-            throw std::invalid_argument("Invalid message type: neither UTF-8 nor binary!");
+            Platform::String^ name = ref new Platform::String(iter->first.c_str());
+            Platform::String^ val = ref new Platform::String(iter->second.c_str());
+            m_msg_websocket->SetRequestHeader(name, val);
+        }
+
+        if (client_config.credentials().is_set())
+        {
+            m_msg_websocket->Control->ServerCredential = ref new Windows::Security::Credentials::PasswordCredential("WebSocketClientCredentialResource", 
+                ref new Platform::String(client_config.credentials().username().c_str()), 
+                ref new Platform::String(client_config.credentials().password().c_str()));
         }
 
         m_context = ref new ReceiveContext([=](std::shared_ptr<websocket_incoming_message> msg)
@@ -184,9 +187,16 @@ public:
             return pplx::task_from_exception<void>(websocket_exception(_XPLATSTR("Client not connected.")));
         }
 
-        if (msg._m_impl->message_type() != config().message_type())
+        switch(msg._m_impl->message_type())
         {
-            return pplx::task_from_exception<void>(websocket_exception(_XPLATSTR("Message type mismatch.")));
+        case websocket_message_type::binary_message :
+            m_msg_websocket->Control->MessageType = SocketMessageType::Binary;
+            break;
+        case websocket_message_type::text_message:
+            m_msg_websocket->Control->MessageType = SocketMessageType::Utf8;
+            break;
+        default:
+            return pplx::task_from_exception<void>(websocket_exception(_XPLATSTR("Message Type not supported.")));
         }
 
         const auto length = msg._m_impl->length();
@@ -218,25 +228,26 @@ public:
 
     void send_msg(websocket_outgoing_message msg)
     {
+        auto this_client = this->shared_from_this();
         auto length = msg._m_impl->length();
 
         auto is = msg._m_impl->instream();
         auto is_buf = is.streambuf();
 
         std::shared_ptr<uint8_t> sp( new uint8_t[length](), []( uint8_t *p ) { delete[] p; } );
-        is_buf.getn(sp.get(), length).then([this, sp, msg](size_t bytes_read)
+        is_buf.getn(sp.get(), length).then([this_client, sp, msg](size_t bytes_read)
         {   
-            m_messageWriter->WriteBytes(Platform::ArrayReference<unsigned char>(sp.get(), static_cast<unsigned int>(bytes_read)));
+            this_client->m_messageWriter->WriteBytes(Platform::ArrayReference<unsigned char>(sp.get(), static_cast<unsigned int>(bytes_read)));
 
             // Send the data as one complete message, in WinRT we do not have an option to send fragments
-            return pplx::task<unsigned int>(m_messageWriter->StoreAsync()).then([this, msg, bytes_read] (unsigned int bytes_written) 
+            return pplx::task<unsigned int>(this_client->m_messageWriter->StoreAsync()).then([msg, bytes_read] (unsigned int bytes_written) 
             {
                 if (bytes_written != bytes_read)
                 {
                     msg.m_send_tce.set_exception(std::make_exception_ptr(websocket_exception(_XPLATSTR("Failed to send all the bytes."))));
                 }            
             });
-        }).then([this, msg] (pplx::task<void> previousTask)
+        }).then([this_client, msg] (pplx::task<void> previousTask)
         {
             try
             { 
@@ -249,13 +260,13 @@ public:
             }
 
             {
-                std::unique_lock<std::mutex> lock(m_send_lock);
-                --m_scheduled;
-                if (!m_outgoing_msg_queue.empty())
+                std::unique_lock<std::mutex> lock(this_client->m_send_lock);
+                --this_client->m_scheduled;
+                if (!this_client->m_outgoing_msg_queue.empty())
                 {
-                    auto next_msg = m_outgoing_msg_queue.front();
-                    m_outgoing_msg_queue.pop();
-                    send_msg(next_msg);
+                    auto next_msg = this_client->m_outgoing_msg_queue.front();
+                    this_client->m_outgoing_msg_queue.pop();
+                    this_client->send_msg(next_msg);
                 }
             }
             msg.m_send_tce.set();

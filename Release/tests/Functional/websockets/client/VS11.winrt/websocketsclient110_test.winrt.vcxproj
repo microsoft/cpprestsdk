@@ -156,6 +156,7 @@
     <ClCompile Include="..\error_tests.cpp" />
     <ClCompile Include="..\receive_msg_tests.cpp" />
     <ClCompile Include="..\send_msg_tests.cpp" />
+    <ClCompile Include="..\authentication_tests.cpp" />
     <ClCompile Include="..\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
