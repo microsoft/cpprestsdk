@@ -43,7 +43,34 @@ namespace experimental
 
 
 /// <summary>
-/// Oauth2 configuration.
+/// OAuth 2.0 configuration.
+///
+/// Encapsulates functionality for:
+/// - Authenticating requests with an access token.
+/// - Performing the OAuth 2.0 authorization code grant authorization flow.
+///   See: http://tools.ietf.org/html/rfc6749#section-4.1
+///
+/// Usage for authorization:
+/// 1. Set service and client/app parameters:
+/// - Client/app key & secret (as provided by the service).
+/// - The service authorization endpoint and token endpoint.
+/// - Your client/app redirect URI.
+/// - Set if bearer token is passed in query or header field (default: header).
+///   See: http://tools.ietf.org/html/rfc6750#section-2
+/// - If the service uses "non-standard" access token key, set it also (default: "access_token").
+/// 2. Open web browser with URI from build_authorization_uri().
+/// - The passed state string should be unique for this authorization session.
+/// 3. In the web browser, the resource owner clicks "Yes" to authorize your client/app.
+/// 4. To signal authorization, web browser is redirected to redirect_uri().
+/// 5. The redirect contains the authorization code and the state string.
+/// 6. Check the state string equals the one in step 2.
+/// 7. Pass the authorization code to fetch_token() to create a token fetch task.
+///
+/// Usage for issuing authenticated requests:
+/// 1. Obtain token. (Perform authorization as above or get token otherwise.)
+/// 2. Use http_client_config::set_oauth2() to set configuration, and construct http_client using it.
+/// 3. All requests issued with that http_client will be OAuth 2.0 -authenticated.
+///
 /// </summary>
 struct oauth2_config
 {
@@ -67,8 +94,20 @@ struct oauth2_config
     {
     }
 
+    /// <summary>
+    /// Builds an authorization URI to be loaded in the web browser.
+    /// The URI is built with auth_endpoint() as basis.
+    /// </summary>
+    /// <param name="state">State string unique to an authorization session. This would be received in the redirect upon successful authorization.</param>
     _ASYNCRTIMP utility::string_t build_authorization_uri(utility::string_t state) const;
 
+    /// <summary>
+    /// Creates a task to fetch token from the token endpoint.
+    /// The task creates a request to the token_endpoint() which is used exchange an authorization code to an access token.
+    /// If successful, resulting token is set as active via set_token().
+    /// </summary>
+    /// <param name="authorization_code">Code received via redirect upon successful authorization.</param>
+    /// <param name="do_http_basic_auth">Set false if token endpoint authenticates client with key & secret in request body instead of HTTP Basic (default: HTTP Basic).</param>
     _ASYNCRTIMP pplx::task<void> fetch_token(utility::string_t authorization_code, bool do_http_basic_auth=true);
 
     bool is_enabled() const { return !m_token.empty(); }
@@ -95,9 +134,18 @@ struct oauth2_config
     void set_token(utility::string_t token) { m_token = std::move(token); }
 
     bool bearer_auth() const { return m_bearer_auth; }
+    /// <summary>
+    /// Bearer token passing method. This must be selected based on what the service accepts.
+    /// True means token is passed in the request header. (http://tools.ietf.org/html/rfc6750#section-2.1)
+    /// False means token in passed in the query parameters. (http://tools.ietf.org/html/rfc6750#section-2.3)
+    /// </summary>
     void set_bearer_auth(bool enable) { m_bearer_auth = std::move(enable); }
 
     const utility::string_t&  access_token_key() const { return m_access_token_key; }
+    /// <summary>
+    /// Set custom access token key field in the case service requires a "non-standard" key.
+    /// Default access token key is "access_token".
+    /// </summary>
     void set_access_token_key(utility::string_t access_token_key) { m_access_token_key = std::move(access_token_key); }
 
 private:
