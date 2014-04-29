@@ -48,19 +48,25 @@ public:
 
 TEST(oauth2_build_authorization_uri)
 {
-    // Basic/empty authorization URIs.
-    {
-        oauth2_config c(U(""), U(""), U(""), U(""), U(""));
-        VERIFY_ARE_EQUAL(U("/?response_type=code&client_id=&redirect_uri=&state="), c.build_authorization_uri(U("")));
+    oauth2_config c(U(""), U(""), U(""), U(""), U(""));
 
-        c.set_scope(U("123"));
-        VERIFY_ARE_EQUAL(U("/?response_type=code&client_id=&redirect_uri=&state=&scope=123"), c.build_authorization_uri(U("")));
+    // Empty authorization URI.
+    {
+        VERIFY_ARE_EQUAL(U("/?response_type=code&client_id=&redirect_uri=&state="), c.build_authorization_uri(U("")));
     }
 
-    // Full authorization URI.
+    // Authorization URI with scope parameter.
     {
-        oauth2_config c(U("1234abcd"), U(""), U("https://foo"), U(""), U("https://bar"));
-        VERIFY_ARE_EQUAL(U("https://foo/?response_type=code&client_id=1234abcd&redirect_uri=https://bar&state=xuzzy"),
+        c.set_scope(U("testing_123"));
+        VERIFY_ARE_EQUAL(U("/?response_type=code&client_id=&redirect_uri=&state=&scope=testing_123"), c.build_authorization_uri(U("")));
+    }
+
+    // Setters/getters, full authorization URI with both state and scope.
+    {
+        c.set_client_key(U("4567abcd"));
+        c.set_auth_endpoint(U("https://foo"));
+        c.set_redirect_uri(U("http://localhost:8080"));
+        VERIFY_ARE_EQUAL(U("https://foo/?response_type=code&client_id=4567abcd&redirect_uri=http://localhost:8080&state=xuzzy&scope=testing_123"),
                 c.build_authorization_uri(U("xuzzy")));
     }
 }
@@ -72,7 +78,7 @@ TEST_FIXTURE(oauth2_test_uri, oauth2_fetch_token)
 
     VERIFY_ARE_EQUAL(false, c.is_enabled());
 
-    // Test fetching with HTTP Basic authentication.
+    // Fetch using HTTP Basic authentication.
     {
         scoped.server()->next_request().then([](test_request *request)
         {
@@ -96,7 +102,7 @@ TEST_FIXTURE(oauth2_test_uri, oauth2_fetch_token)
         VERIFY_ARE_EQUAL(true, c.is_enabled());
     }
 
-    // Test fetching with key & secret in request body (x-www-form-urlencoded) authentication.
+    // Fetch using client key & secret in request body (x-www-form-urlencoded).
     {
         scoped.server()->next_request().then([](test_request *request)
         {
@@ -129,7 +135,7 @@ TEST_FIXTURE(oauth2_test_uri, oauth2_bearer_token)
     oauth2_config c(U("12345678"));
     http_client_config config;
 
-    // Test bearer token in "Authorization" header field (bearer_auth() == true) [default]
+    // Default, bearer token in "Authorization" header (bearer_auth() == true)
     {
         config.set_oauth2(c);
 
@@ -145,7 +151,7 @@ TEST_FIXTURE(oauth2_test_uri, oauth2_bearer_token)
         VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
     }
 
-    // Test bearer token in query path (bearer_auth() == false)
+    // Bearer token in query, default access token key (bearer_auth() == false)
     {
         c.set_bearer_auth(false);
         config.set_oauth2(c);
@@ -155,6 +161,25 @@ TEST_FIXTURE(oauth2_test_uri, oauth2_bearer_token)
         {
             VERIFY_ARE_EQUAL(U(""), request->m_headers[header_names::authorization]);
             VERIFY_ARE_EQUAL(U("/?access_token=12345678"), request->m_path);
+            request->reply(status_codes::OK);
+        });
+
+        http_response response = client.request(methods::GET).get();
+        VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
+    }
+
+    // Bearer token in query, updated token, custom access token key (bearer_auth() == false)
+    {
+        c.set_bearer_auth(false);
+        c.set_access_token_key(U("open"));
+        c.set_token(U("Sesame"));
+        config.set_oauth2(c);
+
+        http_client client(m_uri, config);
+        scoped.server()->next_request().then([](test_request *request)
+        {
+            VERIFY_ARE_EQUAL(U(""), request->m_headers[header_names::authorization]);
+            VERIFY_ARE_EQUAL(U("/?open=Sesame"), request->m_path);
             request->reply(status_codes::OK);
         });
 
