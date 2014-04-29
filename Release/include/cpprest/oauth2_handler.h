@@ -124,10 +124,10 @@ private:
 class oauth2_handler : public http_pipeline_stage
 {
 public:
-    oauth2_handler(oauth2_config config) : m_config(std::move(config)) {}
+    oauth2_handler(oauth2_config cfg) : m_config(std::move(cfg)) {}
 
-    void set_config(oauth2_config config) { m_config = std::move(config); }
-    const oauth2_config& get_config() const { return m_config; }
+    const oauth2_config& config() const { return m_config; }
+    void set_config(oauth2_config cfg) { m_config = std::move(cfg); }
 
     _ASYNCRTIMP virtual pplx::task<http_response> propagate(http_request request) override;
 

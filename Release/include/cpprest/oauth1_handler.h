@@ -116,13 +116,13 @@ private:
 class oauth1_handler : public http_pipeline_stage
 {
 public:
-    oauth1_handler(oauth1_config config) :
+    oauth1_handler(oauth1_config cfg) :
         m_random((unsigned int)utility::datetime::utc_timestamp()),
-        m_config(std::move(config))
+        m_config(std::move(cfg))
     {}
 
-    void set_config(oauth1_config config) { m_config = std::move(config); }
-    const oauth1_config& get_config() const { return m_config; }
+    const oauth1_config& config() const { return m_config; }
+    void set_config(oauth1_config cfg) { m_config = std::move(cfg); }
 
     _ASYNCRTIMP virtual pplx::task<http_response> propagate(http_request request) override;
 
