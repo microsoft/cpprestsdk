@@ -86,7 +86,6 @@ pplx::task<void> oauth2_config::fetch_token(utility::string_t authorization_code
     })
     .then([](json::value token_json)
     {
-        ucout << token_json.serialize() << std::endl;
         return token_json[U("access_token")].as_string();
     })
     .then([&](utility::string_t token)
