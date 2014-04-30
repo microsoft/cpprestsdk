@@ -94,7 +94,8 @@ TEST_FIXTURE(oauth2_test_uri, oauth2_fetch_token)
 
             std::map<utility::string_t, utility::string_t> headers;
             headers[header_names::content_type] = mime_types::application_json;
-            request->reply(status_codes::OK, U(""), headers, U("{\"access_token\":\"xuzzy123\"}"));
+            // NOTE: Reply body data must not be wide chars.
+            request->reply(status_codes::OK, U(""), headers, "{\"access_token\":\"xuzzy123\"}");
         });
 
         c.fetch_token(U("789GHI")).wait();
@@ -106,7 +107,8 @@ TEST_FIXTURE(oauth2_test_uri, oauth2_fetch_token)
     {
         scoped.server()->next_request().then([](test_request *request)
         {
-            utility::string_t content, charset;
+            utility::string_t content;
+            utility::string_t charset;
             parse_content_type_and_charset(request->m_headers[header_names::content_type], content, charset);
             VERIFY_ARE_EQUAL(mime_types::application_x_www_form_urlencoded, content);
 
@@ -118,7 +120,8 @@ TEST_FIXTURE(oauth2_test_uri, oauth2_fetch_token)
 
             std::map<utility::string_t, utility::string_t> headers;
             headers[header_names::content_type] = mime_types::application_json;
-            request->reply(status_codes::OK, U(""), headers, U("{\"access_token\":\"xuzzy123\"}"));
+            // NOTE: Reply body data must not be wide chars.
+            request->reply(status_codes::OK, U(""), headers, "{\"access_token\":\"xuzzy123\"}");
         });
 
         c.set_token(U(""));
