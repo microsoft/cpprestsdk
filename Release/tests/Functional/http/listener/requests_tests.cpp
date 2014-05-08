@@ -254,6 +254,31 @@ TEST_FIXTURE(uri_address, uri_encoding)
 
     listener.close().wait();
 }
+
+TEST_FIXTURE(uri_address, https_listener, "Ignore", "Manual")
+{
+    // Requires a certificate for execution. 
+    // Here are instructions for creating a self signed cert. Full instructions can be located here:
+    // http://blogs.msdn.com/b/haoxu/archive/2009/04/30/one-time-set-up-for-wwsapi-security-examples.aspx
+    // From an elevated admin prompt:
+    // 1. MakeCert.exe -ss Root -sr LocalMachine -n "CN=Fake-Test-CA" -cy authority -r -sk "CAKeyContainer"
+    // 2. MakeCert.exe -ss My -sr LocalMachine -n "CN=localhost" -sky exchange -is Root -ir LocalMachine -in Fake-Test-CA -sk "ServerKeyContainer"
+    // 3. Find corresponding SHA-1 hash with CertUtil.exe -store My localhost
+    // 4. Netsh.exe http add sslcert ipport=0.0.0.0:8443 appid={00112233-4455-6677-8899-AABBCCDDEEFF} certhash=<40CharacterThumbprintWithNoSpaces>
+
+    http_listener listener(m_secure_uri);
+    listener.open().wait();
+    client::http_client client(m_secure_uri);
+
+    listener.support([&](http_request request)
+    {
+        request.reply(status_codes::OK);
+    });
+
+    http_asserts::assert_response_equals(client.request(methods::GET, U("")).get(), status_codes::OK);
+
+    listener.close().wait();
+}
 }
 
 }}}}
