@@ -8,7 +8,7 @@ function Get-Batchfile ($file) {
 
 function VsVars32()
 {
-    $vs110comntools = (Get-ChildItem env:VS120COMNTOOLS).Value
+    $vs120comntools = (Get-ChildItem env:VS120COMNTOOLS).Value
     $batchFile = [System.IO.Path]::Combine($vs120comntools, "vsvars32.bat")
     Get-Batchfile $BatchFile
 }
