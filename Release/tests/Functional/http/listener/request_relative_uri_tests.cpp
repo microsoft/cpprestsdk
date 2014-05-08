@@ -44,6 +44,8 @@ TEST_FIXTURE(uri_address, empty_base_uri)
         http_asserts::assert_test_response_equals(p_response, status_codes::OK);
     }).wait();
     VERIFY_ARE_EQUAL(0, client.close());
+
+    listener.close().wait();
 }
 
 TEST_FIXTURE(uri_address, nested_paths)
@@ -65,6 +67,8 @@ TEST_FIXTURE(uri_address, nested_paths)
         http_asserts::assert_test_response_equals(p_response, status_codes::OK);
     }).wait();
     VERIFY_ARE_EQUAL(0, client.close());
+
+    listener.close().wait();
 }
 
 TEST_FIXTURE(uri_address, nested_paths_encoding)
@@ -86,6 +90,8 @@ TEST_FIXTURE(uri_address, nested_paths_encoding)
         http_asserts::assert_test_response_equals(p_response, status_codes::OK);
     }).wait();
     VERIFY_ARE_EQUAL(0, client.close());
+
+    listener.close().wait();
 }
 
 TEST(listener_uri_empty_path)

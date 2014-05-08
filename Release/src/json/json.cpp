@@ -29,6 +29,12 @@
 
 using namespace web;
 
+bool json::details::g_keep_json_object_unsorted = false;
+void json::keep_object_element_order(bool keep_order)
+{
+    json::details::g_keep_json_object_unsorted = keep_order;
+}
+
 utility::ostream_t& web::json::operator << (utility::ostream_t &os, const web::json::value &val)
 {
     val.serialize(os);
@@ -190,9 +196,9 @@ web::json::value web::json::value::string(const std::string &value)
 }
 #endif
 
-web::json::value web::json::value::object()
+web::json::value web::json::value::object(bool keep_order)
 {
-    std::unique_ptr<details::_Value> ptr = utility::details::make_unique<details::_Object>();
+    std::unique_ptr<details::_Value> ptr = utility::details::make_unique<details::_Object>(keep_order);
     return web::json::value(std::move(ptr)
 #ifdef ENABLE_JSON_VALUE_VISUALIZER
             ,value::Object
@@ -200,9 +206,9 @@ web::json::value web::json::value::object()
             );
 }
 
-web::json::value web::json::value::object(std::vector<std::pair<::utility::string_t, value>> fields)
+web::json::value web::json::value::object(std::vector<std::pair<::utility::string_t, value>> fields, bool keep_order)
 {
-    std::unique_ptr<details::_Value> ptr = utility::details::make_unique<details::_Object>(std::move(fields));
+    std::unique_ptr<details::_Value> ptr = utility::details::make_unique<details::_Object>(std::move(fields), keep_order);
     return web::json::value(std::move(ptr)
 #ifdef ENABLE_JSON_VALUE_VISUALIZER
             ,value::Object
@@ -324,10 +330,8 @@ bool web::json::details::_String::has_escape_chars(const _String &str)
     return str.m_string.find_first_of(escapes) != utility::string_t::npos;
 }
 
-web::json::details::_Object::_Object(const _Object& other):web::json::details::_Value(other)
-{
-    m_object = other.m_object;
-}
+web::json::details::_Object::_Object(const _Object& other) : 
+    m_object(other.m_object.m_elements, other.m_object.m_keep_order), web::json::details::_Value(other) {}
 
 web::json::value::value_type json::value::type() const { return m_value->type(); }
 
@@ -412,7 +416,7 @@ web::json::value& web::json::value::operator [] (const utility::string_t &key)
 {
     if ( this->is_null() )
     {
-        m_value.reset(new web::json::details::_Object());
+        m_value.reset(new web::json::details::_Object(details::g_keep_json_object_unsorted));
 #ifdef ENABLE_JSON_VALUE_VISUALIZER
         m_kind = value::Object;
 #endif

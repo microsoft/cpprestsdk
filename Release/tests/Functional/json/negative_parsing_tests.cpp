@@ -24,7 +24,8 @@
 
 #include "stdafx.h"
 
-using namespace web; using namespace utility;
+using namespace web; 
+using namespace utility;
 
 namespace tests { namespace functional { namespace json_tests {
 
@@ -125,16 +126,8 @@ TEST(incomplete_literals)
 // TFS#501321
 TEST(exception_string)
 {
-    try
-    {
-        utility::string_t json_ip_str=U("");
-        json::value jsonnode1 = json::value::parse(json_ip_str);
-    }
-    catch(json::json_exception ex)
-    {
-        auto s = ex.what(); // make sure this has a decent error
-        VERIFY_IS_TRUE(strstr(s, "Unexpected token") != 0);
-    }
+    utility::string_t json_ip_str=U("");
+    VERIFY_THROWS(json::value::parse(json_ip_str), json::json_exception);
 }
 
 TEST(boundary_chars)
@@ -150,17 +143,7 @@ TEST(stream_left_over_chars)
     std::stringbuf buf;
     buf.sputn("[false]false", 12);
     std::istream stream(&buf);
-
-    // TFS 563372
-    //VERIFY_THROWS_JSON_JSON(json::value(stream));
-    try
-    {
-        json::value v = json::value::parse(stream);
-        CHECK(false);
-    } catch(std::exception &)
-    {
-        // expected
-    }
+    VERIFY_THROWS(json::value::parse(stream), json::json_exception);
 }
 
 // Test using Windows only API.
@@ -170,17 +153,7 @@ TEST(wstream_left_over_chars)
     std::wstringbuf buf;
     buf.sputn(L"[false]false", 12);
     std::wistream stream(&buf);
-
-    // TFS 563372
-    //VERIFY_THROWS(json::value(stream), json::json_exception);
-    try
-    {
-        json::value v = json::value::parse(stream);
-        CHECK(false);
-    } catch(std::exception &)
-    {
-        // expected
-    }
+    VERIFY_THROWS(json::value::parse(stream), json::json_exception);
 }
 #endif
 

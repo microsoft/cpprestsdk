@@ -220,6 +220,13 @@ namespace details
 #endif
     }
 
+    // Turn const_iterator into an iterator
+    template <typename Container, typename ConstIterator>
+    typename Container::iterator remove_iterator_constness(Container& c, ConstIterator it)
+    {
+        return c.erase(it, it);
+    }
+
 #ifdef _MS_WINDOWS
 
 /// <summary>

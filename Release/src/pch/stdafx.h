@@ -82,6 +82,10 @@
 #include <sys/syscall.h>
 #endif // _MS_WINDOWS
 
+// Macro indicating the C++ Rest SDK product itself is being built.
+// This is to help track how many developers are directly building from source themselves.
+#define CASA_BUILD_FROM_SRC
+
 #include <iostream>
 #include <fstream>
 #include <algorithm>
@@ -96,6 +100,8 @@ namespace pplx = Concurrency;
 #include "pplx/pplxtasks.h"
 #endif
 
+#include "cpprest/version.h"
+
 // Stream
 #include "cpprest/streams.h"
 #include "cpprest/astreambuf.h"
@@ -109,7 +115,11 @@ namespace pplx = Concurrency;
 #include "cpprest/base_uri.h"
 #include "cpprest/uri_parser.h"
 
+// web utilities
+#include "cpprest/web_utilities.h"
+
 // http
+#include "cpprest/http_headers.h"
 #include "cpprest/http_msg.h"
 #include "cpprest/http_client.h"
 #include "cpprest/http_helpers.h"

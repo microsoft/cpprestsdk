@@ -44,6 +44,8 @@ namespace pplx = Concurrency;
 #endif
 
 #include "cpprest/uri.h"
+#include "cpprest/web_utilities.h"
+#include "cpprest/http_headers.h"
 #include "cpprest/basic_types.h"
 #include "cpprest/asyncrt_utils.h"
 #include "cpprest/ws_msg.h"
@@ -78,35 +80,44 @@ class websocket_client_config
 {
 public:
     websocket_client_config()
-#ifdef __cplusplus_winrt
-        :m_msg_type(websocket_message_type::text_message)
-#endif
     {}
 
-#ifdef __cplusplus_winrt
     /// <summary>
-    /// Gets the websocket message type.
-    /// Note: This property exists only for WinRT implementation. 
-    /// A non store client must be able to send both binary and text message.
+    /// Get the client credentials
     /// </summary>
-    websocket_message_type message_type() const
+    /// <returns>A reference to the client credentials.</returns>
+    const web::credentials& credentials() const
     {
-        return m_msg_type;
+        return m_credentials;
     }
 
     /// <summary>
-    /// Sets the websocket message type. 
+    /// Set the client credentials
     /// </summary>
-    void set_message_type(const websocket_message_type type)
+    /// <param name="cred">The client credentials.</param>
+    void set_credentials(web::credentials cred)
     {
-        m_msg_type = type;
+        m_credentials = std::move(cred);
     }
-#endif
+
+    /// <summary>
+    /// Gets the headers of the HTTP request message used in the WebSocket protocol handshake.
+    /// </summary>
+    /// <returns>HTTP headers for the WebSocket protocol handshake.</returns>
+    /// <remarks>
+    /// Use the <seealso cref="http_headers::add Method"/> to fill in desired headers.
+    /// </remarks>
+    web::http::http_headers &headers() { return m_headers; }
+
+    /// <summary>
+    /// Gets a const reference to the headers of the WebSocket protocol handshake HTTP message.
+    /// </summary>
+    /// <returns>HTTP headers.</returns>
+    const web::http::http_headers &headers() const { return m_headers; }
 
 private:
-#ifdef __cplusplus_winrt
-    websocket_message_type m_msg_type;
-#endif
+    web::credentials m_credentials;
+    web::http::http_headers m_headers;
 };
 
 /// <summary>

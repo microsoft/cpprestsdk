@@ -515,15 +515,25 @@ void details::http_msg_base::set_body(streams::istream instream, utility::size64
 details::_http_request::_http_request()
   : m_initiated_response(0), 
     m_server_context(), 
-    m_listener_path(_XPLATSTR("")),
     m_cancellationToken(pplx::cancellation_token::none())
 {
+}
+
+details::_http_request::_http_request(http::method mtd)
+  : m_method(std::move(mtd)), 
+    m_initiated_response(0),
+    m_server_context(), 
+    m_cancellationToken(pplx::cancellation_token::none())
+{
+    if(m_method.empty())
+    {
+        throw std::invalid_argument("Invalid HTTP method specified. Method can't be an empty string.");
+    }
 }
 
 details::_http_request::_http_request(std::shared_ptr<http::details::_http_server_context> server_context)
   : m_initiated_response(0), 
     m_server_context(std::move(server_context)),
-    m_listener_path(_XPLATSTR("")),
     m_cancellationToken(pplx::cancellation_token::none())
 {
 }
