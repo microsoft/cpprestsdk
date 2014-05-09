@@ -22,6 +22,8 @@
 ****/
 
 #include "stdafx.h"
+#include <thread>
+#include <chrono>
 
 #if defined(_MS_WINDOWS) && !defined(__cplusplus_winrt) // Windows desktop
 #include <windows.h>
@@ -58,13 +60,14 @@ public:
                     || (code_query->second.empty()) || (state_query->second.empty())
                     || (m_state != state_query->second))
             {
-                m_tce.set(U("FAIL"));
+                request.reply(status_codes::NotFound, U("Not found."));
             }
             else
             {
+                request.reply(status_codes::OK, U("Ok."));
+                std::this_thread::sleep_for(std::chrono::milliseconds(500));
                 m_tce.set(code_query->second);
             }
-            request.reply(status_codes::OK);
         });
         m_listener->open().wait();
     }
@@ -121,7 +124,13 @@ static string_t code_from_localhost_listener(oauth2_config cfg)
 {
     utility::string_t auth_code;
     {
+#if 1
         oauth2_code_listener listener(cfg.redirect_uri(), s_state);
+#else
+        uri_builder ub(cfg.redirect_uri());
+        ub.set_host(U("localhost"));
+        oauth2_code_listener listener(ub.to_uri(), s_state);
+#endif
         open_browser(cfg.build_authorization_uri(s_state));
         auth_code = listener.listen_for_code().get();
     }
@@ -202,8 +211,8 @@ static void live_client()
         U("https://login.live.com/oauth20_authorize.srf"),
         U("https://login.live.com/oauth20_token.srf"),
         // Live can't use localhost redirect, so we map localhost to a fake domain name:
-        // 127.0.0.1    www.livetestdummy.com
-        U("http://www.livetestdummy.com:8890/"));
+        // 127.0.0.1    testhost.local
+        U("http://testhost.local:8890/"));
     // Scope "wl.basic" allows getting user information.
     live_cfg.set_scope(U("wl.basic"));
     live_cfg.fetch_token(code_from_localhost_listener(live_cfg)).wait();
