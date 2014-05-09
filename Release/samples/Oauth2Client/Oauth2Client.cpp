@@ -65,7 +65,9 @@ public:
             else
             {
                 request.reply(status_codes::OK, U("Ok."));
+#if defined(_MS_WINDOWS)
                 std::this_thread::sleep_for(std::chrono::milliseconds(500));
+#endif
                 m_tce.set(code_query->second);
             }
         });
@@ -124,7 +126,7 @@ static string_t code_from_localhost_listener(oauth2_config cfg)
 {
     utility::string_t auth_code;
     {
-#if 1
+#if defined(_MS_WINDOWS)
         oauth2_code_listener listener(cfg.redirect_uri(), s_state);
 #else
         uri_builder ub(cfg.redirect_uri());
@@ -210,8 +212,9 @@ static void live_client()
     oauth2_config live_cfg(s_live_key, s_live_secret,
         U("https://login.live.com/oauth20_authorize.srf"),
         U("https://login.live.com/oauth20_token.srf"),
-        // Live can't use localhost redirect, so we map localhost to a fake domain name:
+        // Live can't use localhost redirect, so we set hosts file to following:
         // 127.0.0.1    testhost.local
+        // Additionally Windows requires Administrator privileges to listen to this host.
         U("http://testhost.local:8890/"));
     // Scope "wl.basic" allows getting user information.
     live_cfg.set_scope(U("wl.basic"));
