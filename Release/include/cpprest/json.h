@@ -886,9 +886,14 @@ public:
         /// <returns>If the key exists, a reference to the value kept in the field.</returns>
         json::value& at(const utility::string_t& key)
         {
-            return const_cast<json::value&>(at_internal(key));
+            auto iter = find_by_key(key);
+
+            if (iter == m_elements.end() || key != (iter->first))
+                throw web::json::json_exception(_XPLATSTR("Key not found"));
+
+            return iter->second;
         }
-        
+
         /// <summary>
         /// Accesses an element of a JSON object. If the key doesn't exist, this method throws.
         /// </summary>
@@ -896,9 +901,14 @@ public:
         /// <returns>If the key exists, a reference to the value kept in the field.</returns>
         const json::value& at(const utility::string_t& key) const
         {
-            return at_internal(key);
+            auto iter = find_by_key(key);
+
+            if (iter == m_elements.end() || key != (iter->first))
+                throw web::json::json_exception(_XPLATSTR("Key not found"));
+
+            return iter->second;
         }
-        
+
         /// <summary>
         /// Accesses an element of a JSON object.
         /// </summary>
@@ -911,7 +921,7 @@ public:
             if (iter == m_elements.end() || key != (iter->first))
                 return m_elements.insert(iter, std::pair<utility::string_t, value>(key, value()))->second;
 
-            return const_cast<json::value&>(iter->second);
+            return iter->second;
         }
 
         /// <summary>
@@ -977,6 +987,21 @@ public:
             }
         }
 
+        storage_type::iterator find_by_key(const utility::string_t& key)
+        {
+            if (m_keep_order)
+            {
+                return std::find_if(m_elements.begin(), m_elements.end(),
+                    [&key](const std::pair<utility::string_t, value>& p) {
+                    return p.first == key;
+                });
+            }
+            else
+            {
+                return std::lower_bound(m_elements.begin(), m_elements.end(), key, compare_with_key);
+            }
+        }
+
         const json::value& at_internal(const utility::string_t& key) const
         {
             auto iter = find_by_key(key);
@@ -997,10 +1022,20 @@ public:
             return iter;
         }
 
+        iterator find_internal(const utility::string_t& key)
+        {
+            auto iter = find_by_key(key);
+
+            if (iter != m_elements.end() && key != (iter->first))
+                return m_elements.end();
+
+            return iter;
+        }
+
         const bool m_keep_order;
         storage_type m_elements;
         friend class details::_Object;
-        
+
         template<typename CharType> friend class json::details::JSON_Parser;
    };
 
