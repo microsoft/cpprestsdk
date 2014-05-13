@@ -121,7 +121,7 @@ public:
     /// Gets the credentials used for authentication with this proxy.
     /// </summary>
     /// <returns>Credentials to for this proxy.</returns>
-    const credentials& credentials() const { return m_credentials; }
+    const web::credentials& credentials() const { return m_credentials; }
     
     /// <summary>
     /// Sets the credentials to use for authentication with this proxy.
