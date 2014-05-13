@@ -141,7 +141,7 @@ TEST(parsing_time_roundtrip_datetime6)
     TestDateTimeRoundtrip(_XPLATSTR("2013-11-19T14:30:59.5Z"));
 }
 
-TEST(parsing_time_roundtrip_datetime_invalid1)
+TEST(parsing_time_roundtrip_datetime_invalid1, "Ignore:Linux", "Codeplex issue #115")
 {
     // No digits after the dot, or non-digits. This is not a valid input, but we should not choke on it,
     // Simply ignore the bad fraction
