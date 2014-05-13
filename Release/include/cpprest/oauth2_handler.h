@@ -83,6 +83,7 @@ struct oauth2_config
                 m_token_endpoint(token_endpoint),
                 m_redirect_uri(redirect_uri),
                 m_bearer_auth(true),
+                m_http_basic_auth(true),
                 m_access_token_key(_XPLATSTR("access_token"))
     {
     }
@@ -107,8 +108,7 @@ struct oauth2_config
     /// If successful, resulting token is set as active via set_token().
     /// </summary>
     /// <param name="authorization_code">Code received via redirect upon successful authorization.</param>
-    /// <param name="do_http_basic_auth">Set false if token endpoint authenticates client with key & secret in request body instead of HTTP Basic (default: HTTP Basic).</param>
-    _ASYNCRTIMP pplx::task<void> fetch_token(utility::string_t authorization_code, bool do_http_basic_auth=true);
+    _ASYNCRTIMP pplx::task<void> fetch_token(utility::string_t authorization_code);
 
     bool is_enabled() const { return !m_token.empty(); }
 
@@ -138,8 +138,18 @@ struct oauth2_config
     /// Bearer token passing method. This must be selected based on what the service accepts.
     /// True means token is passed in the request header. (http://tools.ietf.org/html/rfc6750#section-2.1)
     /// False means token in passed in the query parameters. (http://tools.ietf.org/html/rfc6750#section-2.3)
+    /// Default: True.
     /// </summary>
     void set_bearer_auth(bool enable) { m_bearer_auth = std::move(enable); }
+
+    bool http_basic_auth() const { return m_http_basic_auth; }
+    /// <summary>
+    /// Token endpoint authorization method. This must be selected based on what the service accepts.
+    /// True means HTTP Basic is used for authentication.
+    /// False means client key & secret are passed in the HTTP request body.
+    /// Default: True.
+    /// </summary>
+    void set_http_basic_auth(bool enable) { m_http_basic_auth = std::move(enable); }
 
     const utility::string_t&  access_token_key() const { return m_access_token_key; }
     /// <summary>
@@ -160,6 +170,7 @@ private:
     utility::string_t m_scope;
 
     bool m_bearer_auth;
+    bool m_http_basic_auth;
     utility::string_t m_access_token_key;
 
     utility::string_t m_token;

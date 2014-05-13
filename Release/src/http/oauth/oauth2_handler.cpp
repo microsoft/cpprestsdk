@@ -56,7 +56,7 @@ utility::string_t oauth2_config::build_authorization_uri(utility::string_t state
     return u.to_string();
 }
 
-pplx::task<void> oauth2_config::fetch_token(utility::string_t authorization_code, bool do_http_basic_auth)
+pplx::task<void> oauth2_config::fetch_token(utility::string_t authorization_code)
 {
     http_client token_client(m_token_endpoint);
     http_request request;
@@ -65,17 +65,18 @@ pplx::task<void> oauth2_config::fetch_token(utility::string_t authorization_code
 
     utility::string_t request_body(U("grant_type=authorization_code&code=") + uri::encode_data_string(authorization_code)
             + U("&redirect_uri=") + uri::encode_data_string(m_redirect_uri));
-    if (!do_http_basic_auth)
+
+    if (http_basic_auth())
     {
-        request_body += U("&client_id=") + uri::encode_data_string(m_client_key)
-            + U("&client_secret=") + uri::encode_data_string(m_client_secret);
+        std::vector<unsigned char> creds_vec(conversions::to_body_data(
+            uri::encode_data_string(m_client_key) + U(":") + uri::encode_data_string(m_client_secret))
+        );
+        request.headers().add(header_names::authorization, U("Basic ") + conversions::to_base64(std::move(creds_vec)));
     }
     else
     {
-        std::vector<unsigned char> creds_vec(conversions::to_body_data(
-                uri::encode_data_string(m_client_key) + U(":") + uri::encode_data_string(m_client_secret))
-        );
-        request.headers().add(header_names::authorization, U("Basic ") + conversions::to_base64(std::move(creds_vec)));
+        request_body += U("&client_id=") + uri::encode_data_string(m_client_key)
+            + U("&client_secret=") + uri::encode_data_string(m_client_secret);
     }
     request.set_body(request_body, mime_types::application_x_www_form_urlencoded);
 

@@ -126,7 +126,8 @@ TEST_FIXTURE(oauth2_test_uri, oauth2_fetch_token)
 
         c.set_token(U(""));
         VERIFY_ARE_EQUAL(false, c.is_enabled());
-        c.fetch_token(U("789GHI"), false).wait();
+        c.set_http_basic_auth(false);
+        c.fetch_token(U("789GHI")).wait();
         VERIFY_ARE_EQUAL(U("xuzzy123"), c.token());
         VERIFY_ARE_EQUAL(true, c.is_enabled());
     }
