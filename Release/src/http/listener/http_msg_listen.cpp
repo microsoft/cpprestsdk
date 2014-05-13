@@ -45,11 +45,11 @@ pplx::task<void> details::_http_request::_reply_impl(http_response response)
 #undef DAT
         };
 
-        for( auto iter = std::begin(idToPhraseMap); iter != std::end(idToPhraseMap); ++iter)
+        for(const auto &iter : idToPhraseMap)
         {
-            if( iter->id == response.status_code() )
+            if( iter.id == response.status_code() )
             {
-                response.set_reason_phrase(iter->phrase);
+                response.set_reason_phrase(iter.phrase);
                 break;
             }
         }
@@ -85,8 +85,8 @@ pplx::task<void> details::_http_request::_reply_impl(http_response response)
 
 pplx::task<void> details::_http_request::_reply_if_not_already(status_code status)
 {
-    long expected = 0;
-    long desired = 1;
+    const long expected = 0;
+    const long desired = 1;
     if (pplx::details::atomic_compare_exchange(m_initiated_response, desired, expected) == expected)
     {
         return _reply_impl(http_response(status));

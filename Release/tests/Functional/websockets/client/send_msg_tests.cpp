@@ -117,9 +117,7 @@ TEST_FIXTURE(uri_address, send_binary_msg)
     std::vector<uint8_t> body(6);
     memcpy(&body[0], "a\0b\0c\0", 6);
 
-    websocket_client_config config;
-    config.set_message_type(websocket_message_type::binary_message);
-    websocket_client client(m_uri, config);
+    websocket_client client(m_uri);
 
     send_msg_from_stream_helper(client, server, body, rbuf, test_websocket_message_type::WEB_SOCKET_BINARY_MESSAGE_TYPE).wait();
     rbuf.close(std::ios::out);
@@ -198,9 +196,7 @@ TEST_FIXTURE(uri_address, send_multiple_binary_msg_same_stream)
     std::vector<uint8_t> body2(6);
     memcpy(&body2[0], "a\0b\0c\0", 6);
 
-    websocket_client_config config;
-    config.set_message_type(websocket_message_type::binary_message);
-    websocket_client client(m_uri, config);
+    websocket_client client(m_uri);
 
     auto t1 = send_msg_from_stream_helper(client, server, body1, rbuf, test_websocket_message_type::WEB_SOCKET_BINARY_MESSAGE_TYPE);
     auto t2 = send_msg_from_stream_helper(client, server, body2, rbuf, test_websocket_message_type::WEB_SOCKET_BINARY_MESSAGE_TYPE, false);
@@ -211,7 +207,7 @@ TEST_FIXTURE(uri_address, send_multiple_binary_msg_same_stream)
     client.close().wait();
 }
 
-// Send text message followed by binary message: WinRT does not support this scenario.
+// Send text message followed by binary message
 TEST_FIXTURE(uri_address, send_text_and_binary)
 {
     test_websocket_server server;
@@ -222,8 +218,7 @@ TEST_FIXTURE(uri_address, send_text_and_binary)
     websocket_client client(m_uri);
 
     send_text_msg_helper(client, server, "hello1").wait();
-    auto t = send_msg_from_stream_helper(client, server, body2, rbuf, test_websocket_message_type::WEB_SOCKET_BINARY_MESSAGE_TYPE, false);
-    VERIFY_THROWS(t.wait(), websocket_exception);
+    send_msg_from_stream_helper(client, server, body2, rbuf, test_websocket_message_type::WEB_SOCKET_BINARY_MESSAGE_TYPE, false).wait();
 
     rbuf.close(std::ios::out).wait();
     client.close().wait();

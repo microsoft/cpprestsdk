@@ -492,6 +492,10 @@ void connection::async_process_response(http_response response)
         m_chunked = true;
         response.headers()[header_names::transfer_encoding] = U("chunked");
     }
+    if (!response.body())
+    {
+        response.headers().add(header_names::content_length,0);
+    }
 
     for(const auto & header : response.headers())
     {

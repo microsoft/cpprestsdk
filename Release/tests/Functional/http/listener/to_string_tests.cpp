@@ -77,6 +77,8 @@ TEST_FIXTURE(uri_address, request_to_string)
     {
         http_asserts::assert_test_response_equals(p_response, status_codes::OK);
     }).wait();
+
+    listener.close().wait();
 }
 
 }

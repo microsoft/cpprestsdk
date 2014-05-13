@@ -48,6 +48,8 @@ TEST_FIXTURE(uri_address, extract_string)
     {
         http_asserts::assert_test_response_equals(p_response, status_codes::OK);
     }).wait();
+
+    listener.close().wait();
 }
 
 TEST_FIXTURE(uri_address, extract_json)
@@ -72,6 +74,8 @@ TEST_FIXTURE(uri_address, extract_json)
     {
         http_asserts::assert_test_response_equals(p_response, status_codes::OK);
     }).wait();
+
+    listener.close().wait();
 }
 
 TEST_FIXTURE(uri_address, empty_vector)
@@ -95,6 +99,8 @@ TEST_FIXTURE(uri_address, empty_vector)
     {
         http_asserts::assert_test_response_equals(p_response, status_codes::OK);
     }).wait();
+
+    listener.close().wait();
 }
 
 TEST_FIXTURE(uri_address, extract_vector)
@@ -124,6 +130,8 @@ TEST_FIXTURE(uri_address, extract_vector)
     {
         http_asserts::assert_test_response_equals(p_response, status_codes::OK);
     }).wait();
+
+    listener.close().wait();
 }
 
 }

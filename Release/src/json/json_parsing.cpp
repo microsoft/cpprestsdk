@@ -193,7 +193,7 @@ template <typename CharType>
 class JSON_StreamParser : public JSON_Parser<CharType>
     {
 public:
-    JSON_StreamParser(std::basic_istream<CharType> &stream) 
+    JSON_StreamParser(std::basic_istream<CharType> &stream)
         : m_streambuf(stream.rdbuf())
     {
     }
@@ -928,7 +928,7 @@ std::unique_ptr<web::json::details::_Object> JSON_Parser<CharType>::_ParseObject
 {
     GetNextToken(tkn);
 
-    auto obj = utility::details::make_unique<web::json::details::_Object>();
+    auto obj = utility::details::make_unique<web::json::details::_Object>(g_keep_json_object_unsorted);
     auto& elems = obj->m_object.m_elements;
 
     if ( tkn.kind != JSON_Parser<CharType>::Token::TKN_CloseBrace ) 
@@ -985,7 +985,9 @@ done:
 
     GetNextToken(tkn);
 
-    ::std::sort(elems.begin(), elems.end(), json::object::compare_pairs);
+    if (!g_keep_json_object_unsorted) {
+        ::std::sort(elems.begin(), elems.end(), json::object::compare_pairs);
+    }
 
     return obj;
 

@@ -128,9 +128,7 @@ TEST_FIXTURE(uri_address, receive_binary_msg)
 
     test_websocket_server server;
 
-    websocket_client_config config;
-    config.set_message_type(websocket_message_type::binary_message);
-    websocket_client client(m_uri, config);
+    websocket_client client(m_uri);
 
     receive_msg_stream_helper(client, server, body, test_websocket_message_type::WEB_SOCKET_BINARY_MESSAGE_TYPE).wait();
     client.close().wait();

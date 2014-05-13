@@ -238,6 +238,42 @@ TEST(object_construction)
     VERIFY_ARE_EQUAL(U("true"), val2[U("hahah")].serialize());
 }
 
+TEST(object_construction_keep_order)
+{
+    std::vector<std::pair<string_t, json::value>> f;
+    f.push_back(std::make_pair(U("x"), json::value(0)));
+    f.push_back(std::make_pair(U("a"), json::value(1)));
+
+    auto obj1 = json::value::object(f, /*keep_order==*/ true);
+    VERIFY_ARE_EQUAL(obj1.as_object().begin()->first, U("x"));
+
+    auto obj2 = json::value::object(f, /*keep_order==*/ false);
+    VERIFY_ARE_EQUAL(obj2.as_object().begin()->first, U("a"));
+}
+
+TEST(object_construction_from_null_keep_order)
+{
+    struct restore {
+        ~restore() {
+            json::keep_object_element_order(false);
+        }
+    }_;
+
+    json::keep_object_element_order(true);
+
+    auto val1 = json::value::null();
+    val1[U("B")] = 1;
+    val1[U("A")] = 1;
+    VERIFY_ARE_EQUAL(val1.as_object().begin()->first, U("B"));
+
+    json::keep_object_element_order(false);
+
+    auto val2 = json::value::null();
+    val2[U("B")] = 1;
+    val2[U("A")] = 1;
+    VERIFY_ARE_EQUAL(val2.as_object().begin()->first, U("A"));
+}
+
 TEST(array_construction)
 {
     // Constructor which takes a vector.

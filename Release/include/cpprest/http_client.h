@@ -55,15 +55,21 @@ namespace pplx = Concurrency;
 
 #include "cpprest/json.h"
 #include "cpprest/uri.h"
+#include "cpprest/web_utilities.h"
 #include "cpprest/basic_types.h"
 #include "cpprest/asyncrt_utils.h"
 
 namespace web 
-{ 
+{
 namespace http
 {
 namespace client
 {
+
+// credentials class has been moved from web::http::client namespace to web namespace.
+// The below using declarations ensure we dont break existing code.
+// Please use the web::credentials class going forward.
+using web::credentials;
 
 #ifdef _MS_WINDOWS
 namespace details {
@@ -74,33 +80,6 @@ namespace details {
 #endif // __cplusplus_winrt
 }  
 #endif // _MS_WINDOWS
-
-/// <summary>
-/// credentials represents a set of user credentials (username and password) to be used
-/// for the client and proxy authentication
-/// </summary>
-class credentials
-{
-public:
-    credentials(utility::string_t username, utility::string_t password) :
-        m_is_set(true),
-        m_username(std::move(username)),
-        m_password(std::move(password))
-    {}
-
-    const utility::string_t& username() const { return m_username; }
-    const utility::string_t& password() const { return m_password; }
-    bool is_set() const { return m_is_set; }
-
-private:
-    friend class web_proxy;
-    friend class http_client_config;
-    credentials() : m_is_set(false) {}
-
-    utility::string_t m_username;
-    utility::string_t m_password;
-    bool m_is_set;
-};
 
 /// <summary>
 /// web_proxy represents the concept of the web proxy, which can be auto-discovered,
