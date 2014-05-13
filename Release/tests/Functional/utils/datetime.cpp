@@ -93,56 +93,91 @@ TEST(parsing_time_extended)
     }
 }
 
-TEST(parsing_time_roundtrip_datetime01)
+void TestDateTimeRoundtrip(utility::string_t str, utility::string_t strExpected)
+{
+    auto dt = utility::datetime::from_string(str, utility::datetime::ISO_8601);
+    utility::string_t str2 = dt.to_string(utility::datetime::ISO_8601);
+    VERIFY_ARE_EQUAL(str2, strExpected);
+}
+
+void TestDateTimeRoundtrip(utility::string_t str)
+{
+    TestDateTimeRoundtrip(str, str);
+}
+
+TEST(parsing_time_roundtrip_datetime1)
 {
     // Preserve all 7 digits after the comma:
-    utility::string_t str = _XPLATSTR("2013-11-19T14:30:59.1234567Z");
-    auto dt = utility::datetime::from_string(str, utility::datetime::ISO_8601);
-    utility::string_t str2 = dt.to_string(utility::datetime::ISO_8601);
-    VERIFY_ARE_EQUAL(str2, str);
+    TestDateTimeRoundtrip(_XPLATSTR("2013-11-19T14:30:59.1234567Z"));
 }
 
-TEST(parsing_time_roundtrip_datetime02)
+TEST(parsing_time_roundtrip_datetime2)
 {
     // lose the last '999' without rounding up
-    utility::string_t str = _XPLATSTR("2013-11-19T14:30:59.1234567999Z");
-    auto dt = utility::datetime::from_string(str, utility::datetime::ISO_8601);
-    utility::string_t str2 = dt.to_string(utility::datetime::ISO_8601);
-    VERIFY_ARE_EQUAL(str2, _XPLATSTR("2013-11-19T14:30:59.1234567Z"));
+    TestDateTimeRoundtrip(_XPLATSTR("2013-11-19T14:30:59.1234567999Z"), _XPLATSTR("2013-11-19T14:30:59.1234567Z"));
 }
 
-TEST(parsing_time_roundtrip_datetime03)
+TEST(parsing_time_roundtrip_datetime3)
 {
     // leading 0-s after the comma, tricky to parse correctly
-    utility::string_t str = _XPLATSTR("2013-11-19T14:30:59.00123Z");
-    auto dt = utility::datetime::from_string(str, utility::datetime::ISO_8601);
-    utility::string_t str2 = dt.to_string(utility::datetime::ISO_8601);
-    VERIFY_ARE_EQUAL(str2, str);
+    TestDateTimeRoundtrip(_XPLATSTR("2013-11-19T14:30:59.00123Z"));
 }
 
 TEST(parsing_time_roundtrip_datetime4)
 {
     // another leading 0 test
-    utility::string_t str = _XPLATSTR("2013-11-19T14:30:59.0000001Z");
-    auto dt = utility::datetime::from_string(str, utility::datetime::ISO_8601);
-    utility::string_t str2 = dt.to_string(utility::datetime::ISO_8601);
-    VERIFY_ARE_EQUAL(str2, str);
+    TestDateTimeRoundtrip(_XPLATSTR("2013-11-19T14:30:59.0000001Z"));
 }
 
-TEST(parsing_time_roundtrip_datetime05)
+TEST(parsing_time_roundtrip_datetime5)
 {
     // this is going to be truncated
-    utility::string_t str = _XPLATSTR("2013-11-19T14:30:59.00000001Z");
-    auto dt = utility::datetime::from_string(str, utility::datetime::ISO_8601);
-    utility::string_t str2 = dt.to_string(utility::datetime::ISO_8601);
-    VERIFY_ARE_EQUAL(str2, _XPLATSTR("2013-11-19T14:30:59Z"));
+    TestDateTimeRoundtrip(_XPLATSTR("2013-11-19T14:30:59.00000001Z"), _XPLATSTR("2013-11-19T14:30:59Z"));
+}
+
+TEST(parsing_time_roundtrip_datetime6)
+{
+    // Only one digit after the dot
+    TestDateTimeRoundtrip(_XPLATSTR("2013-11-19T14:30:59.5Z"));
+}
+
+TEST(parsing_time_roundtrip_datetime_invalid1)
+{
+    // No digits after the dot, or non-digits. This is not a valid input, but we should not choke on it,
+    // Simply ignore the bad fraction
+    const utility::string_t bad_strings[] = { _XPLATSTR("2013-11-19T14:30:59.Z"),
+                                              _XPLATSTR("2013-11-19T14:30:59.1a2Z")
+                                            };
+    utility::string_t str_corrected = _XPLATSTR("2013-11-19T14:30:59Z");
+
+    for (const auto& str : bad_strings)
+    {
+        auto dt = utility::datetime::from_string(str, utility::datetime::ISO_8601);
+        utility::string_t str2 = dt.to_string(utility::datetime::ISO_8601);
+        VERIFY_ARE_EQUAL(str2, str_corrected);
+    }
+}
+
+TEST(parsing_time_roundtrip_datetime_invalid2)
+{
+    // Variouls unsupported cases. In all cases, we have produce an empty date time
+    const utility::string_t bad_strings[] = { _XPLATSTR(""),     // empty
+                                              _XPLATSTR(".Z"),   // too short
+                                              _XPLATSTR(".Zx"),  // no trailing Z
+                                              _XPLATSTR("3.14Z") // not a valid date
+                                            };
+
+    for (const auto& str : bad_strings)
+    {
+        auto dt = utility::datetime::from_string(str, utility::datetime::ISO_8601);
+        VERIFY_ARE_EQUAL(dt.to_interval(), 0);
+    }
 }
 
 TEST(parsing_time_roundtrip_time)
 {
     // time only without date
     utility::string_t str = _XPLATSTR("14:30:59.1234567Z");
-    //utility::string_t str = _XPLATSTR("14:30:01Z");
     auto dt = utility::datetime::from_string(str, utility::datetime::ISO_8601);
     utility::string_t str2 = dt.to_string(utility::datetime::ISO_8601);
     // Must look for a substring now, since the date part is filled with today's date

@@ -50,24 +50,20 @@ namespace client
 
 void details::_websocket_message::set_body(streams::istream instream)
 {
-    set_instream(instream);
+    set_streambuf(instream.streambuf());
 }
 
 void details::_websocket_message::_prepare_to_receive_data()
 {
-    // The user did not specify an outstream.
+    // The user did not specify a stream.
     // We will create one...
     concurrency::streams::producer_consumer_buffer<uint8_t> buf;
-    set_outstream(buf.create_ostream());
-
-    // Since we are creating the streambuffer, set the input stream
-    // so that the user can retrieve the data.
-    set_instream(buf.create_istream());
+    set_streambuf(buf);
 }
 
 std::string details::_websocket_message::_extract_string()
 {
-    auto buf_r = instream().streambuf();
+    auto& buf_r = streambuf();
 
     if (buf_r.in_avail() == 0)
     {

@@ -40,10 +40,12 @@ HEADERS = \
 	../include/cpprest/filestream.h \
 	../include/cpprest/globals.h \
 	../include/cpprest/genstreambuf.h \
+	../include/cpprest/web_utilities.h \
 	../include/cpprest/http_client.h \
 	../include/cpprest/http_client_impl.h \
 	../include/cpprest/http_constants.dat \
 	../include/cpprest/http_helpers.h \
+	../include/cpprest/http_headers.h \
 	../include/cpprest/http_linux_server.h \
 	../include/cpprest/http_listener.h \
 	../include/cpprest/http_msg.h \

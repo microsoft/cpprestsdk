@@ -30,22 +30,14 @@ using namespace Platform;
 using namespace Windows::Storage::Streams;
 #endif // #if !defined(__cplusplus_winrt)
 
-#if defined(_MS_WINDOWS)
-#include <regex>
-#else
+#ifndef _MS_WINDOWS
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/posix_time/posix_time_io.hpp>
-#ifndef __APPLE__
-// GCC 4.8 does not support regex, use boost. TODO: switch to std::regex in GCC 4.9
-// Clang already supports std::regex
-#include <boost/regex.hpp>
-#endif
 using namespace boost::locale::conv;
 #endif
 
 #ifdef __APPLE__
 #include <CoreFoundation/CoreFoundation.h>
-#include <regex>
 #endif
 
 using namespace web;
@@ -505,6 +497,8 @@ datetime datetime::timeval_to_datetime(struct timeval time)
 }
 #endif
 
+static bool is_digit(utility::char_t c) { return c >= _XPLATSTR('0') && c <= _XPLATSTR('9'); }
+
 /// <summary>
 /// Returns the current UTC date and time.
 /// </summary>
@@ -682,18 +676,43 @@ bool __cdecl datetime::system_type_to_datetime(void* pvsysTime, uint64_t seconds
 // Take a string that represents a fractional second and return the number of ticks
 // This is equivalent to doing atof on the string and multiplying by 10000000,
 // but does not lose precision
-uint64_t timeticks_from_second(const utility::string_t& str)
+template<typename StringIterator>
+uint64_t timeticks_from_second(StringIterator begin, StringIterator end)
 {
-    _ASSERTE(str.size()>1);
-    _ASSERTE(str[0]==U('.'));
+    int size = (int)(end - begin);
+    _ASSERTE(begin[0] == U('.'));
     uint64_t ufrac_second = 0;
-    for(int i=1; i<=7; ++i)
+    for (int i = 1; i <= 7; ++i)
     {
         ufrac_second *= 10;
-        auto add = i < (int)str.size() ? str[i] - U('0') : 0;
+        int add = i < size ? begin[i] - U('0') : 0;
         ufrac_second += add;
     }
     return ufrac_second;
+}
+
+void extract_fractional_second(const utility::string_t& dateString, utility::string_t& resultString, uint64_t& ufrac_second)
+{
+    resultString = dateString;
+    // First, the string must be strictly longer than 2 characters, and the trailing character must be 'Z'
+    if (resultString.size() > 2 && resultString[resultString.size() - 1] == U('Z'))
+    {
+        // Second, find the last non-digit by scanning the string backwards
+        auto last_non_digit = std::find_if_not(resultString.rbegin() + 1, resultString.rend(), is_digit);
+        if (last_non_digit < resultString.rend() - 1)
+        {
+            // Finally, make sure the last non-digit is a dot:
+            auto last_dot = last_non_digit.base() - 1;
+            if (*last_dot == U('.'))
+            {
+                // Got it! Now extract the fractional second
+                auto last_before_Z = std::end(resultString) - 1;
+                ufrac_second = timeticks_from_second(last_dot, last_before_Z);
+                // And erase it from the string
+                resultString.erase(last_dot, last_before_Z);
+            }
+        }
+    }
 }
 
 /// <summary>
@@ -745,17 +764,8 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
         // increments. Therefore, start with seconds and milliseconds set to 0, then add them separately
 
         // Try to extract the fractional second from the timestamp
-        std::wregex r_frac_second(L"(.+)(\\.\\d+)(Z$)");
-        std::wsmatch m;
-
-        std::wstring input(dateString);
-        if (std::regex_search(dateString, m, r_frac_second))
-        {
-            auto frac = m[2].str(); // this is the fractional second
-            ufrac_second = timeticks_from_second(frac);
-            input = m[1].str() + m[3].str();
-        }
-
+        utility::string_t input;
+        extract_fractional_second(dateString, input, ufrac_second);
         {
             SYSTEMTIME sysTime = { 0 };
             const wchar_t * formatString = L"%4d-%2d-%2dT%2d:%2d:%2dZ";
@@ -834,29 +844,12 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
     } 
     else
     {
-#ifdef __APPLE__
         // Try to extract the fractional second from the timestamp
-        std::regex r_frac_second("(.+)(\\.\\d+)(Z$)");
-        std::smatch m;
-        if(std::regex_search(input,m,r_frac_second))
-        {
-            auto frac = m[2].str(); // this is the fractional second
-            ufrac_second = timeticks_from_second(frac);
-            input = m[1].str() + m[3].str();
-        }
-#else
-        // Try to extract the fractional second from the timestamp
-        boost::regex r_frac_second("(.+)(\\.\\d+)(Z$)");
-        boost::smatch m;
-        if(boost::regex_search(input,m,r_frac_second))
-        {
-            auto frac = m[2].str(); // this is the fractional second
-            ufrac_second = timeticks_from_second(frac);
-            input = m[1].str() + m[3].str();
-        }
-#endif
+        utility::string_t input;
+        extract_fractional_second(dateString, input, ufrac_second);
+
         auto result = strptime(input.data(), "%Y-%m-%dT%H:%M:%SZ", &output);
-       
+
         if ( result == nullptr )
         {
             result = strptime(input.data(), "%Y%m%dT%H:%M:%SZ", &output);
@@ -955,8 +948,6 @@ utility::string_t __cdecl timespan::seconds_to_xml_duration(utility::seconds dur
 
     return oss.str();
 }
-
-static bool is_digit(utility::char_t c) { return c >= _XPLATSTR('0') && c <= _XPLATSTR('9'); }
 
 /// <summary>
 /// Converts an xml duration to timespan/interval in seconds

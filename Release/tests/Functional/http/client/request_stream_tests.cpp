@@ -316,7 +316,7 @@ public:
     }
 };
 
-TEST_FIXTURE(uri_address, set_body_stream_exception)
+TEST_FIXTURE(uri_address, set_body_stream_exception, "Ignore", "940704")
 {
     utility::string_t fname = U("set_body_stream_exception.txt");
     fill_file(fname);

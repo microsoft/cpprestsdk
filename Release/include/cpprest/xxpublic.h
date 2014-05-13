@@ -29,7 +29,7 @@
 #pragma once
 
 #ifndef _MS_WINDOWS
-#if defined(WIN32) || defined(__cplusplus_winrt)
+#if defined(_WIN32) || defined(__cplusplus_winrt)
 #define _MS_WINDOWS
 #endif
 #endif // _MS_WINDOWS
