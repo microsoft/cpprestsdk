@@ -40,7 +40,7 @@ namespace web { namespace http { namespace client { namespace experimental
 {
 
 
-utility::string_t oauth2_config::build_authorization_uri(utility::string_t state) const
+utility::string_t oauth2_config::build_authorization_uri() const
 {
     // TODO: Use "token" here for implicit flow. This would get token directly without auth code.
     const string_t response_type(U("code"));
@@ -48,12 +48,35 @@ utility::string_t oauth2_config::build_authorization_uri(utility::string_t state
     u.append_query(U("response_type"), response_type);
     u.append_query(U("client_id"), m_client_key);
     u.append_query(U("redirect_uri"), m_redirect_uri);
-    u.append_query(U("state"), state);
+    u.append_query(U("state"), m_state);
     if (!scope().empty())
     {
         u.append_query(U("scope"), scope());
     }
     return u.to_string();
+}
+
+utility::string_t oauth2_config::parse_code_from_redirected_uri(uri redirected_uri) const
+{
+    auto query = uri::split_query(redirected_uri.query());
+    auto code_query = query.find(_XPLATSTR("code"));
+    auto state_query = query.find(_XPLATSTR("state"));
+    if (code_query == query.end())
+    {
+        throw oauth2_exception(_XPLATSTR("Query parameter 'code' missing from redirected URI."));
+    }
+    if (state_query == query.end())
+    {
+        throw oauth2_exception(_XPLATSTR("Query parameter 'state' missing from redirected URI."));
+    }
+    if (m_state != state_query->second)
+    {
+        utility::ostringstream_t os;
+        os << _XPLATSTR("Redirected URI query parameter 'state'='") << state_query->second
+            << _XPLATSTR("' does not match state='") << m_state << _XPLATSTR("'.");
+        throw oauth2_exception(os.str().c_str());
+    }
+    return code_query->second;
 }
 
 pplx::task<void> oauth2_config::fetch_token(utility::string_t authorization_code)
@@ -89,9 +112,9 @@ pplx::task<void> oauth2_config::fetch_token(utility::string_t authorization_code
     {
         return token_json[U("access_token")].as_string();
     })
-    .then([&](utility::string_t token)
+    .then([this](utility::string_t token)
     {
-        this->set_token(token);
+        set_token(token);
     });
 }
 

@@ -52,13 +52,13 @@ TEST(oauth2_build_authorization_uri)
 
     // Empty authorization URI.
     {
-        VERIFY_ARE_EQUAL(U("/?response_type=code&client_id=&redirect_uri=&state="), c.build_authorization_uri(U("")));
+        VERIFY_ARE_EQUAL(U("/?response_type=code&client_id=&redirect_uri=&state="), c.build_authorization_uri());
     }
 
     // Authorization URI with scope parameter.
     {
         c.set_scope(U("testing_123"));
-        VERIFY_ARE_EQUAL(U("/?response_type=code&client_id=&redirect_uri=&state=&scope=testing_123"), c.build_authorization_uri(U("")));
+        VERIFY_ARE_EQUAL(U("/?response_type=code&client_id=&redirect_uri=&state=&scope=testing_123"), c.build_authorization_uri());
     }
 
     // Setters/getters, full authorization URI with both state and scope.
@@ -66,8 +66,9 @@ TEST(oauth2_build_authorization_uri)
         c.set_client_key(U("4567abcd"));
         c.set_auth_endpoint(U("https://foo"));
         c.set_redirect_uri(U("http://localhost:8080"));
+        c.set_state(U("xuzzy"));
         VERIFY_ARE_EQUAL(U("https://foo/?response_type=code&client_id=4567abcd&redirect_uri=http://localhost:8080&state=xuzzy&scope=testing_123"),
-                c.build_authorization_uri(U("xuzzy")));
+                c.build_authorization_uri());
     }
 }
 

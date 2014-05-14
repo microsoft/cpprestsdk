@@ -43,6 +43,21 @@ namespace experimental
 
 
 /// <summary>
+/// Exception type for OAuth 2.0 errors.
+/// </summary>
+class oauth2_exception : public std::exception
+{
+public:
+    oauth2_exception(utility::string_t msg) : m_msg(utility::conversions::to_utf8string(std::move(msg))) {}
+    ~oauth2_exception() _noexcept {}
+    const char* what() const _noexcept { return m_msg.c_str(); }
+
+private:
+    std::string m_msg;
+};
+
+
+/// <summary>
 /// OAuth 2.0 configuration.
 ///
 /// Encapsulates functionality for:
@@ -72,8 +87,9 @@ namespace experimental
 /// 3. All requests issued with that http_client will be OAuth 2.0 -authenticated.
 ///
 /// </summary>
-struct oauth2_config
+class oauth2_config
 {
+public:
     oauth2_config(utility::string_t client_key, utility::string_t client_secret,
             utility::string_t auth_endpoint, utility::string_t token_endpoint,
             utility::string_t redirect_uri) :
@@ -91,6 +107,7 @@ struct oauth2_config
     oauth2_config(utility::string_t token) :
         m_token(std::move(token)),
         m_bearer_auth(true),
+        m_http_basic_auth(true),
         m_access_token_key(_XPLATSTR("access_token"))
     {
     }
@@ -99,8 +116,16 @@ struct oauth2_config
     /// Builds an authorization URI to be loaded in the web browser.
     /// The URI is built with auth_endpoint() as basis.
     /// </summary>
-    /// <param name="state">State string unique to an authorization session. This would be received in the redirect upon successful authorization.</param>
-    _ASYNCRTIMP utility::string_t build_authorization_uri(utility::string_t state) const;
+    _ASYNCRTIMP utility::string_t build_authorization_uri() const;
+
+    /// <summary>
+    /// Parses authorization code from the redirected URI when resource owner
+    /// has accepted the authorization.
+    /// Redirected URI must satisfy the following (otherwise an exception is thrown):
+    /// - Must contain both 'code' and 'state' query parameters.
+    /// - The 'state' parameter must be equal to state().
+    /// </summary>
+    _ASYNCRTIMP utility::string_t parse_code_from_redirected_uri(uri redirected_uri) const;
 
     /// <summary>
     /// Creates a task to fetch token from the token endpoint.
@@ -129,6 +154,13 @@ struct oauth2_config
 
     const utility::string_t& scope() const { return m_scope; }
     void set_scope(utility::string_t scope) { m_scope = std::move(scope); }
+
+    const utility::string_t& state() const { return m_state; }
+    /// <summary>
+    /// State string should be unique for each authorization session.
+    /// This state string should be returned by the authorization server on redirect
+    /// </summary>
+    void set_state(utility::string_t state) { m_state = std::move(state); }
 
     const utility::string_t& token() const { return m_token; }
     void set_token(utility::string_t token) { m_token = std::move(token); }
@@ -168,6 +200,7 @@ private:
     utility::string_t m_token_endpoint;
     utility::string_t m_redirect_uri;
     utility::string_t m_scope;
+    utility::string_t m_state;
 
     bool m_bearer_auth;
     bool m_http_basic_auth;

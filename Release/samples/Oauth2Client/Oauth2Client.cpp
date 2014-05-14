@@ -60,14 +60,14 @@ using namespace web::http::experimental::listener;
 #define EXTENSIVE 0
 
 
-static const utility::string_t s_dropbox_key(U(""));
-static const utility::string_t s_dropbox_secret(U(""));
+static const utility::string_t s_dropbox_key(U("wvf3odtrwgwq91o"));
+static const utility::string_t s_dropbox_secret(U("w4s8zajiz197iip"));
 
-static const utility::string_t s_linkedin_key(U(""));
-static const utility::string_t s_linkedin_secret(U(""));
+static const utility::string_t s_linkedin_key(U("758evsaj4o491o"));
+static const utility::string_t s_linkedin_secret(U("vPRl6ED5jaakbZrx"));
 
-static const utility::string_t s_live_key(U(""));
-static const utility::string_t s_live_secret(U(""));
+static const utility::string_t s_live_key(U("0000000048119F29"));
+static const utility::string_t s_live_secret(U("lJSaBqD42czHGkLIrq4uH9Aadb7LtvIx"));
 
 // State should be generated per authorization/session. Here we just hard-code it.
 static const utility::string_t s_state(U("1234ABCD"));
@@ -95,30 +95,24 @@ class oauth2_code_listener
 public:
     oauth2_code_listener(
         uri listen_uri,
-        utility::string_t state) :
+        const oauth2_config& config) :
             m_listener(utility::details::make_unique<http_listener>(listen_uri)),
-            m_state(state)
+            m_config(config)
     {
         m_listener->support([this](http::http_request request) -> void
         {
             pplx::extensibility::scoped_critical_section_t lck(m_resplock);
-
-            auto query = uri::split_query(request.request_uri().query());
-            auto code_query = query.find(U("code"));
-            auto state_query = query.find(U("state"));
-            if ((code_query == query.end()) || (state_query == query.end())
-                    || (code_query->second.empty()) || (state_query->second.empty())
-                    || (m_state != state_query->second))
+            try
             {
-                request.reply(status_codes::NotFound, U("Not found."));
-            }
-            else
-            {
-                auto code(code_query->second);
+                auto code(m_config.parse_code_from_redirected_uri(request.request_uri()));
                 request.reply(status_codes::OK, U("Ok.")).then([this,code]() -> void
                 {
                     m_tce.set(code);
                 });
+            }
+            catch (oauth2_exception&)
+            {
+                request.reply(status_codes::NotFound, U("Not found."));
             }
         });
         m_listener->open().wait();
@@ -137,7 +131,7 @@ public:
 private:
     std::unique_ptr<http_listener> m_listener;
     pplx::task_completion_event<utility::string_t> m_tce;
-    utility::string_t m_state;
+    const oauth2_config& m_config;
     pplx::extensibility::critical_section_t m_resplock;
 };
 
@@ -158,12 +152,13 @@ public:
                 redirect_uri),
             m_name(name)
     {
-#if defined(_MS_WINDOWS)
-        m_listener = utility::details::make_unique<oauth2_code_listener>(redirect_uri, s_state);
+        m_oauth2_config.set_state(s_state);
+#if defined(_MS_WINDOWS) || defined(__APPLE__)
+        m_listener = utility::details::make_unique<oauth2_code_listener>(redirect_uri, m_oauth2_config);
 #else
         uri_builder ub(redirect_uri);
         ub.set_host(U("localhost"));
-        m_listener = utility::details::make_unique<oauth2_code_listener>(ub.to_uri(), s_state);
+        m_listener = utility::details::make_unique<oauth2_code_listener>(ub.to_uri(), m_oauth2_config);
 #endif
     }
 
@@ -210,7 +205,7 @@ private:
 
     void open_browser_auth()
     {
-        auto auth_uri(m_oauth2_config.build_authorization_uri(s_state));
+        auto auth_uri(m_oauth2_config.build_authorization_uri());
         ucout << "Opening browser in URI:" << std::endl;
         ucout << auth_uri << std::endl;
         open_browser(auth_uri);
