@@ -25,8 +25,8 @@
 
 INSTRUCTIONS
 
-This sample performs authorization code authorization flow againts
-various OAuth 2.0 services and then requests basic user information.
+This sample performs authorization code grant flow on various OAuth 2.0
+services and then requests basic user information.
 
 This sample is for Windows Desktop, OS X and Linux.
 Execute with administrator privileges.
@@ -54,20 +54,19 @@ using namespace web;
 using namespace web::http;
 using namespace web::http::details;
 using namespace web::http::client;
-using namespace web::http::experimental::listener;
+using namespace web::http::experimental::listener; 
 
 // Set to 1 to run an extensive client sample parts.
-#define EXTENSIVE 0
+#define EXTENSIVE       0
 
+static const utility::string_t s_dropbox_key(U(""));
+static const utility::string_t s_dropbox_secret(U(""));
 
-static const utility::string_t s_dropbox_key(U("wvf3odtrwgwq91o"));
-static const utility::string_t s_dropbox_secret(U("w4s8zajiz197iip"));
+static const utility::string_t s_linkedin_key(U(""));
+static const utility::string_t s_linkedin_secret(U(""));
 
-static const utility::string_t s_linkedin_key(U("758evsaj4o491o"));
-static const utility::string_t s_linkedin_secret(U("vPRl6ED5jaakbZrx"));
-
-static const utility::string_t s_live_key(U("0000000048119F29"));
-static const utility::string_t s_live_secret(U("lJSaBqD42czHGkLIrq4uH9Aadb7LtvIx"));
+static const utility::string_t s_live_key(U(""));
+static const utility::string_t s_live_secret(U(""));
 
 // State should be generated per authorization/session. Here we just hard-code it.
 static const utility::string_t s_state(U("1234ABCD"));
@@ -95,7 +94,7 @@ class oauth2_code_listener
 public:
     oauth2_code_listener(
         uri listen_uri,
-        const oauth2_config& config) :
+        oauth2_config& config) :
             m_listener(utility::details::make_unique<http_listener>(listen_uri)),
             m_config(config)
     {
@@ -104,14 +103,15 @@ public:
             pplx::extensibility::scoped_critical_section_t lck(m_resplock);
             try
             {
-                auto code(m_config.parse_code_from_redirected_uri(request.request_uri()));
-                request.reply(status_codes::OK, U("Ok.")).then([this,code]() -> void
+                m_config.token_from_redirected_uri(request.request_uri()).then([this,request]() -> void
                 {
-                    m_tce.set(code);
+                    request.reply(status_codes::OK, U("Ok."));
+                    m_tce.set();
                 });
             }
-            catch (oauth2_exception&)
+            catch (oauth2_exception& e)
             {
+                ucout << "Error: " << e.what() << std::endl;
                 request.reply(status_codes::NotFound, U("Not found."));
             }
         });
@@ -123,15 +123,15 @@ public:
         m_listener->close().wait();
     }
 
-    pplx::task<utility::string_t> listen_for_code()
+    pplx::task<void> listen_for_code()
     {
         return pplx::create_task(m_tce);
     }
 
 private:
     std::unique_ptr<http_listener> m_listener;
-    pplx::task_completion_event<utility::string_t> m_tce;
-    const oauth2_config& m_config;
+    pplx::task_completion_event<void> m_tce;
+    oauth2_config& m_config;
     pplx::extensibility::critical_section_t m_resplock;
 };
 
@@ -188,10 +188,7 @@ protected:
     pplx::task<void> authorization_code_flow()
     {
         open_browser_auth();
-        return m_listener->listen_for_code().then([this](utility::string_t auth_code)
-        {
-            return m_oauth2_config.fetch_token(auth_code);
-        });
+        return m_listener->listen_for_code();
     }
 
     http_client_config m_http_config;

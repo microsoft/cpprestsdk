@@ -21,6 +21,7 @@
                 <StackPanel Orientation="Horizontal" Margin="0,4,0,4">
                     <TextBlock TextWrapping="Wrap" Style="{StaticResource BasicTextStyle}" Text="OAuth 2.0 Live sample." VerticalAlignment="Center" Margin="4,0,4,0"/>
                     <Button x:Name="StartButton" Content="Start" Click="StartButtonClick" Margin="4,0,4,0"/>
+                    <CheckBox x:Name="ImplicitGrantCheckBox" Content="Implicit grant" Unchecked="ImplicitGrantUnchecked" Checked="ImplicitGrantChecked"/>
                     <Button x:Name="InfoButton" Content="Info" Click="InfoButtonClick" Margin="4,0,4,0" IsEnabled="False"/>
                     <Button x:Name="ContactsButton" Content="Contacts" Click="ContactsButtonClick" Margin="4,0,4,0" IsEnabled="False"/>
                     <Button x:Name="EventsButton" Content="Events" Click="EventsButtonClick" Margin="4,0,4,0" IsEnabled="False"/>
