@@ -227,12 +227,10 @@ public:
     std::char_traits<uint8_t>::pos_type m_readbuf_pos;
 
     // The read-write buffer used to save the outgoing body data,
-    // if the authentication chanllenges failed, resend the body data from this buffer.
+    // if the authentication challenges failed, resend the body data from this buffer.
     std::shared_ptr<streams::producer_consumer_buffer<uint8_t>> m_rwbuf_copy;
 
     memory_holder m_body_data;
-
-protected:
 
     virtual void cleanup()
     {
@@ -243,6 +241,8 @@ protected:
             WinHttpCloseHandle(tmp_handle);
         }
     }
+
+protected:
 
     virtual void finish()
     {
@@ -597,7 +597,9 @@ protected:
             // cancellation callback is unregistered when request is completed.
             winhttp_context->m_cancellationRegistration = msg._cancellation_token().register_callback([winhttp_context]()
             {
-                WinHttpCloseHandle(winhttp_context->m_request_handle);
+                // Call the WinHttpSendRequest API after WinHttpCloseHandle will give invalid handle error and we throw this exception.
+                // Call the cleanup to make the m_request_handle as nullptr, otherwise, Application Verifier will give AV exception on m_request_handle.
+                winhttp_context->cleanup();
             });
         }
 

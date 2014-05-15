@@ -33,10 +33,51 @@ using namespace web::experimental::web_sockets::client;
 
 using namespace tests::functional::websocket::utilities;
 
+#if defined(__cplusplus_winrt)
+using namespace Windows::Storage;
+#endif
+
 namespace tests { namespace functional { namespace websocket { namespace client {
 
 SUITE(send_msg_tests)
 {
+utility::string_t get_full_name(const utility::string_t &name)
+{
+#if defined(__cplusplus_winrt)
+    // On WinRT, we must compensate for the fact that we will be accessing files in the
+    // Documents folder
+    auto file = pplx::create_task(
+        KnownFolders::DocumentsLibrary->CreateFileAsync(
+            ref new Platform::String(name.c_str()), CreationCollisionOption::ReplaceExisting)).get();
+    return file->Path->Data();
+#else
+    return name;
+#endif
+}
+
+template<typename _CharType>
+pplx::task<streams::streambuf<_CharType>> OPEN_R(const utility::string_t &name)
+{
+#if !defined(__cplusplus_winrt)
+    return streams::file_buffer<_CharType>::open(name, std::ios_base::in);
+#else
+    auto file = pplx::create_task(
+        KnownFolders::DocumentsLibrary->GetFileAsync(ref new Platform::String(name.c_str()))).get();
+
+    return streams::file_buffer<_CharType>::open(file, std::ios_base::in);
+#endif
+}
+
+// Used to prepare data for stream tests
+void fill_file(const utility::string_t &name, const std::vector<uint8_t>& body, size_t repetitions = 1)
+{
+    std::fstream stream(get_full_name(name), std::ios_base::out | std::ios_base::trunc);
+
+    for (size_t i = 0; i < repetitions; i++)
+        stream.write((char *)&body[0], body.size());
+    stream.close();
+}
+
 void fill_buffer(streams::streambuf<uint8_t> rbuf, const std::vector<uint8_t>& body, size_t repetitions = 1)
 {
     size_t len = body.size();
@@ -59,29 +100,52 @@ pplx::task<void> send_text_msg_helper(websocket_client& client, test_websocket_s
     return client.send(msg);
 }
 
-pplx::task<void> send_msg_from_stream_helper(websocket_client& client,
+pplx::task<void> send_msg_from_stream(websocket_client& client,
                                              test_websocket_server& server,
                                              const std::vector<uint8_t>& body, 
-                                             streams::producer_consumer_buffer<uint8_t> rbuf,
+                                             streams::streambuf<uint8_t> buf,
                                              test_websocket_message_type type,
+                                             bool fill_data,
                                              bool connect_client = true)
 {
     server.next_message([body, type](test_websocket_msg msg)
     {
         websocket_asserts::assert_message_equals(msg, body, type);
     });
+
     if (connect_client)
         client.connect().wait();
-
-    fill_buffer(rbuf, body);
+    if (fill_data)
+        fill_buffer(buf, body);
 
     websocket_outgoing_message msg;
     if (type == test_websocket_message_type::WEB_SOCKET_UTF8_MESSAGE_TYPE)
-        msg.set_utf8_message(streams::istream(rbuf), body.size());
+        msg.set_utf8_message(streams::istream(buf), body.size());
     else if (type == test_websocket_message_type::WEB_SOCKET_BINARY_MESSAGE_TYPE)
-        msg.set_binary_message(streams::istream(rbuf), body.size());
+        msg.set_binary_message(streams::istream(buf), body.size());
 
     return client.send(msg);
+}
+
+// Send message from input stream -> data is already populated in the stream buffer
+pplx::task<void> send_msg_from_istream_helper(websocket_client& client,
+                                             test_websocket_server& server,
+                                             const std::vector<uint8_t>& body, 
+                                             streams::streambuf<uint8_t> rbuf,
+                                             test_websocket_message_type type,
+                                             bool connect_client = true)
+{
+    return send_msg_from_stream(client, server, body, rbuf, type, false, connect_client);
+}
+
+pplx::task<void> send_msg_from_stream_helper(websocket_client& client,
+                                             test_websocket_server& server,
+                                             const std::vector<uint8_t>& body, 
+                                             streams::streambuf<uint8_t> rbuf,
+                                             test_websocket_message_type type,
+                                             bool connect_client = true)
+{
+    return send_msg_from_stream(client, server, body, rbuf, type, true, connect_client);
 }
 
 // Send text message (no fragmentation)
@@ -183,6 +247,94 @@ TEST_FIXTURE(uri_address, send_multiple_text_msges_stream)
 
     t1.wait();
     t2.wait();
+    client.close().wait();
+}
+
+// Send multiple text messages from a file stream
+// send uses stream::acquire API, acquire will fail for file streams.
+TEST_FIXTURE(uri_address, send_text_msges_fstream)
+{
+    test_websocket_server server;
+    utility::string_t fname = U("send_multiple_text_msges_fstream.txt");
+    std::vector<uint8_t> body1(26);
+    memcpy(&body1[0], "abcdefghijklmnopqrstuvwxyz", 26);
+    fill_file(fname, body1, 2);
+    auto file_buf = OPEN_R<uint8_t>(fname).get();
+    websocket_client client(m_uri);
+
+    auto t1 = send_msg_from_istream_helper(client, server, body1, file_buf, test_websocket_message_type::WEB_SOCKET_UTF8_MESSAGE_TYPE);
+    auto t2 = send_msg_from_istream_helper(client, server, body1, file_buf, test_websocket_message_type::WEB_SOCKET_UTF8_MESSAGE_TYPE, false);
+
+    t1.wait();
+    t2.wait();
+    client.close().wait();
+}
+
+// Send multiple text messages from a container stream, where container stream has more data than what we want to send in a single message
+TEST_FIXTURE(uri_address, send_text_msges_cstream)
+{
+    test_websocket_server server;
+    std::vector<uint8_t> body(26);
+    memcpy(&body[0], "abcdefghijklmnopqrstuvwxyz", 26);
+    auto cbuf = streams::container_stream<std::vector<uint8_t>>::open_istream(body).streambuf();
+
+    websocket_client client(m_uri);
+
+    auto t1 = send_msg_from_istream_helper(client, server, std::vector<uint8_t>(body.begin(), body.begin() + body.size()/2), cbuf, test_websocket_message_type::WEB_SOCKET_UTF8_MESSAGE_TYPE);
+    auto t2 = send_msg_from_istream_helper(client, server, std::vector<uint8_t>(body.begin() + body.size()/2, body.end()), cbuf, test_websocket_message_type::WEB_SOCKET_UTF8_MESSAGE_TYPE, false);
+
+    t1.wait();
+    t2.wait();
+    client.close().wait();
+}
+
+// Send multiple text messages from a producer consumer stream, where stream initially has less data than what we want to send in a single message
+// Write data to the buffer after initiating the send, send should succeed.
+TEST_FIXTURE(uri_address, send_text_msges_pcstream_lessdata)
+{
+    test_websocket_server server;
+    streams::producer_consumer_buffer<uint8_t> rbuf;
+    std::vector<uint8_t> body(26);
+    memcpy(&body[0], "abcdefghijklmnopqrstuvwxyz", 26);
+    fill_buffer(rbuf, body);
+
+    server.next_message([](test_websocket_msg msg)
+    {
+        websocket_asserts::assert_message_equals(msg, "abcdefghijklmnopqrstuvwxyzabcd", test_websocket_message_type::WEB_SOCKET_UTF8_MESSAGE_TYPE);
+    });
+
+    websocket_client client(m_uri);
+    client.connect().wait();
+    websocket_outgoing_message msg;
+    msg.set_utf8_message(rbuf.create_istream(), 30);
+    auto t1 = client.send(msg);
+
+    fill_buffer(rbuf, body);
+    t1.wait();
+    client.close().wait();
+}
+
+// Send multiple text messages from a container stream, where stream has less data than what we want to send in a single message
+// Since container stream does not support in | out simultaneously, websocket send_msg will fail to read the required number of bytes 
+// and throws an exception.
+TEST_FIXTURE(uri_address, send_text_msges_cstream_lessdata)
+{
+    test_websocket_server server;
+    std::vector<uint8_t> body(26);
+    memcpy(&body[0], "abcdefghijklmnopqrstuvwxyz", 26);
+    auto cbuf = streams::container_stream<std::vector<uint8_t>>::open_istream(body).streambuf();
+
+    server.next_message([](test_websocket_msg msg)
+    {
+        websocket_asserts::assert_message_equals(msg, "abcdefghijklmnopqrstuvwxyzabcd", test_websocket_message_type::WEB_SOCKET_UTF8_MESSAGE_TYPE);
+    });
+
+    websocket_client client(m_uri);
+    client.connect().wait();
+    websocket_outgoing_message msg;
+    msg.set_utf8_message(cbuf.create_istream(), 30);
+
+    VERIFY_THROWS(client.send(msg).wait(), websocket_exception);
     client.close().wait();
 }
 

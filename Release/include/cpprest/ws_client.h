@@ -83,6 +83,24 @@ public:
     {}
 
     /// <summary>
+    /// Get the web proxy object
+    /// </summary>
+    /// <returns>A reference to the web proxy object.</returns>
+    const web_proxy& proxy() const
+    {
+        return m_proxy;
+    }
+
+    /// <summary>
+    /// Set the web proxy object
+    /// </summary>
+    /// <param name="proxy">The web proxy object.</param>
+    void set_proxy(web_proxy proxy)
+    {
+        m_proxy = std::move(proxy);
+    }
+
+    /// <summary>
     /// Get the client credentials
     /// </summary>
     /// <returns>A reference to the client credentials.</returns>
@@ -116,6 +134,7 @@ public:
     const web::http::http_headers &headers() const { return m_headers; }
 
 private:
+    web::web_proxy m_proxy;
     web::credentials m_credentials;
     web::http::http_headers m_headers;
 };

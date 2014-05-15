@@ -159,6 +159,20 @@ public:
 
     pplx::task<void> connect()
     {
+        const auto &proxy = config().proxy();
+        if(!proxy.is_default())
+        {
+            return pplx::task_from_exception<void>(websocket_exception(_XPLATSTR("Only a default proxy server is supported.")));
+        }
+
+        const auto &proxy_cred = proxy.credentials();
+        if(proxy_cred.is_set())
+        {
+            m_msg_websocket->Control->ProxyCredential = ref new Windows::Security::Credentials::PasswordCredential("WebSocketClientProxyCredentialResource", 
+                ref new Platform::String(proxy_cred.username().c_str()), 
+                ref new Platform::String(proxy_cred.password().c_str()));
+        }
+
         const auto uri = ref new Windows::Foundation::Uri(ref new Platform::String(m_uri.to_string().c_str()));
 
         m_msg_websocket->MessageReceived += ref new TypedEventHandler<MessageWebSocket^, MessageWebSocketMessageReceivedEventArgs^>(m_context, &ReceiveContext::OnReceive);
@@ -229,34 +243,82 @@ public:
     void send_msg(websocket_outgoing_message msg)
     {
         auto this_client = this->shared_from_this();
+        auto& is_buf = msg._m_impl->streambuf();
         auto length = msg._m_impl->length();
 
-        auto is = msg._m_impl->instream();
-        auto is_buf = is.streambuf();
+        // First try to acquire the data (Get a pointer to the next already allocated contiguous block of data)
+        // If acquire succeeds, send the data over the socket connection, there is no copy of data from stream to temporary buffer.
+        // If acquire fails, copy the data to a temporary buffer managed by sp_allocated and send it over the socket connection. 
+        std::shared_ptr<uint8_t> sp_allocated(nullptr, [](uint8_t *) { } );
+        size_t acquired_size = 0;
+        uint8_t* ptr;
+        auto read_task = pplx::task_from_result();
+        bool acquired = is_buf.acquire(ptr, acquired_size);
 
-        std::shared_ptr<uint8_t> sp( new uint8_t[length](), []( uint8_t *p ) { delete[] p; } );
-        is_buf.getn(sp.get(), length).then([this_client, sp, msg](size_t bytes_read)
-        {   
-            this_client->m_messageWriter->WriteBytes(Platform::ArrayReference<unsigned char>(sp.get(), static_cast<unsigned int>(bytes_read)));
-
-            // Send the data as one complete message, in WinRT we do not have an option to send fragments
-            return pplx::task<unsigned int>(this_client->m_messageWriter->StoreAsync()).then([msg, bytes_read] (unsigned int bytes_written) 
-            {
-                if (bytes_written != bytes_read)
-                {
-                    msg.m_send_tce.set_exception(std::make_exception_ptr(websocket_exception(_XPLATSTR("Failed to send all the bytes."))));
-                }            
-            });
-        }).then([this_client, msg] (pplx::task<void> previousTask)
+        if (!acquired || acquired_size < length) // Stream does not support acquire or failed to acquire specified number of bytes
         {
+            // If acquire did not return the required number of bytes, do not rely on its return value. 
+            if (acquired_size < length)
+            {
+                acquired = false;
+                is_buf.release(ptr, 0);
+            }
+
+            // Allocate buffer to hold the data to be read from the stream.
+            sp_allocated.reset(new uint8_t[length](), [=](uint8_t *p ) { delete[] p; });
+
+            read_task = is_buf.getn(sp_allocated.get(), length).then([length](size_t bytes_read)
+            {
+                if (bytes_read != length)
+                {
+                    throw websocket_exception(_XPLATSTR("Failed to read required length of data from the stream.")); 
+                }              
+            });
+        }
+        else
+        {
+            // Acquire succeeded, assign the acquired pointer to sp_allocated. Keep an empty custom destructor 
+            // so that the data is not released when sp_allocated goes out of scope. The streambuf will manage its memory.
+            sp_allocated.reset(ptr, [](uint8_t *) {});
+        }
+
+        read_task.then([this_client, acquired, sp_allocated, length]()
+        {
+            this_client->m_messageWriter->WriteBytes(Platform::ArrayReference<unsigned char>(sp_allocated.get(), static_cast<unsigned int>(length)));
+
+            // Send the data as one complete message, in WinRT we do not have an option to send fragments.
+            return pplx::task<unsigned int>(this_client->m_messageWriter->StoreAsync());
+        }).then([this_client, msg, acquired, sp_allocated, length] (pplx::task<unsigned int> previousTask)
+        {
+            std::exception_ptr eptr;
+            unsigned int bytes_written = 0;
             try
             { 
-                // Get the exception from DataWriter::StoreAsync, if any and convert it to websocket exception
-                previousTask.get();
+                // Catch exceptions from previous tasks, if any and convert it to websocket exception.
+                bytes_written = previousTask.get();
+                if (bytes_written != length)
+                {
+                    eptr = std::make_exception_ptr(websocket_exception(_XPLATSTR("Failed to send all the bytes.")));
+                }
             }
-            catch (Platform::Exception^ exception)
+            catch (const websocket_exception& ex)
             {
-                msg.m_send_tce.set_exception(std::make_exception_ptr(websocket_exception(exception->HResult)));
+                eptr = std::make_exception_ptr(ex);
+            }
+            catch (...)
+            {
+                eptr = std::make_exception_ptr(websocket_exception(_XPLATSTR("Failed to send data over the websocket connection.")));
+            }
+
+            if (acquired)
+            {
+                msg._m_impl->streambuf().release(sp_allocated.get(), bytes_written);
+            }
+
+            // Set the send_task_completion_event after calling release.
+            if (eptr)
+            {
+                msg.m_send_tce.set_exception(eptr);
             }
 
             {
@@ -372,9 +434,7 @@ void ReceiveContext::OnReceive(MessageWebSocket^ sender, MessageWebSocketMessage
         break;
     }
 
-    auto outstream = msg->outstream();
-
-    auto writebuf = outstream.streambuf();
+    auto& writebuf = msg->streambuf();
 
     try
     {
