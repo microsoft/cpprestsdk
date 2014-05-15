@@ -158,7 +158,7 @@ void connection::handle_http_line(const boost::system::error_code& ec)
         std::string http_path_and_version;
         std::getline(request_stream, http_path_and_version);
         const size_t VersionPortionSize = sizeof(" HTTP/1.1\r") - 1;
-
+        
         // Make sure path and version is long enough to contain the HTTP version
         if(http_path_and_version.size() < VersionPortionSize + 2)
         {
@@ -176,8 +176,18 @@ void connection::handle_http_line(const boost::system::error_code& ec)
 
         // Get the path - remove the version portion and prefix space
         builder.append_path(http_path_and_version.substr(1, http_path_and_version.size() - VersionPortionSize - 1));
-        m_request.set_request_uri(builder.to_uri());
-
+        try
+        {
+            m_request.set_request_uri(builder.to_uri());
+        }
+        catch(const uri_exception &e)
+        {
+            m_request.reply(status_codes::BadRequest, e.what());
+            m_close = true;
+            do_response(true);
+            return;
+        }
+            
         // Get the version
         std::string http_version = http_path_and_version.substr(http_path_and_version.size() - VersionPortionSize + 1, VersionPortionSize - 2);
         // if HTTP version is 1.0 then disable pipelining
@@ -197,10 +207,10 @@ void connection::handle_headers()
     while (std::getline(request_stream, header) && header != "\r")
     {
         auto colon = header.find(':');
-        if (colon != std::string::npos)
+        if (colon != std::string::npos && colon != 0)
         {
             auto name = header.substr(0, colon);
-            auto value = header.substr(colon+1, header.length() - (colon+1)); // also exclude '\r'
+            auto value = header.substr(colon + 1, header.length() - (colon + 1)); // also exclude '\r'
             http::details::trim_whitespace(name);
             http::details::trim_whitespace(value);
 
@@ -217,7 +227,8 @@ void connection::handle_headers()
         else
         {
             m_request.reply(status_codes::BadRequest);
-            do_response();
+            m_close = true;
+            do_response(true);
             return;
         }
     }
@@ -290,7 +301,8 @@ void connection::handle_chunked_body(const boost::system::error_code& ec, int to
         auto writebuf = m_request._get_impl()->outstream().streambuf();
         writebuf.putn(buffer_cast<const uint8_t *>(m_request_buf.data()), toWrite).then([=](pplx::task<size_t> writeChunkTask) 
         {
-            try {
+            try 
+            {
                 writeChunkTask.get();
             } catch (...) {
                 m_request._reply_if_not_already(status_codes::InternalError);
@@ -321,7 +333,8 @@ void connection::handle_body(const boost::system::error_code& ec)
         writebuf.putn(boost::asio::buffer_cast<const uint8_t*>(m_request_buf.data()), std::min(m_request_buf.size(), m_read_size - m_read)).then([=](pplx::task<size_t> writtenSizeTask) 
         {
             size_t writtenSize = 0;
-            try {
+            try 
+            {
                 writtenSize = writtenSizeTask.get();
             } catch (...) {
                 m_request._reply_if_not_already(status_codes::InternalError);
@@ -409,21 +422,16 @@ void connection::dispatch_request_to_listener()
         catch(const std::exception &e)
         {
             pListenerLock->unlock();
-            std::ostringstream str_stream;
-            str_stream << "Error: a std::exception was thrown out of http_listener handle: " << e.what();
-
             m_request._reply_if_not_already(status_codes::InternalError);
         }
         catch(...)
         {
             pListenerLock->unlock();
-
             m_request._reply_if_not_already(status_codes::InternalError);
         }
     }
 
-    if (--m_refs == 0)
-        delete this;
+    if (--m_refs == 0) delete this;
 }
 
 void connection::request_data_avail(size_t size)
@@ -446,13 +454,11 @@ void connection::do_response(bool bad_request)
         }
         catch(const std::exception& ex)
         {
-            std::ostringstream str_stream;
-            str_stream << "Error in listener: " << ex.what() << std::endl;
             response = http::http_response(status_codes::InternalError);
         }
         catch(...)
         {
-                response = http::http_response(status_codes::InternalError);
+            response = http::http_response(status_codes::InternalError);
         }
         
         // before sending response, the full incoming message need to be processed.
@@ -536,7 +542,8 @@ void connection::handle_write_chunked_response(http_response response, const boo
     readbuf.getn(buffer_cast<uint8_t *>(membuf) + http::details::chunked_encoding::data_offset, ChunkSize).then([=](pplx::task<size_t> actualSizeTask) 
     {		
         size_t actualSize = 0;
-        try {
+        try 
+        {
             actualSize = actualSizeTask.get();
         } catch (...) {
             return cancel_sending_response_with_error(response, std::current_exception());
@@ -553,7 +560,6 @@ void connection::handle_write_chunked_response(http_response response, const boo
     });
 }
 
-
 void connection::handle_write_large_response(http_response response, const boost::system::error_code& ec)
 {
     if (ec || m_write == m_write_size)
@@ -566,7 +572,8 @@ void connection::handle_write_large_response(http_response response, const boost
     readbuf.getn(buffer_cast<uint8_t *>(m_response_buf.prepare(readBytes)), readBytes).then([=](pplx::task<size_t> actualSizeTask) 
     {
         size_t actualSize = 0;
-        try {
+        try 
+        {
             actualSize = actualSizeTask.get();
         } catch (...) {
             return cancel_sending_response_with_error(response, std::current_exception());
