@@ -57,7 +57,7 @@ using namespace utility;
 # define CRLF std::string("\r\n")
 #endif
 
-
+using namespace web::http::client::experimental;
 using namespace web::http::details;
 
 namespace web { namespace http { namespace client { namespace details

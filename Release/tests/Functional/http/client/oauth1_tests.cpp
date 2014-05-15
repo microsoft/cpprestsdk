@@ -63,7 +63,7 @@ struct oauth1_basic_setup
 struct oauth1_server_setup : public oauth1_basic_setup
 {
     oauth1_server_setup() :
-        m_server_uri(U("http://localhost:34568/")),
+        m_server_uri(U("http://localhost:17778/")),
         m_server(m_server_uri)
     {
     }
@@ -132,7 +132,8 @@ TEST_FIXTURE(oauth1_server_setup, oauth1_hmac_sha1_request)
     m_server.server()->next_request().then([](test_request *request)
     {
         const utility::string_t begins_with(U("OAuth oauth_version=\"1.0\", oauth_consumer_key=\"test_key\", oauth_token=\"test_token\", oauth_signature_method=\"HMAC-SHA1\", oauth_timestamp=\""));
-        VERIFY_ARE_EQUAL(0, request->m_headers[U("Authorization")].find(begins_with));
+        const utility::string_t header_authorization(request->m_headers[header_names::authorization]);
+        VERIFY_ARE_EQUAL(0, header_authorization.find(begins_with));
         request->reply(status_codes::OK);
     });
 
@@ -155,7 +156,8 @@ TEST_FIXTURE(oauth1_server_setup, oauth1_plaintext_request)
     m_server.server()->next_request().then([](test_request *request)
     {
         const utility::string_t begins_with(U("OAuth oauth_version=\"1.0\", oauth_consumer_key=\"test_key\", oauth_token=\"test_token\", oauth_signature_method=\"PLAINTEXT\", oauth_timestamp=\""));
-        VERIFY_ARE_EQUAL(0, request->m_headers[U("Authorization")].find(begins_with));
+        const utility::string_t header_authorization(request->m_headers[header_names::authorization]);
+        VERIFY_ARE_EQUAL(0, header_authorization.find(begins_with));
         request->reply(status_codes::OK);
     });
 

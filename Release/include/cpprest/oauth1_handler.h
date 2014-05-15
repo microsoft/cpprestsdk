@@ -38,6 +38,9 @@ namespace http
 {
 namespace client
 {
+class http_client_config;
+namespace experimental
+{
 
 
 /// <summary>
@@ -92,7 +95,7 @@ struct oauth1_config
     bool is_enabled() const { return !m_key.empty() && !m_secret.empty() && !m_token.empty() && !m_token_secret.empty(); }
 
 private:
-    friend class http_client_config;
+    friend class web::http::client::http_client_config;
     oauth1_config() {}
 
     // Required.
@@ -113,13 +116,13 @@ private:
 class oauth1_handler : public http_pipeline_stage
 {
 public:
-    oauth1_handler(oauth1_config config) :
+    oauth1_handler(oauth1_config cfg) :
         m_random((unsigned int)utility::datetime::utc_timestamp()),
-        m_config(std::move(config))
+        m_config(std::move(cfg))
     {}
 
-    void set_config(oauth1_config config) { m_config = std::move(config); }
-    const oauth1_config& get_config() const { return m_config; }
+    const oauth1_config& config() const { return m_config; }
+    void set_config(oauth1_config cfg) { m_config = std::move(cfg); }
 
     _ASYNCRTIMP virtual pplx::task<http_response> propagate(http_request request) override;
 
@@ -147,6 +150,6 @@ private:
 };
 
 
-}}} // namespace web::http::client
+}}}} // namespace web::http::client::experimental
 
 #endif  /* _CASA_OAUTH1_HANDLER_H */

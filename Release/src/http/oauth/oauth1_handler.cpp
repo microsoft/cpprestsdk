@@ -34,7 +34,7 @@ using namespace http;
 using namespace client;
 using namespace utility;
 
-namespace web { namespace http { namespace client
+namespace web { namespace http { namespace client { namespace experimental
 {
 
 
@@ -42,9 +42,15 @@ static const int s_nonce_length(32);
 static const utility::string_t s_nonce_chars(_XPLATSTR("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"));
 
 
+//
+// Start of platform-dependent _hmac_sha1() block...
+//
 #if defined(_MS_WINDOWS) && !defined(__cplusplus_winrt) // Windows desktop
+
+
 #include <winternl.h>
 #include <bcrypt.h>
+
 
 std::vector<unsigned char> oauth1_handler::_hmac_sha1(const utility::string_t key, const utility::string_t data)
 {
@@ -103,15 +109,47 @@ cleanup:
     return hash;
 }
 
+
 #elif defined(_MS_WINDOWS) && defined(__cplusplus_winrt) // Windows RT
+
+
+using namespace Windows::Security::Cryptography;
+using namespace Windows::Security::Cryptography::Core;
+using namespace Windows::Storage::Streams;
+ 
 
 std::vector<unsigned char> oauth1_handler::_hmac_sha1(const utility::string_t key, const utility::string_t data)
 {
-    // TODO: not implemented
-    return std::vector<unsigned char>();
+    Platform::String^ data_str = ref new Platform::String(data.c_str());
+    Platform::String^ key_str = ref new Platform::String(key.c_str());
+
+    MacAlgorithmProvider^ HMACSha1Provider = MacAlgorithmProvider::OpenAlgorithm(MacAlgorithmNames::HmacSha1);
+    IBuffer^ content_buffer = CryptographicBuffer::ConvertStringToBinary(data_str, BinaryStringEncoding::Utf8);
+    IBuffer^ key_buffer = CryptographicBuffer::ConvertStringToBinary(key_str, BinaryStringEncoding::Utf8);
+
+    auto signature_key = HMACSha1Provider->CreateKey(key_buffer);
+    auto signed_buffer = CryptographicEngine::Sign(signature_key, content_buffer);
+
+#if 1
+    Platform::Array<unsigned char, 1>^ arr;
+    CryptographicBuffer::CopyToByteArray(signed_buffer, &arr);
+    return std::vector<unsigned char>(arr->Data, arr->Data + arr->Length);
+#else
+    // Alternative.
+    auto reader = ::Windows::Storage::Streams::DataReader::FromBuffer(signed_buffer);
+    std::vector<unsigned char> digest(reader->UnconsumedBufferLength);
+    if (!digest.empty())
+    {
+        reader->ReadBytes(::Platform::ArrayReference<unsigned char>(&digest[0], static_cast<unsigned int>(digest.size())));
+    }
+    return digest;
+#endif
 }
 
+
 #else // Linux, Mac OS X
+
+
 #include <openssl/hmac.h>
 
 
@@ -126,7 +164,13 @@ std::vector<unsigned char> oauth1_handler::_hmac_sha1(const utility::string_t ke
 
     return std::vector<unsigned char>(digest, digest + digest_len);
 }
+
+
 #endif
+//
+// ...End of platform-dependent _hmac_sha1() block.
+//
+
 
 utility::string_t oauth1_handler::_generate_nonce()
 {
@@ -297,4 +341,4 @@ pplx::task<http_response> oauth1_handler::propagate(http_request request)
 #undef DAT
 
 
-}}} // namespace web::http::client
+}}}} // namespace web::http::client::experimental

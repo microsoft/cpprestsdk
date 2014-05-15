@@ -20,6 +20,10 @@
 -->
 
   <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.2|110'">
+    <ProjectFile Include="OAuth2Live\dirs.proj"/>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.2|110'">
     <ProjectFile Include="FacebookDemo\dirs.proj"/>
   </ItemGroup>
 

@@ -20,6 +20,7 @@ SOURCES = \
 	http/listener/http_msg_listen.cpp \
 	http/listener/http_server_api.cpp \
 	http/oauth/oauth1_handler.cpp \
+	http/oauth/oauth2_handler.cpp \
 	utilities/base64.cpp
 
 ifeq ($(UNAME),APPLE)

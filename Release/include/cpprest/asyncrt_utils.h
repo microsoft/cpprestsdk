@@ -147,6 +147,11 @@ namespace conversions
     /// </summary>
     _ASYNCRTIMP std::vector<unsigned char> __cdecl from_base64(const utility::string_t& str);
 
+    /// <summary>
+    /// Convert string to body data
+    /// </summary>
+    _ASYNCRTIMP std::vector<unsigned char> __cdecl to_body_data(const utility::string_t& str);
+
     template <typename Source>
     utility::string_t print_string(const Source &val)
     {
