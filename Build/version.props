@@ -3,12 +3,9 @@
   <PropertyGroup>
     <CppRestBaseFileName>cpprest</CppRestBaseFileName>
     <CppRestSDKVersionMajor>2</CppRestSDKVersionMajor>
-    <CppRestSDKVersionMinor>0</CppRestSDKVersionMinor>
-    <CppRestSDKVersionRevision>1</CppRestSDKVersionRevision>
+    <CppRestSDKVersionMinor>1</CppRestSDKVersionMinor>
+    <CppRestSDKVersionRevision>0</CppRestSDKVersionRevision>
     <CppRestSDKVersionFileSuffix>$(CppRestSDKVersionMajor)_$(CppRestSDKVersionMinor)</CppRestSDKVersionFileSuffix>
     <CppRestSDKVersionString>$(CppRestSDKVersionMajor).$(CppRestSDKVersionMinor)</CppRestSDKVersionString>
   </PropertyGroup>
-<!--
-  Note: remember to regenerate guiddefs.wxi files using gen_guids_for_msi.ps1 whenever major or minor version file changes
--->
 </Project>
