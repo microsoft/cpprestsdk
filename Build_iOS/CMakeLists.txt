@@ -51,7 +51,7 @@ add_custom_target(arm
   VERBATIM
 )
 
-set(LIB_CPPREST libcasablanca.a)
+set(LIB_CPPREST libcpprest.a)
 add_custom_command(
   OUTPUT ${LIB_CPPREST}
   COMMAND lipo -create
