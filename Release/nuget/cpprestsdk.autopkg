@@ -68,7 +68,7 @@ nuget {
 			symbols:${BIN_DIR}Win32\Release\cpprest110_wp8_${VER_WUNDERSCORE}.pdb;
 			lib:${BIN_DIR}Win32\Release\cpprest110_wp8_${VER_WUNDERSCORE}.lib;
 		}
-        
+
         // XP
         [x64,v110_xp,debug,desktop] { 
 			lib: ${BIN_DIR}x64\Debug\cpprest110d_xp_${VER_WUNDERSCORE}.lib;
@@ -92,6 +92,31 @@ nuget {
 			lib: ${BIN_DIR}Win32\Release\cpprest110_xp_${VER_WUNDERSCORE}.lib;
 			symbols: ${BIN_DIR}Win32\Release\cpprest110_xp_${VER_WUNDERSCORE}.pdb;
 			bin: ${X86_DLLS}cpprest110_xp_${VER_WUNDERSCORE}.dll;
+		}
+
+        // XP vs2013
+		[x64,v120_xp,debug,desktop] { 
+			lib: ${BIN_DIR}x64\Debug\cpprest120d_xp_${VER_WUNDERSCORE}.lib;
+			symbols: ${BIN_DIR}x64\Debug\cpprest120d_xp_${VER_WUNDERSCORE}.pdb;
+			bin: ${X64_DLLS}cpprest120d_xp_${VER_WUNDERSCORE}.dll;
+		}
+		
+		[x86,v120_xp,debug,desktop] { 
+			lib: ${BIN_DIR}Win32\Debug\cpprest120d_xp_${VER_WUNDERSCORE}.lib;
+			symbols: ${BIN_DIR}Win32\Debug\cpprest120d_xp_${VER_WUNDERSCORE}.pdb;
+			bin: ${X86_DLLS}cpprest120d_xp_${VER_WUNDERSCORE}.dll;
+		}
+		
+		[x64,v120_xp,release,desktop] { 
+			lib: ${BIN_DIR}x64\Release\cpprest120_xp_${VER_WUNDERSCORE}.lib;
+			symbols: ${BIN_DIR}x64\Release\cpprest120_xp_${VER_WUNDERSCORE}.pdb;
+			bin: ${X64_DLLS}cpprest120_xp_${VER_WUNDERSCORE}.dll;
+		}	
+
+		[x86,v120_xp,release,desktop] { 
+			lib: ${BIN_DIR}Win32\Release\cpprest120_xp_${VER_WUNDERSCORE}.lib;
+			symbols: ${BIN_DIR}Win32\Release\cpprest120_xp_${VER_WUNDERSCORE}.pdb;
+			bin: ${X86_DLLS}cpprest120_xp_${VER_WUNDERSCORE}.dll;
 		}
         
 		[x64,v110,debug,desktop] { 
