@@ -944,6 +944,54 @@ TEST(alloc_acquire_not_supported)
     VERIFY_IS_FALSE(file_buf.acquire(temp, size));
 }
 
+TEST(read_alloc_acquire_not_supported)
+{
+    auto file_buf1 = OPEN<char>(U("read_acquire_not_supported1.txt"), std::ios::out | std::ios::in).get();
+    auto file_buf2 = OPEN<char>(U("read_acquire_not_supported2.txt"), std::ios::out | std::ios::in).get();
+
+    concurrency::streams::stringstreambuf data_buf("A");
+    file_buf1.create_ostream().write(data_buf, 1).wait();
+    file_buf1.sync().wait();
+    file_buf2.create_ostream().write(file_buf1, 1).wait();
+    file_buf2.sync().wait();
+
+    file_buf2.create_istream().read(file_buf1, 1).wait();
+    file_buf1.sync().wait();
+    file_buf1.seekpos(0, std::ios::in);
+    data_buf = concurrency::streams::stringstreambuf();
+    file_buf1.create_istream().read(data_buf, 2).wait();
+    const auto &data = data_buf.collection();
+    VERIFY_ARE_EQUAL(data[0], 'A');
+    VERIFY_ARE_EQUAL(data[1], 'A');
+
+    file_buf1.close().wait();
+    file_buf2.close().wait();
+}
+
+TEST(winrt_filestream_close)
+{
+    std::string str("test data");
+    auto t = OPEN_W<uint8_t>(U("file.txt")).then(
+        [this, str](concurrency::streams::ostream stream)
+    {
+        concurrency::streams::container_buffer<std::string> rbuf(str);
+        concurrency::streams::istream is(rbuf);
+        size_t size = 0;
+        is.read(stream.streambuf(), 1).wait();
+        while (!is.is_eof())
+        {
+            is.read(stream.streambuf(), 1).wait();
+            size += 1;
+        }
+
+        return stream.flush().then([size, stream](){
+            stream.close();
+            return size;
+        });
+    });
+
+    VERIFY_ARE_EQUAL(t.get(), str.length());
+}
 } // SUITE(file_buffer_tests)
 
 }}}
