@@ -251,7 +251,7 @@ namespace Concurrency { namespace streams
                         source.release(data, 0);
                     }
 
-                    std::shared_ptr<CharType> buf(new CharType[count]);
+                    std::shared_ptr<CharType> buf(new CharType[count], [](CharType *buf) { delete [] buf; });
 
                     auto post_write = 
                         [buf](pplx::task<size_t> op)-> pplx::task<size_t>
@@ -710,7 +710,7 @@ namespace Concurrency { namespace streams
                         [buffer,data](pplx::task<size_t> op)-> pplx::task<size_t>
                         {
                             auto b = buffer;
-                            b.release(data,op.get());
+                            b.release(data, op.get());
                             return op; 
                         };
                     return target.putn(data, count).then(post_write);
@@ -723,7 +723,7 @@ namespace Concurrency { namespace streams
                         buffer.release(data, 0);
                     }
 
-                    std::shared_ptr<CharType> buf(new CharType[count]);
+                    std::shared_ptr<CharType> buf(new CharType[count], [](CharType *buf) { delete [] buf; });
 
                     auto post_write = 
                         [buf](pplx::task<size_t> op) -> pplx::task<size_t>
