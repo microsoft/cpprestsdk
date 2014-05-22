@@ -149,7 +149,7 @@ public:
             m_receive_task_queue.pop();
             tce.set_exception(std::make_exception_ptr(websocket_exception(_XPLATSTR("Websocket connection has been closed."))));
         }
-    } 
+    }
 
     pplx::task<void> connect()
     {

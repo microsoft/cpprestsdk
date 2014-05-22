@@ -25,10 +25,16 @@
 
 #include "stdafx.h"
 
+#if defined(__cplusplus_winrt) || !defined(_M_ARM)
+
 using namespace concurrency::streams;
+
+#if defined(WINAPI_FAMILY) && WINAPI_FAMILY != WINAPI_FAMILY_DESKTOP_APP
 
 using namespace Windows::Foundation;
 using namespace Windows::System::Threading;
+
+#endif
 
 using namespace web;
 using namespace web::experimental::web_sockets;
@@ -61,7 +67,7 @@ TEST_FIXTURE(uri_address, client_construction_error_cases)
 
     // Invalid scheme.
     verify_client_invalid_argument(address);
-    
+
     // empty host.
     address = uri(U("ws://:34567/"));
     verify_client_invalid_argument(address);
@@ -71,7 +77,7 @@ TEST_FIXTURE(uri_address, client_construction_error_cases)
 TEST_FIXTURE(uri_address, get_client_config)
 {
     websocket_client_config config;
-    
+
     web::credentials cred(U("username"), U("password"));
     config.set_credentials(cred);
     websocket_client client(m_uri, config);
@@ -122,7 +128,7 @@ TEST_FIXTURE(uri_address, move_operations)
         VERIFY_ARE_EQUAL(body.compare(ret_str), 0);
         VERIFY_ARE_EQUAL(ret_msg.messge_type(), websocket_message_type::text_message);
     });
-    
+
     test_websocket_msg rmsg;
     rmsg.set_data(body_vec);
     rmsg.set_msg_type(test_websocket_message_type::WEB_SOCKET_UTF8_MESSAGE_TYPE);
@@ -181,3 +187,5 @@ TEST_FIXTURE(uri_address, connect_with_headers)
 } // SUITE(client_construction)
 
 }}}}
+
+#endif

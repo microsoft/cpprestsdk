@@ -25,6 +25,8 @@
 
 #include "stdafx.h"
 
+#if defined(__cplusplus_winrt) || !defined(_M_ARM)
+
 using namespace concurrency::streams;
 
 using namespace web::experimental::web_sockets;
@@ -109,7 +111,8 @@ TEST_FIXTURE(uri_address, try_receive_after_server_initiated_close)
     msg.set_msg_type(test_websocket_message_type::WEB_SOCKET_CLOSE_TYPE);
     server.send_msg(msg);
 
-    std::chrono::milliseconds dura(3000);
+    // 100 ms should be plenty for local loopback
+    std::chrono::milliseconds dura(100);
     std::this_thread::sleep_for(dura);
 
     auto t = client.receive();
@@ -126,6 +129,7 @@ TEST_FIXTURE(uri_address, destroy_without_close)
 
     {
         websocket_client client(m_uri);
+
         client.connect().wait();
 
         t = client.receive();
@@ -166,3 +170,5 @@ TEST_FIXTURE(uri_address, send_fragment)
 } // SUITE(error_tests)
 
 }}}}
+
+#endif

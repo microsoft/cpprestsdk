@@ -124,12 +124,10 @@ namespace pplx = Concurrency;
 #include "cpprest/http_client.h"
 #include "cpprest/http_helpers.h"
 
-#if WINAPI_FAMILY == WINAPI_FAMILY_APP
 // Currently websockets are only supported on WinRT (Store only).
 // They are not available on Phone. Hence, cannot use the __cplusplus_winrt macro here.
 #include "cpprest/ws_client.h"
 #include "cpprest/ws_msg.h"
-#endif
 
 #if !defined(__cplusplus_winrt)
 #if _WIN32_WINNT >= _WIN32_WINNT_VISTA 

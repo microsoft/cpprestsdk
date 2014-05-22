@@ -16,32 +16,39 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* stdafx.h
+* proxy_tests.cpp
 *
-* Pre-compiled headers
+* Tests cases for covering proxies using websocket_client
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 
-#pragma once
+#include "stdafx.h"
 
-#ifdef _MS_WINDOWS
-#include <winsock2.h>
+#if defined(__cplusplus_winrt) || !defined(_M_ARM)
+
+using namespace web::experimental::web_sockets;
+using namespace web::experimental::web_sockets::client;
+
+using namespace tests::functional::websocket::utilities;
+
+namespace tests { namespace functional { namespace websocket { namespace client {
+
+SUITE(proxy_tests)
+{
+
+#ifdef __cplusplus_winrt
+TEST_FIXTURE(uri_address, no_proxy_options_on_winrt)
+{
+    websocket_client_config config;
+    config.set_proxy(web::web_proxy::use_auto_discovery);
+    websocket_client client(m_uri, config);
+    VERIFY_THROWS(client.connect().wait(), websocket_exception);
+}
 #endif
 
-#include <thread>
-#include <chrono>
+} // SUITE(proxy_tests)
 
-#include "cpprest/asyncrt_utils.h"
-#include "cpprest/rawptrstream.h"
-#include "cpprest/containerstream.h"
-#include "cpprest/producerconsumerstream.h"
-#include "cpprest/filestream.h"
-#include "cpprest/ws_client.h"
-#include "cpprest/ws_msg.h"
+}}}}
 
-#include "unittestpp.h"
-#include "os_utilities.h"
-
-#include "websocket_client_tests.h"
-#include "test_websocket_server.h"
+#endif
