@@ -18,7 +18,7 @@
 *
 * oauth2_handler.cpp
 *
-* HTTP Library: Oauth 2.0 handler
+* HTTP Library: Oauth 2.0 protocol handler
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
 *
@@ -27,7 +27,6 @@
 
 #include "stdafx.h"
 #include "cpprest/oauth2_handler.h"
-//#include "cpprest/asyncrt_utils.h"
 #include "cpprest/http_helpers.h"
 
 using namespace utility;
@@ -42,8 +41,7 @@ namespace web { namespace http { namespace client { namespace experimental
 
 utility::string_t oauth2_config::build_authorization_uri() const
 {
-    // TODO: Use "token" here for implicit flow. This would get token directly without auth code.
-    const string_t response_type(U("code"));
+    const utility::string_t response_type((m_implicit_grant) ? U("token") : U("code"));
     uri_builder u(m_auth_endpoint);
     u.append_query(U("response_type"), response_type);
     u.append_query(U("client_id"), m_client_key);
@@ -56,27 +54,40 @@ utility::string_t oauth2_config::build_authorization_uri() const
     return u.to_string();
 }
 
-utility::string_t oauth2_config::parse_code_from_redirected_uri(uri redirected_uri) const
+pplx::task<void> oauth2_config::token_from_redirected_uri(uri redirected_uri)
 {
-    auto query = uri::split_query(redirected_uri.query());
-    auto code_query = query.find(_XPLATSTR("code"));
-    auto state_query = query.find(_XPLATSTR("state"));
-    if (code_query == query.end())
+    auto query = uri::split_query((m_implicit_grant) ? redirected_uri.fragment() : redirected_uri.query());
+    
+    auto state_param = query.find(_XPLATSTR("state"));
+    if (state_param == query.end())
     {
-        throw oauth2_exception(_XPLATSTR("Query parameter 'code' missing from redirected URI."));
+        throw oauth2_exception(_XPLATSTR("Parameter 'state' missing from redirected URI."));
     }
-    if (state_query == query.end())
+    if (m_state != state_param->second)
     {
-        throw oauth2_exception(_XPLATSTR("Query parameter 'state' missing from redirected URI."));
-    }
-    if (m_state != state_query->second)
-    {
-        utility::ostringstream_t os;
-        os << _XPLATSTR("Redirected URI query parameter 'state'='") << state_query->second
+        utility::ostringstream_t err;
+        err << _XPLATSTR("Redirected URI parameter 'state'='") << state_param->second
             << _XPLATSTR("' does not match state='") << m_state << _XPLATSTR("'.");
-        throw oauth2_exception(os.str().c_str());
+        throw oauth2_exception(err.str().c_str());
     }
-    return code_query->second;
+
+    auto code_param = query.find(_XPLATSTR("code"));
+    if (code_param != query.end())
+    {
+        return fetch_token(code_param->second);
+    }
+
+    auto token_param = query.find(_XPLATSTR("access_token"));
+    if (token_param == query.end())
+    {
+        throw oauth2_exception(_XPLATSTR("Either 'code' or 'access_token' parameter must be in the redirected URI."));
+    }
+
+    auto access_token(token_param->second);
+    return pplx::create_task([this, access_token]() -> void
+    {
+        set_token(access_token);
+    });
 }
 
 pplx::task<void> oauth2_config::fetch_token(utility::string_t authorization_code)

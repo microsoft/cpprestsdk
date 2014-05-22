@@ -29,6 +29,9 @@ namespace OAuth2Live
         void ContactsButtonClick(Platform::Object^ sender, Windows::UI::Xaml::Navigation::NavigationEventArgs^ e);
         void EventsButtonClick(Platform::Object^ sender, Windows::UI::Xaml::Navigation::NavigationEventArgs^ e);
 
+        void ImplicitGrantUnchecked(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
+        void ImplicitGrantChecked(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
+
         void AuthCodeTextChanged(Platform::Object^ sender, Windows::UI::Xaml::Controls::TextChangedEventArgs^ e);
         void AccessTokenTextChanged(Platform::Object^ sender, Windows::UI::Xaml::Controls::TextChangedEventArgs^ e);
 

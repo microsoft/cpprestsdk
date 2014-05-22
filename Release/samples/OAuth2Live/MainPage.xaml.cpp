@@ -21,17 +21,9 @@ using namespace Windows::UI::Xaml::Media;
 using namespace Windows::UI::Xaml::Navigation;
 using namespace Windows::Security::Authentication::Web;
 
-//using namespace web;
-//using namespace web::http;
-//using namespace web::http::client;
-//using namespace web::http::client::experimental;
 
-//using namespace web::details;
-//using namespace web::http::details;
-
-
-static const utility::string_t s_live_key = L"0000000048119F29";
-static const utility::string_t s_live_secret = L"lJSaBqD42czHGkLIrq4uH9Aadb7LtvIx";
+static const utility::string_t s_live_key = L"";
+static const utility::string_t s_live_secret = L"";
 
 static const utility::string_t s_state = L"1234ABCD";
 
@@ -79,42 +71,43 @@ void OAuth2Live::MainPage::StartButtonClick(Platform::Object^ sender, Windows::U
         {
             String^ statusString;
 
+            DebugArea->Text += "< WebAuthenticationBroker returned: ";
             switch (result->ResponseStatus)
             {
                 case WebAuthenticationStatus::ErrorHttp:
                 {
-                    statusString = "ErrorHttp: " + result->ResponseErrorDetail;
+                    DebugArea->Text += "ErrorHttp: " + result->ResponseErrorDetail + "\n";
                     break;
                 }
                 case WebAuthenticationStatus::Success:
                 {
-                    statusString = "Success";
+                    DebugArea->Text += "Success\n";
                     utility::string_t data = result->ResponseData->Data();
                     try
                     {
-                        statusString += "\nParsing authorization code: ";
-                        utility::string_t code = m_live_oauth2_config.parse_code_from_redirected_uri(data);
-                        AuthorizationCode->Text = ref new String(code.c_str());
-                        statusString += "Success";
+                        DebugArea->Text += "Redirect URI:\n" + result->ResponseData + "\n";
+                        DebugArea->Text += "> Obtaining token from redirect...\n";
+                        m_live_oauth2_config.token_from_redirected_uri(data).then([this]()
+                        {
+                            DebugArea->Text += "< Got token.\n";
+                            AccessToken->Text = ref new String(m_live_oauth2_config.token().c_str());
+                        }, pplx::task_continuation_context::use_current());
                     }
                     catch (oauth2_exception& e)
                     {
                         String^ error = ref new String(utility::conversions::to_string_t(e.what()).c_str());
-                        statusString += "Error: " + error;
+                        DebugArea->Text += "Error: " + error + "\n";
                     }
                     break;
                 }
                 default:
                 case WebAuthenticationStatus::UserCancel:
                 {
-                    statusString = "UserCancel";
+                    DebugArea->Text += "UserCancel\n";
                     break;
                 }
             }
-
-            DebugArea->Text += "< WebAuthenticationBroker returned: " + statusString + "\n";
         });
-
 #endif
     }
     catch (Exception^ ex)
@@ -122,7 +115,6 @@ void OAuth2Live::MainPage::StartButtonClick(Platform::Object^ sender, Windows::U
         DebugArea->Text += "< Error launching WebAuthenticationBroker: " + ex->Message + "\n";
     }
 }
-
 
 void OAuth2Live::MainPage::InfoButtonClick(Platform::Object^ sender, Windows::UI::Xaml::Navigation::NavigationEventArgs^ e)
 {
@@ -181,7 +173,6 @@ void OAuth2Live::MainPage::AuthCodeTextChanged(Platform::Object^ sender, Windows
     }, pplx::task_continuation_context::use_current());
 }
 
-
 void OAuth2Live::MainPage::AccessTokenTextChanged(Platform::Object^ sender, Windows::UI::Xaml::Controls::TextChangedEventArgs^ e)
 {
     http_client_config http_config;
@@ -192,4 +183,14 @@ void OAuth2Live::MainPage::AccessTokenTextChanged(Platform::Object^ sender, Wind
     InfoButton->IsEnabled = true;
     ContactsButton->IsEnabled = true;
     EventsButton->IsEnabled = true;
+}
+
+void OAuth2Live::MainPage::ImplicitGrantUnchecked(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+{
+    m_live_oauth2_config.set_implicit_grant(false);
+}
+
+void OAuth2Live::MainPage::ImplicitGrantChecked(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+{
+    m_live_oauth2_config.set_implicit_grant(true);
 }

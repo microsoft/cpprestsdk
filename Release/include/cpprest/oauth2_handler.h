@@ -61,30 +61,39 @@ private:
 /// OAuth 2.0 configuration.
 ///
 /// Encapsulates functionality for:
-/// - Authenticating requests with an access token.
-/// - Performing the OAuth 2.0 authorization code grant authorization flow.
-///   See: http://tools.ietf.org/html/rfc6749#section-4.1
+/// -  Authenticating requests with an access token.
+/// -  Performing the OAuth 2.0 authorization code grant authorization flow.
+///    See: http://tools.ietf.org/html/rfc6749#section-4.1
+/// -  Performing the OAuth 2.0 implicit grant authorization flow.
+///    See: http://tools.ietf.org/html/rfc6749#section-4.2
 ///
-/// Usage for authorization:
+/// Performing OAuth 2.0 authorization:
 /// 1. Set service and client/app parameters:
-/// - Client/app key & secret (as provided by the service).
-/// - The service authorization endpoint and token endpoint.
-/// - Your client/app redirect URI.
-/// - Set if bearer token is passed in query or header field (default: header).
-///   See: http://tools.ietf.org/html/rfc6750#section-2
-/// - If the service uses "non-standard" access token key, set it also (default: "access_token").
-/// 2. Open web browser with URI from build_authorization_uri().
-/// - The passed state string should be unique for this authorization session.
-/// 3. In the web browser, the resource owner clicks "Yes" to authorize your client/app.
-/// 4. To signal authorization, web browser is redirected to redirect_uri().
-/// 5. The redirect contains the authorization code and the state string.
-/// 6. Check the state string equals the one in step 2.
-/// 7. Pass the authorization code to fetch_token() to create a token fetch task.
+/// -  Client/app key & secret (as provided by the service).
+/// -  The service authorization endpoint and token endpoint.
+/// -  Your client/app redirect URI.
+/// -  Use set_state() to assign a unique state string for the authorization
+///    session (default: "").
+/// -  If needed, use set_bearer_auth() to control bearer token passing in either
+///    query or header (default: header). See: http://tools.ietf.org/html/rfc6750#section-2
+/// -  If needed, use set_access_token_key() to set "non-standard" access token
+///    key (default: "access_token").
+/// -  If needed, use set_implicit_grant() to enable implicit grant flow.
+/// 2. Build authorization URI with build_authorization_uri() and open this in web browser/control.
+/// 3. The resource owner should then clicks "Yes" to authorize your client/app, and
+///    as a result the web browser/control is redirected to redirect_uri().
+/// 5. Capture the redirected URI either in web control or by HTTP listener.
+/// 6. Pass the redirected URI to token_from_redirected_uri() to obtain access token.
+/// -  The method ensures redirected URI contains same state() as set in step 1.
+/// -  In implicit_grant() is false, this will create HTTP request to fetch access token
+///    from the service. Otherwise access token is already included in the redirected URI.
 ///
 /// Usage for issuing authenticated requests:
-/// 1. Obtain token. (Perform authorization as above or get token otherwise.)
-/// 2. Use http_client_config::set_oauth2() to set configuration, and construct http_client using it.
-/// 3. All requests issued with that http_client will be OAuth 2.0 -authenticated.
+/// 1. Perform authorization as above to obtain the access token or use an existing token.
+/// -  Some services provice option to generate access tokens for testing purposes.
+/// 2. Pass the resulting oauth2_config with the access token to http_client_config::set_oauth2().
+/// 3. Construct http_client with this http_client_config. After this all requests
+///    by that client will be OAuth 2.0 authenticated.
 ///
 /// </summary>
 class oauth2_config
@@ -98,6 +107,7 @@ public:
                 m_auth_endpoint(auth_endpoint),
                 m_token_endpoint(token_endpoint),
                 m_redirect_uri(redirect_uri),
+                m_implicit_grant(false),
                 m_bearer_auth(true),
                 m_http_basic_auth(true),
                 m_access_token_key(_XPLATSTR("access_token"))
@@ -106,6 +116,7 @@ public:
 
     oauth2_config(utility::string_t token) :
         m_token(std::move(token)),
+        m_implicit_grant(false),
         m_bearer_auth(true),
         m_http_basic_auth(true),
         m_access_token_key(_XPLATSTR("access_token"))
@@ -115,17 +126,25 @@ public:
     /// <summary>
     /// Builds an authorization URI to be loaded in the web browser.
     /// The URI is built with auth_endpoint() as basis.
+    /// The implicit_grant() affects the built URI by selecting
+    /// either authorization code or implicit grant flow.
     /// </summary>
     _ASYNCRTIMP utility::string_t build_authorization_uri() const;
 
     /// <summary>
-    /// Parses authorization code from the redirected URI when resource owner
-    /// has accepted the authorization.
-    /// Redirected URI must satisfy the following (otherwise an exception is thrown):
-    /// - Must contain both 'code' and 'state' query parameters.
-    /// - The 'state' parameter must be equal to state().
+    /// Get the access token based on redirected URI.
+    /// Behavior depends on the implicit_grant() setting.
+    /// If implicit_grant() is false redirect URI is parsed for 'code' query
+    /// parameter which is then used to fetch a token
+    /// from token_endpoint().
+    /// Otherwise, redirect URI fragment part is parsed for 'access_token'
+    /// parameter containing the token.
+    /// In both cases 'state' parameter is parsed and verified to match state().
+    /// When token is successfully obtained, set_token() is called, and config is
+    /// ready for use.
+    /// An oauth2_exception is thrown if anything fails.
     /// </summary>
-    _ASYNCRTIMP utility::string_t parse_code_from_redirected_uri(uri redirected_uri) const;
+    _ASYNCRTIMP pplx::task<void> token_from_redirected_uri(uri redirected_uri);
 
     /// <summary>
     /// Creates a task to fetch token from the token endpoint.
@@ -158,12 +177,20 @@ public:
     const utility::string_t& state() const { return m_state; }
     /// <summary>
     /// State string should be unique for each authorization session.
-    /// This state string should be returned by the authorization server on redirect
+    /// This state string should be returned by the authorization server on redirect.
     /// </summary>
     void set_state(utility::string_t state) { m_state = std::move(state); }
 
     const utility::string_t& token() const { return m_token; }
     void set_token(utility::string_t token) { m_token = std::move(token); }
+
+    bool implicit_grant() const { return m_implicit_grant; }
+    /// <summary>
+    /// False means authorization code grant flow is used.
+    /// True means implicit grant flow is used.
+    /// Default: False.
+    /// </summary>
+    void set_implicit_grant(bool enable) { m_implicit_grant = std::move(enable); }
 
     bool bearer_auth() const { return m_bearer_auth; }
     /// <summary>
@@ -202,6 +229,7 @@ private:
     utility::string_t m_scope;
     utility::string_t m_state;
 
+    bool m_implicit_grant;
     bool m_bearer_auth;
     bool m_http_basic_auth;
     utility::string_t m_access_token_key;
