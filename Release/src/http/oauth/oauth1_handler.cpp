@@ -38,10 +38,6 @@ namespace web { namespace http { namespace client { namespace experimental
 {
 
 
-static const int s_nonce_length(32);
-static const utility::string_t s_nonce_chars(_XPLATSTR("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"));
-
-
 //
 // Start of platform-dependent _hmac_sha1() block...
 //
@@ -171,15 +167,6 @@ std::vector<unsigned char> oauth1_handler::_hmac_sha1(const utility::string_t ke
 // ...End of platform-dependent _hmac_sha1() block.
 //
 
-
-utility::string_t oauth1_handler::_generate_nonce()
-{
-    std::uniform_int_distribution<> distr(0, static_cast<int>(s_nonce_chars.length() - 1));
-    utility::string_t nonce;
-    nonce.reserve(s_nonce_length);
-    std::generate_n(std::back_inserter(nonce), s_nonce_length, [&]() { return s_nonce_chars[distr(m_random)]; } );
-    return nonce;
-}
 
 utility::string_t oauth1_handler::_generate_timestamp()
 {
@@ -312,7 +299,7 @@ pplx::task<http_response> oauth1_handler::propagate(http_request request)
     if (m_config.is_enabled())
     {
         utility::string_t timestamp(_generate_timestamp());
-        utility::string_t nonce(_generate_nonce());
+        utility::string_t nonce(m_nonce_generator.generate());
 
         utility::ostringstream_t os;
         os << "OAuth ";

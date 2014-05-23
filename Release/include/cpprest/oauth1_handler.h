@@ -29,7 +29,6 @@
 #ifndef _CASA_OAUTH1_HANDLER_H
 #define _CASA_OAUTH1_HANDLER_H
 
-#include <random>
 #include "cpprest/http_msg.h"
 
 namespace web
@@ -117,7 +116,6 @@ class oauth1_handler : public http_pipeline_stage
 {
 public:
     oauth1_handler(oauth1_config cfg) :
-        m_random((unsigned int)utility::datetime::utc_timestamp()),
         m_config(std::move(cfg))
     {}
 
@@ -125,8 +123,6 @@ public:
     void set_config(oauth1_config cfg) { m_config = std::move(cfg); }
 
     _ASYNCRTIMP virtual pplx::task<http_response> propagate(http_request request) override;
-
-    _ASYNCRTIMP utility::string_t _generate_nonce();
 
     _ASYNCRTIMP utility::string_t _build_signature_base_string(http_request request, utility::string_t timestamp, utility::string_t nonce) const;
 
@@ -146,7 +142,7 @@ private:
     utility::string_t _build_key() const;
 
     oauth1_config m_config;
-    std::mt19937 m_random;
+    utility::nonce_generator m_nonce_generator;
 };
 
 
