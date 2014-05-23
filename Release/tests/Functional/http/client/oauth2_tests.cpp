@@ -49,30 +49,30 @@ public:
 TEST(oauth2_build_authorization_uri)
 {
     oauth2_config c(U(""), U(""), U(""), U(""), U(""));
+    c.set_custom_state(U("xuzzy"));
 
     // Empty authorization URI.
     {
-        VERIFY_ARE_EQUAL(U("/?response_type=code&client_id=&redirect_uri=&state="), c.build_authorization_uri());
+        VERIFY_ARE_EQUAL(U("/?response_type=code&client_id=&redirect_uri=&state=xuzzy"), c.build_authorization_uri());
     }
 
     // Authorization URI with scope parameter.
     {
         c.set_scope(U("testing_123"));
-        VERIFY_ARE_EQUAL(U("/?response_type=code&client_id=&redirect_uri=&state=&scope=testing_123"), c.build_authorization_uri());
+        VERIFY_ARE_EQUAL(U("/?response_type=code&client_id=&redirect_uri=&state=xuzzy&scope=testing_123"), c.build_authorization_uri());
     }
 
-    // Setters/getters, full authorization URI with both state and scope.
+    // Full authorization URI with scope.
     {
         c.set_client_key(U("4567abcd"));
         c.set_auth_endpoint(U("https://foo"));
         c.set_redirect_uri(U("http://localhost:8080"));
-        c.set_state(U("xuzzy"));
         VERIFY_ARE_EQUAL(U("https://foo/?response_type=code&client_id=4567abcd&redirect_uri=http://localhost:8080&state=xuzzy&scope=testing_123"),
                 c.build_authorization_uri());
     }
 }
 
-TEST_FIXTURE(oauth2_test_uri, oauth2_fetch_token)
+TEST_FIXTURE(oauth2_test_uri, oauth2_token_from_code)
 {
     test_http_server::scoped_server scoped(m_uri);
     oauth2_config c(U("123ABC"), U("456DEF"), U("https://foo"), m_uri.to_string(), U("https://bar"));
@@ -96,11 +96,11 @@ TEST_FIXTURE(oauth2_test_uri, oauth2_fetch_token)
             std::map<utility::string_t, utility::string_t> headers;
             headers[header_names::content_type] = mime_types::application_json;
             // NOTE: Reply body data must not be wide chars.
-            request->reply(status_codes::OK, U(""), headers, "{\"access_token\":\"xuzzy123\"}");
+            request->reply(status_codes::OK, U(""), headers, "{\"access_token\":\"xuzzy123\",\"token_type\":\"bearer\"}");
         });
 
-        c.fetch_token(U("789GHI")).wait();
-        VERIFY_ARE_EQUAL(U("xuzzy123"), c.token());
+        c.token_from_code(U("789GHI")).wait();
+        VERIFY_ARE_EQUAL(U("xuzzy123"), c.token().access_token());
         VERIFY_ARE_EQUAL(true, c.is_enabled());
     }
 
@@ -122,22 +122,34 @@ TEST_FIXTURE(oauth2_test_uri, oauth2_fetch_token)
             std::map<utility::string_t, utility::string_t> headers;
             headers[header_names::content_type] = mime_types::application_json;
             // NOTE: Reply body data must not be wide chars.
-            request->reply(status_codes::OK, U(""), headers, "{\"access_token\":\"xuzzy123\"}");
+            request->reply(status_codes::OK, U(""), headers, "{\"access_token\":\"xuzzy123\",\"token_type\":\"bearer\"}");
         });
 
-        c.set_token(U(""));
+        c.set_token(oauth2_token()); // Clear token.
         VERIFY_ARE_EQUAL(false, c.is_enabled());
         c.set_http_basic_auth(false);
-        c.fetch_token(U("789GHI")).wait();
-        VERIFY_ARE_EQUAL(U("xuzzy123"), c.token());
+        c.token_from_code(U("789GHI")).wait();
+        VERIFY_ARE_EQUAL(U("xuzzy123"), c.token().access_token());
         VERIFY_ARE_EQUAL(true, c.is_enabled());
     }
+
+    // TODO: negative tests for exceptions: in json, http format, etc.
+}
+
+TEST_FIXTURE(oauth2_test_uri, oauth2_token_from_redirected_uri)
+{
+    // TODO: TBD, note: most of it is already covered by token_from_code
+}
+
+TEST_FIXTURE(oauth2_test_uri, oauth2_token_from_refresh)
+{
+    // TODO: TBD
 }
 
 TEST_FIXTURE(oauth2_test_uri, oauth2_bearer_token)
 {
     test_http_server::scoped_server scoped(m_uri);
-    oauth2_config c(U("12345678"));
+    oauth2_config c(oauth2_token(U("12345678")));
     http_client_config config;
 
     // Default, bearer token in "Authorization" header (bearer_auth() == true)
@@ -177,7 +189,7 @@ TEST_FIXTURE(oauth2_test_uri, oauth2_bearer_token)
     {
         c.set_bearer_auth(false);
         c.set_access_token_key(U("open"));
-        c.set_token(U("Sesame"));
+        c.set_token(oauth2_token(U("Sesame")));
         config.set_oauth2(c);
 
         http_client client(m_uri, config);

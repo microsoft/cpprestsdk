@@ -24,18 +24,20 @@ namespace OAuth2Live
 	protected:
 		virtual void OnNavigatedTo(Windows::UI::Xaml::Navigation::NavigationEventArgs^ e) override;
     private:
-        void StartButtonClick(Platform::Object^ sender, Windows::UI::Xaml::Navigation::NavigationEventArgs^ e);
-        void InfoButtonClick(Platform::Object^ sender, Windows::UI::Xaml::Navigation::NavigationEventArgs^ e);
-        void ContactsButtonClick(Platform::Object^ sender, Windows::UI::Xaml::Navigation::NavigationEventArgs^ e);
-        void EventsButtonClick(Platform::Object^ sender, Windows::UI::Xaml::Navigation::NavigationEventArgs^ e);
+        oauth2_config m_live_oauth2_config;
+        std::unique_ptr<http_client> m_live_client;
 
+        void _UpdateButtonState();
+
+        void GetTokenButtonClick(Platform::Object^ sender, Windows::UI::Xaml::Navigation::NavigationEventArgs^ e);
+        void RefreshTokenButtonClick(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
         void ImplicitGrantUnchecked(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
         void ImplicitGrantChecked(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 
-        void AuthCodeTextChanged(Platform::Object^ sender, Windows::UI::Xaml::Controls::TextChangedEventArgs^ e);
-        void AccessTokenTextChanged(Platform::Object^ sender, Windows::UI::Xaml::Controls::TextChangedEventArgs^ e);
+        void GetInfoButtonClick(Platform::Object^ sender, Windows::UI::Xaml::Navigation::NavigationEventArgs^ e);
+        void GetContactsButtonClick(Platform::Object^ sender, Windows::UI::Xaml::Navigation::NavigationEventArgs^ e);
+        void GetEventsButtonClick(Platform::Object^ sender, Windows::UI::Xaml::Navigation::NavigationEventArgs^ e);
 
-        oauth2_config m_live_oauth2_config;
-        std::unique_ptr<http_client> m_live_client;
+        void AccessTokenTextChanged(Platform::Object^ sender, Windows::UI::Xaml::Controls::TextChangedEventArgs^ e);
     };
 }

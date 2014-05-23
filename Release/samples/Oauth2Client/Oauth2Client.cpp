@@ -68,9 +68,6 @@ static const utility::string_t s_linkedin_secret(U(""));
 static const utility::string_t s_live_key(U(""));
 static const utility::string_t s_live_secret(U(""));
 
-// State should be generated per authorization/session. Here we just hard-code it.
-static const utility::string_t s_state(U("1234ABCD"));
-
 
 static void open_browser(utility::string_t auth_uri)
 {
@@ -101,19 +98,20 @@ public:
         m_listener->support([this](http::http_request request) -> void
         {
             pplx::extensibility::scoped_critical_section_t lck(m_resplock);
-            try
+            m_config.token_from_redirected_uri(request.request_uri()).then([this,request](pplx::task<void> token_task) -> void
             {
-                m_config.token_from_redirected_uri(request.request_uri()).then([this,request]() -> void
+                try
                 {
-                    request.reply(status_codes::OK, U("Ok."));
-                    m_tce.set();
-                });
-            }
-            catch (oauth2_exception& e)
-            {
-                ucout << "Error: " << e.what() << std::endl;
-                request.reply(status_codes::NotFound, U("Not found."));
-            }
+                        token_task.wait();
+                        request.reply(status_codes::OK, U("Ok."));
+                        m_tce.set();
+                }
+                catch (oauth2_exception& e)
+                {
+                    ucout << "Error: " << e.what() << std::endl;
+                    request.reply(status_codes::NotFound, U("Not found."));
+                }
+            });
         });
         m_listener->open().wait();
     }
@@ -152,7 +150,6 @@ public:
                 redirect_uri),
             m_name(name)
     {
-        m_oauth2_config.set_state(s_state);
 #if defined(_MS_WINDOWS) || defined(__APPLE__)
         m_listener = utility::details::make_unique<oauth2_code_listener>(redirect_uri, m_oauth2_config);
 #else
@@ -168,7 +165,7 @@ public:
         {
             ucout << "Running " << m_name.c_str() << " session sample..." << std::endl;
 
-            if (m_oauth2_config.token().empty())
+            if (m_oauth2_config.token().access_token().empty())
             {
                 authorization_code_flow().wait();
                 m_http_config.set_oauth2(m_oauth2_config);
