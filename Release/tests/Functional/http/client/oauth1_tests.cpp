@@ -73,13 +73,15 @@ struct oauth1_server_setup : public oauth1_basic_setup
 };
 
 
-TEST_FIXTURE(oauth1_basic_setup, oauth1_unique_nonces)
+// TODO: This test should be probably moved elsewhere.
+TEST(oauth1_unique_nonces)
 {
     // Generate 100 nonces and check each is unique.
     std::vector<utility::string_t> nonces(100);
+    utility::nonce_generator gen;
     for (auto&& v : nonces)
     {
-        v = std::move(m_oauth1_handler._generate_nonce());
+        v = std::move(gen.generate());
     }
     for (auto v : nonces)
     {
