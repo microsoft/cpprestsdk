@@ -33,6 +33,7 @@
 #include "cpprest/fileio.h"
 
 using namespace boost::asio;
+using namespace Concurrency::streams::details;
 
 namespace Concurrency { namespace streams { namespace details {
 
@@ -124,7 +125,6 @@ std::shared_ptr<io_scheduler> get_scheduler()
 * =-=-=-
 ****/
 
-
 /// <summary>
 /// The public parts of the file information record contain only what is implementation-
 /// independent. The actual allocated record is larger and has details that the implementation
@@ -165,8 +165,6 @@ struct _file_info_impl : _file_info
 
 }}}
 
-using namespace Concurrency::streams::details;
-
 /// <summary>
 /// Perform post-CreateFile processing.
 /// </summary>
@@ -204,12 +202,7 @@ bool _finish_create(int fh, _filestream_callback *callback, std::ios_base::openm
     }
     else
     {
-#ifdef __APPLE__
-        auto exptr = std::make_exception_ptr(std::ios_base::failure("failed to create file", std::make_error_code(std::errc::no_such_file_or_directory)));
-#else
-        auto exptr = std::make_exception_ptr(std::ios_base::failure("failed to create file"));
-#endif
-        callback->on_error(exptr);
+        callback->on_error(std::make_exception_ptr(utility::details::create_system_error(errno)));
         return false;
     }
 }
@@ -326,8 +319,7 @@ bool _close_fsb_nolock(_file_info **info, Concurrency::streams::details::_filest
             }
             else
             {
-                auto exptr = std::make_exception_ptr(std::ios_base::failure("failed to close file"));
-                callback->on_error(exptr);
+                callback->on_error(std::make_exception_ptr(utility::details::create_system_error(errno)));
             }
         });
 
@@ -383,9 +375,7 @@ size_t _write_file_async(Concurrency::streams::details::_file_info_impl *fInfo, 
         auto bytes_written = pwrite(fInfo->m_handle, ptr, count, abs_position);
         if (bytes_written == -1)
         {
-            auto exptr = std::make_exception_ptr(std::ios_base::failure("failed to write file"));
-            callback->on_error(exptr);
-            perror("failed to write");
+            callback->on_error(std::make_exception_ptr(utility::details::create_system_error(errno)));
         }
         
         if(must_restore_pos)
@@ -437,8 +427,7 @@ size_t _read_file_async(Concurrency::streams::details::_file_info_impl *fInfo, C
         auto bytes_read = pread(fInfo->m_handle, ptr, count, offset);
         if (bytes_read < 0)
         {
-            auto exptr = std::make_exception_ptr(std::ios_base::failure("failed to read file"));
-            callback->on_error(exptr);
+            callback->on_error(std::make_exception_ptr(utility::details::create_system_error(errno)));
         }
         else
         {

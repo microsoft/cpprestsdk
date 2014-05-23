@@ -136,7 +136,7 @@ TEST(OpenForReadDoesntCreateFile1)
 {
     utility::string_t fname = U("OpenForReadDoesntCreateFile1.txt");
 
-    VERIFY_THROWS(OPEN_R<char>(fname).get(), std::system_error);
+    VERIFY_THROWS_SYSTEM_ERROR(OPEN_R<char>(fname).get(), std::errc::no_such_file_or_directory);
 
     std::ifstream is;
     VERIFY_IS_NULL(is.rdbuf()->open(fname.c_str(), std::ios::in));
@@ -146,7 +146,7 @@ TEST(OpenForReadDoesntCreateFile2)
 {
     utility::string_t fname = U("OpenForReadDoesntCreateFile2.txt");
 
-    VERIFY_THROWS(OPEN<char>(fname, std::ios_base::in | std::ios_base::binary ).get(), std::system_error);
+    VERIFY_THROWS_SYSTEM_ERROR(OPEN<char>(fname, std::ios_base::in | std::ios_base::binary ).get(), std::errc::no_such_file_or_directory);
 
     std::ifstream is;
     VERIFY_IS_NULL(is.rdbuf()->open(fname.c_str(), std::ios::in | std::ios_base::binary));
