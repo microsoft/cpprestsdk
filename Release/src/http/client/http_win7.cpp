@@ -322,7 +322,7 @@ protected:
     unsigned long report_failure(const utility::string_t& errorMessage)
     {
         // Should we log?
-        UNREFERENCED_PARAMETER(errorMessage);
+        CASABLANCA_UNREFERENCED_PARAMETER(errorMessage);
 
         return GetLastError();
     }
@@ -1026,7 +1026,7 @@ private:
         _In_ void* statusInfo,
         DWORD statusInfoLength)
     {
-        UNREFERENCED_PARAMETER(statusInfoLength);
+        CASABLANCA_UNREFERENCED_PARAMETER(statusInfoLength);
 
         if ( statusCode == WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING )
             return;

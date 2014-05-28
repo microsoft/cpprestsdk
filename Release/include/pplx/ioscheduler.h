@@ -142,7 +142,7 @@ public:
     /// </summary>
     void Disassociate(HANDLE fHandle, void *ctxt) const
     {
-        UNREFERENCED_PARAMETER(fHandle);
+        CASABLANCA_UNREFERENCED_PARAMETER(fHandle);
         CloseThreadpoolIo((PTP_IO)ctxt);
     }
 
@@ -185,9 +185,9 @@ private:
         ULONG_PTR numberOfBytesTransferred,
         PTP_IO io)
     {
-        UNREFERENCED_PARAMETER(io);
-        UNREFERENCED_PARAMETER(ctxt);
-        UNREFERENCED_PARAMETER(instance);
+        CASABLANCA_UNREFERENCED_PARAMETER(io);
+        CASABLANCA_UNREFERENCED_PARAMETER(ctxt);
+        CASABLANCA_UNREFERENCED_PARAMETER(instance);
 
         if ( pOverlapped != nullptr )
         {
