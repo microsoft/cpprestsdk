@@ -63,9 +63,12 @@ private:
 class oauth2_token
 {
 public:
-    oauth2_token(utility::string_t access_token=_XPLATSTR("")) : m_access_token(access_token), m_expires_in(-1) {}
+    oauth2_token(utility::string_t access_token=utility::string_t()) :
+        m_access_token(access_token),
+        m_expires_in(-1)
+    {}
 
-    bool is_valid() const { return !m_access_token.empty(); }
+    bool is_valid() const { return !access_token().empty(); }
 
     const utility::string_t& access_token() const { return m_access_token; }
     void set_access_token(utility::string_t access_token) { m_access_token = std::move(access_token); }
@@ -146,8 +149,7 @@ public:
                 m_bearer_auth(true),
                 m_http_basic_auth(true),
                 m_access_token_key(_XPLATSTR("access_token"))
-    {
-    }
+    {}
 
     oauth2_config(oauth2_token token) :
         m_token(std::move(token)),
@@ -155,8 +157,7 @@ public:
         m_bearer_auth(true),
         m_http_basic_auth(true),
         m_access_token_key(_XPLATSTR("access_token"))
-    {
-    }
+    {}
 
     /// <summary>
     /// Builds an authorization URI to be loaded in the web browser.
@@ -181,7 +182,7 @@ public:
     /// When token is successfully obtained, set_token() is called, and config is
     /// ready for use.
     /// </summary>
-    _ASYNCRTIMP pplx::task<void> token_from_redirected_uri(uri redirected_uri);
+    _ASYNCRTIMP pplx::task<void> token_from_redirected_uri(web::http::uri redirected_uri);
 
     /// <summary>
     /// Creates a task to fetch token from the token endpoint.
@@ -192,7 +193,11 @@ public:
     /// See: http://tools.ietf.org/html/rfc6749#section-4.1.3
     /// </summary>
     /// <param name="authorization_code">Code received via redirect upon successful authorization.</param>
-    _ASYNCRTIMP pplx::task<void> token_from_code(utility::string_t authorization_code);
+    pplx::task<void> token_from_code(utility::string_t authorization_code)
+    {
+        return _request_token(_XPLATSTR("grant_type=authorization_code&code=") + uri::encode_data_string(authorization_code)
+            + _XPLATSTR("&redirect_uri=") + uri::encode_data_string(redirect_uri()));
+    }
 
     /// <summary>
     /// Creates a task to fetch new token using refresh token.
@@ -201,9 +206,30 @@ public:
     /// If successfull, resulting token is set as active via set_token().
     /// See: http://tools.ietf.org/html/rfc6749#section-6
     /// </summary>
-    _ASYNCRTIMP pplx::task<void> token_from_refresh();
+    pplx::task<void> token_from_refresh()
+    {
+        return _request_token(_XPLATSTR("grant_type=refresh_token&refresh_token=")
+            + uri::encode_data_string(token().refresh_token()));
+    }
 
-    bool is_enabled() const { return m_token.is_valid(); }
+    /// <summary>
+    /// Authenticates a http_request.
+    /// </summary>
+    void authenticate_request(http_request &req) const
+    {
+        if (bearer_auth())
+        {
+            req.headers().add(header_names::authorization, _XPLATSTR("Bearer ") + token().access_token());
+        }
+        else
+        {
+            uri_builder ub(req.request_uri());
+            ub.append_query(access_token_key(), token().access_token());
+            req.set_request_uri(ub.to_uri());
+        }
+    }
+
+    bool is_enabled() const { return token().is_valid(); }
 
     const utility::string_t& client_key() const { return m_client_key; }
     void set_client_key(utility::string_t client_key) { m_client_key = std::move(client_key); }
@@ -275,7 +301,8 @@ private:
     friend class web::http::client::http_client_config;
     oauth2_config() {}
 
-    pplx::task<void> _request_token(utility::string_t request_body);
+    _ASYNCRTIMP pplx::task<void> _request_token(utility::string_t request_body);
+
     oauth2_token _parse_token_from_json(json::value& token_json);
 
     utility::string_t m_client_key;
@@ -310,7 +337,14 @@ public:
     const oauth2_config& config() const { return m_config; }
     void set_config(oauth2_config cfg) { m_config = std::move(cfg); }
 
-    _ASYNCRTIMP virtual pplx::task<http_response> propagate(http_request request) override;
+    virtual pplx::task<http_response> propagate(http_request request) override
+    {
+        if (config().is_enabled())
+        {
+            config().authenticate_request(request);
+        }
+        return next_stage()->propagate(request);
+    }
 
 private:
     oauth2_config m_config;

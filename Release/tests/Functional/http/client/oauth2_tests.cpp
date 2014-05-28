@@ -49,17 +49,17 @@ public:
 TEST(oauth2_build_authorization_uri)
 {
     oauth2_config c(U(""), U(""), U(""), U(""), U(""));
-    c.set_custom_state(U("xuzzy"));
+    c.set_custom_state(U("xyzzy"));
 
     // Empty authorization URI.
     {
-        VERIFY_ARE_EQUAL(U("/?response_type=code&client_id=&redirect_uri=&state=xuzzy"), c.build_authorization_uri());
+        VERIFY_ARE_EQUAL(U("/?response_type=code&client_id=&redirect_uri=&state=xyzzy"), c.build_authorization_uri());
     }
 
     // Authorization URI with scope parameter.
     {
         c.set_scope(U("testing_123"));
-        VERIFY_ARE_EQUAL(U("/?response_type=code&client_id=&redirect_uri=&state=xuzzy&scope=testing_123"), c.build_authorization_uri());
+        VERIFY_ARE_EQUAL(U("/?response_type=code&client_id=&redirect_uri=&state=xyzzy&scope=testing_123"), c.build_authorization_uri());
     }
 
     // Full authorization URI with scope.
@@ -67,7 +67,7 @@ TEST(oauth2_build_authorization_uri)
         c.set_client_key(U("4567abcd"));
         c.set_auth_endpoint(U("https://foo"));
         c.set_redirect_uri(U("http://localhost:8080"));
-        VERIFY_ARE_EQUAL(U("https://foo/?response_type=code&client_id=4567abcd&redirect_uri=http://localhost:8080&state=xuzzy&scope=testing_123"),
+        VERIFY_ARE_EQUAL(U("https://foo/?response_type=code&client_id=4567abcd&redirect_uri=http://localhost:8080&state=xyzzy&scope=testing_123"),
                 c.build_authorization_uri());
     }
 }
@@ -96,11 +96,11 @@ TEST_FIXTURE(oauth2_test_uri, oauth2_token_from_code)
             std::map<utility::string_t, utility::string_t> headers;
             headers[header_names::content_type] = mime_types::application_json;
             // NOTE: Reply body data must not be wide chars.
-            request->reply(status_codes::OK, U(""), headers, "{\"access_token\":\"xuzzy123\",\"token_type\":\"bearer\"}");
+            request->reply(status_codes::OK, U(""), headers, "{\"access_token\":\"xyzzy123\",\"token_type\":\"bearer\"}");
         });
 
         c.token_from_code(U("789GHI")).wait();
-        VERIFY_ARE_EQUAL(U("xuzzy123"), c.token().access_token());
+        VERIFY_ARE_EQUAL(U("xyzzy123"), c.token().access_token());
         VERIFY_ARE_EQUAL(true, c.is_enabled());
     }
 
@@ -122,14 +122,14 @@ TEST_FIXTURE(oauth2_test_uri, oauth2_token_from_code)
             std::map<utility::string_t, utility::string_t> headers;
             headers[header_names::content_type] = mime_types::application_json;
             // NOTE: Reply body data must not be wide chars.
-            request->reply(status_codes::OK, U(""), headers, "{\"access_token\":\"xuzzy123\",\"token_type\":\"bearer\"}");
+            request->reply(status_codes::OK, U(""), headers, "{\"access_token\":\"xyzzy123\",\"token_type\":\"bearer\"}");
         });
 
         c.set_token(oauth2_token()); // Clear token.
         VERIFY_ARE_EQUAL(false, c.is_enabled());
         c.set_http_basic_auth(false);
         c.token_from_code(U("789GHI")).wait();
-        VERIFY_ARE_EQUAL(U("xuzzy123"), c.token().access_token());
+        VERIFY_ARE_EQUAL(U("xyzzy123"), c.token().access_token());
         VERIFY_ARE_EQUAL(true, c.is_enabled());
     }
 
