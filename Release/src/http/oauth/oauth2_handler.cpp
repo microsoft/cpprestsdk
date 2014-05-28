@@ -196,12 +196,10 @@ oauth2_token oauth2_config::_parse_token_from_json(json::value& token_json)
         throw oauth2_exception(_XPLATSTR("only 'token_type=bearer' access tokens are currently supported: ") + token_json.serialize());
     }
 
-    try
-    {
+    if (token_json.has_field(U("refresh_token"))) {
         result.set_refresh_token(token_json[_XPLATSTR("refresh_token")].as_string());
     }
-    catch (json::json_exception)
-    {
+    else {
         // Do nothing. Preserves the old refresh token.
     }
 
