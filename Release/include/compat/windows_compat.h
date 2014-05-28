@@ -38,6 +38,8 @@
 
 #define _noexcept 
 
+#define CASABLANCA_UNREFERENCED_PARAMETER(x) (x)
+
 #ifdef CASABLANCA_DEPRECATION_NO_WARNINGS
 #define CASABLANCA_DEPRECATED(x)
 #else
