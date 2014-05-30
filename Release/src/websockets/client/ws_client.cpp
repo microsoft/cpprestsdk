@@ -171,7 +171,7 @@ public:
             m_client.close(m_con, static_cast<websocketpp::close::status::value>(status), utility::conversions::to_utf8string(reason), ec);
             if (ec.value() != 0)
             {
-                websocket_exception wx(utility::conversions::to_string_t(ec.message()));
+                websocket_exception wx(ec.value());
                 return pplx::task_from_exception<void>(wx);
             }
         }
@@ -274,7 +274,7 @@ public:
         m_con = con;
         if (ec.value() != 0)
         {
-            websocket_exception wx(utility::conversions::to_string_t(ec.message()));
+            websocket_exception wx(ec.value());
             return pplx::task_from_exception<void>(wx);
         }
 
@@ -441,7 +441,7 @@ public:
                 auto ec = previousTask.get();
                 if (ec.value() != 0)
                 {
-                    websocket_exception wx(utility::conversions::to_string_t(ec.message()));
+                    websocket_exception wx(ec.value());
                     eptr = std::make_exception_ptr(wx);
                 }
             }
@@ -451,7 +451,7 @@ public:
             }
             catch (...)
             {
-                eptr = std::make_exception_ptr(websocket_exception(_XPLATSTR("Failed to send data over the websocket connection.")));
+                eptr = std::current_exception();
             }
 
             if (acquired)
