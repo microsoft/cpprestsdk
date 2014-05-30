@@ -171,7 +171,7 @@ public:
             m_client.close(m_con, static_cast<websocketpp::close::status::value>(status), utility::conversions::to_utf8string(reason), ec);
             if (ec.value() != 0)
             {
-                websocket_exception wx(ec.value());
+                websocket_exception wx(ec.value(), ec.category());
                 return pplx::task_from_exception<void>(wx);
             }
         }
@@ -274,7 +274,7 @@ public:
         m_con = con;
         if (ec.value() != 0)
         {
-            websocket_exception wx(ec.value());
+            websocket_exception wx(ec.value(), ec.category());
             return pplx::task_from_exception<void>(wx);
         }
 
@@ -441,13 +441,9 @@ public:
                 auto ec = previousTask.get();
                 if (ec.value() != 0)
                 {
-                    websocket_exception wx(ec.value());
+                    websocket_exception wx(ec.value(), ec.category());
                     eptr = std::make_exception_ptr(wx);
                 }
-            }
-            catch (const websocket_exception& ex)
-            {
-                eptr = std::make_exception_ptr(ex);
             }
             catch (...)
             {
@@ -521,7 +517,6 @@ private:
 
     // Queue to maintain the receive tasks when there are no messages(yet).
     std::queue<pplx::task_completion_event<websocket_incoming_message>> m_receive_task_queue;
-
 
     // Guards access to m_outgoing_msg_queue
     std::mutex m_send_lock;
