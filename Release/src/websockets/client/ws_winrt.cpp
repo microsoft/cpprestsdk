@@ -95,6 +95,7 @@ public:
 
         m_context = ref new ReceiveContext([=](std::shared_ptr<websocket_incoming_message> msg)
         {
+            _ASSERTE(msg != nullptr);
             pplx::task_completion_event<websocket_incoming_message> tce; // This will be set if there are any tasks waiting to receive a message
             {
                 std::unique_lock<std::mutex> lock(m_receive_queue_lock);
@@ -110,14 +111,7 @@ public:
                 }
             }
             // Setting the tce outside the receive lock for better performance
-            if (msg != nullptr)
-            {
-                tce.set(*msg);
-            }
-            else
-            {
-                tce.set_exception(std::make_exception_ptr(websocket_exception(_XPLATSTR("Error occured during receive."))));
-            }
+            tce.set(*msg);
         }, 
         [=]() // Close handler called upon receiving a close frame from the server.
         {
@@ -448,9 +442,13 @@ void ReceiveContext::OnReceive(MessageWebSocket^ sender, MessageWebSocketMessage
         msg->_set_data_available(); 
         m_receive_handler(std::make_shared<websocket_incoming_message>(ws_incoming_message));
     }
-    catch(Platform::Exception^ ex)
+    catch(...)
     {
-        m_receive_handler(nullptr);
+        // Swallow the exception for now. Following up on this with the WinRT team.
+        // We can handle this more gracefully once we know the scenarios where DataReader operations can throw an exception:
+        // When socket gets into a bad state
+        // or only when we receive a valid message and message processing fails.
+        // Tracking this on codeplex with : https://casablanca.codeplex.com/workitem/181
     }
 }
 
