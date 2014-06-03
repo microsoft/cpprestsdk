@@ -224,11 +224,16 @@ public:
 
     size64_t m_remaining_to_write;
 
-    std::char_traits<uint8_t>::pos_type m_readbuf_pos;
+    std::char_traits<uint8_t>::pos_type m_startingPosition;
 
-    // The read-write buffer used to save the outgoing body data,
-    // if the authentication challenges failed, resend the body data from this buffer.
-    std::shared_ptr<streams::producer_consumer_buffer<uint8_t>> m_rwbuf_copy;
+    // If the user specified that to guarantee data buffering of request data, in case of challenged authentication requests, etc...
+    // Then if the request stream buffer doesn't support seeking we need to copy the body chunks as it is sent.
+    concurrency::streams::istream m_readStream;
+    std::unique_ptr<concurrency::streams::container_buffer<std::vector<uint8_t>>> m_readBufferCopy;
+    virtual concurrency::streams::streambuf<uint8_t> _get_readbuffer()
+    {
+        return m_readStream.streambuf();
+    }
 
     memory_holder m_body_data;
 
@@ -257,11 +262,12 @@ private:
         : request_context(client, request), 
         m_request_handle(nullptr), 
         m_bodyType(no_body),
-        m_readbuf_pos(0),
+        m_startingPosition(std::char_traits<uint8_t>::eof()),
         m_body_data(),
         m_remaining_to_write(0),
         m_proxy_authentication_tried(false),
-        m_server_authentication_tried(false)
+        m_server_authentication_tried(false),
+        m_readStream(request.body())
     {
     }
 };
@@ -614,10 +620,10 @@ protected:
             return;
         }
 
-        // Initialize the local producer_consumer buffer.
-        if (winhttp_context->m_bodyType == transfer_encoding_chunked && !winhttp_context->_get_readbuffer().can_seek() && has_credentials(winhttp_context))
+        // Only need to cache the request body if user specified and the request stream doesn't support seeking.
+        if (winhttp_context->m_bodyType != no_body && client_config().buffer_request() && !winhttp_context->_get_readbuffer().can_seek())
         {
-            winhttp_context->m_rwbuf_copy = std::make_shared<streams::producer_consumer_buffer<uint8_t>>();
+            winhttp_context->m_readBufferCopy = ::utility::details::make_unique<::concurrency::streams::container_buffer<std::vector<uint8_t>>>();
         }
 
         _start_request_send(winhttp_context, content_length);
@@ -661,14 +667,16 @@ private:
             return;
         }
 
-        // Capure the current read position of the stream.
+        // Capture the current read position of the stream.
         auto rbuf = winhttp_context->_get_readbuffer();
         if ( !_check_streambuf(winhttp_context, rbuf, _XPLATSTR("Input stream is not open")) )
         {
             return;
         }
 
-        winhttp_context->m_readbuf_pos = rbuf.getpos(std::ios_base::in);
+        // Record starting position incase request is challenged for authorization
+        // and needs to seek back to where reading is started from.
+        winhttp_context->m_startingPosition = rbuf.getpos(std::ios_base::in);
 
         // If we find ourselves here, we either don't know how large the message
         // body is, or it is larger than our threshold.
@@ -708,19 +716,12 @@ private:
             try
             {
                 bytes_read = op.get();
-                if (!p_request_context->_get_readbuffer().can_seek() && has_credentials(p_request_context)
-                    && !p_request_context->m_server_authentication_tried && !p_request_context->m_proxy_authentication_tried)
+                // If the read buffer for copying exists then write to it.
+                if (p_request_context->m_readBufferCopy)
                 {
-                    // If the user buffer is not seekable, the credentials are provided and the authentication challenges are not tried,
-                    // copy the user buffer to a local producer_consumer buffer for resending if authentication failed.
-                    try
-                    {
-                        p_request_context->m_rwbuf_copy->putn(&p_request_context->m_body_data.get()[http::details::chunked_encoding::data_offset], bytes_read).wait();
-                    }
-                    catch (...)
-                    {
-                        p_request_context->report_exception(std::current_exception());
-                    }
+                    // We have raw memory here writing to a memory stream so it is safe to wait
+                    // since it will always be non-blocking.
+                    p_request_context->m_readBufferCopy->putn(&p_request_context->m_body_data.get()[http::details::chunked_encoding::data_offset], bytes_read).wait();
                 }
             }
             catch (...)
@@ -737,18 +738,11 @@ private:
             if (bytes_read == 0)
             {
                 p_request_context->m_bodyType = no_body;
-                if (!p_request_context->_get_readbuffer().can_seek() && has_credentials(p_request_context)
-                    && !p_request_context->m_server_authentication_tried && !p_request_context->m_proxy_authentication_tried)
+                if (p_request_context->m_readBufferCopy)
                 {
-                    try
-                    {
-                        p_request_context->m_rwbuf_copy->close(std::ios_base::out).wait();
-
-                    }
-                    catch (...)
-                    {
-                        p_request_context->report_exception(std::current_exception());
-                    }
+                    // Move the saved buffer into the read buffer, which now supports seeking.
+                    p_request_context->m_readStream = concurrency::streams::container_stream<std::vector<uint8_t>>::open_istream(std::move(p_request_context->m_readBufferCopy->collection()));
+                    p_request_context->m_readBufferCopy.reset();
                 }
             }
 
@@ -764,24 +758,11 @@ private:
             }
         };
 
-        if ((!p_request_context->m_server_authentication_tried && !p_request_context->m_proxy_authentication_tried) || p_request_context->_get_readbuffer().can_seek())
+        if (!_check_streambuf(p_request_context, p_request_context->_get_readbuffer(), _XPLATSTR("Input stream is not open")))
         {
-            if (!_check_streambuf(p_request_context, p_request_context->_get_readbuffer(), _XPLATSTR("Input stream is not open")))
-            {
-                return;
-            }
-
-            p_request_context->_get_readbuffer().getn(&p_request_context->m_body_data.get()[http::details::chunked_encoding::data_offset], chunk_size).then(after_read);
+            return;
         }
-        else
-        {
-            if (!_check_streambuf(p_request_context, *p_request_context->m_rwbuf_copy, _XPLATSTR("Locally copied input stream is not open")))
-            {
-                return;
-            }
-            // Resending the request after authentication failed, we need to read the body data from the copied buffer.
-            p_request_context->m_rwbuf_copy->getn(&p_request_context->m_body_data.get()[http::details::chunked_encoding::data_offset], chunk_size).then(after_read);
-        }
+        p_request_context->_get_readbuffer().getn(&p_request_context->m_body_data.get()[http::details::chunked_encoding::data_offset], chunk_size).then(after_read);
     }
 
     static void _multiple_segment_write_data(_In_ winhttp_request_context * p_request_context)
@@ -887,10 +868,6 @@ private:
         _ASSERTE(response.status_code() == status_codes::Unauthorized  || response.status_code() == status_codes::ProxyAuthRequired
             || error == ERROR_WINHTTP_RESEND_REQUEST);
 
-        // If the application set a stream for the request body, we can only resend if the input stream supports
-        // seeking and we are also successful in seeking to the position we started at when the original request
-        // was sent.
-
         bool got_credentials = false;
         BOOL results;
         DWORD dwSupportedSchemes;
@@ -900,22 +877,16 @@ private:
         string_t username;
         string_t password;
 
-        if (request.body())
+        // Check if the saved read position is valid
+        auto rdpos = p_request_context->m_startingPosition;
+        if (rdpos != static_cast<std::char_traits<uint8_t>::pos_type>(std::char_traits<uint8_t>::eof()))
         {
-            // Valid request stream => msg has a body that needs to be resend
+            auto rbuf = p_request_context->_get_readbuffer();
 
-            auto rdpos = p_request_context->m_readbuf_pos;
-
-            // Check if the saved read position is valid
-            if (rdpos != (std::char_traits<uint8_t>::pos_type) - 1)
+            // Try to seek back to the saved read position
+            if (rbuf.seekpos(rdpos, std::ios::ios_base::in) != rdpos)
             {
-                auto rbuf = p_request_context->_get_readbuffer();
-
-                if (rbuf.is_open())
-                {
-                    // Try to seek back to the saved read position
-                    rbuf.seekpos(rdpos, std::ios::ios_base::in);
-                }
+                return false;
             }
         }
 
@@ -1333,7 +1304,7 @@ private:
 http_network_handler::http_network_handler(uri base_uri, http_client_config client_config) :
     m_http_client_impl(std::make_shared<details::winhttp_client>(std::move(base_uri), std::move(client_config)))
 {
-    }
+}
 
 pplx::task<http_response> http_network_handler::propagate(http_request request)
 {

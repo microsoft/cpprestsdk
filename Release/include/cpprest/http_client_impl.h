@@ -187,7 +187,7 @@ public:
         finish();
     }
 
-    concurrency::streams::streambuf<uint8_t> _get_readbuffer()
+    virtual concurrency::streams::streambuf<uint8_t> _get_readbuffer()
     {
         auto instream = m_request.body();
 
@@ -200,7 +200,6 @@ public:
         auto outstream = m_response._get_impl()->outstream();
 
         _ASSERTE((bool)outstream);
-
         return outstream.streambuf();
     }
 
@@ -256,7 +255,7 @@ public:
     // Destructor to clean up any held resources.
     virtual ~_http_client_communicator() {}
 
-    // Asychronously send a HTTP request and process the response.
+    // Asynchronously send a HTTP request and process the response.
     void async_send_request(std::shared_ptr<request_context> request)
     {
         if(m_client_config.guarantee_order())
@@ -388,7 +387,7 @@ private:
         }
     }
 
-    // Queue used to guarantee ordering of requests, when appliable.
+    // Queue used to guarantee ordering of requests, when applicable.
     std::queue<std::shared_ptr<request_context>> m_requests_queue;
     int                           m_scheduled;
 };
@@ -424,7 +423,7 @@ private:
 // Helper function to check to make sure the uri is valid.
 void verify_uri(const uri &uri)
 {
-    // Somethings like proper URI schema are verified by the URI class.
+    // Some things like proper URI schema are verified by the URI class.
     // We only need to check certain things specific to HTTP.
     if (uri.scheme() != _XPLATSTR("http") && uri.scheme() != _XPLATSTR("https"))
     {
