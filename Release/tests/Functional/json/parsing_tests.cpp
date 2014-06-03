@@ -520,6 +520,42 @@ TEST(unsorted_object_parsing)
     VERIFY_IS_TRUE(::std::is_sorted(obj.begin(), obj.end(), compare_pairs));
 }
 
+TEST(keep_order_while_parsing)
+{
+    utility::stringstream_t ss;
+    ss << U("{\"k\":3, \"j\":2, \"i\":1}");
+
+    json::keep_object_element_order(true);
+    struct restore {
+        ~restore() {
+            json::keep_object_element_order(false);
+        }
+    }_;
+
+    json::value v = json::value::parse(ss);
+    auto& obj = v.as_object();
+
+    // Make sure collection stays unsorted:
+    auto b = obj.begin();
+    VERIFY_ARE_EQUAL(b[0].first, U("k"));
+    VERIFY_ARE_EQUAL(b[1].first, U("j"));
+    VERIFY_ARE_EQUAL(b[2].first, U("i"));
+
+    // Make sure lookup still works:
+    auto val_i = obj[U("i")];
+    VERIFY_ARE_EQUAL(val_i.as_integer(), 1);
+
+    auto val_j = obj[U("j")];
+    VERIFY_ARE_EQUAL(val_j.as_integer(), 2);
+
+    // Make sure 'a' goes to the back of the collection, and
+    // can be looked up
+    obj[U("a")] = 4;
+    b = obj.begin();
+    VERIFY_ARE_EQUAL(b[3].first, U("a"));
+    VERIFY_ARE_EQUAL(obj[U("a")].as_integer(), 4);
+}
+
 } // SUITE(parsing_tests)
 
 }}}

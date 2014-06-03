@@ -85,7 +85,7 @@ typedef struct _SYSTEMTIME {
 
 #define YieldProcessor() __asm__ __volatile__ ("pause")
 
-#define UNREFERENCED_PARAMETER(x) (void)x
+#define CASABLANCA_UNREFERENCED_PARAMETER(x) (void)x
 #define _ASSERTE(x) assert(x)
 
 #ifdef CASABLANCA_DEPRECATION_NO_WARNINGS

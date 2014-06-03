@@ -141,6 +141,8 @@ TEST_FIXTURE(uri_address, http_body_and_body_size)
     {
         http_asserts::assert_test_response_equals(p_response, status_codes::OK);
     }).wait();
+
+    listener.close().wait();
 }
 
 TEST_FIXTURE(uri_address, large_body)
@@ -168,6 +170,8 @@ TEST_FIXTURE(uri_address, large_body)
     {
         http_asserts::assert_test_response_equals(p_response, status_codes::OK);
     }).wait();
+
+    listener.close().wait();
 }
 
 TEST_FIXTURE(uri_address, response_order)
@@ -210,6 +214,8 @@ TEST_FIXTURE(uri_address, response_order)
         VERIFY_ARE_EQUAL(response.status_code(), status_codes::OK);
         VERIFY_ARE_EQUAL(response.extract_string().get(), ss.str());
     }
+
+    listener.close().wait();
 }
 
 TEST_FIXTURE(uri_address, uri_encoding)
@@ -225,14 +231,53 @@ TEST_FIXTURE(uri_address, uri_encoding)
         request.reply(status_codes::OK);
     });
 
-    encoded_uri = uri::encode_uri(U("/path 1/path 2")); // Path component contains encoded characters
-    client.request(methods::GET, encoded_uri).wait();
-    encoded_uri = uri::encode_uri(U("/test?Text=J'ai besoin de trouver un personnage")); // Query string contains encoded characters
-    client.request(methods::GET, encoded_uri).wait();
-    encoded_uri = uri::encode_uri(U("/path 1/path 2#fragment1")); // URI has path and fragment components
-    client.request(methods::GET, encoded_uri).wait();
-    encoded_uri = uri::encode_uri(U("/path 1/path 2?key1=val1 val2#fragment1")); // URI has path, query and fragment components
-    client.request(methods::GET, encoded_uri).wait();
+    // Wrap in try catch to print out more information to help with a sporadic failure.
+    try
+    {
+        encoded_uri = uri::encode_uri(U("/path 1/path 2")); // Path component contains encoded characters
+        client.request(methods::GET, encoded_uri).wait();
+        encoded_uri = uri::encode_uri(U("/test?Text=J'ai besoin de trouver un personnage")); // Query string contains encoded characters
+        client.request(methods::GET, encoded_uri).wait();
+        encoded_uri = uri::encode_uri(U("/path 1/path 2#fragment1")); // URI has path and fragment components
+        client.request(methods::GET, encoded_uri).wait();
+        encoded_uri = uri::encode_uri(U("/path 1/path 2?key1=val1 val2#fragment1")); // URI has path, query and fragment components
+        client.request(methods::GET, encoded_uri).wait();
+    }
+    catch (const http_exception &e)
+    {
+        std::cout << "http_exception caught" << std::endl <<
+            "what():" << e.what() << std::endl <<
+            "error_code msg:" << e.error_code().message() << std::endl <<
+            "error_code value:" << e.error_code().value() << std::endl;
+        VERIFY_IS_TRUE(false);
+    }
+
+    listener.close().wait();
+}
+
+TEST_FIXTURE(uri_address, https_listener, "Ignore", "Manual")
+{
+    // Requires a certificate for execution. 
+    // Here are instructions for creating a self signed cert. Full instructions can be located here:
+    // http://blogs.msdn.com/b/haoxu/archive/2009/04/30/one-time-set-up-for-wwsapi-security-examples.aspx
+    // From an elevated admin prompt:
+    // 1. MakeCert.exe -ss Root -sr LocalMachine -n "CN=Fake-Test-CA" -cy authority -r -sk "CAKeyContainer"
+    // 2. MakeCert.exe -ss My -sr LocalMachine -n "CN=localhost" -sky exchange -is Root -ir LocalMachine -in Fake-Test-CA -sk "ServerKeyContainer"
+    // 3. Find corresponding SHA-1 hash with CertUtil.exe -store My localhost
+    // 4. Netsh.exe http add sslcert ipport=0.0.0.0:8443 appid={00112233-4455-6677-8899-AABBCCDDEEFF} certhash=<40CharacterThumbprintWithNoSpaces>
+
+    http_listener listener(m_secure_uri);
+    listener.open().wait();
+    client::http_client client(m_secure_uri);
+
+    listener.support([&](http_request request)
+    {
+        request.reply(status_codes::OK);
+    });
+
+    http_asserts::assert_response_equals(client.request(methods::GET, U("")).get(), status_codes::OK);
+
+    listener.close().wait();
 }
 }
 

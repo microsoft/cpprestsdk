@@ -24,6 +24,10 @@
       <ProjectFile Include="build\casablanca120.winrt.vcxproj" />
   </ItemGroup>
 
+  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|120' and '$(Platform)'!='x64'">
+      <ProjectFile Include="build\casablanca120.wp81.vcxproj" />
+  </ItemGroup>
+
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
 
 </Project>

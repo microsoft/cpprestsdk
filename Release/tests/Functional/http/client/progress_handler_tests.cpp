@@ -130,7 +130,7 @@ TEST_FIXTURE(uri_address, set_progress_handler_upload)
     VERIFY_IS_TRUE(calls >= 3);
 }
 
-TEST_FIXTURE(uri_address, set_progress_handler_download, "Ignore:Apple", "766075")
+TEST_FIXTURE(uri_address, set_progress_handler_download)
 {
     http_client_config config;
     config.set_chunksize(512);
@@ -180,7 +180,7 @@ TEST_FIXTURE(uri_address, set_progress_handler_download, "Ignore:Apple", "766075
     VERIFY_IS_TRUE(calls > 4);
 }
 
-TEST_FIXTURE(uri_address, set_progress_handler_upload_and_download, "Ignore:Apple", "766075")
+TEST_FIXTURE(uri_address, set_progress_handler_upload_and_download)
 {
     http_client_config config;
     config.set_chunksize(512);
@@ -272,8 +272,7 @@ TEST_FIXTURE(uri_address, set_progress_handler_open_failure)
     VERIFY_ARE_EQUAL(0, calls);
 }
 
-// This test hangs or crashes intermittently on Linux
-TEST_FIXTURE(uri_address, set_progress_handler_request_timeout, "Ignore:Apple", "766075")
+TEST_FIXTURE(uri_address, set_progress_handler_request_timeout)
 {
     test_http_server::scoped_server scoped(m_uri);
     http_client_config config;

@@ -24,6 +24,7 @@
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
+
 #include "cpprest/http_helpers.h"
 #ifdef _MS_WINDOWS
 #if !defined(__cplusplus_winrt)
@@ -463,13 +464,6 @@ void http_client::build_pipeline(uri base_uri, http_client_config client_config)
     m_pipeline = ::web::http::http_pipeline::create_pipeline(std::make_shared<details::http_network_handler>(std::move(base_uri), client_config));
 	add_handler(std::dynamic_pointer_cast<http::http_pipeline_stage>(std::make_shared<oauth1_handler>(client_config.oauth1())));
 	add_handler(std::dynamic_pointer_cast<http::http_pipeline_stage>(std::make_shared<oauth2_handler>(client_config.oauth2())));
-}
-
-pplx::task<http_response> http_client::request(http_request request, pplx::cancellation_token token)
-{
-    request._set_base_uri(base_uri());
-    request._set_cancellation_token(token);
-    return m_pipeline->propagate(request);
 }
 
 const http_client_config& http_client::client_config() const

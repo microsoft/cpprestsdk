@@ -19,20 +19,12 @@
 #include "pplx/threadpool.h"
 #include "http_server.h"
 
-using boost::asio::ip::tcp;
-using namespace boost::asio;
-
-#define FAILED(x) ((x) != 0)
-
 namespace web
 {
-
 namespace http
 {
-
 namespace experimental
 {
-
 namespace listener
 {
 
@@ -40,7 +32,6 @@ class http_linux_server;
 
 namespace details
 {
-
 
 struct linux_request_context : web::http::details::_http_server_context
 {
@@ -58,7 +49,7 @@ class hostport_listener;
 class connection
 {
 private:
-    std::unique_ptr<tcp::socket> m_socket;
+    std::unique_ptr<boost::asio::ip::tcp::socket> m_socket;
     boost::asio::streambuf m_request_buf;
     boost::asio::streambuf m_response_buf;
     http_linux_server* m_p_server;
@@ -71,7 +62,7 @@ private:
     std::atomic<int> m_refs; // track how many threads are still referring to this
     
 public:
-    connection(std::unique_ptr<tcp::socket> socket, http_linux_server* server, hostport_listener* parent)
+    connection(std::unique_ptr<boost::asio::ip::tcp::socket> socket, http_linux_server* server, hostport_listener* parent)
     : m_socket(std::move(socket))
     , m_request_buf()
     , m_response_buf()
@@ -113,7 +104,7 @@ class hostport_listener
 private:
     friend class connection;
 
-    std::unique_ptr<tcp::acceptor> m_acceptor;
+    std::unique_ptr<boost::asio::ip::tcp::acceptor> m_acceptor;
     std::map<std::string, web::http::experimental::listener::details::http_listener_impl* > m_listeners;
     pplx::extensibility::reader_writer_lock_t m_listeners_lock;
 
@@ -155,13 +146,11 @@ public:
     void remove_listener(const std::string& path, web::http::experimental::listener::details::http_listener_impl* listener);
 
 private:
-    void on_accept(ip::tcp::socket* socket, const boost::system::error_code& ec);
+    void on_accept(boost::asio::ip::tcp::socket* socket, const boost::system::error_code& ec);
     
 };
 
 }
-
-using namespace http::experimental::listener::details;
 
 struct iequal_to
 {
@@ -177,8 +166,8 @@ private:
     friend class http::experimental::listener::details::connection;
 
     pplx::extensibility::reader_writer_lock_t m_listeners_lock;
-    std::map<std::string, std::unique_ptr<hostport_listener>, iequal_to> m_listeners;
-    std::unordered_map<web::http::experimental::listener::details::http_listener_impl *, std::unique_ptr<pplx::extensibility::reader_writer_lock_t>> m_registered_listeners;
+    std::map<std::string, std::unique_ptr<details::hostport_listener>, iequal_to> m_listeners;
+    std::unordered_map<details::http_listener_impl *, std::unique_ptr<pplx::extensibility::reader_writer_lock_t>> m_registered_listeners;
     bool m_started;
 
 public:
@@ -202,7 +191,4 @@ public:
     pplx::task<void> respond(http::http_response response);
 };
 
-}
-}
-}
-}
+}}}}

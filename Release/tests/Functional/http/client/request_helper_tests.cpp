@@ -24,9 +24,13 @@
 ****/
 
 #include "stdafx.h"
+
 #include <fstream>
 
-using namespace web; using namespace utility;
+#include "cpprest/version.h"
+
+using namespace web; 
+using namespace utility;
 using namespace web::http;
 using namespace web::http::client;
 
@@ -144,6 +148,47 @@ TEST_FIXTURE(uri_address, non_rvalue_2k_body)
         body.append(1, (char)('A' + (i % 26)));
     }
     test_server_utilities::verify_request(&client, methods::PUT, U("/"), U("text/plain"), ::utility::conversions::to_string_t(body), p_server, status_codes::OK, U("OK"));
+}
+
+TEST_FIXTURE(uri_address, default_user_agent)
+{
+    test_http_server::scoped_server scoped(m_uri);
+    test_http_server * p_server = scoped.server();
+    http_client client(m_uri);
+    
+    p_server->next_request().then([&](test_request *p_request)
+    {
+        utility::stringstream_t stream;
+        stream << _XPLATSTR("cpprestsdk/") << CPPREST_VERSION_MAJOR << _XPLATSTR(".") << CPPREST_VERSION_MINOR << _XPLATSTR(".") << CPPREST_VERSION_REVISION;
+        utility::string_t foundHeader;
+        p_request->match_header(U("User-Agent"), foundHeader);
+        VERIFY_ARE_EQUAL(stream.str(), foundHeader);
+        
+        p_request->reply(200);
+    });
+
+    http_asserts::assert_response_equals(client.request(methods::GET).get(), status_codes::OK);
+}
+
+TEST_FIXTURE(uri_address, overwrite_user_agent)
+{
+    test_http_server::scoped_server scoped(m_uri);
+    test_http_server * p_server = scoped.server();
+    http_client client(m_uri);
+    
+    utility::string_t customUserAgent(U("MyAgent"));
+    p_server->next_request().then([&](test_request *p_request)
+    {
+        utility::string_t foundHeader;
+        p_request->match_header(U("User-Agent"), foundHeader);
+        VERIFY_ARE_EQUAL(customUserAgent, foundHeader);
+        
+        p_request->reply(200);
+    });
+
+    http_request request(methods::GET);
+    request.headers()[U("User-Agent")] = customUserAgent;
+    http_asserts::assert_response_equals(client.request(request).get(), status_codes::OK);
 }
 
 } // SUITE(request_helper_tests)

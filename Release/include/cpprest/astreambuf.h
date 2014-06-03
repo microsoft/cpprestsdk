@@ -418,11 +418,15 @@ namespace Concurrency { namespace streams
                 closeOp = _close_read();
             }
 
+            // After the flush_internal task completed, "this" object may have been destroyed, 
+            // accessing the memebers is invalid, use shared_from_this to avoid access violation exception.
+            auto this_ptr = std::static_pointer_cast<streambuf_state_manager>(this->shared_from_this());
+
             if (mode & std::ios_base::out && can_write()) {
                 if (closeOp.is_done())
-                    closeOp = closeOp && _close_write(); // passing down exceptions from closeOp
+                    closeOp = closeOp && _close_write().then([this_ptr]{}); // passing down exceptions from closeOp
                 else
-                    closeOp = closeOp.then([this] { return _close_write();});
+                    closeOp = closeOp.then([this_ptr] { return this_ptr->_close_write().then([this_ptr]{}); });
             }
             
             return closeOp;

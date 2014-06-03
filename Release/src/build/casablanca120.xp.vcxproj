@@ -11,7 +11,7 @@
     <SccLocalPath>SAK</SccLocalPath>
     <SccProvider>SAK</SccProvider>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v120_xp</PlatformToolset>
     <WinRTProject>false</WinRTProject>
     <TargetXP>true</TargetXP>
   </PropertyGroup>

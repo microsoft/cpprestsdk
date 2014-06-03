@@ -56,6 +56,37 @@ enum test_websocket_message_type
   WEB_SOCKET_CLOSE_TYPE
 };
 
+// Class that contains details about the HTTP handshake request received by the test server
+class test_http_request
+{
+public:
+    const std::string& username() { return m_username; }
+    const std::string& password() { return m_password; }
+    void set_username(std::string username) { m_username = std::move(username); }
+    void set_password(std::string password) { m_password = std::move(password); }
+
+    const std::string& get_header_val(const std::string& header_name) { return m_headers[header_name]; }
+    void add_header(const std::string& name, const std::string& value) { m_headers[name] = value; }
+
+private:
+    std::string m_username;
+    std::string m_password;
+    std::map<std::string, std::string> m_headers;
+};
+
+// Class that contains details about the HTTP handshake response to be sent by the test server
+class test_http_response
+{
+public:
+    void set_realm(std::string realm) { m_realm = std::move(realm); }
+    void set_status_code(unsigned short code) { m_status_code = code; }
+    const std::string& realm() const { return m_realm; }
+    unsigned short status_code() const { return m_status_code; }
+private:
+    std::string m_realm;
+    unsigned short m_status_code;
+};
+
 // Represents a websocket message at the test server.
 // Contains a vector that can contain text/binary data 
 // and a type variable to denote the message type.
@@ -106,6 +137,8 @@ public:
     // The server will call the handler in order, for each incoming message.
     TEST_UTILITY_API void next_message(std::function<void(test_websocket_msg)> msg_handler);
     TEST_UTILITY_API std::function<void(test_websocket_msg)> get_next_message_handler();
+    TEST_UTILITY_API void set_http_handler(std::function<test_http_response(test_http_request)> handler) { m_http_handler = handler; }
+    std::function<test_http_response(test_http_request)> get_http_handler() { return m_http_handler; }
     bool handler_exists() { return !m_handler_queue.empty(); }
 
     // Tests can use this API to send a message from the server to the client.
@@ -116,6 +149,9 @@ private:
     // Queue to maintain the request handlers.
     // Note: This queue is not thread-safe
     std::queue<std::function<void(test_websocket_msg)>> m_handler_queue;
+    // Handler to address the HTTP handshake request. To be used in scenarios where tests may wish to fail the HTTP request
+    // and not proceed with the websocket connection.
+    std::function<test_http_response(test_http_request)> m_http_handler;
     std::shared_ptr<_test_websocket_server> m_p_impl;
 };
 }}}}

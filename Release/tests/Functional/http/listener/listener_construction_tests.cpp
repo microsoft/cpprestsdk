@@ -67,6 +67,8 @@ TEST_FIXTURE(uri_address, move_operations)
     {
         http_asserts::assert_test_response_equals(p_response, status_codes::OK);
     }).wait();
+
+    listener.close().wait();
 }
 
 TEST_FIXTURE(uri_address, various_uris)
@@ -106,6 +108,8 @@ TEST_FIXTURE(uri_address, various_uris)
     {
         http_asserts::assert_test_response_equals(p_response, status_codes::NotFound);
     }).wait();
+
+    listener.close().wait();
 }
 
 TEST_FIXTURE(uri_address, uri_routing)

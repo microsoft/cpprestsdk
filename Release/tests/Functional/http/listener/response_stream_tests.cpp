@@ -272,8 +272,8 @@ TEST_FIXTURE(uri_address, reply_transfer_encoding_4k)
     listener.close().wait();
 }
 
-// Fails sporadically, TFS 906957
-TEST_FIXTURE(uri_address, reply_chunked_4k)
+// Fails sporadically, Codeplex #158
+TEST_FIXTURE(uri_address, reply_chunked_4k, "Ignore", "Codeplex 158")
 {
     web::http::experimental::listener::http_listener listener(m_uri);
     listener.open().wait();

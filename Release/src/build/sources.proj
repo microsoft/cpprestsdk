@@ -28,6 +28,9 @@
     <ClInclude Include="$(CasablancaIncludeDir)\cpprest\globals.h">
       <Filter>Header Files\cpprest</Filter>
     </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\web_utilities.h">
+      <Filter>Header Files\cpprest</Filter>
+    </ClInclude>
     <ClInclude Include="$(CasablancaIncludeDir)\cpprest\http_client.h">
       <Filter>Header Files\cpprest</Filter>
     </ClInclude>
@@ -35,6 +38,9 @@
       <Filter>Header Files\cpprest</Filter>
     </ClInclude>
     <ClInclude Include="$(CasablancaIncludeDir)\cpprest\http_helpers.h">
+      <Filter>Header Files\cpprest</Filter>
+    </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\http_headers.h">
       <Filter>Header Files\cpprest</Filter>
     </ClInclude>
     <ClInclude Include="$(CasablancaIncludeDir)\cpprest\http_msg.h">
