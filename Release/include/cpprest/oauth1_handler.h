@@ -156,8 +156,6 @@ struct oauth1_config
         m_method(std::move(method))
     {}
 
-
-// TODO: do something to this?
     oauth1_config(utility::string_t consumer_key, utility::string_t consumer_secret,
             oauth1_token token, oauth1_method method) :
         m_consumer_key(consumer_key),

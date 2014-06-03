@@ -180,11 +180,6 @@ utility::string_t oauth1_config::_build_base_string_uri(const uri& u)
         os << ":" << u.port();
     }
     os << u.path();
-// TODO: remove, trailing '?' is not added to the uri
-//    if (!u.query().empty())
-//    {
-//        os << "?";
-//    }
     return uri::encode_data_string(os.str());
 }
 
@@ -204,7 +199,10 @@ utility::string_t oauth1_config::_build_normalized_parameters(web::http::uri u, 
     // Push oauth1 parameters.
     queries.push_back(U("oauth_version=1.0"));
     queries.push_back(U("oauth_consumer_key=" + consumer_key()));
-    queries.push_back(U("oauth_token=" + token().token()));
+    if (!token().token().empty())
+    {
+        queries.push_back(U("oauth_token=" + token().token()));
+    }
     queries.push_back(U("oauth_signature_method=" + method()));
     queries.push_back(U("oauth_timestamp=" + state.timestamp()));
     queries.push_back(U("oauth_nonce=" + state.nonce()));
@@ -213,15 +211,14 @@ utility::string_t oauth1_config::_build_normalized_parameters(web::http::uri u, 
         queries.push_back(state.extra_key() + U("=") + state.extra_value());
     }
 
+    // Sort parameters and build the string.
     sort(queries.begin(), queries.end());
-
     utility::ostringstream_t os;
     for (auto i = queries.begin(); i != queries.end() - 1; ++i)
     {
         os << *i << U("&");
     }
     os << queries.back();
-
     return uri::encode_data_string(os.str());
 }
 
@@ -256,19 +253,23 @@ utility::string_t oauth1_config::_build_signature(http_request request, oauth1_a
 
 pplx::task<void> oauth1_config::_request_token(oauth1_auth_state state, bool is_temp_token)
 {
+    utility::string_t endpoint = is_temp_token ? temp_endpoint() : token_endpoint();
     http_request req;
     req.set_method(methods::POST);
     req.set_request_uri(utility::string_t());
+    req._set_base_uri(endpoint);
+
     _authenticate_request(req, std::move(state));
-    
-    http_client c(is_temp_token ? temp_endpoint() : token_endpoint());
+    http_client c(endpoint);
     return c.request(req)
     .then([this, is_temp_token](pplx::task<http_response> req_task)
     {
         std::map<utility::string_t, utility::string_t> query;
+        utility::string_t body;
+
         try
         {
-            utility::string_t body(req_task.get().extract_string().get());
+            body = req_task.get().extract_string().get();
 // TODO: what exception we get here?
 // TODO: this may be issue in token_from_redirected_uri() also!
             query = uri::split_query(body);
@@ -291,24 +292,24 @@ pplx::task<void> oauth1_config::_request_token(oauth1_auth_state state, bool is_
             auto callback_confirmed_param = query.find(U("oauth_callback_confirmed"));
             if (callback_confirmed_param == query.end())
             {
-                throw oauth1_exception(U("parameter 'oauth_callback_confirmed' missing from response body."));
+                throw oauth1_exception(U("parameter 'oauth_callback_confirmed' missing from response: ") + body);
             }
             if (callback_confirmed_param->second != U("true"))
             {
-                throw oauth1_exception(U("parameter 'oauth_callback_confirmed' is not 'true' in the response body."));
+                throw oauth1_exception(U("parameter 'oauth_callback_confirmed' is not 'true' in the response: ") + body);
             }
         }
         
         auto token_param = query.find(U("oauth_token"));
         if (token_param == query.end())
         {
-            throw oauth1_exception(U("parameter 'oauth_token' missing from response body."));
+            throw oauth1_exception(U("parameter 'oauth_token' missing from response: ") + body);
         }
         
         auto token_secret_param = query.find(U("oauth_token_secret"));
         if (token_secret_param == query.end())
         {
-            throw oauth1_exception(U("parameter 'oauth_token_secret' missing from response body."));
+            throw oauth1_exception(U("parameter 'oauth_token_secret' missing from response: ") + body);
         }
         
         // Set temp token as current until real token is fetched.
@@ -325,7 +326,10 @@ void oauth1_config::_authenticate_request(http_request &request, oauth1_auth_sta
         os << "realm=\"" << realm() << "\", ";
     }
     os << "oauth_version=\"1.0\", oauth_consumer_key=\"" << consumer_key();
-    os << "\", oauth_token=\"" << token().token();
+    if (!token().token().empty())
+    {
+        os << "\", oauth_token=\"" << token().token();
+    }
     os << "\", oauth_signature_method=\"" << method();
     os << "\", oauth_timestamp=\"" << state.timestamp();
     os << "\", oauth_nonce=\"" << state.nonce();
