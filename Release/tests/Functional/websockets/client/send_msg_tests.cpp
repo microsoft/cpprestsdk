@@ -25,6 +25,8 @@
 
 #include "stdafx.h"
 
+#if defined(__cplusplus_winrt) || !defined(_M_ARM)
+
 using namespace concurrency;
 using namespace concurrency::streams;
 
@@ -380,8 +382,7 @@ TEST_FIXTURE(uri_address, send_text_and_binary)
 TEST_FIXTURE(uri_address, send_multi_byte_utf8_msg)
 {
     test_websocket_server server;
-    utf16string utf16str(U("аш"));
-    auto body = utility::conversions::to_utf8string(utf16str);
+    std::string body = "\xC3\xA0\xC3\xB8";
     websocket_client client(m_uri);
 
     send_text_msg_helper(client, server, body).wait();
@@ -391,3 +392,5 @@ TEST_FIXTURE(uri_address, send_multi_byte_utf8_msg)
 } // SUITE(send_msg_tests)
 
 }}}}
+
+#endif

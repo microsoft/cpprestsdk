@@ -25,6 +25,8 @@
 
 #include "stdafx.h"
 
+#if defined(__cplusplus_winrt) || !defined(_M_ARM)
+
 using namespace web::experimental::web_sockets;
 using namespace web::experimental::web_sockets::client;
 
@@ -59,7 +61,7 @@ void auth_helper(test_websocket_server& server, utility::string_t username = U("
 }
 
 // connect without credentials, when the server expects credentials
-TEST_FIXTURE(uri_address, auth_no_credentials)
+TEST_FIXTURE(uri_address, auth_no_credentials, "Ignore:Linux", "NYI", "Ignore:Apple", "NYI")
 {
     test_websocket_server server;
     websocket_client client(m_uri);
@@ -68,7 +70,7 @@ TEST_FIXTURE(uri_address, auth_no_credentials)
 }
 
 // Connect with credentials
-TEST_FIXTURE(uri_address, auth_with_credentials)
+TEST_FIXTURE(uri_address, auth_with_credentials, "Ignore:Linux", "NYI", "Ignore:Apple", "NYI")
 {
     test_websocket_server server;
     websocket_client_config config;   
@@ -108,3 +110,5 @@ TEST_FIXTURE(uri_address, ssl_test, "Ignore", "Manual")
 } // SUITE(authentication_tests)
 
 }}}}
+
+#endif
