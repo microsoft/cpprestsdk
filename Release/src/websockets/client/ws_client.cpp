@@ -171,11 +171,7 @@ public:
             m_client.close(m_con, static_cast<websocketpp::close::status::value>(status), utility::conversions::to_utf8string(reason), ec);
             if (ec.value() != 0)
             {
-#if defined(_MSC_VER) && (_MSC_VER < 1800)
-                websocket_exception wx(ec.value());
-#else
-                websocket_exception wx(ec.value(), ec.category());
-#endif
+                websocket_exception wx(utility::conversions::to_string_t(ec.message()));
                 return pplx::task_from_exception<void>(wx);
             }
         }
@@ -278,11 +274,7 @@ public:
         m_con = con;
         if (ec.value() != 0)
         {
-#if defined(_MSC_VER) && (_MSC_VER < 1800)
-            websocket_exception wx(ec.value());
-#else
-            websocket_exception wx(ec.value(), ec.category());
-#endif
+            websocket_exception wx(utility::conversions::to_string_t(ec.message()));
             return pplx::task_from_exception<void>(wx);
         }
 
@@ -449,11 +441,7 @@ public:
                 auto ec = previousTask.get();
                 if (ec.value() != 0)
                 {
-#if defined(_MSC_VER) && (_MSC_VER < 1800)
-                    websocket_exception wx(ec.value());
-#else
-                    websocket_exception wx(ec.value(), ec.category());
-#endif
+                    websocket_exception wx(utility::conversions::to_string_t(ec.message()));
                     eptr = std::make_exception_ptr(wx);
                 }
             }
