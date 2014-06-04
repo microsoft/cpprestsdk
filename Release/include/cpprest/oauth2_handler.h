@@ -43,6 +43,21 @@ namespace experimental
 
 
 /// <summary>
+/// Constant strings.
+/// </summary>
+typedef utility::string_t oauth2_string;
+class oauth2_strings
+{
+public:
+#define _OAUTH2_STRINGS
+#define DAT(a_, b_) _ASYNCRTIMP static const oauth2_string a_;
+#include "cpprest/http_constants.dat"
+#undef _OAUTH2_STRINGS
+#undef DAT
+};
+
+
+/// <summary>
 /// Exception type for OAuth 2.0 errors.
 /// </summary>
 class oauth2_exception : public std::exception
@@ -148,7 +163,7 @@ public:
                 m_implicit_grant(false),
                 m_bearer_auth(true),
                 m_http_basic_auth(true),
-                m_access_token_key(_XPLATSTR("access_token"))
+                m_access_token_key(oauth2_strings::access_token)
     {}
 
     oauth2_config(oauth2_token token) :
@@ -156,7 +171,7 @@ public:
         m_implicit_grant(false),
         m_bearer_auth(true),
         m_http_basic_auth(true),
-        m_access_token_key(_XPLATSTR("access_token"))
+        m_access_token_key(oauth2_strings::access_token)
     {}
 
     /// <summary>
@@ -195,8 +210,11 @@ public:
     /// <param name="authorization_code">Code received via redirect upon successful authorization.</param>
     pplx::task<void> token_from_code(utility::string_t authorization_code)
     {
-        return _request_token(_XPLATSTR("grant_type=authorization_code&code=") + uri::encode_data_string(authorization_code)
-            + _XPLATSTR("&redirect_uri=") + uri::encode_data_string(redirect_uri()));
+        uri_builder ub;
+        ub.append_query(oauth2_strings::grant_type, oauth2_strings::authorization_code, false);
+        ub.append_query(oauth2_strings::code, uri::encode_data_string(authorization_code), false);
+        ub.append_query(oauth2_strings::redirect_uri, uri::encode_data_string(redirect_uri()), false);
+        return _request_token(std::move(ub));
     }
 
     /// <summary>
@@ -208,8 +226,10 @@ public:
     /// </summary>
     pplx::task<void> token_from_refresh()
     {
-        return _request_token(_XPLATSTR("grant_type=refresh_token&refresh_token=")
-            + uri::encode_data_string(token().refresh_token()));
+        uri_builder ub;
+        ub.append_query(oauth2_strings::grant_type, oauth2_strings::refresh_token, false);
+        ub.append_query(oauth2_strings::refresh_token, uri::encode_data_string(token().refresh_token()), false);
+        return _request_token(std::move(ub));
     }
 
     /// <summary>
@@ -301,7 +321,7 @@ private:
     friend class web::http::client::http_client_config;
     oauth2_config() {}
 
-    _ASYNCRTIMP pplx::task<void> _request_token(utility::string_t request_body);
+    _ASYNCRTIMP pplx::task<void> _request_token(uri_builder&& request_body);
 
     oauth2_token _parse_token_from_json(json::value& token_json);
 

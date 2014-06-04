@@ -41,11 +41,11 @@ namespace web { namespace http { namespace client { namespace experimental
 
 utility::string_t oauth2_config::build_authorization_uri()
 {
-    const utility::string_t response_type((implicit_grant()) ? U("token") : U("code"));
-    uri_builder u(auth_endpoint());
-    u.append_query(U("response_type"), response_type);
-    u.append_query(U("client_id"), client_key());
-    u.append_query(U("redirect_uri"), redirect_uri());
+    const utility::string_t response_type((implicit_grant()) ? oauth2_strings::token : oauth2_strings::code);
+    uri_builder ub(auth_endpoint());
+    ub.append_query(oauth2_strings::response_type, response_type);
+    ub.append_query(oauth2_strings::client_id, client_key());
+    ub.append_query(oauth2_strings::redirect_uri, redirect_uri());
 
     if (custom_state().empty())
     {
@@ -55,20 +55,20 @@ utility::string_t oauth2_config::build_authorization_uri()
     {
         m_state = custom_state();
     }
-    u.append_query(U("state"), state());
+    ub.append_query(oauth2_strings::state, state());
 
     if (!scope().empty())
     {
-        u.append_query(U("scope"), scope());
+        ub.append_query(oauth2_strings::scope, scope());
     }
-    return u.to_string();
+    return ub.to_string();
 }
 
 pplx::task<void> oauth2_config::token_from_redirected_uri(web::http::uri redirected_uri)
 {
     auto query = uri::split_query((implicit_grant()) ? redirected_uri.fragment() : redirected_uri.query());
     
-    auto state_param = query.find(U("state"));
+    auto state_param = query.find(oauth2_strings::state);
     if (state_param == query.end())
     {
         throw oauth2_exception(U("parameter 'state' missing from redirected URI."));
@@ -81,7 +81,7 @@ pplx::task<void> oauth2_config::token_from_redirected_uri(web::http::uri redirec
         throw oauth2_exception(err.str().c_str());
     }
 
-    auto code_param = query.find(U("code"));
+    auto code_param = query.find(oauth2_strings::code);
     if (code_param != query.end())
     {
         return token_from_code(code_param->second);
@@ -89,7 +89,7 @@ pplx::task<void> oauth2_config::token_from_redirected_uri(web::http::uri redirec
 
     // NOTE: The redirected URI contains access token only in the implicit grant.
     // The implicit grant never passes a refresh token.
-    auto token_param = query.find(U("access_token"));
+    auto token_param = query.find(oauth2_strings::access_token);
     if (token_param == query.end())
     {
         throw oauth2_exception(U("either 'code' or 'access_token' parameter must be in the redirected URI."));
@@ -99,7 +99,7 @@ pplx::task<void> oauth2_config::token_from_redirected_uri(web::http::uri redirec
     return pplx::create_task([](){});
 }
 
-pplx::task<void> oauth2_config::_request_token(utility::string_t request_body)
+pplx::task<void> oauth2_config::_request_token(uri_builder&& request_body_ub)
 {
     http_request request;
     request.set_method(methods::POST);
@@ -107,7 +107,7 @@ pplx::task<void> oauth2_config::_request_token(utility::string_t request_body)
 
     if (!scope().empty())
     {
-        request_body += U("&scope=") + uri::encode_data_string(scope());
+        request_body_ub.append_query(oauth2_strings::scope, uri::encode_data_string(scope()), false);
     }
 
     if (http_basic_auth())
@@ -119,10 +119,10 @@ pplx::task<void> oauth2_config::_request_token(utility::string_t request_body)
     }
     else
     {
-        request_body += U("&client_id=") + uri::encode_data_string(client_key())
-            + U("&client_secret=") + uri::encode_data_string(client_secret());
+        request_body_ub.append_query(oauth2_strings::client_id, uri::encode_data_string(client_key()), false);
+        request_body_ub.append_query(oauth2_strings::client_secret, uri::encode_data_string(client_secret()), false);
     }
-    request.set_body(request_body, mime_types::application_x_www_form_urlencoded);
+    request.set_body(request_body_ub.query(), mime_types::application_x_www_form_urlencoded);
 
     http_client token_client(token_endpoint());
 
@@ -159,60 +159,67 @@ oauth2_token oauth2_config::_parse_token_from_json(json::value& token_json)
 {
     oauth2_token result;
 
-    try
+    if (token_json.has_field(oauth2_strings::access_token))
     {
-        result.set_access_token(token_json[U("access_token")].as_string());
+        result.set_access_token(token_json[oauth2_strings::access_token].as_string());
     }
-    catch (json::json_exception)
+    else
     {
         throw oauth2_exception(U("response json contains no 'access_token': ") + token_json.serialize());
     }
 
-    try
+    if (token_json.has_field(oauth2_strings::token_type))
     {
-        result.set_token_type(token_json[U("token_type")].as_string());
+        result.set_token_type(token_json[oauth2_strings::token_type].as_string());
     }
-    catch (json::json_exception)
+    else
     {
         // Some services don't return 'token_type' while it's required by OAuth 2.0 spec:
         // http://tools.ietf.org/html/rfc6749#section-5.1
         // As workaround we act as if 'token_type=bearer' was received.
-        result.set_token_type(U("bearer"));
+        result.set_token_type(oauth2_strings::bearer);
     }
-    if (!utility::details::str_icmp(result.token_type(), U("bearer")))
+    if (!utility::details::str_icmp(result.token_type(), oauth2_strings::bearer))
     {
         throw oauth2_exception(U("only 'token_type=bearer' access tokens are currently supported: ") + token_json.serialize());
     }
 
-    if (token_json.has_field(U("refresh_token")))
+    if (token_json.has_field(oauth2_strings::refresh_token))
     {
-        result.set_refresh_token(token_json[_XPLATSTR("refresh_token")].as_string());
+        result.set_refresh_token(token_json[oauth2_strings::refresh_token].as_string());
     }
     else
     {
         // Do nothing. Preserves the old refresh token.
     }
 
-    try
+    if (token_json.has_field(oauth2_strings::expires_in))
     {
-        result.set_expires_in(token_json[U("expires_in")].as_integer());
+        result.set_expires_in(token_json[oauth2_strings::expires_in].as_integer());
     }
-    catch (json::json_exception)
+    else
     {
         result.set_expires_in(-1); // Set as unspecified.
     }
 
-    try
+    if (token_json.has_field(oauth2_strings::scope))
     {
-        result.set_scope(token_json[U("scope")].as_string());
+        result.set_scope(token_json[oauth2_strings::scope].as_string());
     }
-    catch (json::json_exception)
+    else
     {
         result.set_scope(scope()); // Set to current scope().
     }
 
     return result;
 }
+
+
+#define _OAUTH2_STRINGS
+#define DAT(a_, b_) const oauth2_string oauth2_strings::a_(_XPLATSTR(b_));
+#include "cpprest/http_constants.dat"
+#undef _OAUTH2_STRINGS
+#undef DAT
 
 
 }}}} // namespace web::http::client::experimental
