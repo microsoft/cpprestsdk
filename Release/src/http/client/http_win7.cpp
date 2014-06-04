@@ -1254,37 +1254,22 @@ private:
                         }
 
                         auto writebuf = p_request_context->_get_writebuffer();
-                        if ( !_check_streambuf(p_request_context, writebuf, _XPLATSTR("Output stream is not open")) )
-                            break;
-
-                        auto after_sync = 
-                            [hRequestHandle, p_request_context]
-                        (pplx::task<void> sync_op)
-                        {
-                            try { sync_op.wait(); } catch(...)
-                            {
-                                p_request_context->report_exception(std::current_exception());
-                                return;
-                            }
-
-                            // Look for more data
-                            if( !WinHttpQueryDataAvailable(hRequestHandle, nullptr))
-                            {
-                                p_request_context->report_error(GetLastError(), _XPLATSTR("Error querying for http body chunk"));
-                                return;
-                            }
-                        };
-
+                        
                         if ( p_request_context->is_externally_allocated() )
                         {
                             writebuf.commit(statusInfoLength);
 
-                            writebuf.sync().then(after_sync);
+                            // Look for more data
+                            if (!WinHttpQueryDataAvailable(hRequestHandle, nullptr))
+                            {
+                                p_request_context->report_error(GetLastError(), _XPLATSTR("Error querying for http body chunk"));
+                                return;
+                            }
                         }
                         else 
                         {
                             writebuf.putn(p_request_context->m_body_data.get(), statusInfoLength).then(
-                                [hRequestHandle, p_request_context, statusInfoLength, after_sync]
+                                [hRequestHandle, p_request_context, statusInfoLength]
                             (pplx::task<size_t> op)
                             {
                                 size_t written = 0;
@@ -1301,11 +1286,12 @@ private:
                                     return;
                                 }
 
-                                auto wbuf = p_request_context->_get_writebuffer();
-                                if ( !_check_streambuf(p_request_context, wbuf, _XPLATSTR("Output stream is not open")) )
+                                // Look for more data
+                                if (!WinHttpQueryDataAvailable(hRequestHandle, nullptr))
+                                {
+                                    p_request_context->report_error(GetLastError(), _XPLATSTR("Error querying for http body chunk"));
                                     return;
-
-                                wbuf.sync().then(after_sync);
+                                }
                             });
                         }
                     }
