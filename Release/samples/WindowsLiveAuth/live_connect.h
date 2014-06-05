@@ -18,7 +18,7 @@
 *
 * live_connect.h
 *
-* Simple API for connecting to Windows Live services, such as SkyDrive and Hotmail.
+* Simple API for connecting to Windows Live services, such as OneDrive and Hotmail.
 * Only supported for App Store apps.
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -70,16 +70,12 @@ namespace web { namespace live {
     }
 
     /// <summary>
-    /// Represents a session connected to Windows Live services like Calendar, Contacts, SkyDrive, and the
+    /// Represents a session connected to Windows Live services like Calendar, Contacts, OneDrive, and the
     /// user profile, by using the Live Connect REST API. It is a thin layer on top of the Casablanca HTTP
     /// library, tailored to the usage scenarios for Windows Live clients.
     /// </summary>
     /// <remarks>
-    ///   See http://msdn.microsoft.com/en-us/live/ for details on using the Live Connect REST API. The
-    ///   'Interactive SDK' is particularly useful in examining its behavior and capabilities. The REST API
-    ///   reference is found under 'Docs >> Core Concepts'. Examples of user profile scenarios are under
-    ///   'Docs >> Identity API', SkyDrive under 'Docs >> SkyDrive API', contacts and calendars under
-    ///   'Docs >> Hotmail API'.
+    ///   See http://msdn.microsoft.com/onedrive/ for details on using the OneDrive REST API.
     ///
     ///   Note: when passing resource paths into the functions in this class, it is not necessary to add the
     ///   leading '/' path character. It will be added automatically when constructing the HTTP request.
@@ -256,9 +252,9 @@ namespace web { namespace live {
         }
 
         /// <summary>
-        /// Download a file from SkyDrive.
+        /// Download a file from OneDrive.
         /// </summary>
-        /// <param name="file_id">The SkyDrive file id to download.</param>
+        /// <param name="file_id">The OneDrive file id to download.</param>
         /// <param name="stream">A stream into which the contents of the file should be placed.</param>
         /// <returns>The size of the downloaded resource.</returns>
         /// <remarks></remarks>
@@ -288,9 +284,9 @@ namespace web { namespace live {
         }
 
         /// <summary>
-        /// Download a file from SkyDrive.
+        /// Download a file from OneDrive.
         /// </summary>
-        /// <param name="file_id">The SkyDrive file id to download.</param>
+        /// <param name="file_id">The OneDrive file id to download.</param>
         /// <param name="file">A StorageFile reference identifying the target for the downloaded data.</param>
         /// <returns>The size of the downloaded resource.</returns>
         /// <remarks></remarks>
@@ -336,9 +332,9 @@ namespace web { namespace live {
         }
 
         /// <summary>
-        /// Upload a file to SkyDrive.
+        /// Upload a file to OneDrive.
         /// </summary>
-        /// <param name="path">The path of the file location in SkyDrive. It should be of the form "folder.NNNNNNNNNN/files/file_name.ext"</param>
+        /// <param name="path">The path of the file location in OneDrive. It should be of the form "folder.NNNNNNNNNN/files/file_name.ext"</param>
         /// <param name="stream">A stream from which data for the file will be read.</param>
         /// <param name="content_length">The size of the data to upload.</param>
         /// <returns>The JSON value resulting from the request, containing metadata about the uploaded file.</returns>
@@ -362,9 +358,9 @@ namespace web { namespace live {
         }
 
         /// <summary>
-        /// Upload a file to SkyDrive.
+        /// Upload a file to OneDrive.
         /// </summary>
-        /// <param name="path">The path of the file location in SkyDrive. It should be of the form "folder.NNNNNNNNNN/files/file_name.ext"</param>
+        /// <param name="path">The path of the file location in OneDrive. It should be of the form "folder.NNNNNNNNNN/files/file_name.ext"</param>
         /// <param name="file">A StorageFile reference identifying the source of the uploaded data.</param>
         /// <param name="content_length">The size of the data to upload.</param>
         /// <returns>The JSON value resulting from the request, containing metadata about the uploaded file.</returns>
