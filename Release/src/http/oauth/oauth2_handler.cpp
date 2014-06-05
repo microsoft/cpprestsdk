@@ -127,12 +127,12 @@ pplx::task<void> oauth2_config::_request_token(uri_builder&& request_body_ub)
     http_client token_client(token_endpoint());
 
     return token_client.request(request)
-    .then([this](pplx::task<http_response> resp_task)
+    .then([this](pplx::task<http_response> req_task)
     {
         json::value resp_json;
         try
         {
-            resp_json = resp_task.get().extract_json().get();
+            resp_json = req_task.get().extract_json().get();
         }
         catch (http_exception &e)
         {

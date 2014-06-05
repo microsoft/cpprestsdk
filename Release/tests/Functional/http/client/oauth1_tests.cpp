@@ -220,7 +220,7 @@ TEST_FIXTURE(oauth1_auth_config_server, oauth1_build_authorization_uri)
         const utility::string_t header_authorization(request->m_headers[header_names::authorization]);
 
         // Verify empty token.
-        const utility::string_t prefix(U("OAuth oauth_version=\"1.0\", oauth_consumer_key=\"test_key\", oauth_token=\"\", oauth_signature_method=\"HMAC-SHA1\", oauth_timestamp=\""));
+        const utility::string_t prefix(U("OAuth oauth_version=\"1.0\", oauth_consumer_key=\"test_key\", oauth_signature_method=\"HMAC-SHA1\", oauth_timestamp=\""));
         VERIFY_ARE_EQUAL(0, header_authorization.find(prefix));
 
         // Verify 'oauth_callback'.

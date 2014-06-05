@@ -34,6 +34,9 @@ Execute with administrator privileges.
 Set the app key & secret strings below (i.e. s_linkedin_key, s_linkedin_secret, etc.)
 To get key & secret, register an app in the corresponding service.
 
+Set following entry in the hosts file:
+127.0.0.1    testhost.local
+
 */
 #include "stdafx.h"
 
@@ -54,9 +57,17 @@ using namespace web::http::client;
 using namespace web::http::experimental::listener; 
 
 
-// Consumer key and secret pairs.
+//
+// Set key & secret pair to enable session for that service.
+//
+static const utility::string_t s_dropbox_key(U(""));
+static const utility::string_t s_dropbox_secret(U(""));
+
 static const utility::string_t s_linkedin_key(U(""));
 static const utility::string_t s_linkedin_secret(U(""));
+
+static const utility::string_t s_twitter_key(U(""));
+static const utility::string_t s_twitter_secret(U(""));
 
 
 static void open_browser(utility::string_t auth_uri)
@@ -156,7 +167,7 @@ public:
     {
         if (is_enabled())
         {
-            ucout << "Running " << m_name.c_str() << " session sample..." << std::endl;
+            ucout << "Running " << m_name.c_str() << " session..." << std::endl;
 
             if (!m_oauth1_config.token().is_valid())
             {
@@ -229,14 +240,56 @@ protected:
     void run_internal() override
     {
         http_client api(U("https://api.linkedin.com/v1/people/"), m_http_config);
-
         ucout << "Requesting user information:" << std::endl;
         ucout << "Information: " << api.request(methods::GET, U("~?format=json")).get().extract_json().get() << std::endl;
-
-#if EXTENSIVE
-#endif
     }
 
+};
+
+class twitter_session_sample : public oauth1_session_sample
+{
+public:
+    twitter_session_sample() :
+        oauth1_session_sample(U("Twitter"),
+            s_twitter_key,
+            s_twitter_secret,
+            U("https://api.twitter.com/oauth/request_token"),
+            U("https://api.twitter.com/oauth/authorize"),
+            U("https://api.twitter.com/oauth/access_token"),
+            U("http://testhost.local:8890/"))
+    {
+    }
+
+protected:
+    void run_internal() override
+    {
+        http_client api(U("https://api.twitter.com/1.1/"), m_http_config);
+        ucout << "Requesting account information:" << std::endl;
+        ucout << api.request(methods::GET, U("account/settings.json")).get().extract_json().get() << std::endl;
+    }
+};
+
+class dropbox_session_sample : public oauth1_session_sample
+{
+public:
+    dropbox_session_sample() :
+        oauth1_session_sample(U("Dropbox"),
+            s_dropbox_key,
+            s_dropbox_secret,
+            U("https://api.dropbox.com/1/oauth/request_token"),
+            U("https://www.dropbox.com/1/oauth/authorize"),
+            U("https://api.dropbox.com/1/oauth/access_token"),
+            U("http://testhost.local:8889/"))
+    {
+    }
+
+protected:
+    void run_internal() override
+    {
+        http_client api(U("https://api.dropbox.com/1/"), m_http_config);
+        ucout << "Requesting account information:" << std::endl;
+        ucout << "Information: " << api.request(methods::GET, U("account/info")).get().extract_json().get() << std::endl;
+    }
 };
 
 
@@ -246,12 +299,18 @@ int wmain(int argc, wchar_t *argv[])
 int main(int argc, char *argv[])
 #endif
 {
-    ucout << "Running oauth1 sample..." << std::endl;
+    ucout << "Running OAuth 1.0 client sample..." << std::endl;
 
     linkedin_session_sample linkedin;
+    twitter_session_sample twitter;
+    dropbox_session_sample dropbox;
+
     linkedin.run();
+    twitter.run();
+// TODO: Fix Dropbox oauth1 error:
+// Error: parameter 'oauth_callback_confirmed' missing from response: oauth_token_secret=qKJ7G4ZukgQ5Tr4c&oauth_token=p3XrfF74IsvE9MPB
+//    dropbox.run();
 
     ucout << "Done." << std::endl;
     return 0;
 }
-

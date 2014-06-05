@@ -56,9 +56,10 @@ using namespace web::http::details;
 using namespace web::http::client;
 using namespace web::http::experimental::listener; 
 
-// Set to 1 to run an extensive client sample parts.
-#define EXTENSIVE       0
 
+//
+// Set key & secret pair to enable session for that service.
+//
 static const utility::string_t s_dropbox_key(U(""));
 static const utility::string_t s_dropbox_secret(U(""));
 
@@ -163,7 +164,7 @@ public:
     {
         if (is_enabled())
         {
-            ucout << "Running " << m_name.c_str() << " session sample..." << std::endl;
+            ucout << "Running " << m_name.c_str() << " session..." << std::endl;
 
             if (m_oauth2_config.token().access_token().empty())
             {
@@ -227,39 +228,8 @@ protected:
     void run_internal() override
     {
         http_client api(U("https://api.dropbox.com/1/"), m_http_config);
-        http_client content(U("https://api-content.dropbox.com/1/"), m_http_config);
-
         ucout << "Requesting account information:" << std::endl;
         ucout << "Information: " << api.request(methods::GET, U("account/info")).get().extract_json().get() << std::endl;
-
-#if EXTENSIVE
-        ucout << "Requesting directory listing of sandbox '/':" << std::endl;
-        ucout << "Listing: " << api.request(methods::GET, U("metadata/sandbox/")).get().extract_json().get() << std::endl;
-        ucout << "Getting 'hello_world.txt' metadata:" << std::endl;
-        ucout << "Metadata: " << api.request(methods::GET, U("metadata/sandbox/hello_world.txt")).get().extract_json().get() << std::endl;
-
-        ucout << "Downloading 'hello_world.txt' file contents (text):" << std::endl;
-        string_t content_string = content.request(methods::GET, U("files/sandbox/hello_world.txt")).get().extract_string().get();
-        ucout << "Contents: '" << content_string << "'" << std::endl;
-        ucout << "Downloading 'test_image.jpg' file contents (binary):" << std::endl;
-        std::vector<unsigned char> content_vector = content.request(methods::GET, U("files/sandbox/test_image.jpg")).get().extract_vector().get();
-        ucout << "Contents size: " << (content_vector.size() / 1024) << "KiB" << std::endl;
-
-        ucout << "Uploading 'test_put.txt' file with contents 'Testing POST' (text):" << std::endl;
-        ucout << "Response: "
-                << content.request(methods::POST, U("files_put/sandbox/test_put.txt"), U("Testing POST")).get().extract_string().get()
-                << std::endl;
-        ucout << "Uploading 'test_image_copy.jpg' (copy of 'test_image.jpg'):" << std::endl;
-        ucout << "Response: "
-                << content.request(methods::PUT, U("files_put/sandbox/test_image_copy.jpg"),
-                        concurrency::streams::bytestream::open_istream(std::move(content_vector))).get().extract_string().get()
-                << std::endl;
-
-        ucout << "Deleting uploaded file 'test_put.txt':" << std::endl;
-        ucout << "Response: " << api.request(methods::POST, U("fileops/delete?root=sandbox&path=test_put.txt")).get().extract_string().get() << std::endl;
-        ucout << "Deleting uploaded file 'test_image_copy.jpg':" << std::endl;
-        ucout << "Response: " << api.request(methods::POST, U("fileops/delete?root=sandbox&path=test_image_copy.jpg")).get().extract_string().get() << std::endl;
-#endif
     }
 };
 
@@ -287,12 +257,8 @@ protected:
     void run_internal() override
     {
         http_client api(U("https://api.linkedin.com/v1/people/"), m_http_config);
-
         ucout << "Requesting account information:" << std::endl;
         ucout << "Information: " << api.request(methods::GET, U("~?format=json")).get().extract_json().get() << std::endl;
-
-#if EXTENSIVE
-#endif
     }
 
 };
@@ -319,9 +285,6 @@ protected:
         http_client api(U("https://apis.live.net/v5.0/"), m_http_config);
         ucout << "Requesting account information:" << std::endl;
         ucout << api.request(methods::GET, U("me")).get().extract_json().get() << std::endl;
-
-#if EXTENSIVE
-#endif
     }
 };
 
@@ -332,7 +295,7 @@ int wmain(int argc, wchar_t *argv[])
 int main(int argc, char *argv[])
 #endif
 {
-    ucout << "Running oauth2 sample..." << std::endl;
+    ucout << "Running OAuth 2.0 client sample..." << std::endl;
 
     linkedin_session_sample linkedin;
     dropbox_session_sample  dropbox;

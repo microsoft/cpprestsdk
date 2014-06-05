@@ -60,6 +60,21 @@ public:
 
 
 /// <summary>
+/// Constant strings for OAuth 1.0.
+/// </summary>
+typedef utility::string_t oauth1_string;
+class oauth1_strings
+{
+public:
+#define _OAUTH1_STRINGS
+#define DAT(a_, b_) _ASYNCRTIMP static const oauth1_string a_;
+#include "cpprest/http_constants.dat"
+#undef _OAUTH1_STRINGS
+#undef DAT
+};
+
+
+/// <summary>
 /// Exception type for OAuth 1.0 errors.
 /// </summary>
 class oauth1_exception : public std::exception
@@ -182,7 +197,7 @@ struct oauth1_config
     /// <param name="verifier">Verifier received via redirect upon successful authorization.</param>
     pplx::task<void> token_from_verifier(utility::string_t verifier)
     {
-        return _request_token(_generate_auth_state(_XPLATSTR("oauth_verifier"), uri::encode_data_string(verifier)), false);
+        return _request_token(_generate_auth_state(oauth1_strings::verifier, uri::encode_data_string(verifier)), false);
     }
 
     /// <summary>
@@ -241,17 +256,15 @@ struct oauth1_config
         return signature;
     }
 
-// TODO: RSA-SHA1
-/*
+    // TODO: Not implemented.
     /// <summary>
     /// Builds RSA-SHA1 signature according to:
     /// http://tools.ietf.org/html/rfc5849#section-3.4.3
     /// </summary>
     utility::string_t _build_rsa_sha1_signature(http_request request, oauth1_auth_state state) const
     {
-        return _XPLATSTR("");
+        throw oauth1_exception(_XPLATSTR("RSA-SHA1 signature method is not implemented."));
     }
-*/
 
     /// <summary>
     /// Builds PLAINTEXT signature according to:
@@ -278,8 +291,8 @@ private:
 
     static utility::string_t _generate_timestamp()
     {
-// FIXME: this only works on Linux
         utility::ostringstream_t os;
+        // Convert utc_timestamp() result as standard posix timestamp.
         os << (utility::datetime::utc_timestamp() - 11644473600LL);
         return os.str();
     }

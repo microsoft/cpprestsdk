@@ -92,8 +92,6 @@ std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t key
     return hash;
 
 cleanup:
-
-// TODO: Throw respective error if crypto cannot be used.
     if (hash_handle)
     {
         BCryptDestroyHash(hash_handle);
@@ -102,6 +100,7 @@ cleanup:
     {
         BCryptCloseAlgorithmProvider(alg_handle, 0);
     }
+
     return hash;
 }
 
@@ -126,20 +125,9 @@ std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t key
     auto signature_key = HMACSha1Provider->CreateKey(key_buffer);
     auto signed_buffer = CryptographicEngine::Sign(signature_key, content_buffer);
 
-#if 1
     Platform::Array<unsigned char, 1>^ arr;
     CryptographicBuffer::CopyToByteArray(signed_buffer, &arr);
     return std::vector<unsigned char>(arr->Data, arr->Data + arr->Length);
-#else
-    // Alternative.
-    auto reader = ::Windows::Storage::Streams::DataReader::FromBuffer(signed_buffer);
-    std::vector<unsigned char> digest(reader->UnconsumedBufferLength);
-    if (!digest.empty())
-    {
-        reader->ReadBytes(::Platform::ArrayReference<unsigned char>(&digest[0], static_cast<unsigned int>(digest.size())));
-    }
-    return digest;
-#endif
 }
 
 
@@ -197,15 +185,15 @@ utility::string_t oauth1_config::_build_normalized_parameters(web::http::uri u, 
     }
 
     // Push oauth1 parameters.
-    queries.push_back(U("oauth_version=1.0"));
-    queries.push_back(U("oauth_consumer_key=" + consumer_key()));
+    queries.push_back(oauth1_strings::version + U("=1.0"));
+    queries.push_back(oauth1_strings::consumer_key + U("=") + consumer_key());
     if (!token().token().empty())
     {
-        queries.push_back(U("oauth_token=" + token().token()));
+        queries.push_back(oauth1_strings::token + U("=") + token().token());
     }
-    queries.push_back(U("oauth_signature_method=" + method()));
-    queries.push_back(U("oauth_timestamp=" + state.timestamp()));
-    queries.push_back(U("oauth_nonce=" + state.nonce()));
+    queries.push_back(oauth1_strings::signature_method + U("=") + method());
+    queries.push_back(oauth1_strings::timestamp + U("=") + state.timestamp());
+    queries.push_back(oauth1_strings::nonce + U("=") + state.nonce());
     if (!state.extra_key().empty())
     {
         queries.push_back(state.extra_key() + U("=") + state.extra_value());
@@ -238,17 +226,15 @@ utility::string_t oauth1_config::_build_signature(http_request request, oauth1_a
     {
         return _build_hmac_sha1_signature(std::move(request), std::move(state));
     }
-// TODO: RSA-SHA1
-//    else if (oauth1_methods::rsa_sha1 == m_config.m_method)
-//    {
-//        return _build_rsa_sha1_signature(std::move(request), std::move(state));
-//    }
+    else if (oauth1_methods::rsa_sha1 == m_method)
+    {
+        return _build_rsa_sha1_signature(std::move(request), std::move(state));
+    }
     else if (oauth1_methods::plaintext == method())
     {
         return _build_plaintext_signature();
     }
-// TODO: add assertion?
-    return utility::string_t();
+    throw oauth1_exception(U("invalid signature method."));
 }
 
 pplx::task<void> oauth1_config::_request_token(oauth1_auth_state state, bool is_temp_token)
@@ -289,7 +275,7 @@ pplx::task<void> oauth1_config::_request_token(oauth1_auth_state state, bool is_
         
         if (is_temp_token)
         {
-            auto callback_confirmed_param = query.find(U("oauth_callback_confirmed"));
+            auto callback_confirmed_param = query.find(oauth1_strings::callback_confirmed);
             if (callback_confirmed_param == query.end())
             {
                 throw oauth1_exception(U("parameter 'oauth_callback_confirmed' missing from response: ") + body);
@@ -300,13 +286,13 @@ pplx::task<void> oauth1_config::_request_token(oauth1_auth_state state, bool is_
             }
         }
         
-        auto token_param = query.find(U("oauth_token"));
+        auto token_param = query.find(oauth1_strings::token);
         if (token_param == query.end())
         {
             throw oauth1_exception(U("parameter 'oauth_token' missing from response: ") + body);
         }
         
-        auto token_secret_param = query.find(U("oauth_token_secret"));
+        auto token_secret_param = query.find(oauth1_strings::token_secret);
         if (token_secret_param == query.end())
         {
             throw oauth1_exception(U("parameter 'oauth_token_secret' missing from response: ") + body);
@@ -323,17 +309,18 @@ void oauth1_config::_authenticate_request(http_request &request, oauth1_auth_sta
     os << "OAuth ";
     if (!realm().empty())
     {
-        os << "realm=\"" << realm() << "\", ";
+        os << oauth1_strings::realm << "=\"" << realm() << "\", ";
     }
-    os << "oauth_version=\"1.0\", oauth_consumer_key=\"" << consumer_key();
+    os << oauth1_strings::version << "=\"1.0";
+    os << "\", " << oauth1_strings::consumer_key << "=\"" << consumer_key();
     if (!token().token().empty())
     {
-        os << "\", oauth_token=\"" << token().token();
+        os << "\", " << oauth1_strings::token << "=\"" << token().token();
     }
-    os << "\", oauth_signature_method=\"" << method();
-    os << "\", oauth_timestamp=\"" << state.timestamp();
-    os << "\", oauth_nonce=\"" << state.nonce();
-    os << "\", oauth_signature=\"" << uri::encode_data_string(_build_signature(request, state));
+    os << "\", " << oauth1_strings::signature_method << "=\"" << method();
+    os << "\", " << oauth1_strings::timestamp << "=\"" << state.timestamp();
+    os << "\", " << oauth1_strings::nonce << "=\"" << state.nonce();
+    os << "\", " << oauth1_strings::signature << "=\"" << uri::encode_data_string(_build_signature(request, state));
     os << "\"";
 
     if (!state.extra_key().empty())
@@ -341,17 +328,17 @@ void oauth1_config::_authenticate_request(http_request &request, oauth1_auth_sta
         os << ", " << state.extra_key() << "=\"" << state.extra_value() << "\"";
     }
 
-    request.headers().add(U("Authorization"), os.str());
+    request.headers().add(header_names::authorization, os.str());
 }
 
 pplx::task<utility::string_t> oauth1_config::build_authorization_uri()
 {
-    return _request_token(_generate_auth_state(U("oauth_callback"), uri::encode_data_string(callback_uri())), true)
+    return _request_token(_generate_auth_state(oauth1_strings::callback, uri::encode_data_string(callback_uri())), true)
     .then([this]()
     {
 // TODO: what happens with exception?
         uri_builder ub(auth_endpoint());
-        ub.append_query(U("oauth_token"), token().token());
+        ub.append_query(oauth1_strings::token, token().token());
         return ub.to_string();
     });
 }
@@ -360,7 +347,7 @@ pplx::task<void> oauth1_config::token_from_redirected_uri(web::http::uri redirec
 {
     auto query = uri::split_query(redirected_uri.query());
     
-    auto token_param = query.find(U("oauth_token"));
+    auto token_param = query.find(oauth1_strings::token);
     if (token_param == query.end())
     {
         throw oauth1_exception(U("parameter 'oauth_token' missing from redirected URI."));
@@ -373,7 +360,7 @@ pplx::task<void> oauth1_config::token_from_redirected_uri(web::http::uri redirec
         throw oauth2_exception(err.str().c_str());
     }
     
-    auto verifier_param = query.find(U("oauth_verifier"));
+    auto verifier_param = query.find(oauth1_strings::verifier);
     if (verifier_param == query.end())
     {
         throw oauth1_exception(U("parameter 'oauth_verifier' missing from redirected URI."));
@@ -387,6 +374,12 @@ pplx::task<void> oauth1_config::token_from_redirected_uri(web::http::uri redirec
 #define DAT(a,b) const oauth1_method oauth1_methods::a = b;
 #include "cpprest/http_constants.dat"
 #undef _OAUTH1_METHODS
+#undef DAT
+
+#define _OAUTH1_STRINGS
+#define DAT(a_, b_) const oauth1_string oauth1_strings::a_(_XPLATSTR(b_));
+#include "cpprest/http_constants.dat"
+#undef _OAUTH1_STRINGS
 #undef DAT
 
 
