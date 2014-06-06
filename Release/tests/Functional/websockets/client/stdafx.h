@@ -25,7 +25,10 @@
 
 #pragma once
 
+#ifdef _MS_WINDOWS
 #include <winsock2.h>
+#endif
+
 #include <thread>
 #include <chrono>
 

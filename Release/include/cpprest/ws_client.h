@@ -24,10 +24,11 @@
 ****/
 
 #pragma once
-#if WINAPI_FAMILY == WINAPI_FAMILY_APP
 
 #ifndef _CASA_WS_CLIENT_H
 #define _CASA_WS_CLIENT_H
+
+#if defined(__cplusplus_winrt) || !defined(_M_ARM)
 
 #include <memory>
 #include <limits>
@@ -205,6 +206,7 @@ private:
 namespace details
 {
 class winrt_client;
+class ws_desktop_client;
 
 // Interface to be implemented by the websocket client implementations.
 class _websocket_client_impl
@@ -381,6 +383,5 @@ private:
 
 }}}}
 
+#endif
 #endif  /* _CASA_WS_CLIENT_H */
-
-#endif /* WINAPI_FAMILY == WINAPI_FAMILY_APP */

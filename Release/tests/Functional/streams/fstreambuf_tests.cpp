@@ -248,7 +248,7 @@ TEST(WriteBufferTest1w)
 }
 #endif
 
-TEST(WriteBufferAndSyncTest1, "Ignore", "478760")
+TEST(WriteBufferAndSyncTest1)
 { 
     auto open = OPEN_W<char>(U("WriteBufferAndSyncTest1.txt"));
     auto stream = open.get();
@@ -267,9 +267,9 @@ TEST(WriteBufferAndSyncTest1, "Ignore", "478760")
 
     stream.sync().get();
 
-    VERIFY_IS_TRUE(write.is_done());
     VERIFY_ARE_EQUAL(write.get(), vect.size());
-
+    VERIFY_IS_TRUE(write.is_done());
+    
     auto close = stream.close();
     close.get();
 

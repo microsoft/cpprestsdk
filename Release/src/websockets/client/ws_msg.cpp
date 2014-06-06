@@ -28,19 +28,24 @@
 ****/
 #include "stdafx.h"
 #include "cpprest/producerconsumerstream.h"
+#include "cpprest/ws_msg.h"
+#include "cpprest/ws_client.h"
 
-#if WINAPI_FAMILY == WINAPI_FAMILY_APP
+#if !defined(_M_ARM) || defined(__cplusplus_winrt)
+#if defined(WINAPI_FAMILY_APP) && WINAPI_FAMILY == WINAPI_FAMILY_APP
 
 using namespace ::Windows::Foundation;
 using namespace ::Windows::Storage;
 using namespace ::Windows::Storage::Streams;
 using namespace ::Windows::Networking;
 using namespace ::Windows::Networking::Sockets;
+#endif /* WINAPI_FAMILY == WINAPI_FAMILY_APP */
+
 using namespace concurrency;
 using namespace concurrency::streams::details;
 
-namespace web 
-{ 
+namespace web
+{
 namespace experimental
 {
 namespace web_sockets
@@ -78,15 +83,16 @@ std::string details::_websocket_message::_extract_string()
 
 pplx::task<std::string> websocket_incoming_message::extract_string() const
 {
-    if (_m_impl->message_type() == websocket_message_type::binary_fragment || 
+    if (_m_impl->message_type() == websocket_message_type::binary_fragment ||
         _m_impl->message_type() == websocket_message_type::binary_message)
     {
         return pplx::task_from_exception<std::string>(websocket_exception(_XPLATSTR("Invalid message type")));
     }
 
-    return pplx::create_task(_m_impl->_get_data_available()).then([=]() { return _m_impl->_extract_string(); });
+    auto m_impl = _m_impl;
+
+    return pplx::create_task(_m_impl->_get_data_available()).then([m_impl]() { return m_impl->_extract_string(); });
 }
 
 }}}}
-
-#endif /* WINAPI_FAMILY == WINAPI_FAMILY_APP */
+#endif

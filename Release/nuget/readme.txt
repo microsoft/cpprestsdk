@@ -1,6 +1,18 @@
 Here are the steps to follow to generate Casablanca's NuGet package. 
 Most important is to make sure all the binaries, libs, header files, etc... laid out in structure specified in cpprestsdk.autopkg.
 
+To make sure you have the latest CoApp tools run the following from an elevated prompt:
+    update-coapptools -development -killpowershell
+
+***** Before starting, to workaround Visual Studio bug TFS 729316, open the file C:\Program Files (x86)\Outercurve Foundation\Modules\CoApp\etc\PackageScriptTemplate.autopkg.
+    Find the "bin += {" section and add the following line:
+    
+        bin += {
+            #add-each-file : {
+            --> Items.ReferenceCopyLocalPaths;
+                Items.CopyToOutput;
+*****                
+                
 1. Make sure includes in repository are up to date matching for release.
 2. Copy the signed dlls under the Main\Casablanca\Release\nuget\Binaries.
 3. Copy the libs and pdbs into Main\Binaries.
