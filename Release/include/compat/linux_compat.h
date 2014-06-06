@@ -63,17 +63,6 @@ typedef uint32_t HRESULT;
 #define E_NOTIMPL 0x80004001
 #define E_NOINTERFACE 0x80004002
 
-typedef struct _SYSTEMTIME {
-  WORD wYear;
-  WORD wMonth;
-  WORD wDayOfWeek;
-  WORD wDay;
-  WORD wHour;
-  WORD wMinute;
-  WORD wSecond;
-  WORD wMilliseconds;
-} SYSTEMTIME, *PSYSTEMTIME;
-
 #define ULARGE_INTEGER uint64_t
 #define LARGE_INTEGER int64_t
 
