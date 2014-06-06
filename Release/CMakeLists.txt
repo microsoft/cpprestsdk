@@ -24,7 +24,7 @@ if(IOS)
 
   set(BUILD_SHARED_LIBS OFF)
 elseif(UNIX) # This includes OSX
-  find_package(Boost COMPONENTS system thread locale regex filesystem REQUIRED)
+  find_package(Boost REQUIRED COMPONENTS random system thread locale regex filesystem)
   find_package(Threads REQUIRED)
   find_package(OpenSSL REQUIRED)
 
@@ -80,7 +80,8 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/Binaries)
 
 # These settings can be used by the test targets
 set(Casablanca_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
-set(Casablanca_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include ${Boost_INCLUDE_DIR})
+set(Casablanca_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include ${Boost_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/libs/websocketpp)
+
 set(Casablanca_LIBRARY ${LIB}cpprest)
 set(Casablanca_LIBRARIES ${Casablanca_LIBRARY} ${Boost_LIBRARIES} ${Boost_FRAMEWORK})
 

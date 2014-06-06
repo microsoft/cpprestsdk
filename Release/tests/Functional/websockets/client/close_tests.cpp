@@ -25,6 +25,8 @@
 
 #include "stdafx.h"
 
+#if defined(__cplusplus_winrt) || !defined(_M_ARM)
+
 using namespace concurrency::streams;
 
 using namespace web::experimental::web_sockets;
@@ -82,3 +84,6 @@ TEST_FIXTURE(uri_address, close_from_server)
 } // SUITE(close_tests)
 
 }}}}
+
+#endif
+

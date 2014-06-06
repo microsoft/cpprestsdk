@@ -1,0 +1,10 @@
+
+file (GLOB SOURCE_FILES *.cpp)
+file (GLOB HEADER_FILES *.hpp)
+
+init_target (print_server)
+
+build_executable (${TARGET_NAME} ${SOURCE_FILES} ${HEADER_FILES})
+
+link_boost ()
+final_target ()
