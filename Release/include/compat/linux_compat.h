@@ -63,10 +63,6 @@ typedef uint32_t HRESULT;
 #define E_NOTIMPL 0x80004001
 #define E_NOINTERFACE 0x80004002
 
-typedef unsigned long ULONG;
-typedef unsigned short WORD;
-typedef unsigned long DWORD;
-
 typedef struct _SYSTEMTIME {
   WORD wYear;
   WORD wMonth;
