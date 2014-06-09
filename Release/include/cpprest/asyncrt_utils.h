@@ -313,10 +313,11 @@ public:
 
     /// <summary>
     /// Returns seconds since Unix/POSIX time epoch at 01-01-1970 00:00:00.
+    /// NOTE: Return value is negative if timestamp is before epoch.
     /// </summary>
     static interval_type utc_timestamp()
     {
-        return utc_now().to_interval() / _secondTicks;
+        return (utc_now().to_interval() / _secondTicks) - 11644473600LL;
     }
 
     datetime() : m_interval(0)
@@ -470,7 +471,7 @@ class nonce_generator
 {
 public:
     nonce_generator(int length=32) :
-        m_random((unsigned int)utility::datetime::utc_timestamp()),
+        m_random((unsigned int) utility::datetime::utc_timestamp()),
         m_length(length)
     {
     }
