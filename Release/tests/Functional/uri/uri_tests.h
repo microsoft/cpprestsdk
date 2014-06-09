@@ -27,6 +27,12 @@
 
 #include "unittestpp.h"
 
+// For more details see https://casablanca.codeplex.com/wikipage?title=Running%20Leak%20Detection&IsNewlyCreatedPage=true
+#if defined(CASA_ENABLE_VLD)
+#include "C:/Program Files (x86)/Visual Leak Detector/include/vld.h"
+#pragma comment(lib, "vld.lib")
+#endif
+
 namespace tests { namespace functional { namespace uri_tests {
 
 }}}
