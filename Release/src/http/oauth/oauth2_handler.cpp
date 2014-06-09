@@ -71,14 +71,14 @@ pplx::task<void> oauth2_config::token_from_redirected_uri(web::http::uri redirec
     auto state_param = query.find(oauth2_strings::state);
     if (state_param == query.end())
     {
-        throw oauth2_exception(U("parameter 'state' missing from redirected URI."));
+        return pplx::task_from_exception<void>(oauth2_exception(U("parameter 'state' missing from redirected URI.")));
     }
     if (state() != state_param->second)
     {
         utility::ostringstream_t err;
         err << U("redirected URI parameter 'state'='") << state_param->second
             << U("' does not match state='") << state() << U("'.");
-        throw oauth2_exception(err.str().c_str());
+        return pplx::task_from_exception<void>(oauth2_exception(err.str().c_str()));
     }
 
     auto code_param = query.find(oauth2_strings::code);
@@ -92,7 +92,7 @@ pplx::task<void> oauth2_config::token_from_redirected_uri(web::http::uri redirec
     auto token_param = query.find(oauth2_strings::access_token);
     if (token_param == query.end())
     {
-        throw oauth2_exception(U("either 'code' or 'access_token' parameter must be in the redirected URI."));
+        return pplx::task_from_exception<void>(oauth2_exception(U("either 'code' or 'access_token' parameter must be in the redirected URI.")));
     }
 
     set_token(token_param->second);

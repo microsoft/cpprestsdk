@@ -99,20 +99,28 @@ public:
         m_listener->support([this](http::http_request request) -> void
         {
             pplx::extensibility::scoped_critical_section_t lck(m_resplock);
-            m_config.token_from_redirected_uri(request.request_uri()).then([this,request](pplx::task<void> token_task) -> void
+            if (request.request_uri().path() == U("/") && request.request_uri().query() != U(""))
             {
-                try
+                m_config.token_from_redirected_uri(request.request_uri()).then([this,request](pplx::task<void> token_task) -> void
                 {
+                    try
+                    {
                         token_task.wait();
                         request.reply(status_codes::OK, U("Ok."));
-                        m_tce.set();
-                }
-                catch (oauth2_exception& e)
-                {
-                    ucout << "Error: " << e.what() << std::endl;
-                    request.reply(status_codes::NotFound, U("Not found."));
-                }
-            });
+                        m_tce.set(true);
+                    }
+                    catch (oauth2_exception& e)
+                    {
+                        ucout << "Error: " << e.what() << std::endl;
+                        request.reply(status_codes::NotFound, U("Not found."));
+                        m_tce.set(false);
+                    }
+                });
+            }
+            else
+            {
+                request.reply(status_codes::NotFound, U("Not found."));
+            }
         });
         m_listener->open().wait();
     }
@@ -122,14 +130,14 @@ public:
         m_listener->close().wait();
     }
 
-    pplx::task<void> listen_for_code()
+    pplx::task<bool> listen_for_code()
     {
         return pplx::create_task(m_tce);
     }
 
 private:
     std::unique_ptr<http_listener> m_listener;
-    pplx::task_completion_event<void> m_tce;
+    pplx::task_completion_event<bool> m_tce;
     oauth2_config& m_config;
     pplx::extensibility::critical_section_t m_resplock;
 };
@@ -166,13 +174,22 @@ public:
         {
             ucout << "Running " << m_name.c_str() << " session..." << std::endl;
 
-            if (m_oauth2_config.token().access_token().empty())
+            if (!m_oauth2_config.token().is_valid())
             {
-                authorization_code_flow().wait();
-                m_http_config.set_oauth2(m_oauth2_config);
+                if (authorization_code_flow().get())
+                {
+                    m_http_config.set_oauth2(m_oauth2_config);
+                }
+                else
+                {
+                    ucout << "Authorization failed for " << m_name.c_str() << "." << std::endl;
+                }
             }
 
-            run_internal();
+            if (m_oauth2_config.token().is_valid())
+            {
+                run_internal();
+            }
         }
         else
         {
@@ -183,7 +200,7 @@ public:
 protected:
     virtual void run_internal() = 0;
 
-    pplx::task<void> authorization_code_flow()
+    pplx::task<bool> authorization_code_flow()
     {
         open_browser_auth();
         return m_listener->listen_for_code();

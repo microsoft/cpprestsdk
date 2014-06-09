@@ -232,23 +232,6 @@ public:
         return _request_token(std::move(ub));
     }
 
-    /// <summary>
-    /// Authenticates a http_request.
-    /// </summary>
-    void authenticate_request(http_request &req) const
-    {
-        if (bearer_auth())
-        {
-            req.headers().add(header_names::authorization, _XPLATSTR("Bearer ") + token().access_token());
-        }
-        else
-        {
-            uri_builder ub(req.request_uri());
-            ub.append_query(access_token_key(), token().access_token());
-            req.set_request_uri(ub.to_uri());
-        }
-    }
-
     bool is_enabled() const { return token().is_valid(); }
 
     const utility::string_t& client_key() const { return m_client_key; }
@@ -319,11 +302,26 @@ public:
 
 private:
     friend class web::http::client::http_client_config;
+    friend class oauth2_handler;
     oauth2_config() {}
 
     _ASYNCRTIMP pplx::task<void> _request_token(uri_builder&& request_body);
 
     oauth2_token _parse_token_from_json(json::value& token_json);
+
+    void _authenticate_request(http_request &req) const
+    {
+        if (bearer_auth())
+        {
+            req.headers().add(header_names::authorization, _XPLATSTR("Bearer ") + token().access_token());
+        }
+        else
+        {
+            uri_builder ub(req.request_uri());
+            ub.append_query(access_token_key(), token().access_token());
+            req.set_request_uri(ub.to_uri());
+        }
+    }
 
     utility::string_t m_client_key;
     utility::string_t m_client_secret;
@@ -361,7 +359,7 @@ public:
     {
         if (config().is_enabled())
         {
-            config().authenticate_request(request);
+            config()._authenticate_request(request);
         }
         return next_stage()->propagate(request);
     }
