@@ -99,20 +99,28 @@ public:
         m_listener->support([this](http::http_request request) -> void
         {
             pplx::extensibility::scoped_critical_section_t lck(m_resplock);
-            m_config.token_from_redirected_uri(request.request_uri()).then([this,request](pplx::task<void> token_task) -> void
+            if (request.request_uri().path() == U("/") && request.request_uri().query() != U(""))
             {
-                try
+                m_config.token_from_redirected_uri(request.request_uri()).then([this,request](pplx::task<void> token_task) -> void
                 {
+                    try
+                    {
                         token_task.wait();
                         request.reply(status_codes::OK, U("Ok."));
-                        m_tce.set();
-                }
-                catch (oauth1_exception& e)
-                {
-                    ucout << "Error: " << e.what() << std::endl;
-                    request.reply(status_codes::NotFound, U("Not found."));
-                }
-            });
+                        m_tce.set(true);
+                    }
+                    catch (oauth1_exception& e)
+                    {
+                        ucout << "Error: " << e.what() << std::endl;
+                        request.reply(status_codes::NotFound, U("Not found."));
+                        m_tce.set(false);
+                    }
+                });
+            }
+            else
+            {
+                request.reply(status_codes::NotFound, U("Not found."));
+            }
         });
         m_listener->open().wait();
     }
@@ -122,14 +130,14 @@ public:
         m_listener->close().wait();
     }
 
-    pplx::task<void> listen_for_code()
+    pplx::task<bool> listen_for_code()
     {
         return pplx::create_task(m_tce);
     }
 
 private:
     std::unique_ptr<http_listener> m_listener;
-    pplx::task_completion_event<void> m_tce;
+    pplx::task_completion_event<bool> m_tce;
     oauth1_config& m_config;
     pplx::extensibility::critical_section_t m_resplock;
 };
@@ -171,11 +179,20 @@ public:
 
             if (!m_oauth1_config.token().is_valid())
             {
-                do_authorization().wait();
-                m_http_config.set_oauth1(m_oauth1_config);
+                if (do_authorization().get())
+                {
+                    m_http_config.set_oauth1(m_oauth1_config);
+                }
+                else
+                {
+                    ucout << "Authorization failed for " << m_name.c_str() << "." << std::endl;
+                }
             }
 
-            run_internal();
+            if (m_oauth1_config.token().is_valid())
+            {
+                run_internal();
+            }
         }
         else
         {
@@ -186,10 +203,16 @@ public:
 protected:
     virtual void run_internal() = 0;
 
-    pplx::task<void> do_authorization()
+    pplx::task<bool> do_authorization()
     {
-        open_browser_auth();
-        return m_listener->listen_for_code();
+        if (open_browser_auth())
+        {
+            return m_listener->listen_for_code();
+        }
+        else
+        {
+            return pplx::create_task([](){return false;});
+        }
     }
 
     http_client_config m_http_config;
@@ -201,7 +224,7 @@ private:
         return !m_oauth1_config.consumer_key().empty() && !m_oauth1_config.consumer_secret().empty();
     }
 
-    void open_browser_auth()
+    bool open_browser_auth()
     {
         auto auth_uri_task(m_oauth1_config.build_authorization_uri());
         try
@@ -210,10 +233,12 @@ private:
             ucout << "Opening browser in URI:" << std::endl;
             ucout << auth_uri << std::endl;
             open_browser(auth_uri);
+            return true;
         }
         catch (oauth1_exception &e)
         {
             ucout << "Error: " << e.what() << std::endl;
+            return false;
         }
     }
 
@@ -279,8 +304,10 @@ public:
             U("https://api.dropbox.com/1/oauth/request_token"),
             U("https://www.dropbox.com/1/oauth/authorize"),
             U("https://api.dropbox.com/1/oauth/access_token"),
-            U("http://testhost.local:8889/"))
+            U("http://localhost:8889/"))
     {
+        // Dropbox uses obsolete OAuth Core 1.0: http://oauth.net/core/1.0/
+        m_oauth1_config.set_use_core10(true);
     }
 
 protected:
@@ -307,9 +334,7 @@ int main(int argc, char *argv[])
 
     linkedin.run();
     twitter.run();
-// TODO: Fix Dropbox oauth1 error:
-// Error: parameter 'oauth_callback_confirmed' missing from response: oauth_token_secret=qKJ7G4ZukgQ5Tr4c&oauth_token=p3XrfF74IsvE9MPB
-//    dropbox.run();
+    dropbox.run();
 
     ucout << "Done." << std::endl;
     return 0;

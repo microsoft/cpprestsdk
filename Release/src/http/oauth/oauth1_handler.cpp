@@ -41,7 +41,16 @@ namespace web { namespace http { namespace client { namespace experimental
 //
 // Start of platform-dependent _hmac_sha1() block...
 //
-#if defined(_MS_WINDOWS) && !defined(__cplusplus_winrt) // Windows desktop
+#if _WIN32_WINNT < _WIN32_WINNT_VISTA || _PHONE8_ // Windows XP or Windows Phone 8.0
+
+
+std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t, const utility::string_t)
+{
+    throw oauth1_exception(U("oauth1 is not supported"));
+}
+
+
+#elif defined(_MS_WINDOWS) && !defined(__cplusplus_winrt) // Windows desktop
 
 
 #include <winternl.h>
@@ -234,12 +243,12 @@ utility::string_t oauth1_config::_build_signature(http_request request, oauth1_a
     {
         return _build_plaintext_signature();
     }
-    throw oauth1_exception(U("invalid signature method."));
+    throw oauth1_exception(U("invalid signature method.")); // Should never happen.
 }
 
-pplx::task<void> oauth1_config::_request_token(oauth1_auth_state state, bool is_temp_token)
+pplx::task<void> oauth1_config::_request_token(oauth1_auth_state state, bool is_temp_token_request)
 {
-    utility::string_t endpoint = is_temp_token ? temp_endpoint() : token_endpoint();
+    utility::string_t endpoint = is_temp_token_request ? temp_endpoint() : token_endpoint();
     http_request req;
     req.set_method(methods::POST);
     req.set_request_uri(utility::string_t());
@@ -248,7 +257,7 @@ pplx::task<void> oauth1_config::_request_token(oauth1_auth_state state, bool is_
     _authenticate_request(req, std::move(state));
     http_client c(endpoint);
     return c.request(req)
-    .then([this, is_temp_token](pplx::task<http_response> req_task)
+    .then([this, is_temp_token_request](pplx::task<http_response> req_task) -> void
     {
         std::map<utility::string_t, utility::string_t> query;
         utility::string_t body;
@@ -256,8 +265,6 @@ pplx::task<void> oauth1_config::_request_token(oauth1_auth_state state, bool is_
         try
         {
             body = req_task.get().extract_string().get();
-// TODO: what exception we get here?
-// TODO: this may be issue in token_from_redirected_uri() also!
             query = uri::split_query(body);
         }
         catch (http_exception &e)
@@ -273,19 +280,18 @@ pplx::task<void> oauth1_config::_request_token(oauth1_auth_state state, bool is_
             throw oauth1_exception(U("encountered unknown exception"));
         }
         
-        if (is_temp_token)
+        if (is_temp_token_request && !use_core10())
         {
+            // Obsoleted OAuth Core 1.0 protocol will not return 'oauth_callback_confirmed' on temporary
+            // token request. Regular OAuth 1.0 and OAuth Core 1.0a MUST return this.
             auto callback_confirmed_param = query.find(oauth1_strings::callback_confirmed);
             if (callback_confirmed_param == query.end())
             {
-                throw oauth1_exception(U("parameter 'oauth_callback_confirmed' missing from response: ") + body);
-            }
-            if (callback_confirmed_param->second != U("true"))
-            {
-                throw oauth1_exception(U("parameter 'oauth_callback_confirmed' is not 'true' in the response: ") + body);
+                throw oauth1_exception(U("parameter 'oauth_callback_confirmed' is missing from response: ") + body
+                    + U(". the service may use obsolete OAuth Core 1.0. try setting use_core10() option."));
             }
         }
-        
+
         auto token_param = query.find(oauth1_strings::token);
         if (token_param == query.end())
         {
@@ -298,7 +304,7 @@ pplx::task<void> oauth1_config::_request_token(oauth1_auth_state state, bool is_
             throw oauth1_exception(U("parameter 'oauth_token_secret' missing from response: ") + body);
         }
         
-        // Set temp token as current until real token is fetched.
+        // Set the token even if the token is a temp token.
         set_token(oauth1_token(token_param->second, token_secret_param->second));
     });
 }
@@ -333,12 +339,29 @@ void oauth1_config::_authenticate_request(http_request &request, oauth1_auth_sta
 
 pplx::task<utility::string_t> oauth1_config::build_authorization_uri()
 {
-    return _request_token(_generate_auth_state(oauth1_strings::callback, uri::encode_data_string(callback_uri())), true)
-    .then([this]()
+    pplx::task<void> temp_token_req;
+
+    if (!use_core10())
     {
-// TODO: what happens with exception?
+        temp_token_req = _request_token(_generate_auth_state(oauth1_strings::callback, uri::encode_data_string(callback_uri())), true);
+    }
+    else
+    {
+        // Obsolete OAuth Core 1.0 does not require 'oauth_callback' parameter in temporary token request.
+        temp_token_req = _request_token(_generate_auth_state(), true);
+    }
+
+    return temp_token_req.then([this]() -> utility::string_t
+    {
         uri_builder ub(auth_endpoint());
         ub.append_query(oauth1_strings::token, token().token());
+
+        if (use_core10())
+        {
+            // Obsolete OAuth Core 1.0 has the 'oauth_callback' as query parameter in the authorization URI.
+            ub.append_query(oauth1_strings::callback, callback_uri());
+        }
+
         return ub.to_string();
     });
 }
@@ -346,27 +369,34 @@ pplx::task<utility::string_t> oauth1_config::build_authorization_uri()
 pplx::task<void> oauth1_config::token_from_redirected_uri(web::http::uri redirected_uri)
 {
     auto query = uri::split_query(redirected_uri.query());
-    
+
     auto token_param = query.find(oauth1_strings::token);
     if (token_param == query.end())
     {
-        throw oauth1_exception(U("parameter 'oauth_token' missing from redirected URI."));
+        return pplx::task_from_exception<void>(oauth1_exception(U("parameter 'oauth_token' missing from redirected URI.")));
     }
     if (token().token() != token_param->second)
     {
         utility::ostringstream_t err;
         err << U("redirected URI parameter 'oauth_token'='") << token_param->second
             << U("' does not match temporary token='") << token().token() << U("'.");
-        throw oauth2_exception(err.str().c_str());
+        return pplx::task_from_exception<void>(oauth1_exception(err.str().c_str()));
     }
     
-    auto verifier_param = query.find(oauth1_strings::verifier);
-    if (verifier_param == query.end())
+    if (!use_core10())
     {
-        throw oauth1_exception(U("parameter 'oauth_verifier' missing from redirected URI."));
+        auto verifier_param = query.find(oauth1_strings::verifier);
+        if (verifier_param == query.end())
+        {
+            return pplx::task_from_exception<void>(oauth1_exception(U("parameter 'oauth_verifier' missing from redirected URI.")));
+        }
+        return token_from_verifier(verifier_param->second);
     }
-
-    return token_from_verifier(verifier_param->second);
+    else
+    {
+        // Obsolete OAuth Core 1.0 does not require 'oauth_verifier'. Instead it uses 'oauth_token'.
+        return _request_token(_generate_auth_state(), false);
+    }
 }
 
 
