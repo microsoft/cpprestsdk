@@ -10,7 +10,7 @@ mv OpenSSL-for-iPhone/include openssl
 mv OpenSSL-for-iPhone/lib openssl
 git clone https://git.gitorious.org/boostoniphone/galbraithjosephs-boostoniphone.git boostoniphone
 pushd boostoniphone
-sed -e 's/\${BOOST_LIBS:=".*"}/\${BOOST_LIBS:="thread filesystem regex locale system"}/g' -i .bak boost.sh
+sed -e 's/\${BOOST_LIBS:=".*"}/\${BOOST_LIBS:="random thread filesystem regex locale system"}/g' -i .bak boost.sh
 ./boost.sh
 pushd ios/framework/boost.framework/Versions/A
 mkdir Headers2
