@@ -23,6 +23,8 @@ if(UNIX)
     http/listener/http_server_api.cpp
     http/oauth/oauth1_handler.cpp
     http/oauth/oauth2_handler.cpp
+    websockets/client/ws_msg.cpp
+    websockets/client/ws_client.cpp
     utilities/base64.cpp
     )
   if(APPLE)
@@ -47,6 +49,8 @@ elseif(WIN32)
     http/listener/http_listener.cpp
     http/listener/http_msg_listen.cpp
     http/listener/http_server_api.cpp
+    websockets/client/ws_msg.cpp
+    websockets/client/ws_client.cpp
     utilities/base64.cpp
     http/client/http_win7.cpp
     http/listener/http_windows_server.cpp
@@ -76,6 +80,7 @@ target_link_libraries(${Casablanca_LIBRARY}
   ${Boost_THREAD_LIBRARY}
   ${Boost_LOCALE_LIBRARY}
   ${Boost_REGEX_LIBRARY}
+  ${Boost_RANDOM_LIBRARY}
   ${COREFOUNDATION}
   ${EXTRALINKS}
   )

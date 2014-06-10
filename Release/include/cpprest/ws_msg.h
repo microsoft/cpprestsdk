@@ -23,15 +23,17 @@
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 #pragma once
-#if WINAPI_FAMILY == WINAPI_FAMILY_APP
 
 #ifndef _CASA_WS_MSG_H
 #define _CASA_WS_MSG_H
+
+#if defined(__cplusplus_winrt) || !defined(_M_ARM)
 
 #include <memory>
 #include <limits>
 
 #include "cpprest/xxpublic.h"
+#include "cpprest/containerstream.h"
 
 #if defined(_MSC_VER) && (_MSC_VER >= 1800)
 #include <ppltasks.h>
@@ -56,6 +58,7 @@ namespace client
 namespace details
 {
     class winrt_client;
+    class ws_desktop_client;
 }
 
 
@@ -97,7 +100,7 @@ public:
 
     void set_length(size_t len) { m_length = len; }
 
-    size_t length() { return m_length; } 
+    size_t length() { return m_length; }
 
     websocket_message_type message_type() { return m_msg_type; }
 
@@ -190,6 +193,7 @@ public:
 private:
 
     friend class details::winrt_client;
+    friend class details::ws_desktop_client;
 
     std::shared_ptr<details::_websocket_message> _m_impl;
 
@@ -257,11 +261,12 @@ public:
 
 private:
     friend class details::winrt_client;
+    friend class details::ws_desktop_client;
     std::shared_ptr<details::_websocket_message> _m_impl;
 };
 
 }}}}
 
-#endif  /* _CASA_WS_MSG_H */
+#endif
 
-#endif /* WINAPI_FAMILY == WINAPI_FAMILY_APP */
+#endif  /* _CASA_WS_MSG_H */

@@ -41,7 +41,7 @@
 #include <string>
 #include <cstring>
 
-#ifndef WIN32
+#ifndef _WIN32
 #include <boost/locale/encoding_utf.hpp>
 #endif
 
@@ -51,7 +51,7 @@ namespace details
 {
     inline std::string utf16_to_utf8(const std::basic_string<utf16char> &w)
     {
-#ifdef WIN32
+#ifdef _WIN32
         std::string result;
         size_t size;
         wcstombs_s(&size, nullptr, 0, (const wchar_t *)w.c_str(), w.size());
