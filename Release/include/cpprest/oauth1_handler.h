@@ -292,7 +292,7 @@ public:
     /// http://tools.ietf.org/html/rfc5849#section-3.4.3
     /// NOTE: This feature is not implemented.
     /// </summary>
-    utility::string_t _build_rsa_sha1_signature(http_request request, oauth1_auth_state state) const
+    utility::string_t _build_rsa_sha1_signature(http_request, oauth1_auth_state) const
     {
         throw oauth1_exception(_XPLATSTR("RSA-SHA1 signature method is not implemented."));
     }
@@ -319,7 +319,7 @@ public:
 private:
     friend class web::http::client::http_client_config;
     friend class oauth1_handler;
-    oauth1_config() {}
+    oauth1_config() : m_use_core10(false) {}
 
     utility::string_t _generate_nonce()
     {
