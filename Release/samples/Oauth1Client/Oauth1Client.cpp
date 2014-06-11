@@ -99,9 +99,9 @@ public:
         m_listener->support([this](http::http_request request) -> void
         {
             pplx::extensibility::scoped_critical_section_t lck(m_resplock);
-            m_config.token_from_redirected_uri(request.request_uri()).then([this,request](pplx::task<void> token_task) -> void
+            if (request.request_uri().path() == U("/") && request.request_uri().query() != U(""))
             {
-                if (request.request_uri().path() == U("/") && request.request_uri().query() != U(""))
+                m_config.token_from_redirected_uri(request.request_uri()).then([this,request](pplx::task<void> token_task) -> void
                 {
                     try
                     {
@@ -113,10 +113,14 @@ public:
                         ucout << "Error: " << e.what() << std::endl;
                         m_tce.set(false);
                     }
-                }
-            });
-            
-            request.reply(status_codes::OK, U("Ok."));
+                });
+
+                request.reply(status_codes::OK, U("Ok."));
+            }
+            else
+            {
+                request.reply(status_codes::NotFound, U("Not found."));
+            }
         });
         m_listener->open().wait();
     }

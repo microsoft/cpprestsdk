@@ -43,10 +43,9 @@ SUITE(oauth1_tests)
 
 struct oauth1_basic_config
 {
-// TODO: modify parameters (secret, token secret) to include encodable characters?
     oauth1_basic_config() :
         m_oauth1_config(U("test_key"), U("test_secret"),
-            oauth1_token(U("test_token"), U("test_token_secret")),
+            oauth1_token(U("test_token"), U("test_token_secret"), false),
             oauth1_methods::hmac_sha1),
         m_oauth1_handler(m_oauth1_config)
     {}
@@ -84,7 +83,7 @@ struct oauth1_auth_config_server : public oauth1_server_setup
 };
 
 
-// TODO: This test should be probably moved elsewhere.
+// TODO: This test should be probably moved elsewhere?
 TEST(oauth1_unique_nonces)
 {
     // Generate 100 nonces and check each is unique.
@@ -118,7 +117,7 @@ TEST_FIXTURE(oauth1_basic_config, oauth1_signature_base_string)
         ));
         VERIFY_ARE_EQUAL(correct_base_string, base_string);
     }
-    // Added extra_param and proper parameter normalization.
+    // Added "extra_param" and proper parameter normalization.
     {
         http_request r;
         r.set_method(methods::POST);
@@ -150,13 +149,11 @@ TEST_FIXTURE(oauth1_basic_config, oauth1_hmac_sha1_method)
 
     utility::string_t correct_signature(U("iUq3VlP39UNXoJHXlKjgSTmjEs8="));
     VERIFY_ARE_EQUAL(correct_signature, signature);
-
-// TODO: verify extra_param is added correctly???
 }
 
 TEST_FIXTURE(oauth1_basic_config, oauth1_rsa_sha1_method)
 {
-// TODO: verify signature over base string
+    // TODO: not implemented
 }
 
 TEST_FIXTURE(oauth1_basic_config, oauth1_plaintext_method)
@@ -168,8 +165,9 @@ TEST_FIXTURE(oauth1_basic_config, oauth1_plaintext_method)
 
 TEST_FIXTURE(oauth1_basic_config_server, oauth1_hmac_sha1_request)
 {
-    http_client_config client_config;
     m_oauth1_config.set_method(oauth1_methods::hmac_sha1);
+
+    http_client_config client_config;
     client_config.set_oauth1(m_oauth1_config);
     http_client client(m_server_uri, client_config);
 
@@ -181,19 +179,21 @@ TEST_FIXTURE(oauth1_basic_config_server, oauth1_hmac_sha1_request)
         request->reply(status_codes::OK);
     });
 
+    VERIFY_IS_TRUE(m_oauth1_config.token().is_valid());
     http_response response = client.request(methods::GET).get();
     VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
 }
 
 TEST_FIXTURE(oauth1_basic_config_server, oauth1_rsa_sha1_request)
 {
-// TODO: create test server, send request, verity headers are correct
+    // TODO: not implemented
 }
 
 TEST_FIXTURE(oauth1_basic_config_server, oauth1_plaintext_request)
 {
-    http_client_config client_config;
     m_oauth1_config.set_method(oauth1_methods::plaintext);
+
+    http_client_config client_config;
     client_config.set_oauth1(m_oauth1_config);
     http_client client(m_server_uri, client_config);
 
@@ -205,25 +205,22 @@ TEST_FIXTURE(oauth1_basic_config_server, oauth1_plaintext_request)
         request->reply(status_codes::OK);
     });
 
+    VERIFY_IS_TRUE(m_oauth1_config.token().is_valid());
     http_response response = client.request(methods::GET).get();
     VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
 }
 
 TEST_FIXTURE(oauth1_auth_config_server, oauth1_build_authorization_uri)
 {
-    http_client_config client_config;
-    client_config.set_oauth1(m_oauth1_config);
-    http_client client(m_server_uri, client_config);
-
     m_server.server()->next_request().then([](test_request *request)
     {
         const utility::string_t header_authorization(request->m_headers[header_names::authorization]);
 
-        // Verify empty token.
+        // Verify prefix, and without 'oauth_token'.
         const utility::string_t prefix(U("OAuth oauth_version=\"1.0\", oauth_consumer_key=\"test_key\", oauth_signature_method=\"HMAC-SHA1\", oauth_timestamp=\""));
         VERIFY_ARE_EQUAL(0, header_authorization.find(prefix));
 
-        // Verify 'oauth_callback'.
+        // Verify suffix with proper 'oauth_callback'.
         const utility::string_t suffix(U(", oauth_callback=\"http%3A%2F%2Flocalhost%3A17778%2F\""));
         VERIFY_IS_TRUE(std::equal(suffix.rbegin(), suffix.rend(), header_authorization.rbegin()));
 
@@ -233,31 +230,30 @@ TEST_FIXTURE(oauth1_auth_config_server, oauth1_build_authorization_uri)
         request->reply(status_codes::OK, U(""), headers, "oauth_token=foobar&oauth_token_secret=xyzzy&oauth_callback_confirmed=true");
     });
     
+    VERIFY_IS_FALSE(m_oauth1_config.token().is_temporary());
     utility::string_t auth_uri = m_oauth1_config.build_authorization_uri().get();
     VERIFY_ARE_EQUAL(auth_uri, U("http://localhost:17778/?oauth_token=foobar"));
+    VERIFY_IS_TRUE(m_oauth1_config.token().is_temporary());
 }
 
 // NOTE: This test also covers token_from_verifier().
 TEST_FIXTURE(oauth1_auth_config_server, oauth1_token_from_redirected_uri)
 {
-    http_client_config client_config;
-    client_config.set_oauth1(m_oauth1_config);
-    http_client client(m_server_uri, client_config);
-
-    m_oauth1_config.set_token(oauth1_token(U("xyzzy"), U(""))); // Simulate temporary token.
-// TODO: Set verify token secret from signature?
-
     m_server.server()->next_request().then([](test_request *request)
     {
         const utility::string_t header_authorization(request->m_headers[header_names::authorization]);
      
-        // Verify temp token.
+        // Verify temporary token prefix.
         const utility::string_t prefix(U("OAuth oauth_version=\"1.0\", oauth_consumer_key=\"test_key\", oauth_token=\"xyzzy\", oauth_signature_method=\"HMAC-SHA1\", oauth_timestamp=\""));
         VERIFY_ARE_EQUAL(0, header_authorization.find(prefix));
 
-        // Verify 'oauth_verifier'.
+        // Verify suffix with 'oauth_verifier'.
         const utility::string_t suffix(U(", oauth_verifier=\"simsalabim\""));
         VERIFY_IS_TRUE(std::equal(suffix.rbegin(), suffix.rend(), header_authorization.rbegin()));
+
+        // Verify we have 'oauth_nonce' and 'oauth_signature'.
+        VERIFY_ARE_NOT_EQUAL(utility::string_t::npos, header_authorization.find(U("oauth_nonce")));
+        VERIFY_ARE_NOT_EQUAL(utility::string_t::npos, header_authorization.find(U("oauth_signature")));
 
         // Reply with access token and secret.
         std::map<utility::string_t, utility::string_t> headers;
@@ -265,13 +261,71 @@ TEST_FIXTURE(oauth1_auth_config_server, oauth1_token_from_redirected_uri)
         request->reply(status_codes::OK, U(""), headers, "oauth_token=foo&oauth_token_secret=bar");
     });
     
+    m_oauth1_config.set_token(oauth1_token(U("xyzzy"), U(""), true)); // Simulate temporary token.
+    VERIFY_IS_TRUE(m_oauth1_config.token().is_temporary());
+
     const web::http::uri redirected_uri(U("http://localhost:17778/?oauth_token=xyzzy&oauth_verifier=simsalabim"));
     m_oauth1_config.token_from_redirected_uri(redirected_uri).wait();
 
+    VERIFY_IS_TRUE(m_oauth1_config.token().is_valid());
     VERIFY_ARE_EQUAL(m_oauth1_config.token().token(), U("foo"));
     VERIFY_ARE_EQUAL(m_oauth1_config.token().secret(), U("bar"));
 }
 
+TEST_FIXTURE(oauth1_auth_config_server, oauth1_core10)
+{
+    m_oauth1_config.set_use_core10(true);
+
+    // Verify authorization URI is without 'oauth_callback'.
+    m_server.server()->next_request().then([](test_request *request)
+    {
+        const utility::string_t header_authorization(request->m_headers[header_names::authorization]);
+
+        // Verify no token in prefix.
+        const utility::string_t prefix(U("OAuth oauth_version=\"1.0\", oauth_consumer_key=\"test_key\", oauth_signature_method=\"HMAC-SHA1\", oauth_timestamp=\""));
+        VERIFY_ARE_EQUAL(0, header_authorization.find(prefix));
+
+        // Verify no 'oauth_callback'.
+        VERIFY_ARE_EQUAL(utility::string_t::npos, header_authorization.find(U("oauth_callback")));
+
+        // Reply with temporary token and secret.
+        std::map<utility::string_t, utility::string_t> headers;
+        headers[header_names::content_type] = mime_types::application_x_www_form_urlencoded;
+        request->reply(status_codes::OK, U(""), headers, "oauth_token=foobar&oauth_token_secret=xyzzy");
+    });
+    
+    VERIFY_IS_FALSE(m_oauth1_config.token().is_temporary());
+    utility::string_t auth_uri = m_oauth1_config.build_authorization_uri().get();
+    VERIFY_ARE_EQUAL(auth_uri, U("http://localhost:17778/?oauth_token=foobar&oauth_callback=http://localhost:17778/"));
+    VERIFY_IS_TRUE(m_oauth1_config.token().is_temporary());
+
+    // Verify token request is sent without 'oauth_verifier' parameter.
+    m_server.server()->next_request().then([](test_request *request)
+    {
+        const utility::string_t header_authorization(request->m_headers[header_names::authorization]);
+
+        // Verify we have token in prefix.
+        const utility::string_t prefix(U("OAuth oauth_version=\"1.0\", oauth_consumer_key=\"test_key\", oauth_token=\"foobar\", oauth_signature_method=\"HMAC-SHA1\", oauth_timestamp=\""));
+        VERIFY_ARE_EQUAL(0, header_authorization.find(prefix));
+
+        // Verify we have 'oauth_nonce' and 'oauth_signature'.
+        VERIFY_ARE_NOT_EQUAL(utility::string_t::npos, header_authorization.find(U("oauth_nonce")));
+        VERIFY_ARE_NOT_EQUAL(utility::string_t::npos, header_authorization.find(U("oauth_signature")));
+
+        // Reply with access token and secret.
+        std::map<utility::string_t, utility::string_t> headers;
+        headers[header_names::content_type] = mime_types::application_x_www_form_urlencoded;
+        request->reply(status_codes::OK, U(""), headers, "oauth_token=baz&oauth_token_secret=123");
+    });
+
+    VERIFY_IS_FALSE(m_oauth1_config.token().is_valid());
+    const utility::string_t simulated_redirected_uri(U("http://localhost:17778/?oauth_token=foobar"));
+    m_oauth1_config.token_from_redirected_uri(simulated_redirected_uri).wait();
+
+    VERIFY_IS_TRUE(m_oauth1_config.token().is_valid());
+    VERIFY_ARE_EQUAL(m_oauth1_config.token().token(), U("baz"));
+    VERIFY_ARE_EQUAL(m_oauth1_config.token().secret(), U("123"));
+}
 
 } // SUITE(oauth1_tests)
 

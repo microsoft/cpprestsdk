@@ -95,13 +95,17 @@ private:
 class oauth1_token
 {
 public:
-    oauth1_token(utility::string_t token=utility::string_t(),
-            utility::string_t secret=utility::string_t()) :
+    oauth1_token(utility::string_t token, utility::string_t secret, bool is_temporary) :
         m_token(token),
-        m_secret(secret)
+        m_secret(secret),
+        m_is_temporary(is_temporary)
     {}
 
-    bool is_valid() const { return !(token().empty() || secret().empty()); }
+    oauth1_token() :
+        m_is_temporary(false)
+    {}
+
+    bool is_valid() const { return !(is_temporary() || token().empty() || secret().empty()); }
 
     const utility::string_t& token() const { return m_token; }
     void set_token(utility::string_t token) { m_token = std::move(token); }
@@ -109,9 +113,17 @@ public:
     const utility::string_t& secret() const { return m_secret; }
     void set_secret(utility::string_t secret) { m_secret = std::move(secret); }
 
+    bool is_temporary() const { return m_is_temporary; }
+    /// <summary>
+    /// If set, token is a temporary token. Note that is_valid() will also return
+    /// false if this option is set.
+    /// </summary>
+    void set_is_temporary(bool is_temporary) { m_is_temporary = std::move(is_temporary); }
+
 private:
     utility::string_t m_token;
     utility::string_t m_secret;
+    bool m_is_temporary;
 };
 
 
@@ -218,15 +230,25 @@ public:
 
     /// <summary>
     /// Creates a task to fetch token from the token endpoint.
-    /// The task creates a HTTP request to the token_endpoint() which is
-    /// used exchange a verifier to an access token.
+    /// Behavior depends on the use_core10() setting.
+    /// If use_core10() is not set, the request will exchange a verifier code
+    /// to an access token. Otherwise verifier is omitted and current (temporary)
+    /// token is used instead in the exchange.
     /// If successful, resulting token is set as active via set_token().
     /// See: http://tools.ietf.org/html/rfc5849#section-2.3
     /// </summary>
     /// <param name="verifier">Verifier received via redirect upon successful authorization.</param>
     pplx::task<void> token_from_verifier(utility::string_t verifier)
     {
-        return _request_token(_generate_auth_state(oauth1_strings::verifier, uri::encode_data_string(verifier)), false);
+        if (!use_core10())
+        {
+            return _request_token(_generate_auth_state(oauth1_strings::verifier, uri::encode_data_string(verifier)), false);
+        }
+        else
+        {
+            // Do not use verifier in obsolete OAuth Core 1.0.
+            return _request_token(_generate_auth_state(), false);
+        }
     }
 
     const utility::string_t& consumer_key() const { return m_consumer_key; }

@@ -305,7 +305,7 @@ pplx::task<void> oauth1_config::_request_token(oauth1_auth_state state, bool is_
         }
         
         // Set the token even if the token is a temp token.
-        set_token(oauth1_token(token_param->second, token_secret_param->second));
+        set_token(oauth1_token(token_param->second, token_secret_param->second, is_temp_token_request));
     });
 }
 
@@ -383,6 +383,7 @@ pplx::task<void> oauth1_config::token_from_redirected_uri(web::http::uri redirec
         return pplx::task_from_exception<void>(oauth1_exception(err.str().c_str()));
     }
     
+    utility::string_t verifier;
     if (!use_core10())
     {
         auto verifier_param = query.find(oauth1_strings::verifier);
@@ -390,13 +391,13 @@ pplx::task<void> oauth1_config::token_from_redirected_uri(web::http::uri redirec
         {
             return pplx::task_from_exception<void>(oauth1_exception(U("parameter 'oauth_verifier' missing from redirected URI.")));
         }
-        return token_from_verifier(verifier_param->second);
+        verifier = verifier_param->second;
     }
     else
     {
-        // Obsolete OAuth Core 1.0 does not require 'oauth_verifier'. Instead it uses 'oauth_token'.
-        return _request_token(_generate_auth_state(), false);
+        // Do not set verifier since obsolete OAuth Core 1.0 does not use 'oauth_verifier'.
     }
+    return token_from_verifier(verifier);
 }
 
 
