@@ -303,7 +303,11 @@ public:
 private:
     friend class web::http::client::http_client_config;
     friend class oauth2_handler;
-    oauth2_config() {}
+    oauth2_config() :
+        m_implicit_grant(false),
+        m_bearer_auth(true),
+        m_http_basic_auth(true)
+    {}
 
     _ASYNCRTIMP pplx::task<void> _request_token(uri_builder&& request_body);
 
