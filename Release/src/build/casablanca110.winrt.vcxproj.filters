@@ -3,6 +3,5 @@
   <PropertyGroup>
     <WinRTProject>true</WinRTProject>
   </PropertyGroup>
-  <Import Project="filterdefs.props" />
   <Import Project="sources.proj" />
 </Project>
