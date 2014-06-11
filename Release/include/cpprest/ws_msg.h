@@ -23,15 +23,17 @@
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 #pragma once
-#if WINAPI_FAMILY == WINAPI_FAMILY_APP
 
 #ifndef _CASA_WS_MSG_H
 #define _CASA_WS_MSG_H
+
+#if defined(__cplusplus_winrt) || !defined(_M_ARM)
 
 #include <memory>
 #include <limits>
 
 #include "cpprest/xxpublic.h"
+#include "cpprest/containerstream.h"
 
 #if defined(_MSC_VER) && (_MSC_VER >= 1800)
 #include <ppltasks.h>
@@ -56,6 +58,7 @@ namespace client
 namespace details
 {
     class winrt_client;
+    class ws_desktop_client;
 }
 
 
@@ -84,30 +87,20 @@ public:
     _ASYNCRTIMP void set_body(concurrency::streams::istream instream);
 
     /// <summary>
-    /// Set the stream through which the message body could be read
+    /// Get the streambuf for the message
     /// </summary>
-    void set_instream(concurrency::streams::istream instream)  { m_inStream = instream; }
+    concurrency::streams::streambuf<uint8_t>& streambuf() { return m_buf; }
 
     /// <summary>
-    /// Get the stream through which the message body could be read
+    /// Set the streambuf for the message
     /// </summary>
-    concurrency::streams::istream instream() const { return m_inStream; }
-
-    /// <summary>
-    /// Set the stream through which the message body could be written
-    /// </summary>
-    void set_outstream(concurrency::streams::ostream outstream)  { m_outStream = outstream;  }
-
-    /// <summary>
-    /// Get the stream through which the message body could be written
-    /// </summary>
-    concurrency::streams::ostream outstream() const { return m_outStream; }
+    void set_streambuf(concurrency::streams::streambuf<uint8_t> buf) { m_buf = buf; }
 
     void set_msg_type(websocket_message_type msg_type) { m_msg_type = msg_type; }
 
     void set_length(size_t len) { m_length = len; }
 
-    size_t length() { return m_length; } 
+    size_t length() { return m_length; }
 
     websocket_message_type message_type() { return m_msg_type; }
 
@@ -124,15 +117,7 @@ public:
 
 protected:
 
-    /// <summary>
-    /// Stream to read the message body.
-    /// </summary>
-    concurrency::streams::istream m_inStream;
-
-    /// <summary>
-    /// Stream to write the message body.
-    /// </summary>
-    concurrency::streams::ostream m_outStream;
+    concurrency::streams::streambuf<uint8_t> m_buf;
 
     websocket_message_type m_msg_type;
 
@@ -208,6 +193,7 @@ public:
 private:
 
     friend class details::winrt_client;
+    friend class details::ws_desktop_client;
 
     std::shared_ptr<details::_websocket_message> _m_impl;
 
@@ -254,7 +240,7 @@ public:
     /// </remarks>
     concurrency::streams::istream body() const
     {
-        return _m_impl->instream();
+        return _m_impl->streambuf().create_istream();
     }
 
     /// <summary>
@@ -275,11 +261,12 @@ public:
 
 private:
     friend class details::winrt_client;
+    friend class details::ws_desktop_client;
     std::shared_ptr<details::_websocket_message> _m_impl;
 };
 
 }}}}
 
-#endif  /* _CASA_WS_MSG_H */
+#endif
 
-#endif /* WINAPI_FAMILY == WINAPI_FAMILY_APP */
+#endif  /* _CASA_WS_MSG_H */

@@ -40,7 +40,7 @@ namespace pplx = Concurrency;
 
 #include "cpprest/xxpublic.h"
 
-#ifdef WIN32
+#ifdef _MS_WINDOWS
 #include <cstdint>
 #endif
 

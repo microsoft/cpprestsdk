@@ -114,75 +114,80 @@ TEST_FIXTURE(uri_address, response_headers)
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
 
-    // header with empty value
-    http_response response(status_codes::OK);
-    response.headers()[U("Key1")] = U("");
-    listener.support([&](http_request request)
+    // No http_request/response classes can be around for close to complete.
     {
-        http_asserts::assert_request_equals(request, methods::POST, U("/"));
-        request.reply(response).wait();
-    });
-    VERIFY_ARE_EQUAL(0u, p_client->request(methods::POST, U("")));
-    p_client->next_response().then([&](test_response *p_response)
-    {
-        http_asserts::assert_test_response_equals(p_response, status_codes::OK, response.headers());
-    }).wait();
+        // header with empty value
+        http_response response(status_codes::OK);
+        response.headers()[U("Key1")] = U("");
+        listener.support([&](http_request request)
+        {
+            http_asserts::assert_request_equals(request, methods::POST, U("/"));
+            request.reply(response).wait();
+        });
+        VERIFY_ARE_EQUAL(0u, p_client->request(methods::POST, U("")));
+        p_client->next_response().then([&](test_response *p_response)
+        {
+            http_asserts::assert_test_response_equals(p_response, status_codes::OK, response.headers());
+        }).wait();
 
-    // 10 headers
-    response = http_response(status_codes::Accepted);
-    response.headers()[U("MyHeader")] = U("hehe;blach");
-    response.headers()[U("Yo1")] = U("You, Too");
-    response.headers()[U("Yo2")] = U("You2");
-    response.headers()[U("Yo3")] = U("You3");
-    response.headers()[U("Yo4")] = U("You4");
-    response.headers()[U("Yo5")] = U("You5");
-    response.headers()[U("Yo6")] = U("You6");
-    response.headers()[U("Yo7")] = U("You7");
-    response.headers()[U("Yo8")] = U("You8");
-    response.headers()[U("Yo9")] = U("You9");
-    response.headers()[U("Yo10")] = U("You10");
-    response.headers()[U("Yo11")] = U("You11");
-    response.headers()[U("Accept")] = U("text/plain");
-    listener.support([&](http_request request)
-    {
-        http_asserts::assert_request_equals(request, methods::POST, U("/"));
-        request.reply(response).wait();
-    });
-    VERIFY_ARE_EQUAL(0u, p_client->request(methods::POST, U("")));
-    p_client->next_response().then([&](test_response *p_response)
-    {
-        http_asserts::assert_test_response_equals(p_response, status_codes::Accepted, response.headers());
-    }).wait();
+        // 10 headers
+        response = http_response(status_codes::Accepted);
+        response.headers()[U("MyHeader")] = U("hehe;blach");
+        response.headers()[U("Yo1")] = U("You, Too");
+        response.headers()[U("Yo2")] = U("You2");
+        response.headers()[U("Yo3")] = U("You3");
+        response.headers()[U("Yo4")] = U("You4");
+        response.headers()[U("Yo5")] = U("You5");
+        response.headers()[U("Yo6")] = U("You6");
+        response.headers()[U("Yo7")] = U("You7");
+        response.headers()[U("Yo8")] = U("You8");
+        response.headers()[U("Yo9")] = U("You9");
+        response.headers()[U("Yo10")] = U("You10");
+        response.headers()[U("Yo11")] = U("You11");
+        response.headers()[U("Accept")] = U("text/plain");
+        listener.support([&](http_request request)
+        {
+            http_asserts::assert_request_equals(request, methods::POST, U("/"));
+            request.reply(response).wait();
+        });
+        VERIFY_ARE_EQUAL(0u, p_client->request(methods::POST, U("")));
+        p_client->next_response().then([&](test_response *p_response)
+        {
+            http_asserts::assert_test_response_equals(p_response, status_codes::Accepted, response.headers());
+        }).wait();
 
-    // several headers in different casings
-    response = http_response(status_codes::BadGateway);
-    response.headers().add(U("Key1"), U("value1"));
-    response.headers()[U("KEY1")] += U("value2");
-    listener.support([&](http_request request)
-    {
-        http_asserts::assert_request_equals(request, methods::POST, U("/"));
-        request.reply(response).wait();
-    });
-    VERIFY_ARE_EQUAL(0u, p_client->request(methods::POST, U("")));
-    p_client->next_response().then([&](test_response *p_response)
-    {
-        http_asserts::assert_test_response_equals(p_response, status_codes::BadGateway, response.headers());
-    }).wait();
+        // several headers in different casings
+        response = http_response(status_codes::BadGateway);
+        response.headers().add(U("Key1"), U("value1"));
+        response.headers()[U("KEY1")] += U("value2");
+        listener.support([&](http_request request)
+        {
+            http_asserts::assert_request_equals(request, methods::POST, U("/"));
+            request.reply(response).wait();
+        });
+        VERIFY_ARE_EQUAL(0u, p_client->request(methods::POST, U("")));
+        p_client->next_response().then([&](test_response *p_response)
+        {
+            http_asserts::assert_test_response_equals(p_response, status_codes::BadGateway, response.headers());
+        }).wait();
 
-    // duplicate headers fields
-    response = http_response(status_codes::BadGateway);
-    response.headers().add(U("Key1"), U("value1"));
-    response.headers().add(U("Key1"), U("value2"));
-    listener.support([&](http_request request)
-    {
-        http_asserts::assert_request_equals(request, methods::POST, U("/"));
-        request.reply(response).wait();
-    });
-    VERIFY_ARE_EQUAL(0u, p_client->request(methods::POST, U("")));
-    p_client->next_response().then([&](test_response *p_response)
-    {
-        http_asserts::assert_test_response_equals(p_response, status_codes::BadGateway, response.headers());
-    }).wait();
+        // duplicate headers fields
+        response = http_response(status_codes::BadGateway);
+        response.headers().add(U("Key1"), U("value1"));
+        response.headers().add(U("Key1"), U("value2"));
+        listener.support([&](http_request request)
+        {
+            http_asserts::assert_request_equals(request, methods::POST, U("/"));
+            request.reply(response).wait();
+        });
+        VERIFY_ARE_EQUAL(0u, p_client->request(methods::POST, U("")));
+        p_client->next_response().then([&](test_response *p_response)
+        {
+            http_asserts::assert_test_response_equals(p_response, status_codes::BadGateway, response.headers());
+        }).wait();
+    }
+
+    listener.close().wait();
 }
 
 }

@@ -25,10 +25,16 @@
 
 #include "stdafx.h"
 
+#if defined(__cplusplus_winrt) || !defined(_M_ARM)
+
 using namespace concurrency::streams;
+
+#if defined(WINAPI_FAMILY) && WINAPI_FAMILY != WINAPI_FAMILY_DESKTOP_APP
 
 using namespace Windows::Foundation;
 using namespace Windows::System::Threading;
+
+#endif
 
 using namespace web;
 using namespace web::experimental::web_sockets;
@@ -61,7 +67,7 @@ TEST_FIXTURE(uri_address, client_construction_error_cases)
 
     // Invalid scheme.
     verify_client_invalid_argument(address);
-    
+
     // empty host.
     address = uri(U("ws://:34567/"));
     verify_client_invalid_argument(address);
@@ -71,12 +77,14 @@ TEST_FIXTURE(uri_address, client_construction_error_cases)
 TEST_FIXTURE(uri_address, get_client_config)
 {
     websocket_client_config config;
-    
-    config.set_message_type(websocket_message_type::binary_message);
+
+    web::credentials cred(U("username"), U("password"));
+    config.set_credentials(cred);
     websocket_client client(m_uri, config);
 
     const websocket_client_config& config2 = client.config();
-    VERIFY_ARE_EQUAL(config2.message_type(), websocket_message_type::binary_message);
+    VERIFY_ARE_EQUAL(config2.credentials().username(), cred.username());
+    VERIFY_ARE_EQUAL(config2.credentials().password(), cred.password());
 }
 
 // Verify that we can get the baseuri from websocket_client constructors
@@ -120,7 +128,7 @@ TEST_FIXTURE(uri_address, move_operations)
         VERIFY_ARE_EQUAL(body.compare(ret_str), 0);
         VERIFY_ARE_EQUAL(ret_msg.messge_type(), websocket_message_type::text_message);
     });
-    
+
     test_websocket_msg rmsg;
     rmsg.set_data(body_vec);
     rmsg.set_msg_type(test_websocket_message_type::WEB_SOCKET_UTF8_MESSAGE_TYPE);
@@ -154,6 +162,30 @@ TEST_FIXTURE(uri_address, move_operations)
     client.close().wait();
 }
 
+TEST_FIXTURE(uri_address, connect_with_headers)
+{
+    test_websocket_server server;
+    websocket_client_config config;
+    utility::string_t header_name(U("HeaderTest"));
+    utility::string_t header_val(U("ConnectSuccessfully"));
+    config.headers().add(header_name, header_val);
+    websocket_client client(m_uri, config);
+
+    server.set_http_handler([&](test_http_request request)
+    {
+        test_http_response resp;
+        if (request.get_header_val(utility::conversions::to_utf8string(header_name)).compare(utility::conversions::to_utf8string(header_val)) == 0)
+            resp.set_status_code(200); // Handshake request will be completed only if header match succeeds.
+        else
+            resp.set_status_code(400); // Else fail the handshake, websocket client connect will fail in this case.
+        return resp;
+    });
+    client.connect().wait();
+    client.close().wait();
+}
+
 } // SUITE(client_construction)
 
 }}}}
+
+#endif

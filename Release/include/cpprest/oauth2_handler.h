@@ -43,6 +43,21 @@ namespace experimental
 
 
 /// <summary>
+/// Constant strings.
+/// </summary>
+typedef utility::string_t oauth2_string;
+class oauth2_strings
+{
+public:
+#define _OAUTH2_STRINGS
+#define DAT(a_, b_) _ASYNCRTIMP static const oauth2_string a_;
+#include "cpprest/http_constants.dat"
+#undef _OAUTH2_STRINGS
+#undef DAT
+};
+
+
+/// <summary>
 /// Exception type for OAuth 2.0 errors.
 /// </summary>
 class oauth2_exception : public std::exception
@@ -54,6 +69,43 @@ public:
 
 private:
     std::string m_msg;
+};
+
+
+/// <summary>
+/// OAuth 2.0 token and associated information.
+/// </summary>
+class oauth2_token
+{
+public:
+    oauth2_token(utility::string_t access_token=utility::string_t()) :
+        m_access_token(access_token),
+        m_expires_in(-1)
+    {}
+
+    bool is_valid() const { return !access_token().empty(); }
+
+    const utility::string_t& access_token() const { return m_access_token; }
+    void set_access_token(utility::string_t access_token) { m_access_token = std::move(access_token); }
+
+    const utility::string_t& refresh_token() const { return m_refresh_token; }
+    void set_refresh_token(utility::string_t refresh_token) { m_refresh_token = std::move(refresh_token); }
+
+    const utility::string_t& token_type() const { return m_token_type; }
+    void set_token_type(utility::string_t token_type) { m_token_type = std::move(token_type); }
+
+    const utility::string_t& scope() const { return m_scope; }
+    void set_scope(utility::string_t scope) { m_scope = std::move(scope); }
+
+    int expires_in() const { return m_expires_in; }
+    void set_expires_in(int expires_in) { m_expires_in = expires_in; }
+
+private:
+    utility::string_t m_access_token;
+    utility::string_t m_refresh_token;
+    utility::string_t m_token_type;
+    utility::string_t m_scope;
+    int m_expires_in;
 };
 
 
@@ -99,6 +151,7 @@ private:
 class oauth2_config
 {
 public:
+
     oauth2_config(utility::string_t client_key, utility::string_t client_secret,
             utility::string_t auth_endpoint, utility::string_t token_endpoint,
             utility::string_t redirect_uri) :
@@ -110,18 +163,16 @@ public:
                 m_implicit_grant(false),
                 m_bearer_auth(true),
                 m_http_basic_auth(true),
-                m_access_token_key(_XPLATSTR("access_token"))
-    {
-    }
+                m_access_token_key(oauth2_strings::access_token)
+    {}
 
-    oauth2_config(utility::string_t token) :
+    oauth2_config(oauth2_token token) :
         m_token(std::move(token)),
         m_implicit_grant(false),
         m_bearer_auth(true),
         m_http_basic_auth(true),
-        m_access_token_key(_XPLATSTR("access_token"))
-    {
-    }
+        m_access_token_key(oauth2_strings::access_token)
+    {}
 
     /// <summary>
     /// Builds an authorization URI to be loaded in the web browser.
@@ -129,32 +180,59 @@ public:
     /// The implicit_grant() affects the built URI by selecting
     /// either authorization code or implicit grant flow.
     /// </summary>
-    _ASYNCRTIMP utility::string_t build_authorization_uri() const;
+    _ASYNCRTIMP utility::string_t build_authorization_uri();
 
     /// <summary>
     /// Get the access token based on redirected URI.
     /// Behavior depends on the implicit_grant() setting.
-    /// If implicit_grant() is false redirect URI is parsed for 'code' query
-    /// parameter which is then used to fetch a token
-    /// from token_endpoint().
+    /// If implicit_grant() is false, the URI is parsed for 'code'
+    /// parameter, which is then used to fetch a token using the
+    /// token_from_code() method.
+    /// See: http://tools.ietf.org/html/rfc6749#section-4.1
     /// Otherwise, redirect URI fragment part is parsed for 'access_token'
-    /// parameter containing the token.
-    /// In both cases 'state' parameter is parsed and verified to match state().
+    /// parameter, which directly contains the access token.
+    /// See: http://tools.ietf.org/html/rfc6749#section-4.2
+    /// In both cases, the 'state' parameter is parsed and verified to match
+    /// state().
     /// When token is successfully obtained, set_token() is called, and config is
     /// ready for use.
-    /// An oauth2_exception is thrown if anything fails.
     /// </summary>
-    _ASYNCRTIMP pplx::task<void> token_from_redirected_uri(uri redirected_uri);
+    _ASYNCRTIMP pplx::task<void> token_from_redirected_uri(web::http::uri redirected_uri);
 
     /// <summary>
     /// Creates a task to fetch token from the token endpoint.
-    /// The task creates a request to the token_endpoint() which is used exchange an authorization code to an access token.
+    /// The task creates a HTTP request to the token_endpoint() which is
+    /// used exchange an authorization code to an access token.
     /// If successful, resulting token is set as active via set_token().
+    /// If a refresh token was returned, this method also calls set_refresh_token().
+    /// See: http://tools.ietf.org/html/rfc6749#section-4.1.3
     /// </summary>
     /// <param name="authorization_code">Code received via redirect upon successful authorization.</param>
-    _ASYNCRTIMP pplx::task<void> fetch_token(utility::string_t authorization_code);
+    pplx::task<void> token_from_code(utility::string_t authorization_code)
+    {
+        uri_builder ub;
+        ub.append_query(oauth2_strings::grant_type, oauth2_strings::authorization_code, false);
+        ub.append_query(oauth2_strings::code, uri::encode_data_string(authorization_code), false);
+        ub.append_query(oauth2_strings::redirect_uri, uri::encode_data_string(redirect_uri()), false);
+        return _request_token(std::move(ub));
+    }
 
-    bool is_enabled() const { return !m_token.empty(); }
+    /// <summary>
+    /// Creates a task to fetch new token using refresh token.
+    /// The task creates a HTTP request to the token_endpoint() to refresh
+    /// the access token.
+    /// If successfull, resulting token is set as active via set_token().
+    /// See: http://tools.ietf.org/html/rfc6749#section-6
+    /// </summary>
+    pplx::task<void> token_from_refresh()
+    {
+        uri_builder ub;
+        ub.append_query(oauth2_strings::grant_type, oauth2_strings::refresh_token, false);
+        ub.append_query(oauth2_strings::refresh_token, uri::encode_data_string(token().refresh_token()), false);
+        return _request_token(std::move(ub));
+    }
+
+    bool is_enabled() const { return token().is_valid(); }
 
     const utility::string_t& client_key() const { return m_client_key; }
     void set_client_key(utility::string_t client_key) { m_client_key = std::move(client_key); }
@@ -175,14 +253,19 @@ public:
     void set_scope(utility::string_t scope) { m_scope = std::move(scope); }
 
     const utility::string_t& state() const { return m_state; }
-    /// <summary>
-    /// State string should be unique for each authorization session.
-    /// This state string should be returned by the authorization server on redirect.
-    /// </summary>
-    void set_state(utility::string_t state) { m_state = std::move(state); }
 
-    const utility::string_t& token() const { return m_token; }
-    void set_token(utility::string_t token) { m_token = std::move(token); }
+    const utility::string_t& custom_state() const { return m_custom_state; }
+    /// <summary>
+    /// Set a custom state string to be used in the next authorization session.
+    /// Call this only if there is a specific need to have a custom state
+    /// string. A state string is generated automatically by oauth2_config
+    /// if custom_state() string is empty.
+    /// A good state string consist of 30 or more random alphanumeric characters.
+    /// </summary>
+    void set_custom_state(utility::string_t custom_state) { m_custom_state = std::move(custom_state); }
+
+    const oauth2_token& token() const { return m_token; }
+    void set_token(oauth2_token token) { m_token = std::move(token); }
 
     bool implicit_grant() const { return m_implicit_grant; }
     /// <summary>
@@ -219,7 +302,30 @@ public:
 
 private:
     friend class web::http::client::http_client_config;
-    oauth2_config() {}
+    friend class oauth2_handler;
+    oauth2_config() :
+        m_implicit_grant(false),
+        m_bearer_auth(true),
+        m_http_basic_auth(true)
+    {}
+
+    _ASYNCRTIMP pplx::task<void> _request_token(uri_builder&& request_body);
+
+    oauth2_token _parse_token_from_json(json::value& token_json);
+
+    void _authenticate_request(http_request &req) const
+    {
+        if (bearer_auth())
+        {
+            req.headers().add(header_names::authorization, _XPLATSTR("Bearer ") + token().access_token());
+        }
+        else
+        {
+            uri_builder ub(req.request_uri());
+            ub.append_query(access_token_key(), token().access_token());
+            req.set_request_uri(ub.to_uri());
+        }
+    }
 
     utility::string_t m_client_key;
     utility::string_t m_client_secret;
@@ -234,7 +340,10 @@ private:
     bool m_http_basic_auth;
     utility::string_t m_access_token_key;
 
-    utility::string_t m_token;
+    oauth2_token m_token;
+
+    utility::string_t m_custom_state;
+    utility::nonce_generator m_state_generator;
 };
 
 
@@ -250,7 +359,14 @@ public:
     const oauth2_config& config() const { return m_config; }
     void set_config(oauth2_config cfg) { m_config = std::move(cfg); }
 
-    _ASYNCRTIMP virtual pplx::task<http_response> propagate(http_request request) override;
+    virtual pplx::task<http_response> propagate(http_request request) override
+    {
+        if (config().is_enabled())
+        {
+            config()._authenticate_request(request);
+        }
+        return next_stage()->propagate(request);
+    }
 
 private:
     oauth2_config m_config;

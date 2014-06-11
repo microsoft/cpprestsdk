@@ -40,6 +40,7 @@ namespace pplx = Concurrency;
 #include <vector>
 #include <cstdint>
 #include <system_error>
+#include <random>
 
 #if !defined(_MS_WINDOWS) || (_MSC_VER >= 1700)
 #include <chrono>
@@ -225,6 +226,13 @@ namespace details
 #endif
     }
 
+    // Turn const_iterator into an iterator
+    template <typename Container, typename ConstIterator>
+    typename Container::iterator remove_iterator_constness(Container& c, ConstIterator it)
+    {
+        return c.erase(it, it);
+    }
+
 #ifdef _MS_WINDOWS
 
 /// <summary>
@@ -305,10 +313,11 @@ public:
 
     /// <summary>
     /// Returns seconds since Unix/POSIX time epoch at 01-01-1970 00:00:00.
+    /// NOTE: Return value is negative if timestamp is before epoch.
     /// </summary>
     static interval_type utc_timestamp()
     {
-        return utc_now().to_interval() / _secondTicks;
+        return (utc_now().to_interval() / _secondTicks) - 11644473600LL;
     }
 
     datetime() : m_interval(0)
@@ -453,5 +462,30 @@ inline int operator- (datetime t1, datetime t2)
     
     return static_cast<int>(diff);
 }
+
+
+/// <summary>
+/// Nonce generator class.
+/// </summary>
+class nonce_generator
+{
+public:
+    nonce_generator(int length=32) :
+        m_random((unsigned int) utility::datetime::utc_timestamp()),
+        m_length(length)
+    {
+    }
+
+    _ASYNCRTIMP utility::string_t generate();
+
+    int length() const { return m_length; }
+    void set_length(int length) { m_length = length; }
+
+private:
+    static const utility::string_t c_allowed_chars;
+    std::mt19937 m_random;
+    int m_length;
+};
+
 
 } // namespace utility;

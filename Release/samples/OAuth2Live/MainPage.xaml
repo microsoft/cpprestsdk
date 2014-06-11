@@ -13,33 +13,25 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <Grid x:Name="Input" Grid.Row="0" Margin="8,8,8,8">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
             <StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="0,4,0,4">
                     <TextBlock TextWrapping="Wrap" Style="{StaticResource BasicTextStyle}" Text="OAuth 2.0 Live sample." VerticalAlignment="Center" Margin="4,0,4,0"/>
-                    <Button x:Name="StartButton" Content="Start" Click="StartButtonClick" Margin="4,0,4,0"/>
+                    <Button x:Name="GetTokenButton" Content="Get token (authorize)" Click="GetTokenButtonClick" Margin="4,0,4,0"/>
                     <CheckBox x:Name="ImplicitGrantCheckBox" Content="Implicit grant" Unchecked="ImplicitGrantUnchecked" Checked="ImplicitGrantChecked"/>
-                    <Button x:Name="InfoButton" Content="Info" Click="InfoButtonClick" Margin="4,0,4,0" IsEnabled="False"/>
-                    <Button x:Name="ContactsButton" Content="Contacts" Click="ContactsButtonClick" Margin="4,0,4,0" IsEnabled="False"/>
-                    <Button x:Name="EventsButton" Content="Events" Click="EventsButtonClick" Margin="4,0,4,0" IsEnabled="False"/>
+                    <Button x:Name="RefreshTokenButton" Content="Refresh token" Click="RefreshTokenButtonClick" Margin="4,0,4,0" IsEnabled="False"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="0,4,0,4">
-                    <TextBlock TextWrapping="Wrap" Style="{StaticResource BasicTextStyle}" Text="Authorization code" VerticalAlignment="Center" Margin="4,0,4,0"/>
-                    <TextBox x:Name="AuthorizationCode" Height="14" Width="457" Text="" TextChanged="AuthCodeTextChanged" IsEnabled="False" Margin="4,0,4,0"/>
+                    <TextBlock TextWrapping="Wrap" Style="{StaticResource BasicTextStyle}" Text="Actions:" VerticalAlignment="Center" Margin="4,0,4,0"/>
+                    <Button x:Name="GetInfoButton" Content="Get user info" Click="GetInfoButtonClick" Margin="4,0,4,0" IsEnabled="False"/>
+                    <Button x:Name="GetContactsButton" Content="Get contacts" Click="GetContactsButtonClick" Margin="4,0,4,0" IsEnabled="False"/>
+                    <Button x:Name="GetEventsButton" Content="Get events" Click="GetEventsButtonClick" Margin="4,0,4,0" IsEnabled="False"/>
                 </StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="0,4,0,4">
-                    <TextBlock TextWrapping="Wrap" Style="{StaticResource BasicTextStyle}" Text="Access token" VerticalAlignment="Center" Margin="4,0,4,0"/>
-                    <TextBox x:Name="AccessToken" Height="14" Width="497" Text="" IsEnabled="False" Margin="4,0,4,0" TextChanged="AccessTokenTextChanged"/>
-                </StackPanel>
-            </StackPanel>
-        </Grid>
-        <Grid x:Name="Output" Grid.Row="1" Margin="8,8,0,0">
-            <TextBox x:Name="DebugArea" HorizontalAlignment="Left" Height="400" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="590" Margin="4,0,4,0"
+                <TextBlock TextWrapping="Wrap" Style="{StaticResource BasicTextStyle}" Text="Token:" Margin="4,4,4,4"/>
+                <TextBox x:Name="AccessToken" Height="128" VerticalAlignment="Top" Width="Auto" Text="" IsEnabled="False" TextWrapping="Wrap" Margin="4,4,4,4" TextChanged="AccessTokenTextChanged"/>
+                <TextBox x:Name="DebugArea" Height="400" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="Auto" Margin="4,4,4,4"
                      ScrollViewer.VerticalScrollBarVisibility="Auto"
                      AcceptsReturn="True"/>
+            </StackPanel>
         </Grid>
     </Grid>
 </Page>

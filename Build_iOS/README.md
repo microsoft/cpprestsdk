@@ -110,7 +110,7 @@ Using Casablanca
 ----------------
 You will need to link against the following from your project:
 
-  * build.ios/libcasablanca.a
+  * build.ios/libcpprest.a
   * boost.framework
   * openssl/lib/libcrypto.a
   * openssl/lib/libssl.a

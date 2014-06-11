@@ -58,6 +58,8 @@ TEST_FIXTURE(uri_address, large_body, "Ignore:Linux", "712252", "Ignore:Apple", 
     {
         http_asserts::assert_test_response_equals(p_response, status_codes::OK);
     }).wait();
+
+    listener.close().wait();
 }
 
 TEST_FIXTURE(uri_address, test_chunked_transfer)

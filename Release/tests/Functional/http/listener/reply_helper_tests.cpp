@@ -43,6 +43,8 @@ TEST_FIXTURE(uri_address, json)
     {
         http_asserts::assert_test_response_equals(p_response, status_codes::OK, U("application/json"), U("true"));
     }).wait();
+
+    listener.close().wait();
 }
 
 TEST_FIXTURE(uri_address, string)
@@ -84,6 +86,8 @@ TEST_FIXTURE(uri_address, string)
     {
         http_asserts::assert_test_response_equals(p_response, status_codes::OK, U("text/plain"), U("test str"));
     }).wait();
+
+    listener.close().wait();
 }
 
 TEST_FIXTURE(uri_address, multiple_responses_to_request)
@@ -93,9 +97,9 @@ TEST_FIXTURE(uri_address, multiple_responses_to_request)
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
 
-    http_response response(status_codes::OK);
-    listener.support([&](http_request request)
+    listener.support([](http_request request)
     {
+        http_response response(status_codes::OK);
         request.reply(response).wait();
 
         // try responding to the request again
@@ -106,6 +110,8 @@ TEST_FIXTURE(uri_address, multiple_responses_to_request)
     {
         http_asserts::assert_test_response_equals(p_response, status_codes::OK);
     }).wait();
+
+    listener.close().wait();
 }
 
 }

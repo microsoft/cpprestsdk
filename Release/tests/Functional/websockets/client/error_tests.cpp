@@ -25,6 +25,8 @@
 
 #include "stdafx.h"
 
+#if defined(__cplusplus_winrt) || !defined(_M_ARM)
+
 using namespace concurrency::streams;
 
 using namespace web::experimental::web_sockets;
@@ -56,7 +58,7 @@ TEST_FIXTURE(uri_address, server_doesnt_exist)
 }
 
 // Send after close
-TEST_FIXTURE(uri_address, send_after_close, "Ignore", "902663")
+TEST_FIXTURE(uri_address, send_after_close)
 {
     std::string body("hello");
     test_websocket_server server;
@@ -109,7 +111,8 @@ TEST_FIXTURE(uri_address, try_receive_after_server_initiated_close)
     msg.set_msg_type(test_websocket_message_type::WEB_SOCKET_CLOSE_TYPE);
     server.send_msg(msg);
 
-    std::chrono::milliseconds dura(3000);
+    // 100 ms should be plenty for local loopback
+    std::chrono::milliseconds dura(100);
     std::this_thread::sleep_for(dura);
 
     auto t = client.receive();
@@ -126,6 +129,7 @@ TEST_FIXTURE(uri_address, destroy_without_close)
 
     {
         websocket_client client(m_uri);
+
         client.connect().wait();
 
         t = client.receive();
@@ -143,6 +147,28 @@ TEST_FIXTURE(uri_address, connect_fail_with_receive)
     VERIFY_THROWS(client.connect().get(), websocket_exception);
     VERIFY_THROWS(t.get(), websocket_exception);
 }
+
+#ifdef __cplusplus_winrt
+TEST_FIXTURE(uri_address, send_fragment)
+{
+    std::string body("hello");
+    test_websocket_server server;
+
+    server.next_message([&](test_websocket_msg msg)
+    {
+        websocket_asserts::assert_message_equals(msg, body, test_websocket_message_type::WEB_SOCKET_UTF8_FRAGMENT_TYPE);
+    });
+    websocket_client client(m_uri);
+    client.connect().wait();
+    
+    websocket_outgoing_message msg;
+    msg.set_utf8_fragment(body);
+    VERIFY_THROWS(client.send(msg).wait(), websocket_exception);
+}
+#endif
+
 } // SUITE(error_tests)
 
 }}}}
+
+#endif

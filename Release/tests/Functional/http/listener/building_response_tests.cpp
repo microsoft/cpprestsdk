@@ -34,11 +34,11 @@ TEST_FIXTURE(uri_address, set_body_with_content_type)
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
 
-    http_response response(status_codes::OK);
-    response.set_body(U("test string"), U("text"));
     listener.support([&](http_request request)
     {
         http_asserts::assert_request_equals(request, methods::POST, U("/"));
+        http_response response(status_codes::OK);
+        response.set_body(U("test string"), U("text"));
         request.reply(response).wait();
     });
     VERIFY_ARE_EQUAL(0u, p_client->request(methods::POST, U("")));
@@ -46,6 +46,8 @@ TEST_FIXTURE(uri_address, set_body_with_content_type)
     {
         http_asserts::assert_test_response_equals(p_response, status_codes::OK, U("text; charset=utf-8"), U("test string"));
     }).wait();
+
+    listener.close().wait();
 }
 
 TEST_FIXTURE(uri_address, set_body_without_content_type)
@@ -55,10 +57,10 @@ TEST_FIXTURE(uri_address, set_body_without_content_type)
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
 
-    http_response response(status_codes::OK);
-    response.set_body(U("test string"));
     listener.support([&](http_request request)
     {
+        http_response response(status_codes::OK);
+        response.set_body(U("test string"));
         http_asserts::assert_request_equals(request, methods::POST, U("/"));
         request.reply(response).wait();
     });
@@ -67,6 +69,8 @@ TEST_FIXTURE(uri_address, set_body_without_content_type)
     {
         http_asserts::assert_test_response_equals(p_response, status_codes::OK, U("text/plain; charset=utf-8"), U("test string"));
     }).wait();
+
+    listener.close().wait();
 }
 
 TEST_FIXTURE(uri_address, set_body_string)
@@ -76,12 +80,12 @@ TEST_FIXTURE(uri_address, set_body_string)
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
 
-    http_response response(status_codes::OK);
-    utility::string_t data(U("test data"));
-    response.set_body(std::move(data));
     listener.support([&](http_request request)
     {
         http_asserts::assert_request_equals(request, methods::POST, U("/"));
+        http_response response(status_codes::OK);
+        utility::string_t data(U("test data"));
+        response.set_body(std::move(data));
         request.reply(response).wait();
     });
     VERIFY_ARE_EQUAL(0, p_client->request(methods::POST, U("")));
@@ -89,6 +93,8 @@ TEST_FIXTURE(uri_address, set_body_string)
     {
         http_asserts::assert_test_response_equals(p_response, status_codes::OK, U("text/plain; charset=utf-8"), U("test data"));
     }).wait();
+
+    listener.close().wait();
 }
 
 TEST(set_body_string_with_charset)
@@ -104,15 +110,15 @@ TEST_FIXTURE(uri_address, set_body_vector)
     test_http_client::scoped_client client(m_uri);
     test_http_client * p_client = client.client();
 
-    http_response response(status_codes::OK);
-    std::vector<unsigned char> v_body;
-    v_body.push_back('A');
-    v_body.push_back('B');
-    v_body.push_back('C');
-    response.set_body(std::move(v_body));
     listener.support([&](http_request request)
     {
         http_asserts::assert_request_equals(request, methods::POST, U("/"));
+        http_response response(status_codes::OK);
+        std::vector<unsigned char> v_body;
+        v_body.push_back('A');
+        v_body.push_back('B');
+        v_body.push_back('C');
+        response.set_body(std::move(v_body));
         request.reply(response).wait();
     });
     VERIFY_ARE_EQUAL(0, p_client->request(methods::POST, U("")));
@@ -120,6 +126,8 @@ TEST_FIXTURE(uri_address, set_body_vector)
     {
         http_asserts::assert_test_response_equals(p_response, status_codes::OK, U("application/octet-stream"), U("ABC"));
     }).wait();
+
+    listener.close().wait();
 }
 
 }

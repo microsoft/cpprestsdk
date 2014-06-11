@@ -87,9 +87,8 @@ namespace Concurrency { namespace streams {
         /// </summary>
         virtual ~basic_stdio_buffer()
         {
-            if( this->can_read() || this->can_write() ) {
-                this->close().wait();
-            }
+            this->_close_read();
+            this->_close_write();
         }
 
     private:

@@ -12,7 +12,7 @@ add_library(${LIB}common_utilities
   )
   
 target_link_libraries(${LIB}common_utilities
-  ${LIB}casablanca
+  ${Casablanca_LIBRARY}
   ${LIB}unittestpp
   ${BOOST_SYSTEM_LIBRARY}
   ${BOOST_THREAD_LIBRARY}

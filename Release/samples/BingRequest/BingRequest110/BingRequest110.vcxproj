@@ -76,7 +76,17 @@
 	<PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Release.Product.Settings" />
+
+  <!-- Normally these settings would be include by Release.Product.Settings,
+       however they aren't to cover the case of a project without WIN32 defined -->
+  <PropertyGroup>
+    <BuildRoot>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))</BuildRoot> 
+    <OutputPath>$(BuildRoot)\Binaries\$(Platform)\$(Configuration)\</OutputPath>
+    <OutDir>$(OutputPath)</OutDir>
+    <CasablancaSrcDir>$(BuildRoot)\Release\src</CasablancaSrcDir>
+    <CasablancaIncludeDir>$(BuildRoot)\Release\include</CasablancaIncludeDir>
+  </PropertyGroup>
+  
   <ImportGroup Label="ExtensionSettings" />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

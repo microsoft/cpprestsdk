@@ -23,6 +23,8 @@ if(UNIX)
     http/listener/http_server_api.cpp
     http/oauth/oauth1_handler.cpp
     http/oauth/oauth2_handler.cpp
+    websockets/client/ws_msg.cpp
+    websockets/client/ws_client.cpp
     utilities/base64.cpp
     )
   if(APPLE)
@@ -47,6 +49,8 @@ elseif(WIN32)
     http/listener/http_listener.cpp
     http/listener/http_msg_listen.cpp
     http/listener/http_server_api.cpp
+    websockets/client/ws_msg.cpp
+    websockets/client/ws_client.cpp
     utilities/base64.cpp
     http/client/http_win7.cpp
     http/listener/http_windows_server.cpp
@@ -57,9 +61,7 @@ elseif(WIN32)
     )
   add_definitions(
     -D_ASYNCRT_EXPORT
-    -DAZURESTORAGESERVICES_EXPORTS
     -D_PPLX_EXPORT
-    -DWIN32
     -D_MBCS
     -D_USRDLL
     )
@@ -68,9 +70,9 @@ endif()
 
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNINGS} -Werror -pedantic")
 
-add_library(${LIB}casablanca ${SOURCES})
+add_library(${Casablanca_LIBRARY} ${SOURCES})
 
-target_link_libraries(${LIB}casablanca
+target_link_libraries(${Casablanca_LIBRARY}
   ${OPENSSL_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT}
   ${Boost_FRAMEWORK}
@@ -78,6 +80,19 @@ target_link_libraries(${LIB}casablanca
   ${Boost_THREAD_LIBRARY}
   ${Boost_LOCALE_LIBRARY}
   ${Boost_REGEX_LIBRARY}
+  ${Boost_RANDOM_LIBRARY}
   ${COREFOUNDATION}
   ${EXTRALINKS}
   )
+
+# Portions specific to cpprest binary versioning.
+set (CPPREST_VERSION_MAJOR 2)
+set (CPPREST_VERSION_MINOR 1)
+set (CPPREST_VERSION_REVISION 0)
+if(WIN32)
+  set_target_properties(${Casablanca_LIBRARY} PROPERTIES
+    OUTPUT_NAME "${Casablanca_LIBRARY}_${CPPREST_VERSION_MAJOR}_${CPPREST_VERSION_MINOR}")
+else()
+  set_target_properties(${Casablanca_LIBRARY} PROPERTIES
+    SOVERSION ${CPPREST_VERSION_MAJOR}.${CPPREST_VERSION_MINOR})
+endif()

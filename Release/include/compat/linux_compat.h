@@ -63,21 +63,6 @@ typedef uint32_t HRESULT;
 #define E_NOTIMPL 0x80004001
 #define E_NOINTERFACE 0x80004002
 
-typedef unsigned long ULONG;
-typedef unsigned short WORD;
-typedef unsigned long DWORD;
-
-typedef struct _SYSTEMTIME {
-  WORD wYear;
-  WORD wMonth;
-  WORD wDayOfWeek;
-  WORD wDay;
-  WORD wHour;
-  WORD wMinute;
-  WORD wSecond;
-  WORD wMilliseconds;
-} SYSTEMTIME, *PSYSTEMTIME;
-
 #define ULARGE_INTEGER uint64_t
 #define LARGE_INTEGER int64_t
 
@@ -85,7 +70,7 @@ typedef struct _SYSTEMTIME {
 
 #define YieldProcessor() __asm__ __volatile__ ("pause")
 
-#define UNREFERENCED_PARAMETER(x) (void)x
+#define CASABLANCA_UNREFERENCED_PARAMETER(x) (void)x
 #define _ASSERTE(x) assert(x)
 
 #ifdef CASABLANCA_DEPRECATION_NO_WARNINGS

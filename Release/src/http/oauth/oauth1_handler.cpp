@@ -38,21 +38,26 @@ namespace web { namespace http { namespace client { namespace experimental
 {
 
 
-static const int s_nonce_length(32);
-static const utility::string_t s_nonce_chars(_XPLATSTR("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"));
-
-
 //
 // Start of platform-dependent _hmac_sha1() block...
 //
-#if defined(_MS_WINDOWS) && !defined(__cplusplus_winrt) // Windows desktop
+#if _WIN32_WINNT < _WIN32_WINNT_VISTA || _PHONE8_ // Windows XP or Windows Phone 8.0
+
+
+std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t, const utility::string_t)
+{
+    throw oauth1_exception(U("oauth1 is not supported"));
+}
+
+
+#elif defined(_MS_WINDOWS) && !defined(__cplusplus_winrt) // Windows desktop
 
 
 #include <winternl.h>
 #include <bcrypt.h>
 
 
-std::vector<unsigned char> oauth1_handler::_hmac_sha1(const utility::string_t key, const utility::string_t data)
+std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t key, const utility::string_t data)
 {
     NTSTATUS status;
     BCRYPT_ALG_HANDLE alg_handle = nullptr;
@@ -96,8 +101,6 @@ std::vector<unsigned char> oauth1_handler::_hmac_sha1(const utility::string_t ke
     return hash;
 
 cleanup:
-
-    // TODO: Throw respective error if crypto cannot be used.
     if (hash_handle)
     {
         BCryptDestroyHash(hash_handle);
@@ -106,6 +109,7 @@ cleanup:
     {
         BCryptCloseAlgorithmProvider(alg_handle, 0);
     }
+
     return hash;
 }
 
@@ -118,7 +122,7 @@ using namespace Windows::Security::Cryptography::Core;
 using namespace Windows::Storage::Streams;
  
 
-std::vector<unsigned char> oauth1_handler::_hmac_sha1(const utility::string_t key, const utility::string_t data)
+std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t key, const utility::string_t data)
 {
     Platform::String^ data_str = ref new Platform::String(data.c_str());
     Platform::String^ key_str = ref new Platform::String(key.c_str());
@@ -130,20 +134,9 @@ std::vector<unsigned char> oauth1_handler::_hmac_sha1(const utility::string_t ke
     auto signature_key = HMACSha1Provider->CreateKey(key_buffer);
     auto signed_buffer = CryptographicEngine::Sign(signature_key, content_buffer);
 
-#if 1
     Platform::Array<unsigned char, 1>^ arr;
     CryptographicBuffer::CopyToByteArray(signed_buffer, &arr);
     return std::vector<unsigned char>(arr->Data, arr->Data + arr->Length);
-#else
-    // Alternative.
-    auto reader = ::Windows::Storage::Streams::DataReader::FromBuffer(signed_buffer);
-    std::vector<unsigned char> digest(reader->UnconsumedBufferLength);
-    if (!digest.empty())
-    {
-        reader->ReadBytes(::Platform::ArrayReference<unsigned char>(&digest[0], static_cast<unsigned int>(digest.size())));
-    }
-    return digest;
-#endif
 }
 
 
@@ -153,7 +146,7 @@ std::vector<unsigned char> oauth1_handler::_hmac_sha1(const utility::string_t ke
 #include <openssl/hmac.h>
 
 
-std::vector<unsigned char> oauth1_handler::_hmac_sha1(const utility::string_t key, const utility::string_t data)
+std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t key, const utility::string_t data)
 {
     unsigned char digest[HMAC_MAX_MD_CBLOCK];
     unsigned int digest_len = 0;
@@ -172,27 +165,10 @@ std::vector<unsigned char> oauth1_handler::_hmac_sha1(const utility::string_t ke
 //
 
 
-utility::string_t oauth1_handler::_generate_nonce()
-{
-    std::uniform_int_distribution<> distr(0, static_cast<int>(s_nonce_chars.length() - 1));
-    utility::string_t nonce;
-    nonce.reserve(s_nonce_length);
-    std::generate_n(std::back_inserter(nonce), s_nonce_length, [&]() { return s_nonce_chars[distr(m_random)]; } );
-    return nonce;
-}
-
-utility::string_t oauth1_handler::_generate_timestamp()
-{
-// FIXME: this only works on Linux
-    utility::ostringstream_t os;
-    os << (utility::datetime::utc_timestamp() - 11644473600LL);
-    return os.str();
-}
-
 // Notes:
 // - Doesn't support URIs without scheme or host.
 // - If URI port is unspecified.
-utility::string_t oauth1_handler::_build_base_string_uri(const uri& u)
+utility::string_t oauth1_config::_build_base_string_uri(const uri& u)
 {
     utility::ostringstream_t os;
     os << u.scheme() << "://" << u.host();
@@ -201,16 +177,10 @@ utility::string_t oauth1_handler::_build_base_string_uri(const uri& u)
         os << ":" << u.port();
     }
     os << u.path();
-// TODO: remove, trailing '?' is not added to the uri
-//    if (!u.query().empty())
-//    {
-//        os << "?";
-//    }
     return uri::encode_data_string(os.str());
 }
 
-utility::string_t oauth1_handler::_build_normalized_parameters(uri u,
-        utility::string_t timestamp, utility::string_t nonce) const
+utility::string_t oauth1_config::_build_normalized_parameters(web::http::uri u, const oauth1_auth_state& state) const
 {
     // While map sorts items by keys it doesn't take value into account.
     // We need to sort the query parameters separately.
@@ -224,113 +194,210 @@ utility::string_t oauth1_handler::_build_normalized_parameters(uri u,
     }
 
     // Push oauth1 parameters.
-    queries.push_back(_XPLATSTR("oauth_version=1.0"));
-    queries.push_back(_XPLATSTR("oauth_consumer_key=" + m_config.key()));
-    queries.push_back(_XPLATSTR("oauth_token=" + m_config.token()));
-    queries.push_back(_XPLATSTR("oauth_signature_method=" + m_config.method()));
-    queries.push_back(_XPLATSTR("oauth_timestamp=" + std::move(timestamp)));
-    queries.push_back(_XPLATSTR("oauth_nonce=" + std::move(nonce)));
+    queries.push_back(oauth1_strings::version + U("=1.0"));
+    queries.push_back(oauth1_strings::consumer_key + U("=") + consumer_key());
+    if (!token().token().empty())
+    {
+        queries.push_back(oauth1_strings::token + U("=") + token().token());
+    }
+    queries.push_back(oauth1_strings::signature_method + U("=") + method());
+    queries.push_back(oauth1_strings::timestamp + U("=") + state.timestamp());
+    queries.push_back(oauth1_strings::nonce + U("=") + state.nonce());
+    if (!state.extra_key().empty())
+    {
+        queries.push_back(state.extra_key() + U("=") + state.extra_value());
+    }
 
+    // Sort parameters and build the string.
     sort(queries.begin(), queries.end());
-
     utility::ostringstream_t os;
     for (auto i = queries.begin(); i != queries.end() - 1; ++i)
     {
-        os << *i << _XPLATSTR("&");
+        os << *i << U("&");
     }
     os << queries.back();
-
     return uri::encode_data_string(os.str());
 }
 
-// Builds signature base string according to:
-// http://tools.ietf.org/html/rfc5849#section-3.4.1.1
-utility::string_t oauth1_handler::_build_signature_base_string(http_request request,
-        utility::string_t timestamp, utility::string_t nonce) const
+utility::string_t oauth1_config::_build_signature_base_string(http_request request, oauth1_auth_state state) const
 {
     uri u(request.absolute_uri());
     utility::ostringstream_t os;
     os << request.method();
     os << "&" << _build_base_string_uri(u);
-    os << "&" << _build_normalized_parameters(std::move(u), std::move(timestamp), std::move(nonce));
+    os << "&" << _build_normalized_parameters(std::move(u), std::move(state));
     return os.str();
 }
 
-utility::string_t oauth1_handler::_build_key() const
+utility::string_t oauth1_config::_build_signature(http_request request, oauth1_auth_state state) const
 {
-    return uri::encode_data_string(m_config.secret()) + _XPLATSTR("&") + uri::encode_data_string(m_config.token_secret());
-}
-
-// Builds HMAC-SHA1 signature according to:
-// http://tools.ietf.org/html/rfc5849#section-3.4.2
-utility::string_t oauth1_handler::_build_hmac_sha1_signature(http_request request, utility::string_t timestamp, utility::string_t nonce) const
-{
-    auto text(_build_signature_base_string(std::move(request), std::move(timestamp), std::move(nonce)));
-    auto digest(_hmac_sha1(_build_key(), std::move(text)));
-    auto signature(conversions::to_base64(std::move(digest)));
-    return signature;
-}
-
-// TODO: RSA-SHA1
-/*
-// Builds RSA-SHA1 signature according to:
-// http://tools.ietf.org/html/rfc5849#section-3.4.3
-utility::string_t oauth1_handler::_build_rsa_sha1_signature(http_request request, utility::string_t timestamp, utility::string_t nonce) const
-{
-    return U("");
-}
-*/
-
-// Builds PLAINTEXT signature according to:
-// http://tools.ietf.org/html/rfc5849#section-3.4.4
-utility::string_t oauth1_handler::_build_plaintext_signature() const
-{
-    return _build_key();
-}
-
-utility::string_t oauth1_handler::_build_signature(http_request request, utility::string_t timestamp, utility::string_t nonce) const
-{
-    if (oauth1_methods::hmac_sha1 == m_config.method())
+    if (oauth1_methods::hmac_sha1 == method())
     {
-        return _build_hmac_sha1_signature(std::move(request), std::move(timestamp), std::move(nonce));
+        return _build_hmac_sha1_signature(std::move(request), std::move(state));
     }
-// TODO: RSA-SHA1
-//    else if (oauth1_methods::rsa_sha1 == m_config.m_method)
-//    {
-//        return _build_rsa_sha1_signature(std::move(request), std::move(timestamp), std::move(nonce));
-//    }
-    else if (oauth1_methods::plaintext == m_config.method())
+    else if (oauth1_methods::rsa_sha1 == m_method)
+    {
+        return _build_rsa_sha1_signature(std::move(request), std::move(state));
+    }
+    else if (oauth1_methods::plaintext == method())
     {
         return _build_plaintext_signature();
     }
-// TODO: add assertion?
-    return _XPLATSTR("");
+    throw oauth1_exception(U("invalid signature method.")); // Should never happen.
 }
 
-pplx::task<http_response> oauth1_handler::propagate(http_request request)
+pplx::task<void> oauth1_config::_request_token(oauth1_auth_state state, bool is_temp_token_request)
 {
-    if (m_config.is_enabled())
+    utility::string_t endpoint = is_temp_token_request ? temp_endpoint() : token_endpoint();
+    http_request req;
+    req.set_method(methods::POST);
+    req.set_request_uri(utility::string_t());
+    req._set_base_uri(endpoint);
+
+    _authenticate_request(req, std::move(state));
+    http_client c(endpoint);
+    return c.request(req)
+    .then([this, is_temp_token_request](pplx::task<http_response> req_task) -> void
     {
-        utility::string_t timestamp(_generate_timestamp());
-        utility::string_t nonce(_generate_nonce());
+        std::map<utility::string_t, utility::string_t> query;
+        utility::string_t body;
 
-        utility::ostringstream_t os;
-        os << "OAuth ";
-        if (!m_config.realm().empty())
+        try
         {
-            os << "realm=\"" << m_config.realm() << "\", ";
+            body = req_task.get().extract_string().get();
+            query = uri::split_query(body);
         }
-        os << "oauth_version=\"1.0\", oauth_consumer_key=\"" << m_config.key();
-        os << "\", oauth_token=\"" << m_config.token();
-        os << "\", oauth_signature_method=\"" << m_config.method();
-        os << "\", oauth_timestamp=\"" << timestamp;
-        os << "\", oauth_nonce=\"" << nonce;
-        os << "\", oauth_signature=\"" << uri::encode_data_string(_build_signature(request, std::move(timestamp), std::move(nonce)));
-        os << "\"";
+        catch (http_exception &e)
+        {
+            throw oauth1_exception(U("encountered http_exception: ") + conversions::to_string_t(std::string(e.what())));
+        }
+        catch (std::exception &e)
+        {
+            throw oauth1_exception(U("encountered exception: ") + conversions::to_string_t(std::string(e.what())));
+        }
+        catch (...)
+        {
+            throw oauth1_exception(U("encountered unknown exception"));
+        }
+        
+        if (is_temp_token_request && !use_core10())
+        {
+            // Obsoleted OAuth Core 1.0 protocol will not return 'oauth_callback_confirmed' on temporary
+            // token request. Regular OAuth 1.0 and OAuth Core 1.0a MUST return this.
+            auto callback_confirmed_param = query.find(oauth1_strings::callback_confirmed);
+            if (callback_confirmed_param == query.end())
+            {
+                throw oauth1_exception(U("parameter 'oauth_callback_confirmed' is missing from response: ") + body
+                    + U(". the service may use obsolete OAuth Core 1.0. try setting use_core10() option."));
+            }
+        }
 
-        request.headers().add(_XPLATSTR("Authorization"), os.str());
+        auto token_param = query.find(oauth1_strings::token);
+        if (token_param == query.end())
+        {
+            throw oauth1_exception(U("parameter 'oauth_token' missing from response: ") + body);
+        }
+        
+        auto token_secret_param = query.find(oauth1_strings::token_secret);
+        if (token_secret_param == query.end())
+        {
+            throw oauth1_exception(U("parameter 'oauth_token_secret' missing from response: ") + body);
+        }
+        
+        // Set the token even if the token is a temp token.
+        set_token(oauth1_token(token_param->second, token_secret_param->second, is_temp_token_request));
+    });
+}
+
+void oauth1_config::_authenticate_request(http_request &request, oauth1_auth_state state)
+{
+    utility::ostringstream_t os;
+    os << "OAuth ";
+    if (!realm().empty())
+    {
+        os << oauth1_strings::realm << "=\"" << realm() << "\", ";
     }
-    return next_stage()->propagate(request);
+    os << oauth1_strings::version << "=\"1.0";
+    os << "\", " << oauth1_strings::consumer_key << "=\"" << consumer_key();
+    if (!token().token().empty())
+    {
+        os << "\", " << oauth1_strings::token << "=\"" << token().token();
+    }
+    os << "\", " << oauth1_strings::signature_method << "=\"" << method();
+    os << "\", " << oauth1_strings::timestamp << "=\"" << state.timestamp();
+    os << "\", " << oauth1_strings::nonce << "=\"" << state.nonce();
+    os << "\", " << oauth1_strings::signature << "=\"" << uri::encode_data_string(_build_signature(request, state));
+    os << "\"";
+
+    if (!state.extra_key().empty())
+    {
+        os << ", " << state.extra_key() << "=\"" << state.extra_value() << "\"";
+    }
+
+    request.headers().add(header_names::authorization, os.str());
+}
+
+pplx::task<utility::string_t> oauth1_config::build_authorization_uri()
+{
+    pplx::task<void> temp_token_req;
+
+    if (!use_core10())
+    {
+        temp_token_req = _request_token(_generate_auth_state(oauth1_strings::callback, uri::encode_data_string(callback_uri())), true);
+    }
+    else
+    {
+        // Obsolete OAuth Core 1.0 does not require 'oauth_callback' parameter in temporary token request.
+        temp_token_req = _request_token(_generate_auth_state(), true);
+    }
+
+    return temp_token_req.then([this]() -> utility::string_t
+    {
+        uri_builder ub(auth_endpoint());
+        ub.append_query(oauth1_strings::token, token().token());
+
+        if (use_core10())
+        {
+            // Obsolete OAuth Core 1.0 has the 'oauth_callback' as query parameter in the authorization URI.
+            ub.append_query(oauth1_strings::callback, callback_uri());
+        }
+
+        return ub.to_string();
+    });
+}
+
+pplx::task<void> oauth1_config::token_from_redirected_uri(web::http::uri redirected_uri)
+{
+    auto query = uri::split_query(redirected_uri.query());
+
+    auto token_param = query.find(oauth1_strings::token);
+    if (token_param == query.end())
+    {
+        return pplx::task_from_exception<void>(oauth1_exception(U("parameter 'oauth_token' missing from redirected URI.")));
+    }
+    if (token().token() != token_param->second)
+    {
+        utility::ostringstream_t err;
+        err << U("redirected URI parameter 'oauth_token'='") << token_param->second
+            << U("' does not match temporary token='") << token().token() << U("'.");
+        return pplx::task_from_exception<void>(oauth1_exception(err.str().c_str()));
+    }
+    
+    utility::string_t verifier;
+    if (!use_core10())
+    {
+        auto verifier_param = query.find(oauth1_strings::verifier);
+        if (verifier_param == query.end())
+        {
+            return pplx::task_from_exception<void>(oauth1_exception(U("parameter 'oauth_verifier' missing from redirected URI.")));
+        }
+        verifier = verifier_param->second;
+    }
+    else
+    {
+        // Do not set verifier since obsolete OAuth Core 1.0 does not use 'oauth_verifier'.
+    }
+    return token_from_verifier(verifier);
 }
 
 
@@ -338,6 +405,12 @@ pplx::task<http_response> oauth1_handler::propagate(http_request request)
 #define DAT(a,b) const oauth1_method oauth1_methods::a = b;
 #include "cpprest/http_constants.dat"
 #undef _OAUTH1_METHODS
+#undef DAT
+
+#define _OAUTH1_STRINGS
+#define DAT(a_, b_) const oauth1_string oauth1_strings::a_(_XPLATSTR(b_));
+#include "cpprest/http_constants.dat"
+#undef _OAUTH1_STRINGS
 #undef DAT
 
 

@@ -140,3 +140,36 @@ DAT(hmac_sha1,                      _XPLATSTR("HMAC-SHA1"))
 DAT(rsa_sha1,                       _XPLATSTR("RSA-SHA1"))
 DAT(plaintext,                      _XPLATSTR("PLAINTEXT"))
 #endif // _OAUTH1_METHODS
+
+#ifdef _OAUTH1_STRINGS
+DAT(callback,                       "oauth_callback")
+DAT(callback_confirmed,             "oauth_callback_confirmed")
+DAT(consumer_key,                   "oauth_consumer_key")
+DAT(nonce,                          "oauth_nonce")
+DAT(realm,                          "realm") // NOTE: No "oauth_" prefix.
+DAT(signature,                      "oauth_signature")
+DAT(signature_method,               "oauth_signature_method")
+DAT(timestamp,                      "oauth_timestamp")
+DAT(token,                          "oauth_token")
+DAT(token_secret,                   "oauth_token_secret")
+DAT(verifier,                       "oauth_verifier")
+DAT(version,                        "oauth_version")
+#endif // _OAUTH1_STRINGS
+
+#ifdef _OAUTH2_STRINGS
+DAT(access_token,                   "access_token")
+DAT(authorization_code,             "authorization_code")
+DAT(bearer,                         "bearer")
+DAT(client_id,                      "client_id")
+DAT(client_secret,                  "client_secret")
+DAT(code,                           "code")
+DAT(expires_in,                     "expires_in")
+DAT(grant_type,                     "grant_type")
+DAT(redirect_uri,                   "redirect_uri")
+DAT(refresh_token,                  "refresh_token")
+DAT(response_type,                  "response_type")
+DAT(scope,                          "scope")
+DAT(state,                          "state")
+DAT(token,                          "token")
+DAT(token_type,                     "token_type")
+#endif // _OAUTH2_STRINGS

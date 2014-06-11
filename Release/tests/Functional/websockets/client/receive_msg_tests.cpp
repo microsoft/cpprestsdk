@@ -25,6 +25,8 @@
 
 #include "stdafx.h"
 
+#if defined(__cplusplus_winrt) || !defined(_M_ARM)
+
 using namespace concurrency;
 using namespace concurrency::streams;
 
@@ -56,7 +58,7 @@ pplx::task<void> receive_text_msg_helper(websocket_client& client,
         VERIFY_ARE_EQUAL(body_str.compare(ret_str), 0);
         VERIFY_ARE_EQUAL(ret_msg.messge_type(), websocket_message_type::text_message);
     });
-    
+
     test_websocket_msg msg;
     msg.set_data(std::move(body));
     msg.set_msg_type(test_websocket_message_type::WEB_SOCKET_UTF8_MESSAGE_TYPE);
@@ -81,7 +83,7 @@ pplx::task<void> receive_msg_stream_helper(websocket_client& client,
         is.read_to_end(ret_data).wait();
 
         VERIFY_ARE_EQUAL(ret_msg.length(), body.size());
-        VERIFY_IS_TRUE(body == ret_data.collection());
+        VERIFY_ARE_EQUAL(body, ret_data.collection());
         if (type == test_websocket_message_type::WEB_SOCKET_BINARY_MESSAGE_TYPE)
             VERIFY_ARE_EQUAL(ret_msg.messge_type(), websocket_message_type::binary_message);
         else if (type == test_websocket_message_type::WEB_SOCKET_UTF8_MESSAGE_TYPE)
@@ -98,7 +100,7 @@ pplx::task<void> receive_msg_stream_helper(websocket_client& client,
 
 // Receive text message (no fragmentation)
 TEST_FIXTURE(uri_address, receive_text_msg)
-{    
+{
     test_websocket_server server;
     websocket_client client(m_uri);
 
@@ -128,9 +130,7 @@ TEST_FIXTURE(uri_address, receive_binary_msg)
 
     test_websocket_server server;
 
-    websocket_client_config config;
-    config.set_message_type(websocket_message_type::binary_message);
-    websocket_client client(m_uri, config);
+    websocket_client client(m_uri);
 
     receive_msg_stream_helper(client, server, body, test_websocket_message_type::WEB_SOCKET_BINARY_MESSAGE_TYPE).wait();
     client.close().wait();
@@ -183,8 +183,7 @@ TEST_FIXTURE(uri_address, receive_zero_length_msg)
 // Receive UTF-8 string with special characters
 TEST_FIXTURE(uri_address, receive_multi_byte_utf8_msg)
 {
-    utf16string utf16str(U("аш"));
-    auto body_str = utility::conversions::to_utf8string(utf16str);
+    std::string body_str = "\xC3\xA0\xC3\xB8";
     test_websocket_server server;
     websocket_client client(m_uri);
 
@@ -225,9 +224,9 @@ TEST_FIXTURE(uri_address, receive_after_server_send)
     msg.set_msg_type(test_websocket_message_type::WEB_SOCKET_UTF8_MESSAGE_TYPE);
     server.send_msg(msg);
 
-    // We dont have a way of knowing if the message has been received by our client. 
-    // Hence Sleep for 5 secs and then initiate the receive
-    std::chrono::milliseconds dura(5000);
+    // We dont have a way of knowing if the message has been received by our client.
+    // Hence Sleep for 100 msecs and then initiate the receive
+    std::chrono::milliseconds dura(100);
     std::this_thread::sleep_for(dura);
 
     client.receive().then([&](websocket_incoming_message ret_msg)
@@ -273,3 +272,5 @@ TEST_FIXTURE(uri_address, receive_before_connect)
 } // SUITE(receive_msg_tests)
 
 }}}}
+
+#endif

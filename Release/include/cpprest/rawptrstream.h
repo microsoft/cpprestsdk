@@ -27,8 +27,8 @@
 ****/
 #pragma once
 
-#ifndef _CASA_RAWPTR_STREAMS_
-#define _CASA_RAWPTR_STREAMS_
+#ifndef _CASA_RAWPTR_STREAMS_H
+#define _CASA_RAWPTR_STREAMS_H
 
 #include <vector>
 #include <queue>
