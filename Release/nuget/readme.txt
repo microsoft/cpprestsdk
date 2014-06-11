@@ -4,6 +4,8 @@ Most important is to make sure all the binaries, libs, header files, etc... laid
 To make sure you have the latest CoApp tools run the following from an elevated prompt:
     update-coapptools -development -killpowershell
 
+Replace the "C:\Program Files (x86)\Outercurve Foundation\Modules\CoApp\etc\Pivots.Properties" with the "Main\Casablanca\Release\nuget\Pivots.Properties" file.
+
 ***** Before starting, to workaround Visual Studio bug TFS 729316, open the file C:\Program Files (x86)\Outercurve Foundation\Modules\CoApp\etc\PackageScriptTemplate.autopkg.
     Find the "bin += {" section and add the following line:
     

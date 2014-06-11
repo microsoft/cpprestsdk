@@ -1,7 +1,7 @@
 nuget {
 	nuspec {
 		id = cpprestsdk;
-		version : 2.0.1;
+		version : 2.1.0;
 		title: C++ REST SDK;
 		authors: {casablancacore};
 		owners: {Microsoft, Visual C++};
@@ -11,7 +11,7 @@ nuget {
 		requireLicenseAcceptance: true;
 		summary: "The C++ REST SDK is a cross-platform, modern, and asynchronous library that enables developers to access and author connected applications";
 		description: "This library is a Microsoft effort to support cloud-based client-server communication in native code using a modern asynchronous C++ API design. The C++ REST SDK (codename "Casablanca") is a project to start exploring how to best support C++ developers who want to take advantage of the radical shift in software architecture that cloud computing represents.";
-		releaseNotes: "Release of C++ Rest SDK 2.0.1 libraries.";
+		releaseNotes: "Release of C++ Rest SDK 2.1.0 libraries.";
 		copyright: Copyright 2014;
 		tags: {REST, native, C++, JSON, Casablanca, Http, Uri, WebSockets};
 	};
@@ -19,7 +19,7 @@ nuget {
 		files {
 	
 		#defines {
-            VER_WUNDERSCORE = 2_0;
+            VER_WUNDERSCORE = 2_1;
         
             // Signed dlls
             ARM_DLLS = Binaries\Arm\;
@@ -27,7 +27,7 @@ nuget {
             X64_DLLS = Binaries\x64\;
             
             // For libs and pdbs
-            BIN_DIR = ..\..\..\Binaries\;
+            BIN_DIR = ..\..\Binaries\;
 		}
 	
 		// grab all the files in the include folder
@@ -63,10 +63,37 @@ nuget {
 			lib:${BIN_DIR}ARM\Release\cpprest110_wp8_${VER_WUNDERSCORE}.lib;
 		}
 		
-		[x86,v110_wp80 ,release,phone8] {
+		[x86,v110_wp80,release,phone8] {
 			bin:${X86_DLLS}cpprest110_wp8_${VER_WUNDERSCORE}.dll;
 			symbols:${BIN_DIR}Win32\Release\cpprest110_wp8_${VER_WUNDERSCORE}.pdb;
 			lib:${BIN_DIR}Win32\Release\cpprest110_wp8_${VER_WUNDERSCORE}.lib;
+		}
+
+        // Windows Phone 8.1
+        // Use "phone8" as the target application type, since the CoApp author defines 
+        // Phone8_condition = "('$(TargetPlatformIdentifier.ToLower())' == 'windows phone' And '$(TargetPlatformVersion)' >= '8.0')"
+        [arm,v120_wp81,debug,phone8] {
+			bin: ${ARM_DLLS}cpprest120d_wp81_${VER_WUNDERSCORE}.dll;
+			symbols: ${BIN_DIR}ARM\Debug\cpprest120d_wp81_${VER_WUNDERSCORE}.pdb;
+			lib:${BIN_DIR}ARM\Debug\cpprest120d_wp81_${VER_WUNDERSCORE}.lib;
+		}
+		
+		[x86,v120_wp81,debug,phone8] {
+			bin:${X86_DLLS}cpprest120d_wp81_${VER_WUNDERSCORE}.dll;
+			symbols:${BIN_DIR}Win32\Debug\cpprest120d_wp81_${VER_WUNDERSCORE}.pdb;
+			lib:${BIN_DIR}Win32\Debug\cpprest120d_wp81_${VER_WUNDERSCORE}.lib;
+		}			
+		
+		[arm,v120_wp81,release,phone8] {
+			bin:${ARM_DLLS}cpprest120_wp81_${VER_WUNDERSCORE}.dll;
+			symbols:${BIN_DIR}ARM\Release\cpprest120_wp81_${VER_WUNDERSCORE}.pdb;
+			lib:${BIN_DIR}ARM\Release\cpprest120_wp81_${VER_WUNDERSCORE}.lib;
+		}
+		
+		[x86,v120_wp81,release,phone8] {
+			bin:${X86_DLLS}cpprest120_wp81_${VER_WUNDERSCORE}.dll;
+			symbols:${BIN_DIR}Win32\Release\cpprest120_wp81_${VER_WUNDERSCORE}.pdb;
+			lib:${BIN_DIR}Win32\Release\cpprest120_wp81_${VER_WUNDERSCORE}.lib;
 		}
 
         // XP
