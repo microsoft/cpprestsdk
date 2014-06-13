@@ -39,7 +39,7 @@ namespace web { namespace http { namespace client { namespace experimental
 {
 
 
-utility::string_t oauth2_config::build_authorization_uri()
+utility::string_t oauth2_config::build_authorization_uri(bool generate_state)
 {
     const utility::string_t response_type((implicit_grant()) ? oauth2_strings::token : oauth2_strings::code);
     uri_builder ub(auth_endpoint());
@@ -47,13 +47,9 @@ utility::string_t oauth2_config::build_authorization_uri()
     ub.append_query(oauth2_strings::client_id, client_key());
     ub.append_query(oauth2_strings::redirect_uri, redirect_uri());
 
-    if (custom_state().empty())
+    if (generate_state)
     {
         m_state = m_state_generator.generate();
-    }
-    else
-    {
-        m_state = custom_state();
     }
     ub.append_query(oauth2_strings::state, state());
 
@@ -195,11 +191,11 @@ oauth2_token oauth2_config::_parse_token_from_json(json::value& token_json)
 
     if (token_json.has_field(oauth2_strings::expires_in))
     {
-        result.set_expires_in(token_json[oauth2_strings::expires_in].as_integer());
+        result.set_expires_in(token_json[oauth2_strings::expires_in].as_number().to_int64());
     }
     else
     {
-        result.set_expires_in(-1); // Set as unspecified.
+        result.set_expires_in(oauth2_token::undefined_expiration);
     }
 
     if (token_json.has_field(oauth2_strings::scope))
