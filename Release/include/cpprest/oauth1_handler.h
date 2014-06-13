@@ -187,8 +187,7 @@ public:
         m_auth_endpoint(auth_endpoint),
         m_token_endpoint(token_endpoint),
         m_callback_uri(callback_uri),
-        m_method(std::move(method)),
-        m_use_core10(false)
+        m_method(std::move(method))
     {}
 
     oauth1_config(utility::string_t consumer_key, utility::string_t consumer_secret,
@@ -196,8 +195,7 @@ public:
         m_consumer_key(consumer_key),
         m_consumer_secret(consumer_secret),
         m_token(std::move(token)),
-        m_method(std::move(method)),
-        m_use_core10(false)
+        m_method(std::move(method))
     {}
 
     /// <summary>
@@ -205,50 +203,31 @@ public:
     /// The URI is built with auth_endpoint() as basis.
     /// The method creates a task for HTTP request to first obtain a
     /// temporary token. The authorization URI build based on this token.
-    /// The use_core10() option affects the process by passing 'oauth_callback'
-    /// parameter either in the temporary token request or in the query part
-    /// of the built authorization uri.
     /// </summary>
     _ASYNCRTIMP pplx::task<utility::string_t> build_authorization_uri();
 
     /// <summary>
     /// Get the access token based on redirected URI.
-    /// Behavior depends on the use_core10() setting.
-    /// If use_core10() is false, the URI is expected to contain 'oauth_verifier'
+    /// The URI is expected to contain 'oauth_verifier'
     /// parameter, which is then used to fetch a token using the
     /// token_from_verifier() method.
     /// See: http://tools.ietf.org/html/rfc5849#section-2.2
-    /// Otherwise (for obsolete OAuth Core 1.0), the redirect URI parameter
-    /// 'oauth_token' is used instead of 'oauth_verifier' to get the token.
-    /// See: http://oauth.net/core/1.0/#auth_step2
-    /// In both cases, the 'oauth_token' is parsed and verified to match
-    /// the current token().
+    /// The received 'oauth_token' is parsed and verified to match the current token().
     /// When token is successfully obtained, set_token() is called, and config is
     /// ready for use.
     /// </summary>
     _ASYNCRTIMP pplx::task<void> token_from_redirected_uri(web::http::uri redirected_uri);
 
     /// <summary>
-    /// Creates a task to fetch token from the token endpoint.
-    /// Behavior depends on the use_core10() setting.
-    /// If use_core10() is not set, the request will exchange a verifier code
-    /// to an access token. Otherwise verifier is omitted and current (temporary)
-    /// token is used instead in the exchange.
+    /// Creates a task with HTTP request to fetch token from the token endpoint.
+    /// The request exchanges a verifier code to an access token.
     /// If successful, resulting token is set as active via set_token().
     /// See: http://tools.ietf.org/html/rfc5849#section-2.3
     /// </summary>
     /// <param name="verifier">Verifier received via redirect upon successful authorization.</param>
     pplx::task<void> token_from_verifier(utility::string_t verifier)
     {
-        if (!use_core10())
-        {
-            return _request_token(_generate_auth_state(oauth1_strings::verifier, uri::encode_data_string(verifier)), false);
-        }
-        else
-        {
-            // Do not use verifier in obsolete OAuth Core 1.0.
-            return _request_token(_generate_auth_state(), false);
-        }
+        return _request_token(_generate_auth_state(oauth1_strings::verifier, uri::encode_data_string(verifier)), false);
     }
 
     const utility::string_t& consumer_key() const { return m_consumer_key; }
@@ -278,23 +257,12 @@ public:
     const utility::string_t& realm() const { return m_realm; }
     void set_realm(utility::string_t realm) { m_realm = std::move(realm); }
 
-    bool use_core10() const { return m_use_core10; }
-    /// <summary>
-    /// If false, OAuth 1.0 protocol (RFC 5849) will be used.
-    /// Otherwise the obsolete OAuth Core 1.0 version will be used.
-    /// Default: False.
-    /// OAuth 1.0 specification: http://tools.ietf.org/html/rfc5849
-    /// OAuth Core 1.0 document: http://oauth.net/core/1.0/
-    /// </summary>
-    void set_use_core10(bool use_obsolete) { m_use_core10 = std::move(use_obsolete); }
-
     bool is_enabled() const { return token().is_valid() && !(consumer_key().empty() || consumer_secret().empty()); }
 
     /// <summary>
     /// Builds signature base string according to:
     /// http://tools.ietf.org/html/rfc5849#section-3.4.1.1
     /// </summary>
-    // NOTE: Public for unit tests.
     _ASYNCRTIMP utility::string_t _build_signature_base_string(http_request request, oauth1_auth_state state) const;
 
     /// <summary>
@@ -307,16 +275,6 @@ public:
         auto digest(_hmac_sha1(_build_key(), std::move(text)));
         auto signature(conversions::to_base64(std::move(digest)));
         return signature;
-    }
-
-    /// <summary>
-    /// Builds RSA-SHA1 signature according to:
-    /// http://tools.ietf.org/html/rfc5849#section-3.4.3
-    /// NOTE: This feature is not implemented.
-    /// </summary>
-    utility::string_t _build_rsa_sha1_signature(http_request, oauth1_auth_state) const
-    {
-        throw oauth1_exception(_XPLATSTR("RSA-SHA1 signature method is not implemented."));
     }
 
     /// <summary>
@@ -341,7 +299,7 @@ public:
 private:
     friend class web::http::client::http_client_config;
     friend class oauth1_handler;
-    oauth1_config() : m_use_core10(false) {}
+    oauth1_config() {}
 
     utility::string_t _generate_nonce()
     {
@@ -391,7 +349,6 @@ private:
     utility::string_t m_auth_endpoint;
     utility::string_t m_token_endpoint;
     utility::string_t m_callback_uri;
-    bool m_use_core10;
 
     utility::nonce_generator m_nonce_generator;
 };

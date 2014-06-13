@@ -272,60 +272,6 @@ TEST_FIXTURE(oauth1_auth_config_server, oauth1_token_from_redirected_uri)
     VERIFY_ARE_EQUAL(m_oauth1_config.token().secret(), U("bar"));
 }
 
-TEST_FIXTURE(oauth1_auth_config_server, oauth1_core10)
-{
-    m_oauth1_config.set_use_core10(true);
-
-    // Verify authorization URI is without 'oauth_callback'.
-    m_server.server()->next_request().then([](test_request *request)
-    {
-        const utility::string_t header_authorization(request->m_headers[header_names::authorization]);
-
-        // Verify no token in prefix.
-        const utility::string_t prefix(U("OAuth oauth_version=\"1.0\", oauth_consumer_key=\"test_key\", oauth_signature_method=\"HMAC-SHA1\", oauth_timestamp=\""));
-        VERIFY_ARE_EQUAL(0, header_authorization.find(prefix));
-
-        // Verify no 'oauth_callback'.
-        VERIFY_ARE_EQUAL(utility::string_t::npos, header_authorization.find(U("oauth_callback")));
-
-        // Reply with temporary token and secret.
-        std::map<utility::string_t, utility::string_t> headers;
-        headers[header_names::content_type] = mime_types::application_x_www_form_urlencoded;
-        request->reply(status_codes::OK, U(""), headers, "oauth_token=foobar&oauth_token_secret=xyzzy");
-    });
-    
-    VERIFY_IS_FALSE(m_oauth1_config.token().is_temporary());
-    utility::string_t auth_uri = m_oauth1_config.build_authorization_uri().get();
-    VERIFY_ARE_EQUAL(auth_uri, U("http://localhost:17778/?oauth_token=foobar&oauth_callback=http://localhost:17778/"));
-    VERIFY_IS_TRUE(m_oauth1_config.token().is_temporary());
-
-    // Verify token request is sent without 'oauth_verifier' parameter.
-    m_server.server()->next_request().then([](test_request *request)
-    {
-        const utility::string_t header_authorization(request->m_headers[header_names::authorization]);
-
-        // Verify we have token in prefix.
-        const utility::string_t prefix(U("OAuth oauth_version=\"1.0\", oauth_consumer_key=\"test_key\", oauth_token=\"foobar\", oauth_signature_method=\"HMAC-SHA1\", oauth_timestamp=\""));
-        VERIFY_ARE_EQUAL(0, header_authorization.find(prefix));
-
-        // Verify we have 'oauth_nonce' and 'oauth_signature'.
-        VERIFY_ARE_NOT_EQUAL(utility::string_t::npos, header_authorization.find(U("oauth_nonce")));
-        VERIFY_ARE_NOT_EQUAL(utility::string_t::npos, header_authorization.find(U("oauth_signature")));
-
-        // Reply with access token and secret.
-        std::map<utility::string_t, utility::string_t> headers;
-        headers[header_names::content_type] = mime_types::application_x_www_form_urlencoded;
-        request->reply(status_codes::OK, U(""), headers, "oauth_token=baz&oauth_token_secret=123");
-    });
-
-    VERIFY_IS_FALSE(m_oauth1_config.token().is_valid());
-    const utility::string_t simulated_redirected_uri(U("http://localhost:17778/?oauth_token=foobar"));
-    m_oauth1_config.token_from_redirected_uri(simulated_redirected_uri).wait();
-
-    VERIFY_IS_TRUE(m_oauth1_config.token().is_valid());
-    VERIFY_ARE_EQUAL(m_oauth1_config.token().token(), U("baz"));
-    VERIFY_ARE_EQUAL(m_oauth1_config.token().secret(), U("123"));
-}
 
 } // SUITE(oauth1_tests)
 

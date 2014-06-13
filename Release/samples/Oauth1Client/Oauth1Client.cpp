@@ -60,9 +60,6 @@ using namespace web::http::experimental::listener;
 //
 // Set key & secret pair to enable session for that service.
 //
-static const utility::string_t s_dropbox_key(U(""));
-static const utility::string_t s_dropbox_secret(U(""));
-
 static const utility::string_t s_linkedin_key(U(""));
 static const utility::string_t s_linkedin_secret(U(""));
 
@@ -294,31 +291,6 @@ protected:
     }
 };
 
-class dropbox_session_sample : public oauth1_session_sample
-{
-public:
-    dropbox_session_sample() :
-        oauth1_session_sample(U("Dropbox"),
-            s_dropbox_key,
-            s_dropbox_secret,
-            U("https://api.dropbox.com/1/oauth/request_token"),
-            U("https://www.dropbox.com/1/oauth/authorize"),
-            U("https://api.dropbox.com/1/oauth/access_token"),
-            U("http://localhost:8889/"))
-    {
-        // Dropbox uses obsolete OAuth Core 1.0: http://oauth.net/core/1.0/
-        m_oauth1_config.set_use_core10(true);
-    }
-
-protected:
-    void run_internal() override
-    {
-        http_client api(U("https://api.dropbox.com/1/"), m_http_config);
-        ucout << "Requesting account information:" << std::endl;
-        ucout << "Information: " << api.request(methods::GET, U("account/info")).get().extract_json().get() << std::endl;
-    }
-};
-
 
 #ifdef _MS_WINDOWS
 int wmain(int argc, wchar_t *argv[])
@@ -330,11 +302,9 @@ int main(int argc, char *argv[])
 
     linkedin_session_sample linkedin;
     twitter_session_sample twitter;
-    dropbox_session_sample dropbox;
 
     linkedin.run();
     twitter.run();
-    dropbox.run();
 
     ucout << "Done." << std::endl;
     return 0;

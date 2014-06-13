@@ -235,10 +235,6 @@ utility::string_t oauth1_config::_build_signature(http_request request, oauth1_a
     {
         return _build_hmac_sha1_signature(std::move(request), std::move(state));
     }
-    else if (oauth1_methods::rsa_sha1 == m_method)
-    {
-        return _build_rsa_sha1_signature(std::move(request), std::move(state));
-    }
     else if (oauth1_methods::plaintext == method())
     {
         return _build_plaintext_signature();
@@ -280,15 +276,13 @@ pplx::task<void> oauth1_config::_request_token(oauth1_auth_state state, bool is_
             throw oauth1_exception(U("encountered unknown exception"));
         }
         
-        if (is_temp_token_request && !use_core10())
+        if (is_temp_token_request)
         {
-            // Obsoleted OAuth Core 1.0 protocol will not return 'oauth_callback_confirmed' on temporary
-            // token request. Regular OAuth 1.0 and OAuth Core 1.0a MUST return this.
             auto callback_confirmed_param = query.find(oauth1_strings::callback_confirmed);
             if (callback_confirmed_param == query.end())
             {
                 throw oauth1_exception(U("parameter 'oauth_callback_confirmed' is missing from response: ") + body
-                    + U(". the service may use obsolete OAuth Core 1.0. try setting use_core10() option."));
+                    + U(". the service may be using obsoleted and insecure OAuth Core 1.0 protocol."));
             }
         }
 
@@ -339,28 +333,12 @@ void oauth1_config::_authenticate_request(http_request &request, oauth1_auth_sta
 
 pplx::task<utility::string_t> oauth1_config::build_authorization_uri()
 {
-    pplx::task<void> temp_token_req;
-
-    if (!use_core10())
-    {
-        temp_token_req = _request_token(_generate_auth_state(oauth1_strings::callback, uri::encode_data_string(callback_uri())), true);
-    }
-    else
-    {
-        // Obsolete OAuth Core 1.0 does not require 'oauth_callback' parameter in temporary token request.
-        temp_token_req = _request_token(_generate_auth_state(), true);
-    }
+    pplx::task<void> temp_token_req = _request_token(_generate_auth_state(oauth1_strings::callback, uri::encode_data_string(callback_uri())), true);
 
     return temp_token_req.then([this]() -> utility::string_t
     {
         uri_builder ub(auth_endpoint());
         ub.append_query(oauth1_strings::token, token().token());
-
-        if (use_core10())
-        {
-            // Obsolete OAuth Core 1.0 has the 'oauth_callback' as query parameter in the authorization URI.
-            ub.append_query(oauth1_strings::callback, callback_uri());
-        }
 
         return ub.to_string();
     });
@@ -383,21 +361,13 @@ pplx::task<void> oauth1_config::token_from_redirected_uri(web::http::uri redirec
         return pplx::task_from_exception<void>(oauth1_exception(err.str().c_str()));
     }
     
-    utility::string_t verifier;
-    if (!use_core10())
+    auto verifier_param = query.find(oauth1_strings::verifier);
+    if (verifier_param == query.end())
     {
-        auto verifier_param = query.find(oauth1_strings::verifier);
-        if (verifier_param == query.end())
-        {
-            return pplx::task_from_exception<void>(oauth1_exception(U("parameter 'oauth_verifier' missing from redirected URI.")));
-        }
-        verifier = verifier_param->second;
+        return pplx::task_from_exception<void>(oauth1_exception(U("parameter 'oauth_verifier' missing from redirected URI.")));
     }
-    else
-    {
-        // Do not set verifier since obsolete OAuth Core 1.0 does not use 'oauth_verifier'.
-    }
-    return token_from_verifier(verifier);
+
+    return token_from_verifier(verifier_param->second);
 }
 
 
