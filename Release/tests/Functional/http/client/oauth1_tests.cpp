@@ -151,11 +151,6 @@ TEST_FIXTURE(oauth1_basic_config, oauth1_hmac_sha1_method)
     VERIFY_ARE_EQUAL(correct_signature, signature);
 }
 
-TEST_FIXTURE(oauth1_basic_config, oauth1_rsa_sha1_method)
-{
-    // TODO: not implemented
-}
-
 TEST_FIXTURE(oauth1_basic_config, oauth1_plaintext_method)
 {
     utility::string_t signature(m_oauth1_config._build_plaintext_signature());
@@ -182,11 +177,6 @@ TEST_FIXTURE(oauth1_basic_config_server, oauth1_hmac_sha1_request)
     VERIFY_IS_TRUE(m_oauth1_config.token().is_valid());
     http_response response = client.request(methods::GET).get();
     VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
-}
-
-TEST_FIXTURE(oauth1_basic_config_server, oauth1_rsa_sha1_request)
-{
-    // TODO: not implemented
 }
 
 TEST_FIXTURE(oauth1_basic_config_server, oauth1_plaintext_request)
