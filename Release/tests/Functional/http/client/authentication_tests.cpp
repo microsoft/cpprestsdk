@@ -490,6 +490,9 @@ TEST_FIXTURE(uri_address, auth_producer_comsumer_buffer)
     msg.set_body(buf.create_istream());
 
     http_client_config config;
+    VERIFY_IS_FALSE(config.buffer_request());
+    config.set_buffer_request(true);
+    VERIFY_IS_TRUE(config.buffer_request());
     config.set_credentials(credentials(U("USERNAME"), U("PASSWORD")));
 
     http_client client(m_uri, config);
@@ -553,6 +556,7 @@ TEST_FIXTURE(uri_address, auth_producer_comsumer_buffer_fail)
     msg.set_body(buf.create_istream());
 
     http_client_config config;
+    config.set_buffer_request(true);
     config.set_credentials(credentials(U("USERNAME"), U("PASSWORD")));
 
     http_client client(m_uri, config);

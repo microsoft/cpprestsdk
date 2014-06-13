@@ -102,7 +102,12 @@ public:
 #if !defined(__cplusplus_winrt)
         , m_validate_certificates(true)
 #endif
-        ,m_set_user_nativehandle_options([](native_handle)->void{})
+        , m_set_user_nativehandle_options([](native_handle)->void{})
+#ifdef _MS_WINDOWS
+#if !defined(__cplusplus_winrt)
+        , m_buffer_request(false)
+#endif
+#endif
     {
     }
 
@@ -242,6 +247,30 @@ public:
     }
 #endif
 
+#ifdef _MS_WINDOWS
+#if !defined(__cplusplus_winrt)
+    /// <summary>
+    /// Checks if request data buffering is turned on, the default is off.
+    /// </summary>
+    /// <returns>True if buffering is enabled, false otherwise</returns>
+    bool buffer_request() const
+    {
+        return m_buffer_request;
+    }
+
+    /// <summary>
+    /// Sets the request buffering property. 
+    /// If true, in cases where the request body/stream doesn't support seeking the request data will be buffered.
+    /// This can help in situations where an authentication challenge might be expected.
+    /// </summary>
+    /// <remarks>Please note there is a performance cost due to copying the request data.</remarks>
+    void set_buffer_request(bool buffer_request)
+    {
+        m_buffer_request = buffer_request;
+    }
+#endif
+#endif
+    
     /// <summary>
     /// Sets a callback to enable custom setting of winhttp options
     /// </summary>
@@ -263,6 +292,13 @@ private:
 #if !defined(__cplusplus_winrt)
     bool m_validate_certificates;
 #endif
+
+#ifdef _MS_WINDOWS
+#if !defined(__cplusplus_winrt)
+    bool m_buffer_request;
+#endif
+#endif
+
     std::function<void(native_handle)> m_set_user_nativehandle_options;
 
     utility::seconds m_timeout;
@@ -275,7 +311,6 @@ private:
     friend class details::winhttp_client;
 #endif // __cplusplus_winrt  
 #endif // _MS_WINDOWS
-
 
     /// <summary>
     /// Invokes a user callback to allow for customization of the requst
