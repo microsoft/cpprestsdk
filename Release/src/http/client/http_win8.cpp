@@ -316,20 +316,6 @@ public:
     winrt_client(http::uri address, http_client_config client_config)
         : _http_client_communicator(std::move(address), std::move(client_config)) { }
 
-private:
-    static bool _check_streambuf(std::shared_ptr<winrt_request_context> winhttp_context, concurrency::streams::streambuf<uint8_t> rdbuf, const utility::char_t* msg) 
-    {
-        if ( !rdbuf.is_open() )
-        {
-            auto eptr = rdbuf.exception();
-            if ( eptr )
-                winhttp_context->report_exception(eptr);
-            else
-                winhttp_context->report_exception(http_exception(msg));
-        }
-        return rdbuf.is_open();
-    }
-
 protected:
 
     // Method to open client.
