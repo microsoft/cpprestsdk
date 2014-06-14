@@ -174,7 +174,7 @@ void MainPage::DownloadButton_Click(Platform::Object^ sender, Windows::UI::Xaml:
     auto ui_ctx = pplx::task_continuation_context::use_current();
     utility::string_t path = this->Box1->Text->Data();
 
-    // Start by getting the file metadata from skydrive. We need the file name.
+    // Start by getting the file metadata from OneDrive. We need the file name.
     lv_client.get(path)
     .then([this](web::json::value file_info)
     {
