@@ -463,18 +463,22 @@ inline int operator- (datetime t1, datetime t2)
     return static_cast<int>(diff);
 }
 
-
 /// <summary>
 /// Nonce generator class.
 /// </summary>
 class nonce_generator
 {
 public:
-    nonce_generator(int length=32) :
+
+    enum
+    {
+        default_length = 32
+    };
+
+    nonce_generator(int length=default_length) :
         m_random((unsigned int) utility::datetime::utc_timestamp()),
         m_length(length)
-    {
-    }
+    {}
 
     _ASYNCRTIMP utility::string_t generate();
 
@@ -486,6 +490,5 @@ private:
     std::mt19937 m_random;
     int m_length;
 };
-
 
 } // namespace utility;

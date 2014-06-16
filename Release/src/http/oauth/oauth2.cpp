@@ -38,7 +38,6 @@ using namespace web::http::details;
 namespace web { namespace http { namespace client { namespace experimental
 {
 
-
 utility::string_t oauth2_config::build_authorization_uri(bool generate_state)
 {
     const utility::string_t response_type((implicit_grant()) ? oauth2_strings::token : oauth2_strings::code);
@@ -60,7 +59,7 @@ utility::string_t oauth2_config::build_authorization_uri(bool generate_state)
     return ub.to_string();
 }
 
-pplx::task<void> oauth2_config::token_from_redirected_uri(web::http::uri redirected_uri)
+pplx::task<void> oauth2_config::token_from_redirected_uri(const web::http::uri& redirected_uri)
 {
     auto query = uri::split_query((implicit_grant()) ? redirected_uri.fragment() : redirected_uri.query());
     
@@ -210,12 +209,10 @@ oauth2_token oauth2_config::_parse_token_from_json(const json::value&& token_jso
     return result;
 }
 
-
 #define _OAUTH2_STRINGS
 #define DAT(a_, b_) const oauth2_string oauth2_strings::a_(_XPLATSTR(b_));
 #include "cpprest/http_constants.dat"
 #undef _OAUTH2_STRINGS
 #undef DAT
-
 
 }}}} // namespace web::http::client::experimental

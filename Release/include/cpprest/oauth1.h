@@ -31,7 +31,6 @@
 
 #include "cpprest/http_msg.h"
 
-
 namespace web
 {
 namespace http
@@ -41,7 +40,6 @@ namespace client
 class http_client_config;
 namespace experimental
 {
-
 
 /// <summary>
 /// Constant strings for OAuth 1.0 signature methods.
@@ -57,7 +55,6 @@ public:
 #undef DAT
 };
 
-
 /// <summary>
 /// Constant strings for OAuth 1.0.
 /// </summary>
@@ -72,7 +69,6 @@ public:
 #undef DAT
 };
 
-
 /// <summary>
 /// Exception type for OAuth 1.0 errors.
 /// </summary>
@@ -86,7 +82,6 @@ public:
 private:
     std::string m_msg;
 };
-
 
 /// <summary>
 /// OAuth 1.0 token and associated information.
@@ -124,7 +119,6 @@ private:
     utility::string_t m_secret;
     bool m_is_temporary;
 };
-
 
 /// <summary>
 /// State currently used by oauth1_config to authenticate request.
@@ -168,8 +162,6 @@ private:
     utility::string_t m_extra_value;
 };
 
-
-
 /// <summary>
 /// Oauth1 configuration.
 /// </summary>
@@ -179,21 +171,14 @@ public:
     oauth1_config(utility::string_t consumer_key, utility::string_t consumer_secret,
             utility::string_t temp_endpoint, utility::string_t auth_endpoint,
             utility::string_t token_endpoint, utility::string_t callback_uri,
-            oauth1_method method) :
+            oauth1_method method, utility::string_t realm=utility::string_t()) :
         m_consumer_key(std::move(consumer_key)),
         m_consumer_secret(std::move(consumer_secret)),
         m_temp_endpoint(std::move(temp_endpoint)),
         m_auth_endpoint(std::move(auth_endpoint)),
         m_token_endpoint(std::move(token_endpoint)),
         m_callback_uri(std::move(callback_uri)),
-        m_method(std::move(method))
-    {}
-
-    oauth1_config(utility::string_t consumer_key, utility::string_t consumer_secret,
-            oauth1_token token, oauth1_method method) :
-        m_consumer_key(std::move(consumer_key)),
-        m_consumer_secret(std::move(consumer_secret)),
-        m_token(std::move(token)),
+        m_realm(std::move(realm)),
         m_method(std::move(method))
     {}
 
@@ -215,7 +200,7 @@ public:
     /// When token is successfully obtained, set_token() is called, and config is
     /// ready for use.
     /// </summary>
-    _ASYNCRTIMP pplx::task<void> token_from_redirected_uri(web::http::uri redirected_uri);
+    _ASYNCRTIMP pplx::task<void> token_from_redirected_uri(const web::http::uri& redirected_uri);
 
     /// <summary>
     /// Creates a task with HTTP request to fetch token from the token endpoint.
@@ -312,7 +297,7 @@ private:
         return os.str();
     }
 
-    _ASYNCRTIMP static std::vector<unsigned char> _hmac_sha1(const utility::string_t key, const utility::string_t data);
+    _ASYNCRTIMP static std::vector<unsigned char> _hmac_sha1(const utility::string_t&& key, const utility::string_t&& data);
 
     static utility::string_t _build_base_string_uri(const uri& u);
 
@@ -352,7 +337,6 @@ private:
     utility::nonce_generator m_nonce_generator;
 };
 
-
 /// <summary>
 /// Oauth1 handler. Specialization of http_pipeline_stage.
 /// </summary>
@@ -378,7 +362,6 @@ public:
 private:
     oauth1_config m_config;
 };
-
 
 }}}} // namespace web::http::client::experimental
 

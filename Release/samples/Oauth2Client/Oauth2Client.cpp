@@ -217,7 +217,7 @@ private:
 
     void open_browser_auth()
     {
-        auto auth_uri(m_oauth2_config.build_authorization_uri());
+        auto auth_uri(m_oauth2_config.build_authorization_uri(true));
         ucout << "Opening browser in URI:" << std::endl;
         ucout << auth_uri << std::endl;
         open_browser(auth_uri);

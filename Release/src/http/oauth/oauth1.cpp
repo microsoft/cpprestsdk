@@ -37,27 +37,22 @@ using namespace utility;
 namespace web { namespace http { namespace client { namespace experimental
 {
 
-
 //
 // Start of platform-dependent _hmac_sha1() block...
 //
 #if _WIN32_WINNT < _WIN32_WINNT_VISTA || _PHONE8_ // Windows XP or Windows Phone 8.0
 
-
-std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t, const utility::string_t)
+std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t&&, const utility::string_t&&)
 {
     throw oauth1_exception(U("oauth1 is not supported"));
 }
 
-
 #elif defined(_MS_WINDOWS) && !defined(__cplusplus_winrt) // Windows desktop
-
 
 #include <winternl.h>
 #include <bcrypt.h>
 
-
-std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t key, const utility::string_t data)
+std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t&& key, const utility::string_t&& data)
 {
     NTSTATUS status;
     BCRYPT_ALG_HANDLE alg_handle = nullptr;
@@ -67,8 +62,8 @@ std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t key
     DWORD hash_len = 0;
     ULONG result_len = 0;
 
-    auto key_c = conversions::utf16_to_utf8(std::move(key));
-    auto data_c = conversions::utf16_to_utf8(std::move(data));
+    auto key_c = conversions::utf16_to_utf8(key);
+    auto data_c = conversions::utf16_to_utf8(data);
 
     status = BCryptOpenAlgorithmProvider(&alg_handle, BCRYPT_SHA1_ALGORITHM, nullptr, BCRYPT_ALG_HANDLE_HMAC_FLAG);
     if (!NT_SUCCESS(status))
@@ -113,16 +108,13 @@ cleanup:
     return hash;
 }
 
-
 #elif defined(_MS_WINDOWS) && defined(__cplusplus_winrt) // Windows RT
-
 
 using namespace Windows::Security::Cryptography;
 using namespace Windows::Security::Cryptography::Core;
 using namespace Windows::Storage::Streams;
  
-
-std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t key, const utility::string_t data)
+std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t&& key, const utility::string_t&& data)
 {
     Platform::String^ data_str = ref new Platform::String(data.c_str());
     Platform::String^ key_str = ref new Platform::String(key.c_str());
@@ -139,14 +131,11 @@ std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t key
     return std::vector<unsigned char>(arr->Data, arr->Data + arr->Length);
 }
 
-
 #else // Linux, Mac OS X
-
 
 #include <openssl/hmac.h>
 
-
-std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t key, const utility::string_t data)
+std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t&& key, const utility::string_t&& data)
 {
     unsigned char digest[HMAC_MAX_MD_CBLOCK];
     unsigned int digest_len = 0;
@@ -158,12 +147,10 @@ std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t key
     return std::vector<unsigned char>(digest, digest + digest_len);
 }
 
-
 #endif
 //
 // ...End of platform-dependent _hmac_sha1() block.
 //
-
 
 // Notes:
 // - Doesn't support URIs without scheme or host.
@@ -344,7 +331,7 @@ pplx::task<utility::string_t> oauth1_config::build_authorization_uri()
     });
 }
 
-pplx::task<void> oauth1_config::token_from_redirected_uri(web::http::uri redirected_uri)
+pplx::task<void> oauth1_config::token_from_redirected_uri(const web::http::uri& redirected_uri)
 {
     auto query = uri::split_query(redirected_uri.query());
 
@@ -370,7 +357,6 @@ pplx::task<void> oauth1_config::token_from_redirected_uri(web::http::uri redirec
     return token_from_verifier(verifier_param->second);
 }
 
-
 #define _OAUTH1_METHODS
 #define DAT(a,b) const oauth1_method oauth1_methods::a = b;
 #include "cpprest/http_constants.dat"
@@ -382,6 +368,5 @@ pplx::task<void> oauth1_config::token_from_redirected_uri(web::http::uri redirec
 #include "cpprest/http_constants.dat"
 #undef _OAUTH1_STRINGS
 #undef DAT
-
 
 }}}} // namespace web::http::client::experimental

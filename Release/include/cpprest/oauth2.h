@@ -41,7 +41,6 @@ class http_client_config;
 namespace experimental
 {
 
-
 /// <summary>
 /// Constant strings.
 /// </summary>
@@ -55,7 +54,6 @@ public:
 #undef _OAUTH2_STRINGS
 #undef DAT
 };
-
 
 /// <summary>
 /// Exception type for OAuth 2.0 errors.
@@ -71,7 +69,6 @@ private:
     std::string m_msg;
 };
 
-
 /// <summary>
 /// OAuth 2.0 token and associated information.
 /// </summary>
@@ -79,7 +76,10 @@ class oauth2_token
 {
 public:
 
-    enum: int64_t { undefined_expiration = -1 };
+    enum: int64_t
+    {
+        undefined_expiration = -1
+    };
 
     oauth2_token(utility::string_t access_token=utility::string_t()) :
         m_access_token(std::move(access_token)),
@@ -117,7 +117,6 @@ private:
     utility::string_t m_scope;
     int64_t m_expires_in;
 };
-
 
 /// <summary>
 /// OAuth 2.0 configuration.
@@ -164,24 +163,17 @@ public:
 
     oauth2_config(utility::string_t client_key, utility::string_t client_secret,
             utility::string_t auth_endpoint, utility::string_t token_endpoint,
-            utility::string_t redirect_uri) :
+            utility::string_t redirect_uri, utility::string_t scope=utility::string_t()) :
                 m_client_key(std::move(client_key)),
                 m_client_secret(std::move(client_secret)),
                 m_auth_endpoint(std::move(auth_endpoint)),
                 m_token_endpoint(std::move(token_endpoint)),
                 m_redirect_uri(std::move(redirect_uri)),
+                m_scope(std::move(scope)),
                 m_implicit_grant(false),
                 m_bearer_auth(true),
                 m_http_basic_auth(true),
                 m_access_token_key(oauth2_strings::access_token)
-    {}
-
-    oauth2_config(oauth2_token token) :
-        m_token(std::move(token)),
-        m_implicit_grant(false),
-        m_bearer_auth(true),
-        m_http_basic_auth(true),
-        m_access_token_key(oauth2_strings::access_token)
     {}
 
     /// <summary>
@@ -210,7 +202,7 @@ public:
     /// When token is successfully obtained, set_token() is called, and config is
     /// ready for use.
     /// </summary>
-    _ASYNCRTIMP pplx::task<void> token_from_redirected_uri(web::http::uri redirected_uri);
+    _ASYNCRTIMP pplx::task<void> token_from_redirected_uri(const web::http::uri& redirected_uri);
 
     /// <summary>
     /// Creates a task to fetch token from the token endpoint.
@@ -355,7 +347,6 @@ private:
     utility::nonce_generator m_state_generator;
 };
 
-
 /// <summary>
 /// OAuth 2.0 handler.
 /// Specialization of http_pipeline_stage to perform OAuth 2.0 request authentication.
@@ -380,7 +371,6 @@ public:
 private:
     oauth2_config m_config;
 };
-
 
 }}}} // namespace web::http::client::experimental
 

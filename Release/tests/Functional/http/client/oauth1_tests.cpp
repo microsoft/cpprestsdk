@@ -36,70 +36,45 @@ using namespace tests::functional::http::utilities;
 
 namespace tests { namespace functional { namespace http { namespace client {
 
-
 SUITE(oauth1_tests)
 {
 
-
-struct oauth1_basic_config
+struct oauth1_test_config
 {
-    oauth1_basic_config() :
-        m_oauth1_config(U("test_key"), U("test_secret"),
-            oauth1_token(U("test_token"), U("test_token_secret"), false),
-            oauth1_methods::hmac_sha1),
-        m_oauth1_handler(m_oauth1_config)
-    {}
-
-    oauth1_config m_oauth1_config;
-    oauth1_handler m_oauth1_handler;
-
-};
-
-struct oauth1_server_setup
-{
-    oauth1_server_setup() :
+    oauth1_test_config() :
         m_server_uri(U("http://localhost:17778/")),
-        m_server(m_server_uri)
-    {
-    }
-
-    utility::string_t m_server_uri;
-    test_http_server::scoped_server m_server;
-};
-
-struct oauth1_basic_config_server : public oauth1_basic_config, oauth1_server_setup {};
-
-struct oauth1_auth_config_server : public oauth1_server_setup
-{
-    oauth1_auth_config_server() :
+        m_test_token(U("test_token"), U("test_token_secret"), false),
         m_oauth1_config(U("test_key"), U("test_secret"),
             m_server_uri, m_server_uri, m_server_uri, m_server_uri,
             oauth1_methods::hmac_sha1),
         m_oauth1_handler(m_oauth1_config)
     {}
 
+    const utility::string_t m_server_uri;
+    const oauth1_token m_test_token;
+
     oauth1_config m_oauth1_config;
     oauth1_handler m_oauth1_handler;
 };
 
-
-// TODO: This test should be probably moved elsewhere?
-TEST(oauth1_unique_nonces)
+struct oauth1_token_setup : public oauth1_test_config
 {
-    // Generate 100 nonces and check each is unique.
-    std::vector<utility::string_t> nonces(100);
-    utility::nonce_generator gen;
-    for (auto&& v : nonces)
+    oauth1_token_setup()
     {
-        v = std::move(gen.generate());
+        m_oauth1_config.set_token(m_test_token);
     }
-    for (auto v : nonces)
-    {
-        VERIFY_ARE_EQUAL(1, std::count(nonces.begin(), nonces.end(), v));
-    }
-}
+};
 
-TEST_FIXTURE(oauth1_basic_config, oauth1_signature_base_string)
+struct oauth1_server_setup : public oauth1_test_config
+{
+    oauth1_server_setup() :
+        m_server(m_server_uri)
+    {}
+
+    test_http_server::scoped_server m_server;
+};
+
+TEST_FIXTURE(oauth1_token_setup, oauth1_signature_base_string)
 {
     // Basic base string generation.
     {
@@ -135,7 +110,7 @@ TEST_FIXTURE(oauth1_basic_config, oauth1_signature_base_string)
     }
 }
 
-TEST_FIXTURE(oauth1_basic_config, oauth1_hmac_sha1_method)
+TEST_FIXTURE(oauth1_token_setup, oauth1_hmac_sha1_method)
 {
     http_request r;
     r.set_method(methods::POST);
@@ -151,15 +126,16 @@ TEST_FIXTURE(oauth1_basic_config, oauth1_hmac_sha1_method)
     VERIFY_ARE_EQUAL(correct_signature, signature);
 }
 
-TEST_FIXTURE(oauth1_basic_config, oauth1_plaintext_method)
+TEST_FIXTURE(oauth1_token_setup, oauth1_plaintext_method)
 {
     utility::string_t signature(m_oauth1_config._build_plaintext_signature());
     utility::string_t correct_signature(U("test_secret&test_token_secret"));
     VERIFY_ARE_EQUAL(correct_signature, signature);
 }
 
-TEST_FIXTURE(oauth1_basic_config_server, oauth1_hmac_sha1_request)
+TEST_FIXTURE(oauth1_server_setup, oauth1_hmac_sha1_request)
 {
+    m_oauth1_config.set_token(m_test_token);
     m_oauth1_config.set_method(oauth1_methods::hmac_sha1);
 
     http_client_config client_config;
@@ -179,8 +155,9 @@ TEST_FIXTURE(oauth1_basic_config_server, oauth1_hmac_sha1_request)
     VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
 }
 
-TEST_FIXTURE(oauth1_basic_config_server, oauth1_plaintext_request)
+TEST_FIXTURE(oauth1_server_setup, oauth1_plaintext_request)
 {
+    m_oauth1_config.set_token(m_test_token);
     m_oauth1_config.set_method(oauth1_methods::plaintext);
 
     http_client_config client_config;
@@ -200,7 +177,7 @@ TEST_FIXTURE(oauth1_basic_config_server, oauth1_plaintext_request)
     VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
 }
 
-TEST_FIXTURE(oauth1_auth_config_server, oauth1_build_authorization_uri)
+TEST_FIXTURE(oauth1_server_setup, oauth1_build_authorization_uri)
 {
     m_server.server()->next_request().then([](test_request *request)
     {
@@ -227,7 +204,7 @@ TEST_FIXTURE(oauth1_auth_config_server, oauth1_build_authorization_uri)
 }
 
 // NOTE: This test also covers token_from_verifier().
-TEST_FIXTURE(oauth1_auth_config_server, oauth1_token_from_redirected_uri)
+TEST_FIXTURE(oauth1_server_setup, oauth1_token_from_redirected_uri)
 {
     m_server.server()->next_request().then([](test_request *request)
     {
@@ -262,8 +239,6 @@ TEST_FIXTURE(oauth1_auth_config_server, oauth1_token_from_redirected_uri)
     VERIFY_ARE_EQUAL(m_oauth1_config.token().secret(), U("bar"));
 }
 
-
 } // SUITE(oauth1_tests)
-
 
 }}}}
