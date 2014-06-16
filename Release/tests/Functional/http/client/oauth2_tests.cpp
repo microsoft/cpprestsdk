@@ -33,8 +33,16 @@ using namespace utility;
 using namespace concurrency;
 
 using namespace tests::functional::http::utilities;
+extern utility::string_t _to_base64(const unsigned char *ptr, size_t size);
 
 namespace tests { namespace functional { namespace http { namespace client {
+
+
+static std::vector<unsigned char> to_body_data(utility::string_t str)
+{
+    const std::string utf8(conversions::to_utf8string(std::move(str)));
+    return std::vector<unsigned char>(utf8.data(), utf8.data() + utf8.size());
+}
 
 SUITE(oauth2_tests)
 {
@@ -111,7 +119,7 @@ TEST_FIXTURE(oauth2_test_setup, oauth2_token_from_code)
 
             VERIFY_ARE_EQUAL(U("Basic MTIzQUJDOjQ1NkRFRg=="), request->m_headers[header_names::authorization]);
 
-            VERIFY_ARE_EQUAL(conversions::to_body_data(
+            VERIFY_ARE_EQUAL(to_body_data(
                     U("grant_type=authorization_code&code=789GHI&redirect_uri=https%3A%2F%2Fbar")),
                     request->m_body);
 
@@ -136,7 +144,7 @@ TEST_FIXTURE(oauth2_test_setup, oauth2_token_from_code)
 
             VERIFY_ARE_EQUAL(U(""), request->m_headers[header_names::authorization]);
 
-            VERIFY_ARE_EQUAL(conversions::to_body_data(
+            VERIFY_ARE_EQUAL(to_body_data(
                     U("grant_type=authorization_code&code=789GHI&redirect_uri=https%3A%2F%2Fbar&client_id=123ABC&client_secret=456DEF")),
                     request->m_body);
 
@@ -206,7 +214,7 @@ TEST_FIXTURE(oauth2_test_setup, oauth2_token_from_refresh)
 
         VERIFY_ARE_EQUAL(U("Basic MTIzQUJDOjQ1NkRFRg=="), request->m_headers[header_names::authorization]);
 
-        VERIFY_ARE_EQUAL(conversions::to_body_data(
+        VERIFY_ARE_EQUAL(to_body_data(
                 U("grant_type=refresh_token&refresh_token=refreshing")),
                 request->m_body);
 
@@ -225,7 +233,7 @@ TEST_FIXTURE(oauth2_test_setup, oauth2_token_from_refresh)
         utility::string_t content, charset;
         parse_content_type_and_charset(request->m_headers[header_names::content_type], content, charset);
 
-        VERIFY_ARE_EQUAL(conversions::to_body_data(
+        VERIFY_ARE_EQUAL(to_body_data(
                 U("grant_type=refresh_token&refresh_token=BAZ&scope=xyzzy")),
                 request->m_body);
 

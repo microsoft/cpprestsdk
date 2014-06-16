@@ -148,11 +148,6 @@ namespace conversions
     /// </summary>
     _ASYNCRTIMP std::vector<unsigned char> __cdecl from_base64(const utility::string_t& str);
 
-    /// <summary>
-    /// Convert string to body data
-    /// </summary>
-    _ASYNCRTIMP std::vector<unsigned char> __cdecl to_body_data(const utility::string_t& str);
-
     template <typename Source>
     utility::string_t print_string(const Source &val)
     {
@@ -464,7 +459,7 @@ inline int operator- (datetime t1, datetime t2)
 }
 
 /// <summary>
-/// Nonce generator class.
+/// Nonce string generator class.
 /// </summary>
 class nonce_generator
 {
@@ -475,14 +470,32 @@ public:
         default_length = 32
     };
 
+    /// <summary>
+    /// Nonce generator constructor.
+    /// </summary>
+    /// <param name="length">Length of the generated nonce string.</param>
     nonce_generator(int length=default_length) :
-        m_random((unsigned int) utility::datetime::utc_timestamp()),
+        m_random(static_cast<unsigned int>(utility::datetime::utc_timestamp())),
         m_length(length)
     {}
 
+    /// <summary>
+    /// Generate a nonce string containing random alphanumeric characters (A-Za-z0-9).
+    /// Length of the generated string is set by length().
+    /// </summary>
+    /// <returns>The generated nonce string.</returns>
     _ASYNCRTIMP utility::string_t generate();
 
+    /// <summary>
+    /// Get length of generated nonce string.
+    /// </summary>
+    /// <returns>Nonce string length.</returns>
     int length() const { return m_length; }
+
+    /// <summary>
+    /// Set length of the generated nonce string.
+    /// </summary>
+    /// <param name="length">Lenght of nonce string.</param>
     void set_length(int length) { m_length = length; }
 
 private:

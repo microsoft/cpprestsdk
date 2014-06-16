@@ -481,12 +481,6 @@ utf16string __cdecl conversions::to_utf16string(const std::string &value) { retu
 
 utf16string __cdecl conversions::to_utf16string(utf16string value) { return std::move(value); }
 
-std::vector<unsigned char> __cdecl conversions::to_body_data(const utility::string_t& str)
-{
-    std::string s(to_utf8string(str));
-    return std::vector<unsigned char>(s.data(), s.data() + s.size());
-}
-
 #pragma endregion
 
 #pragma region datetime

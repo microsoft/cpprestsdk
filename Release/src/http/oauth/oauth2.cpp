@@ -35,6 +35,8 @@ using namespace web::http;
 using namespace web::http::client;
 using namespace web::http::details;
 
+extern utility::string_t _to_base64(const unsigned char *ptr, size_t size);
+
 namespace web { namespace http { namespace client { namespace experimental
 {
 
@@ -107,13 +109,15 @@ pplx::task<void> oauth2_config::_request_token(uri_builder&& request_body_ub)
 
     if (http_basic_auth())
     {
-        std::vector<unsigned char> creds_vec(conversions::to_body_data(
-            uri::encode_data_string(client_key()) + U(":") + uri::encode_data_string(client_secret()))
-        );
-        request.headers().add(header_names::authorization, U("Basic ") + conversions::to_base64(std::move(creds_vec)));
+        // Build HTTP Basic authorization header.
+        const std::string creds_utf8(conversions::to_utf8string(
+            uri::encode_data_string(client_key()) + U(":") + uri::encode_data_string(client_secret())));
+        request.headers().add(header_names::authorization, U("Basic ")
+            + _to_base64(reinterpret_cast<const unsigned char*>(creds_utf8.data()), creds_utf8.size()));
     }
     else
     {
+        // Add credentials to query as-is.
         request_body_ub.append_query(oauth2_strings::client_id, uri::encode_data_string(client_key()), false);
         request_body_ub.append_query(oauth2_strings::client_secret, uri::encode_data_string(client_secret()), false);
     }
@@ -122,31 +126,9 @@ pplx::task<void> oauth2_config::_request_token(uri_builder&& request_body_ub)
     http_client token_client(token_endpoint());
 
     return token_client.request(request)
-    .then([this](pplx::task<http_response> req_task)
+    .then([this](http_response resp)
     {
-        json::value resp_json;
-        try
-        {
-            resp_json = req_task.get().extract_json().get();
-        }
-        catch (http_exception &e)
-        {
-            throw oauth2_exception(U("encountered http_exception: ") + conversions::to_string_t(std::string(e.what())));
-        }
-        catch (json::json_exception &e)
-        {
-            throw oauth2_exception(U("encountered json_exception: ") + conversions::to_string_t(std::string(e.what())));
-        }
-        catch (std::exception &e)
-        {
-            throw oauth2_exception(U("encountered exception: ") + conversions::to_string_t(std::string(e.what())));
-        }
-        catch (...)
-        {
-            throw oauth2_exception(U("encountered unknown exception"));
-        }
-
-        set_token(_parse_token_from_json(std::move(resp_json)));
+        set_token(_parse_token_from_json(resp.extract_json().get()));
     });
 }
 
