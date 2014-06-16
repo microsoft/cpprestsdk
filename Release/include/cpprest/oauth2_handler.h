@@ -79,10 +79,10 @@ class oauth2_token
 {
 public:
 
-    static const int64_t undefined_expiration = -1;
+    enum: int64_t { undefined_expiration = -1 };
 
     oauth2_token(utility::string_t access_token=utility::string_t()) :
-        m_access_token(access_token),
+        m_access_token(std::move(access_token)),
         m_expires_in(undefined_expiration)
     {}
 
@@ -165,11 +165,11 @@ public:
     oauth2_config(utility::string_t client_key, utility::string_t client_secret,
             utility::string_t auth_endpoint, utility::string_t token_endpoint,
             utility::string_t redirect_uri) :
-                m_client_key(client_key),
-                m_client_secret(client_secret),
-                m_auth_endpoint(auth_endpoint),
-                m_token_endpoint(token_endpoint),
-                m_redirect_uri(redirect_uri),
+                m_client_key(std::move(client_key)),
+                m_client_secret(std::move(client_secret)),
+                m_auth_endpoint(std::move(auth_endpoint)),
+                m_token_endpoint(std::move(token_endpoint)),
+                m_redirect_uri(std::move(redirect_uri)),
                 m_implicit_grant(false),
                 m_bearer_auth(true),
                 m_http_basic_auth(true),
@@ -225,7 +225,7 @@ public:
     {
         uri_builder ub;
         ub.append_query(oauth2_strings::grant_type, oauth2_strings::authorization_code, false);
-        ub.append_query(oauth2_strings::code, uri::encode_data_string(authorization_code), false);
+        ub.append_query(oauth2_strings::code, uri::encode_data_string(std::move(authorization_code)), false);
         ub.append_query(oauth2_strings::redirect_uri, uri::encode_data_string(redirect_uri()), false);
         return _request_token(std::move(ub));
     }

@@ -31,7 +31,6 @@
 
 #include "cpprest/http_msg.h"
 
-using namespace utility;
 
 namespace web
 {
@@ -96,8 +95,8 @@ class oauth1_token
 {
 public:
     oauth1_token(utility::string_t token, utility::string_t secret, bool is_temporary) :
-        m_token(token),
-        m_secret(secret),
+        m_token(std::move(token)),
+        m_secret(std::move(secret)),
         m_is_temporary(is_temporary)
     {}
 
@@ -138,16 +137,16 @@ class oauth1_auth_state
 public:
 
     oauth1_auth_state(utility::string_t timestamp, utility::string_t nonce) :
-        m_timestamp(timestamp),
-        m_nonce(nonce)
+        m_timestamp(std::move(timestamp)),
+        m_nonce(std::move(nonce))
     {}
 
     oauth1_auth_state(utility::string_t timestamp, utility::string_t nonce,
             utility::string_t extra_key, utility::string_t extra_value) :
-        m_timestamp(timestamp),
-        m_nonce(nonce),
-        m_extra_key(extra_key),
-        m_extra_value(extra_value)
+        m_timestamp(std::move(timestamp)),
+        m_nonce(std::move(nonce)),
+        m_extra_key(std::move(extra_key)),
+        m_extra_value(std::move(extra_value))
     {}
 
     const utility::string_t& timestamp() const { return m_timestamp; }
@@ -181,19 +180,19 @@ public:
             utility::string_t temp_endpoint, utility::string_t auth_endpoint,
             utility::string_t token_endpoint, utility::string_t callback_uri,
             oauth1_method method) :
-        m_consumer_key(consumer_key),
-        m_consumer_secret(consumer_secret),
-        m_temp_endpoint(temp_endpoint),
-        m_auth_endpoint(auth_endpoint),
-        m_token_endpoint(token_endpoint),
-        m_callback_uri(callback_uri),
+        m_consumer_key(std::move(consumer_key)),
+        m_consumer_secret(std::move(consumer_secret)),
+        m_temp_endpoint(std::move(temp_endpoint)),
+        m_auth_endpoint(std::move(auth_endpoint)),
+        m_token_endpoint(std::move(token_endpoint)),
+        m_callback_uri(std::move(callback_uri)),
         m_method(std::move(method))
     {}
 
     oauth1_config(utility::string_t consumer_key, utility::string_t consumer_secret,
             oauth1_token token, oauth1_method method) :
-        m_consumer_key(consumer_key),
-        m_consumer_secret(consumer_secret),
+        m_consumer_key(std::move(consumer_key)),
+        m_consumer_secret(std::move(consumer_secret)),
         m_token(std::move(token)),
         m_method(std::move(method))
     {}
@@ -227,7 +226,7 @@ public:
     /// <param name="verifier">Verifier received via redirect upon successful authorization.</param>
     pplx::task<void> token_from_verifier(utility::string_t verifier)
     {
-        return _request_token(_generate_auth_state(oauth1_strings::verifier, uri::encode_data_string(verifier)), false);
+        return _request_token(_generate_auth_state(oauth1_strings::verifier, uri::encode_data_string(std::move(verifier))), false);
     }
 
     const utility::string_t& consumer_key() const { return m_consumer_key; }
@@ -273,7 +272,7 @@ public:
     {
         auto text(_build_signature_base_string(std::move(request), std::move(state)));
         auto digest(_hmac_sha1(_build_key(), std::move(text)));
-        auto signature(conversions::to_base64(std::move(digest)));
+        auto signature(utility::conversions::to_base64(std::move(digest)));
         return signature;
     }
 
