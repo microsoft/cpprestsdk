@@ -21,8 +21,8 @@ if(UNIX)
     http/listener/http_listener.cpp
     http/listener/http_msg_listen.cpp
     http/listener/http_server_api.cpp
-    http/oauth/oauth1_handler.cpp
-    http/oauth/oauth2_handler.cpp
+    http/oauth/oauth1.cpp
+    http/oauth/oauth2.cpp
     websockets/client/ws_msg.cpp
     websockets/client/ws_client.cpp
     utilities/base64.cpp
@@ -54,7 +54,7 @@ elseif(WIN32)
     utilities/base64.cpp
     http/client/http_win7.cpp
     http/listener/http_windows_server.cpp
-    http/oauth/oauth1_handler.cpp
+    http/oauth/oauth1.cpp
     streams/windows/fileio.cpp
     streams/windows/ioscheduler.cpp
     utilities/dllmain.cpp

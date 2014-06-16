@@ -22,6 +22,6 @@
 #include <cpprest/basic_types.h>
 #include <cpprest/uri.h>
 #include <cpprest/http_client.h>
-#include <cpprest/oauth2_handler.h>
+#include <cpprest/oauth2.h>
 #include "App.xaml.h"
 #include "MainPage.xaml.h"

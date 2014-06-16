@@ -16,9 +16,9 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* oauth1_handler.h
+* oauth1.h
 *
-* HTTP Library: Oauth 1.0 protocol handler
+* HTTP Library: Oauth 1.0 
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
 *
@@ -26,8 +26,8 @@
 ****/
 #pragma once
 
-#ifndef _CASA_OAUTH1_HANDLER_H
-#define _CASA_OAUTH1_HANDLER_H
+#ifndef _CASA_OAUTH1_H
+#define _CASA_OAUTH1_H
 
 #include "cpprest/http_msg.h"
 
@@ -382,4 +382,4 @@ private:
 
 }}}} // namespace web::http::client::experimental
 
-#endif  /* _CASA_OAUTH1_HANDLER_H */
+#endif  /* _CASA_OAUTH1_H */

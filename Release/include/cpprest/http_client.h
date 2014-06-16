@@ -58,8 +58,8 @@ namespace pplx = Concurrency;
 #include "cpprest/web_utilities.h"
 #include "cpprest/basic_types.h"
 #include "cpprest/asyncrt_utils.h"
-#include "cpprest/oauth1_handler.h"
-#include "cpprest/oauth2_handler.h"
+#include "cpprest/oauth1.h"
+#include "cpprest/oauth2.h"
 
 namespace web 
 {

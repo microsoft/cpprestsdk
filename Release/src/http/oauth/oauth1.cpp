@@ -16,9 +16,9 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* oauth1_handler.cpp
+* oauth1.cpp
 *
-* HTTP Library: Oauth 1.0 handler
+* HTTP Library: Oauth 1.0
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
 *
@@ -26,7 +26,7 @@
 ****/
 
 #include "stdafx.h"
-#include "cpprest/oauth1_handler.h"
+#include "cpprest/oauth1.h"
 #include "cpprest/asyncrt_utils.h"
 
 using namespace web;

@@ -16,9 +16,9 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* oauth2_handler.cpp
+* oauth2.cpp
 *
-* HTTP Library: Oauth 2.0 protocol handler
+* HTTP Library: Oauth 2.0
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
 *
@@ -26,7 +26,7 @@
 ****/
 
 #include "stdafx.h"
-#include "cpprest/oauth2_handler.h"
+#include "cpprest/oauth2.h"
 #include "cpprest/http_helpers.h"
 
 using namespace utility;
