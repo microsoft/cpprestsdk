@@ -186,7 +186,7 @@ utility::string_t oauth1_config::_build_normalized_parameters(web::http::uri u, 
     // We need to sort the query parameters separately.
     std::map<utility::string_t, utility::string_t> queries_map = http::uri::split_query(std::move(u).query());
     std::vector<utility::string_t> queries;
-    for (auto query : queries_map)
+    for (const auto& query : queries_map)
     {
         utility::ostringstream_t os;
         os << query.first << "=" << query.second;
@@ -251,8 +251,8 @@ pplx::task<void> oauth1_config::_request_token(oauth1_auth_state state, bool is_
     req._set_base_uri(endpoint);
 
     _authenticate_request(req, std::move(state));
-    http_client c(endpoint);
-    return c.request(req)
+    http_client client(endpoint);
+    return client.request(req)
     .then([this, is_temp_token_request](pplx::task<http_response> req_task) -> void
     {
         std::map<utility::string_t, utility::string_t> query;

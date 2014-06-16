@@ -321,7 +321,7 @@ private:
 
     _ASYNCRTIMP pplx::task<void> _request_token(uri_builder&& request_body);
 
-    oauth2_token _parse_token_from_json(json::value& token_json);
+    oauth2_token _parse_token_from_json(const json::value&& token_json);
 
     void _authenticate_request(http_request &req) const
     {

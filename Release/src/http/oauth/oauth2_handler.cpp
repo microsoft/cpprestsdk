@@ -92,7 +92,7 @@ pplx::task<void> oauth2_config::token_from_redirected_uri(web::http::uri redirec
     }
 
     set_token(token_param->second);
-    return pplx::create_task([](){});
+    return pplx::task_from_result();
 }
 
 pplx::task<void> oauth2_config::_request_token(uri_builder&& request_body_ub)
@@ -147,17 +147,17 @@ pplx::task<void> oauth2_config::_request_token(uri_builder&& request_body_ub)
             throw oauth2_exception(U("encountered unknown exception"));
         }
 
-        set_token(_parse_token_from_json(resp_json));
+        set_token(_parse_token_from_json(std::move(resp_json)));
     });
 }
 
-oauth2_token oauth2_config::_parse_token_from_json(json::value& token_json)
+oauth2_token oauth2_config::_parse_token_from_json(const json::value&& token_json)
 {
     oauth2_token result;
 
     if (token_json.has_field(oauth2_strings::access_token))
     {
-        result.set_access_token(token_json[oauth2_strings::access_token].as_string());
+        result.set_access_token(token_json.at(oauth2_strings::access_token).as_string());
     }
     else
     {
@@ -166,7 +166,7 @@ oauth2_token oauth2_config::_parse_token_from_json(json::value& token_json)
 
     if (token_json.has_field(oauth2_strings::token_type))
     {
-        result.set_token_type(token_json[oauth2_strings::token_type].as_string());
+        result.set_token_type(token_json.at(oauth2_strings::token_type).as_string());
     }
     else
     {
@@ -182,7 +182,7 @@ oauth2_token oauth2_config::_parse_token_from_json(json::value& token_json)
 
     if (token_json.has_field(oauth2_strings::refresh_token))
     {
-        result.set_refresh_token(token_json[oauth2_strings::refresh_token].as_string());
+        result.set_refresh_token(token_json.at(oauth2_strings::refresh_token).as_string());
     }
     else
     {
@@ -191,7 +191,7 @@ oauth2_token oauth2_config::_parse_token_from_json(json::value& token_json)
 
     if (token_json.has_field(oauth2_strings::expires_in))
     {
-        result.set_expires_in(token_json[oauth2_strings::expires_in].as_number().to_int64());
+        result.set_expires_in(token_json.at(oauth2_strings::expires_in).as_number().to_int64());
     }
     else
     {
@@ -200,7 +200,7 @@ oauth2_token oauth2_config::_parse_token_from_json(json::value& token_json)
 
     if (token_json.has_field(oauth2_strings::scope))
     {
-        result.set_scope(token_json[oauth2_strings::scope].as_string());
+        result.set_scope(token_json.at(oauth2_strings::scope).as_string());
     }
     else
     {
