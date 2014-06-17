@@ -221,13 +221,6 @@ namespace details
 #endif
     }
 
-    // Turn const_iterator into an iterator
-    template <typename Container, typename ConstIterator>
-    typename Container::iterator remove_iterator_constness(Container& c, ConstIterator it)
-    {
-        return c.erase(it, it);
-    }
-
 #ifdef _MS_WINDOWS
 
 /// <summary>
@@ -307,12 +300,25 @@ public:
     static _ASYNCRTIMP datetime __cdecl utc_now();
 
     /// <summary>
+    /// An invalid UTC timestamp value.
+    /// </summary>
+    enum:interval_type { utc_timestamp_invalid = std::numeric_limits<interval_type>::max() };
+
+    /// <summary>
     /// Returns seconds since Unix/POSIX time epoch at 01-01-1970 00:00:00.
-    /// NOTE: Return value is negative if timestamp is before epoch.
+    /// If time is before epoch, utc_timestamp_invalid is returned.
     /// </summary>
     static interval_type utc_timestamp()
     {
-        return (utc_now().to_interval() / _secondTicks) - 11644473600LL;
+        const auto seconds = utc_now().to_interval() / _secondTicks;
+        if (seconds >= 11644473600LL)
+        {
+            return seconds - 11644473600LL;
+        }
+        else
+        {
+            return utc_timestamp_invalid;
+        }
     }
 
     datetime() : m_interval(0)
@@ -465,10 +471,10 @@ class nonce_generator
 {
 public:
 
-    enum
-    {
-        default_length = 32
-    };
+    /// <summary>
+    /// Define default nonce length.
+    /// </summary>
+    enum { default_length = 32 };
 
     /// <summary>
     /// Nonce generator constructor.

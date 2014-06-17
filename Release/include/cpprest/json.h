@@ -935,16 +935,6 @@ public:
         }
 
         /// <summary>
-        /// Gets an iterator to an element of a JSON object.
-        /// </summary>
-        /// <param name="key">The key of an element in the JSON object.</param>
-        /// <returns>An iterator to the value kept in the field.</returns>
-        iterator find(const utility::string_t& key)
-        {
-            return utility::details::remove_iterator_constness(m_elements, find_internal(key));
-        }
-
-        /// <summary>
         /// Gets the number of elements of the object.
         /// </summary>
         /// <returns>The number of elements.</returns>

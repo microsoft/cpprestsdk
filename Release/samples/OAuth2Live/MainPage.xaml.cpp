@@ -180,7 +180,7 @@ void OAuth2Live::MainPage::AccessTokenTextChanged(Platform::Object^ sender, Wind
 {
     http_client_config http_config;
     http_config.set_oauth2(m_live_oauth2_config);
-    m_live_client = utility::details::make_unique<http_client>(U("https://apis.live.net/v5.0/"), http_config);
+    m_live_client.reset(new http_client(U("https://apis.live.net/v5.0/"), http_config));
     _UpdateButtonState();
 }
 
