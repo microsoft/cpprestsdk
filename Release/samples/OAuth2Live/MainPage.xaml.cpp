@@ -106,7 +106,7 @@ void OAuth2Live::MainPage::GetTokenButtonClick(Platform::Object^ sender, Windows
                             DebugArea->Text += "< Got token\n";
                             AccessToken->Text = ref new String(m_live_oauth2_config.token().access_token().c_str());
                         }
-                        catch (oauth2_exception& e)
+                        catch (const oauth2_exception& e)
                         {
                             DebugArea->Text += "< Failed to get token\n";
                             String^ error = ref new String(utility::conversions::to_string_t(e.what()).c_str());
@@ -207,7 +207,7 @@ void OAuth2Live::MainPage::RefreshTokenButtonClick(Platform::Object^ sender, Win
             DebugArea->Text += "< Got token\n";
             AccessToken->Text = ref new String(m_live_oauth2_config.token().access_token().c_str());
         }
-        catch (oauth2_exception& e)
+        catch (const oauth2_exception& e)
         {
             DebugArea->Text += "< Failed to get token\n";
             String^ error = ref new String(utility::conversions::to_string_t(e.what()).c_str());

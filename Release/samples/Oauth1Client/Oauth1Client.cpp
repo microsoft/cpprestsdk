@@ -105,7 +105,7 @@ public:
                         token_task.wait();
                         m_tce.set(true);
                     }
-                    catch (oauth1_exception& e)
+                    catch (const oauth1_exception& e)
                     {
                         ucout << "Error: " << e.what() << std::endl;
                         m_tce.set(false);
@@ -232,7 +232,7 @@ private:
             open_browser(auth_uri);
             return true;
         }
-        catch (oauth1_exception &e)
+        catch (const oauth1_exception &e)
         {
             ucout << "Error: " << e.what() << std::endl;
             return false;

@@ -108,7 +108,7 @@ public:
                         token_task.wait();
                         m_tce.set(true);
                     }
-                    catch (oauth2_exception& e)
+                    catch (const oauth2_exception& e)
                     {
                         ucout << "Error: " << e.what() << std::endl;
                         m_tce.set(false);
