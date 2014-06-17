@@ -82,7 +82,7 @@ TEST_FIXTURE(oauth1_token_setup, oauth1_signature_base_string)
         r.set_method(methods::POST);
         r.set_request_uri(U("http://example.com:80/request?a=b&c=d")); // Port set to avoid default.
 
-        oauth1_auth_state state = m_oauth1_config._generate_auth_state(U(""), U(""));
+        auto state = m_oauth1_config._generate_auth_state();
         state.set_timestamp(U("12345678"));
         state.set_nonce(U("ABCDEFGH"));
 
@@ -98,7 +98,7 @@ TEST_FIXTURE(oauth1_token_setup, oauth1_signature_base_string)
         r.set_method(methods::POST);
         r.set_request_uri(U("http://example.com:80/request?a=b&c=d"));
 
-        oauth1_auth_state state = m_oauth1_config._generate_auth_state(U("oauth_test"), U("xyzzy"));
+        auto state = m_oauth1_config._generate_auth_state(U("oauth_test"), U("xyzzy"));
         state.set_timestamp(U("12345678"));
         state.set_nonce(U("ABCDEFGH"));
 
@@ -116,7 +116,7 @@ TEST_FIXTURE(oauth1_token_setup, oauth1_hmac_sha1_method)
     r.set_method(methods::POST);
     r.set_request_uri(U("http://example.com:80/request?a=b&c=d")); // Port set to avoid default.
 
-    oauth1_auth_state state = m_oauth1_config._generate_auth_state(U(""), U(""));
+    auto state = m_oauth1_config._generate_auth_state();
     state.set_timestamp(U("12345678"));
     state.set_nonce(U("ABCDEFGH"));
 
@@ -150,7 +150,7 @@ TEST_FIXTURE(oauth1_server_setup, oauth1_hmac_sha1_request)
         request->reply(status_codes::OK);
     });
 
-    VERIFY_IS_TRUE(m_oauth1_config.token().is_valid());
+    VERIFY_IS_TRUE(m_oauth1_config.token().is_valid_access_token());
     http_response response = client.request(methods::GET).get();
     VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
 }
@@ -172,7 +172,7 @@ TEST_FIXTURE(oauth1_server_setup, oauth1_plaintext_request)
         request->reply(status_codes::OK);
     });
 
-    VERIFY_IS_TRUE(m_oauth1_config.token().is_valid());
+    VERIFY_IS_TRUE(m_oauth1_config.token().is_valid_access_token());
     http_response response = client.request(methods::GET).get();
     VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
 }
@@ -234,7 +234,7 @@ TEST_FIXTURE(oauth1_server_setup, oauth1_token_from_redirected_uri)
     const web::http::uri redirected_uri(U("http://localhost:17778/?oauth_token=xyzzy&oauth_verifier=simsalabim"));
     m_oauth1_config.token_from_redirected_uri(redirected_uri).wait();
 
-    VERIFY_IS_TRUE(m_oauth1_config.token().is_valid());
+    VERIFY_IS_TRUE(m_oauth1_config.token().is_valid_access_token());
     VERIFY_ARE_EQUAL(m_oauth1_config.token().token(), U("foo"));
     VERIFY_ARE_EQUAL(m_oauth1_config.token().secret(), U("bar"));
 }

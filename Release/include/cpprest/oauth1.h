@@ -37,7 +37,62 @@ namespace http
 {
 namespace client
 {
+namespace details
+{
+
+// State currently used by oauth1_config to authenticate request.
+// The state varies for every request (due to timestamp and nonce).
+// The state also contains extra transmitted protocol parameters during
+// authorization flow (i.e. 'oauth_callback' or 'oauth_verifier').
+class oauth1_state
+{
+public:
+    oauth1_state(utility::string_t timestamp, utility::string_t nonce,
+            utility::string_t extra_key=utility::string_t(),
+            utility::string_t extra_value=utility::string_t()) :
+        m_timestamp(std::move(timestamp)),
+        m_nonce(std::move(nonce)),
+        m_extra_key(std::move(extra_key)),
+        m_extra_value(std::move(extra_value))
+    {}
+
+    const utility::string_t& timestamp() const { return m_timestamp; }
+    void set_timestamp(utility::string_t timestamp) { m_timestamp = std::move(timestamp); }
+
+    const utility::string_t& nonce() const { return m_nonce; }
+    void set_nonce(utility::string_t nonce) { m_nonce = std::move(nonce); }
+
+    const utility::string_t& extra_key() const { return m_extra_key; }
+    void set_extra_key(utility::string_t key) { m_extra_key = std::move(key); }
+
+    const utility::string_t& extra_value() const { return m_extra_value; }
+    void set_extra_value(utility::string_t value) { m_extra_value = std::move(value); }
+
+private:
+    utility::string_t m_timestamp;
+    utility::string_t m_nonce;
+    utility::string_t m_extra_key;
+    utility::string_t m_extra_value;
+};
+
+/// <summary>
+/// Constant strings for OAuth 1.0.
+/// </summary>
+typedef utility::string_t oauth1_string;
+class oauth1_strings
+{
+public:
+#define _OAUTH1_STRINGS
+#define DAT(a_, b_) _ASYNCRTIMP static const oauth1_string a_;
+#include "cpprest/http_constants.dat"
+#undef _OAUTH1_STRINGS
+#undef DAT
+};
+
+} // namespace web::http::client::details
+
 class http_client_config;
+
 namespace experimental
 {
 
@@ -52,20 +107,6 @@ public:
 #define DAT(a,b) _ASYNCRTIMP static const oauth1_method a;
 #include "cpprest/http_constants.dat"
 #undef _OAUTH1_METHODS
-#undef DAT
-};
-
-/// <summary>
-/// Constant strings for OAuth 1.0.
-/// </summary>
-typedef utility::string_t oauth1_string;
-class oauth1_strings
-{
-public:
-#define _OAUTH1_STRINGS
-#define DAT(a_, b_) _ASYNCRTIMP static const oauth1_string a_;
-#include "cpprest/http_constants.dat"
-#undef _OAUTH1_STRINGS
 #undef DAT
 };
 
@@ -99,19 +140,49 @@ public:
         m_is_temporary(false)
     {}
 
-    bool is_valid() const { return !(is_temporary() || token().empty() || secret().empty()); }
+    /// <summary>
+    /// Get access token validity state.
+    /// If true, token is a valid access token; when is_temporary() is false
+    /// and both token() and secret() are set (=not empty).
+    /// </summary>
+    /// <returns>Access token validity state of the token.</returns>
+    bool is_valid_access_token() const { return !(is_temporary() || token().empty() || secret().empty()); }
 
+    /// <summary>
+    /// Get token.
+    /// </summary>
+    /// <returns>Token string.</returns>
     const utility::string_t& token() const { return m_token; }
+    /// <summary>
+    /// Set token.
+    /// </summary>
+    /// <param name="token">Token string to set.</returns>
     void set_token(utility::string_t token) { m_token = std::move(token); }
 
+    /// <summary>
+    /// Get token secret.
+    /// </summary>
+    /// <returns>Token secret string.</returns>
     const utility::string_t& secret() const { return m_secret; }
+    /// <summary>
+    /// Set token secret.
+    /// </summary>
+    /// <param name="secret">Token secret string to set.</returns>
     void set_secret(utility::string_t secret) { m_secret = std::move(secret); }
 
+    /// <summary>
+    /// Temporary token bit.
+    /// If true, token is a temporary token, otherwise an access token.
+    /// Note that is_valid() will be false if is_temporary() == true.
+    /// </summary>
+    /// <returns>Temporary token bit.</returns>
     bool is_temporary() const { return m_is_temporary; }
     /// <summary>
-    /// If set, token is a temporary token. Note that is_valid() will also return
-    /// false if this option is set.
+    /// Set temporary token bit.
+    /// If true, token is a temporary token, otherwise an access token.
+    /// Note that is_valid() will be false if is_temporary() == true.
     /// </summary>
+    /// <param name="is_temporary">Temporary token bit to set.</param>
     void set_is_temporary(bool is_temporary) { m_is_temporary = std::move(is_temporary); }
 
 private:
@@ -121,49 +192,7 @@ private:
 };
 
 /// <summary>
-/// State currently used by oauth1_config to authenticate request.
-/// The state varies for every request (due to timestamp and nonce).
-/// The state also contains extra transmitted protocol parameters during
-/// authorization flow (i.e. 'oauth_callback' or 'oauth_verifier').
-/// </summary>
-class oauth1_auth_state
-{
-public:
-
-    oauth1_auth_state(utility::string_t timestamp, utility::string_t nonce) :
-        m_timestamp(std::move(timestamp)),
-        m_nonce(std::move(nonce))
-    {}
-
-    oauth1_auth_state(utility::string_t timestamp, utility::string_t nonce,
-            utility::string_t extra_key, utility::string_t extra_value) :
-        m_timestamp(std::move(timestamp)),
-        m_nonce(std::move(nonce)),
-        m_extra_key(std::move(extra_key)),
-        m_extra_value(std::move(extra_value))
-    {}
-
-    const utility::string_t& timestamp() const { return m_timestamp; }
-    void set_timestamp(utility::string_t timestamp) { m_timestamp = std::move(timestamp); }
-    
-    const utility::string_t& nonce() const { return m_nonce; }
-    void set_nonce(utility::string_t nonce) { m_nonce = std::move(nonce); }
-
-    const utility::string_t& extra_key() const { return m_extra_key; }
-    void set_extra_key(utility::string_t key) { m_extra_key = std::move(key); }
-
-    const utility::string_t& extra_value() const { return m_extra_value; }
-    void set_extra_value(utility::string_t value) { m_extra_value = std::move(value); }
-
-private:
-    utility::string_t m_timestamp;
-    utility::string_t m_nonce;
-    utility::string_t m_extra_key;
-    utility::string_t m_extra_value;
-};
-
-/// <summary>
-/// Oauth1 configuration.
+/// OAuth 1.0 configuration class.
 /// </summary>
 class oauth1_config
 {
@@ -183,77 +212,121 @@ public:
     {}
 
     /// <summary>
-    /// Builds an authorization URI to be loaded in the web browser.
+    /// Builds an authorization URI to be loaded in a web browser/view.
     /// The URI is built with auth_endpoint() as basis.
     /// The method creates a task for HTTP request to first obtain a
     /// temporary token. The authorization URI build based on this token.
     /// </summary>
+    /// <returns>Authorization URI to be loaded in a web browser/view.</returns>
     _ASYNCRTIMP pplx::task<utility::string_t> build_authorization_uri();
 
     /// <summary>
-    /// Get the access token based on redirected URI.
+    /// Fetch an access token based on redirected URI.
     /// The URI is expected to contain 'oauth_verifier'
-    /// parameter, which is then used to fetch a token using the
+    /// parameter, which is then used to fetch an access token using the
     /// token_from_verifier() method.
     /// See: http://tools.ietf.org/html/rfc5849#section-2.2
     /// The received 'oauth_token' is parsed and verified to match the current token().
-    /// When token is successfully obtained, set_token() is called, and config is
-    /// ready for use.
+    /// When access token is successfully obtained, set_token() is called, and config is
+    /// ready for use by oauth1_handler.
     /// </summary>
+    /// <param name="redirected_uri">The URI where web browser/view was redirected after resource owner's authorization.</param>
+    /// <returns>Task that fetches the access token based on redirected URI.</returns>
     _ASYNCRTIMP pplx::task<void> token_from_redirected_uri(const web::http::uri& redirected_uri);
 
     /// <summary>
-    /// Creates a task with HTTP request to fetch token from the token endpoint.
+    /// Creates a task with HTTP request to fetch an access token from the token endpoint.
     /// The request exchanges a verifier code to an access token.
-    /// If successful, resulting token is set as active via set_token().
+    /// If successful, the resulting token is set as active via set_token().
     /// See: http://tools.ietf.org/html/rfc5849#section-2.3
     /// </summary>
     /// <param name="verifier">Verifier received via redirect upon successful authorization.</param>
     pplx::task<void> token_from_verifier(utility::string_t verifier)
     {
-        return _request_token(_generate_auth_state(oauth1_strings::verifier, uri::encode_data_string(std::move(verifier))), false);
+        return _request_token(_generate_auth_state(details::oauth1_strings::verifier, uri::encode_data_string(std::move(verifier))), false);
     }
 
+    /// <summary>
+    /// Get consumer key used in authorization and authentication.
+    /// </summary>
+    /// <returns>Consumer key.</returns>
     const utility::string_t& consumer_key() const { return m_consumer_key; }
     void set_consumer_key(utility::string_t key) { m_consumer_key = std::move(key); }
 
+    /// <summary>
+    /// Get consumer secret used in authorization and authentication.
+    /// </summary>
+    /// <returns>Consumer secret.</returns>
     const utility::string_t& consumer_secret() const { return m_consumer_secret; }
     void set_consumer_secret(utility::string_t secret) { m_consumer_secret = std::move(secret); }
 
+    /// <summary>
+    /// Get temporary token endpoint URI string.
+    /// </summary>
+    /// <returns>Temporary token endpoint URI string.</returns>
     const utility::string_t& temp_endpoint() const { return m_temp_endpoint; }
     void set_temp_endpoint(utility::string_t temp_endpoint) { m_temp_endpoint = std::move(temp_endpoint); }
 
+    /// <summary>
+    /// Get authorization endpoint URI string.
+    /// </summary>
+    /// <returns>Authorization endpoint URI string.</returns>
     const utility::string_t& auth_endpoint() const { return m_auth_endpoint; }
     void set_auth_endpoint(utility::string_t auth_endpoint) { m_auth_endpoint = std::move(auth_endpoint); }
 
+    /// <summary>
+    /// Get token endpoint URI string.
+    /// </summary>
+    /// <returns>Token endpoint URI string.</returns>
     const utility::string_t& token_endpoint() const { return m_token_endpoint; }
     void set_token_endpoint(utility::string_t token_endpoint) { m_token_endpoint = std::move(token_endpoint); }
 
+    /// <summary>
+    /// Get callback URI string.
+    /// </summary>
+    /// <returns>Callback URI string.</returns>
     const utility::string_t& callback_uri() const { return m_callback_uri; }
     void set_callback_uri(utility::string_t callback_uri) { m_callback_uri = std::move(callback_uri); }
 
+    /// <summary>
+    /// Get access token. The token will be empty if it has not been obtained with
+    /// token_from_redirected_uri(), token_from_verifier(), or not assigned with set_token().
+    /// </summary>
+    /// <returns>The access token or an empty string if the token has not been obtained or set.</returns>
     const oauth1_token& token() const { return m_token; }
     void set_token(oauth1_token token) { m_token = std::move(token); }
 
+    /// <summary>
+    /// Get signature method.
+    /// </summary>
+    /// <returns>Signature method.</returns>
     const oauth1_method& method() const { return m_method; }
     void set_method(oauth1_method method) { m_method = std::move(method); }
 
+    /// <summary>
+    /// Get authentication realm.
+    /// </summary>
+    /// <returns>Authentication realm.</returns>
     const utility::string_t& realm() const { return m_realm; }
     void set_realm(utility::string_t realm) { m_realm = std::move(realm); }
 
-    bool is_enabled() const { return token().is_valid() && !(consumer_key().empty() || consumer_secret().empty()); }
-
     /// <summary>
-    /// Builds signature base string according to:
-    /// http://tools.ietf.org/html/rfc5849#section-3.4.1.1
+    /// Returns enabled state of the configuration.
+    /// The oauth1_handler will perform OAuth 1.0 authentication only if
+    /// this method returns true.
+    /// Return value is true if token() is valid (=obtained/set)
+    /// and both consumer_key() and consumer_secret() are set (=non-empty).
     /// </summary>
-    _ASYNCRTIMP utility::string_t _build_signature_base_string(http_request request, oauth1_auth_state state) const;
+    /// <returns>The configuration enabled state.</returns>
+    bool is_enabled() const { return token().is_valid_access_token() && !(consumer_key().empty() || consumer_secret().empty()); }
 
-    /// <summary>
-    /// Builds HMAC-SHA1 signature according to:
-    /// http://tools.ietf.org/html/rfc5849#section-3.4.2
-    /// </summary>
-    utility::string_t _build_hmac_sha1_signature(http_request request, oauth1_auth_state state) const
+    // Builds signature base string according to:
+    // http://tools.ietf.org/html/rfc5849#section-3.4.1.1
+    _ASYNCRTIMP utility::string_t _build_signature_base_string(http_request request, details::oauth1_state state) const;
+
+    // Builds HMAC-SHA1 signature according to:
+    // http://tools.ietf.org/html/rfc5849#section-3.4.2
+    utility::string_t _build_hmac_sha1_signature(http_request request, details::oauth1_state state) const
     {
         auto text(_build_signature_base_string(std::move(request), std::move(state)));
         auto digest(_hmac_sha1(_build_key(), std::move(text)));
@@ -261,28 +334,27 @@ public:
         return signature;
     }
 
-    /// <summary>
-    /// Builds PLAINTEXT signature according to:
-    /// http://tools.ietf.org/html/rfc5849#section-3.4.4
-    /// </summary>
+    // Builds PLAINTEXT signature according to:
+    // http://tools.ietf.org/html/rfc5849#section-3.4.4
     utility::string_t _build_plaintext_signature() const
     {
         return _build_key();
     }
 
-    oauth1_auth_state _generate_auth_state(utility::string_t extra_key, utility::string_t extra_value)
+    details::oauth1_state _generate_auth_state(utility::string_t extra_key, utility::string_t extra_value)
     {
-        return oauth1_auth_state(_generate_timestamp(), _generate_nonce(), std::move(extra_key), std::move(extra_value));
+        return details::oauth1_state(_generate_timestamp(), _generate_nonce(), std::move(extra_key), std::move(extra_value));
     }
 
-    oauth1_auth_state _generate_auth_state()
+    details::oauth1_state _generate_auth_state()
     {
-        return oauth1_auth_state(_generate_timestamp(), _generate_nonce());
+        return details::oauth1_state(_generate_timestamp(), _generate_nonce());
     }
 
 private:
     friend class web::http::client::http_client_config;
     friend class oauth1_handler;
+
     oauth1_config() {}
 
     utility::string_t _generate_nonce()
@@ -301,9 +373,9 @@ private:
 
     static utility::string_t _build_base_string_uri(const uri& u);
 
-    utility::string_t _build_normalized_parameters(web::http::uri u, const oauth1_auth_state& state) const;
+    utility::string_t _build_normalized_parameters(web::http::uri u, const details::oauth1_state& state) const;
 
-    utility::string_t _build_signature(http_request request, oauth1_auth_state state) const;
+    utility::string_t _build_signature(http_request request, details::oauth1_state state) const;
 
     utility::string_t _build_key() const
     {
@@ -315,20 +387,16 @@ private:
         _authenticate_request(req, _generate_auth_state());
     }
     
-    _ASYNCRTIMP void _authenticate_request(http_request &req, oauth1_auth_state state);
+    _ASYNCRTIMP void _authenticate_request(http_request &req, details::oauth1_state state);
 
-    _ASYNCRTIMP pplx::task<void> _request_token(oauth1_auth_state state, bool is_temp_token_request);
+    _ASYNCRTIMP pplx::task<void> _request_token(details::oauth1_state state, bool is_temp_token_request);
 
-    // Required.
     utility::string_t m_consumer_key;
     utility::string_t m_consumer_secret;
     oauth1_token m_token;
     oauth1_method m_method;
-    
-    // Optional.
     utility::string_t m_realm;
 
-    // For authorization.
     utility::string_t m_temp_endpoint;
     utility::string_t m_auth_endpoint;
     utility::string_t m_token_endpoint;

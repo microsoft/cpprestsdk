@@ -30,11 +30,24 @@
 #include "cpprest/asyncrt_utils.h"
 
 using namespace web;
-using namespace http;
-using namespace client;
+using namespace web::http;
+using namespace web::http::client;
+using namespace web::http::client::details;
 using namespace utility;
 
-namespace web { namespace http { namespace client { namespace experimental
+namespace web { namespace http { namespace client
+{
+
+namespace details
+{
+#define _OAUTH1_STRINGS
+#define DAT(a_, b_) const oauth1_string oauth1_strings::a_(_XPLATSTR(b_));
+#include "cpprest/http_constants.dat"
+#undef _OAUTH1_STRINGS
+#undef DAT
+} // namespace web::http::client::details
+
+namespace experimental
 {
 
 //
@@ -167,7 +180,7 @@ utility::string_t oauth1_config::_build_base_string_uri(const uri& u)
     return uri::encode_data_string(os.str());
 }
 
-utility::string_t oauth1_config::_build_normalized_parameters(web::http::uri u, const oauth1_auth_state& state) const
+utility::string_t oauth1_config::_build_normalized_parameters(web::http::uri u, const oauth1_state& state) const
 {
     // While map sorts items by keys it doesn't take value into account.
     // We need to sort the query parameters separately.
@@ -206,7 +219,7 @@ utility::string_t oauth1_config::_build_normalized_parameters(web::http::uri u, 
     return uri::encode_data_string(os.str());
 }
 
-utility::string_t oauth1_config::_build_signature_base_string(http_request request, oauth1_auth_state state) const
+utility::string_t oauth1_config::_build_signature_base_string(http_request request, oauth1_state state) const
 {
     uri u(request.absolute_uri());
     utility::ostringstream_t os;
@@ -216,7 +229,7 @@ utility::string_t oauth1_config::_build_signature_base_string(http_request reque
     return os.str();
 }
 
-utility::string_t oauth1_config::_build_signature(http_request request, oauth1_auth_state state) const
+utility::string_t oauth1_config::_build_signature(http_request request, oauth1_state state) const
 {
     if (oauth1_methods::hmac_sha1 == method())
     {
@@ -229,7 +242,7 @@ utility::string_t oauth1_config::_build_signature(http_request request, oauth1_a
     throw oauth1_exception(U("invalid signature method.")); // Should never happen.
 }
 
-pplx::task<void> oauth1_config::_request_token(oauth1_auth_state state, bool is_temp_token_request)
+pplx::task<void> oauth1_config::_request_token(oauth1_state state, bool is_temp_token_request)
 {
     utility::string_t endpoint = is_temp_token_request ? temp_endpoint() : token_endpoint();
     http_request req;
@@ -250,11 +263,11 @@ pplx::task<void> oauth1_config::_request_token(oauth1_auth_state state, bool is_
             body = req_task.get().extract_string().get();
             query = uri::split_query(body);
         }
-        catch (http_exception &e)
+        catch (const http_exception &e)
         {
             throw oauth1_exception(U("encountered http_exception: ") + conversions::to_string_t(std::string(e.what())));
         }
-        catch (std::exception &e)
+        catch (const std::exception &e)
         {
             throw oauth1_exception(U("encountered exception: ") + conversions::to_string_t(std::string(e.what())));
         }
@@ -290,7 +303,7 @@ pplx::task<void> oauth1_config::_request_token(oauth1_auth_state state, bool is_
     });
 }
 
-void oauth1_config::_authenticate_request(http_request &request, oauth1_auth_state state)
+void oauth1_config::_authenticate_request(http_request &request, oauth1_state state)
 {
     utility::ostringstream_t os;
     os << "OAuth ";
@@ -361,12 +374,6 @@ pplx::task<void> oauth1_config::token_from_redirected_uri(const web::http::uri& 
 #define DAT(a,b) const oauth1_method oauth1_methods::a = b;
 #include "cpprest/http_constants.dat"
 #undef _OAUTH1_METHODS
-#undef DAT
-
-#define _OAUTH1_STRINGS
-#define DAT(a_, b_) const oauth1_string oauth1_strings::a_(_XPLATSTR(b_));
-#include "cpprest/http_constants.dat"
-#undef _OAUTH1_STRINGS
 #undef DAT
 
 }}}} // namespace web::http::client::experimental

@@ -174,7 +174,7 @@ public:
         {
             ucout << "Running " << m_name.c_str() << " session..." << std::endl;
 
-            if (!m_oauth1_config.token().is_valid())
+            if (!m_oauth1_config.token().is_valid_access_token())
             {
                 if (do_authorization().get())
                 {
@@ -186,7 +186,7 @@ public:
                 }
             }
 
-            if (m_oauth1_config.token().is_valid())
+            if (m_oauth1_config.token().is_valid_access_token())
             {
                 run_internal();
             }
