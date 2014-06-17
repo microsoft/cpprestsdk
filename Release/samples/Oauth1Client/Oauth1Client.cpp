@@ -52,10 +52,8 @@ Set following entry in the hosts file:
 using namespace utility;
 using namespace web;
 using namespace web::http;
-using namespace web::http::details;
 using namespace web::http::client;
 using namespace web::http::experimental::listener; 
-
 
 //
 // Set key & secret pair to enable session for that service.
@@ -66,7 +64,9 @@ static const utility::string_t s_linkedin_secret(U(""));
 static const utility::string_t s_twitter_key(U(""));
 static const utility::string_t s_twitter_secret(U(""));
 
-
+//
+// Utility method to open browser on Windows, OS X and Linux systems.
+//
 static void open_browser(utility::string_t auth_uri)
 {
 #if defined(_MS_WINDOWS) && !defined(__cplusplus_winrt)
@@ -83,21 +83,26 @@ static void open_browser(utility::string_t auth_uri)
 #endif
 }
 
-
+//
+// A simple listener class to capture OAuth 1.0 HTTP redirect to localhost.
+// The listener captures redirected URI and obtains the token.
+// This type of listener can be implemented in the back-end to capture and store tokens.
+//
 class oauth1_code_listener
 {
 public:
     oauth1_code_listener(
         uri listen_uri,
         oauth1_config& config) :
-            m_listener(utility::details::make_unique<http_listener>(listen_uri)),
+            m_listener(new http_listener(listen_uri)),
             m_config(config)
     {
         m_listener->support([this](http::http_request request) -> void
         {
-            pplx::extensibility::scoped_critical_section_t lck(m_resplock);
             if (request.request_uri().path() == U("/") && request.request_uri().query() != U(""))
             {
+                m_resplock.lock();
+
                 m_config.token_from_redirected_uri(request.request_uri()).then([this,request](pplx::task<void> token_task) -> void
                 {
                     try
@@ -110,6 +115,8 @@ public:
                         ucout << "Error: " << e.what() << std::endl;
                         m_tce.set(false);
                     }
+
+                    m_resplock.unlock();
                 });
 
                 request.reply(status_codes::OK, U("Ok."));
@@ -119,6 +126,7 @@ public:
                 request.reply(status_codes::NotFound, U("Not found."));
             }
         });
+
         m_listener->open().wait();
     }
 
@@ -136,10 +144,12 @@ private:
     std::unique_ptr<http_listener> m_listener;
     pplx::task_completion_event<bool> m_tce;
     oauth1_config& m_config;
-    pplx::extensibility::critical_section_t m_resplock;
+    std::mutex m_resplock;
 };
 
-
+//
+// Base class for OAuth 1.0 sessions of this sample.
+//
 class oauth1_session_sample
 {
 public:
@@ -157,16 +167,9 @@ public:
                 token_endpoint,
                 callback_uri,
                 oauth1_methods::hmac_sha1),
-            m_name(name)
-    {
-#if defined(_MS_WINDOWS) || defined(__APPLE__)
-        m_listener = utility::details::make_unique<oauth1_code_listener>(callback_uri, m_oauth1_config);
-#else
-        uri_builder ub(callback_uri);
-        ub.set_host(U("localhost"));
-        m_listener = utility::details::make_unique<oauth1_code_listener>(ub.to_uri(), m_oauth1_config);
-#endif
-    }
+            m_name(name),
+            m_listener(new oauth1_code_listener(callback_uri, m_oauth1_config))
+    {}
 
     void run()
     {
@@ -243,7 +246,9 @@ private:
     std::unique_ptr<oauth1_code_listener> m_listener;
 };
 
-
+//
+// Specialized class for LinkedIn OAuth 1.0 session.
+//
 class linkedin_session_sample : public oauth1_session_sample
 {
 public:
@@ -255,8 +260,7 @@ public:
             U("https://www.linkedin.com/uas/oauth/authenticate"),
             U("https://api.linkedin.com/uas/oauth/accessToken"),
             U("http://localhost:8888/"))
-    {
-    }
+    {}
 
 protected:
     void run_internal() override
@@ -268,6 +272,9 @@ protected:
 
 };
 
+//
+// Specialized class for Twitter OAuth 1.0 session.
+//
 class twitter_session_sample : public oauth1_session_sample
 {
 public:
@@ -279,8 +286,7 @@ public:
             U("https://api.twitter.com/oauth/authorize"),
             U("https://api.twitter.com/oauth/access_token"),
             U("http://testhost.local:8890/"))
-    {
-    }
+    {}
 
 protected:
     void run_internal() override
