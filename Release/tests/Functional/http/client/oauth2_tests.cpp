@@ -60,6 +60,43 @@ struct oauth2_test_setup
     test_http_server::scoped_server m_scoped;
 };
 
+#define TEST_ACCESSOR(value_, name_) \
+    t.set_ ## name_(value_); \
+    VERIFY_ARE_EQUAL(value_, t.name_());
+
+TEST(oauth2_token_accessors)
+{
+    oauth2_token t;
+    TEST_ACCESSOR(U("b%20456"), access_token)
+    TEST_ACCESSOR(U("a%123"), refresh_token)
+    TEST_ACCESSOR(U("b%20456"), token_type)
+    TEST_ACCESSOR(U("ad.ww xyz"), scope)
+    TEST_ACCESSOR(123, expires_in)
+    TEST_ACCESSOR(std::numeric_limits<int64_t>::min(), expires_in)
+    TEST_ACCESSOR(std::numeric_limits<int64_t>::max(), expires_in)
+}
+
+TEST(oauth2_config_accessors)
+{
+    oauth2_config t(U(""), U(""), U(""), U(""), U(""));
+    TEST_ACCESSOR(U("ABC123abc"), client_key)
+    TEST_ACCESSOR(U("123abcABC"), client_secret)
+    TEST_ACCESSOR(U("x:/t/a?q=c&a#3"), auth_endpoint)
+    TEST_ACCESSOR(U("y:///?a=21#1=2"), token_endpoint)
+    TEST_ACCESSOR(U("z://?=#"), redirect_uri)
+    TEST_ACCESSOR(U("xyzw=stuv"), scope)
+    TEST_ACCESSOR(U("1234567890"), state)
+    TEST_ACCESSOR(U("keyx"), access_token_key)
+    TEST_ACCESSOR(true, implicit_grant)
+    TEST_ACCESSOR(false, implicit_grant)
+    TEST_ACCESSOR(true, bearer_auth)
+    TEST_ACCESSOR(false, bearer_auth)
+    TEST_ACCESSOR(true, http_basic_auth)
+    TEST_ACCESSOR(false, http_basic_auth)
+}
+
+#undef TEST_ACCESSOR
+
 TEST(oauth2_build_authorization_uri)
 {
     oauth2_config config(U(""), U(""), U(""), U(""), U(""));

@@ -74,6 +74,34 @@ struct oauth1_server_setup : public oauth1_test_config
     test_http_server::scoped_server m_server;
 };
 
+#define TEST_ACCESSOR(value_, name_) \
+    t.set_ ## name_(value_); \
+    VERIFY_ARE_EQUAL(value_, t.name_());
+
+TEST(oauth1_token_accessors)
+{
+    oauth1_token t;
+    TEST_ACCESSOR(U("a%123"), token)
+    TEST_ACCESSOR(U("b%20456"), secret)
+    TEST_ACCESSOR(true, is_temporary)
+    TEST_ACCESSOR(false, is_temporary)
+}
+
+TEST(oauth1_config_accessors)
+{
+    oauth1_config t(U(""), U(""), U(""), U(""), U(""), U(""), oauth1_methods::hmac_sha1);
+    TEST_ACCESSOR(U("Foo123"), consumer_key)
+    TEST_ACCESSOR(U("bar456"), consumer_secret)
+    TEST_ACCESSOR(U("file:///123?123=a&1="), temp_endpoint)
+    TEST_ACCESSOR(U("x:yxw#0"), auth_endpoint)
+    TEST_ACCESSOR(U("baz:"), token_endpoint)
+    TEST_ACCESSOR(U("/xyzzy=2"), callback_uri)
+    TEST_ACCESSOR(oauth1_methods::plaintext, method)
+    TEST_ACCESSOR(U("wally.world x"), realm)
+}
+
+#undef TEST_ACCESSOR
+
 TEST_FIXTURE(oauth1_token_setup, oauth1_signature_base_string)
 {
     // Basic base string generation.
