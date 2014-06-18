@@ -30,6 +30,7 @@ using namespace web::http;
 using namespace web::http::client;
 using namespace web::http::details;
 using namespace web::http::oauth1::experimental;
+using namespace web::http::oauth1::details;
 using namespace utility;
 using namespace concurrency;
 
@@ -44,7 +45,7 @@ struct oauth1_test_config
 {
     oauth1_test_config() :
         m_server_uri(U("http://localhost:17778/")),
-        m_test_token(U("test_token"), U("test_token_secret"), false),
+        m_test_token(U("test_token"), U("test_token_secret")),
         m_oauth1_config(U("test_key"), U("test_secret"),
             m_server_uri, m_server_uri, m_server_uri, m_server_uri,
             oauth1_methods::hmac_sha1),
@@ -81,11 +82,9 @@ struct oauth1_server_setup : public oauth1_test_config
 
 TEST(oauth1_token_accessors)
 {
-    oauth1_token t;
-    TEST_ACCESSOR(U("a%123"), token)
+    oauth1_token t(U(""), U(""));
+    TEST_ACCESSOR(U("a%123"), access_token)
     TEST_ACCESSOR(U("b%20456"), secret)
-    TEST_ACCESSOR(true, is_temporary)
-    TEST_ACCESSOR(false, is_temporary)
 }
 
 TEST(oauth1_config_accessors)
@@ -226,10 +225,10 @@ TEST_FIXTURE(oauth1_server_setup, oauth1_build_authorization_uri)
         request->reply(status_codes::OK, U(""), headers, "oauth_token=foobar&oauth_token_secret=xyzzy&oauth_callback_confirmed=true");
     });
     
-    VERIFY_IS_FALSE(m_oauth1_config.token().is_temporary());
+    VERIFY_IS_FALSE(m_oauth1_config.token().is_valid_access_token());
     utility::string_t auth_uri = m_oauth1_config.build_authorization_uri().get();
     VERIFY_ARE_EQUAL(auth_uri, U("http://localhost:17778/?oauth_token=foobar"));
-    VERIFY_IS_TRUE(m_oauth1_config.token().is_temporary());
+    VERIFY_IS_FALSE(m_oauth1_config.token().is_valid_access_token());
 }
 
 // NOTE: This test also covers token_from_verifier().
@@ -257,14 +256,13 @@ TEST_FIXTURE(oauth1_server_setup, oauth1_token_from_redirected_uri)
         request->reply(status_codes::OK, U(""), headers, "oauth_token=foo&oauth_token_secret=bar");
     });
     
-    m_oauth1_config.set_token(oauth1_token(U("xyzzy"), U(""), true)); // Simulate temporary token.
-    VERIFY_IS_TRUE(m_oauth1_config.token().is_temporary());
+    m_oauth1_config.set_token(oauth1_token(U("xyzzy"), U(""))); // Simulate temporary token.
 
     const web::http::uri redirected_uri(U("http://localhost:17778/?oauth_token=xyzzy&oauth_verifier=simsalabim"));
     m_oauth1_config.token_from_redirected_uri(redirected_uri).wait();
 
     VERIFY_IS_TRUE(m_oauth1_config.token().is_valid_access_token());
-    VERIFY_ARE_EQUAL(m_oauth1_config.token().token(), U("foo"));
+    VERIFY_ARE_EQUAL(m_oauth1_config.token().access_token(), U("foo"));
     VERIFY_ARE_EQUAL(m_oauth1_config.token().secret(), U("bar"));
 }
 

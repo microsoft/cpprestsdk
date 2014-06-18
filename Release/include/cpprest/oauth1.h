@@ -40,6 +40,8 @@ namespace oauth1
 namespace details
 {
 
+class oauth1_handler;
+
 // State currently used by oauth1_config to authenticate request.
 // The state varies for every request (due to timestamp and nonce).
 // The state also contains extra transmitted protocol parameters during
@@ -75,9 +77,7 @@ private:
     utility::string_t m_extra_value;
 };
 
-/// <summary>
-/// Constant strings for OAuth 1.0.
-/// </summary>
+// Constant strings for OAuth 1.0.
 typedef utility::string_t oauth1_string;
 class oauth1_strings
 {
@@ -128,34 +128,28 @@ private:
 class oauth1_token
 {
 public:
-    oauth1_token(utility::string_t token, utility::string_t secret, bool is_temporary) :
-        m_token(std::move(token)),
-        m_secret(std::move(secret)),
-        m_is_temporary(is_temporary)
-    {}
-
-    oauth1_token() :
-        m_is_temporary(false)
+    oauth1_token(utility::string_t access_token, utility::string_t secret) :
+        m_token(std::move(access_token)),
+        m_secret(std::move(secret))
     {}
 
     /// <summary>
     /// Get access token validity state.
-    /// If true, token is a valid access token; when is_temporary() is false
-    /// and both token() and secret() are set (=not empty).
+    /// If true, token is a valid access token.
     /// </summary>
     /// <returns>Access token validity state of the token.</returns>
-    bool is_valid_access_token() const { return !(is_temporary() || token().empty() || secret().empty()); }
+    bool is_valid_access_token() const { return !(access_token().empty() || secret().empty()); }
 
     /// <summary>
-    /// Get token.
+    /// Get access token.
     /// </summary>
-    /// <returns>Token string.</returns>
-    const utility::string_t& token() const { return m_token; }
+    /// <returns>The access token string.</returns>
+    const utility::string_t& access_token() const { return m_token; }
     /// <summary>
-    /// Set token.
+    /// Set access token.
     /// </summary>
-    /// <param name="token">Token string to set.</returns>
-    void set_token(utility::string_t token) { m_token = std::move(token); }
+    /// <param name="token">Access token string to set.</param>
+    void set_access_token(utility::string_t access_token) { m_token = std::move(access_token); }
 
     /// <summary>
     /// Get token secret.
@@ -165,28 +159,16 @@ public:
     /// <summary>
     /// Set token secret.
     /// </summary>
-    /// <param name="secret">Token secret string to set.</returns>
+    /// <param name="secret">Token secret string to set.</param>
     void set_secret(utility::string_t secret) { m_secret = std::move(secret); }
 
-    /// <summary>
-    /// Temporary token bit.
-    /// If true, token is a temporary token, otherwise an access token.
-    /// Note that is_valid() will be false if is_temporary() == true.
-    /// </summary>
-    /// <returns>Temporary token bit.</returns>
-    bool is_temporary() const { return m_is_temporary; }
-    /// <summary>
-    /// Set temporary token bit.
-    /// If true, token is a temporary token, otherwise an access token.
-    /// Note that is_valid() will be false if is_temporary() == true.
-    /// </summary>
-    /// <param name="is_temporary">Temporary token bit to set.</param>
-    void set_is_temporary(bool is_temporary) { m_is_temporary = std::move(is_temporary); }
-
 private:
+    friend class oauth1_config;
+
+    oauth1_token() {}
+
     utility::string_t m_token;
     utility::string_t m_secret;
-    bool m_is_temporary;
 };
 
 /// <summary>
@@ -206,7 +188,8 @@ public:
         m_token_endpoint(std::move(token_endpoint)),
         m_callback_uri(std::move(callback_uri)),
         m_realm(std::move(realm)),
-        m_method(std::move(method))
+        m_method(std::move(method)),
+        m_is_authorization_completed(false)
     {}
 
     /// <summary>
@@ -239,6 +222,7 @@ public:
     /// See: http://tools.ietf.org/html/rfc5849#section-2.3
     /// </summary>
     /// <param name="verifier">Verifier received via redirect upon successful authorization.</param>
+    /// <returns>Task that fetches the access token based on the verifier.</returns>
     pplx::task<void> token_from_verifier(utility::string_t verifier)
     {
         return _request_token(_generate_auth_state(details::oauth1_strings::verifier, uri::encode_data_string(std::move(verifier))), false);
@@ -247,15 +231,23 @@ public:
     /// <summary>
     /// Get consumer key used in authorization and authentication.
     /// </summary>
-    /// <returns>Consumer key.</returns>
+    /// <returns>Consumer key string.</returns>
     const utility::string_t& consumer_key() const { return m_consumer_key; }
+    /// <summary>
+    /// Set consumer key used in authorization and authentication.
+    /// </summary>
+    /// <param name="key">Consumer key string to set.</param>
     void set_consumer_key(utility::string_t key) { m_consumer_key = std::move(key); }
 
     /// <summary>
     /// Get consumer secret used in authorization and authentication.
     /// </summary>
-    /// <returns>Consumer secret.</returns>
+    /// <returns>Consumer secret string.</returns>
     const utility::string_t& consumer_secret() const { return m_consumer_secret; }
+    /// <summary>
+    /// Set consumer secret used in authorization and authentication.
+    /// </summary>
+    /// <param name="secret">Consumer secret string to set.</param>
     void set_consumer_secret(utility::string_t secret) { m_consumer_secret = std::move(secret); }
 
     /// <summary>
@@ -263,6 +255,10 @@ public:
     /// </summary>
     /// <returns>Temporary token endpoint URI string.</returns>
     const utility::string_t& temp_endpoint() const { return m_temp_endpoint; }
+    /// <summary>
+    /// Set temporary token endpoint URI string.
+    /// </summary>
+    /// <param name="temp_endpoint">Temporary token endpoint URI string to set.</param>
     void set_temp_endpoint(utility::string_t temp_endpoint) { m_temp_endpoint = std::move(temp_endpoint); }
 
     /// <summary>
@@ -270,6 +266,10 @@ public:
     /// </summary>
     /// <returns>Authorization endpoint URI string.</returns>
     const utility::string_t& auth_endpoint() const { return m_auth_endpoint; }
+    /// <summary>
+    /// Set authorization endpoint URI string.
+    /// </summary>
+    /// <param name="auth_endpoint">Authorization endpoint URI string to set.</param>
     void set_auth_endpoint(utility::string_t auth_endpoint) { m_auth_endpoint = std::move(auth_endpoint); }
 
     /// <summary>
@@ -277,6 +277,10 @@ public:
     /// </summary>
     /// <returns>Token endpoint URI string.</returns>
     const utility::string_t& token_endpoint() const { return m_token_endpoint; }
+    /// <summary>
+    /// Set token endpoint URI string.
+    /// </summary>
+    /// <param name="token_endpoint">Token endpoint URI string to set.</param>
     void set_token_endpoint(utility::string_t token_endpoint) { m_token_endpoint = std::move(token_endpoint); }
 
     /// <summary>
@@ -284,35 +288,67 @@ public:
     /// </summary>
     /// <returns>Callback URI string.</returns>
     const utility::string_t& callback_uri() const { return m_callback_uri; }
+    /// <summary>
+    /// Set callback URI string.
+    /// </summary>
+    /// <param name="callback_uri">Callback URI string to set.</param>
     void set_callback_uri(utility::string_t callback_uri) { m_callback_uri = std::move(callback_uri); }
 
     /// <summary>
-    /// Get access token. The token will be empty if it has not been obtained with
-    /// token_from_redirected_uri(), token_from_verifier(), or not assigned with set_token().
+    /// Get token.
     /// </summary>
-    /// <returns>The access token or an empty string if the token has not been obtained or set.</returns>
-    const oauth1_token& token() const { return m_token; }
-    void set_token(oauth1_token token) { m_token = std::move(token); }
+    /// <returns>Token.</returns>
+    const oauth1_token& token() const
+    {
+        if (m_is_authorization_completed)
+        {
+            // Return the token object only if authorization has been completed.
+            // Otherwise the token object holds a temporary token which should not be
+            // returned to the user.
+            return m_token;
+        }
+        else
+        {
+            return c_empty_token;
+        }
+    }
+    /// <summary>
+    /// Set token.
+    /// </summary>
+    /// <param name="token">Token to set.</param>
+    void set_token(oauth1_token token)
+    {
+        m_token = std::move(token);
+        m_is_authorization_completed = true;
+    }
 
     /// <summary>
     /// Get signature method.
     /// </summary>
     /// <returns>Signature method.</returns>
     const oauth1_method& method() const { return m_method; }
+    /// <summary>
+    /// Set signature method.
+    /// </summary>
+    /// <param name="method">Signature method.</param>
     void set_method(oauth1_method method) { m_method = std::move(method); }
 
     /// <summary>
     /// Get authentication realm.
     /// </summary>
-    /// <returns>Authentication realm.</returns>
+    /// <returns>Authentication realm string.</returns>
     const utility::string_t& realm() const { return m_realm; }
+    /// <summary>
+    /// Set authentication realm.
+    /// </summary>
+    /// <param name="realm">Authentication realm string to set.</param>
     void set_realm(utility::string_t realm) { m_realm = std::move(realm); }
 
     /// <summary>
     /// Returns enabled state of the configuration.
     /// The oauth1_handler will perform OAuth 1.0 authentication only if
     /// this method returns true.
-    /// Return value is true if token() is valid (=obtained/set)
+    /// Return value is true if access token is valid (=fetched or manually set)
     /// and both consumer_key() and consumer_secret() are set (=non-empty).
     /// </summary>
     /// <returns>The configuration enabled state.</returns>
@@ -351,9 +387,11 @@ public:
 
 private:
     friend class web::http::client::http_client_config;
-    friend class oauth1_handler;
+    friend class web::http::oauth1::details::oauth1_handler;
 
-    oauth1_config() {}
+    oauth1_config() :
+        m_is_authorization_completed(false)
+    {}
 
     utility::string_t _generate_nonce()
     {
@@ -377,7 +415,7 @@ private:
 
     utility::string_t _build_key() const
     {
-        return uri::encode_data_string(consumer_secret()) + _XPLATSTR("&") + uri::encode_data_string(token().secret());
+        return uri::encode_data_string(consumer_secret()) + _XPLATSTR("&") + uri::encode_data_string(m_token.secret());
     }
 
     void _authenticate_request(http_request &req)
@@ -392,6 +430,7 @@ private:
     utility::string_t m_consumer_key;
     utility::string_t m_consumer_secret;
     oauth1_token m_token;
+    bool m_is_authorization_completed;
     oauth1_method m_method;
     utility::string_t m_realm;
 
@@ -401,20 +440,24 @@ private:
     utility::string_t m_callback_uri;
 
     utility::nonce_generator m_nonce_generator;
+
+    static const oauth1_token c_empty_token;
 };
 
-/// <summary>
-/// Oauth1 handler. Specialization of http_pipeline_stage.
-/// </summary>
+} // namespace web::http::oauth1::experimental
+
+namespace details
+{
+
 class oauth1_handler : public http_pipeline_stage
 {
 public:
-    oauth1_handler(oauth1_config cfg) :
+    oauth1_handler(experimental::oauth1_config cfg) :
         m_config(std::move(cfg))
     {}
 
-    const oauth1_config& config() const { return m_config; }
-    void set_config(oauth1_config cfg) { m_config = std::move(cfg); }
+    const experimental::oauth1_config& config() const { return m_config; }
+    void set_config(experimental::oauth1_config cfg) { m_config = std::move(cfg); }
 
     virtual pplx::task<http_response> propagate(http_request request) override
     {
@@ -426,9 +469,9 @@ public:
     }
 
 private:
-    oauth1_config m_config;
+    experimental::oauth1_config m_config;
 };
 
-}}}} // namespace web::http::oauth1::experimental
+}}}} // namespace web::http::oauth1::details
 
 #endif  /* _CASA_OAUTH1_H */

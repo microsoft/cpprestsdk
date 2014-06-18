@@ -29,26 +29,29 @@
 #include "cpprest/oauth1.h"
 #include "cpprest/asyncrt_utils.h"
 
-using namespace web;
-using namespace web::http;
-using namespace web::http::client;
 using namespace utility;
-using namespace web::http::oauth1::details;
+using web::http::client::http_client;
+using web::http::oauth1::details::oauth1_state;
+using web::http::oauth1::details::oauth1_strings;
 
 namespace web { namespace http { namespace oauth1
 {
 
 namespace details
 {
+
 #define _OAUTH1_STRINGS
 #define DAT(a_, b_) const oauth1_string oauth1_strings::a_(_XPLATSTR(b_));
 #include "cpprest/http_constants.dat"
 #undef _OAUTH1_STRINGS
 #undef DAT
+
 } // namespace web::http::oauth1::details
 
 namespace experimental
 {
+
+const oauth1_token oauth1_config::c_empty_token;
 
 //
 // Start of platform-dependent _hmac_sha1() block...
@@ -196,9 +199,9 @@ utility::string_t oauth1_config::_build_normalized_parameters(web::http::uri u, 
     // Push oauth1 parameters.
     queries.push_back(oauth1_strings::version + U("=1.0"));
     queries.push_back(oauth1_strings::consumer_key + U("=") + consumer_key());
-    if (!token().token().empty())
+    if (!m_token.access_token().empty())
     {
-        queries.push_back(oauth1_strings::token + U("=") + token().token());
+        queries.push_back(oauth1_strings::token + U("=") + m_token.access_token());
     }
     queries.push_back(oauth1_strings::signature_method + U("=") + method());
     queries.push_back(oauth1_strings::timestamp + U("=") + state.timestamp());
@@ -298,8 +301,10 @@ pplx::task<void> oauth1_config::_request_token(oauth1_state state, bool is_temp_
             throw oauth1_exception(U("parameter 'oauth_token_secret' missing from response: ") + body);
         }
         
-        // Set the token even if the token is a temp token.
-        set_token(oauth1_token(token_param->second, token_secret_param->second, is_temp_token_request));
+        // Here the token can be either temporary or access token.
+        // The authorization is complete if it is access token.
+        m_is_authorization_completed = !is_temp_token_request;
+        m_token = oauth1_token(token_param->second, token_secret_param->second);
     });
 }
 
@@ -313,9 +318,9 @@ void oauth1_config::_authenticate_request(http_request &request, oauth1_state st
     }
     os << oauth1_strings::version << "=\"1.0";
     os << "\", " << oauth1_strings::consumer_key << "=\"" << consumer_key();
-    if (!token().token().empty())
+    if (!m_token.access_token().empty())
     {
-        os << "\", " << oauth1_strings::token << "=\"" << token().token();
+        os << "\", " << oauth1_strings::token << "=\"" << m_token.access_token();
     }
     os << "\", " << oauth1_strings::signature_method << "=\"" << method();
     os << "\", " << oauth1_strings::timestamp << "=\"" << state.timestamp();
@@ -338,7 +343,7 @@ pplx::task<utility::string_t> oauth1_config::build_authorization_uri()
     return temp_token_req.then([this]() -> utility::string_t
     {
         uri_builder ub(auth_endpoint());
-        ub.append_query(oauth1_strings::token, token().token());
+        ub.append_query(oauth1_strings::token, m_token.access_token());
 
         return ub.to_string();
     });
@@ -353,11 +358,11 @@ pplx::task<void> oauth1_config::token_from_redirected_uri(const web::http::uri& 
     {
         return pplx::task_from_exception<void>(oauth1_exception(U("parameter 'oauth_token' missing from redirected URI.")));
     }
-    if (token().token() != token_param->second)
+    if (m_token.access_token() != token_param->second)
     {
         utility::ostringstream_t err;
         err << U("redirected URI parameter 'oauth_token'='") << token_param->second
-            << U("' does not match temporary token='") << token().token() << U("'.");
+            << U("' does not match temporary token='") << m_token.access_token() << U("'.");
         return pplx::task_from_exception<void>(oauth1_exception(err.str().c_str()));
     }
     

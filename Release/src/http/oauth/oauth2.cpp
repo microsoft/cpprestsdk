@@ -29,15 +29,29 @@
 #include "cpprest/oauth2.h"
 #include "cpprest/http_helpers.h"
 
-using namespace utility;
-using namespace web;
-using namespace web::http;
-using namespace web::http::client;
-using namespace web::http::details;
+using web::http::client::http_client;
+using web::http::oauth2::details::oauth2_strings;
+using web::http::details::mime_types;
+using utility::conversions::to_utf8string;
 
+// Expose base64 conversion for arbitrary buffer.
 extern utility::string_t _to_base64(const unsigned char *ptr, size_t size);
 
-namespace web { namespace http { namespace oauth2 { namespace experimental
+namespace web { namespace http { namespace oauth2
+{
+
+namespace details
+{
+
+#define _OAUTH2_STRINGS
+#define DAT(a_, b_) const oauth2_string oauth2_strings::a_(_XPLATSTR(b_));
+#include "cpprest/http_constants.dat"
+#undef _OAUTH2_STRINGS
+#undef DAT
+
+} // namespace web::http::oauth2::details
+
+namespace experimental
 {
 
 utility::string_t oauth2_config::build_authorization_uri(bool generate_state)
@@ -110,7 +124,7 @@ pplx::task<void> oauth2_config::_request_token(uri_builder&& request_body_ub)
     if (http_basic_auth())
     {
         // Build HTTP Basic authorization header.
-        const std::string creds_utf8(conversions::to_utf8string(
+        const std::string creds_utf8(to_utf8string(
             uri::encode_data_string(client_key()) + U(":") + uri::encode_data_string(client_secret())));
         request.headers().add(header_names::authorization, U("Basic ")
             + _to_base64(reinterpret_cast<const unsigned char*>(creds_utf8.data()), creds_utf8.size()));
@@ -181,20 +195,18 @@ oauth2_token oauth2_config::_parse_token_from_json(const json::value&& token_jso
 
     if (token_json.has_field(oauth2_strings::scope))
     {
+        // The authorization server may return different scope from the one requested.
+        // This however doesn't necessarily mean the token authorization scope is different.
+        // See: http://tools.ietf.org/html/rfc6749#section-3.3
         result.set_scope(token_json.at(oauth2_strings::scope).as_string());
     }
     else
     {
-        result.set_scope(scope()); // Set to current scope().
+        // Use the requested scope() if no scope parameter was returned.
+        result.set_scope(scope());
     }
 
     return result;
 }
 
-#define _OAUTH2_STRINGS
-#define DAT(a_, b_) const oauth2_string oauth2_strings::a_(_XPLATSTR(b_));
-#include "cpprest/http_constants.dat"
-#undef _OAUTH2_STRINGS
-#undef DAT
-
-}}}} // namespace web::http::client::experimental
+}}}} // namespace web::http::oauth2::experimental

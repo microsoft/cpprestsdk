@@ -219,7 +219,7 @@ TEST_FIXTURE(oauth2_test_setup, oauth2_token_from_redirected_uri)
         const web::http::uri redirected_uri(m_uri.to_string() + U("?code=sesame&state=xyzzy"));
         m_oauth2_config.token_from_redirected_uri(redirected_uri).wait();
 
-        VERIFY_IS_TRUE(m_oauth2_config.token().is_valid());
+        VERIFY_IS_TRUE(m_oauth2_config.token().is_valid_access_token());
         VERIFY_ARE_EQUAL(m_oauth2_config.token().access_token(), U("foo"));
     }
 
@@ -229,7 +229,7 @@ TEST_FIXTURE(oauth2_test_setup, oauth2_token_from_redirected_uri)
         const web::http::uri redirected_uri(m_uri.to_string() + U("#access_token=abcd1234&state=xyzzy"));
         m_oauth2_config.token_from_redirected_uri(redirected_uri).wait();
 
-        VERIFY_IS_TRUE(m_oauth2_config.token().is_valid());
+        VERIFY_IS_TRUE(m_oauth2_config.token().is_valid_access_token());
         VERIFY_ARE_EQUAL(m_oauth2_config.token().access_token(), U("abcd1234"));
     }
 }

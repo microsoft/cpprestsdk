@@ -190,10 +190,7 @@ public:
                 }
             }
 
-            if (m_oauth1_config.token().is_valid_access_token())
-            {
-                run_internal();
-            }
+            run_internal();
         }
         else
         {

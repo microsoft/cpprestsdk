@@ -59,8 +59,8 @@ using namespace utility;
 #endif
 
 using namespace web::http::details;
-using namespace web::http::oauth1::experimental;
-using namespace web::http::oauth2::experimental;
+using namespace web::http::oauth1::details;
+using namespace web::http::oauth2::details;
 
 namespace web { namespace http { namespace client { namespace details
 {
