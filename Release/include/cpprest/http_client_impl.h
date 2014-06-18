@@ -461,9 +461,16 @@ void http_client::build_pipeline(uri base_uri, http_client_config client_config)
     }
     details::verify_uri(base_uri);
 
-    m_pipeline = ::web::http::http_pipeline::create_pipeline(std::make_shared<details::http_network_handler>(std::move(base_uri), client_config));
-	add_handler(std::dynamic_pointer_cast<http::http_pipeline_stage>(std::make_shared<oauth1_handler>(client_config.oauth1())));
-	add_handler(std::dynamic_pointer_cast<http::http_pipeline_stage>(std::make_shared<oauth2_handler>(client_config.oauth2())));
+    std::vector<std::shared_ptr<http::http_pipeline_stage> > extra_handlers;
+    extra_handlers.push_back(std::shared_ptr<http::http_pipeline_stage>(new oauth1_handler(client_config.oauth1())));
+    extra_handlers.push_back(std::shared_ptr<http::http_pipeline_stage>(new oauth2_handler(client_config.oauth2())));
+
+    m_pipeline = ::web::http::http_pipeline::create_pipeline(std::make_shared<details::http_network_handler>(std::move(base_uri), std::move(client_config)));
+
+    for (auto& handler : extra_handlers)
+    {
+        add_handler(handler);
+    }
 }
 
 const http_client_config& http_client::client_config() const

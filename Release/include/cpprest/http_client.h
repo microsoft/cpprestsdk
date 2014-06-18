@@ -111,29 +111,30 @@ public:
     {
     }
 
-    /// <summary>
-    /// Get oauth1 configuration
-    /// </summary>
-    /// <returns>Reference to oauth1 config.</returns>
-    const oauth1_config& oauth1() const { return m_oauth1; }
 
     /// <summary>
-    /// Set oauth1 configuration
+    /// Get OAuth 1.0 configuration.
     /// </summary>
-    /// <param name="config">Oauth1 configuration.</param>
-    void set_oauth1(oauth1_config config) { m_oauth1 = std::move(config); }
+    /// <returns>Shared pointer to OAuth 1.0 configuration.</returns>
+    const std::shared_ptr<oauth1_config> oauth1() const { return m_oauth1; }
 
     /// <summary>
-    /// Get oauth2 configuration
+    /// Set OAuth 1.0 configuration.
     /// </summary>
-    /// <returns>Reference to oauth2 config.</returns>
-    const oauth2_config& oauth2() const { return m_oauth2; }
+    /// <param name="config">OAuth 1.0 configuration to set.</param>
+    void set_oauth1(oauth1_config config) { m_oauth1.reset(new oauth1_config(std::move(config))); }
 
     /// <summary>
-    /// Set oauth2 configuration
+    /// Get OAuth 2.0 configuration.
     /// </summary>
-    /// <param name="config">Oauth2 configuration.</param>
-    void set_oauth2(oauth2_config config) { m_oauth2 = std::move(config); }
+    /// <returns>Shared pointer to OAuth 2.0 configuration.</returns>
+    const std::shared_ptr<oauth2_config> oauth2() const { return m_oauth2; }
+
+    /// <summary>
+    /// Set OAuth 2.0 configuration.
+    /// </summary>
+    /// <param name="config">OAuth 2.0 configuration to set.</param>
+    void set_oauth2(oauth2_config config) { m_oauth2.reset(new oauth2_config(std::move(config))); }
 
     /// <summary>
     /// Get the web proxy object
@@ -281,8 +282,8 @@ public:
     }
 
 private:
-    oauth1_config m_oauth1;
-    oauth2_config m_oauth2;
+    std::shared_ptr<oauth1_config> m_oauth1;
+    std::shared_ptr<oauth2_config> m_oauth2;
     web_proxy m_proxy;
     http::client::credentials m_credentials;
     // Whether or not to guarantee ordering, i.e. only using one underlying TCP connection.

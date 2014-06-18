@@ -452,24 +452,21 @@ namespace details
 class oauth1_handler : public http_pipeline_stage
 {
 public:
-    oauth1_handler(experimental::oauth1_config cfg) :
+    oauth1_handler(std::shared_ptr<experimental::oauth1_config> cfg) :
         m_config(std::move(cfg))
     {}
 
-    const experimental::oauth1_config& config() const { return m_config; }
-    void set_config(experimental::oauth1_config cfg) { m_config = std::move(cfg); }
-
     virtual pplx::task<http_response> propagate(http_request request) override
     {
-        if (m_config.is_enabled())
+        if (m_config)
         {
-            m_config._authenticate_request(request);
+            m_config->_authenticate_request(request);
         }
         return next_stage()->propagate(request);
     }
 
 private:
-    experimental::oauth1_config m_config;
+    std::shared_ptr<experimental::oauth1_config> m_config;
 };
 
 }}}} // namespace web::http::oauth1::details

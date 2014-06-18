@@ -49,7 +49,7 @@ struct oauth1_test_config
         m_oauth1_config(U("test_key"), U("test_secret"),
             m_server_uri, m_server_uri, m_server_uri, m_server_uri,
             oauth1_methods::hmac_sha1),
-        m_oauth1_handler(m_oauth1_config)
+        m_oauth1_handler(std::shared_ptr<oauth1_config>(new oauth1_config(m_oauth1_config)))
     {}
 
     const utility::string_t m_server_uri;

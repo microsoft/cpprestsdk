@@ -447,6 +447,7 @@ public:
 private:
     friend class web::http::client::http_client_config;
     friend class web::http::oauth2::details::oauth2_handler;
+
     oauth2_config() :
         m_implicit_grant(false),
         m_bearer_auth(true),
@@ -497,24 +498,21 @@ namespace details
 class oauth2_handler : public http_pipeline_stage
 {
 public:
-    oauth2_handler(experimental::oauth2_config cfg) :
+    oauth2_handler(std::shared_ptr<experimental::oauth2_config> cfg) :
         m_config(std::move(cfg))
     {}
 
-    const experimental::oauth2_config& config() const { return m_config; }
-    void set_config(experimental::oauth2_config cfg) { m_config = std::move(cfg); }
-
     virtual pplx::task<http_response> propagate(http_request request) override
     {
-        if (config().is_enabled())
+        if (m_config)
         {
-            config()._authenticate_request(request);
+            m_config->_authenticate_request(request);
         }
         return next_stage()->propagate(request);
     }
 
 private:
-    experimental::oauth2_config m_config;
+    std::shared_ptr<experimental::oauth2_config> m_config;
 };
 
 }}}} // namespace web::http::oauth2::details
