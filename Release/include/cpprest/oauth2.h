@@ -35,9 +35,8 @@ namespace web
 {
 namespace http
 {
-namespace client
+namespace oauth2
 {
-class http_client_config;
 namespace experimental
 {
 
@@ -177,7 +176,7 @@ public:
     {}
 
     /// <summary>
-    /// Builds an authorization URI to be loaded in the web browser.
+    /// Builds an authorization URI to be loaded in the web browser/view.
     /// The URI is built with auth_endpoint() as basis.
     /// The implicit_grant() affects the built URI by selecting
     /// either authorization code or implicit grant flow.
@@ -372,6 +371,6 @@ private:
     oauth2_config m_config;
 };
 
-}}}} // namespace web::http::client::experimental
+}}}} // namespace web::http::oauth2::experimental
 
 #endif  /* _CASA_OAUTH2_H */

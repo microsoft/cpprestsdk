@@ -29,6 +29,7 @@ using namespace web;
 using namespace web::http;
 using namespace web::http::client;
 using namespace web::http::details;
+using namespace web::http::oauth2::experimental;
 using namespace utility;
 using namespace concurrency;
 

@@ -32,10 +32,10 @@
 using namespace web;
 using namespace web::http;
 using namespace web::http::client;
-using namespace web::http::client::details;
 using namespace utility;
+using namespace web::http::oauth1::details;
 
-namespace web { namespace http { namespace client
+namespace web { namespace http { namespace oauth1
 {
 
 namespace details
@@ -45,7 +45,7 @@ namespace details
 #include "cpprest/http_constants.dat"
 #undef _OAUTH1_STRINGS
 #undef DAT
-} // namespace web::http::client::details
+} // namespace web::http::oauth1::details
 
 namespace experimental
 {
@@ -376,4 +376,4 @@ pplx::task<void> oauth1_config::token_from_redirected_uri(const web::http::uri& 
 #undef _OAUTH1_METHODS
 #undef DAT
 
-}}}} // namespace web::http::client::experimental
+}}}} // namespace web::http::oauth1::experimental

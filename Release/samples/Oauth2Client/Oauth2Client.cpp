@@ -53,7 +53,8 @@ using namespace utility;
 using namespace web;
 using namespace web::http;
 using namespace web::http::client;
-using namespace web::http::experimental::listener; 
+using namespace web::http::oauth2::experimental;
+using namespace web::http::experimental::listener;
 
 //
 // Set key & secret pair to enable session for that service.

@@ -35,7 +35,7 @@ namespace web
 {
 namespace http
 {
-namespace client
+namespace oauth1
 {
 namespace details
 {
@@ -89,9 +89,7 @@ public:
 #undef DAT
 };
 
-} // namespace web::http::client::details
-
-class http_client_config;
+} // namespace web::http::oauth1::details
 
 namespace experimental
 {
@@ -431,6 +429,6 @@ private:
     oauth1_config m_config;
 };
 
-}}}} // namespace web::http::client::experimental
+}}}} // namespace web::http::oauth1::experimental
 
 #endif  /* _CASA_OAUTH1_H */

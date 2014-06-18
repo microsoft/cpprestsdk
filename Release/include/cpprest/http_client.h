@@ -68,8 +68,8 @@ namespace http
 namespace client
 {
 
-
-using namespace web::http::client::experimental;
+using web::http::oauth1::experimental::oauth1_config;
+using web::http::oauth2::experimental::oauth2_config;
 
 // credentials and web_proxy class has been moved from web::http::client namespace to web namespace.
 // The below using declarations ensure we dont break existing code.

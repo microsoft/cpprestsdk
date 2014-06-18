@@ -37,7 +37,7 @@ using namespace web::http::details;
 
 extern utility::string_t _to_base64(const unsigned char *ptr, size_t size);
 
-namespace web { namespace http { namespace client { namespace experimental
+namespace web { namespace http { namespace oauth2 { namespace experimental
 {
 
 utility::string_t oauth2_config::build_authorization_uri(bool generate_state)
