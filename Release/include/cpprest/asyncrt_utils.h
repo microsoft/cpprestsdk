@@ -313,7 +313,7 @@ public:
     /// <summary>
     /// An invalid UTC timestamp value.
     /// </summary>
-    enum:interval_type { utc_timestamp_invalid = std::numeric_limits<interval_type>::max() };
+    enum:interval_type { utc_timestamp_invalid = static_cast<interval_type>(-1) };
 
     /// <summary>
     /// Returns seconds since Unix/POSIX time epoch at 01-01-1970 00:00:00.

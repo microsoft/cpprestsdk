@@ -21,7 +21,13 @@ using namespace Windows::UI::Xaml::Media;
 using namespace Windows::UI::Xaml::Navigation;
 using namespace Windows::Security::Authentication::Web;
 
+using namespace web::http;
+using namespace web::http::client;
+using namespace web::http::oauth2::experimental;
 
+//
+// NOTE: You must set this Live key and secret for app to work.
+//
 static const utility::string_t s_live_key(U(""));
 static const utility::string_t s_live_secret(U(""));
 
@@ -58,7 +64,7 @@ void OAuth2Live::MainPage::_UpdateButtonState()
     RefreshTokenButton->IsEnabled = has_refresh_token;
 }
 
-void OAuth2Live::MainPage::GetTokenButtonClick(Platform::Object^ sender, Windows::UI::Xaml::Navigation::NavigationEventArgs^ e)
+void OAuth2Live::MainPage::_GetToken()
 {
     m_live_oauth2_config.set_scope(L"wl.basic wl.calendars");
 
@@ -67,7 +73,7 @@ void OAuth2Live::MainPage::GetTokenButtonClick(Platform::Object^ sender, Windows
     AccessToken->Text = "";
     _UpdateButtonState();
 
-    String^ authURI = ref new String(m_live_oauth2_config.build_authorization_uri().c_str());
+    String^ authURI = ref new String(m_live_oauth2_config.build_authorization_uri(true).c_str());
     auto startURI = ref new Uri(authURI);
     String^ redirectURI = ref new String(m_live_oauth2_config.redirect_uri().c_str());
     auto endURI = ref new Uri(redirectURI);
@@ -128,6 +134,18 @@ void OAuth2Live::MainPage::GetTokenButtonClick(Platform::Object^ sender, Windows
     catch (Exception^ ex)
     {
         DebugArea->Text += "< Error launching WebAuthenticationBroker: " + ex->Message + "\n";
+    }
+}
+
+void OAuth2Live::MainPage::GetTokenButtonClick(Platform::Object^ sender, Windows::UI::Xaml::Navigation::NavigationEventArgs^ e)
+{
+    if (m_live_oauth2_config.client_key().empty() || m_live_oauth2_config.client_secret().empty())
+    {
+        DebugArea->Text += "Error: Cannot get token because Live app key or secret is empty. Please see instructions.\n";
+    }
+    else
+    {
+        _GetToken();
     }
 }
 

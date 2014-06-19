@@ -309,7 +309,8 @@ public:
         }
         else
         {
-            return c_empty_token;
+            static const oauth1_token empty_token;
+            return empty_token;
         }
     }
     /// <summary>
@@ -440,8 +441,6 @@ private:
     utility::string_t m_callback_uri;
 
     utility::nonce_generator m_nonce_generator;
-
-    static const oauth1_token c_empty_token;
 };
 
 } // namespace web::http::oauth1::experimental

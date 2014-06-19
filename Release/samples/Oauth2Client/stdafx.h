@@ -25,4 +25,5 @@
 
 #pragma once
 
+#include <mutex>
 #include "cpprest/http_client.h"

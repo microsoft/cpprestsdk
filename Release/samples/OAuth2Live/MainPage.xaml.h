@@ -7,9 +7,8 @@
 
 #include "MainPage.g.h"
 
-using namespace web::http;
-using namespace web::http::client;
-using namespace web::http::client::experimental;
+using web::http::client::http_client;
+using web::http::oauth2::experimental::oauth2_config;
 
 namespace OAuth2Live
 {
@@ -28,6 +27,7 @@ namespace OAuth2Live
         std::unique_ptr<http_client> m_live_client;
 
         void _UpdateButtonState();
+        void _GetToken();
 
         void GetTokenButtonClick(Platform::Object^ sender, Windows::UI::Xaml::Navigation::NavigationEventArgs^ e);
         void RefreshTokenButtonClick(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);

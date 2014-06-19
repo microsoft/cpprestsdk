@@ -89,7 +89,7 @@ pplx::task<void> oauth2_config::token_from_redirected_uri(const web::http::uri& 
         utility::ostringstream_t err;
         err << U("redirected URI parameter 'state'='") << state_param->second
             << U("' does not match state='") << state() << U("'.");
-        return pplx::task_from_exception<void>(oauth2_exception(err.str().c_str()));
+        return pplx::task_from_exception<void>(oauth2_exception(err.str()));
     }
 
     auto code_param = query.find(oauth2_strings::code);
@@ -140,9 +140,13 @@ pplx::task<void> oauth2_config::_request_token(uri_builder&& request_body_ub)
     http_client token_client(token_endpoint());
 
     return token_client.request(request)
-    .then([this](http_response resp)
+    .then([](http_response resp)
     {
-        set_token(_parse_token_from_json(resp.extract_json().get()));
+        return resp.extract_json();
+    })
+    .then([this](json::value json_resp) -> void
+    {
+        set_token(_parse_token_from_json(std::move(json_resp)));
     });
 }
 

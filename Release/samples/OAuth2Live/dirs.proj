@@ -2,12 +2,8 @@
 
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Common.Build.settings" />
 
-  <ItemGroup Condition="'$(DevToolsVersion)'=='110'">
-      <ProjectFile Include="OAuth2Live110.vcxproj"/>
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(DevToolsVersion)'=='120'">
-      <ProjectFile Include="OAuth2Live120.vcxproj"/>
+  <ItemGroup>
+      <ProjectFile Include="OAuth2Live$(DevToolsVersion).vcxproj"/>
   </ItemGroup>
 
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />

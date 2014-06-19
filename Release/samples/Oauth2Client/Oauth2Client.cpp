@@ -119,11 +119,11 @@ public:
                         ucout << "Error: " << e.what() << std::endl;
                         m_tce.set(false);
                     }
-
-                    m_resplock.unlock();
                 });
 
                 request.reply(status_codes::OK, U("Ok."));
+
+                m_resplock.unlock();
             }
             else
             {

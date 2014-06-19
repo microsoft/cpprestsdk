@@ -51,8 +51,6 @@ namespace details
 namespace experimental
 {
 
-const oauth1_token oauth1_config::c_empty_token;
-
 //
 // Start of platform-dependent _hmac_sha1() block...
 //
@@ -256,29 +254,14 @@ pplx::task<void> oauth1_config::_request_token(oauth1_state state, bool is_temp_
     _authenticate_request(req, std::move(state));
     http_client client(endpoint);
     return client.request(req)
-    .then([this, is_temp_token_request](pplx::task<http_response> req_task) -> void
+    .then([](http_response resp)
     {
-        std::map<utility::string_t, utility::string_t> query;
-        utility::string_t body;
+        return resp.extract_string();
+    })
+    .then([this, is_temp_token_request](utility::string_t body) -> void
+    {
+        auto query(uri::split_query(body));
 
-        try
-        {
-            body = req_task.get().extract_string().get();
-            query = uri::split_query(body);
-        }
-        catch (const http_exception &e)
-        {
-            throw oauth1_exception(U("encountered http_exception: ") + conversions::to_string_t(std::string(e.what())));
-        }
-        catch (const std::exception &e)
-        {
-            throw oauth1_exception(U("encountered exception: ") + conversions::to_string_t(std::string(e.what())));
-        }
-        catch (...)
-        {
-            throw oauth1_exception(U("encountered unknown exception"));
-        }
-        
         if (is_temp_token_request)
         {
             auto callback_confirmed_param = query.find(oauth1_strings::callback_confirmed);

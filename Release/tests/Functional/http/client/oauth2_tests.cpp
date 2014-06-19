@@ -72,9 +72,8 @@ TEST(oauth2_token_accessors)
     TEST_ACCESSOR(U("a%123"), refresh_token)
     TEST_ACCESSOR(U("b%20456"), token_type)
     TEST_ACCESSOR(U("ad.ww xyz"), scope)
+    TEST_ACCESSOR(0, expires_in)
     TEST_ACCESSOR(123, expires_in)
-    TEST_ACCESSOR(std::numeric_limits<int64_t>::min(), expires_in)
-    TEST_ACCESSOR(std::numeric_limits<int64_t>::max(), expires_in)
 }
 
 TEST(oauth2_config_accessors)
