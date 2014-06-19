@@ -148,6 +148,11 @@ namespace conversions
     /// </summary>
     _ASYNCRTIMP std::vector<unsigned char> __cdecl from_base64(const utility::string_t& str);
 
+    /// <summary>
+    /// Converts a type that supports the stream operator << to a string.
+    /// </summary>
+    /// <param name="val">Value to convert to a string.</param>
+    /// <returns>String representation of the value</returns>
     template <typename Source>
     utility::string_t print_string(const Source &val)
     {
@@ -157,6 +162,12 @@ namespace conversions
             throw std::bad_cast();
         return oss.str();
     }
+
+    /// <summary>
+    /// Creates a type from a string using the stream operator >>.
+    /// </summary>
+    /// <param name="str">String to create type from.</param>
+    /// <returns>An instance of type Target.</returns>
     template <typename Target>
     Target scan_string(const utility::string_t &str)
     {

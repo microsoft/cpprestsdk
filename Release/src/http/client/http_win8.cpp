@@ -126,6 +126,21 @@ public:
         else    
             m_request->complete_request((size_t)m_request->m_downloaded);
 
+        // Break the circular reference loop.
+        //     - winrt_request_context holds a reference to IXmlHttpRequest2
+        //     - IXmlHttpRequest2 holds a reference to HttpRequestCallback
+        //     - HttpRequestCallback holds a reference to winrt_request_context
+        // 
+        // Not releasing the winrt_request_context below previously worked due to the 
+        // implementation of IXmlHttpRequest2, after calling OnError/OnResponseReceived 
+        // it would immediately release its reference to HttpRequestCallback. However
+        // it since has been discovered on Xbox that the implementation is different, 
+        // the reference to HttpRequestCallback is NOT immediately released and is only
+        // done at destruction of IXmlHttpRequest2.
+        // 
+        // To be safe we now will break the circular reference.
+        m_request.reset();
+
         return S_OK;
     }
 
@@ -136,6 +151,10 @@ public:
             m_request->report_exception(m_request->m_exceptionPtr);
         else    
             m_request->report_error(hrError, L"Error in IXMLHttpRequest2Callback");
+        
+        // Break the circular reference loop.
+        // See full explaination in OnResponseReceived
+        m_request.reset();
         
         return S_OK;
     }
@@ -315,20 +334,6 @@ class winrt_client : public _http_client_communicator
 public:
     winrt_client(http::uri address, http_client_config client_config)
         : _http_client_communicator(std::move(address), std::move(client_config)) { }
-
-private:
-    static bool _check_streambuf(std::shared_ptr<winrt_request_context> winhttp_context, concurrency::streams::streambuf<uint8_t> rdbuf, const utility::char_t* msg) 
-    {
-        if ( !rdbuf.is_open() )
-        {
-            auto eptr = rdbuf.exception();
-            if ( eptr )
-                winhttp_context->report_exception(eptr);
-            else
-                winhttp_context->report_exception(http_exception(msg));
-        }
-        return rdbuf.is_open();
-    }
 
 protected:
 
