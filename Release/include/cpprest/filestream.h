@@ -226,8 +226,8 @@ namespace details {
         {
             return m_readOps.enqueue_operation([this]()
             {
-                streambuf_state_manager<_CharType>::_close_read();
-
+                this->_close_read_workaround();
+            
                 if (this->can_write())
                 {
                     return pplx::task_from_result();
@@ -241,6 +241,11 @@ namespace details {
                     return _close_file(fileInfo);
                 }
             });
+        }
+        // workaround for gcc compiler bug with lambdas and fully qualified names
+        pplx::task<void> _close_read_workaround()
+        {
+            return this->_close_read();
         }
 
         pplx::task<void> _close_write()
