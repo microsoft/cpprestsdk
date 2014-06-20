@@ -36,13 +36,19 @@ using namespace concurrency;
 using namespace tests::functional::http::utilities;
 extern utility::string_t _to_base64(const unsigned char *ptr, size_t size);
 
-namespace tests { namespace functional { namespace http { namespace client {
-
+namespace tests { namespace functional { namespace http { namespace client
+{
 
 static std::vector<unsigned char> to_body_data(utility::string_t str)
 {
     const std::string utf8(conversions::to_utf8string(std::move(str)));
     return std::vector<unsigned char>(utf8.data(), utf8.data() + utf8.size());
+}
+
+static bool is_application_x_www_form_urlencoded(test_request *request)
+{
+    const auto content_type(request->m_headers[header_names::content_type]);
+    return (0 == content_type.find(mime_types::application_x_www_form_urlencoded));
 }
 
 SUITE(oauth2_tests)
@@ -149,10 +155,8 @@ TEST_FIXTURE(oauth2_test_setup, oauth2_token_from_code)
         m_scoped.server()->next_request().then([](test_request *request)
         {
             VERIFY_ARE_EQUAL(request->m_method, methods::POST);
-
-            utility::string_t content, charset;
-            parse_content_type_and_charset(request->m_headers[header_names::content_type], content, charset);
-            VERIFY_ARE_EQUAL(mime_types::application_x_www_form_urlencoded, content);
+            
+            VERIFY_IS_TRUE(is_application_x_www_form_urlencoded(request));
 
             VERIFY_ARE_EQUAL(U("Basic MTIzQUJDOjQ1NkRFRg=="), request->m_headers[header_names::authorization]);
 
@@ -174,10 +178,7 @@ TEST_FIXTURE(oauth2_test_setup, oauth2_token_from_code)
     {
         m_scoped.server()->next_request().then([](test_request *request)
         {
-            utility::string_t content;
-            utility::string_t charset;
-            parse_content_type_and_charset(request->m_headers[header_names::content_type], content, charset);
-            VERIFY_ARE_EQUAL(mime_types::application_x_www_form_urlencoded, content);
+            VERIFY_IS_TRUE(is_application_x_www_form_urlencoded(request));
 
             VERIFY_ARE_EQUAL(U(""), request->m_headers[header_names::authorization]);
 
@@ -245,9 +246,7 @@ TEST_FIXTURE(oauth2_test_setup, oauth2_token_from_refresh)
     {
         VERIFY_ARE_EQUAL(request->m_method, methods::POST);
 
-        utility::string_t content, charset;
-        parse_content_type_and_charset(request->m_headers[header_names::content_type], content, charset);
-        VERIFY_ARE_EQUAL(mime_types::application_x_www_form_urlencoded, content);
+        VERIFY_IS_TRUE(is_application_x_www_form_urlencoded(request));
 
         VERIFY_ARE_EQUAL(U("Basic MTIzQUJDOjQ1NkRFRg=="), request->m_headers[header_names::authorization]);
 
@@ -267,8 +266,7 @@ TEST_FIXTURE(oauth2_test_setup, oauth2_token_from_refresh)
     // Verify chaining refresh tokens and refresh with scope.
     m_scoped.server()->next_request().then([](test_request *request)
     {
-        utility::string_t content, charset;
-        parse_content_type_and_charset(request->m_headers[header_names::content_type], content, charset);
+        VERIFY_IS_TRUE(is_application_x_www_form_urlencoded(request));
 
         VERIFY_ARE_EQUAL(to_body_data(
                 U("grant_type=refresh_token&refresh_token=BAZ&scope=xyzzy")),

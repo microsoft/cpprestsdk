@@ -83,10 +83,7 @@ public:
     /// <summary>
     /// Value for undefined expiration time in expires_in().
     /// </summary>
-    enum: int64_t
-    {
-        undefined_expiration = -1
-    };
+    enum { undefined_expiration = -1 };
 
     oauth2_token(utility::string_t access_token=utility::string_t()) :
         m_access_token(std::move(access_token)),
