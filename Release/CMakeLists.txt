@@ -23,14 +23,20 @@ if(IOS)
   set(CMAKE_CXX_FLAGS "-fvisibility=hidden -fvisibility-inlines-hidden")
 
   set(BUILD_SHARED_LIBS OFF)
+  set(BUILD_SAMPLES OFF)
+  option(BUILD_TESTS "Build tests." ON)
 elseif(UNIX) # This includes OSX
   find_package(Boost REQUIRED COMPONENTS random system thread locale regex filesystem)
   find_package(Threads REQUIRED)
   find_package(OpenSSL REQUIRED)
 
   option(BUILD_SHARED_LIBS "Build shared Libraries." ON)
+  option(BUILD_TESTS "Build tests." ON)
+  option(BUILD_SAMPLES "Build samples." ON)
 elseif(WIN32)
   option(BUILD_SHARED_LIBS "Build shared Libraries." ON)
+  option(BUILD_TESTS "Build tests." ON)
+  option(BUILD_SAMPLES "Build samples." ON)
 
   add_definitions(-DUNICODE)
 
@@ -109,9 +115,12 @@ function(add_casablanca_test NAME SOURCES_VAR)
 endfunction()
 
 add_subdirectory(src)
-add_subdirectory(tests)
 
-# If we aren't on iOS, we can build samples.
-if(NOT IOS)
+if(BUILD_TESTS)
+  add_subdirectory(tests)
+endif()
+
+if(BUILD_SAMPLES)
   add_subdirectory(samples)
 endif()
+
