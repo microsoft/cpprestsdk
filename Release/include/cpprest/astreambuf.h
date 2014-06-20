@@ -969,7 +969,9 @@ namespace Concurrency { namespace streams
         /// <param name="mode">The I/O mode (in or out) to close for.</param>
         virtual pplx::task<void> close(std::ios_base::openmode mode = (std::ios_base::in | std::ios_base::out))
         {
-            return get_base()->close(mode);
+            // We preserve the check here to workaround a Dev10 compiler crash
+            auto buffer = get_base();
+            return buffer ? buffer->close(mode) : pplx::task_from_result(); 
         }
 
         /// <summary>
@@ -979,7 +981,9 @@ namespace Concurrency { namespace streams
         /// <param name="eptr">Pointer to the exception.</param>
         virtual pplx::task<void> close(std::ios_base::openmode mode, std::exception_ptr eptr)
         {
-            return get_base()->close(mode, eptr);
+            // We preserve the check here to workaround a Dev10 compiler crash
+            auto buffer = get_base();
+            return buffer ? buffer->close(mode, eptr) : pplx::task_from_result(); 
         }
 
         /// <summary>
