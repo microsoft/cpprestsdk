@@ -28,7 +28,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(CASA_ENABLE_VLD)' != '' AND '$(Platform)'=='x64'">
     <Link>
-      <AdditionalLibraryDirectories>"C:\Program Files (x86)\Visual Leak Detector\lib\Win32";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>"C:\Program Files (x86)\Visual Leak Detector\lib\Win64";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   
