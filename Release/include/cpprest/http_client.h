@@ -68,15 +68,11 @@ namespace http
 namespace client
 {
 
-using web::http::oauth1::experimental::oauth1_config;
-using web::http::oauth2::experimental::oauth2_config;
-
 // credentials and web_proxy class has been moved from web::http::client namespace to web namespace.
 // The below using declarations ensure we dont break existing code.
 // Please use the web::credentials and web::web_proxy class going forward.
 using web::credentials;
 using web::web_proxy;
-
 
 #ifdef _MS_WINDOWS
 namespace details {
@@ -111,30 +107,41 @@ public:
     {
     }
 
-
     /// <summary>
     /// Get OAuth 1.0 configuration.
     /// </summary>
     /// <returns>Shared pointer to OAuth 1.0 configuration.</returns>
-    const std::shared_ptr<oauth1_config> oauth1() const { return m_oauth1; }
+    const std::shared_ptr<oauth1::experimental::oauth1_config> oauth1() const
+    {
+        return m_oauth1;
+    }
 
     /// <summary>
     /// Set OAuth 1.0 configuration.
     /// </summary>
     /// <param name="config">OAuth 1.0 configuration to set.</param>
-    void set_oauth1(oauth1_config config) { m_oauth1.reset(new oauth1_config(std::move(config))); }
+    void set_oauth1(oauth1::experimental::oauth1_config config)
+    {
+        m_oauth1 = std::make_shared<oauth1::experimental::oauth1_config>(std::move(config));
+    }
 
     /// <summary>
     /// Get OAuth 2.0 configuration.
     /// </summary>
     /// <returns>Shared pointer to OAuth 2.0 configuration.</returns>
-    const std::shared_ptr<oauth2_config> oauth2() const { return m_oauth2; }
+    const std::shared_ptr<oauth2::experimental::oauth2_config> oauth2() const
+    {
+        return m_oauth2;
+    }
 
     /// <summary>
     /// Set OAuth 2.0 configuration.
     /// </summary>
     /// <param name="config">OAuth 2.0 configuration to set.</param>
-    void set_oauth2(oauth2_config config) { m_oauth2.reset(new oauth2_config(std::move(config))); }
+    void set_oauth2(oauth2::experimental::oauth2_config config)
+    {
+        m_oauth2 = std::make_shared<oauth2::experimental::oauth2_config>(std::move(config));
+    }
 
     /// <summary>
     /// Get the web proxy object
@@ -282,8 +289,8 @@ public:
     }
 
 private:
-    std::shared_ptr<oauth1_config> m_oauth1;
-    std::shared_ptr<oauth2_config> m_oauth2;
+    std::shared_ptr<oauth1::experimental::oauth1_config> m_oauth1;
+    std::shared_ptr<oauth2::experimental::oauth2_config> m_oauth2;
     web_proxy m_proxy;
     http::client::credentials m_credentials;
     // Whether or not to guarantee ordering, i.e. only using one underlying TCP connection.

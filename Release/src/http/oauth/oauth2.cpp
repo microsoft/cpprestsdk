@@ -110,7 +110,7 @@ pplx::task<void> oauth2_config::token_from_redirected_uri(const web::http::uri& 
     return pplx::task_from_result();
 }
 
-pplx::task<void> oauth2_config::_request_token(uri_builder&& request_body_ub)
+pplx::task<void> oauth2_config::_request_token(uri_builder& request_body_ub)
 {
     http_request request;
     request.set_method(methods::POST);
@@ -146,11 +146,11 @@ pplx::task<void> oauth2_config::_request_token(uri_builder&& request_body_ub)
     })
     .then([this](json::value json_resp) -> void
     {
-        set_token(_parse_token_from_json(std::move(json_resp)));
+        set_token(_parse_token_from_json(json_resp));
     });
 }
 
-oauth2_token oauth2_config::_parse_token_from_json(const json::value&& token_json)
+oauth2_token oauth2_config::_parse_token_from_json(const json::value& token_json)
 {
     oauth2_token result;
 

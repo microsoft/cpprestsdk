@@ -264,7 +264,7 @@ public:
         ub.append_query(details::oauth2_strings::grant_type, details::oauth2_strings::authorization_code, false);
         ub.append_query(details::oauth2_strings::code, uri::encode_data_string(std::move(authorization_code)), false);
         ub.append_query(details::oauth2_strings::redirect_uri, uri::encode_data_string(redirect_uri()), false);
-        return _request_token(std::move(ub));
+        return _request_token(ub);
     }
 
     /// <summary>
@@ -280,7 +280,7 @@ public:
         uri_builder ub;
         ub.append_query(details::oauth2_strings::grant_type, details::oauth2_strings::refresh_token, false);
         ub.append_query(details::oauth2_strings::refresh_token, uri::encode_data_string(token().refresh_token()), false);
-        return _request_token(std::move(ub));
+        return _request_token(ub);
     }
 
     /// <summary>
@@ -451,9 +451,9 @@ private:
         m_http_basic_auth(true)
     {}
 
-    _ASYNCRTIMP pplx::task<void> _request_token(uri_builder&& request_body);
+    _ASYNCRTIMP pplx::task<void> _request_token(uri_builder& request_body);
 
-    oauth2_token _parse_token_from_json(const json::value&& token_json);
+    oauth2_token _parse_token_from_json(const json::value& token_json);
 
     void _authenticate_request(http_request &req) const
     {

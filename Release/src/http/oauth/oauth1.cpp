@@ -56,7 +56,7 @@ namespace experimental
 //
 #if _WIN32_WINNT < _WIN32_WINNT_VISTA || _PHONE8_ // Windows XP or Windows Phone 8.0
 
-std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t&&, const utility::string_t&&)
+std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t&, const utility::string_t&)
 {
     throw oauth1_exception(U("oauth1 is not supported"));
 }
@@ -66,7 +66,7 @@ std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t&&, 
 #include <winternl.h>
 #include <bcrypt.h>
 
-std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t&& key, const utility::string_t&& data)
+std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t& key, const utility::string_t& data)
 {
     NTSTATUS status;
     BCRYPT_ALG_HANDLE alg_handle = nullptr;
@@ -128,7 +128,7 @@ using namespace Windows::Security::Cryptography;
 using namespace Windows::Security::Cryptography::Core;
 using namespace Windows::Storage::Streams;
  
-std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t&& key, const utility::string_t&& data)
+std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t& key, const utility::string_t& data)
 {
     Platform::String^ data_str = ref new Platform::String(data.c_str());
     Platform::String^ key_str = ref new Platform::String(key.c_str());
@@ -149,7 +149,7 @@ std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t&& k
 
 #include <openssl/hmac.h>
 
-std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t&& key, const utility::string_t&& data)
+std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t& key, const utility::string_t& data)
 {
     unsigned char digest[HMAC_MAX_MD_CBLOCK];
     unsigned int digest_len = 0;

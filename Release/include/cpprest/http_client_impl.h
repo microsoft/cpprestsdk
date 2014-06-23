@@ -59,8 +59,6 @@ using namespace utility;
 #endif
 
 using namespace web::http::details;
-using namespace web::http::oauth1::details;
-using namespace web::http::oauth2::details;
 
 namespace web { namespace http { namespace client { namespace details
 {
@@ -462,8 +460,8 @@ void http_client::build_pipeline(uri base_uri, http_client_config client_config)
     details::verify_uri(base_uri);
 
     std::vector<std::shared_ptr<http::http_pipeline_stage> > extra_handlers;
-    extra_handlers.push_back(std::shared_ptr<http::http_pipeline_stage>(new oauth1_handler(client_config.oauth1())));
-    extra_handlers.push_back(std::shared_ptr<http::http_pipeline_stage>(new oauth2_handler(client_config.oauth2())));
+    extra_handlers.push_back(std::make_shared<oauth1::details::oauth1_handler>(client_config.oauth1()));
+    extra_handlers.push_back(std::make_shared<oauth2::details::oauth2_handler>(client_config.oauth2()));
 
     m_pipeline = ::web::http::http_pipeline::create_pipeline(std::make_shared<details::http_network_handler>(std::move(base_uri), std::move(client_config)));
 
