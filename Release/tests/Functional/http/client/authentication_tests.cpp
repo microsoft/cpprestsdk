@@ -19,7 +19,7 @@
 * authentication_tests.cpp
 *
 * Tests cases for authentication with http_clients.
-****
+*
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 
