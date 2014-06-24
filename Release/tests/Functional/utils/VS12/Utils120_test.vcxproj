@@ -187,6 +187,7 @@
     <ClCompile Include="..\base64.cpp" />
     <ClCompile Include="..\datetime.cpp" />
     <ClCompile Include="..\macro_test.cpp" />
+    <ClCompile Include="..\nonce_generator_tests.cpp" />
     <ClCompile Include="..\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">Create</PrecompiledHeader>

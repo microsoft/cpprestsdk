@@ -58,6 +58,8 @@ namespace pplx = Concurrency;
 #include "cpprest/web_utilities.h"
 #include "cpprest/basic_types.h"
 #include "cpprest/asyncrt_utils.h"
+#include "cpprest/oauth1.h"
+#include "cpprest/oauth2.h"
 
 namespace web 
 {
@@ -103,6 +105,42 @@ public:
 #endif
 #endif
     {
+    }
+
+    /// <summary>
+    /// Get OAuth 1.0 configuration.
+    /// </summary>
+    /// <returns>Shared pointer to OAuth 1.0 configuration.</returns>
+    const std::shared_ptr<oauth1::experimental::oauth1_config> oauth1() const
+    {
+        return m_oauth1;
+    }
+
+    /// <summary>
+    /// Set OAuth 1.0 configuration.
+    /// </summary>
+    /// <param name="config">OAuth 1.0 configuration to set.</param>
+    void set_oauth1(oauth1::experimental::oauth1_config config)
+    {
+        m_oauth1 = std::make_shared<oauth1::experimental::oauth1_config>(std::move(config));
+    }
+
+    /// <summary>
+    /// Get OAuth 2.0 configuration.
+    /// </summary>
+    /// <returns>Shared pointer to OAuth 2.0 configuration.</returns>
+    const std::shared_ptr<oauth2::experimental::oauth2_config> oauth2() const
+    {
+        return m_oauth2;
+    }
+
+    /// <summary>
+    /// Set OAuth 2.0 configuration.
+    /// </summary>
+    /// <param name="config">OAuth 2.0 configuration to set.</param>
+    void set_oauth2(oauth2::experimental::oauth2_config config)
+    {
+        m_oauth2 = std::make_shared<oauth2::experimental::oauth2_config>(std::move(config));
     }
 
     /// <summary>
@@ -251,6 +289,8 @@ public:
     }
 
 private:
+    std::shared_ptr<oauth1::experimental::oauth1_config> m_oauth1;
+    std::shared_ptr<oauth2::experimental::oauth2_config> m_oauth2;
     web_proxy m_proxy;
     http::client::credentials m_credentials;
     // Whether or not to guarantee ordering, i.e. only using one underlying TCP connection.

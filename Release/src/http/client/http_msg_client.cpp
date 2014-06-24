@@ -57,6 +57,18 @@ uri details::_http_request::relative_uri() const
     }    
 }
 
+uri details::_http_request::absolute_uri() const
+{
+    if (m_base_uri.is_empty())
+    {
+        return m_uri;
+    }
+    else
+    {
+        return uri_builder(m_base_uri).append(m_uri).to_uri();
+    }
+}
+
 void details::_http_request::set_request_uri(const uri& relative)
 {
     m_uri = relative;
@@ -114,6 +126,7 @@ pplx::task<http_response> client::http_client::request(http_request request, ppl
         request.headers().add(header_names::user_agent, USERAGENT);
     }
 
+    request._set_base_uri(base_uri());
     request._set_cancellation_token(token);
     return m_pipeline->propagate(request);
 }

@@ -249,11 +249,11 @@ namespace web
         /// <param name="value">The value portion of the query string</param>
         /// <returns>A reference to this uri_builder to support chaining.</returns>
         template<typename T>
-        uri_builder &append_query(utility::string_t name, const T &value)
+        uri_builder &append_query(utility::string_t name, const T &value, bool do_encoding = true)
         {
             utility::ostringstream_t ss;
             ss << name << _XPLATSTR("=") << value;
-            return append_query(ss.str(), true);
+            return append_query(ss.str(), do_encoding);
         }
 
 #pragma endregion

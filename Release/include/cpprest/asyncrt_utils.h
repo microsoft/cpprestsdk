@@ -40,6 +40,7 @@ namespace pplx = Concurrency;
 #include <vector>
 #include <cstdint>
 #include <system_error>
+#include <random>
 
 #if !defined(_MS_WINDOWS) || (_MSC_VER >= 1700)
 #include <chrono>
@@ -220,13 +221,6 @@ namespace details
 #endif
     }
 
-    // Turn const_iterator into an iterator
-    template <typename Container, typename ConstIterator>
-    typename Container::iterator remove_iterator_constness(Container& c, ConstIterator it)
-    {
-        return c.erase(it, it);
-    }
-
 #ifdef _MS_WINDOWS
 
 /// <summary>
@@ -304,6 +298,28 @@ public:
     /// Returns the current UTC time. 
     /// </summary>
     static _ASYNCRTIMP datetime __cdecl utc_now();
+
+    /// <summary>
+    /// An invalid UTC timestamp value.
+    /// </summary>
+    enum:interval_type { utc_timestamp_invalid = static_cast<interval_type>(-1) };
+
+    /// <summary>
+    /// Returns seconds since Unix/POSIX time epoch at 01-01-1970 00:00:00.
+    /// If time is before epoch, utc_timestamp_invalid is returned.
+    /// </summary>
+    static interval_type utc_timestamp()
+    {
+        const auto seconds = utc_now().to_interval() / _secondTicks;
+        if (seconds >= 11644473600LL)
+        {
+            return seconds - 11644473600LL;
+        }
+        else
+        {
+            return utc_timestamp_invalid;
+        }
+    }
 
     datetime() : m_interval(0)
     {
@@ -447,5 +463,51 @@ inline int operator- (datetime t1, datetime t2)
     
     return static_cast<int>(diff);
 }
+
+/// <summary>
+/// Nonce string generator class.
+/// </summary>
+class nonce_generator
+{
+public:
+
+    /// <summary>
+    /// Define default nonce length.
+    /// </summary>
+    enum { default_length = 32 };
+
+    /// <summary>
+    /// Nonce generator constructor.
+    /// </summary>
+    /// <param name="length">Length of the generated nonce string.</param>
+    nonce_generator(int length=default_length) :
+        m_random(static_cast<unsigned int>(utility::datetime::utc_timestamp())),
+        m_length(length)
+    {}
+
+    /// <summary>
+    /// Generate a nonce string containing random alphanumeric characters (A-Za-z0-9).
+    /// Length of the generated string is set by length().
+    /// </summary>
+    /// <returns>The generated nonce string.</returns>
+    _ASYNCRTIMP utility::string_t generate();
+
+    /// <summary>
+    /// Get length of generated nonce string.
+    /// </summary>
+    /// <returns>Nonce string length.</returns>
+    int length() const { return m_length; }
+
+    /// <summary>
+    /// Set length of the generated nonce string.
+    /// </summary>
+    /// <param name="length">Lenght of nonce string.</param>
+    void set_length(int length) { m_length = length; }
+
+private:
+    static const utility::string_t c_allowed_chars;
+    std::mt19937 m_random;
+    int m_length;
+};
 
 } // namespace utility;

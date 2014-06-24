@@ -81,7 +81,7 @@ namespace details
     /// Parses the given Content-Type header value to get out actual content type and charset.
     /// If the charset isn't specified the default charset for the content type will be set.
     /// </summary>
-    void parse_content_type_and_charset(const utility::string_t &content_type, utility::string_t &content, utility::string_t &charset); 
+    void parse_content_type_and_charset(const utility::string_t &content_type, utility::string_t &content, utility::string_t &charset);
 
     /// <summary>
     /// Gets the default charset for given content type. If the MIME type is not textual or recognized Latin1 will be returned.

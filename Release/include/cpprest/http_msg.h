@@ -646,6 +646,8 @@ public:
 
     uri &request_uri() { return m_uri; }
 
+    _ASYNCRTIMP uri absolute_uri() const;
+
     _ASYNCRTIMP uri relative_uri() const;
 
     _ASYNCRTIMP void set_request_uri(const uri&);
@@ -688,6 +690,8 @@ public:
 
     void _set_listener_path(const utility::string_t &path) { m_listener_path = path; }
 
+    void _set_base_uri(http::uri base_uri) { m_base_uri = std::move(base_uri); }
+
 private:
 
     // Actual initiates sending the response, without checking if a response has already been sent.
@@ -700,6 +704,7 @@ private:
 
     http::method m_method;
 
+    http::uri m_base_uri;
     http::uri m_uri;
     utility::string_t m_listener_path;
     std::shared_ptr<http::details::_http_server_context> m_server_context;
@@ -789,6 +794,15 @@ public:
     /// request_uri() and relative_uri() will return the same value.
     /// </remarks>
     uri relative_uri() const { return _m_impl->relative_uri(); }
+
+    /// <summary>
+    /// Get an absolute URI with scheme, host, port, path, query, and fragment part of
+    /// the request message.
+    /// </summary>
+    /// <remarks>Absolute URI is only valid after this http_request object has been passed
+    /// to http_client::request().
+    /// </remarks>
+    uri absolute_uri() const { return _m_impl->absolute_uri(); }
 
     /// <summary>
     /// Gets a reference to the headers of the response message.
@@ -1135,6 +1149,11 @@ public:
     pplx::cancellation_token _cancellation_token()
     {
         return _m_impl->cancellation_token();
+    }
+
+    void _set_base_uri(http::uri base_uri)
+    {
+        _m_impl->_set_base_uri(std::move(base_uri));
     }
 
 private:
