@@ -97,6 +97,8 @@ pplx::task<void> http_server_api::register_listener(_In_ web::http::experimental
             std::unique_ptr<http_linux_server> server_api(new http_linux_server());
 #endif
             http_server_api::unsafe_register_server_api(std::move(server_api));
+
+            _ASSERTE(s_server_api != nullptr);
         }
 
         std::exception_ptr except;

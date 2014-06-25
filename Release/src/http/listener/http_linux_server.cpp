@@ -41,8 +41,123 @@ namespace experimental
 {
 namespace listener
 {
+namespace details
+{
+/// This class replaces the regex "\r\n\r\n|[\x00-\x1F\x80-\xFF]"
+// It was added due to issues with regex on Android, however since
+// regex was rather overkill for such a simple parse it makes sense
+// to use it on all *nix platforms.
+//
+// This is used as part of the async_read_until call below; see the
+// following for more details:
+// http://www.boost.org/doc/libs/1_55_0/doc/html/boost_asio/reference/async_read_until/overload4.html
+struct crlf_nonascii_searcher_t
+{
+    enum class State
+    {
+        none = 0,   // ".\r\n\r\n$"
+        cr = 1,     // "\r.\n\r\n$"
+                    // "  .\r\n\r\n$"
+        crlf = 2,   // "\r\n.\r\n$"
+                    // "    .\r\n\r\n$"
+        crlfcr = 3  // "\r\n\r.\n$"
+                    // "    \r.\n\r\n$"
+                    // "      .\r\n\r\n$"
+    };
+   
+    // This function implements the searcher which "consumes" a certain amount of the input
+    // and returns whether or not there was a match (see above).
 
-    const size_t ChunkSize = 4 * 1024;
+    // From the Boost documentation:
+    // "The first member of the return value is an iterator marking one-past-the-end of the
+    //  bytes that have been consumed by the match function. This iterator is used to
+    //  calculate the begin parameter for any subsequent invocation of the match condition.
+    //  The second member of the return value is true if a match has been found, false
+    //  otherwise."
+    template<typename Iter>
+    std::pair<Iter, bool> operator()(const Iter begin, const Iter end) const
+    {
+        // In the case that we end inside a partially parsed match (like abcd\r\n\r),
+        // we need to signal the matcher to give us the partial match back again (\r\n\r).
+        // We use the excluded variable to keep track of this sequence point (abcd.\r\n\r
+        // in the previous example).
+        Iter excluded = begin;
+        Iter cur = begin;
+        State state = State::none;
+        while (cur != end)
+        {
+            char c = *cur;
+            if (c == '\r')
+            {
+                if (state == State::crlf)
+                {
+                    state = State::crlfcr;
+                }
+                else
+                {
+                    // In the case of State::cr or State::crlfcr, setting the state here
+                    // "skips" a none state and therefore fails to move up the excluded
+                    // counter.
+                    excluded = cur;
+                    state = State::cr;
+                }
+            }
+            else if (c == '\n')
+            {
+                if (state == State::cr)
+                {
+                    state = State::crlf;
+                }
+                else if (state == State::crlfcr)
+                {
+                    ++cur;
+                    return std::make_pair(cur, true);
+                }
+                else
+                {
+                    state = State::none;
+                }
+            }
+            else if (c <= '\x1F' && c >= '\x00')
+            {
+                ++cur;
+                return std::make_pair(cur, true);
+            }
+            else if (c <= '\xFF' && c >= '\x80')
+            {
+                ++cur;
+                return std::make_pair(cur, true);
+            }
+            else
+            {
+                state = State::none;
+            }
+            ++cur;
+            if (state == State::none)
+                excluded = cur;
+        }
+        return std::make_pair(excluded, false);
+    }
+} crlf_nonascii_searcher;
+}}}}}
+
+namespace boost
+{
+namespace asio
+{
+template <> struct is_match_condition<web::http::experimental::listener::details::crlf_nonascii_searcher_t> : public boost::true_type {};
+}}
+
+namespace web
+{
+namespace http
+{
+namespace experimental 
+{
+namespace listener
+{
+
+const size_t ChunkSize = 4 * 1024;
 
 namespace details
 {
@@ -76,6 +191,7 @@ void connection::close()
     m_request._reply_if_not_already(status_codes::InternalError);
 }
 
+
 void connection::start_request_response()
 {
     m_read_size = 0; 
@@ -84,7 +200,7 @@ void connection::start_request_response()
     
     // Wait for either double newline or a char which is not in the range [32-127] which suggests SSL handshaking.
     // For the SSL server support this line might need to be changed. Now, this prevents from hanging when SSL client tries to connect.
-    async_read_until(*m_socket, m_request_buf, boost::regex(CRLF+CRLF+"|[\\x00-\\x1F]|[\\x80-\\xFF]"), boost::bind(&connection::handle_http_line, this, placeholders::error));
+    async_read_until(*m_socket, m_request_buf, crlf_nonascii_searcher, boost::bind(&connection::handle_http_line, this, placeholders::error));
 }
 
 void hostport_listener::on_accept(ip::tcp::socket* socket, const boost::system::error_code& ec)
@@ -681,13 +797,11 @@ pplx::task<void> http_linux_server::start()
     }
     catch (...)
     {
-        --it;
         while (it != m_listeners.begin())
         {
-            it->second->stop();
             --it;
+            it->second->stop();
         }
-        it->second->stop();
         return pplx::task_from_exception<void>(std::current_exception());
     }
 

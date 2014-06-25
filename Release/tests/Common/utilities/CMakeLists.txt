@@ -10,10 +10,10 @@ add_library(${LIB}common_utilities
   os_utilities.cpp
   stdafx.cpp
   )
-  
+
 target_link_libraries(${LIB}common_utilities
   ${Casablanca_LIBRARY}
   ${LIB}unittestpp
-  ${BOOST_SYSTEM_LIBRARY}
-  ${BOOST_THREAD_LIBRARY}
+  ${Boost_SYSTEM_LIBRARY}
+  ${Boost_THREAD_LIBRARY}
   )

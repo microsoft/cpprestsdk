@@ -49,3 +49,4 @@ elseif(WIN32)
 endif()
 
 add_library(${LIB}unittestpp ${UT_SOURCES})
+target_link_libraries(${LIB}unittestpp ${ANDROID_STL_FLAGS})

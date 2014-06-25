@@ -20,7 +20,53 @@
 
 namespace crossplat
 {
-    // initialize the static shared threadpool 
-    threadpool threadpool::s_shared(40);
+// initialize the static shared threadpool 
+threadpool threadpool::s_shared(40);
+
+#if defined(ANDROID)
+// This pointer will be 0-initialized by default (at load time).
+std::atomic<JavaVM*> JVM;
+static thread_local JNIEnv* JVM_ENV = nullptr;
+
+JNIEnv* get_jvm_env()
+{
+    if (JVM == nullptr)
+    {
+	throw std::runtime_error("Could not contact JVM");
+    }
+    if (JVM_ENV == nullptr)
+    {
+	auto result = JVM.load()->AttachCurrentThread(&crossplat::JVM_ENV, nullptr);
+	if (result != JNI_OK)
+	{
+	    throw std::runtime_error("Could not attach to JVM");
+	}
+    }
+
+    return JVM_ENV;
+}
+
+jmethodID java_parseDouble;
+jclass java_lang_double;
+#endif
 
 }
+
+#if defined(ANDROID)
+extern "C" jint JNI_OnLoad(JavaVM* vm, void* reserved)
+{
+   JNIEnv* env;
+   if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK)
+   {
+      return -1;
+   }
+
+   crossplat::java_local_ref<jclass> local_java_lang_double{env->FindClass("java/lang/Double")};
+   crossplat::java_lang_double = static_cast<jclass>(env->NewGlobalRef(local_java_lang_double.get()));
+
+   crossplat::java_parseDouble = env->GetStaticMethodID(crossplat::java_lang_double, "parseDouble", "(Ljava/lang/String;)D");
+
+   crossplat::JVM = vm;
+   return JNI_VERSION_1_6;
+}
+#endif

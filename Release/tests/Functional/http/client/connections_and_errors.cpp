@@ -72,7 +72,14 @@ static void pending_requests_after_client_impl(uri address, bool guarantee_order
     // verify responses.
     for(size_t i = 0; i < num_requests; ++i)
     {
-        http_asserts::assert_response_equals(responses[i].get(), status_codes::OK);
+        try
+        {
+            http_asserts::assert_response_equals(responses[i].get(), status_codes::OK);
+        }
+        catch (...)
+        {
+            VERIFY_IS_TRUE(false);
+        }
     }
 }
 

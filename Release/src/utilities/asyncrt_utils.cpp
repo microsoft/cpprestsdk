@@ -880,9 +880,29 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
         {
             return datetime();
         }
-    } 
+    }
 
+#if defined(ANDROID)
+    time_t time;
+
+    static boost::mutex env_var_lock;
+    {
+        boost::lock_guard<boost::mutex> lock(env_var_lock);
+        std::string prev_env;
+        auto prev_env_cstr = getenv("TZ");
+        if (prev_env_cstr != nullptr)
+        {
+            prev_env = prev_env_cstr;
+        }
+        setenv("TZ", "UTC", 1);
+
+        time = mktime(&output);
+
+        setenv("TZ", prev_env.c_str(), 1);
+    }
+#else
     time_t time = timegm(&output);
+#endif
 
     struct timeval tv = timeval();
     tv.tv_sec = time;

@@ -27,6 +27,7 @@
 
 #if defined(_MS_WINDOWS) || defined(__APPLE__)
 #include <regex>
+#elif defined(ANDROID)
 #else
 // GCC 4.8 doesn't support regex very well, fall back to Boost. Revist in GCC 4.9.
 #include <boost/regex.hpp>
@@ -43,6 +44,8 @@ namespace tests { namespace functional { namespace json_tests {
 #if defined(_MS_WINDOWS) || defined(__APPLE__)
         static std::regex pattern(spattern);
         return std::regex_match(str, pattern, std::regex_constants::match_flag_type::match_not_null);
+#elif defined(ANDROID)
+	return str.find("Syntax error: ") != std::string::npos;
 #else
         static boost::regex pattern(spattern);
         return boost::regex_match(str, pattern, boost::regex_constants::match_flag_type::match_not_null);
@@ -105,52 +108,58 @@ TEST(stringstream_t)
     VERIFY_ARE_EQUAL(v9.type(), json::value::Array);
 }
 
-TEST(whitespace)
+TEST(whitespace_failure)
 {
     VERIFY_PARSING_THROW(json::value::parse(U("  ")));
+}
 
+static const std::array<char, 4> whitespace_chars = { 0x20, 0x09, 0x0A, 0x0D };
+
+TEST(whitespace_array)
+{
     // Try all the whitespace characters before/after all the structural characters
     // whitespace characters according to RFC4627: space, horizontal tab, line feed or new line, carriage return
     // structural characters: [{]}:,
-    const int num_whitespace = 4;
-    char whitespace_chars[num_whitespace] = { 0x20, 0x09, 0x0A, 0x0D };
 
     // [,]
-    for(int i = 0; i < num_whitespace; ++i)
+    for(auto ch : whitespace_chars)
     {
         utility::string_t input;
-        input.append(2, whitespace_chars[i]);
+        input.append(2, ch);
         input.append(U("["));
-        input.append(2, whitespace_chars[i]);
+        input.append(2, ch);
         input.append(U("1"));
-        input.append(1, whitespace_chars[i]);
+        input.append(1, ch);
         input.append(U(","));
-        input.append(4, whitespace_chars[i]);
+        input.append(4, ch);
         input.append(U("2"));
-        input.append(1, whitespace_chars[i]);
+        input.append(1, ch);
         input.append(U("]"));
-        input.append(2, whitespace_chars[i]);
+        input.append(2, ch);
         json::value val = json::value::parse(input);
         VERIFY_IS_TRUE(val.is_array());
         VERIFY_ARE_EQUAL(U("1"), val[0].serialize());
         VERIFY_ARE_EQUAL(U("2"), val[1].serialize());
     }
+}
 
+TEST(whitespace_object)
+{
     // {:}
-    for(int i = 0; i < num_whitespace; ++i)
+    for(auto ch : whitespace_chars)
     {
         utility::string_t input;
-        input.append(2, whitespace_chars[i]);
+        input.append(2, ch);
         input.append(U("{"));
-        input.append(2, whitespace_chars[i]);
+        input.append(2, ch);
         input.append(U("\"1\""));
-        input.append(1, whitespace_chars[i]);
+        input.append(1, ch);
         input.append(U(":"));
-        input.append(4, whitespace_chars[i]);
+        input.append(4, ch);
         input.append(U("2"));
-        input.append(1, whitespace_chars[i]);
+        input.append(1, ch);
         input.append(U("}"));
-        input.append(2, whitespace_chars[i]);
+        input.append(2, ch);
         json::value val = json::value::parse(input);
         VERIFY_IS_TRUE(val.is_object());
         VERIFY_ARE_EQUAL(U("2"), val[U("1"]).serialize());

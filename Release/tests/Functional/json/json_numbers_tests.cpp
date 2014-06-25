@@ -176,12 +176,17 @@ TEST(parsing_doubles)
 {
     test_double(3.14);
     test_double(-9.81);
+}
 
+TEST(parsing_doubles_maxes)
+{
     // Note: this should not parse to a ullong because of rounding
     test_double(static_cast<double>(ULLONG_MAX));
 
     test_double(0 - static_cast<double>(ULLONG_MAX));
-    test_double(static_cast<double>(ULLONG_MAX)+(2<<(64-52)));  // the lowest number that will be represented as double due to overflowing unsigned int64 (52bits fraction in double-precision)
+    // the lowest number that will be represented as double due to overflowing unsigned int64 (52bits fraction in double-precision)
+    test_double(static_cast<double>(ULLONG_MAX)+(2<<(64-52)));
+
     test_double(0 - pow(2.0, 63.0) * 1.5);  // between 0-ULLONG_MAX and LLONGMIN
 }
 

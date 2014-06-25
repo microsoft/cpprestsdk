@@ -27,6 +27,17 @@
 
 #include "stdafx.h"
 #include <vector>
+#include <cstdlib>
+
+#if defined(ANDROID)
+
+namespace crossplat
+{
+// These two are initialized in threadpool.cpp
+extern jmethodID java_parseDouble;
+extern jclass java_lang_double;
+}
+#endif
 
 #pragma warning(disable : 4127) // allow expressions like while(true) pass 
 using namespace web;
@@ -392,8 +403,32 @@ namespace
     }
 #endif
 
+#ifdef ANDROID
+    static double anystod(const char* str)
+    {
+        if (str == nullptr)
+            str = "";
+
+	auto env = crossplat::get_jvm_env();
+
+        jdouble parsed_double;
+
+        crossplat::java_local_ref<jstring> jstr{env->NewStringUTF(str)};
+        parsed_double = env->CallStaticDoubleMethod(crossplat::java_lang_double, crossplat::java_parseDouble, jstr.get());
+
+        jthrowable exc = env->ExceptionOccurred();
+        if (exc)
+        {
+            env->ExceptionClear();
+            throw exc;
+        }
+        return parsed_double;
+    }
+
+#else
     static double anystod(const char* str) { return strtod(str, nullptr); }
     static double anystod(const wchar_t* str) { return wcstod(str, nullptr); }
+#endif
 }
 
 template <typename CharType>

@@ -69,7 +69,7 @@ void ExecuteTest(T& testObject, TestDetails const& details, bool isMockTest)
 #else
 		UT_TRY
 		({
-			UNITTEST_THROW_SIGNALS_POSIX_ONLY
+                        UNITTEST_THROW_SIGNALS_POSIX_ONLY
 			testObject.RunImpl();
 		})
 #endif

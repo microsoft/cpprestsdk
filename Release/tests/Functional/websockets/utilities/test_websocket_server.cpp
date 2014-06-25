@@ -400,21 +400,22 @@ namespace utilities {
 
             m_srv.init_asio(&m_service);
 
-            m_thread = std::thread([this]()
-            {
-                m_service.run();
-                return 0;
-            });
-
             m_srv.set_reuse_addr(true);
 
             websocketpp::lib::error_code ec;
             m_srv.listen(WEBSOCKETS_TEST_SERVER_PORT, ec);
             if (ec)
             {
-                std::abort();
+                throw std::runtime_error(ec.message());
             }
+
             m_srv.start_accept();
+
+            m_thread = std::thread([this]()
+            {
+                m_service.run();
+                return 0;
+            });
         }
 
         ~_test_websocket_server()

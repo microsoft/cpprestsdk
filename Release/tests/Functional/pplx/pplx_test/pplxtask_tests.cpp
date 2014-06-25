@@ -141,8 +141,8 @@ namespace helpers
     }
 } // namespace helpers
 
- SUITE(pplxtask_tests)
- {
+SUITE(pplxtask_tests)
+{
 
 TEST(TestCancellationTokenRegression)
 {
@@ -168,7 +168,7 @@ TEST(TestCancellationTokenRegression)
         auto t4 = (t1 && t2 && t3).then([=](std::vector<int> vec) -> int {
             return vec[0] + vec[1] + vec[3];
         });
-        
+
         ct.cancel();
 
         tce.set();
@@ -177,9 +177,8 @@ TEST(TestCancellationTokenRegression)
         IsTrue(t4Status == canceled, L"operator && did not properly cancel. Expected: %d, Actual: %d", canceled, t4Status);
     }
 }
-TEST(TestTasks)
+TEST(TestTasks_basic)
 {
-    LogMessage(L"- * Testing basic ppl tasks functionality");
     {
         task<int> t1 ([]() -> int {
             return 47;
@@ -207,7 +206,10 @@ TEST(TestTasks)
 
         t3.wait();
     }
+}
 
+TEST(TestTasks_default_construction)
+{
     // Test that default constructed task<T> properly throw exceptions
     {
         task<int> t1;
@@ -242,7 +244,10 @@ TEST(TestTasks)
         {
         }
     }
+}
 
+TEST(TestTasks_void_tasks)
+{
     // Test void tasks
     {
         int value = 0;
@@ -266,7 +271,10 @@ TEST(TestTasks)
         IsFalse(t1 == t3, L"task operator== resulted true on different tasks");
         IsTrue(t1 != t3, L"task operator!= resulted false on different tasks");
     }
+}
 
+TEST(TestTasks_void_tasks_default_construction)
+{
     // Test that default constructed task<void> properly throw exceptions
     {
         task<void> t1;
@@ -298,7 +306,10 @@ TEST(TestTasks)
         {
         }
     }
-    
+}
+
+TEST(TestTasks_constant_this)
+{
 #ifdef _MSC_VER
 #if _MSC_VER < 1700
     // Dev10 compiler gives an error => .then(func) where func = int!
@@ -323,1027 +334,1026 @@ TEST(TestTasks)
     }
 #endif // _MSC_VER < 1700
 #endif // _MSC_VER    
+}
 
+TEST(TestTasks_fire_and_forget)
+{
+    // Test Fire-and-forget behavior
+    extensibility::event_t evt;
+    bool flag = false;
     {
-        // Test Fire-and-forget behavior
-        extensibility::event_t evt;
-        bool flag = false;
-        {
-            task<int> t1([&flag, &evt]() -> int{
+        task<int> t1([&flag, &evt]() -> int{
                 flag = true;
                 evt.set();
                 return 0;
             });
-        }
-
-        evt.wait();
-        IsTrue(flag == true, L"Fire-and-forget task did not properly execute.");
     }
-    
-    {
-        // test create task
-        task<int> t1 = create_task([]() -> int {
+
+    evt.wait();
+    IsTrue(flag == true, L"Fire-and-forget task did not properly execute.");
+}
+TEST(TestTasks_create_task)
+{
+    // test create task
+    task<int> t1 = create_task([]() -> int {
+        return 4;
+    });
+    IsTrue(t1.get() == 4, L"create_task for simple task did not properly execute.");
+    IsTrue(create_task(t1).get() == 4, L"create_task from a task task did not properly execute.");
+    task<void> t2 = create_task([](){});
+    task<int> t3 = create_task([]() -> task<int> {
+        return create_task([]() -> int {
             return 4;
         });
-        IsTrue(t1.get() == 4, L"create_task for simple task did not properly execute.");
-        IsTrue(create_task(t1).get() == 4, L"create_task from a task task did not properly execute.");
-        task<void> t2 = create_task([]() {
-        });
-        task<int> t3 = create_task([]() -> task<int> {
-            return create_task([]() -> int {
-                return 4;
-            });
-        });
-        IsTrue(t3.get() == 4, L"create_task for task unwrapping did not properly execute.");
-    }
-    
+    });
+    IsTrue(t3.get() == 4, L"create_task for task unwrapping did not properly execute.");
 }
 
-TEST(TestTaskCompletionEvents)
+TEST(TestTaskCompletionEvents_basic)
 {
-    LogMessage(L"- * Testing basic PPL task completion event functionality");
-    {
-        task_completion_event<int> tce;
-        task<int> completion(tce);
-        auto completion2 = create_task(tce);
+    task_completion_event<int> tce;
+    task<int> completion(tce);
+    auto completion2 = create_task(tce);
 
-        task<void> setEvent([=]() {
-            tce.set(50);
-        });
+    task<void> setEvent([=]() {
+        tce.set(50);
+    });
 
-        int result = completion.get();
-        IsTrue(result == 50, L"Task Completion Event did not get the right result. Expected: 50, Actual: %d", result);
-        IsTrue(completion2.get() == 50, L"create_task didn't construct correct task for task_completion_event, Expected: 50, Actual: %d", result);
-    }
+    int result = completion.get();
+    IsTrue(result == 50, L"Task Completion Event did not get the right result. Expected: 50, Actual: %d", result);
+    IsTrue(completion2.get() == 50, L"create_task didn't construct correct task for task_completion_event, Expected: 50, Actual: %d", result);
+}
 
-    {
-        task_completion_event<void> tce;
-        task<void> completion(tce);
-        auto completion2 = create_task(tce);
-
-        task<void> setEvent([=]() {
-            tce.set();
-        });
-
-        // this should not hang, because of the set of tce
-        completion.wait();
-        completion2.wait();
-    }
-
-    LogMessage(L"- * Test the basic use-case of set_exception");
-    {
-        task_completion_event<void> tce;
-        task<void> t(tce);
-        tce.set_exception(42);
-
-        t.then([=](task<void> p) {
-            try
-            {
-                p.get();
-                IsTrue(false, L"Exception not propagated to task t when calling set_exception.");
-            }
-            catch(int n)
-            {
-                IsTrue(n==42, L"%ws:%u:bad exception value", __FILE__, __LINE__);
-            }
-        }).wait();
-    }
-
-    LogMessage(L"- * Testing whether multiple continuations can receive an exception via set_exception");
-    {
-        task_completion_event<void> tce;
-        task<void> t(tce);
-        tce.set_exception(42);
-
-        t.then([=](task<void> p) {
-            try
-            {
-                p.get();
-                IsTrue(false, L"Exception not propagated to task t's first continuation when calling set_exception.");
-            }
-            catch(int n)
-            {
-                IsTrue(n==42, L"%ws:%u:bad exception value", __FILE__, __LINE__);
-            }
-        }).wait();
-
-        t.then([=](task<void> p) {
-            try
-            {
-                p.get();
-                IsTrue(false, L"Exception not propagated to task t's second continuation when calling set_exception.");
-            }
-            catch(int n)
-            {
-                IsTrue(n==42, L"%ws:%u:bad exception value", __FILE__, __LINE__);
-            }
-        }).wait();
-    }
+TEST(TestTaskCompletionEvents_basic2)
+{
+    task_completion_event<void> tce;
+    task<void> completion(tce);
+    auto completion2 = create_task(tce);
     
-#ifdef _MSC_VER
-#if _MSC_VER < 1700
+    task<void> setEvent([=]() {
+        tce.set();
+    });
+
+    // this should not hang, because of the set of tce
+    completion.wait();
+    completion2.wait();
+}
+
+TEST(TestTaskCompletionEvents_set_exception_basic)
+{
+    task_completion_event<void> tce;
+    task<void> t(tce);
+    tce.set_exception(42);
+
+    t.then([=](task<void> p) {
+        try
+        {
+            p.get();
+            IsTrue(false, L"Exception not propagated to task t when calling set_exception.");
+        }
+        catch(int n)
+        {
+            IsTrue(n==42, L"%ws:%u:bad exception value", __FILE__, __LINE__);
+        }
+    }).wait();
+}
+
+TEST(TestTaskCompletionEvents_set_exception_multiple)
+{
+    task_completion_event<void> tce;
+    task<void> t(tce);
+    tce.set_exception(42);
+
+    t.then([=](task<void> p) {
+        try
+        {
+            p.get();
+            IsTrue(false, L"Exception not propagated to task t's first continuation when calling set_exception.");
+        }
+        catch(int n)
+        {
+            IsTrue(n==42, L"%ws:%u:bad exception value", __FILE__, __LINE__);
+        }
+    }).wait();
+
+    t.then([=](task<void> p) {
+        try
+        {
+            p.get();
+            IsTrue(false, L"Exception not propagated to task t's second continuation when calling set_exception.");
+        }
+        catch(int n)
+        {
+            IsTrue(n==42, L"%ws:%u:bad exception value", __FILE__, __LINE__);
+        }
+    }).wait();
+}
+
+TEST(TestTaskCompletionEvents_set_exception_struct)
+{
+#if defined(_MSC_VER) && _MSC_VER < 1700
     // The Dev10 compiler hits an ICE with this code
 #else
-    LogMessage(L"- * Testing whether a task can receive a struct-based exception from set_exception");
+    struct s
     {
-        struct s
+    };
+
+    task_completion_event<void> tce;
+    task<void> t(tce);
+    tce.set_exception(s());
+    t.then([=](task<void> p){
+        try
         {
-        };
-
-        task_completion_event<void> tce;
-        task<void> t(tce);
-        tce.set_exception(s());
-        t.then([=](task<void> p){
-            try
-            {
-                p.get();
-                IsTrue(false, L"Exception not caught.");
-            }
-            catch(s)
-            {
-                //Do nothing
-            }
-            catch(...)
-            {
-                IsTrue(false, L"%ws:%u:not the right exception", __FILE__, __LINE__);
-            }
-        }).wait();
-    }
+            p.get();
+            IsTrue(false, L"Exception not caught.");
+        }
+        catch(s)
+        {
+            //Do nothing
+        }
+        catch(...)
+        {
+            IsTrue(false, L"%ws:%u:not the right exception", __FILE__, __LINE__);
+        }
+    }).wait();
 #endif // _MSC_VER < 1700
-#endif // _MSC_VER
-
-    LogMessage(L"- * Testing whether multiple tasks from the same tce receive the exception");
-    {
-        task_completion_event<void> tce;
-        task<void> t1(tce);
-        task<void> t2(tce);
-        tce.set_exception(1);
-        
-        t1.then([=](task<void> p) {
-            try
-            {
-                p.get();
-                IsTrue(false, L"An exception was not thrown when calling t1.get().  An exception was expected.");
-            }
-            catch(int ex)
-            {
-                IsTrue(ex==1, L"%ws:%u:wrong exception value", __FILE__, __LINE__);
-            }
-            catch(...)
-            {
-                IsTrue(false, L"%ws:%u:not the right exception", __FILE__, __LINE__);
-            }
-        });
-        
-        t2.then([=](task<void> p) {
-            try
-            {
-                p.get();
-                IsTrue(false, L"An exception was not thrown when calling t2.get().  An exception was expected.");
-            }
-            catch(int ex)
-            {
-                IsTrue(ex==1, L"%ws:%u:wrong exception value", __FILE__, __LINE__);
-            }
-            catch(...)
-            {
-                IsTrue(false, L"%ws:%u:not the right exception", __FILE__, __LINE__);
-            }
-        });
-    }
-
-    LogMessage(L"- * Testing that set_exception() after set() returns false");
-    {
-        task_completion_event<int> tce;
-        task<int> t(tce);
-        tce.set(1);
-        auto result = tce.set_exception(std::current_exception());
-        IsFalse(result, L"set_exception must return false, but did not");
-        t.then([=](task<int> p) {
-            try
-            {
-                int n=p.get();
-                IsTrue(n==1, L"Value not properly propagated to continuation");
-            }
-            catch(...)
-            {
-                IsTrue(false, L"An exception was unexpectedly thrown in the continuation task");
-            }
-        }).wait();
-    }
-
-    LogMessage(L"- * Testing that set_exception() after set_exception() returns false, and the second exception does not 'take'");
-    {
-        task_completion_event<int> tce;
-        task<int> t(tce);
-        tce.set_exception(1);
-        auto result = tce.set_exception(2);
-        IsFalse(result, L"set_exception must return false, but did not");
-        t.then([=](task<int> p) {
-            try
-            {
-                p.get();
-                IsTrue(false, L"%ws:%u:expected exception not thrown", __FILE__, __LINE__);
-            }
-            catch(int n)
-            {
-                IsTrue(n==1, L"%ws:%u:unexpected exception payload", __FILE__, __LINE__);
-            }
-        }).wait();
-    }
-    
-    LogMessage(L"- * Testing that set after set_exception is a no-op");
-    {
-        task_completion_event<int> tce;
-        task<int> t(tce);
-        tce.set_exception(42);
-        tce.set(1); // should be no-op
-        t.then([=](task<int> p) {
-            try
-            {
-                p.get();
-                IsTrue(false, L"Exception should have been thrown here.");
-            }
-            catch(int e)
-            {
-                IsTrue(e==42, L"%ws:%u:not the right exception value", __FILE__, __LINE__);
-            }
-            catch(...)
-            {
-                IsTrue(false, L"%ws:%u:not the right exception", __FILE__, __LINE__);
-            }
-        }).wait();
-    }
 }
 
-TEST(TestTaskOperators)
+TEST(TestTaskCompletionEvents_multiple_tasks)
 {
-    // LogMessage(L"- * Testing ppl task operator&& and operator||");
+    task_completion_event<void> tce;
+    task<void> t1(tce);
+    task<void> t2(tce);
+    tce.set_exception(1);
+        
+    t1.then([=](task<void> p) {
+        try
+        {
+            p.get();
+            IsTrue(false, L"An exception was not thrown when calling t1.get().  An exception was expected.");
+        }
+        catch(int ex)
+        {
+            IsTrue(ex==1, L"%ws:%u:wrong exception value", __FILE__, __LINE__);
+        }
+        catch(...)
+        {
+            IsTrue(false, L"%ws:%u:not the right exception", __FILE__, __LINE__);
+        }
+    });
 
-    {
-        task<int> t1 ([]() -> int {
-            return 47;
-        });
+    t2.then([=](task<void> p) {
+        try
+        {
+            p.get();
+            IsTrue(false, L"An exception was not thrown when calling t2.get().  An exception was expected.");
+        }
+        catch(int ex)
+        {
+            IsTrue(ex==1, L"%ws:%u:wrong exception value", __FILE__, __LINE__);
+        }
+        catch(...)
+        {
+            IsTrue(false, L"%ws:%u:not the right exception", __FILE__, __LINE__);
+        }
+    });
+}
 
-        task<int> t2 ([]() -> int {
-            return 82;
-        });
+TEST(TestTaskCompletionEvents_set_exception_after_set)
+{
+    task_completion_event<int> tce;
+    task<int> t(tce);
+    tce.set(1);
+    auto result = tce.set_exception(std::current_exception());
+    IsFalse(result, L"set_exception must return false, but did not");
+    t.then([=](task<int> p) {
+        try
+        {
+            int n=p.get();
+            IsTrue(n==1, L"Value not properly propagated to continuation");
+        }
+        catch(...)
+        {
+            IsTrue(false, L"An exception was unexpectedly thrown in the continuation task");
+        }
+    }).wait();
+}
 
-        auto t3 = (t1 && t2).then([=](std::vector<int> vec) -> int {
-            IsTrue(vec.size() == 2, L"operator&& did not produce a correct vector size. Expected: 2, Actual: %d", vec.size());
-            IsTrue(vec[0] == 47, L"operator&& did not produce a correct vector[0]. Expected: 47, Actual: %d", vec[0]);
-            IsTrue(vec[1] == 82, L"operator&& did not produce a correct vector[1]. Expected: 82, Actual: %d", vec[1]);
-            return vec[0] + vec[1];
-        });
+TEST(TestTaskCompletionEvents_set_exception_after_set2)
+{
+    task_completion_event<int> tce;
+    task<int> t(tce);
+    tce.set_exception(1);
+    auto result = tce.set_exception(2);
+    IsFalse(result, L"set_exception must return false, but did not");
+    t.then([=](task<int> p) {
+        try
+        {
+            p.get();
+            IsTrue(false, L"%ws:%u:expected exception not thrown", __FILE__, __LINE__);
+        }
+        catch(int n)
+        {
+            IsTrue(n==1, L"%ws:%u:unexpected exception payload", __FILE__, __LINE__);
+        }
+    }).wait();
+}
 
-        int t3Result = t3.get();
-        IsTrue(t3Result  == 129, L"operator&& task did not produce the correct result. Expected: 129, Actual: %d", t3Result);
-    }
+TEST(TestTaskCompletionEvents_set_after_set_exception)
+{
+    task_completion_event<int> tce;
+    task<int> t(tce);
+    tce.set_exception(42);
+    tce.set(1); // should be no-op
+    t.then([=](task<int> p) {
+        try
+        {
+            p.get();
+            IsTrue(false, L"Exception should have been thrown here.");
+        }
+        catch(int e)
+        {
+            IsTrue(e==42, L"%ws:%u:not the right exception value", __FILE__, __LINE__);
+        }
+        catch(...)
+        {
+            IsTrue(false, L"%ws:%u:not the right exception", __FILE__, __LINE__);
+        }
+    }).wait();
+}
 
-    {
-        task<int> t1 ([]() -> int {
-            return 47;
-        });
+TEST(TestTaskOperators_and_or)
+{
+    task<int> t1 ([]() -> int {
+        return 47;
+    });
 
-        task<int> t2 ([]() -> int {
-            return 82;
-        });
+    task<int> t2 ([]() -> int {
+        return 82;
+    });
 
-        task<int> t3 ([]() -> int {
-            return 147;
-        });
+    auto t3 = (t1 && t2).then([=](std::vector<int> vec) -> int {
+        IsTrue(vec.size() == 2, L"operator&& did not produce a correct vector size. Expected: 2, Actual: %d", vec.size());
+        IsTrue(vec[0] == 47, L"operator&& did not produce a correct vector[0]. Expected: 47, Actual: %d", vec[0]);
+        IsTrue(vec[1] == 82, L"operator&& did not produce a correct vector[1]. Expected: 82, Actual: %d", vec[1]);
+        return vec[0] + vec[1];
+    });
 
-        task<int> t4 ([]() -> int {
-            return 192;
-        });
+    int t3Result = t3.get();
+    IsTrue(t3Result  == 129, L"operator&& task did not produce the correct result. Expected: 129, Actual: %d", t3Result);
+}
 
-        auto t5 = (t1 && t2 && t3 && t4).then([=](std::vector<int> vec) -> int {
-            IsTrue(vec.size() == 4, L"operator&& did not produce a correct vector size. Expected: 4, Actual: %d", vec.size());
-            IsTrue(vec[0] == 47, L"operator&& did not produce a correct vector[0]. Expected: 47, Actual: %d", vec[0]);
-            IsTrue(vec[1] == 82, L"operator&& did not produce a correct vector[1]. Expected: 82, Actual: %d", vec[1]);
-            IsTrue(vec[2] == 147, L"operator&& did not produce a correct vector[2]. Expected: 147, Actual: %d", vec[2]);
-            IsTrue(vec[3] == 192, L"operator&& did not produce a correct vector[3]. Expected: 192, Actual: %d", vec[3]);
-            int count = 0;
-            for(unsigned i = 0; i < vec.size(); i++) 
-                count += vec[i];
-            return count;
-        });
+TEST(TestTaskOperators_and_or2)
+{
+    task<int> t1 ([]() -> int {
+        return 47;
+    });
 
-        int t5Result = t5.get();
-        IsTrue(t5Result  == 468, L"operator&& task did not produce the correct result. Expected: 468, Actual: %d", t5Result);
+    task<int> t2 ([]() -> int {
+        return 82;
+    });
 
-    }
+    task<int> t3 ([]() -> int {
+        return 147;
+    });
 
-    {
-        task<int> t1 ([]() -> int {
-            return 47;
-        });
+    task<int> t4 ([]() -> int {
+        return 192;
+    });
 
-        task<int> t2 ([]() -> int {
-            return 82;
-        });
+    auto t5 = (t1 && t2 && t3 && t4).then([=](std::vector<int> vec) -> int {
+        IsTrue(vec.size() == 4, L"operator&& did not produce a correct vector size. Expected: 4, Actual: %d", vec.size());
+        IsTrue(vec[0] == 47, L"operator&& did not produce a correct vector[0]. Expected: 47, Actual: %d", vec[0]);
+        IsTrue(vec[1] == 82, L"operator&& did not produce a correct vector[1]. Expected: 82, Actual: %d", vec[1]);
+        IsTrue(vec[2] == 147, L"operator&& did not produce a correct vector[2]. Expected: 147, Actual: %d", vec[2]);
+        IsTrue(vec[3] == 192, L"operator&& did not produce a correct vector[3]. Expected: 192, Actual: %d", vec[3]);
+        int count = 0;
+        for(unsigned i = 0; i < vec.size(); i++) 
+            count += vec[i];
+        return count;
+    });
 
-        task<int> t3 ([]() -> int {
-            return 147;
-        });
+    int t5Result = t5.get();
+    IsTrue(t5Result  == 468, L"operator&& task did not produce the correct result. Expected: 468, Actual: %d", t5Result);
 
-        task<int> t4 ([]() -> int {
-            return 192;
-        });
+}
 
-        auto t5 = ((t1 && t2) && (t3 && t4)).then([=](std::vector<int> vec) -> int {
-            IsTrue(vec.size() == 4, L"operator&& did not produce a correct vector size. Expected: 4, Actual: %d", vec.size());
-            IsTrue(vec[0] == 47, L"operator&& did not produce a correct vector[0]. Expected: 47, Actual: %d", vec[0]);
-            IsTrue(vec[1] == 82, L"operator&& did not produce a correct vector[1]. Expected: 82, Actual: %d", vec[1]);
-            IsTrue(vec[2] == 147, L"operator&& did not produce a correct vector[2]. Expected: 147, Actual: %d", vec[2]);
-            IsTrue(vec[3] == 192, L"operator&& did not produce a correct vector[3]. Expected: 192, Actual: %d", vec[3]);
-            int count = 0;
-            for(unsigned i = 0; i < vec.size(); i++) 
-                count += vec[i];
-            return count;
-        });
+TEST(TestTaskOperators_and_or3)
+{
+    task<int> t1 ([]() -> int {
+        return 47;
+    });
 
-        int t5Result = t5.get();
-        IsTrue(t5Result  == 468, L"operator&& task did not produce the correct result. Expected: 468, Actual: %d", t5Result);
-    }
+    task<int> t2 ([]() -> int {
+        return 82;
+    });
 
-    {
-        extensibility::event_t evt;
+    task<int> t3 ([]() -> int {
+        return 147;
+    });
 
-        task<int> t1 ([&evt]() -> int {
-            evt.wait();
-            return 47;
-        });
+    task<int> t4 ([]() -> int {
+        return 192;
+    });
 
-        task<int> t2 ([]() -> int {
-            return 82;
-        });
+    auto t5 = ((t1 && t2) && (t3 && t4)).then([=](std::vector<int> vec) -> int {
+        IsTrue(vec.size() == 4, L"operator&& did not produce a correct vector size. Expected: 4, Actual: %d", vec.size());
+        IsTrue(vec[0] == 47, L"operator&& did not produce a correct vector[0]. Expected: 47, Actual: %d", vec[0]);
+        IsTrue(vec[1] == 82, L"operator&& did not produce a correct vector[1]. Expected: 82, Actual: %d", vec[1]);
+        IsTrue(vec[2] == 147, L"operator&& did not produce a correct vector[2]. Expected: 147, Actual: %d", vec[2]);
+        IsTrue(vec[3] == 192, L"operator&& did not produce a correct vector[3]. Expected: 192, Actual: %d", vec[3]);
+        int count = 0;
+        for(unsigned i = 0; i < vec.size(); i++) 
+            count += vec[i];
+        return count;
+    });
 
-        auto t3 = (t1 || t2).then([=](int p) -> int {
-            IsTrue(p == 82, L"operator|| did not get the right result. Expected: 82, Actual: %d", p);
-            return p;
-        });
+    int t5Result = t5.get();
+    IsTrue(t5Result  == 468, L"operator&& task did not produce the correct result. Expected: 468, Actual: %d", t5Result);
+}
 
-        t3.wait();
+TEST(TestTaskOperators_and_or4)
+{
+    extensibility::event_t evt;
 
-        evt.set();
-        t1.wait();
-    }
+    task<int> t1 ([&evt]() -> int {
+        evt.wait();
+        return 47;
+    });
 
-    {
-        extensibility::event_t evt;
+    task<int> t2 ([]() -> int {
+        return 82;
+    });
 
-        task<int> t1 ([&evt]() -> int {
-            evt.wait();
-            return 47;
-        });
+    auto t3 = (t1 || t2).then([=](int p) -> int {
+        IsTrue(p == 82, L"operator|| did not get the right result. Expected: 82, Actual: %d", p);
+        return p;
+    });
 
-        task<int> t2 ([&evt]() -> int {
-            evt.wait();
-            return 82;
-        });
+    t3.wait();
 
-        task<int> t3 ([]() -> int {
-            return 147;
-        });
+    evt.set();
+    t1.wait();
+}
 
-        task<int> t4 ([&evt]() -> int {
-            evt.wait();
-            return 192;
-        });
+TEST(TestTaskOperators_and_or5)
+{
+    extensibility::event_t evt;
 
-        auto t5 = (t1 || t2 || t3 || t4).then([=](int result) -> int {
-            IsTrue(result == 147, L"operator|| did not produce a correct result. Expected: 147, Actual: %d", result);
-            return result;
-        });
+    task<int> t1 ([&evt]() -> int {
+        evt.wait();
+        return 47;
+    });
 
-        t5.wait();
+    task<int> t2 ([&evt]() -> int {
+        evt.wait();
+        return 82;
+    });
 
-        evt.set();
-        t1.wait();
-        t2.wait();
-        t4.wait();
-    }
+    task<int> t3 ([]() -> int {
+        return 147;
+    });
 
-    {
-        // testing ( t1 && t2 ) || t3, operator&& finishes first
-        extensibility::event_t evt;
+    task<int> t4 ([&evt]() -> int {
+        evt.wait();
+        return 192;
+    });
 
-        task<int> t1 ([]() -> int {
-            return 47;
-        });
+    auto t5 = (t1 || t2 || t3 || t4).then([=](int result) -> int {
+        IsTrue(result == 147, L"operator|| did not produce a correct result. Expected: 147, Actual: %d", result);
+        return result;
+    });
 
-        task<int> t2 ([]() -> int {
-            return 82;
-        });
+    t5.wait();
 
-        task<int> t3 ([&evt]() -> int {
-            evt.wait();
-            return 147;
-        });
+    evt.set();
+    t1.wait();
+    t2.wait();
+    t4.wait();
+}
 
-        auto t4 = ((t1 && t2) || t3).then([=](std::vector<int> vec) -> int {
+TEST(TestTaskOperators_and_or_sequence)
+{
+    // testing ( t1 && t2 ) || t3, operator&& finishes first
+    extensibility::event_t evt;
+
+    task<int> t1 ([]() -> int {
+        return 47;
+    });
+
+    task<int> t2 ([]() -> int {
+        return 82;
+    });
+
+    task<int> t3 ([&evt]() -> int {
+        evt.wait();
+        return 147;
+    });
+
+    auto t4 = ((t1 && t2) || t3).then([=](std::vector<int> vec) -> int {
             IsTrue(vec.size() == 2, L"(t1 && t2) || t3 did not produce a correct vector size. Expected: 2, Actual: %d", vec.size());
             IsTrue(vec[0] == 47, L"(t1 && t2) || t3 did not produce a correct vector[0]. Expected: 47, Actual: %d", vec[0]);
             IsTrue(vec[1] == 82, L"(t1 && t2) || t3 did not produce a correct vector[1]. Expected: 82, Actual: %d", vec[1]);
             return vec[0] + vec[1];
-        });
+    });
 
-        int t4Result = t4.get();
-        IsTrue(t4.get() == 129, L"(t1 && t2) || t3 task did not produce the correct result. Expected: 129, Actual: %d", t4Result);
+    int t4Result = t4.get();
+    IsTrue(t4.get() == 129, L"(t1 && t2) || t3 task did not produce the correct result. Expected: 129, Actual: %d", t4Result);
 
-        evt.set();
-        t3.wait();
-    }
+    evt.set();
+    t3.wait();
+}
 
-    {
-        // testing ( t1 && t2 ) || t3, operator|| finishes first
-        extensibility::event_t evt;
+TEST(TestTaskOperators_and_or_sequence2)
+{
+    // testing ( t1 && t2 ) || t3, operator|| finishes first
+    extensibility::event_t evt;
 
-        task<int> t1 ([&evt]() -> int {
-            evt.wait();
-            return 47;
-        });
+    task<int> t1 ([&evt]() -> int {
+        evt.wait();
+        return 47;
+    });
 
-        task<int> t2 ([&evt]() -> int {
-            evt.wait();
-            return 82;
-        });
+    task<int> t2 ([&evt]() -> int {
+        evt.wait();
+        return 82;
+    });
 
-        task<int> t3 ([]() -> int {
-            return 147;
-        });
+    task<int> t3 ([]() -> int {
+        return 147;
+    });
 
-        auto t4 = ((t1 && t2) || t3).then([=](std::vector<int> vec) -> int {
-            IsTrue(vec.size() == 1, L"(t1 && t2) || t3 did not produce a correct vector size. Expected: 1, Actual: %d", vec.size());
-            IsTrue(vec[0] == 147, L"(t1 && t2) || t3 did not produce a correct vector[0]. Expected: 147, Actual: %d", vec[0]);
-            return vec[0];
-        });
+    auto t4 = ((t1 && t2) || t3).then([=](std::vector<int> vec) -> int {
+        IsTrue(vec.size() == 1, L"(t1 && t2) || t3 did not produce a correct vector size. Expected: 1, Actual: %d", vec.size());
+        IsTrue(vec[0] == 147, L"(t1 && t2) || t3 did not produce a correct vector[0]. Expected: 147, Actual: %d", vec[0]);
+        return vec[0];
+    });
 
-        int t4Result = t4.get();
-        IsTrue(t4.get() == 147, L"(t1 && t2) || t3 task did not produce the correct result. Expected: 147, Actual: %d", t4Result);
+    int t4Result = t4.get();
+    IsTrue(t4.get() == 147, L"(t1 && t2) || t3 task did not produce the correct result. Expected: 147, Actual: %d", t4Result);
 
-        evt.set();
-        t1.wait();
-        t2.wait();
-    }
+    evt.set();
+    t1.wait();
+    t2.wait();
+}
 
-    {
-        // testing t1 && (t2 || t3)
-        extensibility::event_t evt;
+TEST(TestTaskOperators_and_or_sequence3)
+{
+    // testing t1 && (t2 || t3)
+    extensibility::event_t evt;
 
-        task<int> t1 ([]() -> int {
-            return 47;
-        });
+    task<int> t1 ([]() -> int {
+        return 47;
+    });
 
-        task<int> t2 ([&evt]() -> int {
-            evt.wait();
-            return 82;
-        });
+    task<int> t2 ([&evt]() -> int {
+        evt.wait();
+        return 82;
+    });
 
-        task<int> t3 ([]() -> int {
-            return 147;
-        });
+    task<int> t3 ([]() -> int {
+        return 147;
+    });
 
-        auto t4 = (t1 && (t2 || t3)).then([=](std::vector<int> vec) -> int {
-            IsTrue(vec.size() == 2, L"t1 && (t2 || t3) did not produce a correct vector size. Expected: 2, Actual: %d", vec.size());
-            IsTrue(vec[0] == 47, L"t1 && (t2 || t3) did not produce a correct vector[0]. Expected: 47, Actual: %d", vec[0]);
-            IsTrue(vec[1] == 147, L"t1 && (t2 || t3) did not produce a correct vector[1]. Expected: 147, Actual: %d",  vec[1]);
-            return vec[0] + vec[1];
-        });
+    auto t4 = (t1 && (t2 || t3)).then([=](std::vector<int> vec) -> int {
+        IsTrue(vec.size() == 2, L"t1 && (t2 || t3) did not produce a correct vector size. Expected: 2, Actual: %d", vec.size());
+        IsTrue(vec[0] == 47, L"t1 && (t2 || t3) did not produce a correct vector[0]. Expected: 47, Actual: %d", vec[0]);
+        IsTrue(vec[1] == 147, L"t1 && (t2 || t3) did not produce a correct vector[1]. Expected: 147, Actual: %d",  vec[1]);
+        return vec[0] + vec[1];
+    });
 
-        int t4Result = t4.get();
-        IsTrue(t4.get() == 194, L"t1 && (t2 || t3) task did not produce the correct result. Expected: 194 Actual: %d", t4Result);
+    int t4Result = t4.get();
+    IsTrue(t4.get() == 194, L"t1 && (t2 || t3) task did not produce the correct result. Expected: 194 Actual: %d", t4Result);
 
-        evt.set();
-        t2.wait();
-    }
+    evt.set();
+    t2.wait();
+}
 
-    {
-        task_completion_event<void> tce;
-        task<void> starter(tce);
+TEST(TestTaskOperators_cancellation)
+{
+    task_completion_event<void> tce;
+    task<void> starter(tce);
 
-        cancellation_token_source ct;
+    cancellation_token_source ct;
 
-        task<int> t1 = starter.then([]() -> int {
-            return 47;
-        }, ct.get_token());
+    task<int> t1 = starter.then([]() -> int {
+        return 47;
+    }, ct.get_token());
 
-        task<int> t2 ([]() -> int {
-            return 82;
-        });
+    task<int> t2 ([]() -> int {
+        return 82;
+    });
 
-        task<int> t3 ([]() -> int {
-            return 147;
-        });
+    task<int> t3 ([]() -> int {
+        return 147;
+    });
 
-        auto t4 = (t1 && t2 && t3).then([=](std::vector<int> vec) -> int {
-            return vec[0] + vec[1] + vec[3];
-        });
+    auto t4 = (t1 && t2 && t3).then([=](std::vector<int> vec) -> int {
+        return vec[0] + vec[1] + vec[3];
+    });
         
-        ct.cancel();
+    ct.cancel();
 
-        tce.set();
-        // this should not hang
-        task_status t4Status = t4.wait();
-        IsTrue(t4Status == canceled, L"operator && did not properly cancel. Expected: %d, Actual: %d", canceled, t4Status);
-    }
+    tce.set();
+    // this should not hang
+    task_status t4Status = t4.wait();
+    IsTrue(t4Status == canceled, L"operator && did not properly cancel. Expected: %d, Actual: %d", canceled, t4Status);
+}
 
-    {
-        task_completion_event<void> tce;
-        task<void> starter(tce);
+TEST(TestTaskOperators_cancellation_and)
+{
+    task_completion_event<void> tce;
+    task<void> starter(tce);
 
-        cancellation_token_source ct;
+    cancellation_token_source ct;
 
-        task<void> t1 = starter.then([]() -> void {
-        }, ct.get_token());
+    task<void> t1 = starter.then([]() -> void {}, ct.get_token());
 
-        task<void> t2 ([]() -> void {
-        });
+    task<void> t2 ([]() -> void {});
 
-        task<void> t3 ([]() -> void {
-        });
+    task<void> t3 ([]() -> void {});
 
-        auto t4 = (t1 && t2 && t3).then([=]() {
-        });
+    auto t4 = (t1 && t2 && t3).then([=]() {});
         
-        ct.cancel();
+    ct.cancel();
 
-        tce.set();
-        // this should not hang
-        task_status t4Status = t4.wait();
-        IsTrue(t4Status == canceled, L"operator && did not properly cancel. Expected: %d, Actual: %d", canceled, t4Status);
-    }
+    tce.set();
+    // this should not hang
+    task_status t4Status = t4.wait();
+    IsTrue(t4Status == canceled, L"operator && did not properly cancel. Expected: %d, Actual: %d", canceled, t4Status);
+}
 
-    {
-        task_completion_event<void> tce;
-        task<void> starter(tce);
+TEST(TestTaskOperators_cancellation_or)
+{
+    task_completion_event<void> tce;
+    task<void> starter(tce);
 
-        cancellation_token_source ct1;
-        cancellation_token_source ct2;
-        cancellation_token_source ct3;
+    cancellation_token_source ct1;
+    cancellation_token_source ct2;
+    cancellation_token_source ct3;
 
-        task<int> t1 = starter.then([]() -> int {
-            return 47;
-        }, ct1.get_token());
+    task<int> t1 = starter.then([]() -> int {
+        return 47;
+    }, ct1.get_token());
 
-        task<int> t2 = starter.then([]() -> int {
-            return 82;
-        }, ct2.get_token());
+    task<int> t2 = starter.then([]() -> int {
+        return 82;
+    }, ct2.get_token());
 
-        task<int> t3 = starter.then([]() -> int {
-            return 147;
-        }, ct3.get_token());
+    task<int> t3 = starter.then([]() -> int {
+        return 147;
+    }, ct3.get_token());
 
-        auto t4 = (t1 || t2 || t3).then([=](int result) -> int {
-            return result;
-        });
+    auto t4 = (t1 || t2 || t3).then([=](int result) -> int {
+        return result;
+    });
         
-        ct1.cancel();
-        ct2.cancel();
-        ct3.cancel();
+    ct1.cancel();
+    ct2.cancel();
+    ct3.cancel();
 
-        tce.set();
-        // this should not hang
-        task_status t4Status = t4.wait();
-        IsTrue(t4Status == canceled, L"operator || did not properly cancel. Expected: %d, Actual: %d", canceled, t4Status);
+    tce.set();
+    // this should not hang
+    task_status t4Status = t4.wait();
+    IsTrue(t4Status == canceled, L"operator || did not properly cancel. Expected: %d, Actual: %d", canceled, t4Status);
 
-    }
-    {
-        task_completion_event<void> tce;
-        task<void> starter(tce);
+}
+TEST(TestTaskOperators_cancellation_or2)
+{
+    task_completion_event<void> tce;
+    task<void> starter(tce);
 
-        cancellation_token_source ct1;
-        cancellation_token_source ct2;
-        cancellation_token_source ct3;
+    cancellation_token_source ct1;
+    cancellation_token_source ct2;
+    cancellation_token_source ct3;
 
-        task<void> t1 = starter.then([]() -> void {
-        }, ct1.get_token());
+    task<void> t1 = starter.then([]() -> void {}, ct1.get_token());
 
-        task<void> t2 = starter.then([]() -> void {
-        }, ct2.get_token());
+    task<void> t2 = starter.then([]() -> void {}, ct2.get_token());
 
-        task<void> t3 = starter.then([]() -> void {
-        }, ct3.get_token());
+    task<void> t3 = starter.then([]() -> void {}, ct3.get_token());
 
-        auto t4 = (t1 || t2 || t3).then([=]() {
-        });
+    auto t4 = (t1 || t2 || t3).then([=]() {});
         
-        ct1.cancel();
-        ct2.cancel();
-        ct3.cancel();
+    ct1.cancel();
+    ct2.cancel();
+    ct3.cancel();
 
-        tce.set();
-        // this should not hang
-        task_status t4Status = t4.wait();
-        IsTrue(t4Status == canceled, L"operator || did not properly cancel. Expected: %d, Actual: %d", canceled, t4Status);
-    }
+    tce.set();
+    // this should not hang
+    task_status t4Status = t4.wait();
+    IsTrue(t4Status == canceled, L"operator || did not properly cancel. Expected: %d, Actual: %d", canceled, t4Status);
+}
 
-    {
-        extensibility::event_t evt1, evt2;
-        pplx::details::atomic_long n(0);
+TEST(TestTaskOperators_cancellation_complex)
+{
+    extensibility::event_t evt1, evt2;
+    pplx::details::atomic_long n(0);
 
-        cancellation_token_source ct;
+    cancellation_token_source ct;
 
-        task<void> t1([&n, &evt1, &evt2](){
-            pplx::details::atomic_add(n, 1L); // this should execute
-            evt2.set();
-            evt1.wait();
-        }, ct.get_token());
+    task<void> t1([&n, &evt1, &evt2](){
+        pplx::details::atomic_add(n, 1L); // this should execute
+        evt2.set();
+        evt1.wait();
+    }, ct.get_token());
 
-        task<void> t2 = t1.then([&n](){
-            pplx::details::atomic_add(n, 10L); // this should NOT execute
-        });
+    task<void> t2 = t1.then([&n](){
+        pplx::details::atomic_add(n, 10L); // this should NOT execute
+    });
 
-        task<void> t3 = t1.then([&n](){
-            pplx::details::atomic_add(n, 100L); // this should NOT execute
-        });
+    task<void> t3 = t1.then([&n](){
+        pplx::details::atomic_add(n, 100L); // this should NOT execute
+    });
 
-        task<void> t4 = t1.then([&n](task<void> taskResult){
-            pplx::details::atomic_add(n, 1000L); // this should execute
-        });
+    task<void> t4 = t1.then([&n](task<void> taskResult){
+        pplx::details::atomic_add(n, 1000L); // this should execute
+    });
 
-        task<void> t5 = t1.then([&n](task<void> taskResult){
-            try
-            {
-                taskResult.get();
-                pplx::details::atomic_add(n, 10000L); // this should execute
-            }
-            catch(task_canceled&)
-            {
-                pplx::details::atomic_add(n, 100000L); // this should NOT execute
-            }
-        });
-
-        evt2.wait();
-        ct.cancel();
-        evt1.set();
-
-        IsTrue((t2 && t3).wait() == canceled, L"(t1 && t2) was not canceled");
-        IsTrue((t2 || t3 || t4 || t5).wait() == completed, L"(t2 || t3 || t4 || t5) did not complete");
-        IsTrue((t4 && t5).wait() == completed, L"(t4 && t5) did not complete");
-
+    task<void> t5 = t1.then([&n](task<void> taskResult){
         try
         {
-            t1.get();
+            taskResult.get();
+            pplx::details::atomic_add(n, 10000L); // this should execute
         }
-        catch (task_canceled&)
+        catch(task_canceled&)
         {
-            LogFailure(L"get() on canceled task t1 should not throw a task_canceled exception.");
+            pplx::details::atomic_add(n, 100000L); // this should NOT execute
         }
+    });
 
+    evt2.wait();
+    ct.cancel();
+    evt1.set();
+
+    IsTrue((t2 && t3).wait() == canceled, L"(t1 && t2) was not canceled");
+    IsTrue((t2 || t3 || t4 || t5).wait() == completed, L"(t2 || t3 || t4 || t5) did not complete");
+    IsTrue((t4 && t5).wait() == completed, L"(t4 && t5) did not complete");
+
+    try
+    {
+        t1.get();
+    }
+    catch (task_canceled&)
+    {
+        LogFailure(L"get() on canceled task t1 should not throw a task_canceled exception.");
+    }
+
+    try
+    {
+        t2.get();
+        LogFailure(L"get() on canceled task t2 should throw a task_canceled exception.");
+    }
+    catch (task_canceled&){}
+
+    try
+    {
+        t3.get();
+        LogFailure(L"get() on canceled task t3 should throw a task_canceled exception.");
+    }
+    catch (task_canceled&){}
+
+    try
+    {
+        t4.get();
+        t5.get();
+    }
+    catch(...)
+    {
+        LogFailure(L"get() on completed tasks threw an exception.");
+    }
+    IsTrue(n == 11001L, L"The right result was not obtained from the sequence of tasks that executed. Expected: 11001, Actual: %d", static_cast<long>(n));
+}
+
+TEST(TestTaskOperators_cancellation_exception)
+{
+    extensibility::event_t evt1, evt2;
+    pplx::details::atomic_long n(0);
+
+    cancellation_token_source ct;
+
+    task<void> t1([&n, &evt1, &evt2](){
+        evt2.set();
+        evt1.wait();
+    }, ct.get_token());
+
+    task<void> t2([&n](){
+        throw 42;
+    });
+
+    for (int i = 0; i < 5; ++i)
+    {
         try
         {
             t2.get();
-            LogFailure(L"get() on canceled task t2 should throw a task_canceled exception.");
-        }
-        catch (task_canceled&){}
-
-        try
-        {
-            t3.get();
-            LogFailure(L"get() on canceled task t3 should throw a task_canceled exception.");
-        }
-        catch (task_canceled&){}
-
-        try
-        {
-            t4.get();
-            t5.get();
-        }
-        catch(...)
-        {
-            LogFailure(L"get() on completed tasks threw an exception.");
-        }
-        IsTrue(n == 11001L, L"The right result was not obtained from the sequence of tasks that executed. Expected: 11001, Actual: %d", static_cast<long>(n));
-    }
-
-    {
-        extensibility::event_t evt1, evt2;
-        pplx::details::atomic_long n(0);
-
-        cancellation_token_source ct;
-
-        task<void> t1([&n, &evt1, &evt2](){
-            evt2.set();
-            evt1.wait();
-        }, ct.get_token());
-
-        task<void> t2([&n](){
-            throw 42;
-        });
-
-        for (int i = 0; i < 5; ++i)
-        {
-            try
-            {
-                t2.get();
-                LogFailure(L"Exception was not received from t2.get()");
-            }
-            catch(int x)
-            {
-                IsTrue(x == 42, L"Incorrect integer was thrown from t2.get(). Expected: 42, Actual: %d", x);
-            }
-            catch(task_canceled&)
-            {
-                LogFailure(L"task_canceled was thrown from t2.get() when an integer was expected");
-            }
-        }
-
-        for (int i = 0; i < 5; ++i)
-        {
-            try
-            {
-                t2.wait();
-                LogFailure(L"Exception was not received from t2.wait()");
-            }
-            catch(int x)
-            {
-                IsTrue(x == 42, L"Incorrect integer was thrown from t2.wait(). Expected: 42, Actual: %d", x);
-            }
-            catch(task_canceled&)
-            {
-                LogFailure(L"task_canceled was thrown from t2.wait() when an integer was expected");
-            }
-        }
-
-        task<void> t3 = t1.then([&n](){
-            pplx::details::atomic_add(n, 1L); // this should NOT execute, 
-        });
-
-        task<void> t4 = t1.then([&n](task<void> taskResult){
-            pplx::details::atomic_add(n, 10L); // this should execute
-        });
-
-        task<void> t5 = t2.then([&n](){
-            pplx::details::atomic_add(n, 100L); // this should NOT execute
-        });
-
-        task<void> t6 = t2.then([&n](task<void> taskResult){
-            pplx::details::atomic_add(n, 1000L); // this should execute
-            taskResult.get(); // should throw 42
-            pplx::details::atomic_add(n, 10000L); // this should NOT execute
-        });
-
-        task<void> t7 = t2.then([&n, this](task<void> taskResult){
-            try
-            {
-                taskResult.get();
-                pplx::details::atomic_add(n, 100000L); // this should NOT execute
-            }
-            catch(int x)
-            {
-                IsTrue(x == 42, L"Incorrect integer exception was received in t7 from taskresult.get(). Expected: 42, Actual: %d", x);
-                pplx::details::atomic_add(n, 1000000L); // this should execute
-            }
-            catch(task_canceled)
-            {
-                LogFailure(L"task_canceled was thrown by taskResult.get() in t7");
-            }
-            catch(...)
-            {
-                LogFailure(L"A random exception was thrown by taskResult.get() in t7");
-            }
-
-            throw 96;
-        });
-
-        task<void> t8 = (t6 || t7).then([&n, this](task<void> taskResult){
-            try
-            {
-                taskResult.get();
-                pplx::details::atomic_add(n, 1000000L); // this should NOT execute
-            }
-            catch(int x)
-            {
-                IsTrue((x == 42 || x ==96), L"Incorrect integer exception was received in t7 from taskresult.get(). Expected: 42 or 96, Actual: %d", x);
-                pplx::details::atomic_add(n, 100000000L); // this should execute
-            }
-            catch(task_canceled)
-            {
-                LogFailure(L"(t6 || t7) was canceled without an exception");
-            }
-            catch(...)
-            {
-                LogFailure(L"(t6 || t7) was canceled with an unexpected exception");
-            }
-        });
-
-        // Cancel t1 now that t2 is guaranteed canceled with an exception
-        evt2.wait();
-        ct.cancel();
-        evt1.set();
-
-        try
-        {
-            task_status status = (t1 && t2).wait();
-            IsTrue((status == canceled), L"(t1 && t2).wait() did not return canceled. Expected: %d, Actual %d", canceled, status);
+            LogFailure(L"Exception was not received from t2.get()");
         }
         catch(int x)
         {
-            IsTrue(x == 42, L"Incorrect integer exception was received from (t1 && t2).wait(). Expected: 42, Actual: %d", x);
-        }
-
-        try
-        {
-            task_status status = t3.wait();
-            IsTrue((status == canceled), L"t3.wait() did not returned canceled. Expected: %d, Actual %d", canceled, status);
+            IsTrue(x == 42, L"Incorrect integer was thrown from t2.get(). Expected: 42, Actual: %d", x);
         }
         catch(task_canceled&)
         {
-            LogFailure(L"t3.wait() threw task_canceled instead of returning canceled");
+            LogFailure(L"task_canceled was thrown from t2.get() when an integer was expected");
         }
-        catch(...)
-        {
-            LogFailure(L"t3.wait() threw an unexpected exception");
-        }
+    }
 
+    for (int i = 0; i < 5; ++i)
+    {
         try
         {
-            task_status status = t4.wait();
-            IsTrue((status == completed), L"t4.wait() did not returned completed. Expected: %d, Actual %d", completed, status);
-        }
-        catch(...)
-        {
-            LogFailure(L"t4.wait() threw an unexpected exception");
-        }
-
-        try
-        {
-            t5.wait();
-            LogFailure(L"t5.wait() did not throw an exception");
+            t2.wait();
+            LogFailure(L"Exception was not received from t2.wait()");
         }
         catch(int x)
         {
-            IsTrue(x == 42, L"Incorrect integer exception was received from t5.wait(). Expected: 42, Actual: %d", x);
-        }
-
-        // Observe the exceptions from t5, t6 and t7
-        helpers::ObserveException(t5); helpers::ObserveException(t6); helpers::ObserveException(t7);
-
-        try
-        {
-            (t1 || t6).get();
-            LogFailure(L"(t1 || t6).get() should throw an exception.");
-        }
-        catch (task_canceled&)
-        {
-            LogFailure(L"(t1 || t6).get() threw task_canceled when an int was expected.");
-        }
-        catch(int x)
-        {
-            IsTrue((x == 42 || x ==96), L"Incorrect integer exception was received from (t1 || t6 || t7).get(). Expected: 42 or 96, Actual: %d", x);
-        }
-
-        t8.wait();
-
-        IsTrue(n == 101001010L, L"The right result was not obtained from the sequence of tasks that executed. Expected 101001010, actual %d", 101001010, static_cast<long>(n));
-    }
-
-    {
-        // A task that participates in a 'when all' operation is canceled and then throws an exception. Verify that value and task based continuations of the when
-        // all task see the exception.
-        extensibility::event_t evt1, evt2;
-
-        cancellation_token_source ct;
-
-        task<void> t1([&evt1, &evt2](){
-            evt2.set();
-            evt1.wait();
-            os_utilities::sleep(100);
-            throw 42;
-        }, ct.get_token());
-
-        task<void> t2([](){
-            helpers::DoRandomParallelWork();
-        });
-
-        task<void> t3([](){
-            helpers::DoRandomParallelWork();
-        });
-
-        task<void> whenAllTask = t1 && t2 && t3;
-
-        task<void> t4 = whenAllTask.then([this](task<void> t){
-            IsFalse(helpers::VerifyCanceled(t), L"%ws:%u:t should be canceled by token", __FILE__, __LINE__);
-            IsTrue(helpers::VerifyException<int>(t), L"%ws:%u:exception from t is unexpected", __FILE__, __LINE__);
-        });
-
-        task<void> t5 = whenAllTask.then([this]() {
-            LogFailure(L"%ws:%u:t5 was unexpectedly executed", __FILE__, __LINE__);
-        });
-
-        evt2.wait();
-        ct.cancel();
-        evt1.set();
-
-        IsFalse(helpers::VerifyCanceled(t5), L"%ws:%u:t5 should be canceled", __FILE__, __LINE__);
-    }
-
-
-    {
-        // A task that participates in a 'when all' operation throws an exception, but a continuation of the when all task is canceled before this point.
-        // Ensure that continuation does not get the exception but others do.
-        extensibility::event_t evt1, evt2;
-
-        cancellation_token_source ct;
-
-        task<void> t1([&evt1, &evt2](){
-            evt2.set();
-            evt1.wait();
-            os_utilities::sleep(100);
-            throw 42;
-        });
-
-        task<void> t2([](){
-            helpers::DoRandomParallelWork();
-        });
-
-        task<void> t3([](){
-            helpers::DoRandomParallelWork();
-        });
-
-        task<void> whenAllTask = t1 && t2 && t3;
-
-        task<void> t4 = whenAllTask.then([this](task<void> t){
-            IsFalse(helpers::VerifyCanceled(t), L"%ws:%u:t was unexpectedly canceled", __FILE__, __LINE__);
-            IsTrue(helpers::VerifyException<int>(t), L"%ws:%u:Did not receive the correct exception from t", __FILE__, __LINE__);
-        });
-
-        task<void> t5 = whenAllTask.then([this]() {
-            LogFailure(L"%ws:%u:t5 was unexpectedly executed", __FILE__, __LINE__);
-        });
-
-        task<void> t6 = whenAllTask.then([this](task<void> t){
-            IsTrue(helpers::VerifyCanceled(t), L"%ws:%u:t was not canceled as expected", __FILE__, __LINE__);
-        }, ct.get_token());
-
-        evt2.wait();
-        ct.cancel();
-        evt1.set();
-
-        IsTrue(helpers::VerifyException<int>(t5), L"%ws:%u:Did not receive the correct exception from t5", __FILE__, __LINE__);
-    }
-
-    //
-    // operator&& with differing tokens:
-    //
-    {
-        cancellation_token_source ct1;
-        cancellation_token_source ct2;
-        cancellation_token_source ct3;
-        cancellation_token_source ct4;
-
-
-        task<int> t1( []() -> int {
-            return 42;
-        }, ct1.get_token());
-
-        task<int> t2( []() -> int {
-            return 77;
-        }, ct2.get_token());
-
-        task<int> t3( []() -> int {
-            return 92;
-        }, ct3.get_token());
-
-        task<int> t4( []() -> int {
-            return 147;
-        }, ct4.get_token());
-
-        auto t5 = t1 && t2 && t3 && t4;
-
-        extensibility::event_t ev1, ev2;
-
-        auto t6 = t5.then( [&ev1, &ev2](std::vector<int> iVec) -> int {
-            ev2.set();
-            ev1.wait();
-            return iVec[0] + iVec[1] + iVec[2] + iVec[3];
-        });
-
-        auto t7 = t6.then( [](int val) -> int {
-            return val;
-        });
-
-        ev2.wait();
-        ct3.cancel();
-        ev1.set();
-        t6.wait();
-        t7.wait();
-
-        bool caughtCanceled = false;
-
-        try
-        {
-            t7.get();
+            IsTrue(x == 42, L"Incorrect integer was thrown from t2.wait(). Expected: 42, Actual: %d", x);
         }
         catch(task_canceled&)
         {
-            caughtCanceled = true;
+            LogFailure(L"task_canceled was thrown from t2.wait() when an integer was expected");
+        }
+    }
+
+    task<void> t3 = t1.then([&n](){
+        pplx::details::atomic_add(n, 1L); // this should NOT execute, 
+    });
+
+    task<void> t4 = t1.then([&n](task<void> taskResult){
+        pplx::details::atomic_add(n, 10L); // this should execute
+    });
+
+    task<void> t5 = t2.then([&n](){
+        pplx::details::atomic_add(n, 100L); // this should NOT execute
+    });
+
+    task<void> t6 = t2.then([&n](task<void> taskResult){
+        pplx::details::atomic_add(n, 1000L); // this should execute
+        taskResult.get(); // should throw 42
+        pplx::details::atomic_add(n, 10000L); // this should NOT execute
+    });
+
+    task<void> t7 = t2.then([&n, this](task<void> taskResult){
+        try
+        {
+            taskResult.get();
+            pplx::details::atomic_add(n, 100000L); // this should NOT execute
+        }
+        catch(int x)
+        {
+            IsTrue(x == 42, L"Incorrect integer exception was received in t7 from taskresult.get(). Expected: 42, Actual: %d", x);
+            pplx::details::atomic_add(n, 1000000L); // this should execute
+        }
+        catch(task_canceled)
+        {
+            LogFailure(L"task_canceled was thrown by taskResult.get() in t7");
+        }
+        catch(...)
+        {
+            LogFailure(L"A random exception was thrown by taskResult.get() in t7");
         }
 
-        IsTrue(caughtCanceled, L"Cancellation token was not joined/inherited on operator&&");
+        throw 96;
+    });
+
+    task<void> t8 = (t6 || t7).then([&n, this](task<void> taskResult){
+        try
+        {
+            taskResult.get();
+            pplx::details::atomic_add(n, 1000000L); // this should NOT execute
+        }
+        catch(int x)
+        {
+            IsTrue((x == 42 || x ==96), L"Incorrect integer exception was received in t7 from taskresult.get(). Expected: 42 or 96, Actual: %d", x);
+            pplx::details::atomic_add(n, 100000000L); // this should execute
+        }
+        catch(task_canceled)
+        {
+            LogFailure(L"(t6 || t7) was canceled without an exception");
+        }
+        catch(...)
+        {
+            LogFailure(L"(t6 || t7) was canceled with an unexpected exception");
+        }
+    });
+
+    // Cancel t1 now that t2 is guaranteed canceled with an exception
+    evt2.wait();
+    ct.cancel();
+    evt1.set();
+
+    try
+    {
+        task_status status = (t1 && t2).wait();
+        IsTrue((status == canceled), L"(t1 && t2).wait() did not return canceled. Expected: %d, Actual %d", canceled, status);
     }
+    catch(int x)
+    {
+        IsTrue(x == 42, L"Incorrect integer exception was received from (t1 && t2).wait(). Expected: 42, Actual: %d", x);
+    }
+
+    try
+    {
+        task_status status = t3.wait();
+        IsTrue((status == canceled), L"t3.wait() did not returned canceled. Expected: %d, Actual %d", canceled, status);
+    }
+    catch(task_canceled&)
+    {
+        LogFailure(L"t3.wait() threw task_canceled instead of returning canceled");
+    }
+    catch(...)
+    {
+        LogFailure(L"t3.wait() threw an unexpected exception");
+    }
+
+    try
+    {
+        task_status status = t4.wait();
+        IsTrue((status == completed), L"t4.wait() did not returned completed. Expected: %d, Actual %d", completed, status);
+    }
+    catch(...)
+    {
+        LogFailure(L"t4.wait() threw an unexpected exception");
+    }
+
+    try
+    {
+        t5.wait();
+        LogFailure(L"t5.wait() did not throw an exception");
+    }
+    catch(int x)
+    {
+        IsTrue(x == 42, L"Incorrect integer exception was received from t5.wait(). Expected: 42, Actual: %d", x);
+    }
+
+    // Observe the exceptions from t5, t6 and t7
+    helpers::ObserveException(t5); helpers::ObserveException(t6); helpers::ObserveException(t7);
+
+    try
+    {
+        (t1 || t6).get();
+        LogFailure(L"(t1 || t6).get() should throw an exception.");
+    }
+    catch (task_canceled&)
+    {
+        LogFailure(L"(t1 || t6).get() threw task_canceled when an int was expected.");
+    }
+    catch(int x)
+    {
+        IsTrue((x == 42 || x ==96), L"Incorrect integer exception was received from (t1 || t6 || t7).get(). Expected: 42 or 96, Actual: %d", x);
+    }
+
+    t8.wait();
+
+    IsTrue(n == 101001010L, L"The right result was not obtained from the sequence of tasks that executed. Expected 101001010, actual %d", 101001010, static_cast<long>(n));
+}
+
+TEST(TestTaskOperators_when_all_cancellation)
+{
+    // A task that participates in a 'when all' operation is canceled and then throws an exception. Verify that value and task based continuations of the when
+    // all task see the exception.
+    extensibility::event_t evt1, evt2;
+
+    cancellation_token_source ct;
+
+    task<void> t1([&evt1, &evt2](){
+        evt2.set();
+        evt1.wait();
+        os_utilities::sleep(100);
+        throw 42;
+    }, ct.get_token());
+
+    task<void> t2([](){
+        helpers::DoRandomParallelWork();
+    });
+
+    task<void> t3([](){
+        helpers::DoRandomParallelWork();
+    });
+
+    task<void> whenAllTask = t1 && t2 && t3;
+
+    task<void> t4 = whenAllTask.then([this](task<void> t){
+        IsFalse(helpers::VerifyCanceled(t), L"%ws:%u:t should be canceled by token", __FILE__, __LINE__);
+        IsTrue(helpers::VerifyException<int>(t), L"%ws:%u:exception from t is unexpected", __FILE__, __LINE__);
+    });
+
+    task<void> t5 = whenAllTask.then([this]() {
+        LogFailure(L"%ws:%u:t5 was unexpectedly executed", __FILE__, __LINE__);
+    });
+
+    evt2.wait();
+    ct.cancel();
+    evt1.set();
+
+    IsFalse(helpers::VerifyCanceled(t5), L"%ws:%u:t5 should be canceled", __FILE__, __LINE__);
+}
+
+
+TEST(TestTaskOperators_when_all_cancellation_sequence)
+{
+    // A task that participates in a 'when all' operation throws an exception, but a continuation of the when all task is canceled before this point.
+    // Ensure that continuation does not get the exception but others do.
+    extensibility::event_t evt1, evt2;
+
+    cancellation_token_source ct;
+
+    task<void> t1([&evt1, &evt2](){
+        evt2.set();
+        evt1.wait();
+        os_utilities::sleep(100);
+        throw 42;
+    });
+
+    task<void> t2([](){
+        helpers::DoRandomParallelWork();
+    });
+
+    task<void> t3([](){
+        helpers::DoRandomParallelWork();
+    });
+
+    task<void> whenAllTask = t1 && t2 && t3;
+
+    task<void> t4 = whenAllTask.then([this](task<void> t){
+        IsFalse(helpers::VerifyCanceled(t), L"%ws:%u:t was unexpectedly canceled", __FILE__, __LINE__);
+        IsTrue(helpers::VerifyException<int>(t), L"%ws:%u:Did not receive the correct exception from t", __FILE__, __LINE__);
+    });
+
+    task<void> t5 = whenAllTask.then([this]() {
+        LogFailure(L"%ws:%u:t5 was unexpectedly executed", __FILE__, __LINE__);
+    });
+
+    task<void> t6 = whenAllTask.then([this](task<void> t){
+        IsTrue(helpers::VerifyCanceled(t), L"%ws:%u:t was not canceled as expected", __FILE__, __LINE__);
+    }, ct.get_token());
+
+    evt2.wait();
+    ct.cancel();
+    evt1.set();
+
+    IsTrue(helpers::VerifyException<int>(t5), L"%ws:%u:Did not receive the correct exception from t5", __FILE__, __LINE__);
+}
+
+TEST(TestTaskOperators_and_cancellation_multiple_tokens)
+//
+// operator&& with differing tokens:
+//
+{
+    cancellation_token_source ct1;
+    cancellation_token_source ct2;
+    cancellation_token_source ct3;
+    cancellation_token_source ct4;
+
+
+    task<int> t1( []() -> int {
+        return 42;
+    }, ct1.get_token());
+
+    task<int> t2( []() -> int {
+        return 77;
+    }, ct2.get_token());
+
+    task<int> t3( []() -> int {
+        return 92;
+    }, ct3.get_token());
+
+    task<int> t4( []() -> int {
+        return 147;
+    }, ct4.get_token());
+
+    auto t5 = t1 && t2 && t3 && t4;
+
+    extensibility::event_t ev1, ev2;
+
+    auto t6 = t5.then( [&ev1, &ev2](std::vector<int> iVec) -> int {
+        ev2.set();
+        ev1.wait();
+        return iVec[0] + iVec[1] + iVec[2] + iVec[3];
+    });
+
+    auto t7 = t6.then( [](int val) -> int {
+        return val;
+    });
+
+    ev2.wait();
+    ct3.cancel();
+    ev1.set();
+    t6.wait();
+    t7.wait();
+
+    bool caughtCanceled = false;
+
+    try
+    {
+        t7.get();
+    }
+    catch(task_canceled&)
+    {
+        caughtCanceled = true;
+    }
+
+    IsTrue(caughtCanceled, L"Cancellation token was not joined/inherited on operator&&");
 }
 
 struct TestException1
@@ -1359,7 +1369,7 @@ TEST(TestContinuationsWithTask)
     {
         int n2 = 0;
 
-        task<int> t([&]() -> int { 
+        task<int> t([&]() -> int {
             return 10;
         });
 
@@ -1821,7 +1831,7 @@ task<void> async_for(int start, int step, int end, Function func)
 {
     if (start < end)
     {
-        return func(start).then([=] () -> task<void> 
+        return func(start).then([=] () -> task<void>
         {
             return async_for(start + step, step, end, func);
         });

@@ -5,6 +5,7 @@ project(casablanca)
 enable_testing()
 
 set(WARNINGS)
+set(ANDROID_STL_FLAGS)
 
 # Platform (not compiler) specific settings
 if(IOS)
@@ -23,6 +24,40 @@ if(IOS)
   set(CMAKE_CXX_FLAGS "-fvisibility=hidden -fvisibility-inlines-hidden")
 
   set(BUILD_SHARED_LIBS OFF)
+  set(BUILD_SAMPLES OFF)
+  option(BUILD_TESTS "Build tests." ON)
+elseif(ANDROID)
+  set(ANDROID_SOURCE_DIR "${CMAKE_SOURCE_DIR}/../Build_android")
+  # list(APPEND CMAKE_FIND_ROOT_PATH "${CMAKE_BINARY_DIR}/../Boost-for-Android")
+  # list(APPEND CMAKE_FIND_ROOT_PATH "${CMAKE_BINARY_DIR}/../Boost-for-Android/build")
+  # list(APPEND CMAKE_FIND_ROOT_PATH "${CMAKE_BINARY_DIR}/../Boost-for-Android/build/lib")
+
+  #set(Boost_DEBUG ON)
+  set(Boost_COMPILER "-gcc")
+  set(Boost_USE_STATIC_LIBS ON)
+  set(BOOST_ROOT "${CMAKE_BINARY_DIR}/../Boost-for-Android/build")
+  set(BOOST_LIBRARYDIR "${CMAKE_BINARY_DIR}/../Boost-for-Android/build/lib")
+  find_host_package(Boost 1.55 EXACT REQUIRED COMPONENTS random system thread locale filesystem chrono atomic)
+  #find_package(Boost 1.55 EXACT REQUIRED COMPONENTS random system thread locale filesystem chrono atomic)
+  find_package(Threads REQUIRED)
+  set(OPENSSL_FOUND 1)
+  set(OPENSSL_INCLUDE_DIR "${CMAKE_BINARY_DIR}/../openssl/r9d-9-armeabiv7/include")
+  set(OPENSSL_LIBRARIES
+    "${CMAKE_BINARY_DIR}/../openssl/r9d-9-armeabiv7/lib/libssl.a"
+    "${CMAKE_BINARY_DIR}/../openssl/r9d-9-armeabiv7/lib/libcrypto.a"
+    )
+  set(LIBCXX_STL "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.8/libs/armeabi-v7a/libgnustl_shared.so")
+  set(ANDROID_STL_FLAGS
+    gcc
+    ${LIBCXX_STL}
+    atomic
+    c
+    m
+    dl
+    -nodefaultlibs
+    )
+
+  set(BUILD_SHARED_LIBS ON)
   set(BUILD_SAMPLES OFF)
   option(BUILD_TESTS "Build tests." ON)
 elseif(UNIX) # This includes OSX
@@ -47,11 +82,26 @@ elseif(WIN32)
 
   set(LIB lib)
 else()
-  message("-- Unsupported Build Platform.")
+  message(FATAL_ERROR "-- Unsupported Build Platform.")
 endif()
 
 # Compiler (not platform) specific settings
-if(("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang") OR IOS)
+if(ANDROID)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fno-strict-aliasing")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-pedantic")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-attributes -Wno-pointer-arith")
+  #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -gcc-toolchain ${ANDROID_NDK}/toolchains/arm-linux-androideabi-4.8/prebuilt/${ANDROID_NDK_HOST_SYSTEM_NAME}")
+  #include_directories(
+  #  "${ANDROID_NDK}/sources/cxx-stl/llvm-libc++/libcxx/include"
+  #  "${ANDROID_NDK}/sources/cxx-stl/llvm-libc++/../gabi++/include"
+  #  "${ANDROID_NDK}/sources/cxx-stl/llvm-libc++/../../android/support/include"
+  #  )
+  include_directories(
+    "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.8/include"
+    "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.8/libs/armeabi-v7a/include"
+    "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.8/include/backward"
+    )
+elseif(("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang") OR IOS)
   message("-- Setting clang options")
 
   set(WARNINGS "-Wall -Wextra -Wcast-qual -Wconversion -Wformat=2 -Winit-self -Winvalid-pch -Wmissing-format-attribute -Wmissing-include-dirs -Wpacked -Wredundant-decls")
@@ -104,6 +154,7 @@ function(add_casablanca_test NAME SOURCES_VAR)
       ${LIB}common_utilities
       ${LIB}unittestpp
       ${Casablanca_LIBRARIES}
+      ${ANDROID_STL_FLAGS}
       )
     if (BUILD_SHARED_LIBS)
       add_test(NAME ${NAME}

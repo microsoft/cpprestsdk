@@ -34,7 +34,29 @@
 #include "boost/asio.hpp"
 #pragma clang diagnostic pop
 
+#if defined(ANDROID)
+#include <atomic>
+#include <jni.h>
+#include "pplx/pplx.h"
+#endif
+
 namespace crossplat {
+
+#if defined(ANDROID)
+extern std::atomic<JavaVM*> JVM;
+JNIEnv* get_jvm_env();
+
+struct java_local_ref_deleter
+{
+    void operator()(jobject lref) const
+    {
+        crossplat::get_jvm_env()->DeleteLocalRef(lref);
+    }
+};
+
+template<class T>
+using java_local_ref = std::unique_ptr<typename std::remove_pointer<T>::type, java_local_ref_deleter>;
+#endif
 
 class threadpool
 {
@@ -93,8 +115,25 @@ private:
         schedule([]() -> void { throw _cancel_thread(); });
     }
 
+#if defined(ANDROID)
+    static void detach_from_java(void*)
+    {
+        JVM.load()->DetachCurrentThread();
+    }
+#endif
+
     static void* thread_start(void *arg)
     {
+#if defined(ANDROID)
+        // Spinlock on the JVM calling JNI_OnLoad()
+        while (JVM == nullptr)
+        {
+            pplx::details::platform::YieldExecution();
+        }
+	// Calling get_jvm_env() here forces the thread to be attached.
+	get_jvm_env();
+        pthread_cleanup_push(detach_from_java, nullptr);
+#endif
         threadpool* _this = reinterpret_cast<threadpool*>(arg);
         try
         {
@@ -104,6 +143,20 @@ private:
         {
             // thread was cancelled
         }
+        catch (...)
+        {
+            // Something bad happened
+#if defined(ANDROID)
+            // Reach into the depths of the 'droid!
+            // NOTE: Uses internals of the bionic library
+            // Written against android ndk r9d, 7/26/2014
+            __pthread_cleanup_pop(&__cleanup, true);
+            throw;
+#endif
+        }
+#if defined(ANDROID)
+        pthread_cleanup_pop(true);
+#endif
         return arg;
     }
 

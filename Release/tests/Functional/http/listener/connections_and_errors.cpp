@@ -237,7 +237,7 @@ static void close_stream_early_with_length_impl(const uri &u, bool useException)
         body.putc('A').wait();
         body.putc('B').wait();
         auto responseTask = request.reply(status_codes::OK, instream, 4);
-        
+
         if(useException)
         {
             body.close(std::ios::out, std::make_exception_ptr(std::invalid_argument("test exception"))).wait();

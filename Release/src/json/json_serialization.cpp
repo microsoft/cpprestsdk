@@ -26,13 +26,13 @@
 ****/
 
 #include "stdafx.h"
+#include <stdio.h>
 
 #pragma warning(disable : 4127) // allow expressions like while(true) pass 
 using namespace web;
 using namespace web::json;
 using namespace utility;
 using namespace utility::conversions;
-
 
 //
 // JSON Serialization
@@ -173,7 +173,7 @@ void web::json::details::_Number::format(std::basic_string<char>& stream) const
 #ifdef _MS_WINDOWS
         const auto numChars = sprintf_s(tempBuffer, tempSize, "%.*g", std::numeric_limits<double>::digits10 + 2, m_number.m_value);
 #else
-        const auto numChars = std::snprintf(tempBuffer, tempSize, "%.*g", std::numeric_limits<double>::digits10 + 2, m_number.m_value);
+        const auto numChars = snprintf(tempBuffer, tempSize, "%.*g", std::numeric_limits<double>::digits10 + 2, m_number.m_value);
 #endif
         stream.append(tempBuffer, numChars);
     }
