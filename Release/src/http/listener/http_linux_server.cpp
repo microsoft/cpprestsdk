@@ -123,7 +123,7 @@ void connection::handle_http_line(const boost::system::error_code& ec)
         else
         {
             m_request.reply(status_codes::BadRequest);
-            do_response();
+            do_response(true);
         }
     }
     else
@@ -389,12 +389,12 @@ void connection::dispatch_request_to_listener()
     if (pListener == nullptr)
     {
         m_request.reply(status_codes::NotFound);
-        do_response();
+        do_response(false);
     }
     else
     {
         m_request._set_listener_path(pListener->uri().path());
-        do_response();
+        do_response(false);
         
         // Look up the lock for the http_listener.
         pplx::extensibility::reader_writer_lock_t *pListenerLock;
