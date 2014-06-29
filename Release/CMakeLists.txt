@@ -24,7 +24,7 @@ if(IOS)
 
   set(BUILD_SHARED_LIBS OFF)
 elseif(UNIX) # This includes OSX
-  find_package(Boost REQUIRED COMPONENTS random system thread locale regex filesystem)
+  find_package(Boost REQUIRED COMPONENTS random chrono system thread locale regex filesystem)
   find_package(Threads REQUIRED)
   find_package(OpenSSL REQUIRED)
 
