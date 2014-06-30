@@ -78,6 +78,7 @@ target_link_libraries(${Casablanca_LIBRARY}
   ${Boost_FRAMEWORK}
   ${Boost_SYSTEM_LIBRARY}
   ${Boost_THREAD_LIBRARY}
+  ${Boost_CHRONO_LIBRARY}
   ${Boost_LOCALE_LIBRARY}
   ${Boost_REGEX_LIBRARY}
   ${Boost_RANDOM_LIBRARY}
