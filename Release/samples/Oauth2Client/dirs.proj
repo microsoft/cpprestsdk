@@ -2,7 +2,7 @@
 
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Common.Build.settings" />
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(Platform)' != 'ARM'">
       <ProjectFile Include="Oauth2Client$(DevToolsVersion)\Oauth2Client$(DevToolsVersion).vcxproj"/>
   </ItemGroup>
 
