@@ -217,6 +217,10 @@
     <ClCompile Include="$(CasablancaSrcDir)\http\listener\http_msg_listen.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+  </ItemGroup>
+  
+    <!-- non-TargetXP and non-Phone8.0 files go here-->
+  <ItemGroup Condition ="'$(TargetXP)' != 'true' and '$(PlatformToolset)' != 'v110_wp80'">
 	<ClInclude Include="$(CasablancaIncludeDir)\cpprest\oauth1.h">
       <Filter>Header Files\cpprest</Filter>
     </ClInclude>
@@ -224,7 +228,7 @@
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
-  
+
   <!-- PPLX files for pre-Dev12 toolsets go here -->
   <ItemGroup Condition="'$(PlatformToolset)' == 'v110' or '$(PlatformToolset)' == 'v110_xp' or '$(PlatformToolset)' == 'v110_wp80'">
     <ClCompile Include="$(CasablancaSrcDir)\pplx\pplx.cpp">
