@@ -137,7 +137,7 @@ pplx::task<void> details::http_listener_impl::close()
     return web::http::experimental::details::http_server_api::unregister_listener(this);
 }
 
-pplx::task<http_response> details::http_listener_impl::handle_request(http_request msg)
+void details::http_listener_impl::handle_request(http_request msg)
 {
     // Specific method handler takes priority over general.
     const method &mtd = msg.method();
@@ -165,8 +165,6 @@ pplx::task<http_response> details::http_listener_impl::handle_request(http_reque
         response.headers().add(U("Allow"), get_supported_methods());
         msg.reply(response);
     }
-
-    return msg.get_response();
 }
 
 utility::string_t details::http_listener_impl::get_supported_methods() const 

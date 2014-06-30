@@ -157,7 +157,7 @@ public:
     /// Handler for all requests. The HTTP host uses this to dispatch a message to the pipeline.
     /// </summary>
     /// <remarks>Only HTTP server implementations should call this API.</remarks>
-    _ASYNCRTIMP pplx::task<http::http_response> handle_request(http::http_request msg);
+    _ASYNCRTIMP void handle_request(http::http_request msg);
 
     const http::uri & uri() const { return m_uri; }
 

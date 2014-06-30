@@ -111,7 +111,8 @@ namespace details {
         typedef typename basic_streambuf<_CharType>::pos_type pos_type;
         typedef typename basic_streambuf<_CharType>::off_type off_type;
 
-        virtual ~basic_file_buffer() {
+        virtual ~basic_file_buffer() 
+        {
             if( this->can_read() )
             {
                 this->_close_read().wait();
@@ -122,6 +123,7 @@ namespace details {
                 this->_close_write().wait();
             }
         }
+
     protected:
 
         /// <summary>

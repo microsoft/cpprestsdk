@@ -344,10 +344,10 @@ public:
 
     _http_server_context * _get_server_context() const { return m_server_context.get(); }
 
-    void _set_server_context(std::shared_ptr<details::_http_server_context> server_context) { m_server_context = std::move(server_context); }
+    void _set_server_context(std::unique_ptr<details::_http_server_context> server_context) { m_server_context = std::move(server_context); }
 
 private:
-    std::shared_ptr<_http_server_context> m_server_context;
+    std::unique_ptr<_http_server_context> m_server_context;
 
     unsigned long m_error_code;
 
@@ -611,7 +611,7 @@ public:
     std::shared_ptr<http::details::_http_response> _get_impl() const { return _m_impl; }
 
     http::details::_http_server_context * _get_server_context() const { return _m_impl->_get_server_context(); }
-    void _set_server_context(std::shared_ptr<http::details::_http_server_context> server_context) { _m_impl->_set_server_context(std::move(server_context)); }
+    void _set_server_context(std::unique_ptr<http::details::_http_server_context> server_context) { _m_impl->_set_server_context(std::move(server_context)); }
 
 private:
 
@@ -638,9 +638,9 @@ public:
 
     _ASYNCRTIMP _http_request(http::method mtd);
 
-    _ASYNCRTIMP _http_request(std::shared_ptr<http::details::_http_server_context> server_context);
+    _ASYNCRTIMP _http_request(std::unique_ptr<http::details::_http_server_context> server_context);
 
-    virtual ~_http_request() { }
+    virtual ~_http_request() {}
 
     http::method &method() { return m_method; }
 
@@ -686,7 +686,7 @@ public:
 
     http::details::_http_server_context * _get_server_context() const { return m_server_context.get(); }
 
-    void _set_server_context(std::shared_ptr<http::details::_http_server_context> server_context) { m_server_context = std::move(server_context); }
+    void _set_server_context(std::unique_ptr<http::details::_http_server_context> server_context) { m_server_context = std::move(server_context); }
 
     void _set_listener_path(const utility::string_t &path) { m_listener_path = path; }
 
@@ -707,7 +707,7 @@ private:
     http::uri m_base_uri;
     http::uri m_uri;
     utility::string_t m_listener_path;
-    std::shared_ptr<http::details::_http_server_context> m_server_context;
+    std::unique_ptr<http::details::_http_server_context> m_server_context;
 
     concurrency::streams::ostream m_response_stream;
 
@@ -1134,8 +1134,8 @@ public:
     /// <summary>
     /// These are used for the initial creation of the HTTP request.
     /// </summary>
-    static http_request _create_request(std::shared_ptr<http::details::_http_server_context> server_context) { return http_request(std::move(server_context)); }
-    void _set_server_context(std::shared_ptr<http::details::_http_server_context> server_context) { _m_impl->_set_server_context(std::move(server_context)); }
+    static http_request _create_request(std::unique_ptr<http::details::_http_server_context> server_context) { return http_request(std::move(server_context)); }
+    void _set_server_context(std::unique_ptr<http::details::_http_server_context> server_context) { _m_impl->_set_server_context(std::move(server_context)); }
 
     void _set_listener_path(const utility::string_t &path) { _m_impl->_set_listener_path(path); }
 
@@ -1160,7 +1160,7 @@ private:
     friend class http::details::_http_request;
     friend class http::client::http_client;
 
-    http_request(std::shared_ptr<http::details::_http_server_context> server_context) : _m_impl(std::shared_ptr<details::_http_request>(new details::_http_request(std::move(server_context)))) {}
+    http_request(std::unique_ptr<http::details::_http_server_context> server_context) : _m_impl(std::make_shared<details::_http_request>(std::move(server_context))) {}
     http_request(std::shared_ptr<http::details::_http_request> message) : _m_impl(message) {}
 
     /// <summary>

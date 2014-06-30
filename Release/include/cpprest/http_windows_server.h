@@ -102,7 +102,7 @@ struct windows_request_context : http::details::_http_server_context
     void async_process_request(HTTP_REQUEST_ID request_id, http::http_request msg, const unsigned long headers_size);
 
     // Dispatch request to the provided http_listener.
-    void dispatch_request_to_listener(http_request& request, _In_ web::http::experimental::listener::details::http_listener_impl *pListener);
+    void dispatch_request_to_listener(_In_ web::http::experimental::listener::details::http_listener_impl *pListener);
 
     // Read in a portion of the request body.
     void read_request_body_chunk();
@@ -128,6 +128,8 @@ struct windows_request_context : http::details::_http_server_context
     void cancel_request_io_completion(DWORD error_code, DWORD bytes_read);
 
     // TCE that indicates the completion of response
+    // Workaround for ppl task_completion_event bug.
+    std::mutex m_responseCompletedLock;
     pplx::task_completion_event<void> m_response_completed;
 
     // Id of the currently processed request on this connection.
