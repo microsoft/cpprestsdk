@@ -58,7 +58,11 @@ namespace pplx = Concurrency;
 #include "cpprest/web_utilities.h"
 #include "cpprest/basic_types.h"
 #include "cpprest/asyncrt_utils.h"
+
+#if !defined(CPPREST_TARGET_XP) && !defined(_PHONE8_)
 #include "cpprest/oauth1.h"
+#endif
+
 #include "cpprest/oauth2.h"
 
 namespace web 
@@ -107,6 +111,7 @@ public:
     {
     }
 
+#if !defined(CPPREST_TARGET_XP) && !defined(_PHONE8_)
     /// <summary>
     /// Get OAuth 1.0 configuration.
     /// </summary>
@@ -124,6 +129,7 @@ public:
     {
         m_oauth1 = std::make_shared<oauth1::experimental::oauth1_config>(std::move(config));
     }
+#endif
 
     /// <summary>
     /// Get OAuth 2.0 configuration.
@@ -289,7 +295,10 @@ public:
     }
 
 private:
+#if !defined(CPPREST_TARGET_XP) && !defined(_PHONE8_)
     std::shared_ptr<oauth1::experimental::oauth1_config> m_oauth1;
+#endif // !defined(CPPREST_TARGET_XP) && !defined(_PHONE8_)
+
     std::shared_ptr<oauth2::experimental::oauth2_config> m_oauth2;
     web_proxy m_proxy;
     http::client::credentials m_credentials;

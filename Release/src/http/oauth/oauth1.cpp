@@ -54,14 +54,7 @@ namespace experimental
 //
 // Start of platform-dependent _hmac_sha1() block...
 //
-#if _WIN32_WINNT < _WIN32_WINNT_VISTA || _PHONE8_ // Windows XP or Windows Phone 8.0
-
-std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t&, const utility::string_t&)
-{
-    throw oauth1_exception(U("oauth1 is not supported"));
-}
-
-#elif defined(_MS_WINDOWS) && !defined(__cplusplus_winrt) // Windows desktop
+#if defined(_MS_WINDOWS) && !defined(__cplusplus_winrt) // Windows desktop
 
 #include <winternl.h>
 #include <bcrypt.h>

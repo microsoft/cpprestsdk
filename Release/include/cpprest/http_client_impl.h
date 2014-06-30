@@ -460,7 +460,11 @@ void http_client::build_pipeline(uri base_uri, http_client_config client_config)
     details::verify_uri(base_uri);
 
     std::vector<std::shared_ptr<http::http_pipeline_stage> > extra_handlers;
+
+#if !defined(CPPREST_TARGET_XP) && !defined(_PHONE8_)
     extra_handlers.push_back(std::make_shared<oauth1::details::oauth1_handler>(client_config.oauth1()));
+#endif // !defined(CPPREST_TARGET_XP) && !defined(_PHONE8_)
+
     extra_handlers.push_back(std::make_shared<oauth2::details::oauth2_handler>(client_config.oauth2()));
 
     m_pipeline = ::web::http::http_pipeline::create_pipeline(std::make_shared<details::http_network_handler>(std::move(base_uri), std::move(client_config)));
