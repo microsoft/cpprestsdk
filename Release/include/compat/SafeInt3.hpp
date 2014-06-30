@@ -117,6 +117,17 @@ Version 3.0
 #endif
 #endif
 
+#ifdef __has_feature
+    #ifdef NEEDS_NULLPTR_DEFINED
+        #undef NEEDS_NULLPTR_DEFINED
+    #endif
+    #if __has_feature(cxx_nullptr)
+        #define NEEDS_NULLPTR_DEFINED 0
+    #else
+        #define NEEDS_NULLPTR_DEFINED 1
+    #endif
+#endif
+
 #if NEEDS_NULLPTR_DEFINED
 #define nullptr NULL
 #endif

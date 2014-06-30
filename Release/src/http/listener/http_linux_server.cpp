@@ -71,7 +71,7 @@ void connection::close()
         boost::system::error_code ec;
         sock->cancel(ec);
         sock->shutdown(tcp::socket::shutdown_both, ec);
-        sock->close();
+        sock->close(ec);
     }
     m_request._reply_if_not_already(status_codes::InternalError);
 }
