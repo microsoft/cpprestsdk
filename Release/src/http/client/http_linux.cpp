@@ -91,7 +91,21 @@ namespace web { namespace http
                     }
                     request_context::report_error(errorcodeValue, message);
                 }
-
+                
+                void set_timer(const int secs)
+                {
+                    m_timer.expires_from_now(boost::posix_time::milliseconds(secs * 1000));
+                    m_timer.async_wait(boost::bind(&linux_request_context::cancel, this, boost::asio::placeholders::error));
+                }
+                
+                void reset_timer(const int secs)
+                {
+                    if ( m_timer.expires_from_now(boost::posix_time::milliseconds(secs * 1000)) > 0 )
+                    {
+                        m_timer.async_wait(boost::bind(&linux_request_context::cancel, this, boost::asio::placeholders::error));
+                    }
+                }
+                
                 tcp::socket m_socket;
                 std::unique_ptr<boost::asio::ssl::stream<tcp::socket &>> m_ssl_stream;
                 size_t m_known_size;
@@ -226,9 +240,7 @@ namespace web { namespace http
 
                     tcp::resolver::query query(host, utility::conversions::print_string(port));
 
-                    const int secs = static_cast<int>(client_config().timeout().count());
-                    ctx->m_timer.expires_from_now(boost::posix_time::milliseconds(secs * 1000));
-                    ctx->m_timer.async_wait(boost::bind(&linux_request_context::cancel, ctx.get(), boost::asio::placeholders::error));
+                    ctx->set_timer(static_cast<int>(client_config().timeout().count()));
 
                     m_resolver.async_resolve(query, boost::bind(&linux_client::handle_resolve, this, boost::asio::placeholders::error, boost::asio::placeholders::iterator, ctx));
                 }
@@ -565,20 +577,17 @@ namespace web { namespace http
                 void async_read_until_buffersize(size_t size, ReadHandler handler, std::shared_ptr<linux_request_context> ctx)
                 {
                     size_t size_to_read = 0;
+                    if (ctx->m_body_buf.size() < size)
+                    {
+                        size_to_read = size - ctx->m_body_buf.size();
+                    }
+
                     if (ctx->m_ssl_stream)
                     {
-                        if (ctx->m_body_buf.size() < size)
-                        {
-                            size_to_read = size - ctx->m_body_buf.size();
-                        }
                         boost::asio::async_read(*ctx->m_ssl_stream, ctx->m_body_buf, boost::asio::transfer_at_least(size_to_read), handler);
                     }
                     else
                     {
-                        if (ctx->m_body_buf.size() < size)
-                        {
-                            size_to_read = size - ctx->m_body_buf.size();
-                        }
                         boost::asio::async_read(ctx->m_socket, ctx->m_body_buf, boost::asio::transfer_at_least(size_to_read), handler);
                     }
                 }
@@ -643,6 +652,7 @@ namespace web { namespace http
                         }
                         else
                         {
+                            ctx->reset_timer(static_cast<int>(client_config().timeout().count()));
                             auto writeBuffer = ctx->_get_writebuffer();
                             writeBuffer.putn(boost::asio::buffer_cast<const uint8_t *>(ctx->m_body_buf.data()), to_read).then([=](pplx::task<size_t> op)
                             {
@@ -695,6 +705,7 @@ namespace web { namespace http
 
                     if (ctx->m_current_size < ctx->m_known_size)
                     {
+                        ctx->reset_timer(static_cast<int>(client_config().timeout().count()));
                         // more data need to be read
                         writeBuffer.putn(boost::asio::buffer_cast<const uint8_t *>(ctx->m_body_buf.data()),
                             std::min(ctx->m_body_buf.size(), ctx->m_known_size - ctx->m_current_size)).then([=](pplx::task<size_t> op)
