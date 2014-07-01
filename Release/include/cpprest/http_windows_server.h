@@ -40,6 +40,7 @@
 #pragma warning(pop)
 
 #include <atomic>
+#include <mutex>
 
 #include "cpprest/http_server.h"
 

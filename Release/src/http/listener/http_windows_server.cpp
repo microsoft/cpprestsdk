@@ -649,7 +649,7 @@ void windows_request_context::dispatch_request_to_listener(_In_ web::http::exper
             {
                 m_response = responseTask.get();
             }
-            catch (const task_canceled &)
+            catch (const pplx::task_canceled &)
             {
                 // This means the user didn't respond to the request, allowing the
                 // http_request instance to be destroyed. There is nothing to do then
