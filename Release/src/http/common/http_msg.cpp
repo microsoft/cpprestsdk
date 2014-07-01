@@ -534,7 +534,7 @@ details::_http_request::_http_request(http::method mtd)
     }
 }
 
-details::_http_request::_http_request(std::shared_ptr<http::details::_http_server_context> server_context)
+details::_http_request::_http_request(std::unique_ptr<http::details::_http_server_context> server_context)
   : m_initiated_response(0), 
     m_server_context(std::move(server_context)),
     m_cancellationToken(pplx::cancellation_token::none())

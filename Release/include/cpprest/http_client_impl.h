@@ -388,7 +388,7 @@ private:
 
     // Queue used to guarantee ordering of requests, when applicable.
     std::queue<std::shared_ptr<request_context>> m_requests_queue;
-    int                           m_scheduled;
+    int m_scheduled;
 };
 
 inline void request_context::finish()

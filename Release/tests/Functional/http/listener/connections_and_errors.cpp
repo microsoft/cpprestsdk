@@ -118,6 +118,57 @@ TEST_FIXTURE(uri_address, send_response_later)
     listener.close().wait();
 }
 
+TEST_FIXTURE(uri_address, save_request_reply)
+{
+    http_listener listener(m_uri);
+    listener.open().wait();
+    test_http_client::scoped_client client(m_uri);
+    test_http_client * p_client = client.client();
+
+    http_request request;
+    pplx::extensibility::event_t request_event;
+    listener.support([&](http_request r)
+    {
+        request = r;
+        request_event.set();
+    });
+    VERIFY_ARE_EQUAL(0, p_client->request(methods::POST, U("")));
+    request_event.wait();
+    request.reply(status_codes::OK).wait();
+    
+    p_client->next_response().then([](test_response *p_response)
+    {
+        http_asserts::assert_test_response_equals(p_response, status_codes::OK);
+    }).wait();
+    listener.close().wait();
+}
+
+TEST_FIXTURE(uri_address, save_request_response)
+{
+    http_listener listener(m_uri);
+    listener.open().wait();
+    test_http_client::scoped_client client(m_uri);
+    test_http_client * p_client = client.client();
+
+    http_request request;
+    pplx::extensibility::event_t request_event;
+    listener.support([&](http_request r)
+    {
+        request = r;
+        request_event.set();
+    });
+    VERIFY_ARE_EQUAL(0, p_client->request(methods::POST, U("")));
+    request_event.wait();
+    http_response response(status_codes::OK);
+    request.reply(response).wait();
+
+    p_client->next_response().then([](test_response *p_response)
+    {
+        http_asserts::assert_test_response_equals(p_response, status_codes::OK);
+    }).wait();
+    listener.close().wait();
+}
+
 TEST_FIXTURE(uri_address, reply_twice)
 {
     http_listener listener(m_uri);

@@ -442,8 +442,8 @@ void http_windows_server::receive_requests()
 
         // Start processing the request
         auto pContext = new windows_request_context();
-        auto pRequestContext = std::shared_ptr<_http_server_context>(pContext);
-        http::http_request msg = http::http_request::_create_request(pRequestContext);
+        auto pRequestContext = std::unique_ptr<_http_server_context>(pContext);
+        http_request msg = http_request::_create_request(std::move(pRequestContext));
         pContext->async_process_request(p_request.RequestId, msg, bytes_received);
     }
 }
@@ -451,7 +451,13 @@ void http_windows_server::receive_requests()
 pplx::task<void> http_windows_server::respond(http::http_response response)
 {
     windows_request_context * p_context = static_cast<windows_request_context *>(response._get_server_context());
-    return pplx::create_task(p_context->m_response_completed);
+    return pplx::create_task(p_context->m_response_completed).then([p_context](::pplx::task<void> t)
+    {
+        // After response is sent, break circular reference between http_response and the request context.
+        // Otherwise http_listener::close() can hang.
+        p_context->m_response._get_impl()->_set_server_context(nullptr);
+        t.get();
+    });
 }
 
 windows_request_context::windows_request_context() 
@@ -468,6 +474,12 @@ windows_request_context::windows_request_context()
 
 windows_request_context::~windows_request_context()
 {
+    // Unfortunately have to work around a ppl task_completion_event bug that can cause AVs.
+    // Bug is that task_completion_event accesses internal state after setting.
+    // Workaround is to use a lock incurring additional synchronization, if can acquire
+    // the lock then setting of the event has completed.
+    std::unique_lock<std::mutex> lock(m_responseCompletedLock);
+
     auto *pServer = static_cast<http_windows_server *>(http_server_api::server_api());
     if(--pServer->m_numOutstandingRequests == 0)
     {
@@ -536,7 +548,7 @@ void windows_request_context::read_headers_io_completion(DWORD error_code, DWORD
         read_request_body_chunk();
 
         // Dispatch request to the http_listener.
-        dispatch_request_to_listener(m_msg, (web::http::experimental::listener::details::http_listener_impl *)m_request->UrlContext);
+        dispatch_request_to_listener((web::http::experimental::listener::details::http_listener_impl *)m_request->UrlContext);
     }
 }
 
@@ -587,58 +599,70 @@ void windows_request_context::read_body_io_completion(DWORD error_code, DWORD by
 {
     auto request_body_buf = m_msg._get_impl()->outstream().streambuf();
 
-        if (error_code == NO_ERROR)
-        {
-            request_body_buf.commit(bytes_read);
-            read_request_body_chunk();
-        }
-        else if(error_code == ERROR_HANDLE_EOF)
-        {
-            request_body_buf.commit(0);
-            m_msg._get_impl()->_complete(request_body_buf.in_avail());
-        }
-        else
-        {
-            request_body_buf.commit(0);    
-            m_msg._get_impl()->_complete(0, std::make_exception_ptr(http_exception(error_code)));
-        }
+    if (error_code == NO_ERROR)
+    {
+        request_body_buf.commit(bytes_read);
+        read_request_body_chunk();
+    }
+    else if (error_code == ERROR_HANDLE_EOF)
+    {
+        request_body_buf.commit(0);
+        m_msg._get_impl()->_complete(request_body_buf.in_avail());
+    }
+    else
+    {
+        request_body_buf.commit(0);
+        m_msg._get_impl()->_complete(0, std::make_exception_ptr(http_exception(error_code)));
+    }
 }
 
-void windows_request_context::dispatch_request_to_listener(http_request& request, _In_ web::http::experimental::listener::details::http_listener_impl *pListener)
+void windows_request_context::dispatch_request_to_listener(_In_ web::http::experimental::listener::details::http_listener_impl *pListener)
 {
-    request._set_listener_path(pListener->uri().path());
+    m_msg._set_listener_path(pListener->uri().path());
+    
+    // Save http_request copy to dispatch to user's handler in case content_ready() completes before.
+    http_request request = m_msg;
 
-    // Don't let an exception from sending the response bring down the server.
-    pplx::task<http_response> response_task = request.get_response();
-    response_task.then(
-        [this, request](pplx::task<http::http_response> r_task) mutable
+    // Wait until the content download finished before replying.
+    request.content_ready().then([=](pplx::task<http_request> requestBody)
+    {
+        // If an exception occurred while processing the body then there is no reason
+        // to even try sending the response, just re-surface the same exception.
+        try
         {
-            http_response response;
+            requestBody.wait();
+        }
+        catch (...)
+        {
+            m_msg = http_request();
+            cancel_request(std::current_exception());
+            return;
+        }
+
+        // At this point the user entirely controls the lifetime of the http_request.
+        m_msg = http_request();
+
+        request.get_response().then([this](pplx::task<http::http_response> responseTask)
+        {
+            // Don't let an exception from sending the response bring down the server.
             try
             {
-                response = r_task.get();
+                m_response = responseTask.get();
             }
-            catch(...)
+            catch (const task_canceled &)
             {
-                response = http::http_response(status_codes::InternalError);
+                // This means the user didn't respond to the request, allowing the
+                // http_request instance to be destroyed. There is nothing to do then
+                // so don't send a response.
+                return;
             }
-
-            request.content_ready().then([this, response](pplx::task<http_request> request) mutable
+            catch (...)
             {
-
-                // Wait until the content download finished before replying.
-                // If an exception already occurred then no reason to try sending response just re-surface same exception.
-                try
-                {
-                    request.wait();
-                    m_response = response;
-                    async_process_response();
-                } catch(...)
-                {
-                    cancel_request(std::current_exception());
-                }
-            });
+                m_response = http::http_response(status_codes::InternalError);
+            }
+            async_process_response();
         });
+    });
 
     // Look up the lock for the http_listener.
     auto *pServer = static_cast<http_windows_server *>(http_server_api::server_api());
@@ -661,26 +685,12 @@ void windows_request_context::dispatch_request_to_listener(http_request& request
 
     try
     {
-        pListener->handle_request(request).then(
-            [request](pplx::task<http_response> resp)
-            {
-                try
-                {
-                    resp.wait();
-                }
-                catch(...)
-                {
-                    auto r = request;
-                    r._reply_if_not_already(status_codes::InternalError);
-                }
-            });
-
+        pListener->handle_request(request);
         pListenerLock->unlock();
     } 
     catch(...)
     {
         pListenerLock->unlock();
-
         request._reply_if_not_already(status_codes::InternalError);
     }
 }
@@ -791,15 +801,8 @@ void windows_request_context::transmit_body()
     if ( !m_sending_in_chunks && !m_transfer_encoding )
     {
         // We are done sending data.
+        std::unique_lock<std::mutex> lock(m_responseCompletedLock);
         m_response_completed.set();
-        
-        // The member "m_msg" comes from "_create_request(new windows_request_context)".
-        // When destructing this "windows_request_context", it requires to destruct the member "m_msg" first,
-        // but "m_msg" is waiting for "new windows_request_context" desctruction.
-        // We need to reinitialize this "m_msg"; otherwise this windows_request_context destructor will never be called.
-        m_response = http_response();
-        m_msg = http_request();
-
         return;
     }
     
@@ -844,7 +847,7 @@ void windows_request_context::transmit_body()
 
         streams::rawptr_buffer<unsigned char> buf(&m_body_data[http::details::chunked_encoding::data_offset], body_data_length);
 
-        auto t1 = m_response.body().read(buf, CHUNK_SIZE).then([this, body_data_length](pplx::task<size_t> op)
+        m_response.body().read(buf, CHUNK_SIZE).then([this, body_data_length](pplx::task<size_t> op)
         {
             size_t bytes_read = 0;
             
@@ -918,20 +921,13 @@ void windows_request_context::send_response_body_io_completion(DWORD error_code,
     transmit_body();
 }
 
-
 /// <summary>
-///  The canel request completion callback function.
+///  The cancel request completion callback function.
 /// </summary>
 void windows_request_context::cancel_request_io_completion(DWORD, DWORD)
 {
+    std::unique_lock<std::mutex> lock(m_responseCompletedLock);
     m_response_completed.set_exception(m_except_ptr);
-
-    // The member "m_msg" comes from "_create_request(new windows_request_context)".
-    // When destructing this "windows_request_context", it requires to destruct the member "m_msg" first,
-    // but "m_msg" is waiting for "new windows_request_context" desctruction.
-    // We need to reinitialize this "m_msg"; otherwise this windows_request_context destructor will never be called.
-    m_response = http_response();
-    m_msg = http_request();
 }
 
 void windows_request_context::cancel_request(std::exception_ptr except_ptr)
@@ -953,14 +949,8 @@ void windows_request_context::cancel_request(std::exception_ptr except_ptr)
     if(error_code != NO_ERROR && error_code != ERROR_IO_PENDING)
     {
         CancelThreadpoolIo(pServer->m_threadpool_io);
+        std::unique_lock<std::mutex> lock(m_responseCompletedLock);
         m_response_completed.set_exception(except_ptr);
-
-        // The member "m_msg" comes from "_create_request(new windows_request_context)".
-        // When destructing this "windows_request_context", it requires to destruct the member "m_msg" first,
-        // but "m_msg" is waiting for "new windows_request_context" desctruction.
-        // We need to reinitialize this "m_msg"; otherwise this windows_request_context destructor will never be called.
-        m_response = http_response();
-        m_msg = http_request();
     }
 }
 
