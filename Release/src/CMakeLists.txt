@@ -68,10 +68,6 @@ elseif(WIN32)
   set(EXTRALINKS Httpapi.lib Winhttp.dll)
 endif()
 
-add_definitions(
-    -D_WEBSOCKETPP_CPP11_STL_
-    )
-
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNINGS} -Werror -pedantic")
 
 add_library(${Casablanca_LIBRARY} ${SOURCES})

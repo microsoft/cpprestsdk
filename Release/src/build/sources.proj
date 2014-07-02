@@ -105,7 +105,7 @@
     <ClInclude Include="$(CasablancaIncludeDir)\cpprest\rawptrstream.h">
       <Filter>Header Files\cpprest</Filter>
     </ClInclude>
-    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\compat\SafeInt3.hpp">
+    <ClInclude Include="$(CasablancaIncludeDir)\compat\SafeInt3.hpp">
       <Filter>Header Files\cpprest</Filter>
     </ClInclude>
     <ClInclude Include="$(CasablancaIncludeDir)\cpprest\streams.h">
