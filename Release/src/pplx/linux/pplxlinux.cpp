@@ -43,7 +43,7 @@ namespace details {
     {
         _PPLXIMP long GetCurrentThreadId()
         {
-            return reinterpret_cast<long>(pthread_self());
+            return static_cast<long>(pthread_self());
         }
 
         _PPLXIMP void YieldExecution()
