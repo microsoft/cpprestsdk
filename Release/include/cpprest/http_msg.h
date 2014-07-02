@@ -324,17 +324,13 @@ private:
 class _http_response : public http::details::http_msg_base
 {
 public:
-    _http_response() : m_status_code((std::numeric_limits<uint16_t>::max)()), m_error_code(0) { }
+    _http_response() : m_status_code((std::numeric_limits<uint16_t>::max)()) { }
 
-    _http_response(http::status_code code) : m_status_code(code), m_error_code(0) {}
+    _http_response(http::status_code code) : m_status_code(code) {}
 
     http::status_code status_code() const { return m_status_code; } 
 
     void set_status_code(http::status_code code) { m_status_code = code; }
-
-    unsigned long error_code() const { return m_error_code; } 
-
-    void set_error_code(unsigned long code) { m_error_code = code; }
 
     const http::reason_phrase & reason_phrase() const { return m_reason_phrase; }
 
@@ -348,8 +344,6 @@ public:
 
 private:
     std::unique_ptr<_http_server_context> m_server_context;
-
-    unsigned long m_error_code;
 
     http::status_code m_status_code;
     http::reason_phrase m_reason_phrase;
@@ -596,18 +590,6 @@ public:
         return pplx::create_task(impl->_get_data_available()).then([impl](utility::size64_t) -> http_response { return http_response(impl); });
     }
 
-    /// <summary>
-    /// Gets the error code of the response. This is used for errors other than HTTP status codes.
-    /// </summary>
-    /// <returns>The error code.</returns>
-    unsigned long error_code() const { return _m_impl->error_code(); }
-
-    /// <summary>
-    /// Sets the error code of the response. This is used for errors other than HTTP status codes.
-    /// </summary>
-    /// <param name="code">The error code</param>
-    void set_error_code(unsigned long code) const { _m_impl->set_error_code(code); }
-
     std::shared_ptr<http::details::_http_response> _get_impl() const { return _m_impl; }
 
     http::details::_http_server_context * _get_server_context() const { return _m_impl->_get_server_context(); }
@@ -620,7 +602,6 @@ private:
     {
     }
 
-private:
     std::shared_ptr<http::details::_http_response> _m_impl;
 };
 
