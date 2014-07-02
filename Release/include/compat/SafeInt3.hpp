@@ -128,7 +128,9 @@ Version 3.0
     #endif
 #endif
 
-#if NEEDS_NULLPTR_DEFINED
+// For some reason we keep getting compiler errors os OS X/iOS if nullptr isn't
+// defined to NULL
+#if NEEDS_NULLPTR_DEFINED || defined(__APPLE__)
 #define nullptr NULL
 #endif
 
