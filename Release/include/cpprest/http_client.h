@@ -277,6 +277,7 @@ public:
     /// If true, in cases where the request body/stream doesn't support seeking the request data will be buffered.
     /// This can help in situations where an authentication challenge might be expected.
     /// </summary>
+    /// <param name="buffer_request">True to turn on buffer, false otherwise.</param>
     /// <remarks>Please note there is a performance cost due to copying the request data.</remarks>
     void set_buffer_request(bool buffer_request)
     {
@@ -591,7 +592,6 @@ private:
     uri _base_uri;
 };
 
-} // namespace client
-}} // namespace web::http
+}}} // namespaces
 
 #endif  /* _CASA_HTTP_CLIENT_H */

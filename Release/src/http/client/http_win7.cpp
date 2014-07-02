@@ -224,7 +224,7 @@ public:
 
     size64_t m_remaining_to_write;
 
-    std::char_traits<uint8_t>::pos_type m_readbuf_pos;
+    std::char_traits<uint8_t>::pos_type m_startingPosition;
 
     // If the user specified that to guarantee data buffering of request data, in case of challenged authentication requests, etc...
     // Then if the request stream buffer doesn't support seeking we need to copy the body chunks as it is sent.
@@ -262,7 +262,7 @@ private:
         : request_context(client, request), 
         m_request_handle(nullptr), 
         m_bodyType(no_body),
-        m_readbuf_pos(0),
+        m_startingPosition(std::char_traits<uint8_t>::eof()),
         m_body_data(),
         m_remaining_to_write(0),
         m_proxy_authentication_tried(false),
@@ -674,7 +674,9 @@ private:
             return;
         }
 
-        winhttp_context->m_readbuf_pos = rbuf.getpos(std::ios_base::in);
+        // Record starting position incase request is challenged for authorization
+        // and needs to seek back to where reading is started from.
+        winhttp_context->m_startingPosition = rbuf.getpos(std::ios_base::in);
 
         // If we find ourselves here, we either don't know how large the message
         // body is, or it is larger than our threshold.
@@ -717,6 +719,8 @@ private:
                 // If the read buffer for copying exists then write to it.
                 if (p_request_context->m_readBufferCopy)
                 {
+                    // We have raw memory here writing to a memory stream so it is safe to wait
+                    // since it will always be non-blocking.
                     p_request_context->m_readBufferCopy->putn(&p_request_context->m_body_data.get()[http::details::chunked_encoding::data_offset], bytes_read).wait();
                 }
             }
@@ -736,7 +740,7 @@ private:
                 p_request_context->m_bodyType = no_body;
                 if (p_request_context->m_readBufferCopy)
                 {
-                    // Move the saved buffer into the read buffer.
+                    // Move the saved buffer into the read buffer, which now supports seeking.
                     p_request_context->m_readStream = concurrency::streams::container_stream<std::vector<uint8_t>>::open_istream(std::move(p_request_context->m_readBufferCopy->collection()));
                     p_request_context->m_readBufferCopy.reset();
                 }
@@ -864,10 +868,6 @@ private:
         _ASSERTE(response.status_code() == status_codes::Unauthorized  || response.status_code() == status_codes::ProxyAuthRequired
             || error == ERROR_WINHTTP_RESEND_REQUEST);
 
-        // If the application set a stream for the request body, we can only resend if the input stream supports
-        // seeking and we are also successful in seeking to the position we started at when the original request
-        // was sent.
-
         bool got_credentials = false;
         BOOL results;
         DWORD dwSupportedSchemes;
@@ -877,22 +877,16 @@ private:
         string_t username;
         string_t password;
 
-        if (request.body())
+        // Check if the saved read position is valid
+        auto rdpos = p_request_context->m_startingPosition;
+        if (rdpos != static_cast<std::char_traits<uint8_t>::pos_type>(std::char_traits<uint8_t>::eof()))
         {
-            // Valid request stream => msg has a body that needs to be resend
+            auto rbuf = p_request_context->_get_readbuffer();
 
-            auto rdpos = p_request_context->m_readbuf_pos;
-
-            // Check if the saved read position is valid
-            if (rdpos != (std::char_traits<uint8_t>::pos_type) - 1)
+            // Try to seek back to the saved read position
+            if (rbuf.seekpos(rdpos, std::ios::ios_base::in) != rdpos)
             {
-                auto rbuf = p_request_context->_get_readbuffer();
-
-                if (rbuf.is_open())
-                {
-                    // Try to seek back to the saved read position
-                    rbuf.seekpos(rdpos, std::ios::ios_base::in);
-                }
+                return false;
             }
         }
 
