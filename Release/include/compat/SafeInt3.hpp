@@ -100,32 +100,29 @@ Version 3.0
 
 // If the user made a choice, respect it #if !defined
 #if !defined NEEDS_NULLPTR_DEFINED
+
 // Visual Studio 2010 and higher support this
 #if defined(_MSC_VER)
-#if (_MSC_VER < 1600)
-#define NEEDS_NULLPTR_DEFINED 1
-#else
-#define NEEDS_NULLPTR_DEFINED 0
-#endif
+#    if (_MSC_VER < 1600)
+#        define NEEDS_NULLPTR_DEFINED 1
+#    else
+#        define NEEDS_NULLPTR_DEFINED 0
+#    endif
+#elif defined __has_feature
+#    if __has_feature(cxx_nullptr)
+#        define NEEDS_NULLPTR_DEFINED 0
+#    else
+#        define NEEDS_NULLPTR_DEFINED 1
+#    endif
 #else
 // Let everything else trigger based on whether we have nullptr_t
-#if defined nullptr_t
-#define NEEDS_NULLPTR_DEFINED 0
-#else
-#define NEEDS_NULLPTR_DEFINED 1
-#endif
-#endif
+#    if defined nullptr_t
+#        define NEEDS_NULLPTR_DEFINED 0
+#    else
+#        define NEEDS_NULLPTR_DEFINED 1
+#    endif
 #endif
 
-#ifdef __has_feature
-    #ifdef NEEDS_NULLPTR_DEFINED
-        #undef NEEDS_NULLPTR_DEFINED
-    #endif
-    #if __has_feature(cxx_nullptr)
-        #define NEEDS_NULLPTR_DEFINED 0
-    #else
-        #define NEEDS_NULLPTR_DEFINED 1
-    #endif
 #endif
 
 #if NEEDS_NULLPTR_DEFINED
