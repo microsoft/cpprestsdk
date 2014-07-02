@@ -71,6 +71,7 @@ namespace details
     {
         static const utility::string_t json_types[] = {
             mime_types::application_json,
+            mime_types::application_xjson,
             mime_types::text_json,
             mime_types::text_xjson,
             mime_types::text_javascript,
