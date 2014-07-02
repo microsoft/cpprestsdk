@@ -107,6 +107,16 @@ Version 3.0
 #else
 #define NEEDS_NULLPTR_DEFINED 0
 #endif
+#elif defined(__APPLE__)
+// For some reason we keep getting compiler errors on OS X/iOS if nullptr isn't
+// defined to NULL
+#define NEEDS_NULLPTR_DEFINED 1
+#elif __has_feature
+#if __has_feature(cxx_nullptr)
+#define NEEDS_NULLPTR_DEFINED 0
+#else
+#define NEEDS_NULLPTR_DEFINED 1
+#endif
 #else
 // Let everything else trigger based on whether we have nullptr_t
 #if defined nullptr_t
@@ -117,20 +127,7 @@ Version 3.0
 #endif
 #endif
 
-#ifdef __has_feature
-    #ifdef NEEDS_NULLPTR_DEFINED
-        #undef NEEDS_NULLPTR_DEFINED
-    #endif
-    #if __has_feature(cxx_nullptr)
-        #define NEEDS_NULLPTR_DEFINED 0
-    #else
-        #define NEEDS_NULLPTR_DEFINED 1
-    #endif
-#endif
-
-// For some reason we keep getting compiler errors os OS X/iOS if nullptr isn't
-// defined to NULL
-#if NEEDS_NULLPTR_DEFINED || defined(__APPLE__)
+#if NEEDS_NULLPTR_DEFINED
 #define nullptr NULL
 #endif
 
