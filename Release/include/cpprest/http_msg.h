@@ -224,8 +224,8 @@ public:
     _ASYNCRTIMP void set_body(concurrency::streams::istream instream, utility::string_t contentType);
     _ASYNCRTIMP void set_body(concurrency::streams::istream instream, utility::size64_t contentLength, utility::string_t contentType);
 
-    _ASYNCRTIMP utility::string_t _extract_string();
-    _ASYNCRTIMP json::value _extract_json();
+    _ASYNCRTIMP utility::string_t _extract_string(bool force = false);
+    _ASYNCRTIMP json::value _extract_json(bool force = false);
     _ASYNCRTIMP std::vector<unsigned char> _extract_vector();
 
     virtual _ASYNCRTIMP utility::string_t to_string() const;
@@ -445,22 +445,24 @@ public:
     /// Extracts the body of the response message as a string value, checking that the content type is a MIME text type.
     /// A body can only be extracted once because in some cases an optimization is made where the data is 'moved' out.
     /// </summary>
+    /// <param name="force">If true, ignores the Content-Type header and assumes UTF-8.</param>
     /// <returns>String containing body of the message.</returns>
-    pplx::task<utility::string_t> extract_string() const
+    pplx::task<utility::string_t> extract_string(bool force = false) const
     {
         auto impl = _m_impl;
-        return pplx::create_task(_m_impl->_get_data_available()).then([impl](utility::size64_t) { return impl->_extract_string(); });
+        return pplx::create_task(_m_impl->_get_data_available()).then([impl, force](utility::size64_t) { return impl->_extract_string(force); });
     }
 
     /// <summary>
     /// Extracts the body of the response message into a json value, checking that the content type is application\json.
     /// A body can only be extracted once because in some cases an optimization is made where the data is 'moved' out.
     /// </summary>
+    /// <param name="force">If true, ignores the Content-Type header and assumes UTF-8.</param>
     /// <returns>JSON value from the body of this message.</returns>
-    pplx::task<json::value> extract_json() const
+    pplx::task<json::value> extract_json(bool force = false) const
     {
         auto impl = _m_impl;
-        return pplx::create_task(_m_impl->_get_data_available()).then([impl](utility::size64_t) { return impl->_extract_json(); });
+        return pplx::create_task(_m_impl->_get_data_available()).then([impl, force](utility::size64_t) { return impl->_extract_json(force); });
     }
 
     /// <summary>
@@ -826,22 +828,24 @@ public:
     /// Extract the body of the request message as a string value, checking that the content type is a MIME text type.
     /// A body can only be extracted once because in some cases an optimization is made where the data is 'moved' out.
     /// </summary>
+    /// <param name="force">If true, ignores the Content-Type header and assumes UTF-8.</param>
     /// <returns>String containing body of the message.</returns>
-    pplx::task<utility::string_t> extract_string()
+    pplx::task<utility::string_t> extract_string(bool force = false)
     {
         auto impl = _m_impl;
-        return pplx::create_task(_m_impl->_get_data_available()).then([impl](utility::size64_t) { return impl->_extract_string(); });
+        return pplx::create_task(_m_impl->_get_data_available()).then([impl, force](utility::size64_t) { return impl->_extract_string(force); });
     }
 
     /// <summary>
     /// Extracts the body of the request message into a json value, checking that the content type is application\json.
     /// A body can only be extracted once because in some cases an optimization is made where the data is 'moved' out.
     /// </summary>
+    /// <param name="force">If true, ignores the Content-Type header and assumes UTF-8.</param>
     /// <returns>JSON value from the body of this message.</returns>
-    pplx::task<json::value> extract_json() const
+    pplx::task<json::value> extract_json(bool force = false) const
     {
         auto impl = _m_impl;
-        return pplx::create_task(_m_impl->_get_data_available()).then([impl](utility::size64_t) { return impl->_extract_json(); });
+        return pplx::create_task(_m_impl->_get_data_available()).then([impl, force](utility::size64_t) { return impl->_extract_json(force); });
     }
 
     /// <summary>
