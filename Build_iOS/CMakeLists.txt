@@ -1,4 +1,4 @@
-project(casablanca-ios)
+project(casablanca-ios NONE)
 cmake_minimum_required(VERSION 2.6)
 
 set(TOOLCHAIN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/ios-cmake/toolchain/iOS.cmake")
