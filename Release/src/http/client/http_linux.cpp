@@ -329,8 +329,6 @@ namespace web { namespace http
                     request_stream << "Connection: Keep-Alive" << CRLF;
                     request_stream << CRLF;
 
-                    tcp::resolver::query query(host, utility::conversions::print_string(port));
-
                     ctx->set_timer(static_cast<int>(client_config().timeout().count()));
 
                     if (ctx->m_connection->m_socket.is_open())
@@ -339,6 +337,8 @@ namespace web { namespace http
                     }
                     else
                     {
+                        tcp::resolver::query query(host, utility::conversions::print_string(port));
+
                         m_resolver.async_resolve(query, boost::bind(&linux_client::handle_resolve, shared_from_this(), boost::asio::placeholders::error, boost::asio::placeholders::iterator, ctx));
                     }
                 }
