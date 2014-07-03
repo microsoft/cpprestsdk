@@ -153,6 +153,16 @@ TEST_FIXTURE(uri_address, extract_string)
 #endif
 }
 
+TEST_FIXTURE(uri_address, extract_string_force)
+{
+    test_http_server::scoped_server scoped(m_uri);
+    http_client client(m_uri);
+
+    std::string data("YOU KNOW ITITITITI");
+    http_response rsp = send_request_response(scoped.server(), &client, U("bad unknown charset"), data);
+    VERIFY_ARE_EQUAL(to_string_t(data), rsp.extract_string(true).get());
+}
+
 TEST_FIXTURE(uri_address, extract_string_incorrect)
 {
     test_http_server::scoped_server scoped(m_uri);
@@ -270,6 +280,16 @@ TEST_FIXTURE(uri_address, extract_json)
     VERIFY_ARE_EQUAL(data.serialize(), rsp.extract_json().get().serialize());
     rsp = send_request_response(scoped.server(), &client, U("application/x-javascript"), to_utf8string(data.serialize()));
     VERIFY_ARE_EQUAL(data.serialize(), rsp.extract_json().get().serialize());
+}
+
+TEST_FIXTURE(uri_address, extract_json_force)
+{
+    test_http_server::scoped_server scoped(m_uri);
+    http_client client(m_uri);
+
+    json::value data = json::value::string(U("JSON string object"));
+    http_response rsp = send_request_response(scoped.server(), &client, U("bad charset"), to_utf8string(data.serialize()));
+    VERIFY_ARE_EQUAL(data.serialize(), rsp.extract_json(true).get().serialize());
 }
 
 TEST_FIXTURE(uri_address, extract_json_incorrect)
