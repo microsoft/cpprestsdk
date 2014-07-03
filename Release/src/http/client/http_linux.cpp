@@ -78,66 +78,66 @@ namespace web { namespace http
 
                 linux_connection_pool(boost::asio::io_service& io_service, utility::seconds idle_timeout) :
                     m_io_service(io_service),
-                    m_idle_timeout(idle_timeout)
+                    m_timeout_secs(idle_timeout)
                 {}
 
                 ~linux_connection_pool()
                 {
-                    std::lock_guard<std::mutex> lock(m_conns_mutex);
-                    for (auto& conn : m_conns_list)
+                    std::lock_guard<std::mutex> lock(m_connections_mutex);
+                    for (auto& connection : m_connections)
                     {
-                        conn->m_pool_timer.cancel();
+                        connection->m_pool_timer.cancel();
 
                         boost::system::error_code error;
-                        conn->m_socket.shutdown(tcp::socket::shutdown_both, error);
-                        conn->m_socket.close(error);
+                        connection->m_socket.shutdown(tcp::socket::shutdown_both, error);
+                        connection->m_socket.close(error);
                     }
                 }
 
-                void put(std::shared_ptr<linux_connection> conn)
+                void put(std::shared_ptr<linux_connection> connection)
                 {
-                    std::lock_guard<std::mutex> lock(m_conns_mutex);
+                    std::lock_guard<std::mutex> lock(m_connections_mutex);
 
-                    const int secs = static_cast<int>(m_idle_timeout.count());
-                    conn->m_pool_timer.expires_from_now(boost::posix_time::milliseconds(secs * 1000));
-                    conn->m_pool_timer.async_wait(boost::bind(&linux_connection::handle_pool_timer, conn, boost::asio::placeholders::error));
+                    const int secs = static_cast<int>(m_timeout_secs.count());
+                    connection->m_pool_timer.expires_from_now(boost::posix_time::milliseconds(secs * 1000));
+                    connection->m_pool_timer.async_wait(boost::bind(&linux_connection::handle_pool_timer, connection, boost::asio::placeholders::error));
 
-                    m_conns_list.insert(conn);
+                    m_connections.insert(connection);
                 }
 
                 std::shared_ptr<linux_connection> get()
                 {
-                    std::lock_guard<std::mutex> lock(m_conns_mutex);
+                    std::lock_guard<std::mutex> lock(m_connections_mutex);
 
-                    if (m_conns_list.empty())
+                    if (m_connections.empty())
                     {
                         return std::make_shared<linux_connection>(shared_from_this(), m_io_service);
                     }
                     else
                     {
-                        (*m_conns_list.begin())->m_pool_timer.cancel();
-                        auto result(*m_conns_list.begin());
+                        (*m_connections.begin())->m_pool_timer.cancel();
+                        auto result(*m_connections.begin());
                         result->m_is_reused = true;
-                        m_conns_list.erase(m_conns_list.begin());
+                        m_connections.erase(m_connections.begin());
 
                         return result;
                     }
                 }
 
-                void remove(std::shared_ptr<linux_connection> conn)
+                void remove(std::shared_ptr<linux_connection> connection)
                 {
-                    std::lock_guard<std::mutex> lock(m_conns_mutex);
-                    m_conns_list.erase(conn);
+                    std::lock_guard<std::mutex> lock(m_connections_mutex);
+                    m_connections.erase(connection);
                 }
 
             private:
                 boost::asio::io_service& m_io_service;
-                utility::seconds m_idle_timeout;
-                std::unordered_set<std::shared_ptr<linux_connection> > m_conns_list;
-                std::mutex m_conns_mutex;
+                const utility::seconds m_timeout_secs;
+                std::unordered_set<std::shared_ptr<linux_connection> > m_connections;
+                std::mutex m_connections_mutex;
             };
 
-            class linux_client_request_context : public request_context
+            class linux_client_request_context : public request_context, public std::enable_shared_from_this<linux_client_request_context>
             {
             public:
                 static std::shared_ptr<request_context> create_request_context(std::shared_ptr<_http_client_communicator> &client, http_request &request);
@@ -185,14 +185,14 @@ namespace web { namespace http
                 void set_timer(const int secs)
                 {
                     m_timeout_timer.expires_from_now(boost::posix_time::milliseconds(secs * 1000));
-                    m_timeout_timer.async_wait(boost::bind(&linux_client_request_context::handle_timeout_timer, this, boost::asio::placeholders::error));
+                    m_timeout_timer.async_wait(boost::bind(&linux_client_request_context::handle_timeout_timer, shared_from_this(), boost::asio::placeholders::error));
                 }
                 
                 void reset_timer(const int secs)
                 {
                     if (m_timeout_timer.expires_from_now(boost::posix_time::milliseconds(secs * 1000)) > 0)
                     {
-                        m_timeout_timer.async_wait(boost::bind(&linux_client_request_context::handle_timeout_timer, this, boost::asio::placeholders::error));
+                        m_timeout_timer.async_wait(boost::bind(&linux_client_request_context::handle_timeout_timer, shared_from_this(), boost::asio::placeholders::error));
                     }
                 }
                 
@@ -223,7 +223,7 @@ namespace web { namespace http
                     }
                 }
 
-                linux_client_request_context(std::shared_ptr<_http_client_communicator> &client, http_request request, std::shared_ptr<linux_connection> conn);
+                linux_client_request_context(std::shared_ptr<_http_client_communicator> &client, http_request request, std::shared_ptr<linux_connection> connection);
 
             protected:
                 virtual void cleanup()
@@ -980,14 +980,14 @@ namespace web { namespace http
             }
 
             linux_client_request_context::linux_client_request_context(std::shared_ptr<_http_client_communicator> &client, http_request request,
-                    std::shared_ptr<linux_connection> conn)
+                    std::shared_ptr<linux_connection> connection)
                 : request_context(client, request)
                 , m_known_size(0)
                 , m_needChunked(false)
                 , m_timedout(false)
                 , m_current_size(0)
                 , m_timeout_timer(crossplat::threadpool::shared_instance().service())
-                , m_conn(conn)
+                , m_conn(connection)
                 , m_close_socket_in_destructor(false)
             {}
 
@@ -995,8 +995,8 @@ namespace web { namespace http
                     std::shared_ptr<_http_client_communicator> &client, http_request &request)
             {
                 auto client_cast(std::static_pointer_cast<linux_client>(client));
-                auto conn(client_cast->m_pool->get());
-                return std::make_shared<linux_client_request_context>(client, request, conn);
+                auto connection(client_cast->m_pool->get());
+                return std::make_shared<linux_client_request_context>(client, request, connection);
             }
 
             linux_client_request_context::~linux_client_request_context()
