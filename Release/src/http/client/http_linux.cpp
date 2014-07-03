@@ -137,7 +137,7 @@ namespace web { namespace http
                 std::mutex m_connections_mutex;
             };
 
-            class linux_client_request_context : public request_context, public std::enable_shared_from_this<linux_client_request_context>
+            class linux_client_request_context : public request_context
             {
             public:
                 static std::shared_ptr<request_context> create_request_context(std::shared_ptr<_http_client_communicator> &client, http_request &request);
@@ -185,14 +185,14 @@ namespace web { namespace http
                 void set_timer(const int secs)
                 {
                     m_timeout_timer.expires_from_now(boost::posix_time::milliseconds(secs * 1000));
-                    m_timeout_timer.async_wait(boost::bind(&linux_client_request_context::handle_timeout_timer, shared_from_this(), boost::asio::placeholders::error));
+                    m_timeout_timer.async_wait(boost::bind(&linux_client_request_context::handle_timeout_timer, this, boost::asio::placeholders::error));
                 }
                 
                 void reset_timer(const int secs)
                 {
                     if (m_timeout_timer.expires_from_now(boost::posix_time::milliseconds(secs * 1000)) > 0)
                     {
-                        m_timeout_timer.async_wait(boost::bind(&linux_client_request_context::handle_timeout_timer, shared_from_this(), boost::asio::placeholders::error));
+                        m_timeout_timer.async_wait(boost::bind(&linux_client_request_context::handle_timeout_timer, this, boost::asio::placeholders::error));
                     }
                 }
                 
