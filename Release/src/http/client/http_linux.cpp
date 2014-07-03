@@ -335,7 +335,7 @@ namespace web { namespace http
 
                     if (ctx->m_connection->m_socket.is_open())
                     {
-                        begin_send(ctx);
+                        write_request(ctx);
                     }
                     else
                     {
@@ -392,7 +392,7 @@ namespace web { namespace http
                     }
                 }
 
-                void begin_send(std::shared_ptr<linux_client_request_context> ctx)
+                void write_request(std::shared_ptr<linux_client_request_context> ctx)
                 {
                     if (ctx->m_ssl_stream)
                     {
@@ -408,7 +408,7 @@ namespace web { namespace http
                 {
                     if (!ec)
                     {
-                        begin_send(ctx);
+                        write_request(ctx);
                     }
                     else if (endpoints == tcp::resolver::iterator())
                     {
