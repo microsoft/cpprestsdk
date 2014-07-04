@@ -94,7 +94,7 @@ namespace web { namespace http
                     }
                 }
 
-                void put(std::shared_ptr<linux_connection> connection)
+                void release(std::shared_ptr<linux_connection> connection)
                 {
                     std::lock_guard<std::mutex> lock(m_connections_mutex);
 
@@ -105,7 +105,7 @@ namespace web { namespace http
                     m_connections.insert(connection);
                 }
 
-                std::shared_ptr<linux_connection> get()
+                std::shared_ptr<linux_connection> obtain()
                 {
                     std::lock_guard<std::mutex> lock(m_connections_mutex);
 
@@ -421,7 +421,7 @@ namespace web { namespace http
                         boost::system::error_code error;
                         ctx->m_connection->m_socket.shutdown(tcp::socket::shutdown_both, error);
                         ctx->m_connection->m_socket.close(error);
-                        ctx->m_connection = m_pool->get();
+                        ctx->m_connection = m_pool->obtain();
 
                         auto endpoint = *endpoints;
                         if (ctx->m_ssl_stream)
@@ -995,7 +995,7 @@ namespace web { namespace http
                     std::shared_ptr<_http_client_communicator> &client, http_request &request)
             {
                 auto client_cast(std::static_pointer_cast<linux_client>(client));
-                auto connection(client_cast->m_pool->get());
+                auto connection(client_cast->m_pool->obtain());
                 return std::make_shared<linux_client_request_context>(client, request, connection);
             }
 
@@ -1013,7 +1013,7 @@ namespace web { namespace http
                 else
                 {
                     m_connection->m_socket.cancel(error);
-                    std::static_pointer_cast<linux_client>(m_http_client)->m_pool->put(m_connection);
+                    std::static_pointer_cast<linux_client>(m_http_client)->m_pool->release(m_connection);
                 }
             }
 
