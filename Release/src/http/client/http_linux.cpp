@@ -250,6 +250,12 @@ namespace web { namespace http
 
                 void send_request(std::shared_ptr<request_context> request_ctx)
                 {
+                    if (request_ctx->m_request._cancellation_token().is_canceled())
+                    {
+                        request_ctx->report_error(make_error_code(std::errc::operation_canceled).value(), "Request cancelled by user.");
+                        return;
+                    }
+
                     auto ctx = std::static_pointer_cast<linux_client_request_context>(request_ctx);
 
                     if (m_uri.scheme() == "https")
@@ -340,6 +346,19 @@ namespace web { namespace http
                         tcp::resolver::query query(host, utility::conversions::print_string(port));
 
                         m_resolver.async_resolve(query, boost::bind(&linux_client::handle_resolve, shared_from_this(), boost::asio::placeholders::error, boost::asio::placeholders::iterator, ctx));
+                    }
+
+                    // Register for notification on cancellation to abort this request.
+                    if(request_ctx->m_request._cancellation_token() != pplx::cancellation_token::none())
+                    {
+                        ctx->m_cancellationRegistration = request_ctx->m_request._cancellation_token().register_callback([ctx]()
+                        {
+                            boost::system::error_code error;
+                            ctx->m_connection->m_socket.cancel(error);
+                            ctx->m_connection->m_socket.shutdown(tcp::socket::shutdown_both, error);
+                            ctx->m_connection->m_socket.close(error);
+                            ctx->m_close_socket_in_destructor = true;
+                        });
                     }
                 }
 
@@ -501,15 +520,29 @@ namespace web { namespace http
                         ctx->m_uploaded += (size64_t)readSize;
                         if (ctx->m_ssl_stream)
                         {
-                            boost::asio::async_write(*ctx->m_ssl_stream, ctx->m_body_buf,
-                                boost::bind(readSize != 0 ? &linux_client::handle_write_chunked_body : &linux_client::handle_write_body,
-                                    shared_from_this(), boost::asio::placeholders::error, ctx));
+                            if (readSize != 0)
+                            {
+                                boost::asio::async_write(*ctx->m_ssl_stream, ctx->m_body_buf,
+                                    boost::bind(&linux_client::handle_write_chunked_body, shared_from_this(), boost::asio::placeholders::error, ctx));
+                            }
+                            else
+                            {
+                                boost::asio::async_write(*ctx->m_ssl_stream, ctx->m_body_buf,
+                                    boost::bind(&linux_client::handle_write_body, shared_from_this(), boost::asio::placeholders::error, ctx));
+                            }
                         }
                         else
                         {
-                            boost::asio::async_write(ctx->m_connection->m_socket, ctx->m_body_buf,
-                                boost::bind(readSize != 0 ? &linux_client::handle_write_chunked_body : &linux_client::handle_write_body,
-                                    shared_from_this(), boost::asio::placeholders::error, ctx));
+                            if (readSize != 0)
+                            {
+                                boost::asio::async_write(ctx->m_connection->m_socket, ctx->m_body_buf,
+                                    boost::bind(&linux_client::handle_write_chunked_body, shared_from_this(), boost::asio::placeholders::error, ctx));
+                            }
+                            else
+                            {
+                                boost::asio::async_write(ctx->m_connection->m_socket, ctx->m_body_buf,
+                                    boost::bind(&linux_client::handle_write_body, shared_from_this(), boost::asio::placeholders::error, ctx));
+                            }
                         }
                     });
                 }
@@ -616,7 +649,7 @@ namespace web { namespace http
                         else
                         {
                             boost::asio::async_read_until(ctx->m_connection->m_socket, ctx->m_body_buf, CRLF+CRLF,
-                                boost::bind(&linux_client::handle_status_line, shared_from_this(), boost::asio::placeholders::error,  ctx));
+                                boost::bind(&linux_client::handle_status_line, shared_from_this(), boost::asio::placeholders::error, ctx));
                         }
                     }
                     else
