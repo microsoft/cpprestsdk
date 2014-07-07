@@ -175,7 +175,7 @@ TEST_FIXTURE(uri_address, handle_trace)
 #ifdef _MS_WINDOWS
         VERIFY_ARE_EQUAL("TRACE http://localhost:34567/ HTTP/1.1\r\nConnection: Keep-Alive\r\nHost: localhost:34567\r\nUser-Agent: test_http_client\r\n\r\n", utf8_response);
 #else
-        VERIFY_ARE_EQUAL("TRACE http://localhost:34567/ HTTP/1.1\r\nConnection: close\r\nContent-Length: 0\r\nContent-Type: text/plain; charset=utf-8\r\nHost: localhost:34567\r\nUser-Agent: test_http_client\r\n\r\n", utf8_response);
+        VERIFY_ARE_EQUAL("TRACE http://localhost:34567/ HTTP/1.1\r\nConnection: Keep-Alive\r\nContent-Length: 0\r\nContent-Type: text/plain; charset=utf-8\r\nHost: localhost:34567\r\nUser-Agent: test_http_client\r\n\r\n", utf8_response);
 #endif
     }).wait();
 

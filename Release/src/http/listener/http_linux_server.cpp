@@ -116,7 +116,7 @@ void connection::handle_http_line(const boost::system::error_code& ec)
     if (ec)
     {
         // client closed connection
-        if (ec == boost::asio::error::eof)
+        if ((ec == boost::asio::error::eof) || (ec == boost::asio::error::operation_aborted))
         {
             finish_request_response();
         }
