@@ -70,6 +70,21 @@ namespace web { namespace http
                 bool m_is_reused;
 
                 void handle_pool_timer(const boost::system::error_code& ec);
+
+                bool close()
+                {
+                    boost::system::error_code error;
+                    m_socket.shutdown(tcp::socket::shutdown_both, error);
+                    m_socket.close(error);
+                    return !error;
+                }
+
+                bool cancel()
+                {
+                    boost::system::error_code error;
+                    m_socket.cancel(error);
+                    return !error;
+                }
             };
 
             class linux_connection_pool : public std::enable_shared_from_this<linux_connection_pool>
@@ -87,10 +102,7 @@ namespace web { namespace http
                     for (auto& connection : m_connections)
                     {
                         connection->m_pool_timer.cancel();
-
-                        boost::system::error_code error;
-                        connection->m_socket.shutdown(tcp::socket::shutdown_both, error);
-                        connection->m_socket.close(error);
+                        connection->close();
                     }
                 }
 
@@ -213,12 +225,9 @@ namespace web { namespace http
                     if (!ec)
                     {
                         m_timedout = true;
-
-                        boost::system::error_code error;
-                        m_connection->m_socket.cancel(error);
-                        if (error)
+                        if (!m_connection->cancel())
                         {
-                            report_error("Failed to cancel the socket", error);
+                            report_error("Failed to cancel the socket", boost::system::error_code());
                         }
                     }
                 }
@@ -353,10 +362,8 @@ namespace web { namespace http
                     {
                         ctx->m_cancellationRegistration = request_ctx->m_request._cancellation_token().register_callback([ctx]()
                         {
-                            boost::system::error_code error;
-                            ctx->m_connection->m_socket.cancel(error);
-                            ctx->m_connection->m_socket.shutdown(tcp::socket::shutdown_both, error);
-                            ctx->m_connection->m_socket.close(error);
+                            ctx->m_connection->cancel();
+                            ctx->m_connection->close();
                             ctx->m_close_socket_in_destructor = true;
                         });
                     }
@@ -437,9 +444,7 @@ namespace web { namespace http
                     {
                         ctx->m_timeout_timer.cancel();
 
-                        boost::system::error_code error;
-                        ctx->m_connection->m_socket.shutdown(tcp::socket::shutdown_both, error);
-                        ctx->m_connection->m_socket.close(error);
+                        ctx->m_connection->close();
                         ctx->m_connection = m_pool->obtain();
 
                         auto endpoint = *endpoints;
@@ -694,9 +699,7 @@ namespace web { namespace http
                         {
                             // Connection was closed by the server for some reason during the connection was
                             // being pooled. We re-send the request to get a new connection.
-                            boost::system::error_code error;
-                            ctx->m_connection->m_socket.shutdown(tcp::socket::shutdown_both, error);
-                            ctx->m_connection->m_socket.close(error);
+                            ctx->m_connection->close();
                             ctx->m_close_socket_in_destructor = true;
 
                             auto new_ctx = details::linux_client_request_context::create_request_context(ctx->m_http_client, ctx->m_request);
@@ -1034,18 +1037,15 @@ namespace web { namespace http
 
             linux_client_request_context::~linux_client_request_context()
             {
-                boost::system::error_code error;
-
                 m_timeout_timer.cancel();
 
                 if (m_close_socket_in_destructor)
                 {
-                    m_connection->m_socket.shutdown(tcp::socket::shutdown_both, error);
-                    m_connection->m_socket.close(error);
+                    m_connection->close();
                 }
                 else
                 {
-                    m_connection->m_socket.cancel(error);
+                    m_connection->cancel();
                     std::static_pointer_cast<linux_client>(m_http_client)->m_pool->release(m_connection);
                 }
             }
