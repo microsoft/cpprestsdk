@@ -61,18 +61,19 @@ namespace web { namespace http
                     m_socket(io_service),
                     m_pool_timer(io_service),
                     m_pool_weak(pool_weak),
-                    m_is_reused(false)
+                    m_is_reused(false),
+                    m_keep_alive(true)
                 {}
-
-                std::weak_ptr<linux_connection_pool> m_pool_weak;
-                tcp::socket m_socket;
-                boost::asio::deadline_timer m_pool_timer;
-                bool m_is_reused;
 
                 void handle_pool_timer(const boost::system::error_code& ec);
 
-                bool close()
+                bool close(bool cancel_timer)
                 {
+                    if (cancel_timer)
+                    {
+                        m_pool_timer.cancel();
+                    }
+                    m_keep_alive = false;
                     boost::system::error_code error;
                     m_socket.shutdown(tcp::socket::shutdown_both, error);
                     m_socket.close(error);
@@ -85,6 +86,33 @@ namespace web { namespace http
                     m_socket.cancel(error);
                     return !error;
                 }
+
+                template <typename TimeoutHandler>
+                void start_pool_timer(int timeout_secs, TimeoutHandler handler)
+                {
+                    m_pool_timer.expires_from_now(boost::posix_time::milliseconds(timeout_secs * 1000));
+                    m_pool_timer.async_wait(handler);
+                }
+
+                void start_reuse()
+                {
+                    m_pool_timer.cancel();
+                    m_is_reused = true;
+                }
+
+                bool is_reused() const { return m_is_reused; }
+
+                bool keep_alive() const { return m_keep_alive; }
+                void set_keep_alive(bool keep_alive) { m_keep_alive = keep_alive; }
+
+                tcp::socket& socket() { return m_socket; }
+
+            private:
+                tcp::socket m_socket;
+                boost::asio::deadline_timer m_pool_timer;
+                std::weak_ptr<linux_connection_pool> m_pool_weak;
+                bool m_is_reused;
+                bool m_keep_alive;
             };
 
             class linux_connection_pool : public std::enable_shared_from_this<linux_connection_pool>
@@ -93,7 +121,7 @@ namespace web { namespace http
 
                 linux_connection_pool(boost::asio::io_service& io_service, utility::seconds idle_timeout) :
                     m_io_service(io_service),
-                    m_timeout_secs(idle_timeout)
+                    m_timeout_secs(static_cast<int>(idle_timeout.count()))
                 {}
 
                 ~linux_connection_pool()
@@ -101,38 +129,43 @@ namespace web { namespace http
                     std::lock_guard<std::mutex> lock(m_connections_mutex);
                     for (auto& connection : m_connections)
                     {
-                        connection->m_pool_timer.cancel();
-                        connection->close();
+                        connection->close(true);
                     }
                 }
 
                 void release(std::shared_ptr<linux_connection> connection)
                 {
-                    std::lock_guard<std::mutex> lock(m_connections_mutex);
+                    if (connection->keep_alive() && (m_timeout_secs > 0))
+                    {
+                        connection->cancel();
+                        // Remove idle connections from pool after timeout.
+                        connection->start_pool_timer(m_timeout_secs, boost::bind(&linux_connection::handle_pool_timer, connection, boost::asio::placeholders::error));
 
-                    const int secs = static_cast<int>(m_timeout_secs.count());
-                    connection->m_pool_timer.expires_from_now(boost::posix_time::milliseconds(secs * 1000));
-                    connection->m_pool_timer.async_wait(boost::bind(&linux_connection::handle_pool_timer, connection, boost::asio::placeholders::error));
-
-                    m_connections.insert(connection);
+                        {
+                            std::lock_guard<std::mutex> lock(m_connections_mutex);
+                            m_connections.insert(connection);
+                        }
+                    }
+                    else
+                    {
+                        // Connection is not returned to pool => will be destroyed.
+                        connection->close(false);
+                    }
                 }
 
                 std::shared_ptr<linux_connection> obtain()
                 {
-                    std::lock_guard<std::mutex> lock(m_connections_mutex);
-
-                    if (m_connections.empty())
+                    if (is_connections_empty())
                     {
+                        // No connections in pool => create new connection instance.
                         return std::make_shared<linux_connection>(shared_from_this(), m_io_service);
                     }
                     else
                     {
-                        (*m_connections.begin())->m_pool_timer.cancel();
-                        auto result(*m_connections.begin());
-                        result->m_is_reused = true;
-                        m_connections.erase(m_connections.begin());
-
-                        return result;
+                        // Reuse connection from pool.
+                        auto connection(obtain_begin());
+                        connection->start_reuse();
+                        return connection;
                     }
                 }
 
@@ -143,8 +176,22 @@ namespace web { namespace http
                 }
 
             private:
+                bool is_connections_empty()
+                {
+                    std::lock_guard<std::mutex> lock(m_connections_mutex);
+                    return m_connections.empty();
+                }
+
+                std::shared_ptr<linux_connection> obtain_begin()
+                {
+                    std::lock_guard<std::mutex> lock(m_connections_mutex);
+                    auto connection(*m_connections.begin());
+                    m_connections.erase(m_connections.begin());
+                    return connection;
+                }
+
                 boost::asio::io_service& m_io_service;
-                const utility::seconds m_timeout_secs;
+                const int m_timeout_secs;
                 std::unordered_set<std::shared_ptr<linux_connection> > m_connections;
                 std::mutex m_connections_mutex;
             };
@@ -216,7 +263,6 @@ namespace web { namespace http
                 bool m_timedout;
                 boost::asio::streambuf m_body_buf;
                 boost::asio::deadline_timer m_timeout_timer;
-                bool m_close_socket_in_destructor;
 
                 ~linux_client_request_context();
 
@@ -271,7 +317,7 @@ namespace web { namespace http
                     {
                         boost::asio::ssl::context context(boost::asio::ssl::context::sslv23);
                         context.set_default_verify_paths();
-                        ctx->m_ssl_stream.reset(new boost::asio::ssl::stream<boost::asio::ip::tcp::socket &>(ctx->m_connection->m_socket, context));
+                        ctx->m_ssl_stream.reset(new boost::asio::ssl::stream<boost::asio::ip::tcp::socket &>(ctx->m_connection->socket(), context));
                     }
 
                     auto encoded_resource = uri_builder(m_uri).append(ctx->m_request.relative_uri()).to_uri().resource().to_string();
@@ -346,7 +392,7 @@ namespace web { namespace http
 
                     ctx->set_timer(static_cast<int>(client_config().timeout().count()));
 
-                    if (ctx->m_connection->m_socket.is_open())
+                    if (ctx->m_connection->socket().is_open())
                     {
                         write_request(ctx);
                     }
@@ -363,8 +409,7 @@ namespace web { namespace http
                         ctx->m_cancellationRegistration = request_ctx->m_request._cancellation_token().register_callback([ctx]()
                         {
                             ctx->m_connection->cancel();
-                            ctx->m_connection->close();
-                            ctx->m_close_socket_in_destructor = true;
+                            ctx->m_connection->close(false);
                         });
                     }
                 }
@@ -414,7 +459,7 @@ namespace web { namespace http
                                 ctx->m_ssl_stream->set_verify_mode(boost::asio::ssl::context::verify_none);
                             }
                         }
-                        ctx->m_connection->m_socket.async_connect(endpoint, boost::bind(&linux_client::handle_connect, shared_from_this(), boost::asio::placeholders::error, ++endpoints, ctx));
+                        ctx->m_connection->socket().async_connect(endpoint, boost::bind(&linux_client::handle_connect, shared_from_this(), boost::asio::placeholders::error, ++endpoints, ctx));
                     }
                 }
 
@@ -426,7 +471,7 @@ namespace web { namespace http
                     }
                     else
                     {
-                        boost::asio::async_write(ctx->m_connection->m_socket, ctx->m_body_buf, boost::bind(&linux_client::handle_write_request, shared_from_this(), boost::asio::placeholders::error, ctx));
+                        boost::asio::async_write(ctx->m_connection->socket(), ctx->m_body_buf, boost::bind(&linux_client::handle_write_request, shared_from_this(), boost::asio::placeholders::error, ctx));
                     }
                 }
 
@@ -444,7 +489,7 @@ namespace web { namespace http
                     {
                         ctx->m_timeout_timer.cancel();
 
-                        ctx->m_connection->close();
+                        ctx->m_connection->close(false);
                         ctx->m_connection = m_pool->obtain();
 
                         auto endpoint = *endpoints;
@@ -452,7 +497,7 @@ namespace web { namespace http
                         {
                             boost::asio::ssl::context context(boost::asio::ssl::context::sslv23);
                             context.set_default_verify_paths();
-                            ctx->m_ssl_stream.reset(new boost::asio::ssl::stream<boost::asio::ip::tcp::socket &>(ctx->m_connection->m_socket, context));
+                            ctx->m_ssl_stream.reset(new boost::asio::ssl::stream<boost::asio::ip::tcp::socket &>(ctx->m_connection->socket(), context));
 
                             // Check to turn off server certificate verification.
                             if(client_config().validate_certificates())
@@ -466,7 +511,7 @@ namespace web { namespace http
                             }
                         }
 
-                        ctx->m_connection->m_socket.async_connect(endpoint, boost::bind(&linux_client::handle_connect, shared_from_this(), boost::asio::placeholders::error, ++endpoints, ctx));
+                        ctx->m_connection->socket().async_connect(endpoint, boost::bind(&linux_client::handle_connect, shared_from_this(), boost::asio::placeholders::error, ++endpoints, ctx));
                     }
                 }
 
@@ -540,12 +585,12 @@ namespace web { namespace http
                         {
                             if (readSize != 0)
                             {
-                                boost::asio::async_write(ctx->m_connection->m_socket, ctx->m_body_buf,
+                                boost::asio::async_write(ctx->m_connection->socket(), ctx->m_body_buf,
                                     boost::bind(&linux_client::handle_write_chunked_body, shared_from_this(), boost::asio::placeholders::error, ctx));
                             }
                             else
                             {
-                                boost::asio::async_write(ctx->m_connection->m_socket, ctx->m_body_buf,
+                                boost::asio::async_write(ctx->m_connection->socket(), ctx->m_body_buf,
                                     boost::bind(&linux_client::handle_write_body, shared_from_this(), boost::asio::placeholders::error, ctx));
                             }
                         }
@@ -600,7 +645,7 @@ namespace web { namespace http
                         }
                         else
                         {
-                            boost::asio::async_write(ctx->m_connection->m_socket, ctx->m_body_buf,
+                            boost::asio::async_write(ctx->m_connection->socket(), ctx->m_body_buf,
                                 boost::bind(&linux_client::handle_write_large_body, shared_from_this(), boost::asio::placeholders::error, ctx));
                         }
                     });
@@ -653,7 +698,7 @@ namespace web { namespace http
                         }
                         else
                         {
-                            boost::asio::async_read_until(ctx->m_connection->m_socket, ctx->m_body_buf, CRLF+CRLF,
+                            boost::asio::async_read_until(ctx->m_connection->socket(), ctx->m_body_buf, CRLF+CRLF,
                                 boost::bind(&linux_client::handle_status_line, shared_from_this(), boost::asio::placeholders::error, ctx));
                         }
                     }
@@ -695,12 +740,11 @@ namespace web { namespace http
                         const bool socket_was_closed((boost::asio::error::eof == ec)
                                 || (boost::asio::error::connection_reset == ec)
                                 || (boost::asio::error::connection_aborted == ec));
-                        if (socket_was_closed && ctx->m_connection->m_is_reused && ctx->m_connection->m_socket.is_open())
+                        if (socket_was_closed && ctx->m_connection->is_reused() && ctx->m_connection->socket().is_open())
                         {
                             // Connection was closed by the server for some reason during the connection was
                             // being pooled. We re-send the request to get a new connection.
-                            ctx->m_connection->close();
-                            ctx->m_close_socket_in_destructor = true;
+                            ctx->m_connection->close(false);
 
                             auto new_ctx = details::linux_client_request_context::create_request_context(ctx->m_http_client, ctx->m_request);
                             new_ctx->m_request_completion = ctx->m_request_completion;
@@ -740,10 +784,11 @@ namespace web { namespace http
 
                             if (boost::iequals(name, header_names::connection))
                             {
-                                // This assumes server uses HTTP/1.1 so that 'Keep-Alive' is the default.
-                                // We don't handle HTTP/1.0 server explicitly here. HTTP/1.0 server would need
-                                // to respond with 'Connection: Keep-Alive' to resume connection.
-                                ctx->m_close_socket_in_destructor = boost::iequals(value, U("close"));
+                                // This assumes server uses HTTP/1.1 so that 'Keep-Alive' is the default,
+                                // so connection is explicitly closed only if we get "Connection: close".
+                                // We don't handle HTTP/1.0 server here. HTTP/1.0 server would need
+                                // to respond using 'Connection: Keep-Alive' every time.
+                                ctx->m_connection->set_keep_alive(!boost::iequals(value, U("close")));
                             }
 
                             ctx->m_response.headers().add(std::move(name), std::move(value));
@@ -792,7 +837,7 @@ namespace web { namespace http
                             }
                             else
                             {
-                                boost::asio::async_read_until(ctx->m_connection->m_socket, ctx->m_body_buf, CRLF,
+                                boost::asio::async_read_until(ctx->m_connection->socket(), ctx->m_body_buf, CRLF,
                                     boost::bind(&linux_client::handle_chunk_header, shared_from_this(), boost::asio::placeholders::error, ctx));
                             }
                         }
@@ -814,7 +859,7 @@ namespace web { namespace http
                     }
                     else
                     {
-                        boost::asio::async_read(ctx->m_connection->m_socket, ctx->m_body_buf, boost::asio::transfer_at_least(size_to_read), handler);
+                        boost::asio::async_read(ctx->m_connection->socket(), ctx->m_body_buf, boost::asio::transfer_at_least(size_to_read), handler);
                     }
                 }
 
@@ -909,7 +954,7 @@ namespace web { namespace http
                                 }
                                 else
                                 {
-                                    boost::asio::async_read_until(ctx->m_connection->m_socket, ctx->m_body_buf, CRLF,
+                                    boost::asio::async_read_until(ctx->m_connection->socket(), ctx->m_body_buf, CRLF,
                                         boost::bind(&linux_client::handle_chunk_header, shared_from_this(), boost::asio::placeholders::error, ctx));
                                 }
                             });
@@ -1024,7 +1069,6 @@ namespace web { namespace http
                 , m_current_size(0)
                 , m_timeout_timer(crossplat::threadpool::shared_instance().service())
                 , m_connection(connection)
-                , m_close_socket_in_destructor(false)
             {}
 
             std::shared_ptr<request_context> linux_client_request_context::create_request_context(
@@ -1038,16 +1082,7 @@ namespace web { namespace http
             linux_client_request_context::~linux_client_request_context()
             {
                 m_timeout_timer.cancel();
-
-                if (m_close_socket_in_destructor)
-                {
-                    m_connection->close();
-                }
-                else
-                {
-                    m_connection->cancel();
-                    std::static_pointer_cast<linux_client>(m_http_client)->m_pool->release(m_connection);
-                }
+                std::static_pointer_cast<linux_client>(m_http_client)->m_pool->release(m_connection);
             }
 
             void linux_connection::handle_pool_timer(const boost::system::error_code& ec)
