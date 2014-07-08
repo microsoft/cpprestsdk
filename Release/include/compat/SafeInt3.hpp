@@ -111,7 +111,7 @@ Version 3.0
 // For some reason we keep getting compiler errors on OS X/iOS if nullptr isn't
 // defined to NULL
 #define NEEDS_NULLPTR_DEFINED 1
-#elif __has_feature
+#elif defined(__has_feature)
 #if __has_feature(cxx_nullptr)
 #define NEEDS_NULLPTR_DEFINED 0
 #else
