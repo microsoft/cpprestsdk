@@ -142,7 +142,6 @@ public:
     /// </summary>
     void complete_request(size_t body_size)
     {
-        m_response.set_error_code(0);
         m_response._get_impl()->_complete(body_size);
 
         finish();
@@ -150,8 +149,7 @@ public:
 
     void report_error(unsigned long error_code, const utility::string_t & errorMessage)
     {
-        m_response.set_error_code(error_code);
-        report_exception(http_exception((int)m_response.error_code(), errorMessage));
+        report_exception(http_exception((int)error_code, errorMessage));
     }
 
     template<typename _ExceptionType>

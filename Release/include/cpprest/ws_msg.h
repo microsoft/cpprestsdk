@@ -70,9 +70,7 @@ namespace details
 /// </summary>
 enum class websocket_message_type
 {
-    text_fragment,
     text_message,
-    binary_fragment,
     binary_message,
     close,
     ping,
@@ -138,15 +136,6 @@ public:
         : _m_impl(std::make_shared<details::_websocket_message>()) {}
 
     /// <summary>
-    /// Sets a UTF-8 fragment as the message body.
-    /// </summary>
-    /// <params>UTF-8 String containing body of the fragment.</returns>
-    void set_utf8_fragment(std::string data)
-    {
-        this->_set_message(std::move(data), websocket_message_type::text_fragment);
-    }
-
-    /// <summary>
     /// Sets a UTF-8 message as the message body.
     /// </summary>
     /// <params>UTF-8 String containing body of the message.</returns>
@@ -156,29 +145,12 @@ public:
     }
 
     /// <summary>
-    /// Sets a UTF-8 fragment as the message body.
-    /// </summary>
-    /// <params>casablanca input stream representing the body of the fragment.</returns>
-    void set_utf8_fragment(concurrency::streams::istream istream, size_t len)
-    {
-        this->_set_message(istream, len, websocket_message_type::text_fragment);
-    }
-
-    /// <summary>
     /// Sets a UTF-8 message as the message body.
     /// </summary>
-    /// <params>casablanca input stream representing the body of the fragment.</returns>
+    /// <params>casablanca input stream representing the body of the message.</returns>
     void set_utf8_message(concurrency::streams::istream istream, size_t len)
     {
         this->_set_message(istream, len, websocket_message_type::text_message);
-    }
-    /// <summary>
-    /// Sets a binary fragment as the message body.
-    /// </summary>
-    /// <params>casablanca input stream representing the body of the fragment.</returns>
-    void set_binary_fragment(concurrency::streams::istream istream, size_t len)
-    {
-        this->_set_message(istream, len, websocket_message_type::binary_fragment);
     }
 
     /// <summary>

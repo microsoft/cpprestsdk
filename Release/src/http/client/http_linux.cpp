@@ -30,7 +30,6 @@
 #include "stdafx.h"
 
 #include "cpprest/http_client_impl.h"
-#include <limits>
 #include <unordered_set>
 
 using boost::asio::ip::tcp;
@@ -56,6 +55,7 @@ namespace web { namespace http
             class linux_connection_pool;
             class linux_connection : public std::enable_shared_from_this<linux_connection>
             {
+                friend class linux_connection_pool;
             public:
                 linux_connection(std::weak_ptr<linux_connection_pool> pool_weak, boost::asio::io_service& io_service) :
                     m_socket(io_service),
@@ -64,8 +64,6 @@ namespace web { namespace http
                     m_is_reused(false),
                     m_keep_alive(true)
                 {}
-
-                void handle_pool_timer(const boost::system::error_code& ec);
 
                 bool close(bool cancel_timer)
                 {
@@ -87,6 +85,14 @@ namespace web { namespace http
                     return !error;
                 }
 
+                bool is_reused() const { return m_is_reused; }
+
+                void set_keep_alive(bool keep_alive) { m_keep_alive = keep_alive; }
+                bool keep_alive() const { return m_keep_alive; }
+
+                tcp::socket& socket() { return m_socket; }
+
+            private:
                 template <typename TimeoutHandler>
                 void start_pool_timer(int timeout_secs, TimeoutHandler handler)
                 {
@@ -100,14 +106,8 @@ namespace web { namespace http
                     m_is_reused = true;
                 }
 
-                bool is_reused() const { return m_is_reused; }
+                void handle_pool_timer(const boost::system::error_code& ec);
 
-                bool keep_alive() const { return m_keep_alive; }
-                void set_keep_alive(bool keep_alive) { m_keep_alive = keep_alive; }
-
-                tcp::socket& socket() { return m_socket; }
-
-            private:
                 tcp::socket m_socket;
                 boost::asio::deadline_timer m_pool_timer;
                 std::weak_ptr<linux_connection_pool> m_pool_weak;

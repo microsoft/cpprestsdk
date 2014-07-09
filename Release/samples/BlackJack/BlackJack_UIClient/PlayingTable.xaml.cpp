@@ -149,9 +149,7 @@ void BlackjackClient::PlayingTable::Refresh()
 
 void BlackjackClient::PlayingTable::InterpretResponse(http_response &response)
 {
-    HRESULT responseHR = response.error_code();
-
-    if ( InterpretError(responseHR) || response.headers().content_type() != L"application/json" ) return;
+    if ( response.headers().content_type() != L"application/json" ) return;
 
     this->resultLabel->Text = L"";
 

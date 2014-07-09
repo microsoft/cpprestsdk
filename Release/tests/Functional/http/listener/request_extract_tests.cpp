@@ -52,6 +52,28 @@ TEST_FIXTURE(uri_address, extract_string)
     listener.close().wait();
 }
 
+TEST_FIXTURE(uri_address, extract_string_force)
+{
+    http_listener listener(m_uri);
+    listener.open().wait();
+    test_http_client::scoped_client client(m_uri);
+    test_http_client * p_client = client.client();
+    std::string data("HEHEHE");
+
+    listener.support([&](http_request request)
+    {
+        VERIFY_ARE_EQUAL(to_string_t(data), request.extract_string(true).get());
+        request.reply(status_codes::OK);
+    });
+    VERIFY_ARE_EQUAL(0, p_client->request(methods::PUT, U(""), U("unknown charset"), data));
+    p_client->next_response().then([](test_response *p_response)
+    {
+        http_asserts::assert_test_response_equals(p_response, status_codes::OK);
+    }).wait();
+
+    listener.close().wait();
+}
+
 TEST_FIXTURE(uri_address, extract_json)
 {
     http_listener listener(m_uri);
@@ -70,6 +92,30 @@ TEST_FIXTURE(uri_address, extract_json)
     });
     std::string data = to_utf8string(j.serialize());
     VERIFY_ARE_EQUAL(0, p_client->request(methods::PUT, U(""), U("application/json"), data));
+    p_client->next_response().then([](test_response *p_response)
+    {
+        http_asserts::assert_test_response_equals(p_response, status_codes::OK);
+    }).wait();
+
+    listener.close().wait();
+}
+
+TEST_FIXTURE(uri_address, extract_json_force)
+{
+    http_listener listener(m_uri);
+    listener.open().wait();
+    test_http_client::scoped_client client(m_uri);
+    test_http_client * p_client = client.client();
+
+    json::value j(true);
+    listener.support([&](http_request request)
+    {
+        const json::value j_found = request.extract_json(true).get();
+        VERIFY_ARE_EQUAL(j.serialize(), j_found.serialize());
+        request.reply(status_codes::OK);
+    });
+    std::string data = to_utf8string(j.serialize());
+    VERIFY_ARE_EQUAL(0, p_client->request(methods::PUT, U(""), U("unknown charset"), data));
     p_client->next_response().then([](test_response *p_response)
     {
         http_asserts::assert_test_response_equals(p_response, status_codes::OK);
