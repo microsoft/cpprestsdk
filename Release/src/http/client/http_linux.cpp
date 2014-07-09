@@ -127,6 +127,8 @@ namespace web { namespace http
                 ~linux_connection_pool()
                 {
                     std::lock_guard<std::mutex> lock(m_connections_mutex);
+                    // Close all connections. This happens when linux_client is destroyed because
+                    // it only has shared_ptr reference to pool. Connections use weak_ptr instead.
                     for (auto& connection : m_connections)
                     {
                         connection->close(true);
@@ -155,15 +157,16 @@ namespace web { namespace http
 
                 std::shared_ptr<linux_connection> obtain()
                 {
-                    if (is_connections_empty())
+                    if (is_pool_empty())
                     {
                         // No connections in pool => create new connection instance.
+                        // shared_from_this() is only to create a weak_ptr to pool.
                         return std::make_shared<linux_connection>(shared_from_this(), m_io_service);
                     }
                     else
                     {
                         // Reuse connection from pool.
-                        auto connection(obtain_begin());
+                        auto connection(get_head());
                         connection->start_reuse();
                         return connection;
                     }
@@ -176,13 +179,13 @@ namespace web { namespace http
                 }
 
             private:
-                bool is_connections_empty()
+                bool is_pool_empty()
                 {
                     std::lock_guard<std::mutex> lock(m_connections_mutex);
                     return m_connections.empty();
                 }
 
-                std::shared_ptr<linux_connection> obtain_begin()
+                std::shared_ptr<linux_connection> get_head()
                 {
                     std::lock_guard<std::mutex> lock(m_connections_mutex);
                     auto connection(*m_connections.begin());
@@ -349,10 +352,10 @@ namespace web { namespace http
                     }
                     request_stream << ":" << port << CRLF;
 
-                    // Manipulate headers
+                    // Copy headers to keep the original request state intact.
                     auto headers(ctx->m_request.headers());
 
-                    // Check user specified transfer-encoding
+                    // Check user specified transfer-encoding.
                     std::string transferencoding;
                     if (headers.match(header_names::transfer_encoding, transferencoding) && transferencoding == "chunked")
                     {
@@ -363,6 +366,7 @@ namespace web { namespace http
 
                     if (headers.match(header_names::content_length, ctx->m_known_size))
                     {
+                        // Have request body if content length header field is non-zero.
                         has_body = (0 != ctx->m_known_size);
                     }
                     else
@@ -387,6 +391,7 @@ namespace web { namespace http
                     }
 
                     request_stream << flatten_http_headers(headers);
+                    // Enforce HTTP connection keep alive (even for the old HTTP/1.0 protocol).
                     request_stream << "Connection: Keep-Alive" << CRLF;
                     request_stream << CRLF;
 
@@ -394,10 +399,13 @@ namespace web { namespace http
 
                     if (ctx->m_connection->socket().is_open())
                     {
+                        // If socket is already open (connection is reused), try to write the request directly.
                         write_request(ctx);
                     }
                     else
                     {
+                        // If the connection is new (unresolved and unconnected socket), then start async
+                        // call to resolve first, leading eventually to request write.
                         tcp::resolver::query query(host, utility::conversions::print_string(port));
 
                         m_resolver.async_resolve(query, boost::bind(&linux_client::handle_resolve, shared_from_this(), boost::asio::placeholders::error, boost::asio::placeholders::iterator, ctx));
@@ -408,7 +416,9 @@ namespace web { namespace http
                     {
                         ctx->m_cancellationRegistration = request_ctx->m_request._cancellation_token().register_callback([ctx]()
                         {
+                            // Cancel operations and all async handlers.
                             ctx->m_connection->cancel();
+                            // Shut down transmissions and close socket. Also prevents connection being pooled.
                             ctx->m_connection->close(false);
                         });
                     }
@@ -742,17 +752,19 @@ namespace web { namespace http
                                 || (boost::asio::error::connection_aborted == ec));
                         if (socket_was_closed && ctx->m_connection->is_reused() && ctx->m_connection->socket().is_open())
                         {
-                            // Connection was closed by the server for some reason during the connection was
-                            // being pooled. We re-send the request to get a new connection.
+                            // Connection was closed while connection was in pool.
+                            // Ensure connection is closed in a robust way.
                             ctx->m_connection->close(false);
 
+                            // Replace context and destroy the old one. The request,
+                            // completion event and cancellation registration are copied to
+                            // the new context. This will also obtain a new connection.
                             auto new_ctx = details::linux_client_request_context::create_request_context(ctx->m_http_client, ctx->m_request);
                             new_ctx->m_request_completion = ctx->m_request_completion;
                             new_ctx->m_cancellationRegistration = ctx->m_cancellationRegistration;
-
-                            // Close and destroy and the old socket.
                             ctx = std::static_pointer_cast<linux_client_request_context>(new_ctx);
 
+                            // Resend the request using the new context.
                             send_request(ctx);
                         }
                         else
@@ -1082,6 +1094,7 @@ namespace web { namespace http
             linux_client_request_context::~linux_client_request_context()
             {
                 m_timeout_timer.cancel();
+                // Give connection back to the pool where it can be reused.
                 std::static_pointer_cast<linux_client>(m_http_client)->m_pool->release(m_connection);
             }
 
@@ -1091,8 +1104,11 @@ namespace web { namespace http
                 {
                     if (auto pool_ptr = m_pool_weak.lock())
                     {
+                        // Remove connection from pool only if pool still exists (lock succeeds).
                         pool_ptr->remove(shared_from_this());
                     }
+                    // If lock fails, pool has been destroyed and we let connection object
+                    // to expire via shared_ptr. This should happen when this method returns.
                 }
             }
 
