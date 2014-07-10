@@ -65,24 +65,24 @@ namespace web { namespace http
                     m_keep_alive(true)
                 {}
 
-                bool close(bool cancel_timer)
+                void close()
                 {
-                    if (cancel_timer)
-                    {
-                        m_pool_timer.cancel();
-                    }
                     m_keep_alive = false;
                     boost::system::error_code error;
                     m_socket.shutdown(tcp::socket::shutdown_both, error);
                     m_socket.close(error);
-                    return !error;
                 }
 
-                bool cancel()
+                boost::system::error_code cancel()
                 {
                     boost::system::error_code error;
                     m_socket.cancel(error);
-                    return !error;
+                    return error;
+                }
+
+                void cancel_pool_timer()
+                {
+                    m_pool_timer.cancel();
                 }
 
                 bool is_reused() const { return m_is_reused; }
@@ -102,7 +102,7 @@ namespace web { namespace http
 
                 void start_reuse()
                 {
-                    m_pool_timer.cancel();
+                    cancel_pool_timer();
                     m_is_reused = true;
                 }
 
@@ -131,7 +131,8 @@ namespace web { namespace http
                     // it only has shared_ptr reference to pool. Connections use weak_ptr instead.
                     for (auto& connection : m_connections)
                     {
-                        connection->close(true);
+                        connection->cancel_pool_timer();
+                        connection->close();
                     }
                 }
 
@@ -151,7 +152,7 @@ namespace web { namespace http
                     else
                     {
                         // Connection is not returned to pool => will be destroyed.
-                        connection->close(false);
+                        connection->close();
                     }
                 }
 
@@ -274,9 +275,10 @@ namespace web { namespace http
                     if (!ec)
                     {
                         m_timedout = true;
-                        if (!m_connection->cancel())
+                        auto error(m_connection->cancel());
+                        if (error)
                         {
-                            report_error("Failed to cancel the socket", boost::system::error_code());
+                            report_error("Failed to cancel the socket", error);
                         }
                     }
                 }
@@ -419,7 +421,7 @@ namespace web { namespace http
                             // Cancel operations and all async handlers.
                             ctx->m_connection->cancel();
                             // Shut down transmissions and close socket. Also prevents connection being pooled.
-                            ctx->m_connection->close(false);
+                            ctx->m_connection->close();
                         });
                     }
                 }
@@ -499,7 +501,7 @@ namespace web { namespace http
                     {
                         ctx->m_timeout_timer.cancel();
 
-                        ctx->m_connection->close(false);
+                        ctx->m_connection->close();
                         ctx->m_connection = m_pool->obtain();
 
                         auto endpoint = *endpoints;
@@ -754,7 +756,7 @@ namespace web { namespace http
                         {
                             // Connection was closed while connection was in pool.
                             // Ensure connection is closed in a robust way.
-                            ctx->m_connection->close(false);
+                            ctx->m_connection->close();
 
                             // Replace context and destroy the old one. The request,
                             // completion event and cancellation registration are copied to
