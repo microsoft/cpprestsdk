@@ -80,7 +80,7 @@ uri_builder &uri_builder::append_query(const utility::string_t &query, bool is_e
         return *this;
     }
     
-    auto encoded_query = is_encode ? uri::encode_uri(query, uri::components::path) : query;
+    auto encoded_query = is_encode ? uri::encode_uri(query, uri::components::query) : query;
     auto thisQuery = this->query();
     if (thisQuery.empty())
     {
