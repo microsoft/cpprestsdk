@@ -354,19 +354,19 @@ namespace web { namespace http
                     }
                     request_stream << ":" << port << CRLF;
 
-                    // Copy headers to keep the original request state intact.
-                    auto headers(ctx->m_request.headers());
+                    // Extra request headers are constructed here.
+                    utility::string_t extra_headers;
 
                     // Check user specified transfer-encoding.
                     std::string transferencoding;
-                    if (headers.match(header_names::transfer_encoding, transferencoding) && transferencoding == "chunked")
+                    if (ctx->m_request.headers().match(header_names::transfer_encoding, transferencoding) && transferencoding == "chunked")
                     {
                         ctx->m_needChunked = true;
                     }
 
                     bool has_body;
 
-                    if (headers.match(header_names::content_length, ctx->m_known_size))
+                    if (ctx->m_request.headers().match(header_names::content_length, ctx->m_known_size))
                     {
                         // Have request body if content length header field is non-zero.
                         has_body = (0 != ctx->m_known_size);
@@ -378,12 +378,14 @@ namespace web { namespace http
                         {
                             has_body = true;
                             ctx->m_needChunked = true;
-                            headers[header_names::transfer_encoding] = U("chunked");
+                            extra_headers.append(header_names::transfer_encoding);
+                            extra_headers.append(":chunked" + CRLF);
                         }
                         else
                         {
                             has_body = false;
-                            headers[header_names::content_length] = U("0");
+                            extra_headers.append(header_names::content_length);
+                            extra_headers.append(":0" + CRLF);
                         }
                     }
 
@@ -392,10 +394,10 @@ namespace web { namespace http
                         return;
                     }
 
-                    request_stream << flatten_http_headers(headers);
+                    request_stream << flatten_http_headers(ctx->m_request.headers());
+                    request_stream << extra_headers;
                     // Enforce HTTP connection keep alive (even for the old HTTP/1.0 protocol).
-                    request_stream << "Connection: Keep-Alive" << CRLF;
-                    request_stream << CRLF;
+                    request_stream << "Connection: Keep-Alive" << CRLF << CRLF;
 
                     ctx->set_timer(static_cast<int>(client_config().timeout().count()));
 
