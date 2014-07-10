@@ -53,14 +53,13 @@ namespace web { namespace http
             };
 
             class linux_connection_pool;
-            class linux_connection : public std::enable_shared_from_this<linux_connection>
+            class linux_connection
             {
                 friend class linux_connection_pool;
             public:
-                linux_connection(std::weak_ptr<linux_connection_pool> pool_weak, boost::asio::io_service& io_service) :
+                linux_connection(boost::asio::io_service& io_service) :
                     m_socket(io_service),
                     m_pool_timer(io_service),
-                    m_pool_weak(pool_weak),
                     m_is_reused(false),
                     m_keep_alive(true)
                 {}
@@ -88,8 +87,7 @@ namespace web { namespace http
                 bool is_reused() const { return m_is_reused; }
 
                 void set_keep_alive(bool keep_alive) { m_keep_alive = keep_alive; }
-                bool keep_alive() const { return m_keep_alive; }
-
+                bool keep_alive() const { return m_keep_alive; } 
                 tcp::socket& socket() { return m_socket; }
 
             private:
@@ -110,12 +108,11 @@ namespace web { namespace http
 
                 tcp::socket m_socket;
                 boost::asio::deadline_timer m_pool_timer;
-                std::weak_ptr<linux_connection_pool> m_pool_weak;
                 bool m_is_reused;
                 bool m_keep_alive;
             };
 
-            class linux_connection_pool : public std::enable_shared_from_this<linux_connection_pool>
+            class linux_connection_pool
             {
             public:
 
@@ -142,7 +139,7 @@ namespace web { namespace http
                     {
                         connection->cancel();
                         // Remove idle connections from pool after timeout.
-                        connection->start_pool_timer(m_timeout_secs, boost::bind(&linux_connection::handle_pool_timer, connection, boost::asio::placeholders::error));
+                        connection->start_pool_timer(m_timeout_secs, boost::bind(&linux_connection_pool::handle_pool_timer, this, boost::asio::placeholders::error, connection));
 
                         {
                             std::lock_guard<std::mutex> lock(m_connections_mutex);
@@ -162,7 +159,7 @@ namespace web { namespace http
                     {
                         // No connections in pool => create new connection instance.
                         // shared_from_this() is only to create a weak_ptr to pool.
-                        return std::make_shared<linux_connection>(shared_from_this(), m_io_service);
+                        return std::make_shared<linux_connection>(m_io_service);
                     }
                     else
                     {
@@ -177,6 +174,14 @@ namespace web { namespace http
                 {
                     std::lock_guard<std::mutex> lock(m_connections_mutex);
                     m_connections.erase(connection);
+                }
+
+                void handle_pool_timer(const boost::system::error_code& ec, std::shared_ptr<linux_connection> connection)
+                {
+                    if (!ec)
+                    {
+                        remove(connection);
+                    }
                 }
 
             private:
@@ -268,7 +273,7 @@ namespace web { namespace http
                 boost::asio::streambuf m_body_buf;
                 boost::asio::deadline_timer m_timeout_timer;
 
-                ~linux_client_request_context();
+                virtual ~linux_client_request_context();
 
                 void handle_timeout_timer(const boost::system::error_code& ec)
                 {
@@ -300,7 +305,7 @@ namespace web { namespace http
                     : _http_client_communicator(std::move(address), client_config)
                     , m_resolver(crossplat::threadpool::shared_instance().service())
                     , m_io_service(crossplat::threadpool::shared_instance().service())
-                    , m_pool(std::make_shared<linux_connection_pool>(crossplat::threadpool::shared_instance().service(), client_config.timeout()))
+                    , m_pool(crossplat::threadpool::shared_instance().service(), client_config.timeout())
                 {}
 
                 unsigned long open()
@@ -429,7 +434,7 @@ namespace web { namespace http
                 }
 
                 boost::asio::io_service& m_io_service;
-                std::shared_ptr<linux_connection_pool> m_pool;
+                linux_connection_pool m_pool;
 
             private:
                 tcp::resolver m_resolver;
@@ -504,7 +509,7 @@ namespace web { namespace http
                         ctx->m_timeout_timer.cancel();
 
                         ctx->m_connection->close();
-                        ctx->m_connection = m_pool->obtain();
+                        ctx->m_connection = m_pool.obtain();
 
                         auto endpoint = *endpoints;
                         if (ctx->m_ssl_stream)
@@ -1091,7 +1096,7 @@ namespace web { namespace http
                     std::shared_ptr<_http_client_communicator> &client, http_request &request)
             {
                 auto client_cast(std::static_pointer_cast<linux_client>(client));
-                auto connection(client_cast->m_pool->obtain());
+                auto connection(client_cast->m_pool.obtain());
                 return std::make_shared<linux_client_request_context>(client, request, connection);
             }
 
@@ -1099,21 +1104,7 @@ namespace web { namespace http
             {
                 m_timeout_timer.cancel();
                 // Give connection back to the pool where it can be reused.
-                std::static_pointer_cast<linux_client>(m_http_client)->m_pool->release(m_connection);
-            }
-
-            void linux_connection::handle_pool_timer(const boost::system::error_code& ec)
-            {
-                if (!ec)
-                {
-                    if (auto pool_ptr = m_pool_weak.lock())
-                    {
-                        // Remove connection from pool only if pool still exists (lock succeeds).
-                        pool_ptr->remove(shared_from_this());
-                    }
-                    // If lock fails, pool has been destroyed and we let connection object
-                    // to expire via shared_ptr. This should happen when this method returns.
-                }
+                std::static_pointer_cast<linux_client>(m_http_client)->m_pool.release(m_connection);
             }
 
 }}}} // namespaces
