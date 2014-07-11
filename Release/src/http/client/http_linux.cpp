@@ -431,12 +431,18 @@ namespace web { namespace http
                     // Register for notification on cancellation to abort this request.
                     if(request_ctx->m_request._cancellation_token() != pplx::cancellation_token::none())
                     {
-                        ctx->m_cancellationRegistration = request_ctx->m_request._cancellation_token().register_callback([ctx]()
+                        // weak_ptr prevents lambda from taking shared ownership of the context.
+                        // Otherwise context replacement in the handle_status_line() would leak the objects.
+                        std::weak_ptr<linux_client_request_context> ctx_weak(ctx);
+                        ctx->m_cancellationRegistration = request_ctx->m_request._cancellation_token().register_callback([ctx_weak]()
                         {
-                            // Cancel operations and all asio async handlers.
-                            ctx->m_connection->cancel();
-                            // Shut down transmissions, close the socket and prevent connection from being pooled.
-                            ctx->m_connection->close();
+                            if (auto ctx_lock = ctx_weak.lock())
+                            {
+                                // Cancel operations and all asio async handlers.
+                                ctx_lock->m_connection->cancel();
+                                // Shut down transmissions, close the socket and prevent connection from being pooled.
+                                ctx_lock->m_connection->close();
+                            }
                         });
                     }
                 }
