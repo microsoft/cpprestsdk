@@ -64,9 +64,16 @@ namespace web { namespace http
                     m_keep_alive(true)
                 {}
 
+                ~linux_connection()
+                {
+                    close();
+                }
+
                 void close()
                 {
+                    // Ensures closed connections owned by request_context will not be put to pool when they are released.
                     m_keep_alive = false;
+
                     boost::system::error_code error;
                     m_socket.shutdown(tcp::socket::shutdown_both, error);
                     m_socket.close(error);
@@ -124,12 +131,10 @@ namespace web { namespace http
                 ~linux_connection_pool()
                 {
                     std::lock_guard<std::mutex> lock(m_connections_mutex);
-                    // Close all connections. This happens when linux_client is destroyed because
-                    // it only has shared_ptr reference to pool. Connections use weak_ptr instead.
+                    // Cancel the pool timer for all connections.
                     for (auto& connection : m_connections)
                     {
                         connection->cancel_pool_timer();
-                        connection->close();
                     }
                 }
 
@@ -138,27 +143,20 @@ namespace web { namespace http
                     if (connection->keep_alive() && (m_timeout_secs > 0))
                     {
                         connection->cancel();
-                        // Remove idle connections from pool after timeout.
+                        // This will destroy and remove the connection from pool after the set timeout.
+                        // We use 'this' because async calls to timer handler only occur while the pool exists.
                         connection->start_pool_timer(m_timeout_secs, boost::bind(&linux_connection_pool::handle_pool_timer, this, boost::asio::placeholders::error, connection));
 
-                        {
-                            std::lock_guard<std::mutex> lock(m_connections_mutex);
-                            m_connections.insert(connection);
-                        }
+                        put_to_pool(connection);
                     }
-                    else
-                    {
-                        // Connection is not returned to pool => will be destroyed.
-                        connection->close();
-                    }
+                    // Otherwise connection is not put to the pool and it will go out of scope.
                 }
 
                 std::shared_ptr<linux_connection> obtain()
                 {
                     if (is_pool_empty())
                     {
-                        // No connections in pool => create new connection instance.
-                        // shared_from_this() is only to create a weak_ptr to pool.
+                        // No connections in pool => create a new connection instance.
                         return std::make_shared<linux_connection>(m_io_service);
                     }
                     else
@@ -176,11 +174,15 @@ namespace web { namespace http
                     m_connections.erase(connection);
                 }
 
-                void handle_pool_timer(const boost::system::error_code& ec, std::shared_ptr<linux_connection> connection)
+                // Using weak_ptr here ensures bind() to this handler will not prevent the connection object from going out of scope.
+                void handle_pool_timer(const boost::system::error_code& ec, std::weak_ptr<linux_connection> connection)
                 {
                     if (!ec)
                     {
-                        remove(connection);
+                        if (auto connection_shared = connection.lock())
+                        {
+                            remove(connection_shared);
+                        }
                     }
                 }
 
@@ -197,6 +199,12 @@ namespace web { namespace http
                     auto connection(*m_connections.begin());
                     m_connections.erase(m_connections.begin());
                     return connection;
+                }
+
+                void put_to_pool(std::shared_ptr<linux_connection> connection)
+                {
+                    std::lock_guard<std::mutex> lock(m_connections_mutex);
+                    m_connections.insert(connection);
                 }
 
                 boost::asio::io_service& m_io_service;
@@ -425,9 +433,9 @@ namespace web { namespace http
                     {
                         ctx->m_cancellationRegistration = request_ctx->m_request._cancellation_token().register_callback([ctx]()
                         {
-                            // Cancel operations and all async handlers.
+                            // Cancel operations and all asio async handlers.
                             ctx->m_connection->cancel();
-                            // Shut down transmissions and close socket. Also prevents connection being pooled.
+                            // Shut down transmissions, close the socket and prevent connection from being pooled.
                             ctx->m_connection->close();
                         });
                     }
@@ -508,8 +516,8 @@ namespace web { namespace http
                     {
                         ctx->m_timeout_timer.cancel();
 
-                        ctx->m_connection->close();
-                        ctx->m_connection = m_pool.obtain();
+                        // Replace the connection. This causes old connection object to go out of scope.
+                        ctx->m_connection = m_pool.obtain(); 
 
                         auto endpoint = *endpoints;
                         if (ctx->m_ssl_stream)
@@ -761,16 +769,18 @@ namespace web { namespace http
                                 || (boost::asio::error::connection_aborted == ec));
                         if (socket_was_closed && ctx->m_connection->is_reused() && ctx->m_connection->socket().is_open())
                         {
-                            // Connection was closed while connection was in pool.
-                            // Ensure connection is closed in a robust way.
+                            // Failed to write to socket because connection was already closed while it was in the pool.
+                            // close() here ensures socket is closed in a robust way and prevents the connection from being put to the pool again.
                             ctx->m_connection->close();
 
-                            // Replace context and destroy the old one. The request,
-                            // completion event and cancellation registration are copied to
-                            // the new context. This will also obtain a new connection.
+                            // Create a new context and copy the requst object, completion event and
+                            // cancellation registration to maintain the old state.
+                            // This also obtains a new connection from pool.
                             auto new_ctx = details::linux_client_request_context::create_request_context(ctx->m_http_client, ctx->m_request);
                             new_ctx->m_request_completion = ctx->m_request_completion;
                             new_ctx->m_cancellationRegistration = ctx->m_cancellationRegistration;
+
+                            // Replace context with the new one. This causes the old context and connection to go out of scope.
                             ctx = std::static_pointer_cast<linux_client_request_context>(new_ctx);
 
                             // Resend the request using the new context.
@@ -1103,7 +1113,7 @@ namespace web { namespace http
             linux_client_request_context::~linux_client_request_context()
             {
                 m_timeout_timer.cancel();
-                // Give connection back to the pool where it can be reused.
+                // Release connection back to the pool. If connection was not closed, it will be put to the pool for reuse.
                 std::static_pointer_cast<linux_client>(m_http_client)->m_pool.release(m_connection);
             }
 
