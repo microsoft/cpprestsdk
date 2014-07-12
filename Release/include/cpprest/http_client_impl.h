@@ -141,7 +141,7 @@ public:
     /// <summary>
     /// Completes this request, setting the underlying task completion event, and cleaning up the handles
     /// </summary>
-    void complete_request(size_t body_size)
+    void complete_request(utility::size64_t body_size)
     {
         m_response.set_error_code(0);
         m_response._get_impl()->_complete(body_size);

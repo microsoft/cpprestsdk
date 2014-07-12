@@ -583,7 +583,7 @@ protected:
             if(!WinHttpAddRequestHeaders(
                 winhttp_context->m_request_handle,
                 flattened_headers.c_str(),
-                (DWORD)flattened_headers.length(),
+                static_cast<DWORD>(flattened_headers.length()),
                 WINHTTP_ADDREQ_FLAG_ADD))
             {
                 request->report_error(GetLastError(), _XPLATSTR("Error adding request headers"));
@@ -715,7 +715,7 @@ private:
             const size_t chunkSize = pContext->m_http_client->client_config().chunksize();
             if (bytesRead < chunkSize && !firstRead)
             {
-                pContext->complete_request((size_t) pContext->m_downloaded);
+                pContext->complete_request(pContext->m_downloaded);
             }
             else
             {
@@ -724,8 +724,8 @@ private:
 
                 if (!WinHttpReadData(
                     pContext->m_request_handle,
-                    (LPVOID) pContext->m_body_data.get(),
-                    (DWORD) chunkSize,
+                    pContext->m_body_data.get(),
+                    static_cast<DWORD>(chunkSize),
                     nullptr))
                 {
                     pContext->report_error(GetLastError(), _XPLATSTR("Error receiving http response body chunk"));
@@ -795,7 +795,7 @@ private:
             if (!WinHttpWriteData(
                 p_request_context->m_request_handle,
                 &p_request_context->m_body_data.get()[offset],
-                (DWORD) length,
+                static_cast<DWORD>(length),
                 nullptr))
             {
                 p_request_context->report_error(GetLastError(), _XPLATSTR("Error writing data"));
@@ -861,7 +861,7 @@ private:
             if( !WinHttpWriteData(
                 p_request_context->m_request_handle,
                 p_request_context->m_body_data.get(),
-                (DWORD)to_write,
+                static_cast<DWORD>(to_write),
                 nullptr))
             {
                 p_request_context->report_error(GetLastError(), _XPLATSTR("Error writing data"));
@@ -903,7 +903,7 @@ private:
                 if( !WinHttpWriteData(
                     p_request_context->m_request_handle,
                     p_request_context->m_body_data.get(),
-                    (DWORD)read,
+                    static_cast<DWORD>(read),
                     nullptr))
                 {
                     p_request_context->report_error(GetLastError(), _XPLATSTR("Error writing data"));
@@ -1139,7 +1139,7 @@ private:
                         auto progress = p_request_context->m_request._get_impl()->_progress_handler();
                         if ( progress )
                         {
-                            p_request_context->m_uploaded += (size64_t)bytesWritten;
+                            p_request_context->m_uploaded += bytesWritten;
                             try { (*progress)(message_direction::upload, p_request_context->m_uploaded); } catch(...)
                             {
                                 p_request_context->report_exception(std::current_exception());
@@ -1240,8 +1240,8 @@ private:
                         // Read in body all at once.
                         if(!WinHttpReadData(
                             hRequestHandle,
-                            (LPVOID)p_request_context->m_body_data.get(),
-                            (DWORD)num_bytes,
+                            p_request_context->m_body_data.get(),
+                            num_bytes,
                             nullptr))
                         {
                             p_request_context->report_error(GetLastError(), _XPLATSTR("Error receiving http body chunk"));
@@ -1261,7 +1261,7 @@ private:
                             }
                         }
 
-                        p_request_context->complete_request((size_t)p_request_context->m_downloaded);
+                        p_request_context->complete_request(p_request_context->m_downloaded);
                     }
                     break;
                 }
@@ -1286,7 +1286,7 @@ private:
                     // If no bytes have been read, then this is the end of the response.
                     if (bytesRead == 0)
                     {
-                        p_request_context->complete_request((size_t) p_request_context->m_downloaded);
+                        p_request_context->complete_request(p_request_context->m_downloaded);
                         break;
                     }
 
