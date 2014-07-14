@@ -1272,7 +1272,7 @@ private:
 
                     // Report progress about downloaded bytes.
                     auto progress = p_request_context->m_request._get_impl()->_progress_handler();
-                    p_request_context->m_downloaded += (size64_t) statusInfoLength;
+                    p_request_context->m_downloaded += statusInfoLength;
                     if (progress)
                     {
                         try { (*progress)(message_direction::download, p_request_context->m_downloaded); }
