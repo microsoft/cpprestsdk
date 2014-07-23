@@ -98,7 +98,7 @@ public:
     http_client_config() : 
         m_guarantee_order(false),
         m_timeout(utility::seconds(30)),
-        m_chunksize(64 * 1024)
+        m_chunksize(0)
 #if !defined(__cplusplus_winrt)
         , m_validate_certificates(true)
 #endif
@@ -227,7 +227,7 @@ public:
     /// <returns>The internal buffer size used by the http client when sending and receiving data from the network.</returns>
     size_t chunksize() const
     {
-        return m_chunksize;
+        return m_chunksize == 0 ? 64 * 1024 : m_chunksize;
     }
 
     /// <summary>
@@ -238,6 +238,16 @@ public:
     void set_chunksize(size_t size)
     {
         m_chunksize = size;
+    }
+
+    /// <summary>
+    /// Returns true if the default chunk size is in use.
+    /// <remarks>If true, implementations are allowed to choose whatever size is best.</remarks>
+    /// </summary>
+    /// <returns>True if default, false if set by user.</returns>
+    bool is_default_chunksize() const
+    {
+        return m_chunksize == 0;
     }
 
 #if !defined(__cplusplus_winrt)

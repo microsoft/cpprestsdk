@@ -18,7 +18,7 @@
 *
 * json_parsing.cpp
 *
-* HTTP Library: JSON parser and writer
+* HTTP Library: JSON parser
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
 *

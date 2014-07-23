@@ -124,7 +124,7 @@ public:
         if (m_request->m_exceptionPtr != nullptr)
             m_request->report_exception(m_request->m_exceptionPtr);
         else    
-            m_request->complete_request((size_t)m_request->m_downloaded);
+            m_request->complete_request(m_request->m_downloaded);
 
         // Break the circular reference loop.
         //     - winrt_request_context holds a reference to IXmlHttpRequest2
