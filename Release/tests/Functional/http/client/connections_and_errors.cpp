@@ -326,7 +326,7 @@ TEST_FIXTURE(uri_address, cancel_with_error)
     VERIFY_THROWS_HTTP_ERROR_CODE(responseTask.get(), std::errc::operation_canceled);
 }
 
-TEST_FIXTURE(uri_address, cancel_while_uploading_data)
+TEST_FIXTURE(uri_address, cancel_while_uploading_data, "Ignore:Linux", "220", "Ignore:Apple", "220")
 {
     test_http_server::scoped_server scoped(m_uri);
     http_client c(m_uri);
