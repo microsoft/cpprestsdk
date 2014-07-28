@@ -64,9 +64,9 @@ void auth_helper(test_websocket_server& server, utility::string_t username = U("
 TEST_FIXTURE(uri_address, auth_no_credentials, "Ignore:Linux", "NYI", "Ignore:Apple", "NYI")
 {
     test_websocket_server server;
-    websocket_client client(m_uri);
+    websocket_client client;
     auth_helper(server);
-    VERIFY_THROWS(client.connect().wait(), websocket_exception);
+    VERIFY_THROWS(client.connect(m_uri).wait(), websocket_exception);
 }
 
 // Connect with credentials
@@ -76,18 +76,18 @@ TEST_FIXTURE(uri_address, auth_with_credentials, "Ignore:Linux", "NYI", "Ignore:
     websocket_client_config config;   
     web::credentials cred(U("user"), U("password"));
     config.set_credentials(cred);
-    websocket_client client(m_uri, config);
+    websocket_client client(config);
 
     auth_helper(server, cred.username(), cred.password());
-    client.connect().wait();
+    client.connect(m_uri).wait();
     client.close().wait();
 }
 
 // Send and receive text message over SSL
 TEST_FIXTURE(uri_address, ssl_test, "Ignore", "Manual")
 {
-    websocket_client client(U("wss://echo.websocket.org/"));
-    client.connect().wait();
+    websocket_client client;
+    client.connect(U("wss://echo.websocket.org/")).wait();
     std::string body_str("hello");
 
     auto receive_task = client.receive().then([body_str](websocket_incoming_message ret_msg)

@@ -72,10 +72,9 @@ private:
 class winrt_client : public _websocket_client_impl, public std::enable_shared_from_this<winrt_client>
 {
 public:
-    winrt_client(web::uri address, websocket_client_config client_config)
-        : _websocket_client_impl(std::move(address), std::move(client_config)), m_scheduled(0), m_client_closed(false)
+    winrt_client(websocket_client_config client_config)
+        : _websocket_client_impl(std::move(client_config)), m_scheduled(0), m_client_closed(false)
     {
-        verify_uri(m_uri);
         m_msg_websocket = ref new MessageWebSocket();
 
         // Sets the HTTP request headers to the HTTP request message used in the WebSocket protocol handshake 
@@ -153,6 +152,8 @@ public:
 
     pplx::task<void> connect()
     {
+        verify_uri(m_uri);
+
         const auto &proxy = config().proxy();
         if(!proxy.is_default())
         {
@@ -171,7 +172,7 @@ public:
 
         m_msg_websocket->MessageReceived += ref new TypedEventHandler<MessageWebSocket^, MessageWebSocketMessageReceivedEventArgs^>(m_context, &ReceiveContext::OnReceive);
         m_msg_websocket->Closed += ref new TypedEventHandler<IWebSocket^, WebSocketClosedEventArgs^>(m_context, &ReceiveContext::OnClosed);
-
+        
         return pplx::create_task(m_msg_websocket->ConnectAsync(uri)).then([=](pplx::task<void> result) -> pplx::task<void>
         {
             try
@@ -458,13 +459,13 @@ void ReceiveContext::OnClosed(IWebSocket^ sender, WebSocketClosedEventArgs^ args
 }
 }
 
-websocket_client::websocket_client(web::uri base_uri)
-:m_client(std::make_shared<details::winrt_client>(std::move(base_uri), websocket_client_config()))
+websocket_client::websocket_client()
+    :m_client(std::make_shared<details::winrt_client>(websocket_client_config()))
 {
 }
 
-websocket_client::websocket_client(web::uri base_uri, websocket_client_config config)
-:m_client(std::make_shared<details::winrt_client>(std::move(base_uri), std::move(config)))
+websocket_client::websocket_client(websocket_client_config config)
+    :m_client(std::make_shared<details::winrt_client>(std::move(config)))
 {
 }
 

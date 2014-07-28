@@ -93,15 +93,12 @@ private:
         DESTROYED
     };
 public:
-    ws_desktop_client(web::uri address,
-                      websocket_client_config client_config)
-        : _websocket_client_impl(std::move(address), std::move(client_config)),
+    ws_desktop_client(websocket_client_config client_config)
+        : _websocket_client_impl(std::move(client_config)),
           m_work(new boost::asio::io_service::work(m_service)),
           m_state(UNINITIALIZED),
           m_scheduled(0)
         {
-            verify_uri(m_uri);
-
             m_client.clear_access_channels(websocketpp::log::alevel::all);
             m_client.clear_error_channels(websocketpp::log::alevel::all);
 
@@ -166,7 +163,7 @@ public:
         if (m_state == CONNECTED)
         {
             m_state = CLOSING;
-
+            
             websocketpp::lib::error_code ec;
             m_client.close(m_con, static_cast<websocketpp::close::status::value>(status), utility::conversions::to_utf8string(reason), ec);
             if (ec.value() != 0)
@@ -180,6 +177,8 @@ public:
 
     pplx::task<void> connect()
     {
+        verify_uri(m_uri);
+
         _ASSERTE(m_state == INITIALIZED);
         m_client.set_open_handler([this](websocketpp::connection_hdl)
         {
@@ -530,17 +529,15 @@ private:
 
 }
 
-websocket_client::websocket_client(web::uri base_uri)
-    :m_client(std::make_shared<details::ws_desktop_client>(
-                  std::move(base_uri), websocket_client_config()))
-        {
-        }
+websocket_client::websocket_client()
+    :m_client(std::make_shared<details::ws_desktop_client>(websocket_client_config()))
+{
+}
 
-websocket_client::websocket_client(web::uri base_uri, websocket_client_config config)
-    :m_client(std::make_shared<details::ws_desktop_client>(
-                  std::move(base_uri), std::move(config)))
-        {
-        }
+websocket_client::websocket_client(websocket_client_config config)
+    : m_client(std::make_shared<details::ws_desktop_client>(std::move(config)))
+{
+}
 
 }}}}
 
