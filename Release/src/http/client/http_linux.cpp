@@ -30,6 +30,7 @@
 #include "stdafx.h"
 
 #include "cpprest/http_client_impl.h"
+#include "cpprest/x509_cert_utilities.h"
 #include <unordered_set>
 
 using boost::asio::ip::tcp;
@@ -280,7 +281,7 @@ namespace web { namespace http
                 bool m_timedout;
                 boost::asio::streambuf m_body_buf;
                 boost::asio::deadline_timer m_timeout_timer;
-
+                
                 virtual ~linux_client_request_context();
 
                 void handle_timeout_timer(const boost::system::error_code& ec)
@@ -485,7 +486,7 @@ namespace web { namespace http
                             if(client_config().validate_certificates())
                             {
                                 ctx->m_ssl_stream->set_verify_mode(boost::asio::ssl::context::verify_peer);
-                                ctx->m_ssl_stream->set_verify_callback(boost::asio::ssl::rfc2818_verification(m_uri.host()));
+                                ctx->m_ssl_stream->set_verify_callback(boost::bind(&linux_client::handle_cert_verification, shared_from_this(), _1, _2));
                             }
                             else
                             {
@@ -536,7 +537,7 @@ namespace web { namespace http
                             if(client_config().validate_certificates())
                             {
                                 ctx->m_ssl_stream->set_verify_mode(boost::asio::ssl::context::verify_peer);
-                                ctx->m_ssl_stream->set_verify_callback(boost::asio::ssl::rfc2818_verification(m_uri.host()));
+                                ctx->m_ssl_stream->set_verify_callback(boost::bind(&linux_client::handle_cert_verification, shared_from_this(), _1, _2));
                             }
                             else
                             {
@@ -546,6 +547,53 @@ namespace web { namespace http
 
                         ctx->m_connection->socket().async_connect(endpoint, boost::bind(&linux_client::handle_connect, shared_from_this(), boost::asio::placeholders::error, ++endpoints, ctx));
                     }
+                }
+
+                bool handle_cert_verification(bool preverified, boost::asio::ssl::verify_context &ctx)
+                {
+#if defined(__APPLE__)
+                    // The 'leaf', non-Certificate Authority (CA) certificate, i.e. actual server certificate
+                    // is at the '0' position in the certificate chain, the rest are optional intermediate
+                    // certificates, followed finally by the root CA self signed certificate.
+                        
+                    // OpenSSL calls the verification callback once per certificate in the chain,
+                    // starting with the root CA certificate. We will be performing verification all
+                    // at once using the whole certificate chain so wait until the 'leaf' cert.
+                    X509_STORE_CTX *storeContext = ctx.native_handle();
+                    int currentDepth = X509_STORE_CTX_get_error_depth(storeContext);
+                    if(currentDepth == 0)
+                    {
+                        // preverified false means OpenSSL falied to verify the certificate successfully.
+                        // On OS X, iOS, or Android, OpenSSL doesn't have access to where the OS stores keychains.
+                        // To work around this we fall back to the OS facilities to verify the server certificate.
+                        if(!preverified)
+                        {
+                            STACK_OF(X509) *certStack = X509_STORE_CTX_get_chain(ctx.native_handle());
+                            const int numCerts = sk_X509_num(certStack);
+                            std::vector<std::string> certChain;
+                           
+                            for(int i = 0; i < numCerts; ++i)
+                            {
+                                X509 *cert = sk_X509_value(certStack, i);
+                                
+                                // Encode into DER format into raw memory.
+                                unsigned char * buffer = nullptr;
+                                const int len = i2d_X509(cert, &buffer);
+                                if(len < 0)
+                                {
+                                    return false;
+                                }
+                                
+                                certChain.emplace_back(reinterpret_cast<char *>(buffer), len);
+                            }
+                            
+                            return verify_X509_cert_chain(certChain, m_uri.host());
+                        }
+                    }
+#endif
+
+                    boost::asio::ssl::rfc2818_verification rfc2818(m_uri.host());
+                    return rfc2818(preverified, ctx);
                 }
 
                 void handle_handshake(const boost::system::error_code& ec, std::shared_ptr<linux_client_request_context> ctx)
