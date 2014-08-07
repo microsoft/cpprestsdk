@@ -47,7 +47,10 @@ template <typename T>
 class cf_ref
 {
 public:
-    cf_ref(T v) : value(v) {}
+    cf_ref(T v) : value(v)
+    {
+        static_assert(sizeof(cf_ref<T>) == sizeof(T), "Code assumes just a wrapper, see usage in CFArrayCreate below.");
+    }
     cf_ref() : value(nullptr) {}
     cf_ref(cf_ref &&other) : value(other.value) { other.value = nullptr; }
     
@@ -77,8 +80,7 @@ bool verify_X509_cert_chain(const std::vector<std::string> &certChain, const std
     std::vector<cf_ref<SecCertificateRef>> certs;
     for(const auto & certBuf : certChain)
     {
-        cf_ref<CFDataRef> certDataRef;
-        certDataRef.get() = CFDataCreateWithBytesNoCopy(kCFAllocatorDefault,
+        cf_ref<CFDataRef> certDataRef = CFDataCreateWithBytesNoCopy(kCFAllocatorDefault,
                                                                    reinterpret_cast<const unsigned char*>(certBuf.c_str()),
                                                                    certBuf.size(),
                                                                    kCFAllocatorNull);
@@ -94,8 +96,7 @@ bool verify_X509_cert_chain(const std::vector<std::string> &certChain, const std
         }
         certs.push_back(std::move(certObj));
     }
-    cf_ref<CFArrayRef> certsArray;
-    certsArray.get() = CFArrayCreate(kCFAllocatorDefault, const_cast<const void **>(reinterpret_cast<void **>(&certs[0])), certs.size(), nullptr);
+    cf_ref<CFArrayRef> certsArray = CFArrayCreate(kCFAllocatorDefault, const_cast<const void **>(reinterpret_cast<void **>(&certs[0])), certs.size(), nullptr);
     if(certsArray.get() == nullptr)
     {
         return false;
@@ -104,8 +105,7 @@ bool verify_X509_cert_chain(const std::vector<std::string> &certChain, const std
     // Create trust management object with certificates and SSL policy.
     // Note: SecTrustCreateWithCertificates expects the certificate to be
     // verified is the first element.
-    cf_ref<CFStringRef> cfHostName;
-    cfHostName.get() = CFStringCreateWithCStringNoCopy(kCFAllocatorDefault,
+    cf_ref<CFStringRef> cfHostName = CFStringCreateWithCStringNoCopy(kCFAllocatorDefault,
                                                                     hostName.c_str(),
                                                                     kCFStringEncodingASCII,
                                                                     kCFAllocatorNull);
@@ -113,8 +113,7 @@ bool verify_X509_cert_chain(const std::vector<std::string> &certChain, const std
     {
         return false;
     }
-    cf_ref<SecPolicyRef> policy;
-    policy.get() = SecPolicyCreateSSL(true /* client side */, cfHostName.get());
+    cf_ref<SecPolicyRef> policy = SecPolicyCreateSSL(true /* client side */, cfHostName.get());
     cf_ref<SecTrustRef> trust;
     OSStatus status = SecTrustCreateWithCertificates(certsArray.get(), policy.get(), &trust.get());
     if(status == noErr)
