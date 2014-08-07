@@ -453,7 +453,10 @@ namespace web { namespace http
 
             private:
                 tcp::resolver m_resolver;
-
+#if defined(__APPLE__)
+                bool m_openssl_failed;
+#endif
+                
                 static bool _check_streambuf(std::shared_ptr<linux_client_request_context> ctx, concurrency::streams::streambuf<uint8_t> rdbuf, const utility::char_t* msg)
                 {
                     if (!rdbuf.is_open())
@@ -487,6 +490,7 @@ namespace web { namespace http
                             {
                                 ctx->m_ssl_stream->set_verify_mode(boost::asio::ssl::context::verify_peer);
                                 ctx->m_ssl_stream->set_verify_callback(boost::bind(&linux_client::handle_cert_verification, shared_from_this(), _1, _2));
+                                m_openssl_failed = false;
                             }
                             else
                             {
@@ -538,6 +542,7 @@ namespace web { namespace http
                             {
                                 ctx->m_ssl_stream->set_verify_mode(boost::asio::ssl::context::verify_peer);
                                 ctx->m_ssl_stream->set_verify_callback(boost::bind(&linux_client::handle_cert_verification, shared_from_this(), _1, _2));
+                                m_openssl_failed = false;
                             }
                             else
                             {
@@ -551,47 +556,66 @@ namespace web { namespace http
 
                 bool handle_cert_verification(bool preverified, boost::asio::ssl::verify_context &ctx)
                 {
-#if defined(__APPLE__)
-                    // The 'leaf', non-Certificate Authority (CA) certificate, i.e. actual server certificate
-                    // is at the '0' position in the certificate chain, the rest are optional intermediate
-                    // certificates, followed finally by the root CA self signed certificate.
-                        
                     // OpenSSL calls the verification callback once per certificate in the chain,
-                    // starting with the root CA certificate. We will be performing verification all
-                    // at once using the whole certificate chain so wait until the 'leaf' cert.
-                    X509_STORE_CTX *storeContext = ctx.native_handle();
-                    int currentDepth = X509_STORE_CTX_get_error_depth(storeContext);
-                    if(currentDepth == 0)
+                    // starting with the root CA certificate. The 'leaf', non-Certificate Authority (CA)
+                    // certificate, i.e. actual server certificate is at the '0' position in the
+                    // certificate chain, the rest are optional intermediate certificates, followed
+                    // finally by the root CA self signed certificate.
+                    
+#if defined(__APPLE__)
+                    if(!preverified)
                     {
-                        // preverified false means OpenSSL falied to verify the certificate successfully.
-                        // On OS X, iOS, or Android, OpenSSL doesn't have access to where the OS stores keychains.
-                        // To work around this we fall back to the OS facilities to verify the server certificate.
-                        if(!preverified)
+                        m_openssl_failed = true;
+                    }
+                    if(m_openssl_failed)
+                    {
+                        // On OS X, iOS, and Android, OpenSSL doesn't have access to where the OS
+                        // stores keychains. If OpenSSL fails we will doing verification at the
+                        // end using the whole certificate chain so wait until the 'leaf' cert.
+                        // For now return true so OpenSSL continues down the certificate chain.
+                        X509_STORE_CTX *storeContext = ctx.native_handle();
+                        int currentDepth = X509_STORE_CTX_get_error_depth(storeContext);
+                        if(currentDepth != 0)
                         {
-                            STACK_OF(X509) *certStack = X509_STORE_CTX_get_chain(ctx.native_handle());
-                            const int numCerts = sk_X509_num(certStack);
-                            std::vector<std::string> certChain;
-                           
-                            for(int i = 0; i < numCerts; ++i)
-                            {
-                                X509 *cert = sk_X509_value(certStack, i);
-                                
-                                // Encode into DER format into raw memory.
-                                unsigned char * buffer = nullptr;
-                                const int len = i2d_X509(cert, &buffer);
-                                if(len < 0)
-                                {
-                                    return false;
-                                }
-                                
-                                certChain.emplace_back(reinterpret_cast<char *>(buffer), len);
-                            }
-                            
-                            return verify_X509_cert_chain(certChain, m_uri.host());
+                            return true;
                         }
+                    
+                        STACK_OF(X509) *certStack = X509_STORE_CTX_get_chain(storeContext);
+                        const int numCerts = sk_X509_num(certStack);
+                        if(numCerts < 0)
+                        {
+                            return false;
+                        }
+                    
+                        std::vector<std::string> certChain;
+                        certChain.reserve(numCerts);
+                        for(int i = 0; i < numCerts; ++i)
+                        {
+                            X509 *cert = sk_X509_value(certStack, i);
+                                
+                            // Encode into DER format into raw memory.
+                            int len = i2d_X509(cert, nullptr);
+                            if(len < 0)
+                            {
+                                return false;
+                            }
+                        
+                            std::string certData;
+                            certData.resize(len);
+                            unsigned char * buffer = reinterpret_cast<unsigned char *>(&certData[0]);
+                            len = i2d_X509(cert, &buffer);
+                            if(len < 0)
+                            {
+                                return false;
+                            }
+                        
+                            certChain.push_back(std::move(certData));
+                        }
+                    
+                        return verify_X509_cert_chain(certChain, m_uri.host());
                     }
 #endif
-
+                    
                     boost::asio::ssl::rfc2818_verification rfc2818(m_uri.host());
                     return rfc2818(preverified, ctx);
                 }
@@ -604,7 +628,7 @@ namespace web { namespace http
                     }
                     else
                     {
-                        ctx->report_error("Error code in handle_handshake is ", ec, httpclient_errorcode_context::handshake);
+                        ctx->report_error("Error in SSL handshake", ec, httpclient_errorcode_context::handshake);
                     }
                 }
 

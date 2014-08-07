@@ -44,13 +44,14 @@ namespace web { namespace http { namespace client { namespace details {
 
 // Simple RAII pattern wrapper to perform CFRelease on objects.
 template <typename T>
-class CFRef
+class cf_ref
 {
 public:
-    CFRef(T v) : value(v) {}
-    CFRef() : value(nullptr) {}
-
-    ~CFRef()
+    cf_ref(T v) : value(v) {}
+    cf_ref() : value(nullptr) {}
+    cf_ref(cf_ref &&other) : value(other.value) { other.value = nullptr; }
+    
+    ~cf_ref()
     {
         if(value != nullptr)
         {
@@ -58,38 +59,14 @@ public:
         }
     }
 
-    T & Get()
+    T & get()
     {
         return value;
     }
 private:
+    cf_ref(const cf_ref &);
+    cf_ref & operator=(const cf_ref &);
     T value;
-};
-    
-template <typename T>
-class CFVectorRef
-{
-public:
-    CFVectorRef() {}
-    ~CFVectorRef()
-    {
-        for(auto & item : container)
-        {
-            CFRelease(item);
-        }
-    }
-    
-    void push_back(T item)
-    {
-        container.push_back(item);
-    }
-    std::vector<T> & items()
-    {
-        return container;
-    }
-    
-private:
-    std::vector<T> container;
 };
 
 bool verify_X509_cert_chain(const std::vector<std::string> &certChain, const std::string &hostName)
@@ -97,27 +74,29 @@ bool verify_X509_cert_chain(const std::vector<std::string> &certChain, const std
     // Build up CFArrayRef with all the certificates.
     // All this code is basically just to get into the correct structures for the Apple APIs.
     // Copies are avoided whenever possible.
-    CFVectorRef<SecCertificateRef> certs;
+    std::vector<cf_ref<SecCertificateRef>> certs;
     for(const auto & certBuf : certChain)
     {
-        CFRef<CFDataRef> certDataRef = CFDataCreateWithBytesNoCopy(kCFAllocatorDefault,
+        cf_ref<CFDataRef> certDataRef;
+        certDataRef.get() = CFDataCreateWithBytesNoCopy(kCFAllocatorDefault,
                                                                    reinterpret_cast<const unsigned char*>(certBuf.c_str()),
                                                                    certBuf.size(),
                                                                    kCFAllocatorNull);
-        if(certDataRef.Get() == nullptr)
+        if(certDataRef.get() == nullptr)
         {
             return false;
         }
         
-        SecCertificateRef certObj = SecCertificateCreateWithData(nullptr, certDataRef.Get());
-        if(certObj == nullptr)
+        cf_ref<SecCertificateRef> certObj = SecCertificateCreateWithData(nullptr, certDataRef.get());
+        if(certObj.get() == nullptr)
         {
             return false;
         }
-        certs.push_back(certObj);
+        certs.push_back(std::move(certObj));
     }
-    CFRef<CFArrayRef> certsArray = CFArrayCreate(kCFAllocatorDefault, (const void **)&certs.items()[0], certs.items().size(), nullptr);
-    if(certsArray.Get() == nullptr)
+    cf_ref<CFArrayRef> certsArray;
+    certsArray.get() = CFArrayCreate(kCFAllocatorDefault, const_cast<const void **>(reinterpret_cast<void **>(&certs[0])), certs.size(), nullptr);
+    if(certsArray.get() == nullptr)
     {
         return false;
     }
@@ -125,22 +104,24 @@ bool verify_X509_cert_chain(const std::vector<std::string> &certChain, const std
     // Create trust management object with certificates and SSL policy.
     // Note: SecTrustCreateWithCertificates expects the certificate to be
     // verified is the first element.
-    CFRef<CFStringRef> cfHostName = CFStringCreateWithCStringNoCopy(kCFAllocatorDefault,
-                                                                    &hostName[0],
+    cf_ref<CFStringRef> cfHostName;
+    cfHostName.get() = CFStringCreateWithCStringNoCopy(kCFAllocatorDefault,
+                                                                    hostName.c_str(),
                                                                     kCFStringEncodingASCII,
                                                                     kCFAllocatorNull);
-    if(cfHostName.Get() == nullptr)
+    if(cfHostName.get() == nullptr)
     {
         return false;
     }
-    CFRef<SecPolicyRef> policy = SecPolicyCreateSSL(true /* client side */, cfHostName.Get());
-    CFRef<SecTrustRef> trust;
-    OSStatus status = SecTrustCreateWithCertificates(certsArray.Get(), policy.Get(), &trust.Get());
+    cf_ref<SecPolicyRef> policy;
+    policy.get() = SecPolicyCreateSSL(true /* client side */, cfHostName.get());
+    cf_ref<SecTrustRef> trust;
+    OSStatus status = SecTrustCreateWithCertificates(certsArray.get(), policy.get(), &trust.get());
     if(status == noErr)
     {
         // Perform actual certificate verification.
         SecTrustResultType trustResult;
-        status = SecTrustEvaluate(trust.Get(), &trustResult);
+        status = SecTrustEvaluate(trust.get(), &trustResult);
         if(status == noErr && (trustResult == kSecTrustResultUnspecified || trustResult == kSecTrustResultProceed))
         {
             return true;
