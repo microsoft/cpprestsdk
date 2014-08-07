@@ -224,7 +224,7 @@ namespace platform
                 _M_cs.lock();
                 _M_owner = id;
                 _M_recursionCount = 1;
-            }
+            }            
         }
 
         void unlock()
@@ -238,7 +238,7 @@ namespace platform
             {
                 _M_owner = -1;
                 _M_cs.unlock();
-            }
+            }           
         }
 
     private:
@@ -312,7 +312,7 @@ namespace extensibility
 #else
     typedef details::linux_scheduler default_scheduler_t;
 #endif
-
+    
 namespace details
 {
     /// <summary>

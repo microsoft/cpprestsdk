@@ -103,7 +103,8 @@ if(WIN32)
   set_target_properties(${Casablanca_LIBRARY} PROPERTIES
     OUTPUT_NAME "${Casablanca_LIBRARY}_${CPPREST_VERSION_MAJOR}_${CPPREST_VERSION_MINOR}")
 elseif(ANDROID)
-  # Do not use SOVERSION on android
+  # Do not use SOVERSION on android. It is completely unsupported (and causes problems).
+  # Perhaps revisit in the future? (NDK r9d, 8/7/14)
 else()
   set_target_properties(${Casablanca_LIBRARY} PROPERTIES
     SOVERSION ${CPPREST_VERSION_MAJOR}.${CPPREST_VERSION_MINOR})

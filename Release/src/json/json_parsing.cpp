@@ -34,6 +34,8 @@
 namespace crossplat
 {
 // These two are initialized in threadpool.cpp
+// HACK: This uses silently shared global variables. Revisit in the future if android
+//       JNI code gets its own header and cpp file.
 extern jmethodID java_parseDouble;
 extern jclass java_lang_double;
 }
@@ -406,15 +408,27 @@ namespace
 #ifdef ANDROID
     static double anystod(const char* str)
     {
+        // HACK: To work around issues with bionic's strtod() implementation, we ship
+        //       the string to parse into java, call the java function
+        //       java.lang.Double.parseDouble(), and bring it back down to native code.
+        //
+        // The strtod() bug causes problems when parsing large strings; furthermore, it
+        // is arguable that it uses "locale" information, which is announced as being
+        // off-limits for native code.
+        //
+        // It is highly unlikely this situation will be remedied due to ecosystem
+        // fragmentation.
         if (str == nullptr)
             str = "";
 
-	auto env = crossplat::get_jvm_env();
+        auto env = crossplat::get_jvm_env();
 
         jdouble parsed_double;
 
         crossplat::java_local_ref<jstring> jstr{env->NewStringUTF(str)};
-        parsed_double = env->CallStaticDoubleMethod(crossplat::java_lang_double, crossplat::java_parseDouble, jstr.get());
+        parsed_double = env->CallStaticDoubleMethod(crossplat::java_lang_double,
+                                                    crossplat::java_parseDouble,
+                                                    jstr.get());
 
         jthrowable exc = env->ExceptionOccurred();
         if (exc)

@@ -883,6 +883,15 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
     }
 
 #if defined(ANDROID)
+    // HACK: The (nonportable?) POSIX function timegm is not available in
+    //       bionic. As a workaround[1][2], we set the C library timezone to
+    //       UTC, call mktime, then set the timezone back. However, the C
+    //       environment is fundamentally a shared global resource and thread-
+    //       unsafe. We can protect our usage here, however any other code might
+    //       manipulate the environment at the same time.
+    //
+    // [1] http://linux.die.net/man/3/timegm
+    // [2] http://www.gnu.org/software/libc/manual/html_node/Broken_002ddown-Time.html
     time_t time;
 
     static boost::mutex env_var_lock;

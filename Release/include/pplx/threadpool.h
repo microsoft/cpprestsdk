@@ -43,6 +43,7 @@
 namespace crossplat {
 
 #if defined(ANDROID)
+// IDEA: Break this section into a separate android/jni header
 extern std::atomic<JavaVM*> JVM;
 JNIEnv* get_jvm_env();
 
@@ -130,8 +131,8 @@ private:
         {
             pplx::details::platform::YieldExecution();
         }
-	// Calling get_jvm_env() here forces the thread to be attached.
-	get_jvm_env();
+        // Calling get_jvm_env() here forces the thread to be attached.
+        get_jvm_env();
         pthread_cleanup_push(detach_from_java, nullptr);
 #endif
         threadpool* _this = reinterpret_cast<threadpool*>(arg);

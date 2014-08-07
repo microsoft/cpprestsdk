@@ -154,7 +154,8 @@ TEST_FIXTURE(uri_address, requests_with_data)
         try
         {
             http_asserts::assert_response_equals(responses[i].get(), code);
-        } catch (...)
+        }
+        catch (...)
         {
             VERIFY_ARE_EQUAL(1, 0);
         }
@@ -198,7 +199,8 @@ TEST_FIXTURE(uri_address, responses_with_data)
             http_response rsp = responses[i].get();
             http_asserts::assert_response_equals(rsp, code, headers);
             VERIFY_ARE_EQUAL(to_string_t(request_body), rsp.extract_string().get());
-        } catch (...)
+        }
+        catch (...)
         {
             VERIFY_ARE_EQUAL(1, 0);
         }
