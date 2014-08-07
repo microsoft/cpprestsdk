@@ -490,7 +490,9 @@ namespace web { namespace http
                             {
                                 ctx->m_ssl_stream->set_verify_mode(boost::asio::ssl::context::verify_peer);
                                 ctx->m_ssl_stream->set_verify_callback(boost::bind(&linux_client::handle_cert_verification, shared_from_this(), _1, _2));
+#if defined(__APPLE__)
                                 m_openssl_failed = false;
+#endif
                             }
                             else
                             {
@@ -542,7 +544,9 @@ namespace web { namespace http
                             {
                                 ctx->m_ssl_stream->set_verify_mode(boost::asio::ssl::context::verify_peer);
                                 ctx->m_ssl_stream->set_verify_callback(boost::bind(&linux_client::handle_cert_verification, shared_from_this(), _1, _2));
+#if defined(__APPLE__)
                                 m_openssl_failed = false;
+#endif
                             }
                             else
                             {
