@@ -40,6 +40,9 @@
 #include <cstdint>
 #endif
 
+#include "compat/SafeInt3.hpp"
+typedef SafeInt<size_t> SafeSize;
+
 namespace utility
 {
 
@@ -50,6 +53,10 @@ namespace utility
 // We should be using a 64-bit size type for most situations that do
 // not involve specifying the size of a memory allocation or buffer.
 typedef uint64_t size64_t;
+
+#ifndef _MS_WINDOWS
+typedef uint32_t HRESULT; // Needed for PPLX
+#endif
 
 #ifdef _UTF16_STRINGS
 //

@@ -26,7 +26,6 @@
 ****/
 #pragma once
 
-#include "compat\safeint3.hpp"
 #include <string>
 
 #if _MSC_VER >= 1700
@@ -53,11 +52,3 @@ typedef std::wostringstream utf16ostringstream;
 typedef std::wostream utf16ostream;
 typedef std::wistream utf16istream;
 typedef std::wistringstream utf16istringstream;
-
-#define _XPLATSTR(x) L ## x
-
-#ifndef _TURN_OFF_PLATFORM_STRING
-#define U(x) _XPLATSTR(x)
-#endif // !_TURN_OFF_PLATFORM_STRING
-
-typedef SafeInt<size_t> SafeSize;

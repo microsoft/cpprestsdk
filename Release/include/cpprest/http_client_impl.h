@@ -327,7 +327,7 @@ private:
         // First see if client needs to be opened.
         auto error = open_if_required();
 
-        if (error != S_OK)
+        if (error != 0)
         {
             // Failed to open
             request->report_error(error, _XPLATSTR("Open failed"));
@@ -343,18 +343,18 @@ private:
 
     unsigned long open_if_required()
     {
-        unsigned long error = S_OK;
+        unsigned long error = 0;
 
-        if( !m_opened )
+        if(!m_opened)
         {
             pplx::extensibility::scoped_critical_section_t l(m_open_lock);
 
             // Check again with the lock held
-            if ( !m_opened )
+            if (!m_opened)
             {
                 error = open();
 
-                if (error == S_OK)
+                if (error == 0)
                 {
                     m_opened = true;
                 }

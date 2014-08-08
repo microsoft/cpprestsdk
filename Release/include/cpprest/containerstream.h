@@ -65,12 +65,12 @@ namespace Concurrency { namespace streams {
     namespace details {
 
     /// <summary>
-        /// The basic_container_buffer class serves as a memory-based steam buffer that supports writing or reading
+    /// The basic_container_buffer class serves as a memory-based steam buffer that supports writing or reading
     /// sequences of characters.
-        /// The class itself should not be used in application code, it is used by the stream definitions farther down in the header file.
+    /// The class itself should not be used in application code, it is used by the stream definitions farther down in the header file.
     /// </summary>
-        /// <remarks> When closed, neither writing nor reading is supported any longer. <c>basic_container_buffer</c> does not support simultaneous use of the buffer
-        /// for reading and writing.</remarks>
+    /// <remarks> When closed, neither writing nor reading is supported any longer. <c>basic_container_buffer</c> does not support simultaneous use of the buffer
+    /// for reading and writing.</remarks>
     template<typename _CollectionType>
     class basic_container_buffer : public streams::details::streambuf_state_manager<typename _CollectionType::value_type>
     {
