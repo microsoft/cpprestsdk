@@ -44,9 +44,9 @@ TEST_FIXTURE(uri_address, close_client_websocket)
 {
     test_websocket_server server;
     
-    websocket_client client(m_uri);
+    websocket_client client;
 
-    client.connect().wait();
+    client.connect(m_uri).wait();
 
     client.close().wait();
 }
@@ -56,9 +56,9 @@ TEST_FIXTURE(uri_address, close_with_reason)
 {
     test_websocket_server server;
     
-    websocket_client client(m_uri);
+    websocket_client client;
 
-    client.connect().wait();
+    client.connect(m_uri).wait();
 
     client.close(websocket_close_status::going_away, U("Client disconnecting")).wait();
 }
@@ -69,9 +69,9 @@ TEST_FIXTURE(uri_address, close_from_server)
     std::string body("hello");
     test_websocket_server server;
 
-    websocket_client client(m_uri);
+    websocket_client client;
 
-    client.connect().wait();
+    client.connect(m_uri).wait();
 
     // Send close frame from server
     test_websocket_msg msg;

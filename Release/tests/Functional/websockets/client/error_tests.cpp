@@ -42,7 +42,7 @@ SUITE(error_tests)
 // Send before connecting
 TEST_FIXTURE(uri_address, send_before_connect)
 {
-    websocket_client client(m_uri);
+    websocket_client client;
 
     websocket_outgoing_message msg;
     msg.set_utf8_message("xyz");
@@ -53,8 +53,8 @@ TEST_FIXTURE(uri_address, send_before_connect)
 // Server does not exist
 TEST_FIXTURE(uri_address, server_doesnt_exist)
 {
-    websocket_client client(m_uri);
-    VERIFY_THROWS(client.connect().get(), websocket_exception);
+    websocket_client client;
+    VERIFY_THROWS(client.connect(m_uri).get(), websocket_exception);
 }
 
 // Send after close
@@ -67,9 +67,9 @@ TEST_FIXTURE(uri_address, send_after_close)
     {
         websocket_asserts::assert_message_equals(msg, body, test_websocket_message_type::WEB_SOCKET_UTF8_MESSAGE_TYPE);
     });
-    websocket_client client(m_uri);
+    websocket_client client;
 
-    client.connect().wait();
+    client.connect(m_uri).wait();
     client.close().wait();
     
     websocket_outgoing_message msg;
@@ -81,8 +81,8 @@ TEST_FIXTURE(uri_address, send_after_close)
 TEST_FIXTURE(uri_address, receive_after_close)
 {
     test_websocket_server server;
-    websocket_client client(m_uri);
-    client.connect().wait();
+    websocket_client client;
+    client.connect(m_uri).wait();
     auto t = client.receive();
     client.close().wait();
     VERIFY_THROWS(t.wait(), websocket_exception);
@@ -92,8 +92,8 @@ TEST_FIXTURE(uri_address, receive_after_close)
 TEST_FIXTURE(uri_address, try_receive_after_close)
 {
     test_websocket_server server;
-    websocket_client client(m_uri);
-    client.connect().wait();
+    websocket_client client;
+    client.connect(m_uri).wait();
     client.close().wait();
     auto t = client.receive();
     VERIFY_THROWS(t.wait(), websocket_exception);
@@ -103,8 +103,8 @@ TEST_FIXTURE(uri_address, try_receive_after_close)
 TEST_FIXTURE(uri_address, try_receive_after_server_initiated_close)
 {
     test_websocket_server server;
-    websocket_client client(m_uri);
-    client.connect().wait();
+    websocket_client client;
+    client.connect(m_uri).wait();
 
     // Send close frame from server
     test_websocket_msg msg;
@@ -128,9 +128,9 @@ TEST_FIXTURE(uri_address, destroy_without_close)
     pplx::task<websocket_incoming_message> t;
 
     {
-        websocket_client client(m_uri);
+        websocket_client client;
 
-        client.connect().wait();
+        client.connect(m_uri).wait();
 
         t = client.receive();
     }
@@ -141,10 +141,10 @@ TEST_FIXTURE(uri_address, destroy_without_close)
 // connect fails while user is waiting on receive
 TEST_FIXTURE(uri_address, connect_fail_with_receive)
 {
-    websocket_client client(U("ws://localhost:9981/ws"));
+    websocket_client client;
     auto t = client.receive();
 
-    VERIFY_THROWS(client.connect().get(), websocket_exception);
+    VERIFY_THROWS(client.connect(U("ws://localhost:9981/ws")).get(), websocket_exception);
     VERIFY_THROWS(t.get(), websocket_exception);
 }
 

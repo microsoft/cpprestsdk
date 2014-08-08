@@ -87,7 +87,7 @@ void fill_buffer(streams::streambuf<uint8_t> rbuf, const std::vector<uint8_t>& b
         rbuf.putn((const uint8_t *)&body[0], len).wait();
 }
 
-pplx::task<void> send_text_msg_helper(websocket_client& client, test_websocket_server& server, const std::string& body, bool connect_client = true)
+pplx::task<void> send_text_msg_helper(websocket_client& client, web::uri uri, test_websocket_server& server, const std::string& body, bool connect_client = true)
 {
     server.next_message([body](test_websocket_msg msg) // Handler to verify the message sent by the client.
     {
@@ -95,7 +95,7 @@ pplx::task<void> send_text_msg_helper(websocket_client& client, test_websocket_s
     });
 
     if (connect_client)
-        client.connect().wait();
+        client.connect(uri).wait();
 
     websocket_outgoing_message msg;
     msg.set_utf8_message(body);
@@ -104,6 +104,7 @@ pplx::task<void> send_text_msg_helper(websocket_client& client, test_websocket_s
 
 pplx::task<void> send_msg_from_stream(websocket_client& client,
                                              test_websocket_server& server,
+                                             web::uri uri,
                                              const std::vector<uint8_t>& body, 
                                              streams::streambuf<uint8_t> buf,
                                              test_websocket_message_type type,
@@ -116,7 +117,7 @@ pplx::task<void> send_msg_from_stream(websocket_client& client,
     });
 
     if (connect_client)
-        client.connect().wait();
+        client.connect(uri).wait();
     if (fill_data)
         fill_buffer(buf, body);
 
@@ -132,30 +133,32 @@ pplx::task<void> send_msg_from_stream(websocket_client& client,
 // Send message from input stream -> data is already populated in the stream buffer
 pplx::task<void> send_msg_from_istream_helper(websocket_client& client,
                                              test_websocket_server& server,
+                                             web::uri uri,
                                              const std::vector<uint8_t>& body, 
                                              streams::streambuf<uint8_t> rbuf,
                                              test_websocket_message_type type,
                                              bool connect_client = true)
 {
-    return send_msg_from_stream(client, server, body, rbuf, type, false, connect_client);
+    return send_msg_from_stream(client, server, uri, body, rbuf, type, false, connect_client);
 }
 
 pplx::task<void> send_msg_from_stream_helper(websocket_client& client,
                                              test_websocket_server& server,
+                                             web::uri uri,
                                              const std::vector<uint8_t>& body, 
                                              streams::streambuf<uint8_t> rbuf,
                                              test_websocket_message_type type,
                                              bool connect_client = true)
 {
-    return send_msg_from_stream(client, server, body, rbuf, type, true, connect_client);
+    return send_msg_from_stream(client, server, uri, body, rbuf, type, true, connect_client);
 }
 
 // Send text message (no fragmentation)
 TEST_FIXTURE(uri_address, send_text_msg)
 {
     test_websocket_server server;
-    websocket_client client(m_uri);
-    send_text_msg_helper(client, server, "hello").wait();
+    websocket_client client;
+    send_text_msg_helper(client, m_uri, server, "hello").wait();
     client.close().wait();
 }
 
@@ -168,8 +171,8 @@ TEST_FIXTURE(uri_address, send_text_msg_stream)
     std::vector<uint8_t> body(26);
     memcpy(&body[0], "abcdefghijklmnopqrstuvwxyz", 26);
 
-    websocket_client client(m_uri);
-    send_msg_from_stream_helper(client, server, body, rbuf, test_websocket_message_type::WEB_SOCKET_UTF8_MESSAGE_TYPE).wait();
+    websocket_client client;
+    send_msg_from_stream_helper(client, server, m_uri, body, rbuf, test_websocket_message_type::WEB_SOCKET_UTF8_MESSAGE_TYPE).wait();
 
     rbuf.close(std::ios::out).wait();
     client.close().wait();
@@ -183,9 +186,9 @@ TEST_FIXTURE(uri_address, send_binary_msg)
     std::vector<uint8_t> body(6);
     memcpy(&body[0], "a\0b\0c\0", 6);
 
-    websocket_client client(m_uri);
+    websocket_client client;
 
-    send_msg_from_stream_helper(client, server, body, rbuf, test_websocket_message_type::WEB_SOCKET_BINARY_MESSAGE_TYPE).wait();
+    send_msg_from_stream_helper(client, server, m_uri, body, rbuf, test_websocket_message_type::WEB_SOCKET_BINARY_MESSAGE_TYPE).wait();
     rbuf.close(std::ios::out);
     client.close().wait();
 }
@@ -195,9 +198,9 @@ TEST_FIXTURE(uri_address, send_binary_msg)
 TEST_FIXTURE(uri_address, send_empty_text_msg)
 {
     test_websocket_server server;
-    websocket_client client(m_uri);
+    websocket_client client;
 
-    client.connect().wait();
+    client.connect(m_uri).wait();
 
     websocket_outgoing_message msg;
     msg.set_utf8_message("");
@@ -210,10 +213,10 @@ TEST_FIXTURE(uri_address, send_empty_text_msg)
 TEST_FIXTURE(uri_address, send_multiple_text_msges)
 {
     test_websocket_server server;
-    websocket_client client(m_uri);
+    websocket_client client;
 
-    send_text_msg_helper(client, server, "hello1").wait();
-    send_text_msg_helper(client, server, "hello2", false).wait();
+    send_text_msg_helper(client, m_uri, server, "hello1").wait();
+    send_text_msg_helper(client, m_uri, server, "hello2", false).wait();
 
     client.close().wait();
 }
@@ -222,10 +225,10 @@ TEST_FIXTURE(uri_address, send_multiple_text_msges)
 TEST_FIXTURE(uri_address, send_multiple_text_msges_async)
 {
     test_websocket_server server;
-    websocket_client client(m_uri);
+    websocket_client client;
 
-    auto t1 = send_text_msg_helper(client, server, "hello1");
-    auto t2 = send_text_msg_helper(client, server, "hello2", false);
+    auto t1 = send_text_msg_helper(client, m_uri, server, "hello1");
+    auto t2 = send_text_msg_helper(client, m_uri, server, "hello2", false);
 
     t2.wait();
     t1.wait();
@@ -242,10 +245,10 @@ TEST_FIXTURE(uri_address, send_multiple_text_msges_stream)
     std::vector<uint8_t> body2(26);
     memcpy(&body2[0], "zyxwvutsrqponmlkjihgfedcba", 26);
 
-    websocket_client client(m_uri);
+    websocket_client client;
 
-    auto t1 = send_msg_from_stream_helper(client, server, body1, rbuf, test_websocket_message_type::WEB_SOCKET_UTF8_MESSAGE_TYPE);
-    auto t2 = send_msg_from_stream_helper(client, server, body2, rbuf, test_websocket_message_type::WEB_SOCKET_UTF8_MESSAGE_TYPE, false);
+    auto t1 = send_msg_from_stream_helper(client, server, m_uri, body1, rbuf, test_websocket_message_type::WEB_SOCKET_UTF8_MESSAGE_TYPE);
+    auto t2 = send_msg_from_stream_helper(client, server, m_uri, body2, rbuf, test_websocket_message_type::WEB_SOCKET_UTF8_MESSAGE_TYPE, false);
 
     t1.wait();
     t2.wait();
@@ -262,10 +265,10 @@ TEST_FIXTURE(uri_address, send_text_msges_fstream)
     memcpy(&body1[0], "abcdefghijklmnopqrstuvwxyz", 26);
     fill_file(fname, body1, 2);
     auto file_buf = OPEN_R<uint8_t>(fname).get();
-    websocket_client client(m_uri);
+    websocket_client client;
 
-    auto t1 = send_msg_from_istream_helper(client, server, body1, file_buf, test_websocket_message_type::WEB_SOCKET_UTF8_MESSAGE_TYPE);
-    auto t2 = send_msg_from_istream_helper(client, server, body1, file_buf, test_websocket_message_type::WEB_SOCKET_UTF8_MESSAGE_TYPE, false);
+    auto t1 = send_msg_from_istream_helper(client, server, m_uri, body1, file_buf, test_websocket_message_type::WEB_SOCKET_UTF8_MESSAGE_TYPE);
+    auto t2 = send_msg_from_istream_helper(client, server, m_uri, body1, file_buf, test_websocket_message_type::WEB_SOCKET_UTF8_MESSAGE_TYPE, false);
 
     t1.wait();
     t2.wait();
@@ -280,10 +283,10 @@ TEST_FIXTURE(uri_address, send_text_msges_cstream)
     memcpy(&body[0], "abcdefghijklmnopqrstuvwxyz", 26);
     auto cbuf = streams::container_stream<std::vector<uint8_t>>::open_istream(body).streambuf();
 
-    websocket_client client(m_uri);
+    websocket_client client;
 
-    auto t1 = send_msg_from_istream_helper(client, server, std::vector<uint8_t>(body.begin(), body.begin() + body.size()/2), cbuf, test_websocket_message_type::WEB_SOCKET_UTF8_MESSAGE_TYPE);
-    auto t2 = send_msg_from_istream_helper(client, server, std::vector<uint8_t>(body.begin() + body.size()/2, body.end()), cbuf, test_websocket_message_type::WEB_SOCKET_UTF8_MESSAGE_TYPE, false);
+    auto t1 = send_msg_from_istream_helper(client, server, m_uri, std::vector<uint8_t>(body.begin(), body.begin() + body.size() / 2), cbuf, test_websocket_message_type::WEB_SOCKET_UTF8_MESSAGE_TYPE);
+    auto t2 = send_msg_from_istream_helper(client, server, m_uri, std::vector<uint8_t>(body.begin() + body.size() / 2, body.end()), cbuf, test_websocket_message_type::WEB_SOCKET_UTF8_MESSAGE_TYPE, false);
 
     t1.wait();
     t2.wait();
@@ -305,8 +308,8 @@ TEST_FIXTURE(uri_address, send_text_msges_pcstream_lessdata)
         websocket_asserts::assert_message_equals(msg, "abcdefghijklmnopqrstuvwxyzabcd", test_websocket_message_type::WEB_SOCKET_UTF8_MESSAGE_TYPE);
     });
 
-    websocket_client client(m_uri);
-    client.connect().wait();
+    websocket_client client;
+    client.connect(m_uri).wait();
     websocket_outgoing_message msg;
     msg.set_utf8_message(rbuf.create_istream(), 30);
     auto t1 = client.send(msg);
@@ -331,8 +334,8 @@ TEST_FIXTURE(uri_address, send_text_msges_cstream_lessdata)
         websocket_asserts::assert_message_equals(msg, "abcdefghijklmnopqrstuvwxyzabcd", test_websocket_message_type::WEB_SOCKET_UTF8_MESSAGE_TYPE);
     });
 
-    websocket_client client(m_uri);
-    client.connect().wait();
+    websocket_client client;
+    client.connect(m_uri).wait();
     websocket_outgoing_message msg;
     msg.set_utf8_message(cbuf.create_istream(), 30);
 
@@ -350,10 +353,10 @@ TEST_FIXTURE(uri_address, send_multiple_binary_msg_same_stream)
     std::vector<uint8_t> body2(6);
     memcpy(&body2[0], "a\0b\0c\0", 6);
 
-    websocket_client client(m_uri);
+    websocket_client client;
 
-    auto t1 = send_msg_from_stream_helper(client, server, body1, rbuf, test_websocket_message_type::WEB_SOCKET_BINARY_MESSAGE_TYPE);
-    auto t2 = send_msg_from_stream_helper(client, server, body2, rbuf, test_websocket_message_type::WEB_SOCKET_BINARY_MESSAGE_TYPE, false);
+    auto t1 = send_msg_from_stream_helper(client, server, m_uri, body1, rbuf, test_websocket_message_type::WEB_SOCKET_BINARY_MESSAGE_TYPE);
+    auto t2 = send_msg_from_stream_helper(client, server, m_uri, body2, rbuf, test_websocket_message_type::WEB_SOCKET_BINARY_MESSAGE_TYPE, false);
 
     t1.wait();
     t2.wait();
@@ -369,10 +372,10 @@ TEST_FIXTURE(uri_address, send_text_and_binary)
     std::vector<uint8_t> body2(6);
     memcpy(&body2[0], "a\0b\0c\0", 6);
 
-    websocket_client client(m_uri);
+    websocket_client client;
 
-    send_text_msg_helper(client, server, "hello1").wait();
-    send_msg_from_stream_helper(client, server, body2, rbuf, test_websocket_message_type::WEB_SOCKET_BINARY_MESSAGE_TYPE, false).wait();
+    send_text_msg_helper(client, m_uri, server, "hello1").wait();
+    send_msg_from_stream_helper(client, server, m_uri, body2, rbuf, test_websocket_message_type::WEB_SOCKET_BINARY_MESSAGE_TYPE, false).wait();
 
     rbuf.close(std::ios::out).wait();
     client.close().wait();
@@ -383,9 +386,9 @@ TEST_FIXTURE(uri_address, send_multi_byte_utf8_msg)
 {
     test_websocket_server server;
     std::string body = "\xC3\xA0\xC3\xB8";
-    websocket_client client(m_uri);
+    websocket_client client;
 
-    send_text_msg_helper(client, server, body).wait();
+    send_text_msg_helper(client, m_uri, server, body).wait();
     client.close().wait();
 }
 

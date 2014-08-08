@@ -30,6 +30,7 @@
 #include "stdafx.h"
 
 #include "cpprest/http_client_impl.h"
+#include "cpprest/x509_cert_utilities.h"
 #include <unordered_set>
 
 using boost::asio::ip::tcp;
@@ -280,7 +281,7 @@ namespace web { namespace http
                 bool m_timedout;
                 boost::asio::streambuf m_body_buf;
                 boost::asio::deadline_timer m_timeout_timer;
-
+                
                 virtual ~linux_client_request_context();
 
                 void handle_timeout_timer(const boost::system::error_code& ec)
@@ -452,7 +453,10 @@ namespace web { namespace http
 
             private:
                 tcp::resolver m_resolver;
-
+#if defined(__APPLE__)
+                bool m_openssl_failed;
+#endif
+                
                 static bool _check_streambuf(std::shared_ptr<linux_client_request_context> ctx, concurrency::streams::streambuf<uint8_t> rdbuf, const utility::char_t* msg)
                 {
                     if (!rdbuf.is_open())
@@ -485,7 +489,10 @@ namespace web { namespace http
                             if(client_config().validate_certificates())
                             {
                                 ctx->m_ssl_stream->set_verify_mode(boost::asio::ssl::context::verify_peer);
-                                ctx->m_ssl_stream->set_verify_callback(boost::asio::ssl::rfc2818_verification(m_uri.host()));
+                                ctx->m_ssl_stream->set_verify_callback(boost::bind(&linux_client::handle_cert_verification, shared_from_this(), _1, _2));
+#if defined(__APPLE__)
+                                m_openssl_failed = false;
+#endif
                             }
                             else
                             {
@@ -536,7 +543,10 @@ namespace web { namespace http
                             if(client_config().validate_certificates())
                             {
                                 ctx->m_ssl_stream->set_verify_mode(boost::asio::ssl::context::verify_peer);
-                                ctx->m_ssl_stream->set_verify_callback(boost::asio::ssl::rfc2818_verification(m_uri.host()));
+                                ctx->m_ssl_stream->set_verify_callback(boost::bind(&linux_client::handle_cert_verification, shared_from_this(), _1, _2));
+#if defined(__APPLE__)
+                                m_openssl_failed = false;
+#endif
                             }
                             else
                             {
@@ -548,6 +558,72 @@ namespace web { namespace http
                     }
                 }
 
+                bool handle_cert_verification(bool preverified, boost::asio::ssl::verify_context &ctx)
+                {
+                    // OpenSSL calls the verification callback once per certificate in the chain,
+                    // starting with the root CA certificate. The 'leaf', non-Certificate Authority (CA)
+                    // certificate, i.e. actual server certificate is at the '0' position in the
+                    // certificate chain, the rest are optional intermediate certificates, followed
+                    // finally by the root CA self signed certificate.
+                    
+#if defined(__APPLE__)
+                    if(!preverified)
+                    {
+                        m_openssl_failed = true;
+                    }
+                    if(m_openssl_failed)
+                    {
+                        // On OS X, iOS, and Android, OpenSSL doesn't have access to where the OS
+                        // stores keychains. If OpenSSL fails we will doing verification at the
+                        // end using the whole certificate chain so wait until the 'leaf' cert.
+                        // For now return true so OpenSSL continues down the certificate chain.
+                        X509_STORE_CTX *storeContext = ctx.native_handle();
+                        int currentDepth = X509_STORE_CTX_get_error_depth(storeContext);
+                        if(currentDepth != 0)
+                        {
+                            return true;
+                        }
+                    
+                        STACK_OF(X509) *certStack = X509_STORE_CTX_get_chain(storeContext);
+                        const int numCerts = sk_X509_num(certStack);
+                        if(numCerts < 0)
+                        {
+                            return false;
+                        }
+                    
+                        std::vector<std::string> certChain;
+                        certChain.reserve(numCerts);
+                        for(int i = 0; i < numCerts; ++i)
+                        {
+                            X509 *cert = sk_X509_value(certStack, i);
+                                
+                            // Encode into DER format into raw memory.
+                            int len = i2d_X509(cert, nullptr);
+                            if(len < 0)
+                            {
+                                return false;
+                            }
+                        
+                            std::string certData;
+                            certData.resize(len);
+                            unsigned char * buffer = reinterpret_cast<unsigned char *>(&certData[0]);
+                            len = i2d_X509(cert, &buffer);
+                            if(len < 0)
+                            {
+                                return false;
+                            }
+                        
+                            certChain.push_back(std::move(certData));
+                        }
+                    
+                        return verify_X509_cert_chain(certChain, m_uri.host());
+                    }
+#endif
+                    
+                    boost::asio::ssl::rfc2818_verification rfc2818(m_uri.host());
+                    return rfc2818(preverified, ctx);
+                }
+
                 void handle_handshake(const boost::system::error_code& ec, std::shared_ptr<linux_client_request_context> ctx)
                 {
                     if (!ec)
@@ -556,7 +632,7 @@ namespace web { namespace http
                     }
                     else
                     {
-                        ctx->report_error("Error code in handle_handshake is ", ec, httpclient_errorcode_context::handshake);
+                        ctx->report_error("Error in SSL handshake", ec, httpclient_errorcode_context::handshake);
                     }
                 }
 

@@ -53,7 +53,8 @@ static void verify_client_invalid_argument(const uri &address)
 {
     try
     {
-        websocket_client client(address);
+        websocket_client client;
+        client.connect(address).wait();
         VERIFY_IS_TRUE(false);
     } catch(std::invalid_argument &)
     {
@@ -80,22 +81,31 @@ TEST_FIXTURE(uri_address, get_client_config)
 
     web::credentials cred(U("username"), U("password"));
     config.set_credentials(cred);
-    websocket_client client(m_uri, config);
+    websocket_client client(config);
 
     const websocket_client_config& config2 = client.config();
     VERIFY_ARE_EQUAL(config2.credentials().username(), cred.username());
     VERIFY_ARE_EQUAL(config2.credentials().password(), cred.password());
 }
 
-// Verify that we can get the baseuri from websocket_client constructors
+// Verify that we can get the baseuri from websocket_client connect.
 TEST_FIXTURE(uri_address, uri_test)
 {
-    websocket_client client1(m_uri);
+    websocket_client client1;
+    VERIFY_ARE_EQUAL(client1.uri(), U("/"));
+
+    test_websocket_server server;
+    client1.connect(m_uri).wait();
     VERIFY_ARE_EQUAL(client1.uri(), m_uri);
+    client1.close().wait();
 
     websocket_client_config config;
-    websocket_client client2(m_uri, config);
+    websocket_client client2(config);
+    VERIFY_ARE_EQUAL(client2.uri(), U("/"));
+
+    client2.connect(m_uri).wait();
     VERIFY_ARE_EQUAL(client2.uri(), m_uri);
+    client2.close().wait();
 }
 
 TEST_FIXTURE(uri_address, move_operations)
@@ -104,9 +114,9 @@ TEST_FIXTURE(uri_address, move_operations)
     std::vector<unsigned char> body_vec(body.begin(), body.end());
 
     test_websocket_server server;
-    websocket_client client(m_uri);
+    websocket_client client;
 
-    client.connect().wait();
+    client.connect(m_uri).wait();
 
     // Move constructor
     websocket_client client2 = std::move(client);
@@ -169,7 +179,7 @@ TEST_FIXTURE(uri_address, connect_with_headers)
     utility::string_t header_name(U("HeaderTest"));
     utility::string_t header_val(U("ConnectSuccessfully"));
     config.headers().add(header_name, header_val);
-    websocket_client client(m_uri, config);
+    websocket_client client(config);
 
     server.set_http_handler([&](test_http_request request)
     {
@@ -180,7 +190,7 @@ TEST_FIXTURE(uri_address, connect_with_headers)
             resp.set_status_code(400); // Else fail the handshake, websocket client connect will fail in this case.
         return resp;
     });
-    client.connect().wait();
+    client.connect(m_uri).wait();
     client.close().wait();
 }
 

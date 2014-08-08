@@ -236,6 +236,15 @@ public:
     }
 
     /// <summary>
+    ///  Set the base uri.
+    /// </summary>
+    /// <param name="uri"> The user specified uri. </param>
+    void set_uri(web::uri uri)
+    {
+        m_uri = std::move(uri);
+    }
+
+    /// <summary>
     /// Get client configuration object
     /// </summary>
     /// <returns>A reference to the client configuration object.</returns>
@@ -266,13 +275,15 @@ public:
         }
     }
 
+
 protected:
-    _websocket_client_impl(web::uri address, websocket_client_config client_config)
-        : m_uri(std::move(address)), m_client_config(std::move(client_config))
+    web::uri m_uri;
+
+    _websocket_client_impl(websocket_client_config client_config)
+        : m_client_config(std::move(client_config))
     {
     }
 
-    web::uri m_uri;
     websocket_client_config m_client_config;    
 };
 }
@@ -284,17 +295,15 @@ class websocket_client
 {
 public:
     /// <summary>
-    /// Creates a new websocket_client to connect to the specified uri.
+    ///  Creates a new websocket_client.
     /// </summary>
-    /// <param name="base_uri">A string representation of the base uri to be used for all messages. Must start with either "ws://" or "wss://"</param>
-    _ASYNCRTIMP websocket_client(web::uri base_uri);
+    _ASYNCRTIMP websocket_client();
 
     /// <summary>
-    /// Creates a new websocket_client to connect to the specified uri.
+    ///  Creates a new websocket_client.
     /// </summary>
-    /// <param name="base_uri">A string representation of the base uri to be used for all requests. Must start with either "ws://" or "wss://"</param>
     /// <param name="client_config">The client configuration object containing the possible configuration options to intitialize the <c>websocket_client</c>. </param>
-    _ASYNCRTIMP websocket_client(web::uri base_uri, websocket_client_config client_config);
+    _ASYNCRTIMP websocket_client(websocket_client_config client_config);
 
     /// <summary>
     /// </summary>
@@ -324,8 +333,13 @@ public:
     /// Connects to the remote network destination. The connect method initiates the websocket handshake with the 
     /// remote network destination, takes care of the protocol upgrade request.
     /// </summary>
+    /// <param name="uri">The uri address to connect. </param>
     /// <returns>An asynchronous operation that is completed once the client has successfully connected to the websocket server.</returns>
-    pplx::task<void> connect() { return m_client->connect(); }
+    pplx::task<void> connect(web::uri uri) 
+    { 
+        m_client->set_uri(std::move(uri));
+        return m_client->connect(); 
+    }
 
     /// <summary>
     /// Sends a websocket message to the server .

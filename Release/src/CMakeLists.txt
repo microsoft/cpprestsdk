@@ -17,6 +17,7 @@ if(UNIX)
     http/common/http_helpers.cpp
     http/client/http_msg_client.cpp
     http/client/http_linux.cpp
+    http/client/x509_cert_utilities.cpp
     http/listener/http_linux_server.cpp
     http/listener/http_listener.cpp
     http/listener/http_msg_listen.cpp
@@ -30,7 +31,8 @@ if(UNIX)
   if(APPLE)
     set(SOURCES ${SOURCES} pplx/apple/pplxapple.cpp)
     find_library(COREFOUNDATION CoreFoundation "/")
-    set(EXTRALINKS ${COREFOUNDATION})
+    find_library(SECURITY Security "/")
+    set(EXTRALINKS ${COREFOUNDATION} ${SECURITY})
   else()
     set(SOURCES ${SOURCES} pplx/linux/pplxlinux.cpp)
   endif()
@@ -46,6 +48,7 @@ elseif(WIN32)
     http/common/http_msg.cpp
     http/common/http_helpers.cpp
     http/client/http_msg_client.cpp
+    http/client/x509_cert_utilities.cpp
     http/listener/http_listener.cpp
     http/listener/http_msg_listen.cpp
     http/listener/http_server_api.cpp
@@ -82,7 +85,6 @@ target_link_libraries(${Casablanca_LIBRARY}
   ${Boost_LOCALE_LIBRARY}
   ${Boost_REGEX_LIBRARY}
   ${Boost_RANDOM_LIBRARY}
-  ${COREFOUNDATION}
   ${EXTRALINKS}
   )
 

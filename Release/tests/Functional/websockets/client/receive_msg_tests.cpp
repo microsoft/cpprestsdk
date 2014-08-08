@@ -42,13 +42,14 @@ SUITE(receive_msg_tests)
 
 pplx::task<void> receive_text_msg_helper(websocket_client& client, 
                                          test_websocket_server& server, 
+                                         web::uri uri,
                                          const std::string& body_str, 
                                          bool connect_client = true)
 {
     std::vector<unsigned char> body(body_str.begin(), body_str.end());
 
     if (connect_client)
-        client.connect().wait();
+        client.connect(uri).wait();
 
     auto t = client.receive().then([body_str](websocket_incoming_message ret_msg)
     {
@@ -69,12 +70,13 @@ pplx::task<void> receive_text_msg_helper(websocket_client& client,
 
 pplx::task<void> receive_msg_stream_helper(websocket_client& client, 
                                           test_websocket_server& server, 
+                                          web::uri uri,
                                           const std::vector<unsigned char>& body, 
                                           test_websocket_message_type type,
                                           bool connect_client = true)
 {
     if (connect_client)
-        client.connect().wait();
+        client.connect(uri).wait();
 
     auto t = client.receive().then([body, type](websocket_incoming_message ret_msg)
     {
@@ -102,9 +104,9 @@ pplx::task<void> receive_msg_stream_helper(websocket_client& client,
 TEST_FIXTURE(uri_address, receive_text_msg)
 {
     test_websocket_server server;
-    websocket_client client(m_uri);
+    websocket_client client;
 
-    receive_text_msg_helper(client, server, "hello").wait();
+    receive_text_msg_helper(client, server, m_uri, "hello").wait();
     client.close().wait();
 }
 
@@ -115,9 +117,9 @@ TEST_FIXTURE(uri_address, receive_text_msg_stream)
     std::string body_str("hello");
     std::vector<unsigned char> body(body_str.begin(), body_str.end());
     test_websocket_server server;
-    websocket_client client(m_uri);
+    websocket_client client;
 
-    receive_msg_stream_helper(client, server, body, test_websocket_message_type::WEB_SOCKET_UTF8_MESSAGE_TYPE).wait();
+    receive_msg_stream_helper(client, server, m_uri, body, test_websocket_message_type::WEB_SOCKET_UTF8_MESSAGE_TYPE).wait();
     client.close().wait();
 }
 
@@ -130,9 +132,9 @@ TEST_FIXTURE(uri_address, receive_binary_msg)
 
     test_websocket_server server;
 
-    websocket_client client(m_uri);
+    websocket_client client;
 
-    receive_msg_stream_helper(client, server, body, test_websocket_message_type::WEB_SOCKET_BINARY_MESSAGE_TYPE).wait();
+    receive_msg_stream_helper(client, server, m_uri, body, test_websocket_message_type::WEB_SOCKET_BINARY_MESSAGE_TYPE).wait();
     client.close().wait();
 }
 
@@ -143,9 +145,9 @@ TEST_FIXTURE(uri_address, receive_text_msg_fragments, "Ignore", "898451")
     std::vector<unsigned char> body(body_str.begin(), body_str.end());
     test_websocket_server server;
 
-    websocket_client client(m_uri);
+    websocket_client client;
 
-    client.connect().wait();
+    client.connect(m_uri).wait();
 
     auto t = client.receive().then([&](websocket_incoming_message ret_msg)
     {
@@ -173,9 +175,9 @@ TEST_FIXTURE(uri_address, receive_text_msg_fragments, "Ignore", "898451")
 TEST_FIXTURE(uri_address, receive_zero_length_msg)
 {
     test_websocket_server server;
-    websocket_client client(m_uri);
+    websocket_client client;
 
-    receive_text_msg_helper(client, server, "").wait();
+    receive_text_msg_helper(client, server, m_uri, "").wait();
 
     client.close().wait();
 }
@@ -185,9 +187,9 @@ TEST_FIXTURE(uri_address, receive_multi_byte_utf8_msg)
 {
     std::string body_str = "\xC3\xA0\xC3\xB8";
     test_websocket_server server;
-    websocket_client client(m_uri);
+    websocket_client client;
 
-    receive_text_msg_helper(client, server, body_str).wait();
+    receive_text_msg_helper(client, server, m_uri, body_str).wait();
 
     client.close().wait();
 }
@@ -196,10 +198,10 @@ TEST_FIXTURE(uri_address, receive_multi_byte_utf8_msg)
 TEST_FIXTURE(uri_address, receive_multiple_msges)
 {
     test_websocket_server server;
-    websocket_client client(m_uri);
+    websocket_client client;
 
-    auto t1 = receive_text_msg_helper(client, server, "hello1");
-    auto t2 = receive_text_msg_helper(client, server, "hello2", false);
+    auto t1 = receive_text_msg_helper(client, server, m_uri, "hello1");
+    auto t2 = receive_text_msg_helper(client, server, m_uri, "hello2", false);
 
     t1.wait();
     t2.wait();
@@ -215,9 +217,9 @@ TEST_FIXTURE(uri_address, receive_after_server_send)
     
     test_websocket_server server;
 
-    websocket_client client(m_uri);
+    websocket_client client;
 
-    client.connect().wait();
+    client.connect(m_uri).wait();
     
     test_websocket_msg msg;
     msg.set_data(std::move(body));
@@ -243,7 +245,7 @@ TEST_FIXTURE(uri_address, receive_after_server_send)
 TEST_FIXTURE(uri_address, receive_before_connect)
 {
     test_websocket_server server;
-    websocket_client client(m_uri);
+    websocket_client client;
 
     std::string body_str("hello");
     std::vector<unsigned char> body(body_str.begin(), body_str.end());
@@ -258,7 +260,7 @@ TEST_FIXTURE(uri_address, receive_before_connect)
     });
     
     // Connect after the client is waiting on a receive task.
-    client.connect().wait();
+    client.connect(m_uri).wait();
 
     // Now send the message from the server
     test_websocket_msg msg;
