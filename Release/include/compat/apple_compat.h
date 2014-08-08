@@ -41,6 +41,7 @@
 #define dllimport 
 
 #include <stdint.h>
+#include <assert.h>
 
 #define __assume(x) do { if (!(x)) __builtin_unreachable(); } while (false)
 
