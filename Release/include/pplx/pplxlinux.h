@@ -65,12 +65,12 @@ namespace platform
     /// <summary>
     /// Returns a unique identifier for the execution thread where this routine in invoked
     /// </summary>
-    _PPLXIMP long __cdecl GetCurrentThreadId();
+    _PPLXIMP long _pplx_cdecl GetCurrentThreadId();
 
     /// <summary>
     /// Yields the execution of the current execution thread - typically when spin-waiting
     /// </summary>
-    _PPLXIMP void __cdecl YieldExecution();
+    _PPLXIMP void _pplx_cdecl YieldExecution();
 
     /// <summary>
     /// Caputeres the callstack

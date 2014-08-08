@@ -144,12 +144,12 @@ private:
     sched_ptr m_scheduler;
 } _pplx_g_sched;
 
-_PPLXIMP std::shared_ptr<pplx::scheduler_interface> __cdecl get_ambient_scheduler()
+_PPLXIMP std::shared_ptr<pplx::scheduler_interface> _pplx_cdecl get_ambient_scheduler()
 {
     return _pplx_g_sched.get_scheduler();
 }
 
-_PPLXIMP void __cdecl set_ambient_scheduler(std::shared_ptr<pplx::scheduler_interface> _Scheduler)
+_PPLXIMP void _pplx_cdecl set_ambient_scheduler(std::shared_ptr<pplx::scheduler_interface> _Scheduler)
 {
     _pplx_g_sched.set_scheduler(std::move(_Scheduler));
 }

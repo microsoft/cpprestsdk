@@ -46,8 +46,6 @@ JNIEnv* get_jvm_env()
     return JVM_ENV;
 }
 
-jmethodID java_parseDouble;
-jclass java_lang_double;
 #endif
 
 }
@@ -60,11 +58,6 @@ extern "C" jint JNI_OnLoad(JavaVM* vm, void* reserved)
    {
       return -1;
    }
-
-   crossplat::java_local_ref<jclass> local_java_lang_double{env->FindClass("java/lang/Double")};
-   crossplat::java_lang_double = static_cast<jclass>(env->NewGlobalRef(local_java_lang_double.get()));
-
-   crossplat::java_parseDouble = env->GetStaticMethodID(crossplat::java_lang_double, "parseDouble", "(Ljava/lang/String;)D");
 
    crossplat::JVM = vm;
    return JNI_VERSION_1_6;

@@ -48,6 +48,13 @@
 #include <atomic>
 #endif
 
+#if defined(ANDROID)
+// This prevents users from requiring -Wno-attributes when using gcc-4.8 with the android NDK.
+#define _pplx_cdecl
+#else
+#define _pplx_cdecl __cdecl
+#endif
+
 namespace pplx
 {
 
@@ -56,7 +63,7 @@ namespace pplx
 ///     invoke the body of a task.
 /// </summary>
 /**/
-typedef void (__cdecl * TaskProc_t)(void *);
+typedef void (_pplx_cdecl * TaskProc_t)(void *);
 
 /// <summary>
 ///     Scheduler Interface

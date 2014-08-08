@@ -85,12 +85,12 @@ namespace pplx
 /// <summary>
 /// Sets the ambient scheduler to be used by the PPL constructs.
 /// </summary>
-_PPLXIMP void __cdecl set_ambient_scheduler(std::shared_ptr<pplx::scheduler_interface> _Scheduler);
+_PPLXIMP void _pplx_cdecl set_ambient_scheduler(std::shared_ptr<pplx::scheduler_interface> _Scheduler);
 
 /// <summary>
 /// Gets the ambient scheduler to be used by the PPL constructs
 /// </summary>
-_PPLXIMP std::shared_ptr<pplx::scheduler_interface> __cdecl get_ambient_scheduler();
+_PPLXIMP std::shared_ptr<pplx::scheduler_interface> _pplx_cdecl get_ambient_scheduler();
 
 namespace details
 {
@@ -122,7 +122,7 @@ namespace details
         virtual ~_TaskProcHandle() {}
         virtual void invoke() const = 0;
 
-        static void __cdecl _RunChoreBridge(void * _Parameter)
+        static void _pplx_cdecl _RunChoreBridge(void * _Parameter)
         {
             auto _PTaskHandle = static_cast<_TaskProcHandle *>(_Parameter);
             _AutoDeleter<_TaskProcHandle> _AutoDeleter(_PTaskHandle);
@@ -207,7 +207,7 @@ namespace details
             }
         }
 
-        static bool __cdecl _Is_cancellation_requested()
+        static bool _pplx_cdecl _Is_cancellation_requested()
         {
             // We do not yet have the ability to determine the current task. So return false always
             return false;

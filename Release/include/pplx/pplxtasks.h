@@ -201,7 +201,7 @@ template <> class task<void>;
 /// <seealso cref="cancellation_token Class"/>
 /// <seealso cref="cancel_current_task Function"/>
 /**/
-inline bool __cdecl is_task_cancellation_requested()
+inline bool _pplx_cdecl is_task_cancellation_requested()
 {
     return ::pplx::details::_TaskCollection_t::_Is_cancellation_requested();
 }
@@ -216,7 +216,7 @@ inline bool __cdecl is_task_cancellation_requested()
 /// </summary>
 /// <seealso cref="task Class"/>
 /**/
-inline __declspec(noreturn) void __cdecl cancel_current_task()
+inline __declspec(noreturn) void _pplx_cdecl cancel_current_task()
 {
     throw task_canceled();
 }
@@ -506,7 +506,7 @@ namespace details
         {
         }
 
-        static void __cdecl _Bridge(void *_PData)
+        static void _pplx_cdecl _Bridge(void *_PData)
         {
             _TaskProcThunk *_PThunk = reinterpret_cast<_TaskProcThunk *>(_PData);
             _Holder _ThunkHolder(_PThunk);
