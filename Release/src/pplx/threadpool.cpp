@@ -32,15 +32,15 @@ JNIEnv* get_jvm_env()
 {
     if (JVM == nullptr)
     {
-	throw std::runtime_error("Could not contact JVM");
+        throw std::runtime_error("Could not contact JVM");
     }
     if (JVM_ENV == nullptr)
     {
-	auto result = JVM.load()->AttachCurrentThread(&crossplat::JVM_ENV, nullptr);
-	if (result != JNI_OK)
-	{
-	    throw std::runtime_error("Could not attach to JVM");
-	}
+        auto result = JVM.load()->AttachCurrentThread(&crossplat::JVM_ENV, nullptr);
+        if (result != JNI_OK)
+        {
+            throw std::runtime_error("Could not attach to JVM");
+        }
     }
 
     return JVM_ENV;
