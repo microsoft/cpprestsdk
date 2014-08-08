@@ -30,6 +30,7 @@ using namespace Windows::Storage;
 # define DEFAULT_PROT (int)std::ios_base::_Openprot
 #else
 # define DEFAULT_PROT 0
+# define _SH_DENYRW 0x20
 #endif
 
 namespace tests { namespace functional { namespace streams {

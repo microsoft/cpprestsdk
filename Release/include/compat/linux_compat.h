@@ -34,9 +34,6 @@
 
 #define novtable /* no novtable equivalent */
 #define __declspec(x) __attribute__ ((x))
-#define __export __attribute__ ((dllexport))
-#define __stdcall __attribute__ ((stdcall))
-#define STDMETHODCALLTYPE __export __stdcall
 
 // ignore these:
 #define dllimport 
@@ -47,8 +44,6 @@
 #include <stdint.h>
 
 #define __assume(x) do { if (!(x)) __builtin_unreachable(); } while (false)
-
-#define WINAPI __stdcall
 
 #define CASABLANCA_UNREFERENCED_PARAMETER(x) (void)x
 #define _ASSERTE(x) assert(x)
