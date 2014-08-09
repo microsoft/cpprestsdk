@@ -53,7 +53,7 @@ if(NOT IOS)
         ${LIB}httplistener_test
 
         -Wl,-force_load
-        ${LIB}asyncop_test
+        ${LIB}streams_test
 
         -Wl,-force_load
         ${LIB}utils_test
@@ -76,7 +76,7 @@ if(NOT IOS)
         ${LIB}uri_test
         ${LIB}pplx_test
         ${LIB}httplistener_test
-        ${LIB}asyncop_test
+        ${LIB}streams_test
         ${LIB}utils_test
         -Wl,--no-whole-archive
         )
@@ -91,7 +91,7 @@ if(NOT IOS)
         $<TARGET_OBJECTS:${LIB}uri_test>
         $<TARGET_OBJECTS:${LIB}pplx_test>
         $<TARGET_OBJECTS:${LIB}httplistener_test>
-        $<TARGET_OBJECTS:${LIB}asyncop_test>
+        $<TARGET_OBJECTS:${LIB}streams_test>
         $<TARGET_OBJECTS:${LIB}utils_test>
         )
       target_link_libraries(test_runner
