@@ -6,4 +6,4 @@ set(SOURCES
   stdstream_tests.cpp
   fuzz_tests.cpp
 )
-add_casablanca_test(${LIB}asyncop_test SOURCES)
+add_casablanca_test(${LIB}streams_test SOURCES)
