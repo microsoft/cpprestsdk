@@ -24,6 +24,7 @@
 ****/
 
 #include "stdafx.h"
+#include <array>
 
 #if defined(_MS_WINDOWS) || defined(__APPLE__)
 #include <regex>
