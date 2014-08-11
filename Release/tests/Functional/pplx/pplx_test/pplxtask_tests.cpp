@@ -43,10 +43,6 @@ static void LogFailure(const wchar_t * msg, ...)
     VERIFY_IS_TRUE(false);
 }
 
-static void LogMessage(const wchar_t *, ...)
-{
-}
-
 namespace helpers
 {
     static int FibSerial(int n)
