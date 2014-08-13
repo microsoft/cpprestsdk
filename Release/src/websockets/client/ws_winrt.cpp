@@ -27,7 +27,8 @@
 #include "stdafx.h"
 #include <concrt.h>
 
-#if WINAPI_FAMILY == WINAPI_FAMILY_APP
+// ws_winrt only available for windows storea app or window phone8.1
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_PC_APP) || (WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_PHONE_APP) && _WIN32_WINNT == _WIN32_WINNT_WINBLUE)
 
 using namespace ::Windows::Foundation;
 using namespace ::Windows::Storage;

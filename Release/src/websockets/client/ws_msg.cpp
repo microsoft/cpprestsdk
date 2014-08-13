@@ -32,14 +32,7 @@
 #include "cpprest/ws_client.h"
 
 #if !defined(_M_ARM) || defined(__cplusplus_winrt)
-#if defined(WINAPI_FAMILY_APP) && WINAPI_FAMILY == WINAPI_FAMILY_APP
-
-using namespace ::Windows::Foundation;
-using namespace ::Windows::Storage;
-using namespace ::Windows::Storage::Streams;
-using namespace ::Windows::Networking;
-using namespace ::Windows::Networking::Sockets;
-#endif /* WINAPI_FAMILY == WINAPI_FAMILY_APP */
+#if _NOT_PHONE8_
 
 using namespace concurrency;
 using namespace concurrency::streams::details;
@@ -94,4 +87,5 @@ pplx::task<std::string> websocket_incoming_message::extract_string() const
 }
 
 }}}}
+#endif  //  _NOT_PHONE8_
 #endif
