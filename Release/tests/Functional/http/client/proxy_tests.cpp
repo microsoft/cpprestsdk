@@ -86,12 +86,8 @@ TEST_FIXTURE(uri_address, no_proxy_options_on_winrt)
 
     VERIFY_THROWS(client.request(methods::GET, U("/")).get(), http_exception);
 }
-#endif
 
-// Test is disabled since one time the office site was unavaliable.
-// We want 100% reliability in our automated test cases.
-TEST_FIXTURE(uri_address, proxy_with_credentials,
-             "Ignore", "Manual")
+TEST_FIXTURE(uri_address, proxy_with_credentials)
 {
     uri u(U("http://netproxy.redmond.corp.microsoft.com"));
 
@@ -112,6 +108,7 @@ TEST_FIXTURE(uri_address, proxy_with_credentials,
     VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
     response.content_ready().wait();
 }
+#endif
 
 } // SUITE(proxy_tests)
 

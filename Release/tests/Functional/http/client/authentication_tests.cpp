@@ -50,7 +50,7 @@ namespace tests { namespace functional { namespace http { namespace client {
 SUITE(authentication_tests)
 {
 
-TEST_FIXTURE(uri_address, auth_no_data, "Ignore:Linux", "698420", "Ignore:Apple", "698420")
+TEST_FIXTURE(uri_address, auth_no_data, "Ignore:Linux", "89", "Ignore:Apple", "89")
 {
     test_http_server::scoped_server scoped(m_uri);
     http_client_config client_config;
@@ -89,7 +89,7 @@ TEST_FIXTURE(uri_address, auth_no_data, "Ignore:Linux", "698420", "Ignore:Apple"
 
 // TFS 648783
 #ifndef __cplusplus_winrt
-TEST_FIXTURE(uri_address, proxy_auth_known_contentlength, "Ignore:Linux", "646268", "Ignore:Apple", "646268")
+TEST_FIXTURE(uri_address, proxy_auth_known_contentlength, "Ignore:Linux", "88", "Ignore:Apple", "88")
 {
     test_http_server::scoped_server scoped(m_uri);
     http_client_config client_config;
@@ -130,9 +130,7 @@ TEST_FIXTURE(uri_address, proxy_auth_known_contentlength, "Ignore:Linux", "64626
 }
 #endif
 
-TEST_FIXTURE(uri_address, proxy_auth_noseek,
-             "Ignore:Linux", "646268",
-             "Ignore:Apple", "646268")
+TEST_FIXTURE(uri_address, proxy_auth_noseek, "Ignore:Linux", "88", "Ignore:Apple", "88")
 {
     web::http::uri uri(U("http://localhost:34567/"));
     test_http_server::scoped_server scoped(uri);
@@ -164,9 +162,7 @@ TEST_FIXTURE(uri_address, proxy_auth_noseek,
 
 // Must specify content length with winrt client, so this test case isn't possible.
 #ifndef __cplusplus_winrt
-TEST_FIXTURE(uri_address, proxy_auth_unknown_contentlength, 
-            "Ignore:Linux", "646268",
-            "Ignore:Apple", "646268")
+TEST_FIXTURE(uri_address, proxy_auth_unknown_contentlength, "Ignore:Linux", "88", "Ignore:Apple", "88")
 {
     test_http_server::scoped_server scoped(m_uri);
     http_client_config client_config;
@@ -237,7 +233,7 @@ TEST_FIXTURE(uri_address, empty_username_password)
 // Fails on WinRT due to TFS 648278
 // Accessing a server that supports auth, but returns 401, even after the user has provided valid creds
 // We're making sure the error is reported properly, and the response data from the second response is received
-TEST_FIXTURE(uri_address, error_after_valid_credentials, "Ignore:Linux", "646268", "Ignore:Apple", "646268")
+TEST_FIXTURE(uri_address, error_after_valid_credentials, "Ignore:Linux", "89", "Ignore:Apple", "89")
 {
     web::http::uri uri(U("http://localhost:34569/"));
     test_http_server::scoped_server scoped(uri);
@@ -398,6 +394,7 @@ TEST_FIXTURE(server_properties, successful_auth_with_domain_cred, "Requires", "S
     VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
 }
 
+#ifndef __cplusplus_winrt // WinRT implementation doesn't support request buffer caching.
 TEST_FIXTURE(server_properties, failed_authentication_resend_request_error, "Requires", "Server;UserName;Password")
 {
     load_parameters();
@@ -414,14 +411,11 @@ TEST_FIXTURE(server_properties, failed_authentication_resend_request_error, "Req
     http_request request;
     request.set_method(methods::POST);
     request.set_body(data);
-    auto responseTask = client.request(request);
-
-    http_response response;
-
-    response = responseTask.get();
+    http_response response = client.request(request).get();
 
     VERIFY_ARE_EQUAL(200, response.status_code());
 }
+#endif
 
 #ifdef __cplusplus_winrt
 TEST_FIXTURE(uri_address, set_user_options_winrt)
@@ -604,7 +598,7 @@ TEST_FIXTURE(uri_address, set_user_options_exceptions)
 #pragma endregion 
 
 // Fix for 522831 AV after failed authentication attempt
-TEST_FIXTURE(uri_address, failed_authentication_attempt, "Ignore:Linux", "698420", "Ignore:Apple", "698420")
+TEST_FIXTURE(uri_address, failed_authentication_attempt, "Ignore:Linux", "89", "Ignore:Apple", "89")
 {
     http_client_config config;
     credentials cred(U("user"),U("schmuser"));

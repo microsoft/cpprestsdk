@@ -40,8 +40,7 @@ namespace tests { namespace functional { namespace http { namespace client {
 SUITE(outside_tests)
 {
 
-TEST_FIXTURE(uri_address, outside_cnn_dot_com,
-             "Ignore", "Manual")
+TEST_FIXTURE(uri_address, outside_cnn_dot_com)
 {
     http_client client(U("http://www.cnn.com"));
 
@@ -62,8 +61,7 @@ TEST_FIXTURE(uri_address, outside_cnn_dot_com,
 #endif
 }
 
-TEST_FIXTURE(uri_address, outside_google_dot_com,
-             "Ignore", "Manual")
+TEST_FIXTURE(uri_address, outside_google_dot_com)
 {
     http_client client(U("http://www.google.com"));
 
@@ -84,8 +82,7 @@ TEST_FIXTURE(uri_address, outside_google_dot_com,
 #endif
 }
 
-TEST_FIXTURE(uri_address, reading_google_stream,
-             "Ignore", "Manual")
+TEST_FIXTURE(uri_address, reading_google_stream)
 {
     http_client simpleclient(U("http://www.google.com"));
     utility::string_t path = m_uri.query();
@@ -100,8 +97,62 @@ TEST_FIXTURE(uri_address, reading_google_stream,
     VERIFY_ARE_EQUAL(strcmp((const char *)chars, "<!doctype html><html itemscope=\"\" itemtype=\"http://schema.org/WebPage\""), 0);
 }
 
-TEST_FIXTURE(uri_address, outside_ssl_json,
-             "Ignore", "Manual")
+TEST_FIXTURE(uri_address, no_transfer_encoding_content_length)
+{
+    http_client client(U("http://ws.audioscrobbler.com/2.0/?method=artist.gettoptracks&artist=cher&api_key=6fcd59047568e89b1615975081258990&format=json"));
+
+    client.request(methods::GET).then([](http_response response){
+        VERIFY_ARE_EQUAL(response.status_code(), status_codes::OK);
+        VERIFY_IS_FALSE(response.headers().has(header_names::content_length)
+            && response.headers().has(header_names::transfer_encoding));
+        return response.extract_string();
+    }).then([](string_t result){
+        // Verify that the body size isn't empty.
+        VERIFY_IS_TRUE(result.size() > 0);
+    }).wait();
+}
+
+// Note additional sites for testing can be found at:
+// https://www.ssllabs.com/ssltest/
+// http://www.internetsociety.org/deploy360/resources/dane-test-sites/
+// https://onlinessl.netlock.hu/#
+TEST(server_selfsigned_cert, "Ignore:Android", "SSL certs not implemented")
+{
+    http_client client(U("https://www.pcwebshop.co.uk/"));
+    auto requestTask = client.request(methods::GET);
+    VERIFY_THROWS(requestTask.get(), http_exception);
+}
+
+TEST(server_hostname_mismatch, "Ignore:Android", "SSL certs not implemented")
+{
+    http_client client(U("https://swordsoftruth.com/"));
+    auto requestTask = client.request(methods::GET);
+    VERIFY_THROWS(requestTask.get(), http_exception);
+}
+
+TEST(server_cert_expired, "Ignore:Android", "SSL certs not implemented")
+{
+    http_client client(U("https://tv.eurosport.com/"));
+    auto requestTask = client.request(methods::GET);
+    VERIFY_THROWS(requestTask.get(), http_exception);
+}
+
+#if !defined(__cplusplus_winrt)
+TEST(ignore_server_cert_invalid, 
+     "Ignore:Android", "229",
+     "Ignore:Apple", "229",
+     "Ignore:Linux", "229")
+{
+    http_client_config config;
+    config.set_validate_certificates(false);
+    http_client client(U("https://www.pcwebshop.co.uk/"), config);
+
+    auto request = client.request(methods::GET).get();
+    VERIFY_ARE_EQUAL(status_codes::OK, request.status_code());
+}
+#endif
+
+TEST_FIXTURE(uri_address, outside_ssl_json, "Ignore:Android", "SSL certs not implemented")
 {
     // Create URI for:
     // https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=UUF1hMUVwlrvlVMjUGOZExgg&key=AIzaSyAviHxf_y0SzNoAq3iKqvWVE4KQ0yylsnk

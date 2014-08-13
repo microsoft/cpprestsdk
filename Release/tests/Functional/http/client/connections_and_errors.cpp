@@ -166,28 +166,6 @@ TEST_FIXTURE(uri_address, handshake_fail)
 }
 
 #if !defined(__cplusplus_winrt)
-// Test case needs a server with invalid certificate running.
-TEST(server_cert_invalid, "Ignore", "Manual")
-{
-    http_client client(U("https://localhost"));
-
-    auto requestTask = client.request(methods::GET);
-    VERIFY_THROWS(requestTask.get(), http_exception);
-}
-
-// Test case needs a server with invalid certificate running.
-TEST(ignore_server_cert_invalid, "Ignore", "Manual")
-{
-    http_client_config config;
-    config.set_validate_certificates(false);
-    http_client client(U("https://localhost"), config);
-
-    auto request = client.request(methods::GET).get();
-    VERIFY_ARE_EQUAL(status_codes::OK, request.status_code());
-}
-#endif
-
-#if !defined(__cplusplus_winrt)
 // This test still sometimes segfaults on Linux, but I'm re-enabling it [AL]
 TEST_FIXTURE(uri_address, content_ready_timeout)
 {
@@ -219,7 +197,7 @@ TEST_FIXTURE(uri_address, content_ready_timeout)
     listener.close().wait();
 }
 
-TEST_FIXTURE(uri_address, stream_timeout, "Ignore:Apple", "Bug 885080")
+TEST_FIXTURE(uri_address, stream_timeout, "Ignore:Apple", "149")
 {
     web::http::experimental::listener::http_listener listener(m_uri);
     listener.open().wait();
@@ -386,18 +364,6 @@ TEST_FIXTURE(uri_address, cancel_while_downloading_data)
 }
 #endif
 
-TEST_FIXTURE(uri_address, no_transfer_encoding_content_length, "Ignore", "Manual")
-{
-    http_client client(U("http://ws.audioscrobbler.com/2.0/?method=artist.gettoptracks&artist=cher&api_key=6fcd59047568e89b1615975081258990&format=json"));
-
-    client.request(methods::GET).then([](http_response response){
-        VERIFY_IS_FALSE(response.headers().has(header_names::content_length) 
-            && response.headers().has(header_names::transfer_encoding));
-        return response.extract_string();
-    }).then([](string_t result){
-        VERIFY_ARE_EQUAL(result.size(), 34686);  // hardcoded the content size here, need to check the correct number for manual test.
-    }).wait();
-}
 #pragma endregion
 
 } // SUITE(connections_and_errors)
