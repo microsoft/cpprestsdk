@@ -62,7 +62,7 @@ namespace experimental
 std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t&, const utility::string_t&)
 {
     // CodePlex #230
-    throw std::runtime_error("oauth1 is not implemented yet.");
+    return std::vector<unsigned char>();
 }
 
 #elif defined(_MS_WINDOWS) && defined(__cplusplus_winrt) // Windows RT
@@ -74,7 +74,7 @@ using namespace Windows::Storage::Streams;
 std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t&, const utility::string_t&)
 {
     // CodePlex #230
-    throw std::runtime_error("oauth1 is not implemented yet.");
+    return std::vector<unsigned char>();
 }
 
 #else // Linux, Mac OS X
@@ -84,7 +84,7 @@ std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t&, c
 std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t&, const utility::string_t&)
 {
     // CodePlex #230
-    throw std::runtime_error("oauth1 is not implemented yet.");
+    return std::vector<unsigned char>();
 }
 
 #endif
