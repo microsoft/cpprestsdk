@@ -127,7 +127,7 @@ public:
     /// Set OAuth 1.0 configuration.
     /// </summary>
     /// <param name="config">OAuth 1.0 configuration to set.</param>
-    void set_oauth1(oauth1::experimental::oauth1_config config)
+    void set_oauth1(oauth1::experimental::oauth1_config)
     {
         // CodePlex #230
         throw std::runtime_error("oauth1 is not implemented yet.");
