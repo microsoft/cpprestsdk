@@ -58,7 +58,7 @@ struct oauth2_test_setup
 {
     oauth2_test_setup() :
         m_uri(U("http://localhost:16743/")),
-        m_oauth2_config(U("123ABC"), U("456DEF"), U("https://foo"), m_uri.to_string(), U("https://bar")),
+        m_oauth2_config(U("123ABC"), U("456DEF"), U("https://test1"), m_uri.to_string(), U("https://bar")),
         m_scoped(m_uri)
     {}
 
@@ -125,16 +125,16 @@ TEST(oauth2_build_authorization_uri)
     // Full authorization URI with scope.
     {
         config.set_client_key(U("4567abcd"));
-        config.set_auth_endpoint(U("https://foo"));
+        config.set_auth_endpoint(U("https://test1"));
         config.set_redirect_uri(U("http://localhost:8080"));
-        VERIFY_ARE_EQUAL(U("https://foo/?response_type=code&client_id=4567abcd&redirect_uri=http://localhost:8080&state=xyzzy&scope=testing_123"),
+        VERIFY_ARE_EQUAL(U("https://test1/?response_type=code&client_id=4567abcd&redirect_uri=http://localhost:8080&state=xyzzy&scope=testing_123"),
                 config.build_authorization_uri(false));
     }
 
     // Verify again with implicit grant.
     {
         config.set_implicit_grant(true);
-        VERIFY_ARE_EQUAL(U("https://foo/?response_type=token&client_id=4567abcd&redirect_uri=http://localhost:8080&state=xyzzy&scope=testing_123"),
+        VERIFY_ARE_EQUAL(U("https://test1/?response_type=token&client_id=4567abcd&redirect_uri=http://localhost:8080&state=xyzzy&scope=testing_123"),
                 config.build_authorization_uri(false));
     }
 
@@ -210,7 +210,7 @@ TEST_FIXTURE(oauth2_test_setup, oauth2_token_from_redirected_uri)
         {
             std::map<utility::string_t, utility::string_t> headers;
             headers[header_names::content_type] = mime_types::application_json;
-            request->reply(status_codes::OK, U(""), headers, "{\"access_token\":\"foo\",\"token_type\":\"bearer\"}");
+            request->reply(status_codes::OK, U(""), headers, "{\"access_token\":\"test1\",\"token_type\":\"bearer\"}");
         });
     
         m_oauth2_config.set_implicit_grant(false);
@@ -220,7 +220,7 @@ TEST_FIXTURE(oauth2_test_setup, oauth2_token_from_redirected_uri)
         m_oauth2_config.token_from_redirected_uri(redirected_uri).wait();
 
         VERIFY_IS_TRUE(m_oauth2_config.token().is_valid_access_token());
-        VERIFY_ARE_EQUAL(m_oauth2_config.token().access_token(), U("foo"));
+        VERIFY_ARE_EQUAL(m_oauth2_config.token().access_token(), U("test1"));
     }
 
     // Implicit grant.
