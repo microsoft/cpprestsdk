@@ -205,7 +205,6 @@
     <ClCompile Include="..\header_tests.cpp" />
     <ClCompile Include="..\http_client_tests.cpp" />
     <ClCompile Include="..\http_methods_tests.cpp" />
-    <ClCompile Include="..\oauth1_tests.cpp" />
     <ClCompile Include="..\oauth2_tests.cpp" />
     <ClCompile Include="..\outside_tests.cpp" />
     <ClCompile Include="..\multiple_requests.cpp" />

@@ -62,6 +62,7 @@ elseif(WIN32)
     http/client/http_win7.cpp
     http/listener/http_windows_server.cpp
     http/oauth/oauth1.cpp
+    http/oauth/oauth2.cpp
     streams/windows/fileio.cpp
     streams/windows/ioscheduler.cpp
     utilities/dllmain.cpp
