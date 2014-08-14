@@ -242,10 +242,10 @@ TEST(comments_string)
     json::value obj2 = json::value::parse(U("{/* A comment in the middle of an empty object */}"));
     VERIFY_IS_TRUE(obj2.is_object());
     VERIFY_ARE_EQUAL(0u, obj2.size());
-    json::value obj3 = json::value::parse(U("{ \"foo\" : // A comment in the middle of a non-empty object\n 2}"));
+    json::value obj3 = json::value::parse(U("{ \"test\" : // A comment in the middle of a non-empty object\n 2}"));
     VERIFY_IS_TRUE(obj3.is_object());
     VERIFY_ARE_EQUAL(1u, obj3.size());
-    json::value obj4 = json::value::parse(U("{ \"foo\" : /* A comment in the middle of a non-empty object */ 2}"));
+    json::value obj4 = json::value::parse(U("{ \"test\" : /* A comment in the middle of a non-empty object */ 2}"));
     VERIFY_IS_TRUE(obj4.is_object());
     VERIFY_ARE_EQUAL(1u, obj4.size());
 
@@ -343,14 +343,14 @@ TEST(comments_stream)
     }
     {
     std::basic_stringstream<utility::char_t> stream;
-    stream << U("{ \"foo\" : // A comment in the middle of a non-empty object\n 2}");
+    stream << U("{ \"test1\" : // A comment in the middle of a non-empty object\n 2}");
     json::value obj3 = json::value::parse(stream);
     VERIFY_IS_TRUE(obj3.is_object());
     VERIFY_ARE_EQUAL(1u, obj3.size());
     }
     {
     std::basic_stringstream<utility::char_t> stream;
-    stream << U("{ \"foo\" : /* A comment in the middle of a non-empty object */ 2}");
+    stream << U("{ \"test1\" : /* A comment in the middle of a non-empty object */ 2}");
     json::value obj4 = json::value::parse(stream);
     VERIFY_IS_TRUE(obj4.is_object());
     VERIFY_ARE_EQUAL(1u, obj4.size());
@@ -410,13 +410,13 @@ TEST(bug_416116)
 
 TEST(byte_ptr_parsing_array)
 {
-    char s[] = "[ \"foo\",true]";
+    char s[] = "[ \"test1\",true]";
     std::stringstream ss;
     ss << s;
     json::value v = json::value::parse(ss);
     auto s2 = v.serialize();
 
-    VERIFY_ARE_EQUAL(s2, U("[\"foo\",true]"));
+    VERIFY_ARE_EQUAL(s2, U("[\"test1\",true]"));
 
     std::stringstream os;
     v.serialize(os);
@@ -425,13 +425,13 @@ TEST(byte_ptr_parsing_array)
 
 TEST(byte_ptr_parsing_object)
 {
-    char s[] = "{\"foo\":true }";
+    char s[] = "{\"test1\":true }";
     std::stringstream ss;
     ss << s;
     json::value v = json::value::parse(ss);
     auto s2 = v.serialize();
 
-    VERIFY_ARE_EQUAL(s2, U("{\"foo\":true}"));
+    VERIFY_ARE_EQUAL(s2, U("{\"test1\":true}"));
 
     std::stringstream os;
     v.serialize(os);
