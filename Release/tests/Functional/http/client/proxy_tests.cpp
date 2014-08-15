@@ -90,7 +90,7 @@ TEST_FIXTURE(uri_address, no_proxy_options_on_winrt)
 
 #ifndef __cplusplus_winrt
 // Can't specify a proxy with WinRT implementation.
-TEST_FIXTURE(uri_address, proxy_with_credentials)
+TEST_FIXTURE(uri_address, proxy_with_credentials, "Ignore:Linux", "NYI", "Ignore:Apple", "NYI", "Ignore:Android", "NYI")
 {
     uri u(U("http://netproxy.redmond.corp.microsoft.com"));
 
