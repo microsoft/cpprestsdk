@@ -59,60 +59,10 @@ namespace experimental
 #include <winternl.h>
 #include <bcrypt.h>
 
-std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t& key, const utility::string_t& data)
+std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t&, const utility::string_t&)
 {
-    NTSTATUS status;
-    BCRYPT_ALG_HANDLE alg_handle = nullptr;
-    BCRYPT_HASH_HANDLE hash_handle = nullptr;
-
-    std::vector<unsigned char> hash;
-    DWORD hash_len = 0;
-    ULONG result_len = 0;
-
-    auto key_c = conversions::utf16_to_utf8(key);
-    auto data_c = conversions::utf16_to_utf8(data);
-
-    status = BCryptOpenAlgorithmProvider(&alg_handle, BCRYPT_SHA1_ALGORITHM, nullptr, BCRYPT_ALG_HANDLE_HMAC_FLAG);
-    if (!NT_SUCCESS(status))
-    {
-        goto cleanup;
-    }
-    status = BCryptGetProperty(alg_handle, BCRYPT_HASH_LENGTH, (PBYTE) &hash_len, sizeof(hash_len), &result_len, 0);
-    if (!NT_SUCCESS(status))
-    {
-        goto cleanup;
-    }
-    hash.resize(hash_len);
-
-    status = BCryptCreateHash(alg_handle, &hash_handle, nullptr, 0, (PBYTE) key_c.c_str(), (ULONG) key_c.length(), 0);
-    if (!NT_SUCCESS(status))
-    {
-        goto cleanup;
-    }
-    status = BCryptHashData(hash_handle, (PBYTE) data_c.c_str(), (ULONG) data_c.length(), 0);
-    if (!NT_SUCCESS(status))
-    {
-        goto cleanup;
-    }
-    status = BCryptFinishHash(hash_handle, hash.data(), hash_len, 0);
-    if (!NT_SUCCESS(status))
-    {
-        goto cleanup;
-    }
-
-    return hash;
-
-cleanup:
-    if (hash_handle)
-    {
-        BCryptDestroyHash(hash_handle);
-    }
-    if (alg_handle)
-    {
-        BCryptCloseAlgorithmProvider(alg_handle, 0);
-    }
-
-    return hash;
+    // CodePlex #230
+    return std::vector<unsigned char>();
 }
 
 #elif defined(_MS_WINDOWS) && defined(__cplusplus_winrt) // Windows RT
@@ -121,37 +71,20 @@ using namespace Windows::Security::Cryptography;
 using namespace Windows::Security::Cryptography::Core;
 using namespace Windows::Storage::Streams;
  
-std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t& key, const utility::string_t& data)
+std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t&, const utility::string_t&)
 {
-    Platform::String^ data_str = ref new Platform::String(data.c_str());
-    Platform::String^ key_str = ref new Platform::String(key.c_str());
-
-    MacAlgorithmProvider^ HMACSha1Provider = MacAlgorithmProvider::OpenAlgorithm(MacAlgorithmNames::HmacSha1);
-    IBuffer^ content_buffer = CryptographicBuffer::ConvertStringToBinary(data_str, BinaryStringEncoding::Utf8);
-    IBuffer^ key_buffer = CryptographicBuffer::ConvertStringToBinary(key_str, BinaryStringEncoding::Utf8);
-
-    auto signature_key = HMACSha1Provider->CreateKey(key_buffer);
-    auto signed_buffer = CryptographicEngine::Sign(signature_key, content_buffer);
-
-    Platform::Array<unsigned char, 1>^ arr;
-    CryptographicBuffer::CopyToByteArray(signed_buffer, &arr);
-    return std::vector<unsigned char>(arr->Data, arr->Data + arr->Length);
+    // CodePlex #230
+    return std::vector<unsigned char>();
 }
 
 #else // Linux, Mac OS X
 
 #include <openssl/hmac.h>
 
-std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t& key, const utility::string_t& data)
+std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t&, const utility::string_t&)
 {
-    unsigned char digest[HMAC_MAX_MD_CBLOCK];
-    unsigned int digest_len = 0;
-
-    HMAC(EVP_sha1(), key.c_str(), static_cast<int>(key.length()),
-            (const unsigned char*) data.c_str(), data.length(),
-            digest, &digest_len);
-
-    return std::vector<unsigned char>(digest, digest + digest_len);
+    // CodePlex #230
+    return std::vector<unsigned char>();
 }
 
 #endif

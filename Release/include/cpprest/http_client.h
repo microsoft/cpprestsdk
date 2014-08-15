@@ -73,7 +73,7 @@ namespace client
 {
 
 // credentials and web_proxy class has been moved from web::http::client namespace to web namespace.
-// The below using declarations ensure we dont break existing code.
+// The below using declarations ensure we don't break existing code.
 // Please use the web::credentials and web::web_proxy class going forward.
 using web::credentials;
 using web::web_proxy;
@@ -125,9 +125,11 @@ public:
     /// Set OAuth 1.0 configuration.
     /// </summary>
     /// <param name="config">OAuth 1.0 configuration to set.</param>
-    void set_oauth1(oauth1::experimental::oauth1_config config)
+    void set_oauth1(oauth1::experimental::oauth1_config)
     {
-        m_oauth1 = std::make_shared<oauth1::experimental::oauth1_config>(std::move(config));
+        // CodePlex #230
+        throw std::runtime_error("oauth1 is not implemented yet.");
+        //m_oauth1 = std::make_shared<oauth1::experimental::oauth1_config>(std::move(config));
     }
 #endif
 

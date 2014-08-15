@@ -35,6 +35,7 @@
 #include "cpprest/xxpublic.h"
 #include "cpprest/containerstream.h"
 
+#if _NOT_PHONE8_
 #if defined(_MSC_VER) && (_MSC_VER >= 1800)
 #include <ppltasks.h>
 namespace pplx = Concurrency;
@@ -239,6 +240,6 @@ private:
 
 }}}}
 
+#endif  // _NOT_PHONE8_
 #endif
-
 #endif  /* _CASA_WS_MSG_H */

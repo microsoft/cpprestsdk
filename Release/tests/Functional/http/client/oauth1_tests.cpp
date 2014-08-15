@@ -90,7 +90,7 @@ TEST(oauth1_token_accessors)
 TEST(oauth1_config_accessors)
 {
     oauth1_config t(U(""), U(""), U(""), U(""), U(""), U(""), oauth1_methods::hmac_sha1);
-    TEST_ACCESSOR(U("Foo123"), consumer_key)
+    TEST_ACCESSOR(U("Test123"), consumer_key)
     TEST_ACCESSOR(U("bar456"), consumer_secret)
     TEST_ACCESSOR(U("file:///123?123=a&1="), temp_endpoint)
     TEST_ACCESSOR(U("x:yxw#0"), auth_endpoint)
@@ -222,12 +222,12 @@ TEST_FIXTURE(oauth1_server_setup, oauth1_build_authorization_uri)
         // Reply with temporary token and secret.
         std::map<utility::string_t, utility::string_t> headers;
         headers[header_names::content_type] = mime_types::application_x_www_form_urlencoded;
-        request->reply(status_codes::OK, U(""), headers, "oauth_token=foobar&oauth_token_secret=xyzzy&oauth_callback_confirmed=true");
+        request->reply(status_codes::OK, U(""), headers, "oauth_token=testbar&oauth_token_secret=xyzzy&oauth_callback_confirmed=true");
     });
     
     VERIFY_IS_FALSE(m_oauth1_config.token().is_valid_access_token());
     utility::string_t auth_uri = m_oauth1_config.build_authorization_uri().get();
-    VERIFY_ARE_EQUAL(auth_uri, U("http://localhost:17778/?oauth_token=foobar"));
+    VERIFY_ARE_EQUAL(auth_uri, U("http://localhost:17778/?oauth_token=testbar"));
     VERIFY_IS_FALSE(m_oauth1_config.token().is_valid_access_token());
 }
 
@@ -253,7 +253,7 @@ TEST_FIXTURE(oauth1_server_setup, oauth1_token_from_redirected_uri)
         // Reply with access token and secret.
         std::map<utility::string_t, utility::string_t> headers;
         headers[header_names::content_type] = mime_types::application_x_www_form_urlencoded;
-        request->reply(status_codes::OK, U(""), headers, "oauth_token=foo&oauth_token_secret=bar");
+        request->reply(status_codes::OK, U(""), headers, "oauth_token=test&oauth_token_secret=bar");
     });
     
     m_oauth1_config.set_token(oauth1_token(U("xyzzy"), U(""))); // Simulate temporary token.
@@ -262,7 +262,7 @@ TEST_FIXTURE(oauth1_server_setup, oauth1_token_from_redirected_uri)
     m_oauth1_config.token_from_redirected_uri(redirected_uri).wait();
 
     VERIFY_IS_TRUE(m_oauth1_config.token().is_valid_access_token());
-    VERIFY_ARE_EQUAL(m_oauth1_config.token().access_token(), U("foo"));
+    VERIFY_ARE_EQUAL(m_oauth1_config.token().access_token(), U("test"));
     VERIFY_ARE_EQUAL(m_oauth1_config.token().secret(), U("bar"));
 }
 

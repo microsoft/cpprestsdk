@@ -68,3 +68,6 @@
 #ifdef __clang__
 #include <cstdio>
 #endif
+
+// Define the _NOT_PHONE8_ as non-windows or windows desktop without arm configuration or windows store app or windows phone8.1
+#define _NOT_PHONE8_ !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP && !defined(_M_ARM)) || WINAPI_FAMILY == WINAPI_FAMILY_APP || (WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP && _WIN32_WINNT == _WIN32_WINNT_WINBLUE)

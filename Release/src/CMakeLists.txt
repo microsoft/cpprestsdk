@@ -62,6 +62,7 @@ elseif(WIN32)
     http/client/http_win7.cpp
     http/listener/http_windows_server.cpp
     http/oauth/oauth1.cpp
+    http/oauth/oauth2.cpp
     streams/windows/fileio.cpp
     streams/windows/ioscheduler.cpp
     utilities/dllmain.cpp
@@ -96,7 +97,7 @@ target_link_libraries(${Casablanca_LIBRARY}
 
 # Portions specific to cpprest binary versioning.
 set (CPPREST_VERSION_MAJOR 2)
-set (CPPREST_VERSION_MINOR 1)
+set (CPPREST_VERSION_MINOR 2)
 set (CPPREST_VERSION_REVISION 0)
 
 if(WIN32)
