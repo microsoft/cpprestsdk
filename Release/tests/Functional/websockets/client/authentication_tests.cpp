@@ -84,7 +84,7 @@ TEST_FIXTURE(uri_address, auth_with_credentials, "Ignore:Linux", "NYI", "Ignore:
 }
 
 // Send and receive text message over SSL
-TEST_FIXTURE(uri_address, ssl_test)
+TEST_FIXTURE(uri_address, ssl_test, "Ignore", "NYI on desktop/apple/linux/android")
 {
     websocket_client client;
     client.connect(U("wss://echo.websocket.org/")).wait();
