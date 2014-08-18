@@ -118,7 +118,9 @@ public:
     /// <returns>Shared pointer to OAuth 1.0 configuration.</returns>
     const std::shared_ptr<oauth1::experimental::oauth1_config> oauth1() const
     {
-        return m_oauth1;
+        // CodePlex #230
+        throw std::runtime_error("oauth1 is not implemented yet.");
+        //return m_oauth1;
     }
 
     /// <summary>
