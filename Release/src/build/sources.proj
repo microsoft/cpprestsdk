@@ -221,7 +221,7 @@
   
     <!-- non-TargetXP and non-Phone8.0 files go here-->
   <ItemGroup Condition ="'$(TargetXP)' != 'true' and '$(PlatformToolset)' != 'v110_wp80'">
-    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\oauth1.h">
+	<ClInclude Include="$(CasablancaIncludeDir)\cpprest\oauth1.h">
       <Filter>Header Files\cpprest</Filter>
     </ClInclude>
     <ClCompile Include="$(CasablancaSrcDir)\http\oauth\oauth1.cpp">
