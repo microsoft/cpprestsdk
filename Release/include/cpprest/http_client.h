@@ -65,10 +65,13 @@ namespace pplx = Concurrency;
 
 #include "cpprest/oauth2.h"
 
+/// The web namespace contains functionality common to multiple protocols like HTTP and WebSockets.
 namespace web 
 {
+/// Declarations and functionality for the HTTP protocol.
 namespace http
 {
+/// HTTP client side library.
 namespace client
 {
 
@@ -263,7 +266,7 @@ public:
     /// <summary>
     /// Sets the server certificate validation property.
     /// </summary>
-    /// <param name="validate_cert">False to turn ignore all server certificate validation errors, true otherwise.</param>
+    /// <param name="validate_certs">False to turn ignore all server certificate validation errors, true otherwise.</param>
     /// <remarks>Note ignoring certificate errors can be dangerous and should be done with caution.</remarks>
     void set_validate_certificates(bool validate_certs)
     {

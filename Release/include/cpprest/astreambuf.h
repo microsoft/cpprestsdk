@@ -96,7 +96,10 @@ namespace std {
 }
 #endif // _MS_WINDOWS
 
-namespace Concurrency { namespace streams
+namespace Concurrency 
+{ 
+/// Library for asychronous streams.
+namespace streams
 {
     /// <summary>
     /// Extending the standard char_traits type with one that adds values and types

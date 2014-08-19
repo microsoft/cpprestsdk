@@ -50,27 +50,14 @@ namespace pplx = Concurrency;
 #include <boost/algorithm/string.hpp>
 #endif
 
+/// Various utilities for string conversions and date and time manipulation.
 namespace utility
 {
 
-#if  !defined(_MS_WINDOWS) || (_MSC_VER >= 1700) // Post VS10 and Linux
+// Left over from VS2010 support, remains to avoid breaking.
 typedef std::chrono::seconds seconds;
-#else // VS10
-/// <summary>
-/// A type used to represent timeouts for Azure storage APIs
-/// </summary>
-// The chrono header is not present on Visual Studio with versions < 1700 so we define a 'seconds' type for timeouts
-class seconds
-{
-public:
-    explicit seconds(__int64 time = 0): m_count(time) {}
-    __int64 count() const { return m_count; }
 
-private:
-    __int64 m_count;
-};
-#endif
-
+/// Functions for converting to/from std::chrono::seconds to xml string.
 namespace timespan
 {
     /// <summary>
@@ -86,6 +73,7 @@ namespace timespan
     _ASYNCRTIMP utility::seconds __cdecl xml_duration_to_seconds(utility::string_t timespanString);
 }
 
+/// Functions for string conversions.
 namespace conversions
 {
     /// <summary>

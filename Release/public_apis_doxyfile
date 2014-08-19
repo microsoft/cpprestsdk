@@ -1961,7 +1961,8 @@ INCLUDE_FILE_PATTERNS  =
 # recursively expanded use the := operator instead of the = operator.
 # This tag requires that the tag ENABLE_PREPROCESSING is set to YES.
 
-PREDEFINED             =
+# These are defined to make sure the WebSocket APIs are picked up.
+PREDEFINED             = __cplusplus_winrt _NOT_PHONE8_
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then this
 # tag can be used to specify a list of macro names that should be expanded. The

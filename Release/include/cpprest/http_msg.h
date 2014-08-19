@@ -51,18 +51,11 @@ namespace pplx = Concurrency;
 #include <boost/algorithm/string/predicate.hpp>
 #endif
 
-namespace web {
-
-/// <summary>
-/// Declaration to avoid making a dependency on IISHost.
-/// </summary>
-namespace iis_host
+namespace web 
 {
-    class http_iis_receiver;
-}
-
 namespace http
 {
+
 // URI class has been moved from web::http namespace to web namespace.
 // The below using declarations ensure we dont break existing code.
 // Please use the web::uri class going forward.
@@ -79,6 +72,10 @@ namespace client
 /// HTTP 1.1 specification.
 /// </summary>
 typedef utility::string_t method;
+
+/// <summary>
+/// Common HTTP methods.
+/// </summary>
 class methods
 {
 public:
@@ -191,6 +188,10 @@ public:
         return m_msg.c_str();
     }
 
+    /// <summary>
+    /// Retrieves the underlying error code causing this exception.
+    /// </summary>
+    /// <returns>A std::error_code.</returns>
     const std::error_code & error_code() const
     {
         return m_errorCode;
