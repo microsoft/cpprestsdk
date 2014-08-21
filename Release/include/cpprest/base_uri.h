@@ -316,7 +316,7 @@ namespace web {
         /// A default port is one where the port is unspecified, and will be determined by the operating system.
         /// The choice of default port may be dictated by the scheme (http -> 80) or not.
         /// </summary>
-        /// <returns>True if this URI instance has a default port.</returns>
+        /// <returns><c>true</c> if this URI instance has a default port, <c>false</c> otherwise.</returns>
         bool is_port_default() const
         {
             return !is_empty() && this->port() == 0;

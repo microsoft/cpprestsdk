@@ -103,7 +103,7 @@ namespace Concurrency { namespace streams
     }
 
     /// <summary>
-    /// Base interface for asynchronous output streams.
+    /// Base interface for all asynchronous output streams.
     /// </summary>
     template<typename CharType>
     class basic_ostream
