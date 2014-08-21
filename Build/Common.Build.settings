@@ -9,7 +9,7 @@
     </MSBuildAllProjects>
   </PropertyGroup>
 
-  <!-- defualt configuration -->
+  <!-- default configuration -->
   <PropertyGroup>
     <Configuration Condition="'$(Configuration)'==''">Debug</Configuration>
     <Platform Condition="'$(Platform)'==''">Win32</Platform>
@@ -60,7 +60,6 @@
     <PackagesRoot Condition="'$(PackagesRoot)'=='' AND Exists('$(BuildRoot)\packages')">$(BuildRoot)\packages</PackagesRoot>
     <PackagesRoot Condition="'$(PackagesRoot)'=='' AND Exists('$(BuildRoot)\..\Tools\packages')">$(BuildRoot)\..\Tools\packages</PackagesRoot>
     <CollateralsDir>$(BuildRoot)\Release\Collateral</CollateralsDir>
-    <PocoRoot Condition="'$(PocoRoot)'=='' AND Exists('$(BuildRoot)\..\Tools\poco\poco$(DevToolsVersion)')">$(BuildRoot)\..\Tools\poco\poco$(DevToolsVersion)</PocoRoot>
   </PropertyGroup>
 
   <!-- try locating configuration file -->
