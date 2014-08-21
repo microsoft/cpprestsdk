@@ -42,8 +42,8 @@ TEST_FIXTURE(uri_address, no_proxy_options_on_winrt)
 {
     websocket_client_config config;
     config.set_proxy(web::web_proxy::use_auto_discovery);
-    websocket_client client(m_uri, config);
-    VERIFY_THROWS(client.connect().wait(), websocket_exception);
+    websocket_client client(config);
+    VERIFY_THROWS(client.connect(m_uri).wait(), websocket_exception);
 }
 #endif
 

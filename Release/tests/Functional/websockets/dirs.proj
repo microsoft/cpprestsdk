@@ -2,8 +2,10 @@
 
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Common.Build.settings" />
 
-  <ProjectFile Include="utilities\dirs.proj"/>
-  <ProjectFile Include="client\dirs.proj"/>
+    <ItemGroup>
+      <ProjectFile Include="utilities\dirs.proj"/>
+      <ProjectFile Include="client\dirs.proj"/>
+    </ItemGroup>
 
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
 

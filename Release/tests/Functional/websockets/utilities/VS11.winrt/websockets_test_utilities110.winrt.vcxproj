@@ -66,7 +66,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;WEBSOCKETTESTUTILITY_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\$(CasablancaIncludeDir);$(CommonTestIncludeDir);..\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);$(WebsocketppIncludeDir);..\include</AdditionalIncludeDirectories>
       <AdditionalUsingDirectories>$(WindowsSDKDir)\References\CommonConfiguration\Neutral;$(VSInstallDir)\vc\vcpackages;$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <AdditionalOptions>-Zm200 %(AdditionalOptions)</AdditionalOptions>
       <CompileAsWinRT>true</CompileAsWinRT>
@@ -84,7 +84,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;WEBSOCKETTESTUTILITY_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);..\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);$(WebsocketppIncludeDir);..\include</AdditionalIncludeDirectories>
       <AdditionalUsingDirectories>$(WindowsSDKDir)\References\CommonConfiguration\Neutral;$(VSInstallDir)\vc\vcpackages;$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <AdditionalOptions>-Zm200 %(AdditionalOptions)</AdditionalOptions>
       <CompileAsWinRT>true</CompileAsWinRT>
@@ -104,7 +104,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;WEBSOCKETTESTUTILITY_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);..\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);$(WebsocketppIncludeDir);..\include</AdditionalIncludeDirectories>
       <AdditionalUsingDirectories>$(WindowsSDKDir)\References\CommonConfiguration\Neutral;$(VSInstallDir)\vc\vcpackages;$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <AdditionalOptions>-Zm200 %(AdditionalOptions)</AdditionalOptions>
       <CompileAsWinRT>true</CompileAsWinRT>
@@ -126,7 +126,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;WEBSOCKETTESTUTILITY_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);..\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);$(WebsocketppIncludeDir);..\include</AdditionalIncludeDirectories>
       <AdditionalUsingDirectories>$(WindowsSDKDir)\References\CommonConfiguration\Neutral;$(VSInstallDir)\vc\vcpackages;$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <AdditionalOptions>-Zm200 %(AdditionalOptions)</AdditionalOptions>
       <CompileAsWinRT>true</CompileAsWinRT>
@@ -167,5 +167,12 @@
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(PackagesRoot)\boost.1.55.0.16\build\native\boost.targets" Condition="Exists('$(PackagesRoot)\boost.1.55.0.16\build\native\boost.targets')" />
+    <Import Project="$(PackagesRoot)\boost_system-vc110.1.55.0.16\build\native\boost_system-vc110.targets" Condition="Exists('$(PackagesRoot)\boost_system-vc110.1.55.0.16\build\native\boost_system-vc110.targets')" />
+    <Import Project="$(PackagesRoot)\boost_date_time-vc110.1.55.0.16\build\native\boost_date_time-vc110.targets" Condition="Exists('$(PackagesRoot)\boost_date_time-vc110.1.55.0.16\build\native\boost_date_time-vc110.targets')" />
+    <Import Project="$(PackagesRoot)\boost_regex-vc110.1.55.0.16\build\native\boost_regex-vc110.targets" Condition="Exists('$(PackagesRoot)\boost_regex-vc110.1.55.0.16\build\native\boost_regex-vc110.targets')" />
+    <Import Project="$(PackagesRoot)\boost_thread-vc110.1.55.0.16\build\native\boost_thread-vc110.targets" Condition="Exists('$(PackagesRoot)\boost_thread-vc110.1.55.0.16\build\native\boost_thread-vc110.targets')" />
+    <Import Project="$(PackagesRoot)\boost_chrono-vc110.1.55.0.16\build\native\boost_chrono-vc110.targets" Condition="Exists('$(PackagesRoot)\boost_chrono-vc110.1.55.0.16\build\native\boost_chrono-vc110.targets')" />
+    <Import Project="$(PackagesRoot)\boost_random-vc110.1.55.0.16\build\native\boost_random-vc110.targets" Condition="Exists('$(PackagesRoot)\boost_random-vc110.1.55.0.16\build\native\boost_random-vc110.targets')" />
   </ImportGroup>
 </Project>

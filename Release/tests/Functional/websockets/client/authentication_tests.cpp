@@ -37,7 +37,7 @@ namespace tests { namespace functional { namespace websocket { namespace client 
 SUITE(authentication_tests)
 {
 
-void auth_helper(test_websocket_server& server, utility::string_t username = U(""), utility::string_t password = U(""))
+void auth_helper(test_websocket_server& server, const utility::string_t &username = U(""), const utility::string_t &password = U(""))
 {
     server.set_http_handler([username, password](test_http_request& request)
     {
@@ -61,7 +61,7 @@ void auth_helper(test_websocket_server& server, utility::string_t username = U("
 }
 
 // connect without credentials, when the server expects credentials
-TEST_FIXTURE(uri_address, auth_no_credentials, "Ignore:Linux", "NYI", "Ignore:Apple", "NYI")
+TEST_FIXTURE(uri_address, auth_no_credentials, "Ignore", "245", "Ignore:Linux", "NYI", "Ignore:Apple", "NYI")
 {
     test_websocket_server server;
     websocket_client client;
@@ -70,7 +70,7 @@ TEST_FIXTURE(uri_address, auth_no_credentials, "Ignore:Linux", "NYI", "Ignore:Ap
 }
 
 // Connect with credentials
-TEST_FIXTURE(uri_address, auth_with_credentials, "Ignore:Linux", "NYI", "Ignore:Apple", "NYI")
+TEST_FIXTURE(uri_address, auth_with_credentials, "Ignore", "245", "Ignore:Linux", "NYI", "Ignore:Apple", "NYI")
 {
     test_websocket_server server;
     websocket_client_config config;   
