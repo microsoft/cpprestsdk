@@ -1025,8 +1025,8 @@ public:
             return iter;
         }
 
-        const bool m_keep_order;
         storage_type m_elements;
+        const bool m_keep_order;
         friend class details::_Object;
 
         template<typename CharType> friend class json::details::JSON_Parser;
@@ -1048,7 +1048,6 @@ public:
 
     public:
 
-#pragma region "is" checkers
         /// <summary>
         /// Does the number fit into int32?
         /// </summary>
@@ -1082,9 +1081,7 @@ public:
                 return false;
             }
         }
-#pragma endregion
 
-#pragma region "to" converters
         /// <summary>
         /// Converts the JSON number to a C++ double.
         /// </summary>
@@ -1147,7 +1144,6 @@ public:
             else
                 return static_cast<uint64_t>(m_intval);
         }
-#pragma endregion
 
         /// <summary>
         /// Is the number represented internally as an integral type?

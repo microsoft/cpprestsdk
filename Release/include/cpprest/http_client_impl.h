@@ -65,7 +65,6 @@ namespace web { namespace http { namespace client { namespace details
 
 #ifdef _MS_WINDOWS
 static const utility::char_t * get_with_body = _XPLATSTR("A GET or HEAD request should not have an entity body.");
-#endif
 
 // Helper function to trim leading and trailing null characters from a string.
 static void trim_nulls(utility::string_t &str)
@@ -76,6 +75,8 @@ static void trim_nulls(utility::string_t &str)
     for(index = str.size(); index > 0 && str[index - 1] == 0; --index);
     str.erase(index);
 }
+
+#endif
 
 // Flatten the http_headers into a name:value pairs separated by a carriage return and line feed.
 static utility::string_t flatten_http_headers(const http_headers &headers)
@@ -200,20 +201,20 @@ public:
         return outstream.streambuf();
     }
 
+    // Reference to the http_client implementation.
+    std::shared_ptr<_http_client_communicator> m_http_client;
+
     // request/response pair.
     http_request m_request;
     http_response m_response;
 
+    std::exception_ptr m_exceptionPtr;
+
     size64_t m_uploaded;
     size64_t m_downloaded;
 
-    std::exception_ptr m_exceptionPtr;
-
     // task completion event to signal request is completed.
     pplx::task_completion_event<http_response> m_request_completion;
-
-    // Reference to the http_client implementation.
-    std::shared_ptr<_http_client_communicator> m_http_client;
 
     // Registration for cancellation notification if enabled.
     pplx::cancellation_token_registration m_cancellationRegistration;

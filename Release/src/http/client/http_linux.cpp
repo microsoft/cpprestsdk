@@ -273,7 +273,6 @@ namespace web { namespace http
                     }
                 }
                 
-                std::shared_ptr<linux_connection> m_connection;
                 std::unique_ptr<boost::asio::ssl::stream<tcp::socket &> > m_ssl_stream;
                 size_t m_known_size;
                 size_t m_current_size;
@@ -281,6 +280,7 @@ namespace web { namespace http
                 bool m_timedout;
                 boost::asio::streambuf m_body_buf;
                 boost::asio::deadline_timer m_timeout_timer;
+                std::shared_ptr<linux_connection> m_connection;
                 
                 virtual ~linux_client_request_context();
 
@@ -312,9 +312,9 @@ namespace web { namespace http
 
                 linux_client(http::uri address, http_client_config client_config)
                     : _http_client_communicator(std::move(address), client_config)
-                    , m_resolver(crossplat::threadpool::shared_instance().service())
                     , m_io_service(crossplat::threadpool::shared_instance().service())
                     , m_pool(crossplat::threadpool::shared_instance().service(), client_config.timeout())
+                    , m_resolver(crossplat::threadpool::shared_instance().service())
                 {}
 
                 unsigned long open()
@@ -1173,15 +1173,17 @@ namespace web { namespace http
                 return result_task;
             }
 
-            linux_client_request_context::linux_client_request_context(std::shared_ptr<_http_client_communicator> &client, http_request request,
+            linux_client_request_context::linux_client_request_context(
+                    std::shared_ptr<_http_client_communicator> &client,
+                    http_request request,
                     std::shared_ptr<linux_connection> connection)
                 : request_context(client, request)
                 , m_known_size(0)
+                , m_current_size(0)
                 , m_needChunked(false)
                 , m_timedout(false)
-                , m_current_size(0)
                 , m_timeout_timer(crossplat::threadpool::shared_instance().service())
-                , m_connection(connection)
+                , m_connection(std::move(connection))
             {}
 
             std::shared_ptr<request_context> linux_client_request_context::create_request_context(

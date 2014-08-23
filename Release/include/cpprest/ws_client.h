@@ -202,8 +202,8 @@ public:
     }
 
 private:
-    std::string m_msg;
     std::error_code m_errorCode;
+    std::string m_msg;
 };
 
 namespace details

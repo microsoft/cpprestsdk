@@ -43,7 +43,6 @@ namespace web
     {
     public:
 
-#pragma region Constructors
         /// <summary>
         /// Creates a builder with an initially empty URI.
         /// </summary>
@@ -54,10 +53,6 @@ namespace web
         /// </summary>
         /// <param name="uri_str">Encoded string containing the URI.</param>
         uri_builder(const uri &uri_str): m_uri(uri_str.m_components) {}
-
-#pragma endregion
-
-#pragma region Accessors
 
         /// <summary>
         /// Get the scheme component of the URI as an encoded string.
@@ -100,10 +95,6 @@ namespace web
         /// </summary>
         /// <returns>The URI fragment as a string.</returns>
         const utility::string_t &fragment() const { return m_uri.m_fragment; }
-
-#pragma endregion
-
-#pragma region Modifiers
 
         /// <summary>
         /// Set the scheme of the URI.
@@ -215,9 +206,6 @@ namespace web
             m_uri = details::_uri_components();
         }
 
-#pragma endregion
-
-#pragma region Appending
         /// <summary>
         /// Appends another path to the path of this uri_builder.
         /// </summary>
@@ -256,9 +244,6 @@ namespace web
             return append_query(ss.str(), do_encoding);
         }
 
-#pragma endregion
-
-#pragma region URI Creation
         /// <summary>
         /// Combine and validate the URI components into a encoded string. An exception will be thrown if the URI is invalid.
         /// </summary>
@@ -276,7 +261,6 @@ namespace web
         /// </summary>
         /// <returns>Whether the URI is valid.</returns>
         _ASYNCRTIMP bool is_valid();
-#pragma endregion
 
     private:
         details::_uri_components m_uri;

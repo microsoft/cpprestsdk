@@ -29,9 +29,9 @@
 #if defined(_MSC_VER) && (_MSC_VER >= 1800)
 #include <ppltasks.h>
 namespace pplx = Concurrency;
-#else 
+#else // defined(_MSC_VER) && (_MSC_VER >= 1800)
 #include "pplx/pplxtasks.h"
-#endif
+#endif // defined(_MSC_VER) && (_MSC_VER >= 1800)
 
 #include "cpprest/astreambuf.h"
 #include "cpprest/streams.h"
@@ -43,8 +43,8 @@ namespace pplx = Concurrency;
 // is capitalized for historical reasons. The alias let's us pretend that style issue doesn't exist.
 namespace Concurrency { }
 namespace concurrency = Concurrency;
-#endif
-#endif
+#endif // _LWRCASE_CNCRRNCY
+#endif // _CONCRT_H
 
 #pragma warning(push)
 // Suppress unreferenced formal parameter warning as they are required for documentation

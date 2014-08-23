@@ -34,7 +34,10 @@
 #include "pplx/pplx.h"
 
 // Disable false alarm code analyze warning
+#if defined(_MSC_VER)
 #pragma warning (disable : 26165 26110)
+#endif
+
 namespace pplx
 {
 

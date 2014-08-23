@@ -18,10 +18,14 @@
 */
 #include "stdafx.h"
 #include <boost/algorithm/string/find.hpp>
+#if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wcast-align"
+#endif
 #include <boost/regex.hpp>
+#if defined(__clang__)
 #pragma clang diagnostic pop
+#endif
 #include "cpprest/http_helpers.h"
 #include "cpprest/http_server_api.h"
 #include "cpprest/http_server.h"
@@ -43,7 +47,7 @@ namespace listener
 {
 namespace details
 {
-/// This class replaces the regex "\r\n\r\n|[\x00-\x1F\x80-\xFF]"
+/// This class replaces the regex "\r\n\r\n|[\x00-\x1F]|[\x80-\xFF]"
 // It was added due to issues with regex on Android, however since
 // regex was rather overkill for such a simple parse it makes sense
 // to use it on all *nix platforms.
