@@ -1,25 +1,25 @@
-/****************************** Module Header ******************************\
-* Module Name:  CppSparseFile.cpp
-* Project:      CppSparseFile
-* Copyright (c) Microsoft Corporation.
+/***
+* ==++==
 *
-* CppSparseFile demonstrates the common operations on sparse files. A sparse
-* file is a type of computer file that attempts to use file system space more
-* efficiently when blocks allocated to the file are mostly empty. This is
-* achieved by writing brief information (metadata) representing the empty
-* blocks to disk instead of the actual "empty" space which makes up the
-* block, using less disk space. You can find in this example the creation of
-* sparse file, the detection of sparse attribute, the retrieval of sparse
-* file size, and the query of sparse file layout.
+* Copyright (c) Microsoft Corporation. All rights reserved.
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+* http://www.apache.org/licenses/LICENSE-2.0
 *
-* This source is subject to the Microsoft Public License.
-* See http://www.microsoft.com/opensource/licenses.mspx#Ms-PL.
-* All other rights reserved.
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
 *
-* THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND,
-* EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED
-* WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR PURPOSE.
-\***************************************************************************/
+* ==--==
+* =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+*
+* CppSparseFile.h : defines various apis for creation and access of sparse files under windows
+*
+* =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+****/
 
 #pragma region Includes
 #include <stdio.h>

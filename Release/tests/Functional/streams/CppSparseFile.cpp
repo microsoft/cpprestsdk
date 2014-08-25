@@ -1,6 +1,7 @@
 /****************************** Module Header ******************************\
 * Module Name:  CppSparseFile.cpp
 * Project:      CppSparseFile
+* URL: http://code.msdn.microsoft.com/windowsapps/CppSparseFile-7f28156b
 * Copyright (c) Microsoft Corporation.
 * 
 * CppSparseFile demonstrates the common operations on sparse files. A sparse 
@@ -238,83 +239,3 @@ BOOL GetSparseRanges(LPCTSTR lpFileName)
 	CloseHandle(hFile);
 	return TRUE;
 }
-//
-//
-//int _tmain(int argc, _TCHAR* argv[])
-//{
-//	/////////////////////////////////////////////////////////////////////////
-//	// Determine if the volume support sparse streams.
-//	// 
-//
-//	if (!VolumeSupportsSparseFiles(L"C:\\"))
-//	{
-//		wprintf(L"Volume %s does not support sparse streams\n", L"C:\\");
-//		return 1;
-//	}
-//
-//
-//	/////////////////////////////////////////////////////////////////////////
-//	// Create a sparse file.
-//	// 
-//
-//	LPCWSTR lpFileName = L"SparseFile.tmp";
-//	wprintf(L"Create sparse file: %s\n", lpFileName);
-//
-//	HANDLE hSparseFile = CreateSparseFile(lpFileName);
-//	if (hSparseFile == INVALID_HANDLE_VALUE)
-//	{
-//		wprintf(L"CreateFile failed w/err 0x%08lx\n", GetLastError());
-//		return 1;
-//	}
-//
-//	// Write a large block of data
-//
-//	const DWORD dwBlockLength = 512 * 1024; // 512KB
-//	BYTE* lpBlock = new BYTE[dwBlockLength];
-//	for (DWORD i = 0; i < dwBlockLength; i++)
-//	{
-//		lpBlock[i] = 0xFF;
-//	}
-//	DWORD dwBytesWritten;
-//	WriteFile(hSparseFile, lpBlock, dwBlockLength, &dwBytesWritten, NULL);
-//	delete[] lpBlock;
-//
-//	// Set some sparse ranges in the block
-//
-//	SetSparseRange(hSparseFile, 0, 64 * 1024 /*64KB*/);
-//	SetSparseRange(hSparseFile, 128 * 1024, 128 * 1024);
-//
-//	// Set sparse block at the end of the file
-//
-//	// 1GB sparse zeros are extended to the end of the file
-//	SetFilePointer(hSparseFile, 0x40000000 /*1GB*/, NULL, FILE_END);
-//	SetEndOfFile(hSparseFile);
-//
-//	// Flush and close the file
-//	CloseHandle(hSparseFile);
-//
-//
-//	/////////////////////////////////////////////////////////////////////////
-//	// Determine if a file is sparse.
-//	// 
-//
-//	BOOL fIsSparse = IsSparseFile(lpFileName);
-//	wprintf(L"The file is%s sparse\n", fIsSparse ? L"" : L" not");
-//
-//
-//	/////////////////////////////////////////////////////////////////////////
-//	// Get file size.
-//	// 
-//
-//	GetSparseFileSize(lpFileName);
-//
-//
-//	/////////////////////////////////////////////////////////////////////////
-//	// Query the sparse file layout.
-//	// 
-//
-//	GetSparseRanges(lpFileName);
-//
-//
-//	return 0;
-//}
