@@ -939,92 +939,100 @@ TEST(file_with_one_byte_size)
     VERIFY_IS_TRUE(inFile.is_eof());
 }
 
-
-#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
-
+#if ( !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)) && defined(_WIN64)
 TEST(read_one_byte_at_4G)
 {
-        // Create a file with one byte.
-        string_t filename = U("read_one_byte_at_4G.txt");
-        // create a sparse file with sparse file apis
-        auto handle = CreateSparseFile(filename.c_str());
-        if (handle == INVALID_HANDLE_VALUE)
-        {
-                wprintf(L"CreateFile failed w/err 0x%08lx\n", GetLastError());
-                return;
-        }
+    // Create a file with one byte.
+    string_t filename = U("read_one_byte_at_4G.txt");
+    // create a sparse file with sparse file apis
+    auto handle = CreateSparseFile(filename.c_str());
 
-        // write 1 byte
-        const DWORD size = 1;
-        auto data = std::unique_ptr<BYTE>(new BYTE[size]);
-        *(data.get()) = 'a';
+    VERIFY_ARE_EQUAL(handle, INVALID_HANDLE_VALUE);
 
-        DWORD dwBytesWritten;
-        LARGE_INTEGER i;
-        i.QuadPart = 0x100000000;
+    // write 1 byte
+    auto data = 'a';
 
-        SetFilePointerEx(handle, i /*4GB*/, NULL, FILE_END);
-        WriteFile(handle, data.get(), size, &dwBytesWritten, NULL);
+    DWORD dwBytesWritten;
+    LARGE_INTEGER i;
+    i.QuadPart = 0x100000000;
 
-        CloseHandle(handle);
+    SetFilePointerEx(handle, i /*4GB*/, NULL, FILE_END);
+    WriteFile(handle, data.get(), 1, &dwBytesWritten, NULL);
 
-        // read the file with casablanca streams
-        concurrency::streams::streambuf<char> file_buf = OPEN<char>(filename, std::ios_base::in).get();
-        file_buf.seekoff(4 * 1024 * 1024 * 1024ll, ::std::ios_base::beg, ::std::ios_base::in);
+    CloseHandle(handle);
 
-        int aCharacter = file_buf.getc().get();
-        file_buf.close().wait();
+    // read the file with casablanca streams
+    concurrency::streams::streambuf<char> file_buf = OPEN<char>(filename, std::ios_base::in).get();
+    file_buf.seekoff(4 * 1024 * 1024 * 1024ll, ::std::ios_base::beg, ::std::ios_base::in);
 
-        VERIFY_ARE_EQUAL(aCharacter, 'a');
+    int aCharacter = file_buf.getc().get();
+    file_buf.close().wait();
+
+    VERIFY_ARE_EQUAL(aCharacter, 'a');
 }
 
 // since casablanca does not use sparse file apis we're not doing the reverse test (write one byte at 4Gb and verify with std apis)
 // because the file created would be too big
-
 #endif
 #else
 
+
+struct TidyStream
+{
+    string_t _fileName;
+    concurrency::streams::streambuf<char> _stream;
+
+    TidyStream(string_t filename)
+    {
+        _fileName = filename;
+        _stream = OPEN<char>(filename, std::ios_base::out | ::std::ios_base::in).get();
+    }
+
+    ~TidyStream()
+    {
+        _stream.close().wait();
+        std::remove(_fileName.c_str());
+    }
+};
+
 TEST(write_one_byte_at_4G)
 {
-        // write using casablanca streams
-        concurrency::streams::streambuf<char>::off_type pos = 4 * 1024 * 1024 * 1024ll;
-        // Create a file with one byte.
-        string_t filename = U("write_one_byte_at_4G.txt");
-        concurrency::streams::streambuf<char> file_buf = OPEN<char>(filename, std::ios_base::out).get();
-        file_buf.seekoff(pos, ::std::ios_base::beg, ::std::ios_base::out);
+    // write using casablanca streams
+    concurrency::streams::streambuf<char>::off_type pos = 4 * 1024 * 1024 * 1024ll;
 
-        file_buf.putc('a').wait();
-        file_buf.close().wait();
+    string_t filename = U("write_one_byte_at_4G.txt");
+    TidyStream file_buf(filename);
+    file_buf._stream.seekoff(pos, ::std::ios_base::beg, ::std::ios_base::out);
+    file_buf._stream.putc('a').wait();
+    file_buf._stream.sync().get();
 
-        // verify with std streams
-        std::fstream stream(get_full_name(filename), std::ios_base::in);
-        stream.seekg(pos);
-        char c;
-        stream >> c;
-        stream.close();
-        VERIFY_ARE_EQUAL(c, 'a');
+    // verify with std streams
+    std::fstream stream(get_full_name(filename), std::ios_base::in);
+    stream.seekg(pos);
+    char c;
+    stream >> c;
+    stream.close();
+    VERIFY_ARE_EQUAL(c, 'a');
 }
 
 TEST(read_one_byte_at_4G)
 {
-        // write with std stream
-        concurrency::streams::streambuf<char>::off_type pos = 4 * 1024 * 1024 * 1024ll;
-        // Create a file with one byte.
-        string_t filename = U("read_one_byte_at_4G.txt");
+    // write with std stream
+    concurrency::streams::streambuf<char>::off_type pos = 4 * 1024 * 1024 * 1024ll;
+    // Create a file with one byte.
+    string_t filename = U("read_one_byte_at_4G.txt");
 
-        std::fstream stream(get_full_name(filename), std::ios_base::out);
-        stream.seekg(pos);
-        stream << 'a';
-        stream.close();
+    std::fstream stream(get_full_name(filename), std::ios_base::out);
+    stream.seekg(pos);
+    stream << 'a';
+    stream.close();
 
-        // verify with casablanca streams
-        concurrency::streams::streambuf<char> file_buf = OPEN<char>(filename, std::ios_base::in).get();
-        file_buf.seekoff(pos, ::std::ios_base::beg, ::std::ios_base::in);
+    // verify with casablanca streams
+    TidyStream file_buf(filename);
+    file_buf._stream.seekoff(pos, ::std::ios_base::beg, ::std::ios_base::in);
+    int aCharacter = file_buf._stream.getc().get();
 
-        int aCharacter = file_buf.getc().get();
-        file_buf.close().wait();
-
-        VERIFY_ARE_EQUAL(aCharacter, 'a');
+    VERIFY_ARE_EQUAL(aCharacter, 'a');
 }
 
 #endif
