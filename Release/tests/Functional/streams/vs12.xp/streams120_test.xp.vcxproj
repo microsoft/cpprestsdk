@@ -133,6 +133,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\CppSparseFile.cpp" />
     <ClCompile Include="..\fstreambuf_tests.cpp" />
     <ClCompile Include="..\ostream_tests.cpp" />
     <ClCompile Include="..\stdstream_tests.cpp" />
