@@ -100,11 +100,4 @@ if(NOT IOS)
         )
     endif()
   endif()
-
-  add_custom_target(run_tests ALL DEPENDS run_tests.sh)
-  add_custom_command(
-    OUTPUT run_tests.sh
-    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/run_tests.sh $<TARGET_FILE_DIR:test_runner>
-    DEPENDS run_tests.sh
-    )
 endif()	
