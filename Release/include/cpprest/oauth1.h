@@ -35,6 +35,7 @@ namespace web
 {
 namespace http
 {
+/// oAuth 1.0 library.
 namespace oauth1
 {
 namespace details
@@ -91,6 +92,7 @@ public:
 
 } // namespace web::http::oauth1::details
 
+/// oAuth functionality is currently in beta.
 namespace experimental
 {
 

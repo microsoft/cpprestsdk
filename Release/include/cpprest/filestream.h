@@ -100,7 +100,7 @@ namespace details {
 
     /// <summary>
     /// Private stream buffer implementation for file streams.
-        /// The class itself should not be used in application code, it is used by the stream definitions farther down in the header file.
+    /// The class itself should not be used in application code, it is used by the stream definitions farther down in the header file.
     /// </summary>
     template<typename _CharType>
     class basic_file_buffer : public details::streambuf_state_manager<_CharType>

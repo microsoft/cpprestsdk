@@ -39,7 +39,10 @@
 #include "cpprest/basic_types.h"
 #include "cpprest/asyncrt_utils.h"
 
-namespace web { namespace json
+namespace web 
+{
+/// Library for parsing and serializing JSON values to and from C++ types.
+namespace json
 {
 
     // Various forward declarations.

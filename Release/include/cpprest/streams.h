@@ -102,6 +102,9 @@ namespace Concurrency { namespace streams
         static const char *_out_streambuf_msg = "stream buffer not set up for output of data";
     }
 
+    /// <summary>
+    /// Base interface for all asynchronous output streams.
+    /// </summary>
     template<typename CharType>
     class basic_ostream
     {
@@ -555,6 +558,9 @@ namespace Concurrency { namespace streams
 
 #pragma endregion
 
+    /// <summary>
+    /// Base interface for all asynchronous input streams.
+    /// </summary>
     template<typename CharType>
     class basic_istream
     {

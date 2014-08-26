@@ -54,10 +54,12 @@ namespace pplx = Concurrency;
 
 namespace web 
 {
+/// WebSocket client is currently in beta.
 namespace experimental 
 {
 namespace web_sockets
 {
+/// WebSocket client side library.
 namespace client
 {
 

@@ -37,19 +37,14 @@
 
 #include "cpprest/http_msg.h"
 
-namespace web { 
-
-/// <summary>
-/// Declaration to avoid making a dependency on IISHost.
-/// </summary>
-namespace iis_host
-{
-    class http_iis_receiver;
-}
-
+namespace web 
+{ 
 namespace http
 {
-namespace experimental {
+/// HTTP listener is currently in beta.
+namespace experimental 
+{
+/// HTTP server side library.
 namespace listener
 {
 
