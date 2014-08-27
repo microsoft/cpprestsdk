@@ -140,31 +140,6 @@ bool verify_X509_cert_chain(const std::vector<std::string> &certChain, const std
 
 #if defined(ANDROID)
 
-#include <android/log.h>
-
-void android_print(const std::string &s)
-{
-    //__android_log_print(ANDROID_LOG_WARN, "UnitTestpp", "%s", s.c_str());
-}
-
-void printerror(JNIEnv *env)
-{
-    jthrowable thr = env->ExceptionOccurred();
-    if(thr != nullptr)
-    {
-    	env->ExceptionClear();
-
-	jclass throwable_class = env->FindClass("java/lang/Throwable");
-	jmethodID getMsg = env->GetMethodID(throwable_class,
-                      "getMessage",
-                      "()Ljava/lang/String;");
-	
-     	jstring str = static_cast<jstring>(env->CallObjectMethod(thr, getMsg));
-	const char *charStr = env->GetStringUTFChars(str, 0);
-	android_print(charStr);
-    }
-}
-
 /// <summary>
 /// Helper function to check return value and see if any exceptions
 /// occurred when calling a JNI function.
@@ -178,7 +153,6 @@ bool jni_failed(JNIEnv *env)
         // In the future if we improve error reporting the exception message
         // can be retrieved from here.
         env->ExceptionClear();
-        //printerror(env); // TODO
         return true;
     }
     return false;
