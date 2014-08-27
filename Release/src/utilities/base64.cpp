@@ -24,6 +24,7 @@
 ****/
 
 #include "stdafx.h"
+#include <array>
 
 using namespace web;
 using namespace utility;

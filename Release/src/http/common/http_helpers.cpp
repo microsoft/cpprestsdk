@@ -27,6 +27,7 @@
 
 #include "stdafx.h"
 #include "cpprest/http_helpers.h"
+#include <array>
 
 using namespace web; 
 using namespace utility;
