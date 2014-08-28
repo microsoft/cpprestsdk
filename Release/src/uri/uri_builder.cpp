@@ -30,11 +30,13 @@
 namespace web 
 {
 
+#if defined(_MSC_VER)
 #pragma region Validation
 
 #pragma endregion
 
 #pragma region Appending
+#endif
 
 uri_builder &uri_builder::append_path(const utility::string_t &path, bool is_encode)
 {
@@ -111,10 +113,11 @@ uri_builder &uri_builder::append(const http::uri &relative_uri)
     return *this;
 }
 
+#if defined(_MSC_VER)
 #pragma endregion
 
 #pragma region URI Creation
-
+#endif
 
 utility::string_t uri_builder::to_string()
 {
@@ -131,7 +134,9 @@ bool uri_builder::is_valid()
     return uri::validate(m_uri.join());
 }
 
+#if defined(_MSC_VER)
 #pragma endregion
+#endif
 
 } // namespace web
 

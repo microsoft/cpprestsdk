@@ -243,23 +243,19 @@ namespace platform
 
     private:
         cpprest_synchronization::mutex _M_cs;
-        long _M_recursionCount;
         volatile long _M_owner;
+        long _M_recursionCount;
     };
 
 #if defined(__APPLE__)
     class apple_scheduler : public pplx::scheduler_interface
-    {
-    public:
-        _PPLXIMP virtual void schedule( TaskProc_t proc, _In_ void* param);
-    };
 #else
     class linux_scheduler : public pplx::scheduler_interface
+#endif
     {
     public:
         _PPLXIMP virtual void schedule( TaskProc_t proc, _In_ void* param);
     };
-#endif
 
 } // namespace details
 

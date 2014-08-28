@@ -106,10 +106,8 @@ public:
         , m_validate_certificates(true)
 #endif
         , m_set_user_nativehandle_options([](native_handle)->void{})
-#ifdef _MS_WINDOWS
-#if !defined(__cplusplus_winrt)
+#if defined(_MS_WINDOWS) && !defined(__cplusplus_winrt)
         , m_buffer_request(false)
-#endif
 #endif
     {
     }
@@ -319,29 +317,23 @@ private:
     // Whether or not to guarantee ordering, i.e. only using one underlying TCP connection.
     bool m_guarantee_order;
 
-    // IXmlHttpRequest2 doesn't allow configuration of certificate verification.
-#if !defined(__cplusplus_winrt)
-    bool m_validate_certificates;
-#endif
+    utility::seconds m_timeout;
+    size_t m_chunksize;
 
-#ifdef _MS_WINDOWS
 #if !defined(__cplusplus_winrt)
-    bool m_buffer_request;
-#endif
+    // IXmlHttpRequest2 doesn't allow configuration of certificate verification.
+    bool m_validate_certificates;
 #endif
 
     std::function<void(native_handle)> m_set_user_nativehandle_options;
 
-    utility::seconds m_timeout;
-    size_t m_chunksize;
-
-#ifdef _MS_WINDOWS
-#ifdef __cplusplus_winrt
+#if defined(_MS_WINDOWS) && defined(__cplusplus_winrt)
     friend class details::winrt_client;
-#else
+#elif defined(_MS_WINDOWS)
+    bool m_buffer_request;
+
     friend class details::winhttp_client;
-#endif // __cplusplus_winrt  
-#endif // _MS_WINDOWS
+#endif // defined(_MS_WINDOWS) && defined(__cplusplus_winrt)
 
     /// <summary>
     /// Invokes a user callback to allow for customization of the requst

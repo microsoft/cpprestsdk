@@ -153,10 +153,6 @@ namespace web {
         /// <returns>The decoded string.</returns>
         _ASYNCRTIMP static utility::string_t __cdecl decode(const utility::string_t &encoded);
 
-#pragma endregion
-
-#pragma region splitting
-
         /// <summary>
         /// Splits a path into its hierarchical components.
         /// </summary>
@@ -171,20 +167,12 @@ namespace web {
         /// <returns>A <c>std::map&lt;utility::string_t, utility::string_t&gt;</c> containing the key-value components of the query.</returns>
         _ASYNCRTIMP static std::map<utility::string_t, utility::string_t> __cdecl split_query(const utility::string_t &query);
 
-#pragma endregion
-
-#pragma region validation
-
         /// <summary>
         /// Validates a string as a uri.
         /// </summary>
         /// <param name="uri_string">The uri string to be validated.</param>
         /// <returns><c>true</c> if the given string represents a valid URI, <c>false</c> otherwise.</returns>
         _ASYNCRTIMP static bool __cdecl validate(const utility::string_t &uri_string);
-
-#pragma endregion
-
-#pragma region constructors
 
         /// <summary>
         /// Creates an empty uri
@@ -204,10 +192,6 @@ namespace web {
         /// </summary>
         /// <param name="uri_string">An encoded uri string to create the URI instance.</param>
         _ASYNCRTIMP uri(const utility::string_t &uri_string);
-
-#pragma endregion
-
-#pragma region accessors
 
         /// <summary>
         /// Get the scheme component of the URI as an encoded string.
@@ -262,10 +246,6 @@ namespace web {
         /// </summary>
         /// <returns>The new uri object with the path, query and fragment portion of this uri.</returns>
         _ASYNCRTIMP uri resource() const;
-
-#pragma endregion
-
-#pragma region diagnostics
 
         /// <summary>
         /// An empty uri specifies no components, and serves as a default value
@@ -350,10 +330,6 @@ namespace web {
             return path().empty() || path() == _XPLATSTR("/");
         }
 
-#pragma endregion
-
-#pragma region conversion
-
         /// <summary>
         /// Returns the full (encoded) uri as a string.
         /// </summary>
@@ -362,10 +338,6 @@ namespace web {
         {
             return m_uri;
         }
-
-#pragma endregion
-
-#pragma region operators
 
         _ASYNCRTIMP bool operator == (const uri &other) const;
 
@@ -378,8 +350,6 @@ namespace web {
         {
             return !(this->operator == (other));
         }
-
-#pragma endregion
 
     private:
         friend class uri_builder;
