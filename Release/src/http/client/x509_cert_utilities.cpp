@@ -144,7 +144,7 @@ bool verify_X509_cert_chain(const std::vector<std::string> &certChain, const std
 /// Helper function to check return value and see if any exceptions
 /// occurred when calling a JNI function.
 /// <summary>
-/// <returns><c>true</c> if JNI call <c>failed</c>, false othewise.</returns>
+/// <returns><c>true</c> if JNI call failed, <c>false</c> othewise.</returns>
 bool jni_failed(JNIEnv *env)
 {
     if(env->ExceptionOccurred())
@@ -158,18 +158,25 @@ bool jni_failed(JNIEnv *env)
     return false;
 }
 template <typename T>
-bool jni_failed(JNIEnv *env, const T &result)
+bool jni_failed(JNIEnv *env, const java_local_ref<T> &result)
 {
-    if(jni_failed(env))
-    {
-        return true;
-    }
-    else if(result == nullptr)
+    if(jni_failed(env) || !result)
     {
         return true;
     }
     return false;
 }
+bool jni_failed(JNIEnv *env, const jmethodID &result)
+{
+    if(jni_failed(env) || result == nullptr)
+    {
+        return true;
+    }
+    return false;
+}
+#define CHECK_JREF(env, obj) if(jni_failed<decltype(obj)::element_type>(env, obj)) return false;
+#define CHECK_JMID(env, mid) if(jni_failed(env, mid)) return false;
+#define CHECK_JNI(env) if(jni_failed(env)) return false;
 
 bool verify_X509_cert_chain(const std::vector<std::string> &certChain, const std::string &hostName)
 {
@@ -183,136 +190,82 @@ bool verify_X509_cert_chain(const std::vector<std::string> &certChain, const std
 
     // ByteArrayInputStream
     java_local_ref<jclass> byteArrayInputStreamClass(env->FindClass("java/io/ByteArrayInputStream"));
-    if(jni_failed(env, byteArrayInputStreamClass))
-    {
-        return false;
-    }
+    CHECK_JREF(env, byteArrayInputStreamClass);
     jmethodID byteArrayInputStreamConstructorMethod = env->GetMethodID(
         byteArrayInputStreamClass.get(), 
         "<init>", 
         "([B)V");
-    if(jni_failed(env, byteArrayInputStreamConstructorMethod))
-    {
-        return false;
-    }
+    CHECK_JMID(env, byteArrayInputStreamConstructorMethod);    
 
     // CertificateFactory
     java_local_ref<jclass> certificateFactoryClass(env->FindClass("java/security/cert/CertificateFactory"));
-    if(jni_failed(env, certificateFactoryClass))
-    {
-        return false;
-    }
+    CHECK_JREF(env, certificateFactoryClass);
     jmethodID certificateFactoryGetInstanceMethod = env->GetStaticMethodID(
         certificateFactoryClass.get(), 
         "getInstance", 
         "(Ljava/lang/String;)Ljava/security/cert/CertificateFactory;");
-    if(jni_failed(env, certificateFactoryGetInstanceMethod))
-    {
-        return false;
-    }
+    CHECK_JMID(env, certificateFactoryGetInstanceMethod);
     jmethodID generateCertificateMethod = env->GetMethodID(
         certificateFactoryClass.get(), 
         "generateCertificate", 
         "(Ljava/io/InputStream;)Ljava/security/cert/Certificate;");
-    if(jni_failed(env, generateCertificateMethod))
-    {
-        return false;
-    }
+    CHECK_JMID(env, generateCertificateMethod);
 
     // X509Certificate
     java_local_ref<jclass> X509CertificateClass(env->FindClass("java/security/cert/X509Certificate"));
-    if(jni_failed(env, X509CertificateClass))
-    {
-        return false;
-    }
+    CHECK_JREF(env, X509CertificateClass);
 
     // TrustManagerFactory
     java_local_ref<jclass> trustManagerFactoryClass(env->FindClass("javax/net/ssl/TrustManagerFactory"));
-    if(jni_failed(env, trustManagerFactoryClass))
-    {
-        return false;
-    }
+    CHECK_JREF(env, trustManagerFactoryClass);
     jmethodID trustManagerFactoryGetInstanceMethod = env->GetStaticMethodID(
         trustManagerFactoryClass.get(), 
         "getInstance", 
         "(Ljava/lang/String;)Ljavax/net/ssl/TrustManagerFactory;");
-    if(jni_failed(env, trustManagerFactoryGetInstanceMethod))
-    {
-        return false;
-    }
+    CHECK_JMID(env, trustManagerFactoryGetInstanceMethod);
     jmethodID trustManagerFactoryInitMethod = env->GetMethodID(
         trustManagerFactoryClass.get(), 
         "init", 
         "(Ljava/security/KeyStore;)V");
-    if(jni_failed(env, trustManagerFactoryInitMethod))
-    {
-        return false;
-    }
+    CHECK_JMID(env, trustManagerFactoryInitMethod);
     jmethodID trustManagerFactoryGetTrustManagersMethod = env->GetMethodID(
         trustManagerFactoryClass.get(), 
         "getTrustManagers", 
         "()[Ljavax/net/ssl/TrustManager;");
-    if(jni_failed(env, trustManagerFactoryGetTrustManagersMethod))
-    {
-        return false;
-    }
+    CHECK_JMID(env, trustManagerFactoryGetTrustManagersMethod);
 
     // X509TrustManager
     java_local_ref<jclass> X509TrustManagerClass(env->FindClass("javax/net/ssl/X509TrustManager"));
-    if(jni_failed(env, X509TrustManagerClass))
-    {
-        return false;
-    }
+    CHECK_JREF(env, X509TrustManagerClass);
     jmethodID X509TrustManagerCheckServerTrustedMethod = env->GetMethodID(
         X509TrustManagerClass.get(), 
         "checkServerTrusted", 
         "([Ljava/security/cert/X509Certificate;Ljava/lang/String;)V");
-    if(jni_failed(env, X509TrustManagerCheckServerTrustedMethod))
-    {
-        return false;
-    }
+    CHECK_JMID(env, X509TrustManagerCheckServerTrustedMethod);
 
     // StrictHostnameVerifier
     java_local_ref<jclass> strictHostnameVerifierClass(env->FindClass("org/apache/http/conn/ssl/StrictHostnameVerifier"));
-    if(jni_failed(env, strictHostnameVerifierClass))
-    {
-        return false;
-    }
+    CHECK_JREF(env, strictHostnameVerifierClass);
     jmethodID strictHostnameVerifierConstructorMethod = env->GetMethodID(strictHostnameVerifierClass.get(), "<init>", "()V");
-    if(jni_failed(env, strictHostnameVerifierConstructorMethod))
-    {
-        return false;
-    }
+    CHECK_JMID(env, strictHostnameVerifierConstructorMethod);
     jmethodID strictHostnameVerifierVerifyMethod = env->GetMethodID(
         strictHostnameVerifierClass.get(), 
         "verify", 
         "(Ljava/lang/String;Ljava/security/cert/X509Certificate;)V");
-    if(jni_failed(env, strictHostnameVerifierVerifyMethod))
-    {
-        return false;
-    }
+    CHECK_JMID(env, strictHostnameVerifierVerifyMethod);
 
     // Create CertificateFactory
     java_local_ref<jstring> XDot509String(env->NewStringUTF("X.509"));
-    if(jni_failed(env, XDot509String))
-    {
-        return false;
-    }
+    CHECK_JREF(env, XDot509String);
     java_local_ref<jobject> certificateFactory(env->CallStaticObjectMethod(
          certificateFactoryClass.get(), 
          certificateFactoryGetInstanceMethod, 
          XDot509String.get()));
-    if(jni_failed(env, certificateFactory))
-    {
-        return false;
-    }
+    CHECK_JREF(env, certificateFactory);
     
     // Create Java array to store all the certs in.
     java_local_ref<jobjectArray> certsArray(env->NewObjectArray(certChain.size(), X509CertificateClass.get(), nullptr));
-    if(jni_failed(env, certsArray))
-    {
-        return false;
-    }
+    CHECK_JREF(env, certsArray);
 
     // For each certificate perform the following steps:
     //   1. Create ByteArrayInputStream backed by DER certificate bytes 
@@ -322,116 +275,68 @@ bool verify_X509_cert_chain(const std::vector<std::string> &certChain, const std
     for(const auto &certData : certChain)
     {
         java_local_ref<jbyteArray> byteArray(env->NewByteArray(certData.size()));
-        if(jni_failed(env, byteArray))
-        {
-            return false;
-        }
+        CHECK_JREF(env, byteArray);
         env->SetByteArrayRegion(byteArray.get(), 0, certData.size(), reinterpret_cast<const jbyte *>(certData.c_str()));
-        if(jni_failed(env))
-        {
-            return false;
-        }
+        CHECK_JNI(env);
         java_local_ref<jobject> byteArrayInputStream(env->NewObject(
             byteArrayInputStreamClass.get(), 
             byteArrayInputStreamConstructorMethod, 
             byteArray.get()));
-        if(jni_failed(env, byteArrayInputStream))
-        {
-            return false;
-        }
+        CHECK_JREF(env, byteArrayInputStream);
 
         java_local_ref<jobject> cert(env->CallObjectMethod(
             certificateFactory.get(), 
             generateCertificateMethod, 
             byteArrayInputStream.get()));
-        if(jni_failed(env, cert))
-        {
-            return false;
-        }
+        CHECK_JREF(env, cert);
 
         env->SetObjectArrayElement(certsArray.get(), i, cert.get());
-        if(jni_failed(env))
-        {
-            return false;
-        }
+        CHECK_JNI(env);
         ++i;
     }
     
     // Create TrustManagerFactory, init with Android system certs
     java_local_ref<jstring> X509String(env->NewStringUTF("X509"));
-    if(jni_failed(env, X509String))
-    {
-        return false;
-    }
+    CHECK_JREF(env, X509String);
     java_local_ref<jobject> trustFactoryManager(env->CallStaticObjectMethod(
         trustManagerFactoryClass.get(), 
         trustManagerFactoryGetInstanceMethod, 
         X509String.get()));
-    if(jni_failed(env, trustFactoryManager))
-    {
-        return false;
-    }
+    CHECK_JREF(env, trustFactoryManager);
     env->CallVoidMethod(trustFactoryManager.get(), trustManagerFactoryInitMethod, nullptr);
-    if(jni_failed(env)) 
-    {
-       return false;
-    }
+    CHECK_JNI(env);
 
     // Get TrustManager
     java_local_ref<jobjectArray> trustManagerArray(static_cast<jobjectArray>(
         env->CallObjectMethod(trustFactoryManager.get(), trustManagerFactoryGetTrustManagersMethod)));
-    if(jni_failed(env, trustManagerArray))
-    {
-        return false;
-    }
+    CHECK_JREF(env, trustManagerArray);
     java_local_ref<jobject> trustManager(env->GetObjectArrayElement(trustManagerArray.get(), 0));
-    if(jni_failed(env, trustManager))
-    {
-        return false;
-    }
+    CHECK_JREF(env, trustManager);
     
     // Validate certificate chain.
     java_local_ref<jstring> RSAString(env->NewStringUTF("RSA"));
-    if(jni_failed(env, RSAString))
-    {
-        return false;
-    }
+    CHECK_JREF(env, RSAString);
     env->CallVoidMethod(
         trustManager.get(), 
         X509TrustManagerCheckServerTrustedMethod, 
         certsArray.get(), 
         RSAString.get());
-    if(jni_failed(env))
-    {
-        return false;
-    }
+    CHECK_JNI(env);
 
     // Verify hostname on certificate according to RFC 2818.
     java_local_ref<jobject> hostnameVerifier(env->NewObject(
         strictHostnameVerifierClass.get(), strictHostnameVerifierConstructorMethod));
-    if(jni_failed(env, hostnameVerifier))
-    {
-        return false;
-    }
+    CHECK_JREF(env, hostnameVerifier);
     java_local_ref<jstring> hostNameString(env->NewStringUTF(hostName.c_str()));
-    if(jni_failed(env, hostNameString))
-    {
-        return false;
-    }
+    CHECK_JREF(env, hostNameString);
     java_local_ref<jobject> cert(env->GetObjectArrayElement(certsArray.get(), 0));
-    if(jni_failed(env, cert))
-    {
-        return false;
-    }
+    CHECK_JREF(env, cert);
     env->CallVoidMethod(
         hostnameVerifier.get(), 
         strictHostnameVerifierVerifyMethod, 
         hostNameString.get(), 
         cert.get());
-    if(jni_failed(env))
-    {
-        return false;
-    }
+    CHECK_JNI(env);
 
     return true;
 }
