@@ -25,11 +25,6 @@
 
 #include <map>
 #include <sstream>
-
-#include "unittestpp.h"
-#include "cpprest/uri.h"
-#include "cpprest/ws_msg.h"
-
 #include <iostream>
 #include <mutex>
 #include <condition_variable>
@@ -58,23 +53,15 @@ enum test_websocket_message_type
   WEB_SOCKET_CLOSE_TYPE
 };
 
-// Class that contains details about the HTTP handshake request received by the test server
-class test_http_request
+// Interface containing details about the HTTP handshake request received by the test server.
+class test_http_request_interface
 {
 public:
-    const std::string& username() { return m_username; }
-    const std::string& password() { return m_password; }
-    void set_username(std::string username) { m_username = std::move(username); }
-    void set_password(std::string password) { m_password = std::move(password); }
-
-    const std::string& get_header_val(const std::string& header_name) { return m_headers[header_name]; }
-    void add_header(const std::string& name, const std::string& value) { m_headers[name] = value; }
-
-private:
-    std::string m_username;
-    std::string m_password;
-    std::map<std::string, std::string> m_headers;
+    virtual const std::string& username() = 0;
+    virtual const std::string& password() = 0;
+    virtual const std::string& get_header_val(const std::string& header_name) = 0;
 };
+typedef std::unique_ptr<test_http_request_interface> test_http_request;
 
 // Class that contains details about the HTTP handshake response to be sent by the test server
 class test_http_response
@@ -139,9 +126,11 @@ public:
     // The server will call the handler in order, for each incoming message.
     WEBSOCKET_UTILITY_API void next_message(std::function<void(test_websocket_msg)> msg_handler);
     WEBSOCKET_UTILITY_API std::function<void(test_websocket_msg)> get_next_message_handler();
-    WEBSOCKET_UTILITY_API void set_http_handler(std::function<test_http_response(test_http_request&)> handler) { m_http_handler = handler; }
-    WEBSOCKET_UTILITY_API std::function<test_http_response(test_http_request&)> get_http_handler() { return m_http_handler; }
-    WEBSOCKET_UTILITY_API bool handler_exists() { return !m_handler_queue.empty(); }
+
+    // Handler for initial HTTP request.
+    typedef std::function<test_http_response(test_http_request)> http_handler;
+    WEBSOCKET_UTILITY_API void set_http_handler(http_handler handler) { m_http_handler = handler; }
+    WEBSOCKET_UTILITY_API http_handler get_http_handler() { return m_http_handler; }
 
     // Tests can use this API to send a message from the server to the client.
     WEBSOCKET_UTILITY_API void send_msg(const test_websocket_msg& msg);
@@ -153,7 +142,7 @@ private:
     std::queue<std::function<void(test_websocket_msg)>> m_handler_queue;
     // Handler to address the HTTP handshake request. To be used in scenarios where tests may wish to fail the HTTP request
     // and not proceed with the websocket connection.
-    std::function<test_http_response(test_http_request&)> m_http_handler;
+    http_handler m_http_handler;
     std::shared_ptr<_test_websocket_server> m_p_impl;
 };
 }}}}

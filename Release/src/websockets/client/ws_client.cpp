@@ -267,14 +267,39 @@ public:
             m_state = CLOSED;
         });
 
-
+        // Get the connection handle to save for later, have to create temporary
+        // because type erasure occurs with connection_hdl.
         websocketpp::lib::error_code ec;
         auto con = m_client.get_connection(utility::conversions::to_utf8string(m_uri.to_string()), ec);
         m_con = con;
         if (ec.value() != 0)
         {
-            websocket_exception wx(utility::conversions::to_string_t(ec.message()));
-            return pplx::task_from_exception<void>(wx);
+            return pplx::task_from_exception<void>(websocket_exception(ec.message()));
+        }
+
+        // Add any request headers specified by the user.
+        const utility::string_t protocolHeader(_XPLATSTR("Sec-WebSocket-Protocol"));
+        const auto & headers = m_client_config.headers();
+        for (const auto & header : headers)
+        {
+            if (!utility::details::str_icmp(header.first, protocolHeader))
+            {
+                con->append_header(utility::conversions::to_utf8string(header.first), utility::conversions::to_utf8string(header.second));
+            }
+        }
+
+        // Add any specified subprotocols.
+        if (headers.has(protocolHeader))
+        {
+            const std::vector<utility::string_t> protocols = m_client_config.subprotocols();
+            for (const auto & value : protocols)
+            {
+                con->add_subprotocol(utility::conversions::to_utf8string(value), ec);
+                if (ec.value())
+                {
+                    return pplx::task_from_exception<void>(websocket_exception(ec.message()));
+                }
+            }
         }
 
         m_state = CONNECTING;

@@ -27,7 +27,7 @@
 #include "stdafx.h"
 #include <concrt.h>
 
-// ws_winrt only available for windows storea app or window phone8.1
+// ws_winrt only available for windows store app or window phone 8.1
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_PC_APP) || (WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_PHONE_APP) && _WIN32_WINNT == _WIN32_WINNT_WINBLUE)
 
 using namespace ::Windows::Foundation;
@@ -79,11 +79,26 @@ public:
         m_msg_websocket = ref new MessageWebSocket();
 
         // Sets the HTTP request headers to the HTTP request message used in the WebSocket protocol handshake 
-        for (auto iter = client_config.headers().begin(); iter != client_config.headers().end(); ++iter)
+        const utility::string_t protocolHeader(_XPLATSTR("Sec-WebSocket-Protocol"));
+        const auto & headers = config().headers();
+        for (const auto & header : headers)
         {
-            Platform::String^ name = ref new Platform::String(iter->first.c_str());
-            Platform::String^ val = ref new Platform::String(iter->second.c_str());
-            m_msg_websocket->SetRequestHeader(name, val);
+            // Unfortunately the MessageWebSocket API throws a COMException if you try to set the 
+            // 'Sec-WebSocket-Protocol' header here. It requires you to go through their API instead.
+            if (!utility::details::str_icmp(header.first, protocolHeader))
+            {
+                m_msg_websocket->SetRequestHeader(Platform::StringReference(header.first.c_str()), Platform::StringReference(header.second.c_str()));
+            }
+        }
+
+        // Add any specified subprotocols.
+        if (headers.has(protocolHeader))
+        {
+            const std::vector<utility::string_t> protocols = this->config().subprotocols();
+            for (const auto & value : protocols)
+            {
+                m_msg_websocket->Control->SupportedProtocols->Append(Platform::StringReference(value.c_str()));
+            }
         }
 
         if (client_config.credentials().is_set())

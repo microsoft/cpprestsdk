@@ -37,18 +37,20 @@ namespace tests { namespace functional { namespace websocket { namespace client 
 SUITE(authentication_tests)
 {
 
+// Authorization not implemented in non WinRT websocket_client yet - CodePlex 254
+#if defined(__cplusplus_winrt)
 void auth_helper(test_websocket_server& server, const utility::string_t &username = U(""), const utility::string_t &password = U(""))
 {
-    server.set_http_handler([username, password](test_http_request& request)
+    server.set_http_handler([username, password](test_http_request request)
     {
         test_http_response resp;
-        if (request.username().empty()) // No credentials -> challenge the request 
+        if (request->username().empty()) // No credentials -> challenge the request 
         {
             resp.set_status_code(401); // Unauthorized.
             resp.set_realm("My Realm");
         }
-        else if (request.username().compare(utility::conversions::to_utf8string(username))
-            || request.password().compare(utility::conversions::to_utf8string(password)))
+        else if (request->username().compare(utility::conversions::to_utf8string(username))
+            || request->password().compare(utility::conversions::to_utf8string(password)))
         {
             resp.set_status_code(403); // User name/password did not match: Forbidden - auth failure.
         }
@@ -61,7 +63,7 @@ void auth_helper(test_websocket_server& server, const utility::string_t &usernam
 }
 
 // connect without credentials, when the server expects credentials
-TEST_FIXTURE(uri_address, auth_no_credentials, "Ignore", "245", "Ignore:Linux", "NYI", "Ignore:Apple", "NYI")
+TEST_FIXTURE(uri_address, auth_no_credentials, "Ignore", "245")
 {
     test_websocket_server server;
     websocket_client client;
@@ -70,7 +72,7 @@ TEST_FIXTURE(uri_address, auth_no_credentials, "Ignore", "245", "Ignore:Linux", 
 }
 
 // Connect with credentials
-TEST_FIXTURE(uri_address, auth_with_credentials, "Ignore", "245", "Ignore:Linux", "NYI", "Ignore:Apple", "NYI")
+TEST_FIXTURE(uri_address, auth_with_credentials, "Ignore", "245")
 {
     test_websocket_server server;
     websocket_client_config config;   
@@ -82,9 +84,12 @@ TEST_FIXTURE(uri_address, auth_with_credentials, "Ignore", "245", "Ignore:Linux"
     client.connect(m_uri).wait();
     client.close().wait();
 }
+#endif
 
+// Secure websockets on implemented yet on non-WinRT - 255
+#if defined(__cplusplus_winrt)
 // Send and receive text message over SSL
-TEST_FIXTURE(uri_address, ssl_test, "Ignore", "NYI on desktop/apple/linux/android")
+TEST_FIXTURE(uri_address, ssl_test)
 {
     websocket_client client;
     client.connect(U("wss://echo.websocket.org/")).wait();
@@ -106,6 +111,7 @@ TEST_FIXTURE(uri_address, ssl_test, "Ignore", "NYI on desktop/apple/linux/androi
     receive_task.wait();
     client.close().wait();
 }
+#endif
 
 } // SUITE(authentication_tests)
 

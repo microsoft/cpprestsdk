@@ -46,6 +46,31 @@ namespace web_sockets
 namespace client
 {
 
+static ::utility::string_t g_subProtocolHeader = _XPLATSTR("Sec-WebSocket-Protocol");
+void websocket_client_config::add_subprotocol(const ::utility::string_t &name)
+{
+    m_headers.add(g_subProtocolHeader, name);
+}
+
+std::vector<::utility::string_t> websocket_client_config::subprotocols() const
+{
+    std::vector<::utility::string_t> values;
+    if (m_headers.has(g_subProtocolHeader))
+    {
+        utility::stringstream_t header(m_headers.find(g_subProtocolHeader)->second);
+        utility::string_t token;
+        while (std::getline(header, token, U(',')))
+        {
+            http::details::trim_whitespace(token);
+            if (!token.empty())
+            {
+                values.push_back(token);
+            }
+        }
+    }
+    return values;
+}
+
 void details::_websocket_message::set_body(streams::istream instream)
 {
     set_streambuf(instream.streambuf());
