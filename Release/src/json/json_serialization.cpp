@@ -28,12 +28,10 @@
 #include "stdafx.h"
 #include <stdio.h>
 
-#pragma warning(disable : 4127) // allow expressions like while(true) pass 
 using namespace web;
 using namespace web::json;
 using namespace utility;
 using namespace utility::conversions;
-
 
 //
 // JSON Serialization
@@ -42,6 +40,8 @@ using namespace utility::conversions;
 #ifdef _MS_WINDOWS
 void web::json::value::serialize(std::ostream& stream) const
 { 
+    utility::details::thread_local_locale("C");
+
     // This has better performance than writing directly to stream.
     std::string str;
     m_value->serialize_impl(str);
@@ -55,6 +55,8 @@ void web::json::value::format(std::basic_string<wchar_t> &string) const
 
 void web::json::value::serialize(utility::ostream_t &stream) const 
 {
+    utility::details::thread_local_locale("C");
+
     // This has better performance than writing directly to stream.
     utility::string_t str;
     m_value->serialize_impl(str);
@@ -157,7 +159,7 @@ void web::json::details::_Number::format(std::basic_string<char>& stream) const
         const auto numChars = strnlen_s(tempBuffer, tempSize);
         stream.append(tempBuffer, numChars);
 #else
-        std::stringstream ss;
+        std::stringstream ss; // TODO - also consider replacing with snprintf...
         if (m_number.m_type == number::type::signed_type)
             ss << m_number.m_intval;
         else
@@ -235,4 +237,8 @@ utility::string_t web::json::value::as_string() const
     return m_value->as_string();
 }
 
-utility::string_t json::value::serialize() const { return m_value->to_string(); }
+utility::string_t json::value::serialize() const 
+{ 
+    utility::details::thread_local_locale("C");
+    return m_value->to_string(); 
+}

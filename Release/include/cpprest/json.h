@@ -44,7 +44,6 @@ namespace web
 /// Library for parsing and serializing JSON values to and from C++ types.
 namespace json
 {
-
     // Various forward declarations.
     namespace details 
     {
@@ -64,8 +63,11 @@ namespace json
     }
 
     /// <summary>
-    /// Preserve the order of the name/value pairs when parsing a JSON object
+    /// Preserve the order of the name/value pairs when parsing a JSON object.
+    /// The default is false, which can yield better performance.
     /// </summary>
+    /// <param name="keep_order"><c>true</c> if ordering should be preserved when parsing, <c>false</c> otherwise.</param>
+    /// <remarks>Note this is a global setting and affects all JSON parsing done.</remarks>
     void _ASYNCRTIMP keep_object_element_order(bool keep_order);
 
 #ifdef _MS_WINDOWS
@@ -1415,8 +1417,7 @@ public:
             virtual void serialize_impl(std::wstring& str) const
             {
                 serialize_impl_char_type(str);
-            }
-            
+            }  
 #endif
 
         protected:

@@ -160,6 +160,37 @@ namespace conversions
 namespace details
 {
     /// <summary>
+    /// Cross platform RAII container for setting thread local locale.
+    /// </summary>
+    class thread_local_locale
+    {
+    public:
+
+        thread_local_locale(const char * locale)
+        {
+#ifdef _MS_WINDOWS
+            _configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
+            m_prevLocale = setlocale(LC_ALL, locale);
+#endif
+        }
+
+        ~thread_local_locale()
+        {
+            if (m_prevLocale != nullptr)
+            {
+#ifdef _MS_WINDOWS
+                setlocale(LC_ALL, m_prevLocale);
+#endif
+            }
+        }
+
+    private:
+#ifdef _MS_WINDOWS
+        char * m_prevLocale;
+#endif
+    };
+
+    /// <summary>
     /// Our own implementation of alpha numeric instead of std::isalnum to avoid
     /// taking global lock for performance reasons.
     /// </summary>

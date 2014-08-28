@@ -106,7 +106,7 @@ web::json::value::value(utility::string_t value) :
     { }
 
 web::json::value::value(const utility::char_t* value) : 
-    m_value(utility::details::make_unique<web::json::details::_String>(utility::string_t(value)))
+    m_value(utility::details::make_unique<web::json::details::_String>(value))
 #ifdef ENABLE_JSON_VALUE_VISUALIZER
     ,m_kind(value::String)
 #endif
@@ -363,7 +363,11 @@ bool web::json::details::_Object::has_field(const utility::string_t &key) const
     return m_object.find(key) != m_object.end();
 }
 
-utility::string_t json::value::to_string() const { return m_value->to_string(); }
+utility::string_t json::value::to_string() const 
+{ 
+    utility::details::thread_local_locale("C");
+    return m_value->to_string(); 
+}
 
 bool json::value::operator==(const json::value &other) const
 {
@@ -410,7 +414,6 @@ const web::json::value& web::json::value::at(const utility::string_t& key) const
 {
     return this->as_object().at(key);
 }
-
 
 web::json::value& web::json::value::operator [] (const utility::string_t &key)
 {

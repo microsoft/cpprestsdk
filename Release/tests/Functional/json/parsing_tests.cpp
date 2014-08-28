@@ -566,6 +566,32 @@ TEST(keep_order_while_parsing)
     VERIFY_ARE_EQUAL(obj[U("a")].as_integer(), 4);
 }
 
+TEST(non_default_locale)
+{
+    char * prevLocale = setlocale(LC_ALL, "fr-FR");
+
+    // string serialize
+    utility::string_t str(U("[true,false,-1.55,5,null,{\"abc\":5555}]"));
+    json::value v = json::value::parse(str);
+    VERIFY_ARE_EQUAL(str, v.serialize());
+
+    // cpprestsdk stream serialize
+    utility::stringstream_t stream;
+    stream << v;
+    utility::string_t serializedStr;
+    stream >> serializedStr;
+    VERIFY_ARE_EQUAL(str, serializedStr);
+
+    // std stream serialize
+    std::stringstream stdStream;
+    v.serialize(stdStream);
+    std::string stdStr;
+    stdStream >> stdStr;
+    VERIFY_ARE_EQUAL(str, utility::conversions::to_string_t(stdStr));
+
+    setlocale(LC_ALL, prevLocale);
+}
+
 } // SUITE(parsing_tests)
 
 }}}

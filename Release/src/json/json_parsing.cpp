@@ -67,7 +67,6 @@ void CreateError(const Token &tk, const utility::string_t &message)
     throw web::json::json_exception(os.str().c_str());
 }
 
-    
 template <typename CharType>
 class JSON_Parser
 {
@@ -195,7 +194,7 @@ class JSON_StreamParser : public JSON_Parser<CharType>
     {
 public:
     JSON_StreamParser(std::basic_istream<CharType> &stream)
-        : m_streambuf(stream.rdbuf())
+        : m_streambuf(stream.rdbuf()), m_locale("C")
     {
     }
 
@@ -206,14 +205,16 @@ protected:
 
 private:
     typename std::basic_streambuf<CharType, std::char_traits<CharType>>* m_streambuf;
+
+    ::utility::details::thread_local_locale m_locale;
 };
 
 template <typename CharType>
 class JSON_StringParser : public JSON_Parser<CharType>
 {
 public:
-    JSON_StringParser(const std::basic_string<CharType>& string) 
-        : m_position(&string[0])
+    JSON_StringParser(const std::basic_string<CharType>& string)
+        : m_position(&string[0]), m_locale("C")
     {
         m_startpos = m_position;
         m_endpos = m_position+string.size();
@@ -232,6 +233,7 @@ private:
     const CharType* m_position;
     const CharType* m_startpos;
     const CharType* m_endpos;
+    ::utility::details::thread_local_locale m_locale;
 };
 
 
