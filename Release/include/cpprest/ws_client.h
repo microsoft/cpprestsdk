@@ -176,11 +176,13 @@ public:
     websocket_exception(const utility::string_t &whatArg) 
         : m_msg(utility::conversions::to_utf8string(whatArg)) {}
 
+#ifdef _MS_WINDOWS
     /// <summary>
     /// Creates an <c>websocket_exception</c> with just a string message and no error code.
     /// </summary>
     /// <param name="whatArg">Error message string.</param>
     websocket_exception(std::string whatArg) : m_msg(std::move(whatArg)) {}
+#endif
 
     /// <summary>
     /// Creates a <c>websocket_exception</c> from a error code using the current platform error category.
@@ -203,6 +205,7 @@ public:
           m_msg(utility::conversions::to_utf8string(whatArg))
     {}
 
+#ifdef _MS_WINDOWS
     /// <summary>
     /// Creates a <c>websocket_exception</c> from a error code and string message.
     /// </summary>
@@ -212,6 +215,7 @@ public:
         : m_errorCode(utility::details::create_error_code(errorCode)),
         m_msg(std::move(whatArg))
     {}
+#endif
 
     /// <summary>
     /// Creates a <c>websocket_exception</c> from a error code and category. The message of the error code will be used

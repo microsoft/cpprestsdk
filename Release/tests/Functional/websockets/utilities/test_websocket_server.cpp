@@ -87,11 +87,11 @@ namespace utilities {
 
         const std::string& username() override
         {
-            throw std::exception("NYI");
+            throw std::runtime_error("NYI");
         }
         const std::string& password() override
         {
-            throw std::exception("NYI");
+            throw std::runtime_error("NYI");
         }
 
         const std::string& get_header_val(const std::string& header_name) override
