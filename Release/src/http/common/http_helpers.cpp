@@ -335,7 +335,7 @@ namespace details
 
 #if (!defined(_MS_WINDOWS) || defined(__cplusplus_winrt))
     const std::array<bool,128> valid_chars =
-    {
+    {{
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0-15
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //16-31
         0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, //32-47
@@ -344,7 +344,7 @@ namespace details
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, //80-95
         0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, //96-111
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0 //112-127
-    };
+    }};
 
     // Checks if the method contains any invalid characters
     bool validate_method(const utility::string_t& method)
