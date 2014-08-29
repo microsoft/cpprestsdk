@@ -57,6 +57,7 @@ enum test_websocket_message_type
 class test_http_request_interface
 {
 public:
+    virtual ~test_http_request_interface() {}
     virtual const std::string& username() = 0;
     virtual const std::string& password() = 0;
     virtual const std::string& get_header_val(const std::string& header_name) = 0;

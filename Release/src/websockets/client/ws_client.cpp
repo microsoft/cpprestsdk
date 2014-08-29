@@ -80,6 +80,8 @@ namespace client
 namespace details
 {
 
+static utility::string_t g_subProtocolHeader(_XPLATSTR("Sec-WebSocket-Protocol"));
+
 class ws_desktop_client : public _websocket_client_impl, public std::enable_shared_from_this<ws_desktop_client>
 {
 private:
@@ -278,18 +280,17 @@ public:
         }
 
         // Add any request headers specified by the user.
-        const utility::string_t protocolHeader(_XPLATSTR("Sec-WebSocket-Protocol"));
         const auto & headers = m_client_config.headers();
         for (const auto & header : headers)
         {
-            if (!utility::details::str_icmp(header.first, protocolHeader))
+            if (!utility::details::str_icmp(header.first, g_subProtocolHeader))
             {
                 con->append_header(utility::conversions::to_utf8string(header.first), utility::conversions::to_utf8string(header.second));
             }
         }
 
         // Add any specified subprotocols.
-        if (headers.has(protocolHeader))
+        if (headers.has(g_subProtocolHeader))
         {
             const std::vector<utility::string_t> protocols = m_client_config.subprotocols();
             for (const auto & value : protocols)

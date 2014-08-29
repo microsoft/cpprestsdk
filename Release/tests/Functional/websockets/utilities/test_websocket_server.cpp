@@ -155,7 +155,7 @@ namespace utilities {
 
                 test_websocket_msg wsmsg;
 
-                wsmsg.set_data(std::vector<unsigned char>(pay.begin(), pay.end()));
+                wsmsg.set_data(std::vector<uint8_t>(pay.begin(), pay.end()));
 
                 switch (msg->get_opcode())
                 {
