@@ -163,40 +163,72 @@ namespace details
     /// <summary>
     /// Cross platform RAII container for setting thread local locale.
     /// </summary>
+#ifdef _MS_WINDOWS
     class thread_local_locale
     {
     public:
-
         thread_local_locale(const char * locale)
         {
-#ifdef _MS_WINDOWS
-            _configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
-            m_prevLocale = setlocale(LC_ALL, locale);
-#else
-            m_prevLocale = uselocale(newlocale(LC_ALL, locale, nullptr));        
-#endif
-        }
-
-        ~thread_local_locale()
-        {
-            if (m_prevLocale != nullptr)
+            char *prevLocale = setlocale(LC_ALL, nullptr);
+            if (prevLocale == nullptr)
             {
-#ifdef _MS_WINDOWS
-                setlocale(LC_ALL, m_prevLocale);
-#else
-                locale_t original = uselocale(m_prevLocale);
-                freelocale(original);
-#endif
+                throw std::runtime_error("Unable to retrieve current locale.");
+            }
+            
+            // Copy to a string because later calls can invalidate the returned pointer.
+            m_prevLocale = prevLocale;
+            
+            m_prevThreadSetting = _configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
+            if (m_prevThreadSetting == -1)
+            {
+                throw std::runtime_error("Unable to enable per thread locale.");
+            }
+            if (setlocale(LC_ALL, locale) == nullptr)
+            {
+                throw std::runtime_error("Unable to set locale");
             }
         }
-
+        ~thread_local_locale()
+        {
+            setlocale(LC_ALL, m_prevLocale.c_str());
+            _configthreadlocale(m_prevThreadSetting);
+        }
     private:
-#ifdef _MS_WINDOWS
-        char * m_prevLocale;
-#else
-        locale_t m_prevLocale;
-#endif
+        std::string m_prevLocale;
+        int m_prevThreadSetting;
+        thread_local_locale(const thread_local_locale &);
+        thread_local_locale & operator=(const thread_local_locale &);
     };
+#else
+    class thread_local_locale
+    {
+    public:
+        thread_local_locale(const char * locale)
+        {
+            m_changedLocale = newlocale(LC_ALL, locale, nullptr);
+            if(m_changedLocale == nullptr)
+            {
+                throw std::runtime_error("Unable to create new locale.");
+            }
+            m_prevLocale = uselocale(original);
+            if(m_prevLocale == nullptr)
+            {
+                freelocale(original);
+                throw std::runtime_error("Unable to set locale");
+            }
+        }
+        ~thread_local_locale()
+        {
+            uselocale(m_prevLocale);
+            freelocale(m_changedLocale);
+        }
+    private:
+        locale_t m_prevLocale;
+        locale_t m_changedLocale;
+        thread_local_locale(const thread_local_locale &);
+        thread_local_locale & operator=(const thread_local_locale &);
+    };
+#endif
 
     /// <summary>
     /// Our own implementation of alpha numeric instead of std::isalnum to avoid

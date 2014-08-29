@@ -41,7 +41,7 @@ using namespace utility::conversions;
 #ifdef _MS_WINDOWS
 void web::json::value::serialize(std::ostream& stream) const
 { 
-    utility::details::thread_local_locale("C");
+    utility::details::thread_local_locale locale("C");
 
     // This has better performance than writing directly to stream.
     std::string str;
@@ -56,7 +56,7 @@ void web::json::value::format(std::basic_string<wchar_t> &string) const
 
 void web::json::value::serialize(utility::ostream_t &stream) const 
 {
-    utility::details::thread_local_locale("C");
+    utility::details::thread_local_locale locale("C");
 
     // This has better performance than writing directly to stream.
     utility::string_t str;
@@ -238,6 +238,6 @@ utility::string_t web::json::value::as_string() const
 
 utility::string_t json::value::serialize() const 
 { 
-    utility::details::thread_local_locale("C");
+    utility::details::thread_local_locale locale("C");
     return m_value->to_string(); 
 }

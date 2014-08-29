@@ -568,13 +568,20 @@ TEST(keep_order_while_parsing)
 
 TEST(non_default_locale)
 {
-    char * prevLocale = setlocale(LC_ALL, "fr-FR");
+    std::string originalLocale = setlocale(LC_ALL, nullptr);
+    std::string changedLocale("fr-FR");
+    setlocale(LC_ALL, changedLocale.c_str());
 
     // string serialize
     utility::string_t str(U("[true,false,-1.55,5,null,{\"abc\":5555}]"));
     json::value v = json::value::parse(str);
+    VERIFY_ARE_EQUAL(changedLocale, setlocale(LC_ALL, nullptr));
     VERIFY_ARE_EQUAL(str, v.serialize());
+    VERIFY_ARE_EQUAL(changedLocale, setlocale(LC_ALL, nullptr));
 
+    setlocale(LC_ALL, originalLocale.c_str());
+    setlocale(LC_NUMERIC, changedLocale.c_str());
+    
     // cpprestsdk stream serialize
     utility::stringstream_t stream;
     stream << v;
@@ -589,7 +596,7 @@ TEST(non_default_locale)
     stdStream >> stdStr;
     VERIFY_ARE_EQUAL(str, utility::conversions::to_string_t(stdStr));
 
-    setlocale(LC_ALL, prevLocale);
+    setlocale(LC_ALL, originalLocale.c_str());
 }
 
 } // SUITE(parsing_tests)
