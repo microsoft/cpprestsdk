@@ -424,9 +424,10 @@ TEST_FIXTURE(uri_address, send_stream_binary_msg_no_length)
 {
     test_websocket_server server;
 
-    std::vector<uint8_t> body = { { 0, 1, 2, 0 } };
+    std::string body = "\x00\x01\x02\x00";
+    std::vector<uint8_t> msgbuf(body.begin(), body.end());
 
-    auto is = streams::container_stream<std::vector<uint8_t>>::open_istream(body);
+    auto is = streams::container_stream<std::vector<uint8_t>>::open_istream(std::move(msgbuf));
 
     websocket_client client;
     {
