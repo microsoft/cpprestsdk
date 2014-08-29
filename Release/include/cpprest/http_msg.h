@@ -101,6 +101,7 @@ public:
 #undef DAT
 };
 
+/// Message direction
 namespace message_direction
 {
     /// <summary>

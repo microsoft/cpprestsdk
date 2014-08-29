@@ -87,7 +87,21 @@ namespace json
         /// <summary>
         /// This enumeration represents the various kinds of JSON values.
         /// </summary>
-        enum value_type { Number, Boolean, String, Object, Array, Null };
+        enum value_type 
+        { 
+            /// Number value
+            Number, 
+            /// Boolean value
+            Boolean, 
+            /// String value
+            String, 
+            /// Object value
+            Object, 
+            /// Array value
+            Array, 
+            /// Null value
+            Null 
+        };
 
         /// <summary>
         /// Constructor creating a null value
