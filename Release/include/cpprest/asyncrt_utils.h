@@ -48,6 +48,7 @@ namespace pplx = Concurrency;
 
 #ifndef _MS_WINDOWS
 #include <boost/algorithm/string.hpp>
+#include <xlocale.h>
 #endif
 
 /// Various utilities for string conversions and date and time manipulation.
@@ -171,6 +172,8 @@ namespace details
 #ifdef _MS_WINDOWS
             _configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
             m_prevLocale = setlocale(LC_ALL, locale);
+#else
+            m_prevLocale = uselocale(newlocale(LC_ALL, locale, nullptr));        
 #endif
         }
 
@@ -180,6 +183,9 @@ namespace details
             {
 #ifdef _MS_WINDOWS
                 setlocale(LC_ALL, m_prevLocale);
+#else
+                locale_t original = uselocale(m_prevLocale);
+                freelocale(original);
 #endif
             }
         }
@@ -187,6 +193,8 @@ namespace details
     private:
 #ifdef _MS_WINDOWS
         char * m_prevLocale;
+#else
+        locale_t m_prevLocale;
 #endif
     };
 

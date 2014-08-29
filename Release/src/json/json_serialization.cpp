@@ -27,6 +27,7 @@
 
 #include "stdafx.h"
 #include <stdio.h>
+#include <inttypes.h>
 
 using namespace web;
 using namespace web::json;
@@ -145,11 +146,11 @@ void web::json::details::_Number::format(std::basic_string<char>& stream) const
 {
     if(m_number.m_type != number::type::double_type)
     {
-#ifdef _MS_WINDOWS
         // #digits + 1 to avoid loss + 1 for the sign + 1 for null terminator.
         const size_t tempSize = std::numeric_limits<uint64_t>::digits10 + 3;
         char tempBuffer[tempSize];
 
+#ifdef _MS_WINDOWS
         // This can be improved performance-wise if we implement our own routine
         if (m_number.m_type == number::type::signed_type)
             _i64toa_s(m_number.m_intval, tempBuffer, tempSize, 10);
@@ -157,16 +158,14 @@ void web::json::details::_Number::format(std::basic_string<char>& stream) const
             _ui64toa_s(m_number.m_uintval, tempBuffer, tempSize, 10);
 
         const auto numChars = strnlen_s(tempBuffer, tempSize);
-        stream.append(tempBuffer, numChars);
 #else
-        std::stringstream ss; // TODO - also consider replacing with snprintf...
+        int numChars;
         if (m_number.m_type == number::type::signed_type)
-            ss << m_number.m_intval;
+            numChars = snprintf(tempBuffer, tempSize, "%" PRId64, m_number.m_intval);
         else
-            ss << m_number.m_uintval;
-
-        stream.append(ss.str());
+            numChars = snprintf(tempBuffer, tempSize, "%" PRIu64, m_number.m_uintval);
 #endif
+        stream.append(tempBuffer, numChars);
     }
     else
     {
