@@ -365,7 +365,7 @@ bool web::json::details::_Object::has_field(const utility::string_t &key) const
 
 utility::string_t json::value::to_string() const 
 { 
-    utility::details::thread_local_locale locale("C");
+    utility::details::scoped_thread_locale locale("C");
     return m_value->to_string(); 
 }
 

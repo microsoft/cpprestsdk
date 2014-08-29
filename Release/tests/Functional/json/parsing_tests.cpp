@@ -569,34 +569,41 @@ TEST(keep_order_while_parsing)
 TEST(non_default_locale)
 {
     std::string originalLocale = setlocale(LC_ALL, nullptr);
+#ifdef _MS_WINDOWS
     std::string changedLocale("fr-FR");
-    setlocale(LC_ALL, changedLocale.c_str());
+#else
+    std::string changedLocale("fr_FR");
+#endif
 
-    // string serialize
-    utility::string_t str(U("[true,false,-1.55,5,null,{\"abc\":5555}]"));
-    json::value v = json::value::parse(str);
-    VERIFY_ARE_EQUAL(changedLocale, setlocale(LC_ALL, nullptr));
-    VERIFY_ARE_EQUAL(str, v.serialize());
-    VERIFY_ARE_EQUAL(changedLocale, setlocale(LC_ALL, nullptr));
+    // If locale isn't installed on system just silently pass.
+    if(setlocale(LC_ALL, changedLocale.c_str()) != nullptr)
+    {
+        // string serialize
+        utility::string_t str(U("[true,false,-1.55,5,null,{\"abc\":5555}]"));
+        json::value v = json::value::parse(str);
+        VERIFY_ARE_EQUAL(changedLocale, setlocale(LC_ALL, nullptr));
+        VERIFY_ARE_EQUAL(str, v.serialize());
+        VERIFY_ARE_EQUAL(changedLocale, setlocale(LC_ALL, nullptr));
 
-    setlocale(LC_ALL, originalLocale.c_str());
-    setlocale(LC_NUMERIC, changedLocale.c_str());
+        setlocale(LC_ALL, originalLocale.c_str());
+        setlocale(LC_NUMERIC, changedLocale.c_str());
     
-    // cpprestsdk stream serialize
-    utility::stringstream_t stream;
-    stream << v;
-    utility::string_t serializedStr;
-    stream >> serializedStr;
-    VERIFY_ARE_EQUAL(str, serializedStr);
+        // cpprestsdk stream serialize
+        utility::stringstream_t stream;
+        stream << v;
+        utility::string_t serializedStr;
+        stream >> serializedStr;
+        VERIFY_ARE_EQUAL(str, serializedStr);
 
-    // std stream serialize
-    std::stringstream stdStream;
-    v.serialize(stdStream);
-    std::string stdStr;
-    stdStream >> stdStr;
-    VERIFY_ARE_EQUAL(str, utility::conversions::to_string_t(stdStr));
+        // std stream serialize
+        std::stringstream stdStream;
+        v.serialize(stdStream);
+        std::string stdStr;
+        stdStream >> stdStr;
+        VERIFY_ARE_EQUAL(str, utility::conversions::to_string_t(stdStr));
 
-    setlocale(LC_ALL, originalLocale.c_str());
+        setlocale(LC_ALL, originalLocale.c_str());
+    }
 }
 
 } // SUITE(parsing_tests)

@@ -52,6 +52,80 @@ using namespace utility::conversions;
 namespace utility
 {
 
+namespace details
+{
+
+#ifdef _MS_WINDOWS
+scoped_thread_locale::scoped_thread_locale(const char * locale)
+    : m_prevLocale(), m_prevThreadSetting(-1)
+{
+    char *prevLocale = setlocale(LC_ALL, nullptr);
+    if (prevLocale == nullptr)
+    {
+        throw std::runtime_error("Unable to retrieve current locale.");
+    }
+
+    if(std::strcmp(prevLocale, locale) != 0)
+    { 
+        m_prevLocale = prevLocale;
+        m_prevThreadSetting = _configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
+        if (m_prevThreadSetting == -1)
+        {
+            throw std::runtime_error("Unable to enable per thread locale.");
+        }
+        if (setlocale(LC_ALL, locale) == nullptr)
+        {
+             _configthreadlocale(m_prevThreadSetting);
+             throw std::runtime_error("Unable to set locale");
+        }
+    }   
+}
+
+scoped_thread_locale::~scoped_thread_locale()
+{
+    if(m_prevThreadSetting != -1)
+    {
+        setlocale(LC_ALL, m_prevLocale.c_str());
+        _configthreadlocale(m_prevThreadSetting);
+    }
+}
+#else
+scoped_thread_locale::scoped_thread_locale(const char * locale)
+    : m_prevLocale(nullptr), m_newLocale(nullptr)
+{
+    char * prevLocale = setlocale(LC_ALL, nullptr);
+    if(prevLocale == nullptr)
+    {
+        throw std::runtime_error("Unable to retrieve current locale.");
+    }
+        
+    if(std::strcmp(prevLocale, locale) != 0)
+    {
+        m_newLocale = newlocale(LC_ALL, locale, nullptr);
+        if(m_newLocale == nullptr)
+        {
+            throw std::runtime_error("Unable to create new locale.");
+        }
+        m_prevLocale = uselocale(m_newLocale);
+        if(m_prevLocale == nullptr)
+        {
+            freelocale(m_newLocale);
+            throw std::runtime_error("Unable to set locale");
+        }
+    }
+}
+
+scoped_thread_locale::~scoped_thread_locale()
+{
+    if(m_prevLocale != nullptr)
+    {
+        uselocale(m_prevLocale);
+        freelocale(m_newLocale);
+    }
+}
+#endif
+}
+
 #pragma region error categories
 
 namespace details
