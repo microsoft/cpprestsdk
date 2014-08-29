@@ -149,7 +149,7 @@ public:
     /// Sets a UTF-8 message as the message body.
     /// </summary>
     /// <param name="istream">casablanca input stream representing the body of the message.</param>
-    /// <remarks>Upon sending, the entire stream will be buffered to determine the length.</remarks>
+    /// <remarks>Upon sending, the entire stream may be buffered to determine the length.</remarks>
     void set_utf8_message(concurrency::streams::istream istream)
     {
         this->_set_message(istream, SIZE_MAX, websocket_message_type::text_message);
@@ -159,7 +159,7 @@ public:
     /// Sets a UTF-8 message as the message body.
     /// </summary>
     /// <param name="istream">casablanca input stream representing the body of the message.</param>
-    /// <param name="len">number of bytes to send</param>
+    /// <param name="len">number of bytes to send.</param>
     void set_utf8_message(concurrency::streams::istream istream, size_t len)
     {
         this->_set_message(istream, len, websocket_message_type::text_message);
@@ -169,7 +169,7 @@ public:
     /// Sets binary data as the message body.
     /// </summary>
     /// <param name="istream">casablanca input stream representing the body of the message.</param>
-    /// <param name="len">number of bytes to send</param>
+    /// <param name="len">number of bytes to send.</param>
     void set_binary_message(concurrency::streams::istream istream, size_t len)
     {
         this->_set_message(istream, len, websocket_message_type::binary_message);
@@ -179,7 +179,7 @@ public:
     /// Sets binary data as the message body.
     /// </summary>
     /// <param name="istream">casablanca input stream representing the body of the message.</param>
-    /// <remarks>Upon sending, the entire stream will be buffered to determine the length.</remarks>
+    /// <remarks>Upon sending, the entire stream may be buffered to determine the length.</remarks>
     void set_binary_message(concurrency::streams::istream istream)
     {
         this->_set_message(istream, SIZE_MAX, websocket_message_type::binary_message);
