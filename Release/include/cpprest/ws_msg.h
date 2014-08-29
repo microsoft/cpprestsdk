@@ -139,7 +139,7 @@ public:
     /// <summary>
     /// Sets a UTF-8 message as the message body.
     /// </summary>
-    /// <params>UTF-8 String containing body of the message.</returns>
+    /// <param name="data">UTF-8 String containing body of the message.</param>
     void set_utf8_message(std::string data)
     {
         this->_set_message(std::move(data), websocket_message_type::text_message);
@@ -148,7 +148,18 @@ public:
     /// <summary>
     /// Sets a UTF-8 message as the message body.
     /// </summary>
-    /// <params>casablanca input stream representing the body of the message.</returns>
+    /// <param name="istream">casablanca input stream representing the body of the message.</param>
+    /// <remarks>Upon sending, the entire stream will be buffered to determine the length.</remarks>
+    void set_utf8_message(concurrency::streams::istream istream)
+    {
+        this->_set_message(istream, SIZE_MAX, websocket_message_type::text_message);
+    }
+
+    /// <summary>
+    /// Sets a UTF-8 message as the message body.
+    /// </summary>
+    /// <param name="istream">casablanca input stream representing the body of the message.</param>
+    /// <param name="len">number of bytes to send</param>
     void set_utf8_message(concurrency::streams::istream istream, size_t len)
     {
         this->_set_message(istream, len, websocket_message_type::text_message);
@@ -157,10 +168,21 @@ public:
     /// <summary>
     /// Sets binary data as the message body.
     /// </summary>
-    /// <params>casablanca input stream representing the body of the message.</returns>
+    /// <param name="istream">casablanca input stream representing the body of the message.</param>
+    /// <param name="len">number of bytes to send</param>
     void set_binary_message(concurrency::streams::istream istream, size_t len)
     {
         this->_set_message(istream, len, websocket_message_type::binary_message);
+    }
+
+    /// <summary>
+    /// Sets binary data as the message body.
+    /// </summary>
+    /// <param name="istream">casablanca input stream representing the body of the message.</param>
+    /// <remarks>Upon sending, the entire stream will be buffered to determine the length.</remarks>
+    void set_binary_message(concurrency::streams::istream istream)
+    {
+        this->_set_message(istream, SIZE_MAX, websocket_message_type::binary_message);
     }
 
 private:

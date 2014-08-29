@@ -392,6 +392,59 @@ TEST_FIXTURE(uri_address, send_multi_byte_utf8_msg)
     client.close().wait();
 }
 
+// Send a streamed text message without specifying length
+TEST_FIXTURE(uri_address, send_stream_utf8_msg_no_length)
+{
+    test_websocket_server server;
+
+    std::string body = "\xC3\xA0\xC3\xB8";
+    std::vector<uint8_t> msgbuf(body.begin(), body.end());
+
+    auto is = streams::container_stream<std::vector<uint8_t>>::open_istream(std::move(msgbuf));
+
+    websocket_client client;
+    {
+        server.next_message([body](test_websocket_msg msg) // Handler to verify the message sent by the client.
+        {
+            websocket_asserts::assert_message_equals(msg, body, test_websocket_message_type::WEB_SOCKET_UTF8_MESSAGE_TYPE);
+        });
+
+        client.connect(m_uri).wait();
+
+        websocket_outgoing_message msg;
+        msg.set_utf8_message(is);
+        client.send(msg).wait();
+    }
+
+    client.close().wait();
+}
+
+// Send a streamed binary message without specifying length
+TEST_FIXTURE(uri_address, send_stream_binary_msg_no_length)
+{
+    test_websocket_server server;
+
+    std::vector<uint8_t> body = { { 0, 1, 2, 0 } };
+
+    auto is = streams::container_stream<std::vector<uint8_t>>::open_istream(body);
+
+    websocket_client client;
+    {
+        server.next_message([body](test_websocket_msg msg) // Handler to verify the message sent by the client.
+        {
+            websocket_asserts::assert_message_equals(msg, body, test_websocket_message_type::WEB_SOCKET_BINARY_MESSAGE_TYPE);
+        });
+
+        client.connect(m_uri).wait();
+
+        websocket_outgoing_message msg;
+        msg.set_binary_message(is);
+        client.send(msg).wait();
+    }
+
+    client.close().wait();
+}
+
 } // SUITE(send_msg_tests)
 
 }}}}

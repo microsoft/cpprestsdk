@@ -341,9 +341,9 @@ public:
             return pplx::task_from_exception<void>(websocket_exception("Cannot send empty message."));
         }
 
-        if (length > UINT_MAX)
+        if (length >= UINT_MAX && length != SIZE_MAX)
         {
-            return pplx::task_from_exception<void>(websocket_exception("Message size too large. Ensure message length is less than or equal to UINT_MAX."));
+            return pplx::task_from_exception<void>(websocket_exception("Message size too large. Ensure message length is less than UINT_MAX."));
         }
 
         {
@@ -394,6 +394,47 @@ public:
         auto this_client = this->shared_from_this();
         auto& is_buf = msg._m_impl->streambuf();
         auto length = msg._m_impl->length();
+
+        if (length == SIZE_MAX)
+        {
+            // This indicates we should determine the length automatically.
+            if (is_buf.has_size())
+            {
+                // The user's stream knows how large it is -- there's no need to buffer.
+                auto buf_sz = is_buf.size();
+                if (buf_sz >= SIZE_MAX)
+                {
+                    websocket_exception wx(_XPLATSTR("Cannot send messages larger than SIZE_MAX."));
+                    msg.m_send_tce.set_exception(std::make_exception_ptr(wx));
+                    return;
+                }
+                length = static_cast<size_t>(buf_sz);
+                // We have determined the length and can proceed normally.
+            }
+            else
+            {
+                // The stream needs to be buffered.
+                concurrency::streams::container_buffer<std::vector<uint8_t>> stbuf;
+                auto is_buf_istream = is_buf.create_istream();
+                msg._m_impl->set_streambuf(stbuf);
+                is_buf_istream.read_to_end(stbuf).then([this_client,msg](pplx::task<size_t> t)
+                {
+                    try
+                    {
+                        auto sz = t.get();
+                        msg._m_impl->set_length(sz);
+                        this_client->send_msg(msg);
+                    }
+                    catch (...)
+                    {
+                        auto eptr = std::current_exception();
+                        msg.m_send_tce.set_exception(eptr);
+                    }
+                });
+                // We have postponed the call to send_msg() until after the data is buffered.
+                return;
+            }
+        }
 
         // First try to acquire the data (Get a pointer to the next already allocated contiguous block of data)
         // If acquire succeeds, send the data over the socket connection, there is no copy of data from stream to temporary buffer.
