@@ -41,6 +41,7 @@ namespace pplx = Concurrency;
 #include <cstdint>
 #include <system_error>
 #include <random>
+#include <locale.h>
 
 #if !defined(_MS_WINDOWS) || (_MSC_VER >= 1700)
 #include <chrono>
@@ -163,21 +164,28 @@ namespace details
     /// <summary>
     /// Cross platform RAII container for setting thread local locale.
     /// </summary>
-    class scoped_thread_locale
+    class scoped_c_thread_locale
     {
     public:
-        _ASYNCRTIMP scoped_thread_locale(const char * locale);
-        _ASYNCRTIMP ~scoped_thread_locale();
+        _ASYNCRTIMP scoped_c_thread_locale();
+        _ASYNCRTIMP ~scoped_c_thread_locale();
+
+#ifdef _MS_WINDOWS
+        typedef _locale_t locale_t;
+#else
+        typedef locale_t locale_t;
+#endif
+
+        static _ASYNCRTIMP locale_t __cdecl c_locale();
     private:
 #ifdef _MS_WINDOWS
         std::string m_prevLocale;
         int m_prevThreadSetting;
 #else
-        locale_t m_prevLocale;
-        locale_t m_newLocale;        
+        locale_t m_prevLocale;        
 #endif
-        scoped_thread_locale(const scoped_thread_locale &);
-        scoped_thread_locale & operator=(const scoped_thread_locale &);
+        scoped_c_thread_locale(const scoped_c_thread_locale &);
+        scoped_c_thread_locale & operator=(const scoped_c_thread_locale &);
     };
 
     /// <summary>

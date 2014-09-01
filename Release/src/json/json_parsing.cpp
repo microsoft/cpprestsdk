@@ -127,7 +127,10 @@ public:
 
     web::json::value ParseValue(typename JSON_Parser<CharType>::Token &first)
     {
-        utility::details::scoped_thread_locale locale("C");
+#ifndef _MS_WINDOWS
+        utility::details::scoped_c_thread_locale locale;
+#endif
+
         auto _value = _ParseValue(first);
 #ifdef ENABLE_JSON_VALUE_VISUALIZER
         auto type = _value->type();
@@ -375,12 +378,12 @@ namespace
 #ifdef _MS_WINDOWS
     static int print_llu(char* ptr, size_t n, uint64_t val64)
     {
-        return _snprintf_s(ptr, n, _TRUNCATE, "%I64u", val64);
+        return _snprintf_s(ptr, n, _TRUNCATE, "%I64u", val64, utility::details::scoped_c_thread_locale::c_locale());
     }
 
     static int print_llu(wchar_t* ptr, size_t n, uint64_t val64)
     {
-        return _snwprintf_s(ptr, n, _TRUNCATE, L"%I64u", val64);
+        return _snwprintf_s(ptr, n, _TRUNCATE, L"%I64u", val64, utility::details::scoped_c_thread_locale::c_locale());
     }
 #else
     static int print_llu(char* ptr, size_t n, unsigned long long val64)
@@ -393,8 +396,22 @@ namespace
     }
 #endif
 
-    static double anystod(const char* str) { return strtod(str, nullptr); }
-    static double anystod(const wchar_t* str) { return wcstod(str, nullptr); }
+    static double anystod(const char* str) 
+    {
+#ifdef _MS_WINDOWS
+        return _strtod_l(str, nullptr, utility::details::scoped_c_thread_locale::c_locale());
+#else
+        return strtod(str, nullptr); 
+#endif
+    }
+    static double anystod(const wchar_t* str) 
+    { 
+#ifdef _MS_WINDOWS
+        return _wcstod_l(str, nullptr, utility::details::scoped_c_thread_locale::c_locale());
+#else
+        return wcstod(str, nullptr);
+#endif
+    }
 }
 
 template <typename CharType>
@@ -710,7 +727,12 @@ inline bool JSON_Parser<CharType>::handle_unescape_char(Token &token)
             for (int i = 0; i < 4; ++i)
             {
                 ch = NextCharacter();
-                if (!isxdigit((unsigned char) (ch)))
+#ifdef _MS_WINDOWS
+                const int isxdigitResult = _isxdigit_l(static_cast<unsigned char>(ch), utility::details::scoped_c_thread_locale::c_locale());
+#else
+                const int isxdigitResult = isxdigit(static_cast<unsigned char>(ch));
+#endif
+                if (!isxdigitResult)
                     return false;
 
                 int val = _hexval[ch];

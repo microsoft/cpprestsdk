@@ -41,7 +41,9 @@ using namespace utility::conversions;
 #ifdef _MS_WINDOWS
 void web::json::value::serialize(std::ostream& stream) const
 { 
-    utility::details::scoped_thread_locale locale("C");
+#ifndef _MS_WINDOWS
+    utility::details::scoped_c_thread_locale locale;
+#endif
 
     // This has better performance than writing directly to stream.
     std::string str;
@@ -56,7 +58,9 @@ void web::json::value::format(std::basic_string<wchar_t> &string) const
 
 void web::json::value::serialize(utility::ostream_t &stream) const 
 {
-    utility::details::scoped_thread_locale locale("C");
+#ifndef _MS_WINDOWS
+    utility::details::scoped_c_thread_locale locale;
+#endif
 
     // This has better performance than writing directly to stream.
     utility::string_t str;
@@ -173,7 +177,13 @@ void web::json::details::_Number::format(std::basic_string<char>& stream) const
         const size_t tempSize = std::numeric_limits<double>::digits10 + 10;
         char tempBuffer[tempSize];
 #ifdef _MS_WINDOWS
-        const auto numChars = sprintf_s(tempBuffer, tempSize, "%.*g", std::numeric_limits<double>::digits10 + 2, m_number.m_value);
+        const auto numChars = _sprintf_s_l(
+            tempBuffer, 
+            tempSize, 
+            "%.*g",
+            utility::details::scoped_c_thread_locale::c_locale(),
+            std::numeric_limits<double>::digits10 + 2, 
+            m_number.m_value);
 #else
         const auto numChars = snprintf(tempBuffer, tempSize, "%.*g", std::numeric_limits<double>::digits10 + 2, m_number.m_value);
 #endif
@@ -219,7 +229,13 @@ void web::json::details::_Number::format(std::basic_string<wchar_t>& stream) con
         // #digits + 2 to avoid loss + 1 for the sign + 1 for decimal point + 5 for exponent (e+xxx) + 1 for null terminator
         const size_t tempSize = std::numeric_limits<double>::digits10 + 10;
         wchar_t tempBuffer[tempSize];
-        const int numChars = swprintf_s(tempBuffer, tempSize, L"%.*g", std::numeric_limits<double>::digits10 + 2, m_number.m_value);
+        const int numChars = _swprintf_s_l(
+            tempBuffer, 
+            tempSize, 
+            L"%.*g",
+            utility::details::scoped_c_thread_locale::c_locale(),
+            std::numeric_limits<double>::digits10 + 2, 
+            m_number.m_value);
         stream.append(tempBuffer, numChars);
     }
 }
@@ -238,6 +254,8 @@ utility::string_t web::json::value::as_string() const
 
 utility::string_t json::value::serialize() const 
 { 
-    utility::details::scoped_thread_locale locale("C");
+#ifndef _MS_WINDOWS
+    utility::details::scoped_c_thread_locale locale;
+#endif
     return m_value->to_string(); 
 }
