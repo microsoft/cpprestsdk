@@ -55,8 +55,10 @@ namespace concurrency = Concurrency;
 #endif
 
 // Suppress unreferenced formal parameter warning as they are required for documentation
+#if defined(_MSC_VER)
 #pragma warning(push)
 #pragma warning(disable : 4100)
+#endif
 
 namespace Concurrency { namespace streams {
 
@@ -668,6 +670,12 @@ namespace Concurrency { namespace streams {
             // The in/out mode for the buffer
             std::ios_base::openmode m_mode;
 
+            // Default block size
+            SafeSize m_alloc_size;
+
+            // Block used for alloc/commit
+            std::shared_ptr<_block> m_allocBlock;
+
             // Total available data
             size_t m_total;
 
@@ -677,9 +685,6 @@ namespace Concurrency { namespace streams {
             // Keeps track of the number of chars that have been flushed but still
             // remain to be consumed by a read operation.
             size_t m_synced;
-
-            // Default block size
-            SafeSize m_alloc_size;
 
             // The producer-consumer buffer is intended to be used concurrently by a reader
             // and a writer, who are not coordinating their accesses to the buffer (coordination
@@ -694,9 +699,6 @@ namespace Concurrency { namespace streams {
 
             // Queue of requests
             std::queue<_request> m_requests;
-
-            // Block used for alloc/commit
-            std::shared_ptr<_block> m_allocBlock;
         };
 
     } // namespace details 
@@ -729,5 +731,8 @@ namespace Concurrency { namespace streams {
 }} // namespaces
 
 
+#if defined(_MSC_VER)
 #pragma warning(pop) // 4100
+#endif
+
 #endif  /* _CASA_PRODUCER_CONSUMER_STREAMS_H */

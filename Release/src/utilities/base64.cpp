@@ -24,6 +24,7 @@
 ****/
 
 #include "stdafx.h"
+#include <array>
 
 using namespace web;
 using namespace utility;
@@ -56,15 +57,15 @@ utility::string_t __cdecl conversions::to_base64(uint64_t input)
 
 #if defined(_USE_INTERNAL_BASE64_)
 static const char* _base64_enctbl = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-unsigned char _base64_dectbl [] = 
-    { 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 
+const std::array<unsigned char, 128> _base64_dectbl =
+   {{ 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 
       255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
       255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,  62, 255, 255, 255,  63,
        52,  53,  54,  55,  56,  57,  58,  59,  60,  61, 255, 255, 255, 254, 255, 255,
       255,  0,    1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,
        15,  16,  17,  18,  19,  20,  21,  22,  23,  24,  25, 255, 255, 255, 255, 255,
       255,  26,  27,  28,  29,  30,  31,  32,  33,  34,  35,  36,  37,  38,  39,  40,
-       41,  42,  43,  44,  45,  46,  47,  48,  49,  50,  51, 255, 255, 255, 255, 255 };
+       41,  42,  43,  44,  45,  46,  47,  48,  49,  50,  51, 255, 255, 255, 255, 255 }};
 
 struct _triple_byte
 {
@@ -108,18 +109,36 @@ std::vector<unsigned char> _from_base64(const utility::string_t& input)
 
         for (auto iter = input.begin(); iter != input.end(); ++iter,--size)
         {
-            auto ch = *iter;
-            if ( ch < 0 || _base64_dectbl[ch] == 255 )
+            const auto ch = *iter;
+            if ( ch < 0 )
             {
                 throw std::runtime_error("invalid character found in base64 string");
             }
-            if ( _base64_dectbl[ch] == 254 )
+            const size_t ch_sz = static_cast<size_t>(ch);
+            if ( ch_sz >= _base64_dectbl.size() || _base64_dectbl[ch_sz] == 255 )
+            {
+                throw std::runtime_error("invalid character found in base64 string");
+            }
+            if ( _base64_dectbl[ch_sz] == 254 )
             {
                 padding++;
                 // padding only at the end
-                if ( size > 2 || (size == 2 && _base64_dectbl[*(iter+1)] != 254) )
+                if ( size > 2 )
                 {
                     throw std::runtime_error("invalid padding character found in base64 string");
+                }
+                if ( size == 2 )
+                {
+                    const auto ch2 = *(iter+1);
+                    if ( ch2 < 0 )
+                    {
+                        throw std::runtime_error("invalid padding character found in base64 string");
+                    }
+                    const size_t ch2_sz = static_cast<size_t>(ch2);
+                    if ( ch2_sz >= _base64_dectbl.size() || _base64_dectbl[ch2_sz] != 254 )
+                    {
+                        throw std::runtime_error("invalid padding character found in base64 string");
+                    }
                 }
             }
         }

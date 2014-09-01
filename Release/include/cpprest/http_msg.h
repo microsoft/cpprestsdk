@@ -101,6 +101,7 @@ public:
 #undef DAT
 };
 
+/// Message direction
 namespace message_direction
 {
     /// <summary>
@@ -198,8 +199,8 @@ public:
     }
 
 private:
-    std::string m_msg;
     std::error_code m_errorCode;
+    std::string m_msg;
 };
 
 namespace details
@@ -299,12 +300,11 @@ protected:
     /// </summary>
     concurrency::streams::ostream m_outStream;
 
+    http_headers m_headers;
     bool m_default_outstream;
 
     /// <summary> The TCE is used to signal the availability of the message body. </summary>
     pplx::task_completion_event<utility::size64_t> m_data_available;
-
-    http_headers m_headers;
 };
 
 /// <summary>
@@ -352,8 +352,6 @@ private:
 
 } // namespace details
 
-
-#pragma region HTTP response message
 
 /// <summary>
 /// Represents an HTTP response.
@@ -608,8 +606,6 @@ private:
     std::shared_ptr<http::details::_http_response> _m_impl;
 };
 
-#pragma endregion
-
 namespace details {
 /// <summary>
 /// Internal representation of an HTTP request message.
@@ -681,17 +677,18 @@ private:
     // Actual initiates sending the response, without checking if a response has already been sent.
     pplx::task<void> _reply_impl(http_response response);
 
+    http::method m_method;
+
     // Tracks whether or not a response has already been started for this message.
     pplx::details::atomic_long m_initiated_response;
 
-    pplx::cancellation_token m_cancellationToken;
+    std::unique_ptr<http::details::_http_server_context> m_server_context;
 
-    http::method m_method;
+    pplx::cancellation_token m_cancellationToken;
 
     http::uri m_base_uri;
     http::uri m_uri;
     utility::string_t m_listener_path;
-    std::unique_ptr<http::details::_http_server_context> m_server_context;
 
     concurrency::streams::ostream m_response_stream;
 
@@ -702,8 +699,6 @@ private:
 
 
 }  // namespace details
-
-#pragma region HTTP Request
 
 /// <summary>
 /// Represents an HTTP request.
@@ -1161,8 +1156,6 @@ private:
 
     std::shared_ptr<http::details::_http_request> _m_impl;
 };
-
-#pragma endregion
 
 /// <summary>
 /// HTTP client handler class, used to represent an HTTP pipeline stage.

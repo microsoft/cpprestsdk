@@ -28,7 +28,9 @@
 #include "stdafx.h"
 #include <stdio.h>
 
+#if defined(_MSC_VER)
 #pragma warning(disable : 4127) // allow expressions like while(true) pass 
+#endif
 using namespace web;
 using namespace web::json;
 using namespace utility;

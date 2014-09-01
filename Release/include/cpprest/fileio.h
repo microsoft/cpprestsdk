@@ -90,11 +90,11 @@ namespace details
         // Input buffer
 
         size_t m_buffer_size;  // The intended size of the buffer to read into.
-        SafeSize m_bufsize;    // Buffer allocated size, as actually allocated.
-
         char   *m_buffer;
-        size_t m_bufoff;    // File position that the start of the buffer represents.
-        size_t m_buffill;   // Amount of file data actually in the buffer
+
+        size_t m_bufoff;       // File position that the start of the buffer represents.
+        SafeSize m_bufsize;    // Buffer allocated size, as actually allocated.
+        size_t m_buffill;      // Amount of file data actually in the buffer
 
         std::ios_base::openmode m_mode;
 

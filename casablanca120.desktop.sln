@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.30128.0
+VisualStudioVersion = 12.0.30501.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "casablanca120.xp", "Release\src\build\casablanca120.xp.vcxproj", "{15F3B200-1AED-4B57-AF37-B21CD67914B1}"
 EndProject
@@ -50,60 +50,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SearchFile120", "Release\sa
 		{1014C621-BC2D-4813-B8C1-6D83AD6F9249} = {1014C621-BC2D-4813-B8C1-6D83AD6F9249}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "codeplex165", "..\codeplex165\codeplex165.vcxproj", "{70E24896-422E-4CB4-B671-94D33D60BA1A}"
+EndProject
 Global
-	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 8
-		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccTeamFoundationServer = http://vstfdevdiv:8080/devdiv2
-		SccProjectUniqueName0 = Release\\src\\build\\casablanca120.xp.vcxproj
-		SccProjectTopLevelParentUniqueName0 = casablanca120.desktop.sln
-		SccProjectName0 = Release/src/build
-		SccAuxPath0 = http://vstfdevdiv:8080/devdiv2
-		SccLocalPath0 = Release\\src\\build
-		SccProvider0 = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccProjectUniqueName1 = Release\\samples\\BingRequest\\BingRequest120.xp\\BingRequest120.xp.vcxproj
-		SccProjectTopLevelParentUniqueName1 = casablanca120.desktop.sln
-		SccProjectName1 = Release/samples/BingRequest/BingRequest120.xp
-		SccAuxPath1 = http://vstfdevdiv:8080/devdiv2
-		SccLocalPath1 = Release\\samples\\BingRequest\\BingRequest120.xp
-		SccProvider1 = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccProjectUniqueName2 = Release\\src\\build\\casablanca120.vcxproj
-		SccProjectTopLevelParentUniqueName2 = casablanca120.desktop.sln
-		SccProjectName2 = Release/src/build
-		SccAuxPath2 = http://vstfdevdiv:8080/devdiv2
-		SccLocalPath2 = Release\\src\\build
-		SccProvider2 = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccProjectUniqueName3 = Release\\samples\\BingRequest\\BingRequest120\\BingRequest120.vcxproj
-		SccProjectTopLevelParentUniqueName3 = casablanca120.desktop.sln
-		SccProjectName3 = Release/samples/BingRequest/BingRequest120
-		SccAuxPath3 = http://vstfdevdiv:8080/devdiv2
-		SccLocalPath3 = Release\\samples\\BingRequest\\BingRequest120
-		SccProvider3 = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccProjectUniqueName4 = Release\\samples\\BlackJack\\BlackJack_Client\\BlackJack_Client120\\BlackJack_Client120.vcxproj
-		SccProjectTopLevelParentUniqueName4 = casablanca120.desktop.sln
-		SccProjectName4 = Release/samples/BlackJack/BlackJack_Client/BlackJack_Client120
-		SccAuxPath4 = http://vstfdevdiv:8080/devdiv2
-		SccLocalPath4 = Release\\samples\\BlackJack\\BlackJack_Client\\BlackJack_Client120
-		SccProvider4 = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccProjectUniqueName5 = Release\\samples\\BlackJack\\BlackJack_Server\\BlackJack_Server120\\BlackJack_Server120.vcxproj
-		SccProjectTopLevelParentUniqueName5 = casablanca120.desktop.sln
-		SccProjectName5 = Release/samples/BlackJack/BlackJack_Server/BlackJack_Server120
-		SccAuxPath5 = http://vstfdevdiv:8080/devdiv2
-		SccLocalPath5 = Release\\samples\\BlackJack\\BlackJack_Server\\BlackJack_Server120
-		SccProvider5 = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccProjectUniqueName6 = Release\\samples\\CasaLens\\CasaLens120\\CasaLens120.vcxproj
-		SccProjectTopLevelParentUniqueName6 = casablanca120.desktop.sln
-		SccProjectName6 = Release/samples/CasaLens/CasaLens120
-		SccAuxPath6 = http://vstfdevdiv:8080/devdiv2
-		SccLocalPath6 = Release\\samples\\CasaLens\\CasaLens120
-		SccProvider6 = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccProjectUniqueName7 = Release\\samples\\SearchFile\\SearchFile120\\SearchFile120.vcxproj
-		SccProjectTopLevelParentUniqueName7 = casablanca120.desktop.sln
-		SccProjectName7 = Release/samples/SearchFile/SearchFile120
-		SccAuxPath7 = http://vstfdevdiv:8080/devdiv2
-		SccLocalPath7 = Release\\samples\\SearchFile\\SearchFile120
-		SccProvider7 = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM
 		Debug|Win32 = Debug|Win32
@@ -205,6 +154,14 @@ Global
 		{F03BEE03-BEFB-4B17-A774-D9C8246530D4}.Release|Win32.Build.0 = Release|Win32
 		{F03BEE03-BEFB-4B17-A774-D9C8246530D4}.Release|x64.ActiveCfg = Release|x64
 		{F03BEE03-BEFB-4B17-A774-D9C8246530D4}.Release|x64.Build.0 = Release|x64
+		{70E24896-422E-4CB4-B671-94D33D60BA1A}.Debug|ARM.ActiveCfg = Debug|Win32
+		{70E24896-422E-4CB4-B671-94D33D60BA1A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{70E24896-422E-4CB4-B671-94D33D60BA1A}.Debug|Win32.Build.0 = Debug|Win32
+		{70E24896-422E-4CB4-B671-94D33D60BA1A}.Debug|x64.ActiveCfg = Debug|Win32
+		{70E24896-422E-4CB4-B671-94D33D60BA1A}.Release|ARM.ActiveCfg = Release|Win32
+		{70E24896-422E-4CB4-B671-94D33D60BA1A}.Release|Win32.ActiveCfg = Release|Win32
+		{70E24896-422E-4CB4-B671-94D33D60BA1A}.Release|Win32.Build.0 = Release|Win32
+		{70E24896-422E-4CB4-B671-94D33D60BA1A}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

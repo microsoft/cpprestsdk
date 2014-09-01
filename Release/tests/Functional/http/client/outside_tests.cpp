@@ -116,21 +116,21 @@ TEST_FIXTURE(uri_address, no_transfer_encoding_content_length)
 // https://www.ssllabs.com/ssltest/
 // http://www.internetsociety.org/deploy360/resources/dane-test-sites/
 // https://onlinessl.netlock.hu/#
-TEST(server_selfsigned_cert, "Ignore:Android", "SSL certs not implemented")
+TEST(server_selfsigned_cert)
 {
     http_client client(U("https://www.pcwebshop.co.uk/"));
     auto requestTask = client.request(methods::GET);
     VERIFY_THROWS(requestTask.get(), http_exception);
 }
 
-TEST(server_hostname_mismatch, "Ignore:Android", "SSL certs not implemented")
+TEST(server_hostname_mismatch)
 {
     http_client client(U("https://swordsoftruth.com/"));
     auto requestTask = client.request(methods::GET);
     VERIFY_THROWS(requestTask.get(), http_exception);
 }
 
-TEST(server_cert_expired, "Ignore:Android", "SSL certs not implemented")
+TEST(server_cert_expired)
 {
     http_client client(U("https://tv.eurosport.com/"));
     auto requestTask = client.request(methods::GET);
@@ -152,7 +152,7 @@ TEST(ignore_server_cert_invalid,
 }
 #endif
 
-TEST_FIXTURE(uri_address, outside_ssl_json, "Ignore:Android", "SSL certs not implemented")
+TEST_FIXTURE(uri_address, outside_ssl_json)
 {
     // Create URI for:
     // https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=UUF1hMUVwlrvlVMjUGOZExgg&key=AIzaSyAviHxf_y0SzNoAq3iKqvWVE4KQ0yylsnk

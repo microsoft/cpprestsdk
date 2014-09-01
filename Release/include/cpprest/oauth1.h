@@ -433,16 +433,16 @@ private:
     utility::string_t m_consumer_key;
     utility::string_t m_consumer_secret;
     oauth1_token m_token;
-    bool m_is_authorization_completed;
-    oauth1_method m_method;
-    utility::string_t m_realm;
 
     utility::string_t m_temp_endpoint;
     utility::string_t m_auth_endpoint;
     utility::string_t m_token_endpoint;
     utility::string_t m_callback_uri;
+    utility::string_t m_realm;
+    oauth1_method m_method;
 
     utility::nonce_generator m_nonce_generator;
+    bool m_is_authorization_completed;
 };
 
 } // namespace web::http::oauth1::experimental

@@ -28,21 +28,24 @@
 #include "stdafx.h"
 #include <vector>
 #include <cstdlib>
+#include <array>
 
+#if defined(_MSC_VER)
 #pragma warning(disable : 4127) // allow expressions like while(true) pass 
+#endif
 using namespace web;
 using namespace web::json;
 using namespace utility;
 using namespace utility::conversions;
 
-int _hexval [] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 
-                   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-                   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-                    0,  1,  2,  3,  4,  5,  6,  7,  8,  9, -1, -1, -1, -1, -1, -1,
-                   -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-                   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-                   -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-                   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+std::array<signed char,128> _hexval = {{ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 
+                                         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                                         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                                          0,  1,  2,  3,  4,  5,  6,  7,  8,  9, -1, -1, -1, -1, -1, -1,
+                                         -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                                         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                                         -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                                         -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 }};
 
 namespace web {
 namespace json
@@ -55,7 +58,7 @@ namespace details
 //
 
 template <typename Token>
-#ifdef _MS_WINDOWS
+#if defined(_MS_WINDOWS)
     __declspec(noreturn)
 #else
     __attribute__((noreturn))
@@ -180,6 +183,7 @@ private:
 protected:
 
     size_t m_currentLine;
+    const typename std::char_traits<CharType>::int_type m_eof;
     size_t m_currentColumn;
     size_t m_currentParsingDepth;
 #ifndef __APPLE__
@@ -187,7 +191,6 @@ protected:
 #else
     static const size_t maxParsingDepth = 32;
 #endif
-    const typename std::char_traits<CharType>::int_type m_eof;
 };
 
 template <typename CharType>
@@ -356,7 +359,7 @@ inline bool JSON_Parser<CharType>::ParseInt64(CharType first, uint64_t& value)
     CharType ch = PeekCharacter();
     while (ch >= '0' && ch <= '9')
     {
-        int next_digit = ch - '0';
+        unsigned int next_digit = (unsigned int)(ch - '0');
         if (value > (ULLONG_MAX / 10) || (value == ULLONG_MAX/10 && next_digit > ULLONG_MAX%10))
             return false;
 
@@ -372,7 +375,7 @@ inline bool JSON_Parser<CharType>::ParseInt64(CharType first, uint64_t& value)
 // This namespace hides the x-plat helper functions
 namespace
 {
-#ifdef _MS_WINDOWS
+#if defined(_MS_WINDOWS)
     static int print_llu(char* ptr, size_t n, uint64_t val64)
     {
         return _snprintf_s(ptr, n, _TRUNCATE, "%I64u", val64);
@@ -383,18 +386,21 @@ namespace
         return _snwprintf_s(ptr, n, _TRUNCATE, L"%I64u", val64);
     }
 #else
-    static int print_llu(char* ptr, size_t n, unsigned long long val64)
+
+    static int __attribute__((__unused__)) print_llu(char* ptr, size_t n, unsigned long long val64)
     {
         return snprintf(ptr, n, "%llu", val64);
     }
-    static int print_llu(char* ptr, size_t n, unsigned long val64)
+    static int __attribute__((__unused__)) print_llu(char* ptr, size_t n, unsigned long val64)
     {
         return snprintf(ptr, n, "%lu", val64);
     }
 #endif
 
     static double anystod(const char* str) { return strtod(str, nullptr); }
+#if defined(_MS_WINDOWS)
     static double anystod(const wchar_t* str) { return wcstod(str, nullptr); }
+#endif
 }
 
 template <typename CharType>
@@ -710,10 +716,13 @@ inline bool JSON_Parser<CharType>::handle_unescape_char(Token &token)
             for (int i = 0; i < 4; ++i)
             {
                 ch = NextCharacter();
-                if (!isxdigit((unsigned char) (ch)))
+                int ch_int = static_cast<int>(ch);
+                if (ch_int < 0 || ch_int > 127)
+                    return false;
+                if (!isxdigit(ch_int))
                     return false;
 
-                int val = _hexval[ch];
+                int val = _hexval[static_cast<size_t>(ch_int)];
                 _ASSERTE(val != -1);
 
                 // Add the input char to the decoded number
