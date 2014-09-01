@@ -171,12 +171,12 @@ namespace details
         _ASYNCRTIMP ~scoped_c_thread_locale();
 
 #ifdef _MS_WINDOWS
-        typedef _locale_t locale_t;
+        typedef _locale_t xplat_locale;
 #else
-        typedef locale_t locale_t;
+        typedef locale_t xplat_locale;
 #endif
 
-        static _ASYNCRTIMP locale_t __cdecl c_locale();
+        static _ASYNCRTIMP xplat_locale __cdecl c_locale();
     private:
 #ifdef _MS_WINDOWS
         std::string m_prevLocale;

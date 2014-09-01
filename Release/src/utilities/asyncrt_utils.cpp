@@ -56,19 +56,19 @@ namespace details
 {
 
 std::once_flag g_c_localeFlag;
-std::unique_ptr<scoped_c_thread_locale::locale_t, void(*)(scoped_c_thread_locale::locale_t *)> g_c_locale(nullptr, [](scoped_c_thread_locale::locale_t *){});
-scoped_c_thread_locale::locale_t scoped_c_thread_locale::c_locale()
+std::unique_ptr<scoped_c_thread_locale::xplat_locale, void(*)(scoped_c_thread_locale::xplat_locale *)> g_c_locale(nullptr, [](scoped_c_thread_locale::xplat_locale *){});
+scoped_c_thread_locale::xplat_locale scoped_c_thread_locale::c_locale()
 {
     std::call_once(g_c_localeFlag, [&]()
     {
-        scoped_c_thread_locale::locale_t *clocale = new scoped_c_thread_locale::locale_t();
+        scoped_c_thread_locale::xplat_locale *clocale = new scoped_c_thread_locale::xplat_locale();
 #ifdef _MS_WINDOWS
         *clocale = _create_locale(LC_ALL, "C");
         if (clocale == nullptr)
         {
             throw std::runtime_error("Unable to create 'C' locale.");
         }
-        auto deleter = [](scoped_c_thread_locale::locale_t *clocale)
+        auto deleter = [](scoped_c_thread_locale::xplat_locale *clocale)
         {
             _free_locale(*clocale);
         };
@@ -78,12 +78,12 @@ scoped_c_thread_locale::locale_t scoped_c_thread_locale::c_locale()
         {
             throw std::runtime_error("Unable to create 'C' locale.");
         }
-        auto deleter = [](scoped_c_thread_locale::locale_t *clocale)
+        auto deleter = [](scoped_c_thread_locale::xplat_locale *clocale)
         {
-            freelocale(clocale);
+            freelocale(*clocale);
         };
 #endif
-        g_c_locale = std::unique_ptr<scoped_c_thread_locale::locale_t, void(*)(scoped_c_thread_locale::locale_t *)>(clocale, deleter);
+        g_c_locale = std::unique_ptr<scoped_c_thread_locale::xplat_locale, void(*)(scoped_c_thread_locale::xplat_locale *)>(clocale, deleter);
     });
     return *g_c_locale;
 }
@@ -98,7 +98,7 @@ scoped_c_thread_locale::scoped_c_thread_locale()
         throw std::runtime_error("Unable to retrieve current locale.");
     }
 
-    if(std::strcmp(prevLocale, "C") != 0)
+    if (std::strcmp(prevLocale, "C") != 0)
     { 
         m_prevLocale = prevLocale;
         m_prevThreadSetting = _configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
@@ -116,7 +116,7 @@ scoped_c_thread_locale::scoped_c_thread_locale()
 
 scoped_c_thread_locale::~scoped_c_thread_locale()
 {
-    if(m_prevThreadSetting != -1)
+    if (m_prevThreadSetting != -1)
     {
         setlocale(LC_ALL, m_prevLocale.c_str());
         _configthreadlocale(m_prevThreadSetting);
@@ -124,18 +124,18 @@ scoped_c_thread_locale::~scoped_c_thread_locale()
 }
 #else
 scoped_c_thread_locale::scoped_c_thread_locale()
-    : m_prevLocale(nullptr), m_newLocale(nullptr)
+    : m_prevLocale(nullptr)
 {
-    char * prevLocale = setlocale(LC_ALL, nullptr);
-    if(prevLocale == nullptr)
+    char *prevLocale = setlocale(LC_ALL, nullptr);
+    if (prevLocale == nullptr)
     {
         throw std::runtime_error("Unable to retrieve current locale.");
     }
         
-    if(std::strcmp(prevLocale, "C") != 0)
+    if (std::strcmp(prevLocale, "C") != 0)
     {
         m_prevLocale = uselocale(c_locale());
-        if(m_prevLocale == nullptr)
+        if (m_prevLocale == nullptr)
         {
             throw std::runtime_error("Unable to set locale");
         }
@@ -144,7 +144,7 @@ scoped_c_thread_locale::scoped_c_thread_locale()
 
 scoped_c_thread_locale::~scoped_c_thread_locale()
 {
-    if(m_prevLocale != nullptr)
+    if (m_prevLocale != nullptr)
     {
         uselocale(m_prevLocale);
     }
