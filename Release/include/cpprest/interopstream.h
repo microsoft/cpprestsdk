@@ -104,7 +104,7 @@ namespace Concurrency { namespace streams {
         virtual size_t buffer_size(std::ios_base::openmode direction = std::ios_base::in) const { return 0; }
         virtual void set_buffer_size(size_t size, std::ios_base::openmode direction = std::ios_base::in) { return; }
 
-        virtual pplx::task<bool> _sync() { return pplx::task_from_result(m_buffer->pubsync() != std::char_traits<_CharType>::eof()); }
+        virtual pplx::task<bool> _sync() { return pplx::task_from_result(m_buffer->pubsync() == 0); }
 
         virtual pplx::task<int_type> _putc(_CharType ch) { return pplx::task_from_result(m_buffer->sputc(ch)); }
         virtual pplx::task<size_t> _putn(const _CharType *ptr, size_t size) { return pplx::task_from_result((size_t)m_buffer->sputn(ptr, size)); }

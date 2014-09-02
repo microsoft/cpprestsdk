@@ -1123,21 +1123,20 @@ namespace Concurrency { namespace streams
                 auto locs = _locals;
                 auto trg = _target;
                 
-                auto after_putn =
-                [=](size_t wr) mutable -> bool
+                return _buffer.getn(locs->outbuf, buf_size).then([=](size_t rd) mutable -> pplx::task<bool>
                 {
-                    locs->total += wr;
-                    trg.sync().wait();
-                    return true;
-                };
-                
-                return _buffer.getn(locs->outbuf, buf_size).then(
-                                                                 [=] (size_t rd) mutable -> pplx::task<bool>
-                                                                 {
-                                                                     if ( rd == 0 )
-                                                                         return pplx::task_from_result(false);
-                                                                     return trg.putn(locs->outbuf, rd).then(after_putn);
-                                                                 });
+                    if ( rd == 0 )
+                        return pplx::task_from_result(false);
+                    return trg.putn(locs->outbuf, rd).then([=](size_t wr) mutable -> bool
+                    {
+                        locs->total += wr;
+                        trg.sync().wait();
+                        if (rd != wr)
+                            // Number of bytes written is less than number of bytes received.
+                            throw std::runtime_error("failed to write all bytes");
+                        return true;
+                    });
+                });
             }
         private:
             size_t _buf_size;
