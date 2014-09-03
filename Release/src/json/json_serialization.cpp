@@ -41,10 +41,6 @@ using namespace utility::conversions;
 #ifdef _MS_WINDOWS
 void web::json::value::serialize(std::ostream& stream) const
 { 
-#ifndef _MS_WINDOWS
-    utility::details::scoped_c_thread_locale locale;
-#endif
-
     // This has better performance than writing directly to stream.
     std::string str;
     m_value->serialize_impl(str);
