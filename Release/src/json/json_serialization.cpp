@@ -27,7 +27,10 @@
 
 #include "stdafx.h"
 #include <stdio.h>
+
+#ifndef _MS_WINDOWS
 #include <inttypes.h>
+#endif
 
 using namespace web;
 using namespace web::json;
