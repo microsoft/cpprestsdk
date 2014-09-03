@@ -83,6 +83,10 @@ enum class websocket_close_status
 class websocket_client_config
 {
 public:
+
+    /// <summary>
+    /// Creates a websocket client configuration with default settings. 
+    /// </summary>
     websocket_client_config()
     {}
 
@@ -137,6 +141,21 @@ public:
     /// <returns>HTTP headers.</returns>
     const web::http::http_headers &headers() const { return m_headers; }
 
+    /// <summary>
+    /// Adds a subprotocol to the request headers.
+    /// </summary>
+    /// <param name="name">The name of the subprotocol.</param>
+    /// <remark>If additional subprotocols have already been specified, the new one will just be added.</remarks>
+    _ASYNCRTIMP void add_subprotocol(const ::utility::string_t &name);
+
+    /// <summary>
+    /// Gets list of the specified subprotocols.
+    /// </summary>
+    /// <returns>Vector of all the subprotocols </returns>
+    /// <remarks>If you want all the subprotocols in a comma separated string 
+    /// they can be directly directly looked up in the headers using 'Sec-WebSocket-Protocol'.</remarks>
+    _ASYNCRTIMP std::vector<::utility::string_t> subprotocols() const;
+
 private:
     web::web_proxy m_proxy;
     web::credentials m_credentials;
@@ -156,6 +175,14 @@ public:
     /// <param name="whatArg">Error message string.</param>
     websocket_exception(const utility::string_t &whatArg) 
         : m_msg(utility::conversions::to_utf8string(whatArg)) {}
+
+#ifdef _MS_WINDOWS
+    /// <summary>
+    /// Creates an <c>websocket_exception</c> with just a string message and no error code.
+    /// </summary>
+    /// <param name="whatArg">Error message string.</param>
+    websocket_exception(std::string whatArg) : m_msg(std::move(whatArg)) {}
+#endif
 
     /// <summary>
     /// Creates a <c>websocket_exception</c> from a error code using the current platform error category.
@@ -178,6 +205,18 @@ public:
           m_msg(utility::conversions::to_utf8string(whatArg))
     {}
 
+#ifdef _MS_WINDOWS
+    /// <summary>
+    /// Creates a <c>websocket_exception</c> from a error code and string message.
+    /// </summary>
+    /// <param name="errorCode">Error code value.</param>
+    /// <param name="whatArg">Message to use in what() string.</param>
+    websocket_exception(int errorCode, std::string whatArg)
+        : m_errorCode(utility::details::create_error_code(errorCode)),
+        m_msg(std::move(whatArg))
+    {}
+#endif
+
     /// <summary>
     /// Creates a <c>websocket_exception</c> from a error code and category. The message of the error code will be used
     /// as the <c>what</c> string message.
@@ -189,21 +228,32 @@ public:
         m_msg = m_errorCode.message();
     }
 
+    /// <summary>
+    /// Destroys the <c>websocket_exception</c> object.
+    /// </summary>
     ~websocket_exception() _noexcept {}
 
+    /// <summary>
+    /// Gets a string identifying the cause of the exception.
+    /// </summary>
+    /// <returns>A null terminated character string.</returns>
     const char* what() const _noexcept
     {
         return m_msg.c_str();
     }
 
-    const std::error_code & error_code() const
+    /// <summary>
+    /// Gets the underlying error code for the cause of the exception.
+    /// </summary>
+    /// <returns>The <c>error_code</c> object associated with the exception.</returns>
+    const std::error_code & error_code() const _noexcept
     {
         return m_errorCode;
     }
 
 private:
-    std::string m_msg;
     std::error_code m_errorCode;
+    std::string m_msg;
 };
 
 namespace details

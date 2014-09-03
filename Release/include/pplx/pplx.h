@@ -69,8 +69,10 @@
 #include <functional>
 
 // conditional expression is constant
+#if defined(_MSC_VER)
 #pragma warning(push)
 #pragma warning(disable: 4127)
+#endif
 
 #pragma pack(push,_CRT_PACKING)
 
@@ -231,6 +233,8 @@ namespace details
 } // namespace pplx
 
 #pragma pack(pop)
+#if defined(_MSC_VER)
 #pragma warning(pop)
+#endif
 
 #endif // _PPLX_H

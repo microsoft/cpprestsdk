@@ -28,11 +28,15 @@
 #include <pthread.h>
 #include <vector>
 
+#if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wconversion"
 #pragma clang diagnostic ignored "-Wunreachable-code"
+#endif
 #include "boost/asio.hpp"
+#if defined(__clang__)
 #pragma clang diagnostic pop
+#endif
 
 #if defined(ANDROID)
 #include <atomic>

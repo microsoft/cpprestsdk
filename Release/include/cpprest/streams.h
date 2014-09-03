@@ -438,8 +438,6 @@ namespace Concurrency { namespace streams
         std::shared_ptr<details::basic_ostream_helper<CharType>> m_helper;
     };
 
-#pragma region Type parsing helpers
-
     template<typename int_type> 
     struct _type_parser_integral_traits
     {
@@ -555,8 +553,6 @@ namespace Concurrency { namespace streams
                 });
         }
     };
-
-#pragma endregion
 
     /// <summary>
     /// Base interface for all asynchronous input streams.
@@ -1159,7 +1155,6 @@ namespace Concurrency { namespace streams
     typedef basic_ostream<utf16char> wostream;
     typedef basic_istream<utf16char> wistream;
 
-#pragma region Input of data of various types.
 template<typename CharType>
 pplx::task<void> concurrency::streams::_type_parser_base<CharType>::_skip_whitespace(streams::streambuf<CharType> buffer)
 {
@@ -1813,7 +1808,6 @@ private:
     }
 };
 #endif //_MS_WINDOWS
-#pragma endregion
 
 }}
 

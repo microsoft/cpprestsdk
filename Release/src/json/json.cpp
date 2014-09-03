@@ -47,7 +47,9 @@ utility::istream_t& web::json::operator >> (utility::istream_t &is, json::value 
     return is;
 }
 
+#if defined(_MSC_VER)
 #pragma region json::value Constructors
+#endif
 
 web::json::value::value() : 
     m_value(utility::details::make_unique<web::json::details::_Null>())
@@ -149,10 +151,12 @@ web::json::value &web::json::value::operator=(web::json::value &&other)
     return *this;
 }
 
+#if defined(_MSC_VER)
 #pragma endregion
 
 
 #pragma region Static Factories
+#endif
 
 web::json::value web::json::value::null()
 {
@@ -246,7 +250,9 @@ web::json::value web::json::value::array(std::vector<value> elements)
             );
 }
 
+#if defined(_MSC_VER)
 #pragma endregion
+#endif
 
 web::json::number web::json::value::as_number() const
 {
@@ -331,7 +337,7 @@ bool web::json::details::_String::has_escape_chars(const _String &str)
 }
 
 web::json::details::_Object::_Object(const _Object& other) : 
-    m_object(other.m_object.m_elements, other.m_object.m_keep_order), web::json::details::_Value(other) {}
+    web::json::details::_Value(other), m_object(other.m_object.m_elements, other.m_object.m_keep_order) {}
 
 web::json::value::value_type json::value::type() const { return m_value->type(); }
 

@@ -79,9 +79,9 @@ private:
 
     credentials() : m_is_set(false) {}
 
+    bool m_is_set;
     utility::string_t m_username;
     utility::string_t m_password;
-    bool m_is_set;
 };
 
 /// <summary>

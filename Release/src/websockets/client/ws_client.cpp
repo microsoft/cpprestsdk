@@ -80,6 +80,8 @@ namespace client
 namespace details
 {
 
+static utility::string_t g_subProtocolHeader(_XPLATSTR("Sec-WebSocket-Protocol"));
+
 class ws_desktop_client : public _websocket_client_impl, public std::enable_shared_from_this<ws_desktop_client>
 {
 private:
@@ -168,8 +170,7 @@ public:
             m_client.close(m_con, static_cast<websocketpp::close::status::value>(status), utility::conversions::to_utf8string(reason), ec);
             if (ec.value() != 0)
             {
-                websocket_exception wx(utility::conversions::to_string_t(ec.message()));
-                return pplx::task_from_exception<void>(wx);
+                return pplx::task_from_exception<void>(ec.message());
             }
         }
         return pplx::task<void>(m_close_tce);
@@ -193,7 +194,7 @@ public:
             std::lock_guard<std::mutex> lock(m_receive_queue_lock);
             close_pending_tasks_with_error();
             m_state = CLOSED;
-            m_connect_tce.set_exception(websocket_exception(_XPLATSTR("Connection attempt failed.")));
+            m_connect_tce.set_exception(websocket_exception("Connection attempt failed."));
         });
 
         m_client.set_message_handler([this](websocketpp::connection_hdl, message_ptr msg)
@@ -267,14 +268,38 @@ public:
             m_state = CLOSED;
         });
 
-
+        // Get the connection handle to save for later, have to create temporary
+        // because type erasure occurs with connection_hdl.
         websocketpp::lib::error_code ec;
         auto con = m_client.get_connection(utility::conversions::to_utf8string(m_uri.to_string()), ec);
         m_con = con;
         if (ec.value() != 0)
         {
-            websocket_exception wx(utility::conversions::to_string_t(ec.message()));
-            return pplx::task_from_exception<void>(wx);
+            return pplx::task_from_exception<void>(websocket_exception(ec.message()));
+        }
+
+        // Add any request headers specified by the user.
+        const auto & headers = m_client_config.headers();
+        for (const auto & header : headers)
+        {
+            if (!utility::details::str_icmp(header.first, g_subProtocolHeader))
+            {
+                con->append_header(utility::conversions::to_utf8string(header.first), utility::conversions::to_utf8string(header.second));
+            }
+        }
+
+        // Add any specified subprotocols.
+        if (headers.has(g_subProtocolHeader))
+        {
+            const std::vector<utility::string_t> protocols = m_client_config.subprotocols();
+            for (const auto & value : protocols)
+            {
+                con->add_subprotocol(utility::conversions::to_utf8string(value), ec);
+                if (ec.value())
+                {
+                    return pplx::task_from_exception<void>(websocket_exception(ec.message()));
+                }
+            }
         }
 
         m_state = CONNECTING;
@@ -298,7 +323,7 @@ public:
     {
         if (!m_connect_tce._IsTriggered())
         {
-            return pplx::task_from_exception<void>(websocket_exception(_XPLATSTR("Client not connected.")));
+            return pplx::task_from_exception<void>(websocket_exception("Client not connected."));
         }
 
         switch (msg._m_impl->message_type())
@@ -307,18 +332,18 @@ public:
         case websocket_message_type::binary_message:
             break;
         default:
-            return pplx::task_from_exception<void>(websocket_exception(_XPLATSTR("Invalid message type")));
+            return pplx::task_from_exception<void>(websocket_exception("Invalid message type"));
         }
 
         const auto length = msg._m_impl->length();
         if (length == 0)
         {
-            return pplx::task_from_exception<void>(websocket_exception(_XPLATSTR("Cannot send empty message.")));
+            return pplx::task_from_exception<void>(websocket_exception("Cannot send empty message."));
         }
 
-        if (length > UINT_MAX)
+        if (length >= UINT_MAX && length != SIZE_MAX)
         {
-            return pplx::task_from_exception<void>(websocket_exception(_XPLATSTR("Message size too large. Ensure message length is less than or equal to UINT_MAX.")));
+            return pplx::task_from_exception<void>(websocket_exception("Message size too large. Ensure message length is less than UINT_MAX."));
         }
 
         {
@@ -344,7 +369,7 @@ public:
         if (m_state > CONNECTED)
         {
             // The client has already been closed.
-            return pplx::task_from_exception<websocket_incoming_message>(std::make_exception_ptr(websocket_exception(_XPLATSTR("Websocket connection has closed."))));
+            return pplx::task_from_exception<websocket_incoming_message>(std::make_exception_ptr(websocket_exception("Websocket connection has closed.")));
         }
 
         if (m_receive_msg_queue.empty())
@@ -369,6 +394,47 @@ public:
         auto this_client = this->shared_from_this();
         auto& is_buf = msg._m_impl->streambuf();
         auto length = msg._m_impl->length();
+
+        if (length == SIZE_MAX)
+        {
+            // This indicates we should determine the length automatically.
+            if (is_buf.has_size())
+            {
+                // The user's stream knows how large it is -- there's no need to buffer.
+                auto buf_sz = is_buf.size();
+                if (buf_sz >= SIZE_MAX)
+                {
+                    websocket_exception wx(_XPLATSTR("Cannot send messages larger than SIZE_MAX."));
+                    msg.m_send_tce.set_exception(std::make_exception_ptr(wx));
+                    return;
+                }
+                length = static_cast<size_t>(buf_sz);
+                // We have determined the length and can proceed normally.
+            }
+            else
+            {
+                // The stream needs to be buffered.
+                concurrency::streams::container_buffer<std::vector<uint8_t>> stbuf;
+                auto is_buf_istream = is_buf.create_istream();
+                msg._m_impl->set_streambuf(stbuf);
+                is_buf_istream.read_to_end(stbuf).then([this_client,msg](pplx::task<size_t> t)
+                {
+                    try
+                    {
+                        auto sz = t.get();
+                        msg._m_impl->set_length(sz);
+                        this_client->send_msg(msg);
+                    }
+                    catch (...)
+                    {
+                        auto eptr = std::current_exception();
+                        msg.m_send_tce.set_exception(eptr);
+                    }
+                });
+                // We have postponed the call to send_msg() until after the data is buffered.
+                return;
+            }
+        }
 
         // First try to acquire the data (Get a pointer to the next already allocated contiguous block of data)
         // If acquire succeeds, send the data over the socket connection, there is no copy of data from stream to temporary buffer.
@@ -395,7 +461,7 @@ public:
             {
                 if (bytes_read != length)
                 {
-                    throw websocket_exception(_XPLATSTR("Failed to read required length of data from the stream."));
+                    throw websocket_exception("Failed to read required length of data from the stream.");
                 }
             });
         }
@@ -483,7 +549,7 @@ public:
             // There are tasks waiting to receive a message, signal them
             auto tce = m_receive_task_queue.front();
             m_receive_task_queue.pop();
-            tce.set_exception(std::make_exception_ptr(websocket_exception(_XPLATSTR("Websocket connection has been closed."))));
+            tce.set_exception(std::make_exception_ptr(websocket_exception("Websocket connection has been closed.")));
         }
     }
 

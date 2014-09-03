@@ -18,7 +18,7 @@
 *
 * client_construction.cpp
 *
-* Tests cases for covering creating http_clients.
+* Tests cases for covering creating websocket_clients.
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
@@ -28,13 +28,6 @@
 #if defined(__cplusplus_winrt) || !defined(_M_ARM)
 
 using namespace concurrency::streams;
-
-#if defined(WINAPI_FAMILY) && WINAPI_FAMILY != WINAPI_FAMILY_DESKTOP_APP
-
-using namespace Windows::Foundation;
-using namespace Windows::System::Threading;
-
-#endif
 
 using namespace web;
 using namespace web::experimental::web_sockets;
@@ -172,24 +165,72 @@ TEST_FIXTURE(uri_address, move_operations)
     client.close().wait();
 }
 
-TEST_FIXTURE(uri_address, connect_with_headers)
+void header_test_impl(const uri &address, const utility::string_t &headerName, const utility::string_t &headerValue, const utility::string_t &expectedHeaderValue = U(""))
 {
     test_websocket_server server;
     websocket_client_config config;
-    utility::string_t header_name(U("HeaderTest"));
-    utility::string_t header_val(U("ConnectSuccessfully"));
-    config.headers().add(header_name, header_val);
+    utility::string_t expectedValue = headerValue;
+    if (!expectedHeaderValue.empty())
+    {
+        expectedValue = expectedHeaderValue;
+    }
+    config.headers().add(headerName, headerValue);
     websocket_client client(config);
 
     server.set_http_handler([&](test_http_request request)
     {
         test_http_response resp;
-        if (request.get_header_val(utility::conversions::to_utf8string(header_name)).compare(utility::conversions::to_utf8string(header_val)) == 0)
+        if (request->get_header_val(utility::conversions::to_utf8string(headerName)).compare(utility::conversions::to_utf8string(expectedValue)) == 0)
             resp.set_status_code(200); // Handshake request will be completed only if header match succeeds.
         else
             resp.set_status_code(400); // Else fail the handshake, websocket client connect will fail in this case.
         return resp;
     });
+    client.connect(address).wait();
+    client.close().wait();
+}
+
+TEST_FIXTURE(uri_address, connect_with_headers)
+{
+    header_test_impl(m_uri, U("HeaderTest"), U("ConnectSuccessfully"));
+}
+
+TEST_FIXTURE(uri_address, manually_set_protocol_header)
+{
+    utility::string_t headerName(U("Sec-WebSocket-Protocol"));
+    header_test_impl(m_uri, headerName, U("myprotocol"));
+    header_test_impl(m_uri, headerName, U("myprotocol2,"), U("myprotocol2"));
+    header_test_impl(m_uri, headerName, U("myprotocol2,protocol3"), U("myprotocol2, protocol3"));
+    header_test_impl(m_uri, headerName, U("myprotocol2, protocol3, protocol6,,"), U("myprotocol2, protocol3, protocol6"));
+}
+
+TEST_FIXTURE(uri_address, set_subprotocol)
+{
+    test_websocket_server server;
+    websocket_client_config config;
+
+    utility::string_t expected1(U("pro1"));
+    config.add_subprotocol(expected1);
+    VERIFY_ARE_EQUAL(1, config.subprotocols().size());
+    VERIFY_ARE_EQUAL(expected1, config.subprotocols()[0]);
+
+    utility::string_t expected2(U("second"));
+    config.add_subprotocol(expected2);
+    VERIFY_ARE_EQUAL(2, config.subprotocols().size());
+    VERIFY_ARE_EQUAL(expected1, config.subprotocols()[0]);
+    VERIFY_ARE_EQUAL(expected2, config.subprotocols()[1]);
+
+    websocket_client client(config);
+    server.set_http_handler([&](test_http_request request)
+    {
+        test_http_response resp;
+        if (request->get_header_val(utility::conversions::to_utf8string(U("Sec-WebSocket-Protocol"))).compare(utility::conversions::to_utf8string(expected1 + U(", ") + expected2)) == 0)
+            resp.set_status_code(200); // Handshake request will be completed only if header match succeeds.
+        else
+            resp.set_status_code(400); // Else fail the handshake, websocket client connect will fail in this case.
+        return resp;
+    });
+
     client.connect(m_uri).wait();
     client.close().wait();
 }

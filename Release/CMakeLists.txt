@@ -110,7 +110,6 @@ elseif(("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang") OR IOS)
   set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++11")
 
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fno-strict-aliasing")
-  set(STRICT_CXX_FLAGS ${WARNINGS} "-Werror -pedantic")
 elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
   message("-- Setting gcc options")
 
@@ -121,7 +120,6 @@ elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
   set(LD_FLAGS "${LD_FLAGS} -Wl,-z,defs")
 
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fno-strict-aliasing")
-  set(STRICT_CXX_FLAGS ${WARNINGS} "-Werror -pedantic")
 else()
   message("-- Unknown compiler, success is doubtful.")
 endif()

@@ -24,7 +24,7 @@
 
 #ifdef _MS_WINDOWS
 #include <http.h>
-#include <agents.h> // TODO why are these needed???
+#include <agents.h>
 #endif
 
 #include <algorithm>
@@ -63,6 +63,7 @@ using namespace web;
 using namespace utility;
 using namespace utility::conversions;
 
+// In the future this should be configurable through option in test server.
 #define WEBSOCKETS_TEST_SERVER_PORT 9980
 
 // Websocketpp typedefs
@@ -72,6 +73,35 @@ namespace tests {
 namespace functional {
 namespace websocket {
 namespace utilities {
+
+    /// <summary>
+    /// Implementation of http request from websocket handshake to avoid leaking
+    /// details about websocketpp into test utilities.
+    /// </summary>
+    class test_http_request_impl : public test_http_request_interface
+    {
+    public:
+        test_http_request_impl(server::connection_ptr connection)
+            : m_connection(std::move(connection))
+        {}
+
+        const std::string& username() override
+        {
+            throw std::runtime_error("NYI");
+        }
+        const std::string& password() override
+        {
+            throw std::runtime_error("NYI");
+        }
+
+        const std::string& get_header_val(const std::string& header_name) override
+        {
+            return m_connection->get_request_header(header_name);
+        }
+
+    private:
+        server::connection_ptr m_connection;
+    };
 
     class _test_websocket_server
     {
@@ -86,6 +116,25 @@ namespace utilities {
 
         void connect()
         {
+            m_srv.set_validate_handler([this](websocketpp::connection_hdl hdl)
+            {
+                auto handler = m_test_srv->get_http_handler();
+                if (handler)
+                {
+                    server::connection_ptr connection = m_srv.get_con_from_hdl(hdl);
+                    test_http_request request(new test_http_request_impl(connection));
+                    test_http_response response = handler(std::move(request));
+
+                    // Also need to indicate the connection is rejected if non 200 status code.
+                    connection->set_status(static_cast<websocketpp::http::status_code::value>(response.status_code()));
+                    if (response.status_code() != 200)
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            });
+
             m_srv.set_open_handler([this](websocketpp::connection_hdl hdl)
             {
                 m_con = hdl;
@@ -106,9 +155,8 @@ namespace utilities {
 
                 test_websocket_msg wsmsg;
 
-                std::vector<unsigned char> data(pay.begin(), pay.end());
+                wsmsg.set_data(std::vector<uint8_t>(pay.begin(), pay.end()));
 
-                wsmsg.set_data(data);
                 switch (msg->get_opcode())
                 {
                 case websocketpp::frame::opcode::binary:

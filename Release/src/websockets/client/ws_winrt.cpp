@@ -27,7 +27,7 @@
 #include "stdafx.h"
 #include <concrt.h>
 
-// ws_winrt only available for windows storea app or window phone8.1
+// ws_winrt only available for Windows Store apps and Windows Phone 8.1
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_PC_APP) || (WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_PHONE_APP) && _WIN32_WINNT == _WIN32_WINNT_WINBLUE)
 
 using namespace ::Windows::Foundation;
@@ -79,11 +79,26 @@ public:
         m_msg_websocket = ref new MessageWebSocket();
 
         // Sets the HTTP request headers to the HTTP request message used in the WebSocket protocol handshake 
-        for (auto iter = client_config.headers().begin(); iter != client_config.headers().end(); ++iter)
+        const utility::string_t protocolHeader(_XPLATSTR("Sec-WebSocket-Protocol"));
+        const auto & headers = config().headers();
+        for (const auto & header : headers)
         {
-            Platform::String^ name = ref new Platform::String(iter->first.c_str());
-            Platform::String^ val = ref new Platform::String(iter->second.c_str());
-            m_msg_websocket->SetRequestHeader(name, val);
+            // Unfortunately the MessageWebSocket API throws a COMException if you try to set the 
+            // 'Sec-WebSocket-Protocol' header here. It requires you to go through their API instead.
+            if (!utility::details::str_icmp(header.first, protocolHeader))
+            {
+                m_msg_websocket->SetRequestHeader(Platform::StringReference(header.first.c_str()), Platform::StringReference(header.second.c_str()));
+            }
+        }
+
+        // Add any specified subprotocols.
+        if (headers.has(protocolHeader))
+        {
+            const std::vector<utility::string_t> protocols = this->config().subprotocols();
+            for (const auto & value : protocols)
+            {
+                m_msg_websocket->Control->SupportedProtocols->Append(Platform::StringReference(value.c_str()));
+            }
         }
 
         if (client_config.credentials().is_set())
@@ -215,9 +230,9 @@ public:
             return pplx::task_from_exception<void>(websocket_exception(_XPLATSTR("Cannot send empty message.")));
         }
 
-        if (length > UINT_MAX)
+        if (length >= UINT_MAX && length != SIZE_MAX)
         {
-            return pplx::task_from_exception<void>(websocket_exception(_XPLATSTR("Message size too large. Ensure message length is less than or equal to UINT_MAX.")));
+            return pplx::task_from_exception<void>(websocket_exception(_XPLATSTR("Message size too large. Ensure message length is less than UINT_MAX.")));
         }
 
         {
@@ -241,6 +256,47 @@ public:
         auto this_client = this->shared_from_this();
         auto& is_buf = msg._m_impl->streambuf();
         auto length = msg._m_impl->length();
+
+        if (length == SIZE_MAX)
+        {
+            // This indicates we should determine the length automatically.
+            if (is_buf.has_size())
+            {
+                // The user's stream knows how large it is -- there's no need to buffer.
+                auto buf_sz = is_buf.size();
+                if (buf_sz >= SIZE_MAX)
+                {
+                    websocket_exception wx(_XPLATSTR("Cannot send messages larger than SIZE_MAX."));
+                    msg.m_send_tce.set_exception(std::make_exception_ptr(wx));
+                    return;
+                }
+                length = static_cast<size_t>(buf_sz);
+                // We have determined the length and can proceed normally.
+            }
+            else
+            {
+                // The stream needs to be buffered.
+                concurrency::streams::container_buffer<std::vector<uint8_t>> stbuf;
+                auto is_buf_istream = is_buf.create_istream();
+                msg._m_impl->set_streambuf(stbuf);
+                is_buf_istream.read_to_end(stbuf).then([this_client, msg](pplx::task<size_t> t)
+                {
+                    try
+                    {
+                        auto sz = t.get();
+                        msg._m_impl->set_length(sz);
+                        this_client->send_msg(msg);
+                    }
+                    catch (...)
+                    {
+                        auto eptr = std::current_exception();
+                        msg.m_send_tce.set_exception(eptr);
+                    }
+                });
+                // We have postponed the call to send_msg() until after the data is buffered.
+                return;
+            }
+        }
 
         // First try to acquire the data (Get a pointer to the next already allocated contiguous block of data)
         // If acquire succeeds, send the data over the socket connection, there is no copy of data from stream to temporary buffer.
