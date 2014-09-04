@@ -157,10 +157,6 @@ scoped_c_thread_locale::~scoped_c_thread_locale()
 #endif
 }
 
-#if defined(_MSC_VER)
-#pragma region error categories
-#endif
-
 namespace details
 {
 
@@ -263,12 +259,6 @@ const std::error_category & __cdecl linux_category()
 #endif
 
 }
-
-#if defined(_MSC_VER)
-#pragma endregion
-
-#pragma region conversions
-#endif
 
 utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
 {
@@ -594,12 +584,6 @@ std::string __cdecl conversions::to_utf8string(const utf16string &value) { retur
 utf16string __cdecl conversions::to_utf16string(const std::string &value) { return utf8_to_utf16(value); }
 
 utf16string __cdecl conversions::to_utf16string(utf16string value) { return std::move(value); }
-
-#if defined(_MSC_VER)
-#pragma endregion
-
-#pragma region datetime
-#endif
 
 #ifndef WIN32
 datetime datetime::timeval_to_datetime(struct timeval time)
@@ -1038,12 +1022,6 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
 #endif
 }
 
-#if defined(_MSC_VER)
-#pragma endregion
-
-#pragma region "timespan"
-#endif
-
 /// <summary>
 /// Converts a timespan/interval in seconds to xml duration string as specified by
 /// http://www.w3.org/TR/xmlschema-2/#duration
@@ -1151,11 +1129,6 @@ utility::seconds __cdecl timespan::xml_duration_to_seconds(utility::string_t tim
 
     return utility::seconds(numSecs);
 }
-
-#if defined(_MSC_VER)
-#pragma endregion
-#endif
-
 
 const utility::string_t nonce_generator::c_allowed_chars(_XPLATSTR("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"));
 

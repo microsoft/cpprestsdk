@@ -737,7 +737,6 @@ namespace details {
         }
 #endif
 
-#pragma region Completion callback interface implementations
         class _filestream_callback_open : public details::_filestream_callback
         {
         public:
@@ -942,7 +941,6 @@ namespace details {
             _file_info *m_info;
             pplx::task_completion_event<int_type> m_op;
         };
-#pragma endregion
 
         _file_info *m_info;
         async_operation_queue m_readOps;

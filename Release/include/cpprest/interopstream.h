@@ -57,7 +57,6 @@ namespace Concurrency { namespace streams {
     template<typename CharType> class stdio_ostream;
     template<typename CharType> class stdio_istream;
 
-#pragma region Asynchronous streams on top of synchronous stream buffers.
     namespace details {
 
     /// <summary>
@@ -227,10 +226,6 @@ namespace Concurrency { namespace streams {
         /// <returns>A reference to the input stream object that contains the result of the assignment.</returns>
         stdio_istream & operator =(const stdio_istream &other) { basic_istream<CharType>::operator=(other); return *this; }
     };
-
-#pragma endregion
-
-#pragma region Synchronous streams on top of asynchronous stream buffers.
 
     namespace details {
 
@@ -504,10 +499,8 @@ namespace Concurrency { namespace streams {
     private:
         details::basic_async_streambuf<CharType> m_strbuf;
     };
-#pragma endregion
 
 #if defined(__cplusplus_winrt)
-#pragma region WinRT streams interop
 
     /// <summary>
     /// Static class containing factory functions for WinRT streams implemented on top of Casablanca async streams.
@@ -554,7 +547,6 @@ namespace Concurrency { namespace streams {
     };
 
 #endif
-#pragma endregion
 
 }} // namespaces
 #pragma warning(pop) // 4100

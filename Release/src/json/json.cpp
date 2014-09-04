@@ -47,10 +47,6 @@ utility::istream_t& web::json::operator >> (utility::istream_t &is, json::value 
     return is;
 }
 
-#if defined(_MSC_VER)
-#pragma region json::value Constructors
-#endif
-
 web::json::value::value() : 
     m_value(utility::details::make_unique<web::json::details::_Null>())
 #ifdef ENABLE_JSON_VALUE_VISUALIZER
@@ -151,13 +147,6 @@ web::json::value &web::json::value::operator=(web::json::value &&other)
     return *this;
 }
 
-#if defined(_MSC_VER)
-#pragma endregion
-
-
-#pragma region Static Factories
-#endif
-
 web::json::value web::json::value::null()
 {
     return web::json::value();
@@ -249,10 +238,6 @@ web::json::value web::json::value::array(std::vector<value> elements)
 #endif
             );
 }
-
-#if defined(_MSC_VER)
-#pragma endregion
-#endif
 
 web::json::number web::json::value::as_number() const
 {
