@@ -953,41 +953,41 @@ namespace Concurrency { namespace streams
             if ( !target.can_write() )
                 return pplx::task_from_exception<size_t>(std::make_exception_ptr(std::runtime_error("source buffer not set up for input of data")));
 
-            // Capture 'buffer' rather than 'helper' here due to VC++ 2010 limitations.
-            auto _buffer = helper()->m_buffer;
-            auto bsz = this->buf_size;
-            std::shared_ptr<_read_helper> _locals = std::make_shared<_read_helper>();
+            auto l_buffer = helper()->m_buffer;
+            auto l_buf_size = this->buf_size;
+            std::shared_ptr<_read_helper> l_locals = std::make_shared<_read_helper>();
 
-            auto wrkarnd = [_locals, target, _buffer, bsz]() mutable -> pplx::task<bool>
+            auto copy_to_target = [l_locals, target, l_buffer, l_buf_size]() mutable -> pplx::task<bool>
             {
                 // We need to capture these, because the object itself may go away
                 // before we're done processing the data.
-                auto locs = _locals;
-                auto trg = target;
+                //auto locs = _locals;
+                //auto trg = target;
 
-                return _buffer.getn(locs->outbuf, bsz).then([=](size_t rd) mutable -> pplx::task<bool>
+                return l_buffer.getn(l_locals->outbuf, l_buf_size).then([=](size_t rd) mutable -> pplx::task<bool>
                 {
                     if (rd == 0)
                         return pplx::task_from_result(false);
-                    return trg.putn(locs->outbuf, rd).then([=](size_t wr) mutable -> pplx::task<bool>
+
+                    // Must be nested to capture rd
+                    return target.putn(l_locals->outbuf, rd).then([target, l_locals, rd](size_t wr) mutable -> pplx::task<bool>
                     {
-                        locs->total += wr;
-                        return trg.sync().then([=]() -> bool
-                        {
-                            if (rd != wr)
-                                // Number of bytes written is less than number of bytes received.
-                                throw std::runtime_error("failed to write all bytes");
-                            return true;
-                        });
+                        l_locals->total += wr;
+
+                        if (rd != wr)
+                            // Number of bytes written is less than number of bytes received.
+                            throw std::runtime_error("failed to write all bytes");
+
+                        return target.sync().then([]() { return true; });
                     });
                 });
             };
 
-            auto loop = pplx::details::do_while(wrkarnd);
+            auto loop = pplx::details::do_while(copy_to_target);
 
             return loop.then([=](bool) mutable -> size_t
                 { 
-                    return _locals->total; 
+                    return l_locals->total; 
                 });
         }
 
