@@ -198,14 +198,22 @@ namespace web { namespace json
         /// </summary>
         /// <param name="value">The C++ value to create a JSON value from</param>
         /// <returns>A JSON string value</returns>
+        /// <remarks>
+        /// This overload has O(n) performance because it tries to determine if
+        /// specified string has characters that should be properly escaped in JSON. 
+        /// <remarks>
         static _ASYNCRTIMP value __cdecl string(utility::string_t value);
 
         /// <summary>
-        /// Creates a string value
+        /// Creates a string value specifying if the string contains characters to escape
         /// </summary>
         /// <param name="value">The C++ value to create a JSON value from</param>
-        /// <param name="has_escape_chars">Whether <paramref name="value" /> contains characters that should be escaped in JSON value</param>
+        /// <param name="has_escape_chars">Whether <paramref name="value" /> contains characters 
+        /// that should be escaped in JSON value</param>
         /// <returns>A JSON string value</returns>
+        /// <remarks>
+        /// This overload has O(1) performance.
+        /// </remarks>
         static _ASYNCRTIMP value __cdecl string(utility::string_t value, bool has_escape_chars);
 
 #ifdef _MS_WINDOWS
