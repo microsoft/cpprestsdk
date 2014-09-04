@@ -954,11 +954,34 @@ namespace Concurrency { namespace streams
                 return pplx::task_from_exception<size_t>(std::make_exception_ptr(std::runtime_error("source buffer not set up for input of data")));
 
             // Capture 'buffer' rather than 'helper' here due to VC++ 2010 limitations.
-            auto buffer = helper()->m_buffer;
-
+            auto _buffer = helper()->m_buffer;
+            auto bsz = this->buf_size;
             std::shared_ptr<_read_helper> _locals = std::make_shared<_read_helper>();
 
-            _dev10_ice_workaround wrkarnd(buffer, target, _locals, buf_size);
+            auto wrkarnd = [_locals, target, _buffer, bsz]() mutable -> pplx::task<bool>
+            {
+                // We need to capture these, because the object itself may go away
+                // before we're done processing the data.
+                auto locs = _locals;
+                auto trg = target;
+
+                return _buffer.getn(locs->outbuf, bsz).then([=](size_t rd) mutable -> pplx::task<bool>
+                {
+                    if (rd == 0)
+                        return pplx::task_from_result(false);
+                    return trg.putn(locs->outbuf, rd).then([=](size_t wr) mutable -> pplx::task<bool>
+                    {
+                        locs->total += wr;
+                        return trg.sync().then([=]() -> bool
+                        {
+                            if (rd != wr)
+                                // Number of bytes written is less than number of bytes received.
+                                throw std::runtime_error("failed to write all bytes");
+                            return true;
+                        });
+                    });
+                });
+            };
 
             auto loop = pplx::details::do_while(wrkarnd);
 
@@ -1104,47 +1127,6 @@ namespace Concurrency { namespace streams
             }
         };
 
-        // To workaround a VS 2010 internal compiler error, we have to do our own
-        // "lambda" here...
-        class _dev10_ice_workaround
-        {
-        public:
-            _dev10_ice_workaround(streams::streambuf<CharType> buffer,
-                                  concurrency::streams::streambuf<CharType> target,
-                                  std::shared_ptr<typename basic_istream::_read_helper> locals,
-                                  size_t buf_size)
-            : _buffer(buffer), _target(target), _locals(locals), _buf_size(buf_size)
-            {
-            }
-            pplx::task<bool> operator()()
-            {
-                // We need to capture these, because the object itself may go away
-                // before we're done processing the data.
-                auto locs = _locals;
-                auto trg = _target;
-                
-                return _buffer.getn(locs->outbuf, buf_size).then([=](size_t rd) mutable -> pplx::task<bool>
-                {
-                    if ( rd == 0 )
-                        return pplx::task_from_result(false);
-                    return trg.putn(locs->outbuf, rd).then([=](size_t wr) mutable -> bool
-                    {
-                        locs->total += wr;
-                        trg.sync().wait();
-                        if (rd != wr)
-                            // Number of bytes written is less than number of bytes received.
-                            throw std::runtime_error("failed to write all bytes");
-                        return true;
-                    });
-                });
-            }
-        private:
-            size_t _buf_size;
-            concurrency::streams::streambuf<CharType> _buffer;
-            concurrency::streams::streambuf<CharType> _target;
-            std::shared_ptr<typename basic_istream::_read_helper> _locals;
-        };
-        
         std::shared_ptr<details::basic_istream_helper<CharType>> m_helper;
     };
 
