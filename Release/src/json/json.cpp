@@ -184,6 +184,16 @@ web::json::value web::json::value::string(utility::string_t value)
             );
 }
 
+web::json::value web::json::value::string(utility::string_t value, bool has_escape_chars)
+{
+    std::unique_ptr<details::_Value> ptr = utility::details::make_unique<details::_String>(std::move(value), has_escape_chars);
+    return web::json::value(std::move(ptr)
+#ifdef ENABLE_JSON_VALUE_VISUALIZER
+            ,value::String
+#endif
+            );
+}
+
 #ifdef _MS_WINDOWS
 web::json::value web::json::value::string(const std::string &value)
 {
