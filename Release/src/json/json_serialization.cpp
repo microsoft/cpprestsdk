@@ -164,25 +164,9 @@ void web::json::details::_Number::format(std::basic_string<char>& stream) const
 #else
         int numChars;
         if (m_number.m_type == number::type::signed_type)
-            numChars = snprintf(
-                tempBuffer, 
-                tempSize,
-#ifdef ANDROID // CodePlex 269
-                "%lld",
-#else
-                "%" PRId64,
-#endif
-                m_number.m_intval);
+            numChars = snprintf(tempBuffer, tempSize, "%" PRId64, m_number.m_intval);
         else
-            numChars = snprintf(
-                tempBuffer, 
-                tempSize,
-#ifdef ANDROID
-                "%llu",
-#else
-                "%" PRIu64,
-#endif
-                m_number.m_uintval);
+            numChars = snprintf(tempBuffer, tempSize, "%" PRIu64, m_number.m_uintval);
 #endif
         stream.append(tempBuffer, numChars);
     }
