@@ -49,7 +49,9 @@ namespace pplx = Concurrency;
 
 #ifndef _MS_WINDOWS
 #include <boost/algorithm/string.hpp>
+#ifndef ANDROID // CodePlex 269
 #include <xlocale.h>
+#endif
 #endif
 
 /// Various utilities for string conversions and date and time manipulation.
@@ -170,6 +172,7 @@ namespace details
         _ASYNCRTIMP scoped_c_thread_locale();
         _ASYNCRTIMP ~scoped_c_thread_locale();
 
+#ifndef ANDROID // CodePlex 269
 #ifdef _MS_WINDOWS
         typedef _locale_t xplat_locale;
 #else
@@ -177,11 +180,12 @@ namespace details
 #endif
 
         static _ASYNCRTIMP xplat_locale __cdecl c_locale();
+#endif
     private:
 #ifdef _MS_WINDOWS
         std::string m_prevLocale;
         int m_prevThreadSetting;
-#else
+#elif !defined(ANDROID)
         locale_t m_prevLocale;        
 #endif
         scoped_c_thread_locale(const scoped_c_thread_locale &);

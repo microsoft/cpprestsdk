@@ -55,6 +55,7 @@ namespace utility
 namespace details
 {
 
+#ifndef ANDROID
 std::once_flag g_c_localeFlag;
 std::unique_ptr<scoped_c_thread_locale::xplat_locale, void(*)(scoped_c_thread_locale::xplat_locale *)> g_c_locale(nullptr, [](scoped_c_thread_locale::xplat_locale *){});
 scoped_c_thread_locale::xplat_locale scoped_c_thread_locale::c_locale()
@@ -87,6 +88,7 @@ scoped_c_thread_locale::xplat_locale scoped_c_thread_locale::c_locale()
     });
     return *g_c_locale;
 }
+#endif
 
 #ifdef _MS_WINDOWS
 scoped_c_thread_locale::scoped_c_thread_locale()
@@ -122,6 +124,9 @@ scoped_c_thread_locale::~scoped_c_thread_locale()
         _configthreadlocale(m_prevThreadSetting);
     }
 }
+#elif defined(ANDROID)
+scoped_c_thread_locale::scoped_c_thread_locale() {}
+scoped_c_thread_locale::~scoped_c_thread_locale() {}
 #else
 scoped_c_thread_locale::scoped_c_thread_locale()
     : m_prevLocale(nullptr)
