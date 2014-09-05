@@ -131,16 +131,56 @@ namespace web { namespace json
         /// Constructor creating a JSON string value
         /// </summary>
         /// <param name="value">The C++ value to create a JSON value from, a C++ STL string of the platform-native character width</param>
-        _ASYNCRTIMP explicit value(utility::string_t);
+        /// <remarks>
+        /// This constructor has O(n) performance because it tries to determine if
+        /// specified string has characters that should be properly escaped in JSON. 
+        /// <remarks>
+        _ASYNCRTIMP explicit value(utility::string_t value);
+
+        /// <summary>
+        /// Constructor creating a JSON string value specifying if the string contains characters to escape
+        /// </summary>
+        /// <param name="value">The C++ value to create a JSON value from, a C++ STL string of the platform-native character width</param>
+        /// <param name="has_escape_chars">Whether <paramref name="value" /> contains characters 
+        /// that should be escaped in JSON value</param>
+        /// <remarks>
+        /// This constructor has O(1) performance.
+        /// </remarks>
+        _ASYNCRTIMP explicit value(utility::string_t value, bool has_escape_chars);
 
         /// <summary>
         /// Constructor creating a JSON string value
         /// </summary>
         /// <param name="value">The C++ value to create a JSON value from, a C++ STL string of the platform-native character width</param>
-        /// <remarks>This constructor exists in order to avoid string literals matching another constructor,
+        /// <remarks>
+        /// <para>
+        /// This constructor has O(n) performance because it tries to determine if
+        /// specified string has characters that should be properly escaped in JSON. 
+        /// </para>
+        /// <para>
+        /// This constructor exists in order to avoid string literals matching another constructor,
         /// as is very likely. For example, conversion to bool does not require a user-defined conversion,
-        /// and will therefore match first, which means that the JSON value turns up as a boolean.</remarks>
-        _ASYNCRTIMP explicit value(const utility::char_t *);
+        /// and will therefore match first, which means that the JSON value turns up as a boolean.
+        /// </para>
+        /// </remarks>
+        _ASYNCRTIMP explicit value(const utility::char_t* value);
+
+        /// <summary>
+        /// Constructor creating a JSON string value
+        /// </summary>
+        /// <param name="value">The C++ value to create a JSON value from, a C++ STL string of the platform-native character width</param>
+        /// <param name="has_escape_chars">Whether <paramref name="value" /> contains characters 
+        /// <remarks>
+        /// <para>
+        /// This overload has O(1) performance.
+        /// </para>
+        /// <para>
+        /// This constructor exists in order to avoid string literals matching another constructor,
+        /// as is very likely. For example, conversion to bool does not require a user-defined conversion,
+        /// and will therefore match first, which means that the JSON value turns up as a boolean.
+        /// </para>
+        /// </remarks>
+        _ASYNCRTIMP explicit value(const utility::char_t* value, bool has_escape_chars);
 
         /// <summary>
         /// Copy constructor

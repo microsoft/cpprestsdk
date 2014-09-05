@@ -153,6 +153,10 @@ TEST(constructor_overloads)
     json::value v5(U("Hello Again!"));
     json::value v6(U("YES YOU KNOW IT"));
     json::value v7(U("HERE ID IS"));
+    json::value v8(U("Hello not-escaped!"), true);
+
+    const utility::char_t* p9 = U("Hello not-escaped!");
+    json::value v9(p9, false);
 
     VERIFY_ARE_EQUAL(v0.type(), json::value::Null);
     VERIFY_IS_TRUE(v0.is_null());
@@ -174,6 +178,10 @@ TEST(constructor_overloads)
     VERIFY_IS_TRUE(v6.is_string());
     VERIFY_ARE_EQUAL(v7.type(), json::value::String);
     VERIFY_IS_TRUE(v7.is_string());
+    VERIFY_ARE_EQUAL(v8.type(), json::value::String);
+    VERIFY_IS_TRUE(v8.is_string());
+    VERIFY_ARE_EQUAL(v9.type(), json::value::String);
+    VERIFY_IS_TRUE(v9.is_string());
 }
 
 TEST(factory_overloads)
