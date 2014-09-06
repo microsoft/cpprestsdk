@@ -572,7 +572,7 @@ TEST(non_default_locale, "Ignore:Apple", "263")
 #ifdef _MS_WINDOWS
     std::string changedLocale("fr-FR");
 #else
-    std::string changedLocale("fr_FR");
+    std::string changedLocale("fr_FR.utf8");
 #endif
 
     // If locale isn't installed on system just silently pass.

@@ -35,6 +35,7 @@
     <SccLocalPath>SAK</SccLocalPath>
     <SccProvider>SAK</SccProvider>
     <VCTargetsPath Condition="'$(VCTargetsPath11)' != '' and '$(VSVersion)' == '' and $(VisualStudioVersion) == ''">$(VCTargetsPath11)</VCTargetsPath>
+    <NuGetPackageImportStamp>c45353f8</NuGetPackageImportStamp>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -180,11 +181,11 @@
   <ItemGroup>
     <ClCompile Include="..\memstream_tests.cpp" />
     <ClCompile Include="..\fuzz_tests.cpp" />
-<!-- Disabled to include following test files for Bug: 759503-->
-    <ClCompile Include="..\fstreambuf_tests.cpp" /> 
-    <ClCompile Include="..\ostream_tests.cpp" /> 
-    <ClCompile Include="..\stdstream_tests.cpp" /> 
-    <ClCompile Include="..\istream_tests.cpp" /> 
+    <!-- Disabled to include following test files for Bug: 759503-->
+    <ClCompile Include="..\fstreambuf_tests.cpp" />
+    <ClCompile Include="..\ostream_tests.cpp" />
+    <ClCompile Include="..\stdstream_tests.cpp" />
+    <ClCompile Include="..\istream_tests.cpp" />
     <ClCompile Include="..\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">Create</PrecompiledHeader>
@@ -206,7 +207,12 @@
       <Project>{4d9ed383-673b-4e48-a6af-6bd9f108150e}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(PackagesRoot)\boost.1.55.0.16\build\native\boost.targets" Condition="Exists('$(PackagesRoot)\boost.1.55.0.16\build\native\boost.targets')" />
+    <Import Project="$(PackagesRoot)\boost_date_time-vc110.1.55.0.16\build\native\boost_date_time-vc110.targets" Condition="Exists('$(PackagesRoot)\boost_date_time-vc110.1.55.0.16\build\native\boost_date_time-vc110.targets')" />
   </ImportGroup>
 </Project>

@@ -139,6 +139,7 @@ public:
 
     http_listener_impl()
         : m_closed(true)
+        , m_close_task(pplx::task_from_result())
     {
     }
 
@@ -176,6 +177,7 @@ private:
 
     // Used to record that the listener is closed.
     bool m_closed;
+    pplx::task<void> m_close_task;
 };
 
 } // namespace details
