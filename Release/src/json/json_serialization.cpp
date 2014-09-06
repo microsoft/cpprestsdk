@@ -29,6 +29,7 @@
 #include <stdio.h>
 
 #ifndef _MS_WINDOWS
+#define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 #endif
 
