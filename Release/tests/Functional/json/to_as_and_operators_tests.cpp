@@ -124,6 +124,12 @@ void verify_escaped_chars(const utility::string_t& str1, const utility::string_t
     VERIFY_ARE_EQUAL(str2, j1.serialize());
 }
 
+void verify_unescaped_chars(const utility::string_t& str1, const utility::string_t& str2)
+{
+    json::value j1 = json::value::string(str1, false);
+    VERIFY_ARE_EQUAL(str2, j1.serialize());
+}
+
 TEST(to_string_escaped_chars)
 {
     verify_escaped_chars(U(" \" "), U("\" \\\" \""));
@@ -146,6 +152,25 @@ TEST(to_string_escaped_chars)
     json::value obj2 = json::value::parse(str);
 
     VERIFY_ARE_EQUAL(str, obj2.serialize());
+}
+
+TEST(to_string_unescaped_chars)
+{
+    verify_unescaped_chars(U(" \" "), U("\" \" \""));
+    verify_unescaped_chars(U(" \b "), U("\" \b \""));
+    verify_unescaped_chars(U(" \f "), U("\" \f \""));
+    verify_unescaped_chars(U(" \n "), U("\" \n \""));
+    verify_unescaped_chars(U(" \r "), U("\" \r \""));
+    verify_unescaped_chars(U(" \t "), U("\" \t \""));
+
+    json::value obj = json::value::object();
+    obj[U(" \t ")] = json::value::string(U(" \b "), false);
+
+    json::value arr = json::value::array();
+    arr[0] = json::value::string(U(" \f "), false);
+
+    VERIFY_ARE_EQUAL(U("{\" \\t \":\" \b \"}"), obj.serialize());
+    VERIFY_ARE_EQUAL(U("[\" \f \"]"), arr.serialize());
 }
 
 TEST(as_string)
