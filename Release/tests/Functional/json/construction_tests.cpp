@@ -153,9 +153,9 @@ TEST(constructor_overloads)
     json::value v5(U("Hello Again!"));
     json::value v6(U("YES YOU KNOW IT"));
     json::value v7(U("HERE ID IS"));
-    json::value v8(U("Hello not-escaped!"), true);
 
     const utility::char_t* p9 = U("Hello not-escaped!");
+    json::value v8(p9, true);
     json::value v9(p9, false);
 
     VERIFY_ARE_EQUAL(v0.type(), json::value::Null);
