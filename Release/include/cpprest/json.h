@@ -169,7 +169,7 @@ namespace json
         /// <summary>
         /// Move constructor
         /// </summary>
-        _ASYNCRTIMP value(value &&);
+        _ASYNCRTIMP value(value &&) _noexcept ;
 
         /// <summary>
         /// Assignment operator.
@@ -181,7 +181,7 @@ namespace json
         /// Move assignment operator.
         /// </summary>
         /// <returns>The JSON value object that contains the result of the assignment.</returns>
-        _ASYNCRTIMP value &operator=(value &&);
+        _ASYNCRTIMP value &operator=(value &&) _noexcept ;
 
         // Static factories
 

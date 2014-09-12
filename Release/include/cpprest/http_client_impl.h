@@ -299,6 +299,11 @@ public:
         return m_client_config;
     }
 
+    const uri & uri() const
+    {
+        return m_uri;
+    }
+
 protected:
     _http_client_communicator(http::uri address, http_client_config client_config)
         : m_uri(std::move(address)), m_client_config(std::move(client_config)), m_opened(false), m_scheduled(0)
@@ -437,15 +442,13 @@ void verify_uri(const uri &uri)
 } // namespace details
 
 http_client::http_client(uri base_uri)
-    :_base_uri(std::move(base_uri))
 {
-    build_pipeline(_base_uri, http_client_config());
+    build_pipeline(std::move(base_uri), http_client_config());
 }
 
 http_client::http_client(uri base_uri, http_client_config client_config)
-    :_base_uri(std::move(base_uri))
 {
-    build_pipeline(_base_uri, std::move(client_config));
+    build_pipeline(std::move(base_uri), std::move(client_config));
 }
 
 void http_client::build_pipeline(uri base_uri, http_client_config client_config)
@@ -458,26 +461,27 @@ void http_client::build_pipeline(uri base_uri, http_client_config client_config)
     }
     details::verify_uri(base_uri);
 
-    std::vector<std::shared_ptr<http::http_pipeline_stage> > extra_handlers;
-
 #if !defined(CPPREST_TARGET_XP) && !defined(_PHONE8_)
-    extra_handlers.push_back(std::make_shared<oauth1::details::oauth1_handler>(client_config.oauth1()));
+    add_handler(std::static_pointer_cast<http::http_pipeline_stage>(
+        std::make_shared<oauth1::details::oauth1_handler>(client_config.oauth1())));
 #endif // !defined(CPPREST_TARGET_XP) && !defined(_PHONE8_)
 
-    extra_handlers.push_back(std::make_shared<oauth2::details::oauth2_handler>(client_config.oauth2()));
+    add_handler(std::static_pointer_cast<http::http_pipeline_stage>(
+        std::make_shared<oauth2::details::oauth2_handler>(client_config.oauth2())));
 
     m_pipeline = ::web::http::http_pipeline::create_pipeline(std::make_shared<details::http_network_handler>(std::move(base_uri), std::move(client_config)));
-
-    for (auto& handler : extra_handlers)
-    {
-        add_handler(handler);
-    }
 }
 
-const http_client_config& http_client::client_config() const
+const http_client_config & http_client::client_config() const
 {
-    auto* ph = static_cast<details::http_network_handler*>(m_pipeline->last_stage().get());
+    auto ph = std::static_pointer_cast<details::http_network_handler>(m_pipeline->last_stage());
     return ph->http_client_impl()->client_config();
+}
+
+const uri & http_client::base_uri() const
+{
+    auto ph = std::static_pointer_cast<details::http_network_handler>(m_pipeline->last_stage());
+    return ph->http_client_impl()->uri();
 }
 
 }}} // namespaces

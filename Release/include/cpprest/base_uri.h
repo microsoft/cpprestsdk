@@ -40,14 +40,39 @@
 namespace web {
     namespace details
     {
-        struct _uri_components
+        struct uri_components
         {
-            _uri_components()
+            uri_components()
             {
                 m_path = _XPLATSTR("/");
                 m_port = -1;
             }
 
+            uri_components(uri_components &&other) _noexcept :
+                m_scheme(std::move(other.m_scheme)),
+                m_host(std::move(other.m_host)),
+                m_user_info(std::move(other.m_user_info)),
+                m_path(std::move(other.m_path)),
+                m_query(std::move(other.m_query)),
+                m_fragment(std::move(other.m_fragment)),
+                m_port(other.m_port)
+            {}
+
+            uri_components & operator=(uri_components &&other) _noexcept
+            {
+                if (this != &other)
+                {
+                    m_scheme = std::move(other.m_scheme);
+                    m_host = std::move(other.m_host);
+                    m_user_info = std::move(other.m_user_info);
+                    m_path = std::move(other.m_path);
+                    m_query = std::move(other.m_query);
+                    m_fragment = std::move(other.m_fragment);
+                    m_port = other.m_port;
+                }
+                return *this;
+            }
+            
             _ASYNCRTIMP utility::string_t join();
 
             utility::string_t m_scheme;
@@ -192,6 +217,27 @@ namespace web {
         /// </summary>
         /// <param name="uri_string">An encoded uri string to create the URI instance.</param>
         _ASYNCRTIMP uri(const utility::string_t &uri_string);
+
+        /// <summary>
+        /// Move constructor.
+        /// </summary>
+        uri(uri &&other) _noexcept :
+            m_uri(std::move(other.m_uri)),
+            m_components(std::move(other.m_components))
+        {}
+
+        /// <summary>
+        /// Move assignment operator
+        /// </summary>
+        uri & operator=(uri &&other) _noexcept
+        {
+            if (this != &other)
+            {
+                m_uri = std::move(other.m_uri);
+                m_components = std::move(m_components);
+            }
+            return *this;
+        }
 
         /// <summary>
         /// Get the scheme component of the URI as an encoded string.
@@ -358,7 +404,7 @@ namespace web {
         static utility::string_t encode_impl(const utility::string_t &raw, const std::function<bool(int)>& should_encode);
 
         utility::string_t m_uri;
-        details::_uri_components m_components;
+        details::uri_components m_components;
     };
 
 } // namespace web

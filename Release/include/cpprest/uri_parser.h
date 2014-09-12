@@ -33,14 +33,13 @@ namespace web { namespace details
     class uri_parser
     {
     public:
-        uri_parser() {}
 
         /// <summary>
         /// Parses the uri, attempting to determine its validity.
         ///
         /// This function accepts both uris ('http://msn.com') and uri relative-references ('path1/path2?query')
         /// </summary>
-        bool validate(const utility::string_t &encoded_string) const;
+        static bool validate(const utility::string_t &encoded_string);
 
         /// <summary>
         /// Parses the uri, setting each provided string to the value of that component. Components
@@ -49,9 +48,7 @@ namespace web { namespace details
         ///
         /// This function accepts both uris ('http://msn.com') and uri relative-references ('path1/path2?query')
         /// </summary>
-        bool parse(
-            const utility::string_t &encoded_string,
-            _uri_components &components) const;
+        static bool parse(const utility::string_t &encoded_string, uri_components &components);
 
         /// <summary>
         /// Unreserved characters are those that are allowed in a URI but do not have a reserved purpose. They include:
@@ -204,11 +201,15 @@ namespace web { namespace details
         }
 
     private:
+        uri_parser();
+        uri_parser(const uri_parser &);
+        uri_parser & operator=(const uri_parser &);
+
         /// <summary>
         /// Parses the uri, setting the given pointers to locations inside the given buffer.
         /// 'encoded' is expected to point to an encoded zero-terminated string containing a uri
         /// </summary>
-        bool inner_parse(
+        static bool inner_parse(
             const utility::char_t *encoded,
             const utility::char_t **scheme_begin, const utility::char_t **scheme_end,
             const utility::char_t **uinfo_begin, const utility::char_t **uinfo_end,
@@ -216,7 +217,7 @@ namespace web { namespace details
             _Out_ int *port,
             const utility::char_t **path_begin, const utility::char_t **path_end,
             const utility::char_t **query_begin, const utility::char_t **query_end,
-            const utility::char_t **fragment_begin, const utility::char_t **fragment_end) const;
+            const utility::char_t **fragment_begin, const utility::char_t **fragment_end);
 
         static const std::locale loc;
     };

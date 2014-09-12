@@ -1247,6 +1247,7 @@ public:
     {
         
     }
+
     /// <summary>
     /// Create an http pipeline that consists of a linear chain of stages
     /// </summary>
@@ -1303,8 +1304,6 @@ private:
     http_pipeline(std::shared_ptr<http_pipeline_stage> last) : m_last_stage(last) 
     {
     }
-
-private:
 
     // The vector of pipeline stages.
     std::vector<std::shared_ptr<http_pipeline_stage>> m_stages;

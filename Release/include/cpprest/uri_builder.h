@@ -203,7 +203,7 @@ namespace web
         /// </summary>
         void clear()
         {
-            m_uri = details::_uri_components();
+            m_uri = details::uri_components();
         }
 
         /// <summary>
@@ -263,6 +263,6 @@ namespace web
         _ASYNCRTIMP bool is_valid();
 
     private:
-        details::_uri_components m_uri;
+        details::uri_components m_uri;
     };
 } // namespace web
