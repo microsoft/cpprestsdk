@@ -163,9 +163,9 @@ public:
     /// Set the web proxy object
     /// </summary>
     /// <param name="proxy">A reference to the web proxy object.</param>
-    void set_proxy(const web_proxy& proxy)
+    void set_proxy(web_proxy proxy)
     {
-        m_proxy = proxy;
+        m_proxy = std::move(proxy);
     }
 
     /// <summary>

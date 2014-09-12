@@ -972,9 +972,6 @@ public:
     ///    progress: the number of bytes that have been processed so far.
     /// </param>
     /// <remarks>
-    ///   **EXPERIMENTAL**
-    ///   This function is subject to change based on user feedback.
-    ///
     ///   This function will be called at least once for upload and at least once for
     ///   the download body, unless there is some exception generated. An HTTP message with an error
     ///   code is not an exception. This means, that even if there is no body, the progress handler
