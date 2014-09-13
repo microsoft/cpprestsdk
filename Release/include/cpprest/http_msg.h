@@ -430,8 +430,14 @@ public:
 
     /// <summary>
     /// Generates a string representation of the message, including the body when possible.
+    /// Mainly this should be used for debugging purposes as it has to copy the
+    /// message body and doesn't have excellent performance.
     /// </summary>
     /// <returns>A string representation of this HTTP request.</returns>
+    /// <remarks>Note this function is synchronous and doesn't wait for the
+    /// entire message body to arrive. If the message body has arrived by the time this
+    /// function is called and it is has a textual Content-Type it will be included.
+    /// Otherwise just the headers will be present.</remarks>
     utility::string_t to_string() const { return _m_impl->to_string(); }
 
     /// <summary>
@@ -1095,8 +1101,14 @@ public:
 
     /// <summary>
     /// Generates a string representation of the message, including the body when possible.
+    /// Mainly this should be used for debugging purposes as it has to copy the
+    /// message body and doesn't have excellent performance.
     /// </summary>
     /// <returns>A string representation of this HTTP request.</returns>
+    /// <remarks>Note this function is synchronous and doesn't wait for the
+    /// entire message body to arrive. If the message body has arrived by the time this
+    /// function is called and it is has a textual Content-Type it will be included.
+    /// Otherwise just the headers will be present.</remarks>
     utility::string_t to_string() const { return _m_impl->to_string(); }
 
     /// <summary>
