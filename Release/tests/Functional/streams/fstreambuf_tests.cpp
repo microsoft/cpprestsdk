@@ -939,7 +939,7 @@ TEST(file_with_one_byte_size)
     VERIFY_IS_TRUE(inFile.is_eof());
 }
 
-#if ( !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)) && defined(_WIN64)
+#if (!defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)) && defined(_WIN64)
 TEST(read_one_byte_at_4G)
 {
     // Create a file with one byte.
@@ -957,7 +957,7 @@ TEST(read_one_byte_at_4G)
     i.QuadPart = 0x100000000;
 
     SetFilePointerEx(handle, i /*4GB*/, NULL, FILE_END);
-    WriteFile(handle, data.get(), 1, &dwBytesWritten, NULL);
+    WriteFile(handle, &data, 1, &dwBytesWritten, NULL);
 
     CloseHandle(handle);
 
@@ -968,14 +968,13 @@ TEST(read_one_byte_at_4G)
     int aCharacter = file_buf.getc().get();
     file_buf.close().wait();
 
-    VERIFY_ARE_EQUAL(aCharacter, 'a');
+    VERIFY_ARE_EQUAL(aCharacter, data);
 }
 
 // since casablanca does not use sparse file apis we're not doing the reverse test (write one byte at 4Gb and verify with std apis)
 // because the file created would be too big
 #endif
 #else
-
 
 struct TidyStream
 {
