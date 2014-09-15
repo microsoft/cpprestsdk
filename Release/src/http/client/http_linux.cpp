@@ -398,8 +398,6 @@ namespace web { namespace http
                         else
                         {
                             has_body = false;
-                            extra_headers.append(header_names::content_length);
-                            extra_headers.append(":0" + CRLF);
                         }
                     }
 
