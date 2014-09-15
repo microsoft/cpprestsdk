@@ -57,7 +57,6 @@ namespace Concurrency { namespace streams {
     template<typename CharType> class stdio_ostream;
     template<typename CharType> class stdio_istream;
 
-#pragma region Asynchronous streams on top of synchronous stream buffers.
     namespace details {
 
     /// <summary>
@@ -104,7 +103,7 @@ namespace Concurrency { namespace streams {
         virtual size_t buffer_size(std::ios_base::openmode direction = std::ios_base::in) const { return 0; }
         virtual void set_buffer_size(size_t size, std::ios_base::openmode direction = std::ios_base::in) { return; }
 
-        virtual pplx::task<bool> _sync() { return pplx::task_from_result(m_buffer->pubsync() != std::char_traits<_CharType>::eof()); }
+        virtual pplx::task<bool> _sync() { return pplx::task_from_result(m_buffer->pubsync() == 0); }
 
         virtual pplx::task<int_type> _putc(_CharType ch) { return pplx::task_from_result(m_buffer->sputc(ch)); }
         virtual pplx::task<size_t> _putn(const _CharType *ptr, size_t size) { return pplx::task_from_result((size_t)m_buffer->sputn(ptr, size)); }
@@ -227,10 +226,6 @@ namespace Concurrency { namespace streams {
         /// <returns>A reference to the input stream object that contains the result of the assignment.</returns>
         stdio_istream & operator =(const stdio_istream &other) { basic_istream<CharType>::operator=(other); return *this; }
     };
-
-#pragma endregion
-
-#pragma region Synchronous streams on top of asynchronous stream buffers.
 
     namespace details {
 
@@ -504,10 +499,8 @@ namespace Concurrency { namespace streams {
     private:
         details::basic_async_streambuf<CharType> m_strbuf;
     };
-#pragma endregion
 
 #if defined(__cplusplus_winrt)
-#pragma region WinRT streams interop
 
     /// <summary>
     /// Static class containing factory functions for WinRT streams implemented on top of Casablanca async streams.
@@ -554,7 +547,6 @@ namespace Concurrency { namespace streams {
     };
 
 #endif
-#pragma endregion
 
 }} // namespaces
 #pragma warning(pop) // 4100

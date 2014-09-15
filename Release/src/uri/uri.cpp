@@ -101,10 +101,6 @@ utility::string_t _uri_components::join()
 
 using namespace details;
 
-#if defined(_MSC_VER)
-#pragma region constructor
-#endif
-
 uri::uri(const utility::string_t &uri_string)
 {
     if (!details::uri_parser().parse(uri_string, m_components))
@@ -122,13 +118,6 @@ uri::uri(const utility::char_t *uri_string): m_uri(uri_string)
     }
     m_uri = m_components.join();
 }
-
-#if defined(_MSC_VER)
-#pragma endregion
-
-
-#pragma region encoding
-#endif
 
 utility::string_t uri::encode_impl(const utility::string_t &raw, const std::function<bool(int)>& should_encode)
 {
@@ -268,12 +257,6 @@ utility::string_t uri::decode(const utility::string_t &encoded)
     return to_string_t(utf8raw);
 }
 
-#if defined(_MSC_VER)
-#pragma endregion
-
-#pragma region splitting
-#endif
-
 std::vector<utility::string_t> uri::split_path(const utility::string_t &path)
 {
     std::vector<utility::string_t> results;
@@ -329,22 +312,10 @@ std::map<utility::string_t, utility::string_t> uri::split_query(const utility::s
     return results;
 }
 
-#if defined(_MSC_VER)
-#pragma endregion
-
-#pragma region validation
-#endif
-
 bool uri::validate(const utility::string_t &uri_string)
 {
     return uri_parser().validate(uri_string);
 }
-
-#if defined(_MSC_VER)
-#pragma endregion
-
-#pragma region accessors
-#endif
 
 uri uri::authority() const
 {
@@ -355,12 +326,6 @@ uri uri::resource() const
 {
         return uri_builder().set_path(this->path()).set_query(this->query()).set_fragment(this->fragment()).to_uri();
 }
-
-#if defined(_MSC_VER)
-#pragma endregion
-
-#pragma region operators
-#endif
 
 bool uri::operator == (const uri &other) const
 {
@@ -408,9 +373,5 @@ bool uri::operator == (const uri &other) const
 
     return true;
 }
-
-#if defined(_MSC_VER)
-#pragma endregion
-#endif
 
 }

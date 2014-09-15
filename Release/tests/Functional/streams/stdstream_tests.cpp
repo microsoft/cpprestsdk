@@ -25,6 +25,7 @@
 #include "cpprest/rawptrstream.h"
 #include "cpprest/filestream.h"
 #include "cpprest/producerconsumerstream.h"
+#include <boost/interprocess/streams/bufferstream.hpp>
 
 #if defined(__cplusplus_winrt)
 using namespace Windows::Storage;
@@ -783,6 +784,26 @@ TEST(sync_on_async_close_with_exception)
         outputStream.write(&tempBuf[0], tempBufSize);
         VERIFY_ARE_EQUAL(std::ios::badbit, outputStream.rdstate());
     }
+}
+
+TEST(ostream_full_throw_exception)
+{
+    char tgt_buffer[5];
+    boost::interprocess::bufferstream limited_stream(tgt_buffer, sizeof(tgt_buffer),
+                                                     ::std::ios_base::out | std::ios_base::binary);
+    concurrency::streams::stdio_ostream<char> os_wrapper(limited_stream);
+    concurrency::streams::streambuf<char> os_streambuf = os_wrapper.streambuf();
+
+
+    // There's one newline in the input.
+    const char *text = "abcdefghijklmnopqrstuvwxyz\nABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+    std::stringstream stream;
+    Concurrency::streams::stdio_istream<char> astream(stream);
+
+    stream << text;
+
+    VERIFY_THROWS(astream.read_to_end(os_streambuf).get(), std::exception);
 }
 
 }

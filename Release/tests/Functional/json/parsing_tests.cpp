@@ -566,13 +566,13 @@ TEST(keep_order_while_parsing)
     VERIFY_ARE_EQUAL(obj[U("a")].as_integer(), 4);
 }
 
-TEST(non_default_locale)
+TEST(non_default_locale, "Ignore:Apple", "263")
 {
     std::string originalLocale = setlocale(LC_ALL, nullptr);
 #ifdef _MS_WINDOWS
     std::string changedLocale("fr-FR");
 #else
-    std::string changedLocale("fr_FR");
+    std::string changedLocale("fr_FR.utf8");
 #endif
 
     // If locale isn't installed on system just silently pass.

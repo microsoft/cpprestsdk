@@ -953,18 +953,41 @@ namespace Concurrency { namespace streams
             if ( !target.can_write() )
                 return pplx::task_from_exception<size_t>(std::make_exception_ptr(std::runtime_error("source buffer not set up for input of data")));
 
-            // Capture 'buffer' rather than 'helper' here due to VC++ 2010 limitations.
-            auto buffer = helper()->m_buffer;
+            auto l_buffer = helper()->m_buffer;
+            auto l_buf_size = this->buf_size;
+            std::shared_ptr<_read_helper> l_locals = std::make_shared<_read_helper>();
 
-            std::shared_ptr<_read_helper> _locals = std::make_shared<_read_helper>();
+            auto copy_to_target = [l_locals, target, l_buffer, l_buf_size]() mutable -> pplx::task<bool>
+            {
+                // We need to capture these, because the object itself may go away
+                // before we're done processing the data.
+                //auto locs = _locals;
+                //auto trg = target;
 
-            _dev10_ice_workaround wrkarnd(buffer, target, _locals, buf_size);
+                return l_buffer.getn(l_locals->outbuf, l_buf_size).then([=](size_t rd) mutable -> pplx::task<bool>
+                {
+                    if (rd == 0)
+                        return pplx::task_from_result(false);
 
-            auto loop = pplx::details::do_while(wrkarnd);
+                    // Must be nested to capture rd
+                    return target.putn(l_locals->outbuf, rd).then([target, l_locals, rd](size_t wr) mutable -> pplx::task<bool>
+                    {
+                        l_locals->total += wr;
+
+                        if (rd != wr)
+                            // Number of bytes written is less than number of bytes received.
+                            throw std::runtime_error("failed to write all bytes");
+
+                        return target.sync().then([]() { return true; });
+                    });
+                });
+            };
+
+            auto loop = pplx::details::do_while(copy_to_target);
 
             return loop.then([=](bool) mutable -> size_t
                 { 
-                    return _locals->total; 
+                    return l_locals->total; 
                 });
         }
 
@@ -1104,48 +1127,6 @@ namespace Concurrency { namespace streams
             }
         };
 
-        // To workaround a VS 2010 internal compiler error, we have to do our own
-        // "lambda" here...
-        class _dev10_ice_workaround
-        {
-        public:
-            _dev10_ice_workaround(streams::streambuf<CharType> buffer,
-                                  concurrency::streams::streambuf<CharType> target,
-                                  std::shared_ptr<typename basic_istream::_read_helper> locals,
-                                  size_t buf_size)
-            : _buffer(buffer), _target(target), _locals(locals), _buf_size(buf_size)
-            {
-            }
-            pplx::task<bool> operator()()
-            {
-                // We need to capture these, because the object itself may go away
-                // before we're done processing the data.
-                auto locs = _locals;
-                auto trg = _target;
-                
-                auto after_putn =
-                [=](size_t wr) mutable -> bool
-                {
-                    locs->total += wr;
-                    trg.sync().wait();
-                    return true;
-                };
-                
-                return _buffer.getn(locs->outbuf, buf_size).then(
-                                                                 [=] (size_t rd) mutable -> pplx::task<bool>
-                                                                 {
-                                                                     if ( rd == 0 )
-                                                                         return pplx::task_from_result(false);
-                                                                     return trg.putn(locs->outbuf, rd).then(after_putn);
-                                                                 });
-            }
-        private:
-            size_t _buf_size;
-            concurrency::streams::streambuf<CharType> _buffer;
-            concurrency::streams::streambuf<CharType> _target;
-            std::shared_ptr<typename basic_istream::_read_helper> _locals;
-        };
-        
         std::shared_ptr<details::basic_istream_helper<CharType>> m_helper;
     };
 

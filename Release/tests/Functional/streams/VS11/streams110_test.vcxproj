@@ -27,7 +27,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{181ccb80-9ae8-4ed7-8b7d-4c0cbc80eedd}</ProjectGuid>
+    <ProjectGuid>{542BDF76-31C1-4160-9E44-8F91ACECB825}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>HttpTests</RootNamespace>
     <SccProjectName>SAK</SccProjectName>
@@ -35,6 +35,7 @@
     <SccLocalPath>SAK</SccLocalPath>
     <SccProvider>SAK</SccProvider>
     <VCTargetsPath Condition="'$(VCTargetsPath11)' != '' and '$(VSVersion)' == '' and $(VisualStudioVersion) == ''">$(VCTargetsPath11)</VCTargetsPath>
+    <NuGetPackageImportStamp>c1a0e600</NuGetPackageImportStamp>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -205,7 +206,12 @@
       <Project>{90D85FF4-F0AE-4816-923F-0EF2758F30AB}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(PackagesRoot)\boost.1.55.0.16\build\native\boost.targets" Condition="Exists('$(PackagesRoot)\boost.1.55.0.16\build\native\boost.targets')" />
+    <Import Project="$(PackagesRoot)\boost_date_time-vc110.1.55.0.16\build\native\boost_date_time-vc110.targets" Condition="Exists('$(PackagesRoot)\boost_date_time-vc110.1.55.0.16\build\native\boost_date_time-vc110.targets')" />
   </ImportGroup>
 </Project>
