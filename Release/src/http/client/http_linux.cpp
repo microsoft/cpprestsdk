@@ -297,7 +297,7 @@ namespace web { namespace http
                     }
                 }
 
-                linux_client_request_context(std::shared_ptr<_http_client_communicator> &client, http_request request, std::shared_ptr<linux_connection> connection);
+                linux_client_request_context(std::shared_ptr<_http_client_communicator> &client, http_request request, std::shared_ptr<linux_connection> &connection);
 
             protected:
                 virtual void cleanup()
@@ -1174,14 +1174,14 @@ namespace web { namespace http
             linux_client_request_context::linux_client_request_context(
                     std::shared_ptr<_http_client_communicator> &client,
                     http_request request,
-                    std::shared_ptr<linux_connection> connection)
+                    std::shared_ptr<linux_connection> &connection)
                 : request_context(client, request)
                 , m_known_size(0)
                 , m_current_size(0)
                 , m_needChunked(false)
                 , m_timedout(false)
                 , m_timeout_timer(crossplat::threadpool::shared_instance().service())
-                , m_connection(std::move(connection))
+                , m_connection(connection)
             {}
 
             std::shared_ptr<request_context> linux_client_request_context::create_request_context(
