@@ -297,7 +297,10 @@ namespace web { namespace http
                     }
                 }
 
-                linux_client_request_context(std::shared_ptr<_http_client_communicator> &client, http_request request, std::shared_ptr<linux_connection> &connection);
+                linux_client_request_context(
+                    const std::shared_ptr<_http_client_communicator> &client, 
+                    http_request request, 
+                    const std::shared_ptr<linux_connection> &connection);
 
             protected:
                 virtual void cleanup()
@@ -873,7 +876,7 @@ namespace web { namespace http
                     }
                 }
 
-                void read_headers(std::shared_ptr<linux_client_request_context> ctx)
+                void read_headers(const std::shared_ptr<linux_client_request_context> &ctx)
                 {
                     ctx->m_needChunked = false;
                     std::istream response_stream(&ctx->m_body_buf);
@@ -1137,8 +1140,7 @@ namespace web { namespace http
                     }
                     else
                     {
-                        writeBuffer.sync()
-                        .then([ctx](pplx::task<void> op)
+                        writeBuffer.sync().then([ctx](pplx::task<void> op)
                         {
                             try
                             {
@@ -1172,9 +1174,9 @@ namespace web { namespace http
             }
 
             linux_client_request_context::linux_client_request_context(
-                    std::shared_ptr<_http_client_communicator> &client,
+                    const std::shared_ptr<_http_client_communicator> &client,
                     http_request request,
-                    std::shared_ptr<linux_connection> &connection)
+                    const std::shared_ptr<linux_connection> &connection)
                 : request_context(client, request)
                 , m_known_size(0)
                 , m_current_size(0)
