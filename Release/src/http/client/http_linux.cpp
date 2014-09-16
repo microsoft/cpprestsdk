@@ -337,9 +337,7 @@ namespace web { namespace http
 
                     if (m_uri.scheme() == "https")
                     {
-                        boost::asio::ssl::context context(boost::asio::ssl::context::sslv23);
-                        context.set_default_verify_paths();
-                        ctx->m_ssl_stream.reset(new boost::asio::ssl::stream<boost::asio::ip::tcp::socket &>(ctx->m_connection->socket(), context));
+                        reset_ssl_stream(ctx);
                     }
 
                     auto encoded_resource = uri_builder(m_uri).append(ctx->m_request.relative_uri()).to_uri().resource().to_string();
@@ -475,6 +473,29 @@ namespace web { namespace http
                     return rdbuf.is_open();
                 }
 
+                // Helper function to create ssl stream and set verification options.
+                void reset_ssl_stream(std::shared_ptr<linux_client_request_context> &ctx)
+                {
+                    boost::asio::ssl::context sslContext(boost::asio::ssl::context::sslv23);
+                    sslContext.set_default_verify_paths();
+                    sslContext.set_options(boost::asio::ssl::context::default_workarounds);
+                    ctx->m_ssl_stream.reset(new boost::asio::ssl::stream<boost::asio::ip::tcp::socket &>(ctx->m_connection->socket(), sslContext));
+
+                    // Check to turn off server certificate verification.
+                    if (client_config().validate_certificates())
+                    {
+                        ctx->m_ssl_stream->set_verify_mode(boost::asio::ssl::context::verify_peer);
+                        ctx->m_ssl_stream->set_verify_callback(boost::bind(&linux_client::handle_cert_verification, shared_from_this(), _1, _2));
+#if defined(__APPLE__) || defined(ANDROID)
+                        m_openssl_failed = false;
+#endif
+                    }
+                    else
+                    {
+                        ctx->m_ssl_stream->set_verify_mode(boost::asio::ssl::context::verify_none);
+                    }
+                }
+
                 void handle_resolve(const boost::system::error_code& ec, tcp::resolver::iterator endpoints, std::shared_ptr<linux_client_request_context> ctx)
                 {
                     if (ec)
@@ -484,22 +505,6 @@ namespace web { namespace http
                     else
                     {
                         auto endpoint = *endpoints;
-                        if (ctx->m_ssl_stream)
-                        {
-                            // Check to turn off server certificate verification.
-                            if(client_config().validate_certificates())
-                            {
-                                ctx->m_ssl_stream->set_verify_mode(boost::asio::ssl::context::verify_peer);
-                                ctx->m_ssl_stream->set_verify_callback(boost::bind(&linux_client::handle_cert_verification, shared_from_this(), _1, _2));
-#if defined(__APPLE__) || defined(ANDROID)
-                                m_openssl_failed = false;
-#endif
-                            }
-                            else
-                            {
-                                ctx->m_ssl_stream->set_verify_mode(boost::asio::ssl::context::verify_none);
-                            }
-                        }
                         ctx->m_connection->socket().async_connect(endpoint, boost::bind(&linux_client::handle_connect, shared_from_this(), boost::asio::placeholders::error, ++endpoints, ctx));
                     }
                 }
@@ -532,29 +537,12 @@ namespace web { namespace http
 
                         // Replace the connection. This causes old connection object to go out of scope.
                         ctx->m_connection = m_pool.obtain(); 
-
-                        auto endpoint = *endpoints;
+                        
                         if (ctx->m_ssl_stream)
                         {
-                            boost::asio::ssl::context context(boost::asio::ssl::context::sslv23);
-                            context.set_default_verify_paths();
-                            ctx->m_ssl_stream.reset(new boost::asio::ssl::stream<boost::asio::ip::tcp::socket &>(ctx->m_connection->socket(), context));
-
-                            // Check to turn off server certificate verification.
-                            if(client_config().validate_certificates())
-                            {
-                                ctx->m_ssl_stream->set_verify_mode(boost::asio::ssl::context::verify_peer);
-                                ctx->m_ssl_stream->set_verify_callback(boost::bind(&linux_client::handle_cert_verification, shared_from_this(), _1, _2));
-#if defined(__APPLE__) || defined(ANDROID)
-                                m_openssl_failed = false;
-#endif
-                            }
-                            else
-                            {
-                                ctx->m_ssl_stream->set_verify_mode(boost::asio::ssl::context::verify_none);
-                            }
+                            reset_ssl_stream(ctx);
                         }
-
+                        auto endpoint = *endpoints;
                         ctx->m_connection->socket().async_connect(endpoint, boost::bind(&linux_client::handle_connect, shared_from_this(), boost::asio::placeholders::error, ++endpoints, ctx));
                     }
                 }
