@@ -26,12 +26,12 @@
 #include <locale>
 #include "cpprest/uri_parser.h"
 
-namespace web { namespace details
+namespace web { namespace details { namespace uri_parser
 {
 
-const std::locale uri_parser::loc("C"); // use the C local to force the ASCII definitions of isalpha and friends
+static std::locale g_clocale("C"); // use the C local to force the ASCII definitions of isalpha and friends
 
-bool uri_parser::validate(const utility::string_t &encoded_string)
+bool validate(const utility::string_t &encoded_string)
 {
     const utility::char_t *scheme_begin = nullptr;
     const utility::char_t *scheme_end = nullptr;
@@ -65,7 +65,7 @@ bool uri_parser::validate(const utility::string_t &encoded_string)
         &fragment_end);
 }
 
-bool uri_parser::parse(const utility::string_t &encoded_string, uri_components &components)
+bool parse(const utility::string_t &encoded_string, uri_components &components)
 {
     const utility::char_t *scheme_begin = nullptr;
     const utility::char_t *scheme_end = nullptr;
@@ -103,7 +103,7 @@ bool uri_parser::parse(const utility::string_t &encoded_string, uri_components &
 
             // convert scheme to lowercase
             std::transform(components.m_scheme.begin(), components.m_scheme.end(), components.m_scheme.begin(), [](utility::char_t c) {
-                return std::tolower(c, loc);
+                return std::tolower(c, g_clocale);
             });
         }
         else
@@ -122,7 +122,7 @@ bool uri_parser::parse(const utility::string_t &encoded_string, uri_components &
 
             // convert host to lowercase
             std::transform(components.m_host.begin(), components.m_host.end(), components.m_host.begin(), [](utility::char_t c) {
-                return std::tolower(c, loc);
+                return std::tolower(c, g_clocale);
             });
         }
         else
@@ -175,7 +175,7 @@ bool uri_parser::parse(const utility::string_t &encoded_string, uri_components &
     }           
 }
 
-bool uri_parser::inner_parse(
+bool inner_parse(
             const utility::char_t *encoded,
             const utility::char_t **scheme_begin, const utility::char_t **scheme_end,
             const utility::char_t **uinfo_begin, const utility::char_t **uinfo_end,
@@ -366,4 +366,4 @@ bool uri_parser::inner_parse(
     return true;
 }
 
-}}
+}}}

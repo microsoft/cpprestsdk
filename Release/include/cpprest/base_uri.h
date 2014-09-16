@@ -42,11 +42,8 @@ namespace web {
     {
         struct uri_components
         {
-            uri_components()
-            {
-                m_path = _XPLATSTR("/");
-                m_port = -1;
-            }
+            uri_components() : m_path(_XPLATSTR("/")), m_port(-1)
+            {}
 
             uri_components(uri_components &&other) _noexcept :
                 m_scheme(std::move(other.m_scheme)),
