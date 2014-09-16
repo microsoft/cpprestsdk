@@ -377,13 +377,13 @@ public:
     /// <returns>
     /// A base uri initialized in constructor
     /// </return>
-    const uri& base_uri() const;
+    _ASYNCRTIMP const uri& base_uri() const;
 
     /// <summary>
     /// Get client configuration object
     /// </summary>
     /// <returns>A reference to the client configuration object.</returns>
-    const http_client_config& client_config() const;
+    _ASYNCRTIMP const http_client_config& client_config() const;
 
     /// <summary>
     /// Adds an HTTP pipeline stage to the client.

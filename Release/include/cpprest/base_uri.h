@@ -45,6 +45,31 @@ namespace web {
             uri_components() : m_path(_XPLATSTR("/")), m_port(-1)
             {}
 
+            uri_components(const uri_components &other) :
+                m_scheme(other.m_scheme),
+                m_host(other.m_host),
+                m_user_info(other.m_user_info),
+                m_path(other.m_path),
+                m_query(other.m_query),
+                m_fragment(other.m_fragment),
+                m_port(other.m_port)
+            {}
+
+            uri_components & operator=(const uri_components &other)
+            {
+                if (this != &other)
+                {
+                    m_scheme = other.m_scheme;
+                    m_host = other.m_host;
+                    m_user_info = other.m_user_info;
+                    m_path = other.m_path;
+                    m_query = other.m_query;
+                    m_fragment = other.m_fragment;
+                    m_port = other.m_port;
+                }
+                return *this;
+            }
+
             uri_components(uri_components &&other) _noexcept :
                 m_scheme(std::move(other.m_scheme)),
                 m_host(std::move(other.m_host)),
@@ -103,25 +128,25 @@ namespace web {
     };
 
     /// <summary>
-    /// A flexible, protocol independent uri implementation.
+    /// A flexible, protocol independent URI implementation.
     ///
-    /// URI instances are immutable. Querying the various fields on an emtpy uri will return empty strings. Querying
-    /// various diagnostic members on an empty uri will return false.
+    /// URI instances are immutable. Querying the various fields on an emtpy URI will return empty strings. Querying
+    /// various diagnostic members on an empty URI will return false.
     /// </summary>
     /// <remarks>
-    /// This implementation accepts both uris ('http://msn.com/path') and uri relative-references
+    /// This implementation accepts both URIs ('http://msn.com/path') and URI relative-references
     /// ('/path?query#frag').
     ///
     /// This implementation does not provide any scheme-specific handling -- an example of this
-    /// would be the following: 'http://path1/path'. This is a valid uri, but it's not a valid 
+    /// would be the following: 'http://path1/path'. This is a valid URI, but it's not a valid 
     /// http-uri -- that is, it's syntactically correct but does not conform to the requirements 
     /// of the http scheme (http requires a host). 
     /// We could provide this by allowing a pluggable 'scheme' policy-class, which would provide 
-    /// extra capability for validating and canonicalizing a uri according to scheme, and would 
-    /// introduce a layer of type-safety for uris of differing schemes, and thus differing semantics.
+    /// extra capability for validating and canonicalizing a URI according to scheme, and would 
+    /// introduce a layer of type-safety for URIs of differing schemes, and thus differing semantics.
     ///
-    /// One issue with implementing a scheme-independent uri facility is that of comparing for equality.
-    /// For instance, these uris are considered equal 'http://msn.com', 'http://msn.com:80'. That is --
+    /// One issue with implementing a scheme-independent URI facility is that of comparing for equality.
+    /// For instance, these URIs are considered equal 'http://msn.com', 'http://msn.com:80'. That is --
     /// the 'default' port can be either omitted or explicit. Since we don't have a way to map a scheme
     /// to it's default port, we don't have a way to know these are equal. This is just one of a class of
     /// issues with regard to scheme-specific behavior.
@@ -190,9 +215,9 @@ namespace web {
         _ASYNCRTIMP static std::map<utility::string_t, utility::string_t> __cdecl split_query(const utility::string_t &query);
 
         /// <summary>
-        /// Validates a string as a uri.
+        /// Validates a string as a URI.
         /// </summary>
-        /// <param name="uri_string">The uri string to be validated.</param>
+        /// <param name="uri_string">The URI string to be validated.</param>
         /// <returns><c>true</c> if the given string represents a valid URI, <c>false</c> otherwise.</returns>
         _ASYNCRTIMP static bool __cdecl validate(const utility::string_t &uri_string);
 
@@ -202,18 +227,39 @@ namespace web {
         uri() { m_uri = _XPLATSTR("/");};
 
         /// <summary>
-        /// Creates a uri from the given encoded string. This will throw an exception if the string 
-        /// does not contain a valid uri. Use uri::validate if processing user-input.
+        /// Creates a URI from the given encoded string. This will throw an exception if the string 
+        /// does not contain a valid URI. Use uri::validate if processing user-input.
         /// </summary>
         /// <param name="uri_string">A pointer to an encoded string to create the URI instance.</param>
         _ASYNCRTIMP uri(const utility::char_t *uri_string);
 
         /// <summary>
-        /// Creates a uri from the given encoded string. This will throw an exception if the string 
-        /// does not contain a valid uri. Use uri::validate if processing user-input.
+        /// Creates a URI from the given encoded string. This will throw an exception if the string 
+        /// does not contain a valid URI. Use uri::validate if processing user-input.
         /// </summary>
-        /// <param name="uri_string">An encoded uri string to create the URI instance.</param>
+        /// <param name="uri_string">An encoded URI string to create the URI instance.</param>
         _ASYNCRTIMP uri(const utility::string_t &uri_string);
+
+        /// <summary>
+        /// Copy constructor.
+        /// </summary>
+        uri(const uri &other) :
+            m_uri(other.m_uri),
+            m_components(other.m_components)
+        {}
+
+        /// <summary>
+        /// Copy assignment operator.
+        /// </summary>
+        uri & operator=(const uri &other)
+        {
+            if (this != &other)
+            {
+                m_uri = other.m_uri;
+                m_components = other.m_components;
+            }
+            return *this;
+        }
 
         /// <summary>
         /// Move constructor.
@@ -287,11 +333,11 @@ namespace web {
         /// <summary>
         /// Gets the path, query, and fragment portion of this uri, which may be empty.
         /// </summary>
-        /// <returns>The new uri object with the path, query and fragment portion of this uri.</returns>
+        /// <returns>The new URI object with the path, query and fragment portion of this URI.</returns>
         _ASYNCRTIMP uri resource() const;
 
         /// <summary>
-        /// An empty uri specifies no components, and serves as a default value
+        /// An empty URI specifies no components, and serves as a default value
         /// </summary>
         bool is_empty() const
         {
@@ -346,37 +392,37 @@ namespace web {
         }
 
         /// <summary>
-        /// An "authority" uri is one with only a scheme, optional userinfo, hostname, and (optional) port.
+        /// An "authority" URI is one with only a scheme, optional userinfo, hostname, and (optional) port.
         /// </summary>
-        /// <returns><c>true</c> if this is an "authority" uri, <c>false</c> otherwise.</returns>
+        /// <returns><c>true</c> if this is an "authority" URI, <c>false</c> otherwise.</returns>
         bool is_authority() const
         {
             return !is_empty() && is_path_empty() && query().empty() && fragment().empty();
         }
 
         /// <summary>
-        /// Returns whether the other uri has the same authority as this one
+        /// Returns whether the other URI has the same authority as this one
         /// </summary>
-        /// <param name="other">The uri to compare the authority with.</param>
-        /// <returns><c>true</c> if both the uri's have the same authority, <c>false</c> otherwise.</returns>
+        /// <param name="other">The URI to compare the authority with.</param>
+        /// <returns><c>true</c> if both the URI's have the same authority, <c>false</c> otherwise.</returns>
         bool has_same_authority(const uri &other) const
         {
             return !is_empty() && this->authority() == other.authority();
         }
 
         /// <summary>
-        /// Returns whether the path portion of this uri is empty
+        /// Returns whether the path portion of this URI is empty
         /// </summary>
-        /// <returns><c>true</c> if the path portion of this uri is empty, <c>false</c> otherwise.</returns>
+        /// <returns><c>true</c> if the path portion of this URI is empty, <c>false</c> otherwise.</returns>
         bool is_path_empty() const
         {
             return path().empty() || path() == _XPLATSTR("/");
         }
 
         /// <summary>
-        /// Returns the full (encoded) uri as a string.
+        /// Returns the full (encoded) URI as a string.
         /// </summary>
-         /// <returns>The full encoded uri string.</returns>
+         /// <returns>The full encoded URI string.</returns>
         utility::string_t to_string() const
         {
             return m_uri;
