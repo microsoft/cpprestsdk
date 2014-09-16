@@ -211,5 +211,5 @@ namespace web { namespace details
             const utility::char_t **path_begin, const utility::char_t **path_end,
             const utility::char_t **query_begin, const utility::char_t **query_end,
             const utility::char_t **fragment_begin, const utility::char_t **fragment_end);
-    };
+    }
 }}
