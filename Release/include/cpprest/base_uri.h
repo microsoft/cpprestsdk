@@ -277,7 +277,7 @@ namespace web {
             if (this != &other)
             {
                 m_uri = std::move(other.m_uri);
-                m_components = std::move(m_components);
+                m_components = std::move(other.m_components);
             }
             return *this;
         }

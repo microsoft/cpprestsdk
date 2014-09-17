@@ -299,7 +299,7 @@ public:
         return m_client_config;
     }
 
-    const uri & uri() const
+    const uri & base_uri() const
     {
         return m_uri;
     }
@@ -461,15 +461,15 @@ void http_client::build_pipeline(uri base_uri, http_client_config client_config)
     }
     details::verify_uri(base_uri);
 
+    m_pipeline = ::web::http::http_pipeline::create_pipeline(std::make_shared<details::http_network_handler>(std::move(base_uri), std::move(client_config)));
+
 #if !defined(CPPREST_TARGET_XP) && !defined(_PHONE8_)
     add_handler(std::static_pointer_cast<http::http_pipeline_stage>(
-        std::make_shared<oauth1::details::oauth1_handler>(client_config.oauth1())));
+        std::make_shared<oauth1::details::oauth1_handler>(this->client_config().oauth1())));
 #endif // !defined(CPPREST_TARGET_XP) && !defined(_PHONE8_)
 
     add_handler(std::static_pointer_cast<http::http_pipeline_stage>(
-        std::make_shared<oauth2::details::oauth2_handler>(client_config.oauth2())));
-
-    m_pipeline = ::web::http::http_pipeline::create_pipeline(std::make_shared<details::http_network_handler>(std::move(base_uri), std::move(client_config)));
+        std::make_shared<oauth2::details::oauth2_handler>(this->client_config().oauth2())));
 }
 
 const http_client_config & http_client::client_config() const
@@ -481,7 +481,7 @@ const http_client_config & http_client::client_config() const
 const uri & http_client::base_uri() const
 {
     auto ph = std::static_pointer_cast<details::http_network_handler>(m_pipeline->last_stage());
-    return ph->http_client_impl()->uri();
+    return ph->http_client_impl()->base_uri();
 }
 
 }}} // namespaces
