@@ -974,7 +974,7 @@ TEST(read_one_byte_at_4G)
 // since casablanca does not use sparse file apis we're not doing the reverse test (write one byte at 4Gb and verify with std apis)
 // because the file created would be too big
 #endif
-#else
+#elif defined(__x86_64__)
 
 struct TidyStream
 {
