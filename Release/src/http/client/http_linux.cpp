@@ -472,7 +472,7 @@ namespace web { namespace http
                 }
 
                 // Helper function to create ssl stream and set verification options.
-                void reset_ssl_stream(std::shared_ptr<linux_client_request_context> &ctx)
+                void reset_ssl_stream(const std::shared_ptr<linux_client_request_context> &ctx)
                 {
                     boost::asio::ssl::context sslContext(boost::asio::ssl::context::sslv23);
                     sslContext.set_default_verify_paths();
@@ -519,7 +519,7 @@ namespace web { namespace http
                     }
                 }
 
-                void handle_connect(const boost::system::error_code& ec, tcp::resolver::iterator endpoints, std::shared_ptr<linux_client_request_context> ctx)
+                void handle_connect(const boost::system::error_code& ec, tcp::resolver::iterator endpoints, const std::shared_ptr<linux_client_request_context> &ctx)
                 {
                     if (!ec)
                     {
@@ -545,7 +545,7 @@ namespace web { namespace http
                     }
                 }
 
-                bool handle_cert_verification(bool preverified, boost::asio::ssl::verify_context &verifyCtx, std::shared_ptr<linux_client_request_context> requestCtx)
+                bool handle_cert_verification(bool preverified, boost::asio::ssl::verify_context &verifyCtx, const std::shared_ptr<linux_client_request_context> &requestCtx)
                 {
                     // Unreferenced parameter on some platforms.
                     requestCtx;
