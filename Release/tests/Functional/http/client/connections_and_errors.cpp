@@ -328,7 +328,7 @@ TEST_FIXTURE(uri_address, cancel_while_uploading_data, "Ignore:Linux", "220", "I
 
 // This test can't be implemented with our test server since it doesn't stream data so isn't avaliable on WinRT.
 #ifndef __cplusplus_winrt
-TEST_FIXTURE(uri_address, cancel_while_downloading_data)
+TEST_FIXTURE(uri_address, cancel_while_downloading_data, "Ignore:Apple", "220")
 {
     web::http::experimental::listener::http_listener listener(m_uri);
     listener.open().wait();
