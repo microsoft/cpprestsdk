@@ -154,6 +154,10 @@ TEST(constructor_overloads)
     json::value v6(U("YES YOU KNOW IT"));
     json::value v7(U("HERE ID IS"));
 
+    const utility::char_t* p9 = U("Hello not-escaped!");
+    json::value v8(p9, true);
+    json::value v9(p9, false);
+
     VERIFY_ARE_EQUAL(v0.type(), json::value::Null);
     VERIFY_IS_TRUE(v0.is_null());
     VERIFY_ARE_EQUAL(v1.type(), json::value::Number);
@@ -174,6 +178,10 @@ TEST(constructor_overloads)
     VERIFY_IS_TRUE(v6.is_string());
     VERIFY_ARE_EQUAL(v7.type(), json::value::String);
     VERIFY_IS_TRUE(v7.is_string());
+    VERIFY_ARE_EQUAL(v8.type(), json::value::String);
+    VERIFY_IS_TRUE(v8.is_string());
+    VERIFY_ARE_EQUAL(v9.type(), json::value::String);
+    VERIFY_IS_TRUE(v9.is_string());
 }
 
 TEST(factory_overloads)
@@ -186,8 +194,11 @@ TEST(factory_overloads)
     json::value v5 = json::value::string(U("Hello Again!"));
     json::value v6 = json::value::string(U("Hello!"));
     json::value v7 = json::value::string(U("Hello Again!"));
-    json::value v8 = json::value::object();
-    json::value v9 = json::value::array();
+    json::value v8 = json::value::string(U("Hello not-escaped!"), true);
+    json::value v9 = json::value::string(U("Hello not-escaped!"), false);
+    json::value v10 = json::value::object();
+    json::value v11 = json::value::array();
+
 
     VERIFY_ARE_EQUAL(v0.type(), json::value::Null);
     VERIFY_ARE_EQUAL(v1.type(), json::value::Number);
@@ -197,10 +208,12 @@ TEST(factory_overloads)
     VERIFY_ARE_EQUAL(v5.type(), json::value::String);
     VERIFY_ARE_EQUAL(v6.type(), json::value::String);
     VERIFY_ARE_EQUAL(v7.type(), json::value::String);
-    VERIFY_ARE_EQUAL(v8.type(), json::value::Object);
-    VERIFY_IS_TRUE(v8.is_object());
-    VERIFY_ARE_EQUAL(v9.type(), json::value::Array);
-    VERIFY_IS_TRUE(v9.is_array());
+    VERIFY_ARE_EQUAL(v8.type(), json::value::String);
+    VERIFY_ARE_EQUAL(v9.type(), json::value::String);
+    VERIFY_ARE_EQUAL(v10.type(), json::value::Object);
+    VERIFY_IS_TRUE(v10.is_object());
+    VERIFY_ARE_EQUAL(v11.type(), json::value::Array);
+    VERIFY_IS_TRUE(v11.is_array());
 }
 
 TEST(object_construction)

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.30501.0
+VisualStudioVersion = 12.0.30723.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "casablanca120.xp", "Release\src\build\casablanca120.xp.vcxproj", "{15F3B200-1AED-4B57-AF37-B21CD67914B1}"
 EndProject
@@ -49,8 +49,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SearchFile120", "Release\sa
 	ProjectSection(ProjectDependencies) = postProject
 		{1014C621-BC2D-4813-B8C1-6D83AD6F9249} = {1014C621-BC2D-4813-B8C1-6D83AD6F9249}
 	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "codeplex165", "..\codeplex165\codeplex165.vcxproj", "{70E24896-422E-4CB4-B671-94D33D60BA1A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -154,14 +152,6 @@ Global
 		{F03BEE03-BEFB-4B17-A774-D9C8246530D4}.Release|Win32.Build.0 = Release|Win32
 		{F03BEE03-BEFB-4B17-A774-D9C8246530D4}.Release|x64.ActiveCfg = Release|x64
 		{F03BEE03-BEFB-4B17-A774-D9C8246530D4}.Release|x64.Build.0 = Release|x64
-		{70E24896-422E-4CB4-B671-94D33D60BA1A}.Debug|ARM.ActiveCfg = Debug|Win32
-		{70E24896-422E-4CB4-B671-94D33D60BA1A}.Debug|Win32.ActiveCfg = Debug|Win32
-		{70E24896-422E-4CB4-B671-94D33D60BA1A}.Debug|Win32.Build.0 = Debug|Win32
-		{70E24896-422E-4CB4-B671-94D33D60BA1A}.Debug|x64.ActiveCfg = Debug|Win32
-		{70E24896-422E-4CB4-B671-94D33D60BA1A}.Release|ARM.ActiveCfg = Release|Win32
-		{70E24896-422E-4CB4-B671-94D33D60BA1A}.Release|Win32.ActiveCfg = Release|Win32
-		{70E24896-422E-4CB4-B671-94D33D60BA1A}.Release|Win32.Build.0 = Release|Win32
-		{70E24896-422E-4CB4-B671-94D33D60BA1A}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

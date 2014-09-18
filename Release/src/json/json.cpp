@@ -103,12 +103,26 @@ web::json::value::value(utility::string_t value) :
 #endif
     { }
 
+web::json::value::value(utility::string_t value, bool has_escape_chars) :
+m_value(utility::details::make_unique<web::json::details::_String>(std::move(value), has_escape_chars))
+#ifdef ENABLE_JSON_VALUE_VISUALIZER
+, m_kind(value::String)
+#endif
+{ }
+
 web::json::value::value(const utility::char_t* value) : 
     m_value(utility::details::make_unique<web::json::details::_String>(value))
 #ifdef ENABLE_JSON_VALUE_VISUALIZER
     ,m_kind(value::String)
 #endif
     { }
+
+web::json::value::value(const utility::char_t* value, bool has_escape_chars) :
+m_value(utility::details::make_unique<web::json::details::_String>(utility::string_t(value), has_escape_chars))
+#ifdef ENABLE_JSON_VALUE_VISUALIZER
+, m_kind(value::String)
+#endif
+{ }
 
 web::json::value::value(const value &other) : 
     m_value(other.m_value->_copy_value())
@@ -170,6 +184,16 @@ web::json::value web::json::value::boolean(bool value)
 web::json::value web::json::value::string(utility::string_t value)
 {
     std::unique_ptr<details::_Value> ptr = utility::details::make_unique<details::_String>(std::move(value));
+    return web::json::value(std::move(ptr)
+#ifdef ENABLE_JSON_VALUE_VISUALIZER
+            ,value::String
+#endif
+            );
+}
+
+web::json::value web::json::value::string(utility::string_t value, bool has_escape_chars)
+{
+    std::unique_ptr<details::_Value> ptr = utility::details::make_unique<details::_String>(std::move(value), has_escape_chars);
     return web::json::value(std::move(ptr)
 #ifdef ENABLE_JSON_VALUE_VISUALIZER
             ,value::String

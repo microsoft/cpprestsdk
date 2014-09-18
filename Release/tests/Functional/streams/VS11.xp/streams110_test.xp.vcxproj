@@ -179,6 +179,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\CppSparseFile.cpp" />
     <ClCompile Include="..\memstream_tests.cpp" />
     <ClCompile Include="..\fuzz_tests.cpp" />
     <!-- Disabled to include following test files for Bug: 759503-->
