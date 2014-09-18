@@ -699,7 +699,7 @@ namespace web { namespace http
                         }
                     };
 
-                    const size_t readSize = std::min(client_config().chunksize(), ctx->m_known_size - ctx->m_uploaded);
+                    const auto readSize = static_cast<size_t>(std::min(static_cast<uint64_t>(client_config().chunksize()), ctx->m_known_size - ctx->m_uploaded));
 
                     auto readbuf = ctx->_get_readbuffer();
                     readbuf.getn(boost::asio::buffer_cast<uint8_t *>(ctx->m_body_buf.prepare(readSize)), readSize)
@@ -892,7 +892,7 @@ namespace web { namespace http
                     {
                         if (!needChunked)
                         {
-                            async_read_until_buffersize(std::min(ctx->m_known_size, client_config().chunksize()),
+                            async_read_until_buffersize(static_cast<size_t>(std::min(ctx->m_known_size, static_cast<uint64_t>(client_config().chunksize()))),
                                 boost::bind(&linux_client::handle_read_content, shared_from_this(), boost::asio::placeholders::error, ctx), ctx);
                         }
                         else
@@ -1069,7 +1069,7 @@ namespace web { namespace http
 
                         // more data need to be read
                         writeBuffer.putn(boost::asio::buffer_cast<const uint8_t *>(ctx->m_body_buf.data()),
-                            std::min(ctx->m_body_buf.size(), ctx->m_known_size - ctx->m_downloaded))
+                            static_cast<size_t>(std::min(static_cast<uint64_t>(ctx->m_body_buf.size()), ctx->m_known_size - ctx->m_downloaded)))
                         .then([=](pplx::task<size_t> op)
                         {
                             size_t writtenSize = 0;
@@ -1079,7 +1079,7 @@ namespace web { namespace http
                                 ctx->m_downloaded += static_cast<uint64_t>(writtenSize);
                                 ctx->m_body_buf.consume(writtenSize);
 
-                                async_read_until_buffersize(std::min(client_config().chunksize(), ctx->m_known_size - ctx->m_downloaded),
+                                async_read_until_buffersize(static_cast<size_t>(std::min(static_cast<uint64_t>(client_config().chunksize()), ctx->m_known_size - ctx->m_downloaded)),
                                     boost::bind(&linux_client::handle_read_content, shared_from_this(), boost::asio::placeholders::error, ctx), ctx);
                             }
                             catch (...)
