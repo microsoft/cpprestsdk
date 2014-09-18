@@ -193,7 +193,7 @@
     <ClInclude Include="..\src\tests\ScopedCurrentTest.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="UnitTestpp120.vcxproj">
+    <ProjectReference Include="UnitTestpp140.vcxproj">
       <Project>{3EB86C0D-432C-4FFC-BAD4-8DF4EFC7D0FF}</Project>
     </ProjectReference>
   </ItemGroup>

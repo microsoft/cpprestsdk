@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(_NTDRIVE)$(_NTROOT)\vctools\cpp_rest\cpprest.razzle.props" Condition="exists('$(_NTDRIVE)$(_NTROOT)\vctools\cpp_rest\cpprest.razzle.props')" />
   <ItemGroup Label="ProjectConfigurations">
@@ -205,15 +205,15 @@
     <ClInclude Include="..\streams_tests.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="$(TestRoot)\Common\utilities\vs12\CommonUtilities120.vcxproj">
+    <ProjectReference Include="$(TestRoot)\Common\utilities\vs14\CommonUtilities140.vcxproj">
       <Project>{0c9d50d9-94fb-4732-a4ad-58e068315bb2}</Project>
     </ProjectReference>
-    <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs12\UnitTestpp120.vcxproj">
+    <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs14\UnitTestpp140.vcxproj">
       <Project>{3EB86C0D-432C-4FFC-BAD4-8DF4EFC7D0FF}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup Condition="'$(BuildAgainstVSInstallation)'==''">
-    <ProjectReference Include="$(CasablancaSrcDir)\build\vs12\casablanca120.vcxproj">
+    <ProjectReference Include="$(CasablancaSrcDir)\build\vs14\casablanca140.vcxproj">
       <Project>{90D85FF4-F0AE-4816-923F-0EF2758F30AB}</Project>
     </ProjectReference>
   </ItemGroup>
@@ -222,8 +222,10 @@
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <Import Project="$(BuildRoot)\cpprest.razzle.targets" Condition="'$(BuildInRazzle)'!=''" />
+<!-- To be reenabled when we have an updated boost package
   <ImportGroup Label="ExtensionTargets">
     <Import Project="$(PackagesRoot)\boost.1.55.0.16\build\native\boost.targets" Condition="Exists('$(PackagesRoot)\boost.1.55.0.16\build\native\boost.targets')" />
     <Import Project="$(PackagesRoot)\boost_date_time-vc120.1.55.0.16\build\native\boost_date_time-vc120.targets" Condition="Exists('$(PackagesRoot)\boost_date_time-vc120.1.55.0.16\build\native\boost_date_time-vc120.targets')" />
   </ImportGroup>
+-->
 </Project>

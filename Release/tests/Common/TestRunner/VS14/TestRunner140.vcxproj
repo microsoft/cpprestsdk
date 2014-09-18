@@ -239,7 +239,7 @@
     <ClInclude Include="..\test_module_loader.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\VS12\UnitTestpp120.vcxproj">
+    <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs14\UnitTestpp140.vcxproj">
       <Project>{3eb86c0d-432c-4ffc-bad4-8df4efc7d0ff}</Project>
     </ProjectReference>
   </ItemGroup>

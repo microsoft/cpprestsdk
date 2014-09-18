@@ -36,7 +36,7 @@
     <DefaultLanguage>en-US</DefaultLanguage>
     <MinimumVisualStudioVersion>11.0</MinimumVisualStudioVersion>
     <RootNamespace>tests::common::websockets_test_utilities</RootNamespace>
-    <ProjectName>websockets_test_utilities120</ProjectName>
+    <ProjectName>websockets_test_utilities140</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -137,13 +137,13 @@
     <ClInclude Include="..\test_websocket_server.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="$(TestRoot)\Common\utilities\vs12\CommonUtilities120.vcxproj">
+    <ProjectReference Include="$(TestRoot)\Common\utilities\vs14\CommonUtilities140.vcxproj">
       <Project>{0c9d50d9-94fb-4732-a4ad-58e068315bb2}</Project>
     </ProjectReference>
-    <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs12\UnitTestpp120.vcxproj">
+    <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs14\UnitTestpp140.vcxproj">
       <Project>{3eb86c0d-432c-4ffc-bad4-8df4efc7d0ff}</Project>
     </ProjectReference>
-    <ProjectReference Include="$(CasablancaSrcDir)\build\vs12\casablanca120.vcxproj">
+    <ProjectReference Include="$(CasablancaSrcDir)\build\vs14\casablanca140.vcxproj">
       <Project>{90D85FF4-F0AE-4816-923F-0EF2758F30AB}</Project>
     </ProjectReference>
   </ItemGroup>
@@ -151,10 +151,12 @@
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+<!--
   <ImportGroup Label="ExtensionTargets">
     <Import Project="$(PackagesRoot)\boost.1.55.0.16\build\native\boost.targets" Condition="Exists('$(PackagesRoot)\boost.1.55.0.16\build\native\boost.targets')" />
     <Import Project="$(PackagesRoot)\boost_system-vc120.1.55.0.16\build\native\boost_system-vc120.targets" Condition="Exists('$(PackagesRoot)\boost_system-vc120.1.55.0.16\build\native\boost_system-vc120.targets')" />
     <Import Project="$(PackagesRoot)\boost_date_time-vc120.1.55.0.16\build\native\boost_date_time-vc120.targets" Condition="Exists('$(PackagesRoot)\boost_date_time-vc120.1.55.0.16\build\native\boost_date_time-vc120.targets')" />
     <Import Project="$(PackagesRoot)\boost_regex-vc120.1.55.0.16\build\native\boost_regex-vc120.targets" Condition="Exists('$(PackagesRoot)\boost_regex-vc120.1.55.0.16\build\native\boost_regex-vc120.targets')" />
   </ImportGroup>
+-->
 </Project>

@@ -231,15 +231,15 @@
     <ClInclude Include="..\streams_tests.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="$(TestRoot)\Common\utilities\vs12.winrt\CommonUtilities120.winrt.vcxproj">
+    <ProjectReference Include="$(TestRoot)\Common\utilities\vs14.winrt\CommonUtilities140.winrt.vcxproj">
       <Project>{ea2d69a1-55c8-4c15-805e-de7e85872484}</Project>
     </ProjectReference>
-    <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs12.winrt\UnitTestpp120.winrt.vcxproj">
+    <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs14.winrt\UnitTestpp140.winrt.vcxproj">
       <Project>{B341AA9C-F38B-4D59-B6B7-8F22491090B7}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup Condition="'$(BuildAgainstVSInstallation)'==''">
-    <ProjectReference Include="$(CasablancaSrcDir)\build\vs12.winrt\casablanca120.winrt.vcxproj">
+    <ProjectReference Include="$(CasablancaSrcDir)\build\vs14.winrt\casablanca140.winrt.vcxproj">
       <Project>{198ED804-2655-4D92-8104-C220E3EA9452}</Project>
     </ProjectReference>
   </ItemGroup>

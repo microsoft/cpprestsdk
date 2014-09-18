@@ -197,15 +197,15 @@
     <ClInclude Include="..\targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\VS12\UnitTestpp120.vcxproj">
+    <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs14\UnitTestpp140.vcxproj">
       <Project>{3EB86C0D-432C-4FFC-BAD4-8DF4EFC7D0FF}</Project>
     </ProjectReference>
-    <ProjectReference Include="$(TestRoot)\Common\TestRunner\VS12\TestRunner120.vcxproj">
+    <ProjectReference Include="$(TestRoot)\Common\TestRunner\vs14\TestRunner140.vcxproj">
       <Project>{6490C580-DD4A-4F2D-A345-732C5148349F}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup Condition="'$(BuildAgainstVSInstallation)'==''">
-    <ProjectReference Include="$(CasablancaSrcDir)\build\vs12\casablanca120.vcxproj">
+    <ProjectReference Include="$(CasablancaSrcDir)\build\vs14\casablanca140.vcxproj">
       <Project>{90D85FF4-F0AE-4816-923F-0EF2758F30AB}</Project>
     </ProjectReference>
   </ItemGroup>

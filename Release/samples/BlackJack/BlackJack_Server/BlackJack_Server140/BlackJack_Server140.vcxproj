@@ -203,7 +203,7 @@
     <ClCompile Include="..\Table.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="$(CasablancaSrcDir)\build\vs12\casablanca120.vcxproj">
+    <ProjectReference Include="$(CasablancaSrcDir)\build\vs14\casablanca140.vcxproj">
       <Project>{90D85FF4-F0AE-4816-923F-0EF2758F30AB}</Project>
     </ProjectReference>
   </ItemGroup>

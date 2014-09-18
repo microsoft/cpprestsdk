@@ -231,16 +231,16 @@
     <ClInclude Include="..\targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs12.winrt\UnitTestpp120.winrt.vcxproj">
+    <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs14.winrt\UnitTestpp140.winrt.vcxproj">
       <Project>{B341AA9C-F38B-4D59-B6B7-8F22491090B7}</Project>
     </ProjectReference>
-    <ProjectReference Include="$(TestRoot)\Common\TestRunner\VS12.winrt\TestRunner120.winrt.vcxproj">
+    <ProjectReference Include="$(TestRoot)\Common\TestRunner\vs14.winrt\TestRunner140.winrt.vcxproj">
       <Project>{26009642-9C25-441F-B138-395E14DF2FB6}</Project>
     </ProjectReference>
   </ItemGroup>
 
   <ItemGroup Condition="'$(BuildAgainstVSInstallation)'==''">
-    <ProjectReference Include="$(CasablancaSrcDir)\build\vs12.winrt\casablanca120.winrt.vcxproj">
+    <ProjectReference Include="$(CasablancaSrcDir)\build\vs14.winrt\casablanca140.winrt.vcxproj">
       <Project>{198ED804-2655-4D92-8104-C220E3EA9452}</Project>
     </ProjectReference>
   </ItemGroup>

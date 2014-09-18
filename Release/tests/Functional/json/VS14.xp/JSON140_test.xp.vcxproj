@@ -135,13 +135,13 @@
     <ClInclude Include="..\stdafx.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs12\UnitTestpp120.vcxproj">
+    <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs14\UnitTestpp140.vcxproj">
       <Project>{3EB86C0D-432C-4FFC-BAD4-8DF4EFC7D0FF}</Project>
     </ProjectReference>
-    <ProjectReference Include="$(CasablancaSrcDir)\build\vs12.xp\casablanca120.xp.vcxproj">
+    <ProjectReference Include="$(CasablancaSrcDir)\build\vs14.xp\casablanca140.xp.vcxproj">
       <Project>{75885703-7f3d-4086-8e60-c60b9b126f7e}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\..\..\Common\utilities\VS12.xp\CommonUtilities120.xp.vcxproj">
+    <ProjectReference Include="..\..\..\Common\utilities\vs14.xp\CommonUtilities140.xp.vcxproj">
       <Project>{5AD81270-B089-4E1B-8741-6486F39DE273}</Project>
     </ProjectReference>
   </ItemGroup>

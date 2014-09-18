@@ -152,13 +152,13 @@
     <ClInclude Include="..\streams_tests.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs12\UnitTestpp120.vcxproj">
+    <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs14\UnitTestpp140.vcxproj">
       <Project>{3EB86C0D-432C-4FFC-BAD4-8DF4EFC7D0FF}</Project>
     </ProjectReference>
-    <ProjectReference Include="$(CasablancaSrcDir)\build\vs12.xp\casablanca120.xp.vcxproj">
+    <ProjectReference Include="$(CasablancaSrcDir)\build\vs14.xp\casablanca140.xp.vcxproj">
       <Project>{75885703-7f3d-4086-8e60-c60b9b126f7e}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\..\..\Common\utilities\VS12.xp\CommonUtilities120.xp.vcxproj">
+    <ProjectReference Include="..\..\..\Common\utilities\vs14.xp\CommonUtilities140.xp.vcxproj">
       <Project>{5ad81270-b089-4e1b-8741-6486f39de273}</Project>
     </ProjectReference>
   </ItemGroup>
