@@ -23,7 +23,9 @@
 #include "stdafx.h"
 
 #ifdef _MS_WINDOWS
+#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
 #include "CppSparseFile.h"
+#endif
 #endif
 
 #if defined(__cplusplus_winrt)
@@ -938,8 +940,11 @@ TEST(file_with_one_byte_size)
     VERIFY_ARE_EQUAL(inFile.read(buffer, 1).get(), 0);
     VERIFY_IS_TRUE(inFile.is_eof());
 }
+#endif
 
-#if (!defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)) && defined(_WIN64)
+#if defined(_MS_WINDOWS) && (!defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)) && defined(_WIN64)
+// since casablanca does not use sparse file apis we're not doing the reverse test (write one byte at 4Gb and verify with std apis)
+// because the file created would be too big
 TEST(read_one_byte_at_4G)
 {
     // Create a file with one byte.
@@ -969,11 +974,9 @@ TEST(read_one_byte_at_4G)
 
     VERIFY_ARE_EQUAL(aCharacter, data);
 }
-
-// since casablanca does not use sparse file apis we're not doing the reverse test (write one byte at 4Gb and verify with std apis)
-// because the file created would be too big
 #endif
-#elif defined(__x86_64__)
+
+#if !defined(_MS_WINDOWS) && defined(__x86_64__)
 
 struct TidyStream
 {
