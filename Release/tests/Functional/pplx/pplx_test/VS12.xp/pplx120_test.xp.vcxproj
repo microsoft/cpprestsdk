@@ -161,7 +161,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup Condition="'$(BuildAgainstVSInstallation)'==''">
-    <ProjectReference Include="$(CasablancaSrcDir)\build\casablanca120.xp.vcxproj">
+    <ProjectReference Include="$(CasablancaSrcDir)\build\vs12.xp\casablanca120.xp.vcxproj">
       <Project>{75885703-7F3D-4086-8E60-C60B9B126F7E}</Project>
     </ProjectReference>
   </ItemGroup>

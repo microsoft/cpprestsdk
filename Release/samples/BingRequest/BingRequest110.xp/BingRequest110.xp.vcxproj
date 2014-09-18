@@ -125,7 +125,7 @@
     <ClCompile Include="..\bingrequest.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="$(CasablancaSrcDir)\build\casablanca110.xp.vcxproj">
+    <ProjectReference Include="$(CasablancaSrcDir)\build\vs11.xp\casablanca110.xp.vcxproj">
       <Project>{4D9ED383-673B-4E48-A6AF-6BD9F108150E}</Project>
     </ProjectReference>
   </ItemGroup>

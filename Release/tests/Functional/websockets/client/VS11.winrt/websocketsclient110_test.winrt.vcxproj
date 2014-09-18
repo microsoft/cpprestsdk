@@ -139,7 +139,7 @@
     <ProjectReference Include="..\..\utilities\vs11.winrt\websockets_test_utilities110.winrt.vcxproj">
       <Project>{14F7B7A0-A057-4E15-8EC4-12BAF00B0F64}</Project>
     </ProjectReference>
-    <ProjectReference Include="$(CasablancaSrcDir)\build\casablanca110.winrt.vcxproj">
+    <ProjectReference Include="$(CasablancaSrcDir)\build\vs11.winrt\casablanca110.winrt.vcxproj">
       <Project>{198ED804-2655-4D92-8104-C220E3EA9452}</Project>
     </ProjectReference>
     <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs11\UnitTestpp110.vcxproj">

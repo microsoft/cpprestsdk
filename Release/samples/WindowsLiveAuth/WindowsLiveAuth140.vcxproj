@@ -179,7 +179,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="$(CasablancaSrcDir)\build\casablanca120.winrt.vcxproj">
+    <ProjectReference Include="$(CasablancaSrcDir)\build\vs12.winrt\casablanca120.winrt.vcxproj">
       <Project>{198ed804-2655-4d92-8104-c220e3ea9452}</Project>
     </ProjectReference>
   </ItemGroup>

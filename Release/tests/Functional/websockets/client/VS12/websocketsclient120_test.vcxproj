@@ -98,7 +98,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ProjectReference Include="$(CasablancaSrcDir)\build\casablanca120.vcxproj">
+    <ProjectReference Include="$(CasablancaSrcDir)\build\vs12\casablanca120.vcxproj">
       <Project>{1014c621-bc2d-4813-b8c1-6d83ad6f9249}</Project>
     </ProjectReference>
     <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs12\UnitTestpp120.vcxproj">

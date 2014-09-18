@@ -114,7 +114,7 @@
     <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs12\UnitTestpp120.vcxproj">
       <Project>{3eb86c0d-432c-4ffc-bad4-8df4efc7d0ff}</Project>
     </ProjectReference>
-    <ProjectReference Include="$(CasablancaSrcDir)\build\casablanca120.xp.vcxproj">
+    <ProjectReference Include="$(CasablancaSrcDir)\build\vs12.xp\casablanca120.xp.vcxproj">
       <Project>{75885703-7f3d-4086-8e60-c60b9b126f7e}</Project>
     </ProjectReference>
     <ProjectReference Include="$(TestRoot)\Common\utilities\VS12.xp\CommonUtilities120.xp.vcxproj">
