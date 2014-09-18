@@ -274,8 +274,7 @@ namespace web { namespace http
                 }
                 
                 std::unique_ptr<boost::asio::ssl::stream<tcp::socket &> > m_ssl_stream;
-                size_t m_known_size;
-                size_t m_current_size;
+                uint64_t m_known_size;
                 bool m_needChunked;
                 bool m_timedout;
                 boost::asio::streambuf m_body_buf;
@@ -301,7 +300,10 @@ namespace web { namespace http
                     }
                 }
 
-                linux_client_request_context(std::shared_ptr<_http_client_communicator> &client, http_request request, std::shared_ptr<linux_connection> connection);
+                linux_client_request_context(
+                    const std::shared_ptr<_http_client_communicator> &client, 
+                    http_request request, 
+                    const std::shared_ptr<linux_connection> &connection);
 
             protected:
                 virtual void cleanup()
@@ -378,34 +380,16 @@ namespace web { namespace http
                     if (ctx->m_request.headers().match(header_names::transfer_encoding, transferencoding) && transferencoding == "chunked")
                     {
                         ctx->m_needChunked = true;
-                    }
-
-                    bool has_body;
-
-                    if (ctx->m_request.headers().match(header_names::content_length, ctx->m_known_size))
+                    } 
+                    else if (!ctx->m_request.headers().match(header_names::content_length, ctx->m_known_size))
                     {
-                        // Have request body if content length header field is non-zero.
-                        has_body = (0 != ctx->m_known_size);
-                    }
-                    else
-                    {
-                        // Stream without content length is the signal of requiring transcoding.
+                        // Stream without content length is the signal of requiring transfer encoding chunked.
                         if (ctx->m_request.body())
                         {
-                            has_body = true;
                             ctx->m_needChunked = true;
                             extra_headers.append(header_names::transfer_encoding);
                             extra_headers.append(":chunked" + CRLF);
                         }
-                        else
-                        {
-                            has_body = false;
-                        }
-                    }
-
-                    if (has_body && !_check_streambuf(ctx, ctx->_get_readbuffer(), "Input stream is not open"))
-                    {
-                        return;
                     }
 
                     request_stream << flatten_http_headers(ctx->m_request.headers());
@@ -425,7 +409,6 @@ namespace web { namespace http
                         // If the connection is new (unresolved and unconnected socket), then start async
                         // call to resolve first, leading eventually to request write.
                         tcp::resolver::query query(host, utility::conversions::print_string(port));
-
                         m_resolver.async_resolve(query, boost::bind(&linux_client::handle_resolve, shared_from_this(), boost::asio::placeholders::error, boost::asio::placeholders::iterator, ctx));
                     }
 
@@ -453,23 +436,6 @@ namespace web { namespace http
 
             private:
                 tcp::resolver m_resolver;
-                
-                static bool _check_streambuf(std::shared_ptr<linux_client_request_context> ctx, concurrency::streams::streambuf<uint8_t> rdbuf, const utility::char_t* msg)
-                {
-                    if (!rdbuf.is_open())
-                    {
-                        auto eptr = rdbuf.exception();
-                        if (!(eptr == nullptr))
-                        {
-                            ctx->report_exception(eptr);
-                        }
-                        else
-                        {
-                            ctx->report_exception(http_exception(msg));
-                        }
-                    }
-                    return rdbuf.is_open();
-                }
 
                 // Helper function to create ssl stream and set verification options.
                 void reset_ssl_stream(const std::shared_ptr<linux_client_request_context> &ctx)
@@ -507,7 +473,7 @@ namespace web { namespace http
                     }
                 }
 
-                void write_request(std::shared_ptr<linux_client_request_context> ctx)
+                void write_request(const std::shared_ptr<linux_client_request_context> &ctx)
                 {
                     if (ctx->m_ssl_stream)
                     {
@@ -515,7 +481,7 @@ namespace web { namespace http
                     }
                     else
                     {
-                        boost::asio::async_write(ctx->m_connection->socket(), ctx->m_body_buf, boost::bind(&linux_client::handle_write_request, shared_from_this(), boost::asio::placeholders::error, ctx));
+                        boost::asio::async_write(ctx->m_connection->socket(), ctx->m_body_buf, boost::bind(&linux_client::handle_write_headers, shared_from_this(), boost::asio::placeholders::error, ctx));
                     }
                 }
 
@@ -618,7 +584,7 @@ namespace web { namespace http
                 {
                     if (!ec)
                     {
-                        boost::asio::async_write(*ctx->m_ssl_stream, ctx->m_body_buf, boost::bind(&linux_client::handle_write_request, shared_from_this(), boost::asio::placeholders::error, ctx));
+                        boost::asio::async_write(*ctx->m_ssl_stream, ctx->m_body_buf, boost::bind(&linux_client::handle_write_headers, shared_from_this(), boost::asio::placeholders::error, ctx));
                     }
                     else
                     {
@@ -630,6 +596,7 @@ namespace web { namespace http
                 {
                     if (ec)
                     {
+                        // Reuse error handling.
                         return handle_write_body(ec, ctx);
                     }
 
@@ -647,9 +614,10 @@ namespace web { namespace http
                         }
                     }
 
+                    const auto & chunkSize = client_config().chunksize();
                     auto readbuf = ctx->_get_readbuffer();
-                    uint8_t *buf = boost::asio::buffer_cast<uint8_t *>(ctx->m_body_buf.prepare(client_config().chunksize() + http::details::chunked_encoding::additional_encoding_space));
-                    readbuf.getn(buf + http::details::chunked_encoding::data_offset, client_config().chunksize())
+                    uint8_t *buf = boost::asio::buffer_cast<uint8_t *>(ctx->m_body_buf.prepare(chunkSize + http::details::chunked_encoding::additional_encoding_space));
+                    readbuf.getn(buf + http::details::chunked_encoding::data_offset, chunkSize)
                     .then([=](pplx::task<size_t> op)
                     {
                         size_t readSize = 0;
@@ -662,11 +630,11 @@ namespace web { namespace http
                             ctx->report_exception(std::current_exception());
                             return;
                         }
-                        const size_t offset = http::details::chunked_encoding::add_chunked_delimiters(buf, client_config().chunksize() + http::details::chunked_encoding::additional_encoding_space, readSize);
+
+                        const size_t offset = http::details::chunked_encoding::add_chunked_delimiters(buf, chunkSize + http::details::chunked_encoding::additional_encoding_space, readSize);
                         ctx->m_body_buf.commit(readSize + http::details::chunked_encoding::additional_encoding_space);
                         ctx->m_body_buf.consume(offset);
-                        ctx->m_current_size += readSize;
-                        ctx->m_uploaded += (size64_t)readSize;
+                        ctx->m_uploaded += static_cast<uint64_t>(readSize);
                         if (ctx->m_ssl_stream)
                         {
                             if (readSize != 0)
@@ -698,8 +666,9 @@ namespace web { namespace http
 
                 void handle_write_large_body(const boost::system::error_code& ec, std::shared_ptr<linux_client_request_context> ctx)
                 {
-                    if (ec || ctx->m_current_size >= ctx->m_known_size)
+                    if (ec || ctx->m_uploaded >= ctx->m_known_size)
                     {
+                        // Reuse error handling.
                         return handle_write_body(ec, ctx);
                     }
 
@@ -717,25 +686,10 @@ namespace web { namespace http
                         }
                     }
 
-                    auto readbuf = ctx->_get_readbuffer();
-                    const size_t readSize = std::min(client_config().chunksize(), ctx->m_known_size - ctx->m_current_size);
-
-                    readbuf.getn(boost::asio::buffer_cast<uint8_t *>(ctx->m_body_buf.prepare(readSize)), readSize)
-                    .then([=](pplx::task<size_t> op)
+                    auto write_chunk = [=](size_t chunkSize)
                     {
-                        size_t actualSize = 0;
-                        try
-                        {
-                            actualSize = op.get();
-                        }
-                        catch (...)
-                        {
-                            ctx->report_exception(std::current_exception());
-                            return;
-                        }
-                        ctx->m_uploaded += (size64_t)actualSize;
-                        ctx->m_current_size += actualSize;
-                        ctx->m_body_buf.commit(actualSize);
+                        ctx->m_uploaded += static_cast<uint64_t>(chunkSize);
+                        ctx->m_body_buf.commit(chunkSize);
 
                         if (ctx->m_ssl_stream)
                         {
@@ -747,15 +701,34 @@ namespace web { namespace http
                             boost::asio::async_write(ctx->m_connection->socket(), ctx->m_body_buf,
                                 boost::bind(&linux_client::handle_write_large_body, shared_from_this(), boost::asio::placeholders::error, ctx));
                         }
+                    };
+
+                    const auto readSize = static_cast<size_t>(std::min(static_cast<uint64_t>(client_config().chunksize()), ctx->m_known_size - ctx->m_uploaded));
+
+                    auto readbuf = ctx->_get_readbuffer();
+                    readbuf.getn(boost::asio::buffer_cast<uint8_t *>(ctx->m_body_buf.prepare(readSize)), readSize)
+                    .then([=](pplx::task<size_t> op)
+                    {
+                        try
+                        {
+                            write_chunk(op.get());
+                        }
+                        catch (...)
+                        {
+                            ctx->report_exception(std::current_exception());
+                            return;
+                        }
                     });
                 }
 
-                void handle_write_request(const boost::system::error_code& ec, std::shared_ptr<linux_client_request_context> ctx)
+                void handle_write_headers(const boost::system::error_code& ec, std::shared_ptr<linux_client_request_context> ctx)
                 {
-                    if (!ec)
+                    if(ec)
                     {
-                        ctx->m_current_size = 0;
-
+                        ctx->report_error("Failed to write request headers", ec, httpclient_errorcode_context::writeheader);
+                    }
+                    else
+                    {
                         if (ctx->m_needChunked)
                         {
                             handle_write_chunked_body(ec, ctx);
@@ -764,10 +737,6 @@ namespace web { namespace http
                         {
                             handle_write_large_body(ec, ctx);
                         }
-                    }
-                    else
-                    {
-                        ctx->report_error("Failed to write request headers", ec, httpclient_errorcode_context::writeheader);
                     }
                 }
 
@@ -865,9 +834,9 @@ namespace web { namespace http
                     }
                 }
 
-                void read_headers(std::shared_ptr<linux_client_request_context> ctx)
+                void read_headers(const std::shared_ptr<linux_client_request_context> &ctx)
                 {
-                    ctx->m_needChunked = false;
+                    auto needChunked = false;
                     std::istream response_stream(&ctx->m_body_buf);
                     std::string header;
                     while (std::getline(response_stream, header) && header != "\r")
@@ -882,7 +851,7 @@ namespace web { namespace http
 
                             if (boost::iequals(name, header_names::transfer_encoding))
                             {
-                                ctx->m_needChunked = boost::iequals(value, U("chunked"));
+                                needChunked = boost::iequals(value, U("chunked"));
                             }
 
                             if (boost::iequals(name, header_names::connection))
@@ -904,7 +873,7 @@ namespace web { namespace http
 
                     // note: need to check for 'chunked' here as well, azure storage sends both
                     // transfer-encoding:chunked and content-length:0 (although HTTP says not to)
-                    if (ctx->m_request.method() == U("HEAD") || (!ctx->m_needChunked && ctx->m_known_size == 0))
+                    if (ctx->m_request.method() == U("HEAD") || (!needChunked && ctx->m_known_size == 0))
                     {
                         // we can stop early - no body
                         auto progress = ctx->m_request._get_impl()->_progress_handler();
@@ -925,10 +894,9 @@ namespace web { namespace http
                     }
                     else
                     {
-                        ctx->m_current_size = 0;
-                        if (!ctx->m_needChunked)
+                        if (!needChunked)
                         {
-                            async_read_until_buffersize(std::min(ctx->m_known_size, client_config().chunksize()),
+                            async_read_until_buffersize(static_cast<size_t>(std::min(ctx->m_known_size, static_cast<uint64_t>(client_config().chunksize()))),
                                 boost::bind(&linux_client::handle_read_content, shared_from_this(), boost::asio::placeholders::error, ctx), ctx);
                         }
                         else
@@ -998,8 +966,7 @@ namespace web { namespace http
                 {
                     if (!ec)
                     {
-                        ctx->m_current_size += to_read;
-                        ctx->m_downloaded += (size64_t)to_read;
+                        ctx->m_downloaded += static_cast<uint64_t>(to_read);
                         auto progress = ctx->m_request._get_impl()->_progress_handler();
                         if (progress)
                         {
@@ -1023,7 +990,7 @@ namespace web { namespace http
                                 try
                                 {
                                     op.wait();
-                                    ctx->complete_request(ctx->m_current_size);
+                                    ctx->complete_request(ctx->m_downloaded);
                                 }
                                 catch (...)
                                 {
@@ -1077,7 +1044,7 @@ namespace web { namespace http
                     {
                         if (ec == boost::asio::error::eof && ctx->m_known_size == std::numeric_limits<size_t>::max())
                         {
-                            ctx->m_known_size = ctx->m_current_size + ctx->m_body_buf.size();
+                            ctx->m_known_size = ctx->m_downloaded + ctx->m_body_buf.size();
                         }
                         else
                         {
@@ -1100,24 +1067,23 @@ namespace web { namespace http
                         }
                     }
 
-                    if (ctx->m_current_size < ctx->m_known_size)
+                    if (ctx->m_downloaded < ctx->m_known_size)
                     {
                         ctx->reset_timer(static_cast<int>(client_config().timeout().count()));
 
                         // more data need to be read
                         writeBuffer.putn(boost::asio::buffer_cast<const uint8_t *>(ctx->m_body_buf.data()),
-                            std::min(ctx->m_body_buf.size(), ctx->m_known_size - ctx->m_current_size))
+                            static_cast<size_t>(std::min(static_cast<uint64_t>(ctx->m_body_buf.size()), ctx->m_known_size - ctx->m_downloaded)))
                         .then([=](pplx::task<size_t> op)
                         {
                             size_t writtenSize = 0;
                             try
                             {
                                 writtenSize = op.get();
-                                ctx->m_downloaded += (size64_t)writtenSize;
-                                ctx->m_current_size += writtenSize;
+                                ctx->m_downloaded += static_cast<uint64_t>(writtenSize);
                                 ctx->m_body_buf.consume(writtenSize);
 
-                                async_read_until_buffersize(std::min(client_config().chunksize(), ctx->m_known_size - ctx->m_current_size),
+                                async_read_until_buffersize(static_cast<size_t>(std::min(static_cast<uint64_t>(client_config().chunksize()), ctx->m_known_size - ctx->m_downloaded)),
                                     boost::bind(&linux_client::handle_read_content, shared_from_this(), boost::asio::placeholders::error, ctx), ctx);
                             }
                             catch (...)
@@ -1129,13 +1095,12 @@ namespace web { namespace http
                     }
                     else
                     {
-                        writeBuffer.sync()
-                        .then([ctx](pplx::task<void> op)
+                        writeBuffer.sync().then([ctx](pplx::task<void> op)
                         {
                             try
                             {
                                 op.wait();
-                                ctx->complete_request(ctx->m_current_size);
+                                ctx->complete_request(ctx->m_downloaded);
                             }
                             catch (...)
                             {
@@ -1164,16 +1129,15 @@ namespace web { namespace http
             }
 
             linux_client_request_context::linux_client_request_context(
-                    std::shared_ptr<_http_client_communicator> &client,
+                    const std::shared_ptr<_http_client_communicator> &client,
                     http_request request,
-                    std::shared_ptr<linux_connection> connection)
+                    const std::shared_ptr<linux_connection> &connection)
                 : request_context(client, request)
                 , m_known_size(0)
-                , m_current_size(0)
                 , m_needChunked(false)
                 , m_timedout(false)
                 , m_timeout_timer(crossplat::threadpool::shared_instance().service())
-                , m_connection(std::move(connection))
+                , m_connection(connection)
 #if defined(__APPLE__) || defined(ANDROID)
                 , m_openssl_failed(false)
 #endif
