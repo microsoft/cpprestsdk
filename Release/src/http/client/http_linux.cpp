@@ -281,6 +281,10 @@ namespace web { namespace http
                 boost::asio::deadline_timer m_timeout_timer;
                 std::shared_ptr<linux_connection> m_connection;
                 
+#if defined(__APPLE__) || defined(ANDROID)
+                bool m_openssl_failed;
+#endif
+
                 virtual ~linux_client_request_context();
 
                 void handle_timeout_timer(const boost::system::error_code& ec)
@@ -432,9 +436,6 @@ namespace web { namespace http
 
             private:
                 tcp::resolver m_resolver;
-#if defined(__APPLE__) || defined(ANDROID)
-                bool m_openssl_failed;
-#endif
 
                 // Helper function to create ssl stream and set verification options.
                 void reset_ssl_stream(const std::shared_ptr<linux_client_request_context> &ctx)
@@ -448,9 +449,9 @@ namespace web { namespace http
                     if (client_config().validate_certificates())
                     {
                         ctx->m_ssl_stream->set_verify_mode(boost::asio::ssl::context::verify_peer);
-                        ctx->m_ssl_stream->set_verify_callback(boost::bind(&linux_client::handle_cert_verification, shared_from_this(), _1, _2));
+                        ctx->m_ssl_stream->set_verify_callback(boost::bind(&linux_client::handle_cert_verification, shared_from_this(), _1, _2, ctx));
 #if defined(__APPLE__) || defined(ANDROID)
-                        m_openssl_failed = false;
+                        ctx->m_openssl_failed = false;
 #endif
                     }
                     else
@@ -472,7 +473,7 @@ namespace web { namespace http
                     }
                 }
 
-                void write_request(std::shared_ptr<linux_client_request_context> &ctx)
+                void write_request(const std::shared_ptr<linux_client_request_context> &ctx)
                 {
                     if (ctx->m_ssl_stream)
                     {
@@ -484,7 +485,7 @@ namespace web { namespace http
                     }
                 }
 
-                void handle_connect(const boost::system::error_code& ec, tcp::resolver::iterator endpoints, std::shared_ptr<linux_client_request_context> ctx)
+                void handle_connect(const boost::system::error_code& ec, tcp::resolver::iterator endpoints, const std::shared_ptr<linux_client_request_context> &ctx)
                 {
                     if (!ec)
                     {
@@ -510,8 +511,11 @@ namespace web { namespace http
                     }
                 }
 
-                bool handle_cert_verification(bool preverified, boost::asio::ssl::verify_context &ctx)
+                bool handle_cert_verification(bool preverified, boost::asio::ssl::verify_context &verifyCtx, const std::shared_ptr<linux_client_request_context> &requestCtx)
                 {
+                    // Unreferenced parameter on some platforms.
+                    requestCtx;
+
                     // OpenSSL calls the verification callback once per certificate in the chain,
                     // starting with the root CA certificate. The 'leaf', non-Certificate Authority (CA)
                     // certificate, i.e. actual server certificate is at the '0' position in the
@@ -521,15 +525,15 @@ namespace web { namespace http
 #if defined(__APPLE__) || defined(ANDROID)
                     if(!preverified)
                     {
-                        m_openssl_failed = true;
+                        requestCtx->m_openssl_failed = true;
                     }
-                    if(m_openssl_failed)
+                    if(requestCtx->m_openssl_failed)
                     {
                         // On OS X, iOS, and Android, OpenSSL doesn't have access to where the OS
                         // stores keychains. If OpenSSL fails we will doing verification at the
                         // end using the whole certificate chain so wait until the 'leaf' cert.
                         // For now return true so OpenSSL continues down the certificate chain.
-                        X509_STORE_CTX *storeContext = ctx.native_handle();
+                        X509_STORE_CTX *storeContext = verifyCtx.native_handle();
                         int currentDepth = X509_STORE_CTX_get_error_depth(storeContext);
                         if(currentDepth != 0)
                         {
@@ -573,7 +577,7 @@ namespace web { namespace http
 #endif
                     
                     boost::asio::ssl::rfc2818_verification rfc2818(m_uri.host());
-                    return rfc2818(preverified, ctx);
+                    return rfc2818(preverified, verifyCtx);
                 }
 
                 void handle_handshake(const boost::system::error_code& ec, std::shared_ptr<linux_client_request_context> ctx)
@@ -1134,6 +1138,9 @@ namespace web { namespace http
                 , m_timedout(false)
                 , m_timeout_timer(crossplat::threadpool::shared_instance().service())
                 , m_connection(connection)
+#if defined(__APPLE__) || defined(ANDROID)
+                , m_openssl_failed(false)
+#endif
             {}
 
             std::shared_ptr<request_context> linux_client_request_context::create_request_context(
