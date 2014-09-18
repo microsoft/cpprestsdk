@@ -48,6 +48,6 @@
       <AdditionalDependencies>Winhttp.lib;httpapi.lib;bcrypt.lib;crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
-  <Import Project="sources.proj" />
+  <Import Project="../sources.proj" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>
