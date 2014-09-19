@@ -41,7 +41,7 @@ namespace web
 {
 namespace experimental
 {
-namespace web_sockets
+namespace websockets
 {
 namespace client
 {
@@ -104,8 +104,8 @@ public:
         if (client_config.credentials().is_set())
         {
             m_msg_websocket->Control->ServerCredential = ref new Windows::Security::Credentials::PasswordCredential("WebSocketClientCredentialResource", 
-                ref new Platform::String(client_config.credentials().username().c_str()), 
-                ref new Platform::String(client_config.credentials().password().c_str()));
+                Platform::StringReference(client_config.credentials().username().c_str()), 
+                Platform::StringReference(client_config.credentials().password().c_str()));
         }
 
         m_context = ref new ReceiveContext([=](std::shared_ptr<websocket_incoming_message> msg)
@@ -113,7 +113,7 @@ public:
             _ASSERTE(msg != nullptr);
             pplx::task_completion_event<websocket_incoming_message> tce; // This will be set if there are any tasks waiting to receive a message
             {
-                std::unique_lock<std::mutex> lock(m_receive_queue_lock);
+                std::lock_guard<std::mutex> lock(m_receive_queue_lock);
                 if (m_receive_task_queue.empty()) // Push message to the queue as no one is waiting to receive
                 {
                     m_receive_msg_queue.push(std::move(*msg));
@@ -156,13 +156,13 @@ public:
 
     void close_pending_tasks_with_error()
     {
-        std::unique_lock<std::mutex> lock(m_receive_queue_lock);
+        std::lock_guard<std::mutex> lock(m_receive_queue_lock);
         m_client_closed = true;
         while(!m_receive_task_queue.empty()) // There are tasks waiting to receive a message, signal them
         {
             auto tce = m_receive_task_queue.front();
             m_receive_task_queue.pop();
-            tce.set_exception(std::make_exception_ptr(websocket_exception(_XPLATSTR("Websocket connection has been closed."))));
+            tce.set_exception(std::make_exception_ptr(websocket_exception("Websocket connection has been closed.")));
         }
     }
 
@@ -173,7 +173,7 @@ public:
         const auto &proxy = config().proxy();
         if(!proxy.is_default())
         {
-            return pplx::task_from_exception<void>(websocket_exception(_XPLATSTR("Only a default proxy server is supported.")));
+            return pplx::task_from_exception<void>(websocket_exception("Only a default proxy server is supported."));
         }
 
         const auto &proxy_cred = proxy.credentials();
@@ -209,7 +209,7 @@ public:
     {
         if (m_messageWriter == nullptr)
         {
-            return pplx::task_from_exception<void>(websocket_exception(_XPLATSTR("Client not connected.")));
+            return pplx::task_from_exception<void>(websocket_exception("Client not connected."));
         }
 
         switch(msg._m_impl->message_type())
@@ -221,22 +221,21 @@ public:
             m_msg_websocket->Control->MessageType = SocketMessageType::Utf8;
             break;
         default:
-            return pplx::task_from_exception<void>(websocket_exception(_XPLATSTR("Message Type not supported.")));
+            return pplx::task_from_exception<void>(websocket_exception("Message Type not supported."));
         }
 
         const auto length = msg._m_impl->length();
         if (length == 0)
         {
-            return pplx::task_from_exception<void>(websocket_exception(_XPLATSTR("Cannot send empty message.")));
+            return pplx::task_from_exception<void>(websocket_exception("Cannot send empty message."));
         }
-
         if (length >= UINT_MAX && length != SIZE_MAX)
         {
-            return pplx::task_from_exception<void>(websocket_exception(_XPLATSTR("Message size too large. Ensure message length is less than UINT_MAX.")));
+            return pplx::task_from_exception<void>(websocket_exception("Message size too large. Ensure message length is less than UINT_MAX."));
         }
 
         {
-            std::unique_lock<std::mutex> lock(m_send_lock);
+            std::lock_guard<std::mutex> lock(m_send_lock);
             ++m_scheduled;
             if (m_scheduled == 1) // No sends in progress
             {
@@ -248,13 +247,13 @@ public:
                 m_outgoing_msg_queue.push(msg);
             }
         }
-        return pplx::create_task(msg.m_send_tce);
+        return pplx::create_task(msg._m_impl->msg_sent());
     }
 
-    void send_msg(websocket_outgoing_message msg)
+    void send_msg(websocket_outgoing_message &msg)
     {
         auto this_client = this->shared_from_this();
-        auto& is_buf = msg._m_impl->streambuf();
+        auto& is_buf = msg._m_impl->body().create_istream();
         auto length = msg._m_impl->length();
 
         if (length == SIZE_MAX)
@@ -266,8 +265,7 @@ public:
                 auto buf_sz = is_buf.size();
                 if (buf_sz >= SIZE_MAX)
                 {
-                    websocket_exception wx(_XPLATSTR("Cannot send messages larger than SIZE_MAX."));
-                    msg.m_send_tce.set_exception(std::make_exception_ptr(wx));
+                    msg.signal_msg_sent(std::make_exception_ptr(websocket_exception("Cannot send messages larger than SIZE_MAX.")));
                     return;
                 }
                 length = static_cast<size_t>(buf_sz);
@@ -278,19 +276,17 @@ public:
                 // The stream needs to be buffered.
                 concurrency::streams::container_buffer<std::vector<uint8_t>> stbuf;
                 auto is_buf_istream = is_buf.create_istream();
-                msg._m_impl->set_streambuf(stbuf);
+                msg._m_impl->set_body(stbuf);
                 is_buf_istream.read_to_end(stbuf).then([this_client, msg](pplx::task<size_t> t)
                 {
                     try
                     {
-                        auto sz = t.get();
-                        msg._m_impl->set_length(sz);
+                        msg._m_impl->set_length(t.get());
                         this_client->send_msg(msg);
                     }
                     catch (...)
                     {
-                        auto eptr = std::current_exception();
-                        msg.m_send_tce.set_exception(eptr);
+                        msg.signal_msg_sent(std::current_exception());
                     }
                 });
                 // We have postponed the call to send_msg() until after the data is buffered.
@@ -303,7 +299,7 @@ public:
         // If acquire fails, copy the data to a temporary buffer managed by sp_allocated and send it over the socket connection. 
         std::shared_ptr<uint8_t> sp_allocated(nullptr, [](uint8_t *) { } );
         size_t acquired_size = 0;
-        uint8_t* ptr;
+        uint8_t *ptr;
         auto read_task = pplx::task_from_result();
         bool acquired = is_buf.acquire(ptr, acquired_size);
 
@@ -323,7 +319,7 @@ public:
             {
                 if (bytes_read != length)
                 {
-                    throw websocket_exception(_XPLATSTR("Failed to read required length of data from the stream.")); 
+                    throw websocket_exception("Failed to read required length of data from the stream."); 
                 }              
             });
         }
@@ -350,7 +346,7 @@ public:
                 bytes_written = previousTask.get();
                 if (bytes_written != length)
                 {
-                    eptr = std::make_exception_ptr(websocket_exception(_XPLATSTR("Failed to send all the bytes.")));
+                    eptr = std::make_exception_ptr(websocket_exception("Failed to send all the bytes."));
                 }
             }
             catch (const websocket_exception& ex)
@@ -359,22 +355,22 @@ public:
             }
             catch (...)
             {
-                eptr = std::make_exception_ptr(websocket_exception(_XPLATSTR("Failed to send data over the websocket connection.")));
+                eptr = std::make_exception_ptr(websocket_exception("Failed to send data over the websocket connection."));
             }
 
             if (acquired)
             {
-                msg._m_impl->streambuf().release(sp_allocated.get(), bytes_written);
+                msg._m_impl->body().release(sp_allocated.get(), bytes_written);
             }
 
             // Set the send_task_completion_event after calling release.
             if (eptr)
             {
-                msg.m_send_tce.set_exception(eptr);
+                msg.signal_msg_sent(eptr);
             }
 
             {
-                std::unique_lock<std::mutex> lock(this_client->m_send_lock);
+                std::lock_guard<std::mutex> lock(this_client->m_send_lock);
                 --this_client->m_scheduled;
                 if (!this_client->m_outgoing_msg_queue.empty())
                 {
@@ -383,16 +379,16 @@ public:
                     this_client->send_msg(next_msg);
                 }
             }
-            msg.m_send_tce.set();
+            msg.signal_msg_sent();
         });
     }
 
     pplx::task<websocket_incoming_message> receive()
     {
-        std::unique_lock<std::mutex> lock(m_receive_queue_lock);
+        std::lock_guard<std::mutex> lock(m_receive_queue_lock);
         if (m_client_closed == true)
         {
-            return pplx::task_from_exception<websocket_incoming_message>(std::make_exception_ptr(websocket_exception(_XPLATSTR("Websocket connection has closed."))));
+            return pplx::task_from_exception<websocket_incoming_message>(std::make_exception_ptr(websocket_exception("Websocket connection has closed.")));
         }
 
         if (m_receive_msg_queue.empty()) // Push task completion event to the tce queue, so that it gets signaled when we have a message.
@@ -424,7 +420,7 @@ public:
         return pplx::create_task(m_close_tce);
     }
 
-    static std::shared_ptr<details::_websocket_message> get_impl(websocket_incoming_message msg)
+    static std::shared_ptr<details::_websocket_message> &get_impl(websocket_incoming_message msg)
     {
         return msg._m_impl;
     }
@@ -473,8 +469,7 @@ private:
 void ReceiveContext::OnReceive(MessageWebSocket^ sender, MessageWebSocketMessageReceivedEventArgs^ args)
 {
     websocket_incoming_message ws_incoming_message;
-    auto msg = winrt_client::get_impl(ws_incoming_message);
-    msg->_prepare_to_receive_data();
+    auto &msg = winrt_client::get_impl(ws_incoming_message);
 
     switch(args->MessageType)
     {
@@ -486,18 +481,17 @@ void ReceiveContext::OnReceive(MessageWebSocket^ sender, MessageWebSocketMessage
         break;
     }
 
-    auto& writebuf = msg->streambuf();
+    auto &writebuf = msg->body();
 
     try
     {
         DataReader^ reader = args->GetDataReader();
-        auto len = reader->UnconsumedBufferLength;
+        const auto len = reader->UnconsumedBufferLength;
         auto block = writebuf.alloc(len);
-        reader->ReadBytes(Platform::ArrayReference<uint8>(block, len)); 
+        reader->ReadBytes(Platform::ArrayReference<uint8_t>(block, len)); 
         writebuf.commit(len);
         writebuf.close(std::ios::out).wait(); // Since this is an in-memory stream, this call is not blocking.
-        msg->set_length(len);
-        msg->_set_data_available(); 
+        msg->signal_msg_received(len);
         m_receive_handler(std::make_shared<websocket_incoming_message>(ws_incoming_message));
     }
     catch(...)

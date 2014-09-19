@@ -41,7 +41,7 @@ namespace web
 {
 namespace experimental
 {
-namespace web_sockets
+namespace websockets
 {
 namespace client
 {
@@ -72,34 +72,6 @@ std::vector<::utility::string_t> websocket_client_config::subprotocols() const
     return values;
 }
 
-void details::_websocket_message::set_body(streams::istream instream)
-{
-    set_streambuf(instream.streambuf());
-}
-
-void details::_websocket_message::_prepare_to_receive_data()
-{
-    // The user did not specify a stream.
-    // We will create one...
-    concurrency::streams::producer_consumer_buffer<uint8_t> buf;
-    set_streambuf(buf);
-}
-
-std::string details::_websocket_message::_extract_string()
-{
-    auto& buf_r = streambuf();
-
-    if (buf_r.in_avail() == 0)
-    {
-        return std::string();
-    }
-
-    std::string body;
-    body.resize(static_cast<std::string::size_type>(buf_r.in_avail()));
-    buf_r.getn(reinterpret_cast<uint8_t*>(&body[0]), body.size()).get();
-    return body;
-}
-
 pplx::task<std::string> websocket_incoming_message::extract_string() const
 {
     if (_m_impl->message_type() == websocket_message_type::binary_message)
@@ -107,9 +79,17 @@ pplx::task<std::string> websocket_incoming_message::extract_string() const
         return pplx::task_from_exception<std::string>(websocket_exception("Invalid message type"));
     }
 
-    auto m_impl = _m_impl;
+    auto& buf_r = _m_impl->body();
+    if (buf_r.in_avail() == 0)
+    {
+        return pplx::task_from_result<std::string>();
+    }
 
-    return pplx::create_task(_m_impl->_get_data_available()).then([m_impl]() { return m_impl->_extract_string(); });
+    // TODO all store as strings than can make optimization...
+    std::string body;
+    body.resize(static_cast<std::string::size_type>(buf_r.in_avail()));
+    buf_r.getn(reinterpret_cast<uint8_t*>(&body[0]), body.size()).get();
+    return pplx::task_from_result(std::move(body));
 }
 
 }}}}

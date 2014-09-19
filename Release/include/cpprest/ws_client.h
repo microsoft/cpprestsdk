@@ -57,7 +57,7 @@ namespace web
 /// WebSocket client is currently in beta.
 namespace experimental 
 {
-namespace web_sockets
+namespace websockets
 {
 /// WebSocket client side library.
 namespace client
@@ -359,28 +359,9 @@ public:
     _ASYNCRTIMP websocket_client(websocket_client_config client_config);
 
     /// <summary>
+    /// Destructor
     /// </summary>
     ~websocket_client() { }
-
-    /// <summary>
-    /// Move constructor.
-    /// </summary>
-    websocket_client(websocket_client &&other) 
-        : m_client(std::move(other.m_client))
-    {
-    }
-
-    /// <summary>
-    /// Move assignment operator.
-    /// </summary>
-    websocket_client &operator=(websocket_client &&other)
-    {
-        if(this != &other)
-        {
-            m_client = std::move(other.m_client);
-        }
-        return *this;
-    }
 
     /// <summary>
     /// Connects to the remote network destination. The connect method initiates the websocket handshake with the 

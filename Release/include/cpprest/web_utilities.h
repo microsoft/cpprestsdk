@@ -37,7 +37,7 @@ namespace http { namespace client {
     class http_client_config;
 }}
 
-namespace experimental { namespace web_sockets { namespace client {
+namespace experimental { namespace websockets { namespace client {
     class websocket_client_config;
 }}}
 
@@ -75,7 +75,7 @@ public:
 private:
     friend class web::web_proxy;
     friend class web::http::client::http_client_config;
-    friend class web::experimental::web_sockets::client::websocket_client_config;
+    friend class web::experimental::websockets::client::websocket_client_config;
 
     credentials() : m_is_set(false) {}
 
