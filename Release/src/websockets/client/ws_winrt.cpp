@@ -61,10 +61,10 @@ public:
 
 private:
     // Public members cannot have native types
-    ReceiveContext(std::function<void(std::shared_ptr<websocket_incoming_message>)> receive_handler, std::function<void()> close_handler): m_receive_handler(receive_handler), m_close_handler(close_handler) {}
+    ReceiveContext(std::function<void(websocket_incoming_message &>)> receive_handler, std::function<void()> close_handler): m_receive_handler(receive_handler), m_close_handler(close_handler) {}
 
     // Handler to be executed when a message has been received by the client
-    std::function<void(std::shared_ptr<websocket_incoming_message>)> m_receive_handler;
+    std::function<void(websocket_incoming_message &)> m_receive_handler;
 
     // Handler to be executed when a close message has been received by the client
     std::function<void()> m_close_handler;
@@ -108,15 +108,14 @@ public:
                 Platform::StringReference(client_config.credentials().password().c_str()));
         }
 
-        m_context = ref new ReceiveContext([=](std::shared_ptr<websocket_incoming_message> msg)
+        m_context = ref new ReceiveContext([=](websocket_incoming_message &msg)
         {
-            _ASSERTE(msg != nullptr);
             pplx::task_completion_event<websocket_incoming_message> tce; // This will be set if there are any tasks waiting to receive a message
             {
                 std::lock_guard<std::mutex> lock(m_receive_queue_lock);
                 if (m_receive_task_queue.empty()) // Push message to the queue as no one is waiting to receive
                 {
-                    m_receive_msg_queue.push(std::move(*msg));
+                    m_receive_msg_queue.push(msg);
                     return;
                 }
                 else // There are tasks waiting to receive a message.
@@ -126,7 +125,7 @@ public:
                 }
             }
             // Setting the tce outside the receive lock for better performance
-            tce.set(*msg);
+            tce.set(msg);
         }, 
         [=]() // Close handler called upon receiving a close frame from the server.
         {
@@ -253,7 +252,7 @@ public:
     void send_msg(websocket_outgoing_message &msg)
     {
         auto this_client = this->shared_from_this();
-        auto& is_buf = msg._m_impl->body().create_istream();
+        auto& is_buf = msg.m_body.create_istream();
         auto length = msg._m_impl->length();
 
         if (length == SIZE_MAX)
@@ -274,10 +273,9 @@ public:
             else
             {
                 // The stream needs to be buffered.
-                concurrency::streams::container_buffer<std::vector<uint8_t>> stbuf;
                 auto is_buf_istream = is_buf.create_istream();
-                msg._m_impl->set_body(stbuf);
-                is_buf_istream.read_to_end(stbuf).then([this_client, msg](pplx::task<size_t> t)
+                msg.m_body = concurrency::streams::container_buffer<std::vector<uint8_t>>();
+                is_buf_istream.read_to_end(msg.m_body).then([this_client, msg](pplx::task<size_t> t)
                 {
                     try
                     {
@@ -336,7 +334,7 @@ public:
 
             // Send the data as one complete message, in WinRT we do not have an option to send fragments.
             return pplx::task<unsigned int>(this_client->m_messageWriter->StoreAsync());
-        }).then([this_client, msg, acquired, sp_allocated, length] (pplx::task<unsigned int> previousTask)
+        }).then([this_client, msg, is_buf, acquired, sp_allocated, length](pplx::task<unsigned int> previousTask)
         {
             std::exception_ptr eptr;
             unsigned int bytes_written = 0;
@@ -360,7 +358,7 @@ public:
 
             if (acquired)
             {
-                msg._m_impl->body().release(sp_allocated.get(), bytes_written);
+                is_buf.release(sp_allocated.get(), bytes_written);
             }
 
             // Set the send_task_completion_event after calling release.
@@ -420,11 +418,6 @@ public:
         return pplx::create_task(m_close_tce);
     }
 
-    static std::shared_ptr<details::_websocket_message> &get_impl(websocket_incoming_message msg)
-    {
-        return msg._m_impl;
-    }
-
 private:
 
     // WinRT MessageWebSocket object
@@ -469,7 +462,7 @@ private:
 void ReceiveContext::OnReceive(MessageWebSocket^ sender, MessageWebSocketMessageReceivedEventArgs^ args)
 {
     websocket_incoming_message ws_incoming_message;
-    auto &msg = winrt_client::get_impl(ws_incoming_message);
+    auto &msg = ws_incoming_message->_m_impl;
 
     switch(args->MessageType)
     {
@@ -481,18 +474,16 @@ void ReceiveContext::OnReceive(MessageWebSocket^ sender, MessageWebSocketMessage
         break;
     }
 
-    auto &writebuf = msg->body();
-
     try
     {
         DataReader^ reader = args->GetDataReader();
         const auto len = reader->UnconsumedBufferLength;
-        auto block = writebuf.alloc(len);
-        reader->ReadBytes(Platform::ArrayReference<uint8_t>(block, len)); 
-        writebuf.commit(len);
-        writebuf.close(std::ios::out).wait(); // Since this is an in-memory stream, this call is not blocking.
+        std::string payload;
+        payload.resize(len);
+        reader->ReadBytes(Platform::ArrayReference<uint8_t>(payload.c_str(), len));
+        ws_incoming_message.m_body = concurrency::streams::container_buffer<std::string>(std::move(payload));
         msg->signal_msg_received(len);
-        m_receive_handler(std::make_shared<websocket_incoming_message>(ws_incoming_message));
+        m_receive_handler(ws_incoming_message);
     }
     catch(...)
     {

@@ -78,18 +78,7 @@ pplx::task<std::string> websocket_incoming_message::extract_string() const
     {
         return pplx::task_from_exception<std::string>(websocket_exception("Invalid message type"));
     }
-
-    auto& buf_r = _m_impl->body();
-    if (buf_r.in_avail() == 0)
-    {
-        return pplx::task_from_result<std::string>();
-    }
-
-    // TODO all store as strings than can make optimization...
-    std::string body;
-    body.resize(static_cast<std::string::size_type>(buf_r.in_avail()));
-    buf_r.getn(reinterpret_cast<uint8_t*>(&body[0]), body.size()).get();
-    return pplx::task_from_result(std::move(body));
+    return pplx::task_from_result(std::move(m_body.collection()));
 }
 
 }}}}

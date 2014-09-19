@@ -220,7 +220,7 @@ public:
             // 'move' the payload into a container buffer to avoid any copies.
             auto &payload = msg->get_raw_payload();
             const auto len = payload.size();
-            incmsg->set_body(concurrency::streams::container_buffer<std::string>(std::move(payload)));
+            ws_incoming_message.m_body = concurrency::streams::container_buffer<std::string>(std::move(payload));
             incmsg->set_length(len);
 
             std::unique_lock<std::mutex> lock(m_receive_queue_lock);
@@ -374,7 +374,7 @@ public:
     void send_msg(websocket_outgoing_message msg)
     {
         auto this_client = this->shared_from_this();
-        auto& is_buf = msg._m_impl->body();
+        auto& is_buf = msg.m_body;
         auto length = msg._m_impl->length();
 
         if (length == SIZE_MAX)
@@ -395,10 +395,9 @@ public:
             else
             {
                 // The stream needs to be buffered.
-                concurrency::streams::container_buffer<std::vector<uint8_t>> stbuf;
                 auto is_buf_istream = is_buf.create_istream();
-                msg._m_impl->set_body(stbuf);
-                is_buf_istream.read_to_end(stbuf).then([this_client, msg](pplx::task<size_t> t) mutable
+                msg.m_body = concurrency::streams::container_buffer<std::vector<uint8_t>>();
+                is_buf_istream.read_to_end(msg.m_body).then([this_client, msg](pplx::task<size_t> t) mutable
                 {
                     try
                     {
@@ -476,7 +475,7 @@ public:
             }
 
             return ec;
-        }).then([this_client, msg, acquired, sp_allocated, length](pplx::task<websocketpp::lib::error_code> previousTask) mutable
+        }).then([this_client, msg, is_buf, acquired, sp_allocated, length](pplx::task<websocketpp::lib::error_code> previousTask) mutable
         {
             std::exception_ptr eptr;
             try
@@ -495,7 +494,7 @@ public:
 
             if (acquired)
             {
-                msg._m_impl->body().release(sp_allocated.get(), length);
+                is_buf.release(sp_allocated.get(), length);
             }
 
             // Set the send_task_completion_event after calling release.

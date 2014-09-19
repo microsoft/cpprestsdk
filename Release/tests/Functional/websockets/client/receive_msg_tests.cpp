@@ -108,6 +108,9 @@ TEST_FIXTURE(uri_address, receive_text_msg)
 
     receive_text_msg_helper(client, server, m_uri, "hello").wait();
     client.close().wait();
+
+    // TODO stgates
+    VERIFY_ARE_EQUAL(false, true);
 }
 
 // Receive text message (no fragmentation)

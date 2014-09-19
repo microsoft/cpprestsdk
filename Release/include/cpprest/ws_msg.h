@@ -59,6 +59,7 @@ namespace client
 namespace details
 {
     class winrt_client;
+    class ReceiveContext;
     class ws_desktop_client;
 }
 
@@ -83,10 +84,6 @@ class _websocket_message
 {
 public:
 
-    concurrency::streams::streambuf<uint8_t> & body() { return m_buf; }
-
-    void set_body(const concurrency::streams::streambuf<uint8_t> &buf) { m_buf = buf; }
-
     void set_msg_type(websocket_message_type msg_type) { m_msg_type = msg_type; }
 
     void set_length(size_t len) { m_length = len; }
@@ -97,10 +94,7 @@ public:
 
 private:
 
-    concurrency::streams::streambuf<uint8_t> m_buf;
-
     websocket_message_type m_msg_type;
-
     size_t m_length;
 };
 }
@@ -176,13 +170,13 @@ public:
     }
 
 private:
-
     friend class details::winrt_client;
     friend class details::ws_desktop_client;
 
     std::shared_ptr<details::_websocket_message> _m_impl;
 
     pplx::task_completion_event<void> m_body_sent;
+    concurrency::streams::streambuf<uint8_t> m_body;
 
     void signal_body_sent()
     {
@@ -200,21 +194,21 @@ private:
     {
         _m_impl->set_msg_type(msg_type);
         _m_impl->set_length(data.length());
-        _m_impl->set_body(concurrency::streams::container_buffer<std::string>(std::move(data)));
+        m_body = concurrency::streams::container_buffer<std::string>(std::move(data));
     }
 
     void _set_message(const std::string &data, websocket_message_type msg_type)
     {
         _m_impl->set_msg_type(msg_type);
         _m_impl->set_length(data.length());
-        _m_impl->set_body(concurrency::streams::container_buffer<std::string>(data));
+        m_body = concurrency::streams::container_buffer<std::string>(data);
     }
 
     void _set_message(const concurrency::streams::istream &istream, size_t len, websocket_message_type msg_type)
     {
         _m_impl->set_msg_type(msg_type);
-        _m_impl->set_body(istream.streambuf());
         _m_impl->set_length(len);
+        m_body = istream.streambuf();
     }
 };
 
@@ -224,11 +218,8 @@ private:
 class websocket_incoming_message
 {
 public:
-    websocket_incoming_message() : _m_impl(std::make_shared<details::_websocket_message>()) 
-    { 
-        // Body defaults to producer_consumer_buffer.
-        // Perhaps in the future options could be exposed to allow the user to set.
-        _m_impl->set_body(concurrency::streams::producer_consumer_buffer<uint8_t>());
+    websocket_incoming_message() : _m_impl(std::make_shared<details::_websocket_message>())
+    {
     }
 
     /// <summary>
@@ -237,7 +228,7 @@ public:
     /// </summary>
     /// <returns>String containing body of the message.</returns>
     _ASYNCRTIMP pplx::task<std::string> extract_string() const;
-
+    
     /// <summary>
     /// Produces a stream which the caller may use to retrieve body from an incoming message.
     /// Can be used for both UTF-8 (text) and binary message types.
@@ -248,7 +239,11 @@ public:
     /// </remarks>
     concurrency::streams::istream body() const
     {
-        return _m_impl->body().create_istream();
+        auto to_uint8_t_stream = [](const concurrency::streams::streambuf<uint8_t> &buf) -> concurrency::streams::istream
+        {
+            return buf.create_istream();
+        };
+        return to_uint8_t_stream(m_body);
     }
 
     /// <summary>
@@ -270,6 +265,12 @@ public:
 private:
     friend class details::winrt_client;
     friend class details::ws_desktop_client;
+    friend class details::ReceiveContext;
+    
+    // Store message body in a container buffer backed by a string.
+    // Allows for optimization in the string message cases.
+    concurrency::streams::container_buffer<std::string> m_body;
+    
     std::shared_ptr<details::_websocket_message> _m_impl;
 };
 
