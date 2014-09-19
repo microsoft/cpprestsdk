@@ -73,7 +73,7 @@ namespace web
 {
 namespace experimental
 {
-namespace web_sockets
+namespace websockets
 {
 namespace client
 {
@@ -97,7 +97,7 @@ private:
 public:
     ws_desktop_client(websocket_client_config client_config)
         : _websocket_client_impl(std::move(client_config)),
-          m_work(new boost::asio::io_service::work(m_service)),
+          m_work(utility::details::make_unique<boost::asio::io_service::work>(m_service)),
           m_state(UNINITIALIZED),
           m_scheduled(0)
         {
@@ -202,7 +202,6 @@ public:
             _ASSERTE(m_state >= CONNECTED && m_state < CLOSED);
             websocket_incoming_message ws_incoming_message;
             auto& incmsg = ws_incoming_message._m_impl;
-            incmsg->_prepare_to_receive_data();
 
             switch (msg->get_opcode())
             {
@@ -218,28 +217,11 @@ public:
                 break;
             }
 
-            auto& writebuf = incmsg->streambuf();
-
-            const std::string& payload = msg->get_payload();
-            auto len = payload.size();
-            auto block = writebuf.alloc(len);
-
-            if (block == nullptr)
-            {
-                // Unable to allocate memory for receiving.
-                std::abort();
-            }
-#ifdef _WIN32
-            memcpy_s(block, payload.size(), payload.data(), payload.size());
-#else
-            std::copy(payload.begin(), payload.end(), block);
-#endif
-
-            writebuf.commit(len);
-            writebuf.close(std::ios::out).wait();
-
+            // 'move' the payload into a container buffer to avoid any copies.
+            auto &payload = msg->get_raw_payload();
+            const auto len = payload.size();
+            ws_incoming_message.m_body = concurrency::streams::container_buffer<std::string>(std::move(payload));
             incmsg->set_length(len);
-            incmsg->_set_data_available();
 
             std::unique_lock<std::mutex> lock(m_receive_queue_lock);
             if (m_receive_task_queue.empty())
@@ -319,6 +301,7 @@ public:
 
         return pplx::create_task(m_connect_tce);
     }
+
     pplx::task<void> send(websocket_outgoing_message msg)
     {
         if (!m_connect_tce._IsTriggered())
@@ -340,7 +323,6 @@ public:
         {
             return pplx::task_from_exception<void>(websocket_exception("Cannot send empty message."));
         }
-
         if (length >= UINT_MAX && length != SIZE_MAX)
         {
             return pplx::task_from_exception<void>(websocket_exception("Message size too large. Ensure message length is less than UINT_MAX."));
@@ -360,7 +342,7 @@ public:
             }
         }
 
-        return pplx::create_task(msg.m_send_tce);
+        return pplx::create_task(msg.body_sent());
     }
 
     pplx::task<websocket_incoming_message> receive()
@@ -392,7 +374,7 @@ public:
     void send_msg(websocket_outgoing_message msg)
     {
         auto this_client = this->shared_from_this();
-        auto& is_buf = msg._m_impl->streambuf();
+        auto& is_buf = msg.m_body;
         auto length = msg._m_impl->length();
 
         if (length == SIZE_MAX)
@@ -404,8 +386,7 @@ public:
                 auto buf_sz = is_buf.size();
                 if (buf_sz >= SIZE_MAX)
                 {
-                    websocket_exception wx(_XPLATSTR("Cannot send messages larger than SIZE_MAX."));
-                    msg.m_send_tce.set_exception(std::make_exception_ptr(wx));
+                    msg.signal_body_sent(std::make_exception_ptr(websocket_exception("Cannot send messages larger than SIZE_MAX.")));
                     return;
                 }
                 length = static_cast<size_t>(buf_sz);
@@ -414,21 +395,18 @@ public:
             else
             {
                 // The stream needs to be buffered.
-                concurrency::streams::container_buffer<std::vector<uint8_t>> stbuf;
                 auto is_buf_istream = is_buf.create_istream();
-                msg._m_impl->set_streambuf(stbuf);
-                is_buf_istream.read_to_end(stbuf).then([this_client,msg](pplx::task<size_t> t)
+                msg.m_body = concurrency::streams::container_buffer<std::vector<uint8_t>>();
+                is_buf_istream.read_to_end(msg.m_body).then([this_client, msg](pplx::task<size_t> t) mutable
                 {
                     try
                     {
-                        auto sz = t.get();
-                        msg._m_impl->set_length(sz);
+                        msg._m_impl->set_length(t.get());
                         this_client->send_msg(msg);
                     }
                     catch (...)
                     {
-                        auto eptr = std::current_exception();
-                        msg.m_send_tce.set_exception(eptr);
+                        msg.signal_body_sent(std::current_exception());
                     }
                 });
                 // We have postponed the call to send_msg() until after the data is buffered.
@@ -497,7 +475,7 @@ public:
             }
 
             return ec;
-        }).then([this_client, msg, acquired, sp_allocated, length](pplx::task<websocketpp::lib::error_code> previousTask)
+        }).then([this_client, msg, is_buf, acquired, sp_allocated, length](pplx::task<websocketpp::lib::error_code> previousTask) mutable
         {
             std::exception_ptr eptr;
             try
@@ -506,8 +484,7 @@ public:
                 auto ec = previousTask.get();
                 if (ec.value() != 0)
                 {
-                    websocket_exception wx(utility::conversions::to_string_t(ec.message()));
-                    eptr = std::make_exception_ptr(wx);
+                    eptr = std::make_exception_ptr(websocket_exception(ec.message()));
                 }
             }
             catch (...)
@@ -517,20 +494,20 @@ public:
 
             if (acquired)
             {
-                msg._m_impl->streambuf().release(sp_allocated.get(), length);
+                is_buf.release(sp_allocated.get(), length);
             }
 
             // Set the send_task_completion_event after calling release.
             if (eptr)
             {
-                msg.m_send_tce.set_exception(eptr);
+                msg.signal_body_sent(eptr);
             }
             else
             {
-                msg.m_send_tce.set();
+                msg.signal_body_sent();
             }
 
-            std::unique_lock<std::mutex> lock(this_client->m_send_lock);
+            std::lock_guard<std::mutex> lock(this_client->m_send_lock);
             --this_client->m_scheduled;
             if (!this_client->m_outgoing_msg_queue.empty())
             {

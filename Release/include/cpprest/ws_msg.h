@@ -33,7 +33,7 @@
 #include <limits>
 
 #include "cpprest/xxpublic.h"
-#include "cpprest/containerstream.h"
+#include "cpprest/producerconsumerstream.h"
 
 #if _NOT_PHONE8_
 #if defined(_MSC_VER) && (_MSC_VER >= 1800)
@@ -51,7 +51,7 @@ namespace web
 { 
 namespace experimental
 {
-namespace web_sockets
+namespace websockets
 {
 namespace client
 {
@@ -60,8 +60,11 @@ namespace details
 {
     class winrt_client;
     class ws_desktop_client;
-}
 
+#if defined(__cplusplus_winrt)
+    ref class ReceiveContext;
+#endif
+}
 
 /// <summary>
 /// The different types of websocket message.
@@ -83,47 +86,19 @@ namespace details
 class _websocket_message
 {
 public:
-    _ASYNCRTIMP void set_body(concurrency::streams::istream instream);
-
-    /// <summary>
-    /// Get the streambuf for the message
-    /// </summary>
-    concurrency::streams::streambuf<uint8_t>& streambuf() { return m_buf; }
-
-    /// <summary>
-    /// Set the streambuf for the message
-    /// </summary>
-    void set_streambuf(concurrency::streams::streambuf<uint8_t> buf) { m_buf = buf; }
 
     void set_msg_type(websocket_message_type msg_type) { m_msg_type = msg_type; }
 
     void set_length(size_t len) { m_length = len; }
 
-    size_t length() { return m_length; }
+    size_t length() const { return m_length; }
 
-    websocket_message_type message_type() { return m_msg_type; }
+    websocket_message_type message_type() const { return m_msg_type; }
 
-    pplx::task_completion_event<void> _get_data_available()  { return m_data_available; }
-
-    void _set_data_available() { m_data_available.set(); }
-
-    _ASYNCRTIMP std::string _extract_string();
-
-    /// <summary>
-    /// Prepare the message with an output stream to receive network data
-    /// </summary>
-    _ASYNCRTIMP void _prepare_to_receive_data();
-
-protected:
-
-    concurrency::streams::streambuf<uint8_t> m_buf;
+private:
 
     websocket_message_type m_msg_type;
-
     size_t m_length;
-
-    /// <summary> The TCE is used to signal the availability of the message body. </summary>
-    pplx::task_completion_event<void> m_data_available;
 };
 }
 
@@ -133,14 +108,17 @@ protected:
 class websocket_outgoing_message 
 {
 public:
-    websocket_outgoing_message()
-        : _m_impl(std::make_shared<details::_websocket_message>()) {}
+
+    /// <summary>
+    /// Creates an initially empty message for sending. 
+    /// </summary>
+    websocket_outgoing_message() : _m_impl(std::make_shared<details::_websocket_message>()) {}
 
     /// <summary>
     /// Sets a UTF-8 message as the message body.
     /// </summary>
     /// <param name="data">UTF-8 String containing body of the message.</param>
-    void set_utf8_message(std::string data)
+    void set_utf8_message(std::string &&data)
     {
         this->_set_message(std::move(data), websocket_message_type::text_message);
     }
@@ -148,9 +126,18 @@ public:
     /// <summary>
     /// Sets a UTF-8 message as the message body.
     /// </summary>
+    /// <param name="data">UTF-8 String containing body of the message.</param>
+    void set_utf8_message(const std::string &data)
+    {
+        this->_set_message(data, websocket_message_type::text_message);
+    }
+
+    /// <summary>
+    /// Sets a UTF-8 message as the message body.
+    /// </summary>
     /// <param name="istream">casablanca input stream representing the body of the message.</param>
     /// <remarks>Upon sending, the entire stream may be buffered to determine the length.</remarks>
-    void set_utf8_message(concurrency::streams::istream istream)
+    void set_utf8_message(const concurrency::streams::istream &istream)
     {
         this->_set_message(istream, SIZE_MAX, websocket_message_type::text_message);
     }
@@ -160,7 +147,7 @@ public:
     /// </summary>
     /// <param name="istream">casablanca input stream representing the body of the message.</param>
     /// <param name="len">number of bytes to send.</param>
-    void set_utf8_message(concurrency::streams::istream istream, size_t len)
+    void set_utf8_message(const concurrency::streams::istream &istream, size_t len)
     {
         this->_set_message(istream, len, websocket_message_type::text_message);
     }
@@ -170,7 +157,7 @@ public:
     /// </summary>
     /// <param name="istream">casablanca input stream representing the body of the message.</param>
     /// <param name="len">number of bytes to send.</param>
-    void set_binary_message(concurrency::streams::istream istream, size_t len)
+    void set_binary_message(const concurrency::streams::istream &istream, size_t len)
     {
         this->_set_message(istream, len, websocket_message_type::binary_message);
     }
@@ -180,34 +167,52 @@ public:
     /// </summary>
     /// <param name="istream">casablanca input stream representing the body of the message.</param>
     /// <remarks>Upon sending, the entire stream may be buffered to determine the length.</remarks>
-    void set_binary_message(concurrency::streams::istream istream)
+    void set_binary_message(const concurrency::streams::istream &istream)
     {
         this->_set_message(istream, SIZE_MAX, websocket_message_type::binary_message);
     }
 
 private:
-
     friend class details::winrt_client;
     friend class details::ws_desktop_client;
 
     std::shared_ptr<details::_websocket_message> _m_impl;
 
-    void _set_message(std::string data, websocket_message_type msg_type)
+    pplx::task_completion_event<void> m_body_sent;
+    concurrency::streams::streambuf<uint8_t> m_body;
+
+    void signal_body_sent()
+    {
+        m_body_sent.set();
+    }
+
+    void signal_body_sent(const std::exception_ptr &e)
+    {
+        m_body_sent.set_exception(e);
+    }
+
+    pplx::task_completion_event<void> & body_sent() { return m_body_sent; }
+
+    void _set_message(std::string &&data, websocket_message_type msg_type)
     {
         _m_impl->set_msg_type(msg_type);
         _m_impl->set_length(data.length());
-        auto istream = concurrency::streams::bytestream::open_istream<std::string>(std::move(data));
-        _m_impl->set_body(istream);
+        m_body = concurrency::streams::container_buffer<std::string>(std::move(data));
     }
 
-    void _set_message(concurrency::streams::istream istream, size_t len, websocket_message_type msg_type)
+    void _set_message(const std::string &data, websocket_message_type msg_type)
     {
         _m_impl->set_msg_type(msg_type);
-        _m_impl->set_body(istream);
-        _m_impl->set_length(len);
+        _m_impl->set_length(data.length());
+        m_body = concurrency::streams::container_buffer<std::string>(data);
     }
 
-    pplx::task_completion_event<void> m_send_tce;
+    void _set_message(const concurrency::streams::istream &istream, size_t len, websocket_message_type msg_type)
+    {
+        _m_impl->set_msg_type(msg_type);
+        _m_impl->set_length(len);
+        m_body = istream.streambuf();
+    }
 };
 
 /// <summary>
@@ -216,7 +221,9 @@ private:
 class websocket_incoming_message
 {
 public:
-    websocket_incoming_message(): _m_impl(std::make_shared<details::_websocket_message>()) { }
+    websocket_incoming_message() : _m_impl(std::make_shared<details::_websocket_message>())
+    {
+    }
 
     /// <summary>
     /// Extracts the body of the incoming message as a string value, only if the message type is UTF-8.
@@ -224,7 +231,7 @@ public:
     /// </summary>
     /// <returns>String containing body of the message.</returns>
     _ASYNCRTIMP pplx::task<std::string> extract_string() const;
-
+    
     /// <summary>
     /// Produces a stream which the caller may use to retrieve body from an incoming message.
     /// Can be used for both UTF-8 (text) and binary message types.
@@ -235,7 +242,11 @@ public:
     /// </remarks>
     concurrency::streams::istream body() const
     {
-        return _m_impl->streambuf().create_istream();
+        auto to_uint8_t_stream = [](const concurrency::streams::streambuf<uint8_t> &buf) -> concurrency::streams::istream
+        {
+            return buf.create_istream();
+        };
+        return to_uint8_t_stream(m_body);
     }
 
     /// <summary>
@@ -257,6 +268,14 @@ public:
 private:
     friend class details::winrt_client;
     friend class details::ws_desktop_client;
+#if defined(__cplusplus_winrt)
+    friend ref class details::ReceiveContext;
+#endif
+    
+    // Store message body in a container buffer backed by a string.
+    // Allows for optimization in the string message cases.
+    concurrency::streams::container_buffer<std::string> m_body;
+    
     std::shared_ptr<details::_websocket_message> _m_impl;
 };
 

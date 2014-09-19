@@ -27,8 +27,8 @@
 
 #if defined(__cplusplus_winrt) || !defined(_M_ARM)
 
-using namespace web::experimental::web_sockets;
-using namespace web::experimental::web_sockets::client;
+using namespace web::experimental::websockets;
+using namespace web::experimental::websockets::client;
 
 using namespace tests::functional::websocket::utilities;
 
