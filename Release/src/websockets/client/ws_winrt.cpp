@@ -37,7 +37,7 @@ using namespace ::Windows::Networking;
 using namespace ::Windows::Networking::Sockets;
 using namespace Concurrency::streams::details;
 
-namespace web 
+namespace web
 {
 namespace experimental
 {
@@ -73,17 +73,20 @@ private:
 class winrt_client : public _websocket_client_impl, public std::enable_shared_from_this<winrt_client>
 {
 public:
-    winrt_client(websocket_client_config client_config)
-        : _websocket_client_impl(std::move(client_config)), m_scheduled(0), m_client_closed(false)
+    winrt_client(websocket_client_config config) :
+        _websocket_client_impl(std::move(config)),
+        m_num_sends(0),
+        m_client_closed(false)
     {
         m_msg_websocket = ref new MessageWebSocket();
+        const auto &config = config();
 
-        // Sets the HTTP request headers to the HTTP request message used in the WebSocket protocol handshake 
+        // Sets the HTTP request headers to the HTTP request message used in the WebSocket protocol handshake
         const utility::string_t protocolHeader(_XPLATSTR("Sec-WebSocket-Protocol"));
-        const auto & headers = config().headers();
+        const auto & headers = config.headers();
         for (const auto & header : headers)
         {
-            // Unfortunately the MessageWebSocket API throws a COMException if you try to set the 
+            // Unfortunately the MessageWebSocket API throws a COMException if you try to set the
             // 'Sec-WebSocket-Protocol' header here. It requires you to go through their API instead.
             if (!utility::details::str_icmp(header.first, protocolHeader))
             {
@@ -94,18 +97,18 @@ public:
         // Add any specified subprotocols.
         if (headers.has(protocolHeader))
         {
-            const std::vector<utility::string_t> protocols = this->config().subprotocols();
+            const std::vector<utility::string_t> protocols = config.subprotocols();
             for (const auto & value : protocols)
             {
                 m_msg_websocket->Control->SupportedProtocols->Append(Platform::StringReference(value.c_str()));
             }
         }
 
-        if (client_config.credentials().is_set())
+        if (config.credentials().is_set())
         {
-            m_msg_websocket->Control->ServerCredential = ref new Windows::Security::Credentials::PasswordCredential("WebSocketClientCredentialResource", 
-                Platform::StringReference(client_config.credentials().username().c_str()), 
-                Platform::StringReference(client_config.credentials().password().c_str()));
+            m_msg_websocket->Control->ServerCredential = ref new Windows::Security::Credentials::PasswordCredential("WebSocketClientCredentialResource",
+                Platform::StringReference(config.credentials().username().c_str()),
+                Platform::StringReference(config.credentials().password().c_str()));
         }
 
         m_context = ref new ReceiveContext([=](websocket_incoming_message &msg)
@@ -126,26 +129,26 @@ public:
             }
             // Setting the tce outside the receive lock for better performance
             tce.set(msg);
-        }, 
+        },
         [=]() // Close handler called upon receiving a close frame from the server.
         {
             close_pending_tasks_with_error();
             m_close_tce.set();
             m_server_close_complete.set();
-        }); 
+        });
     }
 
     ~winrt_client()
     {
         // task_completion_event::set() returns false if it has already been set.
         // In that case, wait on the m_server_close_complete event for the tce::set() to complete.
-        // The websocket client on close handler (upon receiving close frame from server) will 
+        // The websocket client on close handler (upon receiving close frame from server) will
         // set this event.
-        // If we have not received a close frame from the server, this set will be a no-op as the 
+        // If we have not received a close frame from the server, this set will be a no-op as the
         // websocket_client is anyways destructing.
         if (!m_close_tce.set())
         {
-            m_server_close_complete.wait(); 
+            m_server_close_complete.wait();
         }
         else
         {
@@ -167,8 +170,6 @@ public:
 
     pplx::task<void> connect()
     {
-        verify_uri(m_uri);
-
         const auto &proxy = config().proxy();
         if(!proxy.is_default())
         {
@@ -178,8 +179,8 @@ public:
         const auto &proxy_cred = proxy.credentials();
         if(proxy_cred.is_set())
         {
-            m_msg_websocket->Control->ProxyCredential = ref new Windows::Security::Credentials::PasswordCredential("WebSocketClientProxyCredentialResource", 
-                ref new Platform::String(proxy_cred.username().c_str()), 
+            m_msg_websocket->Control->ProxyCredential = ref new Windows::Security::Credentials::PasswordCredential("WebSocketClientProxyCredentialResource",
+                ref new Platform::String(proxy_cred.username().c_str()),
                 ref new Platform::String(proxy_cred.password().c_str()));
         }
 
@@ -187,7 +188,7 @@ public:
 
         m_msg_websocket->MessageReceived += ref new TypedEventHandler<MessageWebSocket^, MessageWebSocketMessageReceivedEventArgs^>(m_context, &ReceiveContext::OnReceive);
         m_msg_websocket->Closed += ref new TypedEventHandler<IWebSocket^, WebSocketClosedEventArgs^>(m_context, &ReceiveContext::OnClosed);
-        
+
         return pplx::create_task(m_msg_websocket->ConnectAsync(uri)).then([=](pplx::task<void> result) -> pplx::task<void>
         {
             try
@@ -234,15 +235,15 @@ public:
         }
 
         {
-            std::lock_guard<std::mutex> lock(m_send_lock);
-            ++m_scheduled;
-            if (m_scheduled == 1) // No sends in progress
+            if (++m_num_sends == 1) // No sends in progress
             {
                 // Start sending the message
                 send_msg(msg);
             }
             else
             {
+                // Only actually have to take the lock if touching the queue.
+                std::lock_guard<std::mutex> lock(m_send_lock);
                 m_outgoing_msg_queue.push(msg);
             }
         }
@@ -294,7 +295,7 @@ public:
 
         // First try to acquire the data (Get a pointer to the next already allocated contiguous block of data)
         // If acquire succeeds, send the data over the socket connection, there is no copy of data from stream to temporary buffer.
-        // If acquire fails, copy the data to a temporary buffer managed by sp_allocated and send it over the socket connection. 
+        // If acquire fails, copy the data to a temporary buffer managed by sp_allocated and send it over the socket connection.
         std::shared_ptr<uint8_t> sp_allocated(nullptr, [](uint8_t *) { } );
         size_t acquired_size = 0;
         uint8_t *ptr;
@@ -303,7 +304,7 @@ public:
 
         if (!acquired || acquired_size < length) // Stream does not support acquire or failed to acquire specified number of bytes
         {
-            // If acquire did not return the required number of bytes, do not rely on its return value. 
+            // If acquire did not return the required number of bytes, do not rely on its return value.
             if (acquired_size < length)
             {
                 acquired = false;
@@ -317,13 +318,13 @@ public:
             {
                 if (bytes_read != length)
                 {
-                    throw websocket_exception("Failed to read required length of data from the stream."); 
-                }              
+                    throw websocket_exception("Failed to read required length of data from the stream.");
+                }
             });
         }
         else
         {
-            // Acquire succeeded, assign the acquired pointer to sp_allocated. Keep an empty custom destructor 
+            // Acquire succeeded, assign the acquired pointer to sp_allocated. Keep an empty custom destructor
             // so that the data is not released when sp_allocated goes out of scope. The streambuf will manage its memory.
             sp_allocated.reset(ptr, [](uint8_t *) {});
         }
@@ -339,7 +340,7 @@ public:
             std::exception_ptr eptr;
             unsigned int bytes_written = 0;
             try
-            { 
+            {
                 // Catch exceptions from previous tasks, if any and convert it to websocket exception.
                 bytes_written = previousTask.get();
                 if (bytes_written != length)
@@ -368,12 +369,15 @@ public:
             }
 
             {
-                std::lock_guard<std::mutex> lock(this_client->m_send_lock);
-                --this_client->m_scheduled;
-                if (!this_client->m_outgoing_msg_queue.empty())
+                if (--this_client->m_num_sends > 0)
                 {
-                    auto next_msg = this_client->m_outgoing_msg_queue.front();
-                    this_client->m_outgoing_msg_queue.pop();
+                    // Only hold the lock when actually touching the queue.
+                    websocket_outgoing_message next_msg;
+                    {
+                        std::lock_guard<std::mutex> lock(this_client->m_send_lock);
+                        next_msg = this_client->m_outgoing_msg_queue.front();
+                        this_client->m_outgoing_msg_queue.pop();
+                    }
                     this_client->send_msg(next_msg);
                 }
             }
@@ -409,9 +413,9 @@ public:
         return close(websocket_close_status::normal);
     }
 
-    pplx::task<void> close(websocket_close_status status, const utility::string_t &strreason=_XPLATSTR("")) 
+    pplx::task<void> close(websocket_close_status status, const utility::string_t &strreason=_XPLATSTR(""))
     {
-        // Send a close frame to the server 
+        // Send a close frame to the server
         Platform::String^ reason = ref new Platform::String(strreason.data());
         m_msg_websocket->Close(static_cast<unsigned short>(status), reason);
         // Wait for the close response frame from the server.
@@ -427,36 +431,36 @@ private:
     ReceiveContext ^ m_context;
 
     pplx::task_completion_event<void> m_close_tce;
-    // There is a bug in ppl task_completion_event. The task_completion_event::set() accesses some 
-    // internal data after signalling the event. The waiting thread might go ahead and start destroying the 
+    // There is a bug in ppl task_completion_event. The task_completion_event::set() accesses some
+    // internal data after signaling the event. The waiting thread might go ahead and start destroying the
     // websocket_client. Due to this race, set() can cause a crash.
-    // To workaround this bug, maintain another event: m_server_close_complete. We will signal this when the m_close_tce.set() has 
+    // To workaround this bug, maintain another event: m_server_close_complete. We will signal this when the m_close_tce.set() has
     // completed. The websocket_client destructor can wait on this event before proceeding.
     Concurrency::event m_server_close_complete;
 
     // m_client_closed maintains the state of the client. It is set to true when:
-    // 1. the client has not connected 
+    // 1. the client has not connected
     // 2. if it has received a close frame from the server.
     // We may want to keep an enum to maintain the client state in the future.
     bool m_client_closed;
 
     // When a message arrives, if there are tasks waiting for a message, signal the topmost one.
     // Else enqueue the message in a queue.
-    // m_receive_queue_lock : to guard access to the queue & m_client_closed 
+    // m_receive_queue_lock : to guard access to the queue & m_client_closed
     std::mutex m_receive_queue_lock;
     // Queue to store incoming messages when there are no tasks waiting for a message
-    std::queue<websocket_incoming_message> m_receive_msg_queue; 
+    std::queue<websocket_incoming_message> m_receive_msg_queue;
     // Queue to maintain the receive tasks when there are no messages(yet).
-    std::queue<pplx::task_completion_event<websocket_incoming_message>> m_receive_task_queue; 
+    std::queue<pplx::task_completion_event<websocket_incoming_message>> m_receive_task_queue;
 
     // The implementation has to ensure ordering of send requests
-    std::mutex m_send_lock; 
+    std::mutex m_send_lock;
 
     // Queue to order the sends
     std::queue<websocket_outgoing_message> m_outgoing_msg_queue;
 
-    // Number of scheduled sends
-    int m_scheduled; 
+    // Number of sends in progress and queued up.
+    std::atomic<int> m_num_sends;
 };
 
 void ReceiveContext::OnReceive(MessageWebSocket^ sender, MessageWebSocketMessageReceivedEventArgs^ args)
@@ -501,15 +505,9 @@ void ReceiveContext::OnClosed(IWebSocket^ sender, WebSocketClosedEventArgs^ args
 }
 }
 
-websocket_client::websocket_client()
-    :m_client(std::make_shared<details::winrt_client>(websocket_client_config()))
-{
-}
-
-websocket_client::websocket_client(websocket_client_config config)
-    :m_client(std::make_shared<details::winrt_client>(std::move(config)))
-{
-}
+websocket_client::websocket_client(websocket_client_config config) :
+    m_client(std::make_shared<details::ws_winrt_client>(std::move(config)))
+{}
 
 }}}}
 #endif /* WINAPI_FAMILY == WINAPI_FAMILY_APP */

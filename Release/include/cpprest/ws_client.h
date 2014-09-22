@@ -52,10 +52,10 @@ namespace pplx = Concurrency;
 #include "cpprest/asyncrt_utils.h"
 #include "cpprest/ws_msg.h"
 
-namespace web 
+namespace web
 {
 /// WebSocket client is currently in beta.
-namespace experimental 
+namespace experimental
 {
 namespace websockets
 {
@@ -85,10 +85,55 @@ class websocket_client_config
 public:
 
     /// <summary>
-    /// Creates a websocket client configuration with default settings. 
+    /// Creates a websocket client configuration with default settings.
     /// </summary>
-    websocket_client_config()
+    websocket_client_config() {}
+
+    /// <summary>
+    /// Copy constructor.
+    /// </summary>
+    websocket_client_config(const websocket_client_config &other) :
+        m_proxy(other.m_proxy),
+        m_credentials(other.m_credentials),
+        m_headers(other.m_headers)
     {}
+
+    /// <summary>
+    /// Move constructor.
+    /// </summary>
+    websocket_client_config(websocket_client_config &&other) :
+        m_proxy(std::move(other.m_proxy)),
+        m_credentials(std::move(other.m_credentials)),
+        m_headers(std::move(other.m_headers))
+    {}
+
+    /// <summary>
+    /// Assignment operator.
+    /// </summary>
+    websocket_client_config &operator=(const websocket_client_config &other)
+    {
+        if (this != &other)
+        {
+            m_proxy = other.m_proxy;
+            m_credentials = other.m_credentials;
+            m_headers = other.m_headers;
+        }
+        return *this;
+    }
+
+    /// <summary>
+    /// Move assignment operator.
+    /// </summary>
+    websocket_client_config &operator=(websocket_client_config &&other)
+    {
+        if (this != &other)
+        {
+            m_proxy = std::move(other.m_proxy);
+            m_credentials = std::move(other.m_credentials);
+            m_headers = std::move(other.m_headers);
+        }
+        return  *this;
+    }
 
     /// <summary>
     /// Get the web proxy object
@@ -103,9 +148,9 @@ public:
     /// Set the web proxy object
     /// </summary>
     /// <param name="proxy">The web proxy object.</param>
-    void set_proxy(web_proxy proxy)
+    void set_proxy(const web_proxy &proxy)
     {
-        m_proxy = std::move(proxy);
+        m_proxy = proxy;
     }
 
     /// <summary>
@@ -121,9 +166,9 @@ public:
     /// Set the client credentials
     /// </summary>
     /// <param name="cred">The client credentials.</param>
-    void set_credentials(web::credentials cred)
+    void set_credentials(const web::credentials &cred)
     {
-        m_credentials = std::move(cred);
+        m_credentials = cred;
     }
 
     /// <summary>
@@ -152,8 +197,8 @@ public:
     /// Gets list of the specified subprotocols.
     /// </summary>
     /// <returns>Vector of all the subprotocols </returns>
-    /// <remarks>If you want all the subprotocols in a comma separated string 
-    /// they can be directly directly looked up in the headers using 'Sec-WebSocket-Protocol'.</remarks>
+    /// <remarks>If you want all the subprotocols in a comma separated string
+    /// they can be directly looked up in the headers using 'Sec-WebSocket-Protocol'.</remarks>
     _ASYNCRTIMP std::vector<::utility::string_t> subprotocols() const;
 
 private:
@@ -258,52 +303,40 @@ private:
 
 namespace details
 {
-class winrt_client;
-class ws_desktop_client;
 
 // Interface to be implemented by the websocket client implementations.
 class _websocket_client_impl
 {
 public:
+
+    _websocket_client_impl(websocket_client_config config) :
+        m_config(std::move(config)) {}
+
     virtual ~_websocket_client_impl() _noexcept {}
 
     virtual pplx::task<void> connect() = 0;
 
-    virtual pplx::task<void> send(websocket_outgoing_message msg) = 0;
+    virtual pplx::task<void> send(websocket_outgoing_message &msg) = 0;
 
-    virtual pplx::task<websocket_incoming_message> receive() = 0; 
+    virtual pplx::task<websocket_incoming_message> receive() = 0;
 
     virtual pplx::task<void> close() = 0;
 
     virtual pplx::task<void> close(websocket_close_status close_status, const utility::string_t &close_reason=_XPLATSTR("")) = 0;
 
-    /// <summary>
-    /// Gets the base uri
-    /// </summary>
-    /// <returns>
-    /// A base uri initialized in constructor
-    /// </return>
     const web::uri& uri() const
     {
         return m_uri;
     }
 
-    /// <summary>
-    ///  Set the base uri.
-    /// </summary>
-    /// <param name="uri"> The user specified uri. </param>
-    void set_uri(web::uri uri)
+    void set_uri(const web::uri &uri)
     {
-        m_uri = std::move(uri);
+        m_uri = uri;
     }
 
-    /// <summary>
-    /// Get client configuration object
-    /// </summary>
-    /// <returns>A reference to the client configuration object.</returns>
     const websocket_client_config& config() const
     {
-        return m_client_config;
+        return m_config;
     }
 
     static void verify_uri(const web::uri& uri)
@@ -328,16 +361,9 @@ public:
         }
     }
 
-
 protected:
     web::uri m_uri;
-
-    _websocket_client_impl(websocket_client_config client_config)
-        : m_client_config(std::move(client_config))
-    {
-    }
-
-    websocket_client_config m_client_config;    
+    websocket_client_config m_config;
 };
 }
 
@@ -350,48 +376,58 @@ public:
     /// <summary>
     ///  Creates a new websocket_client.
     /// </summary>
-    _ASYNCRTIMP websocket_client();
+    websocket_client() : websocket_client(websocket_client_config()) {}
 
     /// <summary>
     ///  Creates a new websocket_client.
     /// </summary>
-    /// <param name="client_config">The client configuration object containing the possible configuration options to intitialize the <c>websocket_client</c>. </param>
+    /// <param name="client_config">The client configuration object containing the possible configuration options to initialize the <c>websocket_client</c>. </param>
     _ASYNCRTIMP websocket_client(websocket_client_config client_config);
 
     /// <summary>
     /// Destructor
     /// </summary>
-    ~websocket_client() { }
+    ~websocket_client() _noexcept {}
 
     /// <summary>
-    /// Connects to the remote network destination. The connect method initiates the websocket handshake with the 
+    /// Connects to the remote network destination. The connect method initiates the websocket handshake with the
     /// remote network destination, takes care of the protocol upgrade request.
     /// </summary>
     /// <param name="uri">The uri address to connect. </param>
     /// <returns>An asynchronous operation that is completed once the client has successfully connected to the websocket server.</returns>
-    pplx::task<void> connect(web::uri uri) 
-    { 
-        m_client->set_uri(std::move(uri));
-        return m_client->connect(); 
+    pplx::task<void> connect(const web::uri &uri)
+    {
+        m_client->verify_uri(uri);
+        m_client->set_uri(uri);
+        return m_client->connect();
     }
 
     /// <summary>
     /// Sends a websocket message to the server .
     /// </summary>
     /// <returns>An asynchronous operation that is completed once the message is sent.</returns>
-    pplx::task<void> send(websocket_outgoing_message msg) { return m_client->send(msg); } 
+    pplx::task<void> send(websocket_outgoing_message msg)
+    {
+        return m_client->send(msg);
+    }
 
     /// <summary>
     /// Receive a websocket message.
     /// </summary>
     /// <returns>An asynchronous operation that is completed when a message has been received by the client endpoint.</returns>
-    pplx::task<websocket_incoming_message> receive() { return m_client->receive(); }
+    pplx::task<websocket_incoming_message> receive()
+    {
+        return m_client->receive();
+    }
 
     /// <summary>
     /// Closes a websocket client connection, sends a close frame to the server and waits for a close message from the server.
     /// </summary>
     /// <returns>An asynchronous operation that is completed the connection has been successfully closed.</returns>
-    pplx::task<void> close() { return m_client->close(); }
+    pplx::task<void> close()
+    {
+        return m_client->close();
+    }
 
     /// <summary>
     /// Closes a websocket client connection, sends a close frame to the server and waits for a close message from the server.
@@ -400,16 +436,14 @@ public:
     /// <param name="close_reason">While closing an established connection, an endpoint may indicate the reason for closure.</param>
     /// <returns>An asynchronous operation that is completed the connection has been successfully closed.</returns>
     pplx::task<void> close(websocket_close_status close_status, const utility::string_t& close_reason=_XPLATSTR(""))
-    { 
-        return m_client->close(close_status, close_reason); 
+    {
+        return m_client->close(close_status, close_reason);
     }
 
     /// <summary>
     /// Gets the websocket client URI.
     /// </summary>
-    /// <returns>
-    /// A base uri initialized in constructor
-    /// </return>
+    /// <returns>URI connected to.</returns>
     const web::uri& uri() const
     {
         return m_client->uri();
@@ -425,7 +459,6 @@ public:
     }
 
 private:
-
     std::shared_ptr<details::_websocket_client_impl> m_client;
 };
 

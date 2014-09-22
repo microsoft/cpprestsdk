@@ -60,14 +60,11 @@
 #pragma warning( pop )
 #endif /* __GNUC__ */
 
-typedef websocketpp::client<websocketpp::config::asio_client> wsppclient;
-typedef websocketpp::config::asio_client::message_type::ptr message_ptr;
+#include <boost/variant.hpp>
 
 using websocketpp::lib::placeholders::_1;
 using websocketpp::lib::placeholders::_2;
 using websocketpp::lib::bind;
-
-using namespace Concurrency::streams::details;
 
 namespace web
 {
@@ -82,7 +79,7 @@ namespace details
 
 static utility::string_t g_subProtocolHeader(_XPLATSTR("Sec-WebSocket-Protocol"));
 
-class ws_desktop_client : public _websocket_client_impl, public std::enable_shared_from_this<ws_desktop_client>
+class wspp_client : public _websocket_client_impl, public std::enable_shared_from_this<wspp_client>
 {
 private:
     enum State {
@@ -95,20 +92,28 @@ private:
         DESTROYED
     };
 public:
-    ws_desktop_client(websocket_client_config client_config)
-        : _websocket_client_impl(std::move(client_config)),
-          m_work(utility::details::make_unique<boost::asio::io_service::work>(m_service)),
-          m_state(UNINITIALIZED),
-          m_scheduled(0)
-        {
-            m_client.clear_access_channels(websocketpp::log::alevel::all);
-            m_client.clear_error_channels(websocketpp::log::alevel::all);
+    wspp_client(websocket_client_config config) :
+        _websocket_client_impl(std::move(config)),
+        m_work(utility::details::make_unique<boost::asio::io_service::work>(m_service)),
+        m_state(UNINITIALIZED),
+        m_num_sends(0)
+    {
+        // TODO tls here.
+        initialize_impl<websocketpp::config::asio_client>();
+    }
 
-            m_client.init_asio(&m_service);
-            m_state = INITIALIZED;
-        }
+    template <typename WebsocketConfigType>
+    void initialize_impl()
+    {
+        auto &client = boost::get<websocketpp::client<WebsocketConfigType>>(m_client);
 
-    ~ws_desktop_client()
+        client.clear_access_channels(websocketpp::log::alevel::all);
+        client.clear_error_channels(websocketpp::log::alevel::all);
+        client.init_asio(&m_service);
+        m_state = INITIALIZED;
+    }
+
+    ~wspp_client()
     {
         _ASSERTE(m_state < DESTROYED);
         std::unique_lock<std::mutex> lock(m_receive_queue_lock);
@@ -159,15 +164,25 @@ public:
     {
         return close(static_cast<websocket_close_status>(websocketpp::close::status::normal), U("going away"));
     }
+
     pplx::task<void> close(websocket_close_status status, const utility::string_t& reason)
     {
+        // TODO tls here.
+        return close_impl<websocketpp::config::asio_client>(status, reason);
+    }
+
+    template <typename WebsocketConfigType>
+    pplx::task<void> close_impl(websocket_close_status status, const utility::string_t& reason)
+    {
+        auto &client = boost::get<websocketpp::client<WebsocketConfigType>>(m_client);
+
         std::lock_guard<std::mutex> lock(m_receive_queue_lock);
         if (m_state == CONNECTED)
         {
             m_state = CLOSING;
-            
+
             websocketpp::lib::error_code ec;
-            m_client.close(m_con, static_cast<websocketpp::close::status::value>(status), utility::conversions::to_utf8string(reason), ec);
+            client.close(m_con, static_cast<websocketpp::close::status::value>(status), utility::conversions::to_utf8string(reason), ec);
             if (ec.value() != 0)
             {
                 return pplx::task_from_exception<void>(ec.message());
@@ -178,17 +193,24 @@ public:
 
     pplx::task<void> connect()
     {
-        verify_uri(m_uri);
+        // TODO tls here.
+        return connect_impl<websocketpp::config::asio_client>();
+    }
+
+    template <typename WebsocketConfigType>
+    pplx::task<void> connect_impl()
+    {
+        auto &client = boost::get<websocketpp::client<WebsocketConfigType>>(m_client);
 
         _ASSERTE(m_state == INITIALIZED);
-        m_client.set_open_handler([this](websocketpp::connection_hdl)
+        client.set_open_handler([this](websocketpp::connection_hdl)
         {
             _ASSERTE(m_state == CONNECTING);
             m_state = CONNECTED;
             m_connect_tce.set();
         });
 
-        m_client.set_fail_handler([this](websocketpp::connection_hdl)
+        client.set_fail_handler([this](websocketpp::connection_hdl)
         {
             _ASSERTE(m_state == CONNECTING);
             std::lock_guard<std::mutex> lock(m_receive_queue_lock);
@@ -197,7 +219,7 @@ public:
             m_connect_tce.set_exception(websocket_exception("Connection attempt failed."));
         });
 
-        m_client.set_message_handler([this](websocketpp::connection_hdl, message_ptr msg)
+        client.set_message_handler([this](websocketpp::connection_hdl, WebsocketConfigType::message_type::ptr msg)
         {
             _ASSERTE(m_state >= CONNECTED && m_state < CLOSED);
             websocket_incoming_message ws_incoming_message;
@@ -241,7 +263,7 @@ public:
             }
         });
 
-        m_client.set_close_handler([this](websocketpp::connection_hdl)
+        client.set_close_handler([this](websocketpp::connection_hdl)
         {
             std::unique_lock<std::mutex> lock(m_receive_queue_lock);
             _ASSERTE(m_state != CLOSED);
@@ -253,7 +275,7 @@ public:
         // Get the connection handle to save for later, have to create temporary
         // because type erasure occurs with connection_hdl.
         websocketpp::lib::error_code ec;
-        auto con = m_client.get_connection(utility::conversions::to_utf8string(m_uri.to_string()), ec);
+        auto con = client.get_connection(utility::conversions::to_utf8string(m_uri.to_string()), ec);
         m_con = con;
         if (ec.value() != 0)
         {
@@ -261,7 +283,7 @@ public:
         }
 
         // Add any request headers specified by the user.
-        const auto & headers = m_client_config.headers();
+        const auto & headers = config().headers();
         for (const auto & header : headers)
         {
             if (!utility::details::str_icmp(header.first, g_subProtocolHeader))
@@ -273,7 +295,7 @@ public:
         // Add any specified subprotocols.
         if (headers.has(g_subProtocolHeader))
         {
-            const std::vector<utility::string_t> protocols = m_client_config.subprotocols();
+            const std::vector<utility::string_t> protocols = config().subprotocols();
             for (const auto & value : protocols)
             {
                 con->add_subprotocol(utility::conversions::to_utf8string(value), ec);
@@ -285,7 +307,7 @@ public:
         }
 
         m_state = CONNECTING;
-        m_client.connect(con);
+        client.connect(con);
 
         m_thread = std::thread([this]()
         {
@@ -302,7 +324,7 @@ public:
         return pplx::create_task(m_connect_tce);
     }
 
-    pplx::task<void> send(websocket_outgoing_message msg)
+    pplx::task<void> send(websocket_outgoing_message &msg)
     {
         if (!m_connect_tce._IsTriggered())
         {
@@ -329,15 +351,15 @@ public:
         }
 
         {
-            std::lock_guard<std::mutex> lock(m_send_lock);
-            ++m_scheduled;
-            if (m_scheduled == 1) // No sends in progress
+            if (++m_num_sends == 1) // No sends in progress
             {
                 // Start sending the message
                 send_msg(msg);
             }
             else
             {
+                // Only actually have to take the lock if touching the queue.
+                std::lock_guard<std::mutex> lock(m_send_lock);
                 m_outgoing_msg_queue.push(msg);
             }
         }
@@ -371,7 +393,13 @@ public:
         }
     }
 
-    void send_msg(websocket_outgoing_message msg)
+    void send_msg(websocket_outgoing_message &msg)
+    {
+        send_msg_impl<websocketpp::config::asio_client>(msg);
+    }
+
+    template <typename WebsocketClientType>
+    void send_msg_impl(websocket_outgoing_message &msg)
     {
         auto this_client = this->shared_from_this();
         auto& is_buf = msg.m_body;
@@ -417,7 +445,7 @@ public:
         // First try to acquire the data (Get a pointer to the next already allocated contiguous block of data)
         // If acquire succeeds, send the data over the socket connection, there is no copy of data from stream to temporary buffer.
         // If acquire fails, copy the data to a temporary buffer managed by sp_allocated and send it over the socket connection.
-        std::shared_ptr<uint8_t> sp_allocated(nullptr, [](uint8_t *) { } );
+        std::shared_ptr<uint8_t> sp_allocated(nullptr, [](uint8_t *) {});
         size_t acquired_size = 0;
         uint8_t* ptr;
         auto read_task = pplx::task_from_result();
@@ -433,7 +461,7 @@ public:
             }
 
             // Allocate buffer to hold the data to be read from the stream.
-            sp_allocated.reset(new uint8_t[length](), [=](uint8_t *p ) { delete[] p; });
+            sp_allocated.reset(new uint8_t[length](), [=](uint8_t *p) { delete [] p; });
 
             read_task = is_buf.getn(sp_allocated.get(), length).then([length](size_t bytes_read)
             {
@@ -445,29 +473,32 @@ public:
         }
         else
         {
-            // Acquire succeeded, assign the acquired pointer to sp_allocated. Keep an empty custom destructor 
+            // Acquire succeeded, assign the acquired pointer to sp_allocated. Keep an empty custom destructor
             // so that the data is not released when sp_allocated goes out of scope. The streambuf will manage its memory.
             sp_allocated.reset(ptr, [](uint8_t *) {});
         }
 
-        read_task.then([this_client, msg, sp_allocated, length]()
+        auto client = boost::get<websocketpp::client<WebsocketClientType>>(&m_client);
+        read_task.then([this_client, client, msg, sp_allocated, length]()
         {
             websocketpp::lib::error_code ec;
             switch (msg._m_impl->message_type())
             {
             case websocket_message_type::text_message:
-                this_client->m_client.send(this_client->m_con,
-                                           sp_allocated.get(),
-                                           length,
-                                           websocketpp::frame::opcode::text,
-                                           ec);
+                client->send(
+                    this_client->m_con,
+                    sp_allocated.get(),
+                    length,
+                    websocketpp::frame::opcode::text,
+                    ec);
                 break;
             case websocket_message_type::binary_message:
-                this_client->m_client.send(this_client->m_con,
-                                           sp_allocated.get(),
-                                           length,
-                                           websocketpp::frame::opcode::binary,
-                                           ec);
+                client->send(
+                    this_client->m_con,
+                    sp_allocated.get(),
+                    length,
+                    websocketpp::frame::opcode::binary,
+                    ec);
                 break;
             default:
                 // This case should have already been filtered above.
@@ -507,12 +538,15 @@ public:
                 msg.signal_body_sent();
             }
 
-            std::lock_guard<std::mutex> lock(this_client->m_send_lock);
-            --this_client->m_scheduled;
-            if (!this_client->m_outgoing_msg_queue.empty())
+            if (--this_client->m_num_sends > 0)
             {
-                auto next_msg = this_client->m_outgoing_msg_queue.front();
-                this_client->m_outgoing_msg_queue.pop();
+                // Only hold the lock when actually touching the queue.
+                websocket_outgoing_message next_msg;
+                {
+                    std::lock_guard<std::mutex> lock(this_client->m_send_lock);
+                    next_msg = this_client->m_outgoing_msg_queue.front();
+                    this_client->m_outgoing_msg_queue.pop();
+                }
                 this_client->send_msg(next_msg);
             }
         });
@@ -536,7 +570,8 @@ private:
     std::unique_ptr<boost::asio::io_service::work> m_work;
     std::thread m_thread;
 
-    wsppclient m_client;
+    boost::variant<
+        websocketpp::client<websocketpp::config::asio_client>> m_client;
     websocketpp::connection_hdl m_con;
 
     pplx::task_completion_event<void> m_connect_tce;
@@ -548,7 +583,7 @@ private:
     // Else enqueue the message in a queue.
     // m_receive_queue_lock : to guard access to the queue & m_client_closed
     // There is a bug in ppl task_completion_event. The task_completion_event::set() accesses some
-    // internal data after signalling the event. The waiting thread might go ahead and start destroying the
+    // internal data after signaling the event. The waiting thread might go ahead and start destroying the
     // websocket_client. Due to this race, set() can cause a crash.
 
     // Workaround: use m_receive_queue_lock as a critical section
@@ -566,21 +601,15 @@ private:
     // Queue to order the sends
     std::queue<websocket_outgoing_message> m_outgoing_msg_queue;
 
-    // Number of scheduled sends
-    int m_scheduled;
+    // Number of sends in progress and queued up.
+    std::atomic<int> m_num_sends;
 };
 
 }
 
-websocket_client::websocket_client()
-    :m_client(std::make_shared<details::ws_desktop_client>(websocket_client_config()))
-{
-}
-
-websocket_client::websocket_client(websocket_client_config config)
-    : m_client(std::make_shared<details::ws_desktop_client>(std::move(config)))
-{
-}
+websocket_client::websocket_client(websocket_client_config config) :
+    m_client(std::make_shared<details::wspp_client>(std::move(config)))
+{}
 
 }}}}
 

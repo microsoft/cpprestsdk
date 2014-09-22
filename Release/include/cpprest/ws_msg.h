@@ -39,7 +39,7 @@
 #if defined(_MSC_VER) && (_MSC_VER >= 1800)
 #include <ppltasks.h>
 namespace pplx = Concurrency;
-#else 
+#else
 #include "pplx/pplxtasks.h"
 #endif
 
@@ -47,8 +47,8 @@ namespace pplx = Concurrency;
 #include "cpprest/basic_types.h"
 #include "cpprest/asyncrt_utils.h"
 
-namespace web 
-{ 
+namespace web
+{
 namespace experimental
 {
 namespace websockets
@@ -60,7 +60,7 @@ namespace details
 {
     class winrt_client;
     class ReceiveContext;
-    class ws_desktop_client;
+    class wspp_client;
 }
 
 /// <summary>
@@ -162,7 +162,7 @@ public:
     /// <summary>
     /// Sets binary data as the message body.
     /// </summary>
-    /// <param name="istream">casablanca input stream representing the body of the message.</param>
+    /// <param name="istream">Input stream representing the body of the message.</param>
     /// <remarks>Upon sending, the entire stream may be buffered to determine the length.</remarks>
     void set_binary_message(const concurrency::streams::istream &istream)
     {
@@ -171,7 +171,7 @@ public:
 
 private:
     friend class details::winrt_client;
-    friend class details::ws_desktop_client;
+    friend class details::wspp_client;
 
     std::shared_ptr<details::_websocket_message> _m_impl;
 
@@ -228,7 +228,7 @@ public:
     /// </summary>
     /// <returns>String containing body of the message.</returns>
     _ASYNCRTIMP pplx::task<std::string> extract_string() const;
-    
+
     /// <summary>
     /// Produces a stream which the caller may use to retrieve body from an incoming message.
     /// Can be used for both UTF-8 (text) and binary message types.
@@ -264,13 +264,13 @@ public:
 
 private:
     friend class details::winrt_client;
-    friend class details::ws_desktop_client;
+    friend class details::wspp_client;
     friend class details::ReceiveContext;
-    
+
     // Store message body in a container buffer backed by a string.
     // Allows for optimization in the string message cases.
     concurrency::streams::container_buffer<std::string> m_body;
-    
+
     std::shared_ptr<details::_websocket_message> _m_impl;
 };
 

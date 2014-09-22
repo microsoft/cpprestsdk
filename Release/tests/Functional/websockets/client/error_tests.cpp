@@ -46,7 +46,7 @@ TEST_FIXTURE(uri_address, send_before_connect)
 
     websocket_outgoing_message msg;
     msg.set_utf8_message("xyz");
-    
+
     VERIFY_THROWS(client.send(msg).wait(), websocket_exception);
 }
 
