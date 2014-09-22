@@ -79,11 +79,10 @@ public:
         m_client_closed(false)
     {
         m_msg_websocket = ref new MessageWebSocket();
-        const auto &config = config();
 
         // Sets the HTTP request headers to the HTTP request message used in the WebSocket protocol handshake
         const utility::string_t protocolHeader(_XPLATSTR("Sec-WebSocket-Protocol"));
-        const auto & headers = config.headers();
+        const auto & headers = m_config.headers();
         for (const auto & header : headers)
         {
             // Unfortunately the MessageWebSocket API throws a COMException if you try to set the
@@ -97,18 +96,18 @@ public:
         // Add any specified subprotocols.
         if (headers.has(protocolHeader))
         {
-            const std::vector<utility::string_t> protocols = config.subprotocols();
+            const std::vector<utility::string_t> protocols = m_config.subprotocols();
             for (const auto & value : protocols)
             {
                 m_msg_websocket->Control->SupportedProtocols->Append(Platform::StringReference(value.c_str()));
             }
         }
 
-        if (config.credentials().is_set())
+        if (m_config.credentials().is_set())
         {
             m_msg_websocket->Control->ServerCredential = ref new Windows::Security::Credentials::PasswordCredential("WebSocketClientCredentialResource",
-                Platform::StringReference(config.credentials().username().c_str()),
-                Platform::StringReference(config.credentials().password().c_str()));
+                Platform::StringReference(m_config.credentials().username().c_str()),
+                Platform::StringReference(m_config.credentials().password().c_str()));
         }
 
         m_context = ref new ReceiveContext([=](websocket_incoming_message &msg)
@@ -170,7 +169,7 @@ public:
 
     pplx::task<void> connect()
     {
-        const auto &proxy = config().proxy();
+        const auto &proxy = m_config.proxy();
         if(!proxy.is_default())
         {
             return pplx::task_from_exception<void>(websocket_exception("Only a default proxy server is supported."));
@@ -296,7 +295,7 @@ public:
         // First try to acquire the data (Get a pointer to the next already allocated contiguous block of data)
         // If acquire succeeds, send the data over the socket connection, there is no copy of data from stream to temporary buffer.
         // If acquire fails, copy the data to a temporary buffer managed by sp_allocated and send it over the socket connection.
-        std::shared_ptr<uint8_t> sp_allocated(nullptr, [](uint8_t *) { } );
+        std::shared_ptr<uint8_t> sp_allocated;
         size_t acquired_size = 0;
         uint8_t *ptr;
         auto read_task = pplx::task_from_result();
@@ -324,7 +323,7 @@ public:
         }
         else
         {
-            // Acquire succeeded, assign the acquired pointer to sp_allocated. Keep an empty custom destructor
+            // Acquire succeeded, assign the acquired pointer to sp_allocated. Use an empty custom destructor
             // so that the data is not released when sp_allocated goes out of scope. The streambuf will manage its memory.
             sp_allocated.reset(ptr, [](uint8_t *) {});
         }

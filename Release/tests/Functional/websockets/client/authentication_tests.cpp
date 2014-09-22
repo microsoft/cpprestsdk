@@ -86,9 +86,8 @@ TEST_FIXTURE(uri_address, auth_with_credentials, "Ignore", "245")
 }
 #endif
 
-// Secure websockets on implemented yet on non-WinRT - 255
-#if defined(__cplusplus_winrt)
-// Send and receive text message over SSL
+// Secure websockets on implemented yet on non-WinRT Windows - 255
+#if defined(__cplusplus_winrt) || !defined(_MS_WINDOWS)
 TEST_FIXTURE(uri_address, ssl_test)
 {
     websocket_client client;

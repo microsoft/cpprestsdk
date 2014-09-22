@@ -40,6 +40,7 @@
 #pragma GCC diagnostic ignored "-Wconversion"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
+#include <websocketpp/config/asio_client.hpp>
 #include <websocketpp/config/asio_no_tls_client.hpp>
 #include <websocketpp/client.hpp>
 #pragma GCC diagnostic pop
@@ -54,6 +55,9 @@
 #define _WEBSOCKETPP_CONSTEXPR_TOKEN_
 #else
 #define _WEBSOCKETPP_NULLPTR_TOKEN_ 0
+#endif
+#ifndef _MS_WINDOWS
+#include <websocketpp/config/asio_client.hpp>
 #endif
 #include <websocketpp/config/asio_no_tls_client.hpp>
 #include <websocketpp/client.hpp>
@@ -83,8 +87,7 @@ class wspp_client : public _websocket_client_impl, public std::enable_shared_fro
 {
 private:
     enum State {
-        UNINITIALIZED,
-        INITIALIZED,
+        CREATED,
         CONNECTING,
         CONNECTED,
         CLOSING,
@@ -95,23 +98,9 @@ public:
     wspp_client(websocket_client_config config) :
         _websocket_client_impl(std::move(config)),
         m_work(utility::details::make_unique<boost::asio::io_service::work>(m_service)),
-        m_state(UNINITIALIZED),
+        m_state(CREATED),
         m_num_sends(0)
-    {
-        // TODO tls here.
-        initialize_impl<websocketpp::config::asio_client>();
-    }
-
-    template <typename WebsocketConfigType>
-    void initialize_impl()
-    {
-        auto &client = boost::get<websocketpp::client<WebsocketConfigType>>(m_client);
-
-        client.clear_access_channels(websocketpp::log::alevel::all);
-        client.clear_error_channels(websocketpp::log::alevel::all);
-        client.init_asio(&m_service);
-        m_state = INITIALIZED;
-    }
+    {}
 
     ~wspp_client()
     {
@@ -123,11 +112,10 @@ public:
 
         // Now, what states could we be in?
         switch (m_state) {
-        case UNINITIALIZED:
         case DESTROYED:
             // These should be impossible
             std::abort();
-        case INITIALIZED:
+        case CREATED:
         case CLOSED:
             // In these cases, nothing need be done.
             lock.unlock();
@@ -167,14 +155,22 @@ public:
 
     pplx::task<void> close(websocket_close_status status, const utility::string_t& reason)
     {
-        // TODO tls here.
-        return close_impl<websocketpp::config::asio_client>(status, reason);
+#ifndef _MS_WINDOWS
+    	if (m_client->is_tls_client())
+        {
+            return close_impl<websocketpp::config::asio_tls_client>(status, reason);
+        }
+        else
+#endif
+        {
+            return close_impl<websocketpp::config::asio_client>(status, reason);
+        }
     }
 
-    template <typename WebsocketConfigType>
+    template <typename WebsocketConfig>
     pplx::task<void> close_impl(websocket_close_status status, const utility::string_t& reason)
     {
-        auto &client = boost::get<websocketpp::client<WebsocketConfigType>>(m_client);
+        auto &client = m_client->client<WebsocketConfig>();
 
         std::lock_guard<std::mutex> lock(m_receive_queue_lock);
         if (m_state == CONNECTED)
@@ -193,16 +189,43 @@ public:
 
     pplx::task<void> connect()
     {
-        // TODO tls here.
-        return connect_impl<websocketpp::config::asio_client>();
+#ifndef _MS_WINDOWS
+        if (m_uri.scheme() == U("wss"))
+        {
+        	m_client = std::unique_ptr<websocketpp_client_base>(new websocketpp_tls_client());
+        	
+            // Options specific to TLS client.
+            auto &client = m_client->client<websocketpp::config::asio_tls_client>();
+            client.set_tls_init_handler([this](websocketpp::connection_hdl)
+            {
+            	auto sslContext = websocketpp::lib::shared_ptr<boost::asio::ssl::context>(new boost::asio::ssl::context(boost::asio::ssl::context::sslv23));
+                sslContext->set_default_verify_paths();
+                sslContext->set_options(boost::asio::ssl::context::default_workarounds);
+                sslContext->set_verify_mode(boost::asio::ssl::context::verify_peer);
+                // Like done with the http_client certificate verification needs more steps for iOS and Android.
+                sslContext->set_verify_callback(boost::asio::ssl::rfc2818_verification(m_uri.host()));
+                return sslContext;
+            });
+            return connect_impl<websocketpp::config::asio_tls_client>();
+        }
+        else
+#endif
+        {
+        	m_client = std::unique_ptr<websocketpp_client_base>(new websocketpp_client());
+            return connect_impl<websocketpp::config::asio_client>();
+        }
     }
-
+    
     template <typename WebsocketConfigType>
     pplx::task<void> connect_impl()
     {
-        auto &client = boost::get<websocketpp::client<WebsocketConfigType>>(m_client);
+        auto &client = m_client->client<WebsocketConfigType>();
 
-        _ASSERTE(m_state == INITIALIZED);
+        client.clear_access_channels(websocketpp::log::alevel::all);
+        client.clear_error_channels(websocketpp::log::alevel::all);
+        client.init_asio(&m_service);
+
+        _ASSERTE(m_state == CREATED);
         client.set_open_handler([this](websocketpp::connection_hdl)
         {
             _ASSERTE(m_state == CONNECTING);
@@ -219,7 +242,7 @@ public:
             m_connect_tce.set_exception(websocket_exception("Connection attempt failed."));
         });
 
-        client.set_message_handler([this](websocketpp::connection_hdl, WebsocketConfigType::message_type::ptr msg)
+        client.set_message_handler([this](websocketpp::connection_hdl, websocketpp::config::asio_client::message_type::ptr msg)
         {
             _ASSERTE(m_state >= CONNECTED && m_state < CLOSED);
             websocket_incoming_message ws_incoming_message;
@@ -283,7 +306,7 @@ public:
         }
 
         // Add any request headers specified by the user.
-        const auto & headers = config().headers();
+        const auto & headers = m_config.headers();
         for (const auto & header : headers)
         {
             if (!utility::details::str_icmp(header.first, g_subProtocolHeader))
@@ -295,7 +318,7 @@ public:
         // Add any specified subprotocols.
         if (headers.has(g_subProtocolHeader))
         {
-            const std::vector<utility::string_t> protocols = config().subprotocols();
+            const std::vector<utility::string_t> protocols = m_config.subprotocols();
             for (const auto & value : protocols)
             {
                 con->add_subprotocol(utility::conversions::to_utf8string(value), ec);
@@ -395,7 +418,16 @@ public:
 
     void send_msg(websocket_outgoing_message &msg)
     {
-        send_msg_impl<websocketpp::config::asio_client>(msg);
+#ifndef _MS_WINDOWS
+        if (m_client->is_tls_client())
+        {
+            send_msg_impl<websocketpp::config::asio_tls_client>(msg);
+        }
+        else
+#endif
+        {
+            send_msg_impl<websocketpp::config::asio_client>(msg);
+        }
     }
 
     template <typename WebsocketClientType>
@@ -445,7 +477,7 @@ public:
         // First try to acquire the data (Get a pointer to the next already allocated contiguous block of data)
         // If acquire succeeds, send the data over the socket connection, there is no copy of data from stream to temporary buffer.
         // If acquire fails, copy the data to a temporary buffer managed by sp_allocated and send it over the socket connection.
-        std::shared_ptr<uint8_t> sp_allocated(nullptr, [](uint8_t *) {});
+        std::shared_ptr<uint8_t> sp_allocated;
         size_t acquired_size = 0;
         uint8_t* ptr;
         auto read_task = pplx::task_from_result();
@@ -473,19 +505,19 @@ public:
         }
         else
         {
-            // Acquire succeeded, assign the acquired pointer to sp_allocated. Keep an empty custom destructor
+            // Acquire succeeded, assign the acquired pointer to sp_allocated. Use an empty custom destructor
             // so that the data is not released when sp_allocated goes out of scope. The streambuf will manage its memory.
             sp_allocated.reset(ptr, [](uint8_t *) {});
         }
 
-        auto client = boost::get<websocketpp::client<WebsocketClientType>>(&m_client);
-        read_task.then([this_client, client, msg, sp_allocated, length]()
+        read_task.then([this_client, msg, sp_allocated, length]()
         {
+        	auto &client = this_client->m_client->client<WebsocketClientType>();
             websocketpp::lib::error_code ec;
             switch (msg._m_impl->message_type())
             {
             case websocket_message_type::text_message:
-                client->send(
+                client.send(
                     this_client->m_con,
                     sp_allocated.get(),
                     length,
@@ -493,7 +525,7 @@ public:
                     ec);
                 break;
             case websocket_message_type::binary_message:
-                client->send(
+                client.send(
                     this_client->m_con,
                     sp_allocated.get(),
                     length,
@@ -570,8 +602,53 @@ private:
     std::unique_ptr<boost::asio::io_service::work> m_work;
     std::thread m_thread;
 
-    boost::variant<
-        websocketpp::client<websocketpp::config::asio_client>> m_client;
+    // Perform type erasure to set the websocketpp client in use at runtime
+    // after construction based on the URI.
+    struct websocketpp_client_base
+    {
+    	virtual ~websocketpp_client_base() _noexcept {}
+    	template <typename WebsocketConfig>
+    	websocketpp::client<WebsocketConfig> & client()
+    	{
+    		if(is_tls_client())
+    		{
+    			return reinterpret_cast<websocketpp::client<WebsocketConfig> &>(tls_client());
+    		}
+    		else
+    		{
+    			return reinterpret_cast<websocketpp::client<WebsocketConfig> &>(non_tls_client());
+    		}
+    	}
+    	virtual websocketpp::client<websocketpp::config::asio_client> & non_tls_client()
+		{
+    		throw std::bad_cast();
+		}
+    	virtual websocketpp::client<websocketpp::config::asio_tls_client> & tls_client()
+		{
+    		throw std::bad_cast();
+		}
+    	virtual bool is_tls_client() const = 0;
+    };
+    struct websocketpp_client : websocketpp_client_base
+    {
+    	websocketpp::client<websocketpp::config::asio_client> & non_tls_client() override
+    	{
+    		return m_client;
+    	}
+    	bool is_tls_client() const override { return false; }
+    	websocketpp::client<websocketpp::config::asio_client> m_client;
+    };
+    struct websocketpp_tls_client : websocketpp_client_base
+    {
+    	websocketpp::client<websocketpp::config::asio_tls_client> & tls_client() override
+    	{
+       		return m_client;
+    	}
+    	bool is_tls_client() const override { return true; }
+    	websocketpp::client<websocketpp::config::asio_tls_client> m_client;
+    };
+    std::unique_ptr<websocketpp_client_base> m_client;
+
     websocketpp::connection_hdl m_con;
 
     pplx::task_completion_event<void> m_connect_tce;
