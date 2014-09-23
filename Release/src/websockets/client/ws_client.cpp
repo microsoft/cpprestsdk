@@ -213,7 +213,7 @@ public:
             return connect_impl<websocketpp::config::asio_client>();
         }
     }
-    
+
     template <typename WebsocketConfigType>
     pplx::task<void> connect_impl()
     {
@@ -240,7 +240,7 @@ public:
             m_connect_tce.set_exception(websocket_exception("Connection attempt failed."));
         });
 
-        client.set_message_handler([this](websocketpp::connection_hdl, websocketpp::config::asio_client::message_type::ptr msg)
+        client.set_message_handler([this](websocketpp::connection_hdl, const websocketpp::config::asio_client::message_type::ptr &msg)
         {
             _ASSERTE(m_state >= CONNECTED && m_state < CLOSED);
             websocket_incoming_message ws_incoming_message;
@@ -491,7 +491,7 @@ public:
             }
 
             // Allocate buffer to hold the data to be read from the stream.
-            sp_allocated.reset(new uint8_t[length](), [=](uint8_t *p) { delete [] p; });
+            sp_allocated.reset(new uint8_t[length], [=](uint8_t *p) { delete [] p; });
 
             read_task = is_buf.getn(sp_allocated.get(), length).then([length](size_t bytes_read)
             {
@@ -608,11 +608,13 @@ private:
     	template <typename WebsocketConfig>
     	websocketpp::client<WebsocketConfig> & client()
     	{
+#ifndef _MS_WINDOWS
     		if(is_tls_client())
     		{
     			return reinterpret_cast<websocketpp::client<WebsocketConfig> &>(tls_client());
     		}
     		else
+#endif
     		{
     			return reinterpret_cast<websocketpp::client<WebsocketConfig> &>(non_tls_client());
     		}
@@ -621,10 +623,12 @@ private:
 		{
     		throw std::bad_cast();
 		}
+#ifndef _MS_WINDOWS
     	virtual websocketpp::client<websocketpp::config::asio_tls_client> & tls_client()
 		{
     		throw std::bad_cast();
 		}
+#endif
     	virtual bool is_tls_client() const = 0;
     };
     struct websocketpp_client : websocketpp_client_base
@@ -636,6 +640,7 @@ private:
     	bool is_tls_client() const override { return false; }
     	websocketpp::client<websocketpp::config::asio_client> m_client;
     };
+#ifndef _MS_WINDOWS
     struct websocketpp_tls_client : websocketpp_client_base
     {
     	websocketpp::client<websocketpp::config::asio_tls_client> & tls_client() override
@@ -645,6 +650,7 @@ private:
     	bool is_tls_client() const override { return true; }
     	websocketpp::client<websocketpp::config::asio_tls_client> m_client;
     };
+#endif
     std::unique_ptr<websocketpp_client_base> m_client;
 
     websocketpp::connection_hdl m_con;

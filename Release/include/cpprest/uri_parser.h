@@ -25,22 +25,19 @@
 
 #pragma once
 
-#include <locale>
 #include <string>
 
 namespace web { namespace details
 {
-    class uri_parser
+    namespace uri_parser
     {
-    public:
-        uri_parser() {}
 
         /// <summary>
         /// Parses the uri, attempting to determine its validity.
         ///
         /// This function accepts both uris ('http://msn.com') and uri relative-references ('path1/path2?query')
         /// </summary>
-        bool validate(const utility::string_t &encoded_string) const;
+        bool validate(const utility::string_t &encoded_string);
 
         /// <summary>
         /// Parses the uri, setting each provided string to the value of that component. Components
@@ -49,9 +46,7 @@ namespace web { namespace details
         ///
         /// This function accepts both uris ('http://msn.com') and uri relative-references ('path1/path2?query')
         /// </summary>
-        bool parse(
-            const utility::string_t &encoded_string,
-            _uri_components &components) const;
+        bool parse(const utility::string_t &encoded_string, uri_components &components);
 
         /// <summary>
         /// Unreserved characters are those that are allowed in a URI but do not have a reserved purpose. They include:
@@ -63,18 +58,9 @@ namespace web { namespace details
         /// - '_' (underscore)
         /// - '~' (tilde)
         /// </summary>
-        static bool is_unreserved(int c)
+        inline bool is_unreserved(int c)
         {
             return ::utility::details::is_alnum((char)c) || c == '-' || c == '.' || c == '_' || c == '~';
-        }
-
-        /// <summary>
-        /// Reserved characters includes the general delimiters and sub delimiters. Some characters
-        /// are neither reserved nor unreserved, and must be percent-encoded.
-        /// </summary>
-        static bool is_reserved(int c)
-        {
-            return is_gen_delim(c) || is_sub_delim(c);
         }
 
         /// <summary>
@@ -82,7 +68,7 @@ namespace web { namespace details
         /// General delimiters include:
         /// - All of these :/?#[]@
         /// </summary>
-        static bool is_gen_delim(int c)
+        inline bool is_gen_delim(int c)
         {
             return c == ':' || c == '/' || c == '?' || c == '#' || c == '[' || c == ']' || c == '@';
         }
@@ -93,7 +79,7 @@ namespace web { namespace details
         /// uri segments. sub_delimiters include:
         /// - All of these !$&'()*+,;=
         /// </summary>
-        static bool is_sub_delim(int c)
+        inline bool is_sub_delim(int c)
         {
             switch (c)
             {
@@ -115,6 +101,15 @@ namespace web { namespace details
         }
 
         /// <summary>
+        /// Reserved characters includes the general delimiters and sub delimiters. Some characters
+        /// are neither reserved nor unreserved, and must be percent-encoded.
+        /// </summary>
+        inline bool is_reserved(int c)
+        {
+            return is_gen_delim(c) || is_sub_delim(c);
+        }
+
+        /// <summary>
         /// Legal characters in the scheme portion include:
         /// - Any alphanumeric character
         /// - '+' (plus)
@@ -123,7 +118,7 @@ namespace web { namespace details
         ///
         /// Note that the scheme must BEGIN with an alpha character.
         /// </summary> 
-        static bool is_scheme_character(int c)
+        inline bool is_scheme_character(int c)
         {
             return ::utility::details::is_alnum((char)c) || c == '+' || c == '-' || c == '.';
         }
@@ -135,7 +130,7 @@ namespace web { namespace details
         /// - The sub-delimiters
         /// - ':' (colon)
         /// </summary> 
-        static bool is_user_info_character(int c)
+        inline bool is_user_info_character(int c)
         {
             return is_unreserved(c) || is_sub_delim(c) || c == '%' || c == ':';
         }
@@ -149,7 +144,7 @@ namespace web { namespace details
         /// - '[' (open bracket)
         /// - ']' (close bracket)
         /// </summary> 
-        static bool is_host_character(int c)
+        inline bool is_host_character(int c)
         {
             return is_unreserved(c) || is_sub_delim(c) || c == '%' || c == ':' || c == '[' || c == ']';
         }
@@ -164,7 +159,7 @@ namespace web { namespace details
         /// Note that we don't currently support:
         /// - IPv6 addresses (requires '[]')
         /// </summary> 
-        static bool is_authority_character(int c)
+        inline bool is_authority_character(int c)
         {
             return is_unreserved(c) || is_sub_delim(c) || c == '%' || c == '@' || c == ':';
         }
@@ -177,7 +172,7 @@ namespace web { namespace details
         /// - ':' (colon)
         /// - '@' (ampersand)
         /// </summary> 
-        static bool is_path_character(int c)
+        inline bool is_path_character(int c)
         {
             return is_unreserved(c) || is_sub_delim(c) || c == '%' || c == '/' || c == ':' || c == '@';
         }
@@ -187,7 +182,7 @@ namespace web { namespace details
         /// - Any path character
         /// - '?' (question mark)
         /// </summary> 
-        static bool is_query_character(int c)
+        inline bool is_query_character(int c)
         {
             return is_path_character(c) || c == '?';
         }
@@ -197,13 +192,12 @@ namespace web { namespace details
         /// - Any path character
         /// - '?' (question mark)
         /// </summary> 
-        static bool is_fragment_character(int c)
+        inline bool is_fragment_character(int c)
         {
             // this is intentional, they have the same set of legal characters
             return is_query_character(c);
         }
 
-    private:
         /// <summary>
         /// Parses the uri, setting the given pointers to locations inside the given buffer.
         /// 'encoded' is expected to point to an encoded zero-terminated string containing a uri
@@ -216,8 +210,6 @@ namespace web { namespace details
             _Out_ int *port,
             const utility::char_t **path_begin, const utility::char_t **path_end,
             const utility::char_t **query_begin, const utility::char_t **query_end,
-            const utility::char_t **fragment_begin, const utility::char_t **fragment_end) const;
-
-        static const std::locale loc;
-    };
+            const utility::char_t **fragment_begin, const utility::char_t **fragment_end);
+    }
 }}

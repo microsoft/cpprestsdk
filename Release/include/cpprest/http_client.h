@@ -163,9 +163,9 @@ public:
     /// Set the web proxy object
     /// </summary>
     /// <param name="proxy">A reference to the web proxy object.</param>
-    void set_proxy(const web_proxy& proxy)
+    void set_proxy(web_proxy proxy)
     {
-        m_proxy = proxy;
+        m_proxy = std::move(proxy);
     }
 
     /// <summary>
@@ -377,10 +377,7 @@ public:
     /// <returns>
     /// A base uri initialized in constructor
     /// </return>
-    const uri& base_uri() const
-    {
-        return _base_uri;
-    }
+    _ASYNCRTIMP const uri& base_uri() const;
 
     /// <summary>
     /// Get client configuration object
@@ -394,7 +391,7 @@ public:
     /// <param name="handler">A function object representing the pipeline stage.</param>
     void add_handler(std::function<pplx::task<http_response>(http_request, std::shared_ptr<http::http_pipeline_stage>)> handler)
     {
-        m_pipeline->append(std::make_shared< ::web::http::details::function_pipeline_wrapper>(handler));
+        m_pipeline->append(std::make_shared<::web::http::details::function_pipeline_wrapper>(handler));
     }
 
     /// <summary>
@@ -593,8 +590,6 @@ private:
     void build_pipeline(uri base_uri, http_client_config client_config);
     
     std::shared_ptr<::web::http::http_pipeline> m_pipeline;
-
-    uri _base_uri;
 };
 
 }}} // namespaces

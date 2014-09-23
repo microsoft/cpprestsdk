@@ -320,9 +320,9 @@ namespace details
         {
             char buffer[9];
 #ifdef _MS_WINDOWS
-            sprintf_s(buffer, 9, "%8IX", bytes_read);
+            sprintf_s(buffer, sizeof(buffer), "%8IX", bytes_read);
 #else
-            sprintf(buffer, "%8zX", bytes_read);
+            snprintf(buffer, sizeof(buffer), "%8zX", bytes_read);
 #endif
             memcpy(&data[0], buffer, 8);
             while (data[offset] == ' ') ++offset;

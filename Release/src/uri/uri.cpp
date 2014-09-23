@@ -34,7 +34,7 @@ using namespace utility::conversions;
 
 namespace web { namespace details
 {
-utility::string_t _uri_components::join()
+utility::string_t uri_components::join()
 {
     // canonicalize components first
 
@@ -103,7 +103,7 @@ using namespace details;
 
 uri::uri(const utility::string_t &uri_string)
 {
-    if (!details::uri_parser().parse(uri_string, m_components))
+    if (!details::uri_parser::parse(uri_string, m_components))
     {
         throw uri_exception("provided uri is invalid: " + utility::conversions::to_utf8string(uri_string));
     }
@@ -112,7 +112,7 @@ uri::uri(const utility::string_t &uri_string)
 
 uri::uri(const utility::char_t *uri_string): m_uri(uri_string)
 {
-    if (!details::uri_parser().parse(uri_string, m_components))
+    if (!details::uri_parser::parse(uri_string, m_components))
     {
         throw uri_exception("provided uri is invalid: " + utility::conversions::to_utf8string(uri_string));
     }
@@ -314,7 +314,7 @@ std::map<utility::string_t, utility::string_t> uri::split_query(const utility::s
 
 bool uri::validate(const utility::string_t &uri_string)
 {
-    return uri_parser().validate(uri_string);
+    return uri_parser::validate(uri_string);
 }
 
 uri uri::authority() const

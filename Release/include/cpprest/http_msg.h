@@ -430,8 +430,14 @@ public:
 
     /// <summary>
     /// Generates a string representation of the message, including the body when possible.
+    /// Mainly this should be used for debugging purposes as it has to copy the
+    /// message body and doesn't have excellent performance.
     /// </summary>
     /// <returns>A string representation of this HTTP request.</returns>
+    /// <remarks>Note this function is synchronous and doesn't wait for the
+    /// entire message body to arrive. If the message body has arrived by the time this
+    /// function is called and it is has a textual Content-Type it will be included.
+    /// Otherwise just the headers will be present.</remarks>
     utility::string_t to_string() const { return _m_impl->to_string(); }
 
     /// <summary>
@@ -972,9 +978,6 @@ public:
     ///    progress: the number of bytes that have been processed so far.
     /// </param>
     /// <remarks>
-    ///   **EXPERIMENTAL**
-    ///   This function is subject to change based on user feedback.
-    ///
     ///   This function will be called at least once for upload and at least once for
     ///   the download body, unless there is some exception generated. An HTTP message with an error
     ///   code is not an exception. This means, that even if there is no body, the progress handler
@@ -1098,8 +1101,14 @@ public:
 
     /// <summary>
     /// Generates a string representation of the message, including the body when possible.
+    /// Mainly this should be used for debugging purposes as it has to copy the
+    /// message body and doesn't have excellent performance.
     /// </summary>
     /// <returns>A string representation of this HTTP request.</returns>
+    /// <remarks>Note this function is synchronous and doesn't wait for the
+    /// entire message body to arrive. If the message body has arrived by the time this
+    /// function is called and it is has a textual Content-Type it will be included.
+    /// Otherwise just the headers will be present.</remarks>
     utility::string_t to_string() const { return _m_impl->to_string(); }
 
     /// <summary>
@@ -1250,6 +1259,7 @@ public:
     {
         
     }
+
     /// <summary>
     /// Create an http pipeline that consists of a linear chain of stages
     /// </summary>
@@ -1306,8 +1316,6 @@ private:
     http_pipeline(std::shared_ptr<http_pipeline_stage> last) : m_last_stage(last) 
     {
     }
-
-private:
 
     // The vector of pipeline stages.
     std::vector<std::shared_ptr<http_pipeline_stage>> m_stages;

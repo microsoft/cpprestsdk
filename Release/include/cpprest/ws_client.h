@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,7 +41,7 @@
 #if defined(_MSC_VER) && (_MSC_VER >= 1800)
 #include <ppltasks.h>
 namespace pplx = Concurrency;
-#else 
+#else
 #include "pplx/pplxtasks.h"
 #endif
 
@@ -57,6 +57,9 @@ namespace web
 /// WebSocket client is currently in beta.
 namespace experimental
 {
+// In the past namespace was accidentally called 'web_sockets'. To avoid breaking code
+// alias it. At our next major release this should be deleted.
+namespace web_sockets = websockets;
 namespace websockets
 {
 /// WebSocket client side library.
@@ -218,7 +221,7 @@ public:
     /// Creates an <c>websocket_exception</c> with just a string message and no error code.
     /// </summary>
     /// <param name="whatArg">Error message string.</param>
-    websocket_exception(const utility::string_t &whatArg) 
+    websocket_exception(const utility::string_t &whatArg)
         : m_msg(utility::conversions::to_utf8string(whatArg)) {}
 
 #ifdef _MS_WINDOWS
@@ -234,18 +237,18 @@ public:
     /// The message of the error code will be used as the what() string message.
     /// </summary>
     /// <param name="errorCode">Error code value.</param>
-    websocket_exception(int errorCode) 
+    websocket_exception(int errorCode)
         : m_errorCode(utility::details::create_error_code(errorCode))
     {
         m_msg = m_errorCode.message();
     }
 
     /// <summary>
-    /// Creates a <c>websocket_exception</c> from a error code using the current platform error category. 
+    /// Creates a <c>websocket_exception</c> from a error code using the current platform error category.
     /// </summary>
     /// <param name="errorCode">Error code value.</param>
     /// <param name="whatArg">Message to use in what() string.</param>
-    websocket_exception(int errorCode, const utility::string_t &whatArg) 
+    websocket_exception(int errorCode, const utility::string_t &whatArg)
         : m_errorCode(utility::details::create_error_code(errorCode)),
           m_msg(utility::conversions::to_utf8string(whatArg))
     {}

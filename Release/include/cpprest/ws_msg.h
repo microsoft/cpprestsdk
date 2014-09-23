@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -59,8 +59,10 @@ namespace client
 namespace details
 {
     class winrt_client;
-    class ReceiveContext;
     class wspp_client;
+#if defined(__cplusplus_winrt)
+    ref class ReceiveContext;
+#endif
 }
 
 /// <summary>
@@ -102,12 +104,12 @@ private:
 /// <summary>
 /// Represents an outgoing websocket message
 /// </summary>
-class websocket_outgoing_message 
+class websocket_outgoing_message
 {
 public:
 
     /// <summary>
-    /// Creates an initially empty message for sending. 
+    /// Creates an initially empty message for sending.
     /// </summary>
     websocket_outgoing_message() : _m_impl(std::make_shared<details::_websocket_message>()) {}
 
@@ -178,17 +180,17 @@ private:
     pplx::task_completion_event<void> m_body_sent;
     concurrency::streams::streambuf<uint8_t> m_body;
 
-    void signal_body_sent()
+    void signal_body_sent() const
     {
         m_body_sent.set();
     }
 
-    void signal_body_sent(const std::exception_ptr &e)
+    void signal_body_sent(const std::exception_ptr &e) const
     {
         m_body_sent.set_exception(e);
     }
 
-    pplx::task_completion_event<void> & body_sent() { return m_body_sent; }
+    const pplx::task_completion_event<void> & body_sent() const { return m_body_sent; }
 
     void _set_message(std::string &&data, websocket_message_type msg_type)
     {
@@ -265,7 +267,9 @@ public:
 private:
     friend class details::winrt_client;
     friend class details::wspp_client;
-    friend class details::ReceiveContext;
+#if defined(__cplusplus_winrt)
+    friend ref class details::ReceiveContext;
+#endif
 
     // Store message body in a container buffer backed by a string.
     // Allows for optimization in the string message cases.
