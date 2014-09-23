@@ -393,8 +393,12 @@ size_t _write_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ str
     }
     else
     {
-        pOverlapped->Offset = (DWORD)position;
-        pOverlapped->OffsetHigh = 0x0;
+        pOverlapped->Offset = static_cast<DWORD>(position);
+#ifdef _WIN64
+        pOverlapped->OffsetHigh = static_cast<DWORD>(position >> 32);
+#else
+        pOverlapped->OffsetHigh = 0;
+#endif
     }
 
     _WriteRequest<streams::details::_file_info_impl>* req = nullptr;
@@ -490,8 +494,12 @@ size_t _read_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ stre
 
     auto pOverlapped = new EXTENDED_OVERLAPPED(_ReadFileCompletionRoutine<streams::details::_file_info_impl>);
     pOverlapped->m_scheduler = scheduler.get();
-    pOverlapped->Offset = (DWORD)offset;
+    pOverlapped->Offset = static_cast<DWORD>(offset);
+#ifdef _WIN64
+    pOverlapped->OffsetHigh = static_cast<DWORD>(offset >> 32);
+#else
     pOverlapped->OffsetHigh = 0;
+#endif
 
     _ReadRequest<streams::details::_file_info_impl>* req = nullptr;
 
