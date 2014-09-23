@@ -57,6 +57,9 @@ namespace web
 /// WebSocket client is currently in beta.
 namespace experimental 
 {
+// In the past namespace was accidentally called 'web_sockets'. To avoid breaking code
+// alias it. At our next major release this should be deleted.
+namespace web_sockets = websockets;
 namespace websockets
 {
 /// WebSocket client side library.

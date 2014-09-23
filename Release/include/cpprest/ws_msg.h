@@ -59,8 +59,10 @@ namespace client
 namespace details
 {
     class winrt_client;
-    class ReceiveContext;
     class ws_desktop_client;
+#if defined(__cplusplus_winrt)
+    ref class ReceiveContext;
+#endif
 }
 
 /// <summary>
@@ -89,6 +91,8 @@ public:
     void set_length(size_t len) { m_length = len; }
 
     size_t length() const { return m_length; }
+
+    websocket_message_type message_type() const { return m_msg_type; }
 
     websocket_message_type message_type() const { return m_msg_type; }
 
@@ -265,8 +269,10 @@ public:
 private:
     friend class details::winrt_client;
     friend class details::ws_desktop_client;
-    friend class details::ReceiveContext;
-    
+#if defined(__cplusplus_winrt)
+    friend ref class details::ReceiveContext;
+#endif
+
     // Store message body in a container buffer backed by a string.
     // Allows for optimization in the string message cases.
     concurrency::streams::container_buffer<std::string> m_body;

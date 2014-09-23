@@ -61,7 +61,7 @@ public:
 
 private:
     // Public members cannot have native types
-    ReceiveContext(std::function<void(websocket_incoming_message &>)> receive_handler, std::function<void()> close_handler): m_receive_handler(receive_handler), m_close_handler(close_handler) {}
+    ReceiveContext(std::function<void(websocket_incoming_message &)> receive_handler, std::function<void()> close_handler): m_receive_handler(receive_handler), m_close_handler(close_handler) {}
 
     // Handler to be executed when a message has been received by the client
     std::function<void(websocket_incoming_message &)> m_receive_handler;
@@ -246,13 +246,13 @@ public:
                 m_outgoing_msg_queue.push(msg);
             }
         }
-        return pplx::create_task(msg._m_impl->msg_sent());
+        return pplx::create_task(msg.body_sent());
     }
 
     void send_msg(websocket_outgoing_message &msg)
     {
         auto this_client = this->shared_from_this();
-        auto& is_buf = msg.m_body.create_istream();
+        auto &is_buf = msg.m_body;
         auto length = msg._m_impl->length();
 
         if (length == SIZE_MAX)
@@ -264,7 +264,7 @@ public:
                 auto buf_sz = is_buf.size();
                 if (buf_sz >= SIZE_MAX)
                 {
-                    msg.signal_msg_sent(std::make_exception_ptr(websocket_exception("Cannot send messages larger than SIZE_MAX.")));
+                    msg.signal_body_sent(std::make_exception_ptr(websocket_exception("Cannot send messages larger than SIZE_MAX.")));
                     return;
                 }
                 length = static_cast<size_t>(buf_sz);
@@ -275,7 +275,7 @@ public:
                 // The stream needs to be buffered.
                 auto is_buf_istream = is_buf.create_istream();
                 msg.m_body = concurrency::streams::container_buffer<std::vector<uint8_t>>();
-                is_buf_istream.read_to_end(msg.m_body).then([this_client, msg](pplx::task<size_t> t)
+                is_buf_istream.read_to_end(msg.m_body).then([this_client, msg](pplx::task<size_t> t) mutable
                 {
                     try
                     {
@@ -284,7 +284,7 @@ public:
                     }
                     catch (...)
                     {
-                        msg.signal_msg_sent(std::current_exception());
+                        msg.signal_body_sent(std::current_exception());
                     }
                 });
                 // We have postponed the call to send_msg() until after the data is buffered.
@@ -334,7 +334,7 @@ public:
 
             // Send the data as one complete message, in WinRT we do not have an option to send fragments.
             return pplx::task<unsigned int>(this_client->m_messageWriter->StoreAsync());
-        }).then([this_client, msg, is_buf, acquired, sp_allocated, length](pplx::task<unsigned int> previousTask)
+        }).then([this_client, msg, is_buf, acquired, sp_allocated, length](pplx::task<unsigned int> previousTask) mutable
         {
             std::exception_ptr eptr;
             unsigned int bytes_written = 0;
@@ -364,7 +364,7 @@ public:
             // Set the send_task_completion_event after calling release.
             if (eptr)
             {
-                msg.signal_msg_sent(eptr);
+                msg.signal_body_sent(eptr);
             }
 
             {
@@ -377,7 +377,7 @@ public:
                     this_client->send_msg(next_msg);
                 }
             }
-            msg.signal_msg_sent();
+            msg.signal_body_sent();
         });
     }
 
@@ -462,7 +462,7 @@ private:
 void ReceiveContext::OnReceive(MessageWebSocket^ sender, MessageWebSocketMessageReceivedEventArgs^ args)
 {
     websocket_incoming_message ws_incoming_message;
-    auto &msg = ws_incoming_message->_m_impl;
+    auto &msg = ws_incoming_message._m_impl;
 
     switch(args->MessageType)
     {
@@ -478,11 +478,14 @@ void ReceiveContext::OnReceive(MessageWebSocket^ sender, MessageWebSocketMessage
     {
         DataReader^ reader = args->GetDataReader();
         const auto len = reader->UnconsumedBufferLength;
-        std::string payload;
-        payload.resize(len);
-        reader->ReadBytes(Platform::ArrayReference<uint8_t>(payload.c_str(), len));
-        ws_incoming_message.m_body = concurrency::streams::container_buffer<std::string>(std::move(payload));
-        msg->signal_msg_received(len);
+        if (len > 0)
+        {
+            std::string payload;
+            payload.resize(len);
+            reader->ReadBytes(Platform::ArrayReference<uint8_t>(reinterpret_cast<uint8 *>(&payload[0]), len));
+            ws_incoming_message.m_body = concurrency::streams::container_buffer<std::string>(std::move(payload));
+        }
+        msg->set_length(len);
         m_receive_handler(ws_incoming_message);
     }
     catch(...)
