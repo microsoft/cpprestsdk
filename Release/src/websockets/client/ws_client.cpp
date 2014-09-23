@@ -64,8 +64,6 @@
 #pragma warning( pop )
 #endif /* __GNUC__ */
 
-#include <boost/variant.hpp>
-
 using websocketpp::lib::placeholders::_1;
 using websocketpp::lib::placeholders::_2;
 using websocketpp::lib::bind;
