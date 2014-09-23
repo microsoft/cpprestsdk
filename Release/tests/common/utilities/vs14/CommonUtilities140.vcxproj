@@ -197,16 +197,11 @@
     <ClInclude Include="..\targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs14\UnitTestpp140.vcxproj">
-      <Project>{3EB86C0D-432C-4FFC-BAD4-8DF4EFC7D0FF}</Project>
-    </ProjectReference>
-    <ProjectReference Include="$(TestRoot)\Common\TestRunner\vs14\TestRunner140.vcxproj">
-      <Project>{6490C580-DD4A-4F2D-A345-732C5148349F}</Project>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup Condition="'$(BuildAgainstVSInstallation)'==''">
     <ProjectReference Include="$(CasablancaSrcDir)\build\vs14\casablanca140.vcxproj">
-      <Project>{90D85FF4-F0AE-4816-923F-0EF2758F30AB}</Project>
+      <Project>{1014c621-bc2d-4813-b8c1-6d83ad6f9249}</Project>
+    </ProjectReference>
+    <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\VS14\UnitTestpp140.vcxproj">
+      <Project>{3eb86c0d-432c-4ffc-bad4-8df4efc7d0ff}</Project>
     </ProjectReference>
   </ItemGroup>
   <!-- After the build copy the installed Casablanca binaries into the test directory -->

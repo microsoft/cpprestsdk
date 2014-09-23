@@ -492,10 +492,10 @@ namespace Concurrency { namespace streams
         static pplx::task<void> _skip_whitespace(streams::streambuf<CharType> buffer);
 
         // Aid in parsing input: peek at a character at a time, call type-specific code to examine, extract value when done.
-        template<typename _ParseState, typename _ReturnType>
-        static pplx::task<_ReturnType> _parse_input(streams::streambuf<CharType> buffer,
-                                                    std::function<bool(std::shared_ptr<_ParseState>, int_type)> accept_character, 
-                                                    std::function<pplx::task<_ReturnType>(std::shared_ptr<_ParseState>)> extract);
+        // <remark>AcceptFunctor should model std::function<bool(std::shared_ptr<X>, int_type)></remark>
+        // <remark>ExtractFunctor should model std::function<pplx::task<ReturnType>(std::shared_ptr<X>)></remark>
+        template<typename StateType, typename ReturnType, typename AcceptFunctor, typename ExtractFunctor>
+        static pplx::task<ReturnType> _parse_input(streams::streambuf<CharType> buffer, AcceptFunctor accept_character, ExtractFunctor extract);
     };
 
     /// <summary>
@@ -1176,13 +1176,13 @@ pplx::task<void> concurrency::streams::_type_parser_base<CharType>::_skip_whites
 }
 
 template<typename CharType>
-template<typename _ParseState, typename _ReturnType>
-pplx::task<_ReturnType> concurrency::streams::_type_parser_base<CharType>::_parse_input(
+template<typename StateType, typename ReturnType, typename AcceptFunctor, typename ExtractFunctor>
+pplx::task<ReturnType> concurrency::streams::_type_parser_base<CharType>::_parse_input(
     concurrency::streams::streambuf<CharType> buffer,
-    std::function<bool(std::shared_ptr<_ParseState>, int_type)> accept_character, 
-    std::function<pplx::task<_ReturnType>(std::shared_ptr<_ParseState>)> extract)
+    AcceptFunctor accept_character,
+    ExtractFunctor extract)
 {
-    std::shared_ptr<_ParseState> state = std::make_shared<_ParseState>();
+    std::shared_ptr<StateType> state = std::make_shared<StateType>();
 
     auto update_end = [=] (pplx::task<int_type> op) -> bool { op.wait(); return true; };
 
@@ -1219,14 +1219,14 @@ pplx::task<_ReturnType> concurrency::streams::_type_parser_base<CharType>::_pars
     };
 
     auto finish = 
-        [=](pplx::task<bool> op) -> pplx::task<_ReturnType>
+        [=](pplx::task<bool> op) -> pplx::task<ReturnType>
         { 
             op.wait();
-            pplx::task<_ReturnType> result = extract(state);
+            pplx::task<ReturnType> result = extract(state);
             return result; 
         };
 
-    return _skip_whitespace(buffer).then([=](pplx::task<void> op) -> pplx::task<_ReturnType>
+    return _skip_whitespace(buffer).then([=](pplx::task<void> op) -> pplx::task<ReturnType>
         {
             op.wait();
 

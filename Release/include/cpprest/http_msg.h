@@ -35,6 +35,24 @@
 #if defined(_MSC_VER) && (_MSC_VER >= 1800)
 #include <ppltasks.h>
 namespace pplx = Concurrency;
+#if (_MSC_VER >= 1900)
+#include <concrt.h>
+#ifndef DEV14_EXTENSIBILITY_WRKRND
+#define DEV14_EXTENSIBILITY_WRKRND
+namespace pplx = Concurrency;
+namespace Concurrency {
+    namespace extensibility {
+        typedef ::Concurrency::event event_t;
+        typedef ::Concurrency::reader_writer_lock reader_writer_lock_t;
+        typedef ::Concurrency::reader_writer_lock::scoped_lock scoped_rw_lock_t;
+        typedef ::Concurrency::reader_writer_lock::scoped_lock_read scoped_read_lock_t;
+
+        typedef ::Concurrency::details::_ReentrantBlockingLock recursive_lock_t;
+        typedef recursive_lock_t::_Scoped_lock scoped_recursive_lock_t;
+    }
+}
+#endif // DEV14_EXTENSIBILITY_WRKRND
+#endif // _MSC_VER >= 1900
 #else 
 #include "pplx/pplxtasks.h"
 #endif

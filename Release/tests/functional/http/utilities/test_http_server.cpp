@@ -24,7 +24,10 @@
 
 #ifdef _MS_WINDOWS
 #include <http.h>
+#pragma warning ( push )
+#pragma warning ( disable : 4457 )
 #include <agents.h>
+#pragma warning ( pop )
 #endif
 #include <algorithm>
 
@@ -262,7 +265,7 @@ public:
                 HTTP_REQUEST *p_http_request = (HTTP_REQUEST *)buffer;
 
                 // Read in everything except the body.
-                ULONG error_code = HttpReceiveHttpRequest(
+                ULONG error_code2 = HttpReceiveHttpRequest(
                     m_request_queue,
                     HTTP_NULL_ID,
                     0,
@@ -270,10 +273,10 @@ public:
                     buffer_length,
                     &bytes_received,
                     0);
-                if (is_error_code(error_code))
+                if (is_error_code(error_code2))
                     break;
                 else
-                    VERIFY_ARE_EQUAL(0, error_code);
+                    VERIFY_ARE_EQUAL(0, error_code2);
 
                 // Now create request structure.
                 auto p_test_request = new test_request();
@@ -310,13 +313,13 @@ public:
                 if(has_transfer_encoding && transfer_encoding == U("chunked"))
                 {
                     content_length = 0;
-                    char buffer[4096];
+                    char buf[4096];
                     auto result = 
                         HttpReceiveRequestEntityBody(
                             m_request_queue,
                             p_http_request->RequestId,
                             HTTP_RECEIVE_REQUEST_ENTITY_BODY_FLAG_FILL_BUFFER,
-                            (LPVOID)buffer,
+                            (LPVOID)buf,
                             4096,
                             &bytes_received,
                             NULL);
@@ -325,14 +328,14 @@ public:
                     {
                         content_length += bytes_received;
                         p_test_request->m_body.resize(content_length);
-                        memcpy(&p_test_request->m_body[content_length-bytes_received], buffer, bytes_received);
+                        memcpy(&p_test_request->m_body[content_length-bytes_received], buf, bytes_received);
 
                         result = 
                             HttpReceiveRequestEntityBody(
                                 m_request_queue,
                                 p_http_request->RequestId,
                                 HTTP_RECEIVE_REQUEST_ENTITY_BODY_FLAG_FILL_BUFFER,
-                                (LPVOID)buffer,
+                                (LPVOID)buf,
                                 4096,
                                 &bytes_received,
                                 NULL);

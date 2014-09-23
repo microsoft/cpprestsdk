@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\version.props" />
   <PropertyGroup Label="Globals">
@@ -20,7 +20,7 @@
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Release.Product.Settings" />
   <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-<!--
+    <!--
     <Import Project="$(PackagesRoot)\boost.1.55.0.16\build\native\boost.targets" Condition="Exists('$(PackagesRoot)\boost.1.55.0.16\build\native\boost.targets')" />
     <Import Project="$(PackagesRoot)\boost_system-vc120.1.55.0.16\build\native\boost_system-vc120.targets" Condition="Exists('$(PackagesRoot)\boost_system-vc120.1.55.0.16\build\native\boost_system-vc120.targets')" />
     <Import Project="$(PackagesRoot)\boost_date_time-vc120.1.55.0.16\build\native\boost_date_time-vc120.targets" Condition="Exists('$(PackagesRoot)\boost_date_time-vc120.1.55.0.16\build\native\boost_date_time-vc120.targets')" />
@@ -31,7 +31,7 @@
     <DebugFileSuffix>d</DebugFileSuffix>
   </PropertyGroup>
   <PropertyGroup>
-    <TargetName>$(CppRestBaseFileName)120$(DebugFileSuffix)_$(CppRestSDKVersionFileSuffix)</TargetName>
+    <TargetName>$(CppRestBaseFileName)140$(DebugFileSuffix)_$(CppRestSDKVersionFileSuffix)</TargetName>
   </PropertyGroup>
   <ItemGroup>
     <None Include="packages.config">

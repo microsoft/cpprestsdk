@@ -386,12 +386,12 @@ namespace
 #if defined(_MS_WINDOWS)
     static int print_llu(char* ptr, size_t n, uint64_t val64)
     {
-        return _snprintf_s(ptr, n, _TRUNCATE, "%I64u", val64, utility::details::scoped_c_thread_locale::c_locale());
+        return _snprintf_s_l(ptr, n, _TRUNCATE, "%I64u", utility::details::scoped_c_thread_locale::c_locale(), val64);
     }
 
     static int print_llu(wchar_t* ptr, size_t n, uint64_t val64)
     {
-        return _snwprintf_s(ptr, n, _TRUNCATE, L"%I64u", val64, utility::details::scoped_c_thread_locale::c_locale());
+        return _snwprintf_s_l(ptr, n, _TRUNCATE, L"%I64u", utility::details::scoped_c_thread_locale::c_locale(), val64);
     }
 #else
 

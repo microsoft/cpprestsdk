@@ -1392,8 +1392,8 @@ TEST(streambuf_read_delim)
         VERIFY_ARE_EQUAL(size, r.size());
         VERIFY_IS_FALSE(is.is_eof());
     
-        auto& s = data.collection();
-        VERIFY_ARE_EQUAL(s, r);
+        auto& s2 = data.collection();
+        VERIFY_ARE_EQUAL(s2, r);
         return is.read_to_delim(data, ' ');
     }).then([&data, is](size_t size) -> pplx::task<size_t> {
         VERIFY_ARE_EQUAL(size, 0);

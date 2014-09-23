@@ -122,11 +122,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ProjectReference Include="$(CasablancaSrcDir)\build\vs14\casablanca140.vcxproj">
-      <Project>{90D85FF4-F0AE-4816-923F-0EF2758F30AB}</Project>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <Text Include="..\ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
@@ -142,6 +137,11 @@
     </ClCompile>
     <ClCompile Include="..\casalens.cpp" />
     <ClCompile Include="..\datafetcher.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\build\vs14\casablanca140.vcxproj">
+      <Project>{1014c621-bc2d-4813-b8c1-6d83ad6f9249}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <Target Name="PreBuildEvent">

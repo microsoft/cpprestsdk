@@ -439,7 +439,7 @@ TEST_FIXTURE(uri_address, test_leaks)
         utility::char_t* pdata = new utility::char_t[nbytes];
 
         // this help recognizing the leaked memory in the CRT/VLD dump
-        for(int i = 0; i < nbytes; i++) pdata[i] = U('a') + (i % 26);
+        for(int j = 0; j < nbytes; j++) pdata[j] = U('a') + (j % 26);
         std::string data(pdata, pdata + nbytes);
         delete[] pdata;
 

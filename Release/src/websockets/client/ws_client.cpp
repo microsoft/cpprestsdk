@@ -34,7 +34,7 @@
 #include <memory>
 #include <thread>
 
-#if (!defined(WINAPI_FAMILY) || WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP) && !defined(_M_ARM)
+#if (!defined(WINAPI_FAMILY) || WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP) && !defined(_M_ARM) && (!defined(_MSC_VER) || (_MSC_VER < 1900))
 #if defined(__GNUC__)
 #include "pplx/threadpool.h"
 #pragma GCC diagnostic push

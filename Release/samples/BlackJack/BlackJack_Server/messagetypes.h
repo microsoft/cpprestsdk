@@ -126,9 +126,9 @@ struct BJHand
 
     NumericHandValues GetNumericValues()
     {
-        NumericHandValues result;
-        result.low = 0;
-        result.low = 0;
+        NumericHandValues res;
+        res.low = 0;
+        res.low = 0;
 
         bool hasAces = false;
 
@@ -136,25 +136,25 @@ struct BJHand
         {
             if ( iter->value == CV_Ace ) hasAces = true;
 
-            result.low += std::min((int)iter->value, 10);
+            res.low += std::min((int)iter->value, 10);
         }
-        result.high = hasAces ? result.low + 10 : result.low;
-        return result;
+        res.high = hasAces ? res.low + 10 : res.low;
+        return res;
     }
 
     static BJHand FromJSON(const web::json::object &object)
     {
-        BJHand result;
+        BJHand res;
 
-        web::json::value cards = object.at(CARDS);
+        web::json::value cs = object.at(CARDS);
 
-        for (auto iter = cards.as_array().begin(); iter != cards.as_array().end(); ++iter)
+        for (auto iter = cs.as_array().begin(); iter != cs.as_array().end(); ++iter)
         {
             if ( !iter->is_null() )
             {
                 Card card;
                 card = Card::FromJSON(iter->as_object());
-                result.cards.push_back(card);
+                res.cards.push_back(card);
             }
         }
 
@@ -164,35 +164,35 @@ struct BJHand
         {
             throw web::json::json_exception(U("STATE key not found"));
         }
-        result.state     = (BJHandState)iState->second.as_integer();
+        res.state     = (BJHandState)iState->second.as_integer();
         auto iBet = object.find(BET);
         if (iBet == object.end())
         {
             throw web::json::json_exception(U("BET key not found"));
         }
-        result.bet       = iBet->second.as_double();
+        res.bet = iBet->second.as_double();
         auto iInsurance = object.find(INSURANCE);
         if (iInsurance == object.end())
         {
             throw web::json::json_exception(U("INSURANCE key not found"));
         }
-        result.insurance = iInsurance->second.as_double();
+        res.insurance = iInsurance->second.as_double();
         auto iResult = object.find(RESULT);
         if (iResult == object.end())
         {
             throw web::json::json_exception(U("RESULT key not found"));
         }
-        result.result    = (BJHandResult)object.find(RESULT)->second.as_integer();
-        return result;
+        res.result = (BJHandResult)object.find(RESULT)->second.as_integer();
+        return res;
     }
 
     web::json::value AsJSON() const 
     {
-        web::json::value result = web::json::value::object();
-        result[STATE] = web::json::value::number(state);
-        result[RESULT] = web::json::value::number(this->result);
-        result[BET] = web::json::value::number(bet);
-        result[INSURANCE] = web::json::value::number(insurance);
+        web::json::value res = web::json::value::object();
+        res[STATE] = web::json::value::number(state);
+        res[RESULT] = web::json::value::number(this->result);
+        res[BET] = web::json::value::number(bet);
+        res[INSURANCE] = web::json::value::number(insurance);
 
         web::json::value jCards = web::json::value::array(cards.size());
 
@@ -213,8 +213,8 @@ struct BJHand
                 break;
             }
         }
-        result[CARDS] = jCards;
-        return result;
+        res[CARDS] = jCards;
+        return res;
     }
 };
 

@@ -430,11 +430,13 @@ TEST(object_test)
     VERIFY_THROWS(cobj.at(U("wrong key")), json::json_exception);
 
     //Test find()
-    auto iter = object.find(U("height"));
-    VERIFY_ARE_NOT_EQUAL(object.end(), iter);
-    VERIFY_IS_TRUE(iter->second.is_number());
-    VERIFY_ARE_EQUAL(5.9, iter->second.as_number().to_double());
-    VERIFY_ARE_EQUAL(object.end(), object.find(U("wrong_key")));
+    {
+        auto iter = object.find(U("height"));
+        VERIFY_ARE_NOT_EQUAL(object.end(), iter);
+        VERIFY_IS_TRUE(iter->second.is_number());
+        VERIFY_ARE_EQUAL(5.9, iter->second.as_number().to_double());
+        VERIFY_ARE_EQUAL(object.end(), object.find(U("wrong_key")));
+    }
 
     //Test find() const
     auto citer = cobject.find(U("height"));

@@ -27,7 +27,10 @@
 #include "test_http_client.h"
 #ifdef _MS_WINDOWS
 #include <winhttp.h>
+#pragma warning ( push )
+#pragma warning ( disable : 4457 )
 #include <agents.h>
+#pragma warning ( pop )
 #endif
 
 using namespace web; using namespace utility;

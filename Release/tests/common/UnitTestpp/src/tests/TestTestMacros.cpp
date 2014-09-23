@@ -170,7 +170,14 @@ TEST(FixturesWithThrowingCtorsAreFailures)
 
 struct FixtureDtorThrows
 {
+#if defined(_MSC_VER)
+#pragma warning (push)
+#pragma warning ( disable : 4297 )
+#endif
 	~FixtureDtorThrows() { throw "exception"; }
+#if defined(_MSC_VER)
+#pragma warning (pop)
+#endif
 };
 
 TestList throwingFixtureTestList2;
