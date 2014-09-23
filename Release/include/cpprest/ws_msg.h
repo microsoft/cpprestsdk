@@ -94,8 +94,6 @@ public:
 
     websocket_message_type message_type() const { return m_msg_type; }
 
-    websocket_message_type message_type() const { return m_msg_type; }
-
 private:
 
     websocket_message_type m_msg_type;
