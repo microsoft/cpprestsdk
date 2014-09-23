@@ -688,6 +688,10 @@ private:
 
 }
 
+websocket_client::websocket_client() :
+    m_client(std::make_shared<details::wspp_client>(websocket_client_config()))
+{}
+
 websocket_client::websocket_client(websocket_client_config config) :
     m_client(std::make_shared<details::wspp_client>(std::move(config)))
 {}
