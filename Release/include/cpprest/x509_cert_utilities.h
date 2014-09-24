@@ -30,6 +30,8 @@
 #include <vector>
 #include <string>
 
+#if defined(__APPLE__) || defined(ANDROID)
+
 #include <boost/asio/ssl.hpp>
 
 namespace web { namespace http { namespace client { namespace details {
@@ -46,3 +48,5 @@ bool verify_cert_chain_platform_specific(boost::asio::ssl::verify_context &verif
 bool verify_X509_cert_chain(const std::vector<std::string> &certChain, const std::string &hostName);
 
 }}}}
+
+#endif

@@ -181,7 +181,7 @@ public:
                     }
                     if(m_openssl_failed)
                     {
-                        return verify_cert_chain_platform_specific(verifyCtx, m_uri.host());
+                        return http::client::details::verify_cert_chain_platform_specific(verifyCtx, m_uri.host());
                     }
 #endif
                     boost::asio::ssl::rfc2818_verification rfc2818(m_uri.host());
