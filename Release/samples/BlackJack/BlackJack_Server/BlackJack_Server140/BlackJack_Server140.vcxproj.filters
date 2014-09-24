@@ -15,37 +15,31 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="$(CollateralsDir)\Samples\BlackJack_Server\BlackJack_Server\messagetypes.h">
+    <ClInclude Include="..\messagetypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="$(CollateralsDir)\Samples\BlackJack_Server\BlackJack_Server\stdafx.h">
+    <ClInclude Include="..\stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="$(CollateralsDir)\Samples\BlackJack_Server\BlackJack_Server\Table.h">
+    <ClInclude Include="..\Table.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="$(CollateralsDir)\Samples\BlackJack_Server\BlackJack_Server\targetver.h">
+    <ClInclude Include="..\targetver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="$(CollateralsDir)\Samples\BlackJack_Server\BlackJack_Server\BlackJack_Server.cpp">
+    <ClCompile Include="..\BlackJack_Server.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="$(CollateralsDir)\Samples\BlackJack_Server\BlackJack_Server\Dealer.cpp">
+    <ClCompile Include="..\Dealer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="$(CollateralsDir)\Samples\BlackJack_Server\BlackJack_Server\stdafx.cpp">
+    <ClCompile Include="..\stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="$(CollateralsDir)\Samples\BlackJack_Server\BlackJack_Server\hosting_hooks.cpp">
+    <ClCompile Include="..\Table.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="$(CollateralsDir)\Samples\BlackJack_Server\BlackJack_Server\Table.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="..\..\..\..\collateral\samples\BlackJack_Server\VC11\BlackJack_Server\actors_config.cfg" />
   </ItemGroup>
 </Project>

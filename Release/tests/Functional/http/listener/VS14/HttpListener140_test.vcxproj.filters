@@ -13,9 +13,6 @@
     <ClCompile Include="..\listener_construction_tests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\pipeline_stage_tests.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\reply_helper_tests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

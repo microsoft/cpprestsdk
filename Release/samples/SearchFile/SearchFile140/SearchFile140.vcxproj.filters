@@ -6,8 +6,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="$(CollateralsDir)\Samples\SearchFile\searchfile.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
+    <ClCompile Include="..\searchfile.cpp" />
   </ItemGroup>
 </Project>
