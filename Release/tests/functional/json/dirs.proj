@@ -20,6 +20,10 @@
       <ProjectFile Include="VS12.winrt\JSON120_test.winrt.vcxproj" />
   </ItemGroup>
 
+  <ItemGroup Condition="'$(DevToolsVersion)'=='140'">
+      <ProjectFile Include="VS14\JSON140_test.vcxproj" />
+  </ItemGroup>
+  
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
 
 </Project>

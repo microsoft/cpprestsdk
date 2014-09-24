@@ -16,6 +16,10 @@
       <ProjectFile Include="VS12.winrt\CommonUtilities120.winrt.vcxproj" />
   </ItemGroup>
 
+  <ItemGroup Condition="'$(DevToolsVersion)'=='140'">
+    <ProjectFile Include="VS14\CommonUtilities140.vcxproj" />
+  </ItemGroup>
+
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
 
 </Project>

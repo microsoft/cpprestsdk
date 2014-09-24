@@ -2,8 +2,8 @@
 
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Common.Build.settings" />
 
-  <ItemGroup Condition="'$(Platform)' != 'ARM'">
-      <ProjectFile Include="Oauth2Client$(DevToolsVersion)\Oauth2Client$(DevToolsVersion).vcxproj"/>
+  <ItemGroup Condition="'$(DevToolsVersion)'=='110' or '$(DevToolsVersion)'=='120' or '$(DevToolsVersion)'=='140'">
+      <ProjectFile Include="Oauth2Client$(DevToolsVersion)\Oauth2Client$(DevToolsVersion).vcxproj" Condition="'$(Platform)' != 'ARM'" />
   </ItemGroup>
 
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />

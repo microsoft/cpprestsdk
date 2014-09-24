@@ -13,10 +13,15 @@
 
   <ItemGroup Condition="'$(DevToolsVersion)'=='120'">
       <ProjectFile Include="VS12\HttpTestUtilities120.vcxproj" />
+      <ProjectFile Include="VS12.xp\HttpTestUtilities120.xp.vcxproj" Condition="'$(Platform)'!='ARM' and '$(RunCodeAnalysis)'!='true'"/>
   </ItemGroup>
   
   <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|120'">
       <ProjectFile Include="VS12.winrt\HttpTestUtilities120.winrt.vcxproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(DevToolsVersion)'=='140'">
+    <ProjectFile Include="VS14\HttpTestUtilities140.vcxproj" />
   </ItemGroup>
 
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />

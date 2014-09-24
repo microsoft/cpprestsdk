@@ -21,6 +21,10 @@
   <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|120'">
       <ProjectFile Include="VS12.winrt\HttpClient120_test.winrt.vcxproj" />
   </ItemGroup>
+
+  <ItemGroup Condition="'$(DevToolsVersion)'=='140'">
+      <ProjectFile Include="VS14\HttpClient140_test.vcxproj" />
+  </ItemGroup>
   
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
 

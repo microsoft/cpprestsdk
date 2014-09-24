@@ -25,6 +25,10 @@
   </ItemGroup>
 -->
 
+  <ItemGroup Condition="'$(DevToolsVersion)'=='140'">
+      <ProjectFile Include="VS14\websockets_test_utilities140.vcxproj" />
+  </ItemGroup>
+
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
 
 </Project>

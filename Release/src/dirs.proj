@@ -3,29 +3,33 @@
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Common.Build.settings" />
 
   <ItemGroup Condition="'$(DevToolsVersion)'=='110'">
-      <ProjectFile Include="build\casablanca110.vcxproj" Condition="'$(Platform)'!='ARM' or '$(WindowsSDKDesktopARMSupport)' == 'true'" />
-      <ProjectFile Include="build\casablanca110.xp.vcxproj" Condition="'$(Platform)'!='ARM' and '$(RunCodeAnalysis)'!='true'" />
+      <ProjectFile Include="build\vs11\casablanca110.vcxproj" Condition="'$(Platform)'!='ARM' or '$(WindowsSDKDesktopARMSupport)' == 'true'" />
+      <ProjectFile Include="build\vs11.xp\casablanca110.xp.vcxproj" Condition="'$(Platform)'!='ARM' and '$(RunCodeAnalysis)'!='true'" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.2|110' or '$(OsVersion)|$(DevToolsVersion)'=='6.3|110'">
-      <ProjectFile Include="build\casablanca110.winrt.vcxproj" />
+      <ProjectFile Include="build\vs11.winrt\casablanca110.winrt.vcxproj" />
   </ItemGroup>
 
   <ItemGroup Condition="('$(OsVersion)|$(DevToolsVersion)'=='6.2|110' or '$(OsVersion)|$(DevToolsVersion)'=='6.3|110') and '$(Platform)'!='x64'">
-      <ProjectFile Include="build\casablanca110.wp8.vcxproj" />
+      <ProjectFile Include="build\vs11.wp8\casablanca110.wp8.vcxproj" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(DevToolsVersion)'=='120'">
-      <ProjectFile Include="build\casablanca120.vcxproj" Condition="'$(Platform)'!='ARM' or '$(WindowsSDKDesktopARMSupport)' == 'true'" />
-      <ProjectFile Include="build\casablanca120.xp.vcxproj" Condition="'$(Platform)'!='ARM' and '$(RunCodeAnalysis)'!='true'" />
+      <ProjectFile Include="build\vs12\casablanca120.vcxproj" Condition="'$(Platform)'!='ARM' or '$(WindowsSDKDesktopARMSupport)' == 'true'" />
+      <ProjectFile Include="build\vs12.xp\casablanca120.xp.vcxproj" Condition="'$(Platform)'!='ARM' and '$(RunCodeAnalysis)'!='true'" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.2|120' or '$(OsVersion)|$(DevToolsVersion)'=='6.3|120'">
-      <ProjectFile Include="build\casablanca120.winrt.vcxproj" />
+      <ProjectFile Include="build\vs12.winrt\casablanca120.winrt.vcxproj" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|120' and '$(Platform)'!='x64'">
-      <ProjectFile Include="build\casablanca120.wp81.vcxproj" />
+      <ProjectFile Include="build\vs12.wp81\casablanca120.wp81.vcxproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(DevToolsVersion)'=='140'">
+    <ProjectFile Include="build\vs14\casablanca140.vcxproj" Condition="'$(Platform)'!='ARM' or '$(WindowsSDKDesktopARMSupport)' == 'true'" />
   </ItemGroup>
 
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
