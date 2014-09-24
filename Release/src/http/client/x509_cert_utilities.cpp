@@ -47,6 +47,7 @@ using namespace crossplat;
 
 namespace web { namespace http { namespace client { namespace details {
 
+#if defined(__APPLE__) || defined(ANDROID)
 bool verify_cert_chain_platform_specific(boost::asio::ssl::verify_context &verifyCtx, const std::string &hostName)
 {
     X509_STORE_CTX *storeContext = verifyCtx.native_handle();
@@ -90,6 +91,7 @@ bool verify_cert_chain_platform_specific(boost::asio::ssl::verify_context &verif
 
     return verify_X509_cert_chain(certChain, hostName);
 }
+#endif
 
 #if defined(__APPLE__)
 

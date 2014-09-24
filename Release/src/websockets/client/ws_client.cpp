@@ -30,6 +30,7 @@
 #include "cpprest/containerstream.h"
 #include "cpprest/ws_msg.h"
 #include "cpprest/ws_client.h"
+#include "cpprest/x509_cert_utilities.h"
 #include <memory>
 #include <thread>
 
