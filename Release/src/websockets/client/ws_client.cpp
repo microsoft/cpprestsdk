@@ -98,6 +98,9 @@ public:
         m_work(utility::details::make_unique<boost::asio::io_service::work>(m_service)),
         m_state(CREATED),
         m_num_sends(0)
+#if defined(__APPLE__) || defined(ANDROID)
+        , m_openssl_failed(false)
+#endif
     {}
 
     ~wspp_client()
@@ -146,52 +149,13 @@ public:
         m_state = DESTROYED;
     }
 
-    pplx::task<void> close()
-    {
-        return close(static_cast<websocket_close_status>(websocketpp::close::status::normal), U("going away"));
-    }
-
-    pplx::task<void> close(websocket_close_status status, const utility::string_t& reason)
-    {
-#ifndef _MS_WINDOWS
-    	if (m_client->is_tls_client())
-        {
-            return close_impl<websocketpp::config::asio_tls_client>(status, reason);
-        }
-        else
-#endif
-        {
-            return close_impl<websocketpp::config::asio_client>(status, reason);
-        }
-    }
-
-    template <typename WebsocketConfig>
-    pplx::task<void> close_impl(websocket_close_status status, const utility::string_t& reason)
-    {
-        auto &client = m_client->client<WebsocketConfig>();
-
-        std::lock_guard<std::mutex> lock(m_receive_queue_lock);
-        if (m_state == CONNECTED)
-        {
-            m_state = CLOSING;
-
-            websocketpp::lib::error_code ec;
-            client.close(m_con, static_cast<websocketpp::close::status::value>(status), utility::conversions::to_utf8string(reason), ec);
-            if (ec.value() != 0)
-            {
-                return pplx::task_from_exception<void>(ec.message());
-            }
-        }
-        return pplx::task<void>(m_close_tce);
-    }
-
     pplx::task<void> connect()
     {
 #ifndef _MS_WINDOWS
         if (m_uri.scheme() == U("wss"))
         {
         	m_client = std::unique_ptr<websocketpp_client_base>(new websocketpp_tls_client());
-        	
+
             // Options specific to TLS client.
             auto &client = m_client->client<websocketpp::config::asio_tls_client>();
             client.set_tls_init_handler([this](websocketpp::connection_hdl)
@@ -200,8 +164,29 @@ public:
                 sslContext->set_default_verify_paths();
                 sslContext->set_options(boost::asio::ssl::context::default_workarounds);
                 sslContext->set_verify_mode(boost::asio::ssl::context::verify_peer);
-                // Like done with the http_client certificate verification needs more steps for iOS and Android.
-                sslContext->set_verify_callback(boost::asio::ssl::rfc2818_verification(m_uri.host()));
+#if defined(__APPLE__) || defined(ANDROID)
+                m_openssl_failed = false;
+#endif
+                sslContext->set_verify_callback([this](bool preverified, boost::asio::ssl::verify_context &verifyCtx)
+                {
+#if defined(__APPLE__) || defined(ANDROID)
+                    // On OS X, iOS, and Android, OpenSSL doesn't have access to where the OS
+                    // stores keychains. If OpenSSL fails we will doing verification at the
+                    // end using the whole certificate chain so wait until the 'leaf' cert.
+                    // For now return true so OpenSSL continues down the certificate chain.
+                    if(!preverified)
+                    {
+                        m_openssl_failed = true;
+                    }
+                    if(m_openssl_failed)
+                    {
+                        return verify_cert_chain_platform_specific(verifyCtx, m_uri.host());
+                    }
+#endif
+                    boost::asio::ssl::rfc2818_verification rfc2818(m_uri.host());
+                    return rfc2818(preverified, verifyCtx);
+                });
+
                 return sslContext;
             });
             return connect_impl<websocketpp::config::asio_tls_client>();
@@ -582,6 +567,45 @@ public:
         });
     }
 
+    pplx::task<void> close()
+    {
+        return close(static_cast<websocket_close_status>(websocketpp::close::status::normal), U("going away"));
+    }
+
+    pplx::task<void> close(websocket_close_status status, const utility::string_t& reason)
+    {
+#ifndef _MS_WINDOWS
+        if (m_client->is_tls_client())
+        {
+            return close_impl<websocketpp::config::asio_tls_client>(status, reason);
+        }
+        else
+#endif
+        {
+            return close_impl<websocketpp::config::asio_client>(status, reason);
+        }
+    }
+
+    template <typename WebsocketConfig>
+    pplx::task<void> close_impl(websocket_close_status status, const utility::string_t& reason)
+    {
+        auto &client = m_client->client<WebsocketConfig>();
+
+        std::lock_guard<std::mutex> lock(m_receive_queue_lock);
+        if (m_state == CONNECTED)
+        {
+            m_state = CLOSING;
+
+            websocketpp::lib::error_code ec;
+            client.close(m_con, static_cast<websocketpp::close::status::value>(status), utility::conversions::to_utf8string(reason), ec);
+            if (ec.value() != 0)
+            {
+                return pplx::task_from_exception<void>(ec.message());
+            }
+        }
+        return pplx::task<void>(m_close_tce);
+    }
+
     // Note: must be called while m_receive_queue_lock is locked.
     void close_pending_tasks_with_error()
     {
@@ -684,6 +708,14 @@ private:
 
     // Number of sends in progress and queued up.
     std::atomic<int> m_num_sends;
+
+    // Used to track if any of the OpenSSL server certificate verifications
+    // failed. This can safely be tracked at the client level since connections
+    // only happen once for each client.
+#if defined(__APPLE__) || defined(ANDROID)
+    bool m_openssl_failed;
+#endif
+
 };
 
 }

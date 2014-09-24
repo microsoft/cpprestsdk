@@ -1,7 +1,7 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
@@ -47,6 +47,50 @@ using namespace crossplat;
 
 namespace web { namespace http { namespace client { namespace details {
 
+bool verify_cert_chain_platform_specific(boost::asio::ssl::verify_context &verifyCtx, const std::string &hostName)
+{
+    X509_STORE_CTX *storeContext = verifyCtx.native_handle();
+    int currentDepth = X509_STORE_CTX_get_error_depth(storeContext);
+    if (currentDepth != 0)
+    {
+        return true;
+    }
+
+    STACK_OF(X509) *certStack = X509_STORE_CTX_get_chain(storeContext);
+    const int numCerts = sk_X509_num(certStack);
+    if (numCerts < 0)
+    {
+        return false;
+    }
+
+    std::vector<std::string> certChain;
+    certChain.reserve(numCerts);
+    for (int i = 0; i < numCerts; ++i)
+    {
+        X509 *cert = sk_X509_value(certStack, i);
+
+        // Encode into DER format into raw memory.
+        int len = i2d_X509(cert, nullptr);
+        if (len < 0)
+        {
+            return false;
+        }
+
+        std::string certData;
+        certData.resize(len);
+        unsigned char * buffer = reinterpret_cast<unsigned char *>(&certData[0]);
+        len = i2d_X509(cert, &buffer);
+        if (len < 0)
+        {
+            return false;
+        }
+
+        certChain.push_back(std::move(certData));
+    }
+
+    return verify_X509_cert_chain(certChain, hostName);
+}
+
 #if defined(__APPLE__)
 
 // Simple RAII pattern wrapper to perform CFRelease on objects.
@@ -60,7 +104,7 @@ public:
     }
     cf_ref() : value(nullptr) {}
     cf_ref(cf_ref &&other) : value(other.value) { other.value = nullptr; }
-    
+
     ~cf_ref()
     {
         if(value != nullptr)
@@ -95,7 +139,7 @@ bool verify_X509_cert_chain(const std::vector<std::string> &certChain, const std
         {
             return false;
         }
-        
+
         cf_ref<SecCertificateRef> certObj = SecCertificateCreateWithData(nullptr, certDataRef.get());
         if(certObj.get() == nullptr)
         {
@@ -108,7 +152,7 @@ bool verify_X509_cert_chain(const std::vector<std::string> &certChain, const std
     {
         return false;
     }
-    
+
     // Create trust management object with certificates and SSL policy.
     // Note: SecTrustCreateWithCertificates expects the certificate to be
     // verified is the first element.
@@ -181,33 +225,33 @@ bool jni_failed(JNIEnv *env, const jmethodID &result)
 bool verify_X509_cert_chain(const std::vector<std::string> &certChain, const std::string &hostName)
 {
     JNIEnv* env = get_jvm_env();
-    
+
     // Possible performance improvement:
     // In the future we could gain performance by turning all the jclass local
     // references into global references. Then we could lazy initialize and
     // save them globally. If this is done I'm not exactly sure where the release
-    // should be. 
+    // should be.
 
     // ByteArrayInputStream
     java_local_ref<jclass> byteArrayInputStreamClass(env->FindClass("java/io/ByteArrayInputStream"));
     CHECK_JREF(env, byteArrayInputStreamClass);
     jmethodID byteArrayInputStreamConstructorMethod = env->GetMethodID(
-        byteArrayInputStreamClass.get(), 
-        "<init>", 
+        byteArrayInputStreamClass.get(),
+        "<init>",
         "([B)V");
-    CHECK_JMID(env, byteArrayInputStreamConstructorMethod);    
+    CHECK_JMID(env, byteArrayInputStreamConstructorMethod);
 
     // CertificateFactory
     java_local_ref<jclass> certificateFactoryClass(env->FindClass("java/security/cert/CertificateFactory"));
     CHECK_JREF(env, certificateFactoryClass);
     jmethodID certificateFactoryGetInstanceMethod = env->GetStaticMethodID(
-        certificateFactoryClass.get(), 
-        "getInstance", 
+        certificateFactoryClass.get(),
+        "getInstance",
         "(Ljava/lang/String;)Ljava/security/cert/CertificateFactory;");
     CHECK_JMID(env, certificateFactoryGetInstanceMethod);
     jmethodID generateCertificateMethod = env->GetMethodID(
-        certificateFactoryClass.get(), 
-        "generateCertificate", 
+        certificateFactoryClass.get(),
+        "generateCertificate",
         "(Ljava/io/InputStream;)Ljava/security/cert/Certificate;");
     CHECK_JMID(env, generateCertificateMethod);
 
@@ -219,18 +263,18 @@ bool verify_X509_cert_chain(const std::vector<std::string> &certChain, const std
     java_local_ref<jclass> trustManagerFactoryClass(env->FindClass("javax/net/ssl/TrustManagerFactory"));
     CHECK_JREF(env, trustManagerFactoryClass);
     jmethodID trustManagerFactoryGetInstanceMethod = env->GetStaticMethodID(
-        trustManagerFactoryClass.get(), 
-        "getInstance", 
+        trustManagerFactoryClass.get(),
+        "getInstance",
         "(Ljava/lang/String;)Ljavax/net/ssl/TrustManagerFactory;");
     CHECK_JMID(env, trustManagerFactoryGetInstanceMethod);
     jmethodID trustManagerFactoryInitMethod = env->GetMethodID(
-        trustManagerFactoryClass.get(), 
-        "init", 
+        trustManagerFactoryClass.get(),
+        "init",
         "(Ljava/security/KeyStore;)V");
     CHECK_JMID(env, trustManagerFactoryInitMethod);
     jmethodID trustManagerFactoryGetTrustManagersMethod = env->GetMethodID(
-        trustManagerFactoryClass.get(), 
-        "getTrustManagers", 
+        trustManagerFactoryClass.get(),
+        "getTrustManagers",
         "()[Ljavax/net/ssl/TrustManager;");
     CHECK_JMID(env, trustManagerFactoryGetTrustManagersMethod);
 
@@ -238,8 +282,8 @@ bool verify_X509_cert_chain(const std::vector<std::string> &certChain, const std
     java_local_ref<jclass> X509TrustManagerClass(env->FindClass("javax/net/ssl/X509TrustManager"));
     CHECK_JREF(env, X509TrustManagerClass);
     jmethodID X509TrustManagerCheckServerTrustedMethod = env->GetMethodID(
-        X509TrustManagerClass.get(), 
-        "checkServerTrusted", 
+        X509TrustManagerClass.get(),
+        "checkServerTrusted",
         "([Ljava/security/cert/X509Certificate;Ljava/lang/String;)V");
     CHECK_JMID(env, X509TrustManagerCheckServerTrustedMethod);
 
@@ -249,8 +293,8 @@ bool verify_X509_cert_chain(const std::vector<std::string> &certChain, const std
     jmethodID strictHostnameVerifierConstructorMethod = env->GetMethodID(strictHostnameVerifierClass.get(), "<init>", "()V");
     CHECK_JMID(env, strictHostnameVerifierConstructorMethod);
     jmethodID strictHostnameVerifierVerifyMethod = env->GetMethodID(
-        strictHostnameVerifierClass.get(), 
-        "verify", 
+        strictHostnameVerifierClass.get(),
+        "verify",
         "(Ljava/lang/String;Ljava/security/cert/X509Certificate;)V");
     CHECK_JMID(env, strictHostnameVerifierVerifyMethod);
 
@@ -258,17 +302,17 @@ bool verify_X509_cert_chain(const std::vector<std::string> &certChain, const std
     java_local_ref<jstring> XDot509String(env->NewStringUTF("X.509"));
     CHECK_JREF(env, XDot509String);
     java_local_ref<jobject> certificateFactory(env->CallStaticObjectMethod(
-         certificateFactoryClass.get(), 
-         certificateFactoryGetInstanceMethod, 
+         certificateFactoryClass.get(),
+         certificateFactoryGetInstanceMethod,
          XDot509String.get()));
     CHECK_JREF(env, certificateFactory);
-    
+
     // Create Java array to store all the certs in.
     java_local_ref<jobjectArray> certsArray(env->NewObjectArray(certChain.size(), X509CertificateClass.get(), nullptr));
     CHECK_JREF(env, certsArray);
 
     // For each certificate perform the following steps:
-    //   1. Create ByteArrayInputStream backed by DER certificate bytes 
+    //   1. Create ByteArrayInputStream backed by DER certificate bytes
     //   2. Create Certificate using CertificateFactory.generateCertificate
     //   3. Add Certificate to array
     int i = 0;
@@ -279,14 +323,14 @@ bool verify_X509_cert_chain(const std::vector<std::string> &certChain, const std
         env->SetByteArrayRegion(byteArray.get(), 0, certData.size(), reinterpret_cast<const jbyte *>(certData.c_str()));
         CHECK_JNI(env);
         java_local_ref<jobject> byteArrayInputStream(env->NewObject(
-            byteArrayInputStreamClass.get(), 
-            byteArrayInputStreamConstructorMethod, 
+            byteArrayInputStreamClass.get(),
+            byteArrayInputStreamConstructorMethod,
             byteArray.get()));
         CHECK_JREF(env, byteArrayInputStream);
 
         java_local_ref<jobject> cert(env->CallObjectMethod(
-            certificateFactory.get(), 
-            generateCertificateMethod, 
+            certificateFactory.get(),
+            generateCertificateMethod,
             byteArrayInputStream.get()));
         CHECK_JREF(env, cert);
 
@@ -294,13 +338,13 @@ bool verify_X509_cert_chain(const std::vector<std::string> &certChain, const std
         CHECK_JNI(env);
         ++i;
     }
-    
+
     // Create TrustManagerFactory, init with Android system certs
     java_local_ref<jstring> X509String(env->NewStringUTF("X509"));
     CHECK_JREF(env, X509String);
     java_local_ref<jobject> trustFactoryManager(env->CallStaticObjectMethod(
-        trustManagerFactoryClass.get(), 
-        trustManagerFactoryGetInstanceMethod, 
+        trustManagerFactoryClass.get(),
+        trustManagerFactoryGetInstanceMethod,
         X509String.get()));
     CHECK_JREF(env, trustFactoryManager);
     env->CallVoidMethod(trustFactoryManager.get(), trustManagerFactoryInitMethod, nullptr);
@@ -312,14 +356,14 @@ bool verify_X509_cert_chain(const std::vector<std::string> &certChain, const std
     CHECK_JREF(env, trustManagerArray);
     java_local_ref<jobject> trustManager(env->GetObjectArrayElement(trustManagerArray.get(), 0));
     CHECK_JREF(env, trustManager);
-    
+
     // Validate certificate chain.
     java_local_ref<jstring> RSAString(env->NewStringUTF("RSA"));
     CHECK_JREF(env, RSAString);
     env->CallVoidMethod(
-        trustManager.get(), 
-        X509TrustManagerCheckServerTrustedMethod, 
-        certsArray.get(), 
+        trustManager.get(),
+        X509TrustManagerCheckServerTrustedMethod,
+        certsArray.get(),
         RSAString.get());
     CHECK_JNI(env);
 
@@ -332,9 +376,9 @@ bool verify_X509_cert_chain(const std::vector<std::string> &certChain, const std
     java_local_ref<jobject> cert(env->GetObjectArrayElement(certsArray.get(), 0));
     CHECK_JREF(env, cert);
     env->CallVoidMethod(
-        hostnameVerifier.get(), 
-        strictHostnameVerifierVerifyMethod, 
-        hostNameString.get(), 
+        hostnameVerifier.get(),
+        strictHostnameVerifierVerifyMethod,
+        hostNameString.get(),
         cert.get());
     CHECK_JNI(env);
 
