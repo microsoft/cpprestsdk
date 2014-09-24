@@ -379,7 +379,7 @@ public:
     /// <summary>
     ///  Creates a new websocket_client.
     /// </summary>
-    websocket_client() : websocket_client(websocket_client_config()) {}
+    _ASYNCRTIMP websocket_client();
 
     /// <summary>
     ///  Creates a new websocket_client.
