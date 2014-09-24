@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@
 #if defined(_MSC_VER) && (_MSC_VER >= 1800)
 #include <ppltasks.h>
 namespace pplx = Concurrency;
-#else 
+#else
 #include "pplx/pplxtasks.h"
 #endif
 
@@ -51,7 +51,7 @@ namespace pplx = Concurrency;
 #include <boost/algorithm/string/predicate.hpp>
 #endif
 
-namespace web 
+namespace web
 {
 namespace http
 {
@@ -109,8 +109,8 @@ namespace message_direction
     /// an upload, a response with a body is a download.
     /// </summary>
     enum direction {
-        upload, 
-        download 
+        upload,
+        download
     };
 }
 
@@ -147,7 +147,7 @@ public:
     /// Creates an <c>http_exception</c> with just a string message and no error code.
     /// </summary>
     /// <param name="whatArg">Error message string.</param>
-    http_exception(const utility::string_t &whatArg) 
+    http_exception(const utility::string_t &whatArg)
         : m_msg(utility::conversions::to_utf8string(whatArg)) {}
 
     /// <summary>
@@ -155,18 +155,18 @@ public:
     /// The message of the error code will be used as the what() string message.
     /// </summary>
     /// <param name="errorCode">Error code value.</param>
-    http_exception(int errorCode) 
+    http_exception(int errorCode)
         : m_errorCode(utility::details::create_error_code(errorCode))
     {
         m_msg = m_errorCode.message();
     }
 
     /// <summary>
-    /// Creates an <c>http_exception</c> with from a error code using the current platform error category. 
+    /// Creates an <c>http_exception</c> with from a error code using the current platform error category.
     /// </summary>
     /// <param name="errorCode">Error code value.</param>
     /// <param name="whatArg">Message to use in what() string.</param>
-    http_exception(int errorCode, const utility::string_t &whatArg) 
+    http_exception(int errorCode, const utility::string_t &whatArg)
         : m_errorCode(utility::details::create_error_code(errorCode)),
           m_msg(utility::conversions::to_utf8string(whatArg))
     {}
@@ -223,8 +223,8 @@ public:
 
     http_headers &headers() { return m_headers; }
 
-    _ASYNCRTIMP void set_body(concurrency::streams::istream instream, utility::string_t contentType);
-    _ASYNCRTIMP void set_body(concurrency::streams::istream instream, utility::size64_t contentLength, utility::string_t contentType);
+    _ASYNCRTIMP void set_body(const concurrency::streams::istream &instream, const utility::string_t &contentType);
+    _ASYNCRTIMP void set_body(const concurrency::streams::istream &instream, utility::size64_t contentLength, const utility::string_t &contentType);
 
     _ASYNCRTIMP utility::string_t _extract_string(bool force = false);
     _ASYNCRTIMP json::value _extract_json(bool force = false);
@@ -235,29 +235,29 @@ public:
     /// <summary>
     /// Completes this message
     /// </summary>
-    virtual _ASYNCRTIMP void _complete(utility::size64_t bodySize, std::exception_ptr exceptionPtr = std::exception_ptr());
+    virtual _ASYNCRTIMP void _complete(utility::size64_t bodySize, const std::exception_ptr &exceptionPtr = std::exception_ptr());
 
     /// <summary>
     /// Set the stream through which the message body could be read
     /// </summary>
-    void set_instream(concurrency::streams::istream instream)  { m_inStream = instream; }
+    void set_instream(const concurrency::streams::istream &instream)  { m_inStream = instream; }
 
     /// <summary>
     /// Get the stream through which the message body could be read
     /// </summary>
-    concurrency::streams::istream instream() const { return m_inStream; }
+    const concurrency::streams::istream & instream() const { return m_inStream; }
 
     /// <summary>
     /// Set the stream through which the message body could be written
     /// </summary>
-    void set_outstream(concurrency::streams::ostream outstream, bool is_default)  { m_outStream = outstream; m_default_outstream = is_default; }
+    void set_outstream(const concurrency::streams::ostream &outstream, bool is_default)  { m_outStream = outstream; m_default_outstream = is_default; }
 
     /// <summary>
     /// Get the stream through which the message body could be written
     /// </summary>
-    concurrency::streams::ostream outstream() const { return m_outStream; }
+    const concurrency::streams::ostream & outstream() const { return m_outStream; }
 
-    pplx::task_completion_event<utility::size64_t> _get_data_available()  { return m_data_available; }
+    const pplx::task_completion_event<utility::size64_t> & _get_data_available() const { return m_data_available; }
 
     /// <summary>
     /// Prepare the message with an output stream to receive network data
@@ -269,7 +269,7 @@ public:
     /// </summary>
     /// <returns>
     /// size_t::max if there is content with unknown length (transfer_encoding:chunked)
-    /// 0           if there is no content 
+    /// 0           if there is no content
     /// length      if there is content with known length
     /// </returns>
     /// <remarks>
@@ -329,13 +329,13 @@ public:
 
     _http_response(http::status_code code) : m_status_code(code) {}
 
-    http::status_code status_code() const { return m_status_code; } 
+    http::status_code status_code() const { return m_status_code; }
 
     void set_status_code(http::status_code code) { m_status_code = code; }
 
     const http::reason_phrase & reason_phrase() const { return m_reason_phrase; }
 
-    void set_reason_phrase(http::reason_phrase reason) { m_reason_phrase = std::move(reason); }
+    void set_reason_phrase(const http::reason_phrase &reason) { m_reason_phrase = reason; }
 
     _ASYNCRTIMP utility::string_t to_string() const;
 
@@ -363,31 +363,16 @@ public:
     /// <summary>
     /// Constructs a response with an empty status code, no headers, and no body.
     /// </summary>
-            /// <returns>A new HTTP response.</returns>
+    /// <returns>A new HTTP response.</returns>
     http_response() : _m_impl(std::make_shared<details::_http_response>()) { }
 
     /// <summary>
     /// Constructs a response with given status code, no headers, and no body.
     /// </summary>
-            /// <param name="code">HTTP status code to use in response.</param>
-            /// <returns>A new HTTP response.</returns>
-    http_response(http::status_code code) 
+    /// <param name="code">HTTP status code to use in response.</param>
+    /// <returns>A new HTTP response.</returns>
+    http_response(http::status_code code)
         : _m_impl(std::make_shared<details::_http_response>(code)) { }
-
-    /// <summary>
-    /// Copy constructor.
-    /// </summary>
-    /// <param name="response">The http_response to copy from.</param>
-    http_response(const http_response &response) : _m_impl(response._m_impl) {}
-
-    /// <summary>
-    /// Assignment operator.
-    /// </summary>
-    http_response &operator=(const http_response &response)
-    {
-        _m_impl = response._m_impl;
-        return *this;
-    }
 
     /// <summary>
     /// Gets the status code of the response message.
@@ -398,7 +383,7 @@ public:
     /// <summary>
     /// Sets the status code of the response message.
     /// </summary>
-            /// <param name="code">Status code to set.</param>
+    /// <param name="code">Status code to set.</param>
     /// <remarks>
     /// This will overwrite any previously set status code.
     /// </remarks>
@@ -416,7 +401,7 @@ public:
     /// If no reason phrase is set it will default to the standard one corresponding to the status code.
     /// </summary>
     /// <param name="reason">The reason phrase to set.</param>
-    void set_reason_phrase(http::reason_phrase reason) const { _m_impl->set_reason_phrase(std::move(reason)); }
+    void set_reason_phrase(const http::reason_phrase &reason) const { _m_impl->set_reason_phrase(reason); }
 
     /// <summary>
     /// Gets the headers of the response message.
@@ -426,6 +411,11 @@ public:
     /// Use the <seealso cref="http_headers::add Method"/> to fill in desired headers.
     /// </remarks>
     http_headers &headers() { return _m_impl->headers(); }
+
+    /// <summary>
+    /// Gets a const reference to the headers of the response message.
+    /// </summary>
+    /// <returns>HTTP headers for this response.</returns>
     const http_headers &headers() const { return _m_impl->headers(); }
 
     /// <summary>
@@ -484,8 +474,9 @@ public:
     /// <remarks>
     /// This will overwrite any previously set body data and "Content-Type" header.
     /// </remarks>
+    // TODO overload... and fix...
     void set_body(const utility::string_t &body_text, utility::string_t content_type = utility::string_t(_XPLATSTR("text/plain")))
-    { 
+    {
         if(content_type.find(_XPLATSTR("charset=")) != content_type.npos)
         {
             throw std::invalid_argument("content_type can't contain a 'charset'.");
@@ -506,10 +497,11 @@ public:
     /// <remarks>
     /// This will overwrite any previously set body data.
     /// </remarks>
-    void set_body(std::string body_text, utility::string_t content_type = utility::string_t(_XPLATSTR("text/plain; charset=utf-8")))
+    // TODO overload
+    void set_body(std::string body_text, const utility::string_t &content_type = utility::string_t(_XPLATSTR("text/plain; charset=utf-8")))
     {
         auto length = body_text.size();
-        set_body(concurrency::streams::bytestream::open_istream(std::move(body_text)), length, std::move(content_type));
+        set_body(concurrency::streams::bytestream::open_istream(std::move(body_text)), length, content_type);
     }
 #endif
 
@@ -536,12 +528,25 @@ public:
     /// <remarks>
     /// This will overwrite any previously set body data.
     /// </remarks>
-    void set_body(std::vector<unsigned char> body_data)
+    void set_body(std::vector<unsigned char> &&body_data)
     {
         auto length = body_data.size();
         set_body(concurrency::streams::bytestream::open_istream(std::move(body_data)), length);
     }
-    
+
+    /// <summary>
+    /// Sets the body of the message to the contents of a byte vector. If the 'Content-Type'
+    /// header hasn't already been set it will be set to 'application/octet-stream'.
+    /// </summary>
+    /// <param name="body_data">Vector containing body data.</param>
+    /// <remarks>
+    /// This will overwrite any previously set body data.
+    /// </remarks>
+    void set_body(const std::vector<unsigned char> &body_data)
+    {
+        set_body(concurrency::streams::bytestream::open_istream(body_data), body_data.size());
+    }
+
     /// <summary>
     /// Defines a stream that will be relied on to provide the body of the HTTP message when it is
     /// sent.
@@ -551,9 +556,9 @@ public:
     /// This cannot be used in conjunction with any other means of setting the body of the request.
     /// The stream will not be read until the message is sent.
     /// </remarks>
-    void set_body(concurrency::streams::istream stream, utility::string_t content_type = _XPLATSTR("application/octet-stream"))
+    void set_body(const concurrency::streams::istream &stream, const utility::string_t &content_type = _XPLATSTR("application/octet-stream"))
     {
-        _m_impl->set_body(stream, std::move(content_type));
+        _m_impl->set_body(stream, content_type);
     }
 
     /// <summary>
@@ -567,9 +572,9 @@ public:
     /// This cannot be used in conjunction with any other means of setting the body of the request.
     /// The stream will not be read until the message is sent.
     /// </remarks>
-    void set_body(concurrency::streams::istream stream, utility::size64_t content_length, utility::string_t content_type = _XPLATSTR("application/octet-stream"))
+    void set_body(const concurrency::streams::istream &stream, utility::size64_t content_length, const utility::string_t &content_type = _XPLATSTR("application/octet-stream"))
     {
-        _m_impl->set_body(stream, content_length, std::move(content_type));
+        _m_impl->set_body(stream, content_length, content_type);
     }
 
     /// <summary>
@@ -584,7 +589,7 @@ public:
     /// </remarks>
     concurrency::streams::istream body() const
     {
-        return  _m_impl->instream();
+        return _m_impl->instream();
     }
 
     /// <summary>
@@ -593,8 +598,8 @@ public:
     /// <returns>A <c>task</c> which is completed when all of the response body has been received.</returns>
     pplx::task<http::http_response> content_ready() const
     {
-        auto impl = _get_impl();
-        return pplx::create_task(impl->_get_data_available()).then([impl](utility::size64_t) -> http_response { return http_response(impl); });
+        http_response resp = *this;
+        return pplx::create_task(_m_impl->_get_data_available()).then([resp](utility::size64_t) { return resp; });
     }
 
     std::shared_ptr<http::details::_http_response> _get_impl() const { return _m_impl; }
@@ -603,11 +608,6 @@ public:
     void _set_server_context(std::unique_ptr<http::details::_http_server_context> server_context) { _m_impl->_set_server_context(std::move(server_context)); }
 
 private:
-
-    http_response(std::shared_ptr<http::details::_http_response> impl)
-        : _m_impl(impl)
-    {
-    }
 
     std::shared_ptr<http::details::_http_response> _m_impl;
 };
@@ -619,8 +619,6 @@ namespace details {
 class _http_request : public http::details::http_msg_base, public std::enable_shared_from_this<_http_request>
 {
 public:
-
-    _ASYNCRTIMP _http_request();
 
     _ASYNCRTIMP _http_request(http::method mtd);
 
@@ -638,16 +636,16 @@ public:
 
     _ASYNCRTIMP void set_request_uri(const uri&);
 
-    pplx::cancellation_token cancellation_token() { return m_cancellationToken; }
+    const pplx::cancellation_token &cancellation_token() const { return m_cancellationToken; }
 
-    void set_cancellation_token(pplx::cancellation_token token)
+    void set_cancellation_token(const pplx::cancellation_token &token)
     {
         m_cancellationToken = token;
     }
 
     _ASYNCRTIMP utility::string_t to_string() const;
 
-    _ASYNCRTIMP pplx::task<void> reply(http_response response);
+    _ASYNCRTIMP pplx::task<void> reply(const http_response &response);
 
     pplx::task<http_response> get_response()
     {
@@ -656,19 +654,19 @@ public:
 
     _ASYNCRTIMP pplx::task<void> _reply_if_not_already(http::status_code status);
 
-    void set_response_stream(concurrency::streams::ostream stream)
+    void set_response_stream(const concurrency::streams::ostream &stream)
     {
         m_response_stream = stream;
     }
 
-    void set_progress_handler(progress_handler handler)
+    void set_progress_handler(const progress_handler &handler)
     {
         m_progress_handler = std::make_shared<progress_handler>(handler);
     }
 
-    concurrency::streams::ostream _response_stream() const { return m_response_stream; }
+    const concurrency::streams::ostream & _response_stream() const { return m_response_stream; }
 
-    std::shared_ptr<progress_handler> _progress_handler() const { return m_progress_handler; }
+    const std::shared_ptr<progress_handler> & _progress_handler() const { return m_progress_handler; }
 
     http::details::_http_server_context * _get_server_context() const { return m_server_context.get(); }
 
@@ -676,7 +674,7 @@ public:
 
     void _set_listener_path(const utility::string_t &path) { m_listener_path = path; }
 
-    void _set_base_uri(http::uri base_uri) { m_base_uri = std::move(base_uri); }
+    void _set_base_uri(const http::uri &base_uri) { m_base_uri = base_uri; }
 
 private:
 
@@ -713,37 +711,22 @@ class http_request
 {
 public:
     /// <summary>
-    /// Constructs a new HTTP request with the given request method.
+    /// Constructs a new HTTP request with the 'GET' method.
     /// </summary>
-    /// <param name="method">Request method.</param>
-    http_request() 
-        : _m_impl(std::make_shared<http::details::_http_request>()) {}
+    http_request()
+        : _m_impl(std::make_shared<http::details::_http_request>(methods::GET)) {}
 
     /// <summary>
     /// Constructs a new HTTP request with the given request method.
     /// </summary>
     /// <param name="mtd">Request method.</param>
-    http_request(http::method mtd) 
+    http_request(http::method mtd)
         : _m_impl(std::make_shared<http::details::_http_request>(std::move(mtd))) {}
-
-    /// <summary>
-    /// Copy constructor.
-    /// </summary>
-    http_request(const http_request &message) : _m_impl(message._m_impl) {}
 
     /// <summary>
     /// Destructor frees any held resources.
     /// </summary>
     ~http_request() {}
-
-    /// <summary>
-    /// Assignment operator.
-    /// </summary>
-    http_request &operator=(const http_request &message) 
-    {
-        _m_impl = message._m_impl;
-        return *this;
-    }
 
     /// <summary>
     /// Get the method (GET/PUT/POST/DELETE) of the request message.
@@ -755,13 +738,13 @@ public:
     /// Get the method (GET/PUT/POST/DELETE) of the request message.
     /// </summary>
     /// <param name="method">Request method of this HTTP request.</param>
-    void set_method(http::method method) const { _m_impl->method() = std::move(method); }
+    void set_method(const http::method &method) const { _m_impl->method() = method; }
 
     /// <summary>
     /// Get the underling URI of the request message.
     /// </summary>
     /// <returns>The uri of this message.</returns>
-    uri request_uri() const { return _m_impl->request_uri(); }
+    const uri & request_uri() const { return _m_impl->request_uri(); }
 
     /// <summary>
     /// Set the underling URI of the request message.
@@ -797,7 +780,7 @@ public:
     /// Use the http_headers::add to fill in desired headers.
     /// </remarks>
     http_headers &headers() { return _m_impl->headers(); }
-    
+
     /// <summary>
     /// Gets a const reference to the headers of the response message.
     /// </summary>
@@ -852,7 +835,7 @@ public:
     /// This will overwrite any previously set body data and "Content-Type" header.
     /// </remarks>
     void set_body(const utility::string_t &body_text, utility::string_t content_type = utility::string_t(_XPLATSTR("text/plain")))
-    { 
+    {
         if(content_type.find(_XPLATSTR("charset=")) != content_type.npos)
         {
             throw std::invalid_argument("content_type can't contain a 'charset'.");
@@ -873,10 +856,11 @@ public:
     /// <remarks>
     /// This will overwrite any previously set body data.
     /// </remarks>
-    void set_body(std::string body_text, utility::string_t content_type = utility::string_t(_XPLATSTR("text/plain; charset=utf-8")))
+    // TODO overload
+    void set_body(std::string body_text, const utility::string_t &content_type = utility::string_t(_XPLATSTR("text/plain; charset=utf-8")))
     {
         auto length = body_text.size();
-        set_body(concurrency::streams::bytestream::open_istream(std::move(body_text)), length, std::move(content_type));
+        set_body(concurrency::streams::bytestream::open_istream(std::move(body_text)), length, content_type);
     }
 #endif
 
@@ -903,10 +887,23 @@ public:
     /// <remarks>
     /// This will overwrite any previously set body data.
     /// </remarks>
-    void set_body(std::vector<unsigned char> body_data)
+    void set_body(std::vector<unsigned char> &&body_data)
     {
         auto length = body_data.size();
         set_body(concurrency::streams::bytestream::open_istream(std::move(body_data)), length);
+    }
+
+    /// <summary>
+    /// Sets the body of the message to the contents of a byte vector. If the 'Content-Type'
+    /// header hasn't already been set it will be set to 'application/octet-stream'.
+    /// </summary>
+    /// <param name="body_data">Vector containing body data.</param>
+    /// <remarks>
+    /// This will overwrite any previously set body data.
+    /// </remarks>
+    void set_body(const std::vector<unsigned char> &body_data)
+    {
+        set_body(concurrency::streams::bytestream::open_istream(body_data), body_data.size());
     }
 
     /// <summary>
@@ -918,9 +915,9 @@ public:
     /// This cannot be used in conjunction with any other means of setting the body of the request.
     /// The stream will not be read until the message is sent.
     /// </remarks>
-    void set_body(concurrency::streams::istream stream, utility::string_t content_type = _XPLATSTR("application/octet-stream"))
+    void set_body(const concurrency::streams::istream &stream, const utility::string_t &content_type = _XPLATSTR("application/octet-stream"))
     {
-        _m_impl->set_body(stream, std::move(content_type));
+        _m_impl->set_body(stream, content_type);
     }
 
     /// <summary>
@@ -934,9 +931,9 @@ public:
     /// This cannot be used in conjunction with any other means of setting the body of the request.
     /// The stream will not be read until the message is sent.
     /// </remarks>
-    void set_body(concurrency::streams::istream stream, utility::size64_t content_length, utility::string_t content_type = _XPLATSTR("application/octet-stream"))
+    void set_body(const concurrency::streams::istream &stream, utility::size64_t content_length, const utility::string_t &content_type = _XPLATSTR("application/octet-stream"))
     {
-        _m_impl->set_body(stream, content_length, std::move(content_type));
+        _m_impl->set_body(stream, content_length, content_type);
     }
 
     /// <summary>
@@ -963,7 +960,7 @@ public:
     /// If this function is called, the body of the response should not be accessed in any other
     /// way.
     /// </remarks>
-    void set_response_stream(concurrency::streams::ostream stream)
+    void set_response_stream(const concurrency::streams::ostream &stream)
     {
         return _m_impl->set_response_stream(stream);
     }
@@ -994,9 +991,9 @@ public:
     ///   the implementation of the handler must take care not to block the thread or do anything
     ///   that takes significant amounts of time. In particular, do not do any kind of I/O from within
     ///   the handler, do not update user interfaces, and to not acquire any locks. If such activities
-    ///   are necessary, it is the handler's responsibilty to execute that work on a separate thread.
+    ///   are necessary, it is the handler's responsibility to execute that work on a separate thread.
     /// </remarks>
-    void set_progress_handler(progress_handler handler)
+    void set_progress_handler(const progress_handler &handler)
     {
         return _m_impl->set_progress_handler(handler);
     }
@@ -1006,7 +1003,7 @@ public:
     /// </summary>
     /// <param name="response">Response to send.</param>
     /// <returns>An asynchronous operation that is completed once response is sent.</returns>
-    pplx::task<void> reply(http_response response) const { return _m_impl->reply(response); }
+    pplx::task<void> reply(const http_response &response) const { return _m_impl->reply(response); }
 
     /// <summary>
     /// Asynchronously responses to this HTTP request.
@@ -1014,8 +1011,8 @@ public:
     /// <param name="status">Response status code.</param>
     /// <returns>An asynchronous operation that is completed once response is sent.</returns>
     pplx::task<void> reply(http::status_code status) const
-    { 
-        return reply(http_response(status)); 
+    {
+        return reply(http_response(status));
     }
 
     /// <summary>
@@ -1044,11 +1041,12 @@ public:
     /// need to block waiting for the response to be sent to before the body data is destroyed or goes
     /// out of scope.
     /// </remarks>
-    pplx::task<void> reply(http::status_code status, const utility::string_t &body_data, utility::string_t content_type = _XPLATSTR("text/plain")) const
+    // TODO overload...
+    pplx::task<void> reply(http::status_code status, const utility::string_t &body_data, const utility::string_t &content_type = _XPLATSTR("text/plain")) const
     {
         http_response response(status);
-        response.set_body(body_data, std::move(content_type));
-        return reply(response);  
+        response.set_body(body_data, content_type);
+        return reply(response);
     }
 
     /// <summary>
@@ -1058,11 +1056,11 @@ public:
     /// <param name="content_type">A string holding the MIME type of the message body.</param>
     /// <param name="body">An asynchronous stream representing the body data.</param>
     /// <returns>A task that is completed once a response from the request is received.</returns>
-    pplx::task<void> reply(status_code status, concurrency::streams::istream body, utility::string_t content_type = _XPLATSTR("application/octet-stream")) const
+    pplx::task<void> reply(status_code status, const concurrency::streams::istream &body, const utility::string_t &content_type = _XPLATSTR("application/octet-stream")) const
     {
         http_response response(status);
-        response.set_body(body, std::move(content_type));
-        return reply(response);  
+        response.set_body(body, content_type);
+        return reply(response);
     }
 
     /// <summary>
@@ -1073,11 +1071,11 @@ public:
     /// <param name="content_type">A string holding the MIME type of the message body.</param>
     /// <param name="body">An asynchronous stream representing the body data.</param>
     /// <returns>A task that is completed once a response from the request is received.</returns>
-    pplx::task<void> reply(status_code status, concurrency::streams::istream body, utility::size64_t content_length, utility::string_t content_type = _XPLATSTR("application/octet-stream")) const
+    pplx::task<void> reply(status_code status, const concurrency::streams::istream &body, utility::size64_t content_length, const utility::string_t &content_type = _XPLATSTR("application/octet-stream")) const
     {
         http_response response(status);
-        response.set_body(body, content_length, std::move(content_type));
-        return reply(response);  
+        response.set_body(body, content_length, content_type);
+        return reply(response);
     }
 
     /// <summary>
@@ -1086,8 +1084,8 @@ public:
     /// <returns>A <c>task</c> which is completed when all of the response body has been received</returns>
     pplx::task<http_request> content_ready() const
     {
-        auto impl = _get_impl();
-        return pplx::create_task(_m_impl->_get_data_available()).then([impl](utility::size64_t) { return http_request(impl); });
+        http_request req = *this;
+        return pplx::create_task(_m_impl->_get_data_available()).then([req](utility::size64_t) { return req; });
     }
 
     /// <summary>
@@ -1129,21 +1127,21 @@ public:
 
     void _set_listener_path(const utility::string_t &path) { _m_impl->_set_listener_path(path); }
 
-    std::shared_ptr<http::details::_http_request> _get_impl() const { return _m_impl; }
+    const std::shared_ptr<http::details::_http_request> & _get_impl() const { return _m_impl; }
 
-    void _set_cancellation_token(pplx::cancellation_token token)
+    void _set_cancellation_token(const pplx::cancellation_token &token)
     {
         _m_impl->set_cancellation_token(token);
     }
 
-    pplx::cancellation_token _cancellation_token()
+    const pplx::cancellation_token & _cancellation_token() const
     {
         return _m_impl->cancellation_token();
     }
 
-    void _set_base_uri(http::uri base_uri)
+    void _set_base_uri(const http::uri &base_uri)
     {
-        _m_impl->_set_base_uri(std::move(base_uri));
+        _m_impl->_set_base_uri(base_uri);
     }
 
 private:
@@ -1151,17 +1149,6 @@ private:
     friend class http::client::http_client;
 
     http_request(std::unique_ptr<http::details::_http_server_context> server_context) : _m_impl(std::make_shared<details::_http_request>(std::move(server_context))) {}
-    http_request(std::shared_ptr<http::details::_http_request> message) : _m_impl(message) {}
-
-    /// <summary>
-    /// This constructor overload is only needed when <c>'const'</c> functions in <c>_http_request</c> need to log messages (<c>log::post</c>).
-    /// call <c>shared_from_this()</c> then get back a <c>std::shared_ptr&lt;const details::_http_request&gt;</c>, 
-    /// from which we need to create an <c>http_request</c>.
-    /// </summary>
-    http_request(std::shared_ptr<const http::details::_http_request> message)
-    {
-        _m_impl = std::shared_ptr<http::details::_http_request>(const_cast<http::details::_http_request *>(message.get()));
-    }
 
     std::shared_ptr<http::details::_http_request> _m_impl;
 };
@@ -1202,7 +1189,7 @@ protected:
     /// Gets the next stage in the pipeline.
     /// </summary>
     /// <returns>A shared pointer to a pipeline stage.</returns>
-    std::shared_ptr<http_pipeline_stage> next_stage() const
+    const std::shared_ptr<http_pipeline_stage> & next_stage() const
     {
         return m_next_stage;
     }
@@ -1219,9 +1206,9 @@ protected:
 private:
     friend class http_pipeline;
 
-    void set_next_stage(std::shared_ptr<http_pipeline_stage> next)
+    void set_next_stage(const std::shared_ptr<http_pipeline_stage> &next)
     {
-        m_next_stage = next; 
+        m_next_stage = next;
     }
 
     std::shared_ptr<http_pipeline_stage> m_next_stage;
@@ -1240,7 +1227,7 @@ public:
     {
     }
 
-    virtual pplx::task<http_response> propagate(http_request request)
+    virtual pplx::task<http_response> propagate(http_request request) override
     {
         return m_handler(request, next_stage());
     }
@@ -1257,14 +1244,14 @@ public:
 
     ~http_pipeline()
     {
-        
+
     }
 
     /// <summary>
     /// Create an http pipeline that consists of a linear chain of stages
     /// </summary>
     /// <param name="last">The final stage</param>
-    static std::shared_ptr<http_pipeline> create_pipeline(std::shared_ptr<http_pipeline_stage> last)
+    static std::shared_ptr<http_pipeline> create_pipeline(const std::shared_ptr<http_pipeline_stage> &last)
     {
         return std::shared_ptr<http_pipeline>(new http_pipeline(last));
     }
@@ -1287,7 +1274,7 @@ public:
     /// Adds an HTTP pipeline stage to the pipeline.
     /// </summary>
     /// <param name="stage">A pipeline stage.</param>
-    void append(std::shared_ptr<http_pipeline_stage> stage)
+    void append(const std::shared_ptr<http_pipeline_stage> &stage)
     {
         pplx::extensibility::scoped_recursive_lock_t l(m_lock);
 
@@ -1301,7 +1288,7 @@ public:
         m_stages.push_back(stage);
     }
 
-    void set_last_stage(std::shared_ptr<http_pipeline_stage> last)
+    void set_last_stage(const std::shared_ptr<http_pipeline_stage> &last)
     {
         m_last_stage = last;
     }
@@ -1313,7 +1300,7 @@ public:
 
 private:
 
-    http_pipeline(std::shared_ptr<http_pipeline_stage> last) : m_last_stage(last) 
+    http_pipeline(std::shared_ptr<http_pipeline_stage> last) : m_last_stage(last)
     {
     }
 
