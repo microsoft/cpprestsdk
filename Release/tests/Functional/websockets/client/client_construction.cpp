@@ -65,8 +65,6 @@ TEST_FIXTURE(uri_address, client_construction_error_cases)
     // empty host.
     address = uri(U("ws://:34567/"));
     verify_client_invalid_argument(address);
-
-    VERIFY_ARE_EQUAL(true, false);
 }
 
 // Verify that we can read the config from the websocket_client
