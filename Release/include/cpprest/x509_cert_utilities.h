@@ -30,6 +30,8 @@
 #include <vector>
 #include <string>
 
+#include <boost/asio/ssl.hpp>
+
 namespace web { namespace http { namespace client { namespace details {
 
 /// <summary>

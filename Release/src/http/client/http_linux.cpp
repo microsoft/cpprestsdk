@@ -737,7 +737,7 @@ namespace web { namespace http
                     }
                 }
 
-                void handle_status_line(const boost::system::error_code& ec, const std::shared_ptr<linux_client_request_context> &ctx)
+                void handle_status_line(const boost::system::error_code& ec, std::shared_ptr<linux_client_request_context> &ctx)
                 {
                     if (!ec)
                     {
