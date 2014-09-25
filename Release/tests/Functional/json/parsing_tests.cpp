@@ -213,6 +213,7 @@ TEST(escaped_unicode_string)
     VERIFY_ARE_EQUAL(U("K"), str.as_string());
 
     str = json::value::parse(U("\"\\u20AC\""));
+    // Euro sign as a hexidecmial UTF-8
     const auto euro = to_string_t("\xE2\x82\xAC");
     VERIFY_ARE_EQUAL(euro, str.as_string());
 

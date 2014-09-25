@@ -152,8 +152,7 @@ protected:
     virtual bool CompleteComment(Token &token);
     virtual bool CompleteStringLiteral(Token &token);
     bool handle_unescape_char(Token &token);
-    void convert_append_unicode_code_unit(Token &token, char16_t value);
-    
+
 private:
 
     bool CompleteNumberLiteral(CharType first, Token &token);
@@ -693,10 +692,20 @@ bool JSON_StringParser<CharType>::CompleteComment(typename JSON_Parser<CharType>
     return true;
 }
 
+void convert_append_unicode_code_unit(JSON_Parser<wchar_t>::Token &token, char16_t value)
+{
+    token.string_val.push_back(value);
+}
+void convert_append_unicode_code_unit(JSON_Parser<char>::Token &token, char16_t value)
+{
+    utf16string utf16(reinterpret_cast<utf16char *>(&value), 1);
+    token.string_val.append(::utility::conversions::utf16_to_utf8(utf16));
+}
+
 template <typename CharType>
 inline bool JSON_Parser<CharType>::handle_unescape_char(Token &token)
 {
-    // This function converts unescape character pairs (e.g. "\t") into their ASCII or UNICODE representations (e.g. tab sign)
+    // This function converts unescape character pairs (e.g. "\t") into their ASCII or Unicode representations (e.g. tab sign)
     // Also it handles \u + 4 hexadecimal digits
     CharType ch = NextCharacter();
     switch (ch)
@@ -727,7 +736,8 @@ inline bool JSON_Parser<CharType>::handle_unescape_char(Token &token)
             return true;
         case 'u':
         {
-            // A four-hexdigit Unicode character
+            // A four-hexdigit Unicode character.
+            // Transform into a 16 bit code point.
             int decoded = 0;
             for (int i = 0; i < 4; ++i)
             {
@@ -758,19 +768,6 @@ inline bool JSON_Parser<CharType>::handle_unescape_char(Token &token)
         default:
             return false;
     }
-}
-
-template <typename CharType>
-inline void JSON_Parser<CharType>::convert_append_unicode_code_unit(Token &token, char16_t value)
-{
-    token.string_val.push_back(value);
-}
-
-template <>
-inline void JSON_Parser<char>::convert_append_unicode_code_unit(Token &token, char16_t value)
-{
-    utf16string utf16(reinterpret_cast<utf16char *>(&value), 1);
-    token.string_val.append(::utility::conversions::utf16_to_utf8(utf16));
 }
 
 template <typename CharType>
