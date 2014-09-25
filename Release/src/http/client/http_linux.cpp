@@ -1,7 +1,7 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
@@ -19,7 +19,7 @@
 * http_linux.cpp
 *
 * HTTP Library: Client-side APIs.
-* 
+*
 * This file contains the implementation for Linux
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
@@ -95,7 +95,7 @@ namespace web { namespace http
                 bool is_reused() const { return m_is_reused; }
 
                 void set_keep_alive(bool keep_alive) { m_keep_alive = keep_alive; }
-                bool keep_alive() const { return m_keep_alive; } 
+                bool keep_alive() const { return m_keep_alive; }
                 tcp::socket& socket() { return m_socket; }
 
             private:
@@ -258,13 +258,13 @@ namespace web { namespace http
                     }
                     request_context::report_error(errorcodeValue, message);
                 }
-                
+
                 void set_timer(const int secs)
                 {
                     m_timeout_timer.expires_from_now(boost::posix_time::milliseconds(secs * 1000));
                     m_timeout_timer.async_wait(boost::bind(&linux_client_request_context::handle_timeout_timer, this, boost::asio::placeholders::error));
                 }
-                
+
                 void reset_timer(const int secs)
                 {
                     if (m_timeout_timer.expires_from_now(boost::posix_time::milliseconds(secs * 1000)) > 0)
@@ -272,7 +272,7 @@ namespace web { namespace http
                         m_timeout_timer.async_wait(boost::bind(&linux_client_request_context::handle_timeout_timer, this, boost::asio::placeholders::error));
                     }
                 }
-                
+
                 std::unique_ptr<boost::asio::ssl::stream<tcp::socket &> > m_ssl_stream;
                 uint64_t m_known_size;
                 bool m_needChunked;
@@ -280,7 +280,7 @@ namespace web { namespace http
                 boost::asio::streambuf m_body_buf;
                 boost::asio::deadline_timer m_timeout_timer;
                 std::shared_ptr<linux_connection> m_connection;
-                
+
 #if defined(__APPLE__) || defined(ANDROID)
                 bool m_openssl_failed;
 #endif
@@ -301,8 +301,8 @@ namespace web { namespace http
                 }
 
                 linux_client_request_context(
-                    const std::shared_ptr<_http_client_communicator> &client, 
-                    http_request request, 
+                    const std::shared_ptr<_http_client_communicator> &client,
+                    http_request request,
                     const std::shared_ptr<linux_connection> &connection);
 
             protected:
@@ -332,7 +332,7 @@ namespace web { namespace http
                 {
                     if (request_ctx->m_request._cancellation_token().is_canceled())
                     {
-                        request_ctx->report_error(make_error_code(std::errc::operation_canceled).value(), "Request cancelled by user.");
+                        request_ctx->report_error(make_error_code(std::errc::operation_canceled).value(), "Request canceled by user.");
                         return;
                     }
 
@@ -380,7 +380,7 @@ namespace web { namespace http
                     if (ctx->m_request.headers().match(header_names::transfer_encoding, transferencoding) && transferencoding == "chunked")
                     {
                         ctx->m_needChunked = true;
-                    } 
+                    }
                     else if (!ctx->m_request.headers().match(header_names::content_length, ctx->m_known_size))
                     {
                         // Stream without content length is the signal of requiring transfer encoding chunked.
@@ -460,7 +460,7 @@ namespace web { namespace http
                     }
                 }
 
-                void handle_resolve(const boost::system::error_code& ec, tcp::resolver::iterator endpoints, std::shared_ptr<linux_client_request_context> ctx)
+                void handle_resolve(const boost::system::error_code& ec, tcp::resolver::iterator endpoints, const std::shared_ptr<linux_client_request_context> &ctx)
                 {
                     if (ec)
                     {
@@ -500,8 +500,8 @@ namespace web { namespace http
                         ctx->m_timeout_timer.cancel();
 
                         // Replace the connection. This causes old connection object to go out of scope.
-                        ctx->m_connection = m_pool.obtain(); 
-                        
+                        ctx->m_connection = m_pool.obtain();
+
                         if (ctx->m_ssl_stream)
                         {
                             reset_ssl_stream(ctx);
@@ -521,66 +521,27 @@ namespace web { namespace http
                     // certificate, i.e. actual server certificate is at the '0' position in the
                     // certificate chain, the rest are optional intermediate certificates, followed
                     // finally by the root CA self signed certificate.
-                    
+
 #if defined(__APPLE__) || defined(ANDROID)
+                    // On OS X, iOS, and Android, OpenSSL doesn't have access to where the OS
+                    // stores keychains. If OpenSSL fails we will doing verification at the
+                    // end using the whole certificate chain so wait until the 'leaf' cert.
+                    // For now return true so OpenSSL continues down the certificate chain.
                     if(!preverified)
                     {
                         requestCtx->m_openssl_failed = true;
                     }
                     if(requestCtx->m_openssl_failed)
                     {
-                        // On OS X, iOS, and Android, OpenSSL doesn't have access to where the OS
-                        // stores keychains. If OpenSSL fails we will doing verification at the
-                        // end using the whole certificate chain so wait until the 'leaf' cert.
-                        // For now return true so OpenSSL continues down the certificate chain.
-                        X509_STORE_CTX *storeContext = verifyCtx.native_handle();
-                        int currentDepth = X509_STORE_CTX_get_error_depth(storeContext);
-                        if(currentDepth != 0)
-                        {
-                            return true;
-                        }
-                    
-                        STACK_OF(X509) *certStack = X509_STORE_CTX_get_chain(storeContext);
-                        const int numCerts = sk_X509_num(certStack);
-                        if(numCerts < 0)
-                        {
-                            return false;
-                        }
-                    
-                        std::vector<std::string> certChain;
-                        certChain.reserve(numCerts);
-                        for(int i = 0; i < numCerts; ++i)
-                        {
-                            X509 *cert = sk_X509_value(certStack, i);
-                                
-                            // Encode into DER format into raw memory.
-                            int len = i2d_X509(cert, nullptr);
-                            if(len < 0)
-                            {
-                                return false;
-                            }
-                        
-                            std::string certData;
-                            certData.resize(len);
-                            unsigned char * buffer = reinterpret_cast<unsigned char *>(&certData[0]);
-                            len = i2d_X509(cert, &buffer);
-                            if(len < 0)
-                            {
-                                return false;
-                            }
-                        
-                            certChain.push_back(std::move(certData));
-                        }
-                    
-                        return verify_X509_cert_chain(certChain, m_uri.host());
+                        return verify_cert_chain_platform_specific(verifyCtx, m_uri.host());
                     }
 #endif
-                    
+
                     boost::asio::ssl::rfc2818_verification rfc2818(m_uri.host());
                     return rfc2818(preverified, verifyCtx);
                 }
 
-                void handle_handshake(const boost::system::error_code& ec, std::shared_ptr<linux_client_request_context> ctx)
+                void handle_handshake(const boost::system::error_code& ec, const std::shared_ptr<linux_client_request_context> &ctx)
                 {
                     if (!ec)
                     {
@@ -592,7 +553,7 @@ namespace web { namespace http
                     }
                 }
 
-                void handle_write_chunked_body(const boost::system::error_code& ec, std::shared_ptr<linux_client_request_context> ctx)
+                void handle_write_chunked_body(const boost::system::error_code& ec, const std::shared_ptr<linux_client_request_context> &ctx)
                 {
                     if (ec)
                     {
@@ -664,7 +625,7 @@ namespace web { namespace http
                     });
                 }
 
-                void handle_write_large_body(const boost::system::error_code& ec, std::shared_ptr<linux_client_request_context> ctx)
+                void handle_write_large_body(const boost::system::error_code& ec, const std::shared_ptr<linux_client_request_context> &ctx)
                 {
                     if (ec || ctx->m_uploaded >= ctx->m_known_size)
                     {
@@ -721,7 +682,7 @@ namespace web { namespace http
                     });
                 }
 
-                void handle_write_headers(const boost::system::error_code& ec, std::shared_ptr<linux_client_request_context> ctx)
+                void handle_write_headers(const boost::system::error_code& ec, const std::shared_ptr<linux_client_request_context> &ctx)
                 {
                     if(ec)
                     {
@@ -740,7 +701,7 @@ namespace web { namespace http
                     }
                 }
 
-                void handle_write_body(const boost::system::error_code& ec, std::shared_ptr<linux_client_request_context> ctx)
+                void handle_write_body(const boost::system::error_code& ec, const std::shared_ptr<linux_client_request_context> &ctx)
                 {
                     if (!ec)
                     {
@@ -776,7 +737,7 @@ namespace web { namespace http
                     }
                 }
 
-                void handle_status_line(const boost::system::error_code& ec, std::shared_ptr<linux_client_request_context> ctx)
+                void handle_status_line(const boost::system::error_code& ec, std::shared_ptr<linux_client_request_context> &ctx)
                 {
                     if (!ec)
                     {
@@ -799,7 +760,7 @@ namespace web { namespace http
                             ctx->report_error("Invalid HTTP status line", ec, httpclient_errorcode_context::readheader);
                             return;
                         }
-                        
+
                         read_headers(ctx);
                     }
                     else
@@ -916,7 +877,7 @@ namespace web { namespace http
                 }
 
                 template <typename ReadHandler>
-                void async_read_until_buffersize(size_t size, ReadHandler handler, std::shared_ptr<linux_client_request_context> ctx)
+                void async_read_until_buffersize(size_t size, ReadHandler handler, const std::shared_ptr<linux_client_request_context> &ctx)
                 {
                     size_t size_to_read = 0;
                     if (ctx->m_body_buf.size() < size)
@@ -934,7 +895,7 @@ namespace web { namespace http
                     }
                 }
 
-                void handle_chunk_header(const boost::system::error_code& ec, std::shared_ptr<linux_client_request_context> ctx)
+                void handle_chunk_header(const boost::system::error_code& ec, const std::shared_ptr<linux_client_request_context> &ctx)
                 {
                     if (!ec)
                     {
@@ -962,7 +923,7 @@ namespace web { namespace http
                     }
                 }
 
-                void handle_chunk(const boost::system::error_code& ec, int to_read, std::shared_ptr<linux_client_request_context> ctx)
+                void handle_chunk(const boost::system::error_code& ec, int to_read, const std::shared_ptr<linux_client_request_context> &ctx)
                 {
                     if (!ec)
                     {
@@ -1036,7 +997,7 @@ namespace web { namespace http
                     }
                 }
 
-                void handle_read_content(const boost::system::error_code& ec, std::shared_ptr<linux_client_request_context> ctx)
+                void handle_read_content(const boost::system::error_code& ec, const std::shared_ptr<linux_client_request_context> &ctx)
                 {
                     auto writeBuffer = ctx->_get_writebuffer();
 
