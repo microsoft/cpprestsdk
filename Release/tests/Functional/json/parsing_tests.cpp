@@ -490,21 +490,12 @@ utility::string_t make_deep_json_string(size_t depth)
 
 TEST(deeply_nested)
 {
-#ifdef __APPLE__
-    auto strGood = make_deep_json_string(32);
-#else
-    auto strGood = make_deep_json_string(128);
-#endif
     // This should parse without issues:
+    auto strGood = make_deep_json_string(128);
     json::value::parse(strGood);
 
-#ifdef __APPLE__
-    auto strBad = make_deep_json_string(33);
-#else
-    auto strBad = make_deep_json_string(129);
-#endif
-
     // But this one should throw:
+    auto strBad = make_deep_json_string(129);
     VERIFY_PARSING_THROW(json::value::parse(strBad));
 }
 
