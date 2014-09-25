@@ -109,7 +109,7 @@
   </ItemDefinitionGroup>
   <PropertyGroup>
     <OutDir>$(OutDir)\$(MSBuildProjectName)\</OutDir>
-    <PackageCertificateThumbprint>5C945ED108BF1723994A90F9BAA4B7D93FBE0E47</PackageCertificateThumbprint>
+    <PackageCertificateThumbprint>F21E91BD711D606106CD99CE5C2E090FD822956F</PackageCertificateThumbprint>
   </PropertyGroup>
   <ItemGroup>
     <ClInclude Include="CardShape.xaml.h">
@@ -141,6 +141,7 @@
     <AppxManifest Include="Package120.appxmanifest">
       <SubType>Designer</SubType>
     </AppxManifest>
+    <None Include="BlackJack_UIClient120_TemporaryKey.pfx" />
     <None Include="BlackJack_UIClient_TemporaryKey.pfx" />
   </ItemGroup>
   <ItemGroup>

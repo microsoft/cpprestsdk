@@ -128,6 +128,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <PackageCertificateKeyFile>WindowsLiveAuth_TemporaryKey.pfx</PackageCertificateKeyFile>
+    <PackageCertificateThumbprint>D3342DAE1EC703934903364490A80C5BB06C929A</PackageCertificateThumbprint>
   </PropertyGroup>
   <ItemGroup>
     <ClInclude Include="live_connect.h" />
