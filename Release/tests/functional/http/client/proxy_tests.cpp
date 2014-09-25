@@ -113,7 +113,7 @@ TEST_FIXTURE(uri_address, proxy_with_credentials, "Ignore:Linux", "NYI", "Ignore
 		VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
 		response.content_ready().wait();
 	}
-	catch (web::http::http_exception& e)
+	catch (web::http::http_exception const& e)
 	{
 		if (e.error_code().value() == 12007) {
 			// The above "netproxy.redmond.corp.microsoft.com" is an internal site not generally accessible.
