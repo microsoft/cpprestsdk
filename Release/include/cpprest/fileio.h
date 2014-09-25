@@ -33,11 +33,11 @@
 
 #if defined(_MSC_VER) && (_MSC_VER >= 1800)
 #include <ppltasks.h>
+namespace pplx = Concurrency;
 #if (_MSC_VER >= 1900)
 #include <concrt.h>
 #ifndef DEV14_EXTENSIBILITY_WRKRND
 #define DEV14_EXTENSIBILITY_WRKRND
-namespace pplx = Concurrency;
 namespace Concurrency {
     namespace extensibility {
         typedef ::std::condition_variable condition_variable_t;
