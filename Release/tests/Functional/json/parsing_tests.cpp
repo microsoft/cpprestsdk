@@ -1,4 +1,4 @@
-﻿/***
+/***
 * ==++==
 *
 * Copyright (c) Microsoft Corporation. All rights reserved. 
@@ -490,12 +490,20 @@ utility::string_t make_deep_json_string(size_t depth)
 
 TEST(deeply_nested)
 {
+#if defined(__APPLE__)
+    size_t safeDepth = 64;
+    size_t overDepth = 65;
+#else
+    size_t safeDepth = 128;
+    size_t overDepth = 129;
+#endif
+                                     
     // This should parse without issues:
-    auto strGood = make_deep_json_string(128);
+    auto strGood = make_deep_json_string(safeDepth);
     json::value::parse(strGood);
 
     // But this one should throw:
-    auto strBad = make_deep_json_string(129);
+    auto strBad = make_deep_json_string(overDepth);
     VERIFY_PARSING_THROW(json::value::parse(strBad));
 }
 
