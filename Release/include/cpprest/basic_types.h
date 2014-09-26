@@ -99,3 +99,29 @@ typedef std::stringstream stringstream_t;
 #endif // !_TURN_OFF_PLATFORM_STRING
 
 }// namespace utility
+
+using utf8char = char;
+using utf8string = std::string;
+using utf8stringstream = std::stringstream;
+using utf8ostringstream = std::ostringstream;
+using utf8ostream = std::ostream;
+using utf8istream = std::istream;
+using utf8istringstream = std::istringstream;
+
+#ifdef _UTF16_STRINGS
+typedef wchar_t utf16char;
+typedef std::wstring utf16string;
+typedef std::wstringstream utf16stringstream;
+typedef std::wostringstream utf16ostringstream;
+typedef std::wostream utf16ostream;
+typedef std::wistream utf16istream;
+typedef std::wistringstream utf16istringstream;
+#else
+typedef char16_t utf16char;
+typedef std::u16string utf16string;
+typedef std::basic_stringstream<utf16char> utf16stringstream;
+typedef std::basic_ostringstream<utf16char> utf16ostringstream;
+typedef std::basic_ostream<utf16char> utf16ostream;
+typedef std::basic_istream<utf16char> utf16istream;
+typedef std::basic_istringstream<utf16char> utf16istringstream;
+#endif

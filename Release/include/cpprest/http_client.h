@@ -461,7 +461,8 @@ public:
     }
 
     /// <summary>
-    /// Asynchronously sends an HTTP request.
+    /// Asynchronously sends an HTTP request with a string body. Assumes the
+    /// character encoding of the string is UTF-8.
     /// </summary>
     /// <param name="mtd">HTTP request method.</param>
     /// <param name="path_query_fragment">String containing the path, query, and fragment, relative to the http_client's base URI.</param>
@@ -469,11 +470,56 @@ public:
     /// <param name="body_data">String containing the text to use in the message body.</param>
     /// <param name="token">Cancellation token for cancellation of this request operation.</param>
     /// <returns>An asynchronous operation that is completed once a response from the request is received.</returns>
-    // TODO overload???Not sure...
+    pplx::task<http_response> request(
+        const method &mtd,
+        const utf8string &path_query_fragment,
+        const utf8string &body_data,
+        const utf8string &content_type = "text/plain; charset=utf-8",
+        const pplx::cancellation_token &token = pplx::cancellation_token::none())
+    {
+        http_request msg(mtd);
+        msg.set_request_uri(::utility::conversions::to_string_t(path_query_fragment));
+        msg.set_body(body_data, content_type);
+        return request(msg, token);
+    }
+
+    /// <summary>
+    /// Asynchronously sends an HTTP request with a string body. Assumes the
+    /// character encoding of the string is UTF-8.
+    /// </summary>
+    /// <param name="mtd">HTTP request method.</param>
+    /// <param name="path_query_fragment">String containing the path, query, and fragment, relative to the http_client's base URI.</param>
+    /// <param name="content_type">A string holding the MIME type of the message body.</param>
+    /// <param name="body_data">String containing the text to use in the message body.</param>
+    /// <param name="token">Cancellation token for cancellation of this request operation.</param>
+    /// <returns>An asynchronous operation that is completed once a response from the request is received.</returns>
+    pplx::task<http_response> request(
+        const method &mtd,
+        const utf8string &path_query_fragment,
+        utf8string &&body_data,
+        const utf8string &content_type = "text/plain; charset=utf-8",
+        const pplx::cancellation_token &token = pplx::cancellation_token::none())
+    {
+        http_request msg(mtd);
+        msg.set_request_uri(::utility::conversions::to_string_t(path_query_fragment));
+        msg.set_body(std::move(body_data), content_type);
+        return request(msg, token);
+    }
+
+    /// <summary>
+    /// Asynchronously sends an HTTP request with a string body. Assumes the
+    /// character encoding of the string is UTF-16 will perform conversion to UTF-8.
+    /// </summary>
+    /// <param name="mtd">HTTP request method.</param>
+    /// <param name="path_query_fragment">String containing the path, query, and fragment, relative to the http_client's base URI.</param>
+    /// <param name="content_type">A string holding the MIME type of the message body.</param>
+    /// <param name="body_data">String containing the text to use in the message body.</param>
+    /// <param name="token">Cancellation token for cancellation of this request operation.</param>
+    /// <returns>An asynchronous operation that is completed once a response from the request is received.</returns>
     pplx::task<http_response> request(
         const method &mtd,
         const utility::string_t &path_query_fragment,
-        const utility::string_t &body_data,
+        const utf16string &body_data,
         const utility::string_t &content_type = _XPLATSTR("text/plain"),
         const pplx::cancellation_token &token = pplx::cancellation_token::none())
     {
@@ -484,18 +530,57 @@ public:
     }
 
     /// <summary>
-    /// Asynchronously sends an HTTP request.
+    /// Asynchronously sends an HTTP request with a string body. Assumes the
+    /// character encoding of the string is UTF-8.
     /// </summary>
     /// <param name="mtd">HTTP request method.</param>
     /// <param name="path_query_fragment">String containing the path, query, and fragment, relative to the http_client's base URI.</param>
     /// <param name="body_data">String containing the text to use in the message body.</param>
     /// <param name="token">Cancellation token for cancellation of this request operation.</param>
     /// <returns>An asynchronous operation that is completed once a response from the request is received.</returns>
-    // TODO overload not usre???
     pplx::task<http_response> request(
         const method &mtd,
-        const utility::string_t &path_query_fragment,
-        const utility::string_t &body_data,
+        const utf8string &path_query_fragment,
+        const utf8string &body_data,
+        const pplx::cancellation_token &token)
+    {
+        return request(mtd, path_query_fragment, body_data, "text/plain; charset=utf-8", token);
+    }
+
+    /// <summary>
+    /// Asynchronously sends an HTTP request with a string body. Assumes the
+    /// character encoding of the string is UTF-8.
+    /// </summary>
+    /// <param name="mtd">HTTP request method.</param>
+    /// <param name="path_query_fragment">String containing the path, query, and fragment, relative to the http_client's base URI.</param>
+    /// <param name="body_data">String containing the text to use in the message body.</param>
+    /// <param name="token">Cancellation token for cancellation of this request operation.</param>
+    /// <returns>An asynchronous operation that is completed once a response from the request is received.</returns>
+    pplx::task<http_response> request(
+        const method &mtd,
+        const utf8string &path_query_fragment,
+        utf8string &&body_data,
+        const pplx::cancellation_token &token)
+    {
+        http_request msg(mtd);
+        msg.set_request_uri(::utility::conversions::to_string_t(path_query_fragment));
+        msg.set_body(std::move(body_data), "text/plain; charset=utf-8");
+        return request(msg, token);
+    }
+
+    /// <summary>
+    /// Asynchronously sends an HTTP request with a string body. Assumes
+    /// the character encoding of the string is UTF-16 will perform conversion to UTF-8.
+    /// </summary>
+    /// <param name="mtd">HTTP request method.</param>
+    /// <param name="path_query_fragment">String containing the path, query, and fragment, relative to the http_client's base URI.</param>
+    /// <param name="body_data">String containing the text to use in the message body.</param>
+    /// <param name="token">Cancellation token for cancellation of this request operation.</param>
+    /// <returns>An asynchronous operation that is completed once a response from the request is received.</returns>
+    pplx::task<http_response> request(
+        const method &mtd,
+        const utf16string &path_query_fragment,
+        const utf16string &body_data,
         const pplx::cancellation_token &token)
     {
         return request(mtd, path_query_fragment, body_data, _XPLATSTR("text/plain"), token);

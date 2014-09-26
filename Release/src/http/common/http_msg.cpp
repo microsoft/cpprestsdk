@@ -508,13 +508,26 @@ static void set_content_type_if_not_present(http::http_headers &headers, const u
     }
 }
 
-void details::http_msg_base::set_body(const streams::istream &instream, const utility::string_t &contentType)
+void details::http_msg_base::set_body(const streams::istream &instream, const utf8string &contentType)
+{
+    set_content_type_if_not_present(headers(), utility::conversions::to_string_t(contentType));
+    set_instream(instream);
+}
+
+void details::http_msg_base::set_body(const streams::istream &instream, const utf16string &contentType)
 {
     set_content_type_if_not_present(headers(), contentType);
     set_instream(instream);
 }
 
-void details::http_msg_base::set_body(const streams::istream &instream, utility::size64_t contentLength, const utility::string_t &contentType)
+void details::http_msg_base::set_body(const streams::istream &instream, utility::size64_t contentLength, const utf8string &contentType)
+{
+    headers().set_content_length(contentLength);
+    set_body(instream, contentType);
+    m_data_available.set(contentLength);
+}
+
+void details::http_msg_base::set_body(const concurrency::streams::istream &instream, utility::size64_t contentLength, const utf16string &contentType)
 {
     headers().set_content_length(contentLength);
     set_body(instream, contentType);

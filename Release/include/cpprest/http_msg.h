@@ -223,8 +223,10 @@ public:
 
     http_headers &headers() { return m_headers; }
 
-    _ASYNCRTIMP void set_body(const concurrency::streams::istream &instream, const utility::string_t &contentType);
-    _ASYNCRTIMP void set_body(const concurrency::streams::istream &instream, utility::size64_t contentLength, const utility::string_t &contentType);
+    _ASYNCRTIMP void set_body(const concurrency::streams::istream &instream, const utf8string &contentType);
+    _ASYNCRTIMP void set_body(const concurrency::streams::istream &instream, const utf16string &contentType);
+    _ASYNCRTIMP void set_body(const concurrency::streams::istream &instream, utility::size64_t contentLength, const utf8string &contentType);
+    _ASYNCRTIMP void set_body(const concurrency::streams::istream &instream, utility::size64_t contentLength, const utf16string &contentType);
 
     _ASYNCRTIMP utility::string_t _extract_string(bool force = false);
     _ASYNCRTIMP json::value _extract_json(bool force = false);
@@ -466,44 +468,53 @@ public:
 
     /// <summary>
     /// Sets the body of the message to a textual string and set the "Content-Type" header. Assumes
-    /// the character encoding of the string is the OS's default code page and will perform appropriate
-    /// conversions to UTF-8.
+    /// the character encoding of the string is UTF-8.
+    /// </summary>
+    /// <param name="body_text">String containing body text.</param>
+    /// <param name="content_type">MIME type to set the "Content-Type" header to. Default to "text/plain; charset=utf-8".</param>
+    /// <remarks>
+    /// This will overwrite any previously set body data and "Content-Type" header.
+    /// </remarks>
+    void set_body(utf8string &&body_text, const utf8string &content_type = utf8string("text/plain; charset=utf-8"))
+    {
+        const auto length = body_text.size();
+        _m_impl->set_body(concurrency::streams::bytestream::open_istream<std::string>(std::move(body_text)), length, content_type);
+    }
+
+    /// <summary>
+    /// Sets the body of the message to a textual string and set the "Content-Type" header. Assumes
+    /// the character encoding of the string is UTF-8.
+    /// </summary>
+    /// <param name="body_text">String containing body text.</param>
+    /// <param name="content_type">MIME type to set the "Content-Type" header to. Default to "text/plain; charset=utf-8".</param>
+    /// <remarks>
+    /// This will overwrite any previously set body data and "Content-Type" header.
+    /// </remarks>
+    void set_body(const utf8string &body_text, const utf8string &content_type = utf8string("text/plain; charset=utf-8"))
+    {
+        _m_impl->set_body(concurrency::streams::bytestream::open_istream<std::string>(body_text), body_text.size(), content_type);
+    }
+
+    /// <summary>
+    /// Sets the body of the message to a textual string and set the "Content-Type" header. Assumes
+    /// the character encoding of the string is UTF-16 will perform conversion to UTF-8.
     /// </summary>
     /// <param name="body_text">String containing body text.</param>
     /// <param name="content_type">MIME type to set the "Content-Type" header to. Default to "text/plain".</param>
     /// <remarks>
     /// This will overwrite any previously set body data and "Content-Type" header.
     /// </remarks>
-    // TODO overload... and fix...
-    void set_body(const utility::string_t &body_text, utility::string_t content_type = utility::string_t(_XPLATSTR("text/plain")))
+    void set_body(const utf16string &body_text, utf16string content_type = utf16string(_XPLATSTR("text/plain")))
     {
-        if(content_type.find(_XPLATSTR("charset=")) != content_type.npos)
+        if (content_type.find(_XPLATSTR("charset=")) != content_type.npos)
         {
             throw std::invalid_argument("content_type can't contain a 'charset'.");
         }
 
-        auto utf8body = utility::conversions::to_utf8string(body_text);
-
+        auto utf8body = utility::conversions::utf16_to_utf8(body_text);
         auto length = utf8body.size();
         set_body(concurrency::streams::bytestream::open_istream<std::string>(std::move(utf8body)), length, std::move(content_type.append(_XPLATSTR("; charset=utf-8"))));
     }
-
-#ifdef _MS_WINDOWS
-    /// <summary>
-    /// Sets the body of the message to contain a UTF-8 string. If the 'Content-Type'
-    /// header hasn't already been set it will be set to 'text/plain; charset=utf-8'.
-    /// </summary>
-    /// <param name="body_text">String containing body text as a UTF-8 string.</param>
-    /// <remarks>
-    /// This will overwrite any previously set body data.
-    /// </remarks>
-    // TODO overload
-    void set_body(std::string body_text, const utility::string_t &content_type = utility::string_t(_XPLATSTR("text/plain; charset=utf-8")))
-    {
-        auto length = body_text.size();
-        set_body(concurrency::streams::bytestream::open_istream(std::move(body_text)), length, content_type);
-    }
-#endif
 
     /// <summary>
     /// Sets the body of the message to contain json value. If the 'Content-Type'
@@ -815,7 +826,7 @@ public:
     }
 
     /// <summary>
-    /// Extract the body of the response message into a vector of bytes. Extracting a vector can be done on 
+    /// Extract the body of the response message into a vector of bytes. Extracting a vector can be done on
     /// </summary>
     /// <returns>The body of the message as a vector of bytes.</returns>
     pplx::task<std::vector<unsigned char>> extract_vector() const
@@ -826,43 +837,54 @@ public:
 
     /// <summary>
     /// Sets the body of the message to a textual string and set the "Content-Type" header. Assumes
-    /// the character encoding of the string is the OS's default code page and will perform appropriate
-    /// conversions to UTF-8.
+    /// the character encoding of the string is UTF-8.
+    /// </summary>
+    /// <param name="body_text">String containing body text.</param>
+    /// <param name="content_type">MIME type to set the "Content-Type" header to. Default to "text/plain; charset=utf-8".</param>
+    /// <remarks>
+    /// This will overwrite any previously set body data and "Content-Type" header.
+    /// </remarks>
+    void set_body(utf8string &&body_text, const utf8string &content_type = utf8string("text/plain; charset=utf-8"))
+    {
+        const auto length = body_text.size();
+        _m_impl->set_body(concurrency::streams::bytestream::open_istream<std::string>(std::move(body_text)), length, content_type);
+    }
+
+    /// <summary>
+    /// Sets the body of the message to a textual string and set the "Content-Type" header. Assumes
+    /// the character encoding of the string is UTF-8.
+    /// </summary>
+    /// <param name="body_text">String containing body text.</param>
+    /// <param name="content_type">MIME type to set the "Content-Type" header to. Default to "text/plain; charset=utf-8".</param>
+    /// <remarks>
+    /// This will overwrite any previously set body data and "Content-Type" header.
+    /// </remarks>
+    void set_body(const utf8string &body_text, const utf8string &content_type = utf8string("text/plain; charset=utf-8"))
+    {
+        _m_impl->set_body(concurrency::streams::bytestream::open_istream<std::string>(body_text), body_text.size(), content_type);
+    }
+
+    /// <summary>
+    /// Sets the body of the message to a textual string and set the "Content-Type" header. Assumes
+    /// the character encoding of the string is UTF-16 will perform conversion to UTF-8.
+    /// </summary>
     /// </summary>
     /// <param name="body_text">String containing body text.</param>
     /// <param name="content_type">MIME type to set the "Content-Type" header to. Default to "text/plain".</param>
     /// <remarks>
     /// This will overwrite any previously set body data and "Content-Type" header.
     /// </remarks>
-    void set_body(const utility::string_t &body_text, utility::string_t content_type = utility::string_t(_XPLATSTR("text/plain")))
+    void set_body(const utf16string &body_text, utf16string content_type = utf16string(_XPLATSTR("text/plain")))
     {
         if(content_type.find(_XPLATSTR("charset=")) != content_type.npos)
         {
             throw std::invalid_argument("content_type can't contain a 'charset'.");
         }
 
-        auto utf8body = utility::conversions::to_utf8string(body_text);
-
+        auto utf8body = utility::conversions::utf16_to_utf8(body_text);
         auto length = utf8body.size();
-        set_body(concurrency::streams::bytestream::open_istream(std::move(utf8body)), length, std::move(content_type.append(_XPLATSTR("; charset=utf-8"))));
+        _m_impl->set_body(concurrency::streams::bytestream::open_istream(std::move(utf8body)), length, std::move(content_type.append(_XPLATSTR("; charset=utf-8"))));
     }
-
-#ifdef _MS_WINDOWS
-    /// <summary>
-    /// Sets the body of the message to contain a UTF-8 string. If the 'Content-Type'
-    /// header hasn't already been set it will be set to 'text/plain; charset=utf-8'.
-    /// </summary>
-    /// <param name="body_text">String containing body text as a UTF-8 string.</param>
-    /// <remarks>
-    /// This will overwrite any previously set body data.
-    /// </remarks>
-    // TODO overload
-    void set_body(std::string body_text, const utility::string_t &content_type = utility::string_t(_XPLATSTR("text/plain; charset=utf-8")))
-    {
-        auto length = body_text.size();
-        set_body(concurrency::streams::bytestream::open_istream(std::move(body_text)), length, content_type);
-    }
-#endif
 
     /// <summary>
     /// Sets the body of the message to contain json value. If the 'Content-Type'
@@ -876,7 +898,7 @@ public:
     {
         auto body_text = utility::conversions::to_utf8string(body_data.serialize());
         auto length = body_text.size();
-        set_body(concurrency::streams::bytestream::open_istream(std::move(body_text)), length, _XPLATSTR("application/json"));
+        _m_impl->set_body(concurrency::streams::bytestream::open_istream(std::move(body_text)), length, _XPLATSTR("application/json"));
     }
 
     /// <summary>
@@ -890,7 +912,7 @@ public:
     void set_body(std::vector<unsigned char> &&body_data)
     {
         auto length = body_data.size();
-        set_body(concurrency::streams::bytestream::open_istream(std::move(body_data)), length);
+        _m_impl->set_body(concurrency::streams::bytestream::open_istream(std::move(body_data)), length, _XPLATSTR("application/octet-stream"));
     }
 
     /// <summary>
@@ -1016,7 +1038,7 @@ public:
     }
 
     /// <summary>
-    /// Responses to this HTTP request.
+    /// Responds to this HTTP request.
     /// </summary>
     /// <param name="status">Response status code.</param>
     /// <param name="body_data">Json value to use in the response body.</param>
@@ -1028,21 +1050,37 @@ public:
         return reply(response);
     }
 
-    /// <summary>
-    /// Responses to this HTTP request.
+    /// Responds to this HTTP request with a string.
+    /// Assumes the character encoding of the string is UTF-8.
     /// </summary>
     /// <param name="status">Response status code.</param>
+    /// <param name="body_data">UTF-8 string containing the text to use in the response body.</param>
     /// <param name="content_type">Content type of the body.</param>
-    /// <param name="body_data">String containing the text to use in the response body.</param>
     /// <returns>An asynchronous operation that is completed once response is sent.</returns>
     /// <remarks>
-    /// The response may be sent either synchronously or asychronously depending on an internal
-    /// algorithm on whether we decide or not to copy the body data. Either way callers of this function do NOT
-    /// need to block waiting for the response to be sent to before the body data is destroyed or goes
-    /// out of scope.
+    //  Callers of this function do NOT need to block waiting for the response to be
+    /// sent to before the body data is destroyed or goes out of scope.
     /// </remarks>
-    // TODO overload...
-    pplx::task<void> reply(http::status_code status, const utility::string_t &body_data, const utility::string_t &content_type = _XPLATSTR("text/plain")) const
+    pplx::task<void> reply(http::status_code status, utf8string &&body_data, const utf8string &content_type = "text/plain") const
+    {
+        http_response response(status);
+        response.set_body(std::move(body_data), content_type);
+        return reply(response);
+    }
+
+    /// <summary>
+    /// Responds to this HTTP request with a string.
+    /// Assumes the character encoding of the string is UTF-8.
+    /// </summary>
+    /// <param name="status">Response status code.</param>
+    /// <param name="body_data">UTF-8 string containing the text to use in the response body.</param>
+    /// <param name="content_type">Content type of the body.</param>
+    /// <returns>An asynchronous operation that is completed once response is sent.</returns>
+    /// <remarks>
+    //  Callers of this function do NOT need to block waiting for the response to be
+    /// sent to before the body data is destroyed or goes out of scope.
+    /// </remarks>
+    pplx::task<void> reply(http::status_code status, const utf8string &body_data, const utf8string &content_type = "text/plain") const
     {
         http_response response(status);
         response.set_body(body_data, content_type);
@@ -1050,7 +1088,26 @@ public:
     }
 
     /// <summary>
-    /// Responses to this HTTP request.
+    /// Responds to this HTTP request with a string. Assumes the character encoding
+    /// of the string is UTF-16 will perform conversion to UTF-8.
+    /// </summary>
+    /// <param name="status">Response status code.</param>
+    /// <param name="body_data">UTF-16 string containing the text to use in the response body.</param>
+    /// <param name="content_type">Content type of the body.</param>
+    /// <returns>An asynchronous operation that is completed once response is sent.</returns>
+    /// <remarks>
+    //  Callers of this function do NOT need to block waiting for the response to be
+    /// sent to before the body data is destroyed or goes out of scope.
+    /// </remarks>
+    pplx::task<void> reply(http::status_code status, const utf16string &body_data, const utf16string &content_type = _XPLATSTR("text/plain")) const
+    {
+        http_response response(status);
+        response.set_body(body_data, content_type);
+        return reply(response);
+    }
+
+    /// <summary>
+    /// Responds to this HTTP request.
     /// </summary>
     /// <param name="status">Response status code.</param>
     /// <param name="content_type">A string holding the MIME type of the message body.</param>
@@ -1064,7 +1121,7 @@ public:
     }
 
     /// <summary>
-    /// Responses to this HTTP request.
+    /// Responds to this HTTP request.
     /// </summary>
     /// <param name="status">Response status code.</param>
     /// <param name="content_length">The size of the data to be sent in the body..</param>

@@ -83,6 +83,7 @@
 
 //#define UNITTEST_NO_EXCEPTIONS
 
+#include <cpprest/basic_types.h>
 #ifdef _MS_WINDOWS
 #include <compat/windows_compat.h>
 #else
