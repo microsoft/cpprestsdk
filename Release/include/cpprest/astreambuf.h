@@ -60,10 +60,6 @@ namespace concurrency = Concurrency;
 #pragma warning(disable : 4718)
 #endif
 
-#if !defined(_MS_WINDOWS) && 0
-// TFS 579628 - 1206: figure out how to avoid having this specialization for Linux (beware of 64-bit Linux)
-#endif // _MS_WINDOWS
-
 namespace Concurrency 
 { 
 /// Library for asychronous streams.
