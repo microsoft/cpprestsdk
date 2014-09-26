@@ -27,6 +27,9 @@
 #include "cpprest/rawptrstream.h"
 #include "os_utilities.h"
 #include <stdexcept>
+#if defined(_MSC_VER) && !defined(__cplusplus_winrt)
+#include <winhttp.h>
+#endif
 
 using namespace web; 
 using namespace utility;
@@ -206,9 +209,13 @@ TEST_FIXTURE(uri_address, outside_ssl_json)
         }
         catch (web::http::http_exception const& e)
         {
-            if (e.what() != "Error in: WinHttpQueryDataAvailable" || i == 3)
+#if defined(_MSC_VER) && !defined(__cplusplus_winrt)
+            if (e.error_code != API_QUERY_DATA_AVAILABLE || i == 3)
+#endif
+            {
                 // If we didn't get a "connection broken" error (or we are on the last retry), rethrow it
                 throw;
+            }
             os_utilities::sleep(1000);
         }
     }
