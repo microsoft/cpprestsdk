@@ -189,10 +189,15 @@ protected:
     const typename std::char_traits<CharType>::int_type m_eof;
     size_t m_currentColumn;
     size_t m_currentParsingDepth;
-#ifndef __APPLE__
-    static const size_t maxParsingDepth = 128;
+    
+// On APPLE debug overflow happens around 80.
+// The DEBUG macro is defined in XCode but we don't in our CMakeList
+// so for now we will keep the same on debug and release. In the future
+// this can be increase on release if necessary.
+#if defined(__APPLE__)
+    static const size_t maxParsingDepth = 64;
 #else
-    static const size_t maxParsingDepth = 32;
+    static const size_t maxParsingDepth = 128;
 #endif
 };
 
