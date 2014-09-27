@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,14 +31,14 @@
 #include <array>
 
 #if defined(_MSC_VER)
-#pragma warning(disable : 4127) // allow expressions like while(true) pass 
+#pragma warning(disable : 4127) // allow expressions like while(true) pass
 #endif
 using namespace web;
 using namespace web::json;
 using namespace utility;
 using namespace utility::conversions;
 
-std::array<signed char,128> _hexval = {{ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 
+std::array<signed char,128> _hexval = {{ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                                          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                                          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                                           0,  1,  2,  3,  4,  5,  6,  7,  8,  9, -1, -1, -1, -1, -1, -1,
@@ -74,7 +74,7 @@ template <typename CharType>
 class JSON_Parser
 {
 public:
-    JSON_Parser() 
+    JSON_Parser()
         : m_currentLine(1),
           m_eof(std::char_traits<CharType>::eof()),
           m_currentColumn(1),
@@ -171,15 +171,15 @@ private:
     void CreateToken(typename JSON_Parser<CharType>::Token& tk, typename Token::Kind kind, Location &start)
     {
         tk.kind = kind;
-        tk.start = start; 
+        tk.start = start;
         tk.string_val.clear();
     }
 
     void CreateToken(typename JSON_Parser<CharType>::Token& tk, typename Token::Kind kind)
     {
         tk.kind = kind;
-        tk.start.m_line = m_currentLine; 
-        tk.start.m_column = m_currentColumn; 
+        tk.start.m_line = m_currentLine;
+        tk.start.m_column = m_currentColumn;
         tk.string_val.clear();
     }
 
@@ -405,16 +405,16 @@ namespace
     }
 #endif
 
-    static double anystod(const char* str) 
+    static double anystod(const char* str)
     {
 #ifdef _MS_WINDOWS
         return _strtod_l(str, nullptr, utility::details::scoped_c_thread_locale::c_locale());
 #else
-        return strtod(str, nullptr); 
+        return strtod(str, nullptr);
 #endif
     }
-    static double anystod(const wchar_t* str) 
-    { 
+    static double anystod(const wchar_t* str)
+    {
 #ifdef _MS_WINDOWS
         return _wcstod_l(str, nullptr, utility::details::scoped_c_thread_locale::c_locale());
 #else
@@ -697,10 +697,20 @@ bool JSON_StringParser<CharType>::CompleteComment(typename JSON_Parser<CharType>
     return true;
 }
 
+void convert_append_unicode_code_unit(JSON_Parser<wchar_t>::Token &token, char16_t value)
+{
+    token.string_val.push_back(value);
+}
+void convert_append_unicode_code_unit(JSON_Parser<char>::Token &token, char16_t value)
+{
+    utf16string utf16(reinterpret_cast<utf16char *>(&value), 1);
+    token.string_val.append(::utility::conversions::utf16_to_utf8(utf16));
+}
+
 template <typename CharType>
 inline bool JSON_Parser<CharType>::handle_unescape_char(Token &token)
 {
-    // This function converts unescape character pairs (e.g. "\t") into their ASCII or UNICODE representations (e.g. tab sign)
+    // This function converts unescape character pairs (e.g. "\t") into their ASCII or Unicode representations (e.g. tab sign)
     // Also it handles \u + 4 hexadecimal digits
     CharType ch = NextCharacter();
     switch (ch)
@@ -731,7 +741,8 @@ inline bool JSON_Parser<CharType>::handle_unescape_char(Token &token)
             return true;
         case 'u':
         {
-            // A four-hexdigit unicode character
+            // A four-hexdigit Unicode character.
+            // Transform into a 16 bit code point.
             int decoded = 0;
             for (int i = 0; i < 4; ++i)
             {
@@ -755,8 +766,8 @@ inline bool JSON_Parser<CharType>::handle_unescape_char(Token &token)
             }
 
             // Construct the character based on the decoded number
-            ch = static_cast<CharType>(decoded & 0xFFFF);
-            token.string_val.push_back(ch);
+            convert_append_unicode_code_unit(token, static_cast<char16_t>(decoded));
+
             return true;
         }
         default:
@@ -966,14 +977,14 @@ std::unique_ptr<web::json::details::_Object> JSON_Parser<CharType>::_ParseObject
     auto obj = utility::details::make_unique<web::json::details::_Object>(g_keep_json_object_unsorted);
     auto& elems = obj->m_object.m_elements;
 
-    if ( tkn.kind != JSON_Parser<CharType>::Token::TKN_CloseBrace ) 
+    if ( tkn.kind != JSON_Parser<CharType>::Token::TKN_CloseBrace )
     {
         while ( true )
         {
             // State 1: New field or end of object, looking for field name or closing brace
 
             std::basic_string<CharType> fieldName;
-        
+
             switch ( tkn.kind )
             {
             case JSON_Parser<CharType>::Token::TKN_StringLiteral:
@@ -1038,7 +1049,7 @@ std::unique_ptr<web::json::details::_Array> JSON_Parser<CharType>::_ParseArray(t
 
     auto result = utility::details::make_unique<web::json::details::_Array>();
 
-    if ( tkn.kind != JSON_Parser<CharType>::Token::TKN_CloseBracket ) 
+    if ( tkn.kind != JSON_Parser<CharType>::Token::TKN_CloseBracket )
     {
         while ( true )
         {
@@ -1096,7 +1107,7 @@ std::unique_ptr<web::json::details::_Value> JSON_Parser<CharType>::_ParseValue(t
                 return std::move(value);
             }
 
-        case JSON_Parser<CharType>::Token::TKN_NumberLiteral:  
+        case JSON_Parser<CharType>::Token::TKN_NumberLiteral:
             {
                 auto value = utility::details::make_unique<web::json::details::_Number>(tkn.double_val);
                 GetNextToken(tkn);

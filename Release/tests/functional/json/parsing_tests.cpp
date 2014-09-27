@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -202,12 +202,20 @@ TEST(string_t)
 
     str = json::value::parse(U("\"\\t\""));
     VERIFY_ARE_EQUAL(U("\t"), str.as_string());
+}
 
-    str = json::value::parse(U("\"\\u0041\""));
+TEST(escaped_unicode_string)
+{
+    auto str = json::value::parse(U("\"\\u0041\""));
     VERIFY_ARE_EQUAL(U("A"), str.as_string());
 
     str = json::value::parse(U("\"\\u004B\""));
     VERIFY_ARE_EQUAL(U("K"), str.as_string());
+
+    str = json::value::parse(U("\"\\u20AC\""));
+    // Euro sign as a hexidecmial UTF-8
+    const auto euro = to_string_t("\xE2\x82\xAC");
+    VERIFY_ARE_EQUAL(euro, str.as_string());
 
     VERIFY_PARSING_THROW(json::value::parse(U("\"\\u0klB\"")));
 }
@@ -565,7 +573,7 @@ TEST(keep_order_while_parsing)
     VERIFY_ARE_EQUAL(obj[U("a")].as_integer(), 4);
 }
 
-TEST(non_default_locale, "Ignore:Apple", "263")
+TEST(non_default_locale)
 {
     std::string originalLocale = setlocale(LC_ALL, nullptr);
 #ifdef _MS_WINDOWS
