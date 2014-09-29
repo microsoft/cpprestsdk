@@ -1030,19 +1030,7 @@ namespace web { namespace http
                         if (to_read == 0)
                         {
                             ctx->m_body_buf.consume(CRLF.size());
-                            ctx->_get_writebuffer().sync()
-                            .then([ctx](pplx::task<void> op)
-                            {
-                                try
-                                {
-                                    op.wait();
-                                    ctx->complete_request(ctx->m_downloaded);
-                                }
-                                catch (...)
-                                {
-                                    ctx->report_exception(std::current_exception());
-                                }
-                            });
+                            ctx->complete_request(ctx->m_downloaded);
                         }
                         else
                         {
@@ -1129,18 +1117,8 @@ namespace web { namespace http
                     }
                     else
                     {
-                        writeBuffer.sync().then([ctx](pplx::task<void> op)
-                        {
-                            try
-                            {
-                                op.wait();
-                                ctx->complete_request(ctx->m_downloaded);
-                            }
-                            catch (...)
-                            {
-                                ctx->report_exception(std::current_exception());
-                            }
-                        });
+                        // Request is complete no more data to read.
+                    	ctx->complete_request(ctx->m_downloaded);
                     }
                 }
             };
