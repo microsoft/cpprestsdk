@@ -305,7 +305,7 @@ namespace web { namespace http
                     long errorcodeValue = ec.value();
 
                     // map timer cancellation to time_out
-                    if (ec == boost::system::errc::operation_canceled && m_timedout)
+                    if (ec == boost::system::errc::operation_canceled && m_timer.has_timedout())
                     {
                         errorcodeValue = make_error_code(std::errc::timed_out).value();
                     }
@@ -339,25 +339,94 @@ namespace web { namespace http
                     request_context::report_error(errorcodeValue, message);
                 }
 
-                void set_timer(const int secs)
+                // Simple timer class wrapping Boost deadline timer.
+                // Closes the connection when timer fires.
+                class timeout_timer
                 {
-                    m_timeout_timer.expires_from_now(boost::posix_time::milliseconds(secs * 1000));
-                    m_timeout_timer.async_wait(boost::bind(&linux_client_request_context::handle_timeout_timer, this, boost::asio::placeholders::error));
-                }
+                public:
 
-                void reset_timer(const int secs)
-                {
-                    if (m_timeout_timer.expires_from_now(boost::posix_time::milliseconds(secs * 1000)) > 0)
+                    timeout_timer(int seconds) :
+                        m_timer(crossplat::threadpool::shared_instance().service()),
+                        m_duration(boost::posix_time::milliseconds(seconds * 1000)),
+                        m_state(created)
+                    {}
+
+                    void set_ctx(const std::weak_ptr<linux_client_request_context> &ctx)
                     {
-                        m_timeout_timer.async_wait(boost::bind(&linux_client_request_context::handle_timeout_timer, this, boost::asio::placeholders::error));
+                    	m_ctx = ctx;
                     }
-                }
+                    
+                    void start()
+                    {
+                    	assert(m_state == created);
+                    	assert(!m_ctx.expired());
+						m_state = started;
+						
+						m_timer.expires_from_now(m_duration);        
+						auto ctx = m_ctx;
+						m_timer.async_wait([ctx](const boost::system::error_code& ec)
+						{
+							handle_timeout(ec, ctx);
+						});
+                    }
+
+                    void reset()
+                    {
+                    	assert(m_state == started || m_state == timedout);
+                    	assert(!m_ctx.expired());
+                        if(m_timer.expires_from_now(m_duration) > 0)
+                        {              
+                        	auto ctx = m_ctx;
+                        	m_timer.async_wait([ctx](const boost::system::error_code& ec)
+                        	{
+                        		handle_timeout(ec, ctx);
+                        	});
+                        }
+                    }
+
+                    bool has_timedout() const { return m_state == timedout; }
+
+                    void stop()
+                    {
+                    	m_state = stopped;
+                    	m_timer.cancel();
+                    }
+
+                private:
+
+                    static void handle_timeout(
+                        const boost::system::error_code& ec,
+                        const std::weak_ptr<linux_client_request_context> &ctx)
+                    {
+                    	if(!ec)
+                    	{
+                    		auto shared_ctx = ctx.lock();
+                    		if (shared_ctx)
+                    		{
+                    			shared_ctx->m_timer.m_state = timedout;
+                    			shared_ctx->m_connection->close();
+                    		}
+                    	}
+                    }
+                    
+                    enum timer_state
+                    {
+                    	created,
+                    	started,
+                    	stopped,
+                    	timedout
+                    };
+
+                    boost::posix_time::milliseconds m_duration;
+                    timer_state m_state;
+                    std::weak_ptr<linux_client_request_context> m_ctx;
+                    boost::asio::deadline_timer m_timer;
+                };
 
                 uint64_t m_known_size;
                 bool m_needChunked;
-                bool m_timedout;
+                timeout_timer m_timer;
                 boost::asio::streambuf m_body_buf;
-                boost::asio::deadline_timer m_timeout_timer;
                 std::shared_ptr<linux_connection> m_connection;
 
 #if defined(__APPLE__) || defined(ANDROID)
@@ -365,19 +434,6 @@ namespace web { namespace http
 #endif
 
                 virtual ~linux_client_request_context();
-
-                void handle_timeout_timer(const boost::system::error_code& ec)
-                {
-                    if (!ec)
-                    {
-                        m_timedout = true;
-                        auto error(m_connection->cancel());
-                        if (error)
-                        {
-                            report_error("Failed to cancel the socket", error);
-                        }
-                    }
-                }
 
                 linux_client_request_context(
                     const std::shared_ptr<_http_client_communicator> &client, 
@@ -473,7 +529,8 @@ namespace web { namespace http
                     // Enforce HTTP connection keep alive (even for the old HTTP/1.0 protocol).
                     request_stream << "Connection: Keep-Alive" << CRLF << CRLF;
 
-                    ctx->set_timer(static_cast<int>(client_config().timeout().count()));
+                    // Start connection timeout timer.
+                    ctx->m_timer.start();
 
                     if (ctx->m_connection->is_open())
                     {
@@ -521,6 +578,7 @@ namespace web { namespace http
                     }
                     else
                     {
+                        ctx->m_timer.reset();
                         auto endpoint = *endpoints;
                         ctx->m_connection->async_connect(endpoint, boost::bind(&linux_client::handle_connect, shared_from_this(), boost::asio::placeholders::error, ++endpoints, ctx));
                     }
@@ -544,6 +602,7 @@ namespace web { namespace http
 
                 void handle_connect(const boost::system::error_code& ec, tcp::resolver::iterator endpoints, const std::shared_ptr<linux_client_request_context> &ctx)
                 {
+                    ctx->m_timer.reset();
                     if (!ec)
                     {
                         write_request(ctx);
@@ -554,8 +613,6 @@ namespace web { namespace http
                     }
                     else
                     {
-                        ctx->m_timeout_timer.cancel();
-
                         // Replace the connection. This causes old connection object to go out of scope.
                         ctx->m_connection = m_pool.obtain();
 
@@ -614,6 +671,7 @@ namespace web { namespace http
                         return handle_write_body(ec, ctx);
                     }
 
+                    ctx->m_timer.reset();
                     auto progress = ctx->m_request._get_impl()->_progress_handler();
                     if (progress)
                     {
@@ -671,6 +729,7 @@ namespace web { namespace http
                         return handle_write_body(ec, ctx);
                     }
 
+                    ctx->m_timer.reset();
                     auto progress = ctx->m_request._get_impl()->_progress_handler();
                     if (progress)
                     {
@@ -718,6 +777,7 @@ namespace web { namespace http
                     }
                     else
                     {
+                        ctx->m_timer.reset();
                         if (ctx->m_needChunked)
                         {
                             handle_write_chunked_body(ec, ctx);
@@ -733,6 +793,7 @@ namespace web { namespace http
                 {
                     if (!ec)
                     {
+                        ctx->m_timer.reset();
                         auto progress = ctx->m_request._get_impl()->_progress_handler();
                         if (progress)
                         {
@@ -760,6 +821,8 @@ namespace web { namespace http
                 {
                     if (!ec)
                     {
+                        ctx->m_timer.reset();
+
                         std::istream response_stream(&ctx->m_body_buf);
                         std::string http_version;
                         response_stream >> http_version;
@@ -902,6 +965,8 @@ namespace web { namespace http
                 {
                     if (!ec)
                     {
+                        ctx->m_timer.reset();
+
                         std::istream response_stream(&ctx->m_body_buf);
                         std::string line;
                         std::getline(response_stream, line);
@@ -930,6 +995,8 @@ namespace web { namespace http
                 {
                     if (!ec)
                     {
+                        ctx->m_timer.reset();
+
                         ctx->m_downloaded += static_cast<uint64_t>(to_read);
                         auto progress = ctx->m_request._get_impl()->_progress_handler();
                         if (progress)
@@ -964,8 +1031,6 @@ namespace web { namespace http
                         }
                         else
                         {
-                            ctx->reset_timer(static_cast<int>(client_config().timeout().count()));
-
                             auto writeBuffer = ctx->_get_writebuffer();
                             writeBuffer.putn(boost::asio::buffer_cast<const uint8_t *>(ctx->m_body_buf.data()), to_read)
                             .then([=](pplx::task<size_t> op)
@@ -1008,6 +1073,7 @@ namespace web { namespace http
                         }
                     }
 
+                    ctx->m_timer.reset();
                     auto progress = ctx->m_request._get_impl()->_progress_handler();
                     if (progress)
                     {
@@ -1024,8 +1090,6 @@ namespace web { namespace http
 
                     if (ctx->m_downloaded < ctx->m_known_size)
                     {
-                        ctx->reset_timer(static_cast<int>(client_config().timeout().count()));
-
                         // more data need to be read
                         writeBuffer.putn(boost::asio::buffer_cast<const uint8_t *>(ctx->m_body_buf.data()),
                             static_cast<size_t>(std::min(static_cast<uint64_t>(ctx->m_body_buf.size()), ctx->m_known_size - ctx->m_downloaded)))
@@ -1090,8 +1154,7 @@ namespace web { namespace http
                 : request_context(client, request)
                 , m_known_size(0)
                 , m_needChunked(false)
-                , m_timedout(false)
-                , m_timeout_timer(crossplat::threadpool::shared_instance().service())
+                , m_timer(static_cast<int>(client->client_config().timeout().count()))
                 , m_connection(connection)
 #if defined(__APPLE__) || defined(ANDROID)
                 , m_openssl_failed(false)
@@ -1103,12 +1166,14 @@ namespace web { namespace http
             {
                 auto client_cast(std::static_pointer_cast<linux_client>(client));
                 auto connection(client_cast->m_pool.obtain());
-                return std::make_shared<linux_client_request_context>(client, request, connection);
+                auto ctx = std::make_shared<linux_client_request_context>(client, request, connection);
+                ctx->m_timer.set_ctx(std::weak_ptr<linux_client_request_context>(ctx));
+                return ctx;
             }
 
             linux_client_request_context::~linux_client_request_context()
             {
-                m_timeout_timer.cancel();
+                m_timer.stop();
                 // Release connection back to the pool. If connection was not closed, it will be put to the pool for reuse.
                 std::static_pointer_cast<linux_client>(m_http_client)->m_pool.release(m_connection);
             }
