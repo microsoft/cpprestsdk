@@ -80,6 +80,8 @@ namespace web { namespace http
 
                 void close()
                 {
+                	std::lock_guard<std::mutex> lock(m_socket_lock);
+
                     // Ensures closed connections owned by request_context will not be put to pool when they are released.
                     m_keep_alive = false;
 
@@ -90,7 +92,8 @@ namespace web { namespace http
 
                 boost::system::error_code cancel()
                 {
-                    boost::system::error_code error;
+                	std::lock_guard<std::mutex> lock(m_socket_lock);
+                	boost::system::error_code error;
                     m_socket.cancel(error);
                     return error;
                 }
@@ -105,13 +108,18 @@ namespace web { namespace http
                 void set_keep_alive(bool keep_alive) { m_keep_alive = keep_alive; }
                 bool keep_alive() const { return m_keep_alive; }
 
-                bool is_open() const { return m_socket.is_open(); }
+                bool is_open()
+                {
+                	std::lock_guard<std::mutex> lock(m_socket_lock);
+                	return m_socket.is_open();
+                }
                 bool is_ssl() const { return m_ssl_stream ? true : false; }
 
                 template <typename Iterator, typename Handler>
                 void async_connect(const Iterator &begin, const Handler &handler)
                 {
-                    m_socket.async_connect(begin, handler);
+                	std::lock_guard<std::mutex> lock(m_socket_lock);
+                	m_socket.async_connect(begin, handler);
                 }
 
                 template <typename HandshakeHandler, typename CertificateHandler>
@@ -121,7 +129,8 @@ namespace web { namespace http
                     const HandshakeHandler &handshake_handler,
                     const CertificateHandler &cert_handler)
                 {
-                    assert(is_ssl());
+                	std::lock_guard<std::mutex> lock(m_socket_lock);
+                	assert(is_ssl());
 
                     // Check to turn on/off server certificate verification.
                     if (config.validate_certificates())
@@ -139,7 +148,8 @@ namespace web { namespace http
                 template <typename ConstBufferSequence, typename Handler>
                 void async_write(ConstBufferSequence &buffer, const Handler &writeHandler)
                 {
-                    if (m_ssl_stream)
+                	std::lock_guard<std::mutex> lock(m_socket_lock);
+                	if (m_ssl_stream)
                     {
                         boost::asio::async_write(*m_ssl_stream, buffer, writeHandler);
                     }
@@ -152,7 +162,8 @@ namespace web { namespace http
                 template <typename MutableBufferSequence, typename CompletionCondition, typename Handler>
                 void async_read(MutableBufferSequence &buffer, const CompletionCondition &condition, const Handler &readHandler)
                 {
-                    if (m_ssl_stream)
+                	std::lock_guard<std::mutex> lock(m_socket_lock);
+                	if (m_ssl_stream)
                     {
                         boost::asio::async_read(*m_ssl_stream, buffer, condition, readHandler);
                     }
@@ -165,6 +176,7 @@ namespace web { namespace http
                 template <typename Handler>
                 void async_read_until(boost::asio::streambuf &buffer, const std::string &delim, const Handler &readHandler)
                 {
+                    std::lock_guard<std::mutex> lock(m_socket_lock);
                     if (m_ssl_stream)
                     {
                         boost::asio::async_read_until(*m_ssl_stream, buffer, delim, readHandler);
@@ -191,8 +203,13 @@ namespace web { namespace http
 
                 void handle_pool_timer(const boost::system::error_code& ec);
 
+                // Guards concurrency access to socket/ssl::stream. This is necessary
+                // because timeouts and cancellation can touch the socket at the same time
+                // as normal request read/writing.
+                std::mutex m_socket_lock;
                 tcp::socket m_socket;
                 std::unique_ptr<boost::asio::ssl::stream<tcp::socket &> > m_ssl_stream;
+
                 boost::asio::deadline_timer m_pool_timer;
                 bool m_is_reused;
                 bool m_keep_alive;
@@ -355,14 +372,14 @@ namespace web { namespace http
                     {
                     	m_ctx = ctx;
                     }
-                    
+
                     void start()
                     {
                     	assert(m_state == created);
                     	assert(!m_ctx.expired());
 						m_state = started;
-						
-						m_timer.expires_from_now(m_duration);        
+
+                        m_timer.expires_from_now(m_duration);
 						auto ctx = m_ctx;
 						m_timer.async_wait([ctx](const boost::system::error_code& ec)
 						{
@@ -375,7 +392,7 @@ namespace web { namespace http
                     	assert(m_state == started || m_state == timedout);
                     	assert(!m_ctx.expired());
                         if(m_timer.expires_from_now(m_duration) > 0)
-                        {              
+                        {
                         	auto ctx = m_ctx;
                         	m_timer.async_wait([ctx](const boost::system::error_code& ec)
                         	{
@@ -408,7 +425,7 @@ namespace web { namespace http
                     		}
                     	}
                     }
-                    
+
                     enum timer_state
                     {
                     	created,
@@ -555,8 +572,6 @@ namespace web { namespace http
                         {
                             if (auto ctx_lock = ctx_weak.lock())
                             {
-                                // Cancel operations and all asio async handlers.
-                                ctx_lock->m_connection->cancel();
                                 // Shut down transmissions, close the socket and prevent connection from being pooled.
                                 ctx_lock->m_connection->close();
                             }
