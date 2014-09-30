@@ -30,7 +30,7 @@
 // Support VS2012 SAL syntax only
 #include <sal.h>
 #else
-#include "compat/nosal.h"
+#include "cpprest/details/nosal.h"
 #endif
 
 #define _noexcept 
