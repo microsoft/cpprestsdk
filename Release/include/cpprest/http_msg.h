@@ -522,16 +522,19 @@ public:
     /// <remarks>
     /// This will overwrite any previously set body data and "Content-Type" header.
     /// </remarks>
-    void set_body(const utf16string &body_text, utf16string content_type = utf16string(_XPLATSTR("text/plain")))
+    void set_body(const utf16string &body_text, utf16string content_type = ::utility::conversions::to_utf16string("text/plain"))
     {
-        if (content_type.find(_XPLATSTR("charset=")) != content_type.npos)
+        if (content_type.find(::utility::conversions::to_utf16string("charset=")) != content_type.npos)
         {
             throw std::invalid_argument("content_type can't contain a 'charset'.");
         }
 
         auto utf8body = utility::conversions::utf16_to_utf8(body_text);
         auto length = utf8body.size();
-        set_body(concurrency::streams::bytestream::open_istream<std::string>(std::move(utf8body)), length, std::move(content_type.append(_XPLATSTR("; charset=utf-8"))));
+        _m_impl->set_body(concurrency::streams::bytestream::open_istream<std::string>(
+        		std::move(utf8body)), 
+        		length, 
+        		std::move(content_type.append(::utility::conversions::to_utf16string("; charset=utf-8"))));
     }
 
     /// <summary>
@@ -892,16 +895,19 @@ public:
     /// <remarks>
     /// This will overwrite any previously set body data and "Content-Type" header.
     /// </remarks>
-    void set_body(const utf16string &body_text, utf16string content_type = utf16string(_XPLATSTR("text/plain")))
+    void set_body(const utf16string &body_text, utf16string content_type = ::utility::conversions::to_utf16string("text/plain"))
     {
-        if(content_type.find(_XPLATSTR("charset=")) != content_type.npos)
+        if(content_type.find(::utility::conversions::to_utf16string("charset=")) != content_type.npos)
         {
             throw std::invalid_argument("content_type can't contain a 'charset'.");
         }
 
         auto utf8body = utility::conversions::utf16_to_utf8(body_text);
         auto length = utf8body.size();
-        _m_impl->set_body(concurrency::streams::bytestream::open_istream(std::move(utf8body)), length, std::move(content_type.append(_XPLATSTR("; charset=utf-8"))));
+        _m_impl->set_body(concurrency::streams::bytestream::open_istream(
+        		std::move(utf8body)), 
+        		length, 
+        		std::move(content_type.append(::utility::conversions::to_utf16string("; charset=utf-8"))));
     }
 
     /// <summary>
@@ -1117,7 +1123,7 @@ public:
     //  Callers of this function do NOT need to block waiting for the response to be
     /// sent to before the body data is destroyed or goes out of scope.
     /// </remarks>
-    pplx::task<void> reply(http::status_code status, const utf16string &body_data, const utf16string &content_type = _XPLATSTR("text/plain")) const
+    pplx::task<void> reply(http::status_code status, const utf16string &body_data, const utf16string &content_type = ::utility::conversions::to_utf16string("text/plain")) const
     {
         http_response response(status);
         response.set_body(body_data, content_type);

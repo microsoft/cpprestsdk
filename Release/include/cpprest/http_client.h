@@ -518,13 +518,13 @@ public:
     /// <returns>An asynchronous operation that is completed once a response from the request is received.</returns>
     pplx::task<http_response> request(
         const method &mtd,
-        const utility::string_t &path_query_fragment,
+        const utf16string &path_query_fragment,
         const utf16string &body_data,
-        const utility::string_t &content_type = _XPLATSTR("text/plain"),
+        const utf16string &content_type = ::utility::conversions::to_utf16string("text/plain"),
         const pplx::cancellation_token &token = pplx::cancellation_token::none())
     {
         http_request msg(mtd);
-        msg.set_request_uri(path_query_fragment);
+        msg.set_request_uri(::utility::conversions::to_string_t(path_query_fragment));
         msg.set_body(body_data, content_type);
         return request(msg, token);
     }
@@ -583,7 +583,7 @@ public:
         const utf16string &body_data,
         const pplx::cancellation_token &token)
     {
-        return request(mtd, path_query_fragment, body_data, _XPLATSTR("text/plain"), token);
+        return request(mtd, path_query_fragment, body_data, ::utility::conversions::to_utf16string("text/plain"), token);
     }
 
 #if !defined (__cplusplus_winrt)
