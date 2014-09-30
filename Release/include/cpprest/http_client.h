@@ -376,7 +376,7 @@ public:
     /// </summary>
     /// <returns>
     /// A base uri initialized in constructor
-    /// </return>
+    /// </returns>
     _ASYNCRTIMP const uri& base_uri() const;
 
     /// <summary>
