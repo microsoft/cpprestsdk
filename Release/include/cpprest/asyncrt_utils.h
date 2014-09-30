@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@
 #if defined(_MSC_VER) && (_MSC_VER >= 1800)
 #include <ppltasks.h>
 namespace pplx = Concurrency;
-#else 
+#else
 #include "pplx/pplxtasks.h"
 #endif
 
@@ -250,11 +250,11 @@ namespace details
 class windows_category_impl : public std::error_category
 {
 public:
-    virtual const char *name() const { return "windows"; }
+    virtual const char *name() const _noexcept { return "windows"; }
 
-    _ASYNCRTIMP virtual std::string message(int errorCode) const;
+    _ASYNCRTIMP virtual std::string message(int errorCode) const _noexcept;
 
-    _ASYNCRTIMP virtual std::error_condition default_error_condition(int errorCode) const;
+    _ASYNCRTIMP virtual std::error_condition default_error_condition(int errorCode) const _noexcept;
 };
 
 /// <summary>

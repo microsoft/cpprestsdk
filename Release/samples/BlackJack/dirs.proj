@@ -7,12 +7,8 @@
       <ProjectFile Include="BlackJack_Server\dirs.proj"/>
   </ItemGroup>
 
-  <ItemGroup Condition="'$(DevToolsVersion)'=='110'">
-      <ProjectFile Include="BlackJack_UIClient\BlackJack_UIClient110.vcxproj"/>
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(DevToolsVersion)'=='120'">
-      <ProjectFile Include="BlackJack_UIClient\BlackJack_UIClient120.vcxproj"/>
+  <ItemGroup Condition="'$(DevToolsVersion)'=='110' Or '$(DevToolsVersion)'=='120'">
+      <ProjectFile Include="BlackJack_UIClient\BlackJack_UIClient$(DevToolsVersion).vcxproj"/>
   </ItemGroup>
 
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />

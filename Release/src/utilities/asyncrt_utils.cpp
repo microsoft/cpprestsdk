@@ -177,7 +177,7 @@ const std::error_category & __cdecl windows_category()
     return instance;
 }
 
-std::string windows_category_impl::message(int errorCode) const
+std::string windows_category_impl::message(int errorCode) const _noexcept
 {
     const size_t buffer_size = 4096;
     DWORD dwFlags = FORMAT_MESSAGE_FROM_SYSTEM;
@@ -213,7 +213,7 @@ std::string windows_category_impl::message(int errorCode) const
     return utility::conversions::to_utf8string(buffer);
 }
 
-std::error_condition windows_category_impl::default_error_condition(int errorCode) const
+std::error_condition windows_category_impl::default_error_condition(int errorCode) const _noexcept
 {
     // First see if the STL implementation can handle the mapping for common cases.
     const std::error_condition errCondition = std::system_category().default_error_condition(errorCode);

@@ -427,8 +427,8 @@ void CasaLens::get_data(http_request message, const std::wstring& input_text)
             auto longitude = coordinates[U("coordinates")][1].serialize();
             uri_builder ub;
             ub.append_path(lattitude + U(",") + longitude).append_query(casalens_creds::bmaps_keyname, casalens_creds::bmaps_key);
-            auto s = ub.to_string();
-            return bing_client.request(methods::GET, s);
+            auto s2 = ub.to_string();
+            return bing_client.request(methods::GET, s2);
         }).then([](http_response resp)
         {
             return resp.extract_json();

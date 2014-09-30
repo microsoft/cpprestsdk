@@ -1,0 +1,31 @@
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Common.Build.settings" />
+
+  <ItemGroup>
+    <ProjectFile Include="AuthListener\dirs.proj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(DevToolsVersion)'=='110'">
+      <ProjectFile Include="VS11\HttpClient110_test.vcxproj" />
+  </ItemGroup>
+  
+  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.2|110' or '$(OsVersion)|$(DevToolsVersion)'=='6.3|110'">
+      <ProjectFile Include="VS11.winrt\HttpClient110_test.winrt.vcxproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(DevToolsVersion)'=='120'">
+      <ProjectFile Include="VS12\HttpClient120_test.vcxproj" />
+  </ItemGroup>
+  
+  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|120'">
+      <ProjectFile Include="VS12.winrt\HttpClient120_test.winrt.vcxproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(DevToolsVersion)'=='140'">
+      <ProjectFile Include="VS14\HttpClient140_test.vcxproj" />
+  </ItemGroup>
+  
+  <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
+
+</Project>

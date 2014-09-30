@@ -38,6 +38,7 @@
     <TargetsPath>$(BuildRoot)\Build</TargetsPath>
     <OsVersion>$(registry:HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion@CurrentVersion)</OsVersion>
     <!--If Dev11 and Dev12 are both installed, the default is to build Dev12. This can be overridden by setting the DevToolsVersion variable in powershell-->
+	<DevToolsVersion Condition="'$(DevToolsVersion)' == '' And '$(VS140COMNTOOLS)' != ''">140</DevToolsVersion>
 	<DevToolsVersion Condition="'$(DevToolsVersion)' == '' And '$(VS120COMNTOOLS)' != ''">120</DevToolsVersion>
     <DevToolsVersion Condition="'$(DevToolsVersion)' == '' And '$(VS110COMNTOOLS)' != ''">110</DevToolsVersion>
     <!-- ARM tools are installed in $(FrameworkSdkDir)\DesignTime\CommonConfiguration\Neutral\Windows.desktop.arm.props -->

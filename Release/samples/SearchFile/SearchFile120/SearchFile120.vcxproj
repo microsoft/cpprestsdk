@@ -175,8 +175,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ProjectReference Include="$(CasablancaSrcDir)\build\casablanca120.vcxproj">
-      <Project>{90D85FF4-F0AE-4816-923F-0EF2758F30AB}</Project>
+    <ProjectReference Include="$(CasablancaSrcDir)\build\vs12\casablanca120.vcxproj">
+      <Project>{1014C621-BC2D-4813-B8C1-6D83AD6F9249}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
