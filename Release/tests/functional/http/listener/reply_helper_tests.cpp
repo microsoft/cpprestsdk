@@ -56,7 +56,8 @@ TEST_FIXTURE(uri_address, string)
 
    listener.support([](http_request request)
     {
-        request.reply(status_codes::OK, U("test str")).wait();
+	    std::string body("test str");
+        request.reply(status_codes::OK, body).wait();
     });
     VERIFY_ARE_EQUAL(0, p_client->request(methods::POST, U("")));
     p_client->next_response().then([&](test_response *p_response)
@@ -76,10 +77,10 @@ TEST_FIXTURE(uri_address, string)
         http_asserts::assert_test_response_equals(p_response, status_codes::OK, U("custom content"), U("test str"));
     }).wait();
 
-    // content type and move string body
+    // content type and rvalue reference string body
     listener.support([](http_request request)
     {
-        request.reply(status_codes::OK, std::move(utility::string_t(U("test str"))), U("text/plain")).wait();
+        request.reply(status_codes::OK, "test str", "text/plain").wait();
     });
     VERIFY_ARE_EQUAL(0, p_client->request(methods::POST, U("")));
     p_client->next_response().then([&](test_response *p_response)

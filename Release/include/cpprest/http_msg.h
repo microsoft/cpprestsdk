@@ -1085,7 +1085,7 @@ public:
     //  Callers of this function do NOT need to block waiting for the response to be
     /// sent to before the body data is destroyed or goes out of scope.
     /// </remarks>
-    pplx::task<void> reply(http::status_code status, utf8string &&body_data, const utf8string &content_type = "text/plain") const
+    pplx::task<void> reply(http::status_code status, utf8string &&body_data, const utf8string &content_type = "text/plain; charset=utf-8") const
     {
         http_response response(status);
         response.set_body(std::move(body_data), content_type);
@@ -1104,7 +1104,7 @@ public:
     //  Callers of this function do NOT need to block waiting for the response to be
     /// sent to before the body data is destroyed or goes out of scope.
     /// </remarks>
-    pplx::task<void> reply(http::status_code status, const utf8string &body_data, const utf8string &content_type = "text/plain") const
+    pplx::task<void> reply(http::status_code status, const utf8string &body_data, const utf8string &content_type = "text/plain; charset=utf-8") const
     {
         http_response response(status);
         response.set_body(body_data, content_type);

@@ -100,13 +100,13 @@ typedef std::stringstream stringstream_t;
 
 }// namespace utility
 
-using utf8char = char;
-using utf8string = std::string;
-using utf8stringstream = std::stringstream;
-using utf8ostringstream = std::ostringstream;
-using utf8ostream = std::ostream;
-using utf8istream = std::istream;
-using utf8istringstream = std::istringstream;
+typedef char utf8char;
+typedef std::string utf8string;
+typedef std::stringstream utf8stringstream;
+typedef std::ostringstream utf8ostringstream;
+typedef std::ostream utf8ostream;
+typedef std::istream utf8istream;
+typedef std::istringstream utf8istringstream;
 
 #ifdef _UTF16_STRINGS
 typedef wchar_t utf16char;
