@@ -104,15 +104,8 @@ namespace web { namespace http
                 }
 
                 bool is_reused() const { return m_is_reused; }
-
                 void set_keep_alive(bool keep_alive) { m_keep_alive = keep_alive; }
                 bool keep_alive() const { return m_keep_alive; }
-
-                bool is_open()
-                {
-                	std::lock_guard<std::mutex> lock(m_socket_lock);
-                	return m_socket.is_open();
-                }
                 bool is_ssl() const { return m_ssl_stream ? true : false; }
 
                 template <typename Iterator, typename Handler>
@@ -552,9 +545,9 @@ namespace web { namespace http
                     // Start connection timeout timer.
                     ctx->m_timer.start();
 
-                    if (ctx->m_connection->is_open())
+                    if (ctx->m_connection->is_reused())
                     {
-                        // If socket is already open (connection is reused), try to write the request directly.
+                        // If socket is a reused connection, try to write the request directly.
                         write_request(ctx);
                     }
                     else
@@ -869,7 +862,7 @@ namespace web { namespace http
                         const bool socket_was_closed((boost::asio::error::eof == ec)
                                 || (boost::asio::error::connection_reset == ec)
                                 || (boost::asio::error::connection_aborted == ec));
-                        if (socket_was_closed && ctx->m_connection->is_reused() && ctx->m_connection->is_open())
+                        if (socket_was_closed && ctx->m_connection->is_reused())
                         {
                             // Failed to write to socket because connection was already closed while it was in the pool.
                             // close() here ensures socket is closed in a robust way and prevents the connection from being put to the pool again.
