@@ -631,7 +631,7 @@ public:
     pplx::task<http::http_response> content_ready() const
     {
         http_response resp = *this;
-        return pplx::create_task(_m_impl->_get_data_available()).then([resp](utility::size64_t) { return resp; });
+        return pplx::create_task(_m_impl->_get_data_available()).then([resp](utility::size64_t) mutable { return resp; });
     }
 
     std::shared_ptr<http::details::_http_response> _get_impl() const { return _m_impl; }
@@ -1166,7 +1166,7 @@ public:
     pplx::task<http_request> content_ready() const
     {
         http_request req = *this;
-        return pplx::create_task(_m_impl->_get_data_available()).then([req](utility::size64_t) { return req; });
+        return pplx::create_task(_m_impl->_get_data_available()).then([req](utility::size64_t) mutable { return req; });
     }
 
     /// <summary>
