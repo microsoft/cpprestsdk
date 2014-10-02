@@ -203,9 +203,9 @@ namespace web { namespace http
 
                 void handle_pool_timer(const boost::system::error_code& ec);
 
-                // Guards concurrency access to socket/ssl::stream. This is necessary
+                // Guards concurrent access to socket/ssl::stream. This is necessary
                 // because timeouts and cancellation can touch the socket at the same time
-                // as normal request read/writing.
+                // as normal message processing.
                 std::mutex m_socket_lock;
                 tcp::socket m_socket;
                 std::unique_ptr<boost::asio::ssl::stream<tcp::socket &> > m_ssl_stream;
@@ -393,6 +393,8 @@ namespace web { namespace http
                     	assert(!m_ctx.expired());
                         if(m_timer.expires_from_now(m_duration) > 0)
                         {
+                            // The existing handler was canceled so schedule a new one.
+                            assert(m_state == started);
                         	auto ctx = m_ctx;
                         	m_timer.async_wait([ctx](const boost::system::error_code& ec)
                         	{
@@ -420,6 +422,7 @@ namespace web { namespace http
                     		auto shared_ctx = ctx.lock();
                     		if (shared_ctx)
                     		{
+                                assert(shared_ctx->m_timer.m_state != timedout);
                     			shared_ctx->m_timer.m_state = timedout;
                     			shared_ctx->m_connection->close();
                     		}
