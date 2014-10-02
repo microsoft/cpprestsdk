@@ -1360,6 +1360,12 @@ struct TestException2
 {
 };
 
+// CodePlex 292
+static int ThrowFunc()
+{
+    throw 42;
+}
+
 TEST(TestContinuationsWithTask)
 {
     {
@@ -1403,9 +1409,7 @@ TEST(TestContinuationsWithTask)
     {
         bool gotException = true;
         int n2 = 0;
-        task<int> t([&]() -> int { 
-            throw 42;
-        });
+        task<int> t(throwFunc);
         t.then([&] (task<int> ti) {
             try
             {
@@ -1875,7 +1879,7 @@ TEST(PPL_Conversions_Nested)
 
 TEST(PPL_Conversions_Exceptions)
 {
-    pplx::task<int> t1([]() -> int { throw 2;});
+    pplx::task<int> t1(ThrowFunc);
     concurrency::task<int> t2 = pplx::pplx_task_to_concurrency_task(t1);
     try
     {
