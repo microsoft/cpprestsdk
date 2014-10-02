@@ -567,7 +567,6 @@ protected:
             }
 
             // There is a request body that needs to be transferred.
-
             if (content_length == std::numeric_limits<size_t>::max()) 
             {
                 // The content length is unknown and the application set a stream. This is an 

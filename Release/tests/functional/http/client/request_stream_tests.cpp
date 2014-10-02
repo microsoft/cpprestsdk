@@ -316,7 +316,9 @@ public:
     }
 };
 
-TEST_FIXTURE(uri_address, set_body_stream_exception, "Ignore", "940704")
+// Ignore on WinRT only CodePlex 144
+#if !defined(__cplusplus_winrt)
+TEST_FIXTURE(uri_address, set_body_stream_exception)
 {
     utility::string_t fname = U("set_body_stream_exception.txt");
     fill_file(fname);
@@ -334,9 +336,11 @@ TEST_FIXTURE(uri_address, set_body_stream_exception, "Ignore", "940704")
 
     VERIFY_THROWS(client.request(msg).get(), test_exception);
 }
+#endif
 
+// These tests aren't possible on WinRT because they don't
+// specify a Content-Length.
 #if !defined(__cplusplus_winrt)
-
 TEST_FIXTURE(uri_address, stream_close_early)
 {
     http_client client(m_uri);
@@ -356,7 +360,7 @@ TEST_FIXTURE(uri_address, stream_close_early)
 
     buf.close(std::ios::out);
 
-    // Verify that the task completes succesfully
+    // Verify that the task completes successfully
     http_asserts::assert_response_equals(responseTask.get(), status_codes::OK);
 }
 
@@ -383,6 +387,8 @@ TEST_FIXTURE(uri_address, stream_close_early)
 }
 #endif
 
+ // Ignore on WinRT only CodePlex 144
+#if !defined(__cplusplus_winrt)
 TEST_FIXTURE(uri_address, stream_close_early_with_exception_and_contentlength, 
             "Ignore", "825361",
             "Ignore:Linux", "TBD", 
@@ -404,7 +410,10 @@ TEST_FIXTURE(uri_address, stream_close_early_with_exception_and_contentlength,
     // Verify that the responseTask throws the exception set when closing the stream
     VERIFY_THROWS(responseTask.get(), test_exception);
 }
+#endif
 
+// Ignore on WinRT only CodePlex 144
+#if !defined(__cplusplus_winrt)
 TEST_FIXTURE(uri_address, stream_close_early_with_contentlength,
              "Ignore", "825361",
              "Ignore:Linux", "TBD", 
@@ -426,6 +435,7 @@ TEST_FIXTURE(uri_address, stream_close_early_with_contentlength,
     // Verify that the responseTask throws the exception set when closing the stream
     VERIFY_THROWS(responseTask.get(), http_exception);
 }
+#endif
 
 TEST_FIXTURE(uri_address, get_with_body_nono)
 {
