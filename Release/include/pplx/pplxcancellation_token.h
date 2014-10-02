@@ -36,6 +36,7 @@
 #error This file must not be included for Visual Studio 12 or later
 #endif
 
+#include <string>
 #include <pplx/pplxinterface.h>
 
 #pragma pack(push,_CRT_PACKING)
