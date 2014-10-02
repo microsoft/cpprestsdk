@@ -7,9 +7,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{21DF
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Source", "Source", "{EBA6EFE2-A7EE-4B93-B4E1-DD7BBB60680E}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "casablanca120.winrt", "Release\src\build\casablanca120.winrt.vcxproj", "{9AD285A2-301E-47A0-A299-14AD5D4F2758}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "casablanca120.winrt", "Release\src\build\vs12.winrt\casablanca120.winrt.vcxproj", "{9AD285A2-301E-47A0-A299-14AD5D4F2758}"
 EndProject
-Project("{E5F8A2F0-F713-4673-A42F-2CC4E8FB171B}") = "casablanca120.wp81", "Release\src\build\casablanca120.wp81.vcxproj", "{E5F8A2F0-F713-4673-A42F-2CC4E8FB171B}"
+Project("{E5F8A2F0-F713-4673-A42F-2CC4E8FB171B}") = "casablanca120.wp81", "Release\src\build\vs12.wp81\casablanca120.wp81.vcxproj", "{E5F8A2F0-F713-4673-A42F-2CC4E8FB171B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BlackJack", "BlackJack", "{C04F5E4B-2BE7-4C98-804D-61515D979C1D}"
 EndProject

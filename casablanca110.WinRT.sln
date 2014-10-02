@@ -11,9 +11,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BlackJack", "BlackJack", "{
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "UIClient", "UIClient", "{04C44A77-3F60-4985-A376-AB455F8D3AE3}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "casablanca110.winrt", "Release\src\build\casablanca110.winrt.vcxproj", "{198ED804-2655-4D92-8104-C220E3EA9452}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "casablanca110.winrt", "Release\src\build\vs11.winrt\casablanca110.winrt.vcxproj", "{198ED804-2655-4D92-8104-C220E3EA9452}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "casablanca110.wp8", "Release\src\build\casablanca110.wp8.vcxproj", "{4BA4E05C-E06B-4D50-948B-6323B411D22A}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "casablanca110.wp8", "Release\src\build\vs11.wp8\casablanca110.wp8.vcxproj", "{4BA4E05C-E06B-4D50-948B-6323B411D22A}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BlackJack_UIClient", "Release\samples\BlackJack\BlackJack_UIClient\BlackJack_UIClient110.vcxproj", "{B8D3F85B-DA71-4ACA-87BA-10FED681DC79}"
 EndProject
