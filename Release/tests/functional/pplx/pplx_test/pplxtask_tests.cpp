@@ -1409,7 +1409,7 @@ TEST(TestContinuationsWithTask)
     {
         bool gotException = true;
         int n2 = 0;
-        task<int> t(throwFunc);
+        task<int> t(ThrowFunc);
         t.then([&] (task<int> ti) {
             try
             {
