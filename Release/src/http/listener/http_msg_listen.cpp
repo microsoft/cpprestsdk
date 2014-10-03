@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -64,7 +64,7 @@ pplx::task<void> details::_http_request::_reply_impl(http_response response)
     {
         // Add a task-based continuation so no exceptions thrown from the task go 'unobserved'.
         response._set_server_context(std::move(m_server_context));
-        response_completed = experimental::details::http_server_api::server_api()->respond(response); 
+        response_completed = experimental::details::http_server_api::server_api()->respond(response);
         response_completed.then([](pplx::task<void> t)
         {
             try { t.wait(); } catch(...) {}
@@ -94,7 +94,7 @@ pplx::task<void> details::_http_request::_reply_if_not_already(status_code statu
     return pplx::task_from_result();
 }
 
-pplx::task<void> details::_http_request::reply(http_response response)
+pplx::task<void> details::_http_request::reply(const http_response &response)
 {
     if(pplx::details::atomic_increment(m_initiated_response) != 1l)
     {

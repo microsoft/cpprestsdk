@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@
 #include "cpprest/producerconsumerstream.h"
 #include "cpprest/http_helpers.h"
 
-using namespace web; 
+using namespace web;
 using namespace utility;
 using namespace concurrency;
 using namespace utility::conversions;
@@ -93,8 +93,8 @@ static const utility::char_t * stream_was_set_explicitly = _XPLATSTR("A stream w
 static const utility::char_t * textual_content_type_missing = _XPLATSTR("Content-Type must be textual to extract a string.");
 static const utility::char_t * unsupported_charset = _XPLATSTR("Charset must be iso-8859-1, utf-8, utf-16, utf-16le, or utf-16be to be extracted.");
 
-http_msg_base::http_msg_base() 
-    : m_headers(), 
+http_msg_base::http_msg_base()
+    : m_headers(),
       m_default_outstream(false)
 {
 }
@@ -118,7 +118,7 @@ void http_msg_base::_prepare_to_receive_data()
     }
 
     // If the user did specify an outstream we leave the instream
-    // as invalid. It is assumed that user either has a read head 
+    // as invalid. It is assumed that user either has a read head
     // to the out streambuffer or the data is streamed into a container
     // or media (like file) that the user can read from...
 }
@@ -128,7 +128,7 @@ void http_msg_base::_prepare_to_receive_data()
 /// </summary>
 /// <returns>
 ///     size_t::max if there is content with unknown length (transfer_encoding:chunked)
-///     0           if there is no content 
+///     0           if there is no content
 ///     length      if there is content with known length
 /// </returns>
 /// <remarks>
@@ -168,7 +168,7 @@ size_t http_msg_base::_get_content_length()
 /// <summary>
 /// Completes this message
 /// </summary>
-void http_msg_base::_complete(utility::size64_t body_size, std::exception_ptr exceptionPtr)
+void http_msg_base::_complete(utility::size64_t body_size, const std::exception_ptr &exceptionPtr)
 {
     // Close the write head
     if ((bool)outstream())
@@ -272,7 +272,7 @@ utility::string_t details::http_msg_base::_extract_string(bool force)
         utf16string body;
         body.resize(buf_r.in_avail() / sizeof(utf16string::value_type));
         buf_r.getn((uint8_t*)&body[0], body.size() * sizeof(utf16string::value_type)); // There is no risk of blocking.
-        return convert_utf16le_to_string_t(std::move(body), false);        
+        return convert_utf16le_to_string_t(std::move(body), false);
     }
 
     // utf-16be
@@ -283,7 +283,7 @@ utility::string_t details::http_msg_base::_extract_string(bool force)
         buf_r.getn((uint8_t*)&body[0], body.size() * sizeof(utf16string::value_type)); // There is no risk of blocking.
         return convert_utf16be_to_string_t(std::move(body), false);
     }
-    
+
     else
     {
         throw http_exception(unsupported_charset);
@@ -310,7 +310,7 @@ json::value details::http_msg_base::_extract_json(bool force)
             throw http_exception((_XPLATSTR("Content-Type must be JSON to extract (is: ") + actualContentType + _XPLATSTR(")")));
         }
     }
-    
+
     if (!instream())
     {
         throw http_exception(stream_was_set_explicitly);
@@ -370,9 +370,9 @@ json::value details::http_msg_base::_extract_json(bool force)
         buf_r.getn((uint8_t*)&body[0], body.size() * sizeof(utf16string::value_type)); // There is no risk of blocking.
         return json::value::parse(convert_utf16be_to_string_t(std::move(body), false));
     }
-    
+
     else
-    {   
+    {
         throw http_exception(unsupported_charset);
     }
 }
@@ -385,7 +385,7 @@ std::vector<uint8_t> details::http_msg_base::_extract_vector()
     }
 
     std::vector<uint8_t> body;
-    auto buf_r = instream().streambuf();	
+    auto buf_r = instream().streambuf();
     const size_t size = buf_r.in_avail();
 
     if (size > 0)
@@ -465,7 +465,7 @@ static utility::string_t convert_body_to_string_t(const utility::string_t &conte
         if(streambuf.scopy((unsigned char *)&body[0], body.size() * sizeof(utf16string::value_type)) == 0) return string_t();
         return convert_utf16be_to_string_t(std::move(body), false);
     }
-    
+
     else
     {
         return utility::string_t();
@@ -499,39 +499,57 @@ utility::string_t details::http_msg_base::to_string() const
     return http_headers_body_to_string(m_headers, instream());
 }
 
-static void set_content_type_if_not_present(http::http_headers &headers, utility::string_t content_type)
+static void set_content_type_if_not_present(http::http_headers &headers, const utility::string_t &content_type)
 {
     utility::string_t temp;
     if(!headers.match(http::header_names::content_type, temp))
     {
-        headers.add(http::header_names::content_type, std::move(content_type));
+        headers.add(http::header_names::content_type, content_type);
     }
 }
 
-void details::http_msg_base::set_body(streams::istream instream, utility::string_t contentType)
+void details::http_msg_base::set_body(const streams::istream &instream, const utf8string &contentType)
 {
-    set_content_type_if_not_present(headers(), std::move(contentType));
+    set_content_type_if_not_present(
+    		headers(), 
+#ifdef _UTF16_STRINGS
+    		utility::conversions::utf8_to_utf16(contentType));
+#else
+    		contentType);
+#endif
     set_instream(instream);
 }
 
-void details::http_msg_base::set_body(streams::istream instream, utility::size64_t contentLength, utility::string_t contentType)
+void details::http_msg_base::set_body(const streams::istream &instream, const utf16string &contentType)
+{
+    set_content_type_if_not_present(
+    		headers(),
+#ifdef _UTF16_STRINGS
+    		contentType);
+#else
+    		utility::conversions::utf16_to_utf8(contentType));
+#endif
+    set_instream(instream);
+}
+
+void details::http_msg_base::set_body(const streams::istream &instream, utility::size64_t contentLength, const utf8string &contentType)
 {
     headers().set_content_length(contentLength);
-    set_body(instream, std::move(contentType));
+    set_body(instream, contentType);
     m_data_available.set(contentLength);
 }
 
-details::_http_request::_http_request()
-  : m_initiated_response(0), 
-    m_server_context(), 
-    m_cancellationToken(pplx::cancellation_token::none())
+void details::http_msg_base::set_body(const concurrency::streams::istream &instream, utility::size64_t contentLength, const utf16string &contentType)
 {
+    headers().set_content_length(contentLength);
+    set_body(instream, contentType);
+    m_data_available.set(contentLength);
 }
 
 details::_http_request::_http_request(http::method mtd)
-  : m_method(std::move(mtd)), 
+  : m_method(std::move(mtd)),
     m_initiated_response(0),
-    m_server_context(), 
+    m_server_context(),
     m_cancellationToken(pplx::cancellation_token::none())
 {
     if(m_method.empty())
@@ -541,7 +559,7 @@ details::_http_request::_http_request(http::method mtd)
 }
 
 details::_http_request::_http_request(std::unique_ptr<http::details::_http_server_context> server_context)
-  : m_initiated_response(0), 
+  : m_initiated_response(0),
     m_server_context(std::move(server_context)),
     m_cancellationToken(pplx::cancellation_token::none())
 {

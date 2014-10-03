@@ -328,7 +328,7 @@ namespace web { namespace http
                     return 0;
                 }
 
-                void send_request(std::shared_ptr<request_context> request_ctx)
+                void send_request(const std::shared_ptr<request_context> &request_ctx)
                 {
                     if (request_ctx->m_request._cancellation_token().is_canceled())
                     {

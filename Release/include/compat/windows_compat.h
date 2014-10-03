@@ -26,8 +26,6 @@
 ****/
 #pragma once
 
-#include <string>
-
 #if _MSC_VER >= 1700
 // Support VS2012 SAL syntax only
 #include <sal.h>
@@ -44,11 +42,3 @@
 #else
 #define CASABLANCA_DEPRECATED(x) __declspec(deprecated(x))
 #endif
-
-typedef wchar_t utf16char;
-typedef std::wstring utf16string;
-typedef std::wstringstream utf16stringstream;
-typedef std::wostringstream utf16ostringstream;
-typedef std::wostream utf16ostream;
-typedef std::wistream utf16istream;
-typedef std::wistringstream utf16istringstream;
