@@ -835,20 +835,16 @@ private:
                 }
                 _ASSERTE(read != static_cast<size_t>(-1));
 
-                if ( read == 0 )
+                if (read == 0)
                 {
-                    // Unexpected end-of-stream.
-                    if (!(rbuf.exception() == nullptr))
-                        p_request_context->report_exception(rbuf.exception());
-                    else
-                        p_request_context->report_error(GetLastError(), _XPLATSTR("Error reading outgoing HTTP body from its stream."));
+                    p_request_context->report_exception(http_exception(U("Unexpected end of request body stream encountered before Content-Length met.")));
                     return;
                 }
 
                 p_request_context->m_remaining_to_write -= read;
 
                 // Stop writing chunks after this one if no more data.
-                if ( p_request_context->m_remaining_to_write == 0 )
+                if (p_request_context->m_remaining_to_write == 0)
                 {
                     p_request_context->m_bodyType = no_body;
                 }
