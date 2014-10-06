@@ -1360,6 +1360,12 @@ struct TestException2
 {
 };
 
+// CodePlex 292
+static int ThrowFunc()
+{
+    throw 42;
+}
+
 TEST(TestContinuationsWithTask)
 {
     {
@@ -1403,9 +1409,7 @@ TEST(TestContinuationsWithTask)
     {
         bool gotException = true;
         int n2 = 0;
-        task<int> t([&]() -> int { 
-            throw 42;
-        });
+        task<int> t(ThrowFunc);
         t.then([&] (task<int> ti) {
             try
             {
@@ -1808,9 +1812,9 @@ TEST(TestNestedTasks)
     }
 
     {
-        task<int> nestedTask;
-        task<int> unwrap([&]() -> task<int> {
-            nestedTask = task<int>([]() -> int {
+        task<void> nestedTask;
+        task<void> unwrap([&]() -> task<void> {
+            nestedTask = task<void>([]() {
                 cancel_current_task();
             });
             return nestedTask;
@@ -1875,7 +1879,7 @@ TEST(PPL_Conversions_Nested)
 
 TEST(PPL_Conversions_Exceptions)
 {
-    pplx::task<int> t1([]() -> int { throw 2;});
+    pplx::task<int> t1(ThrowFunc);
     concurrency::task<int> t2 = pplx::pplx_task_to_concurrency_task(t1);
     try
     {
@@ -1884,7 +1888,7 @@ TEST(PPL_Conversions_Exceptions)
     }
     catch(int m)
     {
-        VERIFY_ARE_EQUAL(m,2);
+        VERIFY_ARE_EQUAL(m,42);
     }
 
     pplx::task<int> t3 = pplx::concurrency_task_to_pplx_task(t2);
@@ -1895,7 +1899,7 @@ TEST(PPL_Conversions_Exceptions)
     }
     catch(int m)
     {
-        VERIFY_ARE_EQUAL(m,2);
+        VERIFY_ARE_EQUAL(m,42);
     }
 }
 

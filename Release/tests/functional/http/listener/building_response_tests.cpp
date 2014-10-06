@@ -44,7 +44,12 @@ TEST_FIXTURE(uri_address, set_body_with_content_type)
     VERIFY_ARE_EQUAL(0u, p_client->request(methods::POST, U("")));
     p_client->next_response().then([&](test_response *p_response)
     {
-        http_asserts::assert_test_response_equals(p_response, status_codes::OK, U("text; charset=utf-8"), U("test string"));
+#ifdef _UTF16_STRINGS
+    	const ::utility::string_t expectedContentType(U("text; charset=utf-8"));
+#else
+    	const ::utility::string_t expectedContentType(U("text"));
+#endif
+        http_asserts::assert_test_response_equals(p_response, status_codes::OK, expectedContentType, U("test string"));
     }).wait();
 
     listener.close().wait();
@@ -100,7 +105,9 @@ TEST_FIXTURE(uri_address, set_body_string)
 TEST(set_body_string_with_charset)
 {
     http_response response;
-    VERIFY_THROWS(response.set_body(U("body_data"), U("text/plain;charset=utf-16")), std::invalid_argument);
+    VERIFY_THROWS(response.set_body(
+    		::utility::conversions::to_utf16string("body_data"), 
+    		::utility::conversions::to_utf16string("text/plain;charset=utf-16")), std::invalid_argument);
 }
 
 TEST_FIXTURE(uri_address, set_body_vector)

@@ -22,7 +22,6 @@
 
 #pragma once
 #include <cstdint>
-#include <string>
 #include <sstream>
 #include <iostream>
 #define __cdecl __attribute__ ((cdecl))
@@ -54,14 +53,4 @@
 #else
 #define CASABLANCA_DEPRECATED(x) __attribute__((deprecated(x)))
 #endif
-
-#include <string>
-
-typedef char16_t utf16char;
-typedef std::u16string utf16string;
-typedef std::basic_stringstream<char16_t> utf16stringstream;
-typedef std::basic_ostringstream<char16_t> utf16ostringstream;
-typedef std::basic_ostream<char16_t> utf16ostream;
-typedef std::basic_istream<char16_t> utf16istream;
-typedef std::basic_istringstream<char16_t> utf16istringstream;
 

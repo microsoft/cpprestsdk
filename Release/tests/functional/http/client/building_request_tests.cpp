@@ -148,7 +148,9 @@ TEST_FIXTURE(uri_address, body_types)
 TEST(set_body_string_with_charset)
 {
     http_request request;
-    VERIFY_THROWS(request.set_body(U("body_data"), U("text/plain;charset=utf-16")), std::invalid_argument);
+    VERIFY_THROWS(request.set_body(
+    		::utility::conversions::to_utf16string("body_data"), 
+    		::utility::conversions::to_utf16string("text/plain;charset=utf-16")), std::invalid_argument);
 }
 
 TEST_FIXTURE(uri_address, empty_bodies)
@@ -219,7 +221,11 @@ TEST_FIXTURE(uri_address, set_body)
 
     // with content type
     content_type = U("YESYES");
+#ifdef _UTF16_STRINGS
     const utility::string_t expected_content_type = U("YESYES; charset=utf-8");
+#else
+    const utility::string_t expected_content_type = U("YESYES");
+#endif
     msg = http_request(mtd);
     msg.set_body(data, content_type);
     VERIFY_ARE_EQUAL(expected_content_type, msg.headers()[U("Content-Type")]);
@@ -233,11 +239,11 @@ TEST_FIXTURE(uri_address, set_body)
 
 TEST_FIXTURE(uri_address, set_body_with_charset)
 {
-    test_http_server::scoped_server scoped(m_uri);
-    http_client client(m_uri);
-
     http_request msg(methods::PUT);
-    VERIFY_THROWS(msg.set_body(U("datadatadata"), U("text/plain;charset=us-ascii")), std::invalid_argument);
+    msg.set_body("datadatadata", "text/plain;charset=us-ascii");
+    VERIFY_THROWS(msg.set_body(
+    		::utility::conversions::to_utf16string("datadatadata"), 
+    		::utility::conversions::to_utf16string("text/plain;charset=us-ascii")), std::invalid_argument);
 }
 
 }

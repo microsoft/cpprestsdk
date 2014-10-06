@@ -108,7 +108,7 @@ TEST_FIXTURE(uri_address, send_response_later)
     });
     VERIFY_ARE_EQUAL(0, p_client->request(methods::POST, U("")));
     request_event.wait();
-    requests[0].reply(status_codes::OK, U("HEHEHE")).wait();
+    requests[0].reply(status_codes::OK, "HEHEHE").wait();
     requests.clear();
     p_client->next_response().then([&](test_response *p_response)
     {

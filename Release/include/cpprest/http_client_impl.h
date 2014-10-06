@@ -1,7 +1,7 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
@@ -40,7 +40,7 @@ using namespace Platform;
 using namespace Microsoft::WRL;
 #endif
 
-using namespace web; 
+using namespace web;
 using namespace concurrency;
 #else
 #include <boost/asio.hpp>
@@ -162,7 +162,7 @@ public:
     void report_exception(std::exception_ptr exceptionPtr)
     {
         auto response_impl = m_response._get_impl();
-        
+
         // If cancellation has been triggered then ignore any errors.
         if(m_request._cancellation_token().is_canceled())
         {
@@ -221,10 +221,10 @@ public:
 
 protected:
 
-    request_context(std::shared_ptr<_http_client_communicator> client, http_request &request)
-        : m_http_client(client), 
+    request_context(const std::shared_ptr<_http_client_communicator> &client, const http_request &request)
+        : m_http_client(client),
         m_request(request),
-        m_exceptionPtr(), 
+        m_exceptionPtr(),
         m_uploaded(0),
         m_downloaded(0)
     {
@@ -254,7 +254,7 @@ public:
     virtual ~_http_client_communicator() {}
 
     // Asynchronously send a HTTP request and process the response.
-    void async_send_request(std::shared_ptr<request_context> request)
+    void async_send_request(const std::shared_ptr<request_context> &request)
     {
         if(m_client_config.guarantee_order())
         {
@@ -314,7 +314,7 @@ protected:
     virtual unsigned long open() = 0;
 
     // HTTP client implementations must implement send_request.
-    virtual void send_request(_In_ std::shared_ptr<request_context> request) = 0;
+    virtual void send_request(_In_ const std::shared_ptr<request_context> &request) = 0;
 
     // URI to connect to.
     const http::uri m_uri;
@@ -328,7 +328,7 @@ private:
     pplx::extensibility::critical_section_t m_open_lock;
 
     // Wraps opening the client around sending a request.
-    void open_and_send_request(std::shared_ptr<request_context> request)
+    void open_and_send_request(const std::shared_ptr<request_context> &request)
     {
         // First see if client needs to be opened.
         auto error = open_if_required();
@@ -370,16 +370,14 @@ private:
         return error;
     }
 
-    void push_request(_In_opt_ std::shared_ptr<request_context> request)
+    void push_request(const std::shared_ptr<request_context> &request)
     {
-        if (request == nullptr) return;
-
         pplx::extensibility::scoped_critical_section_t l(m_open_lock);
 
         if(++m_scheduled == 1)
         {
             // Schedule a task to start sending.
-            pplx::create_task([this, request]() -> void
+            pplx::create_task([this, request]()
             {
                 open_and_send_request(request);
             });
@@ -403,7 +401,7 @@ inline void request_context::finish()
         _ASSERTE(m_request._cancellation_token() != pplx::cancellation_token::none());
         m_request._cancellation_token().deregister_callback(m_cancellationRegistration);
     }
-    
+
     m_http_client->finish_request();
 }
 

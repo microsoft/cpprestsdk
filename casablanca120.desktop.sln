@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.30723.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "casablanca120.xp", "Release\src\build\casablanca120.xp.vcxproj", "{15F3B200-1AED-4B57-AF37-B21CD67914B1}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "casablanca120.xp", "Release\src\build\vs12.xp\casablanca120.xp.vcxproj", "{15F3B200-1AED-4B57-AF37-B21CD67914B1}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{21DF15D1-B0D1-4514-A713-5BCFD945E757}"
 EndProject
@@ -23,7 +23,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Client", "Client", "{10E44C
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Server", "Server", "{50D62AB5-3076-45D3-9D89-863ABE39ED69}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "casablanca120", "Release\src\build\casablanca120.vcxproj", "{1014C621-BC2D-4813-B8C1-6D83AD6F9249}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "casablanca120", "Release\src\build\vs12\casablanca120.vcxproj", "{1014C621-BC2D-4813-B8C1-6D83AD6F9249}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BingRequest120", "Release\samples\BingRequest\BingRequest120\BingRequest120.vcxproj", "{2EB9CCAA-541D-4DC1-BE2C-B1AE9712194D}"
 	ProjectSection(ProjectDependencies) = postProject

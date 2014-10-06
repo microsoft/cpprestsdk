@@ -344,7 +344,7 @@ protected:
     }
 
     // Start sending request.
-    void send_request(_In_ std::shared_ptr<request_context> request)
+    void send_request(_In_ const std::shared_ptr<request_context> &request)
     {
         http_request &msg = request->m_request;
         auto winrt_context = std::static_pointer_cast<winrt_request_context>(request);
