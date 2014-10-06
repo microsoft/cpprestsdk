@@ -70,6 +70,18 @@ void CreateError(const Token &tk, const utility::string_t &message)
     throw web::json::json_exception(os.str().c_str());
 }
 
+struct JsonParseStatus
+{
+    bool didSucceed;
+    string_t errorMsg;
+
+    JsonParseStatus() :
+        didSucceed(true),
+        errorMsg(L"")
+    {
+    }
+};
+    
 template <typename CharType>
 class JSON_Parser
 {
@@ -126,7 +138,7 @@ public:
         bool signed_number;
     };
 
-    void GetNextToken(Token &);
+    JsonParseStatus GetNextToken(Token &);
 
     web::json::value ParseValue(typename JSON_Parser<CharType>::Token &first)
     {
@@ -888,14 +900,16 @@ bool JSON_StringParser<CharType>::finish_parsing_string_with_unescape_char(typen
 }
 
 template <typename CharType>
-void JSON_Parser<CharType>::GetNextToken(typename JSON_Parser<CharType>::Token& result)
+JsonParseStatus JSON_Parser<CharType>::GetNextToken(typename JSON_Parser<CharType>::Token& result)
 {
+    JsonParseStatus parseSucceed;
+
 try_again:
     CharType ch = EatWhitespace();
 
     CreateToken(result, Token::TKN_EOF);
 
-    if (ch == this->m_eof) return;
+    if (ch == this->m_eof) return parseSucceed;
 
     switch (ch)
     {
@@ -904,7 +918,8 @@ try_again:
         {
             if(++m_currentParsingDepth > JSON_Parser<CharType>::maxParsingDepth)
             {
-                CreateError(result, _XPLATSTR("Nesting too deep!"));
+                parseSucceed.didSucceed = false;
+                parseSucceed.errorMsg = _XPLATSTR("Nesting too deep!");
                 break;
             }
 
@@ -917,7 +932,8 @@ try_again:
         {
             if((signed int)(--m_currentParsingDepth) < 0)
             {
-                CreateError(result, _XPLATSTR("Mismatched braces!"));
+                parseSucceed.didSucceed = false;
+                parseSucceed.errorMsg = _XPLATSTR("Mismatched braces!");
                 break;
             }
 
@@ -934,20 +950,41 @@ try_again:
         break;
 
     case 't':
-        if (!CompleteKeywordTrue(result)) CreateError(result, _XPLATSTR("Malformed literal"));
+        if (!CompleteKeywordTrue(result))
+        {
+            parseSucceed.didSucceed = false;
+            parseSucceed.errorMsg = _XPLATSTR("Malformed literal");
+        }
         break;
     case 'f':
-        if (!CompleteKeywordFalse(result)) CreateError(result, _XPLATSTR("Malformed literal"));
+        if (!CompleteKeywordFalse(result))
+        {
+            parseSucceed.didSucceed = false;
+            parseSucceed.errorMsg = _XPLATSTR("Malformed literal");
+        }
         break;
     case 'n':
-        if (!CompleteKeywordNull(result)) CreateError(result, _XPLATSTR("Malformed literal"));
+        if (!CompleteKeywordNull(result))        
+        {
+            parseSucceed.didSucceed = false;
+            parseSucceed.errorMsg = _XPLATSTR("Malformed literal");
+        }
         break;
     case '/':
-        if ( !CompleteComment(result) ) CreateError(result, _XPLATSTR("Malformed comment"));
+        if (!CompleteComment(result))
+        {
+            parseSucceed.didSucceed = false;
+            parseSucceed.errorMsg = _XPLATSTR("Malformed comment");
+            break;
+        }
         // For now, we're ignoring comments.
         goto try_again;
     case '"':
-        if ( !CompleteStringLiteral(result) ) CreateError(result, _XPLATSTR("Malformed string literal"));
+        if (!CompleteStringLiteral(result))
+        {
+            parseSucceed.didSucceed = false;
+            parseSucceed.errorMsg = _XPLATSTR("Malformed string literal");
+        }
         break;
 
     case '-':
@@ -961,30 +998,41 @@ try_again:
     case '7':
     case '8':
     case '9':
-        if ( !CompleteNumberLiteral(ch, result) ) CreateError(result, _XPLATSTR("Malformed numeric literal"));
+        if (!CompleteNumberLiteral(ch, result))
+        {
+            parseSucceed.didSucceed = false;
+            parseSucceed.errorMsg = _XPLATSTR("Malformed numeric literal");
+        }
         break;
     default:
-        CreateError(result, _XPLATSTR("Malformed token"));
+        parseSucceed.didSucceed = false;
+        parseSucceed.errorMsg = _XPLATSTR("Malformed token");
         break;
     }
+
+    return parseSucceed;
 }
 
 template <typename CharType>
 std::unique_ptr<web::json::details::_Object> JSON_Parser<CharType>::_ParseObject(typename JSON_Parser<CharType>::Token &tkn)
 {
-    GetNextToken(tkn);
+    JsonParseStatus parseAttempt = GetNextToken(tkn);
+    if (!parseAttempt.didSucceed)
+    {
+        CreateError(tkn, parseAttempt.errorMsg);
+    }
 
     auto obj = utility::details::make_unique<web::json::details::_Object>(g_keep_json_object_unsorted);
     auto& elems = obj->m_object.m_elements;
 
-    if ( tkn.kind != JSON_Parser<CharType>::Token::TKN_CloseBrace )
+    if ( tkn.kind != JSON_Parser<CharType>::Token::TKN_CloseBrace ) 
     {
         while ( true )
         {
             // State 1: New field or end of object, looking for field name or closing brace
 
             std::basic_string<CharType> fieldName;
-
+        
             switch ( tkn.kind )
             {
             case JSON_Parser<CharType>::Token::TKN_StringLiteral:
@@ -994,14 +1042,15 @@ std::unique_ptr<web::json::details::_Object> JSON_Parser<CharType>::_ParseObject
                 goto error;
             }
 
-            GetNextToken(tkn);
+            parseAttempt = GetNextToken(tkn);
+            if (!parseAttempt.didSucceed) goto getNextTokenError;
 
             // State 2: Looking for a colon.
 
             if ( tkn.kind != JSON_Parser<CharType>::Token::TKN_Colon ) goto done;
 
-            GetNextToken(tkn);
-
+            parseAttempt = GetNextToken(tkn);
+            if (!parseAttempt.didSucceed) goto getNextTokenError;
             // State 3: Looking for an expression.
 #ifdef ENABLE_JSON_VALUE_VISUALIZER
             auto fieldValue = _ParseValue(tkn);
@@ -1017,7 +1066,8 @@ std::unique_ptr<web::json::details::_Object> JSON_Parser<CharType>::_ParseObject
             switch (tkn.kind)
             {
             case JSON_Parser<CharType>::Token::TKN_Comma:
-                GetNextToken(tkn);
+                parseAttempt = GetNextToken(tkn);
+                if (!parseAttempt.didSucceed) goto getNextTokenError;
                 break;
             case JSON_Parser<CharType>::Token::TKN_CloseBrace:
                 goto done;
@@ -1030,6 +1080,7 @@ std::unique_ptr<web::json::details::_Object> JSON_Parser<CharType>::_ParseObject
 done:
 
     GetNextToken(tkn);
+    if (!parseAttempt.didSucceed) goto getNextTokenError;
 
     if (!g_keep_json_object_unsorted) {
         ::std::sort(elems.begin(), elems.end(), json::object::compare_pairs);
@@ -1040,16 +1091,23 @@ done:
 error:
 
     CreateError(tkn, _XPLATSTR("Malformed object literal"));
+
+getNextTokenError:
+    CreateError(tkn, parseAttempt.errorMsg);
 }
 
 template <typename CharType>
 std::unique_ptr<web::json::details::_Array> JSON_Parser<CharType>::_ParseArray(typename JSON_Parser<CharType>::Token &tkn)
 {
-    GetNextToken(tkn);
+    JsonParseStatus parseAttempt = GetNextToken(tkn);
+    if (!parseAttempt.didSucceed)
+    {
+        CreateError(tkn, parseAttempt.errorMsg);
+    }
 
     auto result = utility::details::make_unique<web::json::details::_Array>();
 
-    if ( tkn.kind != JSON_Parser<CharType>::Token::TKN_CloseBracket )
+    if ( tkn.kind != JSON_Parser<CharType>::Token::TKN_CloseBracket ) 
     {
         while ( true )
         {
@@ -1060,10 +1118,12 @@ std::unique_ptr<web::json::details::_Array> JSON_Parser<CharType>::_ParseArray(t
             switch (tkn.kind)
             {
             case JSON_Parser<CharType>::Token::TKN_Comma:
-                GetNextToken(tkn);
+                parseAttempt = GetNextToken(tkn);
+                if (!parseAttempt.didSucceed) goto getNextTokenError;
                 break;
             case JSON_Parser<CharType>::Token::TKN_CloseBracket:
-                GetNextToken(tkn);
+                parseAttempt = GetNextToken(tkn);
+                if (!parseAttempt.didSucceed) goto getNextTokenError;
 
                 return result;
             default:
@@ -1072,26 +1132,34 @@ std::unique_ptr<web::json::details::_Array> JSON_Parser<CharType>::_ParseArray(t
         }
     }
 
-    GetNextToken(tkn);
+    parseAttempt = GetNextToken(tkn);
+    if (!parseAttempt.didSucceed) goto getNextTokenError;
 
     return result;
+
+getNextTokenError:
+    CreateError(tkn, parseAttempt.errorMsg);
 }
 
 template <typename CharType>
 std::unique_ptr<web::json::details::_Value> JSON_Parser<CharType>::_ParseValue(typename JSON_Parser<CharType>::Token &tkn)
 {
+    JsonParseStatus parseAttempt;
     switch (tkn.kind)
     {
         case JSON_Parser<CharType>::Token::TKN_OpenBrace:
-            return _ParseObject(tkn);
-
+            {
+                return _ParseObject(tkn);
+            }
         case JSON_Parser<CharType>::Token::TKN_OpenBracket:
-            return _ParseArray(tkn);
-
+            {
+                return _ParseArray(tkn);
+            }
         case JSON_Parser<CharType>::Token::TKN_StringLiteral:
             {
                 auto value = utility::details::make_unique<web::json::details::_String>(std::move(tkn.string_val), tkn.has_unescape_symbol);
-                GetNextToken(tkn);
+                parseAttempt = GetNextToken(tkn);
+                if (!parseAttempt.didSucceed) goto getNextTokenError;
                 return std::move(value);
             }
 
@@ -1103,31 +1171,40 @@ std::unique_ptr<web::json::details::_Value> JSON_Parser<CharType>::_ParseValue(t
                 else
                     value = utility::details::make_unique<web::json::details::_Number>(tkn.uint64_val);
 
-                GetNextToken(tkn);
+                parseAttempt = GetNextToken(tkn);
+                if (!parseAttempt.didSucceed) goto getNextTokenError;
                 return std::move(value);
             }
 
-        case JSON_Parser<CharType>::Token::TKN_NumberLiteral:
+        case JSON_Parser<CharType>::Token::TKN_NumberLiteral:  
             {
                 auto value = utility::details::make_unique<web::json::details::_Number>(tkn.double_val);
-                GetNextToken(tkn);
+                parseAttempt = GetNextToken(tkn);
+                if (!parseAttempt.didSucceed) goto getNextTokenError;
                 return std::move(value);
             }
         case JSON_Parser<CharType>::Token::TKN_BooleanLiteral:
             {
                 auto value = utility::details::make_unique<web::json::details::_Boolean>(tkn.boolean_val);
-                GetNextToken(tkn);
+                parseAttempt = GetNextToken(tkn);
+                if (!parseAttempt.didSucceed) goto getNextTokenError;
                 return std::move(value);
             }
         case JSON_Parser<CharType>::Token::TKN_NullLiteral:
             {
-                GetNextToken(tkn);
+                parseAttempt = GetNextToken(tkn);
+                if (!parseAttempt.didSucceed) goto getNextTokenError;
                 return utility::details::make_unique<web::json::details::_Null>();
             }
 
         default:
-            CreateError(tkn, _XPLATSTR("Unexpected token"));
+            {
+                return utility::details::make_unique<web::json::details::_Null>();
+            }
     }
+
+getNextTokenError:
+    CreateError(tkn, parseAttempt.errorMsg);
 }
 
 }}}
@@ -1170,7 +1247,12 @@ web::json::value web::json::value::parse(const utility::string_t& str)
     web::json::details::JSON_StringParser<utility::char_t> parser(str);
 
     web::json::details::JSON_Parser<utility::char_t>::Token tkn;
-    parser.GetNextToken(tkn);
+    auto parseAttempt = parser.GetNextToken(tkn);
+
+    if (!parseAttempt.didSucceed)
+    {
+        web::json::details::CreateError(tkn, parseAttempt.errorMsg);
+    }
 
     auto value = parser.ParseValue(tkn);
 
@@ -1179,6 +1261,26 @@ web::json::value web::json::value::parse(const utility::string_t& str)
         web::json::details::CreateError(tkn, _XPLATSTR("Left-over characters in stream after parsing a JSON value"));
     }
     return value;
+}
+
+web::json::value web::json::value::parse(const utility::string_t& str, std::error_code& error)
+{
+    web::json::details::JSON_StringParser<utility::char_t> parser(str);
+
+    web::json::details::JSON_Parser<utility::char_t>::Token tkn;
+    auto parseAttempt = parser.GetNextToken(tkn);
+    web::json::value returnObject;
+    
+    if (parseAttempt.didSucceed)
+    {
+        returnObject = parser.ParseValue(tkn);
+    }
+    else
+    {
+        returnObject = web::json::value::null();
+        error = std::make_error_code(std::errc::protocol_error);
+    }
+    return returnObject;
 }
 
 web::json::value web::json::value::parse(utility::istream_t &stream)

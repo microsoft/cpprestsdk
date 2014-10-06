@@ -392,6 +392,14 @@ public:
         _ASYNCRTIMP static value parse(const utility::string_t&);
 
         /// <summary>
+        /// Attempts to parse a string and construct a JSON value.
+        /// </summary>
+        /// <param name="value">The C++ value to create a JSON value from, a C++ STL double-byte string</param>
+        /// <param name="errorCode">If parsing fails, the error code is filled with a protocol error</param>
+        /// <returns>The parsed object. Returns web::json::value::null if failed</returns>
+        _ASYNCRTIMP static value parse(const utility::string_t&, std::error_code&);
+        
+        /// <summary>
         /// Serializes the current JSON value to a C++ string.
         /// </summary>
         /// <returns>A string representation of the value</returns>
