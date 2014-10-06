@@ -213,11 +213,14 @@ TEST_FIXTURE(uri_address, outside_ssl_json)
         {
 #if defined(_MSC_VER) && !defined(__cplusplus_winrt)
             if (e.error_code().value() != API_QUERY_DATA_AVAILABLE || i == 3)
-#endif
             {
                 // If we didn't get a "connection broken" error (or we are on the last retry), rethrow it
                 throw;
             }
+#else
+            CASABLANCA_UNREFERENCED_PARAMETER(e);
+            throw;
+#endif
             os_utilities::sleep(1000);
         }
     }
