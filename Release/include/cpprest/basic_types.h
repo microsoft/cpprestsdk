@@ -40,7 +40,7 @@
 #include <cstdint>
 #endif
 
-#include "compat/SafeInt3.hpp"
+#include "cpprest/details/SafeInt3.hpp"
 typedef SafeInt<size_t> SafeSize;
 
 namespace utility

@@ -68,7 +68,7 @@ namespace Concurrency { namespace streams {
     template<typename _CharType>
     class basic_stdio_buffer : public streambuf_state_manager<_CharType>
     {
-        typedef std::char_traits<_CharType> traits;
+        typedef concurrency::streams::char_traits<_CharType> traits;
         typedef typename traits::int_type int_type;
         typedef typename traits::pos_type pos_type;
         typedef typename traits::off_type off_type;
@@ -237,7 +237,7 @@ namespace Concurrency { namespace streams {
     class basic_async_streambuf : public std::basic_streambuf<CharType>
     {
     public:
-        typedef std::char_traits<CharType> traits;
+        typedef concurrency::streams::char_traits<CharType> traits;
         typedef typename traits::int_type int_type;
         typedef typename traits::pos_type pos_type;
         typedef typename traits::off_type off_type;

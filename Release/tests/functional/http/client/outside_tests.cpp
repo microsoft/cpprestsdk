@@ -24,7 +24,13 @@
 ****/
 
 #include "stdafx.h"
+#if defined(_MSC_VER) && !defined(__cplusplus_winrt)
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#include <winhttp.h>
+#endif
 #include "cpprest/rawptrstream.h"
+#include "os_utilities.h"
 #include <stdexcept>
 
 using namespace web; 
@@ -33,6 +39,7 @@ using namespace concurrency;
 using namespace web::http;
 using namespace web::http::client;
 
+using namespace tests::common::utilities;
 using namespace tests::functional::http::utilities;
 
 namespace tests { namespace functional { namespace http { namespace client {
@@ -163,37 +170,60 @@ TEST_FIXTURE(uri_address, outside_ssl_json)
 
     // Send request
     web::http::client::http_client playlistClient(playlistUri.to_uri());
-    playlistClient.request(methods::GET).then([=](http_response playlistResponse) -> pplx::task<json::value>
+
+    // Retry up to 4 times.
+    for (int i = 0; i < 4; ++i)
     {
-        return playlistResponse.extract_json();
-    }).then([=](json::value v)
-    {
-        int count = 0;
-        auto& obj = v.as_object();
-
-        VERIFY_ARE_NOT_EQUAL(obj.find(U("pageInfo")), obj.end());
-        VERIFY_ARE_NOT_EQUAL(obj.find(U("items")), obj.end());
-
-        auto& items = obj[U("items")];
-
-        for(auto iter = items.as_array().cbegin(); iter != items.as_array().cend(); ++iter)
+        try
         {
-            const auto& i = *iter;
-            auto iSnippet = i.as_object().find(U("snippet"));
-            if (iSnippet == i.as_object().end())
+            playlistClient.request(methods::GET).then([=](http_response playlistResponse) -> pplx::task < json::value >
             {
-                throw std::runtime_error("snippet key not found");
-            }
-            auto iTitle = iSnippet->second.as_object().find(U("title"));
-            if (iTitle == iSnippet->second.as_object().end())
+                return playlistResponse.extract_json();
+            }).then([=](json::value v)
             {
-                throw std::runtime_error("title key not found");
-            }
-            auto name = iTitle->second.serialize();
-            count++;
+                int count = 0;
+                auto& obj = v.as_object();
+
+                VERIFY_ARE_NOT_EQUAL(obj.find(U("pageInfo")), obj.end());
+                VERIFY_ARE_NOT_EQUAL(obj.find(U("items")), obj.end());
+
+                auto& items = obj[U("items")];
+
+                for (auto iter = items.as_array().cbegin(); iter != items.as_array().cend(); ++iter)
+                {
+                    const auto& i = *iter;
+                    auto iSnippet = i.as_object().find(U("snippet"));
+                    if (iSnippet == i.as_object().end())
+                    {
+                        throw std::runtime_error("snippet key not found");
+                    }
+                    auto iTitle = iSnippet->second.as_object().find(U("title"));
+                    if (iTitle == iSnippet->second.as_object().end())
+                    {
+                        throw std::runtime_error("title key not found");
+                    }
+                    auto name = iTitle->second.serialize();
+                    count++;
+                }
+                VERIFY_ARE_EQUAL(3, count); // Update this accordingly, if the number of items changes
+            }).wait();
+            break;
         }
-        VERIFY_ARE_EQUAL(3, count); // Update this accordingly, if the number of items changes
-    }).wait();
+        catch (web::http::http_exception const& e)
+        {
+#if defined(_MSC_VER) && !defined(__cplusplus_winrt)
+            if (e.error_code().value() != API_QUERY_DATA_AVAILABLE || i == 3)
+            {
+                // If we didn't get a "connection broken" error (or we are on the last retry), rethrow it
+                throw;
+            }
+#else
+            CASABLANCA_UNREFERENCED_PARAMETER(e);
+            throw;
+#endif
+            os_utilities::sleep(1000);
+        }
+    }
 }
 
 } // SUITE(outside_tests)

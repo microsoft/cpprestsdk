@@ -638,7 +638,7 @@ namespace details {
             {
                 return (pos_type)_seekwrpos_fsb(m_info, size_t(pos), sizeof(_CharType)); 
             }
-            return (pos_type)std::char_traits<_CharType>::eof(); 
+            return (pos_type)Concurrency::streams::char_traits<_CharType>::eof(); 
         }
 
         /// <summary>
