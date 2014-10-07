@@ -134,8 +134,14 @@ TEST_FIXTURE(uri_address, request_timeout)
     config.set_timeout(utility::seconds(1));
 
     http_client client(m_uri, config);
-
-    VERIFY_THROWS_HTTP_ERROR_CODE(client.request(methods::GET).get(), std::errc::timed_out);
+    auto responseTask = client.request(methods::GET);
+    
+#ifdef __APPLE__
+    // CodePlex 295
+    VERIFY_THROWS(responseTask.get(), http_exception);
+#else
+    VERIFY_THROWS_HTTP_ERROR_CODE(responseTask.get(), std::errc::timed_out);
+#endif
 }
 
 TEST_FIXTURE(uri_address, invalid_method)
