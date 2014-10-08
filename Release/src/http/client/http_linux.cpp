@@ -665,14 +665,19 @@ namespace web { namespace http
                     };
 
                     const auto readSize = static_cast<size_t>(std::min(static_cast<uint64_t>(client_config().chunksize()), ctx->m_content_length - ctx->m_uploaded));
-
                     auto readbuf = ctx->_get_readbuffer();
                     readbuf.getn(boost::asio::buffer_cast<uint8_t *>(ctx->m_body_buf.prepare(readSize)), readSize)
                     .then([=](pplx::task<size_t> op)
                     {
                         try
                         {
-                            write_chunk(op.get());
+                        	const auto actualReadSize = op.get();
+                        	if(actualReadSize == 0)
+                        	{
+                        		ctx->report_exception(http_exception("Unexpected end of request body stream encountered before Content-Length satisfied."));
+                        		return;
+                        	}
+                            write_chunk(actualReadSize);
                         }
                         catch (...)
                         {
