@@ -4,7 +4,6 @@
   
   <ItemGroup Condition="'$(DevToolsVersion)'=='110'">
       <ProjectFile Include="VS11\HttpTestUtilities110.vcxproj" />
-      <ProjectFile Include="VS11.xp\HttpTestUtilities110.xp.vcxproj" Condition="'$(Platform)'!='ARM' and '$(RunCodeAnalysis)'!='true'"/>
   </ItemGroup>
   
   <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.2|110' or '$(OsVersion)|$(DevToolsVersion)'=='6.3|110'">
@@ -13,7 +12,6 @@
 
   <ItemGroup Condition="'$(DevToolsVersion)'=='120'">
       <ProjectFile Include="VS12\HttpTestUtilities120.vcxproj" />
-      <ProjectFile Include="VS12.xp\HttpTestUtilities120.xp.vcxproj" Condition="'$(Platform)'!='ARM' and '$(RunCodeAnalysis)'!='true'"/>
   </ItemGroup>
   
   <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|120'">
