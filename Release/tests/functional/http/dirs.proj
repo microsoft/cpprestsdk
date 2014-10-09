@@ -5,9 +5,6 @@
   <ItemGroup>
       <ProjectFile Include="utilities\dirs.proj"/>
       <ProjectFile Include="client\dirs.proj"/>
-  </ItemGroup>
-
-  <ItemGroup>
       <ProjectFile Include="listener\dirs.proj"/>
   </ItemGroup>
 
