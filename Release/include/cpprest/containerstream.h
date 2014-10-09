@@ -325,9 +325,9 @@ namespace Concurrency { namespace streams {
         {
             pos_type beg(0);
 
-            // Inorder to support relative seeking from the end postion we need to fix an end position.
+            // In order to support relative seeking from the end position we need to fix an end position.
             // Technically, there is no end for the stream buffer as new writes would just expand the buffer.
-            // For now, we assume that the current write_end is the end of the buffer. We use this aritifical
+            // For now, we assume that the current write_end is the end of the buffer. We use this artificial
             // end to restrict the read head from seeking beyond what is available.
 
             pos_type end(m_size);

@@ -654,7 +654,7 @@ private:
         // Capture the current read position of the stream.
         auto rbuf = winhttp_context->_get_readbuffer();
 
-        // Record starting position incase request is challenged for authorization
+        // Record starting position in case request is challenged for authorization
         // and needs to seek back to where reading is started from.
         winhttp_context->m_startingPosition = rbuf.getpos(std::ios_base::in);
 
