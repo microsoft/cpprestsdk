@@ -308,7 +308,13 @@ TEST_FIXTURE(uri_address, set_progress_handler_request_timeout)
     msg.set_body(data);
 
     auto response = client.request(msg);
+    
+#ifdef __APPLE__
+    // CodePlex 295
+    VERIFY_THROWS(response.get(), http_exception);
+#else
     VERIFY_THROWS_HTTP_ERROR_CODE(response.get(), std::errc::timed_out);
+#endif
     VERIFY_ARE_EQUAL(26u*repeats, upsize);
     VERIFY_ARE_EQUAL(4711u, downsize);
     // We don't have very precise control over how much of the message is transferred

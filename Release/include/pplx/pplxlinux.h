@@ -38,12 +38,12 @@
 #include "pthread.h"
 
 #if defined(__APPLE__)
-#include "compat/apple_compat.h"
+#include "cpprest/details/apple_compat.h"
 #include <dispatch/dispatch.h>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 #else
-#include "compat/linux_compat.h"
+#include "cpprest/details/linux_compat.h"
 #include <mutex>   
 #include <condition_variable>  
 #endif

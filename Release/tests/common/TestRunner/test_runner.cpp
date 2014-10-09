@@ -31,11 +31,11 @@
 #else
 #include <unistd.h>
 #ifdef __APPLE__
-#include "compat/apple_compat.h"
+#include "cpprest/details/apple_compat.h"
 #include <dirent.h>
 #else
 #include <boost/filesystem.hpp>
-#include "compat/linux_compat.h"
+#include "cpprest/details/linux_compat.h"
 #endif
 #endif
 
