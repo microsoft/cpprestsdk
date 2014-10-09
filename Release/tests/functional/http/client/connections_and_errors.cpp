@@ -207,7 +207,7 @@ TEST_FIXTURE(uri_address, content_ready_timeout)
     listener.close().wait();
 }
 
-TEST_FIXTURE(uri_address, stream_timeout, "Ignore:Apple", "149")
+TEST_FIXTURE(uri_address, stream_timeout)
 {
     web::http::experimental::listener::http_listener listener(m_uri);
     listener.open().wait();
@@ -230,7 +230,13 @@ TEST_FIXTURE(uri_address, stream_timeout, "Ignore:Apple", "149")
         http_response rsp = client.request(msg).get();
 
         // The response body should timeout and we should receive an exception
-        VERIFY_THROWS_HTTP_ERROR_CODE(rsp.body().read_to_end(streams::producer_consumer_buffer<uint8_t>()).wait(), std::errc::timed_out);
+        auto readTask = rsp.body().read_to_end(streams::producer_consumer_buffer<uint8_t>());
+#ifdef __APPLE__
+        // CodePlex 295
+        VERIFY_THROWS(readTask.get(), http_exception);
+#else
+        VERIFY_THROWS_HTTP_ERROR_CODE(readTask.wait(), std::errc::timed_out);
+#endif
     }
 
     buf.close(std::ios_base::out).wait();
