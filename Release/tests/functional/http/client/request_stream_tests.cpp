@@ -316,28 +316,38 @@ public:
     }
 };
 
-TEST_FIXTURE(uri_address, set_body_stream_exception, "Ignore", "940704")
+// Ignore on WinRT CodePlex 144
+#if !defined(__cplusplus_winrt)
+TEST_FIXTURE(uri_address, set_body_stream_exception,
+    "Ignore:Apple", "296",
+    "Ignore:Android", "296",
+    "Ignore:Linux", "296")
 {
-    utility::string_t fname = U("set_body_stream_exception.txt");
-    fill_file(fname);
-
     test_http_server::scoped_server scoped(m_uri);
     scoped.server();
     http_client client(m_uri);
 
-    auto stream = OPEN_R<uint8_t>(fname).get();
+    streams::producer_consumer_buffer<uint8_t> buf;
+    const char *data = "abcdefghijklmnopqrstuvwxyz";
+    buf.putn(reinterpret_cast<const uint8_t *>(data), 26).wait();
+
     http_request msg(methods::POST);
-    msg.set_body(stream);
+    msg.set_body(buf.create_istream());
     msg.headers().set_content_length(26);
 
-    stream.close(std::ios::in, std::make_exception_ptr(test_exception()));
+    buf.close(std::ios::in, std::make_exception_ptr(test_exception())).wait();
 
     VERIFY_THROWS(client.request(msg).get(), test_exception);
 }
+#endif
 
+// These tests aren't possible on WinRT because they don't
+// specify a Content-Length.
 #if !defined(__cplusplus_winrt)
-
-TEST_FIXTURE(uri_address, stream_close_early)
+TEST_FIXTURE(uri_address, stream_close_early,
+    "Ignore:Apple", "296",
+    "Ignore:Android", "296",
+    "Ignore:Linux", "296")
 {
     http_client client(m_uri);
     test_http_server::scoped_server scoped(m_uri);
@@ -354,16 +364,16 @@ TEST_FIXTURE(uri_address, stream_close_early)
     unsigned char data[5] = { '1', '2', '3', '4', '5' };
     buf.putn(&data[0], 5).wait();
 
-    buf.close(std::ios::out);
+    buf.close(std::ios::out).wait();
 
-    // Verify that the task completes succesfully
+    // Verify that the task completes successfully
     http_asserts::assert_response_equals(responseTask.get(), status_codes::OK);
 }
 
- TEST_FIXTURE(uri_address, stream_close_early_with_exception, 
-              "Ignore", "825361",
-              "Ignore:Linux", "TBD",
-              "Ignore:Apple", "The test server has trouble closing.")
+TEST_FIXTURE(uri_address, stream_close_early_with_exception,
+    "Ignore:Apple", "296",
+    "Ignore:Android", "296",
+    "Ignore:Linux", "296")
 {
     http_client client(m_uri);
     test_http_server::scoped_server scoped(m_uri);
@@ -376,17 +386,19 @@ TEST_FIXTURE(uri_address, stream_close_early)
     unsigned char data[5] = { '1', '2', '3', '4', '5' };
     buf.putn(&data[0], 5).wait();
 
-    buf.close(std::ios::out, std::make_exception_ptr(test_exception()));
+    buf.close(std::ios::out, std::make_exception_ptr(test_exception())).wait();
 
     // Verify that the responseTask throws the exception set when closing the stream
     VERIFY_THROWS(responseTask.get(), test_exception);
 }
 #endif
 
-TEST_FIXTURE(uri_address, stream_close_early_with_exception_and_contentlength, 
-            "Ignore", "825361",
-            "Ignore:Linux", "TBD", 
-            "Ignore:Apple", "The test server has trouble closing.")
+ // Ignore on WinRT only CodePlex 144
+#if !defined(__cplusplus_winrt)
+TEST_FIXTURE(uri_address, stream_close_early_with_exception_and_contentlength,
+    "Ignore:Apple", "296",
+    "Ignore:Android", "296",
+    "Ignore:Linux", "296")
 {
     http_client client(m_uri);
     test_http_server::scoped_server scoped(m_uri);
@@ -399,16 +411,19 @@ TEST_FIXTURE(uri_address, stream_close_early_with_exception_and_contentlength,
     unsigned char data[5] = { '1', '2', '3', '4', '5' };
     buf.putn(&data[0], 5).wait();
 
-    buf.close(std::ios::out, std::make_exception_ptr(test_exception()));
+    buf.close(std::ios::out, std::make_exception_ptr(test_exception())).wait();
 
     // Verify that the responseTask throws the exception set when closing the stream
     VERIFY_THROWS(responseTask.get(), test_exception);
 }
+#endif
 
+// Ignore on WinRT only CodePlex 144
+#if !defined(__cplusplus_winrt)
 TEST_FIXTURE(uri_address, stream_close_early_with_contentlength,
-             "Ignore", "825361",
-             "Ignore:Linux", "TBD", 
-             "Ignore:Apple", "The test server has trouble closing.")
+    "Ignore:Apple", "296",
+    "Ignore:Android", "296",
+    "Ignore:Linux", "296")
 {
     http_client client(m_uri);
     test_http_server::scoped_server scoped(m_uri);
@@ -421,11 +436,12 @@ TEST_FIXTURE(uri_address, stream_close_early_with_contentlength,
     unsigned char data[5] = { '1', '2', '3', '4', '5' };
     buf.putn(&data[0], 5).wait();
 
-    buf.close(std::ios::out);
+    buf.close(std::ios::out).wait();
 
     // Verify that the responseTask throws the exception set when closing the stream
     VERIFY_THROWS(responseTask.get(), http_exception);
 }
+#endif
 
 TEST_FIXTURE(uri_address, get_with_body_nono)
 {

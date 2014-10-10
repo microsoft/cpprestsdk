@@ -567,7 +567,6 @@ protected:
             }
 
             // There is a request body that needs to be transferred.
-
             if (content_length == std::numeric_limits<size_t>::max()) 
             {
                 // The content length is unknown and the application set a stream. This is an 
@@ -655,7 +654,7 @@ private:
         // Capture the current read position of the stream.
         auto rbuf = winhttp_context->_get_readbuffer();
 
-        // Record starting position incase request is challenged for authorization
+        // Record starting position in case request is challenged for authorization
         // and needs to seek back to where reading is started from.
         winhttp_context->m_startingPosition = rbuf.getpos(std::ios_base::in);
 
@@ -835,20 +834,16 @@ private:
                 }
                 _ASSERTE(read != static_cast<size_t>(-1));
 
-                if ( read == 0 )
+                if (read == 0)
                 {
-                    // Unexpected end-of-stream.
-                    if (!(rbuf.exception() == nullptr))
-                        p_request_context->report_exception(rbuf.exception());
-                    else
-                        p_request_context->report_error(GetLastError(), _XPLATSTR("Error reading outgoing HTTP body from its stream."));
+                    p_request_context->report_exception(http_exception(U("Unexpected end of request body stream encountered before Content-Length met.")));
                     return;
                 }
 
                 p_request_context->m_remaining_to_write -= read;
 
                 // Stop writing chunks after this one if no more data.
-                if ( p_request_context->m_remaining_to_write == 0 )
+                if (p_request_context->m_remaining_to_write == 0)
                 {
                     p_request_context->m_bodyType = no_body;
                 }

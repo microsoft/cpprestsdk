@@ -381,6 +381,8 @@ bool IsTestIgnored(UnitTest::Test *pTest)
     if(pTest->m_properties.Has("Ignore:Windows")) return true;
 #elif defined(__APPLE__)
     if(pTest->m_properties.Has("Ignore:Apple")) return true;
+#elif defined(ANDROID)
+    if(pTest->m_properties.Has("Ignore:Android")) return true;
 #else
     if(pTest->m_properties.Has("Ignore:Linux")) return true;
 #endif
