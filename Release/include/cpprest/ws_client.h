@@ -28,7 +28,7 @@
 #ifndef _CASA_WS_CLIENT_H
 #define _CASA_WS_CLIENT_H
 
-#if defined(__cplusplus_winrt) || !defined(_M_ARM)
+#if (defined(__cplusplus_winrt) || !defined(_M_ARM)) && !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 
 #include <memory>
 #include <limits>
@@ -37,7 +37,6 @@
 
 #include "cpprest/xxpublic.h"
 
-#if _NOT_PHONE8_
 #if defined(_MSC_VER) && (_MSC_VER >= 1800)
 #include <ppltasks.h>
 namespace pplx = Concurrency;
@@ -467,6 +466,5 @@ private:
 
 }}}}
 
-#endif  // _NOT_PHONE8_
 #endif
 #endif  /* _CASA_WS_CLIENT_H */

@@ -25,6 +25,8 @@
 
 #include "stdafx.h"
 
+#include <mutex>
+
 #if defined(__cplusplus_winrt)
 using namespace Platform;
 using namespace Windows::Storage::Streams;

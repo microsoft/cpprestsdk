@@ -25,10 +25,9 @@
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 #include "stdafx.h"
-#include <concrt.h>
 
 // ws_winrt only available for Windows Store apps and Windows Phone 8.1
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_PC_APP) || (WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_PHONE_APP) && _WIN32_WINNT == _WIN32_WINNT_WINBLUE)
+#if (WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_PC_APP) || (WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_PHONE_APP) && _WIN32_WINNT == _WIN32_WINNT_WINBLUE)) && !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 
 using namespace ::Windows::Foundation;
 using namespace ::Windows::Storage;

@@ -31,8 +31,7 @@
 #include "cpprest/ws_msg.h"
 #include "cpprest/ws_client.h"
 
-#if !defined(_M_ARM) || defined(__cplusplus_winrt)
-#if _NOT_PHONE8_
+#if (defined(__cplusplus_winrt) || !defined(_M_ARM)) && !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 
 using namespace concurrency;
 using namespace concurrency::streams::details;
@@ -82,5 +81,5 @@ pplx::task<std::string> websocket_incoming_message::extract_string() const
 }
 
 }}}}
-#endif  //  _NOT_PHONE8_
+
 #endif

@@ -1,18 +1,26 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\version.props" />
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{4BA4E05C-E06B-4D50-948B-6323B411D22A}</ProjectGuid>
-    <RootNamespace>casablanca</RootNamespace>
+    <ProjectGuid>{E5F8A2F0-F713-4673-A42F-2CC4E8FB171B}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
     <DefaultLanguage>en-US</DefaultLanguage>
-    <TargetPlatformVersion>8.0</TargetPlatformVersion>
-    <MinimumVisualStudioVersion>11.0</MinimumVisualStudioVersion>
+    <MinimumVisualStudioVersion>12.0</MinimumVisualStudioVersion>
+    <SccProjectName>SAK</SccProjectName>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccProvider>SAK</SccProvider>
+    <WindowsAppContainer>true</WindowsAppContainer>
+    <PostBuildEventUseInBuild>true</PostBuildEventUseInBuild>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <PlatformToolset>v110_wp80</PlatformToolset>
+    <PlatformToolset>v120</PlatformToolset>
     <WinRTProject>true</WinRTProject>
+    <TargetXP>false</TargetXP>
+    <!-- This is only necessary for dev12 toolset, due to an msbuild change introduced in dev12 -->
+    <OutDir>$(OutDir)\$(MsBuildProjectName)</OutDir>
+    <ApplicationType>Windows Phone Silverlight</ApplicationType>
+    <ApplicationTypeRevision>8.1</ApplicationTypeRevision>
   </PropertyGroup>
-
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Config.Definitions.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -20,22 +28,16 @@
   <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <DebugFileSuffix>d</DebugFileSuffix>
   </PropertyGroup>
   <PropertyGroup>
-    <TargetName>$(CppRestBaseFileName)110$(DebugFileSuffix)_wp8_$(CppRestSDKVersionFileSuffix)</TargetName>
+    <TargetName>$(CppRestBaseFileName)120$(DebugFileSuffix)_wp81_$(CppRestSDKVersionFileSuffix)</TargetName>
   </PropertyGroup>
-
-  <PropertyGroup>
-    <GenerateManifest>false</GenerateManifest>
-  </PropertyGroup>
-
   <ItemDefinitionGroup>
     <ClCompile>
-      <PreprocessorDefinitions>CPPREST_EXCLUDE_WEBSOCKETS;WINAPI_FAMILY=WINAPI_FAMILY_PHONE_APP;_ASYNCRT_EXPORT;_PPLX_EXPORT;_PHONE8_;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalUsingDirectories>$(WindowsSDK_MetadataPath);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
+      <PreprocessorDefinitions>CPPREST_EXCLUDE_WEBSOCKETS;WINAPI_FAMILY=WINAPI_FAMILY_PHONE_APP;_ASYNCRT_EXPORT;_PPLX_EXPORT;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalUsingDirectories>$(WindowsSdkDir)\References\CommonConfiguration\Neutral;$(VSInstallDir)\vc\vcpackages;$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <CompileAsWinRT>true</CompileAsWinRT>
       <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CasablancaSrcDir)\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -47,20 +49,6 @@
       <GenerateWindowsMetadata>true</GenerateWindowsMetadata>
     </Link>
   </ItemDefinitionGroup>
-
   <Import Project="../sources.proj" />
-
-  <ItemGroup>
-    <Reference Include="Windows">
-      <IsWinMDFile>true</IsWinMDFile>
-    </Reference>
-    <Reference Include="platform.winmd">
-      <IsWinMDFile>true</IsWinMDFile>
-      <Private>false</Private>
-    </Reference>
-  </ItemGroup>
-
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <Import Project="$(MSBuildExtensionsPath)\Microsoft\WindowsPhone\v$(TargetPlatformVersion)\Microsoft.Cpp.WindowsPhone.$(TargetPlatformVersion).targets" />
-
 </Project>
