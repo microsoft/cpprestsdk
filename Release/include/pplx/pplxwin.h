@@ -36,7 +36,7 @@
 
 #ifdef _MS_WINDOWS
 
-#include "compat/windows_compat.h"
+#include "cpprest/details/windows_compat.h"
 #include "pplx/pplxinterface.h"
 
 namespace pplx

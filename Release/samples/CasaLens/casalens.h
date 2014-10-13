@@ -31,7 +31,10 @@
 #include "cpprest/producerconsumerstream.h"
 #include "cpprest/http_listener.h"
 #include "cpprest/http_client.h"
+#pragma warning ( push )
+#pragma warning ( disable : 4457 )
 #include <agents.h>
+#pragma warning ( pop )
 #include <locale>
 #include <ctime>
 

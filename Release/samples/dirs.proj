@@ -7,10 +7,10 @@
     <ProjectFile Include="BlackJack\dirs.proj"/>
     <ProjectFile Include="Oauth1Client\dirs.proj"/>
     <ProjectFile Include="Oauth2Client\dirs.proj"/>
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(DevToolsVersion)'=='110' or '$(DevToolsVersion)'=='120'">
     <ProjectFile Include="SearchFile\dirs.proj"/>
+    <ProjectFile Include="CasaLens\dirs.proj"/>
+    <ProjectFile Include="FacebookDemo\dirs.proj"/>
+    <ProjectFile Include="OAuth2Live\dirs.proj"/>
   </ItemGroup>
 
 <!-- Disabled for now, because this project doesn't support rebuild and clean targets.
@@ -19,18 +19,6 @@
   </ItemGroup>
 -->
 
-  <ItemGroup Condition="'$(OsVersion)'=='6.2' and ('$(DevToolsVersion)'=='110' or '$(DevToolsVersion)'=='120')">
-    <ProjectFile Include="OAuth2Live\dirs.proj"/>
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.2|110'">
-    <ProjectFile Include="FacebookDemo\dirs.proj"/>
-  </ItemGroup>
-
-  <ItemGroup Condition="'$(Platform)' != 'ARM'">
-    <ProjectFile Include="CasaLens\dirs.proj"/>
-  </ItemGroup>
-  
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
 
 </Project>

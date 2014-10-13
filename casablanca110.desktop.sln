@@ -7,9 +7,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Sources", "Sources", "{1C75
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{80BEB4BA-C90D-4DF7-B358-1E34219DDDDE}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "casablanca110", "Release\src\build\casablanca110.vcxproj", "{90D85FF4-F0AE-4816-923F-0EF2758F30AB}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "casablanca110", "Release\src\build\vs11\casablanca110.vcxproj", "{90D85FF4-F0AE-4816-923F-0EF2758F30AB}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "casablanca110.xp", "Release\src\build\casablanca110.xp.vcxproj", "{4D9ED383-673B-4E48-A6AF-6BD9F108150E}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "casablanca110.xp", "Release\src\build\vs11.xp\casablanca110.xp.vcxproj", "{4D9ED383-673B-4E48-A6AF-6BD9F108150E}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BingRequest", "BingRequest", "{12C073CE-2A44-4881-891E-16BB6DCE3C0C}"
 EndProject

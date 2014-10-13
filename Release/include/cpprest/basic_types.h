@@ -40,7 +40,7 @@
 #include <cstdint>
 #endif
 
-#include "compat/SafeInt3.hpp"
+#include "cpprest/details/SafeInt3.hpp"
 typedef SafeInt<size_t> SafeSize;
 
 namespace utility
@@ -99,3 +99,29 @@ typedef std::stringstream stringstream_t;
 #endif // !_TURN_OFF_PLATFORM_STRING
 
 }// namespace utility
+
+typedef char utf8char;
+typedef std::string utf8string;
+typedef std::stringstream utf8stringstream;
+typedef std::ostringstream utf8ostringstream;
+typedef std::ostream utf8ostream;
+typedef std::istream utf8istream;
+typedef std::istringstream utf8istringstream;
+
+#ifdef _UTF16_STRINGS
+typedef wchar_t utf16char;
+typedef std::wstring utf16string;
+typedef std::wstringstream utf16stringstream;
+typedef std::wostringstream utf16ostringstream;
+typedef std::wostream utf16ostream;
+typedef std::wistream utf16istream;
+typedef std::wistringstream utf16istringstream;
+#else
+typedef char16_t utf16char;
+typedef std::u16string utf16string;
+typedef std::basic_stringstream<utf16char> utf16stringstream;
+typedef std::basic_ostringstream<utf16char> utf16ostringstream;
+typedef std::basic_ostream<utf16char> utf16ostream;
+typedef std::basic_istream<utf16char> utf16istream;
+typedef std::basic_istringstream<utf16char> utf16istringstream;
+#endif

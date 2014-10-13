@@ -1,0 +1,19 @@
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Common.Build.settings" />
+
+  <ItemGroup Condition="'$(DevToolsVersion)'=='110'">
+      <ProjectFile Include="VS11\TestRunner110.vcxproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(DevToolsVersion)'=='120'">
+      <ProjectFile Include="VS12\TestRunner120.vcxproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(DevToolsVersion)'=='140'">
+    <ProjectFile Include="VS14\TestRunner140.vcxproj" />
+  </ItemGroup>
+
+  <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
+
+</Project>

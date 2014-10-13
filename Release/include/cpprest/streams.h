@@ -110,7 +110,7 @@ namespace Concurrency { namespace streams
     {
     public:
 
-        typedef std::char_traits<CharType> traits;
+        typedef Concurrency::streams::char_traits<CharType> traits;
         typedef typename traits::int_type int_type;
         typedef typename traits::pos_type pos_type;
         typedef typename traits::off_type off_type;
@@ -483,7 +483,7 @@ namespace Concurrency { namespace streams
     class _type_parser_base
     {
     public:
-        typedef typename std::char_traits<CharType>::int_type int_type;
+        typedef typename ::concurrency::streams::char_traits<CharType>::int_type int_type;
 
         _type_parser_base()  { }
 
@@ -492,10 +492,10 @@ namespace Concurrency { namespace streams
         static pplx::task<void> _skip_whitespace(streams::streambuf<CharType> buffer);
 
         // Aid in parsing input: peek at a character at a time, call type-specific code to examine, extract value when done.
-        template<typename _ParseState, typename _ReturnType>
-        static pplx::task<_ReturnType> _parse_input(streams::streambuf<CharType> buffer,
-                                                    std::function<bool(std::shared_ptr<_ParseState>, int_type)> accept_character, 
-                                                    std::function<pplx::task<_ReturnType>(std::shared_ptr<_ParseState>)> extract);
+        // <remark>AcceptFunctor should model std::function<bool(std::shared_ptr<X>, int_type)></remark>
+        // <remark>ExtractFunctor should model std::function<pplx::task<ReturnType>(std::shared_ptr<X>)></remark>
+        template<typename StateType, typename ReturnType, typename AcceptFunctor, typename ExtractFunctor>
+        static pplx::task<ReturnType> _parse_input(streams::streambuf<CharType> buffer, AcceptFunctor accept_character, ExtractFunctor extract);
     };
 
     /// <summary>
@@ -562,8 +562,8 @@ namespace Concurrency { namespace streams
     {
     public:
 
-        typedef std::char_traits<CharType> traits;
-        typedef typename std::char_traits<CharType>::int_type int_type;
+        typedef char_traits<CharType> traits;
+        typedef typename char_traits<CharType>::int_type int_type;
         typedef typename traits::pos_type pos_type;
         typedef typename traits::off_type off_type;
 
@@ -795,7 +795,7 @@ namespace Concurrency { namespace streams
 
             auto update = [=] (int_type ch) mutable -> bool 
                 { 
-                    if ( ch == std::char_traits<CharType>::eof() ) return false;
+                    if ( ch == ::concurrency::streams::char_traits<CharType>::eof() ) return false;
                     if ( ch == delim ) return false;
 
                     _locals->outbuf[_locals->write_pos] = static_cast<CharType>(ch);
@@ -847,7 +847,7 @@ namespace Concurrency { namespace streams
             // Capture 'buffer' rather than 'helper' here due to VC++ 2010 limitations.
             concurrency::streams::streambuf<CharType> buffer = helper()->m_buffer;
 
-            typename std::char_traits<CharType>::int_type req_async = concurrency::streams::char_traits<CharType>::requires_async();
+            typename concurrency::streams::char_traits<CharType>::int_type req_async = concurrency::streams::char_traits<CharType>::requires_async();
 
             std::shared_ptr<_read_helper> _locals = std::make_shared<_read_helper>();
 
@@ -868,9 +868,9 @@ namespace Concurrency { namespace streams
                     return target.putn(_locals->outbuf, _locals->write_pos).then(after_putn);
                 };
 
-            auto update = [=] (typename std::char_traits<CharType>::int_type ch) mutable -> bool 
+            auto update = [=] (typename concurrency::streams::char_traits<CharType>::int_type ch) mutable -> bool 
                 { 
-                    if ( ch == std::char_traits<CharType>::eof() ) return false;
+                    if ( ch == concurrency::streams::char_traits<CharType>::eof() ) return false;
                     if ( ch == '\n' ) return false;
                     if ( ch == '\r' ) { _locals->saw_CR = true; return true; }
 
@@ -886,15 +886,15 @@ namespace Concurrency { namespace streams
                 };
 
             auto return_false = 
-                [](pplx::task<typename std::char_traits<CharType>::int_type>) -> pplx::task<bool> 
+                [](pplx::task<typename concurrency::streams::char_traits<CharType>::int_type>) -> pplx::task<bool> 
                 {
                     return pplx::task_from_result(false);
                 };
 
             auto update_after_cr = 
-                [=] (typename std::char_traits<CharType>::int_type ch) mutable -> pplx::task<bool> 
+                [=] (typename concurrency::streams::char_traits<CharType>::int_type ch) mutable -> pplx::task<bool> 
                 { 
-                    if ( ch == std::char_traits<CharType>::eof() ) return pplx::task_from_result(false);
+                    if ( ch == concurrency::streams::char_traits<CharType>::eof() ) return pplx::task_from_result(false);
                     if ( ch == '\n' )
                         return buffer.bumpc().then(return_false);
 
@@ -905,10 +905,10 @@ namespace Concurrency { namespace streams
                 {
                     while ( buffer.in_avail() > 0 )
                     {
-#ifndef _MS_WINDOWS // Required by GCC, because std::char_traits<CharType> is a dependent scope
+#ifndef _MS_WINDOWS // Required by GCC, because concurrency::streams::char_traits<CharType> is a dependent scope
                         typename
 #endif
-                        std::char_traits<CharType>::int_type ch;
+                        concurrency::streams::char_traits<CharType>::int_type ch;
 
                         if ( _locals->saw_CR )
                         {
@@ -1176,20 +1176,20 @@ pplx::task<void> concurrency::streams::_type_parser_base<CharType>::_skip_whites
 }
 
 template<typename CharType>
-template<typename _ParseState, typename _ReturnType>
-pplx::task<_ReturnType> concurrency::streams::_type_parser_base<CharType>::_parse_input(
+template<typename StateType, typename ReturnType, typename AcceptFunctor, typename ExtractFunctor>
+pplx::task<ReturnType> concurrency::streams::_type_parser_base<CharType>::_parse_input(
     concurrency::streams::streambuf<CharType> buffer,
-    std::function<bool(std::shared_ptr<_ParseState>, int_type)> accept_character, 
-    std::function<pplx::task<_ReturnType>(std::shared_ptr<_ParseState>)> extract)
+    AcceptFunctor accept_character,
+    ExtractFunctor extract)
 {
-    std::shared_ptr<_ParseState> state = std::make_shared<_ParseState>();
+    std::shared_ptr<StateType> state = std::make_shared<StateType>();
 
     auto update_end = [=] (pplx::task<int_type> op) -> bool { op.wait(); return true; };
 
     auto update = [=] (pplx::task<int_type> op) -> pplx::task<bool> 
             { 
                 int_type ch = op.get();
-                if ( ch == std::char_traits<CharType>::eof() ) return pplx::task_from_result(false);
+                if ( ch == concurrency::streams::char_traits<CharType>::eof() ) return pplx::task_from_result(false);
                 bool accptd = accept_character(state, ch);
                 if (!accptd)
                     return pplx::task_from_result(false);
@@ -1219,14 +1219,14 @@ pplx::task<_ReturnType> concurrency::streams::_type_parser_base<CharType>::_pars
     };
 
     auto finish = 
-        [=](pplx::task<bool> op) -> pplx::task<_ReturnType>
+        [=](pplx::task<bool> op) -> pplx::task<ReturnType>
         { 
             op.wait();
-            pplx::task<_ReturnType> result = extract(state);
+            pplx::task<ReturnType> result = extract(state);
             return result; 
         };
 
-    return _skip_whitespace(buffer).then([=](pplx::task<void> op) -> pplx::task<_ReturnType>
+    return _skip_whitespace(buffer).then([=](pplx::task<void> op) -> pplx::task<ReturnType>
         {
             op.wait();
 
@@ -1247,7 +1247,7 @@ public:
 private:
     static bool _accept_char(std::shared_ptr<std::basic_string<CharType>> state, int_type ch)
     {
-        if ( ch == std::char_traits<CharType>::eof() || isspace(ch)) return false;
+        if ( ch == concurrency::streams::char_traits<CharType>::eof() || isspace(ch)) return false;
         state->push_back(CharType(ch));
         return true;
     }
@@ -1278,7 +1278,7 @@ private:
 
     static bool _accept_char(std::shared_ptr<_int64_state> state, int_type ch)
     {
-        if ( ch == std::char_traits<CharType>::eof()) return false;
+        if ( ch == concurrency::streams::char_traits<CharType>::eof()) return false;
         if ( state->minus == 0 )
         {
             // OK to find a sign.
@@ -1657,7 +1657,7 @@ private:
             [=](pplx::task<typename concurrency::streams::streambuf<CharType>::int_type> op) -> signed char
             {
                 int_type val = op.get();
-                if (val == std::char_traits<CharType>::eof())
+                if (val == concurrency::streams::char_traits<CharType>::eof())
                     throw std::runtime_error("reached end-of-stream while constructing a value");
                 return static_cast<signed char>(val);
             });
@@ -1686,7 +1686,7 @@ private:
             [=](pplx::task<typename concurrency::streams::streambuf<CharType>::int_type> op) -> unsigned char
             {
                 int_type val = op.get();
-                if (val == std::char_traits<CharType>::eof())
+                if (val == concurrency::streams::char_traits<CharType>::eof())
                     throw std::runtime_error("reached end-of-stream while constructing a value");
                 return static_cast<unsigned char>(val);
             });
@@ -1715,7 +1715,7 @@ private:
             [=](pplx::task<typename concurrency::streams::streambuf<CharType>::int_type> op) -> char
             {
                 int_type val = op.get();
-                if (val == std::char_traits<CharType>::eof())
+                if (val == concurrency::streams::char_traits<CharType>::eof())
                     throw std::runtime_error("reached end-of-stream while constructing a value");
                 return char(val);
             });
@@ -1735,7 +1735,7 @@ public:
 private:
     static bool _accept_char(std::shared_ptr<std::basic_string<char>> state, int_type ch)
     {
-        if ( ch == std::char_traits<char>::eof() || isspace(ch)) return false;
+        if ( ch == concurrency::streams::char_traits<char>::eof() || isspace(ch)) return false;
         state->push_back(char(ch));
         return true;
     }
@@ -1757,7 +1757,7 @@ public:
 private:
     static bool _accept_char(std::shared_ptr<std::basic_string<char>> state, int_type ch)
     {
-        if ( ch == std::char_traits<char>::eof() || isspace(ch)) return false;
+        if ( ch == concurrency::streams::char_traits<char>::eof() || isspace(ch)) return false;
         state->push_back(char(ch));
         return true;
     }
@@ -1779,7 +1779,7 @@ public:
 private:
     static bool _accept_char(std::shared_ptr<std::basic_string<char>> state, int_type ch)
     {
-        if ( ch == std::char_traits<char>::eof() || isspace(ch)) return false;
+        if ( ch == concurrency::streams::char_traits<char>::eof() || isspace(ch)) return false;
         state->push_back(char(ch));
         return true;
     }

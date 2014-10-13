@@ -34,16 +34,28 @@
 #include <memory>
 #include <thread>
 
-#if (!defined(WINAPI_FAMILY) || WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP) && !defined(_M_ARM)
+#if (!defined(WINAPI_FAMILY) || WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP) && !defined(_M_ARM) && (!defined(_MSC_VER) || (_MSC_VER < 1900))
 #if defined(__GNUC__)
 #include "pplx/threadpool.h"
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wconversion"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
+#if defined(__APPLE__)
+#include "stdlib.h"
+// Issue caused by iOS SDK 8.0
+#pragma push_macro("ntohll")
+#pragma push_macro("htonll")
+#undef ntohll
+#undef htonll
+#endif
 #include <websocketpp/config/asio_client.hpp>
 #include <websocketpp/config/asio_no_tls_client.hpp>
 #include <websocketpp/client.hpp>
+#if defined(__APPLE__)
+#pragma pop_macro("htonll")
+#pragma pop_macro("ntohll")
+#endif
 #pragma GCC diagnostic pop
 #else /* __GNUC__ */
 #pragma warning( disable : 4503 )

@@ -78,6 +78,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <OutDir>$(OutDir)\$(MSBuildProjectName)\</OutDir>
+    <PackageCertificateThumbprint>A2EB87D9E8F458456834BA935C38BCD7C389022E</PackageCertificateThumbprint>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <ClCompile>
@@ -146,6 +147,7 @@
     <AppxManifest Include="Package120.appxmanifest">
       <SubType>Designer</SubType>
     </AppxManifest>
+    <None Include="FacebookDemo120_TemporaryKey.pfx" />
     <None Include="FacebookDemo_TemporaryKey.pfx" />
   </ItemGroup>
   <ItemGroup>
@@ -172,7 +174,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="$(CasablancaSrcDir)\build\casablanca120.winrt.vcxproj">
+    <ProjectReference Include="$(CasablancaSrcDir)\build\vs12.winrt\casablanca120.winrt.vcxproj">
       <Project>{198ed804-2655-4d92-8104-c220e3ea9452}</Project>
     </ProjectReference>
   </ItemGroup>

@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,8 +28,6 @@
 
 namespace web { namespace http
 {
-
-#define CRLF U("\r\n")
 
 uri details::_http_request::relative_uri() const
 {
@@ -54,7 +52,7 @@ uri details::_http_request::relative_uri() const
     else
     {
         throw http_exception(_XPLATSTR("Error: request was not prefixed with listener uri"));
-    }    
+    }
 }
 
 uri details::_http_request::absolute_uri() const
@@ -119,7 +117,7 @@ utility::string_t details::_http_response::to_string() const
 #define TOSTRING(x) STRINGIFY(x)
 #define USERAGENT _XPLATSTR("cpprestsdk/") TOSTRING(CPPREST_VERSION_MAJOR) _XPLATSTR(".") TOSTRING(CPPREST_VERSION_MINOR) _XPLATSTR(".") TOSTRING(CPPREST_VERSION_REVISION)
 
-pplx::task<http_response> client::http_client::request(http_request request, pplx::cancellation_token token)
+pplx::task<http_response> client::http_client::request(http_request request, const pplx::cancellation_token &token)
 {
     if(!request.headers().has(header_names::user_agent))
     {

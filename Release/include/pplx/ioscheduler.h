@@ -149,7 +149,7 @@ public:
     /// <summary>
     /// Get the I/O completion key to use with the scheduler.
     /// </summary>
-    DWORD get_key() const { return (((DWORD)this) & 0xFAFAFA00) + sizeof(EXTENDED_OVERLAPPED); }
+    DWORD get_key() const { return (static_cast<DWORD>((uintptr_t)this) & 0xFAFAFA00) + sizeof(EXTENDED_OVERLAPPED); }
 
     /// <summary>
     /// Get the I/O scheduler instance.

@@ -181,7 +181,7 @@ class winhttp_request_context : public request_context
 public:
 
     // Factory function to create requests on the heap.
-    static std::shared_ptr<request_context> create_request_context(std::shared_ptr<_http_client_communicator> &client, http_request &request)
+    static std::shared_ptr<request_context> create_request_context(const std::shared_ptr<_http_client_communicator> &client, const http_request &request)
     {
         // With WinHttp we have to pass the request context to the callback through a raw pointer.
         // The lifetime of this object is delete once complete or report_error/report_exception is called.
@@ -258,7 +258,7 @@ protected:
 private:
 
     // Can only create on the heap using factory function.
-    winhttp_request_context(std::shared_ptr<_http_client_communicator> &client, http_request request)
+    winhttp_request_context(const std::shared_ptr<_http_client_communicator> &client, const http_request &request)
         : request_context(client, request), 
         m_request_handle(nullptr), 
         m_bodyType(no_body),
@@ -452,7 +452,7 @@ protected:
     }
 
     // Start sending request.
-    void send_request(_In_ std::shared_ptr<request_context> request)
+    void send_request(_In_ const std::shared_ptr<request_context> &request)
     {
         http_request &msg = request->m_request;
         winhttp_request_context * winhttp_context = static_cast<winhttp_request_context *>(request.get());
@@ -567,7 +567,6 @@ protected:
             }
 
             // There is a request body that needs to be transferred.
-
             if (content_length == std::numeric_limits<size_t>::max()) 
             {
                 // The content length is unknown and the application set a stream. This is an 
@@ -633,21 +632,6 @@ protected:
 
 private:
 
-    static bool _check_streambuf(_In_ winhttp_request_context * winhttp_context, concurrency::streams::streambuf<uint8_t> rdbuf, const utility::char_t* msg) 
-    {
-        const auto opened = rdbuf.is_open();
-        if (!opened)
-        {
-            auto eptr = rdbuf.exception();
-            if (eptr == nullptr)
-            {
-                eptr = std::make_exception_ptr(http_exception(msg));
-            }
-            winhttp_context->report_exception(eptr);
-        }
-        return opened;
-    }
-
     void _start_request_send(_In_ winhttp_request_context * winhttp_context, size_t content_length)
     {
         if (winhttp_context->m_bodyType == no_body)
@@ -669,12 +653,8 @@ private:
 
         // Capture the current read position of the stream.
         auto rbuf = winhttp_context->_get_readbuffer();
-        if ( !_check_streambuf(winhttp_context, rbuf, _XPLATSTR("Input stream is not open")) )
-        {
-            return;
-        }
 
-        // Record starting position incase request is challenged for authorization
+        // Record starting position in case request is challenged for authorization
         // and needs to seek back to where reading is started from.
         winhttp_context->m_startingPosition = rbuf.getpos(std::ios_base::in);
 
@@ -796,21 +776,12 @@ private:
             }
         };
 
-        if (!_check_streambuf(p_request_context, p_request_context->_get_readbuffer(), _XPLATSTR("Input stream is not open")))
-        {
-            return;
-        }
         p_request_context->_get_readbuffer().getn(&p_request_context->m_body_data.get()[http::details::chunked_encoding::data_offset], chunk_size).then(after_read);
     }
 
     static void _multiple_segment_write_data(_In_ winhttp_request_context * p_request_context)
     {
         auto rbuf = p_request_context->_get_readbuffer();
-        if ( !_check_streambuf(p_request_context, rbuf, _XPLATSTR("Input stream is not open")) )
-        {
-            return;
-        }
-
         SafeInt<size64_t> safeCount = p_request_context->m_remaining_to_write;
         safeCount = safeCount.Min(p_request_context->m_http_client->client_config().chunksize());
 
@@ -863,20 +834,16 @@ private:
                 }
                 _ASSERTE(read != static_cast<size_t>(-1));
 
-                if ( read == 0 )
+                if (read == 0)
                 {
-                    // Unexpected end-of-stream.
-                    if (!(rbuf.exception() == nullptr))
-                        p_request_context->report_exception(rbuf.exception());
-                    else
-                        p_request_context->report_error(GetLastError(), _XPLATSTR("Error reading outgoing HTTP body from its stream."));
+                    p_request_context->report_exception(http_exception(U("Unexpected end of request body stream encountered before Content-Length met.")));
                     return;
                 }
 
                 p_request_context->m_remaining_to_write -= read;
 
                 // Stop writing chunks after this one if no more data.
-                if ( p_request_context->m_remaining_to_write == 0 )
+                if (p_request_context->m_remaining_to_write == 0)
                 {
                     p_request_context->m_bodyType = no_body;
                 }
