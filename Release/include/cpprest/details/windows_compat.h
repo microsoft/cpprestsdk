@@ -26,14 +26,18 @@
 ****/
 #pragma once
 
-#if _MSC_VER >= 1700
+#if defined(_MSC_VER) && _MSC_VER >= 1700
 // Support VS2012 SAL syntax only
 #include <sal.h>
 #else
 #include "cpprest/details/nosal.h"
 #endif
 
-#define _noexcept 
+#if defined(_MSC_VER) && _MSC_VER >= 1800
+#define _noexcept noexcept
+#else
+#define _noexcept
+#endif
 
 #define CASABLANCA_UNREFERENCED_PARAMETER(x) (x)
 
