@@ -32,56 +32,77 @@
 
 namespace web
 {
-    class web_proxy;
-namespace http { namespace client {
-    class http_client_config;
-}}
-
-namespace experimental { namespace websockets { namespace client {
-    class websocket_client_config;
-}}}
+namespace details
+{
+#if defined(_MS_WINDOWS) && !defined(__cplusplus_winrt)
+class win32_encryption
+{
+public:
+    win32_encryption() {}
+    _ASYNCRTIMP win32_encryption(const std::wstring &data);
+    _ASYNCRTIMP ~win32_encryption();
+    _ASYNCRTIMP std::wstring decrypt() const;
+private:
+    std::vector<char> m_buffer;
+    size_t m_numCharacters;
+};
+#endif
+}
 
 /// <summary>
-/// credentials represents a set of user credentials (username and password) to be used
-/// for the client and proxy authentication
+/// Represents a set of user credentials (user name and password) to be used
+/// for authentication.
 /// </summary>
 class credentials
 {
 public:
-    credentials(utility::string_t username, utility::string_t password) :
-        m_is_set(true),
+    /// <summary>
+    /// Constructs and empty set of credentials without a user name or password.
+    /// </summary>
+    credentials() {}
+
+    /// <summary>
+    /// Constructs credentials from given user name and password.
+    /// </summary>
+    /// <param name="username">User name as a string.</param>
+    /// <param name="password">Password as a string.</param>
+    credentials(utility::string_t username, const utility::string_t &password) :
         m_username(std::move(username)),
-        m_password(std::move(password))
+        m_password(password)
     {}
 
     /// <summary>
     /// The user name associated with the credentials.
     /// </summary>
-    /// <returns>A reference to the username string.</returns>
-    const utility::string_t& username() const { return m_username; }
+    /// <returns>A string containing the user name.</returns>
+    const utility::string_t &username() const { return m_username; }
 
     /// <summary>
     /// The password for the user name associated with the credentials.
     /// </summary>
-    /// <returns>A reference to the password string.</returns>
-    const utility::string_t& password() const { return m_password; }
+    /// <returns>A string containing the password.</returns>
+    utility::string_t password() const
+    {
+#if defined(_MS_WINDOWS) && !defined(__cplusplus_winrt)
+        return m_password.decrypt();
+#else
+        return m_password;
+#endif
+    }
 
     /// <summary>
     /// Checks if credentials have been set
     /// </summary>
-    /// <returns><c>true</c> if username and password is set, <c>false</c> otherwise.</returns>
-    bool is_set() const { return m_is_set; }
+    /// <returns><c>true</c> if user name and password is set, <c>false</c> otherwise.</returns>
+    bool is_set() const { return !m_username.empty(); }
 
 private:
-    friend class web::web_proxy;
-    friend class web::http::client::http_client_config;
-    friend class web::experimental::websockets::client::websocket_client_config;
-
-    credentials() : m_is_set(false) {}
-
-    bool m_is_set;
-    utility::string_t m_username;
-    utility::string_t m_password;
+    ::utility::string_t m_username;
+#if defined(_MS_WINDOWS) && !defined(__cplusplus_winrt)
+    ::web::details::win32_encryption m_password;
+#else
+    ::utility::string_t m_password;
+#endif
 };
 
 /// <summary>
@@ -160,7 +181,7 @@ public:
     bool is_specified() const { return m_mode == user_provided_; }
 
 private:
-    uri m_address;
+    web::uri m_address;
     web_proxy_mode_internal m_mode;
     web::credentials m_credentials;
 };

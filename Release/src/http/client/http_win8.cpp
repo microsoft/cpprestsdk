@@ -385,42 +385,37 @@ protected:
 
         utility::string_t encoded_resource = http::uri_builder(m_uri).append(msg.relative_uri()).to_string();
 
-        const utility::char_t* usernanme = nullptr;
-        const utility::char_t* password = nullptr;
-        const utility::char_t* proxy_usernanme = nullptr;
-        const utility::char_t* proxy_password = nullptr;
-
         const auto &config = client_config();
         const auto &client_cred = config.credentials();
-        if(client_cred.is_set())
-        {
-            usernanme = client_cred.username().c_str();
-            password  = client_cred.password().c_str();
-        }
-
         const auto &proxy = config.proxy();
-        if(!proxy.is_default())
+        const auto &proxy_cred = proxy.credentials();
+        if (!proxy.is_default())
         {
             request->report_exception(http_exception(L"Only a default proxy server is supported"));
             return;
         }
 
-        const auto &proxy_cred = proxy.credentials();
-        if(proxy_cred.is_set())
+        utility::string_t username, password, proxy_username, proxy_password;
+        if (client_cred.is_set())
         {
-            proxy_usernanme = proxy_cred.username().c_str();
-            proxy_password  = proxy_cred.password().c_str();
+            username = client_cred.username();
+            password  = client_cred.password();
+        }
+        if (proxy_cred.is_set())
+        {
+            proxy_username = proxy_cred.username();
+            proxy_password  = proxy_cred.password();
         }
 
         hr = winrt_context->m_hRequest->Open(
             msg.method().c_str(), 
             encoded_resource.c_str(), 
             Make<HttpRequestCallback>(winrt_context).Get(), 
-            usernanme, 
-            password, 
-            proxy_usernanme, 
-            proxy_password);
-        if ( FAILED(hr) ) 
+            username.c_str(),
+            password.c_str(), 
+            proxy_username.c_str(),
+            proxy_password.c_str());
+        if (FAILED(hr)) 
         {
             request->report_error(hr, L"Failure to open HTTP request");
             return;
@@ -437,21 +432,21 @@ protected:
         const auto timeout = config.timeout();
         const int secs = static_cast<int>(timeout.count());
         hr = winrt_context->m_hRequest->SetProperty(XHR_PROP_TIMEOUT, secs * 1000);
-        if ( FAILED(hr) ) 
+        if (FAILED(hr))
         {
             request->report_error(hr, L"Failure to set HTTP request properties");
             return;
         }
 
         // Add headers.
-        for ( auto hdr = msg.headers().begin(); hdr != msg.headers().end(); ++hdr )
+        for (const auto &hdr : msg.headers())
         {
-            winrt_context->m_hRequest->SetRequestHeader(hdr->first.c_str(), hdr->second.c_str());
+            winrt_context->m_hRequest->SetRequestHeader(hdr.first.c_str(), hdr.second.c_str());
         }
 
         // Set response stream.
         hr = winrt_context->m_hRequest->SetCustomResponseStream(Make<IResponseStream>(request).Get());
-        if ( FAILED(hr) ) 
+        if (FAILED(hr))
         {
             request->report_error(hr, L"Failure to set HTTP response stream");
             return;

@@ -8,6 +8,7 @@ if(UNIX)
     json/json_parsing.cpp
     json/json_serialization.cpp
     utilities/asyncrt_utils.cpp
+    utilities/web_utilities.cpp
     pplx/pplx.cpp
     pplx/threadpool.cpp
     uri/uri.cpp
@@ -46,6 +47,7 @@ elseif(WIN32)
     json/json_parsing.cpp
     json/json_serialization.cpp
     utilities/asyncrt_utils.cpp
+    utilities/web_utilities.cpp
     uri/uri.cpp
     uri/uri_builder.cpp
     uri/uri_parser.cpp
