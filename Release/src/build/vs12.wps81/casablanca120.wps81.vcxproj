@@ -32,7 +32,7 @@
     <DebugFileSuffix>d</DebugFileSuffix>
   </PropertyGroup>
   <PropertyGroup>
-    <TargetName>$(CppRestBaseFileName)120$(DebugFileSuffix)_wp81_$(CppRestSDKVersionFileSuffix)</TargetName>
+    <TargetName>$(CppRestBaseFileName)120$(DebugFileSuffix)_wps81_$(CppRestSDKVersionFileSuffix)</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>

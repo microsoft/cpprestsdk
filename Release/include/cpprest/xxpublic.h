@@ -47,7 +47,9 @@
 // for guids, used in comm.h
 #if defined(MS_TARGET_APPLE)
 #include "cpprest/details/apple_compat.h"
-#elif !defined(_MS_WINDOWS)
+#elif defined(_MS_WINDOWS)
+#include "cpprest/details/windows_compat.h"
+#else
 #include "boost/uuid/uuid.hpp"
 #endif
 
