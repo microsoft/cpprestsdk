@@ -106,29 +106,30 @@ static void parse_winhttp_headers(HINTERNET request_handle, _In_z_ utf16char *he
 // Helper function to build an error message from a WinHTTP async result.
 static std::string build_callback_error_msg(_In_ WINHTTP_ASYNC_RESULT *error_result)
 {
-    std::string error_msg("Error in: ");
+	std::stringstream error_msg;
+	error_msg << "Error [" << GetLastError() << "] in: ";
     switch(error_result->dwResult)
     {
     case API_RECEIVE_RESPONSE:
-        error_msg.append("WinHttpReceiveResponse");
+        error_msg << "WinHttpReceiveResponse";
         break;
     case API_QUERY_DATA_AVAILABLE:
-        error_msg.append("WinHttpQueryDataAvaliable");
+        error_msg << "WinHttpQueryDataAvaliable";
         break;
     case API_READ_DATA:
-        error_msg.append("WinHttpReadData");
+        error_msg << "WinHttpReadData";
         break;
     case API_WRITE_DATA:
-        error_msg.append("WinHttpWriteData");
+        error_msg << "WinHttpWriteData";
         break;
     case API_SEND_REQUEST:
-        error_msg.append("WinHttpSendRequest");
+        error_msg << "WinHttpSendRequest";
         break;
     default:
-        error_msg.append("Unknown WinHTTP Function");
+        error_msg << "Unknown WinHTTP Function";
         break;
     }
-    return error_msg;
+    return error_msg.str();
 }
 
 class memory_holder
