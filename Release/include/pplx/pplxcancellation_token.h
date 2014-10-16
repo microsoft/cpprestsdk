@@ -84,7 +84,7 @@ public:
 
     ~task_canceled() throw () {}
 
-    const char* what() const _noexcept
+    const char* what() const CASABLANCA_NOEXCEPT
     {
         return _message.c_str();
     }
@@ -127,7 +127,7 @@ public:
     
     ~invalid_operation() throw () {}
 
-    const char* what() const _noexcept
+    const char* what() const CASABLANCA_NOEXCEPT
     {
         return _message.c_str();
     }

@@ -209,7 +209,7 @@ namespace json
         /// <summary>
         /// Move constructor
         /// </summary>
-        _ASYNCRTIMP value(value &&) _noexcept ;
+        _ASYNCRTIMP value(value &&) CASABLANCA_NOEXCEPT ;
 
         /// <summary>
         /// Assignment operator.
@@ -221,7 +221,7 @@ namespace json
         /// Move assignment operator.
         /// </summary>
         /// <returns>The JSON value object that contains the result of the assignment.</returns>
-        _ASYNCRTIMP value &operator=(value &&) _noexcept ;
+        _ASYNCRTIMP value &operator=(value &&) CASABLANCA_NOEXCEPT ;
 
         // Static factories
 
@@ -627,11 +627,11 @@ public:
         json_exception(const utility::char_t * const &message) : _message(utility::conversions::to_utf8string(message)) { }
 
         // Must be narrow string because it derives from std::exception
-        const char* what() const _noexcept
+        const char* what() const CASABLANCA_NOEXCEPT
         {
             return _message.c_str();
         }
-        ~json_exception() _noexcept {}
+        ~json_exception() CASABLANCA_NOEXCEPT {}
     };
 
     /// <summary>

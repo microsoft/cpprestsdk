@@ -641,7 +641,7 @@ private:
     // after construction based on the URI.
     struct websocketpp_client_base
     {
-    	virtual ~websocketpp_client_base() _noexcept {}
+    	virtual ~websocketpp_client_base() CASABLANCA_NOEXCEPT {}
     	template <typename WebsocketConfig>
     	websocketpp::client<WebsocketConfig> & client()
     	{

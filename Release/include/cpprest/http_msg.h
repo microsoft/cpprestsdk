@@ -200,9 +200,9 @@ public:
         m_msg = m_errorCode.message();
     }
 
-    ~http_exception() _noexcept {}
+    ~http_exception() CASABLANCA_NOEXCEPT {}
 
-    const char* what() const _noexcept
+    const char* what() const CASABLANCA_NOEXCEPT
     {
         return m_msg.c_str();
     }

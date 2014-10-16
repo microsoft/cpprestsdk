@@ -33,10 +33,10 @@
 #include "cpprest/details/nosal.h"
 #endif
 
-#if defined(_MSC_VER) && _MSC_VER >= 1800
-#define _noexcept noexcept
+#if defined(_MSC_VER) && _MSC_VER >= 1900
+#define CASABLANCA_NOEXCEPT noexcept
 #else
-#define _noexcept
+#define CASABLANCA_NOEXCEPT
 #endif
 
 #define CASABLANCA_UNREFERENCED_PARAMETER(x) (x)
