@@ -278,13 +278,13 @@ public:
     /// <summary>
     /// Destroys the <c>websocket_exception</c> object.
     /// </summary>
-    ~websocket_exception() CASABLANCA_NOEXCEPT {}
+    ~websocket_exception() CPPREST_NOEXCEPT {}
 
     /// <summary>
     /// Gets a string identifying the cause of the exception.
     /// </summary>
     /// <returns>A null terminated character string.</returns>
-    const char* what() const CASABLANCA_NOEXCEPT
+    const char* what() const CPPREST_NOEXCEPT
     {
         return m_msg.c_str();
     }
@@ -293,7 +293,7 @@ public:
     /// Gets the underlying error code for the cause of the exception.
     /// </summary>
     /// <returns>The <c>error_code</c> object associated with the exception.</returns>
-    const std::error_code & error_code() const CASABLANCA_NOEXCEPT
+    const std::error_code & error_code() const CPPREST_NOEXCEPT
     {
         return m_errorCode;
     }
@@ -314,7 +314,7 @@ public:
     _websocket_client_impl(websocket_client_config config) :
         m_config(std::move(config)) {}
 
-    virtual ~_websocket_client_impl() CASABLANCA_NOEXCEPT {}
+    virtual ~_websocket_client_impl() CPPREST_NOEXCEPT {}
 
     virtual pplx::task<void> connect() = 0;
 
@@ -389,7 +389,7 @@ public:
     /// <summary>
     /// Destructor
     /// </summary>
-    ~websocket_client() CASABLANCA_NOEXCEPT {}
+    ~websocket_client() CPPREST_NOEXCEPT {}
 
     /// <summary>
     /// Connects to the remote network destination. The connect method initiates the websocket handshake with the

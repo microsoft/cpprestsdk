@@ -70,7 +70,7 @@ namespace web {
                 return *this;
             }
 
-            uri_components(uri_components &&other) CASABLANCA_NOEXCEPT :
+            uri_components(uri_components &&other) CPPREST_NOEXCEPT :
                 m_scheme(std::move(other.m_scheme)),
                 m_host(std::move(other.m_host)),
                 m_user_info(std::move(other.m_user_info)),
@@ -80,7 +80,7 @@ namespace web {
                 m_port(other.m_port)
             {}
 
-            uri_components & operator=(uri_components &&other) CASABLANCA_NOEXCEPT
+            uri_components & operator=(uri_components &&other) CPPREST_NOEXCEPT
             {
                 if (this != &other)
                 {
@@ -116,9 +116,9 @@ namespace web {
 
         uri_exception(std::string msg) : m_msg(std::move(msg)) {}
 
-        ~uri_exception() CASABLANCA_NOEXCEPT {}
+        ~uri_exception() CPPREST_NOEXCEPT {}
 
-        const char* what() const CASABLANCA_NOEXCEPT
+        const char* what() const CPPREST_NOEXCEPT
         {
             return m_msg.c_str();
         }
@@ -264,7 +264,7 @@ namespace web {
         /// <summary>
         /// Move constructor.
         /// </summary>
-        uri(uri &&other) CASABLANCA_NOEXCEPT :
+        uri(uri &&other) CPPREST_NOEXCEPT :
             m_uri(std::move(other.m_uri)),
             m_components(std::move(other.m_components))
         {}
@@ -272,7 +272,7 @@ namespace web {
         /// <summary>
         /// Move assignment operator
         /// </summary>
-        uri & operator=(uri &&other) CASABLANCA_NOEXCEPT
+        uri & operator=(uri &&other) CPPREST_NOEXCEPT
         {
             if (this != &other)
             {

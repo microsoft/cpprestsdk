@@ -28,7 +28,7 @@
 
 #include "cpprest/details/nosal.h"
 
-#define CASABLANCA_NOEXCEPT noexcept
+#define CPPREST_NOEXCEPT noexcept
 
 #define novtable /* no novtable equivalent */
 #define __declspec(x) __attribute__ ((x))

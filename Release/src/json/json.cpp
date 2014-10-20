@@ -142,14 +142,14 @@ web::json::value &web::json::value::operator=(const value &other)
     }
     return *this;
 }
-web::json::value::value(value &&other) CASABLANCA_NOEXCEPT : 
+web::json::value::value(value &&other) CPPREST_NOEXCEPT : 
     m_value(std::move(other.m_value))
 #ifdef ENABLE_JSON_VALUE_VISUALIZER
     ,m_kind(other.m_kind)
 #endif
 {}
 
-web::json::value &web::json::value::operator=(web::json::value &&other) CASABLANCA_NOEXCEPT
+web::json::value &web::json::value::operator=(web::json::value &&other) CPPREST_NOEXCEPT
 {
     if(this != &other)
     {

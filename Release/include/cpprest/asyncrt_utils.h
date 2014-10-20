@@ -250,11 +250,11 @@ namespace details
 class windows_category_impl : public std::error_category
 {
 public:
-    virtual const char *name() const CASABLANCA_NOEXCEPT { return "windows"; }
+    virtual const char *name() const CPPREST_NOEXCEPT { return "windows"; }
 
-    _ASYNCRTIMP virtual std::string message(int errorCode) const CASABLANCA_NOEXCEPT;
+    _ASYNCRTIMP virtual std::string message(int errorCode) const CPPREST_NOEXCEPT;
 
-    _ASYNCRTIMP virtual std::error_condition default_error_condition(int errorCode) const CASABLANCA_NOEXCEPT;
+    _ASYNCRTIMP virtual std::error_condition default_error_condition(int errorCode) const CPPREST_NOEXCEPT;
 };
 
 /// <summary>

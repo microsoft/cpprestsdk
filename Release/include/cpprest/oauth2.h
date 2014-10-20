@@ -68,8 +68,8 @@ class oauth2_exception : public std::exception
 {
 public:
     oauth2_exception(utility::string_t msg) : m_msg(utility::conversions::to_utf8string(std::move(msg))) {}
-    ~oauth2_exception() CASABLANCA_NOEXCEPT {}
-    const char* what() const CASABLANCA_NOEXCEPT { return m_msg.c_str(); }
+    ~oauth2_exception() CPPREST_NOEXCEPT {}
+    const char* what() const CPPREST_NOEXCEPT { return m_msg.c_str(); }
 
 private:
     std::string m_msg;

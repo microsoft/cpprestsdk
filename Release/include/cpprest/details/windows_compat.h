@@ -34,9 +34,9 @@
 #endif
 
 #if defined(_MSC_VER) && _MSC_VER >= 1900
-#define CASABLANCA_NOEXCEPT noexcept
+#define CPPREST_NOEXCEPT noexcept
 #else
-#define CASABLANCA_NOEXCEPT
+#define CPPREST_NOEXCEPT
 #endif
 
 #define CASABLANCA_UNREFERENCED_PARAMETER(x) (x)
