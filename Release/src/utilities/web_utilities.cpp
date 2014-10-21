@@ -35,13 +35,30 @@ namespace web
 {
 namespace details
 {
-#if defined(_MS_WINDOWS) && !defined(__cplusplus_winrt)
+#if defined(_MS_WINDOWS)
 void zero_memory_deleter::operator()(::utility::string_t *data) const
 {
+#if defined(__cplusplus_winrt)
     SecureZeroMemory(reinterpret_cast<void *>(const_cast<::utility::string_t::value_type *>(data->data())), data->size());
+#else
+    // TODO
+#endif
     delete data;
 }
 
+#if defined(__cplusplus_winrt)
+winrt_encryption::winrt_encryption(const std::wstring &data)
+{
+    // TODO
+}
+
+password_string winrt_encryption::decrypt() const
+{
+    auto data = password_string(new std::wstring());
+    // TODO
+    return std::move(data);
+}
+#else
 win32_encryption::win32_encryption(const std::wstring &data) :
     m_numCharacters(data.size())
 {
@@ -80,6 +97,7 @@ password_string win32_encryption::decrypt() const
     data->resize(m_numCharacters);
     return std::move(data);
 }
+#endif
 #endif
 }
 

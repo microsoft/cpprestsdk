@@ -35,18 +35,30 @@ namespace web
 
 namespace http { namespace client { namespace details {
 class winhttp_client;
+class winrt_client;
 }}}
+namespace experimental { namespace websockets { namespace client { namespace details {
+class winrt_client;
+}}}}
 
 namespace details
 {
-#if defined(_MS_WINDOWS) && !defined(__cplusplus_winrt)
+#if defined(_MS_WINDOWS)
 class zero_memory_deleter
 {
 public:
     _ASYNCRTIMP void operator()(::utility::string_t *data) const;
 };
 typedef std::unique_ptr<std::wstring, zero_memory_deleter> password_string;
-
+#if defined(__cplusplus_winrt)
+class winrt_encryption
+{
+public:
+    winrt_encryption() {}
+    _ASYNCRTIMP winrt_encryption(const std::wstring &data);
+    _ASYNCRTIMP password_string decrypt() const;
+};
+#else
 class win32_encryption
 {
 public:
@@ -58,6 +70,7 @@ private:
     std::vector<char> m_buffer;
     size_t m_numCharacters;
 };
+#endif
 #endif
 }
 
@@ -96,10 +109,10 @@ public:
     CASABLANCA_DEPRECATED("This API is deprecated for security reasons to avoid unnecessary password copies stored in plaintext.")
         utility::string_t password() const
     {
-#if defined(_MS_WINDOWS) && !defined(__cplusplus_winrt)
+#if defined(_MS_WINDOWS)
         return utility::string_t(*m_password.decrypt());
 #else
-        return m_password;
+        throw std::runtime_error("Credentials are not supported on this platform yet.");
 #endif
     }
 
@@ -111,8 +124,10 @@ public:
 
 private:
     friend class http::client::details::winhttp_client;
+    friend class http::client::details::winrt_client;
+    friend class experimental::websockets::client::details::winrt_client;
 
-#if defined(_MS_WINDOWS) && !defined(__cplusplus_winrt)
+#if defined(_MS_WINDOWS)
     details::password_string decrypt() const
     {
         return m_password.decrypt();
@@ -120,10 +135,12 @@ private:
 #endif
 
     ::utility::string_t m_username;
-#if defined(_MS_WINDOWS) && !defined(__cplusplus_winrt)
-    ::web::details::win32_encryption m_password;
+#if defined(_MS_WINDOWS)
+#if defined(__cplusplus_winrt)
+    details::winrt_encryption m_password;
 #else
-    ::utility::string_t m_password;
+    details::win32_encryption m_password;
+#endif
 #endif
 };
 

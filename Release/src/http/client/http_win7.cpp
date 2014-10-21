@@ -923,16 +923,20 @@ private:
             {
                 return false;
             }
-            auto password = cred.decrypt();
-            if (!WinHttpSetCredentials(
-                hRequestHandle,
-                dwAuthTarget,
-                dwSelectedScheme,
-                cred.username().c_str(),
-                password->c_str(),
-                nullptr))
+
+            // New scope to ensure plaintext password is cleared as soon as possible.
             {
-                return false;
+                auto password = cred.decrypt();
+                if (!WinHttpSetCredentials(
+                    hRequestHandle,
+                    dwAuthTarget,
+                    dwSelectedScheme,
+                    cred.username().c_str(),
+                    password->c_str(),
+                    nullptr))
+                {
+                    return false;
+                }
             }
         }
 

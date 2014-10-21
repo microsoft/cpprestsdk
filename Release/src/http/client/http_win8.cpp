@@ -355,7 +355,7 @@ protected:
             return;
         }
 
-        if ( msg.method() == http::methods::TRCE )
+        if (msg.method() == http::methods::TRCE)
         {
             // Not supported by WinInet. Generate a more specific exception than what WinInet does.
             request->report_exception(http_exception(L"TRACE is not supported"));
@@ -377,7 +377,7 @@ protected:
             CLSCTX_INPROC, 
             __uuidof(IXMLHTTPRequest2), 
             reinterpret_cast<void**>(winrt_context->m_hRequest.GetAddressOf()));
-        if ( FAILED(hr) ) 
+        if (FAILED(hr)) 
         {
             request->report_error(hr, L"Failure to create IXMLHTTPRequest2 instance");
             return;
@@ -395,27 +395,32 @@ protected:
             return;
         }
 
-        utility::string_t username, password, proxy_username, proxy_password;
-        if (client_cred.is_set())
+        // New scope to ensure plaintext password is cleared as soon as possible.
         {
-            username = client_cred.username();
-            password  = client_cred.password();
-        }
-        if (proxy_cred.is_set())
-        {
-            proxy_username = proxy_cred.username();
-            proxy_password  = proxy_cred.password();
-        }
+            utility::string_t username, proxy_username;
+            ::web::details::password_string password, proxy_password;
 
-        hr = winrt_context->m_hRequest->Open(
-            msg.method().c_str(), 
-            encoded_resource.c_str(), 
-            Make<HttpRequestCallback>(winrt_context).Get(), 
-            username.c_str(),
-            password.c_str(), 
-            proxy_username.c_str(),
-            proxy_password.c_str());
-        if (FAILED(hr)) 
+            if (client_cred.is_set())
+            {
+                username = client_cred.username();
+                password = client_cred.decrypt();
+            }
+            if (proxy_cred.is_set())
+            {
+                proxy_username = proxy_cred.username();
+                proxy_password = proxy_cred.decrypt();
+            }
+
+            hr = winrt_context->m_hRequest->Open(
+                msg.method().c_str(),
+                encoded_resource.c_str(),
+                Make<HttpRequestCallback>(winrt_context).Get(),
+                username.c_str(),
+                password->c_str(),
+                proxy_username.c_str(),
+                proxy_password->c_str());
+        }
+        if (FAILED(hr))
         {
             request->report_error(hr, L"Failure to open HTTP request");
             return;
@@ -423,7 +428,7 @@ protected:
 
         // Suppress automatic prompts for user credentials, since they are already provided.
         hr = winrt_context->m_hRequest->SetProperty(XHR_PROP_NO_CRED_PROMPT, TRUE);
-        if(FAILED(hr))
+        if (FAILED(hr))
         {
             request->report_error(hr, L"Failure to set no credentials prompt property");
             return;
