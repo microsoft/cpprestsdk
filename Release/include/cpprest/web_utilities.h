@@ -32,16 +32,28 @@
 
 namespace web
 {
+
+namespace http { namespace client { namespace details {
+class winhttp_client;
+}}}
+
 namespace details
 {
 #if defined(_MS_WINDOWS) && !defined(__cplusplus_winrt)
+class zero_memory_deleter
+{
+public:
+    _ASYNCRTIMP void operator()(::utility::string_t *data) const;
+};
+typedef std::unique_ptr<std::wstring, zero_memory_deleter> password_string;
+
 class win32_encryption
 {
 public:
     win32_encryption() {}
     _ASYNCRTIMP win32_encryption(const std::wstring &data);
     _ASYNCRTIMP ~win32_encryption();
-    _ASYNCRTIMP std::wstring decrypt() const;
+    _ASYNCRTIMP password_string decrypt() const;
 private:
     std::vector<char> m_buffer;
     size_t m_numCharacters;
@@ -81,10 +93,11 @@ public:
     /// The password for the user name associated with the credentials.
     /// </summary>
     /// <returns>A string containing the password.</returns>
-    utility::string_t password() const
+    CASABLANCA_DEPRECATED("This API is deprecated for security reasons to avoid unnecessary password copies stored in plaintext.")
+        utility::string_t password() const
     {
 #if defined(_MS_WINDOWS) && !defined(__cplusplus_winrt)
-        return m_password.decrypt();
+        return utility::string_t(*m_password.decrypt());
 #else
         return m_password;
 #endif
@@ -97,6 +110,15 @@ public:
     bool is_set() const { return !m_username.empty(); }
 
 private:
+    friend class http::client::details::winhttp_client;
+
+#if defined(_MS_WINDOWS) && !defined(__cplusplus_winrt)
+    details::password_string decrypt() const
+    {
+        return m_password.decrypt();
+    }
+#endif
+
     ::utility::string_t m_username;
 #if defined(_MS_WINDOWS) && !defined(__cplusplus_winrt)
     ::web::details::win32_encryption m_password;

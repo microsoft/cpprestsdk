@@ -36,6 +36,12 @@ namespace web
 namespace details
 {
 #if defined(_MS_WINDOWS) && !defined(__cplusplus_winrt)
+void zero_memory_deleter::operator()(::utility::string_t *data) const
+{
+    SecureZeroMemory(reinterpret_cast<void *>(const_cast<::utility::string_t::value_type *>(data->data())), data->size());
+    delete data;
+}
+
 win32_encryption::win32_encryption(const std::wstring &data) :
     m_numCharacters(data.size())
 {
@@ -60,19 +66,19 @@ win32_encryption::~win32_encryption()
     SecureZeroMemory(m_buffer.data(), m_buffer.size());
 }
 
-std::wstring win32_encryption::decrypt() const
+password_string win32_encryption::decrypt() const
 {
     // Copy the buffer and decrypt to avoid having to re-encrypt.
-    std::wstring data(reinterpret_cast<const std::wstring::value_type *>(m_buffer.data()), m_buffer.size() / 2);
+    auto data = password_string(new std::wstring(reinterpret_cast<const std::wstring::value_type *>(m_buffer.data()), m_buffer.size() / 2));
     if (!CryptUnprotectMemory(
-        reinterpret_cast<void *>(const_cast<std::wstring::value_type *>(data.c_str())),
+        reinterpret_cast<void *>(const_cast<std::wstring::value_type *>(data->c_str())),
         m_buffer.size(),
         CRYPTPROTECTMEMORY_SAME_PROCESS))
     {
         throw ::utility::details::create_system_error(GetLastError());
     }
-    data.resize(m_numCharacters);
-    return data;
+    data->resize(m_numCharacters);
+    return std::move(data);
 }
 #endif
 }
