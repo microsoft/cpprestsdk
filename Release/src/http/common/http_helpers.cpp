@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@
 #include "cpprest/http_helpers.h"
 #include <array>
 
-using namespace web; 
+using namespace web;
 using namespace utility;
 using namespace utility::conversions;
 
@@ -39,7 +39,7 @@ namespace details
 {
     bool is_content_type_one_of(const utility::string_t *first, const utility::string_t *last, const utility::string_t &value)
     {
-        while (first != last) 
+        while (first != last)
         {
             if(utility::details::str_icmp(*first, value))
             {
@@ -87,7 +87,7 @@ namespace details
     void parse_content_type_and_charset(const utility::string_t &content_type, utility::string_t &content, utility::string_t &charset)
     {
         const size_t semi_colon_index = content_type.find_first_of(_XPLATSTR(";"));
-        
+
         // No charset specified.
         if(semi_colon_index == utility::string_t::npos)
         {
@@ -103,7 +103,7 @@ namespace details
         utility::string_t possible_charset = content_type.substr(semi_colon_index + 1);
         trim_whitespace(possible_charset);
         const size_t equals_index = possible_charset.find_first_of(_XPLATSTR("="));
-        
+
         // No charset specified.
         if(equals_index == utility::string_t::npos)
         {
@@ -126,7 +126,7 @@ namespace details
             charset.pop_back();
         }
         trim_whitespace(charset);
-        if (charset.front() == _XPLATSTR('"') && charset.back() == _XPLATSTR('"')) 
+        if (charset.front() == _XPLATSTR('"') && charset.back() == _XPLATSTR('"'))
         {
             charset = charset.substr(1, charset.size() - 2);
             trim_whitespace(charset);
@@ -160,7 +160,7 @@ namespace details
             return unknown;
         }
         const unsigned char *src = (const unsigned char *)&str[0];
-        
+
         // little endian
         if(src[0] == 0xFF && src[1] == 0xFE)
         {
@@ -251,7 +251,7 @@ namespace details
         {
             return std::move(src);
         }
-        
+
         const size_t size = src.size();
         for(size_t i = 0; i < size; ++i)
         {

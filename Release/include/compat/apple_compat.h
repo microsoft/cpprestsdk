@@ -37,7 +37,7 @@
 #define __declspec(x) __attribute__ ((x))
 
 // ignore these:
-#define dllimport 
+#define dllimport
 
 #include <stdint.h>
 #include <assert.h>

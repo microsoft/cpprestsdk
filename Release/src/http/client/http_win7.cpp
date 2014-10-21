@@ -1,7 +1,7 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
@@ -19,7 +19,7 @@
 * http_client.cpp
 *
 * HTTP Library: Client-side APIs.
-* 
+*
 * This file contains the implementation for Windows Vista, Windows 7 and Windows Server
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
@@ -30,8 +30,8 @@
 #include "cpprest/http_client_impl.h"
 #include "cpprest/producerconsumerstream.h"
 
-namespace web 
-{ 
+namespace web
+{
 namespace http
 {
 namespace client
@@ -135,7 +135,7 @@ class memory_holder
 {
     uint8_t* m_externalData;
     std::vector<uint8_t> m_internalData;
-   
+
 public:
     memory_holder() : m_externalData(nullptr)
     {
@@ -259,8 +259,8 @@ private:
 
     // Can only create on the heap using factory function.
     winhttp_request_context(const std::shared_ptr<_http_client_communicator> &client, const http_request &request)
-        : request_context(client, request), 
-        m_request_handle(nullptr), 
+        : request_context(client, request),
+        m_request_handle(nullptr),
         m_bodyType(no_body),
         m_startingPosition(std::char_traits<uint8_t>::eof()),
         m_body_data(),
@@ -274,7 +274,7 @@ private:
 
 static DWORD ChooseAuthScheme( DWORD dwSupportedSchemes )
 {
-    //  It is the server's responsibility only to accept 
+    //  It is the server's responsibility only to accept
     //  authentication schemes that provide a sufficient
     //  level of security to protect the servers resources.
     //
@@ -299,7 +299,7 @@ static DWORD ChooseAuthScheme( DWORD dwSupportedSchemes )
 class winhttp_client : public _http_client_communicator
 {
 public:
-    winhttp_client(http::uri address, http_client_config client_config) 
+    winhttp_client(http::uri address, http_client_config client_config)
         : _http_client_communicator(std::move(address), std::move(client_config)), m_secure(m_uri.scheme() == _XPLATSTR("https")), m_hSession(nullptr), m_hConnection(nullptr) { }
 
     // Closes session.
@@ -395,7 +395,7 @@ protected:
         // Set timeouts.
         const auto timeout = config.timeout();
         const int milliseconds = 1000 * static_cast<int>(timeout.count());
-        if(!WinHttpSetTimeouts(m_hSession, 
+        if(!WinHttpSetTimeouts(m_hSession,
             milliseconds,
             milliseconds,
             milliseconds,
@@ -509,7 +509,7 @@ protected:
             auto result = WinHttpSetOption(
                 winhttp_context->m_request_handle,
                 WINHTTP_OPTION_PROXY,
-                &info, 
+                &info,
                 sizeof(WINHTTP_PROXY_INFO) );
             if(!result)
             {
@@ -528,7 +528,7 @@ protected:
             auto result = WinHttpSetOption(
                 winhttp_context->m_request_handle,
                 WINHTTP_OPTION_AUTOLOGON_POLICY,
-                &data, 
+                &data,
                 sizeof(data));
             if(!result)
             {
@@ -540,9 +540,9 @@ protected:
         // Check to turn off server certificate verification.
         if(!client_config().validate_certificates())
         {
-            DWORD data = SECURITY_FLAG_IGNORE_UNKNOWN_CA 
-                | SECURITY_FLAG_IGNORE_CERT_DATE_INVALID 
-                | SECURITY_FLAG_IGNORE_CERT_CN_INVALID 
+            DWORD data = SECURITY_FLAG_IGNORE_UNKNOWN_CA
+                | SECURITY_FLAG_IGNORE_CERT_DATE_INVALID
+                | SECURITY_FLAG_IGNORE_CERT_CN_INVALID
                 | SECURITY_FLAG_IGNORE_CERT_WRONG_USAGE;
 
             auto result = WinHttpSetOption(
@@ -568,9 +568,9 @@ protected:
 
             // There is a request body that needs to be transferred.
 
-            if (content_length == std::numeric_limits<size_t>::max()) 
+            if (content_length == std::numeric_limits<size_t>::max())
             {
-                // The content length is unknown and the application set a stream. This is an 
+                // The content length is unknown and the application set a stream. This is an
                 // indication that we will use tranfer encoding chunked.
                 winhttp_context->m_bodyType = transfer_encoding_chunked;
             }
@@ -775,7 +775,7 @@ private:
         SafeInt<size64_t> safeCount = p_request_context->m_remaining_to_write;
         safeCount = safeCount.Min(p_request_context->m_http_client->client_config().chunksize());
 
-        uint8_t*  block = nullptr; 
+        uint8_t*  block = nullptr;
         size_t length = 0;
         if ( rbuf.acquire(block, length) )
         {
@@ -849,7 +849,7 @@ private:
                     nullptr))
                 {
                     p_request_context->report_error(GetLastError(), _XPLATSTR("Error writing data"));
-                }       
+                }
             });
         }
     }
@@ -879,7 +879,7 @@ private:
             }
         }
 
-        //  If we got ERROR_WINHTTP_RESEND_REQUEST, the response header is not available, 
+        //  If we got ERROR_WINHTTP_RESEND_REQUEST, the response header is not available,
         //  we cannot call WinHttpQueryAuthSchemes and WinHttpSetCredentials.
         if (error != ERROR_WINHTTP_RESEND_REQUEST)
         {
@@ -894,7 +894,7 @@ private:
                 hRequestHandle,
                 &dwSupportedSchemes,
                 &dwFirstScheme,
-                &dwAuthTarget)) 
+                &dwAuthTarget))
             {
                 // This will return the authentication failure to the user, without reporting fatal errors
                 return false;
@@ -941,9 +941,9 @@ private:
         if (content_length > 0)
         {
             // There is a request body that needs to be transferred.
-            if (content_length == std::numeric_limits<size_t>::max()) 
+            if (content_length == std::numeric_limits<size_t>::max())
             {
-                // The content length is unknown and the application set a stream. This is an 
+                // The content length is unknown and the application set a stream. This is an
                 // indication that we will need to chunk the data.
                 p_request_context->m_bodyType = transfer_encoding_chunked;
             }
@@ -992,8 +992,8 @@ private:
                     const DWORD errorCode = error_result->dwError;
 
                     //  Some authentication schemes require multiple transactions.
-                    //  When ERROR_WINHTTP_RESEND_REQUEST is encountered, 
-                    //  we should continue to resend the request until a response is received that does not contain a 401 or 407 status code. 
+                    //  When ERROR_WINHTTP_RESEND_REQUEST is encountered,
+                    //  we should continue to resend the request until a response is received that does not contain a 401 or 407 status code.
                     if (errorCode == ERROR_WINHTTP_RESEND_REQUEST)
                     {
                         bool resending = handle_authentication_failure(hRequestHandle, p_request_context, errorCode);
@@ -1031,7 +1031,7 @@ private:
                     {
                         _multiple_segment_write_data(p_request_context);
                     }
-                    else 
+                    else
                     {
                         if(!WinHttpReceiveResponse(hRequestHandle, nullptr))
                         {
@@ -1120,7 +1120,7 @@ private:
                     // Signal that the headers are available.
                     p_request_context->complete_headers();
 
-                    // If the method was 'HEAD,' the body of the message is by definition empty. No need to 
+                    // If the method was 'HEAD,' the body of the message is by definition empty. No need to
                     // read it. Any headers that suggest the presence of a body can safely be ignored.
                     if (p_request_context->m_request.method() == methods::HEAD )
                     {
@@ -1130,7 +1130,7 @@ private:
                     }
 
                     // HTTP Specification states:
-                    // If a message is received with both a Transfer-Encoding header field 
+                    // If a message is received with both a Transfer-Encoding header field
                     // and a Content-Length header field, the latter MUST be ignored.
                     // If none of them is specified, the message length should be determined by the server closing the connection.
                     // http://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4.4
@@ -1266,4 +1266,4 @@ pplx::task<http_response> http_network_handler::propagate(http_request request)
     return result_task;
 }
 
-}}}} // namespaces 
+}}}} // namespaces

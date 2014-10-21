@@ -78,7 +78,7 @@ utility::string_t oauth2_config::build_authorization_uri(bool generate_state)
 pplx::task<void> oauth2_config::token_from_redirected_uri(const web::http::uri& redirected_uri)
 {
     auto query = uri::split_query((implicit_grant()) ? redirected_uri.fragment() : redirected_uri.query());
-    
+
     auto state_param = query.find(oauth2_strings::state);
     if (state_param == query.end())
     {

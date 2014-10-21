@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -77,7 +77,7 @@ namespace Concurrency { namespace streams
                 return ss.str();
             }
         };
-    
+
         template <>
         struct Value2StringFormatter <uint8_t>
         {
@@ -137,7 +137,7 @@ namespace Concurrency { namespace streams
         /// Constructor
         /// </summary>
         /// <param name="buffer">A stream buffer.</param>
-        basic_ostream(streams::streambuf<CharType> buffer) : 
+        basic_ostream(streams::streambuf<CharType> buffer) :
             m_helper(std::make_shared<details::basic_ostream_helper<CharType>>(buffer))
         {
             _verify_and_throw(details::_out_streambuf_msg);
@@ -149,19 +149,19 @@ namespace Concurrency { namespace streams
         pplx::task<void> close() const
         {
             return is_valid() ?
-                helper()->m_buffer.close(std::ios_base::out) : 
-                pplx::task_from_result(); 
+                helper()->m_buffer.close(std::ios_base::out) :
+                pplx::task_from_result();
         }
 
         /// <summary>
         /// Close the stream with exception, preventing further write operations.
         /// </summary>
         /// <param name="eptr">Pointer to the exception.</param>
-        pplx::task<void> close(std::exception_ptr eptr) const 
+        pplx::task<void> close(std::exception_ptr eptr) const
         {
-            return is_valid() ? 
-                helper()->m_buffer.close(std::ios_base::out, eptr) : 
-                pplx::task_from_result(); 
+            return is_valid() ?
+                helper()->m_buffer.close(std::ios_base::out, eptr) :
+                pplx::task_from_result();
         }
 
         /// <summary>
@@ -206,7 +206,7 @@ namespace Concurrency { namespace streams
         /// </summary>
         /// <param name="source">A source stream buffer.</param>
         /// <param name="count">The number of characters to write.</param>
-        pplx::task<size_t> write(streams::streambuf<CharType> source, size_t count) const 
+        pplx::task<size_t> write(streams::streambuf<CharType> source, size_t count) const
         {
             pplx::task<size_t> result;
             if ( !_verify_and_return_task(details::_out_stream_msg, result) ) return result;
@@ -221,12 +221,12 @@ namespace Concurrency { namespace streams
 
             if ( data != nullptr )
             {
-                auto post_read = 
+                auto post_read =
                     [buffer](pplx::task<size_t> op)-> pplx::task<size_t>
                     {
                         auto b = buffer;
                         b.commit(op.get());
-                        return op; 
+                        return op;
                     };
                 return source.getn(data, count).then(post_read);
             }
@@ -237,12 +237,12 @@ namespace Concurrency { namespace streams
                 const bool acquired = source.acquire(data, available);
                 if (available >= count)
                 {
-                    auto post_write = 
+                    auto post_write =
                         [source,data](pplx::task<size_t> op)-> pplx::task<size_t>
                         {
                             auto s = source;
                             s.release(data,op.get());
-                            return op; 
+                            return op;
                         };
                     return buffer.putn(data, count).then(post_write);
                 }
@@ -256,12 +256,12 @@ namespace Concurrency { namespace streams
 
                     std::shared_ptr<CharType> buf(new CharType[count], [](CharType *buf) { delete [] buf; });
 
-                    auto post_write = 
+                    auto post_write =
                         [buf](pplx::task<size_t> op)-> pplx::task<size_t>
                         {
-                            return op; 
+                            return op;
                         };
-                    auto post_read = 
+                    auto post_read =
                         [buf,post_write,buffer](pplx::task<size_t> op) -> pplx::task<size_t>
                         {
                             auto b = buffer;
@@ -281,8 +281,8 @@ namespace Concurrency { namespace streams
         {
             pplx::task<size_t> result;
             if ( !_verify_and_return_task(details::_out_stream_msg, result) ) return result;
-            return (str.size() == 0) 
-                ? pplx::task_from_result<size_t>((0)) 
+            return (str.size() == 0)
+                ? pplx::task_from_result<size_t>((0))
                 : helper()->m_buffer.putn(str.c_str(), str.size());
         }
 
@@ -291,7 +291,7 @@ namespace Concurrency { namespace streams
         /// </summary>
         /// <typeparam name="T">
         /// The data type of the object to be written to the stream
-        /// </typeparam>  
+        /// </typeparam>
         /// <param name="val">Input object.</param>
         template<typename T>
         pplx::task<size_t> print(const T& val) const
@@ -306,7 +306,7 @@ namespace Concurrency { namespace streams
         /// </summary>
         /// <typeparam name="T">
         /// The data type of the object to be written to the stream
-        /// </typeparam>  
+        /// </typeparam>
         /// <param name="val">Input object.</param>
         template<typename T>
         pplx::task<size_t> print_line(const T& val) const
@@ -321,7 +321,7 @@ namespace Concurrency { namespace streams
         /// <summary>
         /// Flush any buffered output data.
         /// </summary>
-        pplx::task<void> flush() const 
+        pplx::task<void> flush() const
         {
             pplx::task<void> result;
             if ( !_verify_and_return_task(details::_out_stream_msg, result) ) return result;
@@ -333,7 +333,7 @@ namespace Concurrency { namespace streams
         /// </summary>
         /// <param name="pos">An offset relative to the beginning of the stream.</param>
         /// <returns>The new position in the stream.</returns>
-        pos_type seek(pos_type pos) const 
+        pos_type seek(pos_type pos) const
         {
             _verify_and_throw(details::_out_stream_msg);
             return helper()->m_buffer.seekpos(pos, std::ios_base::out);
@@ -434,11 +434,11 @@ namespace Concurrency { namespace streams
                 throw std::logic_error("uninitialized stream object");
             return m_helper;
         }
-        
+
         std::shared_ptr<details::basic_ostream_helper<CharType>> m_helper;
     };
 
-    template<typename int_type> 
+    template<typename int_type>
     struct _type_parser_integral_traits
     {
         typedef std::false_type _is_integral;
@@ -598,8 +598,8 @@ namespace Concurrency { namespace streams
         /// <returns>A reference to the stream object that contains the result of the assignment.</returns>
         basic_istream & operator =(const basic_istream &other)
         {
-            m_helper = other.m_helper; 
-            return *this; 
+            m_helper = other.m_helper;
+            return *this;
         }
 
         /// <summary>
@@ -608,8 +608,8 @@ namespace Concurrency { namespace streams
         pplx::task<void> close() const
         {
             return is_valid() ?
-                helper()->m_buffer.close(std::ios_base::in) : 
-                pplx::task_from_result(); 
+                helper()->m_buffer.close(std::ios_base::in) :
+                pplx::task_from_result();
         }
 
         /// <summary>
@@ -619,8 +619,8 @@ namespace Concurrency { namespace streams
         pplx::task<void> close(std::exception_ptr eptr) const
         {
             return is_valid() ?
-                m_helper->m_buffer.close(std::ios_base::in, eptr) : 
-                pplx::task_from_result(); 
+                m_helper->m_buffer.close(std::ios_base::in, eptr) :
+                pplx::task_from_result();
         }
 
         /// <summary>
@@ -666,9 +666,9 @@ namespace Concurrency { namespace streams
             if ( !_verify_and_return_task(details::_in_stream_msg, result) ) return result;
 
             auto copy = std::make_shared<T>();
-            return helper()->m_buffer.getn((CharType*)copy.get(), sizeof(T)).then([copy](pplx::task<size_t> op) -> T 
+            return helper()->m_buffer.getn((CharType*)copy.get(), sizeof(T)).then([copy](pplx::task<size_t> op) -> T
             {
-                return std::move(*copy); 
+                return std::move(*copy);
             });
         }
 
@@ -692,12 +692,12 @@ namespace Concurrency { namespace streams
 
             if ( data != nullptr )
             {
-                auto post_read = 
+                auto post_read =
                     [target](pplx::task<size_t> op)-> pplx::task<size_t>
                     {
                         auto t = target;
                         t.commit(op.get());
-                        return op; 
+                        return op;
                     };
                 return buffer.getn(data, count).then(post_read);
             }
@@ -708,12 +708,12 @@ namespace Concurrency { namespace streams
                 const bool acquired = buffer.acquire(data, available);
                 if (available >= count)
                 {
-                    auto post_write = 
+                    auto post_write =
                         [buffer,data](pplx::task<size_t> op)-> pplx::task<size_t>
                         {
                             auto b = buffer;
                             b.release(data, op.get());
-                            return op; 
+                            return op;
                         };
                     return target.putn(data, count).then(post_write);
                 }
@@ -727,12 +727,12 @@ namespace Concurrency { namespace streams
 
                     std::shared_ptr<CharType> buf(new CharType[count], [](CharType *buf) { delete [] buf; });
 
-                    auto post_write = 
+                    auto post_write =
                         [buf](pplx::task<size_t> op) -> pplx::task<size_t>
                         {
-                            return op; 
+                            return op;
                         };
-                    auto post_read = 
+                    auto post_read =
                         [buf,target,post_write](pplx::task<size_t> op) -> pplx::task<size_t>
                         {
                             auto trg = target;
@@ -778,7 +778,7 @@ namespace Concurrency { namespace streams
 
             // We're having to create all these lambdas because VS 2010 has trouble compiling
             // nested lambdas.
-            auto after_putn = 
+            auto after_putn =
                 [=](pplx::task<size_t> wrote) mutable -> bool
                 {
                     _locals->total += wrote.get();
@@ -787,14 +787,14 @@ namespace Concurrency { namespace streams
                     return true;
                 };
 
-            auto flush = 
+            auto flush =
                 [=] () mutable -> pplx::task<bool>
                 {
                     return target.putn(_locals->outbuf, _locals->write_pos).then(after_putn);
                 };
 
-            auto update = [=] (int_type ch) mutable -> bool 
-                { 
+            auto update = [=] (int_type ch) mutable -> bool
+                {
                     if ( ch == std::char_traits<CharType>::eof() ) return false;
                     if ( ch == delim ) return false;
 
@@ -817,7 +817,7 @@ namespace Concurrency { namespace streams
 
                         if (  ch == req_async )
                             break;
-                        
+
                         if ( !update(ch) )
                             return pplx::task_from_result(false);
                     }
@@ -826,9 +826,9 @@ namespace Concurrency { namespace streams
                 });
 
             return loop.then([=](bool) mutable -> size_t
-                { 
+                {
                     flush().wait();
-                    return _locals->total; 
+                    return _locals->total;
                 });
         }
 
@@ -853,7 +853,7 @@ namespace Concurrency { namespace streams
 
             // We're having to create all these lambdas because VS 2010 has trouble compiling
             // nested lambdas.
-            auto after_putn = 
+            auto after_putn =
                 [=](pplx::task<size_t> wrote) mutable -> bool
                 {
                     _locals->total += wrote.get();
@@ -862,14 +862,14 @@ namespace Concurrency { namespace streams
                     return true;
                 };
 
-            auto flush = 
+            auto flush =
                 [=] () mutable -> pplx::task<bool>
                 {
                     return target.putn(_locals->outbuf, _locals->write_pos).then(after_putn);
                 };
 
-            auto update = [=] (typename std::char_traits<CharType>::int_type ch) mutable -> bool 
-                { 
+            auto update = [=] (typename std::char_traits<CharType>::int_type ch) mutable -> bool
+                {
                     if ( ch == std::char_traits<CharType>::eof() ) return false;
                     if ( ch == '\n' ) return false;
                     if ( ch == '\r' ) { _locals->saw_CR = true; return true; }
@@ -885,15 +885,15 @@ namespace Concurrency { namespace streams
                     return true;
                 };
 
-            auto return_false = 
-                [](pplx::task<typename std::char_traits<CharType>::int_type>) -> pplx::task<bool> 
+            auto return_false =
+                [](pplx::task<typename std::char_traits<CharType>::int_type>) -> pplx::task<bool>
                 {
                     return pplx::task_from_result(false);
                 };
 
-            auto update_after_cr = 
-                [=] (typename std::char_traits<CharType>::int_type ch) mutable -> pplx::task<bool> 
-                { 
+            auto update_after_cr =
+                [=] (typename std::char_traits<CharType>::int_type ch) mutable -> pplx::task<bool>
+                {
                     if ( ch == std::char_traits<CharType>::eof() ) return pplx::task_from_result(false);
                     if ( ch == '\n' )
                         return buffer.bumpc().then(return_false);
@@ -917,12 +917,12 @@ namespace Concurrency { namespace streams
                                 buffer.sbumpc();
                             return pplx::task_from_result(false);
                         }
-                        
+
                         ch = buffer.sbumpc();
 
                         if (  ch == req_async )
                             break;
-                        
+
                         if ( !update(ch) )
                             return pplx::task_from_result(false);
                     }
@@ -935,9 +935,9 @@ namespace Concurrency { namespace streams
                 });
 
             return loop.then([=](bool) mutable -> size_t
-                { 
+                {
                     flush().wait();
-                    return _locals->total; 
+                    return _locals->total;
                 });
         }
 
@@ -986,8 +986,8 @@ namespace Concurrency { namespace streams
             auto loop = pplx::details::do_while(copy_to_target);
 
             return loop.then([=](bool) mutable -> size_t
-                { 
-                    return l_locals->total; 
+                {
+                    return l_locals->total;
                 });
         }
 
@@ -1117,7 +1117,7 @@ namespace Concurrency { namespace streams
             size_t write_pos;
             bool saw_CR;
 
-            bool is_full() const 
+            bool is_full() const
             {
                 return write_pos == buf_size;
             }
@@ -1161,7 +1161,7 @@ pplx::task<void> concurrency::streams::_type_parser_base<CharType>::_skip_whites
 
                 if (  ch == req_async )
                     break;
-                        
+
                 if ( !update(ch) ) {
                     return pplx::task_from_result(false);
                 }
@@ -1170,7 +1170,7 @@ pplx::task<void> concurrency::streams::_type_parser_base<CharType>::_skip_whites
         });
 
     return loop.then([=](pplx::task<bool> op)
-        { 
+        {
             op.wait();
         });
 }
@@ -1186,8 +1186,8 @@ pplx::task<ReturnType> concurrency::streams::_type_parser_base<CharType>::_parse
 
     auto update_end = [=] (pplx::task<int_type> op) -> bool { op.wait(); return true; };
 
-    auto update = [=] (pplx::task<int_type> op) -> pplx::task<bool> 
-            { 
+    auto update = [=] (pplx::task<int_type> op) -> pplx::task<bool>
+            {
                 int_type ch = op.get();
                 if ( ch == std::char_traits<CharType>::eof() ) return pplx::task_from_result(false);
                 bool accptd = accept_character(state, ch);
@@ -1200,7 +1200,7 @@ pplx::task<ReturnType> concurrency::streams::_type_parser_base<CharType>::_parse
 
     auto peek_char = [=]() -> pplx::task<bool>
     {
-        concurrency::streams::streambuf<CharType> buf = buffer; 
+        concurrency::streams::streambuf<CharType> buf = buffer;
 
         // If task results are immediately available, there's little need to use ".then(),"
         // so optimize for prompt values.
@@ -1215,15 +1215,15 @@ pplx::task<ReturnType> concurrency::streams::_type_parser_base<CharType>::_parse
             get_op = buf.getc();
         }
 
-        return get_op.then(update); 
+        return get_op.then(update);
     };
 
-    auto finish = 
+    auto finish =
         [=](pplx::task<bool> op) -> pplx::task<ReturnType>
-        { 
+        {
             op.wait();
             pplx::task<ReturnType> result = extract(state);
-            return result; 
+            return result;
         };
 
     return _skip_whitespace(buffer).then([=](pplx::task<void> op) -> pplx::task<ReturnType>
@@ -1283,11 +1283,11 @@ private:
         {
             // OK to find a sign.
             if ( !::isdigit(ch) && ch != int_type('+') && ch != int_type('-') )
-                return false; 
+                return false;
         }
         else
         {
-            if ( !::isdigit(ch) ) return false; 
+            if ( !::isdigit(ch) ) return false;
         }
 
         // At least one digit was found.
@@ -1311,7 +1311,7 @@ private:
             state->result *= 10;
             state->result += int64_t(ch-int_type('0'));
 
-            if ( (state->result >= 0) != positive ) 
+            if ( (state->result >= 0) != positive )
             {
                 state->correct = false;
                 return false;
@@ -1440,7 +1440,7 @@ static bool _accept_char(std::shared_ptr<_double_state<FloatingPoint>> state, in
 
                 state->result *= 10;
                 state->result += int64_t(ch-int_type('0'));
-                    
+
                 if (state->after_comma > 0)
                     state->after_comma++;
             }
@@ -1462,14 +1462,14 @@ static pplx::task<FloatingPoint> _extract_result(std::shared_ptr<_double_state<F
 
     if (!state->complete && state->exponent)
         throw std::runtime_error("Incomplete exponent");
-    
+
     FloatingPoint result = static_cast<FloatingPoint>((state->minus == 2) ? -state->result : state->result);
     if (state->exponent_minus == 2)
         state->exponent_number = 0 - state->exponent_number;
-        
+
     if (state->after_comma > 0)
         state->exponent_number -= state->after_comma-1;
-        
+
     if (state->exponent_number >= 0)
     {
         result *= pow(FloatingPoint(10.0), state->exponent_number);
@@ -1487,7 +1487,7 @@ static pplx::task<FloatingPoint> _extract_result(std::shared_ptr<_double_state<F
 
         result /= pow(FloatingPoint(10.0), -state->exponent_number);
 
-        if (!is_zero && 
+        if (!is_zero &&
             result > -std::numeric_limits<FloatingPoint>::denorm_min() &&
             result < std::numeric_limits<FloatingPoint>::denorm_min())
             throw std::underflow_error("The value is too small");

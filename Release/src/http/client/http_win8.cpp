@@ -1,7 +1,7 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
@@ -19,7 +19,7 @@
 * http_win8.cpp
 *
 * HTTP Library: Client-side APIs.
-* 
+*
 * This file contains the implementation for Windows 8 App store apps
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
@@ -29,7 +29,7 @@
 #include "stdafx.h"
 #include "cpprest/http_client_impl.h"
 
-namespace web 
+namespace web
 {
 namespace http
 {
@@ -53,8 +53,8 @@ public:
 
     // Request contexts must be created through factory function.
     // But constructor needs to be public for make_shared to access.
-    winrt_request_context(std::shared_ptr<_http_client_communicator> client, http_request &request) 
-        : request_context(client, request), m_hRequest(nullptr) 
+    winrt_request_context(std::shared_ptr<_http_client_communicator> client, http_request &request)
+        : request_context(client, request), m_hRequest(nullptr)
     {
     }
 };
@@ -123,21 +123,21 @@ public:
 
         if (m_request->m_exceptionPtr != nullptr)
             m_request->report_exception(m_request->m_exceptionPtr);
-        else    
+        else
             m_request->complete_request(m_request->m_downloaded);
 
         // Break the circular reference loop.
         //     - winrt_request_context holds a reference to IXmlHttpRequest2
         //     - IXmlHttpRequest2 holds a reference to HttpRequestCallback
         //     - HttpRequestCallback holds a reference to winrt_request_context
-        // 
-        // Not releasing the winrt_request_context below previously worked due to the 
-        // implementation of IXmlHttpRequest2, after calling OnError/OnResponseReceived 
+        //
+        // Not releasing the winrt_request_context below previously worked due to the
+        // implementation of IXmlHttpRequest2, after calling OnError/OnResponseReceived
         // it would immediately release its reference to HttpRequestCallback. However
-        // it since has been discovered on Xbox that the implementation is different, 
+        // it since has been discovered on Xbox that the implementation is different,
         // the reference to HttpRequestCallback is NOT immediately released and is only
         // done at destruction of IXmlHttpRequest2.
-        // 
+        //
         // To be safe we now will break the circular reference.
         m_request.reset();
 
@@ -149,13 +149,13 @@ public:
     {
         if (m_request->m_exceptionPtr != nullptr)
             m_request->report_exception(m_request->m_exceptionPtr);
-        else    
+        else
             m_request->report_error(hrError, L"Error in IXMLHttpRequest2Callback");
-        
+
         // Break the circular reference loop.
         // See full explaination in OnResponseReceived
         m_request.reset();
-        
+
         return S_OK;
     }
 
@@ -197,7 +197,7 @@ public:
         try
         {
             auto buffer = context->_get_readbuffer();
-            
+
             // Do not read more than the specified read_length
             SafeSize safe_count = static_cast<size_t>(cb);
             size_t size_to_read = safe_count.Min(m_read_length);
@@ -323,7 +323,7 @@ public:
     }
 
 private:
-    
+
     // The request context controls the lifetime of this class so we only hold a weak_ptr.
     std::weak_ptr<request_context> m_context;
 };
@@ -372,12 +372,12 @@ protected:
 
         // Start sending HTTP request.
         HRESULT hr = CoCreateInstance(
-            __uuidof(FreeThreadedXMLHTTP60), 
-            nullptr, 
-            CLSCTX_INPROC, 
-            __uuidof(IXMLHTTPRequest2), 
+            __uuidof(FreeThreadedXMLHTTP60),
+            nullptr,
+            CLSCTX_INPROC,
+            __uuidof(IXMLHTTPRequest2),
             reinterpret_cast<void**>(winrt_context->m_hRequest.GetAddressOf()));
-        if ( FAILED(hr) ) 
+        if ( FAILED(hr) )
         {
             request->report_error(hr, L"Failure to create IXMLHTTPRequest2 instance");
             return;
@@ -408,14 +408,14 @@ protected:
         }
 
         hr = winrt_context->m_hRequest->Open(
-            msg.method().c_str(), 
-            encoded_resource.c_str(), 
-            Make<HttpRequestCallback>(winrt_context).Get(), 
+            msg.method().c_str(),
+            encoded_resource.c_str(),
+            Make<HttpRequestCallback>(winrt_context).Get(),
             username.c_str(),
-            password.c_str(), 
+            password.c_str(),
             proxy_username.c_str(),
             proxy_password.c_str());
-        if (FAILED(hr)) 
+        if (FAILED(hr))
         {
             request->report_error(hr, L"Failure to open HTTP request");
             return;

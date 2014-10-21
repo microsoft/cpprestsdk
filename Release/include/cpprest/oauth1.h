@@ -18,7 +18,7 @@
 *
 * oauth1.h
 *
-* HTTP Library: Oauth 1.0 
+* HTTP Library: Oauth 1.0
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
 *
@@ -431,7 +431,7 @@ private:
     {
         _authenticate_request(req, _generate_auth_state());
     }
-    
+
     _ASYNCRTIMP void _authenticate_request(http_request &req, details::oauth1_state state);
 
     _ASYNCRTIMP pplx::task<void> _request_token(details::oauth1_state state, bool is_temp_token_request);

@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@
 
 namespace Concurrency { namespace streams { namespace details {
 
-#if _WIN32_WINNT >= _WIN32_WINNT_VISTA 
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA
 io_scheduler::~io_scheduler()
 {
     if (g_isProcessTerminating != 1)
@@ -44,7 +44,7 @@ io_scheduler::~io_scheduler()
         DestroyThreadpoolEnvironment(&m_environ);
     }
 }
-#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA 
+#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA
 
 /// <summary>
 /// We keep a single instance of the I/O scheduler. In order to create it on first

@@ -189,7 +189,7 @@ protected:
     const typename std::char_traits<CharType>::int_type m_eof;
     size_t m_currentColumn;
     size_t m_currentParsingDepth;
-    
+
 // On APPLE debug overflow happens around 80.
 // The DEBUG macro is defined in XCode but we don't in our CMakeList
 // so for now we will keep the same on debug and release. In the future

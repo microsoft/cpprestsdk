@@ -186,7 +186,7 @@ namespace details
         std::string m_prevLocale;
         int m_prevThreadSetting;
 #elif !defined(ANDROID)
-        locale_t m_prevLocale;        
+        locale_t m_prevLocale;
 #endif
         scoped_c_thread_locale(const scoped_c_thread_locale &);
         scoped_c_thread_locale & operator=(const scoped_c_thread_locale &);
@@ -316,7 +316,7 @@ public:
     enum date_format { RFC_1123, ISO_8601 };
 
     /// <summary>
-    /// Returns the current UTC time. 
+    /// Returns the current UTC time.
     /// </summary>
     static _ASYNCRTIMP datetime __cdecl utc_now();
 
@@ -409,7 +409,7 @@ public:
         return days*_dayTicks;
     }
 
-    bool is_initialized() const 
+    bool is_initialized() const
     {
         return m_interval != 0;
     }
@@ -447,7 +447,7 @@ private:
 class cmp
 {
 public:
-    
+
     static int icmp(std::string left, std::string right)
     {
         size_t i;
@@ -481,7 +481,7 @@ inline int operator- (datetime t1, datetime t2)
 
     // Round it down to seconds
     diff /= 10 * 1000 * 1000;
-    
+
     return static_cast<int>(diff);
 }
 

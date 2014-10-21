@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,12 +37,12 @@
 
 #include "cpprest/http_msg.h"
 
-namespace web 
-{ 
+namespace web
+{
 namespace http
 {
 /// HTTP listener is currently in beta.
-namespace experimental 
+namespace experimental
 {
 /// HTTP server side library.
 namespace listener
@@ -214,9 +214,9 @@ public:
     /// </summary>
     /// <remarks>The resulting listener cannot be used for anything, but is useful to initialize a variable
     /// that will later be overwritten with a real listener instance.</remarks>
-    http_listener() 
+    http_listener()
         : m_impl(utility::details::make_unique<details::http_listener_impl>())
-    { 
+    {
     }
 
     /// <summary>
@@ -224,7 +224,7 @@ public:
     /// </summary>
     /// <remarks>Call close() before allowing a listener to be destroyed.</remarks>
     _ASYNCRTIMP ~http_listener();
-    
+
     /// <summary>
     /// Asychronously open the listener, i.e. start accepting requests.
     /// </summary>
@@ -237,10 +237,10 @@ public:
     /// <summary>
     /// Asychrnoously stop accepting requests and close all connections.
     /// </summary>
-    /// <returns>A task that will be completed once this listener is actually closed, no longer accepting requests.</returns> 
+    /// <returns>A task that will be completed once this listener is actually closed, no longer accepting requests.</returns>
     /// <remarks>
     /// This function will stop accepting requests and wait for all outstanding handler calls
-    /// to finish before completing the task. Waiting on the task returned from close() within 
+    /// to finish before completing the task. Waiting on the task returned from close() within
     /// a handler and blocking waiting for its result will result in a deadlock.
     ///
     /// Call close() before allowing a listener to be destroyed.
@@ -254,7 +254,7 @@ public:
     /// Add a general handler to support all requests.
     /// </summary>
     /// <param name="handler">Funtion object to be called for all requests.</param>
-    void support(std::function<void(http_request)> handler)  
+    void support(std::function<void(http_request)> handler)
     {
         m_impl->m_all_requests = handler;
     }

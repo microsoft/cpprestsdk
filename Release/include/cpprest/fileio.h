@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -89,19 +89,19 @@ namespace details
     /// </summary>
     struct _file_info
     {
-        _ASYNCRTIMP _file_info(std::ios_base::openmode mode, size_t buffer_size) : 
-            m_rdpos(0), 
-            m_wrpos(0), 
-            m_atend(false), 
+        _ASYNCRTIMP _file_info(std::ios_base::openmode mode, size_t buffer_size) :
+            m_rdpos(0),
+            m_wrpos(0),
+            m_atend(false),
             m_buffer_size(buffer_size),
             m_buffer(nullptr),
-            m_bufoff(0), 
+            m_bufoff(0),
             m_bufsize(0),
             m_buffill(0),
             m_mode(mode)
         {
         }
-            
+
         // Positional data
 
         size_t m_rdpos;
@@ -140,7 +140,7 @@ namespace details
 }
 }}
 
-extern "C" 
+extern "C"
 {
 /// <summary>
 /// Open a file and create a streambuf instance to represent it.

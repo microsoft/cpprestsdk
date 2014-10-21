@@ -1,10 +1,10 @@
 /*
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -60,7 +60,7 @@ private:
     bool m_close;
     bool m_chunked;
     std::atomic<int> m_refs; // track how many threads are still referring to this
-    
+
 public:
     connection(std::unique_ptr<boost::asio::ip::tcp::socket> socket, http_linux_server* server, hostport_listener* parent)
     : m_socket(std::move(socket))
@@ -116,7 +116,7 @@ private:
 
     std::string m_host;
     std::string m_port;
-    
+
 public:
      hostport_listener(http_linux_server* server, const std::string& hostport)
     : m_acceptor()
@@ -129,7 +129,7 @@ public:
         m_all_connections_complete.set();
 
         std::istringstream hostport_in(hostport);
-        
+
         std::getline(hostport_in, m_host, ':');
         std::getline(hostport_in, m_port);
     }
@@ -147,7 +147,7 @@ public:
 
 private:
     void on_accept(boost::asio::ip::tcp::socket* socket, const boost::system::error_code& ec);
-    
+
 };
 
 }

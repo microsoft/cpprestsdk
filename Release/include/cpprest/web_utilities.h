@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -141,13 +141,13 @@ public:
     /// Constructs a proxy with the default settings.
     /// </summary>
     web_proxy() : m_address(_XPLATSTR("")), m_mode(use_default_) {}
-    
+
     /// <summary>
     /// Creates a proxy with specified mode.
     /// </summary>
     /// <param name="mode">Mode to use.</param>
     web_proxy( web_proxy_mode mode ) : m_address(_XPLATSTR("")), m_mode(static_cast<web_proxy_mode_internal>(mode)) {}
-    
+
     /// <summary>
     /// Creates a proxy explicitly with provided address.
     /// </summary>
@@ -165,7 +165,7 @@ public:
     /// </summary>
     /// <returns>Credentials to for this proxy.</returns>
     const web::credentials& credentials() const { return m_credentials; }
-    
+
     /// <summary>
     /// Sets the credentials to use for authentication with this proxy.
     /// </summary>
@@ -195,11 +195,11 @@ public:
     /// </summary>
     /// <returns>True if auto discovery enabled, false otherwise.</returns>
     bool is_auto_discovery() const { return m_mode == use_auto_discovery_; }
-    
+
     /// <summary>
     /// Checks if a proxy address is explicitly specified by the user.
     /// </summary>
-    /// <returns>True if a proxy address was explicitly specified, false otherwise.</returns> 
+    /// <returns>True if a proxy address was explicitly specified, false otherwise.</returns>
     bool is_specified() const { return m_mode == user_provided_; }
 
 private:

@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -111,7 +111,7 @@ namespace details {
         typedef typename basic_streambuf<_CharType>::pos_type pos_type;
         typedef typename basic_streambuf<_CharType>::off_type off_type;
 
-        virtual ~basic_file_buffer() 
+        virtual ~basic_file_buffer()
         {
             if( this->can_read() )
             {
@@ -164,7 +164,7 @@ namespace details {
         /// <param name="direction">The direction of buffering (in or out)</param>
         /// <remarks>An implementation that does not support buffering will silently ignore calls to this function and it will not have
         ///          any effect on what is returned by subsequent calls to buffer_size().</remarks>
-        virtual void set_buffer_size(size_t size, std::ios_base::openmode direction = std::ios_base::in) 
+        virtual void set_buffer_size(size_t size, std::ios_base::openmode direction = std::ios_base::in)
         {
             if ( direction == std::ios_base::out ) return;
 
@@ -229,7 +229,7 @@ namespace details {
         {
                 streambuf_state_manager<_CharType>::_close_read();
 
-                if (this->can_write()) 
+                if (this->can_write())
                 {
                     return pplx::task_from_result();
                 }
@@ -251,7 +251,7 @@ namespace details {
         pplx::task<void> _close_write()
         {
             streambuf_state_manager<_CharType>::_close_write();
-            if (this->can_read()) 
+            if (this->can_read())
             {
                 // Read head is still open. Just flush the write data
                 return flush_internal();
@@ -289,7 +289,7 @@ namespace details {
         {
             auto result_tce = pplx::task_completion_event<int_type>();
             auto callback = new _filestream_callback_putc(m_info, result_tce, ch);
-             
+
             size_t written = _putc_fsb(m_info, callback, ch, sizeof(_CharType));
 
             if ( written == sizeof(_CharType) )
@@ -307,7 +307,7 @@ namespace details {
         /// <returns>A pointer to a block to write to, null if the stream buffer implementation does not support alloc/commit.</returns>
         _CharType* _alloc(size_t)
         {
-            return nullptr; 
+            return nullptr;
         }
 
         /// <summary>
@@ -319,7 +319,7 @@ namespace details {
         }
 
         /// <summary>
-        /// Gets a pointer to the next already allocated contiguous block of data. 
+        /// Gets a pointer to the next already allocated contiguous block of data.
         /// </summary>
         /// <param name="ptr">A reference to a pointer variable that will hold the address of the block on success.</param>
         /// <param name="count">The number of contiguous characters available at the address in 'ptr.'</param>
@@ -335,7 +335,7 @@ namespace details {
         {
             ptr = nullptr;
             count = 0;
-            return false; 
+            return false;
         }
 
         /// <summary>
@@ -415,7 +415,7 @@ namespace details {
         /// </summary>
         /// <returns>The value of the byte. EOF if the read fails. <see cref="::requires_async method" /> if an asynchronous read is required</returns>
         /// <remarks>This is a synchronous operation, but is guaranteed to never block.</remarks>
-        virtual int_type _sbumpc() 
+        virtual int_type _sbumpc()
         {
             m_readOps.wait();
             if ( m_info->m_atend ) return traits::eof();
@@ -514,10 +514,10 @@ namespace details {
         /// Retreats the read position, then return the current character withouth advancing.
         /// </summary>
             /// <returns>A <c>task</c> that holds the value of the byte. The value is EOF if the read fails, <c>requires_async</c> if an asynchronous read is required</returns>
-        virtual pplx::task<int_type> _ungetc() 
+        virtual pplx::task<int_type> _ungetc()
         {
             return m_readOps.enqueue_operation([this]()-> pplx::task<int_type> {
-                if ( m_info->m_rdpos == 0 ) 
+                if ( m_info->m_rdpos == 0 )
                     return pplx::task_from_result<int_type>(basic_file_buffer<_CharType>::traits::eof());
                 _seekrdpos_fsb(m_info, m_info->m_rdpos-1, sizeof(_CharType));
                 return this->_getcImpl();
@@ -546,7 +546,7 @@ namespace details {
                     {
                         auto bufoff = m_info->m_rdpos - m_info->m_bufoff;
                         std::memcpy((void *)ptr, this->m_info->m_buffer+bufoff*sizeof(_CharType), count*sizeof(_CharType));
-            
+
                         m_info->m_rdpos += count;
                         return pplx::task_from_result<size_t>(count);
                     }
@@ -589,7 +589,7 @@ namespace details {
 
             auto bufoff = m_info->m_rdpos - m_info->m_bufoff;
             std::memcpy((void *)ptr, this->m_info->m_buffer+bufoff*sizeof(_CharType), copy*sizeof(_CharType));
-            
+
             m_info->m_rdpos += copy;
             m_info->m_atend = (copy < count);
             return copy;
@@ -612,7 +612,7 @@ namespace details {
         /// </summary>
         /// <param name="direction">The I/O direction to seek (see remarks)</param>
         /// <returns>The current position. EOF if the operation fails.</returns>
-        /// <remarks>Some streams may have separate write and read cursors. 
+        /// <remarks>Some streams may have separate write and read cursors.
         ///          For such streams, the direction parameter defines whether to move the read or the write cursor.</remarks>
         virtual pos_type getpos(std::ios_base::openmode mode) const
         {
@@ -625,20 +625,20 @@ namespace details {
         /// <param name="pos">The offset from the beginning of the stream</param>
         /// <param name="direction">The I/O direction to seek (see remarks)</param>
         /// <returns>The position. EOF if the operation fails.</returns>
-        /// <remarks>Some streams may have separate write and read cursors. 
+        /// <remarks>Some streams may have separate write and read cursors.
         ///          For such streams, the direction parameter defines whether to move the read or the write cursor.</remarks>
-        virtual pos_type seekpos(pos_type pos, std::ios_base::openmode mode) 
+        virtual pos_type seekpos(pos_type pos, std::ios_base::openmode mode)
         {
-            if ( mode == std::ios_base::in ) 
+            if ( mode == std::ios_base::in )
             {
                 m_readOps.wait();
-                return (pos_type)_seekrdpos_fsb(m_info, size_t(pos), sizeof(_CharType)); 
+                return (pos_type)_seekrdpos_fsb(m_info, size_t(pos), sizeof(_CharType));
             }
             else if ( (m_info->m_mode & std::ios::ios_base::app) == 0 )
             {
-                return (pos_type)_seekwrpos_fsb(m_info, size_t(pos), sizeof(_CharType)); 
+                return (pos_type)_seekwrpos_fsb(m_info, size_t(pos), sizeof(_CharType));
             }
-            return (pos_type)std::char_traits<_CharType>::eof(); 
+            return (pos_type)std::char_traits<_CharType>::eof();
         }
 
         /// <summary>
@@ -648,11 +648,11 @@ namespace details {
         /// <param name="way">The starting point (beginning, end, current) for the seek.</param>
         /// <param name="mode">The I/O direction to seek (see remarks)</param>
         /// <returns>The position. EOF if the operation fails.</returns>
-        /// <remarks>Some streams may have separate write and read cursors. 
+        /// <remarks>Some streams may have separate write and read cursors.
         ///          For such streams, the mode parameter defines whether to move the read or the write cursor.</remarks>
-        virtual pos_type seekoff(off_type offset, std::ios_base::seekdir way, std::ios_base::openmode mode) 
+        virtual pos_type seekoff(off_type offset, std::ios_base::seekdir way, std::ios_base::openmode mode)
         {
-            if ( mode == std::ios_base::in ) 
+            if ( mode == std::ios_base::in )
             {
                 m_readOps.wait();
                 switch ( way )
@@ -679,7 +679,7 @@ namespace details {
                     break;
                 }
             }
-            return (pos_type)traits::eof(); 
+            return (pos_type)traits::eof();
         }
 
         /// <summary>
@@ -715,7 +715,7 @@ namespace details {
 #ifdef _MS_WINDOWS
             int _Prot = (int)std::ios_base::_Openprot
 #else
-            int _Prot = 0 // unsupported on Linux, for now        
+            int _Prot = 0 // unsupported on Linux, for now
 #endif
             )
         {
@@ -858,7 +858,7 @@ namespace details {
             {
                 if ( result == sizeof(_CharType) )
                 {
-                    m_op.set(m_ch);   
+                    m_op.set(m_ch);
                 }
                 else
                 {
@@ -889,7 +889,7 @@ namespace details {
                 if ( result == sizeof(_CharType) )
                 {
                     m_info->m_rdpos += 1;
-                    m_op.set(m_ch);   
+                    m_op.set(m_ch);
                 }
                 else
                 {
@@ -920,7 +920,7 @@ namespace details {
             {
                 if ( result == sizeof(_CharType) )
                 {
-                    m_op.set(m_ch);   
+                    m_op.set(m_ch);
                 }
                 else
                 {
@@ -1015,7 +1015,7 @@ namespace details {
     class file_stream
     {
     public:
-       
+
 #if !defined(__cplusplus_winrt)
         /// <summary>
         /// Open a new input stream representing the given file.
@@ -1026,7 +1026,7 @@ namespace details {
         /// <param name="prot">The file protection mode</param>
         /// <returns>A <c>task</c> that returns an opened input stream on completion.</returns>
         static pplx::task<streams::basic_istream<_CharType>> open_istream(
-            const utility::string_t &file_name, 
+            const utility::string_t &file_name,
             std::ios_base::openmode mode = std::ios_base::in,
 #ifdef _MS_WINDOWS
             int prot = (int) std::ios_base::_Openprot
@@ -1053,7 +1053,7 @@ namespace details {
         /// <param name="prot">The file protection mode</param>
         /// <returns>A <c>task</c> that returns an opened output stream on completion.</returns>
         static pplx::task<streams::basic_ostream<_CharType>> open_ostream(
-            const utility::string_t &file_name, 
+            const utility::string_t &file_name,
             std::ios_base::openmode mode = std::ios_base::out,
 #ifdef _MS_WINDOWS
             int prot = (int) std::ios_base::_Openprot
@@ -1078,7 +1078,7 @@ namespace details {
         /// <param name="mode">The opening mode of the file</param>
         /// <returns>A <c>task</c> that returns an opened input stream on completion.</returns>
         static pplx::task<streams::basic_istream<_CharType>> open_istream(
-            ::Windows::Storage::StorageFile^ file, 
+            ::Windows::Storage::StorageFile^ file,
             std::ios_base::openmode mode = std::ios_base::in)
         {
             mode |= std::ios_base::in;
@@ -1098,7 +1098,7 @@ namespace details {
         /// <param name="mode">The opening mode of the file</param>
         /// <returns>A <c>task</c> that returns an opened output stream on completion.</returns>
         static pplx::task<streams::basic_ostream<_CharType>> open_ostream(
-            ::Windows::Storage::StorageFile^ file, 
+            ::Windows::Storage::StorageFile^ file,
             std::ios_base::openmode mode = std::ios_base::out)
         {
             mode |= std::ios_base::out;

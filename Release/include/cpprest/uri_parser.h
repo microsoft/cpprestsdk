@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -64,7 +64,7 @@ namespace web { namespace details
         }
 
         /// <summary>
-        /// General delimiters serve as the delimiters between different uri components. 
+        /// General delimiters serve as the delimiters between different uri components.
         /// General delimiters include:
         /// - All of these :/?#[]@
         /// </summary>
@@ -117,7 +117,7 @@ namespace web { namespace details
         /// - '.' (period)
         ///
         /// Note that the scheme must BEGIN with an alpha character.
-        /// </summary> 
+        /// </summary>
         inline bool is_scheme_character(int c)
         {
             return ::utility::details::is_alnum((char)c) || c == '+' || c == '-' || c == '.';
@@ -129,7 +129,7 @@ namespace web { namespace details
         /// - The percent character ('%'), and thus any percent-endcoded octet
         /// - The sub-delimiters
         /// - ':' (colon)
-        /// </summary> 
+        /// </summary>
         inline bool is_user_info_character(int c)
         {
             return is_unreserved(c) || is_sub_delim(c) || c == '%' || c == ':';
@@ -143,7 +143,7 @@ namespace web { namespace details
         /// - ':' (colon)
         /// - '[' (open bracket)
         /// - ']' (close bracket)
-        /// </summary> 
+        /// </summary>
         inline bool is_host_character(int c)
         {
             return is_unreserved(c) || is_sub_delim(c) || c == '%' || c == ':' || c == '[' || c == ']';
@@ -158,7 +158,7 @@ namespace web { namespace details
         ///
         /// Note that we don't currently support:
         /// - IPv6 addresses (requires '[]')
-        /// </summary> 
+        /// </summary>
         inline bool is_authority_character(int c)
         {
             return is_unreserved(c) || is_sub_delim(c) || c == '%' || c == '@' || c == ':';
@@ -171,7 +171,7 @@ namespace web { namespace details
         /// - The sub-delimiters
         /// - ':' (colon)
         /// - '@' (ampersand)
-        /// </summary> 
+        /// </summary>
         inline bool is_path_character(int c)
         {
             return is_unreserved(c) || is_sub_delim(c) || c == '%' || c == '/' || c == ':' || c == '@';
@@ -181,7 +181,7 @@ namespace web { namespace details
         /// Legal characters in the query portion include:
         /// - Any path character
         /// - '?' (question mark)
-        /// </summary> 
+        /// </summary>
         inline bool is_query_character(int c)
         {
             return is_path_character(c) || c == '?';
@@ -191,7 +191,7 @@ namespace web { namespace details
         /// Legal characters in the fragment portion include:
         /// - Any path character
         /// - '?' (question mark)
-        /// </summary> 
+        /// </summary>
         inline bool is_fragment_character(int c)
         {
             // this is intentional, they have the same set of legal characters
