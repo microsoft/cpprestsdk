@@ -49,14 +49,16 @@ class zero_memory_deleter
 public:
     _ASYNCRTIMP void operator()(::utility::string_t *data) const;
 };
-typedef std::unique_ptr<std::wstring, zero_memory_deleter> password_string;
+typedef std::unique_ptr<std::wstring, zero_memory_deleter> plaintext_string;
 #if defined(__cplusplus_winrt)
 class winrt_encryption
 {
 public:
     winrt_encryption() {}
     _ASYNCRTIMP winrt_encryption(const std::wstring &data);
-    _ASYNCRTIMP password_string decrypt() const;
+    _ASYNCRTIMP plaintext_string decrypt() const;
+private:
+    ::pplx::task<Windows::Storage::Streams::IBuffer ^> m_buffer;
 };
 #else
 class win32_encryption
@@ -65,7 +67,7 @@ public:
     win32_encryption() {}
     _ASYNCRTIMP win32_encryption(const std::wstring &data);
     _ASYNCRTIMP ~win32_encryption();
-    _ASYNCRTIMP password_string decrypt() const;
+    _ASYNCRTIMP plaintext_string decrypt() const;
 private:
     std::vector<char> m_buffer;
     size_t m_numCharacters;
@@ -128,7 +130,7 @@ private:
     friend class experimental::websockets::client::details::winrt_client;
 
 #if defined(_MS_WINDOWS)
-    details::password_string decrypt() const
+    details::plaintext_string decrypt() const
     {
         return m_password.decrypt();
     }

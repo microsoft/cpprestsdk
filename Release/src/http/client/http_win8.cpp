@@ -395,20 +395,24 @@ protected:
             return;
         }
 
-        // New scope to ensure plaintext password is cleared as soon as possible.
+        // New scope to ensure plain text password is cleared as soon as possible.
         {
             utility::string_t username, proxy_username;
-            ::web::details::password_string password, proxy_password;
+            const utility::char_t *password = nullptr;
+            const utility::char_t *proxy_password = nullptr;
+            ::web::details::plaintext_string password_plaintext, proxy_password_plaintext;
 
             if (client_cred.is_set())
             {
                 username = client_cred.username();
-                password = client_cred.decrypt();
+                password_plaintext = client_cred.decrypt();
+                password = password_plaintext->c_str();
             }
             if (proxy_cred.is_set())
             {
                 proxy_username = proxy_cred.username();
-                proxy_password = proxy_cred.decrypt();
+                proxy_password_plaintext = proxy_cred.decrypt();
+                proxy_password = proxy_password_plaintext->c_str();
             }
 
             hr = winrt_context->m_hRequest->Open(
@@ -416,9 +420,9 @@ protected:
                 encoded_resource.c_str(),
                 Make<HttpRequestCallback>(winrt_context).Get(),
                 username.c_str(),
-                password->c_str(),
+                password,
                 proxy_username.c_str(),
-                proxy_password->c_str());
+                proxy_password);
         }
         if (FAILED(hr))
         {
