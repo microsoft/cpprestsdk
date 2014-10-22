@@ -26,3 +26,14 @@ Replace the "C:\Program Files (x86)\Outercurve Foundation\Modules\CoApp\etc\Pivo
         Write-NuGetPackage .\cpprestsdk.autopkg -SplitThreshold 1000
         
 8. Test generated NuGet package ***Important*** on ALL flavors, architectures, platforms(XP, store, phone, desktop), configurations, VS versions
+
+
+-----------------------------------------------------
+Manually generate NuGet
+1. Copy the Casablanca\Binaries to \Casablanca\Release\nuget\Binaries. 
+2. Copy the \Casablanca\Release\include to \Casablanca\Release\nuget\include. 
+3. Running rename_stripped_pdbs.ps1 script to replace full symbols with stripped ones. 
+4. Update the init.ps1 to correct version. (e.g. change  cpprest2_1.natvis to cpprest2_2.natvis).
+5. Update the cpprestsdk.nuspec with the correct version number. 
+6. Update the cpprestsdk.targets with the correct version number. 
+7. Download the Nuget command utility, run the command "nuget.exe pack" under the directory where this cpprestsdk.nuspec created.
