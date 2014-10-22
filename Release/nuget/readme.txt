@@ -30,10 +30,9 @@ Replace the "C:\Program Files (x86)\Outercurve Foundation\Modules\CoApp\etc\Pivo
 
 -----------------------------------------------------
 Manually generate NuGet
-1. Copy the Casablanca\Binaries to \Casablanca\Release\nuget\Binaries. 
-2. Copy the \Casablanca\Release\include to \Casablanca\Release\nuget\include. 
+1. Run the update.ps1 to copy the binaries and update the cpprestsdk.nuspec version number. (i.e. update.ps1 -OldVer 2_2 -NewVer 2_3)
+2. Update the cpprestsdk.nuspec metadata to correct version description. (i.e. change the "<version>2.2.0</version>" to "<version>2.3.0</version>")
 3. Running rename_stripped_pdbs.ps1 script to replace full symbols with stripped ones. 
-4. Update the init.ps1 to correct version. (e.g. change  cpprest2_1.natvis to cpprest2_2.natvis).
-5. Update the cpprestsdk.nuspec with the correct version number. 
-6. Update the cpprestsdk.targets with the correct version number. 
+4. Update the init.ps1 to correct version. (e.g. change  cpprest2_2.natvis to cpprest2_3.natvis).
+6. Update the cpprestsdk.targets with the correct version number. (change the "<CppRestSDKVersionMinor>2</CppRestSDKVersionMinor>" to "<CppRestSDKVersionMinor>3</CppRestSDKVersionMinor>")
 7. Download the Nuget command utility, run the command "nuget.exe pack" under the directory where this cpprestsdk.nuspec created.
