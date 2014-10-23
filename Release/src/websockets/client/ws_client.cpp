@@ -52,6 +52,7 @@
 #undef ntohll
 #undef htonll
 #endif
+#define _WEBSOCKETPP_NULLPTR_TOKEN_ 0
 #include <websocketpp/config/asio_client.hpp>
 #include <websocketpp/config/asio_no_tls_client.hpp>
 #include <websocketpp/client.hpp>
