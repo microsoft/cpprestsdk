@@ -29,6 +29,10 @@
 
 #include "stdafx.h"
 
+#if defined(BOOST_NO_CXX11_SMART_PTR)
+#error "Cpp rest SDK requires c++11 smart pointer support from boost"
+#endif
+
 #include "cpprest/http_client_impl.h"
 #include "cpprest/x509_cert_utilities.h"
 #include <unordered_set>
@@ -635,7 +639,7 @@ namespace web { namespace http
                 bool handle_cert_verification(bool preverified, boost::asio::ssl::verify_context &verifyCtx, const std::shared_ptr<linux_client_request_context> &requestCtx)
                 {
                     // Unreferenced parameter on some platforms.
-                    requestCtx;
+                    CASABLANCA_UNREFERENCED_PARAMETER(requestCtx);
 
                     // OpenSSL calls the verification callback once per certificate in the chain,
                     // starting with the root CA certificate. The 'leaf', non-Certificate Authority (CA)
