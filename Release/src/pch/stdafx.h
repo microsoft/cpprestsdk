@@ -70,6 +70,12 @@
 #include <atomic>
 #include <signal.h>
 #include "pthread.h"
+#if defined(ANDROID)
+// Boost doesn't recognize libstdcpp on top of clang correctly
+#include "boost/config/stdlib/libstdcpp3.hpp"
+#undef BOOST_NO_CXX11_SMART_PTR
+#undef BOOST_NO_CXX11_NULLPTR
+#endif
 #include "boost/thread/mutex.hpp"
 #include "boost/locale.hpp"
 #include "boost/thread/condition_variable.hpp"
