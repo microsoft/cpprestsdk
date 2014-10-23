@@ -130,7 +130,6 @@ int TestRunner::GetTestTimeout(Test* const curTest, int const defaultTestTimeInM
 
 #if defined(ANDROID)
 static JavaVM* JVM = nullptr;
-static thread_local JNIEnv* JVM_ENV = nullptr;
 
 extern "C" jint JNI_OnLoad(JavaVM* vm, void* reserved)
 {
@@ -179,7 +178,12 @@ void TestRunner::RunTest(TestResults* const result, Test* const curTest, int con
         auto testRunnerFuture = std::async(std::launch::async, [&]()
         {
 #if defined(ANDROID)
-            JVM->AttachCurrentThread(&JVM_ENV, nullptr);
+            JNIEnv* env = nullptr;
+            auto result = JVM->AttachCurrentThread(&env, nullptr);
+            if (result != JNI_OK)
+            {
+                throw std::runtime_error("Could not attach to JVM");
+            }
             BOOST_SCOPE_EXIT(void)
             {
                 JVM->DetachCurrentThread();
