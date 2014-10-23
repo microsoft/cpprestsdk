@@ -29,28 +29,29 @@ if(IOS)
 elseif(ANDROID)
   set(ANDROID_SOURCE_DIR "${CMAKE_SOURCE_DIR}/../Build_android")
 
-  set(Boost_COMPILER "-gcc")
+  set(Boost_COMPILER "-clang")
   set(Boost_USE_STATIC_LIBS ON)
   set(BOOST_ROOT "${CMAKE_BINARY_DIR}/../Boost-for-Android/build")
   set(BOOST_LIBRARYDIR "${CMAKE_BINARY_DIR}/../Boost-for-Android/build/lib")
   find_host_package(Boost 1.55 EXACT REQUIRED COMPONENTS random system thread locale filesystem chrono atomic)
 
-  find_package(Threads REQUIRED)
+  # find_package(Threads REQUIRED)
   set(OPENSSL_FOUND 1)
   set(OPENSSL_INCLUDE_DIR "${CMAKE_BINARY_DIR}/../openssl/r9d-9-armeabiv7/include")
   set(OPENSSL_LIBRARIES
     "${CMAKE_BINARY_DIR}/../openssl/r9d-9-armeabiv7/lib/libssl.a"
     "${CMAKE_BINARY_DIR}/../openssl/r9d-9-armeabiv7/lib/libcrypto.a"
     )
-  set(LIBCXX_STL "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.8/libs/armeabi-v7a/libgnustl_shared.so")
+  set(LIBCXX_STL "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.8/libs/armeabi-v7a/thumb/libgnustl_static.a")
   set(ANDROID_STL_FLAGS
-    gcc
+#    pthread
     ${LIBCXX_STL}
-    atomic
+#    atomic
+    dl
+    gcc
     c
     m
-    dl
-    -nodefaultlibs
+#    -nodefaultlibs
     )
 
   set(BUILD_SHARED_LIBS ON)
