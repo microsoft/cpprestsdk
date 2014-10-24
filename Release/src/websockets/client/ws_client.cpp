@@ -34,7 +34,7 @@
 #include <memory>
 #include <thread>
 
-#if (!defined(WINAPI_FAMILY) || WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP) && !defined(_M_ARM) && (!defined(_MSC_VER) || (_MSC_VER < 1900))
+#if ((!defined(WINAPI_FAMILY) || WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP) && !defined(_M_ARM) && (!defined(_MSC_VER) || (_MSC_VER < 1900))) && !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 #if defined(__GNUC__)
 #include "pplx/threadpool.h"
 #pragma GCC diagnostic push
@@ -633,7 +633,7 @@ private:
     // after construction based on the URI.
     struct websocketpp_client_base
     {
-    	virtual ~websocketpp_client_base() _noexcept {}
+    	virtual ~websocketpp_client_base() CPPREST_NOEXCEPT {}
     	template <typename WebsocketConfig>
     	websocketpp::client<WebsocketConfig> & client()
     	{

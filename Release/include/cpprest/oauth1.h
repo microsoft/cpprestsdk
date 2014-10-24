@@ -117,8 +117,8 @@ class oauth1_exception : public std::exception
 {
 public:
     oauth1_exception(utility::string_t msg) : m_msg(utility::conversions::to_utf8string(std::move(msg))) {}
-    ~oauth1_exception() _noexcept {}
-    const char* what() const _noexcept { return m_msg.c_str(); }
+    ~oauth1_exception() CPPREST_NOEXCEPT {}
+    const char* what() const CPPREST_NOEXCEPT { return m_msg.c_str(); }
 
 private:
     std::string m_msg;
