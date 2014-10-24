@@ -107,7 +107,6 @@ static void parse_winhttp_headers(HINTERNET request_handle, _In_z_ utf16char *he
 static std::string build_callback_error_msg(_In_ WINHTTP_ASYNC_RESULT *error_result)
 {
 	std::stringstream error_msg;
-	error_msg << "Error [" << GetLastError() << "] in: ";
     switch(error_result->dwResult)
     {
     case API_RECEIVE_RESPONSE:
@@ -129,6 +128,20 @@ static std::string build_callback_error_msg(_In_ WINHTTP_ASYNC_RESULT *error_res
         error_msg << "Unknown WinHTTP Function";
         break;
     }
+    error_msg << ": " << error_result->dwError << ": ";
+    std::array<char, 256> buf = { 0 };
+
+    auto hr = ::FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM,
+                              NULL,
+                              error_result->dwError,
+                              MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                              buf.data(),
+                              buf.size() - 1,
+                              NULL);
+    if (hr == 0)
+        error_msg << buf.data();
+    else
+        error_msg << "?";
     return error_msg.str();
 }
 
