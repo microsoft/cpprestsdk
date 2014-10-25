@@ -26,9 +26,9 @@
 
 set -e
 
-# Note: we require android ndk r9d available from
-# https://dl.google.com/android/ndk/android-ndk-r9d-linux-x86_64.tar.bz2
-# https://dl.google.com/android/ndk/android-ndk-r9d-windows-x86_64.zip
+# Note: we require android ndk r10 available from
+# http://dl.google.com/android/ndk/android-ndk32-r10-linux-x86_64.tar.bz2
+# http://dl.google.com/android/ndk/android-ndk32-r10-windows-x86_64.zip
 
 # -----------------
 # Parse args
