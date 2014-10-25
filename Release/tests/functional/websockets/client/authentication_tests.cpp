@@ -86,8 +86,6 @@ TEST_FIXTURE(uri_address, auth_with_credentials, "Ignore", "245")
 }
 #endif
 
-// Server certificate verification isn't implemented on Windows desktop yet.
-#if !defined(_MS_WINDOWS) || defined(__cplusplus_winrt)
 TEST_FIXTURE(uri_address, ssl_test)
 {
     websocket_client client;
@@ -110,7 +108,6 @@ TEST_FIXTURE(uri_address, ssl_test)
     receive_task.wait();
     client.close().wait();
 }
-#endif
 
 } // SUITE(authentication_tests)
 

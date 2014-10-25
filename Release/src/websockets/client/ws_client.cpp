@@ -109,7 +109,7 @@ public:
         m_work(utility::details::make_unique<boost::asio::io_service::work>(m_service)),
         m_state(CREATED),
         m_num_sends(0)
-#if defined(__APPLE__) || defined(ANDROID)
+#if defined(__APPLE__) || defined(ANDROID) || defined(_MS_WINDOWS)
         , m_openssl_failed(false)
 #endif
     {}
@@ -174,12 +174,12 @@ public:
                 sslContext->set_default_verify_paths();
                 sslContext->set_options(boost::asio::ssl::context::default_workarounds);
                 sslContext->set_verify_mode(boost::asio::ssl::context::verify_peer);
-#if defined(__APPLE__) || defined(ANDROID)
+#if defined(__APPLE__) || defined(ANDROID) || defined(_MS_WINDOWS)
                 m_openssl_failed = false;
 #endif
                 sslContext->set_verify_callback([this](bool preverified, boost::asio::ssl::verify_context &verifyCtx)
                 {
-#if defined(__APPLE__) || defined(ANDROID)
+#if defined(__APPLE__) || defined(ANDROID) || defined(_MS_WINDOWS)
                     // On OS X, iOS, and Android, OpenSSL doesn't have access to where the OS
                     // stores keychains. If OpenSSL fails we will doing verification at the
                     // end using the whole certificate chain so wait until the 'leaf' cert.
@@ -190,7 +190,7 @@ public:
                     }
                     if(m_openssl_failed)
                     {
-                        return http::client::details::verify_cert_chain_platform_specific(verifyCtx, m_uri.host());
+                        return http::client::details::verify_cert_chain_platform_specific(verifyCtx, utility::conversions::to_utf8string(m_uri.host()));
                     }
 #endif
                     boost::asio::ssl::rfc2818_verification rfc2818(utility::conversions::to_utf8string(m_uri.host()));
@@ -711,7 +711,7 @@ private:
     // Used to track if any of the OpenSSL server certificate verifications
     // failed. This can safely be tracked at the client level since connections
     // only happen once for each client.
-#if defined(__APPLE__) || defined(ANDROID)
+#if defined(__APPLE__) || defined(ANDROID) || defined(_MS_WINDOWS)
     bool m_openssl_failed;
 #endif
 

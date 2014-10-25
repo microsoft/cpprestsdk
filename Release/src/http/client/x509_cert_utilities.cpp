@@ -41,13 +41,16 @@
 
 #if defined(ANDROID)
 #include <jni.h>
+using namespace crossplat;
 #endif
 
-using namespace crossplat;
+#if defined(_MS_WINDOWS)  && !defined(__cplusplus_winrt)
+#include <wincrypt.h>
+#endif
 
 namespace web { namespace http { namespace client { namespace details {
 
-#if defined(__APPLE__) || defined(ANDROID)
+#if defined(__APPLE__) || defined(ANDROID) || (defined(_MS_WINDOWS)  && !defined(__cplusplus_winrt))
 bool verify_cert_chain_platform_specific(boost::asio::ssl::verify_context &verifyCtx, const std::string &hostName)
 {
     X509_STORE_CTX *storeContext = verifyCtx.native_handle();
@@ -89,7 +92,83 @@ bool verify_cert_chain_platform_specific(boost::asio::ssl::verify_context &verif
         certChain.push_back(std::move(certData));
     }
 
-    return verify_X509_cert_chain(certChain, hostName);
+    auto verify_result = verify_X509_cert_chain(certChain, hostName);
+
+    // The Windows Crypto APIs don't do host name checks, use Boost's implementation.
+#if defined(_MS_WINDOWS)
+    if (verify_result)
+    {
+        boost::asio::ssl::rfc2818_verification rfc2818(hostName);
+        verify_result = rfc2818(verify_result, verifyCtx);
+    }
+#endif
+    return verify_result;
+}
+#endif
+
+#if defined(_MS_WINDOWS)  && !defined(__cplusplus_winrt)
+
+// Helper RAII unique_ptrs to free Windows structures.
+struct cert_free_certificate_context
+{
+    void operator()(const CERT_CONTEXT *ctx) const
+    {
+        CertFreeCertificateContext(ctx);
+    }
+};
+typedef std::unique_ptr<const CERT_CONTEXT, cert_free_certificate_context> cert_context;
+struct cert_free_certificate_chain
+{
+    void operator()(const CERT_CHAIN_CONTEXT *chain) const
+    {
+        CertFreeCertificateChain(chain);
+    }
+};
+typedef std::unique_ptr<const CERT_CHAIN_CONTEXT, cert_free_certificate_chain> chain_context;
+
+bool verify_X509_cert_chain(const std::vector<std::string> &certChain, const std::string &)
+{
+    // Create certificate context from server certificate.
+    cert_context cert(CertCreateCertificateContext(
+        X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
+        reinterpret_cast<const unsigned char *>(certChain[0].c_str()),
+        certChain[0].size()));
+    if (cert == nullptr)
+    {
+        return false;
+    }
+
+    // Let the OS build a certificate chain from the server certificate.
+    CERT_CHAIN_PARA params;
+    ZeroMemory(&params, sizeof(params));
+    params.cbSize = sizeof(CERT_CHAIN_PARA);
+    params.RequestedUsage.dwType = USAGE_MATCH_TYPE_AND;
+    LPTSTR usages[] = { szOID_PKIX_KP_SERVER_AUTH };
+    params.RequestedUsage.Usage.cUsageIdentifier = 1;
+    params.RequestedUsage.Usage.rgpszUsageIdentifier = usages;
+    PCCERT_CHAIN_CONTEXT chainContext;
+    chain_context chain;
+    if (!CertGetCertificateChain(
+        nullptr,
+        cert.get(),
+        nullptr,
+        nullptr,
+        &params,
+        CERT_CHAIN_REVOCATION_CHECK_CHAIN,
+        nullptr,
+        &chainContext))
+    {
+        return false;
+    }
+    chain.reset(chainContext);
+
+    // Check to see if the certificate chain is actually trusted.
+    if (chain->TrustStatus.dwErrorStatus != CERT_TRUST_NO_ERROR)
+    {
+        return false;
+    }
+
+    return true;
 }
 #endif
 
