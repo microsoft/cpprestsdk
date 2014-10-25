@@ -48,12 +48,17 @@
       <AdditionalDependencies>$(MSBuildThisFileDirectory)lib\Win32\v120\Release\Desktop\cpprest120_$(CppRestSDKVersionFileSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Label="Win32 and v120_wp81 and Release and Phone8" Condition="'$(Platform.ToLower())' == 'win32' And '$(PlatformToolset.ToLower())' == 'v120_wp81' And ( $(Configuration.ToLower().IndexOf('debug')) == -1 ) And ('true' == 'true')">
+  <ItemDefinitionGroup Label="Win32 and v120_wp81 and Release and Phone8" Condition="'$(Platform.ToLower())' == 'win32' And '$(PlatformToolset.ToLower())' == 'v120_wp81' And ( $(Configuration.ToLower().IndexOf('debug')) == -1 )">
     <Link>
       <AdditionalDependencies>$(MSBuildThisFileDirectory)lib\Win32\v120_wp81\Release\Phone8\cpprest120_wp81_$(CppRestSDKVersionFileSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Label="Win32 and v110_wp80 and Debug and Phone8" Condition="'$(Platform.ToLower())' == 'win32' And '$(PlatformToolset.ToLower())' == 'v110_wp80' And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 ) And ('true' == 'true')">
+  <ItemDefinitionGroup Label="Win32 and v120 and Release and Phone8 Silverlight" Condition="'$(Platform.ToLower())' == 'win32' And '$(PlatformToolset.ToLower())' == 'v120' And ( $(Configuration.ToLower().IndexOf('debug')) == -1 ) And '$(ApplicationType)' == 'Windows Phone Silverlight'">
+    <Link>
+      <AdditionalDependencies>$(MSBuildThisFileDirectory)lib\Win32\v120\Release\Phone8Silverlight\cpprest120_wps81_$(CppRestSDKVersionFileSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Label="Win32 and v110_wp80 and Debug and Phone8" Condition="'$(Platform.ToLower())' == 'win32' And '$(PlatformToolset.ToLower())' == 'v110_wp80' And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 )">
     <Link>
       <AdditionalDependencies>$(MSBuildThisFileDirectory)lib\Win32\v110_wp80\Debug\Phone8\cpprest110d_wp8_$(CppRestSDKVersionFileSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
@@ -93,7 +98,7 @@
       <AdditionalDependencies>$(MSBuildThisFileDirectory)lib\x64\v120_xp\Release\Desktop\cpprest120_xp_$(CppRestSDKVersionFileSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Label="ARM and v110_wp80 and Debug and Phone8" Condition="'$(Platform.ToLower())' == 'arm' And '$(PlatformToolset.ToLower())' == 'v110_wp80' And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 ) And ('true' == 'true')">
+  <ItemDefinitionGroup Label="ARM and v110_wp80 and Debug and Phone8" Condition="'$(Platform.ToLower())' == 'arm' And '$(PlatformToolset.ToLower())' == 'v110_wp80' And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 )">
     <Link>
       <AdditionalDependencies>$(MSBuildThisFileDirectory)lib\ARM\v110_wp80\Debug\Phone8\cpprest110d_wp8_$(CppRestSDKVersionFileSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
@@ -123,9 +128,14 @@
       <AdditionalDependencies>$(MSBuildThisFileDirectory)lib\x64\v110_xp\Release\Desktop\cpprest110_xp_$(CppRestSDKVersionFileSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Label="Win32 and v120_wp81 and Debug and Phone8" Condition="'$(Platform.ToLower())' == 'win32' And '$(PlatformToolset.ToLower())' == 'v120_wp81' And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 ) And ('true' == 'true')">
+  <ItemDefinitionGroup Label="Win32 and v120_wp81 and Debug and Phone8" Condition="'$(Platform.ToLower())' == 'win32' And '$(PlatformToolset.ToLower())' == 'v120_wp81' And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 )">
     <Link>
       <AdditionalDependencies>$(MSBuildThisFileDirectory)lib\Win32\v120_wp81\Debug\Phone8\cpprest120d_wp81_$(CppRestSDKVersionFileSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Label="Win32 and v120 and Debug and Phone8 Silverlight" Condition="'$(Platform.ToLower())' == 'win32' And '$(PlatformToolset.ToLower())' == 'v120' And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 ) And '$(ApplicationType)' == 'Windows Phone Silverlight'">
+    <Link>
+      <AdditionalDependencies>$(MSBuildThisFileDirectory)lib\Win32\v120\Debug\Phone8Silverlight\cpprest120d_wps81_$(CppRestSDKVersionFileSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Label="Win32 and v110 and Debug and WinRT" Condition="'$(Platform.ToLower())' == 'win32' And ( '$(PlatformToolset.ToLower())' == 'v110' Or '$(PlatformToolset.ToLower())' == 'windowskernelmodedriver8.0' Or '$(PlatformToolset.ToLower())' == 'windowsapplicationfordrivers8.0' Or '$(PlatformToolset.ToLower())' == 'windowsusermodedriver8.0' ) And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 ) And ('$(AppContainerApplication.ToLower())' == 'true')">
@@ -148,9 +158,14 @@
       <AdditionalDependencies>$(MSBuildThisFileDirectory)lib\ARM\v120\Release\WinRT\cpprest120_app_$(CppRestSDKVersionFileSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Label="ARM and v120_wp81 and Release and Phone8" Condition="'$(Platform.ToLower())' == 'arm' And '$(PlatformToolset.ToLower())' == 'v120_wp81' And ( $(Configuration.ToLower().IndexOf('debug')) == -1 ) And ('true' == 'true')">
+  <ItemDefinitionGroup Label="ARM and v120_wp81 and Release and Phone8" Condition="'$(Platform.ToLower())' == 'arm' And '$(PlatformToolset.ToLower())' == 'v120_wp81' And ( $(Configuration.ToLower().IndexOf('debug')) == -1 )">
     <Link>
       <AdditionalDependencies>$(MSBuildThisFileDirectory)lib\ARM\v120_wp81\Release\Phone8\cpprest120_wp81_$(CppRestSDKVersionFileSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Label="ARM and v120 and Release and Phone8 Silverlight" Condition="'$(Platform.ToLower())' == 'arm' And '$(PlatformToolset.ToLower())' == 'v120' And ( $(Configuration.ToLower().IndexOf('debug')) == -1 ) And '$(ApplicationType)' == 'Windows Phone Silverlight'">
+    <Link>
+      <AdditionalDependencies>$(MSBuildThisFileDirectory)lib\ARM\v120\Release\Phone8Silverlight\cpprest120_wps81_$(CppRestSDKVersionFileSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Label="Win32 and v120 and Debug and WinRT" Condition="'$(Platform.ToLower())' == 'win32' And ( '$(PlatformToolset.ToLower())' == 'v120' Or '$(PlatformToolset.ToLower())' == 'ctp_nov2013' Or '$(PlatformToolset.ToLower())' == 'windowskernelmodedriver8.0' Or '$(PlatformToolset.ToLower())' == 'windowsapplicationfordrivers8.0' Or '$(PlatformToolset.ToLower())' == 'windowsusermodedriver8.0' ) And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 ) And ('$(AppContainerApplication.ToLower())' == 'true')">
@@ -173,12 +188,17 @@
       <AdditionalDependencies>$(MSBuildThisFileDirectory)lib\x64\v110\Release\Desktop\cpprest110_$(CppRestSDKVersionFileSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Label="ARM and v120_wp81 and Debug and Phone8" Condition="'$(Platform.ToLower())' == 'arm' And '$(PlatformToolset.ToLower())' == 'v120_wp81' And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 ) And ('true' == 'true')">
+  <ItemDefinitionGroup Label="ARM and v120_wp81 and Debug and Phone8" Condition="'$(Platform.ToLower())' == 'arm' And '$(PlatformToolset.ToLower())' == 'v120_wp81' And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 )">
     <Link>
       <AdditionalDependencies>$(MSBuildThisFileDirectory)lib\ARM\v120_wp81\Debug\Phone8\cpprest120d_wp81_$(CppRestSDKVersionFileSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Label="Win32 and v110_wp80 and Release and Phone8" Condition="'$(Platform.ToLower())' == 'win32' And '$(PlatformToolset.ToLower())' == 'v110_wp80' And ( $(Configuration.ToLower().IndexOf('debug')) == -1 ) And ('true' == 'true')">
+  <ItemDefinitionGroup Label="ARM and v120 and Debug and Phone8 Silverlight" Condition="'$(Platform.ToLower())' == 'arm' And '$(PlatformToolset.ToLower())' == 'v120' And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 ) And '$(ApplicationType)' == 'Windows Phone Silverlight'">
+    <Link>
+      <AdditionalDependencies>$(MSBuildThisFileDirectory)lib\ARM\v120\Debug\Phone8Silverlight\cpprest120d_wps81_$(CppRestSDKVersionFileSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Label="Win32 and v110_wp80 and Release and Phone8" Condition="'$(Platform.ToLower())' == 'win32' And '$(PlatformToolset.ToLower())' == 'v110_wp80' And ( $(Configuration.ToLower().IndexOf('debug')) == -1 )">
     <Link>
       <AdditionalDependencies>$(MSBuildThisFileDirectory)lib\Win32\v110_wp80\Release\Phone8\cpprest110_wp8_$(CppRestSDKVersionFileSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
@@ -188,7 +208,7 @@
       <AdditionalDependencies>$(MSBuildThisFileDirectory)lib\x64\v120\Debug\Desktop\cpprest120d_$(CppRestSDKVersionFileSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Label="ARM and v110_wp80 and Release and Phone8" Condition="'$(Platform.ToLower())' == 'arm' And '$(PlatformToolset.ToLower())' == 'v110_wp80' And ( $(Configuration.ToLower().IndexOf('debug')) == -1 ) And ('true' == 'true')">
+  <ItemDefinitionGroup Label="ARM and v110_wp80 and Release and Phone8" Condition="'$(Platform.ToLower())' == 'arm' And '$(PlatformToolset.ToLower())' == 'v110_wp80' And ( $(Configuration.ToLower().IndexOf('debug')) == -1 )">
     <Link>
       <AdditionalDependencies>$(MSBuildThisFileDirectory)lib\ARM\v110_wp80\Release\Phone8\cpprest110_wp8_$(CppRestSDKVersionFileSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
@@ -206,9 +226,6 @@
       <Output TaskParameter="CopiedFiles" ItemName="CopiedFiles" />
     </Copy>
   </Target>
-    <!--<Target Name="cpprestsdk_BeforeLink" AfterTargets="BeforeLink">
-    <CheckRuntimeLibrary RuntimeLibrary="%(ClCompile.RuntimeLibrary)" ExpectedRuntimeLibrary="none" LibraryName="cpprestsdk" />
-  </Target>-->
     
   <Target Name="cpprestsdk_init_targets_1">
     <StringContains Text="Linkages-dynamic" Library="cpprestsdk" Value="dynamic" Condition="'$(Linkages-cpprestsdk)'==''">
@@ -261,10 +278,13 @@
     <SetEnv Condition="'$(Platform.ToLower())' == 'win32' And ( '$(PlatformToolset.ToLower())' == 'v120' Or '$(PlatformToolset.ToLower())' == 'ctp_nov2013' Or '$(PlatformToolset.ToLower())' == 'windowskernelmodedriver8.0' Or '$(PlatformToolset.ToLower())' == 'windowsapplicationfordrivers8.0' Or '$(PlatformToolset.ToLower())' == 'windowsusermodedriver8.0' ) And ( $(Configuration.ToLower().IndexOf('debug')) == -1 ) And ( !('$(PlatformToolset.ToLower())' == 'windowskernelmodedriver8.0') And !('$(PlatformToolset.ToLower())' == 'windowsapplicationfordrivers8.0') And !('$(PlatformToolset.ToLower())' == 'windowsusermodedriver8.0') And !('$(AppContainerApplication.ToLower())' == 'true') )" Name="PATH" Prefix="true" Value="$(MSBuildThisFileDirectory)bin\Win32\v120\Release\Desktop">
       <Output TaskParameter="OutputEnvironmentVariable" PropertyName="PATH" />
     </SetEnv>
-    <SetEnv Condition="'$(Platform.ToLower())' == 'win32' And '$(PlatformToolset.ToLower())' == 'v120_wp81' And ( $(Configuration.ToLower().IndexOf('debug')) == -1 ) And ('true' == 'true')" Name="PATH" Prefix="true" Value="$(MSBuildThisFileDirectory)bin/Win32/v120_wp81/Release/Phone8">
+    <SetEnv Condition="'$(Platform.ToLower())' == 'win32' And '$(PlatformToolset.ToLower())' == 'v120_wp81' And ( $(Configuration.ToLower().IndexOf('debug')) == -1 )" Name="PATH" Prefix="true" Value="$(MSBuildThisFileDirectory)bin/Win32/v120_wp81/Release/Phone8">
       <Output TaskParameter="OutputEnvironmentVariable" PropertyName="PATH" />
     </SetEnv>
-    <SetEnv Condition="'$(Platform.ToLower())' == 'win32' And '$(PlatformToolset.ToLower())' == 'v110_wp80' And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 ) And ('true' == 'true')" Name="PATH" Prefix="true" Value="$(MSBuildThisFileDirectory)bin/Win32/v110_wp80/Debug/Phone8">
+    <SetEnv Condition="'$(Platform.ToLower())' == 'win32' And '$(PlatformToolset.ToLower())' == 'v120' And ( $(Configuration.ToLower().IndexOf('debug')) == -1 ) And '$(ApplicationType)' == 'Windows Phone Silverlight'" Name="PATH" Prefix="true" Value="$(MSBuildThisFileDirectory)bin/Win32/v120/Release/Phone8Silverlight">
+      <Output TaskParameter="OutputEnvironmentVariable" PropertyName="PATH" />
+    </SetEnv>
+    <SetEnv Condition="'$(Platform.ToLower())' == 'win32' And '$(PlatformToolset.ToLower())' == 'v110_wp80' And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 )" Name="PATH" Prefix="true" Value="$(MSBuildThisFileDirectory)bin/Win32/v110_wp80/Debug/Phone8">
       <Output TaskParameter="OutputEnvironmentVariable" PropertyName="PATH" />
     </SetEnv>
     <SetEnv Condition="'$(Platform.ToLower())' == 'win32' And ( '$(PlatformToolset.ToLower())' == 'v110' Or '$(PlatformToolset.ToLower())' == 'windowskernelmodedriver8.0' Or '$(PlatformToolset.ToLower())' == 'windowsapplicationfordrivers8.0' Or '$(PlatformToolset.ToLower())' == 'windowsusermodedriver8.0' ) And ( $(Configuration.ToLower().IndexOf('debug')) == -1 ) And ( !('$(PlatformToolset.ToLower())' == 'windowskernelmodedriver8.0') And !('$(PlatformToolset.ToLower())' == 'windowsapplicationfordrivers8.0') And !('$(PlatformToolset.ToLower())' == 'windowsusermodedriver8.0') And !('$(AppContainerApplication.ToLower())' == 'true') )" Name="PATH" Prefix="true" Value="$(MSBuildThisFileDirectory)bin/Win32/v110/Release/Desktop">
@@ -288,7 +308,7 @@
     <SetEnv Condition="'$(Platform.ToLower())' == 'x64' And '$(PlatformToolset.ToLower())' == 'v120_xp' And ( $(Configuration.ToLower().IndexOf('debug')) == -1 ) And ( !('$(PlatformToolset.ToLower())' == 'windowskernelmodedriver8.0') And !('$(PlatformToolset.ToLower())' == 'windowsapplicationfordrivers8.0') And !('$(PlatformToolset.ToLower())' == 'windowsusermodedriver8.0') And !('$(AppContainerApplication.ToLower())' == 'true') )" Name="PATH" Prefix="true" Value="$(MSBuildThisFileDirectory)bin/x64/v120_xp/Release/Desktop">
       <Output TaskParameter="OutputEnvironmentVariable" PropertyName="PATH" />
     </SetEnv>
-    <SetEnv Condition="'$(Platform.ToLower())' == 'arm' And '$(PlatformToolset.ToLower())' == 'v110_wp80' And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 ) And ('true' == 'true')" Name="PATH" Prefix="true" Value="$(MSBuildThisFileDirectory)bin/ARM/v110_wp80/Debug/Phone8">
+    <SetEnv Condition="'$(Platform.ToLower())' == 'arm' And '$(PlatformToolset.ToLower())' == 'v110_wp80' And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 )" Name="PATH" Prefix="true" Value="$(MSBuildThisFileDirectory)bin/ARM/v110_wp80/Debug/Phone8">
       <Output TaskParameter="OutputEnvironmentVariable" PropertyName="PATH" />
     </SetEnv>
     <SetEnv Condition="'$(Platform.ToLower())' == 'win32' And ( '$(PlatformToolset.ToLower())' == 'v120' Or '$(PlatformToolset.ToLower())' == 'ctp_nov2013' Or '$(PlatformToolset.ToLower())' == 'windowskernelmodedriver8.0' Or '$(PlatformToolset.ToLower())' == 'windowsapplicationfordrivers8.0' Or '$(PlatformToolset.ToLower())' == 'windowsusermodedriver8.0' ) And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 ) And ( !('$(PlatformToolset.ToLower())' == 'windowskernelmodedriver8.0') And !('$(PlatformToolset.ToLower())' == 'windowsapplicationfordrivers8.0') And !('$(PlatformToolset.ToLower())' == 'windowsusermodedriver8.0') And !('$(AppContainerApplication.ToLower())' == 'true') )" Name="PATH" Prefix="true" Value="$(MSBuildThisFileDirectory)bin/Win32/v120/Debug/Desktop">
@@ -306,7 +326,10 @@
     <SetEnv Condition="'$(Platform.ToLower())' == 'x64' And '$(PlatformToolset.ToLower())' == 'v110_xp' And ( $(Configuration.ToLower().IndexOf('debug')) == -1 ) And ( !('$(PlatformToolset.ToLower())' == 'windowskernelmodedriver8.0') And !('$(PlatformToolset.ToLower())' == 'windowsapplicationfordrivers8.0') And !('$(PlatformToolset.ToLower())' == 'windowsusermodedriver8.0') And !('$(AppContainerApplication.ToLower())' == 'true') )" Name="PATH" Prefix="true" Value="$(MSBuildThisFileDirectory)bin/x64/v110_xp/Release/Desktop">
       <Output TaskParameter="OutputEnvironmentVariable" PropertyName="PATH" />
     </SetEnv>
-    <SetEnv Condition="'$(Platform.ToLower())' == 'win32' And '$(PlatformToolset.ToLower())' == 'v120_wp81' And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 ) And ('true' == 'true')" Name="PATH" Prefix="true" Value="$(MSBuildThisFileDirectory)bin/Win32/v120_wp81/Debug/Phone8">
+    <SetEnv Condition="'$(Platform.ToLower())' == 'win32' And '$(PlatformToolset.ToLower())' == 'v120_wp81' And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 )" Name="PATH" Prefix="true" Value="$(MSBuildThisFileDirectory)bin/Win32/v120_wp81/Debug/Phone8">
+      <Output TaskParameter="OutputEnvironmentVariable" PropertyName="PATH" />
+    </SetEnv>
+    <SetEnv Condition="'$(Platform.ToLower())' == 'win32' And '$(PlatformToolset.ToLower())' == 'v120' And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 ) And '$(ApplicationType)' == 'Windows Phone Silverlight'" Name="PATH" Prefix="true" Value="$(MSBuildThisFileDirectory)bin/Win32/v120/Debug/Phone8Silverlight">
       <Output TaskParameter="OutputEnvironmentVariable" PropertyName="PATH" />
     </SetEnv>
     <SetEnv Condition="'$(Platform.ToLower())' == 'win32' And ( '$(PlatformToolset.ToLower())' == 'v110' Or '$(PlatformToolset.ToLower())' == 'windowskernelmodedriver8.0' Or '$(PlatformToolset.ToLower())' == 'windowsapplicationfordrivers8.0' Or '$(PlatformToolset.ToLower())' == 'windowsusermodedriver8.0' ) And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 ) And ('$(AppContainerApplication.ToLower())' == 'true')" Name="PATH" Prefix="true" Value="$(MSBuildThisFileDirectory)bin/Win32/v110/Debug/WinRT">
@@ -321,7 +344,10 @@
     <SetEnv Condition="'$(Platform.ToLower())' == 'arm' And ( '$(PlatformToolset.ToLower())' == 'v120' Or '$(PlatformToolset.ToLower())' == 'ctp_nov2013' Or '$(PlatformToolset.ToLower())' == 'windowskernelmodedriver8.0' Or '$(PlatformToolset.ToLower())' == 'windowsapplicationfordrivers8.0' Or '$(PlatformToolset.ToLower())' == 'windowsusermodedriver8.0' ) And ( $(Configuration.ToLower().IndexOf('debug')) == -1 ) And ('$(AppContainerApplication.ToLower())' == 'true')" Name="PATH" Prefix="true" Value="$(MSBuildThisFileDirectory)bin/ARM/v120/Release/WinRT">
       <Output TaskParameter="OutputEnvironmentVariable" PropertyName="PATH" />
     </SetEnv>
-    <SetEnv Condition="'$(Platform.ToLower())' == 'arm' And '$(PlatformToolset.ToLower())' == 'v120_wp81' And ( $(Configuration.ToLower().IndexOf('debug')) == -1 ) And ('true' == 'true')" Name="PATH" Prefix="true" Value="$(MSBuildThisFileDirectory)bin/ARM/v120_wp81/Release/Phone8">
+    <SetEnv Condition="'$(Platform.ToLower())' == 'arm' And '$(PlatformToolset.ToLower())' == 'v120_wp81' And ( $(Configuration.ToLower().IndexOf('debug')) == -1 )" Name="PATH" Prefix="true" Value="$(MSBuildThisFileDirectory)bin/ARM/v120_wp81/Release/Phone8">
+      <Output TaskParameter="OutputEnvironmentVariable" PropertyName="PATH" />
+    </SetEnv>
+    <SetEnv Condition="'$(Platform.ToLower())' == 'arm' And '$(PlatformToolset.ToLower())' == 'v120' And ( $(Configuration.ToLower().IndexOf('debug')) == -1 ) And '$(ApplicationType)' == 'Windows Phone Silverlight'" Name="PATH" Prefix="true" Value="$(MSBuildThisFileDirectory)bin/ARM/v120/Release/Phone8Silverlight">
       <Output TaskParameter="OutputEnvironmentVariable" PropertyName="PATH" />
     </SetEnv>
     <SetEnv Condition="'$(Platform.ToLower())' == 'win32' And ( '$(PlatformToolset.ToLower())' == 'v120' Or '$(PlatformToolset.ToLower())' == 'ctp_nov2013' Or '$(PlatformToolset.ToLower())' == 'windowskernelmodedriver8.0' Or '$(PlatformToolset.ToLower())' == 'windowsapplicationfordrivers8.0' Or '$(PlatformToolset.ToLower())' == 'windowsusermodedriver8.0' ) And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 ) And ('$(AppContainerApplication.ToLower())' == 'true')" Name="PATH" Prefix="true" Value="$(MSBuildThisFileDirectory)bin/Win32/v120/Debug/WinRT">
@@ -336,16 +362,19 @@
     <SetEnv Condition="'$(Platform.ToLower())' == 'x64' And ( '$(PlatformToolset.ToLower())' == 'v110' Or '$(PlatformToolset.ToLower())' == 'windowskernelmodedriver8.0' Or '$(PlatformToolset.ToLower())' == 'windowsapplicationfordrivers8.0' Or '$(PlatformToolset.ToLower())' == 'windowsusermodedriver8.0' ) And ( $(Configuration.ToLower().IndexOf('debug')) == -1 ) And ( !('$(PlatformToolset.ToLower())' == 'windowskernelmodedriver8.0') And !('$(PlatformToolset.ToLower())' == 'windowsapplicationfordrivers8.0') And !('$(PlatformToolset.ToLower())' == 'windowsusermodedriver8.0') And !('$(AppContainerApplication.ToLower())' == 'true') )" Name="PATH" Prefix="true" Value="$(MSBuildThisFileDirectory)bin/x64/v110/Release/Desktop">
       <Output TaskParameter="OutputEnvironmentVariable" PropertyName="PATH" />
     </SetEnv>
-    <SetEnv Condition="'$(Platform.ToLower())' == 'arm' And '$(PlatformToolset.ToLower())' == 'v120_wp81' And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 ) And ('true' == 'true')" Name="PATH" Prefix="true" Value="$(MSBuildThisFileDirectory)bin/ARM/v120_wp81/Debug/Phone8">
+    <SetEnv Condition="'$(Platform.ToLower())' == 'arm' And '$(PlatformToolset.ToLower())' == 'v120_wp81' And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 )" Name="PATH" Prefix="true" Value="$(MSBuildThisFileDirectory)bin/ARM/v120_wp81/Debug/Phone8">
       <Output TaskParameter="OutputEnvironmentVariable" PropertyName="PATH" />
     </SetEnv>
-    <SetEnv Condition="'$(Platform.ToLower())' == 'win32' And '$(PlatformToolset.ToLower())' == 'v110_wp80' And ( $(Configuration.ToLower().IndexOf('debug')) == -1 ) And ('true' == 'true')" Name="PATH" Prefix="true" Value="$(MSBuildThisFileDirectory)bin/Win32/v110_wp80/Release/Phone8">
+    <SetEnv Condition="'$(Platform.ToLower())' == 'arm' And '$(PlatformToolset.ToLower())' == 'v120' And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 ) And '$(ApplicationType)' == 'Windows Phone Silverlight'" Name="PATH" Prefix="true" Value="$(MSBuildThisFileDirectory)bin/ARM/v120/Debug/Phone8Silverlight">
+      <Output TaskParameter="OutputEnvironmentVariable" PropertyName="PATH" />
+    </SetEnv>
+    <SetEnv Condition="'$(Platform.ToLower())' == 'win32' And '$(PlatformToolset.ToLower())' == 'v110_wp80' And ( $(Configuration.ToLower().IndexOf('debug')) == -1 )" Name="PATH" Prefix="true" Value="$(MSBuildThisFileDirectory)bin/Win32/v110_wp80/Release/Phone8">
       <Output TaskParameter="OutputEnvironmentVariable" PropertyName="PATH" />
     </SetEnv>
     <SetEnv Condition="'$(Platform.ToLower())' == 'x64' And ( '$(PlatformToolset.ToLower())' == 'v120' Or '$(PlatformToolset.ToLower())' == 'ctp_nov2013' Or '$(PlatformToolset.ToLower())' == 'windowskernelmodedriver8.0' Or '$(PlatformToolset.ToLower())' == 'windowsapplicationfordrivers8.0' Or '$(PlatformToolset.ToLower())' == 'windowsusermodedriver8.0' ) And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 ) And ( !('$(PlatformToolset.ToLower())' == 'windowskernelmodedriver8.0') And !('$(PlatformToolset.ToLower())' == 'windowsapplicationfordrivers8.0') And !('$(PlatformToolset.ToLower())' == 'windowsusermodedriver8.0') And !('$(AppContainerApplication.ToLower())' == 'true') )" Name="PATH" Prefix="true" Value="$(MSBuildThisFileDirectory)bin/x64/v120/Debug/Desktop">
       <Output TaskParameter="OutputEnvironmentVariable" PropertyName="PATH" />
     </SetEnv>
-    <SetEnv Condition="'$(Platform.ToLower())' == 'arm' And '$(PlatformToolset.ToLower())' == 'v110_wp80' And ( $(Configuration.ToLower().IndexOf('debug')) == -1 ) And ('true' == 'true')" Name="PATH" Prefix="true" Value="$(MSBuildThisFileDirectory)bin/ARM/v110_wp80/Release/Phone8">
+    <SetEnv Condition="'$(Platform.ToLower())' == 'arm' And '$(PlatformToolset.ToLower())' == 'v110_wp80' And ( $(Configuration.ToLower().IndexOf('debug')) == -1 )" Name="PATH" Prefix="true" Value="$(MSBuildThisFileDirectory)bin/ARM/v110_wp80/Release/Phone8">
       <Output TaskParameter="OutputEnvironmentVariable" PropertyName="PATH" />
     </SetEnv>
     <SetEnv Condition="'$(Platform.ToLower())' == 'x64' And ( '$(PlatformToolset.ToLower())' == 'v110' Or '$(PlatformToolset.ToLower())' == 'windowskernelmodedriver8.0' Or '$(PlatformToolset.ToLower())' == 'windowsapplicationfordrivers8.0' Or '$(PlatformToolset.ToLower())' == 'windowsusermodedriver8.0' ) And ( $(Configuration.ToLower().IndexOf('debug')) == -1 ) And ('$(AppContainerApplication.ToLower())' == 'true')" Name="PATH" Prefix="true" Value="$(MSBuildThisFileDirectory)bin/x64/v110/Release/WinRT">
@@ -401,20 +430,19 @@
       </None>
       <ReferenceCopyLocalPaths Include="$(MSBuildThisFileDirectory)bin\Win32\v120\Release\Desktop\cpprest120_$(CppRestSDKVersionFileSuffix).dll" />
     </ItemGroup>
-    <ItemGroup Label="Win32 and v120_wp81 and Release and Phone8" Condition="'$(Platform.ToLower())' == 'win32' And '$(PlatformToolset.ToLower())' == 'v120_wp81' And ( $(Configuration.ToLower().IndexOf('debug')) == -1 ) And ('true' == 'true')">
+    <ItemGroup Label="Win32 and v120_wp81 and Release and Phone8" Condition="'$(Platform.ToLower())' == 'win32' And '$(PlatformToolset.ToLower())' == 'v120_wp81' And ( $(Configuration.ToLower().IndexOf('debug')) == -1 )">
       <CopyToOutput Include="$(MSBuildThisFileDirectory)bin\Win32\v120_wp81\Release\Phone8\cpprest120_wp81_$(CppRestSDKVersionFileSuffix).dll" />
       <CopyToOutput Include="$(MSBuildThisFileDirectory)bin\Win32\v120_wp81\Release\Phone8\cpprest120_wp81_$(CppRestSDKVersionFileSuffix).pdb" />
-      <None Include="$(MSBuildThisFileDirectory)bin\Win32\v120_wp81\Release\Phone8\cpprest120_wp81_$(CppRestSDKVersionFileSuffix).dll">
-        <DeploymentContent>true</DeploymentContent>
-      </None>
       <ReferenceCopyLocalPaths Include="$(MSBuildThisFileDirectory)bin\Win32\v120_wp81\Release\Phone8\cpprest120_wp81_$(CppRestSDKVersionFileSuffix).dll" />
     </ItemGroup>
-    <ItemGroup Label="Win32 and v110_wp80 and Debug and Phone8" Condition="'$(Platform.ToLower())' == 'win32' And '$(PlatformToolset.ToLower())' == 'v110_wp80' And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 ) And ('true' == 'true')">
+    <ItemGroup Label="Win32 and v120 and Release and Phone8 Silverlight" Condition="'$(Platform.ToLower())' == 'win32' And '$(PlatformToolset.ToLower())' == 'v120' And ( $(Configuration.ToLower().IndexOf('debug')) == -1 ) And '$(ApplicationType)' == 'Windows Phone Silverlight'"">
+      <CopyToOutput Include="$(MSBuildThisFileDirectory)bin\Win32\v120\Release\Phone8Silverlight\cpprest120_wps81_$(CppRestSDKVersionFileSuffix).dll" />
+      <CopyToOutput Include="$(MSBuildThisFileDirectory)bin\Win32\v120\Release\Phone8Silverlight\cpprest120_wps81_$(CppRestSDKVersionFileSuffix).pdb" />
+      <ReferenceCopyLocalPaths Include="$(MSBuildThisFileDirectory)bin\Win32\v120_wp81\Release\Phone8\cpprest120_wp81_$(CppRestSDKVersionFileSuffix).dll" />
+    </ItemGroup>
+    <ItemGroup Label="Win32 and v110_wp80 and Debug and Phone8" Condition="'$(Platform.ToLower())' == 'win32' And '$(PlatformToolset.ToLower())' == 'v110_wp80' And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 )">
       <CopyToOutput Include="$(MSBuildThisFileDirectory)bin\Win32\v110_wp80\Debug\Phone8\cpprest110d_wp8_$(CppRestSDKVersionFileSuffix).dll" />
       <CopyToOutput Include="$(MSBuildThisFileDirectory)bin\Win32\v110_wp80\Debug\Phone8\cpprest110d_wp8_$(CppRestSDKVersionFileSuffix).pdb" />
-      <None Include="$(MSBuildThisFileDirectory)bin\Win32\v110_wp80\Debug\Phone8\cpprest110d_wp8_$(CppRestSDKVersionFileSuffix).dll">
-        <DeploymentContent>true</DeploymentContent>
-      </None>
       <ReferenceCopyLocalPaths Include="$(MSBuildThisFileDirectory)bin\Win32\v110_wp80\Debug\Phone8\cpprest110d_wp8_$(CppRestSDKVersionFileSuffix).dll" />
     </ItemGroup>
     <ItemGroup Label="Win32 and v110 and Release and Desktop" Condition="'$(Platform.ToLower())' == 'win32' And ( '$(PlatformToolset.ToLower())' == 'v110' Or '$(PlatformToolset.ToLower())' == 'windowskernelmodedriver8.0' Or '$(PlatformToolset.ToLower())' == 'windowsapplicationfordrivers8.0' Or '$(PlatformToolset.ToLower())' == 'windowsusermodedriver8.0' ) And ( $(Configuration.ToLower().IndexOf('debug')) == -1 ) And ( !('$(PlatformToolset.ToLower())' == 'windowskernelmodedriver8.0') And !('$(PlatformToolset.ToLower())' == 'windowsapplicationfordrivers8.0') And !('$(PlatformToolset.ToLower())' == 'windowsusermodedriver8.0') And !('$(AppContainerApplication.ToLower())' == 'true') )">
@@ -473,12 +501,9 @@
       </None>
       <ReferenceCopyLocalPaths Include="$(MSBuildThisFileDirectory)bin\x64\v120_xp\Release\Desktop\cpprest120_xp_$(CppRestSDKVersionFileSuffix).dll" />
     </ItemGroup>
-    <ItemGroup Label="ARM and v110_wp80 and Debug and Phone8" Condition="'$(Platform.ToLower())' == 'arm' And '$(PlatformToolset.ToLower())' == 'v110_wp80' And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 ) And ('true' == 'true')">
+    <ItemGroup Label="ARM and v110_wp80 and Debug and Phone8" Condition="'$(Platform.ToLower())' == 'arm' And '$(PlatformToolset.ToLower())' == 'v110_wp80' And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 )">
       <CopyToOutput Include="$(MSBuildThisFileDirectory)bin\ARM\v110_wp80\Debug\Phone8\cpprest110d_wp8_$(CppRestSDKVersionFileSuffix).dll" />
       <CopyToOutput Include="$(MSBuildThisFileDirectory)bin\ARM\v110_wp80\Debug\Phone8\cpprest110d_wp8_$(CppRestSDKVersionFileSuffix).pdb" />
-      <!--<None Include="$(MSBuildThisFileDirectory)bin\ARM\v110_wp80\Debug\Phone8\cpprest110d_wp8_$(CppRestSDKVersionFileSuffix).dll">
-        <DeploymentContent>true</DeploymentContent>
-      </None>-->
       <ReferenceCopyLocalPaths Include="$(MSBuildThisFileDirectory)bin\ARM\v110_wp80\Debug\Phone8\cpprest110d_wp8_$(CppRestSDKVersionFileSuffix).dll" />
     </ItemGroup>
     <ItemGroup Label="Win32 and v120 and Debug and Desktop" Condition="'$(Platform.ToLower())' == 'win32' And ( '$(PlatformToolset.ToLower())' == 'v120' Or '$(PlatformToolset.ToLower())' == 'ctp_nov2013' Or '$(PlatformToolset.ToLower())' == 'windowskernelmodedriver8.0' Or '$(PlatformToolset.ToLower())' == 'windowsapplicationfordrivers8.0' Or '$(PlatformToolset.ToLower())' == 'windowsusermodedriver8.0' ) And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 ) And ( !('$(PlatformToolset.ToLower())' == 'windowskernelmodedriver8.0') And !('$(PlatformToolset.ToLower())' == 'windowsapplicationfordrivers8.0') And !('$(PlatformToolset.ToLower())' == 'windowsusermodedriver8.0') And !('$(AppContainerApplication.ToLower())' == 'true') )">
@@ -521,13 +546,15 @@
       </None>
       <ReferenceCopyLocalPaths Include="$(MSBuildThisFileDirectory)bin\x64\v110_xp\Release\Desktop\cpprest110_xp_$(CppRestSDKVersionFileSuffix).dll" />
     </ItemGroup>
-    <ItemGroup Label="Win32 and v120_wp81 and Debug and Phone8" Condition="'$(Platform.ToLower())' == 'win32' And '$(PlatformToolset.ToLower())' == 'v120_wp81' And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 ) And ('true' == 'true')">
+    <ItemGroup Label="Win32 and v120_wp81 and Debug and Phone8" Condition="'$(Platform.ToLower())' == 'win32' And '$(PlatformToolset.ToLower())' == 'v120_wp81' And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 )">
       <CopyToOutput Include="$(MSBuildThisFileDirectory)bin\Win32\v120_wp81\Debug\Phone8\cpprest120d_wp81_$(CppRestSDKVersionFileSuffix).dll" />
       <CopyToOutput Include="$(MSBuildThisFileDirectory)bin\Win32\v120_wp81\Debug\Phone8\cpprest120d_wp81_$(CppRestSDKVersionFileSuffix).pdb" />
-      <None Include="$(MSBuildThisFileDirectory)bin\Win32\v120_wp81\Debug\Phone8\cpprest120d_wp81_$(CppRestSDKVersionFileSuffix).dll">
-        <DeploymentContent>true</DeploymentContent>
-      </None>
       <ReferenceCopyLocalPaths Include="$(MSBuildThisFileDirectory)bin\Win32\v120_wp81\Debug\Phone8\cpprest120d_wp81_$(CppRestSDKVersionFileSuffix).dll" />
+    </ItemGroup>
+    <ItemGroup Label="Win32 and v120 and Debug and Phone8 Silverlight" Condition="'$(Platform.ToLower())' == 'win32' And '$(PlatformToolset.ToLower())' == 'v120' And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 ) And '$(ApplicationType)' == 'Windows Phone Silverlight'"">
+      <CopyToOutput Include="$(MSBuildThisFileDirectory)bin\Win32\v120\Debug\Phone8Silverlight\cpprest120d_wps81_$(CppRestSDKVersionFileSuffix).dll" />
+      <CopyToOutput Include="$(MSBuildThisFileDirectory)bin\Win32\v120\Debug\Phone8Silverlight\cpprest120d_wps81_$(CppRestSDKVersionFileSuffix).pdb" />
+      <ReferenceCopyLocalPaths Include="$(MSBuildThisFileDirectory)bin\Win32\v120\Debug\Phone8Silverlight\cpprest120d_wps81_$(CppRestSDKVersionFileSuffix).dll" />
     </ItemGroup>
     <ItemGroup Label="Win32 and v110 and Debug and WinRT" Condition="'$(Platform.ToLower())' == 'win32' And ( '$(PlatformToolset.ToLower())' == 'v110' Or '$(PlatformToolset.ToLower())' == 'windowskernelmodedriver8.0' Or '$(PlatformToolset.ToLower())' == 'windowsapplicationfordrivers8.0' Or '$(PlatformToolset.ToLower())' == 'windowsusermodedriver8.0' ) And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 ) And ('$(AppContainerApplication.ToLower())' == 'true')">
       <CopyToOutput Include="$(MSBuildThisFileDirectory)bin\Win32\v110\Debug\WinRT\cpprest110d_app_$(CppRestSDKVersionFileSuffix).dll" />
@@ -561,13 +588,15 @@
       </None>
       <ReferenceCopyLocalPaths Include="$(MSBuildThisFileDirectory)bin\ARM\v120\Release\WinRT\cpprest120_app_$(CppRestSDKVersionFileSuffix).dll" />
     </ItemGroup>
-    <ItemGroup Label="ARM and v120_wp81 and Release and Phone8" Condition="'$(Platform.ToLower())' == 'arm' And '$(PlatformToolset.ToLower())' == 'v120_wp81' And ( $(Configuration.ToLower().IndexOf('debug')) == -1 ) And ('true' == 'true')">
+    <ItemGroup Label="ARM and v120_wp81 and Release and Phone8" Condition="'$(Platform.ToLower())' == 'arm' And '$(PlatformToolset.ToLower())' == 'v120_wp81' And ( $(Configuration.ToLower().IndexOf('debug')) == -1 )">
       <CopyToOutput Include="$(MSBuildThisFileDirectory)bin\ARM\v120_wp81\Release\Phone8\cpprest120_wp81_$(CppRestSDKVersionFileSuffix).dll" />
       <CopyToOutput Include="$(MSBuildThisFileDirectory)bin\ARM\v120_wp81\Release\Phone8\cpprest120_wp81_$(CppRestSDKVersionFileSuffix).pdb" />
-      <!--<None Include="$(MSBuildThisFileDirectory)bin\ARM\v120_wp81\Release\Phone8\cpprest120_wp81_$(CppRestSDKVersionFileSuffix).dll">
-        <DeploymentContent>true</DeploymentContent>
-      </None>-->
       <ReferenceCopyLocalPaths Include="$(MSBuildThisFileDirectory)bin\ARM\v120_wp81\Release\Phone8\cpprest120_wp81_$(CppRestSDKVersionFileSuffix).dll" />
+    </ItemGroup>
+    <ItemGroup Label="ARM and v120 and Release and Phone8 Silverlight" Condition="'$(Platform.ToLower())' == 'arm' And '$(PlatformToolset.ToLower())' == 'v120' And ( $(Configuration.ToLower().IndexOf('debug')) == -1 ) And '$(ApplicationType)' == 'Windows Phone Silverlight'"">
+      <CopyToOutput Include="$(MSBuildThisFileDirectory)bin\ARM\v120\Release\Phone8Silverlight\cpprest120_wps81_$(CppRestSDKVersionFileSuffix).dll" />
+      <CopyToOutput Include="$(MSBuildThisFileDirectory)bin\ARM\v120\Release\Phone8Silverlight\cpprest120_wps81_$(CppRestSDKVersionFileSuffix).pdb" />
+      <ReferenceCopyLocalPaths Include="$(MSBuildThisFileDirectory)bin\ARM\v120\Release\Phone8Silverlight\cpprest120_wps81_$(CppRestSDKVersionFileSuffix).dll" />
     </ItemGroup>
     <ItemGroup Label="Win32 and v120 and Debug and WinRT" Condition="'$(Platform.ToLower())' == 'win32' And ( '$(PlatformToolset.ToLower())' == 'v120' Or '$(PlatformToolset.ToLower())' == 'ctp_nov2013' Or '$(PlatformToolset.ToLower())' == 'windowskernelmodedriver8.0' Or '$(PlatformToolset.ToLower())' == 'windowsapplicationfordrivers8.0' Or '$(PlatformToolset.ToLower())' == 'windowsusermodedriver8.0' ) And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 ) And ('$(AppContainerApplication.ToLower())' == 'true')">
       <CopyToOutput Include="$(MSBuildThisFileDirectory)bin\Win32\v120\Debug\WinRT\cpprest120d_app_$(CppRestSDKVersionFileSuffix).dll" />
@@ -601,20 +630,19 @@
       </None>
       <ReferenceCopyLocalPaths Include="$(MSBuildThisFileDirectory)bin\x64\v110\Release\Desktop\cpprest110_$(CppRestSDKVersionFileSuffix).dll" />
     </ItemGroup>
-    <ItemGroup Label="ARM and v120_wp81 and Debug and Phone8" Condition="'$(Platform.ToLower())' == 'arm' And '$(PlatformToolset.ToLower())' == 'v120_wp81' And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 ) And ('true' == 'true')">
+    <ItemGroup Label="ARM and v120_wp81 and Debug and Phone8" Condition="'$(Platform.ToLower())' == 'arm' And '$(PlatformToolset.ToLower())' == 'v120_wp81' And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 )">
       <CopyToOutput Include="$(MSBuildThisFileDirectory)bin\ARM\v120_wp81\Debug\Phone8\cpprest120d_wp81_$(CppRestSDKVersionFileSuffix).dll" />
       <CopyToOutput Include="$(MSBuildThisFileDirectory)bin\ARM\v120_wp81\Debug\Phone8\cpprest120d_wp81_$(CppRestSDKVersionFileSuffix).pdb" />
-      <None Include="$(MSBuildThisFileDirectory)bin\ARM\v120_wp81\Debug\Phone8\cpprest120d_wp81_$(CppRestSDKVersionFileSuffix).dll">
-        <DeploymentContent>true</DeploymentContent>
-      </None>
       <ReferenceCopyLocalPaths Include="$(MSBuildThisFileDirectory)bin\ARM\v120_wp81\Debug\Phone8\cpprest120d_wp81_$(CppRestSDKVersionFileSuffix).dll" />
     </ItemGroup>
-    <ItemGroup Label="Win32 and v110_wp80 and Release and Phone8" Condition="'$(Platform.ToLower())' == 'win32' And '$(PlatformToolset.ToLower())' == 'v110_wp80' And ( $(Configuration.ToLower().IndexOf('debug')) == -1 ) And ('true' == 'true')">
+    <ItemGroup Label="ARM and v120 and Debug and Phone8 Silverlight" Condition="'$(Platform.ToLower())' == 'arm' And '$(PlatformToolset.ToLower())' == 'v120' And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 ) And '$(ApplicationType)' == 'Windows Phone Silverlight'"">
+      <CopyToOutput Include="$(MSBuildThisFileDirectory)bin\ARM\v120\Debug\Phone8Silverlight\cpprest120d_wps81_$(CppRestSDKVersionFileSuffix).dll" />
+      <CopyToOutput Include="$(MSBuildThisFileDirectory)bin\ARM\v120\Debug\Phone8Silverlight\cpprest120d_wps81_$(CppRestSDKVersionFileSuffix).pdb" />
+      <ReferenceCopyLocalPaths Include="$(MSBuildThisFileDirectory)bin\ARM\v120\Debug\Phone8Silverlight\cpprest120d_wps81_$(CppRestSDKVersionFileSuffix).dll" />
+    </ItemGroup>
+    <ItemGroup Label="Win32 and v110_wp80 and Release and Phone8" Condition="'$(Platform.ToLower())' == 'win32' And '$(PlatformToolset.ToLower())' == 'v110_wp80' And ( $(Configuration.ToLower().IndexOf('debug')) == -1 )">
       <CopyToOutput Include="$(MSBuildThisFileDirectory)bin\Win32\v110_wp80\Release\Phone8\cpprest110_wp8_$(CppRestSDKVersionFileSuffix).dll" />
       <CopyToOutput Include="$(MSBuildThisFileDirectory)bin\Win32\v110_wp80\Release\Phone8\cpprest110_wp8_$(CppRestSDKVersionFileSuffix).pdb" />
-      <None Include="$(MSBuildThisFileDirectory)bin\Win32\v110_wp80\Release\Phone8\cpprest110_wp8_$(CppRestSDKVersionFileSuffix).dll">
-        <DeploymentContent>true</DeploymentContent>
-      </None>
       <ReferenceCopyLocalPaths Include="$(MSBuildThisFileDirectory)bin\Win32\v110_wp80\Release\Phone8\cpprest110_wp8_$(CppRestSDKVersionFileSuffix).dll" />
     </ItemGroup>
     <ItemGroup Label="x64 and v120 and Debug and Desktop" Condition="'$(Platform.ToLower())' == 'x64' And ( '$(PlatformToolset.ToLower())' == 'v120' Or '$(PlatformToolset.ToLower())' == 'ctp_nov2013' Or '$(PlatformToolset.ToLower())' == 'windowskernelmodedriver8.0' Or '$(PlatformToolset.ToLower())' == 'windowsapplicationfordrivers8.0' Or '$(PlatformToolset.ToLower())' == 'windowsusermodedriver8.0' ) And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 ) And ( !('$(PlatformToolset.ToLower())' == 'windowskernelmodedriver8.0') And !('$(PlatformToolset.ToLower())' == 'windowsapplicationfordrivers8.0') And !('$(PlatformToolset.ToLower())' == 'windowsusermodedriver8.0') And !('$(AppContainerApplication.ToLower())' == 'true') )">
@@ -625,12 +653,9 @@
       </None>
       <ReferenceCopyLocalPaths Include="$(MSBuildThisFileDirectory)bin\x64\v120\Debug\Desktop\cpprest120d_$(CppRestSDKVersionFileSuffix).dll" />
     </ItemGroup>
-    <ItemGroup Label="ARM and v110_wp80 and Release and Phone8" Condition="'$(Platform.ToLower())' == 'arm' And '$(PlatformToolset.ToLower())' == 'v110_wp80' And ( $(Configuration.ToLower().IndexOf('debug')) == -1 ) And ('true' == 'true')">
+    <ItemGroup Label="ARM and v110_wp80 and Release and Phone8" Condition="'$(Platform.ToLower())' == 'arm' And '$(PlatformToolset.ToLower())' == 'v110_wp80' And ( $(Configuration.ToLower().IndexOf('debug')) == -1 )">
       <CopyToOutput Include="$(MSBuildThisFileDirectory)bin\ARM\v110_wp80\Release\Phone8\cpprest110_wp8_$(CppRestSDKVersionFileSuffix).dll" />
       <CopyToOutput Include="$(MSBuildThisFileDirectory)bin\ARM\v110_wp80\Release\Phone8\cpprest110_wp8_$(CppRestSDKVersionFileSuffix).pdb" />
-      <None Include="$(MSBuildThisFileDirectory)bin\ARM\v110_wp80\Release\Phone8\cpprest110_wp8_$(CppRestSDKVersionFileSuffix).dll">
-        <DeploymentContent>true</DeploymentContent>
-      </None>
       <ReferenceCopyLocalPaths Include="$(MSBuildThisFileDirectory)bin\ARM\v110_wp80\Release\Phone8\cpprest110_wp8_$(CppRestSDKVersionFileSuffix).dll" />
     </ItemGroup>
     <ItemGroup Label="x64 and v110 and Release and WinRT" Condition="'$(Platform.ToLower())' == 'x64' And ( '$(PlatformToolset.ToLower())' == 'v110' Or '$(PlatformToolset.ToLower())' == 'windowskernelmodedriver8.0' Or '$(PlatformToolset.ToLower())' == 'windowsapplicationfordrivers8.0' Or '$(PlatformToolset.ToLower())' == 'windowsusermodedriver8.0' ) And ( $(Configuration.ToLower().IndexOf('debug')) == -1 ) And ('$(AppContainerApplication.ToLower())' == 'true')">

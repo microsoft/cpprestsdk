@@ -32,16 +32,20 @@
         <file src="Binaries\Win32\Debug\cpprest120d_app_2_2.pdb" target="\build\native\bin\Win32\v120\Debug\WinRT\cpprest120d_app_2_2.pdb" />
         <file src="Binaries\Win32\Debug\cpprest120d_app_2_2.lib" target="\build\native\lib\Win32\v120\Debug\WinRT\cpprest120d_app_2_2.lib" />
 
-        <!--  Win32 v120_wp81  -->
+        <!--  Win32 v120_wp81 -->
         <file src="Binaries\Win32\Debug\cpprest120d_wp81_2_2.dll" target="\build\native\bin\Win32\v120_wp81\Debug\Phone8\cpprest120d_wp81_2_2.dll" />
         <file src="Binaries\Win32\Debug\cpprest120d_wp81_2_2.pdb" target="\build\native\bin\Win32\v120_wp81\Debug\Phone8\cpprest120d_wp81_2_2.pdb" />
         <file src="Binaries\Win32\Debug\cpprest120d_wp81_2_2.lib" target="\build\native\lib\Win32\v120_wp81\Debug\Phone8\cpprest120d_wp81_2_2.lib" />
 
+        <!-- Win32 v120 Phone Silverlight 8.1 -->
+        <file src="Binaries\Win32\Debug\cpprest120d_wps81_2_2.dll" target="\build\native\bin\Win32\v120\Debug\Phone8Silverlight\cpprest120d_wps81_2_2.dll" />
+        <file src="Binaries\Win32\Debug\cpprest120d_wps81_2_2.pdb" target="\build\native\bin\Win32\v120\Debug\Phone8Silverlight\cpprest120d_wps81_2_2.pdb" />
+        <file src="Binaries\Win32\Debug\cpprest120d_wps81_2_2.lib" target="\build\native\lib\Win32\v120\Debug\Phone8Silverlight\cpprest120d_wps81_2_2.lib" />
+        
         <!-- Win32 v120_xp -->
         <file src="Binaries\Win32\Debug\cpprest120d_xp_2_2.dll" target="\build\native\bin\Win32\v120_xp\Debug\Desktop\cpprest120d_xp_2_2.dll"/>
         <file src="Binaries\Win32\Debug\cpprest120d_xp_2_2.pdb" target="\build\native\bin\Win32\v120_xp\Debug\Desktop\cpprest120d_xp_2_2.pdb"/>
         <file src="Binaries\Win32\Debug\cpprest120d_xp_2_2.lib" target="\build\native\lib\Win32\v120_xp\Debug\Desktop\cpprest120d_xp_2_2.lib"/>
-
 
         <!-- Win32 v110 -->
         <file src="Binaries\Win32\Debug\cpprest110d_2_2.dll" target="\build\native\bin\Win32\v110\Debug\Desktop\cpprest110d_2_2.dll" />
@@ -97,6 +101,11 @@
         <file src="Binaries\arm\Debug\cpprest120d_wp81_2_2.pdb" target="\build\native\bin\arm\v120_wp81\Debug\Phone8\cpprest120d_wp81_2_2.pdb" />
         <file src="Binaries\arm\Debug\cpprest120d_wp81_2_2.lib" target="\build\native\lib\arm\v120_wp81\Debug\Phone8\cpprest120d_wp81_2_2.lib" />
 
+        <!-- ARM v120 Phone Silverlight 8.1 -->
+        <file src="Binaries\arm\Debug\cpprest120d_wps81_2_2.dll" target="\build\native\bin\arm\v120\Debug\Phone8Silverlight\cpprest120d_wps81_2_2.dll" />
+        <file src="Binaries\arm\Debug\cpprest120d_wps81_2_2.pdb" target="\build\native\bin\arm\v120\Debug\Phone8Silverlight\cpprest120d_wps81_2_2.pdb" />
+        <file src="Binaries\arm\Debug\cpprest120d_wps81_2_2.lib" target="\build\native\lib\arm\v120\Debug\Phone8Silverlight\cpprest120d_wps81_2_2.lib" />
+        
         <!-- ARM v110 -->
         <file src="Binaries\arm\Debug\cpprest110d_app_2_2.dll" target="\build\native\bin\arm\v110\Debug\WinRT\cpprest110d_app_2_2.dll" />
         <file src="Binaries\arm\Debug\cpprest110d_app_2_2.pdb" target="\build\native\bin\arm\v110\Debug\WinRT\cpprest110d_app_2_2.pdb" />
@@ -122,6 +131,11 @@
         <file src="Binaries\Win32\Release\casablanca120.wp81\cpprest120_wp81_2_2.pdb" target="\build\native\bin\Win32\v120_wp81\Release\Phone8\cpprest120_wp81_2_2.pdb" />
         <file src="Binaries\Win32\Release\casablanca120.wp81\cpprest120_wp81_2_2.lib" target="\build\native\lib\Win32\v120_wp81\Release\Phone8\cpprest120_wp81_2_2.lib" />
 
+        <!-- Win32 v120 Phone Silverlight 8.1 -->
+        <file src="Binaries\Win32\Release\cpprest120_wps81_2_2.dll" target="\build\native\bin\Win32\v120\Release\Phone8Silverlight\cpprest120_wps81_2_2.dll" />
+        <file src="Binaries\Win32\Release\cpprest120_wps81_2_2.pdb" target="\build\native\bin\Win32\v120\Release\Phone8Silverlight\cpprest120_wps81_2_2.pdb" />
+        <file src="Binaries\Win32\Release\cpprest120_wps81_2_2.lib" target="\build\native\lib\Win32\v120\Release\Phone8Silverlight\cpprest120_wps81_2_2.lib" />
+        
         <!-- Win32 v120_xp -->
         <file src="Binaries\Win32\Release\cpprest120_xp_2_2.dll" target="\build\native\bin\Win32\v120_xp\Release\Desktop\cpprest120_xp_2_2.dll"/>
         <file src="Binaries\Win32\Release\cpprest120_xp_2_2.pdb" target="\build\native\bin\Win32\v120_xp\Release\Desktop\cpprest120_xp_2_2.pdb"/>
@@ -166,7 +180,6 @@
         <file src="Binaries\x64\Release\cpprest110_app_2_2.pdb" target="\build\native\bin\x64\v110\Release\WinRT\cpprest110_app_2_2.pdb" />
         <file src="Binaries\x64\Release\cpprest110_app_2_2.lib" target="\build\native\lib\x64\v110\Release\WinRT\cpprest110_app_2_2.lib" />
 
-
         <!-- x64 v110_xp -->
         <file src="Binaries\x64\Release\cpprest110_xp_2_2.dll" target="\build\native\bin\x64\v110_xp\Release\Desktop\cpprest110_xp_2_2.dll"/>
         <file src="Binaries\x64\Release\cpprest110_xp_2_2.pdb" target="\build\native\bin\x64\v110_xp\Release\Desktop\cpprest110_xp_2_2.pdb"/>
@@ -182,6 +195,11 @@
         <file src="Binaries\arm\Release\cpprest120_wp81_2_2.pdb" target="\build\native\bin\arm\v120_wp81\Release\Phone8\cpprest120_wp81_2_2.pdb" />
         <file src="Binaries\arm\Release\cpprest120_wp81_2_2.lib" target="\build\native\lib\arm\v120_wp81\Release\Phone8\cpprest120_wp81_2_2.lib" />
 
+        <!-- ARM v120 Phone Silverlight 8.1 -->
+        <file src="Binaries\arm\Release\cpprest120_wps81_2_2.dll" target="\build\native\bin\arm\v120\Release\Phone8Silverlight\cpprest120_wps81_2_2.dll" />
+        <file src="Binaries\arm\Release\cpprest120_wps81_2_2.pdb" target="\build\native\bin\arm\v120\Release\Phone8Silverlight\cpprest120_wps81_2_2.pdb" />
+        <file src="Binaries\arm\Release\cpprest120_wps81_2_2.lib" target="\build\native\lib\arm\v120\Release\Phone8Silverlight\cpprest120_wps81_2_2.lib" />
+        
         <!-- ARM v110 -->
         <file src="Binaries\arm\Release\cpprest110_app_2_2.dll" target="\build\native\bin\arm\v110\Release\WinRT\cpprest110_app_2_2.dll" />
         <file src="Binaries\arm\Release\cpprest110_app_2_2.pdb" target="\build\native\bin\arm\v110\Release\WinRT\cpprest110_app_2_2.pdb" />
