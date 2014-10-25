@@ -21,4 +21,4 @@ LOCAL_SRC_FILES := \
     ../libiconv-1.13.1/lib/iconv.c \
     ../libiconv-1.13.1/lib/relocatable.c \
     ../libiconv-1.13.1/libcharset/lib/localcharset.c
-include $(BUILD_SHARED_LIBRARY)
+include $(BUILD_STATIC_LIBRARY)
