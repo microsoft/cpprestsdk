@@ -49,6 +49,7 @@
 #undef ntohll
 #undef htonll
 #endif
+#define _WEBSOCKETPP_CPP11_SYSTEM_ERROR_
 #include <websocketpp/config/asio_client.hpp>
 #include <websocketpp/config/asio_no_tls_client.hpp>
 #include <websocketpp/client.hpp>
@@ -89,6 +90,17 @@ namespace client
 {
 namespace details
 {
+
+// Utility function to build up error string based on error code and location.
+static std::string build_error_msg(const std::error_code &ec, const std::string &location)
+{
+    std::string msg(location);
+    msg.append(": ");
+    msg.append(std::to_string(ec.value()));
+    msg.append(": ");
+    msg.append(ec.message());
+    return msg;
+}
 
 static utility::string_t g_subProtocolHeader(_XPLATSTR("Sec-WebSocket-Protocol"));
 
@@ -151,6 +163,7 @@ public:
             catch (...) {}
             break;
         }
+
         // We have released the lock on all paths here
         m_service.stop();
         if (m_thread.joinable())
@@ -225,13 +238,17 @@ public:
             m_connect_tce.set();
         });
 
-        client.set_fail_handler([this](websocketpp::connection_hdl)
+        client.set_fail_handler([this](websocketpp::connection_hdl con_hdl)
         {
             _ASSERTE(m_state == CONNECTING);
+            auto &client = m_client->client<WebsocketConfigType>();
+            const auto &ec = client.get_con_from_hdl(con_hdl)->get_ec();
+            websocket_exception exc(ec, build_error_msg(ec, "set_fail_handler"));
+
             std::lock_guard<std::mutex> lock(m_receive_queue_lock);
-            close_pending_tasks_with_error();
+            close_pending_tasks_with_error(exc);
             m_state = CLOSED;
-            m_connect_tce.set_exception(websocket_exception("Connection attempt failed."));
+            m_connect_tce.set_exception(exc);
         });
 
         client.set_message_handler([this](websocketpp::connection_hdl, const websocketpp::config::asio_client::message_type::ptr &msg)
@@ -278,11 +295,15 @@ public:
             }
         });
 
-        client.set_close_handler([this](websocketpp::connection_hdl)
+        client.set_close_handler([this](websocketpp::connection_hdl con_hdl)
         {
-            std::unique_lock<std::mutex> lock(m_receive_queue_lock);
             _ASSERTE(m_state != CLOSED);
-            close_pending_tasks_with_error();
+            auto &client = m_client->client<WebsocketConfigType>();
+            const auto &ec = client.get_con_from_hdl(con_hdl)->get_ec();
+            websocket_exception exc(ec, build_error_msg(ec, "set_close_handler"));
+
+            std::lock_guard<std::mutex> lock(m_receive_queue_lock);
+            close_pending_tasks_with_error(exc);
             m_close_tce.set();
             m_state = CLOSED;
         });
@@ -294,7 +315,7 @@ public:
         m_con = con;
         if (ec.value() != 0)
         {
-            return pplx::task_from_exception<void>(websocket_exception(ec.message()));
+            return pplx::task_from_exception<void>(websocket_exception(ec, build_error_msg(ec, "get_connection")));
         }
 
         // Add any request headers specified by the user.
@@ -316,7 +337,7 @@ public:
                 con->add_subprotocol(utility::conversions::to_utf8string(value), ec);
                 if (ec.value())
                 {
-                    return pplx::task_from_exception<void>(websocket_exception(ec.message()));
+                    return pplx::task_from_exception<void>(websocket_exception(ec, build_error_msg(ec, "add_subprotocol")));
                 }
             }
         }
@@ -328,12 +349,6 @@ public:
         {
             m_service.run();
             _ASSERTE(m_state == CLOSED);
-            {
-                std::unique_lock<std::mutex> lock(m_receive_queue_lock);
-                close_pending_tasks_with_error();
-            }
-            _ASSERTE(m_state == CLOSED);
-            return 0;
         });
 
         return pplx::create_task(m_connect_tce);
@@ -534,10 +549,10 @@ public:
             try
             {
                 // Catch exceptions from previous tasks, if any and convert it to websocket exception.
-                auto ec = previousTask.get();
+                const auto &ec = previousTask.get();
                 if (ec.value() != 0)
                 {
-                    eptr = std::make_exception_ptr(websocket_exception(ec.message()));
+                    eptr = std::make_exception_ptr(websocket_exception(ec, build_error_msg(ec, "sending message")));
                 }
             }
             catch (...)
@@ -612,14 +627,14 @@ public:
     }
 
     // Note: must be called while m_receive_queue_lock is locked.
-    void close_pending_tasks_with_error()
+    void close_pending_tasks_with_error(const websocket_exception &exc)
     {
         while (!m_receive_task_queue.empty())
         {
             // There are tasks waiting to receive a message, signal them
             auto tce = m_receive_task_queue.front();
             m_receive_task_queue.pop();
-            tce.set_exception(std::make_exception_ptr(websocket_exception("Websocket connection has been closed.")));
+            tce.set_exception(std::make_exception_ptr(exc));
         }
     }
 

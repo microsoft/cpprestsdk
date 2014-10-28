@@ -86,7 +86,7 @@ TEST_FIXTURE(uri_address, auth_with_credentials, "Ignore", "245")
 }
 #endif
 
-TEST_FIXTURE(uri_address, ssl_test)
+TEST(ssl_test)
 {
     websocket_client client;
     client.connect(U("wss://echo.websocket.org/")).wait();
@@ -108,6 +108,40 @@ TEST_FIXTURE(uri_address, ssl_test)
     receive_task.wait();
     client.close().wait();
 }
+
+// These tests are specific to our websocketpp based implementation.
+#if !defined(__cplusplus_winrt)
+
+void handshake_error_test_impl(const ::utility::string_t &host)
+{
+    websocket_client client;
+    try
+    {
+        client.connect(host).wait();
+        VERIFY_IS_TRUE(false);
+    }
+    catch (const websocket_exception &e)
+    {
+        VERIFY_ARE_EQUAL("TLS handshake failed", e.error_code().message());
+    }
+}
+
+TEST(self_signed_cert)
+{
+    handshake_error_test_impl(U("wss://www.pcwebshop.co.uk/"));
+}
+
+TEST(hostname_mismatch)
+{
+    handshake_error_test_impl(U("wss://swordsoftruth.com/"));
+}
+
+TEST(cert_expired)
+{
+    handshake_error_test_impl(U("wss://tv.eurosport.com/"));
+}
+
+#endif
 
 } // SUITE(authentication_tests)
 

@@ -277,9 +277,14 @@ public:
     }
 
     /// <summary>
-    /// Destroys the <c>websocket_exception</c> object.
+    /// Creates a <c>websocket_exception</c> from a error code and string message to use as the what() argument.
+    /// <param name="code">Error code.</param>
+    /// <param name="whatArg">Message to use in what() string.</param>
     /// </summary>
-    ~websocket_exception() _noexcept {}
+    websocket_exception(std::error_code code, std::string whatArg) :
+        m_errorCode(std::move(code)),
+        m_msg(std::move(whatArg))
+    {}
 
     /// <summary>
     /// Gets a string identifying the cause of the exception.
