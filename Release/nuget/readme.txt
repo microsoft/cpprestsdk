@@ -1,6 +1,6 @@
 Here are the steps to follow to generate C++ Rest SDK's NuGet package. 
 
-1. Run the update.ps1 to copy the binaries and update the cpprestsdk.nuspec version number. (i.e. update.ps1 -OldVer 2_2 -NewVer 2_3)
+1. Run the update.ps1 to copy the binaries and update the cpprestsdk.nuspec version number. (i.g. update.ps1 -OldVer 2_2 -NewVer 2_3)
 2. Copy the signed dlls under the .\Binaries.
 3. Update the cpprestsdk.nuspec metadata to correct version description. (i.e. change the "<version>2.2.0</version>" to "<version>2.3.0</version>")
 4. Running rename_stripped_pdbs.ps1 script to replace full symbols with stripped ones. 
