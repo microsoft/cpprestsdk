@@ -93,6 +93,7 @@
 #include <assert.h>
 #include <streambuf>
 #include <mutex>
+#include <array>
 
 #if defined(_MSC_VER) && (_MSC_VER >= 1800)
 #include <ppltasks.h>
