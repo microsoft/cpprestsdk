@@ -33,7 +33,7 @@
 #include <robuffer.h>
 #endif
 
-#include "cpprest\web_utilities.h"
+#include "cpprest/web_utilities.h"
 
 namespace web
 {
@@ -60,7 +60,7 @@ winrt_encryption::winrt_encryption(const std::wstring &data)
     // Create buffer containing plain text password.
     Platform::ArrayReference<unsigned char> arrayref(
         reinterpret_cast<unsigned char *>(const_cast<std::wstring::value_type *>(data.c_str())),
-        data.size() * sizeof(std::wstring::value_type));
+        static_cast<unsigned int>(data.size()) * sizeof(std::wstring::value_type));
     Windows::Storage::Streams::IBuffer ^plaintext = Windows::Security::Cryptography::CryptographicBuffer::CreateFromByteArray(arrayref);
     m_buffer = pplx::create_task(provider->ProtectAsync(plaintext));
     m_buffer.then([plaintext](pplx::task<Windows::Storage::Streams::IBuffer ^>)

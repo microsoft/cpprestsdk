@@ -98,7 +98,10 @@ public:
 #if defined(_MS_WINDOWS)
         , m_password(password)
 #endif
-    {}
+    {
+        // Avoid unreferenced parameter warning.
+        password;
+    }
 
     /// <summary>
     /// The user name associated with the credentials.
