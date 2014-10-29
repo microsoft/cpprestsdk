@@ -29,6 +29,7 @@
 #define WEBSOCKETPP_RANDOM_NONE_HPP
 
 namespace websocketpp {
+/// Random number generation policies
 namespace random {
 /// Stub RNG policy that always returns 0
 namespace none {

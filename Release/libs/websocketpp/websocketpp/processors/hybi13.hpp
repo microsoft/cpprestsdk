@@ -44,6 +44,7 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <algorithm> // TODO stgates....
 
 namespace websocketpp {
 namespace processor {
@@ -211,10 +212,10 @@ public:
 
         for (int i = 0; i < 4; i++) {
             conv.i = m_rng();
-            std::copy(conv.c.begin(), conv.c.end(), raw_key.begin() + i * 4);
+            std::copy(conv.c.begin(), conv.c.begin() + 4, raw_key.begin() + i * 4);
         }
 
-        req.replace_header("Sec-WebSocket-Key", base64_encode(&raw_key[0], 16));
+        req.replace_header("Sec-WebSocket-Key",base64_encode(&raw_key[0], 16));
 
         return lib::error_code();
     }
@@ -404,7 +405,7 @@ public:
             } else if (m_state == EXTENSION) {
                 m_state = APPLICATION;
             } else if (m_state == APPLICATION) {
-                size_t bytes_to_process = std::min(m_bytes_needed, len - p);
+                size_t bytes_to_process = std::min(m_bytes_needed,len-p);
 
                 if (bytes_to_process > 0) {
                     p += this->process_payload_bytes(buf+p,bytes_to_process,ec);
@@ -533,7 +534,6 @@ public:
         }
 
         frame::masking_key_type key;
-        key.i = 0;
         bool masked = !base::m_server;
         bool compressed = m_permessage_deflate.is_enabled()
                           && in->get_compressed();
@@ -546,7 +546,7 @@ public:
             // Generate masking key.
             key.i = m_rng();
 
-            frame::extended_header e(i.size(), key.i);
+            frame::extended_header e(i.size(),key.i);
             out->set_header(frame::prepare_header(h,e));
         } else {
             frame::extended_header e(i.size());
@@ -560,7 +560,7 @@ public:
 
             // mask in place if necessary
             if (masked) {
-                this->masked_copy(o, o, key);
+                this->masked_copy(o,o,key);
             }
         } else {
             // no compression, just copy data into the output buffer
@@ -671,7 +671,7 @@ protected:
 
     /// Reads bytes from buf into m_extended_header
     size_t copy_extended_header_bytes(uint8_t const * buf, size_t len) {
-        size_t bytes_to_read = std::min(m_bytes_needed, len);
+        size_t bytes_to_read = std::min(m_bytes_needed,len);
 
         std::copy(buf, buf + bytes_to_read, m_extended_header.bytes.begin() + m_cursor);
         m_cursor += bytes_to_read;

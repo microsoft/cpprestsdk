@@ -138,7 +138,7 @@ public:
             m_io_service = rhs.m_io_service;
             m_external_io_service = rhs.m_external_io_service;
             m_acceptor = rhs.m_acceptor;
-            m_listen_backlog = rhs.m_listen_backlog
+            m_listen_backlog = rhs.m_listen_backlog;
             m_reuse_addr = rhs.m_reuse_addr;
             m_state = rhs.m_state;
 
@@ -231,7 +231,7 @@ public:
      * established but before any additional wrappers (proxy connects, TLS
      * handshakes, etc) have been performed.
      *
-     * @since 0.4.0-alpha1
+     * @since 0.3.0
      *
      * @param h The handler to call on tcp pre init.
      */
@@ -260,7 +260,7 @@ public:
      * etc have been performed. This is fired before any bytes are read or any
      * WebSocket specific handshake logic has been performed.
      *
-     * @since 0.4.0-alpha1
+     * @since 0.3.0
      *
      * @param h The handler to call on tcp post init.
      */
@@ -283,7 +283,7 @@ public:
      * A value of zero will use the operating system default. This is the
      * default value.
      *
-     * @since 0.4.0-alpha1
+     * @since 0.3.0
      *
      * @param backlog The maximum length of the queue of pending connections
      */
@@ -301,7 +301,7 @@ public:
      *
      * The default is false.
      *
-     * @since 0.4.0-alpha1
+     * @since 0.3.0
      *
      * @param value Whether or not to use the SO_REUSEADDR option
      */
@@ -604,7 +604,7 @@ public:
      * called either before the endpoint has run out of work or before it was
      * started
      *
-     * @since 0.4.0-alpha1
+     * @since 0.3.0
      */
     void start_perpetual() {
         m_work.reset(new boost::asio::io_service::work(*m_io_service));
@@ -616,7 +616,7 @@ public:
      * method to exit normally when it runs out of connections. If there are
      * currently active connections it will not end until they are complete.
      *
-     * @since 0.4.0-alpha1
+     * @since 0.3.0
      */
     void stop_perpetual() {
         m_work.reset();

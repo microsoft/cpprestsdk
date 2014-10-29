@@ -58,14 +58,12 @@ public:
     basic<concurrency,names>(std::ostream * out = &std::cout)
       : m_static_channels(0xffffffff)
       , m_dynamic_channels(0)
-      , m_out(out) {
-}
+      , m_out(out) {}
 
     basic<concurrency,names>(level c, std::ostream * out = &std::cout)
       : m_static_channels(c)
       , m_dynamic_channels(0)
-      , m_out(out) {
-    }
+      , m_out(out) {}
 
     void set_ostream(std::ostream * out = &std::cout) {
         m_out = out;

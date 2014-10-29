@@ -204,7 +204,7 @@ namespace status {
     /**
      * See https://tools.ietf.org/html/rfc6455#section-7.4 for more details.
      *
-     * @since 0.4.0-beta1
+     * @since 0.3.0
      *
      * @param [in] code The code to look up.
      * @return A human readable interpretation of the code.

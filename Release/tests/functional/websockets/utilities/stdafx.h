@@ -29,10 +29,6 @@
 // This header is required to define _MS_WINDOWS
 #include "cpprest/xxpublic.h"
 
-#ifdef _MS_WINDOWS
-#include <winsock2.h>
-#endif
-
 #include "cpprest/uri.h"
 #include "cpprest/asyncrt_utils.h"
 #include "cpprest/streams.h"

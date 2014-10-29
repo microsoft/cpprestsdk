@@ -33,6 +33,7 @@
 #include <vector>
 
 namespace websocketpp {
+/// HTTP handling support
 namespace http {
     /// The type of an HTTP attribute list
     /**

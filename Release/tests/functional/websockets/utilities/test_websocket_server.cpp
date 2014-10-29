@@ -22,26 +22,17 @@
 ****/
 #include "stdafx.h"
 
-#ifdef _MS_WINDOWS
-#include <http.h>
-#include <agents.h>
-#endif
-
 #include <algorithm>
 #include <thread>
-#ifndef _MS_WINDOWS
-#include <unistd.h>
-#endif
 
 #include <os_utilities.h>
 
-#include "cpprest/uri.h"
 #include "test_websocket_server.h"
 
-#ifdef _WIN32
+#ifdef _MS_WINDOWS
 #pragma warning( disable : 4503 )
 #pragma warning( push )
-#pragma warning( disable : 4100 4127 4996 4512 4996 4267 4067 )
+#pragma warning( disable : 4100 4127 4996 4512 4701)
 #if defined(_MSC_VER) && (_MSC_VER >= 1800)
 #define _WEBSOCKETPP_CPP11_STL_
 #define _WEBSOCKETPP_INITIALIZER_LISTS_
@@ -50,12 +41,12 @@
 #else
 #define _WEBSOCKETPP_NULLPTR_TOKEN_ 0
 #endif
-#endif /* _WIN32 */
+#endif
 
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
 
-#ifdef _WIN32
+#ifdef _MS_WINDOWS
 #pragma warning( pop )
 #endif
 
