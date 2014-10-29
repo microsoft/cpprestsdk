@@ -105,7 +105,7 @@ win32_encryption::win32_encryption(const std::wstring &data) :
     {
         m_buffer.resize(m_buffer.size() + CRYPTPROTECTMEMORY_BLOCK_SIZE - mod);
     }
-    if (!CryptProtectMemory(m_buffer.data(), m_buffer.size(), CRYPTPROTECTMEMORY_SAME_PROCESS))
+    if (!CryptProtectMemory(m_buffer.data(), static_cast<DWORD>(m_buffer.size()), CRYPTPROTECTMEMORY_SAME_PROCESS))
     {
         throw ::utility::details::create_system_error(GetLastError());
     }
@@ -122,7 +122,7 @@ plaintext_string win32_encryption::decrypt() const
     auto data = plaintext_string(new std::wstring(reinterpret_cast<const std::wstring::value_type *>(m_buffer.data()), m_buffer.size() / 2));
     if (!CryptUnprotectMemory(
         const_cast<std::wstring::value_type *>(data->c_str()),
-        m_buffer.size(),
+        static_cast<DWORD>(m_buffer.size()),
         CRYPTPROTECTMEMORY_SAME_PROCESS))
     {
         throw ::utility::details::create_system_error(GetLastError());

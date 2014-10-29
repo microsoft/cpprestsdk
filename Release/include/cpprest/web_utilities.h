@@ -94,8 +94,10 @@ public:
     /// <param name="username">User name as a string.</param>
     /// <param name="password">Password as a string.</param>
     credentials(utility::string_t username, const utility::string_t &password) :
-        m_username(std::move(username)),
-        m_password(password)
+        m_username(std::move(username))
+#if defined(_MS_WINDOWS)
+        , m_password(password)
+#endif
     {}
 
     /// <summary>

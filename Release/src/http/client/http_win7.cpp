@@ -858,10 +858,10 @@ private:
         _In_ winhttp_request_context * p_request_context,
         _In_ DWORD error = 0)
     {
-        http_response & response = p_request_context->m_response;
         http_request & request = p_request_context->m_request;
 
-        _ASSERTE(response.status_code() == status_codes::Unauthorized  || response.status_code() == status_codes::ProxyAuthRequired
+        _ASSERTE(p_request_context->m_response.status_code() == status_codes::Unauthorized
+            || p_request_context->m_response.status_code() == status_codes::ProxyAuthRequired
             || error == ERROR_WINHTTP_RESEND_REQUEST);
 
         // Check if the saved read position is valid
