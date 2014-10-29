@@ -93,15 +93,16 @@ public:
     /// </summary>
     /// <param name="username">User name as a string.</param>
     /// <param name="password">Password as a string.</param>
-    credentials(utility::string_t username, const utility::string_t &password) :
+    credentials(utility::string_t username, const utility::string_t &
+#if defined(_MS_WINDOWS)
+        password
+#endif
+        ) :
         m_username(std::move(username))
 #if defined(_MS_WINDOWS)
         , m_password(password)
 #endif
-    {
-        // Avoid unreferenced parameter warning.
-        password;
-    }
+    {}
 
     /// <summary>
     /// The user name associated with the credentials.
