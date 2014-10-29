@@ -117,7 +117,6 @@ private:
 public:
     wspp_client(websocket_client_config config) :
         _websocket_client_impl(std::move(config)),
-        m_work(utility::details::make_unique<boost::asio::io_service::work>(m_service)),
         m_state(CREATED),
         m_num_sends(0)
 #if defined(__APPLE__) || defined(ANDROID) || defined(_MS_WINDOWS)
@@ -129,9 +128,6 @@ public:
     {
         _ASSERTE(m_state < DESTROYED);
         std::unique_lock<std::mutex> lock(m_receive_queue_lock);
-
-        // First, trigger the boost::io_service to spin down
-        m_work.reset();
 
         // Now, what states could we be in?
         switch (m_state) {
@@ -164,12 +160,31 @@ public:
         }
 
         // We have released the lock on all paths here
-        m_service.stop();
-        if (m_thread.joinable())
-            m_thread.join();
+        if (m_client)
+        {
+            if (m_client->is_tls_client())
+            {
+                stop_client_impl<websocketpp::config::asio_tls_client>();
+            }
+            else
+            {
+                stop_client_impl<websocketpp::config::asio_client>();
+            }
+            if (m_thread.joinable())
+            {
+                m_thread.join();
+            }
+        }
 
         // At this point, there should be no more references to me.
         m_state = DESTROYED;
+    }
+
+    template <typename WebsocketConfigType>
+    void stop_client_impl()
+    {
+        auto &client = m_client->client<WebsocketConfigType>();
+        client.stop_perpetual();
     }
 
     pplx::task<void> connect()
@@ -227,7 +242,8 @@ public:
 
         client.clear_access_channels(websocketpp::log::alevel::all);
         client.clear_error_channels(websocketpp::log::alevel::all);
-        client.init_asio(&m_service);
+        client.init_asio();
+        client.start_perpetual();
 
         _ASSERTE(m_state == CREATED);
         client.set_open_handler([this](websocketpp::connection_hdl)
@@ -343,13 +359,7 @@ public:
 
         m_state = CONNECTING;
         client.connect(con);
-
-        m_thread = std::thread([this]()
-        {
-            m_service.run();
-            _ASSERTE(m_state == CLOSED);
-        });
-
+        m_thread = std::thread(&websocketpp::client<WebsocketConfigType>::run, &client);
         return pplx::create_task(m_connect_tce);
     }
 
@@ -638,9 +648,6 @@ public:
     }
 
 private:
-    // The m_service should be the first member (and therefore the last to be destroyed)
-    boost::asio::io_service m_service;
-    std::unique_ptr<boost::asio::io_service::work> m_work;
     std::thread m_thread;
 
     // Perform type erasure to set the websocketpp client in use at runtime
