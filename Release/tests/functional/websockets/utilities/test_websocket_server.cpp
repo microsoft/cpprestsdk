@@ -98,7 +98,7 @@ namespace utilities {
     {
     public:
         _test_websocket_server(test_websocket_server* test_srv)
-            : m_test_srv(test_srv), m_work(new boost::asio::io_service::work(m_service))
+            : m_test_srv(test_srv)
         {
             m_srv.clear_access_channels(websocketpp::log::alevel::all);
             m_srv.clear_error_channels(websocketpp::log::elevel::all);
@@ -167,7 +167,8 @@ namespace utilities {
                 fn(wsmsg);
             });
 
-            m_srv.init_asio(&m_service);
+            m_srv.init_asio();
+            m_srv.start_perpetual();
 
             m_srv.set_reuse_addr(true);
 
@@ -179,26 +180,19 @@ namespace utilities {
             }
 
             m_srv.start_accept();
-
-            m_thread = std::thread([this]()
-            {
-                m_service.run();
-                return 0;
-            });
+            m_thread = std::thread(&server::run, &m_srv);
         }
 
         ~_test_websocket_server()
         {
             close("destructor");
-
-            m_work.reset();
-            m_service.stop();
+            m_srv.stop_listening();
+            m_srv.stop_perpetual();
             _ASSERTE(m_thread.joinable());
             m_thread.join();
         }
 
         void send_msg(const test_websocket_msg& msg);
-
 
         void close(const std::string& reasoning)
         {
@@ -211,8 +205,6 @@ namespace utilities {
 
         test_websocket_server* m_test_srv;
 
-        boost::asio::io_service m_service;
-        std::unique_ptr<boost::asio::io_service::work> m_work;
         std::thread m_thread;
 
         server m_srv;
