@@ -26,6 +26,7 @@
 
   <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|120' and '$(Platform)'!='x64'">
       <ProjectFile Include="build\vs12.wp81\casablanca120.wp81.vcxproj" />
+      <ProjectFile Include="build\vs12.wps81\casablanca120.wps81.vcxproj" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(DevToolsVersion)'=='140'">

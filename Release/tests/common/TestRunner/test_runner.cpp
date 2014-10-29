@@ -31,11 +31,11 @@
 #else
 #include <unistd.h>
 #ifdef __APPLE__
-#include "compat/apple_compat.h"
+#include "cpprest/details/apple_compat.h"
 #include <dirent.h>
 #else
 #include <boost/filesystem.hpp>
-#include "compat/linux_compat.h"
+#include "cpprest/details/linux_compat.h"
 #endif
 #endif
 
@@ -381,6 +381,8 @@ bool IsTestIgnored(UnitTest::Test *pTest)
     if(pTest->m_properties.Has("Ignore:Windows")) return true;
 #elif defined(__APPLE__)
     if(pTest->m_properties.Has("Ignore:Apple")) return true;
+#elif defined(ANDROID)
+    if(pTest->m_properties.Has("Ignore:Android")) return true;
 #else
     if(pTest->m_properties.Has("Ignore:Linux")) return true;
 #endif

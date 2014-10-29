@@ -60,44 +60,6 @@ namespace concurrency = Concurrency;
 #pragma warning(disable : 4718)
 #endif
 
-#ifndef _MS_WINDOWS
-// TFS 579628 - 1206: figure out how to avoid having this specialization for Linux (beware of 64-bit Linux)
-namespace std {
-    template<>
-    struct char_traits<unsigned char> : private char_traits<char>
-    {
-    public:
-        typedef unsigned char char_type;
-
-        using char_traits<char>::eof;
-        using char_traits<char>::int_type;
-        using char_traits<char>::off_type;
-        using char_traits<char>::pos_type;
-
-        static size_t length(const unsigned char* str)
-        {
-            return char_traits<char>::length(reinterpret_cast<const char*>(str));
-        }
-
-        static void assign(unsigned char& left, const unsigned char& right) { left = right; }
-        static unsigned char* assign(unsigned char* left, size_t n, unsigned char value)
-        {
-            return reinterpret_cast<unsigned char*>(char_traits<char>::assign(reinterpret_cast<char*>(left), n, static_cast<char>(value)));
-        }
-
-        static unsigned char* copy(unsigned char* left, const unsigned char* right, size_t n)
-        {
-            return reinterpret_cast<unsigned char*>(char_traits<char>::copy(reinterpret_cast<char*>(left), reinterpret_cast<const char*>(right), n));
-        }
-
-        static unsigned char* move(unsigned char* left, const unsigned char* right, size_t n)
-        {
-            return reinterpret_cast<unsigned char*>(char_traits<char>::move(reinterpret_cast<char*>(left), reinterpret_cast<const char*>(right), n));
-        }
-    };
-}
-#endif // _MS_WINDOWS
-
 namespace Concurrency 
 { 
 /// Library for asychronous streams.
@@ -120,6 +82,42 @@ namespace streams
         /// <returns>An <c>int_type</c> value which implies that an asynchronous call is required.</returns>
         static typename std::char_traits<_CharType>::int_type requires_async() { return std::char_traits<_CharType>::eof()-1; }
     };
+#if !defined(_MS_WINDOWS)
+    template<>
+    struct char_traits<unsigned char> : private std::char_traits<char>
+    {
+    public:
+        typedef unsigned char char_type;
+
+        using std::char_traits<char>::eof;
+        using std::char_traits<char>::int_type;
+        using std::char_traits<char>::off_type;
+        using std::char_traits<char>::pos_type;
+
+        static size_t length(const unsigned char* str)
+        {
+            return std::char_traits<char>::length(reinterpret_cast<const char*>(str));
+        }
+
+        static void assign(unsigned char& left, const unsigned char& right) { left = right; }
+        static unsigned char* assign(unsigned char* left, size_t n, unsigned char value)
+        {
+            return reinterpret_cast<unsigned char*>(std::char_traits<char>::assign(reinterpret_cast<char*>(left), n, static_cast<char>(value)));
+        }
+
+        static unsigned char* copy(unsigned char* left, const unsigned char* right, size_t n)
+        {
+            return reinterpret_cast<unsigned char*>(std::char_traits<char>::copy(reinterpret_cast<char*>(left), reinterpret_cast<const char*>(right), n));
+        }
+
+        static unsigned char* move(unsigned char* left, const unsigned char* right, size_t n)
+        {
+            return reinterpret_cast<unsigned char*>(std::char_traits<char>::move(reinterpret_cast<char*>(left), reinterpret_cast<const char*>(right), n));
+        }
+
+        static int_type requires_async() { return eof()-1; }
+    };
+#endif
 
     namespace details {
 

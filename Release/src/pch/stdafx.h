@@ -32,7 +32,7 @@
 
 #ifdef _MS_WINDOWS
 #include "cpprest/targetver.h"
-#include "compat/windows_compat.h"
+#include "cpprest/details/windows_compat.h"
 // use the debug version of the CRT if _DEBUG is defined
 #ifdef _DEBUG
     #define _CRTDBG_MAP_ALLOC
@@ -56,9 +56,9 @@
 #endif // #if !defined(__cplusplus_winrt)
 #else // LINUX or APPLE
 #ifdef __APPLE__
-#include <compat/apple_compat.h>
+#include "cpprest/details/apple_compat.h"
 #else
-#include <compat/linux_compat.h>
+#include "cpprest/details/linux_compat.h"
 #define FAILED(x) ((x) != 0)
 #endif
 #define __STDC_LIMIT_MACROS
@@ -92,6 +92,8 @@
 #include <exception>
 #include <assert.h>
 #include <streambuf>
+#include <mutex>
+#include <array>
 
 #if defined(_MSC_VER) && (_MSC_VER >= 1800)
 #include <ppltasks.h>

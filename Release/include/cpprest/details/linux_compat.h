@@ -14,31 +14,42 @@
 * limitations under the License.
 *
 * ==--==
-* =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*
-* windows_compat.h
-*
-* Windows-specific definitions
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
 *
-* =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-****/
-#pragma once
+* =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+***/
 
-#if _MSC_VER >= 1700
-// Support VS2012 SAL syntax only
-#include <sal.h>
-#else
-#include "compat/nosal.h"
+#pragma once
+#include <cstdint>
+#include <sstream>
+#include <iostream>
+#define __cdecl __attribute__ ((cdecl))
+
+#include "cpprest/details/nosal.h"
+
+#define CPPREST_NOEXCEPT noexcept
+
+#define novtable /* no novtable equivalent */
+#define __declspec(x) __attribute__ ((x))
+
+// ignore these:
+#define dllimport 
+#ifdef __LP64__ // ignore cdecl on 64-bit
+#define cdecl
 #endif
 
-#define _noexcept 
+#include <stdint.h>
+#include <assert.h>
 
-#define CASABLANCA_UNREFERENCED_PARAMETER(x) (x)
+#define __assume(x) do { if (!(x)) __builtin_unreachable(); } while (false)
+
+#define CASABLANCA_UNREFERENCED_PARAMETER(x) (void)x
+#define _ASSERTE(x) assert(x)
 
 #ifdef CASABLANCA_DEPRECATION_NO_WARNINGS
 #define CASABLANCA_DEPRECATED(x)
 #else
-#define CASABLANCA_DEPRECATED(x) __declspec(deprecated(x))
+#define CASABLANCA_DEPRECATED(x) __attribute__((deprecated(x)))
 #endif
+

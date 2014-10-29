@@ -279,16 +279,15 @@ public:
             *pcbWritten = 0;
         }
 
+        if (cb == 0)
+        {
+            return S_OK;
+        }
+
         try
         {
             auto buffer = context->_get_writebuffer();
-            if ( cb == 0 )
-            {
-                buffer.sync().wait();
-                return S_OK;
-            }
-
-            const size_t count = buffer.putn((const uint8_t *)pv, (size_t)cb).get();
+            const size_t count = buffer.putn(reinterpret_cast<const uint8_t *>(pv), static_cast<size_t>(cb)).get();
 
             _ASSERTE(count != static_cast<size_t>(-1));
             _ASSERTE(count <= static_cast<size_t>(ULONG_MAX));
@@ -299,7 +298,7 @@ public:
             context->m_downloaded += count;
 
             auto progress = context->m_request._get_impl()->_progress_handler();
-            if ( progress && count > 0 )
+            if (progress && count > 0)
             {
                 try { (*progress)(message_direction::download, context->m_downloaded); } catch(...)
                 {

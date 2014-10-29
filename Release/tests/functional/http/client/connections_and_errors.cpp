@@ -134,8 +134,14 @@ TEST_FIXTURE(uri_address, request_timeout)
     config.set_timeout(utility::seconds(1));
 
     http_client client(m_uri, config);
-
-    VERIFY_THROWS_HTTP_ERROR_CODE(client.request(methods::GET).get(), std::errc::timed_out);
+    auto responseTask = client.request(methods::GET);
+    
+#ifdef __APPLE__
+    // CodePlex 295
+    VERIFY_THROWS(responseTask.get(), http_exception);
+#else
+    VERIFY_THROWS_HTTP_ERROR_CODE(responseTask.get(), std::errc::timed_out);
+#endif
 }
 
 TEST_FIXTURE(uri_address, invalid_method)
@@ -166,7 +172,6 @@ TEST_FIXTURE(uri_address, handshake_fail)
 }
 
 #if !defined(__cplusplus_winrt)
-// This test still sometimes segfaults on Linux, but I'm re-enabling it [AL]
 TEST_FIXTURE(uri_address, content_ready_timeout)
 {
     web::http::experimental::listener::http_listener listener(m_uri);
@@ -189,15 +194,20 @@ TEST_FIXTURE(uri_address, content_ready_timeout)
         http_request msg(methods::GET);
         http_response rsp = client.request(msg).get();
 
-        // The response body should timeout and we should recieve an exception
+        // The response body should timeout and we should receive an exception
+#ifdef __APPLE__
+        // CodePlex 295
+        VERIFY_THROWS(rsp.content_ready().wait(), http_exception);
+#else
         VERIFY_THROWS_HTTP_ERROR_CODE(rsp.content_ready().wait(), std::errc::timed_out);
+#endif
     }
 
     buf.close(std::ios_base::out).wait();
     listener.close().wait();
 }
 
-TEST_FIXTURE(uri_address, stream_timeout, "Ignore:Apple", "149")
+TEST_FIXTURE(uri_address, stream_timeout)
 {
     web::http::experimental::listener::http_listener listener(m_uri);
     listener.open().wait();
@@ -220,7 +230,13 @@ TEST_FIXTURE(uri_address, stream_timeout, "Ignore:Apple", "149")
         http_response rsp = client.request(msg).get();
 
         // The response body should timeout and we should receive an exception
-        VERIFY_THROWS_HTTP_ERROR_CODE(rsp.body().read_to_end(streams::producer_consumer_buffer<uint8_t>()).wait(), std::errc::timed_out);
+        auto readTask = rsp.body().read_to_end(streams::producer_consumer_buffer<uint8_t>());
+#ifdef __APPLE__
+        // CodePlex 295
+        VERIFY_THROWS(readTask.get(), http_exception);
+#else
+        VERIFY_THROWS_HTTP_ERROR_CODE(readTask.wait(), std::errc::timed_out);
+#endif
     }
 
     buf.close(std::ios_base::out).wait();

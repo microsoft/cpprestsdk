@@ -75,7 +75,7 @@ TEST_FIXTURE(uri_address, auth_no_credentials, "Ignore", "245")
 TEST_FIXTURE(uri_address, auth_with_credentials, "Ignore", "245")
 {
     test_websocket_server server;
-    websocket_client_config config;   
+    websocket_client_config config;
     web::credentials cred(U("user"), U("password"));
     config.set_credentials(cred);
     websocket_client client(config);
@@ -86,8 +86,8 @@ TEST_FIXTURE(uri_address, auth_with_credentials, "Ignore", "245")
 }
 #endif
 
-// Secure websockets on implemented yet on non-WinRT Windows - 255
-#if defined(__cplusplus_winrt) || !defined(_MS_WINDOWS)
+// Server certificate verification isn't implemented on Windows desktop yet.
+#if !defined(_MS_WINDOWS) || defined(__cplusplus_winrt)
 TEST_FIXTURE(uri_address, ssl_test)
 {
     websocket_client client;
