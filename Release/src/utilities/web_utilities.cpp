@@ -42,17 +42,7 @@ namespace details
 #if defined(_MS_WINDOWS)
 #if defined(__cplusplus_winrt)
 
-// Helper function since SecureZeroMemory isn't available.
-void winrt_secure_zero_memory(_Out_writes_(count) void *buffer, _In_ size_t count)
-{
-    auto vptr = reinterpret_cast<volatile char *>(buffer);
-    while (count != 0)
-    {
-        *vptr = 0;
-        ++vptr;
-        --count;
-    }
-}
+// Helper function to zero out memory of an IBuffer.
 void winrt_secure_zero_buffer(Windows::Storage::Streams::IBuffer ^buffer)
 {
     Microsoft::WRL::ComPtr<IInspectable> bufferInspectable(reinterpret_cast<IInspectable *>(buffer));
@@ -60,7 +50,7 @@ void winrt_secure_zero_buffer(Windows::Storage::Streams::IBuffer ^buffer)
     bufferInspectable.As(&bufferByteAccess);
     byte * rawBytes;
     bufferByteAccess->Buffer(&rawBytes);
-    winrt_secure_zero_memory(rawBytes, buffer->Length);
+    SecureZeroMemory(rawBytes, buffer->Length);
 }
 
 winrt_encryption::winrt_encryption(const std::wstring &data)
@@ -98,7 +88,7 @@ plaintext_string winrt_encryption::decrypt() const
     auto data = plaintext_string(new std::wstring(
         reinterpret_cast<const std::wstring::value_type *>(rawPlaintext),
         plaintext->Length / 2));
-    winrt_secure_zero_memory(rawPlaintext, plaintext->Length);
+    SecureZeroMemory(rawPlaintext, plaintext->Length);
     return std::move(data);
 }
 #else
@@ -144,11 +134,7 @@ plaintext_string win32_encryption::decrypt() const
 
 void zero_memory_deleter::operator()(::utility::string_t *data) const
 {
-#if defined(__cplusplus_winrt)
-    winrt_secure_zero_memory(
-#else
     SecureZeroMemory(
-#endif
         const_cast<::utility::string_t::value_type *>(data->data()),
         data->size() * sizeof(::utility::string_t::value_type));
     delete data;

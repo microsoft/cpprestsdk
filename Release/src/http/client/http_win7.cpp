@@ -883,30 +883,28 @@ private:
         //  we cannot call WinHttpQueryAuthSchemes and WinHttpSetCredentials.
         if (error != ERROR_WINHTTP_RESEND_REQUEST)
         {
+            // Obtain the supported and preferred schemes.
             DWORD dwSupportedSchemes;
             DWORD dwFirstScheme;
-            DWORD dwSelectedScheme = 0;
             DWORD dwAuthTarget;
-            credentials cred;
-
-            // Obtain the supported and preferred schemes.
             if(!WinHttpQueryAuthSchemes(
                 hRequestHandle,
                 &dwSupportedSchemes,
                 &dwFirstScheme,
-                &dwAuthTarget)) 
+                &dwAuthTarget))
             {
                 // This will return the authentication failure to the user, without reporting fatal errors
                 return false;
             }
 
-            dwSelectedScheme = ChooseAuthScheme(dwSupportedSchemes);
+            DWORD dwSelectedScheme = ChooseAuthScheme(dwSupportedSchemes);
             if(dwSelectedScheme == 0)
             {
                 // This will return the authentication failure to the user, without reporting fatal errors
                 return false;
             }
 
+            credentials cred;
             if (dwAuthTarget == WINHTTP_AUTH_TARGET_SERVER && !p_request_context->m_server_authentication_tried)
             {
                 cred = p_request_context->m_http_client->client_config().credentials();

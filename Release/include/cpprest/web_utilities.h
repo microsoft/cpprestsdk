@@ -84,7 +84,7 @@ class credentials
 {
 public:
     /// <summary>
-    /// Constructs and empty set of credentials without a user name or password.
+    /// Constructs an empty set of credentials without a user name or password.
     /// </summary>
     credentials() {}
 
@@ -148,7 +148,7 @@ private:
 
 /// <summary>
 /// web_proxy represents the concept of the web proxy, which can be auto-discovered,
-/// disabled, or specified explicitly by the user
+/// disabled, or specified explicitly by the user.
 /// </summary>
 class web_proxy
 {
