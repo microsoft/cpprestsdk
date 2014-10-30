@@ -132,7 +132,7 @@ bool verify_X509_cert_chain(const std::vector<std::string> &certChain, const std
     cert_context cert(CertCreateCertificateContext(
         X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
         reinterpret_cast<const unsigned char *>(certChain[0].c_str()),
-        certChain[0].size()));
+        static_cast<DWORD>(certChain[0].size())));
     if (cert == nullptr)
     {
         return false;
