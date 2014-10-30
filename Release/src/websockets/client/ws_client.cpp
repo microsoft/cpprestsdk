@@ -34,6 +34,9 @@
 #include <memory>
 #include <thread>
 
+// Force websocketpp to use C++ std::error_code instead of Boost.
+#define _WEBSOCKETPP_CPP11_SYSTEM_ERROR_
+
 #if ((!defined(WINAPI_FAMILY) || WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP) && !defined(_M_ARM) && (!defined(_MSC_VER) || (_MSC_VER < 1900))) && !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 #if defined(__GNUC__)
 #include "pplx/threadpool.h"
@@ -49,7 +52,6 @@
 #undef ntohll
 #undef htonll
 #endif
-#define _WEBSOCKETPP_CPP11_SYSTEM_ERROR_
 #include <websocketpp/config/asio_client.hpp>
 #include <websocketpp/config/asio_no_tls_client.hpp>
 #include <websocketpp/client.hpp>

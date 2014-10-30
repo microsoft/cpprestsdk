@@ -50,7 +50,7 @@ using namespace crossplat;
 
 namespace web { namespace http { namespace client { namespace details {
 
-#if defined(__APPLE__) || defined(ANDROID) || (defined(_MS_WINDOWS)  && !defined(__cplusplus_winrt))
+#if defined(__APPLE__) || defined(ANDROID) || (defined(_MS_WINDOWS)  && !defined(__cplusplus_winrt) && !defined(_M_ARM))
 bool verify_cert_chain_platform_specific(boost::asio::ssl::verify_context &verifyCtx, const std::string &hostName)
 {
     X509_STORE_CTX *storeContext = verifyCtx.native_handle();
@@ -106,7 +106,7 @@ bool verify_cert_chain_platform_specific(boost::asio::ssl::verify_context &verif
 }
 #endif
 
-#if defined(_MS_WINDOWS)  && !defined(__cplusplus_winrt)
+#if defined(_MS_WINDOWS)  && !defined(__cplusplus_winrt) && !defined(_M_ARM)
 
 // Helper RAII unique_ptrs to free Windows structures.
 struct cert_free_certificate_context
