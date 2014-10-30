@@ -120,7 +120,11 @@ public:
         utility::string_t password() const
     {
 #if defined(_MS_WINDOWS)
+#if defined(WINAPI_FAMILY) && WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP && _MSC_VER < 1800
+        return m_password;
+#else
         return utility::string_t(*m_password.decrypt());
+#endif
 #else
         throw std::runtime_error("Credentials are not supported on this platform yet.");
 #endif
