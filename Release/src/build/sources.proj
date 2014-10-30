@@ -182,6 +182,9 @@
     <ClCompile Include="$(CasablancaSrcDir)\utilities\asyncrt_utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="$(CasablancaSrcDir)\utilities\web_utilities.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="$(CasablancaSrcDir)\utilities\base64.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

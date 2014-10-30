@@ -354,7 +354,7 @@ protected:
             return;
         }
 
-        if ( msg.method() == http::methods::TRCE )
+        if (msg.method() == http::methods::TRCE)
         {
             // Not supported by WinInet. Generate a more specific exception than what WinInet does.
             request->report_exception(http_exception(L"TRACE is not supported"));
@@ -376,7 +376,7 @@ protected:
             CLSCTX_INPROC, 
             __uuidof(IXMLHTTPRequest2), 
             reinterpret_cast<void**>(winrt_context->m_hRequest.GetAddressOf()));
-        if ( FAILED(hr) ) 
+        if (FAILED(hr)) 
         {
             request->report_error(hr, L"Failure to create IXMLHTTPRequest2 instance");
             return;
@@ -384,42 +384,46 @@ protected:
 
         utility::string_t encoded_resource = http::uri_builder(m_uri).append(msg.relative_uri()).to_string();
 
-        const utility::char_t* usernanme = nullptr;
-        const utility::char_t* password = nullptr;
-        const utility::char_t* proxy_usernanme = nullptr;
-        const utility::char_t* proxy_password = nullptr;
-
         const auto &config = client_config();
         const auto &client_cred = config.credentials();
-        if(client_cred.is_set())
-        {
-            usernanme = client_cred.username().c_str();
-            password  = client_cred.password().c_str();
-        }
-
         const auto &proxy = config.proxy();
-        if(!proxy.is_default())
+        const auto &proxy_cred = proxy.credentials();
+        if (!proxy.is_default())
         {
             request->report_exception(http_exception(L"Only a default proxy server is supported"));
             return;
         }
 
-        const auto &proxy_cred = proxy.credentials();
-        if(proxy_cred.is_set())
+        // New scope to ensure plain text password is cleared as soon as possible.
         {
-            proxy_usernanme = proxy_cred.username().c_str();
-            proxy_password  = proxy_cred.password().c_str();
-        }
+            utility::string_t username, proxy_username;
+            const utility::char_t *password = nullptr;
+            const utility::char_t *proxy_password = nullptr;
+            ::web::details::plaintext_string password_plaintext, proxy_password_plaintext;
 
-        hr = winrt_context->m_hRequest->Open(
-            msg.method().c_str(), 
-            encoded_resource.c_str(), 
-            Make<HttpRequestCallback>(winrt_context).Get(), 
-            usernanme, 
-            password, 
-            proxy_usernanme, 
-            proxy_password);
-        if ( FAILED(hr) ) 
+            if (client_cred.is_set())
+            {
+                username = client_cred.username();
+                password_plaintext = client_cred.decrypt();
+                password = password_plaintext->c_str();
+            }
+            if (proxy_cred.is_set())
+            {
+                proxy_username = proxy_cred.username();
+                proxy_password_plaintext = proxy_cred.decrypt();
+                proxy_password = proxy_password_plaintext->c_str();
+            }
+
+            hr = winrt_context->m_hRequest->Open(
+                msg.method().c_str(),
+                encoded_resource.c_str(),
+                Make<HttpRequestCallback>(winrt_context).Get(),
+                username.c_str(),
+                password,
+                proxy_username.c_str(),
+                proxy_password);
+        }
+        if (FAILED(hr))
         {
             request->report_error(hr, L"Failure to open HTTP request");
             return;
@@ -427,7 +431,7 @@ protected:
 
         // Suppress automatic prompts for user credentials, since they are already provided.
         hr = winrt_context->m_hRequest->SetProperty(XHR_PROP_NO_CRED_PROMPT, TRUE);
-        if(FAILED(hr))
+        if (FAILED(hr))
         {
             request->report_error(hr, L"Failure to set no credentials prompt property");
             return;
@@ -436,21 +440,21 @@ protected:
         const auto timeout = config.timeout();
         const int secs = static_cast<int>(timeout.count());
         hr = winrt_context->m_hRequest->SetProperty(XHR_PROP_TIMEOUT, secs * 1000);
-        if ( FAILED(hr) ) 
+        if (FAILED(hr))
         {
             request->report_error(hr, L"Failure to set HTTP request properties");
             return;
         }
 
         // Add headers.
-        for ( auto hdr = msg.headers().begin(); hdr != msg.headers().end(); ++hdr )
+        for (const auto &hdr : msg.headers())
         {
-            winrt_context->m_hRequest->SetRequestHeader(hdr->first.c_str(), hdr->second.c_str());
+            winrt_context->m_hRequest->SetRequestHeader(hdr.first.c_str(), hdr.second.c_str());
         }
 
         // Set response stream.
         hr = winrt_context->m_hRequest->SetCustomResponseStream(Make<IResponseStream>(request).Get());
-        if ( FAILED(hr) ) 
+        if (FAILED(hr))
         {
             request->report_error(hr, L"Failure to set HTTP response stream");
             return;

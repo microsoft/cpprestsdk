@@ -4,7 +4,6 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{4D9ED383-673B-4E48-A6AF-6BD9F108150E}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>casablanca</RootNamespace>
     <SccProjectName>SAK</SccProjectName>
     <SccAuxPath>SAK</SccAuxPath>
     <SccLocalPath>SAK</SccLocalPath>
@@ -27,6 +26,11 @@
     <Import Project="$(PackagesRoot)\boost_regex-vc110.1.55.0.16\build\native\boost_regex-vc110.targets" Condition="Exists('$(PackagesRoot)\boost_regex-vc110.1.55.0.16\build\native\boost_regex-vc110.targets')" />
     <Import Project="$(PackagesRoot)\boost_chrono-vc110.1.55.0.16\build\native\boost_chrono-vc110.targets" Condition="Exists('$(PackagesRoot)\boost_chrono-vc110.1.55.0.16\build\native\boost_chrono-vc110.targets')" />
     <Import Project="$(PackagesRoot)\boost_random-vc110.1.55.0.16\build\native\boost_random-vc110.targets" Condition="Exists('$(PackagesRoot)\boost_random-vc110.1.55.0.16\build\native\boost_random-vc110.targets')" />
+    <Import Project="$(PackagesRoot)\openssl.1.0.1.25\build\native\openssl.props" Condition="Exists('$(PackagesRoot)\openssl.1.0.1.25\build\native\openssl.props')" />
+    <Import Project="$(PackagesRoot)\zlib.redist.1.2.8.7\build\native\zlib.redist.targets" Condition="Exists('$(PackagesRoot)\zlib.redist.1.2.8.7\build\native\zlib.redist.targets')" />
+    <Import Project="$(PackagesRoot)\zlib.1.2.8.7\build\native\zlib.targets" Condition="Exists('$(PackagesRoot)\zlib.1.2.8.7\build\native\zlib.targets')" />
+    <Import Project="$(PackagesRoot)\openssl.redist.1.0.1.25\build\native\openssl.redist.targets" Condition="Exists('$(PackagesRoot)\openssl.redist.1.0.1.25\build\native\openssl.redist.targets')" />
+    <Import Project="$(PackagesRoot)\openssl.1.0.1.25\build\native\openssl.targets" Condition="Exists('$(PackagesRoot)\openssl.1.0.1.25\build\native\openssl.targets')" />
   </ImportGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <DebugFileSuffix>d</DebugFileSuffix>
@@ -46,7 +50,7 @@
       <AdditionalOptions>-Zm160 /bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Kernel32.lib;Winhttp.lib;httpapi.lib;bcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Kernel32.lib;Winhttp.lib;httpapi.lib;crypt32.lib;bcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="../sources.proj" />

@@ -34,7 +34,7 @@
 #include <memory>
 #include <thread>
 
-#if (!defined(WINAPI_FAMILY) || WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP) && !defined(_M_ARM) && (!defined(_MSC_VER) || (_MSC_VER < 1900))
+#if ((!defined(WINAPI_FAMILY) || WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP) && !defined(_M_ARM) && (!defined(_MSC_VER) || (_MSC_VER < 1900))) && !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 #if defined(__GNUC__)
 #include "pplx/threadpool.h"
 #pragma GCC diagnostic push
@@ -69,9 +69,7 @@
 #else
 #define _WEBSOCKETPP_NULLPTR_TOKEN_ 0
 #endif
-#ifndef _MS_WINDOWS
 #include <websocketpp/config/asio_client.hpp>
-#endif
 #include <websocketpp/config/asio_no_tls_client.hpp>
 #include <websocketpp/client.hpp>
 #pragma warning( pop )
@@ -164,7 +162,6 @@ public:
 
     pplx::task<void> connect()
     {
-#ifndef _MS_WINDOWS
         if (m_uri.scheme() == U("wss"))
         {
         	m_client = std::unique_ptr<websocketpp_client_base>(new websocketpp_tls_client());
@@ -196,7 +193,7 @@ public:
                         return http::client::details::verify_cert_chain_platform_specific(verifyCtx, m_uri.host());
                     }
 #endif
-                    boost::asio::ssl::rfc2818_verification rfc2818(m_uri.host());
+                    boost::asio::ssl::rfc2818_verification rfc2818(utility::conversions::to_utf8string(m_uri.host()));
                     return rfc2818(preverified, verifyCtx);
                 });
 
@@ -205,7 +202,6 @@ public:
             return connect_impl<websocketpp::config::asio_tls_client>();
         }
         else
-#endif
         {
         	m_client = std::unique_ptr<websocketpp_client_base>(new websocketpp_client());
             return connect_impl<websocketpp::config::asio_client>();
@@ -414,13 +410,11 @@ public:
 
     void send_msg(websocket_outgoing_message &msg)
     {
-#ifndef _MS_WINDOWS
         if (m_client->is_tls_client())
         {
             send_msg_impl<websocketpp::config::asio_tls_client>(msg);
         }
         else
-#endif
         {
             send_msg_impl<websocketpp::config::asio_client>(msg);
         }
@@ -587,13 +581,11 @@ public:
 
     pplx::task<void> close(websocket_close_status status, const utility::string_t& reason)
     {
-#ifndef _MS_WINDOWS
         if (m_client->is_tls_client())
         {
             return close_impl<websocketpp::config::asio_tls_client>(status, reason);
         }
         else
-#endif
         {
             return close_impl<websocketpp::config::asio_client>(status, reason);
         }
@@ -641,17 +633,15 @@ private:
     // after construction based on the URI.
     struct websocketpp_client_base
     {
-    	virtual ~websocketpp_client_base() _noexcept {}
+    	virtual ~websocketpp_client_base() CPPREST_NOEXCEPT {}
     	template <typename WebsocketConfig>
     	websocketpp::client<WebsocketConfig> & client()
     	{
-#ifndef _MS_WINDOWS
     		if(is_tls_client())
     		{
     			return reinterpret_cast<websocketpp::client<WebsocketConfig> &>(tls_client());
     		}
     		else
-#endif
     		{
     			return reinterpret_cast<websocketpp::client<WebsocketConfig> &>(non_tls_client());
     		}
@@ -660,12 +650,10 @@ private:
 		{
     		throw std::bad_cast();
 		}
-#ifndef _MS_WINDOWS
     	virtual websocketpp::client<websocketpp::config::asio_tls_client> & tls_client()
 		{
     		throw std::bad_cast();
 		}
-#endif
     	virtual bool is_tls_client() const = 0;
     };
     struct websocketpp_client : websocketpp_client_base
@@ -677,7 +665,6 @@ private:
     	bool is_tls_client() const override { return false; }
     	websocketpp::client<websocketpp::config::asio_client> m_client;
     };
-#ifndef _MS_WINDOWS
     struct websocketpp_tls_client : websocketpp_client_base
     {
     	websocketpp::client<websocketpp::config::asio_tls_client> & tls_client() override
@@ -687,7 +674,6 @@ private:
     	bool is_tls_client() const override { return true; }
     	websocketpp::client<websocketpp::config::asio_tls_client> m_client;
     };
-#endif
     std::unique_ptr<websocketpp_client_base> m_client;
 
     websocketpp::connection_hdl m_con;

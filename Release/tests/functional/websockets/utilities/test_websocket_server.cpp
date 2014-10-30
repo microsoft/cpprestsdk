@@ -52,8 +52,22 @@
 #endif
 #endif /* _WIN32 */
 
+#if defined(__APPLE__)
+#include "stdlib.h"
+// Issue caused by iOS SDK 8.0
+#pragma push_macro("ntohll")
+#pragma push_macro("htonll")
+#undef ntohll
+#undef htonll
+#endif
+
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
+
+#if defined(__APPLE__)
+#pragma pop_macro("htonll")
+#pragma pop_macro("ntohll")
+#endif
 
 #ifdef _WIN32
 #pragma warning( pop )
