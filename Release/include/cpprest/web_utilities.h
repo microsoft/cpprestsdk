@@ -51,6 +51,7 @@ public:
 };
 typedef std::unique_ptr<std::wstring, zero_memory_deleter> plaintext_string;
 #if defined(__cplusplus_winrt)
+#if !(WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP && _MSC_VER < 1800)
 class winrt_encryption
 {
 public:
@@ -60,6 +61,7 @@ public:
 private:
     ::pplx::task<Windows::Storage::Streams::IBuffer ^> m_buffer;
 };
+#endif
 #else
 class win32_encryption
 {
@@ -138,14 +140,23 @@ private:
 #if defined(_MS_WINDOWS)
     details::plaintext_string decrypt() const
     {
+        // Encryption APIs not supported on Windows Phone 8.0
+#if WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP && _MSC_VER < 1800
+        return plaintext_string(new string_t(m_password));
+#else
         return m_password.decrypt();
+#endif
     }
 #endif
 
     ::utility::string_t m_username;
 #if defined(_MS_WINDOWS)
 #if defined(__cplusplus_winrt)
+#if WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP && _MSC_VER < 1800
+    ::utility::string_t m_password;
+#else
     details::winrt_encryption m_password;
+#endif
 #else
     details::win32_encryption m_password;
 #endif
