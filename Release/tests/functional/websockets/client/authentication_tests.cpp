@@ -80,7 +80,7 @@ TEST_FIXTURE(uri_address, auth_with_credentials, "Ignore", "245")
     config.set_credentials(cred);
     websocket_client client(config);
 
-    auth_helper(server, cred.username(), cred.password());
+    auth_helper(server, cred.username(), U("password"));
     client.connect(m_uri).wait();
     client.close().wait();
 }
