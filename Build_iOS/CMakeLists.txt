@@ -35,7 +35,6 @@ execute_process(WORKING_DIRECTORY ${ARM_BINARY_DIR}
 add_custom_target(sim
   COMMAND ${CMAKE_COMMAND}
     --build ${SIM_BINARY_DIR}
-    --target cpprest
     --config ${CMAKE_BUILD_TYPE}
   COMMENT "Building for i386 (simulator)"
   VERBATIM
@@ -45,7 +44,6 @@ add_custom_target(sim
 add_custom_target(arm
   COMMAND ${CMAKE_COMMAND}
     --build ${ARM_BINARY_DIR}
-    --target cpprest
     --config ${CMAKE_BUILD_TYPE}
   COMMENT "Building for armv7, armv7s, arm64"
   VERBATIM

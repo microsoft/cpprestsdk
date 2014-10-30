@@ -4,7 +4,6 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{4D9ED383-673B-4E48-A6AF-6BD9F108150E}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>casablanca</RootNamespace>
     <SccProjectName>SAK</SccProjectName>
     <SccAuxPath>SAK</SccAuxPath>
     <SccLocalPath>SAK</SccLocalPath>
@@ -51,7 +50,7 @@
       <AdditionalOptions>-Zm160 /bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Kernel32.lib;Winhttp.lib;httpapi.lib;bcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Kernel32.lib;Winhttp.lib;httpapi.lib;crypt32.lib;bcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="../sources.proj" />

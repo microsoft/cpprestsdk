@@ -106,29 +106,31 @@ static void parse_winhttp_headers(HINTERNET request_handle, _In_z_ utf16char *he
 // Helper function to build an error message from a WinHTTP async result.
 static std::string build_callback_error_msg(_In_ WINHTTP_ASYNC_RESULT *error_result)
 {
-    std::string error_msg("Error in: ");
+	std::stringstream error_msg;
     switch(error_result->dwResult)
     {
     case API_RECEIVE_RESPONSE:
-        error_msg.append("WinHttpReceiveResponse");
+        error_msg << "WinHttpReceiveResponse";
         break;
     case API_QUERY_DATA_AVAILABLE:
-        error_msg.append("WinHttpQueryDataAvaliable");
+        error_msg << "WinHttpQueryDataAvaliable";
         break;
     case API_READ_DATA:
-        error_msg.append("WinHttpReadData");
+        error_msg << "WinHttpReadData";
         break;
     case API_WRITE_DATA:
-        error_msg.append("WinHttpWriteData");
+        error_msg << "WinHttpWriteData";
         break;
     case API_SEND_REQUEST:
-        error_msg.append("WinHttpSendRequest");
+        error_msg << "WinHttpSendRequest";
         break;
     default:
-        error_msg.append("Unknown WinHTTP Function");
+        error_msg << "Unknown WinHTTP Function";
         break;
     }
-    return error_msg;
+    error_msg << ": " << error_result->dwError << ": "
+        << utility::details::windows_category().message(error_result->dwError);
+    return error_msg.str();
 }
 
 class memory_holder
@@ -521,7 +523,7 @@ protected:
         // If credentials are specified, use autologon policy: WINHTTP_AUTOLOGON_SECURITY_LEVEL_HIGH
         //    => default credentials are not used.
         // Else, the default autologon policy WINHTTP_AUTOLOGON_SECURITY_LEVEL_MEDIUM will be used.
-        if ( !client_config().credentials().username().empty() )
+        if (!client_config().credentials().is_set())
         {
             DWORD data = WINHTTP_AUTOLOGON_SECURITY_LEVEL_HIGH;
 
@@ -671,17 +673,6 @@ private:
         {
             winhttp_context->report_error(GetLastError(), _XPLATSTR("Error starting to send chunked request"));
         }
-    }
-
-    static bool has_credentials(winhttp_request_context * p_request_context)
-    {
-        auto has_proxy_credentials = !p_request_context->m_http_client->client_config().proxy().credentials().username().empty() 
-            && !p_request_context->m_http_client->client_config().proxy().credentials().password().empty();
-
-        auto has_server_credentials = !p_request_context->m_http_client->client_config().credentials().username().empty() 
-            && !p_request_context->m_http_client->client_config().credentials().password().empty();
-
-        return has_proxy_credentials || has_server_credentials;
     }
 
     // Helper function to query/read next part of response data from winhttp.
@@ -860,35 +851,25 @@ private:
         }
     }
 
-    // Returns true if we handle successfuly and resending the request
+    // Returns true if we handle successfully and resending the request
     // or false if we fail to handle.
     static bool handle_authentication_failure(
         HINTERNET hRequestHandle,
         _In_ winhttp_request_context * p_request_context,
         _In_ DWORD error = 0)
     {
-        http_response & response = p_request_context->m_response;
         http_request & request = p_request_context->m_request;
 
-        _ASSERTE(response.status_code() == status_codes::Unauthorized  || response.status_code() == status_codes::ProxyAuthRequired
+        _ASSERTE(p_request_context->m_response.status_code() == status_codes::Unauthorized
+            || p_request_context->m_response.status_code() == status_codes::ProxyAuthRequired
             || error == ERROR_WINHTTP_RESEND_REQUEST);
-
-        bool got_credentials = false;
-        BOOL results;
-        DWORD dwSupportedSchemes;
-        DWORD dwFirstScheme;
-        DWORD dwTarget = 0;
-        DWORD dwSelectedScheme = 0;
-        string_t username;
-        string_t password;
 
         // Check if the saved read position is valid
         auto rdpos = p_request_context->m_startingPosition;
         if (rdpos != static_cast<std::char_traits<uint8_t>::pos_type>(std::char_traits<uint8_t>::eof()))
         {
-            auto rbuf = p_request_context->_get_readbuffer();
-
             // Try to seek back to the saved read position
+            auto rbuf = p_request_context->_get_readbuffer();
             if (rbuf.seekpos(rdpos, std::ios::ios_base::in) != rdpos)
             {
                 return false;
@@ -899,67 +880,58 @@ private:
         //  we cannot call WinHttpQueryAuthSchemes and WinHttpSetCredentials.
         if (error != ERROR_WINHTTP_RESEND_REQUEST)
         {
-            // The proxy requires authentication.  Sending credentials...
             // Obtain the supported and preferred schemes.
-            results = WinHttpQueryAuthSchemes( hRequestHandle, 
-                &dwSupportedSchemes, 
-                &dwFirstScheme, 
-                &dwTarget );
-
-            if (!results)
+            DWORD dwSupportedSchemes;
+            DWORD dwFirstScheme;
+            DWORD dwAuthTarget;
+            if(!WinHttpQueryAuthSchemes(
+                hRequestHandle,
+                &dwSupportedSchemes,
+                &dwFirstScheme,
+                &dwAuthTarget))
             {
                 // This will return the authentication failure to the user, without reporting fatal errors
                 return false;
             }
 
-            dwSelectedScheme = ChooseAuthScheme( dwSupportedSchemes);
-            if( dwSelectedScheme == 0 )
+            DWORD dwSelectedScheme = ChooseAuthScheme(dwSupportedSchemes);
+            if(dwSelectedScheme == 0)
             {
                 // This will return the authentication failure to the user, without reporting fatal errors
                 return false;
             }
 
-            if(response.status_code() == status_codes::ProxyAuthRequired /*407*/ && !p_request_context->m_proxy_authentication_tried)
+            credentials cred;
+            if (dwAuthTarget == WINHTTP_AUTH_TARGET_SERVER && !p_request_context->m_server_authentication_tried)
             {
-                // See if the credentials on the proxy were set. If not, there are no credentials to supply hence we cannot resend
-                web_proxy proxy = p_request_context->m_http_client->client_config().proxy();
-                // No need to check if proxy is disabled, because disabled proxies cannot have credentials set on them
-                credentials cred = proxy.credentials();
-                if(cred.is_set())
-                {
-                    username = cred.username();
-                    password = cred.password();
-                    dwTarget = WINHTTP_AUTH_TARGET_PROXY;
-                    got_credentials = !username.empty();
-                    p_request_context->m_proxy_authentication_tried = true;
-                }
-            }
-            else if(response.status_code() == status_codes::Unauthorized /*401*/ && !p_request_context->m_server_authentication_tried)
-            {
-                username = p_request_context->m_http_client->client_config().credentials().username();
-                password = p_request_context->m_http_client->client_config().credentials().password();
-                dwTarget = WINHTTP_AUTH_TARGET_SERVER;
-                got_credentials = !username.empty();
+                cred = p_request_context->m_http_client->client_config().credentials();
                 p_request_context->m_server_authentication_tried = true;
             }
-
-            if(!got_credentials)
+            else if (dwAuthTarget == WINHTTP_AUTH_TARGET_PROXY && !p_request_context->m_proxy_authentication_tried)
             {
-                // Either we cannot resend, or the user did not provide non-empty credentials.
-                // Return the authentication failure to the user.
+                cred = p_request_context->m_http_client->client_config().proxy().credentials();
+                p_request_context->m_proxy_authentication_tried = true;
+            }
+
+            // No credentials found so can't resend.
+            if (!cred.is_set())
+            {
                 return false;
             }
 
-            results = WinHttpSetCredentials( hRequestHandle,
-                dwTarget, 
-                dwSelectedScheme,
-                username.c_str(),
-                password.c_str(),
-                nullptr );
-            if(!results)
+            // New scope to ensure plaintext password is cleared as soon as possible.
             {
-                // This will return the authentication failure to the user, without reporting fatal errors
-                return false;
+                auto password = cred.decrypt();
+                if (!WinHttpSetCredentials(
+                    hRequestHandle,
+                    dwAuthTarget,
+                    dwSelectedScheme,
+                    cred.username().c_str(),
+                    password->c_str(),
+                    nullptr))
+                {
+                    return false;
+                }
             }
         }
 

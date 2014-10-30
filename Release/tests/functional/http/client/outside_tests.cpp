@@ -33,7 +33,7 @@
 #include "os_utilities.h"
 #include <stdexcept>
 
-using namespace web; 
+using namespace web;
 using namespace utility;
 using namespace concurrency;
 using namespace web::http;
@@ -191,9 +191,9 @@ TEST_FIXTURE(uri_address, outside_ssl_json)
 
                 for (auto iter = items.as_array().cbegin(); iter != items.as_array().cend(); ++iter)
                 {
-                    const auto& i = *iter;
-                    auto iSnippet = i.as_object().find(U("snippet"));
-                    if (iSnippet == i.as_object().end())
+                    const auto& item = *iter;
+                    auto iSnippet = item.as_object().find(U("snippet"));
+                    if (iSnippet == item.as_object().end())
                     {
                         throw std::runtime_error("snippet key not found");
                     }
