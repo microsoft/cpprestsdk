@@ -142,7 +142,7 @@ private:
     {
         // Encryption APIs not supported on Windows Phone 8.0
 #if WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP && _MSC_VER < 1800
-        return plaintext_string(new ::utility::string_t(m_password));
+        return details::plaintext_string(new ::utility::string_t(m_password));
 #else
         return m_password.decrypt();
 #endif
