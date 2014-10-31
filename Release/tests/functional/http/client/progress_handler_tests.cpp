@@ -366,7 +366,10 @@ TEST_FIXTURE(uri_address, download_nobody_exception)
     VERIFY_THROWS(client.request(msg).get().content_ready().get(), std::invalid_argument);
 }
 
-TEST_FIXTURE(uri_address, data_upload_exception, "Ignore:Linux", "898953", "Ignore:Apple", "898953")
+TEST_FIXTURE(uri_address, data_upload_exception,
+             "Ignore:Linux", "296",
+             "Ignore:Apple", "296",
+             "Ignore:Android", "296")
 {
     test_http_server::scoped_server scoped(m_uri);
     http_client client(m_uri);

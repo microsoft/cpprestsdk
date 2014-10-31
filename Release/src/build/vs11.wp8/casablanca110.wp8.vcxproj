@@ -34,7 +34,7 @@
 
   <ItemDefinitionGroup>
     <ClCompile>
-      <PreprocessorDefinitions>WINAPI_FAMILY=WINAPI_FAMILY_PHONE_APP;_ASYNCRT_EXPORT;_PPLX_EXPORT;_PHONE8_;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>CPPREST_EXCLUDE_WEBSOCKETS;WINAPI_FAMILY=WINAPI_FAMILY_PHONE_APP;_ASYNCRT_EXPORT;_PPLX_EXPORT;_PHONE8_;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalUsingDirectories>$(WindowsSDK_MetadataPath);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <CompileAsWinRT>true</CompileAsWinRT>
       <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CasablancaSrcDir)\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>

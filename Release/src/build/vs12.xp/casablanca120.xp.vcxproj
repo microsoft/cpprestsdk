@@ -4,7 +4,6 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{15F3B200-1AED-4B57-AF37-B21CD67914B1}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>casablanca</RootNamespace>
     <SccProjectName>SAK</SccProjectName>
     <SccAuxPath>SAK</SccAuxPath>
     <SccLocalPath>SAK</SccLocalPath>
