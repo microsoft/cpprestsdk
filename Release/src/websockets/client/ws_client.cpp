@@ -62,7 +62,7 @@
 #pragma GCC diagnostic pop
 #else /* __GNUC__ */
 #pragma warning( push )
-#pragma warning( disable : 4100 4127 4512 4996 4701)
+#pragma warning( disable : 4100 4127 4512 4996 4701 4267 )
 #if defined(_MSC_VER) && (_MSC_VER >= 1800)
 #define _WEBSOCKETPP_CPP11_STL_
 #define _WEBSOCKETPP_INITIALIZER_LISTS_
