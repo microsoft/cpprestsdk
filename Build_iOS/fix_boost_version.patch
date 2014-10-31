@@ -1,0 +1,36 @@
+From e5b3bf1392d3dc04f1391c4ad60118a394b5219f Mon Sep 17 00:00:00 2001
+From: Steve Gates <stgates@microsoft.com>
+Date: Thu, 30 Oct 2014 17:42:43 -0700
+Subject: [PATCH] Fixing boost.sh to use Boost version 1.56 and iOS 8.0.
+
+---
+ boost.sh | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/boost.sh b/boost.sh
+index 8847aac..2a76aec 100755
+--- a/boost.sh
++++ b/boost.sh
+@@ -18,8 +18,8 @@
+ # same directory as this script, and run "./boost.sh". Grab a cuppa. And voila.
+ #===============================================================================
+ 
+-: ${BOOST_LIBS:="filesystem date_time system"}
+-: ${IPHONE_SDKVERSION:=7.0}
++: ${BOOST_LIBS:="thread chrono filesystem regex locale system random"}
++: ${IPHONE_SDKVERSION:=8.0}
+ : ${OSX_SDKVERSION:=10.9}
+ : ${XCODE_ROOT:=`xcode-select -print-path`}
+ : ${EXTRA_CPPFLAGS:="-DBOOST_AC_USE_PTHREADS -DBOOST_SP_USE_PTHREADS -std=c++11 -stdlib=libc++"}
+@@ -84,7 +84,7 @@ updateBoost()
+ 	then
+ 		git checkout $BOOST_SRC/tools/build/v2/user-config.jam
+ 	else
+-		git clone --recursive https://github.com/boostorg/boost.git $BOOST_SRC
++		git clone --recursive --branch boost-1.56.0 https://github.com/boostorg/boost.git $BOOST_SRC
+ 		pushd $BOOST_SRC
+ 		./bootstrap.sh
+ 		./b2 headers
+-- 
+1.9.3 (Apple Git-50)
+
