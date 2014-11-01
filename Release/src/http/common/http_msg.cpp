@@ -165,53 +165,41 @@ size_t http_msg_base::_get_content_length()
     return 0;
 }
 
-/// <summary>
-/// Completes this message
-/// </summary>
-void http_msg_base::_complete(utility::size64_t body_size, const std::exception_ptr &exceptionPtr)
+// Helper function to inline continuation if possible.
+struct inline_continuation
 {
-    const auto hasBody = outstream().is_valid();
-    const auto hasException = exceptionPtr != std::exception_ptr();
-    const auto &completionEvent = _get_data_available();
-    auto closeTask = pplx::task_from_result();
-
-    if (hasBody)
+    inline_continuation(pplx::task<void> &prev, const std::function<void(pplx::task<void>)> &next) : m_prev(prev), m_next(next) {}
+    ~inline_continuation()
     {
-        if (hasException)
+        if (m_prev.is_done())
         {
-            closeTask = outstream().close(exceptionPtr);
-        }
-        else if (m_default_outstream)
-        {
-            closeTask = outstream().close();
-        }
-    }
-
-    if (hasException)
-    {
-        auto setException = [completionEvent, exceptionPtr](pplx::task<void> t)
-        {
-            // If closing stream throws an exception ignore since we already have an error.
-            try { t.get(); } catch (...) {}
-            completionEvent.set_exception(exceptionPtr);
-            pplx::create_task(completionEvent).then([](pplx::task<utility::size64_t> t)
-            {
-                try { t.get(); } catch (...) {}
-            });
-        };
-
-        if (closeTask.is_done())
-        {
-            setException(closeTask);
+            m_next(m_prev);
         }
         else
         {
-            closeTask.then(setException);
+            m_prev.then(m_next);
         }
     }
-    else
+    pplx::task<void> & m_prev;
+    std::function<void(pplx::task<void>)> m_next;
+private:
+    inline_continuation(const inline_continuation &);
+    inline_continuation &operator=(const inline_continuation &);
+};
+
+void http_msg_base::_complete(utility::size64_t body_size, const std::exception_ptr &exceptionPtr)
+{
+    const auto &completionEvent = _get_data_available();
+    auto closeTask = pplx::task_from_result();
+
+    if (exceptionPtr == std::exception_ptr())
     {
-        auto setBodySize = [completionEvent, body_size](pplx::task<void> t)
+        if (m_default_outstream)
+        {
+            closeTask = outstream().close();
+        }
+
+        inline_continuation(closeTask, [completionEvent, body_size](pplx::task<void> t)
         {
             try
             {
@@ -224,19 +212,31 @@ void http_msg_base::_complete(utility::size64_t body_size, const std::exception_
                 completionEvent.set_exception(std::current_exception());
                 pplx::create_task(completionEvent).then([](pplx::task<utility::size64_t> t)
                 {
-                    try { t.get(); } catch (...) {}
+                    try { t.get(); }
+                    catch (...) {}
                 });
             }
-        };
+        });
+    }
+    else
+    {
+        if (outstream().is_valid())
+        {
+            closeTask = outstream().close(exceptionPtr);
+        }
 
-        if (closeTask.is_done())
+        inline_continuation(closeTask, [completionEvent, exceptionPtr](pplx::task<void> t)
         {
-            setBodySize(closeTask);
-        }
-        else
-        {
-            closeTask.then(setBodySize);
-        }
+            // If closing stream throws an exception ignore since we already have an error.
+            try { t.get(); }
+            catch (...) {}
+            completionEvent.set_exception(exceptionPtr);
+            pplx::create_task(completionEvent).then([](pplx::task<utility::size64_t> t)
+            {
+                try { t.get(); }
+                catch (...) {}
+            });
+        });
     }
 }
 
