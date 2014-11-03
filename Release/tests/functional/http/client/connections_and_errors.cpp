@@ -231,7 +231,7 @@ TEST_FIXTURE(uri_address, stream_timeout)
 
         // The response body should timeout and we should receive an exception
         auto readTask = rsp.body().read_to_end(streams::producer_consumer_buffer<uint8_t>());
-#ifdef _MS_WINDOWS
+#ifndef _MS_WINDOWS
         // CodePlex 295
         VERIFY_THROWS(readTask.get(), http_exception);
 #else
@@ -257,7 +257,7 @@ TEST_FIXTURE(uri_address, cancel_before_request)
     VERIFY_THROWS_HTTP_ERROR_CODE(responseTask.get(), std::errc::operation_canceled);
 }
 
-// This test can't be implemented with our test server so isn't avaliable on WinRT.
+// This test can't be implemented with our test server so isn't available on WinRT.
 #ifndef __cplusplus_winrt
 TEST_FIXTURE(uri_address, cancel_after_headers, "Ignore:Apple", "220")
 {
