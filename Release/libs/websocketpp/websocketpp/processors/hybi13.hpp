@@ -44,7 +44,7 @@
 #include <string>
 #include <vector>
 #include <utility>
-#include <algorithm> // TODO stgates....
+#include <algorithm>
 
 namespace websocketpp {
 namespace processor {
