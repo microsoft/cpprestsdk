@@ -128,14 +128,13 @@ public:
         return in;
     }
 
-    /// Manual input supply
+    /// Manual input supply (read some)
     /**
      * Copies bytes from buf into WebSocket++'s input buffers. Bytes will be
      * copied from the supplied buffer to fulfill any pending library reads. It
      * will return the number of bytes successfully processed. If there are no
      * pending reads read_some will return immediately. Not all of the bytes may
-     * be able to be read in one call
-     *
+     * be able to be read in one call.
      *
      * @since 0.3.0-alpha4
      *
@@ -148,6 +147,37 @@ public:
         scoped_lock_type lock(m_read_mutex);
 
         return this->read_some_impl(buf,len);
+    }
+    
+    /// Manual input supply (read all)
+    /**
+     * Similar to read_some, but continues to read until all bytes in the
+     * supplied buffer have been read or the connection runs out of read
+     * requests.
+     *
+     * This method still may not read all of the bytes in the input buffer. if
+     * it doesn't it indicates that the connection was most likely closed or
+     * is in an error state where it is no longer accepting new input.
+     *
+     * @since 0.3.0
+     *
+     * @param buf Char buffer to read into the websocket
+     * @param len Length of buf
+     * @return The number of characters from buf actually read.
+     */
+    size_t read_all(char const * buf, size_t len) {
+        // this serializes calls to external read.
+        scoped_lock_type lock(m_read_mutex);
+        
+        size_t total_read = 0;
+        size_t read = 0;
+
+        do {
+            read = this->read_some_impl(buf+total_read,len-total_read);
+            total_read += read;
+        } while (read != 0 && total_read < len);
+
+        return total_read;
     }
 
     /// Manual input supply (DEPRECATED)

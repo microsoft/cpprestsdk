@@ -177,7 +177,7 @@ public:
      *
      * The default is retrieved from the max_message_size value from the template config
      *
-     * @since 0.4.0-alpha1
+     * @since 0.3.0
      */
     size_t get_max_message_size() const {
         return m_max_message_size;
@@ -190,7 +190,7 @@ public:
      *
      * The default is retrieved from the max_message_size value from the template config
      *
-     * @since 0.4.0-alpha1
+     * @since 0.3.0
      *
      * @param new_value The value to set as the maximum message size.
      */

@@ -103,9 +103,7 @@ public:
 
     /// Get a shared pointer to this component
     ptr get_shared() {
-        auto ret = lib::static_pointer_cast<type>(socket_con_type::get_shared());
-        assert(ret);
-        return ret;
+        return lib::static_pointer_cast<type>(socket_con_type::get_shared());
     }
 
     bool is_secure() const {
@@ -118,7 +116,7 @@ public:
      * established but before any additional wrappers (proxy connects, TLS
      * handshakes, etc) have been performed.
      *
-     * @since 0.4.0-alpha1
+     * @since 0.3.0
      *
      * @param h The handler to call on tcp pre init.
      */
@@ -147,7 +145,7 @@ public:
      * etc have been performed. This is fired before any bytes are read or any
      * WebSocket specific handshake logic has been performed.
      *
-     * @since 0.4.0-alpha1
+     * @since 0.3.0
      *
      * @param h The handler to call on tcp post init.
      */
@@ -479,16 +477,19 @@ protected:
         }
 
         timer_ptr post_timer;
-        post_timer = set_timer(
-            config::timeout_socket_post_init,
-            lib::bind(
-                &type::handle_post_init_timeout,
-                get_shared(),
-                post_timer,
-                m_init_handler,
-                lib::placeholders::_1
-            )
-        );
+        
+        if (config::timeout_socket_post_init > 0) {
+            post_timer = set_timer(
+                config::timeout_socket_post_init,
+                lib::bind(
+                    &type::handle_post_init_timeout,
+                    get_shared(),
+                    post_timer,
+                    m_init_handler,
+                    lib::placeholders::_1
+                )
+            );
+        }
 
         socket_con_type::post_init(
             lib::bind(
@@ -532,13 +533,15 @@ protected:
         lib::error_code const & ec)
     {
         if (ec == transport::error::operation_aborted ||
-            post_timer->expires_from_now().is_negative())
+            (post_timer && post_timer->expires_from_now().is_negative()))
         {
             m_alog.write(log::alevel::devel,"post_init cancelled");
             return;
         }
 
-        post_timer->cancel();
+        if (post_timer) {
+            post_timer->cancel();
+        }
 
         if (m_alog.static_test(log::alevel::devel)) {
             m_alog.write(log::alevel::devel,"asio connection handle_post_init");
@@ -999,7 +1002,6 @@ protected:
     void handle_async_shutdown_timeout(timer_ptr shutdown_timer, init_handler
         callback, lib::error_code const & ec)
     {
-
         lib::error_code ret_ec;
 
         if (ec) {

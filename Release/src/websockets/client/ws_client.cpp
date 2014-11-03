@@ -34,6 +34,9 @@
 #include <memory>
 #include <thread>
 
+// Force websocketpp to use C++ std::error_code instead of Boost.
+#define _WEBSOCKETPP_CPP11_SYSTEM_ERROR_
+
 #if ((!defined(WINAPI_FAMILY) || WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP) && !defined(_M_ARM) && (!defined(_MSC_VER) || (_MSC_VER < 1900))) && !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 #if defined(__GNUC__)
 #include "pplx/threadpool.h"
@@ -58,9 +61,8 @@
 #endif
 #pragma GCC diagnostic pop
 #else /* __GNUC__ */
-#pragma warning( disable : 4503 )
 #pragma warning( push )
-#pragma warning( disable : 4100 4127 4996 4512 4996 4267 )
+#pragma warning( disable : 4100 4127 4512 4996 4701 4267 )
 #if defined(_MSC_VER) && (_MSC_VER >= 1800)
 #define _WEBSOCKETPP_CPP11_STL_
 #define _WEBSOCKETPP_INITIALIZER_LISTS_
@@ -90,6 +92,17 @@ namespace client
 namespace details
 {
 
+// Utility function to build up error string based on error code and location.
+static std::string build_error_msg(const std::error_code &ec, const std::string &location)
+{
+    std::string msg(location);
+    msg.append(": ");
+    msg.append(std::to_string(ec.value()));
+    msg.append(": ");
+    msg.append(ec.message());
+    return msg;
+}
+
 static utility::string_t g_subProtocolHeader(_XPLATSTR("Sec-WebSocket-Protocol"));
 
 class wspp_client : public _websocket_client_impl, public std::enable_shared_from_this<wspp_client>
@@ -106,10 +119,9 @@ private:
 public:
     wspp_client(websocket_client_config config) :
         _websocket_client_impl(std::move(config)),
-        m_work(utility::details::make_unique<boost::asio::io_service::work>(m_service)),
         m_state(CREATED),
         m_num_sends(0)
-#if defined(__APPLE__) || defined(ANDROID)
+#if defined(__APPLE__) || defined(ANDROID) || defined(_MS_WINDOWS)
         , m_openssl_failed(false)
 #endif
     {}
@@ -118,9 +130,6 @@ public:
     {
         _ASSERTE(m_state < DESTROYED);
         std::unique_lock<std::mutex> lock(m_receive_queue_lock);
-
-        // First, trigger the boost::io_service to spin down
-        m_work.reset();
 
         // Now, what states could we be in?
         switch (m_state) {
@@ -151,13 +160,33 @@ public:
             catch (...) {}
             break;
         }
+
         // We have released the lock on all paths here
-        m_service.stop();
-        if (m_thread.joinable())
-            m_thread.join();
+        if (m_client)
+        {
+            if (m_client->is_tls_client())
+            {
+                stop_client_impl<websocketpp::config::asio_tls_client>();
+            }
+            else
+            {
+                stop_client_impl<websocketpp::config::asio_client>();
+            }
+            if (m_thread.joinable())
+            {
+                m_thread.join();
+            }
+        }
 
         // At this point, there should be no more references to me.
         m_state = DESTROYED;
+    }
+
+    template <typename WebsocketConfigType>
+    void stop_client_impl()
+    {
+        auto &client = m_client->client<WebsocketConfigType>();
+        client.stop_perpetual();
     }
 
     pplx::task<void> connect()
@@ -174,12 +203,12 @@ public:
                 sslContext->set_default_verify_paths();
                 sslContext->set_options(boost::asio::ssl::context::default_workarounds);
                 sslContext->set_verify_mode(boost::asio::ssl::context::verify_peer);
-#if defined(__APPLE__) || defined(ANDROID)
+#if defined(__APPLE__) || defined(ANDROID) || defined(_MS_WINDOWS)
                 m_openssl_failed = false;
 #endif
                 sslContext->set_verify_callback([this](bool preverified, boost::asio::ssl::verify_context &verifyCtx)
                 {
-#if defined(__APPLE__) || defined(ANDROID)
+#if defined(__APPLE__) || defined(ANDROID) || defined(_MS_WINDOWS)
                     // On OS X, iOS, and Android, OpenSSL doesn't have access to where the OS
                     // stores keychains. If OpenSSL fails we will doing verification at the
                     // end using the whole certificate chain so wait until the 'leaf' cert.
@@ -190,7 +219,7 @@ public:
                     }
                     if(m_openssl_failed)
                     {
-                        return http::client::details::verify_cert_chain_platform_specific(verifyCtx, m_uri.host());
+                        return http::client::details::verify_cert_chain_platform_specific(verifyCtx, utility::conversions::to_utf8string(m_uri.host()));
                     }
 #endif
                     boost::asio::ssl::rfc2818_verification rfc2818(utility::conversions::to_utf8string(m_uri.host()));
@@ -215,7 +244,8 @@ public:
 
         client.clear_access_channels(websocketpp::log::alevel::all);
         client.clear_error_channels(websocketpp::log::alevel::all);
-        client.init_asio(&m_service);
+        client.init_asio();
+        client.start_perpetual();
 
         _ASSERTE(m_state == CREATED);
         client.set_open_handler([this](websocketpp::connection_hdl)
@@ -225,13 +255,17 @@ public:
             m_connect_tce.set();
         });
 
-        client.set_fail_handler([this](websocketpp::connection_hdl)
+        client.set_fail_handler([this](websocketpp::connection_hdl con_hdl)
         {
             _ASSERTE(m_state == CONNECTING);
+            auto &client = m_client->client<WebsocketConfigType>();
+            const auto &ec = client.get_con_from_hdl(con_hdl)->get_ec();
+            websocket_exception exc(ec, build_error_msg(ec, "set_fail_handler"));
+
             std::lock_guard<std::mutex> lock(m_receive_queue_lock);
-            close_pending_tasks_with_error();
+            close_pending_tasks_with_error(exc);
             m_state = CLOSED;
-            m_connect_tce.set_exception(websocket_exception("Connection attempt failed."));
+            m_connect_tce.set_exception(exc);
         });
 
         client.set_message_handler([this](websocketpp::connection_hdl, const websocketpp::config::asio_client::message_type::ptr &msg)
@@ -278,11 +312,15 @@ public:
             }
         });
 
-        client.set_close_handler([this](websocketpp::connection_hdl)
+        client.set_close_handler([this](websocketpp::connection_hdl con_hdl)
         {
-            std::unique_lock<std::mutex> lock(m_receive_queue_lock);
             _ASSERTE(m_state != CLOSED);
-            close_pending_tasks_with_error();
+            auto &client = m_client->client<WebsocketConfigType>();
+            const auto &ec = client.get_con_from_hdl(con_hdl)->get_ec();
+            websocket_exception exc(ec, build_error_msg(ec, "set_close_handler"));
+
+            std::lock_guard<std::mutex> lock(m_receive_queue_lock);
+            close_pending_tasks_with_error(exc);
             m_close_tce.set();
             m_state = CLOSED;
         });
@@ -294,7 +332,7 @@ public:
         m_con = con;
         if (ec.value() != 0)
         {
-            return pplx::task_from_exception<void>(websocket_exception(ec.message()));
+            return pplx::task_from_exception<void>(websocket_exception(ec, build_error_msg(ec, "get_connection")));
         }
 
         // Add any request headers specified by the user.
@@ -316,26 +354,14 @@ public:
                 con->add_subprotocol(utility::conversions::to_utf8string(value), ec);
                 if (ec.value())
                 {
-                    return pplx::task_from_exception<void>(websocket_exception(ec.message()));
+                    return pplx::task_from_exception<void>(websocket_exception(ec, build_error_msg(ec, "add_subprotocol")));
                 }
             }
         }
 
         m_state = CONNECTING;
         client.connect(con);
-
-        m_thread = std::thread([this]()
-        {
-            m_service.run();
-            _ASSERTE(m_state == CLOSED);
-            {
-                std::unique_lock<std::mutex> lock(m_receive_queue_lock);
-                close_pending_tasks_with_error();
-            }
-            _ASSERTE(m_state == CLOSED);
-            return 0;
-        });
-
+        m_thread = std::thread(&websocketpp::client<WebsocketConfigType>::run, &client);
         return pplx::create_task(m_connect_tce);
     }
 
@@ -534,10 +560,10 @@ public:
             try
             {
                 // Catch exceptions from previous tasks, if any and convert it to websocket exception.
-                auto ec = previousTask.get();
+                const auto &ec = previousTask.get();
                 if (ec.value() != 0)
                 {
-                    eptr = std::make_exception_ptr(websocket_exception(ec.message()));
+                    eptr = std::make_exception_ptr(websocket_exception(ec, build_error_msg(ec, "sending message")));
                 }
             }
             catch (...)
@@ -612,21 +638,18 @@ public:
     }
 
     // Note: must be called while m_receive_queue_lock is locked.
-    void close_pending_tasks_with_error()
+    void close_pending_tasks_with_error(const websocket_exception &exc)
     {
         while (!m_receive_task_queue.empty())
         {
             // There are tasks waiting to receive a message, signal them
             auto tce = m_receive_task_queue.front();
             m_receive_task_queue.pop();
-            tce.set_exception(std::make_exception_ptr(websocket_exception("Websocket connection has been closed.")));
+            tce.set_exception(std::make_exception_ptr(exc));
         }
     }
 
 private:
-    // The m_service should be the first member (and therefore the last to be destroyed)
-    boost::asio::io_service m_service;
-    std::unique_ptr<boost::asio::io_service::work> m_work;
     std::thread m_thread;
 
     // Perform type erasure to set the websocketpp client in use at runtime
@@ -711,7 +734,7 @@ private:
     // Used to track if any of the OpenSSL server certificate verifications
     // failed. This can safely be tracked at the client level since connections
     // only happen once for each client.
-#if defined(__APPLE__) || defined(ANDROID)
+#if defined(__APPLE__) || defined(ANDROID) || defined(_MS_WINDOWS)
     bool m_openssl_failed;
 #endif
 
