@@ -148,13 +148,20 @@ public:
         finish();
     }
 
-    void report_error(unsigned long error_code, const utility::string_t & errorMessage)
+    void report_error(unsigned long error_code, const std::string &errorMessage)
     {
-        report_exception(http_exception((int)error_code, errorMessage));
+        report_exception(http_exception(static_cast<int>(error_code), errorMessage));
     }
 
+#ifdef _MS_WINDOWS
+    void report_error(unsigned long error_code, const std::wstring &errorMessage)
+    {
+        report_exception(http_exception(static_cast<int>(error_code), errorMessage));
+    }
+#endif
+
     template<typename _ExceptionType>
-    void report_exception(_ExceptionType e)
+    void report_exception(const _ExceptionType &e)
     {
         report_exception(std::make_exception_ptr(e));
     }

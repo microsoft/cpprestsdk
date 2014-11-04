@@ -44,7 +44,7 @@ class winrt_request_context : public request_context
 public:
 
     // Factory function to create requests on the heap.
-    static std::shared_ptr<request_context> create_request_context(std::shared_ptr<_http_client_communicator> client, http_request &request)
+    static std::shared_ptr<request_context> create_request_context(const std::shared_ptr<_http_client_communicator> &client, http_request &request)
     {
         return std::make_shared<winrt_request_context>(client, request);
     }
@@ -53,7 +53,7 @@ public:
 
     // Request contexts must be created through factory function.
     // But constructor needs to be public for make_shared to access.
-    winrt_request_context(std::shared_ptr<_http_client_communicator> client, http_request &request) 
+    winrt_request_context(const std::shared_ptr<_http_client_communicator> &client, http_request &request) 
         : request_context(client, request), m_hRequest(nullptr) 
     {
     }
@@ -64,7 +64,7 @@ class HttpRequestCallback :
     public RuntimeClass<RuntimeClassFlags<ClassicCom>, IXMLHTTPRequest2Callback, FtmBase>
 {
 public:
-    HttpRequestCallback(std::shared_ptr<winrt_request_context> request)
+    HttpRequestCallback(const std::shared_ptr<winrt_request_context> &request)
         : m_request(request)
     {
     }
@@ -77,7 +77,7 @@ public:
     // Called when HTTP headers have been received and processed.
     HRESULT STDMETHODCALLTYPE OnHeadersAvailable(_In_ IXMLHTTPRequest2* xmlReq, DWORD dw, __RPC__in_string const WCHAR* phrase)
     {
-        http_response response = m_request->m_response;
+        http_response &response = m_request->m_response;
         response.set_status_code((http::status_code)dw);
         response.set_reason_phrase(phrase);
 
@@ -89,7 +89,7 @@ public:
         }
 
         auto progress = m_request->m_request._get_impl()->_progress_handler();
-        if ( progress && m_request->m_uploaded == 0)
+        if (progress && m_request->m_uploaded == 0)
         {
             try { (*progress)(message_direction::upload, 0); } catch(...)
             {
@@ -147,13 +147,21 @@ public:
     // Called when an error occurs during the HTTP request.
     HRESULT STDMETHODCALLTYPE OnError(_In_opt_ IXMLHTTPRequest2*, HRESULT hrError)
     {
-        if (m_request->m_exceptionPtr != nullptr)
+        if (m_request->m_exceptionPtr == nullptr)
+        {
+            std::wstring msg(L"IXMLHttpRequest2Callback::OnError: ");
+            msg.append(std::to_wstring(hrError));
+            msg.append(L": ");
+            msg.append(utility::conversions::to_string_t(utility::details::windows_category().message(hrError)));
+            m_request->report_error(hrError, msg);
+        }
+        else
+        {
             m_request->report_exception(m_request->m_exceptionPtr);
-        else    
-            m_request->report_error(hrError, L"Error in IXMLHttpRequest2Callback");
+        }
         
         // Break the circular reference loop.
-        // See full explaination in OnResponseReceived
+        // See full explanation in OnResponseReceived
         m_request.reset();
         
         return S_OK;
@@ -175,11 +183,11 @@ class IRequestStream
     : public Microsoft::WRL::RuntimeClass<Microsoft::WRL::RuntimeClassFlags<ClassicCom>, ISequentialStream>
 {
 public:
-    IRequestStream(std::weak_ptr<winrt_request_context> context, size_t read_length = std::numeric_limits<size_t>::max())
+    IRequestStream(const std::weak_ptr<winrt_request_context> &context, size_t read_length = std::numeric_limits<size_t>::max())
         : m_context(context),
         m_read_length(read_length)
     {
-        // read_length is the initial length of the ISequentialStream that is avaiable for read
+        // read_length is the initial length of the ISequentialStream that is available for read
         // This is required because IXHR2 attempts to read more data that what is specified by
         // the content_length. (Specifically, it appears to be reading 128K chunks regardless of
         // the content_length specified).
@@ -245,7 +253,7 @@ private:
 
     // Length of the ISequentialStream for reads. This is equivalent
     // to the amount of data that the ISequentialStream is allowed
-    // to read from the underlying streambuffer.
+    // to read from the underlying stream buffer.
     size_t m_read_length;
 };
 
@@ -261,7 +269,7 @@ class IResponseStream
     : public Microsoft::WRL::RuntimeClass<Microsoft::WRL::RuntimeClassFlags<ClassicCom>, ISequentialStream>
 {
 public:
-    IResponseStream(std::weak_ptr<request_context> context)
+    IResponseStream(const std::weak_ptr<request_context> &context)
         : m_context(context)
     { }
 
@@ -530,4 +538,4 @@ pplx::task<http_response> http_network_handler::propagate(http_request request)
     return result_task;
 }
 
-}}}} // namespaces
+}}}}

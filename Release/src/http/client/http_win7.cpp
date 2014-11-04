@@ -89,7 +89,7 @@ static utility::string_t parse_reason_phrase(HINTERNET request_handle)
 }
 
 /// <summary>
-/// Parses a string containing Http headers.
+/// Parses a string containing HTTP headers.
 /// </summary>
 static void parse_winhttp_headers(HINTERNET request_handle, _In_z_ utf16char *headersStr, http_response &response)
 {
@@ -103,34 +103,35 @@ static void parse_winhttp_headers(HINTERNET request_handle, _In_z_ utf16char *he
     parse_headers_string(headersStr, response.headers());
 }
 
-// Helper function to build an error message from a WinHTTP async result.
-static std::string build_callback_error_msg(_In_ WINHTTP_ASYNC_RESULT *error_result)
+// Helper function to build error messages.
+static std::string build_error_msg(unsigned long code, const std::string &location)
 {
-	std::stringstream error_msg;
+    std::string msg(location);
+    msg.append(": ");
+    msg.append(std::to_string(code));
+    msg.append(": ");
+    msg.append(utility::details::windows_category().message(code));
+    return msg;
+}
+
+// Helper function to build an error message from a WinHTTP async result.
+static std::string build_error_msg(_In_ WINHTTP_ASYNC_RESULT *error_result)
+{
     switch(error_result->dwResult)
     {
     case API_RECEIVE_RESPONSE:
-        error_msg << "WinHttpReceiveResponse";
-        break;
+        return build_error_msg(error_result->dwError, "WinHttpReceiveResponse");
     case API_QUERY_DATA_AVAILABLE:
-        error_msg << "WinHttpQueryDataAvaliable";
-        break;
+        return build_error_msg(error_result->dwError, "WinHttpQueryDataAvaliable");
     case API_READ_DATA:
-        error_msg << "WinHttpReadData";
-        break;
+        return build_error_msg(error_result->dwError, "WinHttpReadData");
     case API_WRITE_DATA:
-        error_msg << "WinHttpWriteData";
-        break;
+        return build_error_msg(error_result->dwError, "WinHttpWriteData");
     case API_SEND_REQUEST:
-        error_msg << "WinHttpSendRequest";
-        break;
+        return build_error_msg(error_result->dwError, "WinHttpSendRequest");
     default:
-        error_msg << "Unknown WinHTTP Function";
-        break;
+        return build_error_msg(error_result->dwError, "Unknown WinHTTP Function");
     }
-    error_msg << ": " << error_result->dwError << ": "
-        << utility::details::windows_category().message(error_result->dwError);
-    return error_msg.str();
 }
 
 class memory_holder
@@ -416,7 +417,7 @@ protected:
             }
         }
 
-#if 0 // Work in progress. Enable this to support server certrificate revocation check
+#if 0 // Work in progress. Enable this to support server certificate revocation check
         if( m_secure )
         {
             DWORD dwEnableSSLRevocOpt = WINHTTP_ENABLE_SSL_REVOCATION;
@@ -502,11 +503,12 @@ protected:
             WINHTTP_FLAG_ESCAPE_DISABLE | (m_secure ? WINHTTP_FLAG_SECURE : 0));
         if(winhttp_context->m_request_handle == nullptr)
         {
-            request->report_error(GetLastError(), _XPLATSTR("Error opening request"));
+            auto errorCode = GetLastError();
+            request->report_error(errorCode, build_error_msg(errorCode, "WinHttpOpenRequest"));
             return;
         }
 
-        if( proxy_info_required )
+        if(proxy_info_required)
         {
             auto result = WinHttpSetOption(
                 winhttp_context->m_request_handle,
@@ -515,7 +517,8 @@ protected:
                 sizeof(WINHTTP_PROXY_INFO) );
             if(!result)
             {
-                request->report_error(GetLastError(), _XPLATSTR("Error setting http proxy option"));
+                auto errorCode = GetLastError();
+                request->report_error(errorCode, build_error_msg(errorCode, "Setting proxy options"));
                 return;
             }
         }
@@ -534,7 +537,8 @@ protected:
                 sizeof(data));
             if(!result)
             {
-                request->report_error(GetLastError(), _XPLATSTR("Error setting autologon policy to WINHTTP_AUTOLOGON_SECURITY_LEVEL_HIGH."));
+                auto errorCode = GetLastError();
+                request->report_error(errorCode, build_error_msg(errorCode, "Setting autologon policy to WINHTTP_AUTOLOGON_SECURITY_LEVEL_HIGH"));
                 return;
             }
         }
@@ -554,7 +558,8 @@ protected:
                 sizeof(data));
             if(!result)
             {
-                request->report_error(GetLastError(), U("Error setting WinHttp to ignore server certification validation errors."));
+                auto errorCode = GetLastError();
+                request->report_error(errorCode, build_error_msg(errorCode, "Setting ignore server certificate verification"));
                 return;
             }
         }
@@ -572,7 +577,7 @@ protected:
             if (content_length == std::numeric_limits<size_t>::max()) 
             {
                 // The content length is unknown and the application set a stream. This is an 
-                // indication that we will use tranfer encoding chunked.
+                // indication that we will use transfer encoding chunked.
                 winhttp_context->m_bodyType = transfer_encoding_chunked;
             }
             else
@@ -593,7 +598,8 @@ protected:
                 static_cast<DWORD>(flattened_headers.length()),
                 WINHTTP_ADDREQ_FLAG_ADD))
             {
-                request->report_error(GetLastError(), _XPLATSTR("Error adding request headers"));
+                auto errorCode = GetLastError();
+                request->report_error(errorCode, build_error_msg(errorCode, "WinHttpAddRequestHeaders"));
                 return;
             }
         }
@@ -647,7 +653,8 @@ private:
                 0,
                 (DWORD_PTR)winhttp_context))
             {
-                winhttp_context->report_error(GetLastError(), _XPLATSTR("Error starting to send request"));
+                auto errorCode = GetLastError();
+                winhttp_context->report_error(errorCode, build_error_msg(errorCode, "WinHttpSendRequest"));
             }
 
             return;
@@ -671,7 +678,8 @@ private:
             winhttp_context->m_bodyType == content_length_chunked ? (DWORD)content_length : WINHTTP_IGNORE_REQUEST_TOTAL_LENGTH,
             (DWORD_PTR)winhttp_context))
         {
-            winhttp_context->report_error(GetLastError(), _XPLATSTR("Error starting to send chunked request"));
+            auto errorCode = GetLastError();
+            winhttp_context->report_error(errorCode, build_error_msg(errorCode, "WinHttpSendRequest chunked"));
         }
     }
 
@@ -685,12 +693,13 @@ private:
         {
             if (!WinHttpQueryDataAvailable(pContext->m_request_handle, nullptr))
             {
-                pContext->report_error(GetLastError(), _XPLATSTR("Error querying for http body data"));
+                auto errorCode = GetLastError();
+                pContext->report_error(errorCode, build_error_msg(errorCode, "WinHttpQueryDataAvaliable"));
             }
         }
         else
         {
-            // If bytes read is less than the chunksize this request is done.
+            // If bytes read is less than the chunk size this request is done.
             const size_t chunkSize = pContext->m_http_client->client_config().chunksize();
             if (bytesRead < chunkSize && !firstRead)
             {
@@ -707,7 +716,8 @@ private:
                     static_cast<DWORD>(chunkSize),
                     nullptr))
                 {
-                    pContext->report_error(GetLastError(), _XPLATSTR("Error receiving http response body chunk"));
+                    auto errorCode = GetLastError();
+                    pContext->report_error(errorCode, build_error_msg(errorCode, "WinHttpReadData"));
                 }
             }
         }
@@ -763,7 +773,8 @@ private:
                 static_cast<DWORD>(length),
                 nullptr))
             {
-                p_request_context->report_error(GetLastError(), _XPLATSTR("Error writing data"));
+                auto errorCode = GetLastError();
+                p_request_context->report_error(errorCode, build_error_msg(errorCode, "WinHttpWriteData"));
             }
         };
 
@@ -776,17 +787,21 @@ private:
         SafeInt<size64_t> safeCount = p_request_context->m_remaining_to_write;
         safeCount = safeCount.Min(p_request_context->m_http_client->client_config().chunksize());
 
-        uint8_t*  block = nullptr; 
+        uint8_t*  block = nullptr;
         size_t length = 0;
-        if ( rbuf.acquire(block, length) )
+        if (rbuf.acquire(block, length))
         {
-            if ( length == 0 )
+            if (length == 0)
             {
                 // Unexpected end-of-stream.
-                if (!(rbuf.exception() == nullptr))
-                    p_request_context->report_exception(rbuf.exception());
-                else
+                if (rbuf.exception() == nullptr)
+                {
                     p_request_context->report_error(GetLastError(), _XPLATSTR("Error reading outgoing HTTP body from its stream."));
+                }
+                else
+                {
+                    p_request_context->report_exception(rbuf.exception());
+                }
                 return;
             }
 
@@ -807,7 +822,8 @@ private:
                 static_cast<DWORD>(to_write),
                 nullptr))
             {
-                p_request_context->report_error(GetLastError(), _XPLATSTR("Error writing data"));
+                auto errorCode = GetLastError();
+                p_request_context->report_error(errorCode, build_error_msg(errorCode, "WinHttpWriteData"));
             }
         }
         else
@@ -839,13 +855,14 @@ private:
                     p_request_context->m_bodyType = no_body;
                 }
 
-                if( !WinHttpWriteData(
+                if(!WinHttpWriteData(
                     p_request_context->m_request_handle,
                     p_request_context->m_body_data.get(),
                     static_cast<DWORD>(read),
                     nullptr))
                 {
-                    p_request_context->report_error(GetLastError(), _XPLATSTR("Error writing data"));
+                    auto errorCode = GetLastError();
+                    p_request_context->report_error(errorCode, build_error_msg(errorCode, "WinHttpWriteData"));
                 }       
             });
         }
@@ -1003,7 +1020,7 @@ private:
                         }
                     }
 
-                    p_request_context->report_error(errorCode, utility::conversions::to_string_t(build_callback_error_msg(error_result)));
+                    p_request_context->report_error(errorCode, build_error_msg(error_result));
                     break;
                 }
             case WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE :
@@ -1034,7 +1051,8 @@ private:
                     {
                         if(!WinHttpReceiveResponse(hRequestHandle, nullptr))
                         {
-                            p_request_context->report_error(GetLastError(), _XPLATSTR("Error receiving response"));
+                            auto errorCode = GetLastError();
+                            p_request_context->report_error(errorCode, build_error_msg(errorCode, "WinHttpReceiveResponse"));
                         }
                     }
                     break;
@@ -1075,7 +1093,8 @@ private:
                     {
                         if(!WinHttpReceiveResponse(hRequestHandle, nullptr))
                         {
-                            p_request_context->report_error(GetLastError(), _XPLATSTR("Error receiving response"));
+                            auto errorCode = GetLastError();
+                            p_request_context->report_error(errorCode, build_error_msg(errorCode, "WinHttpReceiveResponse"));
                         }
                     }
                     break;
@@ -1098,7 +1117,8 @@ private:
                         &headerBufferLength,
                         WINHTTP_NO_HEADER_INDEX))
                     {
-                        p_request_context->report_error(GetLastError(), _XPLATSTR("Error receiving http headers"));
+                        auto errorCode = GetLastError();
+                        p_request_context->report_error(errorCode, build_error_msg(errorCode, "WinHttpQueryHeaders"));;
                         return;
                     }
 
@@ -1154,7 +1174,8 @@ private:
                             num_bytes,
                             nullptr))
                         {
-                            p_request_context->report_error(GetLastError(), _XPLATSTR("Error receiving http body chunk"));
+                            auto errorCode = GetLastError();
+                            p_request_context->report_error(errorCode, build_error_msg(errorCode, "WinHttpReadData"));
                         }
                     }
                     else
@@ -1265,4 +1286,4 @@ pplx::task<http_response> http_network_handler::propagate(http_request request)
     return result_task;
 }
 
-}}}} // namespaces 
+}}}}
