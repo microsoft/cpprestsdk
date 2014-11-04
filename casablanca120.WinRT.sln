@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.30128.0
+VisualStudioVersion = 12.0.30501.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{21DF15D1-B0D1-4514-A713-5BCFD945E757}"
 EndProject
@@ -9,7 +9,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Source", "Source", "{EBA6EF
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "casablanca120.winrt", "Release\src\build\vs12.winrt\casablanca120.winrt.vcxproj", "{9AD285A2-301E-47A0-A299-14AD5D4F2758}"
 EndProject
-Project("{E5F8A2F0-F713-4673-A42F-2CC4E8FB171B}") = "casablanca120.wp81", "Release\src\build\vs12.wp81\casablanca120.wp81.vcxproj", "{E5F8A2F0-F713-4673-A42F-2CC4E8FB171B}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "casablanca120.wp81", "Release\src\build\vs12.wp81\casablanca120.wp81.vcxproj", "{E5F8A2F0-F713-4673-A42F-2CC4E8FB171B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BlackJack", "BlackJack", "{C04F5E4B-2BE7-4C98-804D-61515D979C1D}"
 EndProject
@@ -24,34 +24,19 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BlackJack_UIClient120", "Re
 		{9AD285A2-301E-47A0-A299-14AD5D4F2758} = {9AD285A2-301E-47A0-A299-14AD5D4F2758}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FacebookDemo", "Release\samples\FacebookDemo\FacebookDemo120.vcxproj", "{43DE4DF3-ACAA-429E-B260-CC6D4FE82658}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FacebookDemo120", "Release\samples\FacebookDemo\FacebookDemo120.vcxproj", "{43DE4DF3-ACAA-429E-B260-CC6D4FE82658}"
 	ProjectSection(ProjectDependencies) = postProject
 		{9AD285A2-301E-47A0-A299-14AD5D4F2758} = {9AD285A2-301E-47A0-A299-14AD5D4F2758}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WindowsLiveAuth", "Release\samples\WindowsLiveAuth\WindowsLiveAuth120.vcxproj", "{1C20F771-3131-46E8-805F-AA1FE44165C0}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WindowsLiveAuth120", "Release\samples\WindowsLiveAuth\WindowsLiveAuth120.vcxproj", "{1C20F771-3131-46E8-805F-AA1FE44165C0}"
 	ProjectSection(ProjectDependencies) = postProject
 		{9AD285A2-301E-47A0-A299-14AD5D4F2758} = {9AD285A2-301E-47A0-A299-14AD5D4F2758}
 	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "casablanca120.wps81", "Release\src\build\vs12.wps81\casablanca120.wps81.vcxproj", "{C5D88D15-F9F5-48E2-9EF2-BE0B645B9C0D}"
 EndProject
 Global
-	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 2
-		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccTeamFoundationServer = http://vstfdevdiv:8080/devdiv2
-		SccProjectUniqueName0 = Release\\src\\build\\casablanca120.winrt.vcxproj
-		SccProjectTopLevelParentUniqueName0 = casablanca120.WinRT.sln
-		SccProjectName0 = Release/src/build
-		SccAuxPath0 = http://vstfdevdiv:8080/devdiv2
-		SccLocalPath0 = Release\\src\\build
-		SccProvider0 = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccProjectUniqueName1 = Release\\samples\\BlackJack\\BlackJack_UIClient\\BlackJack_UIClient120.vcxproj
-		SccProjectTopLevelParentUniqueName1 = casablanca120.WinRT.sln
-		SccProjectName1 = Release/samples/BlackJack/BlackJack_UIClient
-		SccAuxPath1 = http://vstfdevdiv:8080/devdiv2
-		SccLocalPath1 = Release\\samples\\BlackJack\\BlackJack_UIClient
-		SccProvider1 = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM
 		Debug|Win32 = Debug|Win32
@@ -73,6 +58,18 @@ Global
 		{9AD285A2-301E-47A0-A299-14AD5D4F2758}.Release|Win32.Build.0 = Release|Win32
 		{9AD285A2-301E-47A0-A299-14AD5D4F2758}.Release|x64.ActiveCfg = Release|x64
 		{9AD285A2-301E-47A0-A299-14AD5D4F2758}.Release|x64.Build.0 = Release|x64
+		{E5F8A2F0-F713-4673-A42F-2CC4E8FB171B}.Debug|ARM.ActiveCfg = Debug|ARM
+		{E5F8A2F0-F713-4673-A42F-2CC4E8FB171B}.Debug|ARM.Build.0 = Debug|ARM
+		{E5F8A2F0-F713-4673-A42F-2CC4E8FB171B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{E5F8A2F0-F713-4673-A42F-2CC4E8FB171B}.Debug|Win32.Build.0 = Debug|Win32
+		{E5F8A2F0-F713-4673-A42F-2CC4E8FB171B}.Debug|x64.ActiveCfg = Debug|x64
+		{E5F8A2F0-F713-4673-A42F-2CC4E8FB171B}.Debug|x64.Build.0 = Debug|x64
+		{E5F8A2F0-F713-4673-A42F-2CC4E8FB171B}.Release|ARM.ActiveCfg = Release|ARM
+		{E5F8A2F0-F713-4673-A42F-2CC4E8FB171B}.Release|ARM.Build.0 = Release|ARM
+		{E5F8A2F0-F713-4673-A42F-2CC4E8FB171B}.Release|Win32.ActiveCfg = Release|Win32
+		{E5F8A2F0-F713-4673-A42F-2CC4E8FB171B}.Release|Win32.Build.0 = Release|Win32
+		{E5F8A2F0-F713-4673-A42F-2CC4E8FB171B}.Release|x64.ActiveCfg = Release|x64
+		{E5F8A2F0-F713-4673-A42F-2CC4E8FB171B}.Release|x64.Build.0 = Release|x64
 		{B8D3F85B-DA71-4ACA-87BA-10FED681DC79}.Debug|ARM.ActiveCfg = Debug|ARM
 		{B8D3F85B-DA71-4ACA-87BA-10FED681DC79}.Debug|ARM.Build.0 = Debug|ARM
 		{B8D3F85B-DA71-4ACA-87BA-10FED681DC79}.Debug|ARM.Deploy.0 = Debug|ARM
@@ -127,12 +124,25 @@ Global
 		{1C20F771-3131-46E8-805F-AA1FE44165C0}.Release|x64.ActiveCfg = Release|x64
 		{1C20F771-3131-46E8-805F-AA1FE44165C0}.Release|x64.Build.0 = Release|x64
 		{1C20F771-3131-46E8-805F-AA1FE44165C0}.Release|x64.Deploy.0 = Release|x64
+		{C5D88D15-F9F5-48E2-9EF2-BE0B645B9C0D}.Debug|ARM.ActiveCfg = Debug|ARM
+		{C5D88D15-F9F5-48E2-9EF2-BE0B645B9C0D}.Debug|ARM.Build.0 = Debug|ARM
+		{C5D88D15-F9F5-48E2-9EF2-BE0B645B9C0D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{C5D88D15-F9F5-48E2-9EF2-BE0B645B9C0D}.Debug|Win32.Build.0 = Debug|Win32
+		{C5D88D15-F9F5-48E2-9EF2-BE0B645B9C0D}.Debug|x64.ActiveCfg = Debug|x64
+		{C5D88D15-F9F5-48E2-9EF2-BE0B645B9C0D}.Debug|x64.Build.0 = Debug|x64
+		{C5D88D15-F9F5-48E2-9EF2-BE0B645B9C0D}.Release|ARM.ActiveCfg = Release|ARM
+		{C5D88D15-F9F5-48E2-9EF2-BE0B645B9C0D}.Release|ARM.Build.0 = Release|ARM
+		{C5D88D15-F9F5-48E2-9EF2-BE0B645B9C0D}.Release|Win32.ActiveCfg = Release|Win32
+		{C5D88D15-F9F5-48E2-9EF2-BE0B645B9C0D}.Release|Win32.Build.0 = Release|Win32
+		{C5D88D15-F9F5-48E2-9EF2-BE0B645B9C0D}.Release|x64.ActiveCfg = Release|x64
+		{C5D88D15-F9F5-48E2-9EF2-BE0B645B9C0D}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{9AD285A2-301E-47A0-A299-14AD5D4F2758} = {EBA6EFE2-A7EE-4B93-B4E1-DD7BBB60680E}
+		{E5F8A2F0-F713-4673-A42F-2CC4E8FB171B} = {EBA6EFE2-A7EE-4B93-B4E1-DD7BBB60680E}
 		{C04F5E4B-2BE7-4C98-804D-61515D979C1D} = {21DF15D1-B0D1-4514-A713-5BCFD945E757}
 		{E4446CF9-F080-46B9-B2BC-1112DF4EE979} = {C04F5E4B-2BE7-4C98-804D-61515D979C1D}
 		{D475D31F-0915-4BC0-B87F-81D358814481} = {21DF15D1-B0D1-4514-A713-5BCFD945E757}
@@ -140,5 +150,6 @@ Global
 		{B8D3F85B-DA71-4ACA-87BA-10FED681DC79} = {E4446CF9-F080-46B9-B2BC-1112DF4EE979}
 		{43DE4DF3-ACAA-429E-B260-CC6D4FE82658} = {D475D31F-0915-4BC0-B87F-81D358814481}
 		{1C20F771-3131-46E8-805F-AA1FE44165C0} = {2DC1F6BB-581C-4150-B9DA-8F26A0BC3DAC}
+		{C5D88D15-F9F5-48E2-9EF2-BE0B645B9C0D} = {EBA6EFE2-A7EE-4B93-B4E1-DD7BBB60680E}
 	EndGlobalSection
 EndGlobal
