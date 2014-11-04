@@ -83,8 +83,6 @@ using websocketpp::lib::bind;
 
 namespace web
 {
-namespace experimental
-{
 namespace websockets
 {
 namespace client
@@ -750,6 +748,6 @@ websocket_client::websocket_client(websocket_client_config config) :
     m_client(std::make_shared<details::wspp_client>(std::move(config)))
 {}
 
-}}}}
+}}}
 
 #endif // !defined(WINAPI_FAMILY) || WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)

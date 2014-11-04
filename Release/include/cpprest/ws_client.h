@@ -53,12 +53,15 @@ namespace pplx = Concurrency;
 
 namespace web
 {
-/// WebSocket client is currently in beta.
-namespace experimental
-{
+
+// For backwards compatibility for when in the experimental namespace.
+// At next major release this should be deleted.
+namespace experimental = web;
+
 // In the past namespace was accidentally called 'web_sockets'. To avoid breaking code
 // alias it. At our next major release this should be deleted.
 namespace web_sockets = websockets;
+
 namespace websockets
 {
 /// WebSocket client side library.
@@ -469,7 +472,7 @@ private:
     std::shared_ptr<details::_websocket_client_impl> m_client;
 };
 
-}}}}
+}}}
 
 #endif
 #endif  /* _CASA_WS_CLIENT_H */

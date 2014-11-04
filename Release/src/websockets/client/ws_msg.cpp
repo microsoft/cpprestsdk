@@ -38,8 +38,6 @@ using namespace concurrency::streams::details;
 
 namespace web
 {
-namespace experimental
-{
 namespace websockets
 {
 namespace client
@@ -80,6 +78,6 @@ pplx::task<std::string> websocket_incoming_message::extract_string() const
     return pplx::task_from_result(std::move(m_body.collection()));
 }
 
-}}}}
+}}}
 
 #endif

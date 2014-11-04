@@ -39,8 +39,6 @@ using namespace Concurrency::streams::details;
 
 namespace web
 {
-namespace experimental
-{
 namespace websockets
 {
 namespace client
@@ -516,5 +514,5 @@ websocket_client::websocket_client(websocket_client_config config) :
     m_client(std::make_shared<details::winrt_client>(std::move(config)))
 {}
 
-}}}}
+}}}
 #endif /* WINAPI_FAMILY == WINAPI_FAMILY_APP */

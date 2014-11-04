@@ -30,8 +30,8 @@
 using namespace concurrency::streams;
 
 using namespace web;
-using namespace web::experimental::websockets;
-using namespace web::experimental::websockets::client;
+using namespace web::websockets;
+using namespace web::websockets::client;
 
 using namespace tests::functional::websocket::utilities;
 
