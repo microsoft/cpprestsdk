@@ -46,6 +46,17 @@ namespace client
 namespace details
 {
 
+// Helper function to build an error string from a Platform::Exception and a location.
+static std::string build_error_msg(Platform::Exception ^exc, const std::string &location)
+{
+    std::string msg(location);
+    msg.append(": ");
+    msg.append(std::to_string(exc->HResult));
+    msg.append(": ");
+    msg.append(utility::conversions::utf16_to_utf8(exc->Message->Data()));
+    return msg;
+}
+
 // This class is required by the implementation in order to function:
 // The TypedEventHandler requires the message received and close handler to be a member of WinRT class.
 ref class ReceiveContext sealed
@@ -59,13 +70,16 @@ public:
 
 private:
     // Public members cannot have native types
-    ReceiveContext(std::function<void(websocket_incoming_message &)> receive_handler, std::function<void()> close_handler): m_receive_handler(receive_handler), m_close_handler(close_handler) {}
+    ReceiveContext(
+        std::function<void(websocket_incoming_message &)> receive_handler,
+        std::function<void(const websocket_exception &)> close_handler)
+        : m_receive_handler(std::move(receive_handler)), m_close_handler(std::move(close_handler)) {}
 
     // Handler to be executed when a message has been received by the client
     std::function<void(websocket_incoming_message &)> m_receive_handler;
 
     // Handler to be executed when a close message has been received by the client
-    std::function<void()> m_close_handler;
+    std::function<void(const websocket_exception &)> m_close_handler;
 };
 
 class winrt_client : public _websocket_client_impl, public std::enable_shared_from_this<winrt_client>
@@ -128,9 +142,9 @@ public:
             // Setting the tce outside the receive lock for better performance
             tce.set(msg);
         },
-        [=]() // Close handler called upon receiving a close frame from the server.
+        [=](const websocket_exception &e)
         {
-            close_pending_tasks_with_error();
+            close_pending_tasks_with_error(e);
             m_close_tce.set();
             m_server_close_complete.set();
         });
@@ -150,11 +164,11 @@ public:
         }
         else
         {
-            close_pending_tasks_with_error();
+            close_pending_tasks_with_error(websocket_exception("websocket_client is being destroyed"));
         }
     }
 
-    void close_pending_tasks_with_error()
+    void close_pending_tasks_with_error(const websocket_exception &exc)
     {
         std::lock_guard<std::mutex> lock(m_receive_queue_lock);
         m_client_closed = true;
@@ -162,7 +176,7 @@ public:
         {
             auto tce = m_receive_task_queue.front();
             m_receive_task_queue.pop();
-            tce.set_exception(std::make_exception_ptr(websocket_exception("Websocket connection has been closed.")));
+            tce.set_exception(std::make_exception_ptr(exc));
         }
     }
 
@@ -195,10 +209,11 @@ public:
                 result.get();
                 m_messageWriter = ref new DataWriter(m_msg_websocket->OutputStream);
             }
-            catch(Platform::Exception^ ex)
+            catch(Platform::Exception^ e)
             {
-                close_pending_tasks_with_error();
-                return pplx::task_from_exception<void>(websocket_exception(ex->HResult));
+                websocket_exception exc(e->HResult, build_error_msg(e, "ConnectAsync"));
+                close_pending_tasks_with_error(exc);
+                return pplx::task_from_exception<void>(exc);
             }
             return pplx::task_from_result();
         });
@@ -436,10 +451,8 @@ private:
     // completed. The websocket_client destructor can wait on this event before proceeding.
     Concurrency::event m_server_close_complete;
 
-    // m_client_closed maintains the state of the client. It is set to true when:
-    // 1. the client has not connected
-    // 2. if it has received a close frame from the server.
-    // We may want to keep an enum to maintain the client state in the future.
+    // Initially set to false, becomes true if a close frame is received from the server or
+    // if the underlying connection is aborted or terminated.
     bool m_client_closed;
 
     // When a message arrives, if there are tasks waiting for a message, signal the topmost one.
@@ -490,19 +503,15 @@ void ReceiveContext::OnReceive(MessageWebSocket^ sender, MessageWebSocketMessage
         msg->set_length(len);
         m_receive_handler(ws_incoming_message);
     }
-    catch(...)
+    catch (Platform::Exception ^e)
     {
-        // Swallow the exception for now. Following up on this with the WinRT team.
-        // We can handle this more gracefully once we know the scenarios where DataReader operations can throw an exception:
-        // When socket gets into a bad state
-        // or only when we receive a valid message and message processing fails.
-        // Tracking this on codeplex with : https://casablanca.codeplex.com/workitem/181
+        m_close_handler(websocket_exception(e->HResult, build_error_msg(e, "OnReceive")));
     }
 }
 
 void ReceiveContext::OnClosed(IWebSocket^ sender, WebSocketClosedEventArgs^ args)
 {
-    m_close_handler();
+    m_close_handler(websocket_exception("close frame received from server"));
 }
 }
 
@@ -515,4 +524,4 @@ websocket_client::websocket_client(websocket_client_config config) :
 {}
 
 }}}
-#endif /* WINAPI_FAMILY == WINAPI_FAMILY_APP */
+#endif
