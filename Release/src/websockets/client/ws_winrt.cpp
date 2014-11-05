@@ -211,7 +211,7 @@ public:
             return pplx::task_from_exception<void>(websocket_exception("Client not connected."));
         }
 
-        switch(msg._m_impl->message_type())
+        switch(msg.m_msg_type)
         {
         case websocket_message_type::binary_message :
             m_msg_websocket->Control->MessageType = SocketMessageType::Binary;
@@ -223,7 +223,7 @@ public:
             return pplx::task_from_exception<void>(websocket_exception("Message Type not supported."));
         }
 
-        const auto length = msg._m_impl->length();
+        const auto length = msg.m_length;
         if (length == 0)
         {
             return pplx::task_from_exception<void>(websocket_exception("Cannot send empty message."));
@@ -253,7 +253,7 @@ public:
     {
         auto this_client = this->shared_from_this();
         auto &is_buf = msg.m_body;
-        auto length = msg._m_impl->length();
+        auto length = msg.m_length;
 
         if (length == SIZE_MAX)
         {
@@ -279,7 +279,7 @@ public:
                 {
                     try
                     {
-                        msg._m_impl->set_length(t.get());
+                        msg.m_length = t.get();
                         this_client->send_msg(msg);
                     }
                     catch (...)
@@ -463,16 +463,15 @@ private:
 
 void ReceiveContext::OnReceive(MessageWebSocket^ sender, MessageWebSocketMessageReceivedEventArgs^ args)
 {
-    websocket_incoming_message ws_incoming_message;
-    auto &msg = ws_incoming_message._m_impl;
+    websocket_incoming_message incoming_msg;
 
     switch(args->MessageType)
     {
     case SocketMessageType::Binary:
-        msg->set_msg_type(websocket_message_type::binary_message);
+        incoming_msg.m_msg_type = websocket_message_type::binary_message;
         break;
     case SocketMessageType::Utf8:
-        msg->set_msg_type(websocket_message_type::text_message);
+        incoming_msg.m_msg_type = websocket_message_type::text_message;
         break;
     }
 
@@ -485,10 +484,9 @@ void ReceiveContext::OnReceive(MessageWebSocket^ sender, MessageWebSocketMessage
             std::string payload;
             payload.resize(len);
             reader->ReadBytes(Platform::ArrayReference<uint8_t>(reinterpret_cast<uint8 *>(&payload[0]), len));
-            ws_incoming_message.m_body = concurrency::streams::container_buffer<std::string>(std::move(payload));
+            incoming_msg.m_body = concurrency::streams::container_buffer<std::string>(std::move(payload));
         }
-        msg->set_length(len);
-        m_receive_handler(ws_incoming_message);
+        m_receive_handler(incoming_msg);
     }
     catch(...)
     {

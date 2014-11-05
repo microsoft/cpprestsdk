@@ -77,27 +77,6 @@ enum class websocket_message_type
     pong
 };
 
-namespace details
-{
-class _websocket_message
-{
-public:
-
-    void set_msg_type(websocket_message_type msg_type) { m_msg_type = msg_type; }
-
-    void set_length(size_t len) { m_length = len; }
-
-    size_t length() const { return m_length; }
-
-    websocket_message_type message_type() const { return m_msg_type; }
-
-private:
-
-    websocket_message_type m_msg_type;
-    size_t m_length;
-};
-}
-
 /// <summary>
 /// Represents an outgoing websocket message
 /// </summary>
@@ -106,17 +85,12 @@ class websocket_outgoing_message
 public:
 
     /// <summary>
-    /// Creates an initially empty message for sending.
-    /// </summary>
-    websocket_outgoing_message() : _m_impl(std::make_shared<details::_websocket_message>()) {}
-
-    /// <summary>
     /// Sets a UTF-8 message as the message body.
     /// </summary>
     /// <param name="data">UTF-8 String containing body of the message.</param>
     void set_utf8_message(std::string &&data)
     {
-        this->_set_message(std::move(data), websocket_message_type::text_message);
+        this->set_message(concurrency::streams::container_buffer<std::string>(std::move(data)));
     }
 
     /// <summary>
@@ -125,7 +99,7 @@ public:
     /// <param name="data">UTF-8 String containing body of the message.</param>
     void set_utf8_message(const std::string &data)
     {
-        this->_set_message(data, websocket_message_type::text_message);
+        this->set_message(concurrency::streams::container_buffer<std::string>(data));
     }
 
     /// <summary>
@@ -135,7 +109,7 @@ public:
     /// <remarks>Upon sending, the entire stream may be buffered to determine the length.</remarks>
     void set_utf8_message(const concurrency::streams::istream &istream)
     {
-        this->_set_message(istream, SIZE_MAX, websocket_message_type::text_message);
+        this->set_message(istream, SIZE_MAX, websocket_message_type::text_message);
     }
 
     /// <summary>
@@ -145,7 +119,7 @@ public:
     /// <param name="len">number of bytes to send.</param>
     void set_utf8_message(const concurrency::streams::istream &istream, size_t len)
     {
-        this->_set_message(istream, len, websocket_message_type::text_message);
+        this->set_message(istream, len, websocket_message_type::text_message);
     }
 
     /// <summary>
@@ -155,7 +129,7 @@ public:
     /// <param name="len">number of bytes to send.</param>
     void set_binary_message(const concurrency::streams::istream &istream, size_t len)
     {
-        this->_set_message(istream, len, websocket_message_type::binary_message);
+        this->set_message(istream, len, websocket_message_type::binary_message);
     }
 
     /// <summary>
@@ -165,17 +139,17 @@ public:
     /// <remarks>Upon sending, the entire stream may be buffered to determine the length.</remarks>
     void set_binary_message(const concurrency::streams::istream &istream)
     {
-        this->_set_message(istream, SIZE_MAX, websocket_message_type::binary_message);
+        this->set_message(istream, SIZE_MAX, websocket_message_type::binary_message);
     }
 
 private:
     friend class details::winrt_client;
     friend class details::wspp_client;
 
-    std::shared_ptr<details::_websocket_message> _m_impl;
-
     pplx::task_completion_event<void> m_body_sent;
     concurrency::streams::streambuf<uint8_t> m_body;
+	websocket_message_type m_msg_type;
+    size_t m_length;
 
     void signal_body_sent() const
     {
@@ -189,24 +163,17 @@ private:
 
     const pplx::task_completion_event<void> & body_sent() const { return m_body_sent; }
 
-    void _set_message(std::string &&data, websocket_message_type msg_type)
-    {
-        _m_impl->set_msg_type(msg_type);
-        _m_impl->set_length(data.length());
-        m_body = concurrency::streams::container_buffer<std::string>(std::move(data));
-    }
+	void set_message(const concurrency::streams::container_buffer<std::string> &buffer)
+	{
+        m_msg_type = websocket_message_type::text_message;
+        m_length = static_cast<size_t>(buffer.size());
+        m_body = buffer;
+	}
 
-    void _set_message(const std::string &data, websocket_message_type msg_type)
+    void set_message(const concurrency::streams::istream &istream, size_t len, websocket_message_type msg_type)
     {
-        _m_impl->set_msg_type(msg_type);
-        _m_impl->set_length(data.length());
-        m_body = concurrency::streams::container_buffer<std::string>(data);
-    }
-
-    void _set_message(const concurrency::streams::istream &istream, size_t len, websocket_message_type msg_type)
-    {
-        _m_impl->set_msg_type(msg_type);
-        _m_impl->set_length(len);
+        m_msg_type = msg_type;
+        m_length = len;
         m_body = istream.streambuf();
     }
 };
@@ -217,9 +184,6 @@ private:
 class websocket_incoming_message
 {
 public:
-    websocket_incoming_message() : _m_impl(std::make_shared<details::_websocket_message>())
-    {
-    }
 
     /// <summary>
     /// Extracts the body of the incoming message as a string value, only if the message type is UTF-8.
@@ -250,7 +214,7 @@ public:
     /// </summary>
     size_t length() const
     {
-        return _m_impl->length();
+        return static_cast<size_t>(m_body.size());
     }
 
     /// <summary>
@@ -258,7 +222,7 @@ public:
     /// </summary>
     websocket_message_type messge_type() const
     {
-        return _m_impl->message_type();
+        return m_msg_type;
     }
 
 private:
@@ -271,8 +235,7 @@ private:
     // Store message body in a container buffer backed by a string.
     // Allows for optimization in the string message cases.
     concurrency::streams::container_buffer<std::string> m_body;
-
-    std::shared_ptr<details::_websocket_message> _m_impl;
+	websocket_message_type m_msg_type;
 };
 
 }}}

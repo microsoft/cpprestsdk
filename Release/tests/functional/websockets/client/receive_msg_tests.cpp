@@ -53,9 +53,9 @@ pplx::task<void> receive_text_msg_helper(websocket_client& client,
 
     auto t = client.receive().then([body_str](websocket_incoming_message ret_msg)
     {
+        VERIFY_ARE_EQUAL(ret_msg.length(), body_str.length());
         auto ret_str = ret_msg.extract_string().get();
 
-        VERIFY_ARE_EQUAL(ret_msg.length(), body_str.length());
         VERIFY_ARE_EQUAL(body_str.compare(ret_str), 0);
         VERIFY_ARE_EQUAL(ret_msg.messge_type(), websocket_message_type::text_message);
     });
@@ -252,9 +252,9 @@ TEST_FIXTURE(uri_address, receive_before_connect)
 
     auto t = client.receive().then([body_str](websocket_incoming_message ret_msg)
     {
+		VERIFY_ARE_EQUAL(ret_msg.length(), body_str.length());
         auto ret_str = ret_msg.extract_string().get();
 
-        VERIFY_ARE_EQUAL(ret_msg.length(), body_str.length());
         VERIFY_ARE_EQUAL(body_str.compare(ret_str), 0);
         VERIFY_ARE_EQUAL(ret_msg.messge_type(), websocket_message_type::text_message);
     });

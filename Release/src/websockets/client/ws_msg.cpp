@@ -71,7 +71,7 @@ std::vector<::utility::string_t> websocket_client_config::subprotocols() const
 
 pplx::task<std::string> websocket_incoming_message::extract_string() const
 {
-    if (_m_impl->message_type() == websocket_message_type::binary_message)
+    if (m_msg_type == websocket_message_type::binary_message)
     {
         return pplx::task_from_exception<std::string>(websocket_exception("Invalid message type"));
     }
