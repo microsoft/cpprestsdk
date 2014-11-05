@@ -879,7 +879,7 @@ namespace Concurrency { namespace streams
                     if (ch == concurrency::streams::char_traits<CharType>::eof()) return pplx::task_from_result(false);
                     if (ch == '\n')
                     {
-                        return buffer.bumpc().then([](concurrency::streams::char_traits<CharType>::int_type) { return false; });
+                        return buffer.bumpc().then([](typename concurrency::streams::char_traits<CharType>::int_type) { return false; });
                     }
 
                     return pplx::task_from_result(false);
