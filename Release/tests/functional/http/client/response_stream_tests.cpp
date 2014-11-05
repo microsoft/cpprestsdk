@@ -258,6 +258,10 @@ class basic_throws_buffer : public streams::details::streambuf_state_manager<Cha
 public:
     basic_throws_buffer() : streams::details::streambuf_state_manager<CharType>(std::ios_base::out) {}
 
+	typedef typename streams::details::basic_streambuf<CharType>::int_type int_type;
+    typedef typename streams::details::basic_streambuf<CharType>::pos_type pos_type;
+    typedef typename streams::details::basic_streambuf<CharType>::off_type off_type;
+
     bool can_seek() const override { return true; }
     bool has_size() const override { return false; }
     size_t buffer_size(std::ios_base::openmode) const override { return 0; }
@@ -294,7 +298,7 @@ template<typename CharType>
 class close_throws_buffer : public streams::streambuf<CharType>
 {
 public:
-    close_throws_buffer() : streambuf<CharType>(std::shared_ptr<basic_throws_buffer<CharType>>(new basic_throws_buffer<CharType>())) {}
+    close_throws_buffer() : streams::streambuf<CharType>(std::shared_ptr<basic_throws_buffer<CharType>>(new basic_throws_buffer<CharType>())) {}
 };
 
 // Tests if an exception occurs and close throws an exception that the close
