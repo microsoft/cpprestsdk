@@ -22,26 +22,17 @@
 ****/
 #include "stdafx.h"
 
-#ifdef _MS_WINDOWS
-#include <http.h>
-#include <agents.h>
-#endif
-
 #include <algorithm>
 #include <thread>
-#ifndef _MS_WINDOWS
-#include <unistd.h>
-#endif
 
 #include <os_utilities.h>
 
-#include "cpprest/uri.h"
 #include "test_websocket_server.h"
 
-#ifdef _WIN32
+#ifdef _MS_WINDOWS
 #pragma warning( disable : 4503 )
 #pragma warning( push )
-#pragma warning( disable : 4100 4127 4996 4512 4996 4267 4067 )
+#pragma warning( disable : 4100 4127 4996 4512 4701 4267 )
 #if defined(_MSC_VER) && (_MSC_VER >= 1800)
 #define _WEBSOCKETPP_CPP11_STL_
 #define _WEBSOCKETPP_INITIALIZER_LISTS_
@@ -50,12 +41,23 @@
 #else
 #define _WEBSOCKETPP_NULLPTR_TOKEN_ 0
 #endif
-#endif /* _WIN32 */
+#endif
 
+#if defined(__APPLE__)
+#include "stdlib.h"
+// Issue caused by iOS SDK 8.0
+#pragma push_macro("ntohll")
+#pragma push_macro("htonll")
+#undef ntohll
+#undef htonll
+#endif
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
-
-#ifdef _WIN32
+#if defined(__APPLE__)
+#pragma pop_macro("htonll")
+#pragma pop_macro("ntohll")
+#endif
+#ifdef _MS_WINDOWS
 #pragma warning( pop )
 #endif
 
@@ -107,7 +109,7 @@ namespace utilities {
     {
     public:
         _test_websocket_server(test_websocket_server* test_srv)
-            : m_test_srv(test_srv), m_work(new boost::asio::io_service::work(m_service))
+            : m_test_srv(test_srv)
         {
             m_srv.clear_access_channels(websocketpp::log::alevel::all);
             m_srv.clear_error_channels(websocketpp::log::elevel::all);
@@ -176,7 +178,8 @@ namespace utilities {
                 fn(wsmsg);
             });
 
-            m_srv.init_asio(&m_service);
+            m_srv.init_asio();
+            m_srv.start_perpetual();
 
             m_srv.set_reuse_addr(true);
 
@@ -188,26 +191,19 @@ namespace utilities {
             }
 
             m_srv.start_accept();
-
-            m_thread = std::thread([this]()
-            {
-                m_service.run();
-                return 0;
-            });
+            m_thread = std::thread(&server::run, &m_srv);
         }
 
         ~_test_websocket_server()
         {
             close("destructor");
-
-            m_work.reset();
-            m_service.stop();
+            m_srv.stop_listening();
+            m_srv.stop_perpetual();
             _ASSERTE(m_thread.joinable());
             m_thread.join();
         }
 
         void send_msg(const test_websocket_msg& msg);
-
 
         void close(const std::string& reasoning)
         {
@@ -220,8 +216,6 @@ namespace utilities {
 
         test_websocket_server* m_test_srv;
 
-        boost::asio::io_service m_service;
-        std::unique_ptr<boost::asio::io_service::work> m_work;
         std::thread m_thread;
 
         server m_srv;

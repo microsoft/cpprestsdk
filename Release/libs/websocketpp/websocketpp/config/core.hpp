@@ -223,7 +223,7 @@ struct core {
      *
      * The default is 32MB
      *
-     * @since 0.4.0-alpha1
+     * @since 0.3.0
      */
     static const size_t max_message_size = 32000000;
 

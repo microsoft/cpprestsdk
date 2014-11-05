@@ -35,6 +35,12 @@ namespace web
 {
 namespace http
 {
+namespace client
+{
+    // Forward declaration to avoid circular include dependency.
+    class http_client_config;
+}
+
 /// oAuth 1.0 library.
 namespace oauth1
 {

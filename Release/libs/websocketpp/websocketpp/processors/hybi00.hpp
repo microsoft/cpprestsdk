@@ -28,9 +28,7 @@
 #ifndef WEBSOCKETPP_PROCESSOR_HYBI00_HPP
 #define WEBSOCKETPP_PROCESSOR_HYBI00_HPP
 
-//#include <stdlib.h>
-#include <algorithm>
-#undef min
+#include <cstdlib>
 
 #include <websocketpp/frame.hpp>
 #include <websocketpp/utf8_validator.hpp>
@@ -111,9 +109,8 @@ public:
         // TODO: decide if it is best to silently fail here or produce some sort
         //       of warning or exception.
         const std::string& key3 = req.get_header("Sec-WebSocket-Key3");
-        auto sz = std::min(size_t(8), key3.size());
         std::copy(key3.begin(),
-                  key3.begin() + sz,
+                  key3.begin() + std::min(size_t(8), key3.size()),
                   key_final.begin() + 8);
 
         res.append_header(
@@ -371,7 +368,7 @@ private:
             memcpy(result, reinterpret_cast<char*>(&num), 4);
 #endif
         } else {
-            std::fill(result, result + 4, 0);
+            std::fill(result,result+4,0);
         }
     }
 

@@ -39,8 +39,6 @@ using namespace Concurrency::streams::details;
 
 namespace web
 {
-namespace experimental
-{
 namespace websockets
 {
 namespace client
@@ -105,9 +103,10 @@ public:
 
         if (m_config.credentials().is_set())
         {
+            auto password = m_config.credentials().decrypt();
             m_msg_websocket->Control->ServerCredential = ref new Windows::Security::Credentials::PasswordCredential("WebSocketClientCredentialResource",
                 Platform::StringReference(m_config.credentials().username().c_str()),
-                Platform::StringReference(m_config.credentials().password().c_str()));
+                Platform::StringReference(password->c_str()));
         }
 
         m_context = ref new ReceiveContext([=](websocket_incoming_message &msg)
@@ -178,12 +177,13 @@ public:
         const auto &proxy_cred = proxy.credentials();
         if(proxy_cred.is_set())
         {
+            auto password = proxy_cred.decrypt();
             m_msg_websocket->Control->ProxyCredential = ref new Windows::Security::Credentials::PasswordCredential("WebSocketClientProxyCredentialResource",
-                ref new Platform::String(proxy_cred.username().c_str()),
-                ref new Platform::String(proxy_cred.password().c_str()));
+                Platform::StringReference(proxy_cred.username().c_str()),
+                Platform::StringReference(password->c_str()));
         }
 
-        const auto uri = ref new Windows::Foundation::Uri(ref new Platform::String(m_uri.to_string().c_str()));
+        const auto uri = ref new Windows::Foundation::Uri(Platform::StringReference(m_uri.to_string().c_str()));
 
         m_msg_websocket->MessageReceived += ref new TypedEventHandler<MessageWebSocket^, MessageWebSocketMessageReceivedEventArgs^>(m_context, &ReceiveContext::OnReceive);
         m_msg_websocket->Closed += ref new TypedEventHandler<IWebSocket^, WebSocketClosedEventArgs^>(m_context, &ReceiveContext::OnClosed);
@@ -415,8 +415,7 @@ public:
     pplx::task<void> close(websocket_close_status status, const utility::string_t &strreason=_XPLATSTR(""))
     {
         // Send a close frame to the server
-        Platform::String^ reason = ref new Platform::String(strreason.data());
-        m_msg_websocket->Close(static_cast<unsigned short>(status), reason);
+        m_msg_websocket->Close(static_cast<unsigned short>(status), Platform::StringReference(strreason.c_str()));
         // Wait for the close response frame from the server.
         return pplx::create_task(m_close_tce);
     }
@@ -515,5 +514,5 @@ websocket_client::websocket_client(websocket_client_config config) :
     m_client(std::make_shared<details::winrt_client>(std::move(config)))
 {}
 
-}}}}
+}}}
 #endif /* WINAPI_FAMILY == WINAPI_FAMILY_APP */

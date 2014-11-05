@@ -3,8 +3,7 @@ set -e
 
 git clone https://git.gitorious.org/boostoniphone/galbraithjosephs-boostoniphone.git boostoniphone
 pushd boostoniphone
-sed -e 's/\${IPHONE_SDKVERSION:=7.0}/\${IPHONE_SDKVERSION:=8.0}/' -i .bak boost.sh
-sed -e 's/\${BOOST_LIBS:=".*"}/\${BOOST_LIBS:="random thread filesystem regex locale system date_time"}/g' -i .bak boost.sh
+git apply ../fix_boost_version.patch
 ./boost.sh
 pushd ios/framework/boost.framework/Versions/A
 mkdir Headers2

@@ -29,7 +29,10 @@
 // This header is required to define _MS_WINDOWS
 #include "cpprest/xxpublic.h"
 
-#ifdef _MS_WINDOWS
+#if defined(_MS_WINDOWS) && _MSC_VER < 1800
+// pplxtasks.h includes Windows.h on VS2012 only WinRT, which is terrible.
+// Need to include before to avoid winsock issues with websocketpp.
+#define NOMINMAX
 #include <winsock2.h>
 #endif
 

@@ -965,7 +965,7 @@ void connection<config>::handle_read_frame(lib::error_code const & ec,
         if (m_processor->ready()) {
             if (m_alog.static_test(log::alevel::devel)) {
                 std::stringstream s;
-                s << "Complete frame received. Dispatching";
+                s << "Complete message received. Dispatching";
                 m_alog.write(log::alevel::devel,s.str());
             }
 

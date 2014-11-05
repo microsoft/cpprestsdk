@@ -129,6 +129,9 @@
     <ClInclude Include="$(CasablancaIncludeDir)\cpprest\xxpublic.h">
       <Filter>Header Files\cpprest</Filter>
     </ClInclude>
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\x509_cert_utilities.h">
+      <Filter>Header Files\cpprest</Filter>
+    </ClInclude>
     <ClInclude Include="$(CasablancaIncludeDir)\pplx\pplxcancellation_token.h">
       <Filter>Header Files\pplx</Filter>
     </ClInclude>
@@ -150,6 +153,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(CasablancaSrcDir)\http\client\http_msg_client.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CasablancaSrcDir)\http\client\x509_cert_utilities.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(CasablancaSrcDir)\http\common\http_helpers.cpp">
@@ -180,6 +186,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(CasablancaSrcDir)\utilities\asyncrt_utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CasablancaSrcDir)\utilities\web_utilities.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(CasablancaSrcDir)\utilities\base64.cpp">

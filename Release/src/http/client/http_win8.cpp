@@ -44,7 +44,7 @@ class winrt_request_context : public request_context
 public:
 
     // Factory function to create requests on the heap.
-    static std::shared_ptr<request_context> create_request_context(std::shared_ptr<_http_client_communicator> client, http_request &request)
+    static std::shared_ptr<request_context> create_request_context(const std::shared_ptr<_http_client_communicator> &client, http_request &request)
     {
         return std::make_shared<winrt_request_context>(client, request);
     }
@@ -53,7 +53,7 @@ public:
 
     // Request contexts must be created through factory function.
     // But constructor needs to be public for make_shared to access.
-    winrt_request_context(std::shared_ptr<_http_client_communicator> client, http_request &request) 
+    winrt_request_context(const std::shared_ptr<_http_client_communicator> &client, http_request &request) 
         : request_context(client, request), m_hRequest(nullptr) 
     {
     }
@@ -64,7 +64,7 @@ class HttpRequestCallback :
     public RuntimeClass<RuntimeClassFlags<ClassicCom>, IXMLHTTPRequest2Callback, FtmBase>
 {
 public:
-    HttpRequestCallback(std::shared_ptr<winrt_request_context> request)
+    HttpRequestCallback(const std::shared_ptr<winrt_request_context> &request)
         : m_request(request)
     {
     }
@@ -77,7 +77,7 @@ public:
     // Called when HTTP headers have been received and processed.
     HRESULT STDMETHODCALLTYPE OnHeadersAvailable(_In_ IXMLHTTPRequest2* xmlReq, DWORD dw, __RPC__in_string const WCHAR* phrase)
     {
-        http_response response = m_request->m_response;
+        http_response &response = m_request->m_response;
         response.set_status_code((http::status_code)dw);
         response.set_reason_phrase(phrase);
 
@@ -89,7 +89,7 @@ public:
         }
 
         auto progress = m_request->m_request._get_impl()->_progress_handler();
-        if ( progress && m_request->m_uploaded == 0)
+        if (progress && m_request->m_uploaded == 0)
         {
             try { (*progress)(message_direction::upload, 0); } catch(...)
             {
@@ -147,13 +147,21 @@ public:
     // Called when an error occurs during the HTTP request.
     HRESULT STDMETHODCALLTYPE OnError(_In_opt_ IXMLHTTPRequest2*, HRESULT hrError)
     {
-        if (m_request->m_exceptionPtr != nullptr)
+        if (m_request->m_exceptionPtr == nullptr)
+        {
+            std::wstring msg(L"IXMLHttpRequest2Callback::OnError: ");
+            msg.append(std::to_wstring(hrError));
+            msg.append(L": ");
+            msg.append(utility::conversions::to_string_t(utility::details::windows_category().message(hrError)));
+            m_request->report_error(hrError, msg);
+        }
+        else
+        {
             m_request->report_exception(m_request->m_exceptionPtr);
-        else    
-            m_request->report_error(hrError, L"Error in IXMLHttpRequest2Callback");
+        }
         
         // Break the circular reference loop.
-        // See full explaination in OnResponseReceived
+        // See full explanation in OnResponseReceived
         m_request.reset();
         
         return S_OK;
@@ -175,11 +183,11 @@ class IRequestStream
     : public Microsoft::WRL::RuntimeClass<Microsoft::WRL::RuntimeClassFlags<ClassicCom>, ISequentialStream>
 {
 public:
-    IRequestStream(std::weak_ptr<winrt_request_context> context, size_t read_length = std::numeric_limits<size_t>::max())
+    IRequestStream(const std::weak_ptr<winrt_request_context> &context, size_t read_length = std::numeric_limits<size_t>::max())
         : m_context(context),
         m_read_length(read_length)
     {
-        // read_length is the initial length of the ISequentialStream that is avaiable for read
+        // read_length is the initial length of the ISequentialStream that is available for read
         // This is required because IXHR2 attempts to read more data that what is specified by
         // the content_length. (Specifically, it appears to be reading 128K chunks regardless of
         // the content_length specified).
@@ -245,7 +253,7 @@ private:
 
     // Length of the ISequentialStream for reads. This is equivalent
     // to the amount of data that the ISequentialStream is allowed
-    // to read from the underlying streambuffer.
+    // to read from the underlying stream buffer.
     size_t m_read_length;
 };
 
@@ -261,7 +269,7 @@ class IResponseStream
     : public Microsoft::WRL::RuntimeClass<Microsoft::WRL::RuntimeClassFlags<ClassicCom>, ISequentialStream>
 {
 public:
-    IResponseStream(std::weak_ptr<request_context> context)
+    IResponseStream(const std::weak_ptr<request_context> &context)
         : m_context(context)
     { }
 
@@ -354,7 +362,7 @@ protected:
             return;
         }
 
-        if ( msg.method() == http::methods::TRCE )
+        if (msg.method() == http::methods::TRCE)
         {
             // Not supported by WinInet. Generate a more specific exception than what WinInet does.
             request->report_exception(http_exception(L"TRACE is not supported"));
@@ -376,7 +384,7 @@ protected:
             CLSCTX_INPROC, 
             __uuidof(IXMLHTTPRequest2), 
             reinterpret_cast<void**>(winrt_context->m_hRequest.GetAddressOf()));
-        if ( FAILED(hr) ) 
+        if (FAILED(hr)) 
         {
             request->report_error(hr, L"Failure to create IXMLHTTPRequest2 instance");
             return;
@@ -384,42 +392,46 @@ protected:
 
         utility::string_t encoded_resource = http::uri_builder(m_uri).append(msg.relative_uri()).to_string();
 
-        const utility::char_t* usernanme = nullptr;
-        const utility::char_t* password = nullptr;
-        const utility::char_t* proxy_usernanme = nullptr;
-        const utility::char_t* proxy_password = nullptr;
-
         const auto &config = client_config();
         const auto &client_cred = config.credentials();
-        if(client_cred.is_set())
-        {
-            usernanme = client_cred.username().c_str();
-            password  = client_cred.password().c_str();
-        }
-
         const auto &proxy = config.proxy();
-        if(!proxy.is_default())
+        const auto &proxy_cred = proxy.credentials();
+        if (!proxy.is_default())
         {
             request->report_exception(http_exception(L"Only a default proxy server is supported"));
             return;
         }
 
-        const auto &proxy_cred = proxy.credentials();
-        if(proxy_cred.is_set())
+        // New scope to ensure plain text password is cleared as soon as possible.
         {
-            proxy_usernanme = proxy_cred.username().c_str();
-            proxy_password  = proxy_cred.password().c_str();
-        }
+            utility::string_t username, proxy_username;
+            const utility::char_t *password = nullptr;
+            const utility::char_t *proxy_password = nullptr;
+            ::web::details::plaintext_string password_plaintext, proxy_password_plaintext;
 
-        hr = winrt_context->m_hRequest->Open(
-            msg.method().c_str(), 
-            encoded_resource.c_str(), 
-            Make<HttpRequestCallback>(winrt_context).Get(), 
-            usernanme, 
-            password, 
-            proxy_usernanme, 
-            proxy_password);
-        if ( FAILED(hr) ) 
+            if (client_cred.is_set())
+            {
+                username = client_cred.username();
+                password_plaintext = client_cred.decrypt();
+                password = password_plaintext->c_str();
+            }
+            if (proxy_cred.is_set())
+            {
+                proxy_username = proxy_cred.username();
+                proxy_password_plaintext = proxy_cred.decrypt();
+                proxy_password = proxy_password_plaintext->c_str();
+            }
+
+            hr = winrt_context->m_hRequest->Open(
+                msg.method().c_str(),
+                encoded_resource.c_str(),
+                Make<HttpRequestCallback>(winrt_context).Get(),
+                username.c_str(),
+                password,
+                proxy_username.c_str(),
+                proxy_password);
+        }
+        if (FAILED(hr))
         {
             request->report_error(hr, L"Failure to open HTTP request");
             return;
@@ -427,7 +439,7 @@ protected:
 
         // Suppress automatic prompts for user credentials, since they are already provided.
         hr = winrt_context->m_hRequest->SetProperty(XHR_PROP_NO_CRED_PROMPT, TRUE);
-        if(FAILED(hr))
+        if (FAILED(hr))
         {
             request->report_error(hr, L"Failure to set no credentials prompt property");
             return;
@@ -436,21 +448,21 @@ protected:
         const auto timeout = config.timeout();
         const int secs = static_cast<int>(timeout.count());
         hr = winrt_context->m_hRequest->SetProperty(XHR_PROP_TIMEOUT, secs * 1000);
-        if ( FAILED(hr) ) 
+        if (FAILED(hr))
         {
             request->report_error(hr, L"Failure to set HTTP request properties");
             return;
         }
 
         // Add headers.
-        for ( auto hdr = msg.headers().begin(); hdr != msg.headers().end(); ++hdr )
+        for (const auto &hdr : msg.headers())
         {
-            winrt_context->m_hRequest->SetRequestHeader(hdr->first.c_str(), hdr->second.c_str());
+            winrt_context->m_hRequest->SetRequestHeader(hdr.first.c_str(), hdr.second.c_str());
         }
 
         // Set response stream.
         hr = winrt_context->m_hRequest->SetCustomResponseStream(Make<IResponseStream>(request).Get());
-        if ( FAILED(hr) ) 
+        if (FAILED(hr))
         {
             request->report_error(hr, L"Failure to set HTTP response stream");
             return;
@@ -526,4 +538,4 @@ pplx::task<http_response> http_network_handler::propagate(http_request request)
     return result_task;
 }
 
-}}}} // namespaces
+}}}}

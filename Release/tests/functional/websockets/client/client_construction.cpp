@@ -30,8 +30,8 @@
 using namespace concurrency::streams;
 
 using namespace web;
-using namespace web::experimental::websockets;
-using namespace web::experimental::websockets::client;
+using namespace web::websockets;
+using namespace web::websockets::client;
 
 using namespace tests::functional::websocket::utilities;
 
@@ -78,7 +78,6 @@ TEST_FIXTURE(uri_address, get_client_config)
 
     const websocket_client_config& config2 = client.config();
     VERIFY_ARE_EQUAL(config2.credentials().username(), cred.username());
-    VERIFY_ARE_EQUAL(config2.credentials().password(), cred.password());
 }
 
 // Verify that we can get the baseuri from websocket_client connect.

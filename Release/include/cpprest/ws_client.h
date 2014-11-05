@@ -53,12 +53,15 @@ namespace pplx = Concurrency;
 
 namespace web
 {
-/// WebSocket client is currently in beta.
-namespace experimental
-{
+
+// For backwards compatibility for when in the experimental namespace.
+// At next major release this should be deleted.
+namespace experimental = web;
+
 // In the past namespace was accidentally called 'web_sockets'. To avoid breaking code
 // alias it. At our next major release this should be deleted.
 namespace web_sockets = websockets;
+
 namespace websockets
 {
 /// WebSocket client side library.
@@ -276,9 +279,14 @@ public:
     }
 
     /// <summary>
-    /// Destroys the <c>websocket_exception</c> object.
+    /// Creates a <c>websocket_exception</c> from a error code and string message to use as the what() argument.
+    /// <param name="code">Error code.</param>
+    /// <param name="whatArg">Message to use in what() string.</param>
     /// </summary>
-    ~websocket_exception() CPPREST_NOEXCEPT {}
+    websocket_exception(std::error_code code, std::string whatArg) :
+        m_errorCode(std::move(code)),
+        m_msg(std::move(whatArg))
+    {}
 
     /// <summary>
     /// Gets a string identifying the cause of the exception.
@@ -464,7 +472,7 @@ private:
     std::shared_ptr<details::_websocket_client_impl> m_client;
 };
 
-}}}}
+}}}
 
 #endif
 #endif  /* _CASA_WS_CLIENT_H */

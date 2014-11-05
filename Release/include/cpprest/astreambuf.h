@@ -62,7 +62,7 @@ namespace concurrency = Concurrency;
 
 namespace Concurrency 
 { 
-/// Library for asychronous streams.
+/// Library for asynchronous streams.
 namespace streams
 {
     /// <summary>

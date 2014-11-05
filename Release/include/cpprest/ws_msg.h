@@ -48,8 +48,6 @@ namespace pplx = Concurrency;
 
 namespace web
 {
-namespace experimental
-{
 namespace websockets
 {
 namespace client
@@ -277,7 +275,7 @@ private:
     std::shared_ptr<details::_websocket_message> _m_impl;
 };
 
-}}}}
+}}}
 
 #endif
 #endif  /* _CASA_WS_MSG_H */

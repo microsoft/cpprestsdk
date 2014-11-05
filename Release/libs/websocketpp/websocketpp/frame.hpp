@@ -66,7 +66,7 @@ union uint32_converter {
 /// Eight byte conversion union
 union uint64_converter {
     uint64_t i;
-    std::array<uint8_t, 8>  c;
+    std::array<uint8_t, 8> c;
 };
 
 /// Constants and utility functions related to WebSocket opcodes
@@ -569,7 +569,7 @@ inline masking_key_type get_masking_key(const basic_header &h, const
  */
 inline uint16_t get_extended_size(const extended_header &e) {
     uint16_converter temp16;
-    std::copy(e.bytes.begin(), e.bytes.begin() + 2, temp16.c.begin());
+    std::copy(e.bytes.begin() , e.bytes.begin() + 2, temp16.c.begin());
     return ntohs(temp16.i);
 }
 
@@ -858,7 +858,7 @@ inline size_t byte_mask_circ(uint8_t * input, uint8_t * output, size_t length,
     size_t prepared_key)
 {
     uint32_converter key;
-    key.i = (uint32_t)prepared_key;
+    key.i = prepared_key;
 
     for (size_t i = 0; i < length; ++i) {
         output[i] = input[i] ^ key.c[i % 4];
