@@ -1,5 +1,5 @@
 diff --git a/build-android.sh b/build-android.sh
-index 40453f7..0bd39ae 100755
+index 40453f7..dd92f74 100755
 --- a/build-android.sh
 +++ b/build-android.sh
 @@ -258,9 +258,9 @@ case "$NDK_RN" in
@@ -23,7 +23,7 @@ index 40453f7..0bd39ae 100755
  
    cxxflags=""
    for flag in $CXXFLAGS; do cxxflags="$cxxflags cxxflags=$flag"; done
-@@ -404,6 +405,10 @@ echo "Building boost for android"
+@@ -404,8 +405,12 @@ echo "Building boost for android"
           threading=multi              \
           --layout=versioned           \
           --prefix="./../$BUILD_DIR/"  \
@@ -32,8 +32,11 @@ index 40453f7..0bd39ae 100755
 +         boost.locale.iconv=on        \
 +         boost.locale.icu=off         \
           $LIBRARIES                   \
-          install 2>&1                 \
+-         install 2>&1                 \
++         release debug install 2>&1   \
           || { dump "ERROR: Failed to build boost for android!" ; exit 1 ; }
+   } | tee -a $PROGDIR/build.log
+ 
 diff --git a/configs/user-config-boost-1_55_0.jam b/configs/user-config-boost-1_55_0.jam
 index 666d4c8..5f6bab8 100644
 --- a/configs/user-config-boost-1_55_0.jam

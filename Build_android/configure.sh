@@ -39,7 +39,7 @@ DO_BOOST=1
 DO_OPENSSL=1
 
 function usage {
-    echo "Usage: $0 [--skip-boost] [--skip-openssl] [-h] [--ndk <android-ndk>]"
+    echo "Usage: $0 [--skip-boost] [--skip-openssl] [--skip-libiconv] [-h] [--ndk <android-ndk>]"
     echo ""
     echo "    --skip-boost          Skip fetching and compiling boost"
     echo "    --skip-openssl        Skip fetching and compiling openssl"
