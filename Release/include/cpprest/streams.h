@@ -1108,7 +1108,7 @@ namespace Concurrency { namespace streams
                 return write_pos == buf_size;
             }
 
-            _read_helper() : write_pos(0), total(0), saw_CR(false)
+            _read_helper() : total(0), write_pos(0), saw_CR(false)
             {
             }
         };
