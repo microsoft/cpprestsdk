@@ -37,10 +37,6 @@ if(UNIX)
   else()
     set(SOURCES ${SOURCES} pplx/linux/pplxlinux.cpp)
   endif()
-
-  if(ANDROID)
-    set(EXTRALINKS "${CMAKE_BINARY_DIR}/../libiconv/r9d-9-armeabiv7a/lib/libiconv.so")
-  endif()
 elseif(WIN32)
   set(SOURCES
     json/json.cpp
