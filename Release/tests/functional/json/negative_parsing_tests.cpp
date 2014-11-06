@@ -29,105 +29,117 @@ using namespace utility;
 
 namespace tests { namespace functional { namespace json_tests {
 
+#ifndef VERIFY_JSON_THROWS
+#define VERIFY_JSON_THROWS(parseString) \
+    { \
+        std::error_code ec_; \
+        VERIFY_THROWS(json::value::parse(parseString), json::json_exception); \
+        auto value_ = json::value::parse(parseString, ec_); \
+        VERIFY_IS_TRUE(ec_.value() > 0); \
+        VERIFY_IS_TRUE(value_.is_null()); \
+    }
+
+#endif
+
 SUITE(negative_parsing_tests)
 {
 
 TEST(string_t)
 {
-    VERIFY_THROWS(json::value::parse(U("\"\\k\"")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U("\" \" \"")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U("\"\\u23A\"")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U("\"\\uXY1A\"")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U("\"asdf")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U("\\asdf")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U("\"\"\"\"")), json::json_exception);
+    VERIFY_JSON_THROWS(U("\"\\k\""));
+    VERIFY_JSON_THROWS(U("\" \" \""));
+    VERIFY_JSON_THROWS(U("\"\\u23A\""));
+    VERIFY_JSON_THROWS(U("\"\\uXY1A\""));
+    VERIFY_JSON_THROWS(U("\"asdf"));
+    VERIFY_JSON_THROWS(U("\\asdf"));
+    VERIFY_JSON_THROWS(U("\"\"\"\""));
 
     // '\', '"', and control characters must be escaped (0x1F and below).
-    VERIFY_THROWS(json::value::parse(U("\"\\\"")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U("\"")), json::json_exception);
+    VERIFY_JSON_THROWS(U("\"\\\""));
+    VERIFY_JSON_THROWS(U("\""));
     utility::string_t str(U("\""));
     str.append(1, 0x1F);
     str.append(U("\""));
-    VERIFY_THROWS(json::value::parse(str.c_str()), json::json_exception);
+    VERIFY_JSON_THROWS(str.c_str());
 }
 
 TEST(numbers)
 {
-    VERIFY_THROWS(json::value::parse(U("-")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U("-.")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U("-e1")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U("-1e")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U("+1.1")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U("1.1 E")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U("1.1E-")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U("1.1E.1")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U("1.1E1.1")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U("001.1")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U("-.100")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U("-.001")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U(".1")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U("0.1.1")), json::json_exception);
+    VERIFY_JSON_THROWS(U("-"));
+    VERIFY_JSON_THROWS(U("-."));
+    VERIFY_JSON_THROWS(U("-e1"));
+    VERIFY_JSON_THROWS(U("-1e"));
+    VERIFY_JSON_THROWS(U("+1.1"));
+    VERIFY_JSON_THROWS(U("1.1 E"));
+    VERIFY_JSON_THROWS(U("1.1E-"));
+    VERIFY_JSON_THROWS(U("1.1E.1"));
+    VERIFY_JSON_THROWS(U("1.1E1.1"));
+    VERIFY_JSON_THROWS(U("001.1"));
+    VERIFY_JSON_THROWS(U("-.100"));
+    VERIFY_JSON_THROWS(U("-.001"));
+    VERIFY_JSON_THROWS(U(".1"));
+    VERIFY_JSON_THROWS(U("0.1.1"));
 }
 
 // TFS 535589
-json::value parse_help(utility::string_t str)
+void parse_help(utility::string_t str)
 {
     utility::stringstream_t ss1;
     ss1 << str;
-    return json::value::parse(ss1);
+    VERIFY_JSON_THROWS(ss1.str());
 }
 
 TEST(objects)
 {
-    VERIFY_THROWS(json::value::parse(U("}")), json::json_exception);
-    VERIFY_THROWS(parse_help(U("{")), json::json_exception);
-    VERIFY_THROWS(parse_help(U("{ 1, 10 }")), json::json_exception);
-    VERIFY_THROWS(parse_help(U("{ : }")), json::json_exception);
-    VERIFY_THROWS(parse_help(U("{ \"}")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U("{")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U("{ 1")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U("{ \"}")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U("{\"2\":")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U("{\"2\":}")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U("{\"2\": true")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U("{\"2\": true false")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U("{\"2\": true :false")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U("{\"2\": false,}")), json::json_exception);
+    VERIFY_JSON_THROWS(U("}"));
+    parse_help(U("{"));
+    parse_help(U("{ 1, 10 }"));
+    parse_help(U("{ : }"));
+    parse_help(U("{ \"}"));
+    VERIFY_JSON_THROWS(U("{"));
+    VERIFY_JSON_THROWS(U("{ 1"));
+    VERIFY_JSON_THROWS(U("{ \"}"));
+    VERIFY_JSON_THROWS(U("{\"2\":"));
+    VERIFY_JSON_THROWS(U("{\"2\":}"));
+    VERIFY_JSON_THROWS(U("{\"2\": true"));
+    VERIFY_JSON_THROWS(U("{\"2\": true false"));
+    VERIFY_JSON_THROWS(U("{\"2\": true :false"));
+    VERIFY_JSON_THROWS(U("{\"2\": false,}"));
 }
 
 TEST(arrays)
 {
-    VERIFY_THROWS(json::value::parse(U("]")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U("[")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U("[ 1")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U("[ 1,")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U("[ 1,]")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U("[ 1 2]")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U("[ \"1\" : 2]")), json::json_exception);
-    VERIFY_THROWS(parse_help(U("[,]")), json::json_exception);
-    VERIFY_THROWS(parse_help(U("[ \"]")), json::json_exception);
-    VERIFY_THROWS(parse_help(U("[\"2\", false,]")), json::json_exception);
+    VERIFY_JSON_THROWS(U("]"));
+    VERIFY_JSON_THROWS(U("["));
+    VERIFY_JSON_THROWS(U("[ 1"));
+    VERIFY_JSON_THROWS(U("[ 1,"));
+    VERIFY_JSON_THROWS(U("[ 1,]"));
+    VERIFY_JSON_THROWS(U("[ 1 2]"));
+    VERIFY_JSON_THROWS(U("[ \"1\" : 2]"));
+    parse_help(U("[,]"));
+    parse_help(U("[ \"]"));
+    parse_help(U("[\"2\", false,]"));
 }
 
 TEST(literals_not_lower_case)
 {
-    VERIFY_THROWS(json::value::parse(U("NULL")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U("FAlse")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U("TRue")), json::json_exception);
+    VERIFY_JSON_THROWS(U("NULL"));
+    VERIFY_JSON_THROWS(U("FAlse"));
+    VERIFY_JSON_THROWS(U("TRue"));
 }
 
 TEST(incomplete_literals)
 {
-    VERIFY_THROWS(json::value::parse(U("nul")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U("fal")), json::json_exception);
-    VERIFY_THROWS(json::value::parse(U("tru")), json::json_exception);
+    VERIFY_JSON_THROWS(U("nul"));
+    VERIFY_JSON_THROWS(U("fal"));
+    VERIFY_JSON_THROWS(U("tru"));
 }
 
 // TFS#501321
 TEST(exception_string)
 {
     utility::string_t json_ip_str=U("");
-    VERIFY_THROWS(json::value::parse(json_ip_str), json::json_exception);
+    VERIFY_JSON_THROWS(json_ip_str);
 }
 
 TEST(boundary_chars)
@@ -135,7 +147,7 @@ TEST(boundary_chars)
     utility::string_t str(U("\""));
     str.append(1, 0x1F);
     str.append(U("\""));
-    VERIFY_THROWS(parse_help(str), json::json_exception);
+    parse_help(str);
 }
 
 TEST(stream_left_over_chars)
@@ -143,7 +155,7 @@ TEST(stream_left_over_chars)
     std::stringbuf buf;
     buf.sputn("[false]false", 12);
     std::istream stream(&buf);
-    VERIFY_THROWS(json::value::parse(stream), json::json_exception);
+    VERIFY_THROWS(web::json::value::parse(stream), json::json_exception);
 }
 
 // Test using Windows only API.
@@ -153,7 +165,7 @@ TEST(wstream_left_over_chars)
     std::wstringbuf buf;
     buf.sputn(L"[false]false", 12);
     std::wistream stream(&buf);
-    VERIFY_THROWS(json::value::parse(stream), json::json_exception);
+    VERIFY_THROWS(web::json::value::parse(stream), json::json_exception);
 }
 #endif
 
@@ -168,7 +180,7 @@ void garbage_impl(wchar_t ch)
     for (int i = 0; i < 2500; i++)
         ss.push_back(static_cast<char_t>(dist(eng)));
 
-    VERIFY_THROWS(json::value::parse(ss.c_str()), json::json_exception);
+    VERIFY_JSON_THROWS(ss.c_str());
 }
 
 TEST(garbage_1)

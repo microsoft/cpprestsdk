@@ -616,9 +616,9 @@ TEST(non_default_locale)
 TEST(parse_overload_success)
 {
     std::error_code err;
-    utility::string_t str(U("/JSONString/"));
+    utility::string_t str(U("\"JSONString\""));
     json::value parsedObject = json::value::parse(str, err);
-    
+
     VERIFY_IS_TRUE(err.value() == 0);
     VERIFY_IS_TRUE(!parsedObject.is_null());
 }
