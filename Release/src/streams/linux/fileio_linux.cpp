@@ -445,12 +445,12 @@ class _filestream_callback_fill_buffer : public _filestream_callback
 public:
     _filestream_callback_fill_buffer(_file_info *info, _filestream_callback *callback, Func func) : m_info(info), m_func(func), m_callback(callback) { }
 
-    virtual void on_completed(size_t result)
+    virtual void on_completed(size_t result) override
     {
         m_func(result);
         delete this;
     }
-    virtual void on_error(const std::exception &e)
+    virtual void on_error(const std::exception_ptr &e) override
     {
         auto exptr = std::make_exception_ptr(e);
         m_callback->on_error(exptr);
