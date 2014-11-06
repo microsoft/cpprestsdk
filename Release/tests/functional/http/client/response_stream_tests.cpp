@@ -251,6 +251,87 @@ TEST_FIXTURE(uri_address, response_stream_large_file_stream)
 }
 
 #if !defined(__cplusplus_winrt)
+
+template<typename CharType>
+class basic_throws_buffer : public streams::details::streambuf_state_manager<CharType>
+{
+public:
+    basic_throws_buffer() : streams::details::streambuf_state_manager<CharType>(std::ios_base::out) {}
+
+	typedef typename streams::details::basic_streambuf<CharType>::int_type int_type;
+    typedef typename streams::details::basic_streambuf<CharType>::pos_type pos_type;
+    typedef typename streams::details::basic_streambuf<CharType>::off_type off_type;
+
+    bool can_seek() const override { return true; }
+    bool has_size() const override { return false; }
+    size_t buffer_size(std::ios_base::openmode) const override { return 0; }
+    void set_buffer_size(size_t, std::ios_base::openmode) override {}
+    size_t in_avail() const override { return 0; }
+    pos_type getpos(std::ios_base::openmode) const override { return 0; }
+    pos_type seekpos(pos_type, std::ios_base::openmode) { return 0; }
+    pos_type seekoff(off_type, std::ios_base::seekdir, std::ios_base::openmode) override { return 0; }
+    bool acquire(_Out_writes_(count) CharType*&, _In_ size_t&) override { return false; }
+    void release(_Out_writes_(count) CharType *, _In_ size_t) override {}
+
+protected:
+    pplx::task<int_type> _putc(CharType) override { throw std::runtime_error("error"); }
+    pplx::task<size_t> _putn(const CharType *, size_t) override { throw std::runtime_error("error"); }
+    pplx::task<int_type> _bumpc() override { throw std::runtime_error("error"); }
+    int_type _sbumpc() override { throw std::runtime_error("error"); }
+    pplx::task<int_type> _getc() override { throw std::runtime_error("error"); }
+    int_type _sgetc() override { throw std::runtime_error("error"); }
+    pplx::task<int_type> _nextc() override { throw std::runtime_error("error"); }
+    pplx::task<int_type> _ungetc() override { throw std::runtime_error("error"); }
+    pplx::task<size_t> _getn(_Out_writes_(count) CharType *, _In_ size_t) override { throw std::runtime_error("error"); }
+    size_t _scopy(_Out_writes_(count) CharType *, _In_ size_t) override { throw std::runtime_error("error"); }
+    pplx::task<bool> _sync() override { throw std::runtime_error("error"); }
+    CharType* _alloc(size_t) override { throw std::runtime_error("error"); }
+    void _commit(size_t) override { throw std::runtime_error("error"); }
+
+    pplx::task<void> _close_write() override
+    {
+        return pplx::task_from_exception<void>(std::invalid_argument("test"));
+    }
+};
+
+template<typename CharType>
+class close_throws_buffer : public streams::streambuf<CharType>
+{
+public:
+    close_throws_buffer() : streams::streambuf<CharType>(std::shared_ptr<basic_throws_buffer<CharType>>(new basic_throws_buffer<CharType>())) {}
+};
+
+// Tests if an exception occurs and close throws an exception that the close
+// one is ignored and doesn't bring down the process.
+TEST_FIXTURE(uri_address, response_stream_close_throws_with_exception)
+{
+    web::http::experimental::listener::http_listener listener(m_uri);
+    listener.open().wait();
+
+    streams::producer_consumer_buffer<uint8_t> buf;
+
+    listener.support([buf](http_request request)
+    {
+        http_response response(200);
+        response.set_body(streams::istream(buf), U("text/plain"));
+        response.headers().add(header_names::connection, U("close"));
+        request.reply(response);
+    });
+
+    http_client_config config;
+    config.set_timeout(utility::seconds(1));
+    http_client client(m_uri, config);
+
+    close_throws_buffer<uint8_t> responseBody;
+    http_request msg(methods::GET);
+    msg.set_response_stream(responseBody.create_ostream());
+    http_response rsp = client.request(msg).get();
+    VERIFY_THROWS(rsp.content_ready().get(), http_exception);
+
+    buf.close(std::ios_base::out).wait();
+    listener.close().wait();
+}
+
 TEST_FIXTURE(uri_address, content_ready)
 {
     http_client client(m_uri);
