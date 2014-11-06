@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.30723.0
+VisualStudioVersion = 12.0.30501.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "casablanca120.xp", "Release\src\build\vs12.xp\casablanca120.xp.vcxproj", "{15F3B200-1AED-4B57-AF37-B21CD67914B1}"
 EndProject
@@ -49,6 +49,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SearchFile120", "Release\sa
 	ProjectSection(ProjectDependencies) = postProject
 		{1014C621-BC2D-4813-B8C1-6D83AD6F9249} = {1014C621-BC2D-4813-B8C1-6D83AD6F9249}
 	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JSON120_test", "Release\tests\Functional\json\vs12\JSON120_test.vcxproj", "{6F026328-4D10-4EF1-BD6C-8FD3CBE0F530}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -152,6 +154,18 @@ Global
 		{F03BEE03-BEFB-4B17-A774-D9C8246530D4}.Release|Win32.Build.0 = Release|Win32
 		{F03BEE03-BEFB-4B17-A774-D9C8246530D4}.Release|x64.ActiveCfg = Release|x64
 		{F03BEE03-BEFB-4B17-A774-D9C8246530D4}.Release|x64.Build.0 = Release|x64
+		{6F026328-4D10-4EF1-BD6C-8FD3CBE0F530}.Debug|ARM.ActiveCfg = Debug|ARM
+		{6F026328-4D10-4EF1-BD6C-8FD3CBE0F530}.Debug|ARM.Build.0 = Debug|ARM
+		{6F026328-4D10-4EF1-BD6C-8FD3CBE0F530}.Debug|Win32.ActiveCfg = Debug|Win32
+		{6F026328-4D10-4EF1-BD6C-8FD3CBE0F530}.Debug|Win32.Build.0 = Debug|Win32
+		{6F026328-4D10-4EF1-BD6C-8FD3CBE0F530}.Debug|x64.ActiveCfg = Debug|x64
+		{6F026328-4D10-4EF1-BD6C-8FD3CBE0F530}.Debug|x64.Build.0 = Debug|x64
+		{6F026328-4D10-4EF1-BD6C-8FD3CBE0F530}.Release|ARM.ActiveCfg = Release|ARM
+		{6F026328-4D10-4EF1-BD6C-8FD3CBE0F530}.Release|ARM.Build.0 = Release|ARM
+		{6F026328-4D10-4EF1-BD6C-8FD3CBE0F530}.Release|Win32.ActiveCfg = Release|Win32
+		{6F026328-4D10-4EF1-BD6C-8FD3CBE0F530}.Release|Win32.Build.0 = Release|Win32
+		{6F026328-4D10-4EF1-BD6C-8FD3CBE0F530}.Release|x64.ActiveCfg = Release|x64
+		{6F026328-4D10-4EF1-BD6C-8FD3CBE0F530}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
