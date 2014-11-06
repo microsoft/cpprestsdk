@@ -1092,6 +1092,7 @@ done:
     return obj;
 
 error:
+    parseStatus.didSucceed = false;
     parseStatus.errorMsg = _XPLATSTR("Malformed object literal");
     return nullptr;
 
@@ -1102,10 +1103,10 @@ getNextTokenError:
 template <typename CharType>
 std::unique_ptr<web::json::details::_Array> JSON_Parser<CharType>::_ParseArray(typename JSON_Parser<CharType>::Token &tkn, JsonParseStatus& parseStatus)
 {
-    JsonParseStatus parseAttempt = GetNextToken(tkn);
-    if (!parseAttempt.didSucceed)
+    parseStatus = GetNextToken(tkn);
+    if (!parseStatus.didSucceed)
     {
-        CreateError(tkn, parseAttempt.errorMsg);
+        return nullptr;
     }
 
     auto result = utility::details::make_unique<web::json::details::_Array>();
@@ -1116,7 +1117,7 @@ std::unique_ptr<web::json::details::_Array> JSON_Parser<CharType>::_ParseArray(t
         {
             // State 1: Looking for an expression.
             auto value = ParseValue(tkn, parseStatus);
-            if (!parseAttempt.didSucceed) goto getNextTokenError;
+            if (!parseStatus.didSucceed) goto getNextTokenError;
 
             result->m_array.m_elements.emplace_back(value);
 
@@ -1124,27 +1125,30 @@ std::unique_ptr<web::json::details::_Array> JSON_Parser<CharType>::_ParseArray(t
             switch (tkn.kind)
             {
             case JSON_Parser<CharType>::Token::TKN_Comma:
-                parseAttempt = GetNextToken(tkn);
-                if (!parseAttempt.didSucceed) goto getNextTokenError;
+                parseStatus = GetNextToken(tkn);
+                if (!parseStatus.didSucceed) goto getNextTokenError;
                 break;
             case JSON_Parser<CharType>::Token::TKN_CloseBracket:
-                parseAttempt = GetNextToken(tkn);
-                if (!parseAttempt.didSucceed) goto getNextTokenError;
+                parseStatus = GetNextToken(tkn);
+                if (!parseStatus.didSucceed) goto getNextTokenError;
 
                 return result;
             default:
-                CreateError(tkn, _XPLATSTR("Malformed array literal"));
+                parseStatus.didSucceed = false;
+                parseStatus.errorMsg = _XPLATSTR("Malformed array literal");
+
+                return nullptr;
             }
         }
     }
 
-    parseAttempt = GetNextToken(tkn);
-    if (!parseAttempt.didSucceed) goto getNextTokenError;
+    parseStatus = GetNextToken(tkn);
+    if (!parseStatus.didSucceed) goto getNextTokenError;
 
     return result;
 
 getNextTokenError:
-    CreateError(tkn, parseAttempt.errorMsg);
+    return nullptr;
 }
 
 template <typename CharType>
@@ -1298,18 +1302,25 @@ web::json::value web::json::value::parse(const utility::string_t& str, std::erro
     web::json::details::JSON_StringParser<utility::char_t> parser(str);
 
     web::json::details::JSON_Parser<utility::char_t>::Token tkn;
-    auto parseAttempt = parser.GetNextToken(tkn);
+    auto parseStatus = parser.GetNextToken(tkn);
     web::json::value returnObject;
     
-    if (parseAttempt.didSucceed)
+    if (parseStatus.didSucceed)
     {
-        returnObject = parser.ParseValue(tkn, parseAttempt);
+        returnObject = parser.ParseValue(tkn, parseStatus);
+
+        if (!parseStatus.didSucceed || tkn.kind != web::json::details::JSON_Parser<utility::char_t>::Token::TKN_EOF)
+        {
+            returnObject = web::json::value::null();
+            error = std::make_error_code(std::errc::protocol_error);
+        }
     }
     else
     {
         returnObject = web::json::value::null();
         error = std::make_error_code(std::errc::protocol_error);
     }
+
     return returnObject;
 }
 
