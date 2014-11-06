@@ -1199,7 +1199,9 @@ std::unique_ptr<web::json::details::_Value> JSON_Parser<CharType>::_ParseValue(t
 
         default:
             {
-                return utility::details::make_unique<web::json::details::_Null>();
+                parseAttempt.didSucceed = false;
+                parseAttempt.errorMsg = _XPLATSTR("Unexpected token");
+                goto getNextTokenError;
             }
     }
 
