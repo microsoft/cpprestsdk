@@ -27,8 +27,6 @@ if(IOS)
   set(BUILD_SAMPLES OFF)
   option(BUILD_TESTS "Build tests." ON)
 elseif(ANDROID)
-  set(ANDROID_SOURCE_DIR "${CMAKE_SOURCE_DIR}/../Build_android")
-
   set(Boost_COMPILER "-clang")
   set(Boost_USE_STATIC_LIBS ON)
   set(BOOST_ROOT "${CMAKE_BINARY_DIR}/../Boost-for-Android/build")
@@ -37,10 +35,10 @@ elseif(ANDROID)
 
   # find_package(Threads REQUIRED)
   set(OPENSSL_FOUND 1)
-  set(OPENSSL_INCLUDE_DIR "${CMAKE_BINARY_DIR}/../openssl/r9d-9-armeabiv7/include")
+  set(OPENSSL_INCLUDE_DIR "${CMAKE_BINARY_DIR}/../openssl/armeabi-v7a/include")
   set(OPENSSL_LIBRARIES
-    "${CMAKE_BINARY_DIR}/../openssl/r9d-9-armeabiv7/lib/libssl.a"
-    "${CMAKE_BINARY_DIR}/../openssl/r9d-9-armeabiv7/lib/libcrypto.a"
+    "${CMAKE_BINARY_DIR}/../openssl/armeabi-v7a/lib/libssl.a"
+    "${CMAKE_BINARY_DIR}/../openssl/armeabi-v7a/lib/libcrypto.a"
     )
   set(LIBCXX_STL "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.8/libs/armeabi-v7a/thumb/libgnustl_static.a")
   set(ANDROID_STL_FLAGS
