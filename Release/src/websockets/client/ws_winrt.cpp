@@ -345,6 +345,16 @@ public:
                     eptr = std::make_exception_ptr(websocket_exception("Failed to send all the bytes."));
                 }
             }
+            catch (Platform::Exception^ e)
+            {
+                // Convert to websocket_exception.
+                eptr = std::make_exception_ptr(websocket_exception(e->HResult));
+            }
+            catch (const websocket_exception &e)
+            {
+                // Catch to avoid slicing and losing the type if falling through to catch (...).
+                eptr = std::make_exception_ptr(e);
+            }
             catch (...)
             {
                 eptr = std::make_exception_ptr(std::current_exception());
