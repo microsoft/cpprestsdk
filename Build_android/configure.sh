@@ -37,13 +37,15 @@ set -e
 DO_LIBICONV=1
 DO_BOOST=1
 DO_OPENSSL=1
+DO_CPPRESTSDK=1
 
 function usage {
-    echo "Usage: $0 [--skip-boost] [--skip-openssl] [--skip-libiconv] [-h] [--ndk <android-ndk>]"
+    echo "Usage: $0 [--skip-boost] [--skip-openssl] [--skip-libiconv] [--skip-cpprestsdk] [-h] [--ndk <android-ndk>]"
     echo ""
     echo "    --skip-boost          Skip fetching and compiling boost"
     echo "    --skip-openssl        Skip fetching and compiling openssl"
     echo "    --skip-libiconv       Skip fetching and compiling libiconv"
+    echo "    --skip-cpprestsdk     Skip compiling cpprestsdk"
     echo "    -h,--help,-?          Display this information"
     echo "    --ndk <android-ndk>   If specified, overrides the ANDROID_NDK environment variable"
 }
@@ -59,6 +61,9 @@ do
 	    ;;
 	"--skip-libiconv")
 	    DO_LIBICONV=0
+	    ;;
+	"--skip-cpprestsdk")
+	    DO_CPPRESTSDK=0
 	    ;;
 	"-?"|"-h"|"--help")
 	    usage
@@ -113,25 +118,14 @@ fi
 # Openssl
 # -------
 
-# This steps are based on the github project openssl1.0.1g-android
-# https://github.com/aluvalasuman/openssl1.0.1g-android
+# This steps are based on the official openssl build instructions
+# http://wiki.openssl.org/index.php/Android
 if [ "${DO_OPENSSL}" == "1" ]
 then
 (
-    rm -rf openssl
-    mkdir openssl
-    cd openssl
-    if [ ! -e "openssl-1.0.1h.tar.gz" ]
-    then
-	wget http://www.openssl.org/source/openssl-1.0.1h.tar.gz
-    fi
-    rm -rf openssl-1.0.1h
-    tar xzf openssl-1.0.1h.tar.gz
-    cd openssl-1.0.1h
-    export ANDROID_NDK="$NDK_DIR"
-    . "${DIR}/android_configure_armeabiv7.sh"
-    ./Configure android no-shared --openssldir="${SRC_DIR}/openssl/r9d-9-armeabiv7"
-    make all install_sw || exit 1
+    cp "${DIR}/openssl/Makefile" .
+    export ANDROID_NDK_ROOT="${NDK_DIR}"
+    make all
 )
 fi
 
@@ -184,46 +178,51 @@ then
 )
 fi
 
+if [ "${DO_CPPRESTSDK}" == "1" ]
+then
+(
 # -------------
 # android-cmake
 # -------------
-if [ ! -e android-cmake ]
-then
-    git clone https://github.com/taka-no-me/android-cmake.git
-fi
+    if [ ! -e android-cmake ]
+    then
+	git clone https://github.com/taka-no-me/android-cmake.git
+    fi
 
 # ----------
 # casablanca
 # ----------
 
-(
-    mkdir -p build.armv7.debug
-    cd build.armv7.debug
-    cmake "$DIR/../Release/" \
-	-DCMAKE_TOOLCHAIN_FILE=../android-cmake/android.toolchain.cmake \
-	-DANDROID_ABI=armeabi-v7a \
-	-DANDROID_TOOLCHAIN_NAME=arm-linux-androideabi-clang3.4 \
-	-DANDROID_STL=none \
-	-DANDROID_STL_FORCE_FEATURES=ON \
-        -DANDROID_NATIVE_API_LEVEL=android-9 \
-	-DANDROID_GOLD_LINKER=OFF \
-	-DCMAKE_BUILD_TYPE=Debug \
-	-DANDROID_NDK="${ANDROID_NDK}"
-    make -j 3
-)
+    (
+	mkdir -p build.armv7.debug
+	cd build.armv7.debug
+	cmake "$DIR/../Release/" \
+	    -DCMAKE_TOOLCHAIN_FILE=../android-cmake/android.toolchain.cmake \
+	    -DANDROID_ABI=armeabi-v7a \
+	    -DANDROID_TOOLCHAIN_NAME=arm-linux-androideabi-clang3.4 \
+	    -DANDROID_STL=none \
+	    -DANDROID_STL_FORCE_FEATURES=ON \
+            -DANDROID_NATIVE_API_LEVEL=android-9 \
+	    -DANDROID_GOLD_LINKER=OFF \
+	    -DCMAKE_BUILD_TYPE=Debug \
+	    -DANDROID_NDK="${ANDROID_NDK}"
+	make -j 3
+    )
 
-(
-    mkdir -p build.armv7.release
-    cd build.armv7.release
-    cmake "$DIR/../Release/" \
-	-DCMAKE_TOOLCHAIN_FILE=../android-cmake/android.toolchain.cmake \
-	-DANDROID_ABI=armeabi-v7a \
-	-DANDROID_TOOLCHAIN_NAME=arm-linux-androideabi-clang3.4 \
-	-DANDROID_STL=none \
-	-DANDROID_STL_FORCE_FEATURES=ON \
-	-DANDROID_NDK="${ANDROID_NDK}" \
-	-DANDROID_NATIVE_API_LEVEL=android-9 \
-	-DANDROID_GOLD_LINKER=OFF \
-	-DCMAKE_BUILD_TYPE=Release
-    make -j 3
+    (
+	mkdir -p build.armv7.release
+	cd build.armv7.release
+	cmake "$DIR/../Release/" \
+	    -DCMAKE_TOOLCHAIN_FILE=../android-cmake/android.toolchain.cmake \
+	    -DANDROID_ABI=armeabi-v7a \
+	    -DANDROID_TOOLCHAIN_NAME=arm-linux-androideabi-clang3.4 \
+	    -DANDROID_STL=none \
+	    -DANDROID_STL_FORCE_FEATURES=ON \
+	    -DANDROID_NDK="${ANDROID_NDK}" \
+	    -DANDROID_NATIVE_API_LEVEL=android-9 \
+	    -DANDROID_GOLD_LINKER=OFF \
+	    -DCMAKE_BUILD_TYPE=Release
+	make -j 3
+    )
 )
+fi
