@@ -1,6 +1,5 @@
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
-TARGET_ARCH_ABI := armeabi-v7a
 LOCAL_MODULE    := iconv
 LOCAL_CFLAGS    := \
     -Wno-multichar \
