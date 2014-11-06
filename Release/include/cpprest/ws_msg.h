@@ -148,7 +148,7 @@ private:
 
     pplx::task_completion_event<void> m_body_sent;
     concurrency::streams::streambuf<uint8_t> m_body;
-	websocket_message_type m_msg_type;
+    websocket_message_type m_msg_type;
     size_t m_length;
 
     void signal_body_sent() const
@@ -163,12 +163,12 @@ private:
 
     const pplx::task_completion_event<void> & body_sent() const { return m_body_sent; }
 
-	void set_message(const concurrency::streams::container_buffer<std::string> &buffer)
-	{
+    void set_message(const concurrency::streams::container_buffer<std::string> &buffer)
+    {
         m_msg_type = websocket_message_type::text_message;
         m_length = static_cast<size_t>(buffer.size());
         m_body = buffer;
-	}
+    }
 
     void set_message(const concurrency::streams::istream &istream, size_t len, websocket_message_type msg_type)
     {
@@ -235,7 +235,7 @@ private:
     // Store message body in a container buffer backed by a string.
     // Allows for optimization in the string message cases.
     concurrency::streams::container_buffer<std::string> m_body;
-	websocket_message_type m_msg_type;
+    websocket_message_type m_msg_type;
 };
 
 }}}
