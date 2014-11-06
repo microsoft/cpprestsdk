@@ -776,60 +776,52 @@ namespace Concurrency { namespace streams
 
             std::shared_ptr<_read_helper> _locals = std::make_shared<_read_helper>();
 
-            // We're having to create all these lambdas because VS 2010 has trouble compiling
-            // nested lambdas.
-            auto after_putn = 
-                [=](pplx::task<size_t> wrote) mutable -> bool
+            auto flush = [=]() mutable
+            {
+                return target.putn(_locals->outbuf, _locals->write_pos).then([=](size_t wrote) mutable
                 {
-                    _locals->total += wrote.get();
+                    _locals->total += wrote;
                     _locals->write_pos = 0;
-                    target.sync().wait();
-                    return true;
-                };
+                    return target.sync();
+                });
+            };
 
-            auto flush = 
-                [=] () mutable -> pplx::task<bool>
+            auto update = [=](int_type ch) mutable -> pplx::task<bool>
                 {
-                    return target.putn(_locals->outbuf, _locals->write_pos).then(after_putn);
-                };
-
-            auto update = [=] (int_type ch) mutable -> bool 
-                { 
-                    if ( ch == ::concurrency::streams::char_traits<CharType>::eof() ) return false;
-                    if ( ch == delim ) return false;
+                    if (ch == ::concurrency::streams::char_traits<CharType>::eof()) return pplx::task_from_result(false);
+                    if (ch == delim) return pplx::task_from_result(false);
 
                     _locals->outbuf[_locals->write_pos] = static_cast<CharType>(ch);
                     _locals->write_pos += 1;
 
-                    if ( _locals->is_full() )
+                    if (_locals->is_full())
                     {
-                        return flush().get();
+                        return flush().then([] { return true; });
                     }
 
-                    return true;
+                    return pplx::task_from_result(true);
                 };
 
             auto loop = pplx::details::do_while([=]() mutable -> pplx::task<bool>
                 {
-                    while ( buffer.in_avail() > 0 )
+                    while (buffer.in_avail() > 0)
                     {
                         int_type ch = buffer.sbumpc();
 
-                        if (  ch == req_async )
+                        if (ch == req_async)
+                        {
                             break;
-                        
-                        if ( !update(ch) )
-                            return pplx::task_from_result(false);
-                    }
+                        }
 
+                        return update(ch);
+                    }
                     return buffer.bumpc().then(update);
                 });
 
-            return loop.then([=](bool) mutable -> size_t
-                { 
-                    flush().wait();
-                    return _locals->total; 
-                });
+            return loop.then([=](bool) mutable
+            {
+                return flush().then([=] { return _locals->total; });
+            });
         }
 
         /// <summary>
@@ -851,52 +843,48 @@ namespace Concurrency { namespace streams
 
             std::shared_ptr<_read_helper> _locals = std::make_shared<_read_helper>();
 
-            // We're having to create all these lambdas because VS 2010 has trouble compiling
-            // nested lambdas.
-            auto after_putn = 
-                [=](pplx::task<size_t> wrote) mutable -> bool
+            auto flush = [=]() mutable
+            {
+                return target.putn(_locals->outbuf, _locals->write_pos).then([=](size_t wrote) mutable
                 {
-                    _locals->total += wrote.get();
+                    _locals->total += wrote;
                     _locals->write_pos = 0;
-                    target.sync().wait();
-                    return true;
-                };
+                    return target.sync();
+                });
+            };
 
-            auto flush = 
-                [=] () mutable -> pplx::task<bool>
+            auto update = [=](typename concurrency::streams::char_traits<CharType>::int_type ch) mutable
                 {
-                    return target.putn(_locals->outbuf, _locals->write_pos).then(after_putn);
-                };
-
-            auto update = [=] (typename concurrency::streams::char_traits<CharType>::int_type ch) mutable -> bool 
-                { 
-                    if ( ch == concurrency::streams::char_traits<CharType>::eof() ) return false;
-                    if ( ch == '\n' ) return false;
-                    if ( ch == '\r' ) { _locals->saw_CR = true; return true; }
+                    if (ch == concurrency::streams::char_traits<CharType>::eof()) return pplx::task_from_result(false);
+                    if (ch == '\n') return pplx::task_from_result(false);
+                    if (ch == '\r')
+                    {
+                        _locals->saw_CR = true;
+                        return pplx::task_from_result(true);
+                    }
 
                     _locals->outbuf[_locals->write_pos] = static_cast<CharType>(ch);
                     _locals->write_pos += 1;
 
-                    if ( _locals->is_full() )
+                    if (_locals->is_full())
                     {
-                        return flush().get();
+                        return flush().then([] { return true; });
                     }
 
-                    return true;
+                    return pplx::task_from_result(true);
                 };
 
-            auto return_false = 
-                [](pplx::task<typename concurrency::streams::char_traits<CharType>::int_type>) -> pplx::task<bool> 
-                {
-                    return pplx::task_from_result(false);
-                };
-
-            auto update_after_cr = 
-                [=] (typename concurrency::streams::char_traits<CharType>::int_type ch) mutable -> pplx::task<bool> 
+            auto update_after_cr = [=] (typename concurrency::streams::char_traits<CharType>::int_type ch) mutable -> pplx::task<bool> 
                 { 
-                    if ( ch == concurrency::streams::char_traits<CharType>::eof() ) return pplx::task_from_result(false);
-                    if ( ch == '\n' )
-                        return buffer.bumpc().then(return_false);
+                    if (ch == concurrency::streams::char_traits<CharType>::eof()) return pplx::task_from_result(false);
+                    if (ch == '\n')
+                    {
+						return buffer.bumpc().then([](
+#ifndef _MS_WINDOWS // Required by GCC
+							typename
+#endif
+							concurrency::streams::char_traits<CharType>::int_type) { return false; });
+                    }
 
                     return pplx::task_from_result(false);
                 };
@@ -910,35 +898,33 @@ namespace Concurrency { namespace streams
 #endif
                         concurrency::streams::char_traits<CharType>::int_type ch;
 
-                        if ( _locals->saw_CR )
+                        if (_locals->saw_CR)
                         {
                             ch = buffer.sgetc();
-                            if ( ch == '\n' )
+                            if (ch == '\n')
                                 buffer.sbumpc();
                             return pplx::task_from_result(false);
                         }
                         
                         ch = buffer.sbumpc();
 
-                        if (  ch == req_async )
+                        if (ch == req_async)
                             break;
                         
-                        if ( !update(ch) )
-                            return pplx::task_from_result(false);
+                        return update(ch);
                     }
 
-                    if ( _locals->saw_CR )
+                    if (_locals->saw_CR)
                     {
                         return buffer.getc().then(update_after_cr);
                     }
                     return buffer.bumpc().then(update);
                 });
 
-            return loop.then([=](bool) mutable -> size_t
-                { 
-                    flush().wait();
-                    return _locals->total; 
-                });
+            return loop.then([=](bool) mutable
+            {
+                return flush().then([=] { return _locals->total; });
+            });
         }
 
         /// <summary>
@@ -1141,30 +1127,30 @@ pplx::task<void> concurrency::streams::_type_parser_base<CharType>::_skip_whites
 {
     int_type req_async = concurrency::streams::char_traits<CharType>::requires_async();
 
-    auto update = [=] (int_type ch) mutable -> bool
+    auto update = [=] (int_type ch) mutable
         {
             if (isspace(ch))
             {
                 if (buffer.sbumpc() == req_async)
-                    buffer.nextc().wait();
-                return true;
+                {
+                    return buffer.nextc().then([](int_type) { return true; });
+                }
+                return pplx::task_from_result(true);
             }
 
-            return false;
+            return pplx::task_from_result(false);
         };
 
     auto loop = pplx::details::do_while([=]() mutable -> pplx::task<bool>
         {
-            while ( buffer.in_avail() > 0 )
+            while (buffer.in_avail() > 0)
             {
                 int_type ch = buffer.sgetc();
 
-                if (  ch == req_async )
+                if (ch == req_async)
                     break;
                         
-                if ( !update(ch) ) {
-                    return pplx::task_from_result(false);
-                }
+                return update(ch);
             }
             return buffer.getc().then(update);
         });
@@ -1184,8 +1170,6 @@ pplx::task<ReturnType> concurrency::streams::_type_parser_base<CharType>::_parse
 {
     std::shared_ptr<StateType> state = std::make_shared<StateType>();
 
-    auto update_end = [=] (pplx::task<int_type> op) -> bool { op.wait(); return true; };
-
     auto update = [=] (pplx::task<int_type> op) -> pplx::task<bool> 
             { 
                 int_type ch = op.get();
@@ -1195,7 +1179,7 @@ pplx::task<ReturnType> concurrency::streams::_type_parser_base<CharType>::_parse
                     return pplx::task_from_result(false);
                 // We peeked earlier, so now we must advance the position.
                 concurrency::streams::streambuf<CharType> buf = buffer;
-                return buf.bumpc().then(update_end);
+                return buf.bumpc().then([](int_type) { return true; });
             };
 
     auto peek_char = [=]() -> pplx::task<bool>
@@ -1209,7 +1193,7 @@ pplx::task<ReturnType> concurrency::streams::_type_parser_base<CharType>::_parse
         while (get_op.is_done())
         {
             auto condition = update(get_op);
-            if ( !condition.is_done() || !condition.get())
+            if (!condition.is_done() || !condition.get())
                 return condition;
 
             get_op = buf.getc();
@@ -1229,7 +1213,6 @@ pplx::task<ReturnType> concurrency::streams::_type_parser_base<CharType>::_parse
     return _skip_whitespace(buffer).then([=](pplx::task<void> op) -> pplx::task<ReturnType>
         {
             op.wait();
-
             return pplx::details::do_while(peek_char).then(finish);
         });
 }
