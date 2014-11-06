@@ -393,8 +393,15 @@ namespace
     {
         return _snwprintf_s_l(ptr, n, _TRUNCATE, L"%I64u", utility::details::scoped_c_thread_locale::c_locale(), val64);
     }
+    static double anystod(const char* str)
+    {
+        return _strtod_l(str, nullptr, utility::details::scoped_c_thread_locale::c_locale());
+    }
+    static double anystod(const wchar_t* str)
+    {
+        return _wcstod_l(str, nullptr, utility::details::scoped_c_thread_locale::c_locale());
+    }
 #else
-
     static int __attribute__((__unused__)) print_llu(char* ptr, size_t n, unsigned long long val64)
     {
         return snprintf(ptr, n, "%llu", val64);
@@ -403,24 +410,15 @@ namespace
     {
         return snprintf(ptr, n, "%lu", val64);
     }
-#endif
-
-    static double anystod(const char* str)
+    static double __attribute__((__unused__)) anystod(const char* str)
     {
-#ifdef _MS_WINDOWS
-        return _strtod_l(str, nullptr, utility::details::scoped_c_thread_locale::c_locale());
-#else
         return strtod(str, nullptr);
-#endif
     }
-    static double anystod(const wchar_t* str)
+    static double __attribute__((__unused__)) anystod(const wchar_t* str)
     {
-#ifdef _MS_WINDOWS
-        return _wcstod_l(str, nullptr, utility::details::scoped_c_thread_locale::c_locale());
-#else
         return wcstod(str, nullptr);
-#endif
     }
+#endif
 }
 
 template <typename CharType>
