@@ -269,34 +269,31 @@ public:
         client.set_message_handler([this](websocketpp::connection_hdl, const websocketpp::config::asio_client::message_type::ptr &msg)
         {
             _ASSERTE(m_state >= CONNECTED && m_state < CLOSED);
-            websocket_incoming_message ws_incoming_message;
-            auto& incmsg = ws_incoming_message._m_impl;
+            websocket_incoming_message incoming_msg;
 
             switch (msg->get_opcode())
             {
             case websocketpp::frame::opcode::binary:
-                incmsg->set_msg_type(websocket_message_type::binary_message);
+                incoming_msg.m_msg_type = websocket_message_type::binary_message;
                 break;
             case websocketpp::frame::opcode::text:
-                incmsg->set_msg_type(websocket_message_type::text_message);
+                incoming_msg.m_msg_type = websocket_message_type::text_message;
                 break;
             default:
                 // Unknown message type. Since both websocketpp and our code use the RFC codes, we'll just pass it on to the user.
-                incmsg->set_msg_type(static_cast<websocket_message_type>(msg->get_opcode()));
+                incoming_msg.m_msg_type = static_cast<websocket_message_type>(msg->get_opcode());
                 break;
             }
 
             // 'move' the payload into a container buffer to avoid any copies.
             auto &payload = msg->get_raw_payload();
-            const auto len = payload.size();
-            ws_incoming_message.m_body = concurrency::streams::container_buffer<std::string>(std::move(payload));
-            incmsg->set_length(len);
+            incoming_msg.m_body = concurrency::streams::container_buffer<std::string>(std::move(payload));
 
             std::unique_lock<std::mutex> lock(m_receive_queue_lock);
             if (m_receive_task_queue.empty())
             {
                 // Push message to the queue as no one is waiting to receive
-                m_receive_msg_queue.push(ws_incoming_message);
+                m_receive_msg_queue.push(incoming_msg);
                 return;
             }
             else
@@ -306,7 +303,7 @@ public:
                 m_receive_task_queue.pop();
                 // Unlock the lock before setting the completion event to avoid contention
                 lock.unlock();
-                tce.set(ws_incoming_message);
+                tce.set(incoming_msg);
             }
         });
 
@@ -370,7 +367,7 @@ public:
             return pplx::task_from_exception<void>(websocket_exception("Client not connected."));
         }
 
-        switch (msg._m_impl->message_type())
+        switch (msg.m_msg_type)
         {
         case websocket_message_type::text_message:
         case websocket_message_type::binary_message:
@@ -379,7 +376,7 @@ public:
             return pplx::task_from_exception<void>(websocket_exception("Invalid message type"));
         }
 
-        const auto length = msg._m_impl->length();
+        const auto length = msg.m_length;
         if (length == 0)
         {
             return pplx::task_from_exception<void>(websocket_exception("Cannot send empty message."));
@@ -449,7 +446,7 @@ public:
     {
         auto this_client = this->shared_from_this();
         auto& is_buf = msg.m_body;
-        auto length = msg._m_impl->length();
+        auto length = msg.m_length;
 
         if (length == SIZE_MAX)
         {
@@ -475,7 +472,7 @@ public:
                 {
                     try
                     {
-                        msg._m_impl->set_length(t.get());
+                        msg.m_length = t.get();
                         this_client->send_msg(msg);
                     }
                     catch (...)
@@ -528,7 +525,7 @@ public:
         {
         	auto &client = this_client->m_client->client<WebsocketClientType>();
             websocketpp::lib::error_code ec;
-            switch (msg._m_impl->message_type())
+            switch (msg.m_msg_type)
             {
             case websocket_message_type::text_message:
                 client.send(

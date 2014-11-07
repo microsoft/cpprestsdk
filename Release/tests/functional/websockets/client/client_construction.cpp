@@ -124,9 +124,9 @@ TEST_FIXTURE(uri_address, move_operations)
 
     auto t = client2.receive().then([&](websocket_incoming_message ret_msg)
     {
+        VERIFY_ARE_EQUAL(ret_msg.length(), body.length());
         auto ret_str = ret_msg.extract_string().get();
 
-        VERIFY_ARE_EQUAL(ret_msg.length(), body.length());
         VERIFY_ARE_EQUAL(body.compare(ret_str), 0);
         VERIFY_ARE_EQUAL(ret_msg.message_type(), websocket_message_type::text_message);
     });
@@ -154,9 +154,9 @@ TEST_FIXTURE(uri_address, move_operations)
     server.send_msg(rmsg1);
     auto t1 = client.receive().then([&](websocket_incoming_message ret_msg)
     {
+        VERIFY_ARE_EQUAL(ret_msg.length(), body.length());
         auto ret_str = ret_msg.extract_string().get();
 
-        VERIFY_ARE_EQUAL(ret_msg.length(), body.length());
         VERIFY_ARE_EQUAL(body.compare(ret_str), 0);
         VERIFY_ARE_EQUAL(ret_msg.message_type(), websocket_message_type::text_message);
     });
