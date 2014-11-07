@@ -114,28 +114,6 @@ namespace streams
         {
             return reinterpret_cast<unsigned char*>(std::char_traits<char>::move(reinterpret_cast<char*>(left), reinterpret_cast<const char*>(right), n));
         }
-
-namespace Concurrency
-{
-/// Library for asynchronous streams.
-namespace streams
-{
-    /// <summary>
-    /// Extending the standard char_traits type with one that adds values and types
-    /// that are unique to "C++ REST SDK" streams.
-    /// </summary>
-    /// <typeparam name="_CharType">
-    /// The data type of the basic element of the stream.
-    /// </typeparam>
-    template<typename _CharType>
-    struct char_traits : std::char_traits<_CharType>
-    {
-        /// <summary>
-        /// Some synchronous functions will return this value if the operation
-        /// requires an asynchronous call in a given situation.
-        /// </summary>
-        /// <returns>An <c>int_type</c> value which implies that an asynchronous call is required.</returns>
-        static typename std::char_traits<_CharType>::int_type requires_async() { return std::char_traits<_CharType>::eof()-1; }
     };
 #endif
 
