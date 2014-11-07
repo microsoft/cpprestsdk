@@ -697,11 +697,11 @@ bool JSON_StringParser<CharType>::CompleteComment(typename JSON_Parser<CharType>
     return true;
 }
 
-void convert_append_unicode_code_unit(JSON_Parser<wchar_t>::Token &token, char16_t value)
+void convert_append_unicode_code_unit(JSON_Parser<wchar_t>::Token &token, utf16char value)
 {
     token.string_val.push_back(value);
 }
-void convert_append_unicode_code_unit(JSON_Parser<char>::Token &token, char16_t value)
+void convert_append_unicode_code_unit(JSON_Parser<char>::Token &token, utf16char value)
 {
     utf16string utf16(reinterpret_cast<utf16char *>(&value), 1);
     token.string_val.append(::utility::conversions::utf16_to_utf8(utf16));
@@ -766,7 +766,7 @@ inline bool JSON_Parser<CharType>::handle_unescape_char(Token &token)
             }
 
             // Construct the character based on the decoded number
-            convert_append_unicode_code_unit(token, static_cast<char16_t>(decoded));
+			convert_append_unicode_code_unit(token, static_cast<utf16char>(decoded));
 
             return true;
         }

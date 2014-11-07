@@ -1,4 +1,6 @@
 HEAD
+
+0.3.0 - 2014-08-10
 - Feature: Adds `start_perpetual` and `stop_perpetual` methods to asio transport
   These may be used to replace manually managed `asio::io_service::work` objects
 - Feature: Allow setting pong and handshake timeouts at runtime.
@@ -17,6 +19,9 @@ HEAD
 - Feature: Adds the ability to specify a maximum message size.
 - Feature: Adds `close::status::get_string(...)` method to look up a human
   readable string given a close code value.
+- Feature: Adds `connection::read_all(...)` method to iostream transport as a
+  convenience method for reading all data into the connection buffer without the
+  end user needing to manually loop on `read_some`.
 - Improvement: Open, close, and pong timeouts can be disabled entirely by
   setting their duration to 0.
 - Improvement: Numerous performance improvements. Including: tuned default

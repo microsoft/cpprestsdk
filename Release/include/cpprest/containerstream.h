@@ -120,7 +120,7 @@ namespace Concurrency { namespace streams {
         /// </summary>
         virtual utility::size64_t size() const
         {
-            return utility::size64_t(m_size);
+            return utility::size64_t(m_data.size());
         }
 
         /// <summary>
@@ -153,10 +153,10 @@ namespace Concurrency { namespace streams {
         {
             // See the comment in seek around the restriction that we do not allow read head to
             // seek beyond the current write_end.
-            _ASSERTE(m_current_position <= m_size);
+            _ASSERTE(m_current_position <= m_data.size());
 
             SafeSize readhead(m_current_position);
-            SafeSize writeend(m_size);
+            SafeSize writeend(m_data.size());
             return (size_t)(writeend - readhead);
         }
 
@@ -325,12 +325,12 @@ namespace Concurrency { namespace streams {
         {
             pos_type beg(0);
 
-            // Inorder to support relative seeking from the end postion we need to fix an end position.
+            // In order to support relative seeking from the end position we need to fix an end position.
             // Technically, there is no end for the stream buffer as new writes would just expand the buffer.
-            // For now, we assume that the current write_end is the end of the buffer. We use this aritifical
+            // For now, we assume that the current write_end is the end of the buffer. We use this artificial
             // end to restrict the read head from seeking beyond what is available.
 
-            pos_type end(m_size);
+            pos_type end(m_data.size());
 
             if (position >= beg)
             {
@@ -378,7 +378,7 @@ namespace Concurrency { namespace streams {
         {
             pos_type beg = 0;
             pos_type cur = static_cast<pos_type>(m_current_position);
-            pos_type end = static_cast<pos_type>(m_size);
+            pos_type end = static_cast<pos_type>(m_data.size());
 
             switch ( way )
             {
@@ -404,8 +404,7 @@ namespace Concurrency { namespace streams {
         /// </summary>
         basic_container_buffer(std::ios_base::openmode mode)
             : streambuf_state_manager<typename _CollectionType::value_type>(mode),
-              m_current_position(0),
-              m_size(0)
+              m_current_position(0)
         {
             validate_mode(mode);
         }
@@ -416,8 +415,7 @@ namespace Concurrency { namespace streams {
         basic_container_buffer(_CollectionType data, std::ios_base::openmode mode)
             : streambuf_state_manager<typename _CollectionType::value_type>(mode),
               m_data(std::move(data)),
-              m_current_position((mode & std::ios_base::in) ? 0 : m_data.size()),
-              m_size(m_data.size())
+              m_current_position((mode & std::ios_base::in) ? 0 : m_data.size())
         {
             validate_mode(mode);
         }
@@ -509,10 +507,8 @@ namespace Concurrency { namespace streams {
         /// </summary>
         void resize_for_write(size_t newPos)
         {
-            _ASSERTE(m_size <= m_data.size());
-
             // Resize the container if required
-            if (newPos > m_size)
+            if (newPos > m_data.size())
             {
                 m_data.resize(newPos);
             }
@@ -525,15 +521,7 @@ namespace Concurrency { namespace streams {
         {
             // The new write head
             m_current_position = newPos;
-
-            if ( this->can_write() && m_size < m_current_position)
-            {
-                // Update the size of the buffer with valid data if required
-                m_size = m_current_position;
-            }
-
-            _ASSERTE(m_current_position <= m_size);
-            _ASSERTE(m_size <= m_data.size());
+            _ASSERTE(m_current_position <= m_data.size());
         }
 
         // The actual data store
@@ -541,7 +529,6 @@ namespace Concurrency { namespace streams {
 
         // Read/write head
         size_t m_current_position;
-        size_t m_size;
     };
 
     } // namespace details

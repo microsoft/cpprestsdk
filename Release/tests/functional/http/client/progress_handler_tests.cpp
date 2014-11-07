@@ -308,7 +308,13 @@ TEST_FIXTURE(uri_address, set_progress_handler_request_timeout)
     msg.set_body(data);
 
     auto response = client.request(msg);
+    
+#ifdef __APPLE__
+    // CodePlex 295
+    VERIFY_THROWS(response.get(), http_exception);
+#else
     VERIFY_THROWS_HTTP_ERROR_CODE(response.get(), std::errc::timed_out);
+#endif
     VERIFY_ARE_EQUAL(26u*repeats, upsize);
     VERIFY_ARE_EQUAL(4711u, downsize);
     // We don't have very precise control over how much of the message is transferred
@@ -360,7 +366,10 @@ TEST_FIXTURE(uri_address, download_nobody_exception)
     VERIFY_THROWS(client.request(msg).get().content_ready().get(), std::invalid_argument);
 }
 
-TEST_FIXTURE(uri_address, data_upload_exception, "Ignore:Linux", "898953", "Ignore:Apple", "898953")
+TEST_FIXTURE(uri_address, data_upload_exception,
+             "Ignore:Linux", "296",
+             "Ignore:Apple", "296",
+             "Ignore:Android", "296")
 {
     test_http_server::scoped_server scoped(m_uri);
     http_client client(m_uri);

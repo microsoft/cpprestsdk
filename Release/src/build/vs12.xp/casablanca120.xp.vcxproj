@@ -4,7 +4,6 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{15F3B200-1AED-4B57-AF37-B21CD67914B1}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>casablanca</RootNamespace>
     <SccProjectName>SAK</SccProjectName>
     <SccAuxPath>SAK</SccAuxPath>
     <SccLocalPath>SAK</SccLocalPath>
@@ -24,6 +23,11 @@
     <Import Project="$(PackagesRoot)\boost_system-vc120.1.55.0.16\build\native\boost_system-vc120.targets" Condition="Exists('$(PackagesRoot)\boost_system-vc120.1.55.0.16\build\native\boost_system-vc120.targets')" />
     <Import Project="$(PackagesRoot)\boost_date_time-vc120.1.55.0.16\build\native\boost_date_time-vc120.targets" Condition="Exists('$(PackagesRoot)\boost_date_time-vc120.1.55.0.16\build\native\boost_date_time-vc120.targets')" />
     <Import Project="$(PackagesRoot)\boost_regex-vc120.1.55.0.16\build\native\boost_regex-vc120.targets" Condition="Exists('$(PackagesRoot)\boost_regex-vc120.1.55.0.16\build\native\boost_regex-vc120.targets')" />
+    <Import Project="$(PackagesRoot)\openssl.1.0.1.25\build\native\openssl.props" Condition="Exists('$(PackagesRoot)\openssl.1.0.1.25\build\native\openssl.props')" />
+    <Import Project="$(PackagesRoot)\zlib.redist.1.2.8.7\build\native\zlib.redist.targets" Condition="Exists('$(PackagesRoot)\zlib.redist.1.2.8.7\build\native\zlib.redist.targets')" />
+    <Import Project="$(PackagesRoot)\zlib.1.2.8.7\build\native\zlib.targets" Condition="Exists('$(PackagesRoot)\zlib.1.2.8.7\build\native\zlib.targets')" />
+    <Import Project="$(PackagesRoot)\openssl.redist.1.0.1.25\build\native\openssl.redist.targets" Condition="Exists('$(PackagesRoot)\openssl.redist.1.0.1.25\build\native\openssl.redist.targets')" />
+    <Import Project="$(PackagesRoot)\openssl.1.0.1.25\build\native\openssl.targets" Condition="Exists('$(PackagesRoot)\openssl.1.0.1.25\build\native\openssl.targets')" />
   </ImportGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <DebugFileSuffix>d</DebugFileSuffix>
@@ -36,7 +40,7 @@
   </ItemGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <PreprocessorDefinitions>CPPREST_TARGET_XP;_ASYNCRT_EXPORT;AZURESTORAGESERVICES_EXPORTS;_PPLX_EXPORT;WIN32;_MBCS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINSOCK_DEPRECATED_NO_WARNINGS;CPPREST_TARGET_XP;_ASYNCRT_EXPORT;_PPLX_EXPORT;WIN32;_MBCS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CasablancaSrcDir)\pch;$(WebsocketppIncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>

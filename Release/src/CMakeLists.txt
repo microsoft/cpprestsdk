@@ -98,7 +98,7 @@ target_link_libraries(${Casablanca_LIBRARY}
 
 # Portions specific to cpprest binary versioning.
 set (CPPREST_VERSION_MAJOR 2)
-set (CPPREST_VERSION_MINOR 2)
+set (CPPREST_VERSION_MINOR 3)
 set (CPPREST_VERSION_REVISION 0)
 
 if(WIN32)
@@ -110,4 +110,10 @@ elseif(ANDROID)
 else()
   set_target_properties(${Casablanca_LIBRARY} PROPERTIES
     SOVERSION ${CPPREST_VERSION_MAJOR}.${CPPREST_VERSION_MINOR})
+
+  install(
+    TARGETS ${Casablanca_LIBRARY}
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+    )
 endif()

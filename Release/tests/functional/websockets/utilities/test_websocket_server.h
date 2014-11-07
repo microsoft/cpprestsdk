@@ -113,7 +113,7 @@ public:
 
 private:
     websocket_asserts() {}
-    ~websocket_asserts() _noexcept {}
+    ~websocket_asserts() CPPREST_NOEXCEPT {}
 };
 
 // Test websocket server. 

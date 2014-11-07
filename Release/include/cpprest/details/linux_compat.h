@@ -26,10 +26,9 @@
 #include <iostream>
 #define __cdecl __attribute__ ((cdecl))
 
-#include "compat/nosal.h"
+#include "cpprest/details/nosal.h"
 
-// MSVC doesn't support this yet
-#define _noexcept noexcept
+#define CPPREST_NOEXCEPT noexcept
 
 #define novtable /* no novtable equivalent */
 #define __declspec(x) __attribute__ ((x))

@@ -35,29 +35,46 @@ namespace web
 
 namespace http { namespace client { namespace details {
 class winhttp_client;
+class winrt_client;
+}}}
+namespace websockets { namespace client { namespace details {
+class winrt_client;
 }}}
 
 namespace details
 {
-#if defined(_MS_WINDOWS) && !defined(__cplusplus_winrt)
+#if defined(_MS_WINDOWS)
 class zero_memory_deleter
 {
 public:
     _ASYNCRTIMP void operator()(::utility::string_t *data) const;
 };
-typedef std::unique_ptr<std::wstring, zero_memory_deleter> password_string;
-
+typedef std::unique_ptr<std::wstring, zero_memory_deleter> plaintext_string;
+#if defined(__cplusplus_winrt)
+#if !(WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP && _MSC_VER < 1800)
+class winrt_encryption
+{
+public:
+    winrt_encryption() {}
+    _ASYNCRTIMP winrt_encryption(const std::wstring &data);
+    _ASYNCRTIMP plaintext_string decrypt() const;
+private:
+    ::pplx::task<Windows::Storage::Streams::IBuffer ^> m_buffer;
+};
+#endif
+#else
 class win32_encryption
 {
 public:
     win32_encryption() {}
     _ASYNCRTIMP win32_encryption(const std::wstring &data);
     _ASYNCRTIMP ~win32_encryption();
-    _ASYNCRTIMP password_string decrypt() const;
+    _ASYNCRTIMP plaintext_string decrypt() const;
 private:
     std::vector<char> m_buffer;
     size_t m_numCharacters;
 };
+#endif
 #endif
 }
 
@@ -69,7 +86,7 @@ class credentials
 {
 public:
     /// <summary>
-    /// Constructs and empty set of credentials without a user name or password.
+    /// Constructs an empty set of credentials without a user name or password.
     /// </summary>
     credentials() {}
 
@@ -78,9 +95,15 @@ public:
     /// </summary>
     /// <param name="username">User name as a string.</param>
     /// <param name="password">Password as a string.</param>
-    credentials(utility::string_t username, const utility::string_t &password) :
-        m_username(std::move(username)),
-        m_password(password)
+    credentials(utility::string_t username, const utility::string_t &
+#if defined(_MS_WINDOWS)
+        password
+#endif
+        ) :
+        m_username(std::move(username))
+#if defined(_MS_WINDOWS)
+        , m_password(password)
+#endif
     {}
 
     /// <summary>
@@ -96,10 +119,14 @@ public:
     CASABLANCA_DEPRECATED("This API is deprecated for security reasons to avoid unnecessary password copies stored in plaintext.")
         utility::string_t password() const
     {
-#if defined(_MS_WINDOWS) && !defined(__cplusplus_winrt)
-        return utility::string_t(*m_password.decrypt());
-#else
+#if defined(_MS_WINDOWS)
+#if defined(WINAPI_FAMILY) && WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP && _MSC_VER < 1800
         return m_password;
+#else
+        return utility::string_t(*m_password.decrypt());
+#endif
+#else
+        throw std::runtime_error("Credentials are not supported on this platform yet.");
 #endif
     }
 
@@ -111,25 +138,38 @@ public:
 
 private:
     friend class http::client::details::winhttp_client;
+    friend class http::client::details::winrt_client;
+    friend class websockets::client::details::winrt_client;
 
-#if defined(_MS_WINDOWS) && !defined(__cplusplus_winrt)
-    details::password_string decrypt() const
+#if defined(_MS_WINDOWS)
+    details::plaintext_string decrypt() const
     {
+        // Encryption APIs not supported on Windows Phone 8.0
+#if defined(WINAPI_FAMILY) && WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP && _MSC_VER < 1800
+        return details::plaintext_string(new ::utility::string_t(m_password));
+#else
         return m_password.decrypt();
+#endif
     }
 #endif
 
     ::utility::string_t m_username;
-#if defined(_MS_WINDOWS) && !defined(__cplusplus_winrt)
-    ::web::details::win32_encryption m_password;
-#else
+#if defined(_MS_WINDOWS)
+#if defined(__cplusplus_winrt)
+#if WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP && _MSC_VER < 1800
     ::utility::string_t m_password;
+#else
+    details::winrt_encryption m_password;
+#endif
+#else
+    details::win32_encryption m_password;
+#endif
 #endif
 };
 
 /// <summary>
 /// web_proxy represents the concept of the web proxy, which can be auto-discovered,
-/// disabled, or specified explicitly by the user
+/// disabled, or specified explicitly by the user.
 /// </summary>
 class web_proxy
 {

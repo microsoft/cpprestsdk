@@ -60,47 +60,9 @@ namespace concurrency = Concurrency;
 #pragma warning(disable : 4718)
 #endif
 
-#ifndef _MS_WINDOWS
-// TFS 579628 - 1206: figure out how to avoid having this specialization for Linux (beware of 64-bit Linux)
-namespace std {
-    template<>
-    struct char_traits<unsigned char> : private char_traits<char>
-    {
-    public:
-        typedef unsigned char char_type;
-
-        using char_traits<char>::eof;
-        using char_traits<char>::int_type;
-        using char_traits<char>::off_type;
-        using char_traits<char>::pos_type;
-
-        static size_t length(const unsigned char* str)
-        {
-            return char_traits<char>::length(reinterpret_cast<const char*>(str));
-        }
-
-        static void assign(unsigned char& left, const unsigned char& right) { left = right; }
-        static unsigned char* assign(unsigned char* left, size_t n, unsigned char value)
-        {
-            return reinterpret_cast<unsigned char*>(char_traits<char>::assign(reinterpret_cast<char*>(left), n, static_cast<char>(value)));
-        }
-
-        static unsigned char* copy(unsigned char* left, const unsigned char* right, size_t n)
-        {
-            return reinterpret_cast<unsigned char*>(char_traits<char>::copy(reinterpret_cast<char*>(left), reinterpret_cast<const char*>(right), n));
-        }
-
-        static unsigned char* move(unsigned char* left, const unsigned char* right, size_t n)
-        {
-            return reinterpret_cast<unsigned char*>(char_traits<char>::move(reinterpret_cast<char*>(left), reinterpret_cast<const char*>(right), n));
-        }
-    };
-}
-#endif // _MS_WINDOWS
-
 namespace Concurrency
 {
-/// Library for asychronous streams.
+/// Library for asynchronous streams.
 namespace streams
 {
     /// <summary>
@@ -120,6 +82,62 @@ namespace streams
         /// <returns>An <c>int_type</c> value which implies that an asynchronous call is required.</returns>
         static typename std::char_traits<_CharType>::int_type requires_async() { return std::char_traits<_CharType>::eof()-1; }
     };
+#if !defined(_MS_WINDOWS)
+    template<>
+    struct char_traits<unsigned char> : private std::char_traits<char>
+    {
+    public:
+        typedef unsigned char char_type;
+
+        using std::char_traits<char>::eof;
+        using std::char_traits<char>::int_type;
+        using std::char_traits<char>::off_type;
+        using std::char_traits<char>::pos_type;
+
+        static size_t length(const unsigned char* str)
+        {
+            return std::char_traits<char>::length(reinterpret_cast<const char*>(str));
+        }
+
+        static void assign(unsigned char& left, const unsigned char& right) { left = right; }
+        static unsigned char* assign(unsigned char* left, size_t n, unsigned char value)
+        {
+            return reinterpret_cast<unsigned char*>(std::char_traits<char>::assign(reinterpret_cast<char*>(left), n, static_cast<char>(value)));
+        }
+
+        static unsigned char* copy(unsigned char* left, const unsigned char* right, size_t n)
+        {
+            return reinterpret_cast<unsigned char*>(std::char_traits<char>::copy(reinterpret_cast<char*>(left), reinterpret_cast<const char*>(right), n));
+        }
+
+        static unsigned char* move(unsigned char* left, const unsigned char* right, size_t n)
+        {
+            return reinterpret_cast<unsigned char*>(std::char_traits<char>::move(reinterpret_cast<char*>(left), reinterpret_cast<const char*>(right), n));
+        }
+
+namespace Concurrency
+{
+/// Library for asynchronous streams.
+namespace streams
+{
+    /// <summary>
+    /// Extending the standard char_traits type with one that adds values and types
+    /// that are unique to "C++ REST SDK" streams.
+    /// </summary>
+    /// <typeparam name="_CharType">
+    /// The data type of the basic element of the stream.
+    /// </typeparam>
+    template<typename _CharType>
+    struct char_traits : std::char_traits<_CharType>
+    {
+        /// <summary>
+        /// Some synchronous functions will return this value if the operation
+        /// requires an asynchronous call in a given situation.
+        /// </summary>
+        /// <returns>An <c>int_type</c> value which implies that an asynchronous call is required.</returns>
+        static typename std::char_traits<_CharType>::int_type requires_async() { return std::char_traits<_CharType>::eof()-1; }
+    };
+#endif
 
     namespace details {
 
@@ -424,7 +442,7 @@ namespace streams
             }
 
             // After the flush_internal task completed, "this" object may have been destroyed,
-            // accessing the memebers is invalid, use shared_from_this to avoid access violation exception.
+            // accessing the members is invalid, use shared_from_this to avoid access violation exception.
             auto this_ptr = std::static_pointer_cast<streambuf_state_manager>(this->shared_from_this());
 
             if (mode & std::ios_base::out && can_write()) {

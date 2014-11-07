@@ -30,8 +30,8 @@
 using namespace concurrency::streams;
 
 using namespace web;
-using namespace web::experimental::websockets;
-using namespace web::experimental::websockets::client;
+using namespace web::websockets;
+using namespace web::websockets::client;
 
 using namespace tests::functional::websocket::utilities;
 
@@ -78,7 +78,6 @@ TEST_FIXTURE(uri_address, get_client_config)
 
     const websocket_client_config& config2 = client.config();
     VERIFY_ARE_EQUAL(config2.credentials().username(), cred.username());
-    VERIFY_ARE_EQUAL(config2.credentials().password(), cred.password());
 }
 
 // Verify that we can get the baseuri from websocket_client connect.
@@ -125,11 +124,11 @@ TEST_FIXTURE(uri_address, move_operations)
 
     auto t = client2.receive().then([&](websocket_incoming_message ret_msg)
     {
+        VERIFY_ARE_EQUAL(ret_msg.length(), body.length());
         auto ret_str = ret_msg.extract_string().get();
 
-        VERIFY_ARE_EQUAL(ret_msg.length(), body.length());
         VERIFY_ARE_EQUAL(body.compare(ret_str), 0);
-        VERIFY_ARE_EQUAL(ret_msg.messge_type(), websocket_message_type::text_message);
+        VERIFY_ARE_EQUAL(ret_msg.message_type(), websocket_message_type::text_message);
     });
 
     test_websocket_msg rmsg;
@@ -155,11 +154,11 @@ TEST_FIXTURE(uri_address, move_operations)
     server.send_msg(rmsg1);
     auto t1 = client.receive().then([&](websocket_incoming_message ret_msg)
     {
+        VERIFY_ARE_EQUAL(ret_msg.length(), body.length());
         auto ret_str = ret_msg.extract_string().get();
 
-        VERIFY_ARE_EQUAL(ret_msg.length(), body.length());
         VERIFY_ARE_EQUAL(body.compare(ret_str), 0);
-        VERIFY_ARE_EQUAL(ret_msg.messge_type(), websocket_message_type::text_message);
+        VERIFY_ARE_EQUAL(ret_msg.message_type(), websocket_message_type::text_message);
     });
     t1.wait();
     client.close().wait();

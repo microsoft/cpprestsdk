@@ -86,7 +86,8 @@ enum value {
     /// Invalid subprotocol
     invalid_subprotocol,
 
-    /// Bad or unknown connection
+    /// An operation was attempted on a connection that did not exist or was
+    /// already deleted.
     bad_connection,
 
     /// Unit testing utility error code

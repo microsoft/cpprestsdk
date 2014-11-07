@@ -1,4 +1,4 @@
-WebSocket++ (0.3.0-alpha4)
+WebSocket++ (0.3.0)
 ==========================
 
 WebSocket++ is a header only C++ library that implements RFC6455 The WebSocket

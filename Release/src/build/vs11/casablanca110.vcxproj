@@ -4,7 +4,6 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{90D85FF4-F0AE-4816-923F-0EF2758F30AB}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>casablanca</RootNamespace>
     <SccProjectName>SAK</SccProjectName>
     <SccAuxPath>SAK</SccAuxPath>
     <SccLocalPath>SAK</SccLocalPath>
@@ -27,6 +26,9 @@
     <Import Project="$(PackagesRoot)\boost_thread-vc110.1.55.0.16\build\native\boost_thread-vc110.targets" Condition="Exists('$(PackagesRoot)\boost_thread-vc110.1.55.0.16\build\native\boost_thread-vc110.targets')" />
     <Import Project="$(PackagesRoot)\boost_chrono-vc110.1.55.0.16\build\native\boost_chrono-vc110.targets" Condition="Exists('$(PackagesRoot)\boost_chrono-vc110.1.55.0.16\build\native\boost_chrono-vc110.targets')" />
     <Import Project="$(PackagesRoot)\boost_random-vc110.1.55.0.16\build\native\boost_random-vc110.targets" Condition="Exists('$(PackagesRoot)\boost_random-vc110.1.55.0.16\build\native\boost_random-vc110.targets')" />
+    <Import Project="$(PackagesRoot)\openssl.1.0.1.25\build\native\openssl.props" Condition="Exists('$(PackagesRoot)\openssl.1.0.1.25\build\native\openssl.props')" />
+    <Import Project="$(PackagesRoot)\openssl.redist.1.0.1.25\build\native\openssl.redist.targets" Condition="Exists('$(PackagesRoot)\openssl.redist.1.0.1.25\build\native\openssl.redist.targets')" />
+    <Import Project="$(PackagesRoot)\openssl.1.0.1.25\build\native\openssl.targets" Condition="Exists('$(PackagesRoot)\openssl.1.0.1.25\build\native\openssl.targets')" />
   </ImportGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <DebugFileSuffix>d</DebugFileSuffix>
@@ -39,14 +41,14 @@
   </ItemGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <PreprocessorDefinitions>_ASYNCRT_EXPORT;AZURESTORAGESERVICES_EXPORTS;_PPLX_EXPORT;WIN32;_MBCS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINSOCK_DEPRECATED_NO_WARNINGS;_ASYNCRT_EXPORT;_PPLX_EXPORT;WIN32;_MBCS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CasablancaSrcDir)\pch;$(WebsocketppIncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
       <AdditionalOptions>-Zm160 /bigobj%(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Winhttp.lib;httpapi.lib;bcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Winhttp.lib;httpapi.lib;bcrypt.lib;crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="../sources.proj" />

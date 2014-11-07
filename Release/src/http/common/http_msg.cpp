@@ -165,33 +165,77 @@ size_t http_msg_base::_get_content_length()
     return 0;
 }
 
-/// <summary>
-/// Completes this message
-/// </summary>
+// Helper function to inline continuation if possible.
+struct inline_continuation
+{
+    inline_continuation(pplx::task<void> &prev, const std::function<void(pplx::task<void>)> &next) : m_prev(prev), m_next(next) {}
+    ~inline_continuation()
+    {
+        if (m_prev.is_done())
+        {
+            m_next(m_prev);
+        }
+        else
+        {
+            m_prev.then(m_next);
+        }
+    }
+    pplx::task<void> & m_prev;
+    std::function<void(pplx::task<void>)> m_next;
+private:
+    inline_continuation(const inline_continuation &);
+    inline_continuation &operator=(const inline_continuation &);
+};
+
 void http_msg_base::_complete(utility::size64_t body_size, const std::exception_ptr &exceptionPtr)
 {
-    // Close the write head
-    if ((bool)outstream())
-    {
-        if ( !(exceptionPtr == std::exception_ptr()) )
-            outstream().close(exceptionPtr).get();
-        else if ( m_default_outstream )
-            outstream().close().get();
-    }
+    const auto &completionEvent = _get_data_available();
+    auto closeTask = pplx::task_from_result();
 
-    if(exceptionPtr == std::exception_ptr())
+    if (exceptionPtr == std::exception_ptr())
     {
-        _get_data_available().set(body_size);
+        if (m_default_outstream)
+        {
+            closeTask = outstream().close();
+        }
+
+        inline_continuation(closeTask, [completionEvent, body_size](pplx::task<void> t)
+        {
+            try
+            {
+                t.get();
+                completionEvent.set(body_size);
+            }
+            catch (...)
+            {
+                // If close throws an exception report back to user.
+                completionEvent.set_exception(std::current_exception());
+                pplx::create_task(completionEvent).then([](pplx::task<utility::size64_t> t)
+                {
+                    try { t.get(); }
+                    catch (...) {}
+                });
+            }
+        });
     }
     else
     {
-        _get_data_available().set_exception(exceptionPtr);
-        // The exception for body will be observed by default, because read body is not always required.
-        pplx::create_task(_get_data_available()).then([](pplx::task<utility::size64_t> t) {
-            try {
-                t.get();
-            } catch (...) {
-            }
+        if (outstream().is_valid())
+        {
+            closeTask = outstream().close(exceptionPtr);
+        }
+
+        inline_continuation(closeTask, [completionEvent, exceptionPtr](pplx::task<void> t)
+        {
+            // If closing stream throws an exception ignore since we already have an error.
+            try { t.get(); }
+            catch (...) {}
+            completionEvent.set_exception(exceptionPtr);
+            pplx::create_task(completionEvent).then([](pplx::task<utility::size64_t> t)
+            {
+                try { t.get(); }
+                catch (...) {}
+            });
         });
     }
 }

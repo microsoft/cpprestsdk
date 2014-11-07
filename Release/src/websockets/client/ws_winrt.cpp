@@ -28,7 +28,7 @@
 #include <concrt.h>
 
 // ws_winrt only available for Windows Store apps and Windows Phone 8.1
-#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_PC_APP) || (WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_PHONE_APP) && _WIN32_WINNT == _WIN32_WINNT_WINBLUE)
+#if (WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_PC_APP) || (WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_PHONE_APP) && _WIN32_WINNT == _WIN32_WINNT_WINBLUE)) && !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 
 using namespace ::Windows::Foundation;
 using namespace ::Windows::Storage;
@@ -39,14 +39,23 @@ using namespace Concurrency::streams::details;
 
 namespace web
 {
-namespace experimental
-{
 namespace websockets
 {
 namespace client
 {
 namespace details
 {
+
+// Helper function to build an error string from a Platform::Exception and a location.
+static std::string build_error_msg(Platform::Exception ^exc, const std::string &location)
+{
+    std::string msg(location);
+    msg.append(": ");
+    msg.append(std::to_string(exc->HResult));
+    msg.append(": ");
+    msg.append(utility::conversions::utf16_to_utf8(exc->Message->Data()));
+    return msg;
+}
 
 // This class is required by the implementation in order to function:
 // The TypedEventHandler requires the message received and close handler to be a member of WinRT class.
@@ -61,13 +70,16 @@ public:
 
 private:
     // Public members cannot have native types
-    ReceiveContext(std::function<void(websocket_incoming_message &)> receive_handler, std::function<void()> close_handler): m_receive_handler(receive_handler), m_close_handler(close_handler) {}
+    ReceiveContext(
+        std::function<void(websocket_incoming_message &)> receive_handler,
+        std::function<void(const websocket_exception &)> close_handler)
+        : m_receive_handler(std::move(receive_handler)), m_close_handler(std::move(close_handler)) {}
 
     // Handler to be executed when a message has been received by the client
     std::function<void(websocket_incoming_message &)> m_receive_handler;
 
     // Handler to be executed when a close message has been received by the client
-    std::function<void()> m_close_handler;
+    std::function<void(const websocket_exception &)> m_close_handler;
 };
 
 class winrt_client : public _websocket_client_impl, public std::enable_shared_from_this<winrt_client>
@@ -105,9 +117,10 @@ public:
 
         if (m_config.credentials().is_set())
         {
+            auto password = m_config.credentials().decrypt();
             m_msg_websocket->Control->ServerCredential = ref new Windows::Security::Credentials::PasswordCredential("WebSocketClientCredentialResource",
                 Platform::StringReference(m_config.credentials().username().c_str()),
-                Platform::StringReference(m_config.credentials().password().c_str()));
+                Platform::StringReference(password->c_str()));
         }
 
         m_context = ref new ReceiveContext([=](websocket_incoming_message &msg)
@@ -129,9 +142,9 @@ public:
             // Setting the tce outside the receive lock for better performance
             tce.set(msg);
         },
-        [=]() // Close handler called upon receiving a close frame from the server.
+        [=](const websocket_exception &e)
         {
-            close_pending_tasks_with_error();
+            close_pending_tasks_with_error(e);
             m_close_tce.set();
             m_server_close_complete.set();
         });
@@ -151,11 +164,11 @@ public:
         }
         else
         {
-            close_pending_tasks_with_error();
+            close_pending_tasks_with_error(websocket_exception("websocket_client is being destroyed"));
         }
     }
 
-    void close_pending_tasks_with_error()
+    void close_pending_tasks_with_error(const websocket_exception &exc)
     {
         std::lock_guard<std::mutex> lock(m_receive_queue_lock);
         m_client_closed = true;
@@ -163,7 +176,7 @@ public:
         {
             auto tce = m_receive_task_queue.front();
             m_receive_task_queue.pop();
-            tce.set_exception(std::make_exception_ptr(websocket_exception("Websocket connection has been closed.")));
+            tce.set_exception(std::make_exception_ptr(exc));
         }
     }
 
@@ -178,12 +191,13 @@ public:
         const auto &proxy_cred = proxy.credentials();
         if(proxy_cred.is_set())
         {
+            auto password = proxy_cred.decrypt();
             m_msg_websocket->Control->ProxyCredential = ref new Windows::Security::Credentials::PasswordCredential("WebSocketClientProxyCredentialResource",
-                ref new Platform::String(proxy_cred.username().c_str()),
-                ref new Platform::String(proxy_cred.password().c_str()));
+                Platform::StringReference(proxy_cred.username().c_str()),
+                Platform::StringReference(password->c_str()));
         }
 
-        const auto uri = ref new Windows::Foundation::Uri(ref new Platform::String(m_uri.to_string().c_str()));
+        const auto uri = ref new Windows::Foundation::Uri(Platform::StringReference(m_uri.to_string().c_str()));
 
         m_msg_websocket->MessageReceived += ref new TypedEventHandler<MessageWebSocket^, MessageWebSocketMessageReceivedEventArgs^>(m_context, &ReceiveContext::OnReceive);
         m_msg_websocket->Closed += ref new TypedEventHandler<IWebSocket^, WebSocketClosedEventArgs^>(m_context, &ReceiveContext::OnClosed);
@@ -195,10 +209,11 @@ public:
                 result.get();
                 m_messageWriter = ref new DataWriter(m_msg_websocket->OutputStream);
             }
-            catch(Platform::Exception^ ex)
+            catch (Platform::Exception^ e)
             {
-                close_pending_tasks_with_error();
-                return pplx::task_from_exception<void>(websocket_exception(ex->HResult));
+                websocket_exception exc(e->HResult, build_error_msg(e, "ConnectAsync"));
+                close_pending_tasks_with_error(exc);
+                return pplx::task_from_exception<void>(exc);
             }
             return pplx::task_from_result();
         });
@@ -211,7 +226,7 @@ public:
             return pplx::task_from_exception<void>(websocket_exception("Client not connected."));
         }
 
-        switch(msg._m_impl->message_type())
+        switch(msg.m_msg_type)
         {
         case websocket_message_type::binary_message :
             m_msg_websocket->Control->MessageType = SocketMessageType::Binary;
@@ -223,7 +238,7 @@ public:
             return pplx::task_from_exception<void>(websocket_exception("Message Type not supported."));
         }
 
-        const auto length = msg._m_impl->length();
+        const auto length = msg.m_length;
         if (length == 0)
         {
             return pplx::task_from_exception<void>(websocket_exception("Cannot send empty message."));
@@ -233,18 +248,16 @@ public:
             return pplx::task_from_exception<void>(websocket_exception("Message size too large. Ensure message length is less than UINT_MAX."));
         }
 
+        if (++m_num_sends == 1) // No sends in progress
         {
-            if (++m_num_sends == 1) // No sends in progress
-            {
-                // Start sending the message
-                send_msg(msg);
-            }
-            else
-            {
-                // Only actually have to take the lock if touching the queue.
-                std::lock_guard<std::mutex> lock(m_send_lock);
-                m_outgoing_msg_queue.push(msg);
-            }
+            // Start sending the message
+            send_msg(msg);
+        }
+        else
+        {
+            // Only actually have to take the lock if touching the queue.
+            std::lock_guard<std::mutex> lock(m_send_lock);
+            m_outgoing_msg_queue.push(msg);
         }
         return pplx::create_task(msg.body_sent());
     }
@@ -253,7 +266,7 @@ public:
     {
         auto this_client = this->shared_from_this();
         auto &is_buf = msg.m_body;
-        auto length = msg._m_impl->length();
+        auto length = msg.m_length;
 
         if (length == SIZE_MAX)
         {
@@ -279,7 +292,7 @@ public:
                 {
                     try
                     {
-                        msg._m_impl->set_length(t.get());
+                        msg.m_length = t.get();
                         this_client->send_msg(msg);
                     }
                     catch (...)
@@ -347,13 +360,19 @@ public:
                     eptr = std::make_exception_ptr(websocket_exception("Failed to send all the bytes."));
                 }
             }
-            catch (const websocket_exception& ex)
+            catch (Platform::Exception^ e)
             {
-                eptr = std::make_exception_ptr(ex);
+                // Convert to websocket_exception.
+                eptr = std::make_exception_ptr(websocket_exception(e->HResult, build_error_msg(e, "send_msg")));
+            }
+            catch (const websocket_exception &e)
+            {
+                // Catch to avoid slicing and losing the type if falling through to catch (...).
+                eptr = std::make_exception_ptr(e);
             }
             catch (...)
             {
-                eptr = std::make_exception_ptr(websocket_exception("Failed to send data over the websocket connection."));
+                eptr = std::make_exception_ptr(std::current_exception());
             }
 
             if (acquired)
@@ -366,21 +385,22 @@ public:
             {
                 msg.signal_body_sent(eptr);
             }
-
+            else
             {
-                if (--this_client->m_num_sends > 0)
-                {
-                    // Only hold the lock when actually touching the queue.
-                    websocket_outgoing_message next_msg;
-                    {
-                        std::lock_guard<std::mutex> lock(this_client->m_send_lock);
-                        next_msg = this_client->m_outgoing_msg_queue.front();
-                        this_client->m_outgoing_msg_queue.pop();
-                    }
-                    this_client->send_msg(next_msg);
-                }
+                msg.signal_body_sent();
             }
-            msg.signal_body_sent();
+
+            if (--this_client->m_num_sends > 0)
+            {
+                // Only hold the lock when actually touching the queue.
+                websocket_outgoing_message next_msg;
+                {
+                    std::lock_guard<std::mutex> lock(this_client->m_send_lock);
+                    next_msg = this_client->m_outgoing_msg_queue.front();
+                    this_client->m_outgoing_msg_queue.pop();
+                }
+                this_client->send_msg(next_msg);
+            }
         });
     }
 
@@ -415,8 +435,7 @@ public:
     pplx::task<void> close(websocket_close_status status, const utility::string_t &strreason=_XPLATSTR(""))
     {
         // Send a close frame to the server
-        Platform::String^ reason = ref new Platform::String(strreason.data());
-        m_msg_websocket->Close(static_cast<unsigned short>(status), reason);
+        m_msg_websocket->Close(static_cast<unsigned short>(status), Platform::StringReference(strreason.c_str()));
         // Wait for the close response frame from the server.
         return pplx::create_task(m_close_tce);
     }
@@ -437,10 +456,8 @@ private:
     // completed. The websocket_client destructor can wait on this event before proceeding.
     Concurrency::event m_server_close_complete;
 
-    // m_client_closed maintains the state of the client. It is set to true when:
-    // 1. the client has not connected
-    // 2. if it has received a close frame from the server.
-    // We may want to keep an enum to maintain the client state in the future.
+    // Initially set to false, becomes true if a close frame is received from the server or
+    // if the underlying connection is aborted or terminated.
     bool m_client_closed;
 
     // When a message arrives, if there are tasks waiting for a message, signal the topmost one.
@@ -464,16 +481,15 @@ private:
 
 void ReceiveContext::OnReceive(MessageWebSocket^ sender, MessageWebSocketMessageReceivedEventArgs^ args)
 {
-    websocket_incoming_message ws_incoming_message;
-    auto &msg = ws_incoming_message._m_impl;
+    websocket_incoming_message incoming_msg;
 
     switch(args->MessageType)
     {
     case SocketMessageType::Binary:
-        msg->set_msg_type(websocket_message_type::binary_message);
+        incoming_msg.m_msg_type = websocket_message_type::binary_message;
         break;
     case SocketMessageType::Utf8:
-        msg->set_msg_type(websocket_message_type::text_message);
+        incoming_msg.m_msg_type = websocket_message_type::text_message;
         break;
     }
 
@@ -486,24 +502,19 @@ void ReceiveContext::OnReceive(MessageWebSocket^ sender, MessageWebSocketMessage
             std::string payload;
             payload.resize(len);
             reader->ReadBytes(Platform::ArrayReference<uint8_t>(reinterpret_cast<uint8 *>(&payload[0]), len));
-            ws_incoming_message.m_body = concurrency::streams::container_buffer<std::string>(std::move(payload));
+            incoming_msg.m_body = concurrency::streams::container_buffer<std::string>(std::move(payload));
         }
-        msg->set_length(len);
-        m_receive_handler(ws_incoming_message);
+        m_receive_handler(incoming_msg);
     }
-    catch(...)
+    catch (Platform::Exception ^e)
     {
-        // Swallow the exception for now. Following up on this with the WinRT team.
-        // We can handle this more gracefully once we know the scenarios where DataReader operations can throw an exception:
-        // When socket gets into a bad state
-        // or only when we receive a valid message and message processing fails.
-        // Tracking this on codeplex with : https://casablanca.codeplex.com/workitem/181
+        m_close_handler(websocket_exception(e->HResult, build_error_msg(e, "OnReceive")));
     }
 }
 
 void ReceiveContext::OnClosed(IWebSocket^ sender, WebSocketClosedEventArgs^ args)
 {
-    m_close_handler();
+    m_close_handler(websocket_exception("close frame received from server"));
 }
 }
 
@@ -515,5 +526,5 @@ websocket_client::websocket_client(websocket_client_config config) :
     m_client(std::make_shared<details::winrt_client>(std::move(config)))
 {}
 
-}}}}
-#endif /* WINAPI_FAMILY == WINAPI_FAMILY_APP */
+}}}
+#endif

@@ -497,7 +497,7 @@ namespace details {
         }
 
         /// <summary>
-        /// Advances the read position, then return the next character withouth advancing again.
+        /// Advances the read position, then return the next character without advancing again.
         /// </summary>
             /// <returns>A <c>task</c> that holds the value of the byte, which is EOF if the read fails.</returns>
         virtual pplx::task<int_type> _nextc()
@@ -511,7 +511,7 @@ namespace details {
         }
 
         /// <summary>
-        /// Retreats the read position, then return the current character withouth advancing.
+        /// Retreats the read position, then return the current character without advancing.
         /// </summary>
             /// <returns>A <c>task</c> that holds the value of the byte. The value is EOF if the read fails, <c>requires_async</c> if an asynchronous read is required</returns>
         virtual pplx::task<int_type> _ungetc()
@@ -638,7 +638,7 @@ namespace details {
             {
                 return (pos_type)_seekwrpos_fsb(m_info, size_t(pos), sizeof(_CharType));
             }
-            return (pos_type)std::char_traits<_CharType>::eof();
+            return (pos_type)Concurrency::streams::char_traits<_CharType>::eof();
         }
 
         /// <summary>

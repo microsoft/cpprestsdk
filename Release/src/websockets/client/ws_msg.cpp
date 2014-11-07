@@ -31,15 +31,12 @@
 #include "cpprest/ws_msg.h"
 #include "cpprest/ws_client.h"
 
-#if !defined(_M_ARM) || defined(__cplusplus_winrt)
-#if _NOT_PHONE8_
+#if (defined(__cplusplus_winrt) || !defined(_M_ARM)) && !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 
 using namespace concurrency;
 using namespace concurrency::streams::details;
 
 namespace web
-{
-namespace experimental
 {
 namespace websockets
 {
@@ -74,13 +71,13 @@ std::vector<::utility::string_t> websocket_client_config::subprotocols() const
 
 pplx::task<std::string> websocket_incoming_message::extract_string() const
 {
-    if (_m_impl->message_type() == websocket_message_type::binary_message)
+    if (m_msg_type == websocket_message_type::binary_message)
     {
         return pplx::task_from_exception<std::string>(websocket_exception("Invalid message type"));
     }
     return pplx::task_from_result(std::move(m_body.collection()));
 }
 
-}}}}
-#endif  //  _NOT_PHONE8_
+}}}
+
 #endif

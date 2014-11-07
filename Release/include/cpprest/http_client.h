@@ -369,7 +369,7 @@ public:
     /// Note the destructor doesn't necessarily close the connection and release resources.
     /// The connection is reference counted with the http_responses.
     /// </summary>
-    ~http_client() _noexcept {}
+    ~http_client() CPPREST_NOEXCEPT {}
 
     /// <summary>
     /// Gets the base uri

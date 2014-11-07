@@ -37,7 +37,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <PreprocessorDefinitions>WINAPI_FAMILY=WINAPI_PARTITION_APP;_ASYNCRT_EXPORT;_PPLX_EXPORT;_USRDLL;%(PreprocessorDefinitions);AZURESTORAGESERVICES_EXPORTS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WINAPI_FAMILY=WINAPI_PARTITION_APP;_ASYNCRT_EXPORT;_PPLX_EXPORT;_USRDLL;%(PreprocessorDefinitions);</PreprocessorDefinitions>
       <AdditionalUsingDirectories>$(WindowsSdkDir)\References\CommonConfiguration\Neutral;$(VSInstallDir)\vc\vcpackages;$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <CompileAsWinRT>true</CompileAsWinRT>
       <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CasablancaSrcDir)\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>

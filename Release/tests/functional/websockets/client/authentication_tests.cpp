@@ -27,8 +27,8 @@
 
 #if defined(__cplusplus_winrt) || !defined(_M_ARM)
 
-using namespace web::experimental::websockets;
-using namespace web::experimental::websockets::client;
+using namespace web::websockets;
+using namespace web::websockets::client;
 
 using namespace tests::functional::websocket::utilities;
 
@@ -75,41 +75,89 @@ TEST_FIXTURE(uri_address, auth_no_credentials, "Ignore", "245")
 TEST_FIXTURE(uri_address, auth_with_credentials, "Ignore", "245")
 {
     test_websocket_server server;
-    websocket_client_config config;   
+    websocket_client_config config;
     web::credentials cred(U("user"), U("password"));
     config.set_credentials(cred);
     websocket_client client(config);
 
-    auth_helper(server, cred.username(), cred.password());
+    auth_helper(server, cred.username(), U("password"));
     client.connect(m_uri).wait();
     client.close().wait();
 }
 #endif
 
-// Secure websockets on implemented yet on non-WinRT Windows - 255
-#if defined(__cplusplus_winrt) || !defined(_MS_WINDOWS)
-TEST_FIXTURE(uri_address, ssl_test)
+TEST(ssl_test)
 {
     websocket_client client;
-    client.connect(U("wss://echo.websocket.org/")).wait();
     std::string body_str("hello");
 
-    auto receive_task = client.receive().then([body_str](websocket_incoming_message ret_msg)
+    try
     {
-        auto ret_str = ret_msg.extract_string().get();
+        client.connect(U("wss://echo.websocket.org/")).wait();
+        auto receive_task = client.receive().then([body_str](websocket_incoming_message ret_msg)
+        {
+            VERIFY_ARE_EQUAL(ret_msg.length(), body_str.length());
+            auto ret_str = ret_msg.extract_string().get();
 
-        VERIFY_ARE_EQUAL(ret_msg.length(), body_str.length());
-        VERIFY_ARE_EQUAL(body_str.compare(ret_str), 0);
-        VERIFY_ARE_EQUAL(ret_msg.messge_type(), websocket_message_type::text_message);
-    });
+            VERIFY_ARE_EQUAL(body_str.compare(ret_str), 0);
+            VERIFY_ARE_EQUAL(ret_msg.message_type(), websocket_message_type::text_message);
+        });
 
-    websocket_outgoing_message msg;
-    msg.set_utf8_message(body_str);
-    client.send(msg).wait();
+        websocket_outgoing_message msg;
+        msg.set_utf8_message(body_str);
+        client.send(msg).wait();
 
-    receive_task.wait();
-    client.close().wait();
+        receive_task.wait();
+        client.close().wait();
+    }
+    catch (const websocket_exception &e)
+    {
+        const auto msg = std::string(e.what());
+        if (msg.find("set_fail_handler") != std::string::npos)
+        {
+            if (msg.find("TLS handshake timed out") != std::string::npos || msg.find("Timer Expired") != std::string::npos)
+            {
+                // Since this test depends on an outside server sometimes it sporadically can fail due to timeouts
+                // especially on our build machines.
+                return;
+            }
+        }
+        throw;
+    }
 }
+
+// These tests are specific to our websocketpp based implementation.
+#if !defined(__cplusplus_winrt)
+
+void handshake_error_test_impl(const ::utility::string_t &host)
+{
+    websocket_client client;
+    try
+    {
+        client.connect(host).wait();
+        VERIFY_IS_TRUE(false);
+    }
+    catch (const websocket_exception &e)
+    {
+        VERIFY_ARE_EQUAL("TLS handshake failed", e.error_code().message());
+    }
+}
+
+TEST(self_signed_cert)
+{
+    handshake_error_test_impl(U("wss://www.pcwebshop.co.uk/"));
+}
+
+TEST(hostname_mismatch)
+{
+    handshake_error_test_impl(U("wss://swordsoftruth.com/"));
+}
+
+TEST(cert_expired)
+{
+    handshake_error_test_impl(U("wss://tv.eurosport.com/"));
+}
+
 #endif
 
 } // SUITE(authentication_tests)

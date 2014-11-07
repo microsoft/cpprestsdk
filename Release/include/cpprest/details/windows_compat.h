@@ -16,16 +16,33 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* pplxtasks.h
+* windows_compat.h
 *
-* Parallel Patterns Library - PPLx Tasks
+* Windows-specific definitions
+*
+* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
+#pragma once
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1800)
-#include <ppltasks.h>
-namespace pplx = Concurrency;
+#if defined(_MSC_VER) && _MSC_VER >= 1700
+// Support VS2012 SAL syntax only
+#include <sal.h>
 #else
-#error This file must not be included for Visual Studio 11 and older
+#include "cpprest/details/nosal.h"
+#endif
+
+#if defined(_MSC_VER) && _MSC_VER >= 1900
+#define CPPREST_NOEXCEPT noexcept
+#else
+#define CPPREST_NOEXCEPT
+#endif
+
+#define CASABLANCA_UNREFERENCED_PARAMETER(x) (x)
+
+#ifdef CASABLANCA_DEPRECATION_NO_WARNINGS
+#define CASABLANCA_DEPRECATED(x)
+#else
+#define CASABLANCA_DEPRECATED(x) __declspec(deprecated(x))
 #endif

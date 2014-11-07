@@ -1,6 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(_NTDRIVE)$(_NTROOT)\vctools\cpp_rest\cpprest.winrt.razzle.props" Condition="exists('$(_NTDRIVE)$(_NTROOT)\vctools\cpp_rest\cpprest.winrt.razzle.props')" />
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|ARM">
       <Configuration>Debug</Configuration>
@@ -87,16 +86,6 @@
       <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);..\..\utilities\include;$(TestListenerPath)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
-
-  <!-- If testing against a VS installation, need to include the libs. -->
-  <ItemDefinitionGroup Condition="'$(BuildAgainstVSInstallation)'!=''">
-    <Link>
-      <AdditionalLibraryDirectories>$(CasablancaVSLibDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Link>
-    <Link>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
-  </ItemDefinitionGroup>
   
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -106,7 +95,7 @@
 	  <AdditionalUsingDirectories>$(WindowsSDKDir)\References\CommonConfiguration\Neutral;$(VSInstallDir)\vc\vcpackages;$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <CompileAsWinRT>true</CompileAsWinRT>
       <MinimalRebuild>false</MinimalRebuild>
-	  <AdditionalOptions>-Zm200 %(AdditionalOptions)</AdditionalOptions>
+	  <AdditionalOptions>-Zm280 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -122,7 +111,7 @@
 	  <AdditionalUsingDirectories>$(WindowsSDKDir)\References\CommonConfiguration\Neutral;$(VSInstallDir)\vc\vcpackages;$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <CompileAsWinRT>true</CompileAsWinRT>
       <MinimalRebuild>false</MinimalRebuild>
-	  <AdditionalOptions>-Zm200 %(AdditionalOptions)</AdditionalOptions>
+	  <AdditionalOptions>-Zm280 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -138,7 +127,7 @@
 	  <AdditionalUsingDirectories>$(WindowsSDKDir)\References\CommonConfiguration\Neutral;$(VSInstallDir)\vc\vcpackages;$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <CompileAsWinRT>true</CompileAsWinRT>
       <MinimalRebuild>false</MinimalRebuild>
-	  <AdditionalOptions>-Zm200 %(AdditionalOptions)</AdditionalOptions>
+	  <AdditionalOptions>-Zm280 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -156,7 +145,7 @@
 	  <AdditionalUsingDirectories>$(WindowsSDKDir)\References\CommonConfiguration\Neutral;$(VSInstallDir)\vc\vcpackages;$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <CompileAsWinRT>true</CompileAsWinRT>
       <MinimalRebuild>false</MinimalRebuild>
-	  <AdditionalOptions>-Zm200 %(AdditionalOptions)</AdditionalOptions>
+	  <AdditionalOptions>-Zm280 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -176,7 +165,7 @@
 	  <AdditionalUsingDirectories>$(WindowsSDKDir)\References\CommonConfiguration\Neutral;$(VSInstallDir)\vc\vcpackages;$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <CompileAsWinRT>true</CompileAsWinRT>
       <MinimalRebuild>false</MinimalRebuild>
-	  <AdditionalOptions>-Zm200 %(AdditionalOptions)</AdditionalOptions>
+	  <AdditionalOptions>-Zm280 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -196,7 +185,7 @@
 	  <AdditionalUsingDirectories>$(WindowsSDKDir)\References\CommonConfiguration\Neutral;$(VSInstallDir)\vc\vcpackages;$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <CompileAsWinRT>true</CompileAsWinRT>
       <MinimalRebuild>false</MinimalRebuild>
-	  <AdditionalOptions>-Zm200 %(AdditionalOptions)</AdditionalOptions>
+	  <AdditionalOptions>-Zm280 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -216,14 +205,10 @@
     <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs12.winrt\UnitTestpp120.winrt.vcxproj">
       <Project>{B341AA9C-F38B-4D59-B6B7-8F22491090B7}</Project>
     </ProjectReference>
-  </ItemGroup>
-  
-  <ItemGroup Condition="'$(BuildAgainstVSInstallation)'==''">
     <ProjectReference Include="$(CasablancaSrcDir)\build\vs12.winrt\casablanca120.winrt.vcxproj">
       <Project>{198ED804-2655-4D92-8104-C220E3EA9452}</Project>
     </ProjectReference>
   </ItemGroup>
-  
   <ItemGroup>
     <ClInclude Include="..\http_client_tests.h" />
     <ClInclude Include="..\stdafx.h" />
