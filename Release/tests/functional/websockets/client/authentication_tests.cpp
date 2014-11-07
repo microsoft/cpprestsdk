@@ -89,24 +89,41 @@ TEST_FIXTURE(uri_address, auth_with_credentials, "Ignore", "245")
 TEST(ssl_test)
 {
     websocket_client client;
-    client.connect(U("wss://echo.websocket.org/")).wait();
     std::string body_str("hello");
 
-    auto receive_task = client.receive().then([body_str](websocket_incoming_message ret_msg)
+    try
     {
-        VERIFY_ARE_EQUAL(ret_msg.length(), body_str.length());
-        auto ret_str = ret_msg.extract_string().get();
+        client.connect(U("wss://echo.websocket.org/")).wait();
+        auto receive_task = client.receive().then([body_str](websocket_incoming_message ret_msg)
+        {
+            VERIFY_ARE_EQUAL(ret_msg.length(), body_str.length());
+            auto ret_str = ret_msg.extract_string().get();
 
-        VERIFY_ARE_EQUAL(body_str.compare(ret_str), 0);
-        VERIFY_ARE_EQUAL(ret_msg.message_type(), websocket_message_type::text_message);
-    });
+            VERIFY_ARE_EQUAL(body_str.compare(ret_str), 0);
+            VERIFY_ARE_EQUAL(ret_msg.message_type(), websocket_message_type::text_message);
+        });
 
-    websocket_outgoing_message msg;
-    msg.set_utf8_message(body_str);
-    client.send(msg).wait();
+        websocket_outgoing_message msg;
+        msg.set_utf8_message(body_str);
+        client.send(msg).wait();
 
-    receive_task.wait();
-    client.close().wait();
+        receive_task.wait();
+        client.close().wait();
+    }
+    catch (const websocket_exception &e)
+    {
+        const auto msg = std::string(e.what());
+        if (msg.find("set_fail_handler") != std::string::npos)
+        {
+            if (msg.find("TLS handshake timed out") != std::string::npos || msg.find("Timer Expired") != std::string::npos)
+            {
+                // Since this test depends on an outside server sometimes it sporadically can fail due to timeouts
+                // especially on our build machines.
+                return;
+            }
+        }
+        throw;
+    }
 }
 
 // These tests are specific to our websocketpp based implementation.
