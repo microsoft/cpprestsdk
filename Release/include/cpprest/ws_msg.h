@@ -232,7 +232,7 @@ public:
     /// <returns>websocket_message_type</returns>
     websocket_message_type message_type() const
     {
-        return _m_impl->message_type();
+        return m_msg_type;
     }
 
 private:
