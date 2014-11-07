@@ -114,6 +114,8 @@ namespace streams
         {
             return reinterpret_cast<unsigned char*>(std::char_traits<char>::move(reinterpret_cast<char*>(left), reinterpret_cast<const char*>(right), n));
         }
+
+        static int_type requires_async() { return eof() - 1; }
     };
 #endif
 
