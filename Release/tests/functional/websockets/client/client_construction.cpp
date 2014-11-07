@@ -128,7 +128,7 @@ TEST_FIXTURE(uri_address, move_operations)
         auto ret_str = ret_msg.extract_string().get();
 
         VERIFY_ARE_EQUAL(body.compare(ret_str), 0);
-        VERIFY_ARE_EQUAL(ret_msg.messge_type(), websocket_message_type::text_message);
+        VERIFY_ARE_EQUAL(ret_msg.message_type(), websocket_message_type::text_message);
     });
 
     test_websocket_msg rmsg;
@@ -158,7 +158,7 @@ TEST_FIXTURE(uri_address, move_operations)
         auto ret_str = ret_msg.extract_string().get();
 
         VERIFY_ARE_EQUAL(body.compare(ret_str), 0);
-        VERIFY_ARE_EQUAL(ret_msg.messge_type(), websocket_message_type::text_message);
+        VERIFY_ARE_EQUAL(ret_msg.message_type(), websocket_message_type::text_message);
     });
     t1.wait();
     client.close().wait();

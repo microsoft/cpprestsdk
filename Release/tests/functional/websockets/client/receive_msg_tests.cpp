@@ -57,7 +57,7 @@ pplx::task<void> receive_text_msg_helper(websocket_client& client,
         auto ret_str = ret_msg.extract_string().get();
 
         VERIFY_ARE_EQUAL(body_str.compare(ret_str), 0);
-        VERIFY_ARE_EQUAL(ret_msg.messge_type(), websocket_message_type::text_message);
+        VERIFY_ARE_EQUAL(ret_msg.message_type(), websocket_message_type::text_message);
     });
 
     test_websocket_msg msg;
@@ -87,9 +87,9 @@ pplx::task<void> receive_msg_stream_helper(websocket_client& client,
         VERIFY_ARE_EQUAL(ret_msg.length(), body.size());
         VERIFY_ARE_EQUAL(body, ret_data.collection());
         if (type == test_websocket_message_type::WEB_SOCKET_BINARY_MESSAGE_TYPE)
-            VERIFY_ARE_EQUAL(ret_msg.messge_type(), websocket_message_type::binary_message);
+            VERIFY_ARE_EQUAL(ret_msg.message_type(), websocket_message_type::binary_message);
         else if (type == test_websocket_message_type::WEB_SOCKET_UTF8_MESSAGE_TYPE)
-            VERIFY_ARE_EQUAL(ret_msg.messge_type(), websocket_message_type::text_message);
+            VERIFY_ARE_EQUAL(ret_msg.message_type(), websocket_message_type::text_message);
     });
 
     test_websocket_msg msg;
@@ -154,7 +154,7 @@ TEST_FIXTURE(uri_address, receive_text_msg_fragments, "Ignore", "898451")
         auto ret_str = ret_msg.extract_string().get();
 
         VERIFY_ARE_EQUAL(body_str.compare(ret_str), 0);
-        VERIFY_ARE_EQUAL(ret_msg.messge_type(), websocket_message_type::text_message);
+        VERIFY_ARE_EQUAL(ret_msg.message_type(), websocket_message_type::text_message);
     });
 
     test_websocket_msg msg1;
@@ -235,7 +235,7 @@ TEST_FIXTURE(uri_address, receive_after_server_send)
     {
         auto ret_str = ret_msg.extract_string().get();
         VERIFY_ARE_EQUAL(body_str.compare(ret_str), 0);
-        VERIFY_ARE_EQUAL(ret_msg.messge_type(), websocket_message_type::text_message);
+        VERIFY_ARE_EQUAL(ret_msg.message_type(), websocket_message_type::text_message);
     }).wait();
 
     client.close().wait();
@@ -256,7 +256,7 @@ TEST_FIXTURE(uri_address, receive_before_connect)
         auto ret_str = ret_msg.extract_string().get();
 
         VERIFY_ARE_EQUAL(body_str.compare(ret_str), 0);
-        VERIFY_ARE_EQUAL(ret_msg.messge_type(), websocket_message_type::text_message);
+        VERIFY_ARE_EQUAL(ret_msg.message_type(), websocket_message_type::text_message);
     });
 
     // Connect after the client is waiting on a receive task.

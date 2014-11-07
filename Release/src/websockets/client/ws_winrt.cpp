@@ -233,18 +233,16 @@ public:
             return pplx::task_from_exception<void>(websocket_exception("Message size too large. Ensure message length is less than UINT_MAX."));
         }
 
+        if (++m_num_sends == 1) // No sends in progress
         {
-            if (++m_num_sends == 1) // No sends in progress
-            {
-                // Start sending the message
-                send_msg(msg);
-            }
-            else
-            {
-                // Only actually have to take the lock if touching the queue.
-                std::lock_guard<std::mutex> lock(m_send_lock);
-                m_outgoing_msg_queue.push(msg);
-            }
+            // Start sending the message
+            send_msg(msg);
+        }
+        else
+        {
+            // Only actually have to take the lock if touching the queue.
+            std::lock_guard<std::mutex> lock(m_send_lock);
+            m_outgoing_msg_queue.push(msg);
         }
         return pplx::create_task(msg.body_sent());
     }
@@ -347,13 +345,19 @@ public:
                     eptr = std::make_exception_ptr(websocket_exception("Failed to send all the bytes."));
                 }
             }
-            catch (const websocket_exception& ex)
+            catch (Platform::Exception^ e)
             {
-                eptr = std::make_exception_ptr(ex);
+                // Convert to websocket_exception.
+                eptr = std::make_exception_ptr(websocket_exception(e->HResult));
+            }
+            catch (const websocket_exception &e)
+            {
+                // Catch to avoid slicing and losing the type if falling through to catch (...).
+                eptr = std::make_exception_ptr(e);
             }
             catch (...)
             {
-                eptr = std::make_exception_ptr(websocket_exception("Failed to send data over the websocket connection."));
+                eptr = std::make_exception_ptr(std::current_exception());
             }
 
             if (acquired)
@@ -366,21 +370,22 @@ public:
             {
                 msg.signal_body_sent(eptr);
             }
-
+            else
             {
-                if (--this_client->m_num_sends > 0)
-                {
-                    // Only hold the lock when actually touching the queue.
-                    websocket_outgoing_message next_msg;
-                    {
-                        std::lock_guard<std::mutex> lock(this_client->m_send_lock);
-                        next_msg = this_client->m_outgoing_msg_queue.front();
-                        this_client->m_outgoing_msg_queue.pop();
-                    }
-                    this_client->send_msg(next_msg);
-                }
+                msg.signal_body_sent();
             }
-            msg.signal_body_sent();
+
+            if (--this_client->m_num_sends > 0)
+            {
+                // Only hold the lock when actually touching the queue.
+                websocket_outgoing_message next_msg;
+                {
+                    std::lock_guard<std::mutex> lock(this_client->m_send_lock);
+                    next_msg = this_client->m_outgoing_msg_queue.front();
+                    this_client->m_outgoing_msg_queue.pop();
+                }
+                this_client->send_msg(next_msg);
+            }
         });
     }
 
@@ -488,7 +493,7 @@ void ReceiveContext::OnReceive(MessageWebSocket^ sender, MessageWebSocketMessage
         }
         m_receive_handler(incoming_msg);
     }
-    catch(...)
+    catch (...)
     {
         // Swallow the exception for now. Following up on this with the WinRT team.
         // We can handle this more gracefully once we know the scenarios where DataReader operations can throw an exception:

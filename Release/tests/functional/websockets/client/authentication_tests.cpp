@@ -98,7 +98,7 @@ TEST(ssl_test)
         auto ret_str = ret_msg.extract_string().get();
 
         VERIFY_ARE_EQUAL(body_str.compare(ret_str), 0);
-        VERIFY_ARE_EQUAL(ret_msg.messge_type(), websocket_message_type::text_message);
+        VERIFY_ARE_EQUAL(ret_msg.message_type(), websocket_message_type::text_message);
     });
 
     websocket_outgoing_message msg;

@@ -220,9 +220,19 @@ public:
     /// <summary>
     /// Returns the type of the received message.
     /// </summary>
+    CASABLANCA_DEPRECATED("Incorrectly spelled API, use message_type() instead.")
     websocket_message_type messge_type() const
     {
         return m_msg_type;
+    }
+
+    /// <summary>
+    /// Returns the type of the received message, either string or binary.
+    /// </summary>
+    /// <returns>websocket_message_type</returns>
+    websocket_message_type message_type() const
+    {
+        return _m_impl->message_type();
     }
 
 private:
