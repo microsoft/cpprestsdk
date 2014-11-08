@@ -123,6 +123,8 @@ fi
 if [ "${DO_OPENSSL}" == "1" ]
 then
 (
+    if [ ! -d "openssl" ]; then mkdir openssl; fi
+    cd openssl
     cp "${DIR}/openssl/Makefile" .
     export ANDROID_NDK_ROOT="${NDK_DIR}"
     make all
@@ -138,15 +140,14 @@ fi
 if [ "${DO_LIBICONV}" == "1" ]
 then
 (
-    rm -rf libiconv
-    mkdir libiconv
-    cd libiconv
     if [ ! -e "libiconv-1.13.1.tar.gz" ]
     then
 	wget http://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.13.1.tar.gz
     fi
-    rm -rf libiconv-1.13.1
-    tar xzf libiconv-1.13.1.tar.gz
+    rm -rf libiconv
+    mkdir libiconv
+    cd libiconv
+    tar xzf ../libiconv-1.13.1.tar.gz
     patch -b -p0 < "$DIR/libiconv/libiconv.patch"
     cd libiconv-1.13.1
     ./configure
@@ -154,10 +155,14 @@ then
     cd ../jni
     "${NDK_DIR}/ndk-build" || exit 1
     cd ..
-    mkdir -p r9d-9-armeabiv7a/include
-    mkdir -p r9d-9-armeabiv7a/lib
-    cp libiconv-1.13.1/include/iconv.h r9d-9-armeabiv7a/include/
-    cp libs/armeabi-v7a/libiconv.so r9d-9-armeabiv7a/lib/
+    mkdir -p armeabi-v7a/include
+    mkdir -p armeabi-v7a/lib
+    mkdir -p x86/include
+    mkdir -p x86/lib
+    cp libiconv-1.13.1/include/iconv.h armeabi-v7a/include/
+    cp libiconv-1.13.1/include/iconv.h x86/include/
+    cp obj/local/x86/libiconv.a x86/lib/
+    cp obj/local/armeabi-v7a/libiconv.a armeabi-v7a/lib/
 )
 fi
 
@@ -169,12 +174,38 @@ fi
 if [ "${DO_BOOST}" == "1" ]
 then
 (
-    rm -rf Boost-for-Android
-    git clone https://github.com/MysticTreeGames/Boost-for-Android.git
-    cd Boost-for-Android
-    git checkout 1c95d349d5f92c5ac1c24e0ec6985272a3e3883c
-    patch -p1 < "$DIR/boost-for-android.patch"
-    PATH="$PATH:$NDK_DIR" ./build-android.sh --boost=1.55.0 --with-libraries=locale,random,date_time,filesystem,system,thread,chrono "${NDK_DIR}" || exit 1
+    (
+	if [ ! -d "Boost-for-Android" ]
+	then
+	    git clone https://github.com/MysticTreeGames/Boost-for-Android.git
+	fi
+	cd Boost-for-Android
+	if [ ! -e "cpprestsdk.patched.stamp" ]
+	then
+	    git checkout 1c95d349d5f92c5ac1c24e0ec6985272a3e3883c
+	    git reset --hard HEAD
+	    patch -p1 < "$DIR/boost-for-android.patch"
+	    touch cpprestsdk.patched.stamp
+	fi
+	PATH="$PATH:$NDK_DIR" ./build-android.sh --boost=1.55.0 --with-libraries=locale,random,date_time,filesystem,system,thread,chrono "${NDK_DIR}" || exit 1
+    )
+
+    (
+	if [ ! -d "Boost-for-Android-x86" ]
+	then
+	    git clone Boost-for-Android Boost-for-Android-x86
+	fi
+	cd Boost-for-Android-x86
+	if [ ! -e "cpprestsdk.patched.stamp" ]
+	then
+	    git checkout 1c95d349d5f92c5ac1c24e0ec6985272a3e3883c
+	    git reset --hard HEAD
+	    patch -p1 < "$DIR/boost-for-android-x86.patch"
+	    ln -s ../Boost-for-Android/boost_1_55_0.tar.bz2 .
+	    touch cpprestsdk.patched.stamp
+	fi
+	PATH="$PATH:$NDK_DIR" ./build-android.sh --boost=1.55.0 --with-libraries=locale,random,date_time,filesystem,system,thread,chrono "${NDK_DIR}" || exit 1
+    )
 )
 fi
 
