@@ -642,6 +642,70 @@ public:
         ~json_exception() _noexcept {}
     };
 
+    namespace details
+    {
+        enum json_error
+        {
+            left_over_character_in_stream = 1,
+            malformed_array_literal,
+            malformed_comment,
+            malformed_literal,
+            malformed_object_literal,
+            malformed_numeric_literal,
+            malformed_string_literal,
+            malformed_token,
+            mismatched_brances,
+            nesting,
+            unexpected_token
+        };
+
+        class json_error_category_impl : public std::error_category
+        {
+        public:
+            virtual const char* json_error_category_impl::name() const
+            {
+                return "json";
+            }
+
+            virtual std::string json_error_category_impl::message(int ev) const
+            {
+                switch (ev)
+                {
+                case json_error::left_over_character_in_stream:
+                    return "Left-over characters in stream after parsing a JSON value";
+                case json_error::malformed_array_literal:
+                    return "Malformed array literal";
+                case json_error::malformed_comment:
+                    return "Malformed comment";
+                case json_error::malformed_literal:
+                    return "Malformed literal";
+                case json_error::malformed_object_literal:
+                    return "Malformed object literal";
+                case json_error::malformed_numeric_literal:
+                    return "Malformed numeric literal";
+                case json_error::malformed_string_literal:
+                    return "Malformed string literal";
+                case json_error::malformed_token:
+                    return "Malformed token";
+                case json_error::mismatched_brances:
+                    return "Mismatched braces";
+                case json_error::nesting:
+                    return "Nesting too deep";
+                case json_error::unexpected_token:
+                    return "Unexpected token";
+                default:
+                    return "Unknown json error";
+                }
+            }
+        };
+
+        inline const json_error_category_impl& json_error_category()
+        {
+            static json_error_category_impl instance;
+            return instance;
+        }
+    }
+
     /// <summary>
     /// A JSON array represented as a C++ class.
     /// </summary>
