@@ -38,7 +38,6 @@ namespace tests { namespace functional { namespace json_tests {
         VERIFY_IS_TRUE(ec_.value() > 0); \
         VERIFY_IS_TRUE(value_.is_null()); \
     }
-
 #endif
 
 SUITE(negative_parsing_tests)
@@ -155,7 +154,7 @@ TEST(stream_left_over_chars)
     std::stringbuf buf;
     buf.sputn("[false]false", 12);
     std::istream stream(&buf);
-    VERIFY_THROWS(web::json::value::parse(stream), json::json_exception);
+    VERIFY_JSON_THROWS(stream);
 }
 
 // Test using Windows only API.
@@ -165,7 +164,7 @@ TEST(wstream_left_over_chars)
     std::wstringbuf buf;
     buf.sputn(L"[false]false", 12);
     std::wistream stream(&buf);
-    VERIFY_THROWS(web::json::value::parse(stream), json::json_exception);
+    VERIFY_JSON_THROWS(stream);
 }
 #endif
 

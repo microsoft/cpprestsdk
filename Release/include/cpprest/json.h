@@ -395,7 +395,7 @@ public:
         /// Attempts to parse a string and construct a JSON value.
         /// </summary>
         /// <param name="value">The C++ value to create a JSON value from, a C++ STL double-byte string</param>
-        /// <param name="errorCode">If parsing fails, the error code is filled with a protocol error</param>
+        /// <param name="errorCode">If parsing fails, the error code is greater than 0</param>
         /// <returns>The parsed object. Returns web::json::value::null if failed</returns>
         _ASYNCRTIMP static value parse(const utility::string_t&, std::error_code&);
         
@@ -420,6 +420,14 @@ public:
         _ASYNCRTIMP static value parse(utility::istream_t &input);
 
         /// <summary>
+        /// Parses a JSON value from the contents of an input stream using the native platform character width.
+        /// </summary>
+        /// <param name="input">The stream to read the JSON value from</param>
+        /// <param name="errorCode">If parsing fails, the error code is greater than 0</param>
+        /// <returns>The parsed object. Returns web::json::value::null if failed</returns>
+        _ASYNCRTIMP static value parse(utility::istream_t &input, std::error_code& error);
+
+        /// <summary>
         /// Writes the current JSON value to a stream with the native platform character width.
         /// </summary>
         /// <param name="stream">The stream that the JSON string representation should be written to.</param>
@@ -431,6 +439,14 @@ public:
         /// </summary>
         /// <param name="stream">The stream to read the JSON value from</param>
         _ASYNCRTIMP static value parse(std::istream& stream);
+
+        /// <summary>
+        /// Parses a JSON value from the contents of a single-byte (UTF8) stream.
+        /// </summary>
+        /// <param name="stream">The stream to read the JSON value from</param>
+        /// <param name="errorCode">If parsing fails, the error code is greater than 0</param>
+        /// <returns>The parsed object. Returns web::json::value::null if failed</returns>
+        _ASYNCRTIMP static value parse(std::istream& stream, std::error_code& error);
 
         /// <summary>
         /// Serializes the content of the value into a single-byte (UTF8) stream.

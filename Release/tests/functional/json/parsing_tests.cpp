@@ -68,6 +68,16 @@ do { \
     } \
 } while (false)
 
+
+#define JSON_TEST_HELPER(jsonData) \
+{ \
+    std::error_code err; \
+    auto parsedObject = web::json::value::parse(jsonData, err); \
+    \
+    VERIFY_IS_TRUE(err.value() == 0); \
+    VERIFY_IS_TRUE(!parsedObject.is_null()); \
+}
+
 SUITE(parsing_tests)
 {
 
@@ -616,21 +626,68 @@ TEST(non_default_locale)
 TEST(parse_overload_success)
 {
     std::error_code err;
-    utility::string_t str(U("\"JSONString\""));
-    json::value parsedObject = json::value::parse(str, err);
+    utility::string_t valueStr(U("\"JSONString\""));
+    utility::string_t arrStr(U("[true,false,-1.55,5,null,{\"abc\":5555}]"));
+    utility::string_t objStr(U("{\"k\":3, \"j\":2, \"i\":1}"));
 
-    VERIFY_IS_TRUE(err.value() == 0);
-    VERIFY_IS_TRUE(!parsedObject.is_null());
+    JSON_TEST_HELPER(valueStr);
+    JSON_TEST_HELPER(arrStr);
+    JSON_TEST_HELPER(objStr);
+
+    utility::stringstream_t valueStringStream;
+    utility::stringstream_t arrayStringStream;
+    utility::stringstream_t objStringStream;
+
+    valueStringStream << valueStr;
+    arrayStringStream << arrStr;
+    objStringStream << objStr;
+
+    JSON_TEST_HELPER(valueStringStream.str());
+    JSON_TEST_HELPER(arrayStringStream.str());
+    JSON_TEST_HELPER(objStringStream.str());
+
+#ifdef _MS_WINDOWS
+    std::wstringbuf buf;
+
+    buf.sputn(valueStr.c_str(), valueStr.size());
+    std::wistream valStream(&buf);
+    JSON_TEST_HELPER(valStream);
+
+    buf.sputn(arrStr.c_str(), arrStr.size());
+    std::wistream arrStream(&buf);
+    JSON_TEST_HELPER(arrStream);
+
+    buf.sputn(objStr.c_str(), objStr.size());
+    std::wistream objStream(&buf);
+    JSON_TEST_HELPER(objStream);
+#endif
 }
 
 TEST(parse_overload_failed)
 {
-    std::error_code err;
+    std::error_code err, streamErr, iStreamErr;
     utility::string_t str(U("JSONString"));
+    utility::string_t arrStr(U("[true, false"));
     json::value parsedObject = json::value::parse(str, err);
 
     VERIFY_IS_TRUE(err.value() > 0);
     VERIFY_IS_TRUE(parsedObject.is_null());
+
+    utility::stringstream_t stream;
+    stream << str;
+    
+    parsedObject = json::value::parse(arrStr, streamErr);
+    VERIFY_IS_TRUE(streamErr.value() > 0);
+    VERIFY_IS_TRUE(parsedObject.is_null());
+
+#ifdef _MS_WINDOWS
+    std::wstringbuf buf;
+    buf.sputn(str.c_str(), str.size());
+    std::wistream iStream(&buf);
+    parsedObject = json::value::parse(str, iStreamErr);
+    VERIFY_IS_TRUE(iStreamErr.value() > 0);
+    VERIFY_IS_TRUE(parsedObject.is_null());
+#endif
 }
 
 } // SUITE(parsing_tests)

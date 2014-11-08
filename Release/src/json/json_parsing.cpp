@@ -1208,6 +1208,31 @@ static web::json::value _parse_stream(utility::istream_t &stream)
     return value;
 }
 
+static web::json::value _parse_stream(utility::istream_t &stream, std::error_code& error)
+{
+    web::json::details::JSON_StreamParser<utility::char_t> parser(stream);
+
+    web::json::details::JSON_Parser<utility::char_t>::Token tkn;
+
+    parser.GetNextToken(tkn);
+
+    web::json::value returnObject;
+
+    if (tkn.err.value() == 0)
+    {
+        returnObject = parser.ParseValue(tkn);
+
+        if (tkn.kind != web::json::details::JSON_Parser<utility::char_t>::Token::TKN_EOF)
+        {
+            returnObject = web::json::value();
+            web::json::details::SetErrorCode(tkn, web::json::details::json_error::left_over_character_in_stream);
+        }
+    }
+
+    error = std::move(tkn.err);
+    return returnObject;
+}
+
 #ifdef _MS_WINDOWS
 static web::json::value _parse_narrow_stream(std::istream &stream)
 {
@@ -1234,6 +1259,31 @@ static web::json::value _parse_narrow_stream(std::istream &stream)
         web::json::details::CreateError(tkn, _XPLATSTR("Left-over characters in stream after parsing a JSON value"));
     }
     return value;
+}
+
+static web::json::value _parse_narrow_stream(std::istream &stream, std::error_code& error)
+{
+    web::json::details::JSON_StreamParser<char> parser(stream);
+
+    web::json::details::JSON_StreamParser<char>::Token tkn;
+
+    parser.GetNextToken(tkn);
+
+    web::json::value returnObject;
+
+    if (tkn.err.value() == 0)
+    {
+        returnObject = parser.ParseValue(tkn);
+
+        if (tkn.kind != web::json::details::JSON_Parser<utility::char_t>::Token::TKN_EOF)
+        {
+            returnObject = web::json::value();
+            web::json::details::SetErrorCode(tkn, web::json::details::json_error::left_over_character_in_stream);
+        }
+    }
+
+    error = std::move(tkn.err);
+    return returnObject;
 }
 #endif
 
@@ -1268,6 +1318,7 @@ web::json::value web::json::value::parse(const utility::string_t& str, std::erro
     web::json::details::JSON_StringParser<utility::char_t> parser(str);
 
     web::json::details::JSON_Parser<utility::char_t>::Token tkn;
+
     parser.GetNextToken(tkn);
 
     web::json::value returnObject;
@@ -1292,9 +1343,19 @@ web::json::value web::json::value::parse(utility::istream_t &stream)
     return _parse_stream(stream);
 }
 
+web::json::value web::json::value::parse(utility::istream_t &stream, std::error_code& error)
+{
+    return _parse_stream(stream, error);
+}
+
 #ifdef _MS_WINDOWS
 web::json::value web::json::value::parse(std::istream& stream)
 {
     return _parse_narrow_stream(stream);
+}
+
+web::json::value web::json::value::parse(std::istream& stream, std::error_code& error)
+{
+    return _parse_narrow_stream(stream, error);
 }
 #endif
