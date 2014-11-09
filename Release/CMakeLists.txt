@@ -20,7 +20,7 @@ if(IOS)
     "${IOS_SOURCE_DIR}/openssl/lib/libssl.a"
     )
 
-  # The cxx_flags must be set here, because the ios-cmake toolchain file unfortunately sets "-headerpad_max_install_names" which is not a valid clang flag.
+  # The cxx_flags must be reset here, because the ios-cmake toolchain file unfortunately sets "-headerpad_max_install_names" which is not a valid clang flag.
   set(CMAKE_CXX_FLAGS "-fvisibility=hidden -fvisibility-inlines-hidden")
 
   set(BUILD_SHARED_LIBS OFF)
@@ -29,18 +29,36 @@ if(IOS)
 elseif(ANDROID)
   set(Boost_COMPILER "-clang")
   set(Boost_USE_STATIC_LIBS ON)
-  set(BOOST_ROOT "${CMAKE_BINARY_DIR}/../Boost-for-Android/build")
-  set(BOOST_LIBRARYDIR "${CMAKE_BINARY_DIR}/../Boost-for-Android/build/lib")
+  if(ARM)
+    set(BOOST_ROOT "${CMAKE_BINARY_DIR}/../Boost-for-Android/build")
+    set(BOOST_LIBRARYDIR "${CMAKE_BINARY_DIR}/../Boost-for-Android/build/lib")
+  else()
+    set(BOOST_ROOT "${CMAKE_BINARY_DIR}/../Boost-for-Android-x86/build")
+    set(BOOST_LIBRARYDIR "${CMAKE_BINARY_DIR}/../Boost-for-Android-x86/build/lib")
+  endif()
   find_host_package(Boost 1.55 EXACT REQUIRED COMPONENTS random system thread locale filesystem chrono atomic)
 
   # find_package(Threads REQUIRED)
   set(OPENSSL_FOUND 1)
-  set(OPENSSL_INCLUDE_DIR "${CMAKE_BINARY_DIR}/../openssl/armeabi-v7a/include")
-  set(OPENSSL_LIBRARIES
-    "${CMAKE_BINARY_DIR}/../openssl/armeabi-v7a/lib/libssl.a"
-    "${CMAKE_BINARY_DIR}/../openssl/armeabi-v7a/lib/libcrypto.a"
-    )
-  set(LIBCXX_STL "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.8/libs/armeabi-v7a/thumb/libgnustl_static.a")
+  if(ARM)
+    set(OPENSSL_INCLUDE_DIR "${CMAKE_BINARY_DIR}/../openssl/armeabi-v7a/include")
+    set(OPENSSL_LIBRARIES
+      "${CMAKE_BINARY_DIR}/../openssl/armeabi-v7a/lib/libssl.a"
+      "${CMAKE_BINARY_DIR}/../openssl/armeabi-v7a/lib/libcrypto.a"
+      )
+  else()
+    set(OPENSSL_INCLUDE_DIR "${CMAKE_BINARY_DIR}/../openssl/x86/include")
+    set(OPENSSL_LIBRARIES
+      "${CMAKE_BINARY_DIR}/../openssl/x86/lib/libssl.a"
+      "${CMAKE_BINARY_DIR}/../openssl/x86/lib/libcrypto.a"
+      )
+  endif()
+
+  if(ARM)
+    set(LIBCXX_STL "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.8/libs/armeabi-v7a/thumb/libgnustl_static.a")
+  else()
+    set(LIBCXX_STL "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.8/libs/x86/thumb/libgnustl_static.a")
+  endif()
   set(ANDROID_STL_FLAGS
 #    pthread
     ${LIBCXX_STL}
@@ -52,7 +70,7 @@ elseif(ANDROID)
 #    -nodefaultlibs
     )
 
-  set(BUILD_SHARED_LIBS ON)
+  option(BUILD_SHARED_LIBS "Build shared Libraries." OFF)
   set(BUILD_SAMPLES OFF)
   option(BUILD_TESTS "Build tests." ON)
 elseif(UNIX) # This includes OSX

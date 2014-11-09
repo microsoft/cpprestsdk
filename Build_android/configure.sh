@@ -237,7 +237,7 @@ then
 	    -DANDROID_GOLD_LINKER=OFF \
 	    -DCMAKE_BUILD_TYPE=Debug \
 	    -DANDROID_NDK="${ANDROID_NDK}"
-	make -j 3
+	make -j 1
     )
 
     (
@@ -253,7 +253,39 @@ then
 	    -DANDROID_NATIVE_API_LEVEL=android-9 \
 	    -DANDROID_GOLD_LINKER=OFF \
 	    -DCMAKE_BUILD_TYPE=Release
-	make -j 3
+	make -j 1
+    )
+
+    (
+	mkdir -p build.x86.debug
+	cd build.x86.debug
+	cmake "$DIR/../Release/" \
+	    -DCMAKE_TOOLCHAIN_FILE=../android-cmake/android.toolchain.cmake \
+	    -DANDROID_ABI=x86 \
+	    -DANDROID_TOOLCHAIN_NAME=x86-clang3.4 \
+	    -DANDROID_STL=none \
+	    -DANDROID_STL_FORCE_FEATURES=ON \
+            -DANDROID_NATIVE_API_LEVEL=android-9 \
+	    -DANDROID_GOLD_LINKER=OFF \
+	    -DCMAKE_BUILD_TYPE=Debug \
+	    -DANDROID_NDK="${ANDROID_NDK}"
+	make -j 1
+    )
+
+    (
+	mkdir -p build.x86.release
+	cd build.x86.release
+	cmake "$DIR/../Release/" \
+	    -DCMAKE_TOOLCHAIN_FILE=../android-cmake/android.toolchain.cmake \
+	    -DANDROID_ABI=x86 \
+	    -DANDROID_TOOLCHAIN_NAME=x86-clang3.4 \
+	    -DANDROID_STL=none \
+	    -DANDROID_STL_FORCE_FEATURES=ON \
+	    -DANDROID_NDK="${ANDROID_NDK}" \
+	    -DANDROID_NATIVE_API_LEVEL=android-9 \
+	    -DANDROID_GOLD_LINKER=OFF \
+	    -DCMAKE_BUILD_TYPE=Release
+	make -j 1
     )
 )
 fi
