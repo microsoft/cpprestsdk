@@ -678,12 +678,12 @@ public:
         class json_error_category_impl : public std::error_category
         {
         public:
-            virtual const char* json_error_category_impl::name() const override
+            virtual const char* name() const CPPREST_NOEXCEPT override
             {
                 return "json";
             }
 
-            virtual std::string json_error_category_impl::message(int ev) const override
+            virtual std::string message(int ev) const override
             {
                 switch (ev)
                 {
