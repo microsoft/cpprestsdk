@@ -95,13 +95,7 @@
 #include <mutex>
 #include <array>
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1800)
-#include <ppltasks.h>
-namespace pplx = Concurrency;
-#else
 #include "pplx/pplxtasks.h"
-#endif
-
 #include "cpprest/version.h"
 
 // Stream

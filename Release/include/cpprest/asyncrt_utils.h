@@ -27,21 +27,16 @@
 
 #pragma once
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1800)
-#include <ppltasks.h>
-namespace pplx = Concurrency;
-#else
-#include "pplx/pplxtasks.h"
-#endif
-
-#include "cpprest/xxpublic.h"
-#include "cpprest/basic_types.h"
 #include <string>
 #include <vector>
 #include <cstdint>
 #include <system_error>
 #include <random>
 #include <locale.h>
+
+#include "pplx/pplxtasks.h"
+#include "cpprest/xxpublic.h"
+#include "cpprest/basic_types.h"
 
 #if !defined(_MS_WINDOWS) || (_MSC_VER >= 1700)
 #include <chrono>
