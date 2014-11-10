@@ -53,14 +53,16 @@ namespace json
 namespace details
 {
 
-
-
-
 //
 // JSON Parsing
 //
 
 template <typename Token>
+#if defined(_MS_WINDOWS)
+    __declspec(noreturn)
+#else
+    __attribute__((noreturn))
+#endif
 void CreateError(Token &tk, const utility::string_t &message)
 {
     utility::ostringstream_t os;
