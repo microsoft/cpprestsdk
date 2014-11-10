@@ -456,3 +456,9 @@ web::json::value& web::json::value::operator[](size_t index)
     }
     return m_value->index(index);
 }
+
+const web::json::details::json_error_category_impl& web::json::details::json_error_category()
+{
+    static web::json::details::json_error_category_impl instance;
+    return instance;
+}

@@ -398,7 +398,7 @@ public:
         /// <param name="errorCode">If parsing fails, the error code is greater than 0</param>
         /// <returns>The parsed object. Returns web::json::value::null if failed</returns>
         _ASYNCRTIMP static value parse(const utility::string_t&, std::error_code&);
-        
+
         /// <summary>
         /// Serializes the current JSON value to a C++ string.
         /// </summary>
@@ -678,12 +678,12 @@ public:
         class json_error_category_impl : public std::error_category
         {
         public:
-            virtual const char* json_error_category_impl::name() const
+            virtual const char* json_error_category_impl::name() const override
             {
                 return "json";
             }
 
-            virtual std::string json_error_category_impl::message(int ev) const
+            virtual std::string json_error_category_impl::message(int ev) const override
             {
                 switch (ev)
                 {
@@ -715,11 +715,7 @@ public:
             }
         };
 
-        inline const json_error_category_impl& json_error_category()
-        {
-            static json_error_category_impl instance;
-            return instance;
-        }
+        _ASYNCRTIMP const json_error_category_impl& json_error_category();
     }
 
     /// <summary>
