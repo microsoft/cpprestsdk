@@ -509,13 +509,13 @@ utility::string_t make_deep_json_string(size_t depth)
 TEST(deeply_nested)
 {
 #if defined(__APPLE__)
-    size_t safeDepth = 64;
-    size_t overDepth = 65;
+    size_t safeDepth = 32;
+    size_t overDepth = 33;
 #else
     size_t safeDepth = 128;
     size_t overDepth = 129;
 #endif
-                                     
+
     // This should parse without issues:
     auto strGood = make_deep_json_string(safeDepth);
     json::value::parse(strGood);
