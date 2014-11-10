@@ -38,7 +38,6 @@ elseif(ANDROID)
   endif()
   find_host_package(Boost 1.55 EXACT REQUIRED COMPONENTS random system thread locale filesystem chrono atomic)
 
-  # find_package(Threads REQUIRED)
   set(OPENSSL_FOUND 1)
   if(ARM)
     set(OPENSSL_INCLUDE_DIR "${CMAKE_BINARY_DIR}/../openssl/armeabi-v7a/include")
@@ -59,15 +58,15 @@ elseif(ANDROID)
   else()
     set(LIBCXX_STL "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.8/libs/x86/thumb/libgnustl_static.a")
   endif()
+  # These are used in the shared library case
   set(ANDROID_STL_FLAGS
-#    pthread
     ${LIBCXX_STL}
-#    atomic
+    atomic
     dl
     gcc
     c
     m
-#    -nodefaultlibs
+    -nodefaultlibs
     )
 
   option(BUILD_SHARED_LIBS "Build shared Libraries." OFF)

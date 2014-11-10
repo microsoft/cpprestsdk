@@ -37,7 +37,7 @@ JNIEnv* get_jvm_env()
     auto result = JVM.load()->AttachCurrentThread(&env, nullptr);
     if (result != JNI_OK)
     {
-	throw std::runtime_error("Could not attach to JVM");
+        throw std::runtime_error("Could not attach to JVM");
     }
 
     return env;
