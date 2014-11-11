@@ -68,16 +68,6 @@ do { \
     } \
 } while (false)
 
-
-#define JSON_TEST_HELPER(jsonData) \
-{ \
-    std::error_code err; \
-    auto parsedObject = web::json::value::parse(jsonData, err); \
-    \
-    VERIFY_IS_TRUE(err.value() == 0); \
-    VERIFY_IS_TRUE(!parsedObject.is_null()); \
-}
-
 SUITE(parsing_tests)
 {
 
@@ -623,6 +613,15 @@ TEST(non_default_locale)
     }
 }
 
+template <typename T>
+void error_code_helper(T &jsonData)
+{
+    std::error_code err;
+    auto parsedObject = web::json::value::parse(jsonData, err);
+    VERIFY_IS_TRUE(err.value() == 0);
+    VERIFY_IS_TRUE(!parsedObject.is_null());
+}
+
 TEST(parse_overload_success)
 {
     std::error_code err;
@@ -630,9 +629,9 @@ TEST(parse_overload_success)
     utility::string_t arrStr(U("[true,false,-1.55,5,null,{\"abc\":5555}]"));
     utility::string_t objStr(U("{\"k\":3, \"j\":2, \"i\":1}"));
 
-    JSON_TEST_HELPER(valueStr);
-    JSON_TEST_HELPER(arrStr);
-    JSON_TEST_HELPER(objStr);
+    error_code_helper(valueStr);
+    error_code_helper(arrStr);
+    error_code_helper(objStr);
 
     utility::stringstream_t valueStringStream;
     utility::stringstream_t arrayStringStream;
@@ -642,24 +641,24 @@ TEST(parse_overload_success)
     arrayStringStream << arrStr;
     objStringStream << objStr;
 
-    JSON_TEST_HELPER(valueStringStream.str());
-    JSON_TEST_HELPER(arrayStringStream.str());
-    JSON_TEST_HELPER(objStringStream.str());
+    error_code_helper(valueStringStream);
+    error_code_helper(arrayStringStream);
+    error_code_helper(objStringStream);
 
 #ifdef _MS_WINDOWS
     std::wstringbuf buf;
 
     buf.sputn(valueStr.c_str(), valueStr.size());
     std::wistream valStream(&buf);
-    JSON_TEST_HELPER(valStream);
+    error_code_helper(valStream);
 
     buf.sputn(arrStr.c_str(), arrStr.size());
     std::wistream arrStream(&buf);
-    JSON_TEST_HELPER(arrStream);
+    error_code_helper(arrStream);
 
     buf.sputn(objStr.c_str(), objStr.size());
     std::wistream objStream(&buf);
-    JSON_TEST_HELPER(objStream);
+    error_code_helper(objStream);
 #endif
 }
 
