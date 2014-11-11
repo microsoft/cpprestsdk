@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@
 #include "cpprest/http_windows_server.h"
 #include "cpprest/rawptrstream.h"
 
-using namespace web; 
+using namespace web;
 using namespace utility;
 using namespace concurrency;
 using namespace utility::conversions;
@@ -39,11 +39,11 @@ using namespace http::experimental::details;
 
 #define CHUNK_SIZE 64 * 1024
 
-namespace web 
-{ 
+namespace web
+{
 namespace http
 {
-namespace experimental 
+namespace experimental
 {
 namespace details
 {
@@ -288,7 +288,7 @@ pplx::task<void> http_windows_server::register_listener(_In_ web::http::experime
     timeouts.HeaderWait = secs;
     timeouts.Flags.Present = 1;
     errorCode = HttpSetUrlGroupProperty(
-        urlGroupId, 
+        urlGroupId,
         HttpServerTimeoutsProperty,
         &timeouts,
         sizeof(HTTP_TIMEOUT_LIMIT_INFO));
@@ -358,7 +358,7 @@ pplx::task<void> http_windows_server::unregister_listener(_In_ web::http::experi
 pplx::task<void> http_windows_server::start()
 {
     // Initialize data.
-    m_serverSessionId = 0; 
+    m_serverSessionId = 0;
     m_hRequestQueue = nullptr;
     m_threadpool_io = nullptr;
     m_numOutstandingRequests = 0;
@@ -407,7 +407,7 @@ pplx::task<void> http_windows_server::stop()
     }
 
     // Release resources.
-    if(m_serverSessionId != 0) 
+    if(m_serverSessionId != 0)
     {
         HttpCloseServerSession(m_serverSessionId);
     }
@@ -460,7 +460,7 @@ pplx::task<void> http_windows_server::respond(http::http_response response)
     });
 }
 
-windows_request_context::windows_request_context() 
+windows_request_context::windows_request_context()
     : m_sending_in_chunks(false),
       m_transfer_encoding(false),
       m_remaining_to_write(0)
@@ -511,7 +511,7 @@ void windows_request_context::async_process_request(HTTP_REQUEST_ID request_id, 
             headers_size,
             NULL,
             &m_overlapped);
-    
+
     if(error_code != NO_ERROR && error_code != ERROR_IO_PENDING)
     {
         CancelThreadpoolIo(pServer->m_threadpool_io);
@@ -584,7 +584,7 @@ void windows_request_context::read_request_body_chunk()
         if(error_code == ERROR_HANDLE_EOF)
         {
             m_msg._get_impl()->_complete(request_body_buf.in_avail());
-        } 
+        }
         else
         {
             m_msg._get_impl()->_complete(0, std::make_exception_ptr(http_exception(error_code)));
@@ -619,7 +619,7 @@ void windows_request_context::read_body_io_completion(DWORD error_code, DWORD by
 void windows_request_context::dispatch_request_to_listener(_In_ web::http::experimental::listener::details::http_listener_impl *pListener)
 {
     m_msg._set_listener_path(pListener->uri().path());
-    
+
     // Save http_request copy to dispatch to user's handler in case content_ready() completes before.
     http_request request = m_msg;
 
@@ -687,7 +687,7 @@ void windows_request_context::dispatch_request_to_listener(_In_ web::http::exper
     {
         pListener->handle_request(request);
         pListenerLock->unlock();
-    } 
+    }
     catch(...)
     {
         pListenerLock->unlock();
@@ -805,7 +805,7 @@ void windows_request_context::transmit_body()
         m_response_completed.set();
         return;
     }
-    
+
     // In both cases here we could perform optimizations to try and use acquire on the streams to avoid an extra copy.
     if ( m_sending_in_chunks )
     {
@@ -818,7 +818,7 @@ void windows_request_context::transmit_body()
         m_response.body().read(buf, next_chunk_size).then([this](pplx::task<size_t> op)
         {
             size_t bytes_read = 0;
-            
+
             // If an exception occurs surface the error to user on the server side
             // and cancel the request so the client sees the error.
             try { bytes_read = op.get(); } catch (...)
@@ -850,11 +850,11 @@ void windows_request_context::transmit_body()
         m_response.body().read(buf, CHUNK_SIZE).then([this, body_data_length](pplx::task<size_t> op)
         {
             size_t bytes_read = 0;
-            
+
             // If an exception occurs surface the error to user on the server side
             // and cancel the request so the client sees the error.
-            try 
-            { 
+            try
+            {
                 bytes_read = op.get();
             } catch (...)
             {
@@ -936,16 +936,16 @@ void windows_request_context::cancel_request(std::exception_ptr except_ptr)
 
     m_except_ptr = except_ptr;
 
-    // Cancel request callback function. 
+    // Cancel request callback function.
     m_overlapped.set_http_io_completion([this](DWORD error, DWORD nBytes){cancel_request_io_completion(error, nBytes);});
 
     StartThreadpoolIo(pServer->m_threadpool_io);
 
     auto error_code = HttpCancelHttpRequest(
         pServer->m_hRequestQueue,
-        m_request_id, 
+        m_request_id,
         &m_overlapped);
-    
+
     if(error_code != NO_ERROR && error_code != ERROR_IO_PENDING)
     {
         CancelThreadpoolIo(pServer->m_threadpool_io);

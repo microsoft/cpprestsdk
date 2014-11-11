@@ -555,7 +555,7 @@ static void set_content_type_if_not_present(http::http_headers &headers, const u
 void details::http_msg_base::set_body(const streams::istream &instream, const utf8string &contentType)
 {
     set_content_type_if_not_present(
-    		headers(), 
+    		headers(),
 #ifdef _UTF16_STRINGS
     		utility::conversions::utf8_to_utf16(contentType));
 #else

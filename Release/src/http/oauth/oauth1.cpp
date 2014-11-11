@@ -120,7 +120,7 @@ cleanup:
 using namespace Windows::Security::Cryptography;
 using namespace Windows::Security::Cryptography::Core;
 using namespace Windows::Storage::Streams;
- 
+
 std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t& key, const utility::string_t& data)
 {
     Platform::String^ data_str = ref new Platform::String(data.c_str());
@@ -270,13 +270,13 @@ pplx::task<void> oauth1_config::_request_token(oauth1_state state, bool is_temp_
         {
             throw oauth1_exception(U("parameter 'oauth_token' missing from response: ") + body);
         }
-        
+
         auto token_secret_param = query.find(oauth1_strings::token_secret);
         if (token_secret_param == query.end())
         {
             throw oauth1_exception(U("parameter 'oauth_token_secret' missing from response: ") + body);
         }
-        
+
         // Here the token can be either temporary or access token.
         // The authorization is complete if it is access token.
         m_is_authorization_completed = !is_temp_token_request;
@@ -341,7 +341,7 @@ pplx::task<void> oauth1_config::token_from_redirected_uri(const web::http::uri& 
             << U("' does not match temporary token='") << m_token.access_token() << U("'.");
         return pplx::task_from_exception<void>(oauth1_exception(err.str().c_str()));
     }
-    
+
     auto verifier_param = query.find(oauth1_strings::verifier);
     if (verifier_param == query.end())
     {

@@ -1,7 +1,7 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
@@ -19,7 +19,7 @@
 * ws_msg.cpp
 *
 * Websocket library: Client-side APIs.
-* 
+*
 * This file contains the websocket message implementation
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
@@ -71,7 +71,7 @@ std::vector<::utility::string_t> websocket_client_config::subprotocols() const
 
 pplx::task<std::string> websocket_incoming_message::extract_string() const
 {
-    if (_m_impl->message_type() == websocket_message_type::binary_message)
+    if (m_msg_type == websocket_message_type::binary_message)
     {
         return pplx::task_from_exception<std::string>(websocket_exception("Invalid message type"));
     }

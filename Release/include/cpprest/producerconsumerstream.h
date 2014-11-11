@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,7 +38,7 @@
 #if defined(_MSC_VER) && (_MSC_VER >= 1800)
 #include <ppltasks.h>
 namespace pplx = Concurrency;
-#else 
+#else
 #include "pplx/pplxtasks.h"
 #endif
 
@@ -80,20 +80,20 @@ namespace Concurrency { namespace streams {
             /// <summary>
             /// Constructor
             /// </summary>
-            basic_producer_consumer_buffer(size_t alloc_size) 
+            basic_producer_consumer_buffer(size_t alloc_size)
                 : streambuf_state_manager<_CharType>(std::ios_base::out | std::ios_base::in),
                 m_alloc_size(alloc_size),
                 m_allocBlock(nullptr),
                 m_total(0), m_total_read(0), m_total_written(0),
                 m_synced(0)
-            { 
+            {
             }
 
             /// <summary>
             /// Destructor
             /// </summary>
             virtual ~basic_producer_consumer_buffer()
-            { 
+            {
                 // Note: there is no need to call 'wait()' on the result of close(),
                 // since we happen to know that close() will return without actually
                 // doing anything asynchronously. Should the implementation of _close_write()
@@ -149,7 +149,7 @@ namespace Concurrency { namespace streams {
             /// </summary>
             /// <param name="direction">The I/O direction to seek (see remarks)</param>
             /// <returns>The current position. EOF if the operation fails.</returns>
-            /// <remarks>Some streams may have separate write and read cursors. 
+            /// <remarks>Some streams may have separate write and read cursors.
             ///          For such streams, the direction parameter defines whether to move the read or the write cursor.</remarks>
             virtual pos_type getpos(std::ios_base::openmode mode) const
             {
@@ -162,13 +162,13 @@ namespace Concurrency { namespace streams {
                 else if (mode == std::ios_base::out)
                     return (pos_type)m_total_written;
                 else
-                    return (pos_type)traits::eof(); 
+                    return (pos_type)traits::eof();
             }
 
             // Seeking is not supported
             virtual pos_type seekpos(pos_type, std::ios_base::openmode) { return (pos_type)traits::eof(); }
             virtual pos_type seekoff(off_type , std::ios_base::seekdir , std::ios_base::openmode ) { return (pos_type)traits::eof(); }
-            
+
             /// <summary>
             /// Allocates a contiguous memory block and returns it.
             /// </summary>
@@ -199,7 +199,7 @@ namespace Concurrency { namespace streams {
                 pplx::extensibility::scoped_critical_section_t l(m_lock);
 
                 // The count does not reflect the actual size of the block.
-                // Since we do not allow any more writes to this block it would suffice. 
+                // Since we do not allow any more writes to this block it would suffice.
                 // If we ever change the algorithm to reuse blocks then this needs to be revisited.
 
                 _ASSERTE((bool)m_allocBlock);
@@ -211,7 +211,7 @@ namespace Concurrency { namespace streams {
             }
 
             /// <summary>
-            /// Gets a pointer to the next already allocated contiguous block of data. 
+            /// Gets a pointer to the next already allocated contiguous block of data.
             /// </summary>
             /// <param name="ptr">A reference to a pointer variable that will hold the address of the block on success.</param>
             /// <param name="count">The number of contiguous characters available at the address in 'ptr.'</param>
@@ -306,7 +306,7 @@ namespace Concurrency { namespace streams {
             }
 
             virtual size_t _sgetn(_Out_writes_ (count) _CharType *ptr, _In_ size_t count)
-            { 
+            {
                 pplx::extensibility::scoped_critical_section_t l(m_lock);
                 return can_satisfy(count) ? this->read(ptr, count) : (size_t)traits::requires_async();
             }
@@ -361,8 +361,8 @@ namespace Concurrency { namespace streams {
             }
 
             virtual pplx::task<int_type> _ungetc()
-            {            
-                return pplx::task_from_result<int_type>(traits::eof()); 
+            {
+                return pplx::task_from_result<int_type>(traits::eof());
             }
 
         private:
@@ -456,7 +456,7 @@ namespace Concurrency { namespace streams {
             {
             public:
                 _block(size_t size)
-                    : m_read(0), m_pos(0), m_size(size), m_data(new _CharType[size]) 
+                    : m_read(0), m_pos(0), m_size(size), m_data(new _CharType[size])
                 {
                 }
 
@@ -701,7 +701,7 @@ namespace Concurrency { namespace streams {
             std::queue<_request> m_requests;
         };
 
-    } // namespace details 
+    } // namespace details
 
     /// <summary>
     /// The producer_consumer_buffer class serves as a memory-based steam buffer that supports both writing and reading
@@ -710,7 +710,7 @@ namespace Concurrency { namespace streams {
     /// <typeparam name="_CharType">
     /// The data type of the basic element of the <c>producer_consumer_buffer</c>.
     /// </typeparam>
-    /// <remarks> 
+    /// <remarks>
     /// This is a reference-counted version of basic_producer_consumer_buffer.</remarks>
     template<typename _CharType>
     class producer_consumer_buffer : public streambuf<_CharType>
@@ -722,7 +722,7 @@ namespace Concurrency { namespace streams {
         /// Create a producer_consumer_buffer.
         /// </summary>
         /// <param name="alloc_size">The internal default block size.</param>
-        producer_consumer_buffer(size_t alloc_size = 512) 
+        producer_consumer_buffer(size_t alloc_size = 512)
             : streambuf<_CharType>(std::make_shared<details::basic_producer_consumer_buffer<_CharType>>(alloc_size))
         {
         }

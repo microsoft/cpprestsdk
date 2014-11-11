@@ -12,7 +12,7 @@
     <Filter Include="Header Files\pplx">
       <UniqueIdentifier>{8ee80092-f08b-4b6a-914c-1990a3fc88de}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\compat">
+    <Filter Include="Header Files\cpprest\details">
       <UniqueIdentifier>{e02ecd04-cecf-4527-9ae9-9fc076e7be12}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\cpprest">
@@ -78,11 +78,11 @@
     <ClInclude Include="$(CasablancaIncludeDir)\cpprest\json.h">
       <Filter>Header Files\cpprest</Filter>
     </ClInclude>
-    <ClInclude Include="$(CasablancaIncludeDir)\compat\linux_compat.h">
-      <Filter>Header Files\compat</Filter>
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\details\linux_compat.h">
+      <Filter>Header Files\cpprest\details</Filter>
     </ClInclude>
-    <ClInclude Include="$(CasablancaIncludeDir)\compat\nosal.h">
-      <Filter>Header Files\compat</Filter>
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\details\nosal.h">
+      <Filter>Header Files\cpprest\details</Filter>
     </ClInclude>
     <ClInclude Include="$(CasablancaIncludeDir)\pplx\pplx.h">
       <Filter>Header Files\pplx</Filter>
@@ -105,8 +105,8 @@
     <ClInclude Include="$(CasablancaIncludeDir)\cpprest\rawptrstream.h">
       <Filter>Header Files\cpprest</Filter>
     </ClInclude>
-    <ClInclude Include="$(CasablancaIncludeDir)\compat\SafeInt3.hpp">
-      <Filter>Header Files\cpprest</Filter>
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\details\SafeInt3.hpp">
+      <Filter>Header Files\cpprest\details</Filter>
     </ClInclude>
     <ClInclude Include="$(CasablancaIncludeDir)\cpprest\streams.h">
       <Filter>Header Files\cpprest</Filter>
@@ -123,8 +123,8 @@
     <ClInclude Include="$(CasablancaIncludeDir)\cpprest\uri_parser.h">
       <Filter>Header Files\pplx</Filter>
     </ClInclude>
-    <ClInclude Include="$(CasablancaIncludeDir)\compat\windows_compat.h">
-      <Filter>Header Files\compat</Filter>
+    <ClInclude Include="$(CasablancaIncludeDir)\cpprest\details\windows_compat.h">
+      <Filter>Header Files\cpprest\details</Filter>
     </ClInclude>
     <ClInclude Include="$(CasablancaIncludeDir)\cpprest\xxpublic.h">
       <Filter>Header Files\cpprest</Filter>

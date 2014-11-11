@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@
 #if (defined(_MSC_VER) && (_MSC_VER >= 1800))
 #include <ppltasks.h>
 namespace pplx = Concurrency;
-#else 
+#else
 #include "pplx/pplxtasks.h"
 #endif
 
@@ -60,8 +60,8 @@ namespace concurrency = Concurrency;
 #pragma warning(disable : 4718)
 #endif
 
-namespace Concurrency 
-{ 
+namespace Concurrency
+{
 /// Library for asynchronous streams.
 namespace streams
 {
@@ -115,7 +115,7 @@ namespace streams
             return reinterpret_cast<unsigned char*>(std::char_traits<char>::move(reinterpret_cast<char*>(left), reinterpret_cast<const char*>(right), n));
         }
 
-        static int_type requires_async() { return eof()-1; }
+        static int_type requires_async() { return eof() - 1; }
     };
 #endif
 
@@ -148,9 +148,9 @@ namespace streams
 
         /// <summary>
         /// <c>can_write</c> is used to determine whether a stream buffer will support write operations (put).
-        /// </summary>       
+        /// </summary>
         virtual bool can_write() const = 0;
-        
+
         /// <summary>
         /// <c>can_seek<c/> is used to determine whether a stream buffer supports seeking.
         /// </summary>
@@ -283,9 +283,9 @@ namespace streams
         /// </summary>
         /// <param name="direction">The I/O direction to seek (see remarks)</param>
         /// <returns>The current position. EOF if the operation fails.</returns>
-        /// <remarks>Some streams may have separate write and read cursors. 
+        /// <remarks>Some streams may have separate write and read cursors.
         ///          For such streams, the direction parameter defines whether to move the read or the write cursor.</remarks>
-        virtual pos_type getpos(std::ios_base::openmode direction) const = 0; 
+        virtual pos_type getpos(std::ios_base::openmode direction) const = 0;
 
         /// <summary>
         /// Gets the size of the stream, if known. Calls to <c>has_size</c> will determine whether
@@ -300,7 +300,7 @@ namespace streams
         /// <param name="direction">The I/O direction to seek (see remarks).</param>
         /// <returns>The position. EOF if the operation fails.</returns>
         /// <remarks>Some streams may have separate write and read cursors. For such streams, the direction parameter defines whether to move the read or the write cursor.</remarks>
-        virtual pos_type seekpos(pos_type pos, std::ios_base::openmode direction) = 0; 
+        virtual pos_type seekpos(pos_type pos, std::ios_base::openmode direction) = 0;
 
         /// <summary>
         /// Seeks to a position given by a relative offset.
@@ -309,9 +309,9 @@ namespace streams
         /// <param name="way">The starting point (beginning, end, current) for the seek.</param>
         /// <param name="mode">The I/O direction to seek (see remarks)</param>
         /// <returns>The position. EOF if the operation fails.</returns>
-        /// <remarks>Some streams may have separate write and read cursors. 
+        /// <remarks>Some streams may have separate write and read cursors.
         ///          For such streams, the mode parameter defines whether to move the read or the write cursor.</remarks>
-        virtual pos_type seekoff(off_type offset, std::ios_base::seekdir way, std::ios_base::openmode mode) = 0;     
+        virtual pos_type seekoff(off_type offset, std::ios_base::seekdir way, std::ios_base::openmode mode) = 0;
 
         /// <summary>
         /// For output streams, flush any internally buffered data to the underlying medium.
@@ -345,7 +345,7 @@ namespace streams
         virtual void commit(_In_ size_t count) = 0;
 
         /// <summary>
-        /// Gets a pointer to the next already allocated contiguous block of data. 
+        /// Gets a pointer to the next already allocated contiguous block of data.
         /// </summary>
         /// <param name="ptr">A reference to a pointer variable that will hold the address of the block on success.</param>
         /// <param name="count">The number of contiguous characters available at the address in 'ptr.'</param>
@@ -387,17 +387,17 @@ namespace streams
         /// <summary>
         /// <c>can_read</c> is used to determine whether a stream buffer will support read operations (get).
         /// </summary>
-        virtual bool can_read() const 
-        { 
-            return m_stream_can_read; 
+        virtual bool can_read() const
+        {
+            return m_stream_can_read;
         }
-   
+
         /// <summary>
         /// <c>can_write</c> is used to determine whether a stream buffer will support write operations (put).
-        /// </summary>       
-        virtual bool can_write() const 
-        { 
-            return m_stream_can_write; 
+        /// </summary>
+        virtual bool can_write() const
+        {
+            return m_stream_can_write;
         }
 
         /// <summary>
@@ -406,7 +406,7 @@ namespace streams
         /// <remarks>No separation is made between open for reading and open for writing.</remarks>
         virtual bool is_open() const
         {
-            return can_read() || can_write(); 
+            return can_read() || can_write();
         }
 
         /// <summary>
@@ -421,7 +421,7 @@ namespace streams
                 closeOp = _close_read();
             }
 
-            // After the flush_internal task completed, "this" object may have been destroyed, 
+            // After the flush_internal task completed, "this" object may have been destroyed,
             // accessing the members is invalid, use shared_from_this to avoid access violation exception.
             auto this_ptr = std::static_pointer_cast<streambuf_state_manager>(this->shared_from_this());
 
@@ -431,7 +431,7 @@ namespace streams
                 else
                     closeOp = closeOp.then([this_ptr] { return this_ptr->_close_write().then([this_ptr]{}); });
             }
-            
+
             return closeOp;
         }
 
@@ -478,7 +478,7 @@ namespace streams
         /// <returns>The number of characters actually written, either 'count' or 0.</returns>
         virtual pplx::task<size_t> putn(const _CharType *ptr, size_t count)
         {
-            if (!can_write()) 
+            if (!can_write())
                 return create_exception_checked_value_task<size_t>(0);
             if (count == 0)
                 return pplx::task_from_result<size_t>(0);
@@ -601,12 +601,12 @@ namespace streams
         {
             if ( !(m_currentException == nullptr) )
                 std::rethrow_exception(m_currentException);
-            if (!can_read()) 
+            if (!can_read())
                 return 0;
-                
+
             return _scopy(ptr, count);
         }
-            
+
         /// <summary>
         /// For output streams, flush any internally buffered data to the underlying medium.
         /// </summary>
@@ -662,7 +662,7 @@ namespace streams
         {
             if (!m_alloced)
                 throw std::logic_error("The buffer needs to allocate first");
-            
+
             _commit(count);
             m_alloced = false;
         }
@@ -674,9 +674,9 @@ namespace streams
         virtual size_t buffer_size(std::ios_base::openmode direction = std::ios_base::in) const = 0;
         virtual void set_buffer_size(size_t size, std::ios_base::openmode direction = std::ios_base::in) = 0;
         virtual size_t in_avail() const = 0;
-        virtual pos_type getpos(std::ios_base::openmode direction) const = 0; 
-        virtual pos_type seekpos(pos_type pos, std::ios_base::openmode direction) = 0; 
-        virtual pos_type seekoff(off_type offset, std::ios_base::seekdir way, std::ios_base::openmode mode) = 0;     
+        virtual pos_type getpos(std::ios_base::openmode direction) const = 0;
+        virtual pos_type seekpos(pos_type pos, std::ios_base::openmode direction) = 0;
+        virtual pos_type seekoff(off_type offset, std::ios_base::seekdir way, std::ios_base::openmode mode) = 0;
         virtual bool acquire(_Out_writes_(count) _CharType*& ptr, _In_ size_t& count) = 0;
         virtual void release(_Out_writes_(count) _CharType *ptr, _In_ size_t count) = 0;
     protected:
@@ -720,7 +720,7 @@ namespace streams
             m_stream_read_eof = false;
             m_alloced = false;
         }
-            
+
         std::exception_ptr m_currentException;
         // The in/out mode for the buffer
         bool m_stream_can_read, m_stream_can_write, m_stream_read_eof, m_alloced;
@@ -788,7 +788,7 @@ namespace streams
     /// </typeparam>
     /// <typeparam name="_CharType2">
     /// The data type of the basic element of the <c>streambuf.</c>
-    /// </typeparam>         
+    /// </typeparam>
     /// <remarks>
     /// The rationale for refcounting is discussed in the accompanying design
     /// documentation.
@@ -827,10 +827,10 @@ namespace streams
         /// </summary>
         /// <typeparam name="AlterCharType">
         /// The data type of the basic element of the source <c>streambuf</c>.
-        /// </typeparam>  
+        /// </typeparam>
         /// <param name="other">The source buffer to be converted.</param>
         template <typename AlterCharType>
-        streambuf(const streambuf<AlterCharType> &other) : 
+        streambuf(const streambuf<AlterCharType> &other) :
             m_buffer(std::static_pointer_cast<details::basic_streambuf<_CharType>>(std::static_pointer_cast<void>(other.m_buffer)))
         {
             static_assert(std::is_same<pos_type, typename details::basic_streambuf<AlterCharType>::pos_type>::value
@@ -854,7 +854,7 @@ namespace streams
         /// <param name="other">The source object.</param>
         /// <returns>A reference to the <c>streambuf</c> object that contains the result of the assignment.</returns>
         streambuf & operator =(const streambuf &other) { m_buffer = other.m_buffer; return *this; }
-       
+
         /// <summary>
         /// Move operator.
         /// </summary>
@@ -909,9 +909,9 @@ namespace streams
 
         /// <summary>
         /// <c>can_write</c> is used to determine whether a stream buffer will support write operations (put).
-        /// </summary>       
+        /// </summary>
         virtual bool can_write() const { return  get_base()->can_write(); }
-        
+
         /// <summary>
         /// <c>can_seek<c/> is used to determine whether a stream buffer supports seeking.
         /// </summary>
@@ -970,7 +970,7 @@ namespace streams
         {
             // We preserve the check here to workaround a Dev10 compiler crash
             auto buffer = get_base();
-            return buffer ? buffer->close(mode) : pplx::task_from_result(); 
+            return buffer ? buffer->close(mode) : pplx::task_from_result();
         }
 
         /// <summary>
@@ -982,7 +982,7 @@ namespace streams
         {
             // We preserve the check here to workaround a Dev10 compiler crash
             auto buffer = get_base();
-            return buffer ? buffer->close(mode, eptr) : pplx::task_from_result(); 
+            return buffer ? buffer->close(mode, eptr) : pplx::task_from_result();
         }
 
         /// <summary>
@@ -992,7 +992,7 @@ namespace streams
         /// <returns>The value of the character. EOF if the write operation fails</returns>
         virtual pplx::task<int_type> putc(_CharType ch)
         {
-            return get_base()->putc(ch); 
+            return get_base()->putc(ch);
         }
 
         /// <summary>
@@ -1002,7 +1002,7 @@ namespace streams
         /// <returns>A pointer to a block to write to, null if the stream buffer implementation does not support alloc/commit.</returns>
         virtual _CharType* alloc(size_t count)
         {
-            return get_base()->alloc(count); 
+            return get_base()->alloc(count);
         }
 
         /// <summary>
@@ -1015,7 +1015,7 @@ namespace streams
         }
 
         /// <summary>
-        /// Gets a pointer to the next already allocated contiguous block of data. 
+        /// Gets a pointer to the next already allocated contiguous block of data.
         /// </summary>
         /// <param name="ptr">A reference to a pointer variable that will hold the address of the block on success.</param>
         /// <param name="count">The number of contiguous characters available at the address in 'ptr.'</param>
@@ -1031,7 +1031,7 @@ namespace streams
         {
             ptr = nullptr;
             count = 0;
-            return get_base()->acquire(ptr, count); 
+            return get_base()->acquire(ptr, count);
         }
 
         /// <summary>
@@ -1053,7 +1053,7 @@ namespace streams
         /// <returns>The number of characters actually written, either 'count' or 0.</returns>
         virtual pplx::task<size_t> putn(const _CharType *ptr, size_t count)
         {
-            return get_base()->putn(ptr, count); 
+            return get_base()->putn(ptr, count);
         }
 
         /// <summary>
@@ -1062,7 +1062,7 @@ namespace streams
         /// <returns>The value of the character. EOF if the read fails.</returns>
         virtual pplx::task<int_type> bumpc()
         {
-            return get_base()->bumpc(); 
+            return get_base()->bumpc();
         }
 
         /// <summary>
@@ -1072,7 +1072,7 @@ namespace streams
         /// <remarks>This is a synchronous operation, but is guaranteed to never block.</remarks>
         virtual typename details::basic_streambuf<_CharType>::int_type sbumpc()
         {
-            return get_base()->sbumpc(); 
+            return get_base()->sbumpc();
         }
 
         /// <summary>
@@ -1081,7 +1081,7 @@ namespace streams
         /// <returns>The value of the byte. EOF if the read fails.</returns>
         virtual pplx::task<int_type> getc()
         {
-            return get_base()->getc(); 
+            return get_base()->getc();
         }
 
         /// <summary>
@@ -1091,7 +1091,7 @@ namespace streams
         /// <remarks>This is a synchronous operation, but is guaranteed to never block.</remarks>
         virtual typename details::basic_streambuf<_CharType>::int_type sgetc()
         {
-            return get_base()->sgetc(); 
+            return get_base()->sgetc();
         }
 
         /// <summary>
@@ -1100,7 +1100,7 @@ namespace streams
         /// <returns>The value of the character. EOF if the read fails.</returns>
         pplx::task<int_type> nextc()
         {
-            return get_base()->nextc();  
+            return get_base()->nextc();
         }
 
         /// <summary>
@@ -1109,7 +1109,7 @@ namespace streams
         /// <returns>The value of the character. EOF if the read fails. <see cref="::requires_async method" /> if an asynchronous read is required</returns>
         pplx::task<int_type> ungetc()
         {
-            return get_base()->ungetc();  
+            return get_base()->ungetc();
         }
 
         /// <summary>
@@ -1120,7 +1120,7 @@ namespace streams
         /// <returns>The number of characters read. O if the end of the stream is reached.</returns>
         virtual pplx::task<size_t> getn(_Out_writes_(count) _CharType *ptr, _In_ size_t count)
         {
-            return get_base()->getn(ptr, count); 
+            return get_base()->getn(ptr, count);
         }
 
         /// <summary>
@@ -1132,7 +1132,7 @@ namespace streams
         /// <remarks>This is a synchronous operation, but is guaranteed to never block.</remarks>
         virtual size_t scopy(_Out_writes_(count) _CharType *ptr, _In_ size_t count)
         {
-            return get_base()->scopy(ptr, count); 
+            return get_base()->scopy(ptr, count);
         }
 
         /// <summary>
@@ -1140,11 +1140,11 @@ namespace streams
         /// </summary>
         /// <param name="direction">The I/O direction to seek (see remarks)</param>
         /// <returns>The current position. EOF if the operation fails.</returns>
-        /// <remarks>Some streams may have separate write and read cursors. 
+        /// <remarks>Some streams may have separate write and read cursors.
         ///          For such streams, the direction parameter defines whether to move the read or the write cursor.</remarks>
-        virtual typename details::basic_streambuf<_CharType>::pos_type getpos(std::ios_base::openmode direction) const 
+        virtual typename details::basic_streambuf<_CharType>::pos_type getpos(std::ios_base::openmode direction) const
         {
-            return get_base()->getpos(direction); 
+            return get_base()->getpos(direction);
         }
 
         /// <summary>
@@ -1156,7 +1156,7 @@ namespace streams
         /// <remarks>Some streams may have separate write and read cursors. For such streams, the direction parameter defines whether to move the read or the write cursor.</remarks>
         virtual typename details::basic_streambuf<_CharType>::pos_type seekpos(typename details::basic_streambuf<_CharType>::pos_type pos, std::ios_base::openmode direction)
         {
-            return get_base()->seekpos(pos, direction); 
+            return get_base()->seekpos(pos, direction);
         }
 
         /// <summary>
@@ -1166,7 +1166,7 @@ namespace streams
         /// <param name="way">The starting point (beginning, end, current) for the seek.</param>
         /// <param name="mode">The I/O direction to seek (see remarks)</param>
         /// <returns>The position. EOF if the operation fails.</returns>
-        /// <remarks>Some streams may have separate write and read cursors. 
+        /// <remarks>Some streams may have separate write and read cursors.
         ///          For such streams, the mode parameter defines whether to move the read or the write cursor.</remarks>
         virtual typename details::basic_streambuf<_CharType>::pos_type seekoff(typename details::basic_streambuf<_CharType>::off_type offset, std::ios_base::seekdir way, std::ios_base::openmode mode)
         {

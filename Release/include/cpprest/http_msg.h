@@ -554,8 +554,8 @@ public:
         auto utf8body = utility::conversions::utf16_to_utf8(body_text);
         auto length = utf8body.size();
         _m_impl->set_body(concurrency::streams::bytestream::open_istream<std::string>(
-        		std::move(utf8body)), 
-        		length, 
+        		std::move(utf8body)),
+        		length,
         		std::move(content_type.append(::utility::conversions::to_utf16string("; charset=utf-8"))));
     }
 
@@ -927,8 +927,8 @@ public:
         auto utf8body = utility::conversions::utf16_to_utf8(body_text);
         auto length = utf8body.size();
         _m_impl->set_body(concurrency::streams::bytestream::open_istream(
-        		std::move(utf8body)), 
-        		length, 
+        		std::move(utf8body)),
+        		length,
         		std::move(content_type.append(::utility::conversions::to_utf16string("; charset=utf-8"))));
     }
 

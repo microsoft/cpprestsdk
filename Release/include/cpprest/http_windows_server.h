@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,11 +44,11 @@
 
 #include "cpprest/http_server.h"
 
-namespace web 
+namespace web
 {
 namespace http
 {
-namespace experimental 
+namespace experimental
 {
 namespace details
 {
@@ -64,7 +64,7 @@ class http_overlapped : public OVERLAPPED
 public:
     void set_http_io_completion(std::function<void(DWORD, DWORD)> http_io_completion)
     {
-        ZeroMemory(this, sizeof(OVERLAPPED)); 
+        ZeroMemory(this, sizeof(OVERLAPPED));
         m_http_io_completion = http_io_completion;
     }
 
@@ -96,7 +96,7 @@ private:
 /// </summary>
 struct windows_request_context : http::details::_http_server_context
 {
-    windows_request_context(); 
+    windows_request_context();
     virtual ~windows_request_context();
 
     // Asynchronously starts processing the current request.
@@ -121,7 +121,7 @@ struct windows_request_context : http::details::_http_server_context
 
     // Send response io completion callback function .
     void send_response_io_completion(DWORD error_code, DWORD bytes_read);
-    
+
     // Send response body io completion callback function.
     void send_response_body_io_completion(DWORD error_code, DWORD bytes_read);
 
@@ -146,7 +146,7 @@ struct windows_request_context : http::details::_http_server_context
 
     std::unique_ptr<HTTP_UNKNOWN_HEADER []> m_headers;
     std::vector<std::string> m_headers_buffer;
-    
+
     http_overlapped m_overlapped;
 
     http_request m_msg;
@@ -159,7 +159,7 @@ private:
 
     // Sends entity body chunk.
     void send_entity_body(_In_reads_(data_length) unsigned char * data, _In_ size_t data_length);
-    
+
     // Cancels this request.
     void cancel_request(std::exception_ptr except_ptr);
 
@@ -212,7 +212,7 @@ public:
 
 private:
     friend struct details::windows_request_context;
-    
+
     // Structure to hold each registered listener.
     class listener_registration
     {
@@ -245,7 +245,7 @@ private:
 
     // Threadpool I/O structure for overlapped I/O.
     TP_IO * m_threadpool_io;
-    
+
     // Task which actually handles receiving requests from HTTP Server API request queue.
     pplx::task<void> m_receivingTask;
     void receive_requests();

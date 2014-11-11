@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,20 +39,20 @@
 #include "cpprest/basic_types.h"
 #include "cpprest/asyncrt_utils.h"
 
-namespace web 
+namespace web
 {
 /// Library for parsing and serializing JSON values to and from C++ types.
 namespace json
 {
     // Various forward declarations.
-    namespace details 
+    namespace details
     {
-        class _Value; 
-        class _Number; 
-        class _Null; 
-        class _Boolean; 
-        class _String; 
-        class _Object; 
+        class _Value;
+        class _Number;
+        class _Null;
+        class _Boolean;
+        class _String;
+        class _Object;
         class _Array;
         template <typename CharType> class JSON_Parser;
     }
@@ -89,20 +89,20 @@ namespace json
         /// <summary>
         /// This enumeration represents the various kinds of JSON values.
         /// </summary>
-        enum value_type 
-        { 
+        enum value_type
+        {
             /// Number value
-            Number, 
+            Number,
             /// Boolean value
-            Boolean, 
+            Boolean,
             /// String value
-            String, 
+            String,
             /// Object value
-            Object, 
+            Object,
             /// Array value
-            Array, 
+            Array,
             /// Null value
-            Null 
+            Null
         };
 
         /// <summary>
@@ -152,7 +152,7 @@ namespace json
         /// <param name="value">The C++ value to create a JSON value from, a C++ STL string of the platform-native character width</param>
         /// <remarks>
         /// This constructor has O(n) performance because it tries to determine if
-        /// specified string has characters that should be properly escaped in JSON. 
+        /// specified string has characters that should be properly escaped in JSON.
         /// <remarks>
         _ASYNCRTIMP explicit value(utility::string_t value);
 
@@ -160,7 +160,7 @@ namespace json
         /// Constructor creating a JSON string value specifying if the string contains characters to escape
         /// </summary>
         /// <param name="value">The C++ value to create a JSON value from, a C++ STL string of the platform-native character width</param>
-        /// <param name="has_escape_chars">Whether <paramref name="value" /> contains characters 
+        /// <param name="has_escape_chars">Whether <paramref name="value" /> contains characters
         /// that should be escaped in JSON value</param>
         /// <remarks>
         /// This constructor has O(1) performance.
@@ -174,7 +174,7 @@ namespace json
         /// <remarks>
         /// <para>
         /// This constructor has O(n) performance because it tries to determine if
-        /// specified string has characters that should be properly escaped in JSON. 
+        /// specified string has characters that should be properly escaped in JSON.
         /// </para>
         /// <para>
         /// This constructor exists in order to avoid string literals matching another constructor,
@@ -188,7 +188,7 @@ namespace json
         /// Constructor creating a JSON string value
         /// </summary>
         /// <param name="value">The C++ value to create a JSON value from, a C++ STL string of the platform-native character width</param>
-        /// <param name="has_escape_chars">Whether <paramref name="value" /> contains characters 
+        /// <param name="has_escape_chars">Whether <paramref name="value" /> contains characters
         /// <remarks>
         /// <para>
         /// This overload has O(1) performance.
@@ -259,7 +259,7 @@ namespace json
         /// <returns>A JSON string value</returns>
         /// <remarks>
         /// This overload has O(n) performance because it tries to determine if
-        /// specified string has characters that should be properly escaped in JSON. 
+        /// specified string has characters that should be properly escaped in JSON.
         /// <remarks>
         static _ASYNCRTIMP value __cdecl string(utility::string_t value);
 
@@ -267,7 +267,7 @@ namespace json
         /// Creates a string value specifying if the string contains characters to escape
         /// </summary>
         /// <param name="value">The C++ value to create a JSON value from</param>
-        /// <param name="has_escape_chars">Whether <paramref name="value" /> contains characters 
+        /// <param name="has_escape_chars">Whether <paramref name="value" /> contains characters
         /// that should be escaped in JSON value</param>
         /// <returns>A JSON string value</returns>
         /// <remarks>
@@ -392,6 +392,14 @@ public:
         _ASYNCRTIMP static value parse(const utility::string_t&);
 
         /// <summary>
+        /// Attempts to parse a string and construct a JSON value.
+        /// </summary>
+        /// <param name="value">The C++ value to create a JSON value from, a C++ STL double-byte string</param>
+        /// <param name="errorCode">If parsing fails, the error code is greater than 0</param>
+        /// <returns>The parsed object. Returns web::json::value::null if failed</returns>
+        _ASYNCRTIMP static value parse(const utility::string_t&, std::error_code&);
+
+        /// <summary>
         /// Serializes the current JSON value to a C++ string.
         /// </summary>
         /// <returns>A string representation of the value</returns>
@@ -412,6 +420,14 @@ public:
         _ASYNCRTIMP static value parse(utility::istream_t &input);
 
         /// <summary>
+        /// Parses a JSON value from the contents of an input stream using the native platform character width.
+        /// </summary>
+        /// <param name="input">The stream to read the JSON value from</param>
+        /// <param name="errorCode">If parsing fails, the error code is greater than 0</param>
+        /// <returns>The parsed object. Returns web::json::value::null if failed</returns>
+        _ASYNCRTIMP static value parse(utility::istream_t &input, std::error_code& error);
+
+        /// <summary>
         /// Writes the current JSON value to a stream with the native platform character width.
         /// </summary>
         /// <param name="stream">The stream that the JSON string representation should be written to.</param>
@@ -423,6 +439,14 @@ public:
         /// </summary>
         /// <param name="stream">The stream to read the JSON value from</param>
         _ASYNCRTIMP static value parse(std::istream& stream);
+
+        /// <summary>
+        /// Parses a JSON value from the contents of a single-byte (UTF8) stream.
+        /// </summary>
+        /// <param name="stream">The stream to read the JSON value from</param>
+        /// <param name="errorCode">If parsing fails, the error code is greater than 0</param>
+        /// <returns>The parsed object. Returns web::json::value::null if failed</returns>
+        _ASYNCRTIMP static value parse(std::istream& stream, std::error_code& error);
 
         /// <summary>
         /// Serializes the content of the value into a single-byte (UTF8) stream.
@@ -496,7 +520,7 @@ public:
         /// <param name="other">The JSON value to compare with.</param>
         /// <returns>True iff the values are equal.</returns>
         _ASYNCRTIMP bool operator==(const value& other) const;
-            
+
         /// <summary>
         /// Compares two JSON values for inequality.
         /// </summary>
@@ -542,7 +566,7 @@ public:
         /// <param name="key">The key of an element in the JSON object.</param>
         /// <returns>If the key exists, a reference to the value.</returns>
         _ASYNCRTIMP json::value& at(const utility::string_t& key);
-        
+
         /// <summary>
         /// Accesses an element of a JSON object. If the key doesn't exist, this method throws.
         /// </summary>
@@ -567,7 +591,7 @@ private:
         }
 public:
 #endif
-        
+
         /// <summary>
         /// Accesses an element of a JSON array.
         /// </summary>
@@ -619,7 +643,7 @@ public:
     /// elements of JSON values.
     /// </summary>
     class json_exception : public std::exception
-    { 
+    {
     private:
         std::string _message;
     public:
@@ -634,6 +658,66 @@ public:
         ~json_exception() CPPREST_NOEXCEPT {}
     };
 
+    namespace details
+    {
+        enum json_error
+        {
+            left_over_character_in_stream = 1,
+            malformed_array_literal,
+            malformed_comment,
+            malformed_literal,
+            malformed_object_literal,
+            malformed_numeric_literal,
+            malformed_string_literal,
+            malformed_token,
+            mismatched_brances,
+            nesting,
+            unexpected_token
+        };
+
+        class json_error_category_impl : public std::error_category
+        {
+        public:
+            virtual const char* name() const CPPREST_NOEXCEPT override
+            {
+                return "json";
+            }
+
+            virtual std::string message(int ev) const override
+            {
+                switch (ev)
+                {
+                case json_error::left_over_character_in_stream:
+                    return "Left-over characters in stream after parsing a JSON value";
+                case json_error::malformed_array_literal:
+                    return "Malformed array literal";
+                case json_error::malformed_comment:
+                    return "Malformed comment";
+                case json_error::malformed_literal:
+                    return "Malformed literal";
+                case json_error::malformed_object_literal:
+                    return "Malformed object literal";
+                case json_error::malformed_numeric_literal:
+                    return "Malformed numeric literal";
+                case json_error::malformed_string_literal:
+                    return "Malformed string literal";
+                case json_error::malformed_token:
+                    return "Malformed token";
+                case json_error::mismatched_brances:
+                    return "Mismatched braces";
+                case json_error::nesting:
+                    return "Nesting too deep";
+                case json_error::unexpected_token:
+                    return "Unexpected token";
+                default:
+                    return "Unknown json error";
+                }
+            }
+        };
+
+        _ASYNCRTIMP const json_error_category_impl& json_error_category();
+    }
+
     /// <summary>
     /// A JSON array represented as a C++ class.
     /// </summary>
@@ -647,7 +731,7 @@ public:
         typedef storage_type::reverse_iterator reverse_iterator;
         typedef storage_type::const_reverse_iterator const_reverse_iterator;
         typedef storage_type::size_type size_type;
-    
+
     private:
         array() : m_elements() { }
         array(size_type size) : m_elements(size) { }
@@ -1125,7 +1209,7 @@ public:
         /// </summary>
         /// <returns><c>true</c> if the number fits into int32, <c>false</c> otherwise</returns>
         _ASYNCRTIMP bool is_int32() const;
-        
+
         /// <summary>
         /// Does the number fit into unsigned int32?
         /// </summary>
@@ -1266,7 +1350,7 @@ public:
 
     namespace details
     {
-        class _Value 
+        class _Value
         {
         public:
             virtual std::unique_ptr<_Value> _copy_value() = 0;
@@ -1284,7 +1368,7 @@ public:
             // Common function used for serialization to strings and streams.
             virtual void serialize_impl(std::string& str) const
             {
-                format(str); 
+                format(str);
             }
 #ifdef _MS_WINDOWS
             virtual void serialize_impl(std::wstring& str) const
@@ -1447,7 +1531,7 @@ public:
             {
                 m_has_escape_char = has_escape_chars(*this);
             }
-            _String(std::string &&value, bool escape_chars) 
+            _String(std::string &&value, bool escape_chars)
                 : m_string(utility::conversions::to_utf16string(std::move(value))),
                   m_has_escape_char(escape_chars)
             { }
@@ -1483,7 +1567,7 @@ public:
             virtual void serialize_impl(std::wstring& str) const
             {
                 serialize_impl_char_type(str);
-            }  
+            }
 #endif
 
         protected:
@@ -1497,7 +1581,7 @@ public:
             friend class _Array;
 
             size_t get_reserve_size() const
-            {        
+            {
                 return m_string.size() + 2;
             }
 
@@ -1575,7 +1659,7 @@ public:
             {
                 // To avoid repeated allocations reserve some space all up front.
                 str.reserve(get_reserve_size());
-                format(str); 
+                format(str);
             }
 #ifdef _MS_WINDOWS
             virtual void serialize_impl(std::wstring& str) const
@@ -1630,7 +1714,7 @@ public:
             size_t get_reserve_size() const
             {
                 // This is a heuristic we can tune more in the future:
-                // Basically size of string plus 
+                // Basically size of string plus
                 // sum size of value if an object, array, or string.
                 size_t reserveSize = 2; // For brackets {}
                 for(auto iter = m_object.begin(); iter != m_object.end(); ++iter)
@@ -1699,14 +1783,14 @@ public:
             {
                 // To avoid repeated allocations reserve some space all up front.
                 str.reserve(get_reserve_size());
-                format(str);  
+                format(str);
             }
 #ifdef _MS_WINDOWS
             virtual void serialize_impl(std::wstring& str) const
             {
                 // To avoid repeated allocations reserve some space all up front.
                 str.reserve(get_reserve_size());
-                format(str); 
+                format(str);
             }
 #endif
             size_t size() const { return m_array.size(); }

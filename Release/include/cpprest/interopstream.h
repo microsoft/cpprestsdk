@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -50,7 +50,7 @@ namespace concurrency = Concurrency;
 // Suppress unreferenced formal parameter warning as they are required for documentation
 #pragma warning(disable : 4100)
 // Inherited via dominance. Disabling is necessary for iostream, and exactly what STL does.
-#pragma warning(disable: 4250)  
+#pragma warning(disable: 4250)
 
 namespace Concurrency { namespace streams {
 
@@ -75,7 +75,7 @@ namespace Concurrency { namespace streams {
         /// <summary>
         /// Private constructor
         /// </summary>
-        basic_stdio_buffer(_In_ std::basic_streambuf<_CharType>* streambuf, std::ios_base::openmode mode) 
+        basic_stdio_buffer(_In_ std::basic_streambuf<_CharType>* streambuf, std::ios_base::openmode mode)
             : m_buffer(streambuf), streambuf_state_manager<_CharType>(mode)
         {
         }
@@ -94,7 +94,7 @@ namespace Concurrency { namespace streams {
         //
         // The functions overridden below here are documented elsewhere.
         // See astreambuf.h for further information.
-        //     
+        //
         virtual bool can_seek() const { return this->is_open(); }
         virtual bool has_size() const { return false; }
 
@@ -161,7 +161,7 @@ namespace Concurrency { namespace streams {
         /// </summary>
         /// <typeparam name="AlterCharType">
         /// The data type of the basic element of the source output stream.
-        /// </typeparam>  
+        /// </typeparam>
         /// <param name="stream">The synchronous stream that this is using for its I/O</param>
         template <typename AlterCharType>
         stdio_ostream(std::basic_ostream<AlterCharType>& stream)
@@ -205,7 +205,7 @@ namespace Concurrency { namespace streams {
         /// </summary>
         /// <typeparam name="AlterCharType">
         /// The data type of the basic element of the source <c>istream</c>
-        /// </typeparam>  
+        /// </typeparam>
         /// <param name="stream">The synchronous stream that this is using for its I/O</param>
         template <typename AlterCharType>
         stdio_istream(std::basic_istream<AlterCharType>& stream)
@@ -242,7 +242,7 @@ namespace Concurrency { namespace streams {
         typedef typename traits::pos_type pos_type;
         typedef typename traits::off_type off_type;
 
-        basic_async_streambuf(streams::streambuf<CharType> async_buf) : m_buffer(async_buf) 
+        basic_async_streambuf(streams::streambuf<CharType> async_buf) : m_buffer(async_buf)
         {
         }
     protected:
@@ -256,9 +256,9 @@ namespace Concurrency { namespace streams {
         /// </summary>
         int_type overflow(int_type ch)
         {
-            try 
+            try
             {
-            return m_buffer.putc(CharType(ch)).get(); 
+            return m_buffer.putc(CharType(ch)).get();
         }
             catch(...)
             {
@@ -271,9 +271,9 @@ namespace Concurrency { namespace streams {
         /// </summary>
         int_type underflow()
         {
-            try 
+            try
             {
-            return m_buffer.getc().get(); 
+            return m_buffer.getc().get();
         }
             catch(...)
             {
@@ -286,9 +286,9 @@ namespace Concurrency { namespace streams {
         /// </summary>
         int_type uflow()
         {
-            try 
+            try
             {
-            return m_buffer.bumpc().get(); 
+            return m_buffer.bumpc().get();
         }
             catch(...)
             {
@@ -313,7 +313,7 @@ namespace Concurrency { namespace streams {
                 if ( rd == 0 )
                     break;
             }
-            return read_so_far; 
+            return read_so_far;
         }
             catch(...)
             {
@@ -328,7 +328,7 @@ namespace Concurrency { namespace streams {
         {
             try
             {
-            return m_buffer.putn(ptr, (size_t)count).get(); 
+            return m_buffer.putn(ptr, (size_t)count).get();
         }
             catch(...)
             {
@@ -354,8 +354,8 @@ namespace Concurrency { namespace streams {
         /// <summary>
         /// Seeks to the given offset relative to the beginning, end, or current position.
         /// </summary>
-        pos_type seekoff(off_type offset, 
-                         std::ios_base::seekdir dir, 
+        pos_type seekoff(off_type offset,
+                         std::ios_base::seekdir dir,
                          std::ios_base::openmode mode = std::ios_base::in | std::ios_base::out)
         {
             try
@@ -373,7 +373,7 @@ namespace Concurrency { namespace streams {
         /// <summary>
         /// Seeks to the given offset relative to the beginning of the stream.
         /// </summary>
-        pos_type seekpos(pos_type pos, 
+        pos_type seekpos(pos_type pos,
                          std::ios_base::openmode mode = std::ios_base::in | std::ios_base::out)
         {
             try
@@ -407,10 +407,10 @@ namespace Concurrency { namespace streams {
         /// </summary>
         /// <typeparam name="AlterCharType">
         /// The data type of the basic element of the source ostream.
-        /// </typeparam>  
+        /// </typeparam>
         /// <param name="astream">The asynchronous stream whose stream buffer should be used for I/O</param>
         template <typename AlterCharType>
-        async_ostream(streams::basic_ostream<AlterCharType> astream) 
+        async_ostream(streams::basic_ostream<AlterCharType> astream)
             : std::basic_ostream<CharType>(&m_strbuf),
               m_strbuf(astream.streambuf())
         {
@@ -421,10 +421,10 @@ namespace Concurrency { namespace streams {
         /// </summary>
         /// <typeparam name="AlterCharType">
         /// The data type of the basic element of the source <c>streambuf</c>.
-        /// </typeparam>  
+        /// </typeparam>
         /// <param name="strbuf">The asynchronous stream buffer to use for I/O</param>
         template <typename AlterCharType>
-        async_ostream(streams::streambuf<AlterCharType> strbuf) 
+        async_ostream(streams::streambuf<AlterCharType> strbuf)
             : std::basic_ostream<CharType>(&m_strbuf),
               m_strbuf(strbuf)
         {
@@ -449,10 +449,10 @@ namespace Concurrency { namespace streams {
         /// </summary>
         /// <typeparam name="AlterCharType">
         /// The data type of the basic element of the source istream.
-        /// </typeparam>  
+        /// </typeparam>
         /// <param name="astream">The asynchronous stream whose stream buffer should be used for I/O</param>
         template <typename AlterCharType>
-        async_istream(streams::basic_istream<AlterCharType> astream) 
+        async_istream(streams::basic_istream<AlterCharType> astream)
             : std::basic_istream<CharType>(&m_strbuf),
               m_strbuf(astream.streambuf())
         {
@@ -463,10 +463,10 @@ namespace Concurrency { namespace streams {
         /// </summary>
         /// <typeparam name="AlterCharType">
         /// The data type of the basic element of the source <c>streambuf</c>.
-        /// </typeparam>  
+        /// </typeparam>
         /// <param name="strbuf">The asynchronous stream buffer to use for I/O</param>
         template <typename AlterCharType>
-        async_istream(streams::streambuf<AlterCharType> strbuf) 
+        async_istream(streams::streambuf<AlterCharType> strbuf)
             : std::basic_istream<CharType>(&m_strbuf),
               m_strbuf(strbuf)
         {
@@ -490,7 +490,7 @@ namespace Concurrency { namespace streams {
         /// Constructor
         /// </summary>
         /// <param name="strbuf">The asynchronous stream buffer to use for I/O</param>
-        async_iostream(streams::streambuf<CharType> strbuf) 
+        async_iostream(streams::streambuf<CharType> strbuf)
             : std::basic_iostream<CharType>(&m_strbuf),
               m_strbuf(strbuf)
         {
@@ -540,7 +540,7 @@ namespace Concurrency { namespace streams {
         /// <returns>A reference to a WinRT <c>IRandomAccessStream</c>.</returns>
         /// <remarks>
         /// The stream buffer is shared with the caller, allowing data to be passed between the two contexts. For
-        /// example, using a <c>producer_consumer_buffer</c>, a Casablanca-based caller can pass data to and retrieve data 
+        /// example, using a <c>producer_consumer_buffer</c>, a Casablanca-based caller can pass data to and retrieve data
         /// from a WinRT component.
         /// </remarks>
         _ASYNCRTIMP static Windows::Storage::Streams::IRandomAccessStream^ create_random_access_stream(concurrency::streams::streambuf<uint8_t> buffer);

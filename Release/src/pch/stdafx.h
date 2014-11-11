@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -104,7 +104,7 @@
 #if defined(_MSC_VER) && (_MSC_VER >= 1800)
 #include <ppltasks.h>
 namespace pplx = Concurrency;
-#else 
+#else
 #include "pplx/pplxtasks.h"
 #endif
 
@@ -138,17 +138,17 @@ namespace pplx = Concurrency;
 #include "cpprest/ws_msg.h"
 
 #if !defined(__cplusplus_winrt)
-#if _WIN32_WINNT >= _WIN32_WINNT_VISTA 
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA
 #include "cpprest/http_server.h"
 #include "cpprest/http_listener.h"
-#include "cpprest/http_server_api.h"  
-#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA 
+#include "cpprest/http_server_api.h"
+#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA
 
 
 #ifdef _MS_WINDOWS
-#if _WIN32_WINNT >= _WIN32_WINNT_VISTA 
-#include "cpprest/http_windows_server.h"  
-#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA 
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA
+#include "cpprest/http_windows_server.h"
+#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA
 
 #endif
 

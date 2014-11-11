@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,10 +37,10 @@
 #error "ERROR: This file should only be included in Windows Build"
 #endif
 
-// Disable false alarm code analyze warning 
+// Disable false alarm code analyze warning
 #pragma warning (disable : 26165 26110)
-namespace pplx 
-{ 
+namespace pplx
+{
 namespace details
 {
     namespace platform
@@ -86,7 +86,7 @@ namespace details
             // InitializeCriticalSection can cause STATUS_NO_MEMORY see C28125
             __try {
                 ::InitializeCriticalSection(_cs);
-            } 
+            }
             __except(GetExceptionCode() == STATUS_NO_MEMORY ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH)
             {
                 throw ::std::bad_alloc();
@@ -104,11 +104,11 @@ namespace details
     _PPLXIMP event_impl::event_impl()
     {
         static_assert(sizeof(HANDLE) <= sizeof(_M_impl), "HANDLE version mismatch");
-        
+
 #ifndef __cplusplus_winrt
         _M_impl = CreateEvent(NULL, true, false, NULL);
 #else
-        _M_impl = CreateEventEx(NULL, NULL, CREATE_EVENT_MANUAL_RESET, EVENT_ALL_ACCESS);  
+        _M_impl = CreateEventEx(NULL, NULL, CREATE_EVENT_MANUAL_RESET, EVENT_ALL_ACCESS);
 #endif // !__cplusplus_winrt
 
         if( _M_impl != NULL )
@@ -152,7 +152,7 @@ namespace details
         platform::InitializeCriticalSection(reinterpret_cast<LPCRITICAL_SECTION>(&_M_impl));
     }
 
-    _PPLXIMP critical_section_impl::~critical_section_impl() 
+    _PPLXIMP critical_section_impl::~critical_section_impl()
     {
         DeleteCriticalSection(reinterpret_cast<LPCRITICAL_SECTION>(&_M_impl));
     }
@@ -167,7 +167,7 @@ namespace details
         LeaveCriticalSection(reinterpret_cast<LPCRITICAL_SECTION>(&_M_impl));
     }
 
-#if _WIN32_WINNT >= _WIN32_WINNT_VISTA 
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA
     //
     // reader_writer_lock implementation
     //
@@ -200,9 +200,9 @@ namespace details
         {
             ReleaseSRWLockShared(reinterpret_cast<PSRWLOCK>(&_M_impl));
         }
-    }  
-#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA 
-    
+    }
+#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA
+
     //
     // scheduler implementation
     //
@@ -215,11 +215,11 @@ namespace details
             proc(param);
         });
 
-        Windows::System::Threading::ThreadPool::RunAsync(workItemHandler); 
+        Windows::System::Threading::ThreadPool::RunAsync(workItemHandler);
     }
 #else
 
-#if _WIN32_WINNT < _WIN32_WINNT_VISTA 
+#if _WIN32_WINNT < _WIN32_WINNT_VISTA
      struct _Scheduler_Param
     {
         TaskProc_t m_proc;
@@ -246,7 +246,7 @@ namespace details
     {
         auto schedulerParam = new _Scheduler_Param(proc, param);
         auto work = QueueUserWorkItem(_Scheduler_Param::DefaultWorkCallback, schedulerParam, WT_EXECUTEDEFAULT);
-        
+
         if (!work)
         {
             delete schedulerParam;
@@ -288,7 +288,7 @@ namespace details
         SubmitThreadpoolWork(work);
         CloseThreadpoolWork(work);
     }
-#endif // _WIN32_WINNT < _WIN32_WINNT_VISTA 
+#endif // _WIN32_WINNT < _WIN32_WINNT_VISTA
 
 #endif
 } // namespace details

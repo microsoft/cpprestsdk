@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,9 +48,9 @@ std::unique_ptr<http_server> http_server_api::s_server_api((http_server*)nullptr
 
 pplx::details::atomic_long http_server_api::s_registrations(0L);
 
-bool http_server_api::has_listener() 
-{ 
-    return s_registrations > 0L; 
+bool http_server_api::has_listener()
+{
+    return s_registrations > 0L;
 }
 
 void http_server_api::register_server_api(std::unique_ptr<http_server> server_api)
@@ -73,7 +73,7 @@ void http_server_api::unregister_server_api()
 
 void http_server_api::unsafe_register_server_api(std::unique_ptr<http_server> server_api)
 {
-    // we assume that the lock has been taken here. 
+    // we assume that the lock has been taken here.
     if (http_server_api::has_listener())
     {
         throw http_exception(_XPLATSTR("Current server API instance has listeners attached."));
@@ -166,7 +166,7 @@ pplx::task<void> http_server_api::unregister_listener(_In_ web::http::experiment
                 except = std::current_exception();
             }
         }
-        
+
         // rethrow exception if one occurred
         if(except != nullptr)
         {
@@ -175,9 +175,9 @@ pplx::task<void> http_server_api::unregister_listener(_In_ web::http::experiment
     });
 }
 
-http_server *http_server_api::server_api() 
-{ 
-    return s_server_api.get(); 
+http_server *http_server_api::server_api()
+{
+    return s_server_api.get();
 }
 
 } // namespace listener

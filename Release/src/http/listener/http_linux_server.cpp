@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,7 +40,7 @@ namespace web
 {
 namespace http
 {
-namespace experimental 
+namespace experimental
 {
 namespace listener
 {
@@ -67,7 +67,7 @@ struct crlf_nonascii_searcher_t
                     // "    \r.\n\r\n$"
                     // "      .\r\n\r\n$"
     };
-   
+
     // This function implements the searcher which "consumes" a certain amount of the input
     // and returns whether or not there was a match (see above).
 
@@ -155,7 +155,7 @@ namespace web
 {
 namespace http
 {
-namespace experimental 
+namespace experimental
 {
 namespace listener
 {
@@ -197,10 +197,10 @@ void connection::close()
 
 void connection::start_request_response()
 {
-    m_read_size = 0; 
+    m_read_size = 0;
     m_read = 0;
     m_request_buf.consume(m_request_buf.size()); // clear the buffer
-    
+
     // Wait for either double newline or a char which is not in the range [32-127] which suggests SSL handshaking.
     // For the SSL server support this line might need to be changed. Now, this prevents from hanging when SSL client tries to connect.
     async_read_until(*m_socket, m_request_buf, crlf_nonascii_searcher, boost::bind(&connection::handle_http_line, this, placeholders::error));
@@ -218,7 +218,7 @@ void hostport_listener::on_accept(ip::tcp::socket* socket, const boost::system::
             pplx::scoped_lock<pplx::extensibility::recursive_lock_t> lock(m_connections_lock);
             m_connections.insert(new connection(std::unique_ptr<tcp::socket>(std::move(socket)), m_p_server, this));
             m_all_connections_complete.reset();
-            
+
             if (m_acceptor)
             {
                 // spin off another async accept
@@ -277,7 +277,7 @@ void connection::handle_http_line(const boost::system::error_code& ec)
         std::string http_path_and_version;
         std::getline(request_stream, http_path_and_version);
         const size_t VersionPortionSize = sizeof(" HTTP/1.1\r") - 1;
-        
+
         // Make sure path and version is long enough to contain the HTTP version
         if(http_path_and_version.size() < VersionPortionSize + 2)
         {
@@ -287,7 +287,7 @@ void connection::handle_http_line(const boost::system::error_code& ec)
             return;
         }
 
-        // Get the host part of the address. 
+        // Get the host part of the address.
         uri_builder builder;
         builder.set_scheme("http");
         builder.set_host(m_p_parent->m_host, true);
@@ -306,7 +306,7 @@ void connection::handle_http_line(const boost::system::error_code& ec)
             do_response(true);
             return;
         }
-            
+
         // Get the version
         std::string http_version = http_path_and_version.substr(http_path_and_version.size() - VersionPortionSize + 1, VersionPortionSize - 2);
         // if HTTP version is 1.0 then disable pipelining
@@ -338,7 +338,7 @@ void connection::handle_headers()
             {
                 currentValue = value;
             }
-            else 
+            else
             {
                 currentValue += U(", ") + value;
             }
@@ -418,18 +418,18 @@ void connection::handle_chunked_body(const boost::system::error_code& ec, int to
     if (!ec)
     {
         auto writebuf = m_request._get_impl()->outstream().streambuf();
-        writebuf.putn(buffer_cast<const uint8_t *>(m_request_buf.data()), toWrite).then([=](pplx::task<size_t> writeChunkTask) 
+        writebuf.putn(buffer_cast<const uint8_t *>(m_request_buf.data()), toWrite).then([=](pplx::task<size_t> writeChunkTask)
         {
-            try 
+            try
             {
                 writeChunkTask.get();
             } catch (...) {
                 m_request._reply_if_not_already(status_codes::InternalError);
                 return;
             }
-        
+
             m_request_buf.consume(2 + toWrite);
-            boost::asio::async_read_until(*m_socket, m_request_buf, CRLF, 
+            boost::asio::async_read_until(*m_socket, m_request_buf, CRLF,
                     boost::bind(&connection::handle_chunked_header, this, placeholders::error));
         });
     }
@@ -449,10 +449,10 @@ void connection::handle_body(const boost::system::error_code& ec)
     else if (m_read < m_read_size)  // there is more to read
     {
         auto writebuf = m_request._get_impl()->outstream().streambuf();
-        writebuf.putn(boost::asio::buffer_cast<const uint8_t*>(m_request_buf.data()), std::min(m_request_buf.size(), m_read_size - m_read)).then([=](pplx::task<size_t> writtenSizeTask) 
+        writebuf.putn(boost::asio::buffer_cast<const uint8_t*>(m_request_buf.data()), std::min(m_request_buf.size(), m_read_size - m_read)).then([=](pplx::task<size_t> writtenSizeTask)
         {
             size_t writtenSize = 0;
-            try 
+            try
             {
                 writtenSize = writtenSizeTask.get();
             } catch (...) {
@@ -514,7 +514,7 @@ void connection::dispatch_request_to_listener()
     {
         m_request._set_listener_path(pListener->uri().path());
         do_response(false);
-        
+
         // Look up the lock for the http_listener.
         pplx::extensibility::reader_writer_lock_t *pListenerLock;
         {
@@ -537,7 +537,7 @@ void connection::dispatch_request_to_listener()
         {
             pListener->handle_request(m_request);
             pListenerLock->unlock();
-        } 
+        }
         catch(const std::exception &e)
         {
             pListenerLock->unlock();
@@ -579,7 +579,7 @@ void connection::do_response(bool bad_request)
         {
             response = http::http_response(status_codes::InternalError);
         }
-        
+
         // before sending response, the full incoming message need to be processed.
         if (bad_request)
         {
@@ -587,7 +587,7 @@ void connection::do_response(bool bad_request)
         }
         else
         {
-            m_request.content_ready().then([=](pplx::task<http::http_request>) 
+            m_request.content_ready().then([=](pplx::task<http::http_request>)
             {
                 async_process_response(response);
             });
@@ -600,7 +600,7 @@ void connection::async_process_response(http_response response)
     m_response_buf.consume(m_response_buf.size()); // clear the buffer
     std::ostream os(&m_response_buf);
 
-    os << "HTTP/1.1 " << response.status_code() << " " 
+    os << "HTTP/1.1 " << response.status_code() << " "
         << response.reason_phrase()
         << CRLF;
 
@@ -625,7 +625,7 @@ void connection::async_process_response(http_response response)
     for(const auto & header : response.headers())
     {
         // check if the responder has requested we close the connection
-        if (boost::iequals(header.first, U("connection"))) 
+        if (boost::iequals(header.first, U("connection")))
         {
             if (boost::iequals(header.second, U("close")))
             {
@@ -643,7 +643,7 @@ void connection::cancel_sending_response_with_error(http_response response, std:
 {
     auto * context = static_cast<linux_request_context*>(response._get_server_context());
     context->m_response_completed.set_exception(eptr);
-    
+
     // always terminate the connection since error happens
     finish_request_response();
 }
@@ -655,13 +655,13 @@ void connection::handle_write_chunked_response(http_response response, const boo
 
     auto readbuf = response._get_impl()->instream().streambuf();
     if (readbuf.is_eof())
-        return cancel_sending_response_with_error(response, std::make_exception_ptr(http_exception("Response stream close early!")));	
+        return cancel_sending_response_with_error(response, std::make_exception_ptr(http_exception("Response stream close early!")));
     auto membuf = m_response_buf.prepare(ChunkSize + http::details::chunked_encoding::additional_encoding_space);
 
-    readbuf.getn(buffer_cast<uint8_t *>(membuf) + http::details::chunked_encoding::data_offset, ChunkSize).then([=](pplx::task<size_t> actualSizeTask) 
-    {		
+    readbuf.getn(buffer_cast<uint8_t *>(membuf) + http::details::chunked_encoding::data_offset, ChunkSize).then([=](pplx::task<size_t> actualSizeTask)
+    {
         size_t actualSize = 0;
-        try 
+        try
         {
             actualSize = actualSizeTask.get();
         } catch (...) {
@@ -671,10 +671,10 @@ void connection::handle_write_chunked_response(http_response response, const boo
         m_response_buf.commit(actualSize + http::details::chunked_encoding::additional_encoding_space);
         m_response_buf.consume(offset);
         boost::asio::async_write(
-                *m_socket, 
+                *m_socket,
                 m_response_buf,
-                boost::bind(actualSize == 0 ? &connection::handle_response_written : &connection::handle_write_chunked_response, 
-                this, 
+                boost::bind(actualSize == 0 ? &connection::handle_response_written : &connection::handle_write_chunked_response,
+                this,
                 response, placeholders::error));
     });
 }
@@ -688,10 +688,10 @@ void connection::handle_write_large_response(http_response response, const boost
     if (readbuf.is_eof())
         return cancel_sending_response_with_error(response, std::make_exception_ptr(http_exception("Response stream close early!")));
     size_t readBytes = std::min(ChunkSize, m_write_size - m_write);
-    readbuf.getn(buffer_cast<uint8_t *>(m_response_buf.prepare(readBytes)), readBytes).then([=](pplx::task<size_t> actualSizeTask) 
+    readbuf.getn(buffer_cast<uint8_t *>(m_response_buf.prepare(readBytes)), readBytes).then([=](pplx::task<size_t> actualSizeTask)
     {
         size_t actualSize = 0;
-        try 
+        try
         {
             actualSize = actualSizeTask.get();
         } catch (...) {

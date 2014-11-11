@@ -1,7 +1,7 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
@@ -286,7 +286,7 @@ bool _close_fsb_nolock(_file_info **info, Concurrency::streams::details::_filest
 {
     if ( callback == nullptr ) return false;
     if ( info == nullptr || *info == nullptr ) return false;
-    
+
     _file_info_impl *fInfo = (_file_info_impl *)*info;
 
     if ( fInfo->m_handle == -1 ) return false;
@@ -332,7 +332,7 @@ bool _close_fsb(_file_info **info, Concurrency::streams::details::_filestream_ca
 {
     if ( callback == nullptr ) return false;
     if ( info == nullptr || *info == nullptr ) return false;
-    
+
     pplx::extensibility::scoped_recursive_lock_t lock((*info)->m_lock);
 
     return _close_fsb_nolock(info, callback);
@@ -377,12 +377,12 @@ size_t _write_file_async(Concurrency::streams::details::_file_info_impl *fInfo, 
         {
             callback->on_error(std::make_exception_ptr(utility::details::create_system_error(errno)));
         }
-        
+
         if(must_restore_pos)
         {
             lseek(fInfo->m_handle, orig_pos, SEEK_SET);
         }
-        
+
         callback->on_completed(bytes_written);
 
         {
@@ -480,8 +480,8 @@ size_t _fill_buffer_fsb(_file_info_impl *fInfo, _filestream_callback *callback, 
         fInfo->m_bufoff = fInfo->m_rdpos;
 
         auto cb = create_callback(fInfo, callback,
-            [=] (size_t result) 
-            { 
+            [=] (size_t result)
+            {
                 pplx::extensibility::scoped_recursive_lock_t lock(fInfo->m_lock);
                 fInfo->m_buffill = result / charSize;
                 callback->on_completed(result);
@@ -516,8 +516,8 @@ size_t _fill_buffer_fsb(_file_info_impl *fInfo, _filestream_callback *callback, 
         fInfo->m_bufoff = fInfo->m_rdpos;
 
         auto cb = create_callback(fInfo, callback,
-            [=] (size_t result) 
-            { 
+            [=] (size_t result)
+            {
                 pplx::extensibility::scoped_recursive_lock_t lock(fInfo->m_lock);
                 fInfo->m_buffill = result / charSize;
                 callback->on_completed(result + bufrem * charSize);
@@ -542,7 +542,7 @@ size_t _getn_fsb(Concurrency::streams::details::_file_info *info, Concurrency::s
 {
     if ( callback == nullptr ) return (size_t)-1;
     if ( info == nullptr ) return (size_t)-1;
-    
+
     _file_info_impl *fInfo = (_file_info_impl *)info;
 
     pplx::extensibility::scoped_recursive_lock_t lock(info->m_lock);
@@ -594,7 +594,7 @@ size_t _putn_fsb(Concurrency::streams::details::_file_info *info, Concurrency::s
 {
     if ( callback == nullptr ) return (size_t)-1;
     if ( info == nullptr ) return (size_t)-1;
-    
+
     _file_info_impl *fInfo = (_file_info_impl *)info;
 
     pplx::extensibility::scoped_recursive_lock_t lock(fInfo->m_lock);
@@ -638,7 +638,7 @@ bool _sync_fsb(Concurrency::streams::details::_file_info *info, Concurrency::str
 {
     if ( callback == nullptr ) return false;
     if ( info == nullptr ) return false;
-    
+
     _file_info_impl *fInfo = (_file_info_impl *)info;
 
     pplx::extensibility::scoped_recursive_lock_t lock(fInfo->m_lock);
@@ -662,7 +662,7 @@ bool _sync_fsb(Concurrency::streams::details::_file_info *info, Concurrency::str
 size_t _seekrdtoend_fsb(Concurrency::streams::details::_file_info *info, int64_t offset, size_t char_size)
 {
     if ( info == nullptr ) return (size_t)-1;
-    
+
     _file_info_impl *fInfo = (_file_info_impl *)info;
 
     pplx::extensibility::scoped_recursive_lock_t lock(info->m_lock);
@@ -675,7 +675,7 @@ size_t _seekrdtoend_fsb(Concurrency::streams::details::_file_info *info, int64_t
         fInfo->m_buffer = nullptr;
         fInfo->m_bufoff = fInfo->m_buffill = fInfo->m_bufsize = 0;
     }
-    
+
     auto newpos = lseek(fInfo->m_handle, static_cast<off_t>(offset * char_size), SEEK_END);
 
     if ( newpos == -1 ) return (size_t)-1;
@@ -687,30 +687,30 @@ size_t _seekrdtoend_fsb(Concurrency::streams::details::_file_info *info, int64_t
 utility::size64_t _get_size(_In_ concurrency::streams::details::_file_info *info, size_t char_size)
 {
     if ( info == nullptr ) return (size_t)-1;
-    
+
     _file_info_impl *fInfo = (_file_info_impl *)info;
-    
+
     pplx::extensibility::scoped_recursive_lock_t lock(info->m_lock);
-    
+
     if ( fInfo->m_handle == -1 ) return (size_t)-1;
-    
+
     if ( fInfo->m_buffer != nullptr )
     {
         delete[] fInfo->m_buffer;
         fInfo->m_buffer = nullptr;
         fInfo->m_bufoff = fInfo->m_buffill = fInfo->m_bufsize = 0;
     }
-    
+
     auto oldpos = lseek(fInfo->m_handle, 0, SEEK_CUR);
-    
+
     if ( oldpos == -1 ) return utility::size64_t(-1);
-    
+
     auto newpos = lseek(fInfo->m_handle, 0, SEEK_END);
-    
+
     if ( newpos == -1 ) return utility::size64_t(-1);
-    
+
     lseek(fInfo->m_handle, oldpos, SEEK_SET);
-    
+
     return utility::size64_t(newpos / char_size);
 }
 
@@ -723,7 +723,7 @@ utility::size64_t _get_size(_In_ concurrency::streams::details::_file_info *info
 size_t _seekrdpos_fsb(Concurrency::streams::details::_file_info *info, size_t pos, size_t)
 {
     if ( info == nullptr ) return (size_t)-1;
-    
+
     _file_info_impl *fInfo = (_file_info_impl *)info;
 
     pplx::extensibility::scoped_recursive_lock_t lock(info->m_lock);
@@ -750,7 +750,7 @@ size_t _seekrdpos_fsb(Concurrency::streams::details::_file_info *info, size_t po
 size_t _seekwrpos_fsb(Concurrency::streams::details::_file_info *info, size_t pos, size_t)
 {
     if ( info == nullptr ) return (size_t)-1;
-    
+
     _file_info_impl *fInfo = (_file_info_impl *)info;
 
     pplx::extensibility::scoped_recursive_lock_t lock(info->m_lock);
