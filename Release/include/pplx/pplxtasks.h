@@ -35,8 +35,6 @@
 namespace pplx = Concurrency;
 #if (_MSC_VER >= 1900)
 #include <concrt.h>
-#ifndef DEV14_EXTENSIBILITY_WRKRND
-#define DEV14_EXTENSIBILITY_WRKRND
 namespace Concurrency {
     namespace extensibility {
         typedef ::std::condition_variable condition_variable_t;
@@ -52,7 +50,6 @@ namespace Concurrency {
         typedef recursive_lock_t::_Scoped_lock scoped_recursive_lock_t;
     }
 }
-#endif // DEV14_EXTENSIBILITY_WRKRND
 #endif // _MSC_VER >= 1900
 #else
 
