@@ -70,7 +70,7 @@
 #include <atomic>
 #include <signal.h>
 #include "pthread.h"
-#if defined(ANDROID)
+#if (defined(ANDROID) || defined(__ANDROID__))
 // Boost doesn't recognize libstdcpp on top of clang correctly
 #include "boost/config/stdlib/libstdcpp3.hpp"
 #undef BOOST_NO_CXX11_SMART_PTR

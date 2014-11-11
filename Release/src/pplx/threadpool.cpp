@@ -23,7 +23,7 @@ namespace crossplat
 // initialize the static shared threadpool
 threadpool threadpool::s_shared(40);
 
-#if defined(ANDROID)
+#if (defined(ANDROID) || defined(__ANDROID__))
 // This pointer will be 0-initialized by default (at load time).
 std::atomic<JavaVM*> JVM;
 
@@ -47,7 +47,7 @@ JNIEnv* get_jvm_env()
 
 }
 
-#if defined(ANDROID)
+#if (defined(ANDROID) || defined(__ANDROID__))
 extern "C" jint JNI_OnLoad(JavaVM* vm, void* reserved)
 {
    JNIEnv* env;

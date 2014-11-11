@@ -49,7 +49,7 @@ namespace pplx = Concurrency;
 
 #ifndef _MS_WINDOWS
 #include <boost/algorithm/string.hpp>
-#ifndef ANDROID // CodePlex 269
+#if !defined(ANDROID) && !defined(__ANDROID__) // CodePlex 269
 #include <xlocale.h>
 #endif
 #endif
@@ -172,7 +172,7 @@ namespace details
         _ASYNCRTIMP scoped_c_thread_locale();
         _ASYNCRTIMP ~scoped_c_thread_locale();
 
-#ifndef ANDROID // CodePlex 269
+#if !defined(ANDROID) && !defined(__ANDROID__) // CodePlex 269
 #ifdef _MS_WINDOWS
         typedef _locale_t xplat_locale;
 #else
@@ -185,7 +185,7 @@ namespace details
 #ifdef _MS_WINDOWS
         std::string m_prevLocale;
         int m_prevThreadSetting;
-#elif !defined(ANDROID)
+#elif !(defined(ANDROID) || defined(__ANDROID__))
         locale_t m_prevLocale;
 #endif
         scoped_c_thread_locale(const scoped_c_thread_locale &);

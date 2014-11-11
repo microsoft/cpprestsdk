@@ -25,7 +25,7 @@
 #include <sstream>
 #include <iostream>
 
-#if defined(ANDROID) && defined(__arm__)
+#if (defined(ANDROID) || defined(__ANDROID__)) && defined(__arm__)
 // Cdecl is not used on ARM
 #define __cdecl
 #else

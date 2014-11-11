@@ -38,7 +38,7 @@
 #pragma clang diagnostic pop
 #endif
 
-#if defined(ANDROID)
+#if (defined(ANDROID) || defined(__ANDROID__))
 #include <atomic>
 #include <jni.h>
 #include "pplx/pplx.h"
@@ -46,7 +46,7 @@
 
 namespace crossplat {
 
-#if defined(ANDROID)
+#if (defined(ANDROID) || defined(__ANDROID__))
 // IDEA: Break this section into a separate android/jni header
 extern std::atomic<JavaVM*> JVM;
 JNIEnv* get_jvm_env();
@@ -120,7 +120,7 @@ private:
         schedule([]() -> void { throw _cancel_thread(); });
     }
 
-#if defined(ANDROID)
+#if (defined(ANDROID) || defined(__ANDROID__))
     static void detach_from_java(void*)
     {
         JVM.load()->DetachCurrentThread();
@@ -129,7 +129,7 @@ private:
 
     static void* thread_start(void *arg)
     {
-#if defined(ANDROID)
+#if (defined(ANDROID) || defined(__ANDROID__))
         // Spinlock on the JVM calling JNI_OnLoad()
         while (JVM == nullptr)
         {
@@ -151,7 +151,7 @@ private:
         catch (...)
         {
             // Something bad happened
-#if defined(ANDROID)
+#if (defined(ANDROID) || defined(__ANDROID__))
             // Reach into the depths of the 'droid!
             // NOTE: Uses internals of the bionic library
             // Written against android ndk r9d, 7/26/2014
@@ -159,7 +159,7 @@ private:
             throw;
 #endif
         }
-#if defined(ANDROID)
+#if (defined(ANDROID) || defined(__ANDROID__))
         pthread_cleanup_pop(true);
 #endif
         return arg;

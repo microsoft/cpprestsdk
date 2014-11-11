@@ -52,7 +52,7 @@
 #undef htonll
 #endif
 
-#if defined(__clang__) && defined(ANDROID)
+#if defined(__clang__) && (defined(ANDROID) || defined(__ANDROID__))
 #define _WEBSOCKETPP_NULLPTR_TOKEN_ 0
 #endif
 

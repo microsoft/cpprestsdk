@@ -28,7 +28,7 @@
 
 #if defined(_MS_WINDOWS) || defined(__APPLE__)
 #include <regex>
-#elif defined(ANDROID)
+#elif (defined(ANDROID) || defined(__ANDROID__))
 #else
 // GCC 4.8 doesn't support regex very well, fall back to Boost. Revist in GCC 4.9.
 #include <boost/regex.hpp>
@@ -45,7 +45,7 @@ namespace tests { namespace functional { namespace json_tests {
 #if defined(_MS_WINDOWS) || defined(__APPLE__)
         static std::regex pattern(spattern);
         return std::regex_match(str, pattern, std::regex_constants::match_flag_type::match_not_null);
-#elif defined(ANDROID)
+#elif (defined(ANDROID) || defined(__ANDROID__))
 	return str.find("Syntax error: ") != std::string::npos;
 #else
         static boost::regex pattern(spattern);

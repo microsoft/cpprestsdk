@@ -41,7 +41,7 @@
 #include <future>
 #endif
 
-#if defined(ANDROID)
+#if (defined(ANDROID) || defined(__ANDROID__))
 #include <jni.h>
 #include <boost/scope_exit.hpp>
 #endif
@@ -128,7 +128,7 @@ int TestRunner::GetTestTimeout(Test* const curTest, int const defaultTestTimeInM
 }
 
 
-#if defined(ANDROID)
+#if (defined(ANDROID) || defined(__ANDROID__))
 static JavaVM* JVM = nullptr;
 
 extern "C" jint JNI_OnLoad(JavaVM* vm, void* reserved)
@@ -177,7 +177,7 @@ void TestRunner::RunTest(TestResults* const result, Test* const curTest, int con
         // Timed wait requires async execution.
         auto testRunnerFuture = std::async(std::launch::async, [&]()
         {
-#if defined(ANDROID)
+#if (defined(ANDROID) || defined(__ANDROID__))
             JNIEnv* env = nullptr;
             auto result = JVM->AttachCurrentThread(&env, nullptr);
             if (result != JNI_OK)
