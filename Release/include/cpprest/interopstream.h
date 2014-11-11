@@ -26,25 +26,9 @@
 ****/
 #pragma once
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1800)
-#include <ppltasks.h>
-namespace pplx = Concurrency;
-#else // defined(_MSC_VER) && (_MSC_VER >= 1800)
 #include "pplx/pplxtasks.h"
-#endif // defined(_MSC_VER) && (_MSC_VER >= 1800)
-
 #include "cpprest/astreambuf.h"
 #include "cpprest/streams.h"
-
-#ifndef _CONCRT_H
-#ifndef _LWRCASE_CNCRRNCY
-#define _LWRCASE_CNCRRNCY
-// Note to reader: we're using lower-case namespace names everywhere, but the 'Concurrency' namespace
-// is capitalized for historical reasons. The alias let's us pretend that style issue doesn't exist.
-namespace Concurrency { }
-namespace concurrency = Concurrency;
-#endif // _LWRCASE_CNCRRNCY
-#endif // _CONCRT_H
 
 #pragma warning(push)
 // Suppress unreferenced formal parameter warning as they are required for documentation

@@ -30,7 +30,7 @@
 #include <vector>
 #include <string>
 
-#if defined(__APPLE__) || defined(ANDROID) || (defined(_MS_WINDOWS)  && !defined(__cplusplus_winrt) && !defined(_M_ARM))
+#if defined(__APPLE__) || defined(ANDROID) || (defined(_MS_WINDOWS)  && !defined(__cplusplus_winrt) && !defined(_M_ARM) && !defined(CPPREST_EXCLUDE_WEBSOCKETS))
 
 #include <boost/asio/ssl.hpp>
 

@@ -31,55 +31,16 @@
 ****/
 #pragma once
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1800)
-#include <ppltasks.h>
-namespace pplx = Concurrency;
-#if (_MSC_VER >= 1900)
-#include <concrt.h>
-#ifndef DEV14_EXTENSIBILITY_WRKRND
-#define DEV14_EXTENSIBILITY_WRKRND
-namespace Concurrency {
-    namespace extensibility {
-        typedef ::std::condition_variable condition_variable_t;
-        typedef ::std::mutex critical_section_t;
-        typedef ::std::unique_lock< ::std::mutex> scoped_critical_section_t;
-
-        typedef ::Concurrency::event event_t;
-        typedef ::Concurrency::reader_writer_lock reader_writer_lock_t;
-        typedef ::Concurrency::reader_writer_lock::scoped_lock scoped_rw_lock_t;
-        typedef ::Concurrency::reader_writer_lock::scoped_lock_read scoped_read_lock_t;
-
-        typedef ::Concurrency::details::_ReentrantBlockingLock recursive_lock_t;
-        typedef recursive_lock_t::_Scoped_lock scoped_recursive_lock_t;
-    }
-}
-#endif // DEV14_EXTENSIBILITY_WRKRND
-#endif // _MSC_VER >= 1900
-#else // _MSC_VER
-#include "pplx/pplxtasks.h"
-#endif
-
-#include "cpprest/xxpublic.h"
-
 #ifdef _MS_WINDOWS
 #include <cstdint>
 #endif
 
+#include "pplx/pplxtasks.h"
+#include "cpprest/xxpublic.h"
 #include "cpprest/basic_types.h"
-
-#ifndef _CONCRT_H
-#ifndef _LWRCASE_CNCRRNCY
-#define _LWRCASE_CNCRRNCY
-// Note to reader: we're using lower-case namespace names everywhere, but the 'Concurrency' namespace
-// is capitalized for historical reasons. The alias let's us pretend that style issue doesn't exist.
-namespace Concurrency { }
-namespace concurrency = Concurrency;
-#endif
-#endif
 
 namespace Concurrency { namespace streams
 {
-
 namespace details
 {
     /// <summary>

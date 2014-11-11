@@ -43,16 +43,9 @@ typedef void* native_handle;}}}
 #include <memory>
 #include <limits>
 
+#include "pplx/pplxtasks.h"
 #include "cpprest/xxpublic.h"
 #include "cpprest/http_msg.h"
-
-#if defined(_MSC_VER) && (_MSC_VER >= 1800)
-#include <ppltasks.h>
-namespace pplx = Concurrency;
-#else
-#include "pplx/pplxtasks.h"
-#endif
-
 #include "cpprest/json.h"
 #include "cpprest/uri.h"
 #include "cpprest/web_utilities.h"
