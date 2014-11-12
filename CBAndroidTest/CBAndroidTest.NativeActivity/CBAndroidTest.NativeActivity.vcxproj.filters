@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="android_native_app_glue.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="android_native_app_glue.c" />
+    <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="..\..\Build_android\build\build.armv7.debug\Binaries\libhttptest_utilities.a" />
+    <Library Include="..\..\Build_android\build\build.armv7.debug\Binaries\libwebsockettest_utilities.a" />
+  </ItemGroup>
+</Project>

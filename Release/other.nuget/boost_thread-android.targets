@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Target Name="boost_thread_android_PreLink" BeforeTargets="Link" DependsOnTargets="$(ComputeLinkInputsTargets)">
+    <!-- ARM and Clang and GNUSTL and Debug -->
+    <ItemGroup Condition="'$(Platform)' == 'ARM' And '$(PlatformToolset)' == 'Clang_3_4' And ('$(UseOfStl)' == 'gnustl_shared' Or '$(UseOfStl)' == 'gnustl_static') And '$(UseDebugLibraries)' == 'true'">
+      <Link Include="$(MSBuildThisFileDirectory)lib\arm\libboost_thread-clang-mt-d-1_55.a" />
+    </ItemGroup>
+    <!-- ARM and Clang and GNUSTL and Release -->
+    <ItemGroup Condition="'$(Platform)' == 'ARM' And '$(PlatformToolset)' == 'Clang_3_4' And ('$(UseOfStl)' == 'gnustl_shared' Or '$(UseOfStl)' == 'gnustl_static') And '$(UseDebugLibraries)' != 'true'">
+      <Link Include="$(MSBuildThisFileDirectory)lib\arm\libboost_thread-clang-mt-1_55.a" />
+    </ItemGroup>
+    <!-- x86 and Clang and GNUSTL and Debug -->
+    <ItemGroup Condition="'$(Platform)' == 'x86' And '$(PlatformToolset)' == 'Clang_3_4' And ('$(UseOfStl)' == 'gnustl_shared' Or '$(UseOfStl)' == 'gnustl_static') And '$(UseDebugLibraries)' == 'true'">
+      <Link Include="$(MSBuildThisFileDirectory)lib\x86\libboost_thread-clang-mt-d-1_55.a" />
+    </ItemGroup>
+    <!-- x86 and Clang and GNUSTL and Release -->
+    <ItemGroup Condition="'$(Platform)' == 'x86' And '$(PlatformToolset)' == 'Clang_3_4' And ('$(UseOfStl)' == 'gnustl_shared' Or '$(UseOfStl)' == 'gnustl_static') And '$(UseDebugLibraries)' != 'true'">
+      <Link Include="$(MSBuildThisFileDirectory)lib\x86\libboost_thread-clang-mt-1_55.a" />
+    </ItemGroup>
+
+    <Error
+        Condition="'$(PlatformToolset)' != 'Clang_3_4'"
+        Text="The boost_thread-android NuGet package only contains binaries for Clang 3.4."
+        />
+    <Error
+        Condition="'$(UseOfStl)' != 'gnustl_shared' And '$(UseOfStl)' != 'gnustl_static'"
+        Text="boost_thread-android requires linking against the gnustl. Please set Project Properties -> Configuration Properties -> General -> Use of STL to be 'gnustl_static'."
+        />
+  </Target>
+</Project>

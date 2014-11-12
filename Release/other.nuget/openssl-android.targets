@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+
+  <Target Name="openssl_android_PreLink" BeforeTargets="Link" DependsOnTargets="$(ComputeLinkInputsTargets)">
+    <!-- ARM and Clang -->
+    <ItemGroup Condition="'$(Platform)' == 'ARM' And '$(PlatformToolset)' == 'Clang_3_4'">
+      <Link Include="$(MSBuildThisFileDirectory)lib\arm\libssl-clang-1_0_1h.a" />
+      <Link Include="$(MSBuildThisFileDirectory)lib\arm\libcrypto-clang-1_0_1h.a" />
+    </ItemGroup>
+    <!-- x86 and Clang -->
+    <ItemGroup Condition="'$(Platform)' == 'x86' And '$(PlatformToolset)' == 'Clang_3_4'">
+      <Link Include="$(MSBuildThisFileDirectory)lib\x86\libssl-clang-1_0_1h.a" />
+      <Link Include="$(MSBuildThisFileDirectory)lib\x86\libcrypto-clang-1_0_1h.a" />
+    </ItemGroup>
+    <Error
+        Condition="'$(PlatformToolset)' != 'Clang_3_4'"
+        Text="The openssl-android NuGet package only contains binaries for Clang 3.4."
+        />
+  </Target>
+</Project>
