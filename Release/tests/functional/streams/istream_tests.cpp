@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,6 +22,8 @@
 ****/
 #include "unittestpp.h"
 #include "stdafx.h"
+
+#include <float.h>
 
 #if defined(__cplusplus_winrt)
 using namespace Windows::Storage;
@@ -1280,6 +1282,31 @@ TEST(istream_extract_unsigned_long_long)
 #endif
 }
 
+template <typename T>
+void compare_floating(T expected, T actual, T relativeDiff)
+{
+    // http://randomascii.wordpress.com/2012/02/25/comparing-floating-point-numbers-2012-edition/
+    if (expected != actual)
+    {
+        const auto diff = fabs(expected - actual);
+        const auto absExpected = fabs(expected);
+        const auto absActual = fabs(actual);
+        const auto largest = absExpected > absActual ? absExpected : absActual;
+        if (diff > largest * relativeDiff)
+        {
+            VERIFY_IS_TRUE(false);
+        }
+    }
+}
+void compare_double(double expected, double actual)
+{
+    compare_floating(expected, actual, DBL_EPSILON);
+}
+void compare_float(float expected, float actual)
+{
+    compare_floating(expected, actual, FLT_EPSILON);
+}
+
 TEST(extract_floating_point)
 {
     std::string test_string;
@@ -1310,13 +1337,14 @@ TEST(extract_floating_point)
 
     do
     {
-        double expected=0, actual;
+        double expected = 0;
         std_istream >> expected;
         
-        VERIFY_ARE_EQUAL(expected, actual = istream_double.extract<double>().get());
+        const auto actual = istream_double.extract<double>().get();
+        compare_double(expected, actual);
         
         if (actual <= std::numeric_limits<float>::max())
-            VERIFY_ARE_EQUAL(float(expected), istream_float.extract<float>().get());
+            compare_float(float(expected), istream_float.extract<float>().get());
         else
             VERIFY_THROWS(istream_float.extract<float>().get(), std::exception);
 
