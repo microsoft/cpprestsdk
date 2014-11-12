@@ -1280,6 +1280,31 @@ TEST(istream_extract_unsigned_long_long)
 #endif
 }
 
+template <typename T>
+void compare_floating(T expected, T actual, T relativeDiff)
+{
+    // http://randomascii.wordpress.com/2012/02/25/comparing-floating-point-numbers-2012-edition/
+    if (expected != actual)
+    {
+        const auto diff = fabs(expected - actual);
+        const auto absExpected = fabs(expected);
+        const auto absActual = fabs(actual);
+        const auto largest = absExpected > absActual ? absExpected : absActual;
+        if (diff > largest * relativeDiff)
+        {
+            VERIFY_IS_TRUE(false);
+        }
+    }
+}
+void compare_double(double expected, double actual)
+{
+    compare_floating(expected, actual, DBL_EPSILON);
+}
+void compare_float(float expected, float actual)
+{
+    compare_floating(expected, actual, FLT_EPSILON);
+}
+
 TEST(extract_floating_point)
 {
     std::string test_string;
@@ -1310,13 +1335,14 @@ TEST(extract_floating_point)
 
     do
     {
-        double expected=0, actual;
+        double expected = 0;
         std_istream >> expected;
         
-        VERIFY_ARE_EQUAL(expected, actual = istream_double.extract<double>().get());
+        const auto actual = istream_double.extract<double>().get();
+        compare_double(expected, actual);
         
         if (actual <= std::numeric_limits<float>::max())
-            VERIFY_ARE_EQUAL(float(expected), istream_float.extract<float>().get());
+            compare_float(float(expected), istream_float.extract<float>().get());
         else
             VERIFY_THROWS(istream_float.extract<float>().get(), std::exception);
 
