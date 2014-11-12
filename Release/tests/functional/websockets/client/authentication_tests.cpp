@@ -125,7 +125,7 @@ TEST(ssl_test)
     }
     catch (const websocket_exception &e)
     {
-        if (is_timeout(e.what())
+        if (is_timeout(e.what()))
         {
             // Since this test depends on an outside server sometimes it sporadically can fail due to timeouts
             // especially on our build machines.
