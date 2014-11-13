@@ -38,7 +38,7 @@ class winhttp_client;
 class winrt_client;
 }}}
 namespace websockets { namespace client { namespace details {
-class winrt_client;
+class winrt_callback_client;
 }}}
 
 namespace details
@@ -139,7 +139,7 @@ public:
 private:
     friend class http::client::details::winhttp_client;
     friend class http::client::details::winrt_client;
-    friend class websockets::client::details::winrt_client;
+    friend class websockets::client::details::winrt_callback_client;
 
 #if defined(_MS_WINDOWS)
     details::plaintext_string decrypt() const

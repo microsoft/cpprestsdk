@@ -70,6 +70,7 @@ namespace client
 
 enum class websocket_close_status
 {
+    blank = 0,
     normal = 1000,
     going_away = 1001,
     protocol_error = 1002,
@@ -265,6 +266,16 @@ public:
         : m_errorCode(utility::details::create_error_code(errorCode)),
         m_msg(std::move(whatArg))
     {}
+
+    /// <summary>
+    /// Creates a <c>websocket_exception</c> from a error code and string message to use as the what() argument.
+    /// <param name="code">Error code.</param>
+    /// <param name="whatArg">Message to use in what() string.</param>
+    /// </summary>
+    websocket_exception(std::error_code code, std::string whatArg) :
+        m_errorCode(std::move(code)),
+        m_msg(std::move(whatArg))
+    {}
 #endif
 
     /// <summary>
@@ -283,9 +294,9 @@ public:
     /// <param name="code">Error code.</param>
     /// <param name="whatArg">Message to use in what() string.</param>
     /// </summary>
-    websocket_exception(std::error_code code, std::string whatArg) :
+    websocket_exception(std::error_code code, const utility::string_t &whatArg) :
         m_errorCode(std::move(code)),
-        m_msg(std::move(whatArg))
+        m_msg(utility::conversions::to_utf8string(whatArg))
     {}
 
     /// <summary>
@@ -314,25 +325,27 @@ private:
 namespace details
 {
 
-// Interface to be implemented by the websocket client implementations.
-class _websocket_client_impl
+// Interface to be implemented by the websocket client callback implementations.
+class _websocket_client_callback_impl
 {
 public:
 
-    _websocket_client_impl(websocket_client_config config) :
+    _websocket_client_callback_impl(websocket_client_config config) :
         m_config(std::move(config)) {}
 
-    virtual ~_websocket_client_impl() CPPREST_NOEXCEPT {}
+    virtual ~_websocket_client_callback_impl() CPPREST_NOEXCEPT{}
 
     virtual pplx::task<void> connect() = 0;
 
     virtual pplx::task<void> send(websocket_outgoing_message &msg) = 0;
 
-    virtual pplx::task<websocket_incoming_message> receive() = 0;
+    virtual void set_received_handler(std::function<void(websocket_incoming_message)> handler) = 0;
 
     virtual pplx::task<void> close() = 0;
 
-    virtual pplx::task<void> close(websocket_close_status close_status, const utility::string_t &close_reason=_XPLATSTR("")) = 0;
+    virtual pplx::task<void> close(websocket_close_status close_status, const utility::string_t &close_reason = _XPLATSTR("")) = 0;
+
+    virtual void set_closed_handler(std::function<void(websocket_close_status, utility::string_t, std::error_code)> handler) = 0;
 
     const web::uri& uri() const
     {
@@ -353,12 +366,12 @@ public:
     {
         // Most of the URI schema validation is taken care by URI class.
         // We only need to check certain things specific to websockets.
-        if(uri.scheme() != _XPLATSTR("ws") && uri.scheme() != _XPLATSTR("wss"))
+        if (uri.scheme() != _XPLATSTR("ws") && uri.scheme() != _XPLATSTR("wss"))
         {
             throw std::invalid_argument("URI scheme must be 'ws' or 'wss'");
         }
 
-        if(uri.host().empty())
+        if (uri.host().empty())
         {
             throw std::invalid_argument("URI must contain a hostname.");
         }
@@ -375,6 +388,48 @@ protected:
     web::uri m_uri;
     websocket_client_config m_config;
 };
+
+// Interface to be implemented by the websocket client task implementations.
+class _websocket_client_task_impl
+{
+
+public:
+    _websocket_client_task_impl(websocket_client_config config);
+    
+    virtual ~_websocket_client_task_impl() CPPREST_NOEXCEPT;
+
+    pplx::task<websocket_incoming_message> receive();
+
+    std::shared_ptr<_websocket_client_callback_impl> callback_client() { return m_callback_client; };
+
+private:
+    void set_handler();
+
+    void close_pending_tasks_with_error(const websocket_exception &exc);
+
+    std::shared_ptr<_websocket_client_callback_impl> m_callback_client;
+
+    // When a message arrives, if there are tasks waiting for a message, signal the topmost one.
+    // Else enqueue the message in a queue.
+    // m_receive_queue_lock : to guard access to the queue & m_client_closed
+    std::mutex m_receive_queue_lock;
+    // Queue to store incoming messages when there are no tasks waiting for a message
+    std::queue<websocket_incoming_message> m_receive_msg_queue;
+    // Queue to maintain the receive tasks when there are no messages(yet).
+    std::queue<pplx::task_completion_event<websocket_incoming_message>> m_receive_task_queue;
+
+    pplx::task_completion_event<void> m_close_tce;
+    // There is a bug in ppl task_completion_event. The task_completion_event::set() accesses some
+    // internal data after signaling the event. The waiting thread might go ahead and start destroying the
+    // websocket_client. Due to this race, set() can cause a crash.
+    // To workaround this bug, maintain another event: m_server_close_complete. We will signal this when the m_close_tce.set() has
+    // completed. The websocket_client destructor can wait on this event before proceeding.
+    Concurrency::event m_server_close_complete;
+
+    // Initially set to false, becomes true if a close frame is received from the server or
+    // if the underlying connection is aborted or terminated.
+    bool m_client_closed;
+};
 }
 
 /// <summary>
@@ -386,18 +441,117 @@ public:
     /// <summary>
     ///  Creates a new websocket_client.
     /// </summary>
-    _ASYNCRTIMP websocket_client();
+    _ASYNCRTIMP websocket_client::websocket_client() :
+        m_client(std::make_shared<details::_websocket_client_task_impl>(websocket_client_config()))
+    {}
 
     /// <summary>
     ///  Creates a new websocket_client.
     /// </summary>
     /// <param name="client_config">The client configuration object containing the possible configuration options to initialize the <c>websocket_client</c>. </param>
-    _ASYNCRTIMP websocket_client(websocket_client_config client_config);
+    _ASYNCRTIMP websocket_client::websocket_client(websocket_client_config config) :
+        m_client(std::make_shared<details::_websocket_client_task_impl>(std::move(config)))
+    {}
 
     /// <summary>
     /// Destructor
     /// </summary>
     ~websocket_client() CPPREST_NOEXCEPT {}
+
+    /// <summary>
+    /// Connects to the remote network destination. The connect method initiates the websocket handshake with the
+    /// remote network destination, takes care of the protocol upgrade request.
+    /// </summary>
+    /// <param name="uri">The uri address to connect. </param>
+    /// <returns>An asynchronous operation that is completed once the client has successfully connected to the websocket server.</returns>
+    pplx::task<void> connect(const web::uri &uri)
+    {
+        m_client->callback_client()->verify_uri(uri);
+        m_client->callback_client()->set_uri(uri);
+        return m_client->callback_client()->connect();
+    }
+
+    /// <summary>
+    /// Sends a websocket message to the server .
+    /// </summary>
+    /// <returns>An asynchronous operation that is completed once the message is sent.</returns>
+    pplx::task<void> send(websocket_outgoing_message msg)
+    {
+        return m_client->callback_client()->send(msg);
+    }
+
+    /// <summary>
+    /// Receive a websocket message.
+    /// </summary>
+    /// <returns>An asynchronous operation that is completed when a message has been received by the client endpoint.</returns>
+    pplx::task<websocket_incoming_message> receive()
+    {
+        return m_client->receive();
+    }
+
+    /// <summary>
+    /// Closes a websocket client connection, sends a close frame to the server and waits for a close message from the server.
+    /// </summary>
+    /// <returns>An asynchronous operation that is completed the connection has been successfully closed.</returns>
+    pplx::task<void> close()
+    {
+        return m_client->callback_client()->close();
+    }
+
+    /// <summary>
+    /// Closes a websocket client connection, sends a close frame to the server and waits for a close message from the server.
+    /// </summary>
+    /// <param name="close_status">Endpoint MAY use the following pre-defined status codes when sending a Close frame.</param>
+    /// <param name="close_reason">While closing an established connection, an endpoint may indicate the reason for closure.</param>
+    /// <returns>An asynchronous operation that is completed the connection has been successfully closed.</returns>
+    pplx::task<void> close(websocket_close_status close_status, const utility::string_t& close_reason=_XPLATSTR(""))
+    {
+        return m_client->callback_client()->close(close_status, close_reason);
+    }
+
+    /// <summary>
+    /// Gets the websocket client URI.
+    /// </summary>
+    /// <returns>URI connected to.</returns>
+    const web::uri& uri() const
+    {
+        return m_client->callback_client()->uri();
+    }
+
+    /// <summary>
+    /// Gets the websocket client config object.
+    /// </summary>
+    /// <returns>A reference to the client configuration object.</returns>
+    const websocket_client_config& config() const
+    {
+        return m_client->callback_client()->config();
+    }
+
+private:
+    std::shared_ptr<details::_websocket_client_task_impl> m_client;
+};
+
+/// <summary>
+/// Websocket client class, used to maintain a connection to a remote host for an extended session, used handler APIs
+/// </summary>
+class websocket_callback_client
+{
+public:
+    /// <summary>
+    ///  Creates a new websocket_callback_client.
+    /// </summary>
+    _ASYNCRTIMP websocket_callback_client();
+
+    /// <summary>
+    ///  Creates a new websocket_callback_client.
+    /// </summary>
+    /// <param name="client_config">The client configuration object containing the possible configuration options to initialize the <c>websocket_client</c>. </param>
+    _ASYNCRTIMP websocket_callback_client(websocket_client_config client_config);
+
+    /// <summary>
+    /// Destructor
+    /// </summary>
+    ~websocket_callback_client() CPPREST_NOEXCEPT{}
 
     /// <summary>
     /// Connects to the remote network destination. The connect method initiates the websocket handshake with the
@@ -422,12 +576,12 @@ public:
     }
 
     /// <summary>
-    /// Receive a websocket message.
+    /// Set the received handler for notification of client websocket messages.
     /// </summary>
-    /// <returns>An asynchronous operation that is completed when a message has been received by the client endpoint.</returns>
-    pplx::task<websocket_incoming_message> receive()
+    /// <param name="handler">The handler for incoming websocket messages</param>
+    void set_received_handler(std::function<void(websocket_incoming_message)> handler)
     {
-        return m_client->receive();
+        m_client->set_received_handler(handler);
     }
 
     /// <summary>
@@ -445,9 +599,18 @@ public:
     /// <param name="close_status">Endpoint MAY use the following pre-defined status codes when sending a Close frame.</param>
     /// <param name="close_reason">While closing an established connection, an endpoint may indicate the reason for closure.</param>
     /// <returns>An asynchronous operation that is completed the connection has been successfully closed.</returns>
-    pplx::task<void> close(websocket_close_status close_status, const utility::string_t& close_reason=_XPLATSTR(""))
+    pplx::task<void> close(websocket_close_status close_status, const utility::string_t& close_reason = _XPLATSTR(""))
     {
         return m_client->close(close_status, close_reason);
+    }
+
+    /// <summary>
+    /// Set the closed handler for notification of client websocket closing event.
+    /// </summary>
+    /// <param name="handler">The handler for websocket closing event</param>
+    void set_closed_handler(std::function<void(websocket_close_status, const utility::string_t&, std::error_code)> handler)
+    {
+        m_client->set_closed_handler(handler);
     }
 
     /// <summary>
@@ -469,7 +632,7 @@ public:
     }
 
 private:
-    std::shared_ptr<details::_websocket_client_impl> m_client;
+    std::shared_ptr<details::_websocket_client_callback_impl> m_client;
 };
 
 }}}
