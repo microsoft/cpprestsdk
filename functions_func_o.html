@@ -72,6 +72,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
       <li class="current"><a href="functions_func.html"><span>Functions</span></a></li>
       <li><a href="functions_type.html"><span>Typedefs</span></a></li>
       <li><a href="functions_enum.html"><span>Enumerations</span></a></li>
+      <li><a href="functions_eval.html"><span>Enumerator</span></a></li>
     </ul>
   </div>
   <div id="navrow4" class="tabs3">
@@ -133,11 +134,15 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 , <a class="el" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a6da51832fb25a44c5b2ee38ba02001a9">web::http::experimental::listener::http_listener</a>
 </li>
 <li>open_istream()
-: <a class="el" href="class_concurrency_1_1streams_1_1file__stream.html#a60eca8e91d1ab652f3821e0aefd71142">Concurrency::streams::file_stream&lt; _CharType &gt;</a>
+: <a class="el" href="class_concurrency_1_1streams_1_1bytestream.html#a486a64c76c3487ce5824bea314a19b4a">Concurrency::streams::bytestream</a>
+, <a class="el" href="class_concurrency_1_1streams_1_1container__stream.html#af383bc7588da3fc873f20b5f409b044c">Concurrency::streams::container_stream&lt; _CollectionType &gt;</a>
+, <a class="el" href="class_concurrency_1_1streams_1_1file__stream.html#a60eca8e91d1ab652f3821e0aefd71142">Concurrency::streams::file_stream&lt; _CharType &gt;</a>
 , <a class="el" href="class_concurrency_1_1streams_1_1rawptr__stream.html#ad2cb0dab66097008bbd451c7bb151b97">Concurrency::streams::rawptr_stream&lt; _CharType &gt;</a>
 </li>
 <li>open_ostream()
-: <a class="el" href="class_concurrency_1_1streams_1_1file__stream.html#ac1e5a13f0cc1843ba9c82437dacbbb44">Concurrency::streams::file_stream&lt; _CharType &gt;</a>
+: <a class="el" href="class_concurrency_1_1streams_1_1bytestream.html#ab5afd42383ee0040cc5e60938c3759ad">Concurrency::streams::bytestream</a>
+, <a class="el" href="class_concurrency_1_1streams_1_1container__stream.html#a0243cd029e4e8ae733bbd075c11758b4">Concurrency::streams::container_stream&lt; _CollectionType &gt;</a>
+, <a class="el" href="class_concurrency_1_1streams_1_1file__stream.html#ac1e5a13f0cc1843ba9c82437dacbbb44">Concurrency::streams::file_stream&lt; _CharType &gt;</a>
 , <a class="el" href="class_concurrency_1_1streams_1_1rawptr__stream.html#a2d0c53b51d3b1f3f51bedd927d661964">Concurrency::streams::rawptr_stream&lt; _CharType &gt;</a>
 </li>
 <li>operator bool()
@@ -161,13 +166,12 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 , <a class="el" href="class_concurrency_1_1streams_1_1stdio__ostream.html#ac497a39e96ab759996f5d2d7db927b37">Concurrency::streams::stdio_ostream&lt; CharType &gt;</a>
 , <a class="el" href="class_concurrency_1_1streams_1_1streambuf.html#a8a57d9f1f27a0194b5fe97c254c0084c">Concurrency::streams::streambuf&lt; _CharType &gt;</a>
 , <a class="el" href="classpplx_1_1task.html#ad362a50b2e1be3b0b17bd860a5c2929e">pplx::task&lt; _Type &gt;</a>
-, <a class="el" href="classweb_1_1experimental_1_1web__sockets_1_1client_1_1websocket__client.html#a4004e4fdcda036b4736eab0a0b82a948">web::experimental::web_sockets::client::websocket_client</a>
 , <a class="el" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a8b019815bb6663c7a2ab240277e825a9">web::http::experimental::listener::http_listener</a>
 , <a class="el" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener__config.html#a6918c72383b593f3a15f1214992cd966">web::http::experimental::listener::http_listener_config</a>
-, <a class="el" href="classweb_1_1http_1_1http__headers.html#aa6e138da69ca61a7c67ff067c9cd259e">web::http::http_headers</a>
-, <a class="el" href="classweb_1_1http_1_1http__request.html#a32a91b7f7fbb2e65deb0f5f6956c6a9a">web::http::http_request</a>
-, <a class="el" href="classweb_1_1http_1_1http__response.html#aa5370e03a31c2e38d17a6246ff49ed69">web::http::http_response</a>
-, <a class="el" href="classweb_1_1json_1_1value.html#a2e9fad49e337c388d98ac07b87f1c8ba">web::json::value</a>
+, <a class="el" href="classweb_1_1http_1_1http__headers.html#a8676761ce3f806c2578a529512e280c7">web::http::http_headers</a>
+, <a class="el" href="classweb_1_1json_1_1value.html#a9364bd5414f9695977eadfdce2c665d5">web::json::value</a>
+, <a class="el" href="classweb_1_1uri.html#ac966b44ea42d6887e312e7afcf53a17e">web::uri</a>
+, <a class="el" href="classweb_1_1websockets_1_1client_1_1websocket__client__config.html#a52e4a1deba36a760c8d334b410828ada">web::websockets::client::websocket_client_config</a>
 </li>
 <li>operator==()
 : <a class="el" href="classpplx_1_1task.html#af87281a3b6f797b6b0f381df81142798">pplx::task&lt; _Type &gt;</a>
@@ -179,13 +183,13 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 : <a class="el" href="classweb_1_1http_1_1http__headers.html#aee8a18b955eea8a245aeef8f5a43d8c1">web::http::http_headers</a>
 , <a class="el" href="classweb_1_1json_1_1array.html#a53f0a3aa2b61acac7092baaf7426d6e8">web::json::array</a>
 , <a class="el" href="classweb_1_1json_1_1object.html#ad3809c83c4e9eb875b630266ca4cb873">web::json::object</a>
-, <a class="el" href="classweb_1_1json_1_1value.html#a56c751a1c22d14b85b7f41a724100e22">web::json::value</a>
+, <a class="el" href="classweb_1_1json_1_1value.html#a706c50448fc33f1c76f76a86aeec706f">web::json::value</a>
 </li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Aug 19 2014 16:17:56 for C++ Rest SDK by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Thu Nov 13 2014 15:55:32 for C++ Rest SDK by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.7
 </small></address>

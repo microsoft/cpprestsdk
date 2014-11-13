@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['fragment',['fragment',['../classweb_1_1uri_1_1components.html#a65f60c27d8e2c643e4ba78bf05464f2da283756c5642d08b35ba3b2947ddda35c',1,'web::uri::components']]],
-  ['full_5furi',['full_uri',['../classweb_1_1uri_1_1components.html#a65f60c27d8e2c643e4ba78bf05464f2dacce8634e3466a49e143c2d8373983c80',1,'web::uri::components']]]
+  ['object',['Object',['../classweb_1_1json_1_1value.html#a86b0622e1fcb44528756e9c597063d4ea69fa8461bd9b66565990071507198ecd',1,'web::json::value']]]
 ];

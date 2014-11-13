@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['not_5fcomplete',['not_complete',['../namespacepplx.html#a7569c24382f33970242029beed764a6ea716faa59dcf6afa0531293efd19eba46',1,'pplx']]]
+  ['boolean',['Boolean',['../classweb_1_1json_1_1value.html#a86b0622e1fcb44528756e9c597063d4eaaece7d8052f39aec40ddf6345e05d3d2',1,'web::json::value']]]
 ];

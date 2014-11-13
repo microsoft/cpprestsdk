@@ -97,7 +97,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div><!--header-->
 <div class="contents">
 
-<p>A flexible, protocol independent uri implementation.  
+<p>A flexible, protocol independent URI implementation.  
  <a href="classweb_1_1uri.html#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="base__uri_8h_source.html">base_uri.h</a>&gt;</code></p>
@@ -114,11 +114,23 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:ad2f96549f3e47fe738ff271630406b58"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates an empty uri  <a href="#ad2f96549f3e47fe738ff271630406b58">More...</a><br /></td></tr>
 <tr class="separator:ad2f96549f3e47fe738ff271630406b58"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afb4bb7e58d354d7f3394fb729b17a5ea"><td class="memItemLeft" align="right" valign="top">_ASYNCRTIMP&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classweb_1_1uri.html#afb4bb7e58d354d7f3394fb729b17a5ea">uri</a> (const utility::char_t *uri_string)</td></tr>
-<tr class="memdesc:afb4bb7e58d354d7f3394fb729b17a5ea"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a uri from the given encoded string. This will throw an exception if the string does not contain a valid uri. Use <a class="el" href="classweb_1_1uri.html#a8df6d409777a4f6fd4e424b1818c7d24" title="Validates a string as a uri. ">uri::validate</a> if processing user-input.  <a href="#afb4bb7e58d354d7f3394fb729b17a5ea">More...</a><br /></td></tr>
+<tr class="memdesc:afb4bb7e58d354d7f3394fb729b17a5ea"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a URI from the given encoded string. This will throw an exception if the string does not contain a valid URI. Use <a class="el" href="classweb_1_1uri.html#a8df6d409777a4f6fd4e424b1818c7d24" title="Validates a string as a URI. ">uri::validate</a> if processing user-input.  <a href="#afb4bb7e58d354d7f3394fb729b17a5ea">More...</a><br /></td></tr>
 <tr class="separator:afb4bb7e58d354d7f3394fb729b17a5ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac6eb7b91fc84d3f4cf0a53fac328c9ae"><td class="memItemLeft" align="right" valign="top">_ASYNCRTIMP&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classweb_1_1uri.html#ac6eb7b91fc84d3f4cf0a53fac328c9ae">uri</a> (const utility::string_t &amp;uri_string)</td></tr>
-<tr class="memdesc:ac6eb7b91fc84d3f4cf0a53fac328c9ae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a uri from the given encoded string. This will throw an exception if the string does not contain a valid uri. Use <a class="el" href="classweb_1_1uri.html#a8df6d409777a4f6fd4e424b1818c7d24" title="Validates a string as a uri. ">uri::validate</a> if processing user-input.  <a href="#ac6eb7b91fc84d3f4cf0a53fac328c9ae">More...</a><br /></td></tr>
+<tr class="memdesc:ac6eb7b91fc84d3f4cf0a53fac328c9ae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a URI from the given encoded string. This will throw an exception if the string does not contain a valid URI. Use <a class="el" href="classweb_1_1uri.html#a8df6d409777a4f6fd4e424b1818c7d24" title="Validates a string as a URI. ">uri::validate</a> if processing user-input.  <a href="#ac6eb7b91fc84d3f4cf0a53fac328c9ae">More...</a><br /></td></tr>
 <tr class="separator:ac6eb7b91fc84d3f4cf0a53fac328c9ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4e93e0571a932769c549d3b144d61c11"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classweb_1_1uri.html#a4e93e0571a932769c549d3b144d61c11">uri</a> (const <a class="el" href="classweb_1_1uri.html">uri</a> &amp;other)</td></tr>
+<tr class="memdesc:a4e93e0571a932769c549d3b144d61c11"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy constructor.  <a href="#a4e93e0571a932769c549d3b144d61c11">More...</a><br /></td></tr>
+<tr class="separator:a4e93e0571a932769c549d3b144d61c11"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ace276a0e27de8b4e1a4fd20b4d708af2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classweb_1_1uri.html">uri</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classweb_1_1uri.html#ace276a0e27de8b4e1a4fd20b4d708af2">operator=</a> (const <a class="el" href="classweb_1_1uri.html">uri</a> &amp;other)</td></tr>
+<tr class="memdesc:ace276a0e27de8b4e1a4fd20b4d708af2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy assignment operator.  <a href="#ace276a0e27de8b4e1a4fd20b4d708af2">More...</a><br /></td></tr>
+<tr class="separator:ace276a0e27de8b4e1a4fd20b4d708af2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1a2505c4066f5fb74e2a1c5e8de9461e"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classweb_1_1uri.html#a1a2505c4066f5fb74e2a1c5e8de9461e">uri</a> (<a class="el" href="classweb_1_1uri.html">uri</a> &amp;&amp;other) CPPREST_NOEXCEPT</td></tr>
+<tr class="memdesc:a1a2505c4066f5fb74e2a1c5e8de9461e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move constructor.  <a href="#a1a2505c4066f5fb74e2a1c5e8de9461e">More...</a><br /></td></tr>
+<tr class="separator:a1a2505c4066f5fb74e2a1c5e8de9461e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac966b44ea42d6887e312e7afcf53a17e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classweb_1_1uri.html">uri</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classweb_1_1uri.html#ac966b44ea42d6887e312e7afcf53a17e">operator=</a> (<a class="el" href="classweb_1_1uri.html">uri</a> &amp;&amp;other) CPPREST_NOEXCEPT</td></tr>
+<tr class="memdesc:ac966b44ea42d6887e312e7afcf53a17e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move assignment operator  <a href="#ac966b44ea42d6887e312e7afcf53a17e">More...</a><br /></td></tr>
+<tr class="separator:ac966b44ea42d6887e312e7afcf53a17e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9acedb85dd798694623213daf61d5e90"><td class="memItemLeft" align="right" valign="top">const utility::string_t &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classweb_1_1uri.html#a9acedb85dd798694623213daf61d5e90">scheme</a> () const </td></tr>
 <tr class="memdesc:a9acedb85dd798694623213daf61d5e90"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the scheme component of the URI as an encoded string.  <a href="#a9acedb85dd798694623213daf61d5e90">More...</a><br /></td></tr>
 <tr class="separator:a9acedb85dd798694623213daf61d5e90"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -147,7 +159,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a6597fb9621985cc380514ac72cf95b14"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the path, query, and fragment portion of this uri, which may be empty.  <a href="#a6597fb9621985cc380514ac72cf95b14">More...</a><br /></td></tr>
 <tr class="separator:a6597fb9621985cc380514ac72cf95b14"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5d7bd88873f3356f6573e94a65786b79"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classweb_1_1uri.html#a5d7bd88873f3356f6573e94a65786b79">is_empty</a> () const </td></tr>
-<tr class="memdesc:a5d7bd88873f3356f6573e94a65786b79"><td class="mdescLeft">&#160;</td><td class="mdescRight">An empty uri specifies no components, and serves as a default value  <a href="#a5d7bd88873f3356f6573e94a65786b79">More...</a><br /></td></tr>
+<tr class="memdesc:a5d7bd88873f3356f6573e94a65786b79"><td class="mdescLeft">&#160;</td><td class="mdescRight">An empty URI specifies no components, and serves as a default value  <a href="#a5d7bd88873f3356f6573e94a65786b79">More...</a><br /></td></tr>
 <tr class="separator:a5d7bd88873f3356f6573e94a65786b79"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a95dec7339316aff7d87c513e5c6bb54b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classweb_1_1uri.html#a95dec7339316aff7d87c513e5c6bb54b">is_host_loopback</a> () const </td></tr>
 <tr class="memdesc:a95dec7339316aff7d87c513e5c6bb54b"><td class="mdescLeft">&#160;</td><td class="mdescRight">A loopback URI is one which refers to a hostname or ip address with meaning only on the local machine.  <a href="#a95dec7339316aff7d87c513e5c6bb54b">More...</a><br /></td></tr>
@@ -161,16 +173,16 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aefdbf973cc74b1b12d7707a647149820"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classweb_1_1uri.html#aefdbf973cc74b1b12d7707a647149820">is_port_default</a> () const </td></tr>
 <tr class="separator:aefdbf973cc74b1b12d7707a647149820"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a759f0a890ee397bc0166ba1a1839faea"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classweb_1_1uri.html#a759f0a890ee397bc0166ba1a1839faea">is_authority</a> () const </td></tr>
-<tr class="memdesc:a759f0a890ee397bc0166ba1a1839faea"><td class="mdescLeft">&#160;</td><td class="mdescRight">An "authority" uri is one with only a scheme, optional userinfo, hostname, and (optional) port.  <a href="#a759f0a890ee397bc0166ba1a1839faea">More...</a><br /></td></tr>
+<tr class="memdesc:a759f0a890ee397bc0166ba1a1839faea"><td class="mdescLeft">&#160;</td><td class="mdescRight">An "authority" URI is one with only a scheme, optional userinfo, hostname, and (optional) port.  <a href="#a759f0a890ee397bc0166ba1a1839faea">More...</a><br /></td></tr>
 <tr class="separator:a759f0a890ee397bc0166ba1a1839faea"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a26031794cc63050a199098346c570fa1"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classweb_1_1uri.html#a26031794cc63050a199098346c570fa1">has_same_authority</a> (const <a class="el" href="classweb_1_1uri.html">uri</a> &amp;other) const </td></tr>
-<tr class="memdesc:a26031794cc63050a199098346c570fa1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns whether the other uri has the same authority as this one  <a href="#a26031794cc63050a199098346c570fa1">More...</a><br /></td></tr>
+<tr class="memdesc:a26031794cc63050a199098346c570fa1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns whether the other URI has the same authority as this one  <a href="#a26031794cc63050a199098346c570fa1">More...</a><br /></td></tr>
 <tr class="separator:a26031794cc63050a199098346c570fa1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a681c3b107834925c8087a08667b9f146"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classweb_1_1uri.html#a681c3b107834925c8087a08667b9f146">is_path_empty</a> () const </td></tr>
-<tr class="memdesc:a681c3b107834925c8087a08667b9f146"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns whether the path portion of this uri is empty  <a href="#a681c3b107834925c8087a08667b9f146">More...</a><br /></td></tr>
+<tr class="memdesc:a681c3b107834925c8087a08667b9f146"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns whether the path portion of this URI is empty  <a href="#a681c3b107834925c8087a08667b9f146">More...</a><br /></td></tr>
 <tr class="separator:a681c3b107834925c8087a08667b9f146"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9171fc61539a01c111724ddfaadbc2a9"><td class="memItemLeft" align="right" valign="top">utility::string_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classweb_1_1uri.html#a9171fc61539a01c111724ddfaadbc2a9">to_string</a> () const </td></tr>
-<tr class="memdesc:a9171fc61539a01c111724ddfaadbc2a9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the full (encoded) uri as a string.  <a href="#a9171fc61539a01c111724ddfaadbc2a9">More...</a><br /></td></tr>
+<tr class="memdesc:a9171fc61539a01c111724ddfaadbc2a9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the full (encoded) URI as a string.  <a href="#a9171fc61539a01c111724ddfaadbc2a9">More...</a><br /></td></tr>
 <tr class="separator:a9171fc61539a01c111724ddfaadbc2a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a148e6f236a8e8ae442bfe578ff30e6bb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a148e6f236a8e8ae442bfe578ff30e6bb"></a>
 _ASYNCRTIMP bool&#160;</td><td class="memItemRight" valign="bottom"><b>operator==</b> (const <a class="el" href="classweb_1_1uri.html">uri</a> &amp;other) const </td></tr>
@@ -206,7 +218,7 @@ utility::string_t &gt; __cdecl&#160;</td><td class="memItemRight" valign="bottom
 <tr class="memdesc:a48d1bb49e4c518aebbff5e5da812ffbf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Splits a query into its key-value components.  <a href="#a48d1bb49e4c518aebbff5e5da812ffbf">More...</a><br /></td></tr>
 <tr class="separator:a48d1bb49e4c518aebbff5e5da812ffbf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8df6d409777a4f6fd4e424b1818c7d24"><td class="memItemLeft" align="right" valign="top">static _ASYNCRTIMP bool __cdecl&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classweb_1_1uri.html#a8df6d409777a4f6fd4e424b1818c7d24">validate</a> (const utility::string_t &amp;uri_string)</td></tr>
-<tr class="memdesc:a8df6d409777a4f6fd4e424b1818c7d24"><td class="mdescLeft">&#160;</td><td class="mdescRight">Validates a string as a uri.  <a href="#a8df6d409777a4f6fd4e424b1818c7d24">More...</a><br /></td></tr>
+<tr class="memdesc:a8df6d409777a4f6fd4e424b1818c7d24"><td class="mdescLeft">&#160;</td><td class="mdescRight">Validates a string as a URI.  <a href="#a8df6d409777a4f6fd4e424b1818c7d24">More...</a><br /></td></tr>
 <tr class="separator:a8df6d409777a4f6fd4e424b1818c7d24"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
@@ -216,11 +228,11 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>uri_builder</b></td>
 <tr class="separator:a3dcc7893e4827b3928131aebcb66f077"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>A flexible, protocol independent uri implementation. </p>
-<p>URI instances are immutable. Querying the various fields on an emtpy uri will return empty strings. Querying various diagnostic members on an empty uri will return false. </p>
-<p>This implementation accepts both uris ('<a href="http://msn.com/path'">http://msn.com/path'</a>) and uri relative-references ('/path?query::frag').</p>
-<p>This implementation does not provide any scheme-specific handling &ndash; an example of this would be the following: '<a href="http://path1/path'">http://path1/path'</a>. This is a valid uri, but it's not a valid http-uri &ndash; that is, it's syntactically correct but does not conform to the requirements of the http scheme (http requires a host). We could provide this by allowing a pluggable 'scheme' policy-class, which would provide extra capability for validating and canonicalizing a uri according to scheme, and would introduce a layer of type-safety for uris of differing schemes, and thus differing semantics.</p>
-<p>One issue with implementing a scheme-independent uri facility is that of comparing for equality. For instance, these uris are considered equal '<a href="http://msn.com',">http://msn.com',</a> '<a href="http://msn.com:80'">http://msn.com:80'</a>. That is &ndash; the 'default' port can be either omitted or explicit. Since we don't have a way to map a scheme to it's default port, we don't have a way to know these are equal. This is just one of a class of issues with regard to scheme-specific behavior. </p>
+<div class="textblock"><p>A flexible, protocol independent URI implementation. </p>
+<p>URI instances are immutable. Querying the various fields on an emtpy URI will return empty strings. Querying various diagnostic members on an empty URI will return false. </p>
+<p>This implementation accepts both URIs ('<a href="http://msn.com/path'">http://msn.com/path'</a>) and URI relative-references ('/path?query::frag').</p>
+<p>This implementation does not provide any scheme-specific handling &ndash; an example of this would be the following: '<a href="http://path1/path'">http://path1/path'</a>. This is a valid URI, but it's not a valid http-uri &ndash; that is, it's syntactically correct but does not conform to the requirements of the http scheme (http requires a host). We could provide this by allowing a pluggable 'scheme' policy-class, which would provide extra capability for validating and canonicalizing a URI according to scheme, and would introduce a layer of type-safety for URIs of differing schemes, and thus differing semantics.</p>
+<p>One issue with implementing a scheme-independent URI facility is that of comparing for equality. For instance, these URIs are considered equal '<a href="http://msn.com',">http://msn.com',</a> '<a href="http://msn.com:80'">http://msn.com:80'</a>. That is &ndash; the 'default' port can be either omitted or explicit. Since we don't have a way to map a scheme to it's default port, we don't have a way to know these are equal. This is just one of a class of issues with regard to scheme-specific behavior. </p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a class="anchor" id="ad2f96549f3e47fe738ff271630406b58"></a>
 <div class="memitem">
@@ -261,7 +273,7 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>uri_builder</b></td>
       </table>
 </div><div class="memdoc">
 
-<p>Creates a uri from the given encoded string. This will throw an exception if the string does not contain a valid uri. Use <a class="el" href="classweb_1_1uri.html#a8df6d409777a4f6fd4e424b1818c7d24" title="Validates a string as a uri. ">uri::validate</a> if processing user-input. </p>
+<p>Creates a URI from the given encoded string. This will throw an exception if the string does not contain a valid URI. Use <a class="el" href="classweb_1_1uri.html#a8df6d409777a4f6fd4e424b1818c7d24" title="Validates a string as a URI. ">uri::validate</a> if processing user-input. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">uri_string</td><td>A pointer to an encoded string to create the URI instance.</td></tr>
@@ -285,13 +297,65 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>uri_builder</b></td>
       </table>
 </div><div class="memdoc">
 
-<p>Creates a uri from the given encoded string. This will throw an exception if the string does not contain a valid uri. Use <a class="el" href="classweb_1_1uri.html#a8df6d409777a4f6fd4e424b1818c7d24" title="Validates a string as a uri. ">uri::validate</a> if processing user-input. </p>
+<p>Creates a URI from the given encoded string. This will throw an exception if the string does not contain a valid URI. Use <a class="el" href="classweb_1_1uri.html#a8df6d409777a4f6fd4e424b1818c7d24" title="Validates a string as a URI. ">uri::validate</a> if processing user-input. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">uri_string</td><td>An encoded uri string to create the URI instance.</td></tr>
+    <tr><td class="paramname">uri_string</td><td>An encoded URI string to create the URI instance.</td></tr>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a class="anchor" id="a4e93e0571a932769c549d3b144d61c11"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">web::uri::uri </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classweb_1_1uri.html">uri</a> &amp;&#160;</td>
+          <td class="paramname"><em>other</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Copy constructor. </p>
+
+</div>
+</div>
+<a class="anchor" id="a1a2505c4066f5fb74e2a1c5e8de9461e"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">web::uri::uri </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classweb_1_1uri.html">uri</a> &amp;&amp;&#160;</td>
+          <td class="paramname"><em>other</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Move constructor. </p>
 
 </div>
 </div>
@@ -471,14 +535,14 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>uri_builder</b></td>
 </table>
 </div><div class="memdoc">
 
-<p>Returns whether the other uri has the same authority as this one </p>
+<p>Returns whether the other URI has the same authority as this one </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">other</td><td>The uri to compare the authority with.</td></tr>
+    <tr><td class="paramname">other</td><td>The URI to compare the authority with.</td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><code>true</code> if both the uri's have the same authority, <code>false</code> otherwise.</dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><code>true</code> if both the URI's have the same authority, <code>false</code> otherwise.</dd></dl>
 
 </div>
 </div>
@@ -529,8 +593,8 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>uri_builder</b></td>
 </table>
 </div><div class="memdoc">
 
-<p>An "authority" uri is one with only a scheme, optional userinfo, hostname, and (optional) port. </p>
-<dl class="section return"><dt>Returns</dt><dd><code>true</code> if this is an "authority" uri, <code>false</code> otherwise.</dd></dl>
+<p>An "authority" URI is one with only a scheme, optional userinfo, hostname, and (optional) port. </p>
+<dl class="section return"><dt>Returns</dt><dd><code>true</code> if this is an "authority" URI, <code>false</code> otherwise.</dd></dl>
 
 </div>
 </div>
@@ -555,7 +619,7 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>uri_builder</b></td>
 </table>
 </div><div class="memdoc">
 
-<p>An empty uri specifies no components, and serves as a default value </p>
+<p>An empty URI specifies no components, and serves as a default value </p>
 
 </div>
 </div>
@@ -660,8 +724,8 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>uri_builder</b></td>
 </table>
 </div><div class="memdoc">
 
-<p>Returns whether the path portion of this uri is empty </p>
-<dl class="section return"><dt>Returns</dt><dd><code>true</code> if the path portion of this uri is empty, <code>false</code> otherwise.</dd></dl>
+<p>Returns whether the path portion of this URI is empty </p>
+<dl class="section return"><dt>Returns</dt><dd><code>true</code> if the path portion of this URI is empty, <code>false</code> otherwise.</dd></dl>
 
 </div>
 </div>
@@ -686,7 +750,59 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>uri_builder</b></td>
 </table>
 </div><div class="memdoc">
 <p>A default port is one where the port is unspecified, and will be determined by the operating system. The choice of default port may be dictated by the scheme (http -&gt; 80) or not. </p>
-<dl class="section return"><dt>Returns</dt><dd>True if this URI instance has a default port.</dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><code>true</code> if this URI instance has a default port, <code>false</code> otherwise.</dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ace276a0e27de8b4e1a4fd20b4d708af2"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classweb_1_1uri.html">uri</a>&amp; web::uri::operator= </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classweb_1_1uri.html">uri</a> &amp;&#160;</td>
+          <td class="paramname"><em>other</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Copy assignment operator. </p>
+
+</div>
+</div>
+<a class="anchor" id="ac966b44ea42d6887e312e7afcf53a17e"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classweb_1_1uri.html">uri</a>&amp; web::uri::operator= </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classweb_1_1uri.html">uri</a> &amp;&amp;&#160;</td>
+          <td class="paramname"><em>other</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Move assignment operator </p>
 
 </div>
 </div>
@@ -782,7 +898,7 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>uri_builder</b></td>
 </div><div class="memdoc">
 
 <p>Gets the path, query, and fragment portion of this uri, which may be empty. </p>
-<dl class="section return"><dt>Returns</dt><dd>The new uri object with the path, query and fragment portion of this uri.</dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>The new URI object with the path, query and fragment portion of this URI.</dd></dl>
 
 </div>
 </div>
@@ -899,8 +1015,8 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>uri_builder</b></td>
 </table>
 </div><div class="memdoc">
 
-<p>Returns the full (encoded) uri as a string. </p>
-<dl class="section return"><dt>Returns</dt><dd>The full encoded uri string.</dd></dl>
+<p>Returns the full (encoded) URI as a string. </p>
+<dl class="section return"><dt>Returns</dt><dd>The full encoded URI string.</dd></dl>
 
 </div>
 </div>
@@ -952,10 +1068,10 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>uri_builder</b></td>
 </table>
 </div><div class="memdoc">
 
-<p>Validates a string as a uri. </p>
+<p>Validates a string as a URI. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">uri_string</td><td>The uri string to be validated.</td></tr>
+    <tr><td class="paramname">uri_string</td><td>The URI string to be validated.</td></tr>
   </table>
   </dd>
 </dl>
@@ -969,7 +1085,7 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>uri_builder</b></td>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Aug 19 2014 16:17:55 for C++ Rest SDK by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Thu Nov 13 2014 15:55:30 for C++ Rest SDK by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.7
 </small></address>

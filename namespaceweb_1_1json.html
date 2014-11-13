@@ -116,7 +116,7 @@ Classes</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:a31ac82c7a5f846e8e7f27a6f2c376383"><td class="memItemLeft" align="right" valign="top">void _ASYNCRTIMP&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceweb_1_1json.html#a31ac82c7a5f846e8e7f27a6f2c376383">keep_object_element_order</a> (bool keep_order)</td></tr>
-<tr class="memdesc:a31ac82c7a5f846e8e7f27a6f2c376383"><td class="mdescLeft">&#160;</td><td class="mdescRight">Preserve the order of the name/value pairs when parsing a JSON object  <a href="#a31ac82c7a5f846e8e7f27a6f2c376383">More...</a><br /></td></tr>
+<tr class="memdesc:a31ac82c7a5f846e8e7f27a6f2c376383"><td class="mdescLeft">&#160;</td><td class="mdescRight">Preserve the order of the name/value pairs when parsing a JSON object. The default is false, which can yield better performance.  <a href="#a31ac82c7a5f846e8e7f27a6f2c376383">More...</a><br /></td></tr>
 <tr class="separator:a31ac82c7a5f846e8e7f27a6f2c376383"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1b84907a0470d79dc3d996b0b533b7a3"><td class="memItemLeft" align="right" valign="top">_ASYNCRTIMP utility::ostream_t &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceweb_1_1json.html#a1b84907a0470d79dc3d996b0b533b7a3">operator&lt;&lt;</a> (utility::ostream_t &amp;os, const <a class="el" href="classweb_1_1json_1_1value.html">json::value</a> &amp;val)</td></tr>
 <tr class="memdesc:a1b84907a0470d79dc3d996b0b533b7a3"><td class="mdescLeft">&#160;</td><td class="mdescRight">A standard <code>std::ostream</code> operator to facilitate writing JSON values to streams.  <a href="#a1b84907a0470d79dc3d996b0b533b7a3">More...</a><br /></td></tr>
@@ -142,7 +142,14 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Preserve the order of the name/value pairs when parsing a JSON object </p>
+<p>Preserve the order of the name/value pairs when parsing a JSON object. The default is false, which can yield better performance. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">keep_order</td><td><code>true</code> if ordering should be preserved when parsing, <code>false</code> otherwise.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Note this is a global setting and affects all JSON parsing done.</p>
 
 </div>
 </div>
@@ -221,7 +228,7 @@ Functions</h2></td></tr>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Aug 19 2014 16:17:56 for C++ Rest SDK by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Thu Nov 13 2014 15:55:31 for C++ Rest SDK by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.7
 </small></address>

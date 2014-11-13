@@ -113,7 +113,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a657d601863bac9f483244d31bdbd46b8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates an <code><a class="el" href="classweb_1_1http_1_1http__exception.html" title="Represents an HTTP error. This class holds an error message and an optional error code...">http_exception</a></code> with just a string message and no error code.  <a href="#a657d601863bac9f483244d31bdbd46b8">More...</a><br /></td></tr>
 <tr class="separator:a657d601863bac9f483244d31bdbd46b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a54528c24410f991dcb38f535dae17a64"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classweb_1_1http_1_1http__exception.html#a54528c24410f991dcb38f535dae17a64">http_exception</a> (int errorCode)</td></tr>
-<tr class="memdesc:a54528c24410f991dcb38f535dae17a64"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates an <code><a class="el" href="classweb_1_1http_1_1http__exception.html" title="Represents an HTTP error. This class holds an error message and an optional error code...">http_exception</a></code> with from a error code using the current platform error category. The message of the error code will be used as the what() string message.  <a href="#a54528c24410f991dcb38f535dae17a64">More...</a><br /></td></tr>
+<tr class="memdesc:a54528c24410f991dcb38f535dae17a64"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates an <code><a class="el" href="classweb_1_1http_1_1http__exception.html" title="Represents an HTTP error. This class holds an error message and an optional error code...">http_exception</a></code> with from a error code using the current platform error category. The message of the error code will be used as the <a class="el" href="classweb_1_1http_1_1http__exception.html#a6c1c5eca862d09511eb7ea6aff4d39ec" title="Gets a string identifying the cause of the exception. ">what()</a> string message.  <a href="#a54528c24410f991dcb38f535dae17a64">More...</a><br /></td></tr>
 <tr class="separator:a54528c24410f991dcb38f535dae17a64"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad6dd84974c854731f1028b77221c98b0"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classweb_1_1http_1_1http__exception.html#ad6dd84974c854731f1028b77221c98b0">http_exception</a> (int errorCode, const utility::string_t &amp;whatArg)</td></tr>
 <tr class="memdesc:ad6dd84974c854731f1028b77221c98b0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates an <code><a class="el" href="classweb_1_1http_1_1http__exception.html" title="Represents an HTTP error. This class holds an error message and an optional error code...">http_exception</a></code> with from a error code using the current platform error category.  <a href="#ad6dd84974c854731f1028b77221c98b0">More...</a><br /></td></tr>
@@ -121,9 +121,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:afdafc90732ab3f3e1b282a80bb025748"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classweb_1_1http_1_1http__exception.html#afdafc90732ab3f3e1b282a80bb025748">http_exception</a> (int errorCode, const std::error_category &amp;cat)</td></tr>
 <tr class="memdesc:afdafc90732ab3f3e1b282a80bb025748"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates an <code><a class="el" href="classweb_1_1http_1_1http__exception.html" title="Represents an HTTP error. This class holds an error message and an optional error code...">http_exception</a></code> with from a error code and category. The message of the error code will be used as the <code>what</code> string message.  <a href="#afdafc90732ab3f3e1b282a80bb025748">More...</a><br /></td></tr>
 <tr class="separator:afdafc90732ab3f3e1b282a80bb025748"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae828e2bc4ae1646c653b68cfc509e7c6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae828e2bc4ae1646c653b68cfc509e7c6"></a>
-const char *&#160;</td><td class="memItemRight" valign="bottom"><b>what</b> () const _noexcept</td></tr>
-<tr class="separator:ae828e2bc4ae1646c653b68cfc509e7c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6c1c5eca862d09511eb7ea6aff4d39ec"><td class="memItemLeft" align="right" valign="top">const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classweb_1_1http_1_1http__exception.html#a6c1c5eca862d09511eb7ea6aff4d39ec">what</a> () const CPPREST_NOEXCEPT</td></tr>
+<tr class="memdesc:a6c1c5eca862d09511eb7ea6aff4d39ec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets a string identifying the cause of the exception.  <a href="#a6c1c5eca862d09511eb7ea6aff4d39ec">More...</a><br /></td></tr>
+<tr class="separator:a6c1c5eca862d09511eb7ea6aff4d39ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9af95f0ace0185a20c606846c6069fe1"><td class="memItemLeft" align="right" valign="top">const std::error_code &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classweb_1_1http_1_1http__exception.html#a9af95f0ace0185a20c606846c6069fe1">error_code</a> () const </td></tr>
 <tr class="memdesc:a9af95f0ace0185a20c606846c6069fe1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves the underlying error code causing this exception.  <a href="#a9af95f0ace0185a20c606846c6069fe1">More...</a><br /></td></tr>
 <tr class="separator:a9af95f0ace0185a20c606846c6069fe1"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -185,7 +185,7 @@ const char *&#160;</td><td class="memItemRight" valign="bottom"><b>what</b> () c
 </table>
 </div><div class="memdoc">
 
-<p>Creates an <code><a class="el" href="classweb_1_1http_1_1http__exception.html" title="Represents an HTTP error. This class holds an error message and an optional error code...">http_exception</a></code> with from a error code using the current platform error category. The message of the error code will be used as the what() string message. </p>
+<p>Creates an <code><a class="el" href="classweb_1_1http_1_1http__exception.html" title="Represents an HTTP error. This class holds an error message and an optional error code...">http_exception</a></code> with from a error code using the current platform error category. The message of the error code will be used as the <a class="el" href="classweb_1_1http_1_1http__exception.html#a6c1c5eca862d09511eb7ea6aff4d39ec" title="Gets a string identifying the cause of the exception. ">what()</a> string message. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">errorCode</td><td>Error code value.</td></tr>
@@ -231,7 +231,7 @@ const char *&#160;</td><td class="memItemRight" valign="bottom"><b>what</b> () c
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">errorCode</td><td>Error code value.</td></tr>
-    <tr><td class="paramname">whatArg</td><td>Message to use in what() string.</td></tr>
+    <tr><td class="paramname">whatArg</td><td>Message to use in <a class="el" href="classweb_1_1http_1_1http__exception.html#a6c1c5eca862d09511eb7ea6aff4d39ec" title="Gets a string identifying the cause of the exception. ">what()</a> string.</td></tr>
   </table>
   </dd>
 </dl>
@@ -308,13 +308,39 @@ const char *&#160;</td><td class="memItemRight" valign="bottom"><b>what</b> () c
 
 </div>
 </div>
+<a class="anchor" id="a6c1c5eca862d09511eb7ea6aff4d39ec"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const char* web::http::http_exception::what </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Gets a string identifying the cause of the exception. </p>
+<dl class="section return"><dt>Returns</dt><dd>A null terminated character string.</dd></dl>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/cpprest/<a class="el" href="http__msg_8h_source.html">http_msg.h</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Aug 19 2014 16:17:55 for C++ Rest SDK by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Thu Nov 13 2014 15:55:31 for C++ Rest SDK by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.7
 </small></address>

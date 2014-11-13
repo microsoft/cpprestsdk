@@ -238,7 +238,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00149"></a><span class="lineno">  149</span>&#160;<span class="comment">    /// &lt;summary&gt;</span></div>
 <div class="line"><a name="l00150"></a><span class="lineno">  150</span>&#160;<span class="comment">    /// Get the I/O completion key to use with the scheduler.</span></div>
 <div class="line"><a name="l00151"></a><span class="lineno">  151</span>&#160;<span class="comment">    /// &lt;/summary&gt;</span></div>
-<div class="line"><a name="l00152"></a><span class="lineno">  152</span>&#160;<span class="comment"></span>    DWORD get_key()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> (((DWORD)<span class="keyword">this</span>) &amp; 0xFAFAFA00) + <span class="keyword">sizeof</span>(EXTENDED_OVERLAPPED); }</div>
+<div class="line"><a name="l00152"></a><span class="lineno">  152</span>&#160;<span class="comment"></span>    DWORD get_key()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> (static_cast&lt;DWORD&gt;((uintptr_t)<span class="keyword">this</span>) &amp; 0xFAFAFA00) + <span class="keyword">sizeof</span>(EXTENDED_OVERLAPPED); }</div>
 <div class="line"><a name="l00153"></a><span class="lineno">  153</span>&#160;<span class="comment"></span></div>
 <div class="line"><a name="l00154"></a><span class="lineno">  154</span>&#160;<span class="comment">    /// &lt;summary&gt;</span></div>
 <div class="line"><a name="l00155"></a><span class="lineno">  155</span>&#160;<span class="comment">    /// Get the I/O scheduler instance.</span></div>
@@ -300,7 +300,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Aug 19 2014 16:17:53 for C++ Rest SDK by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Thu Nov 13 2014 15:55:28 for C++ Rest SDK by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.7
 </small></address>

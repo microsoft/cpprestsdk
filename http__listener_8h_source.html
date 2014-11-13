@@ -90,12 +90,12 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;<span class="comment">/***</span></div>
 <div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;<span class="comment">* ==++==</span></div>
 <div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;<span class="comment">*</span></div>
-<div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;<span class="comment">* Copyright (c) Microsoft Corporation. All rights reserved. </span></div>
+<div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;<span class="comment">* Copyright (c) Microsoft Corporation. All rights reserved.</span></div>
 <div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;<span class="comment">* Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span></div>
 <div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;<span class="comment">* you may not use this file except in compliance with the License.</span></div>
 <div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;<span class="comment">* You may obtain a copy of the License at</span></div>
 <div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;<span class="comment">* http://www.apache.org/licenses/LICENSE-2.0</span></div>
-<div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;<span class="comment">* </span></div>
+<div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;<span class="comment">*</span></div>
 <div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;<span class="comment">* Unless required by applicable law or agreed to in writing, software</span></div>
 <div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;<span class="comment">* distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span></div>
 <div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;<span class="comment">* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span></div>
@@ -126,12 +126,12 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;</div>
 <div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;<span class="preprocessor">#include &quot;cpprest/http_msg.h&quot;</span></div>
 <div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;</div>
-<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;<span class="keyword">namespace </span>web </div>
-<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;{ </div>
+<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;<span class="keyword">namespace </span>web</div>
+<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;{</div>
 <div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;<span class="keyword">namespace </span>http</div>
 <div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;{<span class="comment"></span></div>
 <div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;<span class="comment">/// HTTP listener is currently in beta.</span></div>
-<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;<span class="comment"></span><span class="keyword">namespace </span>experimental </div>
+<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;<span class="comment"></span><span class="keyword">namespace </span>experimental</div>
 <div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;{<span class="comment"></span></div>
 <div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;<span class="comment">/// HTTP server side library.</span></div>
 <div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;<span class="comment"></span><span class="keyword">namespace </span>listener</div>
@@ -228,212 +228,214 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00139"></a><span class="lineno">  139</span>&#160;</div>
 <div class="line"><a name="l00140"></a><span class="lineno">  140</span>&#160;    http_listener_impl()</div>
 <div class="line"><a name="l00141"></a><span class="lineno">  141</span>&#160;        : m_closed(true)</div>
-<div class="line"><a name="l00142"></a><span class="lineno">  142</span>&#160;    {</div>
-<div class="line"><a name="l00143"></a><span class="lineno">  143</span>&#160;    }</div>
-<div class="line"><a name="l00144"></a><span class="lineno">  144</span>&#160;</div>
-<div class="line"><a name="l00145"></a><span class="lineno">  145</span>&#160;    _ASYNCRTIMP http_listener_impl(<a class="code" href="classweb_1_1uri.html">http::uri</a> address);</div>
-<div class="line"><a name="l00146"></a><span class="lineno">  146</span>&#160;    _ASYNCRTIMP http_listener_impl(<a class="code" href="classweb_1_1uri.html">http::uri</a> address, http_listener_config config);</div>
-<div class="line"><a name="l00147"></a><span class="lineno">  147</span>&#160;</div>
-<div class="line"><a name="l00148"></a><span class="lineno">  148</span>&#160;    _ASYNCRTIMP <a class="code" href="classpplx_1_1task_3_01void_01_4.html">pplx::task&lt;void&gt;</a> open();</div>
-<div class="line"><a name="l00149"></a><span class="lineno">  149</span>&#160;    _ASYNCRTIMP <a class="code" href="classpplx_1_1task_3_01void_01_4.html">pplx::task&lt;void&gt;</a> close();</div>
-<div class="line"><a name="l00150"></a><span class="lineno">  150</span>&#160;<span class="comment"></span></div>
-<div class="line"><a name="l00151"></a><span class="lineno">  151</span>&#160;<span class="comment">    /// &lt;summary&gt;</span></div>
-<div class="line"><a name="l00152"></a><span class="lineno">  152</span>&#160;<span class="comment">    /// Handler for all requests. The HTTP host uses this to dispatch a message to the pipeline.</span></div>
-<div class="line"><a name="l00153"></a><span class="lineno">  153</span>&#160;<span class="comment">    /// &lt;/summary&gt;</span></div>
-<div class="line"><a name="l00154"></a><span class="lineno">  154</span>&#160;<span class="comment">    /// &lt;remarks&gt;Only HTTP server implementations should call this API.&lt;/remarks&gt;</span></div>
-<div class="line"><a name="l00155"></a><span class="lineno">  155</span>&#160;<span class="comment"></span>    _ASYNCRTIMP <span class="keywordtype">void</span> handle_request(<a class="code" href="classweb_1_1http_1_1http__request.html">http::http_request</a> msg);</div>
-<div class="line"><a name="l00156"></a><span class="lineno">  156</span>&#160;</div>
-<div class="line"><a name="l00157"></a><span class="lineno">  157</span>&#160;    <span class="keyword">const</span> <a class="code" href="classweb_1_1uri.html">http::uri</a> &amp; <a class="code" href="classweb_1_1uri.html">uri</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> m_uri; }</div>
-<div class="line"><a name="l00158"></a><span class="lineno">  158</span>&#160;</div>
-<div class="line"><a name="l00159"></a><span class="lineno">  159</span>&#160;    <span class="keyword">const</span> http_listener_config &amp; configuration()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> m_config; }</div>
-<div class="line"><a name="l00160"></a><span class="lineno">  160</span>&#160;</div>
-<div class="line"><a name="l00161"></a><span class="lineno">  161</span>&#160;    <span class="comment">// Handlers</span></div>
-<div class="line"><a name="l00162"></a><span class="lineno">  162</span>&#160;    std::function&lt;void(http::http_request)&gt; m_all_requests;</div>
-<div class="line"><a name="l00163"></a><span class="lineno">  163</span>&#160;    std::map&lt;http::method, std::function&lt;void(http::http_request)&gt;&gt; m_supported_methods;</div>
-<div class="line"><a name="l00164"></a><span class="lineno">  164</span>&#160;</div>
-<div class="line"><a name="l00165"></a><span class="lineno">  165</span>&#160;<span class="keyword">private</span>:</div>
-<div class="line"><a name="l00166"></a><span class="lineno">  166</span>&#160;</div>
-<div class="line"><a name="l00167"></a><span class="lineno">  167</span>&#160;    <span class="comment">// Default implementation for TRACE and OPTIONS.</span></div>
-<div class="line"><a name="l00168"></a><span class="lineno">  168</span>&#160;    <span class="keywordtype">void</span> handle_trace(http::http_request message);</div>
-<div class="line"><a name="l00169"></a><span class="lineno">  169</span>&#160;    <span class="keywordtype">void</span> handle_options(http::http_request message);</div>
-<div class="line"><a name="l00170"></a><span class="lineno">  170</span>&#160;</div>
-<div class="line"><a name="l00171"></a><span class="lineno">  171</span>&#160;    <span class="comment">// Gets a comma seperated string containing the methods supported by this listener.</span></div>
-<div class="line"><a name="l00172"></a><span class="lineno">  172</span>&#160;    utility::string_t get_supported_methods() <span class="keyword">const</span>;</div>
-<div class="line"><a name="l00173"></a><span class="lineno">  173</span>&#160;</div>
-<div class="line"><a name="l00174"></a><span class="lineno">  174</span>&#160;    http::uri m_uri;</div>
-<div class="line"><a name="l00175"></a><span class="lineno">  175</span>&#160;    http_listener_config m_config;</div>
-<div class="line"><a name="l00176"></a><span class="lineno">  176</span>&#160;</div>
-<div class="line"><a name="l00177"></a><span class="lineno">  177</span>&#160;    <span class="comment">// Used to record that the listener is closed.</span></div>
-<div class="line"><a name="l00178"></a><span class="lineno">  178</span>&#160;    <span class="keywordtype">bool</span> m_closed;</div>
-<div class="line"><a name="l00179"></a><span class="lineno">  179</span>&#160;};</div>
-<div class="line"><a name="l00180"></a><span class="lineno">  180</span>&#160;</div>
-<div class="line"><a name="l00181"></a><span class="lineno">  181</span>&#160;} <span class="comment">// namespace details</span></div>
-<div class="line"><a name="l00182"></a><span class="lineno">  182</span>&#160;<span class="comment"></span></div>
-<div class="line"><a name="l00183"></a><span class="lineno">  183</span>&#160;<span class="comment">/// &lt;summary&gt;</span></div>
-<div class="line"><a name="l00184"></a><span class="lineno">  184</span>&#160;<span class="comment">/// A class for listening and processing HTTP requests at a specific URI.</span></div>
-<div class="line"><a name="l00185"></a><span class="lineno">  185</span>&#160;<span class="comment">/// &lt;/summary&gt;</span></div>
-<div class="line"><a name="l00186"></a><span class="lineno"><a class="line" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html">  186</a></span>&#160;<span class="comment"></span><span class="keyword">class </span><a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html">http_listener</a></div>
-<div class="line"><a name="l00187"></a><span class="lineno">  187</span>&#160;{</div>
-<div class="line"><a name="l00188"></a><span class="lineno">  188</span>&#160;<span class="keyword">public</span>:</div>
-<div class="line"><a name="l00189"></a><span class="lineno">  189</span>&#160;<span class="comment"></span></div>
-<div class="line"><a name="l00190"></a><span class="lineno">  190</span>&#160;<span class="comment">    /// &lt;summary&gt;</span></div>
-<div class="line"><a name="l00191"></a><span class="lineno">  191</span>&#160;<span class="comment">    /// Create a listener from a URI.</span></div>
-<div class="line"><a name="l00192"></a><span class="lineno">  192</span>&#160;<span class="comment">    /// &lt;/summary&gt;</span></div>
-<div class="line"><a name="l00193"></a><span class="lineno">  193</span>&#160;<span class="comment">    /// &lt;remarks&gt;The listener will not have been opened when returned.&lt;/remarks&gt;</span></div>
-<div class="line"><a name="l00194"></a><span class="lineno">  194</span>&#160;<span class="comment">    /// &lt;param name=&quot;address&quot;&gt;URI at which the listener should accept requests.&lt;/param&gt;</span></div>
-<div class="line"><a name="l00195"></a><span class="lineno"><a class="line" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a73f04c60b80d26c3f346e7cc0a201d15">  195</a></span>&#160;<span class="comment"></span>    <a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a73f04c60b80d26c3f346e7cc0a201d15">http_listener</a>(<a class="code" href="classweb_1_1uri.html">http::uri</a> address)</div>
-<div class="line"><a name="l00196"></a><span class="lineno">  196</span>&#160;        : m_impl(utility::details::make_unique&lt;details::http_listener_impl&gt;(std::move(address)))</div>
-<div class="line"><a name="l00197"></a><span class="lineno">  197</span>&#160;    {</div>
-<div class="line"><a name="l00198"></a><span class="lineno">  198</span>&#160;    }</div>
-<div class="line"><a name="l00199"></a><span class="lineno">  199</span>&#160;<span class="comment"></span></div>
-<div class="line"><a name="l00200"></a><span class="lineno">  200</span>&#160;<span class="comment">    /// &lt;summary&gt;</span></div>
-<div class="line"><a name="l00201"></a><span class="lineno">  201</span>&#160;<span class="comment">    /// Create a listener with specified URI and configuration.</span></div>
-<div class="line"><a name="l00202"></a><span class="lineno">  202</span>&#160;<span class="comment">    /// &lt;/summary&gt;</span></div>
-<div class="line"><a name="l00203"></a><span class="lineno">  203</span>&#160;<span class="comment">    /// &lt;param name=&quot;address&quot;&gt;URI at which the listener should accept requests.&lt;/param&gt;</span></div>
-<div class="line"><a name="l00204"></a><span class="lineno">  204</span>&#160;<span class="comment">    /// &lt;param name=&quot;config&quot;&gt;Configuration to create listener with.&lt;/param&gt;</span></div>
-<div class="line"><a name="l00205"></a><span class="lineno"><a class="line" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a65b1ac350b173dbf8bdca05ac99cd4dd">  205</a></span>&#160;<span class="comment"></span>    <a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a65b1ac350b173dbf8bdca05ac99cd4dd">http_listener</a>(<a class="code" href="classweb_1_1uri.html">http::uri</a> address, <a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener__config.html">http_listener_config</a> config)</div>
-<div class="line"><a name="l00206"></a><span class="lineno">  206</span>&#160;        : m_impl(utility::details::make_unique&lt;details::http_listener_impl&gt;(std::move(address), std::move(config)))</div>
-<div class="line"><a name="l00207"></a><span class="lineno">  207</span>&#160;    {</div>
-<div class="line"><a name="l00208"></a><span class="lineno">  208</span>&#160;    }</div>
-<div class="line"><a name="l00209"></a><span class="lineno">  209</span>&#160;<span class="comment"></span></div>
-<div class="line"><a name="l00210"></a><span class="lineno">  210</span>&#160;<span class="comment">    /// &lt;summary&gt;</span></div>
-<div class="line"><a name="l00211"></a><span class="lineno">  211</span>&#160;<span class="comment">    /// Default constructor.</span></div>
-<div class="line"><a name="l00212"></a><span class="lineno">  212</span>&#160;<span class="comment">    /// &lt;/summary&gt;</span></div>
-<div class="line"><a name="l00213"></a><span class="lineno">  213</span>&#160;<span class="comment">    /// &lt;remarks&gt;The resulting listener cannot be used for anything, but is useful to initialize a variable</span></div>
-<div class="line"><a name="l00214"></a><span class="lineno">  214</span>&#160;<span class="comment">    /// that will later be overwritten with a real listener instance.&lt;/remarks&gt;</span></div>
-<div class="line"><a name="l00215"></a><span class="lineno"><a class="line" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#abff87a529468732c07c25a9cdb1641c7">  215</a></span>&#160;<span class="comment"></span>    <a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#abff87a529468732c07c25a9cdb1641c7">http_listener</a>() </div>
-<div class="line"><a name="l00216"></a><span class="lineno">  216</span>&#160;        : m_impl(utility::details::make_unique&lt;details::http_listener_impl&gt;())</div>
-<div class="line"><a name="l00217"></a><span class="lineno">  217</span>&#160;    { </div>
-<div class="line"><a name="l00218"></a><span class="lineno">  218</span>&#160;    }</div>
-<div class="line"><a name="l00219"></a><span class="lineno">  219</span>&#160;<span class="comment"></span></div>
-<div class="line"><a name="l00220"></a><span class="lineno">  220</span>&#160;<span class="comment">    /// &lt;summary&gt;</span></div>
-<div class="line"><a name="l00221"></a><span class="lineno">  221</span>&#160;<span class="comment">    /// Destructor frees any held resources.</span></div>
-<div class="line"><a name="l00222"></a><span class="lineno">  222</span>&#160;<span class="comment">    /// &lt;/summary&gt;</span></div>
-<div class="line"><a name="l00223"></a><span class="lineno">  223</span>&#160;<span class="comment">    /// &lt;remarks&gt;Call close() before allowing a listener to be destroyed.&lt;/remarks&gt;</span></div>
-<div class="line"><a name="l00224"></a><span class="lineno">  224</span>&#160;<span class="comment"></span>    _ASYNCRTIMP <a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a4989ccfc96b9376ae08adb394e30c797">~http_listener</a>();</div>
-<div class="line"><a name="l00225"></a><span class="lineno">  225</span>&#160;    <span class="comment"></span></div>
-<div class="line"><a name="l00226"></a><span class="lineno">  226</span>&#160;<span class="comment">    /// &lt;summary&gt;</span></div>
-<div class="line"><a name="l00227"></a><span class="lineno">  227</span>&#160;<span class="comment">    /// Asychronously open the listener, i.e. start accepting requests.</span></div>
-<div class="line"><a name="l00228"></a><span class="lineno">  228</span>&#160;<span class="comment">    /// &lt;/summary&gt;</span></div>
-<div class="line"><a name="l00229"></a><span class="lineno">  229</span>&#160;<span class="comment">    /// &lt;returns&gt;A task that will be completed once this listener is actually opened, accepting requests.&lt;/returns&gt;</span></div>
-<div class="line"><a name="l00230"></a><span class="lineno"><a class="line" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a6da51832fb25a44c5b2ee38ba02001a9">  230</a></span>&#160;<span class="comment"></span>    <a class="code" href="classpplx_1_1task_3_01void_01_4.html">pplx::task&lt;void&gt;</a> <a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a6da51832fb25a44c5b2ee38ba02001a9">open</a>()</div>
-<div class="line"><a name="l00231"></a><span class="lineno">  231</span>&#160;    {</div>
-<div class="line"><a name="l00232"></a><span class="lineno">  232</span>&#160;        <span class="keywordflow">return</span> m_impl-&gt;open();</div>
-<div class="line"><a name="l00233"></a><span class="lineno">  233</span>&#160;    }</div>
-<div class="line"><a name="l00234"></a><span class="lineno">  234</span>&#160;<span class="comment"></span></div>
-<div class="line"><a name="l00235"></a><span class="lineno">  235</span>&#160;<span class="comment">    /// &lt;summary&gt;</span></div>
-<div class="line"><a name="l00236"></a><span class="lineno">  236</span>&#160;<span class="comment">    /// Asychrnoously stop accepting requests and close all connections.</span></div>
-<div class="line"><a name="l00237"></a><span class="lineno">  237</span>&#160;<span class="comment">    /// &lt;/summary&gt;</span></div>
-<div class="line"><a name="l00238"></a><span class="lineno">  238</span>&#160;<span class="comment">    /// &lt;returns&gt;A task that will be completed once this listener is actually closed, no longer accepting requests.&lt;/returns&gt; </span></div>
-<div class="line"><a name="l00239"></a><span class="lineno">  239</span>&#160;<span class="comment">    /// &lt;remarks&gt;</span></div>
-<div class="line"><a name="l00240"></a><span class="lineno">  240</span>&#160;<span class="comment">    /// This function will stop accepting requests and wait for all outstanding handler calls</span></div>
-<div class="line"><a name="l00241"></a><span class="lineno">  241</span>&#160;<span class="comment">    /// to finish before completing the task. Waiting on the task returned from close() within </span></div>
-<div class="line"><a name="l00242"></a><span class="lineno">  242</span>&#160;<span class="comment">    /// a handler and blocking waiting for its result will result in a deadlock.</span></div>
-<div class="line"><a name="l00243"></a><span class="lineno">  243</span>&#160;<span class="comment">    ///</span></div>
-<div class="line"><a name="l00244"></a><span class="lineno">  244</span>&#160;<span class="comment">    /// Call close() before allowing a listener to be destroyed.</span></div>
-<div class="line"><a name="l00245"></a><span class="lineno">  245</span>&#160;<span class="comment">    /// &lt;/remarks&gt;</span></div>
-<div class="line"><a name="l00246"></a><span class="lineno"><a class="line" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a78ab489ba0d6f4305288963a0f942e7d">  246</a></span>&#160;<span class="comment"></span>    <a class="code" href="classpplx_1_1task_3_01void_01_4.html">pplx::task&lt;void&gt;</a> <a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a78ab489ba0d6f4305288963a0f942e7d">close</a>()</div>
-<div class="line"><a name="l00247"></a><span class="lineno">  247</span>&#160;    {</div>
-<div class="line"><a name="l00248"></a><span class="lineno">  248</span>&#160;        <span class="keywordflow">return</span> m_impl-&gt;close();</div>
-<div class="line"><a name="l00249"></a><span class="lineno">  249</span>&#160;    }</div>
-<div class="line"><a name="l00250"></a><span class="lineno">  250</span>&#160;<span class="comment"></span></div>
-<div class="line"><a name="l00251"></a><span class="lineno">  251</span>&#160;<span class="comment">    /// &lt;summary&gt;</span></div>
-<div class="line"><a name="l00252"></a><span class="lineno">  252</span>&#160;<span class="comment">    /// Add a general handler to support all requests.</span></div>
-<div class="line"><a name="l00253"></a><span class="lineno">  253</span>&#160;<span class="comment">    /// &lt;/summary&gt;</span></div>
-<div class="line"><a name="l00254"></a><span class="lineno">  254</span>&#160;<span class="comment">    /// &lt;param name=&quot;handler&quot;&gt;Funtion object to be called for all requests.&lt;/param&gt;</span></div>
-<div class="line"><a name="l00255"></a><span class="lineno"><a class="line" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a0ec35c362370929b7fd52e7dd057472b">  255</a></span>&#160;<span class="comment"></span>    <span class="keywordtype">void</span> <a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a0ec35c362370929b7fd52e7dd057472b">support</a>(std::function&lt;<span class="keywordtype">void</span>(<a class="code" href="classweb_1_1http_1_1http__request.html">http_request</a>)&gt; handler)  </div>
-<div class="line"><a name="l00256"></a><span class="lineno">  256</span>&#160;    {</div>
-<div class="line"><a name="l00257"></a><span class="lineno">  257</span>&#160;        m_impl-&gt;m_all_requests = handler;</div>
-<div class="line"><a name="l00258"></a><span class="lineno">  258</span>&#160;    }</div>
-<div class="line"><a name="l00259"></a><span class="lineno">  259</span>&#160;<span class="comment"></span></div>
-<div class="line"><a name="l00260"></a><span class="lineno">  260</span>&#160;<span class="comment">    /// &lt;summary&gt;</span></div>
-<div class="line"><a name="l00261"></a><span class="lineno">  261</span>&#160;<span class="comment">    /// Add support for a specific HTTP method.</span></div>
-<div class="line"><a name="l00262"></a><span class="lineno">  262</span>&#160;<span class="comment">    /// &lt;/summary&gt;</span></div>
-<div class="line"><a name="l00263"></a><span class="lineno">  263</span>&#160;<span class="comment">    /// &lt;param name=&quot;method&quot;&gt;An HTTP method.&lt;/param&gt;</span></div>
-<div class="line"><a name="l00264"></a><span class="lineno">  264</span>&#160;<span class="comment">    /// &lt;param name=&quot;handler&quot;&gt;Funtion object to be called for all requests for the given HTTP method.&lt;/param&gt;</span></div>
-<div class="line"><a name="l00265"></a><span class="lineno"><a class="line" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#ab173ed7f5c14167b5a58ba21da22a5c1">  265</a></span>&#160;<span class="comment"></span>    <span class="keywordtype">void</span> <a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#ab173ed7f5c14167b5a58ba21da22a5c1">support</a>(<span class="keyword">const</span> <a class="code" href="namespaceweb_1_1http.html#a10753d257365e0864768e18dd985e82a">http::method</a> &amp;<a class="code" href="namespaceweb_1_1http.html#a10753d257365e0864768e18dd985e82a">method</a>, std::function&lt;<span class="keywordtype">void</span>(<a class="code" href="classweb_1_1http_1_1http__request.html">http_request</a>)&gt; handler)</div>
-<div class="line"><a name="l00266"></a><span class="lineno">  266</span>&#160;    {</div>
-<div class="line"><a name="l00267"></a><span class="lineno">  267</span>&#160;        m_impl-&gt;m_supported_methods[<a class="code" href="namespaceweb_1_1http.html#a10753d257365e0864768e18dd985e82a">method</a>] = handler;</div>
-<div class="line"><a name="l00268"></a><span class="lineno">  268</span>&#160;    }</div>
-<div class="line"><a name="l00269"></a><span class="lineno">  269</span>&#160;<span class="comment"></span></div>
-<div class="line"><a name="l00270"></a><span class="lineno">  270</span>&#160;<span class="comment">    /// &lt;summary&gt;</span></div>
-<div class="line"><a name="l00271"></a><span class="lineno">  271</span>&#160;<span class="comment">    /// Get the URI of the listener.</span></div>
-<div class="line"><a name="l00272"></a><span class="lineno">  272</span>&#160;<span class="comment">    /// &lt;/summary&gt;</span></div>
-<div class="line"><a name="l00273"></a><span class="lineno">  273</span>&#160;<span class="comment">    /// &lt;returns&gt;The URI this listener is for.&lt;/returns&gt;</span></div>
-<div class="line"><a name="l00274"></a><span class="lineno"><a class="line" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#aafdd1f356503e3bac66a3a7fcaa3eeb7">  274</a></span>&#160;<span class="comment"></span>    <span class="keyword">const</span> <a class="code" href="classweb_1_1uri.html">http::uri</a> &amp; <a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#aafdd1f356503e3bac66a3a7fcaa3eeb7">uri</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> m_impl-&gt;uri(); }</div>
-<div class="line"><a name="l00275"></a><span class="lineno">  275</span>&#160;<span class="comment"></span></div>
-<div class="line"><a name="l00276"></a><span class="lineno">  276</span>&#160;<span class="comment">    /// &lt;summary&gt;</span></div>
-<div class="line"><a name="l00277"></a><span class="lineno">  277</span>&#160;<span class="comment">    /// Get the configuration of this listener.</span></div>
-<div class="line"><a name="l00278"></a><span class="lineno">  278</span>&#160;<span class="comment">    /// &lt;/summary&gt;</span></div>
-<div class="line"><a name="l00279"></a><span class="lineno">  279</span>&#160;<span class="comment">    /// &lt;returns&gt;Configuration this listener was constructed with.&lt;/returns&gt;</span></div>
-<div class="line"><a name="l00280"></a><span class="lineno"><a class="line" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#aefddeb496fde612a47cb5b0c24e1b19a">  280</a></span>&#160;<span class="comment"></span>    <span class="keyword">const</span> <a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener__config.html">http_listener_config</a> &amp; <a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#aefddeb496fde612a47cb5b0c24e1b19a">configuration</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> m_impl-&gt;configuration(); }</div>
-<div class="line"><a name="l00281"></a><span class="lineno">  281</span>&#160;<span class="comment"></span></div>
-<div class="line"><a name="l00282"></a><span class="lineno">  282</span>&#160;<span class="comment">    /// &lt;summary&gt;</span></div>
-<div class="line"><a name="l00283"></a><span class="lineno">  283</span>&#160;<span class="comment">    /// Move constructor.</span></div>
-<div class="line"><a name="l00284"></a><span class="lineno">  284</span>&#160;<span class="comment">    /// &lt;/summary&gt;</span></div>
-<div class="line"><a name="l00285"></a><span class="lineno">  285</span>&#160;<span class="comment">    /// &lt;param name=&quot;other&quot;&gt;http_listener instance to construct this one from.&lt;/param&gt;</span></div>
-<div class="line"><a name="l00286"></a><span class="lineno"><a class="line" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a5d19b5ac6b41d634a9023dc7874d2de1">  286</a></span>&#160;<span class="comment"></span>    <a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a5d19b5ac6b41d634a9023dc7874d2de1">http_listener</a>(<a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html">http_listener</a> &amp;&amp;other)</div>
-<div class="line"><a name="l00287"></a><span class="lineno">  287</span>&#160;        : m_impl(std::move(other.m_impl))</div>
-<div class="line"><a name="l00288"></a><span class="lineno">  288</span>&#160;    {</div>
-<div class="line"><a name="l00289"></a><span class="lineno">  289</span>&#160;    }</div>
-<div class="line"><a name="l00290"></a><span class="lineno">  290</span>&#160;<span class="comment"></span></div>
-<div class="line"><a name="l00291"></a><span class="lineno">  291</span>&#160;<span class="comment">    /// &lt;summary&gt;</span></div>
-<div class="line"><a name="l00292"></a><span class="lineno">  292</span>&#160;<span class="comment">    /// Move assignment operator.</span></div>
-<div class="line"><a name="l00293"></a><span class="lineno">  293</span>&#160;<span class="comment">    /// &lt;/summary&gt;</span></div>
-<div class="line"><a name="l00294"></a><span class="lineno">  294</span>&#160;<span class="comment">    /// &lt;param name=&quot;other&quot;&gt;http_listener to replace this one with.&lt;/param&gt;</span></div>
-<div class="line"><a name="l00295"></a><span class="lineno"><a class="line" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a8b019815bb6663c7a2ab240277e825a9">  295</a></span>&#160;<span class="comment"></span>    <a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html">http_listener</a> &amp;<a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a8b019815bb6663c7a2ab240277e825a9">operator=</a>(<a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html">http_listener</a> &amp;&amp;other)</div>
-<div class="line"><a name="l00296"></a><span class="lineno">  296</span>&#160;    {</div>
-<div class="line"><a name="l00297"></a><span class="lineno">  297</span>&#160;        <span class="keywordflow">if</span>(<span class="keyword">this</span> != &amp;other)</div>
-<div class="line"><a name="l00298"></a><span class="lineno">  298</span>&#160;        {</div>
-<div class="line"><a name="l00299"></a><span class="lineno">  299</span>&#160;            m_impl = std::move(other.m_impl);</div>
-<div class="line"><a name="l00300"></a><span class="lineno">  300</span>&#160;        }</div>
-<div class="line"><a name="l00301"></a><span class="lineno">  301</span>&#160;        <span class="keywordflow">return</span> *<span class="keyword">this</span>;</div>
-<div class="line"><a name="l00302"></a><span class="lineno">  302</span>&#160;    }</div>
-<div class="line"><a name="l00303"></a><span class="lineno">  303</span>&#160;</div>
-<div class="line"><a name="l00304"></a><span class="lineno">  304</span>&#160;<span class="keyword">private</span>:</div>
+<div class="line"><a name="l00142"></a><span class="lineno">  142</span>&#160;        , m_close_task(pplx::task_from_result())</div>
+<div class="line"><a name="l00143"></a><span class="lineno">  143</span>&#160;    {</div>
+<div class="line"><a name="l00144"></a><span class="lineno">  144</span>&#160;    }</div>
+<div class="line"><a name="l00145"></a><span class="lineno">  145</span>&#160;</div>
+<div class="line"><a name="l00146"></a><span class="lineno">  146</span>&#160;    _ASYNCRTIMP http_listener_impl(<a class="code" href="classweb_1_1uri.html">http::uri</a> address);</div>
+<div class="line"><a name="l00147"></a><span class="lineno">  147</span>&#160;    _ASYNCRTIMP http_listener_impl(<a class="code" href="classweb_1_1uri.html">http::uri</a> address, http_listener_config config);</div>
+<div class="line"><a name="l00148"></a><span class="lineno">  148</span>&#160;</div>
+<div class="line"><a name="l00149"></a><span class="lineno">  149</span>&#160;    _ASYNCRTIMP <a class="code" href="classpplx_1_1task_3_01void_01_4.html">pplx::task&lt;void&gt;</a> open();</div>
+<div class="line"><a name="l00150"></a><span class="lineno">  150</span>&#160;    _ASYNCRTIMP <a class="code" href="classpplx_1_1task_3_01void_01_4.html">pplx::task&lt;void&gt;</a> close();</div>
+<div class="line"><a name="l00151"></a><span class="lineno">  151</span>&#160;<span class="comment"></span></div>
+<div class="line"><a name="l00152"></a><span class="lineno">  152</span>&#160;<span class="comment">    /// &lt;summary&gt;</span></div>
+<div class="line"><a name="l00153"></a><span class="lineno">  153</span>&#160;<span class="comment">    /// Handler for all requests. The HTTP host uses this to dispatch a message to the pipeline.</span></div>
+<div class="line"><a name="l00154"></a><span class="lineno">  154</span>&#160;<span class="comment">    /// &lt;/summary&gt;</span></div>
+<div class="line"><a name="l00155"></a><span class="lineno">  155</span>&#160;<span class="comment">    /// &lt;remarks&gt;Only HTTP server implementations should call this API.&lt;/remarks&gt;</span></div>
+<div class="line"><a name="l00156"></a><span class="lineno">  156</span>&#160;<span class="comment"></span>    _ASYNCRTIMP <span class="keywordtype">void</span> handle_request(<a class="code" href="classweb_1_1http_1_1http__request.html">http::http_request</a> msg);</div>
+<div class="line"><a name="l00157"></a><span class="lineno">  157</span>&#160;</div>
+<div class="line"><a name="l00158"></a><span class="lineno">  158</span>&#160;    <span class="keyword">const</span> <a class="code" href="classweb_1_1uri.html">http::uri</a> &amp; <a class="code" href="classweb_1_1uri.html">uri</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> m_uri; }</div>
+<div class="line"><a name="l00159"></a><span class="lineno">  159</span>&#160;</div>
+<div class="line"><a name="l00160"></a><span class="lineno">  160</span>&#160;    <span class="keyword">const</span> http_listener_config &amp; configuration()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> m_config; }</div>
+<div class="line"><a name="l00161"></a><span class="lineno">  161</span>&#160;</div>
+<div class="line"><a name="l00162"></a><span class="lineno">  162</span>&#160;    <span class="comment">// Handlers</span></div>
+<div class="line"><a name="l00163"></a><span class="lineno">  163</span>&#160;    std::function&lt;void(http::http_request)&gt; m_all_requests;</div>
+<div class="line"><a name="l00164"></a><span class="lineno">  164</span>&#160;    std::map&lt;http::method, std::function&lt;void(http::http_request)&gt;&gt; m_supported_methods;</div>
+<div class="line"><a name="l00165"></a><span class="lineno">  165</span>&#160;</div>
+<div class="line"><a name="l00166"></a><span class="lineno">  166</span>&#160;<span class="keyword">private</span>:</div>
+<div class="line"><a name="l00167"></a><span class="lineno">  167</span>&#160;</div>
+<div class="line"><a name="l00168"></a><span class="lineno">  168</span>&#160;    <span class="comment">// Default implementation for TRACE and OPTIONS.</span></div>
+<div class="line"><a name="l00169"></a><span class="lineno">  169</span>&#160;    <span class="keywordtype">void</span> handle_trace(http::http_request message);</div>
+<div class="line"><a name="l00170"></a><span class="lineno">  170</span>&#160;    <span class="keywordtype">void</span> handle_options(http::http_request message);</div>
+<div class="line"><a name="l00171"></a><span class="lineno">  171</span>&#160;</div>
+<div class="line"><a name="l00172"></a><span class="lineno">  172</span>&#160;    <span class="comment">// Gets a comma seperated string containing the methods supported by this listener.</span></div>
+<div class="line"><a name="l00173"></a><span class="lineno">  173</span>&#160;    utility::string_t get_supported_methods() <span class="keyword">const</span>;</div>
+<div class="line"><a name="l00174"></a><span class="lineno">  174</span>&#160;</div>
+<div class="line"><a name="l00175"></a><span class="lineno">  175</span>&#160;    http::uri m_uri;</div>
+<div class="line"><a name="l00176"></a><span class="lineno">  176</span>&#160;    http_listener_config m_config;</div>
+<div class="line"><a name="l00177"></a><span class="lineno">  177</span>&#160;</div>
+<div class="line"><a name="l00178"></a><span class="lineno">  178</span>&#160;    <span class="comment">// Used to record that the listener is closed.</span></div>
+<div class="line"><a name="l00179"></a><span class="lineno">  179</span>&#160;    <span class="keywordtype">bool</span> m_closed;</div>
+<div class="line"><a name="l00180"></a><span class="lineno">  180</span>&#160;    <a class="code" href="classpplx_1_1task_3_01void_01_4.html">pplx::task&lt;void&gt;</a> m_close_task;</div>
+<div class="line"><a name="l00181"></a><span class="lineno">  181</span>&#160;};</div>
+<div class="line"><a name="l00182"></a><span class="lineno">  182</span>&#160;</div>
+<div class="line"><a name="l00183"></a><span class="lineno">  183</span>&#160;} <span class="comment">// namespace details</span></div>
+<div class="line"><a name="l00184"></a><span class="lineno">  184</span>&#160;<span class="comment"></span></div>
+<div class="line"><a name="l00185"></a><span class="lineno">  185</span>&#160;<span class="comment">/// &lt;summary&gt;</span></div>
+<div class="line"><a name="l00186"></a><span class="lineno">  186</span>&#160;<span class="comment">/// A class for listening and processing HTTP requests at a specific URI.</span></div>
+<div class="line"><a name="l00187"></a><span class="lineno">  187</span>&#160;<span class="comment">/// &lt;/summary&gt;</span></div>
+<div class="line"><a name="l00188"></a><span class="lineno"><a class="line" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html">  188</a></span>&#160;<span class="comment"></span><span class="keyword">class </span><a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html">http_listener</a></div>
+<div class="line"><a name="l00189"></a><span class="lineno">  189</span>&#160;{</div>
+<div class="line"><a name="l00190"></a><span class="lineno">  190</span>&#160;<span class="keyword">public</span>:</div>
+<div class="line"><a name="l00191"></a><span class="lineno">  191</span>&#160;<span class="comment"></span></div>
+<div class="line"><a name="l00192"></a><span class="lineno">  192</span>&#160;<span class="comment">    /// &lt;summary&gt;</span></div>
+<div class="line"><a name="l00193"></a><span class="lineno">  193</span>&#160;<span class="comment">    /// Create a listener from a URI.</span></div>
+<div class="line"><a name="l00194"></a><span class="lineno">  194</span>&#160;<span class="comment">    /// &lt;/summary&gt;</span></div>
+<div class="line"><a name="l00195"></a><span class="lineno">  195</span>&#160;<span class="comment">    /// &lt;remarks&gt;The listener will not have been opened when returned.&lt;/remarks&gt;</span></div>
+<div class="line"><a name="l00196"></a><span class="lineno">  196</span>&#160;<span class="comment">    /// &lt;param name=&quot;address&quot;&gt;URI at which the listener should accept requests.&lt;/param&gt;</span></div>
+<div class="line"><a name="l00197"></a><span class="lineno"><a class="line" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a73f04c60b80d26c3f346e7cc0a201d15">  197</a></span>&#160;<span class="comment"></span>    <a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a73f04c60b80d26c3f346e7cc0a201d15">http_listener</a>(<a class="code" href="classweb_1_1uri.html">http::uri</a> address)</div>
+<div class="line"><a name="l00198"></a><span class="lineno">  198</span>&#160;        : m_impl(utility::details::make_unique&lt;details::http_listener_impl&gt;(std::move(address)))</div>
+<div class="line"><a name="l00199"></a><span class="lineno">  199</span>&#160;    {</div>
+<div class="line"><a name="l00200"></a><span class="lineno">  200</span>&#160;    }</div>
+<div class="line"><a name="l00201"></a><span class="lineno">  201</span>&#160;<span class="comment"></span></div>
+<div class="line"><a name="l00202"></a><span class="lineno">  202</span>&#160;<span class="comment">    /// &lt;summary&gt;</span></div>
+<div class="line"><a name="l00203"></a><span class="lineno">  203</span>&#160;<span class="comment">    /// Create a listener with specified URI and configuration.</span></div>
+<div class="line"><a name="l00204"></a><span class="lineno">  204</span>&#160;<span class="comment">    /// &lt;/summary&gt;</span></div>
+<div class="line"><a name="l00205"></a><span class="lineno">  205</span>&#160;<span class="comment">    /// &lt;param name=&quot;address&quot;&gt;URI at which the listener should accept requests.&lt;/param&gt;</span></div>
+<div class="line"><a name="l00206"></a><span class="lineno">  206</span>&#160;<span class="comment">    /// &lt;param name=&quot;config&quot;&gt;Configuration to create listener with.&lt;/param&gt;</span></div>
+<div class="line"><a name="l00207"></a><span class="lineno"><a class="line" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a65b1ac350b173dbf8bdca05ac99cd4dd">  207</a></span>&#160;<span class="comment"></span>    <a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a65b1ac350b173dbf8bdca05ac99cd4dd">http_listener</a>(<a class="code" href="classweb_1_1uri.html">http::uri</a> address, <a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener__config.html">http_listener_config</a> config)</div>
+<div class="line"><a name="l00208"></a><span class="lineno">  208</span>&#160;        : m_impl(utility::details::make_unique&lt;details::http_listener_impl&gt;(std::move(address), std::move(config)))</div>
+<div class="line"><a name="l00209"></a><span class="lineno">  209</span>&#160;    {</div>
+<div class="line"><a name="l00210"></a><span class="lineno">  210</span>&#160;    }</div>
+<div class="line"><a name="l00211"></a><span class="lineno">  211</span>&#160;<span class="comment"></span></div>
+<div class="line"><a name="l00212"></a><span class="lineno">  212</span>&#160;<span class="comment">    /// &lt;summary&gt;</span></div>
+<div class="line"><a name="l00213"></a><span class="lineno">  213</span>&#160;<span class="comment">    /// Default constructor.</span></div>
+<div class="line"><a name="l00214"></a><span class="lineno">  214</span>&#160;<span class="comment">    /// &lt;/summary&gt;</span></div>
+<div class="line"><a name="l00215"></a><span class="lineno">  215</span>&#160;<span class="comment">    /// &lt;remarks&gt;The resulting listener cannot be used for anything, but is useful to initialize a variable</span></div>
+<div class="line"><a name="l00216"></a><span class="lineno">  216</span>&#160;<span class="comment">    /// that will later be overwritten with a real listener instance.&lt;/remarks&gt;</span></div>
+<div class="line"><a name="l00217"></a><span class="lineno"><a class="line" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#abff87a529468732c07c25a9cdb1641c7">  217</a></span>&#160;<span class="comment"></span>    <a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#abff87a529468732c07c25a9cdb1641c7">http_listener</a>()</div>
+<div class="line"><a name="l00218"></a><span class="lineno">  218</span>&#160;        : m_impl(utility::details::make_unique&lt;details::http_listener_impl&gt;())</div>
+<div class="line"><a name="l00219"></a><span class="lineno">  219</span>&#160;    {</div>
+<div class="line"><a name="l00220"></a><span class="lineno">  220</span>&#160;    }</div>
+<div class="line"><a name="l00221"></a><span class="lineno">  221</span>&#160;<span class="comment"></span></div>
+<div class="line"><a name="l00222"></a><span class="lineno">  222</span>&#160;<span class="comment">    /// &lt;summary&gt;</span></div>
+<div class="line"><a name="l00223"></a><span class="lineno">  223</span>&#160;<span class="comment">    /// Destructor frees any held resources.</span></div>
+<div class="line"><a name="l00224"></a><span class="lineno">  224</span>&#160;<span class="comment">    /// &lt;/summary&gt;</span></div>
+<div class="line"><a name="l00225"></a><span class="lineno">  225</span>&#160;<span class="comment">    /// &lt;remarks&gt;Call close() before allowing a listener to be destroyed.&lt;/remarks&gt;</span></div>
+<div class="line"><a name="l00226"></a><span class="lineno">  226</span>&#160;<span class="comment"></span>    _ASYNCRTIMP <a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a4989ccfc96b9376ae08adb394e30c797">~http_listener</a>();</div>
+<div class="line"><a name="l00227"></a><span class="lineno">  227</span>&#160;<span class="comment"></span></div>
+<div class="line"><a name="l00228"></a><span class="lineno">  228</span>&#160;<span class="comment">    /// &lt;summary&gt;</span></div>
+<div class="line"><a name="l00229"></a><span class="lineno">  229</span>&#160;<span class="comment">    /// Asychronously open the listener, i.e. start accepting requests.</span></div>
+<div class="line"><a name="l00230"></a><span class="lineno">  230</span>&#160;<span class="comment">    /// &lt;/summary&gt;</span></div>
+<div class="line"><a name="l00231"></a><span class="lineno">  231</span>&#160;<span class="comment">    /// &lt;returns&gt;A task that will be completed once this listener is actually opened, accepting requests.&lt;/returns&gt;</span></div>
+<div class="line"><a name="l00232"></a><span class="lineno"><a class="line" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a6da51832fb25a44c5b2ee38ba02001a9">  232</a></span>&#160;<span class="comment"></span>    <a class="code" href="classpplx_1_1task_3_01void_01_4.html">pplx::task&lt;void&gt;</a> <a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a6da51832fb25a44c5b2ee38ba02001a9">open</a>()</div>
+<div class="line"><a name="l00233"></a><span class="lineno">  233</span>&#160;    {</div>
+<div class="line"><a name="l00234"></a><span class="lineno">  234</span>&#160;        <span class="keywordflow">return</span> m_impl-&gt;open();</div>
+<div class="line"><a name="l00235"></a><span class="lineno">  235</span>&#160;    }</div>
+<div class="line"><a name="l00236"></a><span class="lineno">  236</span>&#160;<span class="comment"></span></div>
+<div class="line"><a name="l00237"></a><span class="lineno">  237</span>&#160;<span class="comment">    /// &lt;summary&gt;</span></div>
+<div class="line"><a name="l00238"></a><span class="lineno">  238</span>&#160;<span class="comment">    /// Asychrnoously stop accepting requests and close all connections.</span></div>
+<div class="line"><a name="l00239"></a><span class="lineno">  239</span>&#160;<span class="comment">    /// &lt;/summary&gt;</span></div>
+<div class="line"><a name="l00240"></a><span class="lineno">  240</span>&#160;<span class="comment">    /// &lt;returns&gt;A task that will be completed once this listener is actually closed, no longer accepting requests.&lt;/returns&gt;</span></div>
+<div class="line"><a name="l00241"></a><span class="lineno">  241</span>&#160;<span class="comment">    /// &lt;remarks&gt;</span></div>
+<div class="line"><a name="l00242"></a><span class="lineno">  242</span>&#160;<span class="comment">    /// This function will stop accepting requests and wait for all outstanding handler calls</span></div>
+<div class="line"><a name="l00243"></a><span class="lineno">  243</span>&#160;<span class="comment">    /// to finish before completing the task. Waiting on the task returned from close() within</span></div>
+<div class="line"><a name="l00244"></a><span class="lineno">  244</span>&#160;<span class="comment">    /// a handler and blocking waiting for its result will result in a deadlock.</span></div>
+<div class="line"><a name="l00245"></a><span class="lineno">  245</span>&#160;<span class="comment">    ///</span></div>
+<div class="line"><a name="l00246"></a><span class="lineno">  246</span>&#160;<span class="comment">    /// Call close() before allowing a listener to be destroyed.</span></div>
+<div class="line"><a name="l00247"></a><span class="lineno">  247</span>&#160;<span class="comment">    /// &lt;/remarks&gt;</span></div>
+<div class="line"><a name="l00248"></a><span class="lineno"><a class="line" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a78ab489ba0d6f4305288963a0f942e7d">  248</a></span>&#160;<span class="comment"></span>    <a class="code" href="classpplx_1_1task_3_01void_01_4.html">pplx::task&lt;void&gt;</a> <a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a78ab489ba0d6f4305288963a0f942e7d">close</a>()</div>
+<div class="line"><a name="l00249"></a><span class="lineno">  249</span>&#160;    {</div>
+<div class="line"><a name="l00250"></a><span class="lineno">  250</span>&#160;        <span class="keywordflow">return</span> m_impl-&gt;close();</div>
+<div class="line"><a name="l00251"></a><span class="lineno">  251</span>&#160;    }</div>
+<div class="line"><a name="l00252"></a><span class="lineno">  252</span>&#160;<span class="comment"></span></div>
+<div class="line"><a name="l00253"></a><span class="lineno">  253</span>&#160;<span class="comment">    /// &lt;summary&gt;</span></div>
+<div class="line"><a name="l00254"></a><span class="lineno">  254</span>&#160;<span class="comment">    /// Add a general handler to support all requests.</span></div>
+<div class="line"><a name="l00255"></a><span class="lineno">  255</span>&#160;<span class="comment">    /// &lt;/summary&gt;</span></div>
+<div class="line"><a name="l00256"></a><span class="lineno">  256</span>&#160;<span class="comment">    /// &lt;param name=&quot;handler&quot;&gt;Funtion object to be called for all requests.&lt;/param&gt;</span></div>
+<div class="line"><a name="l00257"></a><span class="lineno"><a class="line" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a0ec35c362370929b7fd52e7dd057472b">  257</a></span>&#160;<span class="comment"></span>    <span class="keywordtype">void</span> <a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a0ec35c362370929b7fd52e7dd057472b">support</a>(std::function&lt;<span class="keywordtype">void</span>(<a class="code" href="classweb_1_1http_1_1http__request.html">http_request</a>)&gt; handler)</div>
+<div class="line"><a name="l00258"></a><span class="lineno">  258</span>&#160;    {</div>
+<div class="line"><a name="l00259"></a><span class="lineno">  259</span>&#160;        m_impl-&gt;m_all_requests = handler;</div>
+<div class="line"><a name="l00260"></a><span class="lineno">  260</span>&#160;    }</div>
+<div class="line"><a name="l00261"></a><span class="lineno">  261</span>&#160;<span class="comment"></span></div>
+<div class="line"><a name="l00262"></a><span class="lineno">  262</span>&#160;<span class="comment">    /// &lt;summary&gt;</span></div>
+<div class="line"><a name="l00263"></a><span class="lineno">  263</span>&#160;<span class="comment">    /// Add support for a specific HTTP method.</span></div>
+<div class="line"><a name="l00264"></a><span class="lineno">  264</span>&#160;<span class="comment">    /// &lt;/summary&gt;</span></div>
+<div class="line"><a name="l00265"></a><span class="lineno">  265</span>&#160;<span class="comment">    /// &lt;param name=&quot;method&quot;&gt;An HTTP method.&lt;/param&gt;</span></div>
+<div class="line"><a name="l00266"></a><span class="lineno">  266</span>&#160;<span class="comment">    /// &lt;param name=&quot;handler&quot;&gt;Funtion object to be called for all requests for the given HTTP method.&lt;/param&gt;</span></div>
+<div class="line"><a name="l00267"></a><span class="lineno"><a class="line" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#ab173ed7f5c14167b5a58ba21da22a5c1">  267</a></span>&#160;<span class="comment"></span>    <span class="keywordtype">void</span> <a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#ab173ed7f5c14167b5a58ba21da22a5c1">support</a>(<span class="keyword">const</span> <a class="code" href="namespaceweb_1_1http.html#a10753d257365e0864768e18dd985e82a">http::method</a> &amp;<a class="code" href="namespaceweb_1_1http.html#a10753d257365e0864768e18dd985e82a">method</a>, std::function&lt;<span class="keywordtype">void</span>(<a class="code" href="classweb_1_1http_1_1http__request.html">http_request</a>)&gt; handler)</div>
+<div class="line"><a name="l00268"></a><span class="lineno">  268</span>&#160;    {</div>
+<div class="line"><a name="l00269"></a><span class="lineno">  269</span>&#160;        m_impl-&gt;m_supported_methods[<a class="code" href="namespaceweb_1_1http.html#a10753d257365e0864768e18dd985e82a">method</a>] = handler;</div>
+<div class="line"><a name="l00270"></a><span class="lineno">  270</span>&#160;    }</div>
+<div class="line"><a name="l00271"></a><span class="lineno">  271</span>&#160;<span class="comment"></span></div>
+<div class="line"><a name="l00272"></a><span class="lineno">  272</span>&#160;<span class="comment">    /// &lt;summary&gt;</span></div>
+<div class="line"><a name="l00273"></a><span class="lineno">  273</span>&#160;<span class="comment">    /// Get the URI of the listener.</span></div>
+<div class="line"><a name="l00274"></a><span class="lineno">  274</span>&#160;<span class="comment">    /// &lt;/summary&gt;</span></div>
+<div class="line"><a name="l00275"></a><span class="lineno">  275</span>&#160;<span class="comment">    /// &lt;returns&gt;The URI this listener is for.&lt;/returns&gt;</span></div>
+<div class="line"><a name="l00276"></a><span class="lineno"><a class="line" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#aafdd1f356503e3bac66a3a7fcaa3eeb7">  276</a></span>&#160;<span class="comment"></span>    <span class="keyword">const</span> <a class="code" href="classweb_1_1uri.html">http::uri</a> &amp; <a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#aafdd1f356503e3bac66a3a7fcaa3eeb7">uri</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> m_impl-&gt;uri(); }</div>
+<div class="line"><a name="l00277"></a><span class="lineno">  277</span>&#160;<span class="comment"></span></div>
+<div class="line"><a name="l00278"></a><span class="lineno">  278</span>&#160;<span class="comment">    /// &lt;summary&gt;</span></div>
+<div class="line"><a name="l00279"></a><span class="lineno">  279</span>&#160;<span class="comment">    /// Get the configuration of this listener.</span></div>
+<div class="line"><a name="l00280"></a><span class="lineno">  280</span>&#160;<span class="comment">    /// &lt;/summary&gt;</span></div>
+<div class="line"><a name="l00281"></a><span class="lineno">  281</span>&#160;<span class="comment">    /// &lt;returns&gt;Configuration this listener was constructed with.&lt;/returns&gt;</span></div>
+<div class="line"><a name="l00282"></a><span class="lineno"><a class="line" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#aefddeb496fde612a47cb5b0c24e1b19a">  282</a></span>&#160;<span class="comment"></span>    <span class="keyword">const</span> <a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener__config.html">http_listener_config</a> &amp; <a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#aefddeb496fde612a47cb5b0c24e1b19a">configuration</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> m_impl-&gt;configuration(); }</div>
+<div class="line"><a name="l00283"></a><span class="lineno">  283</span>&#160;<span class="comment"></span></div>
+<div class="line"><a name="l00284"></a><span class="lineno">  284</span>&#160;<span class="comment">    /// &lt;summary&gt;</span></div>
+<div class="line"><a name="l00285"></a><span class="lineno">  285</span>&#160;<span class="comment">    /// Move constructor.</span></div>
+<div class="line"><a name="l00286"></a><span class="lineno">  286</span>&#160;<span class="comment">    /// &lt;/summary&gt;</span></div>
+<div class="line"><a name="l00287"></a><span class="lineno">  287</span>&#160;<span class="comment">    /// &lt;param name=&quot;other&quot;&gt;http_listener instance to construct this one from.&lt;/param&gt;</span></div>
+<div class="line"><a name="l00288"></a><span class="lineno"><a class="line" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a5d19b5ac6b41d634a9023dc7874d2de1">  288</a></span>&#160;<span class="comment"></span>    <a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a5d19b5ac6b41d634a9023dc7874d2de1">http_listener</a>(<a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html">http_listener</a> &amp;&amp;other)</div>
+<div class="line"><a name="l00289"></a><span class="lineno">  289</span>&#160;        : m_impl(std::move(other.m_impl))</div>
+<div class="line"><a name="l00290"></a><span class="lineno">  290</span>&#160;    {</div>
+<div class="line"><a name="l00291"></a><span class="lineno">  291</span>&#160;    }</div>
+<div class="line"><a name="l00292"></a><span class="lineno">  292</span>&#160;<span class="comment"></span></div>
+<div class="line"><a name="l00293"></a><span class="lineno">  293</span>&#160;<span class="comment">    /// &lt;summary&gt;</span></div>
+<div class="line"><a name="l00294"></a><span class="lineno">  294</span>&#160;<span class="comment">    /// Move assignment operator.</span></div>
+<div class="line"><a name="l00295"></a><span class="lineno">  295</span>&#160;<span class="comment">    /// &lt;/summary&gt;</span></div>
+<div class="line"><a name="l00296"></a><span class="lineno">  296</span>&#160;<span class="comment">    /// &lt;param name=&quot;other&quot;&gt;http_listener to replace this one with.&lt;/param&gt;</span></div>
+<div class="line"><a name="l00297"></a><span class="lineno"><a class="line" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a8b019815bb6663c7a2ab240277e825a9">  297</a></span>&#160;<span class="comment"></span>    <a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html">http_listener</a> &amp;<a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a8b019815bb6663c7a2ab240277e825a9">operator=</a>(<a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html">http_listener</a> &amp;&amp;other)</div>
+<div class="line"><a name="l00298"></a><span class="lineno">  298</span>&#160;    {</div>
+<div class="line"><a name="l00299"></a><span class="lineno">  299</span>&#160;        <span class="keywordflow">if</span>(<span class="keyword">this</span> != &amp;other)</div>
+<div class="line"><a name="l00300"></a><span class="lineno">  300</span>&#160;        {</div>
+<div class="line"><a name="l00301"></a><span class="lineno">  301</span>&#160;            m_impl = std::move(other.m_impl);</div>
+<div class="line"><a name="l00302"></a><span class="lineno">  302</span>&#160;        }</div>
+<div class="line"><a name="l00303"></a><span class="lineno">  303</span>&#160;        <span class="keywordflow">return</span> *<span class="keyword">this</span>;</div>
+<div class="line"><a name="l00304"></a><span class="lineno">  304</span>&#160;    }</div>
 <div class="line"><a name="l00305"></a><span class="lineno">  305</span>&#160;</div>
-<div class="line"><a name="l00306"></a><span class="lineno">  306</span>&#160;    <span class="comment">// No copying of listeners.</span></div>
-<div class="line"><a name="l00307"></a><span class="lineno">  307</span>&#160;    <a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#abff87a529468732c07c25a9cdb1641c7">http_listener</a>(<span class="keyword">const</span> <a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html">http_listener</a> &amp;other);</div>
-<div class="line"><a name="l00308"></a><span class="lineno">  308</span>&#160;    <a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html">http_listener</a> &amp;<a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a8b019815bb6663c7a2ab240277e825a9">operator=</a>(<span class="keyword">const</span> <a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html">http_listener</a> &amp;other);</div>
-<div class="line"><a name="l00309"></a><span class="lineno">  309</span>&#160;</div>
-<div class="line"><a name="l00310"></a><span class="lineno">  310</span>&#160;    std::unique_ptr&lt;details::http_listener_impl&gt; m_impl;</div>
-<div class="line"><a name="l00311"></a><span class="lineno">  311</span>&#160;};</div>
-<div class="line"><a name="l00312"></a><span class="lineno">  312</span>&#160;</div>
-<div class="line"><a name="l00313"></a><span class="lineno">  313</span>&#160;} <span class="comment">// namespace listener</span></div>
-<div class="line"><a name="l00314"></a><span class="lineno">  314</span>&#160;} <span class="comment">// namespace experimental</span></div>
-<div class="line"><a name="l00315"></a><span class="lineno">  315</span>&#160;} <span class="comment">// namespace http</span></div>
-<div class="line"><a name="l00316"></a><span class="lineno">  316</span>&#160;} <span class="comment">// namespace web</span></div>
-<div class="line"><a name="l00317"></a><span class="lineno">  317</span>&#160;</div>
-<div class="line"><a name="l00318"></a><span class="lineno">  318</span>&#160;<span class="preprocessor">#endif  </span><span class="comment">/* _CASA_HTTP_LISTENER_H */</span><span class="preprocessor"></span></div>
-<div class="ttc" id="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener_html_a0ec35c362370929b7fd52e7dd057472b"><div class="ttname"><a href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a0ec35c362370929b7fd52e7dd057472b">web::http::experimental::listener::http_listener::support</a></div><div class="ttdeci">void support(std::function&lt; void(http_request)&gt; handler)</div><div class="ttdoc">Add a general handler to support all requests. </div><div class="ttdef"><b>Definition:</b> http_listener.h:255</div></div>
-<div class="ttc" id="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener_html_abff87a529468732c07c25a9cdb1641c7"><div class="ttname"><a href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#abff87a529468732c07c25a9cdb1641c7">web::http::experimental::listener::http_listener::http_listener</a></div><div class="ttdeci">http_listener()</div><div class="ttdoc">Default constructor. </div><div class="ttdef"><b>Definition:</b> http_listener.h:215</div></div>
+<div class="line"><a name="l00306"></a><span class="lineno">  306</span>&#160;<span class="keyword">private</span>:</div>
+<div class="line"><a name="l00307"></a><span class="lineno">  307</span>&#160;</div>
+<div class="line"><a name="l00308"></a><span class="lineno">  308</span>&#160;    <span class="comment">// No copying of listeners.</span></div>
+<div class="line"><a name="l00309"></a><span class="lineno">  309</span>&#160;    <a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#abff87a529468732c07c25a9cdb1641c7">http_listener</a>(<span class="keyword">const</span> <a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html">http_listener</a> &amp;other);</div>
+<div class="line"><a name="l00310"></a><span class="lineno">  310</span>&#160;    <a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html">http_listener</a> &amp;<a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a8b019815bb6663c7a2ab240277e825a9">operator=</a>(<span class="keyword">const</span> <a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html">http_listener</a> &amp;other);</div>
+<div class="line"><a name="l00311"></a><span class="lineno">  311</span>&#160;</div>
+<div class="line"><a name="l00312"></a><span class="lineno">  312</span>&#160;    std::unique_ptr&lt;details::http_listener_impl&gt; m_impl;</div>
+<div class="line"><a name="l00313"></a><span class="lineno">  313</span>&#160;};</div>
+<div class="line"><a name="l00314"></a><span class="lineno">  314</span>&#160;</div>
+<div class="line"><a name="l00315"></a><span class="lineno">  315</span>&#160;} <span class="comment">// namespace listener</span></div>
+<div class="line"><a name="l00316"></a><span class="lineno">  316</span>&#160;} <span class="comment">// namespace experimental</span></div>
+<div class="line"><a name="l00317"></a><span class="lineno">  317</span>&#160;} <span class="comment">// namespace http</span></div>
+<div class="line"><a name="l00318"></a><span class="lineno">  318</span>&#160;} <span class="comment">// namespace web</span></div>
+<div class="line"><a name="l00319"></a><span class="lineno">  319</span>&#160;</div>
+<div class="line"><a name="l00320"></a><span class="lineno">  320</span>&#160;<span class="preprocessor">#endif  </span><span class="comment">/* _CASA_HTTP_LISTENER_H */</span><span class="preprocessor"></span></div>
+<div class="ttc" id="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener_html_a0ec35c362370929b7fd52e7dd057472b"><div class="ttname"><a href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a0ec35c362370929b7fd52e7dd057472b">web::http::experimental::listener::http_listener::support</a></div><div class="ttdeci">void support(std::function&lt; void(http_request)&gt; handler)</div><div class="ttdoc">Add a general handler to support all requests. </div><div class="ttdef"><b>Definition:</b> http_listener.h:257</div></div>
+<div class="ttc" id="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener_html_abff87a529468732c07c25a9cdb1641c7"><div class="ttname"><a href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#abff87a529468732c07c25a9cdb1641c7">web::http::experimental::listener::http_listener::http_listener</a></div><div class="ttdeci">http_listener()</div><div class="ttdoc">Default constructor. </div><div class="ttdef"><b>Definition:</b> http_listener.h:217</div></div>
 <div class="ttc" id="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener__config_html_a7667e7503d23ff5ae83bf9f223086fcd"><div class="ttname"><a href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener__config.html#a7667e7503d23ff5ae83bf9f223086fcd">web::http::experimental::listener::http_listener_config::timeout</a></div><div class="ttdeci">utility::seconds timeout() const </div><div class="ttdoc">Get the timeout </div><div class="ttdef"><b>Definition:</b> http_listener.h:111</div></div>
 <div class="ttc" id="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener__config_html"><div class="ttname"><a href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener__config.html">web::http::experimental::listener::http_listener_config</a></div><div class="ttdoc">Configuration class used to set various options when constructing and http_listener instance...</div><div class="ttdef"><b>Definition:</b> http_listener.h:54</div></div>
-<div class="ttc" id="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener_html_a73f04c60b80d26c3f346e7cc0a201d15"><div class="ttname"><a href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a73f04c60b80d26c3f346e7cc0a201d15">web::http::experimental::listener::http_listener::http_listener</a></div><div class="ttdeci">http_listener(http::uri address)</div><div class="ttdoc">Create a listener from a URI. </div><div class="ttdef"><b>Definition:</b> http_listener.h:195</div></div>
-<div class="ttc" id="classweb_1_1uri_html"><div class="ttname"><a href="classweb_1_1uri.html">web::uri</a></div><div class="ttdoc">A flexible, protocol independent uri implementation. </div><div class="ttdef"><b>Definition:</b> base_uri.h:107</div></div>
+<div class="ttc" id="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener_html_a73f04c60b80d26c3f346e7cc0a201d15"><div class="ttname"><a href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a73f04c60b80d26c3f346e7cc0a201d15">web::http::experimental::listener::http_listener::http_listener</a></div><div class="ttdeci">http_listener(http::uri address)</div><div class="ttdoc">Create a listener from a URI. </div><div class="ttdef"><b>Definition:</b> http_listener.h:197</div></div>
+<div class="ttc" id="classweb_1_1uri_html"><div class="ttname"><a href="classweb_1_1uri.html">web::uri</a></div><div class="ttdoc">A flexible, protocol independent URI implementation. </div><div class="ttdef"><b>Definition:</b> base_uri.h:154</div></div>
 <div class="ttc" id="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener_html_a4989ccfc96b9376ae08adb394e30c797"><div class="ttname"><a href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a4989ccfc96b9376ae08adb394e30c797">web::http::experimental::listener::http_listener::~http_listener</a></div><div class="ttdeci">_ASYNCRTIMP ~http_listener()</div><div class="ttdoc">Destructor frees any held resources. </div></div>
-<div class="ttc" id="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener_html_a5d19b5ac6b41d634a9023dc7874d2de1"><div class="ttname"><a href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a5d19b5ac6b41d634a9023dc7874d2de1">web::http::experimental::listener::http_listener::http_listener</a></div><div class="ttdeci">http_listener(http_listener &amp;&amp;other)</div><div class="ttdoc">Move constructor. </div><div class="ttdef"><b>Definition:</b> http_listener.h:286</div></div>
-<div class="ttc" id="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener_html_aefddeb496fde612a47cb5b0c24e1b19a"><div class="ttname"><a href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#aefddeb496fde612a47cb5b0c24e1b19a">web::http::experimental::listener::http_listener::configuration</a></div><div class="ttdeci">const http_listener_config &amp; configuration() const </div><div class="ttdoc">Get the configuration of this listener. </div><div class="ttdef"><b>Definition:</b> http_listener.h:280</div></div>
+<div class="ttc" id="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener_html_a5d19b5ac6b41d634a9023dc7874d2de1"><div class="ttname"><a href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a5d19b5ac6b41d634a9023dc7874d2de1">web::http::experimental::listener::http_listener::http_listener</a></div><div class="ttdeci">http_listener(http_listener &amp;&amp;other)</div><div class="ttdoc">Move constructor. </div><div class="ttdef"><b>Definition:</b> http_listener.h:288</div></div>
+<div class="ttc" id="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener_html_aefddeb496fde612a47cb5b0c24e1b19a"><div class="ttname"><a href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#aefddeb496fde612a47cb5b0c24e1b19a">web::http::experimental::listener::http_listener::configuration</a></div><div class="ttdeci">const http_listener_config &amp; configuration() const </div><div class="ttdoc">Get the configuration of this listener. </div><div class="ttdef"><b>Definition:</b> http_listener.h:282</div></div>
 <div class="ttc" id="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener__config_html_adc5fba138d9b04d4d8eda122dcdb2f5b"><div class="ttname"><a href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener__config.html#adc5fba138d9b04d4d8eda122dcdb2f5b">web::http::experimental::listener::http_listener_config::operator=</a></div><div class="ttdeci">http_listener_config &amp; operator=(http_listener_config &amp;&amp;rhs)</div><div class="ttdoc">Assignment operator. </div><div class="ttdef"><b>Definition:</b> http_listener.h:98</div></div>
-<div class="ttc" id="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener_html_ab173ed7f5c14167b5a58ba21da22a5c1"><div class="ttname"><a href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#ab173ed7f5c14167b5a58ba21da22a5c1">web::http::experimental::listener::http_listener::support</a></div><div class="ttdeci">void support(const http::method &amp;method, std::function&lt; void(http_request)&gt; handler)</div><div class="ttdoc">Add support for a specific HTTP method. </div><div class="ttdef"><b>Definition:</b> http_listener.h:265</div></div>
+<div class="ttc" id="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener_html_ab173ed7f5c14167b5a58ba21da22a5c1"><div class="ttname"><a href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#ab173ed7f5c14167b5a58ba21da22a5c1">web::http::experimental::listener::http_listener::support</a></div><div class="ttdeci">void support(const http::method &amp;method, std::function&lt; void(http_request)&gt; handler)</div><div class="ttdoc">Add support for a specific HTTP method. </div><div class="ttdef"><b>Definition:</b> http_listener.h:267</div></div>
 <div class="ttc" id="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener__config_html_a1d019fe19986ab770e7dfb7635fed7e5"><div class="ttname"><a href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener__config.html#a1d019fe19986ab770e7dfb7635fed7e5">web::http::experimental::listener::http_listener_config::http_listener_config</a></div><div class="ttdeci">http_listener_config(http_listener_config &amp;&amp;other)</div><div class="ttdoc">Move constructor. </div><div class="ttdef"><b>Definition:</b> http_listener.h:77</div></div>
-<div class="ttc" id="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener_html_a6da51832fb25a44c5b2ee38ba02001a9"><div class="ttname"><a href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a6da51832fb25a44c5b2ee38ba02001a9">web::http::experimental::listener::http_listener::open</a></div><div class="ttdeci">pplx::task&lt; void &gt; open()</div><div class="ttdoc">Asychronously open the listener, i.e. start accepting requests. </div><div class="ttdef"><b>Definition:</b> http_listener.h:230</div></div>
-<div class="ttc" id="namespaceweb_1_1http_html_a10753d257365e0864768e18dd985e82a"><div class="ttname"><a href="namespaceweb_1_1http.html#a10753d257365e0864768e18dd985e82a">web::http::method</a></div><div class="ttdeci">utility::string_t method</div><div class="ttdoc">Predefined method strings for the standard HTTP methods mentioned in the HTTP 1.1 specification...</div><div class="ttdef"><b>Definition:</b> http_msg.h:74</div></div>
+<div class="ttc" id="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener_html_a6da51832fb25a44c5b2ee38ba02001a9"><div class="ttname"><a href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a6da51832fb25a44c5b2ee38ba02001a9">web::http::experimental::listener::http_listener::open</a></div><div class="ttdeci">pplx::task&lt; void &gt; open()</div><div class="ttdoc">Asychronously open the listener, i.e. start accepting requests. </div><div class="ttdef"><b>Definition:</b> http_listener.h:232</div></div>
+<div class="ttc" id="namespaceweb_1_1http_html_a10753d257365e0864768e18dd985e82a"><div class="ttname"><a href="namespaceweb_1_1http.html#a10753d257365e0864768e18dd985e82a">web::http::method</a></div><div class="ttdeci">utility::string_t method</div><div class="ttdoc">Predefined method strings for the standard HTTP methods mentioned in the HTTP 1.1 specification...</div><div class="ttdef"><b>Definition:</b> http_msg.h:68</div></div>
 <div class="ttc" id="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener__config_html_ad2c69b5f650b50ed2ff16f20b1c3df29"><div class="ttname"><a href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener__config.html#ad2c69b5f650b50ed2ff16f20b1c3df29">web::http::experimental::listener::http_listener_config::http_listener_config</a></div><div class="ttdeci">http_listener_config(const http_listener_config &amp;other)</div><div class="ttdoc">Copy constructor. </div><div class="ttdef"><b>Definition:</b> http_listener.h:69</div></div>
 <div class="ttc" id="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener__config_html_adee76e3c3c471c2c97562652ee199604"><div class="ttname"><a href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener__config.html#adee76e3c3c471c2c97562652ee199604">web::http::experimental::listener::http_listener_config::http_listener_config</a></div><div class="ttdeci">http_listener_config()</div><div class="ttdoc">Create an http_listener configuration with default options. </div><div class="ttdef"><b>Definition:</b> http_listener.h:61</div></div>
-<div class="ttc" id="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener_html_aafdd1f356503e3bac66a3a7fcaa3eeb7"><div class="ttname"><a href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#aafdd1f356503e3bac66a3a7fcaa3eeb7">web::http::experimental::listener::http_listener::uri</a></div><div class="ttdeci">const http::uri &amp; uri() const </div><div class="ttdoc">Get the URI of the listener. </div><div class="ttdef"><b>Definition:</b> http_listener.h:274</div></div>
-<div class="ttc" id="classpplx_1_1task_3_01void_01_4_html"><div class="ttname"><a href="classpplx_1_1task_3_01void_01_4.html">pplx::task&lt; void &gt;</a></div><div class="ttdoc">The Parallel Patterns Library (PPL) task class. A task object represents work that can be executed as...</div><div class="ttdef"><b>Definition:</b> pplxtasks.h:4134</div></div>
-<div class="ttc" id="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener_html"><div class="ttname"><a href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html">web::http::experimental::listener::http_listener</a></div><div class="ttdoc">A class for listening and processing HTTP requests at a specific URI. </div><div class="ttdef"><b>Definition:</b> http_listener.h:186</div></div>
-<div class="ttc" id="classweb_1_1http_1_1http__request_html"><div class="ttname"><a href="classweb_1_1http_1_1http__request.html">web::http::http_request</a></div><div class="ttdoc">Represents an HTTP request. </div><div class="ttdef"><b>Definition:</b> http_msg.h:711</div></div>
-<div class="ttc" id="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener_html_a8b019815bb6663c7a2ab240277e825a9"><div class="ttname"><a href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a8b019815bb6663c7a2ab240277e825a9">web::http::experimental::listener::http_listener::operator=</a></div><div class="ttdeci">http_listener &amp; operator=(http_listener &amp;&amp;other)</div><div class="ttdoc">Move assignment operator. </div><div class="ttdef"><b>Definition:</b> http_listener.h:295</div></div>
-<div class="ttc" id="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener_html_a65b1ac350b173dbf8bdca05ac99cd4dd"><div class="ttname"><a href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a65b1ac350b173dbf8bdca05ac99cd4dd">web::http::experimental::listener::http_listener::http_listener</a></div><div class="ttdeci">http_listener(http::uri address, http_listener_config config)</div><div class="ttdoc">Create a listener with specified URI and configuration. </div><div class="ttdef"><b>Definition:</b> http_listener.h:205</div></div>
+<div class="ttc" id="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener_html_aafdd1f356503e3bac66a3a7fcaa3eeb7"><div class="ttname"><a href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#aafdd1f356503e3bac66a3a7fcaa3eeb7">web::http::experimental::listener::http_listener::uri</a></div><div class="ttdeci">const http::uri &amp; uri() const </div><div class="ttdoc">Get the URI of the listener. </div><div class="ttdef"><b>Definition:</b> http_listener.h:276</div></div>
+<div class="ttc" id="classpplx_1_1task_3_01void_01_4_html"><div class="ttname"><a href="classpplx_1_1task_3_01void_01_4.html">pplx::task&lt; void &gt;</a></div><div class="ttdoc">The Parallel Patterns Library (PPL) task class. A task object represents work that can be executed as...</div><div class="ttdef"><b>Definition:</b> pplxtasks.h:4163</div></div>
+<div class="ttc" id="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener_html"><div class="ttname"><a href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html">web::http::experimental::listener::http_listener</a></div><div class="ttdoc">A class for listening and processing HTTP requests at a specific URI. </div><div class="ttdef"><b>Definition:</b> http_listener.h:188</div></div>
+<div class="ttc" id="classweb_1_1http_1_1http__request_html"><div class="ttname"><a href="classweb_1_1http_1_1http__request.html">web::http::http_request</a></div><div class="ttdoc">Represents an HTTP request. </div><div class="ttdef"><b>Definition:</b> http_msg.h:740</div></div>
+<div class="ttc" id="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener_html_a8b019815bb6663c7a2ab240277e825a9"><div class="ttname"><a href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a8b019815bb6663c7a2ab240277e825a9">web::http::experimental::listener::http_listener::operator=</a></div><div class="ttdeci">http_listener &amp; operator=(http_listener &amp;&amp;other)</div><div class="ttdoc">Move assignment operator. </div><div class="ttdef"><b>Definition:</b> http_listener.h:297</div></div>
+<div class="ttc" id="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener_html_a65b1ac350b173dbf8bdca05ac99cd4dd"><div class="ttname"><a href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a65b1ac350b173dbf8bdca05ac99cd4dd">web::http::experimental::listener::http_listener::http_listener</a></div><div class="ttdeci">http_listener(http::uri address, http_listener_config config)</div><div class="ttdoc">Create a listener with specified URI and configuration. </div><div class="ttdef"><b>Definition:</b> http_listener.h:207</div></div>
 <div class="ttc" id="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener__config_html_a9716834695cc86982010e99b693c1fee"><div class="ttname"><a href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener__config.html#a9716834695cc86982010e99b693c1fee">web::http::experimental::listener::http_listener_config::set_timeout</a></div><div class="ttdeci">void set_timeout(utility::seconds timeout)</div><div class="ttdoc">Set the timeout </div><div class="ttdef"><b>Definition:</b> http_listener.h:120</div></div>
 <div class="ttc" id="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener__config_html_a6918c72383b593f3a15f1214992cd966"><div class="ttname"><a href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener__config.html#a6918c72383b593f3a15f1214992cd966">web::http::experimental::listener::http_listener_config::operator=</a></div><div class="ttdeci">http_listener_config &amp; operator=(const http_listener_config &amp;rhs)</div><div class="ttdoc">Assignment operator. </div><div class="ttdef"><b>Definition:</b> http_listener.h:85</div></div>
-<div class="ttc" id="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener_html_a78ab489ba0d6f4305288963a0f942e7d"><div class="ttname"><a href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a78ab489ba0d6f4305288963a0f942e7d">web::http::experimental::listener::http_listener::close</a></div><div class="ttdeci">pplx::task&lt; void &gt; close()</div><div class="ttdoc">Asychrnoously stop accepting requests and close all connections. </div><div class="ttdef"><b>Definition:</b> http_listener.h:246</div></div>
+<div class="ttc" id="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener_html_a78ab489ba0d6f4305288963a0f942e7d"><div class="ttname"><a href="classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a78ab489ba0d6f4305288963a0f942e7d">web::http::experimental::listener::http_listener::close</a></div><div class="ttdeci">pplx::task&lt; void &gt; close()</div><div class="ttdoc">Asychrnoously stop accepting requests and close all connections. </div><div class="ttdef"><b>Definition:</b> http_listener.h:248</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Aug 19 2014 16:17:52 for C++ Rest SDK by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Thu Nov 13 2014 15:55:27 for C++ Rest SDK by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.7
 </small></address>

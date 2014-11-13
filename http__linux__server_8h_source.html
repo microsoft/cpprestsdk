@@ -88,12 +88,12 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </div><!--header-->
 <div class="contents">
 <div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;<span class="comment">/*</span></div>
-<div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;<span class="comment">* Copyright (c) Microsoft Corporation. All rights reserved. </span></div>
+<div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;<span class="comment">* Copyright (c) Microsoft Corporation. All rights reserved.</span></div>
 <div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;<span class="comment">* Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span></div>
 <div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;<span class="comment">* you may not use this file except in compliance with the License.</span></div>
 <div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;<span class="comment">* You may obtain a copy of the License at</span></div>
 <div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;<span class="comment">* http://www.apache.org/licenses/LICENSE-2.0</span></div>
-<div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;<span class="comment">* </span></div>
+<div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;<span class="comment">*</span></div>
 <div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;<span class="comment">* Unless required by applicable law or agreed to in writing, software</span></div>
 <div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;<span class="comment">* distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span></div>
 <div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;<span class="comment">* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span></div>
@@ -149,7 +149,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;    <span class="keywordtype">bool</span> m_close;</div>
 <div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;    <span class="keywordtype">bool</span> m_chunked;</div>
 <div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;    std::atomic&lt;int&gt; m_refs; <span class="comment">// track how many threads are still referring to this</span></div>
-<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;    </div>
+<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;</div>
 <div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;<span class="keyword">public</span>:</div>
 <div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;    connection(std::unique_ptr&lt;boost::asio::ip::tcp::socket&gt; socket, <a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__linux__server.html">http_linux_server</a>* server, hostport_listener* parent)</div>
 <div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;    : m_socket(std::move(socket))</div>
@@ -205,7 +205,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00116"></a><span class="lineno">  116</span>&#160;</div>
 <div class="line"><a name="l00117"></a><span class="lineno">  117</span>&#160;    std::string m_host;</div>
 <div class="line"><a name="l00118"></a><span class="lineno">  118</span>&#160;    std::string m_port;</div>
-<div class="line"><a name="l00119"></a><span class="lineno">  119</span>&#160;    </div>
+<div class="line"><a name="l00119"></a><span class="lineno">  119</span>&#160;</div>
 <div class="line"><a name="l00120"></a><span class="lineno">  120</span>&#160;<span class="keyword">public</span>:</div>
 <div class="line"><a name="l00121"></a><span class="lineno">  121</span>&#160;     hostport_listener(<a class="code" href="classweb_1_1http_1_1experimental_1_1listener_1_1http__linux__server.html">http_linux_server</a>* server, <span class="keyword">const</span> std::string&amp; hostport)</div>
 <div class="line"><a name="l00122"></a><span class="lineno">  122</span>&#160;    : m_acceptor()</div>
@@ -218,7 +218,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00129"></a><span class="lineno">  129</span>&#160;        m_all_connections_complete.set();</div>
 <div class="line"><a name="l00130"></a><span class="lineno">  130</span>&#160;</div>
 <div class="line"><a name="l00131"></a><span class="lineno">  131</span>&#160;        std::istringstream hostport_in(hostport);</div>
-<div class="line"><a name="l00132"></a><span class="lineno">  132</span>&#160;        </div>
+<div class="line"><a name="l00132"></a><span class="lineno">  132</span>&#160;</div>
 <div class="line"><a name="l00133"></a><span class="lineno">  133</span>&#160;        std::getline(hostport_in, m_host, <span class="charliteral">&#39;:&#39;</span>);</div>
 <div class="line"><a name="l00134"></a><span class="lineno">  134</span>&#160;        std::getline(hostport_in, m_port);</div>
 <div class="line"><a name="l00135"></a><span class="lineno">  135</span>&#160;    }</div>
@@ -236,7 +236,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00147"></a><span class="lineno">  147</span>&#160;</div>
 <div class="line"><a name="l00148"></a><span class="lineno">  148</span>&#160;<span class="keyword">private</span>:</div>
 <div class="line"><a name="l00149"></a><span class="lineno">  149</span>&#160;    <span class="keywordtype">void</span> on_accept(boost::asio::ip::tcp::socket* socket, <span class="keyword">const</span> boost::system::error_code&amp; ec);</div>
-<div class="line"><a name="l00150"></a><span class="lineno">  150</span>&#160;    </div>
+<div class="line"><a name="l00150"></a><span class="lineno">  150</span>&#160;</div>
 <div class="line"><a name="l00151"></a><span class="lineno">  151</span>&#160;};</div>
 <div class="line"><a name="l00152"></a><span class="lineno">  152</span>&#160;</div>
 <div class="line"><a name="l00153"></a><span class="lineno">  153</span>&#160;}</div>
@@ -281,16 +281,16 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="line"><a name="l00192"></a><span class="lineno">  192</span>&#160;};</div>
 <div class="line"><a name="l00193"></a><span class="lineno">  193</span>&#160;</div>
 <div class="line"><a name="l00194"></a><span class="lineno">  194</span>&#160;}}}}</div>
-<div class="ttc" id="classpplx_1_1task__completion__event_3_01void_01_4_html"><div class="ttname"><a href="classpplx_1_1task__completion__event_3_01void_01_4.html">pplx::task_completion_event&lt; void &gt;</a></div><div class="ttdoc">The task_completion_event class allows you to delay the execution of a task until a condition is sati...</div><div class="ttdef"><b>Definition:</b> pplxtasks.h:2897</div></div>
-<div class="ttc" id="classweb_1_1http_1_1http__response_html"><div class="ttname"><a href="classweb_1_1http_1_1http__response.html">web::http::http_response</a></div><div class="ttdoc">Represents an HTTP response. </div><div class="ttdef"><b>Definition:</b> http_msg.h:361</div></div>
+<div class="ttc" id="classpplx_1_1task__completion__event_3_01void_01_4_html"><div class="ttname"><a href="classpplx_1_1task__completion__event_3_01void_01_4.html">pplx::task_completion_event&lt; void &gt;</a></div><div class="ttdoc">The task_completion_event class allows you to delay the execution of a task until a condition is sati...</div><div class="ttdef"><b>Definition:</b> pplxtasks.h:2924</div></div>
+<div class="ttc" id="classweb_1_1http_1_1http__response_html"><div class="ttname"><a href="classweb_1_1http_1_1http__response.html">web::http::http_response</a></div><div class="ttdoc">Represents an HTTP response. </div><div class="ttdef"><b>Definition:</b> http_msg.h:377</div></div>
 <div class="ttc" id="structweb_1_1http_1_1experimental_1_1listener_1_1iequal__to_html"><div class="ttname"><a href="structweb_1_1http_1_1experimental_1_1listener_1_1iequal__to.html">web::http::experimental::listener::iequal_to</a></div><div class="ttdef"><b>Definition:</b> http_linux_server.h:155</div></div>
 <div class="ttc" id="classweb_1_1http_1_1experimental_1_1listener_1_1http__linux__server_html"><div class="ttname"><a href="classweb_1_1http_1_1experimental_1_1listener_1_1http__linux__server.html">web::http::experimental::listener::http_linux_server</a></div><div class="ttdef"><b>Definition:</b> http_linux_server.h:163</div></div>
-<div class="ttc" id="classpplx_1_1task_3_01void_01_4_html"><div class="ttname"><a href="classpplx_1_1task_3_01void_01_4.html">pplx::task&lt; void &gt;</a></div><div class="ttdoc">The Parallel Patterns Library (PPL) task class. A task object represents work that can be executed as...</div><div class="ttdef"><b>Definition:</b> pplxtasks.h:4134</div></div>
-<div class="ttc" id="classweb_1_1http_1_1http__request_html"><div class="ttname"><a href="classweb_1_1http_1_1http__request.html">web::http::http_request</a></div><div class="ttdoc">Represents an HTTP request. </div><div class="ttdef"><b>Definition:</b> http_msg.h:711</div></div>
+<div class="ttc" id="classpplx_1_1task_3_01void_01_4_html"><div class="ttname"><a href="classpplx_1_1task_3_01void_01_4.html">pplx::task&lt; void &gt;</a></div><div class="ttdoc">The Parallel Patterns Library (PPL) task class. A task object represents work that can be executed as...</div><div class="ttdef"><b>Definition:</b> pplxtasks.h:4163</div></div>
+<div class="ttc" id="classweb_1_1http_1_1http__request_html"><div class="ttname"><a href="classweb_1_1http_1_1http__request.html">web::http::http_request</a></div><div class="ttdoc">Represents an HTTP request. </div><div class="ttdef"><b>Definition:</b> http_msg.h:740</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Aug 19 2014 16:17:52 for C++ Rest SDK by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Thu Nov 13 2014 15:55:27 for C++ Rest SDK by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.7
 </small></address>

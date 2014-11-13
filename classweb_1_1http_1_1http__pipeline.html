@@ -94,32 +94,38 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="title">web::http::http_pipeline Class Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
+
+<p> 
+ <a href="classweb_1_1http_1_1http__pipeline.html#details">More...</a></p>
+
+<p><code>#include &lt;<a class="el" href="http__msg_8h_source.html">http_msg.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:afe6eacec681ee3d15bc5a3eb107d9dcc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classpplx_1_1task.html">pplx::task</a>&lt; <a class="el" href="classweb_1_1http_1_1http__response.html">http_response</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classweb_1_1http_1_1http__pipeline.html#afe6eacec681ee3d15bc5a3eb107d9dcc">propagate</a> (<a class="el" href="classweb_1_1http_1_1http__request.html">http_request</a> request)</td></tr>
 <tr class="memdesc:afe6eacec681ee3d15bc5a3eb107d9dcc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initiate an http request into the pipeline  <a href="#afe6eacec681ee3d15bc5a3eb107d9dcc">More...</a><br /></td></tr>
 <tr class="separator:afe6eacec681ee3d15bc5a3eb107d9dcc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a840135e885dc776ea357480f09789c03"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classweb_1_1http_1_1http__pipeline.html#a840135e885dc776ea357480f09789c03">append</a> (std::shared_ptr&lt; <a class="el" href="classweb_1_1http_1_1http__pipeline__stage.html">http_pipeline_stage</a> &gt; stage)</td></tr>
-<tr class="memdesc:a840135e885dc776ea357480f09789c03"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds an HTTP pipeline stage to the pipeline.  <a href="#a840135e885dc776ea357480f09789c03">More...</a><br /></td></tr>
-<tr class="separator:a840135e885dc776ea357480f09789c03"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a619ab8963b6ff29ba63ea184624dd5fe"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a619ab8963b6ff29ba63ea184624dd5fe"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>set_last_stage</b> (std::shared_ptr&lt; <a class="el" href="classweb_1_1http_1_1http__pipeline__stage.html">http_pipeline_stage</a> &gt; last)</td></tr>
-<tr class="separator:a619ab8963b6ff29ba63ea184624dd5fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a128c44c0ffab8c94d28d17fd3c37c4a1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a128c44c0ffab8c94d28d17fd3c37c4a1"></a>
-const std::shared_ptr<br class="typebreak" />
-&lt; <a class="el" href="classweb_1_1http_1_1http__pipeline__stage.html">http_pipeline_stage</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>last_stage</b> () const </td></tr>
+<tr class="memitem:ab1d1ed2449ecdfd74b81f628ecbecce8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classweb_1_1http_1_1http__pipeline.html#ab1d1ed2449ecdfd74b81f628ecbecce8">append</a> (const std::shared_ptr&lt; <a class="el" href="classweb_1_1http_1_1http__pipeline__stage.html">http_pipeline_stage</a> &gt; &amp;stage)</td></tr>
+<tr class="memdesc:ab1d1ed2449ecdfd74b81f628ecbecce8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds an HTTP pipeline stage to the pipeline.  <a href="#ab1d1ed2449ecdfd74b81f628ecbecce8">More...</a><br /></td></tr>
+<tr class="separator:ab1d1ed2449ecdfd74b81f628ecbecce8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa44c4f89faf80ebd6bd66dc20e8a9300"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classweb_1_1http_1_1http__pipeline.html#aa44c4f89faf80ebd6bd66dc20e8a9300">set_last_stage</a> (const std::shared_ptr&lt; <a class="el" href="classweb_1_1http_1_1http__pipeline__stage.html">http_pipeline_stage</a> &gt; &amp;last)</td></tr>
+<tr class="memdesc:aa44c4f89faf80ebd6bd66dc20e8a9300"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the last stage of the pipeline.  <a href="#aa44c4f89faf80ebd6bd66dc20e8a9300">More...</a><br /></td></tr>
+<tr class="separator:aa44c4f89faf80ebd6bd66dc20e8a9300"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a128c44c0ffab8c94d28d17fd3c37c4a1"><td class="memItemLeft" align="right" valign="top">const std::shared_ptr<br class="typebreak" />
+&lt; <a class="el" href="classweb_1_1http_1_1http__pipeline__stage.html">http_pipeline_stage</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classweb_1_1http_1_1http__pipeline.html#a128c44c0ffab8c94d28d17fd3c37c4a1">last_stage</a> () const </td></tr>
+<tr class="memdesc:a128c44c0ffab8c94d28d17fd3c37c4a1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves the last stage in this pipeline.  <a href="#a128c44c0ffab8c94d28d17fd3c37c4a1">More...</a><br /></td></tr>
 <tr class="separator:a128c44c0ffab8c94d28d17fd3c37c4a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:aa425968b907f03737eb38ada5b985aca"><td class="memItemLeft" align="right" valign="top">static std::shared_ptr<br class="typebreak" />
-&lt; <a class="el" href="classweb_1_1http_1_1http__pipeline.html">http_pipeline</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classweb_1_1http_1_1http__pipeline.html#aa425968b907f03737eb38ada5b985aca">create_pipeline</a> (std::shared_ptr&lt; <a class="el" href="classweb_1_1http_1_1http__pipeline__stage.html">http_pipeline_stage</a> &gt; last)</td></tr>
-<tr class="memdesc:aa425968b907f03737eb38ada5b985aca"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create an http pipeline that consists of a linear chain of stages  <a href="#aa425968b907f03737eb38ada5b985aca">More...</a><br /></td></tr>
-<tr class="separator:aa425968b907f03737eb38ada5b985aca"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af995ed3b5a6825f28c2a7f95e5b8b818"><td class="memItemLeft" align="right" valign="top">static std::shared_ptr<br class="typebreak" />
+&lt; <a class="el" href="classweb_1_1http_1_1http__pipeline.html">http_pipeline</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classweb_1_1http_1_1http__pipeline.html#af995ed3b5a6825f28c2a7f95e5b8b818">create_pipeline</a> (const std::shared_ptr&lt; <a class="el" href="classweb_1_1http_1_1http__pipeline__stage.html">http_pipeline_stage</a> &gt; &amp;last)</td></tr>
+<tr class="memdesc:af995ed3b5a6825f28c2a7f95e5b8b818"><td class="mdescLeft">&#160;</td><td class="mdescRight">Create an http pipeline that consists of a linear chain of stages  <a href="#af995ed3b5a6825f28c2a7f95e5b8b818">More...</a><br /></td></tr>
+<tr class="separator:af995ed3b5a6825f28c2a7f95e5b8b818"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<h2 class="groupheader">Member Function Documentation</h2>
-<a class="anchor" id="a840135e885dc776ea357480f09789c03"></a>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"></div><h2 class="groupheader">Member Function Documentation</h2>
+<a class="anchor" id="ab1d1ed2449ecdfd74b81f628ecbecce8"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -129,7 +135,7 @@ Static Public Member Functions</h2></td></tr>
         <tr>
           <td class="memname">void web::http::http_pipeline::append </td>
           <td>(</td>
-          <td class="paramtype">std::shared_ptr&lt; <a class="el" href="classweb_1_1http_1_1http__pipeline__stage.html">http_pipeline_stage</a> &gt;&#160;</td>
+          <td class="paramtype">const std::shared_ptr&lt; <a class="el" href="classweb_1_1http_1_1http__pipeline__stage.html">http_pipeline_stage</a> &gt; &amp;&#160;</td>
           <td class="paramname"><em>stage</em></td><td>)</td>
           <td></td>
         </tr>
@@ -151,7 +157,7 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="aa425968b907f03737eb38ada5b985aca"></a>
+<a class="anchor" id="af995ed3b5a6825f28c2a7f95e5b8b818"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -161,7 +167,7 @@ Static Public Member Functions</h2></td></tr>
         <tr>
           <td class="memname">static std::shared_ptr&lt;<a class="el" href="classweb_1_1http_1_1http__pipeline.html">http_pipeline</a>&gt; web::http::http_pipeline::create_pipeline </td>
           <td>(</td>
-          <td class="paramtype">std::shared_ptr&lt; <a class="el" href="classweb_1_1http_1_1http__pipeline__stage.html">http_pipeline_stage</a> &gt;&#160;</td>
+          <td class="paramtype">const std::shared_ptr&lt; <a class="el" href="classweb_1_1http_1_1http__pipeline__stage.html">http_pipeline_stage</a> &gt; &amp;&#160;</td>
           <td class="paramname"><em>last</em></td><td>)</td>
           <td></td>
         </tr>
@@ -180,6 +186,32 @@ Static Public Member Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a class="anchor" id="a128c44c0ffab8c94d28d17fd3c37c4a1"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::shared_ptr&lt;<a class="el" href="classweb_1_1http_1_1http__pipeline__stage.html">http_pipeline_stage</a>&gt;&amp; web::http::http_pipeline::last_stage </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Retrieves the last stage in this pipeline. </p>
+<dl class="section return"><dt>Returns</dt><dd>A shared pointer to last stage.</dd></dl>
 
 </div>
 </div>
@@ -215,13 +247,45 @@ Static Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="aa44c4f89faf80ebd6bd66dc20e8a9300"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void web::http::http_pipeline::set_last_stage </td>
+          <td>(</td>
+          <td class="paramtype">const std::shared_ptr&lt; <a class="el" href="classweb_1_1http_1_1http__pipeline__stage.html">http_pipeline_stage</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>last</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Sets the last stage of the pipeline. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">last</td><td>Shared pointer to pipeline stage to set as the last.</td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/cpprest/<a class="el" href="http__msg_8h_source.html">http_msg.h</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Aug 19 2014 16:17:55 for C++ Rest SDK by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Thu Nov 13 2014 15:55:31 for C++ Rest SDK by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.7
 </small></address>

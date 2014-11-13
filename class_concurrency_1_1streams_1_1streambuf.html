@@ -192,10 +192,10 @@ std::shared_ptr<br class="typebreak" />
 <tr class="memdesc:a834efc1922550262f94426413f12e825"><td class="mdescLeft">&#160;</td><td class="mdescRight"><code>can_seek<code> is used to determine whether a stream buffer supports seeking. </code></code><code><code> </code></code> <a href="#a834efc1922550262f94426413f12e825">More...</a><br /></td></tr>
 <tr class="separator:a834efc1922550262f94426413f12e825"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4e2cdbf3d137815f93afb0192e8b285d"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_concurrency_1_1streams_1_1streambuf.html#a4e2cdbf3d137815f93afb0192e8b285d">has_size</a> () const </td></tr>
-<tr class="memdesc:a4e2cdbf3d137815f93afb0192e8b285d"><td class="mdescLeft">&#160;</td><td class="mdescRight"><code>has_size<code> is used to determine whether a stream buffer supports <a class="el" href="class_concurrency_1_1streams_1_1streambuf.html#afa53eeb7f3c5c70345b09e2dec87a8e2" title="Gets the size of the stream, if known. Calls to has_size will determine whether the result of size ca...">size()</a>. </code></code><code><code> </code></code> <a href="#a4e2cdbf3d137815f93afb0192e8b285d">More...</a><br /></td></tr>
+<tr class="memdesc:a4e2cdbf3d137815f93afb0192e8b285d"><td class="mdescLeft">&#160;</td><td class="mdescRight"><code>has_size<code> is used to determine whether a stream buffer supports <a class="el" href="class_concurrency_1_1streams_1_1streambuf.html#afa53eeb7f3c5c70345b09e2dec87a8e2" title="Gets the total number of characters in the stream buffer, if known. Calls to has_size will determine ...">size()</a>. </code></code><code><code> </code></code> <a href="#a4e2cdbf3d137815f93afb0192e8b285d">More...</a><br /></td></tr>
 <tr class="separator:a4e2cdbf3d137815f93afb0192e8b285d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afa53eeb7f3c5c70345b09e2dec87a8e2"><td class="memItemLeft" align="right" valign="top">virtual utility::size64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_concurrency_1_1streams_1_1streambuf.html#afa53eeb7f3c5c70345b09e2dec87a8e2">size</a> () const </td></tr>
-<tr class="memdesc:afa53eeb7f3c5c70345b09e2dec87a8e2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the size of the stream, if known. Calls to <code>has_size</code> will determine whether the result of <code>size</code> can be relied on.  <a href="#afa53eeb7f3c5c70345b09e2dec87a8e2">More...</a><br /></td></tr>
+<tr class="memdesc:afa53eeb7f3c5c70345b09e2dec87a8e2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the total number of characters in the stream buffer, if known. Calls to <code>has_size</code> will determine whether the result of <code>size</code> can be relied on.  <a href="#afa53eeb7f3c5c70345b09e2dec87a8e2">More...</a><br /></td></tr>
 <tr class="separator:afa53eeb7f3c5c70345b09e2dec87a8e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a646e484a87f1bf76fee3c4967054c8d4"><td class="memItemLeft" align="right" valign="top">virtual size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_concurrency_1_1streams_1_1streambuf.html#a646e484a87f1bf76fee3c4967054c8d4">buffer_size</a> (std::ios_base::openmode direction=std::ios_base::in) const </td></tr>
 <tr class="memdesc:a646e484a87f1bf76fee3c4967054c8d4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the stream buffer size, if one has been set.  <a href="#a646e484a87f1bf76fee3c4967054c8d4">More...</a><br /></td></tr>
@@ -703,6 +703,7 @@ template&lt;typename _CharType&gt; </div>
 </div><div class="memdoc">
 
 <p><code>can_seek<code> is used to determine whether a stream buffer supports seeking. </code></code><code><code> </code></code></p>
+<dl class="section return"><dt>Returns</dt><dd>True if seeking is supported, false otherwise.</dd></dl>
 
 </div>
 </div>
@@ -898,7 +899,7 @@ template&lt;typename _CharType&gt; </div>
 </div><div class="memdoc">
 
 <p>Constructs an output stream for this stream buffer. </p>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="class_concurrency_1_1streams_1_1basic__ostream.html" title="Base interface for asynchronous output streams. ">basic_ostream</a></dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="class_concurrency_1_1streams_1_1basic__ostream.html" title="Base interface for all asynchronous output streams. ">basic_ostream</a></dd></dl>
 
 </div>
 </div>
@@ -1063,7 +1064,8 @@ template&lt;typename _CharType&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p><code>has_size<code> is used to determine whether a stream buffer supports <a class="el" href="class_concurrency_1_1streams_1_1streambuf.html#afa53eeb7f3c5c70345b09e2dec87a8e2" title="Gets the size of the stream, if known. Calls to has_size will determine whether the result of size ca...">size()</a>. </code></code><code><code> </code></code></p>
+<p><code>has_size<code> is used to determine whether a stream buffer supports <a class="el" href="class_concurrency_1_1streams_1_1streambuf.html#afa53eeb7f3c5c70345b09e2dec87a8e2" title="Gets the total number of characters in the stream buffer, if known. Calls to has_size will determine ...">size()</a>. </code></code><code><code> </code></code></p>
+<dl class="section return"><dt>Returns</dt><dd>True if the <code>size</code> API is supported, false otherwise.</dd></dl>
 
 </div>
 </div>
@@ -1091,6 +1093,7 @@ template&lt;typename _CharType&gt; </div>
 </div><div class="memdoc">
 
 <p>For any input stream, <code>in_avail</code> returns the number of characters that are immediately available to be consumed without blocking. May be used in conjunction with &lt;cref="::sbumpc method"/&gt; to read data without incurring the overhead of using tasks. </p>
+<dl class="section return"><dt>Returns</dt><dd>Number of characters that are ready to read.</dd></dl>
 
 </div>
 </div>
@@ -1118,6 +1121,7 @@ template&lt;typename _CharType&gt; </div>
 </div><div class="memdoc">
 
 <p><code>is_eof</code> is used to determine whether a read head has reached the end of the buffer. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if at the end of the buffer, false otherwise.</dd></dl>
 
 </div>
 </div>
@@ -1146,6 +1150,7 @@ template&lt;typename _CharType&gt; </div>
 
 <p>Checks if the stream buffer is open. </p>
 <p>No separation is made between open for reading and open for writing.</p>
+<dl class="section return"><dt>Returns</dt><dd>True if the stream buffer is open for reading or writing, false otherwise.</dd></dl>
 
 </div>
 </div>
@@ -1675,7 +1680,8 @@ template&lt;typename _CharType&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Gets the size of the stream, if known. Calls to <code>has_size</code> will determine whether the result of <code>size</code> can be relied on. </p>
+<p>Gets the total number of characters in the stream buffer, if known. Calls to <code>has_size</code> will determine whether the result of <code>size</code> can be relied on. </p>
+<dl class="section return"><dt>Returns</dt><dd>The total number of characters in the stream buffer.</dd></dl>
 
 </div>
 </div>
@@ -1741,7 +1747,7 @@ template&lt;typename _CharType&gt; </div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Aug 19 2014 16:17:54 for C++ Rest SDK by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Thu Nov 13 2014 15:55:29 for C++ Rest SDK by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.7
 </small></address>
