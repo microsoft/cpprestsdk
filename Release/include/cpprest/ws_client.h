@@ -484,7 +484,7 @@ public:
     /// Receive a websocket message.
     /// </summary>
     /// <returns>An asynchronous operation that is completed when a message has been received by the client endpoint.</returns>
-    pplx::task<websocket_incoming_message> receive()
+    _ASYNCRTIMP pplx::task<websocket_incoming_message> receive()
     {
         return m_client->receive();
     }
