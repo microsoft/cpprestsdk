@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ using namespace Windows::Storage;
 #include "cpprest/http_listener.h"
 #endif
 
-using namespace web; 
+using namespace web;
 using namespace utility;
 using namespace concurrency;
 using namespace web::http;
@@ -101,7 +101,7 @@ TEST_FIXTURE(uri_address, set_response_stream_producer_consumer_buffer)
     memset(chars, 0, sizeof(chars));
 
     rwbuf.getn((unsigned char *)chars, rwbuf.in_avail()).get();
-    VERIFY_ARE_EQUAL(0, strcmp("This is just a bit of a string", chars));       
+    VERIFY_ARE_EQUAL(0, strcmp("This is just a bit of a string", chars));
 }
 
 TEST_FIXTURE(uri_address, set_response_stream_container_buffer)
@@ -179,7 +179,7 @@ TEST_FIXTURE(uri_address, response_stream_file_stream_close_early)
 {
     // The test needs to be a little different between desktop and WinRT.
     // In the latter case, the server will not see a message, and so the
-    // test will hang. In order to prevent that from happening, we will 
+    // test will hang. In order to prevent that from happening, we will
     // not have a server listening on WinRT.
 #if !defined(__cplusplus_winrt)
     test_http_server::scoped_server scoped(m_uri);
@@ -202,14 +202,14 @@ TEST_FIXTURE(uri_address, response_stream_file_stream_close_early)
     fstream.close(std::make_exception_ptr(std::exception())).wait();
 
     http_response resp;
-    
+
     VERIFY_THROWS((resp = client.request(msg).get(), resp.content_ready().get()), std::exception);
 }
 
-TEST_FIXTURE(uri_address, response_stream_large_file_stream)
+TEST_FIXTURE(uri_address, response_stream_large_file_stream, "Ignore:Windows", "314")
 {
     // Send a 100 KB data in the response body, the server will send this in multiple chunks
-    // This data will get sent with content-length 
+    // This data will get sent with content-length
     const size_t workload_size = 100 * 1024;
     utility::string_t fname(U("response_stream_large_file_stream.txt"));
     std::string responseData;
@@ -219,12 +219,12 @@ TEST_FIXTURE(uri_address, response_stream_large_file_stream)
     test_http_server * p_server = scoped.server();
 
     http_client client(m_uri);
-    
+
     p_server->next_request().then([&](test_request *p_request)
     {
         std::map<utility::string_t, utility::string_t> headers;
         headers[U("Content-Type")] = U("text/plain");
-       
+
         p_request->reply(200, U(""), headers, responseData);
     });
 
@@ -344,10 +344,10 @@ TEST_FIXTURE(uri_address, content_ready)
         streams::producer_consumer_buffer<uint8_t> buf;
         http_response response(200);
         response.set_body(buf.create_istream(), U("text/plain"));
-        response.headers().add(header_names::connection, U("close")); 
+        response.headers().add(header_names::connection, U("close"));
 
         request.reply(response);
-        
+
         VERIFY_ARE_EQUAL(buf.putn((const uint8_t *)responseData.data(), responseData.size()).get(), responseData.size());
         buf.close(std::ios_base::out).get();
     });
@@ -384,8 +384,8 @@ TEST_FIXTURE(uri_address, xfer_chunked_with_length)
         // add chunked transfer encoding
         response.headers().add(header_names::transfer_encoding, U("chunked"));
 
-        // add connection=close header, connection SHOULD NOT be considered `persistent' after the current request/response is complete
-        response.headers().add(header_names::connection, U("close")); 
+        // add connection=close header, connection SHOULD NOT be considered persistent' after the current request/response is complete
+        response.headers().add(header_names::connection, U("close"));
 
         // respond
         request.reply(response);
@@ -415,7 +415,7 @@ TEST_FIXTURE(uri_address, get_resp_stream)
 
         http_response response(200);
         response.set_body(buf.create_istream(), U("text/plain"));
-        response.headers().add(header_names::connection, U("close")); 
+        response.headers().add(header_names::connection, U("close"));
         request.reply(response);
 
         VERIFY_ARE_EQUAL(buf.putn((const uint8_t *)responseData.data(), responseData.size()).get(), responseData.size());
@@ -430,15 +430,15 @@ TEST_FIXTURE(uri_address, get_resp_stream)
 
         auto t = rsp.body().read_to_delim(data, (uint8_t)(' '));
 
-        t.then([&data](size_t size) 
-        { 
+        t.then([&data](size_t size)
+        {
             VERIFY_ARE_EQUAL(size, 5);
             auto s = data.collection();
             VERIFY_ARE_EQUAL(s, std::string("Hello"));
         }).wait();
         rsp.content_ready().wait();
     }
-       
+
     listener.close().wait();
 }
 
@@ -447,7 +447,7 @@ TEST_FIXTURE(uri_address, xfer_chunked_multiple_chunks)
     // With chunked transfer-encoding, send 2 chunks of different sizes in the response
     http_client client(m_uri);
 
-    // Send two chunks, note: second chunk is bigger than the first. 
+    // Send two chunks, note: second chunk is bigger than the first.
     std::string firstChunk("abcdefghijklmnopqrst");
     std::string secondChunk("abcdefghijklmnopqrstuvwxyz");
 
@@ -459,7 +459,7 @@ TEST_FIXTURE(uri_address, xfer_chunked_multiple_chunks)
 
         http_response response(200);
         response.set_body(buf.create_istream(), U("text/plain"));
-        response.headers().add(header_names::connection, U("close")); 
+        response.headers().add(header_names::connection, U("close"));
         request.reply(response);
 
         VERIFY_ARE_EQUAL(buf.putn((const uint8_t *)firstChunk.data(), firstChunk.size()).get(), firstChunk.size());
