@@ -23,10 +23,9 @@ namespace crossplat
 // initialize the static shared threadpool
 threadpool threadpool::s_shared(40);
 
-#if defined(ANDROID)
+#if (defined(ANDROID) || defined(__ANDROID__))
 // This pointer will be 0-initialized by default (at load time).
 std::atomic<JavaVM*> JVM;
-static thread_local JNIEnv* JVM_ENV = nullptr;
 
 JNIEnv* get_jvm_env()
 {
@@ -34,23 +33,21 @@ JNIEnv* get_jvm_env()
     {
         throw std::runtime_error("Could not contact JVM");
     }
-    if (JVM_ENV == nullptr)
+    JNIEnv* env = nullptr;
+    auto result = JVM.load()->AttachCurrentThread(&env, nullptr);
+    if (result != JNI_OK)
     {
-        auto result = JVM.load()->AttachCurrentThread(&crossplat::JVM_ENV, nullptr);
-        if (result != JNI_OK)
-        {
-            throw std::runtime_error("Could not attach to JVM");
-        }
+        throw std::runtime_error("Could not attach to JVM");
     }
 
-    return JVM_ENV;
+    return env;
 }
 
 #endif
 
 }
 
-#if defined(ANDROID)
+#if (defined(ANDROID) || defined(__ANDROID__))
 extern "C" jint JNI_OnLoad(JavaVM* vm, void* reserved)
 {
    JNIEnv* env;

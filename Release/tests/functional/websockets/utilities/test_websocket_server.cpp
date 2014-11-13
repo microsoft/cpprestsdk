@@ -40,8 +40,8 @@
 #define _WEBSOCKETPP_CONSTEXPR_TOKEN_
 #else
 #define _WEBSOCKETPP_NULLPTR_TOKEN_ 0
-#endif
-#endif
+#endif /* _MSC_VER >= 1800 */
+#endif /* _WIN32 */
 
 #if defined(__APPLE__)
 #include "stdlib.h"
@@ -51,6 +51,11 @@
 #undef ntohll
 #undef htonll
 #endif
+
+#if defined(__clang__) && (defined(ANDROID) || defined(__ANDROID__))
+#define _WEBSOCKETPP_NULLPTR_TOKEN_ 0
+#endif
+
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
 #if defined(__APPLE__)

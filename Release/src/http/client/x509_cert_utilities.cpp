@@ -39,7 +39,7 @@
 #include <Security/SecTrust.h>
 #endif
 
-#if defined(ANDROID)
+#if (defined(ANDROID) || defined(__ANDROID__))
 #include <jni.h>
 using namespace crossplat;
 #endif
@@ -50,7 +50,7 @@ using namespace crossplat;
 
 namespace web { namespace http { namespace client { namespace details {
 
-#if defined(__APPLE__) || defined(ANDROID) || (defined(_MS_WINDOWS)  && !defined(__cplusplus_winrt) && !defined(_M_ARM))
+#if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__)) || (defined(_MS_WINDOWS)  && !defined(__cplusplus_winrt) && !defined(_M_ARM) && !defined(CPPREST_EXCLUDE_WEBSOCKETS))
 bool verify_cert_chain_platform_specific(boost::asio::ssl::verify_context &verifyCtx, const std::string &hostName)
 {
     X509_STORE_CTX *storeContext = verifyCtx.native_handle();
@@ -263,7 +263,7 @@ bool verify_X509_cert_chain(const std::vector<std::string> &certChain, const std
 }
 #endif
 
-#if defined(ANDROID)
+#if (defined(ANDROID) || defined(__ANDROID__))
 
 /// <summary>
 /// Helper function to check return value and see if any exceptions

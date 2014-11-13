@@ -32,6 +32,7 @@
 #include "cpprest/fileio.h"
 #include "cpprest/astreambuf.h"
 #include "cpprest/streams.h"
+#include <assert.h>
 
 #ifndef _CONCRT_H
 #ifndef _LWRCASE_CNCRRNCY
@@ -663,7 +664,9 @@ namespace details {
                     return (pos_type)_seekrdpos_fsb(m_info, size_t(m_info->m_rdpos+offset), sizeof(_CharType));
                 case std::ios_base::end:
                     return (pos_type)_seekrdtoend_fsb(m_info, int64_t(offset), sizeof(_CharType));
-                    break;
+                default:
+                    // Fail on invalid input (_S_ios_seekdir_end)
+                    assert(false);
                 }
             }
             else if ( (m_info->m_mode & std::ios::ios_base::app) == 0 )
@@ -676,7 +679,9 @@ namespace details {
                     return (pos_type)_seekwrpos_fsb(m_info, size_t(m_info->m_wrpos+offset), sizeof(_CharType));
                 case std::ios_base::end:
                     return (pos_type)_seekwrpos_fsb(m_info, size_t(-1), sizeof(_CharType));
-                    break;
+                default:
+                    // Fail on invalid input (_S_ios_seekdir_end)
+                    assert(false);
                 }
             }
             return (pos_type)traits::eof();

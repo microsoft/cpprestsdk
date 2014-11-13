@@ -23,7 +23,15 @@
         <file src="init.ps1" target="\tools\init.ps1" />
         <file src="cpprest.natvis" target="\tools\cpprest.natvis" />
 
+        <!-- Including license for WebSocket++ -->
+        <file src="..\libs\websocketpp\COPYING" target="\license\websocketpp" />
+        
         <!-- Debug -->
+        <!-- Win32 v140 -->
+        <file src="Binaries\Win32\Debug\cpprest140d_2_3.dll" target="\build\native\bin\Win32\v140\Debug\Desktop\cpprest140d_2_3.dll" />
+        <file src="Binaries\Win32\Debug\cpprest140d_2_3.pdb" target="\build\native\bin\Win32\v140\Debug\Desktop\cpprest140d_2_3.pdb" />
+        <file src="Binaries\Win32\Debug\cpprest140d_2_3.lib" target="\build\native\lib\Win32\v140\Debug\Desktop\cpprest140d_2_3.lib" />
+        
         <!--  Win32 v120 -->
         <file src="Binaries\Win32\Debug\cpprest120d_2_3.dll" target="\build\native\bin\Win32\v120\Debug\Desktop\cpprest120d_2_3.dll" />
         <file src="Binaries\Win32\Debug\cpprest120d_2_3.pdb" target="\build\native\bin\Win32\v120\Debug\Desktop\cpprest120d_2_3.pdb" />
@@ -65,6 +73,11 @@
         <file src="Binaries\Win32\Debug\cpprest110d_xp_2_3.pdb" target="\build\native\bin\Win32\v110_xp\Debug\Desktop\cpprest110d_xp_2_3.pdb"/>
         <file src="Binaries\Win32\Debug\cpprest110d_xp_2_3.lib" target="\build\native\lib\Win32\v110_xp\Debug\Desktop\cpprest110d_xp_2_3.lib"/>
 
+        <!-- x64 v140 -->
+        <file src="Binaries\x64\Debug\cpprest140d_2_3.dll" target="\build\native\bin\x64\v140\Debug\Desktop\cpprest140d_2_3.dll" />
+        <file src="Binaries\x64\Debug\cpprest140d_2_3.pdb" target="\build\native\bin\x64\v140\Debug\Desktop\cpprest140d_2_3.pdb" />
+        <file src="Binaries\x64\Debug\cpprest140d_2_3.lib" target="\build\native\lib\x64\v140\Debug\Desktop\cpprest140d_2_3.lib" />
+        
         <!--  x64  v120 -->
         <file src="Binaries\x64\Debug\cpprest120d_2_3.dll" target="\build\native\bin\x64\v120\Debug\Desktop\cpprest120d_2_3.dll" />
         <file src="Binaries\x64\Debug\cpprest120d_2_3.pdb" target="\build\native\bin\x64\v120\Debug\Desktop\cpprest120d_2_3.pdb" />
@@ -118,6 +131,11 @@
 
 
         <!-- Release -->
+        <!-- Win32 v140 -->
+        <file src="Binaries\Win32\Release\cpprest140_2_3.dll" target="\build\native\bin\Win32\v140\Release\Desktop\cpprest140_2_3.dll" />
+        <file src="Binaries\Win32\Release\cpprest140_2_3.pdb" target="\build\native\bin\Win32\v140\Release\Desktop\cpprest140_2_3.pdb" />
+        <file src="Binaries\Win32\Release\cpprest140_2_3.lib" target="\build\native\lib\Win32\v140\Release\Desktop\cpprest140_2_3.lib" />
+        
         <!--  Win32 v120 -->
         <file src="Binaries\Win32\Release\cpprest120_2_3.dll" target="\build\native\bin\Win32\v120\Release\Desktop\cpprest120_2_3.dll" />
         <file src="Binaries\Win32\Release\cpprest120_2_3.pdb" target="\build\native\bin\Win32\v120\Release\Desktop\cpprest120_2_3.pdb" />
@@ -159,6 +177,11 @@
         <file src="Binaries\Win32\Release\cpprest110_xp_2_3.pdb" target="\build\native\bin\Win32\v110_xp\Release\Desktop\cpprest110_xp_2_3.pdb"/>
         <file src="Binaries\Win32\Release\cpprest110_xp_2_3.lib" target="\build\native\lib\Win32\v110_xp\Release\Desktop\cpprest110_xp_2_3.lib"/>
 
+        <!-- x64 v140 -->
+        <file src="Binaries\x64\Release\cpprest140_2_3.dll" target="\build\native\bin\x64\v140\Release\Desktop\cpprest140_2_3.dll" />
+        <file src="Binaries\x64\Release\cpprest140_2_3.pdb" target="\build\native\bin\x64\v140\Release\Desktop\cpprest140_2_3.pdb" />
+        <file src="Binaries\x64\Release\cpprest140_2_3.lib" target="\build\native\lib\x64\v140\Release\Desktop\cpprest140_2_3.lib" />
+        
         <!--  x64 v120 -->
         <file src="Binaries\x64\Release\cpprest120_2_3.dll" target="\build\native\bin\x64\v120\Release\Desktop\cpprest120_2_3.dll" />
         <file src="Binaries\x64\Release\cpprest120_2_3.pdb" target="\build\native\bin\x64\v120\Release\Desktop\cpprest120_2_3.pdb" />

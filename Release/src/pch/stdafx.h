@@ -70,6 +70,12 @@
 #include <atomic>
 #include <signal.h>
 #include "pthread.h"
+#if (defined(ANDROID) || defined(__ANDROID__))
+// Boost doesn't recognize libstdcpp on top of clang correctly
+#include "boost/config/stdlib/libstdcpp3.hpp"
+#undef BOOST_NO_CXX11_SMART_PTR
+#undef BOOST_NO_CXX11_NULLPTR
+#endif
 #include "boost/thread/mutex.hpp"
 #include "boost/locale.hpp"
 #include "boost/thread/condition_variable.hpp"
@@ -95,13 +101,7 @@
 #include <mutex>
 #include <array>
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1800)
-#include <ppltasks.h>
-namespace pplx = Concurrency;
-#else
 #include "pplx/pplxtasks.h"
-#endif
-
 #include "cpprest/version.h"
 
 // Stream

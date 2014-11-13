@@ -786,20 +786,22 @@ namespace Concurrency { namespace streams
                 });
             };
 
-            auto update = [=](int_type ch) mutable -> pplx::task<bool>
+            auto update = [=](int_type ch) mutable
                 {
-                    if (ch == ::concurrency::streams::char_traits<CharType>::eof()) return pplx::task_from_result(false);
-                    if (ch == delim) return pplx::task_from_result(false);
+                    if (ch == ::concurrency::streams::char_traits<CharType>::eof()) return false;
+                    if (ch == delim) return false;
 
                     _locals->outbuf[_locals->write_pos] = static_cast<CharType>(ch);
                     _locals->write_pos += 1;
 
                     if (_locals->is_full())
                     {
-                        return flush().then([] { return true; });
+                        // Flushing synchronously because performance is terrible if we
+                        // schedule an empty task. This isn't on a user's thread.
+                        flush().get();
                     }
 
-                    return pplx::task_from_result(true);
+                    return true;
                 };
 
             auto loop = pplx::details::do_while([=]() mutable -> pplx::task<bool>
@@ -813,7 +815,10 @@ namespace Concurrency { namespace streams
                             break;
                         }
 
-                        return update(ch);
+                        if (!update(ch))
+                        {
+                            return pplx::task_from_result(false);
+                        }
                     }
                     return buffer.bumpc().then(update);
                 });
@@ -855,12 +860,12 @@ namespace Concurrency { namespace streams
 
             auto update = [=](typename concurrency::streams::char_traits<CharType>::int_type ch) mutable
                 {
-                    if (ch == concurrency::streams::char_traits<CharType>::eof()) return pplx::task_from_result(false);
-                    if (ch == '\n') return pplx::task_from_result(false);
+                    if (ch == concurrency::streams::char_traits<CharType>::eof()) return false;
+                    if (ch == '\n') return false;
                     if (ch == '\r')
                     {
                         _locals->saw_CR = true;
-                        return pplx::task_from_result(true);
+                        return true;
                     }
 
                     _locals->outbuf[_locals->write_pos] = static_cast<CharType>(ch);
@@ -868,10 +873,12 @@ namespace Concurrency { namespace streams
 
                     if (_locals->is_full())
                     {
-                        return flush().then([] { return true; });
+                        // Flushing synchronously because performance is terrible if we
+                        // schedule an empty task. This isn't on a user's thread.
+                        flush().wait();
                     }
 
-                    return pplx::task_from_result(true);
+                    return true;
                 };
 
             auto update_after_cr = [=] (typename concurrency::streams::char_traits<CharType>::int_type ch) mutable -> pplx::task<bool>
@@ -910,7 +917,10 @@ namespace Concurrency { namespace streams
                         if (ch == req_async)
                             break;
 
-                        return update(ch);
+                        if (!update(ch))
+                        {
+                            return pplx::task_from_result(false);
+                        }
                     }
 
                     if (_locals->saw_CR)
@@ -1107,7 +1117,7 @@ namespace Concurrency { namespace streams
                 return write_pos == buf_size;
             }
 
-            _read_helper() : write_pos(0), total(0), saw_CR(false)
+            _read_helper() : total(0), write_pos(0), saw_CR(false)
             {
             }
         };
@@ -1132,12 +1142,14 @@ pplx::task<void> concurrency::streams::_type_parser_base<CharType>::_skip_whites
             {
                 if (buffer.sbumpc() == req_async)
                 {
-                    return buffer.nextc().then([](int_type) { return true; });
+                    // Synchronously because performance is terrible if we
+                    // schedule an empty task. This isn't on a user's thread.
+                    buffer.nextc().wait();
                 }
-                return pplx::task_from_result(true);
+                return true;
             }
 
-            return pplx::task_from_result(false);
+            return false;
         };
 
     auto loop = pplx::details::do_while([=]() mutable -> pplx::task<bool>
@@ -1149,7 +1161,10 @@ pplx::task<void> concurrency::streams::_type_parser_base<CharType>::_skip_whites
                 if (ch == req_async)
                     break;
 
-                return update(ch);
+                if (!update(ch))
+                {
+                    return pplx::task_from_result(false);
+                }
             }
             return buffer.getc().then(update);
         });

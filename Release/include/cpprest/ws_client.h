@@ -35,15 +35,8 @@
 #include <condition_variable>
 #include <mutex>
 
-#include "cpprest/xxpublic.h"
-
-#if defined(_MSC_VER) && (_MSC_VER >= 1800)
-#include <ppltasks.h>
-namespace pplx = Concurrency;
-#else
 #include "pplx/pplxtasks.h"
-#endif
-
+#include "cpprest/xxpublic.h"
 #include "cpprest/uri.h"
 #include "cpprest/web_utilities.h"
 #include "cpprest/http_headers.h"

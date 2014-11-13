@@ -1,84 +1,64 @@
 diff --git a/build-android.sh b/build-android.sh
-index 7aa2eee..5e621af 100755
+index 40453f7..97a3203 100755
 --- a/build-android.sh
 +++ b/build-android.sh
-@@ -28,9 +28,9 @@
- # -----------------------
- 
- BOOST_VER1=1
--BOOST_VER2=53
-+BOOST_VER2=55
- BOOST_VER3=0
--register_option "--boost=<version>" boost_version "Boost version to be used, one of {1.55.0,1.54.0,1.53.0,1.49.0, 1.48.0, 1.45.0}, default is 1.53.0."
-+register_option "--boost=<version>" boost_version "Boost version to be used, one of {1.55.0,1.54.0,1.53.0,1.49.0, 1.48.0, 1.45.0}, default is 1.55.0."
- boost_version()
- {
-   if [ "$1" = "1.55.0" ]; then
-@@ -82,7 +82,7 @@ do_download ()
- 	CLEAN=yes
- }
- 
--LIBRARIES=--with-libraries=date_time,filesystem,program_options,regex,signals,system,thread,iostreams
-+LIBRARIES=--with-libraries=locale,random,date_time,filesystem,system,thread,chrono,locale
- 
- register_option "--with-libraries=<list>" do_with_libraries "Comma separated list of libraries to build."
- do_with_libraries () { LIBRARIES="--with-libraries=$1"; }
-@@ -245,7 +245,7 @@ case "$NDK_RN" in
+@@ -258,9 +258,9 @@ case "$NDK_RN" in
  		TOOLSET=gcc-androidR8e
  		;;
- 	"9 (64-bit)"|"9b (64-bit)"|"9c (64-bit)"|"9d (64-bit)")
+ 	"10 (64-bit)")
 -		TOOLCHAIN=${TOOLCHAIN:-arm-linux-androideabi-4.6}
-+		TOOLCHAIN=${TOOLCHAIN:-arm-linux-androideabi-4.8}
- 		CXXPATH=$AndroidNDKRoot/toolchains/${TOOLCHAIN}/prebuilt/${PlatformOS}-x86_64/bin/arm-linux-androideabi-g++
- 		TOOLSET=gcc-androidR8e
- 		;;
-@@ -314,7 +314,7 @@ then
-   	exit 1
-   fi
-   cd $PROGDIR
--  
-+
-   # -------------------------------------------------------------
-   # Patching will be done only if we had a successfull bootstrap!
-   # -------------------------------------------------------------
-@@ -376,8 +376,12 @@ echo "Building boost for android"
-          link=static                  \
+-                CXXPATH=$AndroidNDKRoot/toolchains/${TOOLCHAIN}/prebuilt/${PlatformOS}-x86_64/bin/arm-linux-androideabi-g++
+-                TOOLSET=gcc-androidR8e
++		TOOLCHAIN=llvm-3.4
++		CXXPATH=$AndroidNDKRoot/toolchains/${TOOLCHAIN}/prebuilt/${PlatformOS}-x86_64/bin/clang++
++		TOOLSET=clang-androidR8e
+                 ;;
+ 	*)
+ 		echo "Undefined or not supported Android NDK version!"
+@@ -392,6 +392,7 @@ echo "Building boost for android"
+   export PATH=$AndroidBinariesPath:$PATH
+   export AndroidNDKRoot
+   export NO_BZIP2=1
++  export ICONV_PATH="`pwd`/../../libiconv/armeabi-v7a"
+ 
+   cxxflags=""
+   for flag in $CXXFLAGS; do cxxflags="$cxxflags cxxflags=$flag"; done
+@@ -404,8 +405,12 @@ echo "Building boost for android"
           threading=multi              \
           --layout=versioned           \
--         install 2>&1                 \
--         || { dump "ERROR: Failed to build boost for android!" ; exit 1 ; }
-+         --build-type=complete        \
+          --prefix="./../$BUILD_DIR/"  \
 +         boost.locale.posix=off       \
 +         boost.locale.std=on          \
-+         -sICONV_PATH="`pwd`/../../libiconv/r9d-9-armeabiv7a" \
-+         -s"NO_BZIP2=1"               \
-+         install 2>&1
++         boost.locale.iconv=on        \
++         boost.locale.icu=off         \
+          $LIBRARIES                   \
+-         install 2>&1                 \
++         release debug install 2>&1   \
+          || { dump "ERROR: Failed to build boost for android!" ; exit 1 ; }
    } | tee -a $PROGDIR/build.log
  
-   # PIPESTATUS variable is defined only in Bash, and we are using /bin/sh, which is not Bash on newer Debian/Ubuntu
 diff --git a/configs/user-config-boost-1_55_0.jam b/configs/user-config-boost-1_55_0.jam
-index 666d4c8..8250029 100644
+index 666d4c8..5f6bab8 100644
 --- a/configs/user-config-boost-1_55_0.jam
 +++ b/configs/user-config-boost-1_55_0.jam
-@@ -39,84 +39,38 @@
- 
- import os ;
+@@ -41,82 +41,41 @@ import os ;
  local AndroidNDKRoot = [ os.environ AndroidNDKRoot ] ;
-+local ToolChainPath = $(AndroidNDKRoot)/toolchains/arm-linux-androideabi-4.8/prebuilt/linux-x86_64 ;
-+local ToolChainBinPath = $(ToolChainPath)/bin ;
  
--# --------------------------------------------------------------------
+ # --------------------------------------------------------------------
 -# Is same for 8b, 8c and 8d
 -using gcc : androidR8b
--:
++using clang : androidR8e
+ :
 -arm-linux-androideabi-g++
--:
++$(AndroidNDKRoot)/toolchains/llvm-3.4/prebuilt/linux-x86_64/bin/clang++
+ :
 -<archiver>arm-linux-androideabi-ar
--<compileflags>-fexceptions
--<compileflags>-frtti
--<compileflags>-fpic
--<compileflags>-ffunction-sections
--<compileflags>-funwind-tables
++<compileflags>--gcc-toolchain="$(AndroidNDKRoot)/toolchains/arm-linux-androideabi-4.8/prebuilt/linux-x86_64"
+ <compileflags>-fexceptions
+ <compileflags>-frtti
+ <compileflags>-fpic
+ <compileflags>-ffunction-sections
+ <compileflags>-funwind-tables
 -<compileflags>-D__ARM_ARCH_5__
 -<compileflags>-D__ARM_ARCH_5T__
 -<compileflags>-D__ARM_ARCH_5E__
@@ -87,7 +67,12 @@ index 666d4c8..8250029 100644
 -<compileflags>-march=armv5te
 -<compileflags>-mtune=xscale
 -<compileflags>-msoft-float
--<compileflags>-mthumb
++<compileflags>-no-canonical-prefixes
++<compileflags>--target=armv7-none-linux-androideabi
++<compileflags>-march=armv7-a
++<compileflags>-mfloat-abi=softfp
++<compileflags>-mfpu=vfpv3-d16
+ <compileflags>-mthumb
 -<compileflags>-Os
 -<compileflags>-fomit-frame-pointer
 -<compileflags>-fno-strict-aliasing
@@ -112,63 +97,56 @@ index 666d4c8..8250029 100644
 -;
 -
 -# --------------------------------------------------------------------
- using gcc : androidR8e
- :
+-using gcc : androidR8e
+-:
 -arm-linux-androideabi-g++
-+$(ToolChainBinPath)/arm-linux-androideabi-g++
- :
+-:
 -<archiver>arm-linux-androideabi-ar
- <compileflags>-fexceptions
- <compileflags>-frtti
- <compileflags>-fpic
- <compileflags>-ffunction-sections
- <compileflags>-funwind-tables
--<compileflags>-D__ARM_ARCH_5__
--<compileflags>-D__ARM_ARCH_5T__
--<compileflags>-D__ARM_ARCH_5E__
--<compileflags>-D__ARM_ARCH_5TE__
+-<compileflags>-fexceptions
+-<compileflags>-frtti
+-<compileflags>-fpic
+-<compileflags>-ffunction-sections
+-<compileflags>-funwind-tables
++<compileflags>--sysroot="$(AndroidNDKRoot)/platforms/android-9/arch-arm"
+ <compileflags>-D__ARM_ARCH_5__
+ <compileflags>-D__ARM_ARCH_5T__
+ <compileflags>-D__ARM_ARCH_5E__
+ <compileflags>-D__ARM_ARCH_5TE__
 -<compileflags>-Wno-psabi
 -<compileflags>-march=armv5te
-+<compileflags>-Wno-pedantic
-+<compileflags>-march=armv7-a
- <compileflags>-mtune=xscale
- <compileflags>-msoft-float
- <compileflags>-mthumb
-+<compileflags>-O2
+-<compileflags>-mtune=xscale
+-<compileflags>-msoft-float
+-<compileflags>-mthumb
  <compileflags>-Os
-+<compileflags>-g
-+<compileflags>-DNDEBUG
  <compileflags>-fomit-frame-pointer
  <compileflags>-fno-strict-aliasing
 -<compileflags>-finline-limit=64
 -<compileflags>-I$(AndroidNDKRoot)/platforms/android-9/arch-arm/usr/include
--<compileflags>-Wa,--noexecstack
-+<compileflags>-I$(AndroidNDKRoot)/sources/cxx-stl/gnu-libstdc++/4.8/include
-+<compileflags>-I$(AndroidNDKRoot)/sources/cxx-stl/gnu-libstdc++/4.8/libs/armeabi-v7a/include
-+<compileflags>-I$(AndroidNDKRoot)/sources/cxx-stl/gnu-libstdc++/4.8/include/backward
-+<compileflags>--sysroot=$(AndroidNDKRoot)/platforms/android-9/arch-arm
+ <compileflags>-Wa,--noexecstack
  <compileflags>-DANDROID
  <compileflags>-D__ANDROID__
--<compileflags>-DNDEBUG
--<compileflags>-O2
--<compileflags>-g
+ <compileflags>-DNDEBUG
+ <compileflags>-O2
+ <compileflags>-g
 -<compileflags>-I$(AndroidNDKRoot)/sources/cxx-stl/gnu-libstdc++/4.6/include
 -<compileflags>-I$(AndroidNDKRoot)/sources/cxx-stl/gnu-libstdc++/4.6/libs/armeabi/include
-+<compileflags>-Wa,--noexecstack
-+<cxxflags>-std=c++11
++<compileflags>-I$(AndroidNDKRoot)/sources/cxx-stl/gnu-libstdc++/4.8/include
++<compileflags>-I$(AndroidNDKRoot)/sources/cxx-stl/gnu-libstdc++/4.8/libs/armeabi/include
++<linkflags>--target=armv7-none-linux-androideabi
++<linkflags>--gcc-toolchain="$(AndroidNDKRoot)/toolchains/arm-linux-androideabi-4.8/prebuilt/linux-x86_64"
 +<linkflags>--sysroot=$(AndroidNDKRoot)/platforms/android-9/arch-arm
  # @Moss - Above are the 'oficial' android flags
  <architecture>arm
  <compileflags>-fvisibility=hidden
-@@ -125,9 +79,10 @@ arm-linux-androideabi-g++
+@@ -125,9 +84,11 @@ arm-linux-androideabi-g++
  <cxxflags>-D__arm__
  <cxxflags>-D_REENTRANT
  <cxxflags>-D_GLIBCXX__PTHREADS
-+<cxxflags>-D_BOOST_SYSTEM_NO_DEPRECATED
-+<cxxflags>-D_NO_BZIP2
++<cxxflags>-std=c++11
  ;
  
--
+ 
++
  # ------------------
  # GCC configuration.
  # ------------------

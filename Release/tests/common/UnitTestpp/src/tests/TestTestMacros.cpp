@@ -168,39 +168,6 @@ TEST(FixturesWithThrowingCtorsAreFailures)
 	CHECK(strstr(reporter.lastFailedMessage, "while constructing fixture"));
 }
 
-struct FixtureDtorThrows
-{
-#if defined(_MSC_VER)
-#pragma warning (push)
-#pragma warning ( disable : 4297 )
-#endif
-	~FixtureDtorThrows() { throw "exception"; }
-#if defined(_MSC_VER)
-#pragma warning (pop)
-#endif
-};
-
-TestList throwingFixtureTestList2;
-TEST_FIXTURE_EX(FixtureDtorThrows, FixtureDtorThrowsTestName, throwingFixtureTestList2)
-{
-}
-
-TEST(FixturesWithThrowingDtorsAreFailures)
-{
-	CHECK(throwingFixtureTestList2.GetFirst() != NULL);
-
-	RecordingReporter reporter;
-	TestResults result(&reporter);
-	{
-		ScopedCurrentTest scopedResult(result);
-		throwingFixtureTestList2.GetFirst()->Run();
-	}
-
-	int const failureCount = result.GetFailedTestCount();
-	CHECK_EQUAL(1, failureCount);
-	CHECK(strstr(reporter.lastFailedMessage, "while destroying fixture"));
-}
-
 const int FailingLine = 123;
 
 struct FixtureCtorAsserts

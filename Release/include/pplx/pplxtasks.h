@@ -30,6 +30,29 @@
 #ifndef _PPLXTASKS_H
 #define _PPLXTASKS_H
 
+#if (defined(_MSC_VER) && (_MSC_VER >= 1800))
+#include <ppltasks.h>
+namespace pplx = Concurrency;
+#if (_MSC_VER >= 1900)
+#include <concrt.h>
+namespace Concurrency {
+    namespace extensibility {
+        typedef ::std::condition_variable condition_variable_t;
+        typedef ::std::mutex critical_section_t;
+        typedef ::std::unique_lock< ::std::mutex> scoped_critical_section_t;
+
+        typedef ::Concurrency::event event_t;
+        typedef ::Concurrency::reader_writer_lock reader_writer_lock_t;
+        typedef ::Concurrency::reader_writer_lock::scoped_lock scoped_rw_lock_t;
+        typedef ::Concurrency::reader_writer_lock::scoped_lock_read scoped_read_lock_t;
+
+        typedef ::Concurrency::details::_ReentrantBlockingLock recursive_lock_t;
+        typedef recursive_lock_t::_Scoped_lock scoped_recursive_lock_t;
+    }
+}
+#endif // _MSC_VER >= 1900
+#else
+
 #include "pplx/pplx.h"
 
 // Cannot build using a compiler that is older than dev10 SP1
@@ -37,10 +60,6 @@
 #if _MSC_FULL_VER < 160040219 /*IFSTRIP=IGN*/
 #error ERROR: Visual Studio 2010 SP1 or later is required to build ppltasks
 #endif /*IFSTRIP=IGN*/
-
-#if _MSC_VER >= 1800
-#error This file must not be included for Visual Studio 12 or later
-#endif /* _MSC_VER >= 1800 */
 #endif /* defined(_MSC_VER) */
 
 #include <functional>
@@ -3684,6 +3703,7 @@ private:
         auto _LogWorkItemAndInvokeUserLambda(_Func && _func) const -> decltype(_func())
         {
             details::_TaskWorkItemRAIILogger _LogWorkItem(this->_M_pTask->_M_taskEventLogger);
+            CASABLANCA_UNREFERENCED_PARAMETER(_LogWorkItem);
             return _func();
         }
 
@@ -3794,6 +3814,7 @@ private:
         auto _LogWorkItemAndInvokeUserLambda(_Func && _func, _Arg && _value) const -> decltype(_func(std::forward<_Arg>(_value)))
         {
             details::_TaskWorkItemRAIILogger _LogWorkItem(this->_M_pTask->_M_taskEventLogger);
+            CASABLANCA_UNREFERENCED_PARAMETER(_LogWorkItem);
             return _func(std::forward<_Arg>(_value));
         }
 
@@ -7324,5 +7345,17 @@ namespace details
 #pragma warning(pop)
 #endif
 #pragma pack(pop)
+
+#endif // (defined(_MSC_VER) && (_MSC_VER >= 1800))
+
+#ifndef _CONCRT_H
+#ifndef _LWRCASE_CNCRRNCY
+#define _LWRCASE_CNCRRNCY
+// Note to reader: we're using lower-case namespace names everywhere, but the 'Concurrency' namespace
+// is capitalized for historical reasons. The alias let's us pretend that style issue doesn't exist.
+namespace Concurrency {}
+namespace concurrency = Concurrency;
+#endif
+#endif
 
 #endif // _PPLXTASKS_H

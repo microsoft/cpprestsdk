@@ -32,25 +32,9 @@
 #include <cstring>
 #include <math.h>
 
-#if (defined(_MSC_VER) && (_MSC_VER >= 1800))
-#include <ppltasks.h>
-namespace pplx = Concurrency;
-#else
 #include "pplx/pplxtasks.h"
-#endif
-
 #include "cpprest/basic_types.h"
 #include "cpprest/asyncrt_utils.h"
-
-#ifndef _CONCRT_H
-#ifndef _LWRCASE_CNCRRNCY
-#define _LWRCASE_CNCRRNCY
-// Note to reader: we're using lower-case namespace names everywhere, but the 'Concurrency' namespace
-// is capitalized for historical reasons. The alias let's us pretend that style issue doesn't exist.
-namespace Concurrency { }
-namespace concurrency = Concurrency;
-#endif
-#endif
 
 #if defined(_MSC_VER)
 #pragma warning(push)

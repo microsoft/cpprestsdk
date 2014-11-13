@@ -100,8 +100,15 @@ ListAdder::ListAdder(TestList& list, Test* test, ...)
     list.Add(test);
 }
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
+#endif
 extern "C"
 UNITTEST_LINKAGE TestList& GetTestList()
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 {
     static TestList GLOBAL_TESTLIST;
     return GLOBAL_TESTLIST;

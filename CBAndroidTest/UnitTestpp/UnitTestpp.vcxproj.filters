@@ -1,0 +1,56 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\..\Release\tests\common\UnitTestpp\src\AssertException.cpp" />
+    <ClCompile Include="..\..\Release\tests\common\UnitTestpp\src\CurrentTest.cpp" />
+    <ClCompile Include="..\..\Release\tests\common\UnitTestpp\src\DeferredTestReporter.cpp" />
+    <ClCompile Include="..\..\Release\tests\common\UnitTestpp\src\DeferredTestResult.cpp" />
+    <ClCompile Include="..\..\Release\tests\common\UnitTestpp\src\GlobalSettings.cpp" />
+    <ClCompile Include="..\..\Release\tests\common\UnitTestpp\src\MemoryOutStream.cpp" />
+    <ClCompile Include="..\..\Release\tests\common\UnitTestpp\src\ReportAssert.cpp" />
+    <ClCompile Include="..\..\Release\tests\common\UnitTestpp\src\stdafx.cpp" />
+    <ClCompile Include="..\..\Release\tests\common\UnitTestpp\src\Test.cpp" />
+    <ClCompile Include="..\..\Release\tests\common\UnitTestpp\src\TestDetails.cpp" />
+    <ClCompile Include="..\..\Release\tests\common\UnitTestpp\src\TestList.cpp" />
+    <ClCompile Include="..\..\Release\tests\common\UnitTestpp\src\TestReporter.cpp" />
+    <ClCompile Include="..\..\Release\tests\common\UnitTestpp\src\TestReporterStdout.cpp" />
+    <ClCompile Include="..\..\Release\tests\common\UnitTestpp\src\TestResults.cpp" />
+    <ClCompile Include="..\..\Release\tests\common\UnitTestpp\src\TestRunner.cpp" />
+    <ClCompile Include="..\..\Release\tests\common\UnitTestpp\src\XmlTestReporter.cpp" />
+    <ClCompile Include="..\..\Release\tests\common\UnitTestpp\src\Posix\SignalTranslator.cpp" />
+    <ClCompile Include="..\..\Release\tests\common\UnitTestpp\src\Posix\TimeHelpers.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Release\tests\common\UnitTestpp\src\AssertException.h" />
+    <ClInclude Include="..\..\Release\tests\common\UnitTestpp\src\CheckMacros.h" />
+    <ClInclude Include="..\..\Release\tests\common\UnitTestpp\src\Checks.h" />
+    <ClInclude Include="..\..\Release\tests\common\UnitTestpp\src\CurrentTest.h" />
+    <ClInclude Include="..\..\Release\tests\common\UnitTestpp\src\DeferredTestReporter.h" />
+    <ClInclude Include="..\..\Release\tests\common\UnitTestpp\src\DeferredTestResult.h" />
+    <ClInclude Include="..\..\Release\tests\common\UnitTestpp\src\ExceptionMacros.h" />
+    <ClInclude Include="..\..\Release\tests\common\UnitTestpp\src\ExecuteTest.h" />
+    <ClInclude Include="..\..\Release\tests\common\UnitTestpp\src\GlobalSettings.h" />
+    <ClInclude Include="..\..\Release\tests\common\UnitTestpp\src\HelperMacros.h" />
+    <ClInclude Include="..\..\Release\tests\common\UnitTestpp\src\MemoryOutStream.h" />
+    <ClInclude Include="..\..\Release\tests\common\UnitTestpp\src\ReportAssert.h" />
+    <ClInclude Include="..\..\Release\tests\common\UnitTestpp\src\ReportAssertImpl.h" />
+    <ClInclude Include="..\..\Release\tests\common\UnitTestpp\src\stdafx.h" />
+    <ClInclude Include="..\..\Release\tests\common\UnitTestpp\src\Test.h" />
+    <ClInclude Include="..\..\Release\tests\common\UnitTestpp\src\TestDetails.h" />
+    <ClInclude Include="..\..\Release\tests\common\UnitTestpp\src\TestList.h" />
+    <ClInclude Include="..\..\Release\tests\common\UnitTestpp\src\TestMacros.h" />
+    <ClInclude Include="..\..\Release\tests\common\UnitTestpp\src\TestProperties.h" />
+    <ClInclude Include="..\..\Release\tests\common\UnitTestpp\src\TestReporter.h" />
+    <ClInclude Include="..\..\Release\tests\common\UnitTestpp\src\TestReporterStdout.h" />
+    <ClInclude Include="..\..\Release\tests\common\UnitTestpp\src\TestResults.h" />
+    <ClInclude Include="..\..\Release\tests\common\UnitTestpp\src\TestRunner.h" />
+    <ClInclude Include="..\..\Release\tests\common\UnitTestpp\src\TestSuite.h" />
+    <ClInclude Include="..\..\Release\tests\common\UnitTestpp\src\TimeHelpers.h" />
+    <ClInclude Include="..\..\Release\tests\common\UnitTestpp\src\XmlTestReporter.h" />
+    <ClInclude Include="..\..\Release\tests\common\UnitTestpp\src\Posix\SignalTranslator.h" />
+    <ClInclude Include="..\..\Release\tests\common\UnitTestpp\src\Posix\TimeHelpers.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+</Project>

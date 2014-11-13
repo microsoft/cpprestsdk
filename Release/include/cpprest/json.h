@@ -392,6 +392,14 @@ public:
         _ASYNCRTIMP static value parse(const utility::string_t&);
 
         /// <summary>
+        /// Attempts to parse a string and construct a JSON value.
+        /// </summary>
+        /// <param name="value">The C++ value to create a JSON value from, a C++ STL double-byte string</param>
+        /// <param name="errorCode">If parsing fails, the error code is greater than 0</param>
+        /// <returns>The parsed object. Returns web::json::value::null if failed</returns>
+        _ASYNCRTIMP static value parse(const utility::string_t&, std::error_code&);
+
+        /// <summary>
         /// Serializes the current JSON value to a C++ string.
         /// </summary>
         /// <returns>A string representation of the value</returns>
@@ -412,6 +420,14 @@ public:
         _ASYNCRTIMP static value parse(utility::istream_t &input);
 
         /// <summary>
+        /// Parses a JSON value from the contents of an input stream using the native platform character width.
+        /// </summary>
+        /// <param name="input">The stream to read the JSON value from</param>
+        /// <param name="errorCode">If parsing fails, the error code is greater than 0</param>
+        /// <returns>The parsed object. Returns web::json::value::null if failed</returns>
+        _ASYNCRTIMP static value parse(utility::istream_t &input, std::error_code& error);
+
+        /// <summary>
         /// Writes the current JSON value to a stream with the native platform character width.
         /// </summary>
         /// <param name="stream">The stream that the JSON string representation should be written to.</param>
@@ -423,6 +439,14 @@ public:
         /// </summary>
         /// <param name="stream">The stream to read the JSON value from</param>
         _ASYNCRTIMP static value parse(std::istream& stream);
+
+        /// <summary>
+        /// Parses a JSON value from the contents of a single-byte (UTF8) stream.
+        /// </summary>
+        /// <param name="stream">The stream to read the JSON value from</param>
+        /// <param name="errorCode">If parsing fails, the error code is greater than 0</param>
+        /// <returns>The parsed object. Returns web::json::value::null if failed</returns>
+        _ASYNCRTIMP static value parse(std::istream& stream, std::error_code& error);
 
         /// <summary>
         /// Serializes the content of the value into a single-byte (UTF8) stream.
@@ -633,6 +657,66 @@ public:
         }
         ~json_exception() CPPREST_NOEXCEPT {}
     };
+
+    namespace details
+    {
+        enum json_error
+        {
+            left_over_character_in_stream = 1,
+            malformed_array_literal,
+            malformed_comment,
+            malformed_literal,
+            malformed_object_literal,
+            malformed_numeric_literal,
+            malformed_string_literal,
+            malformed_token,
+            mismatched_brances,
+            nesting,
+            unexpected_token
+        };
+
+        class json_error_category_impl : public std::error_category
+        {
+        public:
+            virtual const char* name() const CPPREST_NOEXCEPT override
+            {
+                return "json";
+            }
+
+            virtual std::string message(int ev) const override
+            {
+                switch (ev)
+                {
+                case json_error::left_over_character_in_stream:
+                    return "Left-over characters in stream after parsing a JSON value";
+                case json_error::malformed_array_literal:
+                    return "Malformed array literal";
+                case json_error::malformed_comment:
+                    return "Malformed comment";
+                case json_error::malformed_literal:
+                    return "Malformed literal";
+                case json_error::malformed_object_literal:
+                    return "Malformed object literal";
+                case json_error::malformed_numeric_literal:
+                    return "Malformed numeric literal";
+                case json_error::malformed_string_literal:
+                    return "Malformed string literal";
+                case json_error::malformed_token:
+                    return "Malformed token";
+                case json_error::mismatched_brances:
+                    return "Mismatched braces";
+                case json_error::nesting:
+                    return "Nesting too deep";
+                case json_error::unexpected_token:
+                    return "Unexpected token";
+                default:
+                    return "Unknown json error";
+                }
+            }
+        };
+
+        _ASYNCRTIMP const json_error_category_impl& json_error_category();
+    }
 
     /// <summary>
     /// A JSON array represented as a C++ class.

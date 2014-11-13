@@ -55,7 +55,7 @@ namespace utility
 namespace details
 {
 
-#ifndef ANDROID
+#if !defined(ANDROID) && !defined(__ANDROID__)
 std::once_flag g_c_localeFlag;
 std::unique_ptr<scoped_c_thread_locale::xplat_locale, void(*)(scoped_c_thread_locale::xplat_locale *)> g_c_locale(nullptr, [](scoped_c_thread_locale::xplat_locale *){});
 scoped_c_thread_locale::xplat_locale scoped_c_thread_locale::c_locale()
@@ -124,7 +124,7 @@ scoped_c_thread_locale::~scoped_c_thread_locale()
         _configthreadlocale(m_prevThreadSetting);
     }
 }
-#elif defined(ANDROID)
+#elif (defined(ANDROID) || defined(__ANDROID__))
 scoped_c_thread_locale::scoped_c_thread_locale() {}
 scoped_c_thread_locale::~scoped_c_thread_locale() {}
 #else
@@ -977,7 +977,7 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
         }
     }
 
-#if defined(ANDROID)
+#if (defined(ANDROID) || defined(__ANDROID__))
     // HACK: The (nonportable?) POSIX function timegm is not available in
     //       bionic. As a workaround[1][2], we set the C library timezone to
     //       UTC, call mktime, then set the timezone back. However, the C

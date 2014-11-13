@@ -29,6 +29,10 @@
 
 #include "stdafx.h"
 
+#if defined(BOOST_NO_CXX11_SMART_PTR)
+#error "Cpp rest SDK requires c++11 smart pointer support from boost"
+#endif
+
 #include "cpprest/http_client_impl.h"
 #include "cpprest/x509_cert_utilities.h"
 #include <unordered_set>
@@ -442,7 +446,7 @@ namespace web { namespace http
                 boost::asio::streambuf m_body_buf;
                 std::shared_ptr<linux_connection> m_connection;
 
-#if defined(__APPLE__) || defined(ANDROID)
+#if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__))
                 bool m_openssl_failed;
 #endif
 
@@ -635,7 +639,7 @@ namespace web { namespace http
                 bool handle_cert_verification(bool preverified, boost::asio::ssl::verify_context &verifyCtx, const std::shared_ptr<linux_client_request_context> &requestCtx)
                 {
                     // Unreferenced parameter on some platforms.
-                    requestCtx;
+                    CASABLANCA_UNREFERENCED_PARAMETER(requestCtx);
 
                     // OpenSSL calls the verification callback once per certificate in the chain,
                     // starting with the root CA certificate. The 'leaf', non-Certificate Authority (CA)
@@ -643,7 +647,7 @@ namespace web { namespace http
                     // certificate chain, the rest are optional intermediate certificates, followed
                     // finally by the root CA self signed certificate.
 
-#if defined(__APPLE__) || defined(ANDROID)
+#if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__))
                     // On OS X, iOS, and Android, OpenSSL doesn't have access to where the OS
                     // stores keychains. If OpenSSL fails we will doing verification at the
                     // end using the whole certificate chain so wait until the 'leaf' cert.
@@ -1150,7 +1154,7 @@ namespace web { namespace http
                 , m_needChunked(false)
                 , m_timer(static_cast<int>(client->client_config().timeout().count()))
                 , m_connection(connection)
-#if defined(__APPLE__) || defined(ANDROID)
+#if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__))
                 , m_openssl_failed(false)
 #endif
             {}

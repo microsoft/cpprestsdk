@@ -54,6 +54,7 @@
 #undef ntohll
 #undef htonll
 #endif
+#define _WEBSOCKETPP_NULLPTR_TOKEN_ 0
 #include <websocketpp/config/asio_client.hpp>
 #include <websocketpp/config/asio_no_tls_client.hpp>
 #include <websocketpp/client.hpp>
@@ -95,12 +96,11 @@ namespace details
 // Utility function to build up error string based on error code and location.
 static std::string build_error_msg(const std::error_code &ec, const std::string &location)
 {
-    std::string msg(location);
-    msg.append(": ");
-    msg.append(std::to_string(ec.value()));
-    msg.append(": ");
-    msg.append(ec.message());
-    return msg;
+    std::stringstream ss;
+    ss << location
+       << ": " << ec.value()
+       << ": " << ec.message();
+    return ss.str();
 }
 
 static utility::string_t g_subProtocolHeader(_XPLATSTR("Sec-WebSocket-Protocol"));
@@ -121,7 +121,7 @@ public:
         _websocket_client_callback_impl(std::move(config)),
         m_state(CREATED),
         m_num_sends(0)
-#if defined(__APPLE__) || defined(ANDROID) || defined(_MS_WINDOWS)
+#if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__)) || defined(_MS_WINDOWS)
         , m_openssl_failed(false)
 #endif
     {}
@@ -199,12 +199,12 @@ public:
                 sslContext->set_default_verify_paths();
                 sslContext->set_options(boost::asio::ssl::context::default_workarounds);
                 sslContext->set_verify_mode(boost::asio::ssl::context::verify_peer);
-#if defined(__APPLE__) || defined(ANDROID) || defined(_MS_WINDOWS)
+#if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__)) || defined(_MS_WINDOWS)
                 m_openssl_failed = false;
 #endif
                 sslContext->set_verify_callback([this](bool preverified, boost::asio::ssl::verify_context &verifyCtx)
                 {
-#if defined(__APPLE__) || defined(ANDROID) || defined(_MS_WINDOWS)
+#if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__)) || defined(_MS_WINDOWS)
                     // On OS X, iOS, and Android, OpenSSL doesn't have access to where the OS
                     // stores keychains. If OpenSSL fails we will doing verification at the
                     // end using the whole certificate chain so wait until the 'leaf' cert.
@@ -684,7 +684,7 @@ private:
     // Used to track if any of the OpenSSL server certificate verifications
     // failed. This can safely be tracked at the client level since connections
     // only happen once for each client.
-#if defined(__APPLE__) || defined(ANDROID) || defined(_MS_WINDOWS)
+#if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__)) || defined(_MS_WINDOWS)
     bool m_openssl_failed;
 #endif
 

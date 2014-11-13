@@ -48,7 +48,7 @@
 #include <atomic>
 #endif
 
-#if defined(ANDROID)
+#if (defined(ANDROID) || defined(__ANDROID__))
 // This prevents users from requiring -Wno-attributes when using gcc-4.8 with the android NDK.
 #define _pplx_cdecl
 #else

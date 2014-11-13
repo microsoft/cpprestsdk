@@ -494,7 +494,7 @@ private:
     typename web::http::experimental::listener::http_listener m_listener;
     pplx::extensibility::critical_section_t m_lock;
     std::vector<pplx::task_completion_event<test_request*>> m_requests;
-    std::atomic<unsigned long long> m_last_request_id;
+    std::atomic<unsigned long> m_last_request_id;
 
     std::unordered_map<unsigned long long, web::http::http_request> m_responding_requests;
 
