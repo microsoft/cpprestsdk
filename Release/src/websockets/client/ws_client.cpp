@@ -730,7 +730,7 @@ _websocket_client_task_impl::~_websocket_client_task_impl()
     // websocket_client is anyways destructing.
     if (!m_close_tce.set())
     {
-        m_server_close_complete.wait();
+        create_task(m_server_close_complete).wait();
     }
     else
     {

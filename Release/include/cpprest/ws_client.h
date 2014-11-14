@@ -391,16 +391,14 @@ public:
     
     virtual ~_websocket_client_task_impl() CPPREST_NOEXCEPT;
 
-    pplx::task<websocket_incoming_message> receive();
+    _ASYNCRTIMP pplx::task<websocket_incoming_message> receive();
+
+    _ASYNCRTIMP void close_pending_tasks_with_error(const websocket_exception &exc);
 
     std::shared_ptr<_websocket_client_callback_impl> callback_client() { return m_callback_client; };
 
 private:
     void set_handler();
-
-    void close_pending_tasks_with_error(const websocket_exception &exc);
-
-    std::shared_ptr<_websocket_client_callback_impl> m_callback_client;
 
     // When a message arrives, if there are tasks waiting for a message, signal the topmost one.
     // Else enqueue the message in a queue.
@@ -417,11 +415,13 @@ private:
     // websocket_client. Due to this race, set() can cause a crash.
     // To workaround this bug, maintain another event: m_server_close_complete. We will signal this when the m_close_tce.set() has
     // completed. The websocket_client destructor can wait on this event before proceeding.
-    Concurrency::event m_server_close_complete;
+    pplx::task_completion_event<void> m_server_close_complete;
 
     // Initially set to false, becomes true if a close frame is received from the server or
     // if the underlying connection is aborted or terminated.
     bool m_client_closed;
+
+    std::shared_ptr<_websocket_client_callback_impl> m_callback_client;
 };
 }
 
@@ -461,7 +461,19 @@ public:
     {
         m_client->callback_client()->verify_uri(uri);
         m_client->callback_client()->set_uri(uri);
-        return m_client->callback_client()->connect();
+        auto client = m_client;
+        return m_client->callback_client()->connect().then([client](pplx::task<void> result)
+        {
+            try
+            {
+                result.get();
+            }
+            catch (const websocket_exception& ex)
+            {
+                client->close_pending_tasks_with_error(ex);
+                throw;
+            }
+        });
     }
 
     /// <summary>
@@ -477,7 +489,7 @@ public:
     /// Receive a websocket message.
     /// </summary>
     /// <returns>An asynchronous operation that is completed when a message has been received by the client endpoint.</returns>
-    _ASYNCRTIMP pplx::task<websocket_incoming_message> receive()
+    pplx::task<websocket_incoming_message> receive()
     {
         return m_client->receive();
     }
