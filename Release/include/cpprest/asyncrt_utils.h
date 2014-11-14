@@ -69,30 +69,38 @@ namespace timespan
     /// Converts an xml duration to timespan/interval in seconds
     /// http://www.w3.org/TR/xmlschema-2/#duration
     /// </summary>
-    _ASYNCRTIMP utility::seconds __cdecl xml_duration_to_seconds(utility::string_t timespanString);
+    _ASYNCRTIMP utility::seconds __cdecl xml_duration_to_seconds(const utility::string_t &timespanString);
 }
 
-/// Functions for string conversions.
+/// Functions for Unicode string conversions.
 namespace conversions
 {
     /// <summary>
-    /// Converts a UTF-16 string to a UTF-8 string
+    /// Converts a UTF-16 string to a UTF-8 string.
     /// </summary>
+    /// <param name="w">A two byte character UTF-16 string.</param>
+    /// <returns>A single byte character UTF-8 string.</returns>
     _ASYNCRTIMP std::string __cdecl utf16_to_utf8(const utf16string &w);
 
     /// <summary>
     /// Converts a UTF-8 string to a UTF-16
     /// </summary>
+    /// <param name="s">A single byte character UTF-8 string.</param>
+    /// <returns>A two byte character UTF-16 string.</returns>
     _ASYNCRTIMP utf16string __cdecl utf8_to_utf16(const std::string &s);
 
     /// <summary>
     /// Converts a ASCII (us-ascii) string to a UTF-16 string.
     /// </summary>
+    /// <param name="s">A single byte character us-ascii string.</param>
+    /// <returns>A two byte character UTF-16 string.</returns>
     _ASYNCRTIMP utf16string __cdecl usascii_to_utf16(const std::string &s);
 
     /// <summary>
     /// Converts a Latin1 (iso-8859-1) string to a UTF-16 string.
     /// </summary>
+    /// <param name="s">A single byte character UTF-8 string.</param>
+    /// <returns>A two byte character UTF-16 string.</returns>
     _ASYNCRTIMP utf16string __cdecl latin1_to_utf16(const std::string &s);
 
     /// <summary>
@@ -101,23 +109,59 @@ namespace conversions
     _ASYNCRTIMP utf16string __cdecl default_code_page_to_utf16(const std::string &s);
 
     /// <summary>
-    /// Decode to string_t from either a utf-16 or utf-8 string
+    /// Converts to a platform dependent Unicode string type.
     /// </summary>
+    /// <param name="s">A single byte character UTF-8 string.</param>
+    /// <returns>A platform dependent string type.</returns>
     _ASYNCRTIMP utility::string_t __cdecl to_string_t(std::string &&s);
+
+    /// <summary>
+    /// Converts to a platform dependent Unicode string type.
+    /// </summary>
+    /// <param name="s">A two byte character UTF-16 string.</param>
+    /// <returns>A platform dependent string type.</returns>
     _ASYNCRTIMP utility::string_t __cdecl to_string_t(utf16string &&s);
+
+    /// <summary>
+    /// Converts to a platform dependent Unicode string type.
+    /// </summary>
+    /// <param name="s">A single byte character UTF-8 string.</param>
+    /// <returns>A platform dependent string type.</returns>
     _ASYNCRTIMP utility::string_t __cdecl to_string_t(const std::string &s);
+
+    /// <summary>
+    /// Converts to a platform dependent Unicode string type.
+    /// </summary>
+    /// <param name="s">A two byte character UTF-16 string.</param>
+    /// <returns>A platform dependent string type.</returns>
     _ASYNCRTIMP utility::string_t __cdecl to_string_t(const utf16string &s);
 
     /// <summary>
-    /// Decode to utf16 from either a narrow or wide string
+    /// Converts to a UTF-16 from string.
     /// </summary>
+    /// <param name="value">A single byte character UTF-8 string.</param>
+    /// <returns>A two byte character UTF-16 string.</returns>
     _ASYNCRTIMP utf16string __cdecl to_utf16string(const std::string &value);
+
+    /// <summary>
+    /// Converts to a UTF-16 from string.
+    /// </summary>
+    /// <param name="value">A two byte character UTF-16 string.</param>
+    /// <returns>A two byte character UTF-16 string.</returns>
     _ASYNCRTIMP utf16string __cdecl to_utf16string(utf16string value);
 
     /// <summary>
-    /// Decode to UTF-8 from either a narrow or wide string.
+    /// Converts to a UTF-8 string.
     /// </summary>
+    /// <param name="value">A single byte character UTF-8 string.</param>
+    /// <returns>A single byte character UTF-8 string.</returns>
     _ASYNCRTIMP std::string __cdecl to_utf8string(std::string value);
+
+    /// <summary>
+    /// Converts to a UTF-8 string.
+    /// </summary>
+    /// <param name="value">A two byte character UTF-16 string.</param>
+    /// <returns>A single byte character UTF-8 string.</returns>
     _ASYNCRTIMP std::string __cdecl to_utf8string(const utf16string &value);
 
     /// <summary>

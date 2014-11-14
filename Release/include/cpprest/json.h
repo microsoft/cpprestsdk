@@ -1879,7 +1879,7 @@ public:
     /// <summary>
     /// Access an element of a JSON array.
     /// </summary>
-    /// <param name="key">The index of an element in the JSON array</param>
+    /// <param name="index">The index of an element in the JSON array</param>
     /// <returns>The value kept at the array index; null if outside the boundaries of the array</returns>
     inline json::value json::value::get(size_t index) const
     {

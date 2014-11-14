@@ -365,10 +365,10 @@ public:
     ~http_client() CPPREST_NOEXCEPT {}
 
     /// <summary>
-    /// Gets the base uri
+    /// Gets the base URI.
     /// </summary>
     /// <returns>
-    /// A base uri initialized in constructor
+    /// A base URI initialized in constructor
     /// </returns>
     _ASYNCRTIMP const uri& base_uri() const;
 

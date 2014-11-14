@@ -566,9 +566,7 @@ namespace Concurrency { namespace streams {
     /// collections. The sole purpose of this class to avoid users from having to know
     /// anything about stream buffers.
     /// </summary>
-    /// <typeparam name="_CollectionType">
-    /// The type of the STL collection.
-    /// </typeparam>
+    /// <typeparam name="_CollectionType">The type of the STL collection.</typeparam>
     template<typename _CollectionType>
     class container_stream
     {
@@ -577,11 +575,20 @@ namespace Concurrency { namespace streams {
         typedef typename _CollectionType::value_type char_type;
         typedef container_buffer<_CollectionType> buffer_type;
 
+        /// <summary>
+        /// Creates an input stream given an STL container.
+        /// </summary>
+        /// </param name="data">STL container to back the input stream.</param>
+        /// <returns>An input stream.</returns>
         static concurrency::streams::basic_istream<char_type> open_istream(_CollectionType data)
         {
             return concurrency::streams::basic_istream<char_type>(buffer_type(std::move(data), std::ios_base::in));
         }
 
+        /// <summary>
+        /// Creates an output stream using an STL container as the storage.
+        /// </summary>
+        /// <returns>An output stream.</returns>
         static concurrency::streams::basic_ostream<char_type> open_ostream()
         {
             return concurrency::streams::basic_ostream<char_type>(buffer_type(std::ios_base::out));
@@ -599,18 +606,29 @@ namespace Concurrency { namespace streams {
     typedef wstringstream::buffer_type wstringstreambuf;
 
     /// <summary>
-    /// The <c>bytestream</c> allows an input stream to be constructed from any STL container.
+    /// The <c>bytestream</c> is a static class that allows an input stream to be constructed from any STL container.
     /// </summary>
     class bytestream
     {
     public:
 
+        /// <summary>
+        /// Creates a single byte character input stream given an STL container.
+        /// </summary>
+        /// <typeparam name="_CollectionType">The type of the STL collection.</typeparam>
+        /// <param name="data">STL container to back the input stream.</param>
+        /// <returns>An single byte character input stream.</returns>
         template<typename _CollectionType>
         static concurrency::streams::istream open_istream(_CollectionType data)
         {
             return concurrency::streams::istream(streams::container_buffer<_CollectionType>(std::move(data), std::ios_base::in));
         }
 
+        /// <summary>
+        /// Creates a single byte character output stream using an STL container as storage.
+        /// </summary>
+        /// <typeparam name="_CollectionType">The type of the STL collection.</typeparam>
+        /// <returns>A single byte character output stream.</returns>
         template<typename _CollectionType>
         static concurrency::streams::ostream open_ostream()
         {
