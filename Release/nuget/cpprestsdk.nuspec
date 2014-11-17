@@ -11,10 +11,15 @@
         <iconUrl>https://download-codeplex.sec.s-msft.com/Download?ProjectName=casablanca&amp;DownloadId=630102&amp;Build=20425</iconUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <summary>"The C++ REST SDK is a cross-platform, modern, and asynchronous library that enables developers to access and author connected applications"</summary>
-        <description>"This library is a Microsoft effort to support cloud-based client-server communication in native code using a modern asynchronous C++ API design. The C++ REST SDK (codename "Casablanca") is a project to start exploring how to best support C++ developers who want to take advantage of the radical shift in software architecture that cloud computing represents."</description>
+        <description>"This library is a Microsoft effort to support cloud-based client-server communication in native code using a modern asynchronous C++ API design. The C++ REST SDK is a project to start exploring how to best support C++ developers who want to take advantage of the radical shift in software architecture that cloud computing represents."</description>
         <releaseNotes>"Release of C++ Rest SDK 2.3.0 libraries."</releaseNotes>
         <copyright>Copyright 2014</copyright>
         <tags>REST, native, C++, JSON, Casablanca, Http, Uri, WebSockets</tags>
+        
+        <!-- OpenSSL dependency only necessary for Windows Desktop, but unless our package is split into smaller components it is required for all. -->
+        <dependencies>
+          <dependency id="openssl" version="1.0.1.25" />
+        </dependencies>
     </metadata>
     <files>
         <!-- Include header files-->
@@ -24,7 +29,7 @@
         <file src="cpprest.natvis" target="\tools\cpprest.natvis" />
 
         <!-- Including license for WebSocket++ -->
-        <file src="..\libs\websocketpp\COPYING" target="\license\websocketpp" />
+        <file src="..\libs\websocketpp\COPYING" target="\license\websocketpp\COPYING" />
         
         <!-- Debug -->
         <!-- Win32 v140 -->
@@ -145,9 +150,9 @@
         <file src="Binaries\Win32\Release\cpprest120_app_2_3.lib" target="\build\native\lib\Win32\v120\Release\WinRT\cpprest120_app_2_3.lib" />
 
         <!--  Win32 v120_wp81 -->
-        <file src="Binaries\Win32\Release\casablanca120.wp81\cpprest120_wp81_2_3.dll" target="\build\native\bin\Win32\v120_wp81\Release\Phone8\cpprest120_wp81_2_3.dll" />
-        <file src="Binaries\Win32\Release\casablanca120.wp81\cpprest120_wp81_2_3.pdb" target="\build\native\bin\Win32\v120_wp81\Release\Phone8\cpprest120_wp81_2_3.pdb" />
-        <file src="Binaries\Win32\Release\casablanca120.wp81\cpprest120_wp81_2_3.lib" target="\build\native\lib\Win32\v120_wp81\Release\Phone8\cpprest120_wp81_2_3.lib" />
+        <file src="Binaries\Win32\Release\cpprest120_wp81_2_3.dll" target="\build\native\bin\Win32\v120_wp81\Release\Phone8\cpprest120_wp81_2_3.dll" />
+        <file src="Binaries\Win32\Release\cpprest120_wp81_2_3.pdb" target="\build\native\bin\Win32\v120_wp81\Release\Phone8\cpprest120_wp81_2_3.pdb" />
+        <file src="Binaries\Win32\Release\cpprest120_wp81_2_3.lib" target="\build\native\lib\Win32\v120_wp81\Release\Phone8\cpprest120_wp81_2_3.lib" />
 
         <!-- Win32 v120 Phone Silverlight 8.1 -->
         <file src="Binaries\Win32\Release\cpprest120_wps81_2_3.dll" target="\build\native\bin\Win32\v120\Release\Phone8Silverlight\cpprest120_wps81_2_3.dll" />
