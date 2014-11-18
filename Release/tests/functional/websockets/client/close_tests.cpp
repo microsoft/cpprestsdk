@@ -95,7 +95,7 @@ TEST_FIXTURE(uri_address, close_callback_client_websocket)
 
     websocket_callback_client client1;
 
-    client1.set_closed_handler([](websocket_close_status status, const utility::string_t& reason, const std::error_code& code)
+    client1.set_close_handler([](websocket_close_status status, const utility::string_t& reason, const std::error_code& code)
     {
         VERIFY_ARE_EQUAL(status, websocket_close_status::normal);
         VERIFY_ARE_EQUAL(reason, U("going away"));
@@ -111,20 +111,21 @@ TEST_FIXTURE(uri_address, close_callback_client_websocket)
 // Test close websocket connection: client sends a close with reason and server responds with close frame
 TEST_FIXTURE(uri_address, close_callback_client_with_reason)
 {
+    const utility::string_t close_reason = U("Client disconnecting");
     test_websocket_server server;
 
     websocket_callback_client client;
 
-    client.set_closed_handler([](websocket_close_status status, const utility::string_t& reason, const std::error_code& code)
+    client.set_close_handler([close_reason](websocket_close_status status, const utility::string_t& reason, const std::error_code& code)
     {
-        VERIFY_ARE_EQUAL(status, websocket_close_status::going_away);
-        VERIFY_ARE_EQUAL(reason, U("Client disconnecting"));
+        VERIFY_ARE_EQUAL(status, websocket_close_status::normal);
+        VERIFY_ARE_EQUAL(reason, close_reason);
         VERIFY_ARE_EQUAL(code.value(), 0);
     });
 
     client.connect(m_uri).wait();
 
-    client.close(websocket_close_status::going_away, U("Client disconnecting")).wait();
+    client.close(websocket_close_status::normal, close_reason).wait();
 }
 
 // Server sends a close frame (server initiated close)
@@ -135,11 +136,16 @@ TEST_FIXTURE(uri_address, close_callback_client_from_server)
 
     websocket_callback_client client;
 
-    client.set_closed_handler([](websocket_close_status status, const utility::string_t& reason, const std::error_code& code)
+    int hitCount = 0;
+    pplx::task_completion_event<void> closeEvent;
+    client.set_close_handler([&hitCount, &closeEvent](websocket_close_status status, const utility::string_t& reason, const std::error_code& code)
     {
         VERIFY_ARE_EQUAL(status, websocket_close_status::going_away);
         VERIFY_ARE_EQUAL(reason, U(""));
         VERIFY_ARE_EQUAL(code.value(), 0);
+
+        hitCount++;
+        closeEvent.set();
     });
 
     client.connect(m_uri).wait();
@@ -149,7 +155,9 @@ TEST_FIXTURE(uri_address, close_callback_client_from_server)
     msg.set_msg_type(test_websocket_message_type::WEB_SOCKET_CLOSE_TYPE);
     server.send_msg(msg);
 
-    client.close().wait();
+    // make sure it only called once.
+    pplx::create_task(closeEvent).wait();
+    VERIFY_ARE_EQUAL(hitCount, 1);
 }
 
 } // SUITE(close_tests)

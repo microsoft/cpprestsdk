@@ -264,7 +264,7 @@ public:
 
         client.set_message_handler([this](websocketpp::connection_hdl, const websocketpp::config::asio_client::message_type::ptr &msg)
         {
-            if (m_external_received_handler)
+            if (m_external_message_handler)
             {
                 _ASSERTE(m_state >= CONNECTED && m_state < CLOSED);
                 websocket_incoming_message incoming_msg;
@@ -287,7 +287,7 @@ public:
                 auto &payload = msg->get_raw_payload();
                 incoming_msg.m_body = concurrency::streams::container_buffer<std::string>(std::move(payload));
 
-                m_external_received_handler(incoming_msg);
+                m_external_message_handler(incoming_msg);
             }
         });
 
@@ -295,25 +295,16 @@ public:
         {
             _ASSERTE(m_state != CLOSED);
 
-            if (m_external_closed_handler)
+            if (m_external_close_handler)
             {
                 auto &client = m_client->client<WebsocketConfigType>();
                 auto connection = client.get_con_from_hdl(con_hdl);
 
                 const auto &ec = connection->get_ec();
 
-                const auto& clientCloseCode = connection->get_local_close_code();
-                const auto& clientReason = connection->get_local_close_reason();
-                if (clientCloseCode != websocketpp::close::status::blank)
-                {
-                    const auto& serverCloseCode = connection->get_remote_close_code();
-                    const auto& serverReason = connection->get_remote_close_reason();
-                    m_external_closed_handler(static_cast<websocket_close_status>(serverCloseCode), utility::conversions::to_string_t(serverReason), ec);
-                }
-                else
-                {
-                    m_external_closed_handler(static_cast<websocket_close_status>(clientCloseCode), utility::conversions::to_string_t(clientReason), ec);
-                }
+                const auto& closeCode = connection->get_local_close_code();
+                const auto& reason = connection->get_local_close_reason();
+                m_external_close_handler(static_cast<websocket_close_status>(closeCode), utility::conversions::to_string_t(reason), ec);
 
             }
             m_close_tce.set();
@@ -610,14 +601,14 @@ public:
         return pplx::task_from_result();
     }
 
-    void set_received_handler(const std::function<void(const websocket_incoming_message&)>& handler)
+    void set_message_handler(const std::function<void(const websocket_incoming_message&)>& handler)
     {
-        m_external_received_handler = handler;
+        m_external_message_handler = handler;
     }
 
-    void set_closed_handler(const std::function<void(websocket_close_status, const utility::string_t&, const std::error_code&)>& handler)
+    void set_close_handler(const std::function<void(websocket_close_status, const utility::string_t&, const std::error_code&)>& handler)
     {
-        m_external_closed_handler = handler;
+        m_external_close_handler = handler;
     }
 
 private:
@@ -687,8 +678,8 @@ private:
     std::atomic<int> m_num_sends;
 
     // External callback for handling received and close event
-    std::function<void(websocket_incoming_message)> m_external_received_handler;
-    std::function<void(websocket_close_status, const utility::string_t&, std::error_code)> m_external_closed_handler;
+    std::function<void(websocket_incoming_message)> m_external_message_handler;
+    std::function<void(websocket_close_status, const utility::string_t&, const std::error_code&)> m_external_close_handler;
 
     // Used to track if any of the OpenSSL server certificate verifications
     // failed. This can safely be tracked at the client level since connections
@@ -740,7 +731,7 @@ websocket_client_task_impl::~websocket_client_task_impl()
 
 void websocket_client_task_impl::set_handler()
 {
-    m_callback_client->set_received_handler([=](const websocket_incoming_message &msg)
+    m_callback_client->set_message_handler([=](const websocket_incoming_message &msg)
     {
         pplx::task_completion_event<websocket_incoming_message> tce; // This will be set if there are any tasks waiting to receive a message
         {
@@ -760,9 +751,9 @@ void websocket_client_task_impl::set_handler()
         tce.set(msg);
     });
 
-    m_callback_client->set_closed_handler([=](websocket_close_status status, const utility::string_t& reason, std::error_code error_code)
+    m_callback_client->set_close_handler([=](websocket_close_status status, const utility::string_t& reason, const std::error_code& error_code)
     {
-        UNREFERENCED_PARAMETER(status);
+        CASABLANCA_UNREFERENCED_PARAMETER(status);
         close_pending_tasks_with_error(websocket_exception(error_code, reason));
     });
 }

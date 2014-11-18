@@ -125,21 +125,34 @@ public:
 
         m_context = ref new ReceiveContext([=](const websocket_incoming_message &msg)
         {
-            if (m_external_received_handler)
+            if (m_external_message_handler)
             {
-                m_external_received_handler(msg);
+                m_external_message_handler(msg);
             }
         },
         [=](websocket_close_status status, const utility::string_t& reason, const std::error_code& error_code)
         {
-            if (m_external_closed_handler)
+            if (m_external_close_handler)
             {
-                m_external_closed_handler(status, reason, error_code);
+                m_external_close_handler(status, reason, error_code);
             }
             m_close_tce.set();
             m_server_close_complete.set();
-
         });
+    }
+
+    ~winrt_callback_client()
+    {
+        // task_completion_event::set() returns false if it has already been set.
+        // In that case, wait on the m_server_close_complete event for the tce::set() to complete.
+        // The websocket client on close handler (upon receiving close frame from server) will
+        // set this event.
+        // If we have not received a close frame from the server, this set will be a no-op as the
+        // websocket_client is anyways destructing.
+        if (!m_close_tce.set())
+        {
+            m_server_close_complete.wait();
+        }
     }
 
     pplx::task<void> connect()
@@ -365,9 +378,9 @@ public:
         });
     }
 
-    void set_received_handler(const std::function<void(const websocket_incoming_message&)>& handler)
+    void set_message_handler(const std::function<void(const websocket_incoming_message&)>& handler)
     {
-        m_external_received_handler = handler;
+        m_external_message_handler = handler;
     }
 
     pplx::task<void> close()
@@ -384,9 +397,9 @@ public:
         return pplx::create_task(m_close_tce);
     }
 
-    void set_closed_handler(const std::function<void(websocket_close_status, const utility::string_t&, const std::error_code&)>& handler)
+    void set_close_handler(const std::function<void(websocket_close_status, const utility::string_t&, const std::error_code&)>& handler)
     {
-        m_external_closed_handler = handler;
+        m_external_close_handler = handler;
     }
 
 private:
@@ -406,8 +419,8 @@ private:
     Concurrency::event m_server_close_complete;
 
     // External callback for handling received and close event
-    std::function<void(websocket_incoming_message)> m_external_received_handler;
-    std::function<void(websocket_close_status, const utility::string_t&, std::error_code)> m_external_closed_handler;
+    std::function<void(websocket_incoming_message)> m_external_message_handler;
+    std::function<void(websocket_close_status, const utility::string_t&, const std::error_code&)> m_external_close_handler;
     
     // The implementation has to ensure ordering of send requests
     std::mutex m_send_lock;

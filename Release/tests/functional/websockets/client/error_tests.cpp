@@ -1,4 +1,4 @@
-/***
+﻿/***
 * ==++==
 *
 * Copyright (c) Microsoft Corporation. All rights reserved. 
@@ -77,6 +77,26 @@ TEST_FIXTURE(uri_address, send_after_close)
     VERIFY_THROWS(client.send(msg).wait(), websocket_exception);
 }
 
+// Send after close for callback client
+TEST_FIXTURE(uri_address, send_after_close_callback_client)
+{
+    std::string body("hello");
+    test_websocket_server server;
+
+    server.next_message([&](test_websocket_msg msg)
+    {
+        websocket_asserts::assert_message_equals(msg, body, test_websocket_message_type::WEB_SOCKET_UTF8_MESSAGE_TYPE);
+    });
+    websocket_callback_client client;
+
+    client.connect(m_uri).wait();
+    client.close().wait();
+
+    websocket_outgoing_message msg;
+    msg.set_utf8_message(body);
+    VERIFY_THROWS(client.send(msg).wait(), websocket_exception);
+}
+
 // Receive after close
 TEST_FIXTURE(uri_address, receive_after_close)
 {
@@ -136,6 +156,29 @@ TEST_FIXTURE(uri_address, destroy_without_close)
     }
     
     VERIFY_THROWS(t.wait(), websocket_exception);
+}
+
+// Destroy the callback client without closing it explicitly
+TEST_FIXTURE(uri_address, destroy_without_close_callback_client)
+{
+    test_websocket_server server;
+    pplx::task_completion_event<void> closeEvent;
+
+    {
+        websocket_callback_client client;
+
+        client.connect(m_uri).wait();
+
+        client.set_close_handler([&closeEvent](websocket_close_status status, const utility::string_t& reason, const std::error_code& code)
+        {
+            CASABLANCA_UNREFERENCED_PARAMETER(status);
+            CASABLANCA_UNREFERENCED_PARAMETER(reason);
+            CASABLANCA_UNREFERENCED_PARAMETER(code);
+            closeEvent.set();
+        });
+    }
+
+    pplx::create_task(closeEvent).wait();
 }
 
 // connect fails while user is waiting on receive

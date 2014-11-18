@@ -87,22 +87,8 @@ void fill_buffer(streams::streambuf<uint8_t> rbuf, const std::vector<uint8_t>& b
         rbuf.putn((const uint8_t *)&body[0], len).wait();
 }
 
-pplx::task<void> send_text_msg_helper(websocket_client& client, web::uri uri, test_websocket_server& server, const std::string& body, bool connect_client = true)
-{
-    server.next_message([body](test_websocket_msg msg) // Handler to verify the message sent by the client.
-    {
-        websocket_asserts::assert_message_equals(msg, body, test_websocket_message_type::WEB_SOCKET_UTF8_MESSAGE_TYPE);
-    });
-
-    if (connect_client)
-        client.connect(uri).wait();
-
-    websocket_outgoing_message msg;
-    msg.set_utf8_message(body);
-    return client.send(msg);
-}
-
-pplx::task<void> send_text_msg_helper(websocket_callback_client& client, web::uri uri, test_websocket_server& server, const std::string& body, bool connect_client = true)
+template<class SocketClientClass>
+pplx::task<void> send_text_msg_helper(SocketClientClass& client, web::uri uri, test_websocket_server& server, const std::string& body, bool connect_client = true)
 {
     server.next_message([body](test_websocket_msg msg) // Handler to verify the message sent by the client.
     {

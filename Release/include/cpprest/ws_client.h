@@ -332,13 +332,13 @@ public:
 
     virtual pplx::task<void> send(websocket_outgoing_message &msg) = 0;
 
-    virtual void set_received_handler(const std::function<void(const websocket_incoming_message&)>& handler) = 0;
+    virtual void set_message_handler(const std::function<void(const websocket_incoming_message&)>& handler) = 0;
 
     virtual pplx::task<void> close() = 0;
 
     virtual pplx::task<void> close(websocket_close_status close_status, const utility::string_t &close_reason = _XPLATSTR("")) = 0;
 
-    virtual void set_closed_handler(const std::function<void(websocket_close_status, const utility::string_t&, const std::error_code&)>& handler) = 0;
+    virtual void set_close_handler(const std::function<void(websocket_close_status, const utility::string_t&, const std::error_code&)>& handler) = 0;
 
     const web::uri& uri() const
     {
@@ -524,8 +524,8 @@ private:
 };
 
 /// <summary>
-/// Websocket client class, used to maintain a connection to a remote host for an extended session, used callback for handling receive and close event instead of async task.
-/// For some scenarioes would be a alternative for the websocket_client like if you want to special handling on close event.
+/// Websocket client class, used to maintain a connection to a remote host for an extended session, uses callback APIs for handling receive and close event instead of async task.
+/// For some scenarios would be a alternative for the websocket_client like if you want to special handling on close event.
 /// </summary>
 class websocket_callback_client
 {
@@ -569,11 +569,10 @@ public:
     /// <param name="handler">A function representing the incoming websocket messages handler. It's parameters are:
     ///    msg:  a <c>websocket_incoming_message</c> value indicating the message received
     /// </param>
-    /// <remarks>Note if this handler is not been set while socket recives messages, the message will be ignored. 
-    /// So if want to make sure handles all the message, set the handler before connect() </remarks>
-    void set_received_handler(const std::function<void(const websocket_incoming_message& msg)>& handler)
+    /// <remarks>If this handler is not set before connecting incoming messages will be missed.</remarks>
+    void set_message_handler(const std::function<void(const websocket_incoming_message& msg)>& handler)
     {
-        m_client->set_received_handler(handler);
+        m_client->set_message_handler(handler);
     }
 
     /// <summary>
@@ -602,11 +601,11 @@ public:
     /// <param name="handler">The handler for websocket closing event, It's parameters are:
     ///   close_status: The pre-defined status codes used by the endpoint when sending a Close frame.
     ///   reason: The reason string used by the endpoint when sending a Close frame.
-    ///   errro: The error code if the websocket is closed with abnormal error.
+    ///   error: The error code if the websocket is closed with abnormal error.
     ///</param>
-    void set_closed_handler(const std::function<void(websocket_close_status close_status, const utility::string_t& reason, const std::error_code& error)>& handler)
+    void set_close_handler(const std::function<void(websocket_close_status close_status, const utility::string_t& reason, const std::error_code& error)>& handler)
     {
-        m_client->set_closed_handler(handler);
+        m_client->set_close_handler(handler);
     }
 
     /// <summary>
