@@ -72,22 +72,22 @@ public:
 private:
     // Public members cannot have native types
     ReceiveContext(
-        std::function<void(websocket_incoming_message &)> receive_handler,
-        std::function<void(websocket_close_status, const utility::string_t &, std::error_code)> close_handler)
+        std::function<void(const websocket_incoming_message&)> receive_handler,
+        std::function<void(websocket_close_status, const utility::string_t &, const std::error_code&)> close_handler)
         : m_receive_handler(std::move(receive_handler)), m_close_handler(std::move(close_handler)) {}
 
     // Handler to be executed when a message has been received by the client
-    std::function<void(websocket_incoming_message &)> m_receive_handler;
+    std::function<void(const websocket_incoming_message&)> m_receive_handler;
 
     // Handler to be executed when a close message has been received by the client
-    std::function<void(websocket_close_status, const utility::string_t&, std::error_code)> m_close_handler;
+    std::function<void(websocket_close_status, const utility::string_t&, const std::error_code&)> m_close_handler;
 };
 
-class winrt_callback_client : public _websocket_client_callback_impl, public std::enable_shared_from_this<winrt_callback_client>
+class winrt_callback_client : public websocket_client_callback_impl, public std::enable_shared_from_this<winrt_callback_client>
 {
 public:
     winrt_callback_client(websocket_client_config config) :
-        _websocket_client_callback_impl(std::move(config)),
+        websocket_client_callback_impl(std::move(config)),
         m_num_sends(0)
     {
         m_msg_websocket = ref new MessageWebSocket();
@@ -123,14 +123,14 @@ public:
                 Platform::StringReference(password->c_str()));
         }
 
-        m_context = ref new ReceiveContext([=](websocket_incoming_message &msg)
+        m_context = ref new ReceiveContext([=](const websocket_incoming_message &msg)
         {
             if (m_external_received_handler)
             {
                 m_external_received_handler(msg);
             }
         },
-        [=](websocket_close_status status, const utility::string_t& reason, std::error_code error_code)
+        [=](websocket_close_status status, const utility::string_t& reason, const std::error_code& error_code)
         {
             if (m_external_closed_handler)
             {
@@ -365,7 +365,7 @@ public:
         });
     }
 
-    void set_received_handler(std::function<void(websocket_incoming_message)> handler)
+    void set_received_handler(const std::function<void(const websocket_incoming_message&)>& handler)
     {
         m_external_received_handler = handler;
     }
@@ -384,12 +384,12 @@ public:
         return pplx::create_task(m_close_tce);
     }
 
-    void set_closed_handler(std::function<void(websocket_close_status, utility::string_t, std::error_code)> handler)
+    void set_closed_handler(const std::function<void(websocket_close_status, const utility::string_t&, const std::error_code&)>& handler)
     {
         m_external_closed_handler = handler;
     }
 
-protected:
+private:
 
     // WinRT MessageWebSocket object
     Windows::Networking::Sockets::MessageWebSocket^ m_msg_websocket;
@@ -448,7 +448,7 @@ void ReceiveContext::OnReceive(MessageWebSocket^ sender, MessageWebSocketMessage
     }
     catch (Platform::Exception ^e)
     {
-        m_close_handler(static_cast<websocket_close_status>(0), _XPLATSTR("Abnormal close"), utility::details::create_error_code(e->HResult));
+        m_close_handler(websocket_close_status::abnormal_close, _XPLATSTR("Abnormal close"), utility::details::create_error_code(e->HResult));
     }
 }
 
@@ -457,7 +457,7 @@ void ReceiveContext::OnClosed(IWebSocket^ sender, WebSocketClosedEventArgs^ args
     m_close_handler(static_cast<websocket_close_status>(args->Code), args->Reason->Data(), utility::details::create_error_code(0));
 }
 
-_websocket_client_task_impl::_websocket_client_task_impl(websocket_client_config config) :
+websocket_client_task_impl::websocket_client_task_impl(websocket_client_config config) :
 m_callback_client(std::make_shared<details::winrt_callback_client>(std::move(config))),
 m_client_closed(false)
 {

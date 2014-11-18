@@ -102,6 +102,21 @@ pplx::task<void> send_text_msg_helper(websocket_client& client, web::uri uri, te
     return client.send(msg);
 }
 
+pplx::task<void> send_text_msg_helper(websocket_callback_client& client, web::uri uri, test_websocket_server& server, const std::string& body, bool connect_client = true)
+{
+    server.next_message([body](test_websocket_msg msg) // Handler to verify the message sent by the client.
+    {
+        websocket_asserts::assert_message_equals(msg, body, test_websocket_message_type::WEB_SOCKET_UTF8_MESSAGE_TYPE);
+    });
+
+    if (connect_client)
+        client.connect(uri).wait();
+
+    websocket_outgoing_message msg;
+    msg.set_utf8_message(body);
+    return client.send(msg);
+}
+
 pplx::task<void> send_msg_from_stream(websocket_client& client,
                                              test_websocket_server& server,
                                              web::uri uri,
@@ -158,6 +173,15 @@ TEST_FIXTURE(uri_address, send_text_msg)
 {
     test_websocket_server server;
     websocket_client client;
+    send_text_msg_helper(client, m_uri, server, "hello").wait();
+    client.close().wait();
+}
+
+// Send text message with websocket_callback_client
+TEST_FIXTURE(uri_address, send_text_msg_callback_client)
+{
+    test_websocket_server server;
+    websocket_callback_client client;
     send_text_msg_helper(client, m_uri, server, "hello").wait();
     client.close().wait();
 }

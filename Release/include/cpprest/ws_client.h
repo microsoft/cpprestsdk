@@ -63,11 +63,11 @@ namespace client
 
 enum class websocket_close_status
 {
-    blank = 0,
     normal = 1000,
     going_away = 1001,
     protocol_error = 1002,
     unsupported = 1003, //or data_mismatch
+    abnormal_close = 1006,
     inconsistent_datatype = 1007,
     policy_violation = 1008,
     too_large = 1009,
@@ -319,26 +319,26 @@ namespace details
 {
 
 // Interface to be implemented by the websocket client callback implementations.
-class _websocket_client_callback_impl
+class websocket_client_callback_impl
 {
 public:
 
-    _websocket_client_callback_impl(websocket_client_config config) :
+    websocket_client_callback_impl(websocket_client_config config) :
         m_config(std::move(config)) {}
 
-    virtual ~_websocket_client_callback_impl() CPPREST_NOEXCEPT{}
+    virtual ~websocket_client_callback_impl() CPPREST_NOEXCEPT{}
 
     virtual pplx::task<void> connect() = 0;
 
     virtual pplx::task<void> send(websocket_outgoing_message &msg) = 0;
 
-    virtual void set_received_handler(std::function<void(websocket_incoming_message)> handler) = 0;
+    virtual void set_received_handler(const std::function<void(const websocket_incoming_message&)>& handler) = 0;
 
     virtual pplx::task<void> close() = 0;
 
     virtual pplx::task<void> close(websocket_close_status close_status, const utility::string_t &close_reason = _XPLATSTR("")) = 0;
 
-    virtual void set_closed_handler(std::function<void(websocket_close_status, utility::string_t, std::error_code)> handler) = 0;
+    virtual void set_closed_handler(const std::function<void(websocket_close_status, const utility::string_t&, const std::error_code&)>& handler) = 0;
 
     const web::uri& uri() const
     {
@@ -383,19 +383,19 @@ protected:
 };
 
 // Interface to be implemented by the websocket client task implementations.
-class _websocket_client_task_impl
+class websocket_client_task_impl
 {
 
 public:
-    _websocket_client_task_impl(websocket_client_config config);
+    websocket_client_task_impl(websocket_client_config config);
     
-    virtual ~_websocket_client_task_impl() CPPREST_NOEXCEPT;
+    virtual ~websocket_client_task_impl() CPPREST_NOEXCEPT;
 
     _ASYNCRTIMP pplx::task<websocket_incoming_message> receive();
 
     _ASYNCRTIMP void close_pending_tasks_with_error(const websocket_exception &exc);
 
-    std::shared_ptr<_websocket_client_callback_impl> callback_client() { return m_callback_client; };
+    std::shared_ptr<websocket_client_callback_impl> callback_client() { return m_callback_client; };
 
 private:
     void set_handler();
@@ -409,19 +409,11 @@ private:
     // Queue to maintain the receive tasks when there are no messages(yet).
     std::queue<pplx::task_completion_event<websocket_incoming_message>> m_receive_task_queue;
 
-    pplx::task_completion_event<void> m_close_tce;
-    // There is a bug in ppl task_completion_event. The task_completion_event::set() accesses some
-    // internal data after signaling the event. The waiting thread might go ahead and start destroying the
-    // websocket_client. Due to this race, set() can cause a crash.
-    // To workaround this bug, maintain another event: m_server_close_complete. We will signal this when the m_close_tce.set() has
-    // completed. The websocket_client destructor can wait on this event before proceeding.
-    pplx::task_completion_event<void> m_server_close_complete;
-
     // Initially set to false, becomes true if a close frame is received from the server or
     // if the underlying connection is aborted or terminated.
     bool m_client_closed;
 
-    std::shared_ptr<_websocket_client_callback_impl> m_callback_client;
+    std::shared_ptr<websocket_client_callback_impl> m_callback_client;
 };
 }
 
@@ -434,22 +426,17 @@ public:
     /// <summary>
     ///  Creates a new websocket_client.
     /// </summary>
-    _ASYNCRTIMP websocket_client::websocket_client() :
-        m_client(std::make_shared<details::_websocket_client_task_impl>(websocket_client_config()))
+    _ASYNCRTIMP websocket_client() :
+        m_client(std::make_shared<details::websocket_client_task_impl>(websocket_client_config()))
     {}
 
     /// <summary>
     ///  Creates a new websocket_client.
     /// </summary>
     /// <param name="client_config">The client configuration object containing the possible configuration options to initialize the <c>websocket_client</c>. </param>
-    _ASYNCRTIMP websocket_client::websocket_client(websocket_client_config config) :
-        m_client(std::make_shared<details::_websocket_client_task_impl>(std::move(config)))
+    _ASYNCRTIMP websocket_client(websocket_client_config config) :
+        m_client(std::make_shared<details::websocket_client_task_impl>(std::move(config)))
     {}
-
-    /// <summary>
-    /// Destructor
-    /// </summary>
-    ~websocket_client() CPPREST_NOEXCEPT {}
 
     /// <summary>
     /// Connects to the remote network destination. The connect method initiates the websocket handshake with the
@@ -533,11 +520,12 @@ public:
     }
 
 private:
-    std::shared_ptr<details::_websocket_client_task_impl> m_client;
+    std::shared_ptr<details::websocket_client_task_impl> m_client;
 };
 
 /// <summary>
-/// Websocket client class, used to maintain a connection to a remote host for an extended session, used handler APIs
+/// Websocket client class, used to maintain a connection to a remote host for an extended session, used callback for handling receive and close event instead of async task.
+/// For some scenarioes would be a alternative for the websocket_client like if you want to special handling on close event.
 /// </summary>
 class websocket_callback_client
 {
@@ -552,11 +540,6 @@ public:
     /// </summary>
     /// <param name="client_config">The client configuration object containing the possible configuration options to initialize the <c>websocket_client</c>. </param>
     _ASYNCRTIMP websocket_callback_client(websocket_client_config client_config);
-
-    /// <summary>
-    /// Destructor
-    /// </summary>
-    ~websocket_callback_client() CPPREST_NOEXCEPT{}
 
     /// <summary>
     /// Connects to the remote network destination. The connect method initiates the websocket handshake with the
@@ -583,8 +566,12 @@ public:
     /// <summary>
     /// Set the received handler for notification of client websocket messages.
     /// </summary>
-    /// <param name="handler">The handler for incoming websocket messages</param>
-    void set_received_handler(std::function<void(websocket_incoming_message)> handler)
+    /// <param name="handler">A function representing the incoming websocket messages handler. It's parameters are:
+    ///    msg:  a <c>websocket_incoming_message</c> value indicating the message received
+    /// </param>
+    /// <remarks>Note if this handler is not been set while socket recives messages, the message will be ignored. 
+    /// So if want to make sure handles all the message, set the handler before connect() </remarks>
+    void set_received_handler(const std::function<void(const websocket_incoming_message& msg)>& handler)
     {
         m_client->set_received_handler(handler);
     }
@@ -612,8 +599,12 @@ public:
     /// <summary>
     /// Set the closed handler for notification of client websocket closing event.
     /// </summary>
-    /// <param name="handler">The handler for websocket closing event</param>
-    void set_closed_handler(std::function<void(websocket_close_status, const utility::string_t&, std::error_code)> handler)
+    /// <param name="handler">The handler for websocket closing event, It's parameters are:
+    ///   close_status: The pre-defined status codes used by the endpoint when sending a Close frame.
+    ///   reason: The reason string used by the endpoint when sending a Close frame.
+    ///   errro: The error code if the websocket is closed with abnormal error.
+    ///</param>
+    void set_closed_handler(const std::function<void(websocket_close_status close_status, const utility::string_t& reason, const std::error_code& error)>& handler)
     {
         m_client->set_closed_handler(handler);
     }
@@ -637,7 +628,7 @@ public:
     }
 
 private:
-    std::shared_ptr<details::_websocket_client_callback_impl> m_client;
+    std::shared_ptr<details::websocket_client_callback_impl> m_client;
 };
 
 }}}

@@ -105,7 +105,7 @@ static std::string build_error_msg(const std::error_code &ec, const std::string 
 
 static utility::string_t g_subProtocolHeader(_XPLATSTR("Sec-WebSocket-Protocol"));
 
-class wspp_callback_client : public _websocket_client_callback_impl, public std::enable_shared_from_this<wspp_callback_client>
+class wspp_callback_client : public websocket_client_callback_impl, public std::enable_shared_from_this<wspp_callback_client>
 {
 private:
     enum State {
@@ -118,7 +118,7 @@ private:
     };
 public:
     wspp_callback_client(websocket_client_config config) :
-        _websocket_client_callback_impl(std::move(config)),
+        websocket_client_callback_impl(std::move(config)),
         m_state(CREATED),
         m_num_sends(0)
 #if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__)) || defined(_MS_WINDOWS)
@@ -264,29 +264,29 @@ public:
 
         client.set_message_handler([this](websocketpp::connection_hdl, const websocketpp::config::asio_client::message_type::ptr &msg)
         {
-            _ASSERTE(m_state >= CONNECTED && m_state < CLOSED);
-            websocket_incoming_message incoming_msg;
-
-            switch (msg->get_opcode())
-            {
-            case websocketpp::frame::opcode::binary:
-                incoming_msg.m_msg_type = websocket_message_type::binary_message;
-                break;
-            case websocketpp::frame::opcode::text:
-                incoming_msg.m_msg_type = websocket_message_type::text_message;
-                break;
-            default:
-                // Unknown message type. Since both websocketpp and our code use the RFC codes, we'll just pass it on to the user.
-                incoming_msg.m_msg_type = static_cast<websocket_message_type>(msg->get_opcode());
-                break;
-            }
-
-            // 'move' the payload into a container buffer to avoid any copies.
-            auto &payload = msg->get_raw_payload();
-            incoming_msg.m_body = concurrency::streams::container_buffer<std::string>(std::move(payload));
-
             if (m_external_received_handler)
             {
+                _ASSERTE(m_state >= CONNECTED && m_state < CLOSED);
+                websocket_incoming_message incoming_msg;
+
+                switch (msg->get_opcode())
+                {
+                case websocketpp::frame::opcode::binary:
+                    incoming_msg.m_msg_type = websocket_message_type::binary_message;
+                    break;
+                case websocketpp::frame::opcode::text:
+                    incoming_msg.m_msg_type = websocket_message_type::text_message;
+                    break;
+                default:
+                    // Unknown message type. Since both websocketpp and our code use the RFC codes, we'll just pass it on to the user.
+                    incoming_msg.m_msg_type = static_cast<websocket_message_type>(msg->get_opcode());
+                    break;
+                }
+
+                // 'move' the payload into a container buffer to avoid any copies.
+                auto &payload = msg->get_raw_payload();
+                incoming_msg.m_body = concurrency::streams::container_buffer<std::string>(std::move(payload));
+
                 m_external_received_handler(incoming_msg);
             }
         });
@@ -294,23 +294,27 @@ public:
         client.set_close_handler([this](websocketpp::connection_hdl con_hdl)
         {
             _ASSERTE(m_state != CLOSED);
-            auto &client = m_client->client<WebsocketConfigType>();
-            auto connection = client.get_con_from_hdl(con_hdl);
-
-            const auto &ec = connection->get_ec();
-            websocket_exception exc(ec, build_error_msg(ec, "set_close_handler"));
-
-            auto closeCode = connection->get_local_close_code();
-            auto reason = connection->get_local_close_reason();
-            if (closeCode == websocketpp::close::status::blank)
-            {
-                closeCode = connection->get_remote_close_code();
-                reason = connection->get_remote_close_reason();
-            }
 
             if (m_external_closed_handler)
             {
-                m_external_closed_handler(static_cast<websocket_close_status>(closeCode), utility::conversions::to_utf16string(reason), ec);
+                auto &client = m_client->client<WebsocketConfigType>();
+                auto connection = client.get_con_from_hdl(con_hdl);
+
+                const auto &ec = connection->get_ec();
+
+                const auto& clientCloseCode = connection->get_local_close_code();
+                const auto& clientReason = connection->get_local_close_reason();
+                if (clientCloseCode != websocketpp::close::status::blank)
+                {
+                    const auto& serverCloseCode = connection->get_remote_close_code();
+                    const auto& serverReason = connection->get_remote_close_reason();
+                    m_external_closed_handler(static_cast<websocket_close_status>(serverCloseCode), utility::conversions::to_string_t(serverReason), ec);
+                }
+                else
+                {
+                    m_external_closed_handler(static_cast<websocket_close_status>(clientCloseCode), utility::conversions::to_string_t(clientReason), ec);
+                }
+
             }
             m_close_tce.set();
             m_state = CLOSED;
@@ -572,6 +576,8 @@ public:
 
     pplx::task<void> close(websocket_close_status status, const utility::string_t& reason)
     {
+        if (m_client == nullptr) return pplx::task_from_result();
+
         if (m_client->is_tls_client())
         {
             return close_impl<websocketpp::config::asio_tls_client>(status, reason);
@@ -597,16 +603,19 @@ public:
             {
                 return pplx::task_from_exception<void>(ec.message());
             }
+
+            return pplx::task<void>(m_close_tce);
         }
-        return pplx::task<void>(m_close_tce);
+
+        return pplx::task_from_result();
     }
 
-    void set_received_handler(std::function<void(websocket_incoming_message)> handler)
+    void set_received_handler(const std::function<void(const websocket_incoming_message&)>& handler)
     {
         m_external_received_handler = handler;
     }
 
-    void set_closed_handler(std::function<void(websocket_close_status, utility::string_t, std::error_code)> handler)
+    void set_closed_handler(const std::function<void(websocket_close_status, const utility::string_t&, const std::error_code&)>& handler)
     {
         m_external_closed_handler = handler;
     }
@@ -690,7 +699,7 @@ private:
 
 };
 
-_websocket_client_task_impl::_websocket_client_task_impl(websocket_client_config config) :
+websocket_client_task_impl::websocket_client_task_impl(websocket_client_config config) :
 m_callback_client(std::make_shared<details::wspp_callback_client>(std::move(config))),
 m_client_closed(false)
 {
@@ -720,27 +729,18 @@ namespace client
 namespace details
 {
 
-_websocket_client_task_impl::~_websocket_client_task_impl()
+websocket_client_task_impl::~websocket_client_task_impl()
 {
-    // task_completion_event::set() returns false if it has already been set.
-    // In that case, wait on the m_server_close_complete event for the tce::set() to complete.
-    // The websocket client on close handler (upon receiving close frame from server) will
-    // set this event.
-    // If we have not received a close frame from the server, this set will be a no-op as the
-    // websocket_client is anyways destructing.
-    if (!m_close_tce.set())
+    try
     {
-        create_task(m_server_close_complete).wait();
+        pplx::create_task(m_callback_client->close()).wait();
     }
-    else
-    {
-        close_pending_tasks_with_error(websocket_exception("websocket_client is being destroyed"));
-    }
+    catch (...){}
 }
 
-void _websocket_client_task_impl::set_handler()
+void websocket_client_task_impl::set_handler()
 {
-    m_callback_client->set_received_handler([=](websocket_incoming_message &msg)
+    m_callback_client->set_received_handler([=](const websocket_incoming_message &msg)
     {
         pplx::task_completion_event<websocket_incoming_message> tce; // This will be set if there are any tasks waiting to receive a message
         {
@@ -748,7 +748,7 @@ void _websocket_client_task_impl::set_handler()
             if (m_receive_task_queue.empty()) // Push message to the queue as no one is waiting to receive
             {
                 m_receive_msg_queue.push(msg);
-                return;
+                return; 
             }
             else // There are tasks waiting to receive a message.
             {
@@ -767,7 +767,7 @@ void _websocket_client_task_impl::set_handler()
     });
 }
 
-void _websocket_client_task_impl::close_pending_tasks_with_error(const websocket_exception &exc)
+void websocket_client_task_impl::close_pending_tasks_with_error(const websocket_exception &exc)
 {
     std::lock_guard<std::mutex> lock(m_receive_queue_lock);
     m_client_closed = true;
@@ -779,7 +779,7 @@ void _websocket_client_task_impl::close_pending_tasks_with_error(const websocket
     }
 }
 
-pplx::task<websocket_incoming_message> _websocket_client_task_impl::receive()
+pplx::task<websocket_incoming_message> websocket_client_task_impl::receive()
 {
     std::lock_guard<std::mutex> lock(m_receive_queue_lock);
     if (m_client_closed == true)

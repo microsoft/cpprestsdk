@@ -81,6 +81,77 @@ TEST_FIXTURE(uri_address, close_from_server)
     client.close().wait();
 }
 
+// Test close websocket connection with callback client: client sends an empty close and server responds with close frame
+TEST_FIXTURE(uri_address, close_callback_client_websocket)
+{
+    test_websocket_server server;
+
+    // verify it is ok not to set close handler
+    websocket_callback_client client;
+
+    client.connect(m_uri).wait();
+
+    client.close().wait();
+
+    websocket_callback_client client1;
+
+    client1.set_closed_handler([](websocket_close_status status, const utility::string_t& reason, const std::error_code& code)
+    {
+        VERIFY_ARE_EQUAL(status, websocket_close_status::normal);
+        VERIFY_ARE_EQUAL(reason, U("going away"));
+        VERIFY_ARE_EQUAL(code.value(), 0);
+    });
+
+    client1.connect(m_uri).wait();
+
+    client1.close().wait();
+
+}
+
+// Test close websocket connection: client sends a close with reason and server responds with close frame
+TEST_FIXTURE(uri_address, close_callback_client_with_reason)
+{
+    test_websocket_server server;
+
+    websocket_callback_client client;
+
+    client.set_closed_handler([](websocket_close_status status, const utility::string_t& reason, const std::error_code& code)
+    {
+        VERIFY_ARE_EQUAL(status, websocket_close_status::going_away);
+        VERIFY_ARE_EQUAL(reason, U("Client disconnecting"));
+        VERIFY_ARE_EQUAL(code.value(), 0);
+    });
+
+    client.connect(m_uri).wait();
+
+    client.close(websocket_close_status::going_away, U("Client disconnecting")).wait();
+}
+
+// Server sends a close frame (server initiated close)
+TEST_FIXTURE(uri_address, close_callback_client_from_server)
+{
+    std::string body("hello");
+    test_websocket_server server;
+
+    websocket_callback_client client;
+
+    client.set_closed_handler([](websocket_close_status status, const utility::string_t& reason, const std::error_code& code)
+    {
+        VERIFY_ARE_EQUAL(status, websocket_close_status::going_away);
+        VERIFY_ARE_EQUAL(reason, U(""));
+        VERIFY_ARE_EQUAL(code.value(), 0);
+    });
+
+    client.connect(m_uri).wait();
+
+    // Send close frame from server
+    test_websocket_msg msg;
+    msg.set_msg_type(test_websocket_message_type::WEB_SOCKET_CLOSE_TYPE);
+    server.send_msg(msg);
+
+    client.close().wait();
+}
+
 } // SUITE(close_tests)
 
 }}}}
