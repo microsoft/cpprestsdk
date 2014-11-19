@@ -386,7 +386,7 @@ public:
     pplx::task<void> close()
     {
         // Send a close frame to the server
-        return close(websocket_close_status::normal);
+        return close(websocket_close_status::normal, _XPLATSTR("Normal"));
     }
 
     pplx::task<void> close(websocket_close_status status, const utility::string_t &strreason=_XPLATSTR(""))

@@ -161,24 +161,10 @@ TEST_FIXTURE(uri_address, destroy_without_close)
 // Destroy the callback client without closing it explicitly
 TEST_FIXTURE(uri_address, destroy_without_close_callback_client)
 {
+    // test won't finish if we can't release client properly
     test_websocket_server server;
-    pplx::task_completion_event<void> closeEvent;
-
-    {
-        websocket_callback_client client;
-
-        client.connect(m_uri).wait();
-
-        client.set_close_handler([&closeEvent](websocket_close_status status, const utility::string_t& reason, const std::error_code& code)
-        {
-            CASABLANCA_UNREFERENCED_PARAMETER(status);
-            CASABLANCA_UNREFERENCED_PARAMETER(reason);
-            CASABLANCA_UNREFERENCED_PARAMETER(code);
-            closeEvent.set();
-        });
-    }
-
-    pplx::create_task(closeEvent).wait();
+    websocket_callback_client client;
+    client.connect(m_uri).wait();
 }
 
 // connect fails while user is waiting on receive

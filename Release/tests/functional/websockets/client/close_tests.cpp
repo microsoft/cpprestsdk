@@ -85,6 +85,7 @@ TEST_FIXTURE(uri_address, close_from_server)
 TEST_FIXTURE(uri_address, close_callback_client_websocket)
 {
     test_websocket_server server;
+    const utility::string_t close_reason = U("Too large");
 
     // verify it is ok not to set close handler
     websocket_callback_client client;
@@ -95,16 +96,16 @@ TEST_FIXTURE(uri_address, close_callback_client_websocket)
 
     websocket_callback_client client1;
 
-    client1.set_close_handler([](websocket_close_status status, const utility::string_t& reason, const std::error_code& code)
+    client1.set_close_handler([&close_reason](websocket_close_status status, const utility::string_t& reason, const std::error_code& code)
     {
-        VERIFY_ARE_EQUAL(status, websocket_close_status::normal);
-        VERIFY_ARE_EQUAL(reason, U("going away"));
+        VERIFY_ARE_EQUAL(status, websocket_close_status::too_large);
+        VERIFY_ARE_EQUAL(reason, close_reason);
         VERIFY_ARE_EQUAL(code.value(), 0);
     });
 
     client1.connect(m_uri).wait();
 
-    client1.close().wait();
+    client1.close(websocket_close_status::too_large, close_reason).wait();
 
 }
 

@@ -562,7 +562,7 @@ public:
 
     pplx::task<void> close()
     {
-        return close(static_cast<websocket_close_status>(websocketpp::close::status::normal), U("going away"));
+        return close(static_cast<websocket_close_status>(websocketpp::close::status::normal), U("Normal"));
     }
 
     pplx::task<void> close(websocket_close_status status, const utility::string_t& reason)
@@ -722,11 +722,7 @@ namespace details
 
 websocket_client_task_impl::~websocket_client_task_impl()
 {
-    try
-    {
-        pplx::create_task(m_callback_client->close()).wait();
-    }
-    catch (...){}
+    close_pending_tasks_with_error(websocket_exception("Websocket client is being destroyed"));
 }
 
 void websocket_client_task_impl::set_handler()
