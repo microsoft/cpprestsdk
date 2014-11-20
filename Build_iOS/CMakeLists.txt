@@ -1,6 +1,12 @@
 project(casablanca-ios NONE)
 cmake_minimum_required(VERSION 2.6)
 
+enable_testing()
+add_test(NAME ios_runner
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../Release/tests/common/testrunner/ios
+    COMMAND xcodebuild test -project ios_runner.xcodeproj -configuration=${CMAKE_BUILD_TYPE} -scheme ios_runner -destination "platform=iOS Simulator,name=iPhone 6" LIBRARY_SEARCH_PATH=${SIM_BINARY_DIR}
+  )
+
 set(TOOLCHAIN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/ios-cmake/toolchain/iOS.cmake")
 
 set(SIM_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/build.i386" CACHE INTERNAL "")
