@@ -28,7 +28,7 @@
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 #include "stdafx.h"
-#include "cpprest/fileio.h"
+#include "cpprest/details/fileio.h"
 
 using namespace boost::asio;
 using namespace Concurrency::streams::details;

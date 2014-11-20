@@ -26,7 +26,7 @@
 ****/
 #pragma once
 
-#include "cpprest/xxpublic.h"
+#include "cpprest/details/xxpublic.h"
 
 #ifdef _MS_WINDOWS
 

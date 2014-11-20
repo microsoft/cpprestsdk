@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* interopstream.h
-*
 * Adapter classes for async and STD stream buffers, used to connect std-based and async-based APIs.
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.

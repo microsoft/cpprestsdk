@@ -26,8 +26,8 @@
 ****/
 
 #include "stdafx.h"
-#include "pplx/ioscheduler.h"
-#include "cpprest/globals.h"
+#include "cpprest/details/ioscheduler.h"
+#include "cpprest/details/globals.h"
 
 namespace Concurrency { namespace streams { namespace details {
 

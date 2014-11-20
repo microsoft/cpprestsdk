@@ -27,11 +27,11 @@
 
 #pragma once
 
-#include "cpprest/xxpublic.h"
+#include "cpprest/details/xxpublic.h"
 #include "cpprest/basic_types.h"
 
 #ifdef _MS_WINDOWS
-#include "cpprest/targetver.h"
+#include "cpprest/details/targetver.h"
 #include "cpprest/details/windows_compat.h"
 // use the debug version of the CRT if _DEBUG is defined
 #ifdef _DEBUG
@@ -81,7 +81,6 @@
 #include "boost/thread/condition_variable.hpp"
 #include "boost/date_time/posix_time/posix_time_types.hpp"
 #include "boost/bind/bind.hpp"
-#include <pplx/threadpool.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -100,50 +99,60 @@
 #include <streambuf>
 #include <mutex>
 #include <array>
+#include <vector>
+#include <memory>
+#include <thread>
 
 #include "pplx/pplxtasks.h"
-#include "cpprest/version.h"
+#include "cpprest/details/version.h"
 
-// Stream
+// streams
 #include "cpprest/streams.h"
 #include "cpprest/astreambuf.h"
-
-#include "cpprest/asyncrt_utils.h"
+#include "cpprest/rawptrstream.h"
+#include "cpprest/interopstream.h"
+#include "cpprest/producerconsumerstream.h"
 
 // json
 #include "cpprest/json.h"
 
 // uri
 #include "cpprest/base_uri.h"
-#include "cpprest/uri_parser.h"
+#include "cpprest/details/uri_parser.h"
 
-// web utilities
-#include "cpprest/web_utilities.h"
+// utilities
+#include "cpprest/asyncrt_utils.h"
+#include "cpprest/details/web_utilities.h"
 
 // http
 #include "cpprest/http_headers.h"
 #include "cpprest/http_msg.h"
 #include "cpprest/http_client.h"
-#include "cpprest/http_helpers.h"
+#include "cpprest/details/http_helpers.h"
 
-// Currently websockets are only supported on WinRT (Store only).
-// They are not available on Phone. Hence, cannot use the __cplusplus_winrt macro here.
+// oauth
+#if !defined(_MS_WINDOWS) || _WIN32_WINNT >= _WIN32_WINNT_VISTA
+#include "cpprest/oauth1.h"
+#endif
+#include "cpprest/oauth2.h"
+
+// websockets
 #include "cpprest/ws_client.h"
 #include "cpprest/ws_msg.h"
 
 #if !defined(__cplusplus_winrt)
 #if _WIN32_WINNT >= _WIN32_WINNT_VISTA
-#include "cpprest/http_server.h"
+#include "cpprest/details/http_server.h"
 #include "cpprest/http_listener.h"
-#include "cpprest/http_server_api.h"
+#include "cpprest/details/http_server_api.h"
 #endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA
-
 
 #ifdef _MS_WINDOWS
 #if _WIN32_WINNT >= _WIN32_WINNT_VISTA
-#include "cpprest/http_windows_server.h"
+#include "cpprest/details/http_server_httpsys.h"
 #endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA
-
+#else
+#include "cpprest/details/http_server_asio.h"
 #endif
 
 #endif

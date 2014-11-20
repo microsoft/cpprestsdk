@@ -31,8 +31,8 @@
 #error "Cpp rest SDK requires c++11 smart pointer support from boost"
 #endif
 
-#include "cpprest/http_client_impl.h"
-#include "cpprest/x509_cert_utilities.h"
+#include "cpprest/details/http_client_impl.h"
+#include "cpprest/details/x509_cert_utilities.h"
 #include <unordered_set>
 
 using boost::asio::ip::tcp;

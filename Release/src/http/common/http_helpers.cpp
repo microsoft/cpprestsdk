@@ -26,8 +26,6 @@
 ****/
 
 #include "stdafx.h"
-#include "cpprest/http_helpers.h"
-#include <array>
 
 using namespace web;
 using namespace utility;
@@ -198,7 +196,7 @@ namespace details
             // unknown defaults to big endian.
             return convert_utf16be_to_utf8(std::move(src), false);
         }
-        UNREACHABLE;
+        __assume(0);
     }
 
     utf16string convert_utf16_to_utf16(utf16string src)
@@ -215,7 +213,7 @@ namespace details
             // unknown defaults to big endian.
             return convert_utf16be_to_utf16le(std::move(src), false);
         }
-        UNREACHABLE;
+        __assume(0);
     }
 
     std::string convert_utf16le_to_utf8(utf16string src, bool erase_bom)

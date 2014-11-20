@@ -26,10 +26,8 @@
 ****/
 
 #include "stdafx.h"
-#include "cpprest/x509_cert_utilities.h"
 
-#include <vector>
-#include <string>
+#include "cpprest/details/x509_cert_utilities.h"
 
 #if defined(__APPLE__)
 #include <CoreFoundation/CFData.h>

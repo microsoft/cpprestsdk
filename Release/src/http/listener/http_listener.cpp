@@ -24,7 +24,8 @@
 ****/
 
 #include "stdafx.h"
-#include "cpprest/http_server_api.h"
+
+#if !defined(_MS_WINDOWS) || (_WIN32_WINNT >= _WIN32_WINNT_VISTA && !defined(__cplusplus_winrt))
 
 using namespace web::http::experimental;
 
@@ -202,3 +203,5 @@ void details::http_listener_impl::handle_options(http_request message)
 }
 
 }}}}
+
+#endif

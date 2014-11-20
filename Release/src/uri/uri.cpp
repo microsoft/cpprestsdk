@@ -26,9 +26,6 @@
 ****/
 
 #include "stdafx.h"
-#include "cpprest/uri_parser.h"
-
-#define INTERNET_MAX_URL_LENGTH (2048)
 
 using namespace utility::conversions;
 

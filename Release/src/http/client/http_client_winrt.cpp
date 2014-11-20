@@ -25,7 +25,8 @@
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 #include "stdafx.h"
-#include "cpprest/http_client_impl.h"
+
+#include "cpprest/details/http_client_impl.h"
 
 namespace web
 {

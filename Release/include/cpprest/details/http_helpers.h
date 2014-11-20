@@ -27,14 +27,13 @@
 ****/
 #pragma once
 
-
 // this is a windows header
 #ifdef _MS_WINDOWS
-#include "cpprest/targetver.h"
+#include "cpprest/details/targetver.h"
 #endif
 
 #include "cpprest/http_msg.h"
-#include "cpprest/xxpublic.h"
+#include "cpprest/details/xxpublic.h"
 
 namespace web { namespace http
 {
@@ -49,7 +48,7 @@ namespace details
     public:
     #define _MIME_TYPES
     #define DAT(a,b) _ASYNCRTIMP const static utility::string_t a;
-    #include "cpprest/http_constants.dat"
+    #include "cpprest/details/http_constants.dat"
     #undef _MIME_TYPES
     #undef DAT
     };
@@ -62,7 +61,7 @@ namespace details
     public:
     #define _CHARSET_TYPES
     #define DAT(a,b) _ASYNCRTIMP const static utility::string_t a;
-    #include "cpprest/http_constants.dat"
+    #include "cpprest/details/http_constants.dat"
     #undef _CHARSET_TYPES
     #undef DAT
     };

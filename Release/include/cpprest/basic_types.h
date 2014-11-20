@@ -31,7 +31,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include "cpprest/xxpublic.h"
+#include "cpprest/details/xxpublic.h"
 
 #ifndef _MS_WINDOWS
 # define __STDC_LIMIT_MACROS

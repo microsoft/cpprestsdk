@@ -35,7 +35,7 @@
 #include <vector>
 #include <unordered_map>
 #include <cstdint>
-#include "cpprest/xxpublic.h"
+#include "cpprest/details/xxpublic.h"
 #include "cpprest/basic_types.h"
 #include "cpprest/asyncrt_utils.h"
 
@@ -1329,7 +1329,7 @@ public:
             case json::number::type::double_type :
                 return m_value == other.m_value;
             }
-            UNREACHABLE;
+            __assume(0);
         }
 
     private:

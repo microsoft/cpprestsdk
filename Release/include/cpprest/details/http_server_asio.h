@@ -13,11 +13,12 @@
 */
 
 #pragma once
+
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 #include <set>
 #include "pplx/threadpool.h"
-#include "http_server.h"
+#include "cpprest/details/http_server.h"
 
 namespace web
 {

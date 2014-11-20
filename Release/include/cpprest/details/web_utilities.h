@@ -27,7 +27,7 @@
 #ifndef _CASA_WEB_UTILITIES_H
 #define _CASA_WEB_UTILITIES_H
 
-#include "cpprest/xxpublic.h"
+#include "cpprest/details/xxpublic.h"
 #include "cpprest/asyncrt_utils.h"
 
 namespace web

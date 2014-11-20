@@ -26,8 +26,8 @@
 ****/
 
 #include "stdafx.h"
-#include "cpprest/oauth1.h"
-#include "cpprest/asyncrt_utils.h"
+
+#if !defined(_MS_WINDOWS) || _WIN32_WINNT >= _WIN32_WINNT_VISTA
 
 using namespace utility;
 using web::http::client::http_client;
@@ -42,7 +42,7 @@ namespace details
 
 #define _OAUTH1_STRINGS
 #define DAT(a_, b_) const oauth1_string oauth1_strings::a_(_XPLATSTR(b_));
-#include "cpprest/http_constants.dat"
+#include "cpprest/details/http_constants.dat"
 #undef _OAUTH1_STRINGS
 #undef DAT
 
@@ -353,8 +353,10 @@ pplx::task<void> oauth1_config::token_from_redirected_uri(const web::http::uri& 
 
 #define _OAUTH1_METHODS
 #define DAT(a,b) const oauth1_method oauth1_methods::a = b;
-#include "cpprest/http_constants.dat"
+#include "cpprest/details/http_constants.dat"
 #undef _OAUTH1_METHODS
 #undef DAT
 
-}}}} // namespace web::http::oauth1::experimental
+}}}}
+
+#endif

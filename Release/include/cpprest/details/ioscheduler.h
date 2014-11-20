@@ -27,7 +27,7 @@
 
 #pragma once
 
-#include "cpprest/xxpublic.h"
+#include "cpprest/details/xxpublic.h"
 
 // This header file is only for Windows builds
 #ifdef _MS_WINDOWS

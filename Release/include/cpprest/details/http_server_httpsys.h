@@ -16,18 +16,12 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* http_windows_server.h
-*
 * HTTP Library: implementation of HTTP server API built on Windows HTTP Server APIs.
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 
 #pragma once
-
-#ifndef _MS_WINDOWS
-#error This file is Windows-specific
-#endif
 
 #if _WIN32_WINNT < _WIN32_WINNT_VISTA
 #error "Error: http server APIs are not supported in XP"
@@ -42,7 +36,7 @@
 #include <atomic>
 #include <mutex>
 
-#include "cpprest/http_server.h"
+#include "cpprest/details/http_server.h"
 
 namespace web
 {

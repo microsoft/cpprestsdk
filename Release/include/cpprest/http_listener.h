@@ -28,14 +28,14 @@
 #ifndef _CASA_HTTP_LISTENER_H
 #define _CASA_HTTP_LISTENER_H
 
-#if _WIN32_WINNT < _WIN32_WINNT_VISTA
-#error "Error: http server APIs are not supported in XP"
-#endif //_WIN32_WINNT < _WIN32_WINNT_VISTA
-
 #include <limits>
 #include <functional>
 
 #include "cpprest/http_msg.h"
+
+#if defined(_MS_WINDOWS) && (_WIN32_WINNT < _WIN32_WINNT_VISTA || __cplusplus_winrt)
+#error "Error: http server APIs are not supported on XP and the Windows Runtime"
+#endif
 
 namespace web
 {

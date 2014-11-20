@@ -33,8 +33,6 @@
 #include <robuffer.h>
 #endif
 
-#include "cpprest/web_utilities.h"
-
 namespace web
 {
 namespace details

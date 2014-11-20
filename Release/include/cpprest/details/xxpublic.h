@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* xxpublic.h
-*
 * Standard macros and definitions.
 * This header has minimal dependency on windows headers and is safe for use in the public API
 *
@@ -43,17 +41,6 @@
 #define _ASYNCRTIMP __declspec(dllimport)
 #endif
 #endif
-
-// for guids, used in comm.h
-#if defined(MS_TARGET_APPLE)
-#include "cpprest/details/apple_compat.h"
-#elif defined(_MS_WINDOWS)
-#include "cpprest/details/windows_compat.h"
-#else
-#include "boost/uuid/uuid.hpp"
-#endif
-
-#define UNREACHABLE __assume(0)
 
 #ifdef __clang__
 #include <cstdio>

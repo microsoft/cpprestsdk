@@ -44,11 +44,11 @@ typedef void* native_handle;}}}
 #include <limits>
 
 #include "pplx/pplxtasks.h"
-#include "cpprest/xxpublic.h"
+#include "cpprest/details/xxpublic.h"
 #include "cpprest/http_msg.h"
 #include "cpprest/json.h"
 #include "cpprest/uri.h"
-#include "cpprest/web_utilities.h"
+#include "cpprest/details/web_utilities.h"
 #include "cpprest/basic_types.h"
 #include "cpprest/asyncrt_utils.h"
 

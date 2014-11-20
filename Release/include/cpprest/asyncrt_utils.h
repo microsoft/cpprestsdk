@@ -35,7 +35,7 @@
 #include <locale.h>
 
 #include "pplx/pplxtasks.h"
-#include "cpprest/xxpublic.h"
+#include "cpprest/details/xxpublic.h"
 #include "cpprest/basic_types.h"
 
 #if !defined(_MS_WINDOWS) || (_MSC_VER >= 1700)

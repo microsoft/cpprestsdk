@@ -36,9 +36,9 @@
 #include <mutex>
 
 #include "pplx/pplxtasks.h"
-#include "cpprest/xxpublic.h"
+#include "cpprest/details/xxpublic.h"
 #include "cpprest/uri.h"
-#include "cpprest/web_utilities.h"
+#include "cpprest/details/web_utilities.h"
 #include "cpprest/http_headers.h"
 #include "cpprest/basic_types.h"
 #include "cpprest/asyncrt_utils.h"

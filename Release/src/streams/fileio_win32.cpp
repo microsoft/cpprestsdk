@@ -28,8 +28,8 @@
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 #include "stdafx.h"
-#include "pplx/ioscheduler.h"
-#include "cpprest/fileio.h"
+#include "cpprest/details/ioscheduler.h"
+#include "cpprest/details/fileio.h"
 
 using namespace web;
 using namespace utility;

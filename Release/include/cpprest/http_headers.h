@@ -32,7 +32,7 @@
 #include <string>
 #include <vector>
 #include <system_error>
-#include "cpprest/xxpublic.h"
+#include "cpprest/details/xxpublic.h"
 #include "cpprest/asyncrt_utils.h"
 
 namespace web { namespace http {

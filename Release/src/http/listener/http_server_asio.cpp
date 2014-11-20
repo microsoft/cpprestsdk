@@ -33,11 +33,6 @@
 #if defined(__clang__)
 #pragma clang diagnostic pop
 #endif
-#include "cpprest/http_helpers.h"
-#include "cpprest/http_server_api.h"
-#include "cpprest/http_server.h"
-#include "cpprest/http_linux_server.h"
-#include "cpprest/producerconsumerstream.h"
 
 using namespace boost::asio;
 using namespace boost::asio::ip;

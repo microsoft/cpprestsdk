@@ -36,7 +36,7 @@
 #include "cpprest/json.h"
 #include "cpprest/uri.h"
 #include "cpprest/http_headers.h"
-#include "cpprest/xxpublic.h"
+#include "cpprest/details/xxpublic.h"
 #include "cpprest/asyncrt_utils.h"
 #include "cpprest/streams.h"
 #include "cpprest/containerstream.h"
@@ -75,7 +75,7 @@ class methods
 public:
 #define _METHODS
 #define DAT(a,b) _ASYNCRTIMP const static method a;
-#include "cpprest/http_constants.dat"
+#include "cpprest/details/http_constants.dat"
 #undef _METHODS
 #undef DAT
 };
@@ -90,7 +90,7 @@ class status_codes
 public:
 #define _PHRASES
 #define DAT(a,b,c) const static status_code a=b;
-#include "cpprest/http_constants.dat"
+#include "cpprest/details/http_constants.dat"
 #undef _PHRASES
 #undef DAT
 };
@@ -125,7 +125,7 @@ class header_names
 public:
 #define _HEADER_NAMES
 #define DAT(a,b) _ASYNCRTIMP const static utility::string_t a;
-#include "cpprest/http_constants.dat"
+#include "cpprest/details/http_constants.dat"
 #undef _HEADER_NAMES
 #undef DAT
 };

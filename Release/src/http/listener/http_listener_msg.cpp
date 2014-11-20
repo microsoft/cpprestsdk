@@ -38,7 +38,7 @@ pplx::task<void> details::_http_request::_reply_impl(http_response response)
         static http_status_to_phrase idToPhraseMap[] = {
 #define _PHRASES
 #define DAT(a,b,c) {status_codes::a, c},
-#include "cpprest/http_constants.dat"
+#include "cpprest/details/http_constants.dat"
 #undef _PHRASES
 #undef DAT
         };
@@ -55,7 +55,7 @@ pplx::task<void> details::_http_request::_reply_impl(http_response response)
 
     pplx::task<void> response_completed;
 
-#if !defined(__cplusplus_winrt)
+#if !defined(__cplusplus_winrt) && _WIN32_WINNT >= _WIN32_WINNT_VISTA
     auto server_api = experimental::details::http_server_api::server_api();
 
     if (m_server_context && server_api)

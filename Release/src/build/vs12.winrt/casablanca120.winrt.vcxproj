@@ -50,7 +50,8 @@
       <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
     </Link>
   </ItemDefinitionGroup>
-  <Import Project="../sources.proj" />
+  <Import Project="..\common.vcxitems" Label="Shared" Condition="Exists('..\common.vcxitems')" />
+  <Import Project="..\winrt.vcxitems" Label="Shared" Condition="Exists('..\winrt.vcxitems')" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <!-- This is a workaround until we get the Casablanca120.winrt.dll output directly in binaries folder -->
   <ItemDefinitionGroup>

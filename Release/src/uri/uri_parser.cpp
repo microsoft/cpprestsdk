@@ -24,7 +24,6 @@
 ****/
 #include "stdafx.h"
 #include <locale>
-#include "cpprest/uri_parser.h"
 
 namespace web { namespace details { namespace uri_parser
 {

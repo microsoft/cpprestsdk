@@ -25,8 +25,8 @@
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 #include "stdafx.h"
-#include "cpprest/http_client_impl.h"
-#include "cpprest/producerconsumerstream.h"
+
+#include "cpprest/details/http_client_impl.h"
 
 namespace web
 {
@@ -223,7 +223,7 @@ public:
 
     msg_body_type m_bodyType;
 
-    size64_t m_remaining_to_write;
+    utility::size64_t m_remaining_to_write;
 
     std::char_traits<uint8_t>::pos_type m_startingPosition;
 
@@ -782,7 +782,7 @@ private:
     static void _multiple_segment_write_data(_In_ winhttp_request_context * p_request_context)
     {
         auto rbuf = p_request_context->_get_readbuffer();
-        SafeInt<size64_t> safeCount = p_request_context->m_remaining_to_write;
+        SafeInt<utility::size64_t> safeCount = p_request_context->m_remaining_to_write;
         safeCount = safeCount.Min(p_request_context->m_http_client->client_config().chunksize());
 
         uint8_t*  block = nullptr;

@@ -26,10 +26,8 @@
 ****/
 
 #include "stdafx.h"
-#include "cpprest/http_server.h"
-#include "cpprest/http_server_api.h"
-#include "cpprest/http_windows_server.h"
-#include "cpprest/rawptrstream.h"
+
+#if _WIN32_WINNT >= _WIN32_WINNT_VISTA
 
 using namespace web;
 using namespace utility;
@@ -956,6 +954,6 @@ void windows_request_context::cancel_request(std::exception_ptr except_ptr)
     }
 }
 
-} // namespace details
-} // namespace experimental
-}} // namespace web::http
+}}}}
+
+#endif

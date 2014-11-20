@@ -29,7 +29,7 @@
 #ifndef _CASA_FILE_STREAMS_H
 #define _CASA_FILE_STREAMS_H
 
-#include "cpprest/fileio.h"
+#include "cpprest/details/fileio.h"
 #include "cpprest/astreambuf.h"
 #include "cpprest/streams.h"
 #include <assert.h>

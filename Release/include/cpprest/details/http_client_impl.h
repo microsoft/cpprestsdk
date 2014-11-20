@@ -16,16 +16,17 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* http_client_impl.h
-*
 * HTTP Library: Client-side APIs, non-public declarations used in the implementation.
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
+#pragma once
 
-#include "cpprest/http_helpers.h"
+#include "cpprest/basic_types.h"
+#include "cpprest/details/http_helpers.h"
+
 #ifdef _MS_WINDOWS
 #if !defined(__cplusplus_winrt)
 #include <winhttp.h>
@@ -47,10 +48,7 @@ using namespace concurrency;
 #include <boost/bind.hpp>
 #include <boost/asio/ssl.hpp>
 #include <boost/algorithm/string.hpp>
-#include <pplx/threadpool.h>
 #endif
-
-using namespace utility;
 
 #ifdef _MS_WINDOWS
 # define CRLF _XPLATSTR("\r\n")
@@ -217,8 +215,8 @@ public:
 
     std::exception_ptr m_exceptionPtr;
 
-    size64_t m_uploaded;
-    size64_t m_downloaded;
+    utility::size64_t m_uploaded;
+    utility::size64_t m_downloaded;
 
     // task completion event to signal request is completed.
     pplx::task_completion_event<http_response> m_request_completion;

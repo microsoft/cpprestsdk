@@ -33,7 +33,7 @@
 #include <limits>
 
 #include "pplx/pplxtasks.h"
-#include "cpprest/xxpublic.h"
+#include "cpprest/details/xxpublic.h"
 #include "cpprest/producerconsumerstream.h"
 #include "cpprest/uri.h"
 #include "cpprest/basic_types.h"

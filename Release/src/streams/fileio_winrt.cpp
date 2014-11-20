@@ -28,8 +28,7 @@
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 #include "stdafx.h"
-#include "cpprest/fileio.h"
-#include "cpprest/interopstream.h"
+#include "cpprest/details/fileio.h"
 #include "robuffer.h"
 
 using namespace ::Windows::Foundation;

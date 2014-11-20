@@ -24,7 +24,7 @@
 ****/
 
 #include "stdafx.h"
-#include "cpprest/globals.h"
+#include "cpprest/details/globals.h"
 
 #ifdef _MS_WINDOWS
 volatile long g_isProcessTerminating = 0;

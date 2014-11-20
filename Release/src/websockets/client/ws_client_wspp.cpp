@@ -24,20 +24,13 @@
 ****/
 
 #include "stdafx.h"
-#include "cpprest/producerconsumerstream.h"
-#include "cpprest/containerstream.h"
-#include "cpprest/ws_msg.h"
-#include "cpprest/ws_client.h"
-#include "cpprest/x509_cert_utilities.h"
-#include <memory>
-#include <thread>
+#include "cpprest/details/x509_cert_utilities.h"
 
 // Force websocketpp to use C++ std::error_code instead of Boost.
 #define _WEBSOCKETPP_CPP11_SYSTEM_ERROR_
 
 #if ((!defined(WINAPI_FAMILY) || WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP) && !defined(_M_ARM) && (!defined(_MSC_VER) || (_MSC_VER < 1900))) && !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 #if defined(__GNUC__)
-#include "pplx/threadpool.h"
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wconversion"
 #pragma GCC diagnostic ignored "-Wunused-parameter"

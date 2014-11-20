@@ -88,7 +88,7 @@ utility::string_t details::_http_response::to_string() const
         static http_status_to_phrase idToPhraseMap[] = {
 #define _PHRASES
 #define DAT(a,b,c) {status_codes::a, c},
-#include "cpprest/http_constants.dat"
+#include "cpprest/details/http_constants.dat"
 #undef _PHRASES
 #undef DAT
         };

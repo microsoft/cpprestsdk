@@ -56,7 +56,7 @@ class oauth2_strings
 public:
 #define _OAUTH2_STRINGS
 #define DAT(a_, b_) _ASYNCRTIMP static const oauth2_string a_;
-#include "cpprest/http_constants.dat"
+#include "cpprest/details/http_constants.dat"
 #undef _OAUTH2_STRINGS
 #undef DAT
 };

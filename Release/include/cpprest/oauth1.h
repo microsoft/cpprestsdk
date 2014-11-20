@@ -26,9 +26,6 @@
 ****/
 #pragma once
 
-#ifndef _CASA_OAUTH1_H
-#define _CASA_OAUTH1_H
-
 #include "cpprest/http_msg.h"
 
 namespace web
@@ -91,7 +88,7 @@ class oauth1_strings
 public:
 #define _OAUTH1_STRINGS
 #define DAT(a_, b_) _ASYNCRTIMP static const oauth1_string a_;
-#include "cpprest/http_constants.dat"
+#include "cpprest/details/http_constants.dat"
 #undef _OAUTH1_STRINGS
 #undef DAT
 };
@@ -111,7 +108,7 @@ class oauth1_methods
 public:
 #define _OAUTH1_METHODS
 #define DAT(a,b) _ASYNCRTIMP static const oauth1_method a;
-#include "cpprest/http_constants.dat"
+#include "cpprest/details/http_constants.dat"
 #undef _OAUTH1_METHODS
 #undef DAT
 };
@@ -476,6 +473,4 @@ private:
     std::shared_ptr<experimental::oauth1_config> m_config;
 };
 
-}}}} // namespace web::http::oauth1::details
-
-#endif  /* _CASA_OAUTH1_H */
+}}}}

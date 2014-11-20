@@ -29,9 +29,9 @@
 #error "Error: http server APIs are not supported in XP"
 #endif //_WIN32_WINNT < _WIN32_WINNT_VISTA
 
-#include "cpprest/http_listener.h"
-
 #include <memory>
+
+#include "cpprest/http_listener.h"
 
 namespace web { namespace http
 {
