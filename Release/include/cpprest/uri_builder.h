@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* uri_builder.h
-*
 * Builder style class for creating URIs.
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.

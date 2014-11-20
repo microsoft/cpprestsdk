@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* basic_types.h
-*
 * Platform-dependent type definitions
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.

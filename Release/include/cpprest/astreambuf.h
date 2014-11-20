@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* astreambuf.h
-*
 * Asynchronous I/O: stream buffer. This is an extension to the PPL concurrency features and therefore
 * lives in the Concurrency namespace.
 *
@@ -33,7 +31,7 @@
 #include <math.h>
 
 #include "pplx/pplxtasks.h"
-#include "cpprest/basic_types.h"
+#include "cpprest/details/basic_types.h"
 #include "cpprest/asyncrt_utils.h"
 
 #if defined(_MSC_VER)

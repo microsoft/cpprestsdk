@@ -16,9 +16,7 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* http_helpers.cpp - Implementation Details of the http.h layer of messaging
-*
-* Functions and types for interoperating with http.h from modern C++
+* Implementation Details of the http.h layer of messaging
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
 *

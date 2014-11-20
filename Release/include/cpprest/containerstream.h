@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* containerstream.h
-*
 * This file defines a basic STL-container-based stream buffer. Reading from the buffer will not remove any data
 * from it and seeking is thus supported.
 *

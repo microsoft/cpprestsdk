@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* oauth1.h
-*
 * HTTP Library: Oauth 1.0
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.

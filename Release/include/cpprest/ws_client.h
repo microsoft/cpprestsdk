@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* ws_client.h
-*
 * Websocket client side implementation
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -36,7 +34,7 @@
 #include "cpprest/uri.h"
 #include "cpprest/details/web_utilities.h"
 #include "cpprest/http_headers.h"
-#include "cpprest/basic_types.h"
+#include "cpprest/details/basic_types.h"
 #include "cpprest/asyncrt_utils.h"
 #include "cpprest/ws_msg.h"
 

@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* http_client.h
-*
 * HTTP Library: Client-side APIs.
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
@@ -45,7 +43,7 @@ typedef void* native_handle;}}}
 #include "cpprest/json.h"
 #include "cpprest/uri.h"
 #include "cpprest/details/web_utilities.h"
-#include "cpprest/basic_types.h"
+#include "cpprest/details/basic_types.h"
 #include "cpprest/asyncrt_utils.h"
 
 #if !defined(CPPREST_TARGET_XP) && !defined(_PHONE8_)

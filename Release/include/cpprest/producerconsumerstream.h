@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* producerconsumerstream.h
-*
 * This file defines a basic memory-based stream buffer, which allows consumer / producer pairs to communicate
 * data via a buffer.
 *

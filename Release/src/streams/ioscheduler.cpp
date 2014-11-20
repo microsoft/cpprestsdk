@@ -16,9 +16,7 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* ioscheduler.cpp
-*
-* Implemenation of I/O Scheduler
+* Implementation of I/O Scheduler
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
 *

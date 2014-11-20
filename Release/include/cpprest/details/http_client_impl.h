@@ -24,7 +24,7 @@
 ****/
 #pragma once
 
-#include "cpprest/basic_types.h"
+#include "cpprest/details/basic_types.h"
 #include "cpprest/details/http_helpers.h"
 
 #ifdef _WIN32

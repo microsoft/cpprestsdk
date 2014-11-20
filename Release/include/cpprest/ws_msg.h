@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* ws_msg.h
-*
 * Websocket incoming and outgoing message definitions.
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -32,7 +30,7 @@
 #include "pplx/pplxtasks.h"
 #include "cpprest/producerconsumerstream.h"
 #include "cpprest/uri.h"
-#include "cpprest/basic_types.h"
+#include "cpprest/details/basic_types.h"
 #include "cpprest/asyncrt_utils.h"
 
 namespace web

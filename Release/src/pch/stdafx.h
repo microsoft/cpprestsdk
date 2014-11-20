@@ -28,7 +28,7 @@
 #pragma once
 
 #include "cpprest/details/cpprest_compat.h"
-#include "cpprest/basic_types.h"
+#include "cpprest/details/basic_types.h"
 
 #ifdef _WIN32
 #ifdef CPPREST_TARGET_XP

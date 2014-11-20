@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* pplxconv.h
-*
 * Utilities to convert between PPL tasks and PPLX tasks
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.

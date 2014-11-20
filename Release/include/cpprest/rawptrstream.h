@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* rawptrstream.h
-*
 * This file defines a stream buffer that is based on a raw pointer and block size. Unlike a vector-based
 * stream buffer, the buffer cannot be expanded or contracted, it has a fixed capacity.
 *

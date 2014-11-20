@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* x509_cert_utilities.cpp
-*
 * Contains utility functions for helping to verify server certificates in OS X/iOS.
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.

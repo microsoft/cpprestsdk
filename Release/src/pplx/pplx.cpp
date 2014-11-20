@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* pplx.cpp
-*
 * Parallel Patterns Library implementation (common code across platforms)
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.

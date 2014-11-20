@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* json.h
-*
 * HTTP Library: JSON parser and writer
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
@@ -32,7 +30,7 @@
 #include <vector>
 #include <unordered_map>
 #include <cstdint>
-#include "cpprest/basic_types.h"
+#include "cpprest/details/basic_types.h"
 #include "cpprest/asyncrt_utils.h"
 
 namespace web

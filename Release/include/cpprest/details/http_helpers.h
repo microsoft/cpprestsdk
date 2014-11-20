@@ -16,7 +16,7 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* http_helpers.h - Implementation Details of the http.h layer of messaging
+* Implementation Details of the http.h layer of messaging
 *
 * Functions and types for interoperating with http.h from modern C++
 *   This file includes windows definitions and should not be included in a public header

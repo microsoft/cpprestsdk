@@ -16,7 +16,7 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* asyncrt_utils.cpp - Utilities
+* Utilities
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
 *
