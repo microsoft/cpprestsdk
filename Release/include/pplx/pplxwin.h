@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* pplxwin.h
-*
 * Windows specific pplx implementations
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
@@ -57,7 +55,7 @@ namespace details
         _PPLXIMP void __cdecl YieldExecution();
 
         /// <summary>
-        /// Caputeres the callstack
+        /// Captures the callstack
         /// </summary>
         __declspec(noinline) _PPLXIMP size_t __cdecl CaptureCallstack(void **, size_t, size_t);
 

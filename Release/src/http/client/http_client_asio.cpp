@@ -16,11 +16,9 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* http_linux.cpp
-*
 * HTTP Library: Client-side APIs.
 *
-* This file contains the implementation for Linux
+* This file contains a cross platform implementation based on Boost.ASIO.
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
 *

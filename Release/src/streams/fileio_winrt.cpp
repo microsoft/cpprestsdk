@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* fileio_winrt.cpp
-*
 * Asynchronous I/O: stream buffer implementation details
 *
 * We're going to some lengths to avoid exporting C++ class member functions and implementation details across

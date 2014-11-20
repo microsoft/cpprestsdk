@@ -16,9 +16,9 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* http_listen.cpp
-*
 * HTTP Library: HTTP listener (server-side) APIs
+*
+* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
@@ -37,7 +37,7 @@ namespace listener
 // Helper function to check URI components.
 static void check_listener_uri(const http::uri &address)
 {
-    // Somethings like proper URI schema are verified by the URI class.
+    // Some things like proper URI schema are verified by the URI class.
     // We only need to check certain things specific to HTTP.
 
 #ifdef _MS_WINDOWS
@@ -201,6 +201,4 @@ void details::http_listener_impl::handle_options(http_request message)
     message.reply(response);
 }
 
-} // namespace listener
-} // namespace experimental
-}} // namespace web::http
+}}}}

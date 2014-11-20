@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* http_msg.cpp
-*
 * HTTP Library: Request and reply message definitions (client side).
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.

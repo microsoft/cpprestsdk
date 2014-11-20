@@ -16,11 +16,9 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* http_win8.cpp
-*
 * HTTP Library: Client-side APIs.
 *
-* This file contains the implementation for Windows 8 App store apps
+* This file contains the implementation for the Windows Runtime, using XML HTTP Extended Request.
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
 *

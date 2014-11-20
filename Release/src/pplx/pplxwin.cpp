@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* pplxwin.cpp
-*
 * Windows specific implementation of PPL constructs
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
@@ -37,7 +35,7 @@
 #error "ERROR: This file should only be included in Windows Build"
 #endif
 
-// Disable false alarm code analyze warning
+// Disable false alarm code analyse warning
 #pragma warning (disable : 26165 26110)
 namespace pplx
 {
@@ -144,7 +142,7 @@ namespace details
     //
     // critical_section implementation
     //
-    // TFS# 612702 -- this implementation is unnecessariliy recursive. See bug for details.
+    // TFS# 612702 -- this implementation is unnecessarily recursive. See bug for details.
     _PPLXIMP critical_section_impl::critical_section_impl()
     {
         static_assert(sizeof(CRITICAL_SECTION) <= sizeof(_M_impl), "CRITICAL_SECTION version mismatch");

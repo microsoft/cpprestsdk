@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* pplx.cpp
-*
 * Parallel Patterns Library - Linux version
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
@@ -52,7 +50,7 @@ namespace details {
         }
     }
 
-    _PPLXIMP void linux_scheduler::schedule( TaskProc_t proc, void* param)
+    _PPLXIMP void linux_scheduler::schedule(TaskProc_t proc, void* param)
     {
         crossplat::threadpool::shared_instance().schedule(boost::bind(proc, param));
     }

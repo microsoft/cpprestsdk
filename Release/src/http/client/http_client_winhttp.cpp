@@ -16,11 +16,9 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* http_client.cpp
-*
 * HTTP Library: Client-side APIs.
 *
-* This file contains the implementation for Windows Vista, Windows 7 and Windows Server
+* This file contains the implementation for Windows Desktop, based on WinHTTP.
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
 *
