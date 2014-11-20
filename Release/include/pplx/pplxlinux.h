@@ -32,7 +32,7 @@
 #error This file must not be included for Visual Studio
 #endif
 
-#ifndef _MS_WINDOWS
+#ifndef _WIN32
 
 #include <signal.h>
 #include "pthread.h"
@@ -45,7 +45,7 @@
 #else
 #include "cpprest/details/linux_compat.h"
 #include <mutex>   
-#include <condition_variable>  
+#include <condition_variable>
 #endif
 
 #include "pplx/pplxinterface.h"
@@ -329,5 +329,5 @@ inline void* _ReturnAddress() { return __builtin_return_address(0); }
 
 } // namespace pplx
 
-#endif // !_MS_WINDOWS
+#endif // !_WIN32
 #endif // _PPLXLINUX_H

@@ -202,7 +202,7 @@ web::json::value web::json::value::string(utility::string_t value, bool has_esca
             );
 }
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 web::json::value web::json::value::string(const std::string &value)
 {
     std::unique_ptr<details::_Value> ptr = utility::details::make_unique<details::_String>(utility::conversions::to_utf16string(value));
@@ -381,7 +381,7 @@ bool web::json::details::_Object::has_field(const utility::string_t &key) const
 
 utility::string_t json::value::to_string() const
 {
-#ifndef _MS_WINDOWS
+#ifndef _WIN32
     utility::details::scoped_c_thread_locale locale;
 #endif
     return m_value->to_string();

@@ -30,7 +30,7 @@
 #ifndef _PPLXCONV_H
 #define _PPLXCONV_H
 
-#ifndef _MS_WINDOWS
+#ifndef _WIN32
 #error This is only supported on Windows
 #endif
 

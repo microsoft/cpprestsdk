@@ -34,7 +34,6 @@
 #include <functional>
 
 #include "cpprest/asyncrt_utils.h"
-#include "cpprest/details/xxpublic.h"
 #include "cpprest/basic_types.h"
 
 namespace web {

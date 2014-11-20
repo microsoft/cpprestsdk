@@ -32,7 +32,7 @@
 #error This file must not be included for Visual Studio 12 or later
 #endif
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 
 #include "cpprest/details/windows_compat.h"
 #include "pplx/pplxinterface.h"
@@ -301,5 +301,5 @@ namespace details
 
 } // namespace pplx
 
-#endif // _MS_WINDOWS
+#endif // _WIN32
 #endif // _PPLXWIN_H

@@ -26,9 +26,6 @@
 ****/
 #pragma once
 
-#ifndef _CASA_STREAMS_H
-#define _CASA_STREAMS_H
-
 #include "cpprest/astreambuf.h"
 #include <iosfwd>
 
@@ -445,7 +442,7 @@ namespace Concurrency { namespace streams
         typedef std::false_type _is_unsigned;
     };
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 #define _INT_TRAIT(_t,_low,_high)  template<> struct _type_parser_integral_traits<_t>{typedef std::true_type _is_integral;typedef std::false_type _is_unsigned;static const int64_t _min = _low;static const int64_t _max = _high;};
 #define _UINT_TRAIT(_t,_low,_high) template<> struct _type_parser_integral_traits<_t>{typedef std::true_type _is_integral;typedef std::true_type  _is_unsigned;static const uint64_t _max = _high;};
 
@@ -520,7 +517,7 @@ namespace Concurrency { namespace streams
 
         static pplx::task<T> _parse(streams::streambuf<CharType>, std::false_type, std::true_type)
         {
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
             static_assert(false, "type is not supported for extraction from a stream");
 #else
             throw std::runtime_error("type is not supported for extraction from a stream");
@@ -887,7 +884,7 @@ namespace Concurrency { namespace streams
                     if (ch == '\n')
                     {
 						return buffer.bumpc().then([](
-#ifndef _MS_WINDOWS // Required by GCC
+#ifndef _WIN32 // Required by GCC
 							typename
 #endif
 							concurrency::streams::char_traits<CharType>::int_type) { return false; });
@@ -899,7 +896,7 @@ namespace Concurrency { namespace streams
                 {
                     while ( buffer.in_avail() > 0 )
                     {
-#ifndef _MS_WINDOWS // Required by GCC, because concurrency::streams::char_traits<CharType> is a dependent scope
+#ifndef _WIN32 // Required by GCC, because concurrency::streams::char_traits<CharType> is a dependent scope
                         typename
 #endif
                         concurrency::streams::char_traits<CharType>::int_type ch;
@@ -1719,7 +1716,7 @@ private:
     }
 };
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 template<>
 class type_parser<char,std::basic_string<wchar_t>> : public _type_parser_base<char>
 {
@@ -1785,8 +1782,6 @@ private:
         return pplx::task_from_result(utility::conversions::utf8_to_utf16(*state));
     }
 };
-#endif //_MS_WINDOWS
+#endif //_WIN32
 
 }}
-
-#endif  /* _CASA_STREAMS_H */

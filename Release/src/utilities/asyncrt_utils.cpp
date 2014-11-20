@@ -30,7 +30,7 @@ using namespace Platform;
 using namespace Windows::Storage::Streams;
 #endif // #if !defined(__cplusplus_winrt)
 
-#ifndef _MS_WINDOWS
+#ifndef _WIN32
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/posix_time/posix_time_io.hpp>
 using namespace boost::locale::conv;
@@ -63,7 +63,7 @@ scoped_c_thread_locale::xplat_locale scoped_c_thread_locale::c_locale()
     std::call_once(g_c_localeFlag, [&]()
     {
         scoped_c_thread_locale::xplat_locale *clocale = new scoped_c_thread_locale::xplat_locale();
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
         *clocale = _create_locale(LC_ALL, "C");
         if (clocale == nullptr)
         {
@@ -90,7 +90,7 @@ scoped_c_thread_locale::xplat_locale scoped_c_thread_locale::c_locale()
 }
 #endif
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 scoped_c_thread_locale::scoped_c_thread_locale()
     : m_prevLocale(), m_prevThreadSetting(-1)
 {
@@ -162,14 +162,14 @@ namespace details
 
 const std::error_category & __cdecl platform_category()
 {
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     return windows_category();
 #else
     return linux_category();
 #endif
 }
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 
 const std::error_category & __cdecl windows_category()
 {
@@ -267,7 +267,7 @@ utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
         return utf16string();
     }
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     // first find the size
     int size = ::MultiByteToWideChar(
         CP_UTF8, // convert to utf-8
@@ -310,7 +310,7 @@ std::string __cdecl conversions::utf16_to_utf8(const utf16string &w)
         return std::string();
     }
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     // first find the size
     const int size = ::WideCharToMultiByte(
         CP_UTF8, // convert to utf-8
@@ -363,7 +363,7 @@ utf16string __cdecl conversions::usascii_to_utf16(const std::string &s)
         return utf16string();
     }
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     int size = ::MultiByteToWideChar(
         20127, // convert from us-ascii
         MB_ERR_INVALID_CHARS, // fail if any characters can't be translated
@@ -425,7 +425,7 @@ utf16string __cdecl conversions::latin1_to_utf16(const std::string &s)
         return utf16string();
     }
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     int size = ::MultiByteToWideChar(
         28591, // convert from Latin1
         MB_ERR_INVALID_CHARS, // fail if any characters can't be translated
@@ -486,7 +486,7 @@ utf16string __cdecl conversions::default_code_page_to_utf16(const std::string &s
         return utf16string();
     }
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     // First have to convert to UTF-16.
     int size = ::MultiByteToWideChar(
         CP_ACP, // convert from Windows system default
@@ -603,7 +603,7 @@ static bool is_digit(utility::char_t c) { return c >= _XPLATSTR('0') && c <= _XP
 /// </summary>
 datetime __cdecl datetime::utc_now()
 {
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     ULARGE_INTEGER largeInt;
     FILETIME fileTime;
     GetSystemTimeAsFileTime(&fileTime);
@@ -624,7 +624,7 @@ datetime __cdecl datetime::utc_now()
 /// </summary>
 utility::string_t datetime::to_string(date_format format) const
 {
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     int status;
 
     ULARGE_INTEGER largeInt;
@@ -750,7 +750,7 @@ utility::string_t datetime::to_string(date_format format) const
 #endif
 }
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 bool __cdecl datetime::system_type_to_datetime(void* pvsysTime, uint64_t seconds, datetime * pdt)
 {
     SYSTEMTIME* psysTime = (SYSTEMTIME*)pvsysTime;
@@ -822,7 +822,7 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
     // avoid floating point math to preserve precision
     uint64_t ufrac_second = 0;
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     datetime result;
     if ( format == RFC_1123 )
     {

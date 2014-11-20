@@ -24,16 +24,12 @@
 ****/
 #pragma once
 
-#ifndef _CASA_WS_MSG_H
-#define _CASA_WS_MSG_H
-
 #if (defined(__cplusplus_winrt) || !defined(_M_ARM)) && !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 
 #include <memory>
 #include <limits>
 
 #include "pplx/pplxtasks.h"
-#include "cpprest/details/xxpublic.h"
 #include "cpprest/producerconsumerstream.h"
 #include "cpprest/uri.h"
 #include "cpprest/basic_types.h"
@@ -244,4 +240,3 @@ private:
 }}}
 
 #endif
-#endif  /* _CASA_WS_MSG_H */

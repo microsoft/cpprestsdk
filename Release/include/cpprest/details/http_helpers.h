@@ -28,12 +28,11 @@
 #pragma once
 
 // this is a windows header
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 #include "cpprest/details/targetver.h"
 #endif
 
 #include "cpprest/http_msg.h"
-#include "cpprest/details/xxpublic.h"
 
 namespace web { namespace http
 {

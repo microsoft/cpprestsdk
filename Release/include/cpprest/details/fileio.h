@@ -31,12 +31,11 @@
 ****/
 #pragma once
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 #include <cstdint>
 #endif
 
 #include "pplx/pplxtasks.h"
-#include "cpprest/details/xxpublic.h"
 #include "cpprest/basic_types.h"
 
 namespace Concurrency { namespace streams

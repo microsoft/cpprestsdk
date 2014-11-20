@@ -27,12 +27,11 @@
 
 #pragma once
 
-#include "cpprest/details/xxpublic.h"
+#include "cpprest/details/cpprest_compat.h"
 #include "cpprest/basic_types.h"
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 #include "cpprest/details/targetver.h"
-#include "cpprest/details/windows_compat.h"
 // use the debug version of the CRT if _DEBUG is defined
 #ifdef _DEBUG
     #define _CRTDBG_MAP_ALLOC
@@ -55,12 +54,6 @@
 
 #endif // #if !defined(__cplusplus_winrt)
 #else // LINUX or APPLE
-#ifdef __APPLE__
-#include "cpprest/details/apple_compat.h"
-#else
-#include "cpprest/details/linux_compat.h"
-#define FAILED(x) ((x) != 0)
-#endif
 #define __STDC_LIMIT_MACROS
 #include <stdint.h>
 #include <cstdint>
@@ -85,7 +78,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/syscall.h>
-#endif // _MS_WINDOWS
+#endif // _WIN32
 
 // Macro indicating the C++ Rest SDK product itself is being built.
 // This is to help track how many developers are directly building from source themselves.
@@ -131,7 +124,7 @@
 #include "cpprest/details/http_helpers.h"
 
 // oauth
-#if !defined(_MS_WINDOWS) || _WIN32_WINNT >= _WIN32_WINNT_VISTA
+#if !defined(_WIN32) || _WIN32_WINNT >= _WIN32_WINNT_VISTA
 #include "cpprest/oauth1.h"
 #endif
 #include "cpprest/oauth2.h"
@@ -147,7 +140,7 @@
 #include "cpprest/details/http_server_api.h"
 #endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 #if _WIN32_WINNT >= _WIN32_WINNT_VISTA
 #include "cpprest/details/http_server_httpsys.h"
 #endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA

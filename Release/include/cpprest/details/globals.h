@@ -26,10 +26,6 @@
 ****/
 #pragma once
 
-#include "cpprest/details/xxpublic.h"
-
-#ifdef _MS_WINDOWS
-
+#ifdef _WIN32
 extern volatile long g_isProcessTerminating;
-
-#endif // _MS_WINDOWS
+#endif

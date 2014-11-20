@@ -34,11 +34,11 @@
 #error This file must not be included for Visual Studio 12 or later
 #endif
 
-#ifndef _MS_WINDOWS
+#ifndef _WIN32
 #if defined(_WIN32) || defined(__cplusplus_winrt)
-#define _MS_WINDOWS
+#define _WIN32
 #endif
-#endif // _MS_WINDOWS
+#endif // _WIN32
 
 #ifdef _NO_PPLXIMP
 #define _PPLXIMP
@@ -51,7 +51,7 @@
 #endif
 
 // Use PPLx
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 #include "cpprest/details/windows_compat.h"
 #include "pplx/pplxwin.h"
 #elif defined(__APPLE__)
@@ -62,7 +62,7 @@
 #else
 #include "cpprest/details/linux_compat.h"
 #include "pplx/pplxlinux.h"
-#endif // _MS_WINDOWS
+#endif // _WIN32
 
 // Common implementation across all the non-concrt versions
 #include "pplx/pplxcancellation_token.h"

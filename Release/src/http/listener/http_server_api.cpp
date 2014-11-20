@@ -25,7 +25,7 @@
 
 #include "stdafx.h"
 
-#if !defined(_MS_WINDOWS) || (_WIN32_WINNT >= _WIN32_WINNT_VISTA && !defined(__cplusplus_winrt))
+#if !defined(_WIN32) || (_WIN32_WINNT >= _WIN32_WINNT_VISTA && !defined(__cplusplus_winrt))
 
 using namespace web;
 using namespace utility;
@@ -86,7 +86,7 @@ pplx::task<void> http_server_api::register_listener(_In_ web::http::experimental
         // the server API was not initialized, register a default
         if(s_server_api == nullptr)
         {
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
             std::unique_ptr<http_windows_server> server_api(new http_windows_server());
 #else
             std::unique_ptr<http_linux_server> server_api(new http_linux_server());

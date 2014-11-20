@@ -31,9 +31,9 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include "cpprest/details/xxpublic.h"
+#include "cpprest/details/cpprest_compat.h"
 
-#ifndef _MS_WINDOWS
+#ifndef _WIN32
 # define __STDC_LIMIT_MACROS
 # include <stdint.h>
 #else
@@ -46,7 +46,7 @@ typedef SafeInt<size_t> SafeSize;
 namespace utility
 {
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 #define _UTF16_STRINGS
 #endif
 
@@ -54,7 +54,7 @@ namespace utility
 // not involve specifying the size of a memory allocation or buffer.
 typedef uint64_t size64_t;
 
-#ifndef _MS_WINDOWS
+#ifndef _WIN32
 typedef uint32_t HRESULT; // Needed for PPLX
 #endif
 

@@ -24,10 +24,6 @@
 ****/
 #pragma once
 
-#ifndef _CASA_WEB_UTILITIES_H
-#define _CASA_WEB_UTILITIES_H
-
-#include "cpprest/details/xxpublic.h"
 #include "cpprest/asyncrt_utils.h"
 
 namespace web
@@ -43,7 +39,7 @@ class winrt_client;
 
 namespace details
 {
-#if defined(_MS_WINDOWS)
+#if defined(_WIN32)
 class zero_memory_deleter
 {
 public:
@@ -96,12 +92,12 @@ public:
     /// <param name="username">User name as a string.</param>
     /// <param name="password">Password as a string.</param>
     credentials(utility::string_t username, const utility::string_t &
-#if defined(_MS_WINDOWS)
+#if defined(_WIN32)
         password
 #endif
         ) :
         m_username(std::move(username))
-#if defined(_MS_WINDOWS)
+#if defined(_WIN32)
         , m_password(password)
 #endif
     {}
@@ -119,7 +115,7 @@ public:
     CASABLANCA_DEPRECATED("This API is deprecated for security reasons to avoid unnecessary password copies stored in plaintext.")
         utility::string_t password() const
     {
-#if defined(_MS_WINDOWS)
+#if defined(_WIN32)
 #if defined(WINAPI_FAMILY) && WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP && _MSC_VER < 1800
         return m_password;
 #else
@@ -141,7 +137,7 @@ private:
     friend class http::client::details::winrt_client;
     friend class websockets::client::details::winrt_client;
 
-#if defined(_MS_WINDOWS)
+#if defined(_WIN32)
     details::plaintext_string decrypt() const
     {
         // Encryption APIs not supported on Windows Phone 8.0
@@ -154,7 +150,7 @@ private:
 #endif
 
     ::utility::string_t m_username;
-#if defined(_MS_WINDOWS)
+#if defined(_WIN32)
 #if defined(__cplusplus_winrt)
 #if WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP && _MSC_VER < 1800
     ::utility::string_t m_password;
@@ -249,5 +245,3 @@ private:
 };
 
 }
-
-#endif

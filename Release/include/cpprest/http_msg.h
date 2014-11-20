@@ -36,12 +36,12 @@
 #include "cpprest/json.h"
 #include "cpprest/uri.h"
 #include "cpprest/http_headers.h"
-#include "cpprest/details/xxpublic.h"
+#include "cpprest/details/cpprest_compat.h"
 #include "cpprest/asyncrt_utils.h"
 #include "cpprest/streams.h"
 #include "cpprest/containerstream.h"
 
-#ifndef _MS_WINDOWS
+#ifndef _WIN32
 #include <boost/algorithm/string/predicate.hpp>
 #endif
 
@@ -144,7 +144,7 @@ public:
     http_exception(const utility::string_t &whatArg)
         : m_msg(utility::conversions::to_utf8string(whatArg)) {}
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     /// <summary>
     /// Creates an <c>http_exception</c> with just a string message and no error code.
     /// </summary>
@@ -173,7 +173,7 @@ public:
           m_msg(utility::conversions::to_utf8string(whatArg))
     {}
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     /// <summary>
     /// Creates an <c>http_exception</c> with from a error code using the current platform error category.
     /// </summary>

@@ -35,14 +35,13 @@
 #include <locale.h>
 
 #include "pplx/pplxtasks.h"
-#include "cpprest/details/xxpublic.h"
 #include "cpprest/basic_types.h"
 
-#if !defined(_MS_WINDOWS) || (_MSC_VER >= 1700)
+#if !defined(_WIN32) || (_MSC_VER >= 1700)
 #include <chrono>
 #endif
 
-#ifndef _MS_WINDOWS
+#ifndef _WIN32
 #include <boost/algorithm/string.hpp>
 #if !defined(ANDROID) && !defined(__ANDROID__) // CodePlex 269
 #include <xlocale.h>
@@ -168,7 +167,7 @@ namespace details
         _ASYNCRTIMP ~scoped_c_thread_locale();
 
 #if !defined(ANDROID) && !defined(__ANDROID__) // CodePlex 269
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
         typedef _locale_t xplat_locale;
 #else
         typedef locale_t xplat_locale;
@@ -177,7 +176,7 @@ namespace details
         static _ASYNCRTIMP xplat_locale __cdecl c_locale();
 #endif
     private:
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
         std::string m_prevLocale;
         int m_prevThreadSetting;
 #elif !(defined(ANDROID) || defined(__ANDROID__))
@@ -230,14 +229,14 @@ namespace details
     /// <returns>true if the strings are equivalent, false otherwise</returns>
     inline bool str_icmp(const utility::string_t &left, const utility::string_t &right)
     {
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
         return _wcsicmp(left.c_str(), right.c_str()) == 0;
 #else
         return boost::iequals(left, right);
 #endif
     }
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 
 /// <summary>
 /// Category error type for Windows OS errors.
@@ -420,7 +419,7 @@ private:
     static const interval_type _dayTicks    = 24*60*60*_secondTicks;
 
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     // void* to avoid pulling in windows.h
     static _ASYNCRTIMP bool __cdecl datetime::system_type_to_datetime(/*SYSTEMTIME*/ void* psysTime, uint64_t seconds, datetime * pdt);
 #else
@@ -435,7 +434,7 @@ private:
     interval_type m_interval;
 };
 
-#ifndef _MS_WINDOWS
+#ifndef _WIN32
 
 // temporary workaround for the fact that
 // utf16char is not fully supported in GCC

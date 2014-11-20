@@ -317,7 +317,7 @@ namespace details
         else
         {
             char buffer[9];
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
             sprintf_s(buffer, sizeof(buffer), "%8IX", bytes_read);
 #else
             snprintf(buffer, sizeof(buffer), "%8zX", bytes_read);
@@ -331,7 +331,7 @@ namespace details
         return offset;
     }
 
-#if (!defined(_MS_WINDOWS) || defined(__cplusplus_winrt))
+#if (!defined(_WIN32) || defined(__cplusplus_winrt))
     const std::array<bool,128> valid_chars =
     {{
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0-15

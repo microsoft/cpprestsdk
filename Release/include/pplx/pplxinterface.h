@@ -35,7 +35,7 @@
 #endif
 
 #if defined(_CRTBLD)
-#elif defined(_MS_WINDOWS)
+#elif defined(_WIN32)
 #if (_MSC_VER >= 1700)
 #define _USE_REAL_ATOMICS
 #endif

@@ -630,7 +630,7 @@ details::_http_request::_http_request(std::unique_ptr<http::details::_http_serve
 #undef DAT
 
 // This is necessary for Linux because of a bug in GCC 4.7
-#ifndef _MS_WINDOWS
+#ifndef _WIN32
 #define _PHRASES
 #define DAT(a,b,c) const status_code status_codes::a;
 #include "cpprest/details/http_constants.dat"

@@ -26,9 +26,6 @@
 ****/
 #pragma once
 
-#ifndef _CASA_OAUTH2_H
-#define _CASA_OAUTH2_H
-
 #include "cpprest/http_msg.h"
 
 namespace web
@@ -520,6 +517,4 @@ private:
     std::shared_ptr<experimental::oauth2_config> m_config;
 };
 
-}}}} // namespace web::http::oauth2::details
-
-#endif  /* _CASA_OAUTH2_H */
+}}}}

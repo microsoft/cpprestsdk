@@ -26,9 +26,6 @@
 ****/
 #pragma once
 
-#ifndef _CASA_HTTP_CLIENT_H
-#define _CASA_HTTP_CLIENT_H
-
 #if defined (__cplusplus_winrt)
 #define __WRL_NO_DEFAULT_LIB__
 #include <wrl.h>
@@ -44,7 +41,6 @@ typedef void* native_handle;}}}
 #include <limits>
 
 #include "pplx/pplxtasks.h"
-#include "cpprest/details/xxpublic.h"
 #include "cpprest/http_msg.h"
 #include "cpprest/json.h"
 #include "cpprest/uri.h"
@@ -74,7 +70,7 @@ namespace client
 using web::credentials;
 using web::web_proxy;
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 namespace details {
 #ifdef __cplusplus_winrt
         class winrt_client ;
@@ -82,7 +78,7 @@ namespace details {
         class winhttp_client;
 #endif // __cplusplus_winrt
 }
-#endif // _MS_WINDOWS
+#endif // _WIN32
 
 /// <summary>
 /// HTTP client configuration class, used to set the possible configuration options
@@ -99,7 +95,7 @@ public:
         , m_validate_certificates(true)
 #endif
         , m_set_user_nativehandle_options([](native_handle)->void{})
-#if defined(_MS_WINDOWS) && !defined(__cplusplus_winrt)
+#if defined(_WIN32) && !defined(__cplusplus_winrt)
         , m_buffer_request(false)
 #endif
     {
@@ -265,7 +261,7 @@ public:
     }
 #endif
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 #if !defined(__cplusplus_winrt)
     /// <summary>
     /// Checks if request data buffering is turned on, the default is off.
@@ -320,13 +316,13 @@ private:
 
     std::function<void(native_handle)> m_set_user_nativehandle_options;
 
-#if defined(_MS_WINDOWS) && defined(__cplusplus_winrt)
+#if defined(_WIN32) && defined(__cplusplus_winrt)
     friend class details::winrt_client;
-#elif defined(_MS_WINDOWS)
+#elif defined(_WIN32)
     bool m_buffer_request;
 
     friend class details::winhttp_client;
-#endif // defined(_MS_WINDOWS) && defined(__cplusplus_winrt)
+#endif // defined(_WIN32) && defined(__cplusplus_winrt)
 
     /// <summary>
     /// Invokes a user callback to allow for customization of the requst
@@ -673,5 +669,3 @@ private:
 };
 
 }}}
-
-#endif  /* _CASA_HTTP_CLIENT_H */

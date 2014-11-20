@@ -25,15 +25,12 @@
 ****/
 #pragma once
 
-#ifndef _CASA_HTTP_LISTENER_H
-#define _CASA_HTTP_LISTENER_H
-
 #include <limits>
 #include <functional>
 
 #include "cpprest/http_msg.h"
 
-#if defined(_MS_WINDOWS) && (_WIN32_WINNT < _WIN32_WINNT_VISTA || __cplusplus_winrt)
+#if defined(_WIN32) && (_WIN32_WINNT < _WIN32_WINNT_VISTA || __cplusplus_winrt)
 #error "Error: http server APIs are not supported on XP and the Windows Runtime"
 #endif
 
@@ -312,9 +309,4 @@ private:
     std::unique_ptr<details::http_listener_impl> m_impl;
 };
 
-} // namespace listener
-} // namespace experimental
-} // namespace http
-} // namespace web
-
-#endif  /* _CASA_HTTP_LISTENER_H */
+}}}}

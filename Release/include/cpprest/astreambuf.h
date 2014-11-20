@@ -66,7 +66,7 @@ namespace streams
         /// <returns>An <c>int_type</c> value which implies that an asynchronous call is required.</returns>
         static typename std::char_traits<_CharType>::int_type requires_async() { return std::char_traits<_CharType>::eof()-1; }
     };
-#if !defined(_MS_WINDOWS)
+#if !defined(_WIN32)
     template<>
     struct char_traits<unsigned char> : private std::char_traits<char>
     {

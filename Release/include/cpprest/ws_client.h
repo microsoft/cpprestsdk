@@ -25,9 +25,6 @@
 
 #pragma once
 
-#ifndef _CASA_WS_CLIENT_H
-#define _CASA_WS_CLIENT_H
-
 #if (defined(__cplusplus_winrt) || !defined(_M_ARM)) && !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 
 #include <memory>
@@ -36,7 +33,6 @@
 #include <mutex>
 
 #include "pplx/pplxtasks.h"
-#include "cpprest/details/xxpublic.h"
 #include "cpprest/uri.h"
 #include "cpprest/details/web_utilities.h"
 #include "cpprest/http_headers.h"
@@ -219,7 +215,7 @@ public:
     websocket_exception(const utility::string_t &whatArg)
         : m_msg(utility::conversions::to_utf8string(whatArg)) {}
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     /// <summary>
     /// Creates an <c>websocket_exception</c> with just a string message and no error code.
     /// </summary>
@@ -248,7 +244,7 @@ public:
           m_msg(utility::conversions::to_utf8string(whatArg))
     {}
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     /// <summary>
     /// Creates a <c>websocket_exception</c> from a error code and string message.
     /// </summary>
@@ -468,4 +464,3 @@ private:
 }}}
 
 #endif
-#endif  /* _CASA_WS_CLIENT_H */

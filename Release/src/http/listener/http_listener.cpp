@@ -25,7 +25,7 @@
 
 #include "stdafx.h"
 
-#if !defined(_MS_WINDOWS) || (_WIN32_WINNT >= _WIN32_WINNT_VISTA && !defined(__cplusplus_winrt))
+#if !defined(_WIN32) || (_WIN32_WINNT >= _WIN32_WINNT_VISTA && !defined(__cplusplus_winrt))
 
 using namespace web::http::experimental;
 
@@ -41,7 +41,7 @@ static void check_listener_uri(const http::uri &address)
     // Some things like proper URI schema are verified by the URI class.
     // We only need to check certain things specific to HTTP.
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     //HTTP Server API includes SSL support
     if(address.scheme() != U("http") && address.scheme() != U("https"))
     {

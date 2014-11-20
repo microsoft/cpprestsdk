@@ -27,9 +27,6 @@
 ****/
 #pragma once
 
-#ifndef _CASA_PRODUCER_CONSUMER_STREAMS_H
-#define _CASA_PRODUCER_CONSUMER_STREAMS_H
-
 #include <vector>
 #include <queue>
 #include <algorithm>
@@ -482,12 +479,12 @@ namespace Concurrency { namespace streams {
                     _CharType * beg = rbegin();
                     _CharType * end = rbegin() + countRead;
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
                     // Avoid warning C4996: Use checked iterators under SECURE_SCL
                     std::copy(beg, end, stdext::checked_array_iterator<_CharType *>(dest, count));
 #else
                     std::copy(beg, end, dest);
-#endif // _MS_WINDOWS
+#endif // _WIN32
 
                     if (advance)
                     {
@@ -505,12 +502,12 @@ namespace Concurrency { namespace streams {
 
                     const _CharType * srcEnd = src + countWritten;
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
                     // Avoid warning C4996: Use checked iterators under SECURE_SCL
                     std::copy(src, srcEnd, stdext::checked_array_iterator<_CharType *>(wbegin(), static_cast<size_t>(avail)));
 #else
                     std::copy(src, srcEnd, wbegin());
-#endif // _MS_WINDOWS
+#endif // _WIN32
 
                     update_write_head(countWritten);
                     return countWritten;
@@ -714,9 +711,6 @@ namespace Concurrency { namespace streams {
 
 }} // namespaces
 
-
 #if defined(_MSC_VER)
 #pragma warning(pop) // 4100
 #endif
-
-#endif  /* _CASA_PRODUCER_CONSUMER_STREAMS_H */

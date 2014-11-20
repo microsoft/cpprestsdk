@@ -27,7 +27,7 @@
 
 #include "stdafx.h"
 
-#if !defined(_MS_WINDOWS) || _WIN32_WINNT >= _WIN32_WINNT_VISTA
+#if !defined(_WIN32) || _WIN32_WINNT >= _WIN32_WINNT_VISTA
 
 using namespace utility;
 using web::http::client::http_client;
@@ -54,7 +54,7 @@ namespace experimental
 //
 // Start of platform-dependent _hmac_sha1() block...
 //
-#if defined(_MS_WINDOWS) && !defined(__cplusplus_winrt) // Windows desktop
+#if defined(_WIN32) && !defined(__cplusplus_winrt) // Windows desktop
 
 #include <winternl.h>
 #include <bcrypt.h>
@@ -115,7 +115,7 @@ cleanup:
     return hash;
 }
 
-#elif defined(_MS_WINDOWS) && defined(__cplusplus_winrt) // Windows RT
+#elif defined(_WIN32) && defined(__cplusplus_winrt) // Windows RT
 
 using namespace Windows::Security::Cryptography;
 using namespace Windows::Security::Cryptography::Core;

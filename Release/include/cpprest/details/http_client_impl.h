@@ -27,7 +27,7 @@
 #include "cpprest/basic_types.h"
 #include "cpprest/details/http_helpers.h"
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 #if !defined(__cplusplus_winrt)
 #include <winhttp.h>
 #else
@@ -50,7 +50,7 @@ using namespace concurrency;
 #include <boost/algorithm/string.hpp>
 #endif
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 # define CRLF _XPLATSTR("\r\n")
 #else
 # define CRLF std::string("\r\n")
@@ -61,7 +61,7 @@ using namespace web::http::details;
 namespace web { namespace http { namespace client { namespace details
 {
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 static const utility::char_t * get_with_body = _XPLATSTR("A GET or HEAD request should not have an entity body.");
 
 // Helper function to trim leading and trailing null characters from a string.
@@ -90,7 +90,7 @@ static utility::string_t flatten_http_headers(const http_headers &headers)
     return flattened_headers;
 }
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 /// <summary>
 /// Parses a string containing Http headers.
 /// </summary>
@@ -151,7 +151,7 @@ public:
         report_exception(http_exception(static_cast<int>(error_code), errorMessage));
     }
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     void report_error(unsigned long error_code, const std::wstring &errorMessage)
     {
         report_exception(http_exception(static_cast<int>(error_code), errorMessage));

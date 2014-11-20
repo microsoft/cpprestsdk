@@ -31,7 +31,7 @@
 
 #include "pplx/pplxwin.h"
 
-#ifndef _MS_WINDOWS
+#ifndef _WIN32
 #error "ERROR: This file should only be included in Windows Build"
 #endif
 

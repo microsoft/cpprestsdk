@@ -32,7 +32,6 @@
 #include <vector>
 
 #include "cpprest/base_uri.h"
-#include "cpprest/details/xxpublic.h"
 
 namespace web
 {
