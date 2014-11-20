@@ -31,7 +31,13 @@
 #include "cpprest/basic_types.h"
 
 #ifdef _WIN32
-#include "cpprest/details/targetver.h"
+#ifdef CPPREST_TARGET_XP
+#include <winsdkver.h>
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT _WIN32_WINNT_WS03 //Windows XP with SP2
+#endif
+#endif
+#include <SDKDDKVer.h>
 // use the debug version of the CRT if _DEBUG is defined
 #ifdef _DEBUG
     #define _CRTDBG_MAP_ALLOC
