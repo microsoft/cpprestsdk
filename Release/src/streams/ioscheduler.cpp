@@ -24,8 +24,11 @@
 ****/
 
 #include "stdafx.h"
+
 #include "cpprest/details/ioscheduler.h"
-#include "cpprest/details/globals.h"
+
+// See dllmain.cpp
+extern volatile long g_isProcessTerminating;
 
 namespace Concurrency { namespace streams { namespace details {
 
@@ -59,7 +62,7 @@ std::shared_ptr<io_scheduler> __cdecl io_scheduler::get_scheduler()
     pplx::extensibility::scoped_critical_section_t lck(_g_lock);
     if ( !_g_scheduler )
     {
-        _g_scheduler = std::shared_ptr<io_scheduler>(new io_scheduler());
+        _g_scheduler = std::make_shared<io_scheduler>();
     }
 
     return _g_scheduler;

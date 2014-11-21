@@ -19,6 +19,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\http\listener\http_server_httpsys.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\streams\fileio_win32.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\streams\ioscheduler.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\utilities\dllmain.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\websockets\client\ws_client_wspp.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -26,5 +27,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\http_server_httpsys.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\ioscheduler.h" />
   </ItemGroup>
 </Project>

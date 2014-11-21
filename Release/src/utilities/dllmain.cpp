@@ -22,12 +22,9 @@
 ****/
 
 #include "stdafx.h"
-#include "cpprest/details/globals.h"
 
-#ifdef _WIN32
+// DevNote: in the future it would be great if we removed this.
 volatile long g_isProcessTerminating = 0;
-
-#if !defined(__cplusplus_winrt)
 
 BOOL WINAPI DllMain(HINSTANCE, DWORD fdwReason, LPVOID lpReserved)
 {
@@ -48,6 +45,3 @@ BOOL WINAPI DllMain(HINSTANCE, DWORD fdwReason, LPVOID lpReserved)
 
     return TRUE;
 }
-
-#endif // defined(__cplusplus_winrt)
-#endif // _WIN32

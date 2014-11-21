@@ -22,11 +22,7 @@
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
-
 #pragma once
-
-// This header file is only for Windows builds
-#ifdef _WIN32
 
 #include "windows.h"
 
@@ -61,7 +57,7 @@ struct EXTENDED_OVERLAPPED : OVERLAPPED
     io_scheduler *m_scheduler;
 };
 
-#if _WIN32_WINNT < _WIN32_WINNT_VISTA 
+#if _WIN32_WINNT < _WIN32_WINNT_VISTA
 class io_scheduler
 {
 public:
@@ -119,6 +115,22 @@ class io_scheduler
 public:
 
     /// <summary>
+    /// Constructor
+    /// </summary>
+    io_scheduler()
+    {
+        m_cleanupGroup = CreateThreadpoolCleanupGroup();
+
+        if (m_cleanupGroup == nullptr)
+        {
+            throw std::bad_alloc();
+        }
+
+        InitializeThreadpoolEnvironment(&m_environ);
+        SetThreadpoolCallbackCleanupGroup(&m_environ, m_cleanupGroup, nullptr);
+    }
+
+    /// <summary>
     /// Destructor
     /// </summary>
     ~io_scheduler();
@@ -153,22 +165,6 @@ public:
 private:
 
     /// <summary>
-    /// Constructor
-    /// </summary>
-    io_scheduler()
-    {
-        m_cleanupGroup = CreateThreadpoolCleanupGroup();
-
-        if (m_cleanupGroup == nullptr)
-        {
-            throw std::bad_alloc();
-        }
-
-        InitializeThreadpoolEnvironment(&m_environ);
-        SetThreadpoolCallbackCleanupGroup(&m_environ, m_cleanupGroup, nullptr);
-    }
-
-    /// <summary>
     /// Callback for all I/O completions.
     /// </summary>
     static void CALLBACK IoCompletionCallback(
@@ -197,8 +193,6 @@ private:
     TP_CALLBACK_ENVIRON m_environ;
     PTP_CLEANUP_GROUP m_cleanupGroup;
 };
-#endif // _WIN32_WINNT < _WIN32_WINNT_VISTA 
+#endif // _WIN32_WINNT < _WIN32_WINNT_VISTA
 
 }}} // namespaces;
-
-#endif

@@ -19,6 +19,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\http\client\x509_cert_utilities_win32.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\utilities\dllmain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header Files">
@@ -30,6 +33,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\http_server_httpsys.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\ioscheduler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

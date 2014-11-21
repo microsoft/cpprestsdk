@@ -10,9 +10,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\utilities\base64.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\utilities\dllmain.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\http\client\http_client_msg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -149,9 +146,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\fileio.h">
       <Filter>Header Files\cpprest\details</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\globals.h">
-      <Filter>Header Files\cpprest\details</Filter>
-    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\http_client_impl.h">
       <Filter>Header Files\cpprest\details</Filter>
     </ClInclude>
@@ -162,9 +156,6 @@
       <Filter>Header Files\cpprest\details</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\http_server_api.h">
-      <Filter>Header Files\cpprest\details</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\ioscheduler.h">
       <Filter>Header Files\cpprest\details</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\nosal.h">

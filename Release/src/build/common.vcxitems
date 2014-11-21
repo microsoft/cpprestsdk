@@ -35,7 +35,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\uri\uri_parser.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\utilities\asyncrt_utils.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\utilities\base64.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\utilities\dllmain.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\utilities\web_utilities.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\websockets\client\ws_msg.cpp" />
   </ItemGroup>
@@ -50,12 +49,10 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\basic_types.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\cpprest_compat.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\fileio.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\globals.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\http_client_impl.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\http_helpers.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\http_server.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\http_server_api.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\ioscheduler.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\nosal.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\SafeInt3.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\uri_parser.h" />
