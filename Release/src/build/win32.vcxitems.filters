@@ -16,6 +16,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\streams\ioscheduler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\http\client\x509_cert_utilities_win32.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header Files">
