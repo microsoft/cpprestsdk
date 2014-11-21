@@ -25,9 +25,7 @@
 
 #include "stdafx.h"
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1800)
-#error This file must not be compiled for Visual Studio 12 or later
-#endif
+#if !defined(_WIN32) || _MSC_VER < 1800
 
 #include "pplx/pplx.h"
 
@@ -156,3 +154,5 @@ _PPLXIMP void _pplx_cdecl set_ambient_scheduler(std::shared_ptr<pplx::scheduler_
 }
 
 } // namespace pplx
+
+#endif

@@ -25,14 +25,7 @@
 
 #pragma once
 
-#ifndef _PPLXWIN_H
-#define _PPLXWIN_H
-
-#if (defined(_MSC_VER) && (_MSC_VER >= 1800)) 
-#error This file must not be included for Visual Studio 12 or later
-#endif
-
-#ifdef _WIN32
+#if !defined(_WIN32) || _MSC_VER < 1800
 
 #include "cpprest/details/cpprest_compat.h"
 #include "pplx/pplxinterface.h"
@@ -301,5 +294,4 @@ namespace details
 
 } // namespace pplx
 
-#endif // _WIN32
-#endif // _PPLXWIN_H
+#endif

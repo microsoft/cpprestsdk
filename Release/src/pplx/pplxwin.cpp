@@ -25,17 +25,11 @@
 
 #include "stdafx.h"
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1800)
-#error This file must not be compiled for Visual Studio 12 or later
-#endif
+#if !defined(_WIN32) || _MSC_VER < 1800
 
 #include "pplx/pplxwin.h"
 
-#ifndef _WIN32
-#error "ERROR: This file should only be included in Windows Build"
-#endif
-
-// Disable false alarm code analyse warning
+// Disable false alarm code analysis warning
 #pragma warning (disable : 26165 26110)
 namespace pplx
 {
@@ -292,3 +286,5 @@ namespace details
 } // namespace details
 
 } // namespace pplx
+
+#endif

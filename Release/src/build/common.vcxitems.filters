@@ -61,6 +61,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\websockets\client\ws_msg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\pplx\pplx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source Files">
@@ -191,16 +194,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\pplx\pplxinterface.h">
       <Filter>Header Files\pplx</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\pplx\pplxlinux.h">
-      <Filter>Header Files\pplx</Filter>
-    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\pplx\pplxtasks.h">
-      <Filter>Header Files\pplx</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\pplx\pplxwin.h">
-      <Filter>Header Files\pplx</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\pplx\threadpool.h">
       <Filter>Header Files\pplx</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\cpprest_compat.h">

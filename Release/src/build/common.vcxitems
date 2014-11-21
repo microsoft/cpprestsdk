@@ -30,6 +30,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\pch\stdafx.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\pplx\pplx.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\uri\uri.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\uri\uri_builder.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\uri\uri_parser.cpp" />
@@ -79,10 +80,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\pplx\pplxcancellation_token.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\pplx\pplxconv.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\pplx\pplxinterface.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\pplx\pplxlinux.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\pplx\pplxtasks.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\pplx\pplxwin.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\pplx\threadpool.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\pch\stdafx.h" />
   </ItemGroup>
   <ItemGroup>

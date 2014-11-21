@@ -15,10 +15,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\http\client\http_client_winrt.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\pplx\pplxwin.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\streams\fileio_winrt.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\websockets\client\ws_client_winrt.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectCapability Include="SourceItemsFromImports" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\pplx\pplxwin.h" />
   </ItemGroup>
 </Project>

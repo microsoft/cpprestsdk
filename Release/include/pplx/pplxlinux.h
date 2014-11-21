@@ -25,8 +25,6 @@
 
 #pragma once
 
-#ifndef _PPLXLINUX_H
-#define _PPLXLINUX_H
 
 #if (defined(_MSC_VER))
 #error This file must not be included for Visual Studio
@@ -330,4 +328,3 @@ inline void* _ReturnAddress() { return __builtin_return_address(0); }
 } // namespace pplx
 
 #endif // !_WIN32
-#endif // _PPLXLINUX_H
