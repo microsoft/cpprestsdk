@@ -101,7 +101,7 @@
 #include <thread>
 
 #include "pplx/pplxtasks.h"
-#include "cpprest/details/version.h"
+#include "cpprest/version.h"
 
 // streams
 #include "cpprest/streams.h"

@@ -57,7 +57,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\nosal.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\SafeInt3.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\uri_parser.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\version.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\web_utilities.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\x509_cert_utilities.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\filestream.h" />
@@ -74,6 +73,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\streams.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\uri.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\uri_builder.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\version.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\ws_client.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\ws_msg.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\pplx\pplx.h" />

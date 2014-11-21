@@ -170,9 +170,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\uri_parser.h">
       <Filter>Header Files\cpprest\details</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\version.h">
-      <Filter>Header Files\cpprest\details</Filter>
-    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\web_utilities.h">
       <Filter>Header Files\cpprest\details</Filter>
     </ClInclude>
@@ -202,6 +199,9 @@
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\basic_types.h">
       <Filter>Header Files\cpprest\details</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\version.h">
+      <Filter>Header Files\cpprest</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
