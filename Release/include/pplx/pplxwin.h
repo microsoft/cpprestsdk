@@ -34,7 +34,7 @@
 
 #ifdef _WIN32
 
-#include "cpprest/details/windows_compat.h"
+#include "cpprest/details/cpprest_compat.h"
 #include "pplx/pplxinterface.h"
 
 namespace pplx

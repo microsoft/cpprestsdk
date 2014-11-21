@@ -48,17 +48,16 @@
 #endif
 #endif
 
+#include "cpprest/details/cpprest_compat.h"
+
 // Use PPLx
 #ifdef _WIN32
-#include "cpprest/details/windows_compat.h"
 #include "pplx/pplxwin.h"
 #elif defined(__APPLE__)
 #undef _PPLXIMP
 #define _PPLXIMP
-#include "cpprest/details/apple_compat.h"
 #include "pplx/pplxlinux.h"
 #else
-#include "cpprest/details/linux_compat.h"
 #include "pplx/pplxlinux.h"
 #endif // _WIN32
 
