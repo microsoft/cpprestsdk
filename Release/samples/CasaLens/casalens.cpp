@@ -140,7 +140,7 @@ void CasaLens::handle_post(http_request message)
     }
 }
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 int wmain(int argc, wchar_t *args[])
 #else
 int main(int argc, char *args[])
