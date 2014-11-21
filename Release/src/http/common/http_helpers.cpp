@@ -345,7 +345,7 @@ namespace details
     // Checks if the method contains any invalid characters
     bool validate_method(const utility::string_t& method)
     {
-        for (auto ch : method)
+        for (const auto &ch : method)
         {
             size_t ch_sz = static_cast<size_t>(ch);
             if (ch_sz >= 128)

@@ -28,35 +28,10 @@
 #include "cpprest/details/http_helpers.h"
 
 #ifdef _WIN32
-#if !defined(__cplusplus_winrt)
-#include <winhttp.h>
-#else
-#include <Strsafe.h>
-// Important for WP8
-#define __WRL_NO_DEFAULT_LIB__
-#include <wrl.h>
-#include <msxml6.h>
-using namespace std;
-using namespace Platform;
-using namespace Microsoft::WRL;
-#endif
-
-using namespace web;
-using namespace concurrency;
-#else
-#include <boost/asio.hpp>
-#include <boost/bind.hpp>
-#include <boost/asio/ssl.hpp>
-#include <boost/algorithm/string.hpp>
-#endif
-
-#ifdef _WIN32
 # define CRLF _XPLATSTR("\r\n")
 #else
 # define CRLF std::string("\r\n")
 #endif
-
-using namespace web::http::details;
 
 namespace web { namespace http { namespace client { namespace details
 {

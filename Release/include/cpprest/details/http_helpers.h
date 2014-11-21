@@ -119,5 +119,4 @@ namespace details
         _ASYNCRTIMP size_t add_chunked_delimiters(_Out_writes_ (buffer_size) uint8_t *data, _In_ size_t buffer_size, size_t bytes_read);
     }
 
-} // namespace details
-}} // namespace web::http
+}}}

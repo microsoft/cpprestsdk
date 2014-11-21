@@ -28,6 +28,16 @@
 
 #include "cpprest/details/http_client_impl.h"
 
+// TODO try trimming???
+#include <Strsafe.h>
+// Important for WP8
+#define __WRL_NO_DEFAULT_LIB__
+#include <wrl.h>
+#include <msxml6.h>
+using namespace std;
+using namespace Platform;
+using namespace Microsoft::WRL;
+
 namespace web
 {
 namespace http
@@ -355,7 +365,7 @@ protected:
         http_request &msg = request->m_request;
         auto winrt_context = std::static_pointer_cast<winrt_request_context>(request);
 
-        if (!validate_method(msg.method()))
+        if (!web::http::details::validate_method(msg.method()))
         {
             request->report_exception(http_exception(L"The method string is invalid."));
             return;
