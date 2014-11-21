@@ -83,15 +83,5 @@
 
 //#define UNITTEST_NO_EXCEPTIONS
 
-#include <cpprest/basic_types.h>
-#ifdef _MS_WINDOWS
-#include "cpprest/details/windows_compat.h"
-#else
-#include <stdint.h>
-#ifdef __APPLE__
-#include "cpprest/details/apple_compat.h"
-#else
-#include "cpprest/details/linux_compat.h"
-#endif
-#endif
+#include <cpprest/details/basic_types.h>
 #endif

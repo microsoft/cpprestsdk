@@ -40,14 +40,14 @@ Set following entry in the hosts file:
 */
 #include "stdafx.h"
 
-#if defined(_MS_WINDOWS) && !defined(__cplusplus_winrt)
+#if defined(_WIN32) && !defined(__cplusplus_winrt)
 // Extra includes for Windows desktop.
 #include <windows.h>
 #include <Shellapi.h>
 #endif
 
 #include "cpprest/http_listener.h"
-#include "cpprest/http_helpers.h"
+#include "cpprest/http_client.h"
 
 using namespace utility;
 using namespace web;

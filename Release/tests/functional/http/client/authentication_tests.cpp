@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* authentication_tests.cpp
-*
 * Tests cases for authentication with http_clients.
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -26,7 +24,7 @@
 #include "stdafx.h"
 #include <stdexcept>
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 #ifdef __cplusplus_winrt
 #define __WRL_NO_DEFAULT_LIB__
 #include <wrl.h>

@@ -3,7 +3,7 @@ include_directories(../include pch ${Boost_INCLUDE_DIR} ${OPENSSL_INCLUDE_DIR})
 # THE ORDER OF FILES IS VERY /VERY/ IMPORTANT
 if(UNIX)
   set(SOURCES
-    streams/linux/fileio_linux.cpp
+    streams/fileio_posix.cpp
     json/json.cpp
     json/json_parsing.cpp
     json/json_serialization.cpp
@@ -16,61 +16,32 @@ if(UNIX)
     uri/uri_parser.cpp
     http/common/http_msg.cpp
     http/common/http_helpers.cpp
-    http/client/http_msg_client.cpp
-    http/client/http_linux.cpp
+    http/client/http_client_msg.cpp
+    http/client/http_client_asio.cpp
     http/client/x509_cert_utilities.cpp
-    http/listener/http_linux_server.cpp
+    http/listener/http_server_asio.cpp
     http/listener/http_listener.cpp
-    http/listener/http_msg_listen.cpp
+    http/listener/http_listener_msg.cpp
     http/listener/http_server_api.cpp
     http/oauth/oauth1.cpp
     http/oauth/oauth2.cpp
     websockets/client/ws_msg.cpp
-    websockets/client/ws_client.cpp
+    websockets/client/ws_client_wspp.cpp
     utilities/base64.cpp
     )
   if(APPLE)
-    set(SOURCES ${SOURCES} pplx/apple/pplxapple.cpp)
+    set(SOURCES ${SOURCES} 
+      pplx/pplxapple.cpp
+      http/client/x509_cert_utilities_apple.cpp
+      )
     find_library(COREFOUNDATION CoreFoundation "/")
     find_library(SECURITY Security "/")
     set(EXTRALINKS ${COREFOUNDATION} ${SECURITY})
+  elseif(ANDROID)
+    set(SOURCES $(SOURCES) http/client/x509_cert_utilities_android.cpp)
   else()
-    set(SOURCES ${SOURCES} pplx/linux/pplxlinux.cpp)
+    set(SOURCES ${SOURCES} pplx/pplxlinux.cpp)
   endif()
-elseif(WIN32)
-  set(SOURCES
-    json/json.cpp
-    json/json_parsing.cpp
-    json/json_serialization.cpp
-    utilities/asyncrt_utils.cpp
-    utilities/web_utilities.cpp
-    uri/uri.cpp
-    uri/uri_builder.cpp
-    uri/uri_parser.cpp
-    http/common/http_msg.cpp
-    http/common/http_helpers.cpp
-    http/client/http_msg_client.cpp
-    http/client/x509_cert_utilities.cpp
-    http/listener/http_listener.cpp
-    http/listener/http_msg_listen.cpp
-    http/listener/http_server_api.cpp
-    websockets/client/ws_msg.cpp
-    websockets/client/ws_client.cpp
-    utilities/base64.cpp
-    http/client/http_win7.cpp
-    http/listener/http_windows_server.cpp
-    http/oauth/oauth1.cpp
-    streams/windows/fileio.cpp
-    streams/windows/ioscheduler.cpp
-    utilities/dllmain.cpp
-    )
-  add_definitions(
-    -D_ASYNCRT_EXPORT
-    -D_PPLX_EXPORT
-    -D_MBCS
-    -D_USRDLL
-    )
-  set(EXTRALINKS Httpapi.lib Winhttp.dll)
 endif()
 
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNINGS} -Werror -pedantic")

@@ -506,7 +506,7 @@ namespace web { namespace http
                     // stop injection of headers via method
                     // resource should be ok, since it's been encoded
                     // and host won't resolve
-                    if (!validate_method(method))
+                    if (!::web::http::details::validate_method(method))
                     {
                         ctx->report_exception(http_exception("The method string is invalid."));
                         return;
@@ -857,7 +857,7 @@ namespace web { namespace http
 
                         ctx->m_response.set_status_code(status_code);
 
-                        trim_whitespace(status_message);
+                        ::web::http::details::trim_whitespace(status_message);
                         ctx->m_response.set_reason_phrase(std::move(status_message));
 
                         if (!response_stream || http_version.substr(0, 5) != "HTTP/")
