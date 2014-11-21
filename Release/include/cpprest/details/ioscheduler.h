@@ -115,22 +115,6 @@ class io_scheduler
 public:
 
     /// <summary>
-    /// Constructor
-    /// </summary>
-    io_scheduler()
-    {
-        m_cleanupGroup = CreateThreadpoolCleanupGroup();
-
-        if (m_cleanupGroup == nullptr)
-        {
-            throw std::bad_alloc();
-        }
-
-        InitializeThreadpoolEnvironment(&m_environ);
-        SetThreadpoolCallbackCleanupGroup(&m_environ, m_cleanupGroup, nullptr);
-    }
-
-    /// <summary>
     /// Destructor
     /// </summary>
     ~io_scheduler();
@@ -163,6 +147,22 @@ public:
     _ASYNCRTIMP static std::shared_ptr<io_scheduler> __cdecl get_scheduler();
 
 private:
+
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    io_scheduler()
+    {
+        m_cleanupGroup = CreateThreadpoolCleanupGroup();
+
+        if (m_cleanupGroup == nullptr)
+        {
+            throw std::bad_alloc();
+        }
+
+        InitializeThreadpoolEnvironment(&m_environ);
+        SetThreadpoolCallbackCleanupGroup(&m_environ, m_cleanupGroup, nullptr);
+    }
 
     /// <summary>
     /// Callback for all I/O completions.
