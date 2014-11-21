@@ -25,7 +25,7 @@
 
 #include "stdafx.h"
 
-#if !defined(_WIN32) || _WIN32_WINNT >= _WIN32_WINNT_VISTA
+#if !defined(_WIN32) || (_WIN32_WINNT >= _WIN32_WINNT_VISTA && !defined(_PHONE8_))
 
 using namespace utility;
 using web::http::client::http_client;
