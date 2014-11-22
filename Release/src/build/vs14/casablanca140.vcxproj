@@ -33,11 +33,6 @@
   <PropertyGroup>
     <TargetName>$(CppRestBaseFileName)140$(DebugFileSuffix)_$(CppRestSDKVersionFileSuffix)</TargetName>
   </PropertyGroup>
-  <ItemGroup>
-    <None Include="packages.config">
-      <SubType>Designer</SubType>
-    </None>
-  </ItemGroup>
   <ItemDefinitionGroup>
     <ClCompile>
       <PreprocessorDefinitions>CPPREST_EXCLUDE_WEBSOCKETS;_ASYNCRT_EXPORT;_PPLX_EXPORT;WIN32;_MBCS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
