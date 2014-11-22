@@ -18,21 +18,29 @@
 **/
 #include "stdafx.h"
 
+#if defined(__ANDROID__)
+#include <android/log.h>
+#include <jni.h>
+#endif
+
 namespace crossplat
 {
-// initialize the static shared threadpool
-threadpool threadpool::s_shared(40);
-
 #if (defined(ANDROID) || defined(__ANDROID__))
 // This pointer will be 0-initialized by default (at load time).
 std::atomic<JavaVM*> JVM;
 
-JNIEnv* get_jvm_env()
+static void abort_if_no_jvm()
 {
     if (JVM == nullptr)
     {
-        throw std::runtime_error("Could not contact JVM");
+        __android_log_print(ANDROID_LOG_ERROR, "CPPRESTSDK", "%s", "The CppREST SDK must be initialized before first use on android: https://casablanca.codeplex.com/wikipage?title=Use%20on%20Android");
+        std::abort();
     }
+}
+
+JNIEnv* get_jvm_env()
+{
+    abort_if_no_jvm();
     JNIEnv* env = nullptr;
     auto result = JVM.load()->AttachCurrentThread(&env, nullptr);
     if (result != JNI_OK)
@@ -43,20 +51,25 @@ JNIEnv* get_jvm_env()
     return env;
 }
 
-#endif
-
-}
-
-#if (defined(ANDROID) || defined(__ANDROID__))
-extern "C" jint JNI_OnLoad(JavaVM* vm, void* reserved)
+threadpool& threadpool::shared_instance()
 {
-   JNIEnv* env;
-   if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK)
-   {
-      return -1;
-   }
+    abort_if_no_jvm();
+    static threadpool s_shared(40);
+    return s_shared;
+}
 
-   crossplat::JVM = vm;
-   return JNI_VERSION_1_6;
+#else
+
+// initialize the static shared threadpool
+threadpool threadpool::s_shared(40);
+
+#endif
+
+}
+
+#if defined(__ANDROID__)
+void cpprest_init(JavaVM* vm) {
+    crossplat::JVM = vm;
 }
 #endif
+
