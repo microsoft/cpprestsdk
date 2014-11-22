@@ -2,8 +2,8 @@
 <package>
     <metadata>
         <id>cpprestsdk.android</id>
-        <version>2.3.0.0</version>
-        <title>C++ REST SDK</title>
+        <version>2.3.0.1</version>
+        <title>C++ REST SDK - Android</title>
         <authors>casablancacore</authors>
         <owners>Microsoft, Visual C++</owners>
         <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
