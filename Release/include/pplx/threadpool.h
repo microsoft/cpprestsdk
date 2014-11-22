@@ -74,12 +74,14 @@ public:
         for (size_t i = 0; i < n; i++)
             add_thread();
     }
-
+#if defined(__ANDROID__)
+    static threadpool& shared_instance();
+#else
     static threadpool& shared_instance()
     {
         return s_shared;
     }
-
+#endif
     ~threadpool()
     {
         m_service.stop();
@@ -105,7 +107,9 @@ public:
 private:
     struct _cancel_thread { };
 
+#if !defined(__ANDROID__)
     static threadpool s_shared;
+#endif
 
     void add_thread()
     {
@@ -130,11 +134,6 @@ private:
     static void* thread_start(void *arg)
     {
 #if (defined(ANDROID) || defined(__ANDROID__))
-        // Spinlock on the JVM calling JNI_OnLoad()
-        while (JVM == nullptr)
-        {
-            pplx::details::platform::YieldExecution();
-        }
         // Calling get_jvm_env() here forces the thread to be attached.
         get_jvm_env();
         pthread_cleanup_push(detach_from_java, nullptr);
