@@ -39,10 +39,6 @@
 #include "cpprest/streams.h"
 #include "cpprest/containerstream.h"
 
-#ifndef _WIN32
-#include <boost/algorithm/string/predicate.hpp>
-#endif
-
 namespace web
 {
 namespace http
