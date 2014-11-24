@@ -39,7 +39,22 @@
 ipch/
 obj/
 #OSX files
+*.xccheckout
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspective3
+!default.pbxuser
+!default.mode1v3
+!default.mode2v3
+!default.perspective3
+xcuserdata
+*.xcuserstate
 .DS_Store
+.Trashes
+*.swp
+*.lock
+*~.nib
 *.resfiles
 [Bb]in
 Binaries/
