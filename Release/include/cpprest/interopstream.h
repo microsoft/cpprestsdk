@@ -28,12 +28,6 @@
 #include "cpprest/astreambuf.h"
 #include "cpprest/streams.h"
 
-#pragma warning(push)
-// Suppress unreferenced formal parameter warning as they are required for documentation
-#pragma warning(disable : 4100)
-// Inherited via dominance. Disabling is necessary for iostream, and exactly what STL does.
-#pragma warning(disable: 4250)
-
 namespace Concurrency { namespace streams {
 
     template<typename CharType> class stdio_ostream;
@@ -82,8 +76,8 @@ namespace Concurrency { namespace streams {
 
         virtual size_t in_avail() const { return (size_t)m_buffer->in_avail(); }
 
-        virtual size_t buffer_size(std::ios_base::openmode direction = std::ios_base::in) const { return 0; }
-        virtual void set_buffer_size(size_t size, std::ios_base::openmode direction = std::ios_base::in) { return; }
+        virtual size_t buffer_size(std::ios_base::openmode) const { return 0; }
+        virtual void set_buffer_size(size_t, std::ios_base::openmode) { return; }
 
         virtual pplx::task<bool> _sync() { return pplx::task_from_result(m_buffer->pubsync() == 0); }
 
@@ -107,11 +101,11 @@ namespace Concurrency { namespace streams {
         virtual pos_type seekpos(pos_type pos, std::ios_base::openmode mode) { return m_buffer->pubseekpos(pos, mode); }
         virtual pos_type seekoff(off_type off, std::ios_base::seekdir dir, std::ios_base::openmode mode) { return m_buffer->pubseekoff(off, dir, mode); }
 
-        virtual _CharType* _alloc(size_t count) { return nullptr; }
-        virtual void _commit(size_t count) {}
+        virtual _CharType* _alloc(size_t) { return nullptr; }
+        virtual void _commit(size_t) {}
 
-        virtual bool acquire(_Out_writes_ (count) _CharType*& ptr, _In_ size_t& count) { return false; }
-        virtual void release(_Out_writes_ (count) _CharType *ptr, _In_ size_t count) { }
+        virtual bool acquire(_Out_writes_ (count) _CharType*&, _In_ size_t&) { return false; }
+        virtual void release(_Out_writes_ (count) _CharType *, _In_ size_t) { }
 
         template<typename CharType> friend class concurrency::streams::stdio_ostream;
         template<typename CharType> friend class concurrency::streams::stdio_istream;
@@ -531,4 +525,3 @@ namespace Concurrency { namespace streams {
 #endif
 
 }} // namespaces
-#pragma warning(pop) // 4100

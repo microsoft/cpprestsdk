@@ -34,10 +34,6 @@
 #include "cpprest/astreambuf.h"
 #include "cpprest/streams.h"
 
-// Suppress unreferenced formal parameter warning as they are required for documentation
-#pragma warning(push)
-#pragma warning(disable : 4100)
-
 namespace Concurrency { namespace streams {
 
     // Forward declarations
@@ -449,7 +445,7 @@ namespace Concurrency { namespace streams {
         /// <summary>
         /// Determines if the request can be satisfied.
         /// </summary>
-        bool can_satisfy(size_t count) const
+        bool can_satisfy(size_t) const
         {
             // We can always satisfy a read, at least partially, unless the
             // read position is at the very end of the buffer.
@@ -639,5 +635,3 @@ namespace Concurrency { namespace streams {
     };
 
 }} // namespaces
-
-#pragma warning(pop) // 4100

@@ -34,12 +34,6 @@
 #include "cpprest/astreambuf.h"
 #include "cpprest/streams.h"
 
-// Suppress unreferenced formal parameter warning as they are required for documentation
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable : 4100)
-#endif
-
 namespace Concurrency { namespace streams {
 
     // Forward declarations
@@ -618,7 +612,3 @@ namespace Concurrency { namespace streams {
 
 
 }} // namespaces
-
-#if defined(_MSC_VER)
-#pragma warning(pop) // 4100
-#endif

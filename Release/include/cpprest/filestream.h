@@ -39,12 +39,6 @@ namespace concurrency = Concurrency;
 #endif
 #endif
 
-#pragma warning(push)
-// Suppress unreferenced formal parameter warning as they are required for documentation.
-#pragma warning(disable : 4100)
-// Suppress no-side-effect recursion warning, since it is safe and template-binding-dependent.
-#pragma warning(disable : 4718)
-
 namespace Concurrency { namespace streams
 {
     // Forward declarations
@@ -598,7 +592,7 @@ namespace details {
         /// <param name="count">The maximum number of characters to copy</param>
         /// <returns>The number of characters copied. O if the end of the stream is reached or an asynchronous read is required.</returns>
         /// <remarks>This is a synchronous operation, but is guaranteed to never block.</remarks>
-        virtual size_t _scopy(_Out_writes_ (count) _CharType *ptr, _In_ size_t count)
+        virtual size_t _scopy(_Out_writes_ (count) _CharType *, _In_ size_t)
         {
             return 0;
         }
@@ -1114,4 +1108,17 @@ namespace details {
     typedef file_stream<uint8_t> fstream;
 }} // namespace concurrency::streams
 
-#pragma warning(pop) // 4100
+
+
+
+
+
+
+
+
+
+
+
+
+
+

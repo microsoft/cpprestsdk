@@ -33,12 +33,6 @@
 #include "pplx/pplxtasks.h"
 #include "cpprest/astreambuf.h"
 
-// Suppress unreferenced formal parameter warning as they are required for documentation
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable : 4100)
-#endif
-
 namespace Concurrency { namespace streams {
 
     namespace details {
@@ -468,7 +462,7 @@ namespace Concurrency { namespace streams {
                     return m_data + m_pos;
                 }
 
-                // Read upto count characters from the block
+                // Read up to count characters from the block
                 size_t read(_Out_writes_ (count) _CharType * dest, _In_ size_t count, bool advance = true)
                 {
                     SafeSize avail(rd_chars_left());
@@ -708,7 +702,3 @@ namespace Concurrency { namespace streams {
     };
 
 }} // namespaces
-
-#if defined(_MSC_VER)
-#pragma warning(pop) // 4100
-#endif

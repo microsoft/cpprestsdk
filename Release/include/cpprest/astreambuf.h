@@ -34,14 +34,6 @@
 #include "cpprest/details/basic_types.h"
 #include "cpprest/asyncrt_utils.h"
 
-#if defined(_MSC_VER)
-#pragma warning(push)
-// Suppress unreferenced formal parameter warning as they are required for documentation.
-#pragma warning(disable : 4100)
-// Suppress no-side-effect recursion warning, since it is safe and template-binding-dependent.
-#pragma warning(disable : 4718)
-#endif
-
 namespace Concurrency
 {
 /// Library for asynchronous streams.
@@ -1179,7 +1171,3 @@ namespace streams
     };
 
 }}
-
-#if defined(_MSC_VER)
-#pragma warning(pop) // 4100
-#endif
