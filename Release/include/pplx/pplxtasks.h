@@ -53,6 +53,11 @@ namespace Concurrency {
 
 #include "pplx/pplx.h"
 
+#if defined(__ANDROID__)
+#include <jni.h>
+void cpprest_init(JavaVM*);
+#endif
+
 // Cannot build using a compiler that is older than dev10 SP1
 #if defined(_MSC_VER)
 #if _MSC_FULL_VER < 160040219 /*IFSTRIP=IGN*/

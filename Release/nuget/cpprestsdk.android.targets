@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <CppRestSDKVersionMajor>2</CppRestSDKVersionMajor>
+    <CppRestSDKVersionMinor>3</CppRestSDKVersionMinor>
+    <CppRestSDKVersionRevision>0</CppRestSDKVersionRevision>
+    <CppRestSDKVersionFileSuffix>$(CppRestSDKVersionMajor)_$(CppRestSDKVersionMinor)</CppRestSDKVersionFileSuffix>
+  </PropertyGroup>
+
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>HAS_CPPRESTSDK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <LibraryDependencies>m;%(LibraryDependencies)</LibraryDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+
+  <ItemGroup>
+    <CppRestSDKTargetDependencies Include="boost_atomic_android_PreLink" />
+    <CppRestSDKTargetDependencies Include="boost_chrono_android_PreLink" />
+    <CppRestSDKTargetDependencies Include="boost_date_time_android_PreLink" />
+    <CppRestSDKTargetDependencies Include="boost_filesystem_android_PreLink" />
+    <CppRestSDKTargetDependencies Include="boost_locale_android_PreLink" />
+    <CppRestSDKTargetDependencies Include="boost_system_android_PreLink" />
+    <CppRestSDKTargetDependencies Include="boost_thread_android_PreLink" />
+    <CppRestSDKTargetDependencies Include="openssl_android_PreLink" />
+  </ItemGroup>
+
+  <Target Name="cpprestsdk_android_PreLink" BeforeTargets="@(CppRestSDKTargetDependencies);Link" DependsOnTargets="$(ComputeLinkInputsTargets)">
+    <!-- ARM and Clang and GNUSTL and Debug -->
+    <ItemGroup Condition="'$(Platform)' == 'ARM' And '$(PlatformToolset)' == 'Clang_3_4' And ('$(UseOfStl)' == 'gnustl_shared' Or '$(UseOfStl)' == 'gnustl_static') And '$(UseDebugLibraries)' == 'true'">
+      <Link Include="$(MSBuildThisFileDirectory)lib\arm\libcpprest-clang_3_4-d-gnustl-$(CppRestSDKVersionFileSuffix).a" />
+    </ItemGroup>
+    <!-- ARM and Clang and GNUSTL and Release -->
+    <ItemGroup Condition="'$(Platform)' == 'ARM' And '$(PlatformToolset)' == 'Clang_3_4' And ('$(UseOfStl)' == 'gnustl_shared' Or '$(UseOfStl)' == 'gnustl_static') And '$(UseDebugLibraries)' != 'true'">
+      <Link Include="$(MSBuildThisFileDirectory)lib\arm\libcpprest-clang_3_4-gnustl-$(CppRestSDKVersionFileSuffix).a" />
+    </ItemGroup>
+
+    <Error
+        Condition="'$(PlatformToolset)' != 'Clang_3_4'"
+        Text="The cpprestsdk.android NuGet package only contains binaries for Clang 3.4."
+        />
+    <Error
+        Condition="'$(UseOfStl)' != 'gnustl_shared' And '$(UseOfStl)' != 'gnustl_static'"
+        Text="cpprestsdk requires linking against the gnustl. Please set Project Properties -> Configuration Properties -> General -> Use of STL to be 'gnustl_static'."
+        />
+    <Error
+        Condition="'$(Platform)' != 'ARM'"
+        Text="The cpprestsdk.android NuGet package only contains binaries for the ARM architecture."
+        />
+  </Target>
+</Project>
