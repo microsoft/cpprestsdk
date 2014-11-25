@@ -45,7 +45,7 @@ namespace http
 {
 
 // URI class has been moved from web::http namespace to web namespace.
-// The below using declarations ensure we dont break existing code.
+// The below using declarations ensure we don't break existing code.
 // Please use the web::uri class going forward.
 using web::uri;
 using web::uri_builder;
@@ -1392,5 +1392,4 @@ private:
     http_pipeline(const http_pipeline &);
 };
 
-} // namespace http
-} // namespace web
+}}

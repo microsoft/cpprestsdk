@@ -65,19 +65,19 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FacebookDemo120", "Release\
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		Release\src\build\winrt.vcxitems*{c5d88d15-f9f5-48e2-9ef2-be0b645b9c0d}*SharedItemsImports = 4
 		Release\src\build\common.vcxitems*{c5d88d15-f9f5-48e2-9ef2-be0b645b9c0d}*SharedItemsImports = 4
+		Release\src\build\winrt.vcxitems*{c5d88d15-f9f5-48e2-9ef2-be0b645b9c0d}*SharedItemsImports = 4
 		Release\src\build\winrt.vcxitems*{0a9ba181-7876-4b3d-a5e0-ee673fa51c05}*SharedItemsImports = 9
 		Release\src\build\android.vcxitems*{65951c40-a332-4b54-89c2-7cdaf30d5f66}*SharedItemsImports = 9
 		Release\src\build\common.vcxitems*{15f3b200-1aed-4b57-af37-b21cd67914b1}*SharedItemsImports = 4
 		Release\src\build\win32.vcxitems*{15f3b200-1aed-4b57-af37-b21cd67914b1}*SharedItemsImports = 4
-		Release\src\build\winrt.vcxitems*{9ad285a2-301e-47a0-a299-14ad5d4f2758}*SharedItemsImports = 4
 		Release\src\build\common.vcxitems*{9ad285a2-301e-47a0-a299-14ad5d4f2758}*SharedItemsImports = 4
+		Release\src\build\winrt.vcxitems*{9ad285a2-301e-47a0-a299-14ad5d4f2758}*SharedItemsImports = 4
 		Release\src\build\common.vcxitems*{1014c621-bc2d-4813-b8c1-6d83ad6f9249}*SharedItemsImports = 4
 		Release\src\build\win32.vcxitems*{1014c621-bc2d-4813-b8c1-6d83ad6f9249}*SharedItemsImports = 4
 		Release\src\build\win32.vcxitems*{f40f4804-50f9-4257-8d74-b9cbb19ac4c3}*SharedItemsImports = 9
-		Release\src\build\winrt.vcxitems*{e5f8a2f0-f713-4673-a42f-2cc4e8fb171b}*SharedItemsImports = 4
 		Release\src\build\common.vcxitems*{e5f8a2f0-f713-4673-a42f-2cc4e8fb171b}*SharedItemsImports = 4
+		Release\src\build\winrt.vcxitems*{e5f8a2f0-f713-4673-a42f-2cc4e8fb171b}*SharedItemsImports = 4
 		Release\src\build\other.vcxitems*{3d5908f7-7673-4229-bc46-2007a7af9cae}*SharedItemsImports = 9
 		Release\src\build\common.vcxitems*{594dcb5f-07e3-4084-a2ce-268611fa629f}*SharedItemsImports = 9
 	EndGlobalSection

@@ -28,7 +28,8 @@
 #include <limits>
 
 #include "pplx/pplxtasks.h"
-#include "cpprest/producerconsumerstream.h"
+#include "cpprest/streams.h"
+#include "cpprest/containerstream.h"
 #include "cpprest/uri.h"
 #include "cpprest/details/basic_types.h"
 #include "cpprest/asyncrt_utils.h"
