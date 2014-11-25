@@ -48,8 +48,8 @@ namespace client
 
 namespace details
 {
-    class winrt_client;
-    class wspp_client;
+    class winrt_callback_client;
+    class wspp_callback_client;
 #if defined(__cplusplus_winrt)
     ref class ReceiveContext;
 #endif
@@ -136,8 +136,8 @@ public:
     }
 
 private:
-    friend class details::winrt_client;
-    friend class details::wspp_client;
+    friend class details::winrt_callback_client;
+    friend class details::wspp_callback_client;
 
     pplx::task_completion_event<void> m_body_sent;
     concurrency::streams::streambuf<uint8_t> m_body;
@@ -229,8 +229,8 @@ public:
     }
 
 private:
-    friend class details::winrt_client;
-    friend class details::wspp_client;
+    friend class details::winrt_callback_client;
+    friend class details::wspp_callback_client;
 #if defined(__cplusplus_winrt)
     friend ref class details::ReceiveContext;
 #endif

@@ -80,6 +80,20 @@ TEST_FIXTURE(uri_address, get_client_config)
     VERIFY_ARE_EQUAL(config2.credentials().username(), cred.username());
 }
 
+// Verify that we can read the config from the websocket_callback_client
+TEST_FIXTURE(uri_address, get_client_config_callback_client)
+{
+    websocket_client_config config;
+
+    web::credentials cred(U("username"), U("password"));
+    config.set_credentials(cred);
+    websocket_callback_client client(config);
+
+    const websocket_client_config& config2 = client.config();
+    VERIFY_ARE_EQUAL(config2.credentials().username(), cred.username());
+}
+
+
 // Verify that we can get the baseuri from websocket_client connect.
 TEST_FIXTURE(uri_address, uri_test)
 {
