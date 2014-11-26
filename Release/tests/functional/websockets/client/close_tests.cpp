@@ -82,7 +82,7 @@ TEST_FIXTURE(uri_address, close_from_server)
 }
 
 // Test close websocket connection with callback client: client sends an empty close and server responds with close frame
-TEST_FIXTURE(uri_address, close_callback_client_websocket)
+TEST_FIXTURE(uri_address, close_callback_client_websocket, "Ignore:Apple", "319")
 {
     test_websocket_server server;
     const utility::string_t close_reason = U("Too large");
