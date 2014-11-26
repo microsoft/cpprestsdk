@@ -387,7 +387,7 @@ class websocket_client_task_impl
 {
 
 public:
-    websocket_client_task_impl(websocket_client_config config);
+    _ASYNCRTIMP websocket_client_task_impl(websocket_client_config config);
     
     virtual ~websocket_client_task_impl() CPPREST_NOEXCEPT;
 
