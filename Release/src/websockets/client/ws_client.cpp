@@ -719,7 +719,7 @@ namespace client
 namespace details
 {
 
-websocket_client_task_impl::~websocket_client_task_impl() CPPREST_NOEXCEPT;
+websocket_client_task_impl::~websocket_client_task_impl() CPPREST_NOEXCEPT
 {
     close_pending_tasks_with_error(websocket_exception("Websocket client is being destroyed"));
 }
