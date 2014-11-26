@@ -1,4 +1,4 @@
-/***
+﻿/***
 * ==++==
 *
 * Copyright (c) Microsoft Corporation. All rights reserved. 
@@ -77,6 +77,26 @@ TEST_FIXTURE(uri_address, send_after_close)
     VERIFY_THROWS(client.send(msg).wait(), websocket_exception);
 }
 
+// Send after close for callback client
+TEST_FIXTURE(uri_address, send_after_close_callback_client)
+{
+    std::string body("hello");
+    test_websocket_server server;
+
+    server.next_message([&](test_websocket_msg msg)
+    {
+        websocket_asserts::assert_message_equals(msg, body, test_websocket_message_type::WEB_SOCKET_UTF8_MESSAGE_TYPE);
+    });
+    websocket_callback_client client;
+
+    client.connect(m_uri).wait();
+    client.close().wait();
+
+    websocket_outgoing_message msg;
+    msg.set_utf8_message(body);
+    VERIFY_THROWS(client.send(msg).wait(), websocket_exception);
+}
+
 // Receive after close
 TEST_FIXTURE(uri_address, receive_after_close)
 {
@@ -136,6 +156,15 @@ TEST_FIXTURE(uri_address, destroy_without_close)
     }
     
     VERIFY_THROWS(t.wait(), websocket_exception);
+}
+
+// Destroy the callback client without closing it explicitly
+TEST_FIXTURE(uri_address, destroy_without_close_callback_client)
+{
+    // test won't finish if we can't release client properly
+    test_websocket_server server;
+    websocket_callback_client client;
+    client.connect(m_uri).wait();
 }
 
 // connect fails while user is waiting on receive

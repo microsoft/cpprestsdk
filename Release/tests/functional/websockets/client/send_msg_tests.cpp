@@ -87,7 +87,8 @@ void fill_buffer(streams::streambuf<uint8_t> rbuf, const std::vector<uint8_t>& b
         rbuf.putn((const uint8_t *)&body[0], len).wait();
 }
 
-pplx::task<void> send_text_msg_helper(websocket_client& client, web::uri uri, test_websocket_server& server, const std::string& body, bool connect_client = true)
+template<class SocketClientClass>
+pplx::task<void> send_text_msg_helper(SocketClientClass& client, web::uri uri, test_websocket_server& server, const std::string& body, bool connect_client = true)
 {
     server.next_message([body](test_websocket_msg msg) // Handler to verify the message sent by the client.
     {
@@ -158,6 +159,15 @@ TEST_FIXTURE(uri_address, send_text_msg)
 {
     test_websocket_server server;
     websocket_client client;
+    send_text_msg_helper(client, m_uri, server, "hello").wait();
+    client.close().wait();
+}
+
+// Send text message with websocket_callback_client
+TEST_FIXTURE(uri_address, send_text_msg_callback_client)
+{
+    test_websocket_server server;
+    websocket_callback_client client;
     send_text_msg_helper(client, m_uri, server, "hello").wait();
     client.close().wait();
 }
