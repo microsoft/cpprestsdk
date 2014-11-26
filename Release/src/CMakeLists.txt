@@ -26,6 +26,7 @@ if(UNIX)
     http/oauth/oauth1.cpp
     http/oauth/oauth2.cpp
     websockets/client/ws_msg.cpp
+    websockets/cleint/ws_client.cpp
     websockets/client/ws_client_wspp.cpp
     utilities/base64.cpp
     )
