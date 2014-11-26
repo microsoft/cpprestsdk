@@ -382,8 +382,8 @@ class websocket_client_task_impl
 
 public:
     _ASYNCRTIMP websocket_client_task_impl(websocket_client_config config);
-    
-    virtual ~websocket_client_task_impl() CPPREST_NOEXCEPT;
+
+    _ASYNCRTIMP virtual ~websocket_client_task_impl() CPPREST_NOEXCEPT;
 
     _ASYNCRTIMP pplx::task<websocket_incoming_message> receive();
 

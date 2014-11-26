@@ -64,6 +64,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\pplx\pplx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\websockets\client\ws_client.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source Files">

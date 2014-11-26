@@ -27,7 +27,7 @@
 
 #include <fstream>
 
-#include "cpprest/details/version.h"
+#include "cpprest/version.h"
 
 using namespace web; 
 using namespace utility;

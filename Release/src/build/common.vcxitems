@@ -37,6 +37,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\utilities\asyncrt_utils.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\utilities\base64.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\utilities\web_utilities.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\websockets\client\ws_client.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\websockets\client\ws_msg.cpp" />
   </ItemGroup>
   <ItemGroup>
