@@ -395,7 +395,7 @@ public:
 
     _ASYNCRTIMP void close_pending_tasks_with_error(const websocket_exception &exc);
 
-    std::shared_ptr<websocket_client_callback_impl> callback_client() { return m_callback_client; };
+    const std::shared_ptr<websocket_client_callback_impl> & callback_client() const { return m_callback_client; };
 
 private:
     void set_handler();
