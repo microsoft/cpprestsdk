@@ -426,7 +426,7 @@ public:
     /// <summary>
     ///  Creates a new websocket_client.
     /// </summary>
-    _ASYNCRTIMP websocket_client() :
+    websocket_client() :
         m_client(std::make_shared<details::websocket_client_task_impl>(websocket_client_config()))
     {}
 
@@ -434,7 +434,7 @@ public:
     ///  Creates a new websocket_client.
     /// </summary>
     /// <param name="client_config">The client configuration object containing the possible configuration options to initialize the <c>websocket_client</c>. </param>
-    _ASYNCRTIMP websocket_client(websocket_client_config config) :
+    websocket_client(websocket_client_config config) :
         m_client(std::make_shared<details::websocket_client_task_impl>(std::move(config)))
     {}
 
