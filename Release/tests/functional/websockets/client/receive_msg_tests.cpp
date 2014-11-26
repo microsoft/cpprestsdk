@@ -282,7 +282,6 @@ TEST_FIXTURE(uri_address, receive_text_msg_callback_client)
     std::string body_str("hello");
     std::vector<unsigned char> body(body_str.begin(), body_str.end());
 
-    int hitCount = 0;
     pplx::task_completion_event<void> receiveEvent;
     // make sure client works fine without setting receive handler
     test_websocket_msg msg;
@@ -291,7 +290,7 @@ TEST_FIXTURE(uri_address, receive_text_msg_callback_client)
     server.send_msg(msg);
 
     // set receive handler
-    client.set_message_handler([body_str, &hitCount, &receiveEvent](websocket_incoming_message ret_msg)
+    client.set_message_handler([body_str, &receiveEvent](websocket_incoming_message ret_msg)
     {
         VERIFY_ARE_EQUAL(ret_msg.length(), body_str.length());
         auto ret_str = ret_msg.extract_string().get();
@@ -299,15 +298,12 @@ TEST_FIXTURE(uri_address, receive_text_msg_callback_client)
         VERIFY_ARE_EQUAL(body_str.compare(ret_str), 0);
         VERIFY_ARE_EQUAL(ret_msg.message_type(), websocket_message_type::text_message);
 
-        hitCount++;
         receiveEvent.set();
     });
 
     server.send_msg(msg);
 
     pplx::create_task(receiveEvent).wait();
-    VERIFY_ARE_EQUAL(hitCount, 1);
-
     client.close().wait();
 }
 } // SUITE(receive_msg_tests)
