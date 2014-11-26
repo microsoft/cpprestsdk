@@ -31,7 +31,7 @@
 #include <string>
 
 #if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__)) || (defined(_MS_WINDOWS)  && !defined(__cplusplus_winrt) && !defined(_M_ARM) && !defined(CPPREST_EXCLUDE_WEBSOCKETS))
-
+#define BOOST_ASIO_DISABLE_THREAD_KEYWORD_EXTENSION
 #include <boost/asio/ssl.hpp>
 
 namespace web { namespace http { namespace client { namespace details {

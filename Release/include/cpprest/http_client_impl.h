@@ -43,6 +43,7 @@ using namespace Microsoft::WRL;
 using namespace web;
 using namespace concurrency;
 #else
+#define BOOST_ASIO_DISABLE_THREAD_KEYWORD_EXTENSION
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 #include <boost/asio/ssl.hpp>

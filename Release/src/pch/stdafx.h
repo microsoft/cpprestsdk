@@ -58,6 +58,7 @@
 #ifdef __APPLE__
 #include "cpprest/details/apple_compat.h"
 #else
+#define BOOST_ASIO_DISABLE_THREAD_KEYWORD_EXTENSION
 #include "cpprest/details/linux_compat.h"
 #define FAILED(x) ((x) != 0)
 #endif

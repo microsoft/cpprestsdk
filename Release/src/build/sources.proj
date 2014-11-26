@@ -261,8 +261,30 @@
     </ClCompile>
   </ItemGroup>
 
+  <!-- Android files go here -->
+  <ItemGroup Condition="'$(PlatformToolset)' == 'Clang_3_4'" >
+    <ClCompile Include="$(CasablancaSrcDir)\http\client\http_linux.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CasablancaSrcDir)\http\listener\http_linux_server.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CasablancaSrcDir)\pplx\pplx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CasablancaSrcDir)\pplx\linux\pplxlinux.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CasablancaSrcDir)\streams\linux\fileio_linux.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(CasablancaSrcDir)\pplx\threadpool.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+
   <!-- non-WinRT and non-TargetXP files go here -->
-  <ItemGroup Condition="'$(WinRTProject)' != 'true' and '$(TargetXP)' != 'true'" >
+  <ItemGroup Condition="'$(WinRTProject)' != 'true' and '$(TargetXP)' != 'true' and '$(PlatformToolset)' != 'Clang_3_4'" >
     <ClCompile Include="$(CasablancaSrcDir)\http\listener\http_server_api.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -275,7 +297,7 @@
   </ItemGroup>
 
   <!-- non-WinRT files go here -->
-  <ItemGroup Condition="'$(WinRTProject)' != 'true'" >
+  <ItemGroup Condition="'$(WinRTProject)' != 'true' and '$(PlatformToolset)' != 'Clang_3_4'" >
     <ClCompile Include="$(CasablancaSrcDir)\http\client\http_win7.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
