@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,7 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* test_http_server.cpp -- Defines a test client to handle requests and sending responses.
+* Defines a test client to handle requests and sending responses.
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
@@ -25,7 +25,7 @@
 
 #include "cpprest/uri.h"
 #include "test_http_client.h"
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 #include <winhttp.h>
 #pragma warning ( push )
 #pragma warning ( disable : 4457 )
@@ -67,7 +67,7 @@ static utility::string_t flatten_http_headers(const std::map<utility::string_t, 
     return flattened_headers;
 }
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 
 // Helper function to query for the size of header values.
 static void query_header_length(HINTERNET request_handle, DWORD header, DWORD &length)

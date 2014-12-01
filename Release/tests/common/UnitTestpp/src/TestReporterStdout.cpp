@@ -56,7 +56,7 @@ static void PrintfWrapper(const char* format, ...)
     HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
     WriteFile(h, &byteArray[0], (DWORD)bufSize, &bytesWritten, NULL);
 #else
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     vfprintf_s(stdout, format, args);
 #else
     vfprintf(stdout, format, args);
@@ -68,7 +68,7 @@ static void PrintfWrapper(const char* format, ...)
 
 static void ChangeConsoleTextColorToRed()
 {
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x0004 | 0x0008);
 #else
     std::cout << "\033[1;31m";
@@ -77,7 +77,7 @@ static void ChangeConsoleTextColorToRed()
 
 static void ChangeConsoleTextColorToGreen()
 {
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x0002 | 0x0008);
 #else
     std::cout << "\033[1;32m";
@@ -86,7 +86,7 @@ static void ChangeConsoleTextColorToGreen()
 
 static void ChangeConsoleTextColorToGrey()
 {
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN);
 #else
     std::cout << "\033[0m";

@@ -25,7 +25,7 @@
 
 #include "stdafx.h"
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 #include <WinError.h>
 #endif
 
