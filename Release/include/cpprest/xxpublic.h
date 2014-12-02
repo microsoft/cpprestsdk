@@ -28,6 +28,10 @@
 
 #pragma once
 
+#if defined(__ANDROID__)
+#define BOOST_ASIO_DISABLE_THREAD_KEYWORD_EXTENSION
+#endif
+
 #ifndef _MS_WINDOWS
 #if defined(_WIN32) || defined(__cplusplus_winrt)
 #define _MS_WINDOWS

@@ -25,7 +25,74 @@
 
 pplx::details::atomic_long s_flag;
 
-pplx::scheduler_interface& get_pplx_dflt_scheduler();
+#ifdef _MS_WINDOWS
+
+class pplx_dflt_scheduler : public pplx::scheduler_interface
+{
+    struct _Scheduler_Param
+    {
+        pplx::TaskProc_t m_proc;
+        void * m_param;
+
+        _Scheduler_Param(pplx::TaskProc_t proc, void * param)
+            : m_proc(proc), m_param(param)
+        {
+        }
+    };
+
+    static void CALLBACK DefaultWorkCallbackTest(PTP_CALLBACK_INSTANCE, PVOID pContext, PTP_WORK)
+    {
+        auto schedulerParam = (_Scheduler_Param *)(pContext);
+
+        schedulerParam->m_proc(schedulerParam->m_param);
+
+        delete schedulerParam;
+    }
+
+    virtual void schedule(pplx::TaskProc_t proc, void* param)
+    {
+        pplx::details::atomic_increment(s_flag);
+        auto schedulerParam = new _Scheduler_Param(proc, param);
+        auto work = CreateThreadpoolWork(DefaultWorkCallbackTest, schedulerParam, NULL);
+
+        if (work == nullptr)
+        {
+            delete schedulerParam;
+            throw utility::details::create_system_error(GetLastError());
+        }
+
+        SubmitThreadpoolWork(work);
+        CloseThreadpoolWork(work);
+    }
+};
+
+
+pplx_dflt_scheduler g_pplx_dflt_scheduler;
+
+
+pplx::scheduler_interface& get_pplx_dflt_scheduler()
+{
+    return g_pplx_dflt_scheduler;
+}
+
+#else
+class pplx_dflt_scheduler : public pplx::scheduler_interface
+{
+
+    crossplat::threadpool m_pool;
+
+
+    virtual void schedule(pplx::TaskProc_t proc, void* param)
+    {
+        pplx::details::atomic_increment(s_flag);
+        m_pool.schedule([=]() -> void { proc(param); });
+
+    }
+
+public:
+    pplx_dflt_scheduler() : m_pool(4) {}
+};
+#endif
 
 namespace tests { namespace functional { namespace pplx_tests {
 
@@ -180,6 +247,7 @@ TEST(schedule_task_hold_then_release)
 // TFS # 521911
 TEST(schedule_two_tasks)
 {
+    pplx_dflt_scheduler sched;
     pplx::details::atomic_exchange(s_flag, 0L);
 
     auto nowork = [](){};
@@ -189,7 +257,7 @@ TEST(schedule_two_tasks)
     VERIFY_ARE_EQUAL(s_flag, 0);
 
     pplx::task_completion_event<void> tce;
-    auto t = pplx::create_task(tce, get_pplx_dflt_scheduler());
+    auto t = pplx::create_task(tce, sched);
 
     // 2 continuations to be scheduled on the scheduler.
     // Note that task "t" is not scheduled.
