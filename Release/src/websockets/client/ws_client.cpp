@@ -356,7 +356,15 @@ public:
 
         m_state = CONNECTING;
         client.connect(con);
-        m_thread = std::thread(&websocketpp::client<WebsocketConfigType>::run, &client);
+        m_thread = std::thread([&client] () {
+#if defined(__ANDROID__)
+                crossplat::get_jvm_env();
+#endif
+                client.run();
+#if defined(__ANDROID__)
+                crossplat::JVM.load()->DetachCurrentThread();
+#endif
+            });
         return pplx::create_task(m_connect_tce);
     }
 
