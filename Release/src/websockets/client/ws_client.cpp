@@ -22,7 +22,7 @@
 ****/
 #include "stdafx.h"
 
-#if !defined(CPPREST_EXCLUDE_WEBSOCKETS)
+#if (defined(__cplusplus_winrt) || !defined(_M_ARM)) && !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 
 namespace web
 {
