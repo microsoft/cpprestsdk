@@ -26,10 +26,10 @@
 #include "stdafx.h"
 #include "cpprest/details/x509_cert_utilities.h"
 
+#if !defined(_M_ARM) && (!defined(_MSC_VER) || (_MSC_VER < 1900)) && !defined(CPPREST_EXCLUDE_WEBSOCKETS)
+
 // Force websocketpp to use C++ std::error_code instead of Boost.
 #define _WEBSOCKETPP_CPP11_SYSTEM_ERROR_
-
-#if ((!defined(WINAPI_FAMILY) || WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP) && !defined(_M_ARM) && (!defined(_MSC_VER) || (_MSC_VER < 1900))) && !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 #if defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wconversion"
@@ -94,7 +94,7 @@ static std::string build_error_msg(const std::error_code &ec, const std::string 
 
 static utility::string_t g_subProtocolHeader(_XPLATSTR("Sec-WebSocket-Protocol"));
 
-class wspp_client : public _websocket_client_impl, public std::enable_shared_from_this<wspp_client>
+class wspp_callback_client : public websocket_client_callback_impl, public std::enable_shared_from_this<wspp_callback_client>
 {
 private:
     enum State {
@@ -106,8 +106,8 @@ private:
         DESTROYED
     };
 public:
-    wspp_client(websocket_client_config config) :
-        _websocket_client_impl(std::move(config)),
+    wspp_callback_client(websocket_client_config config) :
+        websocket_client_callback_impl(std::move(config)),
         m_state(CREATED),
         m_num_sends(0)
 #if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__)) || defined(_WIN32)
@@ -115,7 +115,7 @@ public:
 #endif
     {}
 
-    ~wspp_client()
+    ~wspp_callback_client()
     {
         _ASSERTE(m_state < DESTROYED);
         std::unique_lock<std::mutex> lock(m_wspp_client_lock);
@@ -126,14 +126,13 @@ public:
             // This should be impossible
             std::abort();
         case CREATED:
-        case CLOSED:
-            // In these cases, nothing need be done.
             lock.unlock();
             break;
+        case CLOSED:
         case CONNECTING:
         case CONNECTED:
         case CLOSING:
-            // unlock the mutex so connect/close can use it
+            // Unlock the mutex so connect/close can use it.
             lock.unlock();
             try
             {
@@ -158,13 +157,13 @@ public:
     {
         if (m_uri.scheme() == U("wss"))
         {
-        	m_client = std::unique_ptr<websocketpp_client_base>(new websocketpp_tls_client());
+            m_client = std::unique_ptr<websocketpp_client_base>(new websocketpp_tls_client());
 
             // Options specific to TLS client.
             auto &client = m_client->client<websocketpp::config::asio_tls_client>();
             client.set_tls_init_handler([this](websocketpp::connection_hdl)
             {
-            	auto sslContext = websocketpp::lib::shared_ptr<boost::asio::ssl::context>(new boost::asio::ssl::context(boost::asio::ssl::context::sslv23));
+                auto sslContext = websocketpp::lib::shared_ptr<boost::asio::ssl::context>(new boost::asio::ssl::context(boost::asio::ssl::context::sslv23));
                 sslContext->set_default_verify_paths();
                 sslContext->set_options(boost::asio::ssl::context::default_workarounds);
                 sslContext->set_verify_mode(boost::asio::ssl::context::verify_peer);
@@ -197,7 +196,7 @@ public:
         }
         else
         {
-        	m_client = std::unique_ptr<websocketpp_client_base>(new websocketpp_client());
+            m_client = std::unique_ptr<websocketpp_client_base>(new websocketpp_client());
             return connect_impl<websocketpp::config::asio_client>();
         }
     }
@@ -228,42 +227,30 @@ public:
 
         client.set_message_handler([this](websocketpp::connection_hdl, const websocketpp::config::asio_client::message_type::ptr &msg)
         {
-            _ASSERTE(m_state >= CONNECTED && m_state < CLOSED);
-            websocket_incoming_message incoming_msg;
-
-            switch (msg->get_opcode())
+            if (m_external_message_handler)
             {
-            case websocketpp::frame::opcode::binary:
-                incoming_msg.m_msg_type = websocket_message_type::binary_message;
-                break;
-            case websocketpp::frame::opcode::text:
-                incoming_msg.m_msg_type = websocket_message_type::text_message;
-                break;
-            default:
-                // Unknown message type. Since both websocketpp and our code use the RFC codes, we'll just pass it on to the user.
-                incoming_msg.m_msg_type = static_cast<websocket_message_type>(msg->get_opcode());
-                break;
-            }
+                _ASSERTE(m_state >= CONNECTED && m_state < CLOSED);
+                websocket_incoming_message incoming_msg;
 
-            // 'move' the payload into a container buffer to avoid any copies.
-            auto &payload = msg->get_raw_payload();
-            incoming_msg.m_body = concurrency::streams::container_buffer<std::string>(std::move(payload));
+                switch (msg->get_opcode())
+                {
+                case websocketpp::frame::opcode::binary:
+                    incoming_msg.m_msg_type = websocket_message_type::binary_message;
+                    break;
+                case websocketpp::frame::opcode::text:
+                    incoming_msg.m_msg_type = websocket_message_type::text_message;
+                    break;
+                default:
+                    // Unknown message type. Since both websocketpp and our code use the RFC codes, we'll just pass it on to the user.
+                    incoming_msg.m_msg_type = static_cast<websocket_message_type>(msg->get_opcode());
+                    break;
+                }
 
-            std::unique_lock<std::mutex> lock(m_receive_queue_lock);
-            if (m_receive_task_queue.empty())
-            {
-                // Push message to the queue as no one is waiting to receive
-                m_receive_msg_queue.push(incoming_msg);
-                return;
-            }
-            else
-            {
-                // There are tasks waiting to receive a message.
-                auto tce = m_receive_task_queue.front();
-                m_receive_task_queue.pop();
-                // Unlock the lock before setting the completion event to avoid contention
-                lock.unlock();
-                tce.set(incoming_msg);
+                // 'move' the payload into a container buffer to avoid any copies.
+                auto &payload = msg->get_raw_payload();
+                incoming_msg.m_body = concurrency::streams::container_buffer<std::string>(std::move(payload));
+
+                m_external_message_handler(incoming_msg);
             }
         });
 
@@ -354,34 +341,6 @@ public:
         }
 
         return pplx::create_task(msg.body_sent());
-    }
-
-    pplx::task<websocket_incoming_message> receive()
-    {
-        // Acquire client lock first
-        std::lock_guard<std::mutex> client_lock(m_wspp_client_lock);
-        if (m_state > CONNECTED)
-        {
-            // The client has already been closed.
-            return pplx::task_from_exception<websocket_incoming_message>(std::make_exception_ptr(websocket_exception("Websocket connection has closed.")));
-        }
-
-        std::lock_guard<std::mutex> recv_lock(m_receive_queue_lock);
-        if (m_receive_msg_queue.empty())
-        {
-            // Push task completion event to the tce queue, so that it gets signaled when we have a message.
-            pplx::task_completion_event<websocket_incoming_message> tce;
-            m_receive_task_queue.push(tce);
-            return pplx::create_task(tce);
-        }
-        else
-        {
-            // Receive message queue is not empty, return a message from the queue.
-            auto& msg = m_receive_msg_queue.front();
-            auto task = pplx::task_from_result<websocket_incoming_message>(std::move(msg));
-            m_receive_msg_queue.pop();
-            return task;
-        }
     }
 
     void send_msg(websocket_outgoing_message &msg)
@@ -530,7 +489,7 @@ public:
 
     pplx::task<void> close()
     {
-        return close(static_cast<websocket_close_status>(websocketpp::close::status::normal), U("going away"));
+        return close(static_cast<websocket_close_status>(websocketpp::close::status::normal), U("Normal"));
     }
 
     pplx::task<void> close(websocket_close_status status, const utility::string_t& reason)
@@ -573,40 +532,45 @@ private:
         }
 
         auto &client = m_client->client<WebsocketConfigType>();
-        const auto &ec = client.get_con_from_hdl(con_hdl)->get_ec();
-
-        // Close all pending receive calls.
-        auto name = std::string("set_close_handler");
-        if (connecting)
-        {
-            name = std::string("set_fail_handler");
-        }
-        websocket_exception exc(ec, build_error_msg(ec, name));
-        close_pending_tasks_with_error(exc);
+        const auto &connection = client.get_con_from_hdl(con_hdl);
+        client.stop_perpetual();
 
         // Can't join thread directly since it is the current thread.
-        client.stop_perpetual();
-        pplx::create_task([this, connecting, exc]
+        pplx::create_task([this, connecting, connection]
         {
             if (m_thread.joinable())
             {
                 m_thread.join();
             }
+            const auto &ec = connection->get_ec();
+            websocket_exception exc(ec, build_error_msg(ec, "set_fail_handler"));
+
+            // First call close handler if not connecting.
+            if (!connecting)
+            {
+                if (m_external_close_handler)
+                {
+                    const auto &closeCode = connection->get_local_close_code();
+                    const auto &reason = connection->get_local_close_reason();
+                    m_external_close_handler(static_cast<websocket_close_status>(closeCode), utility::conversions::to_string_t(reason), ec);
+                }
+            }
+
+            // Next delete client to make sure Websocketpp cleans up all Boost.Asio portions.
             m_client.reset();
+
+            // Finally set events.
             if (connecting)
             {
                 m_connect_tce.set_exception(exc);
             }
-            else
-            {
-                m_close_tce.set();
-            }
+            m_close_tce.set();
         });
     }
 
     template <typename WebsocketClientType>
-    void send_msg_impl(
-        const std::shared_ptr<wspp_client> &this_client,
+    static void send_msg_impl(
+        const std::shared_ptr<wspp_callback_client> &this_client,
         const websocket_outgoing_message &msg,
         const std::shared_ptr<uint8_t> &sp_allocated,
         size_t length,
@@ -644,16 +608,14 @@ private:
         client.close(m_con, static_cast<websocketpp::close::status::value>(status), utility::conversions::to_utf8string(reason), ec);
     }
 
-    void close_pending_tasks_with_error(const websocket_exception &exc)
+    void set_message_handler(const std::function<void(const websocket_incoming_message&)>& handler)
     {
-        std::lock_guard<std::mutex> lock(m_receive_queue_lock);
-        while (!m_receive_task_queue.empty())
-        {
-            // There are tasks waiting to receive a message, signal them
-            auto tce = m_receive_task_queue.front();
-            m_receive_task_queue.pop();
-            tce.set_exception(std::make_exception_ptr(exc));
-        }
+        m_external_message_handler = handler;
+    }
+
+    void set_close_handler(const std::function<void(websocket_close_status, const utility::string_t&, const std::error_code&)>& handler)
+    {
+        m_external_close_handler = handler;
     }
 
     std::thread m_thread;
@@ -662,46 +624,46 @@ private:
     // after construction based on the URI.
     struct websocketpp_client_base
     {
-    	virtual ~websocketpp_client_base() CPPREST_NOEXCEPT {}
-    	template <typename WebsocketConfig>
-    	websocketpp::client<WebsocketConfig> & client()
-    	{
-    		if(is_tls_client())
-    		{
-    			return reinterpret_cast<websocketpp::client<WebsocketConfig> &>(tls_client());
-    		}
-    		else
-    		{
-    			return reinterpret_cast<websocketpp::client<WebsocketConfig> &>(non_tls_client());
-    		}
-    	}
-    	virtual websocketpp::client<websocketpp::config::asio_client> & non_tls_client()
-		{
-    		throw std::bad_cast();
-		}
-    	virtual websocketpp::client<websocketpp::config::asio_tls_client> & tls_client()
-		{
-    		throw std::bad_cast();
-		}
-    	virtual bool is_tls_client() const = 0;
+        virtual ~websocketpp_client_base() CPPREST_NOEXCEPT {}
+        template <typename WebsocketConfig>
+        websocketpp::client<WebsocketConfig> & client()
+        {
+            if(is_tls_client())
+            {
+                return reinterpret_cast<websocketpp::client<WebsocketConfig> &>(tls_client());
+            }
+            else
+            {
+                return reinterpret_cast<websocketpp::client<WebsocketConfig> &>(non_tls_client());
+            }
+        }
+        virtual websocketpp::client<websocketpp::config::asio_client> & non_tls_client()
+        {
+            throw std::bad_cast();
+        }
+        virtual websocketpp::client<websocketpp::config::asio_tls_client> & tls_client()
+        {
+            throw std::bad_cast();
+        }
+        virtual bool is_tls_client() const = 0;
     };
     struct websocketpp_client : websocketpp_client_base
     {
-    	websocketpp::client<websocketpp::config::asio_client> & non_tls_client() override
-    	{
-    		return m_client;
-    	}
-    	bool is_tls_client() const override { return false; }
-    	websocketpp::client<websocketpp::config::asio_client> m_client;
+        websocketpp::client<websocketpp::config::asio_client> & non_tls_client() override
+        {
+            return m_client;
+        }
+        bool is_tls_client() const override { return false; }
+        websocketpp::client<websocketpp::config::asio_client> m_client;
     };
     struct websocketpp_tls_client : websocketpp_client_base
     {
-    	websocketpp::client<websocketpp::config::asio_tls_client> & tls_client() override
-    	{
-       		return m_client;
-    	}
-    	bool is_tls_client() const override { return true; }
-    	websocketpp::client<websocketpp::config::asio_tls_client> m_client;
+        websocketpp::client<websocketpp::config::asio_tls_client> & tls_client() override
+        {
+            return m_client;
+        }
+        bool is_tls_client() const override { return true; }
+        websocketpp::client<websocketpp::config::asio_tls_client> m_client;
     };
 
     websocketpp::connection_hdl m_con;
@@ -714,19 +676,6 @@ private:
     State m_state;
     std::unique_ptr<websocketpp_client_base> m_client;
 
-    // When a message arrives, if there are tasks waiting for a message, signal the topmost one.
-    // Else enqueue the message in a queue.
-    // m_receive_queue_lock : to guard access to the queue
-
-    // Workaround: use m_receive_queue_lock as a critical section
-    std::mutex m_receive_queue_lock;
-
-    // Queue to store incoming messages when there are no tasks waiting for a message
-    std::queue<websocket_incoming_message> m_receive_msg_queue;
-
-    // Queue to maintain the receive tasks when there are no messages(yet).
-    std::queue<pplx::task_completion_event<websocket_incoming_message>> m_receive_task_queue;
-
     // Guards access to m_outgoing_msg_queue
     std::mutex m_send_lock;
 
@@ -735,6 +684,10 @@ private:
 
     // Number of sends in progress and queued up.
     std::atomic<int> m_num_sends;
+
+    // External callback for handling received and close event
+    std::function<void(websocket_incoming_message)> m_external_message_handler;
+    std::function<void(websocket_close_status, const utility::string_t&, const std::error_code&)> m_external_close_handler;
 
     // Used to track if any of the OpenSSL server certificate verifications
     // failed. This can safely be tracked at the client level since connections
@@ -745,16 +698,22 @@ private:
 
 };
 
+websocket_client_task_impl::websocket_client_task_impl(websocket_client_config config) :
+    m_callback_client(std::make_shared<details::wspp_callback_client>(std::move(config))),
+    m_client_closed(false)
+{
+    set_handler();
+}
 }
 
-websocket_client::websocket_client() :
-    m_client(std::make_shared<details::wspp_client>(websocket_client_config()))
+websocket_callback_client::websocket_callback_client() :
+    m_client(std::make_shared<details::wspp_callback_client>(websocket_client_config()))
 {}
 
-websocket_client::websocket_client(websocket_client_config config) :
-    m_client(std::make_shared<details::wspp_client>(std::move(config)))
+websocket_callback_client::websocket_callback_client(websocket_client_config config) :
+    m_client(std::make_shared<details::wspp_callback_client>(std::move(config)))
 {}
 
 }}}
 
-#endif // !defined(WINAPI_FAMILY) || WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+#endif

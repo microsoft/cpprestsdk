@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@
 ****/
 #include "stdafx.h"
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 #include "CppSparseFile.h"
 #endif
 
@@ -30,7 +30,7 @@
 using namespace Windows::Storage;
 #endif
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 # define DEFAULT_PROT (int)std::ios_base::_Openprot
 #else
 # define DEFAULT_PROT 0
@@ -47,7 +47,7 @@ using namespace ::pplx;
 utility::string_t get_full_name(const utility::string_t &name);
 
 void fill_file(const utility::string_t &name, size_t repetitions = 1);
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 void fill_file_w(const utility::string_t &name, size_t repetitions = 1);
 #endif
 
@@ -179,7 +179,7 @@ TEST(WriteSingleCharTest1)
     VERIFY_IS_TRUE(close.is_done());
     VERIFY_IS_FALSE(stream.is_open());
 }
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 TEST(WriteSingleCharTest1w)
 { 
     auto open = OPEN_W<wchar_t>(U("WriteSingleCharTest1w.txt"));
@@ -227,7 +227,7 @@ TEST(WriteBufferTest1)
     VERIFY_IS_TRUE(close.is_done());
     VERIFY_IS_FALSE(stream.is_open());
 }
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 TEST(WriteBufferTest1w)
 { 
     auto open = OPEN_W<wchar_t>(U("WriteBufferTest1w.txt"));
@@ -350,7 +350,7 @@ TEST(SequentialReadWrite)
 }
 
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 TEST(ReadSingleChar_bumpcw)
 {
     utility::string_t fname = U("ReadSingleChar_bumpcw.txt");
@@ -472,7 +472,7 @@ TEST(ReadSingleChar_nextc)
 
     VERIFY_IS_FALSE(stream.is_open());
 }
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 TEST(ReadSingleChar_nextcw)
 {
     utility::string_t fname = U("ReadSingleChar_nextcw.txt");
@@ -563,7 +563,7 @@ TEST(ReadSingleChar_getc2)
     VERIFY_IS_FALSE(stream.is_open());
 }
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 TEST(ReadSingleChar_getc1w)
 {
     utility::string_t fname = U("ReadSingleChar_getc1w.txt");
@@ -684,7 +684,7 @@ TEST(ReadBuffer1)
     VERIFY_IS_FALSE(stream.is_open());
 }
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 TEST(ReadBuffer1w)
 {
     // Test that seeking works.
@@ -914,7 +914,7 @@ TEST(file_size)
 
 }
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 TEST(file_size_w)
 {
     utility::string_t fname = U("file_size_w.txt");
@@ -940,7 +940,7 @@ TEST(file_with_one_byte_size)
 }
 #endif
 
-#if defined(_MS_WINDOWS) && (!defined(__cplusplus_winrt)) && defined(_WIN64)
+#if defined(_WIN32) && (!defined(__cplusplus_winrt)) && defined(_WIN64)
 // since casablanca does not use sparse file apis we're not doing the reverse test (write one byte at 4Gb and verify with std apis)
 // because the file created would be too big
 TEST(read_one_byte_at_4G)
@@ -974,7 +974,7 @@ TEST(read_one_byte_at_4G)
 }
 #endif
 
-#if !defined(_MS_WINDOWS) && defined(__x86_64__)
+#if !defined(_WIN32) && defined(__x86_64__)
 
 struct TidyStream
 {

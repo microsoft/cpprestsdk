@@ -32,11 +32,7 @@
 #error This is only supported on Windows
 #endif
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1700)
-
-#if (_MSC_VER >= 1800)
-#error This file must not be included for Visual Studio 12 or later
-#endif
+#if defined(_MSC_VER) && (_MSC_VER >= 1700) && (_MSC_VER < 1800)
 
 #include <ppltasks.h>
 #include "pplx/pplxtasks.h"

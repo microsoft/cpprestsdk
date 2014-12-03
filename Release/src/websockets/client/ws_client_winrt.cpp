@@ -62,31 +62,31 @@ ref class ReceiveContext sealed
 public:
     ReceiveContext() {}
 
-    friend class winrt_client;
+    friend class winrt_callback_client;
+    friend class winrt_task_client;
     void OnReceive(MessageWebSocket^ sender, MessageWebSocketMessageReceivedEventArgs^ args);
     void OnClosed(IWebSocket^ sender, WebSocketClosedEventArgs^ args);
 
 private:
     // Public members cannot have native types
     ReceiveContext(
-        std::function<void(websocket_incoming_message &)> receive_handler,
-        std::function<void(const websocket_exception &)> close_handler)
+        std::function<void(const websocket_incoming_message&)> receive_handler,
+        std::function<void(websocket_close_status, const utility::string_t &, const std::error_code&)> close_handler)
         : m_receive_handler(std::move(receive_handler)), m_close_handler(std::move(close_handler)) {}
 
     // Handler to be executed when a message has been received by the client
-    std::function<void(websocket_incoming_message &)> m_receive_handler;
+    std::function<void(const websocket_incoming_message&)> m_receive_handler;
 
     // Handler to be executed when a close message has been received by the client
-    std::function<void(const websocket_exception &)> m_close_handler;
+    std::function<void(websocket_close_status, const utility::string_t&, const std::error_code&)> m_close_handler;
 };
 
-class winrt_client : public _websocket_client_impl, public std::enable_shared_from_this<winrt_client>
+class winrt_callback_client : public websocket_client_callback_impl, public std::enable_shared_from_this<winrt_callback_client>
 {
 public:
-    winrt_client(websocket_client_config config) :
-        _websocket_client_impl(std::move(config)),
-        m_num_sends(0),
-        m_client_closed(false)
+    winrt_callback_client(websocket_client_config config) :
+        websocket_client_callback_impl(std::move(config)),
+        m_num_sends(0)
     {
         m_msg_websocket = ref new MessageWebSocket();
 
@@ -121,34 +121,25 @@ public:
                 Platform::StringReference(password->c_str()));
         }
 
-        m_context = ref new ReceiveContext([=](websocket_incoming_message &msg)
+        m_context = ref new ReceiveContext([=](const websocket_incoming_message &msg)
         {
-            pplx::task_completion_event<websocket_incoming_message> tce; // This will be set if there are any tasks waiting to receive a message
+            if (m_external_message_handler)
             {
-                std::lock_guard<std::mutex> lock(m_receive_queue_lock);
-                if (m_receive_task_queue.empty()) // Push message to the queue as no one is waiting to receive
-                {
-                    m_receive_msg_queue.push(msg);
-                    return;
-                }
-                else // There are tasks waiting to receive a message.
-                {
-                    tce = m_receive_task_queue.front();
-                    m_receive_task_queue.pop();
-                }
+                m_external_message_handler(msg);
             }
-            // Setting the tce outside the receive lock for better performance
-            tce.set(msg);
         },
-        [=](const websocket_exception &e)
+        [=](websocket_close_status status, const utility::string_t& reason, const std::error_code& error_code)
         {
-            close_pending_tasks_with_error(e);
+            if (m_external_close_handler)
+            {
+                m_external_close_handler(status, reason, error_code);
+            }
             m_close_tce.set();
             m_server_close_complete.set();
         });
     }
 
-    ~winrt_client()
+    ~winrt_callback_client()
     {
         // task_completion_event::set() returns false if it has already been set.
         // In that case, wait on the m_server_close_complete event for the tce::set() to complete.
@@ -159,22 +150,6 @@ public:
         if (!m_close_tce.set())
         {
             m_server_close_complete.wait();
-        }
-        else
-        {
-            close_pending_tasks_with_error(websocket_exception("websocket_client is being destroyed"));
-        }
-    }
-
-    void close_pending_tasks_with_error(const websocket_exception &exc)
-    {
-        std::lock_guard<std::mutex> lock(m_receive_queue_lock);
-        m_client_closed = true;
-        while(!m_receive_task_queue.empty()) // There are tasks waiting to receive a message, signal them
-        {
-            auto tce = m_receive_task_queue.front();
-            m_receive_task_queue.pop();
-            tce.set_exception(std::make_exception_ptr(exc));
         }
     }
 
@@ -210,7 +185,6 @@ public:
             catch (Platform::Exception^ e)
             {
                 websocket_exception exc(e->HResult, build_error_msg(e, "ConnectAsync"));
-                close_pending_tasks_with_error(exc);
                 return pplx::task_from_exception<void>(exc);
             }
             return pplx::task_from_result();
@@ -402,32 +376,15 @@ public:
         });
     }
 
-    pplx::task<websocket_incoming_message> receive()
+    void set_message_handler(const std::function<void(const websocket_incoming_message&)>& handler)
     {
-        std::lock_guard<std::mutex> lock(m_receive_queue_lock);
-        if (m_client_closed == true)
-        {
-            return pplx::task_from_exception<websocket_incoming_message>(std::make_exception_ptr(websocket_exception("Websocket connection has closed.")));
-        }
-
-        if (m_receive_msg_queue.empty()) // Push task completion event to the tce queue, so that it gets signaled when we have a message.
-        {
-            pplx::task_completion_event<websocket_incoming_message> tce;
-            m_receive_task_queue.push(tce);
-            return pplx::create_task(tce);
-        }
-        else // Receive message queue is not empty, return a message from the queue.
-        {
-            auto msg = m_receive_msg_queue.front();
-            m_receive_msg_queue.pop();
-            return pplx::task_from_result<websocket_incoming_message>(msg);
-        }
+        m_external_message_handler = handler;
     }
 
     pplx::task<void> close()
     {
         // Send a close frame to the server
-        return close(websocket_close_status::normal);
+        return close(websocket_close_status::normal, _XPLATSTR("Normal"));
     }
 
     pplx::task<void> close(websocket_close_status status, const utility::string_t &strreason=_XPLATSTR(""))
@@ -436,6 +393,11 @@ public:
         m_msg_websocket->Close(static_cast<unsigned short>(status), Platform::StringReference(strreason.c_str()));
         // Wait for the close response frame from the server.
         return pplx::create_task(m_close_tce);
+    }
+
+    void set_close_handler(const std::function<void(websocket_close_status, const utility::string_t&, const std::error_code&)>& handler)
+    {
+        m_external_close_handler = handler;
     }
 
 private:
@@ -454,19 +416,10 @@ private:
     // completed. The websocket_client destructor can wait on this event before proceeding.
     Concurrency::event m_server_close_complete;
 
-    // Initially set to false, becomes true if a close frame is received from the server or
-    // if the underlying connection is aborted or terminated.
-    bool m_client_closed;
-
-    // When a message arrives, if there are tasks waiting for a message, signal the topmost one.
-    // Else enqueue the message in a queue.
-    // m_receive_queue_lock : to guard access to the queue & m_client_closed
-    std::mutex m_receive_queue_lock;
-    // Queue to store incoming messages when there are no tasks waiting for a message
-    std::queue<websocket_incoming_message> m_receive_msg_queue;
-    // Queue to maintain the receive tasks when there are no messages(yet).
-    std::queue<pplx::task_completion_event<websocket_incoming_message>> m_receive_task_queue;
-
+    // External callback for handling received and close event
+    std::function<void(websocket_incoming_message)> m_external_message_handler;
+    std::function<void(websocket_close_status, const utility::string_t&, const std::error_code&)> m_external_close_handler;
+    
     // The implementation has to ensure ordering of send requests
     std::mutex m_send_lock;
 
@@ -506,22 +459,29 @@ void ReceiveContext::OnReceive(MessageWebSocket^ sender, MessageWebSocketMessage
     }
     catch (Platform::Exception ^e)
     {
-        m_close_handler(websocket_exception(e->HResult, build_error_msg(e, "OnReceive")));
+        m_close_handler(websocket_close_status::abnormal_close, _XPLATSTR("Abnormal close"), utility::details::create_error_code(e->HResult));
     }
 }
 
 void ReceiveContext::OnClosed(IWebSocket^ sender, WebSocketClosedEventArgs^ args)
 {
-    m_close_handler(websocket_exception("close frame received from server"));
+    m_close_handler(static_cast<websocket_close_status>(args->Code), args->Reason->Data(), utility::details::create_error_code(0));
+}
+
+websocket_client_task_impl::websocket_client_task_impl(websocket_client_config config) :
+    m_callback_client(std::make_shared<details::winrt_callback_client>(std::move(config))),
+    m_client_closed(false)
+{
+    set_handler();
 }
 }
 
-websocket_client::websocket_client() :
-    m_client(std::make_shared<details::winrt_client>(websocket_client_config()))
+websocket_callback_client::websocket_callback_client() :
+    m_client(std::make_shared<details::winrt_callback_client>(websocket_client_config()))
 {}
 
-websocket_client::websocket_client(websocket_client_config config) :
-    m_client(std::make_shared<details::winrt_client>(std::move(config)))
+websocket_callback_client::websocket_callback_client(websocket_client_config config) :
+    m_client(std::make_shared<details::winrt_callback_client>(std::move(config)))
 {}
 
 }}}

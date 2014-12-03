@@ -98,8 +98,6 @@ std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t& ke
         goto cleanup;
     }
 
-    return hash;
-
 cleanup:
     if (hash_handle)
     {

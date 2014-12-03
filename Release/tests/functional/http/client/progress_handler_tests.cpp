@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* progress_handler_tests.cpp
-*
 * Tests cases manually building up HTTP requests with progress handlers.
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -25,7 +23,7 @@
 
 #include "stdafx.h"
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 #include <WinError.h>
 #endif
 
@@ -92,19 +90,19 @@ TEST_FIXTURE(uri_address, set_progress_handler_upload)
     const size_t repeats = 5500;
     for (size_t i = 0; i < repeats; ++i)
         data.append(U("abcdefghihklmnopqrstuvwxyz"));
-    
+
     utility::size64_t upsize = 4711u, downsize = 4711u;
     int calls = 0;
 
     http_request msg(mtd);
     msg.set_progress_handler(
-        [&](message_direction::direction direction, utility::size64_t so_far) 
-        { 
+        [&](message_direction::direction direction, utility::size64_t so_far)
+        {
             calls += 1;
-            if (direction == message_direction::upload) 
-                upsize = so_far; 
-            else 
-                downsize = so_far; 
+            if (direction == message_direction::upload)
+                upsize = so_far;
+            else
+                downsize = so_far;
         });
 
     msg.set_body(data);

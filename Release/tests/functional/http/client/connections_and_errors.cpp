@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,6 @@
 *
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*
-* connections_and_errors.cpp
 *
 * Tests cases for covering issues dealing with http_client lifetime, underlying TCP connections, and general connection errors.
 *
@@ -29,7 +27,7 @@
 #include "cpprest/http_listener.h"
 #endif
 
-using namespace web; 
+using namespace web;
 using namespace utility;
 using namespace concurrency;
 using namespace web::http;
@@ -195,7 +193,7 @@ TEST_FIXTURE(uri_address, content_ready_timeout)
         http_response rsp = client.request(msg).get();
 
         // The response body should timeout and we should receive an exception
-#ifndef _MS_WINDOWS
+#ifndef _WIN32
         // CodePlex 295
         VERIFY_THROWS(rsp.content_ready().wait(), http_exception);
 #else
@@ -218,7 +216,7 @@ TEST_FIXTURE(uri_address, stream_timeout)
     {
         http_response response(200);
         response.set_body(streams::istream(buf), U("text/plain"));
-        response.headers().add(header_names::connection, U("close")); 
+        response.headers().add(header_names::connection, U("close"));
         request.reply(response);
     });
 
@@ -231,7 +229,7 @@ TEST_FIXTURE(uri_address, stream_timeout)
 
         // The response body should timeout and we should receive an exception
         auto readTask = rsp.body().read_to_end(streams::producer_consumer_buffer<uint8_t>());
-#ifndef _MS_WINDOWS
+#ifndef _WIN32
         // CodePlex 295
         VERIFY_THROWS(readTask.get(), http_exception);
 #else

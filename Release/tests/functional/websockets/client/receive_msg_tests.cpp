@@ -271,6 +271,41 @@ TEST_FIXTURE(uri_address, receive_before_connect)
     t.wait();
     client.close().wait();
 }
+
+// Receive message using callback APIs
+TEST_FIXTURE(uri_address, receive_text_msg_callback_client)
+{
+    test_websocket_server server;
+    websocket_callback_client client;
+
+    client.connect(m_uri).wait();
+    std::string body_str("hello");
+    std::vector<unsigned char> body(body_str.begin(), body_str.end());
+
+    pplx::task_completion_event<void> receiveEvent;
+    // make sure client works fine without setting receive handler
+    test_websocket_msg msg;
+    msg.set_data(std::move(body));
+    msg.set_msg_type(test_websocket_message_type::WEB_SOCKET_UTF8_MESSAGE_TYPE);
+    server.send_msg(msg);
+
+    // set receive handler
+    client.set_message_handler([body_str, &receiveEvent](websocket_incoming_message ret_msg)
+    {
+        VERIFY_ARE_EQUAL(ret_msg.length(), body_str.length());
+        auto ret_str = ret_msg.extract_string().get();
+
+        VERIFY_ARE_EQUAL(body_str.compare(ret_str), 0);
+        VERIFY_ARE_EQUAL(ret_msg.message_type(), websocket_message_type::text_message);
+
+        receiveEvent.set();
+    });
+
+    server.send_msg(msg);
+
+    pplx::create_task(receiveEvent).wait();
+    client.close().wait();
+}
 } // SUITE(receive_msg_tests)
 
 }}}}

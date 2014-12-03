@@ -28,7 +28,6 @@
 
 #include "cpprest/details/http_client_impl.h"
 
-// TODO try trimming???
 #include <Strsafe.h>
 // Important for WP8
 #define __WRL_NO_DEFAULT_LIB__

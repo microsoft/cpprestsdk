@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,6 @@
 *
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*
-* http_methods_tests.cpp
 *
 * Tests cases for HTTP methods.
 *
@@ -49,34 +47,34 @@ TEST_FIXTURE(uri_address, http_methods)
         U("GET"),
         methods::DEL,
         methods::HEAD,
-#ifdef _MS_WINDOWS // -  this is never passed to the listener with http_listener
+#ifdef _WIN32 // -  this is never passed to the listener with http_listener
         methods::OPTIONS,
 #endif
         methods::POST,
         methods::PUT,
         methods::PATCH,
 #ifndef __cplusplus_winrt
-# ifdef _MS_WINDOWS // - ditto
+# ifdef _WIN32 // - ditto
         methods::TRCE,
 #endif
 #endif
 
         U("CUstomMETHOD")
     };
-    utility::string_t recv_methods[] = 
+    utility::string_t recv_methods[] =
     {
         U("GET"),
         U("GET"),
         U("DELETE"),
         U("HEAD"),
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
         U("OPTIONS"),
 #endif
         U("POST"),
         U("PUT"),
         U("PATCH"),
 #ifndef __cplusplus_winrt
-# ifdef _MS_WINDOWS
+# ifdef _WIN32
         U("TRACE"),
 #endif
 #endif

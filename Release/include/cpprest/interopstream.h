@@ -28,6 +28,11 @@
 #include "cpprest/astreambuf.h"
 #include "cpprest/streams.h"
 
+#if defined(_WIN32)
+#pragma warning(push)
+#pragma warning(disable : 4250)
+#endif
+
 namespace Concurrency { namespace streams {
 
     template<typename CharType> class stdio_ostream;
@@ -525,3 +530,7 @@ namespace Concurrency { namespace streams {
 #endif
 
 }} // namespaces
+
+#if defined(_WIN32)
+#pragma warning(pop)
+#endif

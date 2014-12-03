@@ -436,7 +436,7 @@ TEST_FIXTURE(uri_address, set_user_options_winrt)
 }
 #endif // __cplusplus_winrt
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 #if !defined(__cplusplus_winrt)
 TEST_FIXTURE(server_properties, set_user_options, "Requires", "Server;UserName;Password")
 {
@@ -592,7 +592,7 @@ TEST_FIXTURE(uri_address, set_user_options_exceptions)
     http_client client(m_uri, config);
     VERIFY_THROWS(client.request(methods::GET).get(), std::runtime_error);
 }
-#endif // _MS_WINDOWS
+#endif // _WIN32
 #pragma endregion
 
 // Fix for 522831 AV after failed authentication attempt
