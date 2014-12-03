@@ -36,9 +36,10 @@
 
 #include "pplx/pplxtasks.h"
 
-#ifndef _WIN32
-#include "pplx/threadpool.h"
+#if defined(_WIN32)
 #include "pplx/pplxconv.h"
+#else
+#include "pplx/threadpool.h"
 #endif
 
 #include "cpprest/asyncrt_utils.h"
