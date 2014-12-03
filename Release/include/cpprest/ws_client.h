@@ -23,7 +23,7 @@
 
 #pragma once
 
-#if (defined(__cplusplus_winrt) || !defined(_M_ARM)) && !defined(CPPREST_EXCLUDE_WEBSOCKETS)
+#if !defined(_MSC_VER) || (_MSC_VER < 1900) && !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 
 #include <memory>
 #include <limits>
