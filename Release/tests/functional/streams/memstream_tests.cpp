@@ -2336,8 +2336,8 @@ TEST(producer_consumer_alloc_after_close)
 
 TEST(producer_consumer_acquire_after_close)
 {
-    char *temp;
-    size_t size;
+    char *temp = nullptr;
+    size_t size = 0;
     producer_consumer_buffer<char> buffer;
     buffer.close().wait();
     VERIFY_IS_FALSE(buffer.acquire(temp, size));
@@ -2417,8 +2417,8 @@ TEST(rawptr_alloc_too_large)
 
 TEST(rawptr_buffer_acquire_after_close)
 {
-    char *temp;
-    size_t size;
+    char *temp = nullptr;
+    size_t size = 0;
     char data[2];
     rawptr_buffer<char> buffer(&data[0], sizeof(data), std::ios::in);
     buffer.close().wait();
@@ -2449,8 +2449,8 @@ TEST(container_buffer_alloc_after_close)
 
 TEST(container_buffer_acquire_after_close)
 {
-    char *temp;
-    size_t size;
+    char *temp = nullptr;
+    size_t size = 0;
     container_buffer<std::string> buffer("test data");
     buffer.close().wait();
     VERIFY_IS_FALSE(buffer.acquire(temp, size));
