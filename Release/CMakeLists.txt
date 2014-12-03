@@ -56,7 +56,7 @@ elseif(ANDROID)
   if(ARM)
     set(LIBCXX_STL "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.8/libs/armeabi-v7a/thumb/libgnustl_static.a")
   else()
-    set(LIBCXX_STL "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.8/libs/x86/thumb/libgnustl_static.a")
+    set(LIBCXX_STL "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.8/libs/x86/libgnustl_static.a")
   endif()
   # These are used in the shared library case
   set(ANDROID_STL_FLAGS
