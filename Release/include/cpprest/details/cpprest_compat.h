@@ -74,6 +74,11 @@
 #endif
 
 #if defined(__ANDROID__)
+// This is needed to disable the use of __thread inside the boost library.
+// Android does not support thread local storage -- if boost is included
+// without this macro defined, it will create references to __tls_get_addr
+// which (while able to link) will not be available at runtime and prevent
+// the .so from loading.
 #define BOOST_ASIO_DISABLE_THREAD_KEYWORD_EXTENSION
 #endif
 
