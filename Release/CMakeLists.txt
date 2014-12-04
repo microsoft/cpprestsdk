@@ -89,7 +89,7 @@ elseif(UNIX) # This includes OSX
   option(BUILD_SAMPLES "Build samples." ON)
   option(CASA_INSTALL_HEADERS "Install header files." ON)
   if(CASA_INSTALL_HEADERS)
-    file(GLOB CASA_HEADERS_CPPREST include/cpprest/*.hpp include/cpprest/*.h)
+    file(GLOB CASA_HEADERS_CPPREST include/cpprest/*.hpp include/cpprest/*.h include/cpprest/*.dat)
     install(FILES ${CASA_HEADERS_CPPREST} DESTINATION include/cpprest)
     file(GLOB CASA_HEADERS_PPLX include/pplx/*.hpp include/pplx/*.h)
     install(FILES ${CASA_HEADERS_PPLX} DESTINATION include/pplx)
