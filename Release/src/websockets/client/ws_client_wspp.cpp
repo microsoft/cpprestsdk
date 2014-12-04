@@ -533,36 +533,30 @@ private:
 
         auto &client = m_client->client<WebsocketConfigType>();
         const auto &connection = client.get_con_from_hdl(con_hdl);
+        const auto &closeCode = connection->get_local_close_code();
+        const auto &reason = connection->get_local_close_reason();
+        const auto &ec = connection->get_ec();
         client.stop_perpetual();
 
         // Can't join thread directly since it is the current thread.
-        pplx::create_task([this, connecting, connection]
+        pplx::create_task([this, connecting, ec, closeCode, reason]
         {
             if (m_thread.joinable())
             {
                 m_thread.join();
             }
-            const auto &ec = connection->get_ec();
-            websocket_exception exc(ec, build_error_msg(ec, "set_fail_handler"));
 
-            // First call close handler if not connecting.
-            if (!connecting)
-            {
-                if (m_external_close_handler)
-                {
-                    const auto &closeCode = connection->get_local_close_code();
-                    const auto &reason = connection->get_local_close_reason();
-                    m_external_close_handler(static_cast<websocket_close_status>(closeCode), utility::conversions::to_string_t(reason), ec);
-                }
-            }
-
-            // Next delete client to make sure Websocketpp cleans up all Boost.Asio portions.
+            // Delete client to make sure Websocketpp cleans up all Boost.Asio portions.
             m_client.reset();
 
-            // Finally set events.
             if (connecting)
             {
+                websocket_exception exc(ec, build_error_msg(ec, "set_fail_handler"));
                 m_connect_tce.set_exception(exc);
+            }
+            if (m_external_close_handler)
+            {
+                m_external_close_handler(static_cast<websocket_close_status>(closeCode), utility::conversions::to_string_t(reason), ec);
             }
             m_close_tce.set();
         });
