@@ -25,7 +25,7 @@
 
 pplx::details::atomic_long s_flag;
 
-#ifdef _MS_WINDOWS
+#if defined(_MSC_VER)
 
 class pplx_dflt_scheduler : public pplx::scheduler_interface
 {
