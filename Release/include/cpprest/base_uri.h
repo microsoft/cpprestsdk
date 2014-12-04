@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* base_uri.h
-*
 * Protocol independent support for URIs.
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
@@ -34,8 +32,7 @@
 #include <functional>
 
 #include "cpprest/asyncrt_utils.h"
-#include "cpprest/xxpublic.h"
-#include "cpprest/basic_types.h"
+#include "cpprest/details/basic_types.h"
 
 namespace web {
     namespace details

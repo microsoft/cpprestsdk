@@ -16,23 +16,17 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* http_headers.h
-*
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 #pragma once
 
-#ifndef _CASA_HTTP_HEADERS_H
-#define _CASA_HTTP_HEADERS_H
-
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
 #include <system_error>
-#include "cpprest/xxpublic.h"
 #include "cpprest/asyncrt_utils.h"
 
 namespace web { namespace http {
@@ -84,7 +78,7 @@ public:
     {
         bool operator()(const utility::string_t &str1, const utility::string_t &str2) const
         {
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
             return _wcsicmp(str1.c_str(), str2.c_str()) < 0;
 #else
             return utility::cmp::icmp(str1, str2) < 0;
@@ -313,4 +307,3 @@ private:
 };
 
 }}
-#endif

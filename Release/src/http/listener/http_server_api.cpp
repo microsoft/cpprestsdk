@@ -16,31 +16,24 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* http_server_api.cpp
-*
 * HTTP Library: exposes the entry points to the http server transport apis.
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 
 #include "stdafx.h"
-#include "cpprest/http_server_api.h"
 
-#ifdef _MS_WINDOWS
-#include "cpprest/http_windows_server.h"
-#else
-#include "cpprest/http_linux_server.h"
-#endif
+#if !defined(_WIN32) || (_WIN32_WINNT >= _WIN32_WINNT_VISTA && !defined(__cplusplus_winrt))
+
+using namespace web;
+using namespace utility;
+using namespace web::http::experimental::listener;
 
 namespace web { namespace http
 {
 namespace experimental {
 namespace details
 {
-
-using namespace web;
-using namespace utility;
-using namespace web::http::experimental::listener;
 
 pplx::extensibility::critical_section_t http_server_api::s_lock;
 
@@ -91,7 +84,7 @@ pplx::task<void> http_server_api::register_listener(_In_ web::http::experimental
         // the server API was not initialized, register a default
         if(s_server_api == nullptr)
         {
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
             std::unique_ptr<http_windows_server> server_api(new http_windows_server());
 #else
             std::unique_ptr<http_linux_server> server_api(new http_linux_server());
@@ -180,6 +173,6 @@ http_server *http_server_api::server_api()
     return s_server_api.get();
 }
 
-} // namespace listener
-} // namespace experimental
-}} // namespace web::http
+}}}}
+
+#endif

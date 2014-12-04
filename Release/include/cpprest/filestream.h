@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* filestream.h
-*
 * Asynchronous File streams
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
@@ -26,10 +24,7 @@
 ****/
 #pragma once
 
-#ifndef _CASA_FILE_STREAMS_H
-#define _CASA_FILE_STREAMS_H
-
-#include "cpprest/fileio.h"
+#include "cpprest/details/fileio.h"
 #include "cpprest/astreambuf.h"
 #include "cpprest/streams.h"
 #include <assert.h>
@@ -43,12 +38,6 @@ namespace Concurrency { }
 namespace concurrency = Concurrency;
 #endif
 #endif
-
-#pragma warning(push)
-// Suppress unreferenced formal parameter warning as they are required for documentation.
-#pragma warning(disable : 4100)
-// Suppress no-side-effect recursion warning, since it is safe and template-binding-dependent.
-#pragma warning(disable : 4718)
 
 namespace Concurrency { namespace streams
 {
@@ -603,7 +592,7 @@ namespace details {
         /// <param name="count">The maximum number of characters to copy</param>
         /// <returns>The number of characters copied. O if the end of the stream is reached or an asynchronous read is required.</returns>
         /// <remarks>This is a synchronous operation, but is guaranteed to never block.</remarks>
-        virtual size_t _scopy(_Out_writes_ (count) _CharType *ptr, _In_ size_t count)
+        virtual size_t _scopy(_Out_writes_ (count) _CharType *, _In_ size_t)
         {
             return 0;
         }
@@ -717,7 +706,7 @@ namespace details {
         static pplx::task<std::shared_ptr<basic_streambuf<_CharType>>> open(
             const utility::string_t &_Filename,
             std::ios_base::openmode _Mode = std::ios_base::out,
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
             int _Prot = (int)std::ios_base::_Openprot
 #else
             int _Prot = 0 // unsupported on Linux, for now
@@ -974,7 +963,7 @@ namespace details {
         static pplx::task<streambuf<_CharType>> open(
             const utility::string_t &file_name,
             std::ios_base::openmode mode = std::ios_base::out,
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
             int prot = _SH_DENYRD
 #else
             int prot = 0 // unsupported on Linux
@@ -1033,7 +1022,7 @@ namespace details {
         static pplx::task<streams::basic_istream<_CharType>> open_istream(
             const utility::string_t &file_name,
             std::ios_base::openmode mode = std::ios_base::in,
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
             int prot = (int) std::ios_base::_Openprot
 #else
             int prot = 0
@@ -1060,7 +1049,7 @@ namespace details {
         static pplx::task<streams::basic_ostream<_CharType>> open_ostream(
             const utility::string_t &file_name,
             std::ios_base::openmode mode = std::ios_base::out,
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
             int prot = (int) std::ios_base::_Openprot
 #else
             int prot = 0
@@ -1119,5 +1108,17 @@ namespace details {
     typedef file_stream<uint8_t> fstream;
 }} // namespace concurrency::streams
 
-#pragma warning(pop) // 4100
-#endif  /* _CASA_FILE_STREAMS_H */
+
+
+
+
+
+
+
+
+
+
+
+
+
+

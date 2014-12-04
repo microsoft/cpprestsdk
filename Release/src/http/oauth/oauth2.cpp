@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* oauth2.cpp
-*
 * HTTP Library: Oauth 2.0
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
@@ -26,8 +24,6 @@
 ****/
 
 #include "stdafx.h"
-#include "cpprest/oauth2.h"
-#include "cpprest/http_helpers.h"
 
 using web::http::client::http_client;
 using web::http::oauth2::details::oauth2_strings;
@@ -45,7 +41,7 @@ namespace details
 
 #define _OAUTH2_STRINGS
 #define DAT(a_, b_) const oauth2_string oauth2_strings::a_(_XPLATSTR(b_));
-#include "cpprest/http_constants.dat"
+#include "cpprest/details/http_constants.dat"
 #undef _OAUTH2_STRINGS
 #undef DAT
 

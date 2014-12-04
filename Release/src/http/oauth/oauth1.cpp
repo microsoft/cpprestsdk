@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* oauth1.cpp
-*
 * HTTP Library: Oauth 1.0
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
@@ -26,8 +24,8 @@
 ****/
 
 #include "stdafx.h"
-#include "cpprest/oauth1.h"
-#include "cpprest/asyncrt_utils.h"
+
+#if !defined(_WIN32) || (_WIN32_WINNT >= _WIN32_WINNT_VISTA && !defined(_PHONE8_))
 
 using namespace utility;
 using web::http::client::http_client;
@@ -42,7 +40,7 @@ namespace details
 
 #define _OAUTH1_STRINGS
 #define DAT(a_, b_) const oauth1_string oauth1_strings::a_(_XPLATSTR(b_));
-#include "cpprest/http_constants.dat"
+#include "cpprest/details/http_constants.dat"
 #undef _OAUTH1_STRINGS
 #undef DAT
 
@@ -54,7 +52,7 @@ namespace experimental
 //
 // Start of platform-dependent _hmac_sha1() block...
 //
-#if defined(_MS_WINDOWS) && !defined(__cplusplus_winrt) // Windows desktop
+#if defined(_WIN32) && !defined(__cplusplus_winrt) // Windows desktop
 
 #include <winternl.h>
 #include <bcrypt.h>
@@ -100,8 +98,6 @@ std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t& ke
         goto cleanup;
     }
 
-    return hash;
-
 cleanup:
     if (hash_handle)
     {
@@ -115,7 +111,7 @@ cleanup:
     return hash;
 }
 
-#elif defined(_MS_WINDOWS) && defined(__cplusplus_winrt) // Windows RT
+#elif defined(_WIN32) && defined(__cplusplus_winrt) // Windows RT
 
 using namespace Windows::Security::Cryptography;
 using namespace Windows::Security::Cryptography::Core;
@@ -353,8 +349,10 @@ pplx::task<void> oauth1_config::token_from_redirected_uri(const web::http::uri& 
 
 #define _OAUTH1_METHODS
 #define DAT(a,b) const oauth1_method oauth1_methods::a = b;
-#include "cpprest/http_constants.dat"
+#include "cpprest/details/http_constants.dat"
 #undef _OAUTH1_METHODS
 #undef DAT
 
-}}}} // namespace web::http::oauth1::experimental
+}}}}
+
+#endif

@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* pplxwin.h
-*
 * Windows specific pplx implementations
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
@@ -27,16 +25,9 @@
 
 #pragma once
 
-#ifndef _PPLXWIN_H
-#define _PPLXWIN_H
+#if !defined(_WIN32) || _MSC_VER < 1800
 
-#if (defined(_MSC_VER) && (_MSC_VER >= 1800)) 
-#error This file must not be included for Visual Studio 12 or later
-#endif
-
-#ifdef _MS_WINDOWS
-
-#include "cpprest/details/windows_compat.h"
+#include "cpprest/details/cpprest_compat.h"
 #include "pplx/pplxinterface.h"
 
 namespace pplx
@@ -57,7 +48,7 @@ namespace details
         _PPLXIMP void __cdecl YieldExecution();
 
         /// <summary>
-        /// Caputeres the callstack
+        /// Captures the callstack
         /// </summary>
         __declspec(noinline) _PPLXIMP size_t __cdecl CaptureCallstack(void **, size_t, size_t);
 
@@ -303,5 +294,4 @@ namespace details
 
 } // namespace pplx
 
-#endif // _MS_WINDOWS
-#endif // _PPLXWIN_H
+#endif

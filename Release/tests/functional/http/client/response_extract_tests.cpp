@@ -117,7 +117,7 @@ TEST_FIXTURE(uri_address, extract_string)
         VERIFY_ARE_EQUAL(utility::string_t(U("")), rsp.extract_string().get());
     }
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     // utf-16le
     utf16string wdata(utf8_to_utf16("YES NOW, HERHEHE****"));
     data = utf16_to_utf8(wdata);
@@ -233,7 +233,7 @@ TEST_FIXTURE(uri_address, extract_json)
         VERIFY_ARE_EQUAL(utility::string_t(U("null")), rsp.extract_json().get().serialize());
     }
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     // utf-16le
     auto utf16str = data.serialize();
     rsp = send_request_response(scoped.server(), &client, U("application/json; charset=utf-16le"), utf16str);

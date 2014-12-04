@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* pplxinterface.h
-*
 * PPL interfaces
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
@@ -35,7 +33,7 @@
 #endif
 
 #if defined(_CRTBLD)
-#elif defined(_MS_WINDOWS)
+#elif defined(_WIN32)
 #if (_MSC_VER >= 1700)
 #define _USE_REAL_ATOMICS
 #endif

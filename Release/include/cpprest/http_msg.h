@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* http_msg.h
-*
 * HTTP Library: Request and reply message definitions.
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
@@ -36,14 +34,10 @@
 #include "cpprest/json.h"
 #include "cpprest/uri.h"
 #include "cpprest/http_headers.h"
-#include "cpprest/xxpublic.h"
+#include "cpprest/details/cpprest_compat.h"
 #include "cpprest/asyncrt_utils.h"
 #include "cpprest/streams.h"
 #include "cpprest/containerstream.h"
-
-#ifndef _MS_WINDOWS
-#include <boost/algorithm/string/predicate.hpp>
-#endif
 
 namespace web
 {
@@ -51,7 +45,7 @@ namespace http
 {
 
 // URI class has been moved from web::http namespace to web namespace.
-// The below using declarations ensure we dont break existing code.
+// The below using declarations ensure we don't break existing code.
 // Please use the web::uri class going forward.
 using web::uri;
 using web::uri_builder;
@@ -75,7 +69,7 @@ class methods
 public:
 #define _METHODS
 #define DAT(a,b) _ASYNCRTIMP const static method a;
-#include "cpprest/http_constants.dat"
+#include "cpprest/details/http_constants.dat"
 #undef _METHODS
 #undef DAT
 };
@@ -90,7 +84,7 @@ class status_codes
 public:
 #define _PHRASES
 #define DAT(a,b,c) const static status_code a=b;
-#include "cpprest/http_constants.dat"
+#include "cpprest/details/http_constants.dat"
 #undef _PHRASES
 #undef DAT
 };
@@ -125,7 +119,7 @@ class header_names
 public:
 #define _HEADER_NAMES
 #define DAT(a,b) _ASYNCRTIMP const static utility::string_t a;
-#include "cpprest/http_constants.dat"
+#include "cpprest/details/http_constants.dat"
 #undef _HEADER_NAMES
 #undef DAT
 };
@@ -144,7 +138,7 @@ public:
     http_exception(const utility::string_t &whatArg)
         : m_msg(utility::conversions::to_utf8string(whatArg)) {}
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     /// <summary>
     /// Creates an <c>http_exception</c> with just a string message and no error code.
     /// </summary>
@@ -173,7 +167,7 @@ public:
           m_msg(utility::conversions::to_utf8string(whatArg))
     {}
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     /// <summary>
     /// Creates an <c>http_exception</c> with from a error code using the current platform error category.
     /// </summary>
@@ -1398,5 +1392,4 @@ private:
     http_pipeline(const http_pipeline &);
 };
 
-} // namespace http
-} // namespace web
+}}

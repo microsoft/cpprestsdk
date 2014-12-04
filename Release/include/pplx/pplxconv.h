@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* pplxconv.h
-*
 * Utilities to convert between PPL tasks and PPLX tasks
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
@@ -30,15 +28,11 @@
 #ifndef _PPLXCONV_H
 #define _PPLXCONV_H
 
-#ifndef _MS_WINDOWS
+#ifndef _WIN32
 #error This is only supported on Windows
 #endif
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1700)
-
-#if (_MSC_VER >= 1800)
-#error This file must not be included for Visual Studio 12 or later
-#endif
+#if defined(_MSC_VER) && (_MSC_VER >= 1700) && (_MSC_VER < 1800)
 
 #include <ppltasks.h>
 #include "pplx/pplxtasks.h"

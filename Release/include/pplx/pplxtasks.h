@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* pplxtasks.h
-*
 * Parallel Patterns Library - PPLx Tasks
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.

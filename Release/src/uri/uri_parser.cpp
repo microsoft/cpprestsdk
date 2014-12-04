@@ -16,7 +16,7 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* uri_parser.h - A uri parsing implementation
+* URI parsing implementation
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
 *
@@ -24,7 +24,6 @@
 ****/
 #include "stdafx.h"
 #include <locale>
-#include "cpprest/uri_parser.h"
 
 namespace web { namespace details { namespace uri_parser
 {

@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* json_serialization.cpp
-*
 * HTTP Library: JSON parser and writer
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
@@ -28,7 +26,7 @@
 #include "stdafx.h"
 #include <stdio.h>
 
-#ifndef _MS_WINDOWS
+#ifndef _WIN32
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 #endif
@@ -42,7 +40,7 @@ using namespace utility::conversions;
 // JSON Serialization
 //
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 void web::json::value::serialize(std::ostream& stream) const
 {
     // This has better performance than writing directly to stream.
@@ -58,7 +56,7 @@ void web::json::value::format(std::basic_string<wchar_t> &string) const
 
 void web::json::value::serialize(utility::ostream_t &stream) const
 {
-#ifndef _MS_WINDOWS
+#ifndef _WIN32
     utility::details::scoped_c_thread_locale locale;
 #endif
 
@@ -121,7 +119,7 @@ void web::json::details::format_string(const utility::string_t& key, utility::st
     str.push_back('"');
 }
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 void web::json::details::format_string(const utility::string_t& key, std::string& str)
 {
     str.push_back('"');
@@ -154,7 +152,7 @@ void web::json::details::_Number::format(std::basic_string<char>& stream) const
         const size_t tempSize = std::numeric_limits<uint64_t>::digits10 + 3;
         char tempBuffer[tempSize];
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
         // This can be improved performance-wise if we implement our own routine
         if (m_number.m_type == number::type::signed_type)
             _i64toa_s(m_number.m_intval, tempBuffer, tempSize, 10);
@@ -176,7 +174,7 @@ void web::json::details::_Number::format(std::basic_string<char>& stream) const
         // #digits + 2 to avoid loss + 1 for the sign + 1 for decimal point + 5 for exponent (e+xxx) + 1 for null terminator
         const size_t tempSize = std::numeric_limits<double>::digits10 + 10;
         char tempBuffer[tempSize];
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
         const auto numChars = _sprintf_s_l(
             tempBuffer,
             tempSize,
@@ -191,7 +189,7 @@ void web::json::details::_Number::format(std::basic_string<char>& stream) const
     }
 }
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 
 void web::json::details::_String::format(std::basic_string<wchar_t>& str) const
 {
@@ -254,7 +252,7 @@ utility::string_t web::json::value::as_string() const
 
 utility::string_t json::value::serialize() const
 {
-#ifndef _MS_WINDOWS
+#ifndef _WIN32
     utility::details::scoped_c_thread_locale locale;
 #endif
     return m_value->to_string();

@@ -15,8 +15,6 @@
 *
 * ==--==
 *
-* threadpool.h
-*
 * Simple Linux implementation of a static thread pool.
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.

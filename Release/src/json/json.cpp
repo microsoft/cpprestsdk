@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* json.cpp
-*
 * HTTP Library: JSON parser and writer
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
@@ -202,7 +200,7 @@ web::json::value web::json::value::string(utility::string_t value, bool has_esca
             );
 }
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 web::json::value web::json::value::string(const std::string &value)
 {
     std::unique_ptr<details::_Value> ptr = utility::details::make_unique<details::_String>(utility::conversions::to_utf16string(value));
@@ -381,7 +379,7 @@ bool web::json::details::_Object::has_field(const utility::string_t &key) const
 
 utility::string_t json::value::to_string() const
 {
-#ifndef _MS_WINDOWS
+#ifndef _WIN32
     utility::details::scoped_c_thread_locale locale;
 #endif
     return m_value->to_string();
@@ -409,7 +407,7 @@ bool json::value::operator==(const json::value &other) const
     case Array:
         return static_cast<const json::details::_Array*>(this->m_value.get())->is_equal(static_cast<const json::details::_Array*>(other.m_value.get()));
     }
-    UNREACHABLE;
+    __assume(0);
 }
 
 // at() overloads

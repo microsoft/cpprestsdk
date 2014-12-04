@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* json.h
-*
 * HTTP Library: JSON parser and writer
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
@@ -26,17 +24,13 @@
 ****/
 #pragma once
 
-#ifndef _CASA_JSON_H
-#define _CASA_JSON_H
-
 #include <memory>
 #include <string>
 #include <sstream>
 #include <vector>
 #include <unordered_map>
 #include <cstdint>
-#include "cpprest/xxpublic.h"
-#include "cpprest/basic_types.h"
+#include "cpprest/details/basic_types.h"
 #include "cpprest/asyncrt_utils.h"
 
 namespace web
@@ -70,7 +64,7 @@ namespace json
     /// <remarks>Note this is a global setting and affects all JSON parsing done.</remarks>
     void _ASYNCRTIMP keep_object_element_order(bool keep_order);
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 #ifdef _DEBUG
 #define ENABLE_JSON_VALUE_VISUALIZER
 #endif
@@ -275,7 +269,7 @@ namespace json
         /// </remarks>
         static _ASYNCRTIMP value __cdecl string(utility::string_t value, bool has_escape_chars);
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 private:
         // Only used internally by JSON parser.
         static _ASYNCRTIMP value __cdecl string(const std::string &value);
@@ -433,7 +427,7 @@ public:
         /// <param name="stream">The stream that the JSON string representation should be written to.</param>
         _ASYNCRTIMP void serialize(utility::ostream_t &stream) const;
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
         /// <summary>
         /// Parses a JSON value from the contents of a single-byte (UTF8) stream.
         /// </summary>
@@ -581,7 +575,7 @@ public:
         /// <returns>A reference to the value kept in the field.</returns>
         _ASYNCRTIMP value & operator [] (const utility::string_t &key);
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 private:
         // Only used internally by JSON parser
         _ASYNCRTIMP value & operator [] (const std::string &key)
@@ -612,7 +606,7 @@ public:
         friend class web::json::details::_Array;
         template<typename CharType> friend class web::json::details::JSON_Parser;
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
         /// <summary>
         /// Writes the current JSON value as a double-byte string to a string instance.
         /// </summary>
@@ -1329,7 +1323,7 @@ public:
             case json::number::type::double_type :
                 return m_value == other.m_value;
             }
-            UNREACHABLE;
+            __assume(0);
         }
 
     private:
@@ -1370,7 +1364,7 @@ public:
             {
                 format(str);
             }
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
             virtual void serialize_impl(std::wstring& str) const
             {
                 format(str);
@@ -1410,7 +1404,7 @@ public:
             {
                 stream.append("null");
             }
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
             virtual void format(std::basic_string<wchar_t>& stream) const
             {
                 stream.append(L"null");
@@ -1471,7 +1465,7 @@ public:
 
         protected:
             virtual void format(std::basic_string<char>& stream) const ;
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
             virtual void format(std::basic_string<wchar_t>& stream) const;
 #endif
         private:
@@ -1499,7 +1493,7 @@ public:
                 stream.append(m_value ? "true" : "false");
             }
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
             virtual void format(std::basic_string<wchar_t>& stream) const
             {
                 stream.append(m_value ? L"true" : L"false");
@@ -1526,7 +1520,7 @@ public:
                   m_has_escape_char(escaped_chars)
             { }
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
             _String(std::string &&value) : m_string(utility::conversions::to_utf16string(std::move(value)))
             {
                 m_has_escape_char = has_escape_chars(*this);
@@ -1563,7 +1557,7 @@ public:
             {
                  serialize_impl_char_type(str);
             }
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
             virtual void serialize_impl(std::wstring& str) const
             {
                 serialize_impl_char_type(str);
@@ -1572,7 +1566,7 @@ public:
 
         protected:
             virtual void format(std::basic_string<char>& str) const;
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
             virtual void format(std::basic_string<wchar_t>& str) const;
 #endif
 
@@ -1616,7 +1610,7 @@ public:
 
         void format_string(const utility::string_t& key, utility::string_t& str);
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
         void format_string(const utility::string_t& key, std::string& str);
 #endif
 
@@ -1661,7 +1655,7 @@ public:
                 str.reserve(get_reserve_size());
                 format(str);
             }
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
             virtual void serialize_impl(std::wstring& str) const
             {
                 // To avoid repeated allocations reserve some space all up front.
@@ -1676,7 +1670,7 @@ public:
             {
                 format_impl(str);
             }
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
             virtual void format(std::basic_string<wchar_t>& str) const
             {
                 format_impl(str);
@@ -1785,7 +1779,7 @@ public:
                 str.reserve(get_reserve_size());
                 format(str);
             }
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
             virtual void serialize_impl(std::wstring& str) const
             {
                 // To avoid repeated allocations reserve some space all up front.
@@ -1800,7 +1794,7 @@ public:
             {
                 format_impl(str);
             }
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
             virtual void format(std::basic_string<wchar_t>& str) const
             {
                 format_impl(str);
@@ -1902,6 +1896,4 @@ public:
     /// <returns>The input stream object.</returns>
     _ASYNCRTIMP utility::istream_t& operator >> (utility::istream_t &is, json::value &val);
 
-}} // namespace web::json
-
-#endif  /* _CASA_JSON_H */
+}}

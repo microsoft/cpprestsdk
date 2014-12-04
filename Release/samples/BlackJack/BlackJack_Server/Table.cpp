@@ -484,7 +484,7 @@ void DealerTable::FillShoe(size_t decks)
 
     // Randomize the shoe
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     LARGE_INTEGER li;
     QueryPerformanceCounter(&li);
     mt19937 eng(li.LowPart);

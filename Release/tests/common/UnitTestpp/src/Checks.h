@@ -140,7 +140,7 @@ bool Check(Value const value)
     return !!value; // doing double negative to avoid silly VS warnings
 }
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 #pragma warning(push)
 #pragma warning(disable : 4389)
 #endif
@@ -149,7 +149,7 @@ bool CheckEqualImpl(const Expected &expected, const Actual &actual)
 {
     return !(expected == actual);
 }
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 #pragma warning(pop)
 #endif
 

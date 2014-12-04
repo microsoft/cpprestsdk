@@ -25,7 +25,7 @@
 
 #pragma once
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 #include "targetver.h"
 
 #include <stdio.h>

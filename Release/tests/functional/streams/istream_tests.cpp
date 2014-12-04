@@ -29,7 +29,7 @@
 using namespace Windows::Storage;
 #endif
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 # define DEFAULT_PROT (int)std::ios_base::_Openprot
 #else
 # define DEFAULT_PROT 0
@@ -73,7 +73,7 @@ void fill_file_with_lines(const utility::string_t &name, const std::string &end,
         stream << "abcdefghijklmnopqrstuvwxyz" << end;
 }
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 
 // Disabling warning in test because we check for nullptr.
 #pragma warning (push)
@@ -825,7 +825,7 @@ TEST(istream_extract_string)
     VERIFY_ARE_EQUAL(str1, "abc");
     VERIFY_ARE_EQUAL(str2, "defgsf");
 }
-#ifdef _MS_WINDOWS // On Linux, this becomes the exact copy of istream_extract_string1, hence disabled
+#ifdef _WIN32 // On Linux, this becomes the exact copy of istream_extract_string1, hence disabled
 TEST(istream_extract_wstring_1)
 {
     producer_consumer_buffer<char> rbuf;
@@ -910,7 +910,7 @@ TEST(istream_extract_uint64)
     VERIFY_ARE_EQUAL(i1, 1024);
     VERIFY_ARE_EQUAL(i2, (uint64_t)12000000000);
 }
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 TEST(istream_extract_int64w)
 {
     producer_consumer_buffer<wchar_t> rbuf;
@@ -977,7 +977,7 @@ TEST(istream_extract_uint32)
     VERIFY_ARE_EQUAL(i2, (uint32_t)3000000000);
     VERIFY_THROWS(is.extract<uint32_t>().get(), std::range_error);
 }
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 TEST(istream_extract_int32w)
 {
     producer_consumer_buffer<wchar_t> rbuf;
@@ -1047,7 +1047,7 @@ TEST(istream_extract_uint16)
     VERIFY_THROWS(is.extract<uint16_t>().get(), std::range_error);
 }
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 TEST(istream_extract_int16w)
 {
     producer_consumer_buffer<wchar_t> rbuf;
@@ -1115,7 +1115,7 @@ TEST(istream_extract_uint8)
     VERIFY_ARE_EQUAL(i2, '1');
 }
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 TEST(istream_extract_int8w)
 {
     producer_consumer_buffer<wchar_t> rbuf;
@@ -1186,7 +1186,7 @@ TEST(istream_extract_bool_from_number)
     VERIFY_THROWS(is.extract<bool>().get(), std::runtime_error);
 }
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 TEST(istream_extract_bool_w)
 {
     producer_consumer_buffer<wchar_t> rbuf;
@@ -1241,7 +1241,7 @@ void istream_extract_long_impl(streambuf<_CharType> buf)
 TEST(istream_extract_long)
 {
     istream_extract_long_impl<char, long>(container_buffer<std::string>("123 -567 120000000000000000000000000000000000000000000000"));
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     istream_extract_long_impl<wchar_t, long>(container_buffer<std::wstring>(L"123 -567 12000000000"));
 #endif
 }
@@ -1261,7 +1261,7 @@ void istream_extract_unsigned_long_impl(streambuf<_CharType> buf)
 TEST(istream_extract_unsigned_long)
 {
     istream_extract_unsigned_long_impl<char, unsigned long>(container_buffer<std::string>("876 3 -44"));
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     istream_extract_unsigned_long_impl<wchar_t, unsigned long>(container_buffer<std::wstring>(L"876 3 -44"));
 #endif
 }
@@ -1269,7 +1269,7 @@ TEST(istream_extract_unsigned_long)
 TEST(istream_extract_long_long)
 {
     istream_extract_long_impl<char, long long>(container_buffer<std::string>("123 -567 92233720368547758078"));
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     istream_extract_long_impl<wchar_t, long long>(container_buffer<std::wstring>(L"123 -567 92233720368547758078"));
 #endif
 }
@@ -1277,7 +1277,7 @@ TEST(istream_extract_long_long)
 TEST(istream_extract_unsigned_long_long)
 {
     istream_extract_unsigned_long_impl<char, unsigned long long>(container_buffer<std::string>("876 3 -44"));
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     istream_extract_unsigned_long_impl<wchar_t, unsigned long long>(container_buffer<std::wstring>(L"876 3 -44"));
 #endif
 }
@@ -1563,7 +1563,7 @@ TEST(extract_from_empty_stream)
 
     const std::string strValue = inStream.extract<std::string>().get();
     VERIFY_ARE_EQUAL("", strValue);
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     const std::wstring wstrValue = inStream.extract<std::wstring>().get();
     VERIFY_ARE_EQUAL(L"", wstrValue);
 #endif

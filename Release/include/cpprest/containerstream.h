@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* containerstream.h
-*
 * This file defines a basic STL-container-based stream buffer. Reading from the buffer will not remove any data
 * from it and seeking is thus supported.
 *
@@ -35,12 +33,6 @@
 #include "pplx/pplxtasks.h"
 #include "cpprest/astreambuf.h"
 #include "cpprest/streams.h"
-
-// Suppress unreferenced formal parameter warning as they are required for documentation
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable : 4100)
-#endif
 
 namespace Concurrency { namespace streams {
 
@@ -450,12 +442,12 @@ namespace Concurrency { namespace streams {
             auto readBegin = begin(m_data) + m_current_position;
             auto readEnd = begin(m_data) + newPos;
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
             // Avoid warning C4996: Use checked iterators under SECURE_SCL
             std::copy(readBegin, readEnd, stdext::checked_array_iterator<_CharType *>(ptr, count));
 #else
             std::copy(readBegin, readEnd, ptr);
-#endif // _MS_WINDOWS
+#endif // _WIN32
 
             if (advance)
             {
@@ -620,7 +612,3 @@ namespace Concurrency { namespace streams {
 
 
 }} // namespaces
-
-#if defined(_MSC_VER)
-#pragma warning(pop) // 4100
-#endif

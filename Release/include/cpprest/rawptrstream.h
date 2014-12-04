@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* rawptrstream.h
-*
 * This file defines a stream buffer that is based on a raw pointer and block size. Unlike a vector-based
 * stream buffer, the buffer cannot be expanded or contracted, it has a fixed capacity.
 *
@@ -27,9 +25,6 @@
 ****/
 #pragma once
 
-#ifndef _CASA_RAWPTR_STREAMS_H
-#define _CASA_RAWPTR_STREAMS_H
-
 #include <vector>
 #include <queue>
 #include <algorithm>
@@ -38,10 +33,6 @@
 #include "pplx/pplxtasks.h"
 #include "cpprest/astreambuf.h"
 #include "cpprest/streams.h"
-
-// Suppress unreferenced formal parameter warning as they are required for documentation
-#pragma warning(push)
-#pragma warning(disable : 4100)
 
 namespace Concurrency { namespace streams {
 
@@ -454,7 +445,7 @@ namespace Concurrency { namespace streams {
         /// <summary>
         /// Determines if the request can be satisfied.
         /// </summary>
-        bool can_satisfy(size_t count) const
+        bool can_satisfy(size_t) const
         {
             // We can always satisfy a read, at least partially, unless the
             // read position is at the very end of the buffer.
@@ -490,12 +481,12 @@ namespace Concurrency { namespace streams {
             auto readBegin = m_data + m_current_position;
             auto readEnd = m_data + newPos;
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
             // Avoid warning C4996: Use checked iterators under SECURE_SCL
             std::copy(readBegin, readEnd, stdext::checked_array_iterator<_CharType *>(ptr, count));
 #else
             std::copy(readBegin, readEnd, ptr);
-#endif // _MS_WINDOWS
+#endif // _WIN32
 
             if (advance)
             {
@@ -518,12 +509,12 @@ namespace Concurrency { namespace streams {
                 throw std::runtime_error("Writing past the end of the buffer");
 
             // Copy the data
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
             // Avoid warning C4996: Use checked iterators under SECURE_SCL
             std::copy(ptr, ptr + count, stdext::checked_array_iterator<_CharType *>(m_data, m_size, m_current_position));
 #else
             std::copy(ptr, ptr + count, m_data+m_current_position);
-#endif // _MS_WINDOWS
+#endif // _WIN32
 
             // Update write head and satisfy pending reads if any
             update_current_position(newSize);
@@ -644,6 +635,3 @@ namespace Concurrency { namespace streams {
     };
 
 }} // namespaces
-
-#pragma warning(pop) // 4100
-#endif  /* _CASA_RAWPTR_STREAMS_ */

@@ -16,9 +16,7 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* http_helpers.cpp - Implementation Details of the http.h layer of messaging
-*
-* Functions and types for interoperating with http.h from modern C++
+* Implementation Details of the http.h layer of messaging
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
 *
@@ -26,8 +24,6 @@
 ****/
 
 #include "stdafx.h"
-#include "cpprest/http_helpers.h"
-#include <array>
 
 using namespace web;
 using namespace utility;
@@ -198,7 +194,7 @@ namespace details
             // unknown defaults to big endian.
             return convert_utf16be_to_utf8(std::move(src), false);
         }
-        UNREACHABLE;
+        __assume(0);
     }
 
     utf16string convert_utf16_to_utf16(utf16string src)
@@ -215,7 +211,7 @@ namespace details
             // unknown defaults to big endian.
             return convert_utf16be_to_utf16le(std::move(src), false);
         }
-        UNREACHABLE;
+        __assume(0);
     }
 
     std::string convert_utf16le_to_utf8(utf16string src, bool erase_bom)
@@ -319,7 +315,7 @@ namespace details
         else
         {
             char buffer[9];
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
             sprintf_s(buffer, sizeof(buffer), "%8IX", bytes_read);
 #else
             snprintf(buffer, sizeof(buffer), "%8zX", bytes_read);
@@ -333,7 +329,7 @@ namespace details
         return offset;
     }
 
-#if (!defined(_MS_WINDOWS) || defined(__cplusplus_winrt))
+#if (!defined(_WIN32) || defined(__cplusplus_winrt))
     const std::array<bool,128> valid_chars =
     {{
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0-15
@@ -349,7 +345,7 @@ namespace details
     // Checks if the method contains any invalid characters
     bool validate_method(const utility::string_t& method)
     {
-        for (auto ch : method)
+        for (const auto &ch : method)
         {
             size_t ch_sz = static_cast<size_t>(ch);
             if (ch_sz >= 128)
