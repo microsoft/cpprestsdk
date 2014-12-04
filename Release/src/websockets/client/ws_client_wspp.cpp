@@ -689,8 +689,8 @@ private:
 };
 
 websocket_client_task_impl::websocket_client_task_impl(websocket_client_config config) :
-    m_callback_client(std::make_shared<details::wspp_callback_client>(std::move(config))),
-    m_client_closed(false)
+    m_client_closed(false),
+    m_callback_client(std::make_shared<details::wspp_callback_client>(std::move(config)))
 {
     set_handler();
 }

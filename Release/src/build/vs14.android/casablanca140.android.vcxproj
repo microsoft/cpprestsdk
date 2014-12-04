@@ -73,6 +73,7 @@
       <CppLanguageStandard>c++11</CppLanguageStandard>
       <Verbose>true</Verbose>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <TreatWarningAsError>true</TreatWarningAsError>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
