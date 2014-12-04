@@ -165,6 +165,10 @@ public:
     /// <param name="secret">Token secret string to set.</param>
     void set_secret(utility::string_t secret) { m_secret = std::move(secret); }
 
+	const std::map<utility::string_t, utility::string_t> &additional_parameters () const { return (m_additional_parameters) ; }
+	void set_additional_parameter(utility::string_t paramName, utility::string_t paramValue) { m_additional_parameters [std::move(paramName)] = std::move(paramValue); }
+	void clear_additional_parameters() { m_additional_parameters.clear(); }
+
 private:
     friend class oauth1_config;
 
@@ -172,6 +176,8 @@ private:
 
     utility::string_t m_token;
     utility::string_t m_secret;
+	std::map<utility::string_t, utility::string_t> m_additional_parameters ;
+
 };
 
 /// <summary>
@@ -228,7 +234,11 @@ public:
     /// <returns>Task that fetches the access token based on the verifier.</returns>
     pplx::task<void> token_from_verifier(utility::string_t verifier)
     {
-        return _request_token(_generate_auth_state(details::oauth1_strings::verifier, uri::encode_data_string(std::move(verifier))), false);
+        return _request_token(_generate_auth_state(details::oauth1_strings::verifier, std::move(verifier)), false);
+    }
+
+	pplx::task<void> refresh_token (utility::string_t key) {
+		return (_request_token (oauth1_config::_generate_auth_state (key, std::move (m_token.additional_parameters ().at (key))), false)) ;
     }
 
     /// <summary>
@@ -389,6 +399,11 @@ public:
         return details::oauth1_state(_generate_timestamp(), _generate_nonce());
     }
 
+    const std::map<utility::string_t, utility::string_t>& parameters() const { return m_paramters_to_sign; }
+    void add_parameter(utility::string_t key, utility::string_t value) { m_paramters_to_sign [key] =value; }
+	void set_parameters(std::map<utility::string_t, utility::string_t> &parameters) { m_paramters_to_sign .clear(); m_paramters_to_sign =parameters; }
+	void clear_parameters() { m_paramters_to_sign.clear(); }
+
 private:
     friend class web::http::client::http_client_config;
     friend class web::http::oauth1::details::oauth1_handler;
@@ -441,6 +456,8 @@ private:
     utility::string_t m_callback_uri;
     utility::string_t m_realm;
     oauth1_method m_method;
+
+	std::map<utility::string_t, utility::string_t> m_paramters_to_sign;
 
     utility::nonce_generator m_nonce_generator;
     bool m_is_authorization_completed;
