@@ -42,38 +42,27 @@ class pplx_dflt_scheduler : public pplx::scheduler_interface
 
     static void CALLBACK DefaultWorkCallbackTest(PTP_CALLBACK_INSTANCE, PVOID pContext, PTP_WORK)
     {
-        auto schedulerParam = (_Scheduler_Param *)(pContext);
+        auto schedulerParam = std::unique_ptr<_Scheduler_Param>(static_cast<_Scheduler_Param*>(pContext));
 
         schedulerParam->m_proc(schedulerParam->m_param);
-
-        delete schedulerParam;
     }
 
     virtual void schedule(pplx::TaskProc_t proc, void* param)
     {
         pplx::details::atomic_increment(s_flag);
-        auto schedulerParam = new _Scheduler_Param(proc, param);
+        auto schedulerParam = std::unique_ptr<_Scheduler_Param>(new _Scheduler_Param(proc, param));
         auto work = CreateThreadpoolWork(DefaultWorkCallbackTest, schedulerParam, NULL);
 
         if (work == nullptr)
         {
-            delete schedulerParam;
             throw utility::details::create_system_error(GetLastError());
         }
 
         SubmitThreadpoolWork(work);
         CloseThreadpoolWork(work);
+        schedulerParam.release();
     }
 };
-
-
-pplx_dflt_scheduler g_pplx_dflt_scheduler;
-
-
-pplx::scheduler_interface& get_pplx_dflt_scheduler()
-{
-    return g_pplx_dflt_scheduler;
-}
 
 #else
 class pplx_dflt_scheduler : public pplx::scheduler_interface
