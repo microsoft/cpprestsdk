@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,6 @@
 *
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*
-* outside_tests.cpp
 *
 * Tests cases for using http_clients to outside websites.
 *
@@ -57,12 +55,12 @@ TEST_FIXTURE(uri_address, outside_cnn_dot_com)
     while(response.body().streambuf().in_avail() == 0);
 
     // CNN's other pages do use chunked transfer encoding.
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     response = client.request(methods::GET, U("US")).get();
     VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
     while(response.body().streambuf().in_avail() == 0);
 #else
-    // Linux won't handle 301 header automatically 
+    // Linux won't handle 301 header automatically
     response = client.request(methods::GET, U("US")).get();
     VERIFY_ARE_EQUAL(status_codes::MovedPermanently, response.status_code());
 #endif
@@ -77,7 +75,7 @@ TEST_FIXTURE(uri_address, outside_google_dot_com)
     VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
     while(response.body().streambuf().in_avail() == 0);
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     // Google's maps page.
     response = client.request(methods::GET, U("maps")).get();
     VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());

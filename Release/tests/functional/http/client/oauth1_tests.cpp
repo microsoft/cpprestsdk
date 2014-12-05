@@ -24,6 +24,7 @@
 ****/
 
 #include "stdafx.h"
+#include "cpprest/details/http_helpers.h"
 
 using namespace web;
 using namespace web::http;

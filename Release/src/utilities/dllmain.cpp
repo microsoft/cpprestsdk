@@ -16,20 +16,15 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* dllmain.cpp
-*
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 
 #include "stdafx.h"
-#include "cpprest/globals.h"
 
-#ifdef _MS_WINDOWS
+// DevNote: in the future it would be great if we removed this.
 volatile long g_isProcessTerminating = 0;
-
-#if !defined(__cplusplus_winrt)
 
 BOOL WINAPI DllMain(HINSTANCE, DWORD fdwReason, LPVOID lpReserved)
 {
@@ -50,6 +45,3 @@ BOOL WINAPI DllMain(HINSTANCE, DWORD fdwReason, LPVOID lpReserved)
 
     return TRUE;
 }
-
-#endif // defined(__cplusplus_winrt)
-#endif // _MS_WINDOWS

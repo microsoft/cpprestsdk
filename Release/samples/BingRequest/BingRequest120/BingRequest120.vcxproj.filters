@@ -6,7 +6,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="$(CollateralsDir)\Samples\BingRequest\bingrequest.cpp">
+    <ClCompile Include="..\bingrequest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

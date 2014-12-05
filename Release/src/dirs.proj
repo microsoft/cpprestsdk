@@ -31,6 +31,7 @@
 
   <ItemGroup Condition="'$(DevToolsVersion)'=='140'">
     <ProjectFile Include="build\vs14\casablanca140.vcxproj" Condition="'$(Platform)'!='ARM' or '$(WindowsSDKDesktopARMSupport)' == 'true'" />
+    <ProjectFile Include="build\vs14.android\casablanca140.android.vcxproj" Condition="'$(Platform)'!='x64'"/>
   </ItemGroup>
 
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />

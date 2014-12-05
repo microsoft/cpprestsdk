@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* stdafx.h
-*
 * Pre-compiled headers
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
@@ -27,12 +25,17 @@
 
 #pragma once
 
-#include "cpprest/xxpublic.h"
-#include "cpprest/basic_types.h"
+#include "cpprest/details/cpprest_compat.h"
+#include "cpprest/details/basic_types.h"
 
-#ifdef _MS_WINDOWS
-#include "cpprest/targetver.h"
-#include "cpprest/details/windows_compat.h"
+#ifdef _WIN32
+#ifdef CPPREST_TARGET_XP
+#include <winsdkver.h>
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT _WIN32_WINNT_WS03 //Windows XP with SP2
+#endif
+#endif
+#include <SDKDDKVer.h>
 // use the debug version of the CRT if _DEBUG is defined
 #ifdef _DEBUG
     #define _CRTDBG_MAP_ALLOC
@@ -55,12 +58,6 @@
 
 #endif // #if !defined(__cplusplus_winrt)
 #else // LINUX or APPLE
-#ifdef __APPLE__
-#include "cpprest/details/apple_compat.h"
-#else
-#include "cpprest/details/linux_compat.h"
-#define FAILED(x) ((x) != 0)
-#endif
 #define __STDC_LIMIT_MACROS
 #include <stdint.h>
 #include <cstdint>
@@ -72,6 +69,7 @@
 #include "pthread.h"
 #if (defined(ANDROID) || defined(__ANDROID__))
 // Boost doesn't recognize libstdcpp on top of clang correctly
+#include "boost/config.hpp"
 #include "boost/config/stdlib/libstdcpp3.hpp"
 #undef BOOST_NO_CXX11_SMART_PTR
 #undef BOOST_NO_CXX11_NULLPTR
@@ -81,12 +79,11 @@
 #include "boost/thread/condition_variable.hpp"
 #include "boost/date_time/posix_time/posix_time_types.hpp"
 #include "boost/bind/bind.hpp"
-#include <pplx/threadpool.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/syscall.h>
-#endif // _MS_WINDOWS
+#endif // _WIN32
 
 // Macro indicating the C++ Rest SDK product itself is being built.
 // This is to help track how many developers are directly building from source themselves.
@@ -100,50 +97,60 @@
 #include <streambuf>
 #include <mutex>
 #include <array>
+#include <vector>
+#include <memory>
+#include <thread>
 
 #include "pplx/pplxtasks.h"
 #include "cpprest/version.h"
 
-// Stream
+// streams
 #include "cpprest/streams.h"
 #include "cpprest/astreambuf.h"
-
-#include "cpprest/asyncrt_utils.h"
+#include "cpprest/rawptrstream.h"
+#include "cpprest/interopstream.h"
+#include "cpprest/producerconsumerstream.h"
 
 // json
 #include "cpprest/json.h"
 
 // uri
 #include "cpprest/base_uri.h"
-#include "cpprest/uri_parser.h"
+#include "cpprest/details/uri_parser.h"
 
-// web utilities
-#include "cpprest/web_utilities.h"
+// utilities
+#include "cpprest/asyncrt_utils.h"
+#include "cpprest/details/web_utilities.h"
 
 // http
 #include "cpprest/http_headers.h"
 #include "cpprest/http_msg.h"
 #include "cpprest/http_client.h"
-#include "cpprest/http_helpers.h"
+#include "cpprest/details/http_helpers.h"
 
-// Currently websockets are only supported on WinRT (Store only).
-// They are not available on Phone. Hence, cannot use the __cplusplus_winrt macro here.
+// oauth
+#if !defined(_WIN32) || _WIN32_WINNT >= _WIN32_WINNT_VISTA
+#include "cpprest/oauth1.h"
+#endif
+#include "cpprest/oauth2.h"
+
+// websockets
 #include "cpprest/ws_client.h"
 #include "cpprest/ws_msg.h"
 
 #if !defined(__cplusplus_winrt)
 #if _WIN32_WINNT >= _WIN32_WINNT_VISTA
-#include "cpprest/http_server.h"
+#include "cpprest/details/http_server.h"
 #include "cpprest/http_listener.h"
-#include "cpprest/http_server_api.h"
+#include "cpprest/details/http_server_api.h"
 #endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA
 
-
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 #if _WIN32_WINNT >= _WIN32_WINNT_VISTA
-#include "cpprest/http_windows_server.h"
+#include "cpprest/details/http_server_httpsys.h"
 #endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA
-
+#else
+#include "cpprest/details/http_server_asio.h"
 #endif
 
 #endif

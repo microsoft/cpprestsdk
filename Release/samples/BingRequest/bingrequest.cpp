@@ -30,7 +30,7 @@ using namespace web::http;
 using namespace web::http::client;
 using namespace concurrency::streams;
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 int wmain(int argc, wchar_t *args[])
 #else
 int main(int argc, char *args[])

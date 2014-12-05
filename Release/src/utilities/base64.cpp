@@ -16,20 +16,15 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* asyncrt_utils.cpp - Utilities
-*
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
-
 #include "stdafx.h"
-#include <array>
 
 using namespace web;
 using namespace utility;
 
-#define _USE_INTERNAL_BASE64_
 std::vector<unsigned char> _from_base64(const utility::string_t& str);
 utility::string_t _to_base64(const unsigned char *ptr, size_t size);
 
@@ -54,8 +49,6 @@ utility::string_t __cdecl conversions::to_base64(uint64_t input)
     return _to_base64(reinterpret_cast<const unsigned char*>(&input), sizeof(input));
 }
 
-
-#if defined(_USE_INTERNAL_BASE64_)
 static const char* _base64_enctbl = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 const std::array<unsigned char, 128> _base64_dectbl =
    {{ 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
@@ -280,4 +273,3 @@ utility::string_t _to_base64(const unsigned char *ptr, size_t size)
     }
     return result;
 }
-#endif

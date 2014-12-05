@@ -23,11 +23,8 @@
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 #include "stdafx.h"
-#include "cpprest/base_uri.h"
-#include "cpprest/basic_types.h"
 #include "cpprest/http_client.h"
 #include "cpprest/http_msg.h"
-#include "cpprest/http_helpers.h"
 #include "cpprest/json.h"
 #include "cpprest/uri_builder.h"
 

@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* parsing_tests.cpp
-*
 * Tests for JSON parsing.
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -26,7 +24,7 @@
 #include "stdafx.h"
 #include <array>
 
-#if defined(_MS_WINDOWS) || defined(__APPLE__)
+#if defined(_WIN32) || defined(__APPLE__)
 #include <regex>
 #elif (defined(ANDROID) || defined(__ANDROID__))
 #else
@@ -42,7 +40,7 @@ namespace tests { namespace functional { namespace json_tests {
     inline bool verify_parsing_error_msg(const std::string &str)
     {
         auto spattern = "^\\* Line \\d+, Column \\d+ Syntax error: .+";
-#if defined(_MS_WINDOWS) || defined(__APPLE__)
+#if defined(_WIN32) || defined(__APPLE__)
         static std::regex pattern(spattern);
         return std::regex_match(str, pattern, std::regex_constants::match_flag_type::match_not_null);
 #elif (defined(ANDROID) || defined(__ANDROID__))
@@ -576,7 +574,7 @@ TEST(keep_order_while_parsing)
 TEST(non_default_locale)
 {
     std::string originalLocale = setlocale(LC_ALL, nullptr);
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     std::string changedLocale("fr-FR");
 #else
     std::string changedLocale("fr_FR.utf8");
@@ -645,7 +643,7 @@ TEST(parse_overload_success)
     error_code_helper(arrayStringStream);
     error_code_helper(objStringStream);
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     std::wstringbuf buf;
 
     buf.sputn(valueStr.c_str(), valueStr.size());
@@ -679,7 +677,7 @@ TEST(parse_overload_failed)
     VERIFY_IS_TRUE(streamErr.value() > 0);
     VERIFY_IS_TRUE(parsedObject.is_null());
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     std::wstringbuf buf;
     buf.sputn(str.c_str(), str.size());
     std::wistream iStream(&buf);

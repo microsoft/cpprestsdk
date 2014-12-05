@@ -16,36 +16,33 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* pplxlinux.h
-*
 * Linux specific pplx implementations
+*
+* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 
 #pragma once
 
-#ifndef _PPLXLINUX_H
-#define _PPLXLINUX_H
 
 #if (defined(_MSC_VER))
 #error This file must not be included for Visual Studio
 #endif
 
-#ifndef _MS_WINDOWS
+#ifndef _WIN32
 
 #include <signal.h>
 #include "pthread.h"
+#include "cpprest/details/cpprest_compat.h"
 
 #if defined(__APPLE__)
-#include "cpprest/details/apple_compat.h"
 #include <dispatch/dispatch.h>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 #else
-#include "cpprest/details/linux_compat.h"
 #include <mutex>   
-#include <condition_variable>  
+#include <condition_variable>
 #endif
 
 #include "pplx/pplxinterface.h"
@@ -329,5 +326,4 @@ inline void* _ReturnAddress() { return __builtin_return_address(0); }
 
 } // namespace pplx
 
-#endif // !_MS_WINDOWS
-#endif // _PPLXLINUX_H
+#endif // !_WIN32

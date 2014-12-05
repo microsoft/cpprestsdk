@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* pplxtasks.h
-*
 * Parallel Patterns Library - PPLx Tasks
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
@@ -54,6 +52,11 @@ namespace Concurrency {
 #else
 
 #include "pplx/pplx.h"
+
+#if defined(__ANDROID__)
+#include <jni.h>
+void cpprest_init(JavaVM*);
+#endif
 
 // Cannot build using a compiler that is older than dev10 SP1
 #if defined(_MSC_VER)

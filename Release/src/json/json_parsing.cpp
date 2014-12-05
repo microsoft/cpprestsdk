@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* json_parsing.cpp
-*
 * HTTP Library: JSON parser
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
@@ -26,9 +24,7 @@
 ****/
 
 #include "stdafx.h"
-#include <vector>
 #include <cstdlib>
-#include <array>
 
 #if defined(_MSC_VER)
 #pragma warning(disable : 4127) // allow expressions like while(true) pass
@@ -58,7 +54,7 @@ namespace details
 //
 
 template <typename Token>
-#if defined(_MS_WINDOWS)
+#if defined(_WIN32)
     __declspec(noreturn)
 #else
     __attribute__((noreturn))
@@ -138,7 +134,7 @@ public:
 
     web::json::value ParseValue(typename JSON_Parser<CharType>::Token &first)
     {
-#ifndef _MS_WINDOWS
+#ifndef _WIN32
         utility::details::scoped_c_thread_locale locale;
 #endif
 
@@ -388,7 +384,7 @@ inline bool JSON_Parser<CharType>::ParseInt64(CharType first, uint64_t& value)
 // This namespace hides the x-plat helper functions
 namespace
 {
-#if defined(_MS_WINDOWS)
+#if defined(_WIN32)
     static int print_llu(char* ptr, size_t n, uint64_t val64)
     {
         return _snprintf_s_l(ptr, n, _TRUNCATE, "%I64u", utility::details::scoped_c_thread_locale::c_locale(), val64);
@@ -753,7 +749,7 @@ inline bool JSON_Parser<CharType>::handle_unescape_char(Token &token)
                 int ch_int = static_cast<int>(ch);
                 if (ch_int < 0 || ch_int > 127)
                     return false;
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
                 const int isxdigitResult = _isxdigit_l(ch_int, utility::details::scoped_c_thread_locale::c_locale());
 #else
                 const int isxdigitResult = isxdigit(ch_int);
@@ -1214,7 +1210,7 @@ static web::json::value _parse_stream(utility::istream_t &stream, std::error_cod
     return returnObject;
 }
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 static web::json::value _parse_narrow_stream(std::istream &stream)
 {
     web::json::details::JSON_StreamParser<char> parser(stream);
@@ -1318,7 +1314,7 @@ web::json::value web::json::value::parse(utility::istream_t &stream, std::error_
     return _parse_stream(stream, error);
 }
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 web::json::value web::json::value::parse(std::istream& stream)
 {
     return _parse_narrow_stream(stream);

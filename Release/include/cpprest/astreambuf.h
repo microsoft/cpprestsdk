@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* astreambuf.h
-*
 * Asynchronous I/O: stream buffer. This is an extension to the PPL concurrency features and therefore
 * lives in the Concurrency namespace.
 *
@@ -33,16 +31,8 @@
 #include <math.h>
 
 #include "pplx/pplxtasks.h"
-#include "cpprest/basic_types.h"
+#include "cpprest/details/basic_types.h"
 #include "cpprest/asyncrt_utils.h"
-
-#if defined(_MSC_VER)
-#pragma warning(push)
-// Suppress unreferenced formal parameter warning as they are required for documentation.
-#pragma warning(disable : 4100)
-// Suppress no-side-effect recursion warning, since it is safe and template-binding-dependent.
-#pragma warning(disable : 4718)
-#endif
 
 namespace Concurrency
 {
@@ -66,7 +56,7 @@ namespace streams
         /// <returns>An <c>int_type</c> value which implies that an asynchronous call is required.</returns>
         static typename std::char_traits<_CharType>::int_type requires_async() { return std::char_traits<_CharType>::eof()-1; }
     };
-#if !defined(_MS_WINDOWS)
+#if !defined(_WIN32)
     template<>
     struct char_traits<unsigned char> : private std::char_traits<char>
     {
@@ -1187,7 +1177,3 @@ namespace streams
     };
 
 }}
-
-#if defined(_MSC_VER)
-#pragma warning(pop) // 4100
-#endif

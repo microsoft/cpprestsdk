@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* oauth2.h
-*
 * HTTP Library: Oauth 2.0
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
@@ -25,9 +23,6 @@
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 #pragma once
-
-#ifndef _CASA_OAUTH2_H
-#define _CASA_OAUTH2_H
 
 #include "cpprest/http_msg.h"
 
@@ -56,7 +51,7 @@ class oauth2_strings
 public:
 #define _OAUTH2_STRINGS
 #define DAT(a_, b_) _ASYNCRTIMP static const oauth2_string a_;
-#include "cpprest/http_constants.dat"
+#include "cpprest/details/http_constants.dat"
 #undef _OAUTH2_STRINGS
 #undef DAT
 };
@@ -520,6 +515,4 @@ private:
     std::shared_ptr<experimental::oauth2_config> m_config;
 };
 
-}}}} // namespace web::http::oauth2::details
-
-#endif  /* _CASA_OAUTH2_H */
+}}}}

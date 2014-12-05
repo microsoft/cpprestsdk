@@ -34,8 +34,7 @@
 #include <fstream>
 #include <random>
 
-#include "cpprest/basic_types.h"
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 #define NOMINMAX
 #include <Windows.h>
 #else

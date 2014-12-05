@@ -16,15 +16,16 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* http_listen.cpp
-*
 * HTTP Library: HTTP listener (server-side) APIs
+*
+* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 
 #include "stdafx.h"
-#include "cpprest/http_server_api.h"
+
+#if !defined(_WIN32) || (_WIN32_WINNT >= _WIN32_WINNT_VISTA && !defined(__cplusplus_winrt))
 
 using namespace web::http::experimental;
 
@@ -37,10 +38,10 @@ namespace listener
 // Helper function to check URI components.
 static void check_listener_uri(const http::uri &address)
 {
-    // Somethings like proper URI schema are verified by the URI class.
+    // Some things like proper URI schema are verified by the URI class.
     // We only need to check certain things specific to HTTP.
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     //HTTP Server API includes SSL support
     if(address.scheme() != U("http") && address.scheme() != U("https"))
     {
@@ -201,6 +202,6 @@ void details::http_listener_impl::handle_options(http_request message)
     message.reply(response);
 }
 
-} // namespace listener
-} // namespace experimental
-}} // namespace web::http
+}}}}
+
+#endif

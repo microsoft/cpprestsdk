@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,13 +16,13 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* test_http_server.cpp -- Defines a test server to handle requests and sending responses.
+* Defines a test server to handle requests and sending responses.
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 #include "stdafx.h"
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 #include <http.h>
 #pragma warning ( push )
 #pragma warning ( disable : 4457 )
@@ -43,7 +43,7 @@ using namespace utility::conversions;
 
 namespace tests { namespace functional { namespace http { namespace utilities {
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 // Helper function to parse verb from Windows HTTP Server API.
 static utility::string_t parse_verb(const HTTP_REQUEST *p_http_request)
 {
@@ -649,7 +649,7 @@ unsigned long test_request::reply(
 {
     return reply_impl(status_code, reason_phrase, headers, (void *)&data[0], data.size() * sizeof(char));
 }
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 unsigned long test_request::reply(
         const unsigned short status_code, 
         const utility::string_t &reason_phrase, 
@@ -660,7 +660,7 @@ unsigned long test_request::reply(
 }
 #endif
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 unsigned long test_request::reply_impl(
         const unsigned short status_code, 
         const utility::string_t &reason_phrase, 

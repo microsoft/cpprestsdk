@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* http_msg.cpp
-*
 * HTTP Library: Request and reply message definitions.
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
@@ -25,10 +23,6 @@
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 #include "stdafx.h"
-
-#include "cpprest/http_msg.h"
-#include "cpprest/producerconsumerstream.h"
-#include "cpprest/http_helpers.h"
 
 using namespace web;
 using namespace utility;
@@ -611,33 +605,33 @@ details::_http_request::_http_request(std::unique_ptr<http::details::_http_serve
 
 #define _METHODS
 #define DAT(a,b) const method methods::a = b;
-#include "cpprest/http_constants.dat"
+#include "cpprest/details/http_constants.dat"
 #undef _METHODS
 #undef DAT
 
 #define _HEADER_NAMES
 #define DAT(a,b) const utility::string_t header_names::a = _XPLATSTR(b);
-#include "cpprest/http_constants.dat"
+#include "cpprest/details/http_constants.dat"
 #undef _HEADER_NAMES
 #undef DAT
 
 #define _MIME_TYPES
 #define DAT(a,b) const utility::string_t mime_types::a = _XPLATSTR(b);
-#include "cpprest/http_constants.dat"
+#include "cpprest/details/http_constants.dat"
 #undef _MIME_TYPES
 #undef DAT
 
 #define _CHARSET_TYPES
 #define DAT(a,b) const utility::string_t charset_types::a = _XPLATSTR(b);
-#include "cpprest/http_constants.dat"
+#include "cpprest/details/http_constants.dat"
 #undef _CHARSET_TYPES
 #undef DAT
 
 // This is necessary for Linux because of a bug in GCC 4.7
-#ifndef _MS_WINDOWS
+#ifndef _WIN32
 #define _PHRASES
 #define DAT(a,b,c) const status_code status_codes::a;
-#include "cpprest/http_constants.dat"
+#include "cpprest/details/http_constants.dat"
 #undef _PHRASES
 #undef DAT
 #endif

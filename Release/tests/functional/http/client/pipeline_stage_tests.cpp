@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -59,13 +59,13 @@ TEST_FIXTURE(uri_address, http_counting_methods)
     client.add_handler(request_counter);
 
     // Don't include 'CONNECT' it has a special meaning.
-    utility::string_t send_methods[] = 
+    utility::string_t send_methods[] =
     {
         methods::GET,
         U("GET"),
         methods::DEL,
         methods::HEAD,
-#ifdef _MS_WINDOWS // this is never passed to the listener
+#ifdef _WIN32 // this is never passed to the listener
         methods::OPTIONS,
 #endif
         methods::POST,
@@ -73,13 +73,13 @@ TEST_FIXTURE(uri_address, http_counting_methods)
         methods::PATCH,
         U("CUstomMETHOD")
     };
-    utility::string_t recv_methods[] = 
+    utility::string_t recv_methods[] =
     {
         U("GET"),
         U("GET"),
         U("DELETE"),
         U("HEAD"),
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
         U("OPTIONS"),
 #endif
         U("POST"),
