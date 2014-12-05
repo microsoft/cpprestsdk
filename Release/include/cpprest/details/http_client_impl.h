@@ -441,10 +441,10 @@ void http_client::build_pipeline(uri base_uri, http_client_config client_config)
 
     m_pipeline = ::web::http::http_pipeline::create_pipeline(std::make_shared<details::http_network_handler>(std::move(base_uri), std::move(client_config)));
 
-#if !defined(CPPREST_TARGET_XP) && !defined(_PHONE8_)
+#if !defined(CPPREST_TARGET_XP) && (!defined(WINAPI_FAMILY) || WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP || _MSC_VER > 1700)
     add_handler(std::static_pointer_cast<http::http_pipeline_stage>(
         std::make_shared<oauth1::details::oauth1_handler>(this->client_config().oauth1())));
-#endif // !defined(CPPREST_TARGET_XP) && !defined(_PHONE8_)
+#endif
 
     add_handler(std::static_pointer_cast<http::http_pipeline_stage>(
         std::make_shared<oauth2::details::oauth2_handler>(this->client_config().oauth2())));

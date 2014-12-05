@@ -46,7 +46,7 @@ typedef void* native_handle;}}}
 #include "cpprest/details/basic_types.h"
 #include "cpprest/asyncrt_utils.h"
 
-#if !defined(CPPREST_TARGET_XP) && !defined(_PHONE8_)
+#if !defined(CPPREST_TARGET_XP) && (!defined(WINAPI_FAMILY) || WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP || _MSC_VER > 1700)
 #include "cpprest/oauth1.h"
 #endif
 
@@ -99,7 +99,7 @@ public:
     {
     }
 
-#if !defined(CPPREST_TARGET_XP) && !defined(_PHONE8_)
+#if !defined(CPPREST_TARGET_XP) && (!defined(WINAPI_FAMILY) || WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP || _MSC_VER > 1700)
     /// <summary>
     /// Get OAuth 1.0 configuration.
     /// </summary>
@@ -294,9 +294,9 @@ public:
     }
 
 private:
-#if !defined(CPPREST_TARGET_XP) && !defined(_PHONE8_)
+#if !defined(CPPREST_TARGET_XP) && (!defined(WINAPI_FAMILY) || WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP || _MSC_VER > 1700)
     std::shared_ptr<oauth1::experimental::oauth1_config> m_oauth1;
-#endif // !defined(CPPREST_TARGET_XP) && !defined(_PHONE8_)
+#endif
 
     std::shared_ptr<oauth2::experimental::oauth2_config> m_oauth2;
     web_proxy m_proxy;

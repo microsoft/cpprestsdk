@@ -25,7 +25,7 @@
 
 #include "stdafx.h"
 
-#if !defined(_WIN32) || (_WIN32_WINNT >= _WIN32_WINNT_VISTA && !defined(_PHONE8_))
+#if !defined(CPPREST_TARGET_XP) && (!defined(WINAPI_FAMILY) || WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP || _MSC_VER > 1700)
 
 using namespace utility;
 using web::http::client::http_client;

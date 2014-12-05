@@ -22,11 +22,17 @@
     <Link>
       <AdditionalDependencies>$(MSBuildThisFileDirectory)lib\x64\v120_xp\Debug\Desktop\cpprest120d_xp_$(CppRestSDKVersionFileSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <ClCompile>
+      <PreprocessorDefinitions>CPPREST_TARGET_XP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Label="Win32 and v110_xp and Release and Desktop" Condition="'$(Platform.ToLower())' == 'win32' And '$(PlatformToolset.ToLower())' == 'v110_xp' And ( $(Configuration.ToLower().IndexOf('debug')) == -1 ) And ( !('$(PlatformToolset.ToLower())' == 'windowskernelmodedriver8.0') And !('$(PlatformToolset.ToLower())' == 'windowsapplicationfordrivers8.0') And !('$(PlatformToolset.ToLower())' == 'windowsusermodedriver8.0') And !('$(AppContainerApplication.ToLower())' == 'true') )">
     <Link>
       <AdditionalDependencies>$(MSBuildThisFileDirectory)lib\Win32\v110_xp\Release\Desktop\cpprest110_xp_$(CppRestSDKVersionFileSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <ClCompile>
+      <PreprocessorDefinitions>CPPREST_TARGET_XP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Label="x64 and v120 and Debug and WinRT" Condition="'$(Platform.ToLower())' == 'x64' And ( '$(PlatformToolset.ToLower())' == 'v120' Or '$(PlatformToolset.ToLower())' == 'ctp_nov2013' Or '$(PlatformToolset.ToLower())' == 'windowskernelmodedriver8.0' Or '$(PlatformToolset.ToLower())' == 'windowsapplicationfordrivers8.0' Or '$(PlatformToolset.ToLower())' == 'windowsusermodedriver8.0' ) And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 ) And ('$(AppContainerApplication.ToLower())' == 'true')">
     <Link>
@@ -37,6 +43,9 @@
     <Link>
       <AdditionalDependencies>$(MSBuildThisFileDirectory)lib\x64\v110_xp\Debug\Desktop\cpprest110d_xp_$(CppRestSDKVersionFileSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <ClCompile>
+      <PreprocessorDefinitions>CPPREST_TARGET_XP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Label="x64 and v120 and Release and Desktop" Condition="'$(Platform.ToLower())' == 'x64' And ( '$(PlatformToolset.ToLower())' == 'v120' Or '$(PlatformToolset.ToLower())' == 'ctp_nov2013' Or '$(PlatformToolset.ToLower())' == 'windowskernelmodedriver8.0' Or '$(PlatformToolset.ToLower())' == 'windowsapplicationfordrivers8.0' Or '$(PlatformToolset.ToLower())' == 'windowsusermodedriver8.0' ) And ( $(Configuration.ToLower().IndexOf('debug')) == -1 ) And ( !('$(PlatformToolset.ToLower())' == 'windowskernelmodedriver8.0') And !('$(PlatformToolset.ToLower())' == 'windowsapplicationfordrivers8.0') And !('$(PlatformToolset.ToLower())' == 'windowsusermodedriver8.0') And !('$(AppContainerApplication.ToLower())' == 'true') )">
     <Link>
@@ -87,6 +96,9 @@
     <Link>
       <AdditionalDependencies>$(MSBuildThisFileDirectory)lib\Win32\v110_xp\Debug\Desktop\cpprest110d_xp_$(CppRestSDKVersionFileSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <ClCompile>
+      <PreprocessorDefinitions>CPPREST_TARGET_XP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Label="x64 and v110 and Debug and Desktop" Condition="'$(Platform.ToLower())' == 'x64' And ( '$(PlatformToolset.ToLower())' == 'v110' Or '$(PlatformToolset.ToLower())' == 'windowskernelmodedriver8.0' Or '$(PlatformToolset.ToLower())' == 'windowsapplicationfordrivers8.0' Or '$(PlatformToolset.ToLower())' == 'windowsusermodedriver8.0' ) And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 ) And ( !('$(PlatformToolset.ToLower())' == 'windowskernelmodedriver8.0') And !('$(PlatformToolset.ToLower())' == 'windowsapplicationfordrivers8.0') And !('$(PlatformToolset.ToLower())' == 'windowsusermodedriver8.0') And !('$(AppContainerApplication.ToLower())' == 'true') )">
     <Link>
@@ -107,6 +119,9 @@
     <Link>
       <AdditionalDependencies>$(MSBuildThisFileDirectory)lib\x64\v120_xp\Release\Desktop\cpprest120_xp_$(CppRestSDKVersionFileSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <ClCompile>
+      <PreprocessorDefinitions>CPPREST_TARGET_XP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Label="ARM and v110_wp80 and Debug and Phone8" Condition="'$(Platform.ToLower())' == 'arm' And '$(PlatformToolset.ToLower())' == 'v110_wp80' And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 )">
     <Link>
@@ -132,16 +147,25 @@
     <Link>
       <AdditionalDependencies>$(MSBuildThisFileDirectory)lib\Win32\v120_xp\Release\Desktop\cpprest120_xp_$(CppRestSDKVersionFileSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <ClCompile>
+      <PreprocessorDefinitions>CPPREST_TARGET_XP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Label="Win32 and v120_xp and Debug and Desktop" Condition="'$(Platform.ToLower())' == 'win32' And '$(PlatformToolset.ToLower())' == 'v120_xp' And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 ) And ( !('$(PlatformToolset.ToLower())' == 'windowskernelmodedriver8.0') And !('$(PlatformToolset.ToLower())' == 'windowsapplicationfordrivers8.0') And !('$(PlatformToolset.ToLower())' == 'windowsusermodedriver8.0') And !('$(AppContainerApplication.ToLower())' == 'true') )">
     <Link>
       <AdditionalDependencies>$(MSBuildThisFileDirectory)lib\Win32\v120_xp\Debug\Desktop\cpprest120d_xp_$(CppRestSDKVersionFileSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <ClCompile>
+      <PreprocessorDefinitions>CPPREST_TARGET_XP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Label="x64 and v110_xp and Release and Desktop" Condition="'$(Platform.ToLower())' == 'x64' And '$(PlatformToolset.ToLower())' == 'v110_xp' And ( $(Configuration.ToLower().IndexOf('debug')) == -1 ) And ( !('$(PlatformToolset.ToLower())' == 'windowskernelmodedriver8.0') And !('$(PlatformToolset.ToLower())' == 'windowsapplicationfordrivers8.0') And !('$(PlatformToolset.ToLower())' == 'windowsusermodedriver8.0') And !('$(AppContainerApplication.ToLower())' == 'true') )">
     <Link>
       <AdditionalDependencies>$(MSBuildThisFileDirectory)lib\x64\v110_xp\Release\Desktop\cpprest110_xp_$(CppRestSDKVersionFileSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <ClCompile>
+      <PreprocessorDefinitions>CPPREST_TARGET_XP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Label="Win32 and v120_wp81 and Debug and Phone8" Condition="'$(Platform.ToLower())' == 'win32' And '$(PlatformToolset.ToLower())' == 'v120_wp81' And ( $(Configuration.ToLower().IndexOf('debug')) &gt; -1 )">
     <Link>
