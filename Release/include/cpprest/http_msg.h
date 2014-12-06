@@ -1311,14 +1311,12 @@ private:
 
 } // namespace details
 
+/// <summary>
+///
+/// </summary>
 class http_pipeline
 {
 public:
-
-    ~http_pipeline()
-    {
-
-    }
 
     /// <summary>
     /// Create an http pipeline that consists of a linear chain of stages
@@ -1351,7 +1349,7 @@ public:
     {
         pplx::extensibility::scoped_recursive_lock_t l(m_lock);
 
-        if ( m_stages.size() > 0 )
+        if (m_stages.size() > 0)
         {
             std::shared_ptr<http_pipeline_stage> penultimate = m_stages[m_stages.size()-1];
             penultimate->set_next_stage(stage);
@@ -1361,11 +1359,19 @@ public:
         m_stages.push_back(stage);
     }
 
+    /// <summary>
+    /// Sets the last stage of the pipeline.
+    /// </summary>
+    /// <param name="last">Shared pointer to pipeline stage to set as the last.</param>
     void set_last_stage(const std::shared_ptr<http_pipeline_stage> &last)
     {
         m_last_stage = last;
     }
 
+    /// <summary>
+    /// Retrieves the last stage in this pipeline.
+    /// </summary>
+    /// <returns>A shared pointer to last stage.</returns>
     const std::shared_ptr<http_pipeline_stage>& last_stage() const
     {
         return m_last_stage;
@@ -1373,7 +1379,7 @@ public:
 
 private:
 
-    http_pipeline(std::shared_ptr<http_pipeline_stage> last) : m_last_stage(last)
+    http_pipeline(const std::shared_ptr<http_pipeline_stage> &last) : m_last_stage(last)
     {
     }
 
