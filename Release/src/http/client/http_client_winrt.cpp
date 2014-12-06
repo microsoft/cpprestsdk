@@ -28,7 +28,6 @@
 
 #include "cpprest/details/http_client_impl.h"
 
-// TODO try trimming???
 #include <Strsafe.h>
 // Important for WP8
 #define __WRL_NO_DEFAULT_LIB__
@@ -529,8 +528,8 @@ private:
     winrt_client &operator=(const winrt_client&);
 };
 
-http_network_handler::http_network_handler(uri base_uri, http_client_config client_config) :
-    m_http_client_impl(std::make_shared<details::winrt_client>(std::move(base_uri), std::move(client_config)))
+http_network_handler::http_network_handler(const uri &base_uri, const http_client_config &client_config) :
+    m_http_client_impl(std::make_shared<details::winrt_client>(base_uri, client_config))
 {
 }
 

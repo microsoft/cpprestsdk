@@ -26,7 +26,8 @@
 #include "stdafx.h"
 #include "cpprest/details/x509_cert_utilities.h"
 
-#if !defined(_M_ARM) && (!defined(_MSC_VER) || (_MSC_VER < 1900)) && !defined(CPPREST_EXCLUDE_WEBSOCKETS)
+// Include on everything except VS2015 and Windows Desktop ARM, unless explicitly excluded.
+#if !defined(_MSC_VER) || ((_MSC_VER < 1900) && (defined(__cplusplus_winrt) || !defined(__cplusplus_winrt) && !defined(_M_ARM))) && !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 
 // Force websocketpp to use C++ std::error_code instead of Boost.
 #define _WEBSOCKETPP_CPP11_SYSTEM_ERROR_
@@ -118,19 +119,22 @@ public:
     ~wspp_callback_client()
     {
         _ASSERTE(m_state < DESTROYED);
+        std::unique_lock<std::mutex> lock(m_wspp_client_lock);
 
         // Now, what states could we be in?
         switch (m_state) {
         case DESTROYED:
-            // These should be impossible
+            // This should be impossible
             std::abort();
         case CREATED:
-        case CLOSED:
-            // In these cases, nothing need be done.
+            lock.unlock();
             break;
+        case CLOSED:
         case CONNECTING:
         case CONNECTED:
         case CLOSING:
+            // Unlock the mutex so connect/close can use it.
+            lock.unlock();
             try
             {
                 // This will do nothing in the already-connected case
@@ -146,32 +150,8 @@ public:
             break;
         }
 
-        // We have released the lock on all paths here
-        if (m_client)
-        {
-            if (m_client->is_tls_client())
-            {
-                stop_client_impl<websocketpp::config::asio_tls_client>();
-            }
-            else
-            {
-                stop_client_impl<websocketpp::config::asio_client>();
-            }
-            if (m_thread.joinable())
-            {
-                m_thread.join();
-            }
-        }
-
         // At this point, there should be no more references to me.
         m_state = DESTROYED;
-    }
-
-    template <typename WebsocketConfigType>
-    void stop_client_impl()
-    {
-        auto &client = m_client->client<WebsocketConfigType>();
-        client.stop_perpetual();
     }
 
     pplx::task<void> connect()
@@ -243,12 +223,7 @@ public:
         client.set_fail_handler([this](websocketpp::connection_hdl con_hdl)
         {
             _ASSERTE(m_state == CONNECTING);
-            auto &client = m_client->client<WebsocketConfigType>();
-            const auto &ec = client.get_con_from_hdl(con_hdl)->get_ec();
-            websocket_exception exc(ec, build_error_msg(ec, "set_fail_handler"));
-            m_connect_tce.set_exception(exc);
-
-            m_state = CLOSED;
+            shutdown_wspp_impl<WebsocketConfigType>(con_hdl, true);
         });
 
         client.set_message_handler([this](websocketpp::connection_hdl, const websocketpp::config::asio_client::message_type::ptr &msg)
@@ -283,21 +258,7 @@ public:
         client.set_close_handler([this](websocketpp::connection_hdl con_hdl)
         {
             _ASSERTE(m_state != CLOSED);
-
-            if (m_external_close_handler)
-            {
-                auto &client = m_client->client<WebsocketConfigType>();
-                auto connection = client.get_con_from_hdl(con_hdl);
-
-                const auto &ec = connection->get_ec();
-
-                const auto& closeCode = connection->get_local_close_code();
-                const auto& reason = connection->get_local_close_reason();
-                m_external_close_handler(static_cast<websocket_close_status>(closeCode), utility::conversions::to_string_t(reason), ec);
-
-            }
-            m_close_tce.set();
-            m_state = CLOSED;
+            shutdown_wspp_impl<WebsocketConfigType>(con_hdl, false);
         });
 
         // Get the connection handle to save for later, have to create temporary
@@ -394,19 +355,6 @@ public:
 
     void send_msg(websocket_outgoing_message &msg)
     {
-        if (m_client->is_tls_client())
-        {
-            send_msg_impl<websocketpp::config::asio_tls_client>(msg);
-        }
-        else
-        {
-            send_msg_impl<websocketpp::config::asio_client>(msg);
-        }
-    }
-
-    template <typename WebsocketClientType>
-    void send_msg_impl(websocket_outgoing_message &msg)
-    {
         auto this_client = this->shared_from_this();
         auto& is_buf = msg.m_body;
         auto length = msg.m_length;
@@ -486,31 +434,22 @@ public:
 
         read_task.then([this_client, msg, sp_allocated, length]()
         {
-            auto &client = this_client->m_client->client<WebsocketClientType>();
-            websocketpp::lib::error_code ec;
-            switch (msg.m_msg_type)
+            std::lock_guard<std::mutex> lock(this_client->m_wspp_client_lock);
+            if (this_client->m_state > CONNECTED)
             {
-            case websocket_message_type::text_message:
-                client.send(
-                    this_client->m_con,
-                    sp_allocated.get(),
-                    length,
-                    websocketpp::frame::opcode::text,
-                    ec);
-                break;
-            case websocket_message_type::binary_message:
-                client.send(
-                    this_client->m_con,
-                    sp_allocated.get(),
-                    length,
-                    websocketpp::frame::opcode::binary,
-                    ec);
-                break;
-            default:
-                // This case should have already been filtered above.
-                std::abort();
+                // The client has already been closed.
+                throw websocket_exception("Websocket connection is closed.");
             }
 
+            websocketpp::lib::error_code ec;
+            if (this_client->m_client->is_tls_client())
+            {
+                this_client->send_msg_impl<websocketpp::config::asio_tls_client>(this_client, msg, sp_allocated, length, ec);
+            }
+            else
+            {
+                this_client->send_msg_impl<websocketpp::config::asio_client>(this_client, msg, sp_allocated, length, ec);
+            }
             return ec;
         }).then([this_client, msg, is_buf, acquired, sp_allocated, length](pplx::task<websocketpp::lib::error_code> previousTask) mutable
         {
@@ -565,38 +504,112 @@ public:
 
     pplx::task<void> close(websocket_close_status status, const utility::string_t& reason)
     {
-        if (m_client == nullptr) return pplx::task_from_result();
-
-        if (m_client->is_tls_client())
+        websocketpp::lib::error_code ec;
         {
-            return close_impl<websocketpp::config::asio_tls_client>(status, reason);
+            std::lock_guard<std::mutex> lock(m_wspp_client_lock);
+            if (m_state == CONNECTED)
+            {
+                m_state = CLOSING;
+                if (m_client->is_tls_client())
+                {
+                    close_impl<websocketpp::config::asio_tls_client>(status, reason, ec);
+                }
+                else
+                {
+                    close_impl<websocketpp::config::asio_client>(status, reason, ec);
+                }
+            }
+        }
+        if (ec)
+        {
+            return pplx::task_from_exception<void>(ec.message());
         }
         else
         {
-            return close_impl<websocketpp::config::asio_client>(status, reason);
+            return pplx::task<void>(m_close_tce);
+        }
+    }
+
+private:
+
+    template <typename WebsocketConfigType>
+    void shutdown_wspp_impl(const websocketpp::connection_hdl &con_hdl, bool connecting)
+    {
+        // Only need to hold the lock when setting the state to closed.
+        {
+            std::lock_guard<std::mutex> lock(m_wspp_client_lock);
+            m_state = CLOSED;
+        }
+
+        auto &client = m_client->client<WebsocketConfigType>();
+        const auto &connection = client.get_con_from_hdl(con_hdl);
+        const auto &closeCode = connection->get_local_close_code();
+        const auto &reason = connection->get_local_close_reason();
+        const auto &ec = connection->get_ec();
+        client.stop_perpetual();
+
+        // Can't join thread directly since it is the current thread.
+        pplx::create_task([this, connecting, ec, closeCode, reason]
+        {
+            if (m_thread.joinable())
+            {
+                m_thread.join();
+            }
+
+            // Delete client to make sure Websocketpp cleans up all Boost.Asio portions.
+            m_client.reset();
+
+            if (connecting)
+            {
+                websocket_exception exc(ec, build_error_msg(ec, "set_fail_handler"));
+                m_connect_tce.set_exception(exc);
+            }
+            if (m_external_close_handler)
+            {
+                m_external_close_handler(static_cast<websocket_close_status>(closeCode), utility::conversions::to_string_t(reason), ec);
+            }
+            m_close_tce.set();
+        });
+    }
+
+    template <typename WebsocketClientType>
+    static void send_msg_impl(
+        const std::shared_ptr<wspp_callback_client> &this_client,
+        const websocket_outgoing_message &msg,
+        const std::shared_ptr<uint8_t> &sp_allocated,
+        size_t length,
+        websocketpp::lib::error_code &ec)
+    {
+        auto &client = this_client->m_client->client<WebsocketClientType>();
+        switch (msg.m_msg_type)
+        {
+        case websocket_message_type::text_message:
+            client.send(
+                this_client->m_con,
+                sp_allocated.get(),
+                length,
+                websocketpp::frame::opcode::text,
+                ec);
+            break;
+        case websocket_message_type::binary_message:
+            client.send(
+                this_client->m_con,
+                sp_allocated.get(),
+                length,
+                websocketpp::frame::opcode::binary,
+                ec);
+            break;
+        default:
+            // This case should have already been filtered above.
+            std::abort();
         }
     }
 
     template <typename WebsocketConfig>
-    pplx::task<void> close_impl(websocket_close_status status, const utility::string_t& reason)
+    void close_impl(websocket_close_status status, const utility::string_t& reason, websocketpp::lib::error_code &ec)
     {
         auto &client = m_client->client<WebsocketConfig>();
-
-        if (m_state == CONNECTED)
-        {
-            m_state = CLOSING;
-
-            websocketpp::lib::error_code ec;
-            client.close(m_con, static_cast<websocketpp::close::status::value>(status), utility::conversions::to_utf8string(reason), ec);
-            if (ec.value() != 0)
-            {
-                return pplx::task_from_exception<void>(ec.message());
-            }
-
-            return pplx::task<void>(m_close_tce);
-        }
-
-        return pplx::task_from_result();
+        client.close(m_con, static_cast<websocketpp::close::status::value>(status), utility::conversions::to_utf8string(reason), ec);
     }
 
     void set_message_handler(const std::function<void(const websocket_incoming_message&)>& handler)
@@ -609,7 +622,6 @@ public:
         m_external_close_handler = handler;
     }
 
-private:
     std::thread m_thread;
 
     // Perform type erasure to set the websocketpp client in use at runtime
@@ -657,14 +669,16 @@ private:
         bool is_tls_client() const override { return true; }
         websocketpp::client<websocketpp::config::asio_tls_client> m_client;
     };
-    std::unique_ptr<websocketpp_client_base> m_client;
 
     websocketpp::connection_hdl m_con;
 
     pplx::task_completion_event<void> m_connect_tce;
     pplx::task_completion_event<void> m_close_tce;
 
+    // Used to safe guard the wspp client.
+    std::mutex m_wspp_client_lock;
     State m_state;
+    std::unique_ptr<websocketpp_client_base> m_client;
 
     // Guards access to m_outgoing_msg_queue
     std::mutex m_send_lock;

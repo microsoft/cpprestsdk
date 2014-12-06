@@ -1266,8 +1266,8 @@ private:
     winhttp_client &operator=(const winhttp_client&);
 };
 
-http_network_handler::http_network_handler(uri base_uri, http_client_config client_config) :
-    m_http_client_impl(std::make_shared<details::winhttp_client>(std::move(base_uri), std::move(client_config)))
+http_network_handler::http_network_handler(const uri &base_uri, const http_client_config &client_config) :
+    m_http_client_impl(std::make_shared<details::winhttp_client>(base_uri, client_config))
 {
 }
 

@@ -889,17 +889,20 @@ namespace streams
         /// <summary>
         /// <c>can_seek<c/> is used to determine whether a stream buffer supports seeking.
         /// </summary>
+        /// <returns>True if seeking is supported, false otherwise.</returns>
         virtual bool can_seek() const { return get_base()->can_seek(); }
 
         /// <summary>
         /// <c>has_size<c/> is used to determine whether a stream buffer supports size().
         /// </summary>
+        /// <returns>True if the <c>size</c> API is supported, false otherwise.</returns>
         virtual bool has_size() const { return get_base()->has_size(); }
 
         /// <summary>
-        /// Gets the size of the stream, if known. Calls to <c>has_size</c> will determine whether
+        /// Gets the total number of characters in the stream buffer, if known. Calls to <c>has_size</c> will determine whether
         /// the result of <c>size</c> can be relied on.
         /// </summary>
+        /// <returns>The total number of characters in the stream buffer.</returns>
         virtual utility::size64_t size() const { return get_base()->size(); }
 
         /// <summary>
@@ -923,17 +926,20 @@ namespace streams
         /// to be consumed without blocking. May be used in conjunction with <cref="::sbumpc method"/> to read data without
         /// incurring the overhead of using tasks.
         /// </summary>
+        /// <returns>Number of characters that are ready to read.</returns>
         virtual size_t in_avail() const { return get_base()->in_avail(); }
 
         /// <summary>
         /// Checks if the stream buffer is open.
         /// </summary>
         /// <remarks>No separation is made between open for reading and open for writing.</remarks>
+        /// <returns>True if the stream buffer is open for reading or writing, false otherwise.</returns>
         virtual bool is_open() const { return get_base()->is_open(); }
 
         /// <summary>
         /// <c>is_eof</c> is used to determine whether a read head has reached the end of the buffer.
         /// </summary>
+        /// <returns>True if at the end of the buffer, false otherwise.</returns>
         virtual bool is_eof() const { return get_base()->is_eof(); }
 
         /// <summary>
