@@ -26,7 +26,8 @@
 #include "stdafx.h"
 #include "cpprest/details/x509_cert_utilities.h"
 
-#if !defined(_M_ARM) && (!defined(_MSC_VER) || (_MSC_VER < 1900)) && !defined(CPPREST_EXCLUDE_WEBSOCKETS)
+// Include on everything except VS2015 and Windows Desktop ARM, unless explicitly excluded.
+#if !defined(_MSC_VER) || ((_MSC_VER < 1900) && (defined(__cplusplus_winrt) || !defined(__cplusplus_winrt) && !defined(_M_ARM))) && !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 
 // Force websocketpp to use C++ std::error_code instead of Boost.
 #define _WEBSOCKETPP_CPP11_SYSTEM_ERROR_
