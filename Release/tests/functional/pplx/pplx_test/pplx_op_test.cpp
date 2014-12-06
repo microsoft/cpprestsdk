@@ -51,7 +51,7 @@ class pplx_dflt_scheduler : public pplx::scheduler_interface
     {
         pplx::details::atomic_increment(s_flag);
         auto schedulerParam = std::unique_ptr<_Scheduler_Param>(new _Scheduler_Param(proc, param));
-        auto work = CreateThreadpoolWork(DefaultWorkCallbackTest, schedulerParam, NULL);
+        auto work = CreateThreadpoolWork(DefaultWorkCallbackTest, schedulerParam.get(), NULL);
 
         if (work == nullptr)
         {
