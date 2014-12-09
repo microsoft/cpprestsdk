@@ -95,9 +95,9 @@ namespace details
     utf16string convert_utf16be_to_utf16le(utf16string src, bool erase_bom);
 
     // simple helper functions to trim whitespace.
-    void ltrim_whitespace(utility::string_t &str);
-    void rtrim_whitespace(utility::string_t &str);
-    void trim_whitespace(utility::string_t &str);
+    _ASYNCRTIMP void ltrim_whitespace(utility::string_t &str);
+    _ASYNCRTIMP void rtrim_whitespace(utility::string_t &str);
+    _ASYNCRTIMP void trim_whitespace(utility::string_t &str);
 
     bool validate_method(const utility::string_t& method);
 

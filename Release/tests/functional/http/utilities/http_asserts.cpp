@@ -21,29 +21,12 @@
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 #include "stdafx.h"
+#include "cpprest/details/http_helpers.h"
 
 using namespace web; using namespace utility;
 using namespace utility::conversions;
 
 namespace tests { namespace functional { namespace http { namespace utilities {
-
-void ltrim_whitespace(utility::string_t &str)
-{
-    size_t index;
-    for(index = 0; index < str.size() && isspace(str[index]); ++index);
-    str.erase(0, index);
-}
-void rtrim_whitespace(utility::string_t &str)
-{
-    size_t index;
-    for(index = str.size(); index > 0 && isspace(str[index - 1]); --index);
-    str.erase(index);
-}
-void trim_whitespace(utility::string_t &str)
-{
-    ltrim_whitespace(str);
-    rtrim_whitespace(str);
-}
 
 utility::string_t percent_encode_pound(utility::string_t str)
 {
@@ -191,7 +174,7 @@ static std::map<utility::string_t, utility::string_t> parse_headers(utility::ist
         const size_t colon_index = header_line.find(U(":"));
         const utility::string_t header_name = header_line.substr(0, colon_index);
         utility::string_t header_value = header_line.substr(colon_index + 1);
-        trim_whitespace(header_value);
+        web::http::details::trim_whitespace(header_value);
         headers[header_name] = header_value;
 
         char c1 = (char)ss.get(), c2 = (char)ss.get();

@@ -24,6 +24,7 @@
 #include "stdafx.h"
 
 #include "cpprest/uri.h"
+#include "cpprest/details/http_helpers.h"
 #include "test_http_client.h"
 #ifdef _WIN32
 #include <winhttp.h>
@@ -36,24 +37,6 @@
 using namespace web; using namespace utility;
 
 namespace tests { namespace functional { namespace http { namespace utilities {
-
-static void ltrim_whitespace(utility::string_t &str)
-{
-    size_t index;
-    for(index = 0; index < str.size() && isspace(str[index]); ++index);
-    str.erase(0, index);
-}
-static void rtrim_whitespace(utility::string_t &str)
-{
-    size_t index;
-    for(index = str.size(); index > 0 && isspace(str[index - 1]); --index);
-    str.erase(index);
-}
-void trim_whitespace(utility::string_t &str)
-{
-    ltrim_whitespace(str);
-    rtrim_whitespace(str);
-}
 
 // Flatten the http_headers into a name:value pairs separated by a carriage return and line feed.
 utility::string_t flatten_http_headers(const std::map<utility::string_t, utility::string_t> &headers)
@@ -145,8 +128,8 @@ static void parse_winhttp_headers(HINTERNET request_handle, utf16char *headersSt
         {
             utility::string_t key = header_line.substr(0, colonIndex);
             utility::string_t value = header_line.substr(colonIndex + 1, header_line.length() - colonIndex - 1);
-            trim_whitespace(key);
-            trim_whitespace(value);
+            http::details::trim_whitespace(key);
+            http::details::trim_whitespace(value);
             p_response->m_headers[key] = value;
         }
         line = wcstok_s(nullptr, U("\r\n"), &context);
