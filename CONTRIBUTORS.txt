@@ -13,5 +13,8 @@ Dmitry Kolomiets (kolomiets)
 rdeterre
 DeCarabas
 
+AutoDesk Inc.
+Cyrille Fauvel (cyrillef)
+
 Illumina Inc.
 Gery Vessere (gery@vessere.com)
