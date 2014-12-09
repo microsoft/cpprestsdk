@@ -202,7 +202,6 @@ std::string windows_category_impl::message(int errorCode) const CPPREST_NOEXCEPT
         &buffer[0],
         buffer_size,
         NULL);
-
     if (result == 0)
     {
         std::ostringstream os;
@@ -291,7 +290,6 @@ utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
         s.c_str(),
         (int)s.size(),
         &buffer[0], size); // must be null for utf8
-
     if (result != size)
     {
         throw utility::details::create_system_error(GetLastError());
@@ -387,7 +385,6 @@ utf16string __cdecl conversions::usascii_to_utf16(const std::string &s)
         s.c_str(),
         (int)s.size(),
         &buffer[0], size);
-
     if (result != size)
     {
         throw utility::details::create_system_error(GetLastError());
@@ -1081,11 +1078,7 @@ utility::string_t __cdecl timespan::seconds_to_xml_duration(utility::seconds dur
     return oss.str();
 }
 
-/// <summary>
-/// Converts an xml duration to timespan/interval in seconds
-/// http://www.w3.org/TR/xmlschema-2/#duration
-/// </summary>
-utility::seconds __cdecl timespan::xml_duration_to_seconds(utility::string_t timespanString)
+utility::seconds __cdecl timespan::xml_duration_to_seconds(const utility::string_t &timespanString)
 {
     // The format is:
     // PnDTnHnMnS

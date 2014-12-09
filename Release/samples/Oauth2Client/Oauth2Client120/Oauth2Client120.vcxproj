@@ -27,7 +27,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{830b6e2f-9224-41d1-b9c7-a51fc78b00c7}</ProjectGuid>
+    <ProjectGuid>{09E24B3F-FE75-4FDA-B75B-8CE3C65C8D8A}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>Oauth2Client</RootNamespace>
     <SccProjectName>SAK</SccProjectName>

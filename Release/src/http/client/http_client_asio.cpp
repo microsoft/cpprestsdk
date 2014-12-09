@@ -220,8 +220,8 @@ namespace web { namespace http
 
                 linux_connection_pool(boost::asio::io_service& io_service, bool use_ssl, utility::seconds idle_timeout) :
                     m_io_service(io_service),
-                    m_use_ssl(use_ssl),
-                    m_timeout_secs(static_cast<int>(idle_timeout.count()))
+                    m_timeout_secs(static_cast<int>(idle_timeout.count())),
+                    m_use_ssl(use_ssl)
                 {}
 
                 ~linux_connection_pool()
@@ -362,9 +362,9 @@ namespace web { namespace http
                 public:
 
                     timeout_timer(int seconds) :
-                        m_timer(crossplat::threadpool::shared_instance().service()),
                         m_duration(boost::posix_time::milliseconds(seconds * 1000)),
-                        m_state(created)
+                        m_state(created),
+                        m_timer(crossplat::threadpool::shared_instance().service())
                     {}
 
                     void set_ctx(const std::weak_ptr<linux_client_request_context> &ctx)
@@ -1130,8 +1130,8 @@ namespace web { namespace http
                 }
             };
 
-            http_network_handler::http_network_handler(uri base_uri, http_client_config client_config) :
-                m_http_client_impl(std::make_shared<details::linux_client>(std::move(base_uri), std::move(client_config)))
+            http_network_handler::http_network_handler(const uri &base_uri, const http_client_config &client_config) :
+                m_http_client_impl(std::make_shared<details::linux_client>(base_uri, client_config))
             {}
 
             pplx::task<http_response> http_network_handler::propagate(http_request request)
