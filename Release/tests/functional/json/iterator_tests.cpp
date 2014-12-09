@@ -304,7 +304,6 @@ TEST(std_algorithms)
         // transform
         json::value v_array = json::value::parse(U("[44, true, false]"));
         std::vector<json::value> v_target(v_array.size());
-        auto _where = 
             std::transform(std::begin(v_array.as_array()), std::end(v_array.as_array()), std::begin(v_target),
             [&](json::array::iterator::value_type) -> json::value
             {

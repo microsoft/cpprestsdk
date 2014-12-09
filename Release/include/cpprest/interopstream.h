@@ -57,7 +57,7 @@ namespace Concurrency { namespace streams {
         /// Private constructor
         /// </summary>
         basic_stdio_buffer(_In_ std::basic_streambuf<_CharType>* streambuf, std::ios_base::openmode mode)
-            : m_buffer(streambuf), streambuf_state_manager<_CharType>(mode)
+            : streambuf_state_manager<_CharType>(mode), m_buffer(streambuf)
         {
         }
 

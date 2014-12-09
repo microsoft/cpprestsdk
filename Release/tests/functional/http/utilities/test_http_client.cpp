@@ -49,14 +49,14 @@ static void rtrim_whitespace(utility::string_t &str)
     for(index = str.size(); index > 0 && isspace(str[index - 1]); --index);
     str.erase(index);
 }
-static void trim_whitespace(utility::string_t &str)
+void trim_whitespace(utility::string_t &str)
 {
     ltrim_whitespace(str);
     rtrim_whitespace(str);
 }
 
 // Flatten the http_headers into a name:value pairs separated by a carriage return and line feed.
-static utility::string_t flatten_http_headers(const std::map<utility::string_t, utility::string_t> &headers)
+utility::string_t flatten_http_headers(const std::map<utility::string_t, utility::string_t> &headers)
 {
     utility::string_t flattened_headers;
     for(auto iter = headers.begin(); iter != headers.end(); ++iter)

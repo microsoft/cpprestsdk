@@ -54,8 +54,10 @@ pplx::task<concurrency::streams::basic_ostream<_CharType>> OPENSTR_W(const utili
 #endif
 }
 
+#if defined(_MSC_VER)
 #pragma warning(push)
 #pragma warning(disable : 4100)  // Because of '_Prot' in WinRT builds.
+#endif
 template<typename _CharType>
 pplx::task<concurrency::streams::basic_istream<_CharType>> OPENSTR_R(const utility::string_t &name, std::ios_base::openmode mode = std::ios_base::in)
 {
@@ -69,6 +71,9 @@ pplx::task<concurrency::streams::basic_istream<_CharType>> OPENSTR_R(const utili
     return concurrency::streams::file_stream<_CharType>::open_istream(file, mode);
 #endif
 }
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
 
 SUITE(ostream_tests)
 {

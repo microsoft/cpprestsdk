@@ -104,8 +104,10 @@ void fill_file_w(const utility::string_t &name, size_t repetitions = 1)
 // we need to get a StorageFile reference somehow, and one way to do that is to create all the files
 // used in testing in the Documents folder.
 //
+#if defined(_MSC_VER)
 #pragma warning(push)
 #pragma warning(disable : 4100)  // Because of '_Prot' in WinRT builds.
+#endif
 template<typename _CharType>
 pplx::task<streams::streambuf<_CharType>> OPEN_R(const utility::string_t &name, int _Prot = DEFAULT_PROT)
 {
@@ -118,7 +120,9 @@ pplx::task<streams::streambuf<_CharType>> OPEN_R(const utility::string_t &name, 
     return streams::file_buffer<_CharType>::open(file, std::ios_base::in);
 #endif
 }
+#if defined(_MSC_VER)
 #pragma warning(pop)
+#endif
 SUITE(istream_tests)
 {
 

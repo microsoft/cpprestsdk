@@ -51,10 +51,14 @@ bool CompositeTestReporter::AddReporter(TestReporter* reporter)
 		return false;
 
 // Safe to ignore we check the size to make sure no buffer overruns before.
+#if defined(_MSC_VER)
 #pragma warning (push)
 #pragma warning (disable : 6386)
-	m_reporters[m_reporterCount++] = reporter;
+#endif
+    m_reporters[m_reporterCount++] = reporter;
+#if defined(_MSC_VER)
 #pragma warning (pop)
+#endif
 
 	return true;
 }
