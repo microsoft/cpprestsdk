@@ -548,28 +548,27 @@ private:
         const auto &ec = connection->get_ec();
         client.stop_perpetual();
 
-        auto self = this->shared_from_this();
         // Can't join thread directly since it is the current thread.
-        pplx::create_task([self, connecting, ec, closeCode, reason]
+        pplx::create_task([this, connecting, ec, closeCode, reason]
         {
-            if (self->m_thread.joinable())
+            if (m_thread.joinable())
             {
-                self->m_thread.join();
+                m_thread.join();
             }
 
             // Delete client to make sure Websocketpp cleans up all Boost.Asio portions.
-            self->m_client.reset();
+            m_client.reset();
 
             if (connecting)
             {
                 websocket_exception exc(ec, build_error_msg(ec, "set_fail_handler"));
-                self->m_connect_tce.set_exception(exc);
+                m_connect_tce.set_exception(exc);
             }
-            if (self->m_external_close_handler)
+            if (m_external_close_handler)
             {
-                self->m_external_close_handler(static_cast<websocket_close_status>(closeCode), utility::conversions::to_string_t(reason), ec);
+                m_external_close_handler(static_cast<websocket_close_status>(closeCode), utility::conversions::to_string_t(reason), ec);
             }
-            self->m_close_tce.set();
+            m_close_tce.set();
         });
     }
 
