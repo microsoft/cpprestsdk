@@ -84,6 +84,11 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\src\build\vs14.android\casablanca140.android.vcxproj">
       <Project>{afb49019-965b-4c10-baff-c86c16d58010}</Project>
+      <Private>false</Private>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyLocalSatelliteAssemblies>false</CopyLocalSatelliteAssemblies>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+      <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -175,8 +180,8 @@
   <PropertyGroup>
     <TargetName>UnitTestpp140.android</TargetName>
   </PropertyGroup>
-  <Import Project="..\common.vcxitems" Label="Shared" Condition="Exists('..\common.vcxitems')" />
-  <Import Project="..\android.vcxitems" Label="Shared" Condition="Exists('..\android.vcxitems')" />
+
+
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="$(PackagesRoot)\boost.1.55.0.16\build\native\boost.targets" Condition="Exists('$(PackagesRoot)\boost.1.55.0.16\build\native\boost.targets')" />
