@@ -24,6 +24,9 @@
 ****/
 #pragma once
 
+#ifndef _CASA_HTTP_CLIENT_H
+#define _CASA_HTTP_CLIENT_H
+
 #if defined (__cplusplus_winrt)
 #define __WRL_NO_DEFAULT_LIB__
 #include <wrl.h>
@@ -667,3 +670,5 @@ private:
 };
 
 }}}
+
+#endif

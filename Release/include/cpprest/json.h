@@ -24,6 +24,9 @@
 ****/
 #pragma once
 
+#ifndef _CASA_JSON_H
+#define _CASA_JSON_H
+
 #include <memory>
 #include <string>
 #include <sstream>
@@ -1897,3 +1900,5 @@ public:
     _ASYNCRTIMP utility::istream_t& operator >> (utility::istream_t &is, json::value &val);
 
 }}
+
+#endif

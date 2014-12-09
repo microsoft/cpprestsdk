@@ -24,7 +24,12 @@
 ****/
 #pragma once
 
+#ifndef _CASA_URI_H
+#define _CASA_URI_H
+
 #include "cpprest/base_uri.h"
 #include "cpprest/uri_builder.h"
+
+#endif
 
 
