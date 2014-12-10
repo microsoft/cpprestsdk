@@ -87,7 +87,7 @@ index 666d4c8..9c2f67f 100644
 -<compileflags>-I$(AndroidNDKRoot)/sources/cxx-stl/gnu-libstdc++/4.6/include
 -<compileflags>-I$(AndroidNDKRoot)/sources/cxx-stl/gnu-libstdc++/4.6/libs/armeabi/include
 +<compileflags>-I$(AndroidNDKRoot)/sources/cxx-stl/gnu-libstdc++/4.8/include
-+<compileflags>-I$(AndroidNDKRoot)/sources/cxx-stl/gnu-libstdc++/4.8/libs/armeabi/include
++<compileflags>-I$(AndroidNDKRoot)/sources/cxx-stl/gnu-libstdc++/4.8/libs/x86/include
 +<linkflags>--target=i686-none-linux-android
 +<linkflags>--gcc-toolchain="$(AndroidNDKRoot)/toolchains/x86-4.8/prebuilt/linux-x86_64"
 +<linkflags>--sysroot=$(AndroidNDKRoot)/platforms/android-9/arch-x86
