@@ -23,6 +23,9 @@
 ****/
 #pragma once
 
+#ifndef _CASA_HTTP_LISTENER_H
+#define _CASA_HTTP_LISTENER_H
+
 #include <limits>
 #include <functional>
 
@@ -307,4 +310,5 @@ private:
 
 }}}}
 
+#endif
 #endif

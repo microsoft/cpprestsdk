@@ -453,6 +453,7 @@ protected:
             return;
         }
 
+        // Set timeout.
         const auto timeout = config.timeout();
         const int secs = static_cast<int>(timeout.count());
         hr = winrt_context->m_hRequest->SetProperty(XHR_PROP_TIMEOUT, secs * 1000);
@@ -461,6 +462,17 @@ protected:
             request->report_error(hr, L"Failure to set HTTP request properties");
             return;
         }
+
+        // If XHR_PROP_ONDATA_NEVER is defined in ixmlhttprequest.h or msxml6.h utilize it.
+        // Specifies never to call OnDataAvailable improving performance and we
+        // already don't use OnDataAvaliable anyway.
+#ifdef XHR_PROP_ONDATA_NEVER
+        hr = winrt_context->m_hRequest->SetProperty(SetProperty(XHR_PROP_ONDATA_THRESHOLD, XHR_PROP_ONDATA_NEVER);
+        if (FAILED(hr))
+        {
+            request->report_error(hr, L"Failure to turn off on data threshold");
+        }
+#endif
 
         // Add headers.
         for (const auto &hdr : msg.headers())
@@ -528,8 +540,8 @@ private:
     winrt_client &operator=(const winrt_client&);
 };
 
-http_network_handler::http_network_handler(uri base_uri, http_client_config client_config) :
-    m_http_client_impl(std::make_shared<details::winrt_client>(std::move(base_uri), std::move(client_config)))
+http_network_handler::http_network_handler(const uri &base_uri, const http_client_config &client_config) :
+    m_http_client_impl(std::make_shared<details::winrt_client>(base_uri, client_config))
 {
 }
 

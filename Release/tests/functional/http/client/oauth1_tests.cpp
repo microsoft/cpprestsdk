@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,6 @@
 *
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*
-* oauth1_tests.cpp
 *
 * Test cases for oauth1.
 *
@@ -86,6 +84,18 @@ TEST(oauth1_token_accessors)
     oauth1_token t(U(""), U(""));
     TEST_ACCESSOR(U("a%123"), access_token)
     TEST_ACCESSOR(U("b%20456"), secret)
+
+    const auto key1 = U("abc");
+    const auto value1 = U("123");
+    const auto key2 = U("xyz");
+    const auto value2 = U("456");
+    t.set_additional_parameter(key1, value1);
+    t.set_additional_parameter(U("xyz"), U("456"));
+    const auto &parameters = t.additional_parameters();
+    VERIFY_ARE_EQUAL(parameters.at(key1), value1);
+    VERIFY_ARE_EQUAL(parameters.at(key2), value2);
+    t.clear_additional_parameters();
+    VERIFY_ARE_EQUAL(0, t.additional_parameters().size());
 }
 
 TEST(oauth1_config_accessors)
@@ -99,6 +109,22 @@ TEST(oauth1_config_accessors)
     TEST_ACCESSOR(U("/xyzzy=2"), callback_uri)
     TEST_ACCESSOR(oauth1_methods::plaintext, method)
     TEST_ACCESSOR(U("wally.world x"), realm)
+
+    const auto key1 = U("abc");
+    const auto value1 = U("123");
+    const auto key2 = U("xyz");
+    const auto value2 = U("456");
+    t.add_parameter(key1, value1);
+    t.add_parameter(U("xyz"), U("456"));
+    const auto parameters = t.parameters();
+    VERIFY_ARE_EQUAL(parameters.at(key1), value1);
+    VERIFY_ARE_EQUAL(parameters.at(key2), value2);
+    t.clear_parameters();
+    VERIFY_ARE_EQUAL(0, t.parameters().size());
+    t.set_parameters(parameters);
+    const auto parameters2 = t.parameters();
+    VERIFY_ARE_EQUAL(parameters2.at(key1), value1);
+    VERIFY_ARE_EQUAL(parameters2.at(key2), value2);
 }
 
 #undef TEST_ACCESSOR
@@ -121,6 +147,7 @@ TEST_FIXTURE(oauth1_token_setup, oauth1_signature_base_string)
         ));
         VERIFY_ARE_EQUAL(correct_base_string, base_string);
     }
+
     // Added "extra_param" and proper parameter normalization.
     {
         http_request r;
@@ -136,6 +163,22 @@ TEST_FIXTURE(oauth1_token_setup, oauth1_signature_base_string)
                 "POST&http%3A%2F%2Fexample.com%2Frequest&a%3Db%26c%3Dd%26oauth_consumer_key%3Dtest_key%26oauth_nonce%3DABCDEFGH%26oauth_signature_method%3DHMAC-SHA1%26oauth_test%3Dxyzzy%26oauth_timestamp%3D12345678%26oauth_token%3Dtest_token%26oauth_version%3D1.0"
         ));
         VERIFY_ARE_EQUAL(correct_base_string, base_string);
+    }
+
+    // Use application/x-www-form-urlencoded with parameters in body
+    {
+        http_request r(methods::POST);
+        r.set_request_uri(U("http://example.com:80/request?a=b&c=d")); // Port set to avoid default.
+        r.set_body("MyVariableOne=ValueOne&MyVariableTwo=ValueTwo", "application/x-www-form-urlencoded");
+
+        auto state = m_oauth1_config._generate_auth_state();
+        state.set_timestamp(U("12345678"));
+        state.set_nonce(U("ABCDEFGH"));
+
+        utility::string_t base_string = m_oauth1_config._build_signature_base_string(r, state);
+        utility::string_t correct_base_string(U(
+            "POST&http%3A%2F%2Fexample.com%2Frequest&a%3Db%26c%3Dd%26MyVariableOne%3DValueOne%26%26MyVariableTwo%3DValueTwo%26oauth_consumer_key%3Dtest_key%26oauth_nonce%3DABCDEFGH%26oauth_signature_method%3DHMAC-SHA1%26oauth_timestamp%3D12345678%26oauth_token%3Dtest_token%26oauth_version%3D1.0"
+            ));
     }
 }
 
@@ -225,7 +268,7 @@ TEST_FIXTURE(oauth1_server_setup, oauth1_build_authorization_uri)
         headers[header_names::content_type] = mime_types::application_x_www_form_urlencoded;
         request->reply(status_codes::OK, U(""), headers, "oauth_token=testbar&oauth_token_secret=xyzzy&oauth_callback_confirmed=true");
     });
-    
+
     VERIFY_IS_FALSE(m_oauth1_config.token().is_valid_access_token());
     utility::string_t auth_uri = m_oauth1_config.build_authorization_uri().get();
     VERIFY_ARE_EQUAL(auth_uri, U("http://localhost:17778/?oauth_token=testbar"));
@@ -238,7 +281,7 @@ TEST_FIXTURE(oauth1_server_setup, oauth1_token_from_redirected_uri)
     m_server.server()->next_request().then([](test_request *request)
     {
         const utility::string_t header_authorization(request->m_headers[header_names::authorization]);
-     
+
         // Verify temporary token prefix.
         const utility::string_t prefix(U("OAuth oauth_version=\"1.0\", oauth_consumer_key=\"test_key\", oauth_token=\"xyzzy\", oauth_signature_method=\"HMAC-SHA1\", oauth_timestamp=\""));
         VERIFY_ARE_EQUAL(0, header_authorization.find(prefix));
@@ -256,7 +299,7 @@ TEST_FIXTURE(oauth1_server_setup, oauth1_token_from_redirected_uri)
         headers[header_names::content_type] = mime_types::application_x_www_form_urlencoded;
         request->reply(status_codes::OK, U(""), headers, "oauth_token=test&oauth_token_secret=bar");
     });
-    
+
     m_oauth1_config.set_token(oauth1_token(U("xyzzy"), U(""))); // Simulate temporary token.
 
     const web::http::uri redirected_uri(U("http://localhost:17778/?oauth_token=xyzzy&oauth_verifier=simsalabim"));

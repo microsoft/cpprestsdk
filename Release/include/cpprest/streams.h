@@ -24,6 +24,9 @@
 ****/
 #pragma once
 
+#ifndef _CASA_STREAMS_H
+#define _CASA_STREAMS_H
+
 #include "cpprest/astreambuf.h"
 #include <iosfwd>
 
@@ -1783,3 +1786,5 @@ private:
 #endif //_WIN32
 
 }}
+
+#endif

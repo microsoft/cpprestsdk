@@ -25,6 +25,9 @@
 ****/
 #pragma once
 
+#ifndef _CASA_RAWPTR_STREAMS_H
+#define _CASA_RAWPTR_STREAMS_H
+
 #include <vector>
 #include <queue>
 #include <algorithm>
@@ -635,3 +638,5 @@ namespace Concurrency { namespace streams {
     };
 
 }} // namespaces
+
+#endif
