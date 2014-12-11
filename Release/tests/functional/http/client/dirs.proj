@@ -18,6 +18,7 @@
   
   <ItemGroup Condition="'$(DevToolsVersion)'=='140'">
       <ProjectFile Include="VS14\HttpClient140_test.vcxproj" />
+    <ProjectFile Include="vs14.android\HttpClient140_test.android.vcxproj" />
   </ItemGroup>
   
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />

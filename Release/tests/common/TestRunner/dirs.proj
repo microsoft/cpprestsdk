@@ -12,6 +12,8 @@
 
   <ItemGroup Condition="'$(DevToolsVersion)'=='140'">
     <ProjectFile Include="VS14\TestRunner140.vcxproj" />
+    <ProjectFile Include="vs14.android\TestRunner.android.NativeActivity\TestRunner.android.NativeActivity.vcxproj" />
+    <ProjectFile Include="vs14.android\TestRunner.android.Packaging\TestRunner.android.Packaging.androidproj" />
   </ItemGroup>
 
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />

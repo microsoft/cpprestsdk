@@ -14,6 +14,7 @@
 
   <ItemGroup Condition="'$(DevToolsVersion)'=='140'">
       <ProjectFile Include="VS14\pplx140_test.vcxproj" />
+    <ProjectFile Include="vs14.android\pplx140_test.android.vcxproj" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.2|110' or '$(OsVersion)|$(DevToolsVersion)'=='6.3|110'">

@@ -22,6 +22,7 @@
 
   <ItemGroup Condition="'$(DevToolsVersion)'=='140'">
       <ProjectFile Include="VS14\JSON140_test.vcxproj" />
+    <ProjectFile Include="vs14.android\JSON140_test.android.vcxproj" />
   </ItemGroup>
   
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
