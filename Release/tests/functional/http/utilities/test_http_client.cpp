@@ -128,8 +128,8 @@ static void parse_winhttp_headers(HINTERNET request_handle, utf16char *headersSt
         {
             utility::string_t key = header_line.substr(0, colonIndex);
             utility::string_t value = header_line.substr(colonIndex + 1, header_line.length() - colonIndex - 1);
-            http::details::trim_whitespace(key);
-            http::details::trim_whitespace(value);
+            web::http::details::trim_whitespace(key);
+            web::http::details::trim_whitespace(value);
             p_response->m_headers[key] = value;
         }
         line = wcstok_s(nullptr, U("\r\n"), &context);

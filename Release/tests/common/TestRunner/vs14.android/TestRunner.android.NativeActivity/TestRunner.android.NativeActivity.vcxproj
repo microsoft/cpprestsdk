@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|ARM">
@@ -70,6 +70,11 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'" />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <WarningLevel></WarningLevel>
+    </ClCompile>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -82,7 +87,6 @@
     </ClCompile>
     <Link>
       <LibraryDependencies>%(LibraryDependencies);GLESv1_CM;EGL;m</LibraryDependencies>
-      <VerboseOutput>true</VerboseOutput>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
@@ -97,7 +101,6 @@
     </ClCompile>
     <Link>
       <LibraryDependencies>%(LibraryDependencies);GLESv1_CM;EGL;m</LibraryDependencies>
-      <VerboseOutput>true</VerboseOutput>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
@@ -112,7 +115,6 @@
     </ClCompile>
     <Link>
       <LibraryDependencies>%(LibraryDependencies);GLESv1_CM;EGL;m</LibraryDependencies>
-      <VerboseOutput>true</VerboseOutput>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
@@ -127,7 +129,6 @@
     </ClCompile>
     <Link>
       <LibraryDependencies>%(LibraryDependencies);GLESv1_CM;EGL;m</LibraryDependencies>
-      <VerboseOutput>true</VerboseOutput>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -235,7 +236,7 @@
       <LinkLibraryDependencies>true</LinkLibraryDependencies>
       <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>
     </ProjectReference>
-    <ProjectReference Include=".$(TestRoot)\common\utilities\vs14.android\CommonUtilities140.android.vcxproj">
+    <ProjectReference Include="$(TestRoot)\common\utilities\vs14.android\CommonUtilities140.android.vcxproj">
       <Project>{7c4e6e33-42e2-4472-9319-dde7564f3dae}</Project>
       <Private>true</Private>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
