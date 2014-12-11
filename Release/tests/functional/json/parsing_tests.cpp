@@ -52,7 +52,7 @@ namespace tests { namespace functional { namespace json_tests {
 #endif
     }
 
-#if !defined(__clang__)
+#if defined(_MSC_VER)
 #pragma warning (disable: 4127) // const expression
 #endif
 #define VERIFY_PARSING_THROW(target) \
