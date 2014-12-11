@@ -24,6 +24,9 @@
 ****/
 #pragma once
 
+#ifndef _CASA_OAUTH2_H
+#define _CASA_OAUTH2_H
+
 #include "cpprest/http_msg.h"
 
 namespace web
@@ -516,3 +519,5 @@ private:
 };
 
 }}}}
+
+#endif

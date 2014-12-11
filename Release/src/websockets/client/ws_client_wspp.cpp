@@ -26,7 +26,8 @@
 #include "stdafx.h"
 #include "cpprest/details/x509_cert_utilities.h"
 
-#if !defined(_M_ARM) && (!defined(_MSC_VER) || (_MSC_VER < 1900)) && !defined(CPPREST_EXCLUDE_WEBSOCKETS)
+// Include on everything except VS2015 and Windows Desktop ARM, unless explicitly excluded.
+#if !defined(_MSC_VER) || ((_MSC_VER < 1900) && (defined(__cplusplus_winrt) || !defined(__cplusplus_winrt) && !defined(_M_ARM))) && !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 
 // Force websocketpp to use C++ std::error_code instead of Boost.
 #define _WEBSOCKETPP_CPP11_SYSTEM_ERROR_
@@ -296,7 +297,16 @@ public:
 
         m_state = CONNECTING;
         client.connect(con);
-        m_thread = std::thread(&websocketpp::client<WebsocketConfigType>::run, &client);
+        m_thread = std::thread([&client]()
+        {
+#if defined(__ANDROID__)
+            crossplat::get_jvm_env();
+#endif
+            client.run();
+#if defined(__ANDROID__)
+            crossplat::JVM.load()->DetachCurrentThread();
+#endif
+        });
         return pplx::create_task(m_connect_tce);
     }
 
@@ -693,8 +703,8 @@ private:
 };
 
 websocket_client_task_impl::websocket_client_task_impl(websocket_client_config config) :
-    m_callback_client(std::make_shared<details::wspp_callback_client>(std::move(config))),
-    m_client_closed(false)
+    m_client_closed(false),
+    m_callback_client(std::make_shared<details::wspp_callback_client>(std::move(config)))
 {
     set_handler();
 }

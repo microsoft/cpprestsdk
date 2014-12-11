@@ -24,6 +24,9 @@
 ****/
 #pragma once
 
+#ifndef _CASA_HTTP_CLIENT_H
+#define _CASA_HTTP_CLIENT_H
+
 #if defined (__cplusplus_winrt)
 #define __WRL_NO_DEFAULT_LIB__
 #include <wrl.h>
@@ -46,7 +49,7 @@ typedef void* native_handle;}}}
 #include "cpprest/details/basic_types.h"
 #include "cpprest/asyncrt_utils.h"
 
-#if !defined(CPPREST_TARGET_XP) && !defined(_PHONE8_)
+#if !defined(CPPREST_TARGET_XP) && (!defined(WINAPI_FAMILY) || WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP || _MSC_VER > 1700)
 #include "cpprest/oauth1.h"
 #endif
 
@@ -63,7 +66,7 @@ namespace client
 {
 
 // credentials and web_proxy class has been moved from web::http::client namespace to web namespace.
-// The below using declarations ensure we dont break existing code.
+// The below using declarations ensure we don't break existing code.
 // Please use the web::credentials and web::web_proxy class going forward.
 using web::credentials;
 using web::web_proxy;
@@ -99,7 +102,7 @@ public:
     {
     }
 
-#if !defined(CPPREST_TARGET_XP) && !defined(_PHONE8_)
+#if !defined(CPPREST_TARGET_XP) && (!defined(WINAPI_FAMILY) || WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP || _MSC_VER > 1700)
     /// <summary>
     /// Get OAuth 1.0 configuration.
     /// </summary>
@@ -294,9 +297,9 @@ public:
     }
 
 private:
-#if !defined(CPPREST_TARGET_XP) && !defined(_PHONE8_)
+#if !defined(CPPREST_TARGET_XP) && (!defined(WINAPI_FAMILY) || WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP || _MSC_VER > 1700)
     std::shared_ptr<oauth1::experimental::oauth1_config> m_oauth1;
-#endif // !defined(CPPREST_TARGET_XP) && !defined(_PHONE8_)
+#endif
 
     std::shared_ptr<oauth2::experimental::oauth2_config> m_oauth2;
     web_proxy m_proxy;
@@ -323,7 +326,7 @@ private:
 #endif // defined(_WIN32) && defined(__cplusplus_winrt)
 
     /// <summary>
-    /// Invokes a user callback to allow for customization of the requst
+    /// Invokes a user callback to allow for customization of the request
     /// </summary>
     /// <param name="handle">The internal http_request handle</param>
     /// <returns>True if users set WinHttp/IXAMLHttpRequest2 options correctly, false otherwise.</returns>
@@ -343,14 +346,14 @@ public:
     /// Creates a new http_client connected to specified uri.
     /// </summary>
     /// <param name="base_uri">A string representation of the base uri to be used for all requests. Must start with either "http://" or "https://"</param>
-    _ASYNCRTIMP http_client(uri base_uri);
+    _ASYNCRTIMP http_client(const uri &base_uri);
 
     /// <summary>
     /// Creates a new http_client connected to specified uri.
     /// </summary>
     /// <param name="base_uri">A string representation of the base uri to be used for all requests. Must start with either "http://" or "https://"</param>
-    /// <param name="client_config">The http client configuration object containing the possible configuration options to intitialize the <c>http_client</c>. </param>
-    _ASYNCRTIMP http_client(uri base_uri, http_client_config client_config);
+    /// <param name="client_config">The http client configuration object containing the possible configuration options to initialize the <c>http_client</c>. </param>
+    _ASYNCRTIMP http_client(const uri &base_uri, const http_client_config &client_config);
 
     /// <summary>
     /// Note the destructor doesn't necessarily close the connection and release resources.
@@ -661,9 +664,11 @@ public:
 
 private:
 
-    void build_pipeline(uri base_uri, http_client_config client_config);
+    void build_pipeline(const uri &base_uri, const http_client_config &client_config);
 
     std::shared_ptr<::web::http::http_pipeline> m_pipeline;
 };
 
 }}}
+
+#endif

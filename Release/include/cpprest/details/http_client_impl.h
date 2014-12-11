@@ -388,7 +388,7 @@ inline void request_context::finish()
 class http_network_handler : public http_pipeline_stage
 {
 public:
-    http_network_handler(uri base_uri, http_client_config client_config);
+    http_network_handler(const uri &base_uri, const http_client_config &client_config);
 
     virtual pplx::task<http_response> propagate(http_request request);
 
@@ -419,35 +419,39 @@ void verify_uri(const uri &uri)
 
 } // namespace details
 
-http_client::http_client(uri base_uri)
+http_client::http_client(const uri &base_uri)
 {
-    build_pipeline(std::move(base_uri), http_client_config());
+    build_pipeline(base_uri, http_client_config());
 }
 
-http_client::http_client(uri base_uri, http_client_config client_config)
+http_client::http_client(const uri &base_uri, const http_client_config &client_config)
 {
-    build_pipeline(std::move(base_uri), std::move(client_config));
+    build_pipeline(base_uri, client_config);
 }
 
-void http_client::build_pipeline(uri base_uri, http_client_config client_config)
+void http_client::build_pipeline(const uri &base_uri, const http_client_config &client_config)
 {
     if (base_uri.scheme().empty())
     {
         auto uribuilder = uri_builder(base_uri);
         uribuilder.set_scheme(_XPLATSTR("http"));
-        base_uri = uribuilder.to_uri();
+        uri uriWithScheme = uribuilder.to_uri();
+        details::verify_uri(uriWithScheme);
+        m_pipeline = ::web::http::http_pipeline::create_pipeline(std::make_shared<details::http_network_handler>(uriWithScheme, client_config));
     }
-    details::verify_uri(base_uri);
+    else
+    {
+        details::verify_uri(base_uri);
+        m_pipeline = ::web::http::http_pipeline::create_pipeline(std::make_shared<details::http_network_handler>(base_uri, client_config));
+    }
 
-    m_pipeline = ::web::http::http_pipeline::create_pipeline(std::make_shared<details::http_network_handler>(std::move(base_uri), std::move(client_config)));
-
-#if !defined(CPPREST_TARGET_XP) && !defined(_PHONE8_)
+#if !defined(CPPREST_TARGET_XP) && (!defined(WINAPI_FAMILY) || WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP || _MSC_VER > 1700)
     add_handler(std::static_pointer_cast<http::http_pipeline_stage>(
-        std::make_shared<oauth1::details::oauth1_handler>(this->client_config().oauth1())));
-#endif // !defined(CPPREST_TARGET_XP) && !defined(_PHONE8_)
+        std::make_shared<oauth1::details::oauth1_handler>(client_config.oauth1())));
+#endif
 
     add_handler(std::static_pointer_cast<http::http_pipeline_stage>(
-        std::make_shared<oauth2::details::oauth2_handler>(this->client_config().oauth2())));
+        std::make_shared<oauth2::details::oauth2_handler>(client_config.oauth2())));
 }
 
 const http_client_config & http_client::client_config() const
