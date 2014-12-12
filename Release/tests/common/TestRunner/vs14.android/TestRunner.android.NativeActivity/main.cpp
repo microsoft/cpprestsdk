@@ -250,6 +250,7 @@ struct MyTestReporter : UnitTest::TestReporter {
         std::stringstream ss;
         ss << "Tests complete. Total: " << totalTestCount << ", Failed: " << failedTestCount << ", Time: " << secondsElapsed;
         printLn(ss.str());
+        // Print a bunch of messages to defeat any batching that may be applied by adb or logcat
         printLn("--- Flush buffer ---");
         printLn("--- Flush buffer ---");
         printLn("--- Flush buffer ---");
