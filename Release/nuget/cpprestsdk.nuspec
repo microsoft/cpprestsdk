@@ -15,11 +15,6 @@
         <releaseNotes>"Release of C++ Rest SDK 2.3.0 libraries."</releaseNotes>
         <copyright>Copyright 2014</copyright>
         <tags>REST, native, C++, JSON, Casablanca, Http, Uri, WebSockets</tags>
-        
-        <!-- OpenSSL dependency only necessary for Windows Desktop, but unless our package is split into smaller components it is required for all. -->
-        <dependencies>
-          <dependency id="openssl" version="1.0.1.25" />
-        </dependencies>
     </metadata>
     <files>
         <!-- Include header files-->
