@@ -58,11 +58,12 @@ public:
     }
 
     Microsoft::WRL::ComPtr<IXMLHTTPRequest2> m_hRequest;
+    std::exception_ptr m_exceptionPtr;
 
     // Request contexts must be created through factory function.
     // But constructor needs to be public for make_shared to access.
     winrt_request_context(const std::shared_ptr<_http_client_communicator> &client, http_request &request)
-        : request_context(client, request), m_hRequest(nullptr)
+        : request_context(client, request), m_hRequest(nullptr), m_exceptionPtr()
     {
     }
 };
@@ -277,7 +278,7 @@ class IResponseStream
     : public Microsoft::WRL::RuntimeClass<Microsoft::WRL::RuntimeClassFlags<ClassicCom>, ISequentialStream>
 {
 public:
-    IResponseStream(const std::weak_ptr<request_context> &context)
+    IResponseStream(const std::weak_ptr<winrt_request_context> &context)
         : m_context(context)
     { }
 
@@ -340,7 +341,7 @@ public:
 private:
 
     // The request context controls the lifetime of this class so we only hold a weak_ptr.
-    std::weak_ptr<request_context> m_context;
+    std::weak_ptr<winrt_request_context> m_context;
 };
 
 // WinRT client.
@@ -469,7 +470,7 @@ protected:
         }
 
         // Set response stream.
-        hr = winrt_context->m_hRequest->SetCustomResponseStream(Make<IResponseStream>(request).Get());
+        hr = winrt_context->m_hRequest->SetCustomResponseStream(Make<IResponseStream>(winrt_context).Get());
         if (FAILED(hr))
         {
             request->report_error(hr, L"Failure to set HTTP response stream");
