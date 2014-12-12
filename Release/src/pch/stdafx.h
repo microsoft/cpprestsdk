@@ -87,7 +87,7 @@
 
 // Macro indicating the C++ Rest SDK product itself is being built.
 // This is to help track how many developers are directly building from source themselves.
-#define CASA_BUILD_FROM_SRC
+#define _CASA_BUILD_FROM_SRC
 
 #include <iostream>
 #include <fstream>
