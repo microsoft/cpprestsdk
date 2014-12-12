@@ -123,8 +123,7 @@ public:
     }
     
     template <typename HandshakeHandler, typename CertificateHandler>
-    void async_handshake(
-                         boost::asio::ssl::stream_base::handshake_type type,
+    void async_handshake(boost::asio::ssl::stream_base::handshake_type type,
                          const http_client_config &config,
                          const HandshakeHandler &handshake_handler,
                          const CertificateHandler &cert_handler)
@@ -542,10 +541,22 @@ private:
     {
         if (m_connection->is_ssl())
         {
+            const auto weakCtx = std::weak_ptr<asio_context>(shared_from_this());
             m_connection->async_handshake(boost::asio::ssl::stream_base::client,
                                           m_http_client->client_config(),
                                           boost::bind(&asio_context::handle_handshake, shared_from_this(), boost::asio::placeholders::error),
-                                          boost::bind(&asio_context::handle_cert_verification, shared_from_this(), _1, _2));
+                                          
+                                          // Use a weak_ptr since the verify_callback is stored until the connection is destroyed.
+                                          // This avoids creating a circular reference since we pool connection objects.
+                                          [weakCtx](bool preverified, boost::asio::ssl::verify_context &verify_context)
+                                          {
+                                              auto this_request = weakCtx.lock();
+                                              if(this_request)
+                                              {
+                                                  return this_request->handle_cert_verification(preverified, verify_context);
+                                              }
+                                              return false;
+                                          });
         }
         else
         {
