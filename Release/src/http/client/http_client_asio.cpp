@@ -242,64 +242,51 @@ public:
             // This will destroy and remove the connection from pool after the set timeout.
             // We use 'this' because async calls to timer handler only occur while the pool exists.
             connection->start_pool_timer(m_timeout_secs, boost::bind(&asio_connection_pool::handle_pool_timer, this, boost::asio::placeholders::error, connection));
-            
-            put_to_pool(connection);
+
+            std::lock_guard<std::mutex> lock(m_connections_mutex);
+            m_connections.push_back(connection);
         }
         // Otherwise connection is not put to the pool and it will go out of scope.
     }
     
     std::shared_ptr<asio_connection> obtain()
     {
-        if (is_pool_empty())
+        std::unique_lock<std::mutex> lock(m_connections_mutex);
+        if (m_connections.empty())
         {
+            lock.unlock();
+
             // No connections in pool => create a new connection instance.
             return std::make_shared<asio_connection>(m_io_service, m_use_ssl);
         }
         else
         {
             // Reuse connection from pool.
-            auto connection(get_head());
+            auto connection = m_connections.back();
+            m_connections.pop_back();
+            lock.unlock();
+
             connection->start_reuse();
             return connection;
         }
     }
     
 private:
-    
-    bool is_pool_empty()
-    {
-        std::lock_guard<std::mutex> lock(m_connections_mutex);
-        return m_connections.empty();
-    }
-    
-    std::shared_ptr<asio_connection> get_head()
-    {
-        std::lock_guard<std::mutex> lock(m_connections_mutex);
-        auto connection(*m_connections.begin());
-        m_connections.erase(m_connections.begin());
-        return connection;
-    }
-    
-    void put_to_pool(const std::shared_ptr<asio_connection> &connection)
-    {
-        std::lock_guard<std::mutex> lock(m_connections_mutex);
-        m_connections.insert(connection);
-    }
-    
-    void remove(const std::shared_ptr<asio_connection> &connection)
-    {
-        std::lock_guard<std::mutex> lock(m_connections_mutex);
-        m_connections.erase(connection);
-    }
-    
+
     // Using weak_ptr here ensures bind() to this handler will not prevent the connection object from going out of scope.
     void handle_pool_timer(const boost::system::error_code& ec, const std::weak_ptr<asio_connection> &connection)
     {
         if (!ec)
         {
-            if (auto connection_shared = connection.lock())
+            auto connection_shared = connection.lock();
+            if (connection_shared)
             {
-                remove(connection_shared);
+                std::lock_guard<std::mutex> lock(m_connections_mutex);
+                const auto &iter = std::find(m_connections.begin(), m_connections.end(), connection_shared);
+                if (iter != m_connections.end())
+                {
+                    m_connections.erase(iter);
+                }
             }
         }
     }
@@ -307,7 +294,7 @@ private:
     boost::asio::io_service& m_io_service;
     const int m_timeout_secs;
     const bool m_use_ssl;
-    std::unordered_set<std::shared_ptr<asio_connection> > m_connections;
+    std::vector<std::shared_ptr<asio_connection> > m_connections;
     std::mutex m_connections_mutex;
 };
     
