@@ -321,8 +321,8 @@ class asio_context : public request_context, public std::enable_shared_from_this
 {
 public:
     asio_context(const std::shared_ptr<_http_client_communicator> &client,
-                                 http_request &request,
-                                 const std::shared_ptr<asio_connection> &connection)
+                 http_request &request,
+                 const std::shared_ptr<asio_connection> &connection)
     : request_context(client, request)
     , m_content_length(0)
     , m_needChunked(false)
@@ -444,6 +444,19 @@ public:
                 }
             });
         }
+    }
+    
+    template<typename _ExceptionType>
+    void report_exception(const _ExceptionType &e)
+    {
+        report_exception(std::make_exception_ptr(e));
+    }
+    
+    void report_exception(std::exception_ptr exceptionPtr) override
+    {
+        // Don't recycle connections that had an error into the connection pool.
+        m_connection->close();
+        request_context::report_exception(exceptionPtr);
     }
     
 private:
@@ -1072,9 +1085,9 @@ private:
                 assert(m_state == started);
                 auto ctx = m_ctx;
                 m_timer.async_wait([ctx](const boost::system::error_code& ec)
-                                   {
-                                       handle_timeout(ec, ctx);
-                                   });
+                {
+                    handle_timeout(ec, ctx);
+                });
             }
         }
         
