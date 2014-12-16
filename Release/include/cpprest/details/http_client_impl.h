@@ -188,8 +188,6 @@ public:
     http_request m_request;
     http_response m_response;
 
-    std::exception_ptr m_exceptionPtr;
-
     utility::size64_t m_uploaded;
     utility::size64_t m_downloaded;
 
@@ -204,7 +202,6 @@ protected:
     request_context(const std::shared_ptr<_http_client_communicator> &client, const http_request &request)
         : m_http_client(client),
         m_request(request),
-        m_exceptionPtr(),
         m_uploaded(0),
         m_downloaded(0)
     {
