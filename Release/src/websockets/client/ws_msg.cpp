@@ -1,7 +1,7 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
@@ -16,10 +16,8 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* ws_msg.cpp
-*
 * Websocket library: Client-side APIs.
-* 
+*
 * This file contains the websocket message implementation
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
@@ -27,11 +25,9 @@
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 #include "stdafx.h"
-#include "cpprest/producerconsumerstream.h"
-#include "cpprest/ws_msg.h"
-#include "cpprest/ws_client.h"
 
-#if (defined(__cplusplus_winrt) || !defined(_M_ARM)) && !defined(CPPREST_EXCLUDE_WEBSOCKETS)
+// Include on everything except VS2015 and Windows Desktop ARM, unless explicitly excluded.
+#if !defined(_MSC_VER) || ((_MSC_VER < 1900) && (defined(__cplusplus_winrt) || !defined(__cplusplus_winrt) && !defined(_M_ARM))) && !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 
 using namespace concurrency;
 using namespace concurrency::streams::details;

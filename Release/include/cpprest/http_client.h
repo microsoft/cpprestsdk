@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* http_client.h
-*
 * HTTP Library: Client-side APIs.
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
@@ -43,23 +41,15 @@ typedef void* native_handle;}}}
 #include <memory>
 #include <limits>
 
-#include "cpprest/xxpublic.h"
-#include "cpprest/http_msg.h"
-
-#if defined(_MSC_VER) && (_MSC_VER >= 1800)
-#include <ppltasks.h>
-namespace pplx = Concurrency;
-#else
 #include "pplx/pplxtasks.h"
-#endif
-
+#include "cpprest/http_msg.h"
 #include "cpprest/json.h"
 #include "cpprest/uri.h"
-#include "cpprest/web_utilities.h"
-#include "cpprest/basic_types.h"
+#include "cpprest/details/web_utilities.h"
+#include "cpprest/details/basic_types.h"
 #include "cpprest/asyncrt_utils.h"
 
-#if !defined(CPPREST_TARGET_XP) && !defined(_PHONE8_)
+#if !defined(CPPREST_TARGET_XP) && (!defined(WINAPI_FAMILY) || WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP || _MSC_VER > 1700)
 #include "cpprest/oauth1.h"
 #endif
 
@@ -76,12 +66,12 @@ namespace client
 {
 
 // credentials and web_proxy class has been moved from web::http::client namespace to web namespace.
-// The below using declarations ensure we dont break existing code.
+// The below using declarations ensure we don't break existing code.
 // Please use the web::credentials and web::web_proxy class going forward.
 using web::credentials;
 using web::web_proxy;
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 namespace details {
 #ifdef __cplusplus_winrt
         class winrt_client ;
@@ -89,7 +79,7 @@ namespace details {
         class winhttp_client;
 #endif // __cplusplus_winrt
 }
-#endif // _MS_WINDOWS
+#endif // _WIN32
 
 /// <summary>
 /// HTTP client configuration class, used to set the possible configuration options
@@ -106,13 +96,13 @@ public:
         , m_validate_certificates(true)
 #endif
         , m_set_user_nativehandle_options([](native_handle)->void{})
-#if defined(_MS_WINDOWS) && !defined(__cplusplus_winrt)
+#if defined(_WIN32) && !defined(__cplusplus_winrt)
         , m_buffer_request(false)
 #endif
     {
     }
 
-#if !defined(CPPREST_TARGET_XP) && !defined(_PHONE8_)
+#if !defined(CPPREST_TARGET_XP) && (!defined(WINAPI_FAMILY) || WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP || _MSC_VER > 1700)
     /// <summary>
     /// Get OAuth 1.0 configuration.
     /// </summary>
@@ -272,7 +262,7 @@ public:
     }
 #endif
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 #if !defined(__cplusplus_winrt)
     /// <summary>
     /// Checks if request data buffering is turned on, the default is off.
@@ -307,9 +297,9 @@ public:
     }
 
 private:
-#if !defined(CPPREST_TARGET_XP) && !defined(_PHONE8_)
+#if !defined(CPPREST_TARGET_XP) && (!defined(WINAPI_FAMILY) || WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP || _MSC_VER > 1700)
     std::shared_ptr<oauth1::experimental::oauth1_config> m_oauth1;
-#endif // !defined(CPPREST_TARGET_XP) && !defined(_PHONE8_)
+#endif
 
     std::shared_ptr<oauth2::experimental::oauth2_config> m_oauth2;
     web_proxy m_proxy;
@@ -327,16 +317,16 @@ private:
 
     std::function<void(native_handle)> m_set_user_nativehandle_options;
 
-#if defined(_MS_WINDOWS) && defined(__cplusplus_winrt)
+#if defined(_WIN32) && defined(__cplusplus_winrt)
     friend class details::winrt_client;
-#elif defined(_MS_WINDOWS)
+#elif defined(_WIN32)
     bool m_buffer_request;
 
     friend class details::winhttp_client;
-#endif // defined(_MS_WINDOWS) && defined(__cplusplus_winrt)
+#endif // defined(_WIN32) && defined(__cplusplus_winrt)
 
     /// <summary>
-    /// Invokes a user callback to allow for customization of the requst
+    /// Invokes a user callback to allow for customization of the request
     /// </summary>
     /// <param name="handle">The internal http_request handle</param>
     /// <returns>True if users set WinHttp/IXAMLHttpRequest2 options correctly, false otherwise.</returns>
@@ -356,14 +346,14 @@ public:
     /// Creates a new http_client connected to specified uri.
     /// </summary>
     /// <param name="base_uri">A string representation of the base uri to be used for all requests. Must start with either "http://" or "https://"</param>
-    _ASYNCRTIMP http_client(uri base_uri);
+    _ASYNCRTIMP http_client(const uri &base_uri);
 
     /// <summary>
     /// Creates a new http_client connected to specified uri.
     /// </summary>
     /// <param name="base_uri">A string representation of the base uri to be used for all requests. Must start with either "http://" or "https://"</param>
-    /// <param name="client_config">The http client configuration object containing the possible configuration options to intitialize the <c>http_client</c>. </param>
-    _ASYNCRTIMP http_client(uri base_uri, http_client_config client_config);
+    /// <param name="client_config">The http client configuration object containing the possible configuration options to initialize the <c>http_client</c>. </param>
+    _ASYNCRTIMP http_client(const uri &base_uri, const http_client_config &client_config);
 
     /// <summary>
     /// Note the destructor doesn't necessarily close the connection and release resources.
@@ -372,10 +362,10 @@ public:
     ~http_client() CPPREST_NOEXCEPT {}
 
     /// <summary>
-    /// Gets the base uri
+    /// Gets the base URI.
     /// </summary>
     /// <returns>
-    /// A base uri initialized in constructor
+    /// A base URI initialized in constructor
     /// </returns>
     _ASYNCRTIMP const uri& base_uri() const;
 
@@ -674,11 +664,11 @@ public:
 
 private:
 
-    void build_pipeline(uri base_uri, http_client_config client_config);
+    void build_pipeline(const uri &base_uri, const http_client_config &client_config);
 
     std::shared_ptr<::web::http::http_pipeline> m_pipeline;
 };
 
 }}}
 
-#endif  /* _CASA_HTTP_CLIENT_H */
+#endif

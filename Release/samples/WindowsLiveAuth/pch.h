@@ -20,5 +20,4 @@
 #include <collection.h>
 #include "App.xaml.h"
 #include "MainPage.xaml.h"
-#include <cpprest/basic_types.h>
 #include "live_connect.h"

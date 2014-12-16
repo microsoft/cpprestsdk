@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,7 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* asyncrt_utils.cpp - Utilities
+* Utilities
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
 *
@@ -30,7 +30,7 @@ using namespace Platform;
 using namespace Windows::Storage::Streams;
 #endif // #if !defined(__cplusplus_winrt)
 
-#ifndef _MS_WINDOWS
+#ifndef _WIN32
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/posix_time/posix_time_io.hpp>
 using namespace boost::locale::conv;
@@ -55,7 +55,7 @@ namespace utility
 namespace details
 {
 
-#ifndef ANDROID
+#if !defined(ANDROID) && !defined(__ANDROID__)
 std::once_flag g_c_localeFlag;
 std::unique_ptr<scoped_c_thread_locale::xplat_locale, void(*)(scoped_c_thread_locale::xplat_locale *)> g_c_locale(nullptr, [](scoped_c_thread_locale::xplat_locale *){});
 scoped_c_thread_locale::xplat_locale scoped_c_thread_locale::c_locale()
@@ -63,7 +63,7 @@ scoped_c_thread_locale::xplat_locale scoped_c_thread_locale::c_locale()
     std::call_once(g_c_localeFlag, [&]()
     {
         scoped_c_thread_locale::xplat_locale *clocale = new scoped_c_thread_locale::xplat_locale();
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
         *clocale = _create_locale(LC_ALL, "C");
         if (clocale == nullptr)
         {
@@ -90,7 +90,7 @@ scoped_c_thread_locale::xplat_locale scoped_c_thread_locale::c_locale()
 }
 #endif
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 scoped_c_thread_locale::scoped_c_thread_locale()
     : m_prevLocale(), m_prevThreadSetting(-1)
 {
@@ -101,7 +101,7 @@ scoped_c_thread_locale::scoped_c_thread_locale()
     }
 
     if (std::strcmp(prevLocale, "C") != 0)
-    { 
+    {
         m_prevLocale = prevLocale;
         m_prevThreadSetting = _configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
         if (m_prevThreadSetting == -1)
@@ -113,7 +113,7 @@ scoped_c_thread_locale::scoped_c_thread_locale()
              _configthreadlocale(m_prevThreadSetting);
              throw std::runtime_error("Unable to set locale");
         }
-    }   
+    }
 }
 
 scoped_c_thread_locale::~scoped_c_thread_locale()
@@ -124,7 +124,7 @@ scoped_c_thread_locale::~scoped_c_thread_locale()
         _configthreadlocale(m_prevThreadSetting);
     }
 }
-#elif defined(ANDROID)
+#elif (defined(ANDROID) || defined(__ANDROID__))
 scoped_c_thread_locale::scoped_c_thread_locale() {}
 scoped_c_thread_locale::~scoped_c_thread_locale() {}
 #else
@@ -136,7 +136,7 @@ scoped_c_thread_locale::scoped_c_thread_locale()
     {
         throw std::runtime_error("Unable to retrieve current locale.");
     }
-        
+
     if (std::strcmp(prevLocale, "C") != 0)
     {
         m_prevLocale = uselocale(c_locale());
@@ -162,14 +162,14 @@ namespace details
 
 const std::error_category & __cdecl platform_category()
 {
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     return windows_category();
 #else
     return linux_category();
 #endif
 }
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 
 const std::error_category & __cdecl windows_category()
 {
@@ -193,7 +193,7 @@ std::string windows_category_impl::message(int errorCode) const CPPREST_NOEXCEPT
 
     std::wstring buffer;
     buffer.resize(buffer_size);
-    
+
     const auto result = ::FormatMessageW(
         dwFlags,
         lpSource,
@@ -202,7 +202,6 @@ std::string windows_category_impl::message(int errorCode) const CPPREST_NOEXCEPT
         &buffer[0],
         buffer_size,
         NULL);
-
     if (result == 0)
     {
         std::ostringstream os;
@@ -223,8 +222,8 @@ std::error_condition windows_category_impl::default_error_condition(int errorCod
         return errCondition;
     }
 
-    switch(errorCode)  
-    {  
+    switch(errorCode)
+    {
 #ifndef __cplusplus_winrt
     case ERROR_WINHTTP_TIMEOUT:
         return std::errc::timed_out;
@@ -240,7 +239,7 @@ std::error_condition windows_category_impl::default_error_condition(int errorCod
         return std::errc::timed_out;
     case INET_E_DOWNLOAD_FAILURE:
         return std::errc::connection_aborted;
-    default:    
+    default:
         break;
     }
 
@@ -267,7 +266,7 @@ utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
         return utf16string();
     }
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     // first find the size
     int size = ::MultiByteToWideChar(
         CP_UTF8, // convert to utf-8
@@ -280,7 +279,7 @@ utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
     {
         throw utility::details::create_system_error(GetLastError());
     }
-        
+
     utf16string buffer;
     buffer.resize(size);
 
@@ -291,7 +290,6 @@ utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
         s.c_str(),
         (int)s.size(),
         &buffer[0], size); // must be null for utf8
-        
     if (result != size)
     {
         throw utility::details::create_system_error(GetLastError());
@@ -310,7 +308,7 @@ std::string __cdecl conversions::utf16_to_utf8(const utf16string &w)
         return std::string();
     }
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     // first find the size
     const int size = ::WideCharToMultiByte(
         CP_UTF8, // convert to utf-8
@@ -322,7 +320,7 @@ std::string __cdecl conversions::utf16_to_utf8(const utf16string &w)
         w.c_str(),
         (int)w.size(),
         nullptr, 0, // find the size required
-        nullptr, nullptr); // must be null for utf8  
+        nullptr, nullptr); // must be null for utf8
 
     if (size == 0)
     {
@@ -331,7 +329,7 @@ std::string __cdecl conversions::utf16_to_utf8(const utf16string &w)
 
     std::string buffer;
     buffer.resize(size);
-    
+
     // now call again to format the string
     const int result = ::WideCharToMultiByte(
         CP_UTF8, // convert to utf-8
@@ -343,8 +341,8 @@ std::string __cdecl conversions::utf16_to_utf8(const utf16string &w)
         w.c_str(),
         (int)w.size(),
         &buffer[0], size,
-        nullptr, nullptr); // must be null for utf8 
-        
+        nullptr, nullptr); // must be null for utf8
+
     if (result != size)
     {
         throw utility::details::create_system_error(GetLastError());
@@ -363,7 +361,7 @@ utf16string __cdecl conversions::usascii_to_utf16(const std::string &s)
         return utf16string();
     }
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     int size = ::MultiByteToWideChar(
         20127, // convert from us-ascii
         MB_ERR_INVALID_CHARS, // fail if any characters can't be translated
@@ -379,7 +377,7 @@ utf16string __cdecl conversions::usascii_to_utf16(const std::string &s)
     // this length includes the terminating null
     std::wstring buffer;
     buffer.resize(size);
-    
+
     // now call again to format the string
     int result = ::MultiByteToWideChar(
         20127, // convert from us-ascii
@@ -387,7 +385,6 @@ utf16string __cdecl conversions::usascii_to_utf16(const std::string &s)
         s.c_str(),
         (int)s.size(),
         &buffer[0], size);
-
     if (result != size)
     {
         throw utility::details::create_system_error(GetLastError());
@@ -401,17 +398,17 @@ utf16string __cdecl conversions::usascii_to_utf16(const std::string &s)
         s.c_str(),
         kCFStringEncodingASCII,
         kCFAllocatorNull);
-    
+
     if ( str == nullptr )
         throw utility::details::create_system_error(0);
-    
+
     size_t size = CFStringGetLength(str);
-    
+
     // this length includes the terminating null
     std::unique_ptr<utf16char[]> buffer(new utf16char[size]);
-    
+
     CFStringGetCharacters(str, CFRangeMake(0, size), (UniChar*)buffer.get());
-    
+
     return utf16string(buffer.get(), buffer.get() + size);
 #else
     return utf_to_utf<utf16char>(to_utf<char>(s, "ascii", stop));
@@ -425,7 +422,7 @@ utf16string __cdecl conversions::latin1_to_utf16(const std::string &s)
         return utf16string();
     }
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     int size = ::MultiByteToWideChar(
         28591, // convert from Latin1
         MB_ERR_INVALID_CHARS, // fail if any characters can't be translated
@@ -462,17 +459,17 @@ utf16string __cdecl conversions::latin1_to_utf16(const std::string &s)
         s.c_str(),
         kCFStringEncodingWindowsLatin1,
         kCFAllocatorNull);
-    
+
     if ( str == nullptr )
         throw utility::details::create_system_error(0);
-    
+
     size_t size = CFStringGetLength(str);
-    
+
     // this length includes the terminating null
     std::unique_ptr<utf16char[]> buffer(new utf16char[size]);
-    
+
     CFStringGetCharacters(str, CFRangeMake(0, size), (UniChar*)buffer.get());
-    
+
     return utf16string(buffer.get(), buffer.get() + size);
 #else
     return utf_to_utf<utf16char>(to_utf<char>(s, "Latin1", stop));
@@ -486,14 +483,14 @@ utf16string __cdecl conversions::default_code_page_to_utf16(const std::string &s
         return utf16string();
     }
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     // First have to convert to UTF-16.
     int size = ::MultiByteToWideChar(
         CP_ACP, // convert from Windows system default
         MB_ERR_INVALID_CHARS, // fail if any characters can't be translated
         s.c_str(),
         (int)s.size(),
-        nullptr, 0); 
+        nullptr, 0);
     if (size == 0)
     {
         throw utility::details::create_system_error(GetLastError());
@@ -508,7 +505,7 @@ utf16string __cdecl conversions::default_code_page_to_utf16(const std::string &s
         CP_ACP, // convert from Windows system default
         MB_ERR_INVALID_CHARS, // fail if any characters can't be translated
         s.c_str(),
-        (int)s.size(), 
+        (int)s.size(),
         &buffer[0], size);
     if(result == size)
     {
@@ -524,17 +521,17 @@ utf16string __cdecl conversions::default_code_page_to_utf16(const std::string &s
         s.c_str(),
         kCFStringEncodingMacRoman,
         kCFAllocatorNull);
-    
+
     if ( str == nullptr )
         throw utility::details::create_system_error(0);
-    
+
     size_t size = CFStringGetLength(str);
-    
+
     // this length includes the terminating null
     std::unique_ptr<utf16char[]> buffer(new utf16char[size]);
-    
+
     CFStringGetCharacters(str, CFRangeMake(0, size), (UniChar*)buffer.get());
-    
+
     return utf16string(buffer.get(), buffer.get() + size);
 #else // LINUX
     return utf_to_utf<utf16char>(to_utf<char>(s, std::locale(""), stop));
@@ -600,7 +597,7 @@ static bool is_digit(utility::char_t c) { return c >= _XPLATSTR('0') && c <= _XP
 
 datetime __cdecl datetime::utc_now()
 {
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     ULARGE_INTEGER largeInt;
     FILETIME fileTime;
     GetSystemTimeAsFileTime(&fileTime);
@@ -608,7 +605,7 @@ datetime __cdecl datetime::utc_now()
     largeInt.LowPart = fileTime.dwLowDateTime;
     largeInt.HighPart = fileTime.dwHighDateTime;
 
-    return datetime(largeInt.QuadPart);    
+    return datetime(largeInt.QuadPart);
 #else //LINUX
     struct timeval time;
     gettimeofday(&time, nullptr);
@@ -618,7 +615,7 @@ datetime __cdecl datetime::utc_now()
 
 utility::string_t datetime::to_string(date_format format) const
 {
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     int status;
 
     ULARGE_INTEGER largeInt;
@@ -638,25 +635,25 @@ utility::string_t datetime::to_string(date_format format) const
 
     if (format == RFC_1123)
     {
-#if _WIN32_WINNT < _WIN32_WINNT_VISTA 
+#if _WIN32_WINNT < _WIN32_WINNT_VISTA
         TCHAR dateStr[18] = {0};
         status = GetDateFormat(LOCALE_INVARIANT, 0, &systemTime, __TEXT("ddd',' dd MMM yyyy"), dateStr, sizeof(dateStr) / sizeof(TCHAR));
 #else
         wchar_t dateStr[18] = {0};
         status = GetDateFormatEx(LOCALE_NAME_INVARIANT, 0, &systemTime, L"ddd',' dd MMM yyyy", dateStr, sizeof(dateStr) / sizeof(wchar_t), NULL);
-#endif // _WIN32_WINNT < _WIN32_WINNT_VISTA 
+#endif // _WIN32_WINNT < _WIN32_WINNT_VISTA
         if (status == 0)
         {
             throw utility::details::create_system_error(GetLastError());
         }
 
-#if _WIN32_WINNT < _WIN32_WINNT_VISTA 
+#if _WIN32_WINNT < _WIN32_WINNT_VISTA
         TCHAR timeStr[10] = {0};
         status = GetTimeFormat(LOCALE_INVARIANT, TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT, &systemTime, "HH':'mm':'ss", timeStr, sizeof(timeStr) / sizeof(TCHAR));
 #else
         wchar_t timeStr[10] = {0};
         status = GetTimeFormatEx(LOCALE_NAME_INVARIANT, TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT, &systemTime, L"HH':'mm':'ss", timeStr, sizeof(timeStr) / sizeof(wchar_t));
-#endif // _WIN32_WINNT < _WIN32_WINNT_VISTA 
+#endif // _WIN32_WINNT < _WIN32_WINNT_VISTA
         if (status == 0)
         {
             throw utility::details::create_system_error(GetLastError());
@@ -667,25 +664,25 @@ utility::string_t datetime::to_string(date_format format) const
     else if (format == ISO_8601)
     {
         const size_t buffSize = 64;
-#if _WIN32_WINNT < _WIN32_WINNT_VISTA 
+#if _WIN32_WINNT < _WIN32_WINNT_VISTA
         TCHAR dateStr[buffSize] = {0};
         status = GetDateFormat(LOCALE_INVARIANT, 0, &systemTime, "yyyy-MM-dd", dateStr, buffSize);
 #else
         wchar_t dateStr[buffSize] = {0};
         status = GetDateFormatEx(LOCALE_NAME_INVARIANT, 0, &systemTime, L"yyyy-MM-dd", dateStr, buffSize, NULL);
-#endif // _WIN32_WINNT < _WIN32_WINNT_VISTA 
+#endif // _WIN32_WINNT < _WIN32_WINNT_VISTA
         if (status == 0)
         {
             throw utility::details::create_system_error(GetLastError());
         }
 
-#if _WIN32_WINNT < _WIN32_WINNT_VISTA 
+#if _WIN32_WINNT < _WIN32_WINNT_VISTA
         TCHAR timeStr[buffSize] = {0};
         status = GetTimeFormat(LOCALE_INVARIANT, TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT, &systemTime, "HH':'mm':'ss", timeStr, buffSize);
 #else
         wchar_t timeStr[buffSize] = {0};
         status = GetTimeFormatEx(LOCALE_NAME_INVARIANT, TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT, &systemTime, L"HH':'mm':'ss", timeStr, buffSize);
-#endif // _WIN32_WINNT < _WIN32_WINNT_VISTA 
+#endif // _WIN32_WINNT < _WIN32_WINNT_VISTA
         if (status == 0)
         {
             throw utility::details::create_system_error(GetLastError());
@@ -708,7 +705,7 @@ utility::string_t datetime::to_string(date_format format) const
 
     return outStream.str();
 #else //LINUX
-    uint64_t input = m_interval; 
+    uint64_t input = m_interval;
     uint64_t frac_sec = input % _secondTicks;
     input /= _secondTicks; // convert to seconds
     time_t time = (time_t)input - (time_t)11644473600LL;// diff between windows and unix epochs (seconds)
@@ -718,7 +715,7 @@ utility::string_t datetime::to_string(date_format format) const
 
     const int max_dt_length = 64;
     char output[max_dt_length+1] = {0};
-    
+
     if (format != RFC_1123 && frac_sec > 0)
     {
         // Append fractional second, which is a 7-digit value with no trailing zeros
@@ -735,7 +732,7 @@ utility::string_t datetime::to_string(date_format format) const
     }
     else
     {
-        strftime(output, sizeof(output), 
+        strftime(output, sizeof(output),
             format == RFC_1123 ? "%a, %d %b %Y %H:%M:%S GMT" : "%Y-%m-%dT%H:%M:%SZ",
             &datetime);
     }
@@ -744,7 +741,7 @@ utility::string_t datetime::to_string(date_format format) const
 #endif
 }
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 bool __cdecl datetime::system_type_to_datetime(void* pvsysTime, uint64_t seconds, datetime * pdt)
 {
     SYSTEMTIME* psysTime = (SYSTEMTIME*)pvsysTime;
@@ -813,26 +810,26 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
     // avoid floating point math to preserve precision
     uint64_t ufrac_second = 0;
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     datetime result;
     if (format == RFC_1123)
     {
         SYSTEMTIME sysTime = {0};
-    
+
         std::wstring month(3, L'\0');
         std::wstring unused(3, L'\0');
 
         const wchar_t * formatString = L"%3c, %2d %3c %4d %2d:%2d:%2d %3c";
-        auto n = swscanf_s(dateString.c_str(), formatString, 
-            unused.data(), unused.size(), 
-            &sysTime.wDay, 
-            month.data(), month.size(), 
-            &sysTime.wYear,  
-            &sysTime.wHour, 
-            &sysTime.wMinute, 
-            &sysTime.wSecond, 
+        auto n = swscanf_s(dateString.c_str(), formatString,
+            unused.data(), unused.size(),
+            &sysTime.wDay,
+            month.data(), month.size(),
+            &sysTime.wYear,
+            &sysTime.wHour,
+            &sysTime.wMinute,
+            &sysTime.wSecond,
             unused.data(), unused.size());
-    
+
         if (n == 8)
         {
             std::wstring monthnames[12] = {L"Jan", L"Feb", L"Mar", L"Apr", L"May", L"Jun", L"Jul", L"Aug", L"Sep", L"Oct", L"Nov", L"Dec"};
@@ -860,11 +857,11 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
             SYSTEMTIME sysTime = { 0 };
             const wchar_t * formatString = L"%4d-%2d-%2dT%2d:%2d:%2dZ";
             auto n = swscanf_s(input.c_str(), formatString,
-                &sysTime.wYear,  
-                &sysTime.wMonth,  
-                &sysTime.wDay, 
-                &sysTime.wHour, 
-                &sysTime.wMinute, 
+                &sysTime.wYear,
+                &sysTime.wMonth,
+                &sysTime.wDay,
+                &sysTime.wHour,
+                &sysTime.wMinute,
                 &sysTime.wSecond);
 
             if (n == 3 || n == 6)
@@ -881,9 +878,9 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
 
             const wchar_t * formatString = L"%8dT%2d:%2d:%2dZ";
             auto n = swscanf_s(input.c_str(), formatString,
-                &date, 
-                &sysTime.wHour, 
-                &sysTime.wMinute, 
+                &date,
+                &sysTime.wHour,
+                &sysTime.wMinute,
                 &sysTime.wSecond);
 
             if (n == 1 || n == 4)
@@ -905,11 +902,11 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
             GetSystemTime(&sysTime);    // Fill date portion with today's information
             sysTime.wSecond = 0;
             sysTime.wMilliseconds = 0;
-    
+
             const wchar_t * formatString = L"%2d:%2d:%2dZ";
             auto n = swscanf_s(input.c_str(), formatString,
-                &sysTime.wHour, 
-                &sysTime.wMinute, 
+                &sysTime.wHour,
+                &sysTime.wMinute,
                 &sysTime.wSecond);
 
             if (n == 3)
@@ -931,7 +928,7 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
     if (format == RFC_1123)
     {
         strptime(input.data(), "%a, %d %b %Y %H:%M:%S GMT", &output);
-    } 
+    }
     else
     {
         // Try to extract the fractional second from the timestamp
@@ -968,7 +965,7 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
         }
     }
 
-#if defined(ANDROID)
+#if (defined(ANDROID) || defined(__ANDROID__))
     // HACK: The (nonportable?) POSIX function timegm is not available in
     //       bionic. As a workaround[1][2], we set the C library timezone to
     //       UTC, call mktime, then set the timezone back. However, the C
@@ -1054,7 +1051,7 @@ utility::string_t __cdecl timespan::seconds_to_xml_duration(utility::seconds dur
     {
         oss << numDays << _XPLATSTR("D");
     }
-    
+
     oss << _XPLATSTR("T");
 
     if (numHours > 0)
@@ -1075,11 +1072,7 @@ utility::string_t __cdecl timespan::seconds_to_xml_duration(utility::seconds dur
     return oss.str();
 }
 
-/// <summary>
-/// Converts an xml duration to timespan/interval in seconds
-/// http://www.w3.org/TR/xmlschema-2/#duration
-/// </summary>
-utility::seconds __cdecl timespan::xml_duration_to_seconds(utility::string_t timespanString)
+utility::seconds __cdecl timespan::xml_duration_to_seconds(const utility::string_t &timespanString)
 {
     // The format is:
     // PnDTnHnMnS

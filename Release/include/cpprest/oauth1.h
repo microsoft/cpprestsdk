@@ -16,9 +16,7 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* oauth1.h
-*
-* HTTP Library: Oauth 1.0 
+* HTTP Library: Oauth 1.0
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
 *
@@ -91,7 +89,7 @@ class oauth1_strings
 public:
 #define _OAUTH1_STRINGS
 #define DAT(a_, b_) _ASYNCRTIMP static const oauth1_string a_;
-#include "cpprest/http_constants.dat"
+#include "cpprest/details/http_constants.dat"
 #undef _OAUTH1_STRINGS
 #undef DAT
 };
@@ -111,7 +109,7 @@ class oauth1_methods
 public:
 #define _OAUTH1_METHODS
 #define DAT(a,b) _ASYNCRTIMP static const oauth1_method a;
-#include "cpprest/http_constants.dat"
+#include "cpprest/details/http_constants.dat"
 #undef _OAUTH1_METHODS
 #undef DAT
 };
@@ -136,6 +134,12 @@ private:
 class oauth1_token
 {
 public:
+
+    /// <summary>
+    /// Constructs a OAuth1 token from a given access token and secret.
+    /// </summary>
+    /// <param name="access_token">Access token string.</param>
+    /// <param name="secret">Token secret string.</param>
     oauth1_token(utility::string_t access_token, utility::string_t secret) :
         m_token(std::move(access_token)),
         m_secret(std::move(secret))
@@ -153,22 +157,67 @@ public:
     /// </summary>
     /// <returns>The access token string.</returns>
     const utility::string_t& access_token() const { return m_token; }
+
     /// <summary>
     /// Set access token.
     /// </summary>
     /// <param name="token">Access token string to set.</param>
-    void set_access_token(utility::string_t access_token) { m_token = std::move(access_token); }
+    void set_access_token(utility::string_t &&access_token) { m_token = std::move(access_token); }
+
+    /// <summary>
+    /// Set access token.
+    /// </summary>
+    /// <param name="token">Access token string to set.</param>
+    void set_access_token(const utility::string_t &access_token) { m_token = access_token; }
 
     /// <summary>
     /// Get token secret.
     /// </summary>
     /// <returns>Token secret string.</returns>
     const utility::string_t& secret() const { return m_secret; }
+
     /// <summary>
     /// Set token secret.
     /// </summary>
     /// <param name="secret">Token secret string to set.</param>
-    void set_secret(utility::string_t secret) { m_secret = std::move(secret); }
+    void set_secret(utility::string_t &&secret) { m_secret = std::move(secret); }
+
+    /// <summary>
+    /// Set token secret.
+    /// </summary>
+    /// <param name="secret">Token secret string to set.</param>
+    void set_secret(const utility::string_t &secret) { m_secret = secret; }
+
+    /// <summary>
+    /// Retrieves any additional parameters.
+    /// </summary>
+    /// <returns>A map containing the additional parameters.</returns>
+    const std::map<utility::string_t, utility::string_t> &additional_parameters() const { return m_additional_parameters; }
+
+    /// <summary>
+    /// Sets a specific parameter additional parameter.
+    /// </summary>
+    /// <param name="paramName">Parameter name.</param>
+    /// <param name="paramValue">Parameter value.</param>
+    void set_additional_parameter(utility::string_t &&paramName, utility::string_t &&paramValue)
+    {
+        m_additional_parameters[std::move(paramName)] = std::move(paramValue);
+    }
+
+    /// <summary>
+    /// Sets a specific parameter additional parameter.
+    /// </summary>
+    /// <param name="paramName">Parameter name.</param>
+    /// <param name="paramValue">Parameter value.</param>
+    void set_additional_parameter(const utility::string_t &paramName, const utility::string_t &paramValue)
+    {
+        m_additional_parameters[paramName] = paramValue;
+    }
+
+    /// <summary>
+    /// Clears all additional parameters.
+    /// </summary>
+    void clear_additional_parameters() { m_additional_parameters.clear(); }
 
 private:
     friend class oauth1_config;
@@ -177,6 +226,7 @@ private:
 
     utility::string_t m_token;
     utility::string_t m_secret;
+    std::map<utility::string_t, utility::string_t> m_additional_parameters;
 };
 
 /// <summary>
@@ -233,7 +283,17 @@ public:
     /// <returns>Task that fetches the access token based on the verifier.</returns>
     pplx::task<void> token_from_verifier(utility::string_t verifier)
     {
-        return _request_token(_generate_auth_state(details::oauth1_strings::verifier, uri::encode_data_string(std::move(verifier))), false);
+        return _request_token(_generate_auth_state(details::oauth1_strings::verifier, std::move(verifier)), false);
+    }
+
+    /// <summary>
+    /// Creates a task with HTTP request to fetch an access token from the token endpoint.
+    /// If successful, the resulting token is set as active via set_token().
+    /// </summary>
+    /// <returns>Task that fetches the access token based on the verifier.</returns>
+    pplx::task<void> refresh_token(const utility::string_t &key)
+    {
+        return _request_token(_generate_auth_state(key, m_token.additional_parameters().at(key)), false);
     }
 
     /// <summary>
@@ -321,6 +381,7 @@ public:
             return empty_token;
         }
     }
+
     /// <summary>
     /// Set token.
     /// </summary>
@@ -394,6 +455,41 @@ public:
         return details::oauth1_state(_generate_timestamp(), _generate_nonce());
     }
 
+    /// <summary>
+    /// Gets map of parameters to sign.
+    /// </summary>
+    /// <returns>Map of parameters.</returns>
+    const std::map<utility::string_t, utility::string_t>& parameters() const { return m_parameters_to_sign; }
+
+    /// <summary>
+    /// Adds a key value parameter.
+    /// </summary>
+    /// <param name="key">Key as a string value.</param>
+    /// <param name="value">Value as a string value.</param>
+    void add_parameter(const utility::string_t &key, const utility::string_t &value) { m_parameters_to_sign[key] = value; }
+
+    /// <summary>
+    /// Adds a key value parameter.
+    /// </summary>
+    /// <param name="key">Key as a string value.</param>
+    /// <param name="value">Value as a string value.</param>
+    void add_parameter(utility::string_t &&key, utility::string_t &&value) { m_parameters_to_sign[std::move(key)] = std::move(value); }
+
+    /// <summary>
+    /// Sets entire map or parameters replacing all previously values.
+    /// </summary>
+    /// <param name="parameters">Map of values.</param>
+    void set_parameters(const std::map<utility::string_t, utility::string_t> &parameters)
+    {
+        m_parameters_to_sign.clear();
+        m_parameters_to_sign = parameters;
+    }
+
+    /// <summary>
+    /// Clears all parameters.
+    /// </summary>
+    void clear_parameters() { m_parameters_to_sign.clear(); }
+
 private:
     friend class web::http::client::http_client_config;
     friend class web::http::oauth1::details::oauth1_handler;
@@ -431,7 +527,7 @@ private:
     {
         _authenticate_request(req, _generate_auth_state());
     }
-    
+
     _ASYNCRTIMP void _authenticate_request(http_request &req, details::oauth1_state state);
 
     _ASYNCRTIMP pplx::task<void> _request_token(details::oauth1_state state, bool is_temp_token_request);
@@ -446,6 +542,8 @@ private:
     utility::string_t m_callback_uri;
     utility::string_t m_realm;
     oauth1_method m_method;
+
+	std::map<utility::string_t, utility::string_t> m_parameters_to_sign;
 
     utility::nonce_generator m_nonce_generator;
     bool m_is_authorization_completed;
@@ -476,6 +574,6 @@ private:
     std::shared_ptr<experimental::oauth1_config> m_config;
 };
 
-}}}} // namespace web::http::oauth1::details
+}}}}
 
-#endif  /* _CASA_OAUTH1_H */
+#endif

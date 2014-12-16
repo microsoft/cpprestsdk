@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,7 +44,7 @@ void auth_helper(test_websocket_server& server, const utility::string_t &usernam
     server.set_http_handler([username, password](test_http_request request)
     {
         test_http_response resp;
-        if (request->username().empty()) // No credentials -> challenge the request 
+        if (request->username().empty()) // No credentials -> challenge the request
         {
             resp.set_status_code(401); // Unauthorized.
             resp.set_realm("My Realm");
@@ -86,6 +86,19 @@ TEST_FIXTURE(uri_address, auth_with_credentials, "Ignore", "245")
 }
 #endif
 
+// helper function to check if failure is due to timeout.
+bool is_timeout(const std::string &msg)
+{
+    if (msg.find("set_fail_handler") != std::string::npos)
+    {
+        if (msg.find("TLS handshake timed out") != std::string::npos || msg.find("Timer Expired") != std::string::npos)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 TEST(ssl_test)
 {
     websocket_client client;
@@ -112,15 +125,11 @@ TEST(ssl_test)
     }
     catch (const websocket_exception &e)
     {
-        const auto msg = std::string(e.what());
-        if (msg.find("set_fail_handler") != std::string::npos)
+        if (is_timeout(e.what()))
         {
-            if (msg.find("TLS handshake timed out") != std::string::npos || msg.find("Timer Expired") != std::string::npos)
-            {
-                // Since this test depends on an outside server sometimes it sporadically can fail due to timeouts
-                // especially on our build machines.
-                return;
-            }
+            // Since this test depends on an outside server sometimes it sporadically can fail due to timeouts
+            // especially on our build machines.
+            return;
         }
         throw;
     }
@@ -139,6 +148,12 @@ void handshake_error_test_impl(const ::utility::string_t &host)
     }
     catch (const websocket_exception &e)
     {
+        if (is_timeout(e.what()))
+        {
+            // Since this test depends on an outside server sometimes it sporadically can fail due to timeouts
+            // especially on our build machines.
+            return;
+        }
         VERIFY_ARE_EQUAL("TLS handshake failed", e.error_code().message());
     }
 }

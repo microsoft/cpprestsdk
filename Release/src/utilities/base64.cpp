@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,20 +16,15 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* asyncrt_utils.cpp - Utilities
-*
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
-
 #include "stdafx.h"
-#include <array>
 
 using namespace web;
 using namespace utility;
 
-#define _USE_INTERNAL_BASE64_
 std::vector<unsigned char> _from_base64(const utility::string_t& str);
 utility::string_t _to_base64(const unsigned char *ptr, size_t size);
 
@@ -54,11 +49,9 @@ utility::string_t __cdecl conversions::to_base64(uint64_t input)
     return _to_base64(reinterpret_cast<const unsigned char*>(&input), sizeof(input));
 }
 
-
-#if defined(_USE_INTERNAL_BASE64_)
 static const char* _base64_enctbl = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 const std::array<unsigned char, 128> _base64_dectbl =
-   {{ 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 
+   {{ 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
       255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
       255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,  62, 255, 255, 255,  63,
        52,  53,  54,  55,  56,  57,  58,  59,  60,  61, 255, 255, 255, 254, 255, 255,
@@ -93,7 +86,7 @@ std::vector<unsigned char> _from_base64(const utility::string_t& input)
 {
     std::vector<unsigned char> result;
 
-    if ( input.empty() ) 
+    if ( input.empty() )
         return result;
 
     size_t padding = 0;
@@ -184,7 +177,7 @@ std::vector<unsigned char> _from_base64(const utility::string_t& input)
     // Handle the last four bytes separately, to avoid having the conditional statements
     // in all the iterations (a performance issue).
 
-    { 
+    {
         unsigned char target[3];
         memset(target, 0, sizeof(target));
         _triple_byte* record = reinterpret_cast<_triple_byte*>(target);
@@ -237,7 +230,7 @@ std::vector<unsigned char> _from_base64(const utility::string_t& input)
 utility::string_t _to_base64(const unsigned char *ptr, size_t size)
 {
     utility::string_t result;
-    
+
     for (; size >= 3; )
     {
         const _triple_byte* record = reinterpret_cast<const _triple_byte*>(ptr);
@@ -280,4 +273,3 @@ utility::string_t _to_base64(const unsigned char *ptr, size_t size)
     }
     return result;
 }
-#endif

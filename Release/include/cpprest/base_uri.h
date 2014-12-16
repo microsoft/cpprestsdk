@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,6 @@
 *
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*
-* base_uri.h
 *
 * Protocol independent support for URIs.
 *
@@ -34,8 +32,7 @@
 #include <functional>
 
 #include "cpprest/asyncrt_utils.h"
-#include "cpprest/xxpublic.h"
-#include "cpprest/basic_types.h"
+#include "cpprest/details/basic_types.h"
 
 namespace web {
     namespace details
@@ -94,7 +91,7 @@ namespace web {
                 }
                 return *this;
             }
-            
+
             _ASYNCRTIMP utility::string_t join();
 
             utility::string_t m_scheme;
@@ -138,11 +135,11 @@ namespace web {
     /// ('/path?query#frag').
     ///
     /// This implementation does not provide any scheme-specific handling -- an example of this
-    /// would be the following: 'http://path1/path'. This is a valid URI, but it's not a valid 
-    /// http-uri -- that is, it's syntactically correct but does not conform to the requirements 
-    /// of the http scheme (http requires a host). 
-    /// We could provide this by allowing a pluggable 'scheme' policy-class, which would provide 
-    /// extra capability for validating and canonicalizing a URI according to scheme, and would 
+    /// would be the following: 'http://path1/path'. This is a valid URI, but it's not a valid
+    /// http-uri -- that is, it's syntactically correct but does not conform to the requirements
+    /// of the http scheme (http requires a host).
+    /// We could provide this by allowing a pluggable 'scheme' policy-class, which would provide
+    /// extra capability for validating and canonicalizing a URI according to scheme, and would
     /// introduce a layer of type-safety for URIs of differing schemes, and thus differing semantics.
     ///
     /// One issue with implementing a scheme-independent URI facility is that of comparing for equality.
@@ -178,7 +175,7 @@ namespace web {
 
         /// <summary>
         /// Encodes a URI component according to RFC 3986.
-        /// Note if a full URI is specified instead of an individual URI component all 
+        /// Note if a full URI is specified instead of an individual URI component all
         /// characters not in the unreserved set are escaped.
         /// </summary>
         /// <param name="raw">The URI as a string.</param>
@@ -186,7 +183,7 @@ namespace web {
         _ASYNCRTIMP static utility::string_t __cdecl encode_uri(const utility::string_t &raw, uri::components::component = components::full_uri);
 
         /// <summary>
-        /// Encodes a string by converting all characters except for RFC 3986 unreserved characters to their 
+        /// Encodes a string by converting all characters except for RFC 3986 unreserved characters to their
         /// hexadecimal representation.
         /// </summary>
         /// <param name="utf8data">The UTF-8 string data.</param>
@@ -227,14 +224,14 @@ namespace web {
         uri() { m_uri = _XPLATSTR("/");};
 
         /// <summary>
-        /// Creates a URI from the given encoded string. This will throw an exception if the string 
+        /// Creates a URI from the given encoded string. This will throw an exception if the string
         /// does not contain a valid URI. Use uri::validate if processing user-input.
         /// </summary>
         /// <param name="uri_string">A pointer to an encoded string to create the URI instance.</param>
         _ASYNCRTIMP uri(const utility::char_t *uri_string);
 
         /// <summary>
-        /// Creates a URI from the given encoded string. This will throw an exception if the string 
+        /// Creates a URI from the given encoded string. This will throw an exception if the string
         /// does not contain a valid URI. Use uri::validate if processing user-input.
         /// </summary>
         /// <param name="uri_string">An encoded URI string to create the URI instance.</param>

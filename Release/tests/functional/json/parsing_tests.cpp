@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* parsing_tests.cpp
-*
 * Tests for JSON parsing.
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -26,9 +24,9 @@
 #include "stdafx.h"
 #include <array>
 
-#if defined(_MS_WINDOWS) || defined(__APPLE__)
+#if defined(_WIN32) || defined(__APPLE__)
 #include <regex>
-#elif defined(ANDROID)
+#elif (defined(ANDROID) || defined(__ANDROID__))
 #else
 // GCC 4.8 doesn't support regex very well, fall back to Boost. Revist in GCC 4.9.
 #include <boost/regex.hpp>
@@ -42,10 +40,10 @@ namespace tests { namespace functional { namespace json_tests {
     inline bool verify_parsing_error_msg(const std::string &str)
     {
         auto spattern = "^\\* Line \\d+, Column \\d+ Syntax error: .+";
-#if defined(_MS_WINDOWS) || defined(__APPLE__)
+#if defined(_WIN32) || defined(__APPLE__)
         static std::regex pattern(spattern);
         return std::regex_match(str, pattern, std::regex_constants::match_flag_type::match_not_null);
-#elif defined(ANDROID)
+#elif (defined(ANDROID) || defined(__ANDROID__))
 	return str.find("Syntax error: ") != std::string::npos;
 #else
         static boost::regex pattern(spattern);
@@ -499,13 +497,13 @@ utility::string_t make_deep_json_string(size_t depth)
 TEST(deeply_nested)
 {
 #if defined(__APPLE__)
-    size_t safeDepth = 64;
-    size_t overDepth = 65;
+    size_t safeDepth = 32;
+    size_t overDepth = 33;
 #else
     size_t safeDepth = 128;
     size_t overDepth = 129;
 #endif
-                                     
+
     // This should parse without issues:
     auto strGood = make_deep_json_string(safeDepth);
     json::value::parse(strGood);
@@ -573,10 +571,10 @@ TEST(keep_order_while_parsing)
     VERIFY_ARE_EQUAL(obj[U("a")].as_integer(), 4);
 }
 
-TEST(non_default_locale)
+TEST(non_default_locale, "Ignore:Android", "Locale unsupported on Android")
 {
     std::string originalLocale = setlocale(LC_ALL, nullptr);
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     std::string changedLocale("fr-FR");
 #else
     std::string changedLocale("fr_FR.utf8");
@@ -611,6 +609,82 @@ TEST(non_default_locale)
 
         setlocale(LC_ALL, originalLocale.c_str());
     }
+}
+
+template <typename T>
+void error_code_helper(T &jsonData)
+{
+    std::error_code err;
+    auto parsedObject = web::json::value::parse(jsonData, err);
+    VERIFY_IS_TRUE(err.value() == 0);
+    VERIFY_IS_TRUE(!parsedObject.is_null());
+}
+
+TEST(parse_overload_success)
+{
+    std::error_code err;
+    utility::string_t valueStr(U("\"JSONString\""));
+    utility::string_t arrStr(U("[true,false,-1.55,5,null,{\"abc\":5555}]"));
+    utility::string_t objStr(U("{\"k\":3, \"j\":2, \"i\":1}"));
+
+    error_code_helper(valueStr);
+    error_code_helper(arrStr);
+    error_code_helper(objStr);
+
+    utility::stringstream_t valueStringStream;
+    utility::stringstream_t arrayStringStream;
+    utility::stringstream_t objStringStream;
+
+    valueStringStream << valueStr;
+    arrayStringStream << arrStr;
+    objStringStream << objStr;
+
+    error_code_helper(valueStringStream);
+    error_code_helper(arrayStringStream);
+    error_code_helper(objStringStream);
+
+#ifdef _WIN32
+    std::wstringbuf buf;
+
+    buf.sputn(valueStr.c_str(), valueStr.size());
+    std::wistream valStream(&buf);
+    error_code_helper(valStream);
+
+    buf.sputn(arrStr.c_str(), arrStr.size());
+    std::wistream arrStream(&buf);
+    error_code_helper(arrStream);
+
+    buf.sputn(objStr.c_str(), objStr.size());
+    std::wistream objStream(&buf);
+    error_code_helper(objStream);
+#endif
+}
+
+TEST(parse_overload_failed)
+{
+    std::error_code err, streamErr, iStreamErr;
+    utility::string_t str(U("JSONString"));
+    utility::string_t arrStr(U("[true, false"));
+    json::value parsedObject = json::value::parse(str, err);
+
+    VERIFY_IS_TRUE(err.value() > 0);
+    VERIFY_IS_TRUE(parsedObject.is_null());
+
+    utility::stringstream_t stream;
+    stream << str;
+    
+    parsedObject = json::value::parse(arrStr, streamErr);
+    VERIFY_IS_TRUE(streamErr.value() > 0);
+    VERIFY_IS_TRUE(parsedObject.is_null());
+
+#ifdef _WIN32
+    std::wstringbuf buf;
+    buf.sputn(str.c_str(), str.size());
+    std::wistream iStream(&buf);
+    parsedObject = json::value::parse(str, iStreamErr);
+    VERIFY_IS_TRUE(iStreamErr.value() > 0);
+    VERIFY_IS_TRUE(parsedObject.is_null());
+#endif
 }
 
 } // SUITE(parsing_tests)

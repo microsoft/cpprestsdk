@@ -10,7 +10,7 @@ set(TR_SOURCES
 
 add_definitions(-DDESKTOP_TEST_RUNNER)
 
-if(NOT IOS)
+if(NOT IOS AND NOT ANDROID)
   if(BUILD_SHARED_LIBS)
     add_executable(test_runner
       test_runner.cpp

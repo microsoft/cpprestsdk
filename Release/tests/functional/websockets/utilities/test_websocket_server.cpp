@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,7 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* test_websocket_server.cpp -- Defines a test server to handle websocket messages.
+* Defines a test server to handle websocket messages.
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
@@ -29,7 +29,7 @@
 
 #include "test_websocket_server.h"
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 #pragma warning( disable : 4503 )
 #pragma warning( push )
 #pragma warning( disable : 4100 4127 4996 4512 4701 4267 )
@@ -40,8 +40,8 @@
 #define _WEBSOCKETPP_CONSTEXPR_TOKEN_
 #else
 #define _WEBSOCKETPP_NULLPTR_TOKEN_ 0
-#endif
-#endif
+#endif /* _MSC_VER >= 1800 */
+#endif /* _WIN32 */
 
 #if defined(__APPLE__)
 #include "stdlib.h"
@@ -51,13 +51,18 @@
 #undef ntohll
 #undef htonll
 #endif
+
+#if defined(__clang__) && (defined(ANDROID) || defined(__ANDROID__))
+#define _WEBSOCKETPP_NULLPTR_TOKEN_ 0
+#endif
+
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
 #if defined(__APPLE__)
 #pragma pop_macro("htonll")
 #pragma pop_macro("ntohll")
 #endif
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 #pragma warning( pop )
 #endif
 

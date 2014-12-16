@@ -17,8 +17,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* stdafx.h
-*
 * Pre-compiled headers
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -26,10 +24,7 @@
 
 #pragma once
 
-// This header is required to define _MS_WINDOWS
-#include "cpprest/xxpublic.h"
-
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN  
 #define NOMINMAX
 #include <winsock2.h>

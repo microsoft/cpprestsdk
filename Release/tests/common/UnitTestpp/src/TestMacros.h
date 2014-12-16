@@ -62,7 +62,7 @@
 #ifndef CREATED_GET_TEST_LIST
 #define CREATED_GET_TEST_LIST
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 #define _DLL_EXPORT __declspec(dllexport)
 #elif __APPLE__
 #define _DLL_EXPORT __attribute__((visibility("default")))
@@ -72,8 +72,15 @@
 
 namespace UnitTest
 {
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
+#endif
     extern "C"
     _DLL_EXPORT TestList& GetTestList();
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 }
 #endif
 
@@ -87,7 +94,7 @@ namespace UnitTest
     }                                                                       \
 	namespace Suite##Name
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 #define TEST_EX(Name, List, ...)                                                \
     class Test##Name : public UnitTest::Test                               \
     {                                                                      \
@@ -117,13 +124,13 @@ namespace UnitTest
 #endif
 
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 #define TEST(Name, ...) TEST_EX(Name, UnitTest::GetTestList(), __VA_ARGS__)
 #else
 #define TEST(Name, ...) TEST_EX(Name, UnitTest::GetTestList(), ##__VA_ARGS__)
 #endif
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 #define TEST_FIXTURE_EX(Fixture, Name, List, ...)                                         \
     class Fixture##Name##Helper : public Fixture									 \
 	{																				 \
@@ -239,7 +246,7 @@ namespace UnitTest
     void Fixture##Name##Helper::RunImpl()
 #endif
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 #define TEST_FIXTURE(Fixture, Name, ...) TEST_FIXTURE_EX(Fixture, Name, UnitTest::GetTestList(), __VA_ARGS__)
 #else
 #define TEST_FIXTURE(Fixture, Name, ...) TEST_FIXTURE_EX(Fixture, Name, UnitTest::GetTestList(), ##__VA_ARGS__)

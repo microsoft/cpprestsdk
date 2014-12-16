@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* pplx.h
-*
 * Parallel Patterns Library
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
@@ -34,11 +32,11 @@
 #error This file must not be included for Visual Studio 12 or later
 #endif
 
-#ifndef _MS_WINDOWS
+#ifndef _WIN32
 #if defined(_WIN32) || defined(__cplusplus_winrt)
-#define _MS_WINDOWS
+#define _WIN32
 #endif
-#endif // _MS_WINDOWS
+#endif // _WIN32
 
 #ifdef _NO_PPLXIMP
 #define _PPLXIMP
@@ -50,19 +48,18 @@
 #endif
 #endif
 
+#include "cpprest/details/cpprest_compat.h"
+
 // Use PPLx
-#ifdef _MS_WINDOWS
-#include "cpprest/details/windows_compat.h"
+#ifdef _WIN32
 #include "pplx/pplxwin.h"
 #elif defined(__APPLE__)
 #undef _PPLXIMP
 #define _PPLXIMP
-#include "cpprest/details/apple_compat.h"
 #include "pplx/pplxlinux.h"
 #else
-#include "cpprest/details/linux_compat.h"
 #include "pplx/pplxlinux.h"
-#endif // _MS_WINDOWS
+#endif // _WIN32
 
 // Common implementation across all the non-concrt versions
 #include "pplx/pplxcancellation_token.h"

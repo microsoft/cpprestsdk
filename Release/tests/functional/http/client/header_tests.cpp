@@ -16,15 +16,13 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* header_tests.cpp
-*
 * Tests cases for http_headers.
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 
 #include "stdafx.h"
-#include "cpprest/http_helpers.h"
+#include "cpprest/details/http_helpers.h"
 
 using namespace web::http;
 using namespace web::http::client;

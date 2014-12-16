@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,8 +17,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* http_listener.h
-*
 * HTTP Library: HTTP listener (server-side) APIs
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -28,21 +26,19 @@
 #ifndef _CASA_HTTP_LISTENER_H
 #define _CASA_HTTP_LISTENER_H
 
-#if _WIN32_WINNT < _WIN32_WINNT_VISTA
-#error "Error: http server APIs are not supported in XP"
-#endif //_WIN32_WINNT < _WIN32_WINNT_VISTA
-
 #include <limits>
 #include <functional>
 
 #include "cpprest/http_msg.h"
 
-namespace web 
-{ 
+#if !defined(_WIN32) || (_WIN32_WINNT >= _WIN32_WINNT_VISTA && !defined(__cplusplus_winrt))
+
+namespace web
+{
 namespace http
 {
 /// HTTP listener is currently in beta.
-namespace experimental 
+namespace experimental
 {
 /// HTTP server side library.
 namespace listener
@@ -169,7 +165,7 @@ private:
     void handle_trace(http::http_request message);
     void handle_options(http::http_request message);
 
-    // Gets a comma seperated string containing the methods supported by this listener.
+    // Gets a comma separated string containing the methods supported by this listener.
     utility::string_t get_supported_methods() const;
 
     http::uri m_uri;
@@ -214,9 +210,9 @@ public:
     /// </summary>
     /// <remarks>The resulting listener cannot be used for anything, but is useful to initialize a variable
     /// that will later be overwritten with a real listener instance.</remarks>
-    http_listener() 
+    http_listener()
         : m_impl(utility::details::make_unique<details::http_listener_impl>())
-    { 
+    {
     }
 
     /// <summary>
@@ -224,9 +220,9 @@ public:
     /// </summary>
     /// <remarks>Call close() before allowing a listener to be destroyed.</remarks>
     _ASYNCRTIMP ~http_listener();
-    
+
     /// <summary>
-    /// Asychronously open the listener, i.e. start accepting requests.
+    /// Asynchronously open the listener, i.e. start accepting requests.
     /// </summary>
     /// <returns>A task that will be completed once this listener is actually opened, accepting requests.</returns>
     pplx::task<void> open()
@@ -235,12 +231,12 @@ public:
     }
 
     /// <summary>
-    /// Asychrnoously stop accepting requests and close all connections.
+    /// Asynchronously stop accepting requests and close all connections.
     /// </summary>
-    /// <returns>A task that will be completed once this listener is actually closed, no longer accepting requests.</returns> 
+    /// <returns>A task that will be completed once this listener is actually closed, no longer accepting requests.</returns>
     /// <remarks>
     /// This function will stop accepting requests and wait for all outstanding handler calls
-    /// to finish before completing the task. Waiting on the task returned from close() within 
+    /// to finish before completing the task. Waiting on the task returned from close() within
     /// a handler and blocking waiting for its result will result in a deadlock.
     ///
     /// Call close() before allowing a listener to be destroyed.
@@ -253,8 +249,8 @@ public:
     /// <summary>
     /// Add a general handler to support all requests.
     /// </summary>
-    /// <param name="handler">Funtion object to be called for all requests.</param>
-    void support(std::function<void(http_request)> handler)  
+    /// <param name="handler">Function object to be called for all requests.</param>
+    void support(std::function<void(http_request)> handler)
     {
         m_impl->m_all_requests = handler;
     }
@@ -263,7 +259,7 @@ public:
     /// Add support for a specific HTTP method.
     /// </summary>
     /// <param name="method">An HTTP method.</param>
-    /// <param name="handler">Funtion object to be called for all requests for the given HTTP method.</param>
+    /// <param name="handler">Function object to be called for all requests for the given HTTP method.</param>
     void support(const http::method &method, std::function<void(http_request)> handler)
     {
         m_impl->m_supported_methods[method] = handler;
@@ -312,9 +308,7 @@ private:
     std::unique_ptr<details::http_listener_impl> m_impl;
 };
 
-} // namespace listener
-} // namespace experimental
-} // namespace http
-} // namespace web
+}}}}
 
-#endif  /* _CASA_HTTP_LISTENER_H */
+#endif
+#endif

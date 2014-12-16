@@ -1,6 +1,8 @@
 project(casablanca-ios NONE)
 cmake_minimum_required(VERSION 2.6)
 
+enable_testing()
+
 set(TOOLCHAIN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/ios-cmake/toolchain/iOS.cmake")
 
 set(SIM_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/build.i386" CACHE INTERNAL "")
@@ -8,6 +10,10 @@ set(SIM_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../Release" CACHE INTERNAL "")
 
 set(ARM_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/build.arm" CACHE INTERNAL "")
 set(ARM_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../Release" CACHE INTERNAL "")
+add_test(NAME ios_runner
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../Release/tests/common/testrunner/ios
+    COMMAND xcodebuild test -project ios_runner.xcodeproj -configuration=${CMAKE_BUILD_TYPE} -scheme ios_runner -destination "platform=iOS Simulator,name=iPhone 6" LIBRARY_SEARCH_PATH=${SIM_BINARY_DIR}
+  )
 
 file(MAKE_DIRECTORY ${SIM_BINARY_DIR})
 execute_process(WORKING_DIRECTORY ${SIM_BINARY_DIR}

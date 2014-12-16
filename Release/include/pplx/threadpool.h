@@ -15,8 +15,6 @@
 *
 * ==--==
 *
-* threadpool.h
-*
 * Simple Linux implementation of a static thread pool.
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
@@ -38,7 +36,7 @@
 #pragma clang diagnostic pop
 #endif
 
-#if defined(ANDROID)
+#if (defined(ANDROID) || defined(__ANDROID__))
 #include <atomic>
 #include <jni.h>
 #include "pplx/pplx.h"
@@ -46,7 +44,7 @@
 
 namespace crossplat {
 
-#if defined(ANDROID)
+#if (defined(ANDROID) || defined(__ANDROID__))
 // IDEA: Break this section into a separate android/jni header
 extern std::atomic<JavaVM*> JVM;
 JNIEnv* get_jvm_env();
@@ -74,12 +72,14 @@ public:
         for (size_t i = 0; i < n; i++)
             add_thread();
     }
-
+#if defined(__ANDROID__)
+    static threadpool& shared_instance();
+#else
     static threadpool& shared_instance()
     {
         return s_shared;
     }
-
+#endif
     ~threadpool()
     {
         m_service.stop();
@@ -105,7 +105,9 @@ public:
 private:
     struct _cancel_thread { };
 
+#if !defined(__ANDROID__)
     static threadpool s_shared;
+#endif
 
     void add_thread()
     {
@@ -120,7 +122,7 @@ private:
         schedule([]() -> void { throw _cancel_thread(); });
     }
 
-#if defined(ANDROID)
+#if (defined(ANDROID) || defined(__ANDROID__))
     static void detach_from_java(void*)
     {
         JVM.load()->DetachCurrentThread();
@@ -129,12 +131,7 @@ private:
 
     static void* thread_start(void *arg)
     {
-#if defined(ANDROID)
-        // Spinlock on the JVM calling JNI_OnLoad()
-        while (JVM == nullptr)
-        {
-            pplx::details::platform::YieldExecution();
-        }
+#if (defined(ANDROID) || defined(__ANDROID__))
         // Calling get_jvm_env() here forces the thread to be attached.
         get_jvm_env();
         pthread_cleanup_push(detach_from_java, nullptr);
@@ -151,7 +148,7 @@ private:
         catch (...)
         {
             // Something bad happened
-#if defined(ANDROID)
+#if (defined(ANDROID) || defined(__ANDROID__))
             // Reach into the depths of the 'droid!
             // NOTE: Uses internals of the bionic library
             // Written against android ndk r9d, 7/26/2014
@@ -159,7 +156,7 @@ private:
             throw;
 #endif
         }
-#if defined(ANDROID)
+#if (defined(ANDROID) || defined(__ANDROID__))
         pthread_cleanup_pop(true);
 #endif
         return arg;

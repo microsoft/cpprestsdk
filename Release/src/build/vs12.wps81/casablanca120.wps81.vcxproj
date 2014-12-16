@@ -20,6 +20,7 @@
     <OutDir>$(OutDir)\$(MsBuildProjectName)</OutDir>
     <ApplicationType>Windows Phone Silverlight</ApplicationType>
     <ApplicationTypeRevision>8.1</ApplicationTypeRevision>
+    <ProjectName>cpprestsdk120.wps81</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Config.Definitions.props" />
@@ -49,6 +50,7 @@
       <GenerateWindowsMetadata>true</GenerateWindowsMetadata>
     </Link>
   </ItemDefinitionGroup>
-  <Import Project="../sources.proj" />
+  <Import Project="..\common.vcxitems" Label="Shared" Condition="Exists('..\common.vcxitems')" />
+  <Import Project="..\winrt.vcxitems" Label="Shared" Condition="Exists('..\winrt.vcxitems')" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

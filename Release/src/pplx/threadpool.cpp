@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,48 +18,58 @@
 **/
 #include "stdafx.h"
 
+#if defined(__ANDROID__)
+#include <android/log.h>
+#include <jni.h>
+#endif
+
 namespace crossplat
 {
-// initialize the static shared threadpool 
-threadpool threadpool::s_shared(40);
-
-#if defined(ANDROID)
+#if (defined(ANDROID) || defined(__ANDROID__))
 // This pointer will be 0-initialized by default (at load time).
 std::atomic<JavaVM*> JVM;
-static thread_local JNIEnv* JVM_ENV = nullptr;
 
-JNIEnv* get_jvm_env()
+static void abort_if_no_jvm()
 {
     if (JVM == nullptr)
     {
-        throw std::runtime_error("Could not contact JVM");
+        __android_log_print(ANDROID_LOG_ERROR, "CPPRESTSDK", "%s", "The CppREST SDK must be initialized before first use on android: https://casablanca.codeplex.com/wikipage?title=Use%20on%20Android");
+        std::abort();
     }
-    if (JVM_ENV == nullptr)
-    {
-        auto result = JVM.load()->AttachCurrentThread(&crossplat::JVM_ENV, nullptr);
-        if (result != JNI_OK)
-        {
-            throw std::runtime_error("Could not attach to JVM");
-        }
-    }
-
-    return JVM_ENV;
 }
 
-#endif
-
-}
-
-#if defined(ANDROID)
-extern "C" jint JNI_OnLoad(JavaVM* vm, void* reserved)
+JNIEnv* get_jvm_env()
 {
-   JNIEnv* env;
-   if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK)
-   {
-      return -1;
-   }
+    abort_if_no_jvm();
+    JNIEnv* env = nullptr;
+    auto result = JVM.load()->AttachCurrentThread(&env, nullptr);
+    if (result != JNI_OK)
+    {
+        throw std::runtime_error("Could not attach to JVM");
+    }
 
-   crossplat::JVM = vm;
-   return JNI_VERSION_1_6;
+    return env;
+}
+
+threadpool& threadpool::shared_instance()
+{
+    abort_if_no_jvm();
+    static threadpool s_shared(40);
+    return s_shared;
+}
+
+#else
+
+// initialize the static shared threadpool
+threadpool threadpool::s_shared(40);
+
+#endif
+
+}
+
+#if defined(__ANDROID__)
+void cpprest_init(JavaVM* vm) {
+    crossplat::JVM = vm;
 }
 #endif
+

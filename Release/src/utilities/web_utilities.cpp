@@ -25,7 +25,7 @@
 
 #include "stdafx.h"
 
-#if defined(_MS_WINDOWS) && !defined(__cplusplus_winrt)
+#if defined(_WIN32) && !defined(__cplusplus_winrt)
 #include <Wincrypt.h>
 #endif
 
@@ -33,13 +33,11 @@
 #include <robuffer.h>
 #endif
 
-#include "cpprest/web_utilities.h"
-
 namespace web
 {
 namespace details
 {
-#if defined(_MS_WINDOWS)
+#if defined(_WIN32)
 #if defined(__cplusplus_winrt)
 
 // Not available on Windows Phone 8.0

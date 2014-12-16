@@ -16,34 +16,23 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* ws_msg.h
-*
 * Websocket incoming and outgoing message definitions.
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 #pragma once
 
-#ifndef _CASA_WS_MSG_H
-#define _CASA_WS_MSG_H
-
-#if (defined(__cplusplus_winrt) || !defined(_M_ARM)) && !defined(CPPREST_EXCLUDE_WEBSOCKETS)
+// Include on everything except VS2015 and Windows Desktop ARM, unless explicitly excluded.
+#if !defined(_MSC_VER) || ((_MSC_VER < 1900) && (defined(__cplusplus_winrt) || !defined(__cplusplus_winrt) && !defined(_M_ARM))) && !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 
 #include <memory>
 #include <limits>
 
-#include "cpprest/xxpublic.h"
-#include "cpprest/producerconsumerstream.h"
-
-#if defined(_MSC_VER) && (_MSC_VER >= 1800)
-#include <ppltasks.h>
-namespace pplx = Concurrency;
-#else
 #include "pplx/pplxtasks.h"
-#endif
-
+#include "cpprest/streams.h"
+#include "cpprest/containerstream.h"
 #include "cpprest/uri.h"
-#include "cpprest/basic_types.h"
+#include "cpprest/details/basic_types.h"
 #include "cpprest/asyncrt_utils.h"
 
 namespace web
@@ -55,8 +44,8 @@ namespace client
 
 namespace details
 {
-    class winrt_client;
-    class wspp_client;
+    class winrt_callback_client;
+    class wspp_callback_client;
 #if defined(__cplusplus_winrt)
     ref class ReceiveContext;
 #endif
@@ -143,8 +132,8 @@ public:
     }
 
 private:
-    friend class details::winrt_client;
-    friend class details::wspp_client;
+    friend class details::winrt_callback_client;
+    friend class details::wspp_callback_client;
 
     pplx::task_completion_event<void> m_body_sent;
     concurrency::streams::streambuf<uint8_t> m_body;
@@ -236,8 +225,8 @@ public:
     }
 
 private:
-    friend class details::winrt_client;
-    friend class details::wspp_client;
+    friend class details::winrt_callback_client;
+    friend class details::wspp_callback_client;
 #if defined(__cplusplus_winrt)
     friend ref class details::ReceiveContext;
 #endif
@@ -251,4 +240,3 @@ private:
 }}}
 
 #endif
-#endif  /* _CASA_WS_MSG_H */

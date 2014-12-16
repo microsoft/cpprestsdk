@@ -199,7 +199,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\pplx_op_test.cpp" />
-    <ClCompile Include="..\pplx_scheduler.cpp" />
+    
     <ClCompile Include="..\pplxtask_tests.cpp" />
     <ClCompile Include="..\pplx_task_options.cpp" />
     <ClCompile Include="..\stdafx.cpp">

@@ -1,6 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\version.props" />
   <PropertyGroup Label="Globals">
     <ProjectGuid>{4BA4E05C-E06B-4D50-948B-6323B411D22A}</ProjectGuid>
@@ -11,8 +10,8 @@
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <PlatformToolset>v110_wp80</PlatformToolset>
     <WinRTProject>true</WinRTProject>
+    <ProjectName>cpprestsdk110.wp8</ProjectName>
   </PropertyGroup>
-
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Config.Definitions.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -20,21 +19,18 @@
   <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <DebugFileSuffix>d</DebugFileSuffix>
   </PropertyGroup>
   <PropertyGroup>
     <TargetName>$(CppRestBaseFileName)110$(DebugFileSuffix)_wp8_$(CppRestSDKVersionFileSuffix)</TargetName>
   </PropertyGroup>
-
   <PropertyGroup>
     <GenerateManifest>false</GenerateManifest>
   </PropertyGroup>
-
   <ItemDefinitionGroup>
     <ClCompile>
-      <PreprocessorDefinitions>CPPREST_EXCLUDE_WEBSOCKETS;WINAPI_FAMILY=WINAPI_FAMILY_PHONE_APP;_ASYNCRT_EXPORT;_PPLX_EXPORT;_PHONE8_;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>CPPREST_EXCLUDE_WEBSOCKETS;WINAPI_FAMILY=WINAPI_FAMILY_PHONE_APP;_ASYNCRT_EXPORT;_PPLX_EXPORT;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalUsingDirectories>$(WindowsSDK_MetadataPath);$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <CompileAsWinRT>true</CompileAsWinRT>
       <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CasablancaSrcDir)\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -47,9 +43,8 @@
       <GenerateWindowsMetadata>true</GenerateWindowsMetadata>
     </Link>
   </ItemDefinitionGroup>
-
-  <Import Project="../sources.proj" />
-
+  <Import Project="..\common.vcxitems" Label="Shared" Condition="Exists('..\common.vcxitems')" />
+  <Import Project="..\winrt.vcxitems" Label="Shared" Condition="Exists('..\winrt.vcxitems')" />
   <ItemGroup>
     <Reference Include="Windows">
       <IsWinMDFile>true</IsWinMDFile>
@@ -59,8 +54,6 @@
       <Private>false</Private>
     </Reference>
   </ItemGroup>
-
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\WindowsPhone\v$(TargetPlatformVersion)\Microsoft.Cpp.WindowsPhone.$(TargetPlatformVersion).targets" />
-
 </Project>

@@ -105,7 +105,6 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <Profile>true</Profile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
@@ -120,7 +119,6 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <Profile>true</Profile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -196,7 +194,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\pplx_op_test.cpp" />
-    <ClCompile Include="..\pplx_scheduler.cpp" />
+    
     <ClCompile Include="..\pplxtask_tests.cpp" />
     <ClCompile Include="..\pplx_task_options.cpp" />
     <ClCompile Include="..\stdafx.cpp">

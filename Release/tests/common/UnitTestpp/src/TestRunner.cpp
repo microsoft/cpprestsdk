@@ -41,12 +41,18 @@
 #include <future>
 #endif
 
-#if defined(ANDROID)
+#if (defined(ANDROID) || defined(__ANDROID__))
 #include <jni.h>
 #include <boost/scope_exit.hpp>
 #endif
 
 #include <cstdlib>
+
+#if (defined(ANDROID) || defined(__ANDROID__))
+namespace crossplat {
+extern std::atomic<JavaVM*> JVM;
+}
+#endif
 
 namespace UnitTest {
 
@@ -128,23 +134,6 @@ int TestRunner::GetTestTimeout(Test* const curTest, int const defaultTestTimeInM
 }
 
 
-#if defined(ANDROID)
-static JavaVM* JVM = nullptr;
-static thread_local JNIEnv* JVM_ENV = nullptr;
-
-extern "C" jint JNI_OnLoad(JavaVM* vm, void* reserved)
-{
-    JNIEnv* env;
-    if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK)
-    {
-        return -1;
-    }
-    JVM = vm;
-
-    return JNI_VERSION_1_6;
-}
-#endif
-
 void TestRunner::RunTest(TestResults* const result, Test* const curTest, int const defaultTestTimeInMs) const
 {
     if (curTest->m_isMockTest == false)
@@ -178,11 +167,16 @@ void TestRunner::RunTest(TestResults* const result, Test* const curTest, int con
         // Timed wait requires async execution.
         auto testRunnerFuture = std::async(std::launch::async, [&]()
         {
-#if defined(ANDROID)
-            JVM->AttachCurrentThread(&JVM_ENV, nullptr);
+#if (defined(ANDROID) || defined(__ANDROID__))
+            JNIEnv* env = nullptr;
+            auto result = crossplat::JVM.load()->AttachCurrentThread(&env, nullptr);
+            if (result != JNI_OK)
+            {
+                throw std::runtime_error("Could not attach to JVM");
+            }
             BOOST_SCOPE_EXIT(void)
             {
-                JVM->DetachCurrentThread();
+                crossplat::JVM.load()->DetachCurrentThread();
             } BOOST_SCOPE_EXIT_END
 #endif
             curTest->Run();

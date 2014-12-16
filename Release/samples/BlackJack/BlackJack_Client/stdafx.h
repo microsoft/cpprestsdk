@@ -25,7 +25,7 @@
 
 #pragma once
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 #include "targetver.h"
 
 #include <stdio.h>
@@ -52,12 +52,5 @@
 #include <vector>
 #include <string>
 #include <exception>
-
-#if defined(_MSC_VER) && (_MSC_VER >= 1800)
-#include <ppltasks.h>
-namespace pplx = Concurrency;
-#else 
-#include "pplx/pplxtasks.h"
-#endif
 
 #include "cpprest/http_client.h"

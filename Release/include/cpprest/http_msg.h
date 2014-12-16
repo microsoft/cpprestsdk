@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* http_msg.h
-*
 * HTTP Library: Request and reply message definitions.
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
@@ -32,42 +30,14 @@
 #include <vector>
 #include <system_error>
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1800)
-#include <ppltasks.h>
-namespace pplx = Concurrency;
-#if (_MSC_VER >= 1900)
-#include <concrt.h>
-#ifndef DEV14_EXTENSIBILITY_WRKRND
-#define DEV14_EXTENSIBILITY_WRKRND
-namespace pplx = Concurrency;
-namespace Concurrency {
-    namespace extensibility {
-        typedef ::Concurrency::event event_t;
-        typedef ::Concurrency::reader_writer_lock reader_writer_lock_t;
-        typedef ::Concurrency::reader_writer_lock::scoped_lock scoped_rw_lock_t;
-        typedef ::Concurrency::reader_writer_lock::scoped_lock_read scoped_read_lock_t;
-
-        typedef ::Concurrency::details::_ReentrantBlockingLock recursive_lock_t;
-        typedef recursive_lock_t::_Scoped_lock scoped_recursive_lock_t;
-    }
-}
-#endif // DEV14_EXTENSIBILITY_WRKRND
-#endif // _MSC_VER >= 1900
-#else
 #include "pplx/pplxtasks.h"
-#endif
-
 #include "cpprest/json.h"
 #include "cpprest/uri.h"
 #include "cpprest/http_headers.h"
-#include "cpprest/xxpublic.h"
+#include "cpprest/details/cpprest_compat.h"
 #include "cpprest/asyncrt_utils.h"
 #include "cpprest/streams.h"
 #include "cpprest/containerstream.h"
-
-#ifndef _MS_WINDOWS
-#include <boost/algorithm/string/predicate.hpp>
-#endif
 
 namespace web
 {
@@ -75,7 +45,7 @@ namespace http
 {
 
 // URI class has been moved from web::http namespace to web namespace.
-// The below using declarations ensure we dont break existing code.
+// The below using declarations ensure we don't break existing code.
 // Please use the web::uri class going forward.
 using web::uri;
 using web::uri_builder;
@@ -99,7 +69,7 @@ class methods
 public:
 #define _METHODS
 #define DAT(a,b) _ASYNCRTIMP const static method a;
-#include "cpprest/http_constants.dat"
+#include "cpprest/details/http_constants.dat"
 #undef _METHODS
 #undef DAT
 };
@@ -114,7 +84,7 @@ class status_codes
 public:
 #define _PHRASES
 #define DAT(a,b,c) const static status_code a=b;
-#include "cpprest/http_constants.dat"
+#include "cpprest/details/http_constants.dat"
 #undef _PHRASES
 #undef DAT
 };
@@ -149,7 +119,7 @@ class header_names
 public:
 #define _HEADER_NAMES
 #define DAT(a,b) _ASYNCRTIMP const static utility::string_t a;
-#include "cpprest/http_constants.dat"
+#include "cpprest/details/http_constants.dat"
 #undef _HEADER_NAMES
 #undef DAT
 };
@@ -168,7 +138,7 @@ public:
     http_exception(const utility::string_t &whatArg)
         : m_msg(utility::conversions::to_utf8string(whatArg)) {}
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     /// <summary>
     /// Creates an <c>http_exception</c> with just a string message and no error code.
     /// </summary>
@@ -197,7 +167,7 @@ public:
           m_msg(utility::conversions::to_utf8string(whatArg))
     {}
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     /// <summary>
     /// Creates an <c>http_exception</c> with from a error code using the current platform error category.
     /// </summary>
@@ -554,8 +524,8 @@ public:
         auto utf8body = utility::conversions::utf16_to_utf8(body_text);
         auto length = utf8body.size();
         _m_impl->set_body(concurrency::streams::bytestream::open_istream<std::string>(
-        		std::move(utf8body)), 
-        		length, 
+        		std::move(utf8body)),
+        		length,
         		std::move(content_type.append(::utility::conversions::to_utf16string("; charset=utf-8"))));
     }
 
@@ -927,8 +897,8 @@ public:
         auto utf8body = utility::conversions::utf16_to_utf8(body_text);
         auto length = utf8body.size();
         _m_impl->set_body(concurrency::streams::bytestream::open_istream(
-        		std::move(utf8body)), 
-        		length, 
+        		std::move(utf8body)),
+        		length,
         		std::move(content_type.append(::utility::conversions::to_utf16string("; charset=utf-8"))));
     }
 
@@ -1341,14 +1311,12 @@ private:
 
 } // namespace details
 
+/// <summary>
+///
+/// </summary>
 class http_pipeline
 {
 public:
-
-    ~http_pipeline()
-    {
-
-    }
 
     /// <summary>
     /// Create an http pipeline that consists of a linear chain of stages
@@ -1381,7 +1349,7 @@ public:
     {
         pplx::extensibility::scoped_recursive_lock_t l(m_lock);
 
-        if ( m_stages.size() > 0 )
+        if (m_stages.size() > 0)
         {
             std::shared_ptr<http_pipeline_stage> penultimate = m_stages[m_stages.size()-1];
             penultimate->set_next_stage(stage);
@@ -1391,11 +1359,19 @@ public:
         m_stages.push_back(stage);
     }
 
+    /// <summary>
+    /// Sets the last stage of the pipeline.
+    /// </summary>
+    /// <param name="last">Shared pointer to pipeline stage to set as the last.</param>
     void set_last_stage(const std::shared_ptr<http_pipeline_stage> &last)
     {
         m_last_stage = last;
     }
 
+    /// <summary>
+    /// Retrieves the last stage in this pipeline.
+    /// </summary>
+    /// <returns>A shared pointer to last stage.</returns>
     const std::shared_ptr<http_pipeline_stage>& last_stage() const
     {
         return m_last_stage;
@@ -1403,7 +1379,7 @@ public:
 
 private:
 
-    http_pipeline(std::shared_ptr<http_pipeline_stage> last) : m_last_stage(last)
+    http_pipeline(const std::shared_ptr<http_pipeline_stage> &last) : m_last_stage(last)
     {
     }
 
@@ -1422,5 +1398,4 @@ private:
     http_pipeline(const http_pipeline &);
 };
 
-} // namespace http
-} // namespace web
+}}

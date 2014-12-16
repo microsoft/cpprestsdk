@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,9 +16,7 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* http_helpers.cpp - Implementation Details of the http.h layer of messaging
-*
-* Functions and types for interoperating with http.h from modern C++
+* Implementation Details of the http.h layer of messaging
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
 *
@@ -26,10 +24,8 @@
 ****/
 
 #include "stdafx.h"
-#include "cpprest/http_helpers.h"
-#include <array>
 
-using namespace web; 
+using namespace web;
 using namespace utility;
 using namespace utility::conversions;
 
@@ -39,7 +35,7 @@ namespace details
 {
     bool is_content_type_one_of(const utility::string_t *first, const utility::string_t *last, const utility::string_t &value)
     {
-        while (first != last) 
+        while (first != last)
         {
             if(utility::details::str_icmp(*first, value))
             {
@@ -87,7 +83,7 @@ namespace details
     void parse_content_type_and_charset(const utility::string_t &content_type, utility::string_t &content, utility::string_t &charset)
     {
         const size_t semi_colon_index = content_type.find_first_of(_XPLATSTR(";"));
-        
+
         // No charset specified.
         if(semi_colon_index == utility::string_t::npos)
         {
@@ -103,7 +99,7 @@ namespace details
         utility::string_t possible_charset = content_type.substr(semi_colon_index + 1);
         trim_whitespace(possible_charset);
         const size_t equals_index = possible_charset.find_first_of(_XPLATSTR("="));
-        
+
         // No charset specified.
         if(equals_index == utility::string_t::npos)
         {
@@ -126,7 +122,7 @@ namespace details
             charset.pop_back();
         }
         trim_whitespace(charset);
-        if (charset.front() == _XPLATSTR('"') && charset.back() == _XPLATSTR('"')) 
+        if (charset.front() == _XPLATSTR('"') && charset.back() == _XPLATSTR('"'))
         {
             charset = charset.substr(1, charset.size() - 2);
             trim_whitespace(charset);
@@ -160,7 +156,7 @@ namespace details
             return unknown;
         }
         const unsigned char *src = (const unsigned char *)&str[0];
-        
+
         // little endian
         if(src[0] == 0xFF && src[1] == 0xFE)
         {
@@ -198,7 +194,7 @@ namespace details
             // unknown defaults to big endian.
             return convert_utf16be_to_utf8(std::move(src), false);
         }
-        UNREACHABLE;
+        __assume(0);
     }
 
     utf16string convert_utf16_to_utf16(utf16string src)
@@ -215,7 +211,7 @@ namespace details
             // unknown defaults to big endian.
             return convert_utf16be_to_utf16le(std::move(src), false);
         }
-        UNREACHABLE;
+        __assume(0);
     }
 
     std::string convert_utf16le_to_utf8(utf16string src, bool erase_bom)
@@ -251,7 +247,7 @@ namespace details
         {
             return std::move(src);
         }
-        
+
         const size_t size = src.size();
         for(size_t i = 0; i < size; ++i)
         {
@@ -319,7 +315,7 @@ namespace details
         else
         {
             char buffer[9];
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
             sprintf_s(buffer, sizeof(buffer), "%8IX", bytes_read);
 #else
             snprintf(buffer, sizeof(buffer), "%8zX", bytes_read);
@@ -333,7 +329,7 @@ namespace details
         return offset;
     }
 
-#if (!defined(_MS_WINDOWS) || defined(__cplusplus_winrt))
+#if (!defined(_WIN32) || defined(__cplusplus_winrt))
     const std::array<bool,128> valid_chars =
     {{
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0-15
@@ -349,7 +345,7 @@ namespace details
     // Checks if the method contains any invalid characters
     bool validate_method(const utility::string_t& method)
     {
-        for (auto ch : method)
+        for (const auto &ch : method)
         {
             size_t ch_sz = static_cast<size_t>(ch);
             if (ch_sz >= 128)

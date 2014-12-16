@@ -31,5 +31,4 @@
 #include <vector>
 #include <string>
 #include <exception>
-#include "cpprest/basic_types.h"
 #include "cpprest/http_client.h"

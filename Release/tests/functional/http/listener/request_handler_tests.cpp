@@ -1,12 +1,20 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation.  All rights reserved.
+* Copyright (c) Microsoft Corporation. All rights reserved.
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
 *
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*
-* request_handler_tests.cpp
 *
 * Tests cases for covering the http_listener class itself.
 *
@@ -172,7 +180,7 @@ TEST_FIXTURE(uri_address, handle_trace)
         http_asserts::assert_test_response_equals(p_response, status_codes::OK);
         std::string utf8_response;
         utf8_response.assign(p_response->m_data.begin(), p_response->m_data.end());
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
         VERIFY_ARE_EQUAL("TRACE http://localhost:34567/ HTTP/1.1\r\nConnection: Keep-Alive\r\nHost: localhost:34567\r\nUser-Agent: test_http_client\r\n\r\n", utf8_response);
 #else
         VERIFY_ARE_EQUAL("TRACE http://localhost:34567/ HTTP/1.1\r\nConnection: Keep-Alive\r\nContent-Length: 0\r\nContent-Type: text/plain; charset=utf-8\r\nHost: localhost:34567\r\nUser-Agent: test_http_client\r\n\r\n", utf8_response);

@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* authentication_tests.cpp
-*
 * Tests cases for authentication with http_clients.
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -26,7 +24,7 @@
 #include "stdafx.h"
 #include <stdexcept>
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 #ifdef __cplusplus_winrt
 #define __WRL_NO_DEFAULT_LIB__
 #include <wrl.h>
@@ -37,7 +35,7 @@
 #endif
 #endif
 
-using namespace web; 
+using namespace web;
 using namespace utility;
 using namespace concurrency;
 using namespace web::http;
@@ -76,7 +74,7 @@ TEST_FIXTURE(uri_address, auth_no_data, "Ignore:Linux", "89", "Ignore:Apple", "8
         headers[U("WWW-Authenticate")] = U("Basic realm = \"WallyWorld\"");
 
         // unauthorized
-        p_request->reply(status_codes::Unauthorized, U("Authentication Failed"), headers); 
+        p_request->reply(status_codes::Unauthorized, U("Authentication Failed"), headers);
 
     }).then([&scoped, replyFunc]()
     {
@@ -118,7 +116,7 @@ TEST_FIXTURE(uri_address, proxy_auth_known_contentlength, "Ignore:Linux", "88", 
         headers[U("WWW-Authenticate")] = U("Basic realm = \"WallyWorld\"");
 
         // unauthorized
-        p_request->reply(status_codes::Unauthorized, U("Authentication Failed"), headers); 
+        p_request->reply(status_codes::Unauthorized, U("Authentication Failed"), headers);
 
     }).then([&scoped, replyFunc]()
     {
@@ -153,7 +151,7 @@ TEST_FIXTURE(uri_address, proxy_auth_noseek, "Ignore:Linux", "88", "Ignore:Apple
         headers[U("WWW-Authenticate")] = U("Basic realm = \"WallyWorld\"");
 
         // unauthorized
-        p_request->reply(status_codes::Unauthorized, U("Authentication Failed"), headers); 
+        p_request->reply(status_codes::Unauthorized, U("Authentication Failed"), headers);
 
     });
 
@@ -194,7 +192,7 @@ TEST_FIXTURE(uri_address, proxy_auth_unknown_contentlength, "Ignore:Linux", "88"
         headers[U("WWW-Authenticate")] = U("Basic realm = \"WallyWorld\"");
 
         // unauthorized
-        p_request->reply(status_codes::Unauthorized, U("Authentication Failed"), headers); 
+        p_request->reply(status_codes::Unauthorized, U("Authentication Failed"), headers);
 
     }).then([&scoped, replyFunc]()
     {
@@ -218,7 +216,7 @@ TEST_FIXTURE(uri_address, empty_username_password)
         // Auth header
         headers[U("WWW-Authenticate")] = U("Basic realm = \"myRealm\"");
         // unauthorized
-        p_request->reply(status_codes::Unauthorized, U("Authentication Failed"), headers, "a" ); 
+        p_request->reply(status_codes::Unauthorized, U("Authentication Failed"), headers, "a" );
     });
 
     http_response response = client.request(methods::GET).get();
@@ -249,7 +247,7 @@ TEST_FIXTURE(uri_address, error_after_valid_credentials, "Ignore:Linux", "89", "
             headers[U("WWW-Authenticate")] = U("Basic realm = \"WallyWorld\"");
             headers[U("h1")] = U("data2");
             // still unauthorized after the user has resent the request with the credentials
-            p_request->reply(status_codes::Unauthorized, U("Authentication Failed"), headers, "def" ); 
+            p_request->reply(status_codes::Unauthorized, U("Authentication Failed"), headers, "def" );
         };
 
     scoped.server()->next_request().then([&](test_request *p_request)
@@ -259,7 +257,7 @@ TEST_FIXTURE(uri_address, error_after_valid_credentials, "Ignore:Linux", "89", "
         // Auth header
         headers[U("WWW-Authenticate")] = U("Basic realm = \"myRealm\"");
         // unauthorized
-        p_request->reply(status_codes::Unauthorized, U("Authentication Failed"), headers, "abc" ); 
+        p_request->reply(status_codes::Unauthorized, U("Authentication Failed"), headers, "abc" );
     }).then([&scoped, &replyFunc]()
     {
         // Client resent the request
@@ -348,7 +346,7 @@ TEST_FIXTURE(server_properties, unsuccessful_auth_with_basic_cred, "Requires", "
 
     http_client_config config;
     config.set_credentials(credentials(m_username, m_password));
-    
+
     http_client client(m_uri, config);
     http_response response = client.request(methods::GET).get();
     VERIFY_ARE_EQUAL(status_codes::Unauthorized, response.status_code());
@@ -423,7 +421,7 @@ TEST_FIXTURE(uri_address, set_user_options_winrt)
     test_http_server::scoped_server scoped(m_uri);
     scoped.server()->next_request().then([](test_request *p_request)
     {
-        p_request->reply(status_codes::OK); 
+        p_request->reply(status_codes::OK);
     });
 
     http_client_config config;
@@ -438,7 +436,7 @@ TEST_FIXTURE(uri_address, set_user_options_winrt)
 }
 #endif // __cplusplus_winrt
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 #if !defined(__cplusplus_winrt)
 TEST_FIXTURE(server_properties, set_user_options, "Requires", "Server;UserName;Password")
 {
@@ -451,7 +449,7 @@ TEST_FIXTURE(server_properties, set_user_options, "Requires", "Server;UserName;P
         DWORD policy = WINHTTP_AUTOLOGON_SECURITY_LEVEL_LOW;
         if (!WinHttpSetOption(handle,
                          WINHTTP_OPTION_AUTOLOGON_POLICY,
-                         &policy, 
+                         &policy,
                          sizeof(policy)))
         {
             throw std::runtime_error("The Test Error");
@@ -594,8 +592,8 @@ TEST_FIXTURE(uri_address, set_user_options_exceptions)
     http_client client(m_uri, config);
     VERIFY_THROWS(client.request(methods::GET).get(), std::runtime_error);
 }
-#endif // _MS_WINDOWS
-#pragma endregion 
+#endif // _WIN32
+#pragma endregion
 
 // Fix for 522831 AV after failed authentication attempt
 TEST_FIXTURE(uri_address, failed_authentication_attempt, "Ignore:Linux", "89", "Ignore:Apple", "89")

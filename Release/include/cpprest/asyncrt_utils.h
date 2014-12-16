@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* async_utils.h
-*
 * Various common utilities.
 *
 * For the latest on this and related APIs, please see http://casablanca.codeplex.com.
@@ -27,15 +25,6 @@
 
 #pragma once
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1800)
-#include <ppltasks.h>
-namespace pplx = Concurrency;
-#else
-#include "pplx/pplxtasks.h"
-#endif
-
-#include "cpprest/xxpublic.h"
-#include "cpprest/basic_types.h"
 #include <string>
 #include <vector>
 #include <cstdint>
@@ -43,13 +32,16 @@ namespace pplx = Concurrency;
 #include <random>
 #include <locale.h>
 
-#if !defined(_MS_WINDOWS) || (_MSC_VER >= 1700)
+#include "pplx/pplxtasks.h"
+#include "cpprest/details/basic_types.h"
+
+#if !defined(_WIN32) || (_MSC_VER >= 1700)
 #include <chrono>
 #endif
 
-#ifndef _MS_WINDOWS
+#ifndef _WIN32
 #include <boost/algorithm/string.hpp>
-#ifndef ANDROID // CodePlex 269
+#if !defined(ANDROID) && !defined(__ANDROID__) // CodePlex 269
 #include <xlocale.h>
 #endif
 #endif
@@ -74,30 +66,38 @@ namespace timespan
     /// Converts an xml duration to timespan/interval in seconds
     /// http://www.w3.org/TR/xmlschema-2/#duration
     /// </summary>
-    _ASYNCRTIMP utility::seconds __cdecl xml_duration_to_seconds(utility::string_t timespanString);
+    _ASYNCRTIMP utility::seconds __cdecl xml_duration_to_seconds(const utility::string_t &timespanString);
 }
 
-/// Functions for string conversions.
+/// Functions for Unicode string conversions.
 namespace conversions
 {
     /// <summary>
-    /// Converts a UTF-16 string to a UTF-8 string
+    /// Converts a UTF-16 string to a UTF-8 string.
     /// </summary>
+    /// <param name="w">A two byte character UTF-16 string.</param>
+    /// <returns>A single byte character UTF-8 string.</returns>
     _ASYNCRTIMP std::string __cdecl utf16_to_utf8(const utf16string &w);
 
     /// <summary>
     /// Converts a UTF-8 string to a UTF-16
     /// </summary>
+    /// <param name="s">A single byte character UTF-8 string.</param>
+    /// <returns>A two byte character UTF-16 string.</returns>
     _ASYNCRTIMP utf16string __cdecl utf8_to_utf16(const std::string &s);
 
     /// <summary>
     /// Converts a ASCII (us-ascii) string to a UTF-16 string.
     /// </summary>
+    /// <param name="s">A single byte character us-ascii string.</param>
+    /// <returns>A two byte character UTF-16 string.</returns>
     _ASYNCRTIMP utf16string __cdecl usascii_to_utf16(const std::string &s);
 
     /// <summary>
     /// Converts a Latin1 (iso-8859-1) string to a UTF-16 string.
     /// </summary>
+    /// <param name="s">A single byte character UTF-8 string.</param>
+    /// <returns>A two byte character UTF-16 string.</returns>
     _ASYNCRTIMP utf16string __cdecl latin1_to_utf16(const std::string &s);
 
     /// <summary>
@@ -106,23 +106,59 @@ namespace conversions
     _ASYNCRTIMP utf16string __cdecl default_code_page_to_utf16(const std::string &s);
 
     /// <summary>
-    /// Decode to string_t from either a utf-16 or utf-8 string
+    /// Converts to a platform dependent Unicode string type.
     /// </summary>
+    /// <param name="s">A single byte character UTF-8 string.</param>
+    /// <returns>A platform dependent string type.</returns>
     _ASYNCRTIMP utility::string_t __cdecl to_string_t(std::string &&s);
+
+    /// <summary>
+    /// Converts to a platform dependent Unicode string type.
+    /// </summary>
+    /// <param name="s">A two byte character UTF-16 string.</param>
+    /// <returns>A platform dependent string type.</returns>
     _ASYNCRTIMP utility::string_t __cdecl to_string_t(utf16string &&s);
+
+    /// <summary>
+    /// Converts to a platform dependent Unicode string type.
+    /// </summary>
+    /// <param name="s">A single byte character UTF-8 string.</param>
+    /// <returns>A platform dependent string type.</returns>
     _ASYNCRTIMP utility::string_t __cdecl to_string_t(const std::string &s);
+
+    /// <summary>
+    /// Converts to a platform dependent Unicode string type.
+    /// </summary>
+    /// <param name="s">A two byte character UTF-16 string.</param>
+    /// <returns>A platform dependent string type.</returns>
     _ASYNCRTIMP utility::string_t __cdecl to_string_t(const utf16string &s);
 
     /// <summary>
-    /// Decode to utf16 from either a narrow or wide string
+    /// Converts to a UTF-16 from string.
     /// </summary>
+    /// <param name="value">A single byte character UTF-8 string.</param>
+    /// <returns>A two byte character UTF-16 string.</returns>
     _ASYNCRTIMP utf16string __cdecl to_utf16string(const std::string &value);
+
+    /// <summary>
+    /// Converts to a UTF-16 from string.
+    /// </summary>
+    /// <param name="value">A two byte character UTF-16 string.</param>
+    /// <returns>A two byte character UTF-16 string.</returns>
     _ASYNCRTIMP utf16string __cdecl to_utf16string(utf16string value);
 
     /// <summary>
-    /// Decode to UTF-8 from either a narrow or wide string.
+    /// Converts to a UTF-8 string.
     /// </summary>
+    /// <param name="value">A single byte character UTF-8 string.</param>
+    /// <returns>A single byte character UTF-8 string.</returns>
     _ASYNCRTIMP std::string __cdecl to_utf8string(std::string value);
+
+    /// <summary>
+    /// Converts to a UTF-8 string.
+    /// </summary>
+    /// <param name="value">A two byte character UTF-16 string.</param>
+    /// <returns>A single byte character UTF-8 string.</returns>
     _ASYNCRTIMP std::string __cdecl to_utf8string(const utf16string &value);
 
     /// <summary>
@@ -172,8 +208,8 @@ namespace details
         _ASYNCRTIMP scoped_c_thread_locale();
         _ASYNCRTIMP ~scoped_c_thread_locale();
 
-#ifndef ANDROID // CodePlex 269
-#ifdef _MS_WINDOWS
+#if !defined(ANDROID) && !defined(__ANDROID__) // CodePlex 269
+#ifdef _WIN32
         typedef _locale_t xplat_locale;
 #else
         typedef locale_t xplat_locale;
@@ -182,11 +218,11 @@ namespace details
         static _ASYNCRTIMP xplat_locale __cdecl c_locale();
 #endif
     private:
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
         std::string m_prevLocale;
         int m_prevThreadSetting;
-#elif !defined(ANDROID)
-        locale_t m_prevLocale;        
+#elif !(defined(ANDROID) || defined(__ANDROID__))
+        locale_t m_prevLocale;
 #endif
         scoped_c_thread_locale(const scoped_c_thread_locale &);
         scoped_c_thread_locale & operator=(const scoped_c_thread_locale &);
@@ -235,14 +271,14 @@ namespace details
     /// <returns>true if the strings are equivalent, false otherwise</returns>
     inline bool str_icmp(const utility::string_t &left, const utility::string_t &right)
     {
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
         return _wcsicmp(left.c_str(), right.c_str()) == 0;
 #else
         return boost::iequals(left, right);
 #endif
     }
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
 
 /// <summary>
 /// Category error type for Windows OS errors.
@@ -316,7 +352,7 @@ public:
     enum date_format { RFC_1123, ISO_8601 };
 
     /// <summary>
-    /// Returns the current UTC time. 
+    /// Returns the current UTC time.
     /// </summary>
     static _ASYNCRTIMP datetime __cdecl utc_now();
 
@@ -410,7 +446,7 @@ public:
         return days*_dayTicks;
     }
 
-    bool is_initialized() const 
+    bool is_initialized() const
     {
         return m_interval != 0;
     }
@@ -426,7 +462,7 @@ private:
     static const interval_type _dayTicks    = 24*60*60*_secondTicks;
 
 
-#ifdef _MS_WINDOWS
+#ifdef _WIN32
     // void* to avoid pulling in windows.h
     static _ASYNCRTIMP bool __cdecl datetime::system_type_to_datetime(/*SYSTEMTIME*/ void* psysTime, uint64_t seconds, datetime * pdt);
 #else
@@ -442,14 +478,14 @@ private:
     interval_type m_interval;
 };
 
-#ifndef _MS_WINDOWS
+#ifndef _WIN32
 
 // temporary workaround for the fact that
 // utf16char is not fully supported in GCC
 class cmp
 {
 public:
-    
+
     static int icmp(std::string left, std::string right)
     {
         size_t i;
@@ -483,7 +519,7 @@ inline int operator- (datetime t1, datetime t2)
 
     // Round it down to seconds
     diff /= 10 * 1000 * 1000;
-    
+
     return static_cast<int>(diff);
 }
 

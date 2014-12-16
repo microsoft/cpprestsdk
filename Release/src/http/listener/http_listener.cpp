@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,15 +16,16 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* http_listen.cpp
-*
 * HTTP Library: HTTP listener (server-side) APIs
+*
+* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 
 #include "stdafx.h"
-#include "cpprest/http_server_api.h"
+
+#if !defined(_WIN32) || (_WIN32_WINNT >= _WIN32_WINNT_VISTA && !defined(__cplusplus_winrt))
 
 using namespace web::http::experimental;
 
@@ -37,11 +38,11 @@ namespace listener
 // Helper function to check URI components.
 static void check_listener_uri(const http::uri &address)
 {
-    // Somethings like proper URI schema are verified by the URI class.
+    // Some things like proper URI schema are verified by the URI class.
     // We only need to check certain things specific to HTTP.
 
-#ifdef _MS_WINDOWS	
-    //HTTP Server API includes SSL support 
+#ifdef _WIN32
+    //HTTP Server API includes SSL support
     if(address.scheme() != U("http") && address.scheme() != U("https"))
     {
         throw std::invalid_argument("URI scheme must be 'http' or 'https'");
@@ -161,7 +162,7 @@ void details::http_listener_impl::handle_request(http_request msg)
     }
     else
     {
-        // Method is not supported. 
+        // Method is not supported.
         // Send back a list of supported methods to the client.
         http_response response(status_codes::MethodNotAllowed);
         response.headers().add(U("Allow"), get_supported_methods());
@@ -169,7 +170,7 @@ void details::http_listener_impl::handle_request(http_request msg)
     }
 }
 
-utility::string_t details::http_listener_impl::get_supported_methods() const 
+utility::string_t details::http_listener_impl::get_supported_methods() const
 {
     utility::string_t allowed;
     bool first = true;
@@ -201,6 +202,6 @@ void details::http_listener_impl::handle_options(http_request message)
     message.reply(response);
 }
 
-} // namespace listener
-} // namespace experimental
-}} // namespace web::http
+}}}}
+
+#endif

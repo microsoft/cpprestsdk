@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,6 @@
 *
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*
-* uri_builder.cpp
 *
 * Builder for constructing URIs.
 *
@@ -27,7 +25,7 @@
 
 #include "stdafx.h"
 
-namespace web 
+namespace web
 {
 
 uri_builder &uri_builder::append_path(const utility::string_t &path, bool is_encode)
@@ -36,7 +34,7 @@ uri_builder &uri_builder::append_path(const utility::string_t &path, bool is_enc
     {
         return *this;
     }
-    
+
     auto encoded_path = is_encode ? uri::encode_uri(path, uri::components::path) : path;
     auto thisPath = this->path();
     if(thisPath.empty() || thisPath == _XPLATSTR("/"))
@@ -49,7 +47,7 @@ uri_builder &uri_builder::append_path(const utility::string_t &path, bool is_enc
         {
             set_path(encoded_path);
         }
-    }   
+    }
     else if(thisPath.back() == _XPLATSTR('/') && encoded_path.front() == _XPLATSTR('/'))
     {
         thisPath.pop_back();
@@ -73,7 +71,7 @@ uri_builder &uri_builder::append_query(const utility::string_t &query, bool is_e
     {
         return *this;
     }
-    
+
     auto encoded_query = is_encode ? uri::encode_uri(query, uri::components::query) : query;
     auto thisQuery = this->query();
     if (thisQuery.empty())
