@@ -16,8 +16,6 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* request_stream_tests.cpp
-*
 * Tests cases covering using streams with HTTP request with http_client.
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -318,10 +316,7 @@ public:
 
 // Ignore on WinRT CodePlex 144
 #if !defined(__cplusplus_winrt)
-TEST_FIXTURE(uri_address, set_body_stream_exception,
-    "Ignore:Apple", "296",
-    "Ignore:Android", "296",
-    "Ignore:Linux", "296")
+TEST_FIXTURE(uri_address, set_body_stream_exception)
 {
     test_http_server::scoped_server scoped(m_uri);
     scoped.server();
@@ -344,10 +339,7 @@ TEST_FIXTURE(uri_address, set_body_stream_exception,
 // These tests aren't possible on WinRT because they don't
 // specify a Content-Length.
 #if !defined(__cplusplus_winrt)
-TEST_FIXTURE(uri_address, stream_close_early,
-    "Ignore:Apple", "296",
-    "Ignore:Android", "296",
-    "Ignore:Linux", "296")
+TEST_FIXTURE(uri_address, stream_close_early)
 {
     http_client client(m_uri);
     test_http_server::scoped_server scoped(m_uri);
@@ -370,10 +362,7 @@ TEST_FIXTURE(uri_address, stream_close_early,
     http_asserts::assert_response_equals(responseTask.get(), status_codes::OK);
 }
 
-TEST_FIXTURE(uri_address, stream_close_early_with_exception,
-    "Ignore:Apple", "296",
-    "Ignore:Android", "296",
-    "Ignore:Linux", "296")
+TEST_FIXTURE(uri_address, stream_close_early_with_exception)
 {
     http_client client(m_uri);
     test_http_server::scoped_server scoped(m_uri);
@@ -390,15 +379,15 @@ TEST_FIXTURE(uri_address, stream_close_early_with_exception,
 
     // Verify that the responseTask throws the exception set when closing the stream
     VERIFY_THROWS(responseTask.get(), test_exception);
+    
+    // Codeplex 328.
+    tests::common::utilities::os_utilities::sleep(1000);
 }
 #endif
 
  // Ignore on WinRT only CodePlex 144
 #if !defined(__cplusplus_winrt)
-TEST_FIXTURE(uri_address, stream_close_early_with_exception_and_contentlength,
-    "Ignore:Apple", "296",
-    "Ignore:Android", "296",
-    "Ignore:Linux", "296")
+TEST_FIXTURE(uri_address, stream_close_early_with_exception_and_contentlength)
 {
     http_client client(m_uri);
     test_http_server::scoped_server scoped(m_uri);
@@ -420,10 +409,7 @@ TEST_FIXTURE(uri_address, stream_close_early_with_exception_and_contentlength,
 
 // Ignore on WinRT only CodePlex 144
 #if !defined(__cplusplus_winrt)
-TEST_FIXTURE(uri_address, stream_close_early_with_contentlength,
-    "Ignore:Apple", "296",
-    "Ignore:Android", "296",
-    "Ignore:Linux", "296")
+TEST_FIXTURE(uri_address, stream_close_early_with_contentlength)
 {
     http_client client(m_uri);
     test_http_server::scoped_server scoped(m_uri);

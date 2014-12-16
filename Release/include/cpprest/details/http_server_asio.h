@@ -68,7 +68,7 @@ private:
     bool m_close;
     bool m_chunked;
     std::atomic<int> m_refs; // track how many threads are still referring to this
-
+    
 public:
     connection(std::unique_ptr<boost::asio::ip::tcp::socket> socket, http_linux_server* server, hostport_listener* parent)
     : m_socket(std::move(socket))
@@ -94,16 +94,15 @@ private:
     void handle_chunked_header(const boost::system::error_code& ec);
     void handle_chunked_body(const boost::system::error_code& ec, int toWrite);
     void dispatch_request_to_listener();
-    void request_data_avail(size_t size);
     void do_response(bool bad_request);
     template <typename ReadHandler>
-    void async_read_until_buffersize(size_t size, ReadHandler handler);
+    void async_read_until_buffersize(size_t size, const ReadHandler &handler);
     void async_process_response(http_response response);
-    void cancel_sending_response_with_error(http_response response, std::exception_ptr);
-    void handle_headers_written(http_response response, const boost::system::error_code& ec);
-    void handle_write_large_response(http_response response, const boost::system::error_code& ec);
-    void handle_write_chunked_response(http_response response, const boost::system::error_code& ec);
-    void handle_response_written(http_response response, const boost::system::error_code& ec);
+    void cancel_sending_response_with_error(const http_response &response, const std::exception_ptr &);
+    void handle_headers_written(const http_response &response, const boost::system::error_code& ec);
+    void handle_write_large_response(const http_response &response, const boost::system::error_code& ec);
+    void handle_write_chunked_response(const http_response &response, const boost::system::error_code& ec);
+    void handle_response_written(const http_response &response, const boost::system::error_code& ec);
     void finish_request_response();
 };
 
