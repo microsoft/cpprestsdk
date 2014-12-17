@@ -379,9 +379,11 @@ TEST_FIXTURE(uri_address, stream_close_early_with_exception)
 
     // Verify that the responseTask throws the exception set when closing the stream
     VERIFY_THROWS(responseTask.get(), test_exception);
-    
+
     // Codeplex 328.
+#if !defined(_WIN32)
     tests::common::utilities::os_utilities::sleep(1000);
+#endif
 }
 #endif
 

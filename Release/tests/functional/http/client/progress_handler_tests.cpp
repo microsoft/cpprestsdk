@@ -320,7 +320,7 @@ TEST_FIXTURE(uri_address, set_progress_handler_request_timeout)
     VERIFY_IS_TRUE(calls >= 2);
 }
 
-TEST_FIXTURE(uri_address, upload_nobody_exception, "Ignore:Apple", "900236", "Ignore:Linux", "900236")
+TEST_FIXTURE(uri_address, upload_nobody_exception, "Ignore:Apple", "155", "Ignore:Linux", "155")
 {
     test_http_server::scoped_server scoped(m_uri);
     http_client client(m_uri);
@@ -338,6 +338,11 @@ TEST_FIXTURE(uri_address, upload_nobody_exception, "Ignore:Apple", "900236", "Ig
     });
 
     VERIFY_THROWS(client.request(msg).get(), std::invalid_argument);
+    
+    // Codeplex 328.
+#if !defined(_WIN32)
+    tests::common::utilities::os_utilities::sleep(1000);
+#endif
 }
 
 TEST_FIXTURE(uri_address, download_nobody_exception)
@@ -364,10 +369,7 @@ TEST_FIXTURE(uri_address, download_nobody_exception)
     VERIFY_THROWS(client.request(msg).get().content_ready().get(), std::invalid_argument);
 }
 
-TEST_FIXTURE(uri_address, data_upload_exception,
-             "Ignore:Linux", "296",
-             "Ignore:Apple", "296",
-             "Ignore:Android", "296")
+TEST_FIXTURE(uri_address, data_upload_exception)
 {
     test_http_server::scoped_server scoped(m_uri);
     http_client client(m_uri);
@@ -380,6 +382,11 @@ TEST_FIXTURE(uri_address, data_upload_exception,
     });
 
     VERIFY_THROWS(client.request(msg).get(), std::invalid_argument);
+    
+    // Codeplex 328.
+#if !defined(_WIN32)
+    tests::common::utilities::os_utilities::sleep(1000);
+#endif
 }
 
 TEST_FIXTURE(uri_address, data_download_exception)
