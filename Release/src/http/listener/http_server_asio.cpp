@@ -464,6 +464,7 @@ void connection::handle_body(const boost::system::error_code& ec)
             catch (...)
             {
                 m_request._get_impl()->_complete(0, std::current_exception());
+                return;
             }
             m_read += writtenSize;
             m_request_buf.consume(writtenSize);
