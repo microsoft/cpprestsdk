@@ -139,7 +139,7 @@ public:
         report_exception(std::make_exception_ptr(e));
     }
 
-    void report_exception(std::exception_ptr exceptionPtr)
+    virtual void report_exception(std::exception_ptr exceptionPtr)
     {
         auto response_impl = m_response._get_impl();
 
