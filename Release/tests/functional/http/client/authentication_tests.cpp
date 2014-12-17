@@ -285,7 +285,6 @@ TEST_FIXTURE(uri_address, error_after_valid_credentials, "Ignore:Linux", "89", "
 
 // These tests are disabled since they require a server with authentication running.
 // The server portion to use is the C# AuthenticationListener.
-#pragma region Manual Server Authentication Tests
 
 class server_properties
 {
@@ -593,7 +592,6 @@ TEST_FIXTURE(uri_address, set_user_options_exceptions)
     VERIFY_THROWS(client.request(methods::GET).get(), std::runtime_error);
 }
 #endif // _WIN32
-#pragma endregion
 
 // Fix for 522831 AV after failed authentication attempt
 TEST_FIXTURE(uri_address, failed_authentication_attempt, "Ignore:Linux", "89", "Ignore:Apple", "89")

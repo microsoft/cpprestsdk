@@ -68,7 +68,7 @@ static http_response send_request_response(
     return rsp;
 }
 
-static utf16string switch_endian_ness(const utf16string &src_str)
+utf16string switch_endian_ness(const utf16string &src_str)
 {
     utf16string dest_str;
     dest_str.resize(src_str.size());

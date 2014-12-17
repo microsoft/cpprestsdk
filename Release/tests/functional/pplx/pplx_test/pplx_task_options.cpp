@@ -56,7 +56,7 @@ std::shared_ptr<pplx::scheduler_interface> __cdecl get_scheduler()
 class TaskOptionsTestScheduler : public pplx::scheduler_interface
 {
 public:
-    TaskOptionsTestScheduler() : m_scheduler(get_scheduler()), m_numTasks(0)
+    TaskOptionsTestScheduler() : m_numTasks(0), m_scheduler(get_scheduler())
     {
     }
 
@@ -80,8 +80,10 @@ private:
     TaskOptionsTestScheduler & operator=(const TaskOptionsTestScheduler &);
 };
 
+#if defined(_MSC_VER)
 #pragma warning(push)
 #pragma warning(disable : 4512)
+#endif
 class CheckLifetimeScheduler : public pplx::scheduler_interface
 {
 public:
@@ -110,7 +112,9 @@ public:
     pplx::extensibility::event_t& m_event;
     pplx::details::atomic_long m_numTasks;
 };
+#if defined(_MSC_VER)
 #pragma warning(pop)
+#endif
 
 namespace tests { namespace functional { namespace PPLX {
 

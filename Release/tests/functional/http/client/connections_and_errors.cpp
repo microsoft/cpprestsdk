@@ -242,8 +242,6 @@ TEST_FIXTURE(uri_address, stream_timeout)
 }
 #endif
 
-#pragma region Cancellation tests
-
 TEST_FIXTURE(uri_address, cancel_before_request)
 {
     test_http_server::scoped_server scoped(m_uri);
@@ -377,8 +375,6 @@ TEST_FIXTURE(uri_address, cancel_while_downloading_data, "Ignore:Apple", "220")
     listener.close().wait();
 }
 #endif
-
-#pragma endregion
 
 } // SUITE(connections_and_errors)
 

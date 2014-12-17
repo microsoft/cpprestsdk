@@ -417,8 +417,8 @@ namespace Concurrency { namespace streams {
         basic_rawptr_buffer(const _CharType* data, size_t size)
             : streambuf_state_manager<_CharType>(std::ios_base::in),
               m_data(const_cast<_CharType*>(data)),
-              m_current_position(0),
-              m_size(size)
+              m_size(size),
+              m_current_position(0)
         {
             validate_mode(std::ios_base::in);
         }
@@ -432,8 +432,8 @@ namespace Concurrency { namespace streams {
         basic_rawptr_buffer(_CharType* data, size_t size, std::ios_base::openmode mode)
             : streambuf_state_manager<_CharType>(mode),
               m_data(data),
-              m_current_position(0),
-              m_size(size)
+              m_size(size),
+              m_current_position(0)
         {
             validate_mode(mode);
         }

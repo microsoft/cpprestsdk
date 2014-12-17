@@ -1328,7 +1328,7 @@ private:
 template <typename FloatingPoint>
 struct _double_state
 {
-    _double_state() : result(0), minus(0), exponent(false), after_comma(0), exponent_number(0), exponent_minus(0), p_exception_string(), complete(false) {}
+    _double_state() : result(0), minus(0), after_comma(0), exponent(false), exponent_number(0), exponent_minus(0), complete(false), p_exception_string() {}
 
     FloatingPoint result;
     char minus;             // 0 -- no sign, 1 -- plus, 2 -- minus

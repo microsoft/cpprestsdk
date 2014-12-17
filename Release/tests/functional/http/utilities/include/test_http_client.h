@@ -79,7 +79,6 @@ public:
     std::map<utility::string_t, utility::string_t> m_headers;
     std::vector<unsigned char> m_data;
 
-private:
     friend class _test_http_client;
     _test_http_client * m_client;
 };

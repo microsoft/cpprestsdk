@@ -28,7 +28,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{5115840e-a5a8-4044-b595-cda05c2d65d0}</ProjectGuid>
+    <ProjectGuid>{06F8344D-4EBA-4B9F-A209-5FCEFA9D62EB}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>HttpTests</RootNamespace>
     <SccProjectName>SAK</SccProjectName>
@@ -194,7 +194,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\pplx_op_test.cpp" />
-    
     <ClCompile Include="..\pplxtask_tests.cpp" />
     <ClCompile Include="..\pplx_task_options.cpp" />
     <ClCompile Include="..\stdafx.cpp">

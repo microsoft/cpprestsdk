@@ -336,7 +336,14 @@ public:
     virtual void on_closed(bool result)
     {
         m_op.set(result);
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdelete-non-virtual-dtor"
+#endif
         delete this;
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
     }
 
 private:

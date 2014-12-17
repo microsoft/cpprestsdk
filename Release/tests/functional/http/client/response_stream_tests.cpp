@@ -502,8 +502,6 @@ TEST_FIXTURE(uri_address, xfer_chunked_multiple_chunks)
 
 #endif
 
-#pragma endregion
-
 } // SUITE(responses)
 
 }}}}

@@ -703,7 +703,7 @@ namespace details {
             return pplx::create_task(result_tce);
         }
 
-        basic_file_buffer(_In_ _file_info *info) : m_info(info), streambuf_state_manager<_CharType>(info->m_mode) { }
+        basic_file_buffer(_In_ _file_info *info) : streambuf_state_manager<_CharType>(info->m_mode), m_info(info) { }
 
 #if !defined(__cplusplus_winrt)
         static pplx::task<std::shared_ptr<basic_streambuf<_CharType>>> open(
@@ -825,7 +825,7 @@ namespace details {
         class _filestream_callback_read : public details::_filestream_callback
         {
         public:
-            _filestream_callback_read(_In_ _file_info *info, pplx::task_completion_event<size_t> op) : m_op(op), m_info(info) { }
+            _filestream_callback_read(_In_ _file_info *info, pplx::task_completion_event<size_t> op) : m_info(info), m_op(op) { }
 
             virtual void on_completed(size_t result)
             {
@@ -849,7 +849,7 @@ namespace details {
         class _filestream_callback_putc : public details::_filestream_callback
         {
         public:
-            _filestream_callback_putc(_In_ _file_info *info, pplx::task_completion_event<int_type> op, _CharType ch) : m_info(info), m_ch(ch), m_op(op) { }
+            _filestream_callback_putc(_In_ _file_info *info, pplx::task_completion_event<int_type> op, _CharType ch) : m_info(info), m_op(op), m_ch(ch) { }
 
             virtual void on_completed(size_t result)
             {
@@ -879,7 +879,7 @@ namespace details {
         class _filestream_callback_bumpc : public details::_filestream_callback
         {
         public:
-            _filestream_callback_bumpc(_In_ _file_info *info, pplx::task_completion_event<int_type> op) : m_op(op), m_ch(0), m_info(info) { }
+            _filestream_callback_bumpc(_In_ _file_info *info, pplx::task_completion_event<int_type> op) : m_ch(0), m_info(info), m_op(op) { }
 
             virtual void on_completed(size_t result)
             {
@@ -911,7 +911,7 @@ namespace details {
         class _filestream_callback_getc : public details::_filestream_callback
         {
         public:
-            _filestream_callback_getc(_In_ _file_info *info, pplx::task_completion_event<int_type> op) : m_op(op), m_ch(0), m_info(info) { }
+            _filestream_callback_getc(_In_ _file_info *info, pplx::task_completion_event<int_type> op) : m_ch(0), m_info(info), m_op(op) { }
 
             virtual void on_completed(size_t result)
             {

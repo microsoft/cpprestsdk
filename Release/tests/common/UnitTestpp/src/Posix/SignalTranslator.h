@@ -45,7 +45,6 @@ public:
 
     static sigjmp_buf* s_jumpTarget;
 
-private:
     sigjmp_buf m_currentJumpTarget;
     sigjmp_buf* m_oldJumpTarget;
 

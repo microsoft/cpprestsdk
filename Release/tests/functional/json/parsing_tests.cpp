@@ -39,19 +39,22 @@ namespace tests { namespace functional { namespace json_tests {
 
     inline bool verify_parsing_error_msg(const std::string &str)
     {
-        auto spattern = "^\\* Line \\d+, Column \\d+ Syntax error: .+";
 #if defined(_WIN32) || defined(__APPLE__)
+        auto spattern = "^\\* Line \\d+, Column \\d+ Syntax error: .+";
         static std::regex pattern(spattern);
         return std::regex_match(str, pattern, std::regex_constants::match_flag_type::match_not_null);
 #elif (defined(ANDROID) || defined(__ANDROID__))
 	return str.find("Syntax error: ") != std::string::npos;
 #else
+        auto spattern = "^\\* Line \\d+, Column \\d+ Syntax error: .+";
         static boost::regex pattern(spattern);
         return boost::regex_match(str, pattern, boost::regex_constants::match_flag_type::match_not_null);
 #endif
     }
 
+#if defined(_MSC_VER)
 #pragma warning (disable: 4127) // const expression
+#endif
 #define VERIFY_PARSING_THROW(target) \
 do { \
     try { \
@@ -112,7 +115,7 @@ TEST(whitespace_failure)
     VERIFY_PARSING_THROW(json::value::parse(U("  ")));
 }
 
-static const std::array<char, 4> whitespace_chars = { 0x20, 0x09, 0x0A, 0x0D };
+static const std::array<char, 4> whitespace_chars = { { 0x20, 0x09, 0x0A, 0x0D } };
 
 TEST(whitespace_array)
 {
@@ -408,10 +411,14 @@ TEST(bug_416116)
     json::value data2 = json::value::parse(U("\"δοκιμή\""));
     auto s = data2.serialize();
 
+#if defined(_MSC_VER)
 #pragma warning( push )
 #pragma warning( disable : 4566 )
+#endif
     VERIFY_ARE_EQUAL(s, U("\"δοκιμή\""));
+#if defined(_MSC_VER)
 #pragma warning( pop )
+#endif
 }
 
 TEST(byte_ptr_parsing_array)
