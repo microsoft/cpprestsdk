@@ -583,21 +583,18 @@ utf16string __cdecl conversions::to_utf16string(const std::string &value) { retu
 utf16string __cdecl conversions::to_utf16string(utf16string value) { return std::move(value); }
 
 #ifndef WIN32
-datetime datetime::timeval_to_datetime(struct timeval time)
+datetime datetime::timeval_to_datetime(const timeval &time)
 {
     const uint64_t epoch_offset = 11644473600LL; // diff between windows and unix epochs (seconds)
     uint64_t result = epoch_offset + time.tv_sec;
     result *= _secondTicks; // convert to 10e-7
-    result += time.tv_usec; //add microseconds (in 10e-7)
+    result += time.tv_usec * 10; // convert and add microseconds, 10e-6 to 10e-7
     return datetime(result);
 }
 #endif
 
 static bool is_digit(utility::char_t c) { return c >= _XPLATSTR('0') && c <= _XPLATSTR('9'); }
 
-/// <summary>
-/// Returns the current UTC date and time.
-/// </summary>
 datetime __cdecl datetime::utc_now()
 {
 #ifdef _WIN32
@@ -616,9 +613,6 @@ datetime __cdecl datetime::utc_now()
 #endif
 }
 
-/// <summary>
-/// Returns a string representation of the datetime. The string is formatted based on RFC 1123 or ISO 8601
-/// </summary>
 utility::string_t datetime::to_string(date_format format) const
 {
 #ifdef _WIN32
@@ -639,7 +633,7 @@ utility::string_t datetime::to_string(date_format format) const
 
     std::wostringstream outStream;
 
-    if ( format == RFC_1123 )
+    if (format == RFC_1123)
     {
 #if _WIN32_WINNT < _WIN32_WINNT_VISTA
         TCHAR dateStr[18] = {0};
@@ -667,7 +661,7 @@ utility::string_t datetime::to_string(date_format format) const
 
         outStream << dateStr << " " << timeStr << " " << "GMT";
     }
-    else if ( format == ISO_8601 )
+    else if (format == ISO_8601)
     {
         const size_t buffSize = 64;
 #if _WIN32_WINNT < _WIN32_WINNT_VISTA
@@ -811,9 +805,6 @@ void extract_fractional_second(const utility::string_t& dateString, utility::str
     }
 }
 
-/// <summary>
-/// Returns a string representation of the datetime. The string is formatted based on RFC 1123 or ISO 8601
-/// </summary>
 datetime __cdecl datetime::from_string(const utility::string_t& dateString, date_format format)
 {
     // avoid floating point math to preserve precision
@@ -821,7 +812,7 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
 
 #ifdef _WIN32
     datetime result;
-    if ( format == RFC_1123 )
+    if (format == RFC_1123)
     {
         SYSTEMTIME sysTime = {0};
 
@@ -854,7 +845,7 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
             }
         }
     }
-    else if ( format == ISO_8601 )
+    else if (format == ISO_8601)
     {
         // Unlike FILETIME, SYSTEMTIME does not have enough precision to hold seconds in 100 nanosecond
         // increments. Therefore, start with seconds and milliseconds set to 0, then add them separately
@@ -934,7 +925,7 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
 
     struct tm output = tm();
 
-    if ( format == RFC_1123 )
+    if (format == RFC_1123)
     {
         strptime(input.data(), "%a, %d %b %Y %H:%M:%S GMT", &output);
     }
@@ -946,11 +937,11 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
 
         auto result = strptime(input.data(), "%Y-%m-%dT%H:%M:%SZ", &output);
 
-        if ( result == nullptr )
+        if (result == nullptr)
         {
             result = strptime(input.data(), "%Y%m%dT%H:%M:%SZ", &output);
         }
-        if ( result == nullptr )
+        if (result == nullptr)
         {
             // Fill the date portion with the epoch,
             // strptime will do the rest
@@ -960,15 +951,15 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
             output.tm_mday = 1;
             result = strptime(input.data(), "%H:%M:%SZ", &output);
         }
-        if ( result == nullptr )
+        if (result == nullptr)
         {
             result = strptime(input.data(), "%Y-%m-%d", &output);
         }
-        if ( result == nullptr )
+        if (result == nullptr)
         {
             result = strptime(input.data(), "%Y%m%d", &output);
         }
-        if ( result == nullptr )
+        if (result == nullptr)
         {
             return datetime();
         }
@@ -1014,8 +1005,11 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
 
     struct timeval tv = timeval();
     tv.tv_sec = time;
-    tv.tv_usec = (unsigned int)ufrac_second;
-    return timeval_to_datetime(tv);
+    auto result = timeval_to_datetime(tv);
+
+    // fractional seconds are already in correct format so just add them.
+    result = result + ufrac_second;
+    return result;
 #endif
 }
 

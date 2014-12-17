@@ -385,6 +385,7 @@ public:
     /// <summary>
     /// Creates <c>datetime</c> from a string representing time in UTC in RFC 1123 format.
     /// </summary>
+    /// <returns>Returns a <c>datetime</c> of zero if not successful.</returns>
     static _ASYNCRTIMP datetime __cdecl from_string(const utility::string_t& timestring, date_format format = RFC_1123);
 
     /// <summary>
@@ -465,7 +466,7 @@ private:
     // void* to avoid pulling in windows.h
     static _ASYNCRTIMP bool __cdecl datetime::system_type_to_datetime(/*SYSTEMTIME*/ void* psysTime, uint64_t seconds, datetime * pdt);
 #else
-    static datetime timeval_to_datetime(struct timeval time);
+    static datetime timeval_to_datetime(const timeval &time);
 #endif
 
     // Private constructor. Use static methods to create an instance.
@@ -473,6 +474,7 @@ private:
     {
     }
 
+    // Storing as hundreds of nanoseconds 10e-7, i.e. 1 here equals 100ns.
     interval_type m_interval;
 };
 
