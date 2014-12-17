@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,6 @@
 *
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*
-* multiple_requests.cpp
 *
 * Tests cases for multiple requests and responses from an http_client.
 *
@@ -55,67 +53,6 @@ static void initialize_data(std::string *data_arrays, const size_t count)
 SUITE(multiple_requests)
 {
 
-TEST_FIXTURE(uri_address, single_tcp_connection)
-{
-    test_http_server::scoped_server scoped(m_uri);
-    http_client_config config;
-    config.set_guarantee_order(true);
-    http_client client(m_uri, config);
-
-    const size_t num_requests = 20;
-    std::string request_bodies[num_requests];
-    initialize_data(request_bodies, num_requests);
-    const method method = methods::PUT;
-    const web::http::status_code code = status_codes::OK;
-
-    // setup to handle requests on the server side.
-    // If any of the requests come in before the response is sent the test fails.
-    auto requests = scoped.server()->next_requests(num_requests);
-    volatile unsigned long response_sent = 0;
-    requests[0].then([&](test_request *request)
-    {
-        http_asserts::assert_test_request_equals(request, method, U("/"), U("text/plain"), to_string_t(request_bodies[0]));
-        // wait a bit to see if the other requests will come.
-        os_utilities::sleep(500);
-        os_utilities::interlocked_increment(&response_sent);
-        VERIFY_ARE_EQUAL(0u, request->reply(code));
-    });
-    for(size_t i = 1; i < num_requests; ++i)
-    {
-        requests[i].then([i, &response_sent, &code, &method, &request_bodies](test_request *request)
-        {
-            if(os_utilities::interlocked_increment(&response_sent) == 1)
-            {
-                VERIFY_IS_TRUE(false);
-            }
-            http_asserts::assert_test_request_equals(request, method, U("/"), U("text/plain"), to_string_t(request_bodies[i]));
-            VERIFY_ARE_EQUAL(0u, request->reply(code));
-        });
-    }
-
-    // send requests
-    std::vector<pplx::task<http_response>> responses;
-    for(size_t i = 0; i < num_requests; ++i)
-    {
-        http_request msg(method);
-        msg.set_body(request_bodies[i]);
-        responses.push_back(client.request(msg));
-    }
-
-    // wait for requests.
-    for(size_t i = 0; i < num_requests; ++i)
-    {
-        try
-        {
-            http_asserts::assert_response_equals(responses[i].get(), code);
-        }
-        catch (...)
-        {
-            VERIFY_IS_FALSE(false);
-        }
-    }
-}
-
 TEST_FIXTURE(uri_address, requests_with_data)
 {
     test_http_server::scoped_server scoped(m_uri);
@@ -147,7 +84,7 @@ TEST_FIXTURE(uri_address, requests_with_data)
         http_asserts::assert_test_request_equals(request, method, U("/"), U("text/plain"), to_string_t(request_body));
         VERIFY_ARE_EQUAL(0u, request->reply(code));
     }
-    
+
     // wait for requests.
     for(size_t i = 0; i < num_requests; ++i)
     {
@@ -190,7 +127,7 @@ TEST_FIXTURE(uri_address, responses_with_data)
         http_asserts::assert_test_request_equals(request, method, U("/"));
         VERIFY_ARE_EQUAL(0u, request->reply(code, U(""), headers, request_body));
     }
-    
+
     // wait for requests.
     for(size_t i = 0; i < num_requests; ++i)
     {

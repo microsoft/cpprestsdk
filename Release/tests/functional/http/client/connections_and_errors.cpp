@@ -38,7 +38,7 @@ using namespace tests::functional::http::utilities;
 namespace tests { namespace functional { namespace http { namespace client {
 
 // Test implementation for pending_requests_after_client.
-static void pending_requests_after_client_impl(uri address, bool guarantee_order)
+static void pending_requests_after_client_impl(const uri &address)
 {
     test_http_server::scoped_server scoped(address);
     const method mtd = methods::GET;
@@ -46,9 +46,7 @@ static void pending_requests_after_client_impl(uri address, bool guarantee_order
     const size_t num_requests = 10;
     std::vector<pplx::task<http_response>> responses;
     {
-        http_client_config config;
-        config.set_guarantee_order(guarantee_order);
-        http_client client(address, config);
+        http_client client(address);
 
         // send requests.
         for(size_t i = 0; i < num_requests; ++i)
@@ -87,8 +85,7 @@ SUITE(connections_and_errors)
 // Tests requests still outstanding after the http_client has been destroyed.
 TEST_FIXTURE(uri_address, pending_requests_after_client)
 {
-    pending_requests_after_client_impl(m_uri, true);
-    pending_requests_after_client_impl(m_uri, false);
+    pending_requests_after_client_impl(m_uri);
 }
 
 TEST_FIXTURE(uri_address, server_doesnt_exist)

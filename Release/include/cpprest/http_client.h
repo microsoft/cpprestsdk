@@ -189,6 +189,7 @@ public:
     /// Set the 'guarantee order' property
     /// </summary>
     /// <param name="guarantee_order">The value of the property.</param>
+    CASABLANCA_DEPRECATED("Confusing API will be removed in future releases. If you need to order HTTP requests use task continuations.")
     void set_guarantee_order(bool guarantee_order)
     {
         m_guarantee_order = guarantee_order;
