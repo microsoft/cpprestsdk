@@ -197,7 +197,6 @@ void connection::close()
     m_request._reply_if_not_already(status_codes::InternalError);
 }
 
-
 void connection::start_request_response()
 {
     m_read_size = 0;
@@ -238,13 +237,14 @@ void connection::handle_http_line(const boost::system::error_code& ec)
     if (ec)
     {
         // client closed connection
-        if ((ec == boost::asio::error::eof) || (ec == boost::asio::error::operation_aborted))
+        if (ec == boost::asio::error::eof || ec == boost::asio::error::operation_aborted)
         {
             finish_request_response();
         }
         else
         {
-            m_request.reply(status_codes::BadRequest);
+            m_request._reply_if_not_already(status_codes::BadRequest);
+            m_close = true;
             do_response(true);
         }
     }
@@ -385,7 +385,7 @@ void connection::handle_headers()
 
     if (m_read_size == 0)
     {
-        request_data_avail( 0);
+        m_request._get_impl()->_complete(0);
     }
     else // need to read the sent data
     {
@@ -398,7 +398,11 @@ void connection::handle_headers()
 
 void connection::handle_chunked_header(const boost::system::error_code& ec)
 {
-    if (!ec)
+    if (ec)
+    {
+        m_request._get_impl()->_complete(0, std::make_exception_ptr(http_exception(ec.value())));
+    }
+    else
     {
         std::istream is(&m_request_buf);
         int len;
@@ -406,19 +410,19 @@ void connection::handle_chunked_header(const boost::system::error_code& ec)
         m_request_buf.consume(CRLF.size());
         m_read += len;
         if (len == 0)
-            request_data_avail(m_read);
+            m_request._get_impl()->_complete(m_read);
         else
             async_read_until_buffersize(len + 2, boost::bind(&connection::handle_chunked_body, this, boost::asio::placeholders::error, len));
-    }
-    else
-    {
-        m_request._reply_if_not_already(status_codes::BadRequest);
     }
 }
 
 void connection::handle_chunked_body(const boost::system::error_code& ec, int toWrite)
 {
-    if (!ec)
+    if (ec)
+    {
+        m_request._get_impl()->_complete(0, std::make_exception_ptr(http_exception(ec.value())));
+    }
+    else
     {
         auto writebuf = m_request._get_impl()->outstream().streambuf();
         writebuf.putn(buffer_cast<const uint8_t *>(m_request_buf.data()), toWrite).then([=](pplx::task<size_t> writeChunkTask)
@@ -426,8 +430,10 @@ void connection::handle_chunked_body(const boost::system::error_code& ec, int to
             try
             {
                 writeChunkTask.get();
-            } catch (...) {
-                m_request._reply_if_not_already(status_codes::InternalError);
+            }
+            catch (...)
+            {
+                m_request._get_impl()->_complete(0, std::current_exception());
                 return;
             }
 
@@ -436,10 +442,6 @@ void connection::handle_chunked_body(const boost::system::error_code& ec, int to
                     boost::bind(&connection::handle_chunked_header, this, placeholders::error));
         });
     }
-    else
-    {
-        m_request._reply_if_not_already(status_codes::BadRequest);
-    }
 }
 
 void connection::handle_body(const boost::system::error_code& ec)
@@ -447,7 +449,7 @@ void connection::handle_body(const boost::system::error_code& ec)
     // read body
     if (ec)
     {
-        m_request._reply_if_not_already(status_codes::BadRequest);
+        m_request._get_impl()->_complete(0, std::make_exception_ptr(http_exception(ec.value())));
     }
     else if (m_read < m_read_size)  // there is more to read
     {
@@ -458,8 +460,10 @@ void connection::handle_body(const boost::system::error_code& ec)
             try
             {
                 writtenSize = writtenSizeTask.get();
-            } catch (...) {
-                m_request._reply_if_not_already(status_codes::InternalError);
+            }
+            catch (...)
+            {
+                m_request._get_impl()->_complete(0, std::current_exception());
                 return;
             }
             m_read += writtenSize;
@@ -469,12 +473,12 @@ void connection::handle_body(const boost::system::error_code& ec)
     }
     else  // have read request body
     {
-        request_data_avail(m_read);
+        m_request._get_impl()->_complete(m_read);
     }
 }
 
 template <typename ReadHandler>
-void connection::async_read_until_buffersize(size_t size, ReadHandler handler)
+void connection::async_read_until_buffersize(size_t size, const ReadHandler &handler)
 {
     auto bufsize = m_request_buf.size();
     if (bufsize >= size)
@@ -541,42 +545,25 @@ void connection::dispatch_request_to_listener()
             pListener->handle_request(m_request);
             pListenerLock->unlock();
         }
-        catch(const std::exception &e)
-        {
-            pListenerLock->unlock();
-            m_request._reply_if_not_already(status_codes::InternalError);
-        }
         catch(...)
         {
             pListenerLock->unlock();
             m_request._reply_if_not_already(status_codes::InternalError);
         }
     }
-
+    
     if (--m_refs == 0) delete this;
-}
-
-void connection::request_data_avail(size_t size)
-{
-    // closing writing data
-    m_request._get_impl()->_complete(size);
 }
 
 void connection::do_response(bool bad_request)
 {
     ++m_refs;
-    pplx::task<http_response> response_task = m_request.get_response();
-
-    response_task.then([=](pplx::task<http::http_response> r_task)
+    m_request.get_response().then([=](pplx::task<http::http_response> r_task)
     {
         http::http_response response;
         try
         {
             response = r_task.get();
-        }
-        catch(const std::exception& ex)
-        {
-            response = http::http_response(status_codes::InternalError);
         }
         catch(...)
         {
@@ -642,23 +629,27 @@ void connection::async_process_response(http_response response)
     boost::asio::async_write(*m_socket, m_response_buf, boost::bind(&connection::handle_headers_written, this, response, placeholders::error));
 }
 
-void connection::cancel_sending_response_with_error(http_response response, std::exception_ptr eptr)
+void connection::cancel_sending_response_with_error(const http_response &response, const std::exception_ptr &eptr)
 {
     auto * context = static_cast<linux_request_context*>(response._get_server_context());
     context->m_response_completed.set_exception(eptr);
-
+    
     // always terminate the connection since error happens
     finish_request_response();
 }
 
-void connection::handle_write_chunked_response(http_response response, const boost::system::error_code& ec)
+void connection::handle_write_chunked_response(const http_response &response, const boost::system::error_code& ec)
 {
     if (ec)
+    {
         return handle_response_written(response, ec);
-
+    }
+        
     auto readbuf = response._get_impl()->instream().streambuf();
     if (readbuf.is_eof())
+    {
         return cancel_sending_response_with_error(response, std::make_exception_ptr(http_exception("Response stream close early!")));
+    }
     auto membuf = m_response_buf.prepare(ChunkSize + http::details::chunked_encoding::additional_encoding_space);
 
     readbuf.getn(buffer_cast<uint8_t *>(membuf) + http::details::chunked_encoding::data_offset, ChunkSize).then([=](pplx::task<size_t> actualSizeTask)
@@ -667,7 +658,8 @@ void connection::handle_write_chunked_response(http_response response, const boo
         try
         {
             actualSize = actualSizeTask.get();
-        } catch (...) {
+        } catch (...)
+        {
             return cancel_sending_response_with_error(response, std::current_exception());
         }
         size_t offset = http::details::chunked_encoding::add_chunked_delimiters(buffer_cast<uint8_t *>(membuf), ChunkSize+http::details::chunked_encoding::additional_encoding_space, actualSize);
@@ -682,7 +674,7 @@ void connection::handle_write_chunked_response(http_response response, const boo
     });
 }
 
-void connection::handle_write_large_response(http_response response, const boost::system::error_code& ec)
+void connection::handle_write_large_response(const http_response &response, const boost::system::error_code& ec)
 {
     if (ec || m_write == m_write_size)
         return handle_response_written(response, ec);
@@ -697,7 +689,8 @@ void connection::handle_write_large_response(http_response response, const boost
         try
         {
             actualSize = actualSizeTask.get();
-        } catch (...) {
+        } catch (...)
+        {
             return cancel_sending_response_with_error(response, std::current_exception());
         }
         m_write += actualSize;
@@ -706,11 +699,11 @@ void connection::handle_write_large_response(http_response response, const boost
     });
 }
 
-void connection::handle_headers_written(http_response response, const boost::system::error_code& ec)
+void connection::handle_headers_written(const http_response &response, const boost::system::error_code& ec)
 {
     if (ec)
     {
-        return cancel_sending_response_with_error(response, std::make_exception_ptr(http_exception("error writing headers")));
+        return cancel_sending_response_with_error(response, std::make_exception_ptr(http_exception(ec.value(), "error writing headers")));
     }
     else
     {
@@ -721,12 +714,12 @@ void connection::handle_headers_written(http_response response, const boost::sys
     }
 }
 
-void connection::handle_response_written(http_response response, const boost::system::error_code& ec)
+void connection::handle_response_written(const http_response &response, const boost::system::error_code& ec)
 {
     auto * context = static_cast<linux_request_context*>(response._get_server_context());
     if (ec)
     {
-        return cancel_sending_response_with_error(response, std::make_exception_ptr(http_exception("error writing response")));
+        return cancel_sending_response_with_error(response, std::make_exception_ptr(http_exception(ec.value(), "error writing response")));
     }
     else
     {
@@ -749,9 +742,11 @@ void connection::finish_request_response()
         pplx::scoped_lock<pplx::extensibility::recursive_lock_t> lock(m_p_parent->m_connections_lock);
         m_p_parent->m_connections.erase(this);
         if (m_p_parent->m_connections.empty())
+        {
             m_p_parent->m_all_connections_complete.set();
+        }
     }
-
+    
     close();
     if (--m_refs == 0) delete this;
 }
