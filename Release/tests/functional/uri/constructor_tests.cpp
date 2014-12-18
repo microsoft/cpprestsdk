@@ -35,9 +35,10 @@ SUITE(constructor_tests)
 
 TEST(parsing_constructor_char)
 {
-    uri u(uri::encode_uri(U("net.tcp://testname.com:81/bleh%?qstring#goo")));
+    uri u(uri::encode_uri(U("net.tcp://steve:@testname.com:81/bleh%?qstring#goo")));
 
     VERIFY_ARE_EQUAL(U("net.tcp"), u.scheme());
+    VERIFY_ARE_EQUAL(U("steve:"), u.user_info());
     VERIFY_ARE_EQUAL(U("testname.com"), u.host());
     VERIFY_ARE_EQUAL(81, u.port());
     VERIFY_ARE_EQUAL(U("/bleh%25"), u.path());
@@ -107,7 +108,7 @@ TEST(absolute_ref_string)
 
 TEST(copy_constructor)
 {
-    uri original(U("http://localhost:456/path1?qstring#goo"));
+    uri original(U("http://st:pass@localhost:456/path1?qstring#goo"));
     uri new_uri(original);
 
     VERIFY_ARE_EQUAL(original, new_uri);
@@ -205,7 +206,7 @@ TEST(user_info_string)
     VERIFY_ARE_EQUAL(U(""), ftp.fragment());
 }
 
-// Test query component can be seperated with '&' or ';'.
+// Test query component can be separated with '&' or ';'.
 TEST(query_seperated_with_semi_colon)
 {
     uri u(U("http://localhost/path1?key1=val1;key2=val2"));

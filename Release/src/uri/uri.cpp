@@ -62,7 +62,14 @@ utility::string_t uri_components::join()
 
     if (!m_host.empty())
     {
-        os << _XPLATSTR("//") << m_host;
+        os << _XPLATSTR("//");
+
+        if (!m_user_info.empty())
+        {
+            os << m_user_info << _XPLATSTR('@');
+        }
+
+        os << m_host;
 
         if (m_port > 0)
         {
@@ -314,12 +321,12 @@ bool uri::validate(const utility::string_t &uri_string)
 
 uri uri::authority() const
 {
-        return uri_builder().set_scheme(this->scheme()).set_host(this->host()).set_port(this->port()).set_user_info(this->user_info()).to_uri();
+    return uri_builder().set_scheme(this->scheme()).set_host(this->host()).set_port(this->port()).set_user_info(this->user_info()).to_uri();
 }
 
 uri uri::resource() const
 {
-        return uri_builder().set_path(this->path()).set_query(this->query()).set_fragment(this->fragment()).to_uri();
+    return uri_builder().set_path(this->path()).set_query(this->query()).set_fragment(this->fragment()).to_uri();
 }
 
 bool uri::operator == (const uri &other) const
