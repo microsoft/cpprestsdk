@@ -91,7 +91,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
     <ClCompile>
       <WarningLevel>EnableAllWarnings</WarningLevel>
-      <AdditionalIncludeDirectories>$(NDKRoot)\platforms\$(AndroidAPILevel)\arch-x86\usr\include;$(StlIncludeDirectories);$(CasablancaIncludeDir);$(TestRoot)\functional\http\utilities\include;$(CommonTestIncludeDir);$(CasablancaSrcDir)\pch;$(WebsocketppIncludeDir);..\..\utilities;$(TestRoot)\functional\websockets\utilities;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(NDKRoot)\platforms\$(AndroidAPILevel)\arch-x86\usr\include;$(StlIncludeDirectories);$(CasablancaIncludeDir);$(TestRoot)\functional\http\utilities\include;$(CommonTestIncludeDir);$(CasablancaSrcDir)\pch;$(WebsocketppIncludeDir);$(TestRoot)\functional\websockets\utilities;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>Enabled</ExceptionHandling>
       <CppLanguageStandard>c++11</CppLanguageStandard>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
