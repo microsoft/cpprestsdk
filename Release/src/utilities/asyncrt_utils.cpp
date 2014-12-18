@@ -60,23 +60,25 @@ scoped_c_thread_locale::xplat_locale scoped_c_thread_locale::c_locale()
         scoped_c_thread_locale::xplat_locale *clocale = new scoped_c_thread_locale::xplat_locale();
 #ifdef _WIN32
         *clocale = _create_locale(LC_ALL, "C");
-        if (clocale == nullptr)
+        if (*clocale == nullptr)
         {
             throw std::runtime_error("Unable to create 'C' locale.");
         }
         auto deleter = [](scoped_c_thread_locale::xplat_locale *clocale)
         {
             _free_locale(*clocale);
+            delete clocale;
         };
 #else
         *clocale = newlocale(LC_ALL, "C", nullptr);
-        if (clocale == nullptr)
+        if (*clocale == nullptr)
         {
             throw std::runtime_error("Unable to create 'C' locale.");
         }
         auto deleter = [](scoped_c_thread_locale::xplat_locale *clocale)
         {
             freelocale(*clocale);
+            delete clocale;
         };
 #endif
         g_c_locale = std::unique_ptr<scoped_c_thread_locale::xplat_locale, void(*)(scoped_c_thread_locale::xplat_locale *)>(clocale, deleter);
