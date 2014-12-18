@@ -25,7 +25,7 @@
 #include <iostream>
 #include <regex>
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <Windows.h>
 #include <conio.h>
 #else
@@ -45,7 +45,7 @@
 
 static void print_help()
 {
-    std::cout << "Usage: testrunner.exe <test_binaries> [/list] [/listproperties] [/noignore] [/breakonerror]" <<std::endl;
+    std::cout << "Usage: testrunner.exe <test_binaries> [/list] [/listproperties] [/noignore] [/breakonerror] [/detectleaks]" <<std::endl;
     std::cout << "    [/name:<test_name>] [/select:@key=value] [/loop:<num_times>]" << std::endl;
     std::cout << std::endl;
     std::cout << "    /list              List all the names of the test_binaries and their" << std::endl;
@@ -55,6 +55,7 @@ static void print_help()
     std::cout << "                       test properties." << std::endl;
     std::cout << std::endl;
     std::cout << "    /breakonerror      Break into the debugger when a failure is encountered." << std::endl;
+    std::cout << "    /detectleaks       Turns CRT leak detection and prints any leaks, Windows only." << std::endl;
     std::cout << std::endl;
     std::cout << "    /name:<test_name>  Run only test cases with matching name. Can contain the" << std::endl;
     std::cout << "                       wildcard '*' character." << std::endl;
@@ -84,7 +85,7 @@ static std::vector<std::string> get_files_in_directory()
 {
     std::vector<std::string> files;
 
-#ifdef WIN32
+#ifdef _WIN32
 
     char exe_directory_buffer[MAX_PATH];
     GetModuleFileNameA(NULL, exe_directory_buffer, MAX_PATH);
@@ -347,7 +348,7 @@ static void handle_list_option(bool listProperties, const UnitTest::TestList &te
 
 static void ChangeConsoleTextColorToRed()
 {
-#ifdef WIN32
+#ifdef _WIN32
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x0004 | 0x0008);
 #else
     std::cout << "\033[1;31m";
@@ -356,7 +357,7 @@ static void ChangeConsoleTextColorToRed()
 
 static void ChangeConsoleTextColorToGreen()
 {
-#ifdef WIN32
+#ifdef _WIN32
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x0002 | 0x0008);
 #else
     std::cout << "\033[1;32m";
@@ -365,7 +366,7 @@ static void ChangeConsoleTextColorToGreen()
 
 static void ChangeConsoleTextColorToGrey()
 {
-#ifdef WIN32
+#ifdef _WIN32
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN);
 #else
     std::cout << "\033[0m";
@@ -375,7 +376,7 @@ static void ChangeConsoleTextColorToGrey()
 bool IsTestIgnored(UnitTest::Test *pTest)
 {
     if(pTest->m_properties.Has("Ignore")) return true;
-#ifdef WIN32
+#ifdef _WIN32
     if(pTest->m_properties.Has("Ignore:Windows")) return true;
 #elif defined(__APPLE__)
     if(pTest->m_properties.Has("Ignore:Apple")) return true;
@@ -386,24 +387,6 @@ bool IsTestIgnored(UnitTest::Test *pTest)
 #endif
     return false;
 }
-
-//
-// These are to handle cases where an exception or assert occurs on a thread
-// that isn't being waited on and the process exits. These shouldn't be happening,
-// but could happen if we have a bug.
-//
-#ifdef WIN32
-
-int CrtReportHandler(int reportType, char *message, int *returnValue)
-{
-    std::cerr << "In CRT Report Handler. ReportType:" << reportType << ", message:" << message << std::endl;
-
-    // Cause break into debugger.
-    *returnValue = 1;
-    return TRUE;
-}
-
-#endif
 
 typedef std::map<std::string, UnitTest::TestList> testlist_t;
 
@@ -525,7 +508,15 @@ void run_all_tests(UnitTest::TestRunner& testRunner, testlist_t& testlists)
 
 int main(int argc, char* argv[])
 {
-#ifdef WIN32
+#ifdef _WIN32
+    // Add standard error as output as well.
+    _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE | _CRTDBG_MODE_WNDW);
+    _CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDERR);
+    _CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_FILE | _CRTDBG_MODE_WNDW);
+    _CrtSetReportFile(_CRT_ERROR, _CRTDBG_FILE_STDERR);
+    _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_FILE);
+    _CrtSetReportFile(_CRT_WARN, _CRTDBG_FILE_STDERR);
+
     // The test runner built with WinRT support might be used on a pre Win8 machine.
     // Obviously in that case WinRT test cases can't run, but non WinRT ones should be
     // fine. So dynamically try to call RoInitialize/RoUninitialize.
@@ -540,7 +531,6 @@ int main(int argc, char* argv[])
         }
     }
 
-    _CrtSetReportHook2(_CRT_RPTHOOK_INSTALL, CrtReportHandler);
     struct console_restorer {
         CONSOLE_SCREEN_BUFFER_INFO m_originalConsoleInfo;
         console_restorer()
@@ -585,6 +575,12 @@ int main(int argc, char* argv[])
         listOption = true;
         listPropertiesOption = true;
     }
+#ifdef _WIN32
+    if (UnitTest::GlobalSettings::Has("detectleaks"))
+    {
+        _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+    }
+#endif
 
     // Start timer.
     UnitTest::Timer timer;
@@ -639,7 +635,7 @@ int main(int argc, char* argv[])
                   << "Took " << elapsedTime << "ms" << std::endl;
     }
 
-#ifdef WIN32
+#ifdef _WIN32
     if(hComBase != nullptr)
     {
         typedef void (WINAPI *RoUnInit)();

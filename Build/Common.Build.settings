@@ -15,23 +15,6 @@
     <Platform Condition="'$(Platform)'==''">Win32</Platform>
   </PropertyGroup>
   
-  <!-- for Visual Leak Detector -->
-  <ItemDefinitionGroup Condition="'$(CASA_ENABLE_VLD)' != ''">
-    <ClCompile>
-      <AdditionalOptions>/DCASA_ENABLE_VLD %(AdditionalOptions)</AdditionalOptions>
-    </ClCompile>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(CASA_ENABLE_VLD)' != '' AND '$(Platform)'=='Win32'">
-    <Link>
-      <AdditionalLibraryDirectories>"C:\Program Files (x86)\Visual Leak Detector\lib\Win32";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(CASA_ENABLE_VLD)' != '' AND '$(Platform)'=='x64'">
-    <Link>
-      <AdditionalLibraryDirectories>"C:\Program Files (x86)\Visual Leak Detector\lib\Win64";%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Link>
-  </ItemDefinitionGroup>
-  
   <!-- for root paths -->
   <PropertyGroup>
     <BuildRoot>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))</BuildRoot>
