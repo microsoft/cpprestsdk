@@ -421,7 +421,7 @@ TEST_FIXTURE(uri_address, stream_close_early_with_exception_and_contentlength)
 
 // Ignore on WinRT only CodePlex 144
 #if !defined(__cplusplus_winrt)
-TEST_FIXTURE(uri_address, stream_close_early_with_contentlength)
+TEST_FIXTURE(uri_address, stream_close_early_with_contentlength, "Ignore:Apple", "328")
 {
     http_client client(m_uri);
     test_http_server::scoped_server scoped(m_uri);
