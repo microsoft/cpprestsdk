@@ -206,8 +206,6 @@ TEST_FIXTURE(uri_address, response_stream_file_stream_close_early)
     VERIFY_THROWS((resp = client.request(msg).get(), resp.content_ready().get()), std::exception);
 }
 
-// CodePlex 314
-#if !defined(_MSC_VER) || _MSC_VER < 1900
 TEST_FIXTURE(uri_address, response_stream_large_file_stream)
 {
     // Send a 100 KB data in the response body, the server will send this in multiple chunks
@@ -251,7 +249,6 @@ TEST_FIXTURE(uri_address, response_stream_large_file_stream)
         fistream.close().get();
     }
 }
-#endif
 
 #if !defined(__cplusplus_winrt)
 
@@ -367,8 +364,6 @@ TEST_FIXTURE(uri_address, content_ready)
     listener.close().wait();
 }
 
-// CodePlex 314
-#if !defined(_MSC_VER) || _MSC_VER < 1900
 TEST_FIXTURE(uri_address, xfer_chunked_with_length)
 {
     http_client client(m_uri);
@@ -446,7 +441,6 @@ TEST_FIXTURE(uri_address, get_resp_stream)
 
     listener.close().wait();
 }
-#endif
 
 TEST_FIXTURE(uri_address, xfer_chunked_multiple_chunks)
 {
