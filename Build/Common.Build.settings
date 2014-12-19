@@ -91,6 +91,7 @@
       <TreatWarningAsError Condition="'$(TreatWarningsAsErrors)' != ''">true</TreatWarningAsError>
       <EnablePREfast>$(EnableCPPAnalysis)</EnablePREfast>
       <CompileAsManaged Condition="'$(CompileAsManagedDefault)' != ''">true</CompileAsManaged>
+      <AdditionalOptions Condition="'$(DevToolsVersion)'=='140' And '$(ApplicationType)'!='Android'"> /d2notypeopt %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
 
