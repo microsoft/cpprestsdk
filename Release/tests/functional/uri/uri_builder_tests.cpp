@@ -1,12 +1,12 @@
 /***
 * ==++==
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
+* Copyright (c) Microsoft Corporation. All rights reserved.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
 * http://www.apache.org/licenses/LICENSE-2.0
-* 
+*
 * Unless required by applicable law or agreed to in writing, software
 * distributed under the License is distributed on an "AS IS" BASIS,
 * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,6 @@
 *
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*
-* uri_builder_tests.cpp
 *
 * Tests for the URI builder class.
 *
@@ -49,16 +47,6 @@ static void VERIFY_URI_BUILDER(
     VERIFY_ARE_EQUAL(query, builder.query());
     VERIFY_ARE_EQUAL(fragment, builder.fragment());
 }
-
-static void VERIFY_URI_BUILDER(
-    uri_builder &builder,
-    const utility::string_t &scheme,
-    const utility::string_t &host,
-    const int port,
-    const utility::string_t &path)
-{
-    VERIFY_URI_BUILDER(builder, scheme, utility::string_t(), host, port, path, utility::string_t(), utility::string_t());
-}
 static void VERIFY_URI_BUILDER(
     uri_builder &builder,
     const utility::string_t &scheme,
@@ -80,27 +68,28 @@ TEST(constructor_tests)
     // Default constructor
     uri_builder builder;
     VERIFY_URI_BUILDER_IS_EMPTY(builder);
-    // scheme, host, port
+    // scheme, user_info, host, port
     utility::string_t scheme(U("ftp"));
+    utility::string_t user_info(U("steve:pass"));
     utility::string_t host(U("localhost"));
     int port = 44;
     utility::string_t path(U("/Yeshere888"));
-    utility::string_t uri_str(U("ftp://localhost:44/Yeshere888"));
+    utility::string_t uri_str(U("ftp://steve:pass@localhost:44/Yeshere888"));
 
     // utility::string_t
-    utility::string_t uri_wstr(U("ftp://localhost:44/Yeshere888?abc:123&abc2:456#nose"));
+    utility::string_t uri_wstr(U("ftp://steve:pass@localhost:44/Yeshere888?abc:123&abc2:456#nose"));
     builder = uri_builder(uri_wstr);
-    VERIFY_URI_BUILDER(builder, scheme, utility::string_t(), host, port, path, utility::string_t(U("abc:123&abc2:456")), utility::string_t(U("nose")));
+    VERIFY_URI_BUILDER(builder, scheme, user_info, host, port, path, utility::string_t(U("abc:123&abc2:456")), utility::string_t(U("nose")));
 
     // copy constructor
     uri_builder other(builder);
     builder = uri_builder(uri_str);
-    VERIFY_URI_BUILDER(other, scheme, utility::string_t(), host, port, path, utility::string_t(U("abc:123&abc2:456")), utility::string_t(U("nose")));
-    VERIFY_URI_BUILDER(builder, scheme, host, port, path);
+    VERIFY_URI_BUILDER(other, scheme, user_info, host, port, path, utility::string_t(U("abc:123&abc2:456")), utility::string_t(U("nose")));
+    VERIFY_URI_BUILDER(builder, scheme, user_info, host, port, path, U(""), U(""));
 
     // move constructor
     uri_builder move_other = std::move(builder);
-    VERIFY_URI_BUILDER(move_other, scheme, host, port, path);
+    VERIFY_URI_BUILDER(move_other, scheme, user_info, host, port, path, U(""), U(""));
 }
 
 TEST(assignment_operators)
@@ -248,7 +237,7 @@ TEST(validation)
 
 TEST(uri_creation_string)
 {
-    utility::string_t uri_str(U("http://localhost:4556/"));
+    utility::string_t uri_str(U("http://steve:temp@localhost:4556/"));
 
     // to_string
     uri_builder builder(uri_str);
@@ -263,7 +252,7 @@ TEST(uri_creation_string)
     // to encoded string
     uri_builder with_space(builder);
     with_space.set_path(utility::string_t(U("path%20with%20space")));
-    VERIFY_ARE_EQUAL(U("http://localhost:4556/path%20with%20space"), with_space.to_string());
+    VERIFY_ARE_EQUAL(U("http://steve:temp@localhost:4556/path%20with%20space"), with_space.to_string());
 }
 
 TEST(append_path_string)

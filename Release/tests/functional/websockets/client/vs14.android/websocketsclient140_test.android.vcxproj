@@ -91,7 +91,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
     <ClCompile>
       <WarningLevel>EnableAllWarnings</WarningLevel>
-      <AdditionalIncludeDirectories>$(NDKRoot)\platforms\$(AndroidAPILevel)\arch-x86\usr\include;$(StlIncludeDirectories);$(CasablancaIncludeDir);$(TestRoot)\functional\http\utilities\include;$(CommonTestIncludeDir);$(CasablancaSrcDir)\pch;$(WebsocketppIncludeDir);..\..\utilities;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(NDKRoot)\platforms\$(AndroidAPILevel)\arch-x86\usr\include;$(StlIncludeDirectories);$(CasablancaIncludeDir);$(TestRoot)\functional\http\utilities\include;$(CommonTestIncludeDir);$(CasablancaSrcDir)\pch;$(WebsocketppIncludeDir);$(TestRoot)\functional\websockets\utilities;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ExceptionHandling>Enabled</ExceptionHandling>
       <CppLanguageStandard>c++11</CppLanguageStandard>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
@@ -101,7 +101,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <ClCompile>
       <WarningLevel>EnableAllWarnings</WarningLevel>
-      <AdditionalIncludeDirectories>$(NDKRoot)\platforms\$(AndroidAPILevel)\arch-arm\usr\include;$(CasablancaIncludeDir);$(TestRoot)\functional\http\utilities\include;$(CommonTestIncludeDir);$(CasablancaSrcDir)\pch;$(WebsocketppIncludeDir);$(StlIncludeDirectories);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(NDKRoot)\platforms\$(AndroidAPILevel)\arch-arm\usr\include;$(CasablancaIncludeDir);$(TestRoot)\functional\http\utilities\include;$(CommonTestIncludeDir);$(CasablancaSrcDir)\pch;$(WebsocketppIncludeDir);$(StlIncludeDirectories);$(TestRoot)\functional\websockets\utilities;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CppLanguageStandard>c++11</CppLanguageStandard>
       <ExceptionHandling>Enabled</ExceptionHandling>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
@@ -111,7 +111,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
     <ClCompile>
       <WarningLevel>EnableAllWarnings</WarningLevel>
-      <AdditionalIncludeDirectories>$(NDKRoot)\platforms\$(AndroidAPILevel)\arch-arm\usr\include;$(StlIncludeDirectories);$(CasablancaIncludeDir);$(TestRoot)\functional\http\utilities\include;$(CommonTestIncludeDir);$(CasablancaSrcDir)\pch;$(WebsocketppIncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(NDKRoot)\platforms\$(AndroidAPILevel)\arch-arm\usr\include;$(StlIncludeDirectories);$(CasablancaIncludeDir);$(TestRoot)\functional\http\utilities\include;$(CommonTestIncludeDir);$(CasablancaSrcDir)\pch;$(WebsocketppIncludeDir);$(TestRoot)\functional\websockets\utilities;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CppLanguageStandard>c++11</CppLanguageStandard>
       <ExceptionHandling>Enabled</ExceptionHandling>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
@@ -121,7 +121,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
     <ClCompile>
       <WarningLevel>EnableAllWarnings</WarningLevel>
-      <AdditionalIncludeDirectories>$(NDKRoot)\platforms\$(AndroidAPILevel)\arch-x86\usr\include;$(StlIncludeDirectories);$(CasablancaIncludeDir);$(TestRoot)\functional\http\utilities\include;$(CommonTestIncludeDir);$(CasablancaSrcDir)\pch;$(WebsocketppIncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(NDKRoot)\platforms\$(AndroidAPILevel)\arch-x86\usr\include;$(StlIncludeDirectories);$(CasablancaIncludeDir);$(TestRoot)\functional\http\utilities\include;$(CommonTestIncludeDir);$(CasablancaSrcDir)\pch;$(WebsocketppIncludeDir);$(TestRoot)\functional\websockets\utilities;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CppLanguageStandard>c++11</CppLanguageStandard>
       <ExceptionHandling>Enabled</ExceptionHandling>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
@@ -134,8 +134,6 @@
   <PropertyGroup>
     <TargetName>websocketsclient140_test.android</TargetName>
   </PropertyGroup>
-
-
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="$(PackagesRoot)\boost.1.55.0.16\build\native\boost.targets" Condition="Exists('$(PackagesRoot)\boost.1.55.0.16\build\native\boost.targets')" />
