@@ -168,6 +168,7 @@ public:
                 sslContext->set_default_verify_paths();
                 sslContext->set_options(boost::asio::ssl::context::default_workarounds);
                 sslContext->set_verify_mode(boost::asio::ssl::context::verify_peer);
+
 #if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__)) || defined(_WIN32)
                 m_openssl_failed = false;
 #endif
@@ -190,6 +191,14 @@ public:
                     boost::asio::ssl::rfc2818_verification rfc2818(utility::conversions::to_utf8string(m_uri.host()));
                     return rfc2818(preverified, verifyCtx);
                 });
+
+                // OpenSSL stores some per thread state that never will be cleaned up until
+                // the dll is unloaded. If static linking, like we do, the state isn't cleaned up
+                // at all and will be reported as leaks.
+                // See http://www.openssl.org/support/faq.html#PROG13
+                // This is necessary here because it is called on the user's thread calling connect(...)
+                // eventually through websocketpp::client::get_connection(...)
+                ERR_remove_thread_state(nullptr);
 
                 return sslContext;
             });
@@ -306,6 +315,12 @@ public:
 #if defined(__ANDROID__)
             crossplat::JVM.load()->DetachCurrentThread();
 #endif
+
+            // OpenSSL stores some per thread state that never will be cleaned up until
+            // the dll is unloaded. If static linking, like we do, the state isn't cleaned up
+            // at all and will be reported as leaks.
+            // See http://www.openssl.org/support/faq.html#PROG13
+            ERR_remove_thread_state(nullptr);
         });
         return pplx::create_task(m_connect_tce);
     }
