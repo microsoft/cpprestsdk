@@ -4,7 +4,7 @@
     <Linkages-cpprestsdk Condition="'$(Linkages-cpprestsdk)' == ''">dynamic</Linkages-cpprestsdk>
     <CallingConventions-cpprestsdk Condition="'$(CallingConventions-cpprestsdk)' == ''">cdecl</CallingConventions-cpprestsdk>
     <CppRestSDKVersionMajor>2</CppRestSDKVersionMajor>
-    <CppRestSDKVersionMinor>3</CppRestSDKVersionMinor>
+    <CppRestSDKVersionMinor>4</CppRestSDKVersionMinor>
     <CppRestSDKVersionRevision>0</CppRestSDKVersionRevision>
     <CppRestSDKVersionFileSuffix>$(CppRestSDKVersionMajor)_$(CppRestSDKVersionMinor)</CppRestSDKVersionFileSuffix>
   </PropertyGroup>
