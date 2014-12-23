@@ -13,7 +13,7 @@ function VsVars32()
     Get-Batchfile $BatchFile
 }
 
-"Initializing Casablanca Powershell VS2014 Environment"
+"Initializing Casablanca Powershell VS2015 Environment"
 
 # get VS tools
 VsVars32
