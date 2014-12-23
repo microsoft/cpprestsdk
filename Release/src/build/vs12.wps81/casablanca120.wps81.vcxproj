@@ -53,4 +53,12 @@
   <Import Project="..\common.vcxitems" Label="Shared" Condition="Exists('..\common.vcxitems')" />
   <Import Project="..\winrt.vcxitems" Label="Shared" Condition="Exists('..\winrt.vcxitems')" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ItemDefinitionGroup>
+    <PostBuildEvent>
+      <Command>copy /Y $(OutDir)\* $(OutDir)..\
+        link /edit /appcontainer:no $(OutDir)..\$(TargetName).dll
+        exit 0</Command>
+      <Message>Copying $(TargetName).winrt binaries to OutDir and removing appcontainer flag</Message>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
 </Project>
