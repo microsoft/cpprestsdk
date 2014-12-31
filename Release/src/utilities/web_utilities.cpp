@@ -49,9 +49,14 @@ void winrt_secure_zero_buffer(Windows::Storage::Streams::IBuffer ^buffer)
     Microsoft::WRL::ComPtr<IInspectable> bufferInspectable(reinterpret_cast<IInspectable *>(buffer));
     Microsoft::WRL::ComPtr<Windows::Storage::Streams::IBufferByteAccess> bufferByteAccess;
     bufferInspectable.As(&bufferByteAccess);
+
+    // This shouldn't happen but if can't get access to the raw bytes for some reason
+    // then we can't zero out.
     byte * rawBytes;
-    bufferByteAccess->Buffer(&rawBytes);
-    SecureZeroMemory(rawBytes, buffer->Length);
+    if (bufferByteAccess->Buffer(&rawBytes) == S_OK)
+    {
+        SecureZeroMemory(rawBytes, buffer->Length);
+    }
 }
 
 winrt_encryption::winrt_encryption(const std::wstring &data)
@@ -83,7 +88,11 @@ plaintext_string winrt_encryption::decrypt() const
     Microsoft::WRL::ComPtr<Windows::Storage::Streams::IBufferByteAccess> bufferByteAccess;
     bufferInspectable.As(&bufferByteAccess);
     byte * rawPlaintext;
-    bufferByteAccess->Buffer(&rawPlaintext);
+    const auto &result = bufferByteAccess->Buffer(&rawPlaintext);
+    if (result != S_OK)
+    {
+        throw ::utility::details::create_system_error(result);
+    }
 
     // Construct string and zero out memory from plain text buffer.
     auto data = plaintext_string(new std::wstring(
