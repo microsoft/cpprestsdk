@@ -52,18 +52,12 @@ TEST_FIXTURE(uri_address, outside_cnn_dot_com)
     // CNN's main page doesn't use chunked transfer encoding.
     http_response response = client.request(methods::GET).get();
     VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
-    while(response.body().streambuf().in_avail() == 0);
+    response.content_ready().wait();
 
     // CNN's other pages do use chunked transfer encoding.
-#ifdef _WIN32
     response = client.request(methods::GET, U("US")).get();
     VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
-    while(response.body().streambuf().in_avail() == 0);
-#else
-    // Linux won't handle 301 header automatically
-    response = client.request(methods::GET, U("US")).get();
-    VERIFY_ARE_EQUAL(status_codes::MovedPermanently, response.status_code());
-#endif
+    response.content_ready().wait();
 }
 
 TEST_FIXTURE(uri_address, outside_google_dot_com)
@@ -81,7 +75,7 @@ TEST_FIXTURE(uri_address, outside_google_dot_com)
     VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
     while(response.body().streambuf().in_avail() == 0);
 #else
-    // Linux won't handle 302 header automatically 
+    // Linux won't handle 302 header automatically
     response = client.request(methods::GET, U("maps")).get();
     VERIFY_ARE_EQUAL(status_codes::Found, response.status_code());
 #endif
@@ -92,12 +86,12 @@ TEST_FIXTURE(uri_address, reading_google_stream)
     http_client simpleclient(U("http://www.google.com"));
     utility::string_t path = m_uri.query();
     http_response response = simpleclient.request(::http::methods::GET).get();
- 
+
     uint8_t chars[71];
     memset(chars, 0, sizeof(chars));
 
     streams::rawptr_buffer<uint8_t> temp(chars, sizeof(chars));
-    
+
     VERIFY_ARE_EQUAL(response.body().read(temp, 70).get(), 70);
     VERIFY_ARE_EQUAL(strcmp((const char *)chars, "<!doctype html><html itemscope=\"\" itemtype=\"http://schema.org/WebPage\""), 0);
 }
@@ -143,7 +137,7 @@ TEST(server_cert_expired)
 }
 
 #if !defined(__cplusplus_winrt)
-TEST(ignore_server_cert_invalid, 
+TEST(ignore_server_cert_invalid,
      "Ignore:Android", "229",
      "Ignore:Apple", "229",
      "Ignore:Linux", "229")
