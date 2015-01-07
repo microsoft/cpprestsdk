@@ -23,9 +23,9 @@
         <file src="init.ps1" target="\tools\init.ps1" />
         <file src="cpprest.natvis" target="\tools\cpprest.natvis" />
 
-        <!-- Including license for WebSocket++ -->
-        <file src="..\libs\websocketpp\COPYING" target="\license\websocketpp\COPYING" />
-        
+        <!-- Including third party notices -->
+        <file src="..\..\ThirdPartyNotices.txt" target="\license\ThirdPartyNotices.txt" />
+
         <!-- Debug -->
         <!-- Win32 v140 -->
         <file src="Binaries\Win32\Debug\cpprest140d_2_4.dll" target="\build\native\bin\Win32\v140\Debug\Desktop\cpprest140d_2_4.dll" />

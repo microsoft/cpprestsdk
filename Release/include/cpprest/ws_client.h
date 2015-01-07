@@ -58,6 +58,7 @@ namespace websockets
 namespace client
 {
 
+/// Websocket close status values.
 enum class websocket_close_status
 {
     normal = 1000,
@@ -186,7 +187,7 @@ public:
     /// Adds a subprotocol to the request headers.
     /// </summary>
     /// <param name="name">The name of the subprotocol.</param>
-    /// <remark>If additional subprotocols have already been specified, the new one will just be added.</remarks>
+    /// <remarks>If additional subprotocols have already been specified, the new one will just be added.</remarks>
     _ASYNCRTIMP void add_subprotocol(const ::utility::string_t &name);
 
     /// <summary>
@@ -430,7 +431,7 @@ public:
     /// <summary>
     ///  Creates a new websocket_client.
     /// </summary>
-    /// <param name="client_config">The client configuration object containing the possible configuration options to initialize the <c>websocket_client</c>. </param>
+    /// <param name="config">The client configuration object containing the possible configuration options to initialize the <c>websocket_client</c>. </param>
     websocket_client(websocket_client_config config) :
         m_client(std::make_shared<details::websocket_client_task_impl>(std::move(config)))
     {}
@@ -599,7 +600,7 @@ public:
     ///   close_status: The pre-defined status codes used by the endpoint when sending a Close frame.
     ///   reason: The reason string used by the endpoint when sending a Close frame.
     ///   error: The error code if the websocket is closed with abnormal error.
-    ///</param>
+    /// </param>
     void set_close_handler(const std::function<void(websocket_close_status close_status, const utility::string_t& reason, const std::error_code& error)>& handler)
     {
         m_client->set_close_handler(handler);

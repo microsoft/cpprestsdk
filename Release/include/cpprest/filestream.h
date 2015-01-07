@@ -595,7 +595,7 @@ namespace details {
         /// <param name="count">The maximum number of characters to copy</param>
         /// <returns>The number of characters copied. O if the end of the stream is reached or an asynchronous read is required.</returns>
         /// <remarks>This is a synchronous operation, but is guaranteed to never block.</remarks>
-        virtual size_t _scopy(_Out_writes_ (count) _CharType *, _In_ size_t)
+        virtual size_t _scopy(_CharType *, size_t)
         {
             return 0;
         }

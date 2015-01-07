@@ -57,6 +57,9 @@ namespace experimental
 #include <winternl.h>
 #include <bcrypt.h>
 
+// Code analysis complains even though there is no bug.
+#pragma warning(push)
+#pragma warning(disable : 6102)
 std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t& key, const utility::string_t& data)
 {
     NTSTATUS status;
@@ -67,8 +70,8 @@ std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t& ke
     DWORD hash_len = 0;
     ULONG result_len = 0;
 
-    auto key_c = conversions::utf16_to_utf8(key);
-    auto data_c = conversions::utf16_to_utf8(data);
+    const auto &key_c = conversions::utf16_to_utf8(key);
+    const auto &data_c = conversions::utf16_to_utf8(data);
 
     status = BCryptOpenAlgorithmProvider(&alg_handle, BCRYPT_SHA1_ALGORITHM, nullptr, BCRYPT_ALG_HANDLE_HMAC_FLAG);
     if (!NT_SUCCESS(status))
@@ -110,6 +113,7 @@ cleanup:
 
     return hash;
 }
+#pragma warning(pop)
 
 #elif defined(_WIN32) && defined(__cplusplus_winrt) // Windows RT
 

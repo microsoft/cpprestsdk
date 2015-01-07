@@ -109,8 +109,8 @@ namespace Concurrency { namespace streams {
         virtual _CharType* _alloc(size_t) { return nullptr; }
         virtual void _commit(size_t) {}
 
-        virtual bool acquire(_Out_writes_ (count) _CharType*&, _In_ size_t&) { return false; }
-        virtual void release(_Out_writes_ (count) _CharType *, _In_ size_t) { }
+        virtual bool acquire(_CharType*&, size_t&) { return false; }
+        virtual void release(_CharType *, size_t) { }
 
         template<typename CharType> friend class concurrency::streams::stdio_ostream;
         template<typename CharType> friend class concurrency::streams::stdio_istream;

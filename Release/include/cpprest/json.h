@@ -386,7 +386,7 @@ public:
         /// Parses a string and construct a JSON value.
         /// </summary>
         /// <param name="value">The C++ value to create a JSON value from, a C++ STL double-byte string</param>
-        _ASYNCRTIMP static value parse(const utility::string_t&);
+        _ASYNCRTIMP static value parse(const utility::string_t &value);
 
         /// <summary>
         /// Attempts to parse a string and construct a JSON value.
@@ -394,7 +394,7 @@ public:
         /// <param name="value">The C++ value to create a JSON value from, a C++ STL double-byte string</param>
         /// <param name="errorCode">If parsing fails, the error code is greater than 0</param>
         /// <returns>The parsed object. Returns web::json::value::null if failed</returns>
-        _ASYNCRTIMP static value parse(const utility::string_t&, std::error_code&);
+        _ASYNCRTIMP static value parse(const utility::string_t &value, std::error_code &errorCode);
 
         /// <summary>
         /// Serializes the current JSON value to a C++ string.
@@ -422,7 +422,7 @@ public:
         /// <param name="input">The stream to read the JSON value from</param>
         /// <param name="errorCode">If parsing fails, the error code is greater than 0</param>
         /// <returns>The parsed object. Returns web::json::value::null if failed</returns>
-        _ASYNCRTIMP static value parse(utility::istream_t &input, std::error_code& error);
+        _ASYNCRTIMP static value parse(utility::istream_t &input, std::error_code &errorCode);
 
         /// <summary>
         /// Writes the current JSON value to a stream with the native platform character width.

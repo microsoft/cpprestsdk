@@ -37,8 +37,8 @@
         <file src="..\..\Binaries\x86\Release\cpprest140_android_2_4.a" target="\build\native\lib\x86\libcpprest-clang_3_4-gnustl-2_4.a" />
         <file src="..\..\Binaries\x86\Debug\cpprest140d_android_2_4.a" target="\build\native\lib\x86\libcpprest-clang_3_4-d-gnustl-2_4.a" />
 
-        <!-- Including license for WebSocket++ -->
-        <file src="..\libs\websocketpp\COPYING" target="\license\websocketpp\COPYING" />
+        <!-- Including third party notices -->
+        <file src="..\..\ThirdPartyNotices.txt" target="\license\ThirdPartyNotices.txt" />
 
         <!-- vs targets file -->
         <file src="cpprestsdk.android.targets" target="\build\native\cpprestsdk.android.targets"/>
