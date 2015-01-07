@@ -37,13 +37,15 @@ class winrt_callback_client;
 
 namespace details
 {
-#if defined(_WIN32)
+
 class zero_memory_deleter
 {
 public:
     _ASYNCRTIMP void operator()(::utility::string_t *data) const;
 };
 typedef std::unique_ptr<std::wstring, zero_memory_deleter> plaintext_string;
+
+#if defined(_WIN32) && !defined(CPPREST_TARGET_XP)
 #if defined(__cplusplus_winrt)
 #if !(WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP && _MSC_VER < 1800)
 class winrt_encryption
@@ -89,15 +91,9 @@ public:
     /// </summary>
     /// <param name="username">User name as a string.</param>
     /// <param name="password">Password as a string.</param>
-    credentials(utility::string_t username, const utility::string_t &
-#if defined(_WIN32)
-        password
-#endif
-        ) :
-        m_username(std::move(username))
-#if defined(_WIN32)
-        , m_password(password)
-#endif
+    credentials(utility::string_t username, const utility::string_t & password) :
+        m_username(std::move(username)),
+        m_password(password)
     {}
 
     /// <summary>
@@ -113,14 +109,14 @@ public:
     CASABLANCA_DEPRECATED("This API is deprecated for security reasons to avoid unnecessary password copies stored in plaintext.")
         utility::string_t password() const
     {
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(CPPREST_TARGET_XP)
 #if defined(WINAPI_FAMILY) && WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP && _MSC_VER < 1800
         return m_password;
 #else
         return utility::string_t(*m_password.decrypt());
 #endif
 #else
-        throw std::runtime_error("Credentials are not supported on this platform yet.");
+        return m_password;
 #endif
     }
 
@@ -135,20 +131,23 @@ private:
     friend class http::client::details::winrt_client;
     friend class websockets::client::details::winrt_callback_client;
 
-#if defined(_WIN32)
     details::plaintext_string decrypt() const
     {
-        // Encryption APIs not supported on Windows Phone 8.0
+        // Encryption APIs not supported on Windows Phone 8.0 or XP
+#if defined(_WIN32) && !defined(CPPREST_TARGET_XP)
 #if defined(WINAPI_FAMILY) && WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP && _MSC_VER < 1800
         return details::plaintext_string(new ::utility::string_t(m_password));
 #else
         return m_password.decrypt();
 #endif
-    }
+#else
+        return details::plaintext_string(new ::utility::string_t(m_password));
 #endif
+    }
 
     ::utility::string_t m_username;
-#if defined(_WIN32)
+
+#if defined(_WIN32) && !defined(CPPREST_TARGET_XP)
 #if defined(__cplusplus_winrt)
 #if WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP && _MSC_VER < 1800
     ::utility::string_t m_password;
@@ -158,6 +157,8 @@ private:
 #else
     details::win32_encryption m_password;
 #endif
+#else
+    ::utility::string_t m_password;
 #endif
 };
 

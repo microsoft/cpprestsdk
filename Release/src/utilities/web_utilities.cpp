@@ -37,7 +37,7 @@ namespace web
 {
 namespace details
 {
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(CPPREST_TARGET_XP)
 #if defined(__cplusplus_winrt)
 
 // Not available on Windows Phone 8.0
@@ -133,16 +133,17 @@ plaintext_string win32_encryption::decrypt() const
     return std::move(data);
 }
 #endif
+#endif
 
 void zero_memory_deleter::operator()(::utility::string_t *data) const
 {
+#if defined(_WIN32)
     SecureZeroMemory(
         const_cast<::utility::string_t::value_type *>(data->data()),
         data->size() * sizeof(::utility::string_t::value_type));
     delete data;
-}
-
 #endif
+}
 }
 
 }
