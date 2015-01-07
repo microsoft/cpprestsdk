@@ -55,7 +55,7 @@
       <RuntimeLibrary Condition="'$(Configuration)'=='Release'">MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Kernel32.lib;Winhttp.lib;httpapi.lib;crypt32.lib;bcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Winhttp.lib;crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       
       <!-- We are statically linking against an OpenSSL lib which statically links against the CRT, avoid warning -->
       <IgnoreSpecificDefaultLibraries Condition="'$(Configuration)'=='Debug'">LIBCMTD</IgnoreSpecificDefaultLibraries>
