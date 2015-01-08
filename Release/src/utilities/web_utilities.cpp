@@ -146,7 +146,7 @@ plaintext_string win32_encryption::decrypt() const
 
 void zero_memory_deleter::operator()(::utility::string_t *data) const
 {
-    data;
+    CASABLANCA_UNREFERENCED_PARAMETER(data);
 #if defined(_WIN32)
     SecureZeroMemory(
         const_cast<::utility::string_t::value_type *>(data->data()),
