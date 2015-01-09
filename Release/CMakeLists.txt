@@ -82,6 +82,7 @@ elseif(UNIX) # This includes OSX
     list(REVERSE OPENSSL_ROOT_DIR)
   endif()
   # This should prevent linking against the system provided 0.9.8y
+  set(_OPENSSL_VERSION "")
   find_package(OpenSSL 1.0.0 REQUIRED)
 
   option(BUILD_SHARED_LIBS "Build shared Libraries." ON)
