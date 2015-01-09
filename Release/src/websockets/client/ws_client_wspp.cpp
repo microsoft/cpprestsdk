@@ -304,6 +304,18 @@ public:
             }
         }
 
+		web::web_proxy proxy = m_config.proxy();
+		web::uri uri = proxy.address();
+		if (!uri.is_empty())
+		{
+			std::string str = utility::conversions::to_utf8string(uri.to_string());
+			con->set_proxy(str, ec);
+			if (ec.value())
+			{
+				return pplx::task_from_exception<void>(websocket_exception(ec, build_error_msg(ec, "set_proxy")));
+			}
+		}
+
         m_state = CONNECTING;
         client.connect(con);
         m_thread = std::thread([&client]()
