@@ -93,7 +93,7 @@ elseif(UNIX) # This includes OSX
     install(FILES ${CASA_HEADERS_CPPREST} DESTINATION include/cpprest)
     file(GLOB CASA_HEADERS_PPLX include/pplx/*.hpp include/pplx/*.h)
     install(FILES ${CASA_HEADERS_PPLX} DESTINATION include/pplx)
-    file(GLOB CASA_HEADERS_DETAILS include/cpprest/details/*.hpp include/cpprest/details/*.h)
+    file(GLOB CASA_HEADERS_DETAILS include/cpprest/details/*.hpp include/cpprest/details/*.h include/cpprest/details/*.dat)
     install(FILES ${CASA_HEADERS_DETAILS} DESTINATION include/cpprest/details)
   endif()
 elseif(WIN32)
