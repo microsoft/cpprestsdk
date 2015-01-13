@@ -238,7 +238,7 @@ namespace utilities {
 
     void test_websocket_server::next_message(std::function<void(test_websocket_msg)> handler)
     {
-        std::lock_guard<std::mutex> lg{m_handler_queue_lock};
+        std::lock_guard<std::mutex> lg(m_handler_queue_lock);
         assert(handler);
         m_handler_queue.push(handler);
         assert(m_handler_queue.front());
@@ -246,7 +246,7 @@ namespace utilities {
 
     std::function<void(test_websocket_msg)> test_websocket_server::get_next_message_handler()
     {
-        std::lock_guard<std::mutex> lg{ m_handler_queue_lock };
+        std::lock_guard<std::mutex> lg(m_handler_queue_lock);
         assert(m_handler_queue.size() > 0);
         auto handler = m_handler_queue.front();
         assert(handler);
