@@ -138,8 +138,15 @@ public:
     WEBSOCKET_UTILITY_API std::shared_ptr<_test_websocket_server> get_impl();
 
 private:
+
+    test_websocket_server(const test_websocket_server&) = delete;
+    test_websocket_server& operator=(const test_websocket_server&) = delete;
+    test_websocket_server(test_websocket_server&&) = delete;
+    test_websocket_server& operator=(test_websocket_server&&) = delete;
+
     // Queue to maintain the request handlers.
-    // Note: This queue is not thread-safe
+    // Note: This queue is not thread-safe. Use m_handler_queue_lock to synchronize.
+    std::mutex m_handler_queue_lock;
     std::queue<std::function<void(test_websocket_msg)>> m_handler_queue;
     // Handler to address the HTTP handshake request. To be used in scenarios where tests may wish to fail the HTTP request
     // and not proceed with the websocket connection.
