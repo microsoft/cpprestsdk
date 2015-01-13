@@ -585,9 +585,7 @@ private:
             }
             // Making a local copy of the TCE prevents it from being destroyed along with "this"
             auto tceref = m_close_tce;
-            bool close_set_success = tceref.set();
-            // task_completion_event<T>::set() returns false if the event was previously set. This should never be the case, so assert.
-            assert(close_set_success);
+            tceref.set();
         });
     }
 
