@@ -139,10 +139,12 @@ public:
 
 private:
 
+#if !defined(_MSC_VER) || _MSC_VER >= 1800
     test_websocket_server(const test_websocket_server&) = delete;
     test_websocket_server& operator=(const test_websocket_server&) = delete;
     test_websocket_server(test_websocket_server&&) = delete;
     test_websocket_server& operator=(test_websocket_server&&) = delete;
+#endif
 
     // Queue to maintain the request handlers.
     // Note: This queue is not thread-safe. Use m_handler_queue_lock to synchronize.
