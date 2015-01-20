@@ -39,7 +39,10 @@ if(UNIX)
     find_library(SECURITY Security "/")
     set(EXTRALINKS ${COREFOUNDATION} ${SECURITY})
   elseif(ANDROID)
-    set(SOURCES ${SOURCES} http/client/x509_cert_utilities_android.cpp)
+    set(SOURCES ${SOURCES} 
+      http/client/x509_cert_utilities_android.cpp
+      pplx/pplxlinux.cpp
+      )
   else()
     set(SOURCES ${SOURCES} pplx/pplxlinux.cpp)
   endif()
