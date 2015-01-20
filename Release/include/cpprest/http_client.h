@@ -380,7 +380,7 @@ public:
     /// Adds an HTTP pipeline stage to the client.
     /// </summary>
     /// <param name="handler">A function object representing the pipeline stage.</param>
-    void add_handler(std::function<pplx::task<http_response>(http_request, std::shared_ptr<http::http_pipeline_stage>)> handler)
+    void add_handler(const std::function<pplx::task<http_response>(http_request, std::shared_ptr<http::http_pipeline_stage>)> &handler)
     {
         m_pipeline->append(std::make_shared<::web::http::details::function_pipeline_wrapper>(handler));
     }
