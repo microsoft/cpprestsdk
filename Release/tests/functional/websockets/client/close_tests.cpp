@@ -139,7 +139,7 @@ TEST_FIXTURE(uri_address, close_callback_client_from_server)
 
     int hitCount = 0;
     pplx::task_completion_event<void> closeEvent;
-    client.set_close_handler([&hitCount, &closeEvent](websocket_close_status status, const utility::string_t& reason, const std::error_code& code)
+    client.set_close_handler([&hitCount, closeEvent](websocket_close_status status, const utility::string_t& reason, const std::error_code& code)
     {
         VERIFY_ARE_EQUAL(status, websocket_close_status::going_away);
         VERIFY_ARE_EQUAL(reason, U(""));
