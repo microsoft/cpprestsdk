@@ -76,7 +76,7 @@
   <Import Project="$(VCTargetsPath)\AndroidPackaging\Android.targets" />
   <ImportGroup Label="ExtensionTargets" />
   
-  <!-- For some reason fails if the following directory doesn't exist on command line build -->
+  <!-- For some reason build fails if the following directory doesn't exist on command line build -->
   <Target Name="CreateDirectories">
     <MakeDir Directories="$(MSBuildProjectDirectory)\obj\$(Platform)\$(Configuration)" />
   </Target>
