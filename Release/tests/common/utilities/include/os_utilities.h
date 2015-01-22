@@ -31,11 +31,11 @@ class os_utilities
 {
 public:
 
-    static TEST_UTILITY_API void sleep(unsigned long ms);
+    static TEST_UTILITY_API void __cdecl sleep(unsigned long ms);
 
     // Could use std::atomics but VS 2010 doesn't support it yet.
-    static TEST_UTILITY_API unsigned long interlocked_increment(volatile unsigned long *addend);
-    static TEST_UTILITY_API long interlocked_exchange(volatile long *target, long value);
+    static TEST_UTILITY_API unsigned long __cdecl interlocked_increment(volatile unsigned long *addend);
+    static TEST_UTILITY_API long __cdecl interlocked_exchange(volatile long *target, long value);
 
 private:
     os_utilities();

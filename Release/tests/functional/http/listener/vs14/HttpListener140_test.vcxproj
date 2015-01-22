@@ -100,6 +100,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;HTTPTESTS_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);$(TestRoot)\functional\http\utilities\include;$(TestListenerPath)\include</AdditionalIncludeDirectories>
       <AdditionalOptions>-Zm140 %(AdditionalOptions)</AdditionalOptions>
+      <CallingConvention>FastCall</CallingConvention>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -114,6 +115,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;HTTPTESTS_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);$(TestRoot)\functional\http\utilities\include;$(TestListenerPath)\include</AdditionalIncludeDirectories>
       <AdditionalOptions>-Zm140 %(AdditionalOptions)</AdditionalOptions>
+      <CallingConvention>FastCall</CallingConvention>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -128,6 +130,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;HTTPTESTS_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);$(TestRoot)\functional\http\utilities\include;$(TestListenerPath)\include</AdditionalIncludeDirectories>
       <AdditionalOptions>-Zm140 %(AdditionalOptions)</AdditionalOptions>
+      <CallingConvention>FastCall</CallingConvention>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -144,6 +147,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;HTTPTESTS_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);$(TestRoot)\functional\http\utilities\include;$(TestListenerPath)\include</AdditionalIncludeDirectories>
       <AdditionalOptions>-Zm140 %(AdditionalOptions)</AdditionalOptions>
+      <CallingConvention>FastCall</CallingConvention>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -162,6 +166,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;HTTPTESTS_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);$(TestRoot)\functional\http\utilities\include;$(TestListenerPath)\include</AdditionalIncludeDirectories>
       <AdditionalOptions>-Zm140 %(AdditionalOptions)</AdditionalOptions>
+      <CallingConvention>FastCall</CallingConvention>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -180,6 +185,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;HTTPTESTS_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);$(TestRoot)\functional\http\utilities\include;$(TestListenerPath)\include</AdditionalIncludeDirectories>
       <AdditionalOptions>-Zm140 %(AdditionalOptions)</AdditionalOptions>
+      <CallingConvention>FastCall</CallingConvention>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

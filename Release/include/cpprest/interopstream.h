@@ -500,7 +500,7 @@ namespace Concurrency { namespace streams {
         /// The stream buffer is shared with the caller, allowing data to be passed between the two contexts. For
         /// example, using a <c>producer_consumer_buffer</c>, a Casablanca-based caller can pass data to a WinRT component.
         /// </remarks>
-        _ASYNCRTIMP static Windows::Storage::Streams::IInputStream^ create_input_stream(concurrency::streams::streambuf<uint8_t> buffer);
+        _ASYNCRTIMP static Windows::Storage::Streams::IInputStream^ __cdecl create_input_stream(concurrency::streams::streambuf<uint8_t> buffer);
 
         /// <summary>
         /// Creates a WinRT <c>IOutputStream</c> reference from an asynchronous stream buffer.
@@ -512,7 +512,7 @@ namespace Concurrency { namespace streams {
         /// The stream buffer is shared with the caller, allowing data to be passed between the two contexts. For
         /// example, using a <c>producer_consumer_buffer</c>, a Casablanca-based caller can retrieve data from a WinRT component.
         /// </remarks>
-        _ASYNCRTIMP static Windows::Storage::Streams::IOutputStream^ create_output_stream(concurrency::streams::streambuf<uint8_t> buffer);
+        _ASYNCRTIMP static Windows::Storage::Streams::IOutputStream^ __cdecl create_output_stream(concurrency::streams::streambuf<uint8_t> buffer);
 
         /// <summary>
         /// Creates a WinRT <c>IRandomAccessStream reference from an asynchronous input stream.
@@ -524,7 +524,7 @@ namespace Concurrency { namespace streams {
         /// example, using a <c>producer_consumer_buffer</c>, a Casablanca-based caller can pass data to and retrieve data
         /// from a WinRT component.
         /// </remarks>
-        _ASYNCRTIMP static Windows::Storage::Streams::IRandomAccessStream^ create_random_access_stream(concurrency::streams::streambuf<uint8_t> buffer);
+        _ASYNCRTIMP static Windows::Storage::Streams::IRandomAccessStream^ __cdecl create_random_access_stream(concurrency::streams::streambuf<uint8_t> buffer);
     };
 
 #endif
