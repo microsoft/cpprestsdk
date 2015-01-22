@@ -693,13 +693,13 @@ namespace details {
         pplx::task<void> flush_internal()
         {
             pplx::task_completion_event<void> result_tce;
-            auto callback = new _filestream_callback_write_b(m_info, result_tce);
+            auto callback = utility::details::make_unique<_filestream_callback_write_b>(m_info, result_tce);
 
-            if ( !_sync_fsb(m_info, callback) )
+            if ( !_sync_fsb(m_info, callback.get()) )
             {
-                delete callback;
                 return pplx::task_from_exception<void>(std::runtime_error("failure to flush stream"));
             }
+            callback.release();
             return pplx::create_task(result_tce);
         }
 
