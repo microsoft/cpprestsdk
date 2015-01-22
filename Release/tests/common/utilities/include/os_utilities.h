@@ -24,6 +24,7 @@
 #pragma once
 
 #include "common_utilities_public.h"
+#include "cpprest/details/cpprest_compat.h"
 
 namespace tests { namespace common { namespace utilities {
 
