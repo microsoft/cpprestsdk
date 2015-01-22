@@ -66,7 +66,7 @@ bool verify_X509_cert_chain(const std::vector<std::string> &certChain, const std
     ZeroMemory(&params, sizeof(params));
     params.cbSize = sizeof(CERT_CHAIN_PARA);
     params.RequestedUsage.dwType = USAGE_MATCH_TYPE_AND;
-    LPTSTR usages [] = { szOID_PKIX_KP_SERVER_AUTH };
+    LPSTR usages [] = { szOID_PKIX_KP_SERVER_AUTH };
     params.RequestedUsage.Usage.cUsageIdentifier = 1;
     params.RequestedUsage.Usage.rgpszUsageIdentifier = usages;
     PCCERT_CHAIN_CONTEXT chainContext;
