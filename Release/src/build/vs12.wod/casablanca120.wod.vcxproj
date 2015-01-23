@@ -36,26 +36,6 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Release.Product.Settings" />
-  <PropertyGroup>
-    <Linkage-zlib>static</Linkage-zlib>
-    <Linkage-openssl>static</Linkage-openssl>
-  </PropertyGroup>
-  <ImportGroup Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="$(PackagesRoot)\boost.1.55.0.16\build\native\boost.targets" Condition="Exists('$(PackagesRoot)\boost.1.55.0.16\build\native\boost.targets')" />
-    <Import Project="$(PackagesRoot)\boost.1.57.0.0\build\native\boost.targets" Condition="Exists('$(PackagesRoot)\boost.1.57.0.0\build\native\boost.targets')" />
-    <Import Project="$(PackagesRoot)\boost_chrono-vc120.1.57.0.0\build\native\boost_chrono-vc120.targets" Condition="Exists('$(PackagesRoot)\boost_chrono-vc120.1.57.0.0\build\native\boost_chrono-vc120.targets')" />
-    <Import Project="$(PackagesRoot)\boost_system-vc120.1.55.0.16\build\native\boost_system-vc120.targets" Condition="Exists('$(PackagesRoot)\boost_system-vc120.1.55.0.16\build\native\boost_system-vc120.targets')" />
-    <Import Project="$(PackagesRoot)\boost_system-vc120.1.57.0.0\build\native\boost_system-vc120.targets" Condition="Exists('$(PackagesRoot)\boost_system-vc120.1.57.0.0\build\native\boost_system-vc120.targets')" />
-    <Import Project="$(PackagesRoot)\boost_date_time-vc120.1.55.0.16\build\native\boost_date_time-vc120.targets" Condition="Exists('$(PackagesRoot)\boost_date_time-vc120.1.55.0.16\build\native\boost_date_time-vc120.targets')" />
-    <Import Project="$(PackagesRoot)\boost_date_time-vc120.1.57.0.0\build\native\boost_date_time-vc120.targets" Condition="Exists('$(PackagesRoot)\boost_date_time-vc120.1.57.0.0\build\native\boost_date_time-vc120.targets')" />
-    <Import Project="$(PackagesRoot)\boost_regex-vc120.1.55.0.16\build\native\boost_regex-vc120.targets" Condition="Exists('$(PackagesRoot)\boost_regex-vc120.1.55.0.16\build\native\boost_regex-vc120.targets')" />
-    <Import Project="$(PackagesRoot)\boost_regex-vc120.1.57.0.0\build\native\boost_regex-vc120.targets" Condition="Exists('$(PackagesRoot)\boost_regex-vc120.1.57.0.0\build\native\boost_regex-vc120.targets')" />
-    <Import Project="$(PackagesRoot)\boost_thread-vc120.1.57.0.0\build\native\boost_thread-vc120.targets" Condition="Exists('$(PackagesRoot)\boost_thread-vc120.1.57.0.0\build\native\boost_thread-vc120.targets')" />
-    <Import Project="$(PackagesRoot)\openssl.1.0.1.25\build\native\openssl.props" Condition="Exists('$(PackagesRoot)\openssl.1.0.1.25\build\native\openssl.props')" />
-    <Import Project="$(PackagesRoot)\openssl.1.0.1.25\build\native\openssl.targets" Condition="Exists('$(PackagesRoot)\openssl.1.0.1.25\build\native\openssl.targets')" />
-    <Import Project="$(PackagesRoot)\zlib.1.2.8.7\build\native\zlib.targets" Condition="Exists('$(PackagesRoot)\zlib.1.2.8.7\build\native\zlib.targets')" />
-  </ImportGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <DebugFileSuffix>d</DebugFileSuffix>
   </PropertyGroup>
@@ -71,7 +51,7 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <PreprocessorDefinitions>CPPREST_EXCLUDE_WEBSOCKETS;_WINSOCK_DEPRECATED_NO_WARNINGS;_ASYNCRT_EXPORT;_PPLX_EXPORT;WIN32;_MBCS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CasablancaSrcDir)\pch;$(WebsocketppIncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CasablancaSrcDir)\pch;;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
       <AdditionalOptions>-Zm160 /bigobj /d2nolock %(AdditionalOptions)</AdditionalOptions>
@@ -87,26 +67,9 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>Winhttp.lib;httpapi.lib;bcrypt.lib;crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <!-- We are statically linking against an OpenSSL lib which statically links against the CRT, avoid warning -->
-      <IgnoreSpecificDefaultLibraries Condition="'$(Configuration)'=='Debug'">LIBCMTD</IgnoreSpecificDefaultLibraries>
-      <IgnoreSpecificDefaultLibraries Condition="'$(Configuration)'=='Release'">LIBCMT</IgnoreSpecificDefaultLibraries>
-      <!-- The OpenSSL package doesn't include pdbs so suppress the warning, otherwise one is emitted per object file -->
-      <!-- This is just complaining we don't have debug information for OpenSSL -->
-      <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="..\common.vcxitems" Label="Shared" Condition="Exists('..\common.vcxitems')" />
   <Import Project="..\win32.vcxitems" Label="Shared" Condition="Exists('..\win32.vcxitems')" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('..\..\..\..\packages\boost_chrono-vc120.1.57.0.0\build\native\boost_chrono-vc120.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\..\packages\boost_chrono-vc120.1.57.0.0\build\native\boost_chrono-vc120.targets'))" />
-    <Error Condition="!Exists('..\..\..\..\packages\boost_date_time-vc120.1.57.0.0\build\native\boost_date_time-vc120.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\..\packages\boost_date_time-vc120.1.57.0.0\build\native\boost_date_time-vc120.targets'))" />
-    <Error Condition="!Exists('..\..\..\..\packages\boost_regex-vc120.1.57.0.0\build\native\boost_regex-vc120.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\..\packages\boost_regex-vc120.1.57.0.0\build\native\boost_regex-vc120.targets'))" />
-    <Error Condition="!Exists('..\..\..\..\packages\boost_system-vc120.1.57.0.0\build\native\boost_system-vc120.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\..\packages\boost_system-vc120.1.57.0.0\build\native\boost_system-vc120.targets'))" />
-    <Error Condition="!Exists('..\..\..\..\packages\boost_thread-vc120.1.57.0.0\build\native\boost_thread-vc120.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\..\packages\boost_thread-vc120.1.57.0.0\build\native\boost_thread-vc120.targets'))" />
-    <Error Condition="!Exists('..\..\..\..\packages\boost.1.57.0.0\build\native\boost.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\..\packages\boost.1.57.0.0\build\native\boost.targets'))" />
-  </Target>
 </Project>
