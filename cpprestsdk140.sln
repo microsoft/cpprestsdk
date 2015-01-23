@@ -43,8 +43,12 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SearchFile140", "Release\sa
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cpprestsdk140.android", "Release\src\build\vs14.android\casablanca140.android.vcxproj", "{AFB49019-965B-4C10-BAFF-C86C16D58010}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cpprestsdk140.wod", "Release\src\build\vs14.wod\casablanca140.wod.vcxproj", "{3A584D9C-1A98-4046-B7D3-B7171EF42D34}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		Release\src\build\win32.vcxitems*{3a584d9c-1a98-4046-b7d3-b7171ef42d34}*SharedItemsImports = 4
+		Release\src\build\common.vcxitems*{3a584d9c-1a98-4046-b7d3-b7171ef42d34}*SharedItemsImports = 4
 		Release\src\build\winrt.vcxitems*{0a9ba181-7876-4b3d-a5e0-ee673fa51c05}*SharedItemsImports = 9
 		Release\src\build\android.vcxitems*{65951c40-a332-4b54-89c2-7cdaf30d5f66}*SharedItemsImports = 9
 		Release\src\build\win32.vcxitems*{1014c621-bc2d-4813-b8c1-6d83ad6f9249}*SharedItemsImports = 4
@@ -164,6 +168,22 @@ Global
 		{AFB49019-965B-4C10-BAFF-C86C16D58010}.Release|x64.ActiveCfg = Release|x86
 		{AFB49019-965B-4C10-BAFF-C86C16D58010}.Release|x86.ActiveCfg = Release|x86
 		{AFB49019-965B-4C10-BAFF-C86C16D58010}.Release|x86.Build.0 = Release|x86
+		{3A584D9C-1A98-4046-B7D3-B7171EF42D34}.Debug|ARM.ActiveCfg = Debug|ARM
+		{3A584D9C-1A98-4046-B7D3-B7171EF42D34}.Debug|ARM.Build.0 = Debug|ARM
+		{3A584D9C-1A98-4046-B7D3-B7171EF42D34}.Debug|Win32.ActiveCfg = Debug|Win32
+		{3A584D9C-1A98-4046-B7D3-B7171EF42D34}.Debug|Win32.Build.0 = Debug|Win32
+		{3A584D9C-1A98-4046-B7D3-B7171EF42D34}.Debug|x64.ActiveCfg = Debug|x64
+		{3A584D9C-1A98-4046-B7D3-B7171EF42D34}.Debug|x64.Build.0 = Debug|x64
+		{3A584D9C-1A98-4046-B7D3-B7171EF42D34}.Debug|x86.ActiveCfg = Debug|Win32
+		{3A584D9C-1A98-4046-B7D3-B7171EF42D34}.Debug|x86.Build.0 = Debug|Win32
+		{3A584D9C-1A98-4046-B7D3-B7171EF42D34}.Release|ARM.ActiveCfg = Release|ARM
+		{3A584D9C-1A98-4046-B7D3-B7171EF42D34}.Release|ARM.Build.0 = Release|ARM
+		{3A584D9C-1A98-4046-B7D3-B7171EF42D34}.Release|Win32.ActiveCfg = Release|Win32
+		{3A584D9C-1A98-4046-B7D3-B7171EF42D34}.Release|Win32.Build.0 = Release|Win32
+		{3A584D9C-1A98-4046-B7D3-B7171EF42D34}.Release|x64.ActiveCfg = Release|x64
+		{3A584D9C-1A98-4046-B7D3-B7171EF42D34}.Release|x64.Build.0 = Release|x64
+		{3A584D9C-1A98-4046-B7D3-B7171EF42D34}.Release|x86.ActiveCfg = Release|Win32
+		{3A584D9C-1A98-4046-B7D3-B7171EF42D34}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -187,5 +207,6 @@ Global
 		{FFBFD6C1-B525-4D35-AB64-A2FE9460B147} = {76FA5645-FF99-44C0-87DB-B96AFAC2F800}
 		{F03BEE03-BEFB-4B17-A774-D9C8246530D4} = {22309B46-EE6F-45D0-A993-2F45D98DEF22}
 		{AFB49019-965B-4C10-BAFF-C86C16D58010} = {64F2F240-04BE-43B2-97BE-DA47FDFE8393}
+		{3A584D9C-1A98-4046-B7D3-B7171EF42D34} = {64F2F240-04BE-43B2-97BE-DA47FDFE8393}
 	EndGlobalSection
 EndGlobal
