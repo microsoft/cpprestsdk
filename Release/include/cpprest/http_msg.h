@@ -238,7 +238,10 @@ public:
     _ASYNCRTIMP void set_body(const concurrency::streams::istream &instream, utility::size64_t contentLength, const utf8string &contentType);
     _ASYNCRTIMP void set_body(const concurrency::streams::istream &instream, utility::size64_t contentLength, const utf16string &contentType);
 
-    _ASYNCRTIMP utility::string_t _extract_string(bool force = false);
+    _ASYNCRTIMP utf8string extract_utf8string(bool force = false);
+    _ASYNCRTIMP utf16string extract_utf16string(bool force = false);
+    _ASYNCRTIMP utility::string_t extract_string(bool force = false);
+
     _ASYNCRTIMP json::value _extract_json(bool force = false);
     _ASYNCRTIMP std::vector<unsigned char> _extract_vector();
 
@@ -451,7 +454,31 @@ public:
     pplx::task<utility::string_t> extract_string(bool force = false) const
     {
         auto impl = _m_impl;
-        return pplx::create_task(_m_impl->_get_data_available()).then([impl, force](utility::size64_t) { return impl->_extract_string(force); });
+        return pplx::create_task(_m_impl->_get_data_available()).then([impl, force](utility::size64_t) { return impl->extract_string(force); });
+    }
+
+    /// <summary>
+    /// Extracts the body of the response message as a UTF-8 string value, checking that the content type is a MIME text type.
+    /// A body can only be extracted once because in some cases an optimization is made where the data is 'moved' out.
+    /// </summary>
+    /// <param name="force">If true, ignores the Content-Type header and assumes UTF-8.</param>
+    /// <returns>String containing body of the message.</returns>
+    pplx::task<utf8string> extract_utf8string(bool force = false) const
+    {
+        auto impl = _m_impl;
+        return pplx::create_task(_m_impl->_get_data_available()).then([impl, force](utility::size64_t) { return impl->extract_utf8string(force); });
+    }
+
+    /// <summary>
+    /// Extracts the body of the response message as a UTF-16 string value, checking that the content type is a MIME text type.
+    /// A body can only be extracted once because in some cases an optimization is made where the data is 'moved' out.
+    /// </summary>
+    /// <param name="force">If true, ignores the Content-Type header and assumes UTF-8.</param>
+    /// <returns>String containing body of the message.</returns>
+    pplx::task<utf16string> extract_utf16string(bool force = false) const
+    {
+        auto impl = _m_impl;
+        return pplx::create_task(_m_impl->_get_data_available()).then([impl, force](utility::size64_t) { return impl->extract_utf16string(force); });
     }
 
     /// <summary>
@@ -823,7 +850,31 @@ public:
     pplx::task<utility::string_t> extract_string(bool force = false)
     {
         auto impl = _m_impl;
-        return pplx::create_task(_m_impl->_get_data_available()).then([impl, force](utility::size64_t) { return impl->_extract_string(force); });
+        return pplx::create_task(_m_impl->_get_data_available()).then([impl, force](utility::size64_t) { return impl->extract_string(force); });
+    }
+
+    /// <summary>
+    /// Extract the body of the request message as a UTF-8 string value, checking that the content type is a MIME text type.
+    /// A body can only be extracted once because in some cases an optimization is made where the data is 'moved' out.
+    /// </summary>
+    /// <param name="force">If true, ignores the Content-Type header and assumes UTF-8.</param>
+    /// <returns>String containing body of the message.</returns>
+    pplx::task<utf8string> extract_utf8string(bool force = false)
+    {
+        auto impl = _m_impl;
+        return pplx::create_task(_m_impl->_get_data_available()).then([impl, force](utility::size64_t) { return impl->extract_utf8string(force); });
+    }
+
+    /// <summary>
+    /// Extract the body of the request message as a UTF-16 string value, checking that the content type is a MIME text type.
+    /// A body can only be extracted once because in some cases an optimization is made where the data is 'moved' out.
+    /// </summary>
+    /// <param name="force">If true, ignores the Content-Type header and assumes UTF-8.</param>
+    /// <returns>String containing body of the message.</returns>
+    pplx::task<utf16string> extract_utf16string(bool force = false)
+    {
+        auto impl = _m_impl;
+        return pplx::create_task(_m_impl->_get_data_available()).then([impl, force](utility::size64_t) { return impl->extract_utf16string(force); });
     }
 
     /// <summary>

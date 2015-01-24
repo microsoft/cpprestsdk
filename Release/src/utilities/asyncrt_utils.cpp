@@ -388,25 +388,6 @@ utf16string __cdecl conversions::usascii_to_utf16(const std::string &s)
     }
 
     return buffer;
-#elif defined(__APPLE__)
-
-    CFStringRef str = CFStringCreateWithCStringNoCopy(
-        nullptr,
-        s.c_str(),
-        kCFStringEncodingASCII,
-        kCFAllocatorNull);
-
-    if ( str == nullptr )
-        throw utility::details::create_system_error(0);
-
-    size_t size = CFStringGetLength(str);
-
-    // this length includes the terminating null
-    std::unique_ptr<utf16char[]> buffer(new utf16char[size]);
-
-    CFStringGetCharacters(str, CFRangeMake(0, size), (UniChar*)buffer.get());
-
-    return utf16string(buffer.get(), buffer.get() + size);
 #else
     return utf_to_utf<utf16char>(to_utf<char>(s, "ascii", stop));
 #endif
@@ -450,26 +431,24 @@ utf16string __cdecl conversions::latin1_to_utf16(const std::string &s)
     }
 
     return buffer;
-#elif defined(__APPLE__)
-    CFStringRef str = CFStringCreateWithCStringNoCopy(
-        nullptr,
-        s.c_str(),
-        kCFStringEncodingWindowsLatin1,
-        kCFAllocatorNull);
-
-    if ( str == nullptr )
-        throw utility::details::create_system_error(0);
-
-    size_t size = CFStringGetLength(str);
-
-    // this length includes the terminating null
-    std::unique_ptr<utf16char[]> buffer(new utf16char[size]);
-
-    CFStringGetCharacters(str, CFRangeMake(0, size), (UniChar*)buffer.get());
-
-    return utf16string(buffer.get(), buffer.get() + size);
 #else
     return utf_to_utf<utf16char>(to_utf<char>(s, "Latin1", stop));
+#endif
+}
+
+utf8string __cdecl conversions::latin1_to_utf8(const std::string &s)
+{
+    if (s.empty())
+    {
+        return utf8string();
+    }
+
+#ifdef _WIN32
+    // Not aware of a Windows function to perform to round trip
+    // the conversion. Latin1 isn't a common case so use easy to code solution.
+    return utf16_to_utf8(latin1_to_utf16(s));
+#else
+    return to_utf<utf8char>(s, "Latin1");
 #endif
 }
 
@@ -481,7 +460,6 @@ utf16string __cdecl conversions::default_code_page_to_utf16(const std::string &s
     }
 
 #ifdef _WIN32
-    // First have to convert to UTF-16.
     int size = ::MultiByteToWideChar(
         CP_ACP, // convert from Windows system default
         MB_ERR_INVALID_CHARS, // fail if any characters can't be translated
@@ -512,25 +490,7 @@ utf16string __cdecl conversions::default_code_page_to_utf16(const std::string &s
     {
         throw utility::details::create_system_error(GetLastError());
     }
-#elif defined(__APPLE__)
-    CFStringRef str = CFStringCreateWithCStringNoCopy(
-        nullptr,
-        s.c_str(),
-        kCFStringEncodingMacRoman,
-        kCFAllocatorNull);
-
-    if ( str == nullptr )
-        throw utility::details::create_system_error(0);
-
-    size_t size = CFStringGetLength(str);
-
-    // this length includes the terminating null
-    std::unique_ptr<utf16char[]> buffer(new utf16char[size]);
-
-    CFStringGetCharacters(str, CFRangeMake(0, size), (UniChar*)buffer.get());
-
-    return utf16string(buffer.get(), buffer.get() + size);
-#else // LINUX
+#else
     return utf_to_utf<utf16char>(to_utf<char>(s, std::locale(""), stop));
 #endif
 }
