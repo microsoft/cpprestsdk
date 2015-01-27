@@ -645,20 +645,19 @@ unsigned long test_request::reply(
         const unsigned short status_code, 
         const utility::string_t &reason_phrase,
         const std::map<utility::string_t, utility::string_t> &headers,
-        const std::string &data)
+        const utf8string &data)
 {
-    return reply_impl(status_code, reason_phrase, headers, (void *)&data[0], data.size() * sizeof(char));
+    return reply_impl(status_code, reason_phrase, headers, (void *)&data[0], data.size() * sizeof(utf8char));
 }
-#ifdef _WIN32
+
 unsigned long test_request::reply(
         const unsigned short status_code, 
         const utility::string_t &reason_phrase, 
         const std::map<utility::string_t, utility::string_t> &headers,
-        const utility::string_t &data)
+        const utf16string &data)
 {
-    return reply_impl(status_code, reason_phrase, headers, (void *)&data[0], data.size() * sizeof(utility::char_t));
+    return reply_impl(status_code, reason_phrase, headers, (void *)&data[0], data.size() * sizeof(utf16char));
 }
-#endif
 
 #ifdef _WIN32
 unsigned long test_request::reply_impl(

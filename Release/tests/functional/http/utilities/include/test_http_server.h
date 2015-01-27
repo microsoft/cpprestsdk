@@ -57,14 +57,12 @@ public:
         const unsigned short status_code,
         const utility::string_t &reason_phrase,
         const std::map<utility::string_t, utility::string_t> &headers,
-        const std::string &data);
-#ifdef _WIN32
+        const utf8string &data);
     TEST_UTILITY_API unsigned long reply(
         const unsigned short status_code,
         const utility::string_t &reason_phrase,
         const std::map<utility::string_t, utility::string_t> &headers,
-        const utility::string_t &data);
-#endif
+        const utf16string &data);
 
     // API to check if a specific header exists and get it.
     template <typename T>

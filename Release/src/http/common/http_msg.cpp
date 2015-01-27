@@ -286,9 +286,17 @@ utf8string details::http_msg_base::extract_utf8string(bool force)
         return latin1_to_utf8(std::move(body));
     }
 
-    // utf-16, utf-16le
-    else if (utility::details::str_icmp(charset, charset_types::utf16)
-          || utility::details::str_icmp(charset, charset_types::utf16le))
+    // utf-16
+    else if (utility::details::str_icmp(charset, charset_types::utf16))
+    {
+        utf16string body;
+        body.resize(buf_r.in_avail() / sizeof(utf16string::value_type));
+        buf_r.getn(reinterpret_cast<uint8_t *>(&body[0]), body.size() * sizeof(utf16string::value_type)); // There is no risk of blocking.
+        return convert_utf16_to_utf8(std::move(body));
+    }
+
+    // utf-16le
+    else if (utility::details::str_icmp(charset, charset_types::utf16le))
     {
         utf16string body;
         body.resize(buf_r.in_avail() / sizeof(utf16string::value_type));
@@ -344,8 +352,7 @@ utf16string details::http_msg_base::extract_utf16string(bool force)
     }
 
     // Perform the correct character set conversion if one is necessary.
-    if (utility::details::str_icmp(charset, charset_types::utf16)
-        || utility::details::str_icmp(charset, charset_types::utf16le))
+    if (utility::details::str_icmp(charset, charset_types::utf16le))
     {
         utf16string body;
         body.resize(buf_r.in_avail() / sizeof(utf16string::value_type));
@@ -371,6 +378,15 @@ utf16string details::http_msg_base::extract_utf16string(bool force)
         body.resize((std::string::size_type)buf_r.in_avail());
         buf_r.getn(reinterpret_cast<uint8_t*>(&body[0]), body.size()).get(); // There is no risk of blocking.
         return latin1_to_utf16(std::move(body));
+    }
+
+    // utf-16
+    else if (utility::details::str_icmp(charset, charset_types::utf16))
+    {
+        utf16string body;
+        body.resize(buf_r.in_avail() / sizeof(utf16string::value_type));
+        buf_r.getn(reinterpret_cast<uint8_t*>(&body[0]), body.size() * sizeof(utf16string::value_type)); // There is no risk of blocking.
+        return convert_utf16_to_utf16(std::move(body));
     }
 
     // utf-16be

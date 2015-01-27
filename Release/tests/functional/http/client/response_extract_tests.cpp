@@ -117,10 +117,9 @@ TEST_FIXTURE(uri_address, extract_string)
         VERIFY_ARE_EQUAL(utility::string_t(U("")), rsp.extract_string().get());
     }
 
-#ifdef _WIN32
     // utf-16le
-    utf16string wdata(utf8_to_utf16("YES NOW, HERHEHE****"));
-    data = utf16_to_utf8(wdata);
+    data = "YES NOW, HERHEHE****";
+    utf16string wdata(utf8_to_utf16(data));
     rsp = send_request_response(scoped.server(), &client, U("text/plain; charset=utf-16le"), wdata);
     VERIFY_ARE_EQUAL(to_string_t(data), rsp.extract_string().get());
 
@@ -150,7 +149,142 @@ TEST_FIXTURE(uri_address, extract_string)
     start[1] = 0xFE;
     rsp = send_request_response(scoped.server(), &client, U("text/plain; charset=utf-16"), wdata);
     VERIFY_ARE_EQUAL(to_string_t(data), rsp.extract_string().get());
-#endif
+}
+
+TEST_FIXTURE(uri_address, extract_utf8string)
+{
+    test_http_server::scoped_server scoped(m_uri);
+    http_client client(m_uri);
+
+    // default encoding (Latin1)
+    std::string data("YOU KNOW ITITITITI");
+    http_response rsp = send_request_response(scoped.server(), &client, U("text/plain"), data);
+    VERIFY_ARE_EQUAL(data, rsp.extract_utf8string().get());
+
+    // us-ascii
+    rsp = send_request_response(scoped.server(), &client, U("text/plain;  charset=  us-AscIi"), data);
+    VERIFY_ARE_EQUAL(data, rsp.extract_utf8string().get());
+
+    // Latin1
+    rsp = send_request_response(scoped.server(), &client, U("text/plain;charset=iso-8859-1"), data);
+    VERIFY_ARE_EQUAL(data, rsp.extract_utf8string().get());
+
+    // utf-8
+    rsp = send_request_response(scoped.server(), &client, U("text/plain; charset  =  UTF-8"), data);
+    VERIFY_ARE_EQUAL(data, rsp.extract_utf8string().get());
+
+    // "utf-8" - quoted charset
+    rsp = send_request_response(scoped.server(), &client, U("text/plain;charset=\"utf-8\""), data);
+    VERIFY_ARE_EQUAL(data, rsp.extract_utf8string().get());
+
+    // no content length
+    rsp = send_request_response(scoped.server(), &client, U(""), utility::string_t());
+    auto str = rsp.to_string();
+    // If there is no Content-Type in the response, make sure it won't throw when we ask for string
+    if (str.find(U("Content-Type")) == std::string::npos)
+    {
+        VERIFY_ARE_EQUAL("", rsp.extract_utf8string().get());
+    }
+
+    // utf-16le
+    data = "YES NOW, HERHEHE****";
+    utf16string wdata(utf8_to_utf16(data));
+    rsp = send_request_response(scoped.server(), &client, U("text/plain; charset=utf-16le"), wdata);
+    VERIFY_ARE_EQUAL(data, rsp.extract_utf8string().get());
+
+    // utf-16be
+    wdata = switch_endian_ness(wdata);
+    rsp = send_request_response(scoped.server(), &client, U("text/plain; charset=utf-16be"), wdata);
+    VERIFY_ARE_EQUAL(data, rsp.extract_utf8string().get());
+
+    // utf-16 no BOM (utf-16be)
+    rsp = send_request_response(scoped.server(), &client, U("text/plain; charset=utf-16"), wdata);
+    VERIFY_ARE_EQUAL(data, rsp.extract_utf8string().get());
+
+    // utf-16 big endian BOM.
+    wdata.insert(wdata.begin(), ('\0'));
+    unsigned char * start = (unsigned char *) &wdata[0];
+    start[0] = 0xFE;
+    start[1] = 0xFF;
+    rsp = send_request_response(scoped.server(), &client, U("text/plain; charset=utf-16"), wdata);
+    VERIFY_ARE_EQUAL(data, rsp.extract_utf8string().get());
+
+    // utf-16 little endian BOM.
+    wdata = utf8_to_utf16("YOU KNOW THIS **********KICKS");
+    data = utf16_to_utf8(wdata);
+    wdata.insert(wdata.begin(), '\0');
+    start = (unsigned char *) &wdata[0];
+    start[0] = 0xFF;
+    start[1] = 0xFE;
+    rsp = send_request_response(scoped.server(), &client, U("text/plain; charset=utf-16"), wdata);
+    VERIFY_ARE_EQUAL(data, rsp.extract_utf8string().get());
+}
+
+TEST_FIXTURE(uri_address, extract_utf16string)
+{
+    test_http_server::scoped_server scoped(m_uri);
+    http_client client(m_uri);
+
+    // default encoding (Latin1)
+    std::string data("YOU KNOW ITITITITI");
+    utf16string wdata(utf8_to_utf16(data));
+    http_response rsp = send_request_response(scoped.server(), &client, U("text/plain"), data);
+    VERIFY_ARE_EQUAL(wdata, rsp.extract_utf16string().get());
+
+    // us-ascii
+    rsp = send_request_response(scoped.server(), &client, U("text/plain;  charset=  us-AscIi"), data);
+    VERIFY_ARE_EQUAL(wdata, rsp.extract_utf16string().get());
+
+    // Latin1
+    rsp = send_request_response(scoped.server(), &client, U("text/plain;charset=iso-8859-1"), data);
+    VERIFY_ARE_EQUAL(wdata, rsp.extract_utf16string().get());
+
+    // utf-8
+    rsp = send_request_response(scoped.server(), &client, U("text/plain; charset  =  UTF-8"), data);
+    VERIFY_ARE_EQUAL(wdata, rsp.extract_utf16string().get());
+
+    // "utf-8" - quoted charset
+    rsp = send_request_response(scoped.server(), &client, U("text/plain;charset=\"utf-8\""), data);
+    VERIFY_ARE_EQUAL(wdata, rsp.extract_utf16string().get());
+
+    // no content length
+    rsp = send_request_response(scoped.server(), &client, U(""), utility::string_t());
+    auto str = rsp.to_string();
+    // If there is no Content-Type in the response, make sure it won't throw when we ask for string
+    if (str.find(U("Content-Type")) == std::string::npos)
+    {
+        VERIFY_ARE_EQUAL(U(""), rsp.extract_utf16string().get());
+    }
+
+    // utf-16le
+    rsp = send_request_response(scoped.server(), &client, U("text/plain; charset=utf-16le"), wdata);
+    VERIFY_ARE_EQUAL(wdata, rsp.extract_utf16string().get());
+
+    // utf-16be
+    auto wdatabe = switch_endian_ness(wdata);
+    rsp = send_request_response(scoped.server(), &client, U("text/plain; charset=utf-16be"), wdatabe);
+    VERIFY_ARE_EQUAL(wdata, rsp.extract_utf16string().get());
+
+    // utf-16 no BOM (utf-16be)
+    rsp = send_request_response(scoped.server(), &client, U("text/plain; charset=utf-16"), wdatabe);
+    VERIFY_ARE_EQUAL(wdata, rsp.extract_utf16string().get());
+
+    // utf-16 big endian BOM.
+    wdatabe.insert(wdatabe.begin(), ('\0'));
+    unsigned char * start = (unsigned char *) &wdatabe[0];
+    start[0] = 0xFE;
+    start[1] = 0xFF;
+    rsp = send_request_response(scoped.server(), &client, U("text/plain; charset=utf-16"), wdatabe);
+    VERIFY_ARE_EQUAL(wdata, rsp.extract_utf16string().get());
+
+    // utf-16 little endian BOM.
+    auto wdatale = wdata;
+    wdatale.insert(wdatale.begin(), '\0');
+    start = (unsigned char *) &wdatale[0];
+    start[0] = 0xFF;
+    start[1] = 0xFE;
+    rsp = send_request_response(scoped.server(), &client, U("text/plain; charset=utf-16"), wdatale);
+    VERIFY_ARE_EQUAL(wdata, rsp.extract_utf16string().get());
 }
 
 TEST_FIXTURE(uri_address, extract_string_force)
@@ -161,6 +295,10 @@ TEST_FIXTURE(uri_address, extract_string_force)
     std::string data("YOU KNOW ITITITITI");
     http_response rsp = send_request_response(scoped.server(), &client, U("bad unknown charset"), data);
     VERIFY_ARE_EQUAL(to_string_t(data), rsp.extract_string(true).get());
+    rsp = send_request_response(scoped.server(), &client, U("bad unknown charset"), data);
+    VERIFY_ARE_EQUAL(data, rsp.extract_utf8string(true).get());
+    rsp = send_request_response(scoped.server(), &client, U("bad unknown charset"), data);
+    VERIFY_ARE_EQUAL(to_utf16string(data), rsp.extract_utf16string(true).get());
 }
 
 TEST_FIXTURE(uri_address, extract_string_incorrect)
