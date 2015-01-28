@@ -28,9 +28,9 @@
 #ifndef _PPLXINTERFACE_H
 #define _PPLXINTERFACE_H
 
-//#if (defined(_MSC_VER) && (_MSC_VER >= 1800)) 
-//#error This file must not be included for Visual Studio 12 or later
-//#endif
+#if (defined(_MSC_VER) && (_MSC_VER >= 1800)) && !CPPREST_FORCE_PPLX
+#error This file must not be included for Visual Studio 12 or later
+#endif
 
 #if defined(_CRTBLD)
 #elif defined(_WIN32)

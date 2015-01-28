@@ -28,9 +28,9 @@
 #ifndef _PPLX_H
 #define _PPLX_H
 
-//#if (defined(_MSC_VER) && (_MSC_VER >= 1800)) 
-//#error This file must not be included for Visual Studio 12 or later
-//#endif
+#if (defined(_MSC_VER) && (_MSC_VER >= 1800)) && !CPPREST_FORCE_PPLX
+#error This file must not be included for Visual Studio 12 or later
+#endif
 
 #ifndef _WIN32
 #if defined(_WIN32) || defined(__cplusplus_winrt)

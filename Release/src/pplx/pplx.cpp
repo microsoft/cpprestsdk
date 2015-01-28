@@ -25,7 +25,7 @@
 
 #include "stdafx.h"
 
-//#if !defined(_WIN32) || _MSC_VER < 1800
+#if !defined(_WIN32) || _MSC_VER < 1800 || CPPREST_FORCE_PPLX
 
 #include "pplx/pplx.h"
 
@@ -155,4 +155,4 @@ _PPLXIMP void _pplx_cdecl set_ambient_scheduler(std::shared_ptr<pplx::scheduler_
 
 } // namespace pplx
 
-//#endif
+#endif
