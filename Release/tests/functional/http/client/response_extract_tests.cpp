@@ -253,7 +253,7 @@ TEST_FIXTURE(uri_address, extract_utf16string)
     // If there is no Content-Type in the response, make sure it won't throw when we ask for string
     if (str.find(U("Content-Type")) == std::string::npos)
     {
-        VERIFY_ARE_EQUAL(U(""), rsp.extract_utf16string().get());
+        VERIFY_ARE_EQUAL(utf16string(), rsp.extract_utf16string().get());
     }
 
     // utf-16le
