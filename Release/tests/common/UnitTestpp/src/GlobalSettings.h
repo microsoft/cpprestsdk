@@ -43,11 +43,11 @@ namespace UnitTest {
     {
     public:
 
-        UNITTEST_LINKAGE static void Add(const std::string &key, const std::string &value);
+        UNITTEST_LINKAGE static void __cdecl Add(const std::string &key, const std::string &value);
 
-        UNITTEST_LINKAGE static bool Has(const std::string &key);
+        UNITTEST_LINKAGE static bool __cdecl Has(const std::string &key);
         
-        UNITTEST_LINKAGE static const std::string &Get(const std::string &key);
+        UNITTEST_LINKAGE static const std::string & __cdecl Get(const std::string &key);
 
     private:
         GlobalSettings();

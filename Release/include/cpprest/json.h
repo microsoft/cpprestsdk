@@ -65,7 +65,7 @@ namespace json
     /// </summary>
     /// <param name="keep_order"><c>true</c> if ordering should be preserved when parsing, <c>false</c> otherwise.</param>
     /// <remarks>Note this is a global setting and affects all JSON parsing done.</remarks>
-    void _ASYNCRTIMP keep_object_element_order(bool keep_order);
+    void _ASYNCRTIMP __cdecl keep_object_element_order(bool keep_order);
 
 #ifdef _WIN32
 #ifdef _DEBUG
@@ -318,7 +318,7 @@ public:
         /// Accesses the type of JSON value the current value instance is
         /// </summary>
         /// <returns>The value's type</returns>
-        _ASYNCRTIMP json::value::value_type __cdecl type() const;
+        _ASYNCRTIMP json::value::value_type type() const;
 
         /// <summary>
         /// Is the current value a null value?
@@ -386,7 +386,7 @@ public:
         /// Parses a string and construct a JSON value.
         /// </summary>
         /// <param name="value">The C++ value to create a JSON value from, a C++ STL double-byte string</param>
-        _ASYNCRTIMP static value parse(const utility::string_t &value);
+        _ASYNCRTIMP static value __cdecl parse(const utility::string_t &value);
 
         /// <summary>
         /// Attempts to parse a string and construct a JSON value.
@@ -394,7 +394,7 @@ public:
         /// <param name="value">The C++ value to create a JSON value from, a C++ STL double-byte string</param>
         /// <param name="errorCode">If parsing fails, the error code is greater than 0</param>
         /// <returns>The parsed object. Returns web::json::value::null if failed</returns>
-        _ASYNCRTIMP static value parse(const utility::string_t &value, std::error_code &errorCode);
+        _ASYNCRTIMP static value __cdecl parse(const utility::string_t &value, std::error_code &errorCode);
 
         /// <summary>
         /// Serializes the current JSON value to a C++ string.
@@ -414,7 +414,7 @@ public:
         /// </summary>
         /// <param name="input">The stream to read the JSON value from</param>
         /// <returns>The JSON value object created from the input stream.</returns>
-        _ASYNCRTIMP static value parse(utility::istream_t &input);
+        _ASYNCRTIMP static value __cdecl parse(utility::istream_t &input);
 
         /// <summary>
         /// Parses a JSON value from the contents of an input stream using the native platform character width.
@@ -422,7 +422,7 @@ public:
         /// <param name="input">The stream to read the JSON value from</param>
         /// <param name="errorCode">If parsing fails, the error code is greater than 0</param>
         /// <returns>The parsed object. Returns web::json::value::null if failed</returns>
-        _ASYNCRTIMP static value parse(utility::istream_t &input, std::error_code &errorCode);
+        _ASYNCRTIMP static value __cdecl parse(utility::istream_t &input, std::error_code &errorCode);
 
         /// <summary>
         /// Writes the current JSON value to a stream with the native platform character width.
@@ -435,7 +435,7 @@ public:
         /// Parses a JSON value from the contents of a single-byte (UTF8) stream.
         /// </summary>
         /// <param name="stream">The stream to read the JSON value from</param>
-        _ASYNCRTIMP static value parse(std::istream& stream);
+        _ASYNCRTIMP static value __cdecl parse(std::istream& stream);
 
         /// <summary>
         /// Parses a JSON value from the contents of a single-byte (UTF8) stream.
@@ -443,7 +443,7 @@ public:
         /// <param name="stream">The stream to read the JSON value from</param>
         /// <param name="errorCode">If parsing fails, the error code is greater than 0</param>
         /// <returns>The parsed object. Returns web::json::value::null if failed</returns>
-        _ASYNCRTIMP static value parse(std::istream& stream, std::error_code& error);
+        _ASYNCRTIMP static value __cdecl parse(std::istream& stream, std::error_code& error);
 
         /// <summary>
         /// Serializes the content of the value into a single-byte (UTF8) stream.
@@ -712,7 +712,7 @@ public:
             }
         };
 
-        _ASYNCRTIMP const json_error_category_impl& json_error_category();
+        const json_error_category_impl& json_error_category();
     }
 
     /// <summary>
@@ -1889,7 +1889,7 @@ public:
     /// <param name="os">The output stream to write the JSON value to.</param>
     /// <param name="val">The JSON value to be written to the stream.</param>
     /// <returns>The output stream object</returns>
-    _ASYNCRTIMP utility::ostream_t& operator << (utility::ostream_t &os, const json::value &val);
+    _ASYNCRTIMP utility::ostream_t& __cdecl operator << (utility::ostream_t &os, const json::value &val);
 
     /// <summary>
     /// A standard <c>std::istream</c> operator to facilitate reading JSON values from streams.
@@ -1897,8 +1897,7 @@ public:
     /// <param name="is">The input stream to read the JSON value from.</param>
     /// <param name="val">The JSON value object read from the stream.</param>
     /// <returns>The input stream object.</returns>
-    _ASYNCRTIMP utility::istream_t& operator >> (utility::istream_t &is, json::value &val);
-
+    _ASYNCRTIMP utility::istream_t& __cdecl operator >> (utility::istream_t &is, json::value &val);
 }}
 
 #endif

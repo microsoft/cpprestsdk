@@ -53,32 +53,32 @@ public:
     /// <summary>
     /// Returns whether or not any listeners are registered.
     /// </summary>
-    _ASYNCRTIMP static bool has_listener();
+    static bool __cdecl has_listener();
 
     /// <summary>
     /// Registers a HTTP server API.
     /// </summary>
-    _ASYNCRTIMP static void register_server_api(std::unique_ptr<http_server> server_api);
+    static void __cdecl register_server_api(std::unique_ptr<http_server> server_api);
 
     /// <summary>
     /// Clears the http server API.
     /// </summary>
-    _ASYNCRTIMP static void unregister_server_api();
+    static void __cdecl unregister_server_api();
 
     /// <summary>
     /// Registers a listener for HTTP requests and starts receiving.
     /// </summary>
-    _ASYNCRTIMP static pplx::task<void> register_listener(_In_ web::http::experimental::listener::details::http_listener_impl *pListener);
+    static pplx::task<void> __cdecl register_listener(_In_ web::http::experimental::listener::details::http_listener_impl *pListener);
 
     /// <summary>
     /// Unregisters the given listener and stops listening for HTTP requests.
     /// </summary>
-    _ASYNCRTIMP static pplx::task<void> unregister_listener(_In_ web::http::experimental::listener::details::http_listener_impl *pListener);
+    static pplx::task<void> __cdecl unregister_listener(_In_ web::http::experimental::listener::details::http_listener_impl *pListener);
 
     /// <summary>
     /// Gets static HTTP server API. Could be null if no registered listeners.
     /// </summary>
-    _ASYNCRTIMP static http_server *server_api();
+    static http_server * __cdecl server_api();
 
 private:
 

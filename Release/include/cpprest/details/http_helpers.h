@@ -95,9 +95,9 @@ namespace details
     utf16string convert_utf16be_to_utf16le(utf16string src, bool erase_bom);
 
     // simple helper functions to trim whitespace.
-    _ASYNCRTIMP void ltrim_whitespace(utility::string_t &str);
-    _ASYNCRTIMP void rtrim_whitespace(utility::string_t &str);
-    _ASYNCRTIMP void trim_whitespace(utility::string_t &str);
+    _ASYNCRTIMP void __cdecl ltrim_whitespace(utility::string_t &str);
+    _ASYNCRTIMP void __cdecl rtrim_whitespace(utility::string_t &str);
+    _ASYNCRTIMP void __cdecl trim_whitespace(utility::string_t &str);
 
     bool validate_method(const utility::string_t& method);
 
@@ -116,7 +116,7 @@ namespace details
         // All other chunks require up to 8 bytes for the length, and four for the two CRLF
         // delimiters.
         //
-        _ASYNCRTIMP size_t add_chunked_delimiters(_Out_writes_ (buffer_size) uint8_t *data, _In_ size_t buffer_size, size_t bytes_read);
+        _ASYNCRTIMP size_t __cdecl add_chunked_delimiters(_Out_writes_(buffer_size) uint8_t *data, _In_ size_t buffer_size, size_t bytes_read);
     }
 
 }}}

@@ -77,7 +77,7 @@ namespace UnitTest
 #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 #endif
     extern "C"
-    _DLL_EXPORT TestList& GetTestList();
+    _DLL_EXPORT TestList& __cdecl GetTestList();
 #if defined(__clang__)
 #pragma clang diagnostic pop
 #endif

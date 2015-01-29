@@ -82,6 +82,7 @@ elseif(UNIX) # This includes OSX
     list(REVERSE OPENSSL_ROOT_DIR)
   endif()
   # This should prevent linking against the system provided 0.9.8y
+  set(_OPENSSL_VERSION "")
   find_package(OpenSSL 1.0.0 REQUIRED)
 
   option(BUILD_SHARED_LIBS "Build shared Libraries." ON)
@@ -93,7 +94,7 @@ elseif(UNIX) # This includes OSX
     install(FILES ${CASA_HEADERS_CPPREST} DESTINATION include/cpprest)
     file(GLOB CASA_HEADERS_PPLX include/pplx/*.hpp include/pplx/*.h)
     install(FILES ${CASA_HEADERS_PPLX} DESTINATION include/pplx)
-    file(GLOB CASA_HEADERS_DETAILS include/cpprest/details/*.hpp include/cpprest/details/*.h)
+    file(GLOB CASA_HEADERS_DETAILS include/cpprest/details/*.hpp include/cpprest/details/*.h include/cpprest/details/*.dat)
     install(FILES ${CASA_HEADERS_DETAILS} DESTINATION include/cpprest/details)
   endif()
 elseif(WIN32)

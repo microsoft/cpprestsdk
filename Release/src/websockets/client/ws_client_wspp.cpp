@@ -535,14 +535,7 @@ public:
                 }
             }
         }
-        if (ec)
-        {
-            return pplx::task_from_exception<void>(ec.message());
-        }
-        else
-        {
-            return pplx::task<void>(m_close_tce);
-        }
+        return pplx::task<void>(m_close_tce);
     }
 
 private:
@@ -583,7 +576,9 @@ private:
             {
                 m_external_close_handler(static_cast<websocket_close_status>(closeCode), utility::conversions::to_string_t(reason), ec);
             }
-            m_close_tce.set();
+            // Making a local copy of the TCE prevents it from being destroyed along with "this"
+            auto tceref = m_close_tce;
+            tceref.set();
         });
     }
 

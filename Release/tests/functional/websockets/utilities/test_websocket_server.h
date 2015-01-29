@@ -125,11 +125,11 @@ public:
     // Tests can add a handler to handle (verify) the next message received by the server.
     // If the test plans to send n messages, n handlers must be registered.
     // The server will call the handler in order, for each incoming message.
-    WEBSOCKET_UTILITY_API void next_message(std::function<void(test_websocket_msg)> msg_handler);
+    WEBSOCKET_UTILITY_API void next_message(std::function<void __cdecl (test_websocket_msg)> msg_handler);
     WEBSOCKET_UTILITY_API std::function<void(test_websocket_msg)> get_next_message_handler();
 
     // Handler for initial HTTP request.
-    typedef std::function<test_http_response(test_http_request)> http_handler;
+    typedef std::function<test_http_response __cdecl (test_http_request)> http_handler;
     WEBSOCKET_UTILITY_API void set_http_handler(http_handler handler) { m_http_handler = handler; }
     WEBSOCKET_UTILITY_API http_handler get_http_handler() { return m_http_handler; }
 
@@ -138,8 +138,17 @@ public:
     WEBSOCKET_UTILITY_API std::shared_ptr<_test_websocket_server> get_impl();
 
 private:
+
+#if !defined(_MSC_VER) || _MSC_VER >= 1800
+    test_websocket_server(const test_websocket_server&) = delete;
+    test_websocket_server& operator=(const test_websocket_server&) = delete;
+    test_websocket_server(test_websocket_server&&) = delete;
+    test_websocket_server& operator=(test_websocket_server&&) = delete;
+#endif
+
     // Queue to maintain the request handlers.
-    // Note: This queue is not thread-safe
+    // Note: This queue is not thread-safe. Use m_handler_queue_lock to synchronize.
+    std::mutex m_handler_queue_lock;
     std::queue<std::function<void(test_websocket_msg)>> m_handler_queue;
     // Handler to address the HTTP handshake request. To be used in scenarios where tests may wish to fail the HTTP request
     // and not proceed with the websocket connection.
