@@ -524,7 +524,7 @@ protected:
         // If credentials are specified, use autologon policy: WINHTTP_AUTOLOGON_SECURITY_LEVEL_HIGH
         //    => default credentials are not used.
         // Else, the default autologon policy WINHTTP_AUTOLOGON_SECURITY_LEVEL_MEDIUM will be used.
-        if (!client_config().credentials().is_set())
+        if (client_config().credentials().is_set())
         {
             DWORD data = WINHTTP_AUTOLOGON_SECURITY_LEVEL_HIGH;
 
