@@ -72,10 +72,16 @@ TEST_FIXTURE(uri_address, proxy_with_credentials)
     }
     catch (websocket_exception const& e)
     {
-        if (e.error_code().value() == 12007) {
+        if (e.error_code().value() == 12007)
+        {
             // The above "netproxy.redmond.corp.microsoft.com" is an internal site not generally accessible.
             // This will cause a failure to resolve the URL.
             // This is ok.
+            return;
+        }
+        else if (e.error_code().value() == 9)
+        {
+            // Timer expired case, since this is an outside test don't fail due to timing out.
             return;
         }
         throw;
