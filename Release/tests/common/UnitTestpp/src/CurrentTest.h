@@ -41,8 +41,8 @@ class TestDetails;
 
 namespace CurrentTest
 {
-	UNITTEST_LINKAGE TestResults*& Results();
-	UNITTEST_LINKAGE const TestDetails*& Details();
+	UNITTEST_LINKAGE TestResults*& __cdecl Results();
+	UNITTEST_LINKAGE const TestDetails*& __cdecl Details();
 }
 
 }

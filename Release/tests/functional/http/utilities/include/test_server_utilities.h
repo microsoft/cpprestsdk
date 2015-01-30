@@ -38,14 +38,14 @@ public:
     /// Sends request with specified values using given http_client and verifies
     /// they are properly received by the test server.
     /// </summary>
-    TEST_UTILITY_API static void verify_request(
+    TEST_UTILITY_API static void __cdecl verify_request(
         web::http::client::http_client *p_client,
         const utility::string_t &method,
         const utility::string_t &path,
         test_http_server *p_server,
         unsigned short code);
     
-    TEST_UTILITY_API static void verify_request(
+    TEST_UTILITY_API static void __cdecl verify_request(
         web::http::client::http_client *p_client,
         const utility::string_t &method,
         const utility::string_t &path,
@@ -53,7 +53,7 @@ public:
         unsigned short code,
         const utility::string_t &reason);
 
-    TEST_UTILITY_API static void verify_request(
+    TEST_UTILITY_API static void __cdecl verify_request(
         web::http::client::http_client *p_client,
         const utility::string_t &method,
         const utility::string_t &path,
@@ -63,14 +63,13 @@ public:
         unsigned short code,
         const utility::string_t &reason);
 
-    TEST_UTILITY_API static void verify_request(
+    TEST_UTILITY_API static void __cdecl verify_request(
         web::http::client::http_client *p_client,
         const utility::string_t &method,
         const utility::string_t &path,
         test_http_server *p_server,
         unsigned short code,
         const std::map<utility::string_t, utility::string_t> &response_headers);
-
 };
 
 }}}}

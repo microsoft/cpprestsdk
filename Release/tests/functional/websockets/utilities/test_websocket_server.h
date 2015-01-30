@@ -125,11 +125,11 @@ public:
     // Tests can add a handler to handle (verify) the next message received by the server.
     // If the test plans to send n messages, n handlers must be registered.
     // The server will call the handler in order, for each incoming message.
-    WEBSOCKET_UTILITY_API void next_message(std::function<void(test_websocket_msg)> msg_handler);
+    WEBSOCKET_UTILITY_API void next_message(std::function<void __cdecl (test_websocket_msg)> msg_handler);
     WEBSOCKET_UTILITY_API std::function<void(test_websocket_msg)> get_next_message_handler();
 
     // Handler for initial HTTP request.
-    typedef std::function<test_http_response(test_http_request)> http_handler;
+    typedef std::function<test_http_response __cdecl (test_http_request)> http_handler;
     WEBSOCKET_UTILITY_API void set_http_handler(http_handler handler) { m_http_handler = handler; }
     WEBSOCKET_UTILITY_API http_handler get_http_handler() { return m_http_handler; }
 

@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project InitialTargets="CreateDirectories" DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|ARM">
       <Configuration>Debug</Configuration>
@@ -75,4 +75,10 @@
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\AndroidPackaging\Android.targets" />
   <ImportGroup Label="ExtensionTargets" />
+  
+  <!-- For some reason build fails if the following directory doesn't exist on command line build -->
+  <Target Name="CreateDirectories">
+    <MakeDir Directories="$(MSBuildProjectDirectory)\obj\$(Platform)\$(Configuration)" />
+  </Target>
+  
 </Project>

@@ -547,14 +547,7 @@ public:
                 }
             }
         }
-        if (ec)
-        {
-            return pplx::task_from_exception<void>(ec.message());
-        }
-        else
-        {
-            return pplx::task<void>(m_close_tce);
-        }
+        return pplx::task<void>(m_close_tce);
     }
 
 private:

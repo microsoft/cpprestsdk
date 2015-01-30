@@ -510,7 +510,7 @@ private:
         return os.str();
     }
 
-    _ASYNCRTIMP static std::vector<unsigned char> _hmac_sha1(const utility::string_t& key, const utility::string_t& data);
+    _ASYNCRTIMP static std::vector<unsigned char> __cdecl _hmac_sha1(const utility::string_t& key, const utility::string_t& data);
 
     static utility::string_t _build_base_string_uri(const uri& u);
 
