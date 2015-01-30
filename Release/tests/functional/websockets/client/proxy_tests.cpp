@@ -47,6 +47,42 @@ TEST_FIXTURE(uri_address, no_proxy_options_on_winrt)
 }
 #endif
 
+#ifndef __cplusplus_winrt
+// Can't specify a proxy with WinRT implementation.
+TEST_FIXTURE(uri_address, proxy_with_credentials)
+{
+    web::web_proxy proxy(U("http://netproxy.redmond.corp.microsoft.com"));
+    web::credentials cred(U("artur"), U("fred")); // relax, this is not my real password
+    proxy.set_credentials(cred);
+    websocket_client_config config;
+    config.set_proxy(proxy);
+
+    websocket_client client(config);
+
+    try
+    {
+        client.connect(U("wss://echo.websocket.org/")).wait();
+        const auto text = std::string("hello");
+        websocket_outgoing_message msg;
+        msg.set_utf8_message(text);
+        client.send(msg).wait();
+        auto response = client.receive().get();
+        VERIFY_ARE_EQUAL(text, response.extract_string().get());
+        client.close().wait();
+    }
+    catch (websocket_exception const& e)
+    {
+        if (e.error_code().value() == 12007) {
+            // The above "netproxy.redmond.corp.microsoft.com" is an internal site not generally accessible.
+            // This will cause a failure to resolve the URL.
+            // This is ok.
+            return;
+        }
+        throw;
+    }
+}
+#endif
+
 } // SUITE(proxy_tests)
 
 }}}}

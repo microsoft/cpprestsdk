@@ -107,6 +107,7 @@
     <ClInclude Include="..\websocket_client_tests.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\proxy_tests.cpp" />
     <ClCompile Include="..\authentication_tests.cpp" />
     <ClCompile Include="..\client_construction.cpp" />
     <ClCompile Include="..\close_tests.cpp" />
