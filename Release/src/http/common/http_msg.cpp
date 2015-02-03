@@ -84,7 +84,6 @@ void http_headers::set_content_length(utility::size64_t length)
 }
 
 static const utility::char_t * stream_was_set_explicitly = _XPLATSTR("A stream was set on the message and extraction is not possible");
-static const utility::char_t * textual_content_type_missing = _XPLATSTR("Content-Type must be textual to extract a string.");
 static const utility::char_t * unsupported_charset = _XPLATSTR("Charset must be iso-8859-1, utf-8, utf-16, utf-16le, or utf-16be to be extracted.");
 
 http_msg_base::http_msg_base()
@@ -93,9 +92,6 @@ http_msg_base::http_msg_base()
 {
 }
 
-/// <summary>
-/// Prepare the message with an output stream to receive network data
-/// </summary>
 void http_msg_base::_prepare_to_receive_data()
 {
     // See if the user specified an outstream
@@ -117,18 +113,6 @@ void http_msg_base::_prepare_to_receive_data()
     // or media (like file) that the user can read from...
 }
 
-/// <summary>
-///     Determine the content length
-/// </summary>
-/// <returns>
-///     size_t::max if there is content with unknown length (transfer_encoding:chunked)
-///     0           if there is no content
-///     length      if there is content with known length
-/// </returns>
-/// <remarks>
-///     This routine should only be called after a msg (request/response) has been
-///     completely constructed.
-/// </remarks>
 size_t http_msg_base::_get_content_length()
 {
     // An invalid response_stream indicates that there is no body
@@ -234,37 +218,40 @@ void http_msg_base::_complete(utility::size64_t body_size, const std::exception_
     }
 }
 
-utf8string details::http_msg_base::extract_utf8string(bool force)
+utility::string_t details::http_msg_base::parse_and_check_content_type(bool ignore_content_type, const std::function<bool(const utility::string_t &)> &check_content_type)
 {
-    utility::string_t content, charset = charset_types::utf8;
-    if (!force)
-    {
-        parse_content_type_and_charset(headers().content_type(), content, charset);
-
-        // If no Content-Type then just return an empty string.
-        if (content.empty())
-        {
-            return utf8string();
-        }
-
-        // Content-Type must have textual type.
-        if (!is_content_type_textual(content))
-        {
-            throw http_exception(textual_content_type_missing);
-        }
-    }
-
     if (!instream())
     {
         throw http_exception(stream_was_set_explicitly);
     }
+ 
+    utility::string_t content, charset = charset_types::utf8;
+    if (!ignore_content_type)
+    {
+        parse_content_type_and_charset(headers().content_type(), content, charset);
 
-    auto buf_r = instream().streambuf();
+        // If no Content-Type or empty body then just return an empty string.
+        if (content.empty() || instream().streambuf().in_avail() == 0)
+        {
+            return utility::string_t();
+        }
 
-    if (buf_r.in_avail() == 0)
+        if (!check_content_type(content))
+        {
+            throw http_exception(_XPLATSTR("Incorrect Content-Type: must be textual to extract_string, JSON to extract_json."));
+        }
+    }
+    return charset;
+}
+
+utf8string details::http_msg_base::extract_utf8string(bool ignore_content_type)
+{
+    const auto &charset = parse_and_check_content_type(ignore_content_type, is_content_type_textual);
+    if (charset.empty())
     {
         return utf8string();
     }
+    auto buf_r = instream().streambuf();
 
     // Perform the correct character set conversion if one is necessary.
     if (utility::details::str_icmp(charset, charset_types::utf8)
@@ -273,7 +260,7 @@ utf8string details::http_msg_base::extract_utf8string(bool force)
     {
         std::string body;
         body.resize((std::string::size_type)buf_r.in_avail());
-        buf_r.getn(reinterpret_cast<uint8_t *>(&body[0]), body.size()).get(); // There is no risk of blocking.
+        buf_r.getn(const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(body.data())), body.size()).get(); // There is no risk of blocking.
         return body;
     }
 
@@ -282,7 +269,7 @@ utf8string details::http_msg_base::extract_utf8string(bool force)
     {
         std::string body;
         body.resize((std::string::size_type)buf_r.in_avail());
-        buf_r.getn(reinterpret_cast<uint8_t *>(&body[0]), body.size()).get(); // There is no risk of blocking.
+        buf_r.getn(const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(body.data())), body.size()).get(); // There is no risk of blocking.
         return latin1_to_utf8(std::move(body));
     }
 
@@ -291,7 +278,7 @@ utf8string details::http_msg_base::extract_utf8string(bool force)
     {
         utf16string body;
         body.resize(buf_r.in_avail() / sizeof(utf16string::value_type));
-        buf_r.getn(reinterpret_cast<uint8_t *>(&body[0]), body.size() * sizeof(utf16string::value_type)); // There is no risk of blocking.
+        buf_r.getn(const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(body.data())), body.size() * sizeof(utf16string::value_type)); // There is no risk of blocking.
         return convert_utf16_to_utf8(std::move(body));
     }
 
@@ -300,7 +287,7 @@ utf8string details::http_msg_base::extract_utf8string(bool force)
     {
         utf16string body;
         body.resize(buf_r.in_avail() / sizeof(utf16string::value_type));
-        buf_r.getn(reinterpret_cast<uint8_t *>(&body[0]), body.size() * sizeof(utf16string::value_type)); // There is no risk of blocking.
+        buf_r.getn(const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(body.data())), body.size() * sizeof(utf16string::value_type)); // There is no risk of blocking.
         return utility::conversions::utf16_to_utf8(std::move(body));
     }
 
@@ -309,7 +296,7 @@ utf8string details::http_msg_base::extract_utf8string(bool force)
     {
         utf16string body;
         body.resize(buf_r.in_avail() / sizeof(utf16string::value_type));
-        buf_r.getn(reinterpret_cast<uint8_t*>(&body[0]), body.size() * sizeof(utf16string::value_type)); // There is no risk of blocking.
+        buf_r.getn(const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(body.data())), body.size() * sizeof(utf16string::value_type)); // There is no risk of blocking.
         return convert_utf16be_to_utf8(std::move(body), false);
     }
 
@@ -319,44 +306,21 @@ utf8string details::http_msg_base::extract_utf8string(bool force)
     }
 }
 
-utf16string details::http_msg_base::extract_utf16string(bool force)
+utf16string details::http_msg_base::extract_utf16string(bool ignore_content_type)
 {
-    utility::string_t content, charset = charset_types::utf8;
-    if (!force)
-    {
-        parse_content_type_and_charset(headers().content_type(), content, charset);
-
-        // If no Content-Type then just return an empty string.
-        if (content.empty())
-        {
-            return utf16string();
-        }
-
-        // Content-Type must have textual type.
-        if (!is_content_type_textual(content))
-        {
-            throw http_exception(textual_content_type_missing);
-        }
-    }
-
-    if (!instream())
-    {
-        throw http_exception(stream_was_set_explicitly);
-    }
-
-    auto buf_r = instream().streambuf();
-
-    if (buf_r.in_avail() == 0)
+    const auto &charset = parse_and_check_content_type(ignore_content_type, is_content_type_textual);
+    if (charset.empty())
     {
         return utf16string();
     }
+    auto buf_r = instream().streambuf();
 
     // Perform the correct character set conversion if one is necessary.
     if (utility::details::str_icmp(charset, charset_types::utf16le))
     {
         utf16string body;
         body.resize(buf_r.in_avail() / sizeof(utf16string::value_type));
-        buf_r.getn(reinterpret_cast<uint8_t *>(&body[0]), body.size() * sizeof(utf16string::value_type)); // There is no risk of blocking.
+        buf_r.getn(const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(body.data())), body.size() * sizeof(utf16string::value_type)); // There is no risk of blocking.
         return body;
     }
 
@@ -367,7 +331,7 @@ utf16string details::http_msg_base::extract_utf16string(bool force)
     {
         std::string body;
         body.resize((std::string::size_type)buf_r.in_avail());
-        buf_r.getn(reinterpret_cast<uint8_t *>(&body[0]), body.size()).get(); // There is no risk of blocking.
+        buf_r.getn(const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(body.data())), body.size()).get(); // There is no risk of blocking.
         return utility::conversions::utf8_to_utf16(std::move(body));
     }
 
@@ -376,7 +340,7 @@ utf16string details::http_msg_base::extract_utf16string(bool force)
     {
         std::string body;
         body.resize((std::string::size_type)buf_r.in_avail());
-        buf_r.getn(reinterpret_cast<uint8_t*>(&body[0]), body.size()).get(); // There is no risk of blocking.
+        buf_r.getn(const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(body.data())), body.size()).get(); // There is no risk of blocking.
         return latin1_to_utf16(std::move(body));
     }
 
@@ -385,7 +349,7 @@ utf16string details::http_msg_base::extract_utf16string(bool force)
     {
         utf16string body;
         body.resize(buf_r.in_avail() / sizeof(utf16string::value_type));
-        buf_r.getn(reinterpret_cast<uint8_t*>(&body[0]), body.size() * sizeof(utf16string::value_type)); // There is no risk of blocking.
+        buf_r.getn(const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(body.data())), body.size() * sizeof(utf16string::value_type)); // There is no risk of blocking.
         return convert_utf16_to_utf16(std::move(body));
     }
 
@@ -394,7 +358,7 @@ utf16string details::http_msg_base::extract_utf16string(bool force)
     {
         utf16string body;
         body.resize(buf_r.in_avail() / sizeof(utf16string::value_type));
-        buf_r.getn(reinterpret_cast<uint8_t*>(&body[0]), body.size() * sizeof(utf16string::value_type)); // There is no risk of blocking.
+        buf_r.getn(const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(body.data())), body.size() * sizeof(utf16string::value_type)); // There is no risk of blocking.
         return convert_utf16be_to_utf16le(std::move(body), false);
     }
 
@@ -404,37 +368,14 @@ utf16string details::http_msg_base::extract_utf16string(bool force)
     }
 }
 
-utility::string_t details::http_msg_base::extract_string(bool force)
+utility::string_t details::http_msg_base::extract_string(bool ignore_content_type)
 {
-    utility::string_t content, charset = charset_types::utf8;
-    if (!force)
-    {
-        parse_content_type_and_charset(headers().content_type(), content, charset);
-
-        // If no Content-Type then just return an empty string.
-        if (content.empty())
-        {
-            return utility::string_t();
-        }
-
-        // Content-Type must have textual type.
-        if (!is_content_type_textual(content))
-        {
-            throw http_exception(textual_content_type_missing);
-        }
-    }
-
-    if (!instream())
-    {
-        throw http_exception(stream_was_set_explicitly);
-    }
-
-    auto buf_r = instream().streambuf();
-
-    if (buf_r.in_avail() == 0)
+    const auto &charset = parse_and_check_content_type(ignore_content_type, is_content_type_textual);
+    if (charset.empty())
     {
         return utility::string_t();
     }
+    auto buf_r = instream().streambuf();
 
     // Perform the correct character set conversion if one is necessary.
     if (utility::details::str_icmp(charset, charset_types::usascii)
@@ -442,7 +383,7 @@ utility::string_t details::http_msg_base::extract_string(bool force)
     {
         std::string body;
         body.resize((std::string::size_type)buf_r.in_avail());
-        buf_r.getn(reinterpret_cast<uint8_t *>(&body[0]), body.size()).get(); // There is no risk of blocking.
+        buf_r.getn(const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(body.data())), body.size()).get(); // There is no risk of blocking.
         return to_string_t(std::move(body));
     }
 
@@ -451,7 +392,7 @@ utility::string_t details::http_msg_base::extract_string(bool force)
     {
         std::string body;
         body.resize((std::string::size_type)buf_r.in_avail());
-        buf_r.getn(reinterpret_cast<uint8_t *>(&body[0]), body.size()).get(); // There is no risk of blocking.
+        buf_r.getn(const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(body.data())), body.size()).get(); // There is no risk of blocking.
         // Could optimize for linux in the future if a latin1_to_utf8 function was written.
         return to_string_t(latin1_to_utf16(std::move(body)));
     }
@@ -461,7 +402,7 @@ utility::string_t details::http_msg_base::extract_string(bool force)
     {
         std::string body;
         body.resize((std::string::size_type)buf_r.in_avail());
-        buf_r.getn(reinterpret_cast<uint8_t *>(&body[0]), body.size()).get(); // There is no risk of blocking.
+        buf_r.getn(const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(body.data())), body.size()).get(); // There is no risk of blocking.
         return to_string_t(std::move(body));
     }
 
@@ -470,7 +411,7 @@ utility::string_t details::http_msg_base::extract_string(bool force)
     {
         utf16string body;
         body.resize(buf_r.in_avail() / sizeof(utf16string::value_type));
-        buf_r.getn(reinterpret_cast<uint8_t *>(&body[0]), body.size() * sizeof(utf16string::value_type)); // There is no risk of blocking.
+        buf_r.getn(const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(body.data())), body.size() * sizeof(utf16string::value_type)); // There is no risk of blocking.
         return convert_utf16_to_string_t(std::move(body));
     }
 
@@ -479,7 +420,7 @@ utility::string_t details::http_msg_base::extract_string(bool force)
     {
         utf16string body;
         body.resize(buf_r.in_avail() / sizeof(utf16string::value_type));
-        buf_r.getn(reinterpret_cast<uint8_t *>(&body[0]), body.size() * sizeof(utf16string::value_type)); // There is no risk of blocking.
+        buf_r.getn(const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(body.data())), body.size() * sizeof(utf16string::value_type)); // There is no risk of blocking.
         return convert_utf16le_to_string_t(std::move(body), false);
     }
 
@@ -488,7 +429,7 @@ utility::string_t details::http_msg_base::extract_string(bool force)
     {
         utf16string body;
         body.resize(buf_r.in_avail() / sizeof(utf16string::value_type));
-        buf_r.getn(reinterpret_cast<uint8_t *>(&body[0]), body.size() * sizeof(utf16string::value_type)); // There is no risk of blocking.
+        buf_r.getn(const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(body.data())), body.size() * sizeof(utf16string::value_type)); // There is no risk of blocking.
         return convert_utf16be_to_string_t(std::move(body), false);
     }
 
@@ -498,45 +439,21 @@ utility::string_t details::http_msg_base::extract_string(bool force)
     }
 }
 
-json::value details::http_msg_base::_extract_json(bool force)
+json::value details::http_msg_base::_extract_json(bool ignore_content_type)
 {
-    utility::string_t content, charset = charset_types::utf8;
-    if (!force)
+    const auto &charset = parse_and_check_content_type(ignore_content_type, is_content_type_json);
+    if (charset.empty())
     {
-        parse_content_type_and_charset(headers().content_type(), content, charset);
-
-        // If no Content-Type then just return a null json value.
-        if (content.empty())
-        {
-            return json::value();
-        }
-
-        // Content-Type must be "application/json" or one of the unofficial, but common JSON types.
-        if (!is_content_type_json(content))
-        {
-            const utility::string_t actualContentType = utility::conversions::to_string_t(content);
-            throw http_exception((_XPLATSTR("Content-Type must be JSON to extract (is: ") + actualContentType + _XPLATSTR(")")));
-        }
+        return json::value();
     }
-
-    if (!instream())
-    {
-        throw http_exception(stream_was_set_explicitly);
-    }
-
     auto buf_r = instream().streambuf();
-
-    if (buf_r.in_avail() == 0)
-    {
-        return json::value::parse(utility::string_t());
-    }
 
     // Latin1
     if(utility::details::str_icmp(charset, charset_types::latin1))
     {
         std::string body;
         body.resize(buf_r.in_avail());
-        buf_r.getn((uint8_t*)&body[0], body.size()).get(); // There is no risk of blocking.
+        buf_r.getn(const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(body.data())), body.size()).get(); // There is no risk of blocking.
         // On Linux could optimize in the future if a latin1_to_utf8 function is written.
         return json::value::parse(to_string_t(latin1_to_utf16(std::move(body))));
     }
@@ -548,7 +465,7 @@ json::value details::http_msg_base::_extract_json(bool force)
     {
         std::string body;
         body.resize(buf_r.in_avail());
-        buf_r.getn((uint8_t*)&body[0], body.size()).get(); // There is no risk of blocking.
+        buf_r.getn(const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(body.data())), body.size()).get(); // There is no risk of blocking.
         return json::value::parse(to_string_t(std::move(body)));
     }
 
@@ -557,7 +474,7 @@ json::value details::http_msg_base::_extract_json(bool force)
     {
         utf16string body;
         body.resize(buf_r.in_avail() / sizeof(utf16string::value_type));
-        buf_r.getn((uint8_t*)&body[0], body.size() * sizeof(utf16string::value_type)); // There is no risk of blocking.
+        buf_r.getn(const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(body.data())), body.size() * sizeof(utf16string::value_type)); // There is no risk of blocking.
         return json::value::parse(convert_utf16_to_string_t(std::move(body)));
     }
 
@@ -566,7 +483,7 @@ json::value details::http_msg_base::_extract_json(bool force)
     {
         utf16string body;
         body.resize(buf_r.in_avail() / sizeof(utf16string::value_type));
-        buf_r.getn((uint8_t*)&body[0], body.size() * sizeof(utf16string::value_type)); // There is no risk of blocking.
+        buf_r.getn(const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(body.data())), body.size() * sizeof(utf16string::value_type)); // There is no risk of blocking.
         return json::value::parse(convert_utf16le_to_string_t(std::move(body), false));
     }
 
@@ -575,7 +492,7 @@ json::value details::http_msg_base::_extract_json(bool force)
     {
         utf16string body;
         body.resize(buf_r.in_avail() / sizeof(utf16string::value_type));
-        buf_r.getn((uint8_t*)&body[0], body.size() * sizeof(utf16string::value_type)); // There is no risk of blocking.
+        buf_r.getn(const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(body.data())), body.size() * sizeof(utf16string::value_type)); // There is no risk of blocking.
         return json::value::parse(convert_utf16be_to_string_t(std::move(body), false));
     }
 
@@ -595,12 +512,8 @@ std::vector<uint8_t> details::http_msg_base::_extract_vector()
     std::vector<uint8_t> body;
     auto buf_r = instream().streambuf();
     const size_t size = buf_r.in_avail();
-
-    if (size > 0)
-    {
-        body.resize(size);
-        buf_r.getn((uint8_t*)&body[0], size).get(); // There is no risk of blocking.
-    }
+    body.resize(size);
+    buf_r.getn(const_cast<uint8_t *>(reinterpret_cast<const uint8_t *>(body.data())), size).get(); // There is no risk of blocking.
 
     return body;
 }

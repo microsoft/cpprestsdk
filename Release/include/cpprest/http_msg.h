@@ -238,11 +238,20 @@ public:
     _ASYNCRTIMP void set_body(const concurrency::streams::istream &instream, utility::size64_t contentLength, const utf8string &contentType);
     _ASYNCRTIMP void set_body(const concurrency::streams::istream &instream, utility::size64_t contentLength, const utf16string &contentType);
 
-    _ASYNCRTIMP utf8string extract_utf8string(bool force = false);
-    _ASYNCRTIMP utf16string extract_utf16string(bool force = false);
-    _ASYNCRTIMP utility::string_t extract_string(bool force = false);
+    /// <summary>
+    /// Helper function for extract functions. Parses the Content-Type header and check to make sure it matches,
+    /// throws an exception if not.
+    /// </summary>
+    /// <param name="ignore_content_type">If true ignores the Content-Type header value.</param>
+    /// <param name="check_content_type">Function to verify additional information on Content-Type.</param>
+    /// <returns>A string containing the charset, an empty string if no Content-Type header is empty.</returns>
+    utility::string_t parse_and_check_content_type(bool ignore_content_type, const std::function<bool(const utility::string_t&)> &check_content_type);
 
-    _ASYNCRTIMP json::value _extract_json(bool force = false);
+    _ASYNCRTIMP utf8string extract_utf8string(bool ignore_content_type = false);
+    _ASYNCRTIMP utf16string extract_utf16string(bool ignore_content_type = false);
+    _ASYNCRTIMP utility::string_t extract_string(bool ignore_content_type = false);
+
+    _ASYNCRTIMP json::value _extract_json(bool ignore_content_type = false);
     _ASYNCRTIMP std::vector<unsigned char> _extract_vector();
 
     virtual _ASYNCRTIMP utility::string_t to_string() const;
@@ -449,48 +458,48 @@ public:
     /// Extracts the body of the response message as a string value, checking that the content type is a MIME text type.
     /// A body can only be extracted once because in some cases an optimization is made where the data is 'moved' out.
     /// </summary>
-    /// <param name="force">If true, ignores the Content-Type header and assumes UTF-8.</param>
+    /// <param name="ignore_content_type">If true, ignores the Content-Type header and assumes UTF-8.</param>
     /// <returns>String containing body of the message.</returns>
-    pplx::task<utility::string_t> extract_string(bool force = false) const
+    pplx::task<utility::string_t> extract_string(bool ignore_content_type = false) const
     {
         auto impl = _m_impl;
-        return pplx::create_task(_m_impl->_get_data_available()).then([impl, force](utility::size64_t) { return impl->extract_string(force); });
+        return pplx::create_task(_m_impl->_get_data_available()).then([impl, ignore_content_type](utility::size64_t) { return impl->extract_string(ignore_content_type); });
     }
 
     /// <summary>
     /// Extracts the body of the response message as a UTF-8 string value, checking that the content type is a MIME text type.
     /// A body can only be extracted once because in some cases an optimization is made where the data is 'moved' out.
     /// </summary>
-    /// <param name="force">If true, ignores the Content-Type header and assumes UTF-8.</param>
+    /// <param name="ignore_content_type">If true, ignores the Content-Type header and assumes UTF-8.</param>
     /// <returns>String containing body of the message.</returns>
-    pplx::task<utf8string> extract_utf8string(bool force = false) const
+    pplx::task<utf8string> extract_utf8string(bool ignore_content_type = false) const
     {
         auto impl = _m_impl;
-        return pplx::create_task(_m_impl->_get_data_available()).then([impl, force](utility::size64_t) { return impl->extract_utf8string(force); });
+        return pplx::create_task(_m_impl->_get_data_available()).then([impl, ignore_content_type](utility::size64_t) { return impl->extract_utf8string(ignore_content_type); });
     }
 
     /// <summary>
     /// Extracts the body of the response message as a UTF-16 string value, checking that the content type is a MIME text type.
     /// A body can only be extracted once because in some cases an optimization is made where the data is 'moved' out.
     /// </summary>
-    /// <param name="force">If true, ignores the Content-Type header and assumes UTF-8.</param>
+    /// <param name="ignore_content_type">If true, ignores the Content-Type header and assumes UTF-16.</param>
     /// <returns>String containing body of the message.</returns>
-    pplx::task<utf16string> extract_utf16string(bool force = false) const
+    pplx::task<utf16string> extract_utf16string(bool ignore_content_type = false) const
     {
         auto impl = _m_impl;
-        return pplx::create_task(_m_impl->_get_data_available()).then([impl, force](utility::size64_t) { return impl->extract_utf16string(force); });
+        return pplx::create_task(_m_impl->_get_data_available()).then([impl, ignore_content_type](utility::size64_t) { return impl->extract_utf16string(ignore_content_type); });
     }
 
     /// <summary>
     /// Extracts the body of the response message into a json value, checking that the content type is application\json.
     /// A body can only be extracted once because in some cases an optimization is made where the data is 'moved' out.
     /// </summary>
-    /// <param name="force">If true, ignores the Content-Type header and assumes UTF-8.</param>
+    /// <param name="ignore_content_type">If true, ignores the Content-Type header and assumes UTF-8.</param>
     /// <returns>JSON value from the body of this message.</returns>
-    pplx::task<json::value> extract_json(bool force = false) const
+    pplx::task<json::value> extract_json(bool ignore_content_type = false) const
     {
         auto impl = _m_impl;
-        return pplx::create_task(_m_impl->_get_data_available()).then([impl, force](utility::size64_t) { return impl->_extract_json(force); });
+        return pplx::create_task(_m_impl->_get_data_available()).then([impl, ignore_content_type](utility::size64_t) { return impl->_extract_json(ignore_content_type); });
     }
 
     /// <summary>
@@ -845,48 +854,48 @@ public:
     /// Extract the body of the request message as a string value, checking that the content type is a MIME text type.
     /// A body can only be extracted once because in some cases an optimization is made where the data is 'moved' out.
     /// </summary>
-    /// <param name="force">If true, ignores the Content-Type header and assumes UTF-8.</param>
+    /// <param name="ignore_content_type">If true, ignores the Content-Type header and assumes UTF-8.</param>
     /// <returns>String containing body of the message.</returns>
-    pplx::task<utility::string_t> extract_string(bool force = false)
+    pplx::task<utility::string_t> extract_string(bool ignore_content_type = false)
     {
         auto impl = _m_impl;
-        return pplx::create_task(_m_impl->_get_data_available()).then([impl, force](utility::size64_t) { return impl->extract_string(force); });
+        return pplx::create_task(_m_impl->_get_data_available()).then([impl, ignore_content_type](utility::size64_t) { return impl->extract_string(ignore_content_type); });
     }
 
     /// <summary>
     /// Extract the body of the request message as a UTF-8 string value, checking that the content type is a MIME text type.
     /// A body can only be extracted once because in some cases an optimization is made where the data is 'moved' out.
     /// </summary>
-    /// <param name="force">If true, ignores the Content-Type header and assumes UTF-8.</param>
+    /// <param name="ignore_content_type">If true, ignores the Content-Type header and assumes UTF-8.</param>
     /// <returns>String containing body of the message.</returns>
-    pplx::task<utf8string> extract_utf8string(bool force = false)
+    pplx::task<utf8string> extract_utf8string(bool ignore_content_type = false)
     {
         auto impl = _m_impl;
-        return pplx::create_task(_m_impl->_get_data_available()).then([impl, force](utility::size64_t) { return impl->extract_utf8string(force); });
+        return pplx::create_task(_m_impl->_get_data_available()).then([impl, ignore_content_type](utility::size64_t) { return impl->extract_utf8string(ignore_content_type); });
     }
 
     /// <summary>
     /// Extract the body of the request message as a UTF-16 string value, checking that the content type is a MIME text type.
     /// A body can only be extracted once because in some cases an optimization is made where the data is 'moved' out.
     /// </summary>
-    /// <param name="force">If true, ignores the Content-Type header and assumes UTF-8.</param>
+    /// <param name="ignore_content_type">If true, ignores the Content-Type header and assumes UTF-16.</param>
     /// <returns>String containing body of the message.</returns>
-    pplx::task<utf16string> extract_utf16string(bool force = false)
+    pplx::task<utf16string> extract_utf16string(bool ignore_content_type = false)
     {
         auto impl = _m_impl;
-        return pplx::create_task(_m_impl->_get_data_available()).then([impl, force](utility::size64_t) { return impl->extract_utf16string(force); });
+        return pplx::create_task(_m_impl->_get_data_available()).then([impl, ignore_content_type](utility::size64_t) { return impl->extract_utf16string(ignore_content_type); });
     }
 
     /// <summary>
     /// Extracts the body of the request message into a json value, checking that the content type is application\json.
     /// A body can only be extracted once because in some cases an optimization is made where the data is 'moved' out.
     /// </summary>
-    /// <param name="force">If true, ignores the Content-Type header and assumes UTF-8.</param>
+    /// <param name="ignore_content_type">If true, ignores the Content-Type header and assumes UTF-8.</param>
     /// <returns>JSON value from the body of this message.</returns>
-    pplx::task<json::value> extract_json(bool force = false) const
+    pplx::task<json::value> extract_json(bool ignore_content_type = false) const
     {
         auto impl = _m_impl;
-        return pplx::create_task(_m_impl->_get_data_available()).then([impl, force](utility::size64_t) { return impl->_extract_json(force); });
+        return pplx::create_task(_m_impl->_get_data_available()).then([impl, ignore_content_type](utility::size64_t) { return impl->_extract_json(ignore_content_type); });
     }
 
     /// <summary>
