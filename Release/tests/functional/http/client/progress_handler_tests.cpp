@@ -406,6 +406,12 @@ TEST_FIXTURE(uri_address, data_download_exception)
     int numCalls = 0;
     msg.set_progress_handler([&](message_direction::direction, utility::size64_t)
     {
+        // TODO stgates - adding some debugging information to help with hard to reproduce
+        // sporadic failure.
+#if (defined(_MSC_VER) && (_MSC_VER >= 1800))
+        printf("In progress handler, numCalls:%i\n", numCalls);
+#endif
+
         if(++numCalls == 2)
         {
             // 2rd is for data download

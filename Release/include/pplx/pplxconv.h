@@ -32,7 +32,7 @@
 #error This is only supported on Windows
 #endif
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1700) && (_MSC_VER < 1800)
+#if defined(_MSC_VER) && (_MSC_VER >= 1700) && (_MSC_VER < 1800) && !CPPREST_FORCE_PPLX
 
 #include <ppltasks.h>
 #include "pplx/pplxtasks.h"

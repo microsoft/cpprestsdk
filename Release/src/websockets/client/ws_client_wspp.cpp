@@ -304,6 +304,30 @@ public:
             }
         }
 
+        // Setup proxy options.
+        const auto &proxy = m_config.proxy();
+        if (proxy.is_specified())
+        {
+            con->set_proxy(utility::conversions::to_utf8string(proxy.address().to_string()), ec);
+            if (ec)
+            {
+                return pplx::task_from_exception<void>(websocket_exception(ec, build_error_msg(ec, "set_proxy")));
+            }
+
+            const auto &cred = proxy.credentials();
+            if (cred.is_set())
+            {
+                con->set_proxy_basic_auth(
+                    utility::conversions::to_utf8string(cred.username()),
+                    utility::conversions::to_utf8string(*cred.decrypt()),
+                    ec);
+                if (ec)
+                {
+                    return pplx::task_from_exception<void>(websocket_exception(ec, build_error_msg(ec, "set_proxy_basic_auth")));
+                }
+            }
+        }
+
         m_state = CONNECTING;
         client.connect(con);
         m_thread = std::thread([&client]()
