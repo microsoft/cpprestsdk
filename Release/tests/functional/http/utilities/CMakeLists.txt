@@ -1,6 +1,8 @@
 include_directories(include)
 
-add_definitions(-DHTTPTESTUTILITY_EXPORTS)
+if(WIN32)
+  add_definitions(-DHTTPTESTUTILITY_EXPORTS)
+endif()
 
 set(SOURCES
   http_asserts.cpp

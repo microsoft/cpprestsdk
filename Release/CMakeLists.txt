@@ -101,8 +101,9 @@ elseif(WIN32)
   option(BUILD_SHARED_LIBS "Build shared Libraries." ON)
   option(BUILD_TESTS "Build tests." ON)
   option(BUILD_SAMPLES "Build samples." ON)
+  option(Boost_USE_STATIC_LIBS ON)
 
-  add_definitions(-DUNICODE)
+  add_definitions(-DUNICODE -D_UNICODE)
 
   if(NOT BUILD_SHARED_LIBS)
     # This causes cmake to not link the test libraries separately, but instead hold onto their object files.
@@ -110,6 +111,14 @@ elseif(WIN32)
   endif()
 
   set(LIB lib)
+
+  find_package(Boost 1.55 REQUIRED COMPONENTS random system thread locale filesystem chrono atomic)
+  find_package(OpenSSL 1.0 REQUIRED)
+  if (BUILD_SHARED_LIBS)
+    add_definitions(-D_WINSOCK_DEPRECATED_NO_WARNINGS -D_ASYNCRT_EXPORT -D_PPLX_EXPORT -DWIN32 -D_USRDLL)
+  else()
+    add_definitions(-D_WINSOCK_DEPRECATED_NO_WARNINGS -D_NO_ASYNCRTIMP -D_NO_PPLXIMP -DWIN32)
+  endif()
 else()
   message(FATAL_ERROR "-- Unsupported Build Platform.")
 endif()
@@ -146,8 +155,12 @@ elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
   set(LD_FLAGS "${LD_FLAGS} -Wl,-z,defs")
 
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fno-strict-aliasing")
+elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")
+  message("-- Setting msvc options")
+  set(WARNINGS)
 else()
   message("-- Unknown compiler, success is doubtful.")
+  message("CMAKE_CXX_COMPILER_ID=${CMAKE_CXX_COMPILER_ID}")
 endif()
 
 # Reconfigure final output directory
