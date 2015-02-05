@@ -37,10 +37,12 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
       <AdditionalOptions>-Zm250 %(AdditionalOptions)</AdditionalOptions>
+      <WholeProgramOptimization Condition="'$(Configuration)'=='Release'">true</WholeProgramOptimization>
     </ClCompile>
     <Link>
       <AdditionalDependencies>msxml6.lib;WindowsPhoneCore.lib;RuntimeObject.lib;PhoneAppModelHost.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <GenerateWindowsMetadata>true</GenerateWindowsMetadata>
+      <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
+      <LinkTimeCodeGeneration Condition="'$(Configuration)'=='Release'">UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="..\common.vcxitems" Label="Shared" Condition="Exists('..\common.vcxitems')" />

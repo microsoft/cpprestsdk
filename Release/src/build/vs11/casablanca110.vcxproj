@@ -53,9 +53,11 @@
       <AdditionalOptions>-Zm160 /bigobj%(AdditionalOptions)</AdditionalOptions>
       <RuntimeLibrary Condition="'$(Configuration)'=='Debug'">MultiThreadedDebugDLL</RuntimeLibrary>
       <RuntimeLibrary Condition="'$(Configuration)'=='Release'">MultiThreadedDLL</RuntimeLibrary>
+      <WholeProgramOptimization Condition="'$(Configuration)'=='Release'">true</WholeProgramOptimization>
     </ClCompile>
     <Link>
       <AdditionalDependencies>Winhttp.lib;httpapi.lib;bcrypt.lib;crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <LinkTimeCodeGeneration Condition="'$(Configuration)'=='Release'">UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       
       <!-- We are statically linking against an OpenSSL lib which statically links against the CRT, avoid warning -->
       <IgnoreSpecificDefaultLibraries Condition="'$(Configuration)'=='Debug'">LIBCMTD</IgnoreSpecificDefaultLibraries>
