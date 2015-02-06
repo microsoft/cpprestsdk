@@ -101,15 +101,23 @@ elseif(WIN32)
   option(BUILD_SHARED_LIBS "Build shared Libraries." ON)
   option(BUILD_TESTS "Build tests." ON)
   option(BUILD_SAMPLES "Build samples." ON)
+  option(Boost_USE_STATIC_LIBS ON)
 
-  add_definitions(-DUNICODE)
+  add_definitions(-DUNICODE -D_UNICODE)
 
   if(NOT BUILD_SHARED_LIBS)
     # This causes cmake to not link the test libraries separately, but instead hold onto their object files.
     set(TEST_LIBRARY_TARGET_TYPE OBJECT)
+    set(Casablanca_DEFINITIONS -D_NO_ASYNCRTIMP -D_NO_PPLXIMP CACHE INTERNAL "Definitions for consume casablanca library")
+  else()
+    set(Casablanca_DEFINITIONS "" CACHE INTERNAL "Definitions for consume casablanca library")
   endif()
+  add_definitions(${Casablanca_DEFINITIONS} -D_WINSOCK_DEPRECATED_NO_WARNINGS -DWIN32)
 
   set(LIB lib)
+
+  find_package(Boost 1.55 REQUIRED COMPONENTS random system thread locale filesystem chrono atomic)
+  find_package(OpenSSL 1.0 REQUIRED)
 else()
   message(FATAL_ERROR "-- Unsupported Build Platform.")
 endif()
@@ -124,7 +132,7 @@ if(ANDROID)
     "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.8/libs/armeabi-v7a/include"
     "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.8/include/backward"
     )
-elseif(("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang") OR IOS)
+elseif((CMAKE_CXX_COMPILER_ID MATCHES "Clang") OR IOS)
   message("-- Setting clang options")
 
   set(WARNINGS "-Wall -Wextra -Wcast-qual -Wconversion -Wformat=2 -Winit-self -Winvalid-pch -Wmissing-format-attribute -Wmissing-include-dirs -Wpacked -Wredundant-decls")
@@ -136,7 +144,7 @@ elseif(("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang") OR IOS)
   set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++11")
 
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fno-strict-aliasing")
-elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
   message("-- Setting gcc options")
 
   set(WARNINGS "-Wall -Wextra -Wunused-parameter -Wcast-align -Wcast-qual -Wconversion -Wformat=2 -Winit-self -Winvalid-pch -Wmissing-format-attribute -Wmissing-include-dirs -Wpacked -Wredundant-decls -Wunreachable-code")
@@ -146,8 +154,12 @@ elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
   set(LD_FLAGS "${LD_FLAGS} -Wl,-z,defs")
 
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fno-strict-aliasing")
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+  message("-- Setting msvc options")
+  set(WARNINGS)
 else()
   message("-- Unknown compiler, success is doubtful.")
+  message("CMAKE_CXX_COMPILER_ID=${CMAKE_CXX_COMPILER_ID}")
 endif()
 
 # Reconfigure final output directory

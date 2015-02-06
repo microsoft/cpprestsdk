@@ -1,4 +1,6 @@
-add_definitions(-Wno-sign-compare -Wno-enum-compare)
+if (UNIX)
+  add_definitions(-Wno-sign-compare -Wno-enum-compare)
+endif()
 
 add_executable(blackjackserver
   BlackJack_Server.cpp
