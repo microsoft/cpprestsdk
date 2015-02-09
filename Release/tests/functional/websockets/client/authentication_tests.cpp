@@ -135,6 +135,38 @@ TEST(ssl_test)
     }
 }
 
+// Test specifically for server SignalR team hit interesting cases with.
+TEST(sni_with_older_server_test)
+{
+    websocket_client client;
+
+    try
+    {
+        client.connect(U("wss://jabbr.net")).wait();
+        
+        // Should never be reached.
+        VERIFY_IS_TRUE(false);
+    }
+    catch (const websocket_exception &e)
+    {
+        if (is_timeout(e.what()))
+        {
+            // Since this test depends on an outside server sometimes it sporadically can fail due to timeouts
+            // especially on our build machines.
+            return;
+        }
+
+        // This test just covers establishing the TLS connection and verifying
+        // the server certificate, expect it to return an unexpected HTTP status code.
+        printf("Msg:%s\n", e.what());
+        if (e.error_code().value() == 20)
+        {
+            return;
+        }
+        throw;
+    }
+}
+
 // These tests are specific to our websocketpp based implementation.
 #if !defined(__cplusplus_winrt)
 

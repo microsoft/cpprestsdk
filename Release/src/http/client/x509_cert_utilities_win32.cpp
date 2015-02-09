@@ -27,6 +27,7 @@
 
 #include "cpprest/details/x509_cert_utilities.h"
 
+#include <type_traits>
 #include <wincrypt.h>
 
 namespace web { namespace http { namespace client { namespace details {
@@ -65,9 +66,16 @@ bool verify_X509_cert_chain(const std::vector<std::string> &certChain, const std
     CERT_CHAIN_PARA params;
     ZeroMemory(&params, sizeof(params));
     params.cbSize = sizeof(CERT_CHAIN_PARA);
-    params.RequestedUsage.dwType = USAGE_MATCH_TYPE_AND;
-    LPSTR usages [] = { szOID_PKIX_KP_SERVER_AUTH };
-    params.RequestedUsage.Usage.cUsageIdentifier = 1;
+    params.RequestedUsage.dwType = USAGE_MATCH_TYPE_OR;
+    LPSTR usages [] =
+    {
+        szOID_PKIX_KP_SERVER_AUTH,
+        
+        // For older servers and to match IE.
+        szOID_SERVER_GATED_CRYPTO,
+        szOID_SGC_NETSCAPE
+    };
+    params.RequestedUsage.Usage.cUsageIdentifier = std::extent<decltype(usages)>::value;
     params.RequestedUsage.Usage.rgpszUsageIdentifier = usages;
     PCCERT_CHAIN_CONTEXT chainContext;
     chain_context chain;
