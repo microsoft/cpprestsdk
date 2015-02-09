@@ -202,6 +202,27 @@ public:
 
                 return sslContext;
             });
+
+            // Options specific to underlying socket.
+            client.set_socket_init_handler([this](websocketpp::connection_hdl, boost::asio::ssl::stream<boost::asio::ip::tcp::socket> &ssl_stream)
+            {
+                // Support for SNI.
+                if (m_config.is_sni_enabled())
+                {
+                    // If user specified server name is empty default to use URI host name.
+                    if (!m_config.server_name().empty())
+                    {
+                        const auto &server_name = utility::conversions::to_utf8string(m_config.server_name());
+                        SSL_set_tlsext_host_name(ssl_stream.native_handle(), server_name.c_str());
+                    }
+                    else
+                    {
+                        const auto &server_name = utility::conversions::to_utf8string(m_uri.host());
+                        SSL_set_tlsext_host_name(ssl_stream.native_handle(), server_name.c_str());
+                    }
+                }
+            });
+
             return connect_impl<websocketpp::config::asio_tls_client>();
         }
         else
