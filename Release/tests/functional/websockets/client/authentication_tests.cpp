@@ -135,15 +135,15 @@ TEST(ssl_test)
     }
 }
 
-// Test specifically for server SignalR team hit interesting cases with.
-TEST(sni_with_older_server_test)
-{
-    websocket_client client;
+// These tests are specific to our websocketpp based implementation.
+#if !defined(__cplusplus_winrt)
 
+void sni_test_impl(websocket_client &client)
+{
     try
     {
         client.connect(U("wss://jabbr.net")).wait();
-        
+
         // Should never be reached.
         VERIFY_IS_TRUE(false);
     }
@@ -158,7 +158,6 @@ TEST(sni_with_older_server_test)
 
         // This test just covers establishing the TLS connection and verifying
         // the server certificate, expect it to return an unexpected HTTP status code.
-        printf("Msg:%s\n", e.what());
         if (e.error_code().value() == 20)
         {
             return;
@@ -167,8 +166,48 @@ TEST(sni_with_older_server_test)
     }
 }
 
-// These tests are specific to our websocketpp based implementation.
-#if !defined(__cplusplus_winrt)
+// Test specifically for server SignalR team hit interesting cases with.
+TEST(sni_with_older_server_test)
+{
+    websocket_client client;
+    sni_test_impl(client);
+}
+
+// WinRT doesn't expose option for disabling.
+TEST(disable_sni)
+{
+    websocket_client_config config;
+    config.disable_sni();
+    websocket_client client(config);
+
+    try
+    {
+        client.connect(U("wss://jabbr.net")).wait();
+
+        // Should never be reached.
+        VERIFY_IS_TRUE(false);
+    }
+    catch (const websocket_exception &e)
+    {
+        // Should fail for a reason different than invalid HTTP status. 
+        if (e.error_code().value() != 20)
+        {
+            return;
+        }
+        throw;
+    }
+}
+
+// Winrt doesn't allow explicitly setting server host for SNI.
+TEST(sni_explicit_hostname)
+{
+    websocket_client_config config;
+    const auto &name = ::utility::string_t(U("jabbr.net"));
+    config.set_server_name(name);
+    VERIFY_ARE_EQUAL(name, config.server_name());
+    websocket_client client(config);
+    sni_test_impl(client);
+}
 
 void handshake_error_test_impl(const ::utility::string_t &host)
 {
