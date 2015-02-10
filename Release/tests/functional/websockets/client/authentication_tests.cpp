@@ -202,7 +202,7 @@ TEST(disable_sni)
 TEST(sni_explicit_hostname)
 {
     websocket_client_config config;
-    const auto &name = ::utility::string_t(U("jabbr.net"));
+    const auto &name = utf8string("jabbr.net");
     config.set_server_name(name);
     VERIFY_ARE_EQUAL(name, config.server_name());
     websocket_client client(config);

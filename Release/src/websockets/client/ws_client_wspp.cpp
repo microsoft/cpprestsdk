@@ -212,8 +212,7 @@ public:
                     // If user specified server name is empty default to use URI host name.
                     if (!m_config.server_name().empty())
                     {
-                        const auto &server_name = utility::conversions::to_utf8string(m_config.server_name());
-                        SSL_set_tlsext_host_name(ssl_stream.native_handle(), server_name.c_str());
+                        SSL_set_tlsext_host_name(ssl_stream.native_handle(), m_config.server_name().c_str());
                     }
                     else
                     {

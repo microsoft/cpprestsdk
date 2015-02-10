@@ -144,7 +144,7 @@ public:
     /// </summary>
     /// <remarks>By default the host name is set to the websocket URI host.</remarks>
     /// <param name="name">The host name to use, as a string.</param>
-    void set_server_name(const ::utility::string_t &name)
+    void set_server_name(const utf8string &name)
     {
         m_sni_hostname = name;
     }
@@ -153,7 +153,7 @@ public:
     /// Gets the server host name to usefor TLS Server Name Indication (SNI).
     /// </summary>
     /// <returns>Host name as a string.</returns>
-    const ::utility::string_t & server_name() const
+    const utf8string & server_name() const
     {
         return m_sni_hostname;
     }
@@ -193,7 +193,7 @@ private:
     web::credentials m_credentials;
     web::http::http_headers m_headers;
     bool m_sni_enabled;
-    ::utility::string_t m_sni_hostname;
+    utf8string m_sni_hostname;
 };
 
 /// <summary>
