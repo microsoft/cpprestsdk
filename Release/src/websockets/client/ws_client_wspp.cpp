@@ -212,12 +212,14 @@ public:
                     // If user specified server name is empty default to use URI host name.
                     if (!m_config.server_name().empty())
                     {
-                        SSL_set_tlsext_host_name(ssl_stream.native_handle(), m_config.server_name().c_str());
+                        // OpenSSL runs the string parameter through a macro casting away const with a C style cast.
+                        // Do a C++ cast ourselves to avoid warnings.
+                        SSL_set_tlsext_host_name(ssl_stream.native_handle(), const_cast<char *>(m_config.server_name().c_str()));
                     }
                     else
                     {
                         const auto &server_name = utility::conversions::to_utf8string(m_uri.host());
-                        SSL_set_tlsext_host_name(ssl_stream.native_handle(), server_name.c_str());
+                        SSL_set_tlsext_host_name(ssl_stream.native_handle(), const_cast<char *>(server_name.c_str()));
                     }
                 }
             });
