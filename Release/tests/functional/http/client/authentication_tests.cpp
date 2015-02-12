@@ -627,6 +627,7 @@ TEST_FIXTURE(uri_address, set_user_options_asio_http)
     config.set_nativehandle_options([](native_handle handle)
     {
         boost::asio::ip::tcp::socket* socket = static_cast<boost::asio::ip::tcp::socket*>(handle);
+        // Socket shouldn't be open yet since no requests have gone out.
         VERIFY_ARE_EQUAL(false, socket->is_open());
     });
     http_client client(m_uri, config);
@@ -641,12 +642,8 @@ TEST_FIXTURE(uri_address, set_user_options_asio_https)
     {
         boost::asio::ssl::stream<boost::asio::ip::tcp::socket &>* streamobj =
             static_cast<boost::asio::ssl::stream<boost::asio::ip::tcp::socket &>* >(handle);
-
-        SSL* sslhandle = streamobj->native_handle();
-        VERIFY_IS_TRUE(sslhandle != nullptr);
-        SSL_CTX * ctx = ::SSL_get_SSL_CTX(sslhandle);
-        VERIFY_IS_TRUE(ctx != nullptr, "Unexpected NULL pointer for SSL_CTX handle.");
-        VERIFY_ARE_EQUAL(0, ctx->method->version, "Unexpected value for SSL_CTX::method::version.");
+        const auto &tcpLayer = streamobj->lowest_layer();
+        VERIFY_ARE_EQUAL(false, tcpLayer.is_open());
     });
 
     http_client client(U("https://apis.live.net"),config);
