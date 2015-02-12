@@ -35,7 +35,7 @@
 #endif
 #endif
 
-#if defined(__linux)
+#if !defined(_WIN32)
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
 #endif
@@ -589,8 +589,8 @@ TEST_FIXTURE(uri_address, set_user_options_exceptions)
     test_http_server::scoped_server scoped(m_uri);
     http_client_config config;
     class TestException;
-    config.set_nativehandle_options([](native_handle handle)->void{
-        (handle);
+    config.set_nativehandle_options([](native_handle)
+    {
         throw std::runtime_error("The Test exception");
     });
     http_client client(m_uri, config);
@@ -613,7 +613,7 @@ TEST_FIXTURE(uri_address, failed_authentication_attempt, "Ignore:Linux", "89", "
     VERIFY_IS_FALSE(s.empty());
 }
 
-#if defined(__linux)
+#if !defined(_WIN32)
 
 TEST_FIXTURE(uri_address, set_user_options_asio_http)
 {
@@ -624,17 +624,10 @@ TEST_FIXTURE(uri_address, set_user_options_asio_http)
     });
 
     http_client_config config;
-    config.set_nativehandle_options([](native_handle handle)->void{
-        if (!handle)
-        {
-            throw std::runtime_error("Unexpected NULL pointer for tcp::socket handle.");
-        }
-
+    config.set_nativehandle_options([](native_handle handle)
+    {
         boost::asio::ip::tcp::socket* socket = static_cast<boost::asio::ip::tcp::socket*>(handle);
-        if (boost::asio::socket_base::message_do_not_route != socket->message_do_not_route)
-        {
-            throw std::runtime_error("Unexpected tcp::socket object.");
-        }
+        VERIFY_ARE_EQUAL(false, socket->is_open());
     });
     http_client client(m_uri, config);
     auto response = client.request(methods::GET).get();
@@ -644,41 +637,27 @@ TEST_FIXTURE(uri_address, set_user_options_asio_http)
 TEST_FIXTURE(uri_address, set_user_options_asio_https)
 {
     http_client_config config;
-    config.set_nativehandle_options([](native_handle handle)->void{
-        if (!handle)
-        {
-            throw std::runtime_error("Unexpected NULL pointer for ssl::stream handle.");
-        }
-
+    config.set_nativehandle_options([](native_handle handle)
+    {
         boost::asio::ssl::stream<boost::asio::ip::tcp::socket &>* streamobj =
             static_cast<boost::asio::ssl::stream<boost::asio::ip::tcp::socket &>* >(handle);
 
         SSL* sslhandle = streamobj->native_handle();
-        if (!sslhandle)
-        {
-            throw std::runtime_error("Unexpected NULL pointer for SSL handle.");
-        }
+        VERIFY_IS_TRUE(sslhandle != nullptr);
         SSL_CTX * ctx = ::SSL_get_SSL_CTX(sslhandle);
-        if (!ctx)
-        {
-            throw std::runtime_error("Unexpected NULL pointer for SSL_CTX handle.");
-        }
-        if (0 == ctx->method->version)
-        {
-            throw std::runtime_error("Unexpected value for SSL_CTX::method::version.");
-        }
+        VERIFY_IS_TRUE(ctx != nullptr, "Unexpected NULL pointer for SSL_CTX handle.");
+        VERIFY_ARE_EQUAL(0, ctx->method->version, "Unexpected value for SSL_CTX::method::version.");
     });
 
     http_client client(U("https://apis.live.net"),config);
     http_response response = client.request(methods::GET, U("V5.0/me/skydrive/files")).get();
     VERIFY_ARE_EQUAL(status_codes::Unauthorized, response.status_code());
     auto v = response.extract_vector().get();
-    std::string s(v.begin(), v.end());
     // The resulting data must be non-empty (an error about missing access token)
-    VERIFY_IS_FALSE(s.empty());
+    VERIFY_IS_FALSE(v.empty());
 }
 
-#endif // __linux
+#endif
 
 } // SUITE(authentication_tests)
 

@@ -617,7 +617,7 @@ protected:
         // Call the callback function of user customized options.
         try
         {
-            client_config().call_user_nativehandle_options(winhttp_context->m_request_handle);
+            client_config().invoke_nativehandle_options(winhttp_context->m_request_handle);
         }
         catch (...)
         {

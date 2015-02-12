@@ -1165,14 +1165,13 @@ void asio_client::send_request(const std::shared_ptr<request_context> &request_c
 
     try
     {
-        std::shared_ptr<asio_connection> conn = ctx->m_connection;
-        std::lock_guard<std::mutex> lock(conn->m_socket_lock);
-        if (conn->is_ssl())
+        if (ctx->m_connection->is_ssl())
         {
-            client_config().call_user_nativehandle_options(conn->m_ssl_stream.get());
+            client_config().invoke_nativehandle_options(ctx->m_connection->m_ssl_stream.get());
         }
-        else {
-            client_config().call_user_nativehandle_options(&(conn->m_socket));
+        else 
+        {
+            client_config().invoke_nativehandle_options(&(ctx->m_connection->m_socket));
         }
     }
     catch (...)

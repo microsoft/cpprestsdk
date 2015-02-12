@@ -492,7 +492,7 @@ protected:
         // Call the callback function of user customized options
         try
         {
-            config.call_user_nativehandle_options(winrt_context->m_hRequest.Get());
+            config.invoke_nativehandle_options(winrt_context->m_hRequest.Get());
         }
         catch (...)
         {

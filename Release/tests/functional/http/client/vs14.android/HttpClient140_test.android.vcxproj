@@ -149,8 +149,6 @@
   <PropertyGroup>
     <TargetName>HttpClient140_test.android</TargetName>
   </PropertyGroup>
-
-
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="$(PackagesRoot)\boost.1.55.0.16\build\native\boost.targets" Condition="Exists('$(PackagesRoot)\boost.1.55.0.16\build\native\boost.targets')" />

@@ -71,22 +71,6 @@ namespace client
 using web::credentials;
 using web::web_proxy;
 
-#ifdef _WIN32
-namespace details {
-#ifdef __cplusplus_winrt
-        class winrt_client ;
-#else
-        class winhttp_client;
-#endif // __cplusplus_winrt
-}
-#endif // _WIN32
-
-#ifdef __linux
-namespace details {
-        class asio_client;
-}
-#endif // __linux
-
 /// <summary>
 /// HTTP client configuration class, used to set the possible configuration options
 /// used to create an http_client instance.
@@ -295,12 +279,29 @@ public:
 #endif
 
     /// <summary>
-    /// Sets a callback to enable custom setting of winhttp options
+    /// Sets a callback to enable custom setting of platform specific options.
     /// </summary>
+    /// <remarks>
+    /// The native_handle is the following type depending on the underlying platform:
+    ///     Windows Desktop, WinHTTP - HINTERNET
+    ///     Windows Runtime, WinRT - IXMLHTTPRequest2 *
+    ///     All other platforms, Boost.Asio:
+    ///         http - boost::asio::ssl::stream<boost::asio::ip::tcp::socket &> *
+    ///         https - boost::asio::ip::tcp::socket *
+    /// </remarks>
     /// <param name="callback">A user callback allowing for customization of the request</param>
     void set_nativehandle_options(const std::function<void(native_handle)> &callback)
     {
          m_set_user_nativehandle_options = callback;
+    }
+
+    /// <summary>
+    /// Invokes a user's callback to allow for customization of the request.
+    /// </summary>
+    /// <param name="handle">A internal implementation handle.</param>
+    void invoke_nativehandle_options(native_handle handle) const
+    {
+        m_set_user_nativehandle_options(handle);
     }
 
 private:
@@ -324,25 +325,9 @@ private:
 
     std::function<void(native_handle)> m_set_user_nativehandle_options;
 
-#if defined(_WIN32) && defined(__cplusplus_winrt)
-    friend class details::winrt_client;
-#elif defined(_WIN32)
+#if defined(_WIN32) && !defined(__cplusplus_winrt)
     bool m_buffer_request;
-
-    friend class details::winhttp_client;
-#elif defined(__linux)
-    friend class details::asio_client;
-#endif // defined(_WIN32) && defined(__cplusplus_winrt)
-
-    /// <summary>
-    /// Invokes a user callback to allow for customization of the request
-    /// </summary>
-    /// <param name="handle">The internal http_request handle</param>
-    /// <returns>True if users set WinHttp/IXAMLHttpRequest2 options correctly, false otherwise.</returns>
-    void call_user_nativehandle_options(native_handle handle) const
-    {
-         m_set_user_nativehandle_options(handle);
-    }
+#endif
 };
 
 /// <summary>
