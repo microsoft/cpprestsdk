@@ -64,6 +64,7 @@ class asio_connection_pool;
 class asio_connection
 {
     friend class asio_connection_pool;
+    friend class asio_client;
 public:
     asio_connection(boost::asio::io_service& io_service, bool use_ssl) :
     m_socket(io_service),
@@ -77,6 +78,7 @@ public:
             sslContext.set_default_verify_paths();
             sslContext.set_options(boost::asio::ssl::context::default_workarounds);
             m_ssl_stream = utility::details::make_unique<boost::asio::ssl::stream<boost::asio::ip::tcp::socket &>>(m_socket, sslContext);
+
         }
     }
 
@@ -319,6 +321,7 @@ public:
 
 class asio_context : public request_context, public std::enable_shared_from_this<asio_context>
 {
+    friend class asio_client;
 public:
     asio_context(const std::shared_ptr<_http_client_communicator> &client,
                  http_request &request,
@@ -1159,6 +1162,25 @@ pplx::task<http_response> http_network_handler::propagate(http_request request)
 void asio_client::send_request(const std::shared_ptr<request_context> &request_ctx)
 {
     auto ctx = std::static_pointer_cast<asio_context>(request_ctx);
+
+    try
+    {
+        std::shared_ptr<asio_connection> conn = ctx->m_connection;
+        std::lock_guard<std::mutex> lock(conn->m_socket_lock);
+        if (conn->is_ssl())
+        {
+            client_config().call_user_nativehandle_options(conn->m_ssl_stream.get());
+        }
+        else {
+            client_config().call_user_nativehandle_options(&(conn->m_socket));
+        }
+    }
+    catch (...)
+    {
+        request_ctx->report_exception(std::current_exception());
+        return;
+    }
+
     ctx->start_request();
 }
 

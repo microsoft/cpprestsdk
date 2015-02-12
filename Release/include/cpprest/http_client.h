@@ -81,6 +81,12 @@ namespace details {
 }
 #endif // _WIN32
 
+#ifdef __linux
+namespace details {
+        class asio_client;
+}
+#endif // __linux
+
 /// <summary>
 /// HTTP client configuration class, used to set the possible configuration options
 /// used to create an http_client instance.
@@ -324,6 +330,8 @@ private:
     bool m_buffer_request;
 
     friend class details::winhttp_client;
+#elif defined(__linux)
+    friend class details::asio_client;
 #endif // defined(_WIN32) && defined(__cplusplus_winrt)
 
     /// <summary>
