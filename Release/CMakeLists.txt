@@ -114,8 +114,6 @@ elseif(WIN32)
   endif()
   add_definitions(${Casablanca_DEFINITIONS} -D_WINSOCK_DEPRECATED_NO_WARNINGS -DWIN32)
 
-  set(LIB lib)
-
   find_package(Boost 1.55 REQUIRED COMPONENTS random system thread locale filesystem chrono atomic)
   find_package(OpenSSL 1.0 REQUIRED)
 else()
