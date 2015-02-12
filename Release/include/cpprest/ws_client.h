@@ -84,53 +84,7 @@ public:
     /// <summary>
     /// Creates a websocket client configuration with default settings.
     /// </summary>
-    websocket_client_config() {}
-
-    /// <summary>
-    /// Copy constructor.
-    /// </summary>
-    websocket_client_config(const websocket_client_config &other) :
-        m_proxy(other.m_proxy),
-        m_credentials(other.m_credentials),
-        m_headers(other.m_headers)
-    {}
-
-    /// <summary>
-    /// Move constructor.
-    /// </summary>
-    websocket_client_config(websocket_client_config &&other) :
-        m_proxy(std::move(other.m_proxy)),
-        m_credentials(std::move(other.m_credentials)),
-        m_headers(std::move(other.m_headers))
-    {}
-
-    /// <summary>
-    /// Assignment operator.
-    /// </summary>
-    websocket_client_config &operator=(const websocket_client_config &other)
-    {
-        if (this != &other)
-        {
-            m_proxy = other.m_proxy;
-            m_credentials = other.m_credentials;
-            m_headers = other.m_headers;
-        }
-        return *this;
-    }
-
-    /// <summary>
-    /// Move assignment operator.
-    /// </summary>
-    websocket_client_config &operator=(websocket_client_config &&other)
-    {
-        if (this != &other)
-        {
-            m_proxy = std::move(other.m_proxy);
-            m_credentials = std::move(other.m_credentials);
-            m_headers = std::move(other.m_headers);
-        }
-        return  *this;
-    }
+    websocket_client_config() : m_sni_enabled(true) {}
 
     /// <summary>
     /// Get the web proxy object
@@ -169,6 +123,42 @@ public:
     }
 
     /// <summary>
+    /// Disables Server Name Indication (SNI). Default is on.
+    /// </summary>
+    void disable_sni()
+    {
+        m_sni_enabled = false;
+    }
+
+    /// <summary>
+    /// Determines if Server Name Indication (SNI) is enabled.
+    /// </summary>
+    /// <returns>True if enabled, false otherwise.</returns>
+    bool is_sni_enabled() const
+    {
+        return m_sni_enabled;
+    }
+
+    /// <summary>
+    /// Sets the server host name to use for TLS Server Name Indication (SNI).
+    /// </summary>
+    /// <remarks>By default the host name is set to the websocket URI host.</remarks>
+    /// <param name="name">The host name to use, as a string.</param>
+    void set_server_name(const utf8string &name)
+    {
+        m_sni_hostname = name;
+    }
+
+    /// <summary>
+    /// Gets the server host name to usefor TLS Server Name Indication (SNI).
+    /// </summary>
+    /// <returns>Host name as a string.</returns>
+    const utf8string & server_name() const
+    {
+        return m_sni_hostname;
+    }
+
+    /// <summary>
     /// Gets the headers of the HTTP request message used in the WebSocket protocol handshake.
     /// </summary>
     /// <returns>HTTP headers for the WebSocket protocol handshake.</returns>
@@ -202,6 +192,8 @@ private:
     web::web_proxy m_proxy;
     web::credentials m_credentials;
     web::http::http_headers m_headers;
+    bool m_sni_enabled;
+    utf8string m_sni_hostname;
 };
 
 /// <summary>
