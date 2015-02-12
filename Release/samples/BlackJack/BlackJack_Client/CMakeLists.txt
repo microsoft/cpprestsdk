@@ -1,4 +1,6 @@
-add_definitions(-Wno-switch)
+if (UNIX)
+  add_definitions(-Wno-switch)
+endif()
 
 add_executable(blackjackclient
   BlackJackClient.cpp

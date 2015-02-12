@@ -606,7 +606,7 @@ utility::string_t datetime::to_string(date_format format) const
 
 #if _WIN32_WINNT < _WIN32_WINNT_VISTA
         TCHAR timeStr[10] = {0};
-        status = GetTimeFormat(LOCALE_INVARIANT, TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT, &systemTime, "HH':'mm':'ss", timeStr, sizeof(timeStr) / sizeof(TCHAR));
+        status = GetTimeFormat(LOCALE_INVARIANT, TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT, &systemTime, __TEXT("HH':'mm':'ss"), timeStr, sizeof(timeStr) / sizeof(TCHAR));
 #else
         wchar_t timeStr[10] = {0};
         status = GetTimeFormatEx(LOCALE_NAME_INVARIANT, TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT, &systemTime, L"HH':'mm':'ss", timeStr, sizeof(timeStr) / sizeof(wchar_t));
@@ -623,7 +623,7 @@ utility::string_t datetime::to_string(date_format format) const
         const size_t buffSize = 64;
 #if _WIN32_WINNT < _WIN32_WINNT_VISTA
         TCHAR dateStr[buffSize] = {0};
-        status = GetDateFormat(LOCALE_INVARIANT, 0, &systemTime, "yyyy-MM-dd", dateStr, buffSize);
+        status = GetDateFormat(LOCALE_INVARIANT, 0, &systemTime, __TEXT("yyyy-MM-dd"), dateStr, buffSize);
 #else
         wchar_t dateStr[buffSize] = {0};
         status = GetDateFormatEx(LOCALE_NAME_INVARIANT, 0, &systemTime, L"yyyy-MM-dd", dateStr, buffSize, NULL);
@@ -635,7 +635,7 @@ utility::string_t datetime::to_string(date_format format) const
 
 #if _WIN32_WINNT < _WIN32_WINNT_VISTA
         TCHAR timeStr[buffSize] = {0};
-        status = GetTimeFormat(LOCALE_INVARIANT, TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT, &systemTime, "HH':'mm':'ss", timeStr, buffSize);
+        status = GetTimeFormat(LOCALE_INVARIANT, TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT, &systemTime, __TEXT("HH':'mm':'ss"), timeStr, buffSize);
 #else
         wchar_t timeStr[buffSize] = {0};
         status = GetTimeFormatEx(LOCALE_NAME_INVARIANT, TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT, &systemTime, L"HH':'mm':'ss", timeStr, buffSize);
