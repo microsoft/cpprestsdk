@@ -286,8 +286,8 @@ public:
     ///     Windows Desktop, WinHTTP - HINTERNET
     ///     Windows Runtime, WinRT - IXMLHTTPRequest2 *
     ///     All other platforms, Boost.Asio:
-    ///         http - boost::asio::ssl::stream<boost::asio::ip::tcp::socket &> *
-    ///         https - boost::asio::ip::tcp::socket *
+    ///         https - boost::asio::ssl::stream<boost::asio::ip::tcp::socket &> *
+    ///         http - boost::asio::ip::tcp::socket *
     /// </remarks>
     /// <param name="callback">A user callback allowing for customization of the request</param>
     void set_nativehandle_options(const std::function<void(native_handle)> &callback)
