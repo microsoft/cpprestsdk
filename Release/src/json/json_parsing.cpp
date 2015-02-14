@@ -78,7 +78,6 @@ class JSON_Parser
 public:
     JSON_Parser()
         : m_currentLine(1),
-          m_eof(std::char_traits<CharType>::eof()),
           m_currentColumn(1),
           m_currentParsingDepth(0)
     { }
@@ -148,8 +147,9 @@ public:
     }
 
 protected:
-    virtual CharType NextCharacter() = 0;
-    virtual CharType PeekCharacter() = 0;
+    typedef typename std::char_traits<CharType>::int_type int_type;
+    virtual int_type NextCharacter() = 0;
+    virtual int_type PeekCharacter() = 0;
 
     virtual bool CompleteComment(Token &token);
     virtual bool CompleteStringLiteral(Token &token);
@@ -168,7 +168,7 @@ private:
 
     JSON_Parser& operator=(const JSON_Parser&);
 
-    CharType EatWhitespace();
+    int_type EatWhitespace();
 
     void CreateToken(typename JSON_Parser<CharType>::Token& tk, typename Token::Kind kind, Location &start)
     {
@@ -186,9 +186,9 @@ private:
     }
 
 protected:
+    static int_type eof;
 
     size_t m_currentLine;
-    const typename std::char_traits<CharType>::int_type m_eof;
     size_t m_currentColumn;
     size_t m_currentParsingDepth;
 
@@ -203,6 +203,9 @@ protected:
 };
 
 template <typename CharType>
+typename JSON_Parser<CharType>::int_type JSON_Parser<CharType>::eof = std::char_traits<CharType>::eof();
+
+template <typename CharType>
 class JSON_StreamParser : public JSON_Parser<CharType>
     {
 public:
@@ -213,8 +216,8 @@ public:
 
 protected:
 
-    virtual CharType NextCharacter();
-    virtual CharType PeekCharacter();
+    virtual int_type NextCharacter();
+    virtual int_type PeekCharacter();
 
 private:
     typename std::basic_streambuf<CharType, std::char_traits<CharType>>* m_streambuf;
@@ -233,8 +236,8 @@ public:
 
 protected:
 
-    virtual CharType NextCharacter();
-    virtual CharType PeekCharacter();
+    virtual int_type NextCharacter();
+    virtual int_type PeekCharacter();
 
     virtual bool CompleteComment(typename JSON_Parser<CharType>::Token &token);
     virtual bool CompleteStringLiteral(typename JSON_Parser<CharType>::Token &token);
@@ -248,9 +251,9 @@ private:
 
 
 template <typename CharType>
-CharType JSON_StreamParser<CharType>::NextCharacter()
+typename JSON_Parser<CharType>::int_type JSON_StreamParser<CharType>::NextCharacter()
 {
-    CharType ch = (CharType) m_streambuf->sbumpc();
+    auto ch = m_streambuf->sbumpc();
 
     if (ch == '\n')
     {
@@ -262,20 +265,20 @@ CharType JSON_StreamParser<CharType>::NextCharacter()
         this->m_currentColumn += 1;
     }
 
-    return (CharType)ch;
+    return ch;
 }
 
 template <typename CharType>
-CharType JSON_StreamParser<CharType>::PeekCharacter()
+typename JSON_Parser<CharType>::int_type JSON_StreamParser<CharType>::PeekCharacter()
 {
-    return (CharType)m_streambuf->sgetc();
+    return m_streambuf->sgetc();
 }
 
 template <typename CharType>
-CharType JSON_StringParser<CharType>::NextCharacter()
+typename JSON_Parser<CharType>::int_type JSON_StringParser<CharType>::NextCharacter()
 {
     if (m_position == m_endpos)
-        return (CharType)this->m_eof;
+        return eof;
 
     CharType ch = *m_position;
     m_position += 1;
@@ -290,26 +293,26 @@ CharType JSON_StringParser<CharType>::NextCharacter()
         this->m_currentColumn += 1;
     }
 
-    return (CharType)ch;
+    return ch;
 }
 
 template <typename CharType>
-CharType JSON_StringParser<CharType>::PeekCharacter()
+typename JSON_Parser<CharType>::int_type JSON_StringParser<CharType>::PeekCharacter()
 {
-    if ( m_position == m_endpos ) return (CharType)this->m_eof;
+    if ( m_position == m_endpos ) return eof;
 
-    return (CharType)*m_position;
+    return *m_position;
 }
 
 //
 // Consume whitespace characters and return the first non-space character or EOF
 //
 template <typename CharType>
-CharType JSON_Parser<CharType>::EatWhitespace()
+typename JSON_Parser<CharType>::int_type JSON_Parser<CharType>::EatWhitespace()
 {
-   CharType ch = NextCharacter();
+   auto ch = NextCharacter();
 
-   while ( ch != this->m_eof && iswspace((int)ch) )
+   while ( ch != eof && iswspace(static_cast<wint_t>(ch)))
    {
        ch = NextCharacter();
    }
@@ -365,7 +368,7 @@ template <typename CharType>
 inline bool JSON_Parser<CharType>::ParseInt64(CharType first, uint64_t& value)
 {
     value = first - '0';
-    CharType ch = PeekCharacter();
+    auto ch = PeekCharacter();
     while (ch >= '0' && ch <= '9')
     {
         unsigned int next_digit = (unsigned int)(ch - '0');
@@ -431,7 +434,8 @@ bool JSON_Parser<CharType>::CompleteNumberLiteral(CharType first, Token &token)
     {
         minus_sign = true;
 
-        first = NextCharacter();
+        // Safe to cast because the check after this if/else statement will cover EOF.
+        first = static_cast<CharType>(NextCharacter());
     }
     else
     {
@@ -441,7 +445,7 @@ bool JSON_Parser<CharType>::CompleteNumberLiteral(CharType first, Token &token)
     if (first < '0' || first > '9')
         return false;
 
-    CharType ch = PeekCharacter();
+    auto ch = PeekCharacter();
 
     //Check for two (or more) zeros at the beginning
     if (first == '0' && ch == '0')
@@ -489,12 +493,12 @@ bool JSON_Parser<CharType>::CompleteNumberLiteral(CharType first, Token &token)
 
     bool decimal = false;
 
-    while (ch != this->m_eof)
+    while (ch != eof)
     {
         // Digit encountered?
         if (ch >= '0' && ch <= '9')
         {
-            buf.push_back(ch);
+            buf.push_back(static_cast<CharType>(ch));
             NextCharacter();
             ch = PeekCharacter();
         }
@@ -506,7 +510,7 @@ bool JSON_Parser<CharType>::CompleteNumberLiteral(CharType first, Token &token)
                 return false;
 
             decimal = true;
-            buf.push_back(ch);
+            buf.push_back(static_cast<CharType>(ch));
 
             NextCharacter();
             ch = PeekCharacter();
@@ -515,7 +519,7 @@ bool JSON_Parser<CharType>::CompleteNumberLiteral(CharType first, Token &token)
             if (ch < '0' || ch > '9')
             return false;
 
-            buf.push_back(ch);
+            buf.push_back(static_cast<CharType>(ch));
             NextCharacter();
             ch = PeekCharacter();
         }
@@ -523,20 +527,20 @@ bool JSON_Parser<CharType>::CompleteNumberLiteral(CharType first, Token &token)
         // Exponent?
         else if (ch == 'E' || ch == 'e')
         {
-            buf.push_back(ch);
+            buf.push_back(static_cast<CharType>(ch));
             NextCharacter();
             ch = PeekCharacter();
 
             // Check for the exponent sign
             if (ch == '+')
             {
-                buf.push_back(ch);
+                buf.push_back(static_cast<CharType>(ch));
                 NextCharacter();
                 ch = PeekCharacter();
             }
             else if (ch == '-')
             {
-                buf.push_back(ch);
+                buf.push_back(static_cast<CharType>(ch));
                 NextCharacter();
                 ch = PeekCharacter();
             }
@@ -544,7 +548,7 @@ bool JSON_Parser<CharType>::CompleteNumberLiteral(CharType first, Token &token)
             // First number of the exponent
             if (ch >= '0' && ch <= '9')
             {
-                buf.push_back(ch);
+                buf.push_back(static_cast<CharType>(ch));
                 NextCharacter();
                 ch = PeekCharacter();
             }
@@ -553,7 +557,7 @@ bool JSON_Parser<CharType>::CompleteNumberLiteral(CharType first, Token &token)
             // The rest of the exponent
             while (ch >= '0' && ch <= '9')
             {
-                buf.push_back(ch);
+                buf.push_back(static_cast<CharType>(ch));
                 NextCharacter();
                 ch = PeekCharacter();
             }
@@ -584,9 +588,9 @@ bool JSON_Parser<CharType>::CompleteComment(Token &token)
 {
     // We already found a '/' character as the first of a token -- what kind of comment is it?
 
-    CharType ch = NextCharacter();
+    auto ch = NextCharacter();
 
-    if ( ch == this->m_eof || (ch != '/' && ch != '*') )
+    if ( ch == eof || (ch != '/' && ch != '*') )
         return false;
 
     if ( ch == '/' )
@@ -595,7 +599,7 @@ bool JSON_Parser<CharType>::CompleteComment(Token &token)
 
         ch = NextCharacter();
 
-        while ( ch != this->m_eof && ch != '\n')
+        while ( ch != eof && ch != '\n')
         {
             ch = NextCharacter();
         }
@@ -608,14 +612,14 @@ bool JSON_Parser<CharType>::CompleteComment(Token &token)
 
         while ( true )
         {
-            if ( ch == this->m_eof )
+            if ( ch == eof )
                 return false;
 
             if ( ch == '*' )
             {
-                CharType ch1 = PeekCharacter();
+                auto ch1 = PeekCharacter();
 
-                if ( ch1 == this->m_eof )
+                if ( ch1 == eof )
                     return false;
 
                 if ( ch1 == '/' )
@@ -644,9 +648,9 @@ bool JSON_StringParser<CharType>::CompleteComment(typename JSON_Parser<CharType>
     // efficient in copying data from the input to the token: do a memcpy() rather than
     // one character at a time.
 
-    CharType ch = JSON_StringParser<CharType>::NextCharacter();
+    auto ch = JSON_StringParser<CharType>::NextCharacter();
 
-    if ( ch == this->m_eof || (ch != '/' && ch != '*') )
+    if ( ch == eof || (ch != '/' && ch != '*') )
         return false;
 
     if ( ch == '/' )
@@ -655,7 +659,7 @@ bool JSON_StringParser<CharType>::CompleteComment(typename JSON_Parser<CharType>
 
         ch = JSON_StringParser<CharType>::NextCharacter();
 
-        while ( ch != this->m_eof && ch != '\n')
+        while ( ch != eof && ch != '\n')
         {
             ch = JSON_StringParser<CharType>::NextCharacter();
         }
@@ -668,14 +672,14 @@ bool JSON_StringParser<CharType>::CompleteComment(typename JSON_Parser<CharType>
 
         while ( true )
         {
-            if ( ch == this->m_eof )
+            if ( ch == eof )
                 return false;
 
             if ( ch == '*' )
             {
                 ch = JSON_StringParser<CharType>::PeekCharacter();
 
-                if ( ch == this->m_eof )
+                if ( ch == eof )
                     return false;
 
                 if ( ch == '/' )
@@ -711,7 +715,7 @@ inline bool JSON_Parser<CharType>::handle_unescape_char(Token &token)
 {
     // This function converts unescaped character pairs (e.g. "\t") into their ASCII or Unicode representations (e.g. tab sign)
     // Also it handles \u + 4 hexadecimal digits
-    CharType ch = NextCharacter();
+    auto ch = NextCharacter();
     switch (ch)
     {
         case '\"':
@@ -777,7 +781,7 @@ inline bool JSON_Parser<CharType>::handle_unescape_char(Token &token)
 template <typename CharType>
 bool JSON_Parser<CharType>::CompleteStringLiteral(Token &token)
 {
-    CharType ch = NextCharacter();
+    auto ch = NextCharacter();
     while ( ch != '"' )
     {
         if ( ch == '\\' )
@@ -790,10 +794,10 @@ bool JSON_Parser<CharType>::CompleteStringLiteral(Token &token)
         }
         else
         {
-            if (ch == this->m_eof)
+            if (ch == eof)
                 return false;
 
-            token.string_val.push_back(ch);
+            token.string_val.push_back(static_cast<CharType>(ch));
         }
         ch = NextCharacter();
     }
@@ -820,11 +824,11 @@ bool JSON_StringParser<CharType>::CompleteStringLiteral(typename JSON_Parser<Cha
     auto start = m_position;
     token.has_unescape_symbol = false;
 
-    CharType ch = JSON_StringParser<CharType>::NextCharacter();
+    auto ch = JSON_StringParser<CharType>::NextCharacter();
 
     while (ch != '"')
     {
-        if (ch == this->m_eof)
+        if (ch == eof)
             return false;
 
         if (ch == '\\')
@@ -860,7 +864,7 @@ bool JSON_StringParser<CharType>::finish_parsing_string_with_unescape_char(typen
     // This function handles parsing the string when an unescape character is encountered.
     // It is called once the part before the unescape char is copied to the token.string_val string
 
-    CharType ch;
+    int_type ch;
 
     if (!JSON_StringParser<CharType>::handle_unescape_char(token))
         return false;
@@ -874,7 +878,7 @@ bool JSON_StringParser<CharType>::finish_parsing_string_with_unescape_char(typen
         }
         else
         {
-            if (ch == this->m_eof)
+            if (ch == eof)
                 return false;
 
             token.string_val.push_back(ch);
@@ -890,11 +894,11 @@ template <typename CharType>
 void JSON_Parser<CharType>::GetNextToken(typename JSON_Parser<CharType>::Token& result)
 {
 try_again:
-    CharType ch = EatWhitespace();
+    auto ch = EatWhitespace();
 
     CreateToken(result, Token::TKN_EOF);
 
-    if (ch == this->m_eof) return;
+    if (ch == eof) return;
 
     switch (ch)
     {
@@ -976,7 +980,7 @@ try_again:
     case '7':
     case '8':
     case '9':
-        if (!CompleteNumberLiteral(ch, result))
+        if (!CompleteNumberLiteral(static_cast<CharType>(ch), result))
         {
             SetErrorCode(result, json_error::malformed_numeric_literal);
         }
