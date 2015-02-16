@@ -419,7 +419,24 @@ TEST_FIXTURE(uri_address, data_download_exception)
         }
     });
 
-    VERIFY_THROWS(client.request(msg).get().content_ready().get(), std::invalid_argument);
+    try
+    {
+        client.request(msg).get().content_ready().get();
+    }
+    catch (http_exception const &e)
+    {
+        printf("http_exception:%s\n", e.what());
+        VERIFY_IS_TRUE(false);
+    }
+    catch (std::invalid_argument const &)
+    {
+        printf("std::invalid_argument\n");
+    }
+    catch (std::exception const &e)
+    {
+        printf("std::exception:%s\n", e.what());
+    }
+    //VERIFY_THROWS(client.request(msg).get().content_ready().get(), std::invalid_argument);
 }
 
 }
