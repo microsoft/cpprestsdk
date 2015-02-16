@@ -884,7 +884,7 @@ bool JSON_StringParser<CharType>::finish_parsing_string_with_unescape_char(typen
             if (ch == eof<CharType>())
                 return false;
 
-            token.string_val.push_back(ch);
+            token.string_val.push_back(static_cast<CharType>(ch));
         }
     }
 
