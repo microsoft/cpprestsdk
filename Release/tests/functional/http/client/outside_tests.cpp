@@ -45,70 +45,111 @@ namespace tests { namespace functional { namespace http { namespace client {
 SUITE(outside_tests)
 {
 
+// helper function to check if failure is due to timeout.
+bool is_timeout(const std::string &msg)
+{
+    if (msg.find("The operation timed out") != std::string::npos)
+    {
+        return true;
+    }
+    return false;
+}
+
+template <typename Func>
+void handle_timeout(const Func &f)
+{
+    try
+    {
+        f();
+    }
+    catch (const http_exception &e)
+    {
+        if (is_timeout(e.what()))
+        {
+            // Since this test depends on an outside server sometimes it sporadically can fail due to timeouts
+            // especially on our build machines.
+            return;
+        }
+        throw;
+    }
+}
+
 TEST_FIXTURE(uri_address, outside_cnn_dot_com)
 {
-    http_client client(U("http://www.cnn.com"));
+    handle_timeout([]
+    {
+        http_client client(U("http://www.cnn.com"));
 
-    // CNN's main page doesn't use chunked transfer encoding.
-    http_response response = client.request(methods::GET).get();
-    VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
-    response.content_ready().wait();
+        // CNN's main page doesn't use chunked transfer encoding.
+        http_response response = client.request(methods::GET).get();
+        VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
+        response.content_ready().wait();
 
-    // CNN's other pages do use chunked transfer encoding.
-    response = client.request(methods::GET, U("US")).get();
-    VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
-    response.content_ready().wait();
+        // CNN's other pages do use chunked transfer encoding.
+        response = client.request(methods::GET, U("US")).get();
+        VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
+        response.content_ready().wait();
+    });
 }
 
 TEST_FIXTURE(uri_address, outside_google_dot_com)
 {
-    http_client client(U("http://www.google.com"));
+    handle_timeout([]
+    {
+        http_client client(U("http://www.google.com"));
 
-    // Google's main page.
-    http_response response = client.request(methods::GET).get();
-    VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
-    while(response.body().streambuf().in_avail() == 0);
+        // Google's main page.
+        http_response response = client.request(methods::GET).get();
+        VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
+        while (response.body().streambuf().in_avail() == 0);
 
 #ifdef _WIN32
-    // Google's maps page.
-    response = client.request(methods::GET, U("maps")).get();
-    VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
-    while(response.body().streambuf().in_avail() == 0);
+        // Google's maps page.
+        response = client.request(methods::GET, U("maps")).get();
+        VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
+        while (response.body().streambuf().in_avail() == 0);
 #else
-    // Linux won't handle 302 header automatically
-    response = client.request(methods::GET, U("maps")).get();
-    VERIFY_ARE_EQUAL(status_codes::Found, response.status_code());
+        // Linux won't handle 302 header automatically
+        response = client.request(methods::GET, U("maps")).get();
+        VERIFY_ARE_EQUAL(status_codes::Found, response.status_code());
 #endif
+    });
 }
 
 TEST_FIXTURE(uri_address, reading_google_stream)
 {
-    http_client simpleclient(U("http://www.google.com"));
-    utility::string_t path = m_uri.query();
-    http_response response = simpleclient.request(::http::methods::GET).get();
+    handle_timeout([&]
+    {
+        http_client simpleclient(U("http://www.google.com"));
+        utility::string_t path = m_uri.query();
+        http_response response = simpleclient.request(::http::methods::GET).get();
 
-    uint8_t chars[71];
-    memset(chars, 0, sizeof(chars));
+        uint8_t chars[71];
+        memset(chars, 0, sizeof(chars));
 
-    streams::rawptr_buffer<uint8_t> temp(chars, sizeof(chars));
+        streams::rawptr_buffer<uint8_t> temp(chars, sizeof(chars));
 
-    VERIFY_ARE_EQUAL(response.body().read(temp, 70).get(), 70);
-    VERIFY_ARE_EQUAL(strcmp((const char *)chars, "<!doctype html><html itemscope=\"\" itemtype=\"http://schema.org/WebPage\""), 0);
+        VERIFY_ARE_EQUAL(response.body().read(temp, 70).get(), 70);
+        VERIFY_ARE_EQUAL(strcmp((const char *) chars, "<!doctype html><html itemscope=\"\" itemtype=\"http://schema.org/WebPage\""), 0);
+    });
 }
 
 TEST_FIXTURE(uri_address, no_transfer_encoding_content_length)
 {
-    http_client client(U("http://ws.audioscrobbler.com/2.0/?method=artist.gettoptracks&artist=cher&api_key=6fcd59047568e89b1615975081258990&format=json"));
+    handle_timeout([]
+    {
+        http_client client(U("http://ws.audioscrobbler.com/2.0/?method=artist.gettoptracks&artist=cher&api_key=6fcd59047568e89b1615975081258990&format=json"));
 
-    client.request(methods::GET).then([](http_response response){
-        VERIFY_ARE_EQUAL(response.status_code(), status_codes::OK);
-        VERIFY_IS_FALSE(response.headers().has(header_names::content_length)
-            && response.headers().has(header_names::transfer_encoding));
-        return response.extract_string();
-    }).then([](string_t result){
-        // Verify that the body size isn't empty.
-        VERIFY_IS_TRUE(result.size() > 0);
-    }).wait();
+        client.request(methods::GET).then([](http_response response){
+            VERIFY_ARE_EQUAL(response.status_code(), status_codes::OK);
+            VERIFY_IS_FALSE(response.headers().has(header_names::content_length)
+                && response.headers().has(header_names::transfer_encoding));
+            return response.extract_string();
+        }).then([](string_t result){
+            // Verify that the body size isn't empty.
+            VERIFY_IS_TRUE(result.size() > 0);
+        }).wait();
+    });
 }
 
 // Note additional sites for testing can be found at:
@@ -117,23 +158,32 @@ TEST_FIXTURE(uri_address, no_transfer_encoding_content_length)
 // https://onlinessl.netlock.hu/#
 TEST(server_selfsigned_cert)
 {
-    http_client client(U("https://www.pcwebshop.co.uk/"));
-    auto requestTask = client.request(methods::GET);
-    VERIFY_THROWS(requestTask.get(), http_exception);
+    handle_timeout([]
+    {
+        http_client client(U("https://www.pcwebshop.co.uk/"));
+        auto requestTask = client.request(methods::GET);
+        VERIFY_THROWS(requestTask.get(), http_exception);
+    });
 }
 
 TEST(server_hostname_mismatch)
 {
-    http_client client(U("https://swordsoftruth.com/"));
-    auto requestTask = client.request(methods::GET);
-    VERIFY_THROWS(requestTask.get(), http_exception);
+    handle_timeout([]
+    {
+        http_client client(U("https://swordsoftruth.com/"));
+        auto requestTask = client.request(methods::GET);
+        VERIFY_THROWS(requestTask.get(), http_exception);
+    });
 }
 
 TEST(server_cert_expired)
 {
-    http_client client(U("https://tv.eurosport.com/"));
-    auto requestTask = client.request(methods::GET);
-    VERIFY_THROWS(requestTask.get(), http_exception);
+    handle_timeout([]
+    {
+        http_client client(U("https://tv.eurosport.com/"));
+        auto requestTask = client.request(methods::GET);
+        VERIFY_THROWS(requestTask.get(), http_exception);
+    });
 }
 
 #if !defined(__cplusplus_winrt)
@@ -142,12 +192,15 @@ TEST(ignore_server_cert_invalid,
      "Ignore:Apple", "229",
      "Ignore:Linux", "229")
 {
-    http_client_config config;
-    config.set_validate_certificates(false);
-    http_client client(U("https://www.pcwebshop.co.uk/"), config);
+    handle_timeout([]
+    {
+        http_client_config config;
+        config.set_validate_certificates(false);
+        http_client client(U("https://www.pcwebshop.co.uk/"), config);
 
-    auto request = client.request(methods::GET).get();
-    VERIFY_ARE_EQUAL(status_codes::OK, request.status_code());
+        auto request = client.request(methods::GET).get();
+        VERIFY_ARE_EQUAL(status_codes::OK, request.status_code());
+    });
 }
 #endif
 
