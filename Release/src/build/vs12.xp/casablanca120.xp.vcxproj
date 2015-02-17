@@ -50,14 +50,15 @@
       <AdditionalOptions>-Zm160 /bigobj %(AdditionalOptions)</AdditionalOptions>
       <RuntimeLibrary Condition="'$(Configuration)'=='Debug'">MultiThreadedDebugDLL</RuntimeLibrary>
       <RuntimeLibrary Condition="'$(Configuration)'=='Release'">MultiThreadedDLL</RuntimeLibrary>
+      <WholeProgramOptimization Condition="'$(Configuration)'=='Release'">true</WholeProgramOptimization>
     </ClCompile>
     <Link>
       <AdditionalDependencies>Winhttp.lib;crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <LinkTimeCodeGeneration Condition="'$(Configuration)'=='Release'">UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       
       <!-- We are statically linking against an OpenSSL lib which statically links against the CRT, avoid warning -->
       <IgnoreSpecificDefaultLibraries Condition="'$(Configuration)'=='Debug'">LIBCMTD</IgnoreSpecificDefaultLibraries>
       <IgnoreSpecificDefaultLibraries Condition="'$(Configuration)'=='Release'">LIBCMT</IgnoreSpecificDefaultLibraries>
-      
       <!-- The OpenSSL package doesn't include pdbs so suppress the warning, otherwise one is emitted per object file -->
       <!-- This is just complaining we don't have debug information for OpenSSL -->
       <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>

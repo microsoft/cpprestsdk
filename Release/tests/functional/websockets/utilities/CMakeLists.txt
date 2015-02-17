@@ -1,5 +1,9 @@
 include_directories(include)
 
+if(WIN32)
+  add_definitions(-DWEBSOCKETTESTUTILITY_EXPORTS)
+endif()
+
 set(SOURCES
   test_websocket_server.cpp
 )
