@@ -3,6 +3,12 @@ cmake_minimum_required(VERSION 2.6)
 
 enable_testing()
 
+# Required because our iOS toolchain file doesn't quite set the compiler path correctly
+# Modifying it would require user's patching or us getting approval to release it ourselves.
+# Both are not simple options.
+set(CLANG_C_COMPILER /usr/bin/clang)
+set(CLANG_CXX_COMPILER /usr/bin/clang++)
+
 set(TOOLCHAIN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/ios-cmake/toolchain/iOS.cmake")
 
 set(SIM_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/build.i386" CACHE INTERNAL "")
@@ -25,6 +31,8 @@ execute_process(WORKING_DIRECTORY ${SIM_BINARY_DIR}
     -DCMAKE_TOOLCHAIN_FILE=${TOOLCHAIN_FILE}
     -DIOS_PLATFORM=SIMULATOR
     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+    -DCMAKE_C_COMPILER=${CLANG_C_COMPILER}
+    -DCMAKE_CXX_COMPILER=${CLANG_CXX_COMPILER}
     "${SIM_SOURCE_DIR}"
     )
 
@@ -35,6 +43,8 @@ execute_process(WORKING_DIRECTORY ${SIM64_BINARY_DIR}
     -DCMAKE_TOOLCHAIN_FILE=${TOOLCHAIN_FILE}
     -DIOS_PLATFORM=SIMULATOR64
     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+    -DCMAKE_C_COMPILER=${CLANG_C_COMPILER}
+    -DCMAKE_CXX_COMPILER=${CLANG_CXX_COMPILER}
     "${SIM64_SOURCE_DIR}"
 )
 
@@ -45,6 +55,8 @@ execute_process(WORKING_DIRECTORY ${ARM_BINARY_DIR}
     -DCMAKE_TOOLCHAIN_FILE=${TOOLCHAIN_FILE}
     -DIOS_PLATFORM=OS
     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+    -DCMAKE_C_COMPILER=${CLANG_C_COMPILER}
+    -DCMAKE_CXX_COMPILER=${CLANG_CXX_COMPILER}
     "${ARM_SOURCE_DIR}"
     )
 

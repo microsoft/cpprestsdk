@@ -21,11 +21,11 @@ mkdir openssl
 mv OpenSSL-for-iPhone/include openssl
 mv OpenSSL-for-iPhone/lib openssl
 
-hg clone https://code.google.com/p/ios-cmake/
+git clone https://github.com/cristeab/ios-cmake.git
 mkdir build.ios
 pushd build.ios
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make
 popd
 echo "===="
-echo "The final library is available in 'build.ios/libcasablanca.a'"
+echo "The final library is available in 'build.ios/libcpprest.a'"
