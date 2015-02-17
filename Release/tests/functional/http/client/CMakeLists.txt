@@ -1,6 +1,7 @@
 include_directories(
   ../utilities/include
   ../utilities/testlistener/include
+  ${OPENSSL_INCLUDE_DIR}
 )
 
 set(SOURCES
