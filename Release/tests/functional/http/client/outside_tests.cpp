@@ -115,6 +115,22 @@ TEST_FIXTURE(uri_address, outside_google_dot_com)
 #endif
     });
 }
+    
+TEST_FIXTURE(uri_address, multiple_https_requests)
+{
+    handle_timeout([&]
+    {
+        http_client client(U("https://www.google.com"));
+    
+        http_response response;
+        for(int i = 0; i < 5; ++i)
+        {
+            response = client.request(methods::GET).get();
+            VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
+            response.content_ready().wait();
+        }
+    });
+}
 
 TEST_FIXTURE(uri_address, reading_google_stream)
 {

@@ -542,7 +542,8 @@ private:
 
     void write_request()
     {
-        if (m_connection->is_ssl())
+        // Only perform handshake if a TLS connection and not being reused.
+        if (m_connection->is_ssl() && !m_connection->is_reused())
         {
             const auto weakCtx = std::weak_ptr<asio_context>(shared_from_this());
             m_connection->async_handshake(boost::asio::ssl::stream_base::client,
