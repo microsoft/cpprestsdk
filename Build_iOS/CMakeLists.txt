@@ -3,12 +3,6 @@ cmake_minimum_required(VERSION 2.6)
 
 enable_testing()
 
-# Required because our iOS toolchain file doesn't quite set the compiler path correctly
-# Modifying it would require user's patching or us getting approval to release it ourselves.
-# Both are not simple options.
-set(CLANG_C_COMPILER /usr/bin/clang)
-set(CLANG_CXX_COMPILER /usr/bin/clang++)
-
 set(TOOLCHAIN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/ios-cmake/toolchain/iOS.cmake")
 
 set(SIM_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/build.i386" CACHE INTERNAL "")
