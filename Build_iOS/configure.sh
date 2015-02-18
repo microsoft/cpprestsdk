@@ -22,6 +22,9 @@ mv OpenSSL-for-iPhone/include openssl
 mv OpenSSL-for-iPhone/lib openssl
 
 git clone https://github.com/cristeab/ios-cmake.git
+pushd ios-cmake
+git apply ../fix_ios_cmake_compiler.patch
+popd
 mkdir build.ios
 pushd build.ios
 cmake .. -DCMAKE_BUILD_TYPE=Release
