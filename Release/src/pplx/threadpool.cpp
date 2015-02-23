@@ -61,7 +61,11 @@ threadpool& threadpool::shared_instance()
 #else
 
 // initialize the static shared threadpool
-threadpool threadpool::s_shared(40);
+threadpool& threadpool::shared_instance()
+{
+    static threadpool s_shared(40);
+    return s_shared;
+}
 
 #endif
 
