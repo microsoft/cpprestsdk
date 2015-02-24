@@ -25,6 +25,8 @@
 
 #include "stdafx.h"
 
+#include <locale_guard.h>
+
 using namespace utility;
 
 namespace tests { namespace functional { namespace utils_tests {
@@ -66,6 +68,30 @@ TEST(latin1_to_utf16)
         VERIFY_ARE_EQUAL((utf16char)str_latin1[i], str_utf16[i]);
     }
 }
+
+TEST(print_string_locale, "Ignore:Android", "Locale unsupported on Android")
+{
+    tests::common::utilities::locale_guard loc(std::locale("en-us"));
+
+    VERIFY_ARE_EQUAL(_XPLATSTR("1,000"), utility::conversions::print_string(1000));
+    VERIFY_ARE_EQUAL(_XPLATSTR("1000"), utility::conversions::print_string(1000, std::locale::classic()));
+}
+
+TEST(scan_string_locale, "Ignore:Android", "Locale unsupported on Android")
+{
+    VERIFY_ARE_EQUAL(_XPLATSTR("1000"), utility::conversions::scan_string<utility::string_t>(utility::string_t(_XPLATSTR("1000"))));
+    VERIFY_ARE_EQUAL(_XPLATSTR("1,000"), utility::conversions::scan_string<utility::string_t>(utility::string_t(_XPLATSTR("1,000"))));
+
+    VERIFY_ARE_EQUAL(_XPLATSTR("1000"), utility::conversions::scan_string<utility::string_t>(utility::string_t(_XPLATSTR("1000")), std::locale("en-us")));
+    VERIFY_ARE_EQUAL(_XPLATSTR("1,000"), utility::conversions::scan_string<utility::string_t>(utility::string_t(_XPLATSTR("1,000")), std::locale("en-us")));
+
+    {
+        tests::common::utilities::locale_guard loc(std::locale("en-us"));
+        VERIFY_ARE_EQUAL(_XPLATSTR("1000"), utility::conversions::scan_string<utility::string_t>(utility::string_t(_XPLATSTR("1000")), std::locale::classic()));
+        VERIFY_ARE_EQUAL(_XPLATSTR("1,000"), utility::conversions::scan_string<utility::string_t>(utility::string_t(_XPLATSTR("1,000")), std::locale::classic()));
+    }
+}
+
 }
     
 }}} //namespaces

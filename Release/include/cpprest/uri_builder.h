@@ -237,6 +237,7 @@ namespace web
         uri_builder &append_query(utility::string_t name, const T &value, bool do_encoding = true)
         {
             utility::ostringstream_t ss;
+            ss.imbue(std::locale::classic());
             ss << name << _XPLATSTR("=") << value;
             return append_query(ss.str(), do_encoding);
         }

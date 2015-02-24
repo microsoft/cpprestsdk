@@ -427,7 +427,7 @@ public:
         {
             // If the connection is new (unresolved and unconnected socket), then start async
             // call to resolve first, leading eventually to request write.
-            tcp::resolver::query query(host, utility::conversions::print_string(port));
+            tcp::resolver::query query(host, utility::conversions::print_string(port, std::locale::classic()));
             auto client = std::static_pointer_cast<asio_client>(m_http_client);
             client->m_resolver.async_resolve(query, boost::bind(&asio_context::handle_resolve, shared_from_this(), boost::asio::placeholders::error, boost::asio::placeholders::iterator));
         }
@@ -914,6 +914,7 @@ private:
             std::getline(response_stream, line);
 
             std::istringstream octetLine(std::move(line));
+            octetLine.imbue(std::locale::classic());
             int octets = 0;
             octetLine >> std::hex >> octets;
 

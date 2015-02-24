@@ -186,20 +186,39 @@ namespace conversions
     template <typename Source>
     utility::string_t print_string(const Source &val)
     {
+        return print_string(val, std::locale());
+    }
+
+    template <typename Source>
+    utility::string_t print_string(const Source &val, const std::locale &loc)
+    {
         utility::ostringstream_t oss;
+        oss.imbue(loc);
         oss << val;
         if (oss.bad())
+        {
             throw std::bad_cast();
+        }
         return oss.str();
     }
+
     template <typename Target>
     Target scan_string(const utility::string_t &str)
     {
+        return scan_string<Target>(str, std::locale());
+    }
+
+    template <typename Target>
+    Target scan_string(const utility::string_t &str, const std::locale &loc)
+    {
         Target t;
         utility::istringstream_t iss(str);
+        iss.imbue(loc);
         iss >> t;
         if (iss.bad())
+        {
             throw std::bad_cast();
+        }
         return t;
     }
 }

@@ -28,8 +28,6 @@
 namespace web { namespace details { namespace uri_parser
 {
 
-static std::locale g_clocale("C"); // use the C local to force the ASCII definitions of isalpha and friends
-
 bool validate(const utility::string_t &encoded_string)
 {
     const utility::char_t *scheme_begin = nullptr;
@@ -102,7 +100,7 @@ bool parse(const utility::string_t &encoded_string, uri_components &components)
 
             // convert scheme to lowercase
             std::transform(components.m_scheme.begin(), components.m_scheme.end(), components.m_scheme.begin(), [](utility::char_t c) {
-                return std::tolower(c, g_clocale);
+                return std::tolower(c, std::locale::classic());
             });
         }
         else
@@ -121,7 +119,7 @@ bool parse(const utility::string_t &encoded_string, uri_components &components)
 
             // convert host to lowercase
             std::transform(components.m_host.begin(), components.m_host.end(), components.m_host.begin(), [](utility::char_t c) {
-                return std::tolower(c, g_clocale);
+                return std::tolower(c, std::locale::classic());
             });
         }
         else
@@ -279,10 +277,7 @@ bool inner_parse(
                 //skip the colon
                 port_begin++;
 
-                utility::istringstream_t port_str(utility::string_t(port_begin, authority_end));
-                int port_num;
-                port_str >> port_num;
-                *port = port_num;
+                *port = utility::conversions::scan_string<int>(utility::string_t(port_begin, authority_end), std::locale::classic());
             }
             else
             {

@@ -87,6 +87,7 @@ namespace details
 static std::string build_error_msg(const std::error_code &ec, const std::string &location)
 {
     std::stringstream ss;
+    ss.imbue(std::locale::classic());
     ss << location
        << ": " << ec.value()
        << ": " << ec.message();

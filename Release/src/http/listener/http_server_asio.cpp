@@ -827,6 +827,7 @@ pplx::task<void> http_linux_server::stop()
 std::pair<std::string,std::string> canonical_parts(const http::uri& uri)
 {
     std::ostringstream endpoint;
+    endpoint.imbue(std::locale::classic());
     endpoint << uri::decode(uri.host()) << ":" << uri.port();
 
     auto path = uri::decode(uri.path());

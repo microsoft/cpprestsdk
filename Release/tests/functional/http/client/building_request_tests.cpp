@@ -29,6 +29,8 @@
 #include <WinError.h>
 #endif
 
+#include <locale_guard.h>
+
 using namespace web::http;
 using namespace web::http::client;
 
@@ -244,6 +246,35 @@ TEST_FIXTURE(uri_address, set_body_with_charset)
     VERIFY_THROWS(msg.set_body(
     		::utility::conversions::to_utf16string("datadatadata"), 
     		::utility::conversions::to_utf16string("text/plain;charset=us-ascii")), std::invalid_argument);
+}
+
+TEST_FIXTURE(uri_address, set_content_length_locale, "Ignore:Android", "Locale unsupported on Android")
+{
+    tests::common::utilities::locale_guard loc(std::locale("en-us"));
+
+    http_request req(methods::PUT);
+    req.headers().set_content_length(1000);
+    VERIFY_ARE_EQUAL(U("1000"), req.headers()[web::http::header_names::content_length]); // en-us would have 1,000
+}
+
+TEST_FIXTURE(uri_address, set_port_locale, "Ignore:Android", "Locale unsupported on Android")
+{
+    test_http_server::scoped_server scoped(m_uri);
+    http_client client(m_uri);
+
+    utility::string_t data(U("STRING data 1000"));
+    scoped.server()->next_request().then([&](test_request *p_request)
+    {
+        http_asserts::assert_test_request_equals(p_request, methods::PUT, U("/"), U("text/plain; charset=utf-8"), data);
+        p_request->reply(200);
+    });
+
+    {
+        tests::common::utilities::locale_guard loc(std::locale("en-us"));
+        http_request msg(methods::PUT);
+        msg.set_body(data);
+        http_asserts::assert_response_equals(client.request(msg).get(), status_codes::OK);
+    }
 }
 
 }

@@ -370,6 +370,7 @@ protected:
                 if (uri.port() > 0)
                 {
                     utility::ostringstream_t ss;
+                    ss.imbue(std::locale::classic());
                     ss << uri.host() << _XPLATSTR(":") << uri.port();
                     proxy_str = ss.str();
                 }

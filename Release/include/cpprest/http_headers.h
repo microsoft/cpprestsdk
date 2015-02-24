@@ -40,6 +40,7 @@ namespace web { namespace http {
 /// <param name="ref">The value to bind to.</param>
 /// <returns><c>true</c> if the binding succeeds, <c>false</c> otherwise.</returns>
 template<typename key_type, typename _t>
+CASABLANCA_DEPRECATED("This API is deprecated and will be removed in a future release, std::istringstream instead.")
 bool bind(const key_type &text, _t &ref) // const
 {
     utility::istringstream_t iss(text);
@@ -61,6 +62,7 @@ bool bind(const key_type &text, _t &ref) // const
 /// <param name="ref">The value to bind to.</param>
 /// <returns><c>true</c> if the binding succeeds, <c>false</c> otherwise.</returns>
 template <typename key_type>
+CASABLANCA_DEPRECATED("This API is deprecated and will be removed in a future release.")
 bool bind(const key_type &text, utility::string_t &ref) //const
 {
     ref = text;
@@ -175,7 +177,7 @@ public:
     }
 
     /// <summary>
-    /// Removes all elements from the hearders
+    /// Removes all elements from the hearers.
     /// </summary>
     void clear() { m_headers.clear(); }
 
@@ -227,10 +229,10 @@ public:
             // Check to see if doesn't have a value.
             if(iter->second.empty())
             {
-                http::bind(iter->second, value);
+                bind(iter->second, value);
                 return true;
             }
-            return http::bind(iter->second, value);
+            return bind(iter->second, value);
         }
         else
         {
@@ -239,7 +241,7 @@ public:
     }
 
     /// <summary>
-    /// Returns an iterator refering to the first header field.
+    /// Returns an iterator referring to the first header field.
     /// </summary>
     /// <returns>An iterator to the beginning of the HTTP headers</returns>
     iterator begin() { return m_headers.begin(); }
@@ -248,7 +250,7 @@ public:
     /// <summary>
     /// Returns an iterator referring to the past-the-end header field.
     /// </summary>
-            /// <returns>An iterator to the element past the end of the HTTP headers</returns>
+    /// <returns>An iterator to the element past the end of the HTTP headers</returns>
     iterator end() { return m_headers.end(); }
     const_iterator end() const { return m_headers.end(); }
 
@@ -301,6 +303,27 @@ public:
     _ASYNCRTIMP void set_date(const utility::datetime& date);
 
 private:
+
+    template<typename _t>
+    bool bind(const key_type &text, _t &ref) const
+    {
+        utility::istringstream_t iss(text);
+        iss.imbue(std::locale::classic());
+        iss >> ref;
+        if (iss.fail() || !iss.eof())
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    template <>
+    bool bind(const key_type &text, ::utility::string_t &ref) const
+    {
+        ref = text;
+        return true;
+    }
 
     // Headers are stored in a map with case insensitive key.
     std::map<utility::string_t, utility::string_t, _case_insensitive_cmp> m_headers;

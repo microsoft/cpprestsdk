@@ -136,6 +136,7 @@ public:
         m_all_connections_complete.set();
 
         std::istringstream hostport_in(hostport);
+        hostport_in.imbue(std::locale::classic());
 
         std::getline(hostport_in, m_host, ':');
         std::getline(hostport_in, m_port);
