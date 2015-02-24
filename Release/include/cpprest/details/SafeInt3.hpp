@@ -118,8 +118,8 @@ Version 3.0
 #define NEEDS_NULLPTR_DEFINED 1
 #endif
 #else
-// Let everything else trigger based on whether we have nullptr_t
-#if defined nullptr_t
+// Let everything else trigger based on whether we use c++11 or above
+#if __cplusplus >= 201103L
 #define NEEDS_NULLPTR_DEFINED 0
 #else
 #define NEEDS_NULLPTR_DEFINED 1
