@@ -184,12 +184,6 @@ namespace conversions
     _ASYNCRTIMP std::vector<unsigned char> __cdecl from_base64(const utility::string_t& str);
 
     template <typename Source>
-    utility::string_t print_string(const Source &val)
-    {
-        return print_string(val, std::locale());
-    }
-
-    template <typename Source>
     utility::string_t print_string(const Source &val, const std::locale &loc)
     {
         utility::ostringstream_t oss;
@@ -202,10 +196,10 @@ namespace conversions
         return oss.str();
     }
 
-    template <typename Target>
-    Target scan_string(const utility::string_t &str)
+    template <typename Source>
+    utility::string_t print_string(const Source &val)
     {
-        return scan_string<Target>(str, std::locale());
+        return print_string(val, std::locale());
     }
 
     template <typename Target>
@@ -220,6 +214,12 @@ namespace conversions
             throw std::bad_cast();
         }
         return t;
+    }
+
+    template <typename Target>
+    Target scan_string(const utility::string_t &str)
+    {
+        return scan_string<Target>(str, std::locale());
     }
 }
 

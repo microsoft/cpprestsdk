@@ -229,10 +229,10 @@ public:
             // Check to see if doesn't have a value.
             if(iter->second.empty())
             {
-                bind(iter->second, value);
+                bind_impl(iter->second, value);
                 return true;
             }
-            return bind(iter->second, value);
+            return bind_impl(iter->second, value);
         }
         else
         {
@@ -305,7 +305,7 @@ public:
 private:
 
     template<typename _t>
-    bool bind(const key_type &text, _t &ref) const
+    bool bind_impl(const key_type &text, _t &ref) const
     {
         utility::istringstream_t iss(text);
         iss.imbue(std::locale::classic());
@@ -319,7 +319,7 @@ private:
     }
 
     template <>
-    bool bind(const key_type &text, ::utility::string_t &ref) const
+    bool bind_impl(const key_type &text, ::utility::string_t &ref) const
     {
         ref = text;
         return true;
