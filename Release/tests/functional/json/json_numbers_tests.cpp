@@ -188,11 +188,12 @@ TEST(parsing_doubles)
 TEST(parsing_doubles_setlocale, "Ignore:Android", "Locale not supported on Android")
 {
     // JSON uses the C locale always and should therefore not be impacted by the process locale
-    #ifdef _WIN32
+#ifdef _WIN32
     std::string changedLocale("fr-FR");
 #else
     std::string changedLocale("fr_FR.utf8");
 #endif
+    setlocale(LC_ALL, changedLocale.c_str());
 
     test_double(1.91563, U("1.91563"));
     test_double(2.0e93, U("2.0e93"));

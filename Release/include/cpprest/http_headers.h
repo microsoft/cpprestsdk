@@ -177,7 +177,7 @@ public:
     }
 
     /// <summary>
-    /// Removes all elements from the hearers.
+    /// Removes all elements from the headers.
     /// </summary>
     void clear() { m_headers.clear(); }
 
@@ -250,7 +250,7 @@ public:
     /// <summary>
     /// Returns an iterator referring to the past-the-end header field.
     /// </summary>
-    /// <returns>An iterator to the element past the end of the HTTP headers</returns>
+    /// <returns>An iterator to the element past the end of the HTTP headers.</returns>
     iterator end() { return m_headers.end(); }
     const_iterator end() const { return m_headers.end(); }
 
