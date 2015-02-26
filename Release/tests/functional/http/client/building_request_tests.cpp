@@ -253,7 +253,7 @@ TEST_FIXTURE(uri_address, set_content_length_locale, "Ignore:Android", "Locale u
 #ifdef _WIN32
     std::string changedLocale("fr-FR");
 #else
-    std::string changedLocale("fr_FR.utf8");
+    std::string changedLocale("fr_FR.UTF-8");
 #endif
 
     tests::common::utilities::locale_guard loc(std::locale(changedLocale.c_str()));
@@ -279,7 +279,7 @@ TEST_FIXTURE(uri_address, set_port_locale, "Ignore:Android", "Locale unsupported
 #ifdef _WIN32
         std::string changedLocale("fr-FR");
 #else
-        std::string changedLocale("fr_FR.utf8");
+        std::string changedLocale("fr_FR.UTF-8");
 #endif
         tests::common::utilities::locale_guard loc(std::locale(changedLocale.c_str()));
         http_request msg(methods::PUT);
