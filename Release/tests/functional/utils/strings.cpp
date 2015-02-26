@@ -100,7 +100,7 @@ TEST(scan_string_locale, "Ignore:Android", "Locale unsupported on Android")
     VERIFY_ARE_EQUAL(_XPLATSTR("1,000"), utility::conversions::scan_string<utility::string_t>(utility::string_t(_XPLATSTR("1,000")), std::locale(changedLocale.c_str())));
 
     {
-        tests::common::utilities::locale_guard loc(std::locale("en-us"));
+        tests::common::utilities::locale_guard loc(std::locale(changedLocale.c_str()));
         VERIFY_ARE_EQUAL(_XPLATSTR("1000"), utility::conversions::scan_string<utility::string_t>(utility::string_t(_XPLATSTR("1000")), std::locale::classic()));
         VERIFY_ARE_EQUAL(_XPLATSTR("1,000"), utility::conversions::scan_string<utility::string_t>(utility::string_t(_XPLATSTR("1,000")), std::locale::classic()));
     }
