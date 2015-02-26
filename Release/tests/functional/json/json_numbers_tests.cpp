@@ -195,8 +195,8 @@ TEST(parsing_doubles_setlocale, "Ignore:Android", "Locale not supported on Andro
 #endif
     setlocale(LC_ALL, changedLocale.c_str());
 
-    test_double(1.91563, U("1.91563"));
-    test_double(2.0e93, U("2.0e93"));
+    test_double(1.91563);
+    test_double(2.0e93);
     setlocale(LC_ALL, "C");
 }
 

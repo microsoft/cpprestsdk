@@ -250,7 +250,13 @@ TEST_FIXTURE(uri_address, set_body_with_charset)
 
 TEST_FIXTURE(uri_address, set_content_length_locale, "Ignore:Android", "Locale unsupported on Android")
 {
-    tests::common::utilities::locale_guard loc(std::locale("en-us"));
+#ifdef _WIN32
+    std::string changedLocale("fr-FR");
+#else
+    std::string changedLocale("fr_FR.utf8");
+#endif
+
+    tests::common::utilities::locale_guard loc(std::locale(changedLocale.c_str()));
 
     http_request req(methods::PUT);
     req.headers().set_content_length(1000);
@@ -270,7 +276,12 @@ TEST_FIXTURE(uri_address, set_port_locale, "Ignore:Android", "Locale unsupported
     });
 
     {
-        tests::common::utilities::locale_guard loc(std::locale("en-us"));
+#ifdef _WIN32
+        std::string changedLocale("fr-FR");
+#else
+        std::string changedLocale("fr_FR.utf8");
+#endif
+        tests::common::utilities::locale_guard loc(std::locale(changedLocale.c_str()));
         http_request msg(methods::PUT);
         msg.set_body(data);
         http_asserts::assert_response_equals(client.request(msg).get(), status_codes::OK);
