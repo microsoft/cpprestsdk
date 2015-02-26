@@ -461,7 +461,7 @@ TEST(append_query_locale, "Ignore:Android", "Locale unsupported on Android")
 #ifdef _WIN32
     std::string changedLocale("fr-FR");
 #else
-    std::string changedLocale("fr_FR.utf8");
+    std::string changedLocale("fr_FR.UTF-8");
 #endif
 
     tests::common::utilities::locale_guard loc(std::locale(changedLocale.c_str()));

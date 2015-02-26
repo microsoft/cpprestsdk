@@ -783,6 +783,9 @@ private:
 
             if (!response_stream || http_version.substr(0, 5) != "HTTP/")
             {
+                printf("HTTP VERSION:%s\n", http_version.c_str());
+                printf("Status_code:%hu\n", status_code);
+                printf("Status message:%s\n", status_message.c_str());
                 report_error("Invalid HTTP status line", ec, httpclient_errorcode_context::readheader);
                 return;
             }

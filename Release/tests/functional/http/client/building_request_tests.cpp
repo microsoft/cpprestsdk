@@ -260,7 +260,7 @@ TEST_FIXTURE(uri_address, set_content_length_locale, "Ignore:Android", "Locale u
 
     http_request req(methods::PUT);
     req.headers().set_content_length(1000);
-    VERIFY_ARE_EQUAL(U("1000"), req.headers()[web::http::header_names::content_length]); // en-us would have 1,000
+    VERIFY_ARE_EQUAL(U("1000"), req.headers()[web::http::header_names::content_length]); // fr_RF would have 1 000
 }
 
 TEST_FIXTURE(uri_address, set_port_locale, "Ignore:Android", "Locale unsupported on Android")

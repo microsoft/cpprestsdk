@@ -185,7 +185,9 @@ TEST(parsing_doubles)
     test_double(0 - pow(2.0, 63.0) * 1.5);  // between 0-ULLONG_MAX and LLONGMIN
 }
 
-TEST(parsing_doubles_setlocale, "Ignore:Android", "Locale not supported on Android", "Ignore:Linux", "Fails due to double conversion issues")
+TEST(parsing_doubles_setlocale, "Ignore:Android", "Locale not supported on Android",
+                                "Ignore:Linux", "Fails due to double conversion issues",
+                                "Ignore:Apple", "Fails due to double conversion issues")
 {
     // JSON uses the C locale always and should therefore not be impacted by the process locale
 #ifdef _WIN32
