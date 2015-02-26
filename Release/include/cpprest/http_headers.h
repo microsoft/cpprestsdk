@@ -318,7 +318,6 @@ private:
         return true;
     }
 
-    template <>
     bool bind_impl(const key_type &text, ::utility::string_t &ref) const
     {
         ref = text;
