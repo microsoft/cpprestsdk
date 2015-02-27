@@ -252,6 +252,7 @@ void connection::handle_http_line(const boost::system::error_code& ec)
     {
         // read http status line
         std::istream request_stream(&m_request_buf);
+        request_stream.imbue(std::locale::classic());
         std::skipws(request_stream);
 
         std::string http_verb;
@@ -325,6 +326,7 @@ void connection::handle_http_line(const boost::system::error_code& ec)
 void connection::handle_headers()
 {
     std::istream request_stream(&m_request_buf);
+    request_stream.imbue(std::locale::classic());
     std::string header;
     while (std::getline(request_stream, header) && header != "\r")
     {
@@ -405,6 +407,7 @@ void connection::handle_chunked_header(const boost::system::error_code& ec)
     else
     {
         std::istream is(&m_request_buf);
+        is.imbue(std::locale::classic());
         int len;
         is >> std::hex >> len;
         m_request_buf.consume(CRLF.size());
@@ -589,6 +592,7 @@ void connection::async_process_response(http_response response)
 {
     m_response_buf.consume(m_response_buf.size()); // clear the buffer
     std::ostream os(&m_response_buf);
+    os.imbue(std::locale::classic());
 
     os << "HTTP/1.1 " << response.status_code() << " "
         << response.reason_phrase()

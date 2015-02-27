@@ -380,6 +380,7 @@ public:
 
         const auto &host = base_uri.host();
         std::ostream request_stream(&m_body_buf);
+        request_stream.imbue(std::locale::classic());
 
         request_stream << method << " " << encoded_resource << " " << "HTTP/1.1" << CRLF << "Host: " << host;
 
@@ -768,6 +769,7 @@ private:
             m_timer.reset();
 
             std::istream response_stream(&m_body_buf);
+            response_stream.imbue(std::locale::classic());
             std::string http_version;
             response_stream >> http_version;
             status_code status_code;
@@ -783,9 +785,6 @@ private:
 
             if (!response_stream || http_version.substr(0, 5) != "HTTP/")
             {
-                printf("HTTP VERSION:%s\n", http_version.c_str());
-                printf("Status_code:%hu\n", status_code);
-                printf("Status message:%s\n", status_message.c_str());
                 report_error("Invalid HTTP status line", ec, httpclient_errorcode_context::readheader);
                 return;
             }
@@ -826,6 +825,7 @@ private:
     {
         auto needChunked = false;
         std::istream response_stream(&m_body_buf);
+        response_stream.imbue(std::locale::classic());
         std::string header;
         while (std::getline(response_stream, header) && header != "\r")
         {
@@ -913,6 +913,7 @@ private:
             m_timer.reset();
 
             std::istream response_stream(&m_body_buf);
+            response_stream.imbue(std::locale::classic());
             std::string line;
             std::getline(response_stream, line);
 
