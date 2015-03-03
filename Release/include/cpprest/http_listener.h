@@ -250,7 +250,7 @@ public:
     /// Add a general handler to support all requests.
     /// </summary>
     /// <param name="handler">Function object to be called for all requests.</param>
-    void support(std::function<void(http_request)> handler)
+    void support(const std::function<void(http_request)> &handler)
     {
         m_impl->m_all_requests = handler;
     }
@@ -260,7 +260,7 @@ public:
     /// </summary>
     /// <param name="method">An HTTP method.</param>
     /// <param name="handler">Function object to be called for all requests for the given HTTP method.</param>
-    void support(const http::method &method, std::function<void(http_request)> handler)
+    void support(const http::method &method, const std::function<void(http_request)> &handler)
     {
         m_impl->m_supported_methods[method] = handler;
     }
