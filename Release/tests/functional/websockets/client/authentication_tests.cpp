@@ -91,7 +91,7 @@ bool is_timeout(const std::string &msg)
 {
     if (msg.find("set_fail_handler") != std::string::npos)
     {
-        if (msg.find("TLS handshake timed out") != std::string::npos || msg.find("Timer Expired") != std::string::npos)
+        if (msg.find("handshake timed out") != std::string::npos || msg.find("Timer Expired") != std::string::npos)
         {
             return true;
         }
