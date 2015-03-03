@@ -232,59 +232,62 @@ TEST_FIXTURE(uri_address, outside_ssl_json)
     // Send request
     web::http::client::http_client playlistClient(playlistUri.to_uri());
 
-    // Retry up to 4 times.
-    for (int i = 0; i < 4; ++i)
+    handle_timeout([]
     {
-        try
+        // Retry up to 4 times.
+        for (int i = 0; i < 4; ++i)
         {
-            playlistClient.request(methods::GET).then([=](http_response playlistResponse) -> pplx::task < json::value >
+            try
             {
-                return playlistResponse.extract_json();
-            }).then([=](json::value v)
-            {
-                int count = 0;
-                auto& obj = v.as_object();
-
-                VERIFY_ARE_NOT_EQUAL(obj.find(U("pageInfo")), obj.end());
-                VERIFY_ARE_NOT_EQUAL(obj.find(U("items")), obj.end());
-
-                auto& items = obj[U("items")];
-
-                for (auto iter = items.as_array().cbegin(); iter != items.as_array().cend(); ++iter)
+                playlistClient.request(methods::GET).then([=](http_response playlistResponse) -> pplx::task < json::value >
                 {
-                    const auto& item = *iter;
-                    auto iSnippet = item.as_object().find(U("snippet"));
-                    if (iSnippet == item.as_object().end())
+                    return playlistResponse.extract_json();
+                }).then([=](json::value v)
+                {
+                    int count = 0;
+                    auto& obj = v.as_object();
+
+                    VERIFY_ARE_NOT_EQUAL(obj.find(U("pageInfo")), obj.end());
+                    VERIFY_ARE_NOT_EQUAL(obj.find(U("items")), obj.end());
+
+                    auto& items = obj[U("items")];
+
+                    for (auto iter = items.as_array().cbegin(); iter != items.as_array().cend(); ++iter)
                     {
-                        throw std::runtime_error("snippet key not found");
+                        const auto& item = *iter;
+                        auto iSnippet = item.as_object().find(U("snippet"));
+                        if (iSnippet == item.as_object().end())
+                        {
+                            throw std::runtime_error("snippet key not found");
+                        }
+                        auto iTitle = iSnippet->second.as_object().find(U("title"));
+                        if (iTitle == iSnippet->second.as_object().end())
+                        {
+                            throw std::runtime_error("title key not found");
+                        }
+                        auto name = iTitle->second.serialize();
+                        count++;
                     }
-                    auto iTitle = iSnippet->second.as_object().find(U("title"));
-                    if (iTitle == iSnippet->second.as_object().end())
-                    {
-                        throw std::runtime_error("title key not found");
-                    }
-                    auto name = iTitle->second.serialize();
-                    count++;
-                }
-                VERIFY_ARE_EQUAL(3, count); // Update this accordingly, if the number of items changes
-            }).wait();
-            break;
-        }
-        catch (web::http::http_exception const& e)
-        {
-#if defined(_MSC_VER) && !defined(__cplusplus_winrt)
-            if (e.error_code().value() != API_QUERY_DATA_AVAILABLE || i == 3)
-            {
-                // If we didn't get a "connection broken" error (or we are on the last retry), rethrow it
-                throw;
+                    VERIFY_ARE_EQUAL(3, count); // Update this accordingly, if the number of items changes
+                }).wait();
+                break;
             }
+            catch (web::http::http_exception const& e)
+            {
+#if defined(_MSC_VER) && !defined(__cplusplus_winrt)
+                if (e.error_code().value() != API_QUERY_DATA_AVAILABLE || i == 3)
+                {
+                    // If we didn't get a "connection broken" error (or we are on the last retry), rethrow it
+                    throw;
+                }
 #else
-            CASABLANCA_UNREFERENCED_PARAMETER(e);
-            throw;
+                CASABLANCA_UNREFERENCED_PARAMETER(e);
+                throw;
 #endif
-            os_utilities::sleep(1000);
+                os_utilities::sleep(1000);
+            }
         }
-    }
+    });
 }
 
 } // SUITE(outside_tests)
