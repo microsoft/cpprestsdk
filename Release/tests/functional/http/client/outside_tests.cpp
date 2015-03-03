@@ -49,7 +49,7 @@ SUITE(outside_tests)
 bool is_timeout(const std::string &msg)
 {
     if (msg.find("The operation timed out") != std::string::npos /* WinHTTP */ ||
-        msg.find("The operation was timed out") != std::string:npos /* IXmlHttpRequest2 */)
+        msg.find("The operation was timed out") != std::string::npos /* IXmlHttpRequest2 */)
     {
         return true;
     }
