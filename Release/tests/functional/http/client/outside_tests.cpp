@@ -233,7 +233,7 @@ TEST_FIXTURE(uri_address, outside_ssl_json)
     // Send request
     web::http::client::http_client playlistClient(playlistUri.to_uri());
 
-    handle_timeout([]
+    handle_timeout([&]
     {
         // Retry up to 4 times.
         for (int i = 0; i < 4; ++i)
