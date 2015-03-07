@@ -20,12 +20,12 @@
   <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|120'">
       <ProjectFile Include="VS12.winrt\websocketsclient120_test.winrt.vcxproj" />
   </ItemGroup>
-
-  <ItemGroup Condition="'$(DevToolsVersion)'=='140'">
-      <ProjectFile Include="vs14\websocketsclient140_test.vcxproj" />
-    <ProjectFile Include="vs14.android\websocketsclient140_test.android.vcxproj" Condition="'$(Platform)'!='x64'" />
-  </ItemGroup>
 -->
+  <ItemGroup Condition="'$(DevToolsVersion)'=='140'">
+    <ProjectFile Include="vs14\websocketsclient140_test.vcxproj" />
+    <!-- <ProjectFile Include="vs14.android\websocketsclient140_test.android.vcxproj" Condition="'$(Platform)'!='x64'" /> -->
+  </ItemGroup>
+
 
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
 

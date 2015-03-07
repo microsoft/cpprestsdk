@@ -26,8 +26,8 @@
 #include "stdafx.h"
 #include "cpprest/details/x509_cert_utilities.h"
 
-// Include on everything except VS2015 and Windows Desktop ARM, unless explicitly excluded.
-#if !defined(_MSC_VER) || ((_MSC_VER < 1900) && (defined(__cplusplus_winrt) || !defined(__cplusplus_winrt) && !defined(_M_ARM))) && !defined(CPPREST_EXCLUDE_WEBSOCKETS)
+// Include on everything except Windows Desktop ARM, unless explicitly excluded.
+#if !defined(_WIN32) || (defined(__cplusplus_winrt) || !defined(__cplusplus_winrt) && !defined(_M_ARM)) && !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 
 // Force websocketpp to use C++ std::error_code instead of Boost.
 #define _WEBSOCKETPP_CPP11_SYSTEM_ERROR_
@@ -54,20 +54,28 @@
 #endif
 #pragma GCC diagnostic pop
 #else /* __GNUC__ */
+#if defined(_WIN32)
 #pragma warning( push )
 #pragma warning( disable : 4100 4127 4512 4996 4701 4267 )
-#if defined(_MSC_VER) && (_MSC_VER >= 1800)
+#if _MSC_VER >= 1800
 #define _WEBSOCKETPP_CPP11_STL_
-#define _WEBSOCKETPP_INITIALIZER_LISTS_
-#define _WEBSOCKETPP_NOEXCEPT_TOKEN_
 #define _WEBSOCKETPP_CONSTEXPR_TOKEN_
+#if _MSC_VER < 1900
+#define _WEBSOCKETPP_NOEXCEPT_TOKEN_
+#endif
 #else
 #define _WEBSOCKETPP_NULLPTR_TOKEN_ 0
 #endif
+#endif
+
 #include <websocketpp/config/asio_client.hpp>
 #include <websocketpp/config/asio_no_tls_client.hpp>
 #include <websocketpp/client.hpp>
+
+#if defined(_WIN32)
 #pragma warning( pop )
+#endif
+
 #endif /* __GNUC__ */
 
 using websocketpp::lib::placeholders::_1;
