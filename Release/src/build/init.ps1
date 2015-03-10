@@ -17,9 +17,7 @@ function Copy-Natvis($DestFolder)
     }
 }
 
-$VS2012Folder = Join-Path -path $env:userprofile -childpath "Documents\Visual Studio 2012\Visualizers";
 $VS2013Folder = Join-Path -path $env:userprofile -childpath "Documents\Visual Studio 2013\Visualizers";
 $VS2015Folder = Join-Path -path $env:userprofile -childpath "Documents\Visual Studio 2015\Visualizers";
-Copy-Natvis $VS2012Folder;
 Copy-Natvis $VS2013Folder;
 Copy-Natvis $VS2015Folder;
