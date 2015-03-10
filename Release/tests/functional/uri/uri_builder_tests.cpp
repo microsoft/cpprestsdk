@@ -23,6 +23,8 @@
 
 #include "stdafx.h"
 
+#include <locale_guard.h>
+
 using namespace web;
 using namespace utility;
 
@@ -452,6 +454,24 @@ TEST(to_string_invalid_uri)
 
     builder.set_scheme(U("htt%20p"));
     VERIFY_THROWS(builder.to_string(), uri_exception);
+}
+
+TEST(append_query_locale, "Ignore:Android", "Locale unsupported on Android")
+{
+#ifdef _WIN32
+    std::string changedLocale("fr-FR");
+#else
+    std::string changedLocale("fr_FR.UTF-8");
+#endif
+
+    tests::common::utilities::locale_guard loc(std::locale(changedLocale.c_str()));
+
+    uri_builder builder;
+    auto const &key = U("key1000");
+    builder.append_query(key, 1000);
+    ::utility::string_t expected(key);
+    expected.append(U("=1000"));
+    VERIFY_ARE_EQUAL(expected, builder.query());
 }
 
 } // SUITE(uri_builder_tests)

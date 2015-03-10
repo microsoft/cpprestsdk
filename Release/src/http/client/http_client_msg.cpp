@@ -73,6 +73,7 @@ void details::_http_request::set_request_uri(const uri& relative)
 utility::string_t details::_http_request::to_string() const
 {
     utility::ostringstream_t buffer;
+    buffer.imbue(std::locale::classic());
     buffer << m_method << _XPLATSTR(" ") << (this->m_uri.is_empty() ? _XPLATSTR("/") : this->m_uri.to_string()) << _XPLATSTR(" HTTP/1.1\r\n");
     buffer << http_msg_base::to_string();
     return buffer.str();
@@ -104,6 +105,7 @@ utility::string_t details::_http_response::to_string() const
     }
 
     utility::ostringstream_t buffer;
+    buffer.imbue(std::locale::classic());
     buffer << _XPLATSTR("HTTP/1.1 ") << m_status_code << _XPLATSTR(" ") << reason_phrase << _XPLATSTR("\r\n");
 
     buffer << http_msg_base::to_string();

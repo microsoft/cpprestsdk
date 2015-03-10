@@ -79,7 +79,7 @@ TEST_FIXTURE(uri_address, proxy_with_credentials)
             // This is ok.
             return;
         }
-        else if (e.error_code().value() == 9)
+        else if (e.error_code().value() == 9 || e.error_code().value() == 5)
         {
             // Timer expired case, since this is an outside test don't fail due to timing out.
             return;

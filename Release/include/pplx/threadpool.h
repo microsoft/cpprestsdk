@@ -72,14 +72,9 @@ public:
         for (size_t i = 0; i < n; i++)
             add_thread();
     }
-#if defined(__ANDROID__)
+
     static threadpool& shared_instance();
-#else
-    static threadpool& shared_instance()
-    {
-        return s_shared;
-    }
-#endif
+
     ~threadpool()
     {
         m_service.stop();
@@ -104,10 +99,6 @@ public:
 
 private:
     struct _cancel_thread { };
-
-#if !defined(__ANDROID__)
-    static threadpool s_shared;
-#endif
 
     void add_thread()
     {

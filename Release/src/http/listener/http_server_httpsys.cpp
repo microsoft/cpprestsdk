@@ -260,6 +260,7 @@ pplx::task<void> http_windows_server::register_listener(_In_ web::http::experime
     {
         HttpCloseUrlGroup(urlGroupId);
         utility::stringstream_t os;
+        os.imbue(std::locale::classic());
 
         if(errorCode == ERROR_ALREADY_EXISTS || errorCode == ERROR_SHARING_VIOLATION)
         {

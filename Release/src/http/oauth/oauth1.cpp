@@ -165,6 +165,7 @@ std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t& ke
 utility::string_t oauth1_config::_build_base_string_uri(const uri& u)
 {
     utility::ostringstream_t os;
+    os.imbue(std::locale::classic());
     os << u.scheme() << "://" << u.host();
     if (!u.is_port_default() && u.port() != 80 && u.port() != 443)
     {
@@ -183,6 +184,7 @@ utility::string_t oauth1_config::_build_normalized_parameters(web::http::uri u, 
     for (const auto& query : queries_map)
     {
         utility::ostringstream_t os;
+        os.imbue(std::locale::classic());
         os << query.first << "=" << query.second;
         queries.push_back(os.str());
     }
@@ -190,6 +192,7 @@ utility::string_t oauth1_config::_build_normalized_parameters(web::http::uri u, 
     for (const auto& query : parameters())
     {
         utility::ostringstream_t os;
+        os.imbue(std::locale::classic());
         os << query.first << "=" << query.second;
         queries.push_back(os.str());
     }
@@ -212,6 +215,7 @@ utility::string_t oauth1_config::_build_normalized_parameters(web::http::uri u, 
     // Sort parameters and build the string.
     sort(queries.begin(), queries.end());
     utility::ostringstream_t os;
+    os.imbue(std::locale::classic());
     for (auto i = queries.begin(); i != queries.end() - 1; ++i)
     {
         os << *i << U("&");
@@ -230,6 +234,7 @@ utility::string_t oauth1_config::_build_signature_base_string(http_request reque
 {
     uri u(request.absolute_uri());
     utility::ostringstream_t os;
+    os.imbue(std::locale::classic());
     os << request.method();
     os << "&" << _build_base_string_uri(u);
 
@@ -324,6 +329,7 @@ pplx::task<void> oauth1_config::_request_token(oauth1_state state, bool is_temp_
 void oauth1_config::_authenticate_request(http_request &request, oauth1_state state)
 {
     utility::ostringstream_t os;
+    os.imbue(std::locale::classic());
     os << "OAuth ";
     if (!realm().empty())
     {
@@ -373,6 +379,7 @@ pplx::task<void> oauth1_config::token_from_redirected_uri(const web::http::uri& 
     if (m_token.access_token() != token_param->second)
     {
         utility::ostringstream_t err;
+        err.imbue(std::locale::classic());
         err << U("redirected URI parameter 'oauth_token'='") << token_param->second
             << U("' does not match temporary token='") << m_token.access_token() << U("'.");
         return pplx::task_from_exception<void>(oauth1_exception(err.str().c_str()));

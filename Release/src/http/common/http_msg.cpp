@@ -80,7 +80,7 @@ utility::size64_t http_headers::content_length() const
 
 void http_headers::set_content_length(utility::size64_t length)
 {
-    m_headers[http::header_names::content_length] = utility::conversions::print_string(length);
+    m_headers[http::header_names::content_length] = utility::conversions::print_string(length, std::locale::classic());
 }
 
 static const utility::char_t * stream_was_set_explicitly = _XPLATSTR("A stream was set on the message and extraction is not possible");
@@ -599,10 +599,11 @@ static utility::string_t convert_body_to_string_t(const utility::string_t &conte
 static utility::string_t http_headers_body_to_string(const http_headers &headers, concurrency::streams::istream instream)
 {
     utility::ostringstream_t buffer;
+    buffer.imbue(std::locale::classic());
 
-    for (auto iter = headers.begin(); iter != headers.end(); ++iter)
+    for (const auto &header : headers)
     {
-        buffer << iter->first << _XPLATSTR(": ") << iter->second << CRLF;
+        buffer << header.first << _XPLATSTR(": ") << header.second << CRLF;
     }
     buffer << CRLF;
 

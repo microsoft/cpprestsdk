@@ -505,9 +505,7 @@ private:
 
     static utility::string_t _generate_timestamp()
     {
-        utility::ostringstream_t os;
-        os << utility::datetime::utc_timestamp();
-        return os.str();
+        return utility::conversions::print_string(utility::datetime::utc_timestamp(), std::locale::classic());
     }
 
     _ASYNCRTIMP static std::vector<unsigned char> __cdecl _hmac_sha1(const utility::string_t& key, const utility::string_t& data);

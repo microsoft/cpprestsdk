@@ -380,6 +380,7 @@ public:
 
         const auto &host = base_uri.host();
         std::ostream request_stream(&m_body_buf);
+        request_stream.imbue(std::locale::classic());
 
         request_stream << method << " " << encoded_resource << " " << "HTTP/1.1" << CRLF << "Host: " << host;
 
@@ -427,7 +428,7 @@ public:
         {
             // If the connection is new (unresolved and unconnected socket), then start async
             // call to resolve first, leading eventually to request write.
-            tcp::resolver::query query(host, utility::conversions::print_string(port));
+            tcp::resolver::query query(host, utility::conversions::print_string(port, std::locale::classic()));
             auto client = std::static_pointer_cast<asio_client>(m_http_client);
             client->m_resolver.async_resolve(query, boost::bind(&asio_context::handle_resolve, shared_from_this(), boost::asio::placeholders::error, boost::asio::placeholders::iterator));
         }
@@ -768,6 +769,7 @@ private:
             m_timer.reset();
 
             std::istream response_stream(&m_body_buf);
+            response_stream.imbue(std::locale::classic());
             std::string http_version;
             response_stream >> http_version;
             status_code status_code;
@@ -823,6 +825,7 @@ private:
     {
         auto needChunked = false;
         std::istream response_stream(&m_body_buf);
+        response_stream.imbue(std::locale::classic());
         std::string header;
         while (std::getline(response_stream, header) && header != "\r")
         {
@@ -910,10 +913,12 @@ private:
             m_timer.reset();
 
             std::istream response_stream(&m_body_buf);
+            response_stream.imbue(std::locale::classic());
             std::string line;
             std::getline(response_stream, line);
 
             std::istringstream octetLine(std::move(line));
+            octetLine.imbue(std::locale::classic());
             int octets = 0;
             octetLine >> std::hex >> octets;
 

@@ -589,6 +589,7 @@ utility::string_t datetime::to_string(date_format format) const
     }
 
     std::wostringstream outStream;
+    outStream.imbue(std::locale::classic());
 
     if (format == RFC_1123)
     {
@@ -1002,6 +1003,7 @@ utility::string_t __cdecl timespan::seconds_to_xml_duration(utility::seconds dur
     // The format is:
     // PdaysDThoursHminutesMsecondsS
     utility::ostringstream_t oss;
+    oss.imbue(std::locale::classic());
 
     oss << _XPLATSTR("P");
     if (numDays > 0)
@@ -1039,6 +1041,7 @@ utility::seconds __cdecl timespan::xml_duration_to_seconds(const utility::string
     int64_t numSecs = 0;
 
     utility::istringstream_t is(timespanString);
+    is.imbue(std::locale::classic());
     auto eof = std::char_traits<utility::char_t>::eof();
 
     std::basic_istream<utility::char_t>::int_type c;
