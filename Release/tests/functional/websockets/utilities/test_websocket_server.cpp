@@ -30,17 +30,17 @@
 #include "test_websocket_server.h"
 
 #ifdef _WIN32
-#pragma warning( disable : 4503 )
 #pragma warning( push )
-#pragma warning( disable : 4100 4127 4996 4512 4701 4267 )
-#if defined(_MSC_VER) && (_MSC_VER >= 1800)
+#pragma warning( disable : 4503 4100 4127 4996 4512 4701 4267 )
+#if _MSC_VER >= 1800
 #define _WEBSOCKETPP_CPP11_STL_
-#define _WEBSOCKETPP_INITIALIZER_LISTS_
-#define _WEBSOCKETPP_NOEXCEPT_TOKEN_
 #define _WEBSOCKETPP_CONSTEXPR_TOKEN_
+#if _MSC_VER < 1900
+#define _WEBSOCKETPP_NOEXCEPT_TOKEN_
+#endif
 #else
 #define _WEBSOCKETPP_NULLPTR_TOKEN_ 0
-#endif /* _MSC_VER >= 1800 */
+#endif
 #endif /* _WIN32 */
 
 #if defined(__APPLE__)
@@ -62,6 +62,7 @@
 #pragma pop_macro("htonll")
 #pragma pop_macro("ntohll")
 #endif
+
 #ifdef _WIN32
 #pragma warning( pop )
 #endif

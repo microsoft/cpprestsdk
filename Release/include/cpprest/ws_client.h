@@ -25,8 +25,8 @@
 #ifndef _CASA_WS_CLIENT_H
 #define _CASA_WS_CLIENT_H
 
-// Include on everything except VS2015 and Windows Desktop ARM, unless explicitly excluded.
-#if !defined(_MSC_VER) || ((_MSC_VER < 1900) && (defined(__cplusplus_winrt) || !defined(__cplusplus_winrt) && !defined(_M_ARM))) && !defined(CPPREST_EXCLUDE_WEBSOCKETS)
+// Include on everything except Windows Desktop ARM, unless explicitly excluded.
+#if !defined(_MSC_VER) || (defined(__cplusplus_winrt) || !defined(__cplusplus_winrt) && !defined(_M_ARM)) && !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 
 #include <memory>
 #include <limits>
