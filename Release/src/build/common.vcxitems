@@ -87,4 +87,9 @@
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\http_constants.dat" />
   </ItemGroup>
+  <ItemGroup>
+    <Xml Include="$(MSBuildThisFileDirectory)package_info.xml">
+      <SubType>Designer</SubType>
+    </Xml>
+  </ItemGroup>
 </Project>

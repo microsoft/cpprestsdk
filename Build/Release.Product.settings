@@ -43,8 +43,6 @@
       <SubSystem>Windows</SubSystem>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ProgramDatabaseFile>$(OutDir)$(TargetName).pdb</ProgramDatabaseFile>
-      <StripPrivateSymbols>$(OutDir)$(TargetName).pub.pdb</StripPrivateSymbols>
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">/SAFESEH%(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>

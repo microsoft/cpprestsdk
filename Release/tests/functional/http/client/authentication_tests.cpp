@@ -50,6 +50,36 @@ using namespace tests::functional::http::utilities;
 
 namespace tests { namespace functional { namespace http { namespace client {
 
+// helper function to check if failure is due to timeout.
+bool is_timeout(const std::string &msg)
+{
+    if (msg.find("The operation timed out") != std::string::npos /* WinHTTP */ ||
+        msg.find("The operation was timed out") != std::string::npos /* IXmlHttpRequest2 */)
+    {
+        return true;
+    }
+    return false;
+}
+
+template <typename Func>
+void handle_timeout(const Func &f)
+{
+    try
+    {
+        f();
+    }
+    catch (const http_exception &e)
+    {
+        if (is_timeout(e.what()))
+        {
+            // Since this test depends on an outside server sometimes it sporadically can fail due to timeouts
+            // especially on our build machines.
+            return;
+        }
+        throw;
+    }
+}
+
 SUITE(authentication_tests)
 {
 
@@ -601,16 +631,19 @@ TEST_FIXTURE(uri_address, set_user_options_exceptions)
 // Fix for 522831 AV after failed authentication attempt
 TEST_FIXTURE(uri_address, failed_authentication_attempt, "Ignore:Linux", "89", "Ignore:Apple", "89")
 {
-    http_client_config config;
-    credentials cred(U("user"),U("schmuser"));
-    config.set_credentials(cred);
-    http_client client(U("https://apis.live.net"),config);
-    http_response response = client.request(methods::GET, U("V5.0/me/skydrive/files")).get();
-    VERIFY_ARE_EQUAL(status_codes::Unauthorized, response.status_code());
-    auto v = response.extract_vector().get();
-    std::string s(v.begin(), v.end());
-    // The resulting data must be non-empty (an error about missing access token)
-    VERIFY_IS_FALSE(s.empty());
+    handle_timeout([]
+    {
+        http_client_config config;
+        credentials cred(U("user"), U("schmuser"));
+        config.set_credentials(cred);
+        http_client client(U("https://apis.live.net"), config);
+        http_response response = client.request(methods::GET, U("V5.0/me/skydrive/files")).get();
+        VERIFY_ARE_EQUAL(status_codes::Unauthorized, response.status_code());
+        auto v = response.extract_vector().get();
+        std::string s(v.begin(), v.end());
+        // The resulting data must be non-empty (an error about missing access token)
+        VERIFY_IS_FALSE(s.empty());
+    });
 }
 
 #if !defined(_WIN32)
@@ -637,21 +670,24 @@ TEST_FIXTURE(uri_address, set_user_options_asio_http)
 
 TEST_FIXTURE(uri_address, set_user_options_asio_https)
 {
-    http_client_config config;
-    config.set_nativehandle_options([](native_handle handle)
+    handle_timeout([]
     {
-        boost::asio::ssl::stream<boost::asio::ip::tcp::socket &>* streamobj =
-            static_cast<boost::asio::ssl::stream<boost::asio::ip::tcp::socket &>* >(handle);
-        const auto &tcpLayer = streamobj->lowest_layer();
-        VERIFY_ARE_EQUAL(false, tcpLayer.is_open());
-    });
+        http_client_config config;
+        config.set_nativehandle_options([](native_handle handle)
+        {
+            boost::asio::ssl::stream<boost::asio::ip::tcp::socket &>* streamobj =
+                static_cast<boost::asio::ssl::stream<boost::asio::ip::tcp::socket &>*>(handle);
+            const auto &tcpLayer = streamobj->lowest_layer();
+            VERIFY_ARE_EQUAL(false, tcpLayer.is_open());
+        });
 
-    http_client client(U("https://apis.live.net"),config);
-    http_response response = client.request(methods::GET, U("V5.0/me/skydrive/files")).get();
-    VERIFY_ARE_EQUAL(status_codes::Unauthorized, response.status_code());
-    auto v = response.extract_vector().get();
-    // The resulting data must be non-empty (an error about missing access token)
-    VERIFY_IS_FALSE(v.empty());
+        http_client client(U("https://apis.live.net"), config);
+        http_response response = client.request(methods::GET, U("V5.0/me/skydrive/files")).get();
+        VERIFY_ARE_EQUAL(status_codes::Unauthorized, response.status_code());
+        auto v = response.extract_vector().get();
+        // The resulting data must be non-empty (an error about missing access token)
+        VERIFY_IS_FALSE(v.empty());
+    });
 }
 
 #endif

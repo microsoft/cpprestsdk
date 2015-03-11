@@ -212,4 +212,7 @@
       <Filter>Header Files\cpprest\details</Filter>
     </None>
   </ItemGroup>
+  <ItemGroup>
+    <Xml Include="$(MSBuildThisFileDirectory)package_info.xml" />
+  </ItemGroup>
 </Project>
