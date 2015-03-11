@@ -25,11 +25,11 @@
   <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(PackagesRoot)\boost.1.57.0.0\build\native\boost.targets" Condition="Exists('$(PackagesRoot)\boost.1.57.0.0\build\native\boost.targets')" />
-    <Import Project="$(PackagesRoot)\boost_system-vc140.1.57.0-vc140ctp60\build\native\boost_system-vc140.targets" Condition="Exists('$(PackagesRoot)\boost_system-vc140.1.57.0-vc140ctp60\build\native\boost_system-vc140.targets')" />
+    <Import Project="$(PackagesRoot)\boost_system-vc140.1.57.0-vc140ctp61\build\native\boost_system-vc140.targets" Condition="Exists('$(PackagesRoot)\boost_system-vc140.1.57.0-vc140ctp60\build\native\boost_system-vc140.targets')" />
     <Import Project="$(PackagesRoot)\zlib.v140.win32.msvcp.static.md.1.2.8-vc140ctp6\build\native\zlib.v140.win32.msvcp.static.md.targets" Condition="Exists('$(PackagesRoot)\zlib.v140.win32.msvcp.static.md.1.2.8-vc140ctp6\build\native\zlib.v140.win32.msvcp.static.md.targets')" />
     <Import Project="$(PackagesRoot)\openssl.v140.win32.msvcp.static.md.1.0.1-vc140ctp6\build\native\openssl.v140.win32.msvcp.static.md.targets" Condition="Exists('$(PackagesRoot)\openssl.v140.win32.msvcp.static.md.1.0.1-vc140ctp6\build\native\openssl.v140.win32.msvcp.static.md.targets')" />
-    <Import Project="$(PackagesRoot)\boost_date_time-vc140.1.57.0-vc140ctp60\build\native\boost_date_time-vc140.targets" Condition="Exists('$(PackagesRoot)\boost_date_time-vc140.1.57.0-vc140ctp60\build\native\boost_date_time-vc140.targets')" />
-    <Import Project="$(PackagesRoot)\boost_regex-vc140.1.57.0-vc140ctp60\build\native\boost_regex-vc140.targets" Condition="Exists('$(PackagesRoot)\boost_regex-vc140.1.57.0-vc140ctp60\build\native\boost_regex-vc140.targets')" />
+    <Import Project="$(PackagesRoot)\boost_date_time-vc140.1.57.0-vc140ctp61\build\native\boost_date_time-vc140.targets" Condition="Exists('$(PackagesRoot)\boost_date_time-vc140.1.57.0-vc140ctp61\build\native\boost_date_time-vc140.targets')" />
+    <Import Project="$(PackagesRoot)\boost_regex-vc140.1.57.0-vc140ctp61\build\native\boost_regex-vc140.targets" Condition="Exists('$(PackagesRoot)\boost_regex-vc140.1.57.0-vc140ctp61\build\native\boost_regex-vc140.targets')" />
   </ImportGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <DebugFileSuffix>d</DebugFileSuffix>

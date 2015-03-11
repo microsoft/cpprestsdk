@@ -2,7 +2,7 @@
 <Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\version.props" />
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{1014C621-BC2D-4813-B8C1-6D83AD6F9249}</ProjectGuid>
+    <ProjectGuid>{01A76234-E6E8-4332-9FE2-1E12C34621BE}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <SccProjectName>SAK</SccProjectName>
     <SccAuxPath>SAK</SccAuxPath>
@@ -59,7 +59,6 @@
     <Link>
       <AdditionalDependencies>Winhttp.lib;httpapi.lib;bcrypt.lib;crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration Condition="'$(Configuration)'=='Release'">UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
-      
       <!-- We are statically linking against an OpenSSL lib which statically links against the CRT, avoid warning -->
       <IgnoreSpecificDefaultLibraries Condition="'$(Configuration)'=='Debug'">LIBCMTD</IgnoreSpecificDefaultLibraries>
       <IgnoreSpecificDefaultLibraries Condition="'$(Configuration)'=='Release'">LIBCMT</IgnoreSpecificDefaultLibraries>
