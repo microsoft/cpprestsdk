@@ -13,7 +13,7 @@
     <description>The C++ REST SDK is a Microsoft project for cloud-based client-server communication in native code using a modern asynchronous C++ API design. This project aims to help C++ developers connect to and interact with services.</description>
     <releaseNotes>https://casablanca.codeplex.com/releases/view/146873</releaseNotes>
     <copyright>Copyright 2015</copyright>
-    <tags>cpprestsdk, Casablanca, REST, JSON, HTTP, URI, WebSockets</tags>
+    <tags>cpprestsdk Casablanca REST JSON HTTP URI WebSockets</tags>
   </metadata>
   <files>
     <file src="..\..\..\ThirdPartyNotices.txt" target="\license\ThirdPartyNotices.txt" />
