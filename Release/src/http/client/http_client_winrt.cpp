@@ -250,8 +250,11 @@ public:
         }
     }
 
-    virtual HRESULT STDMETHODCALLTYPE Write(const void *, _In_ ULONG, _Out_opt_ ULONG *)
+    virtual HRESULT STDMETHODCALLTYPE Write(_In_reads_bytes_(cb) const void *pv, _In_ ULONG cb, _Out_opt_ ULONG *pcbWritten)
     {
+        CASABLANCA_UNREFERENCED_PARAMETER(pv);
+        CASABLANCA_UNREFERENCED_PARAMETER(cb);
+        CASABLANCA_UNREFERENCED_PARAMETER(pcbWritten);
         return E_NOTIMPL;
     }
 
@@ -333,8 +336,11 @@ public:
         }
     }
 
-    virtual HRESULT STDMETHODCALLTYPE Read(void *, _In_ ULONG, _Out_ ULONG *)
+    virtual HRESULT STDMETHODCALLTYPE Read(_Out_writes_bytes_to_(cb, *pcbRead) void *pv, _In_ ULONG cb, _Out_ ULONG *pcbRead)
     {
+        CASABLANCA_UNREFERENCED_PARAMETER(pv);
+        CASABLANCA_UNREFERENCED_PARAMETER(cb);
+        CASABLANCA_UNREFERENCED_PARAMETER(pcbRead);
         return E_NOTIMPL;
     }
 
