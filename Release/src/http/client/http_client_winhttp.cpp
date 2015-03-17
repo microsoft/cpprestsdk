@@ -783,7 +783,7 @@ private:
     static void _multiple_segment_write_data(_In_ winhttp_request_context * p_request_context)
     {
         auto rbuf = p_request_context->_get_readbuffer();
-        SafeInt<utility::size64_t> safeCount = p_request_context->m_remaining_to_write;
+        msl::safeint3::SafeInt<utility::size64_t> safeCount = p_request_context->m_remaining_to_write;
         safeCount = safeCount.Min(p_request_context->m_http_client->client_config().chunksize());
 
         uint8_t*  block = nullptr;

@@ -133,8 +133,8 @@ namespace Concurrency { namespace streams {
             // seek beyond the current size.
             _ASSERTE(m_current_position <= m_size);
 
-            SafeSize readhead(m_current_position);
-            SafeSize writeend(m_size);
+            msl::safeint3::SafeInt<size_t> readhead(m_current_position);
+            msl::safeint3::SafeInt<size_t> writeend(m_size);
             return (size_t)(writeend - readhead);
         }
 
@@ -178,7 +178,7 @@ namespace Concurrency { namespace streams {
 
         virtual pplx::task<size_t> _putn(const _CharType *ptr, size_t count)
         {
-            SafeSize newSize = SafeSize(count) + m_current_position;
+            msl::safeint3::SafeInt<size_t> newSize = msl::safeint3::SafeInt<size_t>(count) + m_current_position;
             if ( newSize > m_size )
                 return pplx::task_from_exception<size_t>(std::make_exception_ptr(std::runtime_error("Writing past the end of the buffer")));
             return pplx::task_from_result<size_t>(this->write(ptr, count));
@@ -193,8 +193,8 @@ namespace Concurrency { namespace streams {
         {
             if (!this->can_write()) return nullptr;
 
-            SafeSize readhead(m_current_position);
-            SafeSize writeend(m_size);
+            msl::safeint3::SafeInt<size_t> readhead(m_current_position);
+            msl::safeint3::SafeInt<size_t> writeend(m_size);
             size_t space_left = (size_t)(writeend - readhead);
 
             if (space_left < count) return nullptr;
@@ -476,8 +476,8 @@ namespace Concurrency { namespace streams {
             if (!can_satisfy(count))
                 return 0;
 
-            SafeSize request_size(count);
-            SafeSize read_size = request_size.Min(in_avail());
+            msl::safeint3::SafeInt<size_t> request_size(count);
+            msl::safeint3::SafeInt<size_t> read_size = request_size.Min(in_avail());
 
             size_t newPos = m_current_position + read_size;
 
@@ -506,7 +506,7 @@ namespace Concurrency { namespace streams {
         {
             if (!this->can_write() || (count == 0)) return 0;
 
-            SafeSize newSize = SafeSize(count) + m_current_position;
+            msl::safeint3::SafeInt<size_t> newSize = msl::safeint3::SafeInt<size_t>(count) +m_current_position;
 
             if ( newSize > m_size )
                 throw std::runtime_error("Writing past the end of the buffer");

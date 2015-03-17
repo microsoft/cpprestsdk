@@ -536,13 +536,11 @@ SAFEINT_DISABLE_SHIFT_ASSERT       - Set this option if you don't want to assert
 #define __int64 long long
 #endif
 
-#if defined VISUAL_STUDIO_SAFEINT_COMPAT
 namespace msl
 {
 
-namespace utilities
+namespace safeint3
 {
-#endif
 
 // catch these to handle errors
 // Currently implemented code values:
@@ -555,10 +553,8 @@ enum SafeIntError
     SafeIntDivideByZero
 };
 
-#if defined VISUAL_STUDIO_SAFEINT_COMPAT
-} // utilities
+} // safeint3
 } // msl
-#endif
 
 
 /*
@@ -637,13 +633,11 @@ enum SafeIntError
 #define SAFEINT_NOTHROW throw()
 #endif
 
-#if defined VISUAL_STUDIO_SAFEINT_COMPAT
 namespace msl
 {
 
-namespace utilities
+namespace safeint3
 {
-#endif
 
 // If you would like to use your own custom assert
 // Define SAFEINT_ASSERT
@@ -7050,8 +7044,6 @@ SafeInt< T, E > operator |( U lhs, SafeInt< T, E > rhs ) SAFEINT_NOTHROW
 #endif
 #endif //SAFEINT_HPP
 
-#if defined VISUAL_STUDIO_SAFEINT_COMPAT
 } // utilities
-} // msl
-#endif
+} // safeint3
 

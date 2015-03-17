@@ -314,7 +314,7 @@ _filestream_callback_fill_buffer<Func> *create_callback(_In_ _file_info *info, F
 
 size_t _fill_buffer_fsb(_In_ _file_info_impl *fInfo, _In_ _filestream_callback *callback, size_t count, size_t char_size)
 {
-    SafeInt<size_t> safeCount = count;
+    msl::safeint3::SafeInt<size_t> safeCount = count;
 
     if ( fInfo->m_buffer == nullptr || safeCount > fInfo->m_bufsize )
     {
@@ -547,7 +547,7 @@ size_t __cdecl _putn_fsb(_In_ Concurrency::streams::details::_file_info *info, _
     if (fInfo->m_wrpos != static_cast<size_t>(-1))
         fInfo->m_wrpos += count;
 
-    SafeInt<unsigned int> safeWriteSize = count;
+    msl::safeint3::SafeInt<unsigned int> safeWriteSize = count;
     safeWriteSize *= char_size;
 
 

@@ -620,7 +620,7 @@ _filestream_callback_fill_buffer<Func> *create_callback(_In_ _file_info *info, F
 
 size_t _fill_buffer_fsb(_In_ _file_info_impl *fInfo, _In_ _filestream_callback *callback, size_t count, size_t char_size)
 {
-    SafeSize safeCount = count;
+    msl::safeint3::SafeInt<size_t> safeCount = count;
 
     if ( fInfo->m_buffer == nullptr || safeCount > fInfo->m_bufsize )
     {
@@ -848,7 +848,7 @@ size_t __cdecl _putn_fsb(_In_ streams::details::_file_info *info, _In_ streams::
         return (size_t)-1;
     }
 
-    std::shared_ptr<uint8_t> buf(new uint8_t[SafeSize(count*char_size)]);
+    std::shared_ptr<uint8_t> buf(new uint8_t[msl::safeint3::SafeInt<size_t>(count*char_size)]);
     memcpy(buf.get(), ptr, count*char_size);
 
     // To preserve the async write order, we have to move the write head before read.

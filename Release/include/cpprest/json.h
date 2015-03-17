@@ -876,9 +876,9 @@ public:
         /// <returns>A reference to the value kept in the field.</returns>
         json::value& operator[](size_type index)
         {
-            SafeInt<size_type> nMinSize(index);
+            msl::safeint3::SafeInt<size_type> nMinSize(index);
             nMinSize += 1;
-            SafeInt<size_type> nlastSize(m_elements.size());
+            msl::safeint3::SafeInt<size_type> nlastSize(m_elements.size());
             if (nlastSize < nMinSize)
                 m_elements.resize(nMinSize);
 
