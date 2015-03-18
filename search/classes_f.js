@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['task',['task',['../singletonpplx_1_1task.html',1,'pplx']]],
+  ['task',['task',['../classpplx_1_1task.html',1,'pplx']]],
   ['task_3c_20void_20_3e',['task&lt; void &gt;',['../classpplx_1_1task_3_01void_01_4.html',1,'pplx']]],
   ['task_5fcanceled',['task_canceled',['../classpplx_1_1task__canceled.html',1,'pplx']]],
   ['task_5fcompletion_5fevent',['task_completion_event',['../classpplx_1_1task__completion__event.html',1,'pplx']]],

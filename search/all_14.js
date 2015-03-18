@@ -1,7 +1,7 @@
 var searchData=
 [
-  ['task',['task',['../singletonpplx_1_1task.html',1,'pplx']]],
-  ['task',['task',['../singletonpplx_1_1task.html#abcb3e615ddfab9be2d29c205a17a8748',1,'pplx::task::task()'],['../singletonpplx_1_1task.html#a66ddb8d05c86973606fc8d36ea8f9b45',1,'pplx::task::task(const task &amp;_Other)'],['../singletonpplx_1_1task.html#a8d5161438d7876ba21697984775e8ffd',1,'pplx::task::task(task &amp;&amp;_Other)'],['../classpplx_1_1task_3_01void_01_4.html#aa615ee1595e77b38129af56ed402cf75',1,'pplx::task&lt; void &gt;::task()']]],
+  ['task',['task',['../classpplx_1_1task.html',1,'pplx']]],
+  ['task',['task',['../classpplx_1_1task.html#ab81c948d72bc40f282af7b5d7301972d',1,'pplx::task::task()'],['../classpplx_1_1task.html#a1c8f80c5bf8eda45997b9588c5db7a09',1,'pplx::task::task(const task &amp;_Other)'],['../classpplx_1_1task.html#a6624fb4d71cd733ca3259ffd35038002',1,'pplx::task::task(task &amp;&amp;_Other)'],['../classpplx_1_1task_3_01void_01_4.html#aa615ee1595e77b38129af56ed402cf75',1,'pplx::task&lt; void &gt;::task()']]],
   ['task_3c_20void_20_3e',['task&lt; void &gt;',['../classpplx_1_1task_3_01void_01_4.html',1,'pplx']]],
   ['task_5fcanceled',['task_canceled',['../classpplx_1_1task__canceled.html#aea80475afaec9edce23ba9ec7bc5451a',1,'pplx::task_canceled::task_canceled(_In_z_ const char *_Message)'],['../classpplx_1_1task__canceled.html#a1eb0e20f2aa1c0fe8f8cc5b22a29fdaf',1,'pplx::task_canceled::task_canceled()']]],
   ['task_5fcanceled',['task_canceled',['../classpplx_1_1task__canceled.html',1,'pplx']]],
@@ -14,7 +14,7 @@ var searchData=
   ['task_5foptions',['task_options',['../classpplx_1_1task__options.html',1,'pplx']]],
   ['task_5fstatus',['task_status',['../namespacepplx.html#a44290e93feb32970ccf02e7bdb5672b6',1,'pplx']]],
   ['taskproc_5ft',['TaskProc_t',['../namespacepplx.html#ac172757ccc22c3e784c086cc3792863c',1,'pplx']]],
-  ['tell',['tell',['../singleton_concurrency_1_1streams_1_1basic__ostream.html#af5fcfcce6e03fa08a6749a3177f841b3',1,'Concurrency::streams::basic_ostream::tell()'],['../singleton_concurrency_1_1streams_1_1basic__istream.html#a0df29aadc7b7cdae589595c62980f6e4',1,'Concurrency::streams::basic_istream::tell()']]],
+  ['tell',['tell',['../class_concurrency_1_1streams_1_1basic__ostream.html#afa3de4be3b396b86298e93f29de71f8e',1,'Concurrency::streams::basic_ostream::tell()'],['../class_concurrency_1_1streams_1_1basic__istream.html#a2163e7adefa325241e491176d6a236a0',1,'Concurrency::streams::basic_istream::tell()']]],
   ['temp_5fendpoint',['temp_endpoint',['../classweb_1_1http_1_1oauth1_1_1experimental_1_1oauth1__config.html#a7d4f7f4343317e32f5ddd28c75c66935',1,'web::http::oauth1::experimental::oauth1_config']]],
   ['threadpool',['threadpool',['../classcrossplat_1_1threadpool.html',1,'crossplat']]],
   ['timeout',['timeout',['../classweb_1_1http_1_1client_1_1http__client__config.html#a9eb4ec1f4a8ef2a55723026f80e773b7',1,'web::http::client::http_client_config::timeout()'],['../classweb_1_1http_1_1experimental_1_1listener_1_1http__listener__config.html#a7667e7503d23ff5ae83bf9f223086fcd',1,'web::http::experimental::listener::http_listener_config::timeout()']]],
@@ -37,7 +37,7 @@ var searchData=
   ['token_5ffrom_5frefresh',['token_from_refresh',['../classweb_1_1http_1_1oauth2_1_1experimental_1_1oauth2__config.html#a35e7354b1d39e18a2fdb4323dcbed01d',1,'web::http::oauth2::experimental::oauth2_config']]],
   ['token_5ffrom_5fverifier',['token_from_verifier',['../classweb_1_1http_1_1oauth1_1_1experimental_1_1oauth1__config.html#ac85704e707f7cda51ba9f3320a4ff25e',1,'web::http::oauth1::experimental::oauth1_config']]],
   ['token_5ftype',['token_type',['../classweb_1_1http_1_1oauth2_1_1experimental_1_1oauth2__token.html#ab158bc411c995d29c017127673b5cd25',1,'web::http::oauth2::experimental::oauth2_token']]],
-  ['type',['type',['../classweb_1_1json_1_1value.html#a7ca3bf53302417086935ac022711a4ba',1,'web::json::value']]],
+  ['type',['type',['../classweb_1_1json_1_1value.html#a4d2f4d736fb058a428cb505f59e1d16d',1,'web::json::value']]],
   ['type_5fparser',['type_parser',['../class_concurrency_1_1streams_1_1type__parser.html',1,'Concurrency::streams']]],
   ['type_5fparser_3c_20chartype_2c_20bool_20_3e',['type_parser&lt; CharType, bool &gt;',['../class_concurrency_1_1streams_1_1type__parser_3_01_char_type_00_01bool_01_4.html',1,'Concurrency::streams']]],
   ['type_5fparser_3c_20chartype_2c_20char_20_3e',['type_parser&lt; CharType, char &gt;',['../class_concurrency_1_1streams_1_1type__parser_3_01_char_type_00_01char_01_4.html',1,'Concurrency::streams']]],
