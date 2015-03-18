@@ -15,6 +15,7 @@
     <copyright>Copyright 2015</copyright>
     <tags>cpprestsdk Casablanca REST JSON HTTP URI WebSockets</tags>
   </metadata>
+  <headers>..\..\include</headers>
   <files>
     <file src="..\..\..\ThirdPartyNotices.txt" target="\license\ThirdPartyNotices.txt" />
     
