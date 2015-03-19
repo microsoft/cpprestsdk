@@ -99,19 +99,14 @@ void CALLBACK IoCompletionCallback(
     DWORD dwNumberOfBytesTransfered,
     LPOVERLAPPED pOverlapped)
 {
-    if (pOverlapped != nullptr)
-    {
-        EXTENDED_OVERLAPPED *pExtOverlapped = (EXTENDED_OVERLAPPED *) pOverlapped;
+    EXTENDED_OVERLAPPED *pExtOverlapped = (EXTENDED_OVERLAPPED *) pOverlapped;
 
-        ////If dwErrorCode is 0xc0000011, it means STATUS_END_OF_FILE.
-        ////Map this error code to system error code:ERROR_HANDLE_EOF
-        if (dwErrorCode == 0xc0000011)
-            dwErrorCode = ERROR_HANDLE_EOF;
-
-        pExtOverlapped->func(dwErrorCode, dwNumberOfBytesTransfered, pOverlapped);
-
-        delete pOverlapped;
-    }
+    ////If dwErrorCode is 0xc0000011, it means STATUS_END_OF_FILE.
+    ////Map this error code to system error code:ERROR_HANDLE_EOF
+    if (dwErrorCode == 0xc0000011)
+        dwErrorCode = ERROR_HANDLE_EOF;
+    pExtOverlapped->func(dwErrorCode, dwNumberOfBytesTransfered, pOverlapped);
+    delete pOverlapped;
 }
 #else
 void CALLBACK IoCompletionCallback(
@@ -126,14 +121,9 @@ void CALLBACK IoCompletionCallback(
     CASABLANCA_UNREFERENCED_PARAMETER(ctxt);
     CASABLANCA_UNREFERENCED_PARAMETER(instance);
 
-    if (pOverlapped != nullptr)
-    {
-        EXTENDED_OVERLAPPED *pExtOverlapped = (EXTENDED_OVERLAPPED *) pOverlapped;
-
-        pExtOverlapped->func(result, (DWORD) numberOfBytesTransferred, (LPOVERLAPPED) pOverlapped);
-
-        delete pOverlapped;
-    }
+    EXTENDED_OVERLAPPED *pExtOverlapped = (EXTENDED_OVERLAPPED *) pOverlapped;
+    pExtOverlapped->func(result, (DWORD) numberOfBytesTransferred, (LPOVERLAPPED) pOverlapped);
+    delete pOverlapped;
 }
 #endif
 
