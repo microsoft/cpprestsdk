@@ -28,7 +28,6 @@
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 #include "stdafx.h"
-#include "cpprest/details/ioscheduler.h"
 #include "cpprest/details/fileio.h"
 
 using namespace web;
@@ -54,8 +53,7 @@ namespace Concurrency { namespace streams { namespace details {
 /// </summary>
 struct _file_info_impl : _file_info
 {
-    _file_info_impl(std::shared_ptr<io_scheduler> sched, HANDLE handle, _In_ void *io_ctxt, std::ios_base::openmode mode, size_t buffer_size) :
-        m_scheduler(sched),
+    _file_info_impl(HANDLE handle, _In_ void *io_ctxt, std::ios_base::openmode mode, size_t buffer_size) :
         m_io_context(io_ctxt),
         m_handle(handle),
         m_outstanding_writes(0),
@@ -74,18 +72,73 @@ struct _file_info_impl : _file_info
     void         *m_io_context;
 
     volatile long m_outstanding_writes;
-
-    /// <summary>
-    /// A pointer to the scheduler instance used.
-    /// </summary>
-    /// <remarks>Even though we're using a singleton scheduler instance, it may not always be
-    /// the case, so it seems a good idea to keep a pointer here.</remarks>
-    std::shared_ptr<io_scheduler> m_scheduler;
 };
 
 }}}
 
 using namespace streams::details;
+
+/// <summary>
+/// Our extended OVERLAPPED record.
+/// </summary>
+/// <remarks>
+/// The standard OVERLAPPED structure doesn't have any fields for application-specific
+/// data, so we must extend it.
+/// </remarks>
+struct EXTENDED_OVERLAPPED : OVERLAPPED
+{
+    EXTENDED_OVERLAPPED(LPOVERLAPPED_COMPLETION_ROUTINE func) : data(nullptr), func(func)
+    {
+        ZeroMemory(this, sizeof(OVERLAPPED));
+    }
+
+    void *data;
+    LPOVERLAPPED_COMPLETION_ROUTINE func;
+};
+
+#if _WIN32_WINNT < _WIN32_WINNT_VISTA
+void CALLBACK IoCompletionCallback(
+    DWORD dwErrorCode,
+    DWORD dwNumberOfBytesTransfered,
+    LPOVERLAPPED pOverlapped)
+{
+    if (pOverlapped != nullptr)
+    {
+        EXTENDED_OVERLAPPED *pExtOverlapped = (EXTENDED_OVERLAPPED *) pOverlapped;
+
+        ////If dwErrorCode is 0xc0000011, it means STATUS_END_OF_FILE.
+        ////Map this error code to system error code:ERROR_HANDLE_EOF
+        if (dwErrorCode == 0xc0000011)
+            dwErrorCode = ERROR_HANDLE_EOF;
+
+        pExtOverlapped->func(dwErrorCode, dwNumberOfBytesTransfered, pOverlapped);
+
+        delete pOverlapped;
+    }
+}
+#else
+void CALLBACK IoCompletionCallback(
+    PTP_CALLBACK_INSTANCE instance,
+    PVOID ctxt,
+    PVOID pOverlapped,
+    ULONG result,
+    ULONG_PTR numberOfBytesTransferred,
+    PTP_IO io)
+{
+    CASABLANCA_UNREFERENCED_PARAMETER(io);
+    CASABLANCA_UNREFERENCED_PARAMETER(ctxt);
+    CASABLANCA_UNREFERENCED_PARAMETER(instance);
+
+    if (pOverlapped != nullptr)
+    {
+        EXTENDED_OVERLAPPED *pExtOverlapped = (EXTENDED_OVERLAPPED *) pOverlapped;
+
+        pExtOverlapped->func(result, (DWORD) numberOfBytesTransferred, (LPOVERLAPPED) pOverlapped);
+
+        delete pOverlapped;
+    }
+}
+#endif
 
 /// <summary>
 /// Translate from C++ STL file open modes to Win32 flags.
@@ -139,20 +192,18 @@ void _get_create_flags(std::ios_base::openmode mode, int prot, DWORD &dwDesiredA
 /// <param name="fh">The Win32 file handle</param>
 /// <param name="callback">The callback interface pointer</param>
 /// <param name="mode">The C++ file open mode</param>
-/// <returns>The error code if there was an error in file creation.</returns>
-DWORD _finish_create(HANDLE fh, _In_ _filestream_callback *callback, std::ios_base::openmode mode, int prot)
+void _finish_create(HANDLE fh, _In_ _filestream_callback *callback, std::ios_base::openmode mode, int prot)
 {
-    DWORD error = ERROR_SUCCESS;
     void *io_ctxt = nullptr;
 
     if ( fh != INVALID_HANDLE_VALUE )
     {
-        std::shared_ptr<io_scheduler> sched = io_scheduler::get_scheduler();
-
-        io_ctxt = sched->Associate(fh);
-#if _WIN32_WINNT >= _WIN32_WINNT_VISTA
+#if _WIN32_WINNT < _WIN32_WINNT_VISTA
+        BindIoCompletionCallback(fh, IoCompletionCallback, 0);
+#else
+        io_ctxt = CreateThreadpoolIo(fh, IoCompletionCallback, nullptr, nullptr);
         SetFileCompletionNotificationModes(fh, FILE_SKIP_COMPLETION_PORT_ON_SUCCESS);
-#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA
+#endif
 
         // Buffer reads internally if and only if we're just reading (not also writing) and
         // if the file is opened exclusively. If either is false, we're better off just
@@ -160,7 +211,7 @@ DWORD _finish_create(HANDLE fh, _In_ _filestream_callback *callback, std::ios_ba
         // happen.
         bool buffer = (mode == std::ios_base::in) && (prot == _SH_DENYRW);
 
-        auto info = new _file_info_impl(sched, fh, io_ctxt, mode, buffer ? 512 : 0);
+        auto info = new _file_info_impl(fh, io_ctxt, mode, buffer ? 512 : 0);
 
         if ( mode & std::ios_base::app || mode & std::ios_base::ate )
         {
@@ -173,8 +224,6 @@ DWORD _finish_create(HANDLE fh, _In_ _filestream_callback *callback, std::ios_ba
     {
         callback->on_error(std::make_exception_ptr(utility::details::create_system_error(GetLastError())));
     }
-
-    return error;
 }
 
 /// <summary>
@@ -194,8 +243,6 @@ bool __cdecl _open_fsb_str(_In_ _filestream_callback *callback, const utility::c
     _ASSERTE(filename != nullptr);
 
     std::wstring name(filename);
-
-    std::shared_ptr<io_scheduler> sched = io_scheduler::get_scheduler();
 
     pplx::create_task([=] ()
         {
@@ -229,15 +276,12 @@ bool __cdecl _close_fsb_nolock(_In_ _file_info **info, _In_ streams::details::_f
 
     if ( fInfo->m_handle == INVALID_HANDLE_VALUE ) return false;
 
-    std::shared_ptr<io_scheduler> sched = io_scheduler::get_scheduler();
-
     // Since closing a file may involve waiting for outstanding writes which can take some time
     // if the file is on a network share, the close action is done in a separate task, as
     // CloseHandle doesn't have I/O completion events.
     pplx::create_task([=] ()
         {
             bool result = false;
-            DWORD error = S_OK;
 
             {
                 pplx::extensibility::scoped_recursive_lock_t lck(fInfo->m_lock);
@@ -245,13 +289,10 @@ bool __cdecl _close_fsb_nolock(_In_ _file_info **info, _In_ streams::details::_f
                 if ( fInfo->m_handle != INVALID_HANDLE_VALUE )
                 {
 #if _WIN32_WINNT >= _WIN32_WINNT_VISTA
-                    if ( fInfo->m_scheduler != nullptr )
-                        fInfo->m_scheduler->Disassociate(fInfo->m_handle, fInfo->m_io_context);
+                    CloseThreadpoolIo(static_cast<PTP_IO>(fInfo->m_io_context));
 #endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA
 
                     result = CloseHandle(fInfo->m_handle) != FALSE;
-                    if ( !result )
-                        error = GetLastError();
                 }
 
                 delete fInfo->m_buffer;
@@ -379,10 +420,7 @@ VOID CALLBACK _ReadFileCompletionRoutine(DWORD dwErrorCode, DWORD dwNumberOfByte
 /// <returns>0 if the write request is still outstanding, -1 if the request failed, otherwise the size of the data written</returns>
 size_t _write_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ streams::details::_filestream_callback *callback, std::shared_ptr<uint8_t> ptr, size_t count, size_t position)
 {
-    auto scheduler = io_scheduler::get_scheduler();
-
     auto pOverlapped = new EXTENDED_OVERLAPPED(_WriteFileCompletionRoutine<streams::details::_file_info_impl>);
-    pOverlapped->m_scheduler = scheduler.get();
 
     if ( position == (size_t)-1 )
     {
@@ -488,10 +526,7 @@ size_t _write_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ str
 /// <returns>0 if the read request is still outstanding, -1 if the request failed, otherwise the size of the data read into the buffer</returns>
 size_t _read_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ streams::details::_filestream_callback *callback, _Out_writes_ (count) void *ptr, _In_ size_t count, size_t offset)
 {
-    auto scheduler = io_scheduler::get_scheduler();
-
     auto pOverlapped = new EXTENDED_OVERLAPPED(_ReadFileCompletionRoutine<streams::details::_file_info_impl>);
-    pOverlapped->m_scheduler = scheduler.get();
     pOverlapped->Offset = static_cast<DWORD>(offset);
 #ifdef _WIN64
     pOverlapped->OffsetHigh = static_cast<DWORD>(offset >> 32);
