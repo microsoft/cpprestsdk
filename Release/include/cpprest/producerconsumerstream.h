@@ -391,7 +391,7 @@ namespace Concurrency { namespace streams {
                 if ( m_blocks.empty() || m_blocks.back()->wr_chars_left() < count )
                 {
                     msl::safeint3::SafeInt<size_t> alloc = m_alloc_size.Max(count);
-                    m_blocks.push_back(std::make_shared<_block>((size_t)alloc));
+                    m_blocks.push_back(std::make_shared<_block>(alloc));
                 }
 
                 // The block at the back is always the write head

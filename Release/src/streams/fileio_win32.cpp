@@ -84,12 +84,12 @@ using namespace streams::details;
 /// </remarks>
 struct EXTENDED_OVERLAPPED : OVERLAPPED
 {
-    EXTENDED_OVERLAPPED(LPOVERLAPPED_COMPLETION_ROUTINE func) : data(nullptr), func(func)
+    EXTENDED_OVERLAPPED(LPOVERLAPPED_COMPLETION_ROUTINE func, streams::details::_filestream_callback *cb) : callback(cb), func(func)
     {
         ZeroMemory(this, sizeof(OVERLAPPED));
     }
 
-    void *data;
+    streams::details::_filestream_callback *callback;
     LPOVERLAPPED_COMPLETION_ROUTINE func;
 };
 
@@ -99,7 +99,7 @@ void CALLBACK IoCompletionCallback(
     DWORD dwNumberOfBytesTransfered,
     LPOVERLAPPED pOverlapped)
 {
-    EXTENDED_OVERLAPPED *pExtOverlapped = (EXTENDED_OVERLAPPED *) pOverlapped;
+    EXTENDED_OVERLAPPED *pExtOverlapped = static_cast<EXTENDED_OVERLAPPED *>(pOverlapped);
 
     ////If dwErrorCode is 0xc0000011, it means STATUS_END_OF_FILE.
     ////Map this error code to system error code:ERROR_HANDLE_EOF
@@ -331,14 +331,13 @@ VOID CALLBACK _WriteFileCompletionRoutine(DWORD dwErrorCode, DWORD dwNumberOfByt
 {
     EXTENDED_OVERLAPPED* pOverlapped = static_cast<EXTENDED_OVERLAPPED *>(lpOverlapped);
 
-    auto callback = static_cast<streams::details::_filestream_callback *>(pOverlapped->data);
     if (dwErrorCode != ERROR_SUCCESS && dwErrorCode != ERROR_HANDLE_EOF)
     {
-        callback->on_error(std::make_exception_ptr(utility::details::create_system_error(dwErrorCode)));
+        pOverlapped->callback->on_error(std::make_exception_ptr(utility::details::create_system_error(dwErrorCode)));
     }
     else
     {
-        callback->on_completed(static_cast<size_t>(dwNumberOfBytesTransfered));
+        pOverlapped->callback->on_completed(static_cast<size_t>(dwNumberOfBytesTransfered));
     }
 }
 
@@ -353,15 +352,13 @@ VOID CALLBACK _ReadFileCompletionRoutine(DWORD dwErrorCode, DWORD dwNumberOfByte
 {
     EXTENDED_OVERLAPPED* pOverlapped = static_cast<EXTENDED_OVERLAPPED *>(lpOverlapped);
 
-    auto callback = reinterpret_cast<streams::details::_filestream_callback *>(pOverlapped->data);
-
     if (dwErrorCode != ERROR_SUCCESS && dwErrorCode != ERROR_HANDLE_EOF)
     {
-        callback->on_error(std::make_exception_ptr(utility::details::create_system_error(dwErrorCode)));
+        pOverlapped->callback->on_error(std::make_exception_ptr(utility::details::create_system_error(dwErrorCode)));
     }
     else
     {
-        callback->on_completed(static_cast<size_t>(dwNumberOfBytesTransfered));
+        pOverlapped->callback->on_completed(static_cast<size_t>(dwNumberOfBytesTransfered));
     }
 }
 
@@ -375,7 +372,7 @@ VOID CALLBACK _ReadFileCompletionRoutine(DWORD dwErrorCode, DWORD dwNumberOfByte
 /// <returns>0 if the write request is still outstanding, -1 if the request failed, otherwise the size of the data written</returns>
 size_t _write_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ streams::details::_filestream_callback *callback, const void *ptr, size_t count, size_t position)
 {
-    auto pOverlapped = new EXTENDED_OVERLAPPED(_WriteFileCompletionRoutine<streams::details::_file_info_impl>);
+    auto pOverlapped = new EXTENDED_OVERLAPPED(_WriteFileCompletionRoutine<streams::details::_file_info_impl>, callback);
 
     if (position == static_cast<size_t>(-1))
     {
@@ -391,8 +388,6 @@ size_t _write_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ str
         pOverlapped->OffsetHigh = 0;
 #endif
     }
-
-    pOverlapped->data = callback;
 
 #if _WIN32_WINNT >= _WIN32_WINNT_VISTA
     StartThreadpoolIo(static_cast<PTP_IO>(fInfo->m_io_context));
@@ -463,14 +458,13 @@ size_t _write_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ str
 /// <returns>0 if the read request is still outstanding, -1 if the request failed, otherwise the size of the data read into the buffer</returns>
 size_t _read_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ streams::details::_filestream_callback *callback, _Out_writes_ (count) void *ptr, _In_ size_t count, size_t offset)
 {
-    auto pOverlapped = new EXTENDED_OVERLAPPED(_ReadFileCompletionRoutine<streams::details::_file_info_impl>);
+    auto pOverlapped = new EXTENDED_OVERLAPPED(_ReadFileCompletionRoutine<streams::details::_file_info_impl>, callback);
     pOverlapped->Offset = static_cast<DWORD>(offset);
 #ifdef _WIN64
     pOverlapped->OffsetHigh = static_cast<DWORD>(offset >> 32);
 #else
     pOverlapped->OffsetHigh = 0;
 #endif
-    pOverlapped->data = callback;
 
 #if _WIN32_WINNT >= _WIN32_WINNT_VISTA
     StartThreadpoolIo((PTP_IO)fInfo->m_io_context);

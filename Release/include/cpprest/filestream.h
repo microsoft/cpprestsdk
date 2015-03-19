@@ -217,9 +217,10 @@ namespace details {
             return pplx::create_task(result_tce);
         }
 
-            // Use a separated function for working around Dev10's ICE
-            pplx::task<void> _close_read_impl()
+        pplx::task<void> _close_read()
         {
+            return m_readOps.enqueue_operation([this]
+            {
                 streambuf_state_manager<_CharType>::_close_read();
 
                 if (this->can_write())
@@ -234,11 +235,7 @@ namespace details {
 
                     return _close_file(fileInfo);
                 }
-        }
-
-        pplx::task<void> _close_read()
-        {
-            return m_readOps.enqueue_operation([this] { return _close_read_impl(); });
+            });
         }
 
         pplx::task<void> _close_write()
