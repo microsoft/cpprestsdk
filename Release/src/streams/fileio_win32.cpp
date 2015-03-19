@@ -345,17 +345,6 @@ struct _WriteRequest
 };
 
 /// <summary>
-/// Keeps the data associated with a read request, passed from the place where the operation
-/// is started to where it is completed.
-/// </summary>
-template<typename InfoType>
-struct _ReadRequest
-{
-    _ReadRequest(_In_ _filestream_callback *callback) : callback(callback) { }
-    streams::details::_filestream_callback *callback;
-};
-
-/// <summary>
 /// The completion routine used when a write request finishes.
 /// </summary>
 /// <remarks>
@@ -385,16 +374,18 @@ VOID CALLBACK _WriteFileCompletionRoutine(DWORD dwErrorCode, DWORD dwNumberOfByt
 template<typename InfoType>
 VOID CALLBACK _ReadFileCompletionRoutine(DWORD dwErrorCode, DWORD dwNumberOfBytesTransfered, LPOVERLAPPED lpOverlapped)
 {
-    EXTENDED_OVERLAPPED* pOverlapped = (EXTENDED_OVERLAPPED*)lpOverlapped;
+    EXTENDED_OVERLAPPED* pOverlapped = static_cast<EXTENDED_OVERLAPPED *>(lpOverlapped);
 
-    auto req = (_ReadRequest<InfoType> *)pOverlapped->data;
+    auto callback = reinterpret_cast<streams::details::_filestream_callback *>(pOverlapped->data);
 
-    if ( dwErrorCode != ERROR_SUCCESS && dwErrorCode != ERROR_HANDLE_EOF )
-        req->callback->on_error(std::make_exception_ptr(utility::details::create_system_error(dwErrorCode)));
+    if (dwErrorCode != ERROR_SUCCESS && dwErrorCode != ERROR_HANDLE_EOF)
+    {
+        callback->on_error(std::make_exception_ptr(utility::details::create_system_error(dwErrorCode)));
+    }
     else
-        req->callback->on_completed(static_cast<size_t>(dwNumberOfBytesTransfered));
-
-    delete req;
+    {
+        callback->on_completed(static_cast<size_t>(dwNumberOfBytesTransfered));
+    }
 }
 
 /// <summary>
@@ -516,21 +507,7 @@ size_t _read_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ stre
 #else
     pOverlapped->OffsetHigh = 0;
 #endif
-
-    _ReadRequest<streams::details::_file_info_impl>* req = nullptr;
-
-    try
-    {
-        req = new _ReadRequest<streams::details::_file_info_impl>(callback);
-    }
-    catch (const std::bad_alloc &ba)
-    {
-        delete pOverlapped;
-        callback->on_error(std::make_exception_ptr(ba));
-        return static_cast<size_t>(-1);
-    }
-
-    pOverlapped->data = req;
+    pOverlapped->data = callback;
 
 #if _WIN32_WINNT >= _WIN32_WINNT_VISTA
     StartThreadpoolIo((PTP_IO)fInfo->m_io_context);
@@ -561,7 +538,6 @@ size_t _read_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ stre
         result = GetOverlappedResult(fInfo->m_handle, pOverlapped, &read, FALSE) ? static_cast<size_t>(read) : static_cast<size_t>(-1);
     }
 
-    delete req;
     delete pOverlapped;
 
     if ( wrResult == FALSE && error == ERROR_HANDLE_EOF )
