@@ -351,20 +351,7 @@ struct _WriteRequest
 template<typename InfoType>
 struct _ReadRequest
 {
-    _ReadRequest(_In_ InfoType *fInfo,
-                 _In_ _filestream_callback *callback,
-                 _Out_writes_ (nNumberOfBytesToWrite) LPVOID lpBuffer,
-                 _In_ DWORD nNumberOfBytesToWrite) :
-        fInfo(fInfo),
-        lpBuffer(lpBuffer),
-        nNumberOfBytesToWrite(nNumberOfBytesToWrite),
-        callback(callback)
-    {
-    }
-
-    InfoType *fInfo;
-    LPVOID lpBuffer;
-    DWORD nNumberOfBytesToWrite;
+    _ReadRequest(_In_ _filestream_callback *callback) : callback(callback) { }
     streams::details::_filestream_callback *callback;
 };
 
@@ -534,7 +521,7 @@ size_t _read_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ stre
 
     try
     {
-        req = new _ReadRequest<streams::details::_file_info_impl>(fInfo, callback, ptr, static_cast<DWORD>(count));
+        req = new _ReadRequest<streams::details::_file_info_impl>(callback);
     }
     catch (const std::bad_alloc &ba)
     {
