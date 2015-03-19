@@ -321,30 +321,6 @@ bool __cdecl _close_fsb(_In_ _file_info **info, _In_ streams::details::_filestre
 }
 
 /// <summary>
-/// Keeps the data associated with a write request, passed from the place where the operation
-/// is started to where it is completed.
-/// </summary>
-template<typename InfoType>
-struct _WriteRequest
-{
-    _WriteRequest(_In_ InfoType *fInfo,
-                  _In_ _filestream_callback *callback,
-                  const std::shared_ptr<uint8_t> &buffer,
-                  DWORD nNumberOfBytesToWrite) :
-        fInfo(fInfo),
-        lpBuffer(buffer),
-        nNumberOfBytesToWrite(nNumberOfBytesToWrite),
-        callback(callback)
-    {
-    }
-
-    InfoType *fInfo;
-    std::shared_ptr<uint8_t> lpBuffer;
-    DWORD nNumberOfBytesToWrite;
-    streams::details::_filestream_callback *callback;
-};
-
-/// <summary>
 /// The completion routine used when a write request finishes.
 /// </summary>
 /// <remarks>
@@ -353,16 +329,17 @@ struct _WriteRequest
 template<typename InfoType>
 VOID CALLBACK _WriteFileCompletionRoutine(DWORD dwErrorCode, DWORD dwNumberOfBytesTransfered, LPOVERLAPPED lpOverlapped)
 {
-    EXTENDED_OVERLAPPED* pOverlapped = (EXTENDED_OVERLAPPED*)lpOverlapped;
+    EXTENDED_OVERLAPPED* pOverlapped = static_cast<EXTENDED_OVERLAPPED *>(lpOverlapped);
 
-    auto req = (_WriteRequest<InfoType> *)pOverlapped->data;
-
-    if ( dwErrorCode != ERROR_SUCCESS && dwErrorCode != ERROR_HANDLE_EOF )
-        req->callback->on_error(std::make_exception_ptr(utility::details::create_system_error(dwErrorCode)));
+    auto callback = static_cast<streams::details::_filestream_callback *>(pOverlapped->data);
+    if (dwErrorCode != ERROR_SUCCESS && dwErrorCode != ERROR_HANDLE_EOF)
+    {
+        callback->on_error(std::make_exception_ptr(utility::details::create_system_error(dwErrorCode)));
+    }
     else
-        req->callback->on_completed(static_cast<size_t>(dwNumberOfBytesTransfered));
-
-    delete req;
+    {
+        callback->on_completed(static_cast<size_t>(dwNumberOfBytesTransfered));
+    }
 }
 
 /// <summary>
@@ -396,7 +373,7 @@ VOID CALLBACK _ReadFileCompletionRoutine(DWORD dwErrorCode, DWORD dwNumberOfByte
 /// <param name="ptr">A pointer to the data to write</param>
 /// <param name="count">The size (in bytes) of the data</param>
 /// <returns>0 if the write request is still outstanding, -1 if the request failed, otherwise the size of the data written</returns>
-size_t _write_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ streams::details::_filestream_callback *callback, std::shared_ptr<uint8_t> ptr, size_t count, size_t position)
+size_t _write_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ streams::details::_filestream_callback *callback, const void *ptr, size_t count, size_t position)
 {
     auto pOverlapped = new EXTENDED_OVERLAPPED(_WriteFileCompletionRoutine<streams::details::_file_info_impl>);
 
@@ -415,24 +392,12 @@ size_t _write_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ str
 #endif
     }
 
-    _WriteRequest<streams::details::_file_info_impl>* req = nullptr;
-    try
-    {
-        req = new _WriteRequest<streams::details::_file_info_impl>(fInfo, callback, ptr, static_cast<DWORD>(count));
-    }
-    catch (const std::bad_alloc &ba)
-    {
-        delete pOverlapped;
-        callback->on_error(std::make_exception_ptr(ba));
-        return static_cast<size_t>(-1);
-    }
-
-    pOverlapped->data = req;
+    pOverlapped->data = callback;
 
 #if _WIN32_WINNT >= _WIN32_WINNT_VISTA
     StartThreadpoolIo(static_cast<PTP_IO>(fInfo->m_io_context));
 
-    BOOL wrResult = WriteFile(fInfo->m_handle, ptr.get(), static_cast<DWORD>(count), nullptr, pOverlapped);
+    BOOL wrResult = WriteFile(fInfo->m_handle, ptr, static_cast<DWORD>(count), nullptr, pOverlapped);
     DWORD error = GetLastError();
 
     // WriteFile will return false when a) the operation failed, or b) when the request is still
@@ -453,7 +418,6 @@ size_t _write_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ str
         result = GetOverlappedResult(fInfo->m_handle, pOverlapped, &written, FALSE) ? static_cast<size_t>(written) : static_cast<size_t>(-1);
     }
 
-    delete req;
     delete pOverlapped;
 
     if (result == static_cast<size_t>(-1))
@@ -461,7 +425,7 @@ size_t _write_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ str
 
     return result;
 #else
-    BOOL wrResult = WriteFile(fInfo->m_handle, ptr.get(), (DWORD)count, nullptr, pOverlapped);
+    BOOL wrResult = WriteFile(fInfo->m_handle, ptr, (DWORD)count, nullptr, pOverlapped);
     DWORD error = GetLastError();
 
     // 1. If WriteFile returned true, it must be because the operation completed immediately.
@@ -481,7 +445,6 @@ size_t _write_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ str
 
     // 3. If ReadFile returned false and GetLastError is not ERROR_IO_PENDING, we must call "callback->on_error()" and delete.
     //    The threadpools will not start the workerthread.
-    delete req;
     delete pOverlapped;
     callback->on_error(std::make_exception_ptr(utility::details::create_system_error(error)));
 
@@ -842,9 +805,6 @@ size_t __cdecl _putn_fsb(_In_ streams::details::_file_info *info, _In_ streams::
         return static_cast<size_t>(-1);
     }
 
-    std::shared_ptr<uint8_t> buf(new uint8_t[msl::safeint3::SafeInt<size_t>(count*char_size)]);
-    memcpy(buf.get(), ptr, count*char_size);
-
     // To preserve the async write order, we have to move the write head before read.
     auto lastPos = fInfo->m_wrpos;
     if (fInfo->m_wrpos != static_cast<size_t>(-1))
@@ -852,7 +812,7 @@ size_t __cdecl _putn_fsb(_In_ streams::details::_file_info *info, _In_ streams::
         fInfo->m_wrpos += count;
         lastPos *= char_size;
     }
-    return _write_file_async(fInfo, callback, buf, count*char_size, lastPos);
+    return _write_file_async(fInfo, callback, ptr, count*char_size, lastPos);
 }
 
 /// <summary>
