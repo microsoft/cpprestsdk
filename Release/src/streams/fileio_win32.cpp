@@ -56,7 +56,6 @@ struct _file_info_impl : _file_info
     _file_info_impl(HANDLE handle, _In_ void *io_ctxt, std::ios_base::openmode mode, size_t buffer_size) :
         m_io_context(io_ctxt),
         m_handle(handle),
-        m_outstanding_writes(0),
         _file_info(mode, buffer_size)
     {
     }
@@ -70,8 +69,6 @@ struct _file_info_impl : _file_info
     /// A Win32 I/O context, used by the thread pool to scheduler work.
     /// </summary>
     void         *m_io_context;
-
-    volatile long m_outstanding_writes;
 };
 
 }}}
@@ -454,8 +451,6 @@ size_t _write_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ str
 #if _WIN32_WINNT >= _WIN32_WINNT_VISTA
     StartThreadpoolIo((PTP_IO)fInfo->m_io_context);
 
-    _InterlockedIncrement(&fInfo->m_outstanding_writes);
-
     BOOL wrResult = WriteFile(fInfo->m_handle, ptr.get(), (DWORD)count, nullptr, pOverlapped);
     DWORD error = GetLastError();
 
@@ -485,7 +480,6 @@ size_t _write_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ str
 
     return result;
 #else
-    _InterlockedIncrement(&fInfo->m_outstanding_writes);
     BOOL wrResult = WriteFile(fInfo->m_handle, ptr.get(), (DWORD)count, nullptr, pOverlapped);
     DWORD error = GetLastError();
 
