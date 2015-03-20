@@ -592,7 +592,7 @@ public:
         /// <summary>
         /// Accesses an element of a JSON array.
         /// </summary>
-        /// <param name="key">The index of an element in the JSON array</param>
+        /// <param name="index">The index of an element in the JSON array</param>
         /// <returns>The value kept at the array index; null if outside the boundaries of the array</returns>
         CASABLANCA_DEPRECATED("This API is deprecated and will be removed in a future release, use json::value::at() instead.")
         value get(size_t index) const;

@@ -491,7 +491,7 @@ public:
     }
 
     /// <summary>
-    /// Extracts the body of the response message into a json value, checking that the content type is application\json.
+    /// Extracts the body of the response message into a json value, checking that the content type is application/json.
     /// A body can only be extracted once because in some cases an optimization is made where the data is 'moved' out.
     /// </summary>
     /// <param name="ignore_content_type">If true, ignores the Content-Type header and assumes UTF-8.</param>
@@ -612,6 +612,7 @@ public:
     /// sent.
     /// </summary>
     /// <param name="stream">A readable, open asynchronous stream.</param>
+    /// <param name="content_type">A string holding the MIME type of the message body.</param>
     /// <remarks>
     /// This cannot be used in conjunction with any other means of setting the body of the request.
     /// The stream will not be read until the message is sent.
@@ -887,7 +888,7 @@ public:
     }
 
     /// <summary>
-    /// Extracts the body of the request message into a json value, checking that the content type is application\json.
+    /// Extracts the body of the request message into a json value, checking that the content type is application/json.
     /// A body can only be extracted once because in some cases an optimization is made where the data is 'moved' out.
     /// </summary>
     /// <param name="ignore_content_type">If true, ignores the Content-Type header and assumes UTF-8.</param>
@@ -966,7 +967,7 @@ public:
     /// Sets the body of the message to contain json value. If the 'Content-Type'
     /// header hasn't already been set it will be set to 'application/json'.
     /// </summary>
-    /// <param name="body_text">json value.</param>
+    /// <param name="body_data">json value.</param>
     /// <remarks>
     /// This will overwrite any previously set body data.
     /// </remarks>
@@ -1009,6 +1010,7 @@ public:
     /// sent.
     /// </summary>
     /// <param name="stream">A readable, open asynchronous stream.</param>
+    /// <param name="content_type">A string holding the MIME type of the message body.</param>
     /// <remarks>
     /// This cannot be used in conjunction with any other means of setting the body of the request.
     /// The stream will not be read until the message is sent.
