@@ -828,12 +828,6 @@ namespace streams
         streambuf() { }
 
         /// <summary>
-        /// Copy constructor.
-        /// </summary>
-        /// <param name="other">The source object.</param>
-        streambuf(const streambuf &other) : m_buffer(other.m_buffer) { }
-
-        /// <summary>
         /// Converter Constructor.
         /// </summary>
         /// <typeparam name="AlterCharType">
@@ -852,26 +846,6 @@ namespace streams
                 && sizeof(int_type) == sizeof(typename details::basic_streambuf<AlterCharType>::int_type),
                 "incompatible stream character types");
         }
-
-        /// <summary>
-        /// Move constructor.
-        /// </summary>
-        /// <param name="other">The source object.</param>
-        streambuf(streambuf &&other) : m_buffer(std::move(other.m_buffer)) { }
-
-        /// <summary>
-        /// Assignment operator.
-        /// </summary>
-        /// <param name="other">The source object.</param>
-        /// <returns>A reference to the <c>streambuf</c> object that contains the result of the assignment.</returns>
-        streambuf & operator =(const streambuf &other) { m_buffer = other.m_buffer; return *this; }
-
-        /// <summary>
-        /// Move operator.
-        /// </summary>
-        /// <param name="other">The source object.</param>
-        /// <returns>A reference to the <c>streambuf</c> object that contains the result of the assignment.</returns>
-        streambuf & operator =(streambuf &&other) { m_buffer = std::move(other.m_buffer); return *this; }
 
         /// <summary>
         /// Constructs an input stream head for this stream buffer.
