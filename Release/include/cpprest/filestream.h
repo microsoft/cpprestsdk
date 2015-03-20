@@ -277,17 +277,24 @@ namespace details {
             /// <returns>A <c>task</c> that holds the value of the byte written. This is EOF if the write operation fails.</returns>
         virtual pplx::task<int_type> _putc(_CharType ch)
         {
-            auto result_tce = pplx::task_completion_event<int_type>();
-            auto callback = new _filestream_callback_putc(m_info, result_tce, ch);
+            auto result_tce = pplx::task_completion_event<size_t>();
+            auto callback = new _filestream_callback_write<size_t>(m_info, result_tce);
 
-            size_t written = _putc_fsb(m_info, callback, ch, sizeof(_CharType));
-
-            if ( written == sizeof(_CharType) )
+            // Potentially we should consider deprecating this API, it is TERRIBLY inefficient.
+            auto sharedCh = std::make_shared<_CharType>(ch);
+            size_t written = _putn_fsb(m_info, callback, sharedCh.get(), 1, sizeof(_CharType));
+            
+            
+            if (written == sizeof(_CharType))
             {
                 delete callback;
                 return pplx::task_from_result<int_type>(ch);
             }
-            return pplx::create_task(result_tce);
+            
+            return pplx::create_task(result_tce).then([sharedCh](size_t)
+            {
+                return static_cast<int_type>(*sharedCh);
+            });
         }
 
         /// <summary>
@@ -841,36 +848,6 @@ namespace details {
         private:
             _file_info *m_info;
             pplx::task_completion_event<size_t> m_op;
-        };
-
-        class _filestream_callback_putc : public details::_filestream_callback
-        {
-        public:
-            _filestream_callback_putc(_In_ _file_info *info, pplx::task_completion_event<int_type> op, _CharType ch) : m_info(info), m_op(op), m_ch(ch) { }
-
-            virtual void on_completed(size_t result)
-            {
-                if ( result == sizeof(_CharType) )
-                {
-                    m_op.set(m_ch);
-                }
-                else
-                {
-                    m_op.set(traits::eof());
-                }
-                delete this;
-            }
-
-            virtual void on_error(const std::exception_ptr & e)
-            {
-                m_op.set_exception(e);
-                delete this;
-            }
-
-        private:
-            _file_info *m_info;
-            pplx::task_completion_event<int_type> m_op;
-            int_type             m_ch;
         };
 
         class _filestream_callback_bumpc : public details::_filestream_callback

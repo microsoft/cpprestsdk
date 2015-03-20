@@ -590,18 +590,6 @@ size_t __cdecl _putn_fsb(_In_ Concurrency::streams::details::_file_info *info, _
 }
 
 /// <summary>
-/// Write a single byte to the file stream.
-/// </summary>
-/// <param name="info">The file info record of the file</param>
-/// <param name="callback">A pointer to the callback interface to invoke when the write request is completed.</param>
-/// <param name="ptr">A pointer to a buffer where the data should be placed</param>
-/// <returns>0 if the read request is still outstanding, -1 if the request failed, otherwise the size of the data read into the buffer</returns>
-size_t __cdecl _putc_fsb(_In_ Concurrency::streams::details::_file_info *info, _In_ Concurrency::streams::details::_filestream_callback *callback, int ch, size_t char_size)
-{
-    return _putn_fsb(info, callback, &ch, 1, char_size);
-}
-
-/// <summary>
 /// Flush all buffered data to the underlying file.
 /// </summary>
 /// <param name="info">The file info record of the file</param>

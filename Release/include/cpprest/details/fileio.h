@@ -156,15 +156,6 @@ _ASYNCRTIMP bool __cdecl _close_fsb(_In_ concurrency::streams::details::_file_in
 _ASYNCRTIMP size_t __cdecl _putn_fsb(_In_ concurrency::streams::details::_file_info *info, _In_ concurrency::streams::details::_filestream_callback *callback, const void *ptr, size_t count, size_t char_size);
 
 /// <summary>
-/// Write a single byte to the file stream.
-/// </summary>
-/// <param name="info">The file info record of the file</param>
-/// <param name="callback">A pointer to the callback interface to invoke when the write request is completed.</param>
-/// <param name="ptr">A pointer to a buffer where the data should be placed</param>
-/// <returns>0 if the read request is still outstanding, -1 if the request failed, otherwise the size of the data read into the buffer</returns>
-_ASYNCRTIMP size_t __cdecl _putc_fsb(_In_ concurrency::streams::details::_file_info *info, _In_ concurrency::streams::details::_filestream_callback *callback, int ch, size_t char_size);
-
-/// <summary>
 /// Read data from a file stream into a buffer
 /// </summary>
 /// <param name="info">The file info record of the file</param>
