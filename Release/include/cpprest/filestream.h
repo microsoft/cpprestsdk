@@ -368,6 +368,24 @@ namespace details {
             return pplx::create_task(result_tce);
         }
 
+        // Temporarily needed until the deprecated putn is removed.
+        virtual pplx::task<size_t> _putn(const _CharType *ptr, size_t count, bool copy)
+        {
+            if (copy)
+            {
+                auto sharedData = std::shared_ptr<_CharType>(new _CharType[count], std::default_delete<_CharType []>());
+                memcpy(sharedData.get(), ptr, count * sizeof(_CharType));
+                return _putn(ptr, count).then([sharedData](size_t size)
+                {
+                    return size;
+                });
+            }
+            else
+            {
+                return _putn(ptr, count);
+            }
+        }
+
         /// <summary>
         /// Reads a single byte from the stream and advance the read position.
         /// </summary>
@@ -741,7 +759,7 @@ namespace details {
         class _filestream_callback_open : public details::_filestream_callback
         {
         public:
-            _filestream_callback_open(pplx::task_completion_event<std::shared_ptr<basic_streambuf<_CharType>>> op) : m_op(op) { }
+            _filestream_callback_open(const pplx::task_completion_event<std::shared_ptr<basic_streambuf<_CharType>>> &op) : m_op(op) { }
 
             virtual void on_opened(_In_ _file_info *info)
             {
@@ -762,7 +780,7 @@ namespace details {
         class _filestream_callback_close : public details::_filestream_callback
         {
         public:
-            _filestream_callback_close(pplx::task_completion_event<void> op) : m_op(op) { }
+            _filestream_callback_close(const pplx::task_completion_event<void> &op) : m_op(op) { }
 
             virtual void on_closed()
             {
@@ -784,7 +802,7 @@ namespace details {
         class _filestream_callback_write : public details::_filestream_callback
         {
         public:
-            _filestream_callback_write(_In_ _file_info *info, pplx::task_completion_event<ResultType> op) : m_info(info), m_op(op) { }
+            _filestream_callback_write(_In_ _file_info *info, const pplx::task_completion_event<ResultType> &op) : m_info(info), m_op(op) { }
 
             virtual void on_completed(size_t result)
             {
@@ -806,7 +824,7 @@ namespace details {
         class _filestream_callback_write_b : public details::_filestream_callback
         {
         public:
-            _filestream_callback_write_b(_In_ _file_info *info, pplx::task_completion_event<void> op) : m_info(info), m_op(op) { }
+            _filestream_callback_write_b(_In_ _file_info *info, const pplx::task_completion_event<void> &op) : m_info(info), m_op(op) { }
 
             virtual void on_completed(size_t)
             {
@@ -829,7 +847,7 @@ namespace details {
         class _filestream_callback_read : public details::_filestream_callback
         {
         public:
-            _filestream_callback_read(_In_ _file_info *info, pplx::task_completion_event<size_t> op) : m_info(info), m_op(op) { }
+            _filestream_callback_read(_In_ _file_info *info, const pplx::task_completion_event<size_t> &op) : m_info(info), m_op(op) { }
 
             virtual void on_completed(size_t result)
             {
@@ -853,7 +871,7 @@ namespace details {
         class _filestream_callback_bumpc : public details::_filestream_callback
         {
         public:
-            _filestream_callback_bumpc(_In_ _file_info *info, pplx::task_completion_event<int_type> op) : m_ch(0), m_info(info), m_op(op) { }
+            _filestream_callback_bumpc(_In_ _file_info *info, const pplx::task_completion_event<int_type> &op) : m_ch(0), m_info(info), m_op(op) { }
 
             virtual void on_completed(size_t result)
             {
@@ -885,7 +903,7 @@ namespace details {
         class _filestream_callback_getc : public details::_filestream_callback
         {
         public:
-            _filestream_callback_getc(_In_ _file_info *info, pplx::task_completion_event<int_type> op) : m_ch(0), m_info(info), m_op(op) { }
+            _filestream_callback_getc(_In_ _file_info *info, const pplx::task_completion_event<int_type> &op) : m_ch(0), m_info(info), m_op(op) { }
 
             virtual void on_completed(size_t result)
             {

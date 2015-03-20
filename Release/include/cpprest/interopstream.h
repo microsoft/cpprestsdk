@@ -309,8 +309,8 @@ namespace Concurrency { namespace streams {
         {
             try
             {
-            return m_buffer.putn(ptr, (size_t)count).get();
-        }
+                return m_buffer.putn_nocopy(ptr, static_cast<size_t>(count)).get();
+            }
             catch(...)
             {
                 return 0;

@@ -739,7 +739,7 @@ private:
                 {
                     // We have raw memory here writing to a memory stream so it is safe to wait
                     // since it will always be non-blocking.
-                    p_request_context->m_readBufferCopy->putn(&p_request_context->m_body_data.get()[http::details::chunked_encoding::data_offset], bytes_read).wait();
+                    p_request_context->m_readBufferCopy->putn_nocopy(&p_request_context->m_body_data.get()[http::details::chunked_encoding::data_offset], bytes_read).wait();
                 }
             }
             catch (...)
@@ -1230,7 +1230,7 @@ private:
                     }
                     else
                     {
-                        writebuf.putn(p_request_context->m_body_data.get(), bytesRead).then(
+                        writebuf.putn_nocopy(p_request_context->m_body_data.get(), bytesRead).then(
                             [hRequestHandle, p_request_context, bytesRead] (pplx::task<size_t> op)
                         {
                             size_t written = 0;

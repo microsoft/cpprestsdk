@@ -428,7 +428,7 @@ void connection::handle_chunked_body(const boost::system::error_code& ec, int to
     else
     {
         auto writebuf = m_request._get_impl()->outstream().streambuf();
-        writebuf.putn(buffer_cast<const uint8_t *>(m_request_buf.data()), toWrite).then([=](pplx::task<size_t> writeChunkTask)
+        writebuf.putn_nocopy(buffer_cast<const uint8_t *>(m_request_buf.data()), toWrite).then([=](pplx::task<size_t> writeChunkTask)
         {
             try
             {
@@ -457,7 +457,7 @@ void connection::handle_body(const boost::system::error_code& ec)
     else if (m_read < m_read_size)  // there is more to read
     {
         auto writebuf = m_request._get_impl()->outstream().streambuf();
-        writebuf.putn(boost::asio::buffer_cast<const uint8_t*>(m_request_buf.data()), std::min(m_request_buf.size(), m_read_size - m_read)).then([=](pplx::task<size_t> writtenSizeTask)
+        writebuf.putn_nocopy(boost::asio::buffer_cast<const uint8_t*>(m_request_buf.data()), std::min(m_request_buf.size(), m_read_size - m_read)).then([=](pplx::task<size_t> writtenSizeTask)
         {
             size_t writtenSize = 0;
             try

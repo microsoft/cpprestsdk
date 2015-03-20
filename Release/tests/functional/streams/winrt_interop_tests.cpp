@@ -40,7 +40,7 @@ TEST(read_in)
     producer_consumer_buffer<char> buf;
     auto ostream = buf.create_ostream();
     std::string strData("abcdefghij");
-    buf.putn((char *)&strData[0], strData.size() * sizeof(char)).wait();
+    buf.putn_nocopy((char *)&strData[0], strData.size() * sizeof(char)).wait();
 
     auto dr = ref new Windows::Storage::Streams::DataReader(winrt_stream::create_input_stream(buf));
     dr->ByteOrder = Windows::Storage::Streams::ByteOrder::LittleEndian;
@@ -88,7 +88,7 @@ TEST(read_rand)
     producer_consumer_buffer<char> buf;
     auto ostream = buf.create_ostream();
     std::string strData("abcdefghij");
-    buf.putn((char *)&strData[0], strData.size() * sizeof(char)).wait();
+    buf.putn_nocopy((char *)&strData[0], strData.size() * sizeof(char)).wait();
 
     auto dr = ref new Windows::Storage::Streams::DataReader(winrt_stream::create_random_access_stream(buf));
     dr->ByteOrder = Windows::Storage::Streams::ByteOrder::LittleEndian;

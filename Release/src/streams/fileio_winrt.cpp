@@ -986,7 +986,7 @@ IRandomAccessStream_bridge::WriteAsync(Windows::Storage::Streams::IBuffer^ buffe
 
                 pBufferByteAccess->AddRef();
 
-                return sbuf.putn(buffer_data,size).then(
+                return sbuf.putn_nocopy(buffer_data, size).then(
                     [pBufferByteAccess](pplx::task<size_t> size)
                     {
                         pBufferByteAccess->Release();

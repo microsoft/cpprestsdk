@@ -348,7 +348,7 @@ TEST_FIXTURE(uri_address, content_ready)
 
         request.reply(response);
 
-        VERIFY_ARE_EQUAL(buf.putn((const uint8_t *)responseData.data(), responseData.size()).get(), responseData.size());
+        VERIFY_ARE_EQUAL(buf.putn_nocopy((const uint8_t *)responseData.data(), responseData.size()).get(), responseData.size());
         buf.close(std::ios_base::out).get();
     });
 
@@ -418,7 +418,7 @@ TEST_FIXTURE(uri_address, get_resp_stream)
         response.headers().add(header_names::connection, U("close"));
         request.reply(response);
 
-        VERIFY_ARE_EQUAL(buf.putn((const uint8_t *)responseData.data(), responseData.size()).get(), responseData.size());
+        VERIFY_ARE_EQUAL(buf.putn_nocopy((const uint8_t *)responseData.data(), responseData.size()).get(), responseData.size());
         buf.close(std::ios_base::out).get();
     });
 
@@ -462,9 +462,9 @@ TEST_FIXTURE(uri_address, xfer_chunked_multiple_chunks)
         response.headers().add(header_names::connection, U("close"));
         request.reply(response);
 
-        VERIFY_ARE_EQUAL(buf.putn((const uint8_t *)firstChunk.data(), firstChunk.size()).get(), firstChunk.size());
+        VERIFY_ARE_EQUAL(buf.putn_nocopy((const uint8_t *)firstChunk.data(), firstChunk.size()).get(), firstChunk.size());
         buf.sync().get();
-        VERIFY_ARE_EQUAL(buf.putn((const uint8_t *)secondChunk.data(), secondChunk.size()).get(), secondChunk.size());
+        VERIFY_ARE_EQUAL(buf.putn_nocopy((const uint8_t *)secondChunk.data(), secondChunk.size()).get(), secondChunk.size());
         buf.close(std::ios_base::out).get();
     });
 

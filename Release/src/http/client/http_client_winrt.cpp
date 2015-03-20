@@ -307,7 +307,7 @@ public:
         try
         {
             auto buffer = context->_get_writebuffer();
-            const size_t count = buffer.putn(reinterpret_cast<const uint8_t *>(pv), static_cast<size_t>(cb)).get();
+            const size_t count = buffer.putn_nocopy(reinterpret_cast<const uint8_t *>(pv), static_cast<size_t>(cb)).get();
 
             _ASSERTE(count != static_cast<size_t>(-1));
             _ASSERTE(count <= static_cast<size_t>(ULONG_MAX));

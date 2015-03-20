@@ -131,7 +131,7 @@ TEST(stream_read_1)
 {
     producer_consumer_buffer<char> rbuf;
 
-    VERIFY_ARE_EQUAL(26u, rbuf.putn("abcdefghijklmnopqrstuvwxyz", 26).get());
+    VERIFY_ARE_EQUAL(26u, rbuf.putn_nocopy("abcdefghijklmnopqrstuvwxyz", 26).get());
 
     istream stream(rbuf);
 
@@ -168,7 +168,7 @@ TEST(stream_read_1_fail)
 {
     producer_consumer_buffer<char> rbuf;
 
-    VERIFY_ARE_EQUAL(26u, rbuf.putn("abcdefghijklmnopqrstuvwxyz", 26).get());
+    VERIFY_ARE_EQUAL(26u, rbuf.putn_nocopy("abcdefghijklmnopqrstuvwxyz", 26).get());
 
     istream stream(rbuf);
     rbuf.close(std::ios_base::in).get();
@@ -182,7 +182,7 @@ TEST(stream_read_2)
 {
     producer_consumer_buffer<char> rbuf;
 
-    VERIFY_ARE_EQUAL(26u, rbuf.putn("abcdefghijklmnopqrstuvwxyz", 26).get());
+    VERIFY_ARE_EQUAL(26u, rbuf.putn_nocopy("abcdefghijklmnopqrstuvwxyz", 26).get());
 
     istream stream(rbuf);
 
@@ -234,7 +234,7 @@ TEST(stream_read_3)
     const char *text = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
     size_t len = strlen(text);
 
-    VERIFY_ARE_EQUAL(len, rbuf.putn(text, len).get());
+    VERIFY_ARE_EQUAL(len, rbuf.putn_nocopy(text, len).get());
     rbuf.close(std::ios_base::out).get();
 
     istream stream(rbuf);
@@ -265,7 +265,7 @@ TEST(stream_read_3_fail)
     const char *text = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
     size_t len = strlen(text);
 
-    VERIFY_ARE_EQUAL(len, rbuf.putn(text, len).get());
+    VERIFY_ARE_EQUAL(len, rbuf.putn_nocopy(text, len).get());
     rbuf.close(std::ios_base::out).get();
 
     istream stream(rbuf);
@@ -288,7 +288,7 @@ TEST(stream_read_4)
     const char *text = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
     size_t len = strlen(text);
 
-    VERIFY_ARE_EQUAL(len, rbuf.putn(text, len).get());
+    VERIFY_ARE_EQUAL(len, rbuf.putn_nocopy(text, len).get());
     rbuf.close(std::ios_base::out).get();
 
     streams::basic_istream<char> stream = rbuf;
@@ -348,7 +348,7 @@ TEST(stream_read_4_fail)
     const char *text = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
     size_t len = strlen(text);
 
-    VERIFY_ARE_EQUAL(len, rbuf.putn(text, len).get());
+    VERIFY_ARE_EQUAL(len, rbuf.putn_nocopy(text, len).get());
     rbuf.close(std::ios_base::out).get();
 
     streams::basic_istream<char> stream = rbuf;
@@ -369,7 +369,7 @@ TEST(stream_read_5)
     const char *text = "abcdefghijklmnopqrstuvwxyz\n\nABCDEFGHIJKLMNOPQRSTUVWXYZ";
     size_t len = strlen(text);
 
-    VERIFY_ARE_EQUAL(len, rbuf.putn(text, len).get());
+    VERIFY_ARE_EQUAL(len, rbuf.putn_nocopy(text, len).get());
 
     istream stream(rbuf);
     
@@ -425,7 +425,7 @@ TEST(stream_readline_1)
     const char *text = "abcdefghijklmnopqrstuvwxyz\nABCDEFGHIJKLMNOPQRSTUVWXYZ";
     size_t len = strlen(text);
 
-    VERIFY_ARE_EQUAL(len, rbuf.putn(text, len).get());
+    VERIFY_ARE_EQUAL(len, rbuf.putn_nocopy(text, len).get());
 
     istream stream(rbuf);
 
@@ -453,7 +453,7 @@ TEST(stream_readline_1_fail)
     const char *text = "abcdefghijklmnopqrstuvwxyz\nABCDEFGHIJKLMNOPQRSTUVWXYZ";
     size_t len = strlen(text);
 
-    VERIFY_ARE_EQUAL(len, rbuf.putn(text, len).get());
+    VERIFY_ARE_EQUAL(len, rbuf.putn_nocopy(text, len).get());
 
     istream stream(rbuf);
 
@@ -473,7 +473,7 @@ TEST(stream_readline_2)
     const char *text = "abcdefghijklmnopqrstuvwxyz\r\n\r\nABCDEFGHIJKLMNOPQRSTUVWXYZ";
     size_t len = strlen(text);
 
-    VERIFY_ARE_EQUAL(len, rbuf.putn(text, len).get());
+    VERIFY_ARE_EQUAL(len, rbuf.putn_nocopy(text, len).get());
 
     istream stream(rbuf);
 
@@ -553,7 +553,7 @@ TEST(stream_read_6)
     const char *text = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
     size_t len = strlen(text);
 
-    VERIFY_ARE_EQUAL(len, rbuf.putn(text, len).get());
+    VERIFY_ARE_EQUAL(len, rbuf.putn_nocopy(text, len).get());
     rbuf.close(std::ios_base::out).get();
 
     istream stream(rbuf);
@@ -586,7 +586,7 @@ TEST(stream_read_7)
     const char *text = "abcdefghijklmnopqrstuvwxyz|ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     size_t len = strlen(text);
 
-    VERIFY_ARE_EQUAL(len, rbuf.putn(text, len).get());
+    VERIFY_ARE_EQUAL(len, rbuf.putn_nocopy(text, len).get());
 
     istream stream(rbuf);
 
@@ -618,7 +618,7 @@ TEST(stream_read_to_end_1)
 
     for (int i = 0; i < 4096; ++i)
     {
-        VERIFY_ARE_EQUAL(len, rbuf.putn(text, len).get());
+        VERIFY_ARE_EQUAL(len, rbuf.putn_nocopy(text, len).get());
     }
 
     rbuf.close(std::ios_base::out).get();
@@ -645,7 +645,7 @@ TEST(stream_read_to_end_1_fail)
 
     for (int i = 0; i < 4096; ++i)
     {
-        VERIFY_ARE_EQUAL(len, rbuf.putn(text, len).get());
+        VERIFY_ARE_EQUAL(len, rbuf.putn_nocopy(text, len).get());
     }
 
     rbuf.close(std::ios_base::out).get();
@@ -743,7 +743,7 @@ TEST(stream_read_to_delim_flush)
     const char *text = "abcdefghijklmnopqrstuvwxyz|ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     size_t len = strlen(text);
 
-    VERIFY_ARE_EQUAL(len, rbuf.putn(text, len).get());
+    VERIFY_ARE_EQUAL(len, rbuf.putn_nocopy(text, len).get());
     rbuf.close(std::ios_base::out).get();
 
     streams::basic_istream<char> stream = rbuf;
@@ -769,7 +769,7 @@ TEST(stream_read_line_flush)
     const char *text = "abcdefghijklmnopqrstuvwxyz\nABCDEFGHIJKLMNOPQRSTUVWXYZ";
     size_t len = strlen(text);
 
-    VERIFY_ARE_EQUAL(len, rbuf.putn(text, len).get());
+    VERIFY_ARE_EQUAL(len, rbuf.putn_nocopy(text, len).get());
     rbuf.close(std::ios_base::out).get();
 
     streams::basic_istream<char> stream = rbuf;
@@ -796,7 +796,7 @@ TEST(stream_read_to_end_flush)
     const char *text = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
     size_t len = strlen(text);
 
-    VERIFY_ARE_EQUAL(len, rbuf.putn(text, len).get());
+    VERIFY_ARE_EQUAL(len, rbuf.putn_nocopy(text, len).get());
 
     rbuf.close(std::ios_base::out).get();
 
@@ -819,7 +819,7 @@ TEST(istream_extract_string)
     const char *text = " abc defgsf ";
 
     size_t len = strlen(text);
-    rbuf.putn(text, len).wait();
+    rbuf.putn_nocopy(text, len).wait();
     rbuf.close(std::ios_base::out).get();
 
     streams::basic_istream<char> is = rbuf;
@@ -836,7 +836,7 @@ TEST(istream_extract_wstring_1)
     const char *text = " abc defgsf ";
 
     size_t len = strlen(text);
-    rbuf.putn(text, len).wait();
+    rbuf.putn_nocopy(text, len).wait();
     rbuf.close(std::ios_base::out).get();
 
     streams::basic_istream<char> is = rbuf;
@@ -853,7 +853,7 @@ TEST(istream_extract_wstring_2) // On Linux, this becomes the exact copy of istr
     const char *text = " abc defgsf ";
 
     size_t len = strlen(text);
-    rbuf.putn((const signed char *)text, len).wait();
+    rbuf.putn_nocopy((const signed char *)text, len).wait();
     rbuf.close(std::ios_base::out).get();
 
     streams::basic_istream<char> is = rbuf;
@@ -870,7 +870,7 @@ TEST(istream_extract_wstring_3)
     const char *text = " abc defgsf ";
 
     size_t len = strlen(text);
-    rbuf.putn((const unsigned char *)text, len).wait();
+    rbuf.putn_nocopy((const unsigned char *)text, len).wait();
     rbuf.close(std::ios_base::out).get();
 
     streams::basic_istream<char> is = rbuf;
@@ -888,7 +888,7 @@ TEST(istream_extract_int64)
     producer_consumer_buffer<char> rbuf;
     const char *text = "1024 -17134711";
     size_t len = strlen(text);
-    rbuf.putn(text, len).wait();
+    rbuf.putn_nocopy(text, len).wait();
     rbuf.close(std::ios_base::out).get();
 
     streams::basic_istream<char> is = rbuf;
@@ -904,7 +904,7 @@ TEST(istream_extract_uint64)
     producer_consumer_buffer<char> rbuf;
     const char *text = "1024 12000000000";
     size_t len = strlen(text);
-    rbuf.putn(text, len).wait();
+    rbuf.putn_nocopy(text, len).wait();
     rbuf.close(std::ios_base::out).get();
 
     streams::istream is(rbuf);
@@ -920,7 +920,7 @@ TEST(istream_extract_int64w)
     producer_consumer_buffer<wchar_t> rbuf;
     const wchar_t *text = L"1024 -17134711";
     size_t len = wcslen(text);
-    rbuf.putn(text, len).wait();
+    rbuf.putn_nocopy(text, len).wait();
     rbuf.close(std::ios_base::out).get();
 
     streams::wistream is(rbuf);
@@ -936,7 +936,7 @@ TEST(istream_extract_uint64w)
     producer_consumer_buffer<wchar_t> rbuf;
     const wchar_t *text = L"1024 12000000000";
     size_t len = wcslen(text);
-    rbuf.putn(text, len).wait();
+    rbuf.putn_nocopy(text, len).wait();
     rbuf.close(std::ios_base::out).get();
 
     streams::wistream is(rbuf);
@@ -953,7 +953,7 @@ TEST(istream_extract_int32)
     producer_consumer_buffer<char> rbuf;
     const char *text = "1024 -17134711 12000000000";
     size_t len = strlen(text);
-    rbuf.putn(text, len).wait();
+    rbuf.putn_nocopy(text, len).wait();
     rbuf.close(std::ios_base::out).get();
 
     streams::istream is(rbuf);
@@ -970,7 +970,7 @@ TEST(istream_extract_uint32)
     producer_consumer_buffer<char> rbuf;
     const char *text = "1024 3000000000 12000000000";
     size_t len = strlen(text);
-    rbuf.putn(text, len).wait();
+    rbuf.putn_nocopy(text, len).wait();
     rbuf.close(std::ios_base::out).get();
 
     streams::istream is(rbuf);
@@ -987,7 +987,7 @@ TEST(istream_extract_int32w)
     producer_consumer_buffer<wchar_t> rbuf;
     const wchar_t *text = L"1024 -17134711 12000000000";
     size_t len = wcslen(text);
-    rbuf.putn(text, len).wait();
+    rbuf.putn_nocopy(text, len).wait();
     rbuf.close(std::ios_base::out).get();
 
     streams::wistream is(rbuf);
@@ -1004,7 +1004,7 @@ TEST(istream_extract_uint32w)
      producer_consumer_buffer<wchar_t> rbuf;
     const wchar_t *text = L"1024 3000000000 12000000000";
     size_t len = wcslen(text);
-    rbuf.putn(text, len).wait();
+    rbuf.putn_nocopy(text, len).wait();
     rbuf.close(std::ios_base::out).get();
 
     streams::wistream is(rbuf);
@@ -1022,7 +1022,7 @@ TEST(istream_extract_int16)
     producer_consumer_buffer<char> rbuf;
     const char *text = "1024 -4711 100000";
     size_t len = strlen(text);
-    rbuf.putn(text, len).wait();
+    rbuf.putn_nocopy(text, len).wait();
     rbuf.close(std::ios_base::out).get();
 
     streams::istream is(rbuf);
@@ -1039,7 +1039,7 @@ TEST(istream_extract_uint16)
     producer_consumer_buffer<char> rbuf;
     const char *text = "1024 50000 100000";
     size_t len = strlen(text);
-    rbuf.putn(text, len).wait();
+    rbuf.putn_nocopy(text, len).wait();
     rbuf.close(std::ios_base::out).get();
 
     streams::istream is(rbuf);
@@ -1057,7 +1057,7 @@ TEST(istream_extract_int16w)
     producer_consumer_buffer<wchar_t> rbuf;
     const wchar_t *text = L"1024 -4711 100000";
     size_t len = wcslen(text);
-    rbuf.putn(text, len).wait();
+    rbuf.putn_nocopy(text, len).wait();
     rbuf.close(std::ios_base::out).get();
 
     streams::wistream is(rbuf);
@@ -1074,7 +1074,7 @@ TEST(istream_extract_uint16w)
     producer_consumer_buffer<wchar_t> rbuf;
     const wchar_t *text = L"1024 50000 100000";
     size_t len = wcslen(text);
-    rbuf.putn(text, len).wait();
+    rbuf.putn_nocopy(text, len).wait();
     rbuf.close(std::ios_base::out).get();
 
     streams::wistream is(rbuf);
@@ -1092,7 +1092,7 @@ TEST(istream_extract_int8)
     producer_consumer_buffer<char> rbuf;
     const char *text = "0 -125 512";
     size_t len = strlen(text);
-    rbuf.putn(text, len).wait();
+    rbuf.putn_nocopy(text, len).wait();
     rbuf.close(std::ios_base::out).get();
 
     streams::basic_istream<unsigned char> is(rbuf);
@@ -1108,7 +1108,7 @@ TEST(istream_extract_uint8)
     producer_consumer_buffer<char> rbuf;
     const char *text = "0 150 512";
     size_t len = strlen(text);
-    rbuf.putn(text, len).wait();
+    rbuf.putn_nocopy(text, len).wait();
     rbuf.close(std::ios_base::out).get();
 
     streams::basic_istream<unsigned char> is(rbuf);
@@ -1125,7 +1125,7 @@ TEST(istream_extract_int8w)
     producer_consumer_buffer<wchar_t> rbuf;
     const wchar_t *text = L"0 -125 512";
     size_t len = wcslen(text);
-    rbuf.putn(text, len).wait();
+    rbuf.putn_nocopy(text, len).wait();
     rbuf.close(std::ios_base::out).get();
 
     streams::wistream is(rbuf);
@@ -1141,7 +1141,7 @@ TEST(istream_extract_uint8w)
     producer_consumer_buffer<wchar_t> rbuf;
     const wchar_t *text = L"0 150 512";
     size_t len = wcslen(text);
-    rbuf.putn(text, len).wait();
+    rbuf.putn_nocopy(text, len).wait();
     rbuf.close(std::ios_base::out).get();
 
     streams::wistream is(rbuf);
@@ -1158,7 +1158,7 @@ TEST(istream_extract_bool)
     producer_consumer_buffer<char> rbuf;
     const char *text = " true false NOT_OK";
     size_t len = strlen(text);
-    rbuf.putn(text, len).wait();
+    rbuf.putn_nocopy(text, len).wait();
     rbuf.close(std::ios_base::out).get();
 
     streams::istream is(rbuf);
@@ -1176,7 +1176,7 @@ TEST(istream_extract_bool_from_number)
     const char *text = " 1 0 NOT_OK";
     
     size_t len = strlen(text);
-    rbuf.putn(text, len).wait();
+    rbuf.putn_nocopy(text, len).wait();
     rbuf.close(std::ios_base::out).get();
 
     streams::istream is(rbuf);
@@ -1196,7 +1196,7 @@ TEST(istream_extract_bool_w)
     producer_consumer_buffer<wchar_t> rbuf;
     const wchar_t *text = L" true false NOT_OK";
     size_t len = wcslen(text);
-    rbuf.putn(text, len).wait();
+    rbuf.putn_nocopy(text, len).wait();
     rbuf.close(std::ios_base::out).get();
 
     streams::wistream is(rbuf);
@@ -1214,7 +1214,7 @@ TEST(istream_extract_bool_from_number_w)
     const wchar_t *text = L" 1 0 NOT_OK";
     
     size_t len = wcslen(text);
-    rbuf.putn(text, len).wait();
+    rbuf.putn_nocopy(text, len).wait();
     rbuf.close(std::ios_base::out).get();
 
     streams::wistream is(rbuf);
@@ -1435,7 +1435,7 @@ TEST(streambuf_read_delim)
         VERIFY_ARE_EQUAL(size, 5);
         VERIFY_IS_TRUE(is.is_eof());
     });
-    rbuf.putn((uint8_t *)s.data(), s.size()).wait();
+    rbuf.putn_nocopy((uint8_t *)s.data(), s.size()).wait();
     rbuf.close(std::ios_base::out).get();
     t.wait();
 }
@@ -1483,7 +1483,7 @@ TEST(uninitialized_streambuf)
     VERIFY_THROWS(strbuf.get_base(), std::invalid_argument);
 
     VERIFY_THROWS(strbuf.putc('a').get(), std::invalid_argument);
-    VERIFY_THROWS(strbuf.putn(ptr, count).get(), std::invalid_argument);
+    VERIFY_THROWS(strbuf.putn_nocopy(ptr, count).get(), std::invalid_argument);
     VERIFY_THROWS(strbuf.sync().get(), std::invalid_argument);
 
     VERIFY_THROWS(strbuf.getc().get(), std::invalid_argument);

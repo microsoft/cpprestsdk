@@ -84,7 +84,7 @@ void fill_buffer(streams::streambuf<uint8_t> rbuf, const std::vector<uint8_t>& b
 {
     size_t len = body.size();
     for (size_t i = 0; i < repetitions; i++)
-        rbuf.putn((const uint8_t *)&body[0], len).wait();
+        rbuf.putn_nocopy((const uint8_t *)&body[0], len).wait();
 }
 
 template<class SocketClientClass>

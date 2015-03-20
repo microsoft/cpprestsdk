@@ -968,7 +968,7 @@ private:
             {
                 auto writeBuffer = _get_writebuffer();
                 const auto this_request = shared_from_this();
-                writeBuffer.putn(boost::asio::buffer_cast<const uint8_t *>(m_body_buf.data()), to_read).then([this_request, to_read](pplx::task<size_t> op)
+                writeBuffer.putn_nocopy(boost::asio::buffer_cast<const uint8_t *>(m_body_buf.data()), to_read).then([this_request, to_read](pplx::task<size_t> op)
                 {
                     try
                     {
@@ -1026,7 +1026,7 @@ private:
         {
             // more data need to be read
             const auto this_request = shared_from_this();
-            writeBuffer.putn(boost::asio::buffer_cast<const uint8_t *>(m_body_buf.data()),
+            writeBuffer.putn_nocopy(boost::asio::buffer_cast<const uint8_t *>(m_body_buf.data()),
                              static_cast<size_t>(std::min(static_cast<uint64_t>(m_body_buf.size()), m_content_length - m_downloaded)))
             .then([this_request](pplx::task<size_t> op)
             {

@@ -198,9 +198,18 @@ namespace streams
         virtual pplx::task<size_t> putn(const _CharType *ptr, size_t count) = 0;
 
         /// <summary>
+        /// Writes a number of characters to the stream. Note: callers must make sure the data to be written is valid until
+        /// the returned task completes.
+        /// </summary>
+        /// <param name="ptr">A pointer to the block of data to be written.</param>
+        /// <param name="count">The number of characters to write.</param>
+        /// <returns>A <c>task</c> that holds the number of characters actually written, either 'count' or 0.</returns>
+        virtual pplx::task<size_t> putn_nocopy(const _CharType *ptr, size_t count) = 0;
+
+        /// <summary>
         /// Reads a single character from the stream and advances the read position.
         /// </summary>
-            /// <returns>A <c>task</c> that holds the value of the character. This value is EOF if the read fails.</returns>
+        /// <returns>A <c>task</c> that holds the value of the character. This value is EOF if the read fails.</returns>
         virtual pplx::task<int_type> bumpc() = 0;
 
         /// <summary>
@@ -226,7 +235,7 @@ namespace streams
         /// <summary>
         /// Advances the read position, then returns the next character without advancing again.
         /// </summary>
-            /// <returns>A <c>task</c> that holds the value of the character. This value is EOF if the read fails.</returns>
+        /// <returns>A <c>task</c> that holds the value of the character. This value is EOF if the read fails.</returns>
         virtual pplx::task<int_type> nextc() = 0;
 
         /// <summary>
@@ -450,7 +459,27 @@ namespace streams
         /// <param name="ptr">A pointer to the block of data to be written.</param>
         /// <param name="count">The number of characters to write.</param>
         /// <returns>The number of characters actually written, either 'count' or 0.</returns>
+        CASABLANCA_DEPRECATED("This API in some cases performs a copy. It is deprecated and will be removed in a future release. Use putn_nocopy instead.")
         virtual pplx::task<size_t> putn(const _CharType *ptr, size_t count)
+        {
+            if (!can_write())
+                return create_exception_checked_value_task<size_t>(0);
+            if (count == 0)
+                return pplx::task_from_result<size_t>(0);
+
+            return create_exception_checked_task<size_t>(_putn(ptr, count, true), [](size_t) {
+                return false; // no EOF for write
+            });
+        }
+
+        /// <summary>
+        /// Writes a number of characters to the stream. Note: callers must make sure the data to be written is valid until
+        /// the returned task completes.
+        /// </summary>
+        /// <param name="ptr">A pointer to the block of data to be written.</param>
+        /// <param name="count">The number of characters to write.</param>
+        /// <returns>A <c>task</c> that holds the number of characters actually written, either 'count' or 0.</returns>
+        virtual pplx::task<size_t> putn_nocopy(const _CharType *ptr, size_t count)
         {
             if (!can_write())
                 return create_exception_checked_value_task<size_t>(0);
@@ -655,7 +684,15 @@ namespace streams
         virtual void release(_Out_writes_(count) _CharType *ptr, _In_ size_t count) = 0;
     protected:
         virtual pplx::task<int_type> _putc(_CharType ch) = 0;
+
+        // This API is only needed for file streams and until we remove the deprecated stream buffer putn overload.
+        virtual pplx::task<size_t> _putn(const _CharType *ptr, size_t count, bool)
+        {
+            // Default to no copy, only the file streams API overloads and performs a copy.
+            return _putn(ptr, count);
+        }
         virtual pplx::task<size_t> _putn(const _CharType *ptr, size_t count) = 0;
+
         virtual pplx::task<int_type> _bumpc() = 0;
         virtual int_type _sbumpc() = 0;
         virtual pplx::task<int_type> _getc() = 0;
@@ -866,7 +903,7 @@ namespace streams
         /// </summary>
         virtual ~streambuf() { }
 
-        std::shared_ptr<details::basic_streambuf<_CharType>> get_base() const
+        const std::shared_ptr<details::basic_streambuf<_CharType>> & get_base() const
         {
             if (!m_buffer)
             {
@@ -1031,9 +1068,22 @@ namespace streams
         /// <param name="ptr">A pointer to the block of data to be written.</param>
         /// <param name="count">The number of characters to write.</param>
         /// <returns>The number of characters actually written, either 'count' or 0.</returns>
+        CASABLANCA_DEPRECATED("This API in some cases performs a copy. It is deprecated and will be removed in a future release. Use putn_nocopy instead.")
         virtual pplx::task<size_t> putn(const _CharType *ptr, size_t count)
         {
             return get_base()->putn(ptr, count);
+        }
+
+        /// <summary>
+        /// Writes a number of characters to the stream. Note: callers must make sure the data to be written is valid until
+        /// the returned task completes.
+        /// </summary>
+        /// <param name="ptr">A pointer to the block of data to be written.</param>
+        /// <param name="count">The number of characters to write.</param>
+        /// <returns>The number of characters actually written, either 'count' or 0.</returns>
+        virtual pplx::task<size_t> putn_nocopy(const _CharType *ptr, size_t count)
+        {
+            return get_base()->putn_nocopy(ptr, count);
         }
 
         /// <summary>
