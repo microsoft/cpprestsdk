@@ -309,6 +309,51 @@ TEST(ReadSingleChar_bumpc1)
     VERIFY_IS_FALSE(stream.is_open());
 }
 
+TEST(SequentialReadWrite)
+{
+    utility::string_t fname = U("SequentialReadWrite.txt");
+
+    auto ostreamBuf = OPEN_W<char>(fname).get();
+
+    VERIFY_IS_TRUE(ostreamBuf.is_open());
+
+    for (int i = 0; i < 1000; i++)
+    {
+        ostreamBuf.putc(i % 26 + 'a');
+        ostreamBuf.putn("ABCDEFGHIJ", 10);
+    }
+    ostreamBuf.close().wait();
+    VERIFY_IS_FALSE(ostreamBuf.is_open());
+
+    auto istreamBuf = OPEN_R<char>(fname).get();
+    std::vector<pplx::task<void>> t;
+
+    for (int k = 0; k < 2; k++)
+    {
+        for (int i = 0; i < 1000; i++)
+        {
+            t.push_back(istreamBuf.getc().then([i, this](char c) {
+                VERIFY_ARE_EQUAL(i % 26 + 'a', c);
+            }));
+            t.push_back(istreamBuf.bumpc().then([i, this](char c) {
+                VERIFY_ARE_EQUAL(i % 26 + 'a', c);
+            }));
+            char *buffer = new char[11];
+            t.push_back(istreamBuf.getn(buffer, 10).then([=](size_t n) {
+                VERIFY_ARE_EQUAL(10u, n);
+                VERIFY_ARE_EQUAL(std::string("ABCDEFGHIJ"), std::string(buffer, 10));
+                delete[] buffer;
+            }));
+        }
+        istreamBuf.seekpos(0, std::ios::in);
+    }
+    istreamBuf.close().wait();
+    VERIFY_IS_FALSE(istreamBuf.is_open());
+    for (size_t i = 0; i < t.size(); i++)
+        t[i].wait();
+}
+
+
 #ifdef _WIN32
 TEST(ReadSingleChar_bumpcw)
 {
