@@ -303,6 +303,8 @@ namespace Concurrency { namespace streams
         {
             pplx::task<size_t> result;
             if ( !_verify_and_return_task(details::_out_stream_msg, result) ) return result;
+            // TODO in the future this could be improved to have Value2StringFormatter avoid another unnecessary copy
+            // by putting the string on the heap before calling the print string overload.
             return print(details::Value2StringFormatter<CharType>::format(val));
         }
 

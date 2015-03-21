@@ -281,10 +281,17 @@ namespace details {
             auto callback = new _filestream_callback_write<size_t>(m_info, result_tce);
 
             // Potentially we should consider deprecating this API, it is TERRIBLY inefficient.
-            auto sharedCh = std::make_shared<_CharType>(ch);
+            std::shared_ptr<_CharType> sharedCh;
+            try
+            {
+                sharedCh = std::make_shared<_CharType>(ch);
+            } catch (const std::bad_alloc &)
+            {
+                delete callback;
+                throw;
+            }
+            
             size_t written = _putn_fsb(m_info, callback, sharedCh.get(), 1, sizeof(_CharType));
-            
-            
             if (written == sizeof(_CharType))
             {
                 delete callback;
@@ -373,8 +380,7 @@ namespace details {
         {
             if (copy)
             {
-                auto sharedData = std::shared_ptr<_CharType>(new _CharType[count], std::default_delete<_CharType []>());
-                memcpy(sharedData.get(), ptr, count * sizeof(_CharType));
+                auto sharedData = std::make_shared<std::vector<_CharType>>(ptr, ptr + count);
                 return _putn(ptr, count).then([sharedData](size_t size)
                 {
                     return size;

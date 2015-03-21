@@ -121,8 +121,8 @@ void CALLBACK IoCompletionCallback(
     CASABLANCA_UNREFERENCED_PARAMETER(ctxt);
     CASABLANCA_UNREFERENCED_PARAMETER(instance);
 
-    EXTENDED_OVERLAPPED *pExtOverlapped = (EXTENDED_OVERLAPPED *) pOverlapped;
-    pExtOverlapped->func(result, (DWORD) numberOfBytesTransferred, (LPOVERLAPPED) pOverlapped);
+    EXTENDED_OVERLAPPED *pExtOverlapped = static_cast<EXTENDED_OVERLAPPED *>(pOverlapped);
+    pExtOverlapped->func(result, static_cast<DWORD>(numberOfBytesTransferred), static_cast<LPOVERLAPPED>(pOverlapped));
     delete pOverlapped;
 }
 #endif
@@ -272,7 +272,7 @@ bool __cdecl _close_fsb_nolock(_In_ _file_info **info, _In_ streams::details::_f
     _ASSERTE(info != nullptr);
     _ASSERTE(*info != nullptr);
 
-    _file_info_impl *fInfo = (_file_info_impl *)*info;
+    _file_info_impl *fInfo = static_cast<_file_info_impl *>(*info);
 
     if ( fInfo->m_handle == INVALID_HANDLE_VALUE ) return false;
 
@@ -372,7 +372,7 @@ VOID CALLBACK _ReadFileCompletionRoutine(DWORD dwErrorCode, DWORD dwNumberOfByte
 /// <returns>0 if the write request is still outstanding, -1 if the request failed, otherwise the size of the data written</returns>
 size_t _write_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ streams::details::_filestream_callback *callback, const void *ptr, size_t count, size_t position)
 {
-    auto pOverlapped = new EXTENDED_OVERLAPPED(_WriteFileCompletionRoutine<streams::details::_file_info_impl>, callback);
+    auto pOverlapped = std::unique_ptr<EXTENDED_OVERLAPPED>(new EXTENDED_OVERLAPPED(_WriteFileCompletionRoutine<streams::details::_file_info_impl>, callback));
 
     if (position == static_cast<size_t>(-1))
     {
@@ -392,15 +392,19 @@ size_t _write_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ str
 #if _WIN32_WINNT >= _WIN32_WINNT_VISTA
     StartThreadpoolIo(static_cast<PTP_IO>(fInfo->m_io_context));
 
-    BOOL wrResult = WriteFile(fInfo->m_handle, ptr, static_cast<DWORD>(count), nullptr, pOverlapped);
+    BOOL wrResult = WriteFile(fInfo->m_handle, ptr, static_cast<DWORD>(count), nullptr, pOverlapped.get());
     DWORD error = GetLastError();
 
     // WriteFile will return false when a) the operation failed, or b) when the request is still
     // pending. The error code will tell us which is which.
-    if ( wrResult == FALSE && error == ERROR_IO_PENDING )
+    if (wrResult == FALSE && error == ERROR_IO_PENDING)
+    {
+        // Overlapped is deleted in the threadpool callback.
+        pOverlapped.release();
         return 0;
+    }
 
-    CancelThreadpoolIo((PTP_IO)fInfo->m_io_context);
+    CancelThreadpoolIo(static_cast<PTP_IO>(fInfo->m_io_context));
 
     size_t result = static_cast<size_t>(-1);
 
@@ -413,14 +417,12 @@ size_t _write_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ str
         result = GetOverlappedResult(fInfo->m_handle, pOverlapped, &written, FALSE) ? static_cast<size_t>(written) : static_cast<size_t>(-1);
     }
 
-    delete pOverlapped;
-
     if (result == static_cast<size_t>(-1))
         callback->on_error(std::make_exception_ptr(utility::details::create_system_error(error)));
 
     return result;
 #else
-    BOOL wrResult = WriteFile(fInfo->m_handle, ptr, (DWORD)count, nullptr, pOverlapped);
+    BOOL wrResult = WriteFile(fInfo->m_handle, ptr, (DWORD)count, nullptr, pOverlapped.get());
     DWORD error = GetLastError();
 
     // 1. If WriteFile returned true, it must be because the operation completed immediately.
@@ -431,16 +433,22 @@ size_t _write_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ str
     // We do not need to call GetOverlappedResult, the workerthread will call the "on_error()" if the WriteFaile falied.
     // "req" is deleted in "_WriteFileCompletionRoutine, "pOverlapped" is deleted in io_scheduler::FileIOCompletionRoutine.
     if (wrResult == TRUE)
+    {
+        pOverlapped.release();
         return 0;
+    }
 
     // 2. If WriteFile returned false and GetLastError is ERROR_IO_PENDING, return 0,
     //    The xp threadpool will create a workerthread to run "_WriteFileCompletionRoutine" after the operation completed.
     if (wrResult == FALSE && error == ERROR_IO_PENDING)
+    {
+        // Overlapped is deleted in the threadpool callback.
+        pOverlapped.release();
         return 0;
+    }
 
-    // 3. If ReadFile returned false and GetLastError is not ERROR_IO_PENDING, we must call "callback->on_error()" and delete.
+    // 3. If ReadFile returned false and GetLastError is not ERROR_IO_PENDING, we must call "callback->on_error()".
     //    The threadpools will not start the workerthread.
-    delete pOverlapped;
     callback->on_error(std::make_exception_ptr(utility::details::create_system_error(error)));
 
     return static_cast<size_t>(-1);
@@ -458,7 +466,7 @@ size_t _write_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ str
 /// <returns>0 if the read request is still outstanding, -1 if the request failed, otherwise the size of the data read into the buffer</returns>
 size_t _read_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ streams::details::_filestream_callback *callback, _Out_writes_ (count) void *ptr, _In_ size_t count, size_t offset)
 {
-    auto pOverlapped = new EXTENDED_OVERLAPPED(_ReadFileCompletionRoutine<streams::details::_file_info_impl>, callback);
+    auto pOverlapped = std::unique_ptr<EXTENDED_OVERLAPPED>(new EXTENDED_OVERLAPPED(_ReadFileCompletionRoutine<streams::details::_file_info_impl>, callback));
     pOverlapped->Offset = static_cast<DWORD>(offset);
 #ifdef _WIN64
     pOverlapped->OffsetHigh = static_cast<DWORD>(offset >> 32);
@@ -469,24 +477,26 @@ size_t _read_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ stre
 #if _WIN32_WINNT >= _WIN32_WINNT_VISTA
     StartThreadpoolIo((PTP_IO)fInfo->m_io_context);
 
-    BOOL wrResult = ReadFile(fInfo->m_handle, ptr, static_cast<DWORD>(count), nullptr, pOverlapped);
+    BOOL wrResult = ReadFile(fInfo->m_handle, ptr, static_cast<DWORD>(count), nullptr, pOverlapped.get());
     DWORD error = GetLastError();
 
     // ReadFile will return false when a) the operation failed, or b) when the request is still
     // pending. The error code will tell us which is which.
-
-    if ( wrResult == FALSE && error == ERROR_IO_PENDING )
+    if (wrResult == FALSE && error == ERROR_IO_PENDING)
+    {
+        // Overlapped is deleted in the threadpool callback.
+        pOverlapped.release();
         return 0;
+    }
 
     // We find ourselves here because there was a synchronous completion, either with an error or
     // success. Either way, we don't need the thread pool I/O request here, or the request and
     // overlapped structures.
-
     CancelThreadpoolIo(static_cast<PTP_IO>(fInfo->m_io_context));
 
     size_t result = static_cast<size_t>(-1);
 
-    if ( wrResult == TRUE )
+    if (wrResult == TRUE)
     {
         // If ReadFile returned true, it must be because the operation completed immediately.
         // However, we didn't pass in an address for the number of bytes written, so
@@ -495,20 +505,18 @@ size_t _read_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ stre
         result = GetOverlappedResult(fInfo->m_handle, pOverlapped, &read, FALSE) ? static_cast<size_t>(read) : static_cast<size_t>(-1);
     }
 
-    delete pOverlapped;
-
-    if ( wrResult == FALSE && error == ERROR_HANDLE_EOF )
+    if (wrResult == FALSE && error == ERROR_HANDLE_EOF)
     {
         callback->on_completed(0);
         return 0;
     }
 
-    if ( result == static_cast<size_t>(-1) )
+    if (result == static_cast<size_t>(-1))
         callback->on_error(std::make_exception_ptr(utility::details::create_system_error(error)));
 
     return result;
 #else
-    BOOL wrResult = ReadFile(fInfo->m_handle, ptr, static_cast<DWORD>(count), nullptr, pOverlapped);
+    BOOL wrResult = ReadFile(fInfo->m_handle, ptr, static_cast<DWORD>(count), nullptr, pOverlapped.get());
     DWORD error = GetLastError();
 
     // 1. If ReadFile returned true, it must be because the operation completed immediately.
@@ -519,25 +527,30 @@ size_t _read_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ stre
     // We do not need to call GetOverlappedResult, the workerthread will call the "on_error()" if the ReadFile falied.
     // "req" is deleted in "_ReadFileCompletionRoutine, "pOverlapped" is deleted in io_scheduler::FileIOCompletionRoutine.
     if (wrResult == TRUE)
+    {
+        pOverlapped.release();
         return 0;
+    }
 
     // 2. If ReadFile returned false and GetLastError is ERROR_IO_PENDING, return 0.
     //    The xp threadpool will create a workerthread to run "_WriteFileCompletionRoutine" after the operation completed.
     if (wrResult == FALSE && error == ERROR_IO_PENDING)
+    {
+        // Overlapped is deleted in the threadpool callback.
+        pOverlapped.release();
         return 0;
+    }
 
-    // 3. If ReadFile returned false and GetLastError is ERROR_HANDLE_EOF, we must call "callback->on_completed(0)" and delete.
+    // 3. If ReadFile returned false and GetLastError is ERROR_HANDLE_EOF, we must call "callback->on_completed(0)".
     //    The threadpool will not start the workerthread.
     if (wrResult == FALSE && error == ERROR_HANDLE_EOF)
     {
-        delete pOverlapped;
         callback->on_completed(0);
         return 0;
     }
 
-    // 4. If ReadFile returned false and GetLastError is not a valid error code, we must call "callback->on_error()" and delete.
+    // 4. If ReadFile returned false and GetLastError is not a valid error code, we must call "callback->on_error()".
     //    The threadpool will not start the workerthread.
-    delete pOverlapped;
     callback->on_error(std::make_exception_ptr(utility::details::create_system_error(error)));
 
     return static_cast<size_t>(-1);
