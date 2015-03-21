@@ -38,86 +38,6 @@ namespace Concurrency { namespace streams { namespace details {
 /***
 * ==++==
 *
-* Scheduler details.
-*
-* =-=-=-
-****/
-
-class io_scheduler;
-
-/// <summary>
-/// Scheduler of I/O completions as well as any asynchronous operations that
-/// are created internally as opposed to operations created by the application.
-/// </summary>
-class io_scheduler
-{
-public:
-    /// <summary>
-    /// Constructor
-    /// </summary>
-    io_scheduler()
-    : m_outstanding_work(0)
-    {
-        m_no_outstanding_work.set();
-    }
-
-    /// <summary>
-    /// Destructor
-    /// </summary>
-    ~io_scheduler()
-    {
-        m_no_outstanding_work.wait();
-    }
-
-    void submit_io()
-    {
-        m_no_outstanding_work.reset();
-        ++m_outstanding_work;
-    }
-
-    void complete_io()
-    {
-        if (--m_outstanding_work == 0)
-        {
-            m_no_outstanding_work.set();
-        }
-    }
-
-    io_service& service()
-    {
-        return crossplat::threadpool::shared_instance().service();
-    }
-
-private:
-    pplx::extensibility::event_t m_no_outstanding_work;
-
-    volatile std::atomic<long> m_outstanding_work;
-};
-
-/// <summary>
-/// We keep a single instance of the I/O scheduler. In order to create it on first
-/// demand, it's referenced through a shared_ptr<T> and retrieved through function call.
-/// </summary>
-boost::mutex _g_lock;
-std::unique_ptr<io_scheduler> _g_scheduler;
-
-/// <summary>
-/// Get the I/O scheduler instance.
-/// </summary>
-io_scheduler * get_scheduler()
-{
-    boost::lock_guard<boost::mutex> lck(_g_lock);
-    if ( !_g_scheduler )
-    {
-        _g_scheduler = std::unique_ptr<io_scheduler>(new io_scheduler());
-    }
-
-    return _g_scheduler.get();
-}
-
-/***
-* ==++==
-*
 * Implementation details of the file stream buffer
 *
 * =-=-=-
@@ -164,7 +84,7 @@ struct _file_info_impl : _file_info
 /// <returns>The error code if there was an error in file creation.</returns>
 bool _finish_create(int fh, _filestream_callback *callback, std::ios_base::openmode mode, int /* prot */)
 {
-    if ( fh != -1 )
+    if (fh != -1)
     {
         // Buffer reads internally if and only if we're just reading (not also writing) and
         // if the file is opened exclusively. If either is false, we're better off just
@@ -180,7 +100,7 @@ bool _finish_create(int fh, _filestream_callback *callback, std::ios_base::openm
 
         auto info = new _file_info_impl(fh, mode, buffer);
 
-        if ( mode & std::ios_base::app || mode & std::ios_base::ate )
+        if (mode & std::ios_base::app || mode & std::ios_base::ate)
         {
             info->m_wrpos = static_cast<size_t>(-1); // Start at the end of the file.
         }
@@ -240,8 +160,7 @@ int get_open_flags(std::ios_base::openmode mode)
 /// </remarks>
 bool _open_fsb_str(_filestream_callback *callback, const char *filename, std::ios_base::openmode mode, int prot)
 {
-    if ( callback == nullptr ) return false;
-    if ( filename == nullptr ) return false;
+    if ( callback == nullptr || filename == nullptr) return false;
 
     std::string name(filename);
 
@@ -336,12 +255,8 @@ bool _close_fsb(_file_info **info, Concurrency::streams::details::_filestream_ca
 /// <returns>0 if the write request is still outstanding, -1 if the request failed, otherwise the size of the data written</returns>
 size_t _write_file_async(Concurrency::streams::details::_file_info_impl *fInfo, Concurrency::streams::details::_filestream_callback *callback, const void *ptr, size_t count, size_t position)
 {
-    // async file writes are emulated using tasks
-    auto sched = get_scheduler();
-
     ++fInfo->m_outstanding_writes;
-    sched->submit_io();
-
+ 
     pplx::create_task([=]() -> void
     {
         off_t abs_position;
@@ -388,8 +303,6 @@ size_t _write_file_async(Concurrency::streams::details::_file_info_impl *fInfo, 
                 fInfo->m_sync_waiters.clear();
             }
         }
-
-        sched->complete_io();
     });
 
     return 0;
@@ -406,9 +319,6 @@ size_t _write_file_async(Concurrency::streams::details::_file_info_impl *fInfo, 
 /// <returns>0 if the read request is still outstanding, -1 if the request failed, otherwise the size of the data read into the buffer</returns>
 size_t _read_file_async(Concurrency::streams::details::_file_info_impl *fInfo, Concurrency::streams::details::_filestream_callback *callback, void *ptr, size_t count, size_t offset)
 {
-    auto sched = get_scheduler();
-    sched->submit_io();
-
     pplx::create_task([=]() -> void
     {
         auto bytes_read = pread(fInfo->m_handle, ptr, count, offset);
@@ -420,7 +330,6 @@ size_t _read_file_async(Concurrency::streams::details::_file_info_impl *fInfo, C
         {
             callback->on_completed(bytes_read);
         }
-        sched->complete_io();
     });
 
     return 0;
