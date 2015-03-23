@@ -800,10 +800,6 @@ namespace streams
     /// <typeparam name="_CharType2">
     /// The data type of the basic element of the <c>streambuf.</c>
     /// </typeparam>
-    /// <remarks>
-    /// The rationale for refcounting is discussed in the accompanying design
-    /// documentation.
-    /// </remarks>
     template<typename _CharType>
     class streambuf : public details::basic_streambuf<_CharType>
     {
@@ -898,13 +894,13 @@ namespace streams
         virtual bool can_write() const { return  get_base()->can_write(); }
 
         /// <summary>
-        /// <c>can_seek<c/> is used to determine whether a stream buffer supports seeking.
+        /// <c>can_seek</c> is used to determine whether a stream buffer supports seeking.
         /// </summary>
         /// <returns>True if seeking is supported, false otherwise.</returns>
         virtual bool can_seek() const { return get_base()->can_seek(); }
 
         /// <summary>
-        /// <c>has_size<c/> is used to determine whether a stream buffer supports size().
+        /// <c>has_size</c> is used to determine whether a stream buffer supports size().
         /// </summary>
         /// <returns>True if the <c>size</c> API is supported, false otherwise.</returns>
         virtual bool has_size() const { return get_base()->has_size(); }

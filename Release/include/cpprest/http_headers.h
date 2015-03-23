@@ -153,7 +153,7 @@ public:
     /// </summary>
     /// <param name="name">The name of the header field.</param>
     /// <param name="value">The value of the header field.</param>
-    /// <remark>If the header field exists, the value will be combined as comma separated string.</remark>
+    /// <remarks>If the header field exists, the value will be combined as comma separated string.</remarks>
     template<typename _t1>
     void add(const key_type& name, const _t1& value)
     {
