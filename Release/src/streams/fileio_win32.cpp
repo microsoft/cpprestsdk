@@ -414,7 +414,7 @@ size_t _write_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ str
         // However, we didn't pass in an  address for the number of bytes written, so
         // we have to retrieve it using 'GetOverlappedResult,' which may, in turn, fail.
         DWORD written = 0;
-        result = GetOverlappedResult(fInfo->m_handle, pOverlapped, &written, FALSE) ? static_cast<size_t>(written) : static_cast<size_t>(-1);
+        result = GetOverlappedResult(fInfo->m_handle, pOverlapped.get(), &written, FALSE) ? static_cast<size_t>(written) : static_cast<size_t>(-1);
     }
 
     if (result == static_cast<size_t>(-1))
@@ -502,7 +502,7 @@ size_t _read_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ stre
         // However, we didn't pass in an address for the number of bytes written, so
         // we have to retrieve it using 'GetOverlappedResult,' which may, in turn, fail.
         DWORD read = 0;
-        result = GetOverlappedResult(fInfo->m_handle, pOverlapped, &read, FALSE) ? static_cast<size_t>(read) : static_cast<size_t>(-1);
+        result = GetOverlappedResult(fInfo->m_handle, pOverlapped.get(), &read, FALSE) ? static_cast<size_t>(read) : static_cast<size_t>(-1);
     }
 
     if (wrResult == FALSE && error == ERROR_HANDLE_EOF)

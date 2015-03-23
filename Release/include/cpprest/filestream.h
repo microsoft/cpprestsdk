@@ -217,11 +217,17 @@ namespace details {
             return pplx::create_task(result_tce);
         }
 
+        // Workaround GCC compiler bug https://gcc.gnu.org/bugzilla/show_bug.cgi?id=58972
+        void _invoke_parent_close_read()
+        {
+            streambuf_state_manager<_CharType>::_close_read();
+        }
+
         pplx::task<void> _close_read()
         {
             return m_readOps.enqueue_operation([this]
             {
-                streambuf_state_manager<_CharType>::_close_read();
+                _invoke_parent_close_read();
 
                 if (this->can_write())
                 {
