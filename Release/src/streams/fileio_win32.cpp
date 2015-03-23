@@ -196,13 +196,13 @@ void _finish_create(HANDLE fh, _In_ _filestream_callback *callback, std::ios_bas
     }
 #else
     io_ctxt = CreateThreadpoolIo(fh, IoCompletionCallback, nullptr, nullptr);
-    if(io_ctxt == nullptr)
+    if (io_ctxt == nullptr)
     {
         callback->on_error(std::make_exception_ptr(utility::details::create_system_error(GetLastError())));
         return;
     }
 
-    if(!SetFileCompletionNotificationModes(fh, FILE_SKIP_COMPLETION_PORT_ON_SUCCESS))
+    if (!SetFileCompletionNotificationModes(fh, FILE_SKIP_COMPLETION_PORT_ON_SUCCESS))
     {
         CloseThreadpoolIo(static_cast<PTP_IO>(io_ctxt));
         callback->on_error(std::make_exception_ptr(utility::details::create_system_error(GetLastError())));
