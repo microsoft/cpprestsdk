@@ -87,7 +87,7 @@ TEST_FIXTURE(uri_address, auth_no_data, "Ignore:Linux", "89", "Ignore:Apple", "8
 {
     test_http_server::scoped_server scoped(m_uri);
     http_client_config client_config;
-    credentials cred(U("some_user"), U("some_password")); // WinHTTP requires non-empty password
+    web::credentials cred(U("some_user"), U("some_password")); // WinHTTP requires non-empty password
     client_config.set_credentials(cred);
     http_client client(m_uri, client_config);
     const method mtd = methods::POST;
@@ -126,7 +126,7 @@ TEST_FIXTURE(uri_address, proxy_auth_known_contentlength, "Ignore:Linux", "88", 
 {
     test_http_server::scoped_server scoped(m_uri);
     http_client_config client_config;
-    credentials cred(U("some_user"), U("some_password")); // WinHTTP requires non-empty password
+    web::credentials cred(U("some_user"), U("some_password")); // WinHTTP requires non-empty password
     client_config.set_credentials(cred);
     http_client client(m_uri, client_config);
     const method mtd = methods::POST;
@@ -199,7 +199,7 @@ TEST_FIXTURE(uri_address, proxy_auth_unknown_contentlength, "Ignore:Linux", "88"
 {
     test_http_server::scoped_server scoped(m_uri);
     http_client_config client_config;
-    credentials cred(U("some_user"), U("some_password")); // WinHTTP requires non-empty password
+    web::credentials cred(U("some_user"), U("some_password")); // WinHTTP requires non-empty password
     client_config.set_credentials(cred);
     http_client client(m_uri, client_config);
     const method mtd = methods::POST;
@@ -271,7 +271,7 @@ TEST_FIXTURE(uri_address, error_after_valid_credentials, "Ignore:Linux", "89", "
     web::http::uri uri(U("http://localhost:34569/"));
     test_http_server::scoped_server scoped(uri);
     http_client_config client_config;
-    credentials cred(U("some_user"), U("some_password"));
+    web::credentials cred(U("some_user"), U("some_password"));
     client_config.set_credentials(cred);
     http_client client(uri, client_config);
 
@@ -379,7 +379,7 @@ TEST_FIXTURE(server_properties, unsuccessful_auth_with_basic_cred, "Requires", "
     load_parameters();
 
     http_client_config config;
-    config.set_credentials(credentials(m_username, m_password));
+    config.set_credentials(web::credentials(m_username, m_password));
 
     http_client client(m_uri, config);
     http_response response = client.request(methods::GET).get();
@@ -391,7 +391,7 @@ TEST_FIXTURE(server_properties, basic_anonymous_auth_with_basic_cred, "Requires"
     load_parameters();
 
     http_client_config config;
-    config.set_credentials(credentials(m_username, m_password));
+    config.set_credentials(web::credentials(m_username, m_password));
     http_client client(m_uri, config);
     http_request req(methods::GET);
     req.headers().add(U("UserName"), m_username);
@@ -405,7 +405,7 @@ TEST_FIXTURE(server_properties, none_auth_with_cred, "Requires", "Server;UserNam
     load_parameters();
 
     http_client_config config;
-    config.set_credentials(credentials(m_username, m_password));
+    config.set_credentials(web::credentials(m_username, m_password));
     http_client client(m_uri, config);
     http_response response = client.request(methods::GET).get();
     VERIFY_ARE_EQUAL(status_codes::Forbidden, response.status_code());
@@ -417,7 +417,7 @@ TEST_FIXTURE(server_properties, successful_auth_with_domain_cred, "Requires", "S
     load_parameters();
 
     http_client_config config;
-    config.set_credentials(credentials(m_username, m_password));
+    config.set_credentials(web::credentials(m_username, m_password));
     http_client client(m_uri, config);
     http_request req(methods::GET);
     req.headers().add(U("UserName"), m_username);
@@ -432,7 +432,7 @@ TEST_FIXTURE(server_properties, failed_authentication_resend_request_error, "Req
     load_parameters();
 
     http_client_config config;
-    config.set_credentials(credentials(m_username, m_password));
+    config.set_credentials(web::credentials(m_username, m_password));
     http_client client(m_uri, config);
 
     const size_t rawDataSize = 8;
@@ -477,7 +477,7 @@ TEST_FIXTURE(server_properties, set_user_options, "Requires", "Server;UserName;P
     load_parameters();
 
     http_client_config config;
-    config.set_credentials(credentials(m_username, m_password));
+    config.set_credentials(web::credentials(m_username, m_password));
 
     config.set_nativehandle_options([&](native_handle handle)->void{
         DWORD policy = WINHTTP_AUTOLOGON_SECURITY_LEVEL_LOW;
@@ -519,7 +519,7 @@ TEST_FIXTURE(uri_address, auth_producer_comsumer_buffer)
     VERIFY_IS_FALSE(config.buffer_request());
     config.set_buffer_request(true);
     VERIFY_IS_TRUE(config.buffer_request());
-    config.set_credentials(credentials(U("USERNAME"), U("PASSWORD")));
+    config.set_credentials(web::credentials(U("USERNAME"), U("PASSWORD")));
 
     http_client client(m_uri, config);
 
@@ -583,7 +583,7 @@ TEST_FIXTURE(uri_address, auth_producer_comsumer_buffer_fail)
 
     http_client_config config;
     config.set_buffer_request(true);
-    config.set_credentials(credentials(U("USERNAME"), U("PASSWORD")));
+    config.set_credentials(web::credentials(U("USERNAME"), U("PASSWORD")));
 
     http_client client(m_uri, config);
 
@@ -634,7 +634,7 @@ TEST_FIXTURE(uri_address, failed_authentication_attempt, "Ignore:Linux", "89", "
     handle_timeout([]
     {
         http_client_config config;
-        credentials cred(U("user"), U("schmuser"));
+        web::credentials cred(U("user"), U("schmuser"));
         config.set_credentials(cred);
         http_client client(U("https://apis.live.net"), config);
         http_response response = client.request(methods::GET, U("V5.0/me/skydrive/files")).get();
