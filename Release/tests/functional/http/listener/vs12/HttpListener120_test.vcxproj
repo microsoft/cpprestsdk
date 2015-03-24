@@ -99,7 +99,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;HTTPTESTS_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);$(TestRoot)\functional\http\utilities\include;$(TestListenerPath)\include</AdditionalIncludeDirectories>
-      <AdditionalOptions>-Zm140 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-Zm140 /bigobj%(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -113,7 +113,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;HTTPTESTS_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);$(TestRoot)\functional\http\utilities\include;$(TestListenerPath)\include</AdditionalIncludeDirectories>
-      <AdditionalOptions>-Zm140 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-Zm140 /bigobj%(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -127,7 +127,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;HTTPTESTS_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);$(TestRoot)\functional\http\utilities\include;$(TestListenerPath)\include</AdditionalIncludeDirectories>
-      <AdditionalOptions>-Zm140 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-Zm140 /bigobj%(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -143,7 +143,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;HTTPTESTS_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);$(TestRoot)\functional\http\utilities\include;$(TestListenerPath)\include</AdditionalIncludeDirectories>
-      <AdditionalOptions>-Zm140 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-Zm140 /bigobj%(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -161,7 +161,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;HTTPTESTS_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);$(TestRoot)\functional\http\utilities\include;$(TestListenerPath)\include</AdditionalIncludeDirectories>
-      <AdditionalOptions>-Zm140 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-Zm140 /bigobj%(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -179,7 +179,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;HTTPTESTS_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);$(TestRoot)\functional\http\utilities\include;$(TestListenerPath)\include</AdditionalIncludeDirectories>
-      <AdditionalOptions>-Zm140 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-Zm140 /bigobj%(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
