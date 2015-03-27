@@ -201,11 +201,14 @@ TEST(parsing_doubles_setlocale, "Ignore:Android", "Locale not supported on Andro
 #else
     std::string changedLocale("fr_FR.UTF-8");
 #endif
-    setlocale(LC_ALL, changedLocale.c_str());
 
-    test_double(1.91563);
-    test_double(2.0e93);
-    setlocale(LC_ALL, "C");
+    // If locale isn't installed on system just silently pass.
+    if (setlocale(LC_ALL, changedLocale.c_str()) != nullptr)
+    {
+        test_double(1.91563);
+        test_double(2.0e93);
+        setlocale(LC_ALL, "C");
+    }
 }
 
 TEST(parsing_very_large_doubles)
