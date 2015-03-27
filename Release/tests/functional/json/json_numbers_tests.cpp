@@ -61,8 +61,11 @@ void test_int64(int64_t number)
     json::value num = json::value::parse(ss);
     VERIFY_ARE_EQUAL(number, num.as_number().to_int64());
     VERIFY_IS_TRUE(num.is_integer());
+    num = json::value::number(number);
+    VERIFY_ARE_EQUAL(number, num.as_number().to_int64());
+    VERIFY_IS_TRUE(num.is_integer());
 
-    // Check that the number is convertable to signed int64
+    // Check that the number is convertible to signed int64
     VERIFY_IS_TRUE(num.as_number().is_int64());
 
     // Check for other integral conversions
@@ -103,8 +106,11 @@ void test_int64(uint64_t number)
     json::value num = json::value::parse(ss);
     VERIFY_ARE_EQUAL(number, num.as_number().to_uint64());
     VERIFY_IS_TRUE(num.is_integer());
+    num = json::value::number(number);
+    VERIFY_ARE_EQUAL(number, num.as_number().to_uint64());
+    VERIFY_IS_TRUE(num.is_integer());
 
-    // Check that the number is convertable to unsigned int64
+    // Check that the number is convertible to unsigned int64
     VERIFY_IS_TRUE(num.as_number().is_uint64());
 
     // Check for other integral conversions

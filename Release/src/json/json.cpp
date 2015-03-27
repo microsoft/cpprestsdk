@@ -175,6 +175,21 @@ web::json::value web::json::value::number(int32_t value)
     return web::json::value(value);
 }
 
+web::json::value web::json::value::number(uint32_t value)
+{
+    return web::json::value(value);
+}
+
+web::json::value web::json::value::number(int64_t value)
+{
+    return web::json::value(value);
+}
+
+web::json::value web::json::value::number(uint64_t value)
+{
+    return web::json::value(value);
+}
+
 web::json::value web::json::value::boolean(bool value)
 {
     return web::json::value(value);

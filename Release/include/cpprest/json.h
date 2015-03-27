@@ -243,6 +243,27 @@ namespace json
         static _ASYNCRTIMP value __cdecl number(int32_t value);
 
         /// <summary>
+        /// Creates a number value
+        /// </summary>
+        /// <param name="value">The C++ value to create a JSON value from</param>
+        /// <returns>A JSON number value</returns>
+        static _ASYNCRTIMP value __cdecl number(uint32_t value);
+
+        /// <summary>
+        /// Creates a number value
+        /// </summary>
+        /// <param name="value">The C++ value to create a JSON value from</param>
+        /// <returns>A JSON number value</returns>
+        static _ASYNCRTIMP value __cdecl number(int64_t value);
+
+        /// <summary>
+        /// Creates a number value
+        /// </summary>
+        /// <param name="value">The C++ value to create a JSON value from</param>
+        /// <returns>A JSON number value</returns>
+        static _ASYNCRTIMP value __cdecl number(uint64_t value);
+
+        /// <summary>
         /// Creates a Boolean value
         /// </summary>
         /// <param name="value">The C++ value to create a JSON value from</param>
