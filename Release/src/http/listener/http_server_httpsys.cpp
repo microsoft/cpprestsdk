@@ -546,7 +546,7 @@ void windows_request_context::read_headers_io_completion(DWORD error_code, DWORD
         }
         catch(const uri_exception &e)
         {
-            m_msg.reply(status_codes::InternalError, e.what());
+            m_msg.reply(status_codes::BadRequest, e.what());
         }
         m_msg.set_method(parse_request_method(m_request));
         parse_http_headers(m_request->Headers, m_msg.headers());
