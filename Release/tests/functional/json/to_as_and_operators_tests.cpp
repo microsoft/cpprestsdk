@@ -331,6 +331,86 @@ TEST(negative_as_tests)
     VERIFY_THROWS(i.as_string(), json::json_exception);
 }
 
+TEST(erase_array_index)
+{
+    json::value a = json::value::array(4);
+    a[0] = json::value(1);
+    a[1] = json::value(2);
+    a[2] = json::value(3);
+    a[3] = json::value(4);
+
+    a.erase(1);
+    VERIFY_ARE_EQUAL(3, a.size());
+    VERIFY_ARE_EQUAL(1, a[0].as_integer());
+    VERIFY_ARE_EQUAL(3, a[1].as_integer());
+    VERIFY_ARE_EQUAL(4, a[2].as_integer());
+    a.as_array().erase(2);
+    VERIFY_ARE_EQUAL(2, a.size());
+    VERIFY_ARE_EQUAL(1, a[0].as_integer());
+    VERIFY_ARE_EQUAL(3, a[1].as_integer());
+}
+
+TEST(erase_array_iter)
+{
+    json::value a = json::value::array(3);
+    a[0] = json::value(1);
+    a[1] = json::value(2);
+    a[2] = json::value(3);
+
+    auto iter = a.as_array().begin() + 1;
+    a.as_array().erase(iter);
+    VERIFY_ARE_EQUAL(2, a.size());
+    VERIFY_ARE_EQUAL(1, a[0].as_integer());
+    VERIFY_ARE_EQUAL(3, a[1].as_integer());
+
+    auto citer = a.as_array().cbegin() + 1;
+    a.as_array().erase(citer);
+    VERIFY_ARE_EQUAL(1, a.size());
+    VERIFY_ARE_EQUAL(1, a[0].as_integer());
+}
+
+TEST(erase_object_key)
+{
+    auto o = json::value::object();
+    o[U("a")] = json::value(1);
+    o[U("b")] = json::value(2);
+    o[U("c")] = json::value(3);
+    o[U("d")] = json::value(4);
+
+    o.erase(U("a"));
+    VERIFY_ARE_EQUAL(3, o.size());
+    VERIFY_ARE_EQUAL(2, o[U("b")].as_integer());
+    VERIFY_ARE_EQUAL(3, o[U("c")].as_integer());
+    VERIFY_ARE_EQUAL(4, o[U("d")].as_integer());
+
+    o.as_object().erase(U("d"));
+    VERIFY_ARE_EQUAL(2, o.size());
+    VERIFY_ARE_EQUAL(2, o[U("b")].as_integer());
+    VERIFY_ARE_EQUAL(3, o[U("c")].as_integer());
+}
+
+TEST(erase_object_iter)
+{
+    auto o = json::value::object();
+    o[U("a")] = json::value(1);
+    o[U("b")] = json::value(2);
+    o[U("c")] = json::value(3);
+    o[U("d")] = json::value(4);
+
+    auto iter = o.as_object().begin() + 1;
+    o.as_object().erase(iter);
+    VERIFY_ARE_EQUAL(3, o.size());
+    VERIFY_ARE_EQUAL(1, o[U("a")].as_integer());
+    VERIFY_ARE_EQUAL(3, o[U("c")].as_integer());
+    VERIFY_ARE_EQUAL(4, o[U("d")].as_integer());
+
+    auto citer = o.as_object().begin() + 2;
+    o.as_object().erase(citer);
+    VERIFY_ARE_EQUAL(2, o.size());
+    VERIFY_ARE_EQUAL(1, o[U("a")].as_integer());
+    VERIFY_ARE_EQUAL(3, o[U("c")].as_integer());
+}
+
 TEST(floating_number_serialize)
 {
     // This number will have the longest serializaton possible (lenght of the string):

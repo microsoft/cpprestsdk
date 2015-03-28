@@ -565,6 +565,18 @@ public:
         value get(const utility::string_t &key) const;
 
         /// <summary>
+        /// Erases an element of a JSON array. Throws if index is out of bounds.
+        /// </summary>
+        /// <param name="index">The index of the element to erase in the JSON array.</param>
+        _ASYNCRTIMP void erase(size_t index);
+
+        /// <summary>
+        /// Erases an element of a JSON object. Throws if the key doesn't exist.
+        /// </summary>
+        /// <param name="key">The key of the element to erase in the JSON object.</param>
+        _ASYNCRTIMP void erase(const utility::string_t &key);
+
+        /// <summary>
         /// Accesses an element of a JSON array. Throws when index out of bounds.
         /// </summary>
         /// <param name="index">The index of an element in the JSON array.</param>
@@ -865,6 +877,28 @@ public:
         }
 
         /// <summary>
+        /// Deletes an element of the JSON array.
+        /// </summary>
+        /// <param name="position">A const_iterator to the element to delete.</param>
+        void erase(const_iterator position)
+        {
+            m_elements.erase(position);
+        }
+
+        /// <summary>
+        /// Deletes the element at an index of the JSON array.
+        /// </summary>
+        /// <param name="index">The index of the element to delete.</param>
+        void erase(size_type index)
+        {
+            if (index >= m_elements.size())
+            {
+                throw json_exception(_XPLATSTR("index out of bounds"));
+            }
+            m_elements.erase(m_elements.begin() + index);
+        }
+
+        /// <summary>
         /// Accesses an element of a JSON array. Throws when index out of bounds.
         /// </summary>
         /// <param name="index">The index of an element in the JSON array.</param>
@@ -1054,6 +1088,30 @@ public:
         const_reverse_iterator crend() const
         {
             return m_elements.crend();
+        }
+
+        /// <summary>
+        /// Deletes an element of the JSON object.
+        /// </summary>
+        /// <param name="position">A const_iterator to the element to delete.</param>
+        void erase(const_iterator position)
+        {
+            m_elements.erase(position);
+        }
+
+        /// <summary>
+        /// Deletes an element of the JSON object. If the key doesn't exist, this method throws.
+        /// </summary>
+        /// <param name="key">The key of an element in the JSON object.</param>
+        void erase(const utility::string_t &key)
+        {
+            auto iter = find_by_key(key);
+            if (iter == m_elements.end() || key != (iter->first))
+            {
+                throw web::json::json_exception(_XPLATSTR("Key not found"));
+            }
+
+            m_elements.erase(iter);
         }
 
         /// <summary>

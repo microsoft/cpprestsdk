@@ -425,6 +425,16 @@ bool json::value::operator==(const json::value &other) const
     __assume(0);
 }
 
+void web::json::value::erase(size_t index)
+{
+    return this->as_array().erase(index);
+}
+
+void web::json::value::erase(const utility::string_t &key)
+{
+    return this->as_object().erase(key);
+}
+
 // at() overloads
 web::json::value& web::json::value::at(size_t index)
 {
