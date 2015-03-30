@@ -245,20 +245,20 @@ TEST_FIXTURE(uri_address, set_progress_handler_open_failure)
     const size_t repeats = 5500;
     for (size_t i = 0; i < repeats; ++i)
         data.append(U("abcdefghihklmnopqrstuvwxyz"));
-    
+
     utility::size64_t upsize = 4711u, downsize = 4711u;
     int calls = 0;
 
     http_request msg(mtd);
     // We should never see this handler called.
     msg.set_progress_handler(
-        [&](message_direction::direction direction, utility::size64_t so_far) 
-        { 
+        [&](message_direction::direction direction, utility::size64_t so_far)
+        {
             calls += 1;
-            if (direction == message_direction::upload) 
-                upsize = so_far; 
-            else 
-                downsize = so_far; 
+            if (direction == message_direction::upload)
+                upsize = so_far;
+            else
+                downsize = so_far;
         });
 
     msg.set_body(data);
@@ -406,12 +406,6 @@ TEST_FIXTURE(uri_address, data_download_exception)
     int numCalls = 0;
     msg.set_progress_handler([&](message_direction::direction, utility::size64_t)
     {
-        // TODO stgates - adding some debugging information to help with hard to reproduce
-        // sporadic failure.
-#if (defined(_MSC_VER) && (_MSC_VER >= 1800))
-        printf("In progress handler, numCalls:%i\n", numCalls);
-#endif
-
         if(++numCalls == 2)
         {
             // 2rd is for data download
@@ -421,22 +415,15 @@ TEST_FIXTURE(uri_address, data_download_exception)
 
     try
     {
-        client.request(msg).get().content_ready().get();
-    }
-    catch (http_exception const &e)
-    {
-        printf("http_exception:%s\n", e.what());
-        VERIFY_IS_TRUE(false);
+        handle_timeout([&]
+        {
+            client.request(msg).get().content_ready().get();
+        });
     }
     catch (std::invalid_argument const &)
     {
-        printf("std::invalid_argument\n");
+        // Expected.
     }
-    catch (std::exception const &e)
-    {
-        printf("std::exception:%s\n", e.what());
-    }
-    //VERIFY_THROWS(client.request(msg).get().content_ready().get(), std::invalid_argument);
 }
 
 }
