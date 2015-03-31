@@ -28,7 +28,7 @@
 namespace tests { namespace functional { namespace http { namespace client {
 
 // helper function to check if failure is due to timeout.
-bool is_timeout(const std::string &msg)
+inline bool is_timeout(const std::string &msg)
 {
     if (msg.find("The operation timed out") != std::string::npos /* WinHTTP */ ||
         msg.find("The operation was timed out") != std::string::npos /* IXmlHttpRequest2 */)
