@@ -74,9 +74,9 @@ void web::json::value::format(std::basic_string<char>& string) const
 template<typename CharType>
 void web::json::details::append_escape_string(std::basic_string<CharType>& str, const std::basic_string<CharType>& escaped)
 {
-    for (auto iter = escaped.begin(); iter != escaped.end(); ++iter)
+    for (const auto &ch : escaped)
     {
-        switch (*iter)
+        switch (ch)
         {
             case '\"':
                 str += '\\';
@@ -107,7 +107,22 @@ void web::json::details::append_escape_string(std::basic_string<CharType>& str, 
                 str += 't';
                 break;
             default:
-                str += *iter;
+
+                // If a control character then must unicode escaped.
+                if (ch >= 0 && ch <= 0x1F)
+                {
+                    static const std::array<CharType, 16> intToHex = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+                    str += '\\';
+                    str += 'u';
+                    str += '0';
+                    str += '0';
+                    str += intToHex[(ch & 0xF0) >> 4];
+                    str += intToHex[ch & 0x0F];
+                }
+                else
+                {
+                    str += ch;
+                }
         }
     }
 }

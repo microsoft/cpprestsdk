@@ -22,7 +22,9 @@
 ****/
 
 #include "stdafx.h"
+
 #include <array>
+#include <iomanip>
 
 #if defined(_WIN32) || defined(__APPLE__)
 #include <regex>
@@ -219,6 +221,48 @@ TEST(escaped_unicode_string)
     VERIFY_ARE_EQUAL(euro, str.as_string());
 
     VERIFY_PARSING_THROW(json::value::parse(U("\"\\u0klB\"")));
+}
+
+TEST(escaping_control_characters)
+{
+    for (int i = 0; i <= 0x1F; ++i)
+    {
+        ::utility::stringstream_t ss;
+        ss << U("\"\\u") << std::uppercase << std::setfill(U('0')) << std::setw(4) << std::hex << i << U("\"");
+        const auto &str = ss.str();
+        auto expectedStr = str;
+        if (i == 0x08)
+        {
+            expectedStr = U("\"\\b\"");
+        }
+        else if (i == 0x09)
+        {
+            expectedStr = U("\"\\t\"");
+        }
+        else if (i == 0x0A)
+        {
+            expectedStr = U("\"\\n\"");
+        }
+        else if (i == 0x0C)
+        {
+            expectedStr = U("\"\\f\"");
+        }
+        else if (i == 0x0D)
+        {
+            expectedStr = U("\"\\r\"");
+        }
+
+        // Try constructing a json string value directly.
+        ::utility::string_t schar;
+        schar.push_back(static_cast<::utility::string_t::value_type>(i));
+        const auto &sv = json::value::string(schar);
+        VERIFY_ARE_EQUAL(expectedStr, sv.serialize());
+
+        // Try parsing a string
+        const auto &v = json::value::parse(str);
+        VERIFY_IS_TRUE(v.is_string());
+        VERIFY_ARE_EQUAL(expectedStr, v.serialize());
+    }
 }
 
 TEST(comments_string)
