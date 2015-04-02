@@ -1418,6 +1418,8 @@ public:
         class _Value
         {
         public:
+            virtual std::unique_ptr<_Value> _copy_value() = 0;
+
             virtual bool has_field(const utility::string_t &) const { return false; }
             virtual value get_field(const utility::string_t &) const { throw json_exception(_XPLATSTR("not an object")); }
             virtual value get_element(array::size_type) const { throw json_exception(_XPLATSTR("not an array")); }
@@ -1487,6 +1489,10 @@ public:
         class _Null : public _Value
         {
         public:
+            virtual std::unique_ptr<_Value> _copy_value()
+            {
+                return utility::details::make_unique<_Null>();
+            }
             virtual json::value::value_type type() const { return json::value::Null; }
         };
 
@@ -1498,6 +1504,11 @@ public:
             _Number(uint32_t value) : m_number(value) { }
             _Number(int64_t value) : m_number(value) { }
             _Number(uint64_t value) : m_number(value) { }
+
+            virtual std::unique_ptr<_Value> _copy_value()
+            {
+                return utility::details::make_unique<_Number>(*this);
+            }
 
             virtual json::value::value_type type() const { return json::value::Number; }
 
@@ -1531,6 +1542,11 @@ public:
         {
         public:
             _Boolean(bool value) : m_value(value) { }
+
+            virtual std::unique_ptr<_Value> _copy_value()
+            {
+                return utility::details::make_unique<_Boolean>(*this);
+            }
 
             virtual json::value::value_type type() const { return json::value::Boolean; }
 
@@ -1576,6 +1592,11 @@ public:
                   m_has_escape_char(escape_chars)
             { }
 #endif
+
+            virtual std::unique_ptr<_Value> _copy_value()
+            {
+                return utility::details::make_unique<_String>(*this);
+            }
 
             virtual json::value::value_type type() const { return json::value::String; }
 
@@ -1642,6 +1663,11 @@ public:
 
             _Object(bool keep_order) : m_object(keep_order) { }
             _Object(object::storage_type fields, bool keep_order) : m_object(std::move(fields), keep_order) { }
+
+            virtual std::unique_ptr<_Value> _copy_value()
+            {
+                return utility::details::make_unique<_Object>(*this);
+            }
 
             virtual json::object& as_object() { return m_object; }
 
@@ -1748,6 +1774,11 @@ public:
             _Array() {}
             _Array(array::size_type size) : m_array(size) {}
             _Array(array::storage_type elements) : m_array(std::move(elements)) { }
+
+            virtual std::unique_ptr<_Value> _copy_value()
+            {
+                return utility::details::make_unique<_Array>(*this);
+            }
 
             virtual json::value::value_type type() const { return json::value::Array; }
 
