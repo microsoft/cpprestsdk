@@ -123,7 +123,7 @@ m_value(utility::details::make_unique<web::json::details::_String>(utility::stri
 { }
 
 web::json::value::value(const value &other) :
-    m_value(other.m_value->_copy_value())
+    m_value(other.m_value.get())
 #ifdef ENABLE_JSON_VALUE_VISUALIZER
     ,m_kind(other.m_kind)
 #endif
@@ -133,7 +133,7 @@ web::json::value &web::json::value::operator=(const value &other)
 {
     if(this != &other)
     {
-        m_value = std::unique_ptr<details::_Value>(other.m_value->_copy_value());
+        m_value = std::unique_ptr<details::_Value>(other.m_value.get());
 #ifdef ENABLE_JSON_VALUE_VISUALIZER
         m_kind = other.m_kind;
 #endif

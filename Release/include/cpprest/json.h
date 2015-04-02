@@ -1348,8 +1348,6 @@ public:
         class _Value
         {
         public:
-            virtual std::unique_ptr<_Value> _copy_value() = 0;
-
             virtual bool has_field(const utility::string_t &) const { return false; }
             virtual value get_field(const utility::string_t &) const { throw json_exception(_XPLATSTR("not an object")); }
             virtual value get_element(array::size_type) const { throw json_exception(_XPLATSTR("not an array")); }
@@ -1419,18 +1417,7 @@ public:
         class _Null : public _Value
         {
         public:
-
-            virtual std::unique_ptr<_Value> _copy_value()
-            {
-                return utility::details::make_unique<_Null>();
-            }
-
             virtual json::value::value_type type() const { return json::value::Null; }
-
-            _Null() { }
-
-        private:
-            template<typename CharType> friend class json::details::JSON_Parser;
         };
 
         class _Number : public _Value
@@ -1441,11 +1428,6 @@ public:
             _Number(uint32_t value) : m_number(value) { }
             _Number(int64_t value) : m_number(value) { }
             _Number(uint64_t value) : m_number(value) { }
-
-            virtual std::unique_ptr<_Value> _copy_value()
-            {
-                return utility::details::make_unique<_Number>(*this);
-            }
 
             virtual json::value::value_type type() const { return json::value::Number; }
 
@@ -1478,11 +1460,7 @@ public:
         class _Boolean : public _Value
         {
         public:
-
-            virtual std::unique_ptr<_Value> _copy_value()
-            {
-                return utility::details::make_unique<_Boolean>(*this);
-            }
+            _Boolean(bool value) : m_value(value) { }
 
             virtual json::value::value_type type() const { return json::value::Boolean; }
 
@@ -1502,9 +1480,6 @@ public:
 #endif
         private:
             template<typename CharType> friend class json::details::JSON_Parser;
-        public:
-            _Boolean(bool value) : m_value(value) { }
-        private:
             bool m_value;
         };
 
@@ -1543,11 +1518,6 @@ public:
                     copy_from(other);
                 }
                 return *this;
-            }
-
-            virtual std::unique_ptr<_Value> _copy_value()
-            {
-                return utility::details::make_unique<_String>(*this);
             }
 
             virtual json::value::value_type type() const { return json::value::String; }
@@ -1626,11 +1596,6 @@ public:
             _ASYNCRTIMP _Object(const _Object& other);
 
             virtual ~_Object() {}
-
-            virtual std::unique_ptr<_Value> _copy_value()
-            {
-                return utility::details::make_unique<_Object>(*this);
-            }
 
             virtual json::object& as_object() { return m_object;    }
 
@@ -1739,11 +1704,6 @@ public:
             _Array() {}
             _Array(array::size_type size) : m_array(size) {}
             _Array(array::storage_type elements) : m_array(std::move(elements)) { }
-
-            virtual std::unique_ptr<_Value> _copy_value()
-            {
-                return utility::details::make_unique<_Array>(*this);
-            }
 
             virtual json::value::value_type type() const { return json::value::Array; }
 
