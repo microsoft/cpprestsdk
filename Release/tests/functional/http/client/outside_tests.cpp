@@ -45,36 +45,6 @@ namespace tests { namespace functional { namespace http { namespace client {
 SUITE(outside_tests)
 {
 
-// helper function to check if failure is due to timeout.
-bool is_timeout(const std::string &msg)
-{
-    if (msg.find("The operation timed out") != std::string::npos /* WinHTTP */ ||
-        msg.find("The operation was timed out") != std::string::npos /* IXmlHttpRequest2 */)
-    {
-        return true;
-    }
-    return false;
-}
-
-template <typename Func>
-void handle_timeout(const Func &f)
-{
-    try
-    {
-        f();
-    }
-    catch (const http_exception &e)
-    {
-        if (is_timeout(e.what()))
-        {
-            // Since this test depends on an outside server sometimes it sporadically can fail due to timeouts
-            // especially on our build machines.
-            return;
-        }
-        throw;
-    }
-}
-
 TEST_FIXTURE(uri_address, outside_cnn_dot_com)
 {
     handle_timeout([]
