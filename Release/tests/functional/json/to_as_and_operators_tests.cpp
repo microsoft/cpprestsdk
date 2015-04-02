@@ -358,13 +358,15 @@ TEST(erase_array_iter)
     a[2] = json::value(3);
 
     auto iter = a.as_array().begin() + 1;
-    a.as_array().erase(iter);
+    auto afterLoc = a.as_array().erase(iter);
+    VERIFY_ARE_EQUAL(3, afterLoc->as_integer());
     VERIFY_ARE_EQUAL(2, a.size());
     VERIFY_ARE_EQUAL(1, a[0].as_integer());
     VERIFY_ARE_EQUAL(3, a[1].as_integer());
 
     auto citer = a.as_array().cbegin() + 1;
-    a.as_array().erase(citer);
+    afterLoc = a.as_array().erase(citer);
+    VERIFY_ARE_EQUAL(a.as_array().end(), afterLoc);
     VERIFY_ARE_EQUAL(1, a.size());
     VERIFY_ARE_EQUAL(1, a[0].as_integer());
 }
@@ -398,15 +400,17 @@ TEST(erase_object_iter)
     o[U("d")] = json::value(4);
 
     auto iter = o.as_object().begin() + 1;
-    o.as_object().erase(iter);
+    auto afterLoc = o.as_object().erase(iter);
     VERIFY_ARE_EQUAL(3, o.size());
+    VERIFY_ARE_EQUAL(3, afterLoc->second.as_integer());
     VERIFY_ARE_EQUAL(1, o[U("a")].as_integer());
     VERIFY_ARE_EQUAL(3, o[U("c")].as_integer());
     VERIFY_ARE_EQUAL(4, o[U("d")].as_integer());
 
     auto citer = o.as_object().begin() + 2;
-    o.as_object().erase(citer);
+    afterLoc = o.as_object().erase(citer);
     VERIFY_ARE_EQUAL(2, o.size());
+    VERIFY_ARE_EQUAL(o.as_object().end(), afterLoc);
     VERIFY_ARE_EQUAL(1, o[U("a")].as_integer());
     VERIFY_ARE_EQUAL(3, o[U("c")].as_integer());
 }

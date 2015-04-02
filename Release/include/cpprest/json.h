@@ -880,9 +880,10 @@ public:
         /// Deletes an element of the JSON array.
         /// </summary>
         /// <param name="position">A const_iterator to the element to delete.</param>
-        void erase(const_iterator position)
+        /// <returns>Iterator to the new location of the element following the erased element.</returns>
+        iterator erase(const_iterator position)
         {
-            m_elements.erase(position);
+            return m_elements.erase(position);
         }
 
         /// <summary>
@@ -1094,9 +1095,10 @@ public:
         /// Deletes an element of the JSON object.
         /// </summary>
         /// <param name="position">A const_iterator to the element to delete.</param>
-        void erase(const_iterator position)
+        /// <returns>Iterator to the new location of the element following the erased element.</returns>
+        iterator erase(const_iterator position)
         {
-            m_elements.erase(position);
+            return m_elements.erase(position);
         }
 
         /// <summary>
