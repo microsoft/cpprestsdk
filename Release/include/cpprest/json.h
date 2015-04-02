@@ -881,7 +881,8 @@ public:
         /// </summary>
         /// <param name="position">A const_iterator to the element to delete.</param>
         /// <returns>Iterator to the new location of the element following the erased element.</returns>
-        iterator erase(const_iterator position)
+        /// <remarks>GCC doesn't support erase with const_iterator on vector yet. In the future this should be changed.</remarks>
+        iterator erase(iterator position)
         {
             return m_elements.erase(position);
         }
@@ -1096,7 +1097,8 @@ public:
         /// </summary>
         /// <param name="position">A const_iterator to the element to delete.</param>
         /// <returns>Iterator to the new location of the element following the erased element.</returns>
-        iterator erase(const_iterator position)
+        /// <remarks>GCC doesn't support erase with const_iterator on vector yet. In the future this should be changed.</remarks>
+        iterator erase(iterator position)
         {
             return m_elements.erase(position);
         }
@@ -1108,7 +1110,7 @@ public:
         void erase(const utility::string_t &key)
         {
             auto iter = find_by_key(key);
-            if (iter == m_elements.end() || key != (iter->first))
+            if (iter == m_elements.end())
             {
                 throw web::json::json_exception(_XPLATSTR("Key not found"));
             }
@@ -1124,9 +1126,10 @@ public:
         json::value& at(const utility::string_t& key)
         {
             auto iter = find_by_key(key);
-
-            if (iter == m_elements.end() || key != (iter->first))
+            if (iter == m_elements.end())
+            {
                 throw web::json::json_exception(_XPLATSTR("Key not found"));
+            }
 
             return iter->second;
         }
@@ -1139,9 +1142,10 @@ public:
         const json::value& at(const utility::string_t& key) const
         {
             auto iter = find_by_key(key);
-
-            if (iter == m_elements.end() || key != (iter->first))
+            if (iter == m_elements.end())
+            {
                 throw web::json::json_exception(_XPLATSTR("Key not found"));
+            }
 
             return iter->second;
         }
@@ -1153,10 +1157,12 @@ public:
         /// <returns>If the key exists, a reference to the value kept in the field, otherwise a newly created null value that will be stored for the given key.</returns>
         json::value& operator[](const utility::string_t& key)
         {
-            auto iter = find_by_key(key);
+            auto iter = find_insert_location(key);
 
-            if (iter == m_elements.end() || key != (iter->first))
+            if (iter == m_elements.end() || key != iter->first)
+            {
                 return m_elements.insert(iter, std::pair<utility::string_t, value>(key, value()))->second;
+            }
 
             return iter->second;
         }
@@ -1168,7 +1174,7 @@ public:
         /// <returns>A const iterator to the value kept in the field.</returns>
         const_iterator find(const utility::string_t& key) const
         {
-            return find_internal(key);
+            return find_by_key(key);
         }
 
         /// <summary>
@@ -1199,6 +1205,21 @@ public:
             return p1.first < key;
         }
 
+        storage_type::iterator find_insert_location(const utility::string_t &key)
+        {
+            if (m_keep_order)
+            {
+                return std::find_if(m_elements.begin(), m_elements.end(),
+                    [&key](const std::pair<utility::string_t, value>& p) {
+                    return p.first == key;
+                });
+            }
+            else
+            {
+                return std::lower_bound(m_elements.begin(), m_elements.end(), key, compare_with_key);
+            }
+        }
+
         storage_type::const_iterator find_by_key(const utility::string_t& key) const
         {
             if (m_keep_order)
@@ -1210,52 +1231,22 @@ public:
             }
             else
             {
-                return std::lower_bound(m_elements.begin(), m_elements.end(), key, compare_with_key);
+                auto iter = std::lower_bound(m_elements.begin(), m_elements.end(), key, compare_with_key);
+                if (iter != m_elements.end() && key != iter->first)
+                {
+                    return m_elements.end();
+                }
+                return iter;
             }
         }
 
         storage_type::iterator find_by_key(const utility::string_t& key)
         {
-            if (m_keep_order)
+            auto iter = find_insert_location(key);
+            if (iter != m_elements.end() && key != iter->first)
             {
-                return std::find_if(m_elements.begin(), m_elements.end(),
-                    [&key](const std::pair<utility::string_t, value>& p) {
-                    return p.first == key;
-                });
-            }
-            else
-            {
-                return std::lower_bound(m_elements.begin(), m_elements.end(), key, compare_with_key);
-            }
-        }
-
-        const json::value& at_internal(const utility::string_t& key) const
-        {
-            auto iter = find_by_key(key);
-
-            if (iter == m_elements.end() || key != (iter->first))
-                throw web::json::json_exception(_XPLATSTR("Key not found"));
-
-            return iter->second;
-        }
-
-        const_iterator find_internal(const utility::string_t& key) const
-        {
-            auto iter = find_by_key(key);
-
-            if (iter != m_elements.end() && key != (iter->first))
                 return m_elements.end();
-
-            return iter;
-        }
-
-        iterator find_internal(const utility::string_t& key)
-        {
-            auto iter = find_by_key(key);
-
-            if (iter != m_elements.end() && key != (iter->first))
-                return m_elements.end();
-
+            }
             return iter;
         }
 

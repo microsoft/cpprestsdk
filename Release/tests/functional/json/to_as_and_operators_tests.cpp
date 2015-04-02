@@ -364,8 +364,8 @@ TEST(erase_array_iter)
     VERIFY_ARE_EQUAL(1, a[0].as_integer());
     VERIFY_ARE_EQUAL(3, a[1].as_integer());
 
-    auto citer = a.as_array().cbegin() + 1;
-    afterLoc = a.as_array().erase(citer);
+    iter = a.as_array().begin() + 1;
+    afterLoc = a.as_array().erase(iter);
     VERIFY_ARE_EQUAL(a.as_array().end(), afterLoc);
     VERIFY_ARE_EQUAL(1, a.size());
     VERIFY_ARE_EQUAL(1, a[0].as_integer());
@@ -407,8 +407,8 @@ TEST(erase_object_iter)
     VERIFY_ARE_EQUAL(3, o[U("c")].as_integer());
     VERIFY_ARE_EQUAL(4, o[U("d")].as_integer());
 
-    auto citer = o.as_object().begin() + 2;
-    afterLoc = o.as_object().erase(citer);
+    iter = o.as_object().begin() + 2;
+    afterLoc = o.as_object().erase(iter);
     VERIFY_ARE_EQUAL(2, o.size());
     VERIFY_ARE_EQUAL(o.as_object().end(), afterLoc);
     VERIFY_ARE_EQUAL(1, o[U("a")].as_integer());
