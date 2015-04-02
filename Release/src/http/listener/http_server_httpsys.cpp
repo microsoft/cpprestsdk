@@ -540,7 +540,14 @@ void windows_request_context::read_headers_io_completion(DWORD error_code, DWORD
         {
             builder.set_query(uri::decode(builder.query()));
         }
-        m_msg.set_request_uri(builder.to_uri());
+        try
+        {
+            m_msg.set_request_uri(builder.to_uri());
+        }
+        catch(const uri_exception &e)
+        {
+            m_msg.reply(status_codes::BadRequest, e.what());
+        }
         m_msg.set_method(parse_request_method(m_request));
         parse_http_headers(m_request->Headers, m_msg.headers());
 

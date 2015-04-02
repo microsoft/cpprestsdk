@@ -111,7 +111,7 @@ void web::json::details::append_escape_string(std::basic_string<CharType>& str, 
                 // If a control character then must unicode escaped.
                 if (ch >= 0 && ch <= 0x1F)
                 {
-                    static const std::array<CharType, 16> intToHex = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+                    static const std::array<CharType, 16> intToHex = { { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' } };
                     str += '\\';
                     str += 'u';
                     str += '0';
