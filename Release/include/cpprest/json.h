@@ -471,7 +471,7 @@ public:
         /// Throws <see cref="json_exception"/>  if the value is not a number
         /// </summary>
         /// <returns>An instance of number class</returns>
-        _ASYNCRTIMP json::number as_number() const;
+        _ASYNCRTIMP const json::number& as_number() const;
 
         /// <summary>
         /// Converts the JSON value to a C++ bool, if and only if it is a Boolean value.
@@ -509,7 +509,7 @@ public:
         /// Converts the JSON value to a C++ STL string, if and only if it is a string value.
         /// </summary>
         /// <returns>A C++ STL string representation of the value</returns>
-        _ASYNCRTIMP utility::string_t as_string() const;
+        _ASYNCRTIMP const utility::string_t& as_string() const;
 
         /// <summary>
         /// Compares two JSON values for equality.
@@ -644,7 +644,6 @@ public:
     private:
         std::string _message;
     public:
-        json_exception() {}
         json_exception(const utility::char_t * const &message) : _message(utility::conversions::to_utf8string(message)) { }
 
         // Must be narrow string because it derives from std::exception
@@ -652,7 +651,6 @@ public:
         {
             return _message.c_str();
         }
-        ~json_exception() CPPREST_NOEXCEPT {}
     };
 
     namespace details
@@ -1386,7 +1384,7 @@ public:
             virtual bool is_integer() const { throw json_exception(_XPLATSTR("not a number")); }
             virtual bool is_double() const { throw json_exception(_XPLATSTR("not a number")); }
 
-            virtual json::number as_number() { throw json_exception(_XPLATSTR("not a number")); }
+            virtual const json::number& as_number() { throw json_exception(_XPLATSTR("not a number")); }
             virtual double as_double() const { throw json_exception(_XPLATSTR("not a number")); }
             virtual int as_integer() const { throw json_exception(_XPLATSTR("not a number")); }
             virtual bool as_bool() const { throw json_exception(_XPLATSTR("not a boolean")); }
@@ -1394,7 +1392,7 @@ public:
             virtual const json::array& as_array() const { throw json_exception(_XPLATSTR("not an array")); }
             virtual json::object& as_object() { throw json_exception(_XPLATSTR("not an object")); }
             virtual const json::object& as_object() const { throw json_exception(_XPLATSTR("not an object")); }
-            virtual utility::string_t as_string() const { throw json_exception(_XPLATSTR("not a string")); }
+            virtual const utility::string_t& as_string() const { throw json_exception(_XPLATSTR("not a string")); }
 
             virtual size_t size() const { return 0; }
 
@@ -1464,7 +1462,7 @@ public:
                 return m_number.to_int32();
             }
 
-            virtual number as_number() { return m_number; }
+            virtual const number& as_number() { return m_number; }
 
         protected:
             virtual void format(std::basic_string<char>& stream) const ;
@@ -1554,7 +1552,7 @@ public:
 
             virtual json::value::value_type type() const { return json::value::String; }
 
-            virtual utility::string_t as_string() const;
+            virtual const utility::string_t & as_string() const;
 
             virtual void serialize_impl(std::string& str) const
             {

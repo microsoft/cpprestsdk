@@ -262,7 +262,7 @@ web::json::value web::json::value::array(std::vector<value> elements)
             );
 }
 
-web::json::number web::json::value::as_number() const
+const web::json::number& web::json::value::as_number() const
 {
     return m_value->as_number();
 }

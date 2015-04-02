@@ -255,12 +255,12 @@ void web::json::details::_Number::format(std::basic_string<wchar_t>& stream) con
 
 #endif
 
-utility::string_t web::json::details::_String::as_string() const
+const utility::string_t & web::json::details::_String::as_string() const
 {
     return m_string;
 }
 
-utility::string_t web::json::value::as_string() const
+const utility::string_t & web::json::value::as_string() const
 {
     return m_value->as_string();
 }
