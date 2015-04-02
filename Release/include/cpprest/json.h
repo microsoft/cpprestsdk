@@ -1573,11 +1573,9 @@ public:
             _Object(bool keep_order) : m_object(keep_order) { }
             _Object(object::storage_type fields, bool keep_order) : m_object(std::move(fields), keep_order) { }
 
-            _ASYNCRTIMP _Object(const _Object& other);
+            virtual json::object& as_object() { return m_object; }
 
-            virtual json::object& as_object() { return m_object;    }
-
-            virtual const json::object& as_object() const { return m_object;    }
+            virtual const json::object& as_object() const { return m_object; }
 
             virtual json::value::value_type type() const { return json::value::Object; }
 
@@ -1587,7 +1585,7 @@ public:
 
             bool is_equal(const _Object* other) const
             {
-                if ( m_object.size() != other->m_object.size())
+                if (m_object.size() != other->m_object.size())
                     return false;
 
                 return std::equal(std::begin(m_object), std::end(m_object), std::begin(other->m_object));

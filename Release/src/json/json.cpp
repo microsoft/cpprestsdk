@@ -347,9 +347,6 @@ bool web::json::details::_String::has_escape_chars(const _String &str)
     return str.m_string.find_first_of(escapes.data(), 0, escapes.size()) != utility::string_t::npos;
 }
 
-web::json::details::_Object::_Object(const _Object& other) :
-    web::json::details::_Value(other), m_object(other.m_object.m_elements, other.m_object.m_keep_order) {}
-
 web::json::value::value_type json::value::type() const { return m_value->type(); }
 
 bool json::value::is_integer() const
