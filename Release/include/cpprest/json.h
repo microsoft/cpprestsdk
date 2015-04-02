@@ -1507,19 +1507,6 @@ public:
             { }
 #endif
 
-            _String(const _String& other) : web::json::details::_Value(other)
-            {
-                copy_from(other);
-            }
-
-            _String& operator=(const _String& other)
-            {
-                if (this != &other) {
-                    copy_from(other);
-                }
-                return *this;
-            }
-
             virtual json::value::value_type type() const { return json::value::String; }
 
             virtual const utility::string_t & as_string() const;
@@ -1559,12 +1546,6 @@ public:
                 format(str);
             }
 
-            void copy_from(const _String& other)
-            {
-                m_string = other.m_string;
-                m_has_escape_char = other.m_has_escape_char;
-            }
-
             std::string as_utf8_string() const;
             utf16string as_utf16_string() const;
 
@@ -1590,12 +1571,9 @@ public:
         public:
 
             _Object(bool keep_order) : m_object(keep_order) { }
-
             _Object(object::storage_type fields, bool keep_order) : m_object(std::move(fields), keep_order) { }
 
             _ASYNCRTIMP _Object(const _Object& other);
-
-            virtual ~_Object() {}
 
             virtual json::object& as_object() { return m_object;    }
 
@@ -1605,7 +1583,7 @@ public:
 
             virtual bool has_field(const utility::string_t &) const;
 
-            _ASYNCRTIMP virtual json::value &index(const utility::string_t &key);
+            virtual json::value &index(const utility::string_t &key);
 
             bool is_equal(const _Object* other) const
             {
@@ -1647,8 +1625,6 @@ public:
             json::object m_object;
 
             template<typename CharType> friend class json::details::JSON_Parser;
-
-            _ASYNCRTIMP void map_fields();
 
             template<typename CharType>
             void format_impl(std::basic_string<CharType>& str) const
