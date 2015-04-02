@@ -921,8 +921,6 @@ public:
                 sort(m_elements.begin(), m_elements.end(), compare_pairs);
             }
         }
-        object(const object& obj); // non copyable
-        object& operator=(const object& obj); // non copyable
 
     public:
         /// <summary>
@@ -1177,7 +1175,7 @@ public:
         }
 
         storage_type m_elements;
-        const bool m_keep_order;
+        bool m_keep_order;
         friend class details::_Object;
 
         template<typename CharType> friend class json::details::JSON_Parser;

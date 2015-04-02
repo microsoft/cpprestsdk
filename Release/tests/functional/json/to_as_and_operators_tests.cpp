@@ -184,6 +184,33 @@ TEST(as_string)
     VERIFY_ARE_EQUAL(wdata, str.as_string());
 }
 
+TEST(as_copy_constructor)
+{
+    auto arr = json::value::array();
+    arr[0] = json::value::number(44);
+    arr[1] = json::value::string(U("abc"));
+    json::array arrCopy = arr.as_array();
+    VERIFY_ARE_EQUAL(2, arrCopy.size());
+    VERIFY_ARE_EQUAL(2, arr.size());
+    VERIFY_ARE_EQUAL(44, arrCopy[0].as_integer());
+    VERIFY_ARE_EQUAL(U("abc"), arrCopy[1].as_string());
+    VERIFY_ARE_EQUAL(44, arr[0].as_integer());
+    VERIFY_ARE_EQUAL(U("abc"), arr[1].as_string());
+
+    auto obj = json::value::object();
+    obj[U("abc")] = json::value::number(123);
+    json::object objCopy = obj.as_object();
+    VERIFY_ARE_EQUAL(1, objCopy.size());
+    VERIFY_ARE_EQUAL(1, obj.size());
+    VERIFY_ARE_EQUAL(123, objCopy[U("abc")].as_integer());
+    VERIFY_ARE_EQUAL(123, obj[U("abc")].as_integer());
+
+    auto num = json::value::number(44);
+    json::number numCopy = num.as_number();
+    VERIFY_ARE_EQUAL(44, num.as_integer());
+    VERIFY_ARE_EQUAL(44, numCopy.to_int32());
+}
+
 TEST(as_bool_as_double_as_string)
 {
     utility::stringstream_t ss1;
