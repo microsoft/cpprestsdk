@@ -340,11 +340,13 @@ bool web::json::number::is_int64() const
 
 bool web::json::details::_String::has_escape_chars(const _String &str)
 {
-    static const std::array<::utility::string_t::value_type, 34> escapes =
-        { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, /* 0x00 - 0x1F */ '\"', '\\' };
-
-    // Provide the range otherwise find_first_of will think the first null terminator character is the end.
-    return str.m_string.find_first_of(escapes.data(), 0, escapes.size()) != utility::string_t::npos;
+    return std::any_of(std::begin(str.m_string), std::end(str.m_string), [](utility::string_t::value_type const x)
+    {
+        if (x >= 0 && x <= 31) { return true; }
+        if (x == '"') { return true; }
+        if (x == '\\') { return true; }
+        return false;
+    });
 }
 
 web::json::details::_Object::_Object(const _Object& other) :
