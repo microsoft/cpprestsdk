@@ -71,13 +71,22 @@ TEST(latin1_to_utf16)
 
 TEST(print_string_locale, "Ignore:Android", "Locale unsupported on Android")
 {
+    std::locale changedLocale;
+    try
+    {
 #ifdef _WIN32
-    std::string changedLocale("fr-FR");
+        changedLocale = std::locale("fr-FR");
 #else
-    std::string changedLocale("fr_FR.UTF-8");
+        changedLocale = std::locale("fr_FR.UTF-8");
 #endif
+    }
+    catch (const std::exception &)
+    {
+        // Silently pass if locale isn't installed on machine.
+        return;
+    }
 
-    tests::common::utilities::locale_guard loc(std::locale(changedLocale.c_str()));
+    tests::common::utilities::locale_guard loc(changedLocale);
 
     utility::ostringstream_t oss;
     oss << 1000;
@@ -87,20 +96,29 @@ TEST(print_string_locale, "Ignore:Android", "Locale unsupported on Android")
 
 TEST(scan_string_locale, "Ignore:Android", "Locale unsupported on Android")
 {
+    std::locale changedLocale;
+    try
+    {
 #ifdef _WIN32
-    std::string changedLocale("fr-FR");
+        changedLocale = std::locale("fr-FR");
 #else
-    std::string changedLocale("fr_FR.UTF-8");
+        changedLocale = std::locale("fr_FR.UTF-8");
 #endif
+    }
+    catch (const std::exception &)
+    {
+        // Silently pass if locale isn't installed on machine.
+        return;
+    }
 
     VERIFY_ARE_EQUAL(_XPLATSTR("1000"), utility::conversions::scan_string<utility::string_t>(utility::string_t(_XPLATSTR("1000"))));
     VERIFY_ARE_EQUAL(_XPLATSTR("1,000"), utility::conversions::scan_string<utility::string_t>(utility::string_t(_XPLATSTR("1,000"))));
 
-    VERIFY_ARE_EQUAL(_XPLATSTR("1000"), utility::conversions::scan_string<utility::string_t>(utility::string_t(_XPLATSTR("1000")), std::locale(changedLocale.c_str())));
-    VERIFY_ARE_EQUAL(_XPLATSTR("1,000"), utility::conversions::scan_string<utility::string_t>(utility::string_t(_XPLATSTR("1,000")), std::locale(changedLocale.c_str())));
+    VERIFY_ARE_EQUAL(_XPLATSTR("1000"), utility::conversions::scan_string<utility::string_t>(utility::string_t(_XPLATSTR("1000")), changedLocale));
+    VERIFY_ARE_EQUAL(_XPLATSTR("1,000"), utility::conversions::scan_string<utility::string_t>(utility::string_t(_XPLATSTR("1,000")), changedLocale));
 
     {
-        tests::common::utilities::locale_guard loc(std::locale(changedLocale.c_str()));
+        tests::common::utilities::locale_guard loc(changedLocale);
         VERIFY_ARE_EQUAL(_XPLATSTR("1000"), utility::conversions::scan_string<utility::string_t>(utility::string_t(_XPLATSTR("1000")), std::locale::classic()));
         VERIFY_ARE_EQUAL(_XPLATSTR("1,000"), utility::conversions::scan_string<utility::string_t>(utility::string_t(_XPLATSTR("1,000")), std::locale::classic()));
     }
