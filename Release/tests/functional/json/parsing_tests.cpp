@@ -278,6 +278,10 @@ TEST(escaping_control_characters)
         const auto &v = json::value::parse(str);
         VERIFY_IS_TRUE(v.is_string());
         VERIFY_ARE_EQUAL(expectedStr, v.serialize());
+
+        // Try parsing a stringstream.
+        const auto &ssv = json::value::parse(ss);
+        VERIFY_ARE_EQUAL(expectedStr, ssv.serialize());
     }
 }
 
