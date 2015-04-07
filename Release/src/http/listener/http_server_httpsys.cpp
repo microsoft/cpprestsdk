@@ -459,7 +459,8 @@ void http_windows_server::receive_requests()
     }
 #if _MSC_VER < 1900
     concurrency::Context::Oversubscribe(false);
-#endif}
+#endif
+}
 
 pplx::task<void> http_windows_server::respond(http::http_response response)
 {
