@@ -143,12 +143,11 @@ TEST_FIXTURE(uri_address, save_request_reply)
     listener.close().wait();
 }
 
+#if defined(_WIN32) && _MSC_VER < 1900
 TEST_FIXTURE(uri_address, single_core_request)
 {
-#ifdef _MSC_VER
 	// Fake having a scheduler with only 1 core.
 	concurrency::CurrentScheduler::Create(concurrency::SchedulerPolicy(2, 1, Concurrency::MinConcurrency, 1, Concurrency::MaxConcurrency));
-#endif
 
 	http_listener listener(m_uri);
 	listener.open().wait();
@@ -173,10 +172,9 @@ TEST_FIXTURE(uri_address, single_core_request)
 
 	listener.close().wait();
 
-#ifdef _MSC_VER
 	concurrency::CurrentScheduler::Detach();
-#endif
 }
+#endif
 
 TEST_FIXTURE(uri_address, save_request_response)
 {
