@@ -17,6 +17,11 @@
 
 #include <cpprest/http_client.h>
 
+// For single_core test case.
+#if defined(_WIN32) && _MSC_VER < 1900
+#include <concrt.h>
+#endif
+
 using namespace utility;
 using namespace web;
 using namespace web::http;
