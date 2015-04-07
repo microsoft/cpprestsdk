@@ -143,6 +143,41 @@ TEST_FIXTURE(uri_address, save_request_reply)
     listener.close().wait();
 }
 
+TEST_FIXTURE(uri_address, single_core_request)
+{
+#ifdef _MSC_VER
+	// Fake having a scheduler with only 1 core.
+	concurrency::CurrentScheduler::Create(concurrency::SchedulerPolicy(2, 1, Concurrency::MinConcurrency, 1, Concurrency::MaxConcurrency));
+#endif
+
+	http_listener listener(m_uri);
+	listener.open().wait();
+	test_http_client::scoped_client client(m_uri);
+	test_http_client * p_client = client.client();
+
+	listener.support([](http_request request)
+	{
+		request.reply(status_codes::OK).get();
+	});
+	VERIFY_ARE_EQUAL(0, p_client->request(methods::POST, U("")));
+
+	// Don't wait on the task otherwise it could inline allowing other tasks to run on the scheduler.
+	std::atomic_flag responseEvent = ATOMIC_FLAG_INIT;
+	responseEvent.test_and_set();
+	p_client->next_response().then([&](test_response *p_response)
+	{
+		http_asserts::assert_test_response_equals(p_response, status_codes::OK);
+		responseEvent.clear();
+	});
+	while (responseEvent.test_and_set()) {}
+
+	listener.close().wait();
+
+#ifdef _MSC_VER
+	concurrency::CurrentScheduler::Detach();
+#endif
+}
+
 TEST_FIXTURE(uri_address, save_request_response)
 {
     http_listener listener(m_uri);
