@@ -2,11 +2,11 @@
 
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Common.Build.settings" />
 
-  <ItemGroup Condition="'$(BuildInRazzle)'=='' or '$(BuildAgainstVSInstallation)'==''">
+  <ItemGroup>
     <ProjectFile Include="src\dirs.proj"/>
   </ItemGroup>
   
-  <ItemGroup Condition="'$(BuildInRazzle)'=='' or '$(BuildTests)'!=''">
+  <ItemGroup Condition="'$(BuildTests)'!=''">
     <ProjectFile Include="tests\dirs.proj" Condition="'$(Platform)'!='ARM' or '$(WindowsSDKDesktopARMSupport)' == 'true'"/>
     <ProjectFile Include="samples\dirs.proj" Condition="'$(Platform)'!='ARM' or '$(WindowsSDKDesktopARMSupport)' == 'true'"/> 
   </ItemGroup>
