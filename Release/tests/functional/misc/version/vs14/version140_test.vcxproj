@@ -83,7 +83,7 @@
   </ItemDefinitionGroup>
 
   <ItemGroup>
-    <ClCompile Include="version.cpp" />
+    <ClCompile Include="..\version.cpp" />
   </ItemGroup>
 
   <ItemGroup>
