@@ -307,6 +307,24 @@ TEST_FIXTURE(uri_address, set_port_locale, "Ignore:Android", "Locale unsupported
     }
 }
 
+TEST_FIXTURE(uri_address, reuse_request)
+{
+    test_http_server::scoped_server scoped(m_uri);
+    test_http_server * p_server = scoped.server();
+    http_client client(m_uri);
+
+    http_request msg(methods::GET);
+    for (int i = 0; i < 3; ++i)
+    {
+        p_server->next_request().then([](test_request *p_request)
+        {
+            http_asserts::assert_test_request_equals(p_request, methods::GET, U("/"));
+            p_request->reply(200);
+        });
+        http_asserts::assert_response_equals(client.request(msg).get(), status_codes::OK);
+    }
+}
+
 }
 
 }}}}
