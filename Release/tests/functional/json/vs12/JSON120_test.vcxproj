@@ -1,6 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(_NTDRIVE)$(_NTROOT)\vctools\cpp_rest\cpprest.razzle.props" Condition="exists('$(_NTDRIVE)$(_NTROOT)\vctools\cpp_rest\cpprest.razzle.props')" />
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|ARM">
       <Configuration>Debug</Configuration>
@@ -83,16 +82,6 @@
     <ClCompile>
       <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
-  </ItemDefinitionGroup>
-
-  <!-- If testing against a VS installation, need to include the libs. -->
-  <ItemDefinitionGroup Condition="'$(BuildAgainstVSInstallation)'!=''">
-    <Link>
-      <AdditionalLibraryDirectories>$(CasablancaVSLibDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Link>
-    <Link>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
   </ItemDefinitionGroup>
 
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -208,14 +197,11 @@
     <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs12\UnitTestpp120.vcxproj">
       <Project>{3EB86C0D-432C-4FFC-BAD4-8DF4EFC7D0FF}</Project>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup Condition="'$(BuildAgainstVSInstallation)'==''">
-    <ProjectReference Include="$(CasablancaSrcDir)\build\vs12\casablanca120.vcxproj">
+	<ProjectReference Include="$(CasablancaSrcDir)\build\vs12\casablanca120.vcxproj">
       <Project>{1014C621-BC2D-4813-B8C1-6D83AD6F9249}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <Import Project="$(BuildRoot)\cpprest.razzle.targets" Condition="'$(BuildInRazzle)'!=''" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
 </Project>

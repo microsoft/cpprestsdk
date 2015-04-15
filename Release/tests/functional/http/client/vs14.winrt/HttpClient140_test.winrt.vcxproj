@@ -1,6 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(_NTDRIVE)$(_NTROOT)\vctools\cpp_rest\cpprest.winrt.razzle.props" Condition="exists('$(_NTDRIVE)$(_NTROOT)\vctools\cpp_rest\cpprest.winrt.razzle.props')" />
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|ARM">
       <Configuration>Debug</Configuration>
@@ -84,7 +83,7 @@
 
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);..\..\utilities\include;$(TestListenerPath)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);..\..\utilities\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   
@@ -93,7 +92,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WINAPI_FAMILY=WINAPI_PARTITION_APP;WIN32;_DEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-	  <AdditionalUsingDirectories>$(WindowsSDKDir)\References\CommonConfiguration\Neutral;$(VSInstallDir)\vc\vcpackages;$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
+	  <AdditionalUsingDirectories>$(WindowsSDKDir)\References\CommonConfiguration\Neutral;$(VSInstallDir)\vc\vcpackages;%(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <CompileAsWinRT>true</CompileAsWinRT>
       <MinimalRebuild>false</MinimalRebuild>
 	  <AdditionalOptions>-Zm350 /bigobj%(AdditionalOptions)</AdditionalOptions>
@@ -109,7 +108,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WINAPI_FAMILY=WINAPI_PARTITION_APP;WIN32;_DEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-	  <AdditionalUsingDirectories>$(WindowsSDKDir)\References\CommonConfiguration\Neutral;$(VSInstallDir)\vc\vcpackages;$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
+	  <AdditionalUsingDirectories>$(WindowsSDKDir)\References\CommonConfiguration\Neutral;$(VSInstallDir)\vc\vcpackages;%(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <CompileAsWinRT>true</CompileAsWinRT>
       <MinimalRebuild>false</MinimalRebuild>
 	  <AdditionalOptions>-Zm350 /bigobj%(AdditionalOptions)</AdditionalOptions>
@@ -125,7 +124,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WINAPI_FAMILY=WINAPI_PARTITION_APP;WIN32;_DEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-	  <AdditionalUsingDirectories>$(WindowsSDKDir)\References\CommonConfiguration\Neutral;$(VSInstallDir)\vc\vcpackages;$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
+	  <AdditionalUsingDirectories>$(WindowsSDKDir)\References\CommonConfiguration\Neutral;$(VSInstallDir)\vc\vcpackages;%(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <CompileAsWinRT>true</CompileAsWinRT>
       <MinimalRebuild>false</MinimalRebuild>
 	  <AdditionalOptions>-Zm350 /bigobj%(AdditionalOptions)</AdditionalOptions>
@@ -143,7 +142,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WINAPI_FAMILY=WINAPI_PARTITION_APP;WIN32;NDEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-	  <AdditionalUsingDirectories>$(WindowsSDKDir)\References\CommonConfiguration\Neutral;$(VSInstallDir)\vc\vcpackages;$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
+	  <AdditionalUsingDirectories>$(WindowsSDKDir)\References\CommonConfiguration\Neutral;$(VSInstallDir)\vc\vcpackages;%(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <CompileAsWinRT>true</CompileAsWinRT>
       <MinimalRebuild>false</MinimalRebuild>
 	  <AdditionalOptions>-Zm350 /bigobj%(AdditionalOptions)</AdditionalOptions>
@@ -163,7 +162,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WINAPI_FAMILY=WINAPI_PARTITION_APP;WIN32;NDEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-	  <AdditionalUsingDirectories>$(WindowsSDKDir)\References\CommonConfiguration\Neutral;$(VSInstallDir)\vc\vcpackages;$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
+	  <AdditionalUsingDirectories>$(WindowsSDKDir)\References\CommonConfiguration\Neutral;$(VSInstallDir)\vc\vcpackages;%(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <CompileAsWinRT>true</CompileAsWinRT>
       <MinimalRebuild>false</MinimalRebuild>
 	  <AdditionalOptions>-Zm350 /bigobj%(AdditionalOptions)</AdditionalOptions>
@@ -183,7 +182,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WINAPI_FAMILY=WINAPI_PARTITION_APP;WIN32;NDEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-	  <AdditionalUsingDirectories>$(WindowsSDKDir)\References\CommonConfiguration\Neutral;$(VSInstallDir)\vc\vcpackages;$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
+	  <AdditionalUsingDirectories>$(WindowsSDKDir)\References\CommonConfiguration\Neutral;$(VSInstallDir)\vc\vcpackages;%(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <CompileAsWinRT>true</CompileAsWinRT>
       <MinimalRebuild>false</MinimalRebuild>
 	  <AdditionalOptions>-Zm350 /bigobj%(AdditionalOptions)</AdditionalOptions>
@@ -254,10 +253,5 @@
     <CallTarget Targets="StripAppContainerOnProjectDll" />
     <Copy SourceFiles="$(OutDir)\$(TargetName).dll" DestinationFolder="$(OutDir)\.." />
     <Copy SourceFiles="$(OutDir)\$(TargetName).pdb" DestinationFolder="$(OutDir)\.." />
-  </Target>
-  
-  <!-- Razzle environment uses different targets so we have to trigger our targets different -->
-  <Target Name="RazzleAfterBuild" Condition="'$(BuildInRazzle)'!=''" AfterTargets="BuildLinked">
-    <CallTarget Targets="StripAppContainer" />
   </Target>
 </Project>

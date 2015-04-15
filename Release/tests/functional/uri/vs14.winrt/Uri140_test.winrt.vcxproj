@@ -1,6 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(_NTDRIVE)$(_NTROOT)\vctools\cpp_rest\cpprest.winrt.razzle.props" Condition="exists('$(_NTDRIVE)$(_NTROOT)\vctools\cpp_rest\cpprest.winrt.razzle.props')" />
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|ARM">
       <Configuration>Debug</Configuration>
@@ -81,17 +80,6 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Release.Tests.Settings" />
-  
-  <!-- If testing against a VS installation, need to include the libs. -->
-  <ItemDefinitionGroup Condition="'$(BuildAgainstVSInstallation)'!=''">
-    <Link>
-      <AdditionalLibraryDirectories>$(CasablancaVSLibDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Link>
-    <Link>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
-  </ItemDefinitionGroup>
-  
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -228,10 +216,7 @@
     <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs14.winrt\UnitTestpp140.winrt.vcxproj">
       <Project>{B341AA9C-F38B-4D59-B6B7-8F22491090B7}</Project>
     </ProjectReference>
-  </ItemGroup>
-  
-  <ItemGroup Condition="'$(BuildAgainstVSInstallation)'==''">
-    <ProjectReference Include="$(CasablancaSrcDir)\build\vs14.winrt\casablanca140.winrt.vcxproj">
+	<ProjectReference Include="$(CasablancaSrcDir)\build\vs14.winrt\casablanca140.winrt.vcxproj">
       <Project>{198ED804-2655-4D92-8104-C220E3EA9452}</Project>
     </ProjectReference>
   </ItemGroup>
@@ -242,15 +227,7 @@
     <Copy SourceFiles="$(OutDir)\$(TargetName).pdb" DestinationFolder="$(OutDir)\.." />
   </Target>
   
-  <!-- Razzle environment uses different targets so we have to trigger our targets different -->
-  <Target Name="RazzleAfterBuild" Condition="'$(BuildInRazzle)'!=''" AfterTargets="BuildLinked">
-    <CallTarget Targets="StripAppContainer" />
-  </Target>
-  
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <Import Project="$(BuildRoot)\cpprest.razzle.targets" Condition="'$(BuildInRazzle)'!=''" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
-  
-  
 </Project>
