@@ -425,7 +425,17 @@ void http_windows_server::receive_requests()
 {
     HTTP_REQUEST p_request;
     ULONG bytes_received;
-    for(;;)
+
+    // Oversubscribe since this is a blocking call and we don't want to count
+    // towards the concurrency runtime's thread count. A more proper fix
+    // would be to use Overlapped I/O and asynchronously call HttpReceiveHttpRequest.
+    // This requires additional work to be careful sychronizing with the listener
+    // shutdown. This is much easier especially given the http_listener is 'experimental'
+    // and with VS2015 PPL tasks run on the threadpool.
+#if _MSC_VER < 1900
+    concurrency::Context::Oversubscribe(true);
+#endif
+    for (;;)
     {
         unsigned long error_code = HttpReceiveHttpRequest(
             m_hRequestQueue,
@@ -436,7 +446,7 @@ void http_windows_server::receive_requests()
             &bytes_received,
             0);
 
-        if(error_code != NO_ERROR && error_code != ERROR_MORE_DATA)
+        if (error_code != NO_ERROR && error_code != ERROR_MORE_DATA)
         {
             break;
         }
@@ -447,6 +457,9 @@ void http_windows_server::receive_requests()
         http_request msg = http_request::_create_request(std::move(pRequestContext));
         pContext->async_process_request(p_request.RequestId, msg, bytes_received);
     }
+#if _MSC_VER < 1900
+    concurrency::Context::Oversubscribe(false);
+#endif
 }
 
 pplx::task<void> http_windows_server::respond(http::http_response response)
