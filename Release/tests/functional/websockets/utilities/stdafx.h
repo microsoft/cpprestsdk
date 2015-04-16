@@ -32,9 +32,11 @@
 
 #if defined(_WIN32)
 // Trick Boost.Asio into thinking CE, otherwise _beginthreadex will be used which is banned
-// for the Windows Runtime. Then CreateThread will be used instead.
+// for the Windows Runtime pre VS2015. Then CreateThread will be used instead.
+#if _MSC_VER < 1900
 #if defined(__cplusplus_winrt)
 #define UNDER_CE 1
+#endif
 #endif
 #endif
 
