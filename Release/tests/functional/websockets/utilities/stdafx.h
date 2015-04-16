@@ -24,11 +24,18 @@
 
 #pragma once
 
-#if defined(_WIN32) && _MSC_VER < 1800
-// pplxtasks.h includes Windows.h on VS2012 only WinRT, which is terrible.
-// Need to include before to avoid winsock issues with websocketpp.
+#if defined(_WIN32)
+// Include first to avoid any issues with Windows.h.
 #define NOMINMAX
 #include <winsock2.h>
+#endif
+
+#if defined(_WIN32)
+// Trick Boost.Asio into thinking CE, otherwise _beginthreadex will be used which is banned
+// for the Windows Runtime. Then CreateThread will be used instead.
+#if defined(__cplusplus_winrt)
+#define UNDER_CE 1
+#endif
 #endif
 
 #include "cpprest/uri.h"
