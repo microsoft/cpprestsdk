@@ -139,7 +139,7 @@ public:
             // that the set method accesses internal state in the event and the websocket
             // client could be destroyed.
             auto local_close_tce = m_close_tce;
-            m_close_tce.set();
+            local_close_tce.set();
         });
     }
 
@@ -149,7 +149,7 @@ public:
         // that the set method accesses internal state in the event and the websocket
         // client could be destroyed.
         auto local_close_tce = m_close_tce;
-        m_close_tce.set();
+        local_close_tce.set();
     }
 
     pplx::task<void> connect()
