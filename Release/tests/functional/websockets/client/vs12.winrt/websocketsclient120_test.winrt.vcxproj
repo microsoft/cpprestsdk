@@ -1,0 +1,179 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{8E3772EF-7807-40DA-8932-F37DB0C1CB44}</ProjectGuid>
+    <SccProjectName>SAK</SccProjectName>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccProvider>SAK</SccProvider>
+    <DefaultLanguage>en-US</DefaultLanguage>
+    <MinimumVisualStudioVersion>12.0</MinimumVisualStudioVersion>
+	<WindowsAppContainer>true</WindowsAppContainer>
+    <VCTargetsPath Condition="'$(VCTargetsPath12)' != '' and '$(VSVersion)' == '' and $(VisualStudioVersion) == ''">$(VCTargetsPath12)</VCTargetsPath>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Release.Tests.Settings" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WINAPI_FAMILY=WINAPI_PARTITION_APP;WIN32;_DEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);..\..\utilities;</AdditionalIncludeDirectories>
+      <AdditionalUsingDirectories>$(WindowsSDKDir)\References\CommonConfiguration\Neutral;$(VSInstallDir)\vc\vcpackages;$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
+      <CompileAsWinRT>true</CompileAsWinRT>
+      <MinimalRebuild>false</MinimalRebuild>
+      <AdditionalOptions>-Zm200 %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WINAPI_FAMILY=WINAPI_PARTITION_APP;WIN32;_DEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);..\..\utilities</AdditionalIncludeDirectories>
+      <AdditionalUsingDirectories>$(WindowsSDKDir)\References\CommonConfiguration\Neutral;$(VSInstallDir)\vc\vcpackages;$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
+      <CompileAsWinRT>true</CompileAsWinRT>
+      <MinimalRebuild>false</MinimalRebuild>
+      <AdditionalOptions>-Zm200 %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WINAPI_FAMILY=WINAPI_PARTITION_APP;WIN32;NDEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);..\..\utilities</AdditionalIncludeDirectories>
+      <AdditionalUsingDirectories>$(WindowsSDKDir)\References\CommonConfiguration\Neutral;$(VSInstallDir)\vc\vcpackages;$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
+      <CompileAsWinRT>true</CompileAsWinRT>
+      <MinimalRebuild>false</MinimalRebuild>
+      <AdditionalOptions>-Zm200 %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WINAPI_FAMILY=WINAPI_PARTITION_APP;WIN32;NDEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);..\..\utilities</AdditionalIncludeDirectories>
+      <AdditionalUsingDirectories>$(WindowsSDKDir)\References\CommonConfiguration\Neutral;$(VSInstallDir)\vc\vcpackages;$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
+      <CompileAsWinRT>true</CompileAsWinRT>
+      <MinimalRebuild>false</MinimalRebuild>
+      <AdditionalOptions>-Zm200 %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(TestRoot)\Common\utilities\vs12.winrt\CommonUtilities120.winrt.vcxproj">
+      <Project>{ea2d69a1-55c8-4c15-805e-de7e85872484}</Project>
+    </ProjectReference>
+    <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs12.winrt\UnitTestpp120.winrt.vcxproj">
+      <Project>{B341AA9C-F38B-4D59-B6B7-8F22491090B7}</Project>
+    </ProjectReference>
+    <ProjectReference Include="$(CasablancaSrcDir)\build\vs12.winrt\casablanca120.winrt.vcxproj">
+      <Project>{198ED804-2655-4D92-8104-C220E3EA9452}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\utilities\vs12.winrt\websockets_test_utilities120.winrt.vcxproj">
+      <Project>{D422311C-1C3A-4083-A564-6474EA60FFC7}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\stdafx.h" />
+    <ClInclude Include="..\websocket_client_tests.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\authentication_tests.cpp" />
+    <ClCompile Include="..\client_construction.cpp" />
+    <ClCompile Include="..\close_tests.cpp" />
+    <ClCompile Include="..\error_tests.cpp" />
+    <ClCompile Include="..\receive_msg_tests.cpp" />
+    <ClCompile Include="..\send_msg_tests.cpp" />
+    <ClCompile Include="..\proxy_tests.cpp" />
+    <ClCompile Include="..\stdafx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+  
+  <Target Name="StripAppContainer" AfterTargets="Build">
+    <CallTarget Targets="StripAppContainerOnProjectDll" />
+    <Copy SourceFiles="$(OutDir)\$(TargetName).dll" DestinationFolder="$(OutDir)\.." />
+    <Copy SourceFiles="$(OutDir)\$(TargetName).pdb" DestinationFolder="$(OutDir)\.." />
+  </Target>
+</Project>
