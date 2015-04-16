@@ -43,11 +43,7 @@
     <WebsocketppIncludeDir>$(BuildRoot)\Release\libs\websocketpp</WebsocketppIncludeDir>
     <PackagesRoot Condition="'$(PackagesRoot)'=='' AND Exists('$(BuildRoot)\packages')">$(BuildRoot)\packages</PackagesRoot>
     <PackagesRoot Condition="'$(PackagesRoot)'=='' AND Exists('$(BuildRoot)\..\Tools\packages')">$(BuildRoot)\..\Tools\packages</PackagesRoot>
-    <CollateralsDir>$(BuildRoot)\Release\Collateral</CollateralsDir>
   </PropertyGroup>
-
-  <!-- try locating configuration file -->
-  <Import Condition="Exists('$(BuildRoot)\..\Build\environment.casablanca.settings')" Project="$(BuildRoot)\..\Build\environment.casablanca.settings"/>
 
   <!-- paths will not be overridden -->
   <PropertyGroup>
