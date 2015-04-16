@@ -395,11 +395,11 @@ void CasaLens::fetch_data(http_request message, const std::wstring& postal_code,
         }
 
         // Reply with the aggregated JSON data
-        message.reply(status_codes::OK, resp_data).then(handle_error);
+        message.reply(status_codes::OK, resp_data).then([](pplx::task<void> t) { handle_error(t); });
     }
     catch(...)
     {
-        message.reply(status_codes::InternalError).then(handle_error);
+        message.reply(status_codes::InternalError).then([](pplx::task<void> t) { handle_error(t); });
     }
 }
 

@@ -81,12 +81,12 @@ void CasaLens::handle_error(pplx::task<void>& t)
 
 pplx::task<void> CasaLens::open()
 {
-	return m_listener.open().then(handle_error);
+	return m_listener.open().then([](pplx::task<void> t) { handle_error(t); });
 }
 
 pplx::task<void> CasaLens::close()
 {
-    return m_listener.close().then(handle_error);
+    return m_listener.close().then([](pplx::task<void> t) { handle_error(t); });
 }
 
 // Handler to process HTTP::GET requests.
@@ -97,7 +97,7 @@ void CasaLens::handle_get(http_request message)
     auto content_data = m_htmlcontentmap.find(path);
     if (content_data == m_htmlcontentmap.end())
     {
-        message.reply(status_codes::NotFound, U("Path not found")).then(handle_error);
+        message.reply(status_codes::NotFound, U("Path not found")).then([](pplx::task<void> t) { handle_error(t); });
         return;
     }
 
@@ -105,7 +105,7 @@ void CasaLens::handle_get(http_request message)
     auto content_type = std::get<1>(content_data->second);
     concurrency::streams::fstream::open_istream(file_name, std::ios::in).then([=](concurrency::streams::istream is)
     {
-        message.reply(status_codes::OK, is, content_type).then(handle_error);
+        message.reply(status_codes::OK, is, content_type).then([](pplx::task<void> t) { handle_error(t); });
     }).then([=](pplx::task<void>& t)
     {
         try
@@ -116,7 +116,7 @@ void CasaLens::handle_get(http_request message)
         {
             // opening the file (open_istream) failed.
             // Reply with an error.
-            message.reply(status_codes::InternalError).then(handle_error);
+            message.reply(status_codes::InternalError).then([](pplx::task<void> t) { handle_error(t); });
         }
     });
 }
@@ -132,11 +132,11 @@ void CasaLens::handle_post(http_request message)
         message.extract_string().then([=](const utility::string_t& location)
         {
             get_data(message, location); 
-        }).then(handle_error);
+        }).then([](pplx::task<void> t) { handle_error(t); });
     }
     else
     {
-        message.reply(status_codes::NotFound, U("Path not found")).then(handle_error);
+        message.reply(status_codes::NotFound, U("Path not found")).then([](pplx::task<void> t) { handle_error(t); });
     }
 }
 
