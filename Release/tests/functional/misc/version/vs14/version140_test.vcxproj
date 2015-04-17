@@ -27,13 +27,12 @@
     <SccLocalPath>SAK</SccLocalPath>
     <SccProvider>SAK</SccProvider>
     <ProjectName>version</ProjectName>
-    <TargetName>version110_test</TargetName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v110</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
   </PropertyGroup>
 
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\version.props" />
@@ -84,17 +83,14 @@
   </ItemDefinitionGroup>
 
   <ItemGroup>
-    <ClCompile Include="version.cpp" />
+    <ClCompile Include="..\version.cpp" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="$(TestRoot)\Common\utilities\vs11\CommonUtilities110.vcxproj">
-      <Project>{0c9d50d9-94fb-4732-a4ad-58e068315bb2}</Project>
+    <ProjectReference Include="$(CasablancaSrcDir)\build\vs14\casablanca140.vcxproj">
+      <Project>{1014c621-bc2d-4813-b8c1-6d83ad6f9249}</Project>
     </ProjectReference>
-    <ProjectReference Include="$(CasablancaSrcDir)\build\vs11\casablanca110.vcxproj">
-      <Project>{90D85FF4-F0AE-4816-923F-0EF2758F30AB}</Project>
-    </ProjectReference>
-    <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs11\UnitTestpp110.vcxproj">
+    <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs14\UnitTestpp140.vcxproj">
       <Project>{3EB86C0D-432C-4FFC-BAD4-8DF4EFC7D0FF}</Project>
     </ProjectReference>
   </ItemGroup>

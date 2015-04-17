@@ -32,7 +32,7 @@
 #ifdef _WIN32
 #pragma warning( disable : 4503 )
 #pragma warning( push )
-#pragma warning( disable : 4100 4127 4996 4512 4701 4267 )
+#pragma warning( disable : 4100 4127 4996 4512 4701 4267 4067 )
 #if defined(_MSC_VER) && (_MSC_VER >= 1800)
 #define _WEBSOCKETPP_CPP11_STL_
 #define _WEBSOCKETPP_INITIALIZER_LISTS_
