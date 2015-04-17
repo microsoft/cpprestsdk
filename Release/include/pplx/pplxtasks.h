@@ -6582,8 +6582,6 @@ namespace details
             _ReturnTask._SetAsync();
         }
         _VectorTask._Then([_PParam](task<std::vector<_ReturnType>> _ResultTask) {
-            //  Dev10 compiler bug
-            typedef _ReturnType _ReturnTypeDev10;
             auto _PParamCopy = _PParam;
             auto _Func = [_PParamCopy, &_ResultTask]() {
                 auto _ResultLocal = _ResultTask._GetImpl()->_GetResult();
@@ -6593,8 +6591,6 @@ namespace details
             _WhenAllContinuationWrapper(_PParam, _Func, _ResultTask);
         }, _CancellationTokenState::_None());
         _ValueTask._Then([_PParam](task<_ReturnType> _ResultTask) {
-            //  Dev10 compiler bug
-            typedef _ReturnType _ReturnTypeDev10;
             auto _PParamCopy = _PParam;
             auto _Func = [_PParamCopy, &_ResultTask]() {
                 auto _ResultLocal = _ResultTask._GetImpl()->_GetResult();
@@ -7175,13 +7171,11 @@ task<std::vector<_ReturnType>> operator||(const task<std::vector<_ReturnType>> &
     
     _Rhs._Then([_PParam](task<_ReturnType> _ResultTask) 
     {
-        //  Dev10 compiler bug
-        typedef _ReturnType _ReturnTypeDev10;
         auto _PParamCopy = _PParam;
         auto _Func = [&_ResultTask, _PParamCopy]() {
             auto _Result = _ResultTask._GetImpl()->_GetResult();
 
-            std::vector<_ReturnTypeDev10> _Vec;
+            std::vector<_ReturnType> _Vec;
             _Vec.push_back(_Result);
             _PParamCopy->_M_Completed.set(std::make_pair(_Vec, _ResultTask._GetImpl()->_M_pTokenState));
         };
