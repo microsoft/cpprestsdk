@@ -34,6 +34,8 @@
     <SccAuxPath>SAK</SccAuxPath>
     <SccLocalPath>SAK</SccLocalPath>
     <SccProvider>SAK</SccProvider>
+	<MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
+	<ApplicationType>Windows Store</ApplicationType>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Label="Configuration">
@@ -55,9 +57,10 @@
       <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(TestRoot)\Common\UnitTestpp\src\;%(AdditionalIncludeDirectories);</AdditionalIncludeDirectories>
 	  <PrecompiledHeader>NotUsing</PrecompiledHeader>
 	  <PreprocessorDefinitions>UNITTEST_DLL_EXPORT;WIN32;_USRDLL;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-	  <AdditionalUsingDirectories>"C:\Program Files (x86)\Windows Kits\8.1\References\CommonConfiguration\Neutral";$(VSInstallDir)\vc\vcpackages;$(AdditionalUsingDirectories)</AdditionalUsingDirectories> <!-- TODO -->
+	  <AdditionalUsingDirectories>$(WindowsSdkDir)\UnionMetadata;$(VSInstallDir)\vc\vcpackages;$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <CompileAsWinRT>true</CompileAsWinRT>
       <MinimalRebuild>false</MinimalRebuild>
+	  <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
     </ClCompile>
 	<Link>
       <SubSystem>Windows</SubSystem>

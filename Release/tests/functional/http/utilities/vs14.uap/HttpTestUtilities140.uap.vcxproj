@@ -38,6 +38,7 @@
     <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v140</PlatformToolset>
 	<ConfigurationType>DynamicLibrary</ConfigurationType>
+	<ApplicationType>Windows Store</ApplicationType>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
@@ -54,7 +55,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PreprocessorDefinitions>WIN32;_USRDLL;HTTPTESTUTILITY_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);..\include</AdditionalIncludeDirectories>
-	  <AdditionalUsingDirectories>"C:\Program Files (x86)\Windows Kits\8.1\References\CommonConfiguration\Neutral";$(VSInstallDir)\vc\vcpackages;$(AdditionalUsingDirectories)</AdditionalUsingDirectories> <!-- TODO -->
+	  <AdditionalUsingDirectories>$(WindowsSdkDir)\UnionMetadata;$(VSInstallDir)\vc\vcpackages;$(AdditionalUsingDirectories)</AdditionalUsingDirectories>
 	  <AdditionalOptions>-Zm200 %(AdditionalOptions)</AdditionalOptions>
 	  <CompileAsWinRT>true</CompileAsWinRT>
       <MinimalRebuild>false</MinimalRebuild>
