@@ -65,26 +65,13 @@ TEST_FIXTURE(uri_address, outside_cnn_dot_com)
 
 TEST_FIXTURE(uri_address, outside_google_dot_com)
 {
-    handle_timeout([]
+    http_client client(U("http://www.google.com"));
+    http_request request(methods::GET);
+    for (int i = 0; i < 2; ++i)
     {
-        http_client client(U("http://www.google.com"));
-
-        // Google's main page.
-        http_response response = client.request(methods::GET).get();
+        http_response response = client.request(request).get();
         VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
-        while (response.body().streambuf().in_avail() == 0);
-
-#ifdef _WIN32
-        // Google's maps page.
-        response = client.request(methods::GET, U("maps")).get();
-        VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
-        while (response.body().streambuf().in_avail() == 0);
-#else
-        // Linux won't handle 302 header automatically
-        response = client.request(methods::GET, U("maps")).get();
-        VERIFY_ARE_EQUAL(status_codes::Found, response.status_code());
-#endif
-    });
+    }
 }
     
 TEST_FIXTURE(uri_address, multiple_https_requests)

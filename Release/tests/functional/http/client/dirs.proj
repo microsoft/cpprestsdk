@@ -5,11 +5,6 @@
   <ItemGroup>
     <ProjectFile Include="AuthListener\dirs.proj" />
   </ItemGroup>
-
-  <ItemGroup Condition="'$(DevToolsVersion)'=='110'">
-      <ProjectFile Include="VS11\HttpClient110_test.vcxproj" />
-      <ProjectFile Include="VS11.winrt\HttpClient110_test.winrt.vcxproj" Condition="'$(OsVersion)'=='6.2' or '$(OsVersion)'=='6.3'" />
-  </ItemGroup>
   
   <ItemGroup Condition="'$(DevToolsVersion)'=='120'">
       <ProjectFile Include="VS12\HttpClient120_test.vcxproj" />

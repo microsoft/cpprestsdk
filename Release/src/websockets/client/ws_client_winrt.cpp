@@ -133,23 +133,22 @@ public:
             {
                 m_external_close_handler(status, reason, error_code);
             }
-            m_close_tce.set();
-            m_server_close_complete.set();
+
+            // Locally copy the task completion event since there is a PPL bug
+            // that the set method accesses internal state in the event and the websocket
+            // client could be destroyed.
+            auto local_close_tce = m_close_tce;
+            local_close_tce.set();
         });
     }
 
     ~winrt_callback_client()
     {
-        // task_completion_event::set() returns false if it has already been set.
-        // In that case, wait on the m_server_close_complete event for the tce::set() to complete.
-        // The websocket client on close handler (upon receiving close frame from server) will
-        // set this event.
-        // If we have not received a close frame from the server, this set will be a no-op as the
-        // websocket_client is anyways destructing.
-        if (!m_close_tce.set())
-        {
-            m_server_close_complete.wait();
-        }
+        // Locally copy the task completion event since there is a PPL bug
+        // that the set method accesses internal state in the event and the websocket
+        // client could be destroyed.
+        auto local_close_tce = m_close_tce;
+        local_close_tce.set();
     }
 
     pplx::task<void> connect()
@@ -159,6 +158,8 @@ public:
         {
             return pplx::task_from_exception<void>(websocket_exception("Only a default proxy server is supported."));
         }
+
+
 
         const auto &proxy_cred = proxy.credentials();
         if(proxy_cred.is_set())
@@ -408,12 +409,6 @@ private:
     ReceiveContext ^ m_context;
 
     pplx::task_completion_event<void> m_close_tce;
-    // There is a bug in ppl task_completion_event. The task_completion_event::set() accesses some
-    // internal data after signaling the event. The waiting thread might go ahead and start destroying the
-    // websocket_client. Due to this race, set() can cause a crash.
-    // To workaround this bug, maintain another event: m_server_close_complete. We will signal this when the m_close_tce.set() has
-    // completed. The websocket_client destructor can wait on this event before proceeding.
-    Concurrency::event m_server_close_complete;
 
     // External callback for handling received and close event
     std::function<void(websocket_incoming_message)> m_external_message_handler;
