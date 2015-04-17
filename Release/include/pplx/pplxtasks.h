@@ -6388,8 +6388,6 @@ namespace details
 
                     _PTask->_Then([_PParam, _Index](task<_ElementType> _ResultTask) {
 
-                        //  Dev10 compiler bug
-                        typedef _ElementType _ElementTypeDev10;
                         auto _PParamCopy = _PParam;
                         auto _IndexCopy = _Index;
                         auto _Func = [_PParamCopy, _IndexCopy, &_ResultTask](){
@@ -6467,8 +6465,7 @@ namespace details
                     }
 
                     _PTask->_Then([_PParam, _Index](task<std::vector<_ElementType>> _ResultTask) {
-                        //  Dev10 compiler bug
-                        typedef _ElementType _ElementTypeDev10;
+
                         auto _PParamCopy = _PParam;
                         auto _IndexCopy = _Index;
                         auto _Func = [_PParamCopy, _IndexCopy, &_ResultTask]() {
