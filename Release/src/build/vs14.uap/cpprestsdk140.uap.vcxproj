@@ -38,6 +38,7 @@
 	<ProjectName>cpprestsdk140.uap</ProjectName>
 	<PlatformToolset>v140</PlatformToolset>
 	<ConfigurationType>DynamicLibrary</ConfigurationType>
+	<OutDir>$(OutDir)\$(MsBuildProjectName)</OutDir>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -66,7 +67,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-	  <PreprocessorDefinitions>WINAPI_FAMILY=WINAPI_PARTITION_APP;_ASYNCRT_EXPORT;_PPLX_EXPORT;_USRDLL;%(PreprocessorDefinitions);</PreprocessorDefinitions>
+	  <PreprocessorDefinitions>_ASYNCRT_EXPORT;_PPLX_EXPORT;_USRDLL;%(PreprocessorDefinitions);</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <CompileAsWinRT>true</CompileAsWinRT>
 	  <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CasablancaSrcDir)\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -83,6 +84,14 @@
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ItemDefinitionGroup>
+    <PostBuildEvent>
+      <Command>copy /Y $(OutDir)\* $(OutDir)..\
+        link /edit /appcontainer:no $(OutDir)..\$(TargetName).dll
+        exit 0</Command>
+      <Message>Copying $(TargetName).winrt binaries to OutDir and removing appcontainer flag</Message>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
 </Project>

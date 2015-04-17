@@ -15,8 +15,10 @@ function VsVars32()
 
 "Initializing Casablanca Powershell VS2015 Environment"
 
-# get VS tools
-VsVars32
+# Add MSBuild to the path.
+$msbuildLocation = (Get-ChildItem env:ProgramFiles).Value
+$msbuildLocation = [System.IO.Path]::Combine($msbuildLocation, "MSBuild", "14.0", "Bin")
+$Env:Path += ";" + $msbuildLocation
 
 $Env:VisualStudioVersion = "14.0"
 $Env:DevToolsVersion = "140"
