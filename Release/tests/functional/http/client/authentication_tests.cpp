@@ -26,7 +26,9 @@
 
 #ifdef _WIN32
 #ifdef __cplusplus_winrt
+#if !defined(__WRL_NO_DEFAULT_LIB__)
 #define __WRL_NO_DEFAULT_LIB__
+#endif
 #include <wrl.h>
 #include <msxml6.h>
 #else

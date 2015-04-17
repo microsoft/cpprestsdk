@@ -21,6 +21,10 @@
     <ProjectFile Include="VS14\UnitTestpp140.vcxproj"/>
     <ProjectFile Include="VS14\TestUnitTestpp140.vcxproj"/>
   </ItemGroup>
+  
+  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|140'">
+    <ProjectFile Include="vs14.uap\UnitTestpp120.uap.vcxproj" />
+  </ItemGroup>
 
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
 

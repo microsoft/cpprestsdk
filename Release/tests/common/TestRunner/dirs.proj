@@ -15,6 +15,10 @@
     <ProjectFile Include="vs14.android\TestRunner.android.NativeActivity\TestRunner.android.NativeActivity.vcxproj" Condition="'$(Platform)'!='x64'" />
     <ProjectFile Include="vs14.android\TestRunner.android.Packaging\TestRunner.android.Packaging.androidproj" Condition="'$(Platform)'!='x64'" />
   </ItemGroup>
+  
+  <ItemGroup Condition="'$(OsVersion)|'$(DevToolsVersion)'=='6.3|140'">
+  	<ProjectFile Include="vs14.uap\TestRunner140.uap.vcxproj" />
+  </ItemGroup>
 
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
 

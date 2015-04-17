@@ -25,6 +25,10 @@
     <ProjectFile Include="vs14.android\Uri140_test.android.vcxproj" Condition="'$(Platform)'!='x64'" />
   </ItemGroup>
 
+  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|140'">
+    <ProjectFile Include="vs14.uap\URI140_test.uap.vcxproj" />
+  </ItemGroup>
+  
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
 
 </Project>
