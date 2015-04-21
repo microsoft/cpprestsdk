@@ -23,7 +23,7 @@
 #pragma once
 
 // Include on everything except VS2015 Windows Desktop and Windows Desktop ARM, unless explicitly excluded.
-#if !defined(_MSC_VER) || (WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP) || (_MSC_VER < 1900 && !defined(_M_ARM))) && !defined(CPPREST_EXCLUDE_WEBSOCKETS)
+#if !defined(_MSC_VER) || (WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP) && !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)) || (_MSC_VER < 1900 && !defined(_M_ARM)) && !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 
 #include <memory>
 #include <limits>
