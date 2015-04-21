@@ -73,7 +73,7 @@ elseif(ANDROID)
   set(BUILD_SAMPLES OFF)
   option(BUILD_TESTS "Build tests." ON)
 elseif(UNIX) # This includes OSX
-  find_package(Boost REQUIRED COMPONENTS random chrono system thread locale regex filesystem)
+  find_package(Boost REQUIRED COMPONENTS random chrono system thread regex filesystem)
   find_package(Threads REQUIRED)
   if(APPLE AND NOT OPENSSL_ROOT_DIR)
     # Prefer a homebrew version of OpenSSL over the one in /usr/lib
@@ -114,7 +114,7 @@ elseif(WIN32)
   endif()
   add_definitions(${Casablanca_DEFINITIONS} -D_WINSOCK_DEPRECATED_NO_WARNINGS -DWIN32)
 
-  find_package(Boost 1.55 REQUIRED COMPONENTS random system thread locale filesystem chrono atomic)
+  find_package(Boost 1.55 REQUIRED COMPONENTS random system thread filesystem chrono atomic)
   find_package(OpenSSL 1.0 REQUIRED)
 else()
   message(FATAL_ERROR "-- Unsupported Build Platform.")
