@@ -237,7 +237,7 @@ namespace details
     _PPLXIMP void windows_scheduler::schedule( TaskProc_t proc, _In_ void* param)
     {
         auto schedulerParam = new _Scheduler_Param(proc, param);
-        auto work = QueueUserWorkItem(_Scheduler_Param::DefaultWorkCallback, schedulerParam, WT_EXECUTEDEFAULT);
+        auto work = QueueUserWorkItem(_Scheduler_Param::DefaultWorkCallback, schedulerParam, WT_EXECUTELONGFUNCTION);
 
         if (!work)
         {
