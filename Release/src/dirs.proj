@@ -24,7 +24,7 @@
   </ItemGroup>
   
   <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|140'">
-      <ProjectFile Include="build\vs14.uap\cpprestsdk120.uap.vcxproj" />
+      <ProjectFile Include="build\vs14.uwp\cpprestsdk120.uwp.vcxproj" />
   </ItemGroup>
 
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />

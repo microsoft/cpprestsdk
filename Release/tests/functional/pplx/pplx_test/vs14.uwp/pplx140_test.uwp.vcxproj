@@ -27,56 +27,46 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{5E421824-72D7-4482-A161-8D7D02308E52}</ProjectGuid>
+    <ProjectGuid>{23A43AC2-1E04-4589-B0A9-0295962755DC}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
+    <RootNamespace>HttpTests</RootNamespace>
     <SccProjectName>SAK</SccProjectName>
     <SccAuxPath>SAK</SccAuxPath>
     <SccLocalPath>SAK</SccLocalPath>
     <SccProvider>SAK</SccProvider>
-	<MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
-	<PlatformToolset>v140</PlatformToolset>
-	<CharacterSet>Unicode</CharacterSet>
-	<ConfigurationType>Application</ConfigurationType>
+    <DefaultLanguage>en-US</DefaultLanguage>
+    <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
+	<AppContainerApplication>true</AppContainerApplication>
+	<ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
-    <UseDebugLibraries>true</UseDebugLibraries>
+	<UseDebugLibraries>true</UseDebugLibraries>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <UseDebugLibraries>false</UseDebugLibraries>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'" Label="Configuration">
-    <UseDebugLibraries>false</UseDebugLibraries>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+  <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Release.Tests.Settings" />
-  <ImportGroup Label="ExtensionSettings">
-  </ImportGroup>
-  <ImportGroup Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <PropertyGroup Label="UserMacros" />
-  <PropertyGroup>
-    <TargetName>TestRunner.winrt</TargetName>
-  </PropertyGroup>
-
+  
   <ItemDefinitionGroup>
     <ClCompile>
-	  <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-	  <PreprocessorDefinitions>WINRT_TEST_RUNNER;WIN32;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-	  <MinimalRebuild>false</MinimalRebuild>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PreprocessorDefinitions>WIN32;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <CompileAsWinRT>true</CompileAsWinRT>
+      <MinimalRebuild>false</MinimalRebuild>
+	  <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
     </ClCompile>
-	<Link>
-      <SubSystem>Console</SubSystem>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+	  <AdditionalDependencies>CommonUtilities140.uwp.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-	  <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
 
@@ -86,7 +76,7 @@
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
-  
+
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
@@ -101,18 +91,38 @@
   </ItemDefinitionGroup>
 
   <ItemGroup>
-    <ClCompile Include="..\test_module_loader.cpp" />
-    <ClCompile Include="..\test_runner.cpp" />
+    <ClInclude Include="..\stdafx.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\test_module_loader.h" />
+    <ClCompile Include="..\pplx_op_test.cpp" />
+    <ClCompile Include="..\pplxtask_tests.cpp" />
+    <ClCompile Include="..\pplx_task_options.cpp" />
+    <ClCompile Include="..\stdafx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">Create</PrecompiledHeader>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs14.uap\UnitTestpp140.uap.vcxproj">
+    <ProjectReference Include="$(TestRoot)\Common\utilities\vs14.uwp\CommonUtilities140.uwp.vcxproj">
+      <Project>{DA089EAD-00A2-43CF-9954-DF01E8ED5E94}</Project>
+    </ProjectReference>
+    <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs14.uwp\UnitTestpp140.uwp.vcxproj">
       <Project>{04214181-57D7-45F5-8499-1A5530CE6CBF}</Project>
+    </ProjectReference>
+    <ProjectReference Include="$(CasablancaSrcDir)\build\vs14.uwp\cpprestsdk140.uwp.vcxproj">
+      <Project>{36d79e79-7e9e-4b3a-88a3-9f9b295c80b9}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <Target Name="StripAppContainer" AfterTargets="Build">
+    <CallTarget Targets="StripAppContainerOnProjectDll" />
+    <Copy SourceFiles="$(OutDir)\$(TargetName).dll" DestinationFolder="$(OutDir)\.." />
+    <Copy SourceFiles="$(OutDir)\$(TargetName).pdb" DestinationFolder="$(OutDir)\.." />
+  </Target>
 </Project>

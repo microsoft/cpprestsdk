@@ -13,7 +13,7 @@
   </ItemGroup>
   
   <ItemGroup Condition="'$(OsVersion)|'$(DevToolsVersion)'=='6.3|140'">
-  	<ProjectFile Include="vs14.uap\TestRunner140.uap.vcxproj" />
+  	<ProjectFile Include="vs14.uwp\TestRunner140.uwp.vcxproj" />
   </ItemGroup>
 
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />

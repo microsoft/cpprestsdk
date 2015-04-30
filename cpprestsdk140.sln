@@ -45,7 +45,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cpprestsdk140.android", "Re
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cpprestsdk140.wod", "Release\src\build\vs14.wod\casablanca140.wod.vcxproj", "{3A584D9C-1A98-4046-B7D3-B7171EF42D34}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cpprestsdk140.uap", "Release\src\build\vs14.uap\cpprestsdk140.uap.vcxproj", "{36D79E79-7E9E-4B3A-88A3-9F9B295C80B9}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cpprestsdk140.uwp", "Release\src\build\vs14.uwp\cpprestsdk140.uwp.vcxproj", "{36D79E79-7E9E-4B3A-88A3-9F9B295C80B9}"
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution

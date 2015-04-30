@@ -17,7 +17,7 @@
   </ItemGroup>
   
   <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|140'">
-      <ProjectFile Include="vs14.uap\streams140_test.uap.vcxproj" />
+      <ProjectFile Include="vs14.uwp\streams140_test.uwp.vcxproj" />
   </ItemGroup>
 
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />

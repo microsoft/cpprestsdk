@@ -35,7 +35,7 @@
     <AppContainerApplication>true</AppContainerApplication>
     <ApplicationType>Windows Store</ApplicationType>
     <ApplicationTypeRevision>8.2</ApplicationTypeRevision>
-	<ProjectName>cpprestsdk140.uap</ProjectName>
+	<ProjectName>cpprestsdk140.uwp</ProjectName>
 	<PlatformToolset>v140</PlatformToolset>
 	<ConfigurationType>DynamicLibrary</ConfigurationType>
 	<OutDir>$(OutDir)\$(MsBuildProjectName)</OutDir>
@@ -57,7 +57,7 @@
     <DebugFileSuffix>d</DebugFileSuffix>
   </PropertyGroup>
   <PropertyGroup>
-    <TargetName>$(CppRestBaseFileName)140$(DebugFileSuffix)_uap_$(CppRestSDKVersionFileSuffix)</TargetName>
+    <TargetName>$(CppRestBaseFileName)140$(DebugFileSuffix)_uwp_$(CppRestSDKVersionFileSuffix)</TargetName>
   </PropertyGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup />

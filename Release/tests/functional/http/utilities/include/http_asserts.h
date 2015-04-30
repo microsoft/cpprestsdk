@@ -187,6 +187,7 @@ private:
 
 #if defined(_WIN32)
 #if _MSC_VER >= 1900
+#include <winapifamily.h>
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP)
 // For IXMLHttpRequest with Windows 10, the error codes don't directly compare equal anymore.
 // Relax verification for now.

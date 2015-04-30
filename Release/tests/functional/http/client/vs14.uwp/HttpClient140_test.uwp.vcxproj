@@ -27,16 +27,17 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{4fddc511-5cfd-48a0-b373-43b13a43fb45}</ProjectGuid>
+    <ProjectGuid>{E1E5C85C-9C98-49FC-A645-C1368E981940}</ProjectGuid>
+    <RootNamespace>HttpTests</RootNamespace>
     <SccProjectName>SAK</SccProjectName>
     <SccAuxPath>SAK</SccAuxPath>
     <SccLocalPath>SAK</SccLocalPath>
     <SccProvider>SAK</SccProvider>
-    <Keyword>Win32Proj</Keyword>
-    <DefaultLanguage>en-US</DefaultLanguage>
-    <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
+	<DefaultLanguage>en-US</DefaultLanguage>
+	<ApplicationType>Windows Store</ApplicationType>
+	<MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
 	<AppContainerApplication>true</AppContainerApplication>
-    <CharacterSet>Unicode</CharacterSet>
+	<CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v140</PlatformToolset>
 	<ConfigurationType>DynamicLibrary</ConfigurationType>
   </PropertyGroup>
@@ -53,20 +54,22 @@
 
   <ItemDefinitionGroup>
     <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir)</AdditionalIncludeDirectories>
+	  <PrecompiledHeader>Use</PrecompiledHeader>
+      <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);..\..\utilities\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+	  <PreprocessorDefinitions>WIN32;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <CompileAsWinRT>true</CompileAsWinRT>
       <MinimalRebuild>false</MinimalRebuild>
 	  <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
+	  <AdditionalOptions>-Zm350 /bigobj%(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
-    <Link>
+	<Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+	  <AdditionalDependencies>CommonUtilities140.uwp.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
-
+  
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
@@ -87,43 +90,62 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\stdafx.h" />
-    <ClInclude Include="..\utils_tests.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\base64.cpp" />
-    <ClCompile Include="..\datetime.cpp" />
-    <ClCompile Include="..\macro_test.cpp" />
-    <ClCompile Include="..\nonce_generator_tests.cpp" />
-    <ClCompile Include="..\strings.cpp" />
-    <ClCompile Include="..\stdafx.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">Create</PrecompiledHeader>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="$(TestRoot)\Common\utilities\vs14.uap\CommonUtilities140.uap.vcxproj">
+    <ProjectReference Include="..\..\utilities\vs14.uwp\HttpTestUtilities140.uwp.vcxproj">
+      <Project>{039BA657-296A-4E11-8E37-948A5919F0B8}</Project>
+    </ProjectReference>
+    <ProjectReference Include="$(TestRoot)\Common\utilities\vs14.uwp\CommonUtilities140.uwp.vcxproj">
       <Project>{DA089EAD-00A2-43CF-9954-DF01E8ED5E94}</Project>
     </ProjectReference>
-    <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs14.uap\UnitTestpp140.uap.vcxproj">
+    <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs14.uwp\UnitTestpp140.uwp.vcxproj">
       <Project>{04214181-57D7-45F5-8499-1A5530CE6CBF}</Project>
     </ProjectReference>
-    <ProjectReference Include="$(CasablancaSrcDir)\build\vs14.uap\cpprestsdk140.uap.vcxproj">
+    <ProjectReference Include="$(CasablancaSrcDir)\build\vs14.uwp\cpprestsdk140.uwp.vcxproj">
       <Project>{36d79e79-7e9e-4b3a-88a3-9f9b295c80b9}</Project>
     </ProjectReference>
+  </ItemGroup>  
+  <ItemGroup>
+    <ClInclude Include="..\http_client_tests.h" />
+    <ClInclude Include="..\stdafx.h" />
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\http_client_fuzz_tests.cpp" />
+    <ClCompile Include="..\authentication_tests.cpp" />	
+    <ClCompile Include="..\building_request_tests.cpp" />
+    <ClCompile Include="..\client_construction.cpp" />
+    <ClCompile Include="..\connections_and_errors.cpp" />
+    <ClCompile Include="..\header_tests.cpp" />
+    <ClCompile Include="..\http_client_tests.cpp" />
+    <ClCompile Include="..\http_methods_tests.cpp" />
+    <ClCompile Include="..\oauth1_tests.cpp" />
+    <ClCompile Include="..\oauth2_tests.cpp" />
+    <ClCompile Include="..\outside_tests.cpp" />
+    <ClCompile Include="..\multiple_requests.cpp" />
+    <ClCompile Include="..\pipeline_stage_tests.cpp" />
+    <ClCompile Include="..\proxy_tests.cpp" />
+    <ClCompile Include="..\progress_handler_tests.cpp" />
+    <ClCompile Include="..\request_helper_tests.cpp" />
+    <ClCompile Include="..\request_stream_tests.cpp" />
+    <ClCompile Include="..\request_uri_tests.cpp" />
+    <ClCompile Include="..\response_stream_tests.cpp" />
+    <ClCompile Include="..\response_extract_tests.cpp" />
+    <ClCompile Include="..\status_code_reason_phrase_tests.cpp" />
+    <ClCompile Include="..\stdafx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\to_string_tests.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
   
-  <Target Name="StripAppContainer" AfterTargets="AfterBuild">
+  <Target Name="StripAppContainer" AfterTargets="Build">
     <CallTarget Targets="StripAppContainerOnProjectDll" />
     <Copy SourceFiles="$(OutDir)\$(TargetName).dll" DestinationFolder="$(OutDir)\.." />
     <Copy SourceFiles="$(OutDir)\$(TargetName).pdb" DestinationFolder="$(OutDir)\.." />
   </Target>
-  
-  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets">
-  </ImportGroup>
 </Project>

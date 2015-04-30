@@ -106,13 +106,13 @@
     <ClInclude Include="..\targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs14.uap\UnitTestpp140.uap.vcxproj">
+    <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs14.uwp\UnitTestpp140.uwp.vcxproj">
       <Project>{04214181-57D7-45F5-8499-1A5530CE6CBF}</Project>
     </ProjectReference>
-    <ProjectReference Include="$(TestRoot)\Common\TestRunner\vs14.uap\TestRunner140.uap.vcxproj">
+    <ProjectReference Include="$(TestRoot)\Common\TestRunner\vs14.uwp\TestRunner140.uwp.vcxproj">
       <Project>{5E421824-72D7-4482-A161-8D7D02308E52}</Project>
     </ProjectReference>
-	<ProjectReference Include="$(CasablancaSrcDir)\build\vs14.uap\cpprestsdk140.uap.vcxproj">
+	<ProjectReference Include="$(CasablancaSrcDir)\build\vs14.uwp\cpprestsdk140.uwp.vcxproj">
       <Project>{36d79e79-7e9e-4b3a-88a3-9f9b295c80b9}</Project>
     </ProjectReference>
   </ItemGroup>

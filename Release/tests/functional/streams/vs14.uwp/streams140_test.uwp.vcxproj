@@ -27,18 +27,18 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{9169C20C-B98A-46C6-A138-A107C458E8DD}</ProjectGuid>
+    <ProjectGuid>{B4C6E439-20F9-406C-9586-792FB5B073C2}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
     <SccProjectName>SAK</SccProjectName>
     <SccAuxPath>SAK</SccAuxPath>
     <SccLocalPath>SAK</SccLocalPath>
     <SccProvider>SAK</SccProvider>
-    <Keyword>Win32Proj</Keyword>
     <DefaultLanguage>en-US</DefaultLanguage>
     <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
-	<AppContainerApplication>true</AppContainerApplication>
+    <AppContainerApplication>true</AppContainerApplication>
+	<PlatformToolset>v140</PlatformToolset>
 	<ConfigurationType>DynamicLibrary</ConfigurationType>
-    <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v140</PlatformToolset>
+    <NuGetPackageImportStamp>e13f21ed</NuGetPackageImportStamp>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
@@ -50,15 +50,17 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Release.Tests.Settings" />
-
-  <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
+  
+  <ItemDefinitionGroup>
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <CompileAsWinRT>true</CompileAsWinRT>
       <MinimalRebuild>false</MinimalRebuild>
 	  <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
+      <AdditionalOptions>-Zm160 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -66,7 +68,7 @@
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
-  
+
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
@@ -88,19 +90,12 @@
   </ItemDefinitionGroup>
 
   <ItemGroup>
-    <ClInclude Include="..\stdafx.h" />
-    <ClInclude Include="..\uri_tests.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\accessor_tests.cpp" />
-    <ClCompile Include="..\combining_tests.cpp" />
-    <ClCompile Include="..\constructor_tests.cpp" />
-    <ClCompile Include="..\conversions_tests.cpp" />
-    <ClCompile Include="..\diagnostic_tests.cpp" />
-    <ClCompile Include="..\encoding_tests.cpp" />
-    <ClCompile Include="..\operator_tests.cpp" />
-    <ClCompile Include="..\splitting_tests.cpp" />
-    <ClCompile Include="..\uri_builder_tests.cpp" />
+    <ClCompile Include="..\fstreambuf_tests.cpp" />
+    <ClCompile Include="..\ostream_tests.cpp" />
+    <ClCompile Include="..\stdstream_tests.cpp" />
+    <ClCompile Include="..\memstream_tests.cpp" />
+    <ClCompile Include="..\istream_tests.cpp" />
+    <ClCompile Include="..\winrt_interop_tests.cpp" />
     <ClCompile Include="..\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -111,24 +106,30 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="$(TestRoot)\Common\utilities\vs14.uap\CommonUtilities140.uap.vcxproj">
+    <ClInclude Include="..\stdafx.h" />
+    <ClInclude Include="..\streams_tests.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(TestRoot)\Common\utilities\vs14.uwp\CommonUtilities140.uwp.vcxproj">
       <Project>{DA089EAD-00A2-43CF-9954-DF01E8ED5E94}</Project>
     </ProjectReference>
-    <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs14.uap\UnitTestpp140.uap.vcxproj">
+    <ProjectReference Include="$(TestRoot)\Common\UnitTestpp\vs14.uwp\UnitTestpp140.uwp.vcxproj">
       <Project>{04214181-57D7-45F5-8499-1A5530CE6CBF}</Project>
     </ProjectReference>
-    <ProjectReference Include="$(CasablancaSrcDir)\build\vs14.uap\cpprestsdk140.uap.vcxproj">
+    <ProjectReference Include="$(CasablancaSrcDir)\build\vs14.uwp\cpprestsdk140.uwp.vcxproj">
       <Project>{36d79e79-7e9e-4b3a-88a3-9f9b295c80b9}</Project>
     </ProjectReference>
   </ItemGroup>
-  
-  <Target Name="StripAppContainer" AfterTargets="AfterBuild">
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(PackagesRoot)\boost.1.55.0.16\build\native\boost.targets" Condition="Exists('$(PackagesRoot)\boost.1.55.0.16\build\native\boost.targets')" />
+  </ImportGroup>
+  <Target Name="StripAppContainer" AfterTargets="Build">
     <CallTarget Targets="StripAppContainerOnProjectDll" />
     <Copy SourceFiles="$(OutDir)\$(TargetName).dll" DestinationFolder="$(OutDir)\.." />
     <Copy SourceFiles="$(OutDir)\$(TargetName).pdb" DestinationFolder="$(OutDir)\.." />
   </Target>
-  
-  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets">
-  </ImportGroup>
 </Project>
