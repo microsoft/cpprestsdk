@@ -58,10 +58,8 @@ elseif(WIN32)
     http/client/x509_cert_utilities_win32.cpp
     http/listener/http_server_httpsys.cpp
     pplx/pplxwin.cpp
-    streams/ioscheduler.cpp
     streams/fileio_win32.cpp
     pch/stdafx.cpp
-    utilities/dllmain.cpp
   )
   set(EXTRALINKS
     bcrypt.lib
