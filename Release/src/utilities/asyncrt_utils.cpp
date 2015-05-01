@@ -30,10 +30,9 @@
 #include <boost/date_time/posix_time/posix_time_io.hpp>
 #endif
 
-#if defined(__GLIBCXX__)
-#include "boost/locale.hpp"
-#else
-// Not supported on libstdc++
+// Could use C++ standard library if not __GLIBCXX__,
+// For testing purposes we just the handwritten on all platforms.
+#if defined(CPPREST_STDLIB_UTF_CONVERSIONS)
 #include <codecvt>
 #endif
 
@@ -253,23 +252,24 @@ const std::error_category & __cdecl linux_category()
 
 }
 
-utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
+utf16string __cdecl conversions::utf8_to_utf16(const std::string &src)
 {
-#if defined(__GLIBCXX__)
-    return boost::locale::conv::utf_to_utf<utf16char>(s, boost::locale::conv::stop);
-#else
+#if defined(CPPREST_STDLIB_UTF_CONVERSIONS)
     std::wstring_convert<std::codecvt_utf8_utf16<utf16char>, utf16char> conversion;
-    return conversion.from_bytes(s);
+    return conversion.from_bytes(src);
+#else
+
+    // TODO
 #endif
 }
 
 std::string __cdecl conversions::utf16_to_utf8(const utf16string &w)
 {
-#if defined(__GLIBCXX__)
-    return boost::locale::conv::utf_to_utf<char>(w, boost::locale::conv::stop);
-#else
+#if defined(CPPREST_STDLIB_UTF_CONVERSIONS)
     std::wstring_convert<std::codecvt_utf8_utf16<utf16char>, utf16char> conversion;
     return conversion.to_bytes(w);
+#else
+    // TODO
 #endif
 }
 
