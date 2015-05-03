@@ -855,19 +855,28 @@ pplx::task<void> http_linux_server::register_listener(details::http_listener_imp
         if (m_registered_listeners.find(listener) != m_registered_listeners.end())
             throw std::invalid_argument("listener already registered");
 
-        m_registered_listeners[listener] = utility::details::make_unique<pplx::extensibility::reader_writer_lock_t>();
+		try
+		{
+            m_registered_listeners[listener] = utility::details::make_unique<pplx::extensibility::reader_writer_lock_t>();
 
-        auto found_hostport_listener = m_listeners.find(hostport);
-        if (found_hostport_listener == m_listeners.end())
-        {
-            found_hostport_listener = m_listeners.insert(
-                std::make_pair(hostport, utility::details::make_unique<details::hostport_listener>(this, hostport))).first;
+            auto found_hostport_listener = m_listeners.find(hostport);
+            if (found_hostport_listener == m_listeners.end())
+            {
+                found_hostport_listener = m_listeners.insert(
+                    std::make_pair(hostport, utility::details::make_unique<details::hostport_listener>(this, hostport))).first;
 
-            if (m_started)
-                found_hostport_listener->second->start();
-        }
+                if (m_started)
+                    found_hostport_listener->second->start();
+            }
 
-        found_hostport_listener->second->add_listener(path, listener);
+            found_hostport_listener->second->add_listener(path, listener);
+		}
+		catch(...) //naive solution
+		{
+			m_registered_listeners.erase(listener);
+			m_listeners.erase(hostport);
+			throw;
+		}
     }
 
     return pplx::task_from_result();
