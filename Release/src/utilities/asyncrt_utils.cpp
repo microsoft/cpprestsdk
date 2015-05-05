@@ -294,12 +294,12 @@ utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
             }
             else
             {
-                throw std::invalid_argument("UTF-8 string has invalid Unicode code point");
+                throw std::range_error("UTF-8 string has invalid Unicode code point");
             }
             srcRemainingSize -= numContBytes;
             if (srcRemainingSize <= 0)
             {
-                throw std::invalid_argument("UTF-8 string is missing bytes in character");
+                throw std::range_error("UTF-8 string is missing bytes in character");
             }
 
             for (unsigned char i = 0; i < numContBytes; ++i)
@@ -341,18 +341,18 @@ std::string __cdecl conversions::utf16_to_utf8(const utf16string &w)
      return conversion.to_bytes(w);
  #else
     std::string dest;
-    dest.reserve(w.size()); // TODO size
+    dest.reserve(w.size());
     const utf16string::value_type *src = w.c_str();
     auto srcRemainingSize = w.size();
     while (srcRemainingSize > 0)
     {
+        // Check for high surrogate.
         if (*src >= 0xD800 && *src <= 0xDBFF)
         {
             if (--srcRemainingSize == 0)
             {
-                // TODO error
+                throw std::range_error("UTF-16 string is missing low surrogate");
             }
-            // Found a high surrogate.
 
             // To get from surrogate pair to Unicode code point:
             // - subract 0xD800 from high surrogate, this forms top ten bits
@@ -363,6 +363,10 @@ std::string __cdecl conversions::utf16_to_utf8(const utf16string &w)
             codePoint <<= 10;
             codePoint += *++src - 0xDC00;
             codePoint += 0x10000;
+            if (*src < 0xDC00 || *src > 0xDFFF)
+            {
+                throw std::range_error("UTF-16 string has invalid low surrogate");
+            }
 
             // 4 bytes need using 21 bits
             dest.push_back(char(codePoint >> 18) | 0xF0);               // leading 3 bits

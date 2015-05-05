@@ -191,32 +191,48 @@ TEST(utf8_to_utf16)
 #endif
 }
 
+TEST(utf16_to_utf8_errors)
+{
+    VERIFY_ARE_EQUAL("ABC987", utility::conversions::utf16_to_utf8(UTF16("ABC987")));
+    utf16string input;
+    
+    // high surrogate with missing low surrogate.
+    input.push_back(0xD800);
+    input.push_back(0x0);
+    VERIFY_THROWS(utility::conversions::utf16_to_utf8(input), std::range_error);
+
+    // high surrogate with no more characters
+    input.clear();
+    input.push_back(0xD800);
+    VERIFY_THROWS(utility::conversions::utf16_to_utf8(input), std::range_error);
+}
+
 TEST(utf8_to_utf16_errors)
 {
     // missing second continuation byte
     std::string input;
     input.push_back(207u); // 11001111
-    VERIFY_THROWS(utility::conversions::utf8_to_utf16(input), std::invalid_argument);
+    VERIFY_THROWS(utility::conversions::utf8_to_utf16(input), std::range_error);
 
     // missing third continuation byte
     input.clear();
     input.push_back(230u); // 11100110
     input.push_back(141u); // 10001101
-    VERIFY_THROWS(utility::conversions::utf8_to_utf16(input), std::invalid_argument);
+    VERIFY_THROWS(utility::conversions::utf8_to_utf16(input), std::range_error);
 
     // missing fourth continuation byte
     input.clear();
     input.push_back(240u); // 11110000
     input.push_back(173u); // 10101101
     input.push_back(157u); // 10011101
-    VERIFY_THROWS(utility::conversions::utf8_to_utf16(input), std::invalid_argument);
+    VERIFY_THROWS(utility::conversions::utf8_to_utf16(input), std::range_error);
 }
 
 TEST(latin1_to_utf16)
 {
     // TODO: find some string that actually uses something unique to the Latin1 code page.
     std::string str_latin1("This is a test");
-    utf16string str_utf16 = utility::conversions::usascii_to_utf16(str_latin1);
+    utf16string str_utf16 = utility::conversions::latin1_to_utf16(str_latin1);
     
     for (size_t i = 0; i < str_latin1.size(); ++i)
     {
