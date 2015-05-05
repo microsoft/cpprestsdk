@@ -32,7 +32,7 @@
 
 // Could use C++ standard library if not __GLIBCXX__,
 // For testing purposes we just the handwritten on all platforms.
-#if defined(CPPREST_STDLIB_UTF_CONVERSIONS)
+#if defined(CPPREST_STDLIB_UNICODE_CONVERSIONS)
 #include <codecvt>
 #endif
 
@@ -252,25 +252,100 @@ const std::error_category & __cdecl linux_category()
 
 }
 
-utf16string __cdecl conversions::utf8_to_utf16(const std::string &src)
+utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
 {
-#if defined(CPPREST_STDLIB_UTF_CONVERSIONS)
+#if defined(CPPREST_STDLIB_UNICODE_CONVERSIONS)
     std::wstring_convert<std::codecvt_utf8_utf16<utf16char>, utf16char> conversion;
     return conversion.from_bytes(src);
 #else
+    utf16string dest;
+    // Save repeated heap allocations, use less than source string size assuming some
+    // of the characters are not just ASCII and collapse.
+    dest.reserve(static_cast<size_t>(s.size() * .70));
+    
+    const unsigned char *src = reinterpret_cast<const unsigned char *>(s.c_str());
+    auto srcRemainingSize = s.size();
+    const auto leadingBits = 0x3F;
+    while (srcRemainingSize > 0)
+    {
+        if (*src < 0x80) // single byte character, 0x0 to 0x7F
+        {
+            dest.push_back(utf16string::value_type(*src));
+        }
+        else
+        {
+            unsigned char numContBytes = 0;
+            int32_t codePoint;
+            if (*src < 0xE0) // 2 byte character, 0x80 to 0x7FF
+            {
+                codePoint = *src & 0x1F;
+                numContBytes = 1;
+            }
+            else if (*src < 0xF0) // 3 byte character, 0x800 to 0xFFFF
+            {
+                codePoint = *src & 0xF;
+                numContBytes = 2;
+            }
+            else if (*src < 0xF8) // 4 byte character, 0x10000 to 0x10FFFF
+            {
+                codePoint = *src & 0x7;
+                numContBytes = 3;
+            }
+            else
+            {
+                throw std::invalid_argument("UTF-8 string has invalid Unicode code point");
+            }
+            srcRemainingSize -= numContBytes;
+            if (srcRemainingSize == 0)
+            {
+                throw std::invalid_argument("UTF-8 string is missing bytes in character");
+            }
 
-    // TODO
+            for (unsigned char i = 0; i < numContBytes; ++i)
+            {
+                codePoint <<= 6;
+                codePoint |= *++src & leadingBits;
+            }
+
+            if (numContBytes == 3)
+            {
+                // In UTF-16 U+1000 to U+10FFFF are represented as two 16-bit code units, surrogate pairs.
+                //  - 0x10000 is subtracted from the code point
+                //  - high surrogate is 0xD800 added to the top ten bits
+                //  - low surrogate is 0xDC00 added to the low ten bits
+                codePoint -= 0x10000;
+                dest.push_back(utf16string::value_type((codePoint >> 10) + 0xD800));
+                dest.push_back(utf16string::value_type((codePoint & 0x3FF) + 0xDC00));
+            }
+            else
+            {
+                // In UTF-16 U+0000 to U+D7FF and U+E000 to U+FFFF are represented exactly as the Unicode code point value.
+                // U+D800 to U+DFFF are not valid characters, for simplicity we assume they are not present but will encode
+                // them if encountered.
+                dest.push_back(utf16string::value_type(codePoint));
+            }
+        }
+
+        --srcRemainingSize;
+        ++src;
+    }
+    return dest;
 #endif
 }
 
 std::string __cdecl conversions::utf16_to_utf8(const utf16string &w)
 {
-#if defined(CPPREST_STDLIB_UTF_CONVERSIONS)
-    std::wstring_convert<std::codecvt_utf8_utf16<utf16char>, utf16char> conversion;
-    return conversion.to_bytes(w);
-#else
-    // TODO
-#endif
+ #if defined(CPPREST_STDLIB_UNICODE_CONVERSIONS)
+     std::wstring_convert<std::codecvt_utf8_utf16<utf16char>, utf16char> conversion;
+     return conversion.to_bytes(w);
+ #else
+    std::string dest;
+    dest.reserve(w.size());
+
+    
+
+    return dest;
+ #endif
 }
 
 utf16string __cdecl conversions::usascii_to_utf16(const std::string &s)
