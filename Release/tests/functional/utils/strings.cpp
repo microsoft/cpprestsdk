@@ -49,6 +49,88 @@ TEST(usascii_to_utf16)
     }
 }
 
+#ifdef _WIN32
+#define UTF16(x) L ## x
+#else
+#define UTF16(x) u ## x
+#endif
+
+TEST(utf16_to_utf8)
+{
+#if !defined(__GLIBCXX__)
+    std::wstring_convert<std::codecvt_utf8_utf16<utf16char>, utf16char> conversion;
+#endif
+
+    // encodes to single byte character
+    VERIFY_ARE_EQUAL("ABC987", utility::conversions::utf16_to_utf8(UTF16("ABC987")));
+
+    // encodes to 2 byte character
+    utf16string input;
+    input.push_back(0x80);
+    input.push_back(0x14D);
+    input.push_back(0x7FF);
+    auto result = utility::conversions::utf16_to_utf8(input);
+#if defined(__GLIBCXX__)
+    VERIFY_ARE_EQUAL(-62, result[0]);
+    VERIFY_ARE_EQUAL(-128, result[1]);
+    VERIFY_ARE_EQUAL(-59, result[2]);
+    VERIFY_ARE_EQUAL(-115, result[3]);
+    VERIFY_ARE_EQUAL(-33, result[4]);
+    VERIFY_ARE_EQUAL(-65, result[5]);
+#else
+    VERIFY_ARE_EQUAL(conversion.to_bytes(input), result);
+#endif
+
+    // encodes to 3 byte character
+    input.clear();
+    input.push_back(0x800);
+    input.push_back(0x14AB);
+    input.push_back(0xFFFF);
+    result = utility::conversions::utf16_to_utf8(input);
+#if defined(__GLIBCXX__)
+    VERIFY_ARE_EQUAL(-32, result[0]);
+    VERIFY_ARE_EQUAL(-96, result[1]);
+    VERIFY_ARE_EQUAL(-128, result[2]);
+    VERIFY_ARE_EQUAL(-31, result[3]);
+    VERIFY_ARE_EQUAL(-110, result[4]);
+    VERIFY_ARE_EQUAL(-85, result[5]);
+    VERIFY_ARE_EQUAL(-17, result[6]);
+    VERIFY_ARE_EQUAL(-65, result[7]);
+    VERIFY_ARE_EQUAL(-65, result[8]);
+#else
+    VERIFY_ARE_EQUAL(conversion.to_bytes(input), result);
+#endif
+
+    // surrogate pair - encodes to 4 byte character
+    input.clear();
+    // U+10000
+    input.push_back(0xD800);
+    input.push_back(0xDC00);
+    // U+12345
+    input.push_back(0xD802);
+    input.push_back(0xDD29);
+    // U+10FFFF
+    input.push_back(0xDA3F);
+    input.push_back(0xDFFF);
+    result = utility::conversions::utf16_to_utf8(input);
+#if defined(__GLIBCXX__)
+    VERIFY_ARE_EQUAL(-16, result[0]);
+    VERIFY_ARE_EQUAL(-112, result[1]);
+    VERIFY_ARE_EQUAL(-128, result[2]);
+    VERIFY_ARE_EQUAL(-128, result[3]);
+    VERIFY_ARE_EQUAL(-16, result[4]);
+    VERIFY_ARE_EQUAL(-112, result[5]);
+    VERIFY_ARE_EQUAL(-92, result[6]);
+    VERIFY_ARE_EQUAL(-87, result[7]);
+    VERIFY_ARE_EQUAL(-14, result[8]);
+    VERIFY_ARE_EQUAL(-97, result[9]);
+    VERIFY_ARE_EQUAL(-65, result[10]);
+    VERIFY_ARE_EQUAL(-65, result[11]);
+#else
+    VERIFY_ARE_EQUAL(conversion.to_bytes(input), result);
+#endif
+}
+
 TEST(utf8_to_utf16)
 {
 #if !defined(__GLIBCXX__)
@@ -56,14 +138,14 @@ TEST(utf8_to_utf16)
 #endif
 
     // single byte character
-    VERIFY_ARE_EQUAL(_XPLATSTR("ABC123"), utility::conversions::utf8_to_utf16("ABC123"));
+    VERIFY_ARE_EQUAL(UTF16("ABC123"), utility::conversions::utf8_to_utf16("ABC123"));
 
     // 2 byte character
     std::string input;
-    input.push_back(unsigned char(207)); // 11001111
-    input.push_back(unsigned char(129)); // 10000001
-    input.push_back(unsigned char(198)); // 11000110
-    input.push_back(unsigned char(141)); // 10001101
+    input.push_back(207u); // 11001111
+    input.push_back(129u); // 10000001
+    input.push_back(198u); // 11000110
+    input.push_back(141u); // 10001101
     auto result = utility::conversions::utf8_to_utf16(input);
 #if defined(__GLIBCXX__)
     VERIFY_ARE_EQUAL(961, result[0]);
@@ -74,12 +156,12 @@ TEST(utf8_to_utf16)
 
     // 3 byte character
     input.clear();
-    input.push_back(unsigned char(230)); // 11100110
-    input.push_back(unsigned char(141)); // 10001101
-    input.push_back(unsigned char(157)); // 10011101
-    input.push_back(unsigned char(231)); // 11100111
-    input.push_back(unsigned char(143)); // 10001111
-    input.push_back(unsigned char(156)); // 10011100
+    input.push_back(230u); // 11100110
+    input.push_back(141u); // 10001101
+    input.push_back(157u); // 10011101
+    input.push_back(231u); // 11100111
+    input.push_back(143u); // 10001111
+    input.push_back(156u); // 10011100
     result = utility::conversions::utf8_to_utf16(input);
 #if defined(__GLIBCXX__)
     VERIFY_ARE_EQUAL(25437, result[0]);
@@ -90,14 +172,14 @@ TEST(utf8_to_utf16)
 
     // 4 byte character
     input.clear();
-    input.push_back(unsigned char(240)); // 11110000
-    input.push_back(unsigned char(173)); // 10101101
-    input.push_back(unsigned char(157)); // 10011101
-    input.push_back(unsigned char(143)); // 10001111
-    input.push_back(unsigned char(240)); // 11111000
-    input.push_back(unsigned char(161)); // 10100001
-    input.push_back(unsigned char(191)); // 10111111
-    input.push_back(unsigned char(191)); // 10111111
+    input.push_back(240u); // 11110000
+    input.push_back(173u); // 10101101
+    input.push_back(157u); // 10011101
+    input.push_back(143u); // 10001111
+    input.push_back(240u); // 11111000
+    input.push_back(161u); // 10100001
+    input.push_back(191u); // 10111111
+    input.push_back(191u); // 10111111
     result = utility::conversions::utf8_to_utf16(input);
 #if defined(__GLIBCXX__)
     VERIFY_ARE_EQUAL(55413, result[0]);
@@ -113,20 +195,20 @@ TEST(utf8_to_utf16_errors)
 {
     // missing second continuation byte
     std::string input;
-    input.push_back(unsigned char(207)); // 11001111
+    input.push_back(207u); // 11001111
     VERIFY_THROWS(utility::conversions::utf8_to_utf16(input), std::invalid_argument);
 
     // missing third continuation byte
     input.clear();
-    input.push_back(unsigned char(230)); // 11100110
-    input.push_back(unsigned char(141)); // 10001101
+    input.push_back(230u); // 11100110
+    input.push_back(141u); // 10001101
     VERIFY_THROWS(utility::conversions::utf8_to_utf16(input), std::invalid_argument);
 
     // missing fourth continuation byte
     input.clear();
-    input.push_back(unsigned char(240)); // 11110000
-    input.push_back(unsigned char(173)); // 10101101
-    input.push_back(unsigned char(157)); // 10011101
+    input.push_back(240u); // 11110000
+    input.push_back(173u); // 10101101
+    input.push_back(157u); // 10011101
     VERIFY_THROWS(utility::conversions::utf8_to_utf16(input), std::invalid_argument);
 }
 

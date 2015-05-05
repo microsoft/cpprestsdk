@@ -252,7 +252,7 @@ const std::error_category & __cdecl linux_category()
 
 }
 
-#define UTF8_ // TODO 
+#define LOWER_6BITS 0x3F
 
 utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
 {
@@ -267,7 +267,6 @@ utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
     
     const unsigned char *src = reinterpret_cast<const unsigned char *>(s.c_str());
     auto srcRemainingSize = s.size();
-    const auto leadingBits = 0x3F;
     while (srcRemainingSize > 0)
     {
         if (*src < 0x7F) // single byte character, 0x0 to 0x7F
@@ -298,7 +297,7 @@ utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
                 throw std::invalid_argument("UTF-8 string has invalid Unicode code point");
             }
             srcRemainingSize -= numContBytes;
-            if (srcRemainingSize == 0)
+            if (srcRemainingSize <= 0)
             {
                 throw std::invalid_argument("UTF-8 string is missing bytes in character");
             }
@@ -306,7 +305,7 @@ utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
             for (unsigned char i = 0; i < numContBytes; ++i)
             {
                 codePoint <<= 6;
-                codePoint |= *++src & leadingBits;
+                codePoint |= *++src & LOWER_6BITS;
             }
 
             if (numContBytes == 3)
@@ -343,17 +342,33 @@ std::string __cdecl conversions::utf16_to_utf8(const utf16string &w)
  #else
     std::string dest;
     dest.reserve(w.size()); // TODO size
-
     const utf16string::value_type *src = w.c_str();
     auto srcRemainingSize = w.size();
     while (srcRemainingSize > 0)
     {
         if (*src >= 0xD800 && *src <= 0xDBFF)
         {
+            if (--srcRemainingSize == 0)
+            {
+                // TODO error
+            }
             // Found a high surrogate.
-            // TODO in the future check to make sure ....
 
+            // To get from surrogate pair to Unicode code point:
+            // - subract 0xD800 from high surrogate, this forms top ten bits
+            // - subract 0xDC00 from low surrogate, this forms low ten bits
+            // - add 0x10000
+            // Leaves a code point in U+10000 to U+10FFFF range.
+            uint32_t codePoint = *src - 0xD800;
+            codePoint <<= 10;
+            codePoint += *++src - 0xDC00;
+            codePoint += 0x10000;
 
+            // 4 bytes need using 21 bits
+            dest.push_back(char(codePoint >> 18) | 0xF0);               // leading 3 bits
+            dest.push_back(((codePoint >> 12) & LOWER_6BITS) | 0x80);   // next 6 bits
+            dest.push_back(((codePoint >> 6) & LOWER_6BITS) | 0x80);    // next 6 bits
+            dest.push_back((codePoint & LOWER_6BITS) | 0x80);           // trailing 6 bits
         }
         else if (*src <= 0xFFFF)
         {
@@ -361,16 +376,17 @@ std::string __cdecl conversions::utf16_to_utf8(const utf16string &w)
             {
                 dest.push_back(static_cast<char>(*src));
             }
-            else if (*src <= 0x7FF) // 2 bytes needed
+            else if (*src <= 0x7FF) // 2 bytes needed (11 bits used)
             {
-                dest.push_back((*src >> 3) | 0xC0);
-                dest.push_back((*src << 5) | )
+                dest.push_back(char(*src >> 6) | 0xC0);             // leading 5 bits
+                dest.push_back((*src & LOWER_6BITS) | 0x80);        // trailing 6 bits
             }
-            else // 3 bytes needed
+            else // 3 bytes needed (16 bits used)
             {
-
+                dest.push_back((*src >> 12) | 0xE0);                // leading 4 bits
+                dest.push_back(((*src >> 6) & LOWER_6BITS) | 0x80); // middle 6 bits
+                dest.push_back((*src & LOWER_6BITS) | 0x80);        // trailing 6 bits
             }
-            
         }
 
         --srcRemainingSize;
