@@ -252,6 +252,8 @@ const std::error_category & __cdecl linux_category()
 
 }
 
+#define UTF8_ // TODO 
+
 utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
 {
 #if defined(CPPREST_STDLIB_UNICODE_CONVERSIONS)
@@ -268,7 +270,7 @@ utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
     const auto leadingBits = 0x3F;
     while (srcRemainingSize > 0)
     {
-        if (*src < 0x80) // single byte character, 0x0 to 0x7F
+        if (*src < 0x7F) // single byte character, 0x0 to 0x7F
         {
             dest.push_back(utf16string::value_type(*src));
         }
@@ -276,17 +278,17 @@ utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
         {
             unsigned char numContBytes = 0;
             int32_t codePoint;
-            if (*src < 0xE0) // 2 byte character, 0x80 to 0x7FF
+            if (*src <= 0xDF) // 2 byte character, 0x80 to 0x7FF
             {
                 codePoint = *src & 0x1F;
                 numContBytes = 1;
             }
-            else if (*src < 0xF0) // 3 byte character, 0x800 to 0xFFFF
+            else if (*src <= 0xEF) // 3 byte character, 0x800 to 0xFFFF
             {
                 codePoint = *src & 0xF;
                 numContBytes = 2;
             }
-            else if (*src < 0xF8) // 4 byte character, 0x10000 to 0x10FFFF
+            else if (*src <= 0xF7) // 4 byte character, 0x10000 to 0x10FFFF
             {
                 codePoint = *src & 0x7;
                 numContBytes = 3;
@@ -340,9 +342,40 @@ std::string __cdecl conversions::utf16_to_utf8(const utf16string &w)
      return conversion.to_bytes(w);
  #else
     std::string dest;
-    dest.reserve(w.size());
+    dest.reserve(w.size()); // TODO size
 
-    
+    const utf16string::value_type *src = w.c_str();
+    auto srcRemainingSize = w.size();
+    while (srcRemainingSize > 0)
+    {
+        if (*src >= 0xD800 && *src <= 0xDBFF)
+        {
+            // Found a high surrogate.
+            // TODO in the future check to make sure ....
+
+
+        }
+        else if (*src <= 0xFFFF)
+        {
+            if (*src < 0x7F) // single byte character
+            {
+                dest.push_back(static_cast<char>(*src));
+            }
+            else if (*src <= 0x7FF) // 2 bytes needed
+            {
+                dest.push_back((*src >> 3) | 0xC0);
+                dest.push_back((*src << 5) | )
+            }
+            else // 3 bytes needed
+            {
+
+            }
+            
+        }
+
+        --srcRemainingSize;
+        ++src;
+    }
 
     return dest;
  #endif
