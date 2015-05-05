@@ -131,8 +131,8 @@ namespace Concurrency { namespace streams {
             // seek beyond the current write_end.
             _ASSERTE(m_current_position <= m_data.size());
 
-            SafeSize readhead(m_current_position);
-            SafeSize writeend(m_data.size());
+            msl::safeint3::SafeInt<size_t> readhead(m_current_position);
+            msl::safeint3::SafeInt<size_t> writeend(m_data.size());
             return (size_t)(writeend - readhead);
         }
 
@@ -434,8 +434,8 @@ namespace Concurrency { namespace streams {
             if (!can_satisfy(count))
                 return 0;
 
-            SafeSize request_size(count);
-            SafeSize read_size = request_size.Min(in_avail());
+            msl::safeint3::SafeInt<size_t> request_size(count);
+            msl::safeint3::SafeInt<size_t> read_size = request_size.Min(in_avail());
 
             size_t newPos = m_current_position + read_size;
 

@@ -216,7 +216,7 @@ public:
             auto buffer = context->_get_readbuffer();
 
             // Do not read more than the specified read_length
-            SafeSize safe_count = static_cast<size_t>(cb);
+            msl::safeint3::SafeInt<size_t> safe_count = static_cast<size_t>(cb);
             size_t size_to_read = safe_count.Min(m_read_length);
 
             const size_t count = buffer.getn((uint8_t *)pv, size_to_read).get();
@@ -250,8 +250,11 @@ public:
         }
     }
 
-    virtual HRESULT STDMETHODCALLTYPE Write(const void *, _In_ ULONG, _Out_opt_ ULONG *)
+    virtual HRESULT STDMETHODCALLTYPE Write(_In_reads_bytes_(cb) const void *pv, _In_ ULONG cb, _Out_opt_ ULONG *pcbWritten)
     {
+        CASABLANCA_UNREFERENCED_PARAMETER(pv);
+        CASABLANCA_UNREFERENCED_PARAMETER(cb);
+        CASABLANCA_UNREFERENCED_PARAMETER(pcbWritten);
         return E_NOTIMPL;
     }
 
@@ -304,7 +307,7 @@ public:
         try
         {
             auto buffer = context->_get_writebuffer();
-            const size_t count = buffer.putn(reinterpret_cast<const uint8_t *>(pv), static_cast<size_t>(cb)).get();
+            const size_t count = buffer.putn_nocopy(reinterpret_cast<const uint8_t *>(pv), static_cast<size_t>(cb)).get();
 
             _ASSERTE(count != static_cast<size_t>(-1));
             _ASSERTE(count <= static_cast<size_t>(ULONG_MAX));
@@ -333,8 +336,11 @@ public:
         }
     }
 
-    virtual HRESULT STDMETHODCALLTYPE Read(void *, _In_ ULONG, _Out_ ULONG *)
+    virtual HRESULT STDMETHODCALLTYPE Read(_Out_writes_bytes_to_(cb, *pcbRead) void *pv, _In_ ULONG cb, _Out_ ULONG *pcbRead)
     {
+        CASABLANCA_UNREFERENCED_PARAMETER(pv);
+        CASABLANCA_UNREFERENCED_PARAMETER(cb);
+        CASABLANCA_UNREFERENCED_PARAMETER(pcbRead);
         return E_NOTIMPL;
     }
 

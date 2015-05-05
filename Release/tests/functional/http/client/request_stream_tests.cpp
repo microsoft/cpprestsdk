@@ -81,7 +81,7 @@ void fill_buffer(streams::streambuf<uint8_t> rbuf, size_t repetitions = 1)
     const char *text = "abcdefghijklmnopqrstuvwxyz";
     size_t len = strlen(text);
     for (size_t i = 0; i < repetitions; i++)
-        rbuf.putn((const uint8_t *)text, len);
+        rbuf.putn_nocopy((const uint8_t *)text, len);
 }
 
 #if defined(__cplusplus_winrt)
@@ -324,7 +324,7 @@ TEST_FIXTURE(uri_address, set_body_stream_exception)
 
     streams::producer_consumer_buffer<uint8_t> buf;
     const char *data = "abcdefghijklmnopqrstuvwxyz";
-    buf.putn(reinterpret_cast<const uint8_t *>(data), 26).wait();
+    buf.putn_nocopy(reinterpret_cast<const uint8_t *>(data), 26).wait();
 
     http_request msg(methods::POST);
     msg.set_body(buf.create_istream());
@@ -359,7 +359,7 @@ TEST_FIXTURE(uri_address, stream_close_early)
 
     // Write a bit of data then close the stream early.
     unsigned char data[5] = { '1', '2', '3', '4', '5' };
-    buf.putn(&data[0], 5).wait();
+    buf.putn_nocopy(&data[0], 5).wait();
 
     buf.close(std::ios::out).wait();
 
@@ -378,7 +378,7 @@ TEST_FIXTURE(uri_address, stream_close_early_with_exception)
 
     // Write a bit of data then close the stream early.
     unsigned char data[5] = { '1', '2', '3', '4', '5' };
-    buf.putn(&data[0], 5).wait();
+    buf.putn_nocopy(&data[0], 5).wait();
 
     buf.close(std::ios::out, std::make_exception_ptr(test_exception())).wait();
 
@@ -405,7 +405,7 @@ TEST_FIXTURE(uri_address, stream_close_early_with_exception_and_contentlength)
 
     // Write a bit of data then close the stream early.
     unsigned char data[5] = { '1', '2', '3', '4', '5' };
-    buf.putn(&data[0], 5).wait();
+    buf.putn_nocopy(&data[0], 5).wait();
 
     buf.close(std::ios::out, std::make_exception_ptr(test_exception())).wait();
 
@@ -432,7 +432,7 @@ TEST_FIXTURE(uri_address, stream_close_early_with_contentlength, "Ignore:Apple",
 
     // Write a bit of data then close the stream early.
     unsigned char data[5] = { '1', '2', '3', '4', '5' };
-    buf.putn(&data[0], 5).wait();
+    buf.putn_nocopy(&data[0], 5).wait();
 
     buf.close(std::ios::out).wait();
 

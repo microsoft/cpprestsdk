@@ -161,13 +161,13 @@ public:
     /// <summary>
     /// Set access token.
     /// </summary>
-    /// <param name="token">Access token string to set.</param>
+    /// <param name="access_token">Access token string to set.</param>
     void set_access_token(utility::string_t &&access_token) { m_token = std::move(access_token); }
 
     /// <summary>
     /// Set access token.
     /// </summary>
-    /// <param name="token">Access token string to set.</param>
+    /// <param name="access_token">Access token string to set.</param>
     void set_access_token(const utility::string_t &access_token) { m_token = access_token; }
 
     /// <summary>

@@ -716,6 +716,8 @@ void convert_append_unicode_code_unit(JSON_Parser<char>::Token &token, utf16char
 template <typename CharType>
 inline bool JSON_Parser<CharType>::handle_unescape_char(Token &token)
 {
+    token.has_unescape_symbol = true;
+
     // This function converts unescaped character pairs (e.g. "\t") into their ASCII or Unicode representations (e.g. tab sign)
     // Also it handles \u + 4 hexadecimal digits
     auto ch = NextCharacter();
@@ -784,6 +786,7 @@ inline bool JSON_Parser<CharType>::handle_unescape_char(Token &token)
 template <typename CharType>
 bool JSON_Parser<CharType>::CompleteStringLiteral(Token &token)
 {
+    token.has_unescape_symbol = false;
     auto ch = NextCharacter();
     while ( ch != '"' )
     {
@@ -836,13 +839,18 @@ bool JSON_StringParser<CharType>::CompleteStringLiteral(typename JSON_Parser<Cha
 
         if (ch == '\\')
         {
-            token.string_val.resize(m_position - start - 1);
-            if (token.string_val.size() > 0)
-                memcpy(&token.string_val[0], start, (m_position - start - 1)*sizeof(CharType));
+            const size_t numChars = m_position - start - 1;
+            const size_t prevSize = token.string_val.size();
+            token.string_val.resize(prevSize + numChars);
+            memcpy(const_cast<CharType *>(token.string_val.c_str() + prevSize), start, numChars * sizeof(CharType));
 
-            token.has_unescape_symbol = true;
+            if (!JSON_StringParser<CharType>::handle_unescape_char(token))
+            {
+                return false;
+            }
 
-            return finish_parsing_string_with_unescape_char(token);
+            // Reset start position and continue.
+            start = m_position;
         }
         else if (ch >= CharType(0x0) && ch < CharType(0x20))
         {
@@ -852,43 +860,12 @@ bool JSON_StringParser<CharType>::CompleteStringLiteral(typename JSON_Parser<Cha
         ch = JSON_StringParser<CharType>::NextCharacter();
     }
 
-    token.string_val.resize(m_position - start - 1);
-    if (token.string_val.size() > 0)
-        memcpy(&token.string_val[0], start, (m_position - start - 1)*sizeof(CharType));
+    const size_t numChars = m_position - start - 1;
+    const size_t prevSize = token.string_val.size();
+    token.string_val.resize(prevSize + numChars);
+    memcpy(const_cast<CharType *>(token.string_val.c_str() + prevSize), start, numChars * sizeof(CharType));
 
     token.kind = JSON_Parser<CharType>::Token::TKN_StringLiteral;
-
-    return true;
-}
-
-template <typename CharType>
-bool JSON_StringParser<CharType>::finish_parsing_string_with_unescape_char(typename JSON_Parser<CharType>::Token &token)
-{
-    // This function handles parsing the string when an unescape character is encountered.
-    // It is called once the part before the unescape char is copied to the token.string_val string
-
-    typename JSON_Parser<CharType>::int_type ch;
-
-    if (!JSON_StringParser<CharType>::handle_unescape_char(token))
-        return false;
-
-    while ((ch = JSON_StringParser<CharType>::NextCharacter()) != '"')
-    {
-        if (ch == '\\')
-        {
-            if (!JSON_StringParser<CharType>::handle_unescape_char(token))
-                return false;
-        }
-        else
-        {
-            if (ch == eof<CharType>())
-                return false;
-
-            token.string_val.push_back(static_cast<CharType>(ch));
-        }
-    }
-
-    token.kind = JSON_StringParser<CharType>::Token::TKN_StringLiteral;
 
     return true;
 }

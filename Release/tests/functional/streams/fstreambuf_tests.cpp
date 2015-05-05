@@ -223,7 +223,7 @@ TEST(WriteBufferTest1)
         vect.push_back(ch);
     }
 
-    VERIFY_ARE_EQUAL(stream.putn(&vect[0], vect.size()).get(), vect.size());
+    VERIFY_ARE_EQUAL(stream.putn_nocopy(&vect[0], vect.size()).get(), vect.size());
 
     auto close = stream.close();
     close.get();
@@ -247,7 +247,7 @@ TEST(WriteBufferTest1w)
         vect.push_back(ch);
     }
 
-    VERIFY_ARE_EQUAL(stream.putn(&vect[0], vect.size()).get(), vect.size());
+    VERIFY_ARE_EQUAL(stream.putn_nocopy(&vect[0], vect.size()).get(), vect.size());
 
     auto close = stream.close();
     close.get();
@@ -272,7 +272,7 @@ TEST(WriteBufferAndSyncTest1)
         vect.push_back(ch);
     }
 
-    auto write = stream.putn(&vect[0], vect.size());
+    auto write = stream.putn_nocopy(&vect[0], vect.size());
 
     stream.sync().get();
 
@@ -320,7 +320,7 @@ TEST(SequentialReadWrite)
     for (int i = 0; i < 1000; i++)
     {
         ostreamBuf.putc(i % 26 + 'a');
-        ostreamBuf.putn("ABCDEFGHIJ", 10);
+        ostreamBuf.putn_nocopy("ABCDEFGHIJ", 10);
     }
     ostreamBuf.close().wait();
     VERIFY_IS_FALSE(ostreamBuf.is_open());
@@ -851,7 +851,7 @@ TEST(CloseWithException)
     struct MyException {};
     auto streambuf = OPEN_W<char>(U("CloseExceptionTest.txt")).get();
     streambuf.close(std::ios::out, std::make_exception_ptr(MyException())).wait();
-    VERIFY_THROWS(streambuf.putn("this is good", 10).get(), MyException);
+    VERIFY_THROWS(streambuf.putn_nocopy("this is good", 10).get(), MyException);
     VERIFY_THROWS(streambuf.putc('c').get(), MyException);
 
     streambuf = OPEN_R<char>(U("CloseExceptionTest.txt")).get();
@@ -865,7 +865,7 @@ TEST(inout_regression_test)
 {
     std::string data = "abcdefghijklmn";
     concurrency::streams::streambuf<char> file_buf = OPEN<char>(U("inout_regression_test.txt"), std::ios_base::in|std::ios_base::out).get();
-    file_buf.putn(&data[0], data.size()).get();
+    file_buf.putn_nocopy(&data[0], data.size()).get();
 
     file_buf.bumpc().get(); // reads 'a'
     

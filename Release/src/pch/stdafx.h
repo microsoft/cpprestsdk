@@ -75,7 +75,6 @@
 #undef BOOST_NO_CXX11_NULLPTR
 #endif
 #include "boost/thread/mutex.hpp"
-#include "boost/locale.hpp"
 #include "boost/thread/condition_variable.hpp"
 #include "boost/date_time/posix_time/posix_time_types.hpp"
 #include "boost/bind/bind.hpp"

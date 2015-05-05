@@ -39,7 +39,6 @@
 #endif
 
 #include "cpprest/details/SafeInt3.hpp"
-typedef SafeInt<size_t> SafeSize;
 
 namespace utility
 {

@@ -58,10 +58,8 @@ elseif(WIN32)
     http/client/x509_cert_utilities_win32.cpp
     http/listener/http_server_httpsys.cpp
     pplx/pplxwin.cpp
-    streams/ioscheduler.cpp
     streams/fileio_win32.cpp
     pch/stdafx.cpp
-    utilities/dllmain.cpp
   )
   set(EXTRALINKS
     bcrypt.lib
@@ -95,7 +93,7 @@ target_link_libraries(${Casablanca_LIBRARY}
 
 # Portions specific to cpprest binary versioning.
 set (CPPREST_VERSION_MAJOR 2)
-set (CPPREST_VERSION_MINOR 4)
+set (CPPREST_VERSION_MINOR 5)
 set (CPPREST_VERSION_REVISION 0)
 
 if(WIN32)

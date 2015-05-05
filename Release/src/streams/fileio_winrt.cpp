@@ -156,7 +156,7 @@ bool __cdecl _sync_fsb_winrt(_In_ Concurrency::streams::details::_file_info *inf
 {
     _ASSERTE(info != nullptr);
 
-    _file_info_impl *fInfo = (_file_info_impl *)info;
+    _file_info_impl *fInfo = static_cast<_file_info_impl *>(info);
 
     pplx::extensibility::scoped_recursive_lock_t lck(fInfo->m_lock);
 
@@ -172,7 +172,7 @@ bool __cdecl _sync_fsb_winrt(_In_ Concurrency::streams::details::_file_info *inf
         fInfo->m_buffill = 0;
         return writer->FlushAsync();
     }).then([=] (pplx::task<bool> result) {
-        // Rethrow exception if no callback attatched.
+        // Rethrow exception if no callback attached.
         if (callback == nullptr)
             result.wait();
         else
@@ -206,7 +206,7 @@ bool __cdecl _close_fsb_nolock(_In_ _file_info **info, _In_ Concurrency::streams
     _ASSERTE(info != nullptr);
     _ASSERTE(*info != nullptr);
 
-    _file_info_impl *fInfo = (_file_info_impl *)*info;
+    _file_info_impl *fInfo = static_cast<_file_info_impl *>(*info);
 
     *info = nullptr;
 
@@ -265,25 +265,25 @@ size_t __cdecl _read_file_async(_In_ Concurrency::streams::details::_file_info_i
 
     auto reader = ref new Streams::DataReader(fInfo->m_stream->GetInputStreamAt(offset));
 
-    pplx::create_task(reader->LoadAsync((unsigned int)count)).then(
-        [=] (pplx::task<unsigned int> result)
+    pplx::create_task(reader->LoadAsync(static_cast<unsigned int>(count))).then(
+        [=](pplx::task<unsigned int> result)
+    {
+        try
         {
-            try
-            {
-                auto read = result.get();
+            auto read = result.get();
 
-                if ( read > 0 )
-                {
-                    reader->ReadBytes(Platform::ArrayReference<unsigned char>(static_cast<unsigned char *>(ptr), read));
-                }
-
-                callback->on_completed(read);
-            }
-            catch (Platform::Exception^ exc)
+            if (read > 0)
             {
-                callback->on_error(std::make_exception_ptr(utility::details::create_system_error(exc->HResult)));
+                reader->ReadBytes(Platform::ArrayReference<unsigned char>(static_cast<unsigned char *>(ptr), read));
             }
-        });
+
+            callback->on_completed(read);
+        }
+        catch (Platform::Exception^ exc)
+        {
+            callback->on_error(std::make_exception_ptr(utility::details::create_system_error(exc->HResult)));
+        }
+    });
 
     return 0;
 }
@@ -293,7 +293,7 @@ template<typename Func>
 class _filestream_callback_fill_buffer : public _filestream_callback
 {
 public:
-    _filestream_callback_fill_buffer(_In_ _file_info *info, Func func) : m_func(func), m_info(info) { }
+    _filestream_callback_fill_buffer(_In_ _file_info *info, const Func &func) : m_func(func), m_info(info) { }
 
     virtual void on_completed(size_t result)
     {
@@ -307,14 +307,14 @@ private:
 };
 
 template<typename Func>
-_filestream_callback_fill_buffer<Func> *create_callback(_In_ _file_info *info, Func func)
+_filestream_callback_fill_buffer<Func> *create_callback(_In_ _file_info *info, const Func &func)
 {
     return new _filestream_callback_fill_buffer<Func>(info, func);
 }
 
 size_t _fill_buffer_fsb(_In_ _file_info_impl *fInfo, _In_ _filestream_callback *callback, size_t count, size_t char_size)
 {
-    SafeInt<size_t> safeCount = count;
+    msl::safeint3::SafeInt<size_t> safeCount = count;
 
     if ( fInfo->m_buffer == nullptr || safeCount > fInfo->m_bufsize )
     {
@@ -484,7 +484,7 @@ size_t __cdecl _getn_fsb(_In_ Concurrency::streams::details::_file_info *info, _
     _ASSERTE(info != nullptr);
     _ASSERTE(count > 0);
 
-    _file_info_impl *fInfo = (_file_info_impl *)info;
+    _file_info_impl *fInfo = static_cast<_file_info_impl *>(info);
 
     pplx::extensibility::scoped_recursive_lock_t lck(info->m_lock);
 
@@ -496,19 +496,19 @@ size_t __cdecl _getn_fsb(_In_ Concurrency::streams::details::_file_info *info, _
                 auto sz = count*char_size;
                 auto copy = (read < sz) ? read : sz;
                 auto bufoff = fInfo->m_rdpos - fInfo->m_bufoff;
-                memcpy((void *)ptr, fInfo->m_buffer+bufoff*char_size, copy);
+                memcpy(ptr, fInfo->m_buffer+bufoff*char_size, copy);
                 fInfo->m_atend = copy < sz;
                 callback->on_completed(copy);
             });
 
-        int read = (int)_fill_buffer_fsb(fInfo, cb, count, char_size);
+        size_t read = _fill_buffer_fsb(fInfo, cb, count, char_size);
 
         if ( read > 0 )
         {
             auto sz = count*char_size;
-            auto copy = ((size_t)read < sz) ? (size_t)read : sz;
+            auto copy = (read < sz) ? read : sz;
             auto bufoff = fInfo->m_rdpos - fInfo->m_bufoff;
-            memcpy((void *)ptr, fInfo->m_buffer+bufoff*char_size, copy);
+            memcpy(ptr, fInfo->m_buffer+bufoff*char_size, copy);
             fInfo->m_atend = copy < sz;
             return copy;
         }
@@ -536,7 +536,7 @@ size_t __cdecl _putn_fsb(_In_ Concurrency::streams::details::_file_info *info, _
     _ASSERTE(info != nullptr);
     _ASSERTE(count > 0);
 
-    _file_info_impl *fInfo = (_file_info_impl *)info;
+    _file_info_impl *fInfo = static_cast<_file_info_impl *>(info);
 
     pplx::extensibility::scoped_recursive_lock_t lck(fInfo->m_lock);
 
@@ -547,7 +547,7 @@ size_t __cdecl _putn_fsb(_In_ Concurrency::streams::details::_file_info *info, _
     if (fInfo->m_wrpos != static_cast<size_t>(-1))
         fInfo->m_wrpos += count;
 
-    SafeInt<unsigned int> safeWriteSize = count;
+    msl::safeint3::SafeInt<unsigned int> safeWriteSize = count;
     safeWriteSize *= char_size;
 
 
@@ -590,18 +590,6 @@ size_t __cdecl _putn_fsb(_In_ Concurrency::streams::details::_file_info *info, _
 }
 
 /// <summary>
-/// Write a single byte to the file stream.
-/// </summary>
-/// <param name="info">The file info record of the file</param>
-/// <param name="callback">A pointer to the callback interface to invoke when the write request is completed.</param>
-/// <param name="ptr">A pointer to a buffer where the data should be placed</param>
-/// <returns>0 if the read request is still outstanding, -1 if the request failed, otherwise the size of the data read into the buffer</returns>
-size_t __cdecl _putc_fsb(_In_ Concurrency::streams::details::_file_info *info, _In_ Concurrency::streams::details::_filestream_callback *callback, int ch, size_t char_size)
-{
-    return _putn_fsb(info, callback, &ch, 1, char_size);
-}
-
-/// <summary>
 /// Flush all buffered data to the underlying file.
 /// </summary>
 /// <param name="info">The file info record of the file</param>
@@ -622,11 +610,11 @@ size_t __cdecl _seekrdpos_fsb(_In_ Concurrency::streams::details::_file_info *in
 {
     _ASSERTE(info != nullptr);
 
-    _file_info_impl *fInfo = (_file_info_impl *)info;
+    _file_info_impl *fInfo = static_cast<_file_info_impl *>(info);
 
     pplx::extensibility::scoped_recursive_lock_t lck(info->m_lock);
 
-    if ( fInfo->m_stream == nullptr) return (size_t)-1;;
+    if ( fInfo->m_stream == nullptr) return static_cast<size_t>(-1);;
 
     if ( pos < fInfo->m_bufoff || pos > (fInfo->m_bufoff+fInfo->m_buffill) )
     {
@@ -650,7 +638,7 @@ size_t __cdecl _seekrdpos_fsb(_In_ Concurrency::streams::details::_file_info *in
 _ASYNCRTIMP size_t __cdecl _seekrdtoend_fsb(_In_ Concurrency::streams::details::_file_info *info, int64_t offset, size_t char_size)
 {
     _ASSERTE(info != nullptr);
-    _file_info_impl *fInfo = (_file_info_impl *)info;
+    _file_info_impl *fInfo = static_cast<_file_info_impl *>(info);
 
     return _seekrdpos_fsb(info, static_cast<size_t>(fInfo->m_stream->Size / char_size + offset), char_size);
 }
@@ -659,7 +647,7 @@ utility::size64_t __cdecl _get_size(_In_ concurrency::streams::details::_file_in
 {
     _ASSERTE(info != nullptr);
 
-    _file_info_impl *fInfo = (_file_info_impl *)info;
+    _file_info_impl *fInfo = static_cast<_file_info_impl *>(info);
 
     pplx::extensibility::scoped_recursive_lock_t lck(info->m_lock);
 
@@ -678,11 +666,11 @@ size_t __cdecl _seekwrpos_fsb(_In_ Concurrency::streams::details::_file_info *in
 {
     _ASSERTE(info != nullptr);
 
-    _file_info_impl *fInfo = (_file_info_impl *)info;
+    _file_info_impl *fInfo = static_cast<_file_info_impl *>(info);
 
     pplx::extensibility::scoped_recursive_lock_t lck(info->m_lock);
 
-    if ( fInfo->m_stream == nullptr) return (size_t)-1;;
+    if ( fInfo->m_stream == nullptr) return static_cast<size_t>(-1);
 
     fInfo->m_wrpos = pos;
 
@@ -793,14 +781,14 @@ public:
 
 internal:
 
-    IRandomAccessStream_bridge(concurrency::streams::streambuf<uint8_t> buffer) :
+    IRandomAccessStream_bridge(const concurrency::streams::streambuf<uint8_t> &buffer) :
         m_buffer(buffer),
         m_remembered_size(0),
         m_position(0)
     {
     }
 
-    IRandomAccessStream_bridge(concurrency::streams::streambuf<uint8_t> buffer,
+    IRandomAccessStream_bridge(const concurrency::streams::streambuf<uint8_t> &buffer,
                                concurrency::streams::streambuf<uint8_t>::pos_type position) :
         m_buffer(buffer),
         m_remembered_size(0),
@@ -998,7 +986,7 @@ IRandomAccessStream_bridge::WriteAsync(Windows::Storage::Streams::IBuffer^ buffe
 
                 pBufferByteAccess->AddRef();
 
-                return sbuf.putn(buffer_data,size).then(
+                return sbuf.putn_nocopy(buffer_data, size).then(
                     [pBufferByteAccess](pplx::task<size_t> size)
                     {
                         pBufferByteAccess->Release();
@@ -1026,17 +1014,17 @@ IRandomAccessStream_bridge::FlushAsync()
 
 }}} // namespaces
 
-Windows::Storage::Streams::IInputStream^ Concurrency::streams::winrt_stream::create_input_stream(concurrency::streams::streambuf<uint8_t> buffer)
+Windows::Storage::Streams::IInputStream^ Concurrency::streams::winrt_stream::create_input_stream(const concurrency::streams::streambuf<uint8_t> &buffer)
 {
     return ref new ::Concurrency::streams::details::IRandomAccessStream_bridge(buffer,0);
 }
 
-Windows::Storage::Streams::IOutputStream^ Concurrency::streams::winrt_stream::create_output_stream(concurrency::streams::streambuf<uint8_t> buffer)
+Windows::Storage::Streams::IOutputStream^ Concurrency::streams::winrt_stream::create_output_stream(const concurrency::streams::streambuf<uint8_t> &buffer)
 {
     return ref new Concurrency::streams::details::IRandomAccessStream_bridge(buffer,0);
 }
 
-Windows::Storage::Streams::IRandomAccessStream^ Concurrency::streams::winrt_stream::create_random_access_stream(concurrency::streams::streambuf<uint8_t> buffer)
+Windows::Storage::Streams::IRandomAccessStream^ Concurrency::streams::winrt_stream::create_random_access_stream(const concurrency::streams::streambuf<uint8_t> &buffer)
 {
     return ref new Concurrency::streams::details::IRandomAccessStream_bridge(buffer);
 }

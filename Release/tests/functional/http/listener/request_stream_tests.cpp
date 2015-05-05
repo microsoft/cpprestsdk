@@ -84,7 +84,7 @@ TEST_FIXTURE(uri_address, test_chunked_transfer)
     while(start < num_bytes)
     {
         end = start + four_mb < num_bytes ? four_mb : num_bytes - start;
-        size_t num_written = buf.putn(&buffer[start], end).get();
+        size_t num_written = buf.putn_nocopy(&buffer[start], end).get();
         start += num_written;
     }
     buf.close(std::ios_base::out).wait();

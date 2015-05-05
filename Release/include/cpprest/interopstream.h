@@ -223,7 +223,7 @@ namespace Concurrency { namespace streams {
         typedef typename traits::pos_type pos_type;
         typedef typename traits::off_type off_type;
 
-        basic_async_streambuf(streams::streambuf<CharType> async_buf) : m_buffer(async_buf)
+        basic_async_streambuf(const streams::streambuf<CharType> &async_buf) : m_buffer(async_buf)
         {
         }
     protected:
@@ -309,8 +309,8 @@ namespace Concurrency { namespace streams {
         {
             try
             {
-            return m_buffer.putn(ptr, (size_t)count).get();
-        }
+                return m_buffer.putn_nocopy(ptr, static_cast<size_t>(count)).get();
+            }
             catch(...)
             {
                 return 0;
@@ -391,7 +391,7 @@ namespace Concurrency { namespace streams {
         /// </typeparam>
         /// <param name="astream">The asynchronous stream whose stream buffer should be used for I/O</param>
         template <typename AlterCharType>
-        async_ostream(streams::basic_ostream<AlterCharType> astream)
+        async_ostream(const streams::basic_ostream<AlterCharType> &astream)
             : std::basic_ostream<CharType>(&m_strbuf),
               m_strbuf(astream.streambuf())
         {
@@ -405,7 +405,7 @@ namespace Concurrency { namespace streams {
         /// </typeparam>
         /// <param name="strbuf">The asynchronous stream buffer to use for I/O</param>
         template <typename AlterCharType>
-        async_ostream(streams::streambuf<AlterCharType> strbuf)
+        async_ostream(const streams::streambuf<AlterCharType> &strbuf)
             : std::basic_ostream<CharType>(&m_strbuf),
               m_strbuf(strbuf)
         {
@@ -433,7 +433,7 @@ namespace Concurrency { namespace streams {
         /// </typeparam>
         /// <param name="astream">The asynchronous stream whose stream buffer should be used for I/O</param>
         template <typename AlterCharType>
-        async_istream(streams::basic_istream<AlterCharType> astream)
+        async_istream(const streams::basic_istream<AlterCharType> &astream)
             : std::basic_istream<CharType>(&m_strbuf),
               m_strbuf(astream.streambuf())
         {
@@ -447,7 +447,7 @@ namespace Concurrency { namespace streams {
         /// </typeparam>
         /// <param name="strbuf">The asynchronous stream buffer to use for I/O</param>
         template <typename AlterCharType>
-        async_istream(streams::streambuf<AlterCharType> strbuf)
+        async_istream(const streams::streambuf<AlterCharType> &strbuf)
             : std::basic_istream<CharType>(&m_strbuf),
               m_strbuf(strbuf)
         {
@@ -471,7 +471,7 @@ namespace Concurrency { namespace streams {
         /// Constructor
         /// </summary>
         /// <param name="strbuf">The asynchronous stream buffer to use for I/O</param>
-        async_iostream(streams::streambuf<CharType> strbuf)
+        async_iostream(const streams::streambuf<CharType> &strbuf)
             : std::basic_iostream<CharType>(&m_strbuf),
               m_strbuf(strbuf)
         {
@@ -500,7 +500,7 @@ namespace Concurrency { namespace streams {
         /// The stream buffer is shared with the caller, allowing data to be passed between the two contexts. For
         /// example, using a <c>producer_consumer_buffer</c>, a Casablanca-based caller can pass data to a WinRT component.
         /// </remarks>
-        _ASYNCRTIMP static Windows::Storage::Streams::IInputStream^ __cdecl create_input_stream(concurrency::streams::streambuf<uint8_t> buffer);
+        _ASYNCRTIMP static Windows::Storage::Streams::IInputStream^ __cdecl create_input_stream(const concurrency::streams::streambuf<uint8_t> &buffer);
 
         /// <summary>
         /// Creates a WinRT <c>IOutputStream</c> reference from an asynchronous stream buffer.
@@ -512,7 +512,7 @@ namespace Concurrency { namespace streams {
         /// The stream buffer is shared with the caller, allowing data to be passed between the two contexts. For
         /// example, using a <c>producer_consumer_buffer</c>, a Casablanca-based caller can retrieve data from a WinRT component.
         /// </remarks>
-        _ASYNCRTIMP static Windows::Storage::Streams::IOutputStream^ __cdecl create_output_stream(concurrency::streams::streambuf<uint8_t> buffer);
+        _ASYNCRTIMP static Windows::Storage::Streams::IOutputStream^ __cdecl create_output_stream(const concurrency::streams::streambuf<uint8_t> &buffer);
 
         /// <summary>
         /// Creates a WinRT <c>IRandomAccessStream reference from an asynchronous input stream.
@@ -524,7 +524,7 @@ namespace Concurrency { namespace streams {
         /// example, using a <c>producer_consumer_buffer</c>, a Casablanca-based caller can pass data to and retrieve data
         /// from a WinRT component.
         /// </remarks>
-        _ASYNCRTIMP static Windows::Storage::Streams::IRandomAccessStream^ __cdecl create_random_access_stream(concurrency::streams::streambuf<uint8_t> buffer);
+        _ASYNCRTIMP static Windows::Storage::Streams::IRandomAccessStream^ __cdecl create_random_access_stream(const concurrency::streams::streambuf<uint8_t> &buffer);
     };
 
 #endif

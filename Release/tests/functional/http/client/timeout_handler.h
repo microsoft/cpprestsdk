@@ -16,32 +16,45 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
+* Simple utility for handling timeouts with http client test cases.
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 
-#include "stdafx.h"
+#pragma once
 
-// DevNote: in the future it would be great if we removed this.
-volatile long g_isProcessTerminating = 0;
+#include "cpprest/http_client.h"
 
-BOOL WINAPI DllMain(HINSTANCE, DWORD fdwReason, LPVOID lpReserved)
+namespace tests { namespace functional { namespace http { namespace client {
+
+// helper function to check if failure is due to timeout.
+inline bool is_timeout(const std::string &msg)
 {
-    switch (fdwReason)
+    if (msg.find("The operation timed out") != std::string::npos /* WinHTTP */ ||
+        msg.find("The operation was timed out") != std::string::npos /* IXmlHttpRequest2 */)
     {
-    case DLL_PROCESS_DETACH:
-
-        // A non null lpReserved parameter indicates that the process is terminating
-        if (lpReserved != nullptr)
-        {
-            g_isProcessTerminating = 1;
-        }
-        break;
-
-    default:
-        break;
+        return true;
     }
-
-    return TRUE;
+    return false;
 }
+
+template <typename Func>
+void handle_timeout(const Func &f)
+{
+    try
+    {
+        f();
+    }
+    catch (const web::http::http_exception &e)
+    {
+        if (is_timeout(e.what()))
+        {
+            // Since this test depends on an outside server sometimes it sporadically can fail due to timeouts
+            // especially on our build machines.
+            return;
+        }
+        throw;
+    }
+}
+
+}}}}

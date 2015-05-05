@@ -390,8 +390,8 @@ namespace Concurrency { namespace streams {
                 // Allocate a new block if necessary
                 if ( m_blocks.empty() || m_blocks.back()->wr_chars_left() < count )
                 {
-                    SafeSize alloc = m_alloc_size.Max(count);
-                    m_blocks.push_back(std::make_shared<_block>((size_t)alloc));
+                    msl::safeint3::SafeInt<size_t> alloc = m_alloc_size.Max(count);
+                    m_blocks.push_back(std::make_shared<_block>(alloc));
                 }
 
                 // The block at the back is always the write head
@@ -468,7 +468,7 @@ namespace Concurrency { namespace streams {
                 // Read up to count characters from the block
                 size_t read(_Out_writes_ (count) _CharType * dest, _In_ size_t count, bool advance = true)
                 {
-                    SafeSize avail(rd_chars_left());
+                    msl::safeint3::SafeInt<size_t> avail(rd_chars_left());
                     auto countRead = static_cast<size_t>(avail.Min(count));
 
                     _CharType * beg = rbegin();
@@ -492,7 +492,7 @@ namespace Concurrency { namespace streams {
                 // Write count characters into the block
                 size_t write(const _CharType * src, size_t count)
                 {
-                    SafeSize avail(wr_chars_left());
+                    msl::safeint3::SafeInt<size_t> avail(wr_chars_left());
                     auto countWritten = static_cast<size_t>(avail.Min(count));
 
                     const _CharType * srcEnd = src + countWritten;
@@ -647,7 +647,7 @@ namespace Concurrency { namespace streams {
             std::ios_base::openmode m_mode;
 
             // Default block size
-            SafeSize m_alloc_size;
+            msl::safeint3::SafeInt<size_t> m_alloc_size;
 
             // Block used for alloc/commit
             std::shared_ptr<_block> m_allocBlock;

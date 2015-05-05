@@ -425,7 +425,17 @@ void http_windows_server::receive_requests()
 {
     HTTP_REQUEST p_request;
     ULONG bytes_received;
-    for(;;)
+
+    // Oversubscribe since this is a blocking call and we don't want to count
+    // towards the concurrency runtime's thread count. A more proper fix
+    // would be to use Overlapped I/O and asynchronously call HttpReceiveHttpRequest.
+    // This requires additional work to be careful sychronizing with the listener
+    // shutdown. This is much easier especially given the http_listener is 'experimental'
+    // and with VS2015 PPL tasks run on the threadpool.
+#if _MSC_VER < 1900
+    concurrency::Context::Oversubscribe(true);
+#endif
+    for (;;)
     {
         unsigned long error_code = HttpReceiveHttpRequest(
             m_hRequestQueue,
@@ -436,7 +446,7 @@ void http_windows_server::receive_requests()
             &bytes_received,
             0);
 
-        if(error_code != NO_ERROR && error_code != ERROR_MORE_DATA)
+        if (error_code != NO_ERROR && error_code != ERROR_MORE_DATA)
         {
             break;
         }
@@ -447,6 +457,9 @@ void http_windows_server::receive_requests()
         http_request msg = http_request::_create_request(std::move(pRequestContext));
         pContext->async_process_request(p_request.RequestId, msg, bytes_received);
     }
+#if _MSC_VER < 1900
+    concurrency::Context::Oversubscribe(false);
+#endif
 }
 
 pplx::task<void> http_windows_server::respond(http::http_response response)
@@ -496,7 +509,7 @@ void windows_request_context::async_process_request(HTTP_REQUEST_ID request_id, 
     // Save the http_request as the member of windows_request_context for the callback use.
     m_msg = msg;
 
-    m_request_buffer = std::unique_ptr<unsigned char[]>(new unsigned char[SafeInt<unsigned long>(headers_size)]);
+    m_request_buffer = std::unique_ptr<unsigned char[]>(new unsigned char[msl::safeint3::SafeInt<unsigned long>(headers_size)]);
     m_request = (HTTP_REQUEST *) m_request_buffer.get();
 
     // The read_headers_io_completion callback function.
@@ -540,7 +553,14 @@ void windows_request_context::read_headers_io_completion(DWORD error_code, DWORD
         {
             builder.set_query(uri::decode(builder.query()));
         }
-        m_msg.set_request_uri(builder.to_uri());
+        try
+        {
+            m_msg.set_request_uri(builder.to_uri());
+        }
+        catch(const uri_exception &e)
+        {
+            m_msg.reply(status_codes::BadRequest, e.what());
+        }
         m_msg.set_method(parse_request_method(m_request));
         parse_http_headers(m_request->Headers, m_msg.headers());
 
@@ -709,8 +729,8 @@ void windows_request_context::async_process_response()
 
     size_t content_length = m_response._get_impl()->_get_content_length();
 
-    m_headers = std::unique_ptr<HTTP_UNKNOWN_HEADER []>(new HTTP_UNKNOWN_HEADER[SafeSize(m_response.headers().size())]);
-    m_headers_buffer.resize(SafeSize(m_response.headers().size()) * 2);
+    m_headers = std::unique_ptr<HTTP_UNKNOWN_HEADER []>(new HTTP_UNKNOWN_HEADER[msl::safeint3::SafeInt<size_t>(m_response.headers().size())]);
+    m_headers_buffer.resize(msl::safeint3::SafeInt<size_t>(m_response.headers().size()) * 2);
 
     win_api_response.Headers.UnknownHeaderCount = (USHORT)m_response.headers().size();
     win_api_response.Headers.pUnknownHeaders = m_headers.get();
@@ -810,7 +830,7 @@ void windows_request_context::transmit_body()
     // In both cases here we could perform optimizations to try and use acquire on the streams to avoid an extra copy.
     if ( m_sending_in_chunks )
     {
-        SafeSize safeCount = m_remaining_to_write;
+        msl::safeint3::SafeInt<size_t> safeCount = m_remaining_to_write;
         size_t next_chunk_size = safeCount.Min(CHUNK_SIZE);
         m_body_data.resize(CHUNK_SIZE);
 

@@ -153,15 +153,15 @@ void streambuf_putn(StreamBufferType& wbuf)
     s.push_back((typename StreamBufferType::char_type)2);
     s.push_back((typename StreamBufferType::char_type)3);
 
-    VERIFY_ARE_EQUAL(s.size(), wbuf.putn(s.data(), s.size()).get());
+    VERIFY_ARE_EQUAL(s.size(), wbuf.putn_nocopy(s.data(), s.size()).get());
     VERIFY_ARE_EQUAL(s.size() * 1, wbuf.in_avail());
 
-    VERIFY_ARE_EQUAL(s.size(), wbuf.putn(s.data(), s.size()).get());
+    VERIFY_ARE_EQUAL(s.size(), wbuf.putn_nocopy(s.data(), s.size()).get());
     VERIFY_ARE_EQUAL(s.size() * 2, wbuf.in_avail());
 
     int count = 10;
     auto seg2 = [&count](size_t ) { return (--count > 0); };
-    auto seg1 = [&s,&wbuf, seg2]() { return wbuf.putn(s.data(), s.size()).then(seg2); };
+    auto seg1 = [&s,&wbuf, seg2]() { return wbuf.putn_nocopy(s.data(), s.size()).then(seg2); };
     pplx::details::do_while(seg1).wait();
     VERIFY_ARE_EQUAL(s.size() * 12, wbuf.in_avail());
 
@@ -169,7 +169,7 @@ void streambuf_putn(StreamBufferType& wbuf)
     VERIFY_IS_FALSE(wbuf.can_write());
 
     // verify putn after close
-    VERIFY_ARE_EQUAL(0, wbuf.putn(s.data(), s.size()).get());
+    VERIFY_ARE_EQUAL(0, wbuf.putn_nocopy(s.data(), s.size()).get());
 }
 
 template<class CharType>
@@ -185,20 +185,20 @@ void streambuf_putn(concurrency::streams::rawptr_buffer<CharType>& wbuf)
     s.push_back((CharType)2);
     s.push_back((CharType)3);
 
-    VERIFY_ARE_EQUAL(s.size(), wbuf.putn(s.data(), s.size()).get());
+    VERIFY_ARE_EQUAL(s.size(), wbuf.putn_nocopy(s.data(), s.size()).get());
 
-    VERIFY_ARE_EQUAL(s.size(), wbuf.putn(s.data(), s.size()).get());
+    VERIFY_ARE_EQUAL(s.size(), wbuf.putn_nocopy(s.data(), s.size()).get());
 
     int count = 10;
     auto seg2 = [&count](size_t ) { return (--count > 0); };
-    auto seg1 = [&s,&wbuf, seg2]() { return wbuf.putn(s.data(), s.size()).then(seg2); };
+    auto seg1 = [&s,&wbuf, seg2]() { return wbuf.putn_nocopy(s.data(), s.size()).then(seg2); };
     pplx::details::do_while(seg1).wait();
 
     wbuf.close().get();
     VERIFY_IS_FALSE(wbuf.can_write());
 
     // verify putn after close
-    VERIFY_ARE_EQUAL(0, wbuf.putn(s.data(), s.size()).get());
+    VERIFY_ARE_EQUAL(0, wbuf.putn_nocopy(s.data(), s.size()).get());
 }
 
 template<class CollectionType>
@@ -214,20 +214,20 @@ void streambuf_putn(concurrency::streams::container_buffer<CollectionType>& wbuf
     s.push_back((CharType)2);
     s.push_back((CharType)3);
 
-    VERIFY_ARE_EQUAL(s.size(), wbuf.putn(s.data(), s.size()).get());
+    VERIFY_ARE_EQUAL(s.size(), wbuf.putn_nocopy(s.data(), s.size()).get());
 
-    VERIFY_ARE_EQUAL(s.size(), wbuf.putn(s.data(), s.size()).get());
+    VERIFY_ARE_EQUAL(s.size(), wbuf.putn_nocopy(s.data(), s.size()).get());
 
     int count = 10;
     auto seg2 = [&count](size_t ) { return (--count > 0); };
-    auto seg1 = [&s,&wbuf, seg2]() { return wbuf.putn(s.data(), s.size()).then(seg2); };
+    auto seg1 = [&s,&wbuf, seg2]() { return wbuf.putn_nocopy(s.data(), s.size()).then(seg2); };
     pplx::details::do_while(seg1).wait();
 
     wbuf.close().get();
     VERIFY_IS_FALSE(wbuf.can_write());
 
-    // verify putn after close
-    VERIFY_ARE_EQUAL(0, wbuf.putn(s.data(), s.size()).get());
+    // verify putn_nocopy after close
+    VERIFY_ARE_EQUAL(0, wbuf.putn_nocopy(s.data(), s.size()).get());
 }
 
 template<class StreamBufferType>
@@ -587,7 +587,7 @@ void streambuf_putn_getn(StreamBufferType& rwbuf)
 
     auto writeTask = pplx::create_task([&s, &rwbuf]()
     {
-        VERIFY_ARE_EQUAL(rwbuf.putn(s.data(), s.size()).get(), s.size());
+        VERIFY_ARE_EQUAL(rwbuf.putn_nocopy(s.data(), s.size()).get(), s.size());
         rwbuf.close(std::ios_base::out);
     });
 
@@ -706,7 +706,7 @@ void streambuf_close_read_with_pending_read(StreamBufferType& rwbuf)
     s.push_back((typename StreamBufferType::char_type)2);
     s.push_back((typename StreamBufferType::char_type)3);
 
-    VERIFY_ARE_EQUAL(s.size(), rwbuf.putn(s.data(), s.size()).get());
+    VERIFY_ARE_EQUAL(s.size(), rwbuf.putn_nocopy(s.data(), s.size()).get());
     VERIFY_ARE_EQUAL(s.size() * 1, rwbuf.in_avail());
 
     // Try to read 8 characters - this should block
@@ -748,7 +748,7 @@ void streambuf_close_write_with_pending_read(StreamBufferType& rwbuf)
     s.push_back((typename StreamBufferType::char_type)2);
     s.push_back((typename StreamBufferType::char_type)3);
 
-    VERIFY_ARE_EQUAL(s.size(), rwbuf.putn(s.data(), s.size()).get());
+    VERIFY_ARE_EQUAL(s.size(), rwbuf.putn_nocopy(s.data(), s.size()).get());
     VERIFY_ARE_EQUAL(s.size() * 1, rwbuf.in_avail());
 
     // Try to read 8 characters - this should block
@@ -816,7 +816,7 @@ void streambuf_close_parallel(StreamBufferType& rwbuf)
 streams::producer_consumer_buffer<uint8_t> create_producer_consumer_buffer_with_data(const std::vector<uint8_t> & s)
 {
     streams::producer_consumer_buffer<uint8_t> buf;
-    VERIFY_ARE_EQUAL(buf.putn(s.data(), s.size()).get(), s.size());
+    VERIFY_ARE_EQUAL(buf.putn_nocopy(s.data(), s.size()).get(), s.size());
     buf.close(std::ios_base::out).get();
     return buf;
 }
@@ -834,7 +834,7 @@ TEST(charptr_buffer_putc_fail)
 {
     char chars[26];
     rawptr_buffer<char> buf(chars, 26);
-    VERIFY_ARE_EQUAL(buf.putn("abcdefghijklmnopqrstuvwxyz", 26).get(), 26);
+    VERIFY_ARE_EQUAL(buf.putn_nocopy("abcdefghijklmnopqrstuvwxyz", 26).get(), 26);
     VERIFY_ARE_EQUAL(buf.putc('a').get(), std::char_traits<char>::eof());
 }
 
@@ -877,7 +877,7 @@ TEST(charptr_buffer_putn_fail)
     {
         char chars[128];
         rawptr_buffer<char> buf(chars, 12);
-        VERIFY_THROWS(buf.putn("abcdefghijklmnopqrstuvwxyz", 26).get(), std::runtime_error);
+        VERIFY_THROWS(buf.putn_nocopy("abcdefghijklmnopqrstuvwxyz", 26).get(), std::runtime_error);
     }
 }
 
@@ -1526,7 +1526,7 @@ TEST(mem_buffer_large_data)
         ptr[i + 0] = 'a';
         ptr[i + 100] = 'b';
 
-        VERIFY_ARE_EQUAL(size, membuf.putn(ptr, size).get());
+        VERIFY_ARE_EQUAL(size, membuf.putn_nocopy(ptr, size).get());
 
         // overwrite the values in ptr
         ptr[i + 0] = 'c';
@@ -1564,7 +1564,7 @@ public:
         
     virtual HRESULT STDMETHODCALLTYPE Write( const void *pv, ULONG cb, ULONG *pcbWritten )
     {
-        size_t count = m_buffer.putn((const char *)pv, (size_t)cb).get();
+        size_t count = m_buffer.putn_nocopy((const char *)pv, (size_t)cb).get();
         if ( pcbWritten != nullptr )
             *pcbWritten = (ULONG)count;
         return S_OK;
@@ -1910,12 +1910,12 @@ void IStreamTest10()
     strcpy_s(&text[0], 128, "This is a test"); 
     size_t len1 = strlen(&text[0]);
 
-    VERIFY_ARE_EQUAL(len1, rbuf.putn(&text[0], len1).get());
+    VERIFY_ARE_EQUAL(len1, rbuf.putn_nocopy(&text[0], len1).get());
 
     strcpy_s(&text[0], 128, " - but this is not");
     size_t len2 = strlen(&text[0]);
 
-    VERIFY_ARE_EQUAL(len2, rbuf.putn(&text[0], len2).get());
+    VERIFY_ARE_EQUAL(len2, rbuf.putn_nocopy(&text[0], len2).get());
 
     VERIFY_ARE_EQUAL(len1+len2, rbuf.in_avail());
 
@@ -1978,12 +1978,12 @@ void IStreamTest12()
     strcpy_s(&text[0], 128, "This is a test");
     size_t len1 = strlen(&text[0]);
 
-    VERIFY_ARE_EQUAL(len1, rbuf.putn(&text[0], len1).get());
+    VERIFY_ARE_EQUAL(len1, rbuf.putn_nocopy(&text[0], len1).get());
 
     strcpy_s(&text[0], 128, " - but this is not");
     size_t len2 = strlen(&text[0]);
 
-    VERIFY_ARE_EQUAL(len2, rbuf.putn(&text[0], len2).get());
+    VERIFY_ARE_EQUAL(len2, rbuf.putn_nocopy(&text[0], len2).get());
 
     VERIFY_ARE_EQUAL(len1+len2, rbuf.in_avail());
 
@@ -2064,12 +2064,12 @@ TEST(producer_consumer_buffer_flush_1)
 
     std::string text1 = "This is a test";
     size_t len1 = text1.size();
-    VERIFY_ARE_EQUAL(rwbuf.putn(&text1[0], len1).get(), len1);
+    VERIFY_ARE_EQUAL(rwbuf.putn_nocopy(&text1[0], len1).get(), len1);
     rwbuf.sync().wait();
 
     std::string text2 = "- but this is not";
     size_t len2 = text2.size();
-    VERIFY_ARE_EQUAL(rwbuf.putn(&text2[0], len2).get(), len2);
+    VERIFY_ARE_EQUAL(rwbuf.putn_nocopy(&text2[0], len2).get(), len2);
     rwbuf.sync().wait();
 
     VERIFY_ARE_EQUAL(read1.get(), len1);
@@ -2092,8 +2092,8 @@ TEST(producer_consumer_buffer_flush_2)
     std::string text2 = "- but this is not";
     size_t len1 = text1.size();
     size_t len2 = text2.size();
-    VERIFY_ARE_EQUAL(rwbuf.putn(&text1[0], len1).get(), len1);
-    VERIFY_ARE_EQUAL(rwbuf.putn(&text2[0], len2).get(), len2);
+    VERIFY_ARE_EQUAL(rwbuf.putn_nocopy(&text1[0], len1).get(), len1);
+    VERIFY_ARE_EQUAL(rwbuf.putn_nocopy(&text2[0], len2).get(), len2);
     rwbuf.sync().wait();
 
     char buf1[128], buf2[128];
@@ -2250,7 +2250,7 @@ TEST(producer_consumer_buffer_close_reader_early)
 
     std::string text1 = "This is a test";
     size_t len1 = text1.size();
-    VERIFY_ARE_EQUAL(rwbuf.putn(&text1[0], len1).get(), len1);
+    VERIFY_ARE_EQUAL(rwbuf.putn_nocopy(&text1[0], len1).get(), len1);
 
     VERIFY_ARE_EQUAL(size, rwbuf.in_avail());
 
@@ -2281,9 +2281,9 @@ TEST(container_buffer_exception_propagation)
 
     {
         streams::stringstreambuf rwbuf;
-        rwbuf.putn("this is the test", 16);
+        rwbuf.putn_nocopy("this is the test", 16);
         rwbuf.close(std::ios::out, std::make_exception_ptr(MyException()));
-        VERIFY_THROWS(rwbuf.putn("this is the test", 16).get(), MyException);
+        VERIFY_THROWS(rwbuf.putn_nocopy("this is the test", 16).get(), MyException);
         VERIFY_THROWS(rwbuf.putc('c').get(), MyException);
         VERIFY_IS_FALSE(rwbuf.exception() == nullptr);
     }
@@ -2295,7 +2295,7 @@ TEST(producer_consumer_buffer_exception_propagation)
     struct MyException {};
     {
         streams::producer_consumer_buffer<char> rwbuf;
-        rwbuf.putn("this is the test", 16);
+        rwbuf.putn_nocopy("this is the test", 16);
         rwbuf.close(std::ios::out, std::make_exception_ptr(MyException()));
         char buffer[100];
         VERIFY_ARE_EQUAL(rwbuf.getn(buffer, 100).get(), 16);
@@ -2305,7 +2305,7 @@ TEST(producer_consumer_buffer_exception_propagation)
     }
     {
         streams::producer_consumer_buffer<char> rwbuf;
-        rwbuf.putn("this is the test", 16);
+        rwbuf.putn_nocopy("this is the test", 16);
         rwbuf.close(std::ios::in, std::make_exception_ptr(MyException()));
         char buffer[100];
         VERIFY_THROWS(rwbuf.getn(buffer, 100).get(), MyException);
@@ -2315,9 +2315,9 @@ TEST(producer_consumer_buffer_exception_propagation)
 
     {
         streams::producer_consumer_buffer<char> rwbuf;
-        rwbuf.putn("this is the test", 16);
+        rwbuf.putn_nocopy("this is the test", 16);
         rwbuf.close(std::ios::out, std::make_exception_ptr(MyException()));
-        VERIFY_THROWS(rwbuf.putn("this is the test", 16).get(), MyException);
+        VERIFY_THROWS(rwbuf.putn_nocopy("this is the test", 16).get(), MyException);
         VERIFY_THROWS(rwbuf.putc('c').get(), MyException);
         VERIFY_IS_FALSE(rwbuf.exception() == nullptr);
     }

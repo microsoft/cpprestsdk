@@ -218,10 +218,10 @@ TEST_FIXTURE(uri_address, set_body_memorystream_chunked)
 
         os_utilities::sleep(100);
 
-        rwbuf.putn(&text1[0], length).wait();
-        rwbuf.putn(&text1[0], length).wait();
+        rwbuf.putn_nocopy(&text1[0], length).wait();
+        rwbuf.putn_nocopy(&text1[0], length).wait();
         rwbuf.sync().wait();
-        rwbuf.putn(&text1[0], length).wait();
+        rwbuf.putn_nocopy(&text1[0], length).wait();
         rwbuf.close(std::ios_base::out).wait();
 
         rep.wait();
@@ -244,7 +244,7 @@ TEST_FIXTURE(uri_address, reply_transfer_encoding_4k)
 
     // Write 4K - the exact internal chunk size
     unsigned char ptr[4* 1024] = {'a', 'b', 'c'};
-    VERIFY_ARE_EQUAL(buf.putn(ptr, sizeof(ptr)).get(), sizeof(ptr));
+    VERIFY_ARE_EQUAL(buf.putn_nocopy(ptr, sizeof(ptr)).get(), sizeof(ptr));
 
     listener.support([&buf](http_request request)
     {
@@ -282,7 +282,7 @@ TEST_FIXTURE(uri_address, reply_chunked_4k, "Ignore", "Codeplex 158")
 
     // Write 4K - the exact internal chunk size
     unsigned char ptr[4* 1024];
-    VERIFY_ARE_EQUAL(buf.putn(ptr, sizeof(ptr)).get(), sizeof(ptr));
+    VERIFY_ARE_EQUAL(buf.putn_nocopy(ptr, sizeof(ptr)).get(), sizeof(ptr));
     buf.close(std::ios_base::out);
 
     listener.support([&buf](http_request request)

@@ -175,6 +175,21 @@ web::json::value web::json::value::number(int32_t value)
     return web::json::value(value);
 }
 
+web::json::value web::json::value::number(uint32_t value)
+{
+    return web::json::value(value);
+}
+
+web::json::value web::json::value::number(int64_t value)
+{
+    return web::json::value(value);
+}
+
+web::json::value web::json::value::number(uint64_t value)
+{
+    return web::json::value(value);
+}
+
 web::json::value web::json::value::boolean(bool value)
 {
     return web::json::value(value);
@@ -262,7 +277,7 @@ web::json::value web::json::value::array(std::vector<value> elements)
             );
 }
 
-web::json::number web::json::value::as_number() const
+const web::json::number& web::json::value::as_number() const
 {
     return m_value->as_number();
 }
@@ -340,12 +355,14 @@ bool web::json::number::is_int64() const
 
 bool web::json::details::_String::has_escape_chars(const _String &str)
 {
-    static const auto escapes = U("\"\\\b\f\r\n\t");
-    return str.m_string.find_first_of(escapes) != utility::string_t::npos;
+    return std::any_of(std::begin(str.m_string), std::end(str.m_string), [](utility::string_t::value_type const x)
+    {
+        if (x >= 0 && x <= 31) { return true; }
+        if (x == '"') { return true; }
+        if (x == '\\') { return true; }
+        return false;
+    });
 }
-
-web::json::details::_Object::_Object(const _Object& other) :
-    web::json::details::_Value(other), m_object(other.m_object.m_elements, other.m_object.m_keep_order) {}
 
 web::json::value::value_type json::value::type() const { return m_value->type(); }
 
@@ -408,6 +425,16 @@ bool json::value::operator==(const json::value &other) const
         return static_cast<const json::details::_Array*>(this->m_value.get())->is_equal(static_cast<const json::details::_Array*>(other.m_value.get()));
     }
     __assume(0);
+}
+
+void web::json::value::erase(size_t index)
+{
+    return this->as_array().erase(index);
+}
+
+void web::json::value::erase(const utility::string_t &key)
+{
+    return this->as_object().erase(key);
 }
 
 // at() overloads

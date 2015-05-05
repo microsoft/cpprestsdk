@@ -250,13 +250,22 @@ TEST_FIXTURE(uri_address, set_body_with_charset)
 
 TEST_FIXTURE(uri_address, set_content_length_locale, "Ignore:Android", "Locale unsupported on Android")
 {
+    std::locale changedLocale;
+    try
+    {
 #ifdef _WIN32
-    std::string changedLocale("fr-FR");
+        changedLocale = std::locale("fr-FR");
 #else
-    std::string changedLocale("fr_FR.UTF-8");
+        changedLocale = std::locale("fr_FR.UTF-8");
 #endif
+    }
+    catch (const std::exception &)
+    {
+        // Silently pass if locale isn't installed on the machine.
+        return;
+    }
 
-    tests::common::utilities::locale_guard loc(std::locale(changedLocale.c_str()));
+    tests::common::utilities::locale_guard loc(changedLocale);
 
     http_request req(methods::PUT);
     req.headers().set_content_length(1000);
@@ -276,14 +285,42 @@ TEST_FIXTURE(uri_address, set_port_locale, "Ignore:Android", "Locale unsupported
     });
 
     {
+        std::locale changedLocale;
+        try
+        {
 #ifdef _WIN32
-        std::string changedLocale("fr-FR");
+            changedLocale = std::locale("fr-FR");
 #else
-        std::string changedLocale("fr_FR.UTF-8");
+            changedLocale = std::locale("fr_FR.UTF-8");
 #endif
-        tests::common::utilities::locale_guard loc(std::locale(changedLocale.c_str()));
+        }
+        catch (const std::exception &)
+        {
+            // Silently pass if locale isn't installed on machine.
+            return;
+        }
+
+        tests::common::utilities::locale_guard loc(changedLocale);
         http_request msg(methods::PUT);
         msg.set_body(data);
+        http_asserts::assert_response_equals(client.request(msg).get(), status_codes::OK);
+    }
+}
+
+TEST_FIXTURE(uri_address, reuse_request)
+{
+    test_http_server::scoped_server scoped(m_uri);
+    test_http_server * p_server = scoped.server();
+    http_client client(m_uri);
+
+    http_request msg(methods::GET);
+    for (int i = 0; i < 3; ++i)
+    {
+        p_server->next_request().then([](test_request *p_request)
+        {
+            http_asserts::assert_test_request_equals(p_request, methods::GET, U("/"));
+            p_request->reply(200);
+        });
         http_asserts::assert_response_equals(client.request(msg).get(), status_codes::OK);
     }
 }

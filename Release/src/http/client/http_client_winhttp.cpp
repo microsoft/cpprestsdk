@@ -739,7 +739,7 @@ private:
                 {
                     // We have raw memory here writing to a memory stream so it is safe to wait
                     // since it will always be non-blocking.
-                    p_request_context->m_readBufferCopy->putn(&p_request_context->m_body_data.get()[http::details::chunked_encoding::data_offset], bytes_read).wait();
+                    p_request_context->m_readBufferCopy->putn_nocopy(&p_request_context->m_body_data.get()[http::details::chunked_encoding::data_offset], bytes_read).wait();
                 }
             }
             catch (...)
@@ -783,7 +783,7 @@ private:
     static void _multiple_segment_write_data(_In_ winhttp_request_context * p_request_context)
     {
         auto rbuf = p_request_context->_get_readbuffer();
-        SafeInt<utility::size64_t> safeCount = p_request_context->m_remaining_to_write;
+        msl::safeint3::SafeInt<utility::size64_t> safeCount = p_request_context->m_remaining_to_write;
         safeCount = safeCount.Min(p_request_context->m_http_client->client_config().chunksize());
 
         uint8_t*  block = nullptr;
@@ -1230,7 +1230,7 @@ private:
                     }
                     else
                     {
-                        writebuf.putn(p_request_context->m_body_data.get(), bytesRead).then(
+                        writebuf.putn_nocopy(p_request_context->m_body_data.get(), bytesRead).then(
                             [hRequestHandle, p_request_context, bytesRead] (pplx::task<size_t> op)
                         {
                             size_t written = 0;

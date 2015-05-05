@@ -196,7 +196,7 @@ namespace Concurrency { namespace streams
             if ( !_verify_and_return_task(details::_out_stream_msg, result) ) return result;
 
             auto copy = std::make_shared<T>(std::move(value));
-            return helper()->m_buffer.putn((CharType*)copy.get(), sizeof(T)).then([copy](pplx::task<size_t> op) -> size_t { return op.get(); });
+            return helper()->m_buffer.putn_nocopy((CharType*)copy.get(), sizeof(T)).then([copy](pplx::task<size_t> op) -> size_t { return op.get(); });
         }
 
         /// <summary>
@@ -242,7 +242,7 @@ namespace Concurrency { namespace streams
                             s.release(data,op.get());
                             return op;
                         };
-                    return buffer.putn(data, count).then(post_write);
+                    return buffer.putn_nocopy(data, count).then(post_write);
                 }
                 else
                 {
@@ -263,7 +263,7 @@ namespace Concurrency { namespace streams
                         [buf,post_write,buffer](pplx::task<size_t> op) -> pplx::task<size_t>
                         {
                             auto b = buffer;
-                            return b.putn(buf.get(), op.get()).then(post_write);
+                            return b.putn_nocopy(buf.get(), op.get()).then(post_write);
                         };
 
                     return source.getn(buf.get(), count).then(post_read);
@@ -279,9 +279,16 @@ namespace Concurrency { namespace streams
         {
             pplx::task<size_t> result;
             if ( !_verify_and_return_task(details::_out_stream_msg, result) ) return result;
-            return (str.size() == 0)
-                ? pplx::task_from_result<size_t>((0))
-                : helper()->m_buffer.putn(str.c_str(), str.size());
+
+            if (str.empty())
+            {
+                return pplx::task_from_result<size_t>(0);
+            }
+            else
+            {
+                auto sharedStr = std::make_shared<std::basic_string<CharType>>(str);
+                return helper()->m_buffer.putn_nocopy(sharedStr->c_str(), sharedStr->size()).then([sharedStr](size_t size) { return size; });
+            }
         }
 
         /// <summary>
@@ -296,6 +303,8 @@ namespace Concurrency { namespace streams
         {
             pplx::task<size_t> result;
             if ( !_verify_and_return_task(details::_out_stream_msg, result) ) return result;
+            // TODO in the future this could be improved to have Value2StringFormatter avoid another unnecessary copy
+            // by putting the string on the heap before calling the print string overload.
             return print(details::Value2StringFormatter<CharType>::format(val));
         }
 
@@ -713,7 +722,7 @@ namespace Concurrency { namespace streams
                             b.release(data, op.get());
                             return op;
                         };
-                    return target.putn(data, count).then(post_write);
+                    return target.putn_nocopy(data, count).then(post_write);
                 }
                 else
                 {
@@ -734,7 +743,7 @@ namespace Concurrency { namespace streams
                         [buf,target,post_write](pplx::task<size_t> op) -> pplx::task<size_t>
                         {
                             auto trg = target;
-                            return trg.putn(buf.get(), op.get()).then(post_write);
+                            return trg.putn_nocopy(buf.get(), op.get()).then(post_write);
                         };
 
                     return helper()->m_buffer.getn(buf.get(), count).then(post_read);
@@ -776,7 +785,7 @@ namespace Concurrency { namespace streams
 
             auto flush = [=]() mutable
             {
-                return target.putn(_locals->outbuf, _locals->write_pos).then([=](size_t wrote) mutable
+                return target.putn_nocopy(_locals->outbuf, _locals->write_pos).then([=](size_t wrote) mutable
                 {
                     _locals->total += wrote;
                     _locals->write_pos = 0;
@@ -848,7 +857,7 @@ namespace Concurrency { namespace streams
 
             auto flush = [=]() mutable
             {
-                return target.putn(_locals->outbuf, _locals->write_pos).then([=](size_t wrote) mutable
+                return target.putn_nocopy(_locals->outbuf, _locals->write_pos).then([=](size_t wrote) mutable
                 {
                     _locals->total += wrote;
                     _locals->write_pos = 0;
@@ -963,7 +972,7 @@ namespace Concurrency { namespace streams
                         return pplx::task_from_result(false);
 
                     // Must be nested to capture rd
-                    return target.putn(l_locals->outbuf, rd).then([target, l_locals, rd](size_t wr) mutable -> pplx::task<bool>
+                    return target.putn_nocopy(l_locals->outbuf, rd).then([target, l_locals, rd](size_t wr) mutable -> pplx::task<bool>
                     {
                         l_locals->total += wr;
 
@@ -1728,7 +1737,7 @@ public:
     }
 
 private:
-    static bool _accept_char(std::shared_ptr<std::basic_string<char>> state, int_type ch)
+    static bool _accept_char(const std::shared_ptr<std::basic_string<char>> &state, int_type ch)
     {
         if ( ch == concurrency::streams::char_traits<char>::eof() || isspace(ch)) return false;
         state->push_back(char(ch));
@@ -1750,7 +1759,7 @@ public:
     }
 
 private:
-    static bool _accept_char(std::shared_ptr<std::basic_string<char>> state, int_type ch)
+    static bool _accept_char(const std::shared_ptr<std::basic_string<char>> &state, int_type ch)
     {
         if ( ch == concurrency::streams::char_traits<char>::eof() || isspace(ch)) return false;
         state->push_back(char(ch));
@@ -1772,7 +1781,7 @@ public:
     }
 
 private:
-    static bool _accept_char(std::shared_ptr<std::basic_string<char>> state, int_type ch)
+    static bool _accept_char(const std::shared_ptr<std::basic_string<char>> &state, int_type ch)
     {
         if ( ch == concurrency::streams::char_traits<char>::eof() || isspace(ch)) return false;
         state->push_back(char(ch));

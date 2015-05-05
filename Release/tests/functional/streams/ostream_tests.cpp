@@ -327,7 +327,7 @@ TEST(streambuf_close_with_exception_write)
 
     const size_t size = 4;
     char targetBuf[size];
-    auto t1 = sourceBuf.putn(targetBuf, size);
+    auto t1 = sourceBuf.putn_nocopy(targetBuf, size);
     VERIFY_THROWS(t1.get(), std::invalid_argument);
 }
 
