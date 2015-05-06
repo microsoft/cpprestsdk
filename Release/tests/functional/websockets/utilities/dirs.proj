@@ -11,12 +11,14 @@
       <ProjectFile Include="VS12.winrt\websockets_test_utilities120.winrt.vcxproj" />
   </ItemGroup>
 
-<!--
   <ItemGroup Condition="'$(DevToolsVersion)'=='140'">
-      <ProjectFile Include="VS14\websockets_test_utilities140.vcxproj" />
+    <ProjectFile Include="VS14\websockets_test_utilities140.vcxproj" />
     <ProjectFile Include="vs14.android\websockets_test_utilities140.android.vcxproj" Condition="'$(Platform)'!='x64'" />
   </ItemGroup>
--->
+  
+  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|140'">
+    <ProjectFile Include="vs14.uwp\websockets_test_utilities140.uwp.vcxproj" />
+  </ItemGroup>
 
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
 

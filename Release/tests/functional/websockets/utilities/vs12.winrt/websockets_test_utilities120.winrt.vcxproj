@@ -170,9 +170,9 @@
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="$(PackagesRoot)\boost.1.58.0\build\native\boost.targets" Condition="Exists('$(PackagesRoot)\boost.1.58.0\build\native\boost.targets')" />
-    <Import Project="$(PackagesRoot)\boost_system-vc120.1.58.0\build\native\boost_system-vc120.targets" Condition="Exists('$(PackagesRoot)\boost_system-vc120.1.58.0\build\native\boost_system-vc120.targets')" />
-    <Import Project="$(PackagesRoot)\boost_date_time-vc120.1.58.0\build\native\boost_date_time-vc120.targets" Condition="Exists('$(PackagesRoot)\boost_date_time-vc120.1.58.0\build\native\boost_date_time-vc120.targets')" />
-    <Import Project="$(PackagesRoot)\boost_regex-vc120.1.58.0\build\native\boost_regex-vc120.targets" Condition="Exists('$(PackagesRoot)\boost_regex-vc120.1.58.0\build\native\boost_regex-vc120.targets')" />
+    <Import Project="$(PackagesRoot)\boost.1.58.0.0\build\native\boost.targets" Condition="Exists('$(PackagesRoot)\boost.1.58.0.0\build\native\boost.targets')" />
+    <Import Project="$(PackagesRoot)\boost_system-vc120.1.58.0.0\build\native\boost_system-vc120.targets" Condition="Exists('$(PackagesRoot)\boost_system-vc120.1.58.0.0\build\native\boost_system-vc120.targets')" />
+    <Import Project="$(PackagesRoot)\boost_date_time-vc120.1.58.0.0\build\native\boost_date_time-vc120.targets" Condition="Exists('$(PackagesRoot)\boost_date_time-vc120.1.58.0.0\build\native\boost_date_time-vc120.targets')" />
+    <Import Project="$(PackagesRoot)\boost_regex-vc120.1.58.0.0\build\native\boost_regex-vc120.targets" Condition="Exists('$(PackagesRoot)\boost_regex-vc120.1.58.0.0\build\native\boost_regex-vc120.targets')" />
   </ImportGroup>
 </Project>
