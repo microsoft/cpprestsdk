@@ -20,14 +20,13 @@
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Release.Product.Settings" />
   <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="$(PackagesRoot)\boost.1.58.0\build\native\boost.targets" Condition="Exists('$(PackagesRoot)\boost.1.58.0\build\native\boost.targets')" />
-    <Import Project="$(PackagesRoot)\boost_system-vc120.1.58.0\build\native\boost_system-vc120.targets" Condition="Exists('$(PackagesRoot)\boost_system-vc120.1.58.0\build\native\boost_system-vc120.targets')" />
-    <Import Project="$(PackagesRoot)\boost_date_time-vc120.1.58.0\build\native\boost_date_time-vc120.targets" Condition="Exists('$(PackagesRoot)\boost_date_time-vc120.1.58.0\build\native\boost_date_time-vc120.targets')" />
-    <Import Project="$(PackagesRoot)\boost_regex-vc120.1.58.0\build\native\boost_regex-vc120.targets" Condition="Exists('$(PackagesRoot)\boost_regex-vc120.1.58.16\build\native\boost_regex-vc120.targets')" />
+    <Import Project="$(PackagesRoot)\boost.1.58.0.0\build\native\boost.targets" Condition="Exists('$(PackagesRoot)\boost.1.58.0.0\build\native\boost.targets')" />
+    <Import Project="$(PackagesRoot)\boost_system-vc120.1.58.0.0\build\native\boost_system-vc120.targets" Condition="Exists('$(PackagesRoot)\boost_system-vc120.1.58.0.0\build\native\boost_system-vc120.targets')" />
+    <Import Project="$(PackagesRoot)\boost_date_time-vc120.1.58.0.0\build\native\boost_date_time-vc120.targets" Condition="Exists('$(PackagesRoot)\boost_date_time-vc120.1.58.0.0\build\native\boost_date_time-vc120.targets')" />
+    <Import Project="$(PackagesRoot)\boost_regex-vc120.1.58.0.0\build\native\boost_regex-vc120.targets" Condition="Exists('$(PackagesRoot)\boost_regex-vc120.1.58.0.0\build\native\boost_regex-vc120.targets')" />
     <Import Project="$(PackagesRoot)\openssl.v120.windesktop.msvcstl.static.rt-dyn.x64.1.0.2.0\build\native\openssl.v120.windesktop.msvcstl.static.rt-dyn.x64.targets" Condition="Exists('$(PackagesRoot)\openssl.v120.windesktop.msvcstl.static.rt-dyn.x64.1.0.2.0\build\native\openssl.v120.windesktop.msvcstl.static.rt-dyn.x64.targets')" />
     <Import Project="$(PackagesRoot)\openssl.v120.windesktop.msvcstl.static.rt-dyn.x86.1.0.2.0\build\native\openssl.v120.windesktop.msvcstl.static.rt-dyn.x86.targets" Condition="Exists('$(PackagesRoot)\openssl.v120.windesktop.msvcstl.static.rt-dyn.x86.1.0.2.0\build\native\openssl.v120.windesktop.msvcstl.static.rt-dyn.x86.targets')" />
-    <Import Project="$(PackagesRoot)\openssl.v120.windesktop.msvcstl.static.rt-dyn.1.0.2.0\build\native\openssl.v120.windesktop.msvcstl.static.rt-dyn.targets" Condition="Exists('$(PackagesRoot)\openssl.v120.windesktop.msvcstl.static.rt-dyn.1.0.2.0\build\native\openssl.targets')" />
-    <Import Project="$(PackagesRoot)\zlib.v120.windesktop.msvcstl.static.rt-dyn.1.2.8.8\build\native\zlib.v120.windesktop.msvcstl.static.rt-dyn.targets" Condition="Exists('$(PackagesRoot)\zlib.v120.windesktop.msvcstl.static.rt-dyn.1.2.8.8\build\native\zlib.targets')" />
+    <Import Project="$(PackagesRoot)\zlib.v120.windesktop.msvcstl.static.rt-dyn.1.2.8.8\build\native\zlib.v120.windesktop.msvcstl.static.rt-dyn.targets" Condition="Exists('$(PackagesRoot)\zlib.v120.windesktop.msvcstl.static.rt-dyn.1.2.8.8\build\native\zlib.v120.windesktop.msvcstl.static.rt-dyn.targets')" />
   </ImportGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <DebugFileSuffix>d</DebugFileSuffix>
@@ -52,16 +51,18 @@
       <RuntimeLibrary Condition="'$(Configuration)'=='Debug'">MultiThreadedDebugDLL</RuntimeLibrary>
       <RuntimeLibrary Condition="'$(Configuration)'=='Release'">MultiThreadedDLL</RuntimeLibrary>
       <WholeProgramOptimization Condition="'$(Configuration)'=='Release'">true</WholeProgramOptimization>
+      
+      <!-- Disable warning about decorated name length exceeded, name was truncated. This is due to Boost.Asio and Websocket++ templates. -->
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4503;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4503;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">4503;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">4503;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4503;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4503;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <AdditionalDependencies>Winhttp.lib;httpapi.lib;bcrypt.lib;crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration Condition="'$(Configuration)'=='Release'">UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
-      <!-- We are statically linking against an OpenSSL lib which statically links against the CRT, avoid warning -->
-      <IgnoreSpecificDefaultLibraries Condition="'$(Configuration)'=='Debug'">LIBCMTD</IgnoreSpecificDefaultLibraries>
-      <IgnoreSpecificDefaultLibraries Condition="'$(Configuration)'=='Release'">LIBCMT</IgnoreSpecificDefaultLibraries>
-      <!-- The OpenSSL package doesn't include pdbs so suppress the warning, otherwise one is emitted per object file -->
-      <!-- This is just complaining we don't have debug information for OpenSSL -->
-      <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="..\common.vcxitems" Label="Shared" Condition="Exists('..\common.vcxitems')" />
