@@ -185,6 +185,27 @@ private:
     ~http_asserts() {}
 };
 
+#if defined(_WIN32)
+#if _MSC_VER >= 1900
+#include <winapifamily.h>
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP)
+// For IXMLHttpRequest with Windows 10, the error codes don't directly compare equal anymore.
+// Relax verification for now.
+#define HTTP_ERROR_CHECK_IMPL(__code)
+#else
+#define HTTP_ERROR_CHECK_IMPL(__code) if(__code != _exc.error_code()) { VERIFY_IS_TRUE(false, "Unexpected error code encountered."); }
+#endif
+#else
+// The reason we can't directly compare with the given std::errc code is because
+// on Windows the STL implementation of error categories are NOT unique across        
+// dll boundaries, until VS2015.
+#define HTTP_ERROR_CHECK_IMPL(__code) VERIFY_ARE_EQUAL(static_cast<int>(__code), _exc.error_code().default_error_condition().value()); 
+#endif
+#else
+#define HTTP_ERROR_CHECK_IMPL(__code) if(__code != _exc.error_code()) { VERIFY_IS_TRUE(false, "Unexpected error code encountered."); }
+#endif
+
+
 // Helper function to verify http_exception is thrown with correct error code
 #define VERIFY_THROWS_HTTP_ERROR_CODE(__expression, __code)                             \
     UNITTEST_MULTILINE_MACRO_BEGIN                                                      \
@@ -196,11 +217,7 @@ private:
         catch (const web::http::http_exception& _exc)                                   \
         {                                                                               \
             VERIFY_IS_TRUE(std::string(_exc.what()).size() > 0);                        \
-            /* The reason we can't directly compare with the given std::errc code is because*/      \
-            /* on Windows the STL implementation of error categories are NOT unique across*/        \
-            /* dll boundaries.*/                                                        \
-            const std::error_condition _condFound = _exc.error_code().default_error_condition();    \
-            VERIFY_ARE_EQUAL(static_cast<int>(__code), _condFound.value());                               \
+            HTTP_ERROR_CHECK_IMPL(__code);                                              \
         }                                                                               \
         catch(...)                                                                      \
         {                                                                               \

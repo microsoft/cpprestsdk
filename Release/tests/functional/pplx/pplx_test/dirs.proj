@@ -8,12 +8,16 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(DevToolsVersion)'=='140'">
-      <ProjectFile Include="VS14\pplx140_test.vcxproj" />
+    <ProjectFile Include="VS14\pplx140_test.vcxproj" />
     <ProjectFile Include="vs14.android\pplx140_test.android.vcxproj" Condition="'$(Platform)'!='x64'" />
+  </ItemGroup>
+  
+  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|140'">
+      <ProjectFile Include="vs14.uwp\pplx140_test.uwp.vcxproj" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|120'">
-      <ProjectFile Include="VS12.winrt\pplx120_test.winrt.vcxproj" />
+      <ProjectFile Include="VS12.winrt\pplx140_test.winrt.vcxproj" />
   </ItemGroup>
 
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />

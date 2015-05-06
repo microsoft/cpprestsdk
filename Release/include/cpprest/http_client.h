@@ -28,7 +28,9 @@
 #define _CASA_HTTP_CLIENT_H
 
 #if defined (__cplusplus_winrt)
+#if !defined(__WRL_NO_DEFAULT_LIB__)
 #define __WRL_NO_DEFAULT_LIB__
+#endif
 #include <wrl.h>
 #include <msxml6.h>
 namespace web { namespace http{namespace client{

@@ -27,7 +27,7 @@
 #include "cpprest/details/x509_cert_utilities.h"
 
 // Include on everything except Windows Desktop ARM, unless explicitly excluded.
-#if !defined(_WIN32) || (defined(__cplusplus_winrt) || !defined(__cplusplus_winrt) && !defined(_M_ARM)) && !defined(CPPREST_EXCLUDE_WEBSOCKETS)
+#if !defined(_MSC_VER) || (WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP) && !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)) || (WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) && !defined(_M_ARM)) && !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 
 // Force websocketpp to use C++ std::error_code instead of Boost.
 #define _WEBSOCKETPP_CPP11_SYSTEM_ERROR_

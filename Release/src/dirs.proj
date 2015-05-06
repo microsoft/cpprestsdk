@@ -22,6 +22,10 @@
     <ProjectFile Include="build\vs14.wod\casablanca140.wod.vcxproj" Condition="'$(Platform)'!='ARM'" />
     <ProjectFile Include="build\vs14.android\casablanca140.android.vcxproj" Condition="'$(Platform)'!='x64'"/>
   </ItemGroup>
+  
+  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|140'">
+      <ProjectFile Include="build\vs14.uwp\cpprestsdk120.uwp.vcxproj" />
+  </ItemGroup>
 
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
 

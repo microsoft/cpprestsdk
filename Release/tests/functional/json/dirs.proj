@@ -12,8 +12,12 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(DevToolsVersion)'=='140'">
-      <ProjectFile Include="VS14\JSON140_test.vcxproj" />
+    <ProjectFile Include="VS14\JSON140_test.vcxproj" />
     <ProjectFile Include="vs14.android\JSON140_test.android.vcxproj" Condition="'$(Platform)'!='x64'" />
+  </ItemGroup>
+  
+  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|140'">
+    <ProjectFile Include="vs14.uwp\JSON140_test.uwp.vcxproj" />
   </ItemGroup>
   
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />

@@ -30,7 +30,9 @@
 
 #include <Strsafe.h>
 // Important for WP8
+#if !defined(__WRL_NO_DEFAULT_LIB__)
 #define __WRL_NO_DEFAULT_LIB__
+#endif
 #include <wrl.h>
 #include <msxml6.h>
 using namespace std;
@@ -474,7 +476,7 @@ protected:
         // Specifies never to call OnDataAvailable improving performance and we
         // already don't use OnDataAvaliable anyway.
 #ifdef XHR_PROP_ONDATA_NEVER
-        hr = winrt_context->m_hRequest->SetProperty(SetProperty(XHR_PROP_ONDATA_THRESHOLD, XHR_PROP_ONDATA_NEVER);
+        hr = winrt_context->m_hRequest->SetProperty(XHR_PROP_ONDATA_THRESHOLD, XHR_PROP_ONDATA_NEVER);
         if (FAILED(hr))
         {
             request->report_error(hr, L"Failure to turn off on data threshold");

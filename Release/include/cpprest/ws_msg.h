@@ -23,7 +23,7 @@
 #pragma once
 
 // Include on everything except Windows Desktop ARM, unless explicitly excluded.
-#if !defined(_MSC_VER) || (defined(__cplusplus_winrt) || !defined(__cplusplus_winrt) && !defined(_M_ARM)) && !defined(CPPREST_EXCLUDE_WEBSOCKETS)
+#if !defined(_MSC_VER) || (WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP) && !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)) || (WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) && !defined(_M_ARM)) && !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 
 #include <memory>
 #include <limits>

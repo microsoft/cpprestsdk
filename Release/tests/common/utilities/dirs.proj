@@ -14,6 +14,10 @@
   <ItemGroup Condition="'$(DevToolsVersion)'=='140'">
     <ProjectFile Include="VS14\CommonUtilities140.vcxproj" />
   </ItemGroup>
+  
+  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|140'">
+      <ProjectFile Include="vs14.uwp\CommonUtilities140.uwp.vcxproj" />
+  </ItemGroup>
 
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
 
