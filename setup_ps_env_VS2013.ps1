@@ -13,7 +13,7 @@ function VsVars32()
     Get-Batchfile $BatchFile
 }
 
-"Initializing Casablanca Powershell VS2013 Environment"
+"Initializing C++ REST SDK Powershell VS2013 Environment"
 
 # get VS tools
 VsVars32
