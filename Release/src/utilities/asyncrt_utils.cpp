@@ -252,7 +252,20 @@ const std::error_category & __cdecl linux_category()
 
 }
 
-#define LOWER_6BITS 0x3F
+#define LOW_3BITS 0x7
+#define LOW_4BITS 0xF
+#define LOW_5BITS 0x1F
+#define LOW_6BITS 0x3F
+#define BIT4 0x8
+#define BIT5 0x10
+#define BIT6 0x20
+#define BIT7 0x40
+#define BIT8 0x80
+#define L_SURROGATE_START 0xDC00
+#define L_SURROGATE_END 0xDFFF
+#define H_SURROGATE_START 0xD800
+#define H_SURROGATE_END 0xDBFF
+#define SURROGATE_PAIR_START 0x10000
 
 utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
 {
@@ -265,58 +278,63 @@ utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
     // of the characters are not just ASCII and collapse.
     dest.reserve(static_cast<size_t>(s.size() * .70));
     
-    const unsigned char *src = reinterpret_cast<const unsigned char *>(s.c_str());
-    auto srcRemainingSize = s.size();
-    while (srcRemainingSize > 0)
+    for (auto src = s.begin(); src != s.end(); ++src)
     {
-        if (*src < 0x7F) // single byte character, 0x0 to 0x7F
+        if ((*src & BIT8) == 0) // single byte character, 0x0 to 0x7F
         {
             dest.push_back(utf16string::value_type(*src));
         }
         else
         {
             unsigned char numContBytes = 0;
-            int32_t codePoint;
-            if (*src <= 0xDF) // 2 byte character, 0x80 to 0x7FF
+            uint32_t codePoint;
+            if ((*src & BIT6) == 0) // 2 byte character, 0x80 to 0x7FF
             {
-                codePoint = *src & 0x1F;
+                if ((*src & BIT8) != 0 && (*src & BIT7) == 0)
+                {
+                    throw std::range_error("UTF-8 string character can never start with 10xxxxxx");
+                }
+                codePoint = *src & LOW_5BITS;
                 numContBytes = 1;
             }
-            else if (*src <= 0xEF) // 3 byte character, 0x800 to 0xFFFF
+            else if ((*src & BIT5) == 0) // 3 byte character, 0x800 to 0xFFFF
             {
-                codePoint = *src & 0xF;
+                codePoint = *src & LOW_4BITS;
                 numContBytes = 2;
             }
-            else if (*src <= 0xF7) // 4 byte character, 0x10000 to 0x10FFFF
+            else if ((*src & BIT4) == 0) // 4 byte character, 0x10000 to 0x10FFFF
             {
-                codePoint = *src & 0x7;
+                codePoint = *src & LOW_3BITS;
                 numContBytes = 3;
             }
             else
             {
                 throw std::range_error("UTF-8 string has invalid Unicode code point");
             }
-            srcRemainingSize -= numContBytes;
-            if (srcRemainingSize <= 0)
-            {
-                throw std::range_error("UTF-8 string is missing bytes in character");
-            }
 
             for (unsigned char i = 0; i < numContBytes; ++i)
             {
+                if (++src == s.end())
+                {
+                    throw std::range_error("UTF-8 string is missing bytes in character");
+                }
+                if ((*src & BIT8) == 0 || (*src & BIT7) != 0)
+                {
+                    throw std::range_error("UTF-8 continuation byte is missing leading byte");
+                }
                 codePoint <<= 6;
-                codePoint |= *++src & LOWER_6BITS;
+                codePoint |= *src & LOW_6BITS;
             }
 
-            if (numContBytes == 3)
+            if (codePoint >= SURROGATE_PAIR_START)
             {
-                // In UTF-16 U+1000 to U+10FFFF are represented as two 16-bit code units, surrogate pairs.
+                // In UTF-16 U+10000 to U+10FFFF are represented as two 16-bit code units, surrogate pairs.
                 //  - 0x10000 is subtracted from the code point
                 //  - high surrogate is 0xD800 added to the top ten bits
                 //  - low surrogate is 0xDC00 added to the low ten bits
-                codePoint -= 0x10000;
-                dest.push_back(utf16string::value_type((codePoint >> 10) + 0xD800));
-                dest.push_back(utf16string::value_type((codePoint & 0x3FF) + 0xDC00));
+                codePoint -= SURROGATE_PAIR_START;
+                dest.push_back(utf16string::value_type((codePoint >> 10) | H_SURROGATE_START));
+                dest.push_back(utf16string::value_type((codePoint & 0x3FF) | L_SURROGATE_START));
             }
             else
             {
@@ -326,9 +344,6 @@ utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
                 dest.push_back(utf16string::value_type(codePoint));
             }
         }
-
-        --srcRemainingSize;
-        ++src;
     }
     return dest;
 #endif
@@ -342,16 +357,20 @@ std::string __cdecl conversions::utf16_to_utf8(const utf16string &w)
  #else
     std::string dest;
     dest.reserve(w.size());
-    const utf16string::value_type *src = w.c_str();
-    auto srcRemainingSize = w.size();
-    while (srcRemainingSize > 0)
+    for (auto src = w.begin(); src != w.end(); ++src)
     {
         // Check for high surrogate.
-        if (*src >= 0xD800 && *src <= 0xDBFF)
+        if (*src >= H_SURROGATE_START && *src <= H_SURROGATE_END)
         {
-            if (--srcRemainingSize == 0)
+            const auto highSurrogate = *src;
+            if (++src == w.end())
             {
                 throw std::range_error("UTF-16 string is missing low surrogate");
+            }
+            const auto lowSurrogate = *src;
+            if (lowSurrogate < L_SURROGATE_START || lowSurrogate > L_SURROGATE_END)
+            {
+                throw std::range_error("UTF-16 string has invalid low surrogate");
             }
 
             // To get from surrogate pair to Unicode code point:
@@ -359,42 +378,35 @@ std::string __cdecl conversions::utf16_to_utf8(const utf16string &w)
             // - subract 0xDC00 from low surrogate, this forms low ten bits
             // - add 0x10000
             // Leaves a code point in U+10000 to U+10FFFF range.
-            uint32_t codePoint = *src - 0xD800;
+            uint32_t codePoint = highSurrogate - H_SURROGATE_START;
             codePoint <<= 10;
-            codePoint += *++src - 0xDC00;
-            codePoint += 0x10000;
-            if (*src < 0xDC00 || *src > 0xDFFF)
-            {
-                throw std::range_error("UTF-16 string has invalid low surrogate");
-            }
+            codePoint |= lowSurrogate - L_SURROGATE_START;
+            codePoint |= SURROGATE_PAIR_START;
 
             // 4 bytes need using 21 bits
             dest.push_back(char(codePoint >> 18) | 0xF0);               // leading 3 bits
-            dest.push_back(((codePoint >> 12) & LOWER_6BITS) | 0x80);   // next 6 bits
-            dest.push_back(((codePoint >> 6) & LOWER_6BITS) | 0x80);    // next 6 bits
-            dest.push_back((codePoint & LOWER_6BITS) | 0x80);           // trailing 6 bits
+            dest.push_back(((codePoint >> 12) & LOW_6BITS) | BIT8);   // next 6 bits
+            dest.push_back(((codePoint >> 6) & LOW_6BITS) | BIT8);    // next 6 bits
+            dest.push_back((codePoint & LOW_6BITS) | BIT8);           // trailing 6 bits
         }
-        else if (*src <= 0xFFFF)
+        else
         {
-            if (*src < 0x7F) // single byte character
+            if (*src <= 0x7F) // single byte character
             {
                 dest.push_back(static_cast<char>(*src));
             }
             else if (*src <= 0x7FF) // 2 bytes needed (11 bits used)
             {
                 dest.push_back(char(*src >> 6) | 0xC0);             // leading 5 bits
-                dest.push_back((*src & LOWER_6BITS) | 0x80);        // trailing 6 bits
+                dest.push_back((*src & LOW_6BITS) | BIT8);        // trailing 6 bits
             }
             else // 3 bytes needed (16 bits used)
             {
                 dest.push_back((*src >> 12) | 0xE0);                // leading 4 bits
-                dest.push_back(((*src >> 6) & LOWER_6BITS) | 0x80); // middle 6 bits
-                dest.push_back((*src & LOWER_6BITS) | 0x80);        // trailing 6 bits
+                dest.push_back(((*src >> 6) & LOW_6BITS) | BIT8); // middle 6 bits
+                dest.push_back((*src & LOW_6BITS) | BIT8);        // trailing 6 bits
             }
         }
-
-        --srcRemainingSize;
-        ++src;
     }
 
     return dest;
