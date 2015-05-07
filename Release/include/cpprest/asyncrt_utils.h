@@ -108,11 +108,6 @@ namespace conversions
     _ASYNCRTIMP utf8string __cdecl latin1_to_utf8(const std::string &s);
 
     /// <summary>
-    /// Converts a string with the OS's default code page to a UTF-16 string.
-    /// </summary>
-    _ASYNCRTIMP utf16string __cdecl default_code_page_to_utf16(const std::string &s);
-
-    /// <summary>
     /// Converts to a platform dependent Unicode string type.
     /// </summary>
     /// <param name="s">A single byte character UTF-8 string.</param>

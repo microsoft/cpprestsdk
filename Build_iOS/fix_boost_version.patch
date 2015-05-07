@@ -26,7 +26,7 @@ index 22b308c..07ef184
 +: ${BOOST_VERSION2:=1_57_0}
  
 -: ${BOOST_LIBS:="atomic chrono date_time exception filesystem program_options random signals system test thread"}
-+: ${BOOST_LIBS:="thread chrono filesystem regex locale system random"}
++: ${BOOST_LIBS:="thread chrono filesystem regex system random"}
  
  # Current iPhone SDK
  : ${IPHONE_SDKVERSION:=`xcodebuild -showsdks | grep iphoneos | egrep "[[:digit:]]+\.[[:digit:]]+" -o | tail -1`}

@@ -2,8 +2,8 @@
 
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Common.Build.settings" />
 
-  <ItemGroup Condition="'$(DevToolsVersion)'=='110'">
-      <ProjectFile Include="version110.vcxproj" />
+  <ItemGroup Condition="'$(DevToolsVersion)'=='140'">
+      <ProjectFile Include="vs14\version140_test.vcxproj" />
   </ItemGroup>
 
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
