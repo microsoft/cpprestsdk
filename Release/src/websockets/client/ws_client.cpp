@@ -22,8 +22,7 @@
 ****/
 #include "stdafx.h"
 
-// Include on everything except Windows Desktop ARM, unless explicitly excluded.
-#if !defined(_MSC_VER) || (WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP) && !WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)) || (WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) && !defined(_M_ARM)) && !defined(CPPREST_EXCLUDE_WEBSOCKETS)
+#if !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 
 namespace web
 {

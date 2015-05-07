@@ -30,6 +30,7 @@
 #include <iostream>
 #include <sstream>
 #include "cpprest/details/cpprest_compat.h"
+#include "cpprest/details/basic_types.h"
 
 #ifndef _WIN32
 # define __STDC_LIMIT_MACROS
@@ -121,4 +122,20 @@ typedef std::basic_ostringstream<utf16char> utf16ostringstream;
 typedef std::basic_ostream<utf16char> utf16ostream;
 typedef std::basic_istream<utf16char> utf16istream;
 typedef std::basic_istringstream<utf16char> utf16istringstream;
+#endif
+
+
+#if defined(_WIN32)
+// Include on everything except Windows Desktop ARM, unless explicitly excluded.
+#if !defined(CPPREST_EXCLUDE_WEBSOCKETS)
+#if defined(WINAPI_FAMILY)
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP) && defined(_M_ARM)
+#define CPPREST_EXCLUDE_WEBSOCKETS
+#endif
+#else
+#if defined(_M_ARM)
+#define CPPREST_EXCLUDE_WEBSOCKETS
+#endif
+#endif
+#endif
 #endif
