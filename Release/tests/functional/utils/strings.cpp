@@ -256,6 +256,10 @@ TEST(utf8_to_utf16_errors)
     input.push_back(128u); // 10000000
     input.push_back(128u); // 10000000
     VERIFY_THROWS(utility::conversions::utf8_to_utf16(input), std::range_error);
+    input.clear();
+    input.push_back(191u); // 10111111
+    input.push_back(128u); // 10000000
+    VERIFY_THROWS(utility::conversions::utf8_to_utf16(input), std::range_error);
 }
 
 TEST(latin1_to_utf16)

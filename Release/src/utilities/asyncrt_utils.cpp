@@ -286,14 +286,15 @@ utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
         }
         else
         {
+            if ((*src & BIT8) != 0 && (*src & BIT7) == 0)
+            {
+                throw std::range_error("UTF-8 string character can never start with 10xxxxxx");
+            }
+
             unsigned char numContBytes = 0;
             uint32_t codePoint;
             if ((*src & BIT6) == 0) // 2 byte character, 0x80 to 0x7FF
             {
-                if ((*src & BIT8) != 0 && (*src & BIT7) == 0)
-                {
-                    throw std::range_error("UTF-8 string character can never start with 10xxxxxx");
-                }
                 codePoint = *src & LOW_5BITS;
                 numContBytes = 1;
             }
@@ -362,8 +363,8 @@ std::string __cdecl conversions::utf16_to_utf8(const utf16string &w)
         // Check for high surrogate.
         if (*src >= H_SURROGATE_START && *src <= H_SURROGATE_END)
         {
-            const auto highSurrogate = *src;
-            if (++src == w.end())
+            const auto highSurrogate = *src++;
+            if (src == w.end())
             {
                 throw std::range_error("UTF-16 string is missing low surrogate");
             }
