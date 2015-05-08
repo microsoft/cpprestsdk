@@ -9,7 +9,7 @@ set(ANDROID_STL_FLAGS)
 
 # Platform (not compiler) specific settings
 if(IOS)
-  set(IOS_SOURCE_DIR "${CMAKE_SOURCE_DIR}/../Build_iOS")
+  set(IOS_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../Build_iOS")
   set(Boost_FRAMEWORK "-F ${IOS_SOURCE_DIR} -framework boost")
   set(Boost_INCLUDE_DIR "${IOS_SOURCE_DIR}/boost.framework/Headers")
 
