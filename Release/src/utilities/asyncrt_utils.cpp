@@ -276,7 +276,7 @@ utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
     utf16string dest;
     // Save repeated heap allocations, use less than source string size assuming some
     // of the characters are not just ASCII and collapse.
-    dest.reserve(static_cast<size_t>(s.size() * .70));
+    dest.reserve(static_cast<size_t>(static_cast<double>(s.size()) * .70));
     
     for (auto src = s.begin(); src != s.end(); ++src)
     {
@@ -385,10 +385,10 @@ std::string __cdecl conversions::utf16_to_utf8(const utf16string &w)
             codePoint |= SURROGATE_PAIR_START;
 
             // 4 bytes need using 21 bits
-            dest.push_back(char(codePoint >> 18) | 0xF0);               // leading 3 bits
-            dest.push_back(((codePoint >> 12) & LOW_6BITS) | BIT8);   // next 6 bits
-            dest.push_back(((codePoint >> 6) & LOW_6BITS) | BIT8);    // next 6 bits
-            dest.push_back((codePoint & LOW_6BITS) | BIT8);           // trailing 6 bits
+            dest.push_back(char((codePoint >> 18) | 0xF0));                 // leading 3 bits
+            dest.push_back(char(((codePoint >> 12) & LOW_6BITS) | BIT8));   // next 6 bits
+            dest.push_back(char(((codePoint >> 6) & LOW_6BITS) | BIT8));    // next 6 bits
+            dest.push_back(char((codePoint & LOW_6BITS) | BIT8));           // trailing 6 bits
         }
         else
         {
@@ -398,14 +398,14 @@ std::string __cdecl conversions::utf16_to_utf8(const utf16string &w)
             }
             else if (*src <= 0x7FF) // 2 bytes needed (11 bits used)
             {
-                dest.push_back(char(*src >> 6) | 0xC0);             // leading 5 bits
-                dest.push_back((*src & LOW_6BITS) | BIT8);        // trailing 6 bits
+                dest.push_back(char((*src >> 6) | 0xC0));               // leading 5 bits
+                dest.push_back(char((*src & LOW_6BITS) | BIT8));        // trailing 6 bits
             }
             else // 3 bytes needed (16 bits used)
             {
-                dest.push_back((*src >> 12) | 0xE0);                // leading 4 bits
-                dest.push_back(((*src >> 6) & LOW_6BITS) | BIT8); // middle 6 bits
-                dest.push_back((*src & LOW_6BITS) | BIT8);        // trailing 6 bits
+                dest.push_back(char((*src >> 12) | 0xE0));              // leading 4 bits
+                dest.push_back(char(((*src >> 6) & LOW_6BITS) | BIT8)); // middle 6 bits
+                dest.push_back(char((*src & LOW_6BITS) | BIT8));        // trailing 6 bits
             }
         }
     }
