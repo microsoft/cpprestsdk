@@ -18,6 +18,13 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Release.Product.Settings" />
+  <!-- Necessary because OpenSSL and zlib NuGet packages aren't built for the v120_xp toolset. Force them to be on. -->
+  <PropertyGroup>
+    <Force-Enable-openssl-v120-windesktop-msvcstl-static-rt-dyn-x86 Condition="'$(Platform)' == 'Win32'">true</Force-Enable-openssl-v120-windesktop-msvcstl-static-rt-dyn-x86>
+    <Force-Enable-openssl-v120-windesktop-msvcstl-static-rt-dyn-x64 Condition="'$(Platform)' == 'x64'">true</Force-Enable-openssl-v120-windesktop-msvcstl-static-rt-dyn-x64>
+    <Force-Enable-zlib-v120-windesktop-msvcstl-static-rt-dyn-x86 Condition="'$(Platform)' == 'Win32'">true</Force-Enable-zlib-v120-windesktop-msvcstl-static-rt-dyn-x86>
+    <Force-Enable-zlib-v120-windesktop-msvcstl-static-rt-dyn-x64 Condition="'$(Platform)' == 'x64'">true</Force-Enable-zlib-v120-windesktop-msvcstl-static-rt-dyn-x64>
+  </PropertyGroup>
   <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="$(PackagesRoot)\boost.1.58.0.0\build\native\boost.targets" Condition="Exists('$(PackagesRoot)\boost.1.58.0.0\build\native\boost.targets')" />
