@@ -12,7 +12,7 @@
     <ProjectFile Include="vs14.android\TestRunner.android.Packaging\TestRunner.android.Packaging.androidproj" Condition="'$(Platform)'!='x64'" />
   </ItemGroup>
   
-  <ItemGroup Condition="'$(OsVersion)|'$(DevToolsVersion)'=='6.3|140'">
+  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|140'">
   	<ProjectFile Include="vs14.uwp\TestRunner140.uwp.vcxproj" />
   </ItemGroup>
 
