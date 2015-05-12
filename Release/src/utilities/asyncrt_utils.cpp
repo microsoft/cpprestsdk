@@ -286,14 +286,13 @@ utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
         }
         else
         {
-            if ((*src & BIT8) != 0 && (*src & BIT7) == 0)
+            unsigned char numContBytes = 0;
+            uint32_t codePoint;
+            if ((*src & BIT7) == 0)
             {
                 throw std::range_error("UTF-8 string character can never start with 10xxxxxx");
             }
-
-            unsigned char numContBytes = 0;
-            uint32_t codePoint;
-            if ((*src & BIT6) == 0) // 2 byte character, 0x80 to 0x7FF
+            else if ((*src & BIT6) == 0) // 2 byte character, 0x80 to 0x7FF
             {
                 codePoint = *src & LOW_5BITS;
                 numContBytes = 1;
