@@ -82,7 +82,6 @@ target_link_libraries(${Casablanca_LIBRARY}
   ${Boost_THREAD_LIBRARY}
   ${Boost_ATOMIC_LIBRARY}
   ${Boost_CHRONO_LIBRARY}
-  ${Boost_LOCALE_LIBRARY}
   ${Boost_RANDOM_LIBRARY}
   ${EXTRALINKS}
   ${Boost_FRAMEWORK}
@@ -93,7 +92,7 @@ target_link_libraries(${Casablanca_LIBRARY}
 
 # Portions specific to cpprest binary versioning.
 set (CPPREST_VERSION_MAJOR 2)
-set (CPPREST_VERSION_MINOR 5)
+set (CPPREST_VERSION_MINOR 6)
 set (CPPREST_VERSION_REVISION 0)
 
 if(WIN32)
