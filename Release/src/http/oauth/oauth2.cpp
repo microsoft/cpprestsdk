@@ -187,7 +187,16 @@ oauth2_token oauth2_config::_parse_token_from_json(const json::value& token_json
 
     if (token_json.has_field(oauth2_strings::expires_in))
     {
-        result.set_expires_in(token_json.at(oauth2_strings::expires_in).as_number().to_int64());
+        auto json_expires_in_val = token_json.at(oauth2_strings::expires_in);
+
+        if (json_expires_in_val.is_number())
+           result.set_expires_in(json_expires_in_val.as_number().to_int64());
+        else 
+        {
+           // handle the case of a number as a JSON "string".
+           // std::stoll() will throw an exception if no conversion is possible.
+           result.set_expires_in(std::stoll(json_expires_in_val.as_string()));
+        }
     }
     else
     {
