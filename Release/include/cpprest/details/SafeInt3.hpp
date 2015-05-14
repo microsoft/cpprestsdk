@@ -51,8 +51,7 @@ This header compiles properly at Wall on Visual Studio, -Wall on gcc, and -Wever
 
 Please read the leading comments before using the class.
 ---------------------------------------------------------------*/
-#ifndef SAFEINT_HPP
-#define SAFEINT_HPP
+#pragma once
 
 // It is a bit tricky to sort out what compiler we are actually using,
 // do this once here, and avoid cluttering the code
@@ -7042,7 +7041,6 @@ SafeInt< T, E > operator |( U lhs, SafeInt< T, E > rhs ) SAFEINT_NOTHROW
 #if SAFEINT_COMPILER == CLANG_COMPILER
 #pragma clang diagnostic pop
 #endif
-#endif //SAFEINT_HPP
 
 } // utilities
 } // safeint3
