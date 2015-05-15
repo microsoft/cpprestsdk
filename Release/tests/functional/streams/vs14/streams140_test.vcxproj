@@ -212,14 +212,8 @@
       <Project>{1014c621-bc2d-4813-b8c1-6d83ad6f9249}</Project>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <!-- To be reenabled when we have an updated boost package
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="$(PackagesRoot)\boost.1.55.0.16\build\native\boost.targets" Condition="Exists('$(PackagesRoot)\boost.1.55.0.16\build\native\boost.targets')" />
-    <Import Project="$(PackagesRoot)\boost_date_time-vc120.1.55.0.16\build\native\boost_date_time-vc120.targets" Condition="Exists('$(PackagesRoot)\boost_date_time-vc120.1.55.0.16\build\native\boost_date_time-vc120.targets')" />
+    <Import Project="$(PackagesRoot)\boost.1.58.0.0\build\native\boost.targets" Condition="Exists('$(PackagesRoot)\boost.1.58.0.0\build\native\boost.targets')" />
   </ImportGroup>
--->
 </Project>

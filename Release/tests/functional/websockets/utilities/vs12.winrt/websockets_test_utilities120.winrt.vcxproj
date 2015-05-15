@@ -75,7 +75,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(VCINSTALLDIR)\lib\store;$(OutDir);%(AdditionalLibraryDirectories);</AdditionalLibraryDirectories>
-      <AdditionalDependencies>msvcrtd.lib;msvcprtd.lib;vccorlibd.lib;RuntimeObject.lib;Ws2_32.lib;Mswsock.lib;libboost_system-vc120-mt-gd-1_55.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>msvcrtd.lib;msvcprtd.lib;vccorlibd.lib;RuntimeObject.lib;Ws2_32.lib;Mswsock.lib;libboost_system-vc120-mt-gd-1_58.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
@@ -94,7 +94,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(VCINSTALLDIR)\lib\store\amd64;$(OutDir);%(AdditionalLibraryDirectories);</AdditionalLibraryDirectories>
-      <AdditionalDependencies>msvcrtd.lib;msvcprtd.lib;vccorlibd.lib;RuntimeObject.lib;Ws2_32.lib;Mswsock.lib;libboost_system-vc120-mt-gd-1_55.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>msvcrtd.lib;msvcprtd.lib;vccorlibd.lib;RuntimeObject.lib;Ws2_32.lib;Mswsock.lib;libboost_system-vc120-mt-gd-1_58.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
@@ -117,7 +117,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(VCINSTALLDIR)\lib\store;$(OutDir);%(AdditionalLibraryDirectories);</AdditionalLibraryDirectories>
-      <AdditionalDependencies>msvcrt.lib;msvcprt.lib;vccorlib.lib;RuntimeObject.lib;Ws2_32.lib;Mswsock.lib;libboost_system-vc120-mt-1_55.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>msvcrt.lib;msvcprt.lib;vccorlib.lib;RuntimeObject.lib;Ws2_32.lib;Mswsock.lib;libboost_system-vc120-mt-1_58.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
@@ -140,7 +140,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(VCINSTALLDIR)\lib\store\amd64;$(OutDir);%(AdditionalLibraryDirectories);</AdditionalLibraryDirectories>
-      <AdditionalDependencies>msvcrt.lib;msvcprt.lib;vccorlib.lib;RuntimeObject.lib;Ws2_32.lib;Mswsock.lib;libboost_system-vc120-mt-1_55.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>msvcrt.lib;msvcprt.lib;vccorlib.lib;RuntimeObject.lib;Ws2_32.lib;Mswsock.lib;libboost_system-vc120-mt-1_58.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>

@@ -25,10 +25,8 @@
 #include "cpprest/rawptrstream.h"
 #include "cpprest/filestream.h"
 #include "cpprest/producerconsumerstream.h"
-#if !defined(_MSC_VER) || (_MSC_VER < 1900)
-// Do not include boost in dev14
+
 #include <boost/interprocess/streams/bufferstream.hpp>
-#endif
 
 #if defined(__cplusplus_winrt)
 using namespace Windows::Storage;
@@ -788,8 +786,7 @@ TEST(sync_on_async_close_with_exception)
         VERIFY_ARE_EQUAL(std::ios::badbit, outputStream.rdstate());
     }
 }
-#if !defined(_MSC_VER) || (_MSC_VER < 1900)
-// Do not include tests which use boost with dev14
+
 TEST(ostream_full_throw_exception)
 {
     char tgt_buffer[5];
@@ -809,7 +806,7 @@ TEST(ostream_full_throw_exception)
 
     VERIFY_THROWS(astream.read_to_end(os_streambuf).get(), std::exception);
 }
-#endif
+
 }
 }}}
 

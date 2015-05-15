@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|120'">
-      <ProjectFile Include="VS12.winrt\pplx140_test.winrt.vcxproj" />
+      <ProjectFile Include="VS12.winrt\pplx120_test.winrt.vcxproj" />
   </ItemGroup>
 
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
