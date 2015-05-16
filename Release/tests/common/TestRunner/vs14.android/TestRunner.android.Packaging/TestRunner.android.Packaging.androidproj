@@ -24,7 +24,7 @@
     <ProjectVersion>1.0</ProjectVersion>
     <ProjectGuid>{7cf3c460-3486-4106-80cd-eb802dfef373}</ProjectGuid>
   </PropertyGroup>
-  <Import Project="$(VCTargetsPath)\AndroidPackaging\Android.Default.props" />
+  <Import Project="$(AndroidTargetsPath)\Android.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'" Label="Configuration">
     <UseDebugLibraries>true</UseDebugLibraries>
   </PropertyGroup>
@@ -37,7 +37,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'" Label="Configuration">
     <UseDebugLibraries>false</UseDebugLibraries>
   </PropertyGroup>
-  <Import Project="$(VCTargetsPath)\AndroidPackaging\Android.props" />
+  <Import Project="$(AndroidTargetsPath)\Android.props" />
   <ImportGroup Label="ExtensionSettings" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup />
@@ -73,7 +73,7 @@
       <Project>{d1060d0a-a10e-444d-9f6b-9676ea453f9a}</Project>
     </ProjectReference>
   </ItemGroup>
-  <Import Project="$(VCTargetsPath)\AndroidPackaging\Android.targets" />
+  <Import Project="$(AndroidTargetsPath)\Android.targets" />
   <ImportGroup Label="ExtensionTargets" />
   
   <!-- For some reason build fails if the following directory doesn't exist on command line build -->
