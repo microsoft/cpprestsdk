@@ -1997,11 +1997,16 @@ namespace details
             }
             catch(...)
             {
-                // This exception could only have come from within the chore body. It should've been caught
-                // and the task should be canceled with exception. Swallow the exception here.
-                _ASSERTE(_HasUserException());
-				if (!_HasUserException())
-					_CancelWithException(std::current_exception());
+                // The exception could have come from two places:
+                //   1. From the chore body, so it already should have been caught and canceled.
+                //      In this case swallow the exception.
+                //   2. From trying to actually schedule the task on the scheduler.
+                //      In this case cancel the task with the current exception, otherwise the
+                //      task will never be signaled leading to deadlock when waiting on the task.
+                if (!_HasUserException())
+                {
+                    _CancelWithException(std::current_exception());
+                }
             }
         }
 
