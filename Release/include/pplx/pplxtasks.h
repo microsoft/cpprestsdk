@@ -2000,6 +2000,8 @@ namespace details
                 // This exception could only have come from within the chore body. It should've been caught
                 // and the task should be canceled with exception. Swallow the exception here.
                 _ASSERTE(_HasUserException());
+				if (!_HasUserException())
+					_CancelWithException(std::current_exception());
             }
         }
 
