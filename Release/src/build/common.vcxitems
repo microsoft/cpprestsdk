@@ -56,6 +56,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\http_server.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\http_server_api.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\nosal.h" />
+	<ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\resource.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\SafeInt3.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\uri_parser.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\web_utilities.h" />
@@ -83,6 +84,9 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\pplx\pplxinterface.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\pplx\pplxtasks.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\pch\stdafx.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="$(MSBuildThisFileDirectory)..\utilities\Resource.rc" />
   </ItemGroup>
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\http_constants.dat" />
