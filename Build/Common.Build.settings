@@ -99,6 +99,12 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+	  <PreprocessorDefinitions Condition="'$(DevToolsVersion)'=='140'">TOOLSET_VERSION_140;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+	  <PreprocessorDefinitions Condition="'$(DevToolsVersion)'=='120'">TOOLSET_VERSION_120;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+	  <PreprocessorDefinitions Condition="'$(DevToolsVersion)'=='110'">TOOLSET_VERSION_110;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
 
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -108,6 +114,12 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_WIN64;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+	  <PreprocessorDefinitions Condition="'$(DevToolsVersion)'=='140'">TOOLSET_VERSION_140;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+	  <PreprocessorDefinitions Condition="'$(DevToolsVersion)'=='120'">TOOLSET_VERSION_120;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+	  <PreprocessorDefinitions Condition="'$(DevToolsVersion)'=='110'">TOOLSET_VERSION_110;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
 
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
@@ -117,6 +129,12 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)%(PreprocessorDefinitions)</PreprocessorDefinitions>
+	  <PreprocessorDefinitions Condition="'$(DevToolsVersion)'=='140'">TOOLSET_VERSION_140;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+	  <PreprocessorDefinitions Condition="'$(DevToolsVersion)'=='120'">TOOLSET_VERSION_120;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+	  <PreprocessorDefinitions Condition="'$(DevToolsVersion)'=='110'">TOOLSET_VERSION_110;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
 
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -126,6 +144,12 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_WIN64;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+	  <PreprocessorDefinitions Condition="'$(DevToolsVersion)'=='140'">TOOLSET_VERSION_140;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+	  <PreprocessorDefinitions Condition="'$(DevToolsVersion)'=='120'">TOOLSET_VERSION_120;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+	  <PreprocessorDefinitions Condition="'$(DevToolsVersion)'=='110'">TOOLSET_VERSION_110;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
 
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
@@ -135,6 +159,12 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+	  <PreprocessorDefinitions Condition="'$(DevToolsVersion)'=='140'">TOOLSET_VERSION_140;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+	  <PreprocessorDefinitions Condition="'$(DevToolsVersion)'=='120'">TOOLSET_VERSION_120;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+	  <PreprocessorDefinitions Condition="'$(DevToolsVersion)'=='110'">TOOLSET_VERSION_110;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
 
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -144,6 +174,12 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+	  <PreprocessorDefinitions Condition="'$(DevToolsVersion)'=='140'">TOOLSET_VERSION_140;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+	  <PreprocessorDefinitions Condition="'$(DevToolsVersion)'=='120'">TOOLSET_VERSION_120;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+	  <PreprocessorDefinitions Condition="'$(DevToolsVersion)'=='110'">TOOLSET_VERSION_110;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
 
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|Win32' ">
@@ -189,7 +225,7 @@
   
   <!--end paths configuration -->
   <Target Name="CopyToOutputDirectoryAlwaysError"
-          Condition="'@(Content)'!='' or '@(None)'!=''">
+         Condition="'@(Content)'!='' or '@(None)'!=''">
     <Error Condition="'%(Content.CopyToOutputDirectory)'=='Always'" Text="CopyToOutputDirectory is not allowed to be 'Always'.  Use 'PreserveNewest' instead." File="$(MSBuildProjectFile)" />
     <Error Condition="'%(None.CopyToOutputDirectory)'=='Always'" Text="CopyToOutputDirectory is not allowed to be 'Always'.  Use 'PreserveNewest' instead." File="$(MSBuildProjectFile)" />
   </Target>
@@ -222,7 +258,7 @@
   <!-- Remove all items from _ResolvedProjectReferencePaths that have non-default value for CopyToOutputDirectory   -->
   <Target Name="Cleanup_ResolvedProjectReferencePaths"
      BeforeTargets="ResolveAssemblyReferences"
-     Condition="'@(_ResolvedProjectReferencePaths)' != ''">
+    Condition="'@(_ResolvedProjectReferencePaths)' != ''">
     <Message Text="Before Cleanup_ResolvedProjectReferencePaths (CopyToOutputDirectory = %(CopyToOutputDirectory)): @(_ResolvedProjectReferencePaths)"
              Importance="Low" />
     <ItemGroup>

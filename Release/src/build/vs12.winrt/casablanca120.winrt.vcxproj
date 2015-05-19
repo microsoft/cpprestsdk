@@ -52,6 +52,9 @@
       <LinkTimeCodeGeneration Condition="'$(Configuration)'=='Release'">UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
     </Link>
+    <ResourceCompile>
+      <PreprocessorDefinitions>TARGET_APP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <Import Project="..\common.vcxitems" Label="Shared" Condition="Exists('..\common.vcxitems')" />
   <Import Project="..\winrt.vcxitems" Label="Shared" Condition="Exists('..\winrt.vcxitems')" />

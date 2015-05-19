@@ -206,6 +206,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\version.h">
       <Filter>Header Files\cpprest</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\resource.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\http_constants.dat">
@@ -214,5 +215,8 @@
   </ItemGroup>
   <ItemGroup>
     <Xml Include="$(MSBuildThisFileDirectory)package_info.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="$(MSBuildThisFileDirectory)..\utilities\Resource.rc" />
   </ItemGroup>
 </Project>
