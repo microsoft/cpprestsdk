@@ -129,7 +129,7 @@ TEST_FIXTURE(uri_address, close_callback_client_with_reason)
 }
 
 // Server sends a close frame (server initiated close)
-TEST_FIXTURE(uri_address, close_callback_client_from_server)
+TEST_FIXTURE(uri_address, close_callback_client_from_server, "Ignore", "319")
 {
     std::string body("hello");
     test_websocket_server server;
