@@ -22,6 +22,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\websockets\client\ws_client_wspp.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ResourceCompile Include="$(MSBuildThisFileDirectory)..\utilities\Resource.rc" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectCapability Include="SourceItemsFromImports" />
   </ItemGroup>
   <ItemGroup>
