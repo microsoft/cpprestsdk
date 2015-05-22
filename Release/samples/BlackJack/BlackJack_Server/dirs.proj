@@ -2,7 +2,7 @@
 
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Common.Build.settings" />
 
-  <ItemGroup Condition="'$(Platform)' != 'ARM' and ('$(DevToolsVersion)'=='110' or '$(DevToolsVersion)'=='120' or '$(DevToolsVersion)'=='140')">
+  <ItemGroup Condition="'$(Platform)' != 'ARM' and ('$(DevToolsVersion)'=='120' or '$(DevToolsVersion)'=='140')">
       <ProjectFile Include="BlackJack_Server$(DevToolsVersion)\BlackJack_Server$(DevToolsVersion).vcxproj"/>
   </ItemGroup>
 

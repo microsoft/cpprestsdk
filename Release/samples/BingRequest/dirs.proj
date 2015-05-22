@@ -2,11 +2,11 @@
 
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Common.Build.settings" />
 
-  <ItemGroup Condition="'$(Platform)' != 'ARM' and ('$(DevToolsVersion)'=='110' or '$(DevToolsVersion)'=='120' or '$(DevToolsVersion)'=='140')">
+  <ItemGroup Condition="'$(Platform)' != 'ARM' and ('$(DevToolsVersion)'=='120' or '$(DevToolsVersion)'=='140')">
       <ProjectFile Include="BingRequest$(DevToolsVersion)\BingRequest$(DevToolsVersion).vcxproj"/>
   </ItemGroup>
 
-  <ItemGroup Condition="'$(DevToolsVersion)'=='110' or '$(DevToolsVersion)'=='120'">
+  <ItemGroup Condition="'$(DevToolsVersion)'=='120'">
       <ProjectFile Include="BingRequest$(DevToolsVersion).xp\BingRequest$(DevToolsVersion).xp.vcxproj" Condition="'$(Platform)' != 'ARM' and '$(RunCodeAnalysis)'!='true'" />
   </ItemGroup>
 

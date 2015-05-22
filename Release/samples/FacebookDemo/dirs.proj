@@ -2,7 +2,7 @@
 
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Common.Build.settings" />
 
-  <ItemGroup Condition="'$(OsVersion)'=='6.2' and ('$(DevToolsVersion)'=='110' or '$(DevToolsVersion)'=='120')">
+  <ItemGroup Condition="'$(OsVersion)'=='6.2' and ('$(DevToolsVersion)'=='120')">
       <ProjectFile Include="FacebookDemo$(DevToolsVersion).vcxproj"/>
   </ItemGroup>
 

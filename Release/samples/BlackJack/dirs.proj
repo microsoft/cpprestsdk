@@ -7,7 +7,7 @@
       <ProjectFile Include="BlackJack_Server\dirs.proj"/>
   </ItemGroup>
 
-  <ItemGroup Condition="'$(DevToolsVersion)'=='110' Or '$(DevToolsVersion)'=='120'">
+  <ItemGroup Condition="'$(DevToolsVersion)'=='120'">
       <ProjectFile Include="BlackJack_UIClient\BlackJack_UIClient$(DevToolsVersion).vcxproj"/>
   </ItemGroup>
 
