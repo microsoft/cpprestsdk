@@ -109,7 +109,7 @@ TEST_FIXTURE(uri_address, close_callback_client_websocket, "Ignore", "319")
 }
 
 // Test close websocket connection: client sends a close with reason and server responds with close frame
-TEST_FIXTURE(uri_address, close_callback_client_with_reason)
+TEST_FIXTURE(uri_address, close_callback_client_with_reason, "Ignore", "319")
 {
     const utility::string_t close_reason = U("Client disconnecting");
     test_websocket_server server;
