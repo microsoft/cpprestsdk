@@ -291,17 +291,10 @@ void connection::handle_http_line(const boost::system::error_code& ec)
             return;
         }
 
-        // Get the host part of the address.
-        uri_builder builder;
-        builder.set_scheme("http");
-        builder.set_host(m_p_parent->m_host, true);
-        builder.set_port(m_p_parent->m_port);
-
         // Get the path - remove the version portion and prefix space
-        builder.append_path(http_path_and_version.substr(1, http_path_and_version.size() - VersionPortionSize - 1));
         try
         {
-            m_request.set_request_uri(builder.to_uri());
+            m_request.set_request_uri(http_path_and_version.substr(1, http_path_and_version.size() - VersionPortionSize - 1));
         }
         catch(const uri_exception &e)
         {
