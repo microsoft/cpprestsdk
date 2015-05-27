@@ -62,7 +62,7 @@ TEST_FIXTURE(uri_address, request_to_string)
         http_asserts::assert_request_string_equals(
             request.to_string(),
             U("GET"),
-            U("http://localhost:34567/pa%20th1"),
+            U("/pa%20th1"),
             U("HTTP/1.1"),
             expected_headers,
             U("hehehe"));

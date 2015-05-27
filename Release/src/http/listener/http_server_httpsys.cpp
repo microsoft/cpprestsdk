@@ -544,22 +544,20 @@ void windows_request_context::read_headers_io_completion(DWORD error_code, DWORD
     }
     else
     {
-        // Parse headers.
-        // CookedUrl.pFullUrl contains the canonicalized URL and it is not encoded
-        // However, Query strings are opaque to http.sys and are passed as-is => CookedUrl.pFullUrl
-        // contains an already encoded version of query string.
-        uri_builder builder(uri::encode_uri(m_request->CookedUrl.pFullUrl));
-        if (m_request->CookedUrl.QueryStringLength != 0)
-        {
-            builder.set_query(uri::decode(builder.query()));
-        }
+        std::string badRequestMsg;
         try
         {
-            m_msg.set_request_uri(builder.to_uri());
+            // HTTP_REQUEST::pRawUrl contains the raw URI that came across the wire.
+            // Use this instead since the CookedUrl is a mess of the URI components
+            // some encoded and some not.
+            m_msg.set_request_uri(utf8_to_utf16(m_request->pRawUrl));
         }
         catch(const uri_exception &e)
         {
-            m_msg.reply(status_codes::BadRequest, e.what());
+            // If an exception occurred, finish processing the request below but
+            // respond with BadRequest instead of dispatching to the user's
+            // request handlers.
+            badRequestMsg = e.what();
         }
         m_msg.set_method(parse_request_method(m_request));
         parse_http_headers(m_request->Headers, m_msg.headers());
@@ -569,7 +567,14 @@ void windows_request_context::read_headers_io_completion(DWORD error_code, DWORD
         read_request_body_chunk();
 
         // Dispatch request to the http_listener.
-        dispatch_request_to_listener((web::http::experimental::listener::details::http_listener_impl *)m_request->UrlContext);
+        if(badRequestMsg.empty())
+        {
+            dispatch_request_to_listener((web::http::experimental::listener::details::http_listener_impl *)m_request->UrlContext);
+        }
+        else
+        {
+            m_msg.reply(status_codes::BadRequest, badRequestMsg);
+        }
     }
 }
 
