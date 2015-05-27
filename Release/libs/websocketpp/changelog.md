@@ -1,5 +1,99 @@
 HEAD
 
+0.5.1 - 2015-02-27
+- Bug: Fixes an issue where some frame data was counted against the max header
+  size limit, resulting in connections that included a lot of frame data
+  immediately after the opening handshake to fail.
+- Bug: Fix a type in the name of the set method for `max_http_body_size`. #406
+  Thank you jplatte for reporting.
+
+0.5.0 - 2015-01-22
+- BREAKING UTILITY CHANGE: Deprecated methods `http::parser::parse_headers`,
+  `http::response::parse_complete`, and `http::request::parse_complete` have
+  been removed.
+- Security: Disabled SSLv3 in example servers.
+- Feature: Adds basic support for accessing HTTP request bodies in the http
+  handler. #181
+- Feature: Adds the ability to register a shutdown handler when using the
+  iostream transport. This provides a clean interface for triggering the shut
+  down of external sockets and other cleanup without hooking in to higher level
+  WebSocket handlers.
+- Feature: Adds the ability to register a write handler when using the iostream
+  transport. This handler can be used to handle transport output in place of
+  registering an ostream to write to.
+- Feature: Adds a new logging policy that outputs to syslog. #386 Thank you Tom
+  Hughes for submitting the initial version of this policy.
+- Improvement: Message payload logging now prints text for text messages rather
+  than binary.
+- Improvement: Overhaul of handshake state machine. Should make it impossible
+  for exceptions to bubble out of transport methods like `io_service::run`.
+- Improvement: Overhaul of handshake error reporting. Fail handler error codes
+  will be more detailed and precise. Adds new [fail] and [http] logging channels
+  that log failed websocket connections and successful HTTP connections
+  respectively. A new aggregate channel package, `alevel::access_core`, allows
+  enabling connect, disconnect, fail, and http together. Successful HTTP
+  connections will no longer trigger a fail handler.
+- Improvement: Ability to terminate connection during an http handler to cleanly
+  suppress the default outgoing HTTP response.
+- Documentation: Add Sending & Receiving Messages step to chapter one of the
+  `utility_client` tutorial. Update `utility_client` example to match.
+- Cleanup: Removes unused files & STL includes. Adds required STL includes.
+  Normalizes include order.
+- Bug: Fixes a fatal state error when a handshake response is completed
+  immediately after that handshake times out. #389
+- Bug: MinGW fixes; C++11 feature detection, localtime use. #393 Thank you
+  Schebb for reporting, code, and testing.
+- Bug: Fixes an issue where `websocketpp::exception::what()` could return an out
+  of scope pointer. #397 Thank you fabioang for reporting.
+- Bug: Fixes an issue where endpoints were not reset properly after a call to
+  `endpoint::listen` failed. #390 Thank you wyyqyl for reporting.
+
+0.4.0 - 2014-11-04
+- BREAKING API CHANGE: All WebSocket++ methods now throw an exception of type
+  `websocketpp::exception` which derives from `std::exception`. This normalizes
+  all exception types under the standard exception hierarchy and allows
+  WebSocket++ exceptions to be caught in the same statement as others. The error
+  code that was previously thrown is wrapped in the exception object and can be
+  accessed via the `websocketpp::exception::code()` method.
+- BREAKING API CHANGE: Custom logging policies have some new required
+  constructors that take generic config settings rather than pointers to
+  std::ostreams. This allows writing logging policies that do not involve the
+  use of std::ostream. This does not affect anyone using the built in logging
+  policies.
+- BREAKING UTILITY CHANGE: `websocketpp::lib::net::htonll` and
+  `websocketpp::lib::net::ntohll` have been prefixed with an underscore to avoid
+  conflicts with similarly named macros in some operating systems. If you are
+  using the WebSocket++ provided 64 bit host/network byte order functions you
+  will need to switch to the prefixed versions.
+- BREAKING UTILITY CHANGE: The signature of `base64_encode` has changed from
+  `websocketpp::base64_encode(unsigned char const *, unsigned int)` to
+  `websocketpp::base64_encode(unsigned char const *, size_t)`.
+- BREAKING UTILITY CHANGE: The signature of `sha1::calc` has changed from
+  `websocketpp::sha1::calc(void const *, int, unsigned char *)` to
+  `websocketpp::sha1::calc(void const *, size_t, unsigned char *)`
+- Feature: Adds incomplete `minimal_server` and `minimal_client` configs that
+  can be used to build custom configs without pulling in the dependencies of
+  `core` or `core_client`. These configs will offer a stable base config to
+  future-proof custom configs.
+- Improvement: Core library no longer has std::iostream as a dependency.
+  std::iostream is still required for the optional iostream logging policy and
+  iostream transport.
+- Bug: C++11 Chrono support was being incorrectly detected by the `boost_config`
+  header. Thank you Max Dmitrichenko for reporting and a patch.
+- Bug: use of `std::put_time` is now guarded by a unique flag rather than a
+  chrono library flag. Thank you Max Dmitrichenko for reporting.
+- Bug: Fixes non-thread safe use of std::localtime. #347 #383
+- Compatibility: Adjust usage of std::min to be more compatible with systems
+  that define a min(...) macro.
+- Compatibility: Removes unused parameters from all library, test, and example
+  code. This assists with those developing with -Werror and -Wunused-parameter
+  #376
+- Compatibility: Renames ntohll and htonll methods to avoid conflicts with
+  platform specific macros. #358 #381, #382 Thank you logotype, unphased,
+  svendjo
+- Cleanup: Removes unused functions, fixes variable shadow warnings, normalizes
+  all whitespace in library, examples, and tests to 4 spaces. #376
+
 0.3.0 - 2014-08-10
 - Feature: Adds `start_perpetual` and `stop_perpetual` methods to asio transport
   These may be used to replace manually managed `asio::io_service::work` objects
@@ -130,7 +224,7 @@ HEAD
 - Change default HTTP response error code when no http_handler is defined from
   500/Internal Server Error to 426/Upgrade Required
 - Remove timezone from logger timestamp to work around issues with the Windows
-  implimentation of strftime. Thank you breyed for testing and code. #257
+  implementation of strftime. Thank you breyed for testing and code. #257
 - Switch integer literals to char literals to improve VCPP compatibility.
   Thank you breyed for testing and code. #257
 - Add MSVCPP warning suppression for the bundled SHA1 library. Thank you breyed

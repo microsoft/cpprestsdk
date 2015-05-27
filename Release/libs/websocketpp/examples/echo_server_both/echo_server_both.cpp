@@ -46,6 +46,7 @@ context_ptr on_tls_init(websocketpp::connection_hdl hdl) {
     try {
         ctx->set_options(boost::asio::ssl::context::default_workarounds |
                          boost::asio::ssl::context::no_sslv2 |
+                         boost::asio::ssl::context::no_sslv3 |
                          boost::asio::ssl::context::single_dh_use);
         ctx->set_password_callback(bind(&get_password));
         ctx->use_certificate_chain_file("server.pem");

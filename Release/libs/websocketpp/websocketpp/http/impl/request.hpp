@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Peter Thorson. All rights reserved.
+ * Copyright (c) 2014, Peter Thorson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,6 +30,7 @@
 
 #include <algorithm>
 #include <sstream>
+#include <string>
 
 #include <websocketpp/http/parser.hpp>
 
@@ -37,40 +38,17 @@ namespace websocketpp {
 namespace http {
 namespace parser {
 
-inline bool request::parse_complete(std::istream& s) {
-    std::string req;
-
-    // get status line
-    std::getline(s, req);
-
-    if (req[req.size()-1] == '\r') {
-        req.erase(req.end()-1);
-
-        std::stringstream ss(req);
-        std::string val;
-
-        ss >> val;
-        set_method(val);
-
-        ss >> val;
-        set_uri(val);
-
-        ss >> val;
-        set_version(val);
-    } else {
-        return false;
-    }
-
-    return parse_headers(s);
-}
-
-inline size_t request::consume(const char *buf, size_t len) {
+inline size_t request::consume(char const * buf, size_t len) {
+    size_t bytes_processed;
+    
     if (m_ready) {return 0;}
-
-    if (m_buf->size() + len > max_header_size) {
-        // exceeded max header size
-        throw exception("Maximum header size exceeded.",
-                        status_code::request_header_fields_too_large);
+    
+    if (m_body_bytes_needed > 0) {
+        bytes_processed = process_body(buf,len);
+        if (body_ready()) {
+            m_ready = true;
+        }
+        return bytes_processed;
     }
 
     // copy new header bytes into buffer
@@ -88,15 +66,21 @@ inline size_t request::consume(const char *buf, size_t len) {
             header_delimiter,
             header_delimiter+sizeof(header_delimiter)-1
         );
-
-        //std::cout << "mark5: " << end-begin << std::endl;
-        //std::cout << "mark6: " << sizeof(header_delimiter) << std::endl;
+        
+        m_header_bytes += (end-begin+sizeof(header_delimiter));
+        
+        if (m_header_bytes > max_header_size) {
+            // exceeded max header size
+            throw exception("Maximum header size exceeded.",
+                status_code::request_header_fields_too_large);
+        }
 
         if (end == m_buf->end()) {
             // we are out of bytes. Discard the processed bytes and copy the
             // remaining unprecessed bytes to the beginning of the buffer
             std::copy(begin,end,m_buf->begin());
             m_buf->resize(static_cast<std::string::size_type>(end-begin));
+            m_header_bytes -= m_buf->size();
 
             return len;
         }
@@ -107,9 +91,8 @@ inline size_t request::consume(const char *buf, size_t len) {
             if (m_method.empty() || get_header("Host") == "") {
                 throw exception("Incomplete Request",status_code::bad_request);
             }
-            m_ready = true;
 
-            size_t bytes_processed = (
+            bytes_processed = (
                 len - static_cast<std::string::size_type>(m_buf->end()-end)
                     + sizeof(header_delimiter) - 1
             );
@@ -117,8 +100,22 @@ inline size_t request::consume(const char *buf, size_t len) {
             // frees memory used temporarily during request parsing
             m_buf.reset();
 
-            // return number of bytes processed (starting bytes - bytes left)
-            return bytes_processed;
+            // if this was not an upgrade request and has a content length
+            // continue capturing content-length bytes and expose them as a 
+            // request body.
+            
+            if (prepare_body()) {
+                bytes_processed += process_body(buf+bytes_processed,len-bytes_processed);
+                if (body_ready()) {
+                    m_ready = true;
+                }
+                return bytes_processed;
+            } else {
+                m_ready = true;
+
+                // return number of bytes processed (starting bytes - bytes left)
+                return bytes_processed;
+            }
         } else {
             if (m_method.empty()) {
                 this->process(begin,end);
@@ -131,7 +128,7 @@ inline size_t request::consume(const char *buf, size_t len) {
     }
 }
 
-inline std::string request::raw() {
+inline std::string request::raw() const {
     // TODO: validation. Make sure all required fields have been set?
     std::stringstream ret;
 
@@ -141,7 +138,17 @@ inline std::string request::raw() {
     return ret.str();
 }
 
-inline void request::set_method(const std::string& method) {
+inline std::string request::raw_head() const {
+    // TODO: validation. Make sure all required fields have been set?
+    std::stringstream ret;
+
+    ret << m_method << " " << m_uri << " " << get_version() << "\r\n";
+    ret << raw_headers() << "\r\n";
+
+    return ret.str();
+}
+
+inline void request::set_method(std::string const & method) {
     if (std::find_if(method.begin(),method.end(),is_not_token_char) != method.end()) {
         throw exception("Invalid method token.",status_code::bad_request);
     }
@@ -149,14 +156,7 @@ inline void request::set_method(const std::string& method) {
     m_method = method;
 }
 
-/// Set HTTP body
-/**
- * Sets the body of the HTTP object and fills in the appropriate content length
- * header
- *
- * @param value The value to set the body to.
- */
-inline void request::set_uri(const std::string& uri) {
+inline void request::set_uri(std::string const & uri) {
     // TODO: validation?
     m_uri = uri;
 }

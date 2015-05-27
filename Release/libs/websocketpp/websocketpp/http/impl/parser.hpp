@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Peter Thorson. All rights reserved.
+ * Copyright (c) 2014, Peter Thorson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -29,6 +29,8 @@
 #define HTTP_PARSER_IMPL_HPP
 
 #include <algorithm>
+#include <cstdlib>
+#include <istream>
 #include <sstream>
 #include <string>
 
@@ -93,6 +95,9 @@ inline void parser::set_body(std::string const & value) {
         return;
     }
 
+    // TODO: should this method respect the max size? If so how should errors
+    // be indicated?
+
     std::stringstream len;
     len << value.size();
     replace_header("Content-Length", len.str());
@@ -111,26 +116,46 @@ inline bool parser::parse_parameter_list(std::string const & in,
     return (it == in.begin());
 }
 
-inline bool parser::parse_headers(std::istream & s) {
-    std::string header;
-    std::string::size_type end;
-
-    // get headers
-    while (std::getline(s, header) && header != "\r") {
-        if (header[header.size()-1] != '\r') {
-            continue; // ignore malformed header lines?
-        } else {
-            header.erase(header.end()-1);
+inline bool parser::prepare_body() {
+    if (get_header("Content-Length") != "") {
+        std::string const & cl_header = get_header("Content-Length");
+        char * end;
+        
+        // TODO: not 100% sure what the compatibility of this method is. Also,
+        // I believe this will only work up to 32bit sizes. Is there a need for
+        // > 4GiB HTTP payloads?
+        m_body_bytes_needed = std::strtoul(cl_header.c_str(),&end,10);
+        
+        if (m_body_bytes_needed > m_body_bytes_max) {
+            throw exception("HTTP message body too large",
+                status_code::request_entity_too_large);
         }
-
-        end = header.find(header_separator,0);
-
-        if (end != std::string::npos) {
-            append_header(header.substr(0,end),header.substr(end+2));
-        }
+        
+        m_body_encoding = body_encoding::plain;
+        return true;
+    } else if (get_header("Transfer-Encoding") == "chunked") {
+        // TODO
+        //m_body_encoding = body_encoding::chunked;
+        return false;
+    } else {
+        return false;
     }
+}
 
-    return true;
+inline size_t parser::process_body(char const * buf, size_t len) {
+    if (m_body_encoding == body_encoding::plain) {
+        size_t processed = (std::min)(m_body_bytes_needed,len);
+        m_body.append(buf,processed);
+        m_body_bytes_needed -= processed;
+        return processed;
+    } else if (m_body_encoding == body_encoding::chunked) {
+        // TODO: 
+        throw exception("Unexpected body encoding",
+            status_code::internal_server_error);
+    } else {
+        throw exception("Unexpected body encoding",
+            status_code::internal_server_error);
+    }
 }
 
 inline void parser::process_header(std::string::iterator begin,

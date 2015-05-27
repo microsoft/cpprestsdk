@@ -32,10 +32,14 @@ install_manifest.txt
 *.ncb
 */Debug/*
 */*/Debug/*
+bin/Debug
 */Release/*
 */*/Release/*
 */RelWithDebInfo/*
 */*/RelWithDebInfo/*
+
+# explicitly allow this path with /debug/ in it
+!websocketpp/transport/debug/*
 
 objs_shared/
 objs_static/
@@ -78,3 +82,9 @@ examples/wsperf/wsperf_client
 *.out
 
 *.log
+*.opensdf
+*.sdf
+*.vcxproj
+*.vcxproj.filters
+*.user
+install

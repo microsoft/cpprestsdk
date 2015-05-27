@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Peter Thorson. All rights reserved.
+ * Copyright (c) 2014, Peter Thorson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,6 +30,7 @@
 
 // Test Environment:
 // server, no TLS, no locks, iostream based transport
+#include <websocketpp/config/debug.hpp>
 #include <websocketpp/config/core.hpp>
 #include <websocketpp/server.hpp>
 #include <websocketpp/client.hpp>
@@ -46,5 +47,5 @@ using websocketpp::lib::placeholders::_2;
 using websocketpp::lib::bind;
 
 void echo_func(server* s, websocketpp::connection_hdl hdl, message_ptr msg);
-std::string run_server_test(std::string input);
-std::string run_server_test(server & s, std::string input);
+std::string run_server_test(std::string input, bool log = false);
+std::string run_server_test(server & s, std::string input, bool log = false);

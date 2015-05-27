@@ -33,11 +33,12 @@ std::string get_password() {
 
 context_ptr on_tls_init(websocketpp::connection_hdl hdl) {
     std::cout << "on_tls_init called with hdl: " << hdl.lock().get() << std::endl;
-    context_ptr ctx(new boost::asio::ssl::context(boost::asio::ssl::context::tlsv1));
+    context_ptr ctx = websocketpp::lib::make_shared<boost::asio::ssl::context>(boost::asio::ssl::context::tlsv1);
 
     try {
         ctx->set_options(boost::asio::ssl::context::default_workarounds |
                          boost::asio::ssl::context::no_sslv2 |
+                         boost::asio::ssl::context::no_sslv3 |
                          boost::asio::ssl::context::single_dh_use);
         ctx->set_password_callback(bind(&get_password));
         ctx->use_certificate_chain_file("server.pem");
@@ -50,23 +51,23 @@ context_ptr on_tls_init(websocketpp::connection_hdl hdl) {
 
 int main() {
     // Create a server endpoint
-	server echo_server;
+    server echo_server;
 
     // Initialize ASIO
-	echo_server.init_asio();
+    echo_server.init_asio();
 
     // Register our message handler
     echo_server.set_message_handler(bind(&on_message,&echo_server,::_1,::_2));
     echo_server.set_tls_init_handler(bind(&on_tls_init,::_1));
 
 
-	// Listen on port 9002
-	echo_server.listen(9002);
+    // Listen on port 9002
+    echo_server.listen(9002);
 
-	// Start the server accept loop
-	echo_server.start_accept();
+    // Start the server accept loop
+    echo_server.start_accept();
 
-	// Start the ASIO io_service run loop
-	echo_server.run();
+    // Start the ASIO io_service run loop
+    echo_server.run();
 
 }

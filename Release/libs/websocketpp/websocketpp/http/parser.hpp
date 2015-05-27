@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Peter Thorson. All rights reserved.
+ * Copyright (c) 2014, Peter Thorson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -29,8 +29,9 @@
 #define HTTP_PARSER_HPP
 
 #include <algorithm>
-#include <iostream>
 #include <map>
+#include <string>
+#include <utility>
 
 #include <websocketpp/utilities.hpp>
 #include <websocketpp/http/constants.hpp>
@@ -45,6 +46,14 @@ namespace state {
         resource,
         version,
         headers
+    };
+}
+
+namespace body_encoding {
+    enum value {
+        unknown,
+        plain,
+        chunked
     };
 }
 
@@ -384,6 +393,12 @@ inline std::string strip_lws(std::string const & input) {
  */
 class parser {
 public:
+    parser()
+      : m_header_bytes(0)
+      , m_body_bytes_needed(0)
+      , m_body_bytes_max(max_body_size)
+      , m_body_encoding(body_encoding::unknown) {}
+    
     /// Get the HTTP version string
     /**
      * @return The version string for this parser
@@ -467,12 +482,11 @@ public:
      */
     void remove_header(std::string const & key);
 
-    /// Set HTTP body
+    /// Get HTTP body
     /**
-     * Sets the body of the HTTP object and fills in the appropriate content
-     * length header.
+     * Gets the body of the HTTP object
      *
-     * @param [in] value The value to set the body to.
+     * @return The body of the HTTP message.
      */
     std::string const & get_body() const {
         return m_body;
@@ -489,6 +503,32 @@ public:
      */
     void set_body(std::string const & value);
 
+    /// Get body size limit
+    /**
+     * Retrieves the maximum number of bytes to parse & buffer before canceling
+     * a request.
+     *
+     * @since 0.5.0
+     *
+     * @return The maximum length of a message body.
+     */
+    size_t get_max_body_size() const {
+        return m_body_bytes_max;
+    }
+
+    /// Set body size limit
+    /**
+     * Set the maximum number of bytes to parse and buffer before canceling a
+     * request.
+     *
+     * @since 0.5.0
+     *
+     * @param value The size to set the max body length to.
+     */
+    void set_max_body_size(size_t value) {
+        m_body_bytes_max = value;
+    }
+
     /// Extract an HTTP parameter list from a string.
     /**
      * @param [in] in The input string.
@@ -498,14 +538,6 @@ public:
     bool parse_parameter_list(std::string const & in, parameter_list & out)
         const;
 protected:
-    /// Parse headers from an istream
-    /**
-     * @deprecated Use process_header instead.
-     *
-     * @param [in] s The istream to extract headers from.
-     */
-    bool parse_headers(std::istream & s);
-
     /// Process a header line
     /**
      * @todo Update this method to be exception free.
@@ -514,6 +546,45 @@ protected:
      * @param [in] end An iterator to the end of the sequence.
      */
     void process_header(std::string::iterator begin, std::string::iterator end);
+
+    /// Prepare the parser to begin parsing body data
+    /**
+     * Inspects headers to determine if the message has a body that needs to be
+     * read. If so, sets up the necessary state, otherwise returns false. If
+     * this method returns true and loading the message body is desired call
+     * `process_body` until it returns zero bytes or an error.
+     *
+     * Must not be called until after all headers have been processed.
+     *
+     * @since 0.5.0
+     *
+     * @return True if more bytes are needed to load the body, false otherwise.
+     */
+    bool prepare_body();
+
+    /// Process body data
+    /**
+     * Parses body data.
+     *
+     * @since 0.5.0
+     *
+     * @param [in] begin An iterator to the beginning of the sequence.
+     * @param [in] end An iterator to the end of the sequence.
+     * @return The number of bytes processed
+     */
+    size_t process_body(char const * buf, size_t len);
+
+    /// Check if the parser is done parsing the body
+    /**
+     * Behavior before a call to `prepare_body` is undefined.
+     *
+     * @since 0.5.0
+     *
+     * @return True if the message body has been completed loaded.
+     */
+    bool body_ready() const {
+        return (m_body_bytes_needed == 0);
+    }
 
     /// Generate and return the HTTP headers as a string
     /**
@@ -526,7 +597,13 @@ protected:
 
     std::string m_version;
     header_list m_headers;
-    std::string m_body;
+    
+    size_t                  m_header_bytes;
+    
+    std::string             m_body;
+    size_t                  m_body_bytes_needed;
+    size_t                  m_body_bytes_max;
+    body_encoding::value    m_body_encoding;
 };
 
 } // namespace parser

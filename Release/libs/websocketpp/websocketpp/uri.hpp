@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Peter Thorson. All rights reserved.
+ * Copyright (c) 2014, Peter Thorson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,11 +28,11 @@
 #ifndef WEBSOCKETPP_URI_HPP
 #define WEBSOCKETPP_URI_HPP
 
-#include <websocketpp/common/memory.hpp>
 #include <websocketpp/error.hpp>
 
+#include <websocketpp/common/memory.hpp>
+
 #include <algorithm>
-#include <iostream>
 #include <sstream>
 #include <string>
 

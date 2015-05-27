@@ -54,9 +54,9 @@ BOOST_AUTO_TEST_CASE( exact_match ) {
     bool exception;
 
     try {
-    	u = p.get_uri(r);
+        u = p.get_uri(r);
     } catch (const websocketpp::uri_exception& e) {
-    	exception = true;
+        exception = true;
     }
 
     BOOST_CHECK(exception == false);
@@ -147,9 +147,9 @@ BOOST_AUTO_TEST_CASE( bad_host ) {
     BOOST_CHECK(!p.validate_handshake(r));
 
     try {
-    	u = p.get_uri(r);
+        u = p.get_uri(r);
     } catch (const websocketpp::uri_exception& e) {
-    	exception = true;
+        exception = true;
     }
 
     BOOST_CHECK(exception == true);

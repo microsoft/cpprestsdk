@@ -18,17 +18,17 @@ typedef server::message_ptr message_ptr;
 void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
     if (msg->get_opcode() == websocketpp::frame::opcode::text) {
         s->get_alog().write(websocketpp::log::alevel::app,
-                	"Text Message Received: "+msg->get_payload());
+                    "Text Message Received: "+msg->get_payload());
     } else {
         s->get_alog().write(websocketpp::log::alevel::app,
-                	"Binary Message Received: "+websocketpp::utility::to_hex(msg->get_payload()));
+                    "Binary Message Received: "+websocketpp::utility::to_hex(msg->get_payload()));
     }
 
     try {
         s->send(hdl, msg->get_payload(), msg->get_opcode());
     } catch (const websocketpp::lib::error_code& e) {
         s->get_alog().write(websocketpp::log::alevel::app,
-                	"Echo Failed: "+e.message());
+                    "Echo Failed: "+e.message());
     }
 }
 
@@ -36,7 +36,7 @@ int main() {
     server s;
     std::ofstream log;
 
-	try {
+    try {
         // set up access channels to only log interesting things
         s.clear_access_channels(websocketpp::log::alevel::all);
         s.set_access_channels(websocketpp::log::alevel::connect);
@@ -82,12 +82,8 @@ int main() {
             }
             con->eof();
         }
-    } catch (const std::exception & e) {
+    } catch (websocketpp::exception const & e) {
         std::cout << e.what() << std::endl;
-    } catch (websocketpp::lib::error_code e) {
-        std::cout << e.message() << std::endl;
-    } catch (...) {
-        std::cout << "other exception" << std::endl;
     }
     log.close();
 }

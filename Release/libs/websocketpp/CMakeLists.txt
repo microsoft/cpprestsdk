@@ -9,8 +9,8 @@ project (websocketpp)
 cmake_minimum_required (VERSION 2.6)
 
 set (WEBSOCKETPP_MAJOR_VERSION 0)
-set (WEBSOCKETPP_MINOR_VERSION 3)
-set (WEBSOCKETPP_PATCH_VERSION 0)
+set (WEBSOCKETPP_MINOR_VERSION 5)
+set (WEBSOCKETPP_PATCH_VERSION 1)
 set (WEBSOCKETPP_VERSION ${WEBSOCKETPP_MAJOR_VERSION}.${WEBSOCKETPP_MINOR_VERSION}.${WEBSOCKETPP_PATCH_VERSION})
 
 set(INSTALL_INCLUDE_DIR include CACHE PATH "Installation directory for header files")
@@ -87,7 +87,14 @@ if (BUILD_TESTS OR BUILD_EXAMPLES)
 
     # C++11 defines
     if (ENABLE_CPP11)
-        add_definitions (-D_WEBSOCKETPP_CPP11_STL_)
+        if (MSVC)
+            add_definitions (-D_WEBSOCKETPP_CPP11_FUNCTIONAL_)
+            add_definitions (-D_WEBSOCKETPP_CPP11_SYSTEM_ERROR_)
+            add_definitions (-D_WEBSOCKETPP_CPP11_RANDOM_DEVICE_)
+            add_definitions (-D_WEBSOCKETPP_CPP11_MEMORY_)
+        else()
+            add_definitions (-D_WEBSOCKETPP_CPP11_STL_)
+        endif()
     endif ()
 
     # Visual studio
@@ -106,7 +113,7 @@ if (BUILD_TESTS OR BUILD_EXAMPLES)
         set (WEBSOCKETPP_PLATFORM_LIBS pthread rt)
         set (WEBSOCKETPP_PLATFORM_TSL_LIBS ssl crypto)
         set (WEBSOCKETPP_BOOST_LIBS system thread)
-        set (CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-std=c++0x")
+        set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
         if (NOT APPLE)
             add_definitions (-DNDEBUG -Wall -Wcast-align) # todo: should we use CMAKE_C_FLAGS for these?
         endif ()

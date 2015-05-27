@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Peter Thorson. All rights reserved.
+ * Copyright (c) 2014, Peter Thorson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -43,13 +43,13 @@
 #include <websocketpp/extensions/permessage_deflate/enabled.hpp>
 
 struct stub_config {
-	typedef websocketpp::http::parser::request request_type;
-	typedef websocketpp::http::parser::response response_type;
+    typedef websocketpp::http::parser::request request_type;
+    typedef websocketpp::http::parser::response response_type;
 
-	typedef websocketpp::message_buffer::message
-		<websocketpp::message_buffer::alloc::con_msg_manager> message_type;
-	typedef websocketpp::message_buffer::alloc::con_msg_manager<message_type>
-		con_msg_manager_type;
+    typedef websocketpp::message_buffer::message
+        <websocketpp::message_buffer::alloc::con_msg_manager> message_type;
+    typedef websocketpp::message_buffer::alloc::con_msg_manager<message_type>
+        con_msg_manager_type;
 
     typedef websocketpp::random::none::int_generator<uint32_t> rng_type;
 
@@ -65,13 +65,13 @@ struct stub_config {
 };
 
 struct stub_config_ext {
-	typedef websocketpp::http::parser::request request_type;
-	typedef websocketpp::http::parser::response response_type;
+    typedef websocketpp::http::parser::request request_type;
+    typedef websocketpp::http::parser::response response_type;
 
-	typedef websocketpp::message_buffer::message
-		<websocketpp::message_buffer::alloc::con_msg_manager> message_type;
-	typedef websocketpp::message_buffer::alloc::con_msg_manager<message_type>
-		con_msg_manager_type;
+    typedef websocketpp::message_buffer::message
+        <websocketpp::message_buffer::alloc::con_msg_manager> message_type;
+    typedef websocketpp::message_buffer::alloc::con_msg_manager<message_type>
+        con_msg_manager_type;
 
     typedef websocketpp::random::none::int_generator<uint32_t> rng_type;
 
@@ -97,11 +97,11 @@ struct processor_setup {
       , p(false,server,msg_manager,rng) {}
 
     websocketpp::lib::error_code ec;
-	con_msg_manager_type::ptr msg_manager;
-	stub_config::rng_type rng;
-	stub_config::request_type req;
+    con_msg_manager_type::ptr msg_manager;
+    stub_config::rng_type rng;
+    stub_config::request_type req;
     stub_config::response_type res;
-	websocketpp::processor::hybi13<stub_config> p;
+    websocketpp::processor::hybi13<stub_config> p;
 };
 
 struct processor_setup_ext {
@@ -110,15 +110,15 @@ struct processor_setup_ext {
       , p(false,server,msg_manager,rng) {}
 
     websocketpp::lib::error_code ec;
-	con_msg_manager_type::ptr msg_manager;
-	stub_config::rng_type rng;
-	stub_config::request_type req;
+    con_msg_manager_type::ptr msg_manager;
+    stub_config::rng_type rng;
+    stub_config::request_type req;
     stub_config::response_type res;
-	websocketpp::processor::hybi13<stub_config_ext> p;
+    websocketpp::processor::hybi13<stub_config_ext> p;
 };
 
 BOOST_AUTO_TEST_CASE( exact_match ) {
-	processor_setup env(true);
+    processor_setup env(true);
 
     std::string handshake = "GET / HTTP/1.1\r\nHost: www.example.com\r\nConnection: upgrade\r\nUpgrade: websocket\r\nSec-WebSocket-Version: 13\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n\r\n";
 
@@ -145,7 +145,7 @@ BOOST_AUTO_TEST_CASE( exact_match ) {
 }
 
 BOOST_AUTO_TEST_CASE( non_get_method ) {
-	processor_setup env(true);
+    processor_setup env(true);
 
     std::string handshake = "POST / HTTP/1.1\r\nHost: www.example.com\r\nConnection: upgrade\r\nUpgrade: websocket\r\nSec-WebSocket-Version: 13\r\nSec-WebSocket-Key: foo\r\n\r\n";
 
@@ -157,7 +157,7 @@ BOOST_AUTO_TEST_CASE( non_get_method ) {
 }
 
 BOOST_AUTO_TEST_CASE( old_http_version ) {
-	processor_setup env(true);
+    processor_setup env(true);
 
     std::string handshake = "GET / HTTP/1.0\r\nHost: www.example.com\r\nConnection: upgrade\r\nUpgrade: websocket\r\nSec-WebSocket-Version: 13\r\nSec-WebSocket-Key: foo\r\n\r\n";
 
@@ -169,7 +169,7 @@ BOOST_AUTO_TEST_CASE( old_http_version ) {
 }
 
 BOOST_AUTO_TEST_CASE( missing_handshake_key1 ) {
-	processor_setup env(true);
+    processor_setup env(true);
 
     std::string handshake = "GET / HTTP/1.1\r\nHost: www.example.com\r\nConnection: upgrade\r\nUpgrade: websocket\r\nSec-WebSocket-Version: 13\r\n\r\n";
 
@@ -193,7 +193,7 @@ BOOST_AUTO_TEST_CASE( missing_handshake_key2 ) {
 }
 
 BOOST_AUTO_TEST_CASE( bad_host ) {
-	processor_setup env(true);
+    processor_setup env(true);
 
     std::string handshake = "GET / HTTP/1.1\r\nHost: www.example.com:70000\r\nConnection: upgrade\r\nUpgrade: websocket\r\nSec-WebSocket-Version: 13\r\nSec-WebSocket-Key: foo\r\n\r\n";
 
@@ -220,243 +220,243 @@ BOOST_AUTO_TEST_CASE( bad_host ) {
 // 0x81 0x80
 
 BOOST_AUTO_TEST_CASE( frame_empty_binary_unmasked ) {
-	uint8_t frame[2] = {0x82, 0x00};
+    uint8_t frame[2] = {0x82, 0x00};
 
-	// all in one chunk
-	processor_setup env1(false);
+    // all in one chunk
+    processor_setup env1(false);
 
-	size_t ret1 = env1.p.consume(frame,2,env1.ec);
+    size_t ret1 = env1.p.consume(frame,2,env1.ec);
 
-	BOOST_CHECK_EQUAL( ret1, 2 );
-	BOOST_CHECK( !env1.ec );
-	BOOST_CHECK_EQUAL( env1.p.ready(), true );
+    BOOST_CHECK_EQUAL( ret1, 2 );
+    BOOST_CHECK( !env1.ec );
+    BOOST_CHECK_EQUAL( env1.p.ready(), true );
 
-	// two separate chunks
-	processor_setup env2(false);
+    // two separate chunks
+    processor_setup env2(false);
 
-	BOOST_CHECK_EQUAL( env2.p.consume(frame,1,env2.ec), 1 );
-	BOOST_CHECK( !env2.ec );
-	BOOST_CHECK_EQUAL( env2.p.ready(), false );
+    BOOST_CHECK_EQUAL( env2.p.consume(frame,1,env2.ec), 1 );
+    BOOST_CHECK( !env2.ec );
+    BOOST_CHECK_EQUAL( env2.p.ready(), false );
 
-	BOOST_CHECK_EQUAL( env2.p.consume(frame+1,1,env2.ec), 1 );
-	BOOST_CHECK( !env2.ec );
-	BOOST_CHECK_EQUAL( env2.p.ready(), true );
+    BOOST_CHECK_EQUAL( env2.p.consume(frame+1,1,env2.ec), 1 );
+    BOOST_CHECK( !env2.ec );
+    BOOST_CHECK_EQUAL( env2.p.ready(), true );
 }
 
 BOOST_AUTO_TEST_CASE( frame_small_binary_unmasked ) {
-	processor_setup env(false);
+    processor_setup env(false);
 
-	uint8_t frame[4] = {0x82, 0x02, 0x2A, 0x2A};
+    uint8_t frame[4] = {0x82, 0x02, 0x2A, 0x2A};
 
-	BOOST_CHECK_EQUAL( env.p.get_message(), message_ptr() );
-	BOOST_CHECK_EQUAL( env.p.consume(frame,4,env.ec), 4 );
-	BOOST_CHECK( !env.ec );
-	BOOST_CHECK_EQUAL( env.p.ready(), true );
+    BOOST_CHECK_EQUAL( env.p.get_message(), message_ptr() );
+    BOOST_CHECK_EQUAL( env.p.consume(frame,4,env.ec), 4 );
+    BOOST_CHECK( !env.ec );
+    BOOST_CHECK_EQUAL( env.p.ready(), true );
 
-	message_ptr foo = env.p.get_message();
+    message_ptr foo = env.p.get_message();
 
-	BOOST_CHECK_EQUAL( env.p.get_message(), message_ptr() );
-	BOOST_CHECK_EQUAL( foo->get_payload(), "**" );
+    BOOST_CHECK_EQUAL( env.p.get_message(), message_ptr() );
+    BOOST_CHECK_EQUAL( foo->get_payload(), "**" );
 
 }
 
 BOOST_AUTO_TEST_CASE( frame_extended_binary_unmasked ) {
-	processor_setup env(false);
+    processor_setup env(false);
 
-	uint8_t frame[130] = {0x82, 0x7E, 0x00, 0x7E};
-	frame[0] = 0x82;
-	frame[1] = 0x7E;
-	frame[2] = 0x00;
-	frame[3] = 0x7E;
-	std::fill_n(frame+4,126,0x2A);
+    uint8_t frame[130] = {0x82, 0x7E, 0x00, 0x7E};
+    frame[0] = 0x82;
+    frame[1] = 0x7E;
+    frame[2] = 0x00;
+    frame[3] = 0x7E;
+    std::fill_n(frame+4,126,0x2A);
 
-	BOOST_CHECK_EQUAL( env.p.get_message(), message_ptr() );
-	BOOST_CHECK_EQUAL( env.p.consume(frame,130,env.ec), 130 );
-	BOOST_CHECK( !env.ec );
-	BOOST_CHECK_EQUAL( env.p.ready(), true );
+    BOOST_CHECK_EQUAL( env.p.get_message(), message_ptr() );
+    BOOST_CHECK_EQUAL( env.p.consume(frame,130,env.ec), 130 );
+    BOOST_CHECK( !env.ec );
+    BOOST_CHECK_EQUAL( env.p.ready(), true );
 
-	message_ptr foo = env.p.get_message();
+    message_ptr foo = env.p.get_message();
 
-	BOOST_CHECK_EQUAL( env.p.get_message(), message_ptr() );
-	BOOST_CHECK_EQUAL( foo->get_payload().size(), 126 );
+    BOOST_CHECK_EQUAL( env.p.get_message(), message_ptr() );
+    BOOST_CHECK_EQUAL( foo->get_payload().size(), 126 );
 }
 
 BOOST_AUTO_TEST_CASE( frame_jumbo_binary_unmasked ) {
-	processor_setup env(false);
+    processor_setup env(false);
 
-	uint8_t frame[130] = {0x82, 0x7E, 0x00, 0x7E};
-	std::fill_n(frame+4,126,0x2A);
+    uint8_t frame[130] = {0x82, 0x7E, 0x00, 0x7E};
+    std::fill_n(frame+4,126,0x2A);
 
-	BOOST_CHECK_EQUAL( env.p.get_message(), message_ptr() );
-	BOOST_CHECK_EQUAL( env.p.consume(frame,130,env.ec), 130 );
-	BOOST_CHECK( !env.ec );
-	BOOST_CHECK_EQUAL( env.p.ready(), true );
+    BOOST_CHECK_EQUAL( env.p.get_message(), message_ptr() );
+    BOOST_CHECK_EQUAL( env.p.consume(frame,130,env.ec), 130 );
+    BOOST_CHECK( !env.ec );
+    BOOST_CHECK_EQUAL( env.p.ready(), true );
 
-	message_ptr foo = env.p.get_message();
+    message_ptr foo = env.p.get_message();
 
-	BOOST_CHECK_EQUAL( env.p.get_message(), message_ptr() );
-	BOOST_CHECK_EQUAL( foo->get_payload().size(), 126 );
+    BOOST_CHECK_EQUAL( env.p.get_message(), message_ptr() );
+    BOOST_CHECK_EQUAL( foo->get_payload().size(), 126 );
 }
 
 BOOST_AUTO_TEST_CASE( control_frame_too_large ) {
-	processor_setup env(false);
+    processor_setup env(false);
 
-	uint8_t frame[130] = {0x88, 0x7E, 0x00, 0x7E};
-	std::fill_n(frame+4,126,0x2A);
+    uint8_t frame[130] = {0x88, 0x7E, 0x00, 0x7E};
+    std::fill_n(frame+4,126,0x2A);
 
-	BOOST_CHECK_EQUAL( env.p.get_message(), message_ptr() );
-	BOOST_CHECK_GT( env.p.consume(frame,130,env.ec), 0 );
-	BOOST_CHECK_EQUAL( env.ec, websocketpp::processor::error::control_too_big  );
-	BOOST_CHECK_EQUAL( env.p.ready(), false );
+    BOOST_CHECK_EQUAL( env.p.get_message(), message_ptr() );
+    BOOST_CHECK_GT( env.p.consume(frame,130,env.ec), 0 );
+    BOOST_CHECK_EQUAL( env.ec, websocketpp::processor::error::control_too_big  );
+    BOOST_CHECK_EQUAL( env.p.ready(), false );
 }
 
 BOOST_AUTO_TEST_CASE( rsv_bits_used ) {
-	uint8_t frame[3][2] = {{0x90, 0x00},
-		                   {0xA0, 0x00},
-	                       {0xC0, 0x00}};
+    uint8_t frame[3][2] = {{0x90, 0x00},
+                           {0xA0, 0x00},
+                           {0xC0, 0x00}};
 
-	for (int i = 0; i < 3; i++) {
-		processor_setup env(false);
+    for (int i = 0; i < 3; i++) {
+        processor_setup env(false);
 
-		BOOST_CHECK_EQUAL( env.p.get_message(), message_ptr() );
-		BOOST_CHECK_GT( env.p.consume(frame[i],2,env.ec), 0 );
-	    BOOST_CHECK_EQUAL( env.ec, websocketpp::processor::error::invalid_rsv_bit  );
-		BOOST_CHECK_EQUAL( env.p.ready(), false );
-	}
+        BOOST_CHECK_EQUAL( env.p.get_message(), message_ptr() );
+        BOOST_CHECK_GT( env.p.consume(frame[i],2,env.ec), 0 );
+        BOOST_CHECK_EQUAL( env.ec, websocketpp::processor::error::invalid_rsv_bit  );
+        BOOST_CHECK_EQUAL( env.p.ready(), false );
+    }
 }
 
 
 BOOST_AUTO_TEST_CASE( reserved_opcode_used ) {
-	uint8_t frame[10][2] = {{0x83, 0x00},
-		                    {0x84, 0x00},
-	                        {0x85, 0x00},
-	                        {0x86, 0x00},
-	                        {0x87, 0x00},
-	                        {0x8B, 0x00},
-	                        {0x8C, 0x00},
-	                        {0x8D, 0x00},
-	                        {0x8E, 0x00},
-	                        {0x8F, 0x00}};
+    uint8_t frame[10][2] = {{0x83, 0x00},
+                            {0x84, 0x00},
+                            {0x85, 0x00},
+                            {0x86, 0x00},
+                            {0x87, 0x00},
+                            {0x8B, 0x00},
+                            {0x8C, 0x00},
+                            {0x8D, 0x00},
+                            {0x8E, 0x00},
+                            {0x8F, 0x00}};
 
-	for (int i = 0; i < 10; i++) {
-		processor_setup env(false);
+    for (int i = 0; i < 10; i++) {
+        processor_setup env(false);
 
-		BOOST_CHECK_EQUAL( env.p.get_message(), message_ptr() );
-		BOOST_CHECK_GT( env.p.consume(frame[i],2,env.ec), 0 );
-	    BOOST_CHECK_EQUAL( env.ec, websocketpp::processor::error::invalid_opcode  );
-		BOOST_CHECK_EQUAL( env.p.ready(), false );
-	}
+        BOOST_CHECK_EQUAL( env.p.get_message(), message_ptr() );
+        BOOST_CHECK_GT( env.p.consume(frame[i],2,env.ec), 0 );
+        BOOST_CHECK_EQUAL( env.ec, websocketpp::processor::error::invalid_opcode  );
+        BOOST_CHECK_EQUAL( env.p.ready(), false );
+    }
 }
 
 BOOST_AUTO_TEST_CASE( fragmented_control_message ) {
-	processor_setup env(false);
+    processor_setup env(false);
 
-	uint8_t frame[2] = {0x08, 0x00};
+    uint8_t frame[2] = {0x08, 0x00};
 
-	BOOST_CHECK_EQUAL( env.p.get_message(), message_ptr() );
-	BOOST_CHECK_GT( env.p.consume(frame,2,env.ec), 0 );
-	BOOST_CHECK_EQUAL( env.ec, websocketpp::processor::error::fragmented_control );
-	BOOST_CHECK_EQUAL( env.p.ready(), false );
+    BOOST_CHECK_EQUAL( env.p.get_message(), message_ptr() );
+    BOOST_CHECK_GT( env.p.consume(frame,2,env.ec), 0 );
+    BOOST_CHECK_EQUAL( env.ec, websocketpp::processor::error::fragmented_control );
+    BOOST_CHECK_EQUAL( env.p.ready(), false );
 }
 
 BOOST_AUTO_TEST_CASE( fragmented_binary_message ) {
-	processor_setup env0(false);
-	processor_setup env1(false);
+    processor_setup env0(false);
+    processor_setup env1(false);
 
-	uint8_t frame0[6] = {0x02, 0x01, 0x2A, 0x80, 0x01, 0x2A};
-	uint8_t frame1[8] = {0x02, 0x01, 0x2A, 0x89, 0x00, 0x80, 0x01, 0x2A};
+    uint8_t frame0[6] = {0x02, 0x01, 0x2A, 0x80, 0x01, 0x2A};
+    uint8_t frame1[8] = {0x02, 0x01, 0x2A, 0x89, 0x00, 0x80, 0x01, 0x2A};
 
-	// read fragmented message in one chunk
-	BOOST_CHECK_EQUAL( env0.p.get_message(), message_ptr() );
-	BOOST_CHECK_EQUAL( env0.p.consume(frame0,6,env0.ec), 6 );
+    // read fragmented message in one chunk
+    BOOST_CHECK_EQUAL( env0.p.get_message(), message_ptr() );
+    BOOST_CHECK_EQUAL( env0.p.consume(frame0,6,env0.ec), 6 );
     BOOST_CHECK( !env0.ec );
-	BOOST_CHECK_EQUAL( env0.p.ready(), true );
-	BOOST_CHECK_EQUAL( env0.p.get_message()->get_payload(), "**" );
+    BOOST_CHECK_EQUAL( env0.p.ready(), true );
+    BOOST_CHECK_EQUAL( env0.p.get_message()->get_payload(), "**" );
 
-	// read fragmented message in two chunks
-	BOOST_CHECK_EQUAL( env0.p.get_message(), message_ptr() );
-	BOOST_CHECK_EQUAL( env0.p.consume(frame0,3,env0.ec), 3 );
+    // read fragmented message in two chunks
+    BOOST_CHECK_EQUAL( env0.p.get_message(), message_ptr() );
+    BOOST_CHECK_EQUAL( env0.p.consume(frame0,3,env0.ec), 3 );
     BOOST_CHECK( !env0.ec );
-	BOOST_CHECK_EQUAL( env0.p.ready(), false );
-	BOOST_CHECK_EQUAL( env0.p.consume(frame0+3,3,env0.ec), 3 );
+    BOOST_CHECK_EQUAL( env0.p.ready(), false );
+    BOOST_CHECK_EQUAL( env0.p.consume(frame0+3,3,env0.ec), 3 );
     BOOST_CHECK( !env0.ec );
-	BOOST_CHECK_EQUAL( env0.p.ready(), true );
-	BOOST_CHECK_EQUAL( env0.p.get_message()->get_payload(), "**" );
+    BOOST_CHECK_EQUAL( env0.p.ready(), true );
+    BOOST_CHECK_EQUAL( env0.p.get_message()->get_payload(), "**" );
 
-	// read fragmented message with control message in between
-	BOOST_CHECK_EQUAL( env0.p.get_message(), message_ptr() );
-	BOOST_CHECK_EQUAL( env0.p.consume(frame1,8,env0.ec), 5 );
+    // read fragmented message with control message in between
+    BOOST_CHECK_EQUAL( env0.p.get_message(), message_ptr() );
+    BOOST_CHECK_EQUAL( env0.p.consume(frame1,8,env0.ec), 5 );
     BOOST_CHECK( !env0.ec );
-	BOOST_CHECK_EQUAL( env0.p.ready(), true );
-	BOOST_CHECK_EQUAL( env0.p.get_message()->get_opcode(), websocketpp::frame::opcode::PING);
-	BOOST_CHECK_EQUAL( env0.p.consume(frame1+5,3,env0.ec), 3 );
+    BOOST_CHECK_EQUAL( env0.p.ready(), true );
+    BOOST_CHECK_EQUAL( env0.p.get_message()->get_opcode(), websocketpp::frame::opcode::PING);
+    BOOST_CHECK_EQUAL( env0.p.consume(frame1+5,3,env0.ec), 3 );
     BOOST_CHECK( !env0.ec );
-	BOOST_CHECK_EQUAL( env0.p.ready(), true );
-	BOOST_CHECK_EQUAL( env0.p.get_message()->get_payload(), "**" );
+    BOOST_CHECK_EQUAL( env0.p.ready(), true );
+    BOOST_CHECK_EQUAL( env0.p.get_message()->get_payload(), "**" );
 
     // read lone continuation frame
-	BOOST_CHECK_EQUAL( env0.p.get_message(), message_ptr() );
-	BOOST_CHECK_GT( env0.p.consume(frame0+3,3,env0.ec), 0);
+    BOOST_CHECK_EQUAL( env0.p.get_message(), message_ptr() );
+    BOOST_CHECK_GT( env0.p.consume(frame0+3,3,env0.ec), 0);
     BOOST_CHECK_EQUAL( env0.ec, websocketpp::processor::error::invalid_continuation );
 
     // read two start frames in a row
-	BOOST_CHECK_EQUAL( env1.p.get_message(), message_ptr() );
-	BOOST_CHECK_EQUAL( env1.p.consume(frame0,3,env1.ec), 3);
+    BOOST_CHECK_EQUAL( env1.p.get_message(), message_ptr() );
+    BOOST_CHECK_EQUAL( env1.p.consume(frame0,3,env1.ec), 3);
     BOOST_CHECK( !env1.ec );
-	BOOST_CHECK_GT( env1.p.consume(frame0,3,env1.ec), 0);
+    BOOST_CHECK_GT( env1.p.consume(frame0,3,env1.ec), 0);
     BOOST_CHECK_EQUAL( env1.ec, websocketpp::processor::error::invalid_continuation );
 }
 
 BOOST_AUTO_TEST_CASE( unmasked_client_frame ) {
-	processor_setup env(true);
+    processor_setup env(true);
 
-	uint8_t frame[2] = {0x82, 0x00};
+    uint8_t frame[2] = {0x82, 0x00};
 
-	BOOST_CHECK_EQUAL( env.p.get_message(), message_ptr() );
-	BOOST_CHECK_GT( env.p.consume(frame,2,env.ec), 0 );
-	BOOST_CHECK_EQUAL( env.ec, websocketpp::processor::error::masking_required );
-	BOOST_CHECK_EQUAL( env.p.ready(), false );
+    BOOST_CHECK_EQUAL( env.p.get_message(), message_ptr() );
+    BOOST_CHECK_GT( env.p.consume(frame,2,env.ec), 0 );
+    BOOST_CHECK_EQUAL( env.ec, websocketpp::processor::error::masking_required );
+    BOOST_CHECK_EQUAL( env.p.ready(), false );
 }
 
 BOOST_AUTO_TEST_CASE( masked_server_frame ) {
-	processor_setup env(false);
+    processor_setup env(false);
 
-	uint8_t frame[8] = {0x82, 0x82, 0xFF, 0xFF, 0xFF, 0xFF, 0xD5, 0xD5};
+    uint8_t frame[8] = {0x82, 0x82, 0xFF, 0xFF, 0xFF, 0xFF, 0xD5, 0xD5};
 
-	BOOST_CHECK_EQUAL( env.p.get_message(), message_ptr() );
-	BOOST_CHECK_GT( env.p.consume(frame,8,env.ec), 0 );
-	BOOST_CHECK_EQUAL( env.ec, websocketpp::processor::error::masking_forbidden );
-	BOOST_CHECK_EQUAL( env.p.ready(), false );
+    BOOST_CHECK_EQUAL( env.p.get_message(), message_ptr() );
+    BOOST_CHECK_GT( env.p.consume(frame,8,env.ec), 0 );
+    BOOST_CHECK_EQUAL( env.ec, websocketpp::processor::error::masking_forbidden );
+    BOOST_CHECK_EQUAL( env.p.ready(), false );
 }
 
 BOOST_AUTO_TEST_CASE( frame_small_binary_masked ) {
-	processor_setup env(true);
+    processor_setup env(true);
 
-	uint8_t frame[8] = {0x82, 0x82, 0xFF, 0xFF, 0xFF, 0xFF, 0xD5, 0xD5};
+    uint8_t frame[8] = {0x82, 0x82, 0xFF, 0xFF, 0xFF, 0xFF, 0xD5, 0xD5};
 
-	BOOST_CHECK_EQUAL( env.p.get_message(), message_ptr() );
-	BOOST_CHECK_EQUAL( env.p.consume(frame,8,env.ec), 8 );
+    BOOST_CHECK_EQUAL( env.p.get_message(), message_ptr() );
+    BOOST_CHECK_EQUAL( env.p.consume(frame,8,env.ec), 8 );
     BOOST_CHECK( !env.ec );
-	BOOST_CHECK_EQUAL( env.p.ready(), true );
-	BOOST_CHECK_EQUAL( env.p.get_message()->get_payload(), "**" );
+    BOOST_CHECK_EQUAL( env.p.ready(), true );
+    BOOST_CHECK_EQUAL( env.p.get_message()->get_payload(), "**" );
 }
 
 BOOST_AUTO_TEST_CASE( masked_fragmented_binary_message ) {
     processor_setup env(true);
 
-	uint8_t frame0[14] = {0x02, 0x81, 0xAB, 0x23, 0x98, 0x45, 0x81,
-	                     0x80, 0x81, 0xB8, 0x34, 0x12, 0xFF, 0x92};
+    uint8_t frame0[14] = {0x02, 0x81, 0xAB, 0x23, 0x98, 0x45, 0x81,
+                         0x80, 0x81, 0xB8, 0x34, 0x12, 0xFF, 0x92};
 
-	// read fragmented message in one chunk
-	BOOST_CHECK_EQUAL( env.p.get_message(), message_ptr() );
-	BOOST_CHECK_EQUAL( env.p.consume(frame0,14,env.ec), 14 );
+    // read fragmented message in one chunk
+    BOOST_CHECK_EQUAL( env.p.get_message(), message_ptr() );
+    BOOST_CHECK_EQUAL( env.p.consume(frame0,14,env.ec), 14 );
     BOOST_CHECK( !env.ec );
-	BOOST_CHECK_EQUAL( env.p.ready(), true );
-	BOOST_CHECK_EQUAL( env.p.get_message()->get_payload(), "**" );
+    BOOST_CHECK_EQUAL( env.p.ready(), true );
+    BOOST_CHECK_EQUAL( env.p.get_message()->get_payload(), "**" );
 }
 
 BOOST_AUTO_TEST_CASE( prepare_data_frame ) {
-	processor_setup env(true);
+    processor_setup env(true);
 
     message_ptr in = env.msg_manager->get_message();
     message_ptr out = env.msg_manager->get_message();
@@ -496,10 +496,10 @@ BOOST_AUTO_TEST_CASE( single_frame_message_too_large ) {
     
     env.p.set_max_message_size(3);
     
-	uint8_t frame0[10] = {0x82, 0x84, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01};
+    uint8_t frame0[10] = {0x82, 0x84, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x01};
 
-	// read message that is one byte too large
-	BOOST_CHECK_EQUAL( env.p.consume(frame0,10,env.ec), 6 );
+    // read message that is one byte too large
+    BOOST_CHECK_EQUAL( env.p.consume(frame0,10,env.ec), 6 );
     BOOST_CHECK_EQUAL( env.ec, websocketpp::processor::error::message_too_big );
 }
 
@@ -508,11 +508,11 @@ BOOST_AUTO_TEST_CASE( multiple_frame_message_too_large ) {
     
     env.p.set_max_message_size(4);
     
-	uint8_t frame0[8] = {0x02, 0x82, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01};
-	uint8_t frame1[9] = {0x80, 0x83, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01};
+    uint8_t frame0[8] = {0x02, 0x82, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01};
+    uint8_t frame1[9] = {0x80, 0x83, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01};
 
-	// read first message frame with size under the limit
-	BOOST_CHECK_EQUAL( env.p.consume(frame0,8,env.ec), 8 );
+    // read first message frame with size under the limit
+    BOOST_CHECK_EQUAL( env.p.consume(frame0,8,env.ec), 8 );
     BOOST_CHECK( !env.ec );
     
     // read second message frame that puts the size over the limit
@@ -638,7 +638,7 @@ BOOST_AUTO_TEST_CASE( extension_negotiation_unknown ) {
 }
 
 BOOST_AUTO_TEST_CASE( extract_subprotocols_empty ) {
-	processor_setup env(true);
+    processor_setup env(true);
     std::vector<std::string> subps;
 
     BOOST_CHECK( !env.p.extract_subprotocols(env.req,subps) );
@@ -646,7 +646,7 @@ BOOST_AUTO_TEST_CASE( extract_subprotocols_empty ) {
 }
 
 BOOST_AUTO_TEST_CASE( extract_subprotocols_one ) {
-	processor_setup env(true);
+    processor_setup env(true);
     std::vector<std::string> subps;
 
     env.req.replace_header("Sec-WebSocket-Protocol","foo");
@@ -657,7 +657,7 @@ BOOST_AUTO_TEST_CASE( extract_subprotocols_one ) {
 }
 
 BOOST_AUTO_TEST_CASE( extract_subprotocols_multiple ) {
-	processor_setup env(true);
+    processor_setup env(true);
     std::vector<std::string> subps;
 
     env.req.replace_header("Sec-WebSocket-Protocol","foo,bar");
@@ -669,7 +669,7 @@ BOOST_AUTO_TEST_CASE( extract_subprotocols_multiple ) {
 }
 
 BOOST_AUTO_TEST_CASE( extract_subprotocols_invalid) {
-	processor_setup env(true);
+    processor_setup env(true);
     std::vector<std::string> subps;
 
     env.req.replace_header("Sec-WebSocket-Protocol","foo,bar,,,,");

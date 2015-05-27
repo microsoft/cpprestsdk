@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Peter Thorson. All rights reserved.
+ * Copyright (c) 2014, Peter Thorson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,6 +30,9 @@
 
 #include <websocketpp/processors/hybi13.hpp>
 
+#include <string>
+#include <vector>
+
 namespace websocketpp {
 namespace processor {
 
@@ -49,9 +52,17 @@ public:
     explicit hybi08(bool secure, bool p_is_server, msg_manager_ptr manager, rng_type& rng)
       : hybi13<config>(secure, p_is_server, manager, rng) {}
 
-    // outgoing client connection processing is not supported for this version
-    lib::error_code client_handshake_request(request_type& req, uri_ptr uri,
-        std::vector<std::string> const & subprotocols) const
+    /// Fill in a set of request headers for a client connection request
+    /**
+     * The Hybi 08 processor only implements incoming connections so this will
+     * always return an error.
+     *
+     * @param [out] req  Set of headers to fill in
+     * @param [in] uri The uri being connected to
+     * @param [in] subprotocols The list of subprotocols to request
+     */
+    lib::error_code client_handshake_request(request_type &, uri_ptr,
+        std::vector<std::string> const &) const
     {
         return error::make_error_code(error::no_protocol_support);
     }
@@ -60,7 +71,7 @@ public:
         return 8;
     }
 
-    const std::string& get_origin(request_type const & r) const {
+    std::string const & get_origin(request_type const & r) const {
         return r.get_header("Sec-WebSocket-Origin");
     }
 private:

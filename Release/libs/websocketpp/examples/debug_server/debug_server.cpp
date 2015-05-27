@@ -31,11 +31,60 @@
 
 #include <websocketpp/config/debug_asio_no_tls.hpp>
 
+// Custom logger
+#include <websocketpp/logger/syslog.hpp>
+
 #include <websocketpp/server.hpp>
 
 #include <iostream>
 
-typedef websocketpp::server<websocketpp::config::debug_asio> server;
+////////////////////////////////////////////////////////////////////////////////
+///////////////// Custom Config for debugging custom policies //////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+struct debug_custom : public websocketpp::config::debug_asio {
+    typedef debug_custom type;
+    typedef debug_asio base;
+
+    typedef base::concurrency_type concurrency_type;
+
+    typedef base::request_type request_type;
+    typedef base::response_type response_type;
+
+    typedef base::message_type message_type;
+    typedef base::con_msg_manager_type con_msg_manager_type;
+    typedef base::endpoint_msg_manager_type endpoint_msg_manager_type;
+
+    /// Custom Logging policies
+    /*typedef websocketpp::log::syslog<concurrency_type,
+        websocketpp::log::elevel> elog_type;
+    typedef websocketpp::log::syslog<concurrency_type,
+        websocketpp::log::alevel> alog_type;
+    */
+    typedef base::alog_type alog_type;
+    typedef base::elog_type elog_type;
+
+    typedef base::rng_type rng_type;
+
+    struct transport_config : public base::transport_config {
+        typedef type::concurrency_type concurrency_type;
+        typedef type::alog_type alog_type;
+        typedef type::elog_type elog_type;
+        typedef type::request_type request_type;
+        typedef type::response_type response_type;
+        typedef websocketpp::transport::asio::basic_socket::endpoint
+            socket_type;
+    };
+
+    typedef websocketpp::transport::asio::endpoint<transport_config>
+        transport_type;
+    
+    static const long timeout_open_handshake = 0;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+
+typedef websocketpp::server<debug_custom> server;
 
 using websocketpp::lib::placeholders::_1;
 using websocketpp::lib::placeholders::_2;
@@ -43,6 +92,33 @@ using websocketpp::lib::bind;
 
 // pull out the type of messages sent by our config
 typedef server::message_ptr message_ptr;
+
+bool validate(server *, websocketpp::connection_hdl) {
+    //sleep(6);
+    return true;
+}
+
+void on_http(server* s, websocketpp::connection_hdl hdl) {
+    server::connection_ptr con = s->get_con_from_hdl(hdl);
+
+    std::string res = con->get_request_body();
+
+    std::stringstream ss;
+    ss << "got HTTP request with " << res.size() << " bytes of body data.";
+
+    con->set_body(ss.str());
+    con->set_status(websocketpp::http::status_code::ok);
+}
+
+void on_fail(server* s, websocketpp::connection_hdl hdl) {
+    server::connection_ptr con = s->get_con_from_hdl(hdl);
+    
+    std::cout << "Fail handler: " << con->get_ec() << " " << con->get_ec().message()  << std::endl;
+}
+
+void on_close(websocketpp::connection_hdl) {
+    std::cout << "Close handler" << std::endl;
+}
 
 // Define a callback to handle incoming messages
 void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
@@ -59,10 +135,10 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
 }
 
 int main() {
-	// Create a server endpoint
+    // Create a server endpoint
     server echo_server;
 
-	try {
+    try {
         // Set logging settings
         echo_server.set_access_channels(websocketpp::log::alevel::all);
         echo_server.clear_access_channels(websocketpp::log::alevel::frame_payload);
@@ -74,13 +150,19 @@ int main() {
         // Register our message handler
         echo_server.set_message_handler(bind(&on_message,&echo_server,::_1,::_2));
 
+        echo_server.set_http_handler(bind(&on_http,&echo_server,::_1));
+        echo_server.set_fail_handler(bind(&on_fail,&echo_server,::_1));
+        echo_server.set_close_handler(&on_close);
+
+        echo_server.set_validate_handler(bind(&validate,&echo_server,::_1));
+
         // Listen on port 9012
         echo_server.listen(9012);
 
         // Start the server accept loop
         echo_server.start_accept();
 
-	    // Start the ASIO io_service run loop
+        // Start the ASIO io_service run loop
         echo_server.run();
     } catch (const std::exception & e) {
         std::cout << e.what() << std::endl;

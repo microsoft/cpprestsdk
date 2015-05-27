@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Peter Thorson. All rights reserved.
+ * Copyright (c) 2014, Peter Thorson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,23 +28,23 @@
 #ifndef WEBSOCKETPP_PROCESSOR_HYBI13_HPP
 #define WEBSOCKETPP_PROCESSOR_HYBI13_HPP
 
-#include <cassert>
-
-#include <websocketpp/frame.hpp>
-#include <websocketpp/utf8_validator.hpp>
-#include <websocketpp/common/network.hpp>
-#include <websocketpp/common/platforms.hpp>
-#include <websocketpp/http/constants.hpp>
-
 #include <websocketpp/processors/processor.hpp>
 
+#include <websocketpp/frame.hpp>
+#include <websocketpp/http/constants.hpp>
+
+#include <websocketpp/utf8_validator.hpp>
 #include <websocketpp/sha1/sha1.hpp>
 #include <websocketpp/base64/base64.hpp>
 
+#include <websocketpp/common/network.hpp>
+#include <websocketpp/common/platforms.hpp>
+
+#include <algorithm>
+#include <cassert>
 #include <string>
 #include <vector>
 #include <utility>
-#include <algorithm>
 
 namespace websocketpp {
 namespace processor {
@@ -122,8 +122,8 @@ public:
                         // Figure out if this is an error that should halt all
                         // extension negotiations or simply cause negotiation of
                         // this specific extension to fail.
-                        std::cout << "permessage-compress negotiation failed: "
-                                  << neg_ret.first.message() << std::endl;
+                        //std::cout << "permessage-compress negotiation failed: "
+                        //          << neg_ret.first.message() << std::endl;
                     } else {
                         // Note: this list will need commas if WebSocket++ ever
                         // supports more than one extension
@@ -161,8 +161,8 @@ public:
      * generic struct if other user input parameters to the processed handshake
      * are found.
      */
-    lib::error_code process_handshake(request_type const & request, const
-        std::string & subprotocol, response_type& response) const
+    lib::error_code process_handshake(request_type const & request, 
+        std::string const & subprotocol, response_type & response) const
     {
         std::string server_key = request.get_header("Sec-WebSocket-Key");
 
@@ -183,7 +183,13 @@ public:
         return lib::error_code();
     }
 
-    lib::error_code client_handshake_request(request_type& req, uri_ptr
+    /// Fill in a set of request headers for a client connection request
+    /**
+     * @param [out] req  Set of headers to fill in
+     * @param [in] uri The uri being connected to
+     * @param [in] subprotocols The list of subprotocols to request
+     */
+    lib::error_code client_handshake_request(request_type & req, uri_ptr
         uri, std::vector<std::string> const & subprotocols) const
     {
         req.set_method("GET");
@@ -208,18 +214,24 @@ public:
 
         // Generate handshake key
         frame::uint32_converter conv;
-        std::array<unsigned char, 16> raw_key;
+        unsigned char raw_key[16];
 
         for (int i = 0; i < 4; i++) {
             conv.i = m_rng();
-            std::copy(conv.c.begin(), conv.c.begin() + 4, raw_key.begin() + i * 4);
+            std::copy(conv.c,conv.c+4,&raw_key[i*4]);
         }
 
-        req.replace_header("Sec-WebSocket-Key",base64_encode(&raw_key[0], 16));
+        req.replace_header("Sec-WebSocket-Key",base64_encode(raw_key, 16));
 
         return lib::error_code();
     }
 
+    /// Validate the server's response to an outgoing handshake request
+    /**
+     * @param req The original request sent
+     * @param res The reponse to generate
+     * @return An error code, 0 on success, non-zero for other errors
+     */
     lib::error_code validate_server_handshake_response(request_type const & req,
         response_type& res) const
     {
@@ -405,7 +417,7 @@ public:
             } else if (m_state == EXTENSION) {
                 m_state = APPLICATION;
             } else if (m_state == APPLICATION) {
-                size_t bytes_to_process = std::min(m_bytes_needed,len-p);
+                size_t bytes_to_process = (std::min)(m_bytes_needed,len-p);
 
                 if (bytes_to_process > 0) {
                     p += this->process_payload_bytes(buf+p,bytes_to_process,ec);
@@ -449,9 +461,9 @@ public:
         m_basic_header.b0 = 0x00;
         m_basic_header.b1 = 0x00;
 
-        std::fill(
-            m_extended_header.bytes.begin(),
-            m_extended_header.bytes.end(),
+        std::fill_n(
+            m_extended_header.bytes,
+            frame::MAX_EXTENDED_HEADER_LENGTH,
             0x00
         );
     }
@@ -577,6 +589,7 @@ public:
         }
 
         out->set_prepared(true);
+        out->set_opcode(op);
 
         return lib::error_code();
     }
@@ -671,9 +684,9 @@ protected:
 
     /// Reads bytes from buf into m_extended_header
     size_t copy_extended_header_bytes(uint8_t const * buf, size_t len) {
-        size_t bytes_to_read = std::min(m_bytes_needed,len);
+        size_t bytes_to_read = (std::min)(m_bytes_needed,len);
 
-        std::copy(buf, buf + bytes_to_read, m_extended_header.bytes.begin() + m_cursor);
+        std::copy(buf,buf+bytes_to_read,m_extended_header.bytes+m_cursor);
         m_cursor += bytes_to_read;
         m_bytes_needed -= bytes_to_read;
 

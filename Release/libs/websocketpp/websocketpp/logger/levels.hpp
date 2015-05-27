@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Peter Thorson. All rights reserved.
+ * Copyright (c) 2014, Peter Thorson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -35,6 +35,25 @@ namespace log {
 
 /// Type of a channel package
 typedef uint32_t level;
+
+/// Package of values for hinting at the nature of a given logger.
+/**
+ * Used by the library to signal to the logging class a hint that it can use to
+ * set itself up. For example, the `access` hint indicates that it is an access
+ * log that might be suitable for being printed to an access log file or to cout
+ * whereas `error` might be suitable for an error log file or cerr. 
+ */
+struct channel_type_hint {
+    /// Type of a channel type hint value
+    typedef uint32_t value;
+    
+    /// No information
+    static value const none = 0;
+    /// Access log
+    static value const access = 1;
+    /// Error log
+    static value const error = 2;
+};
 
 /// Package of log levels for logging errors
 struct elevel {
@@ -122,6 +141,13 @@ struct alevel {
     static level const devel = 0x400;
     /// Special channel for application specific logs. Not used by the library.
     static level const app = 0x800;
+    /// Access related to HTTP requests
+    static level const http = 0x1000;
+    /// One line for each failed WebSocket connection with details
+    static level const fail = 0x2000;
+    /// Aggregate package representing the commonly used core access channels
+    /// Connect, Disconnect, Fail, and HTTP
+    static level const access_core = 0x00003003;
     /// Special aggregate value representing "all levels"
     static level const all = 0xffffffff;
 
@@ -161,6 +187,10 @@ struct alevel {
                 return "devel";
             case app:
                 return "application";
+            case http:
+                return "http";
+            case fail:
+                return "fail";
             default:
                 return "unknown";
         }

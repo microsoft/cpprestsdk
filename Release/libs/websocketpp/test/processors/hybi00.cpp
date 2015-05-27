@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Peter Thorson. All rights reserved.
+ * Copyright (c) 2014, Peter Thorson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -38,15 +38,15 @@
 #include <websocketpp/message_buffer/alloc.hpp>
 
 struct stub_config {
-	typedef websocketpp::http::parser::request request_type;
-	typedef websocketpp::http::parser::response response_type;
+    typedef websocketpp::http::parser::request request_type;
+    typedef websocketpp::http::parser::response response_type;
 
-	typedef websocketpp::message_buffer::message
-		<websocketpp::message_buffer::alloc::con_msg_manager> message_type;
-	typedef websocketpp::message_buffer::alloc::con_msg_manager<message_type>
-		con_msg_manager_type;
-		
-	static const size_t max_message_size = 16000000;
+    typedef websocketpp::message_buffer::message
+        <websocketpp::message_buffer::alloc::con_msg_manager> message_type;
+    typedef websocketpp::message_buffer::alloc::con_msg_manager<message_type>
+        con_msg_manager_type;
+        
+    static const size_t max_message_size = 16000000;
 };
 
 struct processor_setup {
@@ -55,16 +55,16 @@ struct processor_setup {
       , p(false,server,msg_manager) {}
 
     websocketpp::lib::error_code ec;
-	stub_config::con_msg_manager_type::ptr msg_manager;
-	stub_config::request_type req;
+    stub_config::con_msg_manager_type::ptr msg_manager;
+    stub_config::request_type req;
     stub_config::response_type res;
-	websocketpp::processor::hybi00<stub_config> p;
+    websocketpp::processor::hybi00<stub_config> p;
 };
 
 typedef stub_config::message_type::ptr message_ptr;
 
 BOOST_AUTO_TEST_CASE( exact_match ) {
-	processor_setup env(true);
+    processor_setup env(true);
 
     std::string handshake = "GET / HTTP/1.1\r\nHost: www.example.com\r\nConnection: upgrade\r\nUpgrade: websocket\r\nOrigin: http://example.com\r\nSec-WebSocket-Key1: 3e6b263  4 17 80\r\nSec-WebSocket-Key2: 17  9 G`ZD9   2 2b 7X 3 /r90\r\n\r\n";
 
@@ -96,7 +96,7 @@ BOOST_AUTO_TEST_CASE( exact_match ) {
 }
 
 BOOST_AUTO_TEST_CASE( non_get_method ) {
-	processor_setup env(true);
+    processor_setup env(true);
 
     std::string handshake = "POST / HTTP/1.1\r\nHost: www.example.com\r\nConnection: upgrade\r\nUpgrade: websocket\r\nSec-WebSocket-Key1: 3e6b263  4 17 80\r\nSec-WebSocket-Key2: 17  9 G`ZD9   2 2b 7X 3 /r90\r\n\r\n";
 
@@ -109,7 +109,7 @@ BOOST_AUTO_TEST_CASE( non_get_method ) {
 }
 
 BOOST_AUTO_TEST_CASE( old_http_version ) {
-	processor_setup env(true);
+    processor_setup env(true);
 
     std::string handshake = "GET / HTTP/1.0\r\nHost: www.example.com\r\nConnection: upgrade\r\nUpgrade: websocket\r\nSec-WebSocket-Key1: 3e6b263  4 17 80\r\nSec-WebSocket-Key2: 17  9 G`ZD9   2 2b 7X 3 /r90\r\n\r\n";
 
@@ -122,7 +122,7 @@ BOOST_AUTO_TEST_CASE( old_http_version ) {
 }
 
 BOOST_AUTO_TEST_CASE( missing_handshake_key1 ) {
-	processor_setup env(true);
+    processor_setup env(true);
 
     std::string handshake = "GET / HTTP/1.1\r\nHost: www.example.com\r\nConnection: upgrade\r\nUpgrade: websocket\r\nSec-WebSocket-Key1: 3e6b263  4 17 80\r\n\r\n";
 
@@ -135,7 +135,7 @@ BOOST_AUTO_TEST_CASE( missing_handshake_key1 ) {
 }
 
 BOOST_AUTO_TEST_CASE( missing_handshake_key2 ) {
-	processor_setup env(true);
+    processor_setup env(true);
 
     std::string handshake = "GET / HTTP/1.1\r\nHost: www.example.com\r\nConnection: upgrade\r\nUpgrade: websocket\r\nSec-WebSocket-Key2: 17  9 G`ZD9   2 2b 7X 3 /r90\r\n\r\n";
 
@@ -148,7 +148,7 @@ BOOST_AUTO_TEST_CASE( missing_handshake_key2 ) {
 }
 
 BOOST_AUTO_TEST_CASE( bad_host ) {
-	processor_setup env(true);
+    processor_setup env(true);
     websocketpp::uri_ptr u;
 
     std::string handshake = "GET / HTTP/1.1\r\nHost: www.example.com:70000\r\nConnection: upgrade\r\nUpgrade: websocket\r\nOrigin: http://example.com\r\nSec-WebSocket-Key1: 3e6b263  4 17 80\r\nSec-WebSocket-Key2: 17  9 G`ZD9   2 2b 7X 3 /r90\r\n\r\n";
@@ -164,7 +164,7 @@ BOOST_AUTO_TEST_CASE( bad_host ) {
 }
 
 BOOST_AUTO_TEST_CASE( extract_subprotocols ) {
-	processor_setup env(true);
+    processor_setup env(true);
 
     std::vector<std::string> subps;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Peter Thorson. All rights reserved.
+ * Copyright (c) 2014, Peter Thorson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -29,6 +29,7 @@
 #define WEBSOCKETPP_TRANSPORT_SECURITY_TLS_HPP
 
 #include <websocketpp/transport/asio/security/base.hpp>
+
 #include <websocketpp/common/connection_hdl.hpp>
 #include <websocketpp/common/functional.hpp>
 #include <websocketpp/common/memory.hpp>
@@ -37,7 +38,7 @@
 #include <boost/asio/ssl.hpp>
 #include <boost/system/error_code.hpp>
 
-#include <iostream>
+#include <sstream>
 #include <string>
 
 namespace websocketpp {
@@ -194,7 +195,8 @@ protected:
         if (!m_context) {
             return socket::make_error_code(socket::error::invalid_tls_context);
         }
-        m_socket.reset(new socket_type(*service,*m_context));
+        m_socket = lib::make_shared<socket_type>(
+            _WEBSOCKETPP_REF(*service),lib::ref(*m_context));
 
         m_io_service = service;
         m_strand = strand;

@@ -79,6 +79,14 @@ public:
         m_error_reason = s.str();
     }
 
+    void on_message(websocketpp::connection_hdl, client::message_ptr msg) {
+        if (msg->get_opcode() == websocketpp::frame::opcode::text) {
+            m_messages.push_back("<< " + msg->get_payload());
+        } else {
+            m_messages.push_back("<< " + websocketpp::utility::to_hex(msg->get_payload()));
+        }
+    }
+
     websocketpp::connection_hdl get_hdl() const {
         return m_hdl;
     }
@@ -91,6 +99,10 @@ public:
         return m_status;
     }
 
+    void record_sent_message(std::string message) {
+        m_messages.push_back(">> " + message);
+    }
+
     friend std::ostream & operator<< (std::ostream & out, connection_metadata const & data);
 private:
     int m_id;
@@ -99,13 +111,20 @@ private:
     std::string m_uri;
     std::string m_server;
     std::string m_error_reason;
+    std::vector<std::string> m_messages;
 };
 
 std::ostream & operator<< (std::ostream & out, connection_metadata const & data) {
     out << "> URI: " << data.m_uri << "\n"
         << "> Status: " << data.m_status << "\n"
         << "> Remote Server: " << (data.m_server.empty() ? "None Specified" : data.m_server) << "\n"
-        << "> Error/close reason: " << (data.m_error_reason.empty() ? "N/A" : data.m_error_reason);
+        << "> Error/close reason: " << (data.m_error_reason.empty() ? "N/A" : data.m_error_reason) << "\n";
+    out << "> Messages Processed: (" << data.m_messages.size() << ") \n";
+
+    std::vector<std::string>::const_iterator it;
+    for (it = data.m_messages.begin(); it != data.m_messages.end(); ++it) {
+        out << *it << "\n";
+    }
 
     return out;
 }
@@ -119,7 +138,7 @@ public:
         m_endpoint.init_asio();
         m_endpoint.start_perpetual();
 
-        m_thread.reset(new websocketpp::lib::thread(&client::run, &m_endpoint));
+        m_thread = websocketpp::lib::make_shared<websocketpp::lib::thread>(&client::run, &m_endpoint);
     }
 
     ~websocket_endpoint() {
@@ -155,7 +174,7 @@ public:
         }
 
         int new_id = m_next_id++;
-        connection_metadata::ptr metadata_ptr(new connection_metadata(new_id, con->get_handle(), uri));
+        connection_metadata::ptr metadata_ptr = websocketpp::lib::make_shared<connection_metadata>(new_id, con->get_handle(), uri);
         m_connection_list[new_id] = metadata_ptr;
 
         con->set_open_handler(websocketpp::lib::bind(
@@ -176,6 +195,12 @@ public:
             &m_endpoint,
             websocketpp::lib::placeholders::_1
         ));
+        con->set_message_handler(websocketpp::lib::bind(
+            &connection_metadata::on_message,
+            metadata_ptr,
+            websocketpp::lib::placeholders::_1,
+            websocketpp::lib::placeholders::_2
+        ));
 
         m_endpoint.connect(con);
 
@@ -195,6 +220,24 @@ public:
         if (ec) {
             std::cout << "> Error initiating close: " << ec.message() << std::endl;
         }
+    }
+
+    void send(int id, std::string message) {
+        websocketpp::lib::error_code ec;
+        
+        con_list::iterator metadata_it = m_connection_list.find(id);
+        if (metadata_it == m_connection_list.end()) {
+            std::cout << "> No connection found with id " << id << std::endl;
+            return;
+        }
+        
+        m_endpoint.send(metadata_it->second->get_hdl(), message, websocketpp::frame::opcode::text, ec);
+        if (ec) {
+            std::cout << "> Error sending message: " << ec.message() << std::endl;
+            return;
+        }
+        
+        metadata_it->second->record_sent_message(message);
     }
 
     connection_metadata::ptr get_metadata(int id) const {
@@ -230,6 +273,7 @@ int main() {
             std::cout
                 << "\nCommand List:\n"
                 << "connect <ws uri>\n"
+                << "send <connection id> <message>\n"
                 << "close <connection id> [<close code:default=1000>] [<close reason>]\n"
                 << "show <connection id>\n"
                 << "help: Display this help text\n"
@@ -240,6 +284,17 @@ int main() {
             if (id != -1) {
                 std::cout << "> Created connection with id " << id << std::endl;
             }
+        } else if (input.substr(0,4) == "send") {
+            std::stringstream ss(input);
+            
+            std::string cmd;
+            int id;
+            std::string message = "";
+            
+            ss >> cmd >> id;
+            std::getline(ss,message);
+            
+            endpoint.send(id, message);
         } else if (input.substr(0,5) == "close") {
             std::stringstream ss(input);
             
@@ -252,7 +307,7 @@ int main() {
             std::getline(ss,reason);
             
             endpoint.close(id, close_code, reason);
-        }  else if (input.substr(0,4) == "show") {
+        } else if (input.substr(0,4) == "show") {
             int id = atoi(input.substr(5).c_str());
 
             connection_metadata::ptr metadata = endpoint.get_metadata(id);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Peter Thorson. All rights reserved.
+ * Copyright (c) 2014, Peter Thorson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -35,8 +35,10 @@
 #include <websocketpp/utilities.hpp>
 #include <websocketpp/uri.hpp>
 
-#include <map>
+#include <sstream>
 #include <string>
+#include <utility>
+#include <vector>
 
 namespace websocketpp {
 /// Processors encapsulate the protocol rules specific to each WebSocket version
@@ -103,6 +105,10 @@ bool is_websocket_handshake(request_type& r) {
  */
 template <typename request_type>
 int get_websocket_version(request_type& r) {
+    if (!r.ready()) {
+        return -2;
+    }
+    
     if (r.get_header("Sec-WebSocket-Version") == "") {
         return 0;
     }
@@ -140,12 +146,12 @@ uri_ptr get_uri_from_host(request_type & request, std::string scheme) {
     if (last_colon == std::string::npos ||
         (last_sbrace != std::string::npos && last_sbrace > last_colon))
     {
-        return uri_ptr(new uri(scheme, h, request.get_uri()));
+        return lib::make_shared<uri>(scheme, h, request.get_uri());
     } else {
-        return uri_ptr(new uri(scheme,
+        return lib::make_shared<uri>(scheme,
                                h.substr(0,last_colon),
                                h.substr(last_colon+1),
-                               request.get_uri()));
+                               request.get_uri());
     }
 }
 
@@ -212,8 +218,10 @@ public:
      * Reads the Sec-WebSocket-Extensions header and determines if any of the
      * requested extensions are supported by this processor. If they are their
      * settings data is initialized.
+     *
+     * @param request The request headers to look at.
      */
-    virtual err_str_pair negotiate_extensions(request_type const & request) {
+    virtual err_str_pair negotiate_extensions(request_type const &) {
         return err_str_pair();
     }
 
@@ -253,9 +261,7 @@ public:
     /// Validate the server's response to an outgoing handshake request
     /**
      * @param req The original request sent
-     *
      * @param res The reponse to generate
-     *
      * @return An error code, 0 on success, non-zero for other errors
      */
     virtual lib::error_code validate_server_handshake_response(request_type
@@ -272,10 +278,9 @@ public:
      * Extracts a list of all subprotocols that the client has requested in the
      * given opening handshake request.
      *
-     * @param req The request to extract from
-     *
-     * @param subprotocol_list A reference to a vector of strings to store the
-     * results in.
+     * @param [in] req The request to extract from
+     * @param [out] subprotocol_list A reference to a vector of strings to store
+     * the results in.
      */
     virtual lib::error_code extract_subprotocols(const request_type & req,
         std::vector<std::string> & subprotocol_list) = 0;
@@ -289,11 +294,8 @@ public:
      * interpreted by a protocol processor into discrete frames.
      *
      * @param buf Buffer from which bytes should be read.
-     *
      * @param len Length of buffer
-     *
      * @param ec Reference to an error code to return any errors in
-     *
      * @return Number of bytes processed
      */
     virtual size_t consume(uint8_t *buf, size_t len, lib::error_code & ec) = 0;
@@ -346,9 +348,7 @@ public:
      * other than length. Payload need not be UTF-8.
      *
      * @param in The string to use for the ping payload
-     *
      * @param out The message buffer to prepare the ping in.
-     *
      * @return Status code, zero on success, non-zero on failure
      */
     virtual lib::error_code prepare_ping(std::string const & in, message_ptr out) const 
@@ -360,9 +360,7 @@ public:
      * other than length. Payload need not be UTF-8.
      *
      * @param in The string to use for the pong payload
-     *
      * @param out The message buffer to prepare the pong in.
-     *
      * @return Status code, zero on success, non-zero on failure
      */
     virtual lib::error_code prepare_pong(std::string const & in, message_ptr out) const 
@@ -376,11 +374,8 @@ public:
      * indicate no code. If no code is supplied a reason may not be specified.
      *
      * @param code The close code to send
-     *
      * @param reason The reason string to send
-     *
      * @param out The message buffer to prepare the fame in
-     *
      * @return Status code, zero on success, non-zero on failure
      */
     virtual lib::error_code prepare_close(close::status::value code,

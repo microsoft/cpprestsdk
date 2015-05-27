@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Peter Thorson. All rights reserved.
+ * Copyright (c) 2014, Peter Thorson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,15 +28,20 @@
 #ifndef WEBSOCKETPP_TRANSPORT_IOSTREAM_CON_HPP
 #define WEBSOCKETPP_TRANSPORT_IOSTREAM_CON_HPP
 
+#include <websocketpp/transport/iostream/base.hpp>
+
+#include <websocketpp/transport/base/connection.hpp>
+
+#include <websocketpp/logger/levels.hpp>
+
 #include <websocketpp/common/connection_hdl.hpp>
 #include <websocketpp/common/memory.hpp>
 #include <websocketpp/common/platforms.hpp>
-#include <websocketpp/logger/levels.hpp>
 
-#include <websocketpp/transport/base/connection.hpp>
-#include <websocketpp/transport/iostream/base.hpp>
-
+#include <algorithm>
+#include <iostream>
 #include <sstream>
+#include <string>
 #include <vector>
 
 namespace websocketpp {
@@ -170,12 +175,12 @@ public:
         scoped_lock_type lock(m_read_mutex);
         
         size_t total_read = 0;
-        size_t read = 0;
+        size_t temp_read = 0;
 
         do {
-            read = this->read_some_impl(buf+total_read,len-total_read);
-            total_read += read;
-        } while (read != 0 && total_read < len);
+            temp_read = this->read_some_impl(buf+total_read,len-total_read);
+            total_read += temp_read;
+        } while (temp_read != 0 && total_read < len);
 
         return total_read;
     }
@@ -304,8 +309,46 @@ public:
      * @return A handle that can be used to cancel the timer if it is no longer
      * needed.
      */
-    timer_ptr set_timer(long duration, timer_handler handler) {
+    timer_ptr set_timer(long, timer_handler) {
         return timer_ptr();
+    }
+    
+    /// Sets the write handler
+    /**
+     * The write handler is called when the iostream transport receives data
+     * that needs to be written to the appropriate output location. This handler
+     * can be used in place of registering an ostream for output.
+     *
+     * The signature of the handler is 
+     * `lib::error_code (connection_hdl, char const *, size_t)` The
+     * code returned will be reported and logged by the core library.
+     *
+     * @since 0.5.0
+     *
+     * @param h The handler to call on connection shutdown.
+     */
+    void set_write_handler(write_handler h) {
+        m_write_handler = h;
+    }
+    
+    /// Sets the shutdown handler
+    /**
+     * The shutdown handler is called when the iostream transport receives a
+     * notification from the core library that it is finished with all read and
+     * write operations and that the underlying transport can be cleaned up.
+     *
+     * If you are using iostream transport with another socket library, this is
+     * a good time to close/shutdown the socket for this connection.
+     *
+     * The signature of the handler is `lib::error_code (connection_hdl)`. The
+     * code returned will be reported and logged by the core library.
+     *
+     * @since 0.5.0
+     *
+     * @param h The handler to call on connection shutdown.
+     */
+    void set_shutdown_handler(shutdown_handler h) {
+        m_shutdown_handler = h;
     }
 protected:
     /// Initialize the connection transport
@@ -375,39 +418,48 @@ protected:
 
     /// Asyncronous Transport Write
     /**
-     * Write len bytes in buf to the output stream. Call handler to report
+     * Write len bytes in buf to the output method. Call handler to report
      * success or failure. handler may or may not be called during async_write,
      * but it must be safe for this to happen.
      *
      * Will return 0 on success. Other possible errors (not exhaustive)
      * output_stream_required: No output stream was registered to write to
      * bad_stream: a ostream pass through error
+     *
+     * This method will attempt to write to the registered ostream first. If an
+     * ostream is not registered it will use the write handler. If neither are
+     * registered then an error is passed up to the connection.
      *
      * @param buf buffer to read bytes from
      * @param len number of bytes to write
      * @param handler Callback to invoke with operation status.
      */
-    void async_write(char const * buf, size_t len, write_handler handler) {
+    void async_write(char const * buf, size_t len, transport::write_handler 
+        handler)
+    {
         m_alog.write(log::alevel::devel,"iostream_con async_write");
         // TODO: lock transport state?
 
-        if (!m_output_stream) {
-            handler(make_error_code(error::output_stream_required));
-            return;
-        }
+        lib::error_code ec;
 
-        m_output_stream->write(buf,len);
-
-        if (m_output_stream->bad()) {
-            handler(make_error_code(error::bad_stream));
+        if (m_output_stream) {
+            m_output_stream->write(buf,len);
+            
+            if (m_output_stream->bad()) {
+                ec = make_error_code(error::bad_stream);
+            }
+        } else if (m_write_handler) {
+            ec = m_write_handler(m_connection_hdl, buf, len);
         } else {
-            handler(lib::error_code());
+            ec = make_error_code(error::output_stream_required);
         }
+
+        handler(ec);
     }
 
     /// Asyncronous Transport Write (scatter-gather)
     /**
-     * Write a sequence of buffers to the output stream. Call handler to report
+     * Write a sequence of buffers to the output method. Call handler to report
      * success or failure. handler may or may not be called during async_write,
      * but it must be safe for this to happen.
      *
@@ -415,28 +467,43 @@ protected:
      * output_stream_required: No output stream was registered to write to
      * bad_stream: a ostream pass through error
      *
+     * This method will attempt to write to the registered ostream first. If an
+     * ostream is not registered it will use the write handler. If neither are
+     * registered then an error is passed up to the connection.
+     *
      * @param bufs vector of buffers to write
      * @param handler Callback to invoke with operation status.
      */
-    void async_write(std::vector<buffer> const & bufs, write_handler handler) {
+    void async_write(std::vector<buffer> const & bufs, transport::write_handler
+        handler)
+    {
         m_alog.write(log::alevel::devel,"iostream_con async_write buffer list");
         // TODO: lock transport state?
 
-        if (!m_output_stream) {
-            handler(make_error_code(error::output_stream_required));
-            return;
-        }
+        lib::error_code ec;
 
-        std::vector<buffer>::const_iterator it;
-        for (it = bufs.begin(); it != bufs.end(); it++) {
-            m_output_stream->write((*it).buf,(*it).len);
+        if (m_output_stream) {
+            std::vector<buffer>::const_iterator it;
+            for (it = bufs.begin(); it != bufs.end(); it++) {
+                m_output_stream->write((*it).buf,(*it).len);
 
-            if (m_output_stream->bad()) {
-                handler(make_error_code(error::bad_stream));
+                if (m_output_stream->bad()) {
+                    ec = make_error_code(error::bad_stream);
+                    break;
+                }
             }
+        } else if (m_write_handler) {
+            std::vector<buffer>::const_iterator it;
+            for (it = bufs.begin(); it != bufs.end(); it++) {
+                ec = m_write_handler(m_connection_hdl, (*it).buf, (*it).len);
+                if (ec) {break;}
+            }
+            
+        } else {
+            ec = make_error_code(error::output_stream_required);
         }
-
-        handler(lib::error_code());
+        
+        handler(ec);
     }
 
     /// Set Connection Handle
@@ -465,10 +532,20 @@ protected:
 
     /// Perform cleanup on socket shutdown_handler
     /**
-     * @param h The `shutdown_handler` to call back when complete
+     * If a shutdown handler is set, call it and pass through its return error
+     * code. Otherwise assume there is nothing to do and pass through a success
+     * code.
+     *
+     * @param handler The `shutdown_handler` to call back when complete
      */
-    void async_shutdown(shutdown_handler handler) {
-        handler(lib::error_code());
+    void async_shutdown(transport::shutdown_handler handler) {
+        lib::error_code ec;
+        
+        if (m_shutdown_handler) {
+            ec = m_shutdown_handler(m_connection_hdl);
+        }
+        
+        handler(ec);
     }
 private:
     void read(std::istream &in) {
@@ -510,7 +587,7 @@ private:
             return 0;
         }
 
-        size_t bytes_to_copy = std::min(len,m_len-m_cursor);
+        size_t bytes_to_copy = (std::min)(len,m_len-m_cursor);
 
         std::copy(buf,buf+bytes_to_copy,m_buf+m_cursor);
 
@@ -558,6 +635,8 @@ private:
     // transport resources
     std::ostream *  m_output_stream;
     connection_hdl  m_connection_hdl;
+    write_handler   m_write_handler;
+    shutdown_handler    m_shutdown_handler;
 
     bool            m_reading;
     bool const      m_is_server;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Peter Thorson. All rights reserved.
+ * Copyright (c) 2014, Peter Thorson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -27,6 +27,9 @@
 
 #ifndef HTTP_PARSER_RESPONSE_HPP
 #define HTTP_PARSER_RESPONSE_HPP
+
+#include <iostream>
+#include <string>
 
 #include <websocketpp/http/parser.hpp>
 
@@ -58,7 +61,7 @@ public:
 
     response()
       : m_read(0)
-      , m_buf(new std::string())
+      , m_buf(lib::make_shared<std::string>())
       , m_status_code(status_code::uninitialized)
       , m_state(RESPONSE_LINE) {}
 
@@ -82,8 +85,28 @@ public:
      * @param len Size of byte buffer
      * @return Number of bytes processed.
      */
-    size_t consume(const char *buf, size_t len);
+    size_t consume(char const * buf, size_t len);
 
+    /// Process bytes in the input buffer (istream version)
+    /**
+     * Process bytes from istream s. Returns the number of bytes processed. 
+     * Bytes left unprocessed means bytes left over after the final header
+     * delimiters.
+     *
+     * Consume is a streaming processor. It may be called multiple times on one
+     * response and the full headers need not be available before processing can
+     * begin. If the end of the response was reached during this call to consume
+     * the ready flag will be set. Further calls to consume once ready will be
+     * ignored.
+     *
+     * Consume will throw an http::exception in the case of an error. Typical
+     * error reasons include malformed responses, incomplete responses, and max
+     * header size being reached.
+     *
+     * @param buf Pointer to byte buffer
+     * @param len Size of byte buffer
+     * @return Number of bytes processed.
+     */
     size_t consume(std::istream & s);
 
     /// Returns true if the response is ready.
@@ -98,9 +121,6 @@ public:
     bool headers_ready() const {
         return (m_state == BODY || m_state == DONE);
     }
-
-    /// DEPRECATED parse a complete response from a pre-delimited istream
-    bool parse_complete(std::istream& s);
 
     /// Returns the full raw response
     std::string raw() const;
@@ -126,7 +146,7 @@ public:
      * @param code Code to set
      * @param msg Message to set
      */
-    void set_status(status_code::value code, const std::string& msg);
+    void set_status(status_code::value code, std::string const & msg);
 
     /// Return the response status code
     status_code::value get_status_code() const {
@@ -142,7 +162,7 @@ private:
     void process(std::string::iterator begin, std::string::iterator end);
 
     /// Helper function for processing body bytes
-    size_t process_body(const char *buf, size_t len);
+    size_t process_body(char const * buf, size_t len);
 
     enum state {
         RESPONSE_LINE = 0,

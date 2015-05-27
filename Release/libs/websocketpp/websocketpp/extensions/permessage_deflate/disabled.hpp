@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Peter Thorson. All rights reserved.
+ * Copyright (c) 2014, Peter Thorson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -53,7 +53,15 @@ class disabled {
     typedef std::pair<lib::error_code,std::string> err_str_pair;
 
 public:
-    err_str_pair negotiate(http::attribute_list const & attributes) {
+    /// Negotiate extension
+    /**
+     * The disabled extension always fails the negotiation with a disabled 
+     * error.
+     *
+     * @param offer Attribute from client's offer
+     * @return Status code and value to return to remote endpoint
+     */
+    err_str_pair negotiate(http::attribute_list const &) {
         return make_pair(make_error_code(error::disabled),std::string());
     }
 
@@ -69,17 +77,24 @@ public:
         return false;
     }
 
-    lib::error_code compress(std::string const & in, std::string & out) {
+    /// Compress bytes
+    /**
+     * @param [in] in String to compress
+     * @param [out] out String to append compressed bytes to
+     * @return Error or status code
+     */
+    lib::error_code compress(std::string const &, std::string &) {
         return make_error_code(error::disabled);
     }
 
-    lib::error_code decompress(uint8_t const * buf, size_t len,
-        std::string & out)
-    {
-        return make_error_code(error::disabled);
-    }
-
-    lib::error_code decompress(std::string const & in, std::string & out) {
+    /// Decompress bytes
+    /**
+     * @param buf Byte buffer to decompress
+     * @param len Length of buf
+     * @param out String to append decompressed bytes to
+     * @return Error or status code
+     */
+    lib::error_code decompress(uint8_t const *, size_t, std::string &) {
         return make_error_code(error::disabled);
     }
 };

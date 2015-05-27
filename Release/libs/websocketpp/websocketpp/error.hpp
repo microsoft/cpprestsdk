@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Peter Thorson. All rights reserved.
+ * Copyright (c) 2014, Peter Thorson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,7 +28,9 @@
 #ifndef WEBSOCKETPP_ERROR_HPP
 #define WEBSOCKETPP_ERROR_HPP
 
+#include <exception>
 #include <string>
+#include <utility>
 
 #include <websocketpp/common/cpp11.hpp>
 #include <websocketpp/common/system_error.hpp>
@@ -122,7 +124,23 @@ enum value {
     async_accept_not_listening,
 
     /// The requested operation was canceled
-    operation_canceled
+    operation_canceled,
+
+    /// Connection rejected
+    rejected,
+
+    /// Upgrade Required. This happens if an HTTP request is made to a
+    /// WebSocket++ server that doesn't implement an http handler
+    upgrade_required,
+
+    /// Invalid WebSocket protocol version
+    invalid_version,
+
+    /// Unsupported WebSocket protocol version
+    unsupported_version,
+
+    /// HTTP parse error
+    http_parse_error
 }; // enum value
 
 
@@ -188,6 +206,16 @@ public:
                 return "Async Accept not listening";
             case error::operation_canceled:
                 return "Operation canceled";
+            case error::rejected:
+                return "Connection rejected";
+            case error::upgrade_required:
+                return "Upgrade required";
+            case error::invalid_version:
+                return "Invalid version";
+            case error::unsupported_version:
+                return "Unsupported version";
+            case error::http_parse_error:
+                return "HTTP parse error";
             default:
                 return "Unknown";
         }
@@ -217,8 +245,13 @@ namespace websocketpp {
 
 class exception : public std::exception {
 public:
-    exception(std::string const & msg, error::value p_code = error::general)
-      : m_msg(msg), m_code(p_code) {}
+    exception(std::string const & msg, lib::error_code ec = make_error_code(error::general))
+      : m_msg(msg.empty() ? ec.message() : msg), m_code(ec)
+    {}
+
+    explicit exception(lib::error_code ec)
+      : m_code(ec)
+    {}
 
     ~exception() throw() {}
 
@@ -226,12 +259,12 @@ public:
         return m_msg.c_str();
     }
 
-    error::value code() const throw() {
+    lib::error_code code() const throw() {
         return m_code;
     }
 
     std::string m_msg;
-    error::value m_code;
+    lib::error_code m_code;
 };
 
 } // namespace websocketpp

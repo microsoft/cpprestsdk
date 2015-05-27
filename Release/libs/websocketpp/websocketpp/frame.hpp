@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Peter Thorson. All rights reserved.
+ * Copyright (c) 2014, Peter Thorson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -29,7 +29,7 @@
 #define WEBSOCKETPP_FRAME_HPP
 
 #include <algorithm>
-#include <array>
+#include <string>
 
 #include <websocketpp/common/system_error.hpp>
 #include <websocketpp/common/network.hpp>
@@ -54,19 +54,19 @@ static unsigned int const MAX_EXTENDED_HEADER_LENGTH = 12;
 /// Two byte conversion union
 union uint16_converter {
     uint16_t i;
-    std::array<uint8_t, 2> c;
+    uint8_t  c[2];
 };
 
 /// Four byte conversion union
 union uint32_converter {
     uint32_t i;
-    std::array<uint8_t, 4> c;
+    uint8_t c[4];
 };
 
 /// Eight byte conversion union
 union uint64_converter {
     uint64_t i;
-    std::array<uint8_t, 8> c;
+    uint8_t  c[8];
 };
 
 /// Constants and utility functions related to WebSocket opcodes
@@ -234,17 +234,17 @@ struct basic_header {
 /// The variable size component of a WebSocket frame header
 struct extended_header {
     extended_header() {
-        std::fill_n(this->bytes.begin(), MAX_EXTENDED_HEADER_LENGTH, 0x00);
+        std::fill_n(this->bytes,MAX_EXTENDED_HEADER_LENGTH,0x00);
     }
 
     extended_header(uint64_t payload_size) {
-        std::fill_n(this->bytes.begin(), MAX_EXTENDED_HEADER_LENGTH, 0x00);
+        std::fill_n(this->bytes,MAX_EXTENDED_HEADER_LENGTH,0x00);
 
         copy_payload(payload_size);
     }
 
     extended_header(uint64_t payload_size, uint32_t masking_key) {
-        std::fill_n(this->bytes.begin(), MAX_EXTENDED_HEADER_LENGTH, 0x00);
+        std::fill_n(this->bytes,MAX_EXTENDED_HEADER_LENGTH,0x00);
 
         // Copy payload size
         int offset = copy_payload(payload_size);
@@ -252,10 +252,10 @@ struct extended_header {
         // Copy Masking Key
         uint32_converter temp32;
         temp32.i = masking_key;
-        std::copy(temp32.c.begin(), temp32.c.end(), bytes.begin() + offset);
+        std::copy(temp32.c,temp32.c+4,bytes+offset);
     }
 
-    std::array<uint8_t, MAX_EXTENDED_HEADER_LENGTH> bytes;
+    uint8_t bytes[MAX_EXTENDED_HEADER_LENGTH];
 private:
     int copy_payload(uint64_t payload_size) {
         int payload_offset = 0;
@@ -267,8 +267,8 @@ private:
         }
 
         uint64_converter temp64;
-        temp64.i = lib::net::htonll(payload_size);
-        std::copy(temp64.c.begin() + payload_offset, temp64.c.begin() + 8, bytes.begin());
+        temp64.i = lib::net::_htonll(payload_size);
+        std::copy(temp64.c+payload_offset,temp64.c+8,bytes);
 
         return 8-payload_offset;
     }
@@ -457,35 +457,6 @@ inline size_t get_header_len(basic_header const & h) {
     return size;
 }
 
-/// Set the frame's size
-/**
- * @param [out] h The basic header to set.
- * @param [out] eh The extended header to set.
- * @param [in] The size to set.
- * @return What error occurred, if any.
- */
-inline lib::error_code set_size(basic_header & h, extended_header & eh, uint64_t
-    size)
-{
-    // make sure value isn't too big
-    uint8_t basic_value;
-
-    if (size <= limits::payload_size_basic) {
-        basic_value = static_cast<uint8_t>(size);
-    } else if (size <= limits::payload_size_extended) {
-        basic_value = payload_size_code_16bit;
-    } else if (size <= limits::payload_size_jumbo) {
-        basic_value = payload_size_code_64bit;
-    } else {
-        // error
-        return lib::error_code();
-    }
-
-    h.b1 = (basic_value & BHB1_PAYLOAD) | (h.b1 & BHB1_MASK);
-
-    return lib::error_code();
-}
-
 /// Calculate the offset location of the masking key within the extended header
 /**
  * Calculate the offset location of the masking key within the extended header
@@ -523,7 +494,7 @@ inline std::string prepare_header(const basic_header &h, const
     ret.push_back(char(h.b0));
     ret.push_back(char(h.b1));
     ret.append(
-        reinterpret_cast<const char*>(&*e.bytes.begin()),
+        reinterpret_cast<const char*>(e.bytes),
         get_header_len(h)-BASIC_HEADER_LENGTH
     );
 
@@ -551,8 +522,7 @@ inline masking_key_type get_masking_key(const basic_header &h, const
         temp32.i = 0;
     } else {
         unsigned int offset = get_masking_key_offset(h);
-        auto ptr = e.bytes.begin() + offset;
-        std::copy(ptr, ptr + 4, temp32.c.begin());
+        std::copy(e.bytes+offset,e.bytes+offset+4,temp32.c);
     }
 
     return temp32;
@@ -569,7 +539,7 @@ inline masking_key_type get_masking_key(const basic_header &h, const
  */
 inline uint16_t get_extended_size(const extended_header &e) {
     uint16_converter temp16;
-    std::copy(e.bytes.begin() , e.bytes.begin() + 2, temp16.c.begin());
+    std::copy(e.bytes,e.bytes+2,temp16.c);
     return ntohs(temp16.i);
 }
 
@@ -584,8 +554,8 @@ inline uint16_t get_extended_size(const extended_header &e) {
  */
 inline uint64_t get_jumbo_size(const extended_header &e) {
     uint64_converter temp64;
-    std::copy(e.bytes.begin(), e.bytes.begin() + 8, temp64.c.begin());
-    return lib::net::ntohll(temp64.i);
+    std::copy(e.bytes,e.bytes+8,temp64.c);
+    return lib::net::_ntohll(temp64.i);
 }
 
 /// Extract the full payload size field from a WebSocket header

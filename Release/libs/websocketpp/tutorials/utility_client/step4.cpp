@@ -97,7 +97,7 @@ public:
         m_endpoint.init_asio();
         m_endpoint.start_perpetual();
 
-        m_thread.reset(new websocketpp::lib::thread(&client::run, &m_endpoint));
+        m_thread = websocketpp::lib::make_shared<websocketpp::lib::thread>(&client::run, &m_endpoint);
     }
 
     int connect(std::string const & uri) {
@@ -111,7 +111,7 @@ public:
         }
 
         int new_id = m_next_id++;
-        connection_metadata::ptr metadata_ptr(new connection_metadata(new_id, con->get_handle(), uri));
+        connection_metadata::ptr metadata_ptr = websocketpp::lib::make_shared<connection_metadata>(new_id, con->get_handle(), uri);
         m_connection_list[new_id] = metadata_ptr;
 
         con->set_open_handler(websocketpp::lib::bind(

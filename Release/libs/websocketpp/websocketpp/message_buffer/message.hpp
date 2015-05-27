@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Peter Thorson. All rights reserved.
+ * Copyright (c) 2014, Peter Thorson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -43,7 +43,7 @@ namespace message_buffer {
  *
  * # connection_message_manager:
  * An object that manages all of the message_buffers associated with a given
- * connection. Impliments the get_message_buffer(size) method that returns
+ * connection. Implements the get_message_buffer(size) method that returns
  * a message buffer at least size bytes long.
  *
  * Message buffers are reference counted with shared ownership semantics. Once
@@ -54,7 +54,7 @@ namespace message_buffer {
  * in the manager.
  *
  * # endpoint_message_manager:
- * An object that manages connection_message_managers. Impliments the
+ * An object that manages connection_message_managers. Implements the
  * get_message_manager() method. This is used once by each connection to
  * request the message manager that they are supposed to use to manage message
  * buffers for their own use.

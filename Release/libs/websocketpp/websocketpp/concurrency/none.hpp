@@ -45,7 +45,7 @@ public:
 /// A fake lock guard implementation that does nothing
 class fake_lock_guard {
 public:
-    explicit fake_lock_guard(fake_mutex foo) {}
+    explicit fake_lock_guard(fake_mutex) {}
     ~fake_lock_guard() {}
 };
 } // namespace none_impl

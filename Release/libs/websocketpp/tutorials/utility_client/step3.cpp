@@ -48,7 +48,7 @@ public:
         m_endpoint.init_asio();
         m_endpoint.start_perpetual();
 
-        m_thread.reset(new websocketpp::lib::thread(&client::run, &m_endpoint));
+        m_thread = websocketpp::lib::make_shared<websocketpp::lib::thread>(&client::run, &m_endpoint);
     }
 private:
     client m_endpoint;

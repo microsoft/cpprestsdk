@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Peter Thorson. All rights reserved.
+ * Copyright (c) 2014, Peter Thorson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -36,7 +36,6 @@
 
 #include <boost/asio.hpp>
 
-#include <iostream>
 #include <string>
 
 // Interface that sockets/security policies must implement
@@ -98,14 +97,14 @@ namespace error {
         missing_tls_init_handler,
 
         /// TLS Handshake Failed
-        tls_handshake_failed,
+        tls_handshake_failed
     };
 } // namespace error
 
 /// Error category related to asio transport socket policies
 class socket_category : public lib::error_category {
 public:
-    const char *name() const _WEBSOCKETPP_NOEXCEPT_TOKEN_ {
+    char const * name() const _WEBSOCKETPP_NOEXCEPT_TOKEN_ {
         return "websocketpp.transport.asio.socket";
     }
 
@@ -133,7 +132,7 @@ public:
     }
 };
 
-inline const lib::error_category& get_socket_category() {
+inline lib::error_category const & get_socket_category() {
     static socket_category instance;
     return instance;
 }

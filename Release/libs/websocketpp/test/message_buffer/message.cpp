@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Peter Thorson. All rights reserved.
+ * Copyright (c) 2014, Peter Thorson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -35,38 +35,38 @@
 
 template <typename message>
 struct stub {
-	typedef websocketpp::lib::weak_ptr<stub> weak_ptr;
-	typedef websocketpp::lib::shared_ptr<stub> ptr;
+    typedef websocketpp::lib::weak_ptr<stub> weak_ptr;
+    typedef websocketpp::lib::shared_ptr<stub> ptr;
 
-	stub() : recycled(false) {}
+    stub() : recycled(false) {}
 
-	bool recycle(message * msg) {
-		this->recycled = true;
-		return false;
-	}
+    bool recycle(message *) {
+        this->recycled = true;
+        return false;
+    }
 
-	bool recycled;
+    bool recycled;
 };
 
 BOOST_AUTO_TEST_CASE( basic_size_check ) {
-	typedef websocketpp::message_buffer::message<stub> message_type;
-	typedef stub<message_type> stub_type;
+    typedef websocketpp::message_buffer::message<stub> message_type;
+    typedef stub<message_type> stub_type;
 
-	stub_type::ptr s(new stub_type());
-	message_type::ptr msg(new message_type(s,websocketpp::frame::opcode::TEXT,500));
+    stub_type::ptr s(new stub_type());
+    message_type::ptr msg(new message_type(s,websocketpp::frame::opcode::TEXT,500));
 
-	BOOST_CHECK(msg->get_payload().capacity() >= 500);
+    BOOST_CHECK(msg->get_payload().capacity() >= 500);
 }
 
 BOOST_AUTO_TEST_CASE( recycle ) {
-	typedef websocketpp::message_buffer::message<stub> message_type;
-	typedef stub<message_type> stub_type;
+    typedef websocketpp::message_buffer::message<stub> message_type;
+    typedef stub<message_type> stub_type;
 
-	stub_type::ptr s(new stub_type());
-	message_type::ptr msg(new message_type(s,websocketpp::frame::opcode::TEXT,500));
+    stub_type::ptr s(new stub_type());
+    message_type::ptr msg(new message_type(s,websocketpp::frame::opcode::TEXT,500));
 
-	BOOST_CHECK(s->recycled == false);
-	BOOST_CHECK(msg->recycle() == false);
-	BOOST_CHECK(s->recycled == true);
+    BOOST_CHECK(s->recycled == false);
+    BOOST_CHECK(msg->recycle() == false);
+    BOOST_CHECK(s->recycled == true);
 }
 

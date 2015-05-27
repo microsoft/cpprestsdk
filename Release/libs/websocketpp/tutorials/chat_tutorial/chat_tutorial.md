@@ -2,7 +2,7 @@ Chat Tutorial
 =============
 
 Goals of this tutorial:
-- Impliment a realtime websocket chat server
+- Implement a realtime websocket chat server
 
 
 Server

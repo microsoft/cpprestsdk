@@ -43,13 +43,13 @@ void on_message(client* c, websocketpp::connection_hdl hdl, message_ptr msg) {
 
 int main(int argc, char* argv[]) {
 
-	std::string uri = "ws://localhost:9001";
+    std::string uri = "ws://localhost:9001";
 
-	if (argc == 2) {
-	    uri = argv[1];
-	}
+    if (argc == 2) {
+        uri = argv[1];
+    }
 
-	try {
+    try {
         // We expect there to be a lot of errors, so suppress them
         sip_client.clear_access_channels(websocketpp::log::alevel::all);
         sip_client.clear_error_channels(websocketpp::log::elevel::all);
@@ -69,7 +69,7 @@ int main(int argc, char* argv[]) {
 
         sip_client.connect(con);
 
-	    // Start the ASIO io_service run loop
+        // Start the ASIO io_service run loop
         sip_client.run();
 
         while(!received) {
@@ -78,11 +78,7 @@ int main(int argc, char* argv[]) {
 
         std::cout << "done" << std::endl;
 
-    } catch (const std::exception & e) {
+    } catch (websocketpp::exception const & e) {
         std::cout << e.what() << std::endl;
-    } catch (websocketpp::lib::error_code e) {
-        std::cout << e.message() << std::endl;
-    } catch (...) {
-        std::cout << "other exception" << std::endl;
     }
 }

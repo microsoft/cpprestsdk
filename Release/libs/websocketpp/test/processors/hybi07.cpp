@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Peter Thorson. All rights reserved.
+ * Copyright (c) 2014, Peter Thorson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -40,13 +40,13 @@
 #include <websocketpp/random/none.hpp>
 
 struct stub_config {
-	typedef websocketpp::http::parser::request request_type;
-	typedef websocketpp::http::parser::response response_type;
+    typedef websocketpp::http::parser::request request_type;
+    typedef websocketpp::http::parser::response response_type;
 
-	typedef websocketpp::message_buffer::message
-		<websocketpp::message_buffer::alloc::con_msg_manager> message_type;
-	typedef websocketpp::message_buffer::alloc::con_msg_manager<message_type>
-		con_msg_manager_type;
+    typedef websocketpp::message_buffer::message
+        <websocketpp::message_buffer::alloc::con_msg_manager> message_type;
+    typedef websocketpp::message_buffer::alloc::con_msg_manager<message_type>
+        con_msg_manager_type;
 
     typedef websocketpp::random::none::int_generator<uint32_t> rng_type;
 
@@ -67,10 +67,10 @@ struct stub_config {
 };
 
 BOOST_AUTO_TEST_CASE( exact_match ) {
-	stub_config::request_type r;
+    stub_config::request_type r;
     stub_config::response_type response;
-	stub_config::con_msg_manager_type::ptr msg_manager;
-	stub_config::rng_type rng;
+    stub_config::con_msg_manager_type::ptr msg_manager;
+    stub_config::rng_type rng;
     websocketpp::processor::hybi07<stub_config> p(false,true,msg_manager,rng);
     websocketpp::lib::error_code ec;
 
@@ -101,10 +101,10 @@ BOOST_AUTO_TEST_CASE( exact_match ) {
 }
 
 BOOST_AUTO_TEST_CASE( non_get_method ) {
-	stub_config::request_type r;
+    stub_config::request_type r;
     stub_config::response_type response;
-	stub_config::con_msg_manager_type::ptr msg_manager;
-	stub_config::rng_type rng;
+    stub_config::con_msg_manager_type::ptr msg_manager;
+    stub_config::rng_type rng;
     websocketpp::processor::hybi07<stub_config> p(false,true,msg_manager,rng);
     websocketpp::lib::error_code ec;
 
@@ -119,10 +119,10 @@ BOOST_AUTO_TEST_CASE( non_get_method ) {
 }
 
 BOOST_AUTO_TEST_CASE( old_http_version ) {
-	stub_config::request_type r;
+    stub_config::request_type r;
     stub_config::response_type response;
-	stub_config::con_msg_manager_type::ptr msg_manager;
-	stub_config::rng_type rng;
+    stub_config::con_msg_manager_type::ptr msg_manager;
+    stub_config::rng_type rng;
     websocketpp::processor::hybi07<stub_config> p(false,true,msg_manager,rng);
     websocketpp::lib::error_code ec;
 
@@ -137,10 +137,10 @@ BOOST_AUTO_TEST_CASE( old_http_version ) {
 }
 
 BOOST_AUTO_TEST_CASE( missing_handshake_key1 ) {
-	stub_config::request_type r;
+    stub_config::request_type r;
     stub_config::response_type response;
-	stub_config::con_msg_manager_type::ptr msg_manager;
-	stub_config::rng_type rng;
+    stub_config::con_msg_manager_type::ptr msg_manager;
+    stub_config::rng_type rng;
     websocketpp::processor::hybi07<stub_config> p(false,true,msg_manager,rng);
     websocketpp::lib::error_code ec;
 
@@ -155,10 +155,10 @@ BOOST_AUTO_TEST_CASE( missing_handshake_key1 ) {
 }
 
 BOOST_AUTO_TEST_CASE( missing_handshake_key2 ) {
-	stub_config::request_type r;
+    stub_config::request_type r;
     stub_config::response_type response;
-	stub_config::con_msg_manager_type::ptr msg_manager;
-	stub_config::rng_type rng;
+    stub_config::con_msg_manager_type::ptr msg_manager;
+    stub_config::rng_type rng;
     websocketpp::processor::hybi07<stub_config> p(false,true,msg_manager,rng);
     websocketpp::lib::error_code ec;
 
@@ -173,10 +173,10 @@ BOOST_AUTO_TEST_CASE( missing_handshake_key2 ) {
 }
 
 BOOST_AUTO_TEST_CASE( bad_host ) {
-	stub_config::request_type r;
+    stub_config::request_type r;
     stub_config::response_type response;
-	stub_config::con_msg_manager_type::ptr msg_manager;
-	stub_config::rng_type rng;
+    stub_config::con_msg_manager_type::ptr msg_manager;
+    stub_config::rng_type rng;
     websocketpp::processor::hybi07<stub_config> p(false,true,msg_manager,rng);
     websocketpp::lib::error_code ec;
 

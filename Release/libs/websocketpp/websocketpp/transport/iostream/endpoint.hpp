@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Peter Thorson. All rights reserved.
+ * Copyright (c) 2014, Peter Thorson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,13 +28,15 @@
 #ifndef WEBSOCKETPP_TRANSPORT_IOSTREAM_HPP
 #define WEBSOCKETPP_TRANSPORT_IOSTREAM_HPP
 
-#include <websocketpp/common/memory.hpp>
-#include <websocketpp/logger/levels.hpp>
-
 #include <websocketpp/transport/base/endpoint.hpp>
 #include <websocketpp/transport/iostream/connection.hpp>
 
-#include <iostream>
+#include <websocketpp/uri.hpp>
+#include <websocketpp/logger/levels.hpp>
+
+#include <websocketpp/common/memory.hpp>
+
+#include <ostream>
 
 namespace websocketpp {
 namespace transport {
@@ -114,6 +116,44 @@ public:
     bool is_secure() const {
         return m_is_secure;
     }
+    
+    /// Sets the write handler
+    /**
+     * The write handler is called when the iostream transport receives data
+     * that needs to be written to the appropriate output location. This handler
+     * can be used in place of registering an ostream for output.
+     *
+     * The signature of the handler is 
+     * `lib::error_code (connection_hdl, char const *, size_t)` The
+     * code returned will be reported and logged by the core library.
+     *
+     * @since 0.5.0
+     *
+     * @param h The handler to call on connection shutdown.
+     */
+    void set_write_handler(write_handler h) {
+        m_write_handler = h;
+    }
+    
+    /// Sets the shutdown handler
+    /**
+     * The shutdown handler is called when the iostream transport receives a
+     * notification from the core library that it is finished with all read and
+     * write operations and that the underlying transport can be cleaned up.
+     *
+     * If you are using iostream transport with another socket library, this is
+     * a good time to close/shutdown the socket for this connection.
+     *
+     * The signature of the handler is lib::error_code (connection_hdl). The
+     * code returned will be reported and logged by the core library.
+     *
+     * @since 0.5.0
+     *
+     * @param h The handler to call on connection shutdown.
+     */
+    void set_shutdown_handler(shutdown_handler h) {
+        m_shutdown_handler = h;
+    }
 protected:
     /// Initialize logging
     /**
@@ -140,7 +180,7 @@ protected:
      * @param u A URI pointer to the URI to connect to.
      * @param cb The function to call back with the results when complete.
      */
-    void async_connect(transport_con_ptr tcon, uri_ptr u, connect_handler cb) {
+    void async_connect(transport_con_ptr, uri_ptr, connect_handler cb) {
         cb(lib::error_code());
     }
 
@@ -156,10 +196,19 @@ protected:
      */
     lib::error_code init(transport_con_ptr tcon) {
         tcon->register_ostream(m_output_stream);
+        if (m_shutdown_handler) {
+            tcon->set_shutdown_handler(m_shutdown_handler);
+        }
+        if (m_write_handler) {
+            tcon->set_write_handler(m_write_handler);
+        }
         return lib::error_code();
     }
 private:
     std::ostream *  m_output_stream;
+    shutdown_handler m_shutdown_handler;
+    write_handler   m_write_handler;
+    
     elog_type *     m_elog;
     alog_type *     m_alog;
     bool            m_is_secure;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Peter Thorson. All rights reserved.
+ * Copyright (c) 2014, Peter Thorson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,14 +28,13 @@
 #ifndef WEBSOCKETPP_PROCESSOR_BASE_HPP
 #define WEBSOCKETPP_PROCESSOR_BASE_HPP
 
-#include <websocketpp/common/cpp11.hpp>
-#include <websocketpp/common/system_error.hpp>
-
 #include <websocketpp/close.hpp>
 #include <websocketpp/utilities.hpp>
 #include <websocketpp/uri.hpp>
 
-#include <map>
+#include <websocketpp/common/cpp11.hpp>
+#include <websocketpp/common/system_error.hpp>
+
 #include <string>
 
 namespace websocketpp {
@@ -151,7 +150,11 @@ enum processor_errors {
     extension_parse_error,
 
     /// Extension related operation was ignored because extensions are disabled
-    extensions_disabled
+    extensions_disabled,
+    
+    /// Short Ke3 read. Hybi00 requires a third key to be read from the 8 bytes
+    /// after the handshake. Less than 8 bytes were read.
+    short_key3
 };
 
 /// Category for processor errors
@@ -223,6 +226,8 @@ public:
                 return "Error parsing extension header";
             case error::extensions_disabled:
                 return "Extensions are disabled";
+            case error::short_key3:
+                return "Short Hybi00 Key 3 read";
             default:
                 return "Unknown";
         }

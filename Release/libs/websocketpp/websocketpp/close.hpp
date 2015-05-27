@@ -1,6 +1,6 @@
 
 /*
- * Copyright (c) 2013, Peter Thorson. All rights reserved.
+ * Copyright (c) 2014, Peter Thorson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -150,6 +150,21 @@ namespace status {
      * illegal on the wire.
      */
     static value const tls_handshake = 1015;
+    
+    /// A generic subprotocol error
+    /**
+     * Indicates that a subprotocol error occurred. Typically this involves
+     * receiving a message that is not formatted as a valid message for the
+     * subprotocol in use.
+     */
+    static value const subprotocol_error = 3000;
+    
+    /// A invalid subprotocol data
+    /**
+     * Indicates that data was received that violated the specification of the
+     * subprotocol in use.
+     */
+    static value const invalid_subprotocol_data = 3001;
 
     /// First value in range reserved for future protocol use
     static value const rsv_start = 1016;
@@ -235,6 +250,10 @@ namespace status {
                 return "Internal endpoint error";
             case tls_handshake:
                 return "TLS handshake failure";
+            case subprotocol_error:
+                return "Generic subprotocol error";
+            case invalid_subprotocol_data:
+                return "Invalid subprotocol data";
             default:
                 return "Unknown";
         }

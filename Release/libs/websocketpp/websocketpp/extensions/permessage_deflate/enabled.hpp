@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Peter Thorson. All rights reserved.
+ * Copyright (c) 2014, Peter Thorson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -46,13 +46,13 @@
 namespace websocketpp {
 namespace extensions {
 
-/// Implimentation of the draft permessage-deflate WebSocket extension
+/// Implementation of the draft permessage-deflate WebSocket extension
 /**
  * ### permessage-deflate interface
  *
  * **is_implemented**\n
  * `bool is_implemented()`\n
- * Returns whether or not the object impliments the extension or not
+ * Returns whether or not the object implements the extension or not
  *
  * **is_enabled**\n
  * `bool is_enabled()`\n
@@ -287,11 +287,11 @@ public:
         return lib::error_code();
     }
 
-    /// Test if this object impliments the permessage-deflate specification
+    /// Test if this object implements the permessage-deflate specification
     /**
-     * Because this object does impliment it, it will always return true.
+     * Because this object does implieent it, it will always return true.
      *
-     * @return Whether or not this object impliments permessage-deflate
+     * @return Whether or not this object implements permessage-deflate
      */
     bool is_implemented() const {
         return true;
@@ -434,7 +434,7 @@ public:
      * @param response The server response attribute list to validate
      * @return Validation error or 0 on success
      */
-    lib::error_code validate_offer(http::attribute_list const & response) {
+    lib::error_code validate_offer(http::attribute_list const &) {
         return make_error_code(error::general);
     }
 
@@ -643,7 +643,7 @@ private:
                 m_s2c_max_window_bits = bits;
                 break;
             case mode::largest:
-                m_s2c_max_window_bits = std::min(bits,m_s2c_max_window_bits);
+                m_s2c_max_window_bits = (std::min)(bits,m_s2c_max_window_bits);
                 break;
             case mode::smallest:
                 m_s2c_max_window_bits = min_s2c_max_window_bits;

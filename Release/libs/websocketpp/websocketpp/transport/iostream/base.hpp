@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Peter Thorson. All rights reserved.
+ * Copyright (c) 2014, Peter Thorson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,6 +30,8 @@
 
 #include <websocketpp/common/system_error.hpp>
 #include <websocketpp/common/cpp11.hpp>
+#include <websocketpp/common/functional.hpp>
+#include <websocketpp/common/connection_hdl.hpp>
 
 #include <string>
 
@@ -37,6 +39,14 @@ namespace websocketpp {
 namespace transport {
 /// Transport policy that uses STL iostream for I/O and does not support timers
 namespace iostream {
+
+/// The type and signature of the callback used by iostream transport to write
+typedef lib::function<lib::error_code(connection_hdl, char const *, size_t)> 
+    write_handler;
+
+/// The type and signature of the callback used by iostream transport to signal 
+/// a transport shutdown.
+typedef lib::function<lib::error_code(connection_hdl)> shutdown_handler;
 
 /// iostream transport errors
 namespace error {

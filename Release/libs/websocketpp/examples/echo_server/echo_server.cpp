@@ -28,10 +28,10 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
 }
 
 int main() {
-	// Create a server endpoint
+    // Create a server endpoint
     server echo_server;
 
-	try {
+    try {
         // Set logging settings
         echo_server.set_access_channels(websocketpp::log::alevel::all);
         echo_server.clear_access_channels(websocketpp::log::alevel::frame_payload);
@@ -48,12 +48,10 @@ int main() {
         // Start the server accept loop
         echo_server.start_accept();
 
-	    // Start the ASIO io_service run loop
+        // Start the ASIO io_service run loop
         echo_server.run();
-    } catch (const std::exception & e) {
+    } catch (websocketpp::exception const & e) {
         std::cout << e.what() << std::endl;
-    } catch (websocketpp::lib::error_code e) {
-        std::cout << e.message() << std::endl;
     } catch (...) {
         std::cout << "other exception" << std::endl;
     }

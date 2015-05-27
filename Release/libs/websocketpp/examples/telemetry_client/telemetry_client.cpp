@@ -37,13 +37,13 @@ public:
 
     // This method will block until the connection is complete
     void run(const std::string & uri) {
-    	// Create a new connection to the given URI
+        // Create a new connection to the given URI
         websocketpp::lib::error_code ec;
         client::connection_ptr con = m_client.get_connection(uri, ec);
         if (ec) {
-        	m_client.get_alog().write(websocketpp::log::alevel::app,
-                	"Get Connection Error: "+ec.message());
-        	return;
+            m_client.get_alog().write(websocketpp::log::alevel::app,
+                    "Get Connection Error: "+ec.message());
+            return;
         }
 
         // Grab a handle for this connection so we can talk to it in a thread
@@ -65,7 +65,7 @@ public:
     }
 
     // The open handler will signal that we are ready to start sending telemetry
-    void on_open(websocketpp::connection_hdl hdl) {
+    void on_open(websocketpp::connection_hdl) {
         m_client.get_alog().write(websocketpp::log::alevel::app,
             "Connection opened, starting telemetry!");
 
@@ -74,7 +74,7 @@ public:
     }
 
     // The close handler will signal that we should stop sending telemetry
-    void on_close(websocketpp::connection_hdl hdl) {
+    void on_close(websocketpp::connection_hdl) {
         m_client.get_alog().write(websocketpp::log::alevel::app,
             "Connection closed, stopping telemetry!");
 
@@ -83,7 +83,7 @@ public:
     }
 
     // The fail handler will signal that we should stop sending telemetry
-    void on_fail(websocketpp::connection_hdl hdl) {
+    void on_fail(websocketpp::connection_hdl) {
         m_client.get_alog().write(websocketpp::log::alevel::app,
             "Connection failed, stopping telemetry!");
 
@@ -128,7 +128,7 @@ public:
             // in this simple example, we'll stop the telemetry loop.
             if (ec) {
                 m_client.get_alog().write(websocketpp::log::alevel::app,
-                	"Send Error: "+ec.message());
+                    "Send Error: "+ec.message());
                 break;
             }
 

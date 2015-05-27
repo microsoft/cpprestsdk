@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Peter Thorson. All rights reserved.
+ * Copyright (c) 2014, Peter Thorson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -29,7 +29,9 @@
 #define HTTP_PARSER_RESPONSE_IMPL_HPP
 
 #include <algorithm>
+#include <istream>
 #include <sstream>
+#include <string>
 
 #include <websocketpp/http/parser.hpp>
 
@@ -37,17 +39,11 @@ namespace websocketpp {
 namespace http {
 namespace parser {
 
-inline size_t response::consume(const char *buf, size_t len) {
+inline size_t response::consume(char const * buf, size_t len) {
     if (m_state == DONE) {return 0;}
 
     if (m_state == BODY) {
         return this->process_body(buf,len);
-    }
-
-    if (m_read + len > max_header_size) {
-        // exceeded max header size
-        throw exception("Maximum header size exceeded.",
-                        status_code::request_header_fields_too_large);
     }
 
     // copy new header bytes into buffer
@@ -67,13 +63,22 @@ inline size_t response::consume(const char *buf, size_t len) {
             header_delimiter + sizeof(header_delimiter) - 1
         );
 
+        m_header_bytes += (end-begin+sizeof(header_delimiter));
+        
+        if (m_header_bytes > max_header_size) {
+            // exceeded max header size
+            throw exception("Maximum header size exceeded.",
+                status_code::request_header_fields_too_large);
+        }
+
         if (end == m_buf->end()) {
             // we are out of bytes. Discard the processed bytes and copy the
             // remaining unprecessed bytes to the beginning of the buffer
             std::copy(begin,end,m_buf->begin());
             m_buf->resize(static_cast<std::string::size_type>(end-begin));
 
-            m_read +=len;
+            m_read += len;
+            m_header_bytes -= m_buf->size();
 
             return len;
         }
@@ -170,34 +175,6 @@ inline size_t response::consume(std::istream & s) {
     return total;
 }
 
-inline bool response::parse_complete(std::istream& s) {
-    // parse a complete header (ie \r\n\r\n MUST be in the input stream)
-    std::string line;
-
-    // get status line
-    std::getline(s, line);
-
-    if (line[line.size()-1] == '\r') {
-        line.erase(line.end()-1);
-
-        std::stringstream   ss(line);
-        std::string         str_val;
-        int                 int_val;
-        char                char_val[256];
-
-        ss >> str_val;
-        set_version(str_val);
-
-        ss >> int_val;
-        ss.getline(char_val,256);
-        set_status(status_code::value(int_val),std::string(char_val));
-    } else {
-        return false;
-    }
-
-    return parse_headers(s);
-}
-
 inline std::string response::raw() const {
     // TODO: validation. Make sure all required fields have been set?
 
@@ -217,7 +194,7 @@ inline void response::set_status(status_code::value code) {
     m_status_msg = get_string(code);
 }
 
-inline void response::set_status(status_code::value code, const std::string&
+inline void response::set_status(status_code::value code, std::string const &
     msg)
 {
     // TODO: validation?
@@ -255,7 +232,7 @@ inline void response::process(std::string::iterator begin,
     set_status(status_code::value(code),std::string(cursor_end+1,end));
 }
 
-inline size_t response::process_body(const char *buf, size_t len) {
+inline size_t response::process_body(char const * buf, size_t len) {
     // If no content length was set then we read forever and never set m_ready
     if (m_read == 0) {
         //m_body.append(buf,len);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Peter Thorson. All rights reserved.
+ * Copyright (c) 2014, Peter Thorson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,6 +28,9 @@
 #ifndef WEBSOCKETPP_UTILITIES_IMPL_HPP
 #define WEBSOCKETPP_UTILITIES_IMPL_HPP
 
+#include <algorithm>
+#include <string>
+
 namespace websocketpp {
 namespace utility {
 
@@ -37,7 +40,7 @@ inline std::string to_lower(std::string const & in) {
     return out;
 }
 
-inline std::string to_hex(const std::string& input) {
+inline std::string to_hex(std::string const & input) {
     std::string output;
     std::string hex = "0123456789ABCDEF";
 
@@ -50,7 +53,7 @@ inline std::string to_hex(const std::string& input) {
     return output;
 }
 
-inline std::string to_hex(const uint8_t* input,size_t length) {
+inline std::string to_hex(uint8_t const * input, size_t length) {
     std::string output;
     std::string hex = "0123456789ABCDEF";
 
@@ -67,8 +70,8 @@ inline std::string to_hex(const char* input,size_t length) {
     return to_hex(reinterpret_cast<const uint8_t*>(input),length);
 }
 
-inline std::string string_replace_all(std::string subject, const std::string&
-    search, const std::string& replace)
+inline std::string string_replace_all(std::string subject, std::string const &
+    search, std::string const & replace)
 {
     size_t pos = 0;
     while((pos = subject.find(search, pos)) != std::string::npos) {

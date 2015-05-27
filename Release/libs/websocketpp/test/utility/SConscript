@@ -16,11 +16,13 @@ objs = env.Object('uri_boost.o', ["uri.cpp"], LIBS = BOOST_LIBS)
 objs += env.Object('utilities_boost.o', ["utilities.cpp"], LIBS = BOOST_LIBS)
 objs += env.Object('close_boost.o', ["close.cpp"], LIBS = BOOST_LIBS)
 objs += env.Object('sha1_boost.o', ["sha1.cpp"], LIBS = BOOST_LIBS)
+objs += env.Object('error_boost.o', ["error.cpp"], LIBS = BOOST_LIBS)
 prgs = env.Program('test_uri_boost', ["uri_boost.o"], LIBS = BOOST_LIBS)
 prgs += env.Program('test_utility_boost', ["utilities_boost.o"], LIBS = BOOST_LIBS)
 prgs += env.Program('test_frame', ["frame.cpp"], LIBS = BOOST_LIBS)
 prgs += env.Program('test_close_boost', ["close_boost.o"], LIBS = BOOST_LIBS)
 prgs += env.Program('test_sha1_boost', ["sha1_boost.o"], LIBS = BOOST_LIBS)
+prgs += env.Program('test_error_boost', ["error_boost.o"], LIBS = BOOST_LIBS)
 
 if env_cpp11.has_key('WSPP_CPP11_ENABLED'):
    BOOST_LIBS_CPP11 = boostlibs(['unit_test_framework'],env_cpp11) + [platform_libs] + [polyfill_libs]
@@ -28,9 +30,11 @@ if env_cpp11.has_key('WSPP_CPP11_ENABLED'):
    objs += env_cpp11.Object('uri_stl.o', ["uri.cpp"], LIBS = BOOST_LIBS_CPP11)
    objs += env_cpp11.Object('close_stl.o', ["close.cpp"], LIBS = BOOST_LIBS_CPP11)
    objs += env_cpp11.Object('sha1_stl.o', ["sha1.cpp"], LIBS = BOOST_LIBS_CPP11)
+   objs += env_cpp11.Object('error_stl.o', ["error.cpp"], LIBS = BOOST_LIBS_CPP11)
    prgs += env_cpp11.Program('test_utility_stl', ["utilities_stl.o"], LIBS = BOOST_LIBS_CPP11)
    prgs += env_cpp11.Program('test_uri_stl', ["uri_stl.o"], LIBS = BOOST_LIBS_CPP11)
    prgs += env_cpp11.Program('test_close_stl', ["close_stl.o"], LIBS = BOOST_LIBS_CPP11)
    prgs += env_cpp11.Program('test_sha1_stl', ["sha1_stl.o"], LIBS = BOOST_LIBS_CPP11)
+   prgs += env_cpp11.Program('test_error_stl', ["error_stl.o"], LIBS = BOOST_LIBS_CPP11)
 
 Return('prgs')

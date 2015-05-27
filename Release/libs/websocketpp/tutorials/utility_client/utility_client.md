@@ -221,7 +221,7 @@ int main() {
 
 _Opening WebSocket connections_
 
-This step adds two new commands to app_client. The ability to open a new connection and the ability to view information about a previously opened connection. Every connection that gets opened will be assigned an integer connection id that the user of the program can use to interact with that connection.
+This step adds two new commands to utility_client. The ability to open a new connection and the ability to view information about a previously opened connection. Every connection that gets opened will be assigned an integer connection id that the user of the program can use to interact with that connection.
 
 #### New Connection Metadata Object
 
@@ -263,7 +263,7 @@ A new WebSocket connection is initiated via a three step process. First, a conne
 > **Exception throwing varients**
 > All user facing endpoint methods that take and use an `error_code` parameter have a version that throws an exception instead. These methods are identical in function and signature except for the lack of the final ec parameter. The type of the exception thrown is `websocketpp::exception`. This type derives from `std::exception` so it can be caught by catch blocks grabbing generic `std::exception`s. The `websocketpp::exception::code()` method may be used to extract the machine readable `error_code` value from an exception.
 >
-> For clarity about error handling the app_client example uses exclusively the exception free varients of these methods. Your application may choose to use either.
+> For clarity about error handling the utility_client example uses exclusively the exception free varients of these methods. Your application may choose to use either.
 
 If connection creation succeeds, the next sequential connection ID is generated and a `connection_metadata` object is inserted into the connection list under that ID. Initially the metadata object stores the connection ID, the `connection_hdl`, and the URI the connection was opened to.
 
@@ -286,7 +286,7 @@ Next, the connection request is configured. For this step the only configuration
 >
 > The function signature of each handler can be looked up in the list above in the manual. In general, all handlers include the `connection_hdl` identifying which connection this even is associated with as the first parameter. Some handlers (such as the message handler) include additional parameters. Most handlers have a void return value but some (`validate`, `ping`, `tls_init`) do not. The specific meanings of the return values are documented in the handler list linked above.
 
-`app_client` registers an open and a fail handler. We will use these to track whether each connection was successfully opened or failed. If it successfully opens, we will gather some information from the opening handshake and store it with our connection metadata.
+`utility_client` registers an open and a fail handler. We will use these to track whether each connection was successfully opened or failed. If it successfully opens, we will gather some information from the opening handshake and store it with our connection metadata.
 
 In this example we are going to set connection specific handlers that are bound directly to the metadata object associated with our connection. This allows us to avoid performing a lookup in each handler to find the metadata object we plan to update which is a bit more efficient.
 
@@ -591,7 +591,7 @@ void close(int id, websocketpp::close::status::value code) {
 
 #### Add close option to the command loop and help message
 
-A close option is added to the command loop. It takes a connection ID and optionally a close code and a close reason. If no code is specified the default of 1000/Normal is used. If no reason is specified, none is sent. The `endpoint::send` method will do some error checking and abort the close request if you try and send an invalid code or a reason with invalid UTF8 formatting. Reason strings longer than 125 characters will be truncated.
+A close option is added to the command loop. It takes a connection ID and optionally a close code and a close reason. If no code is specified the default of 1000/Normal is used. If no reason is specified, none is sent. The `endpoint::close` method will do some error checking and abort the close request if you try and send an invalid code or a reason with invalid UTF8 formatting. Reason strings longer than 125 characters will be truncated.
 
 An entry is also added to the help system to describe how the new command may be used.
 
@@ -654,7 +654,7 @@ Enter Command: close 0 1001 example message
 Enter Command: show 0
 > URI: ws://localhost:9002
 > Status: Closed
-> Remote Server: WebSocket++/0.3.0-alpha4
+> Remote Server: WebSocket++/0.4.0
 > Error/close reason: close code: 1001 (Going away), close reason:  example message
 Enter Command: connect ws://localhost:9002
 > Created connection with id 1
@@ -668,9 +668,146 @@ Enter Command: quit
 
 _Sending and receiving messages_
 
-- Sending a messages
-- terminology: WebSocket opcodes, text vs binary messages
-- Receiving a message
+This step adds a command to send a message on a given connection and updates the show command to print a transcript of all sent and received messages for that connection.
+
+> ###### Terminology: WebSocket message types (opcodes)
+> WebSocket messages have types indicated by their opcode. The protocol currently specifies two different opcodes for data messages, text and binary. Text messages represent UTF8 text and will be validated as such. Binary messages represent raw binary bytes and are passed through directly with no validation. 
+>
+> WebSocket++ provides the values `websocketpp::frame::opcode::text` and `websocketpp::frame::opcode::binary` that can be used to direct how outgoing messages should be sent and to check how incoming messages are formatted.
+
+#### Sending Messages
+
+Messages are sent using `endpoint::send`. This is a thread safe method that may be called from anywhere to queue a message for sending on the specified connection. There are three send overloads for use with different scenarios. 
+
+Each method takes a `connection_hdl` to indicate which connection to send the message on as well as a `frame::opcode::value` to indicate which opcode to label the message as. All overloads are also available with an exception free varient that fills in a a status/error code instead of throwing.
+
+The first overload, `connection_hdl hdl, std::string const & payload, frame::opcode::value op`, takes a `std::string`. The string contents are copied into an internal buffer and can be safely modified after calling send.
+
+The second overload, `connection_hdl hdl, void const * payload, size_t len, frame::opcode::value op`, takes a void * buffer and length. The buffer contents are copied and can be safely modified after calling send.
+
+The third overload, `connection_hdl hdl, message_ptr msg`, takes a WebSocket++ `message_ptr`. This overload allows a message to be constructed in place before the call to send. It also may allow a single message buffer to be sent multiple times, including to multiple connections, without copying. Whether or not this actually happens depends on other factors such as whether compression is enabled. The contents of the message buffer may not be safely modified after being sent.
+
+> ###### Terminology: Outgoing WebSocket message queueing & flow control
+> In many configurations, such as when the Asio based transport is in use, WebSocket++ is an asynchronous system. As such the `endpoint::send` method may return before any bytes are actually written to the outgoing socket. In cases where send is called multiple times in quick succession messages may be coalesced and sent in the same operation or even the same TCP packet. When this happens the message boundaries are preserved (each call to send will produce a separate message).
+>
+> In the case of applications that call send from inside a handler this means that no messages will be written to the socket until that handler returns. If you are planning to send many messages in this manor or need a message to be written on the wire before continuing you should look into using multiple threads or the built in timer/interrupt handler functionality.
+>
+> If the outgoing socket link is slow messages may build up in this queue. You can use `connection::get_buffered_amount` to query the current size of the written message queue to decide if you want to change your sending behavior.
+
+#### Add send method to `websocket_endpoint`
+
+Like the close method, send will start by looking up the given connection ID in the connection list.  Next a send request is sent to the connection's handle with the specified WebSocket message and the text opcode. Finally, we record the sent message with our connection metadata object so later our show connection command can print a list of messages sent.
+
+```cpp
+void send(int id, std::string message) {
+    websocketpp::lib::error_code ec;
+    
+    con_list::iterator metadata_it = m_connection_list.find(id);
+    if (metadata_it == m_connection_list.end()) {
+        std::cout << "> No connection found with id " << id << std::endl;
+        return;
+    }
+    
+    m_endpoint.send(metadata_it->second->get_hdl(), message, websocketpp::frame::opcode::text, ec);
+    if (ec) {
+        std::cout << "> Error sending message: " << ec.message() << std::endl;
+        return;
+    }
+    
+    metadata_it->second->record_sent_message(message);
+}
+```
+
+#### Add send option to the command loop and help message
+
+A send option is added to the command loop. It takes a connection ID and a text message to send. An entry is also added to the help system to describe how the new command may be used.
+
+```cpp
+else if (input.substr(0,4) == "send") {
+    std::stringstream ss(input);
+        
+        std::string cmd;
+        int id;
+        std::string message = "";
+        
+        ss >> cmd >> id;
+        std::getline(ss,message);
+        
+        endpoint.send(id, message);
+}
+```
+
+#### Add glue to `connection_metadata` for storing sent messages
+
+In order to store messages sent on this connection some code is added to `connection_metadata`. This includes a new data member `std::vector<std::string> m_messages` to keep track of all messages sent and received as well as a method for adding a sent message in that list:
+
+```cpp
+void record_sent_message(std::string message) {
+    m_messages.push_back(">> " + message);
+}
+```
+
+Finally the connection metadata output operator is updated to also print a list of processed messages:
+
+```cpp
+out << "> Messages Processed: (" << data.m_messages.size() << ") \n";
+
+std::vector<std::string>::const_iterator it;
+for (it = data.m_messages.begin(); it != data.m_messages.end(); ++it) {
+    out << *it << "\n";
+}
+```
+
+#### Receiving Messages
+
+Messages are received by registering a message handler. This handler will be called once per message received and its signature is `void on_message(websocketpp::connection_hdl hdl, endpoint::message_ptr msg)`. The `connection_hdl`, like the similar parameter from the other handlers is a handle for the connection that the message was received on. The `message_ptr` is a pointer to an object that can be queried for the message payload, opcode, and other metadata. Note that the message_ptr type, as well as its underlying message type, is dependent on how your endpoint is configured and may be different for different configs.
+
+#### Add a message handler to method to `connection_metadata`
+
+The message receiving behave that we are implementing will be to collect all messages sent and received and to print them in order when the show connection command is run. The sent messages are already being added to that list. Now we add a message handler that pushes received messages to the list as well. Text messages are pushed as-is. Binary messages are first converted to printable hexadecimal format.
+
+```cpp
+void on_message(websocketpp::connection_hdl hdl, client::message_ptr msg) {
+    if (msg->get_opcode() == websocketpp::frame::opcode::text) {
+        m_messages.push_back(msg->get_payload());
+    } else {
+        m_messages.push_back(websocketpp::utility::to_hex(msg->get_payload()));
+    }
+}
+```
+
+In order to have this handler called when new messages are received we also register it with our connection. Note that unlike most other handlers, the message handler has two parameters and thus needs two placeholders.
+
+```cpp
+con->set_message_handler(websocketpp::lib::bind(
+    &connection_metadata::on_message,
+    metadata_ptr,
+    websocketpp::lib::placeholders::_1,
+    websocketpp::lib::placeholders::_2
+));
+```
+
+#### Build
+
+There are no changes to the build instructions from step 5
+
+#### Run
+
+In this example run we are connecting to the WebSocket++ example echo_server. This server will repeat any message we send back to it. You can also try testing this with the echo server at `ws://echo.websocket.org` with similar results.
+
+```
+Enter Command: connect ws://localhost:9002
+> Created connection with id 0
+Enter Command: send 0 example message
+Enter Command: show 0
+> URI: ws://localhost:9002
+> Status: Open
+> Remote Server: WebSocket++/0.4.0
+> Error/close reason: N/A
+> Messages Processed: (2)
+>>  example message
+<<  example message
+```
 
 ### Step 7
 

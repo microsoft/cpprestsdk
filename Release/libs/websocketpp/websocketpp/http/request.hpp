@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Peter Thorson. All rights reserved.
+ * Copyright (c) 2014, Peter Thorson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,6 +28,8 @@
 #ifndef HTTP_PARSER_REQUEST_HPP
 #define HTTP_PARSER_REQUEST_HPP
 
+#include <string>
+
 #include <websocketpp/common/memory.hpp>
 #include <websocketpp/http/parser.hpp>
 
@@ -51,11 +53,8 @@ public:
     typedef lib::shared_ptr<type> ptr;
 
     request()
-      : m_buf(new std::string())
+      : m_buf(lib::make_shared<std::string>())
       , m_ready(false) {}
-
-    /// DEPRECATED parse a complete header (\r\n\r\n MUST be in the istream)
-    bool parse_complete(std::istream& s);
 
     /// Process bytes in the input buffer
     /**
@@ -77,29 +76,32 @@ public:
      * @param len Size of byte buffer
      * @return Number of bytes processed.
      */
-    size_t consume(const char *buf, size_t len);
+    size_t consume(char const * buf, size_t len);
 
     /// Returns whether or not the request is ready for reading.
     bool ready() const {
         return m_ready;
     }
 
-    /// Returns the full raw request
-    std::string raw();
+    /// Returns the full raw request (including the body)
+    std::string raw() const;
+    
+    /// Returns the raw request headers only (similar to an HTTP HEAD request)
+    std::string raw_head() const;
 
     /// Set the HTTP method. Must be a valid HTTP token
-    void set_method(const std::string& method);
+    void set_method(std::string const & method);
 
     /// Return the request method
-    const std::string& get_method() const {
+    std::string const & get_method() const {
         return m_method;
     }
 
     /// Set the HTTP uri. Must be a valid HTTP uri
-    void set_uri(const std::string& uri);
+    void set_uri(std::string const & uri);
 
     /// Return the requested URI
-    const std::string& get_uri() const {
+    std::string const & get_uri() const {
         return m_uri;
     }
 

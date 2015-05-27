@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Peter Thorson. All rights reserved.
+ * Copyright (c) 2014, Peter Thorson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -36,6 +36,11 @@
 #if defined(_WIN32) && !defined(NOMINMAX)
     // don't define min and max macros that conflict with std::min and std::max
     #define NOMINMAX
+#endif
+
+// Bump up the variadic parameter max for Visual Studio 2012
+#if defined(_MSC_VER) && _MSC_VER == 1700
+    #define _VARIADIC_MAX 8
 #endif
 
 #endif // WEBSOCKETPP_COMMON_PLATFORMS_HPP

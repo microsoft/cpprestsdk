@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Peter Thorson. All rights reserved.
+ * Copyright (c) 2014, Peter Thorson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -130,8 +130,8 @@ BOOST_AUTO_TEST_CASE( connect_con ) {
 
     // TODO: more tests related to reading the HTTP response
     std::stringstream channel2;
-	channel2 << "e\r\n\r\n";
-	channel2 >> *con;
+    channel2 << "e\r\n\r\n";
+    channel2 >> *con;
 }
 
 BOOST_AUTO_TEST_CASE( select_subprotocol ) {
@@ -145,7 +145,7 @@ BOOST_AUTO_TEST_CASE( select_subprotocol ) {
 
     con->select_subprotocol("foo",ec);
     BOOST_CHECK_EQUAL( ec , make_error_code(websocketpp::error::server_only) );
-    BOOST_CHECK_THROW( con->select_subprotocol("foo") , websocketpp::lib::error_code );
+    BOOST_CHECK_THROW( con->select_subprotocol("foo") , websocketpp::exception );
 }
 
 BOOST_AUTO_TEST_CASE( add_subprotocols_invalid ) {
@@ -158,11 +158,11 @@ BOOST_AUTO_TEST_CASE( add_subprotocols_invalid ) {
 
     con->add_subprotocol("",ec);
     BOOST_CHECK_EQUAL( ec , make_error_code(websocketpp::error::invalid_subprotocol) );
-    BOOST_CHECK_THROW( con->add_subprotocol("") , websocketpp::lib::error_code );
+    BOOST_CHECK_THROW( con->add_subprotocol("") , websocketpp::exception );
 
     con->add_subprotocol("foo,bar",ec);
     BOOST_CHECK_EQUAL( ec , make_error_code(websocketpp::error::invalid_subprotocol) );
-    BOOST_CHECK_THROW( con->add_subprotocol("foo,bar") , websocketpp::lib::error_code );
+    BOOST_CHECK_THROW( con->add_subprotocol("foo,bar") , websocketpp::exception );
 }
 
 BOOST_AUTO_TEST_CASE( add_subprotocols ) {
