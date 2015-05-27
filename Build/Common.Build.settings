@@ -89,6 +89,9 @@
       <CompileAsManaged Condition="'$(CompileAsManagedDefault)' != ''">true</CompileAsManaged>
       <AdditionalOptions Condition="'$(DevToolsVersion)'=='140' And '$(ApplicationType)'!='Android'"> /d2notypeopt %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
+    <ResourceCompile>
+	  <AdditionalOptions>/DTARGET_NAME="$(TARGETNAME)" %(AdditionalOptions)</AdditionalOptions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
 
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -189,7 +192,7 @@
   
   <!--end paths configuration -->
   <Target Name="CopyToOutputDirectoryAlwaysError"
-          Condition="'@(Content)'!='' or '@(None)'!=''">
+         Condition="'@(Content)'!='' or '@(None)'!=''">
     <Error Condition="'%(Content.CopyToOutputDirectory)'=='Always'" Text="CopyToOutputDirectory is not allowed to be 'Always'.  Use 'PreserveNewest' instead." File="$(MSBuildProjectFile)" />
     <Error Condition="'%(None.CopyToOutputDirectory)'=='Always'" Text="CopyToOutputDirectory is not allowed to be 'Always'.  Use 'PreserveNewest' instead." File="$(MSBuildProjectFile)" />
   </Target>
@@ -222,7 +225,7 @@
   <!-- Remove all items from _ResolvedProjectReferencePaths that have non-default value for CopyToOutputDirectory   -->
   <Target Name="Cleanup_ResolvedProjectReferencePaths"
      BeforeTargets="ResolveAssemblyReferences"
-     Condition="'@(_ResolvedProjectReferencePaths)' != ''">
+    Condition="'@(_ResolvedProjectReferencePaths)' != ''">
     <Message Text="Before Cleanup_ResolvedProjectReferencePaths (CopyToOutputDirectory = %(CopyToOutputDirectory)): @(_ResolvedProjectReferencePaths)"
              Importance="Low" />
     <ItemGroup>

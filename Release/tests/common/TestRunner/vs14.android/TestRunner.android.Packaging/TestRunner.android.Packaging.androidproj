@@ -43,22 +43,22 @@
   <PropertyGroup />
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <AntPackage>
-      <AndroidAppLibName>TestRunner.android.NativeActivity</AndroidAppLibName>
+      <AndroidAppLibName>TestRunner_android</AndroidAppLibName>
     </AntPackage>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
     <AntPackage>
-      <AndroidAppLibName>TestRunner.android.NativeActivity</AndroidAppLibName>
+      <AndroidAppLibName>TestRunner_android</AndroidAppLibName>
     </AntPackage>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
     <AntPackage>
-      <AndroidAppLibName>TestRunner.android.NativeActivity</AndroidAppLibName>
+      <AndroidAppLibName>TestRunner_android</AndroidAppLibName>
     </AntPackage>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
     <AntPackage>
-      <AndroidAppLibName>TestRunner.android.NativeActivity</AndroidAppLibName>
+      <AndroidAppLibName>TestRunner_android</AndroidAppLibName>
     </AntPackage>
   </ItemDefinitionGroup>
 

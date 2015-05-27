@@ -206,6 +206,9 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\version.h">
       <Filter>Header Files\cpprest</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\resource.h">
+      <Filter>Header Files\cpprest\details</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\http_constants.dat">
