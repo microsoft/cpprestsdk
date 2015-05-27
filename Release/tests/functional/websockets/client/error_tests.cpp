@@ -79,7 +79,7 @@ TEST_FIXTURE(uri_address, send_after_close)
 #endif
 
 // Send after close for callback client
-TEST_FIXTURE(uri_address, send_after_close_callback_client)
+TEST_FIXTURE(uri_address, send_after_close_callback_client, "Ignore", "319")
 {
     std::string body("hello");
     test_websocket_server server;
