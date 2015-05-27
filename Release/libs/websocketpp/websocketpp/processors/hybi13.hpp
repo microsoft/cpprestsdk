@@ -214,14 +214,14 @@ public:
 
         // Generate handshake key
         frame::uint32_converter conv;
-        unsigned char raw_key[16];
+        std::array<unsigned char, 16> raw_key;
 
         for (int i = 0; i < 4; i++) {
             conv.i = m_rng();
-            std::copy(conv.c,conv.c+4,&raw_key[i*4]);
+            std::copy(conv.c.begin(), conv.c.begin() + 4, raw_key.begin() + i * 4);
         }
 
-        req.replace_header("Sec-WebSocket-Key",base64_encode(raw_key, 16));
+        req.replace_header("Sec-WebSocket-Key",base64_encode(&raw_key[0], 16));
 
         return lib::error_code();
     }
@@ -461,9 +461,9 @@ public:
         m_basic_header.b0 = 0x00;
         m_basic_header.b1 = 0x00;
 
-        std::fill_n(
-            m_extended_header.bytes,
-            frame::MAX_EXTENDED_HEADER_LENGTH,
+        std::fill(
+            m_extended_header.bytes.begin(),
+            m_extended_header.bytes.end(),
             0x00
         );
     }
@@ -686,7 +686,7 @@ protected:
     size_t copy_extended_header_bytes(uint8_t const * buf, size_t len) {
         size_t bytes_to_read = (std::min)(m_bytes_needed,len);
 
-        std::copy(buf,buf+bytes_to_read,m_extended_header.bytes+m_cursor);
+        std::copy(buf, buf + bytes_to_read, m_extended_header.bytes.begin() + m_cursor);
         m_cursor += bytes_to_read;
         m_bytes_needed -= bytes_to_read;
 
