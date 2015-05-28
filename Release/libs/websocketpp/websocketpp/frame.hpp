@@ -30,6 +30,7 @@
 
 #include <algorithm>
 #include <string>
+#include <array>
 
 #include <websocketpp/common/system_error.hpp>
 #include <websocketpp/common/network.hpp>

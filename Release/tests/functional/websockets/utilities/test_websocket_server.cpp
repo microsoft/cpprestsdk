@@ -32,36 +32,15 @@
 #ifdef _WIN32
 #pragma warning( push )
 #pragma warning(disable : 4100 4127 4996 4512 4701 4267 4067 4503 4005)
-#if defined(_MSC_VER) && (_MSC_VER >= 1800)
 #define _WEBSOCKETPP_CPP11_STL_
 #define _WEBSOCKETPP_CONSTEXPR_TOKEN_
 #if _MSC_VER < 1900
 #define _WEBSOCKETPP_NOEXCEPT_TOKEN_
 #endif
-#else
-#define _WEBSOCKETPP_NULLPTR_TOKEN_ 0
-#endif
 #endif /* _WIN32 */
-
-#if defined(__APPLE__)
-#include "stdlib.h"
-// Issue caused by iOS SDK 8.0
-#pragma push_macro("ntohll")
-#pragma push_macro("htonll")
-#undef ntohll
-#undef htonll
-#endif
-
-#if defined(__clang__) && (defined(ANDROID) || defined(__ANDROID__))
-#define _WEBSOCKETPP_NULLPTR_TOKEN_ 0
-#endif
 
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
-#if defined(__APPLE__)
-#pragma pop_macro("htonll")
-#pragma pop_macro("ntohll")
-#endif
 
 #ifdef _WIN32
 #pragma warning( pop )
