@@ -35,6 +35,8 @@
     <ClCompile Include="..\stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\strings.cpp" />
+    <ClCompile Include="..\strings.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
