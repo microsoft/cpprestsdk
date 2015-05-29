@@ -75,12 +75,12 @@ TEST(utf16_to_utf8)
     input.push_back(0x7FF);
     result = utility::conversions::utf16_to_utf8(input);
 #if defined(__GLIBCXX__)
-    VERIFY_ARE_EQUAL(-62, result[0]);
-    VERIFY_ARE_EQUAL(-128, result[1]);
-    VERIFY_ARE_EQUAL(-59, result[2]);
-    VERIFY_ARE_EQUAL(-115, result[3]);
-    VERIFY_ARE_EQUAL(-33, result[4]);
-    VERIFY_ARE_EQUAL(-65, result[5]);
+    VERIFY_ARE_EQUAL(194u, result[0]);
+    VERIFY_ARE_EQUAL(128u, result[1]);
+    VERIFY_ARE_EQUAL(197u, result[2]);
+    VERIFY_ARE_EQUAL(141u, result[3]);
+    VERIFY_ARE_EQUAL(223u, result[4]);
+    VERIFY_ARE_EQUAL(191u, result[5]);
 #else
     VERIFY_ARE_EQUAL(conversion.to_bytes(input), result);
 #endif
@@ -92,15 +92,15 @@ TEST(utf16_to_utf8)
     input.push_back(0xFFFF);
     result = utility::conversions::utf16_to_utf8(input);
 #if defined(__GLIBCXX__)
-    VERIFY_ARE_EQUAL(-32, result[0]);
-    VERIFY_ARE_EQUAL(-96, result[1]);
-    VERIFY_ARE_EQUAL(-128, result[2]);
-    VERIFY_ARE_EQUAL(-31, result[3]);
-    VERIFY_ARE_EQUAL(-110, result[4]);
-    VERIFY_ARE_EQUAL(-85, result[5]);
-    VERIFY_ARE_EQUAL(-17, result[6]);
-    VERIFY_ARE_EQUAL(-65, result[7]);
-    VERIFY_ARE_EQUAL(-65, result[8]);
+    VERIFY_ARE_EQUAL(224u, result[0]);
+    VERIFY_ARE_EQUAL(160u, result[1]);
+    VERIFY_ARE_EQUAL(128u, result[2]);
+    VERIFY_ARE_EQUAL(225u, result[3]);
+    VERIFY_ARE_EQUAL(146u, result[4]);
+    VERIFY_ARE_EQUAL(171u, result[5]);
+    VERIFY_ARE_EQUAL(239u, result[6]);
+    VERIFY_ARE_EQUAL(191u, result[7]);
+    VERIFY_ARE_EQUAL(191u, result[8]);
 #else
     VERIFY_ARE_EQUAL(conversion.to_bytes(input), result);
 #endif
@@ -118,18 +118,18 @@ TEST(utf16_to_utf8)
     input.push_back(0xDFFF);
     result = utility::conversions::utf16_to_utf8(input);
 #if defined(__GLIBCXX__)
-    VERIFY_ARE_EQUAL(-16, result[0]);
-    VERIFY_ARE_EQUAL(-112, result[1]);
-    VERIFY_ARE_EQUAL(-128, result[2]);
-    VERIFY_ARE_EQUAL(-128, result[3]);
-    VERIFY_ARE_EQUAL(-16, result[4]);
-    VERIFY_ARE_EQUAL(-112, result[5]);
-    VERIFY_ARE_EQUAL(-92, result[6]);
-    VERIFY_ARE_EQUAL(-87, result[7]);
-    VERIFY_ARE_EQUAL(-14, result[8]);
-    VERIFY_ARE_EQUAL(-97, result[9]);
-    VERIFY_ARE_EQUAL(-65, result[10]);
-    VERIFY_ARE_EQUAL(-65, result[11]);
+    VERIFY_ARE_EQUAL(240u, result[0]);
+    VERIFY_ARE_EQUAL(144u, result[1]);
+    VERIFY_ARE_EQUAL(128u, result[2]);
+    VERIFY_ARE_EQUAL(128u, result[3]);
+    VERIFY_ARE_EQUAL(240u, result[4]);
+    VERIFY_ARE_EQUAL(144u, result[5]);
+    VERIFY_ARE_EQUAL(164u, result[6]);
+    VERIFY_ARE_EQUAL(169u, result[7]);
+    VERIFY_ARE_EQUAL(242u, result[8]);
+    VERIFY_ARE_EQUAL(159u, result[9]);
+    VERIFY_ARE_EQUAL(191u, result[10]);
+    VERIFY_ARE_EQUAL(191u, result[11]);
 #else
     VERIFY_ARE_EQUAL(conversion.to_bytes(input), result);
 #endif
