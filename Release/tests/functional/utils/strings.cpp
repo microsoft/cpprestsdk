@@ -75,12 +75,12 @@ TEST(utf16_to_utf8)
     input.push_back(0x7FF);
     result = utility::conversions::utf16_to_utf8(input);
 #if defined(__GLIBCXX__)
-    VERIFY_ARE_EQUAL(194u, result[0]);
-    VERIFY_ARE_EQUAL(128u, result[1]);
-    VERIFY_ARE_EQUAL(197u, result[2]);
-    VERIFY_ARE_EQUAL(141u, result[3]);
-    VERIFY_ARE_EQUAL(223u, result[4]);
-    VERIFY_ARE_EQUAL(191u, result[5]);
+    VERIFY_ARE_EQUAL(194u, static_cast<unsigned char>(result[0]));
+    VERIFY_ARE_EQUAL(128u, static_cast<unsigned char>(result[1]));
+    VERIFY_ARE_EQUAL(197u, static_cast<unsigned char>(result[2]));
+    VERIFY_ARE_EQUAL(141u, static_cast<unsigned char>(result[3]));
+    VERIFY_ARE_EQUAL(223u, static_cast<unsigned char>(result[4]));
+    VERIFY_ARE_EQUAL(191u, static_cast<unsigned char>(result[5]));
 #else
     VERIFY_ARE_EQUAL(conversion.to_bytes(input), result);
 #endif
@@ -92,15 +92,15 @@ TEST(utf16_to_utf8)
     input.push_back(0xFFFF);
     result = utility::conversions::utf16_to_utf8(input);
 #if defined(__GLIBCXX__)
-    VERIFY_ARE_EQUAL(224u, result[0]);
-    VERIFY_ARE_EQUAL(160u, result[1]);
-    VERIFY_ARE_EQUAL(128u, result[2]);
-    VERIFY_ARE_EQUAL(225u, result[3]);
-    VERIFY_ARE_EQUAL(146u, result[4]);
-    VERIFY_ARE_EQUAL(171u, result[5]);
-    VERIFY_ARE_EQUAL(239u, result[6]);
-    VERIFY_ARE_EQUAL(191u, result[7]);
-    VERIFY_ARE_EQUAL(191u, result[8]);
+    VERIFY_ARE_EQUAL(224u, static_cast<unsigned char>(result[0]));
+    VERIFY_ARE_EQUAL(160u, static_cast<unsigned char>(result[1]));
+    VERIFY_ARE_EQUAL(128u, static_cast<unsigned char>(result[2]));
+    VERIFY_ARE_EQUAL(225u, static_cast<unsigned char>(result[3]));
+    VERIFY_ARE_EQUAL(146u, static_cast<unsigned char>(result[4]));
+    VERIFY_ARE_EQUAL(171u, static_cast<unsigned char>(result[5]));
+    VERIFY_ARE_EQUAL(239u, static_cast<unsigned char>(result[6]));
+    VERIFY_ARE_EQUAL(191u, static_cast<unsigned char>(result[7]));
+    VERIFY_ARE_EQUAL(191u, static_cast<unsigned char>(result[8]));
 #else
     VERIFY_ARE_EQUAL(conversion.to_bytes(input), result);
 #endif
@@ -118,18 +118,18 @@ TEST(utf16_to_utf8)
     input.push_back(0xDFFF);
     result = utility::conversions::utf16_to_utf8(input);
 #if defined(__GLIBCXX__)
-    VERIFY_ARE_EQUAL(240u, result[0]);
-    VERIFY_ARE_EQUAL(144u, result[1]);
-    VERIFY_ARE_EQUAL(128u, result[2]);
-    VERIFY_ARE_EQUAL(128u, result[3]);
-    VERIFY_ARE_EQUAL(240u, result[4]);
-    VERIFY_ARE_EQUAL(144u, result[5]);
-    VERIFY_ARE_EQUAL(164u, result[6]);
-    VERIFY_ARE_EQUAL(169u, result[7]);
-    VERIFY_ARE_EQUAL(242u, result[8]);
-    VERIFY_ARE_EQUAL(159u, result[9]);
-    VERIFY_ARE_EQUAL(191u, result[10]);
-    VERIFY_ARE_EQUAL(191u, result[11]);
+    VERIFY_ARE_EQUAL(240u, static_cast<unsigned char>(result[0]));
+    VERIFY_ARE_EQUAL(144u, static_cast<unsigned char>(result[1]));
+    VERIFY_ARE_EQUAL(128u, static_cast<unsigned char>(result[2]));
+    VERIFY_ARE_EQUAL(128u, static_cast<unsigned char>(result[3]));
+    VERIFY_ARE_EQUAL(240u, static_cast<unsigned char>(result[4]));
+    VERIFY_ARE_EQUAL(144u, static_cast<unsigned char>(result[5]));
+    VERIFY_ARE_EQUAL(164u, static_cast<unsigned char>(result[6]));
+    VERIFY_ARE_EQUAL(169u, static_cast<unsigned char>(result[7]));
+    VERIFY_ARE_EQUAL(242u, static_cast<unsigned char>(result[8]));
+    VERIFY_ARE_EQUAL(159u, static_cast<unsigned char>(result[9]));
+    VERIFY_ARE_EQUAL(191u, static_cast<unsigned char>(result[10]));
+    VERIFY_ARE_EQUAL(191u, static_cast<unsigned char>(result[11]));
 #else
     VERIFY_ARE_EQUAL(conversion.to_bytes(input), result);
 #endif
