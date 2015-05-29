@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|ARM">
@@ -72,7 +72,8 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'" />
   <ItemDefinitionGroup>
     <ClCompile>
-      <WarningLevel></WarningLevel>
+      <WarningLevel>
+      </WarningLevel>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
@@ -84,6 +85,7 @@
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <CppLanguageStandard>c++11</CppLanguageStandard>
       <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>-funwind-tables %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <LibraryDependencies>%(LibraryDependencies);GLESv1_CM;EGL;m</LibraryDependencies>
@@ -98,6 +100,7 @@
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <CppLanguageStandard>c++11</CppLanguageStandard>
       <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>-funwind-tables %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <LibraryDependencies>%(LibraryDependencies);GLESv1_CM;EGL;m</LibraryDependencies>
@@ -112,6 +115,7 @@
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <CppLanguageStandard>c++11</CppLanguageStandard>
       <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>-funwind-tables %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <LibraryDependencies>%(LibraryDependencies);GLESv1_CM;EGL;m</LibraryDependencies>
@@ -126,6 +130,7 @@
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <CppLanguageStandard>c++11</CppLanguageStandard>
       <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>-funwind-tables %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <LibraryDependencies>%(LibraryDependencies);GLESv1_CM;EGL;m</LibraryDependencies>

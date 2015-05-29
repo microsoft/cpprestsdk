@@ -27,6 +27,8 @@
       <ClCompile>
         <AdditionalOptions Condition="'$(PlatformToolset)'=='v140'">/d2notypeopt %(AdditionalOptions)</AdditionalOptions>
         <PreprocessorDefinitions Condition="'$(PlatformToolset)' == 'v120_xp'">CPPREST_TARGET_XP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+        <!-- Workaround Visual Studio Android bug missing -funwind-tables if -fexceptions is specified. -->
+        <AdditionalOptions Condition="'$(PlatformToolset)' == 'Clang_3_4'">-funwind-tables %(AdditionalOptions)</AdditionalOptions>
       </ClCompile>
       <Link>
         <LibraryDependencies Condition="'$(PlatformToolset)' == 'Clang_3_4'">m;%(LibraryDependencies)</LibraryDependencies>
