@@ -86,6 +86,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CommonTestIncludeDir);$(WebsocketppIncludeDir);$(TestRoot)\Common\UnitTestpp\src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 	  <DisableSpecificWarnings>4503;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <AdditionalOptions>-Zm200 /bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
