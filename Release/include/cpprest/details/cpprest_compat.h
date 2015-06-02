@@ -55,17 +55,11 @@
 // No SAL on non Windows platforms
 #include "cpprest/details/nosal.h"
 
-#if defined(__APPLE__) // Settings specific to Apple
-#define __cdecl
-#else
-
-// Settings specific to Linux and Android
-
-// Ignore cdecl on ANDROID ARM and 64bit
-#if defined(__ANDROID__) && defined(__arm__) || defined(__LP64__)
-#define __cdecl
-#else
+#if not defined __cdecl
+#if defined cdecl
 #define __cdecl __attribute__ ((cdecl))
+#else
+#define __cdecl
 #endif
 
 #if defined(__ANDROID__)
