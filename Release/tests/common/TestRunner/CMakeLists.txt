@@ -1,7 +1,4 @@
-include_directories(${Casablanca_INCLUDE_DIR}
-  ../UnitTestpp
-  ${Boost_INCLUDE_DIR}
-  )
+include_directories(${Casablanca_INCLUDE_DIRS})
 
 set(TR_SOURCES
   test_runner.cpp
