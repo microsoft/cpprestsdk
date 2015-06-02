@@ -5,5 +5,5 @@ var searchData=
   ['nonce_5fgenerator',['nonce_generator',['../classutility_1_1nonce__generator.html#ac5968cda076cfca6b94116b4acf72ca2',1,'utility::nonce_generator']]],
   ['none',['none',['../classpplx_1_1cancellation__token.html#a1730eca8686fb4c83776a89b98e48581',1,'pplx::cancellation_token']]],
   ['null',['null',['../classweb_1_1json_1_1value.html#a3f5ac5b637f5f3a55f01fc95b49ea671',1,'web::json::value']]],
-  ['number',['number',['../classweb_1_1json_1_1value.html#a606612bbe8c004791ef6cbb179d69e84',1,'web::json::value::number(double value)'],['../classweb_1_1json_1_1value.html#a88781aeb98da483ba17f843160c49765',1,'web::json::value::number(int32_t value)']]]
+  ['number',['number',['../classweb_1_1json_1_1value.html#a606612bbe8c004791ef6cbb179d69e84',1,'web::json::value::number(double value)'],['../classweb_1_1json_1_1value.html#a88781aeb98da483ba17f843160c49765',1,'web::json::value::number(int32_t value)'],['../classweb_1_1json_1_1value.html#a3d3dcb5c6fc6bdbae0d4f20136886903',1,'web::json::value::number(uint32_t value)'],['../classweb_1_1json_1_1value.html#a37246353800b66d88801b4c7563fe8a6',1,'web::json::value::number(int64_t value)'],['../classweb_1_1json_1_1value.html#a86c3d29b560c313c93e87e10412fd71e',1,'web::json::value::number(uint64_t value)']]]
 ];
