@@ -165,7 +165,20 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/Binaries)
 
 # These settings can be used by the test targets
 set(Casablanca_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
-set(Casablanca_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include ${Boost_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/libs/websocketpp)
+
+find_path(WEBSOCKETPP_CONFIG websocketpp-config.cmake
+                       HINTS /usr/lib/cmake/websocketpp)
+find_path(WEBSOCKETPP_CONFIG_VERSION websocketpp-configVersion.cmake
+                       HINTS /usr/lib/cmake/websocketpp)
+if(WEBSOCKETPP_CONFIG AND WEBSOCKETPP_CONFIG_VERSION)
+  include(${WEBSOCKETPP_CONFIG}/websocketpp-config.cmake)
+  include(${WEBSOCKETPP_CONFIG}/websocketpp-configVersion.cmake)
+  message("-- Found websocketpp version " ${PACKAGE_VERSION} " on system")
+  set(Casablanca_INCLUDE_DIRS ${Casablanca_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${WEBSOCKETPP_INCLUDE_DIR})
+else(WEBSOCKETPP_CONFIG AND WEBSOCKETPP_CONFIG_VERSION)
+  set(Casablanca_INCLUDE_DIRS ${Casablanca_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/libs/websocketpp)
+  message("-- websocketpp not found, using the embedded version")
+endif(WEBSOCKETPP_CONFIG AND WEBSOCKETPP_CONFIG_VERSION)
 
 set(Casablanca_LIBRARY ${LIB}cpprest)
 set(Casablanca_LIBRARIES ${Casablanca_LIBRARY} ${Boost_LIBRARIES} ${Boost_FRAMEWORK})
