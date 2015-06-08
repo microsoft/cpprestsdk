@@ -357,7 +357,7 @@ bool web::json::details::_String::has_escape_chars(const _String &str)
 {
     return std::any_of(std::begin(str.m_string), std::end(str.m_string), [](utility::string_t::value_type const x)
     {
-        if (x >= 0 && x <= 31) { return true; }
+        if (x <= 31) { return true; }
         if (x == '"') { return true; }
         if (x == '\\') { return true; }
         return false;
