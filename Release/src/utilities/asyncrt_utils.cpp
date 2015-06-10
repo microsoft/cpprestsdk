@@ -164,9 +164,15 @@ const std::error_category & __cdecl platform_category()
 
 #ifdef _WIN32
 
+// Remove once VS 2013 is no longer supported.
+#if _MSC_VER < 1900
+static details::windows_category_impl instance;
+#endif
 const std::error_category & __cdecl windows_category()
 {
+#if _MSC_VER > 1900
     static details::windows_category_impl instance;
+#endif
     return instance;
 }
 

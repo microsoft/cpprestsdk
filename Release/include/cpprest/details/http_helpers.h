@@ -82,6 +82,11 @@ namespace details
     utility::string_t get_default_charset(const utility::string_t &content_type);
 
     /// <summary>
+    /// Helper function to get the default HTTP reason phrase for a status code.
+    /// </summary>
+    utility::string_t get_default_reason_phrase(status_code code);
+
+    /// <summary>
     /// Helper functions to convert a series of bytes from a charset to utf-8 or utf-16.
     /// These APIs deal with checking for and handling byte order marker (BOM).
     /// </summary>

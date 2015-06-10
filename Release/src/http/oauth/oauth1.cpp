@@ -394,6 +394,28 @@ pplx::task<void> oauth1_config::token_from_redirected_uri(const web::http::uri& 
     return token_from_verifier(verifier_param->second);
 }
 
+// Remove once VS 2013 is no longer supported.
+#if defined(_WIN32) && _MSC_VER < 1900
+static const oauth1_token empty_token;
+#endif
+const oauth1_token& oauth1_config::token() const
+{
+    if (m_is_authorization_completed)
+    {
+        // Return the token object only if authorization has been completed.
+        // Otherwise the token object holds a temporary token which should not be
+        // returned to the user.
+        return m_token;
+    }
+    else
+    {
+#if !defined(_WIN32) || _MSC_VER > 1900
+        static const oauth1_token empty_token;
+#endif
+        return empty_token;
+    }
+}
+
 #define _OAUTH1_METHODS
 #define DAT(a,b) const oauth1_method oauth1_methods::a = b;
 #include "cpprest/details/http_constants.dat"
