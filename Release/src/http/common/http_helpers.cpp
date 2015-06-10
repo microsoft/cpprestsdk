@@ -49,13 +49,14 @@ bool is_content_type_one_of(const utility::string_t *first, const utility::strin
 
 // Remove once VS 2013 is no longer supported.
 #if defined(_WIN32) && _MSC_VER < 1900
+// Not referring to mime_types to avoid static initialization order fiasco.
 static const utility::string_t textual_types [] = {
-    mime_types::message_http,
-    mime_types::application_json,
-    mime_types::application_xml,
-    mime_types::application_atom_xml,
-    mime_types::application_http,
-    mime_types::application_x_www_form_urlencoded
+    U("message/http"),
+    U("application/json"),
+    U("application/xml"),
+    U("application/atom+xml"),
+    U("application/http"),
+    U("application/x-www-form-urlencoded")
 };
 #endif
 bool is_content_type_textual(const utility::string_t &content_type)
@@ -80,15 +81,16 @@ bool is_content_type_textual(const utility::string_t &content_type)
 
 // Remove once VS 2013 is no longer supported.
 #if defined(_WIN32) && _MSC_VER < 1900
+// Not referring to mime_types to avoid static initialization order fiasco.
 static const utility::string_t json_types [] = {
-    mime_types::application_json,
-    mime_types::application_xjson,
-    mime_types::text_json,
-    mime_types::text_xjson,
-    mime_types::text_javascript,
-    mime_types::text_xjavascript,
-    mime_types::application_javascript,
-    mime_types::application_xjavascript
+    U("application/json"),
+    U("application/x-json"),
+    U("text/json"),
+    U("text/x-json"),
+    U("text/javascript"),
+    U("text/x-javascript"),
+    U("application/javascript"),
+    U("application/x-javascript")
 };
 #endif
 bool is_content_type_json(const utility::string_t &content_type)
