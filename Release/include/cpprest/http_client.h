@@ -51,7 +51,7 @@ typedef void* native_handle;}}}
 #include "cpprest/details/basic_types.h"
 #include "cpprest/asyncrt_utils.h"
 
-#if !defined(CPPREST_TARGET_XP) && (!defined(WINAPI_FAMILY) || WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP || _MSC_VER > 1700)
+#if !defined(CPPREST_TARGET_XP)
 #include "cpprest/oauth1.h"
 #endif
 
@@ -94,7 +94,7 @@ public:
     {
     }
 
-#if !defined(CPPREST_TARGET_XP) && (!defined(WINAPI_FAMILY) || WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP || _MSC_VER > 1700)
+#if !defined(CPPREST_TARGET_XP)
     /// <summary>
     /// Get OAuth 1.0 configuration.
     /// </summary>
@@ -307,7 +307,7 @@ public:
     }
 
 private:
-#if !defined(CPPREST_TARGET_XP) && (!defined(WINAPI_FAMILY) || WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP || _MSC_VER > 1700)
+#if !defined(CPPREST_TARGET_XP)
     std::shared_ptr<oauth1::experimental::oauth1_config> m_oauth1;
 #endif
 
