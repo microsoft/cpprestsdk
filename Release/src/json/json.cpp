@@ -488,7 +488,7 @@ static web::json::details::json_error_category_impl instance;
 #endif
 const web::json::details::json_error_category_impl& web::json::details::json_error_category()
 {
-#if !defined(_WIN32) || _MSC_VER > 1900
+#if !defined(_WIN32) || _MSC_VER >= 1900
     static web::json::details::json_error_category_impl instance;
 #endif
     return instance;

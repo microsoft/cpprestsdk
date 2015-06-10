@@ -60,7 +60,7 @@ static const utility::string_t textual_types [] = {
 #endif
 bool is_content_type_textual(const utility::string_t &content_type)
 {
-#if !defined(_WIN32) || _MSC_VER > 1900
+#if !defined(_WIN32) || _MSC_VER >= 1900
     static const utility::string_t textual_types [] = {
         mime_types::message_http,
         mime_types::application_json,
@@ -93,7 +93,7 @@ static const utility::string_t json_types [] = {
 #endif
 bool is_content_type_json(const utility::string_t &content_type)
 {
-#if !defined(_WIN32) || _MSC_VER > 1900
+#if !defined(_WIN32) || _MSC_VER >= 1900
     static const utility::string_t json_types [] = {
         mime_types::application_json,
         mime_types::application_xjson,
@@ -173,7 +173,7 @@ utility::string_t get_default_charset(const utility::string_t &content_type)
 
 // Remove once VS 2013 is no longer supported.
 #if defined(_WIN32) && _MSC_VER < 1900
-static http_status_to_phrase idToPhraseMap [] = {
+static const http_status_to_phrase idToPhraseMap [] = {
 #define _PHRASES
 #define DAT(a,b,c) {status_codes::a, c},
 #include "cpprest/details/http_constants.dat"
@@ -183,11 +183,11 @@ static http_status_to_phrase idToPhraseMap [] = {
 #endif
 utility::string_t get_default_reason_phrase(status_code code)
 {
-#if !defined(_WIN32) || _MSC_VER > 1900
+#if !defined(_WIN32) || _MSC_VER >= 1900
     // Future improvement: why is this stored as an array of structs instead of a map
     // indexed on the status code for faster lookup?
     // Not a big deal because it is uncommon to not include a reason phrase.
-    static http_status_to_phrase idToPhraseMap [] = {
+    static const http_status_to_phrase idToPhraseMap [] = {
 #define _PHRASES
 #define DAT(a,b,c) {status_codes::a, c},
 #include "cpprest/details/http_constants.dat"
@@ -197,11 +197,11 @@ utility::string_t get_default_reason_phrase(status_code code)
 #endif
 
     utility::string_t phrase;
-    for (const auto &iter : idToPhraseMap)
+    for (const auto &elm : idToPhraseMap)
     {
-        if (iter.id == code)
+        if (elm.id == code)
         {
-            phrase = iter.phrase;
+            phrase = elm.phrase;
             break;
         }
     }

@@ -409,7 +409,7 @@ const oauth1_token& oauth1_config::token() const
     }
     else
     {
-#if !defined(_WIN32) || _MSC_VER > 1900
+#if !defined(_WIN32) || _MSC_VER >= 1900
         static const oauth1_token empty_token;
 #endif
         return empty_token;

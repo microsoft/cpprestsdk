@@ -170,7 +170,7 @@ static details::windows_category_impl instance;
 #endif
 const std::error_category & __cdecl windows_category()
 {
-#if _MSC_VER > 1900
+#if _MSC_VER >= 1900
     static details::windows_category_impl instance;
 #endif
     return instance;
