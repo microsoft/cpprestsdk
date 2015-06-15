@@ -387,7 +387,7 @@ std::string __cdecl conversions::utf16_to_utf8(const utf16string &w)
             uint32_t codePoint = highSurrogate - H_SURROGATE_START;
             codePoint <<= 10;
             codePoint |= lowSurrogate - L_SURROGATE_START;
-            codePoint |= SURROGATE_PAIR_START;
+            codePoint += SURROGATE_PAIR_START;
 
             // 4 bytes need using 21 bits
             dest.push_back(char((codePoint >> 18) | 0xF0));                 // leading 3 bits
