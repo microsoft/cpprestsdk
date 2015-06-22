@@ -85,6 +85,7 @@ class winrt_callback_client : public websocket_client_callback_impl, public std:
 public:
     winrt_callback_client(websocket_client_config config) :
         websocket_client_callback_impl(std::move(config)),
+        m_connected(false),
         m_num_sends(0)
     {
         m_msg_websocket = ref new MessageWebSocket();
@@ -144,22 +145,25 @@ public:
 
     ~winrt_callback_client()
     {
-        // Locally copy the task completion event since there is a PPL bug
-        // that the set method accesses internal state in the event and the websocket
-        // client could be destroyed.
-        auto local_close_tce = m_close_tce;
-        local_close_tce.set();
+        // Only call close if successfully connected.
+        if (m_connected)
+        {
+            // Users should have already called close and wait on the returned task
+            // before destroying the client. In case they didn't we call close and wait for
+            // it to complete. It is safe to call MessageWebSocket::Close multiple times and
+            // concurrently, it has safe guards in place to only execute once.
+            close().wait();
+        }
     }
 
     pplx::task<void> connect()
     {
+        _ASSERTE(!m_connected);
         const auto &proxy = m_config.proxy();
         if(!proxy.is_default())
         {
             return pplx::task_from_exception<void>(websocket_exception("Only a default proxy server is supported."));
         }
-
-
 
         const auto &proxy_cred = proxy.credentials();
         if(proxy_cred.is_set())
@@ -187,6 +191,7 @@ public:
                 websocket_exception exc(e->HResult, build_error_msg(e, "ConnectAsync"));
                 return pplx::task_from_exception<void>(exc);
             }
+            m_connected = true;
             return pplx::task_from_result();
         });
     }
@@ -409,6 +414,9 @@ private:
     ReceiveContext ^ m_context;
 
     pplx::task_completion_event<void> m_close_tce;
+
+    // Tracks whether or not the websocket client successfully connected to the server.
+    std::atomic<bool> m_connected;
 
     // External callback for handling received and close event
     std::function<void(websocket_incoming_message)> m_external_message_handler;
