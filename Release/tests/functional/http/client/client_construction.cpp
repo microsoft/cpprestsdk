@@ -171,7 +171,8 @@ TEST_FIXTURE(uri_address, get_client_config)
     http_client client(m_uri, config);
 
     const http_client_config& config2 = client.client_config();
-    VERIFY_ARE_EQUAL(config2.timeout().count(), timeout.count());
+    VERIFY_ARE_EQUAL(std::chrono::duration_cast<decltype(timeout)>(config2.timeout()).count(),
+		timeout.count());
     VERIFY_ARE_EQUAL(config2.chunksize(), 1024);
 }
 

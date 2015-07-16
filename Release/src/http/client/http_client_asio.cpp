@@ -329,7 +329,7 @@ public:
     : request_context(client, request)
     , m_content_length(0)
     , m_needChunked(false)
-    , m_timer(static_cast<int>(client->client_config().timeout().count()))
+    , m_timer(client->client_config().timeout())
     , m_connection(connection)
 #if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__))
     , m_openssl_failed(false)
@@ -1059,8 +1059,8 @@ private:
     {
     public:
 
-        timeout_timer(int seconds) :
-        m_duration(boost::posix_time::milliseconds(seconds * 1000)),
+        timeout_timer(const std::chrono::microseconds& timeout) :
+        m_duration(timeout),
         m_state(created),
         m_timer(crossplat::threadpool::shared_instance().service())
         {}
@@ -1131,10 +1131,10 @@ private:
             timedout
         };
 
-        boost::posix_time::milliseconds m_duration;
+        std::chrono::microseconds m_duration;
         timer_state m_state;
         std::weak_ptr<asio_context> m_ctx;
-        boost::asio::deadline_timer m_timer;
+        boost::asio::steady_timer m_timer;
     };
 
     uint64_t m_content_length;
