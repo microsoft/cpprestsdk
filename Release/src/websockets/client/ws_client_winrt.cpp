@@ -179,17 +179,26 @@ public:
         m_msg_websocket->MessageReceived += ref new TypedEventHandler<MessageWebSocket^, MessageWebSocketMessageReceivedEventArgs^>(m_context, &ReceiveContext::OnReceive);
         m_msg_websocket->Closed += ref new TypedEventHandler<IWebSocket^, WebSocketClosedEventArgs^>(m_context, &ReceiveContext::OnClosed);
 
-        return pplx::create_task(m_msg_websocket->ConnectAsync(uri)).then([=](pplx::task<void> result) -> pplx::task<void>
+        std::weak_ptr<winrt_callback_client> thisWeakPtr = shared_from_this();
+        return pplx::create_task(m_msg_websocket->ConnectAsync(uri)).then([thisWeakPtr](pplx::task<void> result) -> pplx::task<void>
         {
             try
             {
+                // result.get() should happen before anything else, to make sure there is no unobserved exception 
+                // in the task chain.
                 result.get();
-                m_messageWriter = ref new DataWriter(m_msg_websocket->OutputStream);
+
+                std::shared_ptr<winrt_callback_client> pThis(thisWeakPtr.lock());
+                if (pThis == nullptr)
+                {
+                    throw websocket_exception("Websocket client is being destroyed");
+                }
+
+                pThis->m_messageWriter = ref new DataWriter(m_msg_websocket->OutputStream);
             }
             catch (Platform::Exception^ e)
             {
-                websocket_exception exc(e->HResult, build_error_msg(e, "ConnectAsync"));
-                return pplx::task_from_exception<void>(exc);
+                throw websocket_exception(e->HResult, build_error_msg(e, "ConnectAsync"));
             }
             m_connected = true;
             return pplx::task_from_result();
