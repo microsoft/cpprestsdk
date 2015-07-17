@@ -191,11 +191,20 @@ public:
     /// Get the timeout
     /// </summary>
     /// <returns>The timeout (in seconds) used for each send and receive operation on the client.</returns>
-    const auto& timeout() const
+    utility::seconds timeout() const
     {
-        return m_timeout;
+        return std::chrono::duration_cast<utility::seconds>(m_timeout);
     }
 
+	/// <summary>
+	/// Get the timeout
+	/// </summary>
+	/// <returns>The timeout (in whatever duration) used for each send and receive operation on the client.</returns>
+	template <class T>
+	T timeout() const
+	{
+		return std::chrono::duration_cast<T>(m_timeout);
+	}
 	/// <summary>
 	/// Set the timeout
 	/// </summary>
