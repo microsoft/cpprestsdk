@@ -182,25 +182,27 @@ public:
         std::weak_ptr<winrt_callback_client> thisWeakPtr = shared_from_this();
         return pplx::create_task(m_msg_websocket->ConnectAsync(uri)).then([thisWeakPtr](pplx::task<void> result) -> pplx::task<void>
         {
-            try
-            {
-                // result.get() should happen before anything else, to make sure there is no unobserved exception 
-                // in the task chain.
-                result.get();
+            // result.get() should happen before anything else, to make sure there is no unobserved exception 
+            // in the task chain.
+            result.get();
 
-                std::shared_ptr<winrt_callback_client> pThis(thisWeakPtr.lock());
-                if (pThis == nullptr)
+            if (auto pThis = thisWeakPtr.lock())
+            {
+                try
                 {
-                    throw websocket_exception("Websocket client is being destroyed");
+                    pThis->m_messageWriter = ref new DataWriter(pThis->m_msg_websocket->OutputStream);
                 }
-
-                pThis->m_messageWriter = ref new DataWriter(m_msg_websocket->OutputStream);
+                catch (Platform::Exception^ e)
+                {
+                    throw websocket_exception(e->HResult, build_error_msg(e, "ConnectAsync"));
+                }
+                pThis->m_connected = true;
             }
-            catch (Platform::Exception^ e)
+            else
             {
-                throw websocket_exception(e->HResult, build_error_msg(e, "ConnectAsync"));
+                return pplx::task_from_exception<void>(websocket_exception("Websocket client is being destroyed"));
             }
-            m_connected = true;
+
             return pplx::task_from_result();
         });
     }
