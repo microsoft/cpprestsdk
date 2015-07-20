@@ -172,6 +172,13 @@ TEST_FIXTURE(uri_address, get_client_config)
 
     const http_client_config& config2 = client.client_config();
     VERIFY_ARE_EQUAL(config2.timeout().count(), timeout.count());
+	std::chrono::milliseconds milli_timeout = config2.timeout();
+	VERIFY_ARE_EQUAL(milli_timeout.count(),
+		std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count());
+	auto micro_timeout = config.timeout<std::chrono::microseconds>();
+	VERIFY_ARE_EQUAL(micro_timeout.count(),
+		std::chrono::duration_cast<std::chrono::microseconds>(timeout).count());
+	
     VERIFY_ARE_EQUAL(config2.chunksize(), 1024);
 }
 
