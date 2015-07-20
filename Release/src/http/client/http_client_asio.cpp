@@ -29,6 +29,7 @@
 
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
+#include <boost/asio/steady_timer.hpp>
 #include <boost/algorithm/string.hpp>
 
 #if defined(BOOST_NO_CXX11_SMART_PTR)
