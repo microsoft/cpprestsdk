@@ -305,10 +305,10 @@ class asio_client : public _http_client_communicator, public std::enable_shared_
 {
 public:
     asio_client(http::uri address, http_client_config client_config)
-    : _http_client_communicator(std::move(address), client_config)
+    : _http_client_communicator(std::move(address), std::move(client_config))
     , m_pool(crossplat::threadpool::shared_instance().service(),
              base_uri().scheme() == "https",
-             client_config.timeout())
+             std::chrono::seconds(30)) // Unused sockets are kept in pool for 30 seconds.
     , m_resolver(crossplat::threadpool::shared_instance().service())
     {}
 

@@ -82,7 +82,7 @@ class http_client_config
 public:
     http_client_config() :
         m_guarantee_order(false),
-        m_timeout(utility::seconds(30)),
+        m_timeout(std::chrono::seconds(30)),
         m_chunksize(0)
 #if !defined(__cplusplus_winrt)
         , m_validate_certificates(true)
