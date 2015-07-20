@@ -221,7 +221,7 @@ class asio_connection_pool
 {
 public:
 
-    asio_connection_pool(boost::asio::io_service& io_service, bool use_ssl, const utility::seconds &idle_timeout) :
+    asio_connection_pool(boost::asio::io_service& io_service, bool use_ssl, const std::chrono::seconds &idle_timeout) :
     m_io_service(io_service),
     m_timeout_secs(static_cast<int>(idle_timeout.count())),
     m_use_ssl(use_ssl)
@@ -330,7 +330,7 @@ public:
     : request_context(client, request)
     , m_content_length(0)
     , m_needChunked(false)
-    , m_timer(client->client_config().timeout())
+    , m_timer(client->client_config().timeout<std::chrono::microseconds>())
     , m_connection(connection)
 #if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__))
     , m_openssl_failed(false)
@@ -1061,7 +1061,7 @@ private:
     public:
 
         timeout_timer(const std::chrono::microseconds& timeout) :
-        m_duration(timeout),
+        m_duration(timeout.count()),
         m_state(created),
         m_timer(crossplat::threadpool::shared_instance().service())
         {}
@@ -1132,7 +1132,11 @@ private:
             timedout
         };
 
+#if defined(ANDROID) || defined(__ANDROID__)
+        boost::chrono::microseconds m_duration;
+#else
         std::chrono::microseconds m_duration;
+#endif
         timer_state m_state;
         std::weak_ptr<asio_context> m_ctx;
         boost::asio::steady_timer m_timer;
