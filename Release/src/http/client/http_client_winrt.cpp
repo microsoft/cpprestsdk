@@ -463,10 +463,8 @@ protected:
         }
 
         // Set timeout.
-        ULONGLONG timeout = static_cast<ULONGLONG>(
-			std::chrono::duration_cast<std::chrono::milliseconds>(config.timeout()).count()
-			);
-		timeout = std::max<decltype(timeout)>(timeout, std::numeric_limits<decltype(timeout)>::min() + 1);
+        ULONGLONG timeout = static_cast<ULONGLONG>(std::chrono::duration_cast<std::chrono::milliseconds>(config.timeout()).count());
+        timeout = std::max<decltype(timeout)>(timeout, std::numeric_limits<decltype(timeout)>::min() + 1);
         hr = winrt_context->m_hRequest->SetProperty(XHR_PROP_TIMEOUT, timeout);
         if (FAILED(hr))
         {

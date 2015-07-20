@@ -395,11 +395,9 @@ protected:
         }
 
         // Set timeouts.
-        int milliseconds = static_cast<int>(
-			std::chrono::duration_cast<std::chrono::milliseconds>(config.timeout()).count()
-			);
-		milliseconds = std::max<decltype(milliseconds)>(milliseconds, 1);
-        if(!WinHttpSetTimeouts(m_hSession,
+        int milliseconds = static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(config.timeout()).count());
+        milliseconds = std::max<decltype(milliseconds)>(milliseconds, 1);
+        if (!WinHttpSetTimeouts(m_hSession,
             milliseconds,
             milliseconds,
             milliseconds,
