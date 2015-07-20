@@ -184,7 +184,14 @@ public:
         {
             // result.get() should happen before anything else, to make sure there is no unobserved exception 
             // in the task chain.
-            result.get();
+            try
+            {
+                result.get();
+            }
+            catch (Platform::Exception ^e)
+            {
+                throw websocket_exception(e->HResult, build_error_msg(e, "ConnectAsync"));
+            }
 
             if (auto pThis = thisWeakPtr.lock())
             {
