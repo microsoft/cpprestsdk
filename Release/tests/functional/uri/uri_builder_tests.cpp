@@ -321,6 +321,13 @@ TEST(append_query_string)
     VERIFY_ARE_EQUAL(U("key1=value1&key2=value2&key3=value3&key4=value4&key5=1&key6=val6&key%3D%26%3B=%3D%26%3Bvalue"), builder.query());
 }
 
+TEST(append_query_string_no_encode)
+{
+    uri_builder builder;
+    builder.append_query(U("key=&;"), U("=&;value"), false);
+    VERIFY_ARE_EQUAL(U("key=&;==&;value"), builder.query());
+}
+
 TEST(append_string)
 {
     // with just path

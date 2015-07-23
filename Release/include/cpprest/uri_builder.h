@@ -244,10 +244,19 @@ namespace web
             {
                 auto encodingCheck = [](int ch)
                 {
-                    // Encode '&', ';', and '=' since they are used
-                    // as delimiters in query component.
-                    return ch == '&' || ch == ';' || ch == '=' || !::web::details::uri_parser::is_query_character(ch)
-                        || ch == '%' || ch == '+';
+                    switch (ch)
+                    {
+                        // Encode '&', ';', and '=' since they are used
+                        // as delimiters in query component.
+                    case '&':
+                    case ';':
+                    case '=':
+                    case '%':
+                    case '+':
+                        return true;
+                    default:
+                        return !::web::details::uri_parser::is_query_character(ch);
+                    }
                 };
                 encodedName = uri::encode_impl(encodedName, encodingCheck);
                 encodedValue = uri::encode_impl(encodedValue, encodingCheck);
