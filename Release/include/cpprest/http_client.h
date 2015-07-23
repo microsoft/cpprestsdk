@@ -82,7 +82,7 @@ class http_client_config
 public:
     http_client_config() :
         m_guarantee_order(false),
-        m_timeout(utility::seconds(30)),
+        m_timeout(std::chrono::seconds(30)),
         m_chunksize(0)
 #if !defined(__cplusplus_winrt)
         , m_validate_certificates(true)
@@ -193,16 +193,26 @@ public:
     /// <returns>The timeout (in seconds) used for each send and receive operation on the client.</returns>
     utility::seconds timeout() const
     {
-        return m_timeout;
+        return std::chrono::duration_cast<utility::seconds>(m_timeout);
     }
 
     /// <summary>
+    /// Get the timeout
+    /// </summary>
+    /// <returns>The timeout (in whatever duration) used for each send and receive operation on the client.</returns>
+    template <class T>
+    T timeout() const
+    {
+        return std::chrono::duration_cast<T>(m_timeout);
+    }
+    /// <summary>
     /// Set the timeout
     /// </summary>
-    /// <param name="timeout">The timeout (in seconds) used for each send and receive operation on the client.</param>
-    void set_timeout(const utility::seconds &timeout)
+    /// <param name="timeout">The timeout (duration from microseconds range and up) used for each send and receive operation on the client.</param>
+    template <class T>
+    void set_timeout(const T &timeout)
     {
-        m_timeout = timeout;
+        m_timeout = std::chrono::duration_cast<std::chrono::microseconds>(timeout);
     }
 
     /// <summary>
@@ -317,7 +327,7 @@ private:
     // Whether or not to guarantee ordering, i.e. only using one underlying TCP connection.
     bool m_guarantee_order;
 
-    utility::seconds m_timeout;
+    std::chrono::microseconds m_timeout;
     size_t m_chunksize;
 
 #if !defined(__cplusplus_winrt)

@@ -389,7 +389,7 @@ TEST_FIXTURE(uri_address, data_upload_exception)
 #endif
 }
 
-TEST_FIXTURE(uri_address, data_download_exception)
+TEST_FIXTURE(uri_address, data_download_exception, "Ignore:Windows", "395")
 {
     test_http_server::scoped_server scoped(m_uri);
     http_client client(m_uri);

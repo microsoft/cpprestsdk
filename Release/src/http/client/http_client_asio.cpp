@@ -29,6 +29,7 @@
 
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
+#include <boost/asio/steady_timer.hpp>
 #include <boost/algorithm/string.hpp>
 
 #if defined(BOOST_NO_CXX11_SMART_PTR)
@@ -220,7 +221,7 @@ class asio_connection_pool
 {
 public:
 
-    asio_connection_pool(boost::asio::io_service& io_service, bool use_ssl, const utility::seconds &idle_timeout) :
+    asio_connection_pool(boost::asio::io_service& io_service, bool use_ssl, const std::chrono::seconds &idle_timeout) :
     m_io_service(io_service),
     m_timeout_secs(static_cast<int>(idle_timeout.count())),
     m_use_ssl(use_ssl)
@@ -304,10 +305,10 @@ class asio_client : public _http_client_communicator, public std::enable_shared_
 {
 public:
     asio_client(http::uri address, http_client_config client_config)
-    : _http_client_communicator(std::move(address), client_config)
+    : _http_client_communicator(std::move(address), std::move(client_config))
     , m_pool(crossplat::threadpool::shared_instance().service(),
              base_uri().scheme() == "https",
-             client_config.timeout())
+             std::chrono::seconds(30)) // Unused sockets are kept in pool for 30 seconds.
     , m_resolver(crossplat::threadpool::shared_instance().service())
     {}
 
@@ -329,7 +330,7 @@ public:
     : request_context(client, request)
     , m_content_length(0)
     , m_needChunked(false)
-    , m_timer(static_cast<int>(client->client_config().timeout().count()))
+    , m_timer(client->client_config().timeout<std::chrono::microseconds>())
     , m_connection(connection)
 #if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__))
     , m_openssl_failed(false)
@@ -1059,8 +1060,8 @@ private:
     {
     public:
 
-        timeout_timer(int seconds) :
-        m_duration(boost::posix_time::milliseconds(seconds * 1000)),
+        timeout_timer(const std::chrono::microseconds& timeout) :
+        m_duration(timeout.count()),
         m_state(created),
         m_timer(crossplat::threadpool::shared_instance().service())
         {}
@@ -1131,10 +1132,14 @@ private:
             timedout
         };
 
-        boost::posix_time::milliseconds m_duration;
+#if defined(ANDROID) || defined(__ANDROID__)
+        boost::chrono::microseconds m_duration;
+#else
+        std::chrono::microseconds m_duration;
+#endif
         timer_state m_state;
         std::weak_ptr<asio_context> m_ctx;
-        boost::asio::deadline_timer m_timer;
+        boost::asio::steady_timer m_timer;
     };
 
     uint64_t m_content_length;
