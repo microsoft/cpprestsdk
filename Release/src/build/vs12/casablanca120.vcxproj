@@ -27,13 +27,15 @@
     <Import Project="$(PackagesRoot)\openssl.v120.windesktop.msvcstl.static.rt-dyn.x64.1.0.2.0\build\native\openssl.v120.windesktop.msvcstl.static.rt-dyn.x64.targets" Condition="Exists('$(PackagesRoot)\openssl.v120.windesktop.msvcstl.static.rt-dyn.x64.1.0.2.0\build\native\openssl.v120.windesktop.msvcstl.static.rt-dyn.x64.targets')" />
     <Import Project="$(PackagesRoot)\openssl.v120.windesktop.msvcstl.static.rt-dyn.x86.1.0.2.0\build\native\openssl.v120.windesktop.msvcstl.static.rt-dyn.x86.targets" Condition="Exists('$(PackagesRoot)\openssl.v120.windesktop.msvcstl.static.rt-dyn.x86.1.0.2.0\build\native\openssl.v120.windesktop.msvcstl.static.rt-dyn.x86.targets')" />
     <Import Project="$(PackagesRoot)\zlib.v120.windesktop.msvcstl.static.rt-dyn.1.2.8.8\build\native\zlib.v120.windesktop.msvcstl.static.rt-dyn.targets" Condition="Exists('$(PackagesRoot)\zlib.v120.windesktop.msvcstl.static.rt-dyn.1.2.8.8\build\native\zlib.v120.windesktop.msvcstl.static.rt-dyn.targets')" />
+    <Import Project="$(PackagesRoot)\openssl.v120.windesktop.msvcstl.static.rt-dyn.x86.1.0.2.1\build\native\openssl.v120.windesktop.msvcstl.static.rt-dyn.x86.targets" Condition="Exists('$(PackagesRoot)\openssl.v120.windesktop.msvcstl.static.rt-dyn.x86.1.0.2.1\build\native\openssl.v120.windesktop.msvcstl.static.rt-dyn.x86.targets')" />
+    <Import Project="$(PackagesRoot)\openssl.v120.windesktop.msvcstl.static.rt-dyn.x64.1.0.2.1\build\native\openssl.v120.windesktop.msvcstl.static.rt-dyn.x64.targets" Condition="Exists('$(PackagesRoot)\openssl.v120.windesktop.msvcstl.static.rt-dyn.x64.1.0.2.1\build\native\openssl.v120.windesktop.msvcstl.static.rt-dyn.x64.targets')" />
   </ImportGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <DebugFileSuffix>d</DebugFileSuffix>
   </PropertyGroup>
   <PropertyGroup>
     <TargetName>$(CppRestBaseFileName)120$(DebugFileSuffix)_$(CppRestSDKVersionFileSuffix)</TargetName>
-    <NuGetPackageImportStamp>d5171ca1</NuGetPackageImportStamp>
+    <NuGetPackageImportStamp>1af61e94</NuGetPackageImportStamp>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <ItemGroup>
@@ -67,4 +69,11 @@
   <Import Project="..\common.vcxitems" Label="Shared" Condition="Exists('..\common.vcxitems')" />
   <Import Project="..\win32.vcxitems" Label="Shared" Condition="Exists('..\win32.vcxitems')" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('$(PackagesRoot)\openssl.v120.windesktop.msvcstl.static.rt-dyn.x86.1.0.2.1\build\native\openssl.v120.windesktop.msvcstl.static.rt-dyn.x86.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(PackagesRoot)\openssl.v120.windesktop.msvcstl.static.rt-dyn.x86.1.0.2.1\build\native\openssl.v120.windesktop.msvcstl.static.rt-dyn.x86.targets'))" />
+    <Error Condition="!Exists('$(PackagesRoot)\openssl.v120.windesktop.msvcstl.static.rt-dyn.x64.1.0.2.1\build\native\openssl.v120.windesktop.msvcstl.static.rt-dyn.x64.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(PackagesRoot)\openssl.v120.windesktop.msvcstl.static.rt-dyn.x64.1.0.2.1\build\native\openssl.v120.windesktop.msvcstl.static.rt-dyn.x64.targets'))" />
+  </Target>
 </Project>
