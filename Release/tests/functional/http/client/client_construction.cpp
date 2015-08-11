@@ -192,6 +192,54 @@ TEST_FIXTURE(uri_address, BaseURI_test)
     http_client baseclient2(m_uri, config);
     VERIFY_ARE_EQUAL(baseclient2.base_uri(), m_uri);
 }
+
+// Verify that the callback of sslcontext is called for HTTPS
+TEST_FIXTURE(uri_address, ssl_context_callback_https)
+{
+    http_client_config config;
+    bool called = false;
+
+    config.set_sslcontext_options([&called](boost::asio::ssl::context& ctx)
+    {
+        called = true;
+    });
+
+    http_client client("https://www.google.com/", config);
+
+    try
+    {
+        client.request(methods::GET, U("/")).get();
+    }
+    catch (...)
+    {
+    }
+
+    VERIFY_IS_TRUE(called, "The sslcontext options is not called for HTTPS protocol");
+}
+
+// Verify that the callback of sslcontext is called for HTTP
+TEST_FIXTURE(uri_address, ssl_context_callback_http)
+{
+    http_client_config config;
+    bool called = false;
+
+    config.set_sslcontext_options([&called](boost::asio::ssl::context& ctx)
+    {
+        called = true;
+    });
+
+    http_client client("http://www.google.com/", config);
+
+    try
+    {
+        client.request(methods::GET, U("/")).get();
+    }
+    catch (...)
+    {
+    }
+
+    VERIFY_IS_FALSE(called, "The sslcontext options is called for HTTP protocol");
+}
 } // SUITE(client_construction)
 
 }}}}

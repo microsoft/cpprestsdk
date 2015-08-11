@@ -42,6 +42,9 @@ typedef void* native_handle;}}}
 
 #include <memory>
 #include <limits>
+#if !defined(_WIN32) && !defined(__cplusplus_winrt)
+#include <boost/asio/ssl.hpp>
+#endif
 
 #include "pplx/pplxtasks.h"
 #include "cpprest/http_msg.h"
@@ -88,6 +91,9 @@ public:
         , m_validate_certificates(true)
 #endif
         , m_set_user_nativehandle_options([](native_handle)->void{})
+#if !defined(_WIN32) && !defined(__cplusplus_winrt)
+        , m_sslcontext_options([](boost::asio::ssl::context&)->void{})
+#endif
 #if defined(_WIN32) && !defined(__cplusplus_winrt)
         , m_buffer_request(false)
 #endif
@@ -316,6 +322,25 @@ public:
         m_set_user_nativehandle_options(handle);
     }
 
+#if !defined(_WIN32) && !defined(__cplusplus_winrt)
+    /// <summary>
+    /// Sets a callback to enable custom setting of the ssl context, at construction time.
+    /// </summary>
+    /// <param name="callback">A user callback allowing for customization of the ssl context at construction time.</param>
+    void set_sslcontext_options(const std::function<void(boost::asio::ssl::context&)> callback)
+    {
+         m_sslcontext_options = callback;
+    }
+
+    /// <summary>
+    /// Gets the user's callback to allow for customization of the ssl context.
+    /// </summary>
+    std::function<void(boost::asio::ssl::context&)> get_sslcontext_options() const
+    {
+        return m_sslcontext_options;
+    }
+#endif
+
 private:
 #if !defined(CPPREST_TARGET_XP)
     std::shared_ptr<oauth1::experimental::oauth1_config> m_oauth1;
@@ -337,6 +362,9 @@ private:
 
     std::function<void(native_handle)> m_set_user_nativehandle_options;
 
+#if !defined(_WIN32) && !defined(__cplusplus_winrt)
+    std::function<void(boost::asio::ssl::context&)> m_sslcontext_options;
+#endif
 #if defined(_WIN32) && !defined(__cplusplus_winrt)
     bool m_buffer_request;
 #endif
