@@ -193,6 +193,8 @@ TEST_FIXTURE(uri_address, BaseURI_test)
     VERIFY_ARE_EQUAL(baseclient2.base_uri(), m_uri);
 }
 
+#if !defined(_WIN32) && !defined(__cplusplus_winrt)
+
 // Verify that the callback of sslcontext is called for HTTPS
 TEST_FIXTURE(uri_address, ssl_context_callback_https)
 {
@@ -217,7 +219,7 @@ TEST_FIXTURE(uri_address, ssl_context_callback_https)
     VERIFY_IS_TRUE(called, "The sslcontext options is not called for HTTPS protocol");
 }
 
-// Verify that the callback of sslcontext is called for HTTP
+// Verify that the callback of sslcontext is not called for HTTP
 TEST_FIXTURE(uri_address, ssl_context_callback_http)
 {
     http_client_config config;
@@ -240,6 +242,9 @@ TEST_FIXTURE(uri_address, ssl_context_callback_http)
 
     VERIFY_IS_FALSE(called, "The sslcontext options is called for HTTP protocol");
 }
+
+#endif
+
 } // SUITE(client_construction)
 
 }}}}

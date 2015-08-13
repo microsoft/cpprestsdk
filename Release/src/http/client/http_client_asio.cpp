@@ -222,7 +222,7 @@ class asio_connection_pool
 {
 public:
 
-    asio_connection_pool(boost::asio::io_service& io_service, bool use_ssl, const utility::seconds &idle_timeout, std::function<void(boost::asio::ssl::context&)> sslcontext_options) :
+    asio_connection_pool(boost::asio::io_service& io_service, bool use_ssl, const std::chrono::seconds &idle_timeout, std::function<void(boost::asio::ssl::context&)> sslcontext_options) :
     m_io_service(io_service),
     m_timeout_secs(static_cast<int>(idle_timeout.count())),
     m_use_ssl(use_ssl),
@@ -311,8 +311,8 @@ public:
     : _http_client_communicator(std::move(address), std::move(client_config))
     , m_pool(crossplat::threadpool::shared_instance().service(),
              base_uri().scheme() == "https",
-             std::chrono::seconds(30),
-             this->client_config().get_sslcontext_options()) // Unused sockets are kept in pool for 30 seconds.
+             std::chrono::seconds(30), // Unused sockets are kept in pool for 30 seconds.
+             this->client_config().get_sslcontext_options()) 
     , m_resolver(crossplat::threadpool::shared_instance().service())
     {}
 
