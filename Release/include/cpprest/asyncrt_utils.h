@@ -263,7 +263,7 @@ namespace details
     /// <summary>
     /// Simplistic implementation of make_unique. A better implementation would be based on variadic templates
     /// and therefore not be compatible with Dev10.
-    /// </summary>
+    /// </summary>b  
     template <typename _Type>
     std::unique_ptr<_Type> make_unique() {
         return std::unique_ptr<_Type>(new _Type());
@@ -282,6 +282,11 @@ namespace details
     template <typename _Type, typename _Arg1, typename _Arg2, typename _Arg3>
     std::unique_ptr<_Type> make_unique(_Arg1&& arg1, _Arg2&& arg2, _Arg3&& arg3) {
         return std::unique_ptr<_Type>(new _Type(std::forward<_Arg1>(arg1), std::forward<_Arg2>(arg2), std::forward<_Arg3>(arg3)));
+    }
+
+    template <typename _Type, typename _Arg1, typename _Arg2, typename _Arg3, typename _Arg4>
+    std::unique_ptr<_Type> make_unique(_Arg1&& arg1, _Arg2&& arg2, _Arg3&& arg3, _Arg4&& arg4) {
+        return std::unique_ptr<_Type>(new _Type(std::forward<_Arg1>(arg1), std::forward<_Arg2>(arg2), std::forward<_Arg3>(arg3), std::forward<_Arg4>(arg4)));
     }
 
     /// <summary>

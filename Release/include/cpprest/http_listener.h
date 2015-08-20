@@ -29,6 +29,8 @@
 #include <limits>
 #include <functional>
 
+#include <boost/asio/ssl.hpp>
+
 #include "cpprest/http_msg.h"
 
 #if !defined(_WIN32) || (_WIN32_WINNT >= _WIN32_WINNT_VISTA && !defined(__cplusplus_winrt))
@@ -64,6 +66,9 @@ public:
     /// <param name="other">http_listener_config to copy.</param>
     http_listener_config(const http_listener_config &other)
         : m_timeout(other.m_timeout)
+#ifndef _WIN32
+        , m_ssl_context_configurer(other.m_ssl_context_configurer)
+#endif
     {}
 
     /// <summary>
@@ -72,6 +77,9 @@ public:
     /// <param name="other">http_listener_config to move from.</param>
     http_listener_config(http_listener_config &&other)
         : m_timeout(std::move(other.m_timeout))
+#ifndef _WIN32
+        , m_ssl_context_configurer(other.m_ssl_context_configurer)
+#endif
     {}
 
     /// <summary>
@@ -83,6 +91,9 @@ public:
         if(this != &rhs)
         {
             m_timeout = rhs.m_timeout;
+#ifndef _WIN32
+            m_ssl_context_configurer = rhs.m_ssl_context_configurer;
+#endif
         }
         return *this;
     }
@@ -96,6 +107,9 @@ public:
         if(this != &rhs)
         {
             m_timeout = std::move(rhs.m_timeout);
+#ifndef _WIN32
+            m_ssl_context_configurer = rhs.m_ssl_context_configurer;
+#endif
         }
         return *this;
     }
@@ -118,9 +132,32 @@ public:
         m_timeout = std::move(timeout);
     }
 
+#ifndef _WIN32
+    /// <summary>
+    /// Get the configurer of ssl context
+    /// </summary>
+    /// <returns>The function defined by the user of http_listener_config to configure a ssl context.</returns>
+    const std::function<void(boost::asio::ssl::context&)> ssl_context_configurer() const
+    {
+        return m_ssl_context_configurer;
+    }
+
+    /// <summary>
+    /// Set the configurer of ssl context
+    /// </summary>
+    /// <param name="ssl_context_configurer">The function to configure a ssl context which will setup https connections.</param>
+    void set_ssl_context_configurer(std::function<void(boost::asio::ssl::context&)> ssl_context_configurer)
+    {
+        m_ssl_context_configurer = ssl_context_configurer;
+    }
+#endif
+
 private:
 
     utility::seconds m_timeout;
+#ifndef _WIN32
+    std::function<void(boost::asio::ssl::context&)> m_ssl_context_configurer;
+#endif
 };
 
 namespace details
