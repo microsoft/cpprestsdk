@@ -263,7 +263,7 @@ namespace details
     /// <summary>
     /// Simplistic implementation of make_unique. A better implementation would be based on variadic templates
     /// and therefore not be compatible with Dev10.
-    /// </summary>b  
+    /// </summary>
     template <typename _Type>
     std::unique_ptr<_Type> make_unique() {
         return std::unique_ptr<_Type>(new _Type());
