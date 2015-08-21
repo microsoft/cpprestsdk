@@ -71,22 +71,21 @@ private:
     std::atomic<int> m_refs; // track how many threads are still referring to this
     
     std::unique_ptr<boost::asio::ssl::stream<boost::asio::ip::tcp::socket&>> m_ssl_stream;
-    boost::asio::ssl::context m_ssl_context;
 
 public:
-    connection(std::unique_ptr<boost::asio::ip::tcp::socket> socket, http_linux_server* server, hostport_listener* parent, bool is_https, std::function<void(boost::asio::ssl::context&)> ssl_context_configurer)
+    connection(std::unique_ptr<boost::asio::ip::tcp::socket> socket, http_linux_server* server, hostport_listener* parent, bool is_https, const std::function<void(boost::asio::ssl::context&)>& ssl_context_callback)
     : m_socket(std::move(socket))
     , m_request_buf()
     , m_response_buf()
     , m_p_server(server)
     , m_p_parent(parent)
     , m_refs(1)
-    , m_ssl_context(boost::asio::ssl::context::sslv23)
     {
         if (is_https)
         {
-            ssl_context_configurer(m_ssl_context);
-            m_ssl_stream = utility::details::make_unique<boost::asio::ssl::stream<boost::asio::ip::tcp::socket&>>(*m_socket, m_ssl_context);
+            boost::asio::ssl::context ssl_context(boost::asio::ssl::context::sslv23);
+            ssl_context_callback(ssl_context);
+            m_ssl_stream = utility::details::make_unique<boost::asio::ssl::stream<boost::asio::ip::tcp::socket&>>(*m_socket, ssl_context);
             m_ssl_stream->async_handshake(boost::asio::ssl::stream_base::server, boost::bind(&connection::start_request_response, this));
         }
         else 
@@ -144,7 +143,7 @@ private:
     std::string m_port;
 
     bool m_is_https;
-    std::function<void(boost::asio::ssl::context&)> m_ssl_context_configurer;
+    const std::function<void(boost::asio::ssl::context&)>& m_ssl_context_callback;
 
 public:
      hostport_listener(http_linux_server* server, const std::string& hostport, bool is_https, const http_listener_config& config)
@@ -155,7 +154,7 @@ public:
     , m_connections()
     , m_p_server(server)
     , m_is_https(is_https)
-    , m_ssl_context_configurer(config.ssl_context_configurer())
+    , m_ssl_context_callback(config.get_ssl_context_callback())
     {
         m_all_connections_complete.set();
 

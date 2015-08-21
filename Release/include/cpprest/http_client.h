@@ -92,7 +92,7 @@ public:
 #endif
         , m_set_user_nativehandle_options([](native_handle)->void{})
 #if !defined(_WIN32) && !defined(__cplusplus_winrt)
-        , m_sslcontext_options([](boost::asio::ssl::context&)->void{})
+        , m_ssl_context_callback([](boost::asio::ssl::context&)->void{})
 #endif
 #if defined(_WIN32) && !defined(__cplusplus_winrt)
         , m_buffer_request(false)
@@ -327,17 +327,17 @@ public:
     /// Sets a callback to enable custom setting of the ssl context, at construction time.
     /// </summary>
     /// <param name="callback">A user callback allowing for customization of the ssl context at construction time.</param>
-    void set_sslcontext_options(const std::function<void(boost::asio::ssl::context&)> callback)
+    void set_ssl_context_callback(std::function<void(boost::asio::ssl::context&)> &&callback)
     {
-         m_sslcontext_options = callback;
+         m_ssl_context_callback = std::move(callback);
     }
 
     /// <summary>
     /// Gets the user's callback to allow for customization of the ssl context.
     /// </summary>
-    std::function<void(boost::asio::ssl::context&)> get_sslcontext_options() const
+    const std::function<void(boost::asio::ssl::context&)>& get_ssl_context_callback() const
     {
-        return m_sslcontext_options;
+        return m_ssl_context_callback;
     }
 #endif
 
@@ -363,7 +363,7 @@ private:
     std::function<void(native_handle)> m_set_user_nativehandle_options;
 
 #if !defined(_WIN32) && !defined(__cplusplus_winrt)
-    std::function<void(boost::asio::ssl::context&)> m_sslcontext_options;
+    std::function<void(boost::asio::ssl::context&)> m_ssl_context_callback;
 #endif
 #if defined(_WIN32) && !defined(__cplusplus_winrt)
     bool m_buffer_request;

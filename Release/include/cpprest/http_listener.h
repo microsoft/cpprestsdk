@@ -67,7 +67,7 @@ public:
     http_listener_config(const http_listener_config &other)
         : m_timeout(other.m_timeout)
 #ifndef _WIN32
-        , m_ssl_context_configurer(other.m_ssl_context_configurer)
+        , m_ssl_context_callback(other.m_ssl_context_callback)
 #endif
     {}
 
@@ -78,7 +78,7 @@ public:
     http_listener_config(http_listener_config &&other)
         : m_timeout(std::move(other.m_timeout))
 #ifndef _WIN32
-        , m_ssl_context_configurer(other.m_ssl_context_configurer)
+        , m_ssl_context_callback(std::move(other.m_ssl_context_callback))
 #endif
     {}
 
@@ -92,7 +92,7 @@ public:
         {
             m_timeout = rhs.m_timeout;
 #ifndef _WIN32
-            m_ssl_context_configurer = rhs.m_ssl_context_configurer;
+            m_ssl_context_callback = rhs.m_ssl_context_callback;
 #endif
         }
         return *this;
@@ -108,7 +108,7 @@ public:
         {
             m_timeout = std::move(rhs.m_timeout);
 #ifndef _WIN32
-            m_ssl_context_configurer = rhs.m_ssl_context_configurer;
+            m_ssl_context_callback = std::move(rhs.m_ssl_context_callback);
 #endif
         }
         return *this;
@@ -134,21 +134,21 @@ public:
 
 #ifndef _WIN32
     /// <summary>
-    /// Get the configurer of ssl context
+    /// Get the callback of ssl context
     /// </summary>
     /// <returns>The function defined by the user of http_listener_config to configure a ssl context.</returns>
-    const std::function<void(boost::asio::ssl::context&)> ssl_context_configurer() const
+    const std::function<void(boost::asio::ssl::context&)>& get_ssl_context_callback() const
     {
-        return m_ssl_context_configurer;
+        return m_ssl_context_callback;
     }
 
     /// <summary>
-    /// Set the configurer of ssl context
+    /// Set the callback of ssl context
     /// </summary>
-    /// <param name="ssl_context_configurer">The function to configure a ssl context which will setup https connections.</param>
-    void set_ssl_context_configurer(std::function<void(boost::asio::ssl::context&)> ssl_context_configurer)
+    /// <param name="ssl_context_callback">The function to configure a ssl context which will setup https connections.</param>
+    void set_ssl_context_callback(std::function<void(boost::asio::ssl::context&)> &&ssl_context_callback)
     {
-        m_ssl_context_configurer = ssl_context_configurer;
+        m_ssl_context_callback = std::move(ssl_context_callback);
     }
 #endif
 
@@ -156,7 +156,7 @@ private:
 
     utility::seconds m_timeout;
 #ifndef _WIN32
-    std::function<void(boost::asio::ssl::context&)> m_ssl_context_configurer;
+    std::function<void(boost::asio::ssl::context&)> m_ssl_context_callback;
 #endif
 };
 

@@ -201,7 +201,7 @@ TEST_FIXTURE(uri_address, ssl_context_callback_https)
     http_client_config config;
     bool called = false;
 
-    config.set_sslcontext_options([&called](boost::asio::ssl::context& ctx)
+    config.set_ssl_context_callback([&called](boost::asio::ssl::context& ctx)
     {
         called = true;
     });
@@ -225,7 +225,7 @@ TEST_FIXTURE(uri_address, ssl_context_callback_http)
     http_client_config config;
     bool called = false;
 
-    config.set_sslcontext_options([&called](boost::asio::ssl::context& ctx)
+    config.set_ssl_context_callback([&called](boost::asio::ssl::context& ctx)
     {
         called = true;
     });

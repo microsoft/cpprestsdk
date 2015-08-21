@@ -223,7 +223,7 @@ void hostport_listener::on_accept(ip::tcp::socket* socket, const boost::system::
     {
         {
             pplx::scoped_lock<pplx::extensibility::recursive_lock_t> lock(m_connections_lock);
-            m_connections.insert(new connection(std::unique_ptr<tcp::socket>(std::move(socket)), m_p_server, this, m_is_https, m_ssl_context_configurer));
+            m_connections.insert(new connection(std::unique_ptr<tcp::socket>(std::move(socket)), m_p_server, this, m_is_https, m_ssl_context_callback));
             m_all_connections_complete.reset();
 
             if (m_acceptor)

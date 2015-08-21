@@ -490,7 +490,7 @@ XzJTD4slrGSJrcpLt/g/Jqqdjg==
     boost::asio::const_buffer key(private_key, std::strlen(private_key));
 
     http_listener_config server_config;
-    server_config.set_ssl_context_configurer(
+    server_config.set_ssl_context_callback(
         [&](boost::asio::ssl::context& ctx)
         {
             ctx.set_options(boost::asio::ssl::context::default_workarounds);
@@ -510,7 +510,7 @@ XzJTD4slrGSJrcpLt/g/Jqqdjg==
     listener.open().wait();
 
     client::http_client_config client_config;
-    client_config.set_sslcontext_options(
+    client_config.set_ssl_context_callback(
         [&](boost::asio::ssl::context& ctx)
         {
             ctx.add_certificate_authority(cert);
