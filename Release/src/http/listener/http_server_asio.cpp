@@ -480,14 +480,14 @@ void connection::async_write(ClassFuncPtr &&connection_func_ptr, const http_resp
 {
     if (m_ssl_stream)
     {
-        boost::asio::async_write(*m_ssl_stream, m_response_buf, [this, &connection_func_ptr, &response] (const boost::system::error_code& ec, std::size_t)
+        boost::asio::async_write(*m_ssl_stream, m_response_buf, [=] (const boost::system::error_code& ec, std::size_t)
         {
             (this->*connection_func_ptr)(response, ec);
         });
     }
     else
     {
-        boost::asio::async_write(*m_socket, m_response_buf, [this, &connection_func_ptr, &response] (const boost::system::error_code& ec, std::size_t)
+        boost::asio::async_write(*m_socket, m_response_buf, [=] (const boost::system::error_code& ec, std::size_t)
         {
             (this->*connection_func_ptr)(response, ec);
         });
