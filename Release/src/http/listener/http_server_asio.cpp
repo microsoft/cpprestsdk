@@ -205,11 +205,17 @@ void connection::start_request_response()
 
     if (m_ssl_stream)
     {
-        boost::asio::async_read_until(*m_ssl_stream, m_request_buf, CRLF, boost::bind(&connection::handle_http_line, this, placeholders::error));
+        boost::asio::async_read_until(*m_ssl_stream, m_request_buf, CRLF, [this](const boost::system::error_code& ec, std::size_t)
+        {
+            this->handle_http_line(ec);
+        });
     }
     else
     {
-        boost::asio::async_read_until(*m_socket, m_request_buf, crlf_nonascii_searcher, boost::bind(&connection::handle_http_line, this, placeholders::error));
+        boost::asio::async_read_until(*m_socket, m_request_buf, crlf_nonascii_searcher, [this](const boost::system::error_code& ec, std::size_t)
+        {
+            this->handle_http_line(ec);
+        });
     }
 }
 
