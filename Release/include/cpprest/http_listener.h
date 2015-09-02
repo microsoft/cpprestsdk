@@ -146,9 +146,9 @@ public:
     /// Set the callback of ssl context
     /// </summary>
     /// <param name="ssl_context_callback">The function to configure a ssl context which will setup https connections.</param>
-    void set_ssl_context_callback(std::function<void(boost::asio::ssl::context&)> &&ssl_context_callback)
+    void set_ssl_context_callback(std::function<void(boost::asio::ssl::context&)> ssl_context_callback)
     {
-        m_ssl_context_callback = std::move(ssl_context_callback);
+        m_ssl_context_callback = ssl_context_callback;
     }
 #endif
 

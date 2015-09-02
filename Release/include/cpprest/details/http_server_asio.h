@@ -109,9 +109,9 @@ private:
     void dispatch_request_to_listener();
     void do_response(bool bad_request);
     template <typename ClassFuncPtr>
-    void async_write(const ClassFuncPtr &connection_func_ptr, const http_response &response);
+    void async_write(ClassFuncPtr &&connection_func_ptr, const http_response &response);
     template <typename CompletionCondition, typename Handler>
-    void async_read(const CompletionCondition &condition, const Handler &read_handler);
+    void async_read(CompletionCondition &&condition, Handler &&read_handler);
     void async_read_until();
     template <typename ReadHandler>
     void async_read_until_buffersize(size_t size, const ReadHandler &handler);

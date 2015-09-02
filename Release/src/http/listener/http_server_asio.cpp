@@ -476,20 +476,26 @@ void connection::handle_body(const boost::system::error_code& ec)
 }
 
 template <typename ClassFuncPtr>
-void connection::async_write(const ClassFuncPtr &connection_func_ptr, const http_response &response)
+void connection::async_write(ClassFuncPtr &&connection_func_ptr, const http_response &response)
 {
     if (m_ssl_stream)
     {
-        boost::asio::async_write(*m_ssl_stream, m_response_buf, boost::bind(connection_func_ptr, this, response, placeholders::error));
+        boost::asio::async_write(*m_ssl_stream, m_response_buf, [this, &connection_func_ptr, &response] (const boost::system::error_code& ec, std::size_t)
+        {
+            (this->*connection_func_ptr)(response, ec);
+        });
     }
     else
     {
-        boost::asio::async_write(*m_socket, m_response_buf, boost::bind(connection_func_ptr, this, response, placeholders::error));
+        boost::asio::async_write(*m_socket, m_response_buf, [this, &connection_func_ptr, &response] (const boost::system::error_code& ec, std::size_t)
+        {
+            (this->*connection_func_ptr)(response, ec);
+        });
     }
 }
 
 template <typename CompletionCondition, typename Handler>
-void connection::async_read(const CompletionCondition &condition, const Handler &read_handler)
+void connection::async_read(CompletionCondition &&condition, Handler &&read_handler)
 {
     if (m_ssl_stream)
     {

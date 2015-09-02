@@ -327,9 +327,9 @@ public:
     /// Sets a callback to enable custom setting of the ssl context, at construction time.
     /// </summary>
     /// <param name="callback">A user callback allowing for customization of the ssl context at construction time.</param>
-    void set_ssl_context_callback(std::function<void(boost::asio::ssl::context&)> &&callback)
+    void set_ssl_context_callback(std::function<void(boost::asio::ssl::context&)> callback)
     {
-         m_ssl_context_callback = std::move(callback);
+         m_ssl_context_callback = callback;
     }
 
     /// <summary>
