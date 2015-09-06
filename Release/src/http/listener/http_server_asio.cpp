@@ -505,11 +505,11 @@ void connection::async_read(CompletionCondition &&condition, Handler &&read_hand
 {
     if (m_ssl_stream)
     {
-        boost::asio::async_read(*m_ssl_stream, m_request_buf, condition, read_handler);
+        boost::asio::async_read(*m_ssl_stream, m_request_buf, std::forward<CompletionCondition>(condition), std::forward<Handler>(read_handler));
     }
     else
     {
-        boost::asio::async_read(*m_socket, m_request_buf, condition, read_handler);
+        boost::asio::async_read(*m_socket, m_request_buf, std::forward<CompletionCondition>(condition), std::forward<Handler>(read_handler));
     }
 }
 
