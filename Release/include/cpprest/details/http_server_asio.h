@@ -58,6 +58,8 @@ class hostport_listener;
 class connection
 {
 private:
+    typedef void (connection::*ResponseFuncPtr) (const http_response &response, const boost::system::error_code& ec);
+
     std::unique_ptr<boost::asio::ip::tcp::socket> m_socket;
     boost::asio::streambuf m_request_buf;
     boost::asio::streambuf m_response_buf;
@@ -108,8 +110,7 @@ private:
     void handle_chunked_body(const boost::system::error_code& ec, int toWrite);
     void dispatch_request_to_listener();
     void do_response(bool bad_request);
-    template <typename ClassFuncPtr>
-    void async_write(ClassFuncPtr &&connection_func_ptr, const http_response &response);
+    void async_write(ResponseFuncPtr response_func_ptr, const http_response &response);
     template <typename CompletionCondition, typename Handler>
     void async_read(CompletionCondition &&condition, Handler &&read_handler);
     void async_read_until();
