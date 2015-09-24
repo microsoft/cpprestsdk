@@ -26,9 +26,9 @@
 
 set -e
 
-# Note: we require android ndk r10 available from
-# http://dl.google.com/android/ndk/android-ndk32-r10-linux-x86_64.tar.bz2
-# http://dl.google.com/android/ndk/android-ndk32-r10-windows-x86_64.zip
+# Note: we require android ndk r10e available from
+# http://dl.google.com/android/ndk/android-ndk-r10e-linux-x86_64.tar.bz2
+# http://dl.google.com/android/ndk/android-ndk-r10e-windows-x86_64.zip
 
 # -----------------
 # Parse args
@@ -184,7 +184,7 @@ then
 	then
 	    git checkout 1c95d349d5f92c5ac1c24e0ec6985272a3e3883c
 	    git reset --hard HEAD
-	    patch -p1 < "$DIR/boost-for-android.patch"
+	    git apply "$DIR/boost-for-android.patch"
 	    touch cpprestsdk.patched.stamp
 	fi
 	PATH="$PATH:$NDK_DIR" ./build-android.sh --boost=1.55.0 --with-libraries=locale,random,date_time,filesystem,system,thread,chrono "${NDK_DIR}" || exit 1
@@ -200,7 +200,7 @@ then
 	then
 	    git checkout 1c95d349d5f92c5ac1c24e0ec6985272a3e3883c
 	    git reset --hard HEAD
-	    patch -p1 < "$DIR/boost-for-android-x86.patch"
+	    git apply "$DIR/boost-for-android-x86.patch"
 	    ln -s ../Boost-for-Android/boost_1_55_0.tar.bz2 .
 	    touch cpprestsdk.patched.stamp
 	fi
