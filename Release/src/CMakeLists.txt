@@ -70,8 +70,12 @@ elseif(WIN32)
     httpapi.lib
     Winhttp.lib
   )
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNINGS} /Yustdafx.h /Zm200")
-  set_source_files_properties(pch/stdafx.cpp PROPERTIES COMPILE_FLAGS "/Ycstdafx.h")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNINGS}")
+  if (${CMAKE_GENERATOR} MATCHES "Visual Studio .*")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Yustdafx.h /Zm200")
+    set_source_files_properties(pch/stdafx.cpp PROPERTIES COMPILE_FLAGS "/Ycstdafx.h")
+  endif()
+
   if (BUILD_SHARED_LIBS)
     add_definitions(-D_ASYNCRT_EXPORT -D_PPLX_EXPORT -D_USRDLL)
   endif()
