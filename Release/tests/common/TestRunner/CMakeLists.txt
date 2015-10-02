@@ -1,6 +1,5 @@
-include_directories(${Casablanca_INCLUDE_DIR}
+include_directories(${Casablanca_INCLUDE_DIRS}
   ../UnitTestpp
-  ${Boost_INCLUDE_DIR}
   )
 
 set(TR_SOURCES
@@ -100,4 +99,4 @@ if(NOT IOS AND NOT ANDROID)
         )
     endif()
   endif()
-endif()	
+endif()

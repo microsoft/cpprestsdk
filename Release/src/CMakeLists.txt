@@ -1,4 +1,7 @@
-include_directories(../include pch ${Boost_INCLUDE_DIR} ${OPENSSL_INCLUDE_DIR})
+include_directories(../include pch)
+if (NOT CPPREST_EXCLUDE_WEBSOCKETS)
+  include_directories(${Boost_INCLUDE_DIR} ${OPENSSL_INCLUDE_DIR})
+endif()
 
 set(SOURCES_COMMON
   http/client/http_client_msg.cpp
