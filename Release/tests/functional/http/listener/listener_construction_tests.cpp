@@ -430,6 +430,8 @@ TEST_FIXTURE(uri_address, listener_config_creation)
     }
 }
 
+#if !defined(_WIN32) && !defined(__cplusplus_winrt)
+
 TEST_FIXTURE(uri_address, create_https_listener_get)
 {
     const char * self_signed_cert = R"(
