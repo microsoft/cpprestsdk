@@ -43,7 +43,14 @@ typedef void* native_handle;}}}
 #include <memory>
 #include <limits>
 #if !defined(_WIN32) && !defined(__cplusplus_winrt)
-#include <boost/asio/ssl.hpp>
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconversion"
+#endif
+#include "boost/asio/ssl.hpp"
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 #endif
 
 #include "pplx/pplxtasks.h"
