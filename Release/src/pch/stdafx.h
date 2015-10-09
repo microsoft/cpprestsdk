@@ -25,6 +25,11 @@
 
 #pragma once
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
+
 #include "cpprest/details/cpprest_compat.h"
 #include "cpprest/details/basic_types.h"
 
@@ -159,4 +164,8 @@
 #endif
 #if defined(min)
 #error: min macro defined -- make sure to #define NOMINMAX before including windows.h
+#endif
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
 #endif

@@ -34,7 +34,14 @@
 #pragma warning(push)
 #pragma warning(disable : 4005)
 #endif
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
 #include <boost/asio/ssl.hpp>
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 #if defined(_MSC_VER)
 #pragma warning(pop)
 #endif

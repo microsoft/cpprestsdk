@@ -27,9 +27,16 @@
 
 #include "stdafx.h"
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
 #include <boost/algorithm/string.hpp>
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 #if defined(BOOST_NO_CXX11_SMART_PTR)
 #error "Cpp rest SDK requires c++11 smart pointer support from boost"
