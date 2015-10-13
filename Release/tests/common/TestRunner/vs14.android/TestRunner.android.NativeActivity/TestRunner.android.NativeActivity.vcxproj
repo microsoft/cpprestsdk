@@ -63,9 +63,7 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Release.Tests.Settings" />
-  <PropertyGroup Label="UserMacros">
-    <NuGetPackageImportStamp>f2020e02</NuGetPackageImportStamp>
-  </PropertyGroup>
+  <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'" />
@@ -255,28 +253,32 @@
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="$(PackagesRoot)\boost.1.55.0.16\build\native\boost.targets" Condition="Exists('$(PackagesRoot)\boost.1.55.0.16\build\native\boost.targets')" />
-    <Import Project="$(PackagesRoot)\boost_atomic-android.1.55.0.0\build\native\boost_atomic-android.targets" Condition="Exists('$(PackagesRoot)\boost_atomic-android.1.55.0.0\build\native\boost_atomic-android.targets')" />
-    <Import Project="$(PackagesRoot)\boost_chrono-android.1.55.0.0\build\native\boost_chrono-android.targets" Condition="Exists('$(PackagesRoot)\boost_chrono-android.1.55.0.0\build\native\boost_chrono-android.targets')" />
-    <Import Project="$(PackagesRoot)\boost_date_time-android.1.55.0.0\build\native\boost_date_time-android.targets" Condition="Exists('$(PackagesRoot)\boost_date_time-android.1.55.0.0\build\native\boost_date_time-android.targets')" />
-    <Import Project="$(PackagesRoot)\boost_filesystem-android.1.55.0.0\build\native\boost_filesystem-android.targets" Condition="Exists('$(PackagesRoot)\boost_filesystem-android.1.55.0.0\build\native\boost_filesystem-android.targets')" />
-    <Import Project="$(PackagesRoot)\boost_system-android.1.55.0.0\build\native\boost_system-android.targets" Condition="Exists('$(PackagesRoot)\boost_system-android.1.55.0.0\build\native\boost_system-android.targets')" />
-    <Import Project="$(PackagesRoot)\boost_thread-android.1.55.0.0\build\native\boost_thread-android.targets" Condition="Exists('$(PackagesRoot)\boost_thread-android.1.55.0.0\build\native\boost_thread-android.targets')" />
-    <Import Project="$(PackagesRoot)\openssl-android.1.0.1.0\build\native\openssl-android.targets" Condition="Exists('$(PackagesRoot)\openssl-android.1.0.1.0\build\native\openssl-android.targets')" />
-    <Import Project="$(PackagesRoot)\boost_random-android.1.55.0.0\build\native\boost_random-android.targets" Condition="Exists('$(PackagesRoot)\boost_random-android.1.55.0.0\build\native\boost_random-android.targets')" />
+    <Import Project="..\..\..\..\..\..\packages\openssl-android.1.0.2.0\build\native\openssl-android.targets" Condition="Exists('..\..\..\..\..\..\packages\openssl-android.1.0.2.0\build\native\openssl-android.targets')" />
+    <Import Project="..\..\..\..\..\..\packages\boost.1.59.0.0\build\native\boost.targets" Condition="Exists('..\..\..\..\..\..\packages\boost.1.59.0.0\build\native\boost.targets')" />
+    <Import Project="..\..\..\..\..\..\packages\boost_atomic-android.1.55.0.1\build\native\boost_atomic-android.targets" Condition="Exists('..\..\..\..\..\..\packages\boost_atomic-android.1.55.0.1\build\native\boost_atomic-android.targets')" />
+    <Import Project="..\..\..\..\..\..\packages\libiconv-android.1.13.1.1\build\native\libiconv-android.targets" Condition="Exists('..\..\..\..\..\..\packages\libiconv-android.1.13.1.1\build\native\libiconv-android.targets')" />
+    <Import Project="..\..\..\..\..\..\packages\boost_thread-android.1.55.0.1\build\native\boost_thread-android.targets" Condition="Exists('..\..\..\..\..\..\packages\boost_thread-android.1.55.0.1\build\native\boost_thread-android.targets')" />
+    <Import Project="..\..\..\..\..\..\packages\boost_system-android.1.55.0.1\build\native\boost_system-android.targets" Condition="Exists('..\..\..\..\..\..\packages\boost_system-android.1.55.0.1\build\native\boost_system-android.targets')" />
+    <Import Project="..\..\..\..\..\..\packages\boost_random-android.1.55.0.1\build\native\boost_random-android.targets" Condition="Exists('..\..\..\..\..\..\packages\boost_random-android.1.55.0.1\build\native\boost_random-android.targets')" />
+    <Import Project="..\..\..\..\..\..\packages\boost_locale-android.1.55.0.1\build\native\boost_locale-android.targets" Condition="Exists('..\..\..\..\..\..\packages\boost_locale-android.1.55.0.1\build\native\boost_locale-android.targets')" />
+    <Import Project="..\..\..\..\..\..\packages\boost_filesystem-android.1.55.0.1\build\native\boost_filesystem-android.targets" Condition="Exists('..\..\..\..\..\..\packages\boost_filesystem-android.1.55.0.1\build\native\boost_filesystem-android.targets')" />
+    <Import Project="..\..\..\..\..\..\packages\boost_date_time-android.1.55.0.1\build\native\boost_date_time-android.targets" Condition="Exists('..\..\..\..\..\..\packages\boost_date_time-android.1.55.0.1\build\native\boost_date_time-android.targets')" />
+    <Import Project="..\..\..\..\..\..\packages\boost_chrono-android.1.55.0.1\build\native\boost_chrono-android.targets" Condition="Exists('..\..\..\..\..\..\packages\boost_chrono-android.1.55.0.1\build\native\boost_chrono-android.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('$(PackagesRoot)\boost.1.55.0.16\build\native\boost.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(PackagesRoot)\boost.1.55.0.16\build\native\boost.targets'))" />
-    <Error Condition="!Exists('$(PackagesRoot)\boost_atomic-android.1.55.0.0\build\native\boost_atomic-android.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(PackagesRoot)\boost_atomic-android.1.55.0.0\build\native\boost_atomic-android.targets'))" />
-    <Error Condition="!Exists('$(PackagesRoot)\boost_chrono-android.1.55.0.0\build\native\boost_chrono-android.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(PackagesRoot)\boost_chrono-android.1.55.0.0\build\native\boost_chrono-android.targets'))" />
-    <Error Condition="!Exists('$(PackagesRoot)\boost_date_time-android.1.55.0.0\build\native\boost_date_time-android.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(PackagesRoot)\boost_date_time-android.1.55.0.0\build\native\boost_date_time-android.targets'))" />
-    <Error Condition="!Exists('$(PackagesRoot)\boost_filesystem-android.1.55.0.0\build\native\boost_filesystem-android.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(PackagesRoot)\boost_filesystem-android.1.55.0.0\build\native\boost_filesystem-android.targets'))" />
-    <Error Condition="!Exists('$(PackagesRoot)\boost_system-android.1.55.0.0\build\native\boost_system-android.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(PackagesRoot)\boost_system-android.1.55.0.0\build\native\boost_system-android.targets'))" />
-    <Error Condition="!Exists('$(PackagesRoot)\boost_thread-android.1.55.0.0\build\native\boost_thread-android.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(PackagesRoot)\boost_thread-android.1.55.0.0\build\native\boost_thread-android.targets'))" />
-    <Error Condition="!Exists('$(PackagesRoot)\openssl-android.1.0.1.0\build\native\openssl-android.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(PackagesRoot)\openssl-android.1.0.1.0\build\native\openssl-android.targets'))" />
-    <Error Condition="!Exists('$(PackagesRoot)\boost_random-android.1.55.0.0\build\native\boost_random-android.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(PackagesRoot)\boost_random-android.1.55.0.0\build\native\boost_random-android.targets'))" />
+    <Error Condition="!Exists('..\..\..\..\..\..\packages\openssl-android.1.0.2.0\build\native\openssl-android.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\..\..\..\packages\openssl-android.1.0.2.0\build\native\openssl-android.targets'))" />
+    <Error Condition="!Exists('..\..\..\..\..\..\packages\boost.1.59.0.0\build\native\boost.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\..\..\..\packages\boost.1.59.0.0\build\native\boost.targets'))" />
+    <Error Condition="!Exists('..\..\..\..\..\..\packages\boost_atomic-android.1.55.0.1\build\native\boost_atomic-android.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\..\..\..\packages\boost_atomic-android.1.55.0.1\build\native\boost_atomic-android.targets'))" />
+    <Error Condition="!Exists('..\..\..\..\..\..\packages\libiconv-android.1.13.1.1\build\native\libiconv-android.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\..\..\..\packages\libiconv-android.1.13.1.1\build\native\libiconv-android.targets'))" />
+    <Error Condition="!Exists('..\..\..\..\..\..\packages\boost_thread-android.1.55.0.1\build\native\boost_thread-android.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\..\..\..\packages\boost_thread-android.1.55.0.1\build\native\boost_thread-android.targets'))" />
+    <Error Condition="!Exists('..\..\..\..\..\..\packages\boost_system-android.1.55.0.1\build\native\boost_system-android.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\..\..\..\packages\boost_system-android.1.55.0.1\build\native\boost_system-android.targets'))" />
+    <Error Condition="!Exists('..\..\..\..\..\..\packages\boost_random-android.1.55.0.1\build\native\boost_random-android.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\..\..\..\packages\boost_random-android.1.55.0.1\build\native\boost_random-android.targets'))" />
+    <Error Condition="!Exists('..\..\..\..\..\..\packages\boost_locale-android.1.55.0.1\build\native\boost_locale-android.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\..\..\..\packages\boost_locale-android.1.55.0.1\build\native\boost_locale-android.targets'))" />
+    <Error Condition="!Exists('..\..\..\..\..\..\packages\boost_filesystem-android.1.55.0.1\build\native\boost_filesystem-android.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\..\..\..\packages\boost_filesystem-android.1.55.0.1\build\native\boost_filesystem-android.targets'))" />
+    <Error Condition="!Exists('..\..\..\..\..\..\packages\boost_date_time-android.1.55.0.1\build\native\boost_date_time-android.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\..\..\..\packages\boost_date_time-android.1.55.0.1\build\native\boost_date_time-android.targets'))" />
+    <Error Condition="!Exists('..\..\..\..\..\..\packages\boost_chrono-android.1.55.0.1\build\native\boost_chrono-android.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\..\..\..\packages\boost_chrono-android.1.55.0.1\build\native\boost_chrono-android.targets'))" />
   </Target>
 </Project>
