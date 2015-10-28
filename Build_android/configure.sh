@@ -230,7 +230,7 @@ then
 	cmake "$DIR/../Release/" \
 	    -DCMAKE_TOOLCHAIN_FILE=../android-cmake/android.toolchain.cmake \
 	    -DANDROID_ABI=armeabi-v7a \
-	    -DANDROID_TOOLCHAIN_NAME=arm-linux-androideabi-clang3.4 \
+	    -DANDROID_TOOLCHAIN_NAME=arm-linux-androideabi-clang3.6 \
 	    -DANDROID_STL=none \
 	    -DANDROID_STL_FORCE_FEATURES=ON \
             -DANDROID_NATIVE_API_LEVEL=android-9 \
@@ -246,7 +246,7 @@ then
 	cmake "$DIR/../Release/" \
 	    -DCMAKE_TOOLCHAIN_FILE=../android-cmake/android.toolchain.cmake \
 	    -DANDROID_ABI=armeabi-v7a \
-	    -DANDROID_TOOLCHAIN_NAME=arm-linux-androideabi-clang3.4 \
+	    -DANDROID_TOOLCHAIN_NAME=arm-linux-androideabi-clang3.6 \
 	    -DANDROID_STL=none \
 	    -DANDROID_STL_FORCE_FEATURES=ON \
 	    -DANDROID_NDK="${ANDROID_NDK}" \
@@ -262,7 +262,7 @@ then
 	cmake "$DIR/../Release/" \
 	    -DCMAKE_TOOLCHAIN_FILE=../android-cmake/android.toolchain.cmake \
 	    -DANDROID_ABI=x86 \
-	    -DANDROID_TOOLCHAIN_NAME=x86-clang3.4 \
+	    -DANDROID_TOOLCHAIN_NAME=x86-clang3.6 \
 	    -DANDROID_STL=none \
 	    -DANDROID_STL_FORCE_FEATURES=ON \
             -DANDROID_NATIVE_API_LEVEL=android-9 \
@@ -278,7 +278,7 @@ then
 	cmake "$DIR/../Release/" \
 	    -DCMAKE_TOOLCHAIN_FILE=../android-cmake/android.toolchain.cmake \
 	    -DANDROID_ABI=x86 \
-	    -DANDROID_TOOLCHAIN_NAME=x86-clang3.4 \
+	    -DANDROID_TOOLCHAIN_NAME=x86-clang3.6 \
 	    -DANDROID_STL=none \
 	    -DANDROID_STL_FORCE_FEATURES=ON \
 	    -DANDROID_NDK="${ANDROID_NDK}" \
