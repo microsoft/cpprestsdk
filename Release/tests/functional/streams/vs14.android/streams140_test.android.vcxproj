@@ -96,7 +96,7 @@
       <CppLanguageStandard>c++11</CppLanguageStandard>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalOptions>-funwind-tables %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-funwind-tables -Wno-unused-local-typedef %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
@@ -107,7 +107,7 @@
       <ExceptionHandling>Enabled</ExceptionHandling>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalOptions>-funwind-tables %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-funwind-tables -Wno-unused-local-typedef %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
@@ -118,7 +118,7 @@
       <ExceptionHandling>Enabled</ExceptionHandling>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalOptions>-funwind-tables %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-funwind-tables -Wno-unused-local-typedef %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
@@ -129,7 +129,7 @@
       <ExceptionHandling>Enabled</ExceptionHandling>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <AdditionalOptions>-funwind-tables %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-funwind-tables -Wno-unused-local-typedef %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
