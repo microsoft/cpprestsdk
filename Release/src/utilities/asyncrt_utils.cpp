@@ -171,9 +171,15 @@ const std::error_category & __cdecl platform_category()
 
 #ifdef _WIN32
 
+// Remove once VS 2013 is no longer supported.
+#if _MSC_VER < 1900
+static details::windows_category_impl instance;
+#endif
 const std::error_category & __cdecl windows_category()
 {
+#if _MSC_VER >= 1900
     static details::windows_category_impl instance;
+#endif
     return instance;
 }
 
@@ -388,7 +394,7 @@ std::string __cdecl conversions::utf16_to_utf8(const utf16string &w)
             uint32_t codePoint = highSurrogate - H_SURROGATE_START;
             codePoint <<= 10;
             codePoint |= lowSurrogate - L_SURROGATE_START;
-            codePoint |= SURROGATE_PAIR_START;
+            codePoint += SURROGATE_PAIR_START;
 
             // 4 bytes need using 21 bits
             dest.push_back(char((codePoint >> 18) | 0xF0));                 // leading 3 bits

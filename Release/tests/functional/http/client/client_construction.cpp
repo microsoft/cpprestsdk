@@ -172,6 +172,13 @@ TEST_FIXTURE(uri_address, get_client_config)
 
     const http_client_config& config2 = client.client_config();
     VERIFY_ARE_EQUAL(config2.timeout().count(), timeout.count());
+    std::chrono::milliseconds milli_timeout = config2.timeout();
+    VERIFY_ARE_EQUAL(milli_timeout.count(),
+        std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count());
+    auto micro_timeout = config.timeout<std::chrono::microseconds>();
+    VERIFY_ARE_EQUAL(micro_timeout.count(),
+        std::chrono::duration_cast<std::chrono::microseconds>(timeout).count());
+
     VERIFY_ARE_EQUAL(config2.chunksize(), 1024);
 }
 
@@ -185,6 +192,59 @@ TEST_FIXTURE(uri_address, BaseURI_test)
     http_client baseclient2(m_uri, config);
     VERIFY_ARE_EQUAL(baseclient2.base_uri(), m_uri);
 }
+
+#if !defined(_WIN32) && !defined(__cplusplus_winrt)
+
+// Verify that the callback of sslcontext is called for HTTPS
+TEST_FIXTURE(uri_address, ssl_context_callback_https)
+{
+    http_client_config config;
+    bool called = false;
+
+    config.set_ssl_context_callback([&called](boost::asio::ssl::context& ctx)
+    {
+        called = true;
+    });
+
+    http_client client("https://www.google.com/", config);
+
+    try
+    {
+        client.request(methods::GET, U("/")).get();
+    }
+    catch (...)
+    {
+    }
+
+    VERIFY_IS_TRUE(called, "The sslcontext options is not called for HTTPS protocol");
+}
+
+// Verify that the callback of sslcontext is not called for HTTP
+TEST_FIXTURE(uri_address, ssl_context_callback_http)
+{
+    http_client_config config;
+    bool called = false;
+
+    config.set_ssl_context_callback([&called](boost::asio::ssl::context& ctx)
+    {
+        called = true;
+    });
+
+    http_client client("http://www.google.com/", config);
+
+    try
+    {
+        client.request(methods::GET, U("/")).get();
+    }
+    catch (...)
+    {
+    }
+
+    VERIFY_IS_FALSE(called, "The sslcontext options is called for HTTP protocol");
+}
+
+#endif
+
 } // SUITE(client_construction)
 
 }}}}

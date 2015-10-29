@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/2010/manifest" xmlns:m2="http://schemas.microsoft.com/appx/2013/manifest">
-  <Identity Name="64521d51-da30-445f-ba7b-d79f27cf8c7c" Publisher="CN=stgates" Version="1.0.0.0" />
+  <Identity Name="64521d51-da30-445f-ba7b-d79f27cf8c7c" Publisher="CN=casaserv" Version="1.0.0.0" />
   <Properties>
     <DisplayName>Blackjack Client</DisplayName>
     <PublisherDisplayName>Microsoft Corporation</PublisherDisplayName>

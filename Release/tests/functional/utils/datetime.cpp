@@ -33,8 +33,6 @@ SUITE(datetime)
 // This is by no means a comprehensive test suite for the datetime functionality.
 // It's a response to a particular bug and should be amended over time.
 
-// CodePlex 311
-#if !defined(_WIN32) || (defined(_MSC_VER) && _MSC_VER < 1900)
 TEST(parsing_dateandtime_basic)
 {
     // ISO 8601
@@ -62,7 +60,6 @@ TEST(parsing_dateandtime_extended)
 
     VERIFY_ARE_EQUAL(dt1.to_interval(), dt2.to_interval());
 }
-#endif
 
 TEST(parsing_date_basic)
 {

@@ -1,4 +1,4 @@
-include_directories(../include pch ${Boost_INCLUDE_DIR} ${OPENSSL_INCLUDE_DIR})
+include_directories(pch ${OPENSSL_INCLUDE_DIR})
 
 set(SOURCES_COMMON
   http/client/http_client_msg.cpp
