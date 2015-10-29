@@ -117,14 +117,14 @@
   <Import Project="..\android.vcxitems" Label="Shared" Condition="Exists('..\android.vcxitems')" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\..\..\..\packages\openssl-android.1.0.2.0\build\native\openssl-android.targets" Condition="Exists('..\..\..\..\packages\openssl-android.1.0.2.0\build\native\openssl-android.targets')" />
-    <Import Project="..\..\..\..\packages\boost.1.55.0.16\build\native\boost.targets" Condition="Exists('..\..\..\..\packages\boost.1.59.0.0\build\native\boost.targets')" />
+    <Import Project="$(PackagesRoot)\openssl-android.1.0.2.0\build\native\openssl-android.targets" Condition="Exists('$(PackagesRoot)\openssl-android.1.0.2.0\build\native\openssl-android.targets')" />
+    <Import Project="$(PackagesRoot)\boost.1.55.0.16\build\native\boost.targets" Condition="Exists('$(PackagesRoot)\boost.1.59.0.0\build\native\boost.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\..\..\..\packages\openssl-android.1.0.2.0\build\native\openssl-android.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\..\packages\openssl-android.1.0.2.0\build\native\openssl-android.targets'))" />
-    <Error Condition="!Exists('..\..\..\..\packages\boost.1.55.0.16\build\native\boost.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\..\..\packages\boost.1.59.0.0\build\native\boost.targets'))" />
+    <Error Condition="!Exists('$(PackagesRoot)\openssl-android.1.0.2.0\build\native\openssl-android.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(PackagesRoot)\openssl-android.1.0.2.0\build\native\openssl-android.targets'))" />
+    <Error Condition="!Exists('$(PackagesRoot)\boost.1.55.0.16\build\native\boost.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(PackagesRoot)\boost.1.59.0.0\build\native\boost.targets'))" />
   </Target>
 </Project>
