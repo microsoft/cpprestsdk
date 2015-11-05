@@ -22,13 +22,11 @@ Big or small we'd like to take your [contributions](https://github.com/Microsoft
 
 ## Having Trouble?
 
-We'd love to get your review score, whether good or bad, but even more than that, we want to fix your problem. If you submit your issue as a Review, we won't be able to respond to your problem and ask any follow-up questions that may be necessary. The most efficient way to do that is to open a [discussion](https://casablanca.codeplex.com/discussions) or track it under [issues](https://casablanca.codeplex.com/workitem/list/basic?field=Votes&direction=Descending&issuesToDisplay=Open&keywords=&emailSubscribedItemsOnly=false&size=50).  
+We'd love to get your review score, whether good or bad, but even more than that, we want to fix your problem. If you submit your issue as a Review, we won't be able to respond to your problem and ask any follow-up questions that may be necessary. The most efficient way to do that is to open a an issue in our [issue tracker](https://github.com/Microsoft/cpprestsdk/issues).  
 
 ### Quick Links
 
-*   [Documentation](https://casablanca.codeplex.com/documentation)
-*   [FAQ](https://casablanca.codeplex.com/wikipage?title=FAQ)
-*   [User Q/A forum](https://casablanca.codeplex.com/discussions)
-*   [Vote for or request a feature](https://casablanca.codeplex.com/workitem/list/basic?field=Votes&direction=Descending&issuesToDisplay=Open&keywords=&emailSubscribedItemsOnly=false&size=50)
-*   [Report a bug](https://casablanca.codeplex.com/WorkItem/Create)
-*   Directly contact us askcasablanca at Microsoft dot com
+*   [FAQ](https://github.com/Microsoft/cpprestsdk/wiki/FAQ)
+*   [Documentation](https://github.com/Microsoft/cpprestsdk/wiki)
+*   [Issue Tracker](https://github.com/Microsoft/cpprestsdk/issues)
+*   Directly contact us: <askcasablanca@microsoft.com>
