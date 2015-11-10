@@ -73,6 +73,15 @@ class websocket_outgoing_message
 {
 public:
 
+	/// <summary>
+	/// Sets a the outgoing message to be an unsolicited pong message.
+	/// This is useful when the client side wants to check whether the server is alive.
+	/// </summary>
+	void set_pong_message()
+	{
+		this->set_message_pong();
+	}
+
     /// <summary>
     /// Sets a UTF-8 message as the message body.
     /// </summary>
@@ -151,6 +160,14 @@ private:
     }
 
     const pplx::task_completion_event<void> & body_sent() const { return m_body_sent; }
+
+	void set_message_pong()
+	{
+		concurrency::streams::container_buffer<std::string> buffer("");
+		m_msg_type = websocket_message_type::pong;
+		m_length = static_cast<size_t>(buffer.size());
+		m_body = buffer;
+	}
 
     void set_message(const concurrency::streams::container_buffer<std::string> &buffer)
     {
