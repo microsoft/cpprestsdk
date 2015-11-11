@@ -1,7 +1,6 @@
 var searchData=
 [
-  ['_7ehttp_5fclient',['~http_client',['../classweb_1_1http_1_1client_1_1http__client.html#ae89cdca6ff85ca052568aa9069e491d1',1,'web::http::client::http_client']]],
-  ['_7ehttp_5flistener',['~http_listener',['../classweb_1_1http_1_1experimental_1_1listener_1_1http__listener.html#a4989ccfc96b9376ae08adb394e30c797',1,'web::http::experimental::listener::http_listener']]],
-  ['_7ehttp_5frequest',['~http_request',['../classweb_1_1http_1_1http__request.html#a468dbac9f4ebeeda55308a73f1ccc483',1,'web::http::http_request']]],
-  ['_7estreambuf',['~streambuf',['../class_concurrency_1_1streams_1_1streambuf.html#a4b0144ba4d70ea6c14d08f0d5604ef2f',1,'Concurrency::streams::streambuf']]]
+  ['xml_5fduration_5fto_5fseconds',['xml_duration_to_seconds',['../namespaceutility_1_1timespan.html#a1e75653b121f5cca9cc6cc6affdfe0ad',1,'utility::timespan']]],
+  ['xsgetn',['xsgetn',['../class_concurrency_1_1streams_1_1details_1_1basic__async__streambuf.html#ad71995f840886f83a8f60767783e13b7',1,'Concurrency::streams::details::basic_async_streambuf']]],
+  ['xsputn',['xsputn',['../class_concurrency_1_1streams_1_1details_1_1basic__async__streambuf.html#a3016e435f49e71fdfb3356de658a4399',1,'Concurrency::streams::details::basic_async_streambuf']]]
 ];

@@ -1,9 +1,7 @@
 var searchData=
 [
-  ['next_5fstage',['next_stage',['../classweb_1_1http_1_1http__pipeline__stage.html#a1d2c22d9e781fd00708a5a0c2d28e445',1,'web::http::http_pipeline_stage']]],
-  ['nextc',['nextc',['../class_concurrency_1_1streams_1_1streambuf.html#a5ba3cf48943dfdd814e0eb611ea8cfd0',1,'Concurrency::streams::streambuf']]],
-  ['nonce_5fgenerator',['nonce_generator',['../classutility_1_1nonce__generator.html#ac5968cda076cfca6b94116b4acf72ca2',1,'utility::nonce_generator']]],
-  ['none',['none',['../classpplx_1_1cancellation__token.html#a1730eca8686fb4c83776a89b98e48581',1,'pplx::cancellation_token']]],
-  ['null',['null',['../classweb_1_1json_1_1value.html#a3f5ac5b637f5f3a55f01fc95b49ea671',1,'web::json::value']]],
-  ['number',['number',['../classweb_1_1json_1_1value.html#a606612bbe8c004791ef6cbb179d69e84',1,'web::json::value::number(double value)'],['../classweb_1_1json_1_1value.html#a88781aeb98da483ba17f843160c49765',1,'web::json::value::number(int32_t value)'],['../classweb_1_1json_1_1value.html#a3d3dcb5c6fc6bdbae0d4f20136886903',1,'web::json::value::number(uint32_t value)'],['../classweb_1_1json_1_1value.html#a37246353800b66d88801b4c7563fe8a6',1,'web::json::value::number(int64_t value)'],['../classweb_1_1json_1_1value.html#a86c3d29b560c313c93e87e10412fd71e',1,'web::json::value::number(uint64_t value)']]]
+  ['match',['match',['../classweb_1_1http_1_1http__headers.html#a8bf00a20bb2018a44820a09295df2fd0',1,'web::http::http_headers']]],
+  ['message_5ftype',['message_type',['../classweb_1_1websockets_1_1client_1_1websocket__incoming__message.html#a925b6519f9b98cbc8e4248d37110e4fe',1,'web::websockets::client::websocket_incoming_message']]],
+  ['messge_5ftype',['messge_type',['../classweb_1_1websockets_1_1client_1_1websocket__incoming__message.html#aec9b1fc0b92bac7f8b31284b2435ee36',1,'web::websockets::client::websocket_incoming_message']]],
+  ['method',['method',['../classweb_1_1http_1_1http__request.html#a6a9067f56e50c7de2130d57c2b3d19e4',1,'web::http::http_request::method()'],['../classweb_1_1http_1_1oauth1_1_1experimental_1_1oauth1__config.html#a9cfa359d9479fe24877f9f256945d3c7',1,'web::http::oauth1::experimental::oauth1_config::method()']]]
 ];
