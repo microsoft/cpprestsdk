@@ -99,6 +99,9 @@ struct windows_request_context : http::details::_http_server_context
     // Dispatch request to the provided http_listener.
     void dispatch_request_to_listener(_In_ web::http::experimental::listener::details::http_listener_impl *pListener);
 
+    // Initialise the response task callbacks
+    void do_response(bool bad_request);
+
     // Read in a portion of the request body.
     void read_request_body_chunk();
 

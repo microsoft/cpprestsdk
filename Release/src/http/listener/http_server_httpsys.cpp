@@ -494,6 +494,12 @@ windows_request_context::~windows_request_context()
     // the lock then setting of the event has completed.
     std::unique_lock<std::mutex> lock(m_responseCompletedLock);
 
+    // Add a task-based continuation so no exceptions thrown from the task go 'unobserved'.
+    pplx::create_task(m_response_completed).then([](pplx::task<void> t)
+    {
+        try { t.wait(); } catch(...) {}
+    });
+
     auto *pServer = static_cast<http_windows_server *>(http_server_api::server_api());
     if(--pServer->m_numOutstandingRequests == 0)
     {
@@ -530,6 +536,7 @@ void windows_request_context::async_process_request(HTTP_REQUEST_ID request_id, 
     {
         CancelThreadpoolIo(pServer->m_threadpool_io);
         m_msg.reply(status_codes::InternalError);
+        do_response(true);
     }
 }
 
@@ -541,6 +548,7 @@ void windows_request_context::read_headers_io_completion(DWORD error_code, DWORD
     if(error_code != NO_ERROR)
     {
         m_msg.reply(status_codes::InternalError);
+        do_response(true);
     }
     else
     {
@@ -574,6 +582,7 @@ void windows_request_context::read_headers_io_completion(DWORD error_code, DWORD
         else
         {
             m_msg.reply(status_codes::BadRequest, badRequestMsg);
+            do_response(true);
         }
     }
 }
@@ -614,6 +623,7 @@ void windows_request_context::read_request_body_chunk()
         else
         {
             m_msg._get_impl()->_complete(0, std::make_exception_ptr(http_exception(error_code)));
+            m_msg._reply_if_not_already(status_codes::InternalError);
         }
     }
 }
@@ -639,6 +649,7 @@ void windows_request_context::read_body_io_completion(DWORD error_code, DWORD by
     {
         request_body_buf.commit(0);
         m_msg._get_impl()->_complete(0, std::make_exception_ptr(http_exception(error_code)));
+        m_msg._reply_if_not_already(status_codes::InternalError);
     }
 }
 
@@ -649,46 +660,7 @@ void windows_request_context::dispatch_request_to_listener(_In_ web::http::exper
     // Save http_request copy to dispatch to user's handler in case content_ready() completes before.
     http_request request = m_msg;
 
-    // Wait until the content download finished before replying.
-    request.content_ready().then([=](pplx::task<http_request> requestBody)
-    {
-        // If an exception occurred while processing the body then there is no reason
-        // to even try sending the response, just re-surface the same exception.
-        try
-        {
-            requestBody.wait();
-        }
-        catch (...)
-        {
-            m_msg = http_request();
-            cancel_request(std::current_exception());
-            return;
-        }
-
-        // At this point the user entirely controls the lifetime of the http_request.
-        m_msg = http_request();
-
-        request.get_response().then([this](pplx::task<http::http_response> responseTask)
-        {
-            // Don't let an exception from sending the response bring down the server.
-            try
-            {
-                m_response = responseTask.get();
-            }
-            catch (const pplx::task_canceled &)
-            {
-                // This means the user didn't respond to the request, allowing the
-                // http_request instance to be destroyed. There is nothing to do then
-                // so don't send a response.
-                return;
-            }
-            catch (...)
-            {
-                m_response = http::http_response(status_codes::InternalError);
-            }
-            async_process_response();
-        });
-    });
+    do_response(false);
 
     // Look up the lock for the http_listener.
     auto *pServer = static_cast<http_windows_server *>(http_server_api::server_api());
@@ -719,6 +691,69 @@ void windows_request_context::dispatch_request_to_listener(_In_ web::http::exper
         pListenerLock->unlock();
         request._reply_if_not_already(status_codes::InternalError);
     }
+}
+
+void windows_request_context::do_response(bool bad_request)
+{
+    // Use a proxy event so we're not causing a circular reference between the http_request and the response task
+	pplx::task_completion_event<void> proxy_content_ready;
+
+    auto content_ready_task = m_msg.content_ready();
+    auto get_response_task = m_msg.get_response();
+
+    content_ready_task.then([this, proxy_content_ready](pplx::task<http_request> requestBody)
+    {
+        // If an exception occurred while processing the body then there is no reason
+        // to even try sending the response, just re-surface the same exception.
+        try
+        {
+            requestBody.wait();
+        }
+        catch (...)
+        {
+            m_msg = http_request();
+            proxy_content_ready.set_exception(std::current_exception());
+            cancel_request(std::current_exception());
+            return;
+        }
+
+        // At this point the user entirely controls the lifetime of the http_request.
+        m_msg = http_request();
+        proxy_content_ready.set();
+    });
+
+    get_response_task.then([this, bad_request, proxy_content_ready](pplx::task<http::http_response> responseTask)
+    {
+        // Don't let an exception from sending the response bring down the server.
+        try
+        {
+            m_response = responseTask.get();
+        }
+        catch (const pplx::task_canceled &)
+        {
+            // This means the user didn't respond to the request, allowing the
+            // http_request instance to be destroyed. There is nothing to do then
+            // so don't send a response.
+            return;
+        }
+        catch (...)
+        {
+            m_response = http::http_response(status_codes::InternalError);
+        }
+
+        if (bad_request)
+        {
+            async_process_response();
+        }
+        else
+        {
+            // Wait until the content download finished before replying.
+            pplx::create_task(proxy_content_ready).then([this](pplx::task<void> requestBody)
+            {
+                async_process_response();
+            });
+        }
+    });
 }
 
 void windows_request_context::async_process_response()
