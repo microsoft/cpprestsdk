@@ -734,10 +734,18 @@ void windows_request_context::init_response_callbacks(ShouldWaitForBody shouldWa
             // This means the user didn't respond to the request, allowing the
             // http_request instance to be destroyed. There is nothing to do then
             // so don't send a response.
+            // Avoid unobserved exception handler
+            pplx::create_task(proxy_content_ready).then([this](pplx::task<void> t)
+            {
+                try { t.wait(); } catch(...) {}
+            });
             return;
         }
         catch (...)
         {
+            // Should never get here, if we do there's a chance that a circular reference will cause leaks,
+            // or worse, undefined behaviour as we don't know who owns 'this' anymore 
+            _ASSERTE(false);
             m_response = http::http_response(status_codes::InternalError);
         }
 
