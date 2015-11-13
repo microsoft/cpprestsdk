@@ -706,7 +706,7 @@ void windows_request_context::init_response_callbacks(ShouldWaitForBody shouldWa
         catch (...)
         {
             // Copy the request reference in case it's the last
-			http_request request = m_msg;
+            http_request request = m_msg;
             m_msg = http_request();
             proxy_content_ready.set_exception(std::current_exception());
             cancel_request(std::current_exception());
