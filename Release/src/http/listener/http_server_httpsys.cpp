@@ -465,13 +465,7 @@ void http_windows_server::receive_requests()
 pplx::task<void> http_windows_server::respond(http::http_response response)
 {
     windows_request_context * p_context = static_cast<windows_request_context *>(response._get_server_context());
-    return pplx::create_task(p_context->m_response_completed).then([p_context](::pplx::task<void> t)
-    {
-        // After response is sent, break circular reference between http_response and the request context.
-        // Otherwise http_listener::close() can hang.
-        p_context->m_response._get_impl()->_set_server_context(nullptr);
-        t.get();
-    });
+    return pplx::create_task(p_context->m_response_completed);
 }
 
 windows_request_context::windows_request_context()
@@ -711,6 +705,8 @@ void windows_request_context::init_response_callbacks(ShouldWaitForBody shouldWa
         }
         catch (...)
         {
+            // Copy the request reference in case it's the last
+			http_request request = m_msg;
             m_msg = http_request();
             proxy_content_ready.set_exception(std::current_exception());
             cancel_request(std::current_exception());
@@ -748,6 +744,13 @@ void windows_request_context::init_response_callbacks(ShouldWaitForBody shouldWa
             _ASSERTE(false);
             m_response = http::http_response(status_codes::InternalError);
         }
+
+        pplx::create_task(m_response_completed).then([this](::pplx::task<void> t)
+        {
+            // After response is sent, break circular reference between http_response and the request context.
+            // Otherwise http_listener::close() can hang.
+            m_response._get_impl()->_set_server_context(nullptr);
+        });
 
         // Wait until the content download finished before replying because m_overlapped is reused,
         // and we don't want to delete 'this' if the body is still downloading
