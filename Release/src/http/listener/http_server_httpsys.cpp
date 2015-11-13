@@ -769,7 +769,8 @@ void windows_request_context::init_response_callbacks(ShouldWaitForBody shouldWa
 
     if (shouldWait == DontWaitForBody)
     {
-        proxy_content_ready.set();
+        // Fake a body completion so the content_ready() task doesn't keep the http_request alive forever
+        m_msg._get_impl()->_complete(0);
     }
 }
 
