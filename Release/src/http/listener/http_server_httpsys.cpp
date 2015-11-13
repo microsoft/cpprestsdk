@@ -536,7 +536,7 @@ void windows_request_context::async_process_request(HTTP_REQUEST_ID request_id, 
     {
         CancelThreadpoolIo(pServer->m_threadpool_io);
         m_msg.reply(status_codes::InternalError);
-        do_response(true);
+        init_response_callbacks(DontWaitForBody);
     }
 }
 
@@ -548,7 +548,7 @@ void windows_request_context::read_headers_io_completion(DWORD error_code, DWORD
     if(error_code != NO_ERROR)
     {
         m_msg.reply(status_codes::InternalError);
-        do_response(true);
+        init_response_callbacks(DontWaitForBody);
     }
     else
     {
@@ -582,7 +582,9 @@ void windows_request_context::read_headers_io_completion(DWORD error_code, DWORD
         else
         {
             m_msg.reply(status_codes::BadRequest, badRequestMsg);
-            do_response(true);
+
+            // Even though we have a bad request, we should wait for the body otherwise we risk racing over m_overlapped
+            init_response_callbacks(WaitForBody);
         }
     }
 }
@@ -623,7 +625,6 @@ void windows_request_context::read_request_body_chunk()
         else
         {
             m_msg._get_impl()->_complete(0, std::make_exception_ptr(http_exception(error_code)));
-            m_msg._reply_if_not_already(status_codes::InternalError);
         }
     }
 }
@@ -649,7 +650,6 @@ void windows_request_context::read_body_io_completion(DWORD error_code, DWORD by
     {
         request_body_buf.commit(0);
         m_msg._get_impl()->_complete(0, std::make_exception_ptr(http_exception(error_code)));
-        m_msg._reply_if_not_already(status_codes::InternalError);
     }
 }
 
@@ -660,7 +660,7 @@ void windows_request_context::dispatch_request_to_listener(_In_ web::http::exper
     // Save http_request copy to dispatch to user's handler in case content_ready() completes before.
     http_request request = m_msg;
 
-    do_response(false);
+    init_response_callbacks(WaitForBody);
 
     // Look up the lock for the http_listener.
     auto *pServer = static_cast<http_windows_server *>(http_server_api::server_api());
@@ -693,7 +693,7 @@ void windows_request_context::dispatch_request_to_listener(_In_ web::http::exper
     }
 }
 
-void windows_request_context::do_response(bool bad_request)
+void windows_request_context::init_response_callbacks(ShouldWaitForBody shouldWait)
 {
     // Use a proxy event so we're not causing a circular reference between the http_request and the response task
 	pplx::task_completion_event<void> proxy_content_ready;
@@ -722,7 +722,7 @@ void windows_request_context::do_response(bool bad_request)
         proxy_content_ready.set();
     });
 
-    get_response_task.then([this, bad_request, proxy_content_ready](pplx::task<http::http_response> responseTask)
+    get_response_task.then([this, proxy_content_ready](pplx::task<http::http_response> responseTask)
     {
         // Don't let an exception from sending the response bring down the server.
         try
@@ -741,19 +741,25 @@ void windows_request_context::do_response(bool bad_request)
             m_response = http::http_response(status_codes::InternalError);
         }
 
-        if (bad_request)
+        // Wait until the content download finished before replying because m_overlapped is reused,
+        // and we don't want to delete 'this' if the body is still downloading
+        pplx::create_task(proxy_content_ready).then([this](pplx::task<void> t)
         {
-            async_process_response();
-        }
-        else
-        {
-            // Wait until the content download finished before replying.
-            pplx::create_task(proxy_content_ready).then([this](pplx::task<void> requestBody)
+            try
             {
+                t.wait();
                 async_process_response();
-            });
-        }
+            }
+            catch (...)
+            {
+            }
+        }).wait();
     });
+
+    if (shouldWait == DontWaitForBody)
+    {
+        proxy_content_ready.set();
+    }
 }
 
 void windows_request_context::async_process_response()
