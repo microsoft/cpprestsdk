@@ -14,6 +14,9 @@
 
 #pragma once
 
+#include <set>
+#include "pplx/threadpool.h"
+#include "cpprest/details/http_server.h"
 #if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wconversion"
@@ -24,9 +27,6 @@
 #pragma clang diagnostic pop
 #endif
 #include <boost/bind.hpp>
-#include <set>
-#include "pplx/threadpool.h"
-#include "cpprest/details/http_server.h"
 
 namespace web
 {

@@ -42,16 +42,6 @@ typedef void* native_handle;}}}
 
 #include <memory>
 #include <limits>
-#if !defined(_WIN32) && !defined(__cplusplus_winrt)
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wconversion"
-#endif
-#include "boost/asio/ssl.hpp"
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif
-#endif
 
 #include "pplx/pplxtasks.h"
 #include "cpprest/http_msg.h"
@@ -66,6 +56,17 @@ typedef void* native_handle;}}}
 #endif
 
 #include "cpprest/oauth2.h"
+
+#if !defined(_WIN32) && !defined(__cplusplus_winrt)
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconversion"
+#endif
+#include "boost/asio/ssl.hpp"
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
+#endif
 
 /// The web namespace contains functionality common to multiple protocols like HTTP and WebSockets.
 namespace web
