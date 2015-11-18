@@ -19,7 +19,7 @@
 * This file defines a stream buffer that is based on a raw pointer and block size. Unlike a vector-based
 * stream buffer, the buffer cannot be expanded or contracted, it has a fixed capacity.
 *
-* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
+* For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
