@@ -690,7 +690,7 @@ void windows_request_context::dispatch_request_to_listener(_In_ web::http::exper
 void windows_request_context::init_response_callbacks(ShouldWaitForBody shouldWait)
 {
     // Use a proxy event so we're not causing a circular reference between the http_request and the response task
-	pplx::task_completion_event<void> proxy_content_ready;
+    pplx::task_completion_event<void> proxy_content_ready;
 
     auto content_ready_task = m_msg.content_ready();
     auto get_response_task = m_msg.get_response();
