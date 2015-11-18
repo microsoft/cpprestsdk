@@ -1,0 +1,13 @@
+diff --git a/boost.sh b/boost.sh
+index 2d5c05d..5c10ee9 100644
+--- a/boost.sh
++++ b/boost.sh
+@@ -26,7 +26,7 @@
+ #
+ #===============================================================================
+ 
+-BOOST_LIBS="atomic chrono date_time exception filesystem program_options random signals system test thread"
++BOOST_LIBS="chrono filesystem random regex system thread"
+ 
+ BUILD_IOS=
+ BUILD_OSX=
