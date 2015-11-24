@@ -30,6 +30,9 @@
 #include <functional>
 
 #include "cpprest/http_msg.h"
+#if !defined(_WIN32) && !defined(__cplusplus_winrt)
+#include <boost/asio/ssl.hpp>
+#endif
 
 #if !defined(_WIN32) || (_WIN32_WINNT >= _WIN32_WINNT_VISTA && !defined(__cplusplus_winrt))
 
@@ -64,6 +67,9 @@ public:
     /// <param name="other">http_listener_config to copy.</param>
     http_listener_config(const http_listener_config &other)
         : m_timeout(other.m_timeout)
+#ifndef _WIN32
+        , m_ssl_context_callback(other.m_ssl_context_callback)
+#endif
     {}
 
     /// <summary>
@@ -72,6 +78,9 @@ public:
     /// <param name="other">http_listener_config to move from.</param>
     http_listener_config(http_listener_config &&other)
         : m_timeout(std::move(other.m_timeout))
+#ifndef _WIN32
+        , m_ssl_context_callback(std::move(other.m_ssl_context_callback))
+#endif
     {}
 
     /// <summary>
@@ -83,6 +92,9 @@ public:
         if(this != &rhs)
         {
             m_timeout = rhs.m_timeout;
+#ifndef _WIN32
+            m_ssl_context_callback = rhs.m_ssl_context_callback;
+#endif
         }
         return *this;
     }
@@ -96,6 +108,9 @@ public:
         if(this != &rhs)
         {
             m_timeout = std::move(rhs.m_timeout);
+#ifndef _WIN32
+            m_ssl_context_callback = std::move(rhs.m_ssl_context_callback);
+#endif
         }
         return *this;
     }
@@ -118,9 +133,32 @@ public:
         m_timeout = std::move(timeout);
     }
 
+#ifndef _WIN32
+    /// <summary>
+    /// Get the callback of ssl context
+    /// </summary>
+    /// <returns>The function defined by the user of http_listener_config to configure a ssl context.</returns>
+    const std::function<void(boost::asio::ssl::context&)>& get_ssl_context_callback() const
+    {
+        return m_ssl_context_callback;
+    }
+
+    /// <summary>
+    /// Set the callback of ssl context
+    /// </summary>
+    /// <param name="ssl_context_callback">The function to configure a ssl context which will setup https connections.</param>
+    void set_ssl_context_callback(const std::function<void(boost::asio::ssl::context&)> &ssl_context_callback)
+    {
+        m_ssl_context_callback = ssl_context_callback;
+    }
+#endif
+
 private:
 
     utility::seconds m_timeout;
+#ifndef _WIN32
+    std::function<void(boost::asio::ssl::context&)> m_ssl_context_callback;
+#endif
 };
 
 namespace details

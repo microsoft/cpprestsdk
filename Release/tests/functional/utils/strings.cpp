@@ -133,6 +133,20 @@ TEST(utf16_to_utf8)
 #else
     VERIFY_ARE_EQUAL(conversion.to_bytes(input), result);
 #endif
+
+    // surrogate pair - covering regression bug where 0x10000 was accidentally bitwise OR'ed instead of added.
+    input.clear();
+    input.push_back(0xD840);
+    input.push_back(0xDC00);
+    result = utility::conversions::utf16_to_utf8(input);
+#if defined(__GLIBCXX__)
+    VERIFY_ARE_EQUAL(240u, static_cast<unsigned char>(result[0]));
+    VERIFY_ARE_EQUAL(160u, static_cast<unsigned char>(result[1]));
+    VERIFY_ARE_EQUAL(128u, static_cast<unsigned char>(result[2]));
+    VERIFY_ARE_EQUAL(128u, static_cast<unsigned char>(result[3]));
+#else
+    VERIFY_ARE_EQUAL(conversion.to_bytes(input), result);
+#endif
 }
 
 TEST(utf8_to_utf16)

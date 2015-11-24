@@ -18,7 +18,7 @@
 *
 * Protocol independent support for URIs.
 *
-* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
+* For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
@@ -441,7 +441,7 @@ namespace web {
         friend class uri_builder;
 
         // Encodes all characters not in given set determined by given function.
-        static utility::string_t encode_impl(const utility::string_t &raw, const std::function<bool(int)>& should_encode);
+        _ASYNCRTIMP static utility::string_t __cdecl encode_impl(const utility::string_t &raw, const std::function<bool __cdecl(int)>& should_encode);
 
         utility::string_t m_uri;
         details::uri_components m_components;

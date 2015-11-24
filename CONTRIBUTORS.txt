@@ -20,9 +20,17 @@ jracle
 gandziej 
 adish
 LeonidCSIT
+LocutusOfBorg
+kreuzerkrieg
+evanc
 
 AutoDesk Inc.
 Cyrille Fauvel (cyrillef)
 
 Illumina Inc.
 Gery Vessere (gery@vessere.com)
+
+Cisco Systems
+Gergely Lukacsy (glukacsy)
+
+thomasschaub

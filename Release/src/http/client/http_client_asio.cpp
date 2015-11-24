@@ -20,16 +20,24 @@
 *
 * This file contains a cross platform implementation based on Boost.ASIO.
 *
-* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
+* For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 
 #include "stdafx.h"
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
+#include <boost/asio/steady_timer.hpp>
 #include <boost/algorithm/string.hpp>
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 #if defined(BOOST_NO_CXX11_SMART_PTR)
 #error "Cpp rest SDK requires c++11 smart pointer support from boost"
@@ -66,7 +74,7 @@ class asio_connection
     friend class asio_connection_pool;
     friend class asio_client;
 public:
-    asio_connection(boost::asio::io_service& io_service, bool use_ssl) :
+    asio_connection(boost::asio::io_service& io_service, bool use_ssl, const std::function<void(boost::asio::ssl::context&)>& ssl_context_callback) :
     m_socket(io_service),
     m_pool_timer(io_service),
     m_is_reused(false),
@@ -74,10 +82,11 @@ public:
     {
         if (use_ssl)
         {
-            boost::asio::ssl::context sslContext(boost::asio::ssl::context::sslv23);
-            sslContext.set_default_verify_paths();
-            sslContext.set_options(boost::asio::ssl::context::default_workarounds);
-            m_ssl_stream = utility::details::make_unique<boost::asio::ssl::stream<boost::asio::ip::tcp::socket &>>(m_socket, sslContext);
+            boost::asio::ssl::context ssl_context(boost::asio::ssl::context::sslv23);
+            ssl_context.set_default_verify_paths();
+            ssl_context.set_options(boost::asio::ssl::context::default_workarounds);
+            ssl_context_callback(ssl_context);
+            m_ssl_stream = utility::details::make_unique<boost::asio::ssl::stream<boost::asio::ip::tcp::socket &>>(m_socket, ssl_context);
 
         }
     }
@@ -220,10 +229,11 @@ class asio_connection_pool
 {
 public:
 
-    asio_connection_pool(boost::asio::io_service& io_service, bool use_ssl, const utility::seconds &idle_timeout) :
+    asio_connection_pool(boost::asio::io_service& io_service, bool use_ssl, const std::chrono::seconds &idle_timeout, const std::function<void(boost::asio::ssl::context&)> &ssl_context_callback) :
     m_io_service(io_service),
     m_timeout_secs(static_cast<int>(idle_timeout.count())),
-    m_use_ssl(use_ssl)
+    m_use_ssl(use_ssl),
+    m_ssl_context_callback(ssl_context_callback)
     {}
 
     ~asio_connection_pool()
@@ -259,7 +269,7 @@ public:
             lock.unlock();
 
             // No connections in pool => create a new connection instance.
-            return std::make_shared<asio_connection>(m_io_service, m_use_ssl);
+            return std::make_shared<asio_connection>(m_io_service, m_use_ssl, m_ssl_context_callback);
         }
         else
         {
@@ -296,6 +306,7 @@ private:
     boost::asio::io_service& m_io_service;
     const int m_timeout_secs;
     const bool m_use_ssl;
+    const std::function<void(boost::asio::ssl::context&)>& m_ssl_context_callback;
     std::vector<std::shared_ptr<asio_connection> > m_connections;
     std::mutex m_connections_mutex;
 };
@@ -304,10 +315,11 @@ class asio_client : public _http_client_communicator, public std::enable_shared_
 {
 public:
     asio_client(http::uri address, http_client_config client_config)
-    : _http_client_communicator(std::move(address), client_config)
+    : _http_client_communicator(std::move(address), std::move(client_config))
     , m_pool(crossplat::threadpool::shared_instance().service(),
              base_uri().scheme() == "https",
-             client_config.timeout())
+             std::chrono::seconds(30), // Unused sockets are kept in pool for 30 seconds.
+             this->client_config().get_ssl_context_callback()) 
     , m_resolver(crossplat::threadpool::shared_instance().service())
     {}
 
@@ -329,7 +341,7 @@ public:
     : request_context(client, request)
     , m_content_length(0)
     , m_needChunked(false)
-    , m_timer(static_cast<int>(client->client_config().timeout().count()))
+    , m_timer(client->client_config().timeout<std::chrono::microseconds>())
     , m_connection(connection)
 #if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__))
     , m_openssl_failed(false)
@@ -1059,8 +1071,8 @@ private:
     {
     public:
 
-        timeout_timer(int seconds) :
-        m_duration(boost::posix_time::milliseconds(seconds * 1000)),
+        timeout_timer(const std::chrono::microseconds& timeout) :
+        m_duration(timeout.count()),
         m_state(created),
         m_timer(crossplat::threadpool::shared_instance().service())
         {}
@@ -1131,10 +1143,14 @@ private:
             timedout
         };
 
-        boost::posix_time::milliseconds m_duration;
+#if defined(ANDROID) || defined(__ANDROID__)
+        boost::chrono::microseconds m_duration;
+#else
+        std::chrono::microseconds m_duration;
+#endif
         timer_state m_state;
         std::weak_ptr<asio_context> m_ctx;
-        boost::asio::deadline_timer m_timer;
+        boost::asio::steady_timer m_timer;
     };
 
     uint64_t m_content_length;

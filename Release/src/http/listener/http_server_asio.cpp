@@ -20,7 +20,7 @@
 
 * This file contains a cross platform implementation based on Boost.ASIO.
 *
-* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
+* For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 */
@@ -203,9 +203,20 @@ void connection::start_request_response()
     m_read = 0;
     m_request_buf.consume(m_request_buf.size()); // clear the buffer
 
-    // Wait for either double newline or a char which is not in the range [32-127] which suggests SSL handshaking.
-    // For the SSL server support this line might need to be changed. Now, this prevents from hanging when SSL client tries to connect.
-    async_read_until(*m_socket, m_request_buf, crlf_nonascii_searcher, boost::bind(&connection::handle_http_line, this, placeholders::error));
+    if (m_ssl_stream)
+    {
+        boost::asio::async_read_until(*m_ssl_stream, m_request_buf, CRLF, [this](const boost::system::error_code& ec, std::size_t)
+        {
+            this->handle_http_line(ec);
+        });
+    }
+    else
+    {
+        boost::asio::async_read_until(*m_socket, m_request_buf, crlf_nonascii_searcher, [this](const boost::system::error_code& ec, std::size_t)
+        {
+            this->handle_http_line(ec);
+        });
+    }
 }
 
 void hostport_listener::on_accept(ip::tcp::socket* socket, const boost::system::error_code& ec)
@@ -218,7 +229,7 @@ void hostport_listener::on_accept(ip::tcp::socket* socket, const boost::system::
     {
         {
             pplx::scoped_lock<pplx::extensibility::recursive_lock_t> lock(m_connections_lock);
-            m_connections.insert(new connection(std::unique_ptr<tcp::socket>(std::move(socket)), m_p_server, this));
+            m_connections.insert(new connection(std::unique_ptr<tcp::socket>(std::move(socket)), m_p_server, this, m_is_https, m_ssl_context_callback));
             m_all_connections_complete.reset();
 
             if (m_acceptor)
@@ -363,12 +374,10 @@ void connection::handle_headers()
         m_chunked = boost::ifind_first(name, U("chunked"));
     }
 
-    Concurrency::streams::producer_consumer_buffer<uint8_t> buf;
-    m_request._get_impl()->set_instream(buf.create_istream());
-    m_request._get_impl()->set_outstream(buf.create_ostream(), false);
+    m_request._get_impl()->_prepare_to_receive_data();
     if (m_chunked)
     {
-        boost::asio::async_read_until(*m_socket, m_request_buf, CRLF, boost::bind(&connection::handle_chunked_header, this, placeholders::error));
+        async_read_until();
         dispatch_request_to_listener();
         return;
     }
@@ -434,8 +443,7 @@ void connection::handle_chunked_body(const boost::system::error_code& ec, int to
             }
 
             m_request_buf.consume(2 + toWrite);
-            boost::asio::async_read_until(*m_socket, m_request_buf, CRLF,
-                    boost::bind(&connection::handle_chunked_header, this, placeholders::error));
+            async_read_until();
         });
     }
 }
@@ -473,14 +481,61 @@ void connection::handle_body(const boost::system::error_code& ec)
     }
 }
 
+void connection::async_write(ResponseFuncPtr response_func_ptr, const http_response &response)
+{
+    if (m_ssl_stream)
+    {
+        boost::asio::async_write(*m_ssl_stream, m_response_buf, [=] (const boost::system::error_code& ec, std::size_t)
+        {
+            (this->*response_func_ptr)(response, ec);
+        });
+    }
+    else
+    {
+        boost::asio::async_write(*m_socket, m_response_buf, [=] (const boost::system::error_code& ec, std::size_t)
+        {
+            (this->*response_func_ptr)(response, ec);
+        });
+    }
+}
+
+template <typename CompletionCondition, typename Handler>
+void connection::async_read(CompletionCondition &&condition, Handler &&read_handler)
+{
+    if (m_ssl_stream)
+    {
+        boost::asio::async_read(*m_ssl_stream, m_request_buf, std::forward<CompletionCondition>(condition), std::forward<Handler>(read_handler));
+    }
+    else
+    {
+        boost::asio::async_read(*m_socket, m_request_buf, std::forward<CompletionCondition>(condition), std::forward<Handler>(read_handler));
+    }
+}
+
+void connection::async_read_until()
+{
+    if (m_ssl_stream)
+    {
+        boost::asio::async_read_until(*m_ssl_stream, m_request_buf, CRLF, boost::bind(&connection::handle_chunked_header, this, placeholders::error));
+    }
+    else
+    {
+        boost::asio::async_read_until(*m_socket, m_request_buf, CRLF, boost::bind(&connection::handle_chunked_header, this, placeholders::error));
+    }
+}
+
 template <typename ReadHandler>
 void connection::async_read_until_buffersize(size_t size, const ReadHandler &handler)
 {
     auto bufsize = m_request_buf.size();
     if (bufsize >= size)
-        boost::asio::async_read(*m_socket, m_request_buf, transfer_at_least(0), handler);
+    {
+        async_read(transfer_at_least(0), handler);
+    }
     else
-        boost::asio::async_read(*m_socket, m_request_buf, transfer_at_least(size - bufsize), handler);
+    {
+        async_read(transfer_at_least(size - bufsize), handler);
+    }
 }
 
 void connection::dispatch_request_to_listener()
@@ -623,7 +678,7 @@ void connection::async_process_response(http_response response)
     }
     os << CRLF;
 
-    boost::asio::async_write(*m_socket, m_response_buf, boost::bind(&connection::handle_headers_written, this, response, placeholders::error));
+    async_write(&connection::handle_headers_written, response);
 }
 
 void connection::cancel_sending_response_with_error(const http_response &response, const std::exception_ptr &eptr)
@@ -662,12 +717,7 @@ void connection::handle_write_chunked_response(const http_response &response, co
         size_t offset = http::details::chunked_encoding::add_chunked_delimiters(buffer_cast<uint8_t *>(membuf), ChunkSize+http::details::chunked_encoding::additional_encoding_space, actualSize);
         m_response_buf.commit(actualSize + http::details::chunked_encoding::additional_encoding_space);
         m_response_buf.consume(offset);
-        boost::asio::async_write(
-                *m_socket,
-                m_response_buf,
-                boost::bind(actualSize == 0 ? &connection::handle_response_written : &connection::handle_write_chunked_response,
-                this,
-                response, placeholders::error));
+        async_write(actualSize == 0 ? &connection::handle_response_written : &connection::handle_write_chunked_response, response);
     });
 }
 
@@ -692,7 +742,7 @@ void connection::handle_write_large_response(const http_response &response, cons
         }
         m_write += actualSize;
         m_response_buf.commit(actualSize);
-        boost::asio::async_write(*m_socket, m_response_buf, boost::bind(&connection::handle_write_large_response, this, response, placeholders::error));
+        async_write(&connection::handle_write_large_response, response);
     });
 }
 
@@ -767,7 +817,9 @@ void hostport_listener::add_listener(const std::string& path, web::http::experim
 {
     pplx::extensibility::scoped_rw_lock_t lock(m_listeners_lock);
 
-    if (!m_listeners.insert(std::map<std::string,web::http::experimental::listener::details::http_listener_impl*>::value_type(path, listener)).second)
+    if (m_is_https != (listener->uri().scheme() == U("https")))
+        throw std::invalid_argument("Error: http_listener can not simultaneously listen both http and https paths of one host");
+    else if (!m_listeners.insert(std::map<std::string,web::http::experimental::listener::details::http_listener_impl*>::value_type(path, listener)).second)
         throw std::invalid_argument("Error: http_listener is already registered for this path");
 }
 
@@ -842,6 +894,7 @@ pplx::task<void> http_linux_server::register_listener(details::http_listener_imp
     auto parts = canonical_parts(listener->uri());
     auto hostport = parts.first;
     auto path = parts.second;
+    bool is_https = listener->uri().scheme() == U("https");
 
     {
         pplx::extensibility::scoped_rw_lock_t lock(m_listeners_lock);
@@ -858,7 +911,7 @@ pplx::task<void> http_linux_server::register_listener(details::http_listener_imp
             if (found_hostport_listener == m_listeners.end())
             {
                 found_hostport_listener = m_listeners.insert(
-                    std::make_pair(hostport, utility::details::make_unique<details::hostport_listener>(this, hostport))).first;
+                    std::make_pair(hostport, utility::details::make_unique<details::hostport_listener>(this, hostport, is_https, listener->configuration()))).first;
 
                 if (m_started)
                 {

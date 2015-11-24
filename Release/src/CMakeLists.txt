@@ -1,4 +1,4 @@
-include_directories(../include pch ${Boost_INCLUDE_DIR} ${OPENSSL_INCLUDE_DIR})
+include_directories(pch ${OPENSSL_INCLUDE_DIR})
 
 set(SOURCES_COMMON
   http/client/http_client_msg.cpp
@@ -92,7 +92,7 @@ target_link_libraries(${Casablanca_LIBRARY}
 
 # Portions specific to cpprest binary versioning.
 set (CPPREST_VERSION_MAJOR 2)
-set (CPPREST_VERSION_MINOR 6)
+set (CPPREST_VERSION_MINOR 7)
 set (CPPREST_VERSION_REVISION 0)
 
 if(WIN32)

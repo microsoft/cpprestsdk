@@ -18,14 +18,14 @@
 *
 * HTTP Library: Oauth 1.0
 *
-* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
+* For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 
 #include "stdafx.h"
 
-#if !defined(CPPREST_TARGET_XP) && (!defined(WINAPI_FAMILY) || WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP || _MSC_VER > 1700)
+#if !defined(CPPREST_TARGET_XP)
 
 using namespace utility;
 using web::http::client::http_client;
@@ -392,6 +392,28 @@ pplx::task<void> oauth1_config::token_from_redirected_uri(const web::http::uri& 
     }
 
     return token_from_verifier(verifier_param->second);
+}
+
+// Remove once VS 2013 is no longer supported.
+#if defined(_WIN32) && _MSC_VER < 1900
+static const oauth1_token empty_token;
+#endif
+const oauth1_token& oauth1_config::token() const
+{
+    if (m_is_authorization_completed)
+    {
+        // Return the token object only if authorization has been completed.
+        // Otherwise the token object holds a temporary token which should not be
+        // returned to the user.
+        return m_token;
+    }
+    else
+    {
+#if !defined(_WIN32) || _MSC_VER >= 1900
+        static const oauth1_token empty_token;
+#endif
+        return empty_token;
+    }
 }
 
 #define _OAUTH1_METHODS

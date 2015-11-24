@@ -14,18 +14,19 @@
 
 #pragma once
 
+#include <set>
+#include "pplx/threadpool.h"
+#include "cpprest/details/http_server.h"
 #if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wconversion"
 #endif
 #include <boost/asio.hpp>
+#include <boost/asio/ssl.hpp>
 #if defined(__clang__)
 #pragma clang diagnostic pop
 #endif
 #include <boost/bind.hpp>
-#include <set>
-#include "pplx/threadpool.h"
-#include "cpprest/details/http_server.h"
 
 namespace web
 {
@@ -57,6 +58,8 @@ class hostport_listener;
 class connection
 {
 private:
+    typedef void (connection::*ResponseFuncPtr) (const http_response &response, const boost::system::error_code& ec);
+
     std::unique_ptr<boost::asio::ip::tcp::socket> m_socket;
     boost::asio::streambuf m_request_buf;
     boost::asio::streambuf m_response_buf;
@@ -69,8 +72,10 @@ private:
     bool m_chunked;
     std::atomic<int> m_refs; // track how many threads are still referring to this
     
+    std::unique_ptr<boost::asio::ssl::stream<boost::asio::ip::tcp::socket&>> m_ssl_stream;
+
 public:
-    connection(std::unique_ptr<boost::asio::ip::tcp::socket> socket, http_linux_server* server, hostport_listener* parent)
+    connection(std::unique_ptr<boost::asio::ip::tcp::socket> socket, http_linux_server* server, hostport_listener* parent, bool is_https, const std::function<void(boost::asio::ssl::context&)>& ssl_context_callback)
     : m_socket(std::move(socket))
     , m_request_buf()
     , m_response_buf()
@@ -78,7 +83,17 @@ public:
     , m_p_parent(parent)
     , m_refs(1)
     {
-        start_request_response();
+        if (is_https)
+        {
+            boost::asio::ssl::context ssl_context(boost::asio::ssl::context::sslv23);
+            ssl_context_callback(ssl_context);
+            m_ssl_stream = utility::details::make_unique<boost::asio::ssl::stream<boost::asio::ip::tcp::socket&>>(*m_socket, ssl_context);
+            m_ssl_stream->async_handshake(boost::asio::ssl::stream_base::server, [this](const boost::system::error_code&) { this->start_request_response(); });
+        }
+        else 
+        {
+            start_request_response();
+        }
     }
 
     connection(const connection&) = delete;
@@ -95,6 +110,10 @@ private:
     void handle_chunked_body(const boost::system::error_code& ec, int toWrite);
     void dispatch_request_to_listener();
     void do_response(bool bad_request);
+    void async_write(ResponseFuncPtr response_func_ptr, const http_response &response);
+    template <typename CompletionCondition, typename Handler>
+    void async_read(CompletionCondition &&condition, Handler &&read_handler);
+    void async_read_until();
     template <typename ReadHandler>
     void async_read_until_buffersize(size_t size, const ReadHandler &handler);
     void async_process_response(http_response response);
@@ -124,14 +143,19 @@ private:
     std::string m_host;
     std::string m_port;
 
+    bool m_is_https;
+    const std::function<void(boost::asio::ssl::context&)>& m_ssl_context_callback;
+
 public:
-     hostport_listener(http_linux_server* server, const std::string& hostport)
+     hostport_listener(http_linux_server* server, const std::string& hostport, bool is_https, const http_listener_config& config)
     : m_acceptor()
     , m_listeners()
     , m_listeners_lock()
     , m_connections_lock()
     , m_connections()
     , m_p_server(server)
+    , m_is_https(is_https)
+    , m_ssl_context_callback(config.get_ssl_context_callback())
     {
         m_all_connections_complete.set();
 
