@@ -20,15 +20,15 @@
 #
 # Build script for casablanca on android
 #
-# For the latest on this and related APIs, please see http://casablanca.codeplex.com.
+# For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
 #
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 set -e
 
-# Note: we require android ndk r10 available from
-# http://dl.google.com/android/ndk/android-ndk32-r10-linux-x86_64.tar.bz2
-# http://dl.google.com/android/ndk/android-ndk32-r10-windows-x86_64.zip
+# Note: we require android ndk r10e available from
+# http://dl.google.com/android/ndk/android-ndk-r10e-linux-x86_64.tar.bz2
+# http://dl.google.com/android/ndk/android-ndk-r10e-windows-x86_64.zip
 
 # -----------------
 # Parse args
@@ -184,7 +184,7 @@ then
 	then
 	    git checkout 1c95d349d5f92c5ac1c24e0ec6985272a3e3883c
 	    git reset --hard HEAD
-	    patch -p1 < "$DIR/boost-for-android.patch"
+	    git apply "$DIR/boost-for-android.patch"
 	    touch cpprestsdk.patched.stamp
 	fi
 	PATH="$PATH:$NDK_DIR" ./build-android.sh --boost=1.55.0 --with-libraries=locale,random,date_time,filesystem,system,thread,chrono "${NDK_DIR}" || exit 1
@@ -200,7 +200,7 @@ then
 	then
 	    git checkout 1c95d349d5f92c5ac1c24e0ec6985272a3e3883c
 	    git reset --hard HEAD
-	    patch -p1 < "$DIR/boost-for-android-x86.patch"
+	    git apply "$DIR/boost-for-android-x86.patch"
 	    ln -s ../Boost-for-Android/boost_1_55_0.tar.bz2 .
 	    touch cpprestsdk.patched.stamp
 	fi
@@ -230,7 +230,7 @@ then
 	cmake "$DIR/../Release/" \
 	    -DCMAKE_TOOLCHAIN_FILE=../android-cmake/android.toolchain.cmake \
 	    -DANDROID_ABI=armeabi-v7a \
-	    -DANDROID_TOOLCHAIN_NAME=arm-linux-androideabi-clang3.4 \
+	    -DANDROID_TOOLCHAIN_NAME=arm-linux-androideabi-clang3.6 \
 	    -DANDROID_STL=none \
 	    -DANDROID_STL_FORCE_FEATURES=ON \
             -DANDROID_NATIVE_API_LEVEL=android-9 \
@@ -246,7 +246,7 @@ then
 	cmake "$DIR/../Release/" \
 	    -DCMAKE_TOOLCHAIN_FILE=../android-cmake/android.toolchain.cmake \
 	    -DANDROID_ABI=armeabi-v7a \
-	    -DANDROID_TOOLCHAIN_NAME=arm-linux-androideabi-clang3.4 \
+	    -DANDROID_TOOLCHAIN_NAME=arm-linux-androideabi-clang3.6 \
 	    -DANDROID_STL=none \
 	    -DANDROID_STL_FORCE_FEATURES=ON \
 	    -DANDROID_NDK="${ANDROID_NDK}" \
@@ -262,7 +262,7 @@ then
 	cmake "$DIR/../Release/" \
 	    -DCMAKE_TOOLCHAIN_FILE=../android-cmake/android.toolchain.cmake \
 	    -DANDROID_ABI=x86 \
-	    -DANDROID_TOOLCHAIN_NAME=x86-clang3.4 \
+	    -DANDROID_TOOLCHAIN_NAME=x86-clang3.6 \
 	    -DANDROID_STL=none \
 	    -DANDROID_STL_FORCE_FEATURES=ON \
             -DANDROID_NATIVE_API_LEVEL=android-9 \
@@ -278,7 +278,7 @@ then
 	cmake "$DIR/../Release/" \
 	    -DCMAKE_TOOLCHAIN_FILE=../android-cmake/android.toolchain.cmake \
 	    -DANDROID_ABI=x86 \
-	    -DANDROID_TOOLCHAIN_NAME=x86-clang3.4 \
+	    -DANDROID_TOOLCHAIN_NAME=x86-clang3.6 \
 	    -DANDROID_STL=none \
 	    -DANDROID_STL_FORCE_FEATURES=ON \
 	    -DANDROID_NDK="${ANDROID_NDK}" \

@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-OPENSSL_VER = openssl-1.0.1h
+OPENSSL_VER = openssl-1.0.2d
 
 all: armeabi-v7a/lib/libssl.a x86/lib/libssl.a
 
@@ -10,7 +10,7 @@ clean:
 	rm -rf setenv-android-x86.sh
 
 setenv-android.sh:
-	wget http://wiki.openssl.org/images/7/70/Setenv-android.sh
+	wget https://wiki.openssl.org/images/7/70/Setenv-android.sh
 	mv Setenv-android.sh setenv-android.sh
 	chmod a+x setenv-android.sh
 
@@ -21,7 +21,7 @@ setenv-android-x86.sh: setenv-android.sh
 	mv setenv-android-x86.sh.tmp setenv-android-x86.sh
 
 $(OPENSSL_VER).tar.gz:
-	wget http://www.openssl.org/source/$(OPENSSL_VER).tar.gz
+	wget https://www.openssl.org/source/$(OPENSSL_VER).tar.gz
 
 armeabi-v7a/lib/libssl.a: setenv-android.sh $(OPENSSL_VER).tar.gz
 	[ -d "$(ANDROID_NDK_ROOT)" ]

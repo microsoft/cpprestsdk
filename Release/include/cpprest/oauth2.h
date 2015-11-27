@@ -18,7 +18,7 @@
 *
 * HTTP Library: Oauth 2.0
 *
-* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
+* For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
@@ -446,6 +446,24 @@ public:
     /// Default: "access_token".
     /// </summary>
     void set_access_token_key(utility::string_t access_token_key) { m_access_token_key = std::move(access_token_key); }
+	
+	/// <summary>
+	/// Get the web proxy object
+	/// </summary>
+	/// <returns>A reference to the web proxy object.</returns>
+	const web_proxy& proxy() const
+	{
+		return m_proxy;
+	}
+
+	/// <summary>
+	/// Set the web proxy object that will be used by token_from_code and token_from_refresh
+	/// </summary>
+	/// <param name="proxy">A reference to the web proxy object.</param>
+	void set_proxy(const web_proxy& proxy)
+	{
+		m_proxy = proxy;
+	}
 
 private:
     friend class web::http::client::http_client_config;
@@ -482,6 +500,8 @@ private:
     utility::string_t m_redirect_uri;
     utility::string_t m_scope;
     utility::string_t m_state;
+
+	web::web_proxy m_proxy;
 
     bool m_implicit_grant;
     bool m_bearer_auth;

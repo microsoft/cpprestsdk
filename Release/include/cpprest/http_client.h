@@ -18,7 +18,7 @@
 *
 * HTTP Library: Client-side APIs.
 *
-* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
+* For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
@@ -57,6 +57,17 @@ typedef void* native_handle;}}}
 
 #include "cpprest/oauth2.h"
 
+#if !defined(_WIN32) && !defined(__cplusplus_winrt)
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconversion"
+#endif
+#include "boost/asio/ssl.hpp"
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
+#endif
+
 /// The web namespace contains functionality common to multiple protocols like HTTP and WebSockets.
 namespace web
 {
@@ -88,6 +99,9 @@ public:
         , m_validate_certificates(true)
 #endif
         , m_set_user_nativehandle_options([](native_handle)->void{})
+#if !defined(_WIN32) && !defined(__cplusplus_winrt)
+        , m_ssl_context_callback([](boost::asio::ssl::context&)->void{})
+#endif
 #if defined(_WIN32) && !defined(__cplusplus_winrt)
         , m_buffer_request(false)
 #endif
@@ -316,6 +330,25 @@ public:
         m_set_user_nativehandle_options(handle);
     }
 
+#if !defined(_WIN32) && !defined(__cplusplus_winrt)
+    /// <summary>
+    /// Sets a callback to enable custom setting of the ssl context, at construction time.
+    /// </summary>
+    /// <param name="callback">A user callback allowing for customization of the ssl context at construction time.</param>
+    void set_ssl_context_callback(const std::function<void(boost::asio::ssl::context&)>& callback)
+    {
+         m_ssl_context_callback = callback;
+    }
+
+    /// <summary>
+    /// Gets the user's callback to allow for customization of the ssl context.
+    /// </summary>
+    const std::function<void(boost::asio::ssl::context&)>& get_ssl_context_callback() const
+    {
+        return m_ssl_context_callback;
+    }
+#endif
+
 private:
 #if !defined(CPPREST_TARGET_XP)
     std::shared_ptr<oauth1::experimental::oauth1_config> m_oauth1;
@@ -337,6 +370,9 @@ private:
 
     std::function<void(native_handle)> m_set_user_nativehandle_options;
 
+#if !defined(_WIN32) && !defined(__cplusplus_winrt)
+    std::function<void(boost::asio::ssl::context&)> m_ssl_context_callback;
+#endif
 #if defined(_WIN32) && !defined(__cplusplus_winrt)
     bool m_buffer_request;
 #endif

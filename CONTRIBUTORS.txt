@@ -20,11 +20,19 @@ jracle
 gandziej 
 adish
 LeonidCSIT
-LocutusOfBorg
 kreuzerkrieg
+evanc
+
+Abinsula s.r.l.
+Gianfranco Costamagna (LocutusOfBorg)
 
 AutoDesk Inc.
 Cyrille Fauvel (cyrillef)
 
 Illumina Inc.
 Gery Vessere (gery@vessere.com)
+
+Cisco Systems
+Gergely Lukacsy (glukacsy)
+
+thomasschaub
