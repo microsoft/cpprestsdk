@@ -471,24 +471,25 @@ TEST_FIXTURE(uri_address, send_stream_binary_msg_no_length)
     client.close().wait();
 }
 
+#if !defined(__cplusplus_winrt)
 // Send an unsolicited pong message to the server
 TEST_FIXTURE(uri_address, send_pong_msg)
 {
-	test_websocket_server server;
-	websocket_client client;
-	send_pong_msg_helper(client, m_uri, server).wait();
-	client.close().wait();
+    test_websocket_server server;
+    websocket_client client;
+    send_pong_msg_helper(client, m_uri, server).wait();
+    client.close().wait();
 }
 
 // Send an unsolicited pong message to the server with websocket_callback_client
 TEST_FIXTURE(uri_address, send_pong_msg_callback_client)
 {
-	test_websocket_server server;
-	websocket_callback_client client;
-	send_pong_msg_helper(client, m_uri, server).wait();
-	client.close().wait();
+    test_websocket_server server;
+    websocket_callback_client client;
+    send_pong_msg_helper(client, m_uri, server).wait();
+    client.close().wait();
 }
-
+#endif
 
 } // SUITE(send_msg_tests)
 
