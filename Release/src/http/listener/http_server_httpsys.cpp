@@ -530,7 +530,7 @@ void windows_request_context::async_process_request(HTTP_REQUEST_ID request_id, 
     {
         CancelThreadpoolIo(pServer->m_threadpool_io);
         m_msg.reply(status_codes::InternalError);
-        init_response_callbacks(DontWaitForBody);
+        init_response_callbacks(ShouldWaitForBody::DontWait);
     }
 }
 
@@ -542,7 +542,7 @@ void windows_request_context::read_headers_io_completion(DWORD error_code, DWORD
     if(error_code != NO_ERROR)
     {
         m_msg.reply(status_codes::InternalError);
-        init_response_callbacks(DontWaitForBody);
+        init_response_callbacks(ShouldWaitForBody::DontWait);
     }
     else
     {
@@ -578,7 +578,7 @@ void windows_request_context::read_headers_io_completion(DWORD error_code, DWORD
             m_msg.reply(status_codes::BadRequest, badRequestMsg);
 
             // Even though we have a bad request, we should wait for the body otherwise we risk racing over m_overlapped
-            init_response_callbacks(WaitForBody);
+            init_response_callbacks(ShouldWaitForBody::Wait);
         }
     }
 }
@@ -654,7 +654,7 @@ void windows_request_context::dispatch_request_to_listener(_In_ web::http::exper
     // Save http_request copy to dispatch to user's handler in case content_ready() completes before.
     http_request request = m_msg;
 
-    init_response_callbacks(WaitForBody);
+    init_response_callbacks(ShouldWaitForBody::Wait);
 
     // Look up the lock for the http_listener.
     auto *pServer = static_cast<http_windows_server *>(http_server_api::server_api());
@@ -767,7 +767,7 @@ void windows_request_context::init_response_callbacks(ShouldWaitForBody shouldWa
         }).wait();
     });
 
-    if (shouldWait == DontWaitForBody)
+    if (shouldWait == ShouldWaitForBody::DontWait)
     {
         // Fake a body completion so the content_ready() task doesn't keep the http_request alive forever
         m_msg._get_impl()->_complete(0);
