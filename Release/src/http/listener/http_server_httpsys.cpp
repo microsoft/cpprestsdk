@@ -708,8 +708,9 @@ void windows_request_context::init_response_callbacks(ShouldWaitForBody shouldWa
             // Copy the request reference in case it's the last
             http_request request = m_msg;
             m_msg = http_request();
-            proxy_content_ready.set_exception(std::current_exception());
-            cancel_request(std::current_exception());
+            auto exc = std::current_exception();
+            proxy_content_ready.set_exception(exc);
+            cancel_request(exc);
             return;
         }
 
@@ -731,9 +732,9 @@ void windows_request_context::init_response_callbacks(ShouldWaitForBody shouldWa
             // http_request instance to be destroyed. There is nothing to do then
             // so don't send a response.
             // Avoid unobserved exception handler
-            pplx::create_task(proxy_content_ready).then([this](pplx::task<void> t)
+            pplx::create_task(proxy_content_ready).then([](pplx::task<void> t)
             {
-                try { t.wait(); } catch(...) {}
+                try { t.wait(); } catch (...) {}
             });
             return;
         }
@@ -745,7 +746,7 @@ void windows_request_context::init_response_callbacks(ShouldWaitForBody shouldWa
             m_response = http::http_response(status_codes::InternalError);
         }
 
-        pplx::create_task(m_response_completed).then([this](::pplx::task<void> t)
+        pplx::create_task(m_response_completed).then([this](pplx::task<void> t)
         {
             // After response is sent, break circular reference between http_response and the request context.
             // Otherwise http_listener::close() can hang.
