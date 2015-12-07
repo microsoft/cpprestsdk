@@ -59,7 +59,7 @@
     <DebugFileSuffix>d</DebugFileSuffix>
   </PropertyGroup>
   <PropertyGroup>
-    <TargetName>$(CppRestBaseFileName)140$(DebugFileSuffix)_uwp_$(CppRestSDKVersionFileSuffix)</TargetName>
+    <TargetName>lib$(CppRestBaseFileName)140$(DebugFileSuffix)_uwp_$(CppRestSDKVersionFileSuffix)</TargetName>
   </PropertyGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup />
