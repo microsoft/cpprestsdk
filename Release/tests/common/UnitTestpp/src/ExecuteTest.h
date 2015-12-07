@@ -80,6 +80,18 @@ void ExecuteTest(T& testObject, TestDetails const& details, bool isMockTest)
 			stream << "Unhandled exception: " << e.what();
 			CurrentTest::Results()->OnTestFailure(details, stream.GetText());
 		})
+		UT_CATCH(const char*, e,
+		{
+			MemoryOutStream stream;
+			stream << "Unhandled exception: (const char*)\"" << e << "\"";
+			CurrentTest::Results()->OnTestFailure(details, stream.GetText());
+		})
+		UT_CATCH(int, e,
+		{
+			MemoryOutStream stream;
+			stream << "Unhandled exception: (int)" << e;
+			CurrentTest::Results()->OnTestFailure(details, stream.GetText());
+		})
 		UT_CATCH_ALL
 		({
 			CurrentTest::Results()->OnTestFailure(details, "Unhandled exception: test crashed");
