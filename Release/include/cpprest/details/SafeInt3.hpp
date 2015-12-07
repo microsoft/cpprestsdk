@@ -664,9 +664,17 @@ namespace safeint3
     #define SAFEINT_WEAK
 #endif
 
-class SAFEINT_VISIBLE SafeIntException
+class SAFEINT_VISIBLE SafeIntException : public std::exception
 {
 public:
+    virtual const char* what() const {
+        if (m_code == SafeIntDivideByZero)
+            return "SafeIntException(SafeIntDivideByZero)";
+        if (m_code == SafeIntArithmeticOverflow)
+            return "SafeIntException(SafeIntArithmeticOverflow)";
+        return "SafeIntException(?)";
+    }
+
     SafeIntException() SAFEINT_NOTHROW { m_code = SafeIntNoError; }
     SafeIntException( SafeIntError code ) SAFEINT_NOTHROW
     {
