@@ -18,7 +18,7 @@
 *
 * HTTP Library: HTTP listener (server-side) APIs
 *
-* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
+* For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
@@ -41,23 +41,11 @@ static void check_listener_uri(const http::uri &address)
     // Some things like proper URI schema are verified by the URI class.
     // We only need to check certain things specific to HTTP.
 
-#ifdef _WIN32
     //HTTP Server API includes SSL support
     if(address.scheme() != U("http") && address.scheme() != U("https"))
     {
         throw std::invalid_argument("URI scheme must be 'http' or 'https'");
     }
-#else
-    if(address.scheme() == U("https"))
-    {
-        throw std::invalid_argument("Listeners using 'https' are not yet supported");
-    }
-
-    if(address.scheme() != U("http"))
-    {
-        throw std::invalid_argument("URI scheme must be 'http'");
-    }
-#endif
 
     if(address.host().empty())
     {

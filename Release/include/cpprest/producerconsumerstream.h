@@ -19,7 +19,7 @@
 * This file defines a basic memory-based stream buffer, which allows consumer / producer pairs to communicate
 * data via a buffer.
 *
-* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
+* For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/

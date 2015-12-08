@@ -21,7 +21,7 @@
 * Functions and types for interoperating with http.h from modern C++
 *   This file includes windows definitions and should not be included in a public header
 *
-* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
+* For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
@@ -80,6 +80,11 @@ namespace details
     /// Gets the default charset for given content type. If the MIME type is not textual or recognized Latin1 will be returned.
     /// </summary>
     utility::string_t get_default_charset(const utility::string_t &content_type);
+
+    /// <summary>
+    /// Helper function to get the default HTTP reason phrase for a status code.
+    /// </summary>
+    utility::string_t get_default_reason_phrase(status_code code);
 
     /// <summary>
     /// Helper functions to convert a series of bytes from a charset to utf-8 or utf-16.

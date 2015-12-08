@@ -18,7 +18,7 @@
 *
 * HTTP Library: Client-side APIs.
 *
-* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
+* For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
@@ -51,11 +51,22 @@ typedef void* native_handle;}}}
 #include "cpprest/details/basic_types.h"
 #include "cpprest/asyncrt_utils.h"
 
-#if !defined(CPPREST_TARGET_XP) && (!defined(WINAPI_FAMILY) || WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP || _MSC_VER > 1700)
+#if !defined(CPPREST_TARGET_XP)
 #include "cpprest/oauth1.h"
 #endif
 
 #include "cpprest/oauth2.h"
+
+#if !defined(_WIN32) && !defined(__cplusplus_winrt)
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconversion"
+#endif
+#include "boost/asio/ssl.hpp"
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
+#endif
 
 /// The web namespace contains functionality common to multiple protocols like HTTP and WebSockets.
 namespace web
@@ -82,19 +93,22 @@ class http_client_config
 public:
     http_client_config() :
         m_guarantee_order(false),
-        m_timeout(utility::seconds(30)),
+        m_timeout(std::chrono::seconds(30)),
         m_chunksize(0)
 #if !defined(__cplusplus_winrt)
         , m_validate_certificates(true)
 #endif
         , m_set_user_nativehandle_options([](native_handle)->void{})
+#if !defined(_WIN32) && !defined(__cplusplus_winrt)
+        , m_ssl_context_callback([](boost::asio::ssl::context&)->void{})
+#endif
 #if defined(_WIN32) && !defined(__cplusplus_winrt)
         , m_buffer_request(false)
 #endif
     {
     }
 
-#if !defined(CPPREST_TARGET_XP) && (!defined(WINAPI_FAMILY) || WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP || _MSC_VER > 1700)
+#if !defined(CPPREST_TARGET_XP)
     /// <summary>
     /// Get OAuth 1.0 configuration.
     /// </summary>
@@ -193,16 +207,26 @@ public:
     /// <returns>The timeout (in seconds) used for each send and receive operation on the client.</returns>
     utility::seconds timeout() const
     {
-        return m_timeout;
+        return std::chrono::duration_cast<utility::seconds>(m_timeout);
     }
 
     /// <summary>
+    /// Get the timeout
+    /// </summary>
+    /// <returns>The timeout (in whatever duration) used for each send and receive operation on the client.</returns>
+    template <class T>
+    T timeout() const
+    {
+        return std::chrono::duration_cast<T>(m_timeout);
+    }
+    /// <summary>
     /// Set the timeout
     /// </summary>
-    /// <param name="timeout">The timeout (in seconds) used for each send and receive operation on the client.</param>
-    void set_timeout(const utility::seconds &timeout)
+    /// <param name="timeout">The timeout (duration from microseconds range and up) used for each send and receive operation on the client.</param>
+    template <class T>
+    void set_timeout(const T &timeout)
     {
-        m_timeout = timeout;
+        m_timeout = std::chrono::duration_cast<std::chrono::microseconds>(timeout);
     }
 
     /// <summary>
@@ -306,8 +330,27 @@ public:
         m_set_user_nativehandle_options(handle);
     }
 
+#if !defined(_WIN32) && !defined(__cplusplus_winrt)
+    /// <summary>
+    /// Sets a callback to enable custom setting of the ssl context, at construction time.
+    /// </summary>
+    /// <param name="callback">A user callback allowing for customization of the ssl context at construction time.</param>
+    void set_ssl_context_callback(const std::function<void(boost::asio::ssl::context&)>& callback)
+    {
+         m_ssl_context_callback = callback;
+    }
+
+    /// <summary>
+    /// Gets the user's callback to allow for customization of the ssl context.
+    /// </summary>
+    const std::function<void(boost::asio::ssl::context&)>& get_ssl_context_callback() const
+    {
+        return m_ssl_context_callback;
+    }
+#endif
+
 private:
-#if !defined(CPPREST_TARGET_XP) && (!defined(WINAPI_FAMILY) || WINAPI_FAMILY != WINAPI_FAMILY_PHONE_APP || _MSC_VER > 1700)
+#if !defined(CPPREST_TARGET_XP)
     std::shared_ptr<oauth1::experimental::oauth1_config> m_oauth1;
 #endif
 
@@ -317,7 +360,7 @@ private:
     // Whether or not to guarantee ordering, i.e. only using one underlying TCP connection.
     bool m_guarantee_order;
 
-    utility::seconds m_timeout;
+    std::chrono::microseconds m_timeout;
     size_t m_chunksize;
 
 #if !defined(__cplusplus_winrt)
@@ -327,6 +370,9 @@ private:
 
     std::function<void(native_handle)> m_set_user_nativehandle_options;
 
+#if !defined(_WIN32) && !defined(__cplusplus_winrt)
+    std::function<void(boost::asio::ssl::context&)> m_ssl_context_callback;
+#endif
 #if defined(_WIN32) && !defined(__cplusplus_winrt)
     bool m_buffer_request;
 #endif

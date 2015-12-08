@@ -18,7 +18,7 @@
 *
 * HTTP Library: Oauth 1.0
 *
-* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
+* For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
@@ -136,6 +136,11 @@ class oauth1_token
 public:
 
     /// <summary>
+    /// Constructs an initially empty invalid access token.
+    /// </summary>
+    oauth1_token() {}
+
+    /// <summary>
     /// Constructs a OAuth1 token from a given access token and secret.
     /// </summary>
     /// <param name="access_token">Access token string.</param>
@@ -221,8 +226,6 @@ public:
 
 private:
     friend class oauth1_config;
-
-    oauth1_token() {}
 
     utility::string_t m_token;
     utility::string_t m_secret;
@@ -366,21 +369,7 @@ public:
     /// Get token.
     /// </summary>
     /// <returns>Token.</returns>
-    const oauth1_token& token() const
-    {
-        if (m_is_authorization_completed)
-        {
-            // Return the token object only if authorization has been completed.
-            // Otherwise the token object holds a temporary token which should not be
-            // returned to the user.
-            return m_token;
-        }
-        else
-        {
-            static const oauth1_token empty_token;
-            return empty_token;
-        }
-    }
+    _ASYNCRTIMP const oauth1_token& token() const;
 
     /// <summary>
     /// Set token.

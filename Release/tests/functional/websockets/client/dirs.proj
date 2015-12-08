@@ -14,7 +14,7 @@
 
   <ItemGroup Condition="'$(DevToolsVersion)'=='140'">
     <ProjectFile Include="vs14\websocketsclient140_test.vcxproj" />
-    <!-- <ProjectFile Include="vs14.android\websocketsclient140_test.android.vcxproj" Condition="'$(Platform)'!='x64'" /> -->
+    <ProjectFile Include="vs14.android\websocketsclient140_test.android.vcxproj" Condition="'$(Platform)'!='x64'" />
   </ItemGroup>
   
   <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|140'">

@@ -16,7 +16,7 @@
 * ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
+* For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
@@ -102,12 +102,7 @@ std::vector<unsigned char> _from_base64(const utility::string_t& input)
 
         for (auto iter = input.begin(); iter != input.end(); ++iter,--size)
         {
-            const auto ch = *iter;
-            if ( ch < 0 )
-            {
-                throw std::runtime_error("invalid character found in base64 string");
-            }
-            const size_t ch_sz = static_cast<size_t>(ch);
+            const size_t ch_sz = static_cast<size_t>(*iter);
             if ( ch_sz >= _base64_dectbl.size() || _base64_dectbl[ch_sz] == 255 )
             {
                 throw std::runtime_error("invalid character found in base64 string");
@@ -122,12 +117,7 @@ std::vector<unsigned char> _from_base64(const utility::string_t& input)
                 }
                 if ( size == 2 )
                 {
-                    const auto ch2 = *(iter+1);
-                    if ( ch2 < 0 )
-                    {
-                        throw std::runtime_error("invalid padding character found in base64 string");
-                    }
-                    const size_t ch2_sz = static_cast<size_t>(ch2);
+                    const size_t ch2_sz = static_cast<size_t>(*(iter+1));
                     if ( ch2_sz >= _base64_dectbl.size() || _base64_dectbl[ch2_sz] != 254 )
                     {
                         throw std::runtime_error("invalid padding character found in base64 string");

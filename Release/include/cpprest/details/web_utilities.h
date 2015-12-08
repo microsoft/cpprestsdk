@@ -48,7 +48,6 @@ typedef std::unique_ptr<::utility::string_t, zero_memory_deleter> plaintext_stri
 
 #if defined(_WIN32) && !defined(CPPREST_TARGET_XP)
 #if defined(__cplusplus_winrt)
-#if !(WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP && _MSC_VER < 1800)
 class winrt_encryption
 {
 public:
@@ -58,7 +57,6 @@ public:
 private:
     ::pplx::task<Windows::Storage::Streams::IBuffer ^> m_buffer;
 };
-#endif
 #else
 class win32_encryption
 {
@@ -111,11 +109,7 @@ public:
         utility::string_t password() const
     {
 #if defined(_WIN32) && !defined(CPPREST_TARGET_XP)
-#if defined(WINAPI_FAMILY) && WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP && _MSC_VER < 1800
-        return m_password;
-#else
         return utility::string_t(*m_password.decrypt());
-#endif
 #else
         return m_password;
 #endif
@@ -135,13 +129,9 @@ private:
 
     details::plaintext_string decrypt() const
     {
-        // Encryption APIs not supported on Windows Phone 8.0 or XP
+        // Encryption APIs not supported on XP
 #if defined(_WIN32) && !defined(CPPREST_TARGET_XP)
-#if defined(WINAPI_FAMILY) && WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP && _MSC_VER < 1800
-        return details::plaintext_string(new ::utility::string_t(m_password));
-#else
         return m_password.decrypt();
-#endif
 #else
         return details::plaintext_string(new ::utility::string_t(m_password));
 #endif
@@ -151,11 +141,7 @@ private:
 
 #if defined(_WIN32) && !defined(CPPREST_TARGET_XP)
 #if defined(__cplusplus_winrt)
-#if WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP && _MSC_VER < 1800
-    ::utility::string_t m_password;
-#else
     details::winrt_encryption m_password;
-#endif
 #else
     details::win32_encryption m_password;
 #endif

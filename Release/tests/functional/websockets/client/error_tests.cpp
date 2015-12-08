@@ -143,24 +143,12 @@ TEST_FIXTURE(uri_address, try_receive_after_server_initiated_close)
 }
 
 // Destroy the client without closing it explicitly
-// CodePlex 319 fails on VS2013.
-#if !defined(_MSC_VER) || _MSC_VER >= 1900
 TEST_FIXTURE(uri_address, destroy_without_close)
 {
     test_websocket_server server;
-    pplx::task<websocket_incoming_message> t;
-
-    {
-        websocket_client client;
-
-        client.connect(m_uri).wait();
-
-        t = client.receive();
-    }
-    
-    VERIFY_THROWS(t.wait(), websocket_exception);
+    websocket_client client;
+    client.connect(m_uri).wait();
 }
-#endif
 
 // Destroy the callback client without closing it explicitly
 TEST_FIXTURE(uri_address, destroy_without_close_callback_client)

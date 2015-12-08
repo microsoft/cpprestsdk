@@ -18,7 +18,7 @@
 *
 * HTTP Library: Oauth 2.0
 *
-* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
+* For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
@@ -26,6 +26,7 @@
 #include "stdafx.h"
 
 using web::http::client::http_client;
+using web::http::client::http_client_config;
 using web::http::oauth2::details::oauth2_strings;
 using web::http::details::mime_types;
 using utility::conversions::to_utf8string;
@@ -134,7 +135,11 @@ pplx::task<void> oauth2_config::_request_token(uri_builder& request_body_ub)
     }
     request.set_body(request_body_ub.query(), mime_types::application_x_www_form_urlencoded);
 
-    http_client token_client(token_endpoint());
+	// configure proxy
+	http_client_config config;
+	config.set_proxy(m_proxy);
+
+    http_client token_client(token_endpoint(), config);
 
     return token_client.request(request)
     .then([](http_response resp)

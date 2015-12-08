@@ -1,8 +1,8 @@
 diff --git a/build-android.sh b/build-android.sh
-index 40453f7..97a3203 100755
+index 40453f7..ad78ddf 100755
 --- a/build-android.sh
 +++ b/build-android.sh
-@@ -258,9 +258,9 @@ case "$NDK_RN" in
+@@ -258,9 +258,14 @@ case "$NDK_RN" in
  		TOOLSET=gcc-androidR8e
  		;;
  	"10 (64-bit)")
@@ -12,10 +12,15 @@ index 40453f7..97a3203 100755
 +		TOOLCHAIN=llvm-3.4
 +		CXXPATH=$AndroidNDKRoot/toolchains/${TOOLCHAIN}/prebuilt/${PlatformOS}-x86_64/bin/clang++
 +		TOOLSET=clang-androidR8e
++                ;;
++	"10e-rc4 (64-bit)")
++		TOOLCHAIN=llvm-3.6
++		CXXPATH=$AndroidNDKRoot/toolchains/${TOOLCHAIN}/prebuilt/${PlatformOS}-x86_64/bin/clang++
++		TOOLSET=clang-androidR8e
                  ;;
  	*)
  		echo "Undefined or not supported Android NDK version!"
-@@ -392,6 +392,7 @@ echo "Building boost for android"
+@@ -392,6 +397,7 @@ echo "Building boost for android"
    export PATH=$AndroidBinariesPath:$PATH
    export AndroidNDKRoot
    export NO_BZIP2=1
@@ -23,7 +28,7 @@ index 40453f7..97a3203 100755
  
    cxxflags=""
    for flag in $CXXFLAGS; do cxxflags="$cxxflags cxxflags=$flag"; done
-@@ -404,8 +405,12 @@ echo "Building boost for android"
+@@ -404,8 +410,12 @@ echo "Building boost for android"
           threading=multi              \
           --layout=versioned           \
           --prefix="./../$BUILD_DIR/"  \
@@ -38,7 +43,7 @@ index 40453f7..97a3203 100755
    } | tee -a $PROGDIR/build.log
  
 diff --git a/configs/user-config-boost-1_55_0.jam b/configs/user-config-boost-1_55_0.jam
-index 666d4c8..5f6bab8 100644
+index 666d4c8..df597f6 100644
 --- a/configs/user-config-boost-1_55_0.jam
 +++ b/configs/user-config-boost-1_55_0.jam
 @@ -41,82 +41,41 @@ import os ;
@@ -50,7 +55,7 @@ index 666d4c8..5f6bab8 100644
 +using clang : androidR8e
  :
 -arm-linux-androideabi-g++
-+$(AndroidNDKRoot)/toolchains/llvm-3.4/prebuilt/linux-x86_64/bin/clang++
++$(AndroidNDKRoot)/toolchains/llvm-3.6/prebuilt/linux-x86_64/bin/clang++
  :
 -<archiver>arm-linux-androideabi-ar
 +<compileflags>--gcc-toolchain="$(AndroidNDKRoot)/toolchains/arm-linux-androideabi-4.8/prebuilt/linux-x86_64"

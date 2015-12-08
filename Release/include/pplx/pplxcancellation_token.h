@@ -35,7 +35,7 @@
 #endif
 
 #include <string>
-#include <pplx/pplxinterface.h>
+#include "pplx/pplxinterface.h"
 
 #pragma pack(push,_CRT_PACKING)
 // All header files are required to be protected from the macro new

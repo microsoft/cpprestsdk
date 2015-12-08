@@ -122,6 +122,7 @@ Please read the leading comments before using the class.
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wc++11-long-long"
 #pragma clang diagnostic ignored "-Wold-style-cast"
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
 #endif
 
 #endif

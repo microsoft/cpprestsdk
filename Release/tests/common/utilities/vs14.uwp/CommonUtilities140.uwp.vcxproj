@@ -29,17 +29,19 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{DA089EAD-00A2-43CF-9954-DF01E8ED5E94}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>CommonUtilities120</RootNamespace>
+    <RootNamespace>CommonUtilities140</RootNamespace>
     <SccProjectName>SAK</SccProjectName>
     <SccAuxPath>SAK</SccAuxPath>
     <SccLocalPath>SAK</SccLocalPath>
     <SccProvider>SAK</SccProvider>
-	<DefaultLanguage>en-US</DefaultLanguage>
+    <DefaultLanguage>en-US</DefaultLanguage>
     <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
-	<CharacterSet>Unicode</CharacterSet>
+    <WindowsTargetPlatformVersion>10.0.10240.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformMinVersion>10.0.10240.0</WindowsTargetPlatformMinVersion>
+    <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v140</PlatformToolset>
-	<ConfigurationType>DynamicLibrary</ConfigurationType>
-	<AppContainerApplication>true</AppContainerApplication>
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <AppContainerApplication>true</AppContainerApplication>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">

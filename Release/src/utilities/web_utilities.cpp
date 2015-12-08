@@ -18,7 +18,7 @@
 *
 * Credential and proxy utilities.
 *
-* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
+* For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
@@ -39,9 +39,6 @@ namespace details
 {
 #if defined(_WIN32) && !defined(CPPREST_TARGET_XP)
 #if defined(__cplusplus_winrt)
-
-// Not available on Windows Phone 8.0
-#if !(WINAPI_FAMILY == WINAPI_FAMILY_PHONE_APP && _MSC_VER < 1800)
 
 // Helper function to zero out memory of an IBuffer.
 void winrt_secure_zero_buffer(Windows::Storage::Streams::IBuffer ^buffer)
@@ -101,8 +98,9 @@ plaintext_string winrt_encryption::decrypt() const
     SecureZeroMemory(rawPlaintext, plaintext->Length);
     return std::move(data);
 }
-#endif
+
 #else
+
 win32_encryption::win32_encryption(const std::wstring &data) :
     m_numCharacters(data.size())
 {

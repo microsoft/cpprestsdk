@@ -484,7 +484,7 @@ private:
     HTTP_SERVER_SESSION_ID m_session;
     HTTP_URL_GROUP_ID m_url_group;
     HANDLE m_request_queue;
-    volatile bool m_isClosing;
+    std::atomic<bool> m_isClosing;
 };
 #else
 class _test_http_server

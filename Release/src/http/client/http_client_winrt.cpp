@@ -20,7 +20,7 @@
 *
 * This file contains the implementation for the Windows Runtime, using XML HTTP Extended Request.
 *
-* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
+* For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
@@ -463,9 +463,9 @@ protected:
         }
 
         // Set timeout.
-        const auto timeout = config.timeout();
-        const int secs = static_cast<int>(timeout.count());
-        hr = winrt_context->m_hRequest->SetProperty(XHR_PROP_TIMEOUT, secs * 1000);
+        ULONGLONG timeout = static_cast<ULONGLONG>(config.timeout<std::chrono::milliseconds>().count());
+        timeout = std::max<decltype(timeout)>(timeout, std::numeric_limits<decltype(timeout)>::min() + 1);
+        hr = winrt_context->m_hRequest->SetProperty(XHR_PROP_TIMEOUT, timeout);
         if (FAILED(hr))
         {
             request->report_error(hr, L"Failure to set HTTP request properties");

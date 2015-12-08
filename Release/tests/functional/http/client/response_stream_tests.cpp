@@ -268,7 +268,7 @@ public:
     void set_buffer_size(size_t, std::ios_base::openmode) override {}
     size_t in_avail() const override { return 0; }
     pos_type getpos(std::ios_base::openmode) const override { return 0; }
-    pos_type seekpos(pos_type, std::ios_base::openmode) { return 0; }
+    pos_type seekpos(pos_type, std::ios_base::openmode) override { return 0; }
     pos_type seekoff(off_type, std::ios_base::seekdir, std::ios_base::openmode) override { return 0; }
     bool acquire(_Out_writes_(count) CharType*&, _In_ size_t&) override { return false; }
     void release(_Out_writes_(count) CharType *, _In_ size_t) override {}

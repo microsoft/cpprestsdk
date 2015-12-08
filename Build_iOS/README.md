@@ -1,3 +1,1 @@
-Please consult the codeplex documentation for iOS compilation:
-
-[](https://casablanca.codeplex.com/wikipage?title=Setup%20and%20Build%20on%20IOS)
+Please consult the documentation [here](https://github.com/Microsoft/cpprestsdk/wiki/How-to-build-for-iOS) for iOS compilation.
