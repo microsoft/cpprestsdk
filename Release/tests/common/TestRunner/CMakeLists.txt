@@ -1,4 +1,6 @@
-include_directories(${Casablanca_INCLUDE_DIRS})
+include_directories(${Casablanca_INCLUDE_DIRS}
+  ../UnitTestpp
+  )
 
 set(TR_SOURCES
   test_runner.cpp
@@ -97,4 +99,4 @@ if(NOT IOS AND NOT ANDROID)
         )
     endif()
   endif()
-endif()	
+endif()

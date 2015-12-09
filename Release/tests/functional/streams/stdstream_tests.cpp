@@ -26,7 +26,9 @@
 #include "cpprest/filestream.h"
 #include "cpprest/producerconsumerstream.h"
 
+#if !defined(_WIN32) || !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 #include <boost/interprocess/streams/bufferstream.hpp>
+#endif
 
 #if defined(__cplusplus_winrt)
 using namespace Windows::Storage;
@@ -787,6 +789,7 @@ TEST(sync_on_async_close_with_exception)
     }
 }
 
+#if !defined(_WIN32) || !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 TEST(ostream_full_throw_exception)
 {
     char tgt_buffer[5];
@@ -806,6 +809,7 @@ TEST(ostream_full_throw_exception)
 
     VERIFY_THROWS(astream.read_to_end(os_streambuf).get(), std::exception);
 }
+#endif
 
 }
 }}}
