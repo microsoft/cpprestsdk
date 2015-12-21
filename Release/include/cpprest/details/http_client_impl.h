@@ -57,6 +57,11 @@ static utility::string_t flatten_http_headers(const http_headers &headers)
     utility::string_t flattened_headers;
     for(auto iter = headers.begin(); iter != headers.end(); ++iter)
     {
+        utility::string_t header_name = iter->first;
+        http_headers::_case_insensitive_cmp cmp;
+        if (!cmp(header_name, "host") && !cmp("host", header_name)) {
+            continue;
+        }
         flattened_headers.append(iter->first);
         flattened_headers.push_back(':');
         flattened_headers.append(iter->second);

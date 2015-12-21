@@ -394,14 +394,21 @@ public:
         std::ostream request_stream(&m_body_buf);
         request_stream.imbue(std::locale::classic());
 
-        request_stream << method << " " << encoded_resource << " " << "HTTP/1.1" << CRLF << "Host: " << host;
+        request_stream << method << " " << encoded_resource << " " << "HTTP/1.1" << CRLF;
+        request_stream << "Host: ";
 
         int port = base_uri.port();
         if (base_uri.is_port_default())
         {
             port = (m_connection->is_ssl() ? 443 : 80);
         }
-        request_stream << ":" << port << CRLF;
+
+        std::string specified_host_header;
+        if (m_request.headers().match(header_names::host, specified_host_header)) {
+            request_stream << specified_host_header << CRLF;
+        } else {
+            request_stream << host << ":" << port << CRLF;
+        }
 
         // Extra request headers are constructed here.
         utility::string_t extra_headers;
