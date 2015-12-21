@@ -136,6 +136,7 @@ public:
     template <typename HandshakeHandler, typename CertificateHandler>
     void async_handshake(boost::asio::ssl::stream_base::handshake_type type,
                          const http_client_config &config,
+                         const utility::string_t &host_name,
                          const HandshakeHandler &handshake_handler,
                          const CertificateHandler &cert_handler)
     {
@@ -152,6 +153,13 @@ public:
         {
             m_ssl_stream->set_verify_mode(boost::asio::ssl::context::verify_none);
         }
+
+        // Check to set host name for Server Name Indication (SNI)
+        if (config.tlsext_host_name())
+        {
+            SSL_set_tlsext_host_name(m_ssl_stream->native_handle(), const_cast<char *>(host_name.data()));
+        }
+
         m_ssl_stream->async_handshake(type, handshake_handler);
     }
 
@@ -561,6 +569,7 @@ private:
             const auto weakCtx = std::weak_ptr<asio_context>(shared_from_this());
             m_connection->async_handshake(boost::asio::ssl::stream_base::client,
                                           m_http_client->client_config(),
+                                          m_http_client->base_uri().host(),
                                           boost::bind(&asio_context::handle_handshake, shared_from_this(), boost::asio::placeholders::error),
 
                                           // Use a weak_ptr since the verify_callback is stored until the connection is destroyed.

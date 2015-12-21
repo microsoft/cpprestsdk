@@ -101,6 +101,7 @@ public:
         , m_set_user_nativehandle_options([](native_handle)->void{})
 #if !defined(_WIN32) && !defined(__cplusplus_winrt)
         , m_ssl_context_callback([](boost::asio::ssl::context&)->void{})
+        , m_tlsext_host_name(true)
 #endif
 #if defined(_WIN32) && !defined(__cplusplus_winrt)
         , m_buffer_request(false)
@@ -347,6 +348,25 @@ public:
     {
         return m_ssl_context_callback;
     }
+
+    /// <summary>
+    /// Gets the TLS server name indication (SNI) property.
+    /// </summary>
+    /// <returns>True if TLS server name indication is enabled, false otherwise.</returns>
+    bool tlsext_host_name() const
+    {
+        return m_tlsext_host_name;
+    }
+
+    /// <summary>
+    /// Sets the TLS server name indication (SNI) property.
+    /// </summary>
+    /// <param name="tlsext_host_name">False to disable the TLS (ClientHello) extension for server name indication, true otherwise.</param>
+    /// <remarks>Note: This setting is required in most virtual hosting scenarios.</remarks>
+    void set_tlsext_host_name(bool tlsext_host_name)
+    {
+        m_tlsext_host_name = tlsext_host_name;
+    }
 #endif
 
 private:
@@ -372,6 +392,7 @@ private:
 
 #if !defined(_WIN32) && !defined(__cplusplus_winrt)
     std::function<void(boost::asio::ssl::context&)> m_ssl_context_callback;
+    bool m_tlsext_host_name;
 #endif
 #if defined(_WIN32) && !defined(__cplusplus_winrt)
     bool m_buffer_request;
