@@ -296,9 +296,10 @@ protected:
     // URI to connect to.
     const http::uri m_uri;
 
-private:
 
-    http_client_config m_client_config;
+	http_client_config m_client_config;
+
+private:
 
     bool m_opened;
 
