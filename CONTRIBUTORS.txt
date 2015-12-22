@@ -34,5 +34,6 @@ Gery Vessere (gery@vessere.com)
 
 Cisco Systems
 Gergely Lukacsy (glukacsy)
+Chris Deering (deeringc)
 
 thomasschaub
