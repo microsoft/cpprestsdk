@@ -134,6 +134,19 @@ namespace utilities {
                 m_server_connected.set_exception(std::runtime_error("Connection attempt failed."));
             });
 
+			m_srv.set_pong_handler([this](websocketpp::connection_hdl hdl, std::string input)
+			{
+				auto fn = m_test_srv->get_next_message_handler();
+				assert(fn);
+
+				test_websocket_msg wsmsg;
+
+				wsmsg.set_data(std::vector<uint8_t>(input.begin(), input.end()));
+
+				wsmsg.set_msg_type(WEB_SOCKET_PONG_TYPE);
+				fn(wsmsg);
+			});
+
             m_srv.set_message_handler([this](websocketpp::connection_hdl hdl, server::message_ptr msg)
             {
                 auto pay = msg->get_payload();
@@ -151,12 +164,12 @@ namespace utilities {
                     wsmsg.set_msg_type(utilities::WEB_SOCKET_BINARY_MESSAGE_TYPE);
                     break;
                 case websocketpp::frame::opcode::text:
-                    wsmsg.set_msg_type(utilities::WEB_SOCKET_UTF8_MESSAGE_TYPE);
+					wsmsg.set_msg_type(utilities::WEB_SOCKET_UTF8_MESSAGE_TYPE);
                     break;
                 case websocketpp::frame::opcode::close:
                     wsmsg.set_msg_type(utilities::WEB_SOCKET_CLOSE_TYPE);
                     break;
-                default:
+				default:
                     // Websocketspp does not currently support explicit fragmentation. We should not get here.
                     std::abort();
                 }
@@ -262,7 +275,7 @@ namespace utilities {
         case test_websocket_message_type::WEB_SOCKET_CLOSE_TYPE:
             flags = websocketpp::frame::opcode::close; // WebSocket::FRAME_OP_CLOSE;
             break;
-        case test_websocket_message_type::WEB_SOCKET_UTF8_FRAGMENT_TYPE:
+		case test_websocket_message_type::WEB_SOCKET_UTF8_FRAGMENT_TYPE:
         case test_websocket_message_type::WEB_SOCKET_BINARY_FRAGMENT_TYPE:
         default:
             throw std::runtime_error("invalid message type");

@@ -373,13 +373,14 @@ public:
         {
         case websocket_message_type::text_message:
         case websocket_message_type::binary_message:
+		case websocket_message_type::pong:
             break;
         default:
             return pplx::task_from_exception<void>(websocket_exception("Invalid message type"));
         }
 
         const auto length = msg.m_length;
-        if (length == 0)
+        if (length == 0 && msg.m_msg_type != websocket_message_type::pong)
         {
             return pplx::task_from_exception<void>(websocket_exception("Cannot send empty message."));
         }
@@ -639,13 +640,19 @@ private:
                 ec);
             break;
         case websocket_message_type::binary_message:
-            client.send(
+			client.send(
                 this_client->m_con,
                 sp_allocated.get(),
                 length,
                 websocketpp::frame::opcode::binary,
                 ec);
             break;
+		case websocket_message_type::pong:
+			client.pong(
+				this_client->m_con,
+				"",
+				ec);
+			break;
         default:
             // This case should have already been filtered above.
             std::abort();

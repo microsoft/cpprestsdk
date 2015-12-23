@@ -465,13 +465,7 @@ void http_windows_server::receive_requests()
 pplx::task<void> http_windows_server::respond(http::http_response response)
 {
     windows_request_context * p_context = static_cast<windows_request_context *>(response._get_server_context());
-    return pplx::create_task(p_context->m_response_completed).then([p_context](::pplx::task<void> t)
-    {
-        // After response is sent, break circular reference between http_response and the request context.
-        // Otherwise http_listener::close() can hang.
-        p_context->m_response._get_impl()->_set_server_context(nullptr);
-        t.get();
-    });
+    return pplx::create_task(p_context->m_response_completed);
 }
 
 windows_request_context::windows_request_context()
@@ -493,6 +487,12 @@ windows_request_context::~windows_request_context()
     // Workaround is to use a lock incurring additional synchronization, if can acquire
     // the lock then setting of the event has completed.
     std::unique_lock<std::mutex> lock(m_responseCompletedLock);
+
+    // Add a task-based continuation so no exceptions thrown from the task go 'unobserved'.
+    pplx::create_task(m_response_completed).then([](pplx::task<void> t)
+    {
+        try { t.wait(); } catch(...) {}
+    });
 
     auto *pServer = static_cast<http_windows_server *>(http_server_api::server_api());
     if(--pServer->m_numOutstandingRequests == 0)
@@ -530,6 +530,7 @@ void windows_request_context::async_process_request(HTTP_REQUEST_ID request_id, 
     {
         CancelThreadpoolIo(pServer->m_threadpool_io);
         m_msg.reply(status_codes::InternalError);
+        init_response_callbacks(ShouldWaitForBody::DontWait);
     }
 }
 
@@ -541,6 +542,7 @@ void windows_request_context::read_headers_io_completion(DWORD error_code, DWORD
     if(error_code != NO_ERROR)
     {
         m_msg.reply(status_codes::InternalError);
+        init_response_callbacks(ShouldWaitForBody::DontWait);
     }
     else
     {
@@ -574,6 +576,9 @@ void windows_request_context::read_headers_io_completion(DWORD error_code, DWORD
         else
         {
             m_msg.reply(status_codes::BadRequest, badRequestMsg);
+
+            // Even though we have a bad request, we should wait for the body otherwise we risk racing over m_overlapped
+            init_response_callbacks(ShouldWaitForBody::Wait);
         }
     }
 }
@@ -649,46 +654,7 @@ void windows_request_context::dispatch_request_to_listener(_In_ web::http::exper
     // Save http_request copy to dispatch to user's handler in case content_ready() completes before.
     http_request request = m_msg;
 
-    // Wait until the content download finished before replying.
-    request.content_ready().then([=](pplx::task<http_request> requestBody)
-    {
-        // If an exception occurred while processing the body then there is no reason
-        // to even try sending the response, just re-surface the same exception.
-        try
-        {
-            requestBody.wait();
-        }
-        catch (...)
-        {
-            m_msg = http_request();
-            cancel_request(std::current_exception());
-            return;
-        }
-
-        // At this point the user entirely controls the lifetime of the http_request.
-        m_msg = http_request();
-
-        request.get_response().then([this](pplx::task<http::http_response> responseTask)
-        {
-            // Don't let an exception from sending the response bring down the server.
-            try
-            {
-                m_response = responseTask.get();
-            }
-            catch (const pplx::task_canceled &)
-            {
-                // This means the user didn't respond to the request, allowing the
-                // http_request instance to be destroyed. There is nothing to do then
-                // so don't send a response.
-                return;
-            }
-            catch (...)
-            {
-                m_response = http::http_response(status_codes::InternalError);
-            }
-            async_process_response();
-        });
-    });
+    init_response_callbacks(ShouldWaitForBody::Wait);
 
     // Look up the lock for the http_listener.
     auto *pServer = static_cast<http_windows_server *>(http_server_api::server_api());
@@ -718,6 +684,94 @@ void windows_request_context::dispatch_request_to_listener(_In_ web::http::exper
     {
         pListenerLock->unlock();
         request._reply_if_not_already(status_codes::InternalError);
+    }
+}
+
+void windows_request_context::init_response_callbacks(ShouldWaitForBody shouldWait)
+{
+    // Use a proxy event so we're not causing a circular reference between the http_request and the response task
+    pplx::task_completion_event<void> proxy_content_ready;
+
+    auto content_ready_task = m_msg.content_ready();
+    auto get_response_task = m_msg.get_response();
+
+    content_ready_task.then([this, proxy_content_ready](pplx::task<http_request> requestBody)
+    {
+        // If an exception occurred while processing the body then there is no reason
+        // to even try sending the response, just re-surface the same exception.
+        try
+        {
+            requestBody.wait();
+        }
+        catch (...)
+        {
+            // Copy the request reference in case it's the last
+            http_request request = m_msg;
+            m_msg = http_request();
+            auto exc = std::current_exception();
+            proxy_content_ready.set_exception(exc);
+            cancel_request(exc);
+            return;
+        }
+
+        // At this point the user entirely controls the lifetime of the http_request.
+        m_msg = http_request();
+        proxy_content_ready.set();
+    });
+
+    get_response_task.then([this, proxy_content_ready](pplx::task<http::http_response> responseTask)
+    {
+        // Don't let an exception from sending the response bring down the server.
+        try
+        {
+            m_response = responseTask.get();
+        }
+        catch (const pplx::task_canceled &)
+        {
+            // This means the user didn't respond to the request, allowing the
+            // http_request instance to be destroyed. There is nothing to do then
+            // so don't send a response.
+            // Avoid unobserved exception handler
+            pplx::create_task(proxy_content_ready).then([](pplx::task<void> t)
+            {
+                try { t.wait(); } catch (...) {}
+            });
+            return;
+        }
+        catch (...)
+        {
+            // Should never get here, if we do there's a chance that a circular reference will cause leaks,
+            // or worse, undefined behaviour as we don't know who owns 'this' anymore 
+            _ASSERTE(false);
+            m_response = http::http_response(status_codes::InternalError);
+        }
+
+        pplx::create_task(m_response_completed).then([this](pplx::task<void> t)
+        {
+            // After response is sent, break circular reference between http_response and the request context.
+            // Otherwise http_listener::close() can hang.
+            m_response._get_impl()->_set_server_context(nullptr);
+        });
+
+        // Wait until the content download finished before replying because m_overlapped is reused,
+        // and we don't want to delete 'this' if the body is still downloading
+        pplx::create_task(proxy_content_ready).then([this](pplx::task<void> t)
+        {
+            try
+            {
+                t.wait();
+                async_process_response();
+            }
+            catch (...)
+            {
+            }
+        }).wait();
+    });
+
+    if (shouldWait == ShouldWaitForBody::DontWait)
+    {
+        // Fake a body completion so the content_ready() task doesn't keep the http_request alive forever
+        m_msg._get_impl()->_complete(0);
     }
 }
 
