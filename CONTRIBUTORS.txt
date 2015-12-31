@@ -20,9 +20,11 @@ jracle
 gandziej 
 adish
 LeonidCSIT
-LocutusOfBorg
 kreuzerkrieg
 evanc
+
+Abinsula s.r.l.
+Gianfranco Costamagna (LocutusOfBorg)
 
 AutoDesk Inc.
 Cyrille Fauvel (cyrillef)
@@ -34,3 +36,6 @@ Cisco Systems
 Gergely Lukacsy (glukacsy)
 
 thomasschaub
+
+Trimble
+Tim Boundy (gigaplex)

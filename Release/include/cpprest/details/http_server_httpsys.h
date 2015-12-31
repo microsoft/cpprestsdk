@@ -99,6 +99,14 @@ struct windows_request_context : http::details::_http_server_context
     // Dispatch request to the provided http_listener.
     void dispatch_request_to_listener(_In_ web::http::experimental::listener::details::http_listener_impl *pListener);
 
+    enum class ShouldWaitForBody
+    {
+        Wait,
+        DontWait
+    };
+    // Initialise the response task callbacks. If the body has been requested, we should wait for it to avoid race conditions.
+    void init_response_callbacks(ShouldWaitForBody shouldWait);
+
     // Read in a portion of the request body.
     void read_request_body_chunk();
 

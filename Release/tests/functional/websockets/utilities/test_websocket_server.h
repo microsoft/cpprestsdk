@@ -50,7 +50,8 @@ enum test_websocket_message_type
   WEB_SOCKET_BINARY_FRAGMENT_TYPE,
   WEB_SOCKET_UTF8_MESSAGE_TYPE,
   WEB_SOCKET_UTF8_FRAGMENT_TYPE,
-  WEB_SOCKET_CLOSE_TYPE
+  WEB_SOCKET_CLOSE_TYPE,
+  WEB_SOCKET_PONG_TYPE
 };
 
 // Interface containing details about the HTTP handshake request received by the test server.

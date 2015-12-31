@@ -103,6 +103,21 @@ pplx::task<void> send_text_msg_helper(SocketClientClass& client, web::uri uri, t
     return client.send(msg);
 }
 
+template<class SocketClientClass>
+pplx::task<void> send_pong_msg_helper(SocketClientClass& client, web::uri uri, test_websocket_server& server)
+{
+	server.next_message([](test_websocket_msg msg) // Handler to verify the message sent by the client.
+	{
+		websocket_asserts::assert_message_equals(msg, "", test_websocket_message_type::WEB_SOCKET_PONG_TYPE);
+	});
+
+	client.connect(uri).wait();
+
+	websocket_outgoing_message msg;
+	msg.set_pong_message();
+	return client.send(msg);
+}
+
 pplx::task<void> send_msg_from_stream(websocket_client& client,
                                              test_websocket_server& server,
                                              web::uri uri,
@@ -455,6 +470,26 @@ TEST_FIXTURE(uri_address, send_stream_binary_msg_no_length)
 
     client.close().wait();
 }
+
+#if !defined(__cplusplus_winrt)
+// Send an unsolicited pong message to the server
+TEST_FIXTURE(uri_address, send_pong_msg)
+{
+    test_websocket_server server;
+    websocket_client client;
+    send_pong_msg_helper(client, m_uri, server).wait();
+    client.close().wait();
+}
+
+// Send an unsolicited pong message to the server with websocket_callback_client
+TEST_FIXTURE(uri_address, send_pong_msg_callback_client)
+{
+    test_websocket_server server;
+    websocket_callback_client client;
+    send_pong_msg_helper(client, m_uri, server).wait();
+    client.close().wait();
+}
+#endif
 
 } // SUITE(send_msg_tests)
 
