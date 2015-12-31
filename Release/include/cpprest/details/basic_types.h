@@ -18,7 +18,7 @@
 *
 * Platform-dependent type definitions
 *
-* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
+* For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
@@ -30,7 +30,6 @@
 #include <iostream>
 #include <sstream>
 #include "cpprest/details/cpprest_compat.h"
-#include "cpprest/details/basic_types.h"
 
 #ifndef _WIN32
 # define __STDC_LIMIT_MACROS

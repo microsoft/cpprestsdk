@@ -18,7 +18,7 @@
 *
 * Builder style class for creating URIs.
 *
-* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
+* For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
@@ -30,6 +30,7 @@
 #include <vector>
 
 #include "cpprest/base_uri.h"
+#include "cpprest/details/uri_parser.h"
 
 namespace web
 {
@@ -234,12 +235,38 @@ namespace web
         /// <param name="value">The value portion of the query string</param>
         /// <returns>A reference to this uri_builder to support chaining.</returns>
         template<typename T>
-        uri_builder &append_query(utility::string_t name, const T &value, bool do_encoding = true)
+        uri_builder &append_query(const utility::string_t &name, const T &value, bool do_encoding = true)
         {
-            utility::ostringstream_t ss;
-            ss.imbue(std::locale::classic());
-            ss << name << _XPLATSTR("=") << value;
-            return append_query(ss.str(), do_encoding);
+            auto encodedName = name;
+            auto encodedValue = ::utility::conversions::print_string(value, std::locale::classic());
+
+            if (do_encoding)
+            {
+                auto encodingCheck = [](int ch)
+                {
+                    switch (ch)
+                    {
+                        // Encode '&', ';', and '=' since they are used
+                        // as delimiters in query component.
+                    case '&':
+                    case ';':
+                    case '=':
+                    case '%':
+                    case '+':
+                        return true;
+                    default:
+                        return !::web::details::uri_parser::is_query_character(ch);
+                    }
+                };
+                encodedName = uri::encode_impl(encodedName, encodingCheck);
+                encodedValue = uri::encode_impl(encodedValue, encodingCheck);
+            }
+
+            auto encodedQuery = encodedName;
+            encodedQuery.append(_XPLATSTR("="));
+            encodedQuery.append(encodedValue);
+            // The query key value pair was already encoded by us or the user separately.
+            return append_query(encodedQuery, false);
         }
 
         /// <summary>

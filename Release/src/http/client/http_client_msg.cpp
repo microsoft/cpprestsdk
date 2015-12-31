@@ -18,7 +18,7 @@
 *
 * HTTP Library: Request and reply message definitions (client side).
 *
-* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
+* For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
@@ -86,22 +86,7 @@ utility::string_t details::_http_response::to_string() const
     auto reason_phrase = m_reason_phrase;
     if(reason_phrase.empty())
     {
-        static http_status_to_phrase idToPhraseMap[] = {
-#define _PHRASES
-#define DAT(a,b,c) {status_codes::a, c},
-#include "cpprest/details/http_constants.dat"
-#undef _PHRASES
-#undef DAT
-        };
-
-        for( auto iter = std::begin(idToPhraseMap); iter != std::end(idToPhraseMap); ++iter)
-        {
-            if( iter->id == status_code() )
-            {
-                reason_phrase = iter->phrase;
-                break;
-            }
-        }
+        reason_phrase = get_default_reason_phrase(status_code());
     }
 
     utility::ostringstream_t buffer;

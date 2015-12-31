@@ -18,7 +18,7 @@
 *
 * Asynchronous I/O: streams API, used for formatted input and output, based on unformatted I/O using stream buffers
 *
-* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
+* For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
@@ -673,7 +673,7 @@ namespace Concurrency { namespace streams
             if ( !_verify_and_return_task(details::_in_stream_msg, result) ) return result;
 
             auto copy = std::make_shared<T>();
-            return helper()->m_buffer.getn((CharType*)copy.get(), sizeof(T)).then([copy](pplx::task<size_t> op) -> T
+            return helper()->m_buffer.getn((CharType*)copy.get(), sizeof(T)).then([copy](pplx::task<size_t>) -> T
             {
                 return std::move(*copy);
             });

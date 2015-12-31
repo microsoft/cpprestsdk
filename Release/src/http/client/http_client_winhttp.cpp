@@ -20,7 +20,7 @@
 *
 * This file contains the implementation for Windows Desktop, based on WinHTTP.
 *
-* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
+* For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
@@ -395,9 +395,9 @@ protected:
         }
 
         // Set timeouts.
-        const auto timeout = config.timeout();
-        const int milliseconds = 1000 * static_cast<int>(timeout.count());
-        if(!WinHttpSetTimeouts(m_hSession,
+        int milliseconds = static_cast<int>(config.timeout<std::chrono::milliseconds>().count());
+        milliseconds = std::max<decltype(milliseconds)>(milliseconds, 1);
+        if (!WinHttpSetTimeouts(m_hSession,
             milliseconds,
             milliseconds,
             milliseconds,

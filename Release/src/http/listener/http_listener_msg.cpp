@@ -33,24 +33,9 @@ pplx::task<void> details::_http_request::_reply_impl(http_response response)
 {
     // If the user didn't explicitly set a reason phrase then we should have it default
     // if they used one of the standard known status codes.
-    if(response.reason_phrase().empty())
+    if (response.reason_phrase().empty())
     {
-        static http_status_to_phrase idToPhraseMap[] = {
-#define _PHRASES
-#define DAT(a,b,c) {status_codes::a, c},
-#include "cpprest/details/http_constants.dat"
-#undef _PHRASES
-#undef DAT
-        };
-
-        for(const auto &iter : idToPhraseMap)
-        {
-            if( iter.id == response.status_code() )
-            {
-                response.set_reason_phrase(iter.phrase);
-                break;
-            }
-        }
+        response.set_reason_phrase(get_default_reason_phrase(response.status_code()));
     }
 
     pplx::task<void> response_completed;

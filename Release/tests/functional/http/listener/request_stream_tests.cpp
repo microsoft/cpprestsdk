@@ -28,7 +28,7 @@ namespace tests { namespace functional { namespace http { namespace listener {
 SUITE(request_stream_tests)
 {
 
-TEST_FIXTURE(uri_address, large_body, "Ignore:Linux", "712252", "Ignore:Apple", "712252")
+TEST_FIXTURE(uri_address, large_body)
 {
     http_listener listener(m_uri);
     listener.open().wait();

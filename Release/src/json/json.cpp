@@ -18,7 +18,7 @@
 *
 * HTTP Library: JSON parser and writer
 *
-* For the latest on this and related APIs, please see http://casablanca.codeplex.com.
+* For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
@@ -357,7 +357,7 @@ bool web::json::details::_String::has_escape_chars(const _String &str)
 {
     return std::any_of(std::begin(str.m_string), std::end(str.m_string), [](utility::string_t::value_type const x)
     {
-        if (x >= 0 && x <= 31) { return true; }
+        if (x <= 31) { return true; }
         if (x == '"') { return true; }
         if (x == '\\') { return true; }
         return false;
@@ -482,8 +482,14 @@ web::json::value& web::json::value::operator[](size_t index)
     return m_value->index(index);
 }
 
+// Remove once VS 2013 is no longer supported.
+#if defined(_WIN32) && _MSC_VER < 1900
+static web::json::details::json_error_category_impl instance;
+#endif
 const web::json::details::json_error_category_impl& web::json::details::json_error_category()
 {
+#if !defined(_WIN32) || _MSC_VER >= 1900
     static web::json::details::json_error_category_impl instance;
+#endif
     return instance;
 }

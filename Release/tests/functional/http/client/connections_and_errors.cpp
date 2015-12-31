@@ -139,6 +139,22 @@ TEST_FIXTURE(uri_address, request_timeout)
 #endif
 }
 
+TEST_FIXTURE(uri_address, request_timeout_microsecond)
+{
+    test_http_server::scoped_server scoped(m_uri);
+    http_client_config config;
+    config.set_timeout(std::chrono::microseconds(500));
+
+    http_client client(m_uri, config);
+    auto responseTask = client.request(methods::GET);
+#ifdef __APPLE__
+    // CodePlex 295
+    VERIFY_THROWS(responseTask.get(), http_exception);
+#else
+    VERIFY_THROWS_HTTP_ERROR_CODE(responseTask.get(), std::errc::timed_out);
+#endif
+}
+
 TEST_FIXTURE(uri_address, invalid_method)
 {
     web::http::uri uri(U("http://www.bing.com/"));
