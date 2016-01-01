@@ -34,6 +34,7 @@
 #error This file must not be included for Visual Studio 12 or later
 #endif
 
+#include <cstdlib>
 #include <string>
 #include "pplx/pplxinterface.h"
 
