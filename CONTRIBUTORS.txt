@@ -35,6 +35,9 @@ Gery Vessere (gery@vessere.com)
 Cisco Systems
 Gergely Lukacsy (glukacsy)
 
+Ocedo GmbH
+Henning Pfeiffer (megaposer)
+
 thomasschaub
 
 Trimble
