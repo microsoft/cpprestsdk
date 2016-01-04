@@ -101,7 +101,7 @@ public:
         , m_set_user_nativehandle_options([](native_handle)->void{})
 #if !defined(_WIN32) && !defined(__cplusplus_winrt)
         , m_ssl_context_callback([](boost::asio::ssl::context&)->void{})
-        , m_tlsext_host_name(true)
+        , m_tlsext_sni_enabled(true)
 #endif
 #if defined(_WIN32) && !defined(__cplusplus_winrt)
         , m_buffer_request(false)
@@ -350,22 +350,22 @@ public:
     }
 
     /// <summary>
-    /// Gets the TLS server name indication (SNI) property.
+    /// Gets the TLS extension server name indication (SNI) status.
     /// </summary>
     /// <returns>True if TLS server name indication is enabled, false otherwise.</returns>
-    bool tlsext_host_name() const
+    bool is_tlsext_sni_enabled() const
     {
-        return m_tlsext_host_name;
+        return m_tlsext_sni_enabled;
     }
 
     /// <summary>
-    /// Sets the TLS server name indication (SNI) property.
+    /// Sets the TLS extension server name indication (SNI) status.
     /// </summary>
-    /// <param name="tlsext_host_name">False to disable the TLS (ClientHello) extension for server name indication, true otherwise.</param>
-    /// <remarks>Note: This setting is required in most virtual hosting scenarios.</remarks>
-    void set_tlsext_host_name(bool tlsext_host_name)
+    /// <param name="tlsext_sni_enabled">False to disable the TLS (ClientHello) extension for server name indication, true otherwise.</param>
+    /// <remarks>Note: This setting is enabled by default as it is required in most virtual hosting scenarios.</remarks>
+    void set_tlsext_sni_enabled(bool tlsext_sni_enabled)
     {
-        m_tlsext_host_name = tlsext_host_name;
+        m_tlsext_sni_enabled = tlsext_sni_enabled;
     }
 #endif
 
@@ -392,7 +392,7 @@ private:
 
 #if !defined(_WIN32) && !defined(__cplusplus_winrt)
     std::function<void(boost::asio::ssl::context&)> m_ssl_context_callback;
-    bool m_tlsext_host_name;
+    bool m_tlsext_sni_enabled;
 #endif
 #if defined(_WIN32) && !defined(__cplusplus_winrt)
     bool m_buffer_request;

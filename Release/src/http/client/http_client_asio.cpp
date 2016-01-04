@@ -155,7 +155,7 @@ public:
         }
 
         // Check to set host name for Server Name Indication (SNI)
-        if (config.tlsext_host_name())
+        if (config.is_tlsext_sni_enabled())
         {
             SSL_set_tlsext_host_name(m_ssl_stream->native_handle(), const_cast<char *>(host_name.data()));
         }
