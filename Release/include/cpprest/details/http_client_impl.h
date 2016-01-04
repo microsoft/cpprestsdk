@@ -57,6 +57,10 @@ static utility::string_t flatten_http_headers(const http_headers &headers)
     utility::string_t flattened_headers;
     for(auto iter = headers.begin(); iter != headers.end(); ++iter)
     {
+        utility::string_t header_name = iter->first;
+        if (utility::details::str_icmp(header_name, header_names::host)) {
+            continue;
+        }
         flattened_headers.append(iter->first);
         flattened_headers.push_back(':');
         flattened_headers.append(iter->second);
