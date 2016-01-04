@@ -58,8 +58,7 @@ static utility::string_t flatten_http_headers(const http_headers &headers)
     for(auto iter = headers.begin(); iter != headers.end(); ++iter)
     {
         utility::string_t header_name = iter->first;
-        http_headers::_case_insensitive_cmp cmp;
-        if (!cmp(header_name, header_names::host) && !cmp(header_names::host, header_name)) {
+        if (utility::details::str_icmp(header_name, header_names::host)) {
             continue;
         }
         flattened_headers.append(iter->first);
