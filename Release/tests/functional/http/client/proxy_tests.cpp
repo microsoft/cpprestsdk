@@ -90,7 +90,7 @@ TEST_FIXTURE(uri_address, no_proxy_options_on_winrt)
 
 #ifndef __cplusplus_winrt
 // Can't specify a proxy with WinRT implementation.
-TEST_FIXTURE(uri_address, proxy_with_credentials)
+TEST_FIXTURE(uri_address, http_proxy_with_credentials)
 {
     uri u(U("http://netproxy.redmond.corp.microsoft.com"));
 
@@ -124,6 +124,47 @@ TEST_FIXTURE(uri_address, proxy_with_credentials)
 		throw;
 	}
 }
+
+TEST_FIXTURE(uri_address, http_proxy, "Ignore", "Manual")
+{
+    // In order to run this test, replace this proxy uri with one that you have access to.
+    uri u(U("http://netproxy.redmond.corp.microsoft.com"));
+
+    web_proxy proxy(u);
+    VERIFY_IS_TRUE(proxy.is_specified());
+    VERIFY_ARE_EQUAL(u, proxy.address());
+
+    http_client_config config;
+    config.set_proxy(proxy);
+
+    http_client client(U("http://httpbin.org"), config);
+
+    http_response response = client.request(methods::GET).get();
+    VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
+    response.content_ready().wait();
+}
+
+
+TEST_FIXTURE(uri_address, https_proxy, "Ignore", "Manual")
+{
+    // In order to run this test, replace this proxy uri with one that you have access to.
+    uri u(U("http://netproxy.redmond.corp.microsoft.com"));
+
+    web_proxy proxy(u);
+    VERIFY_IS_TRUE(proxy.is_specified());
+    VERIFY_ARE_EQUAL(u, proxy.address());
+
+    http_client_config config;
+    config.set_proxy(proxy);
+
+    http_client client(U("https://httpbin.org"), config);
+
+    http_response response = client.request(methods::GET).get();
+    VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
+    response.content_ready().wait();
+}
+
+
 #endif
 
 } // SUITE(proxy_tests)

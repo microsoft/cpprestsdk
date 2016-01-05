@@ -329,7 +329,7 @@ public:
     asio_client(http::uri address, http_client_config client_config)
     : _http_client_communicator(std::move(address), std::move(client_config))
     , m_pool(crossplat::threadpool::shared_instance().service(),
-             base_uri().scheme() == "https" && !m_client_config.proxy().is_specified(),
+             base_uri().scheme() == "https" && !_http_client_communicator::client_config().proxy().is_specified(),
              std::chrono::seconds(30), // Unused sockets are kept in pool for 30 seconds.
              this->client_config().get_ssl_context_callback()) 
     , m_resolver(crossplat::threadpool::shared_instance().service())
@@ -394,14 +394,14 @@ public:
             const auto &base_uri = m_context->m_http_client->base_uri();
             const auto &host = base_uri.host();
 
-            std::ostream request_stream(&request_);
+            std::ostream request_stream(&m_request);
             request_stream.imbue(std::locale::classic());
 
             request_stream << "CONNECT " << host << ":" << 443 << " HTTP/1.1" << CRLF;
             request_stream << "Host: " << host << ":" << 443 << CRLF;
             request_stream << "Proxy-Connection: Keep-Alive" << CRLF;
 
-            if(!m_context->m_http_client->client_config().proxy().credentials().username().empty())
+            if(m_context->m_http_client->client_config().proxy().credentials().is_set())
             {
                 request_stream << m_context->generate_basic_proxy_auth_header() << CRLF;
             }
@@ -436,7 +436,7 @@ public:
             if (!ec)
             {
                 m_context->m_timer.reset();
-                m_context->m_connection->async_write(request_, boost::bind(&ssl_proxy_tunnel::handle_write_request, shared_from_this(), boost::asio::placeholders::error));
+                m_context->m_connection->async_write(m_request, boost::bind(&ssl_proxy_tunnel::handle_write_request, shared_from_this(), boost::asio::placeholders::error));
             }
             else if (endpoints == tcp::resolver::iterator())
             {
@@ -460,7 +460,7 @@ public:
             if (!err)
             {
                 m_context->m_timer.reset();
-                m_context->m_connection->async_read_until(response_, CRLF + CRLF, boost::bind(&ssl_proxy_tunnel::handle_status_line, shared_from_this(), boost::asio::placeholders::error));
+                m_context->m_connection->async_read_until(m_response, CRLF + CRLF, boost::bind(&ssl_proxy_tunnel::handle_status_line, shared_from_this(), boost::asio::placeholders::error));
             }
             else
             {
@@ -473,7 +473,7 @@ public:
             if (!ec)
             {
                 m_context->m_timer.reset();
-                std::istream response_stream(&response_);
+                std::istream response_stream(&m_response);
                 response_stream.imbue(std::locale::classic());
                 std::string http_version;
                 response_stream >> http_version;
@@ -531,8 +531,8 @@ public:
         std::function<void(std::shared_ptr<asio_context>)> m_ssl_tunnel_established;
         std::shared_ptr<asio_context> m_context;
     
-        boost::asio::streambuf request_;
-        boost::asio::streambuf response_;
+        boost::asio::streambuf m_request;
+        boost::asio::streambuf m_response;
     };
     
     
@@ -614,7 +614,7 @@ public:
             utility::string_t extra_headers;
                 
             // Add header for basic proxy authentication
-            if (proxy_type == http_proxy_type::http && !ctx->m_http_client->client_config().proxy().credentials().username().empty())
+            if (proxy_type == http_proxy_type::http && ctx->m_http_client->client_config().proxy().credentials().is_set())
             {
                 extra_headers.append(ctx->generate_basic_proxy_auth_header());
             }
