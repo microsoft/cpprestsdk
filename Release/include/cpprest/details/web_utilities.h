@@ -30,6 +30,7 @@ namespace web
 namespace http { namespace client { namespace details {
 class winhttp_client;
 class winrt_client;
+class asio_context;
 }}}
 namespace websockets { namespace client { namespace details {
 class winrt_callback_client;
@@ -124,6 +125,7 @@ public:
 private:
     friend class http::client::details::winhttp_client;
     friend class http::client::details::winrt_client;
+	friend class http::client::details::asio_context;
     friend class websockets::client::details::winrt_callback_client;
     friend class websockets::client::details::wspp_callback_client;
 
