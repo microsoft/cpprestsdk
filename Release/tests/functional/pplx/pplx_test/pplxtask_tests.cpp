@@ -304,6 +304,21 @@ TEST(TestTasks_void_tasks_default_construction)
     }
 }
 
+TEST(TestTasks_movable_then)
+{
+    struct A
+    {
+        A() = default;
+        A(A&&) = default;
+        A& operator=(A&&) = default;
+    } a;
+
+    task<int> task = create_task([]{ return 2; });
+    auto f = task.then([a = std::move(a)](int) { return 'c'; });
+
+    IsTrue(f.get() == 'c', L".then should be able to work with movable functors");
+}
+
 TEST(TestTasks_constant_this)
 {
 #ifdef _MSC_VER
