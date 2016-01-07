@@ -1,5 +1,12 @@
 set(CMAKE_LEGACY_CYGWIN_WIN32 0)
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.0)
+
+include("cmake/HunterGate.cmake")
+HunterGate(
+    URL "http://192.168.2.27/packages/hunter/hunter-project-v1.0.16.tar.gz"
+    SHA1 "ef89bcd473ceef3aa9a3ae085dfc68b92b927639"
+)
+
 project(casablanca)
 
 enable_testing()
@@ -10,48 +17,24 @@ set(ANDROID_STL_FLAGS)
 # Platform (not compiler) specific settings
 if(IOS)
   set(IOS_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../Build_iOS")
-  set(Boost_FRAMEWORK "-F ${IOS_SOURCE_DIR} -framework boost")
-  set(Boost_INCLUDE_DIR "${IOS_SOURCE_DIR}/boost.framework/Headers")
+  add_definitions( -DBOOST_ALL_NO_LIB )
+  hunter_add_package(Boost COMPONENTS random system thread filesystem chrono atomic)
 
-  set(OPENSSL_FOUND 1)
-  set(OPENSSL_INCLUDE_DIR "${IOS_SOURCE_DIR}/openssl/include")
-  set(OPENSSL_LIBRARIES
-    "${IOS_SOURCE_DIR}/openssl/lib/libcrypto.a"
-    "${IOS_SOURCE_DIR}/openssl/lib/libssl.a"
-    )
+  hunter_add_package(OpenSSL)
+  find_package(OpenSSL REQUIRED)
 
   # The cxx_flags must be reset here, because the ios-cmake toolchain file unfortunately sets "-headerpad_max_install_names" which is not a valid clang flag.
   set(CMAKE_CXX_FLAGS "-fvisibility=hidden -fvisibility-inlines-hidden")
 
   set(BUILD_SHARED_LIBS OFF)
   set(BUILD_SAMPLES OFF)
-  option(BUILD_TESTS "Build tests." ON)
+  option(BUILD_TESTS "Build tests." OFF)
 elseif(ANDROID)
-  set(Boost_COMPILER "-clang")
-  set(Boost_USE_STATIC_LIBS ON)
-  if(ARM)
-    set(BOOST_ROOT "${CMAKE_BINARY_DIR}/../Boost-for-Android/build")
-    set(BOOST_LIBRARYDIR "${CMAKE_BINARY_DIR}/../Boost-for-Android/build/lib")
-  else()
-    set(BOOST_ROOT "${CMAKE_BINARY_DIR}/../Boost-for-Android-x86/build")
-    set(BOOST_LIBRARYDIR "${CMAKE_BINARY_DIR}/../Boost-for-Android-x86/build/lib")
-  endif()
-  find_host_package(Boost 1.55 EXACT REQUIRED COMPONENTS random system thread filesystem chrono atomic)
+  add_definitions( -DBOOST_ALL_NO_LIB )
+  hunter_add_package(Boost COMPONENTS random system thread filesystem chrono atomic)
 
-  set(OPENSSL_FOUND 1)
-  if(ARM)
-    set(OPENSSL_INCLUDE_DIR "${CMAKE_BINARY_DIR}/../openssl/armeabi-v7a/include")
-    set(OPENSSL_LIBRARIES
-      "${CMAKE_BINARY_DIR}/../openssl/armeabi-v7a/lib/libssl.a"
-      "${CMAKE_BINARY_DIR}/../openssl/armeabi-v7a/lib/libcrypto.a"
-      )
-  else()
-    set(OPENSSL_INCLUDE_DIR "${CMAKE_BINARY_DIR}/../openssl/x86/include")
-    set(OPENSSL_LIBRARIES
-      "${CMAKE_BINARY_DIR}/../openssl/x86/lib/libssl.a"
-      "${CMAKE_BINARY_DIR}/../openssl/x86/lib/libcrypto.a"
-      )
-  endif()
+  hunter_add_package(OpenSSL)
+  find_package(OpenSSL REQUIRED)
 
   if(ARM)
     set(LIBCXX_STL "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.8/libs/armeabi-v7a/thumb/libgnustl_static.a")
@@ -71,23 +54,18 @@ elseif(ANDROID)
 
   option(BUILD_SHARED_LIBS "Build shared Libraries." OFF)
   set(BUILD_SAMPLES OFF)
-  option(BUILD_TESTS "Build tests." ON)
+  option(BUILD_TESTS "Build tests." OFF)
 elseif(UNIX) # This includes OSX
-  find_package(Boost REQUIRED COMPONENTS random chrono system thread regex filesystem)
+  add_definitions( -DBOOST_ALL_NO_LIB )
+  hunter_add_package(Boost COMPONENTS random system thread filesystem chrono atomic)
   find_package(Threads REQUIRED)
-  if(APPLE AND NOT OPENSSL_ROOT_DIR)
-    # Prefer a homebrew version of OpenSSL over the one in /usr/lib
-    file(GLOB OPENSSL_ROOT_DIR /usr/local/Cellar/openssl/*)
-    # Prefer the latest (make the latest one first)
-    list(REVERSE OPENSSL_ROOT_DIR)
-  endif()
-  # This should prevent linking against the system provided 0.9.8y
-  set(_OPENSSL_VERSION "")
-  find_package(OpenSSL 1.0.0 REQUIRED)
+  
+  hunter_add_package(OpenSSL)
+  find_package(OpenSSL REQUIRED)
 
-  option(BUILD_SHARED_LIBS "Build shared Libraries." ON)
-  option(BUILD_TESTS "Build tests." ON)
-  option(BUILD_SAMPLES "Build samples." ON)
+  option(BUILD_SHARED_LIBS "Build shared Libraries." OFF)
+  option(BUILD_TESTS "Build tests." OFF)
+  option(BUILD_SAMPLES "Build samples." OFF)
   option(CASA_INSTALL_HEADERS "Install header files." ON)
   if(CASA_INSTALL_HEADERS)
     file(GLOB CASA_HEADERS_CPPREST include/cpprest/*.hpp include/cpprest/*.h include/cpprest/*.dat)
@@ -98,9 +76,9 @@ elseif(UNIX) # This includes OSX
     install(FILES ${CASA_HEADERS_DETAILS} DESTINATION include/cpprest/details)
   endif()
 elseif(WIN32)
-  option(BUILD_SHARED_LIBS "Build shared Libraries." ON)
-  option(BUILD_TESTS "Build tests." ON)
-  option(BUILD_SAMPLES "Build samples." ON)
+  option(BUILD_SHARED_LIBS "Build shared Libraries." OFF)
+  option(BUILD_TESTS "Build tests." OFF)
+  option(BUILD_SAMPLES "Build samples." OFF)
   option(Boost_USE_STATIC_LIBS ON)
 
   add_definitions(-DUNICODE -D_UNICODE)
@@ -114,8 +92,12 @@ elseif(WIN32)
   endif()
   add_definitions(${Casablanca_DEFINITIONS} -D_WINSOCK_DEPRECATED_NO_WARNINGS -DWIN32)
 
-  find_package(Boost 1.55 REQUIRED COMPONENTS random system thread filesystem chrono atomic)
-  find_package(OpenSSL 1.0 REQUIRED)
+  add_definitions( -DBOOST_ALL_NO_LIB )
+  hunter_add_package(Boost COMPONENTS random system thread filesystem chrono atomic)
+  find_package(Boost CONFIG REQUIRED random system thread filesystem chrono atomic)
+
+  hunter_add_package(OpenSSL)
+  find_package(OpenSSL REQUIRED)
 else()
   message(FATAL_ERROR "-- Unsupported Build Platform.")
 endif()
@@ -152,6 +134,10 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fno-strict-aliasing")
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
   message("-- Setting msvc options")
+  ADD_DEFINITIONS(-D_NO_ASYNCRTIMP) 
+  ADD_DEFINITIONS(-D_NO_PPLXIMP)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
+
   set(WARNINGS)
 else()
   message("-- Unknown compiler, success is doubtful.")
