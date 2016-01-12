@@ -50,7 +50,7 @@ if(UNIX)
   else()
     list(APPEND SOURCES pplx/pplxlinux.cpp)
   endif()
-  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNINGS} -Werror -pedantic")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNINGS} -Wno-error -pedantic")
 elseif(WIN32)
   set(SOURCES
     ${SOURCES_COMMON}
@@ -111,3 +111,34 @@ else()
     ARCHIVE DESTINATION lib
     )
 endif()
+
+###############################################################################
+# Installation settings
+###############################################################################
+
+set (casablanca_include_dir "include/cpprestsdk")
+set (config_install_dir "lib/cmake/${PROJECT_NAME}")
+set (targets_export_name "${PROJECT_NAME}Targets")
+
+
+set(generated_dir "${CMAKE_CURRENT_BINARY_DIR}/generated")
+set(version_config "${generated_dir}/${PROJECT_NAME}ConfigVersion.cmake")
+set(project_config "${generated_dir}/${PROJECT_NAME}Config.cmake")
+
+install(
+    TARGETS ${Casablanca_LIBRARY}
+ EXPORT "${targets_export_name}"    
+ LIBRARY DESTINATION "lib"
+    ARCHIVE DESTINATION "lib"    
+    INCLUDES DESTINATION "${casablanca_include_dir}")
+ 
+install(
+ DIRECTORY "${PROJECT_SOURCE_DIR}/include/"
+    DESTINATION "${casablanca_include_dir}"
+ FILES_MATCHING PATTERN "*.*")
+
+set(namespace "${PROJECT_NAME}::")
+install(
+    EXPORT "${targets_export_name}"
+ NAMESPACE "${namespace}"
+    DESTINATION "${config_install_dir}")
