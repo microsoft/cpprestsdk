@@ -69,6 +69,28 @@ public:
         endpoint_type::m_alog.write(log::alevel::devel, "server constructor");
     }
 
+    /// Destructor
+    ~server<config>() {}
+
+#ifdef _WEBSOCKETPP_DEFAULT_DELETE_FUNCTIONS_
+    // no copy constructor because endpoints are not copyable
+    server<config>(server<config> &) = delete;
+    
+    // no copy assignment operator because endpoints are not copyable
+    server<config> & operator=(server<config> const &) = delete;
+#endif // _WEBSOCKETPP_DEFAULT_DELETE_FUNCTIONS_
+
+#ifdef _WEBSOCKETPP_MOVE_SEMANTICS_
+    /// Move constructor
+    server<config>(server<config> && o) : endpoint<connection<config>,config>(std::move(o)) {}
+
+#ifdef _WEBSOCKETPP_DEFAULT_DELETE_FUNCTIONS_
+    // no move assignment operator because of const member variables
+    server<config> & operator=(server<config> &&) = delete;
+#endif // _WEBSOCKETPP_DEFAULT_DELETE_FUNCTIONS_
+
+#endif // _WEBSOCKETPP_MOVE_SEMANTICS_
+
     /// Create and initialize a new connection
     /**
      * The connection will be initialized and ready to begin. Call its start()

@@ -30,9 +30,9 @@ public:
         // Bind the handlers we are using
         using websocketpp::lib::placeholders::_1;
         using websocketpp::lib::bind;
-        m_client.set_open_handler(bind(&telemetry_client::on_open,this,::_1));
-        m_client.set_close_handler(bind(&telemetry_client::on_close,this,::_1));
-        m_client.set_fail_handler(bind(&telemetry_client::on_fail,this,::_1));
+        m_client.set_open_handler(bind(&telemetry_client::on_open,this,_1));
+        m_client.set_close_handler(bind(&telemetry_client::on_close,this,_1));
+        m_client.set_fail_handler(bind(&telemetry_client::on_fail,this,_1));
     }
 
     // This method will block until the connection is complete

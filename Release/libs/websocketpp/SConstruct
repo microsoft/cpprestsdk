@@ -125,6 +125,7 @@ elif env['CXX'].startswith('clang++'):
 
    # Wpadded
    # Wsign-conversion
+   #
 
 platform_libs = []
 tls_libs = []
@@ -240,8 +241,12 @@ testee_server = SConscript('#/examples/testee_server/SConscript',variant_dir = b
 # testee_client
 testee_client = SConscript('#/examples/testee_client/SConscript',variant_dir = builddir + 'testee_client',duplicate = 0)
 
-# utility_client
-utility_client = SConscript('#/examples/utility_client/SConscript',variant_dir = builddir + 'utility_client',duplicate = 0)
+# scratch_client
+scratch_client = SConscript('#/examples/scratch_client/SConscript',variant_dir = builddir + 'scratch_client',duplicate = 0)
+
+# scratch_server
+scratch_server = SConscript('#/examples/scratch_server/SConscript',variant_dir = builddir + 'scratch_server',duplicate = 0)
+
 
 # debug_client
 debug_client = SConscript('#/examples/debug_client/SConscript',variant_dir = builddir + 'debug_client',duplicate = 0)

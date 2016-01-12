@@ -214,6 +214,20 @@ namespace internal_state {
         PROCESS_CONNECTION = 7
     };
 } // namespace internal_state
+
+
+namespace http_state {
+    // states to keep track of the progress of http connections
+
+    enum value {
+        init = 0,
+        deferred = 1,
+        headers_written = 2,
+        body_written = 3,
+        closed = 4
+    };
+} // namespace http_state
+
 } // namespace session
 
 /// Represents an individual WebSocket connection
@@ -312,6 +326,7 @@ public:
       , m_local_close_code(close::status::abnormal_close)
       , m_remote_close_code(close::status::abnormal_close)
       , m_is_http(false)
+      , m_http_state(session::http_state::init)
       , m_was_clean(false)
     {
         m_alog.write(log::alevel::devel,"connection constructor");
@@ -1060,6 +1075,52 @@ public:
     request_type const & get_request() const {
         return m_request;
     }
+    
+    /// Defer HTTP Response until later (Exception free)
+    /**
+     * Used in the http handler to defer the HTTP response for this connection
+     * until later. Handshake timers will be canceled and the connection will be
+     * left open until `send_http_response` or an equivalent is called.
+     *
+     * Warning: deferred connections won't time out and as a result can tie up
+     * resources.
+     *
+     * @since 0.6.0
+     *
+     * @return A status code, zero on success, non-zero otherwise
+     */
+    lib::error_code defer_http_response();
+    
+    /// Send deferred HTTP Response (exception free)
+    /**
+     * Sends an http response to an HTTP connection that was deferred. This will
+     * send a complete response including all headers, status line, and body
+     * text. The connection will be closed afterwards.
+     *
+     * @since 0.6.0
+     *
+     * @param ec A status code, zero on success, non-zero otherwise
+     */
+    void send_http_response(lib::error_code & ec);
+    
+    /// Send deferred HTTP Response
+    void send_http_response();
+    
+    // TODO HTTPNBIO: write_headers
+    // function that processes headers + status so far and writes it to the wire
+    // beginning the HTTP response body state. This method will ignore anything
+    // in the response body.
+    
+    // TODO HTTPNBIO: write_body_message
+    // queues the specified message_buffer for async writing
+    
+    // TODO HTTPNBIO: finish connection
+    //
+    
+    // TODO HTTPNBIO: write_response
+    // Writes the whole response, headers + body and closes the connection
+    
+    
 
     /////////////////////////////////////////////////////////////
     // Pass-through access to the other connection information //
@@ -1202,7 +1263,8 @@ public:
     void handle_read_http_response(lib::error_code const & ec,
         size_t bytes_transferred);
 
-    void handle_send_http_response(lib::error_code const & ec);
+    
+    void handle_write_http_response(lib::error_code const & ec);
     void handle_send_http_request(lib::error_code const & ec);
 
     void handle_open_handshake_timeout(lib::error_code const & ec);
@@ -1254,13 +1316,13 @@ protected:
     lib::error_code process_handshake_request();
 private:
     /// Completes m_response, serializes it, and sends it out on the wire.
-    void send_http_response(lib::error_code const & ec);
+    void write_http_response(lib::error_code const & ec);
 
     /// Sends an opening WebSocket connect request
     void send_http_request();
 
-    /// Alternate path for send_http_response in error conditions
-    void send_http_response_error(lib::error_code const & ec);
+    /// Alternate path for write_http_response in error conditions
+    void write_http_response_error(lib::error_code const & ec);
 
     /// Process control message
     /**
@@ -1510,6 +1572,10 @@ private:
     /// A flag that gets set once it is determined that the connection is an
     /// HTTP connection and not a WebSocket one.
     bool m_is_http;
+    
+    /// A flag that gets set when the completion of an http connection is
+    /// deferred until later.
+    session::http_state::value m_http_state;
 
     bool m_was_clean;
 

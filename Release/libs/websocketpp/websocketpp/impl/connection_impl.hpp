@@ -85,6 +85,7 @@ lib::error_code connection<config>::send(std::string const & payload,
 {
     message_ptr msg = m_msg_manager->get_message(op,payload.size());
     msg->append_payload(payload);
+    msg->set_compressed(true);
 
     return send(msg);
 }
@@ -635,7 +636,66 @@ void connection<config>::remove_header(std::string const & key)
     }
 }
 
+/// Defer HTTP Response until later
+/**
+ * Used in the http handler to defer the HTTP response for this connection
+ * until later. Handshake timers will be canceled and the connection will be
+ * left open until `send_http_response` or an equivalent is called.
+ *
+ * Warning: deferred connections won't time out and as a result can tie up
+ * resources.
+ *
+ * @return A status code, zero on success, non-zero otherwise
+ */
+template <typename config>
+lib::error_code connection<config>::defer_http_response() {
+    // Cancel handshake timer, otherwise the connection will time out and we'll
+    // close the connection before the app has a chance to send a response.
+    if (m_handshake_timer) {
+        m_handshake_timer->cancel();
+        m_handshake_timer.reset();
+    }
+    
+    // Do something to signal deferral
+    m_http_state = session::http_state::deferred;
+    
+    return lib::error_code();
+}
 
+/// Send deferred HTTP Response (exception free)
+/**
+ * Sends an http response to an HTTP connection that was deferred. This will
+ * send a complete response including all headers, status line, and body
+ * text. The connection will be closed afterwards.
+ *
+ * @since 0.6.0
+ *
+ * @param ec A status code, zero on success, non-zero otherwise
+ */
+template <typename config>
+void connection<config>::send_http_response(lib::error_code & ec) {
+    {
+        scoped_lock_type lock(m_connection_state_lock);
+        if (m_http_state != session::http_state::deferred) {
+            ec = error::make_error_code(error::invalid_state);
+            return;
+        }
+    
+        m_http_state = session::http_state::body_written;
+    }
+    
+    this->write_http_response(lib::error_code());
+    ec = lib::error_code();
+}
+
+template <typename config>
+void connection<config>::send_http_response() {
+    lib::error_code ec;
+    this->send_http_response(ec);
+    if (ec) {
+        throw exception(ec);
+    }
+}
 
 
 
@@ -728,7 +788,7 @@ void connection<config>::read_handshake(size_t num_bytes) {
     );
 }
 
-// All exit paths for this function need to call send_http_response() or submit
+// All exit paths for this function need to call write_http_response() or submit
 // a new read request with this function as the handler.
 template <typename config>
 void connection<config>::handle_read_handshake(lib::error_code const & ec,
@@ -784,7 +844,7 @@ void connection<config>::handle_read_handshake(lib::error_code const & ec,
         // All HTTP exceptions will result in this request failing and an error
         // response being returned. No more bytes will be read in this con.
         m_response.set_status(e.m_error_code,e.m_error_msg);
-        this->send_http_response_error(error::make_error_code(error::http_parse_error));
+        this->write_http_response_error(error::make_error_code(error::http_parse_error));
         return;
     }
 
@@ -806,7 +866,7 @@ void connection<config>::handle_read_handshake(lib::error_code const & ec,
     if (m_request.ready()) {
         lib::error_code processor_ec = this->initialize_processor();
         if (processor_ec) {
-            this->send_http_response_error(processor_ec);
+            this->write_http_response_error(processor_ec);
             return;
         }
 
@@ -823,7 +883,7 @@ void connection<config>::handle_read_handshake(lib::error_code const & ec,
                 // TODO: need more bytes
                 m_alog.write(log::alevel::devel,"short key3 read");
                 m_response.set_status(http::status_code::internal_server_error);
-                this->send_http_response_error(processor::error::make_error_code(processor::error::short_key3));
+                this->write_http_response_error(processor::error::make_error_code(processor::error::short_key3));
                 return;
             }
         }
@@ -847,7 +907,9 @@ void connection<config>::handle_read_handshake(lib::error_code const & ec,
         
         // We have the complete request. Process it.
         lib::error_code handshake_ec = this->process_handshake_request();
-        this->send_http_response(handshake_ec);
+        if (!m_is_http || m_http_state != session::http_state::deferred) {
+            this->write_http_response(handshake_ec);
+        }
     } else {
         // read at least 1 more byte
         transport_con_type::async_read_at_least(
@@ -864,26 +926,26 @@ void connection<config>::handle_read_handshake(lib::error_code const & ec,
     }
 }
 
-// send_http_response requires the request to be fully read and the connection
+// write_http_response requires the request to be fully read and the connection
 // to be in the PROCESS_HTTP_REQUEST state. In some cases we can detect errors
 // before the request is fully read (specifically at a point where we aren't
 // sure if the hybi00 key3 bytes need to be read). This method sets the correct
-// state and calls send_http_response
+// state and calls write_http_response
 template <typename config>
-void connection<config>::send_http_response_error(lib::error_code const & ec) {
+void connection<config>::write_http_response_error(lib::error_code const & ec) {
     if (m_internal_state != istate::READ_HTTP_REQUEST) {
         m_alog.write(log::alevel::devel,
-            "send_http_response_error called in invalid state");
+            "write_http_response_error called in invalid state");
         this->terminate(error::make_error_code(error::invalid_state));
         return;
     }
     
     m_internal_state = istate::PROCESS_HTTP_REQUEST;
     
-    this->send_http_response(ec);
+    this->write_http_response(ec);
 }
 
-// All exit paths for this function need to call send_http_response() or submit
+// All exit paths for this function need to call write_http_response() or submit
 // a new read request with this function as the handler.
 template <typename config>
 void connection<config>::handle_read_frame(lib::error_code const & ec,
@@ -964,6 +1026,12 @@ void connection<config>::handle_read_frame(lib::error_code const & ec,
         }
 
         lib::error_code consume_ec;
+
+        if (m_alog.static_test(log::alevel::devel)) {
+            std::stringstream s;
+            s << "Processing Bytes: " << utility::to_hex(reinterpret_cast<uint8_t*>(m_buf)+p,bytes_transferred-p);
+            m_alog.write(log::alevel::devel,s.str());
+        }
 
         p += m_processor->consume(
             reinterpret_cast<uint8_t*>(m_buf)+p,
@@ -1113,6 +1181,7 @@ lib::error_code connection<config>::process_handshake_request() {
         if (m_http_handler) {
             m_is_http = true;
             m_http_handler(m_connection_hdl);
+            
             if (m_state == session::state::closed) {
                 return error::make_error_code(error::http_connection_ended);
             }
@@ -1207,8 +1276,8 @@ lib::error_code connection<config>::process_handshake_request() {
 }
 
 template <typename config>
-void connection<config>::send_http_response(lib::error_code const & ec) {
-    m_alog.write(log::alevel::devel,"connection send_http_response");
+void connection<config>::write_http_response(lib::error_code const & ec) {
+    m_alog.write(log::alevel::devel,"connection write_http_response");
 
     if (ec == error::make_error_code(error::http_connection_ended)) {
         m_alog.write(log::alevel::http,"An HTTP handler took over the connection.");
@@ -1254,7 +1323,7 @@ void connection<config>::send_http_response(lib::error_code const & ec) {
         m_handshake_buffer.data(),
         m_handshake_buffer.size(),
         lib::bind(
-            &type::handle_send_http_response,
+            &type::handle_write_http_response,
             type::get_shared(),
             lib::placeholders::_1
         )
@@ -1262,8 +1331,8 @@ void connection<config>::send_http_response(lib::error_code const & ec) {
 }
 
 template <typename config>
-void connection<config>::handle_send_http_response(lib::error_code const & ec) {
-    m_alog.write(log::alevel::devel,"handle_send_http_response");
+void connection<config>::handle_write_http_response(lib::error_code const & ec) {
+    m_alog.write(log::alevel::devel,"handle_write_http_response");
 
     lib::error_code ecm = ec;
 
@@ -1279,7 +1348,7 @@ void connection<config>::handle_send_http_response(lib::error_code const & ec) {
             // usually by the handshake timer. This is basically expected
             // (though hopefully rare) and there is nothing we can do so ignore.
             m_alog.write(log::alevel::devel,
-                "handle_send_http_response invoked after connection was closed");
+                "handle_write_http_response invoked after connection was closed");
             return;
         } else {
             ecm = error::make_error_code(error::invalid_state);
@@ -1294,7 +1363,7 @@ void connection<config>::handle_send_http_response(lib::error_code const & ec) {
             return;
         }
         
-        log_err(log::elevel::rerror,"handle_send_http_response",ecm);
+        log_err(log::elevel::rerror,"handle_write_http_response",ecm);
         this->terminate(ecm);
         return;
     }
@@ -1525,6 +1594,25 @@ void connection<config>::handle_read_http_response(lib::error_code const & ec,
             return;
         }
 
+        // Read extension parameters and set up values necessary for the end
+        // user to complete extension negotiation.
+        std::pair<lib::error_code,std::string> neg_results;
+        neg_results = m_processor->negotiate_extensions(m_response);
+
+        if (neg_results.first) {
+            // There was a fatal error in extension negotiation. For the moment
+            // kill all connections that fail extension negotiation.
+            
+            // TODO: deal with cases where the response is well formed but 
+            // doesn't match the options requested by the client. Its possible
+            // that the best behavior in this cases is to log and continue with
+            // an unextended connection.
+            m_alog.write(log::alevel::devel, "Extension negotiation failed: " 
+                + neg_results.first.message());
+            this->terminate(make_error_code(error::extension_neg_failed));
+            // TODO: close connection with reason 1010 (and list extensions)
+        }
+
         // response is valid, connection can now be assumed to be open      
         m_internal_state = istate::PROCESS_CONNECTION;
         m_state = session::state::open;
@@ -1608,7 +1696,10 @@ void connection<config>::terminate(lib::error_code const & ec) {
         m_local_close_reason = ec.message();
     }
 
-    // TODO: does this need a mutex?
+    // TODO: does any of this need a mutex?
+    if (m_is_http) {
+        m_http_state = session::http_state::closed;
+    }
     if (m_state == session::state::connecting) {
         m_state = session::state::closed;
         tstat = failed;

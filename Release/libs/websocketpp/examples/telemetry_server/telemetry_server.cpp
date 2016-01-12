@@ -46,9 +46,9 @@ public:
         // Bind the handlers we are using
         using websocketpp::lib::placeholders::_1;
         using websocketpp::lib::bind;
-        m_endpoint.set_open_handler(bind(&telemetry_server::on_open,this,::_1));
-        m_endpoint.set_close_handler(bind(&telemetry_server::on_close,this,::_1));
-        m_endpoint.set_http_handler(bind(&telemetry_server::on_http,this,::_1));
+        m_endpoint.set_open_handler(bind(&telemetry_server::on_open,this,_1));
+        m_endpoint.set_close_handler(bind(&telemetry_server::on_close,this,_1));
+        m_endpoint.set_http_handler(bind(&telemetry_server::on_http,this,_1));
     }
 
     void run(std::string docroot, uint16_t port) {

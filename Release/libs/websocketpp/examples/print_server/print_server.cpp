@@ -13,6 +13,8 @@ int main() {
     server print_server;
 
     print_server.set_message_handler(&on_message);
+    print_server.set_access_channels(websocketpp::log::alevel::all);
+    print_server.set_error_channels(websocketpp::log::elevel::all);
 
     print_server.init_asio();
     print_server.listen(9002);

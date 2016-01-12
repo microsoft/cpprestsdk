@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Peter Thorson. All rights reserved.
+ * Copyright (c) 2015, Peter Thorson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -27,6 +27,7 @@
 
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
+#include <websocketpp/extensions/permessage_deflate/enabled.hpp>
 #include <iostream>
 
 struct testee_config : public websocketpp::config::asio {
@@ -64,6 +65,12 @@ struct testee_config : public websocketpp::config::asio {
         websocketpp::log::elevel::none;
     static const websocketpp::log::level alog_level =
         websocketpp::log::alevel::none;
+        
+    /// permessage_compress extension
+    struct permessage_deflate_config {};
+
+    typedef websocketpp::extensions::permessage_deflate::enabled
+        <permessage_deflate_config> permessage_deflate_type;
 };
 
 typedef websocketpp::server<testee_config> server;

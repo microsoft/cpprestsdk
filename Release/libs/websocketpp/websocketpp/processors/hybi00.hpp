@@ -98,7 +98,7 @@ public:
     lib::error_code process_handshake(request_type const & req,
         std::string const & subprotocol, response_type & res) const
     {
-        std::array<char, 16> key_final;
+        char key_final[16];
 
         // copy key1 into final key
         decode_client_key(req.get_header("Sec-WebSocket-Key1"), &key_final[0]);
@@ -112,13 +112,13 @@ public:
         // TODO: decide if it is best to silently fail here or produce some sort
         //       of warning or exception.
         std::string const & key3 = req.get_header("Sec-WebSocket-Key3");
-        std::copy(key3.begin(),
-                  key3.begin() + std::min(size_t(8), key3.size()),
-                  key_final.begin() + 8);
+        std::copy(key3.c_str(),
+                  key3.c_str()+(std::min)(static_cast<size_t>(8), key3.size()),
+                  &key_final[8]);
 
         res.append_header(
             "Sec-WebSocket-Key3",
-            md5::md5_hash_string(std::string(key_final.begin(), key_final.end()))
+            md5::md5_hash_string(std::string(key_final,16))
         );
 
         res.append_header("Upgrade","WebSocket");
@@ -415,11 +415,9 @@ private:
         num = static_cast<uint32_t>(strtoul(digits.c_str(), NULL, 10));
         if (spaces > 0 && num > 0) {
             num = htonl(num/spaces);
-#ifdef _MS_WINDOWS
-            memcpy_s(result, 4, reinterpret_cast<char*>(&num), 4);
-#else
-            memcpy(result, reinterpret_cast<char*>(&num), 4);
-#endif
+            std::copy(reinterpret_cast<char*>(&num),
+                      reinterpret_cast<char*>(&num)+4,
+                      result);
         } else {
             std::fill(result,result+4,0);
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Peter Thorson. All rights reserved.
+ * Copyright (c) 2015, Peter Thorson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,13 +30,13 @@
 
 #include <websocketpp/transport/asio/security/base.hpp>
 
+#include <websocketpp/uri.hpp>
+
+#include <websocketpp/common/asio.hpp>
+#include <websocketpp/common/asio_ssl.hpp>
 #include <websocketpp/common/connection_hdl.hpp>
 #include <websocketpp/common/functional.hpp>
 #include <websocketpp/common/memory.hpp>
-
-#include <boost/asio.hpp>
-#include <boost/asio/ssl.hpp>
-#include <boost/system/error_code.hpp>
 
 #include <sstream>
 #include <string>
@@ -49,16 +49,16 @@ namespace asio {
 namespace tls_socket {
 
 /// The signature of the socket_init_handler for this socket policy
-typedef lib::function<void(connection_hdl,boost::asio::ssl::stream<
-    boost::asio::ip::tcp::socket>&)> socket_init_handler;
+typedef lib::function<void(connection_hdl,lib::asio::ssl::stream<
+    lib::asio::ip::tcp::socket>&)> socket_init_handler;
 /// The signature of the tls_init_handler for this socket policy
-typedef lib::function<lib::shared_ptr<boost::asio::ssl::context>(connection_hdl)>
+typedef lib::function<lib::shared_ptr<lib::asio::ssl::context>(connection_hdl)>
     tls_init_handler;
 
 /// TLS enabled Boost ASIO connection socket component
 /**
  * transport::asio::tls_socket::connection implements a secure connection socket
- * component that uses Boost ASIO's ssl::stream to wrap an ip::tcp::socket.
+ * component that uses Asio's ssl::stream to wrap an ip::tcp::socket.
  */
 class connection : public lib::enable_shared_from_this<connection> {
 public:
@@ -68,17 +68,15 @@ public:
     typedef lib::shared_ptr<type> ptr;
 
     /// Type of the ASIO socket being used
-    typedef boost::asio::ssl::stream<boost::asio::ip::tcp::socket> socket_type;
+    typedef lib::asio::ssl::stream<lib::asio::ip::tcp::socket> socket_type;
     /// Type of a shared pointer to the ASIO socket being used
     typedef lib::shared_ptr<socket_type> socket_ptr;
     /// Type of a pointer to the ASIO io_service being used
-    typedef boost::asio::io_service* io_service_ptr;
+    typedef lib::asio::io_service * io_service_ptr;
     /// Type of a pointer to the ASIO io_service strand being used
-    typedef lib::shared_ptr<boost::asio::io_service::strand> strand_ptr;
+    typedef lib::shared_ptr<lib::asio::io_service::strand> strand_ptr;
     /// Type of a shared pointer to the ASIO TLS context being used
-    typedef lib::shared_ptr<boost::asio::ssl::context> context_ptr;
-
-    typedef boost::system::error_code boost_error;
+    typedef lib::shared_ptr<lib::asio::ssl::context> context_ptr;
 
     explicit connection() {
         //std::cout << "transport::asio::tls_socket::connection constructor"
@@ -102,7 +100,7 @@ public:
     /**
      * This is used internally. It can also be used to set socket options, etc
      */
-    socket_type::lowest_layer_type& get_raw_socket() {
+    socket_type::lowest_layer_type & get_raw_socket() {
         return m_socket->lowest_layer();
     }
 
@@ -110,7 +108,7 @@ public:
     /**
      * This is used internally.
      */
-    socket_type::next_layer_type& get_next_layer() {
+    socket_type::next_layer_type & get_next_layer() {
         return m_socket->next_layer();
     }
 
@@ -118,7 +116,7 @@ public:
     /**
      * This is used internally.
      */
-    socket_type& get_socket() {
+    socket_type & get_socket() {
         return *m_socket;
     }
 
@@ -157,16 +155,16 @@ public:
      *
      * @return A string identifying the address of the remote endpoint
      */
-    std::string get_remote_endpoint(lib::error_code &ec) const {
+    std::string get_remote_endpoint(lib::error_code & ec) const {
         std::stringstream s;
 
-        boost::system::error_code bec;
-        boost::asio::ip::tcp::endpoint ep = m_socket->lowest_layer().remote_endpoint(bec);
+        lib::asio::error_code aec;
+        lib::asio::ip::tcp::endpoint ep = m_socket->lowest_layer().remote_endpoint(aec);
 
-        if (bec) {
+        if (aec) {
             ec = error::make_error_code(error::pass_through);
-            s << "Error getting remote endpoint: " << bec
-               << " (" << bec.message() << ")";
+            s << "Error getting remote endpoint: " << aec
+               << " (" << aec.message() << ")";
             return s.str();
         } else {
             ec = lib::error_code();
@@ -178,7 +176,7 @@ protected:
     /// Perform one time initializations
     /**
      * init_asio is called once immediately after construction to initialize
-     * boost::asio components to the io_service
+     * Asio components to the io_service
      *
      * @param service A pointer to the endpoint's io_service
      * @param strand A pointer to the connection's strand
@@ -205,6 +203,22 @@ protected:
         return lib::error_code();
     }
 
+    /// Set hostname hook
+    /**
+     * Called by the transport as a connection is being established to provide
+     * the hostname being connected to to the security/socket layer.
+     *
+     * This socket policy uses the hostname to set the appropriate TLS SNI
+     * header.
+     *
+     * @since 0.6.0
+     *
+     * @param u The uri to set
+     */
+    void set_uri(uri_ptr u) {
+        m_uri = u;
+    }
+
     /// Pre-initialize security policy
     /**
      * Called by the transport after a new connection is created to initialize
@@ -215,6 +229,22 @@ protected:
      * @param callback Handler to call back with completion information
      */
     void pre_init(init_handler callback) {
+        // TODO: is this the best way to check whether this function is 
+        //       available in the version of OpenSSL being used?
+        // TODO: consider case where host is an IP address
+#if OPENSSL_VERSION_NUMBER >= 0x90812f
+        if (!m_is_server) {
+            // For clients on systems with a suitable OpenSSL version, set the
+            // TLS SNI hostname header so connecting to TLS servers using SNI
+            // will work.
+            long res = SSL_set_tlsext_host_name(
+                get_socket().native_handle(), m_uri->get_host().c_str());
+            if (!(1 == res)) {
+                callback(socket::make_error_code(socket::error::tls_failed_sni_hostname));
+            }
+        }
+#endif
+
         if (m_socket_init_handler) {
             m_socket_init_handler(m_hdl,get_socket());
         }
@@ -266,8 +296,7 @@ protected:
         m_hdl = hdl;
     }
 
-    void handle_init(init_handler callback,boost::system::error_code const & ec)
-    {
+    void handle_init(init_handler callback,lib::asio::error_code const & ec) {
         if (ec) {
             m_ec = socket::make_error_code(socket::error::tls_handshake_failed);
         } else {
@@ -306,7 +335,7 @@ protected:
      * @return The translated error code
      */
     lib::error_code translate_ec(boost::system::error_code ec) {
-        if (ec.category() == boost::asio::error::get_ssl_category()) {
+        if (ec.category() == lib::asio::error::get_ssl_category()) {
             if (ERR_GET_REASON(ec.value()) == SSL_R_SHORT_READ) {
                 return make_error_code(transport::error::tls_short_read);
             } else {
@@ -323,9 +352,9 @@ protected:
 private:
     socket_type::handshake_type get_handshake_type() {
         if (m_is_server) {
-            return boost::asio::ssl::stream_base::server;
+            return lib::asio::ssl::stream_base::server;
         } else {
-            return boost::asio::ssl::stream_base::client;
+            return lib::asio::ssl::stream_base::client;
         }
     }
 
@@ -333,6 +362,7 @@ private:
     strand_ptr          m_strand;
     context_ptr         m_context;
     socket_ptr          m_socket;
+    uri_ptr             m_uri;
     bool                m_is_server;
 
     lib::error_code     m_ec;
@@ -342,10 +372,10 @@ private:
     tls_init_handler    m_tls_init_handler;
 };
 
-/// TLS enabled Boost ASIO endpoint socket component
+/// TLS enabled Asio endpoint socket component
 /**
  * transport::asio::tls_socket::endpoint implements a secure endpoint socket
- * component that uses Boost ASIO's ssl::stream to wrap an ip::tcp::socket.
+ * component that uses Asio's ssl::stream to wrap an ip::tcp::socket.
  */
 class endpoint {
 public:

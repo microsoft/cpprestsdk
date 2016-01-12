@@ -235,7 +235,7 @@ The `websocket_endpoint` object has gained some new data members and methods. It
 A new WebSocket connection is initiated via a three step process. First, a connection request is created by `endpoint::get_connection(uri)`. Next, the connection request is configured. Lastly, the connection request is submitted back to the endpoint via `endpoint::connect()` which adds it to the queue of new connections to make.
 
 > ###### Terminology `connection_ptr`
-> WebSocket++ keeps track of connection related resources using a reference counted shared pointer. The type of this pointer is `endpoint::connection_ptr`. A `connection_ptr` allows direct access to information about the connection and allows changing connection settings. Because of this direct access and their internal resource management role within the library it is not safe to for end applications to use `connection_ptr` except in the specific circumstances detailed below.
+> WebSocket++ keeps track of connection related resources using a reference counted shared pointer. The type of this pointer is `endpoint::connection_ptr`. A `connection_ptr` allows direct access to information about the connection and allows changing connection settings. Because of this direct access and their internal resource management role within the library it is not safe for end applications to use `connection_ptr` except in the specific circumstances detailed below.
 >
 > **When is it safe to use `connection_ptr`?**
 > - After `endpoint::get_connection(...)` and before `endpoint::connect()`: `get_connection` returns a `connection_ptr`. It is safe to use this pointer to configure your new connection. Once you submit the connection to `connect` you may no longer use the `connection_ptr` and should discard it immediately for optimal memory management.
@@ -812,6 +812,13 @@ Enter Command: show 0
 ### Step 7
 
 _Using TLS / Secure WebSockets_
+
+- Change the includes
+- link to the new library dependencies
+- Switch the config
+- add the `tls_init_handler`
+- configure the SSL context for desired security level
+- mixing secure and non-secure connections in one application.
 
 Chapter 2: Intermediate Features
 --------------------------------
