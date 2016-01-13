@@ -76,10 +76,10 @@ class asio_connection
 public:
     asio_connection(boost::asio::io_service& io_service, bool start_with_ssl, const std::function<void(boost::asio::ssl::context&)>& ssl_context_callback) :
     m_socket(io_service),
+    m_ssl_context_callback(ssl_context_callback),
     m_pool_timer(io_service),
     m_is_reused(false),
-    m_keep_alive(true),
-    m_ssl_context_callback(ssl_context_callback)
+    m_keep_alive(true)
     {
         if (start_with_ssl)
         {
