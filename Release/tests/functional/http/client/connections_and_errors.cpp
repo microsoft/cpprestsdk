@@ -406,13 +406,13 @@ TEST_FIXTURE(uri_address, cancel_while_downloading_data)
 // Try to connect to a server on a closed port and cancel the operation.
 TEST_FIXTURE(uri_address, cancel_bad_port)
 {
-    // http_client_asio has a bug where, when canceled, it will cancel only the
+    // http_client_asio had a bug where, when canceled, it would cancel only the
     // current connection but then go and try the next address from the list of
-    // resolved addresses, i.e., it won't actually cancel as long as there are
-    // more addresses to try. Consequently, it will not report the task as being
-    // canceled. This is easiest to observe when trying to connect to a server
-    // that does not respond on a certain port, otherwise the timing might be
-    // tricky.
+    // resolved addresses, i.e., it wouldn't actually cancel as long as there
+    // are more addresses to try. Consequently, it would not report the task as
+    // being canceled. This was easiest to observe when trying to connect to a
+    // server that does not respond on a certain port, otherwise the timing
+    // might be tricky.
 
     // We need to connect to a URI for which there are multiple addresses
     // associated (i.e., multiple A records).

@@ -792,6 +792,10 @@ private:
         {
             write_request();
         }
+        else if (ec.value() == boost::system::errc::operation_canceled)
+        {
+            request_context::report_error(ec.value(), "Request canceled by user.");
+        }
         else if (endpoints == tcp::resolver::iterator())
         {
             report_error("Failed to connect to any resolved endpoint", ec, httpclient_errorcode_context::connect);
