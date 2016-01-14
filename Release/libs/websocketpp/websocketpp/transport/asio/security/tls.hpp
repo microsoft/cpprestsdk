@@ -229,22 +229,6 @@ protected:
      * @param callback Handler to call back with completion information
      */
     void pre_init(init_handler callback) {
-        // TODO: is this the best way to check whether this function is 
-        //       available in the version of OpenSSL being used?
-        // TODO: consider case where host is an IP address
-#if OPENSSL_VERSION_NUMBER >= 0x90812f
-        if (!m_is_server) {
-            // For clients on systems with a suitable OpenSSL version, set the
-            // TLS SNI hostname header so connecting to TLS servers using SNI
-            // will work.
-            long res = SSL_set_tlsext_host_name(
-                get_socket().native_handle(), m_uri->get_host().c_str());
-            if (!(1 == res)) {
-                callback(socket::make_error_code(socket::error::tls_failed_sni_hostname));
-            }
-        }
-#endif
-
         if (m_socket_init_handler) {
             m_socket_init_handler(m_hdl,get_socket());
         }
