@@ -189,7 +189,15 @@ else()
 endif()
 
 set(Casablanca_LIBRARY ${LIB}cpprest)
-set(Casablanca_LIBRARIES ${Casablanca_LIBRARY} ${Boost_LIBRARIES} ${Boost_FRAMEWORK})
+set(Casablanca_LIBRARIES ${Casablanca_LIBRARY}
+  ${Boost_FILESYSTEM_LIBRARY}
+  ${Boost_SYSTEM_LIBRARY}
+  ${Boost_THREAD_LIBRARY}
+  ${Boost_ATOMIC_LIBRARY}
+  ${Boost_CHRONO_LIBRARY}
+  ${Boost_RANDOM_LIBRARY}
+  ${Boost_REGEX_LIBRARY}
+  ${Boost_FRAMEWORK})
 
 # Everything in the project needs access to the casablanca include directories
 include_directories(${Casablanca_INCLUDE_DIRS})
