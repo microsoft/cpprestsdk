@@ -402,6 +402,7 @@ TEST_FIXTURE(uri_address, overwrite_http_header)
 
     client.request(default_host_headers_request).get();
 
+#ifndef __cplusplus_winrt
     // Test case where we overwrite the host header
     http_request overwritten_host_headers_request(methods::GET);
     overwritten_host_headers_request.headers().add(U("Host"), host);
@@ -412,6 +413,7 @@ TEST_FIXTURE(uri_address, overwrite_http_header)
         p_request->reply(200);
     });
     client.request(overwritten_host_headers_request).get();
+#endif
 }
 } // SUITE(header_tests)
 
