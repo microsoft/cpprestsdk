@@ -607,7 +607,7 @@ public:
             request_stream.imbue(std::locale::classic());
             const auto &host = base_uri.host();
                 
-            request_stream << method << " " << encoded_resource << " " << "HTTP/1.1" << CRLF << "Host: " << host;
+            request_stream << method << " " << encoded_resource << " " << "HTTP/1.1" << CRLF;
                 
             int port = base_uri.port();
                 
@@ -616,7 +616,11 @@ public:
                 port = (ctx->m_connection->is_ssl() ? 443 : 80);
             }
                 
-            request_stream << ":" << port << CRLF;
+            // Add the Host header if user has not specified it explicitly
+            if (!m_request.headers().has(header_names::host))
+            {
+                request_stream << "Host: " << host << ":" << port << CRLF;
+            }
                 
             // Extra request headers are constructed here.
             utility::string_t extra_headers;
