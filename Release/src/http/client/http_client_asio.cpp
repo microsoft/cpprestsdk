@@ -617,7 +617,7 @@ public:
             }
                 
             // Add the Host header if user has not specified it explicitly
-            if (!m_request.headers().has(header_names::host))
+            if (!ctx->m_request.headers().has(header_names::host))
             {
                 request_stream << "Host: " << host << ":" << port << CRLF;
             }
