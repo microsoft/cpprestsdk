@@ -1150,7 +1150,13 @@ private:
 #endif
         timer_state m_state;
         std::weak_ptr<asio_context> m_ctx;
+// t.zemaitis for android we are using boost::chrono instead of std::chrono,
+//            because it is bugy on android
+#if defined(ANDROID) || defined(__ANDROID__)
+        boost::asio::basic_waitable_timer<boost::chrono::steady_clock> m_timer;
+#else
         boost::asio::steady_timer m_timer;
+#endif
     };
 
     uint64_t m_content_length;
