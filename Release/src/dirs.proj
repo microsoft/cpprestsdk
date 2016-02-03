@@ -5,7 +5,6 @@
   <ItemGroup Condition="'$(DevToolsVersion)'=='120'">
       <ProjectFile Include="build\vs12\casablanca120.vcxproj" Condition="'$(Platform)'!='ARM' or '$(WindowsSDKDesktopARMSupport)' == 'true'" />
       <ProjectFile Include="build\vs12.xp\casablanca120.xp.vcxproj" Condition="'$(Platform)'!='ARM' and '$(RunCodeAnalysis)'!='true'" />
-      <ProjectFile Include="build\vs12.wod\casablanca120.wod.vcxproj" Condition="'$(Platform)'!='ARM'" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.2|120' or '$(OsVersion)|$(DevToolsVersion)'=='6.3|120'">
@@ -19,10 +18,9 @@
 
   <ItemGroup Condition="'$(DevToolsVersion)'=='140'">
     <ProjectFile Include="build\vs14\casablanca140.vcxproj" Condition="'$(Platform)'!='ARM' or '$(WindowsSDKDesktopARMSupport)' == 'true'" />
-    <ProjectFile Include="build\vs14.wod\casablanca140.wod.vcxproj" Condition="'$(Platform)'!='ARM'" />
     <ProjectFile Include="build\vs14.android\casablanca140.android.vcxproj" Condition="'$(Platform)'!='x64'"/>
   </ItemGroup>
-  
+
   <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|140'">
       <ProjectFile Include="build\vs14.uwp\cpprestsdk140.uwp.vcxproj" />
   </ItemGroup>
