@@ -164,7 +164,9 @@ typedef lib::function<void(lib::error_code const & ec)> write_frame_handler;
 #if defined(_MSC_VER)
 #pragma warning(push)
 #pragma warning(disable : 4592)
+#endif
     static std::vector<int> const versions_supported = {0,7,8,13};
+#if defined(_MSC_VER)
 #pragma warning(pop)
 #endif
 #else
