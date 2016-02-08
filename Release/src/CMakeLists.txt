@@ -105,11 +105,7 @@ else()
   set_target_properties(${Casablanca_LIBRARY} PROPERTIES
     SOVERSION ${CPPREST_VERSION_MAJOR}.${CPPREST_VERSION_MINOR})
 
-  install(
-    TARGETS ${Casablanca_LIBRARY}
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-    )
+  
 endif()
 
 ###############################################################################

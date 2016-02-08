@@ -15,8 +15,7 @@ set(WARNINGS)
 set(ANDROID_STL_FLAGS)
 
 # Platform (not compiler) specific settings
-if(IOS)
-  set(IOS_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../Build_iOS")
+if(IOS)  
   add_definitions( -DBOOST_ALL_NO_LIB )
   hunter_add_package(Boost COMPONENTS random system thread filesystem chrono atomic)
 
