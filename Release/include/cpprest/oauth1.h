@@ -28,6 +28,7 @@
 #define _CASA_OAUTH1_H
 
 #include "cpprest/http_msg.h"
+#include "cpprest/details/web_utilities.h"
 
 namespace web
 {
@@ -479,6 +480,24 @@ public:
     /// </summary>
     void clear_parameters() { m_parameters_to_sign.clear(); }
 
+    /// <summary>
+    /// Get the web proxy object
+    /// </summary>
+    /// <returns>A reference to the web proxy object.</returns>
+    const web_proxy& proxy() const
+    {
+        return m_proxy;
+    }
+
+    /// <summary>
+    /// Set the web proxy object that will be used by token_from_code and token_from_refresh
+    /// </summary>
+    /// <param name="proxy">A reference to the web proxy object.</param>
+    void set_proxy(const web_proxy& proxy)
+    {
+        m_proxy = proxy;
+    }
+
 private:
     friend class web::http::client::http_client_config;
     friend class web::http::oauth1::details::oauth1_handler;
@@ -531,6 +550,8 @@ private:
     oauth1_method m_method;
 
 	std::map<utility::string_t, utility::string_t> m_parameters_to_sign;
+
+    web::web_proxy m_proxy;
 
     utility::nonce_generator m_nonce_generator;
     bool m_is_authorization_completed;
