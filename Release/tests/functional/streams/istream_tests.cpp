@@ -25,6 +25,10 @@
 
 #include <float.h>
 
+#ifdef max
+#undef max
+#endif
+
 #if defined(__cplusplus_winrt)
 using namespace Windows::Storage;
 #endif
@@ -90,7 +94,7 @@ void fill_file_w(const utility::string_t &name, size_t repetitions = 1)
     for (size_t i = 0; i < repetitions; i++)
         for (wchar_t ch = L'a'; ch <= L'z'; ++ch)
             fwrite(&ch, sizeof(wchar_t), 1, stream);
-    
+
     fclose(stream);
 }
 #pragma warning (pop)
@@ -372,7 +376,7 @@ TEST(stream_read_5)
     VERIFY_ARE_EQUAL(len, rbuf.putn_nocopy(text, len).get());
 
     istream stream(rbuf);
-    
+
     VERIFY_IS_FALSE(stream.is_eof());
     VERIFY_ARE_EQUAL(26u, stream.read_to_delim(trg, '\n').get());
     VERIFY_IS_FALSE(stream.is_eof());
@@ -725,7 +729,7 @@ TEST(fstream_read_to_end_3)
     pplx::details::do_while([=]()-> pplx::task<bool> {
         return stream.read().then(lambda1);
     }).wait();
-        
+
     auto& target = sbuf.collection();
     VERIFY_ARE_EQUAL(26, target.size());
     VERIFY_IS_TRUE(stream.is_eof());
@@ -1174,7 +1178,7 @@ TEST(istream_extract_bool_from_number)
 {
     producer_consumer_buffer<char> rbuf;
     const char *text = " 1 0 NOT_OK";
-    
+
     size_t len = strlen(text);
     rbuf.putn_nocopy(text, len).wait();
     rbuf.close(std::ios_base::out).get();
@@ -1212,7 +1216,7 @@ TEST(istream_extract_bool_from_number_w)
 {
     producer_consumer_buffer<wchar_t> rbuf;
     const wchar_t *text = L" 1 0 NOT_OK";
-    
+
     size_t len = wcslen(text);
     rbuf.putn_nocopy(text, len).wait();
     rbuf.close(std::ios_base::out).get();
@@ -1343,10 +1347,10 @@ TEST(extract_floating_point)
     {
         double expected = 0;
         std_istream >> expected;
-        
+
         const auto actual = istream_double.extract<double>().get();
         compare_double(expected, actual);
-        
+
         if (actual <= std::numeric_limits<float>::max())
             compare_float(float(expected), istream_float.extract<float>().get());
         else
@@ -1360,7 +1364,7 @@ TEST(extract_floating_point)
 
 TEST(extract_floating_point_with_exceptions)
 {
-    std::vector<std::pair<std::string, std::string>> tests;   
+    std::vector<std::pair<std::string, std::string>> tests;
     tests.push_back(std::pair<std::string, std::string>("a", "Invalid character 'a'"));
     tests.push_back(std::pair<std::string, std::string>("x", "Invalid character 'x'"));
     tests.push_back(std::pair<std::string, std::string>("e", "Invalid character 'e'"));
@@ -1412,7 +1416,7 @@ TEST(extract_floating_point_with_exceptions)
 TEST(streambuf_read_delim)
 {
     producer_consumer_buffer<uint8_t> rbuf;
-    std::string s("Hello  World"); // there are 2 spaces here 
+    std::string s("Hello  World"); // there are 2 spaces here
 
     streams::stringstreambuf data;
 
@@ -1423,7 +1427,7 @@ TEST(streambuf_read_delim)
         std::string r("Hello");
         VERIFY_ARE_EQUAL(size, r.size());
         VERIFY_IS_FALSE(is.is_eof());
-    
+
         auto& s2 = data.collection();
         VERIFY_ARE_EQUAL(s2, r);
         return is.read_to_delim(data, ' ');
@@ -1465,7 +1469,7 @@ TEST(uninitialized_streambuf)
     // All operations should throw
     uint8_t * ptr = nullptr;
     size_t count = 0;
-    
+
     VERIFY_THROWS(strbuf.acquire(ptr, count), std::invalid_argument);
     VERIFY_THROWS(strbuf.release(ptr, count), std::invalid_argument);
 
