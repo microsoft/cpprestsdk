@@ -33,7 +33,7 @@
     <ClInclude Include="..\test_websocket_server.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\vs12\packages.config" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\common\utilities\vs14.android\CommonUtilities140.android.vcxproj">
