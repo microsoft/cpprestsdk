@@ -53,7 +53,11 @@ if(UNIX)
   else()
     list(APPEND SOURCES pplx/pplxlinux.cpp)
   endif()
-  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNINGS} -Werror -pedantic")
+
+  if(WERROR)
+      set(WARNINGS "${WARNINGS} -Werror")
+  endif()
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNINGS} -pedantic")
 elseif(WIN32)
   set(SOURCES
     ${SOURCES_COMMON}

@@ -17,9 +17,7 @@ if(NOT IOS AND NOT ANDROID)
       )
 
     target_link_libraries(test_runner
-      ${Boost_FRAMEWORK}
-      ${Boost_SYSTEM_LIBRARY}
-      ${Boost_FILESYSTEM_LIBRARY}
+      ${Boost_LIBRARIES}
       ${LIB}unittestpp
       ${CMAKE_DL_LIBS}
       )
@@ -31,9 +29,7 @@ if(NOT IOS AND NOT ANDROID)
         )
 
       target_link_libraries(test_runner
-        ${Boost_FRAMEWORK}
-        ${Boost_SYSTEM_LIBRARY}
-        ${Boost_FILESYSTEM_LIBRARY}
+        ${Boost_LIBRARIES}
         ${LIB}unittestpp
         ${CMAKE_DL_LIBS}
         -Wl,-force_load
@@ -64,9 +60,7 @@ if(NOT IOS AND NOT ANDROID)
         )
 
       target_link_libraries(test_runner
-        ${Boost_FRAMEWORK}
-        ${Boost_SYSTEM_LIBRARY}
-        ${Boost_FILESYSTEM_LIBRARY}
+        ${Boost_LIBRARIES}
         ${LIB}unittestpp
         ${CMAKE_DL_LIBS}
         -Wl,--whole-archive
