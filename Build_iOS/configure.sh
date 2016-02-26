@@ -12,9 +12,11 @@ git clone --depth=1 https://github.com/x2on/OpenSSL-for-iPhone.git
 pushd OpenSSL-for-iPhone
 ./build-libssl.sh
 popd
-mkdir openssl
-mv OpenSSL-for-iPhone/include openssl
-mv OpenSSL-for-iPhone/lib openssl
+mkdir -p openssl/lib
+cp -r OpenSSL-for-iPhone/bin/iPhoneOS8.2-armv7.sdk/include openssl
+cp OpenSSL-for-iPhone/include/LICENSE openssl
+lipo -create -output openssl/lib/libssl.a OpenSSL-for-iPhone/bin/iPhone*/lib/libssl.a
+lipo -create -output openssl/lib/libcrypto.a OpenSSL-for-iPhone/bin/iPhone*/lib/libcrypto.a
 
 git clone https://github.com/cristeab/ios-cmake.git
 pushd ios-cmake
