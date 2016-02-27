@@ -306,15 +306,25 @@ TEST(TestTasks_void_tasks_default_construction)
 
 TEST(TestTasks_movable_then)
 {
+    // create movable only type
     struct A
     {
         A() = default;
         A(A&&) = default;
         A& operator=(A&&) = default;
+
+        // explicitly delete copy functions
+        A(const A&) = delete;
+        A& operator=(const A&) = delete;
+
+        char operator()(int)
+        {
+            return 'c';
+        }
     } a;
 
     task<int> task = create_task([]{ return 2; });
-    auto f = task.then([a = std::move(a)](int) { return 'c'; });
+    auto f = task.then(std::move(a));
 
     IsTrue(f.get() == 'c', L".then should be able to work with movable functors");
 }
