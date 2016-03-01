@@ -3100,8 +3100,10 @@ namespace details
     template<typename _Ty>
     struct _NonCopyableFunctorWrapper
     {
-        template<typename _Tx>
-        _NonCopyableFunctorWrapper(_Tx&& f)
+        template<typename _Tx, typename =
+            typename std::enable_if<!std::is_base_of<_NonCopyableFunctorWrapper<_Ty>,
+                 typename std::decay<_Tx>::type>::value>::type>
+        explicit _NonCopyableFunctorWrapper(_Tx&& f)
           : _M_functor{std::make_shared<_Ty>(std::forward<_Tx>(f))}
         {}
 
