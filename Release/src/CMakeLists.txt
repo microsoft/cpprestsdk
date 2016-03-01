@@ -53,7 +53,11 @@ if(UNIX)
   else()
     list(APPEND SOURCES pplx/pplxlinux.cpp)
   endif()
-  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNINGS} -Werror -pedantic")
+
+  if(WERROR)
+      set(WARNINGS "${WARNINGS} -Werror")
+  endif()
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNINGS} -pedantic")
 elseif(WIN32)
   set(SOURCES
     ${SOURCES_COMMON}
@@ -99,7 +103,7 @@ target_link_libraries(${Casablanca_LIBRARY}
 
 # Portions specific to cpprest binary versioning.
 set (CPPREST_VERSION_MAJOR 2)
-set (CPPREST_VERSION_MINOR 7)
+set (CPPREST_VERSION_MINOR 8)
 set (CPPREST_VERSION_REVISION 0)
 
 if(WIN32)

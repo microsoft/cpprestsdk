@@ -7,6 +7,8 @@ enable_testing()
 set(WARNINGS)
 set(ANDROID_STL_FLAGS)
 
+option(WERROR "Threat Warnings as Errors" ON)
+
 # Platform (not compiler) specific settings
 if(IOS)
   set(IOS_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../Build_iOS")
@@ -73,7 +75,7 @@ elseif(ANDROID)
   set(BUILD_SAMPLES OFF)
   option(BUILD_TESTS "Build tests." ON)
 elseif(UNIX) # This includes OSX
-  find_package(Boost REQUIRED COMPONENTS random chrono system thread regex filesystem)
+  find_package(Boost 1.54 REQUIRED COMPONENTS random chrono system thread regex filesystem)
   find_package(Threads REQUIRED)
   if(APPLE AND NOT OPENSSL_ROOT_DIR)
     # Prefer a homebrew version of OpenSSL over the one in /usr/lib
@@ -189,7 +191,8 @@ else()
 endif()
 
 set(Casablanca_LIBRARY ${LIB}cpprest)
-set(Casablanca_LIBRARIES ${Casablanca_LIBRARY} ${Boost_LIBRARIES} ${Boost_FRAMEWORK})
+set(Casablanca_LIBRARIES ${Casablanca_LIBRARY}
+  ${Boost_LIBRARIES})
 
 # Everything in the project needs access to the casablanca include directories
 include_directories(${Casablanca_INCLUDE_DIRS})

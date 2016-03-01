@@ -32,7 +32,6 @@
 
   <PropertyGroup>
     <InternalIncludeDir>$(CasablancaIncludeDir)</InternalIncludeDir>
-    <IntDir>$(BuildRoot)\Intermediate\$(MSBuildProjectName)\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
 
   <ItemDefinitionGroup>

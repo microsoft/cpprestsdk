@@ -4,7 +4,7 @@
   
   <ItemGroup Condition="'$(DevToolsVersion)'=='120'">
       <ProjectFile Include="VS12\UnitTestpp120.vcxproj"/>
-      <ProjectFile Include="VS12\TestUnitTestpp120.vcxproj"/>
+      <!--<ProjectFile Include="VS12\TestUnitTestpp120.vcxproj"/>-->
   </ItemGroup>
   
   <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|120'">
@@ -14,7 +14,7 @@
   <ItemGroup Condition="'$(DevToolsVersion)'=='140'">
     <ProjectFile Include="vs14.android\UnitTestpp140.android.vcxproj" Condition="'$(Platform)'!='x64'" />
     <ProjectFile Include="VS14\UnitTestpp140.vcxproj"/>
-    <ProjectFile Include="VS14\TestUnitTestpp140.vcxproj"/>
+    <!--<ProjectFile Include="VS14\TestUnitTestpp140.vcxproj"/>-->
   </ItemGroup>
   
   <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|140'">

@@ -382,6 +382,39 @@ TEST_FIXTURE(uri_address, parsing_content_type_redundantsemicolon_string)
     auto resp = client.request(methods::GET).get();
     VERIFY_ARE_EQUAL(resp.extract_string().get(), utility::conversions::to_string_t(body));
 }
+
+TEST_FIXTURE(uri_address, overwrite_http_header)
+{
+    test_http_server::scoped_server scoped(m_uri);
+    http_client client(m_uri);
+    
+    // Test default case of cpprestsdk setting host header as host:port
+    auto& host = m_uri.host();
+    int port = m_uri.port();
+    utility::string_t expected_default_header = host + U(":") + utility::conversions::print_string(port);
+    http_request default_host_headers_request(methods::GET);
+    scoped.server()->next_request().then([&](test_request *p_request) 
+    {
+        auto headers = p_request->m_headers;
+        VERIFY_ARE_EQUAL(expected_default_header, headers[header_names::host]);
+        p_request->reply(200);
+    });
+
+    client.request(default_host_headers_request).get();
+
+#ifndef __cplusplus_winrt
+    // Test case where we overwrite the host header
+    http_request overwritten_host_headers_request(methods::GET);
+    overwritten_host_headers_request.headers().add(U("Host"), host);
+    scoped.server()->next_request().then([&](test_request *p_request)
+    {
+        auto headers = p_request->m_headers;
+        VERIFY_ARE_EQUAL(host, headers[header_names::host]);
+        p_request->reply(200);
+    });
+    client.request(overwritten_host_headers_request).get();
+#endif
+}
 } // SUITE(header_tests)
 
 }}}}

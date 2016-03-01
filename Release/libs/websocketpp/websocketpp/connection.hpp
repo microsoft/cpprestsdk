@@ -161,7 +161,14 @@ typedef lib::function<void(lib::error_code const & ec)> write_frame_handler;
      * @todo Move this to configs to allow compile/runtime disabling or enabling
      * of protocol versions
      */
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable : 4592)
+#endif
     static std::vector<int> const versions_supported = {0,7,8,13};
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
 #else
     /// Helper array to get around lack of initializer lists pre C++11
     static int const helper[] = {0,7,8,13};
@@ -534,7 +541,7 @@ public:
 
     /// Get maximum message size
     /**
-     * Get maximum message size. Maximum message size determines the point at 
+     * Get maximum message size. Maximum message size determines the point at
      * which the connection will fail with the message_too_big protocol error.
      *
      * The default is set by the endpoint that creates the connection.
@@ -544,11 +551,11 @@ public:
     size_t get_max_message_size() const {
         return m_max_message_size;
     }
-    
+
     /// Set maximum message size
     /**
-     * Set maximum message size. Maximum message size determines the point at 
-     * which the connection will fail with the message_too_big protocol error. 
+     * Set maximum message size. Maximum message size determines the point at
+     * which the connection will fail with the message_too_big protocol error.
      * This value may be changed during the connection.
      *
      * The default is set by the endpoint that creates the connection.
@@ -563,7 +570,7 @@ public:
             m_processor->set_max_message_size(new_value);
         }
     }
-    
+
     /// Get maximum HTTP message body size
     /**
      * Get maximum HTTP message body size. Maximum message body size determines
@@ -579,7 +586,7 @@ public:
     size_t get_max_http_body_size() const {
         return m_request.get_max_body_size();
     }
-    
+
     /// Set maximum HTTP message body size
     /**
      * Set maximum HTTP message body size. Maximum message body size determines
@@ -683,14 +690,14 @@ public:
      * @return An error code
      */
     lib::error_code interrupt();
-    
+
     /// Transport inturrupt callback
     void handle_interrupt();
-    
+
     /// Pause reading of new data
     /**
-     * Signals to the connection to halt reading of new data. While reading is paused, 
-     * the connection will stop reading from its associated socket. In turn this will 
+     * Signals to the connection to halt reading of new data. While reading is paused,
+     * the connection will stop reading from its associated socket. In turn this will
      * result in TCP based flow control kicking in and slowing data flow from the remote
      * endpoint.
      *
@@ -702,7 +709,7 @@ public:
      *
      * If supported by the transport this is done asynchronously. As such reading may not
      * stop until the current read operation completes. Typically you can expect to
-     * receive no more bytes after initiating a read pause than the size of the read 
+     * receive no more bytes after initiating a read pause than the size of the read
      * buffer.
      *
      * If reading is paused for this connection already nothing is changed.
@@ -1357,7 +1364,7 @@ private:
      * Includes: error code and message for why it was failed
      */
     void log_fail_result();
-    
+
     /// Prints information about HTTP connections
     /**
      * Includes: TODO
@@ -1506,7 +1513,7 @@ private:
 
     /// Detailed internal error code
     lib::error_code m_ec;
-    
+
     /// A flag that gets set once it is determined that the connection is an
     /// HTTP connection and not a WebSocket one.
     bool m_is_http;

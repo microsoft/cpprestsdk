@@ -46,7 +46,7 @@ TEST_FIXTURE(uri_address, auto_discovery_proxy)
         p_request->reply(200);
     });
     http_client_config config;
-    
+
     config.set_proxy(web_proxy::use_auto_discovery);
     VERIFY_IS_FALSE(config.proxy().is_disabled());
     VERIFY_IS_FALSE(config.proxy().is_specified());
@@ -63,7 +63,7 @@ TEST_FIXTURE(uri_address, disabled_proxy)
         http_asserts::assert_test_request_equals(p_request, methods::PUT, U("/"), U("text/plain"), U("sample data"));
         p_request->reply(status_codes::OK);
     });
-    
+
     http_client_config config;
     config.set_proxy(web_proxy(web_proxy::disabled));
     VERIFY_IS_TRUE(config.proxy().is_disabled());
@@ -90,20 +90,20 @@ TEST_FIXTURE(uri_address, no_proxy_options_on_winrt)
 
 #ifndef __cplusplus_winrt
 // Can't specify a proxy with WinRT implementation.
-TEST_FIXTURE(uri_address, proxy_with_credentials, "Ignore:Linux", "NYI", "Ignore:Apple", "NYI", "Ignore:Android", "NYI")
+ TEST_FIXTURE(uri_address, http_proxy_with_credentials, "Ignore:Linux", "Github 53", "Ignore:Apple", "Github 53", "Ignore:Android", "Github 53", "Ignore:IOS", "Github 53")
 {
     uri u(U("http://netproxy.redmond.corp.microsoft.com"));
 
     web_proxy proxy(u);
     VERIFY_IS_TRUE(proxy.is_specified());
     VERIFY_ARE_EQUAL(u, proxy.address());
-    credentials cred(U("artur"), U("fred")); // relax, this is not my real password
+    web::credentials cred(U("artur"), U("fred")); // relax, this is not my real password
     proxy.set_credentials(cred);
 
     http_client_config config;
     config.set_proxy(proxy);
 
-    // Access to this server will succeed because the first request will not be challenged and hence 
+    // Access to this server will succeed because the first request will not be challenged and hence
     // my bogus credentials will not be supplied.
     http_client client(U("http://www.microsoft.com"), config);
 
@@ -124,6 +124,47 @@ TEST_FIXTURE(uri_address, proxy_with_credentials, "Ignore:Linux", "NYI", "Ignore
 		throw;
 	}
 }
+
+TEST_FIXTURE(uri_address, http_proxy, "Ignore", "Manual")
+{
+    // In order to run this test, replace this proxy uri with one that you have access to.
+    uri u(U("http://netproxy.redmond.corp.microsoft.com"));
+
+    web_proxy proxy(u);
+    VERIFY_IS_TRUE(proxy.is_specified());
+    VERIFY_ARE_EQUAL(u, proxy.address());
+
+    http_client_config config;
+    config.set_proxy(proxy);
+
+    http_client client(U("http://httpbin.org"), config);
+
+    http_response response = client.request(methods::GET).get();
+    VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
+    response.content_ready().wait();
+}
+
+
+TEST_FIXTURE(uri_address, https_proxy, "Ignore", "Manual")
+{
+    // In order to run this test, replace this proxy uri with one that you have access to.
+    uri u(U("http://netproxy.redmond.corp.microsoft.com"));
+
+    web_proxy proxy(u);
+    VERIFY_IS_TRUE(proxy.is_specified());
+    VERIFY_ARE_EQUAL(u, proxy.address());
+
+    http_client_config config;
+    config.set_proxy(proxy);
+
+    http_client client(U("https://httpbin.org"), config);
+
+    http_response response = client.request(methods::GET).get();
+    VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
+    response.content_ready().wait();
+}
+
+
 #endif
 
 } // SUITE(proxy_tests)

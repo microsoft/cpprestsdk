@@ -29,6 +29,7 @@
 
 using namespace utility;
 using web::http::client::http_client;
+using web::http::client::http_client_config;
 using web::http::oauth1::details::oauth1_state;
 using web::http::oauth1::details::oauth1_strings;
 
@@ -281,7 +282,13 @@ pplx::task<void> oauth1_config::_request_token(oauth1_state state, bool is_temp_
     req._set_base_uri(endpoint);
 
     _authenticate_request(req, std::move(state));
-    http_client client(endpoint);
+
+    // configure proxy
+    http_client_config config;
+    config.set_proxy(m_proxy);
+
+    http_client client(endpoint, config);
+
     return client.request(req)
     .then([](http_response resp)
     {
