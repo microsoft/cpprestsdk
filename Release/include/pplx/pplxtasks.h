@@ -3842,7 +3842,7 @@ private:
         typedef typename details::_NormalizeVoidToUnitType<_ContinuationReturnType>::_Type _NormalizedContinuationReturnType;
 
         typename details::_Task_ptr<_ReturnType>::_Type _M_ancestorTaskImpl;
-        typename details::_CopyableFunctor<_Function>::_Type _M_function;
+        typename details::_CopyableFunctor<typename std::decay<_Function>::type >::_Type _M_function;
 
         template <class _ForwardedFunction>
         _ContinuationTaskHandle(const typename details::_Task_ptr<_ReturnType>::_Type & _AncestorImpl,
