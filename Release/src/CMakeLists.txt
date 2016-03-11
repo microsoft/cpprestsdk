@@ -114,7 +114,8 @@ elseif(ANDROID)
   # Perhaps revisit in the future? (NDK r9d, 8/7/14)
 else()
   set_target_properties(${Casablanca_LIBRARY} PROPERTIES
-    SOVERSION ${CPPREST_VERSION_MAJOR}.${CPPREST_VERSION_MINOR})
+    SOVERSION ${CPPREST_VERSION_MAJOR}
+    VERSION ${CPPREST_VERSION_MAJOR}.${CPPREST_VERSION_MINOR})
 
   install(
     TARGETS ${Casablanca_LIBRARY}
