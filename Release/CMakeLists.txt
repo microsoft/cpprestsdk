@@ -3,8 +3,8 @@ cmake_minimum_required(VERSION 3.0)
 
 include("cmake/HunterGate.cmake")
 HunterGate(
-    URL "http://192.168.2.27/packages/hunter/hunter-project-v1.0.16.tar.gz"
-    SHA1 "ef89bcd473ceef3aa9a3ae085dfc68b92b927639"
+    URL "http://192.168.2.27/packages/hunter/hunter-project-v1.0.60.tar.gz"
+    SHA1 "e1a3b70805d481652b53737e4920b4dd712ad067"
 )
 
 project(casablanca VERSION 2.7.0)
