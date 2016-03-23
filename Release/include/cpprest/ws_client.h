@@ -217,7 +217,7 @@ private:
     web::http::http_headers m_headers;
     bool m_sni_enabled;
     utf8string m_sni_hostname;
-	bool m_validate_certificates;
+    bool m_validate_certificates;
 };
 
 /// <summary>
