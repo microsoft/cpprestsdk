@@ -440,7 +440,7 @@ utf16string __cdecl conversions::latin1_to_utf16(const std::string &s)
     dest.resize(s.size());
     for (size_t i = 0; i < s.size(); ++i)
     {
-        dest[i] = utf16char(s[i]);
+        dest[i] = utf16char(static_cast<unsigned char>(s[i]));
     }
     return dest;
 }
