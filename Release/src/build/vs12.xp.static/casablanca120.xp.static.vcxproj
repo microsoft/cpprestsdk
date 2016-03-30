@@ -1,0 +1,109 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\version.props" />
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="DebugStatic|ARM">
+      <Configuration>DebugStatic</Configuration>
+      <Platform>ARM</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="DebugStatic|Win32">
+      <Configuration>DebugStatic</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="DebugStatic|x64">
+      <Configuration>DebugStatic</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseStatic|ARM">
+      <Configuration>ReleaseStatic</Configuration>
+      <Platform>ARM</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseStatic|Win32">
+      <Configuration>ReleaseStatic</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseStatic|x64">
+      <Configuration>ReleaseStatic</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{CF74448D-FE99-4E3C-AFA6-A50F3145BAF3}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <SccProjectName>SAK</SccProjectName>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccProvider>SAK</SccProvider>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v120_xp</PlatformToolset>
+    <WinRTProject>false</WinRTProject>
+    <TargetXP>true</TargetXP>
+    <ProjectName>cpprestsdk120.xp.static</ProjectName>
+  </PropertyGroup>
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Config.Definitions.props" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Release.Product.Settings" />
+  <!-- Necessary because OpenSSL and zlib NuGet packages aren't built for the v120_xp toolset. Force them to be on. -->
+  <PropertyGroup>
+    <Force-Enable-openssl-v120-windesktop-msvcstl-static-rt-dyn-x86 Condition="'$(Platform)' == 'Win32'">true</Force-Enable-openssl-v120-windesktop-msvcstl-static-rt-dyn-x86>
+    <Force-Enable-openssl-v120-windesktop-msvcstl-static-rt-dyn-x64 Condition="'$(Platform)' == 'x64'">true</Force-Enable-openssl-v120-windesktop-msvcstl-static-rt-dyn-x64>
+    <Force-Enable-zlib-v120-windesktop-msvcstl-static-rt-dyn-x86 Condition="'$(Platform)' == 'Win32'">true</Force-Enable-zlib-v120-windesktop-msvcstl-static-rt-dyn-x86>
+    <Force-Enable-zlib-v120-windesktop-msvcstl-static-rt-dyn-x64 Condition="'$(Platform)' == 'x64'">true</Force-Enable-zlib-v120-windesktop-msvcstl-static-rt-dyn-x64>
+  </PropertyGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(PackagesRoot)\boost.1.58.0.0\build\native\boost.targets" Condition="Exists('$(PackagesRoot)\boost.1.58.0.0\build\native\boost.targets')" />
+    <Import Project="$(PackagesRoot)\boost_system-vc120.1.58.0.0\build\native\boost_system-vc120.targets" Condition="Exists('$(PackagesRoot)\boost_system-vc120.1.58.0.0\build\native\boost_system-vc120.targets')" />
+    <Import Project="$(PackagesRoot)\boost_date_time-vc120.1.58.0.0\build\native\boost_date_time-vc120.targets" Condition="Exists('$(PackagesRoot)\boost_date_time-vc120.1.58.0.0\build\native\boost_date_time-vc120.targets')" />
+    <Import Project="$(PackagesRoot)\boost_regex-vc120.1.58.0.0\build\native\boost_regex-vc120.targets" Condition="Exists('$(PackagesRoot)\boost_regex-vc120.1.58.0.0\build\native\boost_regex-vc120.targets')" />
+    <Import Project="$(PackagesRoot)\openssl.v120.windesktop.msvcstl.static.rt-dyn.x64.1.0.2.0\build\native\openssl.v120.windesktop.msvcstl.static.rt-dyn.x64.targets" Condition="Exists('$(PackagesRoot)\openssl.v120.windesktop.msvcstl.static.rt-dyn.x64.1.0.2.0\build\native\openssl.v120.windesktop.msvcstl.static.rt-dyn.x64.targets')" />
+    <Import Project="$(PackagesRoot)\openssl.v120.windesktop.msvcstl.static.rt-dyn.x86.1.0.2.0\build\native\openssl.v120.windesktop.msvcstl.static.rt-dyn.x86.targets" Condition="Exists('$(PackagesRoot)\openssl.v120.windesktop.msvcstl.static.rt-dyn.x86.1.0.2.0\build\native\openssl.v120.windesktop.msvcstl.static.rt-dyn.x86.targets')" />
+    <Import Project="$(PackagesRoot)\zlib.v120.windesktop.msvcstl.static.rt-dyn.1.2.8.8\build\native\zlib.v120.windesktop.msvcstl.static.rt-dyn.targets" Condition="Exists('$(PackagesRoot)\zlib.v120.windesktop.msvcstl.static.rt-dyn.1.2.8.8\build\native\zlib.v120.windesktop.msvcstl.static.rt-dyn.targets')" />
+    <Import Project="$(PackagesRoot)\openssl.v120.windesktop.msvcstl.static.rt-dyn.x64.1.0.2.1\build\native\openssl.v120.windesktop.msvcstl.static.rt-dyn.x64.targets" Condition="Exists('$(PackagesRoot)\openssl.v120.windesktop.msvcstl.static.rt-dyn.x64.1.0.2.1\build\native\openssl.v120.windesktop.msvcstl.static.rt-dyn.x64.targets')" />
+    <Import Project="$(PackagesRoot)\openssl.v120.windesktop.msvcstl.static.rt-dyn.x86.1.0.2.1\build\native\openssl.v120.windesktop.msvcstl.static.rt-dyn.x86.targets" Condition="Exists('$(PackagesRoot)\openssl.v120.windesktop.msvcstl.static.rt-dyn.x86.1.0.2.1\build\native\openssl.v120.windesktop.msvcstl.static.rt-dyn.x86.targets')" />
+  </ImportGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='DebugStatic'">
+    <DebugFileSuffix>d</DebugFileSuffix>
+  </PropertyGroup>
+  <PropertyGroup>
+    <TargetName>$(CppRestBaseFileName)120$(DebugFileSuffix)_xp_$(CppRestSDKVersionFileSuffix)</TargetName>
+    <NuGetPackageImportStamp>58b07c0c</NuGetPackageImportStamp>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>_NO_ASYNCRTIMP;_WINSOCK_DEPRECATED_NO_WARNINGS;CPPREST_TARGET_XP;_ASYNCRT_EXPORT;_PPLX_EXPORT;WIN32;_MBCS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CasablancaSrcDir)\pch;$(WebsocketppIncludeDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
+      <AdditionalOptions>-Zm160 /bigobj %(AdditionalOptions)</AdditionalOptions>
+      <RuntimeLibrary Condition="'$(Configuration)'=='DebugStatic'">MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeLibrary Condition="'$(Configuration)'=='ReleaseStatic'">MultiThreadedDLL</RuntimeLibrary>
+      <WholeProgramOptimization Condition="'$(Configuration)'=='ReleaseStatic'">true</WholeProgramOptimization>
+      <!-- Disable warning about decorated name length exceeded, name was truncated. This is due to Boost.Asio and Websocket++ templates. -->
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='DebugStatic|Win32'">4503;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='ReleaseStatic|Win32'">4503;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='DebugStatic|ARM'">4503;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='ReleaseStatic|ARM'">4503;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='DebugStatic|x64'">4503;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='ReleaseStatic|x64'">4503;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>Winhttp.lib;crypt32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <LinkTimeCodeGeneration Condition="'$(Configuration)'=='ReleaseStatic'">UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="..\common.vcxitems" Label="Shared" Condition="Exists('..\common.vcxitems')" />
+  <Import Project="..\win32.vcxitems" Label="Shared" Condition="Exists('..\win32.vcxitems')" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('$(PackagesRoot)\openssl.v120.windesktop.msvcstl.static.rt-dyn.x64.1.0.2.1\build\native\openssl.v120.windesktop.msvcstl.static.rt-dyn.x64.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(PackagesRoot)\openssl.v120.windesktop.msvcstl.static.rt-dyn.x64.1.0.2.1\build\native\openssl.v120.windesktop.msvcstl.static.rt-dyn.x64.targets'))" />
+    <Error Condition="!Exists('$(PackagesRoot)\openssl.v120.windesktop.msvcstl.static.rt-dyn.x86.1.0.2.1\build\native\openssl.v120.windesktop.msvcstl.static.rt-dyn.x86.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(PackagesRoot)\openssl.v120.windesktop.msvcstl.static.rt-dyn.x86.1.0.2.1\build\native\openssl.v120.windesktop.msvcstl.static.rt-dyn.x86.targets'))" />
+  </Target>
+</Project>
