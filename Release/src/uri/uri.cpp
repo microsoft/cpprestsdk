@@ -226,7 +226,7 @@ static int hex_char_digit_to_decimal_char(int hex)
     }
     else
     {
-        throw uri_exception("Invalid hexidecimal digit");
+        throw uri_exception("Invalid hexadecimal digit");
     }
     return decimal;
 }
@@ -240,12 +240,12 @@ utility::string_t uri::decode(const utility::string_t &encoded)
         {
             if(++iter == encoded.end())
             {
-                throw uri_exception("Invalid URI string, two hexidecimal digits must follow '%'");
+                throw uri_exception("Invalid URI string, two hexadecimal digits must follow '%'");
             }
             int decimal_value = hex_char_digit_to_decimal_char(static_cast<int>(*iter)) << 4;
             if(++iter == encoded.end())
             {
-                throw uri_exception("Invalid URI string, two hexidecimal digits must follow '%'");
+                throw uri_exception("Invalid URI string, two hexadecimal digits must follow '%'");
             }
             decimal_value += hex_char_digit_to_decimal_char(static_cast<int>(*iter));
 
