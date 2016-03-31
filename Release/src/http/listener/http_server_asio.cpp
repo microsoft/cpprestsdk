@@ -38,6 +38,7 @@ using namespace boost::asio;
 using namespace boost::asio::ip;
 
 #define CRLF std::string("\r\n")
+#define CRLFCRLF std::string("\r\n\r\n")
 
 namespace web
 {
@@ -144,7 +145,7 @@ struct crlf_nonascii_searcher_t
         }
         return std::make_pair(excluded, false);
     }
-} crlf_nonascii_searcher;
+} crlfcrlf_nonascii_searcher;
 }}}}}
 
 namespace boost
@@ -205,14 +206,14 @@ void connection::start_request_response()
 
     if (m_ssl_stream)
     {
-        boost::asio::async_read_until(*m_ssl_stream, m_request_buf, CRLF, [this](const boost::system::error_code& ec, std::size_t)
+        boost::asio::async_read_until(*m_ssl_stream, m_request_buf, CRLFCRLF, [this](const boost::system::error_code& ec, std::size_t)
         {
             this->handle_http_line(ec);
         });
     }
     else
     {
-        boost::asio::async_read_until(*m_socket, m_request_buf, crlf_nonascii_searcher, [this](const boost::system::error_code& ec, std::size_t)
+        boost::asio::async_read_until(*m_socket, m_request_buf, crlfcrlf_nonascii_searcher, [this](const boost::system::error_code& ec, std::size_t)
         {
             this->handle_http_line(ec);
         });
