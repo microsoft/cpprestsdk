@@ -17,4 +17,4 @@ set (SOURCES
   stdafx.cpp
 )
 
-add_casablanca_test(${LIB}httplistener_test SOURCES)
+add_casablanca_test(httplistener_test SOURCES)

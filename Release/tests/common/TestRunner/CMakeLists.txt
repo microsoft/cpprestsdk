@@ -18,7 +18,7 @@ if(NOT IOS AND NOT ANDROID)
 
     target_link_libraries(test_runner
       ${Boost_LIBRARIES}
-      ${LIB}unittestpp
+      unittestpp
       ${CMAKE_DL_LIBS}
       )
   else()
@@ -30,28 +30,28 @@ if(NOT IOS AND NOT ANDROID)
 
       target_link_libraries(test_runner
         ${Boost_LIBRARIES}
-        ${LIB}unittestpp
+        unittestpp
         ${CMAKE_DL_LIBS}
         -Wl,-force_load
-        ${LIB}httpclient_test
+        httpclient_test
 
         -Wl,-force_load
-        ${LIB}json_test
+        json_test
 
         -Wl,-force_load
-        ${LIB}uri_test
+        uri_test
 
         -Wl,-force_load
-        ${LIB}pplx_test
+        pplx_test
 
         -Wl,-force_load
-        ${LIB}httplistener_test
+        httplistener_test
 
         -Wl,-force_load
-        ${LIB}streams_test
+        streams_test
 
         -Wl,-force_load
-        ${LIB}utils_test
+        utils_test
         )
     elseif(UNIX)
       add_executable(test_runner
@@ -61,16 +61,16 @@ if(NOT IOS AND NOT ANDROID)
 
       target_link_libraries(test_runner
         ${Boost_LIBRARIES}
-        ${LIB}unittestpp
+        unittestpp
         ${CMAKE_DL_LIBS}
         -Wl,--whole-archive
-        ${LIB}httpclient_test
-        ${LIB}json_test
-        ${LIB}uri_test
-        ${LIB}pplx_test
-        ${LIB}httplistener_test
-        ${LIB}streams_test
-        ${LIB}utils_test
+        httpclient_test
+        json_test
+        uri_test
+        pplx_test
+        httplistener_test
+        streams_test
+        utils_test
         -Wl,--no-whole-archive
         )
     else()
@@ -79,16 +79,16 @@ if(NOT IOS AND NOT ANDROID)
       add_executable(test_runner
         test_runner.cpp
         test_module_loader.cpp
-        $<TARGET_OBJECTS:${LIB}httpclient_test>
-        $<TARGET_OBJECTS:${LIB}json_test>
-        $<TARGET_OBJECTS:${LIB}uri_test>
-        $<TARGET_OBJECTS:${LIB}pplx_test>
-        $<TARGET_OBJECTS:${LIB}httplistener_test>
-        $<TARGET_OBJECTS:${LIB}streams_test>
-        $<TARGET_OBJECTS:${LIB}utils_test>
+        $<TARGET_OBJECTS:httpclient_test>
+        $<TARGET_OBJECTS:json_test>
+        $<TARGET_OBJECTS:uri_test>
+        $<TARGET_OBJECTS:pplx_test>
+        $<TARGET_OBJECTS:httplistener_test>
+        $<TARGET_OBJECTS:streams_test>
+        $<TARGET_OBJECTS:utils_test>
         )
       target_link_libraries(test_runner
-        ${LIB}unittestpp
+        unittestpp
         ${CMAKE_DL_LIBS}
         )
     endif()

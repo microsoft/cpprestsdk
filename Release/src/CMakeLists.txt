@@ -90,9 +90,9 @@ elseif(WIN32)
   endif()
 endif()
 
-add_library(${Casablanca_LIBRARY} ${SOURCES})
+add_library(cpprest ${SOURCES})
 
-target_link_libraries(${Casablanca_LIBRARY}
+target_link_libraries(cpprest
   ${CMAKE_THREAD_LIBS_INIT}
   ${Boost_SYSTEM_LIBRARY}
   ${Boost_THREAD_LIBRARY}
@@ -112,17 +112,17 @@ set (CPPREST_VERSION_MINOR 8)
 set (CPPREST_VERSION_REVISION 0)
 
 if(WIN32)
-  set_target_properties(${Casablanca_LIBRARY} PROPERTIES
-    OUTPUT_NAME "${Casablanca_LIBRARY}_${CPPREST_VERSION_MAJOR}_${CPPREST_VERSION_MINOR}")
+  set_target_properties(cpprest PROPERTIES
+    OUTPUT_NAME "cpprest_${CPPREST_VERSION_MAJOR}_${CPPREST_VERSION_MINOR}")
 elseif(ANDROID)
   # Do not use SOVERSION on android. It is completely unsupported (and causes problems).
   # Perhaps revisit in the future? (NDK r9d, 8/7/14)
 else()
-  set_target_properties(${Casablanca_LIBRARY} PROPERTIES
+  set_target_properties(cpprest PROPERTIES
     SOVERSION ${CPPREST_VERSION_MAJOR}.${CPPREST_VERSION_MINOR})
 
   install(
-    TARGETS ${Casablanca_LIBRARY}
+    TARGETS cpprest
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
     )

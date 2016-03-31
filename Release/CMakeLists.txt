@@ -190,9 +190,8 @@ else()
   set(Casablanca_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include)
 endif()
 
-set(Casablanca_LIBRARY ${LIB}cpprest)
-set(Casablanca_LIBRARIES ${Casablanca_LIBRARY}
-  ${Boost_LIBRARIES})
+set(Casablanca_LIBRARY cpprest)
+set(Casablanca_LIBRARIES cpprest ${Boost_LIBRARIES})
 
 # Everything in the project needs access to the casablanca include directories
 include_directories(${Casablanca_INCLUDE_DIRS})
@@ -203,9 +202,9 @@ function(add_casablanca_test NAME SOURCES_VAR)
   message("-- Added test library ${NAME}")
   if (NOT TEST_LIBRARY_TARGET_TYPE STREQUAL "OBJECT")
     target_link_libraries(${NAME}
-      ${LIB}httptest_utilities
-      ${LIB}common_utilities
-      ${LIB}unittestpp
+      httptest_utilities
+      common_utilities
+      unittestpp
       ${Casablanca_LIBRARIES}
       ${ANDROID_STL_FLAGS}
       )
