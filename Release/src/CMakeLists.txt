@@ -66,7 +66,6 @@ elseif(WIN32)
     http/listener/http_server_httpsys.cpp
     pplx/pplxwin.cpp
     streams/fileio_win32.cpp
-    pch/stdafx.cpp
   )
   set(EXTRALINKS
     bcrypt.lib
@@ -74,11 +73,16 @@ elseif(WIN32)
     httpapi.lib
     Winhttp.lib
   )
+  add_compile_options(/Yustdafx.h /Zm200)
+  set_source_files_properties(pch/stdafx.cpp PROPERTIES COMPILE_FLAGS "/Ycstdafx.h")
+
+  if (NOT ${CMAKE_GENERATOR} MATCHES "Visual Studio .*")
+    set_source_files_properties(pch/stdafx.cpp PROPERTIES OBJECT_OUTPUTS "${CMAKE_CURRENT_BINARY_DIR}/stdafx.pch")
+    set_source_files_properties(${SOURCES} PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/stdafx.pch")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNINGS}")
-  if (${CMAKE_GENERATOR} MATCHES "Visual Studio .*")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Yustdafx.h /Zm200")
-    set_source_files_properties(pch/stdafx.cpp PROPERTIES COMPILE_FLAGS "/Ycstdafx.h")
   endif()
+
+  list(APPEND SOURCES pch/stdafx.cpp)
 
   if (BUILD_SHARED_LIBS)
     add_definitions(-D_ASYNCRT_EXPORT -D_PPLX_EXPORT -D_USRDLL)
