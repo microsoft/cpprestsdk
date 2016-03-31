@@ -3,6 +3,8 @@ if (NOT CPPREST_EXCLUDE_WEBSOCKETS)
   include_directories(${Boost_INCLUDE_DIR} ${OPENSSL_INCLUDE_DIR})
 endif()
 
+add_definitions(${WARNINGS})
+
 set(SOURCES_COMMON
   http/client/http_client_msg.cpp
   http/client/x509_cert_utilities.cpp
@@ -55,9 +57,9 @@ if(UNIX)
   endif()
 
   if(WERROR)
-      set(WARNINGS "${WARNINGS} -Werror")
+      add_compile_options(-Werror)
   endif()
-  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNINGS} -pedantic")
+  add_compile_options(-pedantic)
 elseif(WIN32)
   set(SOURCES
     ${SOURCES_COMMON}
@@ -79,7 +81,6 @@ elseif(WIN32)
   if (NOT ${CMAKE_GENERATOR} MATCHES "Visual Studio .*")
     set_source_files_properties(pch/stdafx.cpp PROPERTIES OBJECT_OUTPUTS "${CMAKE_CURRENT_BINARY_DIR}/stdafx.pch")
     set_source_files_properties(${SOURCES} PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/stdafx.pch")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNINGS}")
   endif()
 
   list(APPEND SOURCES pch/stdafx.cpp)
