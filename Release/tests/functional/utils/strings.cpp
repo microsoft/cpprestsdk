@@ -278,13 +278,22 @@ TEST(utf8_to_utf16_errors)
 
 TEST(latin1_to_utf16)
 {
-    // TODO: find some string that actually uses something unique to the Latin1 code page.
-    std::string str_latin1("This is a test");
-    utf16string str_utf16 = utility::conversions::latin1_to_utf16(str_latin1);
-    
-    for (size_t i = 0; i < str_latin1.size(); ++i)
+    char in[256] = { 0 };
+    char16_t expectedResult[256] = { 0 };
+    for (size_t i = 0; i < 256; ++i)
     {
-        VERIFY_ARE_EQUAL((utf16char)str_latin1[i], str_utf16[i]);
+        in[i] = static_cast<char>(i);
+        expectedResult[i] = static_cast<char16_t>(i);
+    }
+
+    std::string str_latin1(in, 256);
+
+    auto actualResult = utility::conversions::latin1_to_utf16(str_latin1);
+
+    VERIFY_ARE_EQUAL(str_latin1.size(), actualResult.size());
+    for (size_t i = 0; i < actualResult.size(); ++i)
+    {
+        VERIFY_ARE_EQUAL(expectedResult[i], actualResult[i]);
     }
 }
 
