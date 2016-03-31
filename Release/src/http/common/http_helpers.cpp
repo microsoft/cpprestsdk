@@ -272,7 +272,7 @@ utf16string convert_utf16_to_utf16(utf16string src)
     {
     case little_endian:
         src.erase(0, 1);
-        return std::move(src);
+        return src;
     case big_endian:
         return convert_utf16be_to_utf16le(std::move(src), true);
     case unknown:
@@ -313,7 +313,7 @@ static utf16string big_endian_to_little_endian(utf16string src, bool erase_bom)
     }
     if (src.empty())
     {
-        return std::move(src);
+        return src;
     }
 
     const size_t size = src.size();
@@ -324,7 +324,7 @@ static utf16string big_endian_to_little_endian(utf16string src, bool erase_bom)
         src[i] = static_cast<utf16char>(src[i] | ch >> 8);
     }
 
-    return std::move(src);
+    return src;
 }
 
 utility::string_t convert_utf16be_to_string_t(utf16string src, bool erase_bom)
