@@ -35,7 +35,7 @@
     <DebugFileSuffix>d</DebugFileSuffix>
   </PropertyGroup>
   <PropertyGroup>
-    <TargetName>$(CppRestBaseFileName)140$(DebugFileSuffix)_$(CppRestSDKVersionFileSuffix)</TargetName>
+    <TargetName>lib$(CppRestBaseFileName)140$(DebugFileSuffix)_$(CppRestSDKVersionFileSuffix)</TargetName>
   </PropertyGroup>
   <ItemGroup>
     <None Include="packages.config">
