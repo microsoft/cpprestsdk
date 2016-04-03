@@ -28,6 +28,7 @@
 #if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__)) || (defined(_WIN32)  && !defined(__cplusplus_winrt) && !defined(_M_ARM) && !defined(CPPREST_EXCLUDE_WEBSOCKETS))
 
 #include "cpprest/details/x509_cert_utilities.h"
+#include <vector>
 
 #if defined(ANDROID) || defined(__ANDROID__)
 #include <jni.h>
@@ -47,6 +48,8 @@
 #endif
 
 namespace web { namespace http { namespace client { namespace details {
+
+static bool verify_X509_cert_chain(const std::vector<std::string> &certChain, const std::string &hostName);
 
 bool verify_cert_chain_platform_specific(boost::asio::ssl::verify_context &verifyCtx, const std::string &hostName)
 {
