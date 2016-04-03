@@ -89,6 +89,36 @@ public:
 #undef DAT
 };
 
+namespace details {
+
+/// <summary>
+/// Constants for MIME types.
+/// </summary>
+class mime_types
+{
+public:
+#define _MIME_TYPES
+#define DAT(a,b) _ASYNCRTIMP const static utility::string_t a;
+#include "cpprest/details/http_constants.dat"
+#undef _MIME_TYPES
+#undef DAT
+};
+
+/// <summary>
+/// Constants for charset types.
+/// </summary>
+class charset_types
+{
+public:
+#define _CHARSET_TYPES
+#define DAT(a,b) _ASYNCRTIMP const static utility::string_t a;
+#include "cpprest/details/http_constants.dat"
+#undef _CHARSET_TYPES
+#undef DAT
+};
+
+}
+
 /// Message direction
 namespace message_direction
 {

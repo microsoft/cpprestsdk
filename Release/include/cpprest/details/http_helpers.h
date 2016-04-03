@@ -35,43 +35,14 @@ namespace details
 {
 
     /// <summary>
-    /// Constants for MIME types.
-    /// </summary>
-    class mime_types
-    {
-    public:
-    #define _MIME_TYPES
-    #define DAT(a,b) _ASYNCRTIMP const static utility::string_t a;
-    #include "cpprest/details/http_constants.dat"
-    #undef _MIME_TYPES
-    #undef DAT
-    };
-
-    /// <summary>
-    /// Constants for charset types.
-    /// </summary>
-    class charset_types
-    {
-    public:
-    #define _CHARSET_TYPES
-    #define DAT(a,b) _ASYNCRTIMP const static utility::string_t a;
-    #include "cpprest/details/http_constants.dat"
-    #undef _CHARSET_TYPES
-    #undef DAT
-    };
-
-    /// <summary>
     /// Helper function to get the default HTTP reason phrase for a status code.
     /// </summary>
     utility::string_t get_default_reason_phrase(status_code code);
 
     // simple helper functions to trim whitespace.
-    _ASYNCRTIMP void __cdecl ltrim_whitespace(utility::string_t &str);
-    _ASYNCRTIMP void __cdecl rtrim_whitespace(utility::string_t &str);
     _ASYNCRTIMP void __cdecl trim_whitespace(utility::string_t &str);
 
     bool validate_method(const utility::string_t& method);
-
 
     namespace chunked_encoding
     {

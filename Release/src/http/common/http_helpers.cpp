@@ -72,13 +72,13 @@ utility::string_t get_default_reason_phrase(status_code code)
 }
 
 
-void ltrim_whitespace(utility::string_t &str)
+static void ltrim_whitespace(utility::string_t &str)
 {
     size_t index;
     for (index = 0; index < str.size() && isspace(str[index]); ++index);
     str.erase(0, index);
 }
-void rtrim_whitespace(utility::string_t &str)
+static void rtrim_whitespace(utility::string_t &str)
 {
     size_t index;
     for (index = str.size(); index > 0 && isspace(str[index - 1]); --index);
