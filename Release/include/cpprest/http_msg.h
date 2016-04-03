@@ -376,7 +376,7 @@ private:
 /// <summary>
 /// Internal representation of an HTTP response.
 /// </summary>
-class _http_response : public http::details::http_msg_base
+class _http_response final : public http::details::http_msg_base
 {
 public:
     _http_response() : m_status_code((std::numeric_limits<uint16_t>::max)()) { }
@@ -488,7 +488,7 @@ public:
     /// Extracts the body of the response message as a string value, checking that the content type is a MIME text type.
     /// A body can only be extracted once because in some cases an optimization is made where the data is 'moved' out.
     /// </summary>
-    /// <param name="ignore_content_type">If true, ignores the Content-Type header and assumes UTF-8.</param>
+    /// <param name="ignore_content_type">If true, ignores the Content-Type header and assumes text.</param>
     /// <returns>String containing body of the message.</returns>
     pplx::task<utility::string_t> extract_string(bool ignore_content_type = false) const
     {
@@ -500,7 +500,7 @@ public:
     /// Extracts the body of the response message as a UTF-8 string value, checking that the content type is a MIME text type.
     /// A body can only be extracted once because in some cases an optimization is made where the data is 'moved' out.
     /// </summary>
-    /// <param name="ignore_content_type">If true, ignores the Content-Type header and assumes UTF-8.</param>
+    /// <param name="ignore_content_type">If true, ignores the Content-Type header and assumes text.</param>
     /// <returns>String containing body of the message.</returns>
     pplx::task<utf8string> extract_utf8string(bool ignore_content_type = false) const
     {
@@ -512,7 +512,7 @@ public:
     /// Extracts the body of the response message as a UTF-16 string value, checking that the content type is a MIME text type.
     /// A body can only be extracted once because in some cases an optimization is made where the data is 'moved' out.
     /// </summary>
-    /// <param name="ignore_content_type">If true, ignores the Content-Type header and assumes UTF-16.</param>
+    /// <param name="ignore_content_type">If true, ignores the Content-Type header and assumes text.</param>
     /// <returns>String containing body of the message.</returns>
     pplx::task<utf16string> extract_utf16string(bool ignore_content_type = false) const
     {
@@ -524,7 +524,7 @@ public:
     /// Extracts the body of the response message into a json value, checking that the content type is application/json.
     /// A body can only be extracted once because in some cases an optimization is made where the data is 'moved' out.
     /// </summary>
-    /// <param name="ignore_content_type">If true, ignores the Content-Type header and assumes UTF-8.</param>
+    /// <param name="ignore_content_type">If true, ignores the Content-Type header and assumes json.</param>
     /// <returns>JSON value from the body of this message.</returns>
     pplx::task<json::value> extract_json(bool ignore_content_type = false) const
     {
@@ -707,7 +707,7 @@ namespace details {
 /// <summary>
 /// Internal representation of an HTTP request message.
 /// </summary>
-class _http_request : public http::details::http_msg_base, public std::enable_shared_from_this<_http_request>
+class _http_request final : public http::details::http_msg_base, public std::enable_shared_from_this<_http_request>
 {
 public:
 
