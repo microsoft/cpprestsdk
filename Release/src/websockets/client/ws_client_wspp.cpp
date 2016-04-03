@@ -24,9 +24,10 @@
 ****/
 
 #include "stdafx.h"
-#include "cpprest/details/x509_cert_utilities.h"
 
 #if !defined(CPPREST_EXCLUDE_WEBSOCKETS)
+
+#include "cpprest/details/x509_cert_utilities.h"
 
 // Force websocketpp to use C++ std::error_code instead of Boost.
 #define _WEBSOCKETPP_CPP11_SYSTEM_ERROR_

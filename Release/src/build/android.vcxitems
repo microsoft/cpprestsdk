@@ -15,7 +15,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\http\client\http_client_asio.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\http\client\x509_cert_utilities_android.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\http\listener\http_server_asio.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\pplx\pplxlinux.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\pplx\threadpool.cpp" />
