@@ -61,27 +61,6 @@ namespace details
     };
 
     /// <summary>
-    /// Determines whether or not the given content type is 'textual' according the feature specifications.
-    /// </summary>
-    bool is_content_type_textual(const utility::string_t &content_type);
-
-    /// <summary>
-    /// Determines whether or not the given content type is JSON according the feature specifications.
-    /// </summary>
-    bool is_content_type_json(const utility::string_t &content_type);
-
-    /// <summary>
-    /// Parses the given Content-Type header value to get out actual content type and charset.
-    /// If the charset isn't specified the default charset for the content type will be set.
-    /// </summary>
-    void parse_content_type_and_charset(const utility::string_t &content_type, utility::string_t &content, utility::string_t &charset);
-
-    /// <summary>
-    /// Gets the default charset for given content type. If the MIME type is not textual or recognized Latin1 will be returned.
-    /// </summary>
-    utility::string_t get_default_charset(const utility::string_t &content_type);
-
-    /// <summary>
     /// Helper function to get the default HTTP reason phrase for a status code.
     /// </summary>
     utility::string_t get_default_reason_phrase(status_code code);
