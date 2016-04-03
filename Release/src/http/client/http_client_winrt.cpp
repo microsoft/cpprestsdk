@@ -26,7 +26,7 @@
 ****/
 #include "stdafx.h"
 
-#include "cpprest/details/http_client_impl.h"
+#include "http_client_impl.h"
 
 #include <Strsafe.h>
 // Important for WP8
@@ -109,7 +109,7 @@ public:
             }
         }
 
-        parse_headers_string(hdrStr, response.headers());
+        web::http::details::parse_headers_string(hdrStr, response.headers());
         m_request->complete_headers();
 
         return S_OK;
@@ -516,7 +516,7 @@ protected:
         {
             if ( msg.method() == http::methods::GET || msg.method() == http::methods::HEAD )
             {
-                request->report_exception(http_exception(get_with_body));
+                request->report_exception(http_exception(get_with_body_err_msg));
                 return;
             }
 

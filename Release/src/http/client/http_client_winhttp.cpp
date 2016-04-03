@@ -26,7 +26,8 @@
 ****/
 #include "stdafx.h"
 
-#include "cpprest/details/http_client_impl.h"
+#include "cpprest/http_headers.h"
+#include "http_client_impl.h"
 
 namespace web
 {
@@ -66,6 +67,16 @@ static http::status_code parse_status_code(HINTERNET request_handle)
     return (unsigned short)_wtoi(buffer.c_str());
 }
 
+// Helper function to trim leading and trailing null characters from a string.
+static void trim_nulls(utility::string_t &str)
+{
+    size_t index;
+    for (index = 0; index < str.size() && str[index] == 0; ++index);
+    str.erase(0, index);
+    for (index = str.size(); index > 0 && str[index - 1] == 0; --index);
+    str.erase(index);
+}
+
 // Helper function to get the reason phrase from a WinHTTP response.
 static utility::string_t parse_reason_phrase(HINTERNET request_handle)
 {
@@ -98,7 +109,7 @@ static void parse_winhttp_headers(HINTERNET request_handle, _In_z_ utf16char *he
     response.set_status_code(parse_status_code(request_handle));
     response.set_reason_phrase(parse_reason_phrase(request_handle));
 
-    parse_headers_string(headersStr, response.headers());
+    web::http::details::parse_headers_string(headersStr, response.headers());
 }
 
 // Helper function to build error messages.
@@ -568,7 +579,7 @@ protected:
         {
             if ( msg.method() == http::methods::GET || msg.method() == http::methods::HEAD )
             {
-                request->report_exception(http_exception(get_with_body));
+                request->report_exception(http_exception(get_with_body_err_msg));
                 return;
             }
 
@@ -590,7 +601,7 @@ protected:
         // Add headers.
         if(!msg.headers().empty())
         {
-            const utility::string_t flattened_headers = flatten_http_headers(msg.headers());
+            const utility::string_t flattened_headers = web::http::details::flatten_http_headers(msg.headers());
             if(!WinHttpAddRequestHeaders(
                 winhttp_context->m_request_handle,
                 flattened_headers.c_str(),

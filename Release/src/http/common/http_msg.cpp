@@ -223,6 +223,49 @@ void http_headers::set_content_length(utility::size64_t length)
     m_headers[http::header_names::content_length] = utility::conversions::print_string(length, std::locale::classic());
 }
 
+namespace details {
+
+#ifdef _WIN32
+# define CRLF _XPLATSTR("\r\n")
+#else
+# define CRLF std::string("\r\n")
+#endif
+
+utility::string_t flatten_http_headers(const http_headers &headers)
+{
+    utility::string_t flattened_headers;
+    for (auto iter = headers.begin(); iter != headers.end(); ++iter)
+    {
+        flattened_headers.append(iter->first);
+        flattened_headers.push_back(':');
+        flattened_headers.append(iter->second);
+        flattened_headers.append(CRLF);
+    }
+    return flattened_headers;
+}
+
+void parse_headers_string(_Inout_z_ utf16char *headersStr, http_headers &headers)
+{
+    utf16char *context = nullptr;
+    utf16char *line = wcstok_s(headersStr, CRLF, &context);
+    while (line != nullptr)
+    {
+        const utility::string_t header_line(line);
+        const size_t colonIndex = header_line.find_first_of(_XPLATSTR(":"));
+        if (colonIndex != utility::string_t::npos)
+        {
+            utility::string_t key = header_line.substr(0, colonIndex);
+            utility::string_t value = header_line.substr(colonIndex + 1, header_line.length() - colonIndex - 1);
+            http::details::trim_whitespace(key);
+            http::details::trim_whitespace(value);
+            headers.add(key, value);
+        }
+        line = wcstok_s(nullptr, CRLF, &context);
+    }
+}
+
+}
+
 static const utility::char_t * stream_was_set_explicitly = _XPLATSTR("A stream was set on the message and extraction is not possible");
 static const utility::char_t * unsupported_charset = _XPLATSTR("Charset must be iso-8859-1, utf-8, utf-16, utf-16le, or utf-16be to be extracted.");
 

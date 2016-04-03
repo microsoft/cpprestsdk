@@ -15,6 +15,7 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\http\client\http_client.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\http\client\http_client_msg.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\http\client\x509_cert_utilities.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\http\common\http_helpers.cpp" />
@@ -51,12 +52,11 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\basic_types.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\cpprest_compat.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\fileio.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\http_client_impl.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\http_helpers.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\http_server.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\http_server_api.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\nosal.h" />
-	<ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\resource.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\resource.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\SafeInt3.hpp" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\uri_parser.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\web_utilities.h" />
@@ -83,6 +83,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\pplx\pplxconv.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\pplx\pplxinterface.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\pplx\pplxtasks.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\http\client\http_client_impl.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\pch\stdafx.h" />
   </ItemGroup>
   <ItemGroup>
