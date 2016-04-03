@@ -720,8 +720,6 @@ public:
 
 private:
 
-    void build_pipeline(const uri &base_uri, const http_client_config &client_config);
-
     std::shared_ptr<::web::http::http_pipeline> m_pipeline;
 };
 

@@ -282,19 +282,10 @@ void http_client::add_handler(const std::shared_ptr<http::http_pipeline_stage> &
     m_pipeline->append(stage);
 }
 
-http_client::http_client(const uri &base_uri)
-{
-    build_pipeline(base_uri, http_client_config());
-}
+http_client::http_client(const uri &base_uri) : http_client(base_uri, http_client_config())
+{}
 
 http_client::http_client(const uri &base_uri, const http_client_config &client_config)
-{
-    build_pipeline(base_uri, client_config);
-}
-
-http_client::~http_client() CPPREST_NOEXCEPT {}
-
-void http_client::build_pipeline(const uri &base_uri, const http_client_config &client_config)
 {
     if (base_uri.scheme().empty())
     {
@@ -302,12 +293,12 @@ void http_client::build_pipeline(const uri &base_uri, const http_client_config &
         uribuilder.set_scheme(_XPLATSTR("http"));
         uri uriWithScheme = uribuilder.to_uri();
         verify_uri(uriWithScheme);
-        m_pipeline = ::web::http::http_pipeline::create_pipeline(std::make_shared<details::http_network_handler>(uriWithScheme, client_config));
+        m_pipeline = ::web::http::http_pipeline::create_pipeline(details::create_platform_final_pipeline_stage(uriWithScheme, client_config));
     }
     else
     {
         verify_uri(base_uri);
-        m_pipeline = ::web::http::http_pipeline::create_pipeline(std::make_shared<details::http_network_handler>(base_uri, client_config));
+        m_pipeline = ::web::http::http_pipeline::create_pipeline(details::create_platform_final_pipeline_stage(base_uri, client_config));
     }
 
 #if !defined(CPPREST_TARGET_XP)
@@ -319,16 +310,18 @@ void http_client::build_pipeline(const uri &base_uri, const http_client_config &
         std::make_shared<oauth2::details::oauth2_handler>(client_config.oauth2())));
 }
 
+http_client::~http_client() CPPREST_NOEXCEPT {}
+
 const http_client_config & http_client::client_config() const
 {
-    auto ph = std::static_pointer_cast<details::http_network_handler>(m_pipeline->last_stage());
-    return ph->http_client_impl()->client_config();
+    auto ph = std::static_pointer_cast<details::_http_client_communicator>(m_pipeline->last_stage());
+    return ph->client_config();
 }
 
 const uri & http_client::base_uri() const
 {
-    auto ph = std::static_pointer_cast<details::http_network_handler>(m_pipeline->last_stage());
-    return ph->http_client_impl()->base_uri();
+    auto ph = std::static_pointer_cast<details::_http_client_communicator>(m_pipeline->last_stage());
+    return ph->base_uri();
 }
 
 

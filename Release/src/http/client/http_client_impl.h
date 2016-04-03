@@ -96,7 +96,7 @@ protected:
 // Interface used by client implementations. Concrete implementations are responsible for
 // sending HTTP requests and receiving the responses.
 //
-class _http_client_communicator
+class _http_client_communicator : public http_pipeline_stage
 {
 public:
 
@@ -143,26 +143,9 @@ private:
     int m_scheduled;
 };
 
-class http_network_handler : public http_pipeline_stage
-{
-public:
-    /// <summary>
-    /// The constructor is separately defined by each subsystem (winhttp, winrt, asio) to create the platform-specific _http_client_communicator.
-    /// </summary>
-    http_network_handler(const uri &base_uri, const http_client_config &client_config);
-
-    /// <summary>
-    /// This method is separately defined by each subsystem (winhttp, winrt, asio) to enable the platform-specific handling behavior.
-    /// </summary>
-    virtual pplx::task<http_response> propagate(http_request request) override;
-
-    const std::shared_ptr<details::_http_client_communicator>& http_client_impl() const
-    {
-        return m_http_client_impl;
-    }
-
-private:
-    std::shared_ptr<_http_client_communicator> m_http_client_impl;
-};
+/// <summary>
+/// Factory function implemented by the separate platforms to construct their subclasses of _http_client_communicator
+/// </summary>
+std::shared_ptr<_http_client_communicator> create_platform_final_pipeline_stage(uri base_uri, const http_client_config& client_config);
 
 }}}}

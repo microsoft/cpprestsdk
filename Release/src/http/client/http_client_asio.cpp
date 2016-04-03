@@ -44,10 +44,13 @@
 #endif
 
 #include "http_client_impl.h"
+#include "cpprest/base_uri.h"
 #include "cpprest/details/x509_cert_utilities.h"
 #include <unordered_set>
 
 using boost::asio::ip::tcp;
+
+#define CRLF std::string("\r\n")
 
 namespace web { namespace http
 {
@@ -227,8 +230,6 @@ private:
         m_is_reused = true;
     }
 
-    void handle_pool_timer(const boost::system::error_code& ec);
-
     // Guards concurrent access to socket/ssl::stream. This is necessary
     // because timeouts and cancellation can touch the socket at the same time
     // as normal message processing.
@@ -331,7 +332,7 @@ private:
 
 
 
-class asio_client : public _http_client_communicator, public std::enable_shared_from_this<asio_client>
+class asio_client : public _http_client_communicator
 {
 public:
     asio_client(http::uri address, http_client_config client_config)
@@ -346,6 +347,8 @@ public:
     void send_request(const std::shared_ptr<request_context> &request_ctx) override;
 
     unsigned long open() override { return 0; }
+
+    virtual pplx::task<http_response> propagate(http_request request) override;
 
     asio_connection_pool m_pool;
     tcp::resolver m_resolver;
@@ -656,7 +659,7 @@ public:
                 extra_headers.append(": no-cache" + CRLF);
             }
                 
-            request_stream << flatten_http_headers(ctx->m_request.headers());
+            request_stream << ::web::http::details::flatten_http_headers(ctx->m_request.headers());
             request_stream << extra_headers;
             // Enforce HTTP connection keep alive (even for the old HTTP/1.0 protocol).
             request_stream << "Connection: Keep-Alive" << CRLF << CRLF;
@@ -1446,22 +1449,9 @@ private:
 };
 
 
-
-http_network_handler::http_network_handler(const uri &base_uri, const http_client_config &client_config) :
-    m_http_client_impl(std::make_shared<asio_client>(base_uri, client_config))
-{}
-
-pplx::task<http_response> http_network_handler::propagate(http_request request)
+std::shared_ptr<_http_client_communicator> create_platform_final_pipeline_stage(uri base_uri, const http_client_config& client_config)
 {
-    auto context = details::asio_context::create_request_context(m_http_client_impl, request);
-
-    // Use a task to externally signal the final result and completion of the task.
-    auto result_task = pplx::create_task(context->m_request_completion);
-
-    // Asynchronously send the response with the HTTP client implementation.
-    m_http_client_impl->async_send_request(context);
-
-    return result_task;
+    return std::make_shared<asio_client>(base_uri, client_config);
 }
 
 void asio_client::send_request(const std::shared_ptr<request_context> &request_ctx)
@@ -1486,6 +1476,20 @@ void asio_client::send_request(const std::shared_ptr<request_context> &request_c
     }
 
     ctx->start_request();
+}
+
+pplx::task<http_response> asio_client::propagate(http_request request)
+{
+    auto self = std::static_pointer_cast<_http_client_communicator>(shared_from_this());
+    auto context = details::asio_context::create_request_context(self, request);
+
+    // Use a task to externally signal the final result and completion of the task.
+    auto result_task = pplx::create_task(context->m_request_completion);
+
+    // Asynchronously send the response with the HTTP client implementation.
+    this->async_send_request(context);
+
+    return result_task;
 }
 
 }}}} // namespaces
