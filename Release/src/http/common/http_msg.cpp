@@ -42,6 +42,146 @@ utility::string_t http_headers::content_type() const
     return result;
 }
 
+
+
+/// Helper functions to convert a series of bytes from a charset to utf-8 or utf-16.
+/// These APIs deal with checking for and handling byte order marker (BOM).
+namespace {
+    enum endian_ness
+    {
+        little_endian,
+        big_endian,
+        unknown
+    };
+    endian_ness check_byte_order_mark(const utf16string &str)
+    {
+        if (str.empty())
+        {
+            return unknown;
+        }
+        const unsigned char *src = (const unsigned char *) &str[0];
+
+        // little endian
+        if (src[0] == 0xFF && src[1] == 0xFE)
+        {
+            return little_endian;
+        }
+
+        // big endian
+        else if (src[0] == 0xFE && src[1] == 0xFF)
+        {
+            return big_endian;
+        }
+
+        return unknown;
+    }
+
+    std::string convert_utf16le_to_utf8(utf16string src, bool erase_bom)
+    {
+        if (erase_bom && !src.empty())
+        {
+            src.erase(0, 1);
+        }
+        return utf16_to_utf8(std::move(src));
+    }
+
+    utility::string_t convert_utf16le_to_string_t(utf16string src, bool erase_bom)
+    {
+        if (erase_bom && !src.empty())
+        {
+            src.erase(0, 1);
+        }
+    #ifdef _UTF16_STRINGS
+        return std::move(src);
+    #else
+        return utf16_to_utf8(std::move(src));
+    #endif
+    }
+
+    // Helper function to change endian ness from big endian to little endian
+    utf16string big_endian_to_little_endian(utf16string src, bool erase_bom)
+    {
+        if (erase_bom && !src.empty())
+        {
+            src.erase(0, 1);
+        }
+        if (src.empty())
+        {
+            return std::move(src);
+        }
+
+        const size_t size = src.size();
+        for (size_t i = 0; i < size; ++i)
+        {
+            utf16char ch = src[i];
+            src[i] = static_cast<utf16char>(ch << 8);
+            src[i] = static_cast<utf16char>(src[i] | ch >> 8);
+        }
+
+        return std::move(src);
+    }
+
+    std::string convert_utf16be_to_utf8(utf16string src, bool erase_bom)
+    {
+        return utf16_to_utf8(big_endian_to_little_endian(std::move(src), erase_bom));
+    }
+
+    utf16string convert_utf16be_to_utf16le(utf16string src, bool erase_bom)
+    {
+        return big_endian_to_little_endian(std::move(src), erase_bom);
+    }
+
+    utility::string_t convert_utf16be_to_string_t(utf16string src, bool erase_bom)
+    {
+    #ifdef _UTF16_STRINGS
+        return convert_utf16be_to_utf16le(std::move(src), erase_bom);
+    #else
+        return convert_utf16be_to_utf8(std::move(src), erase_bom);
+    #endif
+    }
+
+    std::string convert_utf16_to_utf8(utf16string src)
+    {
+        const endian_ness endian = check_byte_order_mark(src);
+        switch (endian)
+        {
+        case little_endian:
+            return convert_utf16le_to_utf8(std::move(src), true);
+        case big_endian:
+            return convert_utf16be_to_utf8(std::move(src), true);
+        case unknown:
+            // unknown defaults to big endian.
+            return convert_utf16be_to_utf8(std::move(src), false);
+        }
+        __assume(0);
+    }
+
+    utf16string convert_utf16_to_utf16(utf16string src)
+    {
+        const endian_ness endian = check_byte_order_mark(src);
+        switch (endian)
+        {
+        case little_endian:
+            src.erase(0, 1);
+            return std::move(src);
+        case big_endian:
+            return convert_utf16be_to_utf16le(std::move(src), true);
+        case unknown:
+            // unknown defaults to big endian.
+            return convert_utf16be_to_utf16le(std::move(src), false);
+        }
+        __assume(0);
+    }
+    utility::string_t convert_utf16_to_string_t(utf16string src)
+    {
+    #ifdef _UTF16_STRINGS
+        return convert_utf16_to_utf16(std::move(src));
+    #else
+        return convert_utf16_to_utf8(std::move(src));
+    #endif
+    }
+}
+
 void http_headers::set_content_type(utility::string_t type)
 {
     m_headers[http::header_names::content_type] = std::move(type);

@@ -65,19 +65,6 @@ namespace details
     /// </summary>
     utility::string_t get_default_reason_phrase(status_code code);
 
-    /// <summary>
-    /// Helper functions to convert a series of bytes from a charset to utf-8 or utf-16.
-    /// These APIs deal with checking for and handling byte order marker (BOM).
-    /// </summary>
-    utility::string_t convert_utf16_to_string_t(utf16string src);
-    utf16string convert_utf16_to_utf16(utf16string src);
-    std::string convert_utf16_to_utf8(utf16string src);
-    utility::string_t convert_utf16le_to_string_t(utf16string src, bool erase_bom);
-    std::string convert_utf16le_to_utf8(utf16string src, bool erase_bom);
-    utility::string_t convert_utf16be_to_string_t(utf16string src, bool erase_bom);
-    std::string convert_utf16be_to_utf8(utf16string src, bool erase_bom);
-    utf16string convert_utf16be_to_utf16le(utf16string src, bool erase_bom);
-
     // simple helper functions to trim whitespace.
     _ASYNCRTIMP void __cdecl ltrim_whitespace(utility::string_t &str);
     _ASYNCRTIMP void __cdecl rtrim_whitespace(utility::string_t &str);
