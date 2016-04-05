@@ -106,6 +106,8 @@ bool verify_cert_chain_platform_specific(boost::asio::ssl::verify_context &verif
 }
 
 #if defined(ANDROID) || defined(__ANDROID__)
+using namespace crossplat;
+
 /// <summary>
 /// Helper function to check return value and see if any exceptions
 /// occurred when calling a JNI function.

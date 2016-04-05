@@ -225,12 +225,6 @@ void http_headers::set_content_length(utility::size64_t length)
 
 namespace details {
 
-#ifdef _WIN32
-# define CRLF _XPLATSTR("\r\n")
-#else
-# define CRLF std::string("\r\n")
-#endif
-
 utility::string_t flatten_http_headers(const http_headers &headers)
 {
     utility::string_t flattened_headers;
@@ -244,6 +238,7 @@ utility::string_t flatten_http_headers(const http_headers &headers)
     return flattened_headers;
 }
 
+#if defined(_WIN32)
 void parse_headers_string(_Inout_z_ utf16char *headersStr, http_headers &headers)
 {
     utf16char *context = nullptr;
@@ -263,6 +258,7 @@ void parse_headers_string(_Inout_z_ utf16char *headersStr, http_headers &headers
         line = wcstok_s(nullptr, CRLF, &context);
     }
 }
+#endif
 
 }
 
