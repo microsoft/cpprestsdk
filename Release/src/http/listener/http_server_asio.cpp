@@ -58,7 +58,7 @@ namespace details
 // This is used as part of the async_read_until call below; see the
 // following for more details:
 // http://www.boost.org/doc/libs/1_55_0/doc/html/boost_asio/reference/async_read_until/overload4.html
-struct crlf_nonascii_searcher_t
+struct crlfcrlf_nonascii_searcher_t
 {
     enum class State
     {
@@ -152,7 +152,7 @@ namespace boost
 {
 namespace asio
 {
-template <> struct is_match_condition<web::http::experimental::listener::details::crlf_nonascii_searcher_t> : public boost::true_type {};
+template <> struct is_match_condition<web::http::experimental::listener::details::crlfcrlf_nonascii_searcher_t> : public boost::true_type {};
 }}
 
 namespace web
