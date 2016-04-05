@@ -280,9 +280,11 @@ public:
     http_pipeline(std::shared_ptr<details::_http_client_communicator> last) : m_last_stage(std::move(last))
     {}
 
-    // No copy or assignment.
-    http_pipeline & operator=(const http_pipeline &) = delete;
+    // pplx::extensibility::recursive_lock_t does not support move/copy, but does not delete the functions either.
     http_pipeline(const http_pipeline &) = delete;
+    http_pipeline(http_pipeline &&) = delete;
+    http_pipeline & operator=(const http_pipeline &) = delete;
+    http_pipeline & operator=(http_pipeline &&) = delete;
 
     /// <summary>
     /// Initiate an http request into the pipeline
