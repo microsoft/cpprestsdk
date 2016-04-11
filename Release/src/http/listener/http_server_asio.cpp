@@ -799,7 +799,7 @@ void connection::finish_request_response()
     }
     else
     {
-        printf(stderr, "!!! m_refs = %d in finish_request_response, %s \n", (int)m_refs, m_request.request_uri().path().c_str());
+        throw std::runtime_error("m_refs != 0 in finish_request_response, memory leak detected!");
     }
 }
 
