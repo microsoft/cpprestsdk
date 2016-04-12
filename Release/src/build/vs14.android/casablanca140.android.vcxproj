@@ -60,8 +60,10 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
+    <UseMultiToolTask>true</UseMultiToolTask>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
+    <UseMultiToolTask>true</UseMultiToolTask>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
     <ClCompile>
@@ -112,6 +114,12 @@
   </PropertyGroup>
   <PropertyGroup>
     <TargetName>$(CppRestBaseFileName)140$(DebugFileSuffix)_android_$(CppRestSDKVersionFileSuffix)</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
+    <UseMultiToolTask>true</UseMultiToolTask>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
+    <UseMultiToolTask>true</UseMultiToolTask>
   </PropertyGroup>
   <Import Project="..\common.vcxitems" Label="Shared" Condition="Exists('..\common.vcxitems')" />
   <Import Project="..\android.vcxitems" Label="Shared" Condition="Exists('..\android.vcxitems')" />

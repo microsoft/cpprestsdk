@@ -5,4 +5,4 @@ set(SOURCES
   stdafx.cpp
 )
 
-add_casablanca_test(${LIB}pplx_test SOURCES)
+add_casablanca_test(pplx_test SOURCES)

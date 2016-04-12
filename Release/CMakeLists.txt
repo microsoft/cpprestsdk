@@ -1,6 +1,6 @@
 set(CMAKE_LEGACY_CYGWIN_WIN32 0)
 cmake_minimum_required(VERSION 2.6)
-project(casablanca)
+project(cpprest)
 
 enable_testing()
 
@@ -8,6 +8,8 @@ set(WARNINGS)
 set(ANDROID_STL_FLAGS)
 
 option(WERROR "Threat Warnings as Errors" ON)
+option(BUILD_TESTS "Build tests." ON)
+option(CPPREST_EXCLUDE_WEBSOCKETS "Exclude websockets functionality." OFF)
 
 # Platform (not compiler) specific settings
 if(IOS)
@@ -27,7 +29,6 @@ if(IOS)
 
   set(BUILD_SHARED_LIBS OFF)
   set(BUILD_SAMPLES OFF)
-  option(BUILD_TESTS "Build tests." ON)
 elseif(ANDROID)
   set(Boost_COMPILER "-clang")
   set(Boost_USE_STATIC_LIBS ON)
@@ -73,7 +74,6 @@ elseif(ANDROID)
 
   option(BUILD_SHARED_LIBS "Build shared Libraries." OFF)
   set(BUILD_SAMPLES OFF)
-  option(BUILD_TESTS "Build tests." ON)
 elseif(UNIX) # This includes OSX
   find_package(Boost 1.54 REQUIRED COMPONENTS random chrono system thread regex filesystem)
   find_package(Threads REQUIRED)
@@ -88,7 +88,6 @@ elseif(UNIX) # This includes OSX
   find_package(OpenSSL 1.0.0 REQUIRED)
 
   option(BUILD_SHARED_LIBS "Build shared Libraries." ON)
-  option(BUILD_TESTS "Build tests." ON)
   option(BUILD_SAMPLES "Build samples." ON)
   option(CASA_INSTALL_HEADERS "Install header files." ON)
   if(CASA_INSTALL_HEADERS)
@@ -101,9 +100,7 @@ elseif(UNIX) # This includes OSX
   endif()
 elseif(WIN32)
   option(BUILD_SHARED_LIBS "Build shared Libraries." ON)
-  option(BUILD_TESTS "Build tests." ON)
   option(BUILD_SAMPLES "Build samples." ON)
-  option(CPPREST_EXCLUDE_WEBSOCKETS "Exclude websockets functionality." OFF)
   option(Boost_USE_STATIC_LIBS ON)
 
   add_definitions(-DUNICODE -D_UNICODE)
@@ -117,11 +114,31 @@ elseif(WIN32)
   endif()
   add_definitions(${Casablanca_DEFINITIONS} -D_WINSOCK_DEPRECATED_NO_WARNINGS -DWIN32)
 
-  if (CPPREST_EXCLUDE_WEBSOCKETS)
-    add_definitions(-DCPPREST_EXCLUDE_WEBSOCKETS=1)
-  else()
-    find_package(Boost 1.55 REQUIRED COMPONENTS random system thread filesystem chrono atomic)
-    find_package(OpenSSL 1.0 REQUIRED)
+  if (NOT CPPREST_EXCLUDE_WEBSOCKETS)
+    set(NUGET_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../packages")
+    set(PACKAGE_PATHS)
+    list(APPEND PACKAGE_PATHS "${NUGET_PATH}/boost.1.58.0.0/")
+    list(APPEND PACKAGE_PATHS "${NUGET_PATH}/boost_system-vc140.1.58.0-vs140rc/")
+    list(APPEND PACKAGE_PATHS "${NUGET_PATH}/boost_date_time-vc140.1.58.0-vs140rc/")
+    list(APPEND PACKAGE_PATHS "${NUGET_PATH}/boost_regex-vc140.1.58.0-vs140rc/")
+    list(APPEND PACKAGE_PATHS "${NUGET_PATH}/openssl.v140.windesktop.msvcstl.static.rt-dyn.x64.1.0.2.1/")
+    list(APPEND PACKAGE_PATHS "${NUGET_PATH}/zlib.v140.windesktop.msvcstl.static.rt-dyn.1.2.8.8/")
+
+    if (NOT WINDOWS_STORE AND NOT WINDOWS_PHONE)
+      find_library(Boost_SYSTEM_LIBRARY libboost_system-vc140-mt-gd-1_58.lib PATHS ${PACKAGE_PATHS} PATH_SUFFIXES lib/native/address-model-64/lib)
+      find_library(Boost_DATE_TIME_LIBRARY libboost_date_time-vc140-mt-gd-1_58.lib PATHS ${PACKAGE_PATHS} PATH_SUFFIXES lib/native/address-model-64/lib)
+      find_library(Boost_REGEX_LIBRARY libboost_regex-vc140-mt-gd-1_58.lib PATHS ${PACKAGE_PATHS} PATH_SUFFIXES lib/native/address-model-64/lib)
+      set(Boost_LIBRARIES ${Boost_REGEX_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_DATE_TIME_LIBRARY})
+  
+      find_library(OpenSSL_libeay_LIBRARY libeay32.lib PATHS ${PACKAGE_PATHS} PATH_SUFFIXES lib/native/v140/windesktop/msvcstl/static/rt-dyn/x64/debug)
+      find_library(OpenSSL_ssleay_LIBRARY ssleay32.lib PATHS ${PACKAGE_PATHS} PATH_SUFFIXES lib/native/v140/windesktop/msvcstl/static/rt-dyn/x64/debug)
+      find_library(ZLIB_LIBRARY zlibstaticd.lib PATHS ${PACKAGE_PATHS} PATH_SUFFIXES lib/native/v140/windesktop/msvcstl/static/rt-dyn/x64/debug)
+      set(OPENSSL_LIBRARIES ${OpenSSL_ssleay_LIBRARY} ${OpenSSL_libeay_LIBRARY} ${ZLIB_LIBRARY})
+
+      set(OPENSSL_INCLUDE_DIR "${NUGET_PATH}/openssl.v140.windesktop.msvcstl.static.rt-dyn.x64.1.0.2.1/build/native/include")
+    endif()
+
+    set(Boost_INCLUDE_DIR "${NUGET_PATH}/boost.1.58.0.0/lib/native/include")
   endif()
 else()
   message(FATAL_ERROR "-- Unsupported Build Platform.")
@@ -160,9 +177,18 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
   message("-- Setting msvc options")
   set(WARNINGS)
+  set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} /ignore:4264")
+  add_compile_options(/bigobj)
+  if (WINDOWS_STORE OR WINDOWS_PHONE)
+    add_compile_options(/ZW)
+  endif()
 else()
   message("-- Unknown compiler, success is doubtful.")
   message("CMAKE_CXX_COMPILER_ID=${CMAKE_CXX_COMPILER_ID}")
+endif()
+
+if (CPPREST_EXCLUDE_WEBSOCKETS)
+  add_definitions(-DCPPREST_EXCLUDE_WEBSOCKETS=1)
 endif()
 
 # Reconfigure final output directory
@@ -190,9 +216,8 @@ else()
   set(Casablanca_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include)
 endif()
 
-set(Casablanca_LIBRARY ${LIB}cpprest)
-set(Casablanca_LIBRARIES ${Casablanca_LIBRARY}
-  ${Boost_LIBRARIES})
+set(Casablanca_LIBRARY cpprest)
+set(Casablanca_LIBRARIES cpprest ${Boost_LIBRARIES})
 
 # Everything in the project needs access to the casablanca include directories
 include_directories(${Casablanca_INCLUDE_DIRS})
@@ -203,16 +228,16 @@ function(add_casablanca_test NAME SOURCES_VAR)
   message("-- Added test library ${NAME}")
   if (NOT TEST_LIBRARY_TARGET_TYPE STREQUAL "OBJECT")
     target_link_libraries(${NAME}
-      ${LIB}httptest_utilities
-      ${LIB}common_utilities
-      ${LIB}unittestpp
+      httptest_utilities
+      common_utilities
+      unittestpp
       ${Casablanca_LIBRARIES}
       ${ANDROID_STL_FLAGS}
       )
     if (BUILD_SHARED_LIBS)
       add_test(NAME ${NAME}
         WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
-        COMMAND test_runner lib${NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
+        COMMAND test_runner $<TARGET_FILE_NAME:${NAME}>
         )
     endif()
   endif()
