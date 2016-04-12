@@ -359,6 +359,9 @@ public:
     winrt_client(http::uri address, http_client_config client_config)
         : _http_client_communicator(std::move(address), std::move(client_config)) { }
 
+    winrt_client(const winrt_client&) = delete;
+    winrt_client &operator=(const winrt_client&) = delete;
+
     virtual pplx::task<http_response> propagate(http_request request) override
     {
         auto self = std::static_pointer_cast<_http_client_communicator>(shared_from_this());
@@ -555,12 +558,6 @@ protected:
             });
         }
     }
-
-private:
-
-    // No copy or assignment.
-    winrt_client(const winrt_client&) = delete;
-    winrt_client &operator=(const winrt_client&) = delete;
 };
 
 std::shared_ptr<_http_client_communicator> create_platform_final_pipeline_stage(uri base_uri, const http_client_config& client_config)

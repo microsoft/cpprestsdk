@@ -47,19 +47,19 @@ utility::string_t http_headers::content_type() const
 /// Helper functions to convert a series of bytes from a charset to utf-8 or utf-16.
 /// These APIs deal with checking for and handling byte order marker (BOM).
 namespace {
-    enum endian_ness
+    enum endianness
     {
         little_endian,
         big_endian,
         unknown
     };
-    endian_ness check_byte_order_mark(const utf16string &str)
+    endianness check_byte_order_mark(const utf16string &str)
     {
         if (str.empty())
         {
             return unknown;
         }
-        const unsigned char *src = (const unsigned char *) &str[0];
+        const unsigned char *src = reinterpret_cast<const unsigned char *>(str.data());
 
         // little endian
         if (src[0] == 0xFF && src[1] == 0xFE)
@@ -142,7 +142,7 @@ namespace {
 
     std::string convert_utf16_to_utf8(utf16string src)
     {
-        const endian_ness endian = check_byte_order_mark(src);
+        const endianness endian = check_byte_order_mark(src);
         switch (endian)
         {
         case little_endian:
@@ -158,7 +158,7 @@ namespace {
 
     utf16string convert_utf16_to_utf16(utf16string src)
     {
-        const endian_ness endian = check_byte_order_mark(src);
+        const endianness endian = check_byte_order_mark(src);
         switch (endian)
         {
         case little_endian:

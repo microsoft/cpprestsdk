@@ -317,6 +317,9 @@ public:
         , m_hSession(nullptr)
         , m_hConnection(nullptr) { }
 
+    winhttp_client(const winhttp_client&) = delete;
+    winhttp_client &operator=(const winhttp_client&) = delete;
+
     // Closes session.
     ~winhttp_client()
     {
@@ -1289,10 +1292,6 @@ private:
     HINTERNET m_hSession;
     HINTERNET m_hConnection;
     bool      m_secure;
-
-    // No copy or assignment.
-    winhttp_client(const winhttp_client&) = delete;
-    winhttp_client &operator=(const winhttp_client&) = delete;
 };
 
 std::shared_ptr<_http_client_communicator> create_platform_final_pipeline_stage(uri base_uri, const http_client_config& client_config)

@@ -1337,14 +1337,12 @@ class http_pipeline_stage : public std::enable_shared_from_this<http_pipeline_st
 {
 public:
 
-    http_pipeline_stage() {}
+    http_pipeline_stage() = default;
 
     http_pipeline_stage & operator=(const http_pipeline_stage &) = delete;
     http_pipeline_stage(const http_pipeline_stage &) = delete;
 
-    virtual ~http_pipeline_stage()
-    {
-    }
+    virtual ~http_pipeline_stage() = default;
 
     /// <summary>
     /// Runs this stage against the given request and passes onto the next stage.

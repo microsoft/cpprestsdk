@@ -51,7 +51,7 @@ namespace details
 {
 
 #if defined(_WIN32)
-    const utility::char_t * get_with_body_err_msg = _XPLATSTR("A GET or HEAD request should not have an entity body.");
+    extern const utility::char_t * get_with_body_err_msg = _XPLATSTR("A GET or HEAD request should not have an entity body.");
 #endif
 
 void request_context::complete_headers()
