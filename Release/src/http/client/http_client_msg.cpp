@@ -97,21 +97,4 @@ utility::string_t details::_http_response::to_string() const
     return buffer.str();
 }
 
-// Macros to help build string at compile time and avoid overhead.
-#define STRINGIFY(x) _XPLATSTR(#x)
-#define TOSTRING(x) STRINGIFY(x)
-#define USERAGENT _XPLATSTR("cpprestsdk/") TOSTRING(CPPREST_VERSION_MAJOR) _XPLATSTR(".") TOSTRING(CPPREST_VERSION_MINOR) _XPLATSTR(".") TOSTRING(CPPREST_VERSION_REVISION)
-
-pplx::task<http_response> client::http_client::request(http_request request, const pplx::cancellation_token &token)
-{
-    if(!request.headers().has(header_names::user_agent))
-    {
-        request.headers().add(header_names::user_agent, USERAGENT);
-    }
-
-    request._set_base_uri(base_uri());
-    request._set_cancellation_token(token);
-    return m_pipeline->propagate(request);
-}
-
 }} // namespace web::http

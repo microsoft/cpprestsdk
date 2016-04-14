@@ -27,7 +27,7 @@
 ****/
 #pragma once
 
-#include "cpprest/http_msg.h"
+#include "cpprest/details/basic_types.h"
 
 namespace web { namespace http
 {
@@ -35,77 +35,14 @@ namespace details
 {
 
     /// <summary>
-    /// Constants for MIME types.
-    /// </summary>
-    class mime_types
-    {
-    public:
-    #define _MIME_TYPES
-    #define DAT(a,b) _ASYNCRTIMP const static utility::string_t a;
-    #include "cpprest/details/http_constants.dat"
-    #undef _MIME_TYPES
-    #undef DAT
-    };
-
-    /// <summary>
-    /// Constants for charset types.
-    /// </summary>
-    class charset_types
-    {
-    public:
-    #define _CHARSET_TYPES
-    #define DAT(a,b) _ASYNCRTIMP const static utility::string_t a;
-    #include "cpprest/details/http_constants.dat"
-    #undef _CHARSET_TYPES
-    #undef DAT
-    };
-
-    /// <summary>
-    /// Determines whether or not the given content type is 'textual' according the feature specifications.
-    /// </summary>
-    bool is_content_type_textual(const utility::string_t &content_type);
-
-    /// <summary>
-    /// Determines whether or not the given content type is JSON according the feature specifications.
-    /// </summary>
-    bool is_content_type_json(const utility::string_t &content_type);
-
-    /// <summary>
-    /// Parses the given Content-Type header value to get out actual content type and charset.
-    /// If the charset isn't specified the default charset for the content type will be set.
-    /// </summary>
-    void parse_content_type_and_charset(const utility::string_t &content_type, utility::string_t &content, utility::string_t &charset);
-
-    /// <summary>
-    /// Gets the default charset for given content type. If the MIME type is not textual or recognized Latin1 will be returned.
-    /// </summary>
-    utility::string_t get_default_charset(const utility::string_t &content_type);
-
-    /// <summary>
     /// Helper function to get the default HTTP reason phrase for a status code.
     /// </summary>
     utility::string_t get_default_reason_phrase(status_code code);
 
-    /// <summary>
-    /// Helper functions to convert a series of bytes from a charset to utf-8 or utf-16.
-    /// These APIs deal with checking for and handling byte order marker (BOM).
-    /// </summary>
-    utility::string_t convert_utf16_to_string_t(utf16string src);
-    utf16string convert_utf16_to_utf16(utf16string src);
-    std::string convert_utf16_to_utf8(utf16string src);
-    utility::string_t convert_utf16le_to_string_t(utf16string src, bool erase_bom);
-    std::string convert_utf16le_to_utf8(utf16string src, bool erase_bom);
-    utility::string_t convert_utf16be_to_string_t(utf16string src, bool erase_bom);
-    std::string convert_utf16be_to_utf8(utf16string src, bool erase_bom);
-    utf16string convert_utf16be_to_utf16le(utf16string src, bool erase_bom);
-
     // simple helper functions to trim whitespace.
-    _ASYNCRTIMP void __cdecl ltrim_whitespace(utility::string_t &str);
-    _ASYNCRTIMP void __cdecl rtrim_whitespace(utility::string_t &str);
     _ASYNCRTIMP void __cdecl trim_whitespace(utility::string_t &str);
 
     bool validate_method(const utility::string_t& method);
-
 
     namespace chunked_encoding
     {

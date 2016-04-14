@@ -4,6 +4,7 @@ if (NOT CPPREST_EXCLUDE_WEBSOCKETS)
 endif()
 
 set(SOURCES_COMMON
+  http/client/http_client.cpp
   http/client/http_client_msg.cpp
   http/client/x509_cert_utilities.cpp
   http/common/http_helpers.cpp
@@ -40,14 +41,12 @@ if(UNIX)
   if(APPLE)
     list(APPEND SOURCES
       pplx/pplxapple.cpp
-      http/client/x509_cert_utilities_apple.cpp
     )
     find_library(COREFOUNDATION CoreFoundation "/")
     find_library(SECURITY Security "/")
     set(EXTRALINKS ${COREFOUNDATION} ${SECURITY})
   elseif(ANDROID)
     list(APPEND SOURCES
-      http/client/x509_cert_utilities_android.cpp
       pplx/pplxlinux.cpp
     )
   else()
@@ -62,7 +61,6 @@ elseif(WIN32)
   set(SOURCES
     ${SOURCES_COMMON}
     http/client/http_client_winhttp.cpp
-    http/client/x509_cert_utilities_win32.cpp
     http/listener/http_server_httpsys.cpp
     pplx/pplxwin.cpp
     streams/fileio_win32.cpp

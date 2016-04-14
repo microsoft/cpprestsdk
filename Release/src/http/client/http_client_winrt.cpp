@@ -26,7 +26,7 @@
 ****/
 #include "stdafx.h"
 
-#include "cpprest/details/http_client_impl.h"
+#include "http_client_impl.h"
 
 #include <Strsafe.h>
 // Important for WP8
@@ -109,7 +109,7 @@ public:
             }
         }
 
-        parse_headers_string(hdrStr, response.headers());
+        web::http::details::parse_headers_string(hdrStr, response.headers());
         m_request->complete_headers();
 
         return S_OK;
@@ -359,6 +359,23 @@ public:
     winrt_client(http::uri address, http_client_config client_config)
         : _http_client_communicator(std::move(address), std::move(client_config)) { }
 
+    winrt_client(const winrt_client&) = delete;
+    winrt_client &operator=(const winrt_client&) = delete;
+
+    virtual pplx::task<http_response> propagate(http_request request) override
+    {
+        auto self = std::static_pointer_cast<_http_client_communicator>(shared_from_this());
+        auto context = details::winrt_request_context::create_request_context(self, request);
+
+        // Use a task to externally signal the final result and completion of the task.
+        auto result_task = pplx::create_task(context->m_request_completion);
+
+        // Asynchronously send the response with the HTTP client implementation.
+        this->async_send_request(context);
+
+        return result_task;
+    }
+
 protected:
 
     // Method to open client.
@@ -516,7 +533,7 @@ protected:
         {
             if ( msg.method() == http::methods::GET || msg.method() == http::methods::HEAD )
             {
-                request->report_exception(http_exception(get_with_body));
+                request->report_exception(http_exception(get_with_body_err_msg));
                 return;
             }
 
@@ -541,30 +558,11 @@ protected:
             });
         }
     }
-
-private:
-
-    // No copy or assignment.
-    winrt_client(const winrt_client&);
-    winrt_client &operator=(const winrt_client&);
 };
 
-http_network_handler::http_network_handler(const uri &base_uri, const http_client_config &client_config) :
-    m_http_client_impl(std::make_shared<details::winrt_client>(base_uri, client_config))
+std::shared_ptr<_http_client_communicator> create_platform_final_pipeline_stage(uri base_uri, const http_client_config& client_config)
 {
-}
-
-pplx::task<http_response> http_network_handler::propagate(http_request request)
-{
-    auto context = details::winrt_request_context::create_request_context(m_http_client_impl, request);
-
-    // Use a task to externally signal the final result and completion of the task.
-    auto result_task = pplx::create_task(context->m_request_completion);
-
-    // Asynchronously send the response with the HTTP client implementation.
-    m_http_client_impl->async_send_request(context);
-
-    return result_task;
+    return std::make_shared<details::winrt_client>(std::move(base_uri), client_config);
 }
 
 }}}}

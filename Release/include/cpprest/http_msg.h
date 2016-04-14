@@ -89,6 +89,36 @@ public:
 #undef DAT
 };
 
+namespace details {
+
+/// <summary>
+/// Constants for MIME types.
+/// </summary>
+class mime_types
+{
+public:
+#define _MIME_TYPES
+#define DAT(a,b) _ASYNCRTIMP const static utility::string_t a;
+#include "cpprest/details/http_constants.dat"
+#undef _MIME_TYPES
+#undef DAT
+};
+
+/// <summary>
+/// Constants for charset types.
+/// </summary>
+class charset_types
+{
+public:
+#define _CHARSET_TYPES
+#define DAT(a,b) _ASYNCRTIMP const static utility::string_t a;
+#include "cpprest/details/http_constants.dat"
+#undef _CHARSET_TYPES
+#undef DAT
+};
+
+}
+
 /// Message direction
 namespace message_direction
 {
@@ -346,7 +376,7 @@ private:
 /// <summary>
 /// Internal representation of an HTTP response.
 /// </summary>
-class _http_response : public http::details::http_msg_base
+class _http_response final : public http::details::http_msg_base
 {
 public:
     _http_response() : m_status_code((std::numeric_limits<uint16_t>::max)()) { }
@@ -458,7 +488,7 @@ public:
     /// Extracts the body of the response message as a string value, checking that the content type is a MIME text type.
     /// A body can only be extracted once because in some cases an optimization is made where the data is 'moved' out.
     /// </summary>
-    /// <param name="ignore_content_type">If true, ignores the Content-Type header and assumes UTF-8.</param>
+    /// <param name="ignore_content_type">If true, ignores the Content-Type header and assumes text.</param>
     /// <returns>String containing body of the message.</returns>
     pplx::task<utility::string_t> extract_string(bool ignore_content_type = false) const
     {
@@ -470,7 +500,7 @@ public:
     /// Extracts the body of the response message as a UTF-8 string value, checking that the content type is a MIME text type.
     /// A body can only be extracted once because in some cases an optimization is made where the data is 'moved' out.
     /// </summary>
-    /// <param name="ignore_content_type">If true, ignores the Content-Type header and assumes UTF-8.</param>
+    /// <param name="ignore_content_type">If true, ignores the Content-Type header and assumes text.</param>
     /// <returns>String containing body of the message.</returns>
     pplx::task<utf8string> extract_utf8string(bool ignore_content_type = false) const
     {
@@ -482,7 +512,7 @@ public:
     /// Extracts the body of the response message as a UTF-16 string value, checking that the content type is a MIME text type.
     /// A body can only be extracted once because in some cases an optimization is made where the data is 'moved' out.
     /// </summary>
-    /// <param name="ignore_content_type">If true, ignores the Content-Type header and assumes UTF-16.</param>
+    /// <param name="ignore_content_type">If true, ignores the Content-Type header and assumes text.</param>
     /// <returns>String containing body of the message.</returns>
     pplx::task<utf16string> extract_utf16string(bool ignore_content_type = false) const
     {
@@ -494,7 +524,7 @@ public:
     /// Extracts the body of the response message into a json value, checking that the content type is application/json.
     /// A body can only be extracted once because in some cases an optimization is made where the data is 'moved' out.
     /// </summary>
-    /// <param name="ignore_content_type">If true, ignores the Content-Type header and assumes UTF-8.</param>
+    /// <param name="ignore_content_type">If true, ignores the Content-Type header and assumes json.</param>
     /// <returns>JSON value from the body of this message.</returns>
     pplx::task<json::value> extract_json(bool ignore_content_type = false) const
     {
@@ -677,7 +707,7 @@ namespace details {
 /// <summary>
 /// Internal representation of an HTTP request message.
 /// </summary>
-class _http_request : public http::details::http_msg_base, public std::enable_shared_from_this<_http_request>
+class _http_request final : public http::details::http_msg_base, public std::enable_shared_from_this<_http_request>
 {
 public:
 
@@ -1288,6 +1318,10 @@ private:
     std::shared_ptr<http::details::_http_request> _m_impl;
 };
 
+namespace client {
+class http_pipeline;
+}
+
 /// <summary>
 /// HTTP client handler class, used to represent an HTTP pipeline stage.
 /// </summary>
@@ -1303,9 +1337,12 @@ class http_pipeline_stage : public std::enable_shared_from_this<http_pipeline_st
 {
 public:
 
-    virtual ~http_pipeline_stage()
-    {
-    }
+    http_pipeline_stage() = default;
+
+    http_pipeline_stage & operator=(const http_pipeline_stage &) = delete;
+    http_pipeline_stage(const http_pipeline_stage &) = delete;
+
+    virtual ~http_pipeline_stage() = default;
 
     /// <summary>
     /// Runs this stage against the given request and passes onto the next stage.
@@ -1315,10 +1352,6 @@ public:
     virtual pplx::task<http_response> propagate(http_request request) = 0;
 
 protected:
-
-    http_pipeline_stage()
-    {
-    }
 
     /// <summary>
     /// Gets the next stage in the pipeline.
@@ -1333,13 +1366,14 @@ protected:
     /// Gets a shared pointer to this pipeline stage.
     /// </summary>
     /// <returns>A shared pointer to a pipeline stage.</returns>
+    CASABLANCA_DEPRECATED("This api is redundant. Use 'shared_from_this()' directly instead.")
     std::shared_ptr<http_pipeline_stage> current_stage()
     {
         return this->shared_from_this();
     }
 
 private:
-    friend class http_pipeline;
+    friend class ::web::http::client::http_pipeline;
 
     void set_next_stage(const std::shared_ptr<http_pipeline_stage> &next)
     {
@@ -1348,116 +1382,6 @@ private:
 
     std::shared_ptr<http_pipeline_stage> m_next_stage;
 
-    // No copy or assignment.
-    http_pipeline_stage & operator=(const http_pipeline_stage &);
-    http_pipeline_stage(const http_pipeline_stage &);
-};
-
-namespace details {
-
-class function_pipeline_wrapper : public http::http_pipeline_stage
-{
-public:
-    function_pipeline_wrapper(std::function<pplx::task<http_response>(http_request, std::shared_ptr<http::http_pipeline_stage>)> handler) : m_handler(handler)
-    {
-    }
-
-    virtual pplx::task<http_response> propagate(http_request request) override
-    {
-        return m_handler(request, next_stage());
-    }
-private:
-
-    std::function<pplx::task<http_response>(http_request, std::shared_ptr<http::http_pipeline_stage>)> m_handler;
-};
-
-} // namespace details
-
-/// <summary>
-///
-/// </summary>
-class http_pipeline
-{
-public:
-
-    /// <summary>
-    /// Create an http pipeline that consists of a linear chain of stages
-    /// </summary>
-    /// <param name="last">The final stage</param>
-    static std::shared_ptr<http_pipeline> create_pipeline(const std::shared_ptr<http_pipeline_stage> &last)
-    {
-        return std::shared_ptr<http_pipeline>(new http_pipeline(last));
-    }
-
-    /// <summary>
-    /// Initiate an http request into the pipeline
-    /// </summary>
-    /// <param name="request">Http request</param>
-    pplx::task<http_response> propagate(http_request request)
-    {
-        std::shared_ptr<http_pipeline_stage> first;
-        {
-            pplx::extensibility::scoped_recursive_lock_t l(m_lock);
-            first = (m_stages.size() > 0) ? m_stages[0] : m_last_stage;
-        }
-        return first->propagate(request);
-    }
-
-    /// <summary>
-    /// Adds an HTTP pipeline stage to the pipeline.
-    /// </summary>
-    /// <param name="stage">A pipeline stage.</param>
-    void append(const std::shared_ptr<http_pipeline_stage> &stage)
-    {
-        pplx::extensibility::scoped_recursive_lock_t l(m_lock);
-
-        if (m_stages.size() > 0)
-        {
-            std::shared_ptr<http_pipeline_stage> penultimate = m_stages[m_stages.size()-1];
-            penultimate->set_next_stage(stage);
-        }
-        stage->set_next_stage(m_last_stage);
-
-        m_stages.push_back(stage);
-    }
-
-    /// <summary>
-    /// Sets the last stage of the pipeline.
-    /// </summary>
-    /// <param name="last">Shared pointer to pipeline stage to set as the last.</param>
-    void set_last_stage(const std::shared_ptr<http_pipeline_stage> &last)
-    {
-        m_last_stage = last;
-    }
-
-    /// <summary>
-    /// Retrieves the last stage in this pipeline.
-    /// </summary>
-    /// <returns>A shared pointer to last stage.</returns>
-    const std::shared_ptr<http_pipeline_stage>& last_stage() const
-    {
-        return m_last_stage;
-    }
-
-private:
-
-    http_pipeline(const std::shared_ptr<http_pipeline_stage> &last) : m_last_stage(last)
-    {
-    }
-
-    // The vector of pipeline stages.
-    std::vector<std::shared_ptr<http_pipeline_stage>> m_stages;
-
-    // The last stage is always set up by the client or listener and cannot
-    // be changed. All application-defined stages are executed before the
-    // last stage, which is typically a send or dispatch.
-    std::shared_ptr<http_pipeline_stage> m_last_stage;
-
-    pplx::extensibility::recursive_lock_t m_lock;
-
-    // No copy or assignment.
-    http_pipeline & operator=(const http_pipeline &);
-    http_pipeline(const http_pipeline &);
 };
 
 }}
