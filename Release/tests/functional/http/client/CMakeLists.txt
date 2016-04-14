@@ -29,4 +29,4 @@ set(SOURCES
   http_client_fuzz_tests.cpp
 )
 
-add_casablanca_test(${LIB}httpclient_test SOURCES)
+add_casablanca_test(httpclient_test SOURCES)
