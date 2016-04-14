@@ -140,7 +140,7 @@ TEST(server_selfsigned_cert)
     });
 }
 
-TEST(server_hostname_mismatch)
+TEST(server_hostname_mismatch, "Ignore", "Site fixed certificate. Improve test (new site or alternate method).")
 {
     handle_timeout([]
     {
