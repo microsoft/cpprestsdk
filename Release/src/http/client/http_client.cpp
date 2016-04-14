@@ -331,12 +331,12 @@ private:
     pplx::extensibility::recursive_lock_t m_lock;
 };
 
-void http_client::add_handler(const std::function<pplx::task<http_response>(http_request, std::shared_ptr<http::http_pipeline_stage>)> &handler)
+void http_client::add_handler(const std::function<pplx::task<http_response> __cdecl(http_request, std::shared_ptr<http::http_pipeline_stage>)> &handler)
 {
     class function_pipeline_wrapper : public http::http_pipeline_stage
     {
     public:
-        function_pipeline_wrapper(const std::function<pplx::task<http_response>(http_request, std::shared_ptr<http::http_pipeline_stage>)> &handler) : m_handler(handler)
+        function_pipeline_wrapper(const std::function<pplx::task<http_response> __cdecl(http_request, std::shared_ptr<http::http_pipeline_stage>)> &handler) : m_handler(handler)
         {
         }
 

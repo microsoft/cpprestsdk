@@ -442,7 +442,7 @@ public:
     /// Adds an HTTP pipeline stage to the client.
     /// </summary>
     /// <param name="handler">A function object representing the pipeline stage.</param>
-    _ASYNCRTIMP void add_handler(const std::function<pplx::task<http_response>(http_request, std::shared_ptr<http::http_pipeline_stage>)> &handler);
+    _ASYNCRTIMP void add_handler(const std::function<pplx::task<http_response> __cdecl(http_request, std::shared_ptr<http::http_pipeline_stage>)> &handler);
 
 
     /// <summary>
