@@ -271,10 +271,83 @@ inline void request_context::finish()
 
 } // namespace details
 
+/// <summary>
+/// Private implementation of http_client. Manages the http request processing pipeline.
+/// </summary>
+class http_pipeline
+{
+public:
+    http_pipeline(std::shared_ptr<details::_http_client_communicator> last) : m_last_stage(std::move(last))
+    {}
+
+    // No copy or assignment.
+    http_pipeline & operator=(const http_pipeline &) = delete;
+    http_pipeline(const http_pipeline &) = delete;
+
+    /// <summary>
+    /// Initiate an http request into the pipeline
+    /// </summary>
+    /// <param name="request">Http request</param>
+    pplx::task<http_response> propagate(http_request request)
+    {
+        std::shared_ptr<http_pipeline_stage> first;
+        {
+            pplx::extensibility::scoped_recursive_lock_t l(m_lock);
+            first = (m_stages.size() > 0) ? m_stages[0] : m_last_stage;
+        }
+        return first->propagate(request);
+    }
+
+    /// <summary>
+    /// Adds an HTTP pipeline stage to the pipeline.
+    /// </summary>
+    /// <param name="stage">A pipeline stage.</param>
+    void append(const std::shared_ptr<http_pipeline_stage> &stage)
+    {
+        pplx::extensibility::scoped_recursive_lock_t l(m_lock);
+
+        if (m_stages.size() > 0)
+        {
+            std::shared_ptr<http_pipeline_stage> penultimate = m_stages[m_stages.size() - 1];
+            penultimate->set_next_stage(stage);
+        }
+        stage->set_next_stage(m_last_stage);
+
+        m_stages.push_back(stage);
+    }
+
+    // The last stage is always set up by the client or listener and cannot
+    // be changed. All application-defined stages are executed before the
+    // last stage, which is typically a send or dispatch.
+    const std::shared_ptr<details::_http_client_communicator> m_last_stage;
+
+private:
+
+    // The vector of pipeline stages.
+    std::vector<std::shared_ptr<http_pipeline_stage>> m_stages;
+
+    pplx::extensibility::recursive_lock_t m_lock;
+};
 
 void http_client::add_handler(const std::function<pplx::task<http_response>(http_request, std::shared_ptr<http::http_pipeline_stage>)> &handler)
 {
-    m_pipeline->append(std::make_shared<::web::http::details::function_pipeline_wrapper>(handler));
+    class function_pipeline_wrapper : public http::http_pipeline_stage
+    {
+    public:
+        function_pipeline_wrapper(const std::function<pplx::task<http_response>(http_request, std::shared_ptr<http::http_pipeline_stage>)> &handler) : m_handler(handler)
+        {
+        }
+
+        virtual pplx::task<http_response> propagate(http_request request) override
+        {
+            return m_handler(std::move(request), next_stage());
+        }
+    private:
+
+        std::function<pplx::task<http_response>(http_request, std::shared_ptr<http::http_pipeline_stage>)> m_handler;
+    };
+
+    m_pipeline->append(std::make_shared<function_pipeline_wrapper>(handler));
 }
 
 void http_client::add_handler(const std::shared_ptr<http::http_pipeline_stage> &stage)
@@ -287,19 +360,23 @@ http_client::http_client(const uri &base_uri) : http_client(base_uri, http_clien
 
 http_client::http_client(const uri &base_uri, const http_client_config &client_config)
 {
+    std::shared_ptr<details::_http_client_communicator> final_pipeline_stage;
+
     if (base_uri.scheme().empty())
     {
         auto uribuilder = uri_builder(base_uri);
         uribuilder.set_scheme(_XPLATSTR("http"));
         uri uriWithScheme = uribuilder.to_uri();
         verify_uri(uriWithScheme);
-        m_pipeline = ::web::http::http_pipeline::create_pipeline(details::create_platform_final_pipeline_stage(uriWithScheme, client_config));
+        final_pipeline_stage = details::create_platform_final_pipeline_stage(uriWithScheme, client_config);
     }
     else
     {
         verify_uri(base_uri);
-        m_pipeline = ::web::http::http_pipeline::create_pipeline(details::create_platform_final_pipeline_stage(base_uri, client_config));
+        final_pipeline_stage = details::create_platform_final_pipeline_stage(base_uri, client_config);
     }
+
+    m_pipeline = std::make_shared<http_pipeline>(std::move(final_pipeline_stage));
 
 #if !defined(CPPREST_TARGET_XP)
     add_handler(std::static_pointer_cast<http::http_pipeline_stage>(
@@ -314,14 +391,29 @@ http_client::~http_client() CPPREST_NOEXCEPT {}
 
 const http_client_config & http_client::client_config() const
 {
-    auto ph = std::static_pointer_cast<details::_http_client_communicator>(m_pipeline->last_stage());
-    return ph->client_config();
+    return m_pipeline->m_last_stage->client_config();
 }
 
 const uri & http_client::base_uri() const
 {
-    auto ph = std::static_pointer_cast<details::_http_client_communicator>(m_pipeline->last_stage());
-    return ph->base_uri();
+    return m_pipeline->m_last_stage->base_uri();
+}
+
+// Macros to help build string at compile time and avoid overhead.
+#define STRINGIFY(x) _XPLATSTR(#x)
+#define TOSTRING(x) STRINGIFY(x)
+#define USERAGENT _XPLATSTR("cpprestsdk/") TOSTRING(CPPREST_VERSION_MAJOR) _XPLATSTR(".") TOSTRING(CPPREST_VERSION_MINOR) _XPLATSTR(".") TOSTRING(CPPREST_VERSION_REVISION)
+
+pplx::task<http_response> http_client::request(http_request request, const pplx::cancellation_token &token)
+{
+    if (!request.headers().has(header_names::user_agent))
+    {
+        request.headers().add(header_names::user_agent, USERAGENT);
+    }
+
+    request._set_base_uri(base_uri());
+    request._set_cancellation_token(token);
+    return m_pipeline->propagate(request);
 }
 
 

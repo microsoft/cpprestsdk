@@ -397,6 +397,8 @@ private:
 #endif
 };
 
+class http_pipeline;
+
 /// <summary>
 /// HTTP client class, used to maintain a connection to an HTTP service for an extended session.
 /// </summary>

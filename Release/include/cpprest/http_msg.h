@@ -1318,6 +1318,10 @@ private:
     std::shared_ptr<http::details::_http_request> _m_impl;
 };
 
+namespace client {
+class http_pipeline;
+}
+
 /// <summary>
 /// HTTP client handler class, used to represent an HTTP pipeline stage.
 /// </summary>
@@ -1333,6 +1337,11 @@ class http_pipeline_stage : public std::enable_shared_from_this<http_pipeline_st
 {
 public:
 
+    http_pipeline_stage() {}
+
+    http_pipeline_stage & operator=(const http_pipeline_stage &) = delete;
+    http_pipeline_stage(const http_pipeline_stage &) = delete;
+
     virtual ~http_pipeline_stage()
     {
     }
@@ -1345,10 +1354,6 @@ public:
     virtual pplx::task<http_response> propagate(http_request request) = 0;
 
 protected:
-
-    http_pipeline_stage()
-    {
-    }
 
     /// <summary>
     /// Gets the next stage in the pipeline.
@@ -1363,13 +1368,14 @@ protected:
     /// Gets a shared pointer to this pipeline stage.
     /// </summary>
     /// <returns>A shared pointer to a pipeline stage.</returns>
+    CASABLANCA_DEPRECATED("This api is redundant. Use 'shared_from_this()' directly instead.")
     std::shared_ptr<http_pipeline_stage> current_stage()
     {
         return this->shared_from_this();
     }
 
 private:
-    friend class http_pipeline;
+    friend class ::web::http::client::http_pipeline;
 
     void set_next_stage(const std::shared_ptr<http_pipeline_stage> &next)
     {
@@ -1378,116 +1384,6 @@ private:
 
     std::shared_ptr<http_pipeline_stage> m_next_stage;
 
-    // No copy or assignment.
-    http_pipeline_stage & operator=(const http_pipeline_stage &);
-    http_pipeline_stage(const http_pipeline_stage &);
-};
-
-namespace details {
-
-class function_pipeline_wrapper : public http::http_pipeline_stage
-{
-public:
-    function_pipeline_wrapper(std::function<pplx::task<http_response>(http_request, std::shared_ptr<http::http_pipeline_stage>)> handler) : m_handler(handler)
-    {
-    }
-
-    virtual pplx::task<http_response> propagate(http_request request) override
-    {
-        return m_handler(request, next_stage());
-    }
-private:
-
-    std::function<pplx::task<http_response>(http_request, std::shared_ptr<http::http_pipeline_stage>)> m_handler;
-};
-
-} // namespace details
-
-/// <summary>
-///
-/// </summary>
-class http_pipeline
-{
-public:
-
-    /// <summary>
-    /// Create an http pipeline that consists of a linear chain of stages
-    /// </summary>
-    /// <param name="last">The final stage</param>
-    static std::shared_ptr<http_pipeline> create_pipeline(const std::shared_ptr<http_pipeline_stage> &last)
-    {
-        return std::shared_ptr<http_pipeline>(new http_pipeline(last));
-    }
-
-    /// <summary>
-    /// Initiate an http request into the pipeline
-    /// </summary>
-    /// <param name="request">Http request</param>
-    pplx::task<http_response> propagate(http_request request)
-    {
-        std::shared_ptr<http_pipeline_stage> first;
-        {
-            pplx::extensibility::scoped_recursive_lock_t l(m_lock);
-            first = (m_stages.size() > 0) ? m_stages[0] : m_last_stage;
-        }
-        return first->propagate(request);
-    }
-
-    /// <summary>
-    /// Adds an HTTP pipeline stage to the pipeline.
-    /// </summary>
-    /// <param name="stage">A pipeline stage.</param>
-    void append(const std::shared_ptr<http_pipeline_stage> &stage)
-    {
-        pplx::extensibility::scoped_recursive_lock_t l(m_lock);
-
-        if (m_stages.size() > 0)
-        {
-            std::shared_ptr<http_pipeline_stage> penultimate = m_stages[m_stages.size()-1];
-            penultimate->set_next_stage(stage);
-        }
-        stage->set_next_stage(m_last_stage);
-
-        m_stages.push_back(stage);
-    }
-
-    /// <summary>
-    /// Sets the last stage of the pipeline.
-    /// </summary>
-    /// <param name="last">Shared pointer to pipeline stage to set as the last.</param>
-    void set_last_stage(const std::shared_ptr<http_pipeline_stage> &last)
-    {
-        m_last_stage = last;
-    }
-
-    /// <summary>
-    /// Retrieves the last stage in this pipeline.
-    /// </summary>
-    /// <returns>A shared pointer to last stage.</returns>
-    const std::shared_ptr<http_pipeline_stage>& last_stage() const
-    {
-        return m_last_stage;
-    }
-
-private:
-
-    http_pipeline(const std::shared_ptr<http_pipeline_stage> &last) : m_last_stage(last)
-    {
-    }
-
-    // The vector of pipeline stages.
-    std::vector<std::shared_ptr<http_pipeline_stage>> m_stages;
-
-    // The last stage is always set up by the client or listener and cannot
-    // be changed. All application-defined stages are executed before the
-    // last stage, which is typically a send or dispatch.
-    std::shared_ptr<http_pipeline_stage> m_last_stage;
-
-    pplx::extensibility::recursive_lock_t m_lock;
-
-    // No copy or assignment.
-    http_pipeline & operator=(const http_pipeline &);
-    http_pipeline(const http_pipeline &);
 };
 
 }}
