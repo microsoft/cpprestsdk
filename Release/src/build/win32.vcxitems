@@ -15,7 +15,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\http\client\http_client_winhttp.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\http\client\x509_cert_utilities_win32.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\http\listener\http_server_httpsys.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\pplx\pplxwin.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\streams\fileio_win32.cpp" />

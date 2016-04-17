@@ -439,8 +439,8 @@ namespace Concurrency { namespace streams {
 
             size_t newPos = m_current_position + read_size;
 
-            auto readBegin = begin(m_data) + m_current_position;
-            auto readEnd = begin(m_data) + newPos;
+            auto readBegin = std::begin(m_data) + m_current_position;
+            auto readEnd = std::begin(m_data) + newPos;
 
 #ifdef _WIN32
             // Avoid warning C4996: Use checked iterators under SECURE_SCL
@@ -470,7 +470,7 @@ namespace Concurrency { namespace streams {
             resize_for_write(newSize);
 
             // Copy the data
-            std::copy(ptr, ptr + count, begin(m_data) + m_current_position);
+            std::copy(ptr, ptr + count, std::begin(m_data) + m_current_position);
 
             // Update write head and satisfy pending reads if any
             update_current_position(newSize);

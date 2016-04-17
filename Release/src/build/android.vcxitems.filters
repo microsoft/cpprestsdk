@@ -19,9 +19,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\pplx\threadpool.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\http\client\x509_cert_utilities_android.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source Files">

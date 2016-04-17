@@ -26,7 +26,8 @@
 ****/
 #include "stdafx.h"
 
-#include "cpprest/details/http_client_impl.h"
+#include "cpprest/http_headers.h"
+#include "http_client_impl.h"
 
 namespace web
 {
@@ -66,6 +67,16 @@ static http::status_code parse_status_code(HINTERNET request_handle)
     return (unsigned short)_wtoi(buffer.c_str());
 }
 
+// Helper function to trim leading and trailing null characters from a string.
+static void trim_nulls(utility::string_t &str)
+{
+    size_t index;
+    for (index = 0; index < str.size() && str[index] == 0; ++index);
+    str.erase(0, index);
+    for (index = str.size(); index > 0 && str[index - 1] == 0; --index);
+    str.erase(index);
+}
+
 // Helper function to get the reason phrase from a WinHTTP response.
 static utility::string_t parse_reason_phrase(HINTERNET request_handle)
 {
@@ -98,7 +109,7 @@ static void parse_winhttp_headers(HINTERNET request_handle, _In_z_ utf16char *he
     response.set_status_code(parse_status_code(request_handle));
     response.set_reason_phrase(parse_reason_phrase(request_handle));
 
-    parse_headers_string(headersStr, response.headers());
+    web::http::details::parse_headers_string(headersStr, response.headers());
 }
 
 // Helper function to build error messages.
@@ -301,7 +312,13 @@ class winhttp_client : public _http_client_communicator
 {
 public:
     winhttp_client(http::uri address, http_client_config client_config)
-        : _http_client_communicator(std::move(address), std::move(client_config)), m_secure(m_uri.scheme() == _XPLATSTR("https")), m_hSession(nullptr), m_hConnection(nullptr) { }
+        : _http_client_communicator(std::move(address), std::move(client_config))
+        , m_secure(m_uri.scheme() == _XPLATSTR("https"))
+        , m_hSession(nullptr)
+        , m_hConnection(nullptr) { }
+
+    winhttp_client(const winhttp_client&) = delete;
+    winhttp_client &operator=(const winhttp_client&) = delete;
 
     // Closes session.
     ~winhttp_client()
@@ -322,6 +339,20 @@ public:
 
             WinHttpCloseHandle(m_hSession);
         }
+    }
+
+    virtual pplx::task<http_response> propagate(http_request request) override
+    {
+        auto self = std::static_pointer_cast<_http_client_communicator>(shared_from_this());
+        auto context = details::winhttp_request_context::create_request_context(self, request);
+
+        // Use a task to externally signal the final result and completion of the task.
+        auto result_task = pplx::create_task(context->m_request_completion);
+
+        // Asynchronously send the response with the HTTP client implementation.
+        this->async_send_request(context);
+
+        return result_task;
     }
 
 protected:
@@ -568,7 +599,7 @@ protected:
         {
             if ( msg.method() == http::methods::GET || msg.method() == http::methods::HEAD )
             {
-                request->report_exception(http_exception(get_with_body));
+                request->report_exception(http_exception(get_with_body_err_msg));
                 return;
             }
 
@@ -590,7 +621,7 @@ protected:
         // Add headers.
         if(!msg.headers().empty())
         {
-            const utility::string_t flattened_headers = flatten_http_headers(msg.headers());
+            const utility::string_t flattened_headers = web::http::details::flatten_http_headers(msg.headers());
             if(!WinHttpAddRequestHeaders(
                 winhttp_context->m_request_handle,
                 flattened_headers.c_str(),
@@ -1261,28 +1292,11 @@ private:
     HINTERNET m_hSession;
     HINTERNET m_hConnection;
     bool      m_secure;
-
-    // No copy or assignment.
-    winhttp_client(const winhttp_client&);
-    winhttp_client &operator=(const winhttp_client&);
 };
 
-http_network_handler::http_network_handler(const uri &base_uri, const http_client_config &client_config) :
-    m_http_client_impl(std::make_shared<details::winhttp_client>(base_uri, client_config))
+std::shared_ptr<_http_client_communicator> create_platform_final_pipeline_stage(uri base_uri, const http_client_config& client_config)
 {
-}
-
-pplx::task<http_response> http_network_handler::propagate(http_request request)
-{
-    auto context = details::winhttp_request_context::create_request_context(m_http_client_impl, request);
-
-    // Use a task to externally signal the final result and completion of the task.
-    auto result_task = pplx::create_task(context->m_request_completion);
-
-    // Asynchronously send the response with the HTTP client implementation.
-    m_http_client_impl->async_send_request(context);
-
-    return result_task;
+    return std::make_shared<details::winhttp_client>(std::move(base_uri), client_config);
 }
 
 }}}}

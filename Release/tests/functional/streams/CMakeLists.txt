@@ -4,6 +4,13 @@ set(SOURCES
   memstream_tests.cpp
   ostream_tests.cpp
   stdstream_tests.cpp
-  fuzz_tests.cpp
 )
-add_casablanca_test(${LIB}streams_test SOURCES)
+if (NOT WINDOWS_STORE AND NOT WINDOWS_PHONE)
+  list(APPEND SOURCES fuzz_tests.cpp)
+  if (WIN32)
+    list(APPEND SOURCES CppSparseFile.cpp)
+  endif ()
+else ()
+  list(APPEND SOURCES winrt_interop_tests.cpp)
+endif ()
+add_casablanca_test(streams_test SOURCES)

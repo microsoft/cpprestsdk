@@ -234,7 +234,7 @@ TEST(self_signed_cert)
     handshake_error_test_impl(U("wss://www.pcwebshop.co.uk/"));
 }
 
-TEST(hostname_mismatch)
+TEST(hostname_mismatch, "Ignore", "Site fixed certificate. Improve test (new site or alternate method).")
 {
     handshake_error_test_impl(U("wss://swordsoftruth.com/"));
 }
