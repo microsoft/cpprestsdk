@@ -129,7 +129,7 @@ void CasaLens::handle_post(http_request message)
     auto path = message.relative_uri().path();
     if (0 == path.compare(U("/")))
     {
-        message.extract_string().then([=](const utility::string_t& location)
+        message.extract_utf8string().then([=](const std::string& location)
         {
             get_data(message, location); 
         }).then([](pplx::task<void> t) { handle_error(t); });

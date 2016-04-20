@@ -86,17 +86,17 @@ private:
     pplx::task<web::json::value> handle_exception(pplx::task<web::json::value>& t, const utility::string_t& field_name);
 
     // methods to fetch data from the services
-    pplx::task<web::json::value> get_events(const utility::string_t& post_code);
-    pplx::task<web::json::value> get_weather(const utility::string_t& post_code);
-    pplx::task<web::json::value> get_pictures(const utility::string_t& location, const utility::string_t& count);
-    pplx::task<web::json::value> get_movies(const utility::string_t& post_code);
+    pplx::task<web::json::value> get_events(const std::string& post_code);
+    pplx::task<web::json::value> get_weather(const std::string& post_code);
+    pplx::task<web::json::value> get_pictures(const std::string& location, const std::string& count);
+    pplx::task<web::json::value> get_movies(const std::string& post_code);
 
     // Utility functions
     bool is_number(const std::string& s);
     std::wstring get_date();
 
-    void fetch_data(web::http::http_request message, const std::wstring& postal_code, const std::wstring& location);
-    void get_data(web::http::http_request message, const std::wstring& location);
+    void fetch_data(web::http::http_request message, const std::string& postal_code, const std::string& location);
+    void get_data(web::http::http_request message, const std::string& location);
 
     static const int num_events = 5;
     static const int num_images = 5;
@@ -114,7 +114,7 @@ private:
     // key: City name or postal code
     // Value: JSON response data to be sent to clients
     // We are caching the data for multiple requests.
-    std::map<utility::string_t, web::json::value> m_data;
+    std::map<std::string, web::json::value> m_data;
 
     // m_htmlcontentmap contains data about the html contents of the website, their mime types
     // key: relative URI path of the HTML content being requested
