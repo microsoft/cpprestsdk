@@ -1482,7 +1482,7 @@ namespace json
         class _Null final : public _Value
         {
         public:
-            virtual std::unique_ptr<_Value> _copy_value()
+            virtual std::unique_ptr<_Value> _copy_value() override
             {
                 return utility::details::make_unique<_Null>();
             }
@@ -1499,7 +1499,7 @@ namespace json
             template<class T>
             explicit _Number(T t) : m_number(t) { }
 
-            virtual std::unique_ptr<_Value> _copy_value()
+            virtual std::unique_ptr<_Value> _copy_value() override
             {
                 return utility::details::make_unique<_Number>(*this);
             }
@@ -1511,20 +1511,20 @@ namespace json
                 return 10; // fast estimate
             }
 
-            virtual bool is_integer() const { return m_number.is_integral(); }
-            virtual bool is_double() const { return !m_number.is_integral(); }
+            virtual bool is_integer() const override { return m_number.is_integral(); }
+            virtual bool is_double() const override { return !m_number.is_integral(); }
 
-            virtual double as_double() const
+            virtual double as_double() const override
             {
                 return m_number.to_double();
             }
 
-            virtual int as_integer() const
+            virtual int as_integer() const override
             {
                 return m_number.to_int32();
             }
 
-            virtual const number& as_number() { return m_number; }
+            virtual const number& as_number() override { return m_number; }
 
         private:
             json::number m_number;
@@ -1535,14 +1535,14 @@ namespace json
         public:
             _Boolean(bool value) : m_value(value) { }
 
-            virtual std::unique_ptr<_Value> _copy_value()
+            virtual std::unique_ptr<_Value> _copy_value() override
             {
                 return utility::details::make_unique<_Boolean>(*this);
             }
 
-            virtual json::value::value_type type() const { return json::value::Boolean; }
+            virtual json::value::value_type type() const override { return json::value::Boolean; }
 
-            virtual bool as_bool() const { return m_value; }
+            virtual bool as_bool() const override { return m_value; }
 
             virtual void serialize_impl(std::string& stream) const override
             {
@@ -1569,12 +1569,12 @@ namespace json
                   m_has_escape_char(escaped_chars)
             { }
 
-            virtual std::unique_ptr<_Value> _copy_value()
+            virtual std::unique_ptr<_Value> _copy_value() override
             {
                 return utility::details::make_unique<_String>(*this);
             }
 
-            virtual json::value::value_type type() const { return json::value::String; }
+            virtual json::value::value_type type() const override { return json::value::String; }
 
             virtual const std::string& as_string() const override { return m_string; }
 
@@ -1604,20 +1604,20 @@ namespace json
             _Object(bool keep_order) : m_object(keep_order) { }
             _Object(object::storage_type fields, bool keep_order) : m_object(std::move(fields), keep_order) { }
 
-            virtual std::unique_ptr<_Value> _copy_value()
+            virtual std::unique_ptr<_Value> _copy_value() override
             {
                 return utility::details::make_unique<_Object>(*this);
             }
 
-            virtual json::object& as_object() { return m_object; }
+            virtual json::object& as_object() override { return m_object; }
 
-            virtual const json::object& as_object() const { return m_object; }
+            virtual const json::object& as_object() const override { return m_object; }
 
-            virtual json::value::value_type type() const { return json::value::Object; }
+            virtual json::value::value_type type() const override { return json::value::Object; }
 
-            virtual bool has_field(const std::string &) const;
+            virtual bool has_field(const std::string &) const override;
 
-            virtual json::value &index(const std::string &key);
+            virtual json::value &index(const std::string &key) override;
 
             bool is_equal(const _Object* other) const
             {
@@ -1682,17 +1682,17 @@ namespace json
             _Array(array::size_type size) : m_array(size) {}
             _Array(array::storage_type elements) : m_array(std::move(elements)) { }
 
-            virtual std::unique_ptr<_Value> _copy_value()
+            virtual std::unique_ptr<_Value> _copy_value() override
             {
                 return utility::details::make_unique<_Array>(*this);
             }
 
-            virtual json::value::value_type type() const { return json::value::Array; }
+            virtual json::value::value_type type() const override { return json::value::Array; }
 
-            virtual json::array& as_array() { return m_array; }
-            virtual const json::array& as_array() const { return m_array; }
+            virtual json::array& as_array() override { return m_array; }
+            virtual const json::array& as_array() const override { return m_array; }
 
-            virtual json::value &index(json::array::size_type index)
+            virtual json::value &index(json::array::size_type index) override
             {
                 return m_array[index];
             }
