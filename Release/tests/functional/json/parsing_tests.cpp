@@ -667,11 +667,13 @@ TEST(non_default_locale, "Ignore:Android", "Locale unsupported on Android")
         setlocale(LC_NUMERIC, changedLocale.c_str());
     
         // cpprestsdk stream serialize
+#if !defined(_LIBCPP_VERSION)
         utf16stringstream stream;
         stream << v;
         utf16string serializedStr;
         stream >> serializedStr;
         VERIFY_ARE_EQUAL(utility::conversions::to_utf16string(str), serializedStr);
+#endif
 
         // std stream serialize
         std::stringstream stdStream;

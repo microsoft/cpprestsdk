@@ -527,7 +527,9 @@ namespace json
         /// </summary>
         /// <param name="stream">The stream to read the JSON value from</param>
         _ASYNCRTIMP static value __cdecl parse(std::istream& stream);
+#if !defined(_LIBCPP_VERSION)
         _ASYNCRTIMP static value __cdecl parse(utf16istream& stream);
+#endif
 
         /// <summary>
         /// Parses a JSON value from the contents of a single-byte (UTF8) stream.
@@ -536,7 +538,9 @@ namespace json
         /// <param name="errorCode">If parsing fails, the error code is greater than 0</param>
         /// <returns>The parsed object. Returns web::json::value::null if failed</returns>
         _ASYNCRTIMP static value __cdecl parse(std::istream& stream, std::error_code& error);
+#if !defined(_LIBCPP_VERSION)
         _ASYNCRTIMP static value __cdecl parse(utf16istream& stream, std::error_code& error);
+#endif
 
         /// <summary>
         /// Serializes the current JSON value to a UTF-8 string.
@@ -555,13 +559,12 @@ namespace json
 #endif
             stream << serialize();
         }
+#if !defined(_LIBCPP_VERSION)
         inline void serialize(utf16ostream& stream) const
         {
-#ifndef _WIN32
-            utility::details::scoped_c_thread_locale locale;
-#endif
             stream << utility::conversions::to_utf16string(serialize());
         }
+#endif
 
         /// <summary>
         /// Serializes the content of the value into a UTF-8 string.
@@ -1790,10 +1793,12 @@ namespace json
         val.serialize(os);
         return os;
     }
+#if !defined(_LIBCPP_VERSION)
     inline utf16ostream& operator << (utf16ostream &os, const json::value &val) {
         val.serialize(os);
         return os;
     }
+#endif
 
     /// <summary>
     /// A standard <c>std::istream</c> operator to facilitate reading JSON values from streams.
@@ -1805,10 +1810,12 @@ namespace json
         val = ::web::json::value::parse(is);
         return is;
     }
+#if !defined(_LIBCPP_VERSION)
     inline utf16istream& operator >> (utf16istream &is, json::value &val) {
         val = ::web::json::value::parse(is);
         return is;
     }
+#endif
 }}
 
 #endif

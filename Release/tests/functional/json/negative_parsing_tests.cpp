@@ -156,6 +156,7 @@ TEST(stream_left_over_chars)
     verify_json_throws(stream);
 }
 
+#if !defined(_LIBCPP_VERSION)
 TEST(wstream_left_over_chars)
 {
     std::basic_stringbuf<utf16char> buf;
@@ -167,6 +168,7 @@ TEST(wstream_left_over_chars)
     utf16istream stream(&buf);
     verify_json_throws(stream);
 }
+#endif
 
 void garbage_impl(wchar_t ch)
 {

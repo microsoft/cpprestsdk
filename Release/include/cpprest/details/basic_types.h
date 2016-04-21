@@ -116,11 +116,14 @@ typedef std::wistringstream utf16istringstream;
 #else
 typedef char16_t utf16char;
 typedef std::u16string utf16string;
+// Libc++ does not define std::ctype<char16_t> which prevents the following streams from working.
+#if !defined(_LIBCPP_VERSION)
 typedef std::basic_stringstream<utf16char> utf16stringstream;
 typedef std::basic_ostringstream<utf16char> utf16ostringstream;
 typedef std::basic_ostream<utf16char> utf16ostream;
 typedef std::basic_istream<utf16char> utf16istream;
 typedef std::basic_istringstream<utf16char> utf16istringstream;
+#endif
 #endif
 
 

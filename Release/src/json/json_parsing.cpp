@@ -246,6 +246,7 @@ private:
     typename std::streambuf* m_streambuf;
 };
 
+#if !defined(_LIBCPP_VERSION)
 template <>
 class JSON_StreamParser<utf16char> : public JSON_Parser
 {
@@ -333,6 +334,7 @@ private:
     // The string of utf8 code units are buffered in reverse order
     std::string m_utf8_buffer;
 };
+#endif
 
 class JSON_StringParser : public JSON_Parser
 {
@@ -1234,9 +1236,11 @@ static std::unique_ptr<web::json::details::JSON_Parser> parser_factory(std::istr
 static std::unique_ptr<web::json::details::JSON_Parser> parser_factory(const std::string& str) {
     return utility::details::make_unique<web::json::details::JSON_StringParser>(str);
 }
+#if !defined(_LIBCPP_VERSION)
 static std::unique_ptr<web::json::details::JSON_Parser> parser_factory(utf16istream& stream) {
     return utility::details::make_unique<web::json::details::JSON_StreamParser<utf16char>>(stream);
 }
+#endif
 
 template<class Stream>
 static web::json::value parse_stream(Stream&& stream, std::error_code& error)
@@ -1289,6 +1293,7 @@ web::json::value web::json::value::parse(const std::string& stream, std::error_c
     return parse_stream(stream, error);
 }
 
+#if !defined(_LIBCPP_VERSION)
 web::json::value web::json::value::parse(utf16istream& stream)
 {
     return parse_stream(stream);
@@ -1298,3 +1303,4 @@ web::json::value web::json::value::parse(utf16istream& stream, std::error_code& 
 {
     return parse_stream(stream, error);
 }
+#endif

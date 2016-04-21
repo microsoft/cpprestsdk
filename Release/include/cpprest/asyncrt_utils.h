@@ -210,6 +210,7 @@ namespace conversions
         }
         return t;
     }
+#if !defined(_LIBCPP_VERSION)
     template <typename Target>
     Target scan_string(const utf16string &str, const std::locale &loc = std::locale())
     {
@@ -223,6 +224,7 @@ namespace conversions
         }
         return t;
     }
+#endif
 
 }
 
