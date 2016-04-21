@@ -29,6 +29,9 @@
 #include "cpprest/http_headers.h"
 #include "http_client_impl.h"
 
+#include <wincrypt.h> // for certificate pinning logic
+#include <iomanip> // for certificate pinning logic
+
 namespace web
 {
 namespace http
@@ -462,7 +465,7 @@ protected:
         if(WINHTTP_INVALID_STATUS_CALLBACK == WinHttpSetStatusCallback(
             m_hSession,
             &winhttp_client::completion_callback,
-            WINHTTP_CALLBACK_FLAG_ALL_COMPLETIONS | WINHTTP_CALLBACK_FLAG_HANDLES,
+			WINHTTP_CALLBACK_FLAG_ALL_COMPLETIONS | WINHTTP_CALLBACK_FLAG_HANDLES |	WINHTTP_CALLBACK_FLAG_SEND_REQUEST,
             0))
         {
             return report_failure(_XPLATSTR("Error registering callback"));
@@ -898,6 +901,19 @@ private:
         }
     }
 
+	static utility::string_t getCertificateString(BYTE* publicKey, DWORD size)
+	{
+		// obtain public key of certificate as string
+		std::stringstream stream;
+		stream << std::hex;
+		for (size_t i = 0; i < size; ++i)
+		{
+			stream << std::setw(2) << std::setfill('0') << (int)((unsigned char*)publicKey)[i];
+		}
+		
+		return utility::conversions::to_string_t(stream.str());
+	}
+
     // Returns true if we handle successfully and resending the request
     // or false if we fail to handle.
     static bool handle_authentication_failure(
@@ -1053,6 +1069,112 @@ private:
                     p_request_context->report_error(errorCode, build_error_msg(error_result));
                     break;
                 }
+			case WINHTTP_CALLBACK_STATUS_SENDING_REQUEST:
+				{
+					// get actual URL which might be different from the original one due to redirection etc.
+					DWORD urlSize{ 0 };
+					WinHttpQueryOption(hRequestHandle, WINHTTP_OPTION_URL, NULL, &urlSize);
+					auto urlwchar = new WCHAR[urlSize/sizeof(WCHAR)];
+
+					WinHttpQueryOption(hRequestHandle, WINHTTP_OPTION_URL, (void*)urlwchar, &urlSize);
+					utility::string_t url(urlwchar); 
+
+					delete[] urlwchar;
+
+					// obtain leaf cert based on which we will be able to build the certificate chain
+					PCCERT_CONTEXT pCert{ nullptr };
+					DWORD dwSize = sizeof(pCert);
+
+					WinHttpQueryOption(hRequestHandle, WINHTTP_OPTION_SERVER_CERT_CONTEXT, &pCert, &dwSize);
+
+					if (pCert)
+					{
+						std::vector<utility::string_t> certificates;
+
+						CERT_ENHKEY_USAGE keyUsage = {};
+						keyUsage.cUsageIdentifier = 0;
+						keyUsage.rgpszUsageIdentifier = NULL;
+
+						CERT_USAGE_MATCH certUsage = {};
+						certUsage.dwType = USAGE_MATCH_TYPE_AND;
+						certUsage.Usage = keyUsage;
+
+						CERT_CHAIN_PARA chainPara = {};
+						chainPara.cbSize = sizeof(CERT_CHAIN_PARA);
+						chainPara.RequestedUsage = certUsage;
+
+						PCCERT_CHAIN_CONTEXT pChainContext = {};
+
+						// build the certificate chain relying on the actual intermediate certs returned as part of the TLS session
+						// disable any network operations to fetch certificates 
+						auto validChain = CertGetCertificateChain(NULL, pCert, NULL, pCert->hCertStore, &chainPara,
+							CERT_CHAIN_CACHE_ONLY_URL_RETRIEVAL |
+							CERT_CHAIN_REVOCATION_CHECK_CACHE_ONLY |
+							CERT_CHAIN_REVOCATION_CHECK_CHAIN |
+							CERT_CHAIN_CACHE_END_CERT |
+							CERT_CHAIN_DISABLE_AUTH_ROOT_AUTO_UPDATE,
+							NULL, &pChainContext);
+
+						if (validChain && pChainContext)
+						{
+							// extract all certificates from the the TLS connection
+							for (size_t i = 0; i < pChainContext->cChain; ++i)
+							{
+								auto chain = pChainContext->rgpChain[i];
+								for (size_t j = 0; j < chain->cElement; ++j)
+								{
+									auto chainElement = chain->rgpElement[j];
+									auto cert = chainElement->pCertContext;
+									auto publicKey = cert->pCertInfo->SubjectPublicKeyInfo.PublicKey;
+
+									// remember public key
+									certificates.push_back(getCertificateString(publicKey.pbData, publicKey.cbData));
+								}
+							}
+						}
+						else
+						{
+							// failed to build chain, we use what we have (the leaf cert)
+							auto publicKey = pCert->pCertInfo->SubjectPublicKeyInfo.PublicKey;
+							certificates.push_back(getCertificateString(publicKey.pbData, publicKey.cbData));
+						}
+
+						CertFreeCertificateContext(pCert); // we don't need this anymore
+
+						bool pinned{ false };
+						for (const auto& certificate : certificates)
+						{
+							if (p_request_context->m_http_client->client_config().invoke_pinning_callback(url, certificate))
+							{
+								pinned = true;
+								break;
+							}
+						}
+
+						if (validChain)
+						{
+							CertFreeCertificateChain(pChainContext);
+						}
+
+						if (!pinned)
+						{
+							// client refused all the certificates, we need to cancel the current HTTP request
+							p_request_context->cleanup();
+							return;
+						}
+					}
+					else
+					{
+						// not able to extract the leaf certificate, ask the pinning callback what to do in this case by passing in null values
+						if (!p_request_context->m_http_client->client_config().invoke_pinning_callback(url, U("")))
+						{
+							p_request_context->cleanup();
+							return;
+						}
+					}
+
+					break;
+				}
             case WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE :
                 {
                     if (!p_request_context->m_request.body())
