@@ -243,7 +243,7 @@ protected:
     }
 
 private:
-    typename std::streambuf* m_streambuf;
+    std::streambuf* m_streambuf;
 };
 
 #if !defined(_LIBCPP_VERSION)
@@ -309,7 +309,7 @@ private:
             if (low_ch == std::char_traits<utf16char>::eof())
             {
                 // Low surrogate is not present. Replace dangling surrogate with "REPLACEMENT CHARACTER"
-                m_utf8_buffer = u8"\uFFFD";
+                m_utf8_buffer = "\xEF\xBF\xBD";
                 return;
             }
             u16_str.push_back(static_cast<utf16char>(low_ch));
@@ -321,14 +321,14 @@ private:
         catch (...)
         {
             // Conversion failed. Replace the character with the Unicode "REPLACEMENT CHARACTER" https://en.wikipedia.org/wiki/Specials_Unicode_block
-            m_utf8_buffer = u8"\uFFFD";
+            m_utf8_buffer = "\xEF\xBF\xBD";
         }
         std::reverse(m_utf8_buffer.begin(), m_utf8_buffer.end());
 
         assert(m_utf8_buffer.size() > 0 || m_eof);
     }
 
-    typename std::basic_streambuf<utf16char, std::char_traits<utf16char>>* m_streambuf;
+    std::basic_streambuf<utf16char, std::char_traits<utf16char>>* m_streambuf;
     bool m_eof = false;
 
     // The string of utf8 code units are buffered in reverse order
