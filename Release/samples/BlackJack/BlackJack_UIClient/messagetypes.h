@@ -173,7 +173,7 @@ struct Player
         const web::json::value &balance = object[BALANCE];
         const web::json::value &hand = object[HAND];
 
-        result.Name = name.as_string();
+        result.Name = utility::conversions::to_utf16string(name.as_string());
         result.Balance = balance.as_double();
         result.Hand = BJHand(hand);
 

@@ -178,7 +178,7 @@ public:
         test_response * p_response,
         const web::http::status_code &code,
         const utility::string_t &content_type,
-        const utility::string_t data);
+        const utility::string_t &data);
 
 private:
     http_asserts() {}

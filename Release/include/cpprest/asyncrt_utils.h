@@ -198,24 +198,32 @@ namespace conversions
     }
 
     template <typename Target>
-    Target scan_string(const utility::string_t &str, const std::locale &loc)
+    Target scan_string(const std::string &str, const std::locale &loc = std::locale())
     {
         Target t;
-        utility::istringstream_t iss(str);
+        std::istringstream iss(str);
         iss.imbue(loc);
         iss >> t;
-        if (iss.bad())
+        if (iss.bad() || iss.fail())
+        {
+            throw std::bad_cast();
+        }
+        return t;
+    }
+    template <typename Target>
+    Target scan_string(const utf16string &str, const std::locale &loc = std::locale())
+    {
+        Target t;
+        utf16istringstream iss(str);
+        iss.imbue(loc);
+        iss >> t;
+        if (iss.bad() || iss.fail())
         {
             throw std::bad_cast();
         }
         return t;
     }
 
-    template <typename Target>
-    Target scan_string(const utility::string_t &str)
-    {
-        return scan_string<Target>(str, std::locale());
-    }
 }
 
 namespace details

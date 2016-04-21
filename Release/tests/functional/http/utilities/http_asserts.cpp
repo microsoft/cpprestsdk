@@ -302,7 +302,7 @@ void http_asserts::assert_test_response_equals(
         test_response * p_response,
         const ::http::status_code &code,
         const utility::string_t &content_type,
-        const utility::string_t data)
+        const utility::string_t &data)
 {
     VERIFY_ARE_EQUAL(code, p_response->m_status_code);
     utility::string_t found_content;

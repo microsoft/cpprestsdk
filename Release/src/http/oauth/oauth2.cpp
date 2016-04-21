@@ -79,14 +79,14 @@ pplx::task<void> oauth2_config::token_from_redirected_uri(const web::http::uri& 
     auto state_param = query.find(oauth2_strings::state);
     if (state_param == query.end())
     {
-        return pplx::task_from_exception<void>(oauth2_exception(U("parameter 'state' missing from redirected URI.")));
+        return pplx::task_from_exception<void>(oauth2_exception("parameter 'state' missing from redirected URI."));
     }
     if (state() != state_param->second)
     {
-        utility::ostringstream_t err;
+        std::ostringstream err;
         err.imbue(std::locale::classic());
-        err << U("redirected URI parameter 'state'='") << state_param->second
-            << U("' does not match state='") << state() << U("'.");
+        err << "redirected URI parameter 'state'='" << utility::conversions::to_utf8string(state_param->second)
+            << "' does not match state='" << utility::conversions::to_utf8string(state()) << "'.";
         return pplx::task_from_exception<void>(oauth2_exception(err.str()));
     }
 
@@ -101,7 +101,7 @@ pplx::task<void> oauth2_config::token_from_redirected_uri(const web::http::uri& 
     auto token_param = query.find(oauth2_strings::access_token);
     if (token_param == query.end())
     {
-        return pplx::task_from_exception<void>(oauth2_exception(U("either 'code' or 'access_token' parameter must be in the redirected URI.")));
+        return pplx::task_from_exception<void>(oauth2_exception("either 'code' or 'access_token' parameter must be in the redirected URI."));
     }
 
     set_token(token_param->second);
@@ -158,16 +158,16 @@ oauth2_token oauth2_config::_parse_token_from_json(const json::value& token_json
 
     if (token_json.has_field(oauth2_strings::access_token))
     {
-        result.set_access_token(token_json.at(oauth2_strings::access_token).as_string());
+        result.set_access_token(utility::conversions::to_string_t(token_json.at(oauth2_strings::access_token).as_string()));
     }
     else
     {
-        throw oauth2_exception(U("response json contains no 'access_token': ") + token_json.serialize());
+        throw oauth2_exception("response json contains no 'access_token': " + token_json.serialize());
     }
 
     if (token_json.has_field(oauth2_strings::token_type))
     {
-        result.set_token_type(token_json.at(oauth2_strings::token_type).as_string());
+        result.set_token_type(utility::conversions::to_string_t(token_json.at(oauth2_strings::token_type).as_string()));
     }
     else
     {
@@ -178,12 +178,12 @@ oauth2_token oauth2_config::_parse_token_from_json(const json::value& token_json
     }
     if (!utility::details::str_icmp(result.token_type(), oauth2_strings::bearer))
     {
-        throw oauth2_exception(U("only 'token_type=bearer' access tokens are currently supported: ") + token_json.serialize());
+        throw oauth2_exception("only 'token_type=bearer' access tokens are currently supported: " + token_json.serialize());
     }
 
     if (token_json.has_field(oauth2_strings::refresh_token))
     {
-        result.set_refresh_token(token_json.at(oauth2_strings::refresh_token).as_string());
+        result.set_refresh_token(utility::conversions::to_string_t(token_json.at(oauth2_strings::refresh_token).as_string()));
     }
     else
     {
@@ -200,10 +200,7 @@ oauth2_token oauth2_config::_parse_token_from_json(const json::value& token_json
         {
             // Handle the case of a number as a JSON "string".
             // Using streams because std::stoll isn't avaliable on Android.
-            int64_t expires;
-            utility::istringstream_t iss(json_expires_in_val.as_string());
-            iss.exceptions(std::ios::badbit | std::ios::failbit);
-            iss >> expires;
+            int64_t expires = utility::conversions::scan_string<int64_t>(json_expires_in_val.as_string());
             result.set_expires_in(expires);
         }
     }
@@ -217,7 +214,7 @@ oauth2_token oauth2_config::_parse_token_from_json(const json::value& token_json
         // The authorization server may return different scope from the one requested.
         // This however doesn't necessarily mean the token authorization scope is different.
         // See: http://tools.ietf.org/html/rfc6749#section-3.3
-        result.set_scope(token_json.at(oauth2_strings::scope).as_string());
+        result.set_scope(utility::conversions::to_string_t(token_json.at(oauth2_strings::scope).as_string()));
     }
     else
     {
