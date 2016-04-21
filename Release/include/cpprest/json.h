@@ -46,7 +46,6 @@ namespace json
     {
         class _Value;
         class _Number;
-        class _Null;
         class _Boolean;
         class _String;
         class _Object;
@@ -737,6 +736,8 @@ namespace json
         friend class web::json::details::_Object;
         friend class web::json::details::_Array;
         friend class web::json::details::JSON_Parser;
+
+        inline size_t serialize_size() const;
 
         /// <summary>
         /// INTERNAL USE ONLY
@@ -1490,20 +1491,6 @@ namespace json
             friend class web::json::value;
         };
 
-        class _Null final : public _Value
-        {
-        public:
-            virtual std::unique_ptr<_Value> _copy_value() override
-            {
-                return utility::details::make_unique<_Null>();
-            }
-            virtual json::value::value_type type() const override { return json::value::Null; }
-            virtual void serialize_impl(utf8string& str) const override {
-                str.append("null");
-            }
-            virtual size_t serialize_size() const override { return 4; }
-        };
-
         class _Number final : public _Value
         {
         public:
@@ -1670,7 +1657,7 @@ namespace json
                     size_t valueSize = elem.second.size() * 20; // Multipler by each object/array element
                     if (valueSize == 0)
                     {
-                        valueSize = elem.second.m_value->serialize_size();
+                        valueSize = elem.second.serialize_size();
                     }
                     reserveSize += valueSize;
                 }
@@ -1769,7 +1756,10 @@ namespace json
 
     inline void value::serialize(std::string& outstr) const
     {
-        m_value->serialize_impl(outstr);
+        if (m_value)
+            m_value->serialize_impl(outstr);
+        else
+            outstr.append("null");
     }
 
     /// <summary>
@@ -1778,7 +1768,7 @@ namespace json
     /// <returns>The number of children. 0 for all non-composites.</returns>
     inline size_t value::size() const
     {
-        return m_value->size();
+        return m_value ? m_value->size() : 0;
     }
 
     /// <summary>
@@ -1788,13 +1778,18 @@ namespace json
     /// <returns>True if the field exists, false otherwise.</returns>
     inline bool value::has_field(const std::string& key) const
     {
-        return m_value->has_field(key);
+        return m_value ? m_value->has_field(key) : false;
+    }
+
+    inline size_t value::serialize_size() const
+    {
+        return m_value ? m_value->serialize_size() : 4;
     }
 
     inline value::value(std::unique_ptr<details::_Value> v)
         : m_value(std::move(v))
 #ifdef ENABLE_JSON_VALUE_VISUALIZER
-        , m_kind(m_value->type())
+        , m_kind(m_value ? m_value->type() : json::value::Null)
 #endif
     {}
 

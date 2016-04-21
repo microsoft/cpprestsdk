@@ -35,7 +35,7 @@ void json::keep_object_element_order(bool keep_order)
 }
 
 web::json::value::value() :
-    value(utility::details::make_unique<web::json::details::_Null>())
+    value(std::unique_ptr<web::json::details::_Value>())
 { }
 
 web::json::value::value(int32_t v) :
@@ -71,14 +71,17 @@ web::json::value::value(std::string v, bool has_escape_chars) :
 { }
 
 web::json::value::value(const value &other) :
-    value(other.m_value->_copy_value())
+    value(other.m_value ? other.m_value->_copy_value() : std::unique_ptr<json::details::_Value>(nullptr))
 { }
 
 web::json::value &web::json::value::operator=(const value &other)
 {
     if(this != &other)
     {
-        m_value = std::unique_ptr<details::_Value>(other.m_value->_copy_value());
+        if (other.m_value)
+            m_value = other.m_value->_copy_value();
+        else
+            m_value.reset();
 #ifdef ENABLE_JSON_VALUE_VISUALIZER
         m_kind = other.m_kind;
 #endif
@@ -114,41 +117,57 @@ web::json::value web::json::value::array(std::vector<value> elements)
 
 const web::json::number& web::json::value::as_number() const
 {
+    if (!m_value)
+        throw json_exception("not a number");
     return m_value->as_number();
 }
 
 double web::json::value::as_double() const
 {
+    if (!m_value)
+        throw json_exception("not a number");
     return m_value->as_double();
 }
 
 int web::json::value::as_integer() const
 {
+    if (!m_value)
+        throw json_exception("not a number");
     return m_value->as_integer();
 }
 
 bool web::json::value::as_bool() const
 {
+    if (!m_value)
+        throw json_exception("not a boolean");
     return m_value->as_bool();
 }
 
 json::array& web::json::value::as_array()
 {
+    if (!m_value)
+        throw json_exception("not an array");
     return m_value->as_array();
 }
 
 const json::array& web::json::value::as_array() const
 {
+    if (!m_value)
+        throw json_exception("not an array");
     return m_value->as_array();
 }
 
 json::object& web::json::value::as_object()
 {
+    if (!m_value)
+        throw json_exception("not an object");
     return m_value->as_object();
 }
 
 const json::object& web::json::value::as_object() const
 {
+    if (!m_value)
+        throw json_exception("not an object");
     return m_value->as_object();
 }
 
@@ -199,7 +218,7 @@ bool web::json::details::_String::has_escape_chars(const _String &str)
     });
 }
 
-web::json::value::value_type json::value::type() const { return m_value->type(); }
+web::json::value::value_type json::value::type() const { return m_value ? m_value->type() : json::value::Null; }
 
 bool json::value::is_integer() const
 {

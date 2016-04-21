@@ -165,6 +165,8 @@ void web::json::details::_Number::serialize_impl(std::string& stream) const
 
 const std::string& web::json::value::as_string() const
 {
+    if (!m_value)
+        throw json_exception("not a string");
     return m_value->as_string();
 }
 
@@ -175,7 +177,7 @@ std::string json::value::serialize() const
 #endif
 
     std::string ret;
-    ret.reserve(m_value->serialize_size());
-    m_value->serialize_impl(ret);
+    ret.reserve(serialize_size());
+    serialize(ret);
     return ret;
 }
