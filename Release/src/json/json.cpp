@@ -27,81 +27,52 @@
 
 using namespace web;
 
-bool json::details::g_keep_json_object_unsorted = false;
+extern bool json::details::g_keep_json_object_unsorted = false;
+
 void json::keep_object_element_order(bool keep_order)
 {
     json::details::g_keep_json_object_unsorted = keep_order;
 }
 
 web::json::value::value() :
-    m_value(utility::details::make_unique<web::json::details::_Null>())
-#ifdef ENABLE_JSON_VALUE_VISUALIZER
-    ,m_kind(value::Null)
-#endif
-    { }
+    value(utility::details::make_unique<web::json::details::_Null>())
+{ }
 
-web::json::value::value(int32_t value) :
-    m_value(utility::details::make_unique<web::json::details::_Number>(value))
-#ifdef ENABLE_JSON_VALUE_VISUALIZER
-    ,m_kind(value::Number)
-#endif
-    { }
+web::json::value::value(int32_t v) :
+    value(utility::details::make_unique<web::json::details::_Number>(v))
+{ }
 
-web::json::value::value(uint32_t value) :
-    m_value(utility::details::make_unique<web::json::details::_Number>(value))
-#ifdef ENABLE_JSON_VALUE_VISUALIZER
-    ,m_kind(value::Number)
-#endif
-    { }
+web::json::value::value(uint32_t v) :
+    value(utility::details::make_unique<web::json::details::_Number>(v))
+{ }
 
-web::json::value::value(int64_t value) :
-    m_value(utility::details::make_unique<web::json::details::_Number>(value))
-#ifdef ENABLE_JSON_VALUE_VISUALIZER
-    ,m_kind(value::Number)
-#endif
-    { }
+web::json::value::value(int64_t v) :
+    value(utility::details::make_unique<web::json::details::_Number>(v))
+{ }
 
-web::json::value::value(uint64_t value) :
-    m_value(utility::details::make_unique<web::json::details::_Number>(value))
-#ifdef ENABLE_JSON_VALUE_VISUALIZER
-    ,m_kind(value::Number)
-#endif
-    { }
+web::json::value::value(uint64_t v) :
+    value(utility::details::make_unique<web::json::details::_Number>(v))
+{ }
 
-web::json::value::value(double value) :
-    m_value(utility::details::make_unique<web::json::details::_Number>(value))
-#ifdef ENABLE_JSON_VALUE_VISUALIZER
-    ,m_kind(value::Number)
-#endif
-    { }
+web::json::value::value(double v) :
+    value(utility::details::make_unique<web::json::details::_Number>(v))
+{ }
 
-web::json::value::value(bool value) :
-    m_value(utility::details::make_unique<web::json::details::_Boolean>(value))
-#ifdef ENABLE_JSON_VALUE_VISUALIZER
-    ,m_kind(value::Boolean)
-#endif
-    { }
+web::json::value::value(bool v) :
+    value(utility::details::make_unique<web::json::details::_Boolean>(v))
+{ }
 
-web::json::value::value(std::string value) :
-    m_value(utility::details::make_unique<web::json::details::_String>(std::move(value)))
-#ifdef ENABLE_JSON_VALUE_VISUALIZER
-    ,m_kind(value::String)
-#endif
-    { }
+web::json::value::value(std::string v) :
+    value(utility::details::make_unique<web::json::details::_String>(std::move(v)))
+{ }
 
-web::json::value::value(std::string value, bool has_escape_chars) :
-m_value(utility::details::make_unique<web::json::details::_String>(std::move(value), has_escape_chars))
-#ifdef ENABLE_JSON_VALUE_VISUALIZER
-, m_kind(value::String)
-#endif
+web::json::value::value(std::string v, bool has_escape_chars) :
+    value(utility::details::make_unique<web::json::details::_String>(std::move(v), has_escape_chars))
 { }
 
 web::json::value::value(const value &other) :
-    m_value(other.m_value->_copy_value())
-#ifdef ENABLE_JSON_VALUE_VISUALIZER
-    ,m_kind(other.m_kind)
-#endif
-    { }
+    value(other.m_value->_copy_value())
+{ }
 
 web::json::value &web::json::value::operator=(const value &other)
 {
@@ -116,10 +87,7 @@ web::json::value &web::json::value::operator=(const value &other)
 }
 
 web::json::value::value(value &&other) CPPREST_NOEXCEPT :
-    m_value(std::move(other.m_value))
-#ifdef ENABLE_JSON_VALUE_VISUALIZER
-    ,m_kind(other.m_kind)
-#endif
+    value(std::move(other.m_value))
 {}
 
 web::json::value &web::json::value::operator=(web::json::value &&other) CPPREST_NOEXCEPT
@@ -128,115 +96,20 @@ web::json::value &web::json::value::operator=(web::json::value &&other) CPPREST_
     {
         m_value.swap(other.m_value);
 #ifdef ENABLE_JSON_VALUE_VISUALIZER
-        m_kind = other.m_kind;
+        std::swap(m_kind, other.m_kind);
 #endif
     }
     return *this;
 }
 
-web::json::value web::json::value::null()
-{
-    return web::json::value();
-}
-
-web::json::value web::json::value::number(double value)
-{
-    return web::json::value(value);
-}
-
-web::json::value web::json::value::number(int32_t value)
-{
-    return web::json::value(value);
-}
-
-web::json::value web::json::value::number(uint32_t value)
-{
-    return web::json::value(value);
-}
-
-web::json::value web::json::value::number(int64_t value)
-{
-    return web::json::value(value);
-}
-
-web::json::value web::json::value::number(uint64_t value)
-{
-    return web::json::value(value);
-}
-
-web::json::value web::json::value::boolean(bool value)
-{
-    return web::json::value(value);
-}
-
-web::json::value web::json::value::string(std::string value)
-{
-    std::unique_ptr<details::_Value> ptr = utility::details::make_unique<details::_String>(std::move(value));
-    return web::json::value(std::move(ptr)
-#ifdef ENABLE_JSON_VALUE_VISUALIZER
-            ,value::String
-#endif
-            );
-}
-
-web::json::value web::json::value::string(std::string value, bool has_escape_chars)
-{
-    std::unique_ptr<details::_Value> ptr = utility::details::make_unique<details::_String>(std::move(value), has_escape_chars);
-    return web::json::value(std::move(ptr)
-#ifdef ENABLE_JSON_VALUE_VISUALIZER
-            ,value::String
-#endif
-            );
-}
-
-web::json::value web::json::value::object(bool keep_order)
-{
-    std::unique_ptr<details::_Value> ptr = utility::details::make_unique<details::_Object>(keep_order);
-    return web::json::value(std::move(ptr)
-#ifdef ENABLE_JSON_VALUE_VISUALIZER
-            ,value::Object
-#endif
-            );
-}
-
 web::json::value web::json::value::object(std::vector<std::pair<std::string, value>> fields, bool keep_order)
 {
-    std::unique_ptr<details::_Value> ptr = utility::details::make_unique<details::_Object>(std::move(fields), keep_order);
-    return web::json::value(std::move(ptr)
-#ifdef ENABLE_JSON_VALUE_VISUALIZER
-            ,value::Object
-#endif
-            );
-}
-
-web::json::value web::json::value::array()
-{
-    std::unique_ptr<details::_Value> ptr = utility::details::make_unique<details::_Array>();
-    return web::json::value(std::move(ptr)
-#ifdef ENABLE_JSON_VALUE_VISUALIZER
-            ,value::Array
-#endif
-            );
-}
-
-web::json::value web::json::value::array(size_t size)
-{
-    std::unique_ptr<details::_Value> ptr = utility::details::make_unique<details::_Array>(size);
-    return web::json::value(std::move(ptr)
-#ifdef ENABLE_JSON_VALUE_VISUALIZER
-            ,value::Array
-#endif
-            );
+    return web::json::value(utility::details::make_unique<details::_Object>(std::move(fields), keep_order));
 }
 
 web::json::value web::json::value::array(std::vector<value> elements)
 {
-    std::unique_ptr<details::_Value> ptr = utility::details::make_unique<details::_Array>(std::move(elements));
-    return web::json::value(std::move(ptr)
-#ifdef ENABLE_JSON_VALUE_VISUALIZER
-            ,value::Array
-#endif
-            );
+    return web::json::value(utility::details::make_unique<details::_Array>(std::move(elements)));
 }
 
 const web::json::number& web::json::value::as_number() const

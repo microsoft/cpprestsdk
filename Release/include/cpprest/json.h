@@ -32,7 +32,7 @@
 #include <sstream>
 #include <vector>
 #include <unordered_map>
-#include <cstdint>
+#include <stdint.h>
 #include "cpprest/details/basic_types.h"
 #include "cpprest/asyncrt_utils.h"
 
@@ -51,11 +51,15 @@ namespace json
         class _String;
         class _Object;
         class _Array;
-        class JSON_Parser;
+        namespace
+        {
+            class JSON_Parser;
+        }
 
 
         enum json_error
         {
+            no_error = 0,
             left_over_character_in_stream = 1,
             malformed_array_literal,
             malformed_comment,
@@ -304,49 +308,49 @@ namespace json
         /// Creates a null value
         /// </summary>
         /// <returns>A JSON null value</returns>
-        static _ASYNCRTIMP value __cdecl null();
+        static inline value null() { return value(); }
 
         /// <summary>
         /// Creates a number value
         /// </summary>
-        /// <param name="value">The C++ value to create a JSON value from</param>
+        /// <param name="v">The C++ value to create a JSON value from</param>
         /// <returns>A JSON number value</returns>
-        static _ASYNCRTIMP value __cdecl number(double value);
+        static inline value number(double v) { return value(v); }
 
         /// <summary>
         /// Creates a number value
         /// </summary>
-        /// <param name="value">The C++ value to create a JSON value from</param>
+        /// <param name="v">The C++ value to create a JSON value from</param>
         /// <returns>A JSON number value</returns>
-        static _ASYNCRTIMP value __cdecl number(int32_t value);
+        static inline value number(int32_t v) { return value(v); }
 
         /// <summary>
         /// Creates a number value
         /// </summary>
-        /// <param name="value">The C++ value to create a JSON value from</param>
+        /// <param name="v">The C++ value to create a JSON value from</param>
         /// <returns>A JSON number value</returns>
-        static _ASYNCRTIMP value __cdecl number(uint32_t value);
+        static inline value number(uint32_t v) { return value(v); }
 
         /// <summary>
         /// Creates a number value
         /// </summary>
-        /// <param name="value">The C++ value to create a JSON value from</param>
+        /// <param name="v">The C++ value to create a JSON value from</param>
         /// <returns>A JSON number value</returns>
-        static _ASYNCRTIMP value __cdecl number(int64_t value);
+        static inline value number(int64_t v) { return value(v); }
 
         /// <summary>
         /// Creates a number value
         /// </summary>
-        /// <param name="value">The C++ value to create a JSON value from</param>
+        /// <param name="v">The C++ value to create a JSON value from</param>
         /// <returns>A JSON number value</returns>
-        static _ASYNCRTIMP value __cdecl number(uint64_t value);
+        static inline value number(uint64_t v) { return value(v); }
 
         /// <summary>
         /// Creates a Boolean value
         /// </summary>
-        /// <param name="value">The C++ value to create a JSON value from</param>
+        /// <param name="v">The C++ value to create a JSON value from</param>
         /// <returns>A JSON Boolean value</returns>
-        static _ASYNCRTIMP value __cdecl boolean(bool value);
+        static inline value boolean(bool v) { return value(v); }
 
         /// <summary>
         /// Constructor creating a JSON string value
@@ -356,7 +360,8 @@ namespace json
         /// This constructor has O(n) performance because it tries to determine if
         /// specified string has characters that should be properly escaped in JSON.
         /// </remarks>
-        static _ASYNCRTIMP value __cdecl string(std::string str);
+        static inline value string(const std::string& str) { return value(str); }
+        static inline value string(std::string&& str) { return value(std::move(str)); }
         static inline value string(const utf16string& str) {
             return string(utility::conversions::to_utf8string(str));
         }
@@ -370,7 +375,8 @@ namespace json
         /// <remarks>
         /// This constructor has O(1) performance if the string is move constructed.
         /// </remarks>
-        static _ASYNCRTIMP value __cdecl string(std::string value, bool has_escape_chars);
+        static inline value string(const std::string& str, bool has_escape_chars) { return value(str, has_escape_chars); }
+        static inline value string(std::string&& str, bool has_escape_chars) { return value(std::move(str), has_escape_chars); }
         static inline value string(const utf16string& str, bool has_escape_chars) {
             return string(utility::conversions::to_utf8string(str), has_escape_chars);
         }
@@ -380,7 +386,10 @@ namespace json
         /// </summary>
         /// <param name="keep_order">Whether to preserve the original order of the fields</param>
         /// <returns>An empty JSON object value</returns>
-        static _ASYNCRTIMP json::value __cdecl object(bool keep_order = false);
+        static inline value object(bool keep_order = false)
+        {
+            return object(std::vector<std::pair<std::string, value>>(), keep_order);
+        }
 
         /// <summary>
         /// Creates an object value from a collection of field/values
@@ -388,8 +397,8 @@ namespace json
         /// <param name="fields">Field names associated with JSON values</param>
         /// <param name="keep_order">Whether to preserve the original order of the fields</param>
         /// <returns>A non-empty JSON object value</returns>
-        static _ASYNCRTIMP json::value __cdecl object(std::vector<std::pair<std::string, value>> fields, bool keep_order = false);
-        static json::value object(std::vector<std::pair<utf16string, value>> fields, bool keep_order = false) {
+        static _ASYNCRTIMP value __cdecl object(std::vector<std::pair<std::string, value>> fields, bool keep_order = false);
+        static inline value object(std::vector<std::pair<utf16string, value>> fields, bool keep_order = false) {
             std::vector<std::pair<std::string, value>> utf8fields;
             utf8fields.reserve(fields.size());
             for (auto&& field : fields) {
@@ -402,14 +411,14 @@ namespace json
         /// Creates an empty JSON array
         /// </summary>
         /// <returns>An empty JSON array value</returns>
-        static _ASYNCRTIMP json::value __cdecl array();
+        static inline value array() { return array(0); }
 
         /// <summary>
         /// Creates a JSON array
         /// </summary>
         /// <param name="size">The initial number of elements of the JSON value</param>
         /// <returns>A JSON array value</returns>
-        static _ASYNCRTIMP json::value __cdecl array(size_t size);
+        static inline value array(size_t size) { return array(std::vector<value>(size)); }
 
         /// <summary>
         /// Creates a JSON array
@@ -729,12 +738,11 @@ namespace json
         friend class web::json::details::_Array;
         friend class web::json::details::JSON_Parser;
 
-#ifdef ENABLE_JSON_VALUE_VISUALIZER
-        explicit value(std::unique_ptr<details::_Value> v, value_type kind) : m_value(std::move(v)), m_kind(kind)
-#else
-        explicit value(std::unique_ptr<details::_Value> v) : m_value(std::move(v))
-#endif
-        {}
+        /// <summary>
+        /// INTERNAL USE ONLY
+        /// Used by the JSON_Parser to create json::values.
+        /// </summary>
+        explicit value(std::unique_ptr<details::_Value> v);
 
         std::unique_ptr<details::_Value> m_value;
 #ifdef ENABLE_JSON_VALUE_VISUALIZER
@@ -1782,6 +1790,13 @@ namespace json
     {
         return m_value->has_field(key);
     }
+
+    inline value::value(std::unique_ptr<details::_Value> v)
+        : m_value(std::move(v))
+#ifdef ENABLE_JSON_VALUE_VISUALIZER
+        , m_kind(m_value->type())
+#endif
+    {}
 
     /// <summary>
     /// A standard <c>std::ostream</c> operator to facilitate writing JSON values to streams.
