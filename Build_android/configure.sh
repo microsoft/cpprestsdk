@@ -187,7 +187,7 @@ then
 	    git apply "$DIR/boost-for-android.patch"
 	    touch cpprestsdk.patched.stamp
 	fi
-	PATH="$PATH:$NDK_DIR" ./build-android.sh --boost=1.55.0 --with-libraries=locale,random,date_time,filesystem,system,thread,chrono "${NDK_DIR}" || exit 1
+	PATH="$PATH:$NDK_DIR" ./build-android.sh --boost=1.55.0 --with-libraries=atomic,locale,random,date_time,filesystem,system,thread,chrono "${NDK_DIR}" || exit 1
     )
 
     (
@@ -204,7 +204,7 @@ then
 	    ln -s ../Boost-for-Android/boost_1_55_0.tar.bz2 .
 	    touch cpprestsdk.patched.stamp
 	fi
-	PATH="$PATH:$NDK_DIR" ./build-android.sh --boost=1.55.0 --with-libraries=locale,random,date_time,filesystem,system,thread,chrono "${NDK_DIR}" || exit 1
+	PATH="$PATH:$NDK_DIR" ./build-android.sh --boost=1.55.0 --with-libraries=atomic,locale,random,date_time,filesystem,system,thread,chrono "${NDK_DIR}" || exit 1
     )
 )
 fi
