@@ -16,8 +16,8 @@ setenv-android.sh:
 
 setenv-android-x86.sh: setenv-android.sh
 	cp setenv-android.sh setenv-android-x86.sh.tmp
-	sed -i 's/_ANDROID_EABI="arm-linux-androideabi-4.8"/_ANDROID_EABI="x86-4.8"/g' setenv-android-x86.sh.tmp
-	sed -i 's/_ANDROID_ARCH=arch-arm/_ANDROID_ARCH=arch-x86/g' setenv-android-x86.sh.tmp
+	sed -i -e 's/_ANDROID_EABI="arm-linux-androideabi-4.8"/_ANDROID_EABI="x86-4.8"/g' setenv-android-x86.sh.tmp
+	sed -i -e 's/_ANDROID_ARCH=arch-arm/_ANDROID_ARCH=arch-x86/g' setenv-android-x86.sh.tmp
 	mv setenv-android-x86.sh.tmp setenv-android-x86.sh
 
 $(OPENSSL_VER).tar.gz:
