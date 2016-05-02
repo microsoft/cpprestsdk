@@ -220,6 +220,13 @@ TEST(escaped_unicode_string)
     const auto euro = "\xE2\x82\xAC";
     VERIFY_ARE_EQUAL(euro, str.as_string());
 
+    // Test for surrogate pairs of unicode escapes
+    str = web::json::value::parse(U("\"\\ud83c\\uddee\""));
+    VERIFY_ARE_EQUAL("\xF0\x9F\x87\xAE", str.as_string());
+
+    // Should error if a unicode escape is missing its lower surrogate
+    VERIFY_PARSING_THROW(json::value::parse(U("\"\\ud83c\"")));
+
     VERIFY_PARSING_THROW(json::value::parse(U("\"\\u0klB\"")));
 }
 

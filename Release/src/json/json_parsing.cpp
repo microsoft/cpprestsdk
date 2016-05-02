@@ -778,46 +778,77 @@ inline bool JSON_Parser::handle_unescape_char(Token &token)
             return true;
         case 'u':
         {
-            // A four-hexdigit Unicode character.
-            // Transform into a 16 bit code point.
-            int decoded = 0;
-            for (int i = 0; i < 4; ++i)
-            {
-                int ch_int = NextCharacter();
-                if (ch_int < 0 || ch_int > 127)
-                    return false;
+            auto decode_utf16_unit = [](JSON_Parser& parser, json_error& ec) {
+                // A four-hexdigit Unicode character.
+                // Transform into a 16 bit code point.
+                int decoded = 0;
+                for (int i = 0; i < 4; ++i)
+                {
+                    int ch_int = parser.NextCharacter();
+                    if (ch_int < 0 || ch_int > 127) {
+                        ec = json_error::malformed_string_literal;
+                        return 0;
+                    }
 #ifdef _WIN32
-                const int isxdigitResult = _isxdigit_l(ch_int, utility::details::scoped_c_thread_locale::c_locale());
+                    const int isxdigitResult = _isxdigit_l(ch_int, utility::details::scoped_c_thread_locale::c_locale());
 #else
-                const int isxdigitResult = isxdigit(ch_int);
+                    const int isxdigitResult = isxdigit(ch_int);
 #endif
-                if (!isxdigitResult)
-                    return false;
+                    if (!isxdigitResult)
+                    {
+                        ec = json_error::malformed_string_literal;
+                        return 0;
+                    }
 
-                int val = _hexval[static_cast<size_t>(ch_int)];
-                _ASSERTE(val != -1);
+                    int val = _hexval[static_cast<size_t>(ch_int)];
+                    _ASSERTE(val != -1);
 
-                // Add the input char to the decoded number
-                decoded |= (val << (4 * (3 - i)));
-            }
+                    // Add the input char to the decoded number
+                    decoded |= (val << (4 * (3 - i)));
+                }
+
+                return decoded;
+            };
 
             // Construct the character based on the decoded number
             // Convert the code unit into a UTF-8 sequence
-            // TODO: Improve detection of surrogate pair + error handling
             utf16string utf16;
+            auto decoded = decode_utf16_unit(*this, token.m_error);
+            if (token.m_error)
+                return false;
             utf16.push_back(static_cast<utf16char>(decoded));
-            utf8string utf8;
+
+            if (decoded >= 0xD800)
+            {
+                // Decoded a high surrogate. Attempt to grab low surrogate.
+                if (NextCharacter() != '\\')
+                {
+                    token.m_error = json_error::malformed_string_literal;
+                    return false;
+                }
+                if (NextCharacter() != 'u')
+                {
+                    token.m_error = json_error::malformed_string_literal;
+                    return false;
+                }
+                decoded = decode_utf16_unit(*this, token.m_error);
+                if (token.m_error)
+                    return false;
+                utf16.push_back(static_cast<utf16char>(decoded));
+            }
+
             try
             {
+                utf8string utf8;
                 utf8 = ::utility::conversions::utf16_to_utf8(utf16);
+                token.string_val.append(utf8);
+                return true;
             }
             catch (...)
             {
                 token.m_error = json_error::malformed_string_literal;
+                return false;
             }
-            token.string_val.append(utf8);
-
-            return true;
         }
         default:
             // BUG: This is incorrect behavior; all characters MAY be escaped, and should be added as-is.
