@@ -27,7 +27,7 @@
 
 using namespace web;
 
-extern bool json::details::g_keep_json_object_unsorted = false;
+bool json::details::g_keep_json_object_unsorted = false;
 
 void json::keep_object_element_order(bool keep_order)
 {
