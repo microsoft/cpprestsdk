@@ -197,6 +197,11 @@ namespace conversions
         return print_string(val, std::locale());
     }
 
+    inline utility::string_t print_string(const utility::string_t &val)
+    {
+        return val;
+    }
+
     template <typename Target>
     Target scan_string(const utility::string_t &str, const std::locale &loc)
     {
@@ -215,6 +220,11 @@ namespace conversions
     Target scan_string(const utility::string_t &str)
     {
         return scan_string<Target>(str, std::locale());
+    }
+
+    inline utility::string_t scan_string(const utility::string_t &str)
+    {
+        return str;
     }
 }
 

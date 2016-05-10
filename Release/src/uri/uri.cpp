@@ -53,28 +53,27 @@ utility::string_t uri_components::join()
         m_path.insert(m_path.begin(), 1, _XPLATSTR('/'));
     }
 
-    utility::ostringstream_t os;
-    os.imbue(std::locale::classic());
+    utility::string_t ret;
 
     if (!m_scheme.empty())
     {
-        os << m_scheme << _XPLATSTR(':');
+        ret.append(m_scheme).append({ _XPLATSTR(':') });
     }
 
     if (!m_host.empty())
     {
-        os << _XPLATSTR("//");
+        ret.append(_XPLATSTR("//"));
 
         if (!m_user_info.empty())
         {
-            os << m_user_info << _XPLATSTR('@');
+            ret.append(m_user_info).append({ _XPLATSTR('@') });
         }
 
-        os << m_host;
+        ret.append(m_host);
 
         if (m_port > 0)
         {
-            os << _XPLATSTR(':') << m_port;
+            ret.append({ _XPLATSTR(':') }).append(utility::conversions::print_string(m_port));
         }
     }
 
@@ -83,22 +82,23 @@ utility::string_t uri_components::join()
         // only add the leading slash when the host is present
         if (!m_host.empty() && m_path.front() != _XPLATSTR('/'))
         {
-            os << _XPLATSTR('/');
+            ret.append({ _XPLATSTR('/') });
         }
-        os << m_path;
+
+        ret.append(m_path);
     }
 
     if (!m_query.empty())
     {
-        os << _XPLATSTR('?') << m_query;
+        ret.append({ _XPLATSTR('?') }).append(m_query);
     }
 
     if (!m_fragment.empty())
     {
-        os << _XPLATSTR('#') << m_fragment;
+        ret.append({ _XPLATSTR('#') }).append(m_fragment);
     }
 
-    return os.str();
+    return ret;
 }
 }
 
