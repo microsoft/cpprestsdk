@@ -42,6 +42,10 @@
 #include "pplx/pplx.h"
 #endif
 
+namespace web { namespace http { namespace client { namespace details {
+    class asio_connection_pool;
+}}}}
+
 namespace crossplat {
 
 #if (defined(ANDROID) || defined(__ANDROID__))
@@ -95,6 +99,19 @@ public:
     boost::asio::io_service& service()
     {
         return m_service;
+    }
+
+    std::shared_ptr<web::http::client::details::asio_connection_pool> obtain_connection_pool(const std::string &base_uri, std::function<std::shared_ptr<web::http::client::details::asio_connection_pool>()> connection_pool_generator)
+    {
+        std::lock_guard<std::mutex> lg(m_connection_pool_map_mutex);
+
+        auto &pool = m_connection_pool_map[base_uri];
+        if (!pool)
+        {
+            pool = connection_pool_generator();
+        }
+
+        return pool;
     }
 
 private:
@@ -156,6 +173,9 @@ private:
     std::vector<pthread_t> m_threads;
     boost::asio::io_service m_service;
     boost::asio::io_service::work m_work;
+
+    std::mutex m_connection_pool_map_mutex;
+    std::map<std::string, std::shared_ptr<web::http::client::details::asio_connection_pool>> m_connection_pool_map;
 };
 
 }
