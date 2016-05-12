@@ -284,7 +284,7 @@ utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
 {
 #if defined(CPPREST_STDLIB_UNICODE_CONVERSIONS)
     std::wstring_convert<std::codecvt_utf8_utf16<utf16char>, utf16char> conversion;
-    return conversion.from_bytes(src);
+    return conversion.from_bytes(s);
 #else
     utf16string dest;
     // Save repeated heap allocations, use less than source string size assuming some
