@@ -338,31 +338,42 @@ public:
     : _http_client_communicator(std::move(address), std::move(client_config))
     , m_resolver(crossplat::threadpool::shared_instance().service())
     {
-        std::string host = base_uri().to_string();
-
-        auto &credentials = _http_client_communicator::client_config().credentials();
-        if (credentials.is_set())
+        if (this->client_config().get_ssl_context_callback())
         {
-            host.append(credentials.username());
-        }
-
-        auto &proxy = _http_client_communicator::client_config().proxy();
-        if (proxy.is_specified())
-        {
-            host.append(proxy.address().to_string());
-            if (proxy.credentials().is_set())
-            {
-                host.append(proxy.credentials().username());
-            }
-        }
-
-        m_pool = crossplat::threadpool::shared_instance().obtain_connection_pool(host, [this]()
-        {
-            return std::make_shared<asio_connection_pool>(crossplat::threadpool::shared_instance().service(),
+            // The pool is not added to the map because there is no better approaches to compare callback functors.
+            m_pool = std::make_shared<asio_connection_pool>(crossplat::threadpool::shared_instance().service(),
                 base_uri().scheme() == "https" && !_http_client_communicator::client_config().proxy().is_specified(),
                 std::chrono::seconds(30), // Unused sockets are kept in pool for 30 seconds.
                 this->client_config().get_ssl_context_callback());
-        });
+        }
+        else
+        {
+            std::string host = base_uri().to_string();
+
+            auto &credentials = _http_client_communicator::client_config().credentials();
+            if (credentials.is_set())
+            {
+                host.append(credentials.username());
+            }
+
+            auto &proxy = _http_client_communicator::client_config().proxy();
+            if (proxy.is_specified())
+            {
+                host.append(proxy.address().to_string());
+                if (proxy.credentials().is_set())
+                {
+                  host.append(proxy.credentials().username());
+                }
+            }
+
+            m_pool = crossplat::threadpool::shared_instance().obtain_connection_pool(host, [this]()
+            {
+                return std::make_shared<asio_connection_pool>(crossplat::threadpool::shared_instance().service(),
+                    base_uri().scheme() == "https" && !_http_client_communicator::client_config().proxy().is_specified(),
+                    std::chrono::seconds(30), // Unused sockets are kept in pool for 30 seconds.
+                    this->client_config().get_ssl_context_callback());
+            });
+	}
     }
 
     void send_request(const std::shared_ptr<request_context> &request_ctx) override;
