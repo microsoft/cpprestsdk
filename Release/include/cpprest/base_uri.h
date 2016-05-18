@@ -227,7 +227,7 @@ namespace web {
         /// Creates a URI from the given URI components.
         /// </summary>
         /// <param name="components">A URI components object to create the URI instance.</param>
-        _ASYNCRTIMP uri(const details::uri_components &components) : m_components(components) { m_uri = m_components.join(); }
+        _ASYNCRTIMP uri(const details::uri_components &components);
 
         /// <summary>
         /// Creates a URI from the given encoded string. This will throw an exception if the string

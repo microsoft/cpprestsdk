@@ -159,7 +159,7 @@ public:
     {
         if (has(name))
         {
-            m_headers[name] =  m_headers[name].append(_XPLATSTR(", ")).append(utility::conversions::print_string(value));
+            m_headers[name].append(_XPLATSTR(", ")).append(utility::conversions::print_string(value));
         }
         else
         {

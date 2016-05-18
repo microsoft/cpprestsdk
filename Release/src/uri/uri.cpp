@@ -73,7 +73,7 @@ utility::string_t uri_components::join()
 
         if (m_port > 0)
         {
-            ret.append({ _XPLATSTR(':') }).append(utility::conversions::print_string(m_port));
+            ret.append({ _XPLATSTR(':') }).append(utility::conversions::print_string(m_port, std::locale::classic()));
         }
     }
 
@@ -103,6 +103,15 @@ utility::string_t uri_components::join()
 }
 
 using namespace details;
+
+uri::uri(const details::uri_components &components) : m_components(components)
+{
+    m_uri = m_components.join();
+    if (!details::uri_parser::validate(m_uri))
+    {
+        throw uri_exception("provided uri is invalid: " + utility::conversions::to_utf8string(m_uri));
+    }
+}
 
 uri::uri(const utility::string_t &uri_string)
 {
