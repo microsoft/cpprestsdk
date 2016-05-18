@@ -1123,7 +1123,6 @@ private:
             if (colon != std::string::npos)
             {
                 auto name = header.substr(0, colon);
-                auto value = header.substr(colon + 2, header.size() - (colon + 3)); // also exclude '\r'
                 boost::algorithm::trim(name);
                 boost::algorithm::trim(value);
 
