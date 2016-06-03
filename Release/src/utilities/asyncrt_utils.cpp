@@ -63,7 +63,7 @@ scoped_c_thread_locale::xplat_locale scoped_c_thread_locale::c_locale()
         scoped_c_thread_locale::xplat_locale *clocale = new scoped_c_thread_locale::xplat_locale();
 #ifdef _WIN32
         *clocale = _create_locale(LC_ALL, "C");
-        if (*clocale == nullptr)
+        if (clocale == nullptr || *clocale == nullptr)
         {
             throw std::runtime_error("Unable to create 'C' locale.");
         }
@@ -74,7 +74,7 @@ scoped_c_thread_locale::xplat_locale scoped_c_thread_locale::c_locale()
         };
 #else
         *clocale = newlocale(LC_ALL, "C", nullptr);
-        if (*clocale == nullptr)
+        if (clocale == nullptr || *clocale == nullptr)
         {
             throw std::runtime_error("Unable to create 'C' locale.");
         }
