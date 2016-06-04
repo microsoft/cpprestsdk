@@ -466,6 +466,9 @@ public:
 		m_proxy = proxy;
 	}
 
+protected:
+	_ASYNCRTIMP pplx::task<void> _request_token(uri_builder& request_body);
+
 private:
     friend class web::http::client::http_client_config;
     friend class web::http::oauth2::details::oauth2_handler;
@@ -475,8 +478,6 @@ private:
         m_bearer_auth(true),
         m_http_basic_auth(true)
     {}
-
-    _ASYNCRTIMP pplx::task<void> _request_token(uri_builder& request_body);
 
     oauth2_token _parse_token_from_json(const json::value& token_json);
 
