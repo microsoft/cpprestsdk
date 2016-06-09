@@ -159,7 +159,14 @@ public:
                 auto sslContext = websocketpp::lib::shared_ptr<boost::asio::ssl::context>(new boost::asio::ssl::context(boost::asio::ssl::context::sslv23));
                 sslContext->set_default_verify_paths();
                 sslContext->set_options(boost::asio::ssl::context::default_workarounds);
-                sslContext->set_verify_mode(boost::asio::ssl::context::verify_peer);
+                if (m_config.validate_certificates())
+                {
+                    sslContext->set_verify_mode(boost::asio::ssl::context::verify_peer);
+                }
+                else
+                {
+                    sslContext->set_verify_mode(boost::asio::ssl::context::verify_none);
+                }
 
 #if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__)) || defined(_WIN32)
                 m_openssl_failed = false;
