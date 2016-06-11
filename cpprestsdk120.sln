@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Express 2013 for Windows Desktop
+# Visual Studio 2013
 VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "android", "Release\src\build\android.vcxitems", "{65951C40-A332-4B54-89C2-7CDAF30D5F66}"
@@ -65,23 +65,21 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FacebookDemo120", "Release\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cpprestsdk120.wod", "Release\src\build\vs12.wod\casablanca120.wod.vcxproj", "{BA4F15A0-6F9C-4ED6-A132-D6F7D0E08D6A}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cpprestsdk120.xp.static", "Release\src\build\vs12.xp.static\casablanca120.xp.static.vcxproj", "{CF74448D-FE99-4E3C-AFA6-A50F3145BAF3}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		Release\src\build\common.vcxitems*{c5d88d15-f9f5-48e2-9ef2-be0b645b9c0d}*SharedItemsImports = 4
-		Release\src\build\winrt.vcxitems*{c5d88d15-f9f5-48e2-9ef2-be0b645b9c0d}*SharedItemsImports = 4
+		Release\src\build\win32.vcxitems*{cf74448d-fe99-4e3c-afa6-a50f3145baf3}*SharedItemsImports = 4
+		Release\src\build\common.vcxitems*{cf74448d-fe99-4e3c-afa6-a50f3145baf3}*SharedItemsImports = 4
 		Release\src\build\winrt.vcxitems*{0a9ba181-7876-4b3d-a5e0-ee673fa51c05}*SharedItemsImports = 9
 		Release\src\build\android.vcxitems*{65951c40-a332-4b54-89c2-7cdaf30d5f66}*SharedItemsImports = 9
-		Release\src\build\common.vcxitems*{15f3b200-1aed-4b57-af37-b21cd67914b1}*SharedItemsImports = 4
 		Release\src\build\win32.vcxitems*{15f3b200-1aed-4b57-af37-b21cd67914b1}*SharedItemsImports = 4
-		Release\src\build\common.vcxitems*{9ad285a2-301e-47a0-a299-14ad5d4f2758}*SharedItemsImports = 4
-		Release\src\build\winrt.vcxitems*{9ad285a2-301e-47a0-a299-14ad5d4f2758}*SharedItemsImports = 4
-		Release\src\build\common.vcxitems*{01a76234-e6e8-4332-9fe2-1e12c34621be}*SharedItemsImports = 4
+		Release\src\build\common.vcxitems*{15f3b200-1aed-4b57-af37-b21cd67914b1}*SharedItemsImports = 4
 		Release\src\build\win32.vcxitems*{01a76234-e6e8-4332-9fe2-1e12c34621be}*SharedItemsImports = 4
-		Release\src\build\common.vcxitems*{ba4f15a0-6f9c-4ed6-a132-d6f7d0e08d6a}*SharedItemsImports = 4
+		Release\src\build\common.vcxitems*{01a76234-e6e8-4332-9fe2-1e12c34621be}*SharedItemsImports = 4
 		Release\src\build\win32.vcxitems*{ba4f15a0-6f9c-4ed6-a132-d6f7d0e08d6a}*SharedItemsImports = 4
+		Release\src\build\common.vcxitems*{ba4f15a0-6f9c-4ed6-a132-d6f7d0e08d6a}*SharedItemsImports = 4
 		Release\src\build\win32.vcxitems*{f40f4804-50f9-4257-8d74-b9cbb19ac4c3}*SharedItemsImports = 9
-		Release\src\build\common.vcxitems*{e5f8a2f0-f713-4673-a42f-2cc4e8fb171b}*SharedItemsImports = 4
-		Release\src\build\winrt.vcxitems*{e5f8a2f0-f713-4673-a42f-2cc4e8fb171b}*SharedItemsImports = 4
 		Release\src\build\other.vcxitems*{3d5908f7-7673-4229-bc46-2007a7af9cae}*SharedItemsImports = 9
 		Release\src\build\common.vcxitems*{594dcb5f-07e3-4084-a2ce-268611fa629f}*SharedItemsImports = 9
 	EndGlobalSection
@@ -272,6 +270,18 @@ Global
 		{BA4F15A0-6F9C-4ED6-A132-D6F7D0E08D6A}.Release|Win32.Build.0 = Release|Win32
 		{BA4F15A0-6F9C-4ED6-A132-D6F7D0E08D6A}.Release|x64.ActiveCfg = Release|x64
 		{BA4F15A0-6F9C-4ED6-A132-D6F7D0E08D6A}.Release|x64.Build.0 = Release|x64
+		{CF74448D-FE99-4E3C-AFA6-A50F3145BAF3}.Debug|ARM.ActiveCfg = DebugStatic|ARM
+		{CF74448D-FE99-4E3C-AFA6-A50F3145BAF3}.Debug|ARM.Build.0 = DebugStatic|ARM
+		{CF74448D-FE99-4E3C-AFA6-A50F3145BAF3}.Debug|Win32.ActiveCfg = DebugStatic|Win32
+		{CF74448D-FE99-4E3C-AFA6-A50F3145BAF3}.Debug|Win32.Build.0 = DebugStatic|Win32
+		{CF74448D-FE99-4E3C-AFA6-A50F3145BAF3}.Debug|x64.ActiveCfg = DebugStatic|x64
+		{CF74448D-FE99-4E3C-AFA6-A50F3145BAF3}.Debug|x64.Build.0 = DebugStatic|x64
+		{CF74448D-FE99-4E3C-AFA6-A50F3145BAF3}.Release|ARM.ActiveCfg = ReleaseStatic|ARM
+		{CF74448D-FE99-4E3C-AFA6-A50F3145BAF3}.Release|ARM.Build.0 = ReleaseStatic|ARM
+		{CF74448D-FE99-4E3C-AFA6-A50F3145BAF3}.Release|Win32.ActiveCfg = ReleaseStatic|Win32
+		{CF74448D-FE99-4E3C-AFA6-A50F3145BAF3}.Release|Win32.Build.0 = ReleaseStatic|Win32
+		{CF74448D-FE99-4E3C-AFA6-A50F3145BAF3}.Release|x64.ActiveCfg = ReleaseStatic|x64
+		{CF74448D-FE99-4E3C-AFA6-A50F3145BAF3}.Release|x64.Build.0 = ReleaseStatic|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -306,5 +316,6 @@ Global
 		{3E5DF179-3668-49DA-9B6D-38C0632D8F28} = {B27A3D67-1423-48D8-9F6D-D8FD7E682EC7}
 		{43DE4DF3-ACAA-429E-B260-CC6D4FE82658} = {3E5DF179-3668-49DA-9B6D-38C0632D8F28}
 		{BA4F15A0-6F9C-4ED6-A132-D6F7D0E08D6A} = {E25A1A01-9AB0-41C5-A03B-F6B83F5E66B9}
+		{CF74448D-FE99-4E3C-AFA6-A50F3145BAF3} = {E25A1A01-9AB0-41C5-A03B-F6B83F5E66B9}
 	EndGlobalSection
 EndGlobal
