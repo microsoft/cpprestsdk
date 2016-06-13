@@ -274,14 +274,12 @@ public:
     template <typename TimeoutHandler>
     void start_pool_timer(const TimeoutHandler &handler)
     {
-      //std::lock_guard<std::mutex> lg(m_pool_timer_mutex);
         m_pool_timer.expires_from_now(boost::posix_time::milliseconds(m_pool_timeout_secs * 1000));
         m_pool_timer.async_wait(handler);
     }
 
     void cancel_pool_timer()
     {
-      //std::lock_guard<std::mutex> lg(m_pool_timer_mutex);
         m_pool_timer.cancel();
     }
 
@@ -355,9 +353,7 @@ private:
     std::mutex m_connections_mutex;
 
     const int m_pool_timeout_secs;
-    std::mutex m_pool_timer_mutex;
     boost::asio::deadline_timer m_pool_timer;
-  //std::atomic<int> m_use_count;
     int m_use_count;
 };
 
