@@ -38,6 +38,7 @@ using namespace boost::asio;
 using namespace boost::asio::ip;
 
 #define CRLF std::string("\r\n")
+#define CRLFCRLF std::string("\r\n\r\n")
 
 namespace web
 {
@@ -57,7 +58,7 @@ namespace details
 // This is used as part of the async_read_until call below; see the
 // following for more details:
 // http://www.boost.org/doc/libs/1_55_0/doc/html/boost_asio/reference/async_read_until/overload4.html
-struct crlf_nonascii_searcher_t
+struct crlfcrlf_nonascii_searcher_t
 {
     enum class State
     {
@@ -144,14 +145,14 @@ struct crlf_nonascii_searcher_t
         }
         return std::make_pair(excluded, false);
     }
-} crlf_nonascii_searcher;
+} crlfcrlf_nonascii_searcher;
 }}}}}
 
 namespace boost
 {
 namespace asio
 {
-template <> struct is_match_condition<web::http::experimental::listener::details::crlf_nonascii_searcher_t> : public boost::true_type {};
+template <> struct is_match_condition<web::http::experimental::listener::details::crlfcrlf_nonascii_searcher_t> : public boost::true_type {};
 }}
 
 namespace web
@@ -205,14 +206,14 @@ void connection::start_request_response()
 
     if (m_ssl_stream)
     {
-        boost::asio::async_read_until(*m_ssl_stream, m_request_buf, CRLF, [this](const boost::system::error_code& ec, std::size_t)
+        boost::asio::async_read_until(*m_ssl_stream, m_request_buf, CRLFCRLF, [this](const boost::system::error_code& ec, std::size_t)
         {
             this->handle_http_line(ec);
         });
     }
     else
     {
-        boost::asio::async_read_until(*m_socket, m_request_buf, crlf_nonascii_searcher, [this](const boost::system::error_code& ec, std::size_t)
+        boost::asio::async_read_until(*m_socket, m_request_buf, crlfcrlf_nonascii_searcher, [this](const boost::system::error_code& ec, std::size_t)
         {
             this->handle_http_line(ec);
         });

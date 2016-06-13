@@ -224,6 +224,12 @@ namespace web {
         uri() { m_uri = _XPLATSTR("/");};
 
         /// <summary>
+        /// Creates a URI from the given URI components.
+        /// </summary>
+        /// <param name="components">A URI components object to create the URI instance.</param>
+        _ASYNCRTIMP uri(const details::uri_components &components);
+
+        /// <summary>
         /// Creates a URI from the given encoded string. This will throw an exception if the string
         /// does not contain a valid URI. Use uri::validate if processing user-input.
         /// </summary>

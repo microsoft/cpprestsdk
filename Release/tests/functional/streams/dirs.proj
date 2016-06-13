@@ -1,23 +1,24 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Common.Build.settings" />
-  
+
   <ItemGroup Condition="'$(DevToolsVersion)'=='120'">
-      <ProjectFile Include="VS12\streams120_test.vcxproj" />
-      <ProjectFile Include="VS12.xp\streams120_test.xp.vcxproj" Condition="'$(Platform)'!='ARM' and '$(RunCodeAnalysis)'!='true'"/>
+    <ProjectFile Include="VS12\streams120_test.vcxproj" />
+    <ProjectFile Include="VS12.xp\streams120_test.xp.vcxproj" Condition="'$(Platform)'!='ARM' and '$(RunCodeAnalysis)'!='true'"/>
   </ItemGroup>
-  
+
   <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|120'">
-      <ProjectFile Include="VS12.winrt\streams120_test.winrt.vcxproj" />
+    <ProjectFile Include="VS12.winrt\streams120_test.winrt.vcxproj" />
   </ItemGroup>
-  
+
   <ItemGroup Condition="'$(DevToolsVersion)'=='140'">
     <ProjectFile Include="VS14\streams140_test.vcxproj" />
+    <ProjectFile Include="VS14.xp\streams140_test.xp.vcxproj" Condition="'$(Platform)'!='ARM' and '$(RunCodeAnalysis)'!='true'"/>
     <ProjectFile Include="vs14.android\streams140_test.android.vcxproj" Condition="'$(Platform)'!='x64'" />
   </ItemGroup>
-  
+
   <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|140'">
-      <ProjectFile Include="vs14.uwp\streams140_test.uwp.vcxproj" />
+    <ProjectFile Include="vs14.uwp\streams140_test.uwp.vcxproj" />
   </ItemGroup>
 
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />

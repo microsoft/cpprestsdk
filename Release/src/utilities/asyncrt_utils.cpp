@@ -63,7 +63,7 @@ scoped_c_thread_locale::xplat_locale scoped_c_thread_locale::c_locale()
         scoped_c_thread_locale::xplat_locale *clocale = new scoped_c_thread_locale::xplat_locale();
 #ifdef _WIN32
         *clocale = _create_locale(LC_ALL, "C");
-        if (*clocale == nullptr)
+        if (clocale == nullptr || *clocale == nullptr)
         {
             throw std::runtime_error("Unable to create 'C' locale.");
         }
@@ -74,7 +74,7 @@ scoped_c_thread_locale::xplat_locale scoped_c_thread_locale::c_locale()
         };
 #else
         *clocale = newlocale(LC_ALL, "C", nullptr);
-        if (*clocale == nullptr)
+        if (clocale == nullptr || *clocale == nullptr)
         {
             throw std::runtime_error("Unable to create 'C' locale.");
         }
@@ -284,7 +284,7 @@ utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
 {
 #if defined(CPPREST_STDLIB_UNICODE_CONVERSIONS)
     std::wstring_convert<std::codecvt_utf8_utf16<utf16char>, utf16char> conversion;
-    return conversion.from_bytes(src);
+    return conversion.from_bytes(s);
 #else
     utf16string dest;
     // Save repeated heap allocations, use less than source string size assuming some
