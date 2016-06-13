@@ -67,6 +67,15 @@ threadpool& threadpool::shared_instance()
     return s_shared;
 }
 
+void threadpool::free_connection_pool(const boost::system::error_code &ec, const std::string &key)
+{
+    if (!ec)
+    {
+        std::lock_guard<std::mutex> lg(m_connection_pool_map_mutex);
+        m_connection_pool_map.erase(key);
+    }
+}
+
 #endif
 
 }

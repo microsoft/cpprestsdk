@@ -101,18 +101,30 @@ public:
         return m_service;
     }
 
-    std::shared_ptr<web::http::client::details::asio_connection_pool> obtain_connection_pool(const std::string &base_uri, std::function<std::shared_ptr<web::http::client::details::asio_connection_pool>()> connection_pool_generator)
+    template<typename PoolGenerator>
+    std::shared_ptr<web::http::client::details::asio_connection_pool> obtain_connection_pool(const std::string &key, PoolGenerator pool_generator)
     {
         std::lock_guard<std::mutex> lg(m_connection_pool_map_mutex);
 
-        auto &pool = m_connection_pool_map[base_uri];
+        auto &pool = m_connection_pool_map[key];
         if (!pool)
         {
-            pool = connection_pool_generator();
+            pool = pool_generator();
         }
 
         return pool;
     }
+
+    template<typename PoolReleaseHandler>
+    void release_connection_pool(const std::string &key, PoolReleaseHandler handler)
+    {
+        std::lock_guard<std::mutex> lg(m_connection_pool_map_mutex);
+
+        auto pool = m_connection_pool_map[key];
+        handler(pool);
+    }
+
+    void free_connection_pool(const boost::system::error_code &ec, const std::string &key);
 
 private:
     struct _cancel_thread { };

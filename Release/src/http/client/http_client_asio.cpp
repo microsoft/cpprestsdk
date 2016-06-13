@@ -80,7 +80,7 @@ public:
     asio_connection(boost::asio::io_service& io_service, bool start_with_ssl, const std::function<void(boost::asio::ssl::context&)>& ssl_context_callback) :
     m_socket(io_service),
     m_ssl_context_callback(ssl_context_callback),
-    m_pool_timer(io_service),
+    m_connection_timer(io_service),
     m_is_reused(false),
     m_keep_alive(true)
     {
@@ -103,7 +103,10 @@ public:
         boost::asio::ssl::context ssl_context(boost::asio::ssl::context::sslv23);
         ssl_context.set_default_verify_paths();
         ssl_context.set_options(boost::asio::ssl::context::default_workarounds);
-        m_ssl_context_callback(ssl_context);
+        if (m_ssl_context_callback)
+        {
+            m_ssl_context_callback(ssl_context);
+        }
         m_ssl_stream = utility::details::make_unique<boost::asio::ssl::stream<boost::asio::ip::tcp::socket &>>(m_socket, ssl_context);
     }
 
@@ -127,9 +130,9 @@ public:
         return error;
     }
 
-    void cancel_pool_timer()
+    void cancel_connection_timer()
     {
-        m_pool_timer.cancel();
+        m_connection_timer.cancel();
     }
 
     bool is_reused() const { return m_is_reused; }
@@ -218,15 +221,15 @@ public:
 
 private:
     template <typename TimeoutHandler>
-    void start_pool_timer(int timeout_secs, const TimeoutHandler &handler)
+    void start_connection_timer(int timeout_secs, const TimeoutHandler &handler)
     {
-        m_pool_timer.expires_from_now(boost::posix_time::milliseconds(timeout_secs * 1000));
-        m_pool_timer.async_wait(handler);
+        m_connection_timer.expires_from_now(boost::posix_time::milliseconds(timeout_secs * 1000));
+        m_connection_timer.async_wait(handler);
     }
 
     void start_reuse()
     {
-        cancel_pool_timer();
+        cancel_connection_timer();
         m_is_reused = true;
     }
 
@@ -239,7 +242,7 @@ private:
 
     std::function<void(boost::asio::ssl::context&)> m_ssl_context_callback;
 
-    boost::asio::deadline_timer m_pool_timer;
+    boost::asio::deadline_timer m_connection_timer;
     bool m_is_reused;
     bool m_keep_alive;
 };
@@ -252,7 +255,10 @@ public:
     m_io_service(io_service),
     m_timeout_secs(static_cast<int>(idle_timeout.count())),
     m_start_with_ssl(start_with_ssl),
-    m_ssl_context_callback(ssl_context_callback)
+    m_ssl_context_callback(ssl_context_callback),
+    m_pool_timeout_secs(60), // Clean this connection pool 60 secs after the last asio_client release it.
+    m_pool_timer(io_service),
+    m_use_count(0)
     {}
 
     ~asio_connection_pool()
@@ -261,8 +267,22 @@ public:
         // Cancel the pool timer for all connections.
         for (auto& connection : m_connections)
         {
-            connection->cancel_pool_timer();
+            connection->cancel_connection_timer();
         }
+    }
+
+    template <typename TimeoutHandler>
+    void start_pool_timer(const TimeoutHandler &handler)
+    {
+      //std::lock_guard<std::mutex> lg(m_pool_timer_mutex);
+        m_pool_timer.expires_from_now(boost::posix_time::milliseconds(m_pool_timeout_secs * 1000));
+        m_pool_timer.async_wait(handler);
+    }
+
+    void cancel_pool_timer()
+    {
+      //std::lock_guard<std::mutex> lg(m_pool_timer_mutex);
+        m_pool_timer.cancel();
     }
 
     void release(const std::shared_ptr<asio_connection> &connection)
@@ -274,7 +294,7 @@ public:
             std::lock_guard<std::mutex> lock(m_connections_mutex);
             // This will destroy and remove the connection from pool after the set timeout.
             // We use 'this' because async calls to timer handler only occur while the pool exists.
-            connection->start_pool_timer(m_timeout_secs, boost::bind(&asio_connection_pool::handle_pool_timer, this, boost::asio::placeholders::error, connection));
+            connection->start_connection_timer(m_timeout_secs, boost::bind(&asio_connection_pool::handle_connection_timer, this, boost::asio::placeholders::error, connection));
             m_connections.push_back(connection);
         }
         // Otherwise connection is not put to the pool and it will go out of scope.
@@ -302,10 +322,15 @@ public:
         }
     }
 
+    int &use_count()
+    {
+        return m_use_count;
+    }
+
 private:
 
     // Using weak_ptr here ensures bind() to this handler will not prevent the connection object from going out of scope.
-    void handle_pool_timer(const boost::system::error_code& ec, const std::weak_ptr<asio_connection> &connection)
+    void handle_connection_timer(const boost::system::error_code& ec, const std::weak_ptr<asio_connection> &connection)
     {
         if (!ec)
         {
@@ -328,6 +353,12 @@ private:
     std::function<void(boost::asio::ssl::context&)> m_ssl_context_callback;
     std::vector<std::shared_ptr<asio_connection> > m_connections;
     std::mutex m_connections_mutex;
+
+    const int m_pool_timeout_secs;
+    std::mutex m_pool_timer_mutex;
+    boost::asio::deadline_timer m_pool_timer;
+  //std::atomic<int> m_use_count;
+    int m_use_count;
 };
 
 
@@ -348,32 +379,56 @@ public:
         }
         else
         {
-            std::string host = base_uri().to_string();
+            m_pool_key = base_uri().to_string();
 
             auto &credentials = _http_client_communicator::client_config().credentials();
             if (credentials.is_set())
             {
-                host.append(credentials.username());
+                m_pool_key.append(credentials.username());
             }
 
             auto &proxy = _http_client_communicator::client_config().proxy();
             if (proxy.is_specified())
             {
-                host.append(proxy.address().to_string());
+                m_pool_key.append(proxy.address().to_string());
                 if (proxy.credentials().is_set())
                 {
-                  host.append(proxy.credentials().username());
+                    m_pool_key.append(proxy.credentials().username());
                 }
             }
 
-            m_pool = crossplat::threadpool::shared_instance().obtain_connection_pool(host, [this]()
+            m_pool = crossplat::threadpool::shared_instance().obtain_connection_pool(m_pool_key, [this]()
             {
                 return std::make_shared<asio_connection_pool>(crossplat::threadpool::shared_instance().service(),
                     base_uri().scheme() == "https" && !_http_client_communicator::client_config().proxy().is_specified(),
                     std::chrono::seconds(30), // Unused sockets are kept in pool for 30 seconds.
-                    this->client_config().get_ssl_context_callback());
+                    nullptr);
             });
-	}
+
+            if (m_pool->use_count() == 0)
+            {
+                m_pool->cancel_pool_timer();
+            }
+            ++m_pool->use_count();
+        }
+    }
+
+    ~asio_client()
+    {
+        if (!m_pool_key.empty())
+        {
+            crossplat::threadpool::shared_instance().release_connection_pool(m_pool_key, [this](std::shared_ptr<web::http::client::details::asio_connection_pool> pool)
+            {
+                if (pool)
+                {
+                    --pool->use_count();
+                    if (pool->use_count() == 0)
+                    {
+                        pool->start_pool_timer(boost::bind(&crossplat::threadpool::free_connection_pool, &crossplat::threadpool::shared_instance(), boost::asio::placeholders::error, m_pool_key));
+                    }
+                }
+            });
+        }
     }
 
     void send_request(const std::shared_ptr<request_context> &request_ctx) override;
@@ -384,6 +439,7 @@ public:
 
     std::shared_ptr<asio_connection_pool> m_pool;
     tcp::resolver m_resolver;
+    std::string m_pool_key;
 };
 
 class asio_context : public request_context, public std::enable_shared_from_this<asio_context>
@@ -509,7 +565,7 @@ public:
             {
                 m_context->report_error("Failed to send connect request to proxy.", err, httpclient_errorcode_context::writebody);
             }
-	    }
+        }
     
         void handle_status_line(const boost::system::error_code& ec)
         {
