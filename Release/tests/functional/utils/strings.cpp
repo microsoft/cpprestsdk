@@ -297,58 +297,57 @@ TEST(latin1_to_utf16)
     }
 }
 
-TEST(print_string_locale, "Ignore:Android", "Locale unsupported on Android")
+TEST(print_string)
 {
-    std::locale changedLocale;
+    VERIFY_ARE_EQUAL(_XPLATSTR("1.5"), utility::details::print_string(1.5));
+}
+
+TEST(print_string_fr_locale, "Ignore:Android", "Locale unsupported on Android")
+{
     try
     {
 #ifdef _WIN32
-        changedLocale = std::locale("fr-FR");
+        tests::common::utilities::locale_guard loc(std::locale("fr-FR"));
 #else
-        changedLocale = std::locale("fr_FR.UTF-8");
+        tests::common::utilities::locale_guard loc(std::locale("fr_FR.UTF-8"));
 #endif
+
+        VERIFY_ARE_EQUAL(_XPLATSTR("1.5"), utility::details::print_string(1.5));
     }
     catch (const std::exception &)
     {
         // Silently pass if locale isn't installed on machine.
         return;
     }
+}
 
-    tests::common::utilities::locale_guard loc(changedLocale);
-
-    utility::ostringstream_t oss;
-    oss << 1000;
-    VERIFY_ARE_EQUAL(oss.str(), utility::conversions::print_string(1000));
-    VERIFY_ARE_EQUAL(_XPLATSTR("1000"), utility::conversions::print_string(1000, std::locale::classic()));
+TEST(scan_string)
+{
+    VERIFY_ARE_EQUAL(1.5, utility::details::scan_string<double>("1.5"));
+#ifdef WIN32
+    VERIFY_ARE_EQUAL(1.5, utility::details::scan_string<double>(L"1.5"));
+#endif
 }
 
 TEST(scan_string_locale, "Ignore:Android", "Locale unsupported on Android")
 {
-    std::locale changedLocale;
     try
     {
 #ifdef _WIN32
-        changedLocale = std::locale("fr-FR");
+        tests::common::utilities::locale_guard loc(std::locale("fr-FR"));
 #else
-        changedLocale = std::locale("fr_FR.UTF-8");
+        tests::common::utilities::locale_guard loc(std::locale("fr_FR.UTF-8"));
+#endif
+
+        VERIFY_ARE_EQUAL(1.5, utility::details::scan_string<double>("1.5"));
+#ifdef WIN32
+        VERIFY_ARE_EQUAL(1.5, utility::details::scan_string<double>(L"1.5"));
 #endif
     }
     catch (const std::exception &)
     {
         // Silently pass if locale isn't installed on machine.
         return;
-    }
-
-    VERIFY_ARE_EQUAL(_XPLATSTR("1000"), utility::conversions::scan_string<utility::string_t>(utility::string_t(_XPLATSTR("1000"))));
-    VERIFY_ARE_EQUAL(_XPLATSTR("1,000"), utility::conversions::scan_string<utility::string_t>(utility::string_t(_XPLATSTR("1,000"))));
-
-    VERIFY_ARE_EQUAL(_XPLATSTR("1000"), utility::conversions::scan_string<utility::string_t>(utility::string_t(_XPLATSTR("1000")), changedLocale));
-    VERIFY_ARE_EQUAL(_XPLATSTR("1,000"), utility::conversions::scan_string<utility::string_t>(utility::string_t(_XPLATSTR("1,000")), changedLocale));
-
-    {
-        tests::common::utilities::locale_guard loc(changedLocale);
-        VERIFY_ARE_EQUAL(_XPLATSTR("1000"), utility::conversions::scan_string<utility::string_t>(utility::string_t(_XPLATSTR("1000")), std::locale::classic()));
-        VERIFY_ARE_EQUAL(_XPLATSTR("1,000"), utility::conversions::scan_string<utility::string_t>(utility::string_t(_XPLATSTR("1,000")), std::locale::classic()));
     }
 }
 

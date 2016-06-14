@@ -200,7 +200,7 @@ oauth2_token oauth2_config::_parse_token_from_json(const json::value& token_json
         {
             // Handle the case of a number as a JSON "string".
             // Using streams because std::stoll isn't avaliable on Android.
-            int64_t expires = utility::conversions::scan_string<int64_t>(json_expires_in_val.as_string());
+            int64_t expires = utility::details::scan_string<int64_t>(json_expires_in_val.as_string());
             result.set_expires_in(expires);
         }
     }

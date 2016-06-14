@@ -177,12 +177,15 @@ namespace conversions
     /// Decode the given base64 string to a byte array
     /// </summary>
     _ASYNCRTIMP std::vector<unsigned char> __cdecl from_base64(const utility::string_t& str);
+}
 
+namespace details
+{
     template <typename Source>
-    utility::string_t print_string(const Source &val, const std::locale &loc)
+    utility::string_t print_string(const Source &val)
     {
         utility::ostringstream_t oss;
-        oss.imbue(loc);
+        oss.imbue(std::locale::classic());
         oss << val;
         if (oss.bad())
         {
@@ -191,18 +194,12 @@ namespace conversions
         return oss.str();
     }
 
-    template <typename Source>
-    utility::string_t print_string(const Source &val)
-    {
-        return print_string(val, std::locale());
-    }
-
     template <typename Target>
-    Target scan_string(const std::string &str, const std::locale &loc = std::locale())
+    Target scan_string(const std::string &str)
     {
         Target t;
         std::istringstream iss(str);
-        iss.imbue(loc);
+        iss.imbue(std::locale::classic());
         iss >> t;
         if (iss.bad() || iss.fail())
         {
@@ -212,11 +209,11 @@ namespace conversions
     }
 #if !defined(_LIBCPP_VERSION)
     template <typename Target>
-    Target scan_string(const utf16string &str, const std::locale &loc = std::locale())
+    Target scan_string(const utf16string &str)
     {
         Target t;
         utf16istringstream iss(str);
-        iss.imbue(loc);
+        iss.imbue(std::locale::classic());
         iss >> t;
         if (iss.bad() || iss.fail())
         {
@@ -226,10 +223,6 @@ namespace conversions
     }
 #endif
 
-}
-
-namespace details
-{
     /// <summary>
     /// Our own implementation of alpha numeric instead of std::isalnum to avoid
     /// taking global lock for performance reasons.

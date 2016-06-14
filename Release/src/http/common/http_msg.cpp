@@ -220,7 +220,7 @@ utility::size64_t http_headers::content_length() const
 
 void http_headers::set_content_length(utility::size64_t length)
 {
-    m_headers[http::header_names::content_length] = utility::conversions::print_string(length, std::locale::classic());
+    m_headers[http::header_names::content_length] = utility::details::print_string(length);
 }
 
 namespace details {
