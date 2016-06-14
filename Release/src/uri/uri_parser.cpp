@@ -100,7 +100,7 @@ bool parse(const utility::string_t &encoded_string, uri_components &components)
 
             // convert scheme to lowercase
             std::transform(components.m_scheme.begin(), components.m_scheme.end(), components.m_scheme.begin(), [](utility::char_t c) {
-                return std::tolower(c, std::locale::classic());
+                return (utility::char_t)tolower(c);
             });
         }
         else
@@ -119,7 +119,7 @@ bool parse(const utility::string_t &encoded_string, uri_components &components)
 
             // convert host to lowercase
             std::transform(components.m_host.begin(), components.m_host.end(), components.m_host.begin(), [](utility::char_t c) {
-                return std::tolower(c, std::locale::classic());
+                return (utility::char_t)tolower(c);
             });
         }
         else

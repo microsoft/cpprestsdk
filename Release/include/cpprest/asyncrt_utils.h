@@ -194,6 +194,12 @@ namespace details
         return oss.str();
     }
 
+
+    inline const utility::string_t& print_string(const utility::string_t &val)
+    {
+        return val;
+    }
+
     template <typename Target>
     Target scan_string(const std::string &str)
     {
