@@ -42,10 +42,6 @@
 #include "pplx/pplx.h"
 #endif
 
-namespace web { namespace http { namespace client { namespace details {
-    class asio_connection_pool;
-}}}}
-
 namespace crossplat {
 
 #if (defined(ANDROID) || defined(__ANDROID__))
@@ -100,31 +96,6 @@ public:
     {
         return m_service;
     }
-
-    template<typename PoolGenerator>
-    std::shared_ptr<web::http::client::details::asio_connection_pool> obtain_connection_pool(const std::string &key, PoolGenerator pool_generator)
-    {
-        std::lock_guard<std::mutex> lg(m_connection_pool_map_mutex);
-
-        auto &pool = m_connection_pool_map[key];
-        if (!pool)
-        {
-            pool = pool_generator();
-        }
-
-        return pool;
-    }
-
-    template<typename PoolReleaseHandler>
-    void release_connection_pool(const std::string &key, PoolReleaseHandler handler)
-    {
-        std::lock_guard<std::mutex> lg(m_connection_pool_map_mutex);
-
-        auto pool = m_connection_pool_map[key];
-        handler(pool);
-    }
-
-    void free_connection_pool(const boost::system::error_code &ec, const std::string &key);
 
 private:
     struct _cancel_thread { };
@@ -185,9 +156,6 @@ private:
     std::vector<pthread_t> m_threads;
     boost::asio::io_service m_service;
     boost::asio::io_service::work m_work;
-
-    std::mutex m_connection_pool_map_mutex;
-    std::map<std::string, std::shared_ptr<web::http::client::details::asio_connection_pool>> m_connection_pool_map;
 };
 
 }
