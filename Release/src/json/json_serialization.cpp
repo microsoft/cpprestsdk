@@ -25,6 +25,7 @@
 
 #include "stdafx.h"
 #include <stdio.h>
+#include <iomanip>
 
 #ifndef _WIN32
 #define __STDC_FORMAT_MACROS
@@ -145,21 +146,12 @@ void web::json::details::_Number::serialize_impl(std::string& stream) const
     }
     else
     {
-        // #digits + 2 to avoid loss + 1 for the sign + 1 for decimal point + 5 for exponent (e+xxx) + 1 for null terminator
-        const size_t tempSize = std::numeric_limits<double>::digits10 + 10;
-        char tempBuffer[tempSize];
-#ifdef _WIN32
-        const auto numChars = _sprintf_s_l(
-            tempBuffer,
-            tempSize,
-            "%.*g",
-            utility::details::scoped_c_thread_locale::c_locale(),
-            std::numeric_limits<double>::digits10 + 2,
-            m_number.m_value);
-#else
-        const auto numChars = snprintf(tempBuffer, tempSize, "%.*g", std::numeric_limits<double>::digits10 + 2, m_number.m_value);
-#endif
-        stream.append(tempBuffer, numChars);
+        std::stringstream sbuf;
+        sbuf.imbue(std::locale::classic());
+        sbuf.precision(std::numeric_limits<double>::max_digits10);
+        sbuf << m_number.m_value;
+
+        stream.append(sbuf.str());
     }
 }
 
@@ -172,10 +164,6 @@ const std::string& web::json::value::as_string() const
 
 std::string json::value::serialize() const
 {
-#ifndef _WIN32
-    utility::details::scoped_c_thread_locale locale;
-#endif
-
     std::string ret;
     ret.reserve(serialize_size());
     serialize(ret);

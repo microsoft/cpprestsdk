@@ -562,9 +562,6 @@ namespace json
         /// <param name="stream">The stream that the JSON string representation should be written to.</param>
         inline void serialize(std::ostream& stream) const
         {
-#ifndef _WIN32
-            utility::details::scoped_c_thread_locale locale;
-#endif
             stream << serialize();
         }
 #if !defined(_LIBCPP_VERSION)

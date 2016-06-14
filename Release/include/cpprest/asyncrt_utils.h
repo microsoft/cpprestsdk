@@ -231,35 +231,6 @@ namespace conversions
 namespace details
 {
     /// <summary>
-    /// Cross platform RAII container for setting thread local locale.
-    /// </summary>
-    class scoped_c_thread_locale
-    {
-    public:
-        _ASYNCRTIMP scoped_c_thread_locale();
-        _ASYNCRTIMP ~scoped_c_thread_locale();
-
-#if !defined(ANDROID) && !defined(__ANDROID__) // CodePlex 269
-#ifdef _WIN32
-        typedef _locale_t xplat_locale;
-#else
-        typedef locale_t xplat_locale;
-#endif
-
-        static _ASYNCRTIMP xplat_locale __cdecl c_locale();
-#endif
-    private:
-#ifdef _WIN32
-        std::string m_prevLocale;
-        int m_prevThreadSetting;
-#elif !(defined(ANDROID) || defined(__ANDROID__))
-        locale_t m_prevLocale;
-#endif
-        scoped_c_thread_locale(const scoped_c_thread_locale &);
-        scoped_c_thread_locale & operator=(const scoped_c_thread_locale &);
-    };
-
-    /// <summary>
     /// Our own implementation of alpha numeric instead of std::isalnum to avoid
     /// taking global lock for performance reasons.
     /// </summary>

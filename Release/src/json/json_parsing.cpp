@@ -126,10 +126,6 @@ public:
 
     web::json::value ParseValue(Token &first)
     {
-#ifndef _WIN32
-        utility::details::scoped_c_thread_locale locale;
-#endif
-
         return ParseValue_inner(first);
     }
 
@@ -447,30 +443,6 @@ inline bool JSON_Parser::ParseInt64(char first, uint64_t& value)
     return true;
 }
 
-#if defined(_WIN32)
-    int print_llu(char* ptr, size_t n, uint64_t val64)
-    {
-        return _snprintf_s_l(ptr, n, _TRUNCATE, "%I64u", utility::details::scoped_c_thread_locale::c_locale(), val64);
-    }
-    double anystod(const char* str)
-    {
-        return _strtod_l(str, nullptr, utility::details::scoped_c_thread_locale::c_locale());
-    }
-#else
-    int __attribute__((__unused__)) print_llu(char* ptr, size_t n, unsigned long long val64)
-    {
-        return snprintf(ptr, n, "%llu", val64);
-    }
-    int __attribute__((__unused__)) print_llu(char* ptr, size_t n, unsigned long val64)
-    {
-        return snprintf(ptr, n, "%lu", val64);
-    }
-    double __attribute__((__unused__)) anystod(const char* str)
-    {
-        return strtod(str, nullptr);
-    }
-#endif
-
 bool JSON_Parser::CompleteNumberLiteral(char first, Token &token)
 {
     bool minus_sign;
@@ -528,13 +500,22 @@ bool JSON_Parser::CompleteNumberLiteral(char first, Token &token)
         return true;
     }
 
-    // Magic number 5 leaves room for decimal point, null terminator, etc (in most cases)
-    ::std::vector<char> buf(::std::numeric_limits<uint64_t>::digits10 + 5);
-    int count = print_llu(buf.data(), buf.size(), val64);
+    // digits10 is the number of digits _from text_ that are guaranteed to round-trip.
+    // We must +1 to get the the amount of text needed to round trip any number
+    // Also, +1 for null terminator
+    std::array<char, ::std::numeric_limits<uint64_t>::digits10 + 2> longbuf;
+
+#ifdef WIN32
+    int count = _snprintf_s(longbuf.data(), longbuf.size(), _TRUNCATE, "%I64u", val64);
+#else
+    int count = std::snprintf(longbuf.data(), longbuf.size(), "%llu", val64);
+#endif
     _ASSERTE(count >= 0);
-    _ASSERTE((size_t)count < buf.size());
-    // Resize to cut off the null terminator
-    buf.resize(count);
+    _ASSERTE((size_t)count < longbuf.size());
+
+    ::std::stringstream buf;
+    buf.imbue(std::locale::classic());
+    buf.write(longbuf.data(), count);
 
     bool decimal = false;
 
@@ -543,7 +524,7 @@ bool JSON_Parser::CompleteNumberLiteral(char first, Token &token)
         // Digit encountered?
         if (ch >= '0' && ch <= '9')
         {
-            buf.push_back(static_cast<char>(ch));
+            buf.put(static_cast<char>(ch));
             NextCharacter();
             ch = PeekCharacter();
         }
@@ -555,7 +536,7 @@ bool JSON_Parser::CompleteNumberLiteral(char first, Token &token)
                 return false;
 
             decimal = true;
-            buf.push_back(static_cast<char>(ch));
+            buf.put('.');
 
             NextCharacter();
             ch = PeekCharacter();
@@ -564,7 +545,7 @@ bool JSON_Parser::CompleteNumberLiteral(char first, Token &token)
             if (ch < '0' || ch > '9')
             return false;
 
-            buf.push_back(static_cast<char>(ch));
+            buf.put(static_cast<char>(ch));
             NextCharacter();
             ch = PeekCharacter();
         }
@@ -572,20 +553,14 @@ bool JSON_Parser::CompleteNumberLiteral(char first, Token &token)
         // Exponent?
         else if (ch == 'E' || ch == 'e')
         {
-            buf.push_back(static_cast<char>(ch));
+            buf.put(static_cast<char>(ch));
             NextCharacter();
             ch = PeekCharacter();
 
             // Check for the exponent sign
-            if (ch == '+')
+            if (ch == '+' || ch == '-')
             {
-                buf.push_back(static_cast<char>(ch));
-                NextCharacter();
-                ch = PeekCharacter();
-            }
-            else if (ch == '-')
-            {
-                buf.push_back(static_cast<char>(ch));
+                buf.put(static_cast<char>(ch));
                 NextCharacter();
                 ch = PeekCharacter();
             }
@@ -593,7 +568,7 @@ bool JSON_Parser::CompleteNumberLiteral(char first, Token &token)
             // First number of the exponent
             if (ch >= '0' && ch <= '9')
             {
-                buf.push_back(static_cast<char>(ch));
+                buf.put(static_cast<char>(ch));
                 NextCharacter();
                 ch = PeekCharacter();
             }
@@ -602,7 +577,7 @@ bool JSON_Parser::CompleteNumberLiteral(char first, Token &token)
             // The rest of the exponent
             while (ch >= '0' && ch <= '9')
             {
-                buf.push_back(static_cast<char>(ch));
+                buf.put(static_cast<char>(ch));
                 NextCharacter();
                 ch = PeekCharacter();
             }
@@ -616,9 +591,8 @@ bool JSON_Parser::CompleteNumberLiteral(char first, Token &token)
             break;
         }
     };
+    buf >> token.double_val;
 
-    buf.push_back('\0');
-    token.double_val = anystod(buf.data());
     if (minus_sign)
     {
         token.double_val = -token.double_val;
@@ -789,11 +763,12 @@ inline bool JSON_Parser::handle_unescape_char(Token &token)
                         ec = json_error::malformed_string_literal;
                         return 0;
                     }
-#ifdef _WIN32
-                    const int isxdigitResult = _isxdigit_l(ch_int, utility::details::scoped_c_thread_locale::c_locale());
-#else
-                    const int isxdigitResult = isxdigit(ch_int);
-#endif
+
+                    const bool isxdigitResult =
+                        (ch_int >= '0' && ch_int <= '9')
+                        || (ch_int >= 'a' && ch_int <= 'f')
+                        || (ch_int >= 'A' && ch_int <= 'F');
+
                     if (!isxdigitResult)
                     {
                         ec = json_error::malformed_string_literal;

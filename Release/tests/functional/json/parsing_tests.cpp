@@ -664,7 +664,7 @@ TEST(non_default_locale, "Ignore:Android", "Locale unsupported on Android")
     if(setlocale(LC_ALL, changedLocale.c_str()) != nullptr)
     {
         // string serialize
-        std::string str("[true,false,-1.55,5,null,{\"abc\":5555}]");
+        std::string str("[true,false,-1.125,5,null,{\"abc\":5555}]");
         json::value v = json::value::parse(str);
         VERIFY_ARE_EQUAL(changedLocale, setlocale(LC_ALL, nullptr));
         VERIFY_ARE_EQUAL(str, v.serialize());
