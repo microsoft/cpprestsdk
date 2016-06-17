@@ -406,10 +406,10 @@ void asio_connection_pool_map::free_connection_pool(const boost::system::error_c
     if (!ec)
     {
         std::lock_guard<std::mutex> lg(m_connection_pool_map_mutex);
-        auto &pool = m_connection_pool_map[pool_key];
-        if (pool && pool.use_count() == 1)
+        auto it = m_connection_pool_map.find(pool_key);
+        if (it != m_connection_pool_map.end() && it->second.use_count() == 1)
         {
-            m_connection_pool_map.erase(pool_key);
+            m_connection_pool_map.erase(it);
         }
     }
 }
