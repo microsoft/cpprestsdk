@@ -72,28 +72,6 @@ enum class httpclient_errorcode_context
 };
 
 class asio_connection_pool;
-
-class asio_connection_pool_map
-{
-public:
-    static asio_connection_pool_map &instance();
-
-    std::shared_ptr<asio_connection_pool> obtain_connection_pool(const std::string &pool_key, bool start_with_ssl, std::chrono::seconds idle_timeout);
-
-    void release_connection_pool(const std::string &pool_key);
-
-    void free_connection_pool(const boost::system::error_code &ec, const std::string &pool_key);
-
-private:
-    asio_connection_pool_map()
-    : m_threadpool(crossplat::threadpool::shared_instance())
-    {}
-
-    crossplat::threadpool &m_threadpool;
-    std::mutex m_connection_pool_map_mutex;
-    std::map<std::string, std::shared_ptr<asio_connection_pool>> m_connection_pool_map;
-};
-
 class asio_connection
 {
     friend class asio_connection_pool;
@@ -102,7 +80,7 @@ public:
     asio_connection(boost::asio::io_service& io_service, bool start_with_ssl, const std::function<void(boost::asio::ssl::context&)>& ssl_context_callback) :
     m_socket(io_service),
     m_ssl_context_callback(ssl_context_callback),
-    m_connection_timer(io_service),
+    m_pool_timer(io_service),
     m_is_reused(false),
     m_keep_alive(true)
     {
@@ -110,6 +88,12 @@ public:
         {
             upgrade_to_ssl();
         }
+    }
+
+    asio_connection(boost::asio::io_service& io_service, const std::string &pool_key, bool start_with_ssl, const std::function<void(boost::asio::ssl::context&)>& ssl_context_callback) :
+    asio_connection(io_service, start_with_ssl, ssl_context_callback)
+    {
+        m_pool_key = pool_key;
     }
 
     ~asio_connection()
@@ -152,15 +136,18 @@ public:
         return error;
     }
 
-    void cancel_connection_timer()
+    void cancel_pool_timer()
     {
-        m_connection_timer.cancel();
+        m_pool_timer.cancel();
     }
 
     bool is_reused() const { return m_is_reused; }
     void set_keep_alive(bool keep_alive) { m_keep_alive = keep_alive; }
     bool keep_alive() const { return m_keep_alive; }
     bool is_ssl() const { return m_ssl_stream ? true : false; }
+    const std::string &pool_key() const { return m_pool_key; }
+    const std::string &nonce() const { return m_nonce; }
+    void generate_nonce() { m_nonce = m_nonce_generator.generate(); }
 
     template <typename Iterator, typename Handler>
     void async_connect(const Iterator &begin, const Handler &handler)
@@ -243,16 +230,17 @@ public:
 
 private:
     template <typename TimeoutHandler>
-    void start_connection_timer(int timeout_secs, const TimeoutHandler &handler)
+    void start_pool_timer(int timeout_secs, const TimeoutHandler &handler)
     {
-        m_connection_timer.expires_from_now(boost::posix_time::milliseconds(timeout_secs * 1000));
-        m_connection_timer.async_wait(handler);
+        m_pool_timer.expires_from_now(boost::posix_time::milliseconds(timeout_secs * 1000));
+        m_pool_timer.async_wait(handler);
     }
 
     void start_reuse()
     {
-        cancel_connection_timer();
+        cancel_pool_timer();
         m_is_reused = true;
+        generate_nonce();
     }
 
     // Guards concurrent access to socket/ssl::stream. This is necessary
@@ -264,22 +252,22 @@ private:
 
     std::function<void(boost::asio::ssl::context&)> m_ssl_context_callback;
 
-    boost::asio::deadline_timer m_connection_timer;
+    boost::asio::deadline_timer m_pool_timer;
     bool m_is_reused;
     bool m_keep_alive;
+    std::string m_pool_key;
+    std::string m_nonce;
+    utility::nonce_generator m_nonce_generator;
 };
 
 class asio_connection_pool
 {
 public:
 
-    asio_connection_pool(boost::asio::io_service& io_service, bool start_with_ssl, const std::chrono::seconds &idle_timeout, const std::function<void(boost::asio::ssl::context&)> &ssl_context_callback) :
+    asio_connection_pool(boost::asio::io_service& io_service, const std::chrono::seconds &idle_timeout, bool is_shared) :
     m_io_service(io_service),
     m_timeout_secs(static_cast<int>(idle_timeout.count())),
-    m_start_with_ssl(start_with_ssl),
-    m_ssl_context_callback(ssl_context_callback),
-    m_pool_timeout_secs(60), // Clean this connection pool 60 secs after the last asio_client release it.
-    m_pool_timer(io_service)
+    m_is_shared(is_shared)
     {}
 
     ~asio_connection_pool()
@@ -288,20 +276,8 @@ public:
         // Cancel the pool timer for all connections.
         for (auto& connection : m_connections)
         {
-            connection->cancel_connection_timer();
+            connection->cancel_pool_timer();
         }
-    }
-
-    template <typename TimeoutHandler>
-    void start_pool_timer(const TimeoutHandler &handler)
-    {
-        m_pool_timer.expires_from_now(boost::posix_time::milliseconds(m_pool_timeout_secs * 1000));
-        m_pool_timer.async_wait(handler);
-    }
-
-    void cancel_pool_timer()
-    {
-        m_pool_timer.cancel();
     }
 
     void release(const std::shared_ptr<asio_connection> &connection)
@@ -310,108 +286,125 @@ public:
         {
             connection->cancel();
 
-            std::lock_guard<std::mutex> lock(m_connections_mutex);
-            // This will destroy and remove the connection from pool after the set timeout.
-            // We use 'this' because async calls to timer handler only occur while the pool exists.
-            connection->start_connection_timer(m_timeout_secs, boost::bind(&asio_connection_pool::handle_connection_timer, this, boost::asio::placeholders::error, connection));
-            m_connections.push_back(connection);
+            if (m_is_shared)
+            {
+                std::lock_guard<std::mutex> lock(m_connections_mutex);
+                auto it = m_shared_connections.insert(std::make_pair(connection->pool_key(), connection));
+                // This will destroy and remove the connection from pool after the set timeout.
+                // We use 'this' because async calls to timer handler only occur while the pool exists.
+                connection->start_pool_timer(m_timeout_secs, boost::bind(&asio_connection_pool::free_shared_connection, this, boost::asio::placeholders::error, it, std::weak_ptr<asio_connection>(connection), connection->nonce()));
+            }
+            else
+            {
+                std::lock_guard<std::mutex> lock(m_connections_mutex);
+                auto pair = m_connections.insert(connection);
+                if (pair.second)
+                {
+                    // This will destroy and remove the connection from pool after the set timeout.
+                    // We use 'this' because async calls to timer handler only occur while the pool exists.
+                    connection->start_pool_timer(m_timeout_secs, boost::bind(&asio_connection_pool::free_connection, this, boost::asio::placeholders::error, pair.first, std::weak_ptr<asio_connection>(connection), connection->nonce()));
+                }
+            }
         }
         // Otherwise connection is not put to the pool and it will go out of scope.
     }
 
-    std::shared_ptr<asio_connection> obtain()
+    std::shared_ptr<asio_connection> obtain(const std::string &pool_key, bool start_with_ssl, const std::function<void(boost::asio::ssl::context&)>& ssl_context_callback)
     {
-        std::unique_lock<std::mutex> lock(m_connections_mutex);
-        if (m_connections.empty())
+        if (m_is_shared)
         {
-            lock.unlock();
+            std::unique_lock<std::mutex> lock(m_connections_mutex);
+            auto it = m_shared_connections.find(pool_key);
+            if (it == m_shared_connections.end())
+            {
+                lock.unlock();
 
-            // No connections in pool => create a new connection instance.
-            return std::make_shared<asio_connection>(m_io_service, m_start_with_ssl, m_ssl_context_callback);
+                // No connections in pool => create a new connection instance.
+                return std::make_shared<asio_connection>(m_io_service, pool_key, start_with_ssl, ssl_context_callback);
+            }
+            else
+            {
+                // Reuse connection from pool.
+                auto connection = it->second;
+                m_shared_connections.erase(it);
+                connection->start_reuse();
+                lock.unlock();
+
+                return connection;
+            }
         }
         else
         {
-            // Reuse connection from pool.
-            auto connection = m_connections.back();
-            m_connections.pop_back();
-            lock.unlock();
+            std::unique_lock<std::mutex> lock(m_connections_mutex);
+            if (m_connections.empty())
+            {
+                lock.unlock();
 
-            connection->start_reuse();
-            return connection;
+                // No connections in pool => create a new connection instance.
+                return std::make_shared<asio_connection>(m_io_service, start_with_ssl, ssl_context_callback);
+            }
+            else
+            {
+                // Reuse connection from pool.
+                auto it = m_connections.begin();
+                auto connection = *it;
+                m_connections.erase(it);
+                connection->start_reuse();
+                lock.unlock();
+
+                return connection;
+            }
         }
     }
+
+    static std::shared_ptr<asio_connection_pool> shared_instance();
 
 private:
 
     // Using weak_ptr here ensures bind() to this handler will not prevent the connection object from going out of scope.
-    void handle_connection_timer(const boost::system::error_code& ec, const std::weak_ptr<asio_connection> &connection)
+    void free_shared_connection(const boost::system::error_code& ec, std::multimap<std::string, std::shared_ptr<asio_connection>>::iterator it, const std::weak_ptr<asio_connection> &connection, const std::string &nonce)
     {
         if (!ec)
         {
             auto connection_shared = connection.lock();
-            if (connection_shared)
+            // Compare nonce here to ensure the iterator is valid, the connection not been reused.
+            if (connection_shared && (connection_shared->nonce() == nonce))
             {
                 std::lock_guard<std::mutex> lock(m_connections_mutex);
-                const auto &iter = std::find(m_connections.begin(), m_connections.end(), connection_shared);
-                if (iter != m_connections.end())
-                {
-                    m_connections.erase(iter);
-                }
+                m_shared_connections.erase(it);
+            }
+        }
+    }
+
+    // Using weak_ptr here ensures bind() to this handler will not prevent the connection object from going out of scope.
+    void free_connection(const boost::system::error_code& ec, std::set<std::shared_ptr<asio_connection>>::iterator it, const std::weak_ptr<asio_connection> &connection, const std::string &nonce)
+    {
+        if (!ec)
+        {
+            auto connection_shared = connection.lock();
+            // Compare nonce here to ensure the iterator is valid, the connection not been reused.
+            if (connection_shared && (connection_shared->nonce() == nonce))
+            {
+                std::lock_guard<std::mutex> lock(m_connections_mutex);
+                m_connections.erase(it);
             }
         }
     }
 
     boost::asio::io_service& m_io_service;
     const int m_timeout_secs;
-    const bool m_start_with_ssl;
-    std::function<void(boost::asio::ssl::context&)> m_ssl_context_callback;
-    std::vector<std::shared_ptr<asio_connection> > m_connections;
+    bool m_is_shared;
+    std::multimap<std::string, std::shared_ptr<asio_connection>> m_shared_connections;
+    std::set<std::shared_ptr<asio_connection>> m_connections;
     std::mutex m_connections_mutex;
-
-    const int m_pool_timeout_secs;
-    boost::asio::deadline_timer m_pool_timer;
 };
 
-asio_connection_pool_map &asio_connection_pool_map::instance()
+std::shared_ptr<asio_connection_pool> asio_connection_pool::shared_instance()
 {
-    static asio_connection_pool_map s_instance;
+    const std::chrono::seconds idle_timeout(30); // Unused sockets are kept in pool for 30 seconds.
+    static std::shared_ptr<asio_connection_pool> s_instance = std::make_shared<asio_connection_pool>(crossplat::threadpool::shared_instance().service(), idle_timeout, true);
+
     return s_instance;
-}
-
-std::shared_ptr<asio_connection_pool> asio_connection_pool_map::obtain_connection_pool(const std::string &pool_key, bool start_with_ssl, std::chrono::seconds idle_timeout)
-{
-    std::lock_guard<std::mutex> lg(m_connection_pool_map_mutex);
-    auto &pool = m_connection_pool_map[pool_key];
-    if (!pool)
-    {
-        pool = std::make_shared<asio_connection_pool>(crossplat::threadpool::shared_instance().service(), start_with_ssl, idle_timeout, nullptr);
-    }
-
-    pool->cancel_pool_timer();
-    return pool;
-}
-
-void asio_connection_pool_map::release_connection_pool(const std::string &pool_key)
-{
-    std::lock_guard<std::mutex> lg(m_connection_pool_map_mutex);
-    auto &pool = m_connection_pool_map[pool_key];
-    if (pool)
-    {
-        pool->start_pool_timer(boost::bind(&asio_connection_pool_map::free_connection_pool, this, boost::asio::placeholders::error, pool_key));
-    }
-}
-
-void asio_connection_pool_map::free_connection_pool(const boost::system::error_code &ec, const std::string &pool_key)
-{
-    if (!ec)
-    {
-        std::lock_guard<std::mutex> lg(m_connection_pool_map_mutex);
-        auto it = m_connection_pool_map.find(pool_key);
-        if (it != m_connection_pool_map.end() && it->second.use_count() == 1)
-        {
-            m_connection_pool_map.erase(it);
-        }
-    }
 }
 
 class asio_client : public _http_client_communicator
@@ -421,44 +414,19 @@ public:
     : _http_client_communicator(std::move(address), std::move(client_config))
     , m_resolver(crossplat::threadpool::shared_instance().service())
     {
-        bool start_with_ssl = base_uri().scheme() == "https" && !_http_client_communicator::client_config().proxy().is_specified();
+        m_start_with_ssl = base_uri().scheme() == "https" && !_http_client_communicator::client_config().proxy().is_specified();
+        m_ssl_context_callback = this->client_config().get_ssl_context_callback();
         const std::chrono::seconds idle_timeout(30); // Unused sockets are kept in pool for 30 seconds.
-        auto ssl_context_callback = this->client_config().get_ssl_context_callback();
 
-        if (ssl_context_callback)
+        if (m_ssl_context_callback)
         {
-            // The pool is not added to the map because there is no better approaches to compare callback functors.
-            m_pool = std::make_shared<asio_connection_pool>(crossplat::threadpool::shared_instance().service(), start_with_ssl, idle_timeout, ssl_context_callback);
+            // We will use a private connection pool because there is no better approaches to compare callback functors.
+            m_pool = std::make_shared<asio_connection_pool>(crossplat::threadpool::shared_instance().service(), idle_timeout, false);
         }
         else
         {
-            m_pool_key = base_uri().to_string();
-
-            auto &credentials = _http_client_communicator::client_config().credentials();
-            if (credentials.is_set())
-            {
-                m_pool_key.append(credentials.username());
-            }
-
-            auto &proxy = _http_client_communicator::client_config().proxy();
-            if (proxy.is_specified())
-            {
-                m_pool_key.append(proxy.address().to_string());
-                if (proxy.credentials().is_set())
-                {
-                    m_pool_key.append(proxy.credentials().username());
-                }
-            }
-
-            m_pool = asio_connection_pool_map::instance().obtain_connection_pool(m_pool_key, start_with_ssl, idle_timeout);
-        }
-    }
-
-    ~asio_client()
-    {
-        if (!m_pool_key.empty())
-        {
-            asio_connection_pool_map::instance().release_connection_pool(m_pool_key);
+            init_pool_key();
+            m_pool = asio_connection_pool::shared_instance();
         }
     }
 
@@ -468,10 +436,42 @@ public:
 
     virtual pplx::task<http_response> propagate(http_request request) override;
 
+    void init_pool_key();
+
+    std::shared_ptr<asio_connection> obtain_connection();
+
     std::shared_ptr<asio_connection_pool> m_pool;
     tcp::resolver m_resolver;
+    bool m_start_with_ssl;
+    std::function<void(boost::asio::ssl::context&)> m_ssl_context_callback;
     std::string m_pool_key;
 };
+
+void asio_client::init_pool_key()
+{
+    m_pool_key = base_uri().to_string();
+
+    auto &credentials = _http_client_communicator::client_config().credentials();
+    if (credentials.is_set())
+    {
+        m_pool_key.append(credentials.username());
+    }
+
+    auto &proxy = _http_client_communicator::client_config().proxy();
+    if (proxy.is_specified())
+    {
+        m_pool_key.append(proxy.address().to_string());
+        if (proxy.credentials().is_set())
+        {
+            m_pool_key.append(proxy.credentials().username());
+        }
+    }
+}
+
+std::shared_ptr<asio_connection> asio_client::obtain_connection()
+{
+    return m_pool->obtain(m_pool_key, m_start_with_ssl, m_ssl_context_callback);
+}
 
 class asio_context : public request_context, public std::enable_shared_from_this<asio_context>
 {
@@ -500,7 +500,7 @@ public:
     static std::shared_ptr<request_context> create_request_context(std::shared_ptr<_http_client_communicator> &client, http_request &request)
     {
         auto client_cast(std::static_pointer_cast<asio_client>(client));
-        auto connection(client_cast->m_pool->obtain());
+        auto connection(client_cast->obtain_connection());
         auto ctx = std::make_shared<asio_context>(client, request, connection);
         ctx->m_timer.set_ctx(std::weak_ptr<asio_context>(ctx));
         return ctx;
@@ -577,7 +577,7 @@ public:
                 m_context->m_timer.reset();
                 //// Replace the connection. This causes old connection object to go out of scope.
                 auto client = std::static_pointer_cast<asio_client>(m_context->m_http_client);
-                m_context->m_connection = client->m_pool->obtain();
+                m_context->m_connection = client->obtain_connection();
 
                 auto endpoint = *endpoints;
                 m_context->m_connection->async_connect(endpoint, boost::bind(&ssl_proxy_tunnel::handle_tcp_connect, shared_from_this(), boost::asio::placeholders::error, ++endpoints));
@@ -930,7 +930,7 @@ private:
         {
             // Replace the connection. This causes old connection object to go out of scope.
             auto client = std::static_pointer_cast<asio_client>(m_http_client);
-            m_connection = client->m_pool->obtain();
+            m_connection = client->obtain_connection();
 
             auto endpoint = *endpoints;
             m_connection->async_connect(endpoint, boost::bind(&asio_context::handle_connect, shared_from_this(), boost::asio::placeholders::error, ++endpoints));
