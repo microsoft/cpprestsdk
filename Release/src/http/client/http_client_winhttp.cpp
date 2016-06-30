@@ -968,7 +968,7 @@ private:
 
             // New scope to ensure plaintext password is cleared as soon as possible.
             {
-                auto password = cred.decrypt();
+                auto password = cred._decrypt();
                 if (!WinHttpSetCredentials(
                     hRequestHandle,
                     dwAuthTarget,

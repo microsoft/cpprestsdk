@@ -103,33 +103,12 @@ public:
     const utility::string_t &username() const { return m_username; }
 
     /// <summary>
-    /// The password for the user name associated with the credentials.
-    /// </summary>
-    /// <returns>A string containing the password.</returns>
-    CASABLANCA_DEPRECATED("This API is deprecated for security reasons to avoid unnecessary password copies stored in plaintext.")
-        utility::string_t password() const
-    {
-#if defined(_WIN32) && !defined(CPPREST_TARGET_XP)
-        return utility::string_t(*m_password.decrypt());
-#else
-        return m_password;
-#endif
-    }
-
-    /// <summary>
     /// Checks if credentials have been set
     /// </summary>
     /// <returns><c>true</c> if user name and password is set, <c>false</c> otherwise.</returns>
     bool is_set() const { return !m_username.empty(); }
 
-private:
-    friend class http::client::details::winhttp_client;
-    friend class http::client::details::winrt_client;
-	friend class http::client::details::asio_context;
-    friend class websockets::client::details::winrt_callback_client;
-    friend class websockets::client::details::wspp_callback_client;
-
-    details::plaintext_string decrypt() const
+    details::plaintext_string _decrypt() const
     {
         // Encryption APIs not supported on XP
 #if defined(_WIN32) && !defined(CPPREST_TARGET_XP)
@@ -139,6 +118,7 @@ private:
 #endif
     }
 
+private:
     ::utility::string_t m_username;
 
 #if defined(_WIN32) && !defined(CPPREST_TARGET_XP)
