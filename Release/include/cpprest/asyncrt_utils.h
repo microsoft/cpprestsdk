@@ -535,7 +535,6 @@ inline int operator- (datetime t1, datetime t2)
 class nonce_generator
 {
 public:
-
     /// <summary>
     /// Define default nonce length.
     /// </summary>
@@ -569,8 +568,13 @@ public:
     /// <param name="length">Lenght of nonce string.</param>
     void set_length(int length) { m_length = length; }
 
+    /// <summary>
+    /// Use a default-initialized shared global instance to generate a nonce.
+    /// This function is thread-safe.
+    /// </summary>
+    static _ASYNCRTIMP utility::string_t __cdecl shared_generate();
+
 private:
-    static const utility::string_t c_allowed_chars;
     std::mt19937 m_random;
     int m_length;
 };

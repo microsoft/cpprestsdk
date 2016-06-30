@@ -925,7 +925,16 @@ utility::seconds __cdecl timespan::xml_duration_to_seconds(const utility::string
     return utility::seconds(numSecs);
 }
 
-const utility::string_t nonce_generator::c_allowed_chars(_XPLATSTR("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"));
+static const utility::string_t c_allowed_chars(_XPLATSTR("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"));
+
+static std::mutex global_nonce_generator_lock;
+
+utility::string_t nonce_generator::shared_generate()
+{
+    std::lock_guard<std::mutex> lock(global_nonce_generator_lock);
+    static nonce_generator g;
+    return g.generate();
+}
 
 utility::string_t nonce_generator::generate()
 {
