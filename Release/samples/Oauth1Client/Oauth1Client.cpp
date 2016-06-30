@@ -48,6 +48,7 @@ Set following entry in the hosts file:
 
 #include "cpprest/http_listener.h"
 #include "cpprest/http_client.h"
+#include "cpprest/oauth1.h"
 
 using namespace utility;
 using namespace web;
@@ -180,13 +181,10 @@ public:
 
             if (!m_oauth1_config.token().is_valid_access_token())
             {
-                if (do_authorization().get())
-                {
-                    m_http_config.set_oauth1(m_oauth1_config);
-                }
-                else
+                if (!do_authorization().get())
                 {
                     ucout << "Authorization failed for " << m_name.c_str() << "." << std::endl;
+                    return;
                 }
             }
 
@@ -264,6 +262,8 @@ protected:
     void run_internal() override
     {
         http_client api(U("https://api.linkedin.com/v1/people/"), m_http_config);
+        api.add_handler(m_oauth1_config.create_pipeline_stage());
+
         ucout << "Requesting user information:" << std::endl;
         ucout << "Information: " << api.request(methods::GET, U("~?format=json")).get().extract_json().get() << std::endl;
     }
@@ -290,6 +290,8 @@ protected:
     void run_internal() override
     {
         http_client api(U("https://api.twitter.com/1.1/"), m_http_config);
+        api.add_handler(m_oauth1_config.create_pipeline_stage());
+
         ucout << "Requesting account information:" << std::endl;
         ucout << api.request(methods::GET, U("account/settings.json")).get().extract_json().get() << std::endl;
     }

@@ -23,13 +23,14 @@
 
 #include "stdafx.h"
 #include "cpprest/details/http_helpers.h"
+#include "cpprest/oauth1.h"
 
 using namespace web;
 using namespace web::http;
 using namespace web::http::client;
 using namespace web::http::details;
 using namespace web::http::oauth1::experimental;
-using namespace web::http::oauth1::details;
+using namespace web::http::oauth1::experimental::details;
 using namespace utility;
 using namespace concurrency;
 
@@ -47,15 +48,13 @@ struct oauth1_test_config
         m_test_token(U("test_token"), U("test_token_secret")),
         m_oauth1_config(U("test_key"), U("test_secret"),
             m_server_uri, m_server_uri, m_server_uri, m_server_uri,
-            oauth1_methods::hmac_sha1),
-        m_oauth1_handler(std::shared_ptr<oauth1_config>(new oauth1_config(m_oauth1_config)))
+            oauth1_methods::hmac_sha1)
     {}
 
     const utility::string_t m_server_uri;
     const oauth1_token m_test_token;
 
     oauth1_config m_oauth1_config;
-    oauth1_handler m_oauth1_handler;
 };
 
 struct oauth1_token_setup : public oauth1_test_config
@@ -211,8 +210,8 @@ TEST_FIXTURE(oauth1_server_setup, oauth1_hmac_sha1_request)
     m_oauth1_config.set_method(oauth1_methods::hmac_sha1);
 
     http_client_config client_config;
-    client_config.set_oauth1(m_oauth1_config);
     http_client client(m_server_uri, client_config);
+    client.add_handler(m_oauth1_config.create_pipeline_stage());
 
     m_server.server()->next_request().then([](test_request *request)
     {
@@ -233,8 +232,8 @@ TEST_FIXTURE(oauth1_server_setup, oauth1_plaintext_request)
     m_oauth1_config.set_method(oauth1_methods::plaintext);
 
     http_client_config client_config;
-    client_config.set_oauth1(m_oauth1_config);
     http_client client(m_server_uri, client_config);
+    client.add_handler(m_oauth1_config.create_pipeline_stage());
 
     m_server.server()->next_request().then([](test_request *request)
     {

@@ -43,63 +43,63 @@ namespace client
 /// oAuth 1.0 library.
 namespace oauth1
 {
+/// oAuth functionality is currently in beta.
+namespace experimental
+{
+
 namespace details
 {
 
-class oauth1_handler;
+    // State currently used by oauth1_config to authenticate request.
+    // The state varies for every request (due to timestamp and nonce).
+    // The state also contains extra transmitted protocol parameters during
+    // authorization flow (i.e. 'oauth_callback' or 'oauth_verifier').
+    class oauth1_state
+    {
+    public:
+        oauth1_state(utility::string_t timestamp, utility::string_t nonce,
+            utility::string_t extra_key = utility::string_t(),
+            utility::string_t extra_value = utility::string_t()) :
+            m_timestamp(std::move(timestamp)),
+            m_nonce(std::move(nonce)),
+            m_extra_key(std::move(extra_key)),
+            m_extra_value(std::move(extra_value))
+        {}
 
-// State currently used by oauth1_config to authenticate request.
-// The state varies for every request (due to timestamp and nonce).
-// The state also contains extra transmitted protocol parameters during
-// authorization flow (i.e. 'oauth_callback' or 'oauth_verifier').
-class oauth1_state
-{
-public:
-    oauth1_state(utility::string_t timestamp, utility::string_t nonce,
-            utility::string_t extra_key=utility::string_t(),
-            utility::string_t extra_value=utility::string_t()) :
-        m_timestamp(std::move(timestamp)),
-        m_nonce(std::move(nonce)),
-        m_extra_key(std::move(extra_key)),
-        m_extra_value(std::move(extra_value))
-    {}
+        const utility::string_t& timestamp() const { return m_timestamp; }
+        void set_timestamp(utility::string_t timestamp) { m_timestamp = std::move(timestamp); }
 
-    const utility::string_t& timestamp() const { return m_timestamp; }
-    void set_timestamp(utility::string_t timestamp) { m_timestamp = std::move(timestamp); }
+        const utility::string_t& nonce() const { return m_nonce; }
+        void set_nonce(utility::string_t nonce) { m_nonce = std::move(nonce); }
 
-    const utility::string_t& nonce() const { return m_nonce; }
-    void set_nonce(utility::string_t nonce) { m_nonce = std::move(nonce); }
+        const utility::string_t& extra_key() const { return m_extra_key; }
+        void set_extra_key(utility::string_t key) { m_extra_key = std::move(key); }
 
-    const utility::string_t& extra_key() const { return m_extra_key; }
-    void set_extra_key(utility::string_t key) { m_extra_key = std::move(key); }
+        const utility::string_t& extra_value() const { return m_extra_value; }
+        void set_extra_value(utility::string_t value) { m_extra_value = std::move(value); }
 
-    const utility::string_t& extra_value() const { return m_extra_value; }
-    void set_extra_value(utility::string_t value) { m_extra_value = std::move(value); }
+    private:
+        utility::string_t m_timestamp;
+        utility::string_t m_nonce;
+        utility::string_t m_extra_key;
+        utility::string_t m_extra_value;
+    };
 
-private:
-    utility::string_t m_timestamp;
-    utility::string_t m_nonce;
-    utility::string_t m_extra_key;
-    utility::string_t m_extra_value;
-};
-
-// Constant strings for OAuth 1.0.
-typedef utility::string_t oauth1_string;
-class oauth1_strings
-{
-public:
+    // Constant strings for OAuth 1.0.
+    typedef utility::string_t oauth1_string;
+    class oauth1_strings
+    {
+    public:
 #define _OAUTH1_STRINGS
 #define DAT(a_, b_) _ASYNCRTIMP static const oauth1_string a_;
 #include "cpprest/details/http_constants.dat"
 #undef _OAUTH1_STRINGS
 #undef DAT
-};
+    };
 
-} // namespace web::http::oauth1::details
+    class oauth1_pipeline_stage;
 
-/// oAuth functionality is currently in beta.
-namespace experimental
-{
+} // namespace web::http::oauth1::experimental::details
 
 /// <summary>
 /// Constant strings for OAuth 1.0 signature methods.
@@ -270,8 +270,7 @@ public:
     /// token_from_verifier() method.
     /// See: http://tools.ietf.org/html/rfc5849#section-2.2
     /// The received 'oauth_token' is parsed and verified to match the current token().
-    /// When access token is successfully obtained, set_token() is called, and config is
-    /// ready for use by oauth1_handler.
+    /// When access token is successfully obtained, set_token() is called.
     /// </summary>
     /// <param name="redirected_uri">The URI where web browser/view was redirected after resource owner's authorization.</param>
     /// <returns>Task that fetches the access token based on redirected URI.</returns>
@@ -406,8 +405,6 @@ public:
 
     /// <summary>
     /// Returns enabled state of the configuration.
-    /// The oauth1_handler will perform OAuth 1.0 authentication only if
-    /// this method returns true.
     /// Return value is true if access token is valid (=fetched or manually set)
     /// and both consumer_key() and consumer_secret() are set (=non-empty).
     /// </summary>
@@ -498,9 +495,10 @@ public:
         m_proxy = proxy;
     }
 
+    _ASYNCRTIMP std::shared_ptr<http::http_pipeline_stage> create_pipeline_stage() const;
+
 private:
-    friend class web::http::client::http_client_config;
-    friend class web::http::oauth1::details::oauth1_handler;
+    friend class web::http::oauth1::experimental::details::oauth1_pipeline_stage;
 
     oauth1_config() :
         m_is_authorization_completed(false)
@@ -559,29 +557,6 @@ private:
 
 } // namespace web::http::oauth1::experimental
 
-namespace details
-{
-
-class oauth1_handler : public http_pipeline_stage
-{
-public:
-    oauth1_handler(std::shared_ptr<experimental::oauth1_config> cfg) :
-        m_config(std::move(cfg))
-    {}
-
-    virtual pplx::task<http_response> propagate(http_request request) override
-    {
-        if (m_config)
-        {
-            m_config->_authenticate_request(request);
-        }
-        return next_stage()->propagate(request);
-    }
-
-private:
-    std::shared_ptr<experimental::oauth1_config> m_config;
-};
-
-}}}}
+}}}
 
 #endif
