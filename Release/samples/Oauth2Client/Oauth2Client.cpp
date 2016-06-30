@@ -34,9 +34,6 @@ Execute with administrator privileges.
 Set the app key & secret strings below (i.e. s_dropbox_key, s_dropbox_secret, etc.)
 To get key & secret, register an app in the corresponding service.
 
-Set following entry in the hosts file:
-127.0.0.1    testhost.local
-
 */
 #include "stdafx.h"
 
@@ -48,12 +45,13 @@ Set following entry in the hosts file:
 
 #include "cpprest/http_listener.h"
 #include "cpprest/http_client.h"
+#include "cpprest/oauth2.h"
 
 using namespace utility;
 using namespace web;
 using namespace web::http;
 using namespace web::http::client;
-using namespace web::http::oauth2::experimental;
+using namespace web::http::oauth2;
 using namespace web::http::experimental::listener;
 
 //
@@ -68,251 +66,141 @@ static const utility::string_t s_linkedin_secret(U(""));
 static const utility::string_t s_live_key(U(""));
 static const utility::string_t s_live_secret(U(""));
 
+static const web::uri s_local_uri(U("http://localhost:8888/"));
+
 //
 // Utility method to open browser on Windows, OS X and Linux systems.
 //
 static void open_browser(utility::string_t auth_uri)
 {
 #if defined(_WIN32) && !defined(__cplusplus_winrt)
-    // NOTE: Windows desktop only.
-    auto r = ShellExecuteA(NULL, "open", conversions::utf16_to_utf8(auth_uri).c_str(), NULL, NULL, SW_SHOWNORMAL);
+    auto r = ShellExecuteW(NULL, L"open", auth_uri.c_str(), NULL, NULL, SW_SHOWNORMAL);
 #elif defined(__APPLE__)
-    // NOTE: OS X only.
     string_t browser_cmd(U("open \"") + auth_uri + U("\""));
     system(browser_cmd.c_str());
 #else
-    // NOTE: Linux/X11 only.
     string_t browser_cmd(U("xdg-open \"") + auth_uri + U("\""));
     system(browser_cmd.c_str());
 #endif
 }
 
-//
-// A simple listener class to capture OAuth 2.0 HTTP redirect to localhost.
-// The listener captures redirected URI and obtains the token.
-// This type of listener can be implemented in the back-end to capture and store tokens.
-//
-class oauth2_code_listener
+struct
 {
-public:
-    oauth2_code_listener(
-        uri listen_uri,
-        oauth2_config& config) :
-            m_listener(new http_listener(listen_uri)),
-            m_config(config)
+    void set(const pplx::task_completion_event<web::uri>& tce)
     {
-        m_listener->support([this](http::http_request request) -> void
+        std::lock_guard<std::mutex> lk(m_lock);
+        m_tce = tce;
+    }
+    pplx::task_completion_event<web::uri> get()
+    {
+        std::lock_guard<std::mutex> lk(m_lock);
+        return m_tce;
+    }
+
+private:
+    pplx::task_completion_event<web::uri> m_tce;
+    std::mutex m_lock;
+} s_browser_uri;
+
+struct local_redirect_listener
+{
+    local_redirect_listener()
+        : m_listener(s_local_uri)
+    {
+        m_listener.support([](http_request req)
         {
-            if (request.request_uri().path() == U("/") && request.request_uri().query() != U(""))
-            {
-                m_resplock.lock();
+            s_browser_uri.get().set(req.absolute_uri());
 
-                m_config.token_from_redirected_uri(request.request_uri()).then([this,request](pplx::task<void> token_task) -> void
-                {
-                    try
-                    {
-                        token_task.wait();
-                        m_tce.set(true);
-                    }
-                    catch (const oauth2_exception& e)
-                    {
-                        ucout << "Error: " << e.what() << std::endl;
-                        m_tce.set(false);
-                    }
-                });
-
-                request.reply(status_codes::OK, U("Ok."));
-
-                m_resplock.unlock();
-            }
-            else
-            {
-                request.reply(status_codes::NotFound, U("Not found."));
-            }
+            req.reply(status_codes::OK);
         });
-
-        m_listener->open().wait();
+        m_listener.open().wait();
     }
 
-    ~oauth2_code_listener()
-    {
-        m_listener->close().wait();
-    }
-
-    pplx::task<bool> listen_for_code()
-    {
-        return pplx::create_task(m_tce);
-    }
-
-private:
-    std::unique_ptr<http_listener> m_listener;
-    pplx::task_completion_event<bool> m_tce;
-    oauth2_config& m_config;
-    std::mutex m_resplock;
+    http_listener m_listener;
 };
 
-//
-// Base class for OAuth 2.0 sessions of this sample.
-//
-class oauth2_session_sample
+web::uri open_browser_callback(const web::uri& auth_uri)
 {
-public:
-    oauth2_session_sample(utility::string_t name,
-        utility::string_t client_key,
-        utility::string_t client_secret,
-        utility::string_t auth_endpoint,
-        utility::string_t token_endpoint,
-        utility::string_t redirect_uri) :
-            m_oauth2_config(client_key,
-                client_secret,
-                auth_endpoint,
-                token_endpoint,
-                redirect_uri),
-            m_name(name),
-            m_listener(new oauth2_code_listener(redirect_uri, m_oauth2_config))
-    {}
+    ucout << "Opening browser in URI:" << std::endl;
+    ucout << auth_uri.to_string() << std::endl;
 
-    void run()
-    {
-        if (is_enabled())
-        {
-            ucout << "Running " << m_name.c_str() << " session..." << std::endl;
+    pplx::task_completion_event<web::uri> tce;
 
-            if (!m_oauth2_config.token().is_valid_access_token())
-            {
-                if (authorization_code_flow().get())
-                {
-                    m_http_config.set_oauth2(m_oauth2_config);
-                }
-                else
-                {
-                    ucout << "Authorization failed for " << m_name.c_str() << "." << std::endl;
-                }
-            }
+    s_browser_uri.set(tce);
+    open_browser(auth_uri.to_string());
 
-            run_internal();
-        }
-        else
-        {
-            ucout << "Skipped " << m_name.c_str() << " session sample because app key or secret is empty. Please see instructions." << std::endl;
-        }
-    }
+    return pplx::create_task(tce).get();
+}
 
-protected:
-    virtual void run_internal() = 0;
-
-    pplx::task<bool> authorization_code_flow()
-    {
-        open_browser_auth();
-        return m_listener->listen_for_code();
-    }
-
-    http_client_config m_http_config;
-    oauth2_config m_oauth2_config;
-
-private:
-    bool is_enabled() const
-    {
-        return !m_oauth2_config.client_key().empty() && !m_oauth2_config.client_secret().empty();
-    }
-
-    void open_browser_auth()
-    {
-        auto auth_uri(m_oauth2_config.build_authorization_uri(true));
-        ucout << "Opening browser in URI:" << std::endl;
-        ucout << auth_uri << std::endl;
-        open_browser(auth_uri);
-    }
-
-    utility::string_t m_name;
-    std::unique_ptr<oauth2_code_listener> m_listener;
-};
-
-//
-// Specialized class for Dropbox OAuth 2.0 session.
-//
-class dropbox_session_sample : public oauth2_session_sample
+void dropbox_session_sample()
 {
-public:
-    dropbox_session_sample() :
-        oauth2_session_sample(U("Dropbox"),
-            s_dropbox_key,
-            s_dropbox_secret,
-            U("https://www.dropbox.com/1/oauth2/authorize"),
-            U("https://api.dropbox.com/1/oauth2/token"),
-            U("http://localhost:8889/"))
-    {
-        // Dropbox uses "default" OAuth 2.0 settings.
-    }
+    auto oauth_session = auth_code_grant_flow(
+        s_dropbox_key,
+        U("https://www.dropbox.com/1/oauth2/authorize"),
+        s_local_uri);
 
-protected:
-    void run_internal() override
-    {
-        http_client api(U("https://api.dropbox.com/1/"), m_http_config);
-        ucout << "Requesting account information:" << std::endl;
-        ucout << "Information: " << api.request(methods::GET, U("account/info")).get().extract_json().get() << std::endl;
-    }
-};
+    auto redirected = open_browser_callback(oauth_session.uri());
 
-//
-// Specialized class for LinkedIn OAuth 2.0 session.
-//
-class linkedin_session_sample : public oauth2_session_sample
+    http_client_config config;
+    config.set_credentials(web::credentials(s_dropbox_key, s_dropbox_secret));
+    http_client token_client(U("https://api.dropbox.com/1/oauth2/token"), config);
+
+    oauth2_shared_token auth = oauth_session.complete(redirected, token_client).get();
+
+    http_client api(U("https://api.dropbox.com/1/"));
+    api.add_handler(auth.create_pipeline_stage());
+
+    ucout << "Requesting account information:" << std::endl;
+    ucout << "Information: " << api.request(methods::GET, U("account/info")).get().extract_json().get() << std::endl;
+}
+
+void linkedin_session_sample()
 {
-public:
-    linkedin_session_sample() :
-        oauth2_session_sample(U("LinkedIn"),
-            s_linkedin_key,
-            s_linkedin_secret,
-            U("https://www.linkedin.com/uas/oauth2/authorization"),
-            U("https://www.linkedin.com/uas/oauth2/accessToken"),
-            U("http://localhost:8888/"))
-    {
-        // LinkedIn doesn't use bearer auth.
-        m_oauth2_config.set_bearer_auth(false);
-        // Also doesn't use HTTP Basic for token endpoint authentication.
-        m_oauth2_config.set_http_basic_auth(false);
-        // Also doesn't use the common "access_token", but "oauth2_access_token".
-        m_oauth2_config.set_access_token_key(U("oauth2_access_token"));
-    }
+    http_client_config config;
+    config.set_credentials(web::credentials(s_linkedin_key, s_linkedin_secret));
 
-protected:
-    void run_internal() override
-    {
-        http_client api(U("https://api.linkedin.com/v1/people/"), m_http_config);
-        ucout << "Requesting account information:" << std::endl;
-        ucout << "Information: " << api.request(methods::GET, U("~?format=json")).get().extract_json().get() << std::endl;
-    }
+    http_client token_client(U("https://www.linkedin.com/uas/oauth2/accessToken"), config);
 
-};
+    auto flow = auth_code_grant_flow(
+        s_linkedin_key,
+        U("https://www.linkedin.com/uas/oauth2/authorization"),
+        s_local_uri);
+    auto redirected = open_browser_callback(flow.uri());
+    auto auth = flow.complete(
+        redirected,
+        token_client,
+        client_credentials_mode::request_body).get();
 
-//
-// Specialized class for Microsoft Live Connect OAuth 2.0 session.
-//
-class live_session_sample : public oauth2_session_sample
+    http_client api(U("https://api.linkedin.com/v1/people/"));
+    api.add_handler(auth.create_pipeline_stage(U("oauth2_access_token")));
+
+    ucout << "Requesting account information:" << std::endl;
+    ucout << "Information: " << api.request(methods::GET, U("~?format=json")).get().extract_json().get() << std::endl;
+}
+
+void live_session_sample()
 {
-public:
-    live_session_sample() :
-        oauth2_session_sample(U("Live"),
-            s_live_key,
-            s_live_secret,
-            U("https://login.live.com/oauth20_authorize.srf"),
-            U("https://login.live.com/oauth20_token.srf"),
-            U("http://testhost.local:8890/"))
-    {
-        // Scope "wl.basic" allows fetching user information.
-        m_oauth2_config.set_scope(U("wl.basic"));
-    }
+    http_client_config config;
+    config.set_credentials(web::credentials(s_live_key, s_live_secret));
 
-protected:
-    void run_internal() override
-    {
-        http_client api(U("https://apis.live.net/v5.0/"), m_http_config);
-        ucout << "Requesting account information:" << std::endl;
-        ucout << api.request(methods::GET, U("me")).get().extract_json().get() << std::endl;
-    }
-};
+    http_client token_client(U("https://login.live.com/oauth20_token.srf"), config);
 
+    auto flow = auth_code_grant_flow(
+        s_live_key,
+        U("https://login.live.com/oauth20_authorize.srf"),
+        s_local_uri,
+        U("wl.basic"));
+    auto redirected = open_browser_callback(flow.uri());
+    auto auth = flow.complete(
+        redirected,
+        token_client).get();
+
+    http_client api(U("https://apis.live.net/v5.0/"));
+    api.add_handler(auth.create_pipeline_stage());
+
+    ucout << "Requesting account information:" << std::endl;
+    ucout << api.request(methods::GET, U("me")).get().extract_json().get() << std::endl;
+}
 
 #ifdef _WIN32
 int wmain(int argc, wchar_t *argv[])
@@ -321,14 +209,20 @@ int main(int argc, char *argv[])
 #endif
 {
     ucout << "Running OAuth 2.0 client sample..." << std::endl;
+    local_redirect_listener listener;
 
-    linkedin_session_sample linkedin;
-    dropbox_session_sample  dropbox;
-    live_session_sample     live;
+    if (!s_linkedin_key.empty())
+        linkedin_session_sample();
+    if (!s_dropbox_key.empty())
+        dropbox_session_sample();
+    if (!s_live_key.empty())
+        live_session_sample();
 
-    linkedin.run();
-    dropbox.run();
-    live.run();
+    if (s_linkedin_key.empty() && s_dropbox_key.empty() && s_live_key.empty())
+    {
+        ucout << "No client_id/client_secret pairs were set.\n"
+            "Please change the hardcoded client information strings according the instructions in the Oauth2Client.cpp source file." << std::endl;
+    }
 
     ucout << "Done." << std::endl;
     return 0;
