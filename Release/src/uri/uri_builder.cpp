@@ -103,12 +103,12 @@ uri_builder &uri_builder::append(const http::uri &relative_uri)
     return *this;
 }
 
-utility::string_t uri_builder::to_string()
+utility::string_t uri_builder::to_string() const
 {
     return to_uri().to_string();
 }
 
-uri uri_builder::to_uri()
+uri uri_builder::to_uri() const
 {
     return uri(m_uri);
 }

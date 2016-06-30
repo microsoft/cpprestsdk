@@ -53,6 +53,18 @@ namespace web
         uri_builder(const uri &uri_str): m_uri(uri_str.m_components) {}
 
         /// <summary>
+        /// Creates a builder with a existing URI string.
+        /// </summary>
+        /// <param name="str">String containing the URI.</param>
+        uri_builder(const utility::string_t& str) : uri_builder(uri(str)) {}
+
+        /// <summary>
+        /// Creates a builder with a existing URI string.
+        /// </summary>
+        /// <param name="str">String containing the URI.</param>
+        uri_builder(const utility::char_t* str) : uri_builder(uri(str)) {}
+
+        /// <summary>
         /// Get the scheme component of the URI as an encoded string.
         /// </summary>
         /// <returns>The URI scheme as a string.</returns>
@@ -273,13 +285,13 @@ namespace web
         /// Combine and validate the URI components into a encoded string. An exception will be thrown if the URI is invalid.
         /// </summary>
         /// <returns>The created URI as a string.</returns>
-        _ASYNCRTIMP utility::string_t to_string();
+        _ASYNCRTIMP utility::string_t to_string() const;
 
         /// <summary>
         /// Combine and validate the URI components into a URI class instance. An exception will be thrown if the URI is invalid.
         /// </summary>
         /// <returns>The create URI as a URI class instance.</returns>
-        _ASYNCRTIMP uri to_uri();
+        _ASYNCRTIMP uri to_uri() const;
 
         /// <summary>
         /// Validate the generated URI from all existing components of this uri_builder.
