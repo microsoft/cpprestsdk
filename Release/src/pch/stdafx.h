@@ -132,12 +132,6 @@
 #include "cpprest/http_client.h"
 #include "cpprest/details/http_helpers.h"
 
-// oauth
-#if !defined(_WIN32) || _WIN32_WINNT >= _WIN32_WINNT_VISTA
-#include "cpprest/oauth1.h"
-#endif
-#include "cpprest/oauth2.h"
-
 // websockets
 #include "cpprest/ws_client.h"
 #include "cpprest/ws_msg.h"

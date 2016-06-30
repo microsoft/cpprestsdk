@@ -24,7 +24,7 @@
 ****/
 
 #include "stdafx.h"
-
+#include "cpprest/oauth1.h"
 #if !defined(CPPREST_TARGET_XP)
 
 using namespace utility;

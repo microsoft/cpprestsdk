@@ -51,12 +51,6 @@ typedef void* native_handle;}}}
 #include "cpprest/details/basic_types.h"
 #include "cpprest/asyncrt_utils.h"
 
-#if !defined(CPPREST_TARGET_XP)
-#include "cpprest/oauth1.h"
-#endif
-
-#include "cpprest/oauth2.h"
-
 #if !defined(_WIN32) && !defined(__cplusplus_winrt)
 #if defined(__clang__)
 #pragma clang diagnostic push
@@ -107,44 +101,6 @@ public:
         , m_buffer_request(false)
 #endif
     {
-    }
-
-#if !defined(CPPREST_TARGET_XP)
-    /// <summary>
-    /// Get OAuth 1.0 configuration.
-    /// </summary>
-    /// <returns>Shared pointer to OAuth 1.0 configuration.</returns>
-    const std::shared_ptr<oauth1::experimental::oauth1_config> oauth1() const
-    {
-        return m_oauth1;
-    }
-
-    /// <summary>
-    /// Set OAuth 1.0 configuration.
-    /// </summary>
-    /// <param name="config">OAuth 1.0 configuration to set.</param>
-    void set_oauth1(oauth1::experimental::oauth1_config config)
-    {
-        m_oauth1 = std::make_shared<oauth1::experimental::oauth1_config>(std::move(config));
-    }
-#endif
-
-    /// <summary>
-    /// Get OAuth 2.0 configuration.
-    /// </summary>
-    /// <returns>Shared pointer to OAuth 2.0 configuration.</returns>
-    const std::shared_ptr<oauth2::experimental::oauth2_config> oauth2() const
-    {
-        return m_oauth2;
-    }
-
-    /// <summary>
-    /// Set OAuth 2.0 configuration.
-    /// </summary>
-    /// <param name="config">OAuth 2.0 configuration to set.</param>
-    void set_oauth2(oauth2::experimental::oauth2_config config)
-    {
-        m_oauth2 = std::make_shared<oauth2::experimental::oauth2_config>(std::move(config));
     }
 
     /// <summary>
@@ -368,11 +324,6 @@ public:
 #endif
 
 private:
-#if !defined(CPPREST_TARGET_XP)
-    std::shared_ptr<oauth1::experimental::oauth1_config> m_oauth1;
-#endif
-
-    std::shared_ptr<oauth2::experimental::oauth2_config> m_oauth2;
     web_proxy m_proxy;
     http::client::credentials m_credentials;
     // Whether or not to guarantee ordering, i.e. only using one underlying TCP connection.

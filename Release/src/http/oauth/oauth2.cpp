@@ -24,6 +24,7 @@
 ****/
 
 #include "stdafx.h"
+#include "cpprest/oauth2.h"
 
 using web::http::client::http_client;
 using web::http::client::http_client_config;
