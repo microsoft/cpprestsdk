@@ -166,7 +166,7 @@ enum class client_credentials_mode
 };
 
 /// <summary>
-/// A thread-safe OAuth2 token with `std::shared_ptr` semantics.
+/// A thread-safe <see cref="oauth2_token"/> with `std::shared_ptr` semantics.
 /// </summary>
 /// <remarks>
 ///   To create a new token, see the flow factories:
@@ -199,15 +199,6 @@ public:
     _ASYNCRTIMP void set_token(const oauth2_token& tok);
 
     /// <summary>
-    ///   Sets the internal shared token according to the Extension Grant Flow. See <see cref="extension_grant_flow"/>.
-    /// </summary>
-    _ASYNCRTIMP pplx::task<void> set_token_via_extension_grant(
-        web::uri_builder request_body,
-        web::http::client::http_client token_client,
-        const utility::string_t& scope = utility::string_t(),
-        client_credentials_mode creds_mode = client_credentials_mode::http_basic_auth);
-
-    /// <summary>
     ///   Refresh the internal access token using the stored refresh token.
     /// </summary>
     /// <remarks>
@@ -229,7 +220,7 @@ public:
     ///   Defaults to HTTP Basic Auth.
     /// </param>
     /// <returns>
-    ///   A task which completes with `void` when the new access token has been successfully acquired or with a `std::exception` describing the failure.
+    ///   A task which completes with `void` when the new access token has been successfully set or with a `std::exception` describing the failure.
     /// </returns>
     _ASYNCRTIMP pplx::task<void> set_token_via_refresh_token(
         web::http::client::http_client token_client,
@@ -255,8 +246,7 @@ public:
     ///   my_http_client.add_handler(my_oauth2_shared_token.create_pipeline_stage());
     /// </code>
     /// </example>
-    _ASYNCRTIMP std::shared_ptr<http::http_pipeline_stage> create_pipeline_stage(
-        const utility::string_t& access_token_key = utility::string_t());
+    _ASYNCRTIMP std::shared_ptr<http::http_pipeline_stage> create_pipeline_stage();
 
 private:
     std::shared_ptr<details::oauth2_shared_token_impl> m_impl;
@@ -267,17 +257,16 @@ private:
 /// </summary>
 /// <remarks>
 ///   The User must be redirected to the URI returned from <see cref="auth_code_grant_flow::uri"/>.
-///   Once authenticated, they will be redirected to the stored `base_redirect_uri` with an
-///   authorization code which can be exchanged for an access token via the
-///   <see cref="auth_code_grant_flow::complete"/> function.
+///   Once authenticated, they will be redirected to the stored `base_redirect_uri` with an authorization
+///   code which can be exchanged for an access token via <see cref="auth_code_grant_flow::complete"/>.
 ///   See [RFC 6749 Section 4.1](https://tools.ietf.org/html/rfc6749#section-4.1).
 ///
 ///   *Note: This grant flow should only be used in confidential clients (such as on a web server you control) and not in a native client app.
-///   The equivalent flow for native client apps is the Implicit Grant Flow: <see cref="implicit_grant_flow"/>.*
+///   The equivalent flow for native client apps is the <see cref="implicit_grant_flow"/>.*
 /// </remarks>
 /// <example>
 /// <code>
-///   auto flow = oauth2_shared_token::auth_code_grant_flow(
+///   auto flow = auth_code_grant_flow(
 ///       my_client_id,
 ///       U("https://login.live.com/oauth20_authorize.srf"),
 ///       U("https://localhost/"),
@@ -286,7 +275,7 @@ private:
 ///   http_client_config token_client_config;
 ///   token_client_config.set_credentials(web::credentials(my_client_id, my_client_secret));
 ///   http_client token_client(U("https://login.live.com/oauth20_token.srf"), config);
-///   auto my_oauth2_shared_token = flow.complete(redirect_uri, token_client).get();
+///   oauth2_shared_token my_oauth2_shared_token(flow.complete(redirect_uri, token_client).get());
 /// </code>
 /// </example>
 class auth_code_grant_flow
@@ -311,6 +300,7 @@ public:
     ///   The user's browser should be redirected to this URI to authorize your use of the OAuth2 protected resources.
     /// </remarks>
     _ASYNCRTIMP web::uri uri() const;
+
     /// <summary>
     ///   Complete the Authorization Code Grant Flow by passing the authorization code to the token server in exchange for the final access token.
     /// </summary>
@@ -321,10 +311,9 @@ public:
     ///   See <see cref="client_credentials_mode"/> for more details.
     /// </param>
     /// <returns>
-    ///   A task which completes with an initialized <see cref="oauth2_shared_token"/> when the
-    ///   new access token has been successfully acquired or with a `std::exception` describing the failure.
+    ///   A task which completes with an <see cref="oauth2_token"/> when the new access token has been successfully acquired or with a `std::exception` describing the failure.
     /// </returns>
-    _ASYNCRTIMP pplx::task<oauth2_shared_token> complete(
+    _ASYNCRTIMP pplx::task<oauth2_token> complete(
         const web::uri& redirected_uri,
         web::http::client::http_client token_client,
         client_credentials_mode creds_mode = client_credentials_mode::http_basic_auth) const;
@@ -339,18 +328,18 @@ private:
 /// <remarks>
 ///   The URI returned from <see cref="implicit_grant_flow::uri"/> needs to be opened in a WebView or equivalent widget for the user to authenticate.
 ///   Once authenticated, the WebView will be redirected to the stored `base_redirect_uri` with the token information.
-///   This redirected uri can be parsed and validated with the <see cref="implicit_grant_flow::complete"/> function.
+///   This redirected uri can be parsed and validated with <see cref="implicit_grant_flow::complete"/>.
 ///   See [RFC 6749 Section 4.2](https://tools.ietf.org/html/rfc6749#section-4.2).
 /// </remarks>
 /// <example>
 /// <code>
-///   auto flow = oauth2_shared_token::implicit_grant_flow(
+///   auto flow = implicit_grant_flow(
 ///       my_client_id,
 ///       U("https://login.live.com/oauth20_authorize.srf"),
 ///       U("https://localhost/"),
 ///       U("wl.basic"));
 ///   auto redirect_uri = launch_browser_async(flow.uri().to_string()).get();
-///   auto my_oauth2_shared_token = flow.complete(redirect_uri);
+///   oauth2_shared_token my_oauth2_shared_token(flow.complete(redirect_uri));
 /// </code>
 /// </example>
 class implicit_grant_flow
@@ -380,16 +369,16 @@ public:
     /// <summary>
     ///   Complete the Implicit Grant Flow by parsing and validating the access token from the redirected URI.
     /// </summary>
-    /// <returns>A fresh, validated <see cref="oauth2_shared_token"/>.</returns>
+    /// <returns>A fresh, validated <see cref="oauth2_token"/>.</returns>
     /// <exception cref="std::exception">Thrown if an error occurs during parsing or validation.</exception>
-    _ASYNCRTIMP oauth2_shared_token complete(const web::uri& redirected_uri) const;
+    _ASYNCRTIMP oauth2_token complete(const web::uri& redirected_uri) const;
 
 private:
     std::shared_ptr<const details::grant_flow> m_impl;
 };
 
 /// <summary>
-///   Use the Resource Owner Credentials Grant flow to initialize a new <see cref="oauth2_shared_token"/>.
+///   Use the Resource Owner Credentials Grant flow to initialize a new <see cref="oauth2_token"/>.
 /// </summary>
 /// <remarks>
 ///   The Resource Owner Password Credentials Grant flow is suitable in
@@ -420,14 +409,14 @@ private:
 /// <returns>
 ///   A task which completes with `void` when the new access token has been successfully acquired or with a `std::exception` describing the failure.
 /// </returns>
-_ASYNCRTIMP pplx::task<oauth2_shared_token> __cdecl resource_owner_creds_grant_flow(
+_ASYNCRTIMP pplx::task<oauth2_token> __cdecl resource_owner_creds_grant_flow(
     web::http::client::http_client token_client,
     const web::credentials& owner_credentials,
     const utility::string_t& scope = utility::string_t(),
     client_credentials_mode creds_mode = client_credentials_mode::http_basic_auth);
 
 /// <summary>
-///   Use the Extension Grant flow to initialize a new <see cref="oauth2_shared_token"/>.
+///   Use the Extension Grant flow to initialize a new <see cref="oauth2_token"/>.
 /// </summary>
 /// <remarks>
 ///   The OAuth2 specification describes an Extension Grant mechanism for providers to plug in custom grants.
@@ -450,7 +439,7 @@ _ASYNCRTIMP pplx::task<oauth2_shared_token> __cdecl resource_owner_creds_grant_f
 /// <returns>
 ///   A task which completes with `void` when the new access token has been successfully acquired or with a `std::exception` describing the failure.
 /// </returns>
-_ASYNCRTIMP pplx::task<oauth2_shared_token> __cdecl extension_grant_flow(
+_ASYNCRTIMP pplx::task<oauth2_token> __cdecl extension_grant_flow(
     web::uri_builder request_body,
     web::http::client::http_client token_client,
     const utility::string_t& scope = utility::string_t(),

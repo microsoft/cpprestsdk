@@ -92,38 +92,21 @@ namespace
 {
     struct oauth2_pipeline_stage : public http_pipeline_stage
     {
-        oauth2_pipeline_stage(
-            const utility::string_t& access_token_key,
-            std::shared_ptr<oauth2_shared_token_impl> token)
-            : m_access_token_key(access_token_key)
-            , m_token(std::move(token))
+        oauth2_pipeline_stage(std::shared_ptr<oauth2_shared_token_impl> token)
+            : m_token(std::move(token))
         {}
 
-        const utility::string_t m_access_token_key;
         std::shared_ptr<oauth2_shared_token_impl> m_token;
 
         virtual pplx::task<http_response> propagate(http_request request) override
         {
-            if (m_access_token_key.empty())
+            utility::string_t auth_hdr = _XPLATSTR("Bearer ");
             {
-                utility::string_t auth_hdr = _XPLATSTR("Bearer ");
-                {
-                    std::lock_guard<std::mutex> lock(m_token->m_lock);
-                    auth_hdr += m_token->m_token.access_token();
-                }
-                request.headers().add(header_names::authorization, auth_hdr);
+                std::lock_guard<std::mutex> lock(m_token->m_lock);
+                assert(m_token->m_token.token_type().empty() || m_token->m_token.token_type() == _XPLATSTR("bearer"));
+                auth_hdr += m_token->m_token.access_token();
             }
-            else
-            {
-                uri_builder ub(request.request_uri());
-                utility::string_t access_token;
-                {
-                    std::lock_guard<std::mutex> lock(m_token->m_lock);
-                    access_token = m_token->m_token.access_token();
-                }
-                ub.append_query(m_access_token_key, access_token);
-                request.set_request_uri(ub.to_uri());
-            }
+            request.headers().add(header_names::authorization, auth_hdr);
             return next_stage()->propagate(request);
         }
     };
@@ -147,6 +130,30 @@ oauth2_token oauth2_shared_token::token() const
 
 namespace
 {
+    const utility::char_t hex[] = _XPLATSTR("0123456789ABCDEF");
+
+    utility::string_t encode_x_www_form_urlencode(const utility::string_t& str)
+    {
+
+        utility::string_t out;
+        const auto& utf8_str = utility::conversions::to_utf8string(str);
+        for (auto ch : utf8_str)
+        {
+            uint8_t uch = static_cast<uint8_t>(ch);
+            if ((uch >= '0' && uch <= '9') || (uch >= 'a' && uch <= 'z') || (uch >= 'A' && uch <= 'Z') || uch == '_')
+            {
+                out.push_back(static_cast<utility::char_t>(uch));
+            }
+            else
+            {
+                out.push_back(U('%'));
+                out.push_back(hex[(ch >> 4) & 0xF]);
+                out.push_back(hex[ch & 0xF]);
+            }
+        }
+        return out;
+    }
+
     void build_authorization_uri(
         uri_builder& ub,
         const utility::string_t& response_type,
@@ -155,14 +162,14 @@ namespace
         const utility::string_t& state_cookie,
         const utility::string_t& scope)
     {
-        ub.append_query(oauth2_strings::response_type, response_type);
-        ub.append_query(oauth2_strings::client_id, client_id);
-        ub.append_query(oauth2_strings::redirect_uri, base_redirect_uri);
-        ub.append_query(oauth2_strings::state, state_cookie);
+        ub.append_query(oauth2_strings::response_type, encode_x_www_form_urlencode(response_type), false);
+        ub.append_query(oauth2_strings::client_id, encode_x_www_form_urlencode(client_id), false);
+        ub.append_query(oauth2_strings::redirect_uri, encode_x_www_form_urlencode(base_redirect_uri), false);
+        ub.append_query(oauth2_strings::state, encode_x_www_form_urlencode(state_cookie), false);
 
         if (!scope.empty())
         {
-            ub.append_query(oauth2_strings::scope, scope);
+            ub.append_query(oauth2_strings::scope, encode_x_www_form_urlencode(scope), false);
         }
     }
 
@@ -278,43 +285,13 @@ namespace
         }
         else if (mode == client_credentials_mode::request_body)
         {
-            request_body.append_query(oauth2_strings::client_id, uri::encode_data_string(creds.username()), false);
-            request_body.append_query(oauth2_strings::client_secret, uri::encode_data_string(*creds._decrypt()), false);
+            request_body.append_query(oauth2_strings::client_id, encode_x_www_form_urlencode(creds.username()), false);
+            request_body.append_query(oauth2_strings::client_secret, encode_x_www_form_urlencode(*creds._decrypt()), false);
         }
         else
         {
             std::abort();
         }
-    }
-
-    pplx::task<oauth2_token> extension_grant_extract_token(
-        web::uri_builder request_body,
-        web::http::client::http_client token_client,
-        const utility::string_t& scope,
-        client_credentials_mode creds_mode)
-    {
-        http_request request;
-        request.set_method(methods::POST);
-        request.set_request_uri(utility::string_t());
-
-        if (!scope.empty())
-        {
-            request_body.append_query(oauth2_strings::scope, uri::encode_data_string(scope), false);
-        }
-
-        append_client_credentials(request, request_body, token_client.client_config().credentials(), creds_mode);
-
-        request.set_body(request_body.query(), mime_types::application_x_www_form_urlencoded);
-
-        return token_client.request(request)
-            .then([](http_response resp)
-            {
-                return resp.extract_json();
-            }
-            ).then([scope](const web::json::value& v)
-            {
-                return parse_token_from_json(v, scope);
-            });
     }
 
 }
@@ -369,7 +346,7 @@ web::uri implicit_grant_flow::uri() const
     return m_impl->user_agent_uri;
 }
 
-pplx::task<oauth2_shared_token> auth_code_grant_flow::complete(
+pplx::task<oauth2_token> auth_code_grant_flow::complete(
     const web::uri& redirected_uri,
     web::http::client::http_client token_client,
     client_credentials_mode creds_mode) const
@@ -386,13 +363,13 @@ pplx::task<oauth2_shared_token> auth_code_grant_flow::complete(
 
     uri_builder request_body_ub;
     request_body_ub.append_query(oauth2::details::oauth2_strings::grant_type, oauth2::details::oauth2_strings::authorization_code, false);
-    request_body_ub.append_query(oauth2::details::oauth2_strings::code, uri::encode_data_string(code_param->second), false);
-    request_body_ub.append_query(oauth2::details::oauth2_strings::redirect_uri, uri::encode_data_string(m_impl->base_redirect_uri.to_string()), false);
+    request_body_ub.append_query(oauth2::details::oauth2_strings::code, code_param->second, false);
+    request_body_ub.append_query(oauth2::details::oauth2_strings::redirect_uri, encode_x_www_form_urlencode(m_impl->base_redirect_uri.to_string()), false);
 
     return extension_grant_flow(request_body_ub, token_client, m_impl->scope, creds_mode);
 }
 
-oauth2_shared_token implicit_grant_flow::complete(const web::uri& redirected_uri) const
+oauth2_token implicit_grant_flow::complete(const web::uri& redirected_uri) const
 {
     auto query = uri::split_query(redirected_uri.fragment());
 
@@ -425,10 +402,10 @@ oauth2_shared_token implicit_grant_flow::complete(const web::uri& redirected_uri
     }
     tok.set_token_type(oauth2_strings::bearer);
 
-    return oauth2_shared_token(tok);
+    return tok;
 }
 
-pplx::task<oauth2_shared_token> resource_owner_creds_grant_flow(
+pplx::task<oauth2_token> resource_owner_creds_grant_flow(
     web::http::client::http_client token_client,
     const web::credentials& owner_credentials,
     const utility::string_t& scope,
@@ -436,36 +413,39 @@ pplx::task<oauth2_shared_token> resource_owner_creds_grant_flow(
 {
     uri_builder request_body_ub;
     request_body_ub.append_query(oauth2::details::oauth2_strings::grant_type, oauth2::details::oauth2_strings::password, false);
-    request_body_ub.append_query(oauth2::details::oauth2_strings::username, uri::encode_data_string(owner_credentials.username()), false);
-    request_body_ub.append_query(oauth2::details::oauth2_strings::password, uri::encode_data_string(*owner_credentials._decrypt()), false);
+    request_body_ub.append_query(oauth2::details::oauth2_strings::username, encode_x_www_form_urlencode(owner_credentials.username()), false);
+    request_body_ub.append_query(oauth2::details::oauth2_strings::password, encode_x_www_form_urlencode(*owner_credentials._decrypt()), false);
 
     return extension_grant_flow(request_body_ub, token_client, scope, creds_mode);
 }
 
-pplx::task<oauth2_shared_token> extension_grant_flow(
+pplx::task<oauth2_token> extension_grant_flow(
     web::uri_builder request_body,
     web::http::client::http_client token_client,
     const utility::string_t& scope,
     client_credentials_mode creds_mode)
 {
-    return extension_grant_extract_token(request_body, token_client, scope, creds_mode)
-        .then([](const oauth2_token& tok)
-    {
-        return oauth2_shared_token(tok);
-    });
-}
+    http_request request;
+    request.set_method(methods::POST);
+    request.set_request_uri(utility::string_t());
 
-pplx::task<void> oauth2_shared_token::set_token_via_extension_grant(
-    web::uri_builder request_body,
-    web::http::client::http_client token_client,
-    const utility::string_t& scope,
-    client_credentials_mode creds_mode)
-{
-    auto& self = *this;
-    return extension_grant_extract_token(request_body, token_client, scope, creds_mode)
-        .then([self](const oauth2_token& tok)
+    if (!scope.empty())
     {
-        self.m_impl->set_token(tok);
+        request_body.append_query(oauth2_strings::scope, encode_x_www_form_urlencode(scope), false);
+    }
+
+    append_client_credentials(request, request_body, token_client.client_config().credentials(), creds_mode);
+
+    request.set_body(request_body.query(), mime_types::application_x_www_form_urlencoded);
+
+    return token_client.request(request)
+        .then([](http_response resp)
+    {
+        return resp.extract_json();
+    }
+        ).then([scope](const web::json::value& v)
+    {
+        return parse_token_from_json(v, scope);
     });
 }
 
@@ -474,19 +454,28 @@ pplx::task<void> oauth2_shared_token::set_token_via_refresh_token(
     const utility::string_t& scope,
     client_credentials_mode creds_mode)
 {
-    auto tok = m_impl->token();
+    auto token = m_impl->token();
+    if (token.refresh_token().empty())
+        throw oauth2_exception("invalid refresh token: empty string");
 
     uri_builder request_body_ub;
     request_body_ub.append_query(oauth2::details::oauth2_strings::grant_type, oauth2::details::oauth2_strings::refresh_token, false);
-    request_body_ub.append_query(oauth2::details::oauth2_strings::refresh_token, uri::encode_data_string(tok.refresh_token()), false);
+    request_body_ub.append_query(oauth2::details::oauth2_strings::refresh_token, uri::encode_data_string(token.refresh_token()), false);
 
-    return set_token_via_extension_grant(std::move(request_body_ub), token_client, scope, creds_mode);
+    auto& self = *this;
+    auto requested_scope = scope.empty() ? token.scope() : scope;
+    return extension_grant_flow(request_body_ub, token_client, scope, creds_mode)
+        .then([self, requested_scope](oauth2_token tok)
+    {
+        if (tok.scope().empty())
+            tok.set_scope(requested_scope);
+        self.m_impl->set_token(std::move(tok));
+    });
 }
 
-std::shared_ptr<http::http_pipeline_stage> oauth2_shared_token::create_pipeline_stage(
-    const utility::string_t& access_token_key)
+std::shared_ptr<http::http_pipeline_stage> oauth2_shared_token::create_pipeline_stage()
 {
-    return std::make_shared<details::oauth2_pipeline_stage>(access_token_key, m_impl);
+    return std::make_shared<details::oauth2_pipeline_stage>(m_impl);
 }
 
 }}} // namespace web::http::oauth2

@@ -62,7 +62,7 @@ private:
 class win32_encryption
 {
 public:
-    win32_encryption() {}
+    win32_encryption() : m_numCharacters(0) {}
     _ASYNCRTIMP win32_encryption(const std::wstring &data);
     _ASYNCRTIMP ~win32_encryption();
     _ASYNCRTIMP plaintext_string decrypt() const;

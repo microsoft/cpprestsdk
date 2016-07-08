@@ -23,12 +23,13 @@
 
 #include "stdafx.h"
 #include "cpprest/details/http_helpers.h"
+#include "cpprest/oauth2.h"
 
 using namespace web;
 using namespace web::http;
 using namespace web::http::client;
 using namespace web::http::details;
-using namespace web::http::oauth2::experimental;
+using namespace web::http::oauth2;
 using namespace utility;
 using namespace concurrency;
 
@@ -38,346 +39,452 @@ extern utility::string_t _to_base64(const unsigned char *ptr, size_t size);
 namespace tests { namespace functional { namespace http { namespace client
 {
 
-static std::vector<unsigned char> to_body_data(utility::string_t str)
-{
-    const std::string utf8(conversions::to_utf8string(std::move(str)));
-    return std::vector<unsigned char>(utf8.data(), utf8.data() + utf8.size());
-}
-
-static bool is_application_x_www_form_urlencoded(test_request *request)
-{
-    const auto content_type(request->m_headers[header_names::content_type]);
-    return (0 == content_type.find(mime_types::application_x_www_form_urlencoded));
-}
-
 SUITE(oauth2_tests)
 {
-
-struct oauth2_test_setup
-{
-    oauth2_test_setup() :
-        m_uri(U("http://localhost:16743/")),
-        m_oauth2_config(U("123ABC"), U("456DEF"), U("https://test1"), m_uri.to_string(), U("https://bar")),
-        m_scoped(m_uri)
-    {}
-
-    web::http::uri m_uri;
-    oauth2_config m_oauth2_config;
-    test_http_server::scoped_server m_scoped;
-};
-
-#define TEST_ACCESSOR(value_, name_) \
-    t.set_ ## name_(value_); \
-    VERIFY_ARE_EQUAL(value_, t.name_());
 
 TEST(oauth2_token_accessors)
 {
     oauth2_token t;
-    TEST_ACCESSOR(U("b%20456"), access_token)
-    TEST_ACCESSOR(U("a%123"), refresh_token)
-    TEST_ACCESSOR(U("b%20456"), token_type)
-    TEST_ACCESSOR(U("ad.ww xyz"), scope)
-    TEST_ACCESSOR(0, expires_in)
-    TEST_ACCESSOR(123, expires_in)
+    VERIFY_IS_FALSE(t.is_valid_access_token());
+
+    auto access = U("b%20456");
+    auto refresh = U("a%123");
+    auto type = U("b%20456");
+    auto scope = U("ad.ww xyz");
+    auto expires = 123;
+
+    t.set_access_token(access);
+    t.set_refresh_token(refresh);
+    t.set_token_type(type);
+    t.set_scope(scope);
+    t.set_expires_in(expires);
+
+    VERIFY_IS_TRUE(t.is_valid_access_token());
+    VERIFY_ARE_EQUAL(access, t.access_token());
+    VERIFY_ARE_EQUAL(refresh, t.refresh_token());
+    VERIFY_ARE_EQUAL(type, t.token_type());
+    VERIFY_ARE_EQUAL(scope, t.scope());
+    VERIFY_ARE_EQUAL(expires, t.expires_in());
 }
 
-TEST(oauth2_config_accessors)
+TEST(oauth2_shared_token_accessors)
 {
-    oauth2_config t(U(""), U(""), U(""), U(""), U(""));
-    TEST_ACCESSOR(U("ABC123abc"), client_key)
-    TEST_ACCESSOR(U("123abcABC"), client_secret)
-    TEST_ACCESSOR(U("x:/t/a?q=c&a#3"), auth_endpoint)
-    TEST_ACCESSOR(U("y:///?a=21#1=2"), token_endpoint)
-    TEST_ACCESSOR(U("z://?=#"), redirect_uri)
-    TEST_ACCESSOR(U("xyzw=stuv"), scope)
-    TEST_ACCESSOR(U("1234567890"), state)
-    TEST_ACCESSOR(U("keyx"), access_token_key)
-    TEST_ACCESSOR(true, implicit_grant)
-    TEST_ACCESSOR(false, implicit_grant)
-    TEST_ACCESSOR(true, bearer_auth)
-    TEST_ACCESSOR(false, bearer_auth)
-    TEST_ACCESSOR(true, http_basic_auth)
-    TEST_ACCESSOR(false, http_basic_auth)
+    oauth2_token tok(U("accesstoken"));
+    tok.set_scope(U("wl.basic"));
+
+    oauth2_shared_token stok(tok);
+    VERIFY_ARE_EQUAL(U("accesstoken"), stok.token().access_token());
+    VERIFY_ARE_EQUAL(U("wl.basic"), stok.token().scope());
+
+    tok.set_access_token(U("newtoken"));
+    tok.set_scope(U(""));
+
+    stok.set_token(tok);
+    VERIFY_ARE_EQUAL(U("newtoken"), stok.token().access_token());
+    VERIFY_ARE_EQUAL(U(""), stok.token().scope());
 }
 
-#undef TEST_ACCESSOR
-
-TEST(oauth2_build_authorization_uri)
+TEST(oauth2_auth_code_grant_flow_uri)
 {
-    oauth2_config config(U(""), U(""), U(""), U(""), U(""));
-    config.set_state(U("xyzzy"));
-    config.set_implicit_grant(false);
+    auto flow = auth_code_grant_flow(U("s6BhdRkqt3"), U("http://server.example.com/authorize"), U("https://client.example.com/cb"), U("xyz"));
+    auto flowuri = flow.uri();
+    auto query_map = uri::split_query(flowuri.query());
+    VERIFY_ARE_EQUAL(query_map.at(U("response_type")), U("code"));
+    VERIFY_ARE_EQUAL(query_map.at(U("client_id")), U("s6BhdRkqt3"));
+    VERIFY_ARE_EQUAL(query_map.at(U("scope")), U("xyz"));
+    VERIFY_ARE_EQUAL(query_map.at(U("redirect_uri")), U("https%3A%2F%2Fclient%2Eexample%2Ecom%2Fcb"));
+    VERIFY_IS_FALSE(query_map.at(U("state")).empty());
 
-    // Empty authorization URI.
-    {
-        VERIFY_ARE_EQUAL(U("/?response_type=code&client_id=&redirect_uri=&state=xyzzy"),
-                config.build_authorization_uri(false));
-    }
-
-    // Authorization URI with scope parameter.
-    {
-        config.set_scope(U("testing_123"));
-        VERIFY_ARE_EQUAL(U("/?response_type=code&client_id=&redirect_uri=&state=xyzzy&scope=testing_123"),
-                config.build_authorization_uri(false));
-    }
-
-    // Full authorization URI with scope.
-    {
-        config.set_client_key(U("4567abcd"));
-        config.set_auth_endpoint(U("https://test1"));
-        config.set_redirect_uri(U("http://localhost:8080"));
-        VERIFY_ARE_EQUAL(U("https://test1/?response_type=code&client_id=4567abcd&redirect_uri=http://localhost:8080&state=xyzzy&scope=testing_123"),
-                config.build_authorization_uri(false));
-    }
-
-    // Verify again with implicit grant.
-    {
-        config.set_implicit_grant(true);
-        VERIFY_ARE_EQUAL(U("https://test1/?response_type=token&client_id=4567abcd&redirect_uri=http://localhost:8080&state=xyzzy&scope=testing_123"),
-                config.build_authorization_uri(false));
-    }
-
-    // Verify that a new state() will be generated.
-    {
-        const uri auth_uri(config.build_authorization_uri(true));
-        auto params = uri::split_query(auth_uri.query());
-        VERIFY_ARE_NOT_EQUAL(params[U("state")], U("xyzzy"));
-    }
+    VERIFY_ARE_EQUAL(flowuri.authority().to_string(), U("http://server.example.com/"));
+    VERIFY_ARE_EQUAL(flowuri.path(), U("/authorize"));
 }
 
-TEST_FIXTURE(oauth2_test_setup, oauth2_token_from_code)
+TEST(oauth2_implicit_grant_flow_uri)
 {
-    VERIFY_IS_FALSE(m_oauth2_config.is_enabled());
+    auto flow = implicit_grant_flow(U("s6BhdRkqt3"), U("http://server.example.com/authorize"), U("https://client.example.com/cb"), U("xyz"));
+    auto flowuri = flow.uri();
+    auto query_map = uri::split_query(flowuri.query());
+    VERIFY_ARE_EQUAL(query_map.at(U("response_type")), U("token"));
+    VERIFY_ARE_EQUAL(query_map.at(U("client_id")), U("s6BhdRkqt3"));
+    VERIFY_ARE_EQUAL(query_map.at(U("scope")), U("xyz"));
+    VERIFY_ARE_EQUAL(query_map.at(U("redirect_uri")), U("https%3A%2F%2Fclient%2Eexample%2Ecom%2Fcb"));
+    VERIFY_IS_FALSE(query_map.at(U("state")).empty());
 
-    // Fetch using HTTP Basic authentication.
-    {
-        m_scoped.server()->next_request().then([](test_request *request)
-        {
-            VERIFY_ARE_EQUAL(request->m_method, methods::POST);
-            
-            VERIFY_IS_TRUE(is_application_x_www_form_urlencoded(request));
-
-            VERIFY_ARE_EQUAL(U("Basic MTIzQUJDOjQ1NkRFRg=="), request->m_headers[header_names::authorization]);
-
-            VERIFY_ARE_EQUAL(to_body_data(
-                    U("grant_type=authorization_code&code=789GHI&redirect_uri=https%3A%2F%2Fbar")),
-                    request->m_body);
-
-            std::map<utility::string_t, utility::string_t> headers;
-            headers[header_names::content_type] = mime_types::application_json;
-            request->reply(status_codes::OK, U(""), headers, "{\"access_token\":\"xyzzy123\",\"token_type\":\"bearer\"}");
-        });
-
-        m_oauth2_config.token_from_code(U("789GHI")).wait();
-        VERIFY_ARE_EQUAL(U("xyzzy123"), m_oauth2_config.token().access_token());
-        VERIFY_IS_TRUE(m_oauth2_config.is_enabled());
-    }
-
-    // Fetch using client key & secret in request body (x-www-form-urlencoded).
-    {
-        m_scoped.server()->next_request().then([](test_request *request)
-        {
-            VERIFY_IS_TRUE(is_application_x_www_form_urlencoded(request));
-
-            VERIFY_ARE_EQUAL(U(""), request->m_headers[header_names::authorization]);
-
-            VERIFY_ARE_EQUAL(to_body_data(
-                    U("grant_type=authorization_code&code=789GHI&redirect_uri=https%3A%2F%2Fbar&client_id=123ABC&client_secret=456DEF")),
-                    request->m_body);
-
-            std::map<utility::string_t, utility::string_t> headers;
-            headers[header_names::content_type] = mime_types::application_json;
-            request->reply(status_codes::OK, U(""), headers, "{\"access_token\":\"xyzzy123\",\"token_type\":\"bearer\"}");
-        });
-
-        m_oauth2_config.set_token(oauth2_token()); // Clear token.
-        VERIFY_IS_FALSE(m_oauth2_config.is_enabled());
-
-        m_oauth2_config.set_http_basic_auth(false);
-        m_oauth2_config.token_from_code(U("789GHI")).wait();
-
-        VERIFY_ARE_EQUAL(U("xyzzy123"), m_oauth2_config.token().access_token());
-        VERIFY_IS_TRUE(m_oauth2_config.is_enabled());
-    }
+    VERIFY_ARE_EQUAL(flowuri.authority().to_string(), U("http://server.example.com/"));
+    VERIFY_ARE_EQUAL(flowuri.path(), U("/authorize"));
 }
 
-TEST_FIXTURE(oauth2_test_setup, oauth2_token_from_redirected_uri)
+TEST(oauth2_auth_code_grant_flow_complete)
 {
-    // Authorization code grant.
-    {
-        m_scoped.server()->next_request().then([](test_request *request)
-        {
-            std::map<utility::string_t, utility::string_t> headers;
-            headers[header_names::content_type] = mime_types::application_json;
-            request->reply(status_codes::OK, U(""), headers, "{\"access_token\":\"test1\",\"token_type\":\"bearer\"}");
-        });
-    
-        m_oauth2_config.set_implicit_grant(false);
-        m_oauth2_config.set_state(U("xyzzy"));
+    auto flow = auth_code_grant_flow(U("s6BhdRkqt3"), U("http://server.example.com/authorize"), U("https://client.example.com/cb"), U("r_fullprofile r_emailaddress w_share"));
+    auto flowuri = flow.uri();
+    auto query_map = uri::split_query(flowuri.query());
 
-        const web::http::uri redirected_uri(m_uri.to_string() + U("?code=sesame&state=xyzzy"));
-        m_oauth2_config.token_from_redirected_uri(redirected_uri).wait();
-
-        VERIFY_IS_TRUE(m_oauth2_config.token().is_valid_access_token());
-        VERIFY_ARE_EQUAL(m_oauth2_config.token().access_token(), U("test1"));
-    }
-
-    // Implicit grant.
-    {
-        m_oauth2_config.set_implicit_grant(true);
-        const web::http::uri redirected_uri(m_uri.to_string() + U("#access_token=abcd1234&state=xyzzy"));
-        m_oauth2_config.token_from_redirected_uri(redirected_uri).wait();
-
-        VERIFY_IS_TRUE(m_oauth2_config.token().is_valid_access_token());
-        VERIFY_ARE_EQUAL(m_oauth2_config.token().access_token(), U("abcd1234"));
-    }
-}
-
-TEST_FIXTURE(oauth2_test_setup, oauth2_token_from_refresh)
-{
-    oauth2_token token(U("accessing"));
-    token.set_refresh_token(U("refreshing"));
-    m_oauth2_config.set_token(token);
-    VERIFY_IS_TRUE(m_oauth2_config.is_enabled());
-
-    // Verify token refresh without scope.
-    m_scoped.server()->next_request().then([](test_request *request)
-    {
-        VERIFY_ARE_EQUAL(request->m_method, methods::POST);
-
-        VERIFY_IS_TRUE(is_application_x_www_form_urlencoded(request));
-
-        VERIFY_ARE_EQUAL(U("Basic MTIzQUJDOjQ1NkRFRg=="), request->m_headers[header_names::authorization]);
-
-        VERIFY_ARE_EQUAL(to_body_data(
-                U("grant_type=refresh_token&refresh_token=refreshing")),
-                request->m_body);
-
-        std::map<utility::string_t, utility::string_t> headers;
-        headers[header_names::content_type] = mime_types::application_json;
-        request->reply(status_codes::OK, U(""), headers, "{\"access_token\":\"ABBA\",\"refresh_token\":\"BAZ\",\"token_type\":\"bearer\"}");
-    });
-
-    m_oauth2_config.token_from_refresh().wait();
-    VERIFY_ARE_EQUAL(U("ABBA"), m_oauth2_config.token().access_token());
-    VERIFY_ARE_EQUAL(U("BAZ"), m_oauth2_config.token().refresh_token());
-
-    // Verify chaining refresh tokens and refresh with scope.
-    m_scoped.server()->next_request().then([](test_request *request)
-    {
-        VERIFY_IS_TRUE(is_application_x_www_form_urlencoded(request));
-
-        VERIFY_ARE_EQUAL(to_body_data(
-                U("grant_type=refresh_token&refresh_token=BAZ&scope=xyzzy")),
-                request->m_body);
-
-        std::map<utility::string_t, utility::string_t> headers;
-        headers[header_names::content_type] = mime_types::application_json;
-        request->reply(status_codes::OK, U(""), headers, "{\"access_token\":\"done\",\"token_type\":\"bearer\"}");
-    });
-    
-    m_oauth2_config.set_scope(U("xyzzy"));
-    m_oauth2_config.token_from_refresh().wait();
-    VERIFY_ARE_EQUAL(U("done"), m_oauth2_config.token().access_token());
-}
-
-TEST_FIXTURE(oauth2_test_setup, oauth2_bearer_token)
-{
-    m_oauth2_config.set_token(oauth2_token(U("12345678")));
     http_client_config config;
+    config.set_credentials(web::credentials(U("s6BhdRkqt3"), U("gX1fBat3bV")));
 
-    // Default, bearer token in "Authorization" header (bearer_auth() == true)
+    http_client client(U("http://server.example.com/token"), config);
+
+    client.add_handler([&](http_request req, std::shared_ptr<http_pipeline_stage>)
     {
-        config.set_oauth2(m_oauth2_config);
+        VERIFY_ARE_EQUAL(req.headers().content_type(), U("application/x-www-form-urlencoded; charset=utf-8"));
+        VERIFY_ARE_EQUAL(req.headers()[header_names::authorization], U("Basic czZCaGRSa3F0MzpnWDFmQmF0M2JW"));
+        VERIFY_ARE_EQUAL(req.extract_utf8string(true).get(), "grant_type=authorization_code&code=SplxlOBeZQQYbYS6WxSbIA&redirect_uri=https%3A%2F%2Fclient%2Eexample%2Ecom%2Fcb&scope=r_fullprofile%20r_emailaddress%20w_share");
 
-        http_client client(m_uri, config);
-        m_scoped.server()->next_request().then([](test_request *request)
-        {
-            VERIFY_ARE_EQUAL(U("Bearer 12345678"), request->m_headers[header_names::authorization]);
-            VERIFY_ARE_EQUAL(U("/"), request->m_path);
-            request->reply(status_codes::OK);
-        });
+        http_response resp;
+        resp.set_body(R"(
+{
+"access_token":"2YotnFZFEjr1zCsicMWpAA",
+"token_type":"bearer",
+"expires_in":3600,
+"refresh_token":"tGzv3JOkF0XG5Qx2TlKWIA",
+"example_parameter":"example_value"
+}
+        )", "application/json;charset=UTF-8");
 
-        http_response response = client.request(methods::GET).get();
-        VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
-    }
+        return pplx::task_from_result(resp);
+    });
 
-    // Bearer token in query, default access token key (bearer_auth() == false)
-    {
-        m_oauth2_config.set_bearer_auth(false);
-        config.set_oauth2(m_oauth2_config);
+    auto tok = flow.complete(
+        U("https://client.example.com/cb?code=SplxlOBeZQQYbYS6WxSbIA&state=") + query_map[U("state")],
+        client).get();
 
-        http_client client(m_uri, config);
-        m_scoped.server()->next_request().then([](test_request *request)
-        {
-            VERIFY_ARE_EQUAL(U(""), request->m_headers[header_names::authorization]);
-            VERIFY_ARE_EQUAL(U("/?access_token=12345678"), request->m_path);
-            request->reply(status_codes::OK);
-        });
-
-        http_response response = client.request(methods::GET).get();
-        VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
-    }
-
-    // Bearer token in query, updated token, custom access token key (bearer_auth() == false)
-    {
-        m_oauth2_config.set_bearer_auth(false);
-        m_oauth2_config.set_access_token_key(U("open"));
-        m_oauth2_config.set_token(oauth2_token(U("Sesame")));
-        config.set_oauth2(m_oauth2_config);
-
-        http_client client(m_uri, config);
-        m_scoped.server()->next_request().then([](test_request *request)
-        {
-            VERIFY_ARE_EQUAL(U(""), request->m_headers[header_names::authorization]);
-            VERIFY_ARE_EQUAL(U("/?open=Sesame"), request->m_path);
-            request->reply(status_codes::OK);
-        });
-
-        http_response response = client.request(methods::GET).get();
-        VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
-    }
+    VERIFY_ARE_EQUAL(tok.access_token(), U("2YotnFZFEjr1zCsicMWpAA"));
+    VERIFY_ARE_EQUAL(tok.refresh_token(), U("tGzv3JOkF0XG5Qx2TlKWIA"));
+    VERIFY_ARE_EQUAL(tok.scope(), U("r_fullprofile r_emailaddress w_share"));
+    VERIFY_ARE_EQUAL(tok.expires_in(), 3600);
+    VERIFY_ARE_EQUAL(tok.token_type(), U("bearer"));
 }
 
-TEST_FIXTURE(oauth2_test_setup, oauth2_token_parsing)
+TEST(oauth2_auth_code_grant_flow_complete_throws)
 {
-    VERIFY_IS_FALSE(m_oauth2_config.is_enabled());
+    auto flow = auth_code_grant_flow(U("s6BhdRkqt3"), U("http://server.example.com/authorize"), U("https://client.example.com/cb"), U("xyz"));
+    auto flowuri = flow.uri();
+    auto query_map = uri::split_query(flowuri.query());
 
-    // Verify reply JSON 'access_token', 'refresh_token', 'expires_in' and 'scope'.
+    http_client null_client(U("http://0.0.0.0"));
+
+    null_client.add_handler([&](http_request req, std::shared_ptr<http_pipeline_stage>)
     {
-        m_scoped.server()->next_request().then([](test_request *request)
-        {
-            std::map<utility::string_t, utility::string_t> headers;
-            headers[header_names::content_type] = mime_types::application_json;
-            request->reply(status_codes::OK, U(""), headers, "{\"access_token\":\"123\",\"refresh_token\":\"ABC\",\"token_type\":\"bearer\",\"expires_in\":12345678,\"scope\":\"baz\"}");
-        });
+        VERIFY_IS_FALSE(true);
+        return pplx::task_from_result(http_response());
+    });
 
-        m_oauth2_config.token_from_code(U("")).wait();
-        VERIFY_ARE_EQUAL(U("123"), m_oauth2_config.token().access_token());
-        VERIFY_ARE_EQUAL(U("ABC"), m_oauth2_config.token().refresh_token());
-        VERIFY_ARE_EQUAL(12345678, m_oauth2_config.token().expires_in());
-        VERIFY_ARE_EQUAL(U("baz"), m_oauth2_config.token().scope());
-        VERIFY_IS_TRUE(m_oauth2_config.is_enabled());
-    }
+    auto invalid_state_uri = U("https://client.example.com/cb?code=SplxlOBeZQQYbYS6WxSbIA&state=0");
+    VERIFY_THROWS(flow.complete(invalid_state_uri, null_client), oauth2_exception);
+    auto missing_code_uri = U("https://client.example.com/cb?error=access_denied&state=") + query_map[U("state")];
+    VERIFY_THROWS(flow.complete(missing_code_uri, null_client), oauth2_exception);
 
-    // Verify undefined 'expires_in' and 'scope'.
+    http_client error_client(U("http://0.0.0.0"));
+    error_client.add_handler([&](http_request req, std::shared_ptr<http_pipeline_stage>)
     {
-        m_scoped.server()->next_request().then([](test_request *request)
-        {
-            std::map<utility::string_t, utility::string_t> headers;
-            headers[header_names::content_type] = mime_types::application_json;
-            request->reply(status_codes::OK, U(""), headers, "{\"access_token\":\"123\",\"token_type\":\"bearer\"}");
-        });
+        http_response resp;
+        resp.set_body(R"(
+{
+"error":"invalid_client"
+}
+        )", "application/json;charset=UTF-8");
 
-        const utility::string_t test_scope(U("wally world"));
-        m_oauth2_config.set_scope(test_scope);
+        return pplx::task_from_result(resp);
+    });
 
-        m_oauth2_config.token_from_code(U("")).wait();
-        VERIFY_ARE_EQUAL(oauth2_token::undefined_expiration, m_oauth2_config.token().expires_in());
-        VERIFY_ARE_EQUAL(test_scope, m_oauth2_config.token().scope());
-    }
+    auto redirect_uri = U("https://client.example.com/cb?code=SplxlOBeZQQYbYS6WxSbIA&state=") + query_map[U("state")];
+    auto t = flow.complete(redirect_uri, error_client); // The initial call should not throw.
+    VERIFY_THROWS(t.get(), oauth2_exception);
+}
+
+TEST(oauth2_implicit_grant_flow_complete)
+{
+    auto flow = implicit_grant_flow(U("s6BhdRkqt3"), U("http://server.example.com/authorize"), U("https://client.example.com/cb"), U("xyz"));
+    auto flowuri = flow.uri();
+    auto query_map = uri::split_query(flowuri.query());
+
+    auto tok = flow.complete(
+        U("https://client.example.com/cb#access_token=2YotnFZFEjr1zCsicMWpAA&expires_in=3600&token_type=bearer&state=") + query_map[U("state")]);
+
+    VERIFY_ARE_EQUAL(tok.access_token(), U("2YotnFZFEjr1zCsicMWpAA"));
+    VERIFY_ARE_EQUAL(tok.refresh_token(), U(""));
+    VERIFY_ARE_EQUAL(tok.scope(), U("xyz"));
+    VERIFY_ARE_EQUAL(tok.expires_in(), 3600);
+    VERIFY_ARE_EQUAL(tok.token_type(), U("bearer"));
+}
+
+TEST(oauth2_implicit_grant_flow_complete_change_scope)
+{
+    auto flow = implicit_grant_flow(U("s6BhdRkqt3"), U("http://server.example.com/authorize"), U("https://client.example.com/cb"), U("xyz"));
+    auto flowuri = flow.uri();
+    auto query_map = uri::split_query(flowuri.query());
+
+    auto tok = flow.complete(
+        U("https://client.example.com/cb#scope=abc&access_token=2YotnFZFEjr1zCsicMWpAA&expires_in=3600&token_type=bearer&state=") + query_map[U("state")]);
+
+    VERIFY_ARE_EQUAL(tok.access_token(), U("2YotnFZFEjr1zCsicMWpAA"));
+    VERIFY_ARE_EQUAL(tok.refresh_token(), U(""));
+    VERIFY_ARE_EQUAL(tok.scope(), U("abc"));
+    VERIFY_ARE_EQUAL(tok.expires_in(), 3600);
+    VERIFY_ARE_EQUAL(tok.token_type(), U("bearer"));
+}
+
+TEST(oauth2_implicit_grant_flow_complete_throws)
+{
+    auto flow = implicit_grant_flow(U("s6BhdRkqt3"), U("http://server.example.com/authorize"), U("https://client.example.com/cb"), U("xyz"));
+    auto flowuri = flow.uri();
+    auto query_map = uri::split_query(flowuri.query());
+
+    auto invalid_state_uri = U("https://client.example.com/cb#access_token=2YotnFZFEjr1zCsicMWpAA&expires_in=3600&token_type=bearer&state=0");
+    VERIFY_THROWS(flow.complete(invalid_state_uri), oauth2_exception);
+    auto unsupported_token_type_uri = U("https://client.example.com/cb#access_token=2YotnFZFEjr1zCsicMWpAA&expires_in=3600&token_type=none&state=") + query_map[U("state")];
+    VERIFY_THROWS(flow.complete(unsupported_token_type_uri), oauth2_exception);
+    auto missing_access_token_uri = U("https://client.example.com/cb#expires_in=3600&token_type=bearer&state=") + query_map[U("state")];
+    VERIFY_THROWS(flow.complete(missing_access_token_uri), oauth2_exception);
+}
+
+TEST(oauth2_resource_owner_creds_grant_flow)
+{
+    http_client_config config;
+    config.set_credentials(web::credentials(U("s6BhdRkqt3"), U("gX1fBat3bV")));
+    auto user_creds = web::credentials(U("johndoe"), U("A3ddj3w"));
+
+    http_client client(U("http://server.example.com/token"), config);
+
+    client.add_handler([&](http_request req, std::shared_ptr<http_pipeline_stage>)
+    {
+        VERIFY_ARE_EQUAL(req.method(), methods::POST);
+        VERIFY_ARE_EQUAL(req.headers().content_type(), U("application/x-www-form-urlencoded; charset=utf-8"));
+        VERIFY_ARE_EQUAL(req.headers()[header_names::authorization], U("Basic czZCaGRSa3F0MzpnWDFmQmF0M2JW"));
+        VERIFY_ARE_EQUAL(req.extract_utf8string(true).get(), "grant_type=password&username=johndoe&password=A3ddj3w&scope=xyz");
+
+        http_response resp;
+        resp.set_body(R"(
+{
+"access_token":"2YotnFZFEjr1zCsicMWpAA",
+"token_type":"bearer",
+"expires_in":3600,
+"refresh_token":"tGzv3JOkF0XG5Qx2TlKWIA",
+"example_parameter":"example_value"
+}
+        )", "application/json;charset=UTF-8");
+
+        return pplx::task_from_result(resp);
+    });
+
+    auto token = resource_owner_creds_grant_flow(client, user_creds, U("xyz")).get();
+    VERIFY_ARE_EQUAL(token.access_token(), U("2YotnFZFEjr1zCsicMWpAA"));
+}
+
+TEST(oauth2_extension_grant_flow)
+{
+    http_client_config config;
+    config.set_credentials(web::credentials(U("s6BhdRkqt3"), U("gX1fBat3bV")));
+
+    http_client client(U("http://server.example.com/token"), config);
+
+    client.add_handler([&](http_request req, std::shared_ptr<http_pipeline_stage>)
+    {
+        VERIFY_ARE_EQUAL(req.method(), methods::POST);
+        VERIFY_ARE_EQUAL(req.headers().content_type(), U("application/x-www-form-urlencoded; charset=utf-8"));
+        VERIFY_ARE_EQUAL(req.headers()[header_names::authorization], U("Basic czZCaGRSa3F0MzpnWDFmQmF0M2JW"));
+        VERIFY_ARE_EQUAL(req.extract_utf8string(true).get(), "grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Asaml2-bearer&assertion=PEFzc2VydGlvbiBJc3N1ZUluc3RhbnQ9IjIwMTEtMDU&scope=wl%2Ebasic");
+
+        http_response resp;
+        resp.set_body(R"(
+{
+"access_token":"2YotnFZFEjr1zCsicMWpAA"
+}
+        )", "application/json;charset=UTF-8");
+
+        return pplx::task_from_result(resp);
+    });
+
+    uri_builder req_body;
+    req_body.append_query(U("grant_type"), U("urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Asaml2-bearer"), false);
+    req_body.append_query(U("assertion"), U("PEFzc2VydGlvbiBJc3N1ZUluc3RhbnQ9IjIwMTEtMDU"));
+
+    auto token = extension_grant_flow(req_body, client, U("wl.basic")).get();
+    VERIFY_ARE_EQUAL(token.access_token(), U("2YotnFZFEjr1zCsicMWpAA"));
+    VERIFY_ARE_EQUAL(token.scope(), U("wl.basic"));
+}
+
+TEST(oauth2_client_credentials_mode_request_body)
+{
+    http_client_config config;
+    config.set_credentials(web::credentials(U("s6BhdRkqt3."), U("gX1fBat3bV.")));
+
+    http_client client(U("https://www.linkedin.com/uas/oauth2/accessToken"), config);
+
+    client.add_handler([&](http_request req, std::shared_ptr<http_pipeline_stage>)
+    {
+        VERIFY_ARE_EQUAL(req.method(), methods::POST);
+        VERIFY_ARE_EQUAL(req.headers().content_type(), U("application/x-www-form-urlencoded; charset=utf-8"));
+        VERIFY_IS_FALSE(req.headers().has(header_names::authorization));
+        VERIFY_ARE_EQUAL(req.extract_utf8string(true).get(), "grant_type=code&code=AAA&client_id=s6BhdRkqt3%2E&client_secret=gX1fBat3bV%2E");
+
+        http_response resp;
+        resp.set_body(R"(
+{
+"access_token":"2YotnFZFEjr1zCsicMWpAA"
+}
+        )", "application/json;charset=UTF-8");
+
+        return pplx::task_from_result(resp);
+    });
+
+    uri_builder req_body;
+    req_body.append_query(U("grant_type"), U("code"));
+    req_body.append_query(U("code"), U("AAA"));
+
+    auto token = extension_grant_flow(req_body, client, U(""), client_credentials_mode::request_body).get();
+}
+
+TEST(oauth2_extension_grant_flow_server_provided_scope)
+{
+    http_client_config config;
+    config.set_credentials(web::credentials(U("s6BhdRkqt3"), U("gX1fBat3bV")));
+
+    http_client client(U("http://server.example.com/token"), config);
+
+    client.add_handler([&](http_request req, std::shared_ptr<http_pipeline_stage>)
+    {
+        VERIFY_ARE_EQUAL(req.method(), methods::POST);
+        VERIFY_ARE_EQUAL(req.headers().content_type(), U("application/x-www-form-urlencoded; charset=utf-8"));
+        VERIFY_ARE_EQUAL(req.headers()[header_names::authorization], U("Basic czZCaGRSa3F0MzpnWDFmQmF0M2JW"));
+        VERIFY_ARE_EQUAL(req.extract_utf8string(true).get(), "grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Asaml2-bearer&assertion=PEFzc2VydGlvbiBJc3N1ZUluc3RhbnQ9IjIwMTEtMDU");
+
+        http_response resp;
+        resp.set_body(R"(
+{
+"access_token":"2YotnFZFEjr1zCsicMWpAA",
+"scope":"wl%2Abasic"
+}
+        )", "application/json;charset=UTF-8");
+
+        return pplx::task_from_result(resp);
+    });
+
+    uri_builder req_body;
+    req_body.append_query(U("grant_type"), U("urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Asaml2-bearer"), false);
+    req_body.append_query(U("assertion"), U("PEFzc2VydGlvbiBJc3N1ZUluc3RhbnQ9IjIwMTEtMDU"));
+
+    auto token = extension_grant_flow(req_body, client).get();
+    VERIFY_ARE_EQUAL(token.access_token(), U("2YotnFZFEjr1zCsicMWpAA"));
+    VERIFY_ARE_EQUAL(token.scope(), U("wl%2Abasic"));
+}
+
+TEST(oauth2_set_token_from_refresh_token)
+{
+    oauth2_token tok_value;
+    tok_value.set_access_token(U("A"));
+    tok_value.set_refresh_token(U("tGzv3JOkF0XG5Qx2TlKWIA"));
+    tok_value.set_expires_in(3600);
+    oauth2_shared_token tok(tok_value);
+
+    http_client_config config;
+    config.set_credentials(web::credentials(U("s6BhdRkqt3"), U("gX1fBat3bV")));
+
+    http_client client(U("http://server.example.com/token"), config);
+
+    client.add_handler([&](http_request req, std::shared_ptr<http_pipeline_stage>)
+    {
+        VERIFY_ARE_EQUAL(req.method(), methods::POST);
+        VERIFY_ARE_EQUAL(req.headers().content_type(), U("application/x-www-form-urlencoded; charset=utf-8"));
+        VERIFY_ARE_EQUAL(req.headers()[header_names::authorization], U("Basic czZCaGRSa3F0MzpnWDFmQmF0M2JW"));
+        VERIFY_ARE_EQUAL(req.extract_utf8string(true).get(), "grant_type=refresh_token&refresh_token=tGzv3JOkF0XG5Qx2TlKWIA&scope=wl%2Ebasic");
+
+        http_response resp;
+        resp.set_body(R"(
+{
+"access_token":"2YotnFZFEjr1zCsicMWpAA",
+"token_type":"bearer"
+}
+        )", "application/json;charset=UTF-8");
+
+        return pplx::task_from_result(resp);
+    });
+
+    tok.set_token_via_refresh_token(client, U("wl.basic")).get();
+    VERIFY_ARE_EQUAL(tok.token().access_token(), U("2YotnFZFEjr1zCsicMWpAA"));
+    VERIFY_ARE_EQUAL(tok.token().refresh_token(), U(""));
+    VERIFY_ARE_EQUAL(tok.token().scope(), U("wl.basic"));
+    VERIFY_ARE_EQUAL(tok.token().expires_in(), oauth2_token::undefined_expiration);
+}
+
+TEST(oauth2_set_token_from_refresh_token_preserve_scope)
+{
+    oauth2_token tok_value;
+    tok_value.set_access_token(U("A"));
+    tok_value.set_refresh_token(U("tGzv3JOkF0XG5Qx2TlKWIA"));
+    tok_value.set_expires_in(3600);
+    tok_value.set_scope(U("wl.basic"));
+    oauth2_shared_token tok(tok_value);
+
+    http_client_config config;
+    config.set_credentials(web::credentials(U("s6BhdRkqt3"), U("gX1fBat3bV")));
+
+    http_client client(U("http://server.example.com/token"), config);
+
+    client.add_handler([&](http_request req, std::shared_ptr<http_pipeline_stage>)
+    {
+        VERIFY_ARE_EQUAL(req.method(), methods::POST);
+        VERIFY_ARE_EQUAL(req.headers().content_type(), U("application/x-www-form-urlencoded; charset=utf-8"));
+        VERIFY_ARE_EQUAL(req.headers()[header_names::authorization], U("Basic czZCaGRSa3F0MzpnWDFmQmF0M2JW"));
+        VERIFY_ARE_EQUAL(req.extract_utf8string(true).get(), "grant_type=refresh_token&refresh_token=tGzv3JOkF0XG5Qx2TlKWIA");
+
+        http_response resp;
+        resp.set_body(R"(
+{
+"access_token":"2YotnFZFEjr1zCsicMWpAA",
+"token_type":"bearer"
+}
+        )", "application/json;charset=UTF-8");
+
+        return pplx::task_from_result(resp);
+    });
+
+    tok.set_token_via_refresh_token(client).get();
+    VERIFY_ARE_EQUAL(tok.token().access_token(), U("2YotnFZFEjr1zCsicMWpAA"));
+    VERIFY_ARE_EQUAL(tok.token().refresh_token(), U(""));
+    VERIFY_ARE_EQUAL(tok.token().scope(), U("wl.basic"));
+    VERIFY_ARE_EQUAL(tok.token().expires_in(), oauth2_token::undefined_expiration);
+}
+
+TEST(oauth2_set_token_from_refresh_token_empty_refresh_token)
+{
+    oauth2_token tok_value;
+    tok_value.set_access_token(U("A"));
+    tok_value.set_refresh_token(U(""));
+    oauth2_shared_token tok(tok_value);
+
+    http_client null_client(U("http://0.0.0.0"));
+    null_client.add_handler([](http_request, std::shared_ptr<http_pipeline_stage>)
+    {
+        VERIFY_IS_TRUE(false);
+        return pplx::task_from_result(http_response());
+    });
+
+    VERIFY_THROWS(tok.set_token_via_refresh_token(null_client), oauth2_exception);
+}
+
+TEST(oauth2_pipeline_stage)
+{
+    http_client client(U("http://example.com/"));
+
+    oauth2_shared_token tok(oauth2_token(U("mF_9.B5f-4.1JqM")));
+
+    client.add_handler(tok.create_pipeline_stage());
+
+    client.add_handler([&](http_request req, std::shared_ptr<http_pipeline_stage>)
+    {
+        VERIFY_ARE_EQUAL(req.absolute_uri().query(), U(""));
+        VERIFY_ARE_EQUAL(req.headers()[header_names::authorization], U("Bearer mF_9.B5f-4.1JqM"));
+
+        http_response resp;
+        resp.set_body("valid");
+
+        return pplx::task_from_result(resp);
+    });
+
+    VERIFY_ARE_EQUAL(client.request(methods::GET).get().extract_string().get(), U("valid"));
 }
 
 } // SUITE(oauth2_tests)
-
 }}}}

@@ -145,8 +145,7 @@ void dropbox_session_sample()
     config.set_credentials(web::credentials(s_dropbox_key, s_dropbox_secret));
     http_client token_client(U("https://api.dropbox.com/1/oauth2/token"), config);
 
-    oauth2_shared_token auth = oauth_session.complete(redirected, token_client).get();
-
+    auto auth = oauth2_shared_token(oauth_session.complete(redirected, token_client).get());
     http_client api(U("https://api.dropbox.com/1/"));
     api.add_handler(auth.create_pipeline_stage());
 
@@ -166,13 +165,13 @@ void linkedin_session_sample()
         U("https://www.linkedin.com/uas/oauth2/authorization"),
         s_local_uri);
     auto redirected = open_browser_callback(flow.uri());
-    auto auth = flow.complete(
+    auto auth = oauth2_shared_token(flow.complete(
         redirected,
         token_client,
-        client_credentials_mode::request_body).get();
+        client_credentials_mode::request_body).get());
 
     http_client api(U("https://api.linkedin.com/v1/people/"));
-    api.add_handler(auth.create_pipeline_stage(U("oauth2_access_token")));
+    api.add_handler(auth.create_pipeline_stage());
 
     ucout << "Requesting account information:" << std::endl;
     ucout << "Information: " << api.request(methods::GET, U("~?format=json")).get().extract_json().get() << std::endl;
@@ -191,9 +190,9 @@ void live_session_sample()
         s_local_uri,
         U("wl.basic"));
     auto redirected = open_browser_callback(flow.uri());
-    auto auth = flow.complete(
+    auto auth = oauth2_shared_token(flow.complete(
         redirected,
-        token_client).get();
+        token_client).get());
 
     http_client api(U("https://apis.live.net/v5.0/"));
     api.add_handler(auth.create_pipeline_stage());
