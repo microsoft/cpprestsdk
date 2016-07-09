@@ -8,4 +8,4 @@ set (SOURCES
   json_numbers_tests.cpp
 )
 
-add_casablanca_test(${LIB}json_test SOURCES)
+add_casablanca_test(json_test SOURCES)

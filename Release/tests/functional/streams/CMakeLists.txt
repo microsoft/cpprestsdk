@@ -6,4 +6,7 @@ set(SOURCES
   stdstream_tests.cpp
   fuzz_tests.cpp
 )
-add_casablanca_test(${LIB}streams_test SOURCES)
+if (WIN32)
+  list(APPEND SOURCES CppSparseFile.cpp)
+endif ()
+add_casablanca_test(streams_test SOURCES)

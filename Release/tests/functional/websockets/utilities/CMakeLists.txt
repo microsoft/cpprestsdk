@@ -10,10 +10,10 @@ if (NOT CPPREST_EXCLUDE_WEBSOCKETS)
     test_websocket_server.cpp
   )
   
-  add_library(${LIB}websockettest_utilities ${SOURCES})
-  target_link_libraries(${LIB}websockettest_utilities
-    ${LIB}unittestpp
-    ${LIB}common_utilities
+  add_library(websockettest_utilities ${SOURCES})
+  target_link_libraries(websockettest_utilities
+    unittestpp
+    common_utilities
     ${BOOST_LIBRARIES}
     ${Casablanca_LIBRARIES}
   )

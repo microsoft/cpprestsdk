@@ -48,5 +48,5 @@ elseif(WIN32)
   add_definitions(-DWIN32 -D_USRDLL -D_CRT_SECURE_NO_DEPRECATE -DUNITTEST_DLL_EXPORT)
 endif()
 
-add_library(${LIB}unittestpp ${UT_SOURCES})
-target_link_libraries(${LIB}unittestpp ${ANDROID_STL_FLAGS})
+add_library(unittestpp ${UT_SOURCES})
+target_link_libraries(unittestpp ${ANDROID_STL_FLAGS})

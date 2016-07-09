@@ -7,6 +7,10 @@ enable_testing()
 set(WARNINGS)
 set(ANDROID_STL_FLAGS)
 
+option(WERROR "Threat Warnings as Errors" ON)
+option(BUILD_TESTS "Build tests." ON)
+option(CPPREST_EXCLUDE_WEBSOCKETS "Exclude websockets functionality." OFF)
+
 # Platform (not compiler) specific settings
 if(IOS)
   set(IOS_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../Build_iOS")
@@ -25,7 +29,6 @@ if(IOS)
 
   set(BUILD_SHARED_LIBS OFF)
   set(BUILD_SAMPLES OFF)
-  option(BUILD_TESTS "Build tests." ON)
 elseif(ANDROID)
   set(Boost_COMPILER "-clang")
   set(Boost_USE_STATIC_LIBS ON)
@@ -71,9 +74,8 @@ elseif(ANDROID)
 
   option(BUILD_SHARED_LIBS "Build shared Libraries." OFF)
   set(BUILD_SAMPLES OFF)
-  option(BUILD_TESTS "Build tests." ON)
 elseif(UNIX) # This includes OSX
-  find_package(Boost REQUIRED COMPONENTS random chrono system thread regex filesystem)
+  find_package(Boost 1.54 REQUIRED COMPONENTS random chrono system thread regex filesystem)
   find_package(Threads REQUIRED)
   if(APPLE AND NOT OPENSSL_ROOT_DIR)
     # Prefer a homebrew version of OpenSSL over the one in /usr/lib
@@ -86,7 +88,6 @@ elseif(UNIX) # This includes OSX
   find_package(OpenSSL 1.0.0 REQUIRED)
 
   option(BUILD_SHARED_LIBS "Build shared Libraries." ON)
-  option(BUILD_TESTS "Build tests." ON)
   option(BUILD_SAMPLES "Build samples." ON)
   option(CASA_INSTALL_HEADERS "Install header files." ON)
   if(CASA_INSTALL_HEADERS)
@@ -99,9 +100,7 @@ elseif(UNIX) # This includes OSX
   endif()
 elseif(WIN32)
   option(BUILD_SHARED_LIBS "Build shared Libraries." ON)
-  option(BUILD_TESTS "Build tests." ON)
   option(BUILD_SAMPLES "Build samples." ON)
-  option(CPPREST_EXCLUDE_WEBSOCKETS "Exclude websockets functionality." OFF)
   option(Boost_USE_STATIC_LIBS ON)
 
   add_definitions(-DUNICODE -D_UNICODE)
@@ -116,7 +115,6 @@ elseif(WIN32)
   add_definitions(${Casablanca_DEFINITIONS} -D_WINSOCK_DEPRECATED_NO_WARNINGS -DWIN32)
 
   if (CPPREST_EXCLUDE_WEBSOCKETS)
-    add_definitions(-DCPPREST_EXCLUDE_WEBSOCKETS=1)
   else()
     find_package(Boost 1.55 REQUIRED COMPONENTS random system thread filesystem chrono atomic)
     find_package(OpenSSL 1.0 REQUIRED)
@@ -163,6 +161,10 @@ else()
   message("CMAKE_CXX_COMPILER_ID=${CMAKE_CXX_COMPILER_ID}")
 endif()
 
+if (CPPREST_EXCLUDE_WEBSOCKETS)
+  add_definitions(-DCPPREST_EXCLUDE_WEBSOCKETS=1)
+endif()
+
 # Reconfigure final output directory
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/Binaries)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/Binaries)
@@ -188,16 +190,8 @@ else()
   set(Casablanca_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include)
 endif()
 
-set(Casablanca_LIBRARY ${LIB}cpprest)
-set(Casablanca_LIBRARIES ${Casablanca_LIBRARY}
-  ${Boost_FILESYSTEM_LIBRARY}
-  ${Boost_SYSTEM_LIBRARY}
-  ${Boost_THREAD_LIBRARY}
-  ${Boost_ATOMIC_LIBRARY}
-  ${Boost_CHRONO_LIBRARY}
-  ${Boost_RANDOM_LIBRARY}
-  ${Boost_REGEX_LIBRARY}
-  ${Boost_FRAMEWORK})
+set(Casablanca_LIBRARY cpprest)
+set(Casablanca_LIBRARIES cpprest ${Boost_LIBRARIES})
 
 # Everything in the project needs access to the casablanca include directories
 include_directories(${Casablanca_INCLUDE_DIRS})
@@ -208,9 +202,9 @@ function(add_casablanca_test NAME SOURCES_VAR)
   message("-- Added test library ${NAME}")
   if (NOT TEST_LIBRARY_TARGET_TYPE STREQUAL "OBJECT")
     target_link_libraries(${NAME}
-      ${LIB}httptest_utilities
-      ${LIB}common_utilities
-      ${LIB}unittestpp
+      httptest_utilities
+      common_utilities
+      unittestpp
       ${Casablanca_LIBRARIES}
       ${ANDROID_STL_FLAGS}
       )
