@@ -10,6 +10,8 @@ if (NOT CPPREST_EXCLUDE_WEBSOCKETS)
     send_msg_tests.cpp
   )
 
-  add_casablanca_test(${LIB}websocketclient_test SOURCES)
-  target_link_libraries(${LIB}websocketclient_test ${LIB}websockettest_utilities)
+  add_casablanca_test(websocketclient_test SOURCES)
+  if (NOT TEST_LIBRARY_TARGET_TYPE STREQUAL "OBJECT")
+    target_link_libraries(websocketclient_test websockettest_utilities)
+  endif()
 endif()

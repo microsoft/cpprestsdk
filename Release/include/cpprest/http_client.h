@@ -280,8 +280,7 @@ public:
     }
 #endif
 
-#ifdef _WIN32
-#if !defined(__cplusplus_winrt)
+#if defined(_WIN32) && !defined(__cplusplus_winrt)
     /// <summary>
     /// Checks if request data buffering is turned on, the default is off.
     /// </summary>
@@ -302,7 +301,6 @@ public:
     {
         m_buffer_request = buffer_request;
     }
-#endif
 #endif
 
     /// <summary>
@@ -399,6 +397,8 @@ private:
 #endif
 };
 
+class http_pipeline;
+
 /// <summary>
 /// HTTP client class, used to maintain a connection to an HTTP service for an extended session.
 /// </summary>
@@ -422,7 +422,7 @@ public:
     /// Note the destructor doesn't necessarily close the connection and release resources.
     /// The connection is reference counted with the http_responses.
     /// </summary>
-    ~http_client() CPPREST_NOEXCEPT {}
+    _ASYNCRTIMP ~http_client() CPPREST_NOEXCEPT;
 
     /// <summary>
     /// Gets the base URI.
@@ -442,19 +442,14 @@ public:
     /// Adds an HTTP pipeline stage to the client.
     /// </summary>
     /// <param name="handler">A function object representing the pipeline stage.</param>
-    void add_handler(const std::function<pplx::task<http_response>(http_request, std::shared_ptr<http::http_pipeline_stage>)> &handler)
-    {
-        m_pipeline->append(std::make_shared<::web::http::details::function_pipeline_wrapper>(handler));
-    }
+    _ASYNCRTIMP void add_handler(const std::function<pplx::task<http_response> __cdecl(http_request, std::shared_ptr<http::http_pipeline_stage>)> &handler);
+
 
     /// <summary>
     /// Adds an HTTP pipeline stage to the client.
     /// </summary>
     /// <param name="stage">A shared pointer to a pipeline stage.</param>
-    void add_handler(const std::shared_ptr<http::http_pipeline_stage> &stage)
-    {
-        m_pipeline->append(stage);
-    }
+    _ASYNCRTIMP void add_handler(const std::shared_ptr<http::http_pipeline_stage> &stage);
 
     /// <summary>
     /// Asynchronously sends an HTTP request.
@@ -727,10 +722,15 @@ public:
 
 private:
 
-    void build_pipeline(const uri &base_uri, const http_client_config &client_config);
-
-    std::shared_ptr<::web::http::http_pipeline> m_pipeline;
+    std::shared_ptr<::web::http::client::http_pipeline> m_pipeline;
 };
+
+namespace details {
+#if defined(_WIN32)
+extern const utility::char_t * get_with_body_err_msg;
+#endif
+
+}
 
 }}}
 

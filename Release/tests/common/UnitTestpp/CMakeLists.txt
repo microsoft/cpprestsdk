@@ -38,15 +38,15 @@ set(TEST_SOURCES
   )
 
 if(UNIX)
-  set(UT_SOURCES ${UT_SOURCES}
+  list(APPEND UT_SOURCES
     src/Posix/SignalTranslator.cpp
     src/Posix/TimeHelpers.cpp
     )
 elseif(WIN32)
-  set(UT_SOURCES ${UT_SOURCES} src/Win32/TimeHelpers.cpp)
+  list(APPEND UT_SOURCES src/Win32/TimeHelpers.cpp)
 
   add_definitions(-DWIN32 -D_USRDLL -D_CRT_SECURE_NO_DEPRECATE -DUNITTEST_DLL_EXPORT)
 endif()
 
-add_library(${LIB}unittestpp ${UT_SOURCES})
-target_link_libraries(${LIB}unittestpp ${ANDROID_STL_FLAGS})
+add_library(unittestpp ${UT_SOURCES})
+target_link_libraries(unittestpp ${ANDROID_STL_FLAGS})

@@ -63,4 +63,6 @@ Intermediate/
 **/packages/*
 # except build/, which is used as an MSBuild target.
 !**/packages/build/
-
+.vs/
+# Ignore cmake building directories
+build.*/

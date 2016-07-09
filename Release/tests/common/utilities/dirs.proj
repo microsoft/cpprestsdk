@@ -3,20 +3,21 @@
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Common.Build.settings" />
 
   <ItemGroup Condition="'$(DevToolsVersion)'=='120'">
-      <ProjectFile Include="VS12\CommonUtilities120.vcxproj" />
-      <ProjectFile Include="VS12.xp\CommonUtilities120.xp.vcxproj"  Condition="'$(Platform)'!='ARM' and '$(RunCodeAnalysis)'!='true'"/>
+    <ProjectFile Include="VS12\CommonUtilities120.vcxproj" />
+    <ProjectFile Include="VS12.xp\CommonUtilities120.xp.vcxproj"  Condition="'$(Platform)'!='ARM' and '$(RunCodeAnalysis)'!='true'"/>
   </ItemGroup>
-  
+
   <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|120'">
-      <ProjectFile Include="VS12.winrt\CommonUtilities120.winrt.vcxproj" />
+    <ProjectFile Include="VS12.winrt\CommonUtilities120.winrt.vcxproj" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(DevToolsVersion)'=='140'">
     <ProjectFile Include="VS14\CommonUtilities140.vcxproj" />
+    <ProjectFile Include="VS14.xp\CommonUtilities140.xp.vcxproj"  Condition="'$(Platform)'!='ARM' and '$(RunCodeAnalysis)'!='true'"/>
   </ItemGroup>
-  
+
   <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|140'">
-      <ProjectFile Include="vs14.uwp\CommonUtilities140.uwp.vcxproj" />
+    <ProjectFile Include="vs14.uwp\CommonUtilities140.uwp.vcxproj" />
   </ItemGroup>
 
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />

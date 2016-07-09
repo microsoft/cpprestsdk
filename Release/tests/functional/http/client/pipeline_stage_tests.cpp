@@ -244,7 +244,7 @@ public:
     {
         request.headers().set_content_type(U("modified content type"));
 
-        auto currentStage = current_stage();
+        auto currentStage = this->shared_from_this();
         return next_stage()->propagate(request).then([currentStage](http_response response) -> http_response
         {
             

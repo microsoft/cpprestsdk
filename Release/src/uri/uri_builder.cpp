@@ -110,7 +110,7 @@ utility::string_t uri_builder::to_string()
 
 uri uri_builder::to_uri()
 {
-    return uri(m_uri.join());
+    return uri(m_uri);
 }
 
 bool uri_builder::is_valid()

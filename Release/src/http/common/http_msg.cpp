@@ -42,6 +42,146 @@ utility::string_t http_headers::content_type() const
     return result;
 }
 
+
+
+/// Helper functions to convert a series of bytes from a charset to utf-8 or utf-16.
+/// These APIs deal with checking for and handling byte order marker (BOM).
+namespace {
+    enum endianness
+    {
+        little_endian,
+        big_endian,
+        unknown
+    };
+    endianness check_byte_order_mark(const utf16string &str)
+    {
+        if (str.empty())
+        {
+            return unknown;
+        }
+        const unsigned char *src = reinterpret_cast<const unsigned char *>(str.data());
+
+        // little endian
+        if (src[0] == 0xFF && src[1] == 0xFE)
+        {
+            return little_endian;
+        }
+
+        // big endian
+        else if (src[0] == 0xFE && src[1] == 0xFF)
+        {
+            return big_endian;
+        }
+
+        return unknown;
+    }
+
+    std::string convert_utf16le_to_utf8(utf16string src, bool erase_bom)
+    {
+        if (erase_bom && !src.empty())
+        {
+            src.erase(0, 1);
+        }
+        return utf16_to_utf8(std::move(src));
+    }
+
+    utility::string_t convert_utf16le_to_string_t(utf16string src, bool erase_bom)
+    {
+        if (erase_bom && !src.empty())
+        {
+            src.erase(0, 1);
+        }
+    #ifdef _UTF16_STRINGS
+        return src;
+    #else
+        return utf16_to_utf8(std::move(src));
+    #endif
+    }
+
+    // Helper function to change endian ness from big endian to little endian
+    utf16string big_endian_to_little_endian(utf16string src, bool erase_bom)
+    {
+        if (erase_bom && !src.empty())
+        {
+            src.erase(0, 1);
+        }
+        if (src.empty())
+        {
+            return src;
+        }
+
+        const size_t size = src.size();
+        for (size_t i = 0; i < size; ++i)
+        {
+            utf16char ch = src[i];
+            src[i] = static_cast<utf16char>(ch << 8);
+            src[i] = static_cast<utf16char>(src[i] | ch >> 8);
+        }
+
+        return src;
+    }
+
+    std::string convert_utf16be_to_utf8(utf16string src, bool erase_bom)
+    {
+        return utf16_to_utf8(big_endian_to_little_endian(std::move(src), erase_bom));
+    }
+
+    utf16string convert_utf16be_to_utf16le(utf16string src, bool erase_bom)
+    {
+        return big_endian_to_little_endian(std::move(src), erase_bom);
+    }
+
+    utility::string_t convert_utf16be_to_string_t(utf16string src, bool erase_bom)
+    {
+    #ifdef _UTF16_STRINGS
+        return convert_utf16be_to_utf16le(std::move(src), erase_bom);
+    #else
+        return convert_utf16be_to_utf8(std::move(src), erase_bom);
+    #endif
+    }
+
+    std::string convert_utf16_to_utf8(utf16string src)
+    {
+        const endianness endian = check_byte_order_mark(src);
+        switch (endian)
+        {
+        case little_endian:
+            return convert_utf16le_to_utf8(std::move(src), true);
+        case big_endian:
+            return convert_utf16be_to_utf8(std::move(src), true);
+        case unknown:
+            // unknown defaults to big endian.
+            return convert_utf16be_to_utf8(std::move(src), false);
+        }
+        __assume(0);
+    }
+
+    utf16string convert_utf16_to_utf16(utf16string src)
+    {
+        const endianness endian = check_byte_order_mark(src);
+        switch (endian)
+        {
+        case little_endian:
+            src.erase(0, 1);
+            return src;
+        case big_endian:
+            return convert_utf16be_to_utf16le(std::move(src), true);
+        case unknown:
+            // unknown defaults to big endian.
+            return convert_utf16be_to_utf16le(std::move(src), false);
+        }
+        __assume(0);
+    }
+    utility::string_t convert_utf16_to_string_t(utf16string src)
+    {
+    #ifdef _UTF16_STRINGS
+        return convert_utf16_to_utf16(std::move(src));
+    #else
+        return convert_utf16_to_utf8(std::move(src));
+    #endif
+    }
+}
+
 void http_headers::set_content_type(utility::string_t type)
 {
     m_headers[http::header_names::content_type] = std::move(type);
@@ -81,6 +221,45 @@ utility::size64_t http_headers::content_length() const
 void http_headers::set_content_length(utility::size64_t length)
 {
     m_headers[http::header_names::content_length] = utility::conversions::print_string(length, std::locale::classic());
+}
+
+namespace details {
+
+utility::string_t flatten_http_headers(const http_headers &headers)
+{
+    utility::string_t flattened_headers;
+    for (auto iter = headers.begin(); iter != headers.end(); ++iter)
+    {
+        flattened_headers.append(iter->first);
+        flattened_headers.push_back(':');
+        flattened_headers.append(iter->second);
+        flattened_headers.append(CRLF);
+    }
+    return flattened_headers;
+}
+
+#if defined(_WIN32)
+void parse_headers_string(_Inout_z_ utf16char *headersStr, http_headers &headers)
+{
+    utf16char *context = nullptr;
+    utf16char *line = wcstok_s(headersStr, CRLF, &context);
+    while (line != nullptr)
+    {
+        const utility::string_t header_line(line);
+        const size_t colonIndex = header_line.find_first_of(_XPLATSTR(":"));
+        if (colonIndex != utility::string_t::npos)
+        {
+            utility::string_t key = header_line.substr(0, colonIndex);
+            utility::string_t value = header_line.substr(colonIndex + 1, header_line.length() - colonIndex - 1);
+            http::details::trim_whitespace(key);
+            http::details::trim_whitespace(value);
+            headers.add(key, value);
+        }
+        line = wcstok_s(nullptr, CRLF, &context);
+    }
+}
+#endif
+
 }
 
 static const utility::char_t * stream_was_set_explicitly = _XPLATSTR("A stream was set on the message and extraction is not possible");
@@ -218,13 +397,168 @@ void http_msg_base::_complete(utility::size64_t body_size, const std::exception_
     }
 }
 
+static bool is_content_type_one_of(const utility::string_t *first, const utility::string_t *last, const utility::string_t &value)
+{
+    while (first != last)
+    {
+        if (utility::details::str_icmp(*first, value))
+        {
+            return true;
+        }
+        ++first;
+    }
+    return false;
+}
+
+// Remove once VS 2013 is no longer supported.
+#if defined(_WIN32) && _MSC_VER < 1900
+// Not referring to mime_types to avoid static initialization order fiasco.
+static const utility::string_t textual_types [] = {
+    U("message/http"),
+    U("application/json"),
+    U("application/xml"),
+    U("application/atom+xml"),
+    U("application/http"),
+    U("application/x-www-form-urlencoded")
+};
+#endif
+
+/// <summary>
+/// Determines whether or not the given content type is 'textual' according the feature specifications.
+/// </summary>
+static bool is_content_type_textual(const utility::string_t &content_type)
+{
+#if !defined(_WIN32) || _MSC_VER >= 1900
+    static const utility::string_t textual_types [] = {
+        mime_types::message_http,
+        mime_types::application_json,
+        mime_types::application_xml,
+        mime_types::application_atom_xml,
+        mime_types::application_http,
+        mime_types::application_x_www_form_urlencoded
+    };
+#endif
+
+    if (content_type.size() >= 4 && utility::details::str_icmp(content_type.substr(0, 4), _XPLATSTR("text")))
+    {
+        return true;
+    }
+    return (is_content_type_one_of(std::begin(textual_types), std::end(textual_types), content_type));
+}
+
+// Remove once VS 2013 is no longer supported.
+#if defined(_WIN32) && _MSC_VER < 1900
+// Not referring to mime_types to avoid static initialization order fiasco.
+static const utility::string_t json_types [] = {
+    U("application/json"),
+    U("application/x-json"),
+    U("text/json"),
+    U("text/x-json"),
+    U("text/javascript"),
+    U("text/x-javascript"),
+    U("application/javascript"),
+    U("application/x-javascript")
+};
+#endif
+
+/// <summary>
+/// Determines whether or not the given content type is JSON according the feature specifications.
+/// </summary>
+static bool is_content_type_json(const utility::string_t &content_type)
+{
+#if !defined(_WIN32) || _MSC_VER >= 1900
+    static const utility::string_t json_types [] = {
+        mime_types::application_json,
+        mime_types::application_xjson,
+        mime_types::text_json,
+        mime_types::text_xjson,
+        mime_types::text_javascript,
+        mime_types::text_xjavascript,
+        mime_types::application_javascript,
+        mime_types::application_xjavascript
+    };
+#endif
+
+    return (is_content_type_one_of(std::begin(json_types), std::end(json_types), content_type));
+}
+
+/// <summary>
+/// Gets the default charset for given content type. If the MIME type is not textual or recognized Latin1 will be returned.
+/// </summary>
+static utility::string_t get_default_charset(const utility::string_t &content_type)
+{
+    // We are defaulting everything to Latin1 except JSON which is utf-8.
+    if (is_content_type_json(content_type))
+    {
+        return charset_types::utf8;
+    }
+    else
+    {
+        return charset_types::latin1;
+    }
+}
+
+
+/// <summary>
+/// Parses the given Content-Type header value to get out actual content type and charset.
+/// If the charset isn't specified the default charset for the content type will be set.
+/// </summary>
+static void parse_content_type_and_charset(const utility::string_t &content_type, utility::string_t &content, utility::string_t &charset)
+{
+    const size_t semi_colon_index = content_type.find_first_of(_XPLATSTR(";"));
+
+    // No charset specified.
+    if (semi_colon_index == utility::string_t::npos)
+    {
+        content = content_type;
+        trim_whitespace(content);
+        charset = get_default_charset(content);
+        return;
+    }
+
+    // Split into content type and second part which could be charset.
+    content = content_type.substr(0, semi_colon_index);
+    trim_whitespace(content);
+    utility::string_t possible_charset = content_type.substr(semi_colon_index + 1);
+    trim_whitespace(possible_charset);
+    const size_t equals_index = possible_charset.find_first_of(_XPLATSTR("="));
+
+    // No charset specified.
+    if (equals_index == utility::string_t::npos)
+    {
+        charset = get_default_charset(content);
+        return;
+    }
+
+    // Split and make sure 'charset'
+    utility::string_t charset_key = possible_charset.substr(0, equals_index);
+    trim_whitespace(charset_key);
+    if (!utility::details::str_icmp(charset_key, _XPLATSTR("charset")))
+    {
+        charset = get_default_charset(content);
+        return;
+    }
+    charset = possible_charset.substr(equals_index + 1);
+    // Remove the redundant ';' at the end of charset.
+    while (charset.back() == ';')
+    {
+        charset.pop_back();
+    }
+    trim_whitespace(charset);
+    if (charset.front() == _XPLATSTR('"') && charset.back() == _XPLATSTR('"'))
+    {
+        charset = charset.substr(1, charset.size() - 2);
+        trim_whitespace(charset);
+    }
+}
+
 utility::string_t details::http_msg_base::parse_and_check_content_type(bool ignore_content_type, const std::function<bool(const utility::string_t &)> &check_content_type)
 {
     if (!instream())
     {
         throw http_exception(stream_was_set_explicitly);
     }
- 
+
     utility::string_t content, charset = charset_types::utf8;
     if (!ignore_content_type)
     {

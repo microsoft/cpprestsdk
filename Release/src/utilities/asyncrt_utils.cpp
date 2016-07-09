@@ -63,7 +63,7 @@ scoped_c_thread_locale::xplat_locale scoped_c_thread_locale::c_locale()
         scoped_c_thread_locale::xplat_locale *clocale = new scoped_c_thread_locale::xplat_locale();
 #ifdef _WIN32
         *clocale = _create_locale(LC_ALL, "C");
-        if (*clocale == nullptr)
+        if (clocale == nullptr || *clocale == nullptr)
         {
             throw std::runtime_error("Unable to create 'C' locale.");
         }
@@ -74,7 +74,7 @@ scoped_c_thread_locale::xplat_locale scoped_c_thread_locale::c_locale()
         };
 #else
         *clocale = newlocale(LC_ALL, "C", nullptr);
-        if (*clocale == nullptr)
+        if (clocale == nullptr || *clocale == nullptr)
         {
             throw std::runtime_error("Unable to create 'C' locale.");
         }
@@ -284,7 +284,7 @@ utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
 {
 #if defined(CPPREST_STDLIB_UNICODE_CONVERSIONS)
     std::wstring_convert<std::codecvt_utf8_utf16<utf16char>, utf16char> conversion;
-    return conversion.from_bytes(src);
+    return conversion.from_bytes(s);
 #else
     utf16string dest;
     // Save repeated heap allocations, use less than source string size assuming some
@@ -440,7 +440,7 @@ utf16string __cdecl conversions::latin1_to_utf16(const std::string &s)
     dest.resize(s.size());
     for (size_t i = 0; i < s.size(); ++i)
     {
-        dest[i] = utf16char(s[i]);
+        dest[i] = utf16char(static_cast<unsigned char>(s[i]));
     }
     return dest;
 }
@@ -486,13 +486,13 @@ utility::string_t __cdecl conversions::to_string_t(const std::string &s)
 #endif
 }
 
-std::string __cdecl conversions::to_utf8string(std::string value) { return std::move(value); }
+std::string __cdecl conversions::to_utf8string(std::string value) { return value; }
 
 std::string __cdecl conversions::to_utf8string(const utf16string &value) { return utf16_to_utf8(value); }
 
 utf16string __cdecl conversions::to_utf16string(const std::string &value) { return utf8_to_utf16(value); }
 
-utf16string __cdecl conversions::to_utf16string(utf16string value) { return std::move(value); }
+utf16string __cdecl conversions::to_utf16string(utf16string value) { return value; }
 
 #ifndef WIN32
 datetime datetime::timeval_to_datetime(const timeval &time)

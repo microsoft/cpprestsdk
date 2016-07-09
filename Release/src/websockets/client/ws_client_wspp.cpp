@@ -24,9 +24,10 @@
 ****/
 
 #include "stdafx.h"
-#include "cpprest/details/x509_cert_utilities.h"
 
 #if !defined(CPPREST_EXCLUDE_WEBSOCKETS)
+
+#include "cpprest/details/x509_cert_utilities.h"
 
 // Force websocketpp to use C++ std::error_code instead of Boost.
 #define _WEBSOCKETPP_CPP11_SYSTEM_ERROR_
@@ -60,6 +61,26 @@
 #endif
 
 #endif /* __GNUC__ */
+
+// This is a hack to avoid memory leak reports from the debug MSVC CRT for all
+// programs using the library: ASIO calls SSL_library_init() which calls
+// SSL_COMP_get_compression_methods(), which allocates some heap memory and the
+// only way to free it later is to call SSL_COMP_free_compression_methods(),
+// but this function is unaccessible from the application code as OpenSSL is
+// statically linked into the C++ REST SDK DLL. So, just to be nice, call it
+// here ourselves -- even if the real problem is in ASIO (up to v1.60.0).
+#if defined(_WIN32) && !defined(NDEBUG)
+
+#include <openssl/ssl.h>
+static struct ASIO_SSL_memory_leak_suppress
+{
+    ~ASIO_SSL_memory_leak_suppress()
+    {
+        ::SSL_COMP_free_compression_methods();
+    }
+} ASIO_SSL_memory_leak_suppressor;
+
+#endif /* _WIN32 && !NDEBUG */
 
 using websocketpp::lib::placeholders::_1;
 using websocketpp::lib::placeholders::_2;

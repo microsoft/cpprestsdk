@@ -14,7 +14,6 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\http\client\x509_cert_utilities_apple.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\pplx\pplxapple.cpp" />
   </ItemGroup>
   <ItemGroup>
