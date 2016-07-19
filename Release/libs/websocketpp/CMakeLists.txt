@@ -190,7 +190,7 @@ if (BUILD_TESTS OR BUILD_EXAMPLES)
 
     if (Boost_FOUND)
         # Boost is a project wide global dependency.
-        include_directories (${Boost_INCLUDE_DIRS})
+        include_directories (SYSTEM ${Boost_INCLUDE_DIRS})
         link_directories (${Boost_LIBRARY_DIRS})
 
         # Pretty print status
