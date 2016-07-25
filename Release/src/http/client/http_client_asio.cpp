@@ -316,7 +316,7 @@ private:
             _ASSERTE(self.m_self_reference != nullptr);
             if (self.m_prev_epoch == self.m_epoch)
             {
-                assert(self.m_connections.empty());
+                self.m_connections.clear();
                 self.m_self_reference = nullptr;
             }
             else
