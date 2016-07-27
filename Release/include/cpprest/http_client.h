@@ -100,7 +100,6 @@ public:
 #endif
         , m_set_user_nativehandle_options([](native_handle)->void{})
 #if !defined(_WIN32) && !defined(__cplusplus_winrt)
-        , m_ssl_context_callback([](boost::asio::ssl::context&)->void{})
         , m_tlsext_sni_enabled(true)
 #endif
 #if defined(_WIN32) && !defined(__cplusplus_winrt)
