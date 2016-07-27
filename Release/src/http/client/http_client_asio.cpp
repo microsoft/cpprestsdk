@@ -774,7 +774,12 @@ public:
             {
                 extra_headers.append(ctx->generate_basic_proxy_auth_header());
             }
-                
+
+            if (ctx->m_http_client->client_config().credentials().is_set())
+            {
+                extra_headers.append(ctx->generate_basic_auth_header());
+            }
+
             // Check user specified transfer-encoding.
             std::string transferencoding;
             if (ctx->m_request.headers().match(header_names::transfer_encoding, transferencoding) && transferencoding == "chunked")
@@ -873,6 +878,23 @@ public:
     }
 
 private:
+    utility::string_t generate_basic_auth_header()
+    {
+        utility::string_t header;
+
+        header.append(header_names::authorization);
+        header.append(": Basic ");
+
+        auto credential_str = web::details::plaintext_string(new ::utility::string_t(m_http_client->client_config().credentials().username()));
+        credential_str->append(":");
+        credential_str->append(*m_http_client->client_config().credentials().decrypt());
+
+        std::vector<unsigned char> credentials_buffer(credential_str->begin(), credential_str->end());
+
+        header.append(utility::conversions::to_base64(credentials_buffer));
+        header.append(CRLF);
+        return header;
+    }
 
     utility::string_t generate_basic_proxy_auth_header()
     {

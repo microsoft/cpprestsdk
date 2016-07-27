@@ -620,6 +620,37 @@ TEST_FIXTURE(uri_address, failed_authentication_attempt, "Ignore:Linux", "89", "
 
 #if !defined(_WIN32)
 
+// http_server does not support auth
+void auth_test_impl(bool fail)
+{
+    std::string user("user1"), password("user1");
+    auto return_code = status_codes::NotFound; // return 404 if successful auth
+
+    if (fail)
+    {
+        password = "invalid";
+        return_code = status_codes::Unauthorized;
+    }
+
+    http_client_config client_config;
+    web::credentials cred(U(user), U(password));
+    client_config.set_credentials(cred);
+    http_client client(U("http://test.webdav.org/auth-basic/"), client_config);
+
+    http_response response = client.request(methods::GET).get();
+    VERIFY_ARE_EQUAL(return_code, response.status_code());
+}
+
+TEST(auth_no_data)
+{
+    auth_test_impl(false);
+}
+
+TEST(unsuccessful_auth_with_basic_cred)
+{
+    auth_test_impl(true);
+}
+
 TEST_FIXTURE(uri_address, set_user_options_asio_http)
 {
     test_http_server::scoped_server scoped(m_uri);
