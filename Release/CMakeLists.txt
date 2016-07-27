@@ -149,7 +149,7 @@ if(ANDROID)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fno-strict-aliasing")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-pedantic")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-attributes -Wno-pointer-arith")
-  include_directories(
+  include_directories(SYSTEM
     "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.8/include"
     "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.8/libs/armeabi-v7a/include"
     "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.8/include/backward"
@@ -197,7 +197,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/Binaries)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/Binaries)
 
 # These settings can be used by the test targets
-set(Casablanca_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
+set(Casablanca_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include)
 if (NOT CPPREST_EXCLUDE_WEBSOCKETS)
   find_path(WEBSOCKETPP_CONFIG websocketpp-config.cmake
                         HINTS /usr/lib/cmake/websocketpp)
@@ -207,20 +207,19 @@ if (NOT CPPREST_EXCLUDE_WEBSOCKETS)
     include(${WEBSOCKETPP_CONFIG}/websocketpp-config.cmake)
     include(${WEBSOCKETPP_CONFIG}/websocketpp-configVersion.cmake)
     message("-- Found websocketpp version " ${PACKAGE_VERSION} " on system")
-    set(Casablanca_INCLUDE_DIRS ${Casablanca_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${OPENSSL_INCLUDE_DIR} ${WEBSOCKETPP_INCLUDE_DIR})
+    set(Casablanca_SYSTEM_INCLUDE_DIRS ${Boost_INCLUDE_DIR} ${OPENSSL_INCLUDE_DIR} ${WEBSOCKETPP_INCLUDE_DIR})
   else(WEBSOCKETPP_CONFIG AND WEBSOCKETPP_CONFIG_VERSION)
-    set(Casablanca_INCLUDE_DIRS ${Casablanca_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${OPENSSL_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/libs/websocketpp)
+    set(Casablanca_SYSTEM_INCLUDE_DIRS ${Boost_INCLUDE_DIR} ${OPENSSL_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/libs/websocketpp)
     message("-- websocketpp not found, using the embedded version")
   endif(WEBSOCKETPP_CONFIG AND WEBSOCKETPP_CONFIG_VERSION)
-else()
-  set(Casablanca_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include)
 endif()
 
 set(Casablanca_LIBRARY cpprest)
 set(Casablanca_LIBRARIES cpprest ${Boost_LIBRARIES})
 
 # Everything in the project needs access to the casablanca include directories
-include_directories(${Casablanca_INCLUDE_DIRS})
+include_directories(       ${Casablanca_INCLUDE_DIRS})
+include_directories(SYSTEM ${Casablanca_SYSTEM_INCLUDE_DIRS})
 
 # Finally, the tests all use the same style declaration to build themselves, so we use a function
 function(add_casablanca_test NAME SOURCES_VAR)

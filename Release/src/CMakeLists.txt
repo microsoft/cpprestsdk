@@ -1,6 +1,6 @@
 include_directories(../include pch)
 if (NOT CPPREST_EXCLUDE_WEBSOCKETS)
-  include_directories(${Boost_INCLUDE_DIR} ${OPENSSL_INCLUDE_DIR})
+  include_directories(SYSTEM ${Boost_INCLUDE_DIR} ${OPENSSL_INCLUDE_DIR})
 endif()
 
 add_definitions(${WARNINGS})

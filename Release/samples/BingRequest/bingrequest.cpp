@@ -30,6 +30,23 @@ using namespace web::http;
 using namespace web::http::client;
 using namespace concurrency::streams;
 
+/* Can pass proxy information via environment variable http_proxy.
+   Example:
+   Linux:   export http_proxy=http://192.1.8.1:8080
+ */
+web::http::client::http_client_config client_config_for_proxy()
+{
+    web::http::client::http_client_config client_config;
+
+    if(const char* env_http_proxy = std::getenv("http_proxy")) {
+        web::web_proxy proxy(env_http_proxy);
+        client_config.set_proxy(proxy);
+    }
+
+    return client_config;
+}
+
+
 #ifdef _WIN32
 int wmain(int argc, wchar_t *args[])
 #else
@@ -52,7 +69,7 @@ int main(int argc, char *args[])
 
         // Create an HTTP request.
         // Encode the URI query since it could contain special characters like spaces.
-        http_client client(U("http://www.bing.com/"));
+        http_client client(U("http://www.bing.com/"), client_config_for_proxy());
         return client.request(methods::GET, uri_builder(U("/search")).append_query(U("q"), searchTerm).to_string());
     })
 
