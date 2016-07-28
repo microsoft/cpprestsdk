@@ -39,7 +39,7 @@ web::http::client::http_client_config client_config_for_proxy()
     web::http::client::http_client_config client_config;
 
     if(const char* env_http_proxy = std::getenv("http_proxy")) {
-		uri proxy_uri(utility::conversions::utf8_to_utf16(env_http_proxy));
+        uri proxy_uri(utility::conversions::to_string_t(env_http_proxy));
         web::web_proxy proxy(proxy_uri);
         client_config.set_proxy(proxy);
     }
