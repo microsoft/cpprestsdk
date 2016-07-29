@@ -142,7 +142,7 @@ void sni_test_impl(websocket_client &client)
 {
     try
     {
-        client.connect(U("wss://jabbr.net")).wait();
+        client.connect(U("wss://swordsoftruth.com")).wait();
 
         // Should never be reached.
         VERIFY_IS_TRUE(false);
@@ -182,7 +182,7 @@ TEST(disable_sni)
 
     try
     {
-        client.connect(U("wss://jabbr.net")).wait();
+        client.connect(U("wss://swordsoftruth.com")).wait();
 
         // Should never be reached.
         VERIFY_IS_TRUE(false);
@@ -202,7 +202,7 @@ TEST(disable_sni)
 TEST(sni_explicit_hostname)
 {
     websocket_client_config config;
-    const auto &name = utf8string("jabbr.net");
+    const auto &name = utf8string("swordsoftruth.com");
     config.set_server_name(name);
     VERIFY_ARE_EQUAL(name, config.server_name());
     websocket_client client(config);
@@ -234,9 +234,9 @@ TEST(self_signed_cert)
     handshake_error_test_impl(U("wss://www.pcwebshop.co.uk/"));
 }
 
-TEST(hostname_mismatch, "Ignore", "Site fixed certificate. Improve test (new site or alternate method).")
+TEST(hostname_mismatch)
 {
-    handshake_error_test_impl(U("wss://swordsoftruth.com/"));
+    handshake_error_test_impl(U("wss://jabbr.net"));
 }
 
 TEST(cert_expired)
