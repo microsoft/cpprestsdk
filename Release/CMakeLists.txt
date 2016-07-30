@@ -197,7 +197,7 @@ set(Casablanca_LIBRARIES ${Casablanca_LIBRARY}
   ${Boost_CHRONO_LIBRARY}
   ${Boost_RANDOM_LIBRARY}
   ${Boost_REGEX_LIBRARY}
-  ${Boost_FRAMEWORK})
+  ${Boost_FRAMEWORK} PARENT_SCOPE)
 
 # Everything in the project needs access to the casablanca include directories
 include_directories(${Casablanca_INCLUDE_DIRS})
