@@ -100,7 +100,7 @@ class _http_client_communicator : public http_pipeline_stage
 {
 public:
 
-    virtual ~_http_client_communicator() {}
+    virtual ~_http_client_communicator() override = default;
 
     // Asynchronously send a HTTP request and process the response.
     void async_send_request(const std::shared_ptr<request_context> &request);
@@ -112,7 +112,7 @@ public:
     const uri & base_uri() const;
 
 protected:
-    _http_client_communicator(http::uri address, http_client_config client_config);
+    _http_client_communicator(http::uri&& address, http_client_config&& client_config);
 
     // Method to open client.
     virtual unsigned long open() = 0;
@@ -146,6 +146,6 @@ private:
 /// <summary>
 /// Factory function implemented by the separate platforms to construct their subclasses of _http_client_communicator
 /// </summary>
-std::shared_ptr<_http_client_communicator> create_platform_final_pipeline_stage(uri base_uri, const http_client_config& client_config);
+std::shared_ptr<_http_client_communicator> create_platform_final_pipeline_stage(uri&& base_uri, http_client_config&& client_config);
 
 }}}}
