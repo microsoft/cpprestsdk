@@ -160,6 +160,12 @@ web::json::value &web::json::value::operator=(web::json::value &&other) CPPREST_
     return *this;
 }
 
+const web::json::value& web::json::value::null_ref()
+{
+    static web::json::value null_val;
+    return null_val;
+}
+
 web::json::value web::json::value::null()
 {
     return web::json::value();
@@ -389,6 +395,11 @@ json::value& web::json::details::_Object::index(const utility::string_t &key)
     return m_object[key];
 }
 
+const json::value& web::json::details::_Object::cnst_index(const utility::string_t &key) const
+{
+    return m_object[key];
+}
+
 bool web::json::details::_Object::has_field(const utility::string_t &key) const
 {
     return m_object.find(key) != m_object.end();
@@ -470,6 +481,15 @@ web::json::value& web::json::value::operator [] (const utility::string_t &key)
     return m_value->index(key);
 }
 
+const web::json::value& web::json::value::operator [] (const utility::string_t &key) const
+{
+    if ( this->is_object() )
+    {
+        return m_value->cnst_index(key);
+    }
+    return null_ref();
+}
+
 web::json::value& web::json::value::operator[](size_t index)
 {
     if ( this->is_null() )
@@ -480,6 +500,15 @@ web::json::value& web::json::value::operator[](size_t index)
 #endif
     }
     return m_value->index(index);
+}
+
+const web::json::value& web::json::value::operator[](size_t index) const
+{
+    if ( this->is_array() )
+    {
+        return m_value->cnst_index(index);
+    }
+    return null_ref();
 }
 
 // Remove once VS 2013 is no longer supported.
