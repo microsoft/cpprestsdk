@@ -356,7 +356,7 @@ private:
 class winrt_client : public _http_client_communicator
 {
 public:
-    winrt_client(http::uri address, http_client_config client_config)
+    winrt_client(http::uri&& address, http_client_config&& client_config)
         : _http_client_communicator(std::move(address), std::move(client_config)) { }
 
     winrt_client(const winrt_client&) = delete;
@@ -560,9 +560,9 @@ protected:
     }
 };
 
-std::shared_ptr<_http_client_communicator> create_platform_final_pipeline_stage(uri base_uri, const http_client_config& client_config)
+std::shared_ptr<_http_client_communicator> create_platform_final_pipeline_stage(uri&& base_uri, http_client_config&& client_config)
 {
-    return std::make_shared<details::winrt_client>(std::move(base_uri), client_config);
+    return std::make_shared<details::winrt_client>(std::move(base_uri), std::move(client_config));
 }
 
 }}}}

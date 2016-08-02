@@ -191,7 +191,7 @@ const uri & _http_client_communicator::base_uri() const
     return m_uri;
 }
 
-_http_client_communicator::_http_client_communicator(http::uri address, http_client_config client_config)
+_http_client_communicator::_http_client_communicator(http::uri&& address, http_client_config&& client_config)
     : m_uri(std::move(address)), m_client_config(std::move(client_config)), m_opened(false), m_scheduled(0)
 {
 }
@@ -370,12 +370,12 @@ http_client::http_client(const uri &base_uri, const http_client_config &client_c
         uribuilder.set_scheme(_XPLATSTR("http"));
         uri uriWithScheme = uribuilder.to_uri();
         verify_uri(uriWithScheme);
-        final_pipeline_stage = details::create_platform_final_pipeline_stage(uriWithScheme, client_config);
+        final_pipeline_stage = details::create_platform_final_pipeline_stage(std::move(uriWithScheme), http_client_config(client_config));
     }
     else
     {
         verify_uri(base_uri);
-        final_pipeline_stage = details::create_platform_final_pipeline_stage(base_uri, client_config);
+        final_pipeline_stage = details::create_platform_final_pipeline_stage(uri(base_uri), http_client_config(client_config));
     }
 
     m_pipeline = std::make_shared<http_pipeline>(std::move(final_pipeline_stage));
