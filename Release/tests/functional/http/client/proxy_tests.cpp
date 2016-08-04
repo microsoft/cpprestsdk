@@ -97,7 +97,8 @@ TEST_FIXTURE(uri_address, no_proxy_options_on_winrt)
     web_proxy proxy(u);
     VERIFY_IS_TRUE(proxy.is_specified());
     VERIFY_ARE_EQUAL(u, proxy.address());
-    credentials cred(U("artur"), U("fred")); // relax, this is not my real password
+    // Explicit web:: namespace because krb5 also defines a credentials struct
+    web::credentials cred(U("artur"), U("fred")); // relax, this is not my real password
     proxy.set_credentials(cred);
 
     http_client_config config;
