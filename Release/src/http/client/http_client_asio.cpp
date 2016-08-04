@@ -804,7 +804,7 @@ private:
         long errorcodeValue = ec.value();
 
         // map timer cancellation to time_out
-        if (ec == boost::system::errc::operation_canceled && m_timer.has_timedout())
+        if (m_timer.has_timedout())
         {
             errorcodeValue = make_error_code(std::errc::timed_out).value();
         }
