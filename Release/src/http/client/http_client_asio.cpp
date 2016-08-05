@@ -464,6 +464,12 @@ public:
                 m_context->m_timer.reset();
                 auto endpoint = *endpoints;
                 m_context->m_connection->async_connect(endpoint, boost::bind(&ssl_proxy_tunnel::handle_tcp_connect, shared_from_this(), boost::asio::placeholders::error, ++endpoints));
+
+                // TODO: refactor all interactions with the timeout_timer to avoid racing
+                if (m_context->m_timer.has_timedout())
+                {
+                    m_context->m_connection->close();
+                }
             }
         }
 
@@ -876,6 +882,12 @@ private:
             m_timer.reset();
             auto endpoint = *endpoints;
             m_connection->async_connect(endpoint, boost::bind(&asio_context::handle_connect, shared_from_this(), boost::asio::placeholders::error, ++endpoints));
+
+            // TODO: refactor all interactions with the timeout_timer to avoid racing
+            if (m_timer.has_timedout())
+            {
+                m_connection->close();
+            }
         }
     }
 
@@ -1479,7 +1491,7 @@ private:
 #else
         std::chrono::microseconds m_duration;
 #endif
-        timer_state m_state;
+        std::atomic<timer_state> m_state;
         std::weak_ptr<asio_context> m_ctx;
         boost::asio::steady_timer m_timer;
     };
