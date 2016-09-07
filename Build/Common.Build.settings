@@ -36,6 +36,7 @@
   <PropertyGroup>
     <OutputPath>$(BuildRoot)\Binaries\$(Platform)\$(Configuration)\</OutputPath>
     <OutDir>$(OutputPath)</OutDir>
+    <IntDir>$(BuildRoot)\Intermediate\$(MSBuildProjectName)\$(Platform)\$(Configuration)\</IntDir>
     <TestRoot>$(BuildRoot)\Release\Tests</TestRoot>
     <CasablancaSrcDir>$(BuildRoot)\Release\src</CasablancaSrcDir>
     <CasablancaResourceDir>$(BuildRoot)\Release\Resource</CasablancaResourceDir>

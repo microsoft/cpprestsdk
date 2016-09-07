@@ -28,6 +28,7 @@
 #define _CASA_OAUTH2_H
 
 #include "cpprest/http_msg.h"
+#include "cpprest/details/web_utilities.h"
 
 namespace web
 {

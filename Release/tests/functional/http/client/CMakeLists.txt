@@ -1,7 +1,7 @@
 include_directories(
   ../utilities/include
   ../utilities/testlistener/include
-  ${OPENSSL_INCLUDE_DIR}
+  ${Casablanca_INCLUDE_DIRS}
 )
 
 set(SOURCES
