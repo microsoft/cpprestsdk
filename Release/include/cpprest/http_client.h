@@ -94,7 +94,8 @@ public:
     http_client_config() :
         m_guarantee_order(false),
         m_timeout(std::chrono::seconds(30)),
-        m_chunksize(0)
+        m_chunksize(0),
+        m_request_compressed(false)
 #if !defined(__cplusplus_winrt)
         , m_validate_certificates(true)
 #endif
@@ -105,8 +106,8 @@ public:
 #endif
 #if defined(_WIN32) && !defined(__cplusplus_winrt)
         , m_buffer_request(false)
-        , m_request_compressed(false)
 #endif
+        
     {
     }
 
@@ -260,6 +261,27 @@ public:
         return m_chunksize == 0;
     }
 
+    /// <summary>
+    /// Checks if requesting a compressed response is turned on, the default is off.
+    /// </summary>
+    /// <returns>True if compressed response is enabled, false otherwise</returns>
+    bool request_compressed_response() const
+    {
+        return m_request_compressed;
+    }
+
+    /// <summary>
+    /// Request that the server responds with a compressed body.
+    /// If true, in cases where the server does not support compression, this will have no effect.
+    /// The response body is internally decompressed before the consumer receives the data.
+    /// </summary>
+    /// <param name="buffer_request">True to turn on response body compression, false otherwise.</param>
+    /// <remarks>Please note there is a performance cost due to copying the request data. Currently only supported on Windows.</remarks>
+    void set_request_compressed_response(bool request_compressed)
+    {
+        m_request_compressed = request_compressed;
+    }
+
 #if !defined(__cplusplus_winrt)
     /// <summary>
     /// Gets the server certificate validation property.
@@ -302,27 +324,6 @@ public:
     void set_buffer_request(bool buffer_request)
     {
         m_buffer_request = buffer_request;
-    }
-
-    /// <summary>
-    /// Checks if requesting a compressed response is turned on, the default is off.
-    /// </summary>
-    /// <returns>True if compressed response is enabled, false otherwise</returns>
-    bool request_compressed_response() const
-    {
-        return m_request_compressed;
-    }
-
-    /// <summary>
-    /// Request that the server responds with a compressed body.
-    /// If true, in cases where the server does not support compression, this will have no effect.
-    /// The response body is internally decompressed before the consumer receives the data.
-    /// </summary>
-    /// <param name="buffer_request">True to turn on response body compression, false otherwise.</param>
-    /// <remarks>Please note there is a performance cost due to copying the request data.</remarks>
-    void set_request_compressed_response(bool request_compressed)
-    {
-        m_request_compressed = request_compressed;
     }
 #endif
 #endif
@@ -404,6 +405,7 @@ private:
 
     std::chrono::microseconds m_timeout;
     size_t m_chunksize;
+    bool m_request_compressed;
 
 #if !defined(__cplusplus_winrt)
     // IXmlHttpRequest2 doesn't allow configuration of certificate verification.
@@ -418,7 +420,6 @@ private:
 #endif
 #if defined(_WIN32) && !defined(__cplusplus_winrt)
     bool m_buffer_request;
-    bool m_request_compressed;
 #endif
 };
 

@@ -76,6 +76,7 @@ TEST_FIXTURE(uri_address, outside_google_dot_com_compressed_http_response)
     response.content_ready().wait();
 
     auto s = response.extract_utf8string().get();
+    VERIFY_IS_FALSE(s.empty());
 
     std::wstring encoding;
     response.headers().match(web::http::header_names::content_encoding, encoding);
