@@ -28,6 +28,7 @@
 #include <fstream>
 
 #include "cpprest/version.h"
+#include "cpprest/details/http_helpers.h"
 
 using namespace web; 
 using namespace utility;
@@ -40,6 +41,55 @@ namespace tests { namespace functional { namespace http { namespace client {
 
 SUITE(request_helper_tests)
 {
+
+TEST_FIXTURE(uri_address, compress_and_decompress)
+{
+    if (web::http::details::compression::stream_compressor::is_supported())
+    {
+        auto compress_and_decompress = [](web::http::details::compression::compression_algorithm alg)
+        {
+            auto compressor = std::make_shared<web::http::details::compression::stream_compressor>(alg);
+            auto decompressor = std::make_shared<web::http::details::compression::stream_decompressor>(alg);
+
+            const size_t buffer_size = 100;
+            const size_t split_pos = buffer_size / 2;
+
+            web::http::details::compression::data_buffer input_buffer;
+            input_buffer.reserve(buffer_size);
+
+            for (size_t i = 0; i < buffer_size; ++i)
+            {
+                input_buffer.push_back(static_cast<uint8_t>(i));
+            }
+
+            web::http::details::compression::data_buffer buffer1(input_buffer.begin(), input_buffer.begin() + split_pos);
+            web::http::details::compression::data_buffer buffer2(input_buffer.begin() + split_pos, input_buffer.end());
+
+            auto compressed_data1 = compressor->compress(buffer1, false);
+            VERIFY_IS_FALSE(compressed_data1.empty());
+            VERIFY_IS_FALSE(compressor->has_error());
+
+            auto compressed_data2 = compressor->compress(buffer2, true);
+            VERIFY_IS_FALSE(compressed_data2.empty());
+            VERIFY_IS_FALSE(compressor->has_error());
+
+            auto decompressed_data1 = decompressor->decompress(compressed_data1);
+            VERIFY_IS_FALSE(decompressed_data1.empty());
+            VERIFY_IS_FALSE(decompressor->has_error());
+
+            auto decompressed_data2 = decompressor->decompress(compressed_data2);
+            VERIFY_IS_FALSE(decompressed_data2.empty());
+            VERIFY_IS_FALSE(decompressor->has_error());
+
+            decompressed_data1.insert(decompressed_data1.end(), decompressed_data2.begin(), decompressed_data2.end());
+
+            VERIFY_ARE_EQUAL(input_buffer, decompressed_data1);
+        };
+
+        compress_and_decompress(web::http::details::compression::compression_algorithm::gzip);
+        compress_and_decompress(web::http::details::compression::compression_algorithm::deflate);
+    }
+}
 
 TEST_FIXTURE(uri_address, non_rvalue_bodies)
 {

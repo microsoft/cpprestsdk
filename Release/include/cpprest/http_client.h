@@ -104,6 +104,7 @@ public:
 #endif
 #if defined(_WIN32) && !defined(__cplusplus_winrt)
         , m_buffer_request(false)
+        , m_request_compressed(false)
 #endif
     {
     }
@@ -301,6 +302,27 @@ public:
     {
         m_buffer_request = buffer_request;
     }
+
+    /// <summary>
+    /// Checks if requesting a compressed response is turned on, the default is off.
+    /// </summary>
+    /// <returns>True if compressed response is enabled, false otherwise</returns>
+    bool request_compressed_response() const
+    {
+        return m_request_compressed;
+    }
+
+    /// <summary>
+    /// Request that the server responds with a compressed body.
+    /// If true, in cases where the server does not support compression, this will have no effect.
+    /// The response body is internally decompressed before the consumer receives the data.
+    /// </summary>
+    /// <param name="buffer_request">True to turn on response body compression, false otherwise.</param>
+    /// <remarks>Please note there is a performance cost due to copying the request data.</remarks>
+    void set_request_compressed_response(bool request_compressed)
+    {
+        m_request_compressed = request_compressed;
+    }
 #endif
 #endif
 
@@ -375,6 +397,7 @@ private:
 #endif
 #if defined(_WIN32) && !defined(__cplusplus_winrt)
     bool m_buffer_request;
+    bool m_request_compressed;
 #endif
 };
 

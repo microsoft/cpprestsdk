@@ -51,19 +51,19 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestRunner.android.NativeAc
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
-		Release\src\build\win32.vcxitems*{3a584d9c-1a98-4046-b7d3-b7171ef42d34}*SharedItemsImports = 4
-		Release\src\build\common.vcxitems*{3a584d9c-1a98-4046-b7d3-b7171ef42d34}*SharedItemsImports = 4
 		Release\src\build\winrt.vcxitems*{0a9ba181-7876-4b3d-a5e0-ee673fa51c05}*SharedItemsImports = 9
-		Release\src\build\android.vcxitems*{65951c40-a332-4b54-89c2-7cdaf30d5f66}*SharedItemsImports = 9
-		Release\src\build\win32.vcxitems*{1014c621-bc2d-4813-b8c1-6d83ad6f9249}*SharedItemsImports = 4
 		Release\src\build\common.vcxitems*{1014c621-bc2d-4813-b8c1-6d83ad6f9249}*SharedItemsImports = 4
-		Release\src\build\winrt.vcxitems*{36d79e79-7e9e-4b3a-88a3-9f9b295c80b9}*SharedItemsImports = 4
+		Release\src\build\win32.vcxitems*{1014c621-bc2d-4813-b8c1-6d83ad6f9249}*SharedItemsImports = 4
 		Release\src\build\common.vcxitems*{36d79e79-7e9e-4b3a-88a3-9f9b295c80b9}*SharedItemsImports = 4
+		Release\src\build\winrt.vcxitems*{36d79e79-7e9e-4b3a-88a3-9f9b295c80b9}*SharedItemsImports = 4
+		Release\src\build\common.vcxitems*{3a584d9c-1a98-4046-b7d3-b7171ef42d34}*SharedItemsImports = 4
+		Release\src\build\win32.vcxitems*{3a584d9c-1a98-4046-b7d3-b7171ef42d34}*SharedItemsImports = 4
+		Release\src\build\other.vcxitems*{3d5908f7-7673-4229-bc46-2007a7af9cae}*SharedItemsImports = 9
+		Release\src\build\common.vcxitems*{594dcb5f-07e3-4084-a2ce-268611fa629f}*SharedItemsImports = 9
+		Release\src\build\android.vcxitems*{65951c40-a332-4b54-89c2-7cdaf30d5f66}*SharedItemsImports = 9
 		Release\src\build\android.vcxitems*{afb49019-965b-4c10-baff-c86c16d58010}*SharedItemsImports = 4
 		Release\src\build\common.vcxitems*{afb49019-965b-4c10-baff-c86c16d58010}*SharedItemsImports = 4
 		Release\src\build\win32.vcxitems*{f40f4804-50f9-4257-8d74-b9cbb19ac4c3}*SharedItemsImports = 9
-		Release\src\build\other.vcxitems*{3d5908f7-7673-4229-bc46-2007a7af9cae}*SharedItemsImports = 9
-		Release\src\build\common.vcxitems*{594dcb5f-07e3-4084-a2ce-268611fa629f}*SharedItemsImports = 9
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM
