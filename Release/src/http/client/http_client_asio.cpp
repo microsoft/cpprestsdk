@@ -45,7 +45,9 @@
 
 #include "cpprest/details/http_client_impl.h"
 #include "cpprest/details/x509_cert_utilities.h"
+#include "cpprest/details/http_helpers.h"
 #include <unordered_set>
+#include <memory>
 
 using boost::asio::ip::tcp;
 
@@ -630,6 +632,17 @@ public:
             {
                 extra_headers.append(ctx->generate_basic_proxy_auth_header());
             }
+
+            // Add the header needed to request a compressed response if supported on this platform and it has been specified in the config
+            if (web::http::details::compression::stream_decompressor::is_supported() && ctx->m_http_client->client_config().request_compressed_response())
+            {
+                utility::string_t accept_encoding_header;
+                accept_encoding_header.append(header_names::accept_encoding);
+                accept_encoding_header.append(": deflate, gzip");
+                accept_encoding_header.append(CRLF);
+
+                extra_headers.append(accept_encoding_header);
+            }
                 
             // Check user specified transfer-encoding.
             std::string transferencoding;
@@ -1140,7 +1153,7 @@ private:
                     // to respond using 'Connection: Keep-Alive' every time.
                     m_connection->set_keep_alive(!boost::iequals(value, U("close")));
                 }
-
+                
                 m_response.headers().add(std::move(name), std::move(value));
             }
         }
@@ -1148,6 +1161,23 @@ private:
 
         m_content_length = std::numeric_limits<size_t>::max(); // Without Content-Length header, size should be same as TCP stream - set it size_t max.
         m_response.headers().match(header_names::content_length, m_content_length);
+        
+        utility::string_t content_encoding;
+        if(m_response.headers().match(header_names::content_encoding, content_encoding))
+        {
+            auto alg = web::http::details::compression::stream_decompressor::to_compression_algorithm(content_encoding);
+
+            if (alg != web::http::details::compression::compression_algorithm::invalid)
+            {
+                m_decompressor = utility::details::make_unique<web::http::details::compression::stream_decompressor>(alg);
+            }
+            else
+            {
+                utility::string_t error = U("Unsupported compression algorithm in the Content Encoding header: ");
+                error += content_encoding;
+                report_exception(std::runtime_error(error));
+            }
+        }
 
         // note: need to check for 'chunked' here as well, azure storage sends both
         // transfer-encoding:chunked and content-length:0 (although HTTP says not to)
@@ -1316,25 +1346,78 @@ private:
         {
             // more data need to be read
             const auto this_request = shared_from_this();
-            writeBuffer.putn_nocopy(boost::asio::buffer_cast<const uint8_t *>(m_body_buf.data()),
-                             static_cast<size_t>(std::min(static_cast<uint64_t>(m_body_buf.size()), m_content_length - m_downloaded)))
-            .then([this_request](pplx::task<size_t> op)
+
+            auto read_size = static_cast<size_t>(std::min(static_cast<uint64_t>(m_body_buf.size()), m_content_length - m_downloaded));
+
+            if(m_decompressor)
             {
-                size_t writtenSize = 0;
-                try
+                auto decompressed = m_decompressor->decompress(boost::asio::buffer_cast<const uint8_t *>(m_body_buf.data()), read_size);
+                
+                if (m_decompressor->has_error())
                 {
-                    writtenSize = op.get();
-                    this_request->m_downloaded += static_cast<uint64_t>(writtenSize);
-                    this_request->m_body_buf.consume(writtenSize);
-                    this_request->async_read_until_buffersize(static_cast<size_t>(std::min(static_cast<uint64_t>(this_request->m_http_client->client_config().chunksize()), this_request->m_content_length - this_request->m_downloaded)),
-                                                              boost::bind(&asio_context::handle_read_content, this_request, boost::asio::placeholders::error));
-                }
-                catch (...)
-                {
-                    this_request->report_exception(std::current_exception());
+                    this_request->report_exception(std::runtime_error("Failed to decompress the response body"));
                     return;
                 }
-            });
+
+                // It is valid for the decompressor to sometimes return an empty output for a given chunk, the data will be flushed when the next chunk is received
+                if (decompressed.empty())
+                {
+                    try
+                    {
+                        this_request->m_downloaded += static_cast<uint64_t>(read_size);
+
+                        this_request->async_read_until_buffersize(static_cast<size_t>(std::min(static_cast<uint64_t>(this_request->m_http_client->client_config().chunksize()), this_request->m_content_length - this_request->m_downloaded)),
+                            boost::bind(&asio_context::handle_read_content, this_request, boost::asio::placeholders::error));
+                    }
+                    catch (...)
+                    {
+                        this_request->report_exception(std::current_exception());
+                        return;
+                    }
+                }
+                else
+                {
+                    writeBuffer.putn(&decompressed[0], decompressed.size())
+                        .then([this_request, read_size](pplx::task<size_t> op)
+                    {
+                        size_t writtenSize = 0;
+                        try
+                        {
+                            writtenSize = op.get();
+                            this_request->m_downloaded += static_cast<uint64_t>(read_size);
+                            this_request->m_body_buf.consume(writtenSize);
+                            this_request->async_read_until_buffersize(static_cast<size_t>(std::min(static_cast<uint64_t>(this_request->m_http_client->client_config().chunksize()), this_request->m_content_length - this_request->m_downloaded)),
+                                boost::bind(&asio_context::handle_read_content, this_request, boost::asio::placeholders::error));
+                        }
+                        catch (...)
+                        {
+                            this_request->report_exception(std::current_exception());
+                            return;
+                        }
+                    });
+                }
+            }
+            else
+            {
+                writeBuffer.putn_nocopy(boost::asio::buffer_cast<const uint8_t *>(m_body_buf.data()), read_size)
+                .then([this_request](pplx::task<size_t> op)
+                {
+                    size_t writtenSize = 0;
+                    try
+                    {
+                        writtenSize = op.get();
+                        this_request->m_downloaded += static_cast<uint64_t>(writtenSize);
+                        this_request->m_body_buf.consume(writtenSize);
+                        this_request->async_read_until_buffersize(static_cast<size_t>(std::min(static_cast<uint64_t>(this_request->m_http_client->client_config().chunksize()), this_request->m_content_length - this_request->m_downloaded)),
+                                                                  boost::bind(&asio_context::handle_read_content, this_request, boost::asio::placeholders::error));
+                    }
+                    catch (...)
+                    {
+                        this_request->report_exception(std::current_exception());
+                        return;
+                    }
+                });
+            }
         }
         else
         {
@@ -1439,6 +1522,8 @@ private:
     timeout_timer m_timer;
     boost::asio::streambuf m_body_buf;
     std::shared_ptr<asio_connection> m_connection;
+    
+    std::unique_ptr<web::http::details::compression::stream_decompressor> m_decompressor;
 
 #if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__))
     bool m_openssl_failed;

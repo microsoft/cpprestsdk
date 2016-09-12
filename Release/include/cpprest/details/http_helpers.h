@@ -27,8 +27,13 @@
 ****/
 #pragma once
 
+#if __APPLE__
+     #include "TargetConditionals.h"
+#endif
+
+// CPPREST_EXCLUDE_COMPRESSION is set if we're on a platform that supports compression but we want to explicitly disable it.
 // CPPREST_EXCLUDE_WEBSOCKETS is a flag that now essentially means "no external dependencies". TODO: Rename
-#if defined(_WIN32) && !defined(CPPREST_EXCLUDE_WEBSOCKETS)
+#if (defined(_WIN32) || defined(TARGET_OS_MAC)) && !defined(CPPREST_EXCLUDE_WEBSOCKETS) && !defined(CPPREST_EXCLUDE_COMPRESSION)
 #define CPPREST_HTTP_COMPRESSION
 #endif
 

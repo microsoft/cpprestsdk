@@ -26,7 +26,9 @@
 #include "stdafx.h"
 
 #if defined(CPPREST_HTTP_COMPRESSION)
+
 #include <zlib.h>
+
 #endif
 
 using namespace web;
@@ -562,9 +564,6 @@ namespace compression
             const int level = Z_DEFAULT_COMPRESSION;
             if (alg == compression_algorithm::gzip)
             {
-                const auto windowBits = 15;
-                const auto gzip_encoding = 16;
-
                 set_state(deflateInit2(&stream(), level, Z_DEFLATED, to_zlib_alg(alg), MAX_MEM_LEVEL, Z_DEFAULT_STRATEGY));
             }
             else if (alg == compression_algorithm::deflate)
@@ -643,26 +642,27 @@ namespace compression
     public:
         bool has_error() const
         {
-            return false;
+            throw std::runtime_error("Compression/Decompression has not been implemented or configured on this platform");
         }
     };
 
     class stream_compressor::stream_compressor_impl : public compression_base_impl
     {
     public:
-        stream_compressor::stream_compressor_impl(compression_algorithm) {}
+        stream_compressor_impl(compression_algorithm) {}
         compression::data_buffer compress(const uint8_t*, size_t, bool)
         {
-            return compression::data_buffer();
+            throw std::runtime_error("Compression is not implemented or configured on this platform");
         }
     };
 
     class stream_decompressor::stream_decompressor_impl : public compression_base_impl
     {
     public:
-        stream_decompressor::stream_decompressor_impl(compression_algorithm) {}
-        compression::data_buffer decompress(const uint8_t*, size_t) {
-            return compression::data_buffer();
+        stream_decompressor_impl(compression_algorithm) {}
+        compression::data_buffer decompress(const uint8_t*, size_t) 
+        {
+            throw std::runtime_error("Decompression is not implemented or configured on this platform");
         }
     };
 #endif
@@ -674,7 +674,7 @@ namespace compression
 
     compression::data_buffer stream_decompressor::decompress(const data_buffer& input)
     {
-        if (input.empty() || !m_pimpl)
+        if (input.empty())
         {
             return data_buffer();
         }
@@ -684,21 +684,11 @@ namespace compression
 
     web::http::details::compression::data_buffer stream_decompressor::decompress(const uint8_t* input, size_t input_size)
     {
-        if (!m_pimpl)
-        {
-            return data_buffer();
-        }
-
         return m_pimpl->decompress(input, input_size);
     }
 
     bool stream_decompressor::has_error() const
     {
-        if (!m_pimpl)
-        {
-            return true;
-        }
-
         return m_pimpl->has_error();
     }
 
@@ -710,7 +700,7 @@ namespace compression
 
     compression::data_buffer stream_compressor::compress(const data_buffer& input, bool finish)
     {
-        if (input.empty() || !m_pimpl)
+        if (input.empty())
         {
             return compression::data_buffer();
         }
@@ -720,21 +710,11 @@ namespace compression
 
     web::http::details::compression::data_buffer stream_compressor::compress(const uint8_t* input, size_t input_size, bool finish)
     {
-        if (!m_pimpl)
-        {
-            return compression::data_buffer();
-        }
-
         return m_pimpl->compress(input, input_size, finish);
     }
     
     bool stream_compressor::has_error() const
     {
-        if (!m_pimpl)
-        {
-            return true;
-        }
-
         return m_pimpl->has_error();
     }
 

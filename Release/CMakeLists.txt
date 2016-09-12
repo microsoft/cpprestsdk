@@ -74,6 +74,7 @@ elseif(ANDROID)
   option(BUILD_TESTS "Build tests." ON)
 elseif(UNIX) # This includes OSX
   find_package(Boost REQUIRED COMPONENTS random chrono system thread regex filesystem)
+
   find_package(Threads REQUIRED)
   if(APPLE AND NOT OPENSSL_ROOT_DIR)
     # Prefer a homebrew version of OpenSSL over the one in /usr/lib
@@ -84,8 +85,20 @@ elseif(UNIX) # This includes OSX
   # This should prevent linking against the system provided 0.9.8y
   set(_OPENSSL_VERSION "")
   find_package(OpenSSL 1.0.0 REQUIRED)
-
+  
   option(BUILD_SHARED_LIBS "Build shared Libraries." ON)
+  
+  # Prefer the homebrew version of zlib
+  find_library(ZLIB_LIBRARIES NAMES libz.a PATHS /usr/local/Cellar/zlib/1.2.8/lib NO_DEFAULT_PATH)
+  find_path(ZLIB_INCLUDE_DIRS NAMES zlib.h PATHS /usr/local/Cellar/zlib/1.2.8/include NO_DEFAULT_PATH)
+  
+  if(NOT ZLIB_LIBRARIES OR NOT ZLIB_INCLUDE_DIRS)
+    find_package(ZLib)
+	if(NOT ZLIB_FOUND)
+	  option(CPPREST_EXCLUDE_COMPRESSION "Exclude compression functionality." ON)
+	endif()
+  endif()
+ 
   option(BUILD_TESTS "Build tests." ON)
   option(BUILD_SAMPLES "Build samples." ON)
   option(CASA_INSTALL_HEADERS "Install header files." ON)
@@ -197,10 +210,12 @@ set(Casablanca_LIBRARIES ${Casablanca_LIBRARY}
   ${Boost_CHRONO_LIBRARY}
   ${Boost_RANDOM_LIBRARY}
   ${Boost_REGEX_LIBRARY}
-  ${Boost_FRAMEWORK})
-
+  ${Boost_FRAMEWORK}
+  ${ZLIB_LIBRARIES}
+  )
+  
 # Everything in the project needs access to the casablanca include directories
-include_directories(${Casablanca_INCLUDE_DIRS})
+include_directories(${Casablanca_INCLUDE_DIRS} ${ZLIB_INCLUDE_DIRS})
 
 # Finally, the tests all use the same style declaration to build themselves, so we use a function
 function(add_casablanca_test NAME SOURCES_VAR)
@@ -213,7 +228,7 @@ function(add_casablanca_test NAME SOURCES_VAR)
       ${LIB}unittestpp
       ${Casablanca_LIBRARIES}
       ${ANDROID_STL_FLAGS}
-      )
+	  )
     if (BUILD_SHARED_LIBS)
       add_test(NAME ${NAME}
         WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}

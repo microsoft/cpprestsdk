@@ -63,12 +63,12 @@ TEST_FIXTURE(uri_address, outside_cnn_dot_com)
     });
 }
 
-TEST_FIXTURE(uri_address, outside_google_dot_com_compressed_http_response)
+TEST_FIXTURE(uri_address, outside_wikipedia_compressed_http_response)
 {
     http_client_config config;
     config.set_request_compressed_response(true);
 
-    http_client client(U("http://www.google.com"), config);
+    http_client client(U("https://en.wikipedia.org/wiki/HTTP_compression"), config);
     http_request httpRequest(methods::GET);
 
     http_response response = client.request(httpRequest).get();
@@ -77,9 +77,10 @@ TEST_FIXTURE(uri_address, outside_google_dot_com_compressed_http_response)
 
     auto s = response.extract_utf8string().get();
     VERIFY_IS_FALSE(s.empty());
+    
+    utility::string_t encoding;
+    VERIFY_IS_TRUE(response.headers().match(web::http::header_names::content_encoding, encoding));
 
-    std::wstring encoding;
-    response.headers().match(web::http::header_names::content_encoding, encoding);
     VERIFY_ARE_EQUAL(encoding, U("gzip"));
 }
 

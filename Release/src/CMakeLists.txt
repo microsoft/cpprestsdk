@@ -95,6 +95,7 @@ target_link_libraries(${Casablanca_LIBRARY}
   ${OPENSSL_LIBRARIES}
   ${COREFOUNDATION}
   ${ANDROID_STL_FLAGS}
+  ${ZLIB_LIBRARIES}
   )
 
 # Portions specific to cpprest binary versioning.

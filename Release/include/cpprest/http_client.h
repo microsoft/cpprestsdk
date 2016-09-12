@@ -275,8 +275,8 @@ public:
     /// If true, in cases where the server does not support compression, this will have no effect.
     /// The response body is internally decompressed before the consumer receives the data.
     /// </summary>
-    /// <param name="buffer_request">True to turn on response body compression, false otherwise.</param>
-    /// <remarks>Please note there is a performance cost due to copying the request data. Currently only supported on Windows.</remarks>
+    /// <param name="request_compressed">True to turn on response body compression, false otherwise.</param>
+    /// <remarks>Please note there is a performance cost due to copying the request data. Currently only supported on Windows and OSX.</remarks>
     void set_request_compressed_response(bool request_compressed)
     {
         m_request_compressed = request_compressed;
