@@ -1279,7 +1279,7 @@ private:
                         // Note, some servers seem to send a first chunk of body data that decompresses to nothing but initializes the zlib decryption state. This produces no decompressed output.
                         // Subsequent chunks will then begin emmiting decompressed body data.
 
-                        bytesRead = decompressed_size;
+                        bytesRead = static_cast<DWORD>(decompressed_size);
                     }
 
                     // If the data was allocated directly from the buffer then commit, otherwise we still
