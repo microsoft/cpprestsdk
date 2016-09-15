@@ -642,10 +642,9 @@ namespace compression
     public:
         bool has_error() const
         {
-            //Compression/Decompression has not been implemented or configured on this platform
             if (!stream_compressor::is_supported())
             {
-                throw std::exception();
+                throw std::runtime_error("Compression/Decompression has not been implemented or configured on this platform");
             } 
             return true;
         }
@@ -657,10 +656,9 @@ namespace compression
         stream_compressor_impl(compression_algorithm) {}
         compression::data_buffer compress(const uint8_t* data, size_t size, bool)
         {
-            //Compression is not implemented or configured on this platform
             if (!stream_compressor::is_supported())
             {
-                throw std::exception();
+                throw std::runtime_error("Compression is not implemented or configured on this platform");
             }
 
             return data_buffer(data, data + size);
@@ -673,10 +671,9 @@ namespace compression
         stream_decompressor_impl(compression_algorithm) {}
         compression::data_buffer decompress(const uint8_t* data, size_t size) 
         {
-            //Decompression is not implemented or configured on this platform
             if (!stream_decompressor::is_supported())
             {
-                throw std::exception();
+                throw std::runtime_error("Decompression is not implemented or configured on this platform");
             }
 
             return data_buffer(data, data + size);
