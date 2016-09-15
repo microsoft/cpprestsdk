@@ -70,6 +70,7 @@ enum class httpclient_errorcode_context
     close
 };
 
+
 class asio_connection_pool;
 class asio_connection
 {
@@ -1163,7 +1164,7 @@ private:
         m_response.headers().match(header_names::content_length, m_content_length);
         
         utility::string_t content_encoding;
-        if(m_response.headers().match(header_names::content_encoding, content_encoding))
+        if(web::http::details::compression::stream_decompressor::is_supported() && m_response.headers().match(header_names::content_encoding, content_encoding))
         {
             auto alg = web::http::details::compression::stream_decompressor::to_compression_algorithm(content_encoding);
 
@@ -1286,22 +1287,62 @@ private:
             }
             else
             {
-                auto writeBuffer = _get_writebuffer();
                 const auto this_request = shared_from_this();
-                writeBuffer.putn_nocopy(boost::asio::buffer_cast<const uint8_t *>(m_body_buf.data()), to_read).then([this_request, to_read](pplx::task<size_t> op)
+                auto writeBuffer = _get_writebuffer();
+                if(m_decompressor)
                 {
-                    try
+
+                    auto decompressed = m_decompressor->decompress(boost::asio::buffer_cast<const uint8_t *>(m_body_buf.data()), to_read);
+                    
+                    if (m_decompressor->has_error())
                     {
-                        op.wait();
-                    }
-                    catch (...)
-                    {
-                        this_request->report_exception(std::current_exception());
+   
+                        report_exception(std::runtime_error("Failed to decompress the response body"));
                         return;
                     }
-                    this_request->m_body_buf.consume(to_read + CRLF.size()); // consume crlf
-                    this_request->m_connection->async_read_until(this_request->m_body_buf, CRLF, boost::bind(&asio_context::handle_chunk_header, this_request, boost::asio::placeholders::error));
-                });
+
+                    // It is valid for the decompressor to sometimes return an empty output for a given chunk, the data will be flushed when the next chunk is received
+                    if (decompressed.empty())
+                    {
+                        m_body_buf.consume(to_read + CRLF.size()); // consume crlf
+                        m_connection->async_read_until(m_body_buf, CRLF, boost::bind(&asio_context::handle_chunk_header, this_request, boost::asio::placeholders::error));
+                    }
+                    else
+                    {
+
+                        writeBuffer.putn(&decompressed[0], decompressed.size())
+                            .then([this_request, to_read](pplx::task<size_t> op)
+                        {
+                            try
+                            {
+                                this_request->m_body_buf.consume(to_read + CRLF.size()); // consume crlf
+                                this_request->m_connection->async_read_until(this_request->m_body_buf, CRLF, boost::bind(&asio_context::handle_chunk_header, this_request, boost::asio::placeholders::error));
+                            }
+                            catch (...)
+                            {
+                                this_request->report_exception(std::current_exception());
+                                return;
+                            }
+                        });
+                    }
+                }
+                else
+                {
+                    writeBuffer.putn_nocopy(boost::asio::buffer_cast<const uint8_t *>(m_body_buf.data()), to_read).then([this_request, to_read](pplx::task<size_t> op)
+                    {
+                        try
+                        {
+                            op.wait();
+                        }
+                        catch (...)
+                        {
+                            this_request->report_exception(std::current_exception());
+                            return;
+                        }
+                        this_request->m_body_buf.consume(to_read + CRLF.size()); // consume crlf
+                        this_request->m_connection->async_read_until(this_request->m_body_buf, CRLF, boost::bind(&asio_context::handle_chunk_header, this_request, boost::asio::placeholders::error));
+                    }); 
+                }
             }
         }
         else
@@ -1313,6 +1354,7 @@ private:
     void handle_read_content(const boost::system::error_code& ec)
     {
         auto writeBuffer = _get_writebuffer();
+
 
         if (ec)
         {
