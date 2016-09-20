@@ -427,6 +427,14 @@ protected:
             }
         }
 #endif
+		//Enable TLS 1.1 and 1.2
+		HRESULT result(S_OK);
+		BOOL win32_result(FALSE);
+
+		DWORD secure_protocols(WINHTTP_FLAG_SECURE_PROTOCOL_SSL3|WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_1 | WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_2);
+		win32_result = ::WinHttpSetOption(m_hSession, WINHTTP_OPTION_SECURE_PROTOCOLS, &secure_protocols, sizeof(secure_protocols));
+		if(FALSE == win32_result){ result = HRESULT_FROM_WIN32(::GetLastError()); }
+
         // Register asynchronous callback.
         if(WINHTTP_INVALID_STATUS_CALLBACK == WinHttpSetStatusCallback(
             m_hSession,
