@@ -437,6 +437,21 @@ protected:
             return report_failure(_XPLATSTR("Error registering callback"));
         }
 
+		//Attempt to enable TLS 1.1 and 1.2
+		HRESULT result(S_OK);
+		BOOL win32_result(FALSE);
+
+		DWORD secure_protocols(0);
+		DWORD secure_protocols_length(sizeof(secure_protocols));
+		win32_result = ::WinHttpQueryOption(m_hSession, WINHTTP_OPTION_SECURE_PROTOCOLS, &secure_protocols, &secure_protocols_length);
+		if(FALSE == win32_result){ result = HRESULT_FROM_WIN32(::GetLastError()); }
+		if(SUCCEEDED(result)){
+
+			secure_protocols |= (WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_1 | WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_2);
+			win32_result = ::WinHttpSetOption(m_hSession, WINHTTP_OPTION_SECURE_PROTOCOLS, &secure_protocols, sizeof(secure_protocols));
+			if(FALSE == win32_result){ result = HRESULT_FROM_WIN32(::GetLastError()); }
+		}
+
         // Open connection.
         unsigned int port = m_uri.is_port_default() ? (m_secure ? INTERNET_DEFAULT_HTTPS_PORT : INTERNET_DEFAULT_HTTP_PORT) : m_uri.port();
         m_hConnection = WinHttpConnect(
