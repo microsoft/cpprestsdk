@@ -1,7 +1,7 @@
 <package>
   <metadata>
     <base_id>cpprestsdk</base_id>
-    <version>2.7.0</version>
+    <version>2.9.0</version>
     <authors>casablancacore</authors>
     <owners>Microsoft, Visual C++</owners>
     <licenseUrl>http://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
@@ -10,7 +10,7 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <summary>The C++ REST SDK is a cross-platform, modern, and asynchronous library that enables developers to access and author connected applications.</summary>
     <description>The C++ REST SDK is a Microsoft project for cloud-based client-server communication in native code using a modern asynchronous C++ API design. This project aims to help C++ developers connect to and interact with services.</description>
-    <releaseNotes>https://github.com/Microsoft/cpprestsdk/releases/tag/v2.7.0</releaseNotes>
+    <releaseNotes>https://github.com/Microsoft/cpprestsdk/releases/tag/v2.9.0</releaseNotes>
     <copyright>Copyright 2015</copyright>
     <tags>cpprestsdk Casablanca REST JSON HTTP URI WebSockets</tags>
   </metadata>
@@ -28,10 +28,10 @@
         <AdditionalOptions Condition="'$(PlatformToolset)'=='v140'">/d2notypeopt %(AdditionalOptions)</AdditionalOptions>
         <PreprocessorDefinitions Condition="'$(PlatformToolset)' == 'v120_xp'">CPPREST_TARGET_XP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
         <!-- Workaround Visual Studio Android bug missing -funwind-tables if -fexceptions is specified. -->
-        <AdditionalOptions Condition="'$(PlatformToolset)' == 'Clang_3_6'">-funwind-tables %(AdditionalOptions)</AdditionalOptions>
+        <AdditionalOptions Condition="'$(PlatformToolset)' == 'Clang_3_8'">-funwind-tables %(AdditionalOptions)</AdditionalOptions>
       </ClCompile>
       <Link>
-        <LibraryDependencies Condition="'$(PlatformToolset)' == 'Clang_3_6'">m;%(LibraryDependencies)</LibraryDependencies>
+        <LibraryDependencies Condition="'$(PlatformToolset)' == 'Clang_3_8'">m;%(LibraryDependencies)</LibraryDependencies>
       </Link>
     </ItemDefinitionGroup>
   </msbuild_hook>
