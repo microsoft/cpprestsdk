@@ -377,12 +377,13 @@ std::string __cdecl conversions::utf16_to_utf8(const utf16string &w)
         // Check for high surrogate.
         if (src >= H_SURROGATE_START && src <= H_SURROGATE_END)
         {
-            const auto highSurrogate = w[++index];
+            const auto highSurrogate = src;
+			++index;
             if (index == w.size())
             {
                 throw std::range_error("UTF-16 string is missing low surrogate");
             }
-            const auto lowSurrogate = src;
+            const auto lowSurrogate = w[index];
             if (lowSurrogate < L_SURROGATE_START || lowSurrogate > L_SURROGATE_END)
             {
                 throw std::range_error("UTF-16 string has invalid low surrogate");
