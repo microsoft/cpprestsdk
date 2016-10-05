@@ -30,6 +30,7 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wconversion"
 #pragma clang diagnostic ignored "-Wunreachable-code"
+#pragma clang diagnostic ignored "-Winfinite-recursion"
 #endif
 #include "boost/asio.hpp"
 #if defined(__clang__)
