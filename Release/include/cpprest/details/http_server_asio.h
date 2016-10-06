@@ -82,6 +82,7 @@ public:
     , m_response_buf()
     , m_p_server(server)
     , m_p_parent(parent)
+    , m_close(false)
     , m_refs(1)
     {
         if (is_https)

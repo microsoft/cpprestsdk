@@ -362,7 +362,7 @@ void connection::handle_headers()
         }
     }
 
-    m_close = m_chunked = false;
+    m_chunked = false;
     utility::string_t name;
     // check if the client has requested we close the connection
     if (m_request.headers().match(header_names::connection, name))
