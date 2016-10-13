@@ -39,8 +39,17 @@
 #endif
 #endif /* _WIN32 */
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Winfinite-recursion"
+#endif
+
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 #ifdef _WIN32
 #pragma warning( pop )
