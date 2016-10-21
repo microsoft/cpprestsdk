@@ -94,25 +94,33 @@ public:
 
         utf16char *hdrStr = nullptr;
         HRESULT hr = xmlReq->GetAllResponseHeaders(&hdrStr);
-        if(hr != S_OK)
+        if (SUCCEEDED(hr))
         {
-            return hr;
-        }
+            try
+            {
+                auto progress = m_request->m_request._get_impl()->_progress_handler();
+                if (progress && m_request->m_uploaded == 0)
+                {
+                    (*progress)(message_direction::upload, 0);
+                }
 
-        auto progress = m_request->m_request._get_impl()->_progress_handler();
-        if (progress && m_request->m_uploaded == 0)
-        {
-            try { (*progress)(message_direction::upload, 0); } catch(...)
+                parse_headers_string(hdrStr, response.headers());
+                m_request->complete_headers();
+            }
+            catch (...)
             {
                 m_request->m_exceptionPtr = std::current_exception();
-                return ERROR_UNHANDLED_EXCEPTION;
+                hr = ERROR_UNHANDLED_EXCEPTION;
             }
         }
 
-        web::http::details::parse_headers_string(hdrStr, response.headers());
-        m_request->complete_headers();
+        if (hdrStr != nullptr)
+        {
+            ::CoTaskMemFree(hdrStr);
+            hdrStr = nullptr;
+        }
 
-        return S_OK;
+        return hr;
     }
 
     // Called when a portion of the entity body has been received.
