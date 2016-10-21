@@ -46,7 +46,7 @@ namespace details {
 
         _PPLXIMP void YieldExecution()
         {
-            boost::this_thread::yield();
+            std::this_thread::yield();
         }
     }
 
