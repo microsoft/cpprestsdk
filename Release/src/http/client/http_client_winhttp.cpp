@@ -249,6 +249,8 @@ public:
 
     memory_holder m_body_data;
 
+    std::unique_ptr<web::http::details::compression::stream_decompressor> decompressor;
+
     virtual void cleanup()
     {
         if(m_request_handle != nullptr)
@@ -616,6 +618,11 @@ protected:
                 winhttp_context->m_bodyType = content_length_chunked;
                 winhttp_context->m_remaining_to_write = content_length;
             }
+        }
+
+        if(web::http::details::compression::stream_decompressor::is_supported() && client_config().request_compressed_response())
+        {
+            msg.headers().add(web::http::header_names::accept_encoding, U("deflate, gzip"));
         }
 
         // Add headers.
@@ -1166,6 +1173,24 @@ private:
                         }
                     }
 
+                    // If the response body is compressed we will read the encoding header and create a decompressor object which will later decompress the body
+                    utility::string_t encoding;
+                    if (web::http::details::compression::stream_decompressor::is_supported() && response.headers().match(web::http::header_names::content_encoding, encoding))
+                    {
+                        auto alg = web::http::details::compression::stream_decompressor::to_compression_algorithm(encoding);
+
+                        if (alg != web::http::details::compression::compression_algorithm::invalid)
+                        {
+                            p_request_context->decompressor = std::make_unique<web::http::details::compression::stream_decompressor>(alg);
+                        }
+                        else
+                        {
+                            utility::string_t error = U("Unsupported compression algorithm in the Content Encoding header: ");
+                            error += encoding;
+                            p_request_context->report_exception(http_exception(error));
+                        }
+                    }
+
                     // Signal that the headers are available.
                     p_request_context->complete_headers();
 
@@ -1190,12 +1215,21 @@ private:
             case WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE :
                 {
                     // Status information contains pointer to DWORD containing number of bytes available.
-                    DWORD num_bytes = *(PDWORD)statusInfo;
+                    const DWORD num_bytes = *(PDWORD)statusInfo;
 
                     if(num_bytes > 0)
                     {
-                        auto writebuf = p_request_context->_get_writebuffer();
-                        p_request_context->allocate_reply_space(writebuf.alloc(num_bytes), num_bytes);
+                        if (p_request_context->decompressor)
+                        {
+                            // Decompression is too slow to reliably do on this callback. Therefore we need to store it now in order to decompress it at a later stage in the flow.
+                            // However, we want to eventually use the writebuf to store the decompressed body. Therefore we'll store the compressed body as an internal allocation in the request_context
+                            p_request_context->allocate_reply_space(nullptr, num_bytes);
+                        }
+                        else
+                        {
+                            auto writebuf = p_request_context->_get_writebuffer();
+                            p_request_context->allocate_reply_space(writebuf.alloc(num_bytes), num_bytes);
+                        }
 
                         // Read in body all at once.
                         if(!WinHttpReadData(
@@ -1229,7 +1263,7 @@ private:
             case WINHTTP_CALLBACK_STATUS_READ_COMPLETE :
                 {
                     // Status information length contains the number of bytes read.
-                    const DWORD bytesRead = statusInfoLength;
+                    DWORD bytesRead = statusInfoLength;
 
                     // Report progress about downloaded bytes.
                     auto progress = p_request_context->m_request._get_impl()->_progress_handler();
@@ -1251,9 +1285,36 @@ private:
                         break;
                     }
 
+                    auto writebuf = p_request_context->_get_writebuffer();
+
+                    // If we have compressed data it is stored in the local allocation of the p_request_context. We will store the decompressed buffer in the external allocation of the p_request_context.
+                    if (p_request_context->decompressor)
+                    {
+                        web::http::details::compression::data_buffer decompressed = p_request_context->decompressor->decompress(p_request_context->m_body_data.get(), bytesRead);
+
+                        if (p_request_context->decompressor->has_error())
+                        {
+                            p_request_context->report_exception(std::runtime_error("Failed to decompress the response body"));
+                            return;
+                        }
+
+                        // We've decompressed this chunk of the body, need to now store it in the writebuffer.
+                        auto decompressed_size = decompressed.size();
+
+                        if (decompressed_size > 0)
+                        {
+                            auto p = writebuf.alloc(decompressed_size);
+                            p_request_context->allocate_reply_space(p, decompressed_size);
+                            std::memcpy(p_request_context->m_body_data.get(), &decompressed[0], decompressed_size);
+                        }
+                        // Note, some servers seem to send a first chunk of body data that decompresses to nothing but initializes the zlib decryption state. This produces no decompressed output.
+                        // Subsequent chunks will then begin emmiting decompressed body data.
+
+                        bytesRead = static_cast<DWORD>(decompressed_size);
+                    }
+
                     // If the data was allocated directly from the buffer then commit, otherwise we still
                     // need to write to the response stream buffer.
-                    auto writebuf = p_request_context->_get_writebuffer();
                     if (p_request_context->is_externally_allocated())
                     {
                         writebuf.commit(bytesRead);

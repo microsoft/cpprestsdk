@@ -29,6 +29,18 @@
 
 #include "cpprest/details/basic_types.h"
 
+#if __APPLE__
+     #include "TargetConditionals.h"
+#endif
+
+// CPPREST_EXCLUDE_COMPRESSION is set if we're on a platform that supports compression but we want to explicitly disable it.
+// CPPREST_EXCLUDE_WEBSOCKETS is a flag that now essentially means "no external dependencies". TODO: Rename
+#if (defined(_WIN32) || defined(TARGET_OS_MAC)) && !defined(CPPREST_EXCLUDE_WEBSOCKETS) && !defined(CPPREST_EXCLUDE_COMPRESSION)
+#define CPPREST_HTTP_COMPRESSION
+#endif
+
+#include "cpprest/http_msg.h"
+
 namespace web { namespace http
 {
 namespace details
@@ -61,4 +73,82 @@ namespace details
         _ASYNCRTIMP size_t __cdecl add_chunked_delimiters(_Out_writes_(buffer_size) uint8_t *data, _In_ size_t buffer_size, size_t bytes_read);
     }
 
+    namespace compression
+    {
+        enum class compression_algorithm : int 
+        { 
+            deflate = 15,
+            gzip = 31,
+            invalid = 9999
+        };
+
+        using data_buffer = std::vector<uint8_t>;
+
+        class stream_decompressor
+        {
+        public:
+
+            static compression_algorithm to_compression_algorithm(const utility::string_t& alg)
+            {
+                if (U("gzip") == alg)
+                {
+                    return compression_algorithm::gzip;
+                }
+                else if (U("deflate") == alg)
+                {
+                    return compression_algorithm::deflate;
+                }
+
+                return compression_algorithm::invalid;
+            }
+
+            static bool is_supported()
+            {
+#if !defined(CPPREST_HTTP_COMPRESSION) 
+                return false;
+#else
+                return true;
+#endif
+            }
+
+            _ASYNCRTIMP stream_decompressor(compression_algorithm alg);
+
+            _ASYNCRTIMP data_buffer decompress(const data_buffer& input);
+
+            _ASYNCRTIMP data_buffer decompress(const uint8_t* input, size_t input_size);
+
+            _ASYNCRTIMP bool has_error() const;
+
+        private:
+            class stream_decompressor_impl;
+            std::shared_ptr<stream_decompressor_impl> m_pimpl;
+        };
+
+        class stream_compressor
+        {
+        public:
+
+            static bool is_supported()
+            {
+#if !defined(CPPREST_HTTP_COMPRESSION) 
+                return false;
+#else
+                return true;
+#endif
+            }
+
+            _ASYNCRTIMP stream_compressor(compression_algorithm alg);
+
+            _ASYNCRTIMP data_buffer compress(const data_buffer& input, bool finish);
+
+            _ASYNCRTIMP data_buffer compress(const uint8_t* input, size_t input_size, bool finish);
+
+            _ASYNCRTIMP bool has_error() const;
+
+        private:
+            class stream_compressor_impl;
+            std::shared_ptr<stream_compressor_impl> m_pimpl;
+        };
+
+    }
 }}}

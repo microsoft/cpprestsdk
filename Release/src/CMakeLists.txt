@@ -128,6 +128,7 @@ target_link_libraries(cpprest
   ${OPENSSL_LIBRARIES}
   ${COREFOUNDATION}
   ${ANDROID_STL_FLAGS}
+  ${ZLIB_LIBRARIES}
   )
 
 # Portions specific to cpprest binary versioning.
