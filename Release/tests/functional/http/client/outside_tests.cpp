@@ -28,6 +28,7 @@
 #include <winhttp.h>
 #endif
 #include "cpprest/rawptrstream.h"
+#include "cpprest/details/http_helpers.h"
 #include "os_utilities.h"
 #include <stdexcept>
 
@@ -65,6 +66,11 @@ TEST_FIXTURE(uri_address, outside_cnn_dot_com)
 
 TEST_FIXTURE(uri_address, outside_wikipedia_compressed_http_response)
 {
+    if (web::http::details::compression::stream_decompressor::is_supported() == false)
+    {
+        // On platforms which do not support compressed http, nothing to check.
+        return;
+    }
     http_client_config config;
     config.set_request_compressed_response(true);
 
