@@ -35,7 +35,7 @@
 
 // CPPREST_EXCLUDE_COMPRESSION is set if we're on a platform that supports compression but we want to explicitly disable it.
 // CPPREST_EXCLUDE_WEBSOCKETS is a flag that now essentially means "no external dependencies". TODO: Rename
-#if (defined(_WIN32) || defined(TARGET_OS_MAC)) && !defined(CPPREST_EXCLUDE_WEBSOCKETS) && !defined(CPPREST_EXCLUDE_COMPRESSION)
+#if ((defined(_WIN32) && (!defined(WINAPI_FAMILY_SYSTEM) || (WINAPI_PARTITION_DESKTOP == 1))) || defined(TARGET_OS_MAC)) && !defined(CPPREST_EXCLUDE_WEBSOCKETS) && !defined(CPPREST_EXCLUDE_COMPRESSION)
 #define CPPREST_HTTP_COMPRESSION
 #endif
 
