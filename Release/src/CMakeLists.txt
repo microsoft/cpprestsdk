@@ -114,6 +114,11 @@ endif()
 
 add_library(cpprest ${SOURCES})
 
+target_include_directories(cpprest
+  INTERFACE $<INSTALL_INTERFACE:include>
+  PUBLIC    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+  )
+
 target_link_libraries(cpprest
   ${CMAKE_THREAD_LIBS_INIT}
   ${Boost_SYSTEM_LIBRARY}
