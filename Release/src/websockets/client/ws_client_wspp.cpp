@@ -212,6 +212,7 @@ public:
                     return rfc2818(preverified, verifyCtx);
                 });
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
                 // OpenSSL stores some per thread state that never will be cleaned up until
                 // the dll is unloaded. If static linking, like we do, the state isn't cleaned up
                 // at all and will be reported as leaks.
@@ -219,6 +220,7 @@ public:
                 // This is necessary here because it is called on the user's thread calling connect(...)
                 // eventually through websocketpp::client::get_connection(...)
                 ERR_remove_thread_state(nullptr);
+#endif
 
                 return sslContext;
             });
@@ -382,11 +384,14 @@ public:
             crossplat::JVM.load()->DetachCurrentThread();
 #endif
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
             // OpenSSL stores some per thread state that never will be cleaned up until
             // the dll is unloaded. If static linking, like we do, the state isn't cleaned up
             // at all and will be reported as leaks.
             // See http://www.openssl.org/support/faq.html#PROG13
             ERR_remove_thread_state(nullptr);
+#endif
+
         });
         return pplx::create_task(m_connect_tce);
     }
