@@ -249,7 +249,12 @@ void connection::handle_http_line(const boost::system::error_code& ec)
     if (ec)
     {
         // client closed connection
-        if (ec == boost::asio::error::eof || ec == boost::asio::error::operation_aborted)
+        if (
+            ec == boost::asio::error::eof ||                // peer has performed an orderly shutdown
+            ec == boost::asio::error::operation_aborted ||  // this can be removed. ECONNABORTED happens only for accept()
+            ec == boost::asio::error::connection_reset ||   // connection reset by peer
+            ec == boost::asio::error::timed_out             // connection timed out
+        )
         {
             finish_request_response();
         }
