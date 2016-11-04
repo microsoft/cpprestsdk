@@ -25,10 +25,24 @@
 
 #include "stdafx.h"
 
+// CPPREST_EXCLUDE_COMPRESSION is set if we're on a platform that supports compression but we want to explicitly disable it.
+// CPPREST_EXCLUDE_WEBSOCKETS is a flag that now essentially means "no external dependencies". TODO: Rename
+
+#if __APPLE__
+#include "TargetConditionals.h"
+#if defined(TARGET_OS_MAC)
+#if !defined(CPPREST_EXCLUDE_COMPRESSION)
+#define CPPREST_HTTP_COMPRESSION
+#endif // !defined(CPPREST_EXCLUDE_COMPRESSION)
+#endif // defined(TARGET_OS_MAC)
+#elif defined(_WIN32) && (!defined(WINAPI_FAMILY_SYSTEM) || (WINAPI_PARTITION_DESKTOP == 1))
+#if !defined(CPPREST_EXCLUDE_WEBSOCKETS) && !defined(CPPREST_EXCLUDE_COMPRESSION)
+#define CPPREST_HTTP_COMPRESSION
+#endif // !defined(CPPREST_EXCLUDE_WEBSOCKETS) && !defined(CPPREST_EXCLUDE_COMPRESSION)
+#endif
+
 #if defined(CPPREST_HTTP_COMPRESSION)
-
 #include <zlib.h>
-
 #endif
 
 using namespace web;
@@ -392,6 +406,15 @@ namespace compression
     };
 #endif
 
+    bool __cdecl stream_decompressor::is_supported()
+    {
+#if !defined(CPPREST_HTTP_COMPRESSION)
+    return false;
+#else
+    return true;
+#endif
+    }
+
     stream_decompressor::stream_decompressor(compression_algorithm alg)
         : m_pimpl(std::make_shared<stream_decompressor::stream_decompressor_impl>(alg))
     {
@@ -415,6 +438,15 @@ namespace compression
     bool stream_decompressor::has_error() const
     {
         return m_pimpl->has_error();
+    }
+
+    bool __cdecl stream_compressor::is_supported()
+    {
+#if !defined(CPPREST_HTTP_COMPRESSION)
+        return false;
+#else
+        return true;
+#endif
     }
 
     stream_compressor::stream_compressor(compression_algorithm alg)

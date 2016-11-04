@@ -29,16 +29,6 @@
 
 #include "cpprest/details/basic_types.h"
 
-#if __APPLE__
-     #include "TargetConditionals.h"
-#endif
-
-// CPPREST_EXCLUDE_COMPRESSION is set if we're on a platform that supports compression but we want to explicitly disable it.
-// CPPREST_EXCLUDE_WEBSOCKETS is a flag that now essentially means "no external dependencies". TODO: Rename
-#if ((defined(_WIN32) && (!defined(WINAPI_FAMILY_SYSTEM) || (WINAPI_PARTITION_DESKTOP == 1))) || defined(TARGET_OS_MAC)) && !defined(CPPREST_EXCLUDE_WEBSOCKETS) && !defined(CPPREST_EXCLUDE_COMPRESSION)
-#define CPPREST_HTTP_COMPRESSION
-#endif
-
 #include "cpprest/http_msg.h"
 
 namespace web { namespace http
@@ -102,14 +92,7 @@ namespace details
                 return compression_algorithm::invalid;
             }
 
-            static bool is_supported()
-            {
-#if !defined(CPPREST_HTTP_COMPRESSION) 
-                return false;
-#else
-                return true;
-#endif
-            }
+            _ASYNCRTIMP static bool __cdecl is_supported();
 
             _ASYNCRTIMP stream_decompressor(compression_algorithm alg);
 
@@ -128,14 +111,7 @@ namespace details
         {
         public:
 
-            static bool is_supported()
-            {
-#if !defined(CPPREST_HTTP_COMPRESSION) 
-                return false;
-#else
-                return true;
-#endif
-            }
+            _ASYNCRTIMP static bool __cdecl is_supported();
 
             _ASYNCRTIMP stream_compressor(compression_algorithm alg);
 
