@@ -75,7 +75,7 @@ elseif(ANDROID)
   option(BUILD_SHARED_LIBS "Build shared Libraries." OFF)
   set(BUILD_SAMPLES OFF)
 elseif(UNIX) # This includes OSX
-  find_package(Boost 1.54 REQUIRED COMPONENTS random chrono system thread regex filesystem)
+  find_package(Boost REQUIRED COMPONENTS random chrono system thread regex filesystem)
   find_package(Threads REQUIRED)
   if(APPLE AND NOT OPENSSL_ROOT_DIR)
     # Prefer a homebrew version of OpenSSL over the one in /usr/lib
@@ -88,6 +88,18 @@ elseif(UNIX) # This includes OSX
   find_package(OpenSSL 1.0.0 REQUIRED)
 
   option(BUILD_SHARED_LIBS "Build shared Libraries." ON)
+
+  # Prefer the homebrew version of zlib
+  find_library(ZLIB_LIBRARIES NAMES libz.a PATHS /usr/local/Cellar/zlib/1.2.8/lib NO_DEFAULT_PATH)
+  find_path(ZLIB_INCLUDE_DIRS NAMES zlib.h PATHS /usr/local/Cellar/zlib/1.2.8/include NO_DEFAULT_PATH)
+
+  if(NOT ZLIB_LIBRARIES OR NOT ZLIB_INCLUDE_DIRS)
+    find_package(ZLIB)
+      if(NOT ZLIB_FOUND)
+        option(CPPREST_EXCLUDE_COMPRESSION "Exclude compression functionality." ON)
+      endif()
+  endif()
+
   option(BUILD_SAMPLES "Build samples." ON)
   option(CASA_INSTALL_HEADERS "Install header files." ON)
   if(CASA_INSTALL_HEADERS)
@@ -198,6 +210,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/Binaries)
 
 # These settings can be used by the test targets
 set(Casablanca_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include)
+set(Casablanca_SYSTEM_INCLUDE_DIRS)
 if (NOT CPPREST_EXCLUDE_WEBSOCKETS)
   find_path(WEBSOCKETPP_CONFIG websocketpp-config.cmake
                         HINTS /usr/lib/cmake/websocketpp)
@@ -207,15 +220,15 @@ if (NOT CPPREST_EXCLUDE_WEBSOCKETS)
     include(${WEBSOCKETPP_CONFIG}/websocketpp-config.cmake)
     include(${WEBSOCKETPP_CONFIG}/websocketpp-configVersion.cmake)
     message("-- Found websocketpp version " ${PACKAGE_VERSION} " on system")
-    set(Casablanca_SYSTEM_INCLUDE_DIRS ${Boost_INCLUDE_DIR} ${OPENSSL_INCLUDE_DIR} ${WEBSOCKETPP_INCLUDE_DIR})
+    list(APPEND Casablanca_SYSTEM_INCLUDE_DIRS ${Boost_INCLUDE_DIR} ${OPENSSL_INCLUDE_DIR} ${WEBSOCKETPP_INCLUDE_DIR})
   else(WEBSOCKETPP_CONFIG AND WEBSOCKETPP_CONFIG_VERSION)
-    set(Casablanca_SYSTEM_INCLUDE_DIRS ${Boost_INCLUDE_DIR} ${OPENSSL_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/libs/websocketpp)
+    list(APPEND Casablanca_SYSTEM_INCLUDE_DIRS ${Boost_INCLUDE_DIR} ${OPENSSL_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/libs/websocketpp)
     message("-- websocketpp not found, using the embedded version")
   endif(WEBSOCKETPP_CONFIG AND WEBSOCKETPP_CONFIG_VERSION)
 endif()
 
 set(Casablanca_LIBRARY cpprest)
-set(Casablanca_LIBRARIES cpprest ${Boost_LIBRARIES})
+set(Casablanca_LIBRARIES cpprest ${Boost_LIBRARIES} ${ZLIB_LIBRARIES})
 set(Casablanca_LIBRARIES ${Casablanca_LIBRARIES} PARENT_SCOPE)
 
 # Everything in the project needs access to the casablanca include directories

@@ -16,6 +16,7 @@
 #include <winhttp.h>
 #endif
 #include "cpprest/rawptrstream.h"
+#include "cpprest/details/http_helpers.h"
 #include "os_utilities.h"
 #include <stdexcept>
 
@@ -49,6 +50,32 @@ TEST_FIXTURE(uri_address, outside_cnn_dot_com)
         VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
         response.content_ready().wait();
     });
+}
+
+TEST_FIXTURE(uri_address, outside_wikipedia_compressed_http_response)
+{
+    if (web::http::details::compression::stream_decompressor::is_supported() == false)
+    {
+        // On platforms which do not support compressed http, nothing to check.
+        return;
+    }
+    http_client_config config;
+    config.set_request_compressed_response(true);
+
+    http_client client(U("https://en.wikipedia.org/wiki/HTTP_compression"), config);
+    http_request httpRequest(methods::GET);
+
+    http_response response = client.request(httpRequest).get();
+    VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
+    response.content_ready().wait();
+
+    auto s = response.extract_utf8string().get();
+    VERIFY_IS_FALSE(s.empty());
+    
+    utility::string_t encoding;
+    VERIFY_IS_TRUE(response.headers().match(web::http::header_names::content_encoding, encoding));
+
+    VERIFY_ARE_EQUAL(encoding, U("gzip"));
 }
 
 TEST_FIXTURE(uri_address, outside_google_dot_com)
