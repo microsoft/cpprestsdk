@@ -204,6 +204,21 @@ if (NOT CPPREST_EXCLUDE_WEBSOCKETS)
     list(APPEND Casablanca_SYSTEM_INCLUDE_DIRS ${Boost_INCLUDE_DIR} ${OPENSSL_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/libs/websocketpp)
     message("-- websocketpp not found, using the embedded version")
   endif(WEBSOCKETPP_CONFIG AND WEBSOCKETPP_CONFIG_VERSION)
+
+  INCLUDE(CheckCXXSourceCompiles)
+  set(CMAKE_REQUIRED_INCLUDES "${OPENSSL_INCLUDE_DIR}")
+  set(CMAKE_REQUIRED_LIBRARIES "${OPENSSL_LIBRARIES}")
+  CHECK_CXX_SOURCE_COMPILES("
+    #include <openssl/ssl.h>
+    int main()
+    {
+    ::SSL_COMP_free_compression_methods();
+    }
+  " _SSL_LEAK_SUPPRESS_AVAILABLE)
+  if (NOT _SSL_LEAK_SUPPRESS_AVAILABLE)
+    # libressl doesn't ship with the cleanup method being used in ws_client_wspp
+    add_definitions(-D_NO_SSL_LEAK_SUPPRESS)
+  endif()
 endif()
 
 set(Casablanca_LIBRARY cpprest)
