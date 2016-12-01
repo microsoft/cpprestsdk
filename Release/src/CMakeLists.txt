@@ -144,10 +144,11 @@ elseif(ANDROID)
 else()
   set_target_properties(cpprest PROPERTIES
     SOVERSION ${CPPREST_VERSION_MAJOR}.${CPPREST_VERSION_MINOR})
-
-  install(
-    TARGETS cpprest
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-    )
 endif()
+
+install(
+  TARGETS cpprest
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+  )
