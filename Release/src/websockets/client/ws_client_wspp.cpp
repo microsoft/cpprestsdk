@@ -57,7 +57,7 @@
 // but this function is unaccessible from the application code as OpenSSL is
 // statically linked into the C++ REST SDK DLL. So, just to be nice, call it
 // here ourselves -- even if the real problem is in ASIO (up to v1.60.0).
-#if defined(_WIN32) && !defined(NDEBUG)
+#if defined(_WIN32) && !defined(NDEBUG) && !defined(CPPREST_NO_SSL_LEAK_SUPPRESS)
 
 #include <openssl/ssl.h>
 static struct ASIO_SSL_memory_leak_suppress
