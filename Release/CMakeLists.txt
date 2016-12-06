@@ -217,7 +217,7 @@ if (NOT CPPREST_EXCLUDE_WEBSOCKETS)
   " _SSL_LEAK_SUPPRESS_AVAILABLE)
   if (NOT _SSL_LEAK_SUPPRESS_AVAILABLE)
     # libressl doesn't ship with the cleanup method being used in ws_client_wspp
-    add_definitions(-D_NO_SSL_LEAK_SUPPRESS)
+    add_definitions(-DCPPREST_NO_SSL_LEAK_SUPPRESS)
   endif()
 endif()
 
