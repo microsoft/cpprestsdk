@@ -58,6 +58,20 @@ struct _triple_byte
     unsigned char _2_2 : 2;
 };
 
+struct _double_byte
+{
+    unsigned char _1_1 : 2;
+    unsigned char _0   : 6;
+    unsigned char _2_1 : 4;
+    unsigned char _1_2 : 4;
+};
+
+struct _single_byte
+{
+    unsigned char _1_1 : 2;
+    unsigned char _0   : 6;
+};
+
 //
 // A note on the implementation of BASE64 encoding and decoding:
 //
@@ -227,7 +241,7 @@ utility::string_t _to_base64(const unsigned char *ptr, size_t size)
     {
         case 1:
         {
-            const _triple_byte* record = reinterpret_cast<const _triple_byte*>(ptr);
+            const _single_byte* record = reinterpret_cast<const _single_byte*>(ptr);
             unsigned char idx0 = record->_0;
             unsigned char idx1 = (record->_1_1 << 4);
             result.push_back(char_t(_base64_enctbl[idx0]));
@@ -238,7 +252,7 @@ utility::string_t _to_base64(const unsigned char *ptr, size_t size)
         }
         case 2:
         {
-            const _triple_byte* record = reinterpret_cast<const _triple_byte*>(ptr);
+            const _double_byte* record = reinterpret_cast<const _double_byte*>(ptr);
             unsigned char idx0 = record->_0;
             unsigned char idx1 = (record->_1_1 << 4) | record->_1_2;
             unsigned char idx2 = (record->_2_1 << 2);
