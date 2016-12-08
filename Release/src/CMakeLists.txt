@@ -1,6 +1,6 @@
 include_directories(../include pch)
 if (NOT CPPREST_EXCLUDE_WEBSOCKETS OR NOT WIN32)
-  include_directories(SYSTEM ${Boost_INCLUDE_DIR} ${OPENSSL_INCLUDE_DIR})
+  include_directories(SYSTEM ${Boost_INCLUDE_DIR} ${OPENSSL_INCLUDE_DIR} ${ZLIB_INCLUDE_DIRS})
 endif()
 
 add_definitions(${WARNINGS})
