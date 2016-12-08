@@ -44,7 +44,7 @@ TEST(numbers)
 // Test both positive and negative number
 void test_int64(int64_t number)
 {
-    stringstream_t ss;
+    std::stringstream ss;
     ss << number;
     json::value num = json::value::parse(ss);
     VERIFY_ARE_EQUAL(number, num.as_number().to_int64());
@@ -248,7 +248,7 @@ TEST(int_double_limits)
     oracleStream.precision(std::numeric_limits<uint64_t>::digits10 + 2);
     oracleStream << std::numeric_limits<uint64_t>::max();
     json::value iMax(std::numeric_limits<uint64_t>::max());
-    VERIFY_ARE_EQUAL(oracleStream.str(), iMax.serialize());
+    VERIFY_ARE_EQUAL(utility::conversions::to_utf8string(oracleStream.str()), iMax.serialize());
     iMax.serialize(stream);
     VERIFY_ARE_EQUAL(oracleStream.str(), stream.str());
 
@@ -258,7 +258,7 @@ TEST(int_double_limits)
     oracleStream.clear();
     oracleStream << std::numeric_limits<int64_t>::min();
     json::value iMin(std::numeric_limits<int64_t>::min());
-    VERIFY_ARE_EQUAL(oracleStream.str(), iMin.serialize());
+    VERIFY_ARE_EQUAL(utility::conversions::to_utf8string(oracleStream.str()), iMin.serialize());
     iMin.serialize(stream);
     VERIFY_ARE_EQUAL(oracleStream.str(), stream.str());
 
@@ -268,7 +268,7 @@ TEST(int_double_limits)
     oracleStream.precision(std::numeric_limits<double>::digits10 + 2);
     oracleStream << std::numeric_limits<double>::max();
     json::value dMax(std::numeric_limits<double>::max());
-    VERIFY_ARE_EQUAL(oracleStream.str(), dMax.serialize());
+    VERIFY_ARE_EQUAL(utility::conversions::to_utf8string(oracleStream.str()), dMax.serialize());
     dMax.serialize(stream);
     VERIFY_ARE_EQUAL(oracleStream.str(), stream.str());
 
@@ -277,7 +277,7 @@ TEST(int_double_limits)
     oracleStream.str(U(""));
     oracleStream << std::numeric_limits<double>::min();
     json::value dMin(std::numeric_limits<double>::min());
-    VERIFY_ARE_EQUAL(oracleStream.str(), dMin.serialize());
+    VERIFY_ARE_EQUAL(utility::conversions::to_utf8string(oracleStream.str()), dMin.serialize());
     dMin.serialize(stream);
     VERIFY_ARE_EQUAL(oracleStream.str(), stream.str());
 }

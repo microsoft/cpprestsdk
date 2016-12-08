@@ -165,12 +165,15 @@ namespace conversions
     /// Decode the given base64 string to a byte array
     /// </summary>
     _ASYNCRTIMP std::vector<unsigned char> __cdecl from_base64(const utility::string_t& str);
+}
 
+namespace details
+{
     template <typename Source>
-    utility::string_t print_string(const Source &val, const std::locale &loc)
+    utility::string_t print_string(const Source &val)
     {
         utility::ostringstream_t oss;
-        oss.imbue(loc);
+        oss.imbue(std::locale::classic());
         oss << val;
         if (oss.bad())
         {
@@ -179,73 +182,40 @@ namespace conversions
         return oss.str();
     }
 
-    template <typename Source>
-    utility::string_t print_string(const Source &val)
-    {
-        return print_string(val, std::locale());
-    }
 
-    inline utility::string_t print_string(const utility::string_t &val)
+    inline const utility::string_t& print_string(const utility::string_t &val)
     {
         return val;
     }
 
     template <typename Target>
-    Target scan_string(const utility::string_t &str, const std::locale &loc)
+    Target scan_string(const std::string &str)
     {
         Target t;
-        utility::istringstream_t iss(str);
-        iss.imbue(loc);
+        std::istringstream iss(str);
+        iss.imbue(std::locale::classic());
         iss >> t;
-        if (iss.bad())
+        if (iss.bad() || iss.fail())
         {
             throw std::bad_cast();
         }
         return t;
     }
-
+#if !defined(_LIBCPP_VERSION)
     template <typename Target>
-    Target scan_string(const utility::string_t &str)
+    Target scan_string(const utf16string &str)
     {
-        return scan_string<Target>(str, std::locale());
+        Target t;
+        utf16istringstream iss(str);
+        iss.imbue(std::locale::classic());
+        iss >> t;
+        if (iss.bad() || iss.fail())
+        {
+            throw std::bad_cast();
+        }
+        return t;
     }
-
-    inline utility::string_t scan_string(const utility::string_t &str)
-    {
-        return str;
-    }
-}
-
-namespace details
-{
-    /// <summary>
-    /// Cross platform RAII container for setting thread local locale.
-    /// </summary>
-    class scoped_c_thread_locale
-    {
-    public:
-        _ASYNCRTIMP scoped_c_thread_locale();
-        _ASYNCRTIMP ~scoped_c_thread_locale();
-
-#if !defined(ANDROID) && !defined(__ANDROID__) // CodePlex 269
-#ifdef _WIN32
-        typedef _locale_t xplat_locale;
-#else
-        typedef locale_t xplat_locale;
 #endif
-
-        static _ASYNCRTIMP xplat_locale __cdecl c_locale();
-#endif
-    private:
-#ifdef _WIN32
-        std::string m_prevLocale;
-        int m_prevThreadSetting;
-#elif !(defined(ANDROID) || defined(__ANDROID__))
-        locale_t m_prevLocale;
-#endif
-        scoped_c_thread_locale(const scoped_c_thread_locale &);
-        scoped_c_thread_locale & operator=(const scoped_c_thread_locale &);
-    };
 
     /// <summary>
     /// Our own implementation of alpha numeric instead of std::isalnum to avoid

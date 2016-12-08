@@ -265,7 +265,7 @@ bool inner_parse(
                 //skip the colon
                 port_begin++;
 
-                *port = utility::conversions::scan_string<int>(utility::string_t(port_begin, authority_end), std::locale::classic());
+                *port = utility::details::scan_string<int>(utility::string_t(port_begin, authority_end));
             }
             else
             {

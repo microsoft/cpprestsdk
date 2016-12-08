@@ -130,8 +130,8 @@ TEST(whitespace_array)
         input.append(2, ch);
         json::value val = json::value::parse(input);
         VERIFY_IS_TRUE(val.is_array());
-        VERIFY_ARE_EQUAL(U("1"), val[0].serialize());
-        VERIFY_ARE_EQUAL(U("2"), val[1].serialize());
+        VERIFY_ARE_EQUAL("1", val[0].serialize());
+        VERIFY_ARE_EQUAL("2", val[1].serialize());
     }
 }
 
@@ -154,59 +154,66 @@ TEST(whitespace_object)
         input.append(2, ch);
         json::value val = json::value::parse(input);
         VERIFY_IS_TRUE(val.is_object());
-        VERIFY_ARE_EQUAL(U("2"), val[U("1"]).serialize());
+        VERIFY_ARE_EQUAL("2", val[U("1"]).serialize());
     }
 }
 
 TEST(string_t)
 {
     json::value str = json::value::parse(U("\"\\\"\""));
-    VERIFY_ARE_EQUAL(U("\""), str.as_string());
+    VERIFY_ARE_EQUAL("\"", str.as_string());
 
     str = json::value::parse(U("\"\""));
-    VERIFY_ARE_EQUAL(U(""), str.as_string());
+    VERIFY_ARE_EQUAL("", str.as_string());
 
     str = json::value::parse(U("\"\\\"ds\""));
-    VERIFY_ARE_EQUAL(U("\"ds"), str.as_string());
+    VERIFY_ARE_EQUAL("\"ds", str.as_string());
 
     str = json::value::parse(U("\"\\\"\\\"\""));
-    VERIFY_ARE_EQUAL(U("\"\""), str.as_string());
+    VERIFY_ARE_EQUAL("\"\"", str.as_string());
 
     // two character escapes
     str = json::value::parse(U("\"\\\\\""));
-    VERIFY_ARE_EQUAL(U("\\"), str.as_string());
+    VERIFY_ARE_EQUAL("\\", str.as_string());
 
     str = json::value::parse(U("\"\\/\""));
-    VERIFY_ARE_EQUAL(U("/"), str.as_string());
+    VERIFY_ARE_EQUAL("/", str.as_string());
 
     str = json::value::parse(U("\"\\b\""));
-    VERIFY_ARE_EQUAL(U("\b"), str.as_string());
+    VERIFY_ARE_EQUAL("\b", str.as_string());
 
     str = json::value::parse(U("\"\\f\""));
-    VERIFY_ARE_EQUAL(U("\f"), str.as_string());
+    VERIFY_ARE_EQUAL("\f", str.as_string());
 
     str = json::value::parse(U("\"\\n\""));
-    VERIFY_ARE_EQUAL(U("\n"), str.as_string());
+    VERIFY_ARE_EQUAL("\n", str.as_string());
 
     str = json::value::parse(U("\"\\r\""));
-    VERIFY_ARE_EQUAL(U("\r"), str.as_string());
+    VERIFY_ARE_EQUAL("\r", str.as_string());
 
     str = json::value::parse(U("\"\\t\""));
-    VERIFY_ARE_EQUAL(U("\t"), str.as_string());
+    VERIFY_ARE_EQUAL("\t", str.as_string());
 }
 
 TEST(escaped_unicode_string)
 {
     auto str = json::value::parse(U("\"\\u0041\""));
-    VERIFY_ARE_EQUAL(U("A"), str.as_string());
+    VERIFY_ARE_EQUAL("A", str.as_string());
 
     str = json::value::parse(U("\"\\u004B\""));
-    VERIFY_ARE_EQUAL(U("K"), str.as_string());
+    VERIFY_ARE_EQUAL("K", str.as_string());
 
     str = json::value::parse(U("\"\\u20AC\""));
     // Euro sign as a hexidecmial UTF-8
-    const auto euro = to_string_t("\xE2\x82\xAC");
+    const auto euro = "\xE2\x82\xAC";
     VERIFY_ARE_EQUAL(euro, str.as_string());
+
+    // Test for surrogate pairs of unicode escapes
+    str = web::json::value::parse(U("\"\\ud83c\\uddee\""));
+    VERIFY_ARE_EQUAL("\xF0\x9F\x87\xAE", str.as_string());
+
+    // Should error if a unicode escape is missing its lower surrogate
+    VERIFY_PARSING_THROW(json::value::parse(U("\"\\ud83c\"")));
 
     VERIFY_PARSING_THROW(json::value::parse(U("\"\\u0klB\"")));
 }
@@ -256,20 +263,22 @@ TEST(escaping_control_characters)
             expectedStr = U("\"\\\"\"");
         }
 
+        auto utf8_expectedStr = utility::conversions::to_utf8string(expectedStr);
+
         // Try constructing a json string value directly.
         ::utility::string_t schar;
         schar.push_back(static_cast<::utility::string_t::value_type>(i));
         const auto &sv = json::value::string(schar);
-        VERIFY_ARE_EQUAL(expectedStr, sv.serialize());
+        VERIFY_ARE_EQUAL(utf8_expectedStr, sv.serialize());
 
         // Try parsing a string
         const auto &v = json::value::parse(str);
         VERIFY_IS_TRUE(v.is_string());
-        VERIFY_ARE_EQUAL(expectedStr, v.serialize());
+        VERIFY_ARE_EQUAL(utf8_expectedStr, v.serialize());
 
         // Try parsing a stringstream.
         const auto &ssv = json::value::parse(ss);
-        VERIFY_ARE_EQUAL(expectedStr, ssv.serialize());
+        VERIFY_ARE_EQUAL(utf8_expectedStr, ssv.serialize());
     }
 }
 
@@ -467,7 +476,7 @@ TEST(bug_416116)
 #pragma warning( push )
 #pragma warning( disable : 4566 )
 #endif
-    VERIFY_ARE_EQUAL(s, U("\"δοκιμή\""));
+    VERIFY_ARE_EQUAL(utility::conversions::to_string_t(s), U("\"δοκιμή\""));
 #if defined(_MSC_VER)
 #pragma warning( pop )
 #endif
@@ -481,11 +490,11 @@ TEST(byte_ptr_parsing_array)
     json::value v = json::value::parse(ss);
     auto s2 = v.serialize();
 
-    VERIFY_ARE_EQUAL(s2, U("[\"test1\",true]"));
+    VERIFY_ARE_EQUAL(s2, "[\"test1\",true]");
 
     std::stringstream os;
     v.serialize(os);
-    VERIFY_ARE_EQUAL(s2, to_string_t(os.str()));
+    VERIFY_ARE_EQUAL(s2, os.str());
 }
 
 TEST(byte_ptr_parsing_object)
@@ -496,11 +505,11 @@ TEST(byte_ptr_parsing_object)
     json::value v = json::value::parse(ss);
     auto s2 = v.serialize();
 
-    VERIFY_ARE_EQUAL(s2, U("{\"test1\":true}"));
+    VERIFY_ARE_EQUAL(s2, "{\"test1\":true}");
 
     std::stringstream os;
     v.serialize(os);
-    VERIFY_ARE_EQUAL(s2, to_string_t(os.str()));
+    VERIFY_ARE_EQUAL(s2, os.str());
 }
 
 TEST(Japanese)
@@ -513,11 +522,11 @@ TEST(Japanese)
     json::value v = json::value::parse(ss);
     auto s2 = v.serialize();
 
-    VERIFY_ARE_EQUAL(s2, ws);
+    VERIFY_ARE_EQUAL(s2, s);
 
     std::stringstream os;
     v.serialize(os);
-    VERIFY_ARE_EQUAL(s2, to_string_t(os.str()));
+    VERIFY_ARE_EQUAL(s2, os.str());
 }
 
 TEST(Russian)
@@ -526,16 +535,16 @@ TEST(Russian)
     json::value v1 = json::value::parse(ws);
     auto s2 = v1.serialize();
 
-    VERIFY_ARE_EQUAL(s2, ws);
-
     std::string s = to_utf8string(ws);
+
+    VERIFY_ARE_EQUAL(s2, s);
 
     std::stringstream ss;
     ss << s;
     json::value v2 = json::value::parse(ss);
     auto s3 = v2.serialize();
 
-    VERIFY_ARE_EQUAL(s3, ws);
+    VERIFY_ARE_EQUAL(s3, s);
 }
 
 utility::string_t make_deep_json_string(size_t depth)
@@ -572,8 +581,8 @@ TEST(deeply_nested)
     VERIFY_PARSING_THROW(json::value::parse(strBad));
 }
 
- static bool compare_pairs(const std::pair<utility::string_t, json::value>& p1,
-                           const std::pair<utility::string_t, json::value>& p2)
+ static bool compare_pairs(const std::pair<std::string, json::value>& p1,
+                           const std::pair<std::string, json::value>& p2)
  {
    return p1.first < p2.first;
  }
@@ -611,9 +620,9 @@ TEST(keep_order_while_parsing)
 
     // Make sure collection stays unsorted:
     auto b = obj.begin();
-    VERIFY_ARE_EQUAL(b[0].first, U("k"));
-    VERIFY_ARE_EQUAL(b[1].first, U("j"));
-    VERIFY_ARE_EQUAL(b[2].first, U("i"));
+    VERIFY_ARE_EQUAL(b[0].first, "k");
+    VERIFY_ARE_EQUAL(b[1].first, "j");
+    VERIFY_ARE_EQUAL(b[2].first, "i");
 
     // Make sure lookup still works:
     auto val_i = obj[U("i")];
@@ -626,7 +635,7 @@ TEST(keep_order_while_parsing)
     // can be looked up
     obj[U("a")] = 4;
     b = obj.begin();
-    VERIFY_ARE_EQUAL(b[3].first, U("a"));
+    VERIFY_ARE_EQUAL(b[3].first, "a");
     VERIFY_ARE_EQUAL(obj[U("a")].as_integer(), 4);
 }
 
@@ -643,7 +652,7 @@ TEST(non_default_locale, "Ignore:Android", "Locale unsupported on Android")
     if(setlocale(LC_ALL, changedLocale.c_str()) != nullptr)
     {
         // string serialize
-        utility::string_t str(U("[true,false,-1.55,5,null,{\"abc\":5555}]"));
+        std::string str("[true,false,-1.125,5,null,{\"abc\":5555}]");
         json::value v = json::value::parse(str);
         VERIFY_ARE_EQUAL(changedLocale, setlocale(LC_ALL, nullptr));
         VERIFY_ARE_EQUAL(str, v.serialize());
@@ -653,18 +662,20 @@ TEST(non_default_locale, "Ignore:Android", "Locale unsupported on Android")
         setlocale(LC_NUMERIC, changedLocale.c_str());
     
         // cpprestsdk stream serialize
-        utility::stringstream_t stream;
+#if !defined(_LIBCPP_VERSION)
+        utf16stringstream stream;
         stream << v;
-        utility::string_t serializedStr;
+        utf16string serializedStr;
         stream >> serializedStr;
-        VERIFY_ARE_EQUAL(str, serializedStr);
+        VERIFY_ARE_EQUAL(utility::conversions::to_utf16string(str), serializedStr);
+#endif
 
         // std stream serialize
         std::stringstream stdStream;
         v.serialize(stdStream);
         std::string stdStr;
         stdStream >> stdStr;
-        VERIFY_ARE_EQUAL(str, utility::conversions::to_string_t(stdStr));
+        VERIFY_ARE_EQUAL(str, stdStr);
 
         setlocale(LC_ALL, originalLocale.c_str());
     }

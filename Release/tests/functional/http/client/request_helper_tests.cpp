@@ -159,7 +159,7 @@ TEST_FIXTURE(uri_address, json_bodies)
     json::value bool_value = json::value::boolean(true);
     p_server->next_request().then([&](test_request *p_request)
     {
-        http_asserts::assert_test_request_equals(p_request, methods::PUT, U("/"), U("application/json"), bool_value.serialize());
+        http_asserts::assert_test_request_equals(p_request, methods::PUT, U("/"), U("application/json"), U("true"));
         p_request->reply(200);
     });
     http_asserts::assert_response_equals(client.request(methods::PUT, U("/"), bool_value).get(), status_codes::OK);
@@ -168,7 +168,7 @@ TEST_FIXTURE(uri_address, json_bodies)
     json::value null_value = json::value::null();
     p_server->next_request().then([&](test_request *p_request)
     {
-        http_asserts::assert_test_request_equals(p_request, methods::PUT, U("/"), U("application/json"), null_value.serialize());
+        http_asserts::assert_test_request_equals(p_request, methods::PUT, U("/"), U("application/json"), U("null"));
         p_request->reply(200);
     });
     http_asserts::assert_response_equals(client.request(methods::PUT, U(""), null_value).get(), status_codes::OK);

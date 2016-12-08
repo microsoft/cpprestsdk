@@ -150,25 +150,25 @@ struct BJHand
         auto iState = object.find(STATE);
         if (iState == object.end())
         {
-            throw web::json::json_exception(U("STATE key not found"));
+            throw web::json::json_exception("STATE key not found");
         }
         res.state     = (BJHandState)iState->second.as_integer();
         auto iBet = object.find(BET);
         if (iBet == object.end())
         {
-            throw web::json::json_exception(U("BET key not found"));
+            throw web::json::json_exception("BET key not found");
         }
         res.bet = iBet->second.as_double();
         auto iInsurance = object.find(INSURANCE);
         if (iInsurance == object.end())
         {
-            throw web::json::json_exception(U("INSURANCE key not found"));
+            throw web::json::json_exception("INSURANCE key not found");
         }
         res.insurance = iInsurance->second.as_double();
         auto iResult = object.find(RESULT);
         if (iResult == object.end())
         {
-            throw web::json::json_exception(U("RESULT key not found"));
+            throw web::json::json_exception("RESULT key not found");
         }
         res.result = (BJHandResult)object.find(RESULT)->second.as_integer();
         return res;
@@ -222,23 +222,23 @@ struct Player
         auto iName = object.find(NAME);
         if (iName == object.end())
         {
-            throw web::json::json_exception(U("NAME key not found"));
+            throw web::json::json_exception("NAME key not found");
         }
         const web::json::value &name = iName->second;
         auto iBalance = object.find(BALANCE);
         if (iBalance == object.end())
         {
-            throw web::json::json_exception(U("BALANCE key not found"));
+            throw web::json::json_exception("BALANCE key not found");
         }
         const web::json::value &balance = iBalance->second;
         auto iHand = object.find(HAND);
         if (iHand == object.end())
         {
-            throw web::json::json_exception(U("HAND key not found"));
+            throw web::json::json_exception("HAND key not found");
         }
         const web::json::value &hand = iHand->second;
 
-        result.Name = name.as_string();
+        result.Name = utility::conversions::to_string_t(name.as_string());
         result.Balance = balance.as_double();
         result.Hand = BJHand::FromJSON(hand.as_object());
         return result;
@@ -269,13 +269,13 @@ struct BJTable
         auto iID = object.find(ID);
         if (iID == object.end())
         {
-            throw web::json::json_exception(U("ID key not found"));
+            throw web::json::json_exception("ID key not found");
         }
         result.Id = (int)iID->second.as_double();
         auto iCapacity = object.find(CAPACITY);
         if (iCapacity == object.end())
         {
-            throw web::json::json_exception(U("CAPACITY key not found"));
+            throw web::json::json_exception("CAPACITY key not found");
         }
         result.Capacity = (size_t)iCapacity->second.as_double();
 
@@ -283,7 +283,7 @@ struct BJTable
         auto iPlayers = object.find(PLAYERS);
         if (iPlayers == object.end())
         {
-            throw web::json::json_exception(U("PLAYTERS key not found"));
+            throw web::json::json_exception("PLAYTERS key not found");
         }
         web::json::value players = iPlayers->second;
         int i = 0;

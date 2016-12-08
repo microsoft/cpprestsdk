@@ -52,15 +52,15 @@ TEST(objects_constructed)
         switch(count)
         {
         case 0:
-            VERIFY_ARE_EQUAL(U("a"), key);
+            VERIFY_ARE_EQUAL("a", key);
             VERIFY_IS_TRUE(value.is_number());
             break;
         case 1:
-            VERIFY_ARE_EQUAL(U("b"), key);
+            VERIFY_ARE_EQUAL("b", key);
             VERIFY_IS_TRUE(value.is_boolean());
             break;
         case 2:
-            VERIFY_ARE_EQUAL(U("c"), key);
+            VERIFY_ARE_EQUAL("c", key);
             VERIFY_IS_TRUE(value.is_boolean());
             break;
         }
@@ -86,17 +86,17 @@ TEST(objects_parsed)
             VERIFY_IS_TRUE(value.is_null());
             break;
         case 0:
-            VERIFY_ARE_EQUAL(U("a"), key);
+            VERIFY_ARE_EQUAL("a", key);
             VERIFY_IS_TRUE(value.is_number());
             VERIFY_ARE_EQUAL(44, value.as_integer());
             break;
         case 1:
-            VERIFY_ARE_EQUAL(U("b"), key);
+            VERIFY_ARE_EQUAL("b", key);
             VERIFY_IS_TRUE(value.is_boolean());
             VERIFY_IS_TRUE(value.as_bool());
             break;
         case 2:
-            VERIFY_ARE_EQUAL(U("c"), key);
+            VERIFY_ARE_EQUAL("c", key);
             VERIFY_IS_TRUE(value.is_boolean());
             VERIFY_IS_FALSE(value.as_bool());
             break;
@@ -121,17 +121,17 @@ TEST(objects_reverse)
         switch(count)
         {
         case 2:
-            VERIFY_ARE_EQUAL(U("a"), key);
+            VERIFY_ARE_EQUAL("a", key);
             VERIFY_IS_TRUE(value.is_number());
             VERIFY_ARE_EQUAL(44, value.as_integer());
             break;
         case 1:
-            VERIFY_ARE_EQUAL(U("b"), key);
+            VERIFY_ARE_EQUAL("b", key);
             VERIFY_IS_TRUE(value.is_boolean());
             VERIFY_IS_TRUE(value.as_bool());
             break;
         case 0:
-            VERIFY_ARE_EQUAL(U("c"), key);
+            VERIFY_ARE_EQUAL("c", key);
             VERIFY_IS_TRUE(value.is_boolean());
             VERIFY_IS_FALSE(value.as_bool());
             break;

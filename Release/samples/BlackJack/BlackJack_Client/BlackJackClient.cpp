@@ -113,9 +113,9 @@ void PrintTable(const http_response &response, bool &refresh)
                 bool suppressMoney = iter == players.as_array().begin();
 
                 if ( suppressMoney )
-                    ucout << "'" << name.as_string() << "'" ;
+                    std::cout << "'" << name.as_string() << "'" ;
                 else
-                    ucout << "'" << name.as_string() << "' Balance = $" << bet.as_double() << " ";
+                    std::cout << "'" << name.as_string() << "' Balance = $" << bet.as_double() << " ";
 
                 PrintHand(suppressMoney, BJHand::FromJSON(player[HAND].as_object()));
                 ucout << std::endl;

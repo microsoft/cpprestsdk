@@ -144,13 +144,16 @@ TEST(stream_left_over_chars)
     verify_json_throws(stream);
 }
 
-// Test using Windows only API.
-#ifdef _WIN32
+#if !defined(_LIBCPP_VERSION)
 TEST(wstream_left_over_chars)
 {
-    std::wstringbuf buf;
+    std::basic_stringbuf<utf16char> buf;
+#if defined(_WIN32)
     buf.sputn(L"[false]false", 12);
-    std::wistream stream(&buf);
+#else
+    buf.sputn(u"[false]false", 12);
+#endif
+    utf16istream stream(&buf);
     verify_json_throws(stream);
 }
 #endif
