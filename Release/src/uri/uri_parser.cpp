@@ -240,7 +240,8 @@ bool inner_parse(
         // or by EOS. The authority could be empty ('file:///C:\file_name.txt')
         for (;*p != _XPLATSTR('/') && *p != _XPLATSTR('?') && *p != _XPLATSTR('#') && *p != _XPLATSTR('\0'); p++)
         {
-            // We're NOT currently supporting IPv6, IPvFuture or username/password in authority
+            // We're NOT currently supporting IPvFuture or username/password in authority
+            // IPv6 as the host (i.e. http://[:::::::]) is allowed as valid URI and passed to subsystem for support.
             if (!is_authority_character(*p))
             {
                 return false;
