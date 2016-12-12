@@ -92,7 +92,7 @@ public:
                     (*progress)(message_direction::upload, 0);
                 }
 
-                parse_headers_string(hdrStr, response.headers());
+                web::http::details::parse_headers_string(hdrStr, response.headers());
                 m_request->complete_headers();
             }
             catch (...)
