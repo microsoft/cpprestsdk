@@ -102,7 +102,7 @@ public:
 
         if (m_config.credentials().is_set())
         {
-            auto password = m_config.credentials().decrypt();
+            auto password = m_config.credentials()._internal_decrypt();
             m_msg_websocket->Control->ServerCredential = ref new Windows::Security::Credentials::PasswordCredential("WebSocketClientCredentialResource",
                 Platform::StringReference(m_config.credentials().username().c_str()),
                 Platform::StringReference(password->c_str()));
@@ -155,7 +155,7 @@ public:
         const auto &proxy_cred = proxy.credentials();
         if(proxy_cred.is_set())
         {
-            auto password = proxy_cred.decrypt();
+            auto password = proxy_cred._internal_decrypt();
             m_msg_websocket->Control->ProxyCredential = ref new Windows::Security::Credentials::PasswordCredential("WebSocketClientProxyCredentialResource",
                 Platform::StringReference(proxy_cred.username().c_str()),
                 Platform::StringReference(password->c_str()));

@@ -110,14 +110,7 @@ public:
     /// <returns><c>true</c> if user name and password is set, <c>false</c> otherwise.</returns>
     bool is_set() const { return !m_username.empty(); }
 
-private:
-    friend class http::client::details::winhttp_client;
-    friend class http::client::details::winrt_client;
-	friend class http::client::details::asio_context;
-    friend class websockets::client::details::winrt_callback_client;
-    friend class websockets::client::details::wspp_callback_client;
-
-    details::plaintext_string decrypt() const
+    details::plaintext_string _internal_decrypt() const
     {
         // Encryption APIs not supported on XP
 #if defined(_WIN32) && !defined(CPPREST_TARGET_XP)
@@ -127,6 +120,7 @@ private:
 #endif
     }
 
+private:
     ::utility::string_t m_username;
 
 #if defined(_WIN32) && !defined(CPPREST_TARGET_XP)

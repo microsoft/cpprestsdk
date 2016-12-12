@@ -351,7 +351,7 @@ public:
             {
                 con->set_proxy_basic_auth(
                     utility::conversions::to_utf8string(cred.username()),
-                    utility::conversions::to_utf8string(*cred.decrypt()),
+                    utility::conversions::to_utf8string(*cred._internal_decrypt()),
                     ec);
                 if (ec)
                 {

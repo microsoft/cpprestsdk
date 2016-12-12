@@ -68,6 +68,14 @@ enum class httpclient_errorcode_context
     close
 };
 
+static std::string generate_base64_userpass(const ::web::credentials& creds)
+{
+    auto userpass = creds.username() + U(":") + *creds._internal_decrypt();
+    auto&& u8_userpass = utility::conversions::to_utf8string(userpass);
+    std::vector<unsigned char> credentials_buffer(u8_userpass.begin(), u8_userpass.end());
+    return utility::conversions::to_utf8string(utility::conversions::to_base64(credentials_buffer));
+}
+
 class asio_connection_pool;
 
 class asio_connection
@@ -529,9 +537,7 @@ public:
                 
                 if (status_code != 200)
                 {
-                    utility::stringstream_t err_ss;
-                    err_ss << U("Expected a 200 response from proxy, received: ") << status_code;
-                    m_context->report_error(err_ss.str(), ec, httpclient_errorcode_context::readheader);
+                    m_context->report_error("Expected a 200 response from proxy, received: " + to_string(status_code), ec, httpclient_errorcode_context::readheader);
                     return;
                 }
 
@@ -656,7 +662,7 @@ public:
             }
                 
             // Extra request headers are constructed here.
-            utility::string_t extra_headers;
+            std::string extra_headers;
                 
             // Add header for basic proxy authentication
             if (proxy_type == http_proxy_type::http && ctx->m_http_client->client_config().proxy().credentials().is_set())
@@ -672,12 +678,7 @@ public:
             // Add the header needed to request a compressed response if supported on this platform and it has been specified in the config
             if (web::http::details::compression::stream_decompressor::is_supported() && ctx->m_http_client->client_config().request_compressed_response())
             {
-                utility::string_t accept_encoding_header;
-                accept_encoding_header.append(header_names::accept_encoding);
-                accept_encoding_header.append(": deflate, gzip");
-                accept_encoding_header.append(CRLF);
-
-                extra_headers.append(accept_encoding_header);
+                extra_headers.append("Accept-Encoding: deflate, gzip\r\n");
             }
 
             // Check user specified transfer-encoding.
@@ -692,17 +693,15 @@ public:
                 if (ctx->m_request.body())
                 {
                     ctx->m_needChunked = true;
-                    extra_headers.append(header_names::transfer_encoding);
-                    extra_headers.append(":chunked" + CRLF);
+                    extra_headers.append("Transfer-Encoding:chunked\r\n");
                 }
             }
                 
             if (proxy_type == http_proxy_type::http)
             {
-                extra_headers.append(header_names::cache_control);
-                extra_headers.append(": no-store, no-cache" + CRLF);
-                extra_headers.append(header_names::pragma);
-                extra_headers.append(": no-cache" + CRLF);
+                extra_headers.append(
+                    "Cache-Control: no-store, no-cache\r\n"
+                    "Pragma: no-cache\r\n");
             }
                 
             request_stream << ::web::http::details::flatten_http_headers(ctx->m_request.headers());
@@ -778,38 +777,20 @@ public:
     }
 
 private:
-    utility::string_t generate_basic_auth_header()
+    std::string generate_basic_auth_header()
     {
-        utility::string_t header;
-
-        header.append(header_names::authorization);
-        header.append(": Basic ");
-
-        auto credential_str = web::details::plaintext_string(new ::utility::string_t(m_http_client->client_config().credentials().username()));
-        credential_str->append(":");
-        credential_str->append(*m_http_client->client_config().credentials().decrypt());
-
-        std::vector<unsigned char> credentials_buffer(credential_str->begin(), credential_str->end());
-
-        header.append(utility::conversions::to_base64(credentials_buffer));
+        std::string header;
+        header.append("Authorization: Basic ");
+        header.append(generate_base64_userpass(m_http_client->client_config().credentials()));
         header.append(CRLF);
         return header;
     }
 
-    utility::string_t generate_basic_proxy_auth_header()
+    std::string generate_basic_proxy_auth_header()
     {
-        utility::string_t header;
-        
-        header.append(header_names::proxy_authorization);
-        header.append(": Basic ");
-        
-        auto credential_str = web::details::plaintext_string(new ::utility::string_t(m_http_client->client_config().proxy().credentials().username()));
-        credential_str->append(":");
-        credential_str->append(*m_http_client->client_config().proxy().credentials().decrypt());
-        
-        std::vector<unsigned char> credentials_buffer(credential_str->begin(), credential_str->end());
-        
-        header.append(utility::conversions::to_base64(credentials_buffer));
+        std::string header;
+        header.append("Proxy-Authorization: Basic ");
+        header.append(generate_base64_userpass(m_http_client->client_config().credentials()));
         header.append(CRLF);
         return header;
     }
@@ -1232,9 +1213,7 @@ private:
             }
             else
             {
-                utility::string_t error = U("Unsupported compression algorithm in the Content Encoding header: ");
-                error += content_encoding;
-                report_exception(std::runtime_error(error));
+                report_exception(std::runtime_error("Unsupported compression algorithm in the Content Encoding header: " + utility::conversions::to_utf8string(content_encoding)));
             }
         }
 

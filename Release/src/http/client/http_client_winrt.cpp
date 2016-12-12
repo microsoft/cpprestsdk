@@ -442,13 +442,13 @@ protected:
             if (client_cred.is_set())
             {
                 username = client_cred.username();
-                password_plaintext = client_cred.decrypt();
+                password_plaintext = client_cred._internal_decrypt();
                 password = password_plaintext->c_str();
             }
             if (proxy_cred.is_set())
             {
                 proxy_username = proxy_cred.username();
-                proxy_password_plaintext = proxy_cred.decrypt();
+                proxy_password_plaintext = proxy_cred._internal_decrypt();
                 proxy_password = proxy_password_plaintext->c_str();
             }
 
