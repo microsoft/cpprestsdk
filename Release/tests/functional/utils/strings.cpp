@@ -285,6 +285,14 @@ TEST(latin1_to_utf16)
     }
 }
 
+#if defined(_MSC_VER)
+#pragma warning(disable : 4996)
+#elif defined(__clang__)
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#elif defined(__GNUC__)
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
 TEST(print_string_locale, "Ignore:Android", "Locale unsupported on Android")
 {
     std::locale changedLocale;

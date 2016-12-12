@@ -50,6 +50,10 @@
 
 #endif /* __GNUC__ */
 
+#if defined(_MSC_VER)
+#pragma warning( disable : 4503 )
+#endif
+
 // This is a hack to avoid memory leak reports from the debug MSVC CRT for all
 // programs using the library: ASIO calls SSL_library_init() which calls
 // SSL_COMP_get_compression_methods(), which allocates some heap memory and the
