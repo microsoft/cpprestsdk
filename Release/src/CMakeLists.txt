@@ -16,6 +16,7 @@ set(SOURCES
   http/client/http_client_msg.cpp
   http/client/http_client_impl.h
   http/client/x509_cert_utilities.cpp
+  http/common/internal_http_helpers.h
   http/common/http_helpers.cpp
   http/common/http_msg.cpp
   http/listener/http_listener.cpp

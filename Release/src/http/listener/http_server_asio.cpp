@@ -22,6 +22,7 @@
 #pragma clang diagnostic pop
 #endif
 
+#include "../common/internal_http_helpers.h"
 #ifdef __ANDROID__
 using utility::conversions::details::to_string;
 #else

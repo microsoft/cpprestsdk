@@ -18,6 +18,18 @@
 
 namespace tests { namespace functional { namespace http { namespace utilities {
 
+template<class Char>
+void trim_whitespace(std::basic_string<Char> &str)
+{
+    size_t index;
+    // trim left whitespace
+    for (index = 0; index < str.size() && isspace(str[index]); ++index);
+    str.erase(0, index);
+    // trim right whitespace
+    for (index = str.size(); index > 0 && isspace(str[index - 1]); --index);
+    str.erase(index);
+}
+
 /// <summary>
 /// Helper function to do percent encoding of just the '#' character, when running under WinRT.
 /// The WinRT http client implementation performs percent encoding on the '#'.

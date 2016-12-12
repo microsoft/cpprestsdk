@@ -24,16 +24,6 @@ namespace web { namespace http
 namespace details
 {
 
-    /// <summary>
-    /// Helper function to get the default HTTP reason phrase for a status code.
-    /// </summary>
-    utility::string_t get_default_reason_phrase(status_code code);
-
-    // simple helper functions to trim whitespace.
-    _ASYNCRTIMP void __cdecl trim_whitespace(utility::string_t &str);
-
-    bool validate_method(const utility::string_t& method);
-
     namespace chunked_encoding
     {
         // Transfer-Encoding: chunked support

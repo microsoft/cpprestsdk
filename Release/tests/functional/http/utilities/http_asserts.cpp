@@ -9,7 +9,6 @@
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 #include "stdafx.h"
-#include "cpprest/details/http_helpers.h"
 
 using namespace web; using namespace utility;
 using namespace utility::conversions;
@@ -162,7 +161,7 @@ static std::map<utility::string_t, utility::string_t> parse_headers(utility::ist
         const size_t colon_index = header_line.find(U(":"));
         const utility::string_t header_name = header_line.substr(0, colon_index);
         utility::string_t header_value = header_line.substr(colon_index + 1);
-        web::http::details::trim_whitespace(header_value);
+        tests::functional::http::utilities::trim_whitespace(header_value);
         headers[header_name] = header_value;
 
         char c1 = (char)ss.get(), c2 = (char)ss.get();

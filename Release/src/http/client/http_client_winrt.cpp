@@ -15,6 +15,7 @@
 #include "stdafx.h"
 
 #include "http_client_impl.h"
+#include "../common/internal_http_helpers.h"
 
 #include <Strsafe.h>
 // Important for WP8

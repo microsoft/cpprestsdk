@@ -13,6 +13,7 @@
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 #include "stdafx.h"
+#include "../../http/common/internal_http_helpers.h"
 
 #if !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 

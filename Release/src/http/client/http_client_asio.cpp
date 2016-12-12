@@ -15,6 +15,7 @@
 
 #include "stdafx.h"
 
+#include "../common/internal_http_helpers.h"
 #if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-local-typedef"
