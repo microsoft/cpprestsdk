@@ -40,7 +40,7 @@ namespace details {
 
     _PPLXIMP void linux_scheduler::schedule(TaskProc_t proc, void* param)
     {
-        crossplat::threadpool::shared_instance().schedule(boost::bind(proc, param));
+        crossplat::threadpool::shared_instance().service().post(boost::bind(proc, param));
     }
 
 } // namespace details

@@ -56,18 +56,17 @@ class pplx_dflt_scheduler : public pplx::scheduler_interface
 class pplx_dflt_scheduler : public pplx::scheduler_interface
 {
 
-    crossplat::threadpool m_pool;
+    std::unique_ptr<crossplat::threadpool> m_pool;
 
 
     virtual void schedule(pplx::TaskProc_t proc, void* param)
     {
         pplx::details::atomic_increment(s_flag);
-        m_pool.schedule([=]() -> void { proc(param); });
-
+        m_pool->service().post([=]() -> void { proc(param); });
     }
 
 public:
-    pplx_dflt_scheduler() : m_pool(4) {}
+    pplx_dflt_scheduler() : m_pool(crossplat::threadpool::construct(4)) {}
 };
 #endif
 
