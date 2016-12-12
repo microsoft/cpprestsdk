@@ -66,3 +66,4 @@ Intermediate/
 .vs/
 # Ignore cmake building directories
 build.*/
+docs/
