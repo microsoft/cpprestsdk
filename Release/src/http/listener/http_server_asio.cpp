@@ -221,8 +221,8 @@ void hostport_listener::on_accept(ip::tcp::socket* socket, const boost::system::
     }
     else
     {
+        std::lock_guard<std::mutex> lock(m_connections_lock);
         {
-            pplx::scoped_lock<pplx::extensibility::recursive_lock_t> lock(m_connections_lock);
             m_connections.insert(new connection(std::unique_ptr<tcp::socket>(std::move(socket)), m_p_server, this, m_is_https, m_ssl_context_callback));
             m_all_connections_complete.reset();
 
@@ -785,7 +785,7 @@ void connection::finish_request_response()
 {
     // kill the connection
     {
-        pplx::scoped_lock<pplx::extensibility::recursive_lock_t> lock(m_p_parent->m_connections_lock);
+        std::lock_guard<std::mutex> lock(m_p_parent->m_connections_lock);
         m_p_parent->m_connections.erase(this);
         if (m_p_parent->m_connections.empty())
         {
@@ -801,7 +801,7 @@ void hostport_listener::stop()
 {
     // halt existing connections
     {
-        pplx::scoped_lock<pplx::extensibility::recursive_lock_t> lock(m_connections_lock);
+        std::lock_guard<std::mutex> lock(m_connections_lock);
         m_acceptor.reset();
         for(auto connection : m_connections)
         {
