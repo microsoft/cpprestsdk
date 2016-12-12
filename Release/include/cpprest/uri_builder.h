@@ -226,7 +226,7 @@ namespace web
         uri_builder &append_query(const utility::string_t &name, const T &value, bool do_encoding = true)
         {
             auto encodedName = name;
-            auto encodedValue = ::utility::conversions::print_string(value, std::locale::classic());
+            auto encodedValue = utility::conversions::details::print_string(value);
 
             if (do_encoding)
             {

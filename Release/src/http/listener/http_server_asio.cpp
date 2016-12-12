@@ -22,6 +22,11 @@
 #pragma clang diagnostic pop
 #endif
 
+#ifdef __ANDROID__
+using utility::conversions::details::to_string;
+#else
+using std::to_string;
+#endif
 using namespace boost::asio;
 using namespace boost::asio::ip;
 

@@ -379,7 +379,7 @@ TEST_FIXTURE(uri_address, overwrite_http_header)
     // Test default case of cpprestsdk setting host header as host:port
     auto& host = m_uri.host();
     int port = m_uri.port();
-    utility::string_t expected_default_header = host + U(":") + utility::conversions::print_string(port);
+    utility::string_t expected_default_header = host + U(":") + utility::conversions::details::to_string_t(port);
     http_request default_host_headers_request(methods::GET);
     scoped.server()->next_request().then([&](test_request *p_request) 
     {

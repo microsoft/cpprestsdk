@@ -61,7 +61,7 @@ utility::string_t uri_components::join()
 
         if (m_port > 0)
         {
-            ret.append({ _XPLATSTR(':') }).append(utility::conversions::print_string(m_port, std::locale::classic()));
+            ret.append({ _XPLATSTR(':') }).append(utility::conversions::details::to_string_t(m_port));
         }
     }
 

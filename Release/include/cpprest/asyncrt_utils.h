@@ -201,7 +201,8 @@ namespace conversions
     _ASYNCRTIMP std::vector<unsigned char> __cdecl from_base64(const utility::string_t& str);
 
     template <typename Source>
-    utility::string_t print_string(const Source &val, const std::locale &loc)
+    CASABLANCA_DEPRECATED("All locale-sensitive APIs will be removed in a future update. Use stringstreams directly if locale support is required.")
+    utility::string_t print_string(const Source &val, const std::locale& loc = std::locale())
     {
         utility::ostringstream_t oss;
         oss.imbue(loc);
@@ -213,19 +214,81 @@ namespace conversions
         return oss.str();
     }
 
-    template <typename Source>
-    utility::string_t print_string(const Source &val)
-    {
-        return print_string(val, std::locale());
-    }
-
+    CASABLANCA_DEPRECATED("All locale-sensitive APIs will be removed in a future update. Use stringstreams directly if locale support is required.")
     inline utility::string_t print_string(const utility::string_t &val)
     {
         return val;
     }
 
+    namespace details
+    {
+
+#if defined(__ANDROID__)
+        template<class T>
+        inline std::string to_string(const T& t)
+        {
+            std::ostringstream os;
+            os.imbue(std::locale::classic());
+            os << t;
+            return os.str();
+        }
+#endif
+
+        template<class T>
+        inline utility::string_t to_string_t(T&& t)
+        {
+#ifdef _UTF16_STRINGS
+            using std::to_wstring;
+            return to_wstring(std::forward<T>(t));
+#else
+#if !defined(__ANDROID__)
+            using std::to_string;
+#endif
+            return to_string(std::forward<T>(t));
+#endif
+        }
+
+        template <typename Source>
+        utility::string_t print_string(const Source &val)
+        {
+            utility::ostringstream_t oss;
+            oss.imbue(std::locale::classic());
+            oss << val;
+            if (oss.bad())
+            {
+                throw std::bad_cast();
+            }
+            return oss.str();
+        }
+
+        inline const utility::string_t& print_string(const utility::string_t &val)
+        {
+            return val;
+        }
+
+        template <typename Target>
+        Target scan_string(const utility::string_t &str)
+        {
+            Target t;
+            utility::istringstream_t iss(str);
+            iss.imbue(std::locale::classic());
+            iss >> t;
+            if (iss.bad())
+            {
+                throw std::bad_cast();
+            }
+            return t;
+        }
+
+        inline const utility::string_t& scan_string(const utility::string_t &str)
+        {
+            return str;
+        }
+    }
+
     template <typename Target>
-    Target scan_string(const utility::string_t &str, const std::locale &loc)
+    CASABLANCA_DEPRECATED("All locale-sensitive APIs will be removed in a future update. Use stringstreams directly if locale support is required.")
+    Target scan_string(const utility::string_t &str, const std::locale &loc = std::locale())
     {
         Target t;
         utility::istringstream_t iss(str);
@@ -238,12 +301,7 @@ namespace conversions
         return t;
     }
 
-    template <typename Target>
-    Target scan_string(const utility::string_t &str)
-    {
-        return scan_string<Target>(str, std::locale());
-    }
-
+    CASABLANCA_DEPRECATED("All locale-sensitive APIs will be removed in a future update. Use stringstreams directly if locale support is required.")
     inline utility::string_t scan_string(const utility::string_t &str)
     {
         return str;
