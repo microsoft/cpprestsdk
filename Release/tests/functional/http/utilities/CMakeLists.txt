@@ -15,6 +15,6 @@ add_library(httptest_utilities ${SOURCES})
 target_link_libraries(httptest_utilities
   unittestpp
   common_utilities
+  cpprest
   ${BOOST_LIBRARIES}
-  ${Casablanca_LIBRARIES}
 )

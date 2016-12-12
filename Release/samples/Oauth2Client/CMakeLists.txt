@@ -4,5 +4,5 @@ if (NOT WINDOWS_STORE AND NOT WINDOWS_PHONE)
     stdafx.cpp
     )
 
-  target_link_libraries(oauth2client ${Casablanca_LIBRARIES})
+  target_link_libraries(oauth2client cpprest)
 endif()

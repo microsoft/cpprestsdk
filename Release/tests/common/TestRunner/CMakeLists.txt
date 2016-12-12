@@ -1,7 +1,3 @@
-include_directories(${Casablanca_INCLUDE_DIRS}
-  ../UnitTestpp
-  )
-
 set(TR_SOURCES
   test_runner.cpp
   test_module_loader.cpp
@@ -23,7 +19,6 @@ if(NOT IOS AND NOT ANDROID)
       )
 
     target_link_libraries(test_runner
-      ${Boost_LIBRARIES}
       unittestpp
       ${CMAKE_DL_LIBS}
       )
