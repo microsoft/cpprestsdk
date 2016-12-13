@@ -221,23 +221,19 @@ void connection::start_request_response()
 
 void hostport_listener::on_accept(ip::tcp::socket* socket, const boost::system::error_code& ec)
 {
-    if (ec)
-    {
-        delete socket;
-    }
-    else
+    std::unique_ptr<ip::tcp::socket> usocket(std::move(socket));
+
+    if (!ec)
     {
         std::lock_guard<std::mutex> lock(m_connections_lock);
-        {
-            m_connections.insert(new connection(std::unique_ptr<tcp::socket>(std::move(socket)), m_p_server, this, m_is_https, m_ssl_context_callback));
-            m_all_connections_complete.reset();
+        m_connections.insert(new connection(std::move(usocket), m_p_server, this, m_is_https, m_ssl_context_callback));
+        m_all_connections_complete.reset();
 
-            if (m_acceptor)
-            {
-                // spin off another async accept
-                auto newSocket = new ip::tcp::socket(crossplat::threadpool::shared_instance().service());
-                m_acceptor->async_accept(*newSocket, boost::bind(&hostport_listener::on_accept, this, newSocket, placeholders::error));
-            }
+        if (m_acceptor)
+        {
+            // spin off another async accept
+            auto newSocket = new ip::tcp::socket(crossplat::threadpool::shared_instance().service());
+            m_acceptor->async_accept(*newSocket, boost::bind(&hostport_listener::on_accept, this, newSocket, placeholders::error));
         }
     }
 }
