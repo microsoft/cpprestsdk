@@ -17,7 +17,7 @@
 #include <functional>
 
 #include "cpprest/http_msg.h"
-#if !defined(_WIN32) && !defined(__cplusplus_winrt)
+#if !defined(_WIN32) && !defined(__cplusplus_winrt) || defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
 #include <boost/asio/ssl.hpp>
 #endif
 
@@ -54,7 +54,7 @@ public:
     /// <param name="other">http_listener_config to copy.</param>
     http_listener_config(const http_listener_config &other)
         : m_timeout(other.m_timeout)
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
         , m_ssl_context_callback(other.m_ssl_context_callback)
 #endif
     {}
@@ -65,7 +65,7 @@ public:
     /// <param name="other">http_listener_config to move from.</param>
     http_listener_config(http_listener_config &&other)
         : m_timeout(std::move(other.m_timeout))
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
         , m_ssl_context_callback(std::move(other.m_ssl_context_callback))
 #endif
     {}
@@ -79,7 +79,7 @@ public:
         if(this != &rhs)
         {
             m_timeout = rhs.m_timeout;
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
             m_ssl_context_callback = rhs.m_ssl_context_callback;
 #endif
         }
@@ -95,7 +95,7 @@ public:
         if(this != &rhs)
         {
             m_timeout = std::move(rhs.m_timeout);
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
             m_ssl_context_callback = std::move(rhs.m_ssl_context_callback);
 #endif
         }
@@ -120,7 +120,7 @@ public:
         m_timeout = std::move(timeout);
     }
 
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
     /// <summary>
     /// Get the callback of ssl context
     /// </summary>
@@ -143,7 +143,7 @@ public:
 private:
 
     utility::seconds m_timeout;
-#ifndef _WIN32
+#if !defined(_WIN32) || defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
     std::function<void(boost::asio::ssl::context&)> m_ssl_context_callback;
 #endif
 };

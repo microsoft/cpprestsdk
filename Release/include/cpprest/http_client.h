@@ -45,7 +45,7 @@ typedef void* native_handle;}}}
 
 #include "cpprest/oauth2.h"
 
-#if !defined(_WIN32) && !defined(__cplusplus_winrt)
+#if !defined(_WIN32) && !defined(__cplusplus_winrt) || defined(CPPREST_FORCE_HTTP_CLIENT_ASIO)
 #if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wconversion"
@@ -88,7 +88,7 @@ public:
         , m_validate_certificates(true)
 #endif
         , m_set_user_nativehandle_options([](native_handle)->void{})
-#if !defined(_WIN32) && !defined(__cplusplus_winrt)
+#if !defined(_WIN32) && !defined(__cplusplus_winrt) || defined(CPPREST_FORCE_HTTP_CLIENT_ASIO)
         , m_tlsext_sni_enabled(true)
 #endif
 #if defined(_WIN32) && !defined(__cplusplus_winrt)
@@ -338,7 +338,7 @@ public:
         m_set_user_nativehandle_options(handle);
     }
 
-#if !defined(_WIN32) && !defined(__cplusplus_winrt)
+#if !defined(_WIN32) && !defined(__cplusplus_winrt) || defined(CPPREST_FORCE_HTTP_CLIENT_ASIO)
     /// <summary>
     /// Sets a callback to enable custom setting of the ssl context, at construction time.
     /// </summary>
@@ -398,7 +398,7 @@ private:
 
     std::function<void(native_handle)> m_set_user_nativehandle_options;
 
-#if !defined(_WIN32) && !defined(__cplusplus_winrt)
+#if !defined(_WIN32) && !defined(__cplusplus_winrt) || defined(CPPREST_FORCE_HTTP_CLIENT_ASIO)
     std::function<void(boost::asio::ssl::context&)> m_ssl_context_callback;
     bool m_tlsext_sni_enabled;
 #endif

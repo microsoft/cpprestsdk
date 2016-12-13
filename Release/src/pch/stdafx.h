@@ -138,7 +138,7 @@
 #include "cpprest/details/http_server_api.h"
 #endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
 #if _WIN32_WINNT >= _WIN32_WINNT_VISTA
 #include "cpprest/details/http_server_httpsys.h"
 #endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA

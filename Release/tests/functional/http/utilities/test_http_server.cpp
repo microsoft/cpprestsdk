@@ -12,6 +12,7 @@
 
 #ifdef _WIN32
 #include <http.h>
+#pragma comment(lib, "httpapi.lib")
 #pragma warning ( push )
 #pragma warning ( disable : 4457 )
 #include <agents.h>
@@ -31,7 +32,7 @@ using namespace utility::conversions;
 
 namespace tests { namespace functional { namespace http { namespace utilities {
 
-#ifdef _WIN32
+#if defined(_WIN32)
 // Helper function to parse verb from Windows HTTP Server API.
 static utility::string_t parse_verb(const HTTP_REQUEST *p_http_request)
 {
@@ -647,7 +648,7 @@ unsigned long test_request::reply(
     return reply_impl(status_code, reason_phrase, headers, (void *)&data[0], data.size() * sizeof(utf16char));
 }
 
-#ifdef _WIN32
+#if defined(_WIN32)
 unsigned long test_request::reply_impl(
         const unsigned short status_code, 
         const utility::string_t &reason_phrase, 

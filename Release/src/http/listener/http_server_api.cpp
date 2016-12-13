@@ -72,7 +72,7 @@ pplx::task<void> http_server_api::register_listener(_In_ web::http::experimental
         // the server API was not initialized, register a default
         if(s_server_api == nullptr)
         {
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
             std::unique_ptr<http_windows_server> server_api(new http_windows_server());
 #else
             std::unique_ptr<http_linux_server> server_api(new http_linux_server());
