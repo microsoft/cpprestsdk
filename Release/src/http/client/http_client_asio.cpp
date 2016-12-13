@@ -700,6 +700,11 @@ public:
                     ctx->m_needChunked = true;
                     extra_headers.append("Transfer-Encoding:chunked\r\n");
                 }
+                else
+                {
+                    // Howver, if there is no body, then just send 0 length.
+                    extra_headers.append("Content-Length: 0\r\n");
+                }
             }
                 
             if (proxy_type == http_proxy_type::http)
