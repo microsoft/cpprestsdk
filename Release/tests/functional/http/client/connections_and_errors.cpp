@@ -407,7 +407,9 @@ TEST_FIXTURE(uri_address, cancel_bad_port)
     web::http::uri uri(U("https://microsoft.com:442/"));
 
     // Send request.
-    http_client c(uri);
+    http_client_config config;
+    config.set_timeout(std::chrono::milliseconds(500));
+    http_client c(uri, config);
     web::http::http_request r;
     auto cts = pplx::cancellation_token_source();
     auto ct = cts.get_token();
@@ -415,7 +417,7 @@ TEST_FIXTURE(uri_address, cancel_bad_port)
 
     // Make sure that the client already finished resolving before canceling,
     // otherwise the bug might not be triggered.
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    std::this_thread::sleep_for(std::chrono::milliseconds(400));
     cts.cancel();
 
     VERIFY_THROWS_HTTP_ERROR_CODE(t.get(), std::errc::operation_canceled);
