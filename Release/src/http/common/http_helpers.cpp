@@ -114,8 +114,7 @@ size_t chunked_encoding::add_chunked_delimiters(_Out_writes_(buffer_size) uint8_
     return offset;
 }
 
-#if (!defined(_WIN32) || defined(__cplusplus_winrt))
-const std::array<bool,128> valid_chars =
+static const std::array<bool,128> valid_chars =
 {{
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0-15
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //16-31
@@ -142,7 +141,6 @@ bool validate_method(const utility::string_t& method)
 
     return true;
 }
-#endif
 
 namespace compression
 {

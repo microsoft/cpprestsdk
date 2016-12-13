@@ -14,6 +14,7 @@
 */
 #include "stdafx.h"
 #include <boost/algorithm/string/find.hpp>
+#include <boost/asio/read_until.hpp>
 #if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wcast-align"
@@ -22,12 +23,16 @@
 #pragma clang diagnostic pop
 #endif
 
+#include "cpprest/details/http_server_asio.h"
+#include "cpprest/asyncrt_utils.h"
 #include "../common/internal_http_helpers.h"
+
 #ifdef __ANDROID__
 using utility::conversions::details::to_string;
 #else
 using std::to_string;
 #endif
+
 using namespace boost::asio;
 using namespace boost::asio::ip;
 
@@ -266,8 +271,16 @@ void connection::handle_http_line(const boost::system::error_code& ec)
         request_stream.imbue(std::locale::classic());
         std::skipws(request_stream);
 
-        std::string http_verb;
+        web::http::method http_verb;
+#ifndef _UTF16_STRINGS
         request_stream >> http_verb;
+#else
+        {
+            std::string tmp;
+            request_stream >> tmp;
+            http_verb = utility::conversions::latin1_to_utf16(tmp);
+        }
+#endif
 
         if (boost::iequals(http_verb, http::methods::GET))          http_verb = http::methods::GET;
         else if (boost::iequals(http_verb, http::methods::POST))    http_verb = http::methods::POST;
@@ -305,7 +318,7 @@ void connection::handle_http_line(const boost::system::error_code& ec)
         // Get the path - remove the version portion and prefix space
         try
         {
-            m_request.set_request_uri(http_path_and_version.substr(1, http_path_and_version.size() - VersionPortionSize - 1));
+            m_request.set_request_uri(utility::conversions::to_string_t(http_path_and_version.substr(1, http_path_and_version.size() - VersionPortionSize - 1)));
         }
         catch(const uri_exception &e)
         {
@@ -332,24 +345,26 @@ void connection::handle_headers()
     std::istream request_stream(&m_request_buf);
     request_stream.imbue(std::locale::classic());
     std::string header;
+
+    auto& headers = m_request.headers();
+
     while (std::getline(request_stream, header) && header != "\r")
     {
         auto colon = header.find(':');
         if (colon != std::string::npos && colon != 0)
         {
-            auto name = header.substr(0, colon);
-            auto value = header.substr(colon + 1, header.length() - (colon + 1)); // also exclude '\r'
+            auto name = utility::conversions::to_string_t(header.substr(0, colon));
+            auto value = utility::conversions::to_string_t(header.substr(colon + 1, header.length() - (colon + 1))); // also exclude '\r'
             http::details::trim_whitespace(name);
             http::details::trim_whitespace(value);
 
-            auto& currentValue = m_request.headers()[name];
-            if (currentValue.empty() || boost::iequals(name, header_names::content_length)) // (content-length is already set)
+            if (boost::iequals(name, header_names::content_length))
             {
-                currentValue = value;
+                headers[http::header_names::content_length] = value;
             }
             else
             {
-                currentValue += U(", ") + value;
+                headers.add(name, value);
             }
         }
         else
@@ -549,7 +564,7 @@ void connection::dispatch_request_to_listener()
             std::string path = "";
             for (size_t j = 0; j < static_cast<size_t>(i); ++j)
             {
-                path += "/" + path_segments[j];
+                path += "/" + utility::conversions::to_utf8string(path_segments[j]);
             }
             path += "/";
 
@@ -643,7 +658,7 @@ void connection::async_process_response(http_response response)
     os.imbue(std::locale::classic());
 
     os << "HTTP/1.1 " << response.status_code() << " "
-        << response.reason_phrase()
+        << utility::conversions::to_utf8string(response.reason_phrase())
         << CRLF;
 
     m_chunked = false;
@@ -674,7 +689,7 @@ void connection::async_process_response(http_response response)
                 m_close = true;
             }
         }
-        os << header.first << ": " << header.second << CRLF;
+        os << utility::conversions::to_utf8string(header.first) << ": " << utility::conversions::to_utf8string(header.second) << CRLF;
     }
     os << CRLF;
 
@@ -875,18 +890,19 @@ pplx::task<void> http_linux_server::stop()
 
 std::pair<std::string,std::string> canonical_parts(const http::uri& uri)
 {
-    std::ostringstream endpoint;
-    endpoint.imbue(std::locale::classic());
-    endpoint << uri::decode(uri.host()) << ":" << uri.port();
+    std::string endpoint;
+    endpoint += utility::conversions::to_utf8string(uri::decode(uri.host()));
+    endpoint += ":";
+    endpoint += to_string(uri.port());
 
-    auto path = uri::decode(uri.path());
+    auto path = utility::conversions::to_utf8string(uri::decode(uri.path()));
 
     if (path.size() > 1 && path[path.size()-1] != '/')
     {
         path += "/"; // ensure the end slash is present
     }
 
-    return std::make_pair(endpoint.str(), path);
+    return std::make_pair(std::move(endpoint), std::move(path));
 }
 
 pplx::task<void> http_linux_server::register_listener(details::http_listener_impl* listener)

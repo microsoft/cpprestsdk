@@ -478,7 +478,7 @@ private:
 class _test_http_server
 {
 private:
-    const std::string m_uri;
+    const utility::string_t m_uri;
     typename web::http::experimental::listener::http_listener m_listener;
     pplx::extensibility::critical_section_t m_lock;
     std::vector<pplx::task_completion_event<test_request*>> m_requests;
@@ -500,8 +500,8 @@ public:
             auto tr = new test_request();
             tr->m_method = result.method();
             tr->m_path = result.request_uri().resource().to_string();
-            if (tr->m_path == "")
-                tr->m_path = "/";
+            if (tr->m_path.empty())
+                tr->m_path = U("/");
 
             tr->m_p_server = this;
             tr->m_request_id = ++m_last_request_id;
@@ -592,7 +592,7 @@ public:
     std::vector<pplx::task<test_request *>> next_requests(const size_t count)
     {
         std::vector<pplx::task<test_request*>> result;
-        for (int i = 0; i < count; ++i)
+        for (size_t i = 0; i < count; ++i)
         {
             result.push_back(next_request());
         }
@@ -602,7 +602,7 @@ public:
     std::vector<test_request *> wait_for_requests(const size_t count)
     {
         std::vector<test_request*> requests;
-        for (int i = 0; i < count; ++i)
+        for (size_t i = 0; i < count; ++i)
         {
             requests.push_back(wait_for_request());
         }
