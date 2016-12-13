@@ -106,6 +106,7 @@ pplx::task<void> http_server_api::register_listener(_In_ web::http::experimental
                 try
                 {
                     server_api()->stop().wait();
+                    http_server_api::unsafe_register_server_api(nullptr);
                 } catch(...)
                 {
                     // ignore this exception since we want to report the original one
@@ -138,11 +139,12 @@ pplx::task<void> http_server_api::unregister_listener(_In_ web::http::experiment
             if (pplx::details::atomic_decrement(s_registrations) == 0L)
             {
                 server_api()->stop().wait();
+                http_server_api::unsafe_register_server_api(nullptr);
             }
         } catch(...)
         {
             // save the original exception from unregister listener
-            if(except != nullptr)
+            if(except == nullptr)
             {
                 except = std::current_exception();
             }
