@@ -69,10 +69,10 @@
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-	  <PreprocessorDefinitions>_ASYNCRT_EXPORT;_PPLX_EXPORT;_USRDLL;%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_ASYNCRT_EXPORT;_PPLX_EXPORT;_USRDLL;%(PreprocessorDefinitions);</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <CompileAsWinRT>true</CompileAsWinRT>
-	  <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CasablancaSrcDir)\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(CasablancaIncludeDir);$(CasablancaSrcDir)\pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
       <AdditionalOptions>-Zm250 /bigobj %(AdditionalOptions)</AdditionalOptions>
@@ -81,15 +81,15 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
-	  <LinkTimeCodeGeneration Condition="'$(Configuration)'=='Release'">UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <LinkTimeCodeGeneration Condition="'$(Configuration)'=='Release'">UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ItemDefinitionGroup>
     <PostBuildEvent>
-      <Command>copy /Y $(OutDir)\* $(OutDir)..\
-        link /edit /appcontainer:no $(OutDir)..\$(TargetName).dll
+      <Command>copy /Y "$(OutDir)\*" "$(OutDir)..\"
+        link /edit /appcontainer:no "$(OutDir)..\$(TargetName).dll"
         exit 0</Command>
       <Message>Copying $(TargetName).winrt binaries to OutDir and removing appcontainer flag</Message>
     </PostBuildEvent>
