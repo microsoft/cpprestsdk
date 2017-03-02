@@ -385,6 +385,10 @@ public:
 private:
     const std::shared_ptr<asio_connection_pool> m_pool;
     const bool m_start_with_ssl;
+
+    pplx::task<http_response> maybe_redirect(http_response response,
+                                             http_request request,
+                                             std::vector<uri> redirected_uris);
 };
 
 class asio_context : public request_context, public std::enable_shared_from_this<asio_context>
@@ -1659,7 +1663,66 @@ pplx::task<http_response> asio_client::propagate(http_request request)
     // Asynchronously send the response with the HTTP client implementation.
     this->async_send_request(context);
 
-    return result_task;
+    return result_task.then(std::bind(&asio_client::maybe_redirect,
+                                      this,
+                                      std::placeholders::_1,
+                                      request,
+                                      std::vector<uri>()));
+}
+
+pplx::task<http_response> asio_client::maybe_redirect(http_response response, http_request request, std::vector<uri> redirected_uris) {
+    static const status_code found_status_code = 302;
+    static const size_t maximum_redirects = 5; // RFC-2068 10.3
+
+    // Should we redirect?
+    if (response.status_code() == found_status_code && redirected_uris.size() < maximum_redirects) {
+        static const std::string location_header("Location");
+        static const std::string set_cookie_header("Set-Cookie");
+        static const std::string cookie_header("Cookie");
+
+        // Find our redirect location and check for a loop
+        const std::string &redirect_location = response.headers()[location_header];
+        uri redirect_uri(redirect_location);
+        for (const auto &previous_redirect_uri : redirected_uris) {
+            if (previous_redirect_uri == redirect_uri) {
+                return pplx::create_task([response]{ return response; });
+            }
+        }
+
+        // Find our base URI and create a new client
+        web::details::uri_components base_uri_components;
+        base_uri_components.m_scheme = redirect_uri.scheme();
+        base_uri_components.m_host = redirect_uri.host();
+        base_uri_components.m_port = redirect_uri.port();
+        uri base_uri(base_uri_components);
+        http_client client(base_uri);
+
+        // Find our request URI and create a new request
+        web::details::uri_components request_uri_components;
+        request_uri_components.m_path = redirect_uri.path();
+        request_uri_components.m_query = redirect_uri.query();
+        request_uri_components.m_fragment = redirect_uri.fragment();
+        request_uri_components.m_user_info = redirect_uri.user_info();
+        uri request_uri(request_uri_components);
+        http_request redirect_request(request.method());
+        redirect_request.set_request_uri(request_uri);
+
+        // Do we need to set a new cookie value?
+        auto cookie_iterator = request.headers().find(set_cookie_header);
+        if (cookie_iterator != request.headers().end()) {
+            request.headers()[cookie_header] = (*cookie_iterator).second;
+        }
+
+        redirected_uris.push_back(redirect_uri);
+
+        return client.request(redirect_request).then(std::bind(&asio_client::maybe_redirect,
+                                                               this,
+                                                               std::placeholders::_1,
+                                                               request,
+                                                               redirected_uris));
+    }
+
+    return pplx::create_task([response]{ return response; });
 }
 
 }}}} // namespaces
