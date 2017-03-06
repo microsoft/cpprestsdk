@@ -312,6 +312,33 @@ public:
     }
 #endif
 
+	/// <summary>
+	/// Sets a callback to enable custom setting of platform specific options.
+	/// </summary>
+	/// <remarks>
+	/// The native_handle is the following type depending on the underlying platform:
+	///     Windows Desktop, WinHTTP - HINTERNET
+	///     Windows Runtime, WinRT - IXMLHTTPRequest2 *
+	///     All other platforms, Boost.Asio:
+	///         https - boost::asio::ssl::stream<boost::asio::ip::tcp::socket &> *
+	///         http - boost::asio::ip::tcp::socket *
+	/// </remarks>
+	/// <param name="callback">A user callback allowing for customization of the session</param>
+	void set_nativesessionhandle_options(const std::function<void(native_handle)> &callback)
+	{
+		m_set_user_nativesessionhandle_options = callback;
+	}
+
+	/// <summary>
+	/// Invokes a user's callback to allow for customization of the session.
+	/// </summary>
+	/// <param name="handle">A internal implementation handle.</param>
+	void invoke_nativesessionhandle_options(native_handle handle) const
+	{
+		m_set_user_nativesessionhandle_options(handle);
+	}
+
+
     /// <summary>
     /// Sets a callback to enable custom setting of platform specific options.
     /// </summary>
@@ -397,6 +424,7 @@ private:
 #endif
 
     std::function<void(native_handle)> m_set_user_nativehandle_options;
+	std::function<void(native_handle)> m_set_user_nativesessionhandle_options;
 
 #if !defined(_WIN32) && !defined(__cplusplus_winrt)
     std::function<void(boost::asio::ssl::context&)> m_ssl_context_callback;

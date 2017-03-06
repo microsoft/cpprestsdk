@@ -448,6 +448,16 @@ protected:
             }
         }
 #endif
+
+		try
+		{
+			client_config().invoke_nativesessionhandle_options(m_hSession);
+		}
+		catch (...)
+		{
+			return report_failure(_XPLATSTR("Error in session handle callback"));
+		}
+
         // Register asynchronous callback.
         if(WINHTTP_INVALID_STATUS_CALLBACK == WinHttpSetStatusCallback(
             m_hSession,
