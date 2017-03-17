@@ -326,7 +326,7 @@ public:
     /// <param name="callback">A user callback allowing for customization of the session</param>
     void set_nativesessionhandle_options(const std::function<void(native_handle)> &callback)
     {
-            m_set_user_nativesessionhandle_options = callback;
+        m_set_user_nativesessionhandle_options = callback;
     }
 
     /// <summary>
@@ -335,7 +335,9 @@ public:
     /// <param name="handle">A internal implementation handle.</param>
     void invoke_nativesessionhandle_options(native_handle handle) const
     {
+        if (m_set_user_nativesessionhandle_options != nullptr) {
             m_set_user_nativesessionhandle_options(handle);
+        }
     }
 
 
