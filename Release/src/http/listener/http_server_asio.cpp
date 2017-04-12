@@ -542,30 +542,48 @@ void connection::dispatch_request_to_listener()
 {
     // locate the listener:
     web::http::experimental::listener::details::http_listener_impl* pListener = nullptr;
+    auto error_status_code = status_codes::NotFound;
     {
-        auto path_segments = uri::split_path(uri::decode(m_request.relative_uri().path()));
-        for (auto i = static_cast<long>(path_segments.size()); i >= 0; --i)
-        {
-            std::string path = "";
-            for (size_t j = 0; j < static_cast<size_t>(i); ++j)
-            {
-                path += "/" + path_segments[j];
-            }
-            path += "/";
+        utility::string_t decoded_relative_uri;
+        bool was_decoding_successful = false;
 
-            pplx::extensibility::scoped_read_lock_t lock(m_p_parent->m_listeners_lock);
-            auto it = m_p_parent->m_listeners.find(path);
-            if (it != m_p_parent->m_listeners.end())
+        try
+        {
+            decoded_relative_uri = uri::decode(m_request.relative_uri().path());
+            was_decoding_successful = true;
+        }
+        catch (web::uri_exception&)
+        {
+            error_status_code = status_codes::BadRequest;
+        }
+
+        if (was_decoding_successful)
+        {
+            auto path_segments = uri::split_path(decoded_relative_uri);
+
+            for (auto i = static_cast<long>(path_segments.size()); i >= 0; --i)
             {
-                pListener = it->second;
-                break;
+                std::string path = "";
+                for (size_t j = 0; j < static_cast<size_t>(i); ++j)
+                {
+                    path += "/" + path_segments[j];
+                }
+                path += "/";
+
+                pplx::extensibility::scoped_read_lock_t lock(m_p_parent->m_listeners_lock);
+                auto it = m_p_parent->m_listeners.find(path);
+                if (it != m_p_parent->m_listeners.end())
+                {
+                    pListener = it->second;
+                    break;
+                }
             }
         }
     }
 
     if (pListener == nullptr)
     {
-        m_request.reply(status_codes::NotFound);
+        m_request.reply(error_status_code);
         do_response(false);
     }
     else
