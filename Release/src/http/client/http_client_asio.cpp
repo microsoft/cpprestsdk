@@ -90,7 +90,8 @@ public:
     asio_connection(boost::asio::io_service& io_service)
         : m_socket(io_service),
         m_is_reused(false),
-        m_keep_alive(true)
+        m_keep_alive(true),
+        m_closed(false)
     {}
 
     ~asio_connection()
@@ -119,6 +120,7 @@ public:
 
         // Ensures closed connections owned by request_context will not be put to pool when they are released.
         m_keep_alive = false;
+        m_closed = true;
 
         boost::system::error_code error;
         m_socket.shutdown(tcp::socket::shutdown_both, error);
@@ -141,8 +143,14 @@ public:
     template <typename Iterator, typename Handler>
     void async_connect(const Iterator &begin, const Handler &handler)
     {
-        std::lock_guard<std::mutex> lock(m_socket_lock);
-        m_socket.async_connect(begin, handler);
+        std::unique_lock<std::mutex> lock(m_socket_lock);
+        if (!m_closed)
+            m_socket.async_connect(begin, handler);
+        else
+        {
+            lock.unlock();
+            handler(boost::asio::error::operation_aborted);
+        }
     }
 
     template <typename HandshakeHandler, typename CertificateHandler>
@@ -232,6 +240,7 @@ private:
 
     bool m_is_reused;
     bool m_keep_alive;
+    bool m_closed;
 };
 
 /// <summary>Implements a connection pool with adaptive connection removal</summary>
