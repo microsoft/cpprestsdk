@@ -11,7 +11,7 @@
 
 #include "stdafx.h"
 
-#if _MSC_VER >= 1800
+#if (defined(_MSC_VER) && (_MSC_VER >= 1800)) && !CPPREST_FORCE_PPLX
 // Dev12 doesn't have an in-box ambient scheduler, since all tasks execute on ConcRT.
 // Therefore, we need to provide one. A scheduler that directly executes a functor given to it is
 // a simple and valid implementation of a PPL scheduler

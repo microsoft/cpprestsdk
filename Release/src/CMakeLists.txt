@@ -72,6 +72,11 @@ elseif(CPPREST_PPLX_IMPL STREQUAL "win")
     pplx/threadpool.cpp
     pplx/pplxwin.cpp
   )
+elseif(CPPREST_PPLX_IMPL STREQUAL "winpplx")
+  list(APPEND SOURCES
+    pplx/threadpool.cpp
+    pplx/pplxwin.cpp
+  )
 endif()
 
 # Http client component
@@ -176,6 +181,8 @@ if(CPPREST_PPLX_IMPL STREQUAL "apple")
   target_link_libraries(cpprest PRIVATE ${COREFOUNDATION} ${SECURITY})
 elseif(CPPREST_PPLX_IMPL STREQUAL "linux")
 elseif(CPPREST_PPLX_IMPL STREQUAL "win")
+elseif(CPPREST_PPLX_IMPL STREQUAL "winpplx")
+  target_compile_definitions(cpprest PUBLIC -DCPPREST_FORCE_PPLX=1)
 else()
   message(FATAL_ERROR "Invalid implementation")
 endif()

@@ -16,6 +16,7 @@
 #include "test_http_client.h"
 #ifdef _WIN32
 #include <winhttp.h>
+#pragma comment(lib, "winhttp.lib")
 #pragma warning ( push )
 #pragma warning ( disable : 4457 )
 #include <agents.h>

@@ -42,12 +42,14 @@ TEST_FIXTURE(uri_address, outside_cnn_dot_com)
 
         // CNN's main page doesn't use chunked transfer encoding.
         http_response response = client.request(methods::GET).get();
-        VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
+        auto code = response.status_code();
+        VERIFY_IS_TRUE(code == status_codes::OK || code == status_codes::MovedPermanently);
         response.content_ready().wait();
 
         // CNN's other pages do use chunked transfer encoding.
-        response = client.request(methods::GET, U("US")).get();
-        VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
+        response = client.request(methods::GET, U("us")).get();
+        code = response.status_code();
+        VERIFY_IS_TRUE(code == status_codes::OK || code == status_codes::MovedPermanently);
         response.content_ready().wait();
     });
 }
@@ -169,7 +171,9 @@ TEST(server_cert_expired)
 {
     handle_timeout([]
     {
-        http_client client(U("https://tv.eurosport.com/"));
+        http_client_config config;
+        config.set_timeout(std::chrono::seconds(1));
+        http_client client(U("https://tv.eurosport.com/"), config);
         auto requestTask = client.request(methods::GET);
         VERIFY_THROWS(requestTask.get(), http_exception);
     });
@@ -185,6 +189,7 @@ TEST(ignore_server_cert_invalid,
     {
         http_client_config config;
         config.set_validate_certificates(false);
+        config.set_timeout(std::chrono::seconds(1));
         http_client client(U("https://www.pcwebshop.co.uk/"), config);
 
         auto request = client.request(methods::GET).get();

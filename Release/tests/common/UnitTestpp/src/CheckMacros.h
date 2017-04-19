@@ -107,6 +107,7 @@
 #define VERIFY_ARE_EQUAL(expected, actual, ...) CHECK_EQUAL(expected, actual, ##__VA_ARGS__)
 #endif
 
+#define VERIFY_NO_THROWS(expression) CHECK_NO_THROW(expression)
 #define VERIFY_THROWS(expression, exception) CHECK_THROW(expression, exception)
 #define VERIFY_IS_NOT_NULL(expression) CHECK_NOT_NULL(expression)
 #define VERIFY_IS_NULL(expression) CHECK_NULL(expression)
@@ -213,6 +214,20 @@
         catch (...) {} \
         if (!caught_) \
             UnitTest::CurrentTest::Results()->OnTestFailure(UnitTest::TestDetails(*UnitTest::CurrentTest::Details(), __LINE__), "Expected exception: \"" #ExpectedExceptionType "\" not thrown"); \
+    UNITTEST_MULTILINE_MACRO_END
+
+#define CHECK_NO_THROW(expression) \
+    UNITTEST_MULTILINE_MACRO_BEGIN \
+        try { \
+            expression; \
+        } catch(const std::exception & _exc) { \
+            std::string _msg("(" #expression ") threw exception: "); \
+            _msg.append(_exc.what()); \
+            UnitTest::CurrentTest::Results()->OnTestFailure(UnitTest::TestDetails(*UnitTest::CurrentTest::Details(), __LINE__), _msg.c_str()); \
+        } catch (...) { \
+            std::string _msg("(" #expression ") threw exception: <...>"); \
+            UnitTest::CurrentTest::Results()->OnTestFailure(UnitTest::TestDetails(*UnitTest::CurrentTest::Details(), __LINE__), _msg.c_str()); \
+        } \
     UNITTEST_MULTILINE_MACRO_END
 
 #define CHECK_ASSERT(expression) \

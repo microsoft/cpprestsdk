@@ -292,7 +292,7 @@ TEST_FIXTURE(uri_address, set_progress_handler_request_timeout)
         });
 
     msg.set_body(data);
-
+    auto t = scoped.server()->next_request();
     auto response = client.request(msg);
     
 #ifdef __APPLE__
@@ -306,6 +306,7 @@ TEST_FIXTURE(uri_address, set_progress_handler_request_timeout)
     // We don't have very precise control over how much of the message is transferred
     // before the exception occurs, so we can't make an exact comparison here.
     VERIFY_IS_TRUE(calls >= 2);
+    t.get();
 }
 
 TEST_FIXTURE(uri_address, upload_nobody_exception)
@@ -314,7 +315,7 @@ TEST_FIXTURE(uri_address, upload_nobody_exception)
     http_client client(m_uri);
     http_request msg(methods::GET);
 
-    scoped.server()->next_request().then([&](test_request *p_request)
+    auto t = scoped.server()->next_request().then([&](test_request *p_request)
     {
         p_request->reply(200, utility::string_t(U("OK")));
     });
@@ -326,11 +327,8 @@ TEST_FIXTURE(uri_address, upload_nobody_exception)
     });
 
     VERIFY_THROWS(client.request(msg).get(), std::invalid_argument);
-    
-    // Codeplex 328.
-#if !defined(_WIN32)
-    tests::common::utilities::os_utilities::sleep(1000);
-#endif
+
+    t.get();
 }
 
 TEST_FIXTURE(uri_address, download_nobody_exception)
@@ -359,7 +357,6 @@ TEST_FIXTURE(uri_address, download_nobody_exception)
 
 TEST_FIXTURE(uri_address, data_upload_exception)
 {
-    test_http_server::scoped_server scoped(m_uri);
     http_client client(m_uri);
     http_request msg(methods::PUT);
     msg.set_body(U("A"));
@@ -369,12 +366,14 @@ TEST_FIXTURE(uri_address, data_upload_exception)
         throw std::invalid_argument("fake error");
     });
 
-    VERIFY_THROWS(client.request(msg).get(), std::invalid_argument);
-    
-    // Codeplex 328.
-#if !defined(_WIN32)
-    tests::common::utilities::os_utilities::sleep(1000);
-#endif
+    pplx::task<test_request*> t;
+    {
+        test_http_server::scoped_server scoped(m_uri);
+        t = scoped.server()->next_request();
+        VERIFY_THROWS(client.request(msg).get(), std::invalid_argument);
+    }
+    try { t.get(); }
+    catch (const std::runtime_error&) { /* It is ok if the request does not complete before the server is shutdown */ }
 }
 
 TEST_FIXTURE(uri_address, data_download_exception, "Ignore:Windows", "395")
@@ -383,7 +382,7 @@ TEST_FIXTURE(uri_address, data_download_exception, "Ignore:Windows", "395")
     http_client client(m_uri);
     http_request msg(methods::GET);
 
-    scoped.server()->next_request().then([&](test_request *p_request)
+    auto t = scoped.server()->next_request().then([&](test_request *p_request)
     {
         std::string resp_data("abc");
         std::map<utility::string_t, utility::string_t> headers;
@@ -412,6 +411,7 @@ TEST_FIXTURE(uri_address, data_download_exception, "Ignore:Windows", "395")
     {
         // Expected.
     }
+    t.get();
 }
 
 }

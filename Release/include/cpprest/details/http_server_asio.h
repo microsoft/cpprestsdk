@@ -19,6 +19,7 @@
 #pragma clang diagnostic pop
 #endif
 #include <boost/bind.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 namespace web
 {

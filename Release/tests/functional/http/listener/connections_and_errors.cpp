@@ -378,6 +378,9 @@ int verify_http_exception(Func f)
 
 TEST_FIXTURE(uri_address, request_content_ready_timeout, "Ignore:Linux", "Unsuitable until 813276", "Ignore:Apple", "Unsuitable until 813276")
 {
+#if !defined(_WIN32) || defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
+    throw std::runtime_error("Unsuitable until 813276 -- http_listener on ASIO does not support timeouts nor chunk sizes");
+#endif
     http_listener_config config;
     config.set_timeout(utility::seconds(1));
     http_listener listener(m_uri, config);

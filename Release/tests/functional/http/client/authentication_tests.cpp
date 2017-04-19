@@ -52,81 +52,86 @@ SUITE(authentication_tests)
 
 TEST_FIXTURE(uri_address, auth_no_data, "Ignore:Linux", "89", "Ignore:Apple", "89")
 {
-    test_http_server::scoped_server scoped(m_uri);
-    http_client_config client_config;
-    web::credentials cred(U("some_user"), U("some_password")); // WinHTTP requires non-empty password
-    client_config.set_credentials(cred);
-    http_client client(m_uri, client_config);
-    const method mtd = methods::POST;
+    pplx::task<void> t, t2;
+    {
+        test_http_server::scoped_server scoped(m_uri);
+        http_client_config client_config;
+        web::credentials cred(U("some_user"), U("some_password")); // WinHTTP requires non-empty password
+        client_config.set_credentials(cred);
+        http_client client(m_uri, client_config);
+        const method mtd = methods::POST;
 
-    http_request msg(mtd);
+        http_request msg(mtd);
 
-    auto replyFunc = [&](test_request *p_request)
+        t = scoped.server()->next_request().then([&](test_request *p_request)
+        {
+            http_asserts::assert_test_request_equals(p_request, mtd, U("/"));
+
+            // Auth header
+            std::map<utility::string_t, utility::string_t> headers;
+            headers[U("WWW-Authenticate")] = U("Basic realm = \"WallyWorld\"");
+
+            // unauthorized
+            p_request->reply(status_codes::Unauthorized, U("Authentication Failed"), headers);
+
+        });
+        t2 = scoped.server()->next_request().then([&](test_request *p_request)
         {
             http_asserts::assert_test_request_equals(p_request, methods::POST, U("/"));
             p_request->reply(200);
-        };
+        });
 
-    scoped.server()->next_request().then([&](test_request *p_request)
-    {
-        http_asserts::assert_test_request_equals(p_request, mtd, U("/"));
-
-        // Auth header
-        std::map<utility::string_t, utility::string_t> headers;
-        headers[U("WWW-Authenticate")] = U("Basic realm = \"WallyWorld\"");
-
-        // unauthorized
-        p_request->reply(status_codes::Unauthorized, U("Authentication Failed"), headers);
-
-    }).then([&scoped, replyFunc]()
-    {
-        // Client resent the request
-        scoped.server()->next_request().then(replyFunc);
-    });
-
-    http_asserts::assert_response_equals(client.request(msg).get(), status_codes::OK);
+        http_asserts::assert_response_equals(client.request(msg).get(), status_codes::OK);
+    }
+    try { t.get(); }
+    catch (...) { VERIFY_ARE_EQUAL(0, 1); }
+    try { t2.get(); }
+    catch (...) { VERIFY_ARE_EQUAL(0, 1); }
 }
 
 // TFS 648783
 #ifndef __cplusplus_winrt
 TEST_FIXTURE(uri_address, proxy_auth_known_contentlength, "Ignore:Linux", "88", "Ignore:Apple", "88")
 {
-    test_http_server::scoped_server scoped(m_uri);
-    http_client_config client_config;
-    web::credentials cred(U("some_user"), U("some_password")); // WinHTTP requires non-empty password
-    client_config.set_credentials(cred);
-    http_client client(m_uri, client_config);
-    const method mtd = methods::POST;
-    utility::string_t contents(U("Hello World"));
+    pplx::task<void> t, t2;
+    {
+        test_http_server::scoped_server scoped(m_uri);
+        http_client_config client_config;
+        web::credentials cred(U("some_user"), U("some_password")); // WinHTTP requires non-empty password
+        client_config.set_credentials(cred);
+        http_client client(m_uri, client_config);
+        const method mtd = methods::POST;
+        utility::string_t contents(U("Hello World"));
 
-    http_request msg(mtd);
-    msg.set_body(contents);
+        http_request msg(mtd);
+        msg.set_body(contents);
 
-    auto replyFunc = [&](test_request *p_request)
+        t = scoped.server()->next_request().then([&](test_request *p_request)
+        {
+            http_asserts::assert_test_request_equals(p_request, mtd, U("/"));
+
+            // Auth header
+            std::map<utility::string_t, utility::string_t> headers;
+            headers[U("WWW-Authenticate")] = U("Basic realm = \"WallyWorld\"");
+
+            // unauthorized
+            p_request->reply(status_codes::Unauthorized, U("Authentication Failed"), headers);
+
+        });
+
+        t2 = scoped.server()->next_request().then([&](test_request *p_request)
         {
             http_asserts::assert_test_request_equals(p_request, methods::POST, U("/"), U("text/plain; charset=utf-8"), contents);
 
             p_request->reply(200);
-        };
+        });
 
-    scoped.server()->next_request().then([&](test_request *p_request)
-    {
-        http_asserts::assert_test_request_equals(p_request, mtd, U("/"));
-
-        // Auth header
-        std::map<utility::string_t, utility::string_t> headers;
-        headers[U("WWW-Authenticate")] = U("Basic realm = \"WallyWorld\"");
-
-        // unauthorized
-        p_request->reply(status_codes::Unauthorized, U("Authentication Failed"), headers);
-
-    }).then([&scoped, replyFunc]()
-    {
-        // Client resent the request
-        scoped.server()->next_request().then(replyFunc);
-    });
-
-    http_asserts::assert_response_equals(client.request(msg).get(), status_codes::OK);
+        http_asserts::assert_response_equals(client.request(msg).get(), status_codes::OK);
+    }
+    try { t.get(); }
+    catch (...) { VERIFY_ARE_EQUAL(0, 1); }
+    try { t2.get(); }
+    catch (...) { VERIFY_ARE_EQUAL(0, 1); }
 }
 #endif
 
@@ -164,20 +169,22 @@ TEST_FIXTURE(uri_address, proxy_auth_noseek, "Ignore:Linux", "88", "Ignore:Apple
 #ifndef __cplusplus_winrt
 TEST_FIXTURE(uri_address, proxy_auth_unknown_contentlength, "Ignore:Linux", "88", "Ignore:Apple", "88")
 {
-    test_http_server::scoped_server scoped(m_uri);
-    http_client_config client_config;
-    web::credentials cred(U("some_user"), U("some_password")); // WinHTTP requires non-empty password
-    client_config.set_credentials(cred);
-    http_client client(m_uri, client_config);
-    const method mtd = methods::POST;
+    pplx::task<void> t;
+    {
+        test_http_server::scoped_server scoped(m_uri);
+        http_client_config client_config;
+        web::credentials cred(U("some_user"), U("some_password")); // WinHTTP requires non-empty password
+        client_config.set_credentials(cred);
+        http_client client(m_uri, client_config);
+        const method mtd = methods::POST;
 
-    std::vector<uint8_t> msg_body;
-    msg_body.push_back('a');
+        std::vector<uint8_t> msg_body;
+        msg_body.push_back('a');
 
-    http_request msg(mtd);
-    msg.set_body(streams::container_stream<std::vector<uint8_t>>::open_istream(std::move(msg_body)));
+        http_request msg(mtd);
+        msg.set_body(streams::container_stream<std::vector<uint8_t>>::open_istream(std::move(msg_body)));
 
-    auto replyFunc = [&](test_request *p_request)
+        auto replyFunc = [&](test_request *p_request)
         {
             utility::string_t contents(U("a"));
             http_asserts::assert_test_request_equals(p_request, methods::POST, U("/"), U("application/octet-stream"), contents);
@@ -185,24 +192,26 @@ TEST_FIXTURE(uri_address, proxy_auth_unknown_contentlength, "Ignore:Linux", "88"
             p_request->reply(200);
         };
 
-    scoped.server()->next_request().then([&](test_request *p_request)
-    {
-        http_asserts::assert_test_request_equals(p_request, mtd, U("/"));
+        t = scoped.server()->next_request().then([&](test_request *p_request)
+        {
+            http_asserts::assert_test_request_equals(p_request, mtd, U("/"));
 
-        // Auth header
-        std::map<utility::string_t, utility::string_t> headers;
-        headers[U("WWW-Authenticate")] = U("Basic realm = \"WallyWorld\"");
+            // Auth header
+            std::map<utility::string_t, utility::string_t> headers;
+            headers[U("WWW-Authenticate")] = U("Basic realm = \"WallyWorld\"");
 
-        // unauthorized
-        p_request->reply(status_codes::Unauthorized, U("Authentication Failed"), headers);
+            // unauthorized
+            p_request->reply(status_codes::Unauthorized, U("Authentication Failed"), headers);
 
-    }).then([&scoped, replyFunc]()
-    {
-        // Client resent the request
-        scoped.server()->next_request().then(replyFunc);
-    });
+        }).then([&scoped, replyFunc]()
+        {
+            // Client resent the request
+            return scoped.server()->next_request().then(replyFunc);
+        });
 
-    http_asserts::assert_response_equals(client.request(msg).get(), status_codes::OK);
+        http_asserts::assert_response_equals(client.request(msg).get(), status_codes::OK);
+    }
+    t.get();
 }
 
 // Accessing a server that returns 401 with an empty user name should not resend the request with an empty password
@@ -211,7 +220,7 @@ TEST_FIXTURE(uri_address, empty_username_password)
     test_http_server::scoped_server scoped(m_uri);
     http_client client(m_uri);
 
-    scoped.server()->next_request().then([&](test_request *p_request)
+    auto t = scoped.server()->next_request().then([&](test_request *p_request)
     {
         std::map<utility::string_t, utility::string_t> headers;
         headers[U("h1")] = U("data1");
@@ -227,6 +236,7 @@ TEST_FIXTURE(uri_address, empty_username_password)
     VERIFY_ARE_EQUAL(status_codes::Unauthorized, response.status_code());
     VERIFY_ARE_EQUAL(str_body[0], 'a');
     VERIFY_ARE_EQUAL(h1, U("data1"));
+    t.get();
 }
 #endif
 
@@ -235,53 +245,57 @@ TEST_FIXTURE(uri_address, empty_username_password)
 // We're making sure the error is reported properly, and the response data from the second response is received
 TEST_FIXTURE(uri_address, error_after_valid_credentials, "Ignore:Linux", "89", "Ignore:Apple", "89")
 {
-    web::http::uri uri(U("http://localhost:34569/"));
-    test_http_server::scoped_server scoped(uri);
-    http_client_config client_config;
-    web::credentials cred(U("some_user"), U("some_password"));
-    client_config.set_credentials(cred);
-    http_client client(uri, client_config);
+    pplx::task<void> t;
+    {
+        web::http::uri uri(U("http://localhost:34569/"));
+        test_http_server::scoped_server scoped(uri);
+        http_client_config client_config;
+        web::credentials cred(U("some_user"), U("some_password"));
+        client_config.set_credentials(cred);
+        http_client client(uri, client_config);
 
-    auto replyFunc = [&](test_request *p_request)
+        auto replyFunc = [&](test_request *p_request)
         {
             std::map<utility::string_t, utility::string_t> headers;
             // Auth header
             headers[U("WWW-Authenticate")] = U("Basic realm = \"WallyWorld\"");
             headers[U("h1")] = U("data2");
             // still unauthorized after the user has resent the request with the credentials
-            p_request->reply(status_codes::Unauthorized, U("Authentication Failed"), headers, "def" );
+            p_request->reply(status_codes::Unauthorized, U("Authentication Failed"), headers, "def");
         };
 
-    scoped.server()->next_request().then([&](test_request *p_request)
-    {
-        std::map<utility::string_t, utility::string_t> headers;
-        headers[U("h1")] = U("data1");
-        // Auth header
-        headers[U("WWW-Authenticate")] = U("Basic realm = \"myRealm\"");
-        // unauthorized
-        p_request->reply(status_codes::Unauthorized, U("Authentication Failed"), headers, "abc" );
-    }).then([&scoped, &replyFunc]()
-    {
-        // Client resent the request
-        scoped.server()->next_request().then(replyFunc);
-    })
+        t = scoped.server()->next_request().then([&](test_request *p_request)
+        {
+            std::map<utility::string_t, utility::string_t> headers;
+            headers[U("h1")] = U("data1");
+            // Auth header
+            headers[U("WWW-Authenticate")] = U("Basic realm = \"myRealm\"");
+            // unauthorized
+            p_request->reply(status_codes::Unauthorized, U("Authentication Failed"), headers, "abc");
+        }).then([&scoped, &replyFunc]()
+        {
+            // Client resent the request
+            return scoped.server()->next_request().then(replyFunc);
+        })
 #ifdef __cplusplus_winrt
-        .then([&scoped, &replyFunc]()
-    {
-        // in winrt, client resent the request again
-        scoped.server()->next_request().then(replyFunc);
-    })
+            .then([&scoped, &replyFunc]()
+        {
+            // in winrt, client resent the request again
+            return scoped.server()->next_request().then(replyFunc);
+        })
 #endif
-    ;
+            ;
 
-    http_response response = client.request(methods::GET).get();
-    auto str_body = response.extract_vector().get();
-    auto h1 = response.headers()[U("h1")];
-    VERIFY_ARE_EQUAL(status_codes::Unauthorized, response.status_code());
-    VERIFY_ARE_EQUAL(str_body[0], 'd');
-    VERIFY_ARE_EQUAL(str_body[1], 'e');
-    VERIFY_ARE_EQUAL(str_body[2], 'f');
-    VERIFY_ARE_EQUAL(h1, U("data2"));
+        http_response response = client.request(methods::GET).get();
+        auto str_body = response.extract_vector().get();
+        auto h1 = response.headers()[U("h1")];
+        VERIFY_ARE_EQUAL(status_codes::Unauthorized, response.status_code());
+        VERIFY_ARE_EQUAL(str_body[0], 'd');
+        VERIFY_ARE_EQUAL(str_body[1], 'e');
+        VERIFY_ARE_EQUAL(str_body[2], 'f');
+        VERIFY_ARE_EQUAL(h1, U("data2"));
+    }
+    t.get();
 }
 
 
@@ -471,7 +485,7 @@ TEST_FIXTURE(server_properties, set_user_options, "Requires", "Server;UserName;P
     VERIFY_ARE_EQUAL(200, client.request(request).get().status_code());
 }
 
-TEST_FIXTURE(uri_address, auth_producer_comsumer_buffer)
+TEST_FIXTURE(uri_address, auth_producer_consumer_buffer)
 {
     auto buf = streams::producer_consumer_buffer<unsigned char>();
     buf.putc('a').get();
@@ -490,27 +504,27 @@ TEST_FIXTURE(uri_address, auth_producer_comsumer_buffer)
 
     http_client client(m_uri, config);
 
+    pplx::task<void> t, t2;
     test_http_server::scoped_server scoped(m_uri);
 
-    auto replyFunc = [&](test_request *p_request)
-    {
-        http_asserts::assert_test_request_equals(p_request, methods::POST, U("/"), U("application/octet-stream"), U("aaaa"));
-        p_request->reply(200);
-    };
-
-    scoped.server()->next_request().then([&](test_request *p_request)
+    t = scoped.server()->next_request().then([&](test_request *p_request)
     {
         http_asserts::assert_test_request_equals(p_request, methods::POST, U("/"), U("application/octet-stream"), U("aaaa"));
         std::map<utility::string_t, utility::string_t> headers;
         headers[U("WWW-Authenticate")] = U("Basic realm = \"WallyWorld\"");
 
         p_request->reply(status_codes::Unauthorized, U("Authentication Failed"), headers);
-    })
-        .then([&scoped, replyFunc](){
-        scoped.server()->next_request().then(replyFunc);
+    });
+    t2 = scoped.server()->next_request().then([&](test_request *p_request)
+    {
+        http_asserts::assert_test_request_equals(p_request, methods::POST, U("/"), U("application/octet-stream"), U("aaaa"));
+        p_request->reply(200);
     });
 
     http_asserts::assert_response_equals(client.request(msg).get(), status_codes::OK);
+    scoped.server()->close();
+    VERIFY_NO_THROWS(t.get());
+    VERIFY_NO_THROWS(t2.get());
 }
 
 TEST_FIXTURE(uri_address, auth_producer_comsumer_buffer_fail_no_cred)
@@ -526,18 +540,21 @@ TEST_FIXTURE(uri_address, auth_producer_comsumer_buffer_fail_no_cred)
 
     http_client client(m_uri);
 
-    test_http_server::scoped_server scoped(m_uri);
-
-    scoped.server()->next_request().then([&](test_request *p_request)
+    pplx::task<void> t;
     {
-        http_asserts::assert_test_request_equals(p_request, methods::POST, U("/"), U("application/octet-stream"), U("aaaa"));
-        std::map<utility::string_t, utility::string_t> headers;
-        headers[U("WWW-Authenticate")] = U("Basic realm = \"WallyWorld\"");
+        test_http_server::scoped_server scoped(m_uri);
+        t = scoped.server()->next_request().then([&](test_request *p_request)
+        {
+            http_asserts::assert_test_request_equals(p_request, methods::POST, U("/"), U("application/octet-stream"), U("aaaa"));
+            std::map<utility::string_t, utility::string_t> headers;
+            headers[U("WWW-Authenticate")] = U("Basic realm = \"WallyWorld\"");
 
-        p_request->reply(status_codes::Unauthorized, U("Authentication Failed"), headers);
-    });
+            p_request->reply(status_codes::Unauthorized, U("Authentication Failed"), headers);
+        });
 
-    http_asserts::assert_response_equals(client.request(msg).get(), status_codes::Unauthorized);
+        http_asserts::assert_response_equals(client.request(msg).get(), status_codes::Unauthorized);
+    }
+    t.get();
 }
 
 TEST_FIXTURE(uri_address, auth_producer_comsumer_buffer_fail)
@@ -553,31 +570,33 @@ TEST_FIXTURE(uri_address, auth_producer_comsumer_buffer_fail)
     config.set_credentials(web::credentials(U("USERNAME"), U("PASSWORD")));
 
     http_client client(m_uri, config);
-
-    test_http_server::scoped_server scoped(m_uri);
-
-    auto replyFunc = [&](test_request *p_request)
+    pplx::task<void> t;
     {
-        http_asserts::assert_test_request_equals(p_request, methods::POST, U("/"), U("application/octet-stream"), U("a"));
-        std::map<utility::string_t, utility::string_t> headers;
-        headers[U("WWW-Authenticate")] = U("Basic realm = \"WallyWorld2\"");
+        test_http_server::scoped_server scoped(m_uri);
 
-        p_request->reply(status_codes::Unauthorized, U("Authentication Failed"), headers);
-    };
+        auto replyFunc = [&](test_request *p_request)
+        {
+            http_asserts::assert_test_request_equals(p_request, methods::POST, U("/"), U("application/octet-stream"), U("a"));
+            std::map<utility::string_t, utility::string_t> headers;
+            headers[U("WWW-Authenticate")] = U("Basic realm = \"WallyWorld2\"");
 
-    scoped.server()->next_request().then([&](test_request *p_request)
-    {
-        http_asserts::assert_test_request_equals(p_request, methods::POST, U("/"), U("application/octet-stream"), U("a"));
-        std::map<utility::string_t, utility::string_t> headers;
-        headers[U("WWW-Authenticate")] = U("Basic realm = \"WallyWorld\"");
+            p_request->reply(status_codes::Unauthorized, U("Authentication Failed"), headers);
+        };
 
-        p_request->reply(status_codes::Unauthorized, U("Authentication Failed"), headers);
-    })
-        .then([&scoped, replyFunc](){
-        scoped.server()->next_request().then(replyFunc);
-    });
+        t = scoped.server()->next_request().then([&](test_request *p_request)
+        {
+            http_asserts::assert_test_request_equals(p_request, methods::POST, U("/"), U("application/octet-stream"), U("a"));
+            std::map<utility::string_t, utility::string_t> headers;
+            headers[U("WWW-Authenticate")] = U("Basic realm = \"WallyWorld\"");
 
-    http_asserts::assert_response_equals(client.request(msg).get(), status_codes::Unauthorized);
+            p_request->reply(status_codes::Unauthorized, U("Authentication Failed"), headers);
+        }).then([&scoped, replyFunc](){
+            return scoped.server()->next_request().then(replyFunc);
+        });
+
+        http_asserts::assert_response_equals(client.request(msg).get(), status_codes::Unauthorized);
+    }
+    VERIFY_NO_THROWS(t.get());
 }
 #endif
 
