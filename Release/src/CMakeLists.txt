@@ -2,7 +2,7 @@ cmake_policy(SET CMP0022 NEW)
 
 file(GLOB HEADERS_CPPREST "../include/cpprest/*.h" "../include/cpprest/*.hpp" "../include/cpprest/*.dat")
 file(GLOB HEADERS_PPLX "../include/pplx/*.h" "../include/pplx/*.hpp")
-file(GLOB HEADERS_DETAILS "../include/cpprest/details/*.h" "../include/pplx/*.hpp" "../include/pplx/*.dat")
+file(GLOB HEADERS_DETAILS "../include/cpprest/details/*.h" "../include/cpprest/details/*.hpp" "../include/cpprest/details/*.dat" "../include/pplx/*.hpp" "../include/pplx/*.dat")
 source_group("Header Files\\cpprest" FILES ${HEADERS_CPPREST})
 source_group("Header Files\\pplx" FILES ${HEADERS_PPLX})
 source_group("Header Files\\cpprest\\details" FILES ${HEADERS_DETAILS})
