@@ -263,6 +263,11 @@ void connection::handle_http_line(const boost::system::error_code& ec)
             m_request._reply_if_not_already(status_codes::BadRequest);
             m_close = true;
             do_response(true);
+            if (--m_refs == 0)
+            {
+                delete this;
+            }
+            return;
         }
     }
     else
@@ -290,6 +295,10 @@ void connection::handle_http_line(const boost::system::error_code& ec)
             m_request.reply(status_codes::BadRequest);
             m_close = true;
             do_response(true);
+            if (--m_refs == 0)
+            {
+                delete this;
+            }
             return;
         }
 
@@ -305,6 +314,10 @@ void connection::handle_http_line(const boost::system::error_code& ec)
             m_request.reply(status_codes::BadRequest);
             m_close = true;
             do_response(true);
+            if (--m_refs == 0)
+            {
+                delete this;
+            }
             return;
         }
 
@@ -318,6 +331,10 @@ void connection::handle_http_line(const boost::system::error_code& ec)
             m_request.reply(status_codes::BadRequest, e.what());
             m_close = true;
             do_response(true);
+            if (--m_refs == 0)
+            {
+                delete this;
+            }
             return;
         }
 
@@ -363,11 +380,15 @@ void connection::handle_headers()
             m_request.reply(status_codes::BadRequest);
             m_close = true;
             do_response(true);
+            if (--m_refs == 0)
+            {
+                delete this;
+            }
             return;
         }
     }
 
-    m_close = m_chunked = false;
+    m_chunked = false;
     utility::string_t name;
     // check if the client has requested we close the connection
     if (m_request.headers().match(header_names::connection, name))
