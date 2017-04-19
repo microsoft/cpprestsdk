@@ -135,11 +135,10 @@ private:
     pplx::extensibility::critical_section_t m_open_lock;
 
     // Wraps opening the client around sending a request.
+    void open_and_send_request_async(const std::shared_ptr<request_context> &request);
     void open_and_send_request(const std::shared_ptr<request_context> &request);
 
     unsigned long open_if_required();
-
-    void push_request(const std::shared_ptr<request_context> &request);
 
     // Queue used to guarantee ordering of requests, when applicable.
     std::queue<std::shared_ptr<request_context>> m_requests_queue;
