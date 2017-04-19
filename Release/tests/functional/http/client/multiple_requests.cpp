@@ -53,6 +53,13 @@ TEST_FIXTURE(uri_address, requests_with_data)
     const method method = methods::PUT;
     const web::http::status_code code = status_codes::OK;
 
+    std::vector<pplx::task<test_request*>> reqs;
+    // response to requests
+    for (size_t i = 0; i < num_requests; ++i)
+    {
+        reqs.push_back(scoped.server()->next_request());
+    }
+
     // send requests
     std::vector<pplx::task<http_response>> responses;
     for(size_t i = 0; i < num_requests; ++i)
@@ -62,13 +69,9 @@ TEST_FIXTURE(uri_address, requests_with_data)
         responses.push_back(client.request(msg));
     }
 
-    // Wait a bit to let requests get queued up in WinHTTP.
-    os_utilities::sleep(500);
-
-    // response to requests
-    for(size_t i = 0; i < num_requests; ++i)
+    for (auto&& requestTask : reqs)
     {
-        test_request *request = scoped.server()->wait_for_request();
+        auto request = requestTask.get();
         http_asserts::assert_test_request_equals(request, method, U("/"), U("text/plain"), to_string_t(request_body));
         VERIFY_ARE_EQUAL(0u, request->reply(code));
     }
@@ -101,6 +104,9 @@ TEST_FIXTURE(uri_address, responses_with_data)
     std::map<utility::string_t, utility::string_t> headers;
     headers[U("Content-Type")] = U("text/plain");
 
+    // response to requests
+    auto requestTasks = scoped.server()->next_requests(num_requests);
+
     // send requests
     std::vector<pplx::task<http_response>> responses;
     for(size_t i = 0; i < num_requests; ++i)
@@ -111,7 +117,7 @@ TEST_FIXTURE(uri_address, responses_with_data)
     // response to requests
     for(size_t i = 0; i < num_requests; ++i)
     {
-        test_request *request = scoped.server()->wait_for_request();
+        test_request *request = requestTasks[i].get();
         http_asserts::assert_test_request_equals(request, method, U("/"));
         VERIFY_ARE_EQUAL(0u, request->reply(code, U(""), headers, request_body));
     }

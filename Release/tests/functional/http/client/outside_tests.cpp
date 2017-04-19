@@ -171,7 +171,9 @@ TEST(server_cert_expired)
 {
     handle_timeout([]
     {
-        http_client client(U("https://tv.eurosport.com/"));
+        http_client_config config;
+        config.set_timeout(std::chrono::seconds(1));
+        http_client client(U("https://tv.eurosport.com/"), config);
         auto requestTask = client.request(methods::GET);
         VERIFY_THROWS(requestTask.get(), http_exception);
     });
@@ -187,6 +189,7 @@ TEST(ignore_server_cert_invalid,
     {
         http_client_config config;
         config.set_validate_certificates(false);
+        config.set_timeout(std::chrono::seconds(1));
         http_client client(U("https://www.pcwebshop.co.uk/"), config);
 
         auto request = client.request(methods::GET).get();
