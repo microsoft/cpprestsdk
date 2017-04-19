@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Peter Thorson. All rights reserved.
+ * Copyright (c) 2015, Peter Thorson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,123 +28,107 @@
 #ifndef WEBSOCKETPP_TRANSPORT_ASIO_BASE_HPP
 #define WEBSOCKETPP_TRANSPORT_ASIO_BASE_HPP
 
+#include <websocketpp/common/asio.hpp>
 #include <websocketpp/common/cpp11.hpp>
 #include <websocketpp/common/functional.hpp>
 #include <websocketpp/common/system_error.hpp>
-
-#include <boost/system/error_code.hpp>
-
-#include <boost/aligned_storage.hpp>
-#include <boost/noncopyable.hpp>
-#include <boost/array.hpp>
+#include <websocketpp/common/type_traits.hpp>
 
 #include <string>
 
 namespace websocketpp {
 namespace transport {
-/// Transport policy that uses boost::asio
+/// Transport policy that uses asio
 /**
- * This policy uses a single boost::asio io_service to provide transport
+ * This policy uses a single asio io_service to provide transport
  * services to a WebSocket++ endpoint.
  */
 namespace asio {
-
-//
 
 // Class to manage the memory to be used for handler-based custom allocation.
 // It contains a single block of memory which may be returned for allocation
 // requests. If the memory is in use when an allocation request is made, the
 // allocator delegates allocation to the global heap.
-class handler_allocator
-  : private boost::noncopyable
-{
+class handler_allocator {
 public:
-  handler_allocator()
-    : in_use_(false)
-  {
-  }
+    static const size_t size = 1024;
+    
+    handler_allocator() : m_in_use(false) {}
 
-  void* allocate(std::size_t size)
-  {
-    if (!in_use_ && size < storage_.size)
-    {
-      in_use_ = true;
-      return storage_.address();
-    }
-    else
-    {
-      return ::operator new(size);
-    }
-  }
+#ifdef _WEBSOCKETPP_DEFAULT_DELETE_FUNCTIONS_
+	handler_allocator(handler_allocator const & cpy) = delete;
+	handler_allocator & operator =(handler_allocator const &) = delete;
+#endif
 
-  void deallocate(void* pointer)
-  {
-    if (pointer == storage_.address())
-    {
-      in_use_ = false;
+    void * allocate(std::size_t memsize) {
+        if (!m_in_use && memsize < size) {
+            m_in_use = true;
+            return static_cast<void*>(&m_storage);
+        } else {
+            return ::operator new(memsize);
+        }
     }
-    else
-    {
-      ::operator delete(pointer);
+
+    void deallocate(void * pointer) {
+        if (pointer == &m_storage) {
+            m_in_use = false;
+        } else {
+            ::operator delete(pointer);
+        }
     }
-  }
 
 private:
-  // Storage space used for handler-based custom memory allocation.
-  boost::aligned_storage<1024> storage_;
+    // Storage space used for handler-based custom memory allocation.
+    lib::aligned_storage<size>::type m_storage;
 
-  // Whether the handler-based custom allocation storage has been used.
-  bool in_use_;
+    // Whether the handler-based custom allocation storage has been used.
+    bool m_in_use;
 };
 
 // Wrapper class template for handler objects to allow handler memory
 // allocation to be customised. Calls to operator() are forwarded to the
 // encapsulated handler.
 template <typename Handler>
-class custom_alloc_handler
-{
+class custom_alloc_handler {
 public:
-  custom_alloc_handler(handler_allocator& a, Handler h)
-    : allocator_(a),
-      handler_(h)
-  {
-  }
+    custom_alloc_handler(handler_allocator& a, Handler h)
+      : allocator_(a),
+        handler_(h)
+    {}
 
-  template <typename Arg1>
-  void operator()(Arg1 arg1)
-  {
-    handler_(arg1);
-  }
+    template <typename Arg1>
+    void operator()(Arg1 arg1) {
+        handler_(arg1);
+    }
 
-  template <typename Arg1, typename Arg2>
-  void operator()(Arg1 arg1, Arg2 arg2)
-  {
-    handler_(arg1, arg2);
-  }
+    template <typename Arg1, typename Arg2>
+    void operator()(Arg1 arg1, Arg2 arg2) {
+        handler_(arg1, arg2);
+    }
 
-  friend void* asio_handler_allocate(std::size_t size,
-      custom_alloc_handler<Handler>* this_handler)
-  {
-    return this_handler->allocator_.allocate(size);
-  }
+    friend void* asio_handler_allocate(std::size_t size,
+        custom_alloc_handler<Handler> * this_handler)
+    {
+        return this_handler->allocator_.allocate(size);
+    }
 
-  friend void asio_handler_deallocate(void* pointer, std::size_t /*size*/,
-      custom_alloc_handler<Handler>* this_handler)
-  {
-    this_handler->allocator_.deallocate(pointer);
-  }
+    friend void asio_handler_deallocate(void* pointer, std::size_t /*size*/,
+        custom_alloc_handler<Handler> * this_handler)
+    {
+        this_handler->allocator_.deallocate(pointer);
+    }
 
 private:
-  handler_allocator& allocator_;
-  Handler handler_;
+    handler_allocator & allocator_;
+    Handler handler_;
 };
 
 // Helper function to wrap a handler object to add custom allocation.
 template <typename Handler>
 inline custom_alloc_handler<Handler> make_custom_alloc_handler(
-    handler_allocator& a, Handler h)
+    handler_allocator & a, Handler h)
 {
-  return custom_alloc_handler<Handler>(a, h);
+    return custom_alloc_handler<Handler>(a, h);
 }
 
 
@@ -158,13 +142,13 @@ inline custom_alloc_handler<Handler> make_custom_alloc_handler(
 template <typename config>
 class endpoint;
 
-typedef lib::function<void(boost::system::error_code const &)>
+typedef lib::function<void(lib::asio::error_code const &)>
     socket_shutdown_handler;
 
-typedef lib::function<void (boost::system::error_code const & ec,
+typedef lib::function<void (lib::asio::error_code const & ec,
     size_t bytes_transferred)> async_read_handler;
 
-typedef lib::function<void (boost::system::error_code const & ec,
+typedef lib::function<void (lib::asio::error_code const & ec,
     size_t bytes_transferred)> async_write_handler;
 
 typedef lib::function<void (lib::error_code const & ec)> pre_init_handler;

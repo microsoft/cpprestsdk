@@ -11,7 +11,7 @@ Import('tls_libs')
 env = env.Clone ()
 env_cpp11 = env_cpp11.Clone ()
 
-BOOST_LIBS = boostlibs(['unit_test_framework','system','thread','random'],env) + [platform_libs] + [tls_libs]
+BOOST_LIBS = boostlibs(['unit_test_framework','system','thread','random','chrono'],env) + [platform_libs] + [tls_libs]
 
 objs = env.Object('boost_integration.o', ["integration.cpp"], LIBS = BOOST_LIBS)
 prgs = env.Program('test_boost_integration', ["boost_integration.o"], LIBS = BOOST_LIBS)

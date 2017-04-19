@@ -80,6 +80,12 @@
     #ifndef _WEBSOCKETPP_NULLPTR_TOKEN_
         #define _WEBSOCKETPP_NULLPTR_TOKEN_ nullptr
     #endif
+    #ifndef _WEBSOCKETPP_MOVE_SEMANTICS_
+        #define _WEBSOCKETPP_MOVE_SEMANTICS_
+    #endif
+    #ifndef _WEBSOCKETPP_DEFAULT_DELETE_FUNCTIONS_
+        #define _WEBSOCKETPP_DEFAULT_DELETE_FUNCTIONS_
+    #endif
     
     #ifndef __GNUC__
         // GCC as of version 4.9 (latest) does not support std::put_time yet.

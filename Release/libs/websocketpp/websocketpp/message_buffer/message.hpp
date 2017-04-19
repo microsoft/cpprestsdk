@@ -146,10 +146,10 @@ public:
 
     /// Set or clear the compression flag
     /**
-     * The compression flag is used to indicate whether or not the message is
-     * or should be compressed. Compression is not guaranteed. Both endpoints
-     * must support a compression extension and the connection must have had
-     * that extension negotiated in its handshake.
+     * Setting the compression flag indicates that the data in this message
+     * would benefit from compression. If both endpoints negotiate a compression
+     * extension WebSocket++ will attempt to compress messages with this flag.
+     * Setting this flag does not guarantee that the message will be compressed.
      *
      * @param value The value to set the compressed flag to
      */

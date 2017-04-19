@@ -32,6 +32,7 @@
 
 #include <websocketpp/transport/base/connection.hpp>
 
+#include <websocketpp/uri.hpp>
 #include <websocketpp/logger/levels.hpp>
 
 #include <websocketpp/common/connection_hdl.hpp>
@@ -102,6 +103,20 @@ public:
     bool is_secure() const {
         return false;
     }
+
+    /// Set uri hook
+    /**
+     * Called by the endpoint as a connection is being established to provide
+     * the uri being connected to to the transport layer.
+     *
+     * Implementation is optional and can be ignored if the transport has no
+     * need for this information.
+     *
+     * @since 0.6.0
+     *
+     * @param u The uri to set
+     */
+    void set_uri(uri_ptr) {}
 
     /// Set human readable remote endpoint address
     /**

@@ -55,7 +55,7 @@ class disabled {
 public:
     /// Negotiate extension
     /**
-     * The disabled extension always fails the negotiation with a disabled 
+     * The disabled extension always fails the negotiation with a disabled
      * error.
      *
      * @param offer Attribute from client's offer
@@ -63,6 +63,17 @@ public:
      */
     err_str_pair negotiate(http::attribute_list const &) {
         return make_pair(make_error_code(error::disabled),std::string());
+    }
+
+    /// Initialize state
+    /**
+     * For the disabled extension state initialization is a no-op.
+     *
+     * @param is_server True to initialize as a server, false for a client.
+     * @return A code representing the error that occurred, if any
+     */
+    lib::error_code init(bool) {
+        return lib::error_code();
     }
 
     /// Returns true if the extension is capable of providing
@@ -75,6 +86,17 @@ public:
     /// connection
     bool is_enabled() const {
         return false;
+    }
+
+    /// Generate extension offer
+    /**
+     * Creates an offer string to include in the Sec-WebSocket-Extensions
+     * header of outgoing client requests.
+     *
+     * @return A WebSocket extension offer string for this extension
+     */
+    std::string generate_offer() const {
+        return "";
     }
 
     /// Compress bytes
