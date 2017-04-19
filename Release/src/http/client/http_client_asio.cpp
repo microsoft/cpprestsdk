@@ -485,12 +485,6 @@ public:
                 m_context->m_timer.reset();
                 auto endpoint = *endpoints;
                 m_context->m_connection->async_connect(endpoint, boost::bind(&ssl_proxy_tunnel::handle_tcp_connect, shared_from_this(), boost::asio::placeholders::error, ++endpoints));
-
-                // TODO: refactor all interactions with the timeout_timer to avoid racing
-                if (m_context->m_timer.has_timedout())
-                {
-                    m_context->m_connection->close();
-                }
             }
         }
 
@@ -858,7 +852,6 @@ private:
 
     void handle_connect(const boost::system::error_code& ec, tcp::resolver::iterator endpoints)
     {
-       
         m_timer.reset();
         if (!ec)
         {
@@ -894,12 +887,6 @@ private:
             m_timer.reset();
             auto endpoint = *endpoints;
             m_connection->async_connect(endpoint, boost::bind(&asio_context::handle_connect, shared_from_this(), boost::asio::placeholders::error, ++endpoints));
-
-            // TODO: refactor all interactions with the timeout_timer to avoid racing
-            if (m_timer.has_timedout())
-            {
-                m_connection->close();
-            }
         }
     }
 
