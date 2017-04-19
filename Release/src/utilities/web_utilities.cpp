@@ -115,6 +115,9 @@ win32_encryption::~win32_encryption()
 
 plaintext_string win32_encryption::decrypt() const
 {
+    if (m_buffer.empty())
+        return plaintext_string(new std::wstring());
+
     // Copy the buffer and decrypt to avoid having to re-encrypt.
     auto data = plaintext_string(new std::wstring(reinterpret_cast<const std::wstring::value_type *>(m_buffer.data()), m_buffer.size() / 2));
     if (!CryptUnprotectMemory(
