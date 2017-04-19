@@ -14,18 +14,25 @@
 */
 #include "stdafx.h"
 #include <boost/algorithm/string/find.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/asio/read_until.hpp>
+
 #if defined(__clang__)
 #pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wcast-align"
+#pragma clang diagnostic ignored "-Wconversion"
+#pragma clang diagnostic ignored "-Winfinite-recursion"
 #endif
+#include <boost/asio.hpp>
+#include <boost/asio/ssl.hpp>
 #if defined(__clang__)
 #pragma clang diagnostic pop
 #endif
 
 #include "cpprest/details/http_server_asio.h"
 #include "cpprest/asyncrt_utils.h"
+#include "pplx/threadpool.h"
 #include "../common/internal_http_helpers.h"
+#include "http_server_impl.h"
 
 #ifdef __ANDROID__
 using utility::conversions::details::to_string;
@@ -39,15 +46,162 @@ using namespace boost::asio::ip;
 #define CRLF std::string("\r\n")
 #define CRLFCRLF std::string("\r\n\r\n")
 
-namespace web
+namespace listener = web::http::experimental::listener;
+namespace chunked_encoding = web::http::details::chunked_encoding;
+
+using web::uri;
+using web::http::http_request;
+using web::http::http_response;
+using web::http::methods;
+using web::http::status_codes;
+using web::http::header_names;
+using web::http::http_exception;
+using web::http::experimental::listener::details::http_listener_impl;
+using web::http::experimental::listener::http_listener_config;
+
+using utility::details::make_unique;
+
+namespace
 {
-namespace http
+    class hostport_listener;
+    class http_linux_server;
+    class asio_server_connection;
+}
+
+namespace
 {
-namespace experimental
-{
-namespace listener
-{
-namespace details
+    struct iequal_to
+    {
+        bool operator()(const std::string& left, const std::string& right) const
+        {
+            return boost::ilexicographical_compare(left, right);
+        }
+    };
+
+    class http_linux_server : public web::http::experimental::details::http_server
+    {
+    private:
+        friend class asio_server_connection;
+
+        pplx::extensibility::reader_writer_lock_t m_listeners_lock;
+        std::map<std::string, std::unique_ptr<hostport_listener>, iequal_to> m_listeners;
+        std::unordered_map<http_listener_impl *, std::unique_ptr<pplx::extensibility::reader_writer_lock_t>> m_registered_listeners;
+        bool m_started;
+
+    public:
+        http_linux_server()
+            : m_listeners_lock()
+            , m_listeners()
+            , m_started(false)
+        {}
+
+        ~http_linux_server()
+        {
+            stop();
+        }
+
+        virtual pplx::task<void> start();
+        virtual pplx::task<void> stop();
+
+        virtual pplx::task<void> register_listener(http_listener_impl* listener);
+        virtual pplx::task<void> unregister_listener(http_listener_impl* listener);
+
+        pplx::task<void> respond(http_response response);
+    };
+
+    struct linux_request_context : web::http::details::_http_server_context
+    {
+        linux_request_context() {}
+
+        pplx::task_completion_event<void> m_response_completed;
+
+    private:
+        linux_request_context(const linux_request_context&) = delete;
+        linux_request_context& operator=(const linux_request_context&) = delete;
+    };
+
+    class hostport_listener
+    {
+    private:
+        std::unique_ptr<boost::asio::ip::tcp::acceptor> m_acceptor;
+        std::map<std::string, http_listener_impl* > m_listeners;
+        pplx::extensibility::reader_writer_lock_t m_listeners_lock;
+
+        std::mutex m_connections_lock;
+        pplx::extensibility::event_t m_all_connections_complete;
+        std::set<asio_server_connection*> m_connections;
+
+        http_linux_server* m_p_server;
+
+        std::string m_host;
+        std::string m_port;
+
+        bool m_is_https;
+        const std::function<void(boost::asio::ssl::context&)>& m_ssl_context_callback;
+
+    public:
+        hostport_listener(http_linux_server* server, const std::string& hostport, bool is_https, const http_listener_config& config)
+            : m_acceptor()
+            , m_listeners()
+            , m_listeners_lock()
+            , m_connections_lock()
+            , m_connections()
+            , m_p_server(server)
+            , m_is_https(is_https)
+            , m_ssl_context_callback(config.get_ssl_context_callback())
+        {
+            m_all_connections_complete.set();
+
+            std::istringstream hostport_in(hostport);
+            hostport_in.imbue(std::locale::classic());
+
+            std::getline(hostport_in, m_host, ':');
+            std::getline(hostport_in, m_port);
+        }
+
+        ~hostport_listener()
+        {
+            stop();
+        }
+
+        void start();
+        void stop();
+
+        void add_listener(const std::string& path, http_listener_impl* listener);
+        void remove_listener(const std::string& path, http_listener_impl* listener);
+
+        void internal_erase_connection(asio_server_connection*);
+
+        http_listener_impl* find_listener(uri const& u)
+        {
+            auto path_segments = uri::split_path(uri::decode(u.path()));
+            for (auto i = static_cast<long>(path_segments.size()); i >= 0; --i)
+            {
+                std::string path = "";
+                for (size_t j = 0; j < static_cast<size_t>(i); ++j)
+                {
+                    path += "/" + utility::conversions::to_utf8string(path_segments[j]);
+                }
+                path += "/";
+
+                pplx::extensibility::scoped_read_lock_t lock(m_listeners_lock);
+                auto it = m_listeners.find(path);
+                if (it != m_listeners.end())
+                {
+                    return it->second;
+                }
+            }
+            return nullptr;
+        }
+
+    private:
+        void on_accept(boost::asio::ip::tcp::socket* socket, const boost::system::error_code& ec);
+
+    };
+
+}
+
+namespace
 {
 /// This class replaces the regex "\r\n\r\n|[\x00-\x1F]|[\x80-\xFF]"
 // It was added due to issues with regex on Android, however since
@@ -190,12 +344,12 @@ public:
     {
         if (is_https)
         {
-            m_ssl_context = utility::details::make_unique<boost::asio::ssl::context>(boost::asio::ssl::context::sslv23);
+            m_ssl_context = make_unique<boost::asio::ssl::context>(boost::asio::ssl::context::sslv23);
             if (ssl_context_callback)
             {
                 ssl_context_callback(*m_ssl_context);
             }
-            m_ssl_stream = utility::details::make_unique<ssl_stream>(*m_socket, *m_ssl_context);
+            m_ssl_stream = make_unique<ssl_stream>(*m_socket, *m_ssl_context);
 
             m_ssl_stream->async_handshake(boost::asio::ssl::stream_base::server, [this](const boost::system::error_code&)
             {
@@ -227,22 +381,22 @@ private:
     will_erase_from_parent_t do_response()
     {
         ++m_refs;
-        m_request.get_response().then([=](pplx::task<http::http_response> r_task)
+        m_request.get_response().then([=](pplx::task<http_response> r_task)
         {
-            http::http_response response;
+            http_response response;
             try
             {
                 response = r_task.get();
             }
             catch (...)
             {
-                response = http::http_response(status_codes::InternalError);
+                response = http_response(status_codes::InternalError);
             }
 
             serialize_headers(response);
 
             // before sending response, the full incoming message need to be processed.
-            return m_request.content_ready().then([=](pplx::task<http::http_request>)
+            return m_request.content_ready().then([=](pplx::task<http_request>)
             {
                 (will_deref_and_erase_t)this->async_write(&asio_server_connection::handle_headers_written, response);
             });
@@ -252,16 +406,16 @@ private:
     will_erase_from_parent_t do_bad_response()
     {
         ++m_refs;
-        m_request.get_response().then([=](pplx::task<http::http_response> r_task)
+        m_request.get_response().then([=](pplx::task<http_response> r_task)
         {
-            http::http_response response;
+            http_response response;
             try
             {
                 response = r_task.get();
             }
             catch (...)
             {
-                response = http::http_response(status_codes::InternalError);
+                response = http_response(status_codes::InternalError);
             }
 
             // before sending response, the full incoming message need to be processed.
@@ -293,28 +447,29 @@ private:
     }
 };
 
-}}}}}
+}
 
 namespace boost
 {
 namespace asio
 {
-template <> struct is_match_condition<web::http::experimental::listener::details::crlfcrlf_nonascii_searcher_t> : public boost::true_type {};
+template <> struct is_match_condition<crlfcrlf_nonascii_searcher_t> : public boost::true_type {};
 }}
 
-namespace web
-{
-namespace http
-{
-namespace experimental
-{
-namespace listener
+namespace
 {
 
 const size_t ChunkSize = 4 * 1024;
 
-namespace details
+void hostport_listener::internal_erase_connection(asio_server_connection* conn)
 {
+    std::lock_guard<std::mutex> lock(m_connections_lock);
+    m_connections.erase(conn);
+    if (m_connections.empty())
+    {
+        m_all_connections_complete.set();
+    }
+}
 
 void hostport_listener::start()
 {
@@ -328,7 +483,10 @@ void hostport_listener::start()
     m_acceptor->set_option(tcp::acceptor::reuse_address(true));
 
     auto socket = new ip::tcp::socket(service);
-    m_acceptor->async_accept(*socket, boost::bind(&hostport_listener::on_accept, this, socket, placeholders::error));
+    m_acceptor->async_accept(*socket, [this, socket](const boost::system::error_code& ec)
+    {
+        this->on_accept(socket, ec);
+    });
 }
 
 void asio_server_connection::close()
@@ -386,14 +544,17 @@ void hostport_listener::on_accept(ip::tcp::socket* socket, const boost::system::
         {
             // spin off another async accept
             auto newSocket = new ip::tcp::socket(crossplat::threadpool::shared_instance().service());
-            m_acceptor->async_accept(*newSocket, boost::bind(&hostport_listener::on_accept, this, newSocket, placeholders::error));
+            m_acceptor->async_accept(*newSocket, [this, newSocket](const boost::system::error_code& ec)
+            {
+                this->on_accept(newSocket, ec);
+            });
         }
     }
 }
 
 will_deref_and_erase_t asio_server_connection::handle_http_line(const boost::system::error_code& ec)
 {
-    m_request = http_request::_create_request(std::unique_ptr<http::details::_http_server_context>(new linux_request_context()));
+    m_request = http_request::_create_request(make_unique<linux_request_context>());
     if (ec)
     {
         // client closed connection
@@ -433,14 +594,14 @@ will_deref_and_erase_t asio_server_connection::handle_http_line(const boost::sys
         }
 #endif
 
-        if (boost::iequals(http_verb, http::methods::GET))          http_verb = http::methods::GET;
-        else if (boost::iequals(http_verb, http::methods::POST))    http_verb = http::methods::POST;
-        else if (boost::iequals(http_verb, http::methods::PUT))     http_verb = http::methods::PUT;
-        else if (boost::iequals(http_verb, http::methods::DEL))     http_verb = http::methods::DEL;
-        else if (boost::iequals(http_verb, http::methods::HEAD))    http_verb = http::methods::HEAD;
-        else if (boost::iequals(http_verb, http::methods::TRCE))    http_verb = http::methods::TRCE;
-        else if (boost::iequals(http_verb, http::methods::CONNECT)) http_verb = http::methods::CONNECT;
-        else if (boost::iequals(http_verb, http::methods::OPTIONS)) http_verb = http::methods::OPTIONS;
+        if (boost::iequals(http_verb, methods::GET))          http_verb = methods::GET;
+        else if (boost::iequals(http_verb, methods::POST))    http_verb = methods::POST;
+        else if (boost::iequals(http_verb, methods::PUT))     http_verb = methods::PUT;
+        else if (boost::iequals(http_verb, methods::DEL))     http_verb = methods::DEL;
+        else if (boost::iequals(http_verb, methods::HEAD))    http_verb = methods::HEAD;
+        else if (boost::iequals(http_verb, methods::TRCE))    http_verb = methods::TRCE;
+        else if (boost::iequals(http_verb, methods::CONNECT)) http_verb = methods::CONNECT;
+        else if (boost::iequals(http_verb, methods::OPTIONS)) http_verb = methods::OPTIONS;
 
         // Check to see if there is not allowed character on the input
         if (!web::http::details::validate_method(http_verb))
@@ -473,7 +634,7 @@ will_deref_and_erase_t asio_server_connection::handle_http_line(const boost::sys
         {
             m_request.set_request_uri(utility::conversions::to_string_t(http_path_and_version.substr(1, http_path_and_version.size() - VersionPortionSize - 1)));
         }
-        catch(const uri_exception &e)
+        catch(const web::uri_exception &e)
         {
             m_request.reply(status_codes::BadRequest, e.what());
             m_close = true;
@@ -509,12 +670,12 @@ will_deref_and_erase_t asio_server_connection::handle_headers()
         {
             auto name = utility::conversions::to_string_t(header.substr(0, colon));
             auto value = utility::conversions::to_string_t(header.substr(colon + 1, header.length() - (colon + 1))); // also exclude '\r'
-            http::details::trim_whitespace(name);
-            http::details::trim_whitespace(value);
+            web::http::details::trim_whitespace(name);
+            web::http::details::trim_whitespace(value);
 
             if (boost::iequals(name, header_names::content_length))
             {
-                headers[http::header_names::content_length] = value;
+                headers[header_names::content_length] = value;
             }
             else
             {
@@ -735,30 +896,12 @@ void asio_server_connection::async_read_until_buffersize(size_t size, const Read
     }
 }
 
+
+
 will_deref_and_erase_t asio_server_connection::dispatch_request_to_listener()
 {
     // locate the listener:
-    web::http::experimental::listener::details::http_listener_impl* pListener = nullptr;
-    {
-        auto path_segments = uri::split_path(uri::decode(m_request.relative_uri().path()));
-        for (auto i = static_cast<long>(path_segments.size()); i >= 0; --i)
-        {
-            std::string path = "";
-            for (size_t j = 0; j < static_cast<size_t>(i); ++j)
-            {
-                path += "/" + utility::conversions::to_utf8string(path_segments[j]);
-            }
-            path += "/";
-
-            pplx::extensibility::scoped_read_lock_t lock(m_p_parent->m_listeners_lock);
-            auto it = m_p_parent->m_listeners.find(path);
-            if (it != m_p_parent->m_listeners.end())
-            {
-                pListener = it->second;
-                break;
-            }
-        }
-    }
+    http_listener_impl* pListener = m_p_parent->find_listener(m_request.relative_uri());
 
     if (pListener == nullptr)
     {
@@ -870,9 +1013,9 @@ will_deref_and_erase_t asio_server_connection::handle_write_chunked_response(con
     {
         return cancel_sending_response_with_error(response, std::make_exception_ptr(http_exception("Response stream close early!")));
     }
-    auto membuf = m_response_buf.prepare(ChunkSize + http::details::chunked_encoding::additional_encoding_space);
+    auto membuf = m_response_buf.prepare(ChunkSize + chunked_encoding::additional_encoding_space);
 
-    readbuf.getn(buffer_cast<uint8_t *>(membuf) + http::details::chunked_encoding::data_offset, ChunkSize).then([=](pplx::task<size_t> actualSizeTask) -> will_deref_and_erase_t
+    readbuf.getn(buffer_cast<uint8_t *>(membuf) + chunked_encoding::data_offset, ChunkSize).then([=](pplx::task<size_t> actualSizeTask) -> will_deref_and_erase_t
     {
         size_t actualSize = 0;
         try
@@ -883,8 +1026,8 @@ will_deref_and_erase_t asio_server_connection::handle_write_chunked_response(con
         {
             return cancel_sending_response_with_error(response, std::current_exception());
         }
-        size_t offset = http::details::chunked_encoding::add_chunked_delimiters(buffer_cast<uint8_t *>(membuf), ChunkSize + http::details::chunked_encoding::additional_encoding_space, actualSize);
-        m_response_buf.commit(actualSize + http::details::chunked_encoding::additional_encoding_space);
+        size_t offset = chunked_encoding::add_chunked_delimiters(buffer_cast<uint8_t *>(membuf), ChunkSize + chunked_encoding::additional_encoding_space, actualSize);
+        m_response_buf.commit(actualSize + chunked_encoding::additional_encoding_space);
         m_response_buf.consume(offset);
         if (actualSize == 0)
             return async_write(&asio_server_connection::handle_response_written, response);
@@ -963,19 +1106,12 @@ will_deref_and_erase_t asio_server_connection::handle_response_written(
 will_deref_and_erase_t asio_server_connection::finish_request_response()
 {
     // kill the connection
-    {
-        std::lock_guard<std::mutex> lock(m_p_parent->m_connections_lock);
-        m_p_parent->m_connections.erase(this);
-        if (m_p_parent->m_connections.empty())
-        {
-            m_p_parent->m_all_connections_complete.set();
-        }
-    }
+    m_p_parent->internal_erase_connection(this);
 
     close();
     (will_deref_t)deref();
 
-    // m_connections.erase has been called above.
+    // internal_erase_connection has been called above.
     return will_deref_and_erase_t{};
 }
 
@@ -994,24 +1130,22 @@ void hostport_listener::stop()
     m_all_connections_complete.wait();
 }
 
-void hostport_listener::add_listener(const std::string& path, web::http::experimental::listener::details::http_listener_impl* listener)
+void hostport_listener::add_listener(const std::string& path, http_listener_impl* listener)
 {
     pplx::extensibility::scoped_rw_lock_t lock(m_listeners_lock);
 
     if (m_is_https != (listener->uri().scheme() == U("https")))
         throw std::invalid_argument("Error: http_listener can not simultaneously listen both http and https paths of one host");
-    else if (!m_listeners.insert(std::map<std::string,web::http::experimental::listener::details::http_listener_impl*>::value_type(path, listener)).second)
+    else if (!m_listeners.insert(std::map<std::string,http_listener_impl*>::value_type(path, listener)).second)
         throw std::invalid_argument("Error: http_listener is already registered for this path");
 }
 
-void hostport_listener::remove_listener(const std::string& path, web::http::experimental::listener::details::http_listener_impl*)
+void hostport_listener::remove_listener(const std::string& path, http_listener_impl*)
 {
     pplx::extensibility::scoped_rw_lock_t lock(m_listeners_lock);
 
     if (m_listeners.erase(path) != 1)
         throw std::invalid_argument("Error: no http_listener found for this path");
-}
-
 }
 
 pplx::task<void> http_linux_server::start()
@@ -1054,7 +1188,7 @@ pplx::task<void> http_linux_server::stop()
     return pplx::task_from_result();
 }
 
-std::pair<std::string,std::string> canonical_parts(const http::uri& uri)
+std::pair<std::string,std::string> canonical_parts(const uri& uri)
 {
     std::string endpoint;
     endpoint += utility::conversions::to_utf8string(uri::decode(uri.host()));
@@ -1071,7 +1205,7 @@ std::pair<std::string,std::string> canonical_parts(const http::uri& uri)
     return std::make_pair(std::move(endpoint), std::move(path));
 }
 
-pplx::task<void> http_linux_server::register_listener(details::http_listener_impl* listener)
+pplx::task<void> http_linux_server::register_listener(http_listener_impl* listener)
 {
     auto parts = canonical_parts(listener->uri());
     auto hostport = parts.first;
@@ -1087,13 +1221,13 @@ pplx::task<void> http_linux_server::register_listener(details::http_listener_imp
 
         try
         {
-            m_registered_listeners[listener] = utility::details::make_unique<pplx::extensibility::reader_writer_lock_t>();
+            m_registered_listeners[listener] = make_unique<pplx::extensibility::reader_writer_lock_t>();
 
             auto found_hostport_listener = m_listeners.find(hostport);
             if (found_hostport_listener == m_listeners.end())
             {
                 found_hostport_listener = m_listeners.insert(
-                    std::make_pair(hostport, utility::details::make_unique<details::hostport_listener>(this, hostport, is_https, listener->configuration()))).first;
+                    std::make_pair(hostport, make_unique<hostport_listener>(this, hostport, is_https, listener->configuration()))).first;
 
                 if (m_started)
                 {
@@ -1117,7 +1251,7 @@ pplx::task<void> http_linux_server::register_listener(details::http_listener_imp
     return pplx::task_from_result();
 }
 
-pplx::task<void> http_linux_server::unregister_listener(details::http_listener_impl* listener)
+pplx::task<void> http_linux_server::unregister_listener(http_listener_impl* listener)
 {
     auto parts = canonical_parts(listener->uri());
     auto hostport = parts.first;
@@ -1153,10 +1287,26 @@ pplx::task<void> http_linux_server::unregister_listener(details::http_listener_i
     return pplx::task_from_result();
 }
 
-pplx::task<void> http_linux_server::respond(http::http_response response)
+pplx::task<void> http_linux_server::respond(http_response response)
 {
-    details::linux_request_context * p_context = static_cast<details::linux_request_context*>(response._get_server_context());
+    linux_request_context * p_context = static_cast<linux_request_context*>(response._get_server_context());
     return pplx::create_task(p_context->m_response_completed);
+}
+
+}
+
+namespace web
+{
+namespace http
+{
+namespace experimental
+{
+namespace details
+{
+
+std::unique_ptr<http_server> make_http_asio_server()
+{
+    return make_unique<http_linux_server>();
 }
 
 }}}}
