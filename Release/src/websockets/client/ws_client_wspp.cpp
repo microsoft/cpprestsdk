@@ -16,21 +16,11 @@
 #if !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 
 #include "cpprest/details/x509_cert_utilities.h"
+#include "pplx/threadpool.h"
 
 // Force websocketpp to use C++ std::error_code instead of Boost.
 #define _WEBSOCKETPP_CPP11_SYSTEM_ERROR_
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wconversion"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic ignored "-Wignored-qualifiers"
-#pragma GCC diagnostic ignored "-Wcast-qual"
-#include <websocketpp/config/asio_client.hpp>
-#include <websocketpp/config/asio_no_tls_client.hpp>
-#include <websocketpp/client.hpp>
-#pragma GCC diagnostic pop
-#else /* __GNUC__ */
-#if defined(_WIN32)
+#if defined(_MSC_VER)
 #pragma warning( push )
 #pragma warning( disable : 4100 4127 4512 4996 4701 4267 )
 #define _WEBSOCKETPP_CPP11_STL_
@@ -38,6 +28,16 @@
 #if _MSC_VER < 1900
 #define _WEBSOCKETPP_NOEXCEPT_TOKEN_
 #endif
+#elif defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wignored-qualifiers"
+#pragma GCC diagnostic ignored "-Wcast-qual"
+#elif defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconversion"
+#pragma clang diagnostic ignored "-Winfinite-recursion"
 #endif
 
 #include <websocketpp/config/asio_client.hpp>
@@ -46,9 +46,12 @@
 
 #if defined(_WIN32)
 #pragma warning( pop )
+#elif defined(__GNUC__)
+#pragma GCC diagnostic pop
+#elif defined(__clang__)
+#pragma clang diagnostic pop
 #endif
 
-#endif /* __GNUC__ */
 
 #if defined(_MSC_VER)
 #pragma warning( disable : 4503 )
