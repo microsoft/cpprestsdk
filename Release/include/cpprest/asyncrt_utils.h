@@ -500,7 +500,7 @@ private:
 
 #ifdef _WIN32
     // void* to avoid pulling in windows.h
-    static _ASYNCRTIMP bool __cdecl datetime::system_type_to_datetime(/*SYSTEMTIME*/ void* psysTime, uint64_t seconds, datetime * pdt);
+    static _ASYNCRTIMP bool __cdecl system_type_to_datetime(/*SYSTEMTIME*/ void* psysTime, uint64_t seconds, datetime * pdt);
 #else
     static datetime timeval_to_datetime(const timeval &time);
 #endif
