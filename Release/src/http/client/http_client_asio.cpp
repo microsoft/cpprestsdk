@@ -666,7 +666,11 @@ public:
             // Add the Host header if user has not specified it explicitly
             if (!ctx->m_request.headers().has(header_names::host))
             {
-                request_stream << "Host: " << host << ":" << port << CRLF;
+                request_stream << "Host: " << host;
+                if (!base_uri.is_port_default()) {
+                    request_stream << ":" << port;
+                }
+                request_stream << CRLF;
             }
                 
             // Extra request headers are constructed here.
