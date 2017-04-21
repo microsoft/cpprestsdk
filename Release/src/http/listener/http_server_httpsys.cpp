@@ -14,10 +14,11 @@
 ****/
 
 #include "stdafx.h"
-#include "http_server_httpsys.h"
-#include "http_server_impl.h"
 
 #if _WIN32_WINNT >= _WIN32_WINNT_VISTA
+
+#include "http_server_httpsys.h"
+#include "http_server_impl.h"
 
 using namespace web;
 using namespace utility;

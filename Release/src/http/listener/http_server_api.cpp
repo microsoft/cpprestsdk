@@ -10,9 +10,9 @@
 ****/
 
 #include "stdafx.h"
-#include "http_server_impl.h"
 
 #if !defined(_WIN32) || (_WIN32_WINNT >= _WIN32_WINNT_VISTA && !defined(__cplusplus_winrt))
+#include "http_server_impl.h"
 
 using namespace web;
 using namespace utility;
