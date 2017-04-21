@@ -613,13 +613,10 @@ void connection::dispatch_request_to_listener()
             m_request._reply_if_not_already(status_codes::InternalError);
         }
     }
-    
-    if (--m_refs == 0) delete this;
 }
 
 void connection::do_response(bool bad_request)
 {
-    ++m_refs;
     m_request.get_response().then([=](pplx::task<http::http_response> r_task)
     {
         http::http_response response;
@@ -806,7 +803,15 @@ void connection::finish_request_response()
     }
     
     close();
-    if (--m_refs == 0) delete this;
+
+    if (--m_refs == 0)
+    {
+        delete this;
+    }
+    else
+    {
+        throw std::runtime_error("m_refs != 0 in finish_request_response, memory leak detected!");
+    }
 }
 
 void hostport_listener::stop()
