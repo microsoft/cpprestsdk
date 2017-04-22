@@ -456,14 +456,10 @@ protected:
         win32_result = ::WinHttpSetOption(m_hSession, WINHTTP_OPTION_SECURE_PROTOCOLS, &secure_protocols, sizeof(secure_protocols));
         if(FALSE == win32_result){ result = HRESULT_FROM_WIN32(::GetLastError()); }
 
-        try
         {
-            client_config().invoke_nativesessionhandle_options(m_hSession);
         }
-        catch (...)
-        {
-            return report_failure(_XPLATSTR("Error in session handle callback"));
-        }
+
+        config._invoke_nativesessionhandle_options(m_hSession);
 
         // Register asynchronous callback.
         if(WINHTTP_INVALID_STATUS_CALLBACK == WinHttpSetStatusCallback(
