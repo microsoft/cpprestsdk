@@ -12,6 +12,7 @@
 #include "stdafx.h"
 
 #if !defined(_WIN32) || (_WIN32_WINNT >= _WIN32_WINNT_VISTA && !defined(__cplusplus_winrt))
+#include "http_server_impl.h"
 
 using namespace web;
 using namespace utility;
@@ -73,9 +74,9 @@ pplx::task<void> http_server_api::register_listener(_In_ web::http::experimental
         if(s_server_api == nullptr)
         {
 #if defined(_WIN32) && !defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
-            std::unique_ptr<http_windows_server> server_api(new http_windows_server());
+            auto server_api = make_http_httpsys_server();
 #else
-            std::unique_ptr<http_linux_server> server_api(new http_linux_server());
+            auto server_api = make_http_asio_server();
 #endif
             http_server_api::unsafe_register_server_api(std::move(server_api));
 

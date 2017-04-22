@@ -20,6 +20,7 @@
 
 #if defined(ANDROID) || defined(__ANDROID__)
 #include <jni.h>
+#include "pplx/threadpool.h"
 #endif
 
 #if defined(__APPLE__)

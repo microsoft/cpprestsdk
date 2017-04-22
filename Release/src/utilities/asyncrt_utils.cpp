@@ -25,12 +25,6 @@
 #endif
 #endif
 
-// Could use C++ standard library if not __GLIBCXX__,
-// For testing purposes we just the handwritten on all platforms.
-#if defined(CPPREST_STDLIB_UNICODE_CONVERSIONS)
-#include <codecvt>
-#endif
-
 using namespace web;
 using namespace utility;
 using namespace utility::conversions;
@@ -346,10 +340,6 @@ inline size_t count_utf8_to_utf16(const std::string& s)
 
 utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
 {
-#if defined(CPPREST_STDLIB_UNICODE_CONVERSIONS)
-    std::wstring_convert<std::codecvt_utf8_utf16<utf16char>, utf16char> conversion;
-    return conversion.from_bytes(s);
-#else
     // Save repeated heap allocations, use the length of resulting sequence.
     const size_t srcSize = s.size();
     const std::string::value_type* const srcData = &s[0];
@@ -391,7 +381,7 @@ utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
             {
                 const char c2{ srcData[++index] };
                 const char c3{ srcData[++index] };
-                destData[destIndex++] = ((src & LOW_4BITS) << 12) | ((c2 & LOW_6BITS) << 6) | (c3 & LOW_6BITS);
+                destData[destIndex++] = static_cast<utf16string::value_type>(((src & LOW_4BITS) << 12) | ((c2 & LOW_6BITS) << 6) | (c3 & LOW_6BITS));
             }
             break;
         case 0xD0: // 2 byte character, 0x80 to 0x7FF
@@ -406,7 +396,6 @@ utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
         }
     }
     return dest;
-#endif
 }
 
 
@@ -453,10 +442,6 @@ inline size_t count_utf16_to_utf8(const utf16string &w)
 
 std::string __cdecl conversions::utf16_to_utf8(const utf16string &w)
 {
- #if defined(CPPREST_STDLIB_UNICODE_CONVERSIONS)
-     std::wstring_convert<std::codecvt_utf8_utf16<utf16char>, utf16char> conversion;
-     return conversion.to_bytes(w);
- #else
     const size_t srcSize = w.size();
     const utf16string::value_type* const srcData = &w[0];
     std::string dest(count_utf16_to_utf8(w), '\0');
@@ -465,7 +450,7 @@ std::string __cdecl conversions::utf16_to_utf8(const utf16string &w)
 
     for (size_t index = 0; index < srcSize; ++index)
     {
-        const utf16string::value_type src{ srcData[index] };
+        const utf16string::value_type src = srcData[index];
         if (src <= 0x7FF)
         {
             if (src <= 0x7F) // single byte character
@@ -478,41 +463,37 @@ std::string __cdecl conversions::utf16_to_utf8(const utf16string &w)
                 destData[destIndex++] = static_cast<char>(char((src & LOW_6BITS) | BIT8));        // trailing 6 bits
             }
         }
-        else 
+        // Check for high surrogate.
+        else if (src >= H_SURROGATE_START && src <= H_SURROGATE_END)
         {
-            // Check for high surrogate.
-            if (src >= H_SURROGATE_START && src <= H_SURROGATE_END)
-            {
-                const auto highSurrogate{ src };
-                const auto lowSurrogate{ srcData[++index] };
+            const auto highSurrogate = src;
+            const auto lowSurrogate = srcData[++index];
 
-                // To get from surrogate pair to Unicode code point:
-                // - subract 0xD800 from high surrogate, this forms top ten bits
-                // - subract 0xDC00 from low surrogate, this forms low ten bits
-                // - add 0x10000
-                // Leaves a code point in U+10000 to U+10FFFF range.
-                uint32_t codePoint = highSurrogate - H_SURROGATE_START;
-                codePoint <<= 10;
-                codePoint |= lowSurrogate - L_SURROGATE_START;
-                codePoint += SURROGATE_PAIR_START;
+            // To get from surrogate pair to Unicode code point:
+            // - subract 0xD800 from high surrogate, this forms top ten bits
+            // - subract 0xDC00 from low surrogate, this forms low ten bits
+            // - add 0x10000
+            // Leaves a code point in U+10000 to U+10FFFF range.
+            uint32_t codePoint = highSurrogate - H_SURROGATE_START;
+            codePoint <<= 10;
+            codePoint |= lowSurrogate - L_SURROGATE_START;
+            codePoint += SURROGATE_PAIR_START;
 
-                // 4 bytes need using 21 bits
-                destData[destIndex++] = static_cast<char>((codePoint >> 18) | 0xF0);                 // leading 3 bits
-                destData[destIndex++] = static_cast<char>(((codePoint >> 12) & LOW_6BITS) | BIT8);   // next 6 bits
-                destData[destIndex++] = static_cast<char>(((codePoint >> 6) & LOW_6BITS) | BIT8);    // next 6 bits
-                destData[destIndex++] = static_cast<char>((codePoint & LOW_6BITS) | BIT8);           // trailing 6 bits
-            }
-            else // 3 bytes needed (16 bits used)
-            {
-                destData[destIndex++] = static_cast<char>((src >> 12) | 0xE0);              // leading 4 bits
-                destData[destIndex++] = static_cast<char>(((src >> 6) & LOW_6BITS) | BIT8); // middle 6 bits
-                destData[destIndex++] = static_cast<char>((src & LOW_6BITS) | BIT8);        // trailing 6 bits
-            }
+            // 4 bytes need using 21 bits
+            destData[destIndex++] = static_cast<char>((codePoint >> 18) | 0xF0);                 // leading 3 bits
+            destData[destIndex++] = static_cast<char>(((codePoint >> 12) & LOW_6BITS) | BIT8);   // next 6 bits
+            destData[destIndex++] = static_cast<char>(((codePoint >> 6) & LOW_6BITS) | BIT8);    // next 6 bits
+            destData[destIndex++] = static_cast<char>((codePoint & LOW_6BITS) | BIT8);           // trailing 6 bits
+        }
+        else // 3 bytes needed (16 bits used)
+        {
+            destData[destIndex++] = static_cast<char>((src >> 12) | 0xE0);              // leading 4 bits
+            destData[destIndex++] = static_cast<char>(((src >> 6) & LOW_6BITS) | BIT8); // middle 6 bits
+            destData[destIndex++] = static_cast<char>((src & LOW_6BITS) | BIT8);        // trailing 6 bits
         }
     }
 
     return dest;
- #endif
 }
 
 utf16string __cdecl conversions::usascii_to_utf16(const std::string &s)

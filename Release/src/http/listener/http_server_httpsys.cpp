@@ -17,6 +17,9 @@
 
 #if _WIN32_WINNT >= _WIN32_WINNT_VISTA
 
+#include "http_server_httpsys.h"
+#include "http_server_impl.h"
+
 using namespace web;
 using namespace utility;
 using namespace concurrency;
@@ -1020,6 +1023,11 @@ void windows_request_context::cancel_request(std::exception_ptr except_ptr)
         std::unique_lock<std::mutex> lock(m_responseCompletedLock);
         m_response_completed.set_exception(except_ptr);
     }
+}
+
+std::unique_ptr<http_server> make_http_httpsys_server()
+{
+    return std::make_unique<http_windows_server>();
 }
 
 }}}}

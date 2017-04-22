@@ -22,6 +22,7 @@ set(SOURCES
   http/listener/http_listener.cpp
   http/listener/http_listener_msg.cpp
   http/listener/http_server_api.cpp
+  http/listener/http_server_impl.h
   http/oauth/oauth1.cpp
   http/oauth/oauth2.cpp
   json/json.cpp
@@ -101,7 +102,9 @@ endif()
 if(CPPREST_HTTP_LISTENER_IMPL STREQUAL "asio")
   list(APPEND SOURCES http/listener/http_server_asio.cpp)
 elseif(CPPREST_HTTP_LISTENER_IMPL STREQUAL "httpsys")
-  list(APPEND SOURCES http/listener/http_server_httpsys.cpp)
+  list(APPEND SOURCES
+    http/listener/http_server_httpsys.cpp
+    http/listener/http_server_httpsys.h)
 endif()
 
 if(MSVC)

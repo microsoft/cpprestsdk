@@ -25,7 +25,6 @@
     <ProjectCapability Include="SourceItemsFromImports" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\http_server_asio.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\pplx\pplxlinux.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\pplx\threadpool.h" />
   </ItemGroup>

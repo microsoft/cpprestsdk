@@ -93,6 +93,7 @@
 #include <vector>
 #include <memory>
 #include <thread>
+#include <set>
 
 #include "pplx/pplxtasks.h"
 #include "cpprest/version.h"
@@ -137,15 +138,6 @@
 #include "cpprest/http_listener.h"
 #include "cpprest/details/http_server_api.h"
 #endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA
-
-#if defined(_WIN32) && !defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
-#if _WIN32_WINNT >= _WIN32_WINNT_VISTA
-#include "cpprest/details/http_server_httpsys.h"
-#endif // _WIN32_WINNT >= _WIN32_WINNT_VISTA
-#else
-#include "cpprest/details/http_server_asio.h"
-#endif
-
 #endif
 
 #if defined(max)
