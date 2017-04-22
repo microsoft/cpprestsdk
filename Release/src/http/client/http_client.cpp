@@ -205,24 +205,6 @@ _http_client_communicator::_http_client_communicator(http::uri&& address, http_c
 void _http_client_communicator::open_and_send_request(const std::shared_ptr<request_context> &request)
 {
     // First see if client needs to be opened.
-    auto error = open_if_required();
-
-    if (error != 0)
-    {
-        // Failed to open
-        request->report_error(error, _XPLATSTR("Open failed"));
-
-        // DO NOT TOUCH the this pointer after completing the request
-        // This object could be freed along with the request as it could
-        // be the last reference to this object
-        return;
-    }
-
-    send_request(request);
-}
-
-unsigned long _http_client_communicator::open_if_required()
-{
     unsigned long error = 0;
 
     if (!m_opened)
@@ -241,7 +223,18 @@ unsigned long _http_client_communicator::open_if_required()
         }
     }
 
-    return error;
+    if (error != 0)
+    {
+        // Failed to open
+        request->report_error(error, _XPLATSTR("Open failed"));
+
+        // DO NOT TOUCH the this pointer after completing the request
+        // This object could be freed along with the request as it could
+        // be the last reference to this object
+        return;
+    }
+
+    send_request(request);
 }
 
 inline void request_context::finish()
