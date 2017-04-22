@@ -231,8 +231,12 @@ if(CPPREST_USES_WEBSOCKETPP)
 endif()
 if(CPPREST_USES_BOOST)
   cpprest_find_boost()
-  target_link_libraries(cpprest PUBLIC ${Boost_LIBRARIES}) 
-  target_include_directories(cpprest SYSTEM PUBLIC ${Boost_INCLUDE_DIR})
+  target_link_libraries(cpprest PUBLIC ${Boost_LIBRARIES})
+  if (BUILD_SHARED_LIB)
+    target_include_directories(cpprest SYSTEM PUBLIC ${Boost_INCLUDE_DIR})
+  else()
+    target_include_directories(cpprest SYSTEM PRIVATE ${Boost_INCLUDE_DIR})
+  endif()
 endif()
 if(CPPREST_USES_OPENSSL)
   cpprest_find_openssl()
@@ -268,18 +272,20 @@ else()
     SOVERSION ${CPPREST_VERSION_MAJOR}.${CPPREST_VERSION_MINOR})
 endif()
 
-install(
-  TARGETS cpprest
-  EXPORT ${CPPREST_EXPORT_NAME}
-  RUNTIME DESTINATION bin
-  LIBRARY DESTINATION lib
-  ARCHIVE DESTINATION lib
-)
+if(NOT CPPREST_DISABLE_INSTALL)
+  install(
+    TARGETS cpprest
+    EXPORT ${CPPREST_EXPORT_NAME}
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+  )
 
-if(CPPREST_INSTALL_HEADERS)
-  install(FILES ${HEADERS_CPPREST} DESTINATION include/cpprest)
-  install(FILES ${HEADERS_PPLX} DESTINATION include/pplx)
-  install(FILES ${HEADERS_DETAILS} DESTINATION include/cpprest/details)
+  if(CPPREST_INSTALL_HEADERS)
+    install(FILES ${HEADERS_CPPREST} DESTINATION include/cpprest)
+    install(FILES ${HEADERS_PPLX} DESTINATION include/pplx)
+    install(FILES ${HEADERS_DETAILS} DESTINATION include/cpprest/details)
+  endif()
+
+  install(EXPORT ${CPPREST_EXPORT_NAME} DESTINATION ${CPPREST_EXPORT_DIR})
 endif()
-
-install(EXPORT ${CPPREST_EXPORT_NAME} DESTINATION ${CPPREST_EXPORT_DIR})
