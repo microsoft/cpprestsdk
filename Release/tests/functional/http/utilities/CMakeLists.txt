@@ -16,5 +16,4 @@ target_link_libraries(httptest_utilities
   unittestpp
   common_utilities
   cpprest
-  ${BOOST_LIBRARIES}
 )

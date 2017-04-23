@@ -30,8 +30,8 @@ set(SOURCES
   stdafx.cpp
 )
 
-add_casablanca_test(httpclient_test SOURCES)
-
-if(WIN32)
-  target_link_libraries(httpclient_test winhttp)
+if(NOT WIN32)
+  cpprest_find_boost()
+  link_libraries(cpprestsdk_boost_internal)
 endif()
+add_casablanca_test(httpclient_test SOURCES)

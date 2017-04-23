@@ -1,5 +1,5 @@
 function(cpprest_find_websocketpp)
-  if(WEBSOCKETPP_FOUND)
+  if(TARGET cpprestsdk_websocketpp_internal)
     return()
   endif()
 
@@ -9,7 +9,17 @@ function(cpprest_find_websocketpp)
     set(WEBSOCKETPP_INCLUDE_DIR ${WEBSOCKETPP_INCLUDE_DIR} CACHE INTERNAL "")
   else()
     message("-- websocketpp not found, using the embedded version")
-    set(WEBSOCKETPP_FOUND 1 CACHE INTERNAL "" FORCE)
     set(WEBSOCKETPP_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/libs/websocketpp CACHE INTERNAL "")
   endif()
+
+  cpprest_find_boost()
+  cpprest_find_openssl()
+
+  add_library(cpprestsdk_websocketpp_internal INTERFACE)
+  target_include_directories(cpprestsdk_websocketpp_internal INTERFACE "$<BUILD_INTERFACE:${WEBSOCKETPP_INCLUDE_DIR}>")
+  target_link_libraries(cpprestsdk_websocketpp_internal
+    INTERFACE
+      cpprestsdk_boost_internal
+      cpprestsdk_openssl_internal
+  )
 endfunction()
