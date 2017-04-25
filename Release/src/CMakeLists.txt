@@ -272,6 +272,9 @@ if(CPPREST_INSTALL)
   if(TARGET cpprestsdk_openssl_internal)
     list(APPEND CPPREST_TARGETS cpprestsdk_openssl_internal)
   endif()
+  if(TARGET cpprestsdk_websocketpp_internal)
+    list(APPEND CPPREST_TARGETS cpprestsdk_websocketpp_internal)
+  endif()
   install(
     TARGETS ${CPPREST_TARGETS}
     EXPORT cpprestsdk-targets
