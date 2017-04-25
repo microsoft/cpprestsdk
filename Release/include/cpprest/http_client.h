@@ -87,7 +87,6 @@ public:
 #if !defined(__cplusplus_winrt)
         , m_validate_certificates(true)
 #endif
-        , m_set_user_nativehandle_options([](native_handle)->void{})
 #if !defined(_WIN32) && !defined(__cplusplus_winrt) || defined(CPPREST_FORCE_HTTP_CLIENT_ASIO)
         , m_tlsext_sni_enabled(true)
 #endif
@@ -332,7 +331,8 @@ public:
     /// <param name="handle">A internal implementation handle.</param>
     void _invoke_nativesessionhandle_options(native_handle handle) const
     {
-        m_set_user_nativesessionhandle_options(handle);
+        if (m_set_user_nativesessionhandle_options)
+            m_set_user_nativesessionhandle_options(handle);
     }
 
     /// <summary>
@@ -358,7 +358,8 @@ public:
     /// <param name="handle">A internal implementation handle.</param>
     void invoke_nativehandle_options(native_handle handle) const
     {
-        m_set_user_nativehandle_options(handle);
+        if (m_set_user_nativehandle_options)
+            m_set_user_nativehandle_options(handle);
     }
 
 #if !defined(_WIN32) && !defined(__cplusplus_winrt) || defined(CPPREST_FORCE_HTTP_CLIENT_ASIO)
