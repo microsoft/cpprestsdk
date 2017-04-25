@@ -447,7 +447,9 @@ namespace Concurrency { namespace streams
     _INT_TRAIT(char,INT8_MIN,INT8_MAX)
     _INT_TRAIT(signed char,INT8_MIN,INT8_MAX)
     _INT_TRAIT(short,INT16_MIN,INT16_MAX)
-    _INT_TRAIT(utf16char,INT16_MIN,INT16_MAX)
+#if defined(_NATIVE_WCHAR_T_DEFINED)
+    _INT_TRAIT(wchar_t,WCHAR_MIN, WCHAR_MAX)
+#endif
     _INT_TRAIT(int,INT32_MIN,INT32_MAX)
     _INT_TRAIT(long, LONG_MIN, LONG_MAX)
     _INT_TRAIT(long long, LLONG_MIN, LLONG_MAX)
