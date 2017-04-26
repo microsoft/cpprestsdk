@@ -18,6 +18,8 @@
 #include "cpprest/details/x509_cert_utilities.h"
 #include "pplx/threadpool.h"
 
+#include "ws_client_impl.h"
+
 // Force websocketpp to use C++ std::error_code instead of Boost.
 #define _WEBSOCKETPP_CPP11_SYSTEM_ERROR_
 #if defined(_MSC_VER)
@@ -401,10 +403,10 @@ public:
         {
         case websocket_message_type::text_message:
         case websocket_message_type::binary_message:
-		case websocket_message_type::pong:
+        case websocket_message_type::pong:
             break;
         default:
-            return pplx::task_from_exception<void>(websocket_exception("Invalid message type"));
+            return pplx::task_from_exception<void>(websocket_exception("Message Type not supported."));
         }
 
         const auto length = msg.m_length;
@@ -417,22 +419,13 @@ public:
             return pplx::task_from_exception<void>(websocket_exception("Message size too large. Ensure message length is less than UINT_MAX."));
         }
 
-        bool msg_pending = false;
-        {
-          std::lock_guard<std::mutex> lock(m_send_lock);
-          if (m_outgoing_msg_queue.size() > 0)
-          {
-            msg_pending = true;
-          }
-
-          m_outgoing_msg_queue.push(msg);
-        }
+        auto msg_pending = m_out_queue.push(msg);
 
         // No sends in progress
-        if (msg_pending == false)
+        if (msg_pending == outgoing_msg_queue::state::was_empty)
         {
-          // Start sending the message
-          send_msg(msg);
+            // Start sending the message
+            send_msg(msg);
         }
 
         return pplx::create_task(msg.body_sent());
@@ -568,21 +561,8 @@ public:
                 msg.signal_body_sent();
             }
 
-            bool msg_pending = false;
             websocket_outgoing_message next_msg;
-            {
-              // Only hold the lock when actually touching the queue.
-              std::lock_guard<std::mutex> lock(this_client->m_send_lock);
-
-              // First message in queue has been sent
-              this_client->m_outgoing_msg_queue.pop();
-
-              if (this_client->m_outgoing_msg_queue.size() > 0)
-              {
-                next_msg = this_client->m_outgoing_msg_queue.front();
-                msg_pending = true;
-              }
-            }
+            bool msg_pending = this_client->m_out_queue.pop_and_peek(next_msg);
 
             if (msg_pending)
             {
@@ -681,19 +661,19 @@ private:
                 ec);
             break;
         case websocket_message_type::binary_message:
-			client.send(
+            client.send(
                 this_client->m_con,
                 sp_allocated.get(),
                 length,
                 websocketpp::frame::opcode::binary,
                 ec);
             break;
-		case websocket_message_type::pong:
-			client.pong(
-				this_client->m_con,
-				"",
-				ec);
-			break;
+        case websocket_message_type::pong:
+            client.pong(
+                this_client->m_con,
+                "",
+                ec);
+            break;
         default:
             // This case should have already been filtered above.
             std::abort();
@@ -775,11 +755,8 @@ private:
     State m_state;
     std::unique_ptr<websocketpp_client_base> m_client;
 
-    // Guards access to m_outgoing_msg_queue
-    std::mutex m_send_lock;
-
     // Queue to track pending sends
-    std::queue<websocket_outgoing_message> m_outgoing_msg_queue;
+    outgoing_msg_queue m_out_queue;
 
     // External callback for handling received and close event
     std::function<void(websocket_incoming_message)> m_external_message_handler;

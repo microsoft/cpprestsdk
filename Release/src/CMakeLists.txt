@@ -45,12 +45,14 @@ elseif(CPPREST_WEBSOCKETS_IMPL STREQUAL "winrt")
     websockets/client/ws_msg.cpp
     websockets/client/ws_client.cpp
     websockets/client/ws_client_winrt.cpp
+    websockets/client/ws_client_impl.h
   )
 elseif(CPPREST_WEBSOCKETS_IMPL STREQUAL "wspp")
   list(APPEND SOURCES
     websockets/client/ws_msg.cpp
     websockets/client/ws_client.cpp
     websockets/client/ws_client_wspp.cpp
+    websockets/client/ws_client_impl.h
   )
 endif()
 
