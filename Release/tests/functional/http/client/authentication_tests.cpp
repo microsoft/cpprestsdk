@@ -22,6 +22,7 @@
 #else
 #include <windows.h>
 #include <winhttp.h>
+#pragma comment(lib, "winhttp")
 #endif
 #endif
 

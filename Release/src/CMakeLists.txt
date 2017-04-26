@@ -227,26 +227,19 @@ endif()
 # Add any libraries that were used.
 if(CPPREST_USES_WEBSOCKETPP)
   cpprest_find_websocketpp()
-  target_include_directories(cpprest SYSTEM PRIVATE ${WEBSOCKETPP_INCLUDE_DIR})
+  target_link_libraries(cpprest PRIVATE cpprestsdk_websocketpp_internal)
 endif()
 if(CPPREST_USES_BOOST)
   cpprest_find_boost()
-  target_link_libraries(cpprest PUBLIC ${Boost_LIBRARIES}) 
-  target_include_directories(cpprest SYSTEM PUBLIC ${Boost_INCLUDE_DIR})
+  target_link_libraries(cpprest PUBLIC cpprestsdk_boost_internal)
 endif()
 if(CPPREST_USES_OPENSSL)
   cpprest_find_openssl()
-  target_link_libraries(cpprest PUBLIC ${OPENSSL_LIBRARIES})
-  target_include_directories(cpprest SYSTEM PUBLIC ${OPENSSL_INCLUDE_DIR})
-  if (NOT _SSL_LEAK_SUPPRESS_AVAILABLE)
-    # libressl doesn't ship with the cleanup method being used in ws_client_wspp
-    target_compile_definitions(cpprest PRIVATE -DCPPREST_NO_SSL_LEAK_SUPPRESS)
-  endif()
+  target_link_libraries(cpprest PUBLIC cpprestsdk_openssl_internal)
 endif()
 if(CPPREST_USES_ZLIB)
   cpprest_find_zlib()
-  target_link_libraries(cpprest PUBLIC ${ZLIB_LIBRARIES})
-  target_include_directories(cpprest SYSTEM PUBLIC ${ZLIB_INCLUDE_DIR})
+  target_link_libraries(cpprest PRIVATE cpprestsdk_zlib_internal)
 endif()
 if(ANDROID)
   target_link_libraries(cpprest PRIVATE ${ANDROID_STL_FLAGS})
@@ -268,18 +261,44 @@ else()
     SOVERSION ${CPPREST_VERSION_MAJOR}.${CPPREST_VERSION_MINOR})
 endif()
 
-install(
-  TARGETS cpprest
-  EXPORT ${CPPREST_EXPORT_NAME}
-  RUNTIME DESTINATION bin
-  LIBRARY DESTINATION lib
-  ARCHIVE DESTINATION lib
-)
+if(CPPREST_INSTALL)
+  set(CPPREST_TARGETS cpprest)
+  if(TARGET cpprestsdk_boost_internal)
+    list(APPEND CPPREST_TARGETS cpprestsdk_boost_internal)
+  endif()
+  if(TARGET cpprestsdk_zlib_internal)
+    list(APPEND CPPREST_TARGETS cpprestsdk_zlib_internal)
+  endif()
+  if(TARGET cpprestsdk_openssl_internal)
+    list(APPEND CPPREST_TARGETS cpprestsdk_openssl_internal)
+  endif()
+  if(TARGET cpprestsdk_websocketpp_internal)
+    list(APPEND CPPREST_TARGETS cpprestsdk_websocketpp_internal)
+  endif()
+  install(
+    TARGETS ${CPPREST_TARGETS}
+    EXPORT cpprestsdk-targets
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+  )
 
-if(CPPREST_INSTALL_HEADERS)
-  install(FILES ${HEADERS_CPPREST} DESTINATION include/cpprest)
-  install(FILES ${HEADERS_PPLX} DESTINATION include/pplx)
-  install(FILES ${HEADERS_DETAILS} DESTINATION include/cpprest/details)
+  if(CPPREST_INSTALL_HEADERS)
+    install(FILES ${HEADERS_CPPREST} DESTINATION include/cpprest)
+    install(FILES ${HEADERS_PPLX} DESTINATION include/pplx)
+    install(FILES ${HEADERS_DETAILS} DESTINATION include/cpprest/details)
+  endif()
+
+  configure_file(../cmake/cpprestsdk-config.in.cmake "${CMAKE_CURRENT_BINARY_DIR}/cpprestsdk-config.cmake" @ONLY)
+
+  install(
+    FILES "${CMAKE_CURRENT_BINARY_DIR}/cpprestsdk-config.cmake"
+    DESTINATION ${CPPREST_EXPORT_DIR}
+  )
+  install(
+    EXPORT cpprestsdk-targets
+    FILE cpprestsdk-targets.cmake
+    NAMESPACE cpprestsdk::
+    DESTINATION ${CPPREST_EXPORT_DIR}
+  )
 endif()
-
-install(EXPORT ${CPPREST_EXPORT_NAME} DESTINATION ${CPPREST_EXPORT_DIR})
