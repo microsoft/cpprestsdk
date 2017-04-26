@@ -82,7 +82,14 @@ TEST_FIXTURE(uri_address, auth_no_data, "Ignore:Linux", "89", "Ignore:Apple", "8
             p_request->reply(200);
         });
 
-        http_asserts::assert_response_equals(client.request(msg).get(), status_codes::OK);
+        try
+        {
+            http_asserts::assert_response_equals(client.request(msg).get(), status_codes::OK);
+        }
+        catch (...)
+        {
+            VERIFY_ARE_EQUAL(0, 1);
+        }
     }
     try { t.get(); }
     catch (...) { VERIFY_ARE_EQUAL(0, 1); }

@@ -21,47 +21,106 @@ using namespace tests::functional::http::utilities;
 
 namespace tests { namespace functional { namespace http { namespace client {
 
+// In order to run this test, replace this proxy uri with one that you have access to.
+static const auto proxy_uri = U("http://netproxy.redmond.corp.microsoft.com");
+
 SUITE(proxy_tests)
 {
+
+TEST_FIXTURE(uri_address, web_proxy_uri)
+{
+    uri u(proxy_uri);
+
+    web_proxy uri_proxy(u);
+    VERIFY_IS_TRUE(uri_proxy.is_specified());
+    VERIFY_IS_FALSE(uri_proxy.is_disabled());
+    VERIFY_IS_FALSE(uri_proxy.is_auto_discovery());
+    VERIFY_IS_FALSE(uri_proxy.is_default());
+    VERIFY_ARE_EQUAL(u, uri_proxy.address());
+}
+
+TEST_FIXTURE(uri_address, web_proxy_disabled)
+{
+    web_proxy disabled_proxy(web_proxy::disabled);
+    VERIFY_IS_FALSE(disabled_proxy.is_specified());
+    VERIFY_IS_TRUE(disabled_proxy.is_disabled());
+    VERIFY_IS_FALSE(disabled_proxy.is_auto_discovery());
+    VERIFY_IS_FALSE(disabled_proxy.is_default());
+}
+
+TEST_FIXTURE(uri_address, web_proxy_discover)
+{
+    web_proxy discover_proxy(web_proxy::use_auto_discovery);
+    VERIFY_IS_FALSE(discover_proxy.is_specified());
+    VERIFY_IS_FALSE(discover_proxy.is_disabled());
+    VERIFY_IS_TRUE(discover_proxy.is_auto_discovery());
+    VERIFY_IS_FALSE(discover_proxy.is_default());
+}
+
+TEST_FIXTURE(uri_address, web_proxy_default)
+{
+    web_proxy default_proxy(web_proxy::use_default);
+    VERIFY_IS_FALSE(default_proxy.is_specified());
+    VERIFY_IS_FALSE(default_proxy.is_disabled());
+    VERIFY_IS_FALSE(default_proxy.is_auto_discovery());
+    VERIFY_IS_TRUE(default_proxy.is_default());
+}
+
+TEST_FIXTURE(uri_address, web_proxy_default_construct)
+{
+    web_proxy default_proxy_2;
+    VERIFY_IS_FALSE(default_proxy_2.is_specified());
+    VERIFY_IS_FALSE(default_proxy_2.is_disabled());
+    VERIFY_IS_FALSE(default_proxy_2.is_auto_discovery());
+    VERIFY_IS_TRUE(default_proxy_2.is_default());
+}
+
+TEST_FIXTURE(uri_address, http_client_config_set_proxy)
+{
+    http_client_config hconfig;
+    VERIFY_IS_TRUE(hconfig.proxy().is_default());
+
+    uri u = U("http://x");
+
+    hconfig.set_proxy(web_proxy(u));
+    VERIFY_ARE_EQUAL(u, hconfig.proxy().address());
+}
 
 #ifndef __cplusplus_winrt
 // IXHR2 does not allow the proxy settings to be changed
 TEST_FIXTURE(uri_address, auto_discovery_proxy)
 {
     test_http_server::scoped_server scoped(m_uri);
-    scoped.server()->next_request().then([&](test_request *p_request)
+    auto t = scoped.server()->next_request().then([&](test_request *p_request)
     {
         http_asserts::assert_test_request_equals(p_request, methods::PUT, U("/"), U("text/plain"), U("this is a test"));
-        p_request->reply(200);
+        p_request->reply(status_codes::OK);
     });
     http_client_config config;
-
     config.set_proxy(web_proxy::use_auto_discovery);
-    VERIFY_IS_FALSE(config.proxy().is_disabled());
-    VERIFY_IS_FALSE(config.proxy().is_specified());
-    http_client client(m_uri, config);
 
+    http_client client(m_uri, config);
     http_asserts::assert_response_equals(client.request(methods::PUT, U("/"), U("this is a test")).get(), status_codes::OK);
+
+    t.get();
 }
 
 TEST_FIXTURE(uri_address, disabled_proxy)
 {
     test_http_server::scoped_server scoped(m_uri);
-    scoped.server()->next_request().then([&](test_request *p_request)
+    auto t = scoped.server()->next_request().then([&](test_request *p_request)
     {
         http_asserts::assert_test_request_equals(p_request, methods::PUT, U("/"), U("text/plain"), U("sample data"));
         p_request->reply(status_codes::OK);
     });
 
     http_client_config config;
-    config.set_proxy(web_proxy(web_proxy::disabled));
-    VERIFY_IS_TRUE(config.proxy().is_disabled());
-    VERIFY_IS_FALSE(config.proxy().is_auto_discovery());
-    VERIFY_IS_FALSE(config.proxy().is_specified());
-    VERIFY_IS_FALSE(config.proxy().is_default());
+    config.set_proxy(web_proxy::disabled);
 
     http_client client(m_uri, config);
     http_asserts::assert_response_equals(client.request(methods::PUT, U("/"), U("sample data")).get(), status_codes::OK);
+
+    t.get();
 }
 
 #endif // __cplusplus_winrt
@@ -79,13 +138,9 @@ TEST_FIXTURE(uri_address, no_proxy_options_on_winrt)
 
 #ifndef __cplusplus_winrt
 // Can't specify a proxy with WinRT implementation.
- TEST_FIXTURE(uri_address, http_proxy_with_credentials, "Ignore:Linux", "Github 53", "Ignore:Apple", "Github 53", "Ignore:Android", "Github 53", "Ignore:IOS", "Github 53")
+ TEST_FIXTURE(uri_address, http_proxy_with_credentials, "Ignore:Linux", "Github 53", "Ignore:Apple", "Github 53", "Ignore:Android", "Github 53", "Ignore:IOS", "Github 53", "Ignore", "Manual")
 {
-    uri u(U("http://netproxy.redmond.corp.microsoft.com"));
-
-    web_proxy proxy(u);
-    VERIFY_IS_TRUE(proxy.is_specified());
-    VERIFY_ARE_EQUAL(u, proxy.address());
+    web_proxy proxy(proxy_uri);
     web::credentials cred(U("artur"), U("fred")); // relax, this is not my real password
     proxy.set_credentials(cred);
 
@@ -116,15 +171,9 @@ TEST_FIXTURE(uri_address, no_proxy_options_on_winrt)
 
 TEST_FIXTURE(uri_address, http_proxy, "Ignore", "Manual")
 {
-    // In order to run this test, replace this proxy uri with one that you have access to.
-    uri u(U("http://netproxy.redmond.corp.microsoft.com"));
-
-    web_proxy proxy(u);
-    VERIFY_IS_TRUE(proxy.is_specified());
-    VERIFY_ARE_EQUAL(u, proxy.address());
 
     http_client_config config;
-    config.set_proxy(proxy);
+    config.set_proxy(web_proxy(proxy_uri));
 
     http_client client(U("http://httpbin.org"), config);
 
@@ -136,15 +185,8 @@ TEST_FIXTURE(uri_address, http_proxy, "Ignore", "Manual")
 
 TEST_FIXTURE(uri_address, https_proxy, "Ignore", "Manual")
 {
-    // In order to run this test, replace this proxy uri with one that you have access to.
-    uri u(U("http://netproxy.redmond.corp.microsoft.com"));
-
-    web_proxy proxy(u);
-    VERIFY_IS_TRUE(proxy.is_specified());
-    VERIFY_ARE_EQUAL(u, proxy.address());
-
     http_client_config config;
-    config.set_proxy(proxy);
+    config.set_proxy(web_proxy(proxy_uri));
 
     http_client client(U("https://httpbin.org"), config);
 
