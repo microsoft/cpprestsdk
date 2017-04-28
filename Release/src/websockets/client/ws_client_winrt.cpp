@@ -15,6 +15,8 @@
 
 #if !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 
+#include "ws_client_impl.h"
+
 using namespace ::Windows::Foundation;
 using namespace ::Windows::Storage;
 using namespace ::Windows::Storage::Streams;
@@ -230,19 +232,10 @@ public:
             return pplx::task_from_exception<void>(websocket_exception("Message size too large. Ensure message length is less than UINT_MAX."));
         }
 
-        bool msg_pending = false;
-        {
-            std::lock_guard<std::mutex> lock(m_send_lock);
-            if (m_outgoing_msg_queue.size() > 0)
-            {
-                msg_pending = true;
-            }
-
-            m_outgoing_msg_queue.push(msg);
-        }
+        auto msg_pending = m_out_queue.push(msg);
 
         // No sends in progress
-        if (msg_pending == false)
+        if (msg_pending == outgoing_msg_queue::state::was_empty)
         {
             // Start sending the message
             send_msg(msg);
@@ -379,22 +372,8 @@ public:
                 msg.signal_body_sent();
             }
 
-            bool msg_pending = false;
             websocket_outgoing_message next_msg;
-            {
-                // Only hold the lock when actually touching the queue.
-                std::lock_guard<std::mutex> lock(this_client->m_send_lock);
-
-                // First message in queue has been sent
-                this_client->m_outgoing_msg_queue.pop();
-
-                if (this_client->m_outgoing_msg_queue.size() > 0)
-                {
-                    next_msg = this_client->m_outgoing_msg_queue.front();
-                    msg_pending = true;
-                }
-            }
-
+            bool msg_pending = this_client->m_out_queue.pop_and_peek(next_msg);
             if (msg_pending)
             {
                 this_client->send_msg(next_msg);
@@ -443,11 +422,8 @@ private:
     std::function<void(websocket_incoming_message)> m_external_message_handler;
     std::function<void(websocket_close_status, const utility::string_t&, const std::error_code&)> m_external_close_handler;
     
-    // The implementation has to ensure ordering of send requests
-    std::mutex m_send_lock;
-
     // Queue to track pending sends
-    std::queue<websocket_outgoing_message> m_outgoing_msg_queue;
+    outgoing_msg_queue m_out_queue;
 };
 
 void ReceiveContext::OnReceive(MessageWebSocket^ sender, MessageWebSocketMessageReceivedEventArgs^ args)

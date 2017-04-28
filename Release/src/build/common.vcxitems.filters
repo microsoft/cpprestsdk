@@ -218,7 +218,12 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\http\listener\http_server_impl.h">
       <Filter>Header Files\private</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\http\common\internal_http_helpers.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\websockets\client\ws_client_impl.h">
+      <Filter>Header Files\private</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\http\common\internal_http_helpers.h">
+      <Filter>Header Files\private</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\http_constants.dat">
