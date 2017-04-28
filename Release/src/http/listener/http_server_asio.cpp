@@ -900,7 +900,19 @@ void asio_server_connection::async_read_until_buffersize(size_t size, const Read
 will_deref_and_erase_t asio_server_connection::dispatch_request_to_listener()
 {
     // locate the listener:
-    http_listener_impl* pListener = m_p_parent->find_listener(m_request.relative_uri());
+    http_listener_impl* pListener = nullptr;
+
+    try
+    {
+        pListener = m_p_parent->find_listener(m_request.relative_uri());
+    }
+    catch (const web::uri_exception&)
+    {
+        m_request.reply(status_codes::BadRequest);
+        (will_erase_from_parent_t)do_response();
+        (will_deref_t)deref();
+        return will_deref_and_erase_t{};
+    }
 
     if (pListener == nullptr)
     {
