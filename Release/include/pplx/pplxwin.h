@@ -172,7 +172,7 @@ namespace details
             _ASSERTE(_M_recursionCount == 0);
         }
 
-        void recursive_lock_impl::lock()
+        void lock()
         {
             auto id = ::pplx::details::platform::GetCurrentThreadId();
 
@@ -188,7 +188,7 @@ namespace details
             }            
         }
 
-        void recursive_lock_impl::unlock()
+        void unlock()
         {
             _ASSERTE(_M_owner == ::pplx::details::platform::GetCurrentThreadId());
             _ASSERTE(_M_recursionCount >= 1);
