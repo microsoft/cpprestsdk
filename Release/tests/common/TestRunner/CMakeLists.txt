@@ -23,6 +23,7 @@ elseif(APPLE)
     )
 elseif(UNIX)
   target_link_libraries(test_runner PRIVATE
+    dl
     -Wl,--whole-archive
     httpclient_test
     json_test
