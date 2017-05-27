@@ -814,7 +814,7 @@ public:
     const http::method &method() const { return _m_impl->method(); }
 
     /// <summary>
-    /// Get the method (GET/PUT/POST/DELETE) of the request message.
+    /// Set the method (GET/PUT/POST/DELETE) of the request message.
     /// </summary>
     /// <param name="method">Request method of this HTTP request.</param>
     void set_method(const http::method &method) const { _m_impl->method() = method; }
