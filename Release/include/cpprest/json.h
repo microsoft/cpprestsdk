@@ -1383,6 +1383,7 @@ public:
                 return m_value == other.m_value;
             }
             __assume(0);
+            return false;
         }
 
     private:
