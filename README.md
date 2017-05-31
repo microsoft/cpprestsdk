@@ -24,6 +24,31 @@ For other platforms, install options, how to build from source, and more, take a
 
 Once you have the library, look at our [tutorial](https://github.com/Microsoft/cpprestsdk/wiki/Getting-Started-Tutorial) to use the http_client. It walks through how to setup a project to use the C++ Rest SDK and make a basic Http request.
 
+To use from CMake:
+```cmake
+cmake_minimum_required(VERSION 3.7)
+project(main)
+
+find_library(CPPREST_LIB cpprest)
+find_package(Boost REQUIRED COMPONENTS random system thread filesystem chrono atomic date_time regex)
+find_package(OpenSSL 1.0.0 REQUIRED)
+
+add_executable(main main.cpp)
+target_link_libraries(main
+  ${CPPREST_LIB}
+  Boost::boost
+  Boost::random
+  Boost::system
+  Boost::thread
+  Boost::filesystem
+  Boost::chrono
+  Boost::atomic
+  Boost::date_time
+  Boost::regex
+  OpenSSL::SSL
+)
+```
+
 ## What's in the SDK:
 
 *   Features - HTTP client/server, JSON, URI, asynchronous streams, WebSockets client, oAuth
