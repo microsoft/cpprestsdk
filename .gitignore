@@ -67,3 +67,5 @@ Intermediate/
 # Ignore cmake building directories
 build.*/
 docs/
+# ignore NuGet artifacts
+.nuget/

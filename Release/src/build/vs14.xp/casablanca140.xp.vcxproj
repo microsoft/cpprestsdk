@@ -13,6 +13,7 @@
     <WinRTProject>false</WinRTProject>
     <TargetXP>true</TargetXP>
     <ProjectName>cpprestsdk140.xp</ProjectName>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Config.Definitions.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -42,7 +43,6 @@
   </PropertyGroup>
   <PropertyGroup>
     <TargetName>$(CppRestBaseFileName)140$(DebugFileSuffix)_xp_$(CppRestSDKVersionFileSuffix)</TargetName>
-    <NuGetPackageImportStamp>eec97f90</NuGetPackageImportStamp>
   </PropertyGroup>
   <ItemGroup>
     <None Include="packages.config">
