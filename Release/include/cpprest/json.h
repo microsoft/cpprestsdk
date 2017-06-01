@@ -208,6 +208,12 @@ namespace json
         /// <returns>The JSON value object that contains the result of the assignment.</returns>
         _ASYNCRTIMP value &operator=(value &&) CPPREST_NOEXCEPT ;
 
+        /// <summary>
+        /// Returns the static immutable null reference
+        /// </summary>
+        /// <returns>A static null reference</returns>
+        static _ASYNCRTIMP const value& __cdecl null_ref();
+
         // Static factories
 
         /// <summary>
@@ -599,6 +605,13 @@ public:
         /// <returns>A reference to the value kept in the field.</returns>
         _ASYNCRTIMP value & operator [] (const utility::string_t &key);
 
+        /// <summary>
+        /// Accesses a field of a JSON object.
+        /// </summary>
+        /// <param name="key">The name of the field</param>
+        /// <returns>A reference to the value kept in the field or the null reference.</returns>
+        _ASYNCRTIMP const value & operator [] (const utility::string_t &key) const;
+
 #ifdef _WIN32
 private:
         // Only used internally by JSON parser
@@ -624,6 +637,13 @@ public:
         /// <param name="index">The index of an element in the JSON array.</param>
         /// <returns>A reference to the value kept in the field.</returns>
         _ASYNCRTIMP value & operator [] (size_t index);
+
+        /// <summary>
+        /// Accesses an element of a JSON array.
+        /// </summary>
+        /// <param name="index">The index of an element in the JSON array.</param>
+        /// <returns>A reference to the value kept in the field or the null reference.</returns>
+        _ASYNCRTIMP const value & operator [] (size_t index) const;
 
     private:
         friend class web::json::details::_Object;
@@ -929,6 +949,22 @@ public:
         }
 
         /// <summary>
+        /// Accesses an element of a JSON array.
+        /// </summary>
+        /// <param name="index">The index of an element in the JSON array.</param>
+        /// <returns>A reference to the value kept in the field or the null reference.</returns>
+        const json::value& operator[](size_type index) const
+        {
+            msl::safeint3::SafeInt<size_type> nMinSize(index);
+            nMinSize += 1;
+            msl::safeint3::SafeInt<size_type> nlastSize(m_elements.size());
+            if (nlastSize < nMinSize)
+                return json::value::null_ref();
+
+            return m_elements[index];
+        }
+
+        /// <summary>
         /// Gets the number of elements of the array.
         /// </summary>
         /// <returns>The number of elements.</returns>
@@ -1146,6 +1182,23 @@ public:
             if (iter == m_elements.end() || key != iter->first)
             {
                 return m_elements.insert(iter, std::pair<utility::string_t, value>(key, value()))->second;
+            }
+
+            return iter->second;
+        }
+
+        /// <summary>
+        /// Accesses an element of a JSON object.
+        /// </summary>
+        /// <param name="key">The key of an element in the JSON object.</param>
+        /// <returns>If the key exists, a reference to the value kept in the field, or the null reference.</returns>
+        const json::value& operator[](const utility::string_t& key) const
+        {
+            auto iter = find(key);
+
+            if (iter == m_elements.end())
+            {
+                return json::value::null_ref();
             }
 
             return iter->second;
@@ -1668,6 +1721,8 @@ public:
 
             virtual json::value &index(const utility::string_t &key);
 
+            virtual const json::value &cnst_index(const utility::string_t &key) const;
+
             bool is_equal(const _Object* other) const
             {
                 if (m_object.size() != other->m_object.size())
@@ -1775,6 +1830,11 @@ public:
             virtual const json::array& as_array() const { return m_array; }
 
             virtual json::value &index(json::array::size_type index)
+            {
+                return m_array[index];
+            }
+
+            virtual const json::value &cnst_index(json::array::size_type index) const
             {
                 return m_array[index];
             }
