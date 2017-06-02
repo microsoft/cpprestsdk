@@ -470,7 +470,31 @@ web::json::value& web::json::value::operator [] (const utility::string_t &key)
     return m_value->index(key);
 }
 
+const web::json::value& web::json::value::operator [] (const utility::string_t &key) const
+{
+    if ( this->is_null() )
+    {
+        m_value.reset(new web::json::details::_Object(details::g_keep_json_object_unsorted));
+#ifdef ENABLE_JSON_VALUE_VISUALIZER
+        m_kind = value::Object;
+#endif
+    }
+    return m_value->index(key);
+}
+
 web::json::value& web::json::value::operator[](size_t index)
+{
+    if ( this->is_null() )
+    {
+        m_value.reset(new web::json::details::_Array());
+#ifdef ENABLE_JSON_VALUE_VISUALIZER
+        m_kind = value::Array;
+#endif
+    }
+    return m_value->index(index);
+}
+
+const web::json::value& web::json::value::operator[](size_t index) const
 {
     if ( this->is_null() )
     {
