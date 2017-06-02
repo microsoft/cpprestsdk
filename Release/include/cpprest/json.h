@@ -609,7 +609,14 @@ public:
         /// </summary>
         /// <param name="key">The name of the field</param>
         /// <returns>A reference to the value kept in the field.</returns>
-        _ASYNCRTIMP value & operator [] (const utility::string_t &key);
+        _ASYNCRTIMP json::value & operator [] (const utility::string_t &key);
+
+        /// <summary>
+        /// Accesses a field of a JSON object.
+        /// </summary>
+        /// <param name="key">The name of the field</param>
+        /// <returns>A reference to the value kept in the field.</returns>
+        _ASYNCRTIMP const json::value & operator [] (const utility::string_t &key) const;
 
 #ifdef _WIN32
 private:
@@ -635,7 +642,14 @@ public:
         /// </summary>
         /// <param name="index">The index of an element in the JSON array.</param>
         /// <returns>A reference to the value kept in the field.</returns>
-        _ASYNCRTIMP value & operator [] (size_t index);
+        _ASYNCRTIMP json::value & operator [] (size_t index);
+
+        /// <summary>
+        /// Accesses an element of a JSON array.
+        /// </summary>
+        /// <param name="index">The index of an element in the JSON array.</param>
+        /// <returns>A reference to the value kept in the field.</returns>
+        _ASYNCRTIMP const json::value & operator [] (size_t index) const;
 
     private:
         friend class web::json::details::_Object;
@@ -662,9 +676,9 @@ public:
 #endif
         {}
 
-        std::unique_ptr<details::_Value> m_value;
+        mutable std::unique_ptr<details::_Value> m_value;
 #ifdef ENABLE_JSON_VALUE_VISUALIZER
-        value_type m_kind;
+        mutable value_type m_kind;
 #endif
     };
 
