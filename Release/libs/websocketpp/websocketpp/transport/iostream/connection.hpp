@@ -32,6 +32,8 @@
 
 #include <websocketpp/transport/base/connection.hpp>
 
+#include <websocketpp/uri.hpp>
+
 #include <websocketpp/logger/levels.hpp>
 
 #include <websocketpp/common/connection_hdl.hpp>
@@ -105,6 +107,19 @@ public:
         m_output_stream = o;
     }
 
+    /// Set uri hook
+    /**
+     * Called by the endpoint as a connection is being established to provide
+     * the uri being connected to to the transport layer.
+     *
+     * This transport policy doesn't use the uri so it is ignored.
+     *
+     * @since 0.6.0
+     *
+     * @param u The uri to set
+     */
+    void set_uri(uri_ptr) {}
+
     /// Overloaded stream input operator
     /**
      * Attempts to read input from the given stream into the transport. Bytes
@@ -153,7 +168,7 @@ public:
 
         return this->read_some_impl(buf,len);
     }
-    
+
     /// Manual input supply (read all)
     /**
      * Similar to read_some, but continues to read until all bytes in the
@@ -173,7 +188,7 @@ public:
     size_t read_all(char const * buf, size_t len) {
         // this serializes calls to external read.
         scoped_lock_type lock(m_read_mutex);
-        
+
         size_t total_read = 0;
         size_t temp_read = 0;
 
@@ -312,25 +327,60 @@ public:
     timer_ptr set_timer(long, timer_handler) {
         return timer_ptr();
     }
-    
+
     /// Sets the write handler
     /**
      * The write handler is called when the iostream transport receives data
      * that needs to be written to the appropriate output location. This handler
      * can be used in place of registering an ostream for output.
      *
-     * The signature of the handler is 
+     * The signature of the handler is
      * `lib::error_code (connection_hdl, char const *, size_t)` The
      * code returned will be reported and logged by the core library.
      *
+     * See also, set_vector_write_handler, for an optional write handler that
+     * allows more efficient handling of multiple writes at once.
+     *
+     * @see set_vector_write_handler
+     *
      * @since 0.5.0
      *
-     * @param h The handler to call on connection shutdown.
+     * @param h The handler to call when data is to be written.
      */
     void set_write_handler(write_handler h) {
         m_write_handler = h;
     }
-    
+
+    /// Sets the vectored write handler
+    /**
+     * The vectored write handler is called when the iostream transport receives
+     * multiple chunks of data that need to be written to the appropriate output
+     * location. This handler can be used in conjunction with the write_handler
+     * in place of registering an ostream for output.
+     *
+     * The sequence of buffers represents bytes that should be written
+     * consecutively and it is suggested to group the buffers into as few next
+     * layer packets as possible. Vector write is used to allow implementations
+     * that support it to coalesce writes into a single TCP packet or TLS
+     * segment for improved efficiency.
+     *
+     * This is an optional handler. If it is not defined then multiple calls
+     * will be made to the standard write handler.
+     *
+     * The signature of the handler is
+     * `lib::error_code (connection_hdl, std::vector<websocketpp::transport::buffer>
+     * const & bufs)`. The code returned will be reported and logged by the core
+     * library. The `websocketpp::transport::buffer` type is a struct with two
+     * data members. buf (char const *) and len (size_t).
+     *
+     * @since 0.6.0
+     *
+     * @param h The handler to call when vectored data is to be written.
+     */
+    void set_vector_write_handler(vector_write_handler h) {
+        m_vector_write_handler = h;
+    }
+
     /// Sets the shutdown handler
     /**
      * The shutdown handler is called when the iostream transport receives a
@@ -434,7 +484,7 @@ protected:
      * @param len number of bytes to write
      * @param handler Callback to invoke with operation status.
      */
-    void async_write(char const * buf, size_t len, transport::write_handler 
+    void async_write(char const * buf, size_t len, transport::write_handler
         handler)
     {
         m_alog.write(log::alevel::devel,"iostream_con async_write");
@@ -444,7 +494,7 @@ protected:
 
         if (m_output_stream) {
             m_output_stream->write(buf,len);
-            
+
             if (m_output_stream->bad()) {
                 ec = make_error_code(error::bad_stream);
             }
@@ -492,17 +542,19 @@ protected:
                     break;
                 }
             }
+        } else if (m_vector_write_handler) {
+            ec = m_vector_write_handler(m_connection_hdl, bufs);
         } else if (m_write_handler) {
             std::vector<buffer>::const_iterator it;
             for (it = bufs.begin(); it != bufs.end(); it++) {
                 ec = m_write_handler(m_connection_hdl, (*it).buf, (*it).len);
                 if (ec) {break;}
             }
-            
+
         } else {
             ec = make_error_code(error::output_stream_required);
         }
-        
+
         handler(ec);
     }
 
@@ -540,11 +592,11 @@ protected:
      */
     void async_shutdown(transport::shutdown_handler handler) {
         lib::error_code ec;
-        
+
         if (m_shutdown_handler) {
             ec = m_shutdown_handler(m_connection_hdl);
         }
-        
+
         handler(ec);
     }
 private:
@@ -636,6 +688,7 @@ private:
     std::ostream *  m_output_stream;
     connection_hdl  m_connection_hdl;
     write_handler   m_write_handler;
+    vector_write_handler m_vector_write_handler;
     shutdown_handler    m_shutdown_handler;
 
     bool            m_reading;

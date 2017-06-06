@@ -117,7 +117,7 @@ struct stub_con : public iostream_con {
         indef_read_size = num_bytes;
         indef_read_buf = buf;
         indef_read_len = len;
-        
+
         indef_read();
     }
 
@@ -138,7 +138,7 @@ struct stub_con : public iostream_con {
     void handle_indef(websocketpp::lib::error_code const & e, size_t amt_read) {
         ec = e;
         indef_read_total += amt_read;
-        
+
         indef_read();
     }
 
@@ -203,6 +203,15 @@ websocketpp::lib::error_code write_handler(std::string & o, websocketpp::connect
     return websocketpp::lib::error_code();
 }
 
+websocketpp::lib::error_code vector_write_handler(std::string & o, websocketpp::connection_hdl, std::vector<websocketpp::transport::buffer> const & bufs) {
+    std::vector<websocketpp::transport::buffer>::const_iterator it;
+    for (it = bufs.begin(); it != bufs.end(); it++) {
+        o += std::string((*it).buf, (*it).len);
+    }
+
+    return websocketpp::lib::error_code();
+}
+
 websocketpp::lib::error_code write_handler_error(websocketpp::connection_hdl, char const *, size_t) {
     return make_error_code(websocketpp::transport::error::general);
 }
@@ -249,7 +258,7 @@ BOOST_AUTO_TEST_CASE( async_write_vector_0_write_handler ) {
     std::string output;
 
     stub_con::ptr con(new stub_con(true,alogger,elogger));
-    
+
     con->set_write_handler(websocketpp::lib::bind(
         &write_handler,
         websocketpp::lib::ref(output),
@@ -338,6 +347,31 @@ BOOST_AUTO_TEST_CASE( async_write_vector_2_write_handler ) {
         websocketpp::lib::placeholders::_1,
         websocketpp::lib::placeholders::_2,
         websocketpp::lib::placeholders::_3
+    ));
+
+    std::vector<websocketpp::transport::buffer> bufs;
+
+    std::string foo = "foo";
+    std::string bar = "bar";
+
+    bufs.push_back(websocketpp::transport::buffer(foo.data(),foo.size()));
+    bufs.push_back(websocketpp::transport::buffer(bar.data(),bar.size()));
+
+    con->write(bufs);
+
+    BOOST_CHECK( !con->ec );
+    BOOST_CHECK_EQUAL( output, "foobar" );
+}
+
+BOOST_AUTO_TEST_CASE( async_write_vector_2_vector_write_handler ) {
+    std::string output;
+
+    stub_con::ptr con(new stub_con(true,alogger,elogger));
+    con->set_vector_write_handler(websocketpp::lib::bind(
+        &vector_write_handler,
+        websocketpp::lib::ref(output),
+        websocketpp::lib::placeholders::_1,
+        websocketpp::lib::placeholders::_2
     ));
 
     std::vector<websocketpp::transport::buffer> bufs;
@@ -483,7 +517,7 @@ BOOST_AUTO_TEST_CASE( async_read_at_least_read_some_indef ) {
     BOOST_CHECK( !con->ec );
     BOOST_CHECK_EQUAL( std::string(buf,10), "aaaaaxxxxx" );
     BOOST_CHECK_EQUAL( con->indef_read_total, 5 );
-    
+
     // A subsequent read should read 5 more because the indef read refreshes
     // itself. The new read will start again at the beginning of the buffer.
     BOOST_CHECK_EQUAL(con->read_some(input+5,5), 5);
@@ -539,7 +573,7 @@ websocketpp::lib::error_code sd_handler(websocketpp::connection_hdl) {
 
 BOOST_AUTO_TEST_CASE( shutdown_handler ) {
     stub_con::ptr con(new stub_con(true,alogger,elogger));
-    
+
     con->set_shutdown_handler(&sd_handler);
     BOOST_CHECK_EQUAL( con->ec, make_error_code(websocketpp::error::test) );
     con->shutdown();

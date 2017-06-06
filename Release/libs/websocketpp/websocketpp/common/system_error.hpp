@@ -61,6 +61,7 @@ namespace websocketpp {
 namespace lib {
 
 #ifdef _WEBSOCKETPP_CPP11_SYSTEM_ERROR_
+    using std::errc;
     using std::error_code;
     using std::error_category;
     using std::error_condition;
@@ -68,6 +69,7 @@ namespace lib {
     #define _WEBSOCKETPP_ERROR_CODE_ENUM_NS_START_ namespace std {
     #define _WEBSOCKETPP_ERROR_CODE_ENUM_NS_END_ }
 #else
+    namespace errc = boost::system::errc;
     using boost::system::error_code;
     using boost::system::error_category;
     using boost::system::error_condition;

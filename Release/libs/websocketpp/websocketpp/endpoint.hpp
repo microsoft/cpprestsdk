@@ -104,6 +104,56 @@ public:
         transport_type::init_logging(&m_alog, &m_elog);
     }
 
+
+    /// Destructor
+    ~endpoint<connection,config>() {}
+
+    #ifdef _WEBSOCKETPP_DEFAULT_DELETE_FUNCTIONS_
+        // no copy constructor because endpoints are not copyable
+        endpoint(endpoint &) = delete;
+    
+        // no copy assignment operator because endpoints are not copyable
+        endpoint & operator=(endpoint const &) = delete;
+    #endif // _WEBSOCKETPP_DEFAULT_DELETE_FUNCTIONS_
+
+    #ifdef _WEBSOCKETPP_MOVE_SEMANTICS_
+        /// Move constructor
+        endpoint(endpoint && o) 
+         : config::transport_type(std::move(o))
+         , config::endpoint_base(std::move(o))
+         , m_alog(std::move(o.m_alog))
+         , m_elog(std::move(o.m_elog))
+         , m_user_agent(std::move(o.m_user_agent))
+         , m_open_handler(std::move(o.m_open_handler))
+         
+         , m_close_handler(std::move(o.m_close_handler))
+         , m_fail_handler(std::move(o.m_fail_handler))
+         , m_ping_handler(std::move(o.m_ping_handler))
+         , m_pong_handler(std::move(o.m_pong_handler))
+         , m_pong_timeout_handler(std::move(o.m_pong_timeout_handler))
+         , m_interrupt_handler(std::move(o.m_interrupt_handler))
+         , m_http_handler(std::move(o.m_http_handler))
+         , m_validate_handler(std::move(o.m_validate_handler))
+         , m_message_handler(std::move(o.m_message_handler))
+
+         , m_open_handshake_timeout_dur(o.m_open_handshake_timeout_dur)
+         , m_close_handshake_timeout_dur(o.m_close_handshake_timeout_dur)
+         , m_pong_timeout_dur(o.m_pong_timeout_dur)
+         , m_max_message_size(o.m_max_message_size)
+         , m_max_http_body_size(o.m_max_http_body_size)
+
+         , m_rng(std::move(o.m_rng))
+         , m_is_server(o.m_is_server)         
+        {}
+
+    #ifdef _WEBSOCKETPP_DEFAULT_DELETE_FUNCTIONS_
+        // no move assignment operator because of const member variables
+        endpoint & operator=(endpoint &&) = delete;
+    #endif // _WEBSOCKETPP_DEFAULT_DELETE_FUNCTIONS_
+
+    #endif // _WEBSOCKETPP_MOVE_SEMANTICS_
+
+
     /// Returns the user agent string that this endpoint will use
     /**
      * Returns the user agent string that this endpoint will use when creating
@@ -466,6 +516,35 @@ public:
     /// Resume reading of new data
     void resume_reading(connection_hdl hdl);
 
+    /// Send deferred HTTP Response
+    /**
+     * Sends an http response to an HTTP connection that was deferred. This will
+     * send a complete response including all headers, status line, and body
+     * text. The connection will be closed afterwards.
+     *
+     * Exception free variant
+     *
+     * @since 0.6.0
+     *
+     * @param hdl The connection to send the response on
+     * @param ec A status code, zero on success, non-zero otherwise
+     */
+    void send_http_response(connection_hdl hdl, lib::error_code & ec);
+        
+    /// Send deferred HTTP Response (exception free)
+    /**
+     * Sends an http response to an HTTP connection that was deferred. This will
+     * send a complete response including all headers, status line, and body
+     * text. The connection will be closed afterwards.
+     *
+     * Exception variant
+     *
+     * @since 0.6.0
+     *
+     * @param hdl The connection to send the response on
+     */
+    void send_http_response(connection_hdl hdl);
+
     /// Create a message and add it to the outgoing send queue (exception free)
     /**
      * Convenience method to send a message given a payload string and an opcode
@@ -559,7 +638,6 @@ public:
      * @return the connection_ptr. May be NULL if the handle was invalid.
      */
     connection_ptr get_con_from_hdl(connection_hdl hdl, lib::error_code & ec) {
-        scoped_lock_type lock(m_mutex);
         connection_ptr con = lib::static_pointer_cast<connection_type>(
             hdl.lock());
         if (!con) {

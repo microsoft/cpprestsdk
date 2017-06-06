@@ -167,6 +167,15 @@ void http_func(server* s, websocketpp::connection_hdl hdl) {
     con->set_status(websocketpp::http::status_code::ok);
 }
 
+void defer_http_func(server* s, bool * deferred, websocketpp::connection_hdl hdl) {
+    *deferred = true;
+    
+    server::connection_ptr con = s->get_con_from_hdl(hdl);
+    
+    websocketpp::lib::error_code ec = con->defer_http_response();
+    BOOST_CHECK_EQUAL(ec, websocketpp::lib::error_code());
+}
+
 void check_on_fail(server* s, websocketpp::lib::error_code ec, bool & called, 
     websocketpp::connection_hdl hdl)
 {
@@ -221,6 +230,44 @@ BOOST_AUTO_TEST_CASE( http_request ) {
     s.set_http_handler(bind(&http_func,&s,::_1));
 
     BOOST_CHECK_EQUAL(run_server_test(s,input), output);
+}
+
+BOOST_AUTO_TEST_CASE( deferred_http_request ) {
+    std::string input = "GET /foo/bar HTTP/1.1\r\nHost: www.example.com\r\nOrigin: http://www.example.com\r\n\r\n";
+    std::string output = "HTTP/1.1 200 OK\r\nContent-Length: 8\r\nServer: ";
+    output+=websocketpp::user_agent;
+    output+="\r\n\r\n/foo/bar";
+
+    server s;
+    server::connection_ptr con;
+    bool deferred = false;
+    s.set_http_handler(bind(&defer_http_func,&s, &deferred,::_1));
+
+    s.clear_access_channels(websocketpp::log::alevel::all);
+    s.clear_error_channels(websocketpp::log::elevel::all);
+    
+    std::stringstream ostream;
+    s.register_ostream(&ostream);
+
+    con = s.get_connection();
+    con->start();
+    
+    BOOST_CHECK(!deferred);
+    BOOST_CHECK_EQUAL(ostream.str(), "");
+    con->read_some(input.data(),input.size());
+    BOOST_CHECK(deferred);
+    BOOST_CHECK_EQUAL(ostream.str(), "");
+
+    con->set_body(con->get_resource());
+    con->set_status(websocketpp::http::status_code::ok);
+    
+    websocketpp::lib::error_code ec;
+    s.send_http_response(con->get_handle(),ec);
+    BOOST_CHECK_EQUAL(ec, websocketpp::lib::error_code());
+    BOOST_CHECK_EQUAL(ostream.str(), output);
+    con->send_http_response(ec);
+    BOOST_CHECK_EQUAL(ec, make_error_code(websocketpp::error::invalid_state));
+    
 }
 
 BOOST_AUTO_TEST_CASE( request_no_server_header ) {

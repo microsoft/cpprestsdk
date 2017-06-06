@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Peter Thorson. All rights reserved.
+ * Copyright (c) 2015, Peter Thorson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -217,11 +217,26 @@ public:
     /**
      * Reads the Sec-WebSocket-Extensions header and determines if any of the
      * requested extensions are supported by this processor. If they are their
-     * settings data is initialized.
+     * settings data is initialized and an extension string to send to the
+     * is returned.
      *
-     * @param request The request headers to look at.
+     * @param request The request or response headers to look at.
      */
     virtual err_str_pair negotiate_extensions(request_type const &) {
+        return err_str_pair();
+    }
+    
+    /// Initializes extensions based on the Sec-WebSocket-Extensions header
+    /**
+     * Reads the Sec-WebSocket-Extensions header and determines if any of the
+     * requested extensions were accepted by the server. If they are their
+     * settings data is initialized. If they are not a list of required
+     * extensions (if any) is returned. This list may be sent back to the server
+     * as a part of the 1010/Extension required close code.
+     *
+     * @param response The request or response headers to look at.
+     */
+    virtual err_str_pair negotiate_extensions(response_type const &) {
         return err_str_pair();
     }
 

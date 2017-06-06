@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Peter Thorson. All rights reserved.
+ * Copyright (c) 2015, Peter Thorson. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,11 +28,12 @@
 #ifndef WEBSOCKETPP_TRANSPORT_SECURITY_NONE_HPP
 #define WEBSOCKETPP_TRANSPORT_SECURITY_NONE_HPP
 
+#include <websocketpp/uri.hpp>
+
 #include <websocketpp/transport/asio/security/base.hpp>
 
+#include <websocketpp/common/asio.hpp>
 #include <websocketpp/common/memory.hpp>
-
-#include <boost/asio.hpp>
 
 #include <sstream>
 #include <string>
@@ -45,13 +46,13 @@ namespace asio {
 namespace basic_socket {
 
 /// The signature of the socket init handler for this socket policy
-typedef lib::function<void(connection_hdl,boost::asio::ip::tcp::socket&)>
+typedef lib::function<void(connection_hdl,lib::asio::ip::tcp::socket&)>
     socket_init_handler;
 
-/// Basic Boost ASIO connection socket component
+/// Basic Asio connection socket component
 /**
  * transport::asio::basic_socket::connection implements a connection socket
- * component using Boost ASIO ip::tcp::socket.
+ * component using Asio ip::tcp::socket.
  */
 class connection : public lib::enable_shared_from_this<connection> {
 public:
@@ -60,12 +61,12 @@ public:
     /// Type of a shared pointer to this connection socket component
     typedef lib::shared_ptr<type> ptr;
 
-    /// Type of a pointer to the ASIO io_service being used
-    typedef boost::asio::io_service* io_service_ptr;
-    /// Type of a pointer to the ASIO io_service strand being used
-    typedef lib::shared_ptr<boost::asio::io_service::strand> strand_ptr;
+    /// Type of a pointer to the Asio io_service being used
+    typedef lib::asio::io_service* io_service_ptr;
+    /// Type of a pointer to the Asio io_service strand being used
+    typedef lib::shared_ptr<lib::asio::io_service::strand> strand_ptr;
     /// Type of the ASIO socket being used
-    typedef boost::asio::ip::tcp::socket socket_type;
+    typedef lib::asio::ip::tcp::socket socket_type;
     /// Type of a shared pointer to the socket being used.
     typedef lib::shared_ptr<socket_type> socket_ptr;
 
@@ -91,7 +92,7 @@ public:
     /**
      * The socket initialization handler is called after the socket object is
      * created but before it is used. This gives the application a chance to
-     * set any ASIO socket options it needs.
+     * set any Asio socket options it needs.
      *
      * @param h The new socket_init_handler
      */
@@ -103,7 +104,7 @@ public:
     /**
      * This is used internally. It can also be used to set socket options, etc
      */
-    boost::asio::ip::tcp::socket& get_socket() {
+    lib::asio::ip::tcp::socket & get_socket() {
         return *m_socket;
     }
 
@@ -111,7 +112,7 @@ public:
     /**
      * This is used internally.
      */
-    boost::asio::ip::tcp::socket& get_next_layer() {
+    lib::asio::ip::tcp::socket & get_next_layer() {
         return *m_socket;
     }
 
@@ -119,7 +120,7 @@ public:
     /**
      * This is used internally. It can also be used to set socket options, etc
      */
-    boost::asio::ip::tcp::socket& get_raw_socket() {
+    lib::asio::ip::tcp::socket & get_raw_socket() {
         return *m_socket;
     }
 
@@ -133,16 +134,16 @@ public:
      *
      * @return A string identifying the address of the remote endpoint
      */
-    std::string get_remote_endpoint(lib::error_code &ec) const {
+    std::string get_remote_endpoint(lib::error_code & ec) const {
         std::stringstream s;
 
-        boost::system::error_code bec;
-        boost::asio::ip::tcp::endpoint ep = m_socket->remote_endpoint(bec);
+        lib::asio::error_code aec;
+        lib::asio::ip::tcp::endpoint ep = m_socket->remote_endpoint(aec);
 
-        if (bec) {
+        if (aec) {
             ec = error::make_error_code(error::pass_through);
-            s << "Error getting remote endpoint: " << bec
-               << " (" << bec.message() << ")";
+            s << "Error getting remote endpoint: " << aec
+               << " (" << aec.message() << ")";
             return s.str();
         } else {
             ec = lib::error_code();
@@ -154,7 +155,7 @@ protected:
     /// Perform one time initializations
     /**
      * init_asio is called once immediately after construction to initialize
-     * boost::asio components to the io_service
+     * Asio components to the io_service
      *
      * @param service A pointer to the endpoint's io_service
      * @param strand A shared pointer to the connection's asio strand
@@ -166,13 +167,26 @@ protected:
             return socket::make_error_code(socket::error::invalid_state);
         }
 
-        m_socket = lib::make_shared<boost::asio::ip::tcp::socket>(
+        m_socket = lib::make_shared<lib::asio::ip::tcp::socket>(
             lib::ref(*service));
 
         m_state = READY;
 
         return lib::error_code();
     }
+
+    /// Set uri hook
+    /**
+     * Called by the transport as a connection is being established to provide
+     * the uri being connected to to the security/socket layer.
+     *
+     * This socket policy doesn't use the uri so it is ignored.
+     *
+     * @since 0.6.0
+     *
+     * @param u The uri to set
+     */
+    void set_uri(uri_ptr) {}
 
     /// Pre-initialize security policy
     /**
@@ -227,8 +241,8 @@ protected:
     }
 
     void async_shutdown(socket_shutdown_handler h) {
-        boost::system::error_code ec;
-        m_socket->shutdown(boost::asio::ip::tcp::socket::shutdown_both,ec);
+        lib::asio::error_code ec;
+        m_socket->shutdown(lib::asio::ip::tcp::socket::shutdown_both, ec);
         h(ec);
     }
 
@@ -248,7 +262,7 @@ protected:
      * @param ec The error code to translate_ec
      * @return The translated error code
      */
-    lib::error_code translate_ec(boost::system::error_code) {
+    lib::error_code translate_ec(lib::asio::error_code) {
         // We don't know any more information about this error so pass through
         return make_error_code(transport::error::pass_through);
     }

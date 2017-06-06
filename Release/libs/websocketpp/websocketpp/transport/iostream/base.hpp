@@ -33,7 +33,10 @@
 #include <websocketpp/common/functional.hpp>
 #include <websocketpp/common/connection_hdl.hpp>
 
+#include <websocketpp/transport/base/connection.hpp>
+
 #include <string>
+#include <vector>
 
 namespace websocketpp {
 namespace transport {
@@ -41,10 +44,19 @@ namespace transport {
 namespace iostream {
 
 /// The type and signature of the callback used by iostream transport to write
-typedef lib::function<lib::error_code(connection_hdl, char const *, size_t)> 
+typedef lib::function<lib::error_code(connection_hdl, char const *, size_t)>
     write_handler;
 
-/// The type and signature of the callback used by iostream transport to signal 
+/// The type and signature of the callback used by iostream transport to perform
+/// vectored writes.
+/**
+ * If a vectored write handler is not set the standard write handler will be
+ * called multiple times.
+ */
+typedef lib::function<lib::error_code(connection_hdl, std::vector<transport::buffer> const
+    & bufs)> vector_write_handler;
+
+/// The type and signature of the callback used by iostream transport to signal
 /// a transport shutdown.
 typedef lib::function<lib::error_code(connection_hdl)> shutdown_handler;
 

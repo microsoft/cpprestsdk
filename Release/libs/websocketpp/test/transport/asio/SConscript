@@ -11,7 +11,7 @@ Import('tls_libs')
 env = env.Clone ()
 env_cpp11 = env_cpp11.Clone ()
 
-BOOST_LIBS = boostlibs(['unit_test_framework','system','thread'],env) + [platform_libs] + [tls_libs]
+BOOST_LIBS = boostlibs(['unit_test_framework','system','thread','chrono'],env) + [platform_libs] + [tls_libs]
 
 objs = env.Object('base_boost.o', ["base.cpp"], LIBS = BOOST_LIBS)
 objs += env.Object('timers_boost.o', ["timers.cpp"], LIBS = BOOST_LIBS)
