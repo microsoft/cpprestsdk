@@ -135,7 +135,11 @@ if (BUILD_TESTS OR BUILD_EXAMPLES)
         endif()
         set (WEBSOCKETPP_PLATFORM_TSL_LIBS ssl crypto)
         set (WEBSOCKETPP_BOOST_LIBS system thread)
-        set (CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-std=c++0x -stdlib=libc++") # todo: is libc++ really needed here?
+        if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+          set (CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-std=c++0x")
+        else()
+          set (CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-std=c++0x -stdlib=libc++") # todo: is libc++ really needed here?
+        endif()
         if (NOT APPLE)
             add_definitions (-DNDEBUG -Wall -Wno-padded) # todo: should we use CMAKE_C_FLAGS for these?
         endif ()
@@ -241,4 +245,3 @@ install (FILES
   "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/websocketpp-config.cmake"
   "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/websocketpp-configVersion.cmake"
   DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev)
-
