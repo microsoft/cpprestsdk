@@ -29,11 +29,13 @@ To use from CMake:
 cmake_minimum_required(VERSION 3.7)
 project(main)
 
-find_library(CPPREST_LIB cpprest)
+find_path(CPPREST_INCLUDE cpprest/http_client.h)
+find_library(CPPREST_LIB NAMES cpprest_2_9d cpprest_2_9 cpprestd cpprest)
 find_package(Boost REQUIRED COMPONENTS random system thread filesystem chrono atomic date_time regex)
 find_package(OpenSSL 1.0.0 REQUIRED)
 
 add_executable(main main.cpp)
+target_include_directories(main ${CPPREST_INCLUDE})
 target_link_libraries(main
   ${CPPREST_LIB}
   Boost::boost
