@@ -1,0 +1,11 @@
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Common.Build.settings" />
+
+  <ItemGroup Condition="'$(Platform)' != 'ARM' and ('$(DevToolsVersion)'=='120' Or '$(DevToolsVersion)'=='140')">
+      <ProjectFile Include="SearchFile$(DevToolsVersion)\SearchFile$(DevToolsVersion).vcxproj"/>
+  </ItemGroup>
+
+  <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
+
+</Project>

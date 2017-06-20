@@ -105,6 +105,10 @@ extern "C"
 _ASYNCRTIMP bool __cdecl _open_fsb_str(_In_ concurrency::streams::details::_filestream_callback *callback, const utility::char_t *filename, std::ios_base::openmode mode, int prot);
 #endif
 
+#if _WIN32
+_ASYNCRTIMP bool __cdecl _open_fsb(_In_ concurrency::streams::details::_filestream_callback *callback, HANDLE fh, std::ios_base::openmode mode, int prot);
+#endif //_WIN32
+
 /// <summary>
 /// Create a streambuf instance to represent a WinRT file.
 /// </summary>
