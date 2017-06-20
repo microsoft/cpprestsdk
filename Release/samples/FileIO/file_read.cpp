@@ -9,6 +9,8 @@
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 
+#include <Windows.h>
+
 #include "cpprest/filestream.h"
 #include "cpprest/containerstream.h"
 #include "cpprest/producerconsumerstream.h"
@@ -25,7 +27,12 @@ void read_test(string_t file_name, long chunk_size)
 	try {
 		auto start = clock();
 		concurrency::streams::container_buffer<std::vector<uint8_t>> file_read_buffer;
-		auto fs = file_stream<uint8_t>::open_istream(file_name).get();
+
+        HANDLE file_handle = CreateFileW(file_name.c_str(), GENERIC_READ,
+            FILE_SHARE_READ, nullptr,
+            OPEN_EXISTING, FILE_FLAG_OVERLAPPED | FILE_FLAG_NO_BUFFERING, 0);
+
+		auto fs = file_stream<uint8_t>::open_istream(file_handle).get();
 		fs.seek(std::ios_base::beg);
 
 		while ((bytes_read = fs.read(file_read_buffer, chunk_size).get()) != 0)
