@@ -17,6 +17,10 @@
 #include "cpprest/http_headers.h"
 #include "http_client_impl.h"
 
+#ifndef CPPREST_TARGET_XP
+#include <VersionHelpers.h>
+#endif
+
 namespace web
 {
 namespace http
@@ -373,6 +377,12 @@ protected:
         else if(config.proxy().is_default() || config.proxy().is_auto_discovery())
         {
             access_type = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
+#ifndef CPPREST_TARGET_XP
+			if(IsWindows8Point1OrGreater())
+			{
+				access_type = WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY;
+			}
+#endif
             proxy_name = WINHTTP_NO_PROXY_NAME;
         }
         else
