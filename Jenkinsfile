@@ -1,8 +1,5 @@
 #!groovy
 
-DOCKER_REGISTRY  = 'https://dockerregistry.nexenio.com'
-DOCKER_IMAGE     = 'desktop-client/linux:latest'
-
 void updateSourcecode() {
     cleanWs()
     checkout scm
