@@ -29,7 +29,7 @@ web::http::client::http_client_config client_config_for_proxy()
     wchar_t* pValue;
     size_t len;
     auto err = _wdupenv_s(&pValue, &len, L"http_proxy");
-    if (!err) {
+    if (!err && pValue) {
         std::unique_ptr<wchar_t, void(*)(wchar_t*)> holder(pValue, [](wchar_t* p) { free(p); });
         uri proxy_uri(std::wstring(pValue, len));
 #else
