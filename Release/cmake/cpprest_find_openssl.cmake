@@ -41,7 +41,7 @@ function(cpprest_find_openssl)
       # This should prevent linking against the system provided 0.9.8y
       set(_OPENSSL_VERSION "")
     endif()
-    find_package(OpenSSL 1.0.0 REQUIRED)
+    find_package(OpenSSL 1.0 EXACT REQUIRED)
 
     INCLUDE(CheckCXXSourceCompiles)
     set(CMAKE_REQUIRED_INCLUDES "${OPENSSL_INCLUDE_DIR}")
