@@ -297,7 +297,7 @@ static DWORD ChooseAuthScheme( DWORD dwSupportedSchemes )
         return 0;
 }
 
-// Small RAII helper to ensure that the fields of this struct are always
+// Small RAII helpers to ensure that the fields of these structs are always
 // properly freed.
 struct proxy_info : WINHTTP_PROXY_INFO
 {
@@ -313,6 +313,24 @@ struct proxy_info : WINHTTP_PROXY_INFO
         if ( lpszProxyBypass )
             ::GlobalFree(lpszProxyBypass);
     }
+};
+
+struct ie_proxy_config : WINHTTP_CURRENT_USER_IE_PROXY_CONFIG
+{
+  ie_proxy_config()
+  {
+    memset( this, 0, sizeof(WINHTTP_CURRENT_USER_IE_PROXY_CONFIG) );
+  }
+
+  ~ie_proxy_config()
+  {
+    if ( lpszAutoConfigUrl )
+      ::GlobalFree(lpszAutoConfigUrl);
+    if ( lpszProxy )
+      ::GlobalFree(lpszProxy);
+    if ( lpszProxyBypass )
+      ::GlobalFree(lpszProxyBypass);
+  }
 };
 
 // WinHTTP client.
@@ -376,8 +394,13 @@ protected:
     // Open session and connection with the server.
     virtual unsigned long open() override
     {
+        // This object have lifetime greater than proxy_name and proxy_bypass
+        // which may point to its elements.
+        ie_proxy_config proxyIE;
+
         DWORD access_type;
         LPCWSTR proxy_name;
+        LPCWSTR proxy_bypass = WINHTTP_NO_PROXY_BYPASS;
         utility::string_t proxy_str;
         http::uri uri;
 
@@ -388,10 +411,51 @@ protected:
             access_type = WINHTTP_ACCESS_TYPE_NO_PROXY;
             proxy_name = WINHTTP_NO_PROXY_NAME;
         }
-        else if(config.proxy().is_default() || config.proxy().is_auto_discovery())
+        else if(config.proxy().is_default())
+        {
+            // Use the default WinHTTP proxy by default.
+            access_type = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
+            proxy_name = WINHTTP_NO_PROXY_NAME;
+
+            // However, if it is not configured...
+            proxy_info proxyDefault;
+            if(!WinHttpGetDefaultProxyConfiguration(&proxyDefault) ||
+                proxyDefault.dwAccessType == WINHTTP_ACCESS_TYPE_NO_PROXY)
+            {
+                // ... then try to fall back on the default WinINET proxy, as
+                // recommended for the desktop applications (if we're not
+                // running under a user account, the function below will just
+                // fail, so there is no real need to check for this explicitly)
+                if(WinHttpGetIEProxyConfigForCurrentUser(&proxyIE))
+                {
+                    if(proxyIE.fAutoDetect)
+                    {
+                        m_proxy_auto_config = true;
+                    }
+                    else if(proxyIE.lpszAutoConfigUrl)
+                    {
+                        m_proxy_auto_config = true;
+                        m_proxy_auto_config_url = proxyIE.lpszAutoConfigUrl;
+                    }
+                    else if(proxyIE.lpszProxy)
+                    {
+                        access_type = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
+                        proxy_name = proxyIE.lpszProxy;
+
+                        if(proxyIE.lpszProxyBypass)
+                        {
+                            proxy_bypass = proxyIE.lpszProxyBypass;
+                        }
+                    }
+                }
+            }
+        }
+        else if(config.proxy().is_auto_discovery())
         {
             access_type = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
             proxy_name = WINHTTP_NO_PROXY_NAME;
+
+            m_proxy_auto_config = true;
         }
         else
         {
@@ -426,7 +490,7 @@ protected:
             NULL,
             access_type,
             proxy_name,
-            WINHTTP_NO_PROXY_BYPASS,
+            proxy_bypass,
             WINHTTP_FLAG_ASYNC);
         if(!m_hSession)
         {
@@ -513,13 +577,22 @@ protected:
         proxy_info info;
         bool proxy_info_required = false;
 
-        if( client_config().proxy().is_auto_discovery() )
+        if(m_proxy_auto_config)
         {
             WINHTTP_AUTOPROXY_OPTIONS autoproxy_options;
             memset( &autoproxy_options, 0, sizeof(WINHTTP_AUTOPROXY_OPTIONS) );
 
-            autoproxy_options.dwFlags = WINHTTP_AUTOPROXY_AUTO_DETECT;
-            autoproxy_options.dwAutoDetectFlags = WINHTTP_AUTO_DETECT_TYPE_DHCP | WINHTTP_AUTO_DETECT_TYPE_DNS_A;
+            if(m_proxy_auto_config_url.empty())
+            {
+                autoproxy_options.dwFlags = WINHTTP_AUTOPROXY_AUTO_DETECT;
+                autoproxy_options.dwAutoDetectFlags = WINHTTP_AUTO_DETECT_TYPE_DHCP | WINHTTP_AUTO_DETECT_TYPE_DNS_A;
+            }
+            else
+            {
+                autoproxy_options.dwFlags = WINHTTP_AUTOPROXY_CONFIG_URL;
+                autoproxy_options.lpszAutoConfigUrl = m_proxy_auto_config_url.c_str();
+            }
+
             autoproxy_options.fAutoLogonIfChallenged = TRUE;
 
             auto result = WinHttpGetProxyForUrl(
@@ -1370,6 +1443,12 @@ private:
     HINTERNET m_hSession;
     HINTERNET m_hConnection;
     bool      m_secure;
+
+    // If auto config is true, dynamically find the proxy for each URL using
+    // the proxy configuration script at the given URL if it's not empty or
+    // using WPAD otherwise.
+    bool                m_proxy_auto_config{false};
+    utility::string_t   m_proxy_auto_config_url;
 };
 
 std::shared_ptr<_http_client_communicator> create_platform_final_pipeline_stage(uri&& base_uri, http_client_config&& client_config)
