@@ -31,12 +31,21 @@ web::http::client::http_client_config client_config_for_proxy()
     auto err = _wdupenv_s(&pValue, &len, L"http_proxy");
     if (!err && pValue && len) {
         std::unique_ptr<wchar_t, void(*)(wchar_t*)> holder(pValue, [](wchar_t* p) { free(p); });
-        uri proxy_uri(std::wstring(pValue, len - 1));
+        std::wstring env_http_proxy_string(pValue, len - 1);
 #else
     if(const char* env_http_proxy = std::getenv("http_proxy")) {
-        uri proxy_uri(utility::conversions::to_string_t(env_http_proxy));
+        std::string env_http_proxy_string(env_http_proxy);
 #endif
-        web::web_proxy proxy(proxy_uri);
+        web::web_proxy proxy;
+        if (env_http_proxy_string != U("auto"))
+        {
+            uri proxy_uri(env_http_proxy_string);
+            proxy = std::move(web::web_proxy(proxy_uri));
+        }
+        else
+        {
+            proxy = std::move(web::web_proxy(web::web_proxy::use_auto_discovery));
+        }
         client_config.set_proxy(proxy);
     }
 
