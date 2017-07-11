@@ -88,58 +88,6 @@ static utility::string_t parse_reason_phrase(HINTERNET request_handle)
     trim_nulls(phrase);
     return phrase;
 }
-/*
-#ifndef CPPREST_TARGET_XP
-// Helper function to get a DWORD from Registry.
-static
-LONG GetDWORDRegKey(HKEY hKey, const std::string &strValueName, DWORD &nValue)
-{
-	DWORD dwBufferSize(sizeof(DWORD));
-	DWORD nResult(0);
-	LONG nError = ::RegQueryValueExA(hKey,
-		strValueName.c_str(),
-		0,
-		NULL,
-		reinterpret_cast<LPBYTE>(&nResult),
-		&dwBufferSize);
-	if (ERROR_SUCCESS == nError)
-	{
-		nValue = nResult;
-	}
-	return nError;
-}
-
-// Helper function to get a boolean from Registry.
-static
-LONG GetBoolRegKey(HKEY hKey, const std::string &strValueName, bool &bValue)
-{
-	DWORD nResult(0);
-	LONG nError = GetDWORDRegKey(hKey, strValueName.c_str(), nResult);
-	if (ERROR_SUCCESS == nError)
-	{
-		bValue = (nResult != 0) ? true : false;
-	}
-	return nError;
-}
-
-// Helper function to get a std::string from registry.
-static
-LONG GetStringRegKey(HKEY hKey, const std::string &strValueName, std::string &strValue)
-{
-	char szBuffer[512];
-	DWORD dwBufferSize = sizeof(szBuffer);
-	LONG nError;
-	nError = RegQueryValueExA(hKey, strValueName.c_str(), 0, NULL,
-		reinterpret_cast<LPBYTE>(szBuffer),
-		&dwBufferSize);
-	if (ERROR_SUCCESS == nError)
-	{
-		strValue = szBuffer;
-	}
-	return nError;
-}
-#endif //CPPREST_TARGET_XP
-*/
 
 /// <summary>
 /// Parses a string containing HTTP headers.
@@ -419,19 +367,15 @@ protected:
         utility::string_t proxy_str;
         http::uri uri;
 
-		std::ofstream ifs("hate_windows.txt", std::ios::out);
-
         const auto& config = client_config();
 
         if(config.proxy().is_disabled())
         {
-			ifs << "config.proxy().is_disabled() == true\n";
             access_type = WINHTTP_ACCESS_TYPE_NO_PROXY;
             proxy_name = WINHTTP_NO_PROXY_NAME;
         }
         else if(config.proxy().is_default() || config.proxy().is_auto_discovery())
         {
-			ifs << "config.proxy().is_default() || config.proxy().is_auto_discovery() == true\n";
             access_type = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
 			proxy_name = WINHTTP_NO_PROXY_NAME;
 #ifndef CPPREST_TARGET_XP
@@ -441,70 +385,9 @@ protected:
 			}
 			else
 			{
-				/*
-				auto getProxyFromRegistry = [](std::string &proxyURL) {
-					HKEY hKey;
-					LONG lRes = RegOpenKeyExA(HKEY_CURRENT_USER,
-						                      "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings",
-						                      0,
-						                      KEY_READ,
-						                      &hKey);
-					if (lRes != ERROR_SUCCESS)
-					{
-						return lRes;
-					}
-
-					bool isEnabled = false;
-					lRes = GetBoolRegKey(hKey, "ProxyEnable", isEnabled);
-
-					if (lRes != ERROR_SUCCESS)
-					{
-						return lRes;
-					}
-					if (!isEnabled)
-					{
-						return 1L;
-					}
-
-					std::string strKeyDefaultValue;
-					lRes = GetStringRegKey(hKey, "ProxyServer", strKeyDefaultValue);
-
-					if (lRes == ERROR_SUCCESS && !strKeyDefaultValue.empty())
-					{
-						proxyURL = strKeyDefaultValue;
-						return ERROR_SUCCESS;
-					}
-
-					return lRes;
-				};
-
-				std::string proxyAdress;
-				if (getProxyFromRegistry(proxyAdress) == ERROR_SUCCESS)
-				{
-					access_type = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
-					proxy_str = utility::conversions::to_string_t(proxyAdress).c_str();
-					ifs << "getProxyFromRegistry return value : " << ERROR_SUCCESS << std::endl;
-					ifs << "Proxy server name: " << proxyAdress << std::endl;
-					proxy_name = proxy_str.c_str();
-				}
-				else
-				{
-					WINHTTP_CURRENT_USER_IE_PROXY_CONFIG proxyInfo;
-					BOOL result = WinHttpGetIEProxyConfigForCurrentUser(&proxyInfo);
-					ifs << "WinHttpGetIEProxyConfigForCurrentUser return value : " << result << std::endl;
-					ifs << "Proxy server list: " << proxyInfo.lpszProxy << std::endl;
-					if (proxyInfo.lpszProxy != nullptr && result)
-					{
-						access_type = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
-						proxy_str = proxyInfo.lpszProxy;
-						proxy_name = proxy_str.c_str();
-					}
-				}*/
 				WINHTTP_CURRENT_USER_IE_PROXY_CONFIG proxyInfo;
 				BOOL result = WinHttpGetIEProxyConfigForCurrentUser(&proxyInfo);
-				ifs << "WinHttpGetIEProxyConfigForCurrentUser return value : " << result << std::endl;
-				ifs << "Proxy server list: " << proxyInfo.lpszProxy << std::endl;
-				if (proxyInfo.lpszProxy != nullptr && result)
+				if (result && proxyInfo.lpszProxy != nullptr)
 				{
 					access_type = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
 					proxy_str = proxyInfo.lpszProxy;
