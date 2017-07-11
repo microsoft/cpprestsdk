@@ -39,7 +39,8 @@ TEST_FIXTURE(uri_address, outside_cnn_dot_com)
 {
     handle_timeout([]
     {
-        http_client client(U("http://www.cnn.com"));
+        // http://www.cnn.com redirects users from countries outside of the US to the "http://edition.cnn.com/" drop location
+        http_client client(U("http://edition.cnn.com"));
 
         // CNN's main page doesn't use chunked transfer encoding.
         http_response response = client.request(methods::GET).get();
