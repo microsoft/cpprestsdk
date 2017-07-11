@@ -9,8 +9,18 @@ Closure buildOnMac() {
     return {
         node('Mac') {
             updateSourcecode()
+
+            // tentatively set result to SUCCESS, maybe set to FAILED below
+            currentBuild.result = 'SUCCESS'
             sh 'ci/unix/build.sh all'
-            sh 'ci/unix/test.sh'
+
+            try {
+                sh 'ci/unix/test.sh'
+            } catch (err) {
+                // catch failing tests, not marking the whole build as failure
+                // but just as unstable
+                currentBuild.result = 'UNSTABLE'
+            }
         }
     }
 }
@@ -19,13 +29,9 @@ node {
     try {
         stage('Build') {
             buildSteps = [:]
-
-            buildSteps["macOS"]     = buildOnMac()
-
+            buildSteps["macOS"] = buildOnMac()
             parallel buildSteps
         }
-
-        currentBuild.result = 'SUCCESS'
     } catch (err) {
         currentBuild.result = 'FAILED'
     }
