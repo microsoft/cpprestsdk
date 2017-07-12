@@ -32,8 +32,8 @@ Closure buildOnWindows7() {
         node('windows7') {
             updateSourcecode()
 
-            sh 'ci/windows/build.sh'
-            sh 'ci/windows/bundle.sh'
+            bat 'powershell ci/windows/build.ps1'
+            bat 'powershell ci/windows/bundle.ps1'
             archiveArtifacts 'cpprestsdk.zip'
         }
     }
