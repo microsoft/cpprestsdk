@@ -11,15 +11,17 @@ Closure buildOnMac() {
             updateSourcecode()
 
             // tentatively set result to SUCCESS, maybe set to FAILED below
-            currentBuild.result = 'SUCCESS'
             sh 'ci/unix/build.sh all'
 
             try {
                 sh 'ci/unix/test.sh'
             } catch (err) {
                 // catch failing tests, not marking the whole build as failure
-                // but just as unstable
-                currentBuild.result = 'UNSTABLE'
+                // but just as unstable;
+                // if build is already failed, leave it that way
+                if(currentBuild.result != 'FAILED') {
+                    currentBuild.result = 'UNSTABLE'
+                }
             }
         }
     }
@@ -30,13 +32,8 @@ Closure buildOnWindows7() {
         node('windows7') {
             updateSourcecode()
 
-            currentBuild.result = 'SUCCESS'
             sh 'ci/windows/build.sh'
-            try {
-                sh 'ci/windows/bundle.sh'
-            } catch(err) {
-                currentBuild.result = 'FAILED'
-            }
+            sh 'ci/windows/bundle.sh'
         }
     }
 }
@@ -49,6 +46,9 @@ node {
             buildSteps["Windows 7"] = buildOnWindows7()
             parallel buildSteps
         }
+
+
+        currentBuild.result = 'SUCCESS'
     } catch (err) {
         currentBuild.result = 'FAILED'
     }
