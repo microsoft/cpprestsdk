@@ -25,11 +25,28 @@ Closure buildOnMac() {
     }
 }
 
+Closure buildOnWindows7() {
+    return {
+        node('windows7') {
+            updateSourcecode()
+
+            currentBuild.result = 'SUCCESS'
+            sh 'ci/windows/build.sh'
+            try {
+                sh 'ci/windows/bundle.sh'
+            } catch(err) {
+                currentBuild.result = 'FAILED'
+            }
+        }
+    }
+}
+
 node {
     try {
         stage('Build') {
             buildSteps = [:]
             buildSteps["macOS"] = buildOnMac()
+            buildSteps["Windows 7"] = buildOnWindows7()
             parallel buildSteps
         }
     } catch (err) {
