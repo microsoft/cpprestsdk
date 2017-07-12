@@ -34,6 +34,7 @@ Closure buildOnWindows7() {
 
             sh 'ci/windows/build.sh'
             sh 'ci/windows/bundle.sh'
+            archiveArtifacts 'cpprestsdk.zip'
         }
     }
 }
