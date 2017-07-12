@@ -377,23 +377,23 @@ protected:
         else if(config.proxy().is_default() || config.proxy().is_auto_discovery())
         {
             access_type = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
-			proxy_name = WINHTTP_NO_PROXY_NAME;
+            proxy_name = WINHTTP_NO_PROXY_NAME;
 #ifndef CPPREST_TARGET_XP
-			if(IsWindows8Point1OrGreater())
-			{
-				access_type = WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY;
-			}
-			else
-			{
-				WINHTTP_CURRENT_USER_IE_PROXY_CONFIG proxyInfo;
-				BOOL result = WinHttpGetIEProxyConfigForCurrentUser(&proxyInfo);
-				if (result && proxyInfo.lpszProxy != nullptr)
-				{
-					access_type = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
-					proxy_str = proxyInfo.lpszProxy;
-					proxy_name = proxy_str.c_str();
-				}
-			}
+            if(IsWindows8Point1OrGreater())
+            {
+                access_type = WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY;
+            }
+            else
+            {
+                WINHTTP_CURRENT_USER_IE_PROXY_CONFIG proxyInfo;
+                BOOL result = WinHttpGetIEProxyConfigForCurrentUser(&proxyInfo);
+                if (result && proxyInfo.lpszProxy != nullptr)
+                {
+                    access_type = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
+                    proxy_str = proxyInfo.lpszProxy;
+                    proxy_name = proxy_str.c_str();
+                }
+            }
 #endif
         }
         else
