@@ -84,7 +84,8 @@ TEST_FIXTURE(uri_address, outside_wikipedia_compressed_http_response)
 
 TEST_FIXTURE(uri_address, outside_google_dot_com)
 {
-    http_client client(U("http://www.google.com"));
+    // Use code.google.com instead of www.google.com, which redirects
+    http_client client(U("http://code.google.com"));
     http_request request(methods::GET);
     for (int i = 0; i < 2; ++i)
     {
@@ -97,7 +98,8 @@ TEST_FIXTURE(uri_address, multiple_https_requests)
 {
     handle_timeout([&]
     {
-        http_client client(U("https://www.google.com"));
+        // Use code.google.com instead of www.google.com, which redirects
+        http_client client(U("https://code.google.com"));
     
         http_response response;
         for(int i = 0; i < 5; ++i)
@@ -113,7 +115,8 @@ TEST_FIXTURE(uri_address, reading_google_stream)
 {
     handle_timeout([&]
     {
-        http_client simpleclient(U("http://www.google.com"));
+        // Use code.google.com instead of www.google.com, which redirects
+        http_client simpleclient(U("http://code.google.com"));
         utility::string_t path = m_uri.query();
         http_response response = simpleclient.request(::http::methods::GET).get();
 
@@ -123,7 +126,9 @@ TEST_FIXTURE(uri_address, reading_google_stream)
         streams::rawptr_buffer<uint8_t> temp(chars, sizeof(chars));
 
         VERIFY_ARE_EQUAL(response.body().read(temp, 70).get(), 70);
-        VERIFY_ARE_EQUAL(strcmp((const char *) chars, "<!doctype html><html itemscope=\"\" itemtype=\"http://schema.org/WebPage\""), 0);
+        // Uncomment the following line to output the chars.
+        // std::cout << chars << '\n';
+        VERIFY_ARE_EQUAL(strcmp((const char *) chars, "<html>\n  <head>\n    <meta name=\"google-site-verification\" content=\"4zc"), 0);
     });
 }
 
