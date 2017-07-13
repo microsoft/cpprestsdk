@@ -24,6 +24,7 @@ Closure buildOnMac() {
             }
 
             sh 'ci/unix/install.sh'
+            archiveArtifacts 'install/cpprest.tar.gz'
         }
     }
 }
