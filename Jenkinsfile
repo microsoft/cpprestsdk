@@ -22,6 +22,8 @@ Closure buildOnMac() {
                     currentBuild.result = 'UNSTABLE'
                 }
             }
+
+            sh 'ci/unix/install.sh'
         }
     }
 }
