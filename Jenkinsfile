@@ -10,7 +10,6 @@ Closure buildOnMac() {
         node('Mac') {
             updateSourcecode()
 
-            // tentatively set result to SUCCESS, maybe set to FAILED below
             sh 'ci/unix/build.sh all'
 
             try {
