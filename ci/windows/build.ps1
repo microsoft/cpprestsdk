@@ -10,4 +10,4 @@ Initialize-VisualStudio
 
 cd Release
 msbuild dirs.proj /t:Rebuild /p:Configuration=Release /p:Platform=x64 /p:UseEnv=true
-cd ..
+if ($?) { cd .. }  # only cd if build was successful, preserving the exit code if build failed
