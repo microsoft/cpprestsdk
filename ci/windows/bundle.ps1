@@ -8,4 +8,4 @@ Copy-Item Binaries/x64/Release/* usr/local/lib/ -Force -Recurse
 Copy-Item Release/include usr/local/ -Force -Recurse
 
 # compress
-Compress-Archive -Path usr -DestinationPath cpprestsdk.zip
+Compress-Archive -Path usr -DestinationPath cpprest.zip

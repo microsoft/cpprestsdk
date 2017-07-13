@@ -33,7 +33,7 @@ Closure buildOnWindows7() {
 
             bat 'powershell ci/windows/build.ps1'
             bat 'powershell ci/windows/bundle.ps1'
-            archiveArtifacts 'cpprestsdk.zip'
+            archiveArtifacts 'cpprest.zip'
         }
     }
 }
