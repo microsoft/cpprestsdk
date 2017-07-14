@@ -261,13 +261,13 @@ namespace web
         /// Combine and validate the URI components into a encoded string. An exception will be thrown if the URI is invalid.
         /// </summary>
         /// <returns>The created URI as a string.</returns>
-        _ASYNCRTIMP utility::string_t to_string();
+        _ASYNCRTIMP utility::string_t to_string() const;
 
         /// <summary>
         /// Combine and validate the URI components into a URI class instance. An exception will be thrown if the URI is invalid.
         /// </summary>
         /// <returns>The create URI as a URI class instance.</returns>
-        _ASYNCRTIMP uri to_uri();
+        _ASYNCRTIMP uri to_uri() const;
 
         /// <summary>
         /// Validate the generated URI from all existing components of this uri_builder.
