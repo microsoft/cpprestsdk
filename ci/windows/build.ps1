@@ -1,3 +1,8 @@
+# hack: map the curren path to drive X: because otherwise our pathts become too long for windows
+Subst X: \D
+Subst X: .
+X:
+
 . ${PSScriptRoot}\common.ps1
 # the script above should make sure that we are in the source root
 
@@ -10,4 +15,6 @@ Initialize-VisualStudio
 
 cd Release
 msbuild dirs.proj /t:Rebuild /p:Configuration=Release /p:Platform=x64 /p:UseEnv=true
-if ($?) { cd .. }  # only cd if build was successful, preserving the exit code if build failed
+cd ..
+
+Subst X: \D

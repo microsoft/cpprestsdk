@@ -8,9 +8,9 @@ $env:PATHEXT = $env:PATHEXT + ";.PY"
 $env:VCINSTALLDIR = "C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC"
 $env:VS140COMNTOOLS = "C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\Common7\\Tools"
 
-if (-not (Test-Path $SOURCE_DIR/ci)) {
-    throw "must run inside repository root"
-}
+#if (-not (Test-Path $SOURCE_DIR/ci)) {
+#    throw "must run inside repository root"
+#}
 
 if ($env:DVAULT_DEPENDENCIES -eq $null) {
     throw "must define DVAULT_DEPENDENCIES environment variable with dependencies ZIPs"
