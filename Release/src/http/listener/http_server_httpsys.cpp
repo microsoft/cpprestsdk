@@ -555,6 +555,22 @@ void windows_request_context::read_headers_io_completion(DWORD error_code, DWORD
         m_msg.set_method(parse_request_method(m_request));
         parse_http_headers(m_request->Headers, m_msg.headers());
 
+        // Retrieve the remote IP address
+        std::vector<wchar_t> remoteAddressBuffer(50);
+        PVOID inAddr;
+
+        if (m_request->Address.pRemoteAddress->sa_family == AF_INET6)
+        {
+            inAddr = &reinterpret_cast<SOCKADDR_IN6 *>(m_request->Address.pRemoteAddress)->sin6_addr;
+        }
+        else
+        {
+            inAddr = &reinterpret_cast<SOCKADDR_IN *>(m_request->Address.pRemoteAddress)->sin_addr;
+        }
+
+        InetNtopW(m_request->Address.pRemoteAddress->sa_family, inAddr, &remoteAddressBuffer[0], remoteAddressBuffer.size());
+        m_msg._get_impl()->_set_remote_address(std::wstring(&remoteAddressBuffer[0]));
+
         // Start reading in body from the network.
         m_msg._get_impl()->_prepare_to_receive_data();
         read_request_body_chunk();
