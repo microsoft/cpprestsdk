@@ -449,6 +449,7 @@ protected:
         }
 #endif
         //Enable TLS 1.1 and 1.2
+#if !defined(CPPREST_TARGET_XP)
         BOOL win32_result(FALSE);
 
         DWORD secure_protocols(WINHTTP_FLAG_SECURE_PROTOCOL_SSL3 | WINHTTP_FLAG_SECURE_PROTOCOL_TLS1 | WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_1 | WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_2);
@@ -457,6 +458,7 @@ protected:
         {
             return report_failure(_XPLATSTR("Error setting session options"));
         }
+#endif
 
         config._invoke_nativesessionhandle_options(m_hSession);
 
