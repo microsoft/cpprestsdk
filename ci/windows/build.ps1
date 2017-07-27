@@ -16,12 +16,18 @@ Invoke-WebRequest https://dist.nuget.org/win-x86-commandline/latest/nuget.exe -O
 Initialize-VisualStudio
 
 cd Release
-msbuild dirs.proj /t:Rebuild /p:Configuration=Release /p:Platform=x64 /p:UseEnv=true
+msbuild dirs.proj /t:cpprestsdk140         `
+                  /p:Configuration=Release `
+                  /p:Platform=x64          `
+                  /p:UseEnv=true
 if ($LastExitCode -ne 0) {
     exit 1
 }
 
-msbuild dirs.proj /t:Rebuild /p:Configuration=Debug /p:Platform=x64 /p:UseEnv=true
+msbuild dirs.proj /t:cpprestsdk140       `
+                  /p:Configuration=Debug `
+                  /p:Platform=x64        `
+                  /p:UseEnv=true
 if ($LastExitCode -ne 0) {
     exit 1
 }
