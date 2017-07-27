@@ -17,8 +17,15 @@ Initialize-VisualStudio
 
 cd Release
 msbuild dirs.proj /t:Rebuild /p:Configuration=Release /p:Platform=x64 /p:UseEnv=true
-$MsBuildExitCode = $LastExitCode
+if ($LastExitCode -ne 0) {
+    exit 1
+}
+
+msbuild dirs.proj /t:Rebuild /p:Configuration=Debug /p:Platform=x64 /p:UseEnv=true
+if ($LastExitCode -ne 0) {
+    exit 1
+}
 
 cd ..
 
-exit $MsBuildExitCode
+exit 0
