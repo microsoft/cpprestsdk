@@ -437,7 +437,7 @@ protected:
             }
         }
 
-#if 0 // Work in progress. Enable this to support server certificate revocation check
+#if 1 // Work in progress. Enable this to support server certificate revocation check
         if( m_secure )
         {
             DWORD dwEnableSSLRevocOpt = WINHTTP_ENABLE_SSL_REVOCATION;
