@@ -437,17 +437,6 @@ protected:
             }
         }
 
-#if 0 // Work in progress. Enable this to support server certificate revocation check
-        if( m_secure )
-        {
-            DWORD dwEnableSSLRevocOpt = WINHTTP_ENABLE_SSL_REVOCATION;
-            if(!WinHttpSetOption(m_hSession, WINHTTP_OPTION_ENABLE_FEATURE, &dwEnableSSLRevocOpt, sizeof(dwEnableSSLRevocOpt)))
-            {
-                DWORD dwError = GetLastError(); dwError;
-                return report_failure(U("Error enabling SSL revocation check"));
-            }
-        }
-#endif
         //Enable TLS 1.1 and 1.2
 #if !defined(CPPREST_TARGET_XP)
         BOOL win32_result(FALSE);
@@ -542,6 +531,7 @@ protected:
             return;
         }
 
+		// Enable the certificate revocation check
 		if (m_secure)
 		{
 			DWORD dwEnableSSLRevocOpt = WINHTTP_ENABLE_SSL_REVOCATION;
