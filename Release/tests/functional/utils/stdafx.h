@@ -16,6 +16,7 @@
 
 #include "cpprest/uri.h"
 #include "cpprest/asyncrt_utils.h"
+#include "cpprest/details/web_utilities.h"
 
 #include "unittestpp.h"
 #include "utils_tests.h"
