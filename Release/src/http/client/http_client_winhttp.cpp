@@ -531,17 +531,17 @@ protected:
             return;
         }
 
-		// Enable the certificate revocation check
-		if (m_secure)
-		{
-			DWORD dwEnableSSLRevocOpt = WINHTTP_ENABLE_SSL_REVOCATION;
-			if (!WinHttpSetOption(winhttp_context->m_request_handle, WINHTTP_OPTION_ENABLE_FEATURE, &dwEnableSSLRevocOpt, sizeof(dwEnableSSLRevocOpt)))
-			{
-				auto errorCode = GetLastError();
-				request->report_error(errorCode, build_error_msg(errorCode, "Error enabling SSL revocation check"));
-				return;
-			}
-		}
+        // Enable the certificate revocation check
+        if (m_secure)
+        {
+            DWORD dwEnableSSLRevocOpt = WINHTTP_ENABLE_SSL_REVOCATION;
+            if (!WinHttpSetOption(winhttp_context->m_request_handle, WINHTTP_OPTION_ENABLE_FEATURE, &dwEnableSSLRevocOpt, sizeof(dwEnableSSLRevocOpt)))
+            {
+                auto errorCode = GetLastError();
+                request->report_error(errorCode, build_error_msg(errorCode, "Error enabling SSL revocation check"));
+                return;
+            }
+        }
 
         if(proxy_info_required)
         {
