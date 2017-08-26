@@ -557,19 +557,23 @@ void windows_request_context::read_headers_io_completion(DWORD error_code, DWORD
 
         // Retrieve the remote IP address
         std::vector<wchar_t> remoteAddressBuffer(50);
-        PVOID inAddr;
 
         if (m_request->Address.pRemoteAddress->sa_family == AF_INET6)
         {
-            inAddr = &reinterpret_cast<SOCKADDR_IN6 *>(m_request->Address.pRemoteAddress)->sin6_addr;
+            auto inAddr = &reinterpret_cast<SOCKADDR_IN6 *>(m_request->Address.pRemoteAddress)->sin6_addr;
+            InetNtopW(AF_INET6, inAddr, &remoteAddressBuffer[0], remoteAddressBuffer.size());
+        }
+        else if (m_request->Address.pRemoteAddress->sa_family == AF_INET)
+        {
+            auto inAddr = &reinterpret_cast<SOCKADDR_IN *>(m_request->Address.pRemoteAddress)->sin_addr;
+            InetNtopW(AF_INET, inAddr, &remoteAddressBuffer[0], remoteAddressBuffer.size());
         }
         else
         {
-            inAddr = &reinterpret_cast<SOCKADDR_IN *>(m_request->Address.pRemoteAddress)->sin_addr;
+            remoteAddressBuffer[0] = L'\0';
         }
 
-        InetNtopW(m_request->Address.pRemoteAddress->sa_family, inAddr, &remoteAddressBuffer[0], remoteAddressBuffer.size());
-        m_msg._get_impl()->_set_remote_address(std::wstring(&remoteAddressBuffer[0]));
+        m_msg._get_impl()->_set_remote_address(&remoteAddressBuffer[0]);
 
         // Start reading in body from the network.
         m_msg._get_impl()->_prepare_to_receive_data();
