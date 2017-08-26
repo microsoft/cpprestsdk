@@ -17,6 +17,10 @@
 #include "cpprest/http_headers.h"
 #include "http_client_impl.h"
 
+#ifndef CPPREST_TARGET_XP
+#include <VersionHelpers.h>
+#endif
+
 namespace web
 {
 namespace http
@@ -392,6 +396,41 @@ protected:
         {
             access_type = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
             proxy_name = WINHTTP_NO_PROXY_NAME;
+#ifndef CPPREST_TARGET_XP
+            if(IsWindows8Point1OrGreater())
+            {
+                access_type = WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY;
+            }
+            else
+            {
+                struct raii_ie_proxy_config : WINHTTP_CURRENT_USER_IE_PROXY_CONFIG
+                {
+                    raii_ie_proxy_config()
+                    {
+                        memset(this, 0, sizeof(WINHTTP_CURRENT_USER_IE_PROXY_CONFIG));
+                    }
+
+                    ~raii_ie_proxy_config()
+                    {
+                        if (lpszProxy)
+                            ::GlobalFree(lpszProxy);
+                        if (lpszProxyBypass)
+                            ::GlobalFree(lpszProxyBypass);
+                        if (lpszAutoConfigUrl)
+                            ::GlobalFree(lpszAutoConfigUrl);
+                    }
+                };
+
+                raii_ie_proxy_config proxyInfo;
+                BOOL result = WinHttpGetIEProxyConfigForCurrentUser(&proxyInfo);
+                if (result && proxyInfo.lpszProxy != nullptr)
+                {
+                    access_type = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
+                    proxy_str = proxyInfo.lpszProxy;
+                    proxy_name = proxy_str.c_str();
+                }
+            }
+#endif
         }
         else
         {
