@@ -307,8 +307,13 @@ protected:
      */
     lib::error_code translate_ec(boost::system::error_code ec) {
         if (ec.category() == boost::asio::error::get_ssl_category()) {
+#if defined SSL_R_SHORT_READ
             if (ERR_GET_REASON(ec.value()) == SSL_R_SHORT_READ) {
                 return make_error_code(transport::error::tls_short_read);
+#else
+            if (ERR_GET_REASON(ec.value()) == boost::asio::ssl::error::stream_truncated) {
+                return make_error_code(boost::asio::ssl::error::stream_truncated);
+#endif
             } else {
                 // We know it is a TLS related error, but otherwise don't know
                 // more. Pass through as TLS generic.
