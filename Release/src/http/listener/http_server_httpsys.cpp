@@ -17,6 +17,8 @@
 
 #if _WIN32_WINNT >= _WIN32_WINNT_VISTA
 
+#pragma comment(lib, "Ws2_32")
+
 #include "http_server_httpsys.h"
 #include "http_server_impl.h"
 
