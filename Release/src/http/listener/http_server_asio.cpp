@@ -654,6 +654,9 @@ will_deref_and_erase_t asio_server_connection::handle_http_line(const boost::sys
             m_close = true;
         }
 
+        // Get the remote IP address
+        m_request._get_impl()->_set_remote_address(utility::conversions::to_string_t(m_socket->remote_endpoint().address().to_string()));
+
         return handle_headers();
     }
 }

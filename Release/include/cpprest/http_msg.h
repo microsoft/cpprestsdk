@@ -715,6 +715,8 @@ public:
 
     _ASYNCRTIMP void set_request_uri(const uri&);
 
+    const utility::string_t& remote_address() const { return m_remote_address; }
+
     const pplx::cancellation_token &cancellation_token() const { return m_cancellationToken; }
 
     void set_cancellation_token(const pplx::cancellation_token &token)
@@ -755,6 +757,8 @@ public:
 
     void _set_base_uri(const http::uri &base_uri) { m_base_uri = base_uri; }
 
+    void _set_remote_address(const utility::string_t &remote_address) { m_remote_address = remote_address; }
+
 private:
 
     // Actual initiates sending the response, without checking if a response has already been sent.
@@ -778,6 +782,8 @@ private:
     std::shared_ptr<progress_handler> m_progress_handler;
 
     pplx::task_completion_event<http_response> m_response;
+
+    utility::string_t m_remote_address;
 };
 
 
@@ -868,6 +874,12 @@ public:
     /// Use the http_headers::add to fill in desired headers.
     /// </remarks>
     const http_headers &headers() const { return _m_impl->headers(); }
+
+    /// <summary>
+    /// Returns a string representation of the remote IP address.
+    /// </summary>
+    /// <returns>The remote IP address.</returns>
+    const utility::string_t& get_remote_address() const { return _m_impl->remote_address(); }
 
     /// <summary>
     /// Extract the body of the request message as a string value, checking that the content type is a MIME text type.
