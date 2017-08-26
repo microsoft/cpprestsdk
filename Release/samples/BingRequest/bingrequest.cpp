@@ -26,27 +26,22 @@ web::http::client::http_client_config client_config_for_proxy()
 {
     web::http::client::http_client_config client_config;
 #ifdef _WIN32
-    wchar_t* pValue;
-    size_t len;
+    wchar_t* pValue = nullptr;
+    std::unique_ptr<wchar_t, void(*)(wchar_t*)> holder(nullptr, [](wchar_t* p) { free(p); });
+    size_t len = 0;
     auto err = _wdupenv_s(&pValue, &len, L"http_proxy");
+    if (pValue)
+        holder.reset(pValue);
     if (!err && pValue && len) {
-        std::unique_ptr<wchar_t, void(*)(wchar_t*)> holder(pValue, [](wchar_t* p) { free(p); });
         std::wstring env_http_proxy_string(pValue, len - 1);
 #else
     if(const char* env_http_proxy = std::getenv("http_proxy")) {
         std::string env_http_proxy_string(env_http_proxy);
 #endif
-        web::web_proxy proxy;
-        if (env_http_proxy_string != U("auto"))
-        {
-            uri proxy_uri(env_http_proxy_string);
-            proxy = std::move(web::web_proxy(proxy_uri));
-        }
+        if (env_http_proxy_string == U("auto"))
+            client_config.set_proxy(web::web_proxy::use_auto_discovery);
         else
-        {
-            proxy = std::move(web::web_proxy(web::web_proxy::use_auto_discovery));
-        }
-        client_config.set_proxy(proxy);
+            client_config.set_proxy(web::web_proxy(env_http_proxy_string));
     }
 
     return client_config;
