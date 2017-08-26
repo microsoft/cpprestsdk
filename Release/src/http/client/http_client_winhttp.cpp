@@ -385,7 +385,25 @@ protected:
             }
             else
             {
-                WINHTTP_CURRENT_USER_IE_PROXY_CONFIG proxyInfo;
+                struct raii_ie_proxy_config : WINHTTP_CURRENT_USER_IE_PROXY_CONFIG
+                {
+                    raii_ie_proxy_config()
+                    {
+                        memset(this, 0, sizeof(WINHTTP_CURRENT_USER_IE_PROXY_CONFIG));
+                    }
+
+                    ~raii_ie_proxy_config()
+                    {
+                        if (lpszProxy)
+                            ::GlobalFree(lpszProxy);
+                        if (lpszProxyBypass)
+                            ::GlobalFree(lpszProxyBypass);
+                        if (lpszAutoConfigUrl)
+                            ::GlobalFree(lpszAutoConfigUrl);
+                    }
+                };
+
+                raii_ie_proxy_config proxyInfo;
                 BOOL result = WinHttpGetIEProxyConfigForCurrentUser(&proxyInfo);
                 if (result && proxyInfo.lpszProxy != nullptr)
                 {
