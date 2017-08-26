@@ -297,6 +297,24 @@ static DWORD ChooseAuthScheme( DWORD dwSupportedSchemes )
         return 0;
 }
 
+// Small RAII helper to ensure that the fields of this struct are always
+// properly freed.
+struct proxy_info : WINHTTP_PROXY_INFO
+{
+    proxy_info()
+    {
+        memset( this, 0, sizeof(WINHTTP_PROXY_INFO) );
+    }
+
+    ~proxy_info()
+    {
+        if ( lpszProxy )
+            ::GlobalFree(lpszProxy);
+        if ( lpszProxyBypass )
+            ::GlobalFree(lpszProxyBypass);
+    }
+};
+
 // WinHTTP client.
 class winhttp_client : public _http_client_communicator
 {
@@ -494,14 +512,13 @@ protected:
         http_request &msg = request->m_request;
         winhttp_request_context * winhttp_context = static_cast<winhttp_request_context *>(request.get());
 
-        WINHTTP_PROXY_INFO info;
+        proxy_info info;
         bool proxy_info_required = false;
 
         if( client_config().proxy().is_auto_discovery() )
         {
             WINHTTP_AUTOPROXY_OPTIONS autoproxy_options;
             memset( &autoproxy_options, 0, sizeof(WINHTTP_AUTOPROXY_OPTIONS) );
-            memset( &info, 0, sizeof(WINHTTP_PROXY_INFO) );
 
             autoproxy_options.dwFlags = WINHTTP_AUTOPROXY_AUTO_DETECT;
             autoproxy_options.dwAutoDetectFlags = WINHTTP_AUTO_DETECT_TYPE_DHCP | WINHTTP_AUTO_DETECT_TYPE_DNS_A;
