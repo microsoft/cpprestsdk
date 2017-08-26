@@ -809,7 +809,7 @@ private:
     {
         std::string header;
         header.append("Proxy-Authorization: Basic ");
-        header.append(generate_base64_userpass(m_http_client->client_config().credentials()));
+        header.append(generate_base64_userpass(m_http_client->client_config().proxy().credentials()));
         header.append(CRLF);
         return header;
     }
