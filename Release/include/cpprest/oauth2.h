@@ -204,13 +204,15 @@ public:
 
     oauth2_config(utility::string_t client_key, utility::string_t client_secret,
             utility::string_t auth_endpoint, utility::string_t token_endpoint,
-            utility::string_t redirect_uri, utility::string_t scope=utility::string_t()) :
+            utility::string_t redirect_uri, utility::string_t scope=utility::string_t(),
+            utility::string_t user_agent=utility::string_t()) :
                 m_client_key(std::move(client_key)),
                 m_client_secret(std::move(client_secret)),
                 m_auth_endpoint(std::move(auth_endpoint)),
                 m_token_endpoint(std::move(token_endpoint)),
                 m_redirect_uri(std::move(redirect_uri)),
                 m_scope(std::move(scope)),
+                m_user_agent(std::move(user_agent)),
                 m_implicit_grant(false),
                 m_bearer_auth(true),
                 m_http_basic_auth(true),
@@ -436,23 +438,34 @@ public:
     /// </summary>
     void set_access_token_key(utility::string_t access_token_key) { m_access_token_key = std::move(access_token_key); }
 	
-	/// <summary>
-	/// Get the web proxy object
-	/// </summary>
-	/// <returns>A reference to the web proxy object.</returns>
-	const web_proxy& proxy() const
-	{
-		return m_proxy;
-	}
+    /// <summary>
+    /// Get the web proxy object
+    /// </summary>
+    /// <returns>A reference to the web proxy object.</returns>
+    const web_proxy& proxy() const
+    {
+        return m_proxy;
+    }
 
-	/// <summary>
-	/// Set the web proxy object that will be used by token_from_code and token_from_refresh
-	/// </summary>
-	/// <param name="proxy">A reference to the web proxy object.</param>
-	void set_proxy(const web_proxy& proxy)
-	{
-		m_proxy = proxy;
-	}
+    /// <summary>
+    /// Set the web proxy object that will be used by token_from_code and token_from_refresh
+    /// </summary>
+    /// <param name="proxy">A reference to the web proxy object.</param>
+    void set_proxy(const web_proxy& proxy)
+    {
+        m_proxy = proxy;
+    }
+    
+    /// <summary>
+    /// Get user agent to be used in oauth2 flows.
+    /// </summary>
+    /// <returns>User agent string.</returns>
+    const utility::string_t&  user_agent() const { return m_user_agent; }
+    /// <summary>
+    /// Set user agent to be used in oauth2 flows.
+    /// If none is provided a default user agent is provided.
+    /// </summary>
+    void set_user_agent(utility::string_t user_agent) { m_user_agent = std::move(user_agent); }
 
 private:
     friend class web::http::client::http_client_config;
@@ -489,8 +502,9 @@ private:
     utility::string_t m_redirect_uri;
     utility::string_t m_scope;
     utility::string_t m_state;
+    utility::string_t m_user_agent;
 
-	web::web_proxy m_proxy;
+    web::web_proxy m_proxy;
 
     bool m_implicit_grant;
     bool m_bearer_auth;
