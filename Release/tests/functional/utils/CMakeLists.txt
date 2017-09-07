@@ -4,6 +4,7 @@ set(SOURCES
   strings.cpp
   macro_test.cpp
   nonce_generator_tests.cpp
+  win32_encryption_tests.cpp
   stdafx.cpp
 )
 

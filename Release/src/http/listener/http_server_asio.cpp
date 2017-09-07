@@ -475,7 +475,11 @@ void hostport_listener::start()
     // resolve the endpoint address
     auto& service = crossplat::threadpool::shared_instance().service();
     tcp::resolver resolver(service);
-    tcp::resolver::query query(m_host, m_port);
+    // #446: boost resolver does not recognize "+" as a host wildchar
+    tcp::resolver::query query = ( "+" == m_host)?
+          tcp::resolver::query(m_port):
+          tcp::resolver::query(m_host, m_port);
+
     tcp::endpoint endpoint = *resolver.resolve(query);
 
     m_acceptor.reset(new tcp::acceptor(service, endpoint));
@@ -649,6 +653,9 @@ will_deref_and_erase_t asio_server_connection::handle_http_line(const boost::sys
         {
             m_close = true;
         }
+
+        // Get the remote IP address
+        m_request._get_impl()->_set_remote_address(utility::conversions::to_string_t(m_socket->remote_endpoint().address().to_string()));
 
         return handle_headers();
     }

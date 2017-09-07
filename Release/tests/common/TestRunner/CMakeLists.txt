@@ -22,7 +22,7 @@ elseif(APPLE)
     -Wl,-force_load utils_test
     )
 elseif(UNIX)
-  target_link_libraries(test_runner PRIVATE
+  target_link_libraries(test_runner PRIVATE ${CMAKE_DL_LIBS}
     -Wl,--whole-archive
     httpclient_test
     json_test
