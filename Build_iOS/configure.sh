@@ -18,10 +18,8 @@ cp OpenSSL-for-iPhone/include/LICENSE openssl
 lipo -create -output openssl/lib/libssl.a OpenSSL-for-iPhone/bin/iPhone*/lib/libssl.a
 lipo -create -output openssl/lib/libcrypto.a OpenSSL-for-iPhone/bin/iPhone*/lib/libcrypto.a
 
-git clone https://github.com/cristeab/ios-cmake.git
-pushd ios-cmake
-git apply ../fix_ios_cmake_compiler.patch
-popd
+# Now have a local copy of iOS-cmake to decouple from any changes (or lack of changes from the prior git repo)
+
 mkdir build.ios
 pushd build.ios
 cmake .. -DCMAKE_BUILD_TYPE=Release
