@@ -26,6 +26,9 @@
 #include <jni.h>
 #endif
 
+size_t crossplat::threadpool::m_num_threads = 40;
+bool crossplat::threadpool::m_threads_started = false;
+
 namespace
 {
 
@@ -129,7 +132,8 @@ JNIEnv* get_jvm_env()
 threadpool& threadpool::shared_instance()
 {
     abort_if_no_jvm();
-    static threadpool_impl s_shared(40);
+    static threadpool_impl s_shared(threadpool::m_num_threads);
+    threadpool::m_threads_started = true;
     return s_shared;
 }
 
@@ -138,11 +142,22 @@ threadpool& threadpool::shared_instance()
 // initialize the static shared threadpool
 threadpool& threadpool::shared_instance()
 {
-    static threadpool_impl s_shared(40);
+    static threadpool_impl s_shared(threadpool::m_num_threads);
+    threadpool::m_threads_started = true;
     return s_shared;
 }
 
 #endif
+
+void threadpool::set_num_threads(size_t num_threads)
+{
+    if (threadpool::m_threads_started)
+    {
+        throw std::runtime_error("Threads have already been started");
+    }
+
+    threadpool::m_num_threads = num_threads;
+}
 
 }
 

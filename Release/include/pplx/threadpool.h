@@ -57,6 +57,8 @@ public:
 
     virtual ~threadpool() = default;
 
+    static void set_num_threads(size_t num_threads);
+
     template<typename T>
     CASABLANCA_DEPRECATED("Use `.service().post(task)` directly.")
     void schedule(T task)
@@ -70,6 +72,10 @@ protected:
     threadpool(size_t num_threads) : m_service(num_threads) {}
 
     boost::asio::io_service m_service;
+
+private:
+    static bool m_threads_started;
+    static size_t  m_num_threads;
 };
 
 }
