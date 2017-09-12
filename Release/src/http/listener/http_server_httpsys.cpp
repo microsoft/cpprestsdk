@@ -17,6 +17,8 @@
 
 #if _WIN32_WINNT >= _WIN32_WINNT_VISTA
 
+#pragma comment(lib, "Ws2_32")
+
 #include "http_server_httpsys.h"
 #include "http_server_impl.h"
 
@@ -554,6 +556,26 @@ void windows_request_context::read_headers_io_completion(DWORD error_code, DWORD
         }
         m_msg.set_method(parse_request_method(m_request));
         parse_http_headers(m_request->Headers, m_msg.headers());
+
+        // Retrieve the remote IP address
+        std::vector<wchar_t> remoteAddressBuffer(50);
+
+        if (m_request->Address.pRemoteAddress->sa_family == AF_INET6)
+        {
+            auto inAddr = &reinterpret_cast<SOCKADDR_IN6 *>(m_request->Address.pRemoteAddress)->sin6_addr;
+            InetNtopW(AF_INET6, inAddr, &remoteAddressBuffer[0], remoteAddressBuffer.size());
+        }
+        else if (m_request->Address.pRemoteAddress->sa_family == AF_INET)
+        {
+            auto inAddr = &reinterpret_cast<SOCKADDR_IN *>(m_request->Address.pRemoteAddress)->sin_addr;
+            InetNtopW(AF_INET, inAddr, &remoteAddressBuffer[0], remoteAddressBuffer.size());
+        }
+        else
+        {
+            remoteAddressBuffer[0] = L'\0';
+        }
+
+        m_msg._get_impl()->_set_remote_address(&remoteAddressBuffer[0]);
 
         // Start reading in body from the network.
         m_msg._get_impl()->_prepare_to_receive_data();

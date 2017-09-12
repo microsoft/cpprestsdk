@@ -38,6 +38,16 @@ static bool is_application_x_www_form_urlencoded(test_request *request)
     return (0 == content_type.find(mime_types::application_x_www_form_urlencoded));
 }
 
+static utility::string_t get_request_user_agent(test_request *request)
+{
+    if (request->m_headers.find(header_names::user_agent) != request->m_headers.end())
+    {
+        return request->m_headers[header_names::user_agent];
+    }
+    
+    return utility::string_t();
+}
+
 SUITE(oauth2_tests)
 {
 
@@ -137,6 +147,8 @@ TEST_FIXTURE(oauth2_test_setup, oauth2_token_from_code)
 {
     VERIFY_IS_FALSE(m_oauth2_config.is_enabled());
 
+    m_oauth2_config.set_user_agent(U("test_user_agent"));
+
     // Fetch using HTTP Basic authentication.
     {
         m_scoped.server()->next_request().then([](test_request *request)
@@ -150,6 +162,8 @@ TEST_FIXTURE(oauth2_test_setup, oauth2_token_from_code)
             VERIFY_ARE_EQUAL(to_body_data(
                     U("grant_type=authorization_code&code=789GHI&redirect_uri=https%3A%2F%2Fbar")),
                     request->m_body);
+
+            VERIFY_ARE_EQUAL(U("test_user_agent"), get_request_user_agent(request));
 
             std::map<utility::string_t, utility::string_t> headers;
             headers[header_names::content_type] = mime_types::application_json;
@@ -172,6 +186,8 @@ TEST_FIXTURE(oauth2_test_setup, oauth2_token_from_code)
             VERIFY_ARE_EQUAL(to_body_data(
                     U("grant_type=authorization_code&code=789GHI&redirect_uri=https%3A%2F%2Fbar&client_id=123ABC&client_secret=456DEF")),
                     request->m_body);
+
+            VERIFY_ARE_EQUAL(U("test_user_agent"), get_request_user_agent(request));
 
             std::map<utility::string_t, utility::string_t> headers;
             headers[header_names::content_type] = mime_types::application_json;

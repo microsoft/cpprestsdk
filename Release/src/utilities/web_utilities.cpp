@@ -92,6 +92,12 @@ plaintext_string winrt_encryption::decrypt() const
 win32_encryption::win32_encryption(const std::wstring &data) :
     m_numCharacters(data.size())
 {
+    // Early return because CryptProtectMemory crashs with empty string
+    if (m_numCharacters == 0)
+    {
+        return;
+    }
+
     const auto dataNumBytes = data.size() * sizeof(std::wstring::value_type);
     m_buffer.resize(dataNumBytes);
     memcpy_s(m_buffer.data(), m_buffer.size(), data.c_str(), dataNumBytes);

@@ -809,7 +809,7 @@ private:
     {
         std::string header;
         header.append("Proxy-Authorization: Basic ");
-        header.append(generate_base64_userpass(m_http_client->client_config().credentials()));
+        header.append(generate_base64_userpass(m_http_client->client_config().proxy().credentials()));
         header.append(CRLF);
         return header;
     }
@@ -1229,9 +1229,17 @@ private:
             }
         }
 
+        // Check for HEAD requests and status codes which cannot contain a
+        // message body in HTTP/1.1 (see 3.3.3/1 of the RFC 7230).
+        //
         // note: need to check for 'chunked' here as well, azure storage sends both
         // transfer-encoding:chunked and content-length:0 (although HTTP says not to)
-        if (m_request.method() == U("HEAD") || (!needChunked && m_content_length == 0))
+        const auto status = m_response.status_code();
+        if (m_request.method() == U("HEAD")
+            || (status >= 100 && status < 200)
+            || status == status_codes::NoContent
+            || status == status_codes::NotModified
+            || (!needChunked && m_content_length == 0))
         {
             // we can stop early - no body
             const auto &progress = m_request._get_impl()->_progress_handler();

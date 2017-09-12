@@ -464,7 +464,7 @@ public:
         std::fill(
             m_extended_header.bytes.begin(),
             m_extended_header.bytes.end(),
-            0x00
+            static_cast<uint8_t>(0x00)
         );
     }
 
