@@ -114,10 +114,14 @@ elseif(ANDROID)
     "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.8/include/backward"
     )
 elseif(UNIX) # This includes OSX
+  if(NOT BUILD_SHARED_LIBS)
+    SET(CMAKE_FIND_LIBRARY_SUFFIXES .a ${CMAKE_FIND_LIBRARY_SUFFIXES})
+  endif()
 elseif(WIN32)
   add_definitions(-DUNICODE -D_UNICODE -D_WIN32_WINNT=0x0600 -DWIN32 -D_SCL_SECURE_NO_WARNINGS)
 
   if(NOT BUILD_SHARED_LIBS)
+    SET(CMAKE_FIND_LIBRARY_SUFFIXES .lib .a ${CMAKE_FIND_LIBRARY_SUFFIXES})
     # This causes cmake to not link the test libraries separately, but instead hold onto their object files.
     set(TEST_LIBRARY_TARGET_TYPE OBJECT)
     set(Casablanca_DEFINITIONS -D_NO_ASYNCRTIMP -D_NO_PPLXIMP CACHE INTERNAL "Definitions for consume casablanca library")
