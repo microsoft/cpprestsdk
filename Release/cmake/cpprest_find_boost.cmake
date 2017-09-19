@@ -24,7 +24,8 @@ function(cpprest_find_boost)
   endif()
 
   add_library(cpprestsdk_boost_internal INTERFACE)
-  if(NOT TARGET Boost::boost)
+  # FindBoost continually breaks imported targets whenever boost updates.
+  if(1)
     target_include_directories(cpprestsdk_boost_internal INTERFACE "$<BUILD_INTERFACE:${Boost_INCLUDE_DIR}>")
     target_link_libraries(cpprestsdk_boost_internal INTERFACE "$<BUILD_INTERFACE:${Boost_LIBRARIES}>")
   else()
