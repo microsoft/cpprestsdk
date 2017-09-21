@@ -1207,10 +1207,10 @@ private:
                 m_response.headers().add(std::move(name), std::move(value));
             }
         }
-        complete_headers();
-
         m_content_length = std::numeric_limits<size_t>::max(); // Without Content-Length header, size should be same as TCP stream - set it size_t max.
         m_response.headers().match(header_names::content_length, m_content_length);
+
+        complete_headers();
 
         // note: need to check for 'chunked' here as well, azure storage sends both
         // transfer-encoding:chunked and content-length:0 (although HTTP says not to)
