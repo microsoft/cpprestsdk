@@ -205,7 +205,7 @@ void connection::start_request_response()
 
     if (m_ssl_stream)
     {
-        boost::asio::async_read_until(*m_ssl_stream, m_request_buf, CRLF, [this](const boost::system::error_code& ec, std::size_t)
+        boost::asio::async_read_until(*m_ssl_stream, m_request_buf, crlf_nonascii_searcher, [this](const boost::system::error_code& ec, std::size_t)
         {
             this->handle_http_line(ec);
         });
@@ -321,6 +321,12 @@ void connection::handle_http_line(const boost::system::error_code& ec)
         if (http_version == "HTTP/1.0")
         {
             m_close = true;
+        }
+
+
+        if(m_ssl_stream)
+        {
+            m_request._set_client_ssl(m_ssl_stream->native_handle());
         }
 
         handle_headers();
@@ -603,12 +609,12 @@ void connection::dispatch_request_to_listener()
         }
     }
     
-    if (--m_refs == 0) delete this;
+    //if (--m_refs == 0) delete this;
 }
 
 void connection::do_response(bool bad_request)
 {
-    ++m_refs;
+    //++m_refs;
     m_request.get_response().then([=](pplx::task<http::http_response> r_task)
     {
         http::http_response response;
@@ -795,7 +801,18 @@ void connection::finish_request_response()
     }
     
     close();
-    if (--m_refs == 0) delete this;
+    //if (--m_refs == 0) delete this;
+
+    // memory leak bug fix
+    if (--m_refs == 0)
+    {
+        delete this;
+    }
+    else
+    {
+        throw std::runtime_error("m_refs != 0 in finish_request_response, memory leak detected!");
+    }
+
 }
 
 void hostport_listener::stop()

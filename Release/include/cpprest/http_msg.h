@@ -39,6 +39,10 @@
 #include "cpprest/streams.h"
 #include "cpprest/containerstream.h"
 
+#if !defined(_WIN32) && !defined(__cplusplus_winrt)
+#include <boost/asio/ssl.hpp>
+#endif
+
 namespace web
 {
 namespace http
@@ -706,6 +710,10 @@ public:
 
     _ASYNCRTIMP utility::string_t to_string() const;
 
+#if !defined(_WIN32) && !defined(__cplusplus_winrt)
+    _ASYNCRTIMP SSL* client_ssl() const { return m_ssl; }
+#endif   
+
     _ASYNCRTIMP pplx::task<void> reply(const http_response &response);
 
     pplx::task<http_response> get_response()
@@ -737,6 +745,13 @@ public:
 
     void _set_base_uri(const http::uri &base_uri) { m_base_uri = base_uri; }
 
+#if !defined(_WIN32) && !defined(__cplusplus_winrt)
+    void _set_ssl(SSL* ssl)
+    {
+	m_ssl = ssl;
+    }
+#endif
+
 private:
 
     // Actual initiates sending the response, without checking if a response has already been sent.
@@ -760,6 +775,11 @@ private:
     std::shared_ptr<progress_handler> m_progress_handler;
 
     pplx::task_completion_event<http_response> m_response;
+
+#if !defined(_WIN32) && !defined(__cplusplus_winrt)
+    SSL* m_ssl;
+#endif
+
 };
 
 
@@ -806,6 +826,14 @@ public:
     /// </summary>
     /// <returns>The uri of this message.</returns>
     const uri & request_uri() const { return _m_impl->request_uri(); }
+
+
+#if !defined(_WIN32) && !defined(__cplusplus_winrt)
+    /// <summary>
+    /// Get Client certificate 
+    /// </summary>
+    const SSL* client_ssl() const { return _m_impl->client_ssl(); }
+#endif  
 
     /// <summary>
     /// Set the underling URI of the request message.
@@ -1278,6 +1306,13 @@ public:
     {
         _m_impl->_set_base_uri(base_uri);
     }
+
+#if !defined(_WIN32) && !defined(__cplusplus_winrt)
+    void _set_client_ssl(SSL* ssl)
+    {
+	_m_impl->_set_ssl(ssl);
+    }
+#endif
 
 private:
     friend class http::details::_http_request;

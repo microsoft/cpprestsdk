@@ -72,6 +72,7 @@ private:
     bool m_chunked;
     std::atomic<int> m_refs; // track how many threads are still referring to this
     
+    std::unique_ptr<boost::asio::ssl::context> m_ssl_context;
     std::unique_ptr<boost::asio::ssl::stream<boost::asio::ip::tcp::socket&>> m_ssl_stream;
 
 public:
@@ -85,9 +86,10 @@ public:
     {
         if (is_https)
         {
-            boost::asio::ssl::context ssl_context(boost::asio::ssl::context::sslv23);
-            ssl_context_callback(ssl_context);
-            m_ssl_stream = utility::details::make_unique<boost::asio::ssl::stream<boost::asio::ip::tcp::socket&>>(*m_socket, ssl_context);
+            m_ssl_context = utility::details::make_unique<boost::asio::ssl::context>(boost::asio::ssl::context::sslv23);
+            ssl_context_callback(*m_ssl_context);
+            m_ssl_stream = utility::details::make_unique<boost::asio::ssl::stream<boost::asio::ip::tcp::socket&>>(*m_socket, *m_ssl_context);
+            m_ssl_stream = utility::details::make_unique<boost::asio::ssl::stream<boost::asio::ip::tcp::socket&>>(*m_socket, *m_ssl_context);
             m_ssl_stream->async_handshake(boost::asio::ssl::stream_base::server, [this](const boost::system::error_code&) { this->start_request_response(); });
         }
         else 
