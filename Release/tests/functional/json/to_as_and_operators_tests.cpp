@@ -312,11 +312,64 @@ TEST(negative_get_element_array)
 
 TEST(has_field_object)
 {
+
+
     json::value v1;
     
     v1[U("a")] = json::value::number(1);
+    v1[U("b")] = json::value::boolean(true);
+    v1[U("c")] = json::value::string(U("a string"));
+    v1[U("d")] = json::value::array({});    
+    json::value sub_field;
+    sub_field[U("x")] = json::value::number(1);    
+    v1[U("e")] = sub_field;
+
     VERIFY_IS_TRUE(v1.has_field(U("a")));
-    VERIFY_IS_FALSE(v1.has_field(U("b")));
+    VERIFY_IS_TRUE(v1.has_field(U("b")));
+    VERIFY_IS_TRUE(v1.has_field(U("c")));
+    VERIFY_IS_TRUE(v1.has_field(U("d")));
+    VERIFY_IS_TRUE(v1.has_field(U("e")));
+    VERIFY_IS_FALSE(v1.has_field(U("f")));
+
+    VERIFY_IS_TRUE(v1.has_number_field(U("a")));
+    VERIFY_IS_TRUE(v1.has_integer_field(U("a")));
+    VERIFY_IS_FALSE(v1.has_double_field(U("a")));
+    VERIFY_IS_FALSE(v1.has_boolean_field(U("a")));
+    VERIFY_IS_FALSE(v1.has_string_field(U("a")));
+    VERIFY_IS_FALSE(v1.has_array_field(U("a")));
+    VERIFY_IS_FALSE(v1.has_object_field(U("a")));
+
+    VERIFY_IS_TRUE(v1.has_boolean_field(U("b")));
+    VERIFY_IS_FALSE(v1.has_number_field(U("b")));
+    VERIFY_IS_FALSE(v1.has_integer_field(U("b")));
+    VERIFY_IS_FALSE(v1.has_double_field(U("b")));
+    VERIFY_IS_FALSE(v1.has_string_field(U("b")));
+    VERIFY_IS_FALSE(v1.has_array_field(U("b")));
+    VERIFY_IS_FALSE(v1.has_object_field(U("b")));
+
+    VERIFY_IS_TRUE(v1.has_string_field(U("c")));
+    VERIFY_IS_FALSE(v1.has_boolean_field(U("c")));
+    VERIFY_IS_FALSE(v1.has_number_field(U("c")));
+    VERIFY_IS_FALSE(v1.has_integer_field(U("c")));
+    VERIFY_IS_FALSE(v1.has_double_field(U("c")));
+    VERIFY_IS_FALSE(v1.has_array_field(U("c")));
+    VERIFY_IS_FALSE(v1.has_object_field(U("c")));
+
+    VERIFY_IS_TRUE(v1.has_array_field(U("d")));
+    VERIFY_IS_FALSE(v1.has_string_field(U("d")));
+    VERIFY_IS_FALSE(v1.has_boolean_field(U("d")));
+    VERIFY_IS_FALSE(v1.has_number_field(U("d")));
+    VERIFY_IS_FALSE(v1.has_integer_field(U("d")));
+    VERIFY_IS_FALSE(v1.has_double_field(U("d")));
+    VERIFY_IS_FALSE(v1.has_object_field(U("d")));
+
+    VERIFY_IS_TRUE(v1.has_object_field(U("e")));
+    VERIFY_IS_FALSE(v1.has_array_field(U("e")));
+    VERIFY_IS_FALSE(v1.has_string_field(U("e")));
+    VERIFY_IS_FALSE(v1.has_boolean_field(U("e")));
+    VERIFY_IS_FALSE(v1.has_number_field(U("e")));
+    VERIFY_IS_FALSE(v1.has_integer_field(U("e")));
+    VERIFY_IS_FALSE(v1.has_double_field(U("e")));
 
     json::value v2;
     
