@@ -73,7 +73,9 @@ static struct ASIO_SSL_memory_leak_suppress
 {
     ~ASIO_SSL_memory_leak_suppress()
     {
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
         ::SSL_COMP_free_compression_methods();
+#endif
     }
 } ASIO_SSL_memory_leak_suppressor;
 
