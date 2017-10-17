@@ -17,6 +17,12 @@
 	<ProjectFile Include="vs14.uwp\HttpClient140_test.uwp.vcxproj" Condition="'$(OsVersion)'=='6.3'" />
   </ItemGroup>
   
+  <ItemGroup Condition="'$(DevToolsVersion)'=='141'">
+    <ProjectFile Include="vs15\HttpClient141_test.vcxproj" />
+    <ProjectFile Include="vs15.android\HttpClient141_test.android.vcxproj" Condition="'$(Platform)'!='x64'" />
+	<ProjectFile Include="vs15.uwp\HttpClient141_test.uwp.vcxproj" Condition="'$(OsVersion)'=='6.3'" />
+  </ItemGroup>
+
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
 
 </Project>

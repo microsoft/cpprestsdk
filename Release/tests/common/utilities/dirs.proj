@@ -20,6 +20,15 @@
     <ProjectFile Include="vs14.uwp\CommonUtilities140.uwp.vcxproj" />
   </ItemGroup>
 
+  <ItemGroup Condition="'$(DevToolsVersion)'=='141'">
+    <ProjectFile Include="vs15\CommonUtilities141.vcxproj" />
+    <ProjectFile Include="vs15.xp\CommonUtilities141.xp.vcxproj"  Condition="'$(Platform)'!='ARM' and '$(RunCodeAnalysis)'!='true'"/>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|141'">
+    <ProjectFile Include="vs15.uwp\CommonUtilities141.uwp.vcxproj" />
+  </ItemGroup>
+
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
 
 </Project>

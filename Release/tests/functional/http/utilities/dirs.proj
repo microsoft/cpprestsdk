@@ -19,6 +19,15 @@
       <ProjectFile Include="vs14.uwp\HttpTestUtilities140.uwp.vcxproj" />
   </ItemGroup>
   
+  <ItemGroup Condition="'$(DevToolsVersion)'=='141'">
+    <ProjectFile Include="vs15\HttpTestUtilities141.vcxproj" />
+    <ProjectFile Include="vs15.android\HttpTestUtilities141.android.vcxproj" Condition="'$(Platform)'!='x64'" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|141'">
+      <ProjectFile Include="vs15.uwp\HttpTestUtilities141.uwp.vcxproj" />
+  </ItemGroup>
+  
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
 
 </Project>

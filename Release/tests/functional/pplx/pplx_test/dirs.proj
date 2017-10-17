@@ -7,6 +7,10 @@
     <ProjectFile Include="VS12.xp\pplx120_test.xp.vcxproj" Condition="'$(Platform)'!='ARM' and '$(RunCodeAnalysis)'!='true'"/>
   </ItemGroup>
 
+  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|120'">
+    <ProjectFile Include="VS12.winrt\pplx120_test.winrt.vcxproj" />
+  </ItemGroup>
+
   <ItemGroup Condition="'$(DevToolsVersion)'=='140'">
     <ProjectFile Include="VS14\pplx140_test.vcxproj" />
     <ProjectFile Include="VS14.xp\pplx140_test.xp.vcxproj" Condition="'$(Platform)'!='ARM' and '$(RunCodeAnalysis)'!='true'"/>
@@ -17,8 +21,14 @@
     <ProjectFile Include="vs14.uwp\pplx140_test.uwp.vcxproj" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|120'">
-    <ProjectFile Include="VS12.winrt\pplx120_test.winrt.vcxproj" />
+  <ItemGroup Condition="'$(DevToolsVersion)'=='141'">
+    <ProjectFile Include="vs15\pplx141_test.vcxproj" />
+    <ProjectFile Include="vs15.xp\pplx141_test.xp.vcxproj" Condition="'$(Platform)'!='ARM' and '$(RunCodeAnalysis)'!='true'"/>
+    <ProjectFile Include="vs15.android\pplx141_test.android.vcxproj" Condition="'$(Platform)'!='x64'" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|141'">
+    <ProjectFile Include="vs15.uwp\pplx141_test.uwp.vcxproj" />
   </ItemGroup>
 
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
