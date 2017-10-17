@@ -2,7 +2,7 @@
 
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Common.Build.settings" />
 
-  <ItemGroup Condition="'$(Platform)' != 'ARM' and ('$(DevToolsVersion)'=='120' or '$(DevToolsVersion)'=='140')">
+  <ItemGroup Condition="'$(Platform)' != 'ARM' and ('$(DevToolsVersion)'=='120' or '$(DevToolsVersion)'=='140' or '$(DevToolsVersion)'=='141')">
       <ProjectFile Include="BingRequest$(DevToolsVersion)\BingRequest$(DevToolsVersion).vcxproj"/>
   </ItemGroup>
 

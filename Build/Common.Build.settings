@@ -20,7 +20,8 @@
     <BuildRoot>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))</BuildRoot>
     <TargetsPath>$(BuildRoot)\Build</TargetsPath>
     <OsVersion>$(registry:HKEY_LOCAL_MACHINE\Software\Microsoft\Windows NT\CurrentVersion@CurrentVersion)</OsVersion>
-    <!--If Dev11 and Dev12 are both installed, the default is to build Dev12. This can be overridden by setting the DevToolsVersion variable in powershell-->
+    <!-- The default is to build Dev141. This can be overridden by setting the DevToolsVersion variable in powershell-->
+	<DevToolsVersion Condition="'$(DevToolsVersion)' == '' And '$(VS150COMNTOOLS)' != ''">141</DevToolsVersion>
 	<DevToolsVersion Condition="'$(DevToolsVersion)' == '' And '$(VS140COMNTOOLS)' != ''">140</DevToolsVersion>
 	<DevToolsVersion Condition="'$(DevToolsVersion)' == '' And '$(VS120COMNTOOLS)' != ''">120</DevToolsVersion>
     <DevToolsVersion Condition="'$(DevToolsVersion)' == '' And '$(VS110COMNTOOLS)' != ''">110</DevToolsVersion>
@@ -59,6 +60,10 @@
     <DevEnvDir>$(VS120COMNTOOLS)..\IDE</DevEnvDir>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(DevToolsVersion)' == '141'">
+    <DevEnvDir>$(VS150COMNTOOLS)..\IDE</DevEnvDir>
+  </PropertyGroup>
+
   <PropertyGroup>
     <BinaryDependencies>$(TargetsPath)\BinaryDependencies</BinaryDependencies>
     <ErrorReport>prompt</ErrorReport>
@@ -88,6 +93,7 @@
       <TreatWarningAsError Condition="'$(TreatWarningsAsErrors)' != ''">true</TreatWarningAsError>
       <EnablePREfast>$(EnableCPPAnalysis)</EnablePREfast>
       <CompileAsManaged Condition="'$(CompileAsManagedDefault)' != ''">true</CompileAsManaged>
+      <AdditionalOptions Condition="'$(DevToolsVersion)'=='141' And '$(ApplicationType)'!='Android'">/d2notypeopt %(AdditionalOptions)</AdditionalOptions>
       <AdditionalOptions Condition="'$(DevToolsVersion)'=='140' And '$(ApplicationType)'!='Android'"> /d2notypeopt %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <ResourceCompile>

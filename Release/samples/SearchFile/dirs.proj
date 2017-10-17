@@ -2,7 +2,7 @@
 
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Common.Build.settings" />
 
-  <ItemGroup Condition="'$(Platform)' != 'ARM' and ('$(DevToolsVersion)'=='120' Or '$(DevToolsVersion)'=='140')">
+  <ItemGroup Condition="'$(Platform)' != 'ARM' and ('$(DevToolsVersion)'=='120' Or '$(DevToolsVersion)'=='140' Or '$(DevToolsVersion)'=='141')">
       <ProjectFile Include="SearchFile$(DevToolsVersion)\SearchFile$(DevToolsVersion).vcxproj"/>
   </ItemGroup>
 
