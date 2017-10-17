@@ -557,6 +557,9 @@ void windows_request_context::read_headers_io_completion(DWORD error_code, DWORD
         m_msg.set_method(parse_request_method(m_request));
         parse_http_headers(m_request->Headers, m_msg.headers());
 
+        // Get the version
+        m_msg._get_impl()->_set_http_version({ m_request->Version.MajorVersion, m_request->Version.MinorVersion });
+
         // Retrieve the remote IP address
         std::vector<wchar_t> remoteAddressBuffer(50);
 

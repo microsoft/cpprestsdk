@@ -648,6 +648,16 @@ will_deref_and_erase_t asio_server_connection::handle_http_line(const boost::sys
 
         // Get the version
         std::string http_version = http_path_and_version.substr(http_path_and_version.size() - VersionPortionSize + 1, VersionPortionSize - 2);
+
+        if (boost::starts_with(http_version, "HTTP/"))
+        {
+            std::istringstream version{ http_version.substr(5) };
+            unsigned int major = 0; version >> major;
+            char dot; version >> dot;
+            unsigned int minor = 0; version >> minor;
+            m_request._get_impl()->_set_http_version({ (uint16_t)major, (uint16_t)minor });
+        }
+
         // if HTTP version is 1.0 then disable pipelining
         if (http_version == "HTTP/1.0")
         {

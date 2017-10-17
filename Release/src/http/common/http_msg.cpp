@@ -1010,6 +1010,10 @@ details::_http_request::_http_request(std::unique_ptr<http::details::_http_serve
 {
 }
 
+const http_version http_versions::HTTP_0_9{ 0, 9 };
+const http_version http_versions::HTTP_1_0{ 1, 0 };
+const http_version http_versions::HTTP_1_1{ 1, 1 };
+
 #define _METHODS
 #define DAT(a,b) const method methods::a = b;
 #include "cpprest/details/http_constants.dat"
