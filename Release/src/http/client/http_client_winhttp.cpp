@@ -462,7 +462,7 @@ protected:
         if(WINHTTP_INVALID_STATUS_CALLBACK == WinHttpSetStatusCallback(
             m_hSession,
             &winhttp_client::completion_callback,
-            WINHTTP_CALLBACK_FLAG_ALL_COMPLETIONS | WINHTTP_CALLBACK_FLAG_HANDLES,
+            WINHTTP_CALLBACK_FLAG_ALL_COMPLETIONS | WINHTTP_CALLBACK_FLAG_HANDLES | WINHTTP_CALLBACK_FLAG_SECURE_FAILURE,
             0))
         {
             return report_failure(_XPLATSTR("Error registering callback"));
@@ -1092,6 +1092,23 @@ private:
                     }
                     break;
                 }
+			case WINHTTP_CALLBACK_STATUS_SECURE_FAILURE:
+			{
+				auto *flagsPtr = reinterpret_cast<std::uint32_t*>(statusInfo);
+				auto flags = *flagsPtr;
+
+				std::string err = "SSL error: ";
+				if (flags & WINHTTP_CALLBACK_STATUS_FLAG_CERT_REV_FAILED)        err += "WINHTTP_CALLBACK_STATUS_FLAG_CERT_REV_FAILED failed to check revocation status. ";
+				if (flags & WINHTTP_CALLBACK_STATUS_FLAG_INVALID_CERT)           err += "WINHTTP_CALLBACK_STATUS_FLAG_INVALID_CERT SSL certificate is invalid. ";
+				if (flags & WINHTTP_CALLBACK_STATUS_FLAG_CERT_REVOKED)           err += "WINHTTP_CALLBACK_STATUS_FLAG_CERT_REVOKED SSL certificate was revoked. ";
+				if (flags & WINHTTP_CALLBACK_STATUS_FLAG_INVALID_CA)             err += "WINHTTP_CALLBACK_STATUS_FLAG_INVALID_CA SSL invalid CA. ";
+				if (flags & WINHTTP_CALLBACK_STATUS_FLAG_CERT_CN_INVALID)        err += "WINHTTP_CALLBACK_STATUS_FLAG_CERT_CN_INVALID SSL common name does not match. ";
+				if (flags & WINHTTP_CALLBACK_STATUS_FLAG_CERT_DATE_INVALID)      err += "WINHTTP_CALLBACK_STATUS_FLAG_CERT_DATE_INVALID SLL certificate is expired. ";
+				if (flags & WINHTTP_CALLBACK_STATUS_FLAG_SECURITY_CHANNEL_ERROR) err += "WINHTTP_CALLBACK_STATUS_FLAG_SECURITY_CHANNEL_ERROR internal error. ";
+
+				p_request_context->report_exception(std::runtime_error(err));
+				break;
+			}
             case WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE :
                 {
                     DWORD bytesWritten = *((DWORD *)statusInfo);
