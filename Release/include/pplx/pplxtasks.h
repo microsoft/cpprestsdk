@@ -7345,29 +7345,6 @@ task<_TaskType> task_from_exception(_ExType _Exception, const task_options& _Tas
     return create_task(_Tce, _TaskOptions);
 }
 
-namespace details
-{
-    /// <summary>
-    /// A convenient extension to Concurrency: loop until a condition is no longer met
-    /// </summary>
-    /// <param name="func">
-    ///   A function representing the body of the loop. It will be invoked at least once and 
-    ///   then repetitively as long as it returns true.
-    /// </param>
-    inline
-    task<bool> do_while(std::function<task<bool>(void)> func)
-    {
-        task<bool> first = func();
-        return first.then([=](bool guard) -> task<bool> {
-            if (guard)
-                return do_while(func);
-            else
-                return first;
-            });
-    }
-
-} // namespace details
-
 } // namespace Concurrency
 
 #pragma pop_macro("new")

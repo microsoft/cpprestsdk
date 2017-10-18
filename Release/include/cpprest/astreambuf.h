@@ -24,6 +24,21 @@
 
 namespace Concurrency
 {
+    namespace details
+    {
+        template<bool B=true>
+        task<bool> _do_while(std::function<task<bool>(void)> func)
+        {
+            task<bool> first = func();
+            return first.then([=](bool guard) -> task<bool> {
+                if (guard)
+                    return Concurrency::details::_do_while<B>(func);
+                else
+                    return first;
+            });
+        }
+    }
+
 /// Library for asynchronous streams.
 namespace streams
 {
