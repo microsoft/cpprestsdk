@@ -421,7 +421,7 @@ private:
             memcpy(result, reinterpret_cast<char*>(&num), 4);
 #endif
         } else {
-            std::fill(result,result+4,0);
+            std::fill(result,result+4, static_cast<char>(0));
         }
     }
 

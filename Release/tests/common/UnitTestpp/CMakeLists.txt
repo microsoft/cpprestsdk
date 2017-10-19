@@ -47,10 +47,11 @@ elseif(WIN32)
 endif()
 
 add_library(unittestpp ${UT_SOURCES})
+target_link_libraries(unittestpp PUBLIC cpprest)
+
 if(UNIX)
   cpprest_find_boost()
-  target_include_directories(unittestpp PUBLIC ${Boost_INCLUDE_DIR})
-  target_link_libraries(unittestpp PUBLIC ${Boost_LIBRARIES})
+  target_link_libraries(unittestpp PUBLIC cpprestsdk_boost_internal)
 endif()
 target_link_libraries(unittestpp ${ANDROID_STL_FLAGS})
 

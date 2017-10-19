@@ -24,6 +24,21 @@
 
 namespace Concurrency
 {
+    namespace details
+    {
+        template<bool B=true>
+        pplx::task<bool> _do_while(std::function<pplx::task<bool>(void)> func)
+        {
+            pplx::task<bool> first = func();
+            return first.then([=](bool guard) -> pplx::task<bool> {
+                if (guard)
+                    return Concurrency::details::_do_while<B>(func);
+                else
+                    return first;
+            });
+        }
+    }
+
 /// Library for asynchronous streams.
 namespace streams
 {

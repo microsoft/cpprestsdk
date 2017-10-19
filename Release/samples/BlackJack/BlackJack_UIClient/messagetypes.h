@@ -108,9 +108,9 @@ struct BJHand
 
     NumericHandValues GetNumericValues()
     {
-        NumericHandValues result;
-        result.low = 0;
-        result.low = 0;
+        NumericHandValues r;
+        r.low = 0;
+        r.low = 0;
 
         bool hasAces = false;
 
@@ -118,17 +118,17 @@ struct BJHand
         {
             if ( iter->value == CV_Ace ) hasAces = true;
 
-            result.low += (iter->value < 10) ? iter->value : 10;
+            r.low += (iter->value < 10) ? iter->value : 10;
         }
-        result.high = hasAces ? result.low + 10 : result.low;
-        return result;
+        r.high = hasAces ? r.low + 10 : r.low;
+        return r;
     }
 
 	BJHand(web::json::value object)
     {
-        web::json::value cards = object[CARDS];
+        web::json::value l_cards = object[CARDS];
 
-        for (auto iter = cards.as_array().begin(); iter != cards.as_array().end(); ++iter)
+        for (auto iter = l_cards.as_array().begin(); iter != l_cards.as_array().end(); ++iter)
         {
             if ( !iter->is_null() )
             {

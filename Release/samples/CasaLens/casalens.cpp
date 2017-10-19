@@ -94,7 +94,7 @@ void CasaLens::handle_get(http_request message)
     concurrency::streams::fstream::open_istream(file_name, std::ios::in).then([=](concurrency::streams::istream is)
     {
         message.reply(status_codes::OK, is, content_type).then([](pplx::task<void> t) { handle_error(t); });
-    }).then([=](pplx::task<void>& t)
+    }).then([=](pplx::task<void> t)
     {
         try
         {

@@ -15,7 +15,9 @@
 
 #include "stdafx.h"
 
+#include "cpprest/asyncrt_utils.h"
 #include "../common/internal_http_helpers.h"
+
 #if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-local-typedef"
@@ -25,6 +27,7 @@
 #include <boost/asio/ssl.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/bind.hpp>
 #if defined(__clang__)
 #pragma clang diagnostic pop
 #endif
@@ -33,6 +36,7 @@
 #error "Cpp rest SDK requires c++11 smart pointer support from boost"
 #endif
 
+#include "pplx/threadpool.h"
 #include "http_client_impl.h"
 #include "cpprest/base_uri.h"
 #include "cpprest/details/x509_cert_utilities.h"
@@ -86,7 +90,8 @@ public:
     asio_connection(boost::asio::io_service& io_service)
         : m_socket(io_service),
         m_is_reused(false),
-        m_keep_alive(true)
+        m_keep_alive(true),
+        m_closed(false)
     {}
 
     ~asio_connection()
@@ -115,6 +120,7 @@ public:
 
         // Ensures closed connections owned by request_context will not be put to pool when they are released.
         m_keep_alive = false;
+        m_closed = true;
 
         boost::system::error_code error;
         m_socket.shutdown(tcp::socket::shutdown_both, error);
@@ -137,14 +143,20 @@ public:
     template <typename Iterator, typename Handler>
     void async_connect(const Iterator &begin, const Handler &handler)
     {
-        std::lock_guard<std::mutex> lock(m_socket_lock);
-        m_socket.async_connect(begin, handler);
+        std::unique_lock<std::mutex> lock(m_socket_lock);
+        if (!m_closed)
+            m_socket.async_connect(begin, handler);
+        else
+        {
+            lock.unlock();
+            handler(boost::asio::error::operation_aborted);
+        }
     }
 
     template <typename HandshakeHandler, typename CertificateHandler>
     void async_handshake(boost::asio::ssl::stream_base::handshake_type type,
                          const http_client_config &config,
-                         const utility::string_t &host_name,
+                         const std::string& host_name,
                          const HandshakeHandler &handshake_handler,
                          const CertificateHandler &cert_handler)
     {
@@ -228,6 +240,7 @@ private:
 
     bool m_is_reused;
     bool m_keep_alive;
+    bool m_closed;
 };
 
 /// <summary>Implements a connection pool with adaptive connection removal</summary>
@@ -352,7 +365,7 @@ public:
         : _http_client_communicator(std::move(address), std::move(client_config))
         , m_resolver(crossplat::threadpool::shared_instance().service())
         , m_pool(std::make_shared<asio_connection_pool>())
-        , m_start_with_ssl(base_uri().scheme() == "https" && !this->client_config().proxy().is_specified())
+        , m_start_with_ssl(base_uri().scheme() == U("https") && !this->client_config().proxy().is_specified())
     {}
 
     void send_request(const std::shared_ptr<request_context> &request_ctx) override;
@@ -436,7 +449,7 @@ public:
             int proxy_port = proxy_uri.port() == -1 ? 8080 : proxy_uri.port();
 
             const auto &base_uri = m_context->m_http_client->base_uri();
-            const auto &host = base_uri.host();
+            const auto &host = utility::conversions::to_utf8string(base_uri.host());
 
             std::ostream request_stream(&m_request);
             request_stream.imbue(std::locale::classic());
@@ -472,12 +485,6 @@ public:
                 m_context->m_timer.reset();
                 auto endpoint = *endpoints;
                 m_context->m_connection->async_connect(endpoint, boost::bind(&ssl_proxy_tunnel::handle_tcp_connect, shared_from_this(), boost::asio::placeholders::error, ++endpoints));
-
-                // TODO: refactor all interactions with the timeout_timer to avoid racing
-                if (m_context->m_timer.has_timedout())
-                {
-                    m_context->m_connection->close();
-                }
             }
         }
 
@@ -600,7 +607,7 @@ public:
         }
         
         http_proxy_type proxy_type = http_proxy_type::none;
-        utility::string_t proxy_host;
+        std::string proxy_host;
         int proxy_port = -1;
         
         // There is no support for auto-detection of proxies on non-windows platforms, it must be specified explicitly from the client code.
@@ -610,7 +617,7 @@ public:
             auto proxy = m_http_client->client_config().proxy();
             auto proxy_uri = proxy.address();
             proxy_port = proxy_uri.port() == -1 ? 8080 : proxy_uri.port();
-            proxy_host = proxy_uri.host();
+            proxy_host = utility::conversions::to_utf8string(proxy_uri.host());
         }
         
         auto start_http_request_flow = [proxy_type, proxy_host, proxy_port](std::shared_ptr<asio_context> ctx)
@@ -627,9 +634,9 @@ public:
             // For a normal http proxy, we need to specify the full request uri, otherwise just specify the resource
             auto encoded_resource = proxy_type == http_proxy_type::http ? full_uri.to_string() : full_uri.resource().to_string();
                 
-            if (encoded_resource == "")
+            if (encoded_resource.empty())
             {
-                encoded_resource = "/";
+                encoded_resource = U("/");
             }
                 
             const auto &method = ctx->m_request.method();
@@ -645,9 +652,9 @@ public:
                 
             std::ostream request_stream(&ctx->m_body_buf);
             request_stream.imbue(std::locale::classic());
-            const auto &host = base_uri.host();
+            const auto &host = utility::conversions::to_utf8string(base_uri.host());
                 
-            request_stream << method << " " << encoded_resource << " " << "HTTP/1.1" << CRLF;
+            request_stream << utility::conversions::to_utf8string(method) << " " << utility::conversions::to_utf8string(encoded_resource) << " " << "HTTP/1.1" << CRLF;
                 
             int port = base_uri.port();
                 
@@ -659,7 +666,11 @@ public:
             // Add the Host header if user has not specified it explicitly
             if (!ctx->m_request.headers().has(header_names::host))
             {
-                request_stream << "Host: " << host << ":" << port << CRLF;
+                request_stream << "Host: " << host;
+                if (!base_uri.is_port_default()) {
+                    request_stream << ":" << port;
+                }
+                request_stream << CRLF;
             }
                 
             // Extra request headers are constructed here.
@@ -696,6 +707,13 @@ public:
                     ctx->m_needChunked = true;
                     extra_headers.append("Transfer-Encoding:chunked\r\n");
                 }
+                else if (ctx->m_request.method() == methods::POST || ctx->m_request.method() == methods::PUT)
+                {
+                    // Some servers do not accept POST/PUT requests with a content length of 0, such as
+                    // lighttpd - http://serverfault.com/questions/315849/curl-post-411-length-required
+                    // old apache versions - https://issues.apache.org/jira/browse/TS-2902
+                    extra_headers.append("Content-Length: 0\r\n");
+                }
             }
                 
             if (proxy_type == http_proxy_type::http)
@@ -705,7 +723,7 @@ public:
                     "Pragma: no-cache\r\n");
             }
                 
-            request_stream << ::web::http::details::flatten_http_headers(ctx->m_request.headers());
+            request_stream << utility::conversions::to_utf8string(::web::http::details::flatten_http_headers(ctx->m_request.headers()));
             request_stream << extra_headers;
             // Enforce HTTP connection keep alive (even for the old HTTP/1.0 protocol).
             request_stream << "Connection: Keep-Alive" << CRLF << CRLF;
@@ -791,12 +809,12 @@ private:
     {
         std::string header;
         header.append("Proxy-Authorization: Basic ");
-        header.append(generate_base64_userpass(m_http_client->client_config().credentials()));
+        header.append(generate_base64_userpass(m_http_client->client_config().proxy().credentials()));
         header.append(CRLF);
         return header;
     }
 
-    void report_error(const utility::string_t &message, const boost::system::error_code &ec, httpclient_errorcode_context context = httpclient_errorcode_context::none)
+    void report_error(const std::string &message, const boost::system::error_code &ec, httpclient_errorcode_context context = httpclient_errorcode_context::none)
     {
         // By default, errorcodeValue don't need to converted
         long errorcodeValue = ec.value();
@@ -838,13 +856,12 @@ private:
 
     void handle_connect(const boost::system::error_code& ec, tcp::resolver::iterator endpoints)
     {
-       
         m_timer.reset();
         if (!ec)
         {
             write_request();
         }
-        else if (ec.value() == boost::system::errc::operation_canceled)
+        else if (ec.value() == boost::system::errc::operation_canceled || ec.value() == boost::asio::error::operation_aborted)
         {
             request_context::report_error(ec.value(), "Request canceled by user.");
         }
@@ -874,12 +891,6 @@ private:
             m_timer.reset();
             auto endpoint = *endpoints;
             m_connection->async_connect(endpoint, boost::bind(&asio_context::handle_connect, shared_from_this(), boost::asio::placeholders::error, ++endpoints));
-
-            // TODO: refactor all interactions with the timeout_timer to avoid racing
-            if (m_timer.has_timedout())
-            {
-                m_connection->close();
-            }
         }
     }
 
@@ -891,7 +902,7 @@ private:
             const auto weakCtx = std::weak_ptr<asio_context>(shared_from_this());
             m_connection->async_handshake(boost::asio::ssl::stream_base::client,
                                           m_http_client->client_config(),
-                                          m_http_client->base_uri().host(),
+                                          utility::conversions::to_utf8string(m_http_client->base_uri().host()),
                                           boost::bind(&asio_context::handle_handshake, shared_from_this(), boost::asio::placeholders::error),
 
                                           // Use a weak_ptr since the verify_callback is stored until the connection is destroyed.
@@ -932,7 +943,7 @@ private:
         // certificate chain, the rest are optional intermediate certificates, followed
         // finally by the root CA self signed certificate.
 
-        const auto &host = m_http_client->base_uri().host();
+        const auto &host = utility::conversions::to_utf8string(m_http_client->base_uri().host());
 #if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__))
         // On OS X, iOS, and Android, OpenSSL doesn't have access to where the OS
         // stores keychains. If OpenSSL fails we will doing verification at the
@@ -1125,7 +1136,7 @@ private:
             m_response.set_status_code(status_code);
 
             ::web::http::details::trim_whitespace(status_message);
-            m_response.set_reason_phrase(std::move(status_message));
+            m_response.set_reason_phrase(utility::conversions::to_string_t(std::move(status_message)));
 
             if (!response_stream || http_version.substr(0, 5) != "HTTP/")
             {
@@ -1195,7 +1206,7 @@ private:
                     m_connection->set_keep_alive(!boost::iequals(value, U("close")));
                 }
 
-                m_response.headers().add(std::move(name), std::move(value));
+                m_response.headers().add(utility::conversions::to_string_t(std::move(name)), utility::conversions::to_string_t(std::move(value)));
             }
         }
         complete_headers();
@@ -1218,9 +1229,17 @@ private:
             }
         }
 
+        // Check for HEAD requests and status codes which cannot contain a
+        // message body in HTTP/1.1 (see 3.3.3/1 of the RFC 7230).
+        //
         // note: need to check for 'chunked' here as well, azure storage sends both
         // transfer-encoding:chunked and content-length:0 (although HTTP says not to)
-        if (m_request.method() == U("HEAD") || (!needChunked && m_content_length == 0))
+        const auto status = m_response.status_code();
+        if (m_request.method() == U("HEAD")
+            || (status >= 100 && status < 200)
+            || status == status_codes::NoContent
+            || status == status_codes::NotModified
+            || (!needChunked && m_content_length == 0))
         {
             // we can stop early - no body
             const auto &progress = m_request._get_impl()->_progress_handler();

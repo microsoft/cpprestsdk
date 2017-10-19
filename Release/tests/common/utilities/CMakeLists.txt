@@ -9,9 +9,11 @@ add_library(common_utilities
   stdafx.cpp
   )
 
+if(NOT BUILD_SHARED_LIBS)
+  target_compile_definitions(common_utilities INTERFACE -DTEST_UTILITY_API=)
+endif()
+
 target_link_libraries(common_utilities
-  ${Casablanca_LIBRARY}
+  cpprest
   unittestpp
-  ${Boost_SYSTEM_LIBRARY}
-  ${Boost_THREAD_LIBRARY}
-  )
+)

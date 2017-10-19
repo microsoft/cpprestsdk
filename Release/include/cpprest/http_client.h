@@ -45,7 +45,7 @@ typedef void* native_handle;}}}
 
 #include "cpprest/oauth2.h"
 
-#if !defined(_WIN32) && !defined(__cplusplus_winrt)
+#if !defined(_WIN32) && !defined(__cplusplus_winrt) || defined(CPPREST_FORCE_HTTP_CLIENT_ASIO)
 #if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wconversion"
@@ -87,8 +87,7 @@ public:
 #if !defined(__cplusplus_winrt)
         , m_validate_certificates(true)
 #endif
-        , m_set_user_nativehandle_options([](native_handle)->void{})
-#if !defined(_WIN32) && !defined(__cplusplus_winrt)
+#if !defined(_WIN32) && !defined(__cplusplus_winrt) || defined(CPPREST_FORCE_HTTP_CLIENT_ASIO)
         , m_tlsext_sni_enabled(true)
 #endif
 #if defined(_WIN32) && !defined(__cplusplus_winrt)
@@ -317,11 +316,7 @@ public:
     /// </summary>
     /// <remarks>
     /// The native_handle is the following type depending on the underlying platform:
-    ///     Windows Desktop, WinHTTP - HINTERNET
-    ///     Windows Runtime, WinRT - IXMLHTTPRequest2 *
-    ///     All other platforms, Boost.Asio:
-    ///         https - boost::asio::ssl::stream<boost::asio::ip::tcp::socket &> *
-    ///         http - boost::asio::ip::tcp::socket *
+    ///     Windows Desktop, WinHTTP - HINTERNET (session)
     /// </remarks>
     /// <param name="callback">A user callback allowing for customization of the session</param>
     void set_nativesessionhandle_options(const std::function<void(native_handle)> &callback)
@@ -332,14 +327,13 @@ public:
     /// <summary>
     /// Invokes a user's callback to allow for customization of the session.
     /// </summary>
+    /// <remarks>Internal Use Only</remarks>
     /// <param name="handle">A internal implementation handle.</param>
-    void invoke_nativesessionhandle_options(native_handle handle) const
+    void _invoke_nativesessionhandle_options(native_handle handle) const
     {
-        if (m_set_user_nativesessionhandle_options != nullptr) {
+        if (m_set_user_nativesessionhandle_options)
             m_set_user_nativesessionhandle_options(handle);
-        }
     }
-
 
     /// <summary>
     /// Sets a callback to enable custom setting of platform specific options.
@@ -364,10 +358,11 @@ public:
     /// <param name="handle">A internal implementation handle.</param>
     void invoke_nativehandle_options(native_handle handle) const
     {
-        m_set_user_nativehandle_options(handle);
+        if (m_set_user_nativehandle_options)
+            m_set_user_nativehandle_options(handle);
     }
 
-#if !defined(_WIN32) && !defined(__cplusplus_winrt)
+#if !defined(_WIN32) && !defined(__cplusplus_winrt) || defined(CPPREST_FORCE_HTTP_CLIENT_ASIO)
     /// <summary>
     /// Sets a callback to enable custom setting of the ssl context, at construction time.
     /// </summary>
@@ -428,7 +423,7 @@ private:
     std::function<void(native_handle)> m_set_user_nativehandle_options;
 	std::function<void(native_handle)> m_set_user_nativesessionhandle_options;
 
-#if !defined(_WIN32) && !defined(__cplusplus_winrt)
+#if !defined(_WIN32) && !defined(__cplusplus_winrt) || defined(CPPREST_FORCE_HTTP_CLIENT_ASIO)
     std::function<void(boost::asio::ssl::context&)> m_ssl_context_callback;
     bool m_tlsext_sni_enabled;
 #endif

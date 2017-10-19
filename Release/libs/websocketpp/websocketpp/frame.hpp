@@ -235,17 +235,17 @@ struct basic_header {
 /// The variable size component of a WebSocket frame header
 struct extended_header {
     extended_header() {
-        std::fill_n(this->bytes.begin(), MAX_EXTENDED_HEADER_LENGTH, 0x00);
+        std::fill_n(this->bytes.begin(), MAX_EXTENDED_HEADER_LENGTH, static_cast<uint8_t>(0x00));
     }
 
     extended_header(uint64_t payload_size) {
-        std::fill_n(this->bytes.begin(), MAX_EXTENDED_HEADER_LENGTH, 0x00);
+        std::fill_n(this->bytes.begin(), MAX_EXTENDED_HEADER_LENGTH, static_cast<uint8_t>(0x00));
 
         copy_payload(payload_size);
     }
 
     extended_header(uint64_t payload_size, uint32_t masking_key) {
-        std::fill_n(this->bytes.begin(), MAX_EXTENDED_HEADER_LENGTH, 0x00);
+        std::fill_n(this->bytes.begin(), MAX_EXTENDED_HEADER_LENGTH, static_cast<uint8_t>(0x00));
 
         // Copy payload size
         int offset = copy_payload(payload_size);

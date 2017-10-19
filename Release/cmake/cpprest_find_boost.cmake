@@ -1,13 +1,12 @@
 function(cpprest_find_boost)
-  if(Boost_FOUND)
+  if(TARGET cpprestsdk_boost_internal)
     return()
   endif()
 
   if(IOS)
     set(IOS_SOURCE_DIR "${PROJECT_SOURCE_DIR}/../Build_iOS")
-    set(Boost_FOUND 1 CACHE INTERNAL "")
-    set(Boost_FRAMEWORK "-F ${IOS_SOURCE_DIR} -framework boost" CACHE INTERNAL "")
-    set(Boost_INCLUDE_DIR "$<BUILD_INTERFACE:${IOS_SOURCE_DIR}/boost.framework/Headers>" CACHE INTERNAL "")
+    set(Boost_LIBRARIES "${IOS_SOURCE_DIR}/boost.framework/boost" CACHE INTERNAL "")
+    set(Boost_INCLUDE_DIR "${IOS_SOURCE_DIR}/boost.framework/Headers" CACHE INTERNAL "")
   elseif(ANDROID)
     set(Boost_COMPILER "-clang")
     if(ARM)
@@ -24,17 +23,57 @@ function(cpprest_find_boost)
     find_package(Boost REQUIRED COMPONENTS system date_time regex)
   endif()
 
-  set(Boost_FOUND 1 CACHE INTERNAL "")
-  set(Boost_INCLUDE_DIR ${Boost_INCLUDE_DIR} CACHE INTERNAL "")
-  set(Boost_LIBRARIES
-    ${Boost_SYSTEM_LIBRARY}
-    ${Boost_THREAD_LIBRARY}
-    ${Boost_ATOMIC_LIBRARY}
-    ${Boost_CHRONO_LIBRARY}
-    ${Boost_RANDOM_LIBRARY}
-    ${Boost_REGEX_LIBRARY}
-    ${Boost_DATE_TIME_LIBRARY}
-    ${Boost_FILESYSTEM_LIBRARY}
-    ${BOOST_FRAMEWORK}
-    CACHE INTERNAL "")
- endfunction()
+  add_library(cpprestsdk_boost_internal INTERFACE)
+  # FindBoost continually breaks imported targets whenever boost updates.
+  if(1)
+    target_include_directories(cpprestsdk_boost_internal INTERFACE "$<BUILD_INTERFACE:${Boost_INCLUDE_DIR}>")
+    set(_prev)
+    set(_libs)
+    foreach(_lib ${Boost_LIBRARIES})
+      if(_lib STREQUAL "optimized" OR _lib STREQUAL "debug")
+      else()
+        if(_prev STREQUAL "optimized")
+          list(APPEND _libs "$<$<NOT:$<CONFIG:Debug>>:${_lib}>")
+        elseif(_prev STREQUAL "debug")
+        list(APPEND _libs "$<$<CONFIG:Debug>:${_lib}>")
+        else()
+        list(APPEND _libs "${_lib}")
+        endif()
+      endif()
+      set(_prev "${_lib}")
+    endforeach()
+    target_link_libraries(cpprestsdk_boost_internal INTERFACE "$<BUILD_INTERFACE:${_libs}>")
+
+  else()
+    if(ANDROID)
+      target_link_libraries(cpprestsdk_boost_internal INTERFACE
+        Boost::boost
+        Boost::random
+        Boost::system
+        Boost::thread
+        Boost::filesystem
+        Boost::chrono
+        Boost::atomic
+      )
+    elseif(UNIX)
+      target_link_libraries(cpprestsdk_boost_internal INTERFACE
+        Boost::boost
+        Boost::random
+        Boost::system
+        Boost::thread
+        Boost::filesystem
+        Boost::chrono
+        Boost::atomic
+        Boost::date_time
+        Boost::regex
+      )
+    else()
+      target_link_libraries(cpprestsdk_boost_internal INTERFACE
+        Boost::boost
+        Boost::system
+        Boost::date_time
+        Boost::regex
+      )
+    endif()
+  endif()
+endfunction()

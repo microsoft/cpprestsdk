@@ -14,6 +14,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <winhttp.h>
+#pragma comment(lib, "winhttp")
 #endif
 #include "cpprest/rawptrstream.h"
 #include "cpprest/details/http_helpers.h"
@@ -38,16 +39,19 @@ TEST_FIXTURE(uri_address, outside_cnn_dot_com)
 {
     handle_timeout([]
     {
-        http_client client(U("http://www.cnn.com"));
+        // http://www.cnn.com redirects users from countries outside of the US to the "http://edition.cnn.com/" drop location
+        http_client client(U("http://edition.cnn.com"));
 
         // CNN's main page doesn't use chunked transfer encoding.
         http_response response = client.request(methods::GET).get();
-        VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
+        auto code = response.status_code();
+        VERIFY_IS_TRUE(code == status_codes::OK || code == status_codes::MovedPermanently);
         response.content_ready().wait();
 
         // CNN's other pages do use chunked transfer encoding.
-        response = client.request(methods::GET, U("US")).get();
-        VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
+        response = client.request(methods::GET, U("us")).get();
+        code = response.status_code();
+        VERIFY_IS_TRUE(code == status_codes::OK || code == status_codes::MovedPermanently);
         response.content_ready().wait();
     });
 }
@@ -80,7 +84,8 @@ TEST_FIXTURE(uri_address, outside_wikipedia_compressed_http_response)
 
 TEST_FIXTURE(uri_address, outside_google_dot_com)
 {
-    http_client client(U("http://www.google.com"));
+    // Use code.google.com instead of www.google.com, which redirects
+    http_client client(U("http://code.google.com"));
     http_request request(methods::GET);
     for (int i = 0; i < 2; ++i)
     {
@@ -93,7 +98,8 @@ TEST_FIXTURE(uri_address, multiple_https_requests)
 {
     handle_timeout([&]
     {
-        http_client client(U("https://www.google.com"));
+        // Use code.google.com instead of www.google.com, which redirects
+        http_client client(U("https://code.google.com"));
     
         http_response response;
         for(int i = 0; i < 5; ++i)
@@ -109,7 +115,8 @@ TEST_FIXTURE(uri_address, reading_google_stream)
 {
     handle_timeout([&]
     {
-        http_client simpleclient(U("http://www.google.com"));
+        // Use code.google.com instead of www.google.com, which redirects
+        http_client simpleclient(U("http://code.google.com"));
         utility::string_t path = m_uri.query();
         http_response response = simpleclient.request(::http::methods::GET).get();
 
@@ -119,7 +126,9 @@ TEST_FIXTURE(uri_address, reading_google_stream)
         streams::rawptr_buffer<uint8_t> temp(chars, sizeof(chars));
 
         VERIFY_ARE_EQUAL(response.body().read(temp, 70).get(), 70);
-        VERIFY_ARE_EQUAL(strcmp((const char *) chars, "<!doctype html><html itemscope=\"\" itemtype=\"http://schema.org/WebPage\""), 0);
+        // Uncomment the following line to output the chars.
+        // std::cout << chars << '\n';
+        VERIFY_ARE_EQUAL(strcmp((const char *) chars, "<html>\n  <head>\n    <meta name=\"google-site-verification\" content=\"4zc"), 0);
     });
 }
 
@@ -169,7 +178,9 @@ TEST(server_cert_expired)
 {
     handle_timeout([]
     {
-        http_client client(U("https://tv.eurosport.com/"));
+        http_client_config config;
+        config.set_timeout(std::chrono::seconds(1));
+        http_client client(U("https://tv.eurosport.com/"), config);
         auto requestTask = client.request(methods::GET);
         VERIFY_THROWS(requestTask.get(), http_exception);
     });
@@ -185,6 +196,7 @@ TEST(ignore_server_cert_invalid,
     {
         http_client_config config;
         config.set_validate_certificates(false);
+        config.set_timeout(std::chrono::seconds(1));
         http_client client(U("https://www.pcwebshop.co.uk/"), config);
 
         auto request = client.request(methods::GET).get();

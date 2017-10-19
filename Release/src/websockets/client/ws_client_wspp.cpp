@@ -16,21 +16,13 @@
 #if !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 
 #include "cpprest/details/x509_cert_utilities.h"
+#include "pplx/threadpool.h"
+
+#include "ws_client_impl.h"
 
 // Force websocketpp to use C++ std::error_code instead of Boost.
 #define _WEBSOCKETPP_CPP11_SYSTEM_ERROR_
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wconversion"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic ignored "-Wignored-qualifiers"
-#pragma GCC diagnostic ignored "-Wcast-qual"
-#include <websocketpp/config/asio_client.hpp>
-#include <websocketpp/config/asio_no_tls_client.hpp>
-#include <websocketpp/client.hpp>
-#pragma GCC diagnostic pop
-#else /* __GNUC__ */
-#if defined(_WIN32)
+#if defined(_MSC_VER)
 #pragma warning( push )
 #pragma warning( disable : 4100 4127 4512 4996 4701 4267 )
 #define _WEBSOCKETPP_CPP11_STL_
@@ -38,6 +30,16 @@
 #if _MSC_VER < 1900
 #define _WEBSOCKETPP_NOEXCEPT_TOKEN_
 #endif
+#elif defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wignored-qualifiers"
+#pragma GCC diagnostic ignored "-Wcast-qual"
+#elif defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconversion"
+#pragma clang diagnostic ignored "-Winfinite-recursion"
 #endif
 
 #include <websocketpp/config/asio_client.hpp>
@@ -46,9 +48,12 @@
 
 #if defined(_WIN32)
 #pragma warning( pop )
+#elif defined(__GNUC__)
+#pragma GCC diagnostic pop
+#elif defined(__clang__)
+#pragma clang diagnostic pop
 #endif
 
-#endif /* __GNUC__ */
 
 #if defined(_MSC_VER)
 #pragma warning( disable : 4503 )
@@ -68,7 +73,9 @@ static struct ASIO_SSL_memory_leak_suppress
 {
     ~ASIO_SSL_memory_leak_suppress()
     {
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
         ::SSL_COMP_free_compression_methods();
+#endif
     }
 } ASIO_SSL_memory_leak_suppressor;
 
@@ -114,8 +121,7 @@ private:
 public:
     wspp_callback_client(websocket_client_config config) :
         websocket_client_callback_impl(std::move(config)),
-        m_state(CREATED),
-        m_num_sends(0)
+        m_state(CREATED)
 #if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__)) || defined(_WIN32)
         , m_openssl_failed(false)
 #endif
@@ -399,10 +405,10 @@ public:
         {
         case websocket_message_type::text_message:
         case websocket_message_type::binary_message:
-		case websocket_message_type::pong:
+        case websocket_message_type::pong:
             break;
         default:
-            return pplx::task_from_exception<void>(websocket_exception("Invalid message type"));
+            return pplx::task_from_exception<void>(websocket_exception("Message Type not supported."));
         }
 
         const auto length = msg.m_length;
@@ -415,18 +421,13 @@ public:
             return pplx::task_from_exception<void>(websocket_exception("Message size too large. Ensure message length is less than UINT_MAX."));
         }
 
+        auto msg_pending = m_out_queue.push(msg);
+
+        // No sends in progress
+        if (msg_pending == outgoing_msg_queue::state::was_empty)
         {
-            if (++m_num_sends == 1) // No sends in progress
-            {
-                // Start sending the message
-                send_msg(msg);
-            }
-            else
-            {
-                // Only actually have to take the lock if touching the queue.
-                std::lock_guard<std::mutex> lock(m_send_lock);
-                m_outgoing_msg_queue.push(msg);
-            }
+            // Start sending the message
+            send_msg(msg);
         }
 
         return pplx::create_task(msg.body_sent());
@@ -562,16 +563,12 @@ public:
                 msg.signal_body_sent();
             }
 
-            if (--this_client->m_num_sends > 0)
+            websocket_outgoing_message next_msg;
+            bool msg_pending = this_client->m_out_queue.pop_and_peek(next_msg);
+
+            if (msg_pending)
             {
-                // Only hold the lock when actually touching the queue.
-                websocket_outgoing_message next_msg;
-                {
-                    std::lock_guard<std::mutex> lock(this_client->m_send_lock);
-                    next_msg = this_client->m_outgoing_msg_queue.front();
-                    this_client->m_outgoing_msg_queue.pop();
-                }
-                this_client->send_msg(next_msg);
+              this_client->send_msg(next_msg);
             }
         });
     }
@@ -666,19 +663,19 @@ private:
                 ec);
             break;
         case websocket_message_type::binary_message:
-			client.send(
+            client.send(
                 this_client->m_con,
                 sp_allocated.get(),
                 length,
                 websocketpp::frame::opcode::binary,
                 ec);
             break;
-		case websocket_message_type::pong:
-			client.pong(
-				this_client->m_con,
-				"",
-				ec);
-			break;
+        case websocket_message_type::pong:
+            client.pong(
+                this_client->m_con,
+                "",
+                ec);
+            break;
         default:
             // This case should have already been filtered above.
             std::abort();
@@ -760,14 +757,8 @@ private:
     State m_state;
     std::unique_ptr<websocketpp_client_base> m_client;
 
-    // Guards access to m_outgoing_msg_queue
-    std::mutex m_send_lock;
-
-    // Queue to order the sends
-    std::queue<websocket_outgoing_message> m_outgoing_msg_queue;
-
-    // Number of sends in progress and queued up.
-    std::atomic<int> m_num_sends;
+    // Queue to track pending sends
+    outgoing_msg_queue m_out_queue;
 
     // External callback for handling received and close event
     std::function<void(websocket_incoming_message)> m_external_message_handler;

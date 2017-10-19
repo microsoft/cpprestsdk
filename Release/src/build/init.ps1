@@ -5,7 +5,7 @@ function Copy-Natvis($DestFolder)
     if ((Test-Path $DestFolder) -eq $True)
     {
         # Update casablanca version for each release here.
-        $DestFile = Join-Path -path $DestFolder -childpath "cpprest2_8.natvis";
+        $DestFile = Join-Path -path $DestFolder -childpath "cpprest2_10.natvis";
 
         # Check to see if cpp rest natvis file for this version already exists
         # if not, then copy into user profile for Visual Studio to pick up

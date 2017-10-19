@@ -544,6 +544,55 @@ public:
         /// <returns>True if the field exists, false otherwise.</returns>
         bool has_field(const utility::string_t &key) const;
 
+		/// <summary>
+		/// Tests for the presence of a number field
+		/// </summary>
+		/// <param name="key">The name of the field</param>
+		/// <returns>True if the field exists, false otherwise.</returns>
+		_ASYNCRTIMP bool has_number_field(const utility::string_t &key) const;
+
+		/// <summary>
+		/// Tests for the presence of an integer field
+		/// </summary>
+		/// <param name="key">The name of the field</param>
+		/// <returns>True if the field exists, false otherwise.</returns>
+		_ASYNCRTIMP bool has_integer_field(const utility::string_t &key) const;
+
+		/// <summary>
+		/// Tests for the presence of a double field
+		/// </summary>
+		/// <param name="key">The name of the field</param>
+		/// <returns>True if the field exists, false otherwise.</returns>
+		_ASYNCRTIMP bool has_double_field(const utility::string_t &key) const;
+
+		/// <summary>
+		/// Tests for the presence of a boolean field
+		/// </summary>
+		/// <param name="key">The name of the field</param>
+		/// <returns>True if the field exists, false otherwise.</returns>
+		_ASYNCRTIMP bool has_boolean_field(const utility::string_t &key) const;
+
+		/// <summary>
+		/// Tests for the presence of a string field
+		/// </summary>
+		/// <param name="key">The name of the field</param>
+		/// <returns>True if the field exists, false otherwise.</returns>
+		_ASYNCRTIMP bool has_string_field(const utility::string_t &key) const;
+
+		/// <summary>
+		/// Tests for the presence of an array field
+		/// </summary>
+		/// <param name="key">The name of the field</param>
+		/// <returns>True if the field exists, false otherwise.</returns>
+		_ASYNCRTIMP bool has_array_field(const utility::string_t &key) const;
+
+		/// <summary>
+		/// Tests for the presence of an object field
+		/// </summary>
+		/// <param name="key">The name of the field</param>
+		/// <returns>True if the field exists, false otherwise.</returns>
+		_ASYNCRTIMP bool has_object_field(const utility::string_t &key) const;
+
         /// <summary>
         /// Accesses a field of a JSON object.
         /// </summary>
@@ -1383,6 +1432,12 @@ public:
                 return m_value == other.m_value;
             }
             __assume(0);
+            // Absence of this return statement provokes a warning from Intel
+            // compiler, but its presence results in a warning from MSVC, so
+            // we have to resort to conditional compilation to keep both happy.
+#ifdef __INTEL_COMPILER
+            return false;
+#endif
         }
 
     private:

@@ -306,9 +306,14 @@ private:
         return true;
     }
 
-    bool bind_impl(const key_type &text, ::utility::string_t &ref) const
+    bool bind_impl(const key_type &text, utf16string &ref) const
     {
-        ref = text;
+        ref = utility::conversions::to_utf16string(text);
+        return true;
+    }
+    bool bind_impl(const key_type &text, std::string &ref) const
+    {
+        ref = utility::conversions::to_utf8string(text);
         return true;
     }
 

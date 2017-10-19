@@ -101,6 +101,11 @@ pplx::task<void> oauth2_config::_request_token(uri_builder& request_body_ub)
     http_request request;
     request.set_method(methods::POST);
     request.set_request_uri(utility::string_t());
+    
+    if(!user_agent().empty())
+    {
+        request.headers().add(web::http::header_names::user_agent, user_agent());
+    }
 
     if (!scope().empty())
     {

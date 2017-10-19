@@ -17,6 +17,10 @@
 #include "cpprest/http_headers.h"
 #include "http_client_impl.h"
 
+#ifndef CPPREST_TARGET_XP
+#include <VersionHelpers.h>
+#endif
+
 namespace web
 {
 namespace http
@@ -297,6 +301,42 @@ static DWORD ChooseAuthScheme( DWORD dwSupportedSchemes )
         return 0;
 }
 
+// Small RAII helper to ensure that the fields of this struct are always
+// properly freed.
+struct proxy_info : WINHTTP_PROXY_INFO
+{
+    proxy_info()
+    {
+        memset( this, 0, sizeof(WINHTTP_PROXY_INFO) );
+    }
+
+    ~proxy_info()
+    {
+        if ( lpszProxy )
+            ::GlobalFree(lpszProxy);
+        if ( lpszProxyBypass )
+            ::GlobalFree(lpszProxyBypass);
+    }
+};
+
+struct ie_proxy_config : WINHTTP_CURRENT_USER_IE_PROXY_CONFIG
+{
+  ie_proxy_config()
+  {
+    memset( this, 0, sizeof(WINHTTP_CURRENT_USER_IE_PROXY_CONFIG) );
+  }
+
+  ~ie_proxy_config()
+  {
+    if ( lpszAutoConfigUrl )
+      ::GlobalFree(lpszAutoConfigUrl);
+    if ( lpszProxy )
+      ::GlobalFree(lpszProxy);
+    if ( lpszProxyBypass )
+      ::GlobalFree(lpszProxyBypass);
+  }
+};
+
 // WinHTTP client.
 class winhttp_client : public _http_client_communicator
 {
@@ -356,11 +396,15 @@ protected:
     }
 
     // Open session and connection with the server.
-    unsigned long open()
+    virtual unsigned long open() override
     {
+        // This object have lifetime greater than proxy_name and proxy_bypass
+        // which may point to its elements.
+        ie_proxy_config proxyIE;
+
         DWORD access_type;
         LPCWSTR proxy_name;
-        utility::string_t proxy_str;
+        LPCWSTR proxy_bypass = WINHTTP_NO_PROXY_BYPASS;
         http::uri uri;
 
         const auto& config = client_config();
@@ -372,8 +416,54 @@ protected:
         }
         else if(config.proxy().is_default() || config.proxy().is_auto_discovery())
         {
+            // Use the default WinHTTP proxy by default.
             access_type = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
             proxy_name = WINHTTP_NO_PROXY_NAME;
+
+#ifndef CPPREST_TARGET_XP
+            if (IsWindows8Point1OrGreater())
+            {
+                access_type = WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY;
+            }
+
+            // However, if it is not configured...
+            proxy_info proxyDefault;
+            if(!WinHttpGetDefaultProxyConfiguration(&proxyDefault) ||
+                proxyDefault.dwAccessType == WINHTTP_ACCESS_TYPE_NO_PROXY)
+            {
+                // ... then try to fall back on the default WinINET proxy, as
+                // recommended for the desktop applications (if we're not
+                // running under a user account, the function below will just
+                // fail, so there is no real need to check for this explicitly)
+                if(WinHttpGetIEProxyConfigForCurrentUser(&proxyIE))
+                {
+                    if(proxyIE.fAutoDetect)
+                    {
+                        m_proxy_auto_config = true;
+                    }
+                    else if(proxyIE.lpszAutoConfigUrl)
+                    {
+                        m_proxy_auto_config = true;
+                        m_proxy_auto_config_url = proxyIE.lpszAutoConfigUrl;
+                    }
+                    else if(proxyIE.lpszProxy)
+                    {
+                        access_type = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
+                        proxy_name = proxyIE.lpszProxy;
+
+                        if(proxyIE.lpszProxyBypass)
+                        {
+                            proxy_bypass = proxyIE.lpszProxyBypass;
+                        }
+                    }
+                }
+            }
+#endif
+
+            if (config.proxy().is_auto_discovery())
+            {
+                m_proxy_auto_config = true;
+            }
         }
         else
         {
@@ -388,6 +478,7 @@ protected:
             }
             else
             {
+                utility::string_t proxy_str;
                 if (uri.port() > 0)
                 {
                     utility::ostringstream_t ss;
@@ -408,7 +499,7 @@ protected:
             NULL,
             access_type,
             proxy_name,
-            WINHTTP_NO_PROXY_BYPASS,
+            proxy_bypass,
             WINHTTP_FLAG_ASYNC);
         if(!m_hSession)
         {
@@ -437,26 +528,19 @@ protected:
             }
         }
 
-#if 0 // Work in progress. Enable this to support server certificate revocation check
-        if( m_secure )
+        //Enable TLS 1.1 and 1.2
+#if !defined(CPPREST_TARGET_XP)
+        BOOL win32_result(FALSE);
+
+        DWORD secure_protocols(WINHTTP_FLAG_SECURE_PROTOCOL_SSL3 | WINHTTP_FLAG_SECURE_PROTOCOL_TLS1 | WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_1 | WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_2);
+        win32_result = ::WinHttpSetOption(m_hSession, WINHTTP_OPTION_SECURE_PROTOCOLS, &secure_protocols, sizeof(secure_protocols));
+        if(FALSE == win32_result)
         {
-            DWORD dwEnableSSLRevocOpt = WINHTTP_ENABLE_SSL_REVOCATION;
-            if(!WinHttpSetOption(m_hSession, WINHTTP_OPTION_ENABLE_FEATURE, &dwEnableSSLRevocOpt, sizeof(dwEnableSSLRevocOpt)))
-            {
-                DWORD dwError = GetLastError(); dwError;
-                return report_failure(U("Error enabling SSL revocation check"));
-            }
+            return report_failure(_XPLATSTR("Error setting session options"));
         }
 #endif
 
-		try
-		{
-			client_config().invoke_nativesessionhandle_options(m_hSession);
-		}
-		catch (...)
-		{
-			return report_failure(_XPLATSTR("Error in session handle callback"));
-		}
+        config._invoke_nativesessionhandle_options(m_hSession);
 
         // Register asynchronous callback.
         if(WINHTTP_INVALID_STATUS_CALLBACK == WinHttpSetStatusCallback(
@@ -490,17 +574,25 @@ protected:
         http_request &msg = request->m_request;
         winhttp_request_context * winhttp_context = static_cast<winhttp_request_context *>(request.get());
 
-        WINHTTP_PROXY_INFO info;
+        proxy_info info;
         bool proxy_info_required = false;
 
-        if( client_config().proxy().is_auto_discovery() )
+        if(m_proxy_auto_config)
         {
             WINHTTP_AUTOPROXY_OPTIONS autoproxy_options;
             memset( &autoproxy_options, 0, sizeof(WINHTTP_AUTOPROXY_OPTIONS) );
-            memset( &info, 0, sizeof(WINHTTP_PROXY_INFO) );
 
-            autoproxy_options.dwFlags = WINHTTP_AUTOPROXY_AUTO_DETECT;
-            autoproxy_options.dwAutoDetectFlags = WINHTTP_AUTO_DETECT_TYPE_DHCP | WINHTTP_AUTO_DETECT_TYPE_DNS_A;
+            if(m_proxy_auto_config_url.empty())
+            {
+                autoproxy_options.dwFlags = WINHTTP_AUTOPROXY_AUTO_DETECT;
+                autoproxy_options.dwAutoDetectFlags = WINHTTP_AUTO_DETECT_TYPE_DHCP | WINHTTP_AUTO_DETECT_TYPE_DNS_A;
+            }
+            else
+            {
+                autoproxy_options.dwFlags = WINHTTP_AUTOPROXY_CONFIG_URL;
+                autoproxy_options.lpszAutoConfigUrl = m_proxy_auto_config_url.c_str();
+            }
+
             autoproxy_options.fAutoLogonIfChallenged = TRUE;
 
             auto result = WinHttpGetProxyForUrl(
@@ -536,6 +628,18 @@ protected:
             auto errorCode = GetLastError();
             request->report_error(errorCode, build_error_msg(errorCode, "WinHttpOpenRequest"));
             return;
+        }
+
+        // Enable the certificate revocation check
+        if (m_secure)
+        {
+            DWORD dwEnableSSLRevocOpt = WINHTTP_ENABLE_SSL_REVOCATION;
+            if (!WinHttpSetOption(winhttp_context->m_request_handle, WINHTTP_OPTION_ENABLE_FEATURE, &dwEnableSSLRevocOpt, sizeof(dwEnableSSLRevocOpt)))
+            {
+                auto errorCode = GetLastError();
+                request->report_error(errorCode, build_error_msg(errorCode, "Error enabling SSL revocation check"));
+                return;
+            }
         }
 
         if(proxy_info_required)
@@ -1368,6 +1472,12 @@ private:
     HINTERNET m_hSession;
     HINTERNET m_hConnection;
     bool      m_secure;
+
+    // If auto config is true, dynamically find the proxy for each URL using
+    // the proxy configuration script at the given URL if it's not empty or
+    // using WPAD otherwise.
+    bool                m_proxy_auto_config{false};
+    utility::string_t   m_proxy_auto_config_url;
 };
 
 std::shared_ptr<_http_client_communicator> create_platform_final_pipeline_stage(uri&& base_uri, http_client_config&& client_config)

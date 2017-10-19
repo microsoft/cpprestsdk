@@ -6,6 +6,7 @@
 **/
 #include "stdafx.h"
 
+#if !defined(CPPREST_EXCLUDE_WEBSOCKETS) || !defined(_WIN32)
 #include "pplx/threadpool.h"
 
 #if !defined(_WIN32)
@@ -155,3 +156,4 @@ std::unique_ptr<crossplat::threadpool> crossplat::threadpool::construct(size_t n
 {
     return std::unique_ptr<crossplat::threadpool>(new threadpool_impl(num_threads));
 }
+#endif

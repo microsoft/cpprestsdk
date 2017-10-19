@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-OPENSSL_VER = openssl-1.0.2d
+OPENSSL_VER = openssl-1.0.2k
 
 all: armeabi-v7a/lib/libssl.a x86/lib/libssl.a
 

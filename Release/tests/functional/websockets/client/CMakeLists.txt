@@ -1,6 +1,4 @@
 if (NOT CPPREST_EXCLUDE_WEBSOCKETS)
-  include_directories(../utilities)
-  
   set(SOURCES
     authentication_tests.cpp
     client_construction.cpp
@@ -11,8 +9,7 @@ if (NOT CPPREST_EXCLUDE_WEBSOCKETS)
     stdafx.cpp
   )
 
+  # This works around "OBJECT" tests
+  link_libraries(websockettest_utilities)
   add_casablanca_test(websocketclient_test SOURCES)
-  if (NOT TEST_LIBRARY_TARGET_TYPE STREQUAL "OBJECT")
-    target_link_libraries(websocketclient_test websockettest_utilities)
-  endif()
 endif()

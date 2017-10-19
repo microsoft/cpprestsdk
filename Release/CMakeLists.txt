@@ -1,18 +1,22 @@
 set(CMAKE_LEGACY_CYGWIN_WIN32 0)
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.0)
 if(POLICY CMP0042)
   cmake_policy(SET CMP0042 NEW) # use MACOSX_RPATH
 endif()
-project(cpprest)
+if(UNIX)
+  project(cpprest C CXX)
+else()
+  project(cpprest CXX)
+endif()
 
 enable_testing()
 
 set(WERROR ON CACHE BOOL "Treat Warnings as Errors.")
 set(CPPREST_EXCLUDE_WEBSOCKETS OFF CACHE BOOL "Exclude websockets functionality.")
 set(CPPREST_EXCLUDE_COMPRESSION OFF CACHE BOOL "Exclude compression functionality.")
-set(CPPREST_EXPORT_DIR lib/cpprest CACHE STRING "Directory to install CMake config files.")
-set(CPPREST_EXPORT_NAME cpprest-config CACHE STRING "Name for CMake config file.")
+set(CPPREST_EXPORT_DIR lib/cpprestsdk CACHE STRING "Directory to install CMake config files.")
 set(CPPREST_INSTALL_HEADERS ON CACHE BOOL "Install header files.")
+set(CPPREST_INSTALL ON CACHE BOOL "Add install commands.")
 
 if(IOS OR ANDROID)
   set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libraries")
@@ -111,7 +115,7 @@ elseif(ANDROID)
     )
 elseif(UNIX) # This includes OSX
 elseif(WIN32)
-  add_definitions(-DUNICODE -D_UNICODE -D_WIN32_WINNT=0x0600)
+  add_definitions(-DUNICODE -D_UNICODE -D_WIN32_WINNT=0x0600 -DWIN32 -D_SCL_SECURE_NO_WARNINGS)
 
   if(NOT BUILD_SHARED_LIBS)
     # This causes cmake to not link the test libraries separately, but instead hold onto their object files.
@@ -120,7 +124,7 @@ elseif(WIN32)
   else()
     set(Casablanca_DEFINITIONS "" CACHE INTERNAL "Definitions for consume casablanca library")
   endif()
-  add_definitions(${Casablanca_DEFINITIONS} -D_WINSOCK_DEPRECATED_NO_WARNINGS -DWIN32)
+  add_definitions(${Casablanca_DEFINITIONS} -D_WINSOCK_DEPRECATED_NO_WARNINGS)
 else()
   message(FATAL_ERROR "-- Unsupported Build Platform.")
 endif()
@@ -132,6 +136,11 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR IOS)
   if(ANDROID)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-pedantic")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-attributes -Wno-pointer-arith")
+  elseif(CMAKE_SYSTEM_NAME MATCHES "Linux")
+    set(WARNINGS -Wall -Wextra -Wcast-qual -Wconversion -Wformat=2 -Winit-self -Winvalid-pch -Wmissing-format-attribute -Wmissing-include-dirs -Wpacked -Wredundant-decls)
+    set(LINUX_SUPPRESSIONS -Wno-overloaded-virtual -Wno-sign-conversion -Wno-deprecated -Wno-unknown-pragmas -Wno-reorder -Wno-char-subscripts -Wno-switch -Wno-unused-parameter -Wno-unused-variable -Wno-deprecated -Wno-unused-value -Wno-unknown-warning-option -Wno-return-type-c-linkage -Wno-unused-function -Wno-sign-compare -Wno-shorten-64-to-32 -Wno-reorder -Wno-unused-local-typedefs)
+    set(WARNINGS ${WARNINGS} ${LINUX_SUPPRESSIONS})
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-return-type-c-linkage -Wno-unneeded-internal-declaration")
   else()
     set(WARNINGS -Wall -Wextra -Wcast-qual -Wconversion -Wformat=2 -Winit-self -Winvalid-pch -Wmissing-format-attribute -Wmissing-include-dirs -Wpacked -Wredundant-decls)
     set(OSX_SUPPRESSIONS -Wno-overloaded-virtual -Wno-sign-conversion -Wno-deprecated -Wno-unknown-pragmas -Wno-reorder -Wno-char-subscripts -Wno-switch -Wno-unused-parameter -Wno-unused-variable -Wno-deprecated -Wno-unused-value -Wno-unknown-warning-option -Wno-return-type-c-linkage -Wno-unused-function -Wno-sign-compare -Wno-shorten-64-to-32 -Wno-reorder -Wno-unused-local-typedefs)
@@ -172,7 +181,6 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/Binaries)
 
 # These settings can be used by the test targets
 set(Casablanca_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include)
-set(Casablanca_SYSTEM_INCLUDE_DIRS)
 set(Casablanca_LIBRARY cpprest)
 set(Casablanca_LIBRARIES cpprest)
 get_directory_property(PARENT_DIR PARENT_DIRECTORY)
@@ -180,27 +188,28 @@ if(NOT PARENT_DIR STREQUAL "")
   set(Casablanca_LIBRARIES ${Casablanca_LIBRARIES} PARENT_SCOPE)
 endif()
 
-# Everything in the project needs access to the casablanca include directories
-include_directories(       ${Casablanca_INCLUDE_DIRS})
-include_directories(SYSTEM ${Casablanca_SYSTEM_INCLUDE_DIRS})
-
 # Finally, the tests all use the same style declaration to build themselves, so we use a function
 function(add_casablanca_test NAME SOURCES_VAR)
   add_library(${NAME} ${TEST_LIBRARY_TARGET_TYPE} ${${SOURCES_VAR}})
   message("-- Added test library ${NAME}")
-  if (NOT TEST_LIBRARY_TARGET_TYPE STREQUAL "OBJECT")
+  if(TEST_LIBRARY_TARGET_TYPE STREQUAL "OBJECT")
+    foreach(_dep httptest_utilities common_utilities unittestpp cpprest)
+      target_include_directories(${NAME} PRIVATE $<TARGET_PROPERTY:${_dep},INTERFACE_INCLUDE_DIRECTORIES>)
+      target_compile_definitions(${NAME} PRIVATE $<TARGET_PROPERTY:${_dep},INTERFACE_COMPILE_DEFINITIONS>)
+    endforeach()
+  else()
     target_link_libraries(${NAME}
       httptest_utilities
       common_utilities
       unittestpp
       cpprest
       ${ANDROID_STL_FLAGS}
-      )
+    )
     if (BUILD_SHARED_LIBS)
       add_test(NAME ${NAME}
         WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
         COMMAND test_runner $<TARGET_FILE_NAME:${NAME}>
-        )
+      )
     endif()
   endif()
 endfunction()

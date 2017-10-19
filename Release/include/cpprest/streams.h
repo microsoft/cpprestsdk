@@ -447,7 +447,9 @@ namespace Concurrency { namespace streams
     _INT_TRAIT(char,INT8_MIN,INT8_MAX)
     _INT_TRAIT(signed char,INT8_MIN,INT8_MAX)
     _INT_TRAIT(short,INT16_MIN,INT16_MAX)
-    _INT_TRAIT(utf16char,INT16_MIN,INT16_MAX)
+#if defined(_NATIVE_WCHAR_T_DEFINED)
+    _INT_TRAIT(wchar_t,WCHAR_MIN, WCHAR_MAX)
+#endif
     _INT_TRAIT(int,INT32_MIN,INT32_MAX)
     _INT_TRAIT(long, LONG_MIN, LONG_MAX)
     _INT_TRAIT(long long, LLONG_MIN, LLONG_MAX)
@@ -799,7 +801,7 @@ namespace Concurrency { namespace streams
                     return true;
                 };
 
-            auto loop = pplx::details::do_while([=]() mutable -> pplx::task<bool>
+            auto loop = Concurrency::details::_do_while([=]() mutable -> pplx::task<bool>
                 {
                     while (buffer.in_avail() > 0)
                     {
@@ -890,7 +892,7 @@ namespace Concurrency { namespace streams
                     return pplx::task_from_result(false);
                 };
 
-            auto loop = pplx::details::do_while([=]() mutable -> pplx::task<bool>
+            auto loop = Concurrency::details::_do_while([=]() mutable -> pplx::task<bool>
                 {
                     while ( buffer.in_avail() > 0 )
                     {
@@ -973,7 +975,7 @@ namespace Concurrency { namespace streams
                 });
             };
 
-            auto loop = pplx::details::do_while(copy_to_target);
+            auto loop = Concurrency::details::_do_while(copy_to_target);
 
             return loop.then([=](bool) mutable -> size_t
                 {
@@ -1147,7 +1149,7 @@ pplx::task<void> concurrency::streams::_type_parser_base<CharType>::_skip_whites
             return false;
         };
 
-    auto loop = pplx::details::do_while([=]() mutable -> pplx::task<bool>
+    auto loop = Concurrency::details::_do_while([=]() mutable -> pplx::task<bool>
         {
             while (buffer.in_avail() > 0)
             {
@@ -1222,7 +1224,7 @@ pplx::task<ReturnType> concurrency::streams::_type_parser_base<CharType>::_parse
     return _skip_whitespace(buffer).then([=](pplx::task<void> op) -> pplx::task<ReturnType>
         {
             op.wait();
-            return pplx::details::do_while(peek_char).then(finish);
+            return Concurrency::details::_do_while(peek_char).then(finish);
         });
 }
 

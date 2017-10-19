@@ -215,14 +215,19 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\http\client\http_client_impl.h">
       <Filter>Header Files\private</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\http\common\internal_http_helpers.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\http\listener\http_server_impl.h">
+      <Filter>Header Files\private</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\websockets\client\ws_client_impl.h">
+      <Filter>Header Files\private</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\http\common\internal_http_helpers.h">
+      <Filter>Header Files\private</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\http_constants.dat">
       <Filter>Header Files\cpprest\details</Filter>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Xml Include="$(MSBuildThisFileDirectory)package_info.xml" />
   </ItemGroup>
 </Project>
