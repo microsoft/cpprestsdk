@@ -408,7 +408,7 @@ void CasaLens::get_data(http_request message, const std::wstring& input_text)
         bing_client.request(methods::GET, s).then([=](http_response resp) 
         {
             return resp.extract_json();
-        }).then([=](json::value& maps_result) mutable
+        }).then([=](json::value maps_result) mutable
         {
             auto coordinates = maps_result[U("resourceSets")][0][U("resources")][0][U("point")];
             auto lattitude = coordinates[U("coordinates")][0].serialize();
@@ -420,10 +420,10 @@ void CasaLens::get_data(http_request message, const std::wstring& input_text)
         }).then([](http_response resp)
         {
             return resp.extract_json();
-        }).then([=](json::value& maps_result)
+        }).then([=](json::value maps_result)
         {
             auto postal_code = maps_result[U("resourceSets")][0][U("resources")][0][U("address")][U("postalCode")].as_string();
-            fetch_data(message, postal_code, input_text);            
+            fetch_data(message, postal_code, input_text);
         }).then([=](pplx::task<void> t)
         {
             try

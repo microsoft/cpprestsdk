@@ -43,7 +43,7 @@ PlayingTable::PlayingTable() : m_dealerResource(L"dealer"), m_alreadyInsured(fal
 
     this->serverAddress->Text = ref new Platform::String(L"http://localhost:34568/blackjack/");
 
-    this->playerName->Text = Windows::System::UserProfile::UserInformation::GetDisplayNameAsync()->GetResults();
+    this->playerName->Text = L"Player";
 
     size_t players = 5;
 

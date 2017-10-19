@@ -249,7 +249,7 @@ endif()
 
 # Portions specific to cpprest binary versioning.
 set (CPPREST_VERSION_MAJOR 2)
-set (CPPREST_VERSION_MINOR 9)
+set (CPPREST_VERSION_MINOR 10)
 set (CPPREST_VERSION_REVISION 0)
 
 if(WIN32)
