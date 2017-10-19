@@ -20,8 +20,11 @@
   </PropertyGroup>
 
   <!-- Target that can be used to easily strip the AppContainer requirement from a dll -->
-  <Target Name="StripAppContainerOnProjectDll">
-    <Exec Command="link /edit /appcontainer:no $(OutDir)\$(ProjectName).dll" />
+  <Target Name="StripAppContainerOnProjectDll" Condition="'$(DevToolsVersion)' == '141'">
+	<Exec Command="link /edit /appcontainer:no &quot;$(OutDir)$(ProjectName).dll&quot;" />
   </Target>
-  
+  <Target Name="StripAppContainerOnProjectDll" Condition="'$(DevToolsVersion)' != '141'">
+	<Exec Command="link /edit /appcontainer:no $(OutDir)\$(ProjectName).dll" />
+  </Target>
+
 </Project>

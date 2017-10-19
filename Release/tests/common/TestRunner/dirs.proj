@@ -20,6 +20,16 @@
   	<ProjectFile Include="vs14.uwp\TestRunner140.uwp.vcxproj" />
   </ItemGroup>
 
+  <ItemGroup Condition="'$(DevToolsVersion)'=='141'">
+    <ProjectFile Include="vs15\TestRunner141.vcxproj" />
+    <ProjectFile Include="vs15.android\TestRunner.android.NativeActivity\TestRunner.android.NativeActivity.vcxproj" Condition="'$(Platform)'!='x64'" />
+    <ProjectFile Include="vs15.android\TestRunner.android.Packaging\TestRunner.android.Packaging.androidproj" Condition="'$(Platform)'!='x64'" />
+  </ItemGroup>
+  
+  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|141'">
+  	<ProjectFile Include="vs15.uwp\TestRunner141.uwp.vcxproj" />
+  </ItemGroup>
+
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
 
 </Project>

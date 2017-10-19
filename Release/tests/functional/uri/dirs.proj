@@ -21,6 +21,16 @@
     <ProjectFile Include="vs14.uwp\URI140_test.uwp.vcxproj" />
   </ItemGroup>
 
+  <ItemGroup Condition="'$(DevToolsVersion)'=='141'">
+    <ProjectFile Include="vs15\Uri141_test.vcxproj" />
+    <ProjectFile Include="vs15.xp\Uri141_test.xp.vcxproj" Condition="'$(Platform)'!='ARM' and '$(RunCodeAnalysis)'!='true'"/>
+    <ProjectFile Include="vs15.android\Uri141_test.android.vcxproj" Condition="'$(Platform)'!='x64'" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|141'">
+    <ProjectFile Include="vs15.uwp\URI141_test.uwp.vcxproj" />
+  </ItemGroup>
+
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
 
 </Project>

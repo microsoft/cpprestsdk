@@ -21,6 +21,16 @@
     <ProjectFile Include="vs14.uwp\websockets_test_utilities140.uwp.vcxproj" />
   </ItemGroup>
 
+  <ItemGroup Condition="'$(DevToolsVersion)'=='141'">
+    <ProjectFile Include="VS15\websockets_test_utilities141.vcxproj" />
+    <ProjectFile Include="VS15.xp\websockets_test_utilities141.xp.vcxproj" Condition="'$(Platform)'!='ARM' and '$(RunCodeAnalysis)'!='true'"/>
+    <ProjectFile Include="vs15.android\websockets_test_utilities141.android.vcxproj" Condition="'$(Platform)'!='x64'" />
+  </ItemGroup>
+  
+  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|141'">
+    <ProjectFile Include="vs15.uwp\websockets_test_utilities141.uwp.vcxproj" />
+  </ItemGroup>
+
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
 
 </Project>

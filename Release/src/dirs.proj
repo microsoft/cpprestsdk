@@ -26,6 +26,16 @@
       <ProjectFile Include="build\vs14.uwp\cpprestsdk140.uwp.vcxproj" />
   </ItemGroup>
 
+  <ItemGroup Condition="'$(DevToolsVersion)'=='141'">
+    <ProjectFile Include="build\vs15\casablanca141.vcxproj" Condition="'$(Platform)'!='ARM' or '$(WindowsSDKDesktopARMSupport)' == 'true'" />
+    <ProjectFile Include="build\vs15.xp\casablanca141.xp.vcxproj" Condition="'$(Platform)'!='ARM' and '$(RunCodeAnalysis)'!='true'" />
+    <ProjectFile Include="build\vs15.android\casablanca141.android.vcxproj" Condition="'$(Platform)'!='x64'"/>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|141'">
+      <ProjectFile Include="build\vs15.uwp\cpprestsdk141.uwp.vcxproj" />
+  </ItemGroup>
+
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
 
 </Project>

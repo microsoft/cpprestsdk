@@ -21,6 +21,16 @@
     <ProjectFile Include="vs14.uwp\streams140_test.uwp.vcxproj" />
   </ItemGroup>
 
+  <ItemGroup Condition="'$(DevToolsVersion)'=='141'">
+    <ProjectFile Include="vs15\streams141_test.vcxproj" />
+    <ProjectFile Include="vs15.xp\streams141_test.xp.vcxproj" Condition="'$(Platform)'!='ARM' and '$(RunCodeAnalysis)'!='true'"/>
+    <ProjectFile Include="vs15.android\streams141_test.android.vcxproj" Condition="'$(Platform)'!='x64'" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(OsVersion)|$(DevToolsVersion)'=='6.3|141'">
+    <ProjectFile Include="vs15.uwp\streams141_test.uwp.vcxproj" />
+  </ItemGroup>
+
   <Import Project="$(TargetsPath)\Common.Build.Traversal.targets" />
 
 </Project>

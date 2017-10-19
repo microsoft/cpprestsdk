@@ -2,6 +2,10 @@
 
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), build.root))\Build\Common.Build.settings" />
 
+  <ItemGroup Condition="'$(DevToolsVersion)'=='141'">
+      <ProjectFile Include="WindowsLiveAuth141.vcxproj"/>
+  </ItemGroup>
+
   <ItemGroup Condition="'$(DevToolsVersion)'=='140'">
       <ProjectFile Include="WindowsLiveAuth140.vcxproj"/>
   </ItemGroup>
