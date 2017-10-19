@@ -151,6 +151,7 @@ TEST_FIXTURE(uri_address, no_transfer_encoding_content_length)
 }
 
 // Note additional sites for testing can be found at:
+// https://badssl.com/
 // https://www.ssllabs.com/ssltest/
 // http://www.internetsociety.org/deploy360/resources/dane-test-sites/
 // https://onlinessl.netlock.hu/#
@@ -158,17 +159,17 @@ TEST(server_selfsigned_cert)
 {
     handle_timeout([]
     {
-        http_client client(U("https://www.pcwebshop.co.uk/"));
+        http_client client(U("https://self-signed.badssl.com/"));
         auto requestTask = client.request(methods::GET);
         VERIFY_THROWS(requestTask.get(), http_exception);
     });
 }
 
-TEST(server_hostname_mismatch, "Ignore", "Site fixed certificate. Improve test (new site or alternate method).")
+TEST(server_hostname_mismatch)
 {
     handle_timeout([]
     {
-        http_client client(U("https://swordsoftruth.com/"));
+        http_client client(U("https://wrong.host.badssl.com/"));
         auto requestTask = client.request(methods::GET);
         VERIFY_THROWS(requestTask.get(), http_exception);
     });
@@ -180,7 +181,7 @@ TEST(server_cert_expired)
     {
         http_client_config config;
         config.set_timeout(std::chrono::seconds(1));
-        http_client client(U("https://tv.eurosport.com/"), config);
+        http_client client(U("https://expired.badssl.com/"), config);
         auto requestTask = client.request(methods::GET);
         VERIFY_THROWS(requestTask.get(), http_exception);
     });

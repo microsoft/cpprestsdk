@@ -219,17 +219,17 @@ void handshake_error_test_impl(const ::utility::string_t &host)
 
 TEST(self_signed_cert)
 {
-    handshake_error_test_impl(U("wss://www.pcwebshop.co.uk/"));
+    handshake_error_test_impl(U("wss://self-signed.badssl.com/"));
 }
 
 TEST(hostname_mismatch)
 {
-    handshake_error_test_impl(U("wss://jabbr.net"));
+    handshake_error_test_impl(U("wss://wrong.host.badssl.com/"));
 }
 
 TEST(cert_expired)
 {
-    handshake_error_test_impl(U("wss://tv.eurosport.com/"));
+    handshake_error_test_impl(U("wss://expired.badssl.com/"));
 }
 
 #endif
