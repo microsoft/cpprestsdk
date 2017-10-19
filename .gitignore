@@ -69,3 +69,5 @@ build.*/
 docs/
 # ignore NuGet artifacts
 .nuget/
+
+Generated Files/
