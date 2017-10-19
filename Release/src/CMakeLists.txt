@@ -247,6 +247,10 @@ if(ANDROID)
   target_link_libraries(cpprest PRIVATE ${ANDROID_STL_FLAGS})
 endif()
 
+if (UNIX AND NOT BUILD_SHARED_LIBS)
+  target_link_libraries(cpprest PUBLIC ${CMAKE_DL_LIBS})
+endif()
+
 # Portions specific to cpprest binary versioning.
 set (CPPREST_VERSION_MAJOR 2)
 set (CPPREST_VERSION_MINOR 10)
