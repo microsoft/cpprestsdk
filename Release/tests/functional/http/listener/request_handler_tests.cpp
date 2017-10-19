@@ -448,6 +448,39 @@ TEST_FIXTURE(uri_address, test_leaks)
     listener.close().wait();
 }
 
+TEST_FIXTURE(uri_address, http_version)
+{
+    http_listener listener(U("http://localhost:45678/path1"));
+    listener.open().wait();
+
+    test_http_client::scoped_client client(U("http://localhost:45678"));
+    test_http_client * p_client = client.client();
+
+    volatile unsigned long requestCount = 0;
+
+    listener.support(methods::GET, [&requestCount](http_request request)
+    {
+        const auto& httpVersion = request.http_version();
+
+        // All clients currently use HTTP/1.1
+        VERIFY_IS_TRUE(httpVersion == http_versions::HTTP_1_1);
+
+        os_utilities::interlocked_increment(&requestCount);
+        request.reply(status_codes::NoContent);
+    });
+
+    // Send a request to the listener
+    VERIFY_ARE_EQUAL(0, p_client->request(methods::GET, U("/path1")));
+
+    p_client->next_response().then([](test_response *p_response)
+    {
+        http_asserts::assert_test_response_equals(p_response, status_codes::NoContent);
+    }).wait();
+
+    VERIFY_IS_TRUE(requestCount >= 1);
+    listener.close().wait();
+}
+
 TEST_FIXTURE(uri_address, remote_address)
 {
     http_listener listener(U("http://localhost:45678/path1"));
