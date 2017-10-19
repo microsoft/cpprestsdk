@@ -202,7 +202,7 @@ private:
 #define HTTP_ERROR_CHECK_IMPL(__code) VERIFY_ARE_EQUAL(static_cast<int>(__code), _exc.error_code().default_error_condition().value()); 
 #endif
 #else
-#define HTTP_ERROR_CHECK_IMPL(__code) if(__code != _exc.error_code()) { VERIFY_IS_TRUE(false, "Unexpected error code encountered."); }
+#define HTTP_ERROR_CHECK_IMPL(__code) VERIFY_ARE_EQUAL(_exc.error_code(), __code, "Unexpected error code encountered.")
 #endif
 
 
@@ -212,17 +212,20 @@ private:
         try                                                                             \
         {                                                                               \
             __expression;                                                               \
-            VERIFY_IS_TRUE(false, "Expected http_exception not thrown");                \
+            UnitTest::CurrentTest::Results()->OnTestFailure(UnitTest::TestDetails(*UnitTest::CurrentTest::Details(), __LINE__), "Expected exception: \"web::http::http_exception\" not thrown"); \
         }                                                                               \
         catch (const web::http::http_exception& _exc)                                   \
         {                                                                               \
             VERIFY_IS_TRUE(std::string(_exc.what()).size() > 0);                        \
             HTTP_ERROR_CHECK_IMPL(__code);                                              \
-        }                                                                               \
-        catch(...)                                                                      \
-        {                                                                               \
-            VERIFY_IS_TRUE(false, "Exception other than http_exception thrown");        \
-        }                                                                               \
+        } catch(const std::exception & _exc) { \
+            std::string _msg("(" #__expression ") threw exception: "); \
+            _msg.append(_exc.what()); \
+            UnitTest::CurrentTest::Results()->OnTestFailure(UnitTest::TestDetails(*UnitTest::CurrentTest::Details(), __LINE__), _msg.c_str()); \
+        } catch (...) { \
+            std::string _msg("(" #__expression ") threw exception: <...>"); \
+            UnitTest::CurrentTest::Results()->OnTestFailure(UnitTest::TestDetails(*UnitTest::CurrentTest::Details(), __LINE__), _msg.c_str()); \
+        } \
     UNITTEST_MULTILINE_MACRO_END
 
 }}}}

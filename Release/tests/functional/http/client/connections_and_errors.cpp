@@ -91,7 +91,7 @@ TEST_FIXTURE(uri_address, server_doesnt_exist)
     http_client_config config;
     config.set_timeout(std::chrono::seconds(1));
     http_client client(m_uri, config);
-    VERIFY_THROWS_HTTP_ERROR_CODE(client.request(methods::GET).wait(), std::errc::host_unreachable);
+    VERIFY_THROWS(client.request(methods::GET).wait(), web::http::http_exception);
 }
 
 TEST_FIXTURE(uri_address, open_failure)
@@ -125,7 +125,7 @@ TEST_FIXTURE(uri_address, server_close_without_responding)
     VERIFY_THROWS_HTTP_ERROR_CODE(response.wait(), std::errc::connection_aborted);
 
     // Try sending another request.
-    VERIFY_THROWS_HTTP_ERROR_CODE(client.request(methods::GET).wait(), std::errc::host_unreachable);
+    VERIFY_THROWS(client.request(methods::GET).wait(), web::http::http_exception);
 }
 
 TEST_FIXTURE(uri_address, request_timeout)

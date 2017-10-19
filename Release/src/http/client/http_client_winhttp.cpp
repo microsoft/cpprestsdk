@@ -187,10 +187,9 @@ public:
     // Factory function to create requests on the heap.
     static std::shared_ptr<request_context> create_request_context(const std::shared_ptr<_http_client_communicator> &client, const http_request &request)
     {
-        // With WinHttp we have to pass the request context to the callback through a raw pointer.
-        // The lifetime of this object is delete once complete or report_error/report_exception is called.
-        auto pContext = new winhttp_request_context(client, request);
-        return std::shared_ptr<winhttp_request_context>(pContext, [](winhttp_request_context *){});
+        std::shared_ptr<winhttp_request_context> ret(new winhttp_request_context(client, request));
+        ret->m_self_reference = ret;
+        return std::move(ret);
     }
 
     ~winhttp_request_context()
@@ -220,6 +219,7 @@ public:
     }
 
     HINTERNET m_request_handle;
+    std::weak_ptr<winhttp_request_context>* m_request_context;
 
     bool m_proxy_authentication_tried;
     bool m_server_authentication_tried;
@@ -239,8 +239,9 @@ public:
         return m_readStream.streambuf();
     }
 
+    // This self reference will keep us alive until finish() is called.
+    std::shared_ptr<winhttp_request_context> m_self_reference;
     memory_holder m_body_data;
-
     std::unique_ptr<web::http::details::compression::stream_decompressor> decompressor;
 
     virtual void cleanup()
@@ -258,7 +259,9 @@ protected:
     virtual void finish()
     {
         request_context::finish();
-        delete this;
+        assert(m_self_reference != nullptr);
+        auto dereference_self = std::move(m_self_reference);
+        // As the stack frame cleans up, this will be deleted if no other references exist.
     }
 
 private:
@@ -267,6 +270,7 @@ private:
     winhttp_request_context(const std::shared_ptr<_http_client_communicator> &client, const http_request &request)
         : request_context(client, request),
         m_request_handle(nullptr),
+        m_request_context(nullptr),
         m_bodyType(no_body),
         m_startingPosition(std::char_traits<uint8_t>::eof()),
         m_body_data(),
@@ -546,7 +550,7 @@ protected:
         if(WINHTTP_INVALID_STATUS_CALLBACK == WinHttpSetStatusCallback(
             m_hSession,
             &winhttp_client::completion_callback,
-            WINHTTP_CALLBACK_FLAG_ALL_COMPLETIONS | WINHTTP_CALLBACK_FLAG_HANDLES,
+            WINHTTP_CALLBACK_FLAG_ALL_COMPLETIONS | WINHTTP_CALLBACK_FLAG_HANDLES | WINHTTP_CALLBACK_FLAG_SECURE_FAILURE,
             0))
         {
             return report_failure(_XPLATSTR("Error registering callback"));
@@ -572,7 +576,8 @@ protected:
     void send_request(_In_ const std::shared_ptr<request_context> &request)
     {
         http_request &msg = request->m_request;
-        winhttp_request_context * winhttp_context = static_cast<winhttp_request_context *>(request.get());
+        std::shared_ptr<winhttp_request_context> winhttp_context = std::static_pointer_cast<winhttp_request_context>(request);
+        std::weak_ptr<winhttp_request_context> weak_winhttp_context = winhttp_context;
 
         proxy_info info;
         bool proxy_info_required = false;
@@ -747,11 +752,13 @@ protected:
         if(msg._cancellation_token() != pplx::cancellation_token::none())
         {
             // cancellation callback is unregistered when request is completed.
-            winhttp_context->m_cancellationRegistration = msg._cancellation_token().register_callback([winhttp_context]()
+            winhttp_context->m_cancellationRegistration = msg._cancellation_token().register_callback([weak_winhttp_context]()
             {
                 // Call the WinHttpSendRequest API after WinHttpCloseHandle will give invalid handle error and we throw this exception.
                 // Call the cleanup to make the m_request_handle as nullptr, otherwise, Application Verifier will give AV exception on m_request_handle.
-                winhttp_context->cleanup();
+                auto lock = weak_winhttp_context.lock();
+                if (!lock) return;
+                lock->cleanup();
             });
         }
 
@@ -779,8 +786,16 @@ protected:
 
 private:
 
-    void _start_request_send(_In_ winhttp_request_context * winhttp_context, size_t content_length)
+    void _start_request_send(const std::shared_ptr<winhttp_request_context>& winhttp_context, size_t content_length)
     {
+        // WinHttp takes a context object as a void*. We therefore heap allocate a std::weak_ptr to the request context which will be destroyed during the final callback.
+        std::unique_ptr<std::weak_ptr<winhttp_request_context>> weak_context_holder;
+        if (winhttp_context->m_request_context == nullptr)
+        {
+            weak_context_holder = std::make_unique<std::weak_ptr<winhttp_request_context>>(winhttp_context);
+            winhttp_context->m_request_context = weak_context_holder.get();
+        }
+
         if (winhttp_context->m_bodyType == no_body)
         {
             if(!WinHttpSendRequest(
@@ -790,10 +805,18 @@ private:
                 nullptr,
                 0,
                 0,
-                (DWORD_PTR)winhttp_context))
+                (DWORD_PTR)winhttp_context->m_request_context))
             {
+                if (weak_context_holder)
+                    winhttp_context->m_request_context = nullptr;
+
                 auto errorCode = GetLastError();
                 winhttp_context->report_error(errorCode, build_error_msg(errorCode, "WinHttpSendRequest"));
+            }
+            else
+            {
+                // Ownership of the weak_context_holder was accepted by the callback, so release the pointer without freeing.
+                weak_context_holder.release();
             }
 
             return;
@@ -815,10 +838,18 @@ private:
             nullptr,
             0,
             winhttp_context->m_bodyType == content_length_chunked ? (DWORD)content_length : WINHTTP_IGNORE_REQUEST_TOTAL_LENGTH,
-            (DWORD_PTR)winhttp_context))
+            (DWORD_PTR)winhttp_context->m_request_context))
         {
+            if (weak_context_holder)
+                winhttp_context->m_request_context = nullptr;
+
             auto errorCode = GetLastError();
             winhttp_context->report_error(errorCode, build_error_msg(errorCode, "WinHttpSendRequest chunked"));
+        }
+        else
+        {
+            // Ownership of the weak_context_holder was accepted by the callback, so release the pointer without freeing.
+            weak_context_holder.release();
         }
     }
 
@@ -1011,7 +1042,7 @@ private:
     // or false if we fail to handle.
     static bool handle_authentication_failure(
         HINTERNET hRequestHandle,
-        _In_ winhttp_request_context * p_request_context,
+        const std::shared_ptr<winhttp_request_context>& p_request_context,
         _In_ DWORD error = 0)
     {
         http_request & request = p_request_context->m_request;
@@ -1132,244 +1163,250 @@ private:
     {
         CASABLANCA_UNREFERENCED_PARAMETER(statusInfoLength);
 
-        if ( statusCode == WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING )
+        std::weak_ptr<winhttp_request_context>* p_weak_request_context = reinterpret_cast<std::weak_ptr<winhttp_request_context> *>(context);
+
+        if (p_weak_request_context == nullptr)
             return;
 
-        winhttp_request_context * p_request_context = reinterpret_cast<winhttp_request_context *>(context);
-
-        if(p_request_context != nullptr)
+        if (statusCode == WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING)
         {
-            switch (statusCode)
-            {
-            case WINHTTP_CALLBACK_STATUS_REQUEST_ERROR :
-                {
-                    WINHTTP_ASYNC_RESULT *error_result = reinterpret_cast<WINHTTP_ASYNC_RESULT *>(statusInfo);
-                    const DWORD errorCode = error_result->dwError;
+            // This callback is responsible for freeing the type-erased context.
+            // This particular status code indicates that this is the final callback call, suitable for context destruction.
+            delete p_weak_request_context;
+            return;
+        }
 
-                    //  Some authentication schemes require multiple transactions.
-                    //  When ERROR_WINHTTP_RESEND_REQUEST is encountered,
-                    //  we should continue to resend the request until a response is received that does not contain a 401 or 407 status code.
-                    if (errorCode == ERROR_WINHTTP_RESEND_REQUEST)
+        auto p_request_context = p_weak_request_context->lock();
+        if (!p_request_context)
+            // The request context was already released, probably due to cancellation
+            return;
+
+        switch (statusCode)
+        {
+        case WINHTTP_CALLBACK_STATUS_REQUEST_ERROR :
+            {
+                WINHTTP_ASYNC_RESULT *error_result = reinterpret_cast<WINHTTP_ASYNC_RESULT *>(statusInfo);
+                const DWORD errorCode = error_result->dwError;
+
+                //  Some authentication schemes require multiple transactions.
+                //  When ERROR_WINHTTP_RESEND_REQUEST is encountered,
+                //  we should continue to resend the request until a response is received that does not contain a 401 or 407 status code.
+                if (errorCode == ERROR_WINHTTP_RESEND_REQUEST)
+                {
+                    bool resending = handle_authentication_failure(hRequestHandle, p_request_context, errorCode);
+                    if(resending)
                     {
-                        bool resending = handle_authentication_failure(hRequestHandle, p_request_context, errorCode);
-                        if(resending)
+                        // The request is resending. Wait until we get a new response.
+                        return;
+                    }
+                }
+
+                p_request_context->report_error(errorCode, build_error_msg(error_result));
+                break;
+            }
+        case WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE :
+            {
+                if (!p_request_context->m_request.body())
+                {
+                    // Report progress finished uploading with no message body.
+                    auto progress = p_request_context->m_request._get_impl()->_progress_handler();
+                    if ( progress )
+                    {
+                        try { (*progress)(message_direction::upload, 0); } catch(...)
                         {
-                            // The request is resending. Wait until we get a new response.
+                            p_request_context->report_exception(std::current_exception());
                             return;
                         }
                     }
-
-                    p_request_context->report_error(errorCode, build_error_msg(error_result));
-                    break;
                 }
-            case WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE :
-                {
-                    if (!p_request_context->m_request.body())
-                    {
-                        // Report progress finished uploading with no message body.
-                        auto progress = p_request_context->m_request._get_impl()->_progress_handler();
-                        if ( progress )
-                        {
-                            try { (*progress)(message_direction::upload, 0); } catch(...)
-                            {
-                                p_request_context->report_exception(std::current_exception());
-                                return;
-                            }
-                        }
-                    }
 
-                    if ( p_request_context->m_bodyType == transfer_encoding_chunked )
-                    {
-                        _transfer_encoding_chunked_write_data(p_request_context);
-                    }
-                    else if ( p_request_context->m_bodyType == content_length_chunked )
-                    {
-                        _multiple_segment_write_data(p_request_context);
-                    }
-                    else
-                    {
-                        if(!WinHttpReceiveResponse(hRequestHandle, nullptr))
-                        {
-                            auto errorCode = GetLastError();
-                            p_request_context->report_error(errorCode, build_error_msg(errorCode, "WinHttpReceiveResponse"));
-                        }
-                    }
-                    break;
+                if ( p_request_context->m_bodyType == transfer_encoding_chunked )
+                {
+                    _transfer_encoding_chunked_write_data(p_request_context.get());
                 }
-            case WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE :
+                else if ( p_request_context->m_bodyType == content_length_chunked )
                 {
-                    DWORD bytesWritten = *((DWORD *)statusInfo);
-                    _ASSERTE(statusInfoLength == sizeof(DWORD));
-
-                    if ( bytesWritten > 0 )
-                    {
-                        auto progress = p_request_context->m_request._get_impl()->_progress_handler();
-                        if ( progress )
-                        {
-                            p_request_context->m_uploaded += bytesWritten;
-                            try { (*progress)(message_direction::upload, p_request_context->m_uploaded); } catch(...)
-                            {
-                                p_request_context->report_exception(std::current_exception());
-                                return;
-                            }
-                        }
-                    }
-
-                    if ( p_request_context->is_externally_allocated() )
-                    {
-                        p_request_context->_get_readbuffer().release(p_request_context->m_body_data.get(), bytesWritten);
-                    }
-
-                    if ( p_request_context->m_bodyType == transfer_encoding_chunked )
-                    {
-                        _transfer_encoding_chunked_write_data(p_request_context);
-                    }
-                    else if ( p_request_context->m_bodyType == content_length_chunked )
-                    {
-                        _multiple_segment_write_data(p_request_context);
-                    }
-                    else
-                    {
-                        if(!WinHttpReceiveResponse(hRequestHandle, nullptr))
-                        {
-                            auto errorCode = GetLastError();
-                            p_request_context->report_error(errorCode, build_error_msg(errorCode, "WinHttpReceiveResponse"));
-                        }
-                    }
-                    break;
+                    _multiple_segment_write_data(p_request_context.get());
                 }
-            case WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE :
+                else
                 {
-                    // First need to query to see what the headers size is.
-                    DWORD headerBufferLength = 0;
-                    query_header_length(hRequestHandle, WINHTTP_QUERY_RAW_HEADERS_CRLF, headerBufferLength);
-
-                    // Now allocate buffer for headers and query for them.
-                    std::vector<unsigned char> header_raw_buffer;
-                    header_raw_buffer.resize(headerBufferLength);
-                    utf16char * header_buffer = reinterpret_cast<utf16char *>(&header_raw_buffer[0]);
-                    if(!WinHttpQueryHeaders(
-                        hRequestHandle,
-                        WINHTTP_QUERY_RAW_HEADERS_CRLF,
-                        WINHTTP_HEADER_NAME_BY_INDEX,
-                        header_buffer,
-                        &headerBufferLength,
-                        WINHTTP_NO_HEADER_INDEX))
+                    if(!WinHttpReceiveResponse(hRequestHandle, nullptr))
                     {
                         auto errorCode = GetLastError();
-                        p_request_context->report_error(errorCode, build_error_msg(errorCode, "WinHttpQueryHeaders"));;
-                        return;
+                        p_request_context->report_error(errorCode, build_error_msg(errorCode, "WinHttpReceiveResponse"));
                     }
+                }
+                break;
+            }
+        case WINHTTP_CALLBACK_STATUS_SECURE_FAILURE:
+        {
+            auto *flagsPtr = reinterpret_cast<std::uint32_t*>(statusInfo);
+            auto flags = *flagsPtr;
 
-                    http_response & response = p_request_context->m_response;
-                    parse_winhttp_headers(hRequestHandle, header_buffer, response);
+            std::string err = "SSL error: ";
+            if (flags & WINHTTP_CALLBACK_STATUS_FLAG_CERT_REV_FAILED)        err += "WINHTTP_CALLBACK_STATUS_FLAG_CERT_REV_FAILED failed to check revocation status. ";
+            if (flags & WINHTTP_CALLBACK_STATUS_FLAG_INVALID_CERT)           err += "WINHTTP_CALLBACK_STATUS_FLAG_INVALID_CERT SSL certificate is invalid. ";
+            if (flags & WINHTTP_CALLBACK_STATUS_FLAG_CERT_REVOKED)           err += "WINHTTP_CALLBACK_STATUS_FLAG_CERT_REVOKED SSL certificate was revoked. ";
+            if (flags & WINHTTP_CALLBACK_STATUS_FLAG_INVALID_CA)             err += "WINHTTP_CALLBACK_STATUS_FLAG_INVALID_CA SSL invalid CA. ";
+            if (flags & WINHTTP_CALLBACK_STATUS_FLAG_CERT_CN_INVALID)        err += "WINHTTP_CALLBACK_STATUS_FLAG_CERT_CN_INVALID SSL common name does not match. ";
+            if (flags & WINHTTP_CALLBACK_STATUS_FLAG_CERT_DATE_INVALID)      err += "WINHTTP_CALLBACK_STATUS_FLAG_CERT_DATE_INVALID SLL certificate is expired. ";
+            if (flags & WINHTTP_CALLBACK_STATUS_FLAG_SECURITY_CHANNEL_ERROR) err += "WINHTTP_CALLBACK_STATUS_FLAG_SECURITY_CHANNEL_ERROR internal error. ";
 
-                    if(response.status_code() == status_codes::Unauthorized /*401*/ ||
-                        response.status_code() == status_codes::ProxyAuthRequired /*407*/)
+            p_request_context->report_exception(web::http::http_exception(std::move(err)));
+            break;
+        }
+        case WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE :
+            {
+                DWORD bytesWritten = *((DWORD *)statusInfo);
+                _ASSERTE(statusInfoLength == sizeof(DWORD));
+
+                if ( bytesWritten > 0 )
+                {
+                    auto progress = p_request_context->m_request._get_impl()->_progress_handler();
+                    if ( progress )
                     {
-                        bool resending = handle_authentication_failure(hRequestHandle, p_request_context);
-                        if(resending)
+                        p_request_context->m_uploaded += bytesWritten;
+                        try { (*progress)(message_direction::upload, p_request_context->m_uploaded); } catch(...)
                         {
-                            // The request was not completed but resent with credentials. Wait until we get a new response
+                            p_request_context->report_exception(std::current_exception());
                             return;
                         }
                     }
+                }
 
-                    // If the response body is compressed we will read the encoding header and create a decompressor object which will later decompress the body
-                    utility::string_t encoding;
-                    if (web::http::details::compression::stream_decompressor::is_supported() && response.headers().match(web::http::header_names::content_encoding, encoding))
+                if ( p_request_context->is_externally_allocated() )
+                {
+                    p_request_context->_get_readbuffer().release(p_request_context->m_body_data.get(), bytesWritten);
+                }
+
+                if ( p_request_context->m_bodyType == transfer_encoding_chunked )
+                {
+                    _transfer_encoding_chunked_write_data(p_request_context.get());
+                }
+                else if ( p_request_context->m_bodyType == content_length_chunked )
+                {
+                    _multiple_segment_write_data(p_request_context.get());
+                }
+                else
+                {
+                    if(!WinHttpReceiveResponse(hRequestHandle, nullptr))
                     {
-                        auto alg = web::http::details::compression::stream_decompressor::to_compression_algorithm(encoding);
-
-                        if (alg != web::http::details::compression::compression_algorithm::invalid)
-                        {
-                            p_request_context->decompressor = std::make_unique<web::http::details::compression::stream_decompressor>(alg);
-                        }
-                        else
-                        {
-                            utility::string_t error = U("Unsupported compression algorithm in the Content Encoding header: ");
-                            error += encoding;
-                            p_request_context->report_exception(http_exception(error));
-                        }
+                        auto errorCode = GetLastError();
+                        p_request_context->report_error(errorCode, build_error_msg(errorCode, "WinHttpReceiveResponse"));
                     }
+                }
+                break;
+            }
+        case WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE :
+            {
+                // First need to query to see what the headers size is.
+                DWORD headerBufferLength = 0;
+                query_header_length(hRequestHandle, WINHTTP_QUERY_RAW_HEADERS_CRLF, headerBufferLength);
 
-                    // Signal that the headers are available.
-                    p_request_context->complete_headers();
+                // Now allocate buffer for headers and query for them.
+                std::vector<unsigned char> header_raw_buffer;
+                header_raw_buffer.resize(headerBufferLength);
+                utf16char * header_buffer = reinterpret_cast<utf16char *>(&header_raw_buffer[0]);
+                if(!WinHttpQueryHeaders(
+                    hRequestHandle,
+                    WINHTTP_QUERY_RAW_HEADERS_CRLF,
+                    WINHTTP_HEADER_NAME_BY_INDEX,
+                    header_buffer,
+                    &headerBufferLength,
+                    WINHTTP_NO_HEADER_INDEX))
+                {
+                    auto errorCode = GetLastError();
+                    p_request_context->report_error(errorCode, build_error_msg(errorCode, "WinHttpQueryHeaders"));;
+                    return;
+                }
 
-                    // If the method was 'HEAD,' the body of the message is by definition empty. No need to
-                    // read it. Any headers that suggest the presence of a body can safely be ignored.
-                    if (p_request_context->m_request.method() == methods::HEAD )
+                http_response & response = p_request_context->m_response;
+                parse_winhttp_headers(hRequestHandle, header_buffer, response);
+
+                if(response.status_code() == status_codes::Unauthorized /*401*/ ||
+                    response.status_code() == status_codes::ProxyAuthRequired /*407*/)
+                {
+                    bool resending = handle_authentication_failure(hRequestHandle, p_request_context);
+                    if(resending)
                     {
-                        p_request_context->allocate_request_space(nullptr, 0);
-                        p_request_context->complete_request(0);
+                        // The request was not completed but resent with credentials. Wait until we get a new response
                         return;
                     }
-
-                    // HTTP Specification states:
-                    // If a message is received with both a Transfer-Encoding header field
-                    // and a Content-Length header field, the latter MUST be ignored.
-                    // If none of them is specified, the message length should be determined by the server closing the connection.
-                    // http://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4.4
-
-                    read_next_response_chunk(p_request_context, 0, true);
-                    break;
                 }
-            case WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE :
+
+                // If the response body is compressed we will read the encoding header and create a decompressor object which will later decompress the body
+                utility::string_t encoding;
+                if (web::http::details::compression::stream_decompressor::is_supported() && response.headers().match(web::http::header_names::content_encoding, encoding))
                 {
-                    // Status information contains pointer to DWORD containing number of bytes available.
-                    const DWORD num_bytes = *(PDWORD)statusInfo;
+                    auto alg = web::http::details::compression::stream_decompressor::to_compression_algorithm(encoding);
 
-                    if(num_bytes > 0)
+                    if (alg != web::http::details::compression::compression_algorithm::invalid)
                     {
-                        if (p_request_context->decompressor)
-                        {
-                            // Decompression is too slow to reliably do on this callback. Therefore we need to store it now in order to decompress it at a later stage in the flow.
-                            // However, we want to eventually use the writebuf to store the decompressed body. Therefore we'll store the compressed body as an internal allocation in the request_context
-                            p_request_context->allocate_reply_space(nullptr, num_bytes);
-                        }
-                        else
-                        {
-                            auto writebuf = p_request_context->_get_writebuffer();
-                            p_request_context->allocate_reply_space(writebuf.alloc(num_bytes), num_bytes);
-                        }
-
-                        // Read in body all at once.
-                        if(!WinHttpReadData(
-                            hRequestHandle,
-                            p_request_context->m_body_data.get(),
-                            num_bytes,
-                            nullptr))
-                        {
-                            auto errorCode = GetLastError();
-                            p_request_context->report_error(errorCode, build_error_msg(errorCode, "WinHttpReadData"));
-                        }
+                        p_request_context->decompressor = std::make_unique<web::http::details::compression::stream_decompressor>(alg);
                     }
                     else
                     {
-                        // No more data available, complete the request.
-                        auto progress = p_request_context->m_request._get_impl()->_progress_handler();
-                        if (progress)
-                        {
-                            try { (*progress)(message_direction::download, p_request_context->m_downloaded); }
-                            catch (...)
-                            {
-                                p_request_context->report_exception(std::current_exception());
-                                return;
-                            }
-                        }
-
-                        p_request_context->complete_request(p_request_context->m_downloaded);
+                        utility::string_t error = U("Unsupported compression algorithm in the Content Encoding header: ");
+                        error += encoding;
+                        p_request_context->report_exception(http_exception(error));
                     }
-                    break;
                 }
-            case WINHTTP_CALLBACK_STATUS_READ_COMPLETE :
-                {
-                    // Status information length contains the number of bytes read.
-                    DWORD bytesRead = statusInfoLength;
 
-                    // Report progress about downloaded bytes.
+                // Signal that the headers are available.
+                p_request_context->complete_headers();
+
+                // If the method was 'HEAD,' the body of the message is by definition empty. No need to
+                // read it. Any headers that suggest the presence of a body can safely be ignored.
+                if (p_request_context->m_request.method() == methods::HEAD )
+                {
+                    p_request_context->allocate_request_space(nullptr, 0);
+                    p_request_context->complete_request(0);
+                    return;
+                }
+
+                // HTTP Specification states:
+                // If a message is received with both a Transfer-Encoding header field
+                // and a Content-Length header field, the latter MUST be ignored.
+                // If none of them is specified, the message length should be determined by the server closing the connection.
+                // http://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4.4
+
+                read_next_response_chunk(p_request_context.get(), 0, true);
+                break;
+            }
+        case WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE :
+            {
+                // Status information contains pointer to DWORD containing number of bytes available.
+                const DWORD num_bytes = *(PDWORD)statusInfo;
+
+                if(num_bytes > 0)
+                {
+                    if (p_request_context->decompressor)
+                    {
+                        // Decompression is too slow to reliably do on this callback. Therefore we need to store it now in order to decompress it at a later stage in the flow.
+                        // However, we want to eventually use the writebuf to store the decompressed body. Therefore we'll store the compressed body as an internal allocation in the request_context
+                        p_request_context->allocate_reply_space(nullptr, num_bytes);
+                    }
+                    else
+                    {
+                        auto writebuf = p_request_context->_get_writebuffer();
+                        p_request_context->allocate_reply_space(writebuf.alloc(num_bytes), num_bytes);
+                    }
+
+                    // Read in body all at once.
+                    if(!WinHttpReadData(
+                        hRequestHandle,
+                        p_request_context->m_body_data.get(),
+                        num_bytes,
+                        nullptr))
+                    {
+                        auto errorCode = GetLastError();
+                        p_request_context->report_error(errorCode, build_error_msg(errorCode, "WinHttpReadData"));
+                    }
+                }
+                else
+                {
+                    // No more data available, complete the request.
                     auto progress = p_request_context->m_request._get_impl()->_progress_handler();
-                    p_request_context->m_downloaded += statusInfoLength;
                     if (progress)
                     {
                         try { (*progress)(message_direction::download, p_request_context->m_downloaded); }
@@ -1380,75 +1417,96 @@ private:
                         }
                     }
 
-                    // If no bytes have been read, then this is the end of the response.
-                    if (bytesRead == 0)
+                    p_request_context->complete_request(p_request_context->m_downloaded);
+                }
+                break;
+            }
+        case WINHTTP_CALLBACK_STATUS_READ_COMPLETE :
+            {
+                // Status information length contains the number of bytes read.
+                DWORD bytesRead = statusInfoLength;
+
+                // Report progress about downloaded bytes.
+                auto progress = p_request_context->m_request._get_impl()->_progress_handler();
+                p_request_context->m_downloaded += statusInfoLength;
+                if (progress)
+                {
+                    try { (*progress)(message_direction::download, p_request_context->m_downloaded); }
+                    catch (...)
                     {
-                        p_request_context->complete_request(p_request_context->m_downloaded);
-                        break;
+                        p_request_context->report_exception(std::current_exception());
+                        return;
+                    }
+                }
+
+                // If no bytes have been read, then this is the end of the response.
+                if (bytesRead == 0)
+                {
+                    p_request_context->complete_request(p_request_context->m_downloaded);
+                    break;
+                }
+
+                auto writebuf = p_request_context->_get_writebuffer();
+
+                // If we have compressed data it is stored in the local allocation of the p_request_context. We will store the decompressed buffer in the external allocation of the p_request_context.
+                if (p_request_context->decompressor)
+                {
+                    web::http::details::compression::data_buffer decompressed = p_request_context->decompressor->decompress(p_request_context->m_body_data.get(), bytesRead);
+
+                    if (p_request_context->decompressor->has_error())
+                    {
+                        p_request_context->report_exception(std::runtime_error("Failed to decompress the response body"));
+                        return;
                     }
 
-                    auto writebuf = p_request_context->_get_writebuffer();
+                    // We've decompressed this chunk of the body, need to now store it in the writebuffer.
+                    auto decompressed_size = decompressed.size();
 
-                    // If we have compressed data it is stored in the local allocation of the p_request_context. We will store the decompressed buffer in the external allocation of the p_request_context.
-                    if (p_request_context->decompressor)
+                    if (decompressed_size > 0)
                     {
-                        web::http::details::compression::data_buffer decompressed = p_request_context->decompressor->decompress(p_request_context->m_body_data.get(), bytesRead);
+                        auto p = writebuf.alloc(decompressed_size);
+                        p_request_context->allocate_reply_space(p, decompressed_size);
+                        std::memcpy(p_request_context->m_body_data.get(), &decompressed[0], decompressed_size);
+                    }
+                    // Note, some servers seem to send a first chunk of body data that decompresses to nothing but initializes the zlib decryption state. This produces no decompressed output.
+                    // Subsequent chunks will then begin emmiting decompressed body data.
 
-                        if (p_request_context->decompressor->has_error())
+                    bytesRead = static_cast<DWORD>(decompressed_size);
+                }
+
+                // If the data was allocated directly from the buffer then commit, otherwise we still
+                // need to write to the response stream buffer.
+                if (p_request_context->is_externally_allocated())
+                {
+                    writebuf.commit(bytesRead);
+                    read_next_response_chunk(p_request_context.get(), bytesRead);
+                }
+                else
+                {
+                    writebuf.putn_nocopy(p_request_context->m_body_data.get(), bytesRead).then(
+                        [hRequestHandle, p_request_context, bytesRead] (pplx::task<size_t> op)
+                    {
+                        size_t written = 0;
+                        try { written = op.get(); }
+                        catch (...)
                         {
-                            p_request_context->report_exception(std::runtime_error("Failed to decompress the response body"));
+                            p_request_context->report_exception(std::current_exception());
                             return;
                         }
 
-                        // We've decompressed this chunk of the body, need to now store it in the writebuffer.
-                        auto decompressed_size = decompressed.size();
-
-                        if (decompressed_size > 0)
+                        // If we couldn't write everything, it's time to exit.
+                        if (written != bytesRead)
                         {
-                            auto p = writebuf.alloc(decompressed_size);
-                            p_request_context->allocate_reply_space(p, decompressed_size);
-                            std::memcpy(p_request_context->m_body_data.get(), &decompressed[0], decompressed_size);
+                            p_request_context->report_exception(std::runtime_error("response stream unexpectedly failed to write the requested number of bytes"));
+                            return;
                         }
-                        // Note, some servers seem to send a first chunk of body data that decompresses to nothing but initializes the zlib decryption state. This produces no decompressed output.
-                        // Subsequent chunks will then begin emmiting decompressed body data.
 
-                        bytesRead = static_cast<DWORD>(decompressed_size);
-                    }
-
-                    // If the data was allocated directly from the buffer then commit, otherwise we still
-                    // need to write to the response stream buffer.
-                    if (p_request_context->is_externally_allocated())
-                    {
-                        writebuf.commit(bytesRead);
-                        read_next_response_chunk(p_request_context, bytesRead);
-                    }
-                    else
-                    {
-                        writebuf.putn_nocopy(p_request_context->m_body_data.get(), bytesRead).then(
-                            [hRequestHandle, p_request_context, bytesRead] (pplx::task<size_t> op)
-                        {
-                            size_t written = 0;
-                            try { written = op.get(); }
-                            catch (...)
-                            {
-                                p_request_context->report_exception(std::current_exception());
-                                return;
-                            }
-
-                            // If we couldn't write everything, it's time to exit.
-                            if (written != bytesRead)
-                            {
-                                p_request_context->report_exception(std::runtime_error("response stream unexpectedly failed to write the requested number of bytes"));
-                                return;
-                            }
-
-                            read_next_response_chunk(p_request_context, bytesRead);
-                        });
-                    }
-                    break;
+                        read_next_response_chunk(p_request_context.get(), bytesRead);
+                    });
                 }
+                break;
             }
-        }
+    }
     }
 
     // WinHTTP session and connection
