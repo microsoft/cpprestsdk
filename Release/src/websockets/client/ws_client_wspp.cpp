@@ -73,7 +73,7 @@ static struct ASIO_SSL_memory_leak_suppress
 {
     ~ASIO_SSL_memory_leak_suppress()
     {
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
         ::SSL_COMP_free_compression_methods();
 #endif
     }
@@ -210,7 +210,7 @@ public:
                     return rfc2818(preverified, verifyCtx);
                 });
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
                 // OpenSSL stores some per thread state that never will be cleaned up until
                 // the dll is unloaded. If static linking, like we do, the state isn't cleaned up
                 // at all and will be reported as leaks.
@@ -382,7 +382,7 @@ public:
             crossplat::JVM.load()->DetachCurrentThread();
 #endif
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
             // OpenSSL stores some per thread state that never will be cleaned up until
             // the dll is unloaded. If static linking, like we do, the state isn't cleaned up
             // at all and will be reported as leaks.
