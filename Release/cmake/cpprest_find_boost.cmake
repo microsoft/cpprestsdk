@@ -42,7 +42,6 @@ function(cpprest_find_boost)
       endif()
       set(_prev "${_lib}")
     endforeach()
-    message(STATUS "_libs: ${_libs}")
     target_link_libraries(cpprestsdk_boost_internal INTERFACE "$<BUILD_INTERFACE:${_libs}>")
 
   else()
