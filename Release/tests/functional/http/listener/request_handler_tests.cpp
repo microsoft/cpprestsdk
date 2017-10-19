@@ -460,7 +460,7 @@ TEST_FIXTURE(uri_address, remote_address)
 
     listener.support(methods::GET, [&requestCount](http_request request)
     {
-        const string_t& remoteAddr = request.get_remote_address();
+        const string_t& remoteAddr = request.remote_address();
         const string_t& localhost4 = string_t(U("127.0.0.1"));
         const string_t& localhost6 = string_t(U("::1"));
 

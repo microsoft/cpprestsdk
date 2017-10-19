@@ -901,13 +901,13 @@ public:
     /// Returns the HTTP protocol version of this request message.
     /// </summary>
     /// <returns>The HTTP protocol version.</returns>
-    const http_version& get_http_version() const { return _m_impl->http_version(); }
+    const http_version& http_version() const { return _m_impl->http_version(); }
 
     /// <summary>
     /// Returns a string representation of the remote IP address.
     /// </summary>
     /// <returns>The remote IP address.</returns>
-    const utility::string_t& get_remote_address() const { return _m_impl->remote_address(); }
+    const utility::string_t& remote_address() const { return _m_impl->remote_address(); }
 
     /// <summary>
     /// Extract the body of the request message as a string value, checking that the content type is a MIME text type.
