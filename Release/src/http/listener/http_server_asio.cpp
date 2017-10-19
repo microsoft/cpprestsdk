@@ -665,7 +665,12 @@ will_deref_and_erase_t asio_server_connection::handle_http_line(const boost::sys
         }
 
         // Get the remote IP address
-        m_request._get_impl()->_set_remote_address(utility::conversions::to_string_t(m_socket->remote_endpoint().address().to_string()));
+        boost::system::error_code socket_ec;
+        auto endpoint = m_socket->remote_endpoint(socket_ec);
+        if (!socket_ec)
+        {
+            m_request._get_impl()->_set_remote_address(utility::conversions::to_string_t(endpoint.address().to_string()));
+        }
 
         return handle_headers();
     }
