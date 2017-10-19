@@ -88,6 +88,7 @@
 #include <exception>
 #include <assert.h>
 #include <streambuf>
+#include <atomic>
 #include <mutex>
 #include <array>
 #include <vector>
