@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27016.1
+VisualStudioVersion = 15.0.27018.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "android", "Release\src\build\android.vcxitems", "{65951C40-A332-4B54-89C2-7CDAF30D5F66}"
 EndProject
@@ -41,6 +41,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BlackJack_Client141", "Rele
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BingRequest141", "Release\samples\BingRequest\BingRequest141\BingRequest141.vcxproj", "{2EB9CCAA-541D-4DC1-BE2C-B1AE9712194D}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cpprest141.android", "Release\src\build\vs141.android\cpprest141.android.vcxproj", "{AFB49019-965B-4C10-BAFF-C86C16D58010}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		Release\src\build\winrt.vcxitems*{0a9ba181-7876-4b3d-a5e0-ee673fa51c05}*SharedItemsImports = 9
@@ -51,6 +53,8 @@ Global
 		Release\src\build\other.vcxitems*{3d5908f7-7673-4229-bc46-2007a7af9cae}*SharedItemsImports = 9
 		Release\src\build\common.vcxitems*{594dcb5f-07e3-4084-a2ce-268611fa629f}*SharedItemsImports = 9
 		Release\src\build\android.vcxitems*{65951c40-a332-4b54-89c2-7cdaf30d5f66}*SharedItemsImports = 9
+		Release\src\build\android.vcxitems*{afb49019-965b-4c10-baff-c86c16d58010}*SharedItemsImports = 4
+		Release\src\build\common.vcxitems*{afb49019-965b-4c10-baff-c86c16d58010}*SharedItemsImports = 4
 		Release\src\build\win32.vcxitems*{f40f4804-50f9-4257-8d74-b9cbb19ac4c3}*SharedItemsImports = 9
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -214,6 +218,16 @@ Global
 		{2EB9CCAA-541D-4DC1-BE2C-B1AE9712194D}.Release|x64.Build.0 = Release|x64
 		{2EB9CCAA-541D-4DC1-BE2C-B1AE9712194D}.Release|x86.ActiveCfg = Release|Win32
 		{2EB9CCAA-541D-4DC1-BE2C-B1AE9712194D}.Release|x86.Build.0 = Release|Win32
+		{AFB49019-965B-4C10-BAFF-C86C16D58010}.Debug|ARM.ActiveCfg = Debug|ARM
+		{AFB49019-965B-4C10-BAFF-C86C16D58010}.Debug|ARM.Build.0 = Debug|ARM
+		{AFB49019-965B-4C10-BAFF-C86C16D58010}.Debug|x64.ActiveCfg = Debug|x86
+		{AFB49019-965B-4C10-BAFF-C86C16D58010}.Debug|x86.ActiveCfg = Debug|x86
+		{AFB49019-965B-4C10-BAFF-C86C16D58010}.Debug|x86.Build.0 = Debug|x86
+		{AFB49019-965B-4C10-BAFF-C86C16D58010}.Release|ARM.ActiveCfg = Release|ARM
+		{AFB49019-965B-4C10-BAFF-C86C16D58010}.Release|ARM.Build.0 = Release|ARM
+		{AFB49019-965B-4C10-BAFF-C86C16D58010}.Release|x64.ActiveCfg = Release|x86
+		{AFB49019-965B-4C10-BAFF-C86C16D58010}.Release|x86.ActiveCfg = Release|x86
+		{AFB49019-965B-4C10-BAFF-C86C16D58010}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -236,6 +250,7 @@ Global
 		{84350CD1-D406-4A4F-9571-261CA46D77C5} = {EF775754-D70A-4611-A00C-F49F224FD236}
 		{830B6E2F-9224-41D1-B9C7-A51FC78B00C7} = {EF775754-D70A-4611-A00C-F49F224FD236}
 		{2EB9CCAA-541D-4DC1-BE2C-B1AE9712194D} = {EF775754-D70A-4611-A00C-F49F224FD236}
+		{AFB49019-965B-4C10-BAFF-C86C16D58010} = {92944FCF-7E50-41FD-8A99-DD6869F9AEA5}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {5782CB9E-B335-4D07-A195-717BF4093536}
