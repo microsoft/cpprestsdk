@@ -69,7 +69,7 @@ elseif(UNIX AND NOT APPLE) # Note: also android
   set(CPPREST_HTTP_CLIENT_IMPL asio CACHE STRING "Internal use.")
   set(CPPREST_HTTP_LISTENER_IMPL asio CACHE STRING "Internal use.")
 elseif(WINDOWS_PHONE OR WINDOWS_STORE)
-  set(CPPREST_PPLX_IMPL win CACHE STRING "Internal use.")
+  set(CPPREST_PPLX_IMPL winrt CACHE STRING "Internal use.")
   set(CPPREST_WEBSOCKETS_IMPL winrt CACHE STRING "Internal use.")
   set(CPPREST_FILEIO_IMPL winrt CACHE STRING "Internal use.")
   set(CPPREST_HTTP_CLIENT_IMPL winrt CACHE STRING "Internal use.")
@@ -115,7 +115,12 @@ elseif(ANDROID)
     )
 elseif(UNIX) # This includes OSX
 elseif(WIN32)
-  add_definitions(-DUNICODE -D_UNICODE -D_WIN32_WINNT=0x0600 -DWIN32 -D_SCL_SECURE_NO_WARNINGS)
+  add_definitions(-DUNICODE -D_UNICODE -DWIN32 -D_SCL_SECURE_NO_WARNINGS)
+  if(CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
+    add_definitions(-D_WIN32_WINNT=0x0A00)
+  else()
+    add_definitions(-D_WIN32_WINNT=0x0600)
+  endif()
 
   if(NOT BUILD_SHARED_LIBS)
     # This causes cmake to not link the test libraries separately, but instead hold onto their object files.

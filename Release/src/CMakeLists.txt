@@ -80,6 +80,11 @@ elseif(CPPREST_PPLX_IMPL STREQUAL "winpplx")
     pplx/threadpool.cpp
     pplx/pplxwin.cpp
   )
+elseif(CPPREST_PPLX_IMPL STREQUAL "winrt")
+  list(APPEND SOURCES
+    pplx/pplxwin.cpp
+  )
+  list(FILTER HEADERS_PPLX EXCLUDE REGEX "threadpool\\.h")
 endif()
 
 # Http client component
@@ -186,6 +191,7 @@ if(CPPREST_PPLX_IMPL STREQUAL "apple")
   target_link_libraries(cpprest PRIVATE ${COREFOUNDATION} ${SECURITY})
 elseif(CPPREST_PPLX_IMPL STREQUAL "linux")
 elseif(CPPREST_PPLX_IMPL STREQUAL "win")
+elseif(CPPREST_PPLX_IMPL STREQUAL "winrt")
 elseif(CPPREST_PPLX_IMPL STREQUAL "winpplx")
   target_compile_definitions(cpprest PUBLIC -DCPPREST_FORCE_PPLX=1)
 else()
