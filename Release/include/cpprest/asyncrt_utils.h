@@ -19,17 +19,17 @@
 #include <system_error>
 #include <random>
 #include <locale.h>
-
 #include "pplx/pplxtasks.h"
 #include "cpprest/details/basic_types.h"
 
 #if !defined(_WIN32) || (_MSC_VER >= 1700)
+#include <sys/time.h>
 #include <chrono>
 #endif
 
 #ifndef _WIN32
 #include <boost/algorithm/string.hpp>
-#if !defined(ANDROID) && !defined(__ANDROID__) && !defined(__GLIBC__) // CodePlex 269
+#if !defined(ANDROID) && !defined(__ANDROID__) && defined(HAVE_XLOCALE_H) // CodePlex 269
 /* Systems using glibc: xlocale.h has been removed from glibc 2.26
    The above include of locale.h is sufficient
    Further details: https://sourceware.org/git/?p=glibc.git;a=commit;h=f0be25b6336db7492e47d2e8e72eb8af53b5506d */
