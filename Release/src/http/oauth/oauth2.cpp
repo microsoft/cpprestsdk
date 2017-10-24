@@ -149,7 +149,7 @@ oauth2_token oauth2_config::_parse_token_from_json(const json::value& token_json
 {
     oauth2_token result;
 
-    if (token_json.has_field(oauth2_strings::access_token))
+    if (token_json.has_string_field(oauth2_strings::access_token))
     {
         result.set_access_token(token_json.at(oauth2_strings::access_token).as_string());
     }
@@ -158,7 +158,7 @@ oauth2_token oauth2_config::_parse_token_from_json(const json::value& token_json
         throw oauth2_exception(U("response json contains no 'access_token': ") + token_json.serialize());
     }
 
-    if (token_json.has_field(oauth2_strings::token_type))
+    if (token_json.has_string_field(oauth2_strings::token_type))
     {
         result.set_token_type(token_json.at(oauth2_strings::token_type).as_string());
     }
@@ -174,7 +174,7 @@ oauth2_token oauth2_config::_parse_token_from_json(const json::value& token_json
         throw oauth2_exception(U("only 'token_type=bearer' access tokens are currently supported: ") + token_json.serialize());
     }
 
-    if (token_json.has_field(oauth2_strings::refresh_token))
+    if (token_json.has_string_field(oauth2_strings::refresh_token))
     {
         result.set_refresh_token(token_json.at(oauth2_strings::refresh_token).as_string());
     }
@@ -205,7 +205,7 @@ oauth2_token oauth2_config::_parse_token_from_json(const json::value& token_json
         result.set_expires_in(oauth2_token::undefined_expiration);
     }
 
-    if (token_json.has_field(oauth2_strings::scope))
+    if (token_json.has_string_field(oauth2_strings::scope))
     {
         // The authorization server may return different scope from the one requested.
         // This however doesn't necessarily mean the token authorization scope is different.
