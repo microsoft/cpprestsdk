@@ -533,6 +533,16 @@ void hostport_listener::on_accept(ip::tcp::socket* socket, const boost::system::
 {
     std::unique_ptr<ip::tcp::socket> usocket(std::move(socket));
 
+    if (ec)
+    {
+        // The accept() call failed; a typical cause is running out of file handles.
+        //
+        // It's not a great solution to just sleep here, but what else are we going to do?
+        // Continuing immediately will probably just end up calling accept() in a hot loop.
+        // Also, this sleep() is guaranteed to keep at most one thread waiting.
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+
     if (!ec)
     {
         auto conn = new asio_server_connection(std::move(usocket), m_p_server, this);
@@ -542,16 +552,16 @@ void hostport_listener::on_accept(ip::tcp::socket* socket, const boost::system::
         conn->start(m_is_https, m_ssl_context_callback);
         if (m_connections.size() == 1)
             m_all_connections_complete.reset();
+    }
 
-        if (m_acceptor)
+    if (m_acceptor)
+    {
+        // spin off another async accept
+        auto newSocket = new ip::tcp::socket(crossplat::threadpool::shared_instance().service());
+        m_acceptor->async_accept(*newSocket, [this, newSocket](const boost::system::error_code& ec)
         {
-            // spin off another async accept
-            auto newSocket = new ip::tcp::socket(crossplat::threadpool::shared_instance().service());
-            m_acceptor->async_accept(*newSocket, [this, newSocket](const boost::system::error_code& ec)
-            {
-                this->on_accept(newSocket, ec);
-            });
-        }
+            this->on_accept(newSocket, ec);
+        });
     }
 }
 
@@ -1014,7 +1024,7 @@ will_deref_and_erase_t asio_server_connection::cancel_sending_response_with_erro
 {
     auto * context = static_cast<linux_request_context*>(response._get_server_context());
     context->m_response_completed.set_exception(eptr);
-    
+
     // always terminate the connection since error happens
     return finish_request_response();
 }
@@ -1025,7 +1035,7 @@ will_deref_and_erase_t asio_server_connection::handle_write_chunked_response(con
     {
         return handle_response_written(response, ec);
     }
-        
+
     auto readbuf = response._get_impl()->instream().streambuf();
     if (readbuf.is_eof())
     {
