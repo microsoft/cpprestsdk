@@ -182,7 +182,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="$(CasablancaSrcDir)\build\vs141.uwp\cpprest141.uwp.vcxproj">
-      <Project>{198ed804-2655-4d92-8104-c220e3ea9452}</Project>
+      <Project>{36d79e79-7e9e-4b3a-88a3-9f9b295c80b9}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
