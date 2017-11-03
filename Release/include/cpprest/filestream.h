@@ -360,7 +360,7 @@ namespace details {
 
             size_t written = _putn_fsb(m_info, callback, ptr, count, sizeof(_CharType));
 
-            if ( written != 0 && written != -1 )
+            if ( written != 0 && written != size_t(-1) )
             {
                 delete callback;
                 written = written/sizeof(_CharType);
@@ -572,7 +572,7 @@ namespace details {
 
                 size_t read = _getn_fsb(m_info, callback, ptr, count, sizeof(_CharType));
 
-                if ( read != 0 && read != -1)
+                if ( read != 0 && read != size_t(-1) )
                 {
                     delete callback;
                     pplx::extensibility::scoped_recursive_lock_t lck(m_info->m_lock);
