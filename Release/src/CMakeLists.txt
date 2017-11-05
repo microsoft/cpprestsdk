@@ -12,6 +12,7 @@ source_group("Header Files\\pplx" FILES ${HEADERS_PPLX})
 source_group("Header Files\\cpprest\\details" FILES ${HEADERS_DETAILS})
 
 list(FILTER HEADERS_PPLX EXCLUDE REGEX "threadpool\\.h")
+
 set(SOURCES
   ${HEADERS_CPPREST}
   ${HEADERS_PPLX}
@@ -36,7 +37,6 @@ set(SOURCES
   pplx/pplx.cpp
   uri/uri.cpp
   uri/uri_builder.cpp
-  uri/uri_parser.cpp
   utilities/asyncrt_utils.cpp
   utilities/base64.cpp
   utilities/web_utilities.cpp

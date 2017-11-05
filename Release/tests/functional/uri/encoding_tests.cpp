@@ -33,11 +33,11 @@ TEST(encode_string)
 
 TEST(decode_string)
 {
-    utility::string_t result = uri::encode_uri(L"first%second\u4e2d\u56fd");
-    VERIFY_ARE_EQUAL(L"first%second\u4e2d\u56fd", uri::decode(result));
+    utility::string_t result = uri::decode(U("first%25second%E4%B8%AD%E5%9B%BD"));
+    VERIFY_ARE_EQUAL(L"first%second\u4e2d\u56fd", result);
 
-    result = uri::encode_uri(U("first%second"));
-    VERIFY_ARE_EQUAL(U("first%second"), uri::decode(result));
+    result = uri::decode(U("first%25second"));
+    VERIFY_ARE_EQUAL(U("first%second"), result);
 }
 #pragma warning (pop)
 #endif

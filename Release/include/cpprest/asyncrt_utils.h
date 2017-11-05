@@ -269,6 +269,16 @@ namespace conversions
             return val;
         }
 
+        template<typename Source>
+        utf8string print_utf8string(const Source& val)
+        {
+            return conversions::to_utf8string(print_string(val));
+        }
+        inline const utf8string& print_utf8string(const utf8string& val)
+        {
+            return val;
+        }
+
         template <typename Target>
         Target scan_string(const utility::string_t &str)
         {
@@ -407,9 +417,9 @@ class windows_category_impl : public std::error_category
 public:
     virtual const char *name() const CPPREST_NOEXCEPT { return "windows"; }
 
-    _ASYNCRTIMP virtual std::string message(int errorCode) const CPPREST_NOEXCEPT;
+    virtual std::string message(int errorCode) const CPPREST_NOEXCEPT;
 
-    _ASYNCRTIMP virtual std::error_condition default_error_condition(int errorCode) const CPPREST_NOEXCEPT;
+    virtual std::error_condition default_error_condition(int errorCode) const CPPREST_NOEXCEPT;
 };
 
 /// <summary>

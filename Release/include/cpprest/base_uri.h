@@ -27,58 +27,13 @@ namespace web {
     {
         struct uri_components
         {
-            uri_components() : m_path(_XPLATSTR("/")), m_port(-1)
-            {}
+            uri_components() : m_path(_XPLATSTR("/")), m_port(-1) {}
 
-            uri_components(const uri_components &other) :
-                m_scheme(other.m_scheme),
-                m_host(other.m_host),
-                m_user_info(other.m_user_info),
-                m_path(other.m_path),
-                m_query(other.m_query),
-                m_fragment(other.m_fragment),
-                m_port(other.m_port)
-            {}
+            uri_components(const uri_components &other) = default;
+            uri_components & operator=(const uri_components &other) = default;
 
-            uri_components & operator=(const uri_components &other)
-            {
-                if (this != &other)
-                {
-                    m_scheme = other.m_scheme;
-                    m_host = other.m_host;
-                    m_user_info = other.m_user_info;
-                    m_path = other.m_path;
-                    m_query = other.m_query;
-                    m_fragment = other.m_fragment;
-                    m_port = other.m_port;
-                }
-                return *this;
-            }
-
-            uri_components(uri_components &&other) CPPREST_NOEXCEPT :
-                m_scheme(std::move(other.m_scheme)),
-                m_host(std::move(other.m_host)),
-                m_user_info(std::move(other.m_user_info)),
-                m_path(std::move(other.m_path)),
-                m_query(std::move(other.m_query)),
-                m_fragment(std::move(other.m_fragment)),
-                m_port(other.m_port)
-            {}
-
-            uri_components & operator=(uri_components &&other) CPPREST_NOEXCEPT
-            {
-                if (this != &other)
-                {
-                    m_scheme = std::move(other.m_scheme);
-                    m_host = std::move(other.m_host);
-                    m_user_info = std::move(other.m_user_info);
-                    m_path = std::move(other.m_path);
-                    m_query = std::move(other.m_query);
-                    m_fragment = std::move(other.m_fragment);
-                    m_port = other.m_port;
-                }
-                return *this;
-            }
+            uri_components(uri_components &&other) = default;
+            uri_components & operator=(uri_components &&other) = default;
 
             _ASYNCRTIMP utility::string_t join();
 
@@ -174,9 +129,8 @@ namespace web {
         /// Encodes a string by converting all characters except for RFC 3986 unreserved characters to their
         /// hexadecimal representation.
         /// </summary>
-        /// <param name="utf8data">The UTF-8 string data.</param>
         /// <returns>The encoded string.</returns>
-        _ASYNCRTIMP static utility::string_t __cdecl encode_data_string(const utility::string_t &utf8data);
+        _ASYNCRTIMP static utility::string_t __cdecl encode_data_string(const utility::string_t &data);
 
         /// <summary>
         /// Decodes an encoded string.
@@ -202,6 +156,9 @@ namespace web {
         /// <summary>
         /// Validates a string as a URI.
         /// </summary>
+        /// <remarks>
+        /// This function accepts both uris ('http://msn.com') and uri relative-references ('path1/path2?query').
+        /// </remarks>
         /// <param name="uri_string">The URI string to be validated.</param>
         /// <returns><c>true</c> if the given string represents a valid URI, <c>false</c> otherwise.</returns>
         _ASYNCRTIMP static bool __cdecl validate(const utility::string_t &uri_string);
@@ -209,13 +166,7 @@ namespace web {
         /// <summary>
         /// Creates an empty uri
         /// </summary>
-        uri() { m_uri = _XPLATSTR("/");};
-
-        /// <summary>
-        /// Creates a URI from the given URI components.
-        /// </summary>
-        /// <param name="components">A URI components object to create the URI instance.</param>
-        _ASYNCRTIMP uri(const details::uri_components &components);
+        uri() : m_uri(_XPLATSTR("/")) {}
 
         /// <summary>
         /// Creates a URI from the given encoded string. This will throw an exception if the string
@@ -234,44 +185,22 @@ namespace web {
         /// <summary>
         /// Copy constructor.
         /// </summary>
-        uri(const uri &other) :
-            m_uri(other.m_uri),
-            m_components(other.m_components)
-        {}
+        uri(const uri &other) = default;
 
         /// <summary>
         /// Copy assignment operator.
         /// </summary>
-        uri & operator=(const uri &other)
-        {
-            if (this != &other)
-            {
-                m_uri = other.m_uri;
-                m_components = other.m_components;
-            }
-            return *this;
-        }
+        uri & operator=(const uri &other) = default;
 
         /// <summary>
         /// Move constructor.
         /// </summary>
-        uri(uri &&other) CPPREST_NOEXCEPT :
-            m_uri(std::move(other.m_uri)),
-            m_components(std::move(other.m_components))
-        {}
+        uri(uri &&other) = default;
 
         /// <summary>
         /// Move assignment operator
         /// </summary>
-        uri & operator=(uri &&other) CPPREST_NOEXCEPT
-        {
-            if (this != &other)
-            {
-                m_uri = std::move(other.m_uri);
-                m_components = std::move(other.m_components);
-            }
-            return *this;
-        }
+        uri & operator=(uri &&other) = default;
 
         /// <summary>
         /// Get the scheme component of the URI as an encoded string.
@@ -372,7 +301,7 @@ namespace web {
             return !(is_empty() || is_host_loopback() || is_host_wildcard());
         }
 
-        // <summary>
+        /// <summary>
         /// A default port is one where the port is unspecified, and will be determined by the operating system.
         /// The choice of default port may be dictated by the scheme (http -> 80) or not.
         /// </summary>
@@ -434,8 +363,14 @@ namespace web {
     private:
         friend class uri_builder;
 
-        // Encodes all characters not in given set determined by given function.
-        _ASYNCRTIMP static utility::string_t __cdecl encode_impl(const utility::string_t &raw, const std::function<bool __cdecl(int)>& should_encode);
+        /// <summary>
+        /// Creates a URI from the given URI components.
+        /// </summary>
+        /// <param name="components">A URI components object to create the URI instance.</param>
+        _ASYNCRTIMP uri(const details::uri_components &components);
+
+        // Used by uri_builder
+        static utility::string_t __cdecl encode_query_impl(const utf8string& raw);
 
         utility::string_t m_uri;
         details::uri_components m_components;

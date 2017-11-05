@@ -83,6 +83,20 @@ uri_builder &uri_builder::append_query(const utility::string_t &query, bool is_e
     return *this;
 }
 
+uri_builder &uri_builder::set_port(const utility::string_t &port)
+{
+    utility::istringstream_t portStream(port);
+    portStream.imbue(std::locale::classic());
+    int port_tmp;
+    portStream >> port_tmp;
+    if (portStream.fail() || portStream.bad())
+    {
+        throw std::invalid_argument("invalid port argument, must be non empty string containing integer value");
+    }
+    m_uri.m_port = port_tmp;
+    return *this;
+}
+
 uri_builder &uri_builder::append(const http::uri &relative_uri)
 {
     append_path(relative_uri.path());
@@ -106,5 +120,19 @@ bool uri_builder::is_valid()
     return uri::validate(m_uri.join());
 }
 
-} // namespace web
+void uri_builder::append_query_encode_impl(const utility::string_t & name, const utf8string & value)
+{
+    utility::string_t encodedQuery = uri::encode_query_impl(utility::conversions::to_utf8string(name));
+    encodedQuery.append(_XPLATSTR("="));
+    encodedQuery.append(uri::encode_query_impl(value));
 
+    // The query key value pair was already encoded by us or the user separately.
+    append_query(encodedQuery, false);
+}
+
+void uri_builder::append_query_no_encode_impl(const utility::string_t & name, const utility::string_t & value)
+{
+    append_query(name + _XPLATSTR("=") + value, false);
+}
+
+} // namespace web
