@@ -1,6 +1,4 @@
-if (NOT WINDOWS_STORE AND NOT WINDOWS_PHONE)
-  include_directories (../utilities/include)
-  
+if(NOT WINDOWS_STORE AND NOT WINDOWS_PHONE)
   set (SOURCES
     building_response_tests.cpp
     connections_and_errors.cpp
@@ -17,6 +15,11 @@ if (NOT WINDOWS_STORE AND NOT WINDOWS_PHONE)
     to_string_tests.cpp
     stdafx.cpp
   )
-  
+
   add_casablanca_test(httplistener_test SOURCES)
-endif ()
+  if(TEST_LIBRARY_TARGET_TYPE STREQUAL "OBJECT")
+    target_include_directories(httplistener_test PRIVATE ../utilities/include)
+  else()
+    target_link_libraries(httplistener_test PRIVATE httptest_utilities)
+  endif()
+endif()

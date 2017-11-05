@@ -1,4 +1,4 @@
-set (SOURCES
+set(SOURCES
   construction_tests.cpp
   negative_parsing_tests.cpp
   parsing_tests.cpp
@@ -7,12 +7,12 @@ set (SOURCES
   json_numbers_tests.cpp
   stdafx.cpp
 )
-if (NOT WINDOWS_STORE AND NOT WINDOWS_PHONE)
+if(NOT WINDOWS_STORE AND NOT WINDOWS_PHONE)
   list(APPEND SOURCES fuzz_tests.cpp)
 endif()
 
+add_casablanca_test(json_test SOURCES)
 if(UNIX AND NOT APPLE)
   cpprest_find_boost()
-  link_libraries(cpprestsdk_boost_internal)
+  target_link_libraries(json_test PRIVATE cpprestsdk_boost_internal)
 endif()
-add_casablanca_test(json_test SOURCES)

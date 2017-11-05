@@ -14,7 +14,7 @@
 #include "cpprest/filestream.h"
 #include "cpprest/producerconsumerstream.h"
 
-#if !defined(_WIN32) || !defined(CPPREST_EXCLUDE_WEBSOCKETS)
+#if (!defined(_WIN32) || !defined(CPPREST_EXCLUDE_WEBSOCKETS)) && !defined(__cplusplus_winrt)
 #include <boost/interprocess/streams/bufferstream.hpp>
 #endif
 
@@ -777,7 +777,7 @@ TEST(sync_on_async_close_with_exception)
     }
 }
 
-#if !defined(_WIN32) || !defined(CPPREST_EXCLUDE_WEBSOCKETS)
+#if (!defined(_WIN32) || !defined(CPPREST_EXCLUDE_WEBSOCKETS)) && !defined(__cplusplus_winrt)
 TEST(ostream_full_throw_exception)
 {
     char tgt_buffer[5];

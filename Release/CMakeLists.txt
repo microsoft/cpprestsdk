@@ -125,11 +125,9 @@ elseif(WIN32)
   if(NOT BUILD_SHARED_LIBS)
     # This causes cmake to not link the test libraries separately, but instead hold onto their object files.
     set(TEST_LIBRARY_TARGET_TYPE OBJECT)
-    set(Casablanca_DEFINITIONS -D_NO_ASYNCRTIMP -D_NO_PPLXIMP CACHE INTERNAL "Definitions for consume casablanca library")
-  else()
-    set(Casablanca_DEFINITIONS "" CACHE INTERNAL "Definitions for consume casablanca library")
   endif()
-  add_definitions(${Casablanca_DEFINITIONS} -D_WINSOCK_DEPRECATED_NO_WARNINGS)
+
+  add_definitions(-D_WINSOCK_DEPRECATED_NO_WARNINGS)
 else()
   message(FATAL_ERROR "-- Unsupported Build Platform.")
 endif()
@@ -198,16 +196,15 @@ function(add_casablanca_test NAME SOURCES_VAR)
   add_library(${NAME} ${TEST_LIBRARY_TARGET_TYPE} ${${SOURCES_VAR}})
   message("-- Added test library ${NAME}")
   if(TEST_LIBRARY_TARGET_TYPE STREQUAL "OBJECT")
-    foreach(_dep httptest_utilities common_utilities unittestpp cpprest)
+    foreach(_dep cpprest common_utilities unittestpp)
       target_include_directories(${NAME} PRIVATE $<TARGET_PROPERTY:${_dep},INTERFACE_INCLUDE_DIRECTORIES>)
       target_compile_definitions(${NAME} PRIVATE $<TARGET_PROPERTY:${_dep},INTERFACE_COMPILE_DEFINITIONS>)
     endforeach()
   else()
-    target_link_libraries(${NAME}
-      httptest_utilities
+    target_link_libraries(${NAME} PRIVATE
+      cpprest
       common_utilities
       unittestpp
-      cpprest
       ${ANDROID_STL_FLAGS}
     )
     if (BUILD_SHARED_LIBS)

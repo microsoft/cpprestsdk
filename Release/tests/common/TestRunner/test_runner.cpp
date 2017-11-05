@@ -336,7 +336,8 @@ static void handle_list_option(bool listProperties, const UnitTest::TestList &te
 
 static void ChangeConsoleTextColorToRed()
 {
-#ifdef _WIN32
+#if defined(__cplusplus_winrt)
+#elif defined(_WIN32)
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x0004 | 0x0008);
 #else
     std::cout << "\033[1;31m";
@@ -345,7 +346,8 @@ static void ChangeConsoleTextColorToRed()
 
 static void ChangeConsoleTextColorToGreen()
 {
-#ifdef _WIN32
+#if defined(__cplusplus_winrt)
+#elif defined(_WIN32)
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x0002 | 0x0008);
 #else
     std::cout << "\033[1;32m";
@@ -354,7 +356,8 @@ static void ChangeConsoleTextColorToGreen()
 
 static void ChangeConsoleTextColorToGrey()
 {
-#ifdef _WIN32
+#if defined(__cplusplus_winrt)
+#elif defined(_WIN32)
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN);
 #else
     std::cout << "\033[0m";
@@ -494,9 +497,15 @@ void run_all_tests(UnitTest::TestRunner& testRunner, testlist_t& testlists)
     }
 }
 
+#if defined(__cplusplus_winrt)
+#include "ROApi.h"
+#endif
+
 int main(int argc, char* argv[])
 {
-#ifdef _WIN32
+#if defined(__cplusplus_winrt)
+    Windows::Foundation::Initialize(RO_INIT_MULTITHREADED);
+#elif defined(_WIN32)
     // Add standard error as output as well.
     _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE | _CRTDBG_MODE_WNDW | _CRTDBG_MODE_DEBUG);
     _CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDERR);
@@ -623,7 +632,8 @@ int main(int argc, char* argv[])
                   << "Took " << elapsedTime << "ms" << std::endl;
     }
 
-#ifdef _WIN32
+#if defined(__cplusplus_winrt)
+#elif defined(_WIN32)
     if(hComBase != nullptr)
     {
         typedef void (WINAPI *RoUnInit)();

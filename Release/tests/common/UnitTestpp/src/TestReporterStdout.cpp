@@ -68,7 +68,8 @@ static void PrintfWrapper(const char* format, ...)
 
 static void ChangeConsoleTextColorToRed()
 {
-#ifdef _WIN32
+#if defined(__cplusplus_winrt)
+#elif defined(_WIN32)
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x0004 | 0x0008);
 #else
     std::cout << "\033[1;31m";
@@ -77,7 +78,8 @@ static void ChangeConsoleTextColorToRed()
 
 static void ChangeConsoleTextColorToGreen()
 {
-#ifdef _WIN32
+#if defined(__cplusplus_winrt)
+#elif defined(_WIN32)
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x0002 | 0x0008);
 #else
     std::cout << "\033[1;32m";
@@ -86,7 +88,8 @@ static void ChangeConsoleTextColorToGreen()
 
 static void ChangeConsoleTextColorToGrey()
 {
-#ifdef _WIN32
+#if defined(__cplusplus_winrt)
+#elif defined(_WIN32)
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN);
 #else
     std::cout << "\033[0m";

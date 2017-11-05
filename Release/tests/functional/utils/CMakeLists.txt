@@ -8,8 +8,8 @@ set(SOURCES
   stdafx.cpp
 )
 
-add_casablanca_test(${LIB}utils_test SOURCES)
+add_casablanca_test(utils_test SOURCES)
 
 if(CMAKE_COMPILER_IS_GNUCXX)
-  target_compile_options(${LIB}utils_test PRIVATE "-Wno-deprecated-declarations")
+  target_compile_options(utils_test PRIVATE "-Wno-deprecated-declarations")
 endif()
