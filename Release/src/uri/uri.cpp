@@ -673,7 +673,7 @@ utility::string_t uri::decode(const utility::string_t &encoded)
 
             raw.push_back(static_cast<char>(decimal_value));
         }
-        else if (*iter > CHAR_MAX || *iter < 0)
+        else if (static_cast<unsigned char>(*iter) > CHAR_MAX)
         {
             throw uri_exception("Invalid encoded URI string, must be entirely ascii");
         }
