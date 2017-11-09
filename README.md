@@ -41,7 +41,6 @@ target_link_libraries(main PRIVATE cpprestsdk::cpprest)
 *   PPL Tasks - A powerful model for composing asynchronous operations based on C++ 11 features
 *   Platforms - Windows desktop, Windows Store, Windows Phone, Ubuntu, OS X, iOS, and Android
 *   Support for Visual Studio 2012, 2013, and 2015 with debugger visualizers
-*   NuGet package with binaries for Windows and Android platforms
 
 ## Contribute Back!
 
