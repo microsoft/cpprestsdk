@@ -731,7 +731,7 @@ public:
 
     _ASYNCRTIMP void set_request_uri(const uri&);
 
-    const http_version& http_version() const { return m_http_version; }
+    const http::http_version& http_version() const { return m_http_version; }
 
     const utility::string_t& remote_address() const { return m_remote_address; }
 
@@ -901,7 +901,7 @@ public:
     /// Returns the HTTP protocol version of this request message.
     /// </summary>
     /// <returns>The HTTP protocol version.</returns>
-    const http_version& http_version() const { return _m_impl->http_version(); }
+    const http::http_version& http_version() const { return _m_impl->http_version(); }
 
     /// <summary>
     /// Returns a string representation of the remote IP address.
