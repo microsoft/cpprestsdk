@@ -151,6 +151,24 @@ public:
     }
 
     /// <summary>
+    /// Sets the User Agent to be used for the connection
+    /// </summary>
+    /// <param name="name">The User Agent to use, as a string.</param>
+    void set_user_agent(const utf8string &user_agent)
+    {
+        m_user_agent = user_agent;
+    }
+
+    /// <summary>
+    /// Gets the User Agent to be used for the connection
+    /// </summary>
+    /// <returns>User Agent as a string.</returns>
+    const utf8string & user_agent() const
+    {
+        return m_user_agent;
+    }
+
+    /// <summary>
     /// Gets the headers of the HTTP request message used in the WebSocket protocol handshake.
     /// </summary>
     /// <returns>HTTP headers for the WebSocket protocol handshake.</returns>
@@ -206,6 +224,7 @@ private:
     bool m_sni_enabled;
     utf8string m_sni_hostname;
     bool m_validate_certificates;
+    utf8string m_user_agent;
 };
 
 /// <summary>

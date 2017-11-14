@@ -312,6 +312,13 @@ public:
             shutdown_wspp_impl<WebsocketConfigType>(con_hdl, false);
         });
 
+        // Set User Agent specified by the user. This needs to happen before any connection is created
+        const auto & user_agent = m_config.user_agent();
+        if (!user_agent.empty())
+        {
+            client.set_user_agent(user_agent);
+        }
+
         // Get the connection handle to save for later, have to create temporary
         // because type erasure occurs with connection_hdl.
         websocketpp::lib::error_code ec;
