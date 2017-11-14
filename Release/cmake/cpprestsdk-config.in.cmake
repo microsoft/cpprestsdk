@@ -7,7 +7,7 @@ if(@CPPREST_USES_OPENSSL@)
   find_dependency(OpenSSL)
 endif()
 
-if(@CPPREST_USES_BOOST@)
+if(@CPPREST_USES_BOOST@ AND OFF)
   if(UNIX)
     find_dependency(Boost COMPONENTS random system thread filesystem chrono atomic date_time regex)
   else()
