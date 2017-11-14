@@ -11,7 +11,8 @@ source_group("Header Files\\cpprest" FILES ${HEADERS_CPPREST})
 source_group("Header Files\\pplx" FILES ${HEADERS_PPLX})
 source_group("Header Files\\cpprest\\details" FILES ${HEADERS_DETAILS})
 
-list(FILTER HEADERS_PPLX EXCLUDE REGEX "threadpool\\.h")
+file(GLOB HEADER_PPLX_THREADPOOL "../include/pplx/threadpool.h")
+list(REMOVE_ITEM HEADERS_PPLX ${HEADER_PPLX_THREADPOOL})
 
 set(SOURCES
   ${HEADERS_CPPREST}
@@ -163,14 +164,12 @@ endif()
 if(MSVC)
   get_target_property(_srcs cpprest SOURCES)
 
-  set_source_files_properties(pch/stdafx.cpp PROPERTIES COMPILE_FLAGS "/Ycstdafx.h")
-  list(FILTER _srcs EXCLUDE REGEX "pch/stdafx\\.cpp$")
-
   if(NOT CMAKE_GENERATOR MATCHES "Visual Studio .*")
     set_property(SOURCE pch/stdafx.cpp APPEND PROPERTY OBJECT_OUTPUTS "${CMAKE_CURRENT_BINARY_DIR}/stdafx.pch")
     set_property(SOURCE ${_srcs} APPEND PROPERTY OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/stdafx.pch")
   endif()
 
+  set_source_files_properties(pch/stdafx.cpp PROPERTIES COMPILE_FLAGS "/Ycstdafx.h")
   target_sources(cpprest PRIVATE pch/stdafx.cpp)
   target_compile_options(cpprest PRIVATE /Yustdafx.h /Zm200)
 endif()
