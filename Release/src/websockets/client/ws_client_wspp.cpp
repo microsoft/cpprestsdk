@@ -127,7 +127,7 @@ public:
 #endif
     {}
 
-    ~wspp_callback_client()
+    ~wspp_callback_client() CPPREST_NOEXCEPT
     {
         _ASSERTE(m_state < DESTROYED);
         std::unique_lock<std::mutex> lock(m_wspp_client_lock);
@@ -730,6 +730,7 @@ private:
     };
     struct websocketpp_client : websocketpp_client_base
     {
+        ~websocketpp_client() CPPREST_NOEXCEPT {}
         websocketpp::client<websocketpp::config::asio_client> & non_tls_client() override
         {
             return m_client;
@@ -739,6 +740,7 @@ private:
     };
     struct websocketpp_tls_client : websocketpp_client_base
     {
+        ~websocketpp_tls_client() CPPREST_NOEXCEPT {}
         websocketpp::client<websocketpp::config::asio_tls_client> & tls_client() override
         {
             return m_client;
