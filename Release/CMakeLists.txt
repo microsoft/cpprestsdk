@@ -163,6 +163,9 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
   set(LD_FLAGS "${LD_FLAGS} -Wl,-z,defs")
 
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fno-strict-aliasing")
+  if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.8)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive")
+  endif()
 
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
   message("-- Setting msvc options")
