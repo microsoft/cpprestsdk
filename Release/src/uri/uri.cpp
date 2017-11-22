@@ -107,20 +107,6 @@ namespace
     }
 
     /// <summary>
-    /// Legal characters in the host portion include:
-    /// - Any unreserved character
-    /// - The percent character ('%'), and thus any percent-endcoded octet
-    /// - The sub-delimiters
-    /// - ':' (colon)
-    /// - '[' (open bracket)
-    /// - ']' (close bracket)
-    /// </summary>
-    inline bool is_host_character(int c)
-    {
-        return is_unreserved(c) || is_sub_delim(c) || c == '%' || c == ':' || c == '[' || c == ']';
-    }
-
-    /// <summary>
     /// Legal characters in the authority portion include:
     /// - Any unreserved character
     /// - The percent character ('%'), and thus any percent-endcoded octet
@@ -653,19 +639,20 @@ static int hex_char_digit_to_decimal_char(int hex)
     return decimal;
 }
 
-utility::string_t uri::decode(const utility::string_t &encoded)
+template<class String>
+static std::string decode_template(const String& encoded)
 {
-    utf8string raw;
-    for(auto iter = encoded.begin(); iter != encoded.end(); ++iter)
+    std::string raw;
+    for (auto iter = encoded.begin(); iter != encoded.end(); ++iter)
     {
-        if(*iter == _XPLATSTR('%'))
+        if (*iter == '%')
         {
-            if(++iter == encoded.end())
+            if (++iter == encoded.end())
             {
                 throw uri_exception("Invalid URI string, two hexadecimal digits must follow '%'");
             }
             int decimal_value = hex_char_digit_to_decimal_char(static_cast<int>(*iter)) << 4;
-            if(++iter == encoded.end())
+            if (++iter == encoded.end())
             {
                 throw uri_exception("Invalid URI string, two hexadecimal digits must follow '%'");
             }
@@ -673,7 +660,7 @@ utility::string_t uri::decode(const utility::string_t &encoded)
 
             raw.push_back(static_cast<char>(decimal_value));
         }
-        else if (*iter > CHAR_MAX || *iter < 0)
+        else if (*iter > 127 || *iter < 0)
         {
             throw uri_exception("Invalid encoded URI string, must be entirely ascii");
         }
@@ -683,7 +670,12 @@ utility::string_t uri::decode(const utility::string_t &encoded)
             raw.push_back(static_cast<char>(*iter));
         }
     }
-    return to_string_t(raw);
+    return raw;
+}
+
+utility::string_t uri::decode(const utility::string_t &encoded)
+{
+    return to_string_t(decode_template(encoded));
 }
 
 std::vector<utility::string_t> uri::split_path(const utility::string_t &path)
