@@ -198,7 +198,7 @@ TEST(ignore_server_cert_invalid,
         http_client_config config;
         config.set_validate_certificates(false);
         config.set_timeout(std::chrono::seconds(1));
-        http_client client(U("https://www.pcwebshop.co.uk/"), config);
+        http_client client(U("https://expired.badssl.com/"), config);
 
         auto request = client.request(methods::GET).get();
         VERIFY_ARE_EQUAL(status_codes::OK, request.status_code());
