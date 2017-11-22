@@ -34,7 +34,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\pplx\pplx.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\uri\uri.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\uri\uri_builder.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\uri\uri_parser.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\utilities\asyncrt_utils.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\utilities\base64.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\utilities\web_utilities.cpp" />
@@ -58,7 +57,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\nosal.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\resource.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\SafeInt3.hpp" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\uri_parser.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\web_utilities.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\x509_cert_utilities.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\filestream.h" />
