@@ -44,7 +44,9 @@
 #include <unordered_set>
 #include <memory>
 
-#if !defined(__GNUC__) || (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8))
+#if defined(__GNUC__)
+
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)
 #define AND_CAPTURE_MEMBER_FUNCTION_POINTERS
 #else
 // GCC Bug 56222 - Pointer to member in lambda should not require this to be captured
@@ -52,6 +54,21 @@
 // GCC Bug 51494 - Legal program rejection - capturing "this" when using static method inside lambda
 // See https://gcc.gnu.org/bugzilla/show_bug.cgi?id=51494
 #define AND_CAPTURE_MEMBER_FUNCTION_POINTERS , this
+#endif
+
+#elif defined(_MSC_VER)
+
+#if _MSC_VER >= 1900
+#define AND_CAPTURE_MEMBER_FUNCTION_POINTERS
+#else
+// This bug also afflicts VS2013 which incorrectly reports "warning C4573: the usage of 'symbol' requires the compiler to capture 'this' but the current default capture mode does not allow it"
+#define AND_CAPTURE_MEMBER_FUNCTION_POINTERS , this
+#endif
+
+#else
+
+#define AND_CAPTURE_MEMBER_FUNCTION_POINTERS
+
 #endif
 
 using boost::asio::ip::tcp;
