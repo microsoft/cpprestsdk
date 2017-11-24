@@ -18,8 +18,9 @@
 #include "test_websocket_server.h"
 
 #ifdef _WIN32
+#pragma warning(disable : 4503) // generated too late for disable to be effective inside push/pop
 #pragma warning( push )
-#pragma warning(disable : 4100 4127 4996 4512 4701 4267 4067 4503 4005)
+#pragma warning(disable : 4100 4127 4996 4512 4701 4267 4067 4005)
 #define _WEBSOCKETPP_CPP11_STL_
 #define _WEBSOCKETPP_CONSTEXPR_TOKEN_
 #if _MSC_VER < 1900
