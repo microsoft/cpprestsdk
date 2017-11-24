@@ -48,6 +48,16 @@ struct threadpool_impl final : crossplat::threadpool
             pthread_t t = *iter;
             void* res;
             pthread_join(t, &res);
+#elif defined (_WIN32) && defined(_WINDLL)
+            if (boost::asio::detail::win_thread::terminate_threads())
+            {
+                ::TerminateThread(iter->native_handle(), 0);
+                iter->detach();
+            }
+            else
+            {
+                iter->join();
+            }
 #else
             iter->join();
 #endif
@@ -130,6 +140,35 @@ threadpool& threadpool::shared_instance()
 {
     abort_if_no_jvm();
     static threadpool_impl s_shared(40);
+    return s_shared;
+}
+
+#elif defined (_WIN32) && defined(_WINDLL)
+
+// if built as a DLL, the threadpool shared instance will be destroyed at DLL_PROCESS_DETACH,
+// at which stage joining threads causes deadlock, hence this dance
+threadpool& threadpool::shared_instance()
+{
+    static bool terminate_threads = false;
+    static struct restore_terminate_threads
+    {
+        ~restore_terminate_threads()
+        {
+            boost::asio::detail::win_thread::set_terminate_threads(terminate_threads);
+        }
+    } destroyed_after;
+
+    static threadpool_impl s_shared(40);
+
+    static struct enforce_terminate_threads
+    {
+        ~enforce_terminate_threads()
+        {
+            terminate_threads = boost::asio::detail::win_thread::terminate_threads();
+            boost::asio::detail::win_thread::set_terminate_threads(true);
+        }
+    } destroyed_before;
+
     return s_shared;
 }
 
