@@ -430,7 +430,7 @@ TEST_FIXTURE(uri_address, listener_config_creation)
     }
 }
 
-#if !defined(_WIN32) && !defined(__cplusplus_winrt)
+#if !defined(_WIN32) && !defined(__cplusplus_winrt) || defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
 
 TEST_FIXTURE(uri_address, create_https_listener_get, "Ignore", "github 209")
 {
@@ -545,7 +545,6 @@ XzJTD4slrGSJrcpLt/g/Jqqdjg==
 
             for (auto&& h : all_headers)
             {
-                std::cout << "HEADER - " << h.first << ": " << h.second << std::endl;
                 VERIFY_IS_TRUE(request.headers().has(h.first));
                 VERIFY_ARE_EQUAL(h.second, request.headers().find(h.first)->second);
             }
