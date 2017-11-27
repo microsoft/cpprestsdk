@@ -9,16 +9,7 @@
 #if !defined(CPPREST_EXCLUDE_WEBSOCKETS) || !defined(_WIN32)
 #include "pplx/threadpool.h"
 
-#if !defined(_WIN32)
-#define CPPREST_PTHREADS
-#endif
-
-#if defined(CPPREST_PTHREADS)
-#include <pthread.h>
-#else
-#include <thread>
-#endif
-
+#include <boost/asio/detail/thread.hpp>
 #include <vector>
 
 #if defined(__ANDROID__)
@@ -44,37 +35,14 @@ struct threadpool_impl final : crossplat::threadpool
         m_service.stop();
         for (auto iter = m_threads.begin(); iter != m_threads.end(); ++iter)
         {
-#if defined(CPPREST_PTHREADS)
-            pthread_t t = *iter;
-            void* res;
-            pthread_join(t, &res);
-#elif defined (_WIN32) && defined(_WINDLL)
-            if (boost::asio::detail::win_thread::terminate_threads())
-            {
-                ::TerminateThread(iter->native_handle(), 0);
-                iter->detach();
-            }
-            else
-            {
-                iter->join();
-            }
-#else
-            iter->join();
-#endif
+            (*iter)->join();
         }
     }
 
 private:
     void add_thread()
     {
-#ifdef CPPREST_PTHREADS
-        pthread_t t;
-        auto result = pthread_create(&t, nullptr, &thread_start, this);
-        if (result == 0)
-            m_threads.push_back(t);
-#else
-        m_threads.push_back(std::thread(&thread_start, this));
-#endif
+        m_threads.push_back(std::unique_ptr<boost::asio::detail::thread>(new boost::asio::detail::thread([&]{ thread_start(this); })));
     }
 
 #if defined(__ANDROID__)
@@ -99,11 +67,7 @@ private:
         return arg;
     }
 
-#if defined(CPPREST_PTHREADS)
-    std::vector<pthread_t> m_threads;
-#else
-    std::vector<std::thread> m_threads;
-#endif
+    std::vector<std::unique_ptr<boost::asio::detail::thread>> m_threads;
     boost::asio::io_service::work m_work;
 };
 }
@@ -154,7 +118,7 @@ threadpool& threadpool::shared_instance()
     {
         ~restore_terminate_threads()
         {
-            boost::asio::detail::win_thread::set_terminate_threads(terminate_threads);
+            boost::asio::detail::thread::set_terminate_threads(terminate_threads);
         }
     } destroyed_after;
 
@@ -164,8 +128,8 @@ threadpool& threadpool::shared_instance()
     {
         ~enforce_terminate_threads()
         {
-            terminate_threads = boost::asio::detail::win_thread::terminate_threads();
-            boost::asio::detail::win_thread::set_terminate_threads(true);
+            terminate_threads = boost::asio::detail::thread::terminate_threads();
+            boost::asio::detail::thread::set_terminate_threads(true);
         }
     } destroyed_before;
 
