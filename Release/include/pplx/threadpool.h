@@ -67,7 +67,7 @@ public:
 
     threadpool(size_t n)
       : m_service(n),
-        m_work(m_service)
+        m_work(new boost::asio::io_service::work(m_service))
     {
         for (size_t i = 0; i < n; i++)
             add_thread();
@@ -77,7 +77,7 @@ public:
 
     ~threadpool()
     {
-        m_service.stop();
+        m_work.reset();
         for (auto iter = m_threads.begin(); iter != m_threads.end(); ++iter)
         {
             pthread_t t = *iter;
@@ -155,7 +155,7 @@ private:
 
     std::vector<pthread_t> m_threads;
     boost::asio::io_service m_service;
-    boost::asio::io_service::work m_work;
+    std::unique_ptr<boost::asio::io_service::work> m_work;
 };
 
 }
