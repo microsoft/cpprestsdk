@@ -26,13 +26,13 @@ namespace Concurrency
 {
     namespace details
     {
-        template<bool B=true>
-        pplx::task<bool> _do_while(std::function<pplx::task<bool>(void)> func)
+        template<class F, class T = bool>
+        pplx::task<T> _do_while(F func)
         {
-            pplx::task<bool> first = func();
-            return first.then([=](bool guard) -> pplx::task<bool> {
+            pplx::task<T> first = func();
+            return first.then([=](bool guard) -> pplx::task<T> {
                 if (guard)
-                    return Concurrency::details::_do_while<B>(func);
+                    return Concurrency::details::_do_while<F,T>(func);
                 else
                     return first;
             });
@@ -1200,3 +1200,4 @@ namespace streams
     };
 
 }}
+
