@@ -6,10 +6,10 @@ The C++ REST SDK is a Microsoft project for cloud-based client-server communicat
 
 [![Vcpkg package](https://repology.org/badge/version-for-repo/vcpkg/cpprestsdk.svg)](https://repology.org/metapackage/cpprestsdk)
 [![Homebrew package](https://repology.org/badge/version-for-repo/homebrew/cpprestsdk.svg)](https://repology.org/metapackage/cpprestsdk)
-[![Ubuntu 18.04 package](https://repology.org/badge/version-for-repo/ubuntu_18_04/casablanca.svg)](https://repology.org/metapackage/casablanca)
-[![Fedora Rawhide package](https://repology.org/badge/version-for-repo/fedora_rawhide/cpprest.svg)](https://repology.org/metapackage/cpprest)
-[![openSUSE Tumbleweed package](https://repology.org/badge/version-for-repo/opensuse_tumbleweed/cpprest.svg)](https://repology.org/metapackage/cpprest)
-[![Debian Testing package](https://repology.org/badge/version-for-repo/debian_testing/casablanca.svg)](https://repology.org/metapackage/casablanca)
+[![Ubuntu 18.04 package](https://repology.org/badge/version-for-repo/ubuntu_18_04/cpprestsdk.svg)](https://repology.org/metapackage/cpprestsdk)
+[![Fedora Rawhide package](https://repology.org/badge/version-for-repo/fedora_rawhide/cpprestsdk.svg)](https://repology.org/metapackage/cpprestsdk)
+[![openSUSE Tumbleweed package](https://repology.org/badge/version-for-repo/opensuse_tumbleweed/cpprestsdk.svg)](https://repology.org/metapackage/cpprestsdk)
+[![Debian Testing package](https://repology.org/badge/version-for-repo/debian_testing/cpprestsdk.svg)](https://repology.org/metapackage/cpprestsdk)
 
 With [vcpkg](https://github.com/Microsoft/vcpkg) on Windows
 ```
