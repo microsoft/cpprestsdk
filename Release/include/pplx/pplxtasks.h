@@ -60,6 +60,7 @@ void cpprest_init(JavaVM*);
 #include <algorithm>
 
 #if defined(_MSC_VER)
+#include <intrin.h>
 #if defined(__cplusplus_winrt)
 #include <windows.h>
 #include <ctxtcall.h>
@@ -6698,7 +6699,7 @@ auto when_all(_Iterator _Begin, _Iterator _End, const task_options& _TaskOptions
 /// <seealso cref="Task Parallelism (Concurrency Runtime)"/>
 /**/
 template<typename _ReturnType>
-task<std::vector<_ReturnType>> operator&&(const task<_ReturnType> & _Lhs, const task<_ReturnType> & _Rhs)
+auto operator&&(const task<_ReturnType> & _Lhs, const task<_ReturnType> & _Rhs)
 {
     task<_ReturnType> _PTasks[2] = {_Lhs, _Rhs};
     return when_all(_PTasks, _PTasks+2);
@@ -6730,7 +6731,7 @@ task<std::vector<_ReturnType>> operator&&(const task<_ReturnType> & _Lhs, const 
 /// <seealso cref="Task Parallelism (Concurrency Runtime)"/>
 /**/
 template<typename _ReturnType>
-task<std::vector<_ReturnType>> operator&&(const task<std::vector<_ReturnType>> & _Lhs, const task<_ReturnType> & _Rhs)
+auto operator&&(const task<std::vector<_ReturnType>> & _Lhs, const task<_ReturnType> & _Rhs)
 {
     return details::_WhenAllVectorAndValue(_Lhs, _Rhs, true);
 }
@@ -6761,7 +6762,7 @@ task<std::vector<_ReturnType>> operator&&(const task<std::vector<_ReturnType>> &
 /// <seealso cref="Task Parallelism (Concurrency Runtime)"/>
 /**/
 template<typename _ReturnType>
-task<std::vector<_ReturnType>> operator&&(const task<_ReturnType> & _Lhs, const task<std::vector<_ReturnType>> & _Rhs)
+auto operator&&(const task<_ReturnType> & _Lhs, const task<std::vector<_ReturnType>> & _Rhs)
 {
     return details::_WhenAllVectorAndValue(_Rhs, _Lhs, false);
 }
@@ -6792,40 +6793,9 @@ task<std::vector<_ReturnType>> operator&&(const task<_ReturnType> & _Lhs, const 
 /// <seealso cref="Task Parallelism (Concurrency Runtime)"/>
 /**/
 template<typename _ReturnType>
-task<std::vector<_ReturnType>> operator&&(const task<std::vector<_ReturnType>> & _Lhs, const task<std::vector<_ReturnType>> & _Rhs)
+auto operator&&(const task<std::vector<_ReturnType>> & _Lhs, const task<std::vector<_ReturnType>> & _Rhs)
 {
     task<std::vector<_ReturnType>> _PTasks[2] = {_Lhs, _Rhs};
-    return when_all(_PTasks, _PTasks+2);
-}
-
-/// <summary>
-///     Creates a task that will complete succesfully when both of the tasks supplied as arguments complete successfully.
-/// </summary>
-/// <typeparam name="_ReturnType">
-///     The type of the returned task.
-/// </typeparam>
-/// <param name="_Lhs">
-///     The first task to combine into the resulting task.
-/// </param>
-/// <param name="_Rhs">
-///     The second task to combine into the resulting task.
-/// </param>
-/// <returns>
-///     A task that completes successfully when both of the input tasks have completed successfully. If the input tasks are of type <c>T</c>,
-///     the output of this function will be a <c>task&lt;std::vector&lt;T&gt;&gt;</c>. If the input tasks are of type <c>void</c> the output
-///     task will also be a <c>task&lt;void&gt;</c>.
-///     <para> To allow for a construct of the sort taskA &amp;&amp; taskB &amp;&amp; taskC, which are combined in pairs, the &amp;&amp; operator
-///     produces a <c>task&lt;std::vector&lt;T&gt;&gt;</c> if either one or both of the tasks are of type <c>task&lt;std::vector&lt;T&gt;&gt;</c>.</para>
-/// </returns>
-/// <remarks>
-///     If one of the tasks is canceled or throws an exception, the returned task will complete early, in the canceled state, and the exception,
-///     if one is encoutered, will be thrown if you call <c>get()</c> or <c>wait()</c> on that task.
-/// </remarks>
-/// <seealso cref="Task Parallelism (Concurrency Runtime)"/>
-/**/
-inline task<void> operator&&(const task<void> & _Lhs, const task<void> & _Rhs)
-{
-    task<void> _PTasks[2] = {_Lhs, _Rhs};
     return when_all(_PTasks, _PTasks+2);
 }
 
@@ -7114,7 +7084,7 @@ auto when_any(_Iterator _Begin, _Iterator _End, cancellation_token _Cancellation
 /// <seealso cref="Task Parallelism (Concurrency Runtime)"/>
 /**/
 template<typename _ReturnType>
-task<_ReturnType> operator||(const task<_ReturnType> & _Lhs, const task<_ReturnType> & _Rhs)
+auto operator||(const task<_ReturnType> & _Lhs, const task<_ReturnType> & _Rhs)
 {
     auto _PParam = new details::_RunAnyParam<std::pair<_ReturnType, size_t>>();
 
@@ -7175,7 +7145,7 @@ task<_ReturnType> operator||(const task<_ReturnType> & _Lhs, const task<_ReturnT
 /// <seealso cref="Task Parallelism (Concurrency Runtime)"/>
 /**/
 template<typename _ReturnType>
-task<std::vector<_ReturnType>> operator||(const task<std::vector<_ReturnType>> & _Lhs, const task<_ReturnType> & _Rhs)
+auto operator||(const task<std::vector<_ReturnType>> & _Lhs, const task<_ReturnType> & _Rhs)
 {
     auto _PParam = new details::_RunAnyParam<std::pair<std::vector<_ReturnType>, details::_CancellationTokenState *>>();
 
@@ -7249,7 +7219,7 @@ task<std::vector<_ReturnType>> operator||(const task<std::vector<_ReturnType>> &
 /// <seealso cref="Task Parallelism (Concurrency Runtime)"/>
 /**/
 template<typename _ReturnType>
-task<std::vector<_ReturnType>> operator||(const task<_ReturnType> & _Lhs, const task<std::vector<_ReturnType>> & _Rhs)
+auto operator||(const task<_ReturnType> & _Lhs, const task<std::vector<_ReturnType>> & _Rhs)
 {
     return _Rhs || _Lhs;
 }
@@ -7280,14 +7250,17 @@ task<std::vector<_ReturnType>> operator||(const task<_ReturnType> & _Lhs, const 
 /// </remarks>
 /// <seealso cref="Task Parallelism (Concurrency Runtime)"/>
 /**/
-inline task<void> operator||(const task<void> & _Lhs, const task<void> & _Rhs)
+template<typename _Ty = task<void>, typename _Pair = std::pair<details::_Unit_type, details::_CancellationTokenState *>>
+_Ty operator||(const task<void> & _Lhs_arg, const task<void> & _Rhs_arg)
 {
-    auto _PParam = new details::_RunAnyParam<std::pair<details::_Unit_type, details::_CancellationTokenState *>>();
+    const _Ty& _Lhs = _Lhs_arg;
+    const _Ty& _Rhs = _Rhs_arg;
+    auto _PParam = new details::_RunAnyParam<_Pair>();
 
     task<std::pair<details::_Unit_type, details::_CancellationTokenState *>> _Any_task_completed(_PParam->_M_Completed, _PParam->_M_cancellationSource.get_token());
     // Chain the return continuation task here to ensure it will get inline execution when _M_Completed.set is called,
     // So that _PParam can be used before it getting deleted.
-    auto _ReturnTask = _Any_task_completed._Then([=](std::pair<details::_Unit_type, details::_CancellationTokenState *> _Ret) { 
+    auto _ReturnTask = _Any_task_completed._Then([=](_Pair _Ret) {
         _ASSERTE(_Ret.second);
         details::_JoinAllTokens_Add(_PParam->_M_cancellationSource, _Ret.second);
     }, nullptr);
@@ -7298,7 +7271,7 @@ inline task<void> operator||(const task<void> & _Lhs, const task<void> & _Rhs)
     }
 
     _PParam->_M_numTasks = 2;
-    auto _Continuation = [_PParam](task<void> _ResultTask) mutable {
+    auto _Continuation = [_PParam](_Ty _ResultTask) mutable {
         //  Dev10 compiler needs this.
         auto _PParam1 = _PParam;
         auto _Func = [&_ResultTask, _PParam1]() {
@@ -7321,18 +7294,10 @@ task<_Ty> task_from_result(_Ty _Param, const task_options& _TaskOptions = task_o
     return create_task(_Tce, _TaskOptions);
 }
 
-// Work around VS 2010 compiler bug
-#if _MSC_VER == 1600
-inline task<bool> task_from_result(bool _Param)
+template<class _Ty = void>
+inline task<_Ty> task_from_result(const task_options& _TaskOptions = task_options())
 {
-    task_completion_event<bool> _Tce;
-    _Tce.set(_Param);
-    return create_task(_Tce, task_options());
-}
-#endif
-inline task<void> task_from_result(const task_options& _TaskOptions = task_options())
-{
-    task_completion_event<void> _Tce;
+    task_completion_event<_Ty> _Tce;
     _Tce.set();
     return create_task(_Tce, _TaskOptions);
 }
@@ -7367,3 +7332,4 @@ namespace concurrency = Concurrency;
 #endif
 
 #endif // _PPLXTASKS_H
+
