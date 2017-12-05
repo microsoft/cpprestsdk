@@ -884,10 +884,7 @@ namespace Concurrency { namespace streams
                     if (ch == '\n')
                     {
                         return buffer.bumpc().then([](
-#ifndef _WIN32 // Required by GCC
-                            typename
-#endif
-                            concurrency::streams::char_traits<CharType>::int_type) { return false; });
+                            typename concurrency::streams::char_traits<CharType>::int_type) { return false; });
                     }
                     return pplx::task_from_result(false);
                 };
@@ -896,10 +893,7 @@ namespace Concurrency { namespace streams
                 {
                     while ( buffer.in_avail() > 0 )
                     {
-#ifndef _WIN32 // Required by GCC, because concurrency::streams::char_traits<CharType> is a dependent scope
-                        typename
-#endif
-                        concurrency::streams::char_traits<CharType>::int_type ch;
+                        typename concurrency::streams::char_traits<CharType>::int_type ch;
 
                         if (_locals->saw_CR)
                         {
