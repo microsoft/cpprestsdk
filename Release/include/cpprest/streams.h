@@ -883,11 +883,11 @@ namespace Concurrency { namespace streams
                     if (ch == concurrency::streams::char_traits<CharType>::eof()) return pplx::task_from_result(false);
                     if (ch == '\n')
                     {
-						return buffer.bumpc().then([](
+                        return buffer.bumpc().then([](
 #ifndef _WIN32 // Required by GCC
-							typename
+                            typename
 #endif
-							concurrency::streams::char_traits<CharType>::int_type) { return false; });
+                            concurrency::streams::char_traits<CharType>::int_type) { return false; });
                     }
                     return pplx::task_from_result(false);
                 };
