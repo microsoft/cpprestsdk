@@ -122,6 +122,7 @@ namespace
     class hostport_listener
     {
     private:
+        int m_backlog;
         std::unique_ptr<boost::asio::ip::tcp::acceptor> m_acceptor;
         std::map<std::string, http_listener_impl* > m_listeners;
         pplx::extensibility::reader_writer_lock_t m_listeners_lock;
@@ -140,7 +141,8 @@ namespace
 
     public:
         hostport_listener(http_linux_server* server, const std::string& hostport, bool is_https, const http_listener_config& config)
-            : m_acceptor()
+            : m_backlog(config.backlog())
+            , m_acceptor()
             , m_listeners()
             , m_listeners_lock()
             , m_connections_lock()
@@ -482,8 +484,11 @@ void hostport_listener::start()
 
     tcp::endpoint endpoint = *resolver.resolve(query);
 
-    m_acceptor.reset(new tcp::acceptor(service, endpoint));
-    m_acceptor->set_option(tcp::acceptor::reuse_address(true));
+    m_acceptor.reset(new tcp::acceptor(service));
+    m_acceptor->open(endpoint.protocol());
+    m_acceptor->set_option(socket_base::reuse_address(true));
+    m_acceptor->bind(endpoint);
+    m_acceptor->listen(0 != m_backlog ? m_backlog : socket_base::max_connections);
 
     auto socket = new ip::tcp::socket(service);
     m_acceptor->async_accept(*socket, [this, socket](const boost::system::error_code& ec)
