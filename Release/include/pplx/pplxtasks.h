@@ -6699,7 +6699,7 @@ auto when_all(_Iterator _Begin, _Iterator _End, const task_options& _TaskOptions
 /// <seealso cref="Task Parallelism (Concurrency Runtime)"/>
 /**/
 template<typename _ReturnType>
-auto operator&&(const task<_ReturnType> & _Lhs, const task<_ReturnType> & _Rhs)
+auto operator&&(const task<_ReturnType> & _Lhs, const task<_ReturnType> & _Rhs) -> decltype(when_all(&_Lhs, &_Lhs))
 {
     task<_ReturnType> _PTasks[2] = {_Lhs, _Rhs};
     return when_all(_PTasks, _PTasks+2);
@@ -6731,7 +6731,7 @@ auto operator&&(const task<_ReturnType> & _Lhs, const task<_ReturnType> & _Rhs)
 /// <seealso cref="Task Parallelism (Concurrency Runtime)"/>
 /**/
 template<typename _ReturnType>
-auto operator&&(const task<std::vector<_ReturnType>> & _Lhs, const task<_ReturnType> & _Rhs)
+auto operator&&(const task<std::vector<_ReturnType>> & _Lhs, const task<_ReturnType> & _Rhs) -> decltype(details::_WhenAllVectorAndValue(_Lhs, _Rhs, true))
 {
     return details::_WhenAllVectorAndValue(_Lhs, _Rhs, true);
 }
@@ -6762,7 +6762,7 @@ auto operator&&(const task<std::vector<_ReturnType>> & _Lhs, const task<_ReturnT
 /// <seealso cref="Task Parallelism (Concurrency Runtime)"/>
 /**/
 template<typename _ReturnType>
-auto operator&&(const task<_ReturnType> & _Lhs, const task<std::vector<_ReturnType>> & _Rhs)
+auto operator&&(const task<_ReturnType> & _Lhs, const task<std::vector<_ReturnType>> & _Rhs) -> decltype(details::_WhenAllVectorAndValue(_Rhs, _Lhs, false))
 {
     return details::_WhenAllVectorAndValue(_Rhs, _Lhs, false);
 }
@@ -6793,7 +6793,7 @@ auto operator&&(const task<_ReturnType> & _Lhs, const task<std::vector<_ReturnTy
 /// <seealso cref="Task Parallelism (Concurrency Runtime)"/>
 /**/
 template<typename _ReturnType>
-auto operator&&(const task<std::vector<_ReturnType>> & _Lhs, const task<std::vector<_ReturnType>> & _Rhs)
+auto operator&&(const task<std::vector<_ReturnType>> & _Lhs, const task<std::vector<_ReturnType>> & _Rhs) -> decltype(when_all(&_Lhs, &_Lhs))
 {
     task<std::vector<_ReturnType>> _PTasks[2] = {_Lhs, _Rhs};
     return when_all(_PTasks, _PTasks+2);
@@ -7084,7 +7084,7 @@ auto when_any(_Iterator _Begin, _Iterator _End, cancellation_token _Cancellation
 /// <seealso cref="Task Parallelism (Concurrency Runtime)"/>
 /**/
 template<typename _ReturnType>
-auto operator||(const task<_ReturnType> & _Lhs, const task<_ReturnType> & _Rhs)
+task<_ReturnType> operator||(const task<_ReturnType> & _Lhs, const task<_ReturnType> & _Rhs)
 {
     auto _PParam = new details::_RunAnyParam<std::pair<_ReturnType, size_t>>();
 
@@ -7145,7 +7145,7 @@ auto operator||(const task<_ReturnType> & _Lhs, const task<_ReturnType> & _Rhs)
 /// <seealso cref="Task Parallelism (Concurrency Runtime)"/>
 /**/
 template<typename _ReturnType>
-auto operator||(const task<std::vector<_ReturnType>> & _Lhs, const task<_ReturnType> & _Rhs)
+task<std::vector<_ReturnType>> operator||(const task<std::vector<_ReturnType>> & _Lhs, const task<_ReturnType> & _Rhs)
 {
     auto _PParam = new details::_RunAnyParam<std::pair<std::vector<_ReturnType>, details::_CancellationTokenState *>>();
 
@@ -7219,7 +7219,7 @@ auto operator||(const task<std::vector<_ReturnType>> & _Lhs, const task<_ReturnT
 /// <seealso cref="Task Parallelism (Concurrency Runtime)"/>
 /**/
 template<typename _ReturnType>
-auto operator||(const task<_ReturnType> & _Lhs, const task<std::vector<_ReturnType>> & _Rhs)
+auto operator||(const task<_ReturnType> & _Lhs, const task<std::vector<_ReturnType>> & _Rhs) -> decltype(_Rhs || _Lhs)
 {
     return _Rhs || _Lhs;
 }
