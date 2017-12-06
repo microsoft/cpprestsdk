@@ -1,19 +1,7 @@
 /***
-* ==++==
+* Copyright (C) Microsoft. All rights reserved.
+* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-* http://www.apache.org/licenses/LICENSE-2.0
-* 
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
 * http_asserts.cpp - Utility class to help verify assertions about http requests and responses.
@@ -21,7 +9,6 @@
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 #include "stdafx.h"
-#include "cpprest/details/http_helpers.h"
 
 using namespace web; using namespace utility;
 using namespace utility::conversions;
@@ -174,7 +161,7 @@ static std::map<utility::string_t, utility::string_t> parse_headers(utility::ist
         const size_t colon_index = header_line.find(U(":"));
         const utility::string_t header_name = header_line.substr(0, colon_index);
         utility::string_t header_value = header_line.substr(colon_index + 1);
-        web::http::details::trim_whitespace(header_value);
+        tests::functional::http::utilities::trim_whitespace(header_value);
         headers[header_name] = header_value;
 
         char c1 = (char)ss.get(), c2 = (char)ss.get();

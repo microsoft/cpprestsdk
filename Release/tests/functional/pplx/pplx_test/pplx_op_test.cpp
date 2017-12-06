@@ -1,19 +1,7 @@
 /***
-* ==++==
+* Copyright (C) Microsoft. All rights reserved.
+* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-* http://www.apache.org/licenses/LICENSE-2.0
-* 
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
 * Basic tests for PPLX operations.
@@ -68,18 +56,17 @@ class pplx_dflt_scheduler : public pplx::scheduler_interface
 class pplx_dflt_scheduler : public pplx::scheduler_interface
 {
 
-    crossplat::threadpool m_pool;
+    std::unique_ptr<crossplat::threadpool> m_pool;
 
 
     virtual void schedule(pplx::TaskProc_t proc, void* param)
     {
         pplx::details::atomic_increment(s_flag);
-        m_pool.schedule([=]() -> void { proc(param); });
-
+        m_pool->service().post([=]() -> void { proc(param); });
     }
 
 public:
-    pplx_dflt_scheduler() : m_pool(4) {}
+    pplx_dflt_scheduler() : m_pool(crossplat::threadpool::construct(4)) {}
 };
 #endif
 

@@ -1,19 +1,7 @@
 /***
-* ==++==
+* Copyright (C) Microsoft. All rights reserved.
+* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 *
-* Copyright (c) Microsoft Corporation. All rights reserved.
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 **/
 // TestRunner.cpp : Defines the entry point for the console application.
@@ -348,7 +336,8 @@ static void handle_list_option(bool listProperties, const UnitTest::TestList &te
 
 static void ChangeConsoleTextColorToRed()
 {
-#ifdef _WIN32
+#if defined(__cplusplus_winrt)
+#elif defined(_WIN32)
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x0004 | 0x0008);
 #else
     std::cout << "\033[1;31m";
@@ -357,7 +346,8 @@ static void ChangeConsoleTextColorToRed()
 
 static void ChangeConsoleTextColorToGreen()
 {
-#ifdef _WIN32
+#if defined(__cplusplus_winrt)
+#elif defined(_WIN32)
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x0002 | 0x0008);
 #else
     std::cout << "\033[1;32m";
@@ -366,7 +356,8 @@ static void ChangeConsoleTextColorToGreen()
 
 static void ChangeConsoleTextColorToGrey()
 {
-#ifdef _WIN32
+#if defined(__cplusplus_winrt)
+#elif defined(_WIN32)
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN);
 #else
     std::cout << "\033[0m";
@@ -506,9 +497,15 @@ void run_all_tests(UnitTest::TestRunner& testRunner, testlist_t& testlists)
     }
 }
 
+#if defined(__cplusplus_winrt)
+#include "ROApi.h"
+#endif
+
 int main(int argc, char* argv[])
 {
-#ifdef _WIN32
+#if defined(__cplusplus_winrt)
+    Windows::Foundation::Initialize(RO_INIT_MULTITHREADED);
+#elif defined(_WIN32)
     // Add standard error as output as well.
     _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE | _CRTDBG_MODE_WNDW | _CRTDBG_MODE_DEBUG);
     _CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDERR);
@@ -635,7 +632,8 @@ int main(int argc, char* argv[])
                   << "Took " << elapsedTime << "ms" << std::endl;
     }
 
-#ifdef _WIN32
+#if defined(__cplusplus_winrt)
+#elif defined(_WIN32)
     if(hComBase != nullptr)
     {
         typedef void (WINAPI *RoUnInit)();

@@ -1,19 +1,7 @@
 /***
-* ==++==
+* Copyright (C) Microsoft. All rights reserved.
+* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 *
-* Copyright (c) Microsoft Corporation. All rights reserved.
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
 * Implementation Details of the http.h layer of messaging
@@ -25,6 +13,28 @@
 
 #include "stdafx.h"
 
+// CPPREST_EXCLUDE_COMPRESSION is set if we're on a platform that supports compression but we want to explicitly disable it.
+// CPPREST_EXCLUDE_WEBSOCKETS is a flag that now essentially means "no external dependencies". TODO: Rename
+
+#if __APPLE__
+#include "TargetConditionals.h"
+#if defined(TARGET_OS_MAC)
+#if !defined(CPPREST_EXCLUDE_COMPRESSION)
+#define CPPREST_HTTP_COMPRESSION
+#endif // !defined(CPPREST_EXCLUDE_COMPRESSION)
+#endif // defined(TARGET_OS_MAC)
+#elif defined(_WIN32) && (!defined(WINAPI_FAMILY) || WINAPI_PARTITION_DESKTOP)
+#if !defined(CPPREST_EXCLUDE_WEBSOCKETS) && !defined(CPPREST_EXCLUDE_COMPRESSION)
+#define CPPREST_HTTP_COMPRESSION
+#endif // !defined(CPPREST_EXCLUDE_WEBSOCKETS) && !defined(CPPREST_EXCLUDE_COMPRESSION)
+#endif
+
+#if defined(CPPREST_HTTP_COMPRESSION)
+#include <zlib.h>
+#endif
+
+#include "internal_http_helpers.h"
+
 using namespace web;
 using namespace utility;
 using namespace utility::conversions;
@@ -33,145 +43,6 @@ namespace web { namespace http
 {
 namespace details
 {
-
-bool is_content_type_one_of(const utility::string_t *first, const utility::string_t *last, const utility::string_t &value)
-{
-    while (first != last)
-    {
-        if (utility::details::str_icmp(*first, value))
-        {
-            return true;
-        }
-        ++first;
-    }
-    return false;
-}
-
-// Remove once VS 2013 is no longer supported.
-#if defined(_WIN32) && _MSC_VER < 1900
-// Not referring to mime_types to avoid static initialization order fiasco.
-static const utility::string_t textual_types [] = {
-    U("message/http"),
-    U("application/json"),
-    U("application/xml"),
-    U("application/atom+xml"),
-    U("application/http"),
-    U("application/x-www-form-urlencoded")
-};
-#endif
-bool is_content_type_textual(const utility::string_t &content_type)
-{
-#if !defined(_WIN32) || _MSC_VER >= 1900
-    static const utility::string_t textual_types [] = {
-        mime_types::message_http,
-        mime_types::application_json,
-        mime_types::application_xml,
-        mime_types::application_atom_xml,
-        mime_types::application_http,
-        mime_types::application_x_www_form_urlencoded
-    };
-#endif
-
-    if (content_type.size() >= 4 && utility::details::str_icmp(content_type.substr(0, 4), _XPLATSTR("text")))
-    {
-        return true;
-    }
-    return (is_content_type_one_of(std::begin(textual_types), std::end(textual_types), content_type));
-}
-
-// Remove once VS 2013 is no longer supported.
-#if defined(_WIN32) && _MSC_VER < 1900
-// Not referring to mime_types to avoid static initialization order fiasco.
-static const utility::string_t json_types [] = {
-    U("application/json"),
-    U("application/x-json"),
-    U("text/json"),
-    U("text/x-json"),
-    U("text/javascript"),
-    U("text/x-javascript"),
-    U("application/javascript"),
-    U("application/x-javascript")
-};
-#endif
-bool is_content_type_json(const utility::string_t &content_type)
-{
-#if !defined(_WIN32) || _MSC_VER >= 1900
-    static const utility::string_t json_types [] = {
-        mime_types::application_json,
-        mime_types::application_xjson,
-        mime_types::text_json,
-        mime_types::text_xjson,
-        mime_types::text_javascript,
-        mime_types::text_xjavascript,
-        mime_types::application_javascript,
-        mime_types::application_xjavascript
-    };
-#endif
-
-    return (is_content_type_one_of(std::begin(json_types), std::end(json_types), content_type));
-}
-
-void parse_content_type_and_charset(const utility::string_t &content_type, utility::string_t &content, utility::string_t &charset)
-{
-    const size_t semi_colon_index = content_type.find_first_of(_XPLATSTR(";"));
-
-    // No charset specified.
-    if (semi_colon_index == utility::string_t::npos)
-    {
-        content = content_type;
-        trim_whitespace(content);
-        charset = get_default_charset(content);
-        return;
-    }
-
-    // Split into content type and second part which could be charset.
-    content = content_type.substr(0, semi_colon_index);
-    trim_whitespace(content);
-    utility::string_t possible_charset = content_type.substr(semi_colon_index + 1);
-    trim_whitespace(possible_charset);
-    const size_t equals_index = possible_charset.find_first_of(_XPLATSTR("="));
-
-    // No charset specified.
-    if (equals_index == utility::string_t::npos)
-    {
-        charset = get_default_charset(content);
-        return;
-    }
-
-    // Split and make sure 'charset'
-    utility::string_t charset_key = possible_charset.substr(0, equals_index);
-    trim_whitespace(charset_key);
-    if (!utility::details::str_icmp(charset_key, _XPLATSTR("charset")))
-    {
-        charset = get_default_charset(content);
-        return;
-    }
-    charset = possible_charset.substr(equals_index + 1);
-    // Remove the redundant ';' at the end of charset.
-    while (charset.back() == ';')
-    {
-        charset.pop_back();
-    }
-    trim_whitespace(charset);
-    if (charset.front() == _XPLATSTR('"') && charset.back() == _XPLATSTR('"'))
-    {
-        charset = charset.substr(1, charset.size() - 2);
-        trim_whitespace(charset);
-    }
-}
-
-utility::string_t get_default_charset(const utility::string_t &content_type)
-{
-    // We are defaulting everything to Latin1 except JSON which is utf-8.
-    if (is_content_type_json(content_type))
-    {
-        return charset_types::utf8;
-    }
-    else
-    {
-        return charset_types::latin1;
-    }
-}
 
 // Remove once VS 2013 is no longer supported.
 #if defined(_WIN32) && _MSC_VER < 1900
@@ -210,160 +81,6 @@ utility::string_t get_default_reason_phrase(status_code code)
     return phrase;
 }
 
-// Helper function to determine byte order mark.
-enum endian_ness
-{
-    little_endian,
-    big_endian,
-    unknown
-};
-static endian_ness check_byte_order_mark(const utf16string &str)
-{
-    if (str.empty())
-    {
-        return unknown;
-    }
-    const unsigned char *src = (const unsigned char *) &str[0];
-
-    // little endian
-    if (src[0] == 0xFF && src[1] == 0xFE)
-    {
-        return little_endian;
-    }
-
-    // big endian
-    else if (src[0] == 0xFE && src[1] == 0xFF)
-    {
-        return big_endian;
-    }
-
-    return unknown;
-}
-
-utility::string_t convert_utf16_to_string_t(utf16string src)
-{
-#ifdef _UTF16_STRINGS
-    return convert_utf16_to_utf16(std::move(src));
-#else
-    return convert_utf16_to_utf8(std::move(src));
-#endif
-}
-
-std::string convert_utf16_to_utf8(utf16string src)
-{
-    const endian_ness endian = check_byte_order_mark(src);
-    switch (endian)
-    {
-    case little_endian:
-        return convert_utf16le_to_utf8(std::move(src), true);
-    case big_endian:
-        return convert_utf16be_to_utf8(std::move(src), true);
-    case unknown:
-        // unknown defaults to big endian.
-        return convert_utf16be_to_utf8(std::move(src), false);
-    }
-    __assume(0);
-}
-
-utf16string convert_utf16_to_utf16(utf16string src)
-{
-    const endian_ness endian = check_byte_order_mark(src);
-    switch (endian)
-    {
-    case little_endian:
-        src.erase(0, 1);
-        return std::move(src);
-    case big_endian:
-        return convert_utf16be_to_utf16le(std::move(src), true);
-    case unknown:
-        // unknown defaults to big endian.
-        return convert_utf16be_to_utf16le(std::move(src), false);
-    }
-    __assume(0);
-}
-
-std::string convert_utf16le_to_utf8(utf16string src, bool erase_bom)
-{
-    if (erase_bom && !src.empty())
-    {
-        src.erase(0, 1);
-    }
-    return utf16_to_utf8(std::move(src));
-}
-
-utility::string_t convert_utf16le_to_string_t(utf16string src, bool erase_bom)
-{
-    if (erase_bom && !src.empty())
-    {
-        src.erase(0, 1);
-    }
-#ifdef _UTF16_STRINGS
-    return std::move(src);
-#else
-    return utf16_to_utf8(std::move(src));
-#endif
-}
-
-// Helper function to change endian ness from big endian to little endian
-static utf16string big_endian_to_little_endian(utf16string src, bool erase_bom)
-{
-    if (erase_bom && !src.empty())
-    {
-        src.erase(0, 1);
-    }
-    if (src.empty())
-    {
-        return std::move(src);
-    }
-
-    const size_t size = src.size();
-    for (size_t i = 0; i < size; ++i)
-    {
-        utf16char ch = src[i];
-        src[i] = static_cast<utf16char>(ch << 8);
-        src[i] = static_cast<utf16char>(src[i] | ch >> 8);
-    }
-
-    return std::move(src);
-}
-
-utility::string_t convert_utf16be_to_string_t(utf16string src, bool erase_bom)
-{
-#ifdef _UTF16_STRINGS
-    return convert_utf16be_to_utf16le(std::move(src), erase_bom);
-#else
-    return convert_utf16be_to_utf8(std::move(src), erase_bom);
-#endif
-}
-
-std::string convert_utf16be_to_utf8(utf16string src, bool erase_bom)
-{
-    return utf16_to_utf8(big_endian_to_little_endian(std::move(src), erase_bom));
-}
-
-utf16string convert_utf16be_to_utf16le(utf16string src, bool erase_bom)
-{
-    return big_endian_to_little_endian(std::move(src), erase_bom);
-}
-
-void ltrim_whitespace(utility::string_t &str)
-{
-    size_t index;
-    for (index = 0; index < str.size() && isspace(str[index]); ++index);
-    str.erase(0, index);
-}
-void rtrim_whitespace(utility::string_t &str)
-{
-    size_t index;
-    for (index = str.size(); index > 0 && isspace(str[index - 1]); --index);
-    str.erase(index);
-}
-void trim_whitespace(utility::string_t &str)
-{
-    ltrim_whitespace(str);
-    rtrim_whitespace(str);
-}
-
 size_t chunked_encoding::add_chunked_delimiters(_Out_writes_(buffer_size) uint8_t *data, _In_ size_t buffer_size, size_t bytes_read)
 {
     size_t offset = 0;
@@ -397,8 +114,7 @@ size_t chunked_encoding::add_chunked_delimiters(_Out_writes_(buffer_size) uint8_
     return offset;
 }
 
-#if (!defined(_WIN32) || defined(__cplusplus_winrt))
-const std::array<bool,128> valid_chars =
+static const std::array<bool,128> valid_chars =
 {{
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // 0-15
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //16-31
@@ -425,7 +141,310 @@ bool validate_method(const utility::string_t& method)
 
     return true;
 }
+
+namespace compression
+{
+#if defined(CPPREST_HTTP_COMPRESSION)
+
+    class compression_base_impl
+    {
+    public:
+        compression_base_impl(compression_algorithm alg) : m_alg(alg), m_zLibState(Z_OK)
+        {
+            memset(&m_zLibStream, 0, sizeof(m_zLibStream));
+        }
+
+        size_t read_output(size_t input_offset, size_t available_input, size_t total_out_before, uint8_t* temp_buffer, data_buffer& output)
+        {
+            input_offset += (available_input - stream().avail_in);
+            auto out_length = stream().total_out - total_out_before;
+            output.insert(output.end(), temp_buffer, temp_buffer + out_length);
+
+            return input_offset;
+        }
+
+        bool is_complete() const
+        {
+            return state() == Z_STREAM_END;
+        }
+
+        bool has_error() const
+        {
+            return !is_complete() && state() != Z_OK;
+        }
+
+        int state() const
+        {
+            return m_zLibState;
+        }
+
+        void set_state(int state)
+        {
+            m_zLibState = state;
+        }
+
+        compression_algorithm algorithm() const
+        {
+            return m_alg;
+        }
+
+        z_stream& stream()
+        {
+            return m_zLibStream;
+        }
+
+        int to_zlib_alg(compression_algorithm alg)
+        {
+            return static_cast<int>(alg);
+        }
+
+    private:
+        const compression_algorithm m_alg;
+
+        std::atomic<int> m_zLibState{ Z_OK };
+        z_stream m_zLibStream;
+    };
+
+    class stream_decompressor::stream_decompressor_impl : public compression_base_impl
+    {
+    public:
+        stream_decompressor_impl(compression_algorithm alg) : compression_base_impl(alg)
+        {
+            set_state(inflateInit2(&stream(), to_zlib_alg(alg)));
+        }
+
+        ~stream_decompressor_impl()
+        {
+            inflateEnd(&stream());
+        }
+
+        data_buffer decompress(const uint8_t* input, size_t input_size)
+        {
+            if (input == nullptr || input_size == 0)
+            {
+                set_state(Z_BUF_ERROR);
+                return data_buffer();
+            }
+
+            // Need to guard against attempting to decompress when we're already finished or encountered an error!
+            if (is_complete() || has_error())
+            {
+                set_state(Z_STREAM_ERROR);
+                return data_buffer();
+            }
+
+            const size_t BUFFER_SIZE = 1024;
+            unsigned char temp_buffer[BUFFER_SIZE];
+
+            data_buffer output;
+            output.reserve(input_size * 3);
+
+            size_t input_offset{ 0 };
+
+            while (state() == Z_OK && input_offset < input_size)
+            {
+                auto total_out_before = stream().total_out;
+
+                auto available_input = input_size - input_offset;
+                stream().next_in = const_cast<uint8_t*>(&input[input_offset]);
+                stream().avail_in = static_cast<int>(available_input);
+                stream().next_out = temp_buffer;
+                stream().avail_out = BUFFER_SIZE;
+
+                set_state(inflate(&stream(), Z_PARTIAL_FLUSH));
+
+                if (has_error())
+                {
+                    return data_buffer();
+                }
+
+                input_offset = read_output(input_offset, available_input, total_out_before, temp_buffer, output);
+            }
+
+            return output;
+        }
+    };
+
+    class stream_compressor::stream_compressor_impl : public compression_base_impl
+    {
+    public:
+        stream_compressor_impl(compression_algorithm alg) : compression_base_impl(alg)
+        {
+            const int level = Z_DEFAULT_COMPRESSION;
+            if (alg == compression_algorithm::gzip)
+            {
+                set_state(deflateInit2(&stream(), level, Z_DEFLATED, to_zlib_alg(alg), MAX_MEM_LEVEL, Z_DEFAULT_STRATEGY));
+            }
+            else if (alg == compression_algorithm::deflate)
+            {
+                set_state(deflateInit(&stream(), level));
+            }
+        }
+
+        web::http::details::compression::data_buffer compress(const uint8_t* input, size_t input_size, bool finish)
+        {
+            if (input == nullptr || input_size == 0)
+            {
+                set_state(Z_BUF_ERROR);
+                return data_buffer();
+            }
+
+            if (state() != Z_OK)
+            {
+                set_state(Z_STREAM_ERROR);
+                return data_buffer();
+            }
+
+            data_buffer output;
+            output.reserve(input_size);
+
+            const size_t BUFFER_SIZE = 1024;
+            uint8_t temp_buffer[BUFFER_SIZE];
+
+            size_t input_offset{ 0 };
+            auto flush = Z_NO_FLUSH;
+
+            while (flush == Z_NO_FLUSH)
+            {
+                auto total_out_before = stream().total_out;
+                auto available_input = input_size - input_offset;
+
+                if (available_input == 0)
+                {
+                    flush = finish ? Z_FINISH : Z_PARTIAL_FLUSH;
+                }
+                else
+                {
+                    stream().avail_in = static_cast<int>(available_input);
+                    stream().next_in = const_cast<uint8_t*>(&input[input_offset]);
+                }
+
+                do
+                {
+                    stream().next_out = temp_buffer;
+                    stream().avail_out = BUFFER_SIZE;
+
+                    set_state(deflate(&stream(), flush));
+
+                    if (has_error())
+                    {
+                        return data_buffer();
+                    }
+
+                    input_offset = read_output(input_offset, available_input, total_out_before, temp_buffer, output);
+
+                } while (stream().avail_out == 0);
+            }
+
+            return output;
+        }
+
+        ~stream_compressor_impl()
+        {
+            deflateEnd(&stream());
+        }
+    };
+#else // Stub impl for when compression is not supported
+
+    class compression_base_impl
+    {
+    public:
+        bool has_error() const
+        {
+            return true;
+        }
+    };
+
+    class stream_compressor::stream_compressor_impl : public compression_base_impl
+    {
+    public:
+        stream_compressor_impl(compression_algorithm) {}
+        compression::data_buffer compress(const uint8_t* data, size_t size, bool)
+        {
+            return data_buffer(data, data + size);
+        }
+    };
+
+    class stream_decompressor::stream_decompressor_impl : public compression_base_impl
+    {
+    public:
+        stream_decompressor_impl(compression_algorithm) {}
+        compression::data_buffer decompress(const uint8_t* data, size_t size) 
+        {
+            return data_buffer(data, data + size);
+        }
+    };
 #endif
 
+    bool __cdecl stream_decompressor::is_supported()
+    {
+#if !defined(CPPREST_HTTP_COMPRESSION)
+    return false;
+#else
+    return true;
+#endif
+    }
+
+    stream_decompressor::stream_decompressor(compression_algorithm alg)
+        : m_pimpl(std::make_shared<stream_decompressor::stream_decompressor_impl>(alg))
+    {
+    }
+
+    compression::data_buffer stream_decompressor::decompress(const data_buffer& input)
+    {
+        if (input.empty())
+        {
+            return data_buffer();
+        }
+
+        return m_pimpl->decompress(&input[0], input.size());
+    }
+
+    web::http::details::compression::data_buffer stream_decompressor::decompress(const uint8_t* input, size_t input_size)
+    {
+        return m_pimpl->decompress(input, input_size);
+    }
+
+    bool stream_decompressor::has_error() const
+    {
+        return m_pimpl->has_error();
+    }
+
+    bool __cdecl stream_compressor::is_supported()
+    {
+#if !defined(CPPREST_HTTP_COMPRESSION)
+        return false;
+#else
+        return true;
+#endif
+    }
+
+    stream_compressor::stream_compressor(compression_algorithm alg)
+        : m_pimpl(std::make_shared<stream_compressor::stream_compressor_impl>(alg))
+    {
+
+    }
+
+    compression::data_buffer stream_compressor::compress(const data_buffer& input, bool finish)
+    {
+        if (input.empty())
+        {
+            return compression::data_buffer();
+        }
+
+        return m_pimpl->compress(&input[0], input.size(), finish);
+    }
+
+    web::http::details::compression::data_buffer stream_compressor::compress(const uint8_t* input, size_t input_size, bool finish)
+    {
+        return m_pimpl->compress(input, input_size, finish);
+    }
+    
+    bool stream_compressor::has_error() const
+    {
+        return m_pimpl->has_error();
+    }
+
+} // namespace compression
 } // namespace details
 }} // namespace web::http

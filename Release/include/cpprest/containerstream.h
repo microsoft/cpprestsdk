@@ -1,19 +1,7 @@
 /***
-* ==++==
+* Copyright (C) Microsoft. All rights reserved.
+* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 *
-* Copyright (c) Microsoft Corporation. All rights reserved.
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
 * This file defines a basic STL-container-based stream buffer. Reading from the buffer will not remove any data
@@ -439,8 +427,8 @@ namespace Concurrency { namespace streams {
 
             size_t newPos = m_current_position + read_size;
 
-            auto readBegin = begin(m_data) + m_current_position;
-            auto readEnd = begin(m_data) + newPos;
+            auto readBegin = std::begin(m_data) + m_current_position;
+            auto readEnd = std::begin(m_data) + newPos;
 
 #ifdef _WIN32
             // Avoid warning C4996: Use checked iterators under SECURE_SCL
@@ -470,7 +458,7 @@ namespace Concurrency { namespace streams {
             resize_for_write(newSize);
 
             // Copy the data
-            std::copy(ptr, ptr + count, begin(m_data) + m_current_position);
+            std::copy(ptr, ptr + count, std::begin(m_data) + m_current_position);
 
             // Update write head and satisfy pending reads if any
             update_current_position(newSize);

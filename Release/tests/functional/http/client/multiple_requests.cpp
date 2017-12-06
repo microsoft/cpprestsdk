@@ -1,19 +1,7 @@
 /***
-* ==++==
+* Copyright (C) Microsoft. All rights reserved.
+* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 *
-* Copyright (c) Microsoft Corporation. All rights reserved.
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
 * Tests cases for multiple requests and responses from an http_client.
@@ -65,6 +53,13 @@ TEST_FIXTURE(uri_address, requests_with_data)
     const method method = methods::PUT;
     const web::http::status_code code = status_codes::OK;
 
+    std::vector<pplx::task<test_request*>> reqs;
+    // response to requests
+    for (size_t i = 0; i < num_requests; ++i)
+    {
+        reqs.push_back(scoped.server()->next_request());
+    }
+
     // send requests
     std::vector<pplx::task<http_response>> responses;
     for(size_t i = 0; i < num_requests; ++i)
@@ -74,13 +69,9 @@ TEST_FIXTURE(uri_address, requests_with_data)
         responses.push_back(client.request(msg));
     }
 
-    // Wait a bit to let requests get queued up in WinHTTP.
-    os_utilities::sleep(500);
-
-    // response to requests
-    for(size_t i = 0; i < num_requests; ++i)
+    for (auto&& requestTask : reqs)
     {
-        test_request *request = scoped.server()->wait_for_request();
+        auto request = requestTask.get();
         http_asserts::assert_test_request_equals(request, method, U("/"), U("text/plain"), to_string_t(request_body));
         VERIFY_ARE_EQUAL(0u, request->reply(code));
     }
@@ -113,6 +104,9 @@ TEST_FIXTURE(uri_address, responses_with_data)
     std::map<utility::string_t, utility::string_t> headers;
     headers[U("Content-Type")] = U("text/plain");
 
+    // response to requests
+    auto requestTasks = scoped.server()->next_requests(num_requests);
+
     // send requests
     std::vector<pplx::task<http_response>> responses;
     for(size_t i = 0; i < num_requests; ++i)
@@ -123,7 +117,7 @@ TEST_FIXTURE(uri_address, responses_with_data)
     // response to requests
     for(size_t i = 0; i < num_requests; ++i)
     {
-        test_request *request = scoped.server()->wait_for_request();
+        test_request *request = requestTasks[i].get();
         http_asserts::assert_test_request_equals(request, method, U("/"));
         VERIFY_ARE_EQUAL(0u, request->reply(code, U(""), headers, request_body));
     }

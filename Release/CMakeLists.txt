@@ -1,58 +1,97 @@
 set(CMAKE_LEGACY_CYGWIN_WIN32 0)
-cmake_minimum_required(VERSION 2.6)
-project(casablanca)
+cmake_minimum_required(VERSION 3.0)
+if(POLICY CMP0042)
+  cmake_policy(SET CMP0042 NEW) # use MACOSX_RPATH
+endif()
+if(UNIX)
+  project(cpprest C CXX)
+else()
+  project(cpprest CXX)
+endif()
 
 enable_testing()
+
+set(WERROR ON CACHE BOOL "Treat Warnings as Errors.")
+set(CPPREST_EXCLUDE_WEBSOCKETS OFF CACHE BOOL "Exclude websockets functionality.")
+set(CPPREST_EXCLUDE_COMPRESSION OFF CACHE BOOL "Exclude compression functionality.")
+set(CPPREST_EXPORT_DIR lib/cpprestsdk CACHE STRING "Directory to install CMake config files.")
+set(CPPREST_INSTALL_HEADERS ON CACHE BOOL "Install header files.")
+set(CPPREST_INSTALL ON CACHE BOOL "Add install commands.")
+
+if(IOS OR ANDROID)
+  set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libraries")
+else()
+  set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared libraries")
+endif()
+
+if(IOS OR ANDROID OR WINDOWS_STORE OR WINDOWS_PHONE)
+  set(BUILD_TESTS OFF CACHE BOOL "Build tests.")
+  set(BUILD_SAMPLES OFF CACHE BOOL "Build sample applications.")
+else()
+  set(BUILD_TESTS ON CACHE BOOL "Build tests.")
+  set(BUILD_SAMPLES ON CACHE BOOL "Build sample applications.")
+endif()
+
+if(ANDROID)
+  set(Boost_USE_STATIC_LIBS ON CACHE BOOL "Link against boost statically.")
+else()
+  set(Boost_USE_STATIC_LIBS OFF CACHE BOOL "Link against boost statically.")
+endif()
+
+include(cmake/cpprest_find_boost.cmake)
+include(cmake/cpprest_find_zlib.cmake)
+include(cmake/cpprest_find_openssl.cmake)
+include(cmake/cpprest_find_websocketpp.cmake)
+
+find_package(Threads REQUIRED)
+if(THREADS_HAVE_PTHREAD_ARG)
+  add_compile_options(-pthread)
+endif()
+if(CMAKE_THREAD_LIBS_INIT)
+  link_libraries(${CMAKE_THREAD_LIBS_INIT})
+endif()
+
+# Internal component selection logic. This allows us to avoid duplicating platform logic in multiple places.
+if(CPPREST_EXCLUDE_WEBSOCKETS)
+  set(CPPREST_WEBSOCKETS_IMPL none CACHE STRING "Internal use.")
+endif()
+
+if(APPLE) # Note: also iOS
+  set(CPPREST_PPLX_IMPL apple CACHE STRING "Internal use.")
+  set(CPPREST_WEBSOCKETS_IMPL wspp CACHE STRING "Internal use.")
+  set(CPPREST_FILEIO_IMPL posix CACHE STRING "Internal use.")
+  set(CPPREST_HTTP_CLIENT_IMPL asio CACHE STRING "Internal use.")
+  set(CPPREST_HTTP_LISTENER_IMPL asio CACHE STRING "Internal use.")
+elseif(UNIX AND NOT APPLE) # Note: also android
+  set(CPPREST_PPLX_IMPL linux CACHE STRING "Internal use.")
+  set(CPPREST_WEBSOCKETS_IMPL wspp CACHE STRING "Internal use.")
+  set(CPPREST_FILEIO_IMPL posix CACHE STRING "Internal use.")
+  set(CPPREST_HTTP_CLIENT_IMPL asio CACHE STRING "Internal use.")
+  set(CPPREST_HTTP_LISTENER_IMPL asio CACHE STRING "Internal use.")
+elseif(WINDOWS_PHONE OR WINDOWS_STORE)
+  set(CPPREST_PPLX_IMPL winrt CACHE STRING "Internal use.")
+  set(CPPREST_WEBSOCKETS_IMPL winrt CACHE STRING "Internal use.")
+  set(CPPREST_FILEIO_IMPL winrt CACHE STRING "Internal use.")
+  set(CPPREST_HTTP_CLIENT_IMPL winrt CACHE STRING "Internal use.")
+  set(CPPREST_HTTP_LISTENER_IMPL none CACHE STRING "Internal use.")
+elseif(WIN32)
+  set(CPPREST_PPLX_IMPL win CACHE STRING "Internal use.")
+  set(CPPREST_WEBSOCKETS_IMPL wspp CACHE STRING "Internal use.")
+  set(CPPREST_FILEIO_IMPL win32 CACHE STRING "Internal use.")
+  set(CPPREST_HTTP_CLIENT_IMPL winhttp CACHE STRING "Internal use.")
+  set(CPPREST_HTTP_LISTENER_IMPL httpsys CACHE STRING "Internal use.")
+else()
+  message(FATAL_ERROR "Unknown platform. Cannot determine appropriate feature implementations.")
+endif()
 
 set(WARNINGS)
 set(ANDROID_STL_FLAGS)
 
 # Platform (not compiler) specific settings
 if(IOS)
-  set(IOS_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../Build_iOS")
-  set(Boost_FRAMEWORK "-F ${IOS_SOURCE_DIR} -framework boost")
-  set(Boost_INCLUDE_DIR "${IOS_SOURCE_DIR}/boost.framework/Headers")
-
-  set(OPENSSL_FOUND 1)
-  set(OPENSSL_INCLUDE_DIR "${IOS_SOURCE_DIR}/openssl/include")
-  set(OPENSSL_LIBRARIES
-    "${IOS_SOURCE_DIR}/openssl/lib/libcrypto.a"
-    "${IOS_SOURCE_DIR}/openssl/lib/libssl.a"
-    )
-
   # The cxx_flags must be reset here, because the ios-cmake toolchain file unfortunately sets "-headerpad_max_install_names" which is not a valid clang flag.
   set(CMAKE_CXX_FLAGS "-fvisibility=hidden -fvisibility-inlines-hidden")
-
-  set(BUILD_SHARED_LIBS OFF)
-  set(BUILD_SAMPLES OFF)
-  option(BUILD_TESTS "Build tests." ON)
 elseif(ANDROID)
-  set(Boost_COMPILER "-clang")
-  set(Boost_USE_STATIC_LIBS ON)
-  if(ARM)
-    set(BOOST_ROOT "${CMAKE_BINARY_DIR}/../Boost-for-Android/build")
-    set(BOOST_LIBRARYDIR "${CMAKE_BINARY_DIR}/../Boost-for-Android/build/lib")
-  else()
-    set(BOOST_ROOT "${CMAKE_BINARY_DIR}/../Boost-for-Android-x86/build")
-    set(BOOST_LIBRARYDIR "${CMAKE_BINARY_DIR}/../Boost-for-Android-x86/build/lib")
-  endif()
-  find_host_package(Boost 1.55 EXACT REQUIRED COMPONENTS random system thread filesystem chrono atomic)
-
-  set(OPENSSL_FOUND 1)
-  if(ARM)
-    set(OPENSSL_INCLUDE_DIR "${CMAKE_BINARY_DIR}/../openssl/armeabi-v7a/include")
-    set(OPENSSL_LIBRARIES
-      "${CMAKE_BINARY_DIR}/../openssl/armeabi-v7a/lib/libssl.a"
-      "${CMAKE_BINARY_DIR}/../openssl/armeabi-v7a/lib/libcrypto.a"
-      )
-  else()
-    set(OPENSSL_INCLUDE_DIR "${CMAKE_BINARY_DIR}/../openssl/x86/include")
-    set(OPENSSL_LIBRARIES
-      "${CMAKE_BINARY_DIR}/../openssl/x86/lib/libssl.a"
-      "${CMAKE_BINARY_DIR}/../openssl/x86/lib/libcrypto.a"
-      )
-  endif()
-
   if(ARM)
     set(LIBCXX_STL "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.8/libs/armeabi-v7a/thumb/libgnustl_static.a")
   else()
@@ -69,90 +108,70 @@ elseif(ANDROID)
     -nodefaultlibs
     )
 
-  option(BUILD_SHARED_LIBS "Build shared Libraries." OFF)
-  set(BUILD_SAMPLES OFF)
-  option(BUILD_TESTS "Build tests." ON)
+  include_directories(SYSTEM
+    "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.8/include"
+    "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.8/libs/armeabi-v7a/include"
+    "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.8/include/backward"
+    )
 elseif(UNIX) # This includes OSX
-  find_package(Boost REQUIRED COMPONENTS random chrono system thread regex filesystem)
-  find_package(Threads REQUIRED)
-  if(APPLE AND NOT OPENSSL_ROOT_DIR)
-    # Prefer a homebrew version of OpenSSL over the one in /usr/lib
-    file(GLOB OPENSSL_ROOT_DIR /usr/local/Cellar/openssl/*)
-    # Prefer the latest (make the latest one first)
-    list(REVERSE OPENSSL_ROOT_DIR)
-  endif()
-  # This should prevent linking against the system provided 0.9.8y
-  set(_OPENSSL_VERSION "")
-  find_package(OpenSSL 1.0.0 REQUIRED)
-
-  option(BUILD_SHARED_LIBS "Build shared Libraries." ON)
-  option(BUILD_TESTS "Build tests." ON)
-  option(BUILD_SAMPLES "Build samples." ON)
-  option(CASA_INSTALL_HEADERS "Install header files." ON)
-  if(CASA_INSTALL_HEADERS)
-    file(GLOB CASA_HEADERS_CPPREST include/cpprest/*.hpp include/cpprest/*.h include/cpprest/*.dat)
-    install(FILES ${CASA_HEADERS_CPPREST} DESTINATION include/cpprest)
-    file(GLOB CASA_HEADERS_PPLX include/pplx/*.hpp include/pplx/*.h)
-    install(FILES ${CASA_HEADERS_PPLX} DESTINATION include/pplx)
-    file(GLOB CASA_HEADERS_DETAILS include/cpprest/details/*.hpp include/cpprest/details/*.h include/cpprest/details/*.dat)
-    install(FILES ${CASA_HEADERS_DETAILS} DESTINATION include/cpprest/details)
-  endif()
 elseif(WIN32)
-  option(BUILD_SHARED_LIBS "Build shared Libraries." ON)
-  option(BUILD_TESTS "Build tests." ON)
-  option(BUILD_SAMPLES "Build samples." ON)
-  option(Boost_USE_STATIC_LIBS ON)
-
-  add_definitions(-DUNICODE -D_UNICODE)
+  add_definitions(-DUNICODE -D_UNICODE -DWIN32 -D_SCL_SECURE_NO_WARNINGS)
+  if(CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
+    add_definitions(-D_WIN32_WINNT=0x0A00)
+  else()
+    add_definitions(-D_WIN32_WINNT=0x0600)
+  endif()
 
   if(NOT BUILD_SHARED_LIBS)
     # This causes cmake to not link the test libraries separately, but instead hold onto their object files.
     set(TEST_LIBRARY_TARGET_TYPE OBJECT)
-    set(Casablanca_DEFINITIONS -D_NO_ASYNCRTIMP -D_NO_PPLXIMP CACHE INTERNAL "Definitions for consume casablanca library")
-  else()
-    set(Casablanca_DEFINITIONS "" CACHE INTERNAL "Definitions for consume casablanca library")
   endif()
-  add_definitions(${Casablanca_DEFINITIONS} -D_WINSOCK_DEPRECATED_NO_WARNINGS -DWIN32)
 
-  find_package(Boost 1.55 REQUIRED COMPONENTS random system thread filesystem chrono atomic)
-  find_package(OpenSSL 1.0 REQUIRED)
+  add_definitions(-D_WINSOCK_DEPRECATED_NO_WARNINGS)
 else()
   message(FATAL_ERROR "-- Unsupported Build Platform.")
 endif()
 
 # Compiler (not platform) specific settings
-if(ANDROID)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fno-strict-aliasing")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-pedantic")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-attributes -Wno-pointer-arith")
-  include_directories(
-    "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.8/include"
-    "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.8/libs/armeabi-v7a/include"
-    "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.8/include/backward"
-    )
-elseif((CMAKE_CXX_COMPILER_ID MATCHES "Clang") OR IOS)
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR IOS)
   message("-- Setting clang options")
 
-  set(WARNINGS "-Wall -Wextra -Wcast-qual -Wconversion -Wformat=2 -Winit-self -Winvalid-pch -Wmissing-format-attribute -Wmissing-include-dirs -Wpacked -Wredundant-decls")
-  set(OSX_SUPPRESSIONS "-Wno-overloaded-virtual -Wno-sign-conversion -Wno-deprecated -Wno-unknown-pragmas -Wno-reorder -Wno-char-subscripts -Wno-switch -Wno-unused-parameter -Wno-unused-variable -Wno-deprecated -Wno-unused-value -Wno-unknown-warning-option -Wno-return-type-c-linkage -Wno-unused-function -Wno-sign-compare -Wno-shorten-64-to-32 -Wno-reorder -Wno-unused-local-typedefs")
-  set(WARNINGS "${WARNINGS} ${OSX_SUPPRESSIONS}")
+  if(ANDROID)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-pedantic")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-attributes -Wno-pointer-arith")
+  elseif(CMAKE_SYSTEM_NAME MATCHES "Linux")
+    set(WARNINGS -Wall -Wextra -Wcast-qual -Wconversion -Wformat=2 -Winit-self -Winvalid-pch -Wmissing-format-attribute -Wmissing-include-dirs -Wpacked -Wredundant-decls)
+    set(LINUX_SUPPRESSIONS -Wno-overloaded-virtual -Wno-sign-conversion -Wno-deprecated -Wno-unknown-pragmas -Wno-reorder -Wno-char-subscripts -Wno-switch -Wno-unused-parameter -Wno-unused-variable -Wno-deprecated -Wno-unused-value -Wno-unknown-warning-option -Wno-return-type-c-linkage -Wno-unused-function -Wno-sign-compare -Wno-shorten-64-to-32 -Wno-reorder -Wno-unused-local-typedefs)
+    set(WARNINGS ${WARNINGS} ${LINUX_SUPPRESSIONS})
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-return-type-c-linkage -Wno-unneeded-internal-declaration")
+  else()
+    set(WARNINGS -Wall -Wextra -Wcast-qual -Wconversion -Wformat=2 -Winit-self -Winvalid-pch -Wmissing-format-attribute -Wmissing-include-dirs -Wpacked -Wredundant-decls)
+    set(OSX_SUPPRESSIONS -Wno-overloaded-virtual -Wno-sign-conversion -Wno-deprecated -Wno-unknown-pragmas -Wno-reorder -Wno-char-subscripts -Wno-switch -Wno-unused-parameter -Wno-unused-variable -Wno-deprecated -Wno-unused-value -Wno-unknown-warning-option -Wno-return-type-c-linkage -Wno-unused-function -Wno-sign-compare -Wno-shorten-64-to-32 -Wno-reorder -Wno-unused-local-typedefs)
+    set(WARNINGS ${WARNINGS} ${OSX_SUPPRESSIONS})
 
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -Wno-return-type-c-linkage -Wno-unneeded-internal-declaration")
-  set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++")
-  set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++11")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -Wno-return-type-c-linkage -Wno-unneeded-internal-declaration")
+    set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++")
+    set(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++11")
+  endif()
 
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fno-strict-aliasing")
+
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
   message("-- Setting gcc options")
 
-  set(WARNINGS "-Wall -Wextra -Wunused-parameter -Wcast-align -Wcast-qual -Wconversion -Wformat=2 -Winit-self -Winvalid-pch -Wmissing-format-attribute -Wmissing-include-dirs -Wpacked -Wredundant-decls -Wunreachable-code")
-
+  set(WARNINGS -Wall -Wextra -Wunused-parameter -Wcast-align -Wcast-qual -Wconversion -Wformat=2 -Winit-self -Winvalid-pch -Wmissing-format-attribute -Wmissing-include-dirs -Wpacked -Wredundant-decls -Wunreachable-code)
   set(LD_FLAGS "${LD_FLAGS} -Wl,-z,defs")
 
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fno-strict-aliasing")
+
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
   message("-- Setting msvc options")
   set(WARNINGS)
+  set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} /ignore:4264")
+  add_compile_options(/bigobj)
+  if (WINDOWS_STORE OR WINDOWS_PHONE)
+    add_compile_options(/ZW)
+  endif()
 else()
   message("-- Unknown compiler, success is doubtful.")
   message("CMAKE_CXX_COMPILER_ID=${CMAKE_CXX_COMPILER_ID}")
@@ -164,45 +183,35 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/Binaries)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/Binaries)
 
 # These settings can be used by the test targets
-set(Casablanca_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
-
-find_path(WEBSOCKETPP_CONFIG websocketpp-config.cmake
-                       HINTS /usr/lib/cmake/websocketpp)
-find_path(WEBSOCKETPP_CONFIG_VERSION websocketpp-configVersion.cmake
-                       HINTS /usr/lib/cmake/websocketpp)
-if(WEBSOCKETPP_CONFIG AND WEBSOCKETPP_CONFIG_VERSION)
-  include(${WEBSOCKETPP_CONFIG}/websocketpp-config.cmake)
-  include(${WEBSOCKETPP_CONFIG}/websocketpp-configVersion.cmake)
-  message("-- Found websocketpp version " ${PACKAGE_VERSION} " on system")
-  set(Casablanca_INCLUDE_DIRS ${Casablanca_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${OPENSSL_INCLUDE_DIR} ${WEBSOCKETPP_INCLUDE_DIR})
-else(WEBSOCKETPP_CONFIG AND WEBSOCKETPP_CONFIG_VERSION)
-  set(Casablanca_INCLUDE_DIRS ${Casablanca_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${OPENSSL_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/libs/websocketpp)
-  message("-- websocketpp not found, using the embedded version")
-endif(WEBSOCKETPP_CONFIG AND WEBSOCKETPP_CONFIG_VERSION)
-
-set(Casablanca_LIBRARY ${LIB}cpprest)
-set(Casablanca_LIBRARIES ${Casablanca_LIBRARY} ${Boost_LIBRARIES} ${Boost_FRAMEWORK})
-
-# Everything in the project needs access to the casablanca include directories
-include_directories(${Casablanca_INCLUDE_DIRS})
+set(Casablanca_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include)
+set(Casablanca_LIBRARY cpprest)
+set(Casablanca_LIBRARIES cpprest)
+get_directory_property(PARENT_DIR PARENT_DIRECTORY)
+if(NOT PARENT_DIR STREQUAL "")
+  set(Casablanca_LIBRARIES ${Casablanca_LIBRARIES} PARENT_SCOPE)
+endif()
 
 # Finally, the tests all use the same style declaration to build themselves, so we use a function
 function(add_casablanca_test NAME SOURCES_VAR)
   add_library(${NAME} ${TEST_LIBRARY_TARGET_TYPE} ${${SOURCES_VAR}})
   message("-- Added test library ${NAME}")
-  if (NOT TEST_LIBRARY_TARGET_TYPE STREQUAL "OBJECT")
-    target_link_libraries(${NAME}
-      ${LIB}httptest_utilities
-      ${LIB}common_utilities
-      ${LIB}unittestpp
-      ${Casablanca_LIBRARIES}
+  if(TEST_LIBRARY_TARGET_TYPE STREQUAL "OBJECT")
+    foreach(_dep cpprest common_utilities unittestpp)
+      target_include_directories(${NAME} PRIVATE $<TARGET_PROPERTY:${_dep},INTERFACE_INCLUDE_DIRECTORIES>)
+      target_compile_definitions(${NAME} PRIVATE $<TARGET_PROPERTY:${_dep},INTERFACE_COMPILE_DEFINITIONS>)
+    endforeach()
+  else()
+    target_link_libraries(${NAME} PRIVATE
+      cpprest
+      common_utilities
+      unittestpp
       ${ANDROID_STL_FLAGS}
-      )
+    )
     if (BUILD_SHARED_LIBS)
       add_test(NAME ${NAME}
         WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
-        COMMAND test_runner lib${NAME}${CMAKE_SHARED_LIBRARY_SUFFIX}
-        )
+        COMMAND test_runner $<TARGET_FILE_NAME:${NAME}>
+      )
     endif()
   endif()
 endfunction()

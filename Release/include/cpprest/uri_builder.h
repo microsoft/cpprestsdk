@@ -1,19 +1,7 @@
 /***
-* ==++==
+* Copyright (C) Microsoft. All rights reserved.
+* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 *
-* Copyright (c) Microsoft Corporation. All rights reserved.
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
 * Builder style class for creating URIs.
@@ -30,7 +18,6 @@
 #include <vector>
 
 #include "cpprest/base_uri.h"
-#include "cpprest/details/uri_parser.h"
 
 namespace web
 {
@@ -44,7 +31,7 @@ namespace web
         /// <summary>
         /// Creates a builder with an initially empty URI.
         /// </summary>
-        uri_builder() {}
+        uri_builder() = default;
 
         /// <summary>
         /// Creates a builder with a existing URI object.
@@ -146,18 +133,7 @@ namespace web
         /// <param name="port">Port as a string.</param>
         /// <returns>A reference to this <c>uri_builder</c> to support chaining.</returns>
         /// <remarks>When string can't be converted to an integer the port is left unchanged.</remarks>
-        uri_builder & set_port(const utility::string_t &port)
-        {
-            utility::istringstream_t portStream(port);
-            int port_tmp;
-            portStream >> port_tmp;
-            if(portStream.fail() || portStream.bad())
-            {
-                throw std::invalid_argument("invalid port argument, must be non empty string containing integer value");
-            }
-            m_uri.m_port = port_tmp;
-            return *this;
-        }
+        _ASYNCRTIMP uri_builder & set_port(const utility::string_t &port);
 
         /// <summary>
         /// Set the path component of the URI.
@@ -237,49 +213,24 @@ namespace web
         template<typename T>
         uri_builder &append_query(const utility::string_t &name, const T &value, bool do_encoding = true)
         {
-            auto encodedName = name;
-            auto encodedValue = ::utility::conversions::print_string(value, std::locale::classic());
-
             if (do_encoding)
-            {
-                auto encodingCheck = [](int ch)
-                {
-                    switch (ch)
-                    {
-                        // Encode '&', ';', and '=' since they are used
-                        // as delimiters in query component.
-                    case '&':
-                    case ';':
-                    case '=':
-                    case '%':
-                    case '+':
-                        return true;
-                    default:
-                        return !::web::details::uri_parser::is_query_character(ch);
-                    }
-                };
-                encodedName = uri::encode_impl(encodedName, encodingCheck);
-                encodedValue = uri::encode_impl(encodedValue, encodingCheck);
-            }
-
-            auto encodedQuery = encodedName;
-            encodedQuery.append(_XPLATSTR("="));
-            encodedQuery.append(encodedValue);
-            // The query key value pair was already encoded by us or the user separately.
-            return append_query(encodedQuery, false);
+                append_query_encode_impl(name, utility::conversions::details::print_utf8string(value));
+            else
+                append_query_no_encode_impl(name, utility::conversions::details::print_string(value));
+            return *this;
         }
 
         /// <summary>
         /// Combine and validate the URI components into a encoded string. An exception will be thrown if the URI is invalid.
         /// </summary>
         /// <returns>The created URI as a string.</returns>
-        _ASYNCRTIMP utility::string_t to_string();
+        _ASYNCRTIMP utility::string_t to_string() const;
 
         /// <summary>
         /// Combine and validate the URI components into a URI class instance. An exception will be thrown if the URI is invalid.
         /// </summary>
         /// <returns>The create URI as a URI class instance.</returns>
-        _ASYNCRTIMP uri to_uri();
+        _ASYNCRTIMP uri to_uri() const;
 
         /// <summary>
         /// Validate the generated URI from all existing components of this uri_builder.
@@ -288,6 +239,9 @@ namespace web
         _ASYNCRTIMP bool is_valid();
 
     private:
+        _ASYNCRTIMP void append_query_encode_impl(const utility::string_t &name, const utf8string &value);
+        _ASYNCRTIMP void append_query_no_encode_impl(const utility::string_t &name, const utility::string_t &value);
+
         details::uri_components m_uri;
     };
 } // namespace web

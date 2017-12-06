@@ -9,4 +9,4 @@ add_executable(blackjackserver
   Table.cpp
   )
 
-target_link_libraries(blackjackserver ${Casablanca_LIBRARIES})
+target_link_libraries(blackjackserver cpprest)

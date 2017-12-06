@@ -1,19 +1,7 @@
 /***
-* ==++==
+* Copyright (C) Microsoft. All rights reserved.
+* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 *
-* Copyright (c) Microsoft Corporation. All rights reserved.
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
 * Defines a test client to handle requests and sending responses.
@@ -28,6 +16,7 @@
 #include "test_http_client.h"
 #ifdef _WIN32
 #include <winhttp.h>
+#pragma comment(lib, "winhttp.lib")
 #pragma warning ( push )
 #pragma warning ( disable : 4457 )
 #include <agents.h>
@@ -128,8 +117,8 @@ static void parse_winhttp_headers(HINTERNET request_handle, utf16char *headersSt
         {
             utility::string_t key = header_line.substr(0, colonIndex);
             utility::string_t value = header_line.substr(colonIndex + 1, header_line.length() - colonIndex - 1);
-            web::http::details::trim_whitespace(key);
-            web::http::details::trim_whitespace(value);
+            tests::functional::http::utilities::trim_whitespace(key);
+            tests::functional::http::utilities::trim_whitespace(value);
             p_response->m_headers[key] = value;
         }
         line = wcstok_s(nullptr, U("\r\n"), &context);

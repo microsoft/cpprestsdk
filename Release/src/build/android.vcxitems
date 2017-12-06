@@ -15,7 +15,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\http\client\http_client_asio.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\http\client\x509_cert_utilities_android.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\http\listener\http_server_asio.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\pplx\pplxlinux.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\pplx\threadpool.cpp" />
@@ -26,7 +25,6 @@
     <ProjectCapability Include="SourceItemsFromImports" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\http_server_asio.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\pplx\pplxlinux.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\pplx\threadpool.h" />
   </ItemGroup>

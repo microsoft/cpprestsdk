@@ -1,19 +1,7 @@
 /***
-* ==++==
+* Copyright (C) Microsoft. All rights reserved.
+* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 *
-* Copyright (c) Microsoft Corporation. All rights reserved.
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
 * utility classes used by the different web:: clients
@@ -30,6 +18,7 @@ namespace web
 namespace http { namespace client { namespace details {
 class winhttp_client;
 class winrt_client;
+class asio_context;
 }}}
 namespace websockets { namespace client { namespace details {
 class winrt_callback_client;
@@ -121,13 +110,7 @@ public:
     /// <returns><c>true</c> if user name and password is set, <c>false</c> otherwise.</returns>
     bool is_set() const { return !m_username.empty(); }
 
-private:
-    friend class http::client::details::winhttp_client;
-    friend class http::client::details::winrt_client;
-    friend class websockets::client::details::winrt_callback_client;
-    friend class websockets::client::details::wspp_callback_client;
-
-    details::plaintext_string decrypt() const
+    details::plaintext_string _internal_decrypt() const
     {
         // Encryption APIs not supported on XP
 #if defined(_WIN32) && !defined(CPPREST_TARGET_XP)
@@ -137,6 +120,7 @@ private:
 #endif
     }
 
+private:
     ::utility::string_t m_username;
 
 #if defined(_WIN32) && !defined(CPPREST_TARGET_XP)

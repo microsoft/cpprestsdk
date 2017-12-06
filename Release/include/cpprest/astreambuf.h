@@ -1,19 +1,7 @@
 /***
-* ==++==
+* Copyright (C) Microsoft. All rights reserved.
+* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 *
-* Copyright (c) Microsoft Corporation. All rights reserved.
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
 * Asynchronous I/O: stream buffer. This is an extension to the PPL concurrency features and therefore
@@ -36,6 +24,21 @@
 
 namespace Concurrency
 {
+    namespace details
+    {
+        template<class F, class T = bool>
+        pplx::task<T> _do_while(F func)
+        {
+            pplx::task<T> first = func();
+            return first.then([=](bool guard) -> pplx::task<T> {
+                if (guard)
+                    return Concurrency::details::_do_while<F,T>(func);
+                else
+                    return first;
+            });
+        }
+    }
+
 /// Library for asynchronous streams.
 namespace streams
 {
@@ -1197,3 +1200,5 @@ namespace streams
     };
 
 }}
+
+

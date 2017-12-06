@@ -1,19 +1,7 @@
 /***
-* ==++==
+* Copyright (C) Microsoft. All rights reserved.
+* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 *
-* Copyright (c) Microsoft Corporation. All rights reserved.
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
 * HTTP Library: HTTP listener (server-side) APIs
@@ -28,6 +16,11 @@
 #include "stdafx.h"
 
 #if _WIN32_WINNT >= _WIN32_WINNT_VISTA
+
+#pragma comment(lib, "Ws2_32")
+
+#include "http_server_httpsys.h"
+#include "http_server_impl.h"
 
 using namespace web;
 using namespace utility;
@@ -564,6 +557,26 @@ void windows_request_context::read_headers_io_completion(DWORD error_code, DWORD
         m_msg.set_method(parse_request_method(m_request));
         parse_http_headers(m_request->Headers, m_msg.headers());
 
+        // Retrieve the remote IP address
+        std::vector<wchar_t> remoteAddressBuffer(50);
+
+        if (m_request->Address.pRemoteAddress->sa_family == AF_INET6)
+        {
+            auto inAddr = &reinterpret_cast<SOCKADDR_IN6 *>(m_request->Address.pRemoteAddress)->sin6_addr;
+            InetNtopW(AF_INET6, inAddr, &remoteAddressBuffer[0], remoteAddressBuffer.size());
+        }
+        else if (m_request->Address.pRemoteAddress->sa_family == AF_INET)
+        {
+            auto inAddr = &reinterpret_cast<SOCKADDR_IN *>(m_request->Address.pRemoteAddress)->sin_addr;
+            InetNtopW(AF_INET, inAddr, &remoteAddressBuffer[0], remoteAddressBuffer.size());
+        }
+        else
+        {
+            remoteAddressBuffer[0] = L'\0';
+        }
+
+        m_msg._get_impl()->_set_remote_address(&remoteAddressBuffer[0]);
+
         // Start reading in body from the network.
         m_msg._get_impl()->_prepare_to_receive_data();
         read_request_body_chunk();
@@ -1032,6 +1045,11 @@ void windows_request_context::cancel_request(std::exception_ptr except_ptr)
         std::unique_lock<std::mutex> lock(m_responseCompletedLock);
         m_response_completed.set_exception(except_ptr);
     }
+}
+
+std::unique_ptr<http_server> make_http_httpsys_server()
+{
+    return std::make_unique<http_windows_server>();
 }
 
 }}}}

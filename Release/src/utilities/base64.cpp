@@ -1,19 +1,7 @@
 /***
-* ==++==
+* Copyright (C) Microsoft. All rights reserved.
+* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 *
-* Copyright (c) Microsoft Corporation. All rights reserved.
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
 * For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
@@ -68,6 +56,20 @@ struct _triple_byte
     unsigned char _1_2 : 4;
     unsigned char _3   : 6;
     unsigned char _2_2 : 2;
+};
+
+struct _double_byte
+{
+    unsigned char _1_1 : 2;
+    unsigned char _0   : 6;
+    unsigned char _2_1 : 4;
+    unsigned char _1_2 : 4;
+};
+
+struct _single_byte
+{
+    unsigned char _1_1 : 2;
+    unsigned char _0   : 6;
 };
 
 //
@@ -239,7 +241,7 @@ utility::string_t _to_base64(const unsigned char *ptr, size_t size)
     {
         case 1:
         {
-            const _triple_byte* record = reinterpret_cast<const _triple_byte*>(ptr);
+            const _single_byte* record = reinterpret_cast<const _single_byte*>(ptr);
             unsigned char idx0 = record->_0;
             unsigned char idx1 = (record->_1_1 << 4);
             result.push_back(char_t(_base64_enctbl[idx0]));
@@ -250,7 +252,7 @@ utility::string_t _to_base64(const unsigned char *ptr, size_t size)
         }
         case 2:
         {
-            const _triple_byte* record = reinterpret_cast<const _triple_byte*>(ptr);
+            const _double_byte* record = reinterpret_cast<const _double_byte*>(ptr);
             unsigned char idx0 = record->_0;
             unsigned char idx1 = (record->_1_1 << 4) | record->_1_2;
             unsigned char idx2 = (record->_2_1 << 2);

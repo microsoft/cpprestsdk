@@ -1,19 +1,7 @@
 /***
-* ==++==
+* Copyright (C) Microsoft. All rights reserved.
+* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 *
-* Copyright (c) Microsoft Corporation. All rights reserved.
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
 * HTTP Library: Oauth 1.0
@@ -29,6 +17,7 @@
 
 using namespace utility;
 using web::http::client::http_client;
+using web::http::client::http_client_config;
 using web::http::oauth1::details::oauth1_state;
 using web::http::oauth1::details::oauth1_strings;
 
@@ -281,7 +270,13 @@ pplx::task<void> oauth1_config::_request_token(oauth1_state state, bool is_temp_
     req._set_base_uri(endpoint);
 
     _authenticate_request(req, std::move(state));
-    http_client client(endpoint);
+
+    // configure proxy
+    http_client_config config;
+    config.set_proxy(m_proxy);
+
+    http_client client(endpoint, config);
+
     return client.request(req)
     .then([](http_response resp)
     {

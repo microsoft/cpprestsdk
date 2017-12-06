@@ -12,8 +12,5 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\pplx\pplxapple.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\http\client\x509_cert_utilities_apple.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
 </Project>

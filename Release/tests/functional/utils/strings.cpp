@@ -1,19 +1,7 @@
 /***
- * ==++==
- *
- * Copyright (c) Microsoft Corporation. All rights reserved.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- * ==--==
+* Copyright (C) Microsoft. All rights reserved.
+* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+*
  * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
  *
  * base64.cpp
@@ -278,15 +266,32 @@ TEST(utf8_to_utf16_errors)
 
 TEST(latin1_to_utf16)
 {
-    // TODO: find some string that actually uses something unique to the Latin1 code page.
-    std::string str_latin1("This is a test");
-    utf16string str_utf16 = utility::conversions::latin1_to_utf16(str_latin1);
-    
-    for (size_t i = 0; i < str_latin1.size(); ++i)
+    char in[256] = { 0 };
+    char16_t expectedResult[256] = { 0 };
+    for (size_t i = 0; i < 256; ++i)
     {
-        VERIFY_ARE_EQUAL((utf16char)str_latin1[i], str_utf16[i]);
+        in[i] = static_cast<char>(i);
+        expectedResult[i] = static_cast<char16_t>(i);
+    }
+
+    std::string str_latin1(in, 256);
+
+    auto actualResult = utility::conversions::latin1_to_utf16(str_latin1);
+
+    VERIFY_ARE_EQUAL(str_latin1.size(), actualResult.size());
+    for (size_t i = 0; i < actualResult.size(); ++i)
+    {
+        VERIFY_ARE_EQUAL(expectedResult[i], actualResult[i]);
     }
 }
+
+#if defined(_MSC_VER)
+#pragma warning(disable : 4996)
+#elif defined(__clang__)
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#elif defined(__GNUC__)
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
 
 TEST(print_string_locale, "Ignore:Android", "Locale unsupported on Android")
 {

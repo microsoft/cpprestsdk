@@ -1,19 +1,7 @@
 /***
-* ==++==
+* Copyright (C) Microsoft. All rights reserved.
+* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 *
-* Copyright (c) Microsoft Corporation. All rights reserved.
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
 * Basic tests for async memory stream buffer operations.
@@ -60,7 +48,7 @@ void streambuf_putc(StreamBufferType& wbuf)
     size_t count = 10;
     auto seg2 = [&count](typename StreamBufferType::int_type ) { return (--count > 0); };
     auto seg1 = [&s,&wbuf, seg2]() { return wbuf.putc(s[0]).then(seg2); };
-    pplx::details::do_while(seg1).wait();
+    Concurrency::details::_do_while(seg1).wait();
 
     VERIFY_ARE_EQUAL(s.size() + 10, wbuf.in_avail());
 
@@ -95,7 +83,7 @@ void streambuf_putc(concurrency::streams::rawptr_buffer<CharType>& wbuf)
     size_t count = 10;
     auto seg2 = [&count](typename StreamBufferType::int_type ) { return (--count > 0); };
     auto seg1 = [&s,&wbuf, seg2]() { return wbuf.putc(s[0]).then(seg2); };
-    pplx::details::do_while(seg1).wait();
+    Concurrency::details::_do_while(seg1).wait();
 
     VERIFY_ARE_EQUAL(s.size() + 10, wbuf.block().size());
 
@@ -131,7 +119,7 @@ void streambuf_putc(concurrency::streams::container_buffer<CollectionType>& wbuf
     size_t count = 10;
     auto seg2 = [&count](typename StreamBufferType::int_type ) { return (--count > 0); };
     auto seg1 = [&s,&wbuf, seg2]() { return wbuf.putc(s[0]).then(seg2); };
-    pplx::details::do_while(seg1).wait();
+    Concurrency::details::_do_while(seg1).wait();
 
     VERIFY_ARE_EQUAL(s.size() + 10, wbuf.collection().size());
 
@@ -162,7 +150,7 @@ void streambuf_putn(StreamBufferType& wbuf)
     int count = 10;
     auto seg2 = [&count](size_t ) { return (--count > 0); };
     auto seg1 = [&s,&wbuf, seg2]() { return wbuf.putn_nocopy(s.data(), s.size()).then(seg2); };
-    pplx::details::do_while(seg1).wait();
+    Concurrency::details::_do_while(seg1).wait();
     VERIFY_ARE_EQUAL(s.size() * 12, wbuf.in_avail());
 
     wbuf.close().get();
@@ -192,7 +180,7 @@ void streambuf_putn(concurrency::streams::rawptr_buffer<CharType>& wbuf)
     int count = 10;
     auto seg2 = [&count](size_t ) { return (--count > 0); };
     auto seg1 = [&s,&wbuf, seg2]() { return wbuf.putn_nocopy(s.data(), s.size()).then(seg2); };
-    pplx::details::do_while(seg1).wait();
+    Concurrency::details::_do_while(seg1).wait();
 
     wbuf.close().get();
     VERIFY_IS_FALSE(wbuf.can_write());
@@ -221,7 +209,7 @@ void streambuf_putn(concurrency::streams::container_buffer<CollectionType>& wbuf
     int count = 10;
     auto seg2 = [&count](size_t ) { return (--count > 0); };
     auto seg1 = [&s,&wbuf, seg2]() { return wbuf.putn_nocopy(s.data(), s.size()).then(seg2); };
-    pplx::details::do_while(seg1).wait();
+    Concurrency::details::_do_while(seg1).wait();
 
     wbuf.close().get();
     VERIFY_IS_FALSE(wbuf.can_write());
@@ -1947,7 +1935,7 @@ void IStreamTest11()
     auto seg2 = [&ch](int val) { return (val != -1) && (++ch <= 'z'); };
     auto seg1 = [=,&ch,&rbuf]() { return rbuf.putc(ch).then(seg2); };
 
-    pplx::details::do_while(seg1).wait();
+    Concurrency::details::_do_while(seg1).wait();
 
     VERIFY_ARE_EQUAL(26u, rbuf.in_avail());
 

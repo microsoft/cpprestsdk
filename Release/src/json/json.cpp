@@ -1,19 +1,7 @@
 /***
-* ==++==
+* Copyright (C) Microsoft. All rights reserved.
+* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 *
-* Copyright (c) Microsoft Corporation. All rights reserved.
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
 * HTTP Library: JSON parser and writer
@@ -392,6 +380,41 @@ json::value& web::json::details::_Object::index(const utility::string_t &key)
 bool web::json::details::_Object::has_field(const utility::string_t &key) const
 {
     return m_object.find(key) != m_object.end();
+}
+
+bool web::json::value::has_number_field(const utility::string_t &key) const
+{
+	return has_field(key) && at(key).is_number();
+}
+
+bool web::json::value::has_integer_field(const utility::string_t &key) const
+{
+	return has_field(key) && at(key).is_integer();
+}
+
+bool web::json::value::has_double_field(const utility::string_t &key) const
+{
+	return has_field(key) && at(key).is_double();
+}
+
+bool web::json::value::has_boolean_field(const utility::string_t &key) const
+{
+	return has_field(key) && at(key).is_boolean();
+}
+
+bool web::json::value::has_string_field(const utility::string_t &key) const
+{
+	return has_field(key) && at(key).is_string();
+}
+
+bool web::json::value::has_array_field(const utility::string_t &key) const
+{
+	return has_field(key) && at(key).is_array();
+}
+
+bool web::json::value::has_object_field(const utility::string_t &key) const
+{
+	return has_field(key) && at(key).is_object();
 }
 
 utility::string_t json::value::to_string() const

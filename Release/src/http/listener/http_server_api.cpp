@@ -1,19 +1,7 @@
 /***
-* ==++==
+* Copyright (C) Microsoft. All rights reserved.
+* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 *
-* Copyright (c) Microsoft Corporation. All rights reserved.
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
 * HTTP Library: exposes the entry points to the http server transport apis.
@@ -24,6 +12,7 @@
 #include "stdafx.h"
 
 #if !defined(_WIN32) || (_WIN32_WINNT >= _WIN32_WINNT_VISTA && !defined(__cplusplus_winrt))
+#include "http_server_impl.h"
 
 using namespace web;
 using namespace utility;
@@ -84,10 +73,10 @@ pplx::task<void> http_server_api::register_listener(_In_ web::http::experimental
         // the server API was not initialized, register a default
         if(s_server_api == nullptr)
         {
-#ifdef _WIN32
-            std::unique_ptr<http_windows_server> server_api(new http_windows_server());
+#if defined(_WIN32) && !defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
+            auto server_api = make_http_httpsys_server();
 #else
-            std::unique_ptr<http_linux_server> server_api(new http_linux_server());
+            auto server_api = make_http_asio_server();
 #endif
             http_server_api::unsafe_register_server_api(std::move(server_api));
 
@@ -118,6 +107,7 @@ pplx::task<void> http_server_api::register_listener(_In_ web::http::experimental
                 try
                 {
                     server_api()->stop().wait();
+                    http_server_api::unsafe_register_server_api(nullptr);
                 } catch(...)
                 {
                     // ignore this exception since we want to report the original one
@@ -150,11 +140,12 @@ pplx::task<void> http_server_api::unregister_listener(_In_ web::http::experiment
             if (pplx::details::atomic_decrement(s_registrations) == 0L)
             {
                 server_api()->stop().wait();
+                http_server_api::unsafe_register_server_api(nullptr);
             }
         } catch(...)
         {
             // save the original exception from unregister listener
-            if(except != nullptr)
+            if(except == nullptr)
             {
                 except = std::current_exception();
             }

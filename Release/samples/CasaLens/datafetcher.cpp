@@ -1,19 +1,7 @@
 /***
-* ==++==
+* Copyright (C) Microsoft. All rights reserved.
+* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-* http://www.apache.org/licenses/LICENSE-2.0
-* 
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
 * datafetcher.cpp: Listener code: Given a location/postal code, the listener queries different services
@@ -420,7 +408,7 @@ void CasaLens::get_data(http_request message, const std::wstring& input_text)
         bing_client.request(methods::GET, s).then([=](http_response resp) 
         {
             return resp.extract_json();
-        }).then([=](json::value& maps_result) mutable
+        }).then([=](json::value maps_result) mutable
         {
             auto coordinates = maps_result[U("resourceSets")][0][U("resources")][0][U("point")];
             auto lattitude = coordinates[U("coordinates")][0].serialize();
@@ -432,10 +420,10 @@ void CasaLens::get_data(http_request message, const std::wstring& input_text)
         }).then([](http_response resp)
         {
             return resp.extract_json();
-        }).then([=](json::value& maps_result)
+        }).then([=](json::value maps_result)
         {
             auto postal_code = maps_result[U("resourceSets")][0][U("resources")][0][U("address")][U("postalCode")].as_string();
-            fetch_data(message, postal_code, input_text);            
+            fetch_data(message, postal_code, input_text);
         }).then([=](pplx::task<void> t)
         {
             try

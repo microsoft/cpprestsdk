@@ -15,6 +15,7 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\http\client\http_client.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\http\client\http_client_msg.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\http\client\x509_cert_utilities.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\http\common\http_helpers.cpp" />
@@ -33,7 +34,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\pplx\pplx.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\uri\uri.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\uri\uri_builder.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\uri\uri_parser.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\utilities\asyncrt_utils.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\utilities\base64.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)..\utilities\web_utilities.cpp" />
@@ -51,14 +51,12 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\basic_types.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\cpprest_compat.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\fileio.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\http_client_impl.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\http_helpers.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\http_server.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\http_server_api.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\nosal.h" />
-	<ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\resource.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\resource.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\SafeInt3.hpp" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\uri_parser.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\web_utilities.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\x509_cert_utilities.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\filestream.h" />
@@ -83,14 +81,13 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\pplx\pplxconv.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\pplx\pplxinterface.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\pplx\pplxtasks.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\http\client\http_client_impl.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\http\listener\http_server_impl.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\http\common\internal_http_helpers.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\websockets\client\ws_client_impl.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)..\pch\stdafx.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\http_constants.dat" />
-  </ItemGroup>
-  <ItemGroup>
-    <Xml Include="$(MSBuildThisFileDirectory)package_info.xml">
-      <SubType>Designer</SubType>
-    </Xml>
   </ItemGroup>
 </Project>

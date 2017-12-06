@@ -1,9 +1,3 @@
-include_directories(
-  ../utilities/include
-  ../utilities/testlistener/include
-  ${OPENSSL_INCLUDE_DIR}
-)
-
 set(SOURCES
   authentication_tests.cpp
   building_request_tests.cpp
@@ -27,6 +21,17 @@ set(SOURCES
   status_code_reason_phrase_tests.cpp
   to_string_tests.cpp
   http_client_fuzz_tests.cpp
+  stdafx.cpp
 )
 
-add_casablanca_test(${LIB}httpclient_test SOURCES)
+add_casablanca_test(httpclient_test SOURCES)
+if(TEST_LIBRARY_TARGET_TYPE STREQUAL "OBJECT")
+  target_include_directories(httpclient_test PRIVATE ../utilities/include)
+else()
+  target_link_libraries(httpclient_test PRIVATE httptest_utilities)
+endif()
+
+if(NOT WIN32)
+  cpprest_find_boost()
+  target_link_libraries(httpclient_test PRIVATE cpprestsdk_boost_internal)
+endif()

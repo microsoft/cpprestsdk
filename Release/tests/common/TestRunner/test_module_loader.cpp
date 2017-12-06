@@ -1,89 +1,29 @@
 /***
-* ==++==
+* Copyright (C) Microsoft. All rights reserved.
+* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-* http://www.apache.org/licenses/LICENSE-2.0
-* 
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 */
 #ifdef WIN32
 #include <Windows.h>
+#else
+#include "dlfcn.h"
+#include <boost/filesystem.hpp>
 #endif
 
 #include "test_module_loader.h"
 #include <iostream>
 
-#ifdef WIN32
-
-// Windows module
-class windows_module : public test_module
+class test_module
 {
 public:
-    windows_module(const std::string &dllName) : test_module(dllName), m_hModule(nullptr) {}
+    test_module(const std::string& dllName) : m_dllName(dllName), m_handle(nullptr) {}
 
     GetTestsFunc get_test_list()
     {
-        return (GetTestsFunc)GetProcAddress(m_hModule, "GetTestList");
-    }
-
-protected:
-
-    virtual unsigned long load_impl()
-    {
-        // Make sure ends in .dll
-        if(*(m_dllName.end() - 1) != 'l' 
-            || *(m_dllName.end() - 2) != 'l' 
-            || *(m_dllName.end() - 3) != 'd' 
-            || *(m_dllName.end() - 4) != '.')
-        {
-            return (unsigned long)-1;
-        }
-        m_hModule = LoadLibraryA(m_dllName.c_str());
-        if(m_hModule == nullptr)
-        {
-            return GetLastError();
-        }
-        return 0;
-    }
-
-    virtual unsigned long unload_impl()
-    {
-        if(!FreeLibrary(m_hModule))
-        {
-            return GetLastError();
-        }
-        return 0;
-    }
-
-    HMODULE m_hModule;
-
-private:
-	windows_module(const windows_module &);
-	windows_module & operator=(const windows_module &);
-
-};
-
+#if defined(_WIN32)
+        return (GetTestsFunc)GetProcAddress(m_handle, "GetTestList");
 #else
-#include "dlfcn.h"
-#include <boost/filesystem.hpp>
-
-class linux_module : public test_module
-{
-public:
-    linux_module(const std::string &soName) : test_module(soName), m_handle(nullptr) {}
-
-    GetTestsFunc get_test_list()
-    {
         auto ptr = dlsym(m_handle, "GetTestList");
         if (ptr == nullptr)
         {
@@ -93,43 +33,86 @@ public:
 #endif
                 std::endl;
         }
-        return (GetTestsFunc)ptr;
+        return (GetTestsFunc)ptr; 
+#endif
     }
 
-protected:
-
-    virtual unsigned long load_impl()
+    unsigned long load()
     {
-#ifdef __APPLE__
-        auto exe_directory = getcwd(nullptr, 0);
-        auto path = std::string(exe_directory) + "/" + m_dllName;
-        free(exe_directory);
-#else
-        auto path = boost::filesystem::initial_path().string() + "/" + m_dllName;
-#endif
-
-        m_handle = dlopen(path.c_str(), RTLD_LAZY|RTLD_GLOBAL);
         if (m_handle == nullptr)
         {
-            std::cerr << std::string(dlerror()) << std::endl;
-            return -1;
-        }
-        return 0;
-    }
-
-    virtual unsigned long unload_impl()
-    {
-        if (dlclose(m_handle) != 0)
-        {
-            std::cerr << std::string(dlerror()) << std::endl;
-            return -1;
-        }
-        return 0;
-    }
-
-    void* m_handle;
-};
+#if defined(_WIN32)
+            // Make sure ends in .dll
+            if (*(m_dllName.end() - 1) != 'l'
+                || *(m_dllName.end() - 2) != 'l'
+                || *(m_dllName.end() - 3) != 'd'
+                || *(m_dllName.end() - 4) != '.')
+            {
+                return (unsigned long)-1;
+            }
+            m_handle = LoadLibraryA(m_dllName.c_str());
+            if (m_handle == nullptr)
+            {
+                return GetLastError();
+            }
+            return 0;
+#else
+#ifdef __APPLE__
+            auto exe_directory = getcwd(nullptr, 0);
+            auto path = std::string(exe_directory) + "/" + m_dllName;
+            free(exe_directory);
+#else
+            auto path = boost::filesystem::initial_path().string() + "/" + m_dllName;
 #endif
+
+            m_handle = dlopen(path.c_str(), RTLD_LAZY | RTLD_GLOBAL);
+            if (m_handle == nullptr)
+            {
+                std::cerr << std::string(dlerror()) << std::endl;
+                return -1;
+            }
+            return 0;
+#endif
+        }
+        return 0;
+    }
+
+    unsigned long unload()
+    {
+        if (m_handle != nullptr)
+        {
+#if defined(_WIN32)
+            if (!FreeLibrary(m_handle))
+            {
+                return GetLastError();
+            }
+            m_handle = nullptr;
+            return 0;
+#else
+            if (dlclose(m_handle) != 0)
+            {
+                std::cerr << std::string(dlerror()) << std::endl;
+                return -1;
+            }
+            m_handle = nullptr;
+            return 0;
+#endif
+        }
+        return 0;
+    }
+
+private:
+    const std::string m_dllName;
+
+#if defined(_WIN32)
+    HMODULE m_handle;
+#else
+    void* m_handle;
+#endif
+
+    test_module(const test_module &) = delete;
+    test_module & operator=(const test_module &) = delete;
+};
 
 test_module_loader::test_module_loader()
 {
@@ -153,11 +136,7 @@ unsigned long test_module_loader::load(const std::string &dllName)
     }
 
     test_module *pModule;
-#ifdef WIN32
-    pModule = new windows_module(dllName);
-#else
-    pModule = new linux_module(dllName);
-#endif
+    pModule = new test_module(dllName);
 
     // Load dll.
     const unsigned long error_code = pModule->load();

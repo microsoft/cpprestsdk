@@ -1,19 +1,7 @@
 /***
-* ==++==
+* Copyright (C) Microsoft. All rights reserved.
+* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 *
-* Copyright (c) Microsoft Corporation. All rights reserved.
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
 * Tests cases for covering the http_listener class itself.
@@ -457,6 +445,41 @@ TEST_FIXTURE(uri_address, test_leaks)
             http_asserts::assert_test_response_equals(p_response, status_codes::OK);
         }).wait();
     }
+    listener.close().wait();
+}
+
+TEST_FIXTURE(uri_address, remote_address)
+{
+    http_listener listener(U("http://localhost:45678/path1"));
+    listener.open().wait();
+
+    test_http_client::scoped_client client(U("http://localhost:45678"));
+    test_http_client * p_client = client.client();
+
+    volatile unsigned long requestCount = 0;
+
+    listener.support(methods::GET, [&requestCount](http_request request)
+    {
+        const string_t& remoteAddr = request.get_remote_address();
+        const string_t& localhost4 = string_t(U("127.0.0.1"));
+        const string_t& localhost6 = string_t(U("::1"));
+
+        // We can't guarantee that the host has both IPv4 and IPv6 available, so check for either IP
+        VERIFY_IS_TRUE((remoteAddr == localhost4) || (remoteAddr == localhost6));
+
+        os_utilities::interlocked_increment(&requestCount);
+        request.reply(status_codes::NoContent);
+    });
+
+    // Send a request to the listener
+    VERIFY_ARE_EQUAL(0, p_client->request(methods::GET, U("/path1")));
+
+    p_client->next_response().then([](test_response *p_response)
+    {
+        http_asserts::assert_test_response_equals(p_response, status_codes::NoContent);
+    }).wait();
+
+    VERIFY_IS_TRUE(requestCount >= 1);
     listener.close().wait();
 }
 

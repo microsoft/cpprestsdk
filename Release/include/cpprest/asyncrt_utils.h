@@ -1,19 +1,7 @@
 /***
-* ==++==
+* Copyright (C) Microsoft. All rights reserved.
+* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 *
-* Copyright (c) Microsoft Corporation. All rights reserved.
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
 * Various common utilities.
@@ -41,7 +29,10 @@
 
 #ifndef _WIN32
 #include <boost/algorithm/string.hpp>
-#if !defined(ANDROID) && !defined(__ANDROID__) // CodePlex 269
+#if !defined(ANDROID) && !defined(__ANDROID__) && !defined(__GLIBC__) // CodePlex 269
+/* Systems using glibc: xlocale.h has been removed from glibc 2.26
+   The above include of locale.h is sufficient
+   Further details: https://sourceware.org/git/?p=glibc.git;a=commit;h=f0be25b6336db7492e47d2e8e72eb8af53b5506d */
 #include <xlocale.h>
 #endif
 #endif
@@ -112,28 +103,43 @@ namespace conversions
     /// </summary>
     /// <param name="s">A single byte character UTF-8 string.</param>
     /// <returns>A platform dependent string type.</returns>
+#ifdef _UTF16_STRINGS
     _ASYNCRTIMP utility::string_t __cdecl to_string_t(std::string &&s);
+#else
+    inline utility::string_t&& to_string_t(std::string &&s) { return std::move(s); }
+#endif
 
     /// <summary>
     /// Converts to a platform dependent Unicode string type.
     /// </summary>
     /// <param name="s">A two byte character UTF-16 string.</param>
     /// <returns>A platform dependent string type.</returns>
+#ifdef _UTF16_STRINGS
+    inline utility::string_t&& to_string_t(utf16string &&s) { return std::move(s); }
+#else
     _ASYNCRTIMP utility::string_t __cdecl to_string_t(utf16string &&s);
-
+#endif
     /// <summary>
     /// Converts to a platform dependent Unicode string type.
     /// </summary>
     /// <param name="s">A single byte character UTF-8 string.</param>
     /// <returns>A platform dependent string type.</returns>
+#ifdef _UTF16_STRINGS
     _ASYNCRTIMP utility::string_t __cdecl to_string_t(const std::string &s);
+#else
+    inline const utility::string_t& to_string_t(const std::string &s) { return s; }
+#endif
 
     /// <summary>
     /// Converts to a platform dependent Unicode string type.
     /// </summary>
     /// <param name="s">A two byte character UTF-16 string.</param>
     /// <returns>A platform dependent string type.</returns>
+#ifdef _UTF16_STRINGS
+    inline const utility::string_t& to_string_t(const utf16string &s) { return s; }
+#else
     _ASYNCRTIMP utility::string_t __cdecl to_string_t(const utf16string &s);
+#endif
 
     /// <summary>
     /// Converts to a UTF-16 from string.
@@ -147,14 +153,33 @@ namespace conversions
     /// </summary>
     /// <param name="value">A two byte character UTF-16 string.</param>
     /// <returns>A two byte character UTF-16 string.</returns>
-    _ASYNCRTIMP utf16string __cdecl to_utf16string(utf16string value);
+    inline const utf16string& to_utf16string(const utf16string& value)
+    {
+        return value;
+    }
+    /// <summary>
+    /// Converts to a UTF-16 from string.
+    /// </summary>
+    /// <param name="value">A two byte character UTF-16 string.</param>
+    /// <returns>A two byte character UTF-16 string.</returns>
+    inline utf16string&& to_utf16string(utf16string&& value)
+    {
+        return std::move(value);
+    }
 
     /// <summary>
     /// Converts to a UTF-8 string.
     /// </summary>
     /// <param name="value">A single byte character UTF-8 string.</param>
     /// <returns>A single byte character UTF-8 string.</returns>
-    _ASYNCRTIMP std::string __cdecl to_utf8string(std::string value);
+    inline std::string&& to_utf8string(std::string&& value) { return std::move(value); }
+
+    /// <summary>
+    /// Converts to a UTF-8 string.
+    /// </summary>
+    /// <param name="value">A single byte character UTF-8 string.</param>
+    /// <returns>A single byte character UTF-8 string.</returns>
+    inline const std::string& to_utf8string(const std::string& value) { return value; }
 
     /// <summary>
     /// Converts to a UTF-8 string.
@@ -179,7 +204,8 @@ namespace conversions
     _ASYNCRTIMP std::vector<unsigned char> __cdecl from_base64(const utility::string_t& str);
 
     template <typename Source>
-    utility::string_t print_string(const Source &val, const std::locale &loc)
+    CASABLANCA_DEPRECATED("All locale-sensitive APIs will be removed in a future update. Use stringstreams directly if locale support is required.")
+    utility::string_t print_string(const Source &val, const std::locale& loc = std::locale())
     {
         utility::ostringstream_t oss;
         oss.imbue(loc);
@@ -191,14 +217,91 @@ namespace conversions
         return oss.str();
     }
 
-    template <typename Source>
-    utility::string_t print_string(const Source &val)
+    CASABLANCA_DEPRECATED("All locale-sensitive APIs will be removed in a future update. Use stringstreams directly if locale support is required.")
+    inline utility::string_t print_string(const utility::string_t &val)
     {
-        return print_string(val, std::locale());
+        return val;
+    }
+
+    namespace details
+    {
+
+#if defined(__ANDROID__)
+        template<class T>
+        inline std::string to_string(const T& t)
+        {
+            std::ostringstream os;
+            os.imbue(std::locale::classic());
+            os << t;
+            return os.str();
+        }
+#endif
+
+        template<class T>
+        inline utility::string_t to_string_t(T&& t)
+        {
+#ifdef _UTF16_STRINGS
+            using std::to_wstring;
+            return to_wstring(std::forward<T>(t));
+#else
+#if !defined(__ANDROID__)
+            using std::to_string;
+#endif
+            return to_string(std::forward<T>(t));
+#endif
+        }
+
+        template <typename Source>
+        utility::string_t print_string(const Source &val)
+        {
+            utility::ostringstream_t oss;
+            oss.imbue(std::locale::classic());
+            oss << val;
+            if (oss.bad())
+            {
+                throw std::bad_cast();
+            }
+            return oss.str();
+        }
+
+        inline const utility::string_t& print_string(const utility::string_t &val)
+        {
+            return val;
+        }
+
+        template<typename Source>
+        utf8string print_utf8string(const Source& val)
+        {
+            return conversions::to_utf8string(print_string(val));
+        }
+        inline const utf8string& print_utf8string(const utf8string& val)
+        {
+            return val;
+        }
+
+        template <typename Target>
+        Target scan_string(const utility::string_t &str)
+        {
+            Target t;
+            utility::istringstream_t iss(str);
+            iss.imbue(std::locale::classic());
+            iss >> t;
+            if (iss.bad())
+            {
+                throw std::bad_cast();
+            }
+            return t;
+        }
+
+        inline const utility::string_t& scan_string(const utility::string_t &str)
+        {
+            return str;
+        }
     }
 
     template <typename Target>
-    Target scan_string(const utility::string_t &str, const std::locale &loc)
+    CASABLANCA_DEPRECATED("All locale-sensitive APIs will be removed in a future update. Use stringstreams directly if locale support is required.")
+    Target scan_string(const utility::string_t &str, const std::locale &loc = std::locale())
     {
         Target t;
         utility::istringstream_t iss(str);
@@ -211,10 +314,10 @@ namespace conversions
         return t;
     }
 
-    template <typename Target>
-    Target scan_string(const utility::string_t &str)
+    CASABLANCA_DEPRECATED("All locale-sensitive APIs will be removed in a future update. Use stringstreams directly if locale support is required.")
+    inline utility::string_t scan_string(const utility::string_t &str)
     {
-        return scan_string<Target>(str, std::locale());
+        return str;
     }
 }
 
@@ -314,9 +417,9 @@ class windows_category_impl : public std::error_category
 public:
     virtual const char *name() const CPPREST_NOEXCEPT { return "windows"; }
 
-    _ASYNCRTIMP virtual std::string message(int errorCode) const CPPREST_NOEXCEPT;
+    virtual std::string message(int errorCode) const CPPREST_NOEXCEPT;
 
-    _ASYNCRTIMP virtual std::error_condition default_error_condition(int errorCode) const CPPREST_NOEXCEPT;
+    virtual std::error_condition default_error_condition(int errorCode) const CPPREST_NOEXCEPT;
 };
 
 /// <summary>
@@ -490,7 +593,7 @@ private:
 
 #ifdef _WIN32
     // void* to avoid pulling in windows.h
-    static _ASYNCRTIMP bool __cdecl datetime::system_type_to_datetime(/*SYSTEMTIME*/ void* psysTime, uint64_t seconds, datetime * pdt);
+    static _ASYNCRTIMP bool __cdecl system_type_to_datetime(/*SYSTEMTIME*/ void* psysTime, uint64_t seconds, datetime * pdt);
 #else
     static datetime timeval_to_datetime(const timeval &time);
 #endif

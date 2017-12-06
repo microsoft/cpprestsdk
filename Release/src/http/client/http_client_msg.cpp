@@ -1,19 +1,7 @@
 /***
-* ==++==
+* Copyright (C) Microsoft. All rights reserved.
+* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 *
-* Copyright (c) Microsoft Corporation. All rights reserved.
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
 * HTTP Library: Request and reply message definitions (client side).
@@ -23,6 +11,7 @@
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 #include "stdafx.h"
+#include "../common/internal_http_helpers.h"
 
 namespace web { namespace http
 {
@@ -95,23 +84,6 @@ utility::string_t details::_http_response::to_string() const
 
     buffer << http_msg_base::to_string();
     return buffer.str();
-}
-
-// Macros to help build string at compile time and avoid overhead.
-#define STRINGIFY(x) _XPLATSTR(#x)
-#define TOSTRING(x) STRINGIFY(x)
-#define USERAGENT _XPLATSTR("cpprestsdk/") TOSTRING(CPPREST_VERSION_MAJOR) _XPLATSTR(".") TOSTRING(CPPREST_VERSION_MINOR) _XPLATSTR(".") TOSTRING(CPPREST_VERSION_REVISION)
-
-pplx::task<http_response> client::http_client::request(http_request request, const pplx::cancellation_token &token)
-{
-    if(!request.headers().has(header_names::user_agent))
-    {
-        request.headers().add(header_names::user_agent, USERAGENT);
-    }
-
-    request._set_base_uri(base_uri());
-    request._set_cancellation_token(token);
-    return m_pipeline->propagate(request);
 }
 
 }} // namespace web::http

@@ -19,9 +19,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\pplx\threadpool.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\http\client\x509_cert_utilities_android.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source Files">
@@ -32,9 +29,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\http_server_asio.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\pplx\pplxlinux.h">
       <Filter>Header Files</Filter>
     </ClInclude>

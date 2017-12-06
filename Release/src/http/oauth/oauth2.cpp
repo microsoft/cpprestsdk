@@ -1,19 +1,7 @@
 /***
-* ==++==
+* Copyright (C) Microsoft. All rights reserved.
+* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 *
-* Copyright (c) Microsoft Corporation. All rights reserved.
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
 * HTTP Library: Oauth 2.0
@@ -113,6 +101,11 @@ pplx::task<void> oauth2_config::_request_token(uri_builder& request_body_ub)
     http_request request;
     request.set_method(methods::POST);
     request.set_request_uri(utility::string_t());
+    
+    if(!user_agent().empty())
+    {
+        request.headers().add(web::http::header_names::user_agent, user_agent());
+    }
 
     if (!scope().empty())
     {
@@ -156,7 +149,7 @@ oauth2_token oauth2_config::_parse_token_from_json(const json::value& token_json
 {
     oauth2_token result;
 
-    if (token_json.has_field(oauth2_strings::access_token))
+    if (token_json.has_string_field(oauth2_strings::access_token))
     {
         result.set_access_token(token_json.at(oauth2_strings::access_token).as_string());
     }
@@ -165,7 +158,7 @@ oauth2_token oauth2_config::_parse_token_from_json(const json::value& token_json
         throw oauth2_exception(U("response json contains no 'access_token': ") + token_json.serialize());
     }
 
-    if (token_json.has_field(oauth2_strings::token_type))
+    if (token_json.has_string_field(oauth2_strings::token_type))
     {
         result.set_token_type(token_json.at(oauth2_strings::token_type).as_string());
     }
@@ -181,7 +174,7 @@ oauth2_token oauth2_config::_parse_token_from_json(const json::value& token_json
         throw oauth2_exception(U("only 'token_type=bearer' access tokens are currently supported: ") + token_json.serialize());
     }
 
-    if (token_json.has_field(oauth2_strings::refresh_token))
+    if (token_json.has_string_field(oauth2_strings::refresh_token))
     {
         result.set_refresh_token(token_json.at(oauth2_strings::refresh_token).as_string());
     }
@@ -212,7 +205,7 @@ oauth2_token oauth2_config::_parse_token_from_json(const json::value& token_json
         result.set_expires_in(oauth2_token::undefined_expiration);
     }
 
-    if (token_json.has_field(oauth2_strings::scope))
+    if (token_json.has_string_field(oauth2_strings::scope))
     {
         // The authorization server may return different scope from the one requested.
         // This however doesn't necessarily mean the token authorization scope is different.

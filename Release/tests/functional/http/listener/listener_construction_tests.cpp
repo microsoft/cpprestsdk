@@ -432,7 +432,7 @@ TEST_FIXTURE(uri_address, listener_config_creation)
 
 #if !defined(_WIN32) && !defined(__cplusplus_winrt)
 
-TEST_FIXTURE(uri_address, create_https_listener_get)
+TEST_FIXTURE(uri_address, create_https_listener_get, "Ignore", "github 209")
 {
     const char * self_signed_cert = R"(
 -----BEGIN CERTIFICATE-----
@@ -488,6 +488,42 @@ AvLsTlswO+wDLXM1DoKxzFBZL5o8927niqW+vZpzyGc1uPmC1MG7+MDKdZsR+e+9
 XzJTD4slrGSJrcpLt/g/Jqqdjg==
 -----END PRIVATE KEY-----
         )";
+
+    auto body = utility::string_t{U("body content")};
+    http_headers all_headers;
+    all_headers.add(U("Accept"), U("text/plain"));
+    all_headers.add(U("Accept-Charset"), U("utf-8"));
+    all_headers.add(U("Accept-Encoding"), U("gzip, deflate"));
+    all_headers.add(U("Accept-Language"), U("en-US"));
+    all_headers.add(U("Accept-Datetime"), U("Thu, 31 May 2007 20:35:00 GMT"));
+    all_headers.add(U("Authorization"), U("Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=="));
+    all_headers.add(U("Cache-Control"), U("no-cache"));
+    all_headers.add(U("Cookie"), U("$Version=1; Skin=new;"));
+    all_headers.add(U("Content-Length"), body.size());
+    all_headers.add(U("Content-MD5"), U("Q2hlY2sgSW50ZWdyaXR5IQ=="));
+    all_headers.add(U("Content-Type"), U("application/x-www-form-urlencoded"));
+    all_headers.add(U("Date"), U("Tue, 15 Nov 1994 08:12:31 GMT"));
+    all_headers.add(U("Expect"), U("100-continue"));
+    all_headers.add(U("Forwarded"), U("for=192.0.2.60;proto=http;by=203.0.113.43Forwarded: for=192.0.2.43, for=198.51.100.17"));
+    all_headers.add(U("From"), U("user@example.com"));
+    all_headers.add(U("Host"), U("en.wikipedia.org"));
+    all_headers.add(U("If-Match"), U("\"737060cd8c284d8af7ad3082f209582d\""));
+    all_headers.add(U("If-Modified-Since"), U("Sat, 29 Oct 1994 19:43:31 GMT"));
+    all_headers.add(U("If-None-Match"), U("\"737060cd8c284d8af7ad3082f209582d\""));
+    all_headers.add(U("If-Range"), U("\"737060cd8c284d8af7ad3082f209582d\""));
+    all_headers.add(U("If-Unmodified-Since"), U("Sat, 29 Oct 1994 19:43:31 GMT"));
+    all_headers.add(U("Max-Forwards"), U("10"));
+    all_headers.add(U("Origin"), U("http://www.example-social-network.com"));
+    all_headers.add(U("Pragma"), U("no-cache"));
+    all_headers.add(U("Proxy-Authorization"), U("Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=="));
+    all_headers.add(U("Range"), U("bytes=500-999"));
+    all_headers.add(U("Referer"), U("http://en.wikipedia.org/wiki/Main_Page"));
+    all_headers.add(U("TE"), U("trailers, deflate"));
+    all_headers.add(U("User-Agent"), U("Mozilla/5.0 (X11; Linux x86_64; rv:12.0) Gecko/20100101 Firefox/21.0"));
+    all_headers.add(U("Upgrade"), U("HTTP/2.0, SHTTP/1.3, IRC/6.9, RTA/x11"));
+    all_headers.add(U("Via"), U("1.0 fred, 1.1 example.com (Apache/1.1)"));
+    all_headers.add(U("Warning"), U("199 Miscellaneous warning"));
+
     boost::asio::const_buffer cert(self_signed_cert, std::strlen(self_signed_cert));
     boost::asio::const_buffer key(private_key, std::strlen(private_key));
 
@@ -503,9 +539,19 @@ XzJTD4slrGSJrcpLt/g/Jqqdjg==
     http_listener listener(m_secure_uri, server_config);
 
     listener.support(methods::GET,
-        [](http_request request)
+        [&](http_request request)
         {
             http_asserts::assert_request_equals(request, methods::GET, U("/"));
+
+            for (auto&& h : all_headers)
+            {
+                std::cout << "HEADER - " << h.first << ": " << h.second << std::endl;
+                VERIFY_IS_TRUE(request.headers().has(h.first));
+                VERIFY_ARE_EQUAL(h.second, request.headers().find(h.first)->second);
+            }
+
+            VERIFY_ARE_EQUAL(body, request.extract_string(true).get());
+
             request.reply(status_codes::OK);
         });
 
@@ -521,6 +567,9 @@ XzJTD4slrGSJrcpLt/g/Jqqdjg==
     client::http_client client(m_secure_uri, client_config);
     http_request msg(methods::GET);
     msg.set_request_uri(U("/"));
+
+    msg.headers() = all_headers;
+    msg.set_body(body);
 
     http_asserts::assert_response_equals(client.request(msg).get(), status_codes::OK);
 

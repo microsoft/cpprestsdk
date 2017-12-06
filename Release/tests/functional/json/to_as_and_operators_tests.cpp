@@ -1,19 +1,7 @@
 /***
-* ==++==
+* Copyright (C) Microsoft. All rights reserved.
+* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 *
-* Copyright (c) Microsoft Corporation. All rights reserved.
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
 * Tests for to_*, as_*, and operators on JSON values.
@@ -324,11 +312,64 @@ TEST(negative_get_element_array)
 
 TEST(has_field_object)
 {
+
+
     json::value v1;
     
     v1[U("a")] = json::value::number(1);
+    v1[U("b")] = json::value::boolean(true);
+    v1[U("c")] = json::value::string(U("a string"));
+    v1[U("d")] = json::value::array({});    
+    json::value sub_field;
+    sub_field[U("x")] = json::value::number(1);    
+    v1[U("e")] = sub_field;
+
     VERIFY_IS_TRUE(v1.has_field(U("a")));
-    VERIFY_IS_FALSE(v1.has_field(U("b")));
+    VERIFY_IS_TRUE(v1.has_field(U("b")));
+    VERIFY_IS_TRUE(v1.has_field(U("c")));
+    VERIFY_IS_TRUE(v1.has_field(U("d")));
+    VERIFY_IS_TRUE(v1.has_field(U("e")));
+    VERIFY_IS_FALSE(v1.has_field(U("f")));
+
+    VERIFY_IS_TRUE(v1.has_number_field(U("a")));
+    VERIFY_IS_TRUE(v1.has_integer_field(U("a")));
+    VERIFY_IS_FALSE(v1.has_double_field(U("a")));
+    VERIFY_IS_FALSE(v1.has_boolean_field(U("a")));
+    VERIFY_IS_FALSE(v1.has_string_field(U("a")));
+    VERIFY_IS_FALSE(v1.has_array_field(U("a")));
+    VERIFY_IS_FALSE(v1.has_object_field(U("a")));
+
+    VERIFY_IS_TRUE(v1.has_boolean_field(U("b")));
+    VERIFY_IS_FALSE(v1.has_number_field(U("b")));
+    VERIFY_IS_FALSE(v1.has_integer_field(U("b")));
+    VERIFY_IS_FALSE(v1.has_double_field(U("b")));
+    VERIFY_IS_FALSE(v1.has_string_field(U("b")));
+    VERIFY_IS_FALSE(v1.has_array_field(U("b")));
+    VERIFY_IS_FALSE(v1.has_object_field(U("b")));
+
+    VERIFY_IS_TRUE(v1.has_string_field(U("c")));
+    VERIFY_IS_FALSE(v1.has_boolean_field(U("c")));
+    VERIFY_IS_FALSE(v1.has_number_field(U("c")));
+    VERIFY_IS_FALSE(v1.has_integer_field(U("c")));
+    VERIFY_IS_FALSE(v1.has_double_field(U("c")));
+    VERIFY_IS_FALSE(v1.has_array_field(U("c")));
+    VERIFY_IS_FALSE(v1.has_object_field(U("c")));
+
+    VERIFY_IS_TRUE(v1.has_array_field(U("d")));
+    VERIFY_IS_FALSE(v1.has_string_field(U("d")));
+    VERIFY_IS_FALSE(v1.has_boolean_field(U("d")));
+    VERIFY_IS_FALSE(v1.has_number_field(U("d")));
+    VERIFY_IS_FALSE(v1.has_integer_field(U("d")));
+    VERIFY_IS_FALSE(v1.has_double_field(U("d")));
+    VERIFY_IS_FALSE(v1.has_object_field(U("d")));
+
+    VERIFY_IS_TRUE(v1.has_object_field(U("e")));
+    VERIFY_IS_FALSE(v1.has_array_field(U("e")));
+    VERIFY_IS_FALSE(v1.has_string_field(U("e")));
+    VERIFY_IS_FALSE(v1.has_boolean_field(U("e")));
+    VERIFY_IS_FALSE(v1.has_number_field(U("e")));
+    VERIFY_IS_FALSE(v1.has_integer_field(U("e")));
+    VERIFY_IS_FALSE(v1.has_double_field(U("e")));
 
     json::value v2;
     

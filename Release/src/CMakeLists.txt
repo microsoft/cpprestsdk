@@ -1,13 +1,35 @@
-include_directories(pch ${OPENSSL_INCLUDE_DIR})
+cmake_policy(SET CMP0022 NEW)
 
-set(SOURCES_COMMON
+set(CPPREST_VERSION_MAJOR 2)
+set(CPPREST_VERSION_MINOR 10)
+set(CPPREST_VERSION_REVISION 0)
+
+file(GLOB HEADERS_CPPREST "../include/cpprest/*.h" "../include/cpprest/*.hpp" "../include/cpprest/*.dat")
+file(GLOB HEADERS_PPLX "../include/pplx/*.h" "../include/pplx/*.hpp")
+file(GLOB HEADERS_DETAILS "../include/cpprest/details/*.h" "../include/cpprest/details/*.hpp" "../include/cpprest/details/*.dat" "../include/pplx/*.hpp" "../include/pplx/*.dat")
+source_group("Header Files\\cpprest" FILES ${HEADERS_CPPREST})
+source_group("Header Files\\pplx" FILES ${HEADERS_PPLX})
+source_group("Header Files\\cpprest\\details" FILES ${HEADERS_DETAILS})
+
+file(GLOB HEADER_PPLX_THREADPOOL "../include/pplx/threadpool.h")
+list(REMOVE_ITEM HEADERS_PPLX ${HEADER_PPLX_THREADPOOL})
+
+set(SOURCES
+  ${HEADERS_CPPREST}
+  ${HEADERS_PPLX}
+  ${HEADERS_DETAILS}
+  pch/stdafx.h
+  http/client/http_client.cpp
   http/client/http_client_msg.cpp
+  http/client/http_client_impl.h
   http/client/x509_cert_utilities.cpp
+  http/common/internal_http_helpers.h
   http/common/http_helpers.cpp
   http/common/http_msg.cpp
   http/listener/http_listener.cpp
   http/listener/http_listener_msg.cpp
   http/listener/http_server_api.cpp
+  http/listener/http_server_impl.h
   http/oauth/oauth1.cpp
   http/oauth/oauth2.cpp
   json/json.cpp
@@ -16,98 +38,238 @@ set(SOURCES_COMMON
   pplx/pplx.cpp
   uri/uri.cpp
   uri/uri_builder.cpp
-  uri/uri_parser.cpp
   utilities/asyncrt_utils.cpp
   utilities/base64.cpp
   utilities/web_utilities.cpp
-  websockets/client/ws_msg.cpp
-  websockets/client/ws_client.cpp
-  websockets/client/ws_client_wspp.cpp
 )
 
-# THE ORDER OF FILES IS VERY /VERY/ IMPORTANT
-if(UNIX)
-  set(SOURCES
-    ${SOURCES_COMMON}
-    streams/fileio_posix.cpp
-    pplx/threadpool.cpp
-    http/client/http_client_asio.cpp
-    http/listener/http_server_asio.cpp
+add_library(cpprest ${SOURCES})
+target_include_directories(cpprest
+  PUBLIC
+    $<INSTALL_INTERFACE:include> $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+  PRIVATE
+    pch
+)
+
+## Sub-components
+# Websockets component
+if(CPPREST_WEBSOCKETS_IMPL STREQUAL "none")
+  target_compile_definitions(cpprest PUBLIC -DCPPREST_EXCLUDE_WEBSOCKETS=1)
+elseif(CPPREST_WEBSOCKETS_IMPL STREQUAL "winrt")
+  target_sources(cpprest PRIVATE
+    websockets/client/ws_msg.cpp
+    websockets/client/ws_client.cpp
+    websockets/client/ws_client_impl.h
+    websockets/client/ws_client_winrt.cpp
   )
-  if(APPLE)
-    list(APPEND SOURCES
-      pplx/pplxapple.cpp
-      http/client/x509_cert_utilities_apple.cpp
-    )
-    find_library(COREFOUNDATION CoreFoundation "/")
-    find_library(SECURITY Security "/")
-    set(EXTRALINKS ${COREFOUNDATION} ${SECURITY})
-  elseif(ANDROID)
-    list(APPEND SOURCES
-      http/client/x509_cert_utilities_android.cpp
-      pplx/pplxlinux.cpp
-    )
-  else()
-    list(APPEND SOURCES pplx/pplxlinux.cpp)
+elseif(CPPREST_WEBSOCKETS_IMPL STREQUAL "wspp")
+  target_sources(cpprest PRIVATE
+    websockets/client/ws_msg.cpp
+    websockets/client/ws_client.cpp
+    websockets/client/ws_client_impl.h
+    websockets/client/ws_client_wspp.cpp
+  )
+  cpprest_find_websocketpp()
+  target_link_libraries(cpprest PRIVATE cpprestsdk_websocketpp_internal)
+else()
+  message(FATAL_ERROR "Invalid implementation")
+endif()
+
+# Compression component
+if(CPPREST_EXCLUDE_COMPRESSION)
+  target_compile_definitions(cpprest PRIVATE -DCPPREST_EXCLUDE_COMPRESSION=1)
+else()
+  cpprest_find_zlib()
+  target_link_libraries(cpprest PRIVATE cpprestsdk_zlib_internal)
+endif()
+
+# PPLX component
+if(CPPREST_PPLX_IMPL STREQUAL "apple")
+  find_library(COREFOUNDATION CoreFoundation "/")
+  find_library(SECURITY Security "/")
+  target_link_libraries(cpprest PUBLIC ${COREFOUNDATION} ${SECURITY})
+  target_sources(cpprest PRIVATE pplx/pplxapple.cpp pplx/threadpool.cpp ../include/pplx/threadpool.h)
+  if(CPPREST_INSTALL_HEADERS)
+    install(FILES ../include/pplx/threadpool.h DESTINATION include/pplx)
   endif()
-  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNINGS} -Werror -pedantic")
-elseif(WIN32)
-  set(SOURCES
-    ${SOURCES_COMMON}
-    http/client/http_client_winhttp.cpp
-    http/client/x509_cert_utilities_win32.cpp
-    http/listener/http_server_httpsys.cpp
-    pplx/pplxwin.cpp
-    streams/fileio_win32.cpp
-    pch/stdafx.cpp
-  )
-  set(EXTRALINKS
-    bcrypt.lib
-    crypt32.lib
+elseif(CPPREST_PPLX_IMPL STREQUAL "linux")
+  target_sources(cpprest PRIVATE pplx/pplxlinux.cpp pplx/threadpool.cpp ../include/pplx/threadpool.h)
+  if(CPPREST_INSTALL_HEADERS)
+    install(FILES ../include/pplx/threadpool.h DESTINATION include/pplx)
+  endif()
+elseif(CPPREST_PPLX_IMPL STREQUAL "win")
+  target_sources(cpprest PRIVATE pplx/pplxwin.cpp pplx/threadpool.cpp ../include/pplx/threadpool.h)
+  if(CPPREST_INSTALL_HEADERS)
+    install(FILES ../include/pplx/threadpool.h DESTINATION include/pplx)
+  endif()
+elseif(CPPREST_PPLX_IMPL STREQUAL "winpplx")
+  target_compile_definitions(cpprest PUBLIC -DCPPREST_FORCE_PPLX=1)
+  target_sources(cpprest PRIVATE pplx/pplxwin.cpp pplx/threadpool.cpp ../include/pplx/threadpool.h)
+  if(CPPREST_INSTALL_HEADERS)
+    install(FILES ../include/pplx/threadpool.h DESTINATION include/pplx)
+  endif()
+elseif(CPPREST_PPLX_IMPL STREQUAL "winrt")
+  target_sources(cpprest PRIVATE pplx/pplxwin.cpp)
+else()
+  message(FATAL_ERROR "Invalid implementation")
+endif()
+
+# Http client component
+if(CPPREST_HTTP_CLIENT_IMPL STREQUAL "asio")
+  cpprest_find_boost()
+  cpprest_find_openssl()
+  target_compile_definitions(cpprest PUBLIC -DCPPREST_FORCE_HTTP_CLIENT_ASIO)
+  target_sources(cpprest PRIVATE http/client/http_client_asio.cpp)
+  target_link_libraries(cpprest PUBLIC cpprestsdk_boost_internal cpprestsdk_openssl_internal)
+elseif(CPPREST_HTTP_CLIENT_IMPL STREQUAL "winhttp")
+  target_link_libraries(cpprest PRIVATE
     httpapi.lib
     Winhttp.lib
   )
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${WARNINGS} /Yustdafx.h /Zm200")
+  target_sources(cpprest PRIVATE http/client/http_client_winhttp.cpp)
+elseif(CPPREST_HTTP_CLIENT_IMPL STREQUAL "winrt")
+  target_sources(cpprest PRIVATE http/client/http_client_winrt.cpp)
+else()
+  message(FATAL_ERROR "Invalid implementation")
+endif()
+
+# fileio streams component
+if(CPPREST_FILEIO_IMPL STREQUAL "win32")
+  target_sources(cpprest PRIVATE streams/fileio_win32.cpp)
+elseif(CPPREST_FILEIO_IMPL STREQUAL "winrt")
+  target_sources(cpprest PRIVATE streams/fileio_winrt.cpp)
+elseif(CPPREST_FILEIO_IMPL STREQUAL "posix")
+  target_sources(cpprest PRIVATE streams/fileio_posix.cpp)
+else()
+  message(FATAL_ERROR "Invalid implementation")
+endif()
+
+# http listener component
+if(CPPREST_HTTP_LISTENER_IMPL STREQUAL "asio")
+  cpprest_find_boost()
+  cpprest_find_openssl()
+  target_compile_definitions(cpprest PUBLIC -DCPPREST_FORCE_HTTP_LISTENER_ASIO)
+  target_sources(cpprest PRIVATE http/listener/http_server_asio.cpp)
+  target_link_libraries(cpprest PUBLIC cpprestsdk_boost_internal cpprestsdk_openssl_internal)
+elseif(CPPREST_HTTP_LISTENER_IMPL STREQUAL "httpsys")
+  target_sources(cpprest PRIVATE
+    http/listener/http_server_httpsys.cpp
+    http/listener/http_server_httpsys.h
+  )
+elseif(CPPREST_HTTP_LISTENER_IMPL STREQUAL "none")
+else()
+  message(FATAL_ERROR "Invalid implementation")
+endif()
+
+if(MSVC)
+  get_target_property(_srcs cpprest SOURCES)
+
+  if(NOT CMAKE_GENERATOR MATCHES "Visual Studio .*")
+    set_property(SOURCE pch/stdafx.cpp APPEND PROPERTY OBJECT_OUTPUTS "${CMAKE_CURRENT_BINARY_DIR}/stdafx.pch")
+    set_property(SOURCE ${_srcs} APPEND PROPERTY OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/stdafx.pch")
+  endif()
+
   set_source_files_properties(pch/stdafx.cpp PROPERTIES COMPILE_FLAGS "/Ycstdafx.h")
+  target_sources(cpprest PRIVATE pch/stdafx.cpp)
+  target_compile_options(cpprest PRIVATE /Yustdafx.h /Zm200)
+endif()
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+  if(WERROR)
+    target_compile_options(cpprest PRIVATE -Werror)
+  endif()
+  target_compile_options(cpprest PRIVATE -pedantic ${WARNINGS})
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+  if(WERROR)
+    target_compile_options(cpprest PRIVATE /WX ${WARNINGS})
+  endif()
+else()
+  message(FATAL_ERROR "Unknown compiler")
+endif()
+
+if(WIN32)
   if (BUILD_SHARED_LIBS)
-    add_definitions(-D_ASYNCRT_EXPORT -D_PPLX_EXPORT -D_USRDLL)
+    target_compile_definitions(cpprest PRIVATE -D_ASYNCRT_EXPORT -D_PPLX_EXPORT -D_USRDLL)
+  else()
+    target_compile_definitions(cpprest PUBLIC -D_NO_ASYNCRTIMP -D_NO_PPLXIMP)
+  endif()
+elseif(ANDROID)
+  target_link_libraries(cpprest PRIVATE ${ANDROID_STL_FLAGS})
+endif()
+
+if (WIN32 AND NOT WINDOWS_STORE AND NOT WINDOWS_PHONE)
+  target_link_libraries(cpprest PRIVATE
+    bcrypt.lib
+    crypt32.lib
+  )
+elseif(WINDOWS_STORE)
+  if(NOT CMAKE_GENERATOR MATCHES "Visual Studio .*")
+    target_compile_definitions(cpprest PRIVATE -DWINAPI_FAMILY=WINAPI_FAMILY_PC_APP)
+    get_target_property(LINK_FLAGS cpprest LINK_FLAGS)
+    if(NOT LINK_FLAGS)
+        set(LINK_FLAGS "")
+    endif()
+    set(LINK_FLAGS "${LINK_FLAGS} /APPCONTAINER")
+    set_target_properties(cpprest PROPERTIES LINK_FLAGS "${LINK_FLAGS}")
   endif()
 endif()
 
-add_library(${Casablanca_LIBRARY} ${SOURCES})
-
-target_link_libraries(${Casablanca_LIBRARY}
-  ${CMAKE_THREAD_LIBS_INIT}
-  ${Boost_SYSTEM_LIBRARY}
-  ${Boost_THREAD_LIBRARY}
-  ${Boost_ATOMIC_LIBRARY}
-  ${Boost_CHRONO_LIBRARY}
-  ${Boost_RANDOM_LIBRARY}
-  ${EXTRALINKS}
-  ${Boost_FRAMEWORK}
-  ${OPENSSL_LIBRARIES}
-  ${COREFOUNDATION}
-  ${ANDROID_STL_FLAGS}
-  )
-
-# Portions specific to cpprest binary versioning.
-set (CPPREST_VERSION_MAJOR 2)
-set (CPPREST_VERSION_MINOR 7)
-set (CPPREST_VERSION_REVISION 0)
-
 if(WIN32)
-  set_target_properties(${Casablanca_LIBRARY} PROPERTIES
-    OUTPUT_NAME "${Casablanca_LIBRARY}_${CPPREST_VERSION_MAJOR}_${CPPREST_VERSION_MINOR}")
+  set_target_properties(cpprest PROPERTIES
+    OUTPUT_NAME "cpprest_${CPPREST_VERSION_MAJOR}_${CPPREST_VERSION_MINOR}")
 elseif(ANDROID)
   # Do not use SOVERSION on android. It is completely unsupported (and causes problems).
   # Perhaps revisit in the future? (NDK r9d, 8/7/14)
 else()
-  set_target_properties(${Casablanca_LIBRARY} PROPERTIES
+  set_target_properties(cpprest PROPERTIES
     SOVERSION ${CPPREST_VERSION_MAJOR}.${CPPREST_VERSION_MINOR})
+endif()
 
+if(CPPREST_INSTALL_HEADERS)
+  install(FILES ${HEADERS_CPPREST} DESTINATION include/cpprest)
+  install(FILES ${HEADERS_PPLX} DESTINATION include/pplx)
+  install(FILES ${HEADERS_DETAILS} DESTINATION include/cpprest/details)
+endif()
+
+if(CPPREST_INSTALL)
+  set(CPPREST_USES_BOOST OFF)
+  set(CPPREST_USES_ZLIB OFF)
+  set(CPPREST_USES_OPENSSL OFF)
+
+  set(CPPREST_TARGETS cpprest)
+  if(TARGET cpprestsdk_boost_internal)
+    list(APPEND CPPREST_TARGETS cpprestsdk_boost_internal)
+    set(CPPREST_USES_BOOST ON)
+  endif()
+  if(TARGET cpprestsdk_zlib_internal)
+    list(APPEND CPPREST_TARGETS cpprestsdk_zlib_internal)
+    set(CPPREST_USES_ZLIB ON)
+  endif()
+  if(TARGET cpprestsdk_openssl_internal)
+    list(APPEND CPPREST_TARGETS cpprestsdk_openssl_internal)
+    set(CPPREST_USES_OPENSSL ON)
+  endif()
+  if(TARGET cpprestsdk_websocketpp_internal)
+    list(APPEND CPPREST_TARGETS cpprestsdk_websocketpp_internal)
+  endif()
   install(
-    TARGETS ${Casablanca_LIBRARY}
+    TARGETS ${CPPREST_TARGETS}
+    EXPORT cpprestsdk-targets
+    RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
-    )
+  )
+
+  configure_file(../cmake/cpprestsdk-config.in.cmake "${CMAKE_CURRENT_BINARY_DIR}/cpprestsdk-config.cmake" @ONLY)
+
+  install(
+    FILES "${CMAKE_CURRENT_BINARY_DIR}/cpprestsdk-config.cmake"
+    DESTINATION ${CPPREST_EXPORT_DIR}
+  )
+  install(
+    EXPORT cpprestsdk-targets
+    FILE cpprestsdk-targets.cmake
+    NAMESPACE cpprestsdk::
+    DESTINATION ${CPPREST_EXPORT_DIR}
+  )
 endif()

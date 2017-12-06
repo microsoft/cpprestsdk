@@ -52,9 +52,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\uri\uri_builder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\uri\uri_parser.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\utilities\web_utilities.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -65,6 +62,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\websockets\client\ws_client.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)..\http\client\http_client.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -86,6 +86,9 @@
     </Filter>
     <Filter Include="Header Files\pplx">
       <UniqueIdentifier>{1c12997c-5bf5-4b60-853e-a5f9c8303760}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\private">
+      <UniqueIdentifier>{97da7aee-41c8-4948-bb0e-c31cec1bfb16}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -152,9 +155,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\fileio.h">
       <Filter>Header Files\cpprest\details</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\http_client_impl.h">
-      <Filter>Header Files\cpprest\details</Filter>
-    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\http_helpers.h">
       <Filter>Header Files\cpprest\details</Filter>
     </ClInclude>
@@ -168,9 +168,6 @@
       <Filter>Header Files\cpprest\details</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\SafeInt3.hpp">
-      <Filter>Header Files\cpprest\details</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\uri_parser.h">
       <Filter>Header Files\cpprest\details</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\web_utilities.h">
@@ -209,13 +206,22 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\resource.h">
       <Filter>Header Files\cpprest\details</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\http\client\http_client_impl.h">
+      <Filter>Header Files\private</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\http\listener\http_server_impl.h">
+      <Filter>Header Files\private</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\websockets\client\ws_client_impl.h">
+      <Filter>Header Files\private</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\http\common\internal_http_helpers.h">
+      <Filter>Header Files\private</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\http_constants.dat">
       <Filter>Header Files\cpprest\details</Filter>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Xml Include="$(MSBuildThisFileDirectory)package_info.xml" />
   </ItemGroup>
 </Project>

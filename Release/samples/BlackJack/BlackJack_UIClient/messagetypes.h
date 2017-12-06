@@ -1,19 +1,7 @@
 /***
-* ==++==
+* Copyright (C) Microsoft. All rights reserved.
+* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-* http://www.apache.org/licenses/LICENSE-2.0
-* 
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
 * messagetypes.h
@@ -120,9 +108,9 @@ struct BJHand
 
     NumericHandValues GetNumericValues()
     {
-        NumericHandValues result;
-        result.low = 0;
-        result.low = 0;
+        NumericHandValues r;
+        r.low = 0;
+        r.low = 0;
 
         bool hasAces = false;
 
@@ -130,17 +118,17 @@ struct BJHand
         {
             if ( iter->value == CV_Ace ) hasAces = true;
 
-            result.low += (iter->value < 10) ? iter->value : 10;
+            r.low += (iter->value < 10) ? iter->value : 10;
         }
-        result.high = hasAces ? result.low + 10 : result.low;
-        return result;
+        r.high = hasAces ? r.low + 10 : r.low;
+        return r;
     }
 
 	BJHand(web::json::value object)
     {
-        web::json::value cards = object[CARDS];
+        web::json::value l_cards = object[CARDS];
 
-        for (auto iter = cards.as_array().begin(); iter != cards.as_array().end(); ++iter)
+        for (auto iter = l_cards.as_array().begin(); iter != l_cards.as_array().end(); ++iter)
         {
             if ( !iter->is_null() )
             {

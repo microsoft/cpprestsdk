@@ -1,19 +1,7 @@
 /***
-* ==++==
+* Copyright (C) Microsoft. All rights reserved.
+* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 *
-* Copyright (c) Microsoft Corporation. All rights reserved.
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
 * Tests cases for covering issues dealing with http_client lifetime, underlying TCP connections, and general connection errors.
@@ -26,6 +14,9 @@
 #ifndef __cplusplus_winrt
 #include "cpprest/http_listener.h"
 #endif
+
+#include <chrono>
+#include <thread>
 
 using namespace web;
 using namespace utility;
@@ -40,43 +31,50 @@ namespace tests { namespace functional { namespace http { namespace client {
 // Test implementation for pending_requests_after_client.
 static void pending_requests_after_client_impl(const uri &address)
 {
-    test_http_server::scoped_server scoped(address);
-    const method mtd = methods::GET;
-
-    const size_t num_requests = 10;
-    std::vector<pplx::task<http_response>> responses;
+    std::vector<pplx::task<void>> completed_requests;
     {
-        http_client client(address);
+        test_http_server::scoped_server scoped(address);
+        const method mtd = methods::GET;
 
-        // send requests.
-        for(size_t i = 0; i < num_requests; ++i)
+        const size_t num_requests = 10;
+
+        std::vector<pplx::task<test_request*>> requests = scoped.server()->next_requests(num_requests);
+        std::vector<pplx::task<http_response>> responses;
         {
-            responses.push_back(client.request(mtd));
+            http_client client(address);
+
+            // send requests.
+            for (size_t i = 0; i < num_requests; ++i)
+            {
+                responses.push_back(client.request(mtd));
+            }
+        }
+
+        // send responses.
+        for (size_t i = 0; i < num_requests; ++i)
+        {
+            completed_requests.push_back(requests[i].then([&](test_request *request)
+            {
+                http_asserts::assert_test_request_equals(request, mtd, U("/"));
+                VERIFY_ARE_EQUAL(0u, request->reply(status_codes::OK));
+            }));
+        }
+
+        // verify responses.
+        for (size_t i = 0; i < num_requests; ++i)
+        {
+            try
+            {
+                http_asserts::assert_response_equals(responses[i].get(), status_codes::OK);
+            }
+            catch (...)
+            {
+                VERIFY_IS_TRUE(false);
+            }
         }
     }
-
-    // send responses.
-    for(size_t i = 0; i < num_requests; ++i)
-    {
-        scoped.server()->next_request().then([&](test_request *request)
-        {
-            http_asserts::assert_test_request_equals(request, mtd, U("/"));
-            VERIFY_ARE_EQUAL(0u, request->reply(status_codes::OK));
-        });
-    }
-
-    // verify responses.
-    for(size_t i = 0; i < num_requests; ++i)
-    {
-        try
-        {
-            http_asserts::assert_response_equals(responses[i].get(), status_codes::OK);
-        }
-        catch (...)
-        {
-            VERIFY_IS_TRUE(false);
-        }
-    }
+    for (auto&& req : completed_requests)
+        req.get();
 }
 
 SUITE(connections_and_errors)
@@ -90,8 +88,10 @@ TEST_FIXTURE(uri_address, pending_requests_after_client)
 
 TEST_FIXTURE(uri_address, server_doesnt_exist)
 {
-    http_client client(m_uri);
-    VERIFY_THROWS_HTTP_ERROR_CODE(client.request(methods::GET).wait(), std::errc::host_unreachable);
+    http_client_config config;
+    config.set_timeout(std::chrono::seconds(1));
+    http_client client(m_uri, config);
+    VERIFY_THROWS(client.request(methods::GET).wait(), web::http::http_exception);
 }
 
 TEST_FIXTURE(uri_address, open_failure)
@@ -106,25 +106,32 @@ TEST_FIXTURE(uri_address, open_failure)
 
 TEST_FIXTURE(uri_address, server_close_without_responding)
 {
-    test_http_server server(m_uri);
-    VERIFY_ARE_EQUAL(0u, server.open());
-    http_client client(m_uri);
+    http_client_config config;
+    config.set_timeout(utility::seconds(1));
+
+    http_client client(m_uri, config);
+    test_http_server::scoped_server server(m_uri);
+    auto t = server.server()->next_request();
 
     // Send request.
-    auto request = client.request(methods::PUT);
+    auto response = client.request(methods::PUT);
+
+    // Wait for request
+    VERIFY_NO_THROWS(t.get());
 
     // Close server connection.
-    server.wait_for_request();
-    server.close();
-    VERIFY_THROWS_HTTP_ERROR_CODE(request.wait(), std::errc::connection_aborted);
+    server.server()->close();
+
+    VERIFY_THROWS_HTTP_ERROR_CODE(response.wait(), std::errc::connection_aborted);
 
     // Try sending another request.
-    VERIFY_THROWS_HTTP_ERROR_CODE(client.request(methods::GET).wait(), std::errc::host_unreachable);
+    VERIFY_THROWS(client.request(methods::GET).wait(), web::http::http_exception);
 }
 
 TEST_FIXTURE(uri_address, request_timeout)
 {
     test_http_server::scoped_server scoped(m_uri);
+    auto t = scoped.server()->next_request();
     http_client_config config;
     config.set_timeout(utility::seconds(1));
 
@@ -137,22 +144,29 @@ TEST_FIXTURE(uri_address, request_timeout)
 #else
     VERIFY_THROWS_HTTP_ERROR_CODE(responseTask.get(), std::errc::timed_out);
 #endif
+    t.get();
 }
 
 TEST_FIXTURE(uri_address, request_timeout_microsecond)
 {
-    test_http_server::scoped_server scoped(m_uri);
-    http_client_config config;
-    config.set_timeout(std::chrono::microseconds(500));
+    pplx::task<test_request*> t;
+    {
+        test_http_server::scoped_server scoped(m_uri);
+        t = scoped.server()->next_request();
+        http_client_config config;
+        config.set_timeout(std::chrono::microseconds(500));
 
-    http_client client(m_uri, config);
-    auto responseTask = client.request(methods::GET);
+        http_client client(m_uri, config);
+        auto responseTask = client.request(methods::GET);
 #ifdef __APPLE__
-    // CodePlex 295
-    VERIFY_THROWS(responseTask.get(), http_exception);
+        // CodePlex 295
+        VERIFY_THROWS(responseTask.get(), http_exception);
 #else
-    VERIFY_THROWS_HTTP_ERROR_CODE(responseTask.get(), std::errc::timed_out);
+        VERIFY_THROWS_HTTP_ERROR_CODE(responseTask.get(), std::errc::timed_out);
 #endif
+    }
+    try { t.get(); }
+    catch (...) {}
 }
 
 TEST_FIXTURE(uri_address, invalid_method)
@@ -329,14 +343,15 @@ TEST_FIXTURE(uri_address, cancel_after_body)
 
 TEST_FIXTURE(uri_address, cancel_with_error)
 {
-    test_http_server server(m_uri);
-    VERIFY_ARE_EQUAL(0, server.open());
     http_client c(m_uri);
-    pplx::cancellation_token_source source;
+    pplx::task<http_response> responseTask;
+    {
+        test_http_server::scoped_server server(m_uri);
+        pplx::cancellation_token_source source;
 
-    auto responseTask = c.request(methods::GET, U("/"), source.get_token());
-    source.cancel();
-    VERIFY_ARE_EQUAL(0, server.close());
+        responseTask = c.request(methods::GET, U("/"), source.get_token());
+        source.cancel();
+    }
 
     // All errors after cancellation are ignored.
     VERIFY_THROWS_HTTP_ERROR_CODE(responseTask.get(), std::errc::operation_canceled);
@@ -399,6 +414,38 @@ TEST_FIXTURE(uri_address, cancel_while_downloading_data)
     listener.close().wait();
 }
 #endif
+
+// Try to connect to a server on a closed port and cancel the operation.
+TEST_FIXTURE(uri_address, cancel_bad_port)
+{
+    // http_client_asio had a bug where, when canceled, it would cancel only the
+    // current connection but then go and try the next address from the list of
+    // resolved addresses, i.e., it wouldn't actually cancel as long as there
+    // are more addresses to try. Consequently, it would not report the task as
+    // being canceled. This was easiest to observe when trying to connect to a
+    // server that does not respond on a certain port, otherwise the timing
+    // might be tricky.
+
+    // We need to connect to a URI for which there are multiple addresses
+    // associated (i.e., multiple A records).
+    web::http::uri uri(U("https://microsoft.com:442/"));
+
+    // Send request.
+    http_client_config config;
+    config.set_timeout(std::chrono::milliseconds(1000));
+    http_client c(uri, config);
+    web::http::http_request r;
+    auto cts = pplx::cancellation_token_source();
+    auto ct = cts.get_token();
+    auto t = c.request(r, ct);
+
+    // Make sure that the client already finished resolving before canceling,
+    // otherwise the bug might not be triggered.
+    std::this_thread::sleep_for(std::chrono::milliseconds(400));
+    cts.cancel();
+
+    VERIFY_THROWS_HTTP_ERROR_CODE(t.get(), std::errc::operation_canceled);
+}
 
 } // SUITE(connections_and_errors)
 

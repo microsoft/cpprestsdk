@@ -1,19 +1,7 @@
 /***
-* ==++==
+* Copyright (C) Microsoft. All rights reserved.
+* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 *
-* Copyright (c) Microsoft Corporation. All rights reserved.
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
 * Asynchronous I/O: streams API, used for formatted input and output, based on unformatted I/O using stream buffers
@@ -459,7 +447,9 @@ namespace Concurrency { namespace streams
     _INT_TRAIT(char,INT8_MIN,INT8_MAX)
     _INT_TRAIT(signed char,INT8_MIN,INT8_MAX)
     _INT_TRAIT(short,INT16_MIN,INT16_MAX)
-    _INT_TRAIT(utf16char,INT16_MIN,INT16_MAX)
+#if defined(_NATIVE_WCHAR_T_DEFINED)
+    _INT_TRAIT(wchar_t,WCHAR_MIN, WCHAR_MAX)
+#endif
     _INT_TRAIT(int,INT32_MIN,INT32_MAX)
     _INT_TRAIT(long, LONG_MIN, LONG_MAX)
     _INT_TRAIT(long long, LLONG_MIN, LLONG_MAX)
@@ -811,7 +801,7 @@ namespace Concurrency { namespace streams
                     return true;
                 };
 
-            auto loop = pplx::details::do_while([=]() mutable -> pplx::task<bool>
+            auto loop = Concurrency::details::_do_while([=]() mutable -> pplx::task<bool>
                 {
                     while (buffer.in_avail() > 0)
                     {
@@ -893,23 +883,17 @@ namespace Concurrency { namespace streams
                     if (ch == concurrency::streams::char_traits<CharType>::eof()) return pplx::task_from_result(false);
                     if (ch == '\n')
                     {
-						return buffer.bumpc().then([](
-#ifndef _WIN32 // Required by GCC
-							typename
-#endif
-							concurrency::streams::char_traits<CharType>::int_type) { return false; });
+                        return buffer.bumpc().then([](
+                            typename concurrency::streams::char_traits<CharType>::int_type) { return false; });
                     }
                     return pplx::task_from_result(false);
                 };
 
-            auto loop = pplx::details::do_while([=]() mutable -> pplx::task<bool>
+            auto loop = Concurrency::details::_do_while([=]() mutable -> pplx::task<bool>
                 {
                     while ( buffer.in_avail() > 0 )
                     {
-#ifndef _WIN32 // Required by GCC, because concurrency::streams::char_traits<CharType> is a dependent scope
-                        typename
-#endif
-                        concurrency::streams::char_traits<CharType>::int_type ch;
+                        typename concurrency::streams::char_traits<CharType>::int_type ch;
 
                         if (_locals->saw_CR)
                         {
@@ -985,7 +969,7 @@ namespace Concurrency { namespace streams
                 });
             };
 
-            auto loop = pplx::details::do_while(copy_to_target);
+            auto loop = Concurrency::details::_do_while(copy_to_target);
 
             return loop.then([=](bool) mutable -> size_t
                 {
@@ -1159,7 +1143,7 @@ pplx::task<void> concurrency::streams::_type_parser_base<CharType>::_skip_whites
             return false;
         };
 
-    auto loop = pplx::details::do_while([=]() mutable -> pplx::task<bool>
+    auto loop = Concurrency::details::_do_while([=]() mutable -> pplx::task<bool>
         {
             while (buffer.in_avail() > 0)
             {
@@ -1234,7 +1218,7 @@ pplx::task<ReturnType> concurrency::streams::_type_parser_base<CharType>::_parse
     return _skip_whitespace(buffer).then([=](pplx::task<void> op) -> pplx::task<ReturnType>
         {
             op.wait();
-            return pplx::details::do_while(peek_char).then(finish);
+            return Concurrency::details::_do_while(peek_char).then(finish);
         });
 }
 
@@ -1727,55 +1711,11 @@ private:
 };
 
 #ifdef _WIN32
-template<>
-class type_parser<char,std::basic_string<wchar_t>> : public _type_parser_base<char>
+template<class CharType>
+class type_parser<CharType, std::enable_if_t<sizeof(CharType) == 1, std::basic_string<wchar_t>>> : public _type_parser_base<CharType>
 {
 public:
-    static pplx::task<std::wstring> parse(streams::streambuf<char> buffer)
-    {
-        return _parse_input<std::basic_string<char>,std::basic_string<wchar_t>>(buffer, _accept_char, _extract_result);
-    }
-
-private:
-    static bool _accept_char(const std::shared_ptr<std::basic_string<char>> &state, int_type ch)
-    {
-        if ( ch == concurrency::streams::char_traits<char>::eof() || isspace(ch)) return false;
-        state->push_back(char(ch));
-        return true;
-    }
-    static pplx::task<std::basic_string<wchar_t>> _extract_result(std::shared_ptr<std::basic_string<char>> state)
-    {
-        return pplx::task_from_result(utility::conversions::utf8_to_utf16(*state));
-    }
-};
-
-template<>
-class type_parser<signed char,std::basic_string<wchar_t>> : public _type_parser_base<signed char>
-{
-public:
-    static pplx::task<std::wstring> parse(streams::streambuf<signed char> buffer)
-    {
-        return _parse_input<std::basic_string<char>,std::basic_string<wchar_t>>(buffer, _accept_char, _extract_result);
-    }
-
-private:
-    static bool _accept_char(const std::shared_ptr<std::basic_string<char>> &state, int_type ch)
-    {
-        if ( ch == concurrency::streams::char_traits<char>::eof() || isspace(ch)) return false;
-        state->push_back(char(ch));
-        return true;
-    }
-    static pplx::task<std::basic_string<wchar_t>> _extract_result(std::shared_ptr<std::basic_string<char>> state)
-    {
-        return pplx::task_from_result(utility::conversions::utf8_to_utf16(*state));
-    }
-};
-
-template<>
-class type_parser<unsigned char,std::basic_string<wchar_t>> : public _type_parser_base<unsigned char>
-{
-public:
-    static pplx::task<std::wstring> parse(streams::streambuf<unsigned char> buffer)
+    static pplx::task<std::wstring> parse(streams::streambuf<CharType> buffer)
     {
         return _parse_input<std::basic_string<char>,std::basic_string<wchar_t>>(buffer, _accept_char, _extract_result);
     }
@@ -1797,3 +1737,4 @@ private:
 }}
 
 #endif
+

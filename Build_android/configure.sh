@@ -1,19 +1,6 @@
 #!/bin/bash
-# ==++==
-#
-# Copyright (c) Microsoft Corporation. All rights reserved. 
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-# http://www.apache.org/licenses/LICENSE-2.0
-# 
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-# ==--==
+# Copyright (C) Microsoft. All rights reserved.
+# Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 # =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 #
 # configure.sh
@@ -34,17 +21,15 @@ set -e
 # Parse args
 # -----------------
 
-DO_LIBICONV=1
 DO_BOOST=1
 DO_OPENSSL=1
 DO_CPPRESTSDK=1
 
 function usage {
-    echo "Usage: $0 [--skip-boost] [--skip-openssl] [--skip-libiconv] [--skip-cpprestsdk] [-h] [--ndk <android-ndk>]"
+    echo "Usage: $0 [--skip-boost] [--skip-openssl] [--skip-cpprestsdk] [-h] [--ndk <android-ndk>]"
     echo ""
     echo "    --skip-boost          Skip fetching and compiling boost"
     echo "    --skip-openssl        Skip fetching and compiling openssl"
-    echo "    --skip-libiconv       Skip fetching and compiling libiconv"
     echo "    --skip-cpprestsdk     Skip compiling cpprestsdk"
     echo "    -h,--help,-?          Display this information"
     echo "    --ndk <android-ndk>   If specified, overrides the ANDROID_NDK environment variable"
@@ -58,9 +43,6 @@ do
 	    ;;
 	"--skip-openssl")
 	    DO_OPENSSL=0
-	    ;;
-	"--skip-libiconv")
-	    DO_LIBICONV=0
 	    ;;
 	"--skip-cpprestsdk")
 	    DO_CPPRESTSDK=0
@@ -131,40 +113,6 @@ then
 )
 fi
 
-# --------
-# libiconv
-# --------
-
-# This steps are based on the blog post
-# http://danilogiulianelli.blogspot.com/2012/12/how-to-cross-compile-libiconv-for.html
-if [ "${DO_LIBICONV}" == "1" ]
-then
-(
-    if [ ! -e "libiconv-1.13.1.tar.gz" ]
-    then
-	wget http://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.13.1.tar.gz
-    fi
-    rm -rf libiconv
-    mkdir libiconv
-    cd libiconv
-    tar xzf ../libiconv-1.13.1.tar.gz
-    patch -b -p0 < "$DIR/libiconv/libiconv.patch"
-    cd libiconv-1.13.1
-    ./configure
-    cp -r "$DIR/libiconv/jni" ..
-    cd ../jni
-    "${NDK_DIR}/ndk-build" || exit 1
-    cd ..
-    mkdir -p armeabi-v7a/include
-    mkdir -p armeabi-v7a/lib
-    mkdir -p x86/include
-    mkdir -p x86/lib
-    cp libiconv-1.13.1/include/iconv.h armeabi-v7a/include/
-    cp libiconv-1.13.1/include/iconv.h x86/include/
-    cp obj/local/x86/libiconv.a x86/lib/
-    cp obj/local/armeabi-v7a/libiconv.a armeabi-v7a/lib/
-)
-fi
 
 # -----
 # Boost
@@ -187,7 +135,8 @@ then
 	    git apply "$DIR/boost-for-android.patch"
 	    touch cpprestsdk.patched.stamp
 	fi
-	PATH="$PATH:$NDK_DIR" ./build-android.sh --boost=1.55.0 --with-libraries=locale,random,date_time,filesystem,system,thread,chrono "${NDK_DIR}" || exit 1
+
+	PATH="$PATH:$NDK_DIR" ./build-android.sh --boost=1.55.0 --with-libraries=random,date_time,filesystem,system,thread,chrono "${NDK_DIR}" || exit 1
     )
 
     (
@@ -204,7 +153,8 @@ then
 	    ln -s ../Boost-for-Android/boost_1_55_0.tar.bz2 .
 	    touch cpprestsdk.patched.stamp
 	fi
-	PATH="$PATH:$NDK_DIR" ./build-android.sh --boost=1.55.0 --with-libraries=locale,random,date_time,filesystem,system,thread,chrono "${NDK_DIR}" || exit 1
+
+	PATH="$PATH:$NDK_DIR" ./build-android.sh --boost=1.55.0 --with-libraries=atomic,random,date_time,filesystem,system,thread,chrono "${NDK_DIR}" || exit 1
     )
 )
 fi
@@ -230,7 +180,7 @@ then
 	cmake "$DIR/../Release/" \
 	    -DCMAKE_TOOLCHAIN_FILE=../android-cmake/android.toolchain.cmake \
 	    -DANDROID_ABI=armeabi-v7a \
-	    -DANDROID_TOOLCHAIN_NAME=arm-linux-androideabi-clang3.6 \
+	    -DANDROID_TOOLCHAIN_NAME=arm-linux-androideabi-clang3.8 \
 	    -DANDROID_STL=none \
 	    -DANDROID_STL_FORCE_FEATURES=ON \
             -DANDROID_NATIVE_API_LEVEL=android-9 \
@@ -246,7 +196,7 @@ then
 	cmake "$DIR/../Release/" \
 	    -DCMAKE_TOOLCHAIN_FILE=../android-cmake/android.toolchain.cmake \
 	    -DANDROID_ABI=armeabi-v7a \
-	    -DANDROID_TOOLCHAIN_NAME=arm-linux-androideabi-clang3.6 \
+	    -DANDROID_TOOLCHAIN_NAME=arm-linux-androideabi-clang3.8 \
 	    -DANDROID_STL=none \
 	    -DANDROID_STL_FORCE_FEATURES=ON \
 	    -DANDROID_NDK="${ANDROID_NDK}" \
@@ -262,7 +212,7 @@ then
 	cmake "$DIR/../Release/" \
 	    -DCMAKE_TOOLCHAIN_FILE=../android-cmake/android.toolchain.cmake \
 	    -DANDROID_ABI=x86 \
-	    -DANDROID_TOOLCHAIN_NAME=x86-clang3.6 \
+	    -DANDROID_TOOLCHAIN_NAME=x86-clang3.8 \
 	    -DANDROID_STL=none \
 	    -DANDROID_STL_FORCE_FEATURES=ON \
             -DANDROID_NATIVE_API_LEVEL=android-9 \
@@ -278,7 +228,7 @@ then
 	cmake "$DIR/../Release/" \
 	    -DCMAKE_TOOLCHAIN_FILE=../android-cmake/android.toolchain.cmake \
 	    -DANDROID_ABI=x86 \
-	    -DANDROID_TOOLCHAIN_NAME=x86-clang3.6 \
+	    -DANDROID_TOOLCHAIN_NAME=x86-clang3.8 \
 	    -DANDROID_STL=none \
 	    -DANDROID_STL_FORCE_FEATURES=ON \
 	    -DANDROID_NDK="${ANDROID_NDK}" \

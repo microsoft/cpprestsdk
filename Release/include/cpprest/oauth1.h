@@ -1,19 +1,7 @@
 /***
-* ==++==
+* Copyright (C) Microsoft. All rights reserved.
+* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 *
-* Copyright (c) Microsoft Corporation. All rights reserved.
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
 * HTTP Library: Oauth 1.0
@@ -28,6 +16,7 @@
 #define _CASA_OAUTH1_H
 
 #include "cpprest/http_msg.h"
+#include "cpprest/details/web_utilities.h"
 
 namespace web
 {
@@ -479,6 +468,24 @@ public:
     /// </summary>
     void clear_parameters() { m_parameters_to_sign.clear(); }
 
+    /// <summary>
+    /// Get the web proxy object
+    /// </summary>
+    /// <returns>A reference to the web proxy object.</returns>
+    const web_proxy& proxy() const
+    {
+        return m_proxy;
+    }
+
+    /// <summary>
+    /// Set the web proxy object that will be used by token_from_code and token_from_refresh
+    /// </summary>
+    /// <param name="proxy">A reference to the web proxy object.</param>
+    void set_proxy(const web_proxy& proxy)
+    {
+        m_proxy = proxy;
+    }
+
 private:
     friend class web::http::client::http_client_config;
     friend class web::http::oauth1::details::oauth1_handler;
@@ -494,7 +501,7 @@ private:
 
     static utility::string_t _generate_timestamp()
     {
-        return utility::conversions::print_string(utility::datetime::utc_timestamp(), std::locale::classic());
+        return utility::conversions::details::to_string_t(utility::datetime::utc_timestamp());
     }
 
     _ASYNCRTIMP static std::vector<unsigned char> __cdecl _hmac_sha1(const utility::string_t& key, const utility::string_t& data);
@@ -531,6 +538,8 @@ private:
     oauth1_method m_method;
 
 	std::map<utility::string_t, utility::string_t> m_parameters_to_sign;
+
+    web::web_proxy m_proxy;
 
     utility::nonce_generator m_nonce_generator;
     bool m_is_authorization_completed;

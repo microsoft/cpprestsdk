@@ -1,19 +1,7 @@
 /***
-* ==++==
+* Copyright (C) Microsoft. All rights reserved.
+* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-* http://www.apache.org/licenses/LICENSE-2.0
-* 
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
 * building_request_tests.cpp
@@ -44,6 +32,7 @@ SUITE(building_request_tests)
 TEST_FIXTURE(uri_address, simple_values)
 {
     test_http_server::scoped_server scoped(m_uri);
+    pplx::task<void> t1, t2;
     test_http_server * p_server = scoped.server();
     http_client client(m_uri);
 
@@ -56,7 +45,7 @@ TEST_FIXTURE(uri_address, simple_values)
     const utility::string_t custom_path1 = U("/hey/custom/path");
     msg.set_request_uri(custom_path1);
     VERIFY_ARE_EQUAL(custom_path1, msg.relative_uri().to_string());
-    p_server->next_request().then([&](test_request *p_request)
+    t1 = p_server->next_request().then([&](test_request *p_request)
     {
         http_asserts::assert_test_request_equals(p_request, method, custom_path1);
         p_request->reply(200);
@@ -70,12 +59,15 @@ TEST_FIXTURE(uri_address, simple_values)
     const utility::string_t custom_path2 = U("/yes/you/there");
     msg.set_request_uri(custom_path2);
     VERIFY_ARE_EQUAL(custom_path2, msg.relative_uri().to_string());
-    p_server->next_request().then([&](test_request *p_request)
+    t2 = p_server->next_request().then([&](test_request *p_request)
     {
         http_asserts::assert_test_request_equals(p_request, method, custom_path2);
         p_request->reply(200);
     });
     http_asserts::assert_response_equals(client.request(msg).get(), status_codes::OK);
+    p_server->close();
+    try { t1.get(); } catch (...) { VERIFY_ARE_EQUAL(0, 1, "t1 failed"); }
+    try { t2.get(); } catch (...) { VERIFY_ARE_EQUAL(0, 2, "t2 failed"); }
 }
 
 TEST_FIXTURE(uri_address, body_types)
@@ -274,37 +266,39 @@ TEST_FIXTURE(uri_address, set_content_length_locale, "Ignore:Android", "Locale u
 
 TEST_FIXTURE(uri_address, set_port_locale, "Ignore:Android", "Locale unsupported on Android")
 {
+    std::locale changedLocale;
+    try
+    {
+#ifdef _WIN32
+        changedLocale = std::locale("fr-FR");
+#else
+        changedLocale = std::locale("fr_FR.UTF-8");
+#endif
+    }
+    catch (const std::exception &)
+    {
+        // Silently pass if locale isn't installed on machine.
+        return;
+    }
+    tests::common::utilities::locale_guard loc(changedLocale);
+
     test_http_server::scoped_server scoped(m_uri);
+    pplx::task<void> t;
     http_client client(m_uri);
 
     utility::string_t data(U("STRING data 1000"));
-    scoped.server()->next_request().then([&](test_request *p_request)
+    t = scoped.server()->next_request().then([&](test_request *p_request)
     {
         http_asserts::assert_test_request_equals(p_request, methods::PUT, U("/"), U("text/plain; charset=utf-8"), data);
         p_request->reply(200);
     });
 
-    {
-        std::locale changedLocale;
-        try
-        {
-#ifdef _WIN32
-            changedLocale = std::locale("fr-FR");
-#else
-            changedLocale = std::locale("fr_FR.UTF-8");
-#endif
-        }
-        catch (const std::exception &)
-        {
-            // Silently pass if locale isn't installed on machine.
-            return;
-        }
+    http_request msg(methods::PUT);
+    msg.set_body(data);
+    http_asserts::assert_response_equals(client.request(msg).get(), status_codes::OK);
 
-        tests::common::utilities::locale_guard loc(changedLocale);
-        http_request msg(methods::PUT);
-        msg.set_body(data);
-        http_asserts::assert_response_equals(client.request(msg).get(), status_codes::OK);
-    }
+    scoped.server()->close();
+    t.get();
 }
 
 TEST_FIXTURE(uri_address, reuse_request)

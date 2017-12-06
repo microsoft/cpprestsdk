@@ -1,19 +1,7 @@
 /***
-* ==++==
+* Copyright (C) Microsoft. All rights reserved.
+* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 *
-* Copyright (c) Microsoft Corporation. All rights reserved.
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
 * test_http_server.h -- Defines a test server to handle requests and sending responses.
@@ -44,25 +32,28 @@ class _test_http_server;
 /// </summary>
 class test_request
 {
+    friend class _test_http_server;
 public:
+    test_request(unsigned long long reqid, _test_http_server* p_server) : m_request_id(reqid), m_p_server(p_server) {}
 
     // APIs to send responses.
-    TEST_UTILITY_API unsigned long reply(const unsigned short status_code);
-    TEST_UTILITY_API unsigned long reply(const unsigned short status_code, const utility::string_t &reason_phrase);
-    TEST_UTILITY_API unsigned long reply(
+    unsigned long reply(
         const unsigned short status_code,
-        const utility::string_t &reason_phrase,
-        const std::map<utility::string_t, utility::string_t> &headers);
-    TEST_UTILITY_API unsigned long reply(
+        const utility::string_t &reason_phrase = U(""),
+        const std::map<utility::string_t, utility::string_t> &headers = std::map<utility::string_t, utility::string_t>(),
+        const utf8string &data = "")
+    {
+        return reply_impl(status_code, reason_phrase, headers, (void *)&data[0], data.size() * sizeof(utf8char));
+    }
+
+    unsigned long reply(
         const unsigned short status_code,
         const utility::string_t &reason_phrase,
         const std::map<utility::string_t, utility::string_t> &headers,
-        const utf8string &data);
-    TEST_UTILITY_API unsigned long reply(
-        const unsigned short status_code,
-        const utility::string_t &reason_phrase,
-        const std::map<utility::string_t, utility::string_t> &headers,
-        const utf16string &data);
+        const utf16string &data)
+    {
+        return reply_impl(status_code, reason_phrase, headers, (void *)&data[0], data.size() * sizeof(utf16char));
+    }
 
     // API to check if a specific header exists and get it.
     template <typename T>
@@ -91,14 +82,12 @@ public:
     std::map<utility::string_t, utility::string_t> m_headers;
     std::vector<unsigned char> m_body;
 private:
-    friend class _test_http_server;
-    _test_http_server * m_p_server;
-
     // This is the HTTP Server API Request Id, we don't want to bring in the header file.
     unsigned long long m_request_id;
+    _test_http_server * m_p_server;
 
     // Helper to send replies.
-    unsigned long reply_impl(
+    TEST_UTILITY_API unsigned long reply_impl(
         const unsigned short status_code, 
         const utility::string_t &reason_phrase, 
         const std::map<utility::string_t, utility::string_t> &headers,
@@ -117,37 +106,27 @@ public:
     TEST_UTILITY_API test_http_server(const web::http::uri &uri);
     TEST_UTILITY_API ~test_http_server();
 
-    // APIs to open and close requests.
-    TEST_UTILITY_API unsigned long open();
-    TEST_UTILITY_API unsigned long close();
-
     // APIs to receive requests.
-    TEST_UTILITY_API test_request * wait_for_request();
     TEST_UTILITY_API pplx::task<test_request *> next_request();
-    TEST_UTILITY_API std::vector<test_request *> wait_for_requests(const size_t count);
     TEST_UTILITY_API std::vector<pplx::task<test_request *>> next_requests(const size_t count);
 
+    // Enable early close
+    TEST_UTILITY_API void close();
+
     // RAII pattern for test_http_server.
-    class scoped_server
-    {
-    public:
-        scoped_server(const web::http::uri &uri) 
-        {
-            m_p_server = new test_http_server(uri);
-            VERIFY_ARE_EQUAL(0u, m_p_server->open());
-        }
-        ~scoped_server()
-        {
-            VERIFY_ARE_EQUAL(0u, m_p_server->close());
-            delete m_p_server;
-        }
-        test_http_server *server() { return m_p_server; }
-    private:
-        test_http_server * m_p_server;
-    };
+    class scoped_server;
 
 private:
-    _test_http_server *m_p_impl;
+    std::unique_ptr<_test_http_server> m_p_impl;
+};
+
+class test_http_server::scoped_server
+{
+public:
+    scoped_server(const web::http::uri &uri) : m_p_server(uri) {}
+    test_http_server *server() { return &m_p_server; }
+private:
+    test_http_server m_p_server;
 };
 
 }}}}

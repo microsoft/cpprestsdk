@@ -1,19 +1,7 @@
-﻿/***
-* ==++==
+/***
+* Copyright (C) Microsoft. All rights reserved.
+* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 *
-* Copyright (c) Microsoft Corporation. All rights reserved.
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
 * Tests for encoding features of the uri class.
@@ -45,11 +33,11 @@ TEST(encode_string)
 
 TEST(decode_string)
 {
-    utility::string_t result = uri::encode_uri(L"first%second\u4e2d\u56fd");
-    VERIFY_ARE_EQUAL(L"first%second\u4e2d\u56fd", uri::decode(result));
+    utility::string_t result = uri::decode(U("first%25second%E4%B8%AD%E5%9B%BD"));
+    VERIFY_ARE_EQUAL(L"first%second\u4e2d\u56fd", result);
 
-    result = uri::encode_uri(U("first%second"));
-    VERIFY_ARE_EQUAL(U("first%second"), uri::decode(result));
+    result = uri::decode(U("first%25second"));
+    VERIFY_ARE_EQUAL(U("first%second"), result);
 }
 #pragma warning (pop)
 #endif

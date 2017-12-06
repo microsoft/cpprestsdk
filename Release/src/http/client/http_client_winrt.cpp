@@ -1,19 +1,7 @@
 /***
-* ==++==
+* Copyright (C) Microsoft. All rights reserved.
+* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 *
-* Copyright (c) Microsoft Corporation. All rights reserved.
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
 * HTTP Library: Client-side APIs.
@@ -26,7 +14,8 @@
 ****/
 #include "stdafx.h"
 
-#include "cpprest/details/http_client_impl.h"
+#include "http_client_impl.h"
+#include "../common/internal_http_helpers.h"
 
 #include <Strsafe.h>
 // Important for WP8
@@ -94,25 +83,33 @@ public:
 
         utf16char *hdrStr = nullptr;
         HRESULT hr = xmlReq->GetAllResponseHeaders(&hdrStr);
-        if(hr != S_OK)
+        if (SUCCEEDED(hr))
         {
-            return hr;
-        }
+            try
+            {
+                auto progress = m_request->m_request._get_impl()->_progress_handler();
+                if (progress && m_request->m_uploaded == 0)
+                {
+                    (*progress)(message_direction::upload, 0);
+                }
 
-        auto progress = m_request->m_request._get_impl()->_progress_handler();
-        if (progress && m_request->m_uploaded == 0)
-        {
-            try { (*progress)(message_direction::upload, 0); } catch(...)
+                web::http::details::parse_headers_string(hdrStr, response.headers());
+                m_request->complete_headers();
+            }
+            catch (...)
             {
                 m_request->m_exceptionPtr = std::current_exception();
-                return ERROR_UNHANDLED_EXCEPTION;
+                hr = ERROR_UNHANDLED_EXCEPTION;
             }
         }
 
-        parse_headers_string(hdrStr, response.headers());
-        m_request->complete_headers();
+        if (hdrStr != nullptr)
+        {
+            ::CoTaskMemFree(hdrStr);
+            hdrStr = nullptr;
+        }
 
-        return S_OK;
+        return hr;
     }
 
     // Called when a portion of the entity body has been received.
@@ -356,8 +353,25 @@ private:
 class winrt_client : public _http_client_communicator
 {
 public:
-    winrt_client(http::uri address, http_client_config client_config)
+    winrt_client(http::uri&& address, http_client_config&& client_config)
         : _http_client_communicator(std::move(address), std::move(client_config)) { }
+
+    winrt_client(const winrt_client&) = delete;
+    winrt_client &operator=(const winrt_client&) = delete;
+
+    virtual pplx::task<http_response> propagate(http_request request) override
+    {
+        auto self = std::static_pointer_cast<_http_client_communicator>(shared_from_this());
+        auto context = details::winrt_request_context::create_request_context(self, request);
+
+        // Use a task to externally signal the final result and completion of the task.
+        auto result_task = pplx::create_task(context->m_request_completion);
+
+        // Asynchronously send the response with the HTTP client implementation.
+        this->async_send_request(context);
+
+        return result_task;
+    }
 
 protected:
 
@@ -429,13 +443,13 @@ protected:
             if (client_cred.is_set())
             {
                 username = client_cred.username();
-                password_plaintext = client_cred.decrypt();
+                password_plaintext = client_cred._internal_decrypt();
                 password = password_plaintext->c_str();
             }
             if (proxy_cred.is_set())
             {
                 proxy_username = proxy_cred.username();
-                proxy_password_plaintext = proxy_cred.decrypt();
+                proxy_password_plaintext = proxy_cred._internal_decrypt();
                 proxy_password = proxy_password_plaintext->c_str();
             }
 
@@ -516,7 +530,7 @@ protected:
         {
             if ( msg.method() == http::methods::GET || msg.method() == http::methods::HEAD )
             {
-                request->report_exception(http_exception(get_with_body));
+                request->report_exception(http_exception(get_with_body_err_msg));
                 return;
             }
 
@@ -541,30 +555,11 @@ protected:
             });
         }
     }
-
-private:
-
-    // No copy or assignment.
-    winrt_client(const winrt_client&);
-    winrt_client &operator=(const winrt_client&);
 };
 
-http_network_handler::http_network_handler(const uri &base_uri, const http_client_config &client_config) :
-    m_http_client_impl(std::make_shared<details::winrt_client>(base_uri, client_config))
+std::shared_ptr<_http_client_communicator> create_platform_final_pipeline_stage(uri&& base_uri, http_client_config&& client_config)
 {
-}
-
-pplx::task<http_response> http_network_handler::propagate(http_request request)
-{
-    auto context = details::winrt_request_context::create_request_context(m_http_client_impl, request);
-
-    // Use a task to externally signal the final result and completion of the task.
-    auto result_task = pplx::create_task(context->m_request_completion);
-
-    // Asynchronously send the response with the HTTP client implementation.
-    m_http_client_impl->async_send_request(context);
-
-    return result_task;
+    return std::make_shared<details::winrt_client>(std::move(base_uri), std::move(client_config));
 }
 
 }}}}

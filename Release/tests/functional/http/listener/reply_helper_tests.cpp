@@ -91,30 +91,6 @@ TEST_FIXTURE(uri_address, string)
     listener.close().wait();
 }
 
-TEST_FIXTURE(uri_address, multiple_responses_to_request)
-{
-    http_listener listener(m_uri);
-    listener.open().wait();
-    test_http_client::scoped_client client(m_uri);
-    test_http_client * p_client = client.client();
-
-    listener.support([](http_request request)
-    {
-        http_response response(status_codes::OK);
-        request.reply(response).wait();
-
-        // try responding to the request again
-        VERIFY_THROWS(request.reply(response).wait(), http_exception);
-    });
-    VERIFY_ARE_EQUAL(0, p_client->request(methods::GET, U("")));
-    p_client->next_response().then([&](test_response *p_response)
-    {
-        http_asserts::assert_test_response_equals(p_response, status_codes::OK);
-    }).wait();
-
-    listener.close().wait();
-}
-
 }
 
 }}}}

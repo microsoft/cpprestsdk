@@ -1,19 +1,7 @@
 /***
-* ==++==
+* Copyright (C) Microsoft. All rights reserved.
+* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 *
-* Copyright (c) Microsoft Corporation. All rights reserved.
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
 * Websocket client side implementation
@@ -84,7 +72,11 @@ public:
     /// <summary>
     /// Creates a websocket client configuration with default settings.
     /// </summary>
-    websocket_client_config() : m_sni_enabled(true) {}
+    websocket_client_config() :
+        m_sni_enabled(true),
+        m_validate_certificates(true)
+	{
+	}
 
     /// <summary>
     /// Get the web proxy object
@@ -187,6 +179,25 @@ public:
     /// <remarks>If you want all the subprotocols in a comma separated string
     /// they can be directly looked up in the headers using 'Sec-WebSocket-Protocol'.</remarks>
     _ASYNCRTIMP std::vector<::utility::string_t> subprotocols() const;
+	
+    /// <summary>
+    /// Gets the server certificate validation property.
+    /// </summary>
+    /// <returns>True if certificates are to be verified, false otherwise.</returns>
+    bool validate_certificates() const
+    {
+        return m_validate_certificates;
+    }
+	
+    /// <summary>
+    /// Sets the server certificate validation property.
+    /// </summary>
+    /// <param name="validate_certs">False to turn ignore all server certificate validation errors, true otherwise.</param>
+    /// <remarks>Note ignoring certificate errors can be dangerous and should be done with caution.</remarks>
+    void set_validate_certificates(bool validate_certs)
+    {
+        m_validate_certificates = validate_certs;
+    }
 
 private:
     web::web_proxy m_proxy;
@@ -194,6 +205,7 @@ private:
     web::http::http_headers m_headers;
     bool m_sni_enabled;
     utf8string m_sni_hostname;
+    bool m_validate_certificates;
 };
 
 /// <summary>

@@ -1,19 +1,7 @@
 /***
-* ==++==
+* Copyright (C) Microsoft. All rights reserved.
+* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-* http://www.apache.org/licenses/LICENSE-2.0
-* 
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
 * Tests cases for http_headers.
@@ -381,6 +369,39 @@ TEST_FIXTURE(uri_address, parsing_content_type_redundantsemicolon_string)
     http_client client(m_uri);
     auto resp = client.request(methods::GET).get();
     VERIFY_ARE_EQUAL(resp.extract_string().get(), utility::conversions::to_string_t(body));
+}
+
+TEST_FIXTURE(uri_address, overwrite_http_header)
+{
+    test_http_server::scoped_server scoped(m_uri);
+    http_client client(m_uri);
+    
+    // Test default case of cpprestsdk setting host header as host:port
+    auto& host = m_uri.host();
+    int port = m_uri.port();
+    utility::string_t expected_default_header = host + U(":") + utility::conversions::details::to_string_t(port);
+    http_request default_host_headers_request(methods::GET);
+    scoped.server()->next_request().then([&](test_request *p_request) 
+    {
+        auto headers = p_request->m_headers;
+        VERIFY_ARE_EQUAL(expected_default_header, headers[header_names::host]);
+        p_request->reply(200);
+    });
+
+    client.request(default_host_headers_request).get();
+
+#ifndef __cplusplus_winrt
+    // Test case where we overwrite the host header
+    http_request overwritten_host_headers_request(methods::GET);
+    overwritten_host_headers_request.headers().add(U("Host"), host);
+    scoped.server()->next_request().then([&](test_request *p_request)
+    {
+        auto headers = p_request->m_headers;
+        VERIFY_ARE_EQUAL(host, headers[header_names::host]);
+        p_request->reply(200);
+    });
+    client.request(overwritten_host_headers_request).get();
+#endif
 }
 } // SUITE(header_tests)
 

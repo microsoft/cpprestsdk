@@ -13,9 +13,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)..\http\listener\http_server_httpsys.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)..\http\client\x509_cert_utilities_win32.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)..\pplx\pplxwin.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -29,7 +26,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\cpprest\details\http_server_httpsys.h">
+    <ClInclude Include="$(MSBuildThisFileDirectory)..\http\listener\http_server_httpsys.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)..\..\include\pplx\pplxwin.h">

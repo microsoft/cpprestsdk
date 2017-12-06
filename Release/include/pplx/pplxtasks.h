@@ -1,19 +1,7 @@
 /***
-* ==++==
+* Copyright (C) Microsoft. All rights reserved.
+* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 *
-* Copyright (c) Microsoft Corporation. All rights reserved. 
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-* http://www.apache.org/licenses/LICENSE-2.0
-* 
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
 * Parallel Patterns Library - PPLx Tasks
@@ -72,6 +60,7 @@ void cpprest_init(JavaVM*);
 #include <algorithm>
 
 #if defined(_MSC_VER)
+#include <intrin.h>
 #if defined(__cplusplus_winrt)
 #include <windows.h>
 #include <ctxtcall.h>
@@ -3093,6 +3082,47 @@ namespace details
     template<typename _Ty>
     static std::false_type _IsValidCreateAsync(_Ty _Param, ...);
 #endif  /* defined (__cplusplus_winrt) */
+
+/// <summary>
+///     A helper class template that makes only movable functions be able to be passed to std::function
+/// </summary>
+    template<typename _Ty>
+    struct _NonCopyableFunctorWrapper
+    {
+        template<typename _Tx, typename =
+            typename std::enable_if<!std::is_base_of<_NonCopyableFunctorWrapper<_Ty>,
+                 typename std::decay<_Tx>::type>::value>::type>
+        explicit _NonCopyableFunctorWrapper(_Tx&& f)
+          : _M_functor{std::make_shared<_Ty>(std::forward<_Tx>(f))}
+        {}
+
+        template <class... _Args>
+        auto operator()(_Args&&... args) -> decltype(std::declval<_Ty>()(std::forward<_Args>(args)...))
+        {
+            return _M_functor->operator()(std::forward<_Args>(args)...);
+        }
+
+        template <class... _Args>
+        auto operator()(_Args&&... args) const -> decltype(std::declval<_Ty>()(std::forward<_Args>(args)...))
+        {
+            return _M_functor->operator()(std::forward<_Args>(args)...);
+        }
+
+        std::shared_ptr<_Ty> _M_functor;
+    };
+
+    template<typename _Ty, typename Enable = void>
+    struct _CopyableFunctor
+    {
+        typedef _Ty _Type;
+    };
+
+    template<typename _Ty>
+    struct _CopyableFunctor<_Ty, typename std::enable_if<
+        std::is_move_constructible<_Ty>::value && !std::is_copy_constructible<_Ty>::value>::type>
+    {
+        typedef _NonCopyableFunctorWrapper<_Ty> _Type;
+    };
 }
 /// <summary>
 ///     A helper class template that transforms a continuation lambda that either takes or returns void, or both, into a lambda that takes and returns a
@@ -3424,11 +3454,11 @@ public:
     /**/
     template<typename _Function>
     __declspec(noinline) // Ask for no inlining so that the _CAPTURE_CALLSTACK gives us the expected result
-    auto then(const _Function& _Func) const -> typename details::_ContinuationTypeTraits<_Function, _ReturnType>::_TaskOfType
+    auto then(_Function&& _Func) const -> typename details::_ContinuationTypeTraits<_Function, _ReturnType>::_TaskOfType
     {
         task_options _TaskOptions;
         details::_get_internal_task_options(_TaskOptions)._set_creation_callstack(_CAPTURE_CALLSTACK());
-        return _ThenImpl<_ReturnType, _Function>(_Func, _TaskOptions);
+        return _ThenImpl<_ReturnType, _Function>(std::forward<_Function>(_Func), _TaskOptions);
     }
 
     /// <summary>
@@ -3457,10 +3487,10 @@ public:
     /**/
     template<typename _Function>
     __declspec(noinline) // Ask for no inlining so that the _CAPTURE_CALLSTACK gives us the expected result
-    auto then(const _Function& _Func, task_options _TaskOptions) const -> typename details::_ContinuationTypeTraits<_Function, _ReturnType>::_TaskOfType
+    auto then(_Function&& _Func, task_options _TaskOptions) const -> typename details::_ContinuationTypeTraits<_Function, _ReturnType>::_TaskOfType
     {
         details::_get_internal_task_options(_TaskOptions)._set_creation_callstack(_CAPTURE_CALLSTACK());
-        return _ThenImpl<_ReturnType, _Function>(_Func, _TaskOptions);
+        return _ThenImpl<_ReturnType, _Function>(std::forward<_Function>(_Func), _TaskOptions);
     }
 
     /// <summary>
@@ -3493,11 +3523,11 @@ public:
     /**/
     template<typename _Function>
     __declspec(noinline) // Ask for no inlining so that the _CAPTURE_CALLSTACK gives us the expected result
-    auto then(const _Function& _Func, cancellation_token _CancellationToken, task_continuation_context _ContinuationContext) const -> typename details::_ContinuationTypeTraits<_Function, _ReturnType>::_TaskOfType
+    auto then(_Function&& _Func, cancellation_token _CancellationToken, task_continuation_context _ContinuationContext) const -> typename details::_ContinuationTypeTraits<_Function, _ReturnType>::_TaskOfType
     {
         task_options _TaskOptions(_CancellationToken, _ContinuationContext);
         details::_get_internal_task_options(_TaskOptions)._set_creation_callstack(_CAPTURE_CALLSTACK());
-        return _ThenImpl<_ReturnType, _Function>(_Func, _TaskOptions);
+        return _ThenImpl<_ReturnType, _Function>(std::forward<_Function>(_Func), _TaskOptions);
     }
 
     /// <summary>
@@ -3682,13 +3712,13 @@ public:
     ///     This function is Used for runtime internal continuations only.
     /// </summary>
     template<typename _Function>
-    auto _Then(const _Function& _Func, details::_CancellationTokenState *_PTokenState, 
+    auto _Then(_Function&& _Func, details::_CancellationTokenState *_PTokenState, 
         details::_TaskInliningMode_t _InliningMode = details::_ForceInline) const -> typename details::_ContinuationTypeTraits<_Function, _ReturnType>::_TaskOfType
     {
         // inherit from antecedent
         auto _Scheduler = _GetImpl()->_GetScheduler();
 
-        return _ThenImpl<_ReturnType, _Function>(_Func, _PTokenState, task_continuation_context::use_default(), _Scheduler, _CAPTURE_CALLSTACK(), _InliningMode);
+        return _ThenImpl<_ReturnType, _Function>(std::forward<_Function>(_Func), _PTokenState, task_continuation_context::use_default(), _Scheduler, _CAPTURE_CALLSTACK(), _InliningMode);
     }
 
 private:
@@ -3801,16 +3831,17 @@ private:
         typedef typename details::_NormalizeVoidToUnitType<_ContinuationReturnType>::_Type _NormalizedContinuationReturnType;
 
         typename details::_Task_ptr<_ReturnType>::_Type _M_ancestorTaskImpl;
-        _Function _M_function;
+        typename details::_CopyableFunctor<typename std::decay<_Function>::type >::_Type _M_function;
 
+        template <class _ForwardedFunction>
         _ContinuationTaskHandle(const typename details::_Task_ptr<_ReturnType>::_Type & _AncestorImpl,
             const typename details::_Task_ptr<_NormalizedContinuationReturnType>::_Type & _ContinuationImpl,
-            const _Function & _Func, const task_continuation_context & _Context, details::_TaskInliningMode_t _InliningMode)
+            _ForwardedFunction&& _Func, const task_continuation_context & _Context, details::_TaskInliningMode_t _InliningMode)
                 : details::_PPLTaskHandle<typename details::_NormalizeVoidToUnitType<_ContinuationReturnType>::_Type,
                     _ContinuationTaskHandle<_InternalReturnType, _ContinuationReturnType, _Function, _IsTaskBased, _TypeSelection>, details::_ContinuationTaskHandleBase>
                     ::_PPLTaskHandle(_ContinuationImpl)
                 , _M_ancestorTaskImpl(_AncestorImpl)
-                , _M_function(_Func)
+                , _M_function(std::forward<_ForwardedFunction>(_Func))
         {
             this->_M_isTaskBasedContinuation = _IsTaskBased::value;
             this->_M_continuationContext = _Context;
@@ -4095,7 +4126,7 @@ private:
     }
 
     template<typename _InternalReturnType, typename _Function>
-    auto _ThenImpl(const _Function& _Func, const task_options& _TaskOptions) const -> typename details::_ContinuationTypeTraits<_Function, _InternalReturnType>::_TaskOfType
+    auto _ThenImpl(_Function&& _Func, const task_options& _TaskOptions) const -> typename details::_ContinuationTypeTraits<_Function, _InternalReturnType>::_TaskOfType
     {
         if (!_M_Impl)
         {
@@ -4105,14 +4136,14 @@ private:
         details::_CancellationTokenState *_PTokenState = _TaskOptions.has_cancellation_token() ? _TaskOptions.get_cancellation_token()._GetImplValue() : nullptr;
         auto _Scheduler = _TaskOptions.has_scheduler() ? _TaskOptions.get_scheduler() : _GetImpl()->_GetScheduler();
         auto _CreationStack = details::_get_internal_task_options(_TaskOptions)._M_hasPresetCreationCallstack ? details::_get_internal_task_options(_TaskOptions)._M_presetCreationCallstack : details::_TaskCreationCallstack();
-        return _ThenImpl<_InternalReturnType, _Function>(_Func, _PTokenState, _TaskOptions.get_continuation_context(), _Scheduler, _CreationStack);
+        return _ThenImpl<_InternalReturnType, _Function>(std::forward<_Function>(_Func), _PTokenState, _TaskOptions.get_continuation_context(), _Scheduler, _CreationStack);
     }
 
     /// <summary>
     ///     The one and only implementation of then for void and non-void tasks.
     /// </summary>
     template<typename _InternalReturnType, typename _Function>
-    auto _ThenImpl(const _Function& _Func, details::_CancellationTokenState *_PTokenState, const task_continuation_context& _ContinuationContext, scheduler_ptr _Scheduler, details::_TaskCreationCallstack _CreationStack,
+    auto _ThenImpl(_Function&& _Func, details::_CancellationTokenState *_PTokenState, const task_continuation_context& _ContinuationContext, scheduler_ptr _Scheduler, details::_TaskCreationCallstack _CreationStack,
         details::_TaskInliningMode_t _InliningMode = details::_NoInline) const -> typename details::_ContinuationTypeTraits<_Function, _InternalReturnType>::_TaskOfType
     {
         if (!_M_Impl)
@@ -4149,7 +4180,7 @@ private:
         _ContinuationTask._SetTaskCreationCallstack(_CreationStack);
 
         _GetImpl()->_ScheduleContinuation(new _ContinuationTaskHandle<_InternalReturnType, _TaskType, _Function, typename _Function_type_traits::_Takes_task, typename _Async_type_traits::_AsyncKind>(
-            _GetImpl(), _ContinuationTask._GetImpl(), _Func, _ContinuationContext, _InliningMode));
+            _GetImpl(), _ContinuationTask._GetImpl(), std::forward<_Function>(_Func), _ContinuationContext, _InliningMode));
 
         return _ContinuationTask;
     }
@@ -4371,10 +4402,10 @@ public:
     /**/
     template<typename _Function>
     __declspec(noinline) // Ask for no inlining so that the _CAPTURE_CALLSTACK gives us the expected result
-    auto then(const _Function& _Func, task_options _TaskOptions = task_options()) const -> typename details::_ContinuationTypeTraits<_Function, void>::_TaskOfType
+    auto then(_Function&& _Func, task_options _TaskOptions = task_options()) const -> typename details::_ContinuationTypeTraits<_Function, void>::_TaskOfType
     {
         details::_get_internal_task_options(_TaskOptions)._set_creation_callstack(_CAPTURE_CALLSTACK());
-        return _M_unitTask._ThenImpl<void, _Function>(_Func, _TaskOptions);
+        return _M_unitTask._ThenImpl<void, _Function>(std::forward<_Function>(_Func), _TaskOptions);
     }
 
     /// <summary>
@@ -4407,11 +4438,11 @@ public:
     /**/
     template<typename _Function>
     __declspec(noinline) // Ask for no inlining so that the _CAPTURE_CALLSTACK gives us the expected result
-    auto then(const _Function& _Func, cancellation_token _CancellationToken, task_continuation_context _ContinuationContext) const -> typename details::_ContinuationTypeTraits<_Function, void>::_TaskOfType
+    auto then(_Function&& _Func, cancellation_token _CancellationToken, task_continuation_context _ContinuationContext) const -> typename details::_ContinuationTypeTraits<_Function, void>::_TaskOfType
     {
         task_options _TaskOptions(_CancellationToken, _ContinuationContext);
         details::_get_internal_task_options(_TaskOptions)._set_creation_callstack(_CAPTURE_CALLSTACK());
-        return _M_unitTask._ThenImpl<void, _Function>(_Func, _TaskOptions);
+        return _M_unitTask._ThenImpl<void, _Function>(std::forward<_Function>(_Func), _TaskOptions);
     }
 
     /// <summary>
@@ -4555,13 +4586,13 @@ public:
     ///     An internal version of then that takes additional flags and executes the continuation inline. Used for runtime internal continuations only.
     /// </summary>
     template<typename _Function>
-    auto _Then(const _Function& _Func, details::_CancellationTokenState *_PTokenState, 
+    auto _Then(_Function&& _Func, details::_CancellationTokenState *_PTokenState, 
         details::_TaskInliningMode_t _InliningMode = details::_ForceInline) const -> typename details::_ContinuationTypeTraits<_Function, void>::_TaskOfType
     {
         // inherit from antecedent
         auto _Scheduler = _GetImpl()->_GetScheduler();
 
-        return _M_unitTask._ThenImpl<void, _Function>(_Func, _PTokenState, task_continuation_context::use_default(), _Scheduler, _CAPTURE_CALLSTACK(), _InliningMode);
+        return _M_unitTask._ThenImpl<void, _Function>(std::forward<_Function>(_Func), _PTokenState, task_continuation_context::use_default(), _Scheduler, _CAPTURE_CALLSTACK(), _InliningMode);
     }
 
 private:
@@ -6668,7 +6699,7 @@ auto when_all(_Iterator _Begin, _Iterator _End, const task_options& _TaskOptions
 /// <seealso cref="Task Parallelism (Concurrency Runtime)"/>
 /**/
 template<typename _ReturnType>
-task<std::vector<_ReturnType>> operator&&(const task<_ReturnType> & _Lhs, const task<_ReturnType> & _Rhs)
+auto operator&&(const task<_ReturnType> & _Lhs, const task<_ReturnType> & _Rhs) -> decltype(when_all(&_Lhs, &_Lhs))
 {
     task<_ReturnType> _PTasks[2] = {_Lhs, _Rhs};
     return when_all(_PTasks, _PTasks+2);
@@ -6700,7 +6731,7 @@ task<std::vector<_ReturnType>> operator&&(const task<_ReturnType> & _Lhs, const 
 /// <seealso cref="Task Parallelism (Concurrency Runtime)"/>
 /**/
 template<typename _ReturnType>
-task<std::vector<_ReturnType>> operator&&(const task<std::vector<_ReturnType>> & _Lhs, const task<_ReturnType> & _Rhs)
+auto operator&&(const task<std::vector<_ReturnType>> & _Lhs, const task<_ReturnType> & _Rhs) -> decltype(details::_WhenAllVectorAndValue(_Lhs, _Rhs, true))
 {
     return details::_WhenAllVectorAndValue(_Lhs, _Rhs, true);
 }
@@ -6731,7 +6762,7 @@ task<std::vector<_ReturnType>> operator&&(const task<std::vector<_ReturnType>> &
 /// <seealso cref="Task Parallelism (Concurrency Runtime)"/>
 /**/
 template<typename _ReturnType>
-task<std::vector<_ReturnType>> operator&&(const task<_ReturnType> & _Lhs, const task<std::vector<_ReturnType>> & _Rhs)
+auto operator&&(const task<_ReturnType> & _Lhs, const task<std::vector<_ReturnType>> & _Rhs) -> decltype(details::_WhenAllVectorAndValue(_Rhs, _Lhs, false))
 {
     return details::_WhenAllVectorAndValue(_Rhs, _Lhs, false);
 }
@@ -6762,40 +6793,9 @@ task<std::vector<_ReturnType>> operator&&(const task<_ReturnType> & _Lhs, const 
 /// <seealso cref="Task Parallelism (Concurrency Runtime)"/>
 /**/
 template<typename _ReturnType>
-task<std::vector<_ReturnType>> operator&&(const task<std::vector<_ReturnType>> & _Lhs, const task<std::vector<_ReturnType>> & _Rhs)
+auto operator&&(const task<std::vector<_ReturnType>> & _Lhs, const task<std::vector<_ReturnType>> & _Rhs) -> decltype(when_all(&_Lhs, &_Lhs))
 {
     task<std::vector<_ReturnType>> _PTasks[2] = {_Lhs, _Rhs};
-    return when_all(_PTasks, _PTasks+2);
-}
-
-/// <summary>
-///     Creates a task that will complete succesfully when both of the tasks supplied as arguments complete successfully.
-/// </summary>
-/// <typeparam name="_ReturnType">
-///     The type of the returned task.
-/// </typeparam>
-/// <param name="_Lhs">
-///     The first task to combine into the resulting task.
-/// </param>
-/// <param name="_Rhs">
-///     The second task to combine into the resulting task.
-/// </param>
-/// <returns>
-///     A task that completes successfully when both of the input tasks have completed successfully. If the input tasks are of type <c>T</c>,
-///     the output of this function will be a <c>task&lt;std::vector&lt;T&gt;&gt;</c>. If the input tasks are of type <c>void</c> the output
-///     task will also be a <c>task&lt;void&gt;</c>.
-///     <para> To allow for a construct of the sort taskA &amp;&amp; taskB &amp;&amp; taskC, which are combined in pairs, the &amp;&amp; operator
-///     produces a <c>task&lt;std::vector&lt;T&gt;&gt;</c> if either one or both of the tasks are of type <c>task&lt;std::vector&lt;T&gt;&gt;</c>.</para>
-/// </returns>
-/// <remarks>
-///     If one of the tasks is canceled or throws an exception, the returned task will complete early, in the canceled state, and the exception,
-///     if one is encoutered, will be thrown if you call <c>get()</c> or <c>wait()</c> on that task.
-/// </remarks>
-/// <seealso cref="Task Parallelism (Concurrency Runtime)"/>
-/**/
-inline task<void> operator&&(const task<void> & _Lhs, const task<void> & _Rhs)
-{
-    task<void> _PTasks[2] = {_Lhs, _Rhs};
     return when_all(_PTasks, _PTasks+2);
 }
 
@@ -7219,7 +7219,7 @@ task<std::vector<_ReturnType>> operator||(const task<std::vector<_ReturnType>> &
 /// <seealso cref="Task Parallelism (Concurrency Runtime)"/>
 /**/
 template<typename _ReturnType>
-task<std::vector<_ReturnType>> operator||(const task<_ReturnType> & _Lhs, const task<std::vector<_ReturnType>> & _Rhs)
+auto operator||(const task<_ReturnType> & _Lhs, const task<std::vector<_ReturnType>> & _Rhs) -> decltype(_Rhs || _Lhs)
 {
     return _Rhs || _Lhs;
 }
@@ -7250,14 +7250,17 @@ task<std::vector<_ReturnType>> operator||(const task<_ReturnType> & _Lhs, const 
 /// </remarks>
 /// <seealso cref="Task Parallelism (Concurrency Runtime)"/>
 /**/
-inline task<void> operator||(const task<void> & _Lhs, const task<void> & _Rhs)
+template<typename _Ty = task<void>, typename _Pair = std::pair<details::_Unit_type, details::_CancellationTokenState *>>
+_Ty operator||(const task<void> & _Lhs_arg, const task<void> & _Rhs_arg)
 {
-    auto _PParam = new details::_RunAnyParam<std::pair<details::_Unit_type, details::_CancellationTokenState *>>();
+    const _Ty& _Lhs = _Lhs_arg;
+    const _Ty& _Rhs = _Rhs_arg;
+    auto _PParam = new details::_RunAnyParam<_Pair>();
 
     task<std::pair<details::_Unit_type, details::_CancellationTokenState *>> _Any_task_completed(_PParam->_M_Completed, _PParam->_M_cancellationSource.get_token());
     // Chain the return continuation task here to ensure it will get inline execution when _M_Completed.set is called,
     // So that _PParam can be used before it getting deleted.
-    auto _ReturnTask = _Any_task_completed._Then([=](std::pair<details::_Unit_type, details::_CancellationTokenState *> _Ret) { 
+    auto _ReturnTask = _Any_task_completed._Then([=](_Pair _Ret) {
         _ASSERTE(_Ret.second);
         details::_JoinAllTokens_Add(_PParam->_M_cancellationSource, _Ret.second);
     }, nullptr);
@@ -7268,7 +7271,7 @@ inline task<void> operator||(const task<void> & _Lhs, const task<void> & _Rhs)
     }
 
     _PParam->_M_numTasks = 2;
-    auto _Continuation = [_PParam](task<void> _ResultTask) mutable {
+    auto _Continuation = [_PParam](_Ty _ResultTask) mutable {
         //  Dev10 compiler needs this.
         auto _PParam1 = _PParam;
         auto _Func = [&_ResultTask, _PParam1]() {
@@ -7291,18 +7294,10 @@ task<_Ty> task_from_result(_Ty _Param, const task_options& _TaskOptions = task_o
     return create_task(_Tce, _TaskOptions);
 }
 
-// Work around VS 2010 compiler bug
-#if _MSC_VER == 1600
-inline task<bool> task_from_result(bool _Param)
+template<class _Ty = void>
+inline task<_Ty> task_from_result(const task_options& _TaskOptions = task_options())
 {
-    task_completion_event<bool> _Tce;
-    _Tce.set(_Param);
-    return create_task(_Tce, task_options());
-}
-#endif
-inline task<void> task_from_result(const task_options& _TaskOptions = task_options())
-{
-    task_completion_event<void> _Tce;
+    task_completion_event<_Ty> _Tce;
     _Tce.set();
     return create_task(_Tce, _TaskOptions);
 }
@@ -7314,29 +7309,6 @@ task<_TaskType> task_from_exception(_ExType _Exception, const task_options& _Tas
     _Tce.set_exception(_Exception);
     return create_task(_Tce, _TaskOptions);
 }
-
-namespace details
-{
-    /// <summary>
-    /// A convenient extension to Concurrency: loop until a condition is no longer met
-    /// </summary>
-    /// <param name="func">
-    ///   A function representing the body of the loop. It will be invoked at least once and 
-    ///   then repetitively as long as it returns true.
-    /// </param>
-    inline
-    task<bool> do_while(std::function<task<bool>(void)> func)
-    {
-        task<bool> first = func();
-        return first.then([=](bool guard) -> task<bool> {
-            if (guard)
-                return do_while(func);
-            else
-                return first;
-            });
-    }
-
-} // namespace details
 
 } // namespace Concurrency
 
@@ -7360,3 +7332,4 @@ namespace concurrency = Concurrency;
 #endif
 
 #endif // _PPLXTASKS_H
+

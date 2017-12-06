@@ -1,19 +1,7 @@
 /***
-* ==++==
+* Copyright (C) Microsoft. All rights reserved.
+* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 *
-* Copyright (c) Microsoft Corporation. All rights reserved.
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*
-* ==--==
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
 * authentication_tests.cpp
@@ -142,7 +130,7 @@ void sni_test_impl(websocket_client &client)
 {
     try
     {
-        client.connect(U("wss://jabbr.net")).wait();
+        client.connect(U("wss://swordsoftruth.com")).wait();
 
         // Should never be reached.
         VERIFY_IS_TRUE(false);
@@ -182,7 +170,7 @@ TEST(disable_sni)
 
     try
     {
-        client.connect(U("wss://jabbr.net")).wait();
+        client.connect(U("wss://swordsoftruth.com")).wait();
 
         // Should never be reached.
         VERIFY_IS_TRUE(false);
@@ -202,7 +190,7 @@ TEST(disable_sni)
 TEST(sni_explicit_hostname)
 {
     websocket_client_config config;
-    const auto &name = utf8string("jabbr.net");
+    const auto &name = utf8string("swordsoftruth.com");
     config.set_server_name(name);
     VERIFY_ARE_EQUAL(name, config.server_name());
     websocket_client client(config);
@@ -231,17 +219,17 @@ void handshake_error_test_impl(const ::utility::string_t &host)
 
 TEST(self_signed_cert)
 {
-    handshake_error_test_impl(U("wss://www.pcwebshop.co.uk/"));
+    handshake_error_test_impl(U("wss://self-signed.badssl.com/"));
 }
 
 TEST(hostname_mismatch)
 {
-    handshake_error_test_impl(U("wss://swordsoftruth.com/"));
+    handshake_error_test_impl(U("wss://wrong.host.badssl.com/"));
 }
 
 TEST(cert_expired)
 {
-    handshake_error_test_impl(U("wss://tv.eurosport.com/"));
+    handshake_error_test_impl(U("wss://expired.badssl.com/"));
 }
 
 #endif
