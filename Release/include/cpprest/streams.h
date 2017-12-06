@@ -1711,55 +1711,11 @@ private:
 };
 
 #ifdef _WIN32
-template<>
-class type_parser<char,std::basic_string<wchar_t>> : public _type_parser_base<char>
+template<class CharType>
+class type_parser<CharType, std::enable_if_t<sizeof(CharType) == 1, std::basic_string<wchar_t>>> : public _type_parser_base<CharType>
 {
 public:
-    static pplx::task<std::wstring> parse(streams::streambuf<char> buffer)
-    {
-        return _parse_input<std::basic_string<char>,std::basic_string<wchar_t>>(buffer, _accept_char, _extract_result);
-    }
-
-private:
-    static bool _accept_char(const std::shared_ptr<std::basic_string<char>> &state, int_type ch)
-    {
-        if ( ch == concurrency::streams::char_traits<char>::eof() || isspace(ch)) return false;
-        state->push_back(char(ch));
-        return true;
-    }
-    static pplx::task<std::basic_string<wchar_t>> _extract_result(std::shared_ptr<std::basic_string<char>> state)
-    {
-        return pplx::task_from_result(utility::conversions::utf8_to_utf16(*state));
-    }
-};
-
-template<>
-class type_parser<signed char,std::basic_string<wchar_t>> : public _type_parser_base<signed char>
-{
-public:
-    static pplx::task<std::wstring> parse(streams::streambuf<signed char> buffer)
-    {
-        return _parse_input<std::basic_string<char>,std::basic_string<wchar_t>>(buffer, _accept_char, _extract_result);
-    }
-
-private:
-    static bool _accept_char(const std::shared_ptr<std::basic_string<char>> &state, int_type ch)
-    {
-        if ( ch == concurrency::streams::char_traits<char>::eof() || isspace(ch)) return false;
-        state->push_back(char(ch));
-        return true;
-    }
-    static pplx::task<std::basic_string<wchar_t>> _extract_result(std::shared_ptr<std::basic_string<char>> state)
-    {
-        return pplx::task_from_result(utility::conversions::utf8_to_utf16(*state));
-    }
-};
-
-template<>
-class type_parser<unsigned char,std::basic_string<wchar_t>> : public _type_parser_base<unsigned char>
-{
-public:
-    static pplx::task<std::wstring> parse(streams::streambuf<unsigned char> buffer)
+    static pplx::task<std::wstring> parse(streams::streambuf<CharType> buffer)
     {
         return _parse_input<std::basic_string<char>,std::basic_string<wchar_t>>(buffer, _accept_char, _extract_result);
     }
@@ -1781,3 +1737,4 @@ private:
 }}
 
 #endif
+
