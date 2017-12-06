@@ -603,7 +603,7 @@ public:
         const method &mtd,
         const utf16string &path_query_fragment,
         const utf16string &body_data,
-        const utf16string &content_type = ::utility::conversions::to_utf16string("text/plain"),
+        const utf16string &content_type = utility::conversions::to_utf16string("text/plain"),
         const pplx::cancellation_token &token = pplx::cancellation_token::none())
     {
         http_request msg(mtd);
