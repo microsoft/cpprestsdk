@@ -1714,6 +1714,7 @@ private:
 template<class CharType>
 class type_parser<CharType, std::enable_if_t<sizeof(CharType) == 1, std::basic_string<wchar_t>>> : public _type_parser_base<CharType>
 {
+    typedef typename concurrency::streams::streambuf<CharType>::int_type int_type;
 public:
     static pplx::task<std::wstring> parse(streams::streambuf<CharType> buffer)
     {
