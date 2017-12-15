@@ -32,6 +32,10 @@ else()
   set(BUILD_SAMPLES ON CACHE BOOL "Build sample applications.")
 endif()
 
+if(WIN32)
+  set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Default filename postfix for libraries under configuration DEBUG")
+endif()
+
 if(ANDROID)
   set(Boost_USE_STATIC_LIBS ON CACHE BOOL "Link against boost statically.")
 else()
