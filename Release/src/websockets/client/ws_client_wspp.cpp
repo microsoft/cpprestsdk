@@ -20,6 +20,10 @@
 
 #include "ws_client_impl.h"
 
+// These must be undef'ed before including websocketpp because it is not Windows.h safe.
+#undef min
+#undef max
+
 // Force websocketpp to use C++ std::error_code instead of Boost.
 #define _WEBSOCKETPP_CPP11_SYSTEM_ERROR_
 #if defined(_MSC_VER)
@@ -792,3 +796,4 @@ websocket_callback_client::websocket_callback_client(websocket_client_config con
 }}}
 
 #endif
+

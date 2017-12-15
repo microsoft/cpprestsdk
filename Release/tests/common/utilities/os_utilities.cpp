@@ -15,7 +15,6 @@
 
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
-#define NOMINMAX
 #include <Windows.h>
 #else
 #include <unistd.h>
@@ -55,3 +54,4 @@ long os_utilities::interlocked_exchange(volatile long *target, long value)
 }
 
 }}}
+

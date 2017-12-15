@@ -21,6 +21,9 @@
 #include <VersionHelpers.h>
 #endif
 
+#undef min
+#undef max
+
 namespace web
 {
 namespace http
@@ -1527,3 +1530,4 @@ std::shared_ptr<_http_client_communicator> create_platform_final_pipeline_stage(
 }
 
 }}}}
+

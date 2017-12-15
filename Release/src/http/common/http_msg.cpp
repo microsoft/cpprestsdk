@@ -13,6 +13,9 @@
 #include "stdafx.h"
 #include "../common/internal_http_helpers.h"
 
+#undef min
+#undef max
+
 using namespace web;
 using namespace utility;
 using namespace concurrency;
@@ -1043,3 +1046,4 @@ details::_http_request::_http_request(std::unique_ptr<http::details::_http_serve
 #undef DAT
 #endif
 }} // namespace web::http
+

@@ -22,6 +22,9 @@
 #include "http_server_httpsys.h"
 #include "http_server_impl.h"
 
+#undef min
+#undef max
+
 using namespace web;
 using namespace utility;
 using namespace concurrency;
