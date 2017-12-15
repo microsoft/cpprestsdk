@@ -67,11 +67,11 @@ static void open_browser(utility::string_t auth_uri)
 #elif defined(__APPLE__)
     // NOTE: OS X only.
     string_t browser_cmd(U("open \"") + auth_uri + U("\""));
-    system(browser_cmd.c_str());
+    (void)system(browser_cmd.c_str());
 #else
     // NOTE: Linux/X11 only.
     string_t browser_cmd(U("xdg-open \"") + auth_uri + U("\""));
-    system(browser_cmd.c_str());
+    (void)system(browser_cmd.c_str());
 #endif
 }
 
@@ -321,3 +321,4 @@ int main(int argc, char *argv[])
     ucout << "Done." << std::endl;
     return 0;
 }
+
