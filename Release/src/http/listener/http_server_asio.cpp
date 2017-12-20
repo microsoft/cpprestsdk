@@ -637,7 +637,7 @@ will_deref_and_erase_t asio_server_connection::handle_http_line(const boost::sys
         {
             m_request.set_request_uri(utility::conversions::to_string_t(http_path_and_version.substr(1, http_path_and_version.size() - VersionPortionSize - 1)));
         }
-        catch(const web::uri_exception &e)
+        catch (const std::exception& e) // may be std::range_error indicating invalid Unicode, or web::uri_exception
         {
             m_request.reply(status_codes::BadRequest, e.what());
             m_close = true;
@@ -913,7 +913,7 @@ will_deref_and_erase_t asio_server_connection::dispatch_request_to_listener()
     {
         pListener = m_p_parent->find_listener(m_request.relative_uri());
     }
-    catch (const web::uri_exception&)
+    catch (const std::exception&) // may be web::uri_exception, or std::range_error indicating invalid Unicode
     {
         m_request.reply(status_codes::BadRequest);
         (will_erase_from_parent_t)do_response();
