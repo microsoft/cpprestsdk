@@ -412,6 +412,7 @@ protected:
         DWORD access_type;
         LPCWSTR proxy_name;
         LPCWSTR proxy_bypass = WINHTTP_NO_PROXY_BYPASS;
+        utility::string_t proxy_str;
         http::uri uri;
 
         const auto& config = client_config();
@@ -485,7 +486,6 @@ protected:
             }
             else
             {
-                utility::string_t proxy_str;
                 if (uri.port() > 0)
                 {
                     utility::ostringstream_t ss;
