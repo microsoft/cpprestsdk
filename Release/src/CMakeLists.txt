@@ -215,8 +215,18 @@ elseif(WINDOWS_STORE)
 endif()
 
 if(WIN32)
-  set_target_properties(cpprest PROPERTIES
-    OUTPUT_NAME "cpprest_${CPPREST_VERSION_MAJOR}_${CPPREST_VERSION_MINOR}")
+  string(SUBSTRING ${CMAKE_VS_PLATFORM_TOOLSET} 1 -1 TOOLSET)
+  set(CPPREST_VERSION_POSTFIX "_${CPPREST_VERSION_MAJOR}_${CPPREST_VERSION_MINOR}")
+  foreach(CFG ${CMAKE_CONFIGURATION_TYPES})
+    string(TOUPPER ${CFG} CFG)
+    get_target_property(CFG_POSTFIX cpprest ${CFG}_POSTFIX)
+    if (NOT CFG_POSTFIX)
+      # forget "NOTFOUND"
+      set(CFG_POSTFIX)
+    endif()
+    set_target_properties(cpprest PROPERTIES
+      ${CFG}_POSTFIX "${TOOLSET}${CFG_POSTFIX}${CPPREST_VERSION_POSTFIX}")
+  endforeach()
 elseif(ANDROID)
   # Do not use SOVERSION on android. It is completely unsupported (and causes problems).
   # Perhaps revisit in the future? (NDK r9d, 8/7/14)
