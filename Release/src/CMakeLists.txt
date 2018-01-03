@@ -1,9 +1,5 @@
 cmake_policy(SET CMP0022 NEW)
 
-set(CPPREST_VERSION_MAJOR 2)
-set(CPPREST_VERSION_MINOR 10)
-set(CPPREST_VERSION_REVISION 1)
-
 file(GLOB HEADERS_CPPREST "../include/cpprest/*.h" "../include/cpprest/*.hpp" "../include/cpprest/*.dat")
 file(GLOB HEADERS_PPLX "../include/pplx/*.h" "../include/pplx/*.hpp")
 file(GLOB HEADERS_DETAILS "../include/cpprest/details/*.h" "../include/cpprest/details/*.hpp" "../include/cpprest/details/*.dat" "../include/pplx/*.hpp" "../include/pplx/*.dat")
@@ -214,19 +210,8 @@ elseif(WINDOWS_STORE)
   endif()
 endif()
 
+set_target_properties(cpprest PROPERTIES OUTPUT_NAME "cpprest${CPPREST_ABI_TAG}")
 if(WIN32)
-  string(SUBSTRING ${CMAKE_VS_PLATFORM_TOOLSET} 1 -1 TOOLSET)
-  set(CPPREST_VERSION_POSTFIX "_${CPPREST_VERSION_MAJOR}_${CPPREST_VERSION_MINOR}")
-  foreach(CFG ${CMAKE_CONFIGURATION_TYPES})
-    string(TOUPPER ${CFG} CFG)
-    get_target_property(CFG_POSTFIX cpprest ${CFG}_POSTFIX)
-    if (NOT CFG_POSTFIX)
-      # forget "NOTFOUND"
-      set(CFG_POSTFIX)
-    endif()
-    set_target_properties(cpprest PROPERTIES
-      ${CFG}_POSTFIX "${TOOLSET}${CFG_POSTFIX}${CPPREST_VERSION_POSTFIX}")
-  endforeach()
 elseif(ANDROID)
   # Do not use SOVERSION on android. It is completely unsupported (and causes problems).
   # Perhaps revisit in the future? (NDK r9d, 8/7/14)

@@ -4,10 +4,14 @@ if(POLICY CMP0042)
   cmake_policy(SET CMP0042 NEW) # use MACOSX_RPATH
 endif()
 if(UNIX)
-  project(cpprest C CXX)
+  project(cpprestsdk C CXX)
 else()
-  project(cpprest CXX)
+  project(cpprestsdk CXX)
 endif()
+
+set(CPPREST_VERSION_MAJOR 2)
+set(CPPREST_VERSION_MINOR 10)
+set(CPPREST_VERSION_REVISION 1)
 
 enable_testing()
 
@@ -34,6 +38,18 @@ endif()
 
 if(WIN32)
   set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Default filename postfix for libraries under configuration DEBUG")
+else()
+  set(CMAKE_DEBUG_POSTFIX "" CACHE STRING "Default filename postfix for libraries under configuration DEBUG")
+endif()
+
+if(WIN32)
+  set(TOOLSET)
+  if(CMAKE_VS_PLATFORM_TOOLSET)
+    string(REGEX REPLACE "^v" "" TOOLSET "${CMAKE_VS_PLATFORM_TOOLSET}")
+  endif()
+  set(CPPREST_ABI_TAG "${TOOLSET}_${CPPREST_VERSION_MAJOR}_${CPPREST_VERSION_MINOR}" CACHE STRING "Postfix tag for the cpprest abi")
+else()
+  set(CPPREST_ABI_TAG "" CACHE STRING "Postfix tag for the cpprest abi")
 endif()
 
 if(ANDROID)
