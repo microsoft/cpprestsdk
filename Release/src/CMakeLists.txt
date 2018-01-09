@@ -1,9 +1,5 @@
 cmake_policy(SET CMP0022 NEW)
 
-set(CPPREST_VERSION_MAJOR 2)
-set(CPPREST_VERSION_MINOR 10)
-set(CPPREST_VERSION_REVISION 1)
-
 file(GLOB HEADERS_CPPREST "../include/cpprest/*.h" "../include/cpprest/*.hpp" "../include/cpprest/*.dat")
 file(GLOB HEADERS_PPLX "../include/pplx/*.h" "../include/pplx/*.hpp")
 file(GLOB HEADERS_DETAILS "../include/cpprest/details/*.h" "../include/cpprest/details/*.hpp" "../include/cpprest/details/*.dat" "../include/pplx/*.hpp" "../include/pplx/*.dat")
@@ -214,9 +210,8 @@ elseif(WINDOWS_STORE)
   endif()
 endif()
 
+set_target_properties(cpprest PROPERTIES OUTPUT_NAME "cpprest${CPPREST_ABI_TAG}")
 if(WIN32)
-  set_target_properties(cpprest PROPERTIES
-    OUTPUT_NAME "cpprest_${CPPREST_VERSION_MAJOR}_${CPPREST_VERSION_MINOR}")
 elseif(ANDROID)
   # Do not use SOVERSION on android. It is completely unsupported (and causes problems).
   # Perhaps revisit in the future? (NDK r9d, 8/7/14)
