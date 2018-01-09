@@ -450,12 +450,13 @@ public:
 
             const auto &base_uri = m_context->m_http_client->base_uri();
             const auto &host = utility::conversions::to_utf8string(base_uri.host());
+            const auto &port = base_uri.port();
 
             std::ostream request_stream(&m_request);
             request_stream.imbue(std::locale::classic());
 
-            request_stream << "CONNECT " << host << ":" << 443 << " HTTP/1.1" << CRLF;
-            request_stream << "Host: " << host << ":" << 443 << CRLF;
+            request_stream << "CONNECT " << host << ":" << ((port != 0) ? port : 443) << " HTTP/1.1" << CRLF;
+            request_stream << "Host: " << host << ":" << ((port != 0) ? port : 443) << CRLF;
             request_stream << "Proxy-Connection: Keep-Alive" << CRLF;
 
             if(m_context->m_http_client->client_config().proxy().credentials().is_set())
