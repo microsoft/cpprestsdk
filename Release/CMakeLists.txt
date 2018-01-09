@@ -62,6 +62,7 @@ include(cmake/cpprest_find_boost.cmake)
 include(cmake/cpprest_find_zlib.cmake)
 include(cmake/cpprest_find_openssl.cmake)
 include(cmake/cpprest_find_websocketpp.cmake)
+include(CheckIncludeFiles)
 
 find_package(Threads REQUIRED)
 if(THREADS_HAVE_PTHREAD_ARG)
@@ -76,6 +77,7 @@ if(CPPREST_EXCLUDE_WEBSOCKETS)
   set(CPPREST_WEBSOCKETS_IMPL none CACHE STRING "Internal use.")
 endif()
 
+CHECK_INCLUDE_FILES(xlocale.h HAVE_XLOCALE_H)
 if(APPLE) # Note: also iOS
   set(CPPREST_PPLX_IMPL apple CACHE STRING "Internal use.")
   set(CPPREST_WEBSOCKETS_IMPL wspp CACHE STRING "Internal use.")
