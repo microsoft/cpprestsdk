@@ -23,11 +23,11 @@
 #include "cpprest/details/basic_types.h"
 
 #if !defined(_WIN32) || (_MSC_VER >= 1700)
-#include <sys/time.h>
 #include <chrono>
 #endif
 
 #ifndef _WIN32
+#include <sys/time.h>
 #include <boost/algorithm/string.hpp>
 #if !defined(ANDROID) && !defined(__ANDROID__) && defined(HAVE_XLOCALE_H) // CodePlex 269
 /* Systems using glibc: xlocale.h has been removed from glibc 2.26
