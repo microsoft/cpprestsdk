@@ -77,7 +77,10 @@ if(CPPREST_EXCLUDE_WEBSOCKETS)
   set(CPPREST_WEBSOCKETS_IMPL none CACHE STRING "Internal use.")
 endif()
 
-CHECK_INCLUDE_FILES(xlocale.h HAVE_XLOCALE_H)
+if(NOT WIN32)
+  CHECK_INCLUDE_FILES(xlocale.h HAVE_XLOCALE_H)
+endif()
+
 if(APPLE) # Note: also iOS
   set(CPPREST_PPLX_IMPL apple CACHE STRING "Internal use.")
   set(CPPREST_WEBSOCKETS_IMPL wspp CACHE STRING "Internal use.")
