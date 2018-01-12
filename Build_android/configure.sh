@@ -47,13 +47,13 @@ do
 	"--skip-cpprestsdk")
 	    DO_CPPRESTSDK=0
 	    ;;
-	"-?"|"-h"|"--help")
-	    usage
-	    exit
-	    ;;
 	"--ndk")
 	    shift
 	    export ANDROID_NDK=$1
+	    ;;
+	"-?"|"-h"|"--help")
+	    usage
+	    exit
 	    ;;
 	*)
 	    usage
@@ -105,11 +105,13 @@ fi
 if [ "${DO_OPENSSL}" == "1" ]
 then
 (
-    if [ ! -d "openssl" ]; then mkdir openssl; fi
+    if [ ! -d "openssl" ]; then
+        mkdir openssl;
+    fi
     cd openssl
-    cp "${DIR}/openssl/Makefile" .
-    export ANDROID_NDK_ROOT="${NDK_DIR}"
-    make all
+    cp -af "${DIR}/openssl/." .
+    make all ANDROID_NDK="${NDK_DIR}" ANDROID_ABI=armeabi-v7a
+    make all ANDROID_NDK="${NDK_DIR}" ANDROID_ABI=x86
 )
 fi
 
