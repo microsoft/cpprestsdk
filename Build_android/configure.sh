@@ -107,9 +107,9 @@ then
 (
     if [ ! -d "openssl" ]; then mkdir openssl; fi
     cd openssl
-    cp "${DIR}/openssl/Makefile" .
-    export ANDROID_NDK_ROOT="${NDK_DIR}"
-    make all
+    cp -af "${DIR}/openssl/." .
+    make all ANDROID_NDK="${NDK_DIR}" ANDROID_ABI=armeabi-v7a
+    make all ANDROID_NDK="${NDK_DIR}" ANDROID_ABI=x86
 )
 fi
 
