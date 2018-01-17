@@ -1,6 +1,13 @@
 set(CMAKE_LEGACY_CYGWIN_WIN32 0)
 cmake_minimum_required(VERSION 2.6)
-project(cpprest)
+
+CMAKE_POLICY(SET CMP0048 NEW)
+
+if(UNIX)
+  project(cpprestsdk VERSION 2.10.1 LANGUAGES C CXX)
+else()
+  project(cpprestsdk VERSION 2.10.1 LANGUAGES CXX)
+endif()
 
 enable_testing()
 
@@ -251,3 +258,8 @@ endif()
 if(BUILD_SAMPLES)
   add_subdirectory(samples)
 endif()
+
+SET(CONF_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}")
+CONFIGURE_FILE(cpprestsdkConfig.cmake.in "${PROJECT_BINARY_DIR}/cpprestsdkConfig.cmake" @ONLY)
+CONFIGURE_FILE(cpprestsdkConfigVersion.cmake.in "${PROJECT_BINARY_DIR}/cpprestsdkConfigVersion.cmake" @ONLY)
+
