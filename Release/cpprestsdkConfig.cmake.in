@@ -1,0 +1,17 @@
+# - Config file for the legacy package
+# It defines the following variables
+#  LEGACY_INCLUDE_DIRS - include directories for legacy
+#  LEGACY_LIBRARIES    - libraries to link against
+#  LEGACY_EXECUTABLE   - the bar executable
+
+# Compute paths
+get_filename_component(CPPRESTSDK_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+set(CPPRESTSDK_INCLUDE_DIRS "@CONF_INCLUDE_DIRS@")
+
+# Our library dependencies (contains definitions for IMPORTED targets)
+IF(NOT TARGET foo AND NOT legacy_BINARY_DIR)
+  include("${CPPRESTSDK_CMAKE_DIR}/cpprestsdkTargets.cmake")
+ENDIF()
+
+# These are IMPORTED targets created by legacyTargets.cmake
+SET(CPPRESTSDK_LIBRARIES cpprestsdk)
