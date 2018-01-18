@@ -3,7 +3,7 @@ for Android using either Clang or GCC toolchains.
 
 An alias for the android-armv7 target, named android-armeabi, is added for
 compatability with the OpenSSL 1.1.0 configuration target names. Support for
-the AARCH64 archicture is also added, as well as targets using the Clang
+the AArch64 archicture is also added, as well as targets using the Clang
 compiler.
 
 Clang does not recognize some of the ARM assembly nmenonics that are used in
@@ -18,24 +18,32 @@ https://llvm.org/bugs/show_bug.cgi?id=24350
 
 diff -Naur org/Configure mod/Configure
 --- org/Configure	2017-05-25 05:54:38.000000000 -0700
-+++ mod/Configure	2018-01-12 19:28:26.828211300 -0800
-@@ -475,6 +475,13 @@
- "android-x86","gcc:-mandroid -I\$(ANDROID_DEV)/include -B\$(ANDROID_DEV)/lib -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:".eval{my $asm=${x86_elf_asm};$asm=~s/:elf/:android/;$asm}.":dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
- "android-armv7","gcc:-march=armv7-a -mandroid -I\$(ANDROID_DEV)/include -B\$(ANDROID_DEV)/lib -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${armv4_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
- "android-mips","gcc:-mandroid -I\$(ANDROID_DEV)/include -B\$(ANDROID_DEV)/lib -O3 -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${mips32_asm}:o32:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-+"android-armeabi","gcc:-march=armv7-a -mandroid -I\$(ANDROID_DEV)/include -B\$(ANDROID_DEV)/lib -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${armv4_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-+"android64-aarch64","gcc:-march=armv8-a -mandroid -I\$(ANDROID_DEV)/include -B\$(ANDROID_DEV)/lib -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${aarch64_asm}:linux64:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-+"android-x86-clang","clang:-target i686-none-linux-android --gcc-toolchain=\$(ANDROID_GCC_TOOLCHAIN) --sysroot=\$(CROSS_SYSROOT) -I\$(ANDROID_DEV)/include -B\$(ANDROID_DEV)/lib -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:".eval{my $asm=${x86_elf_asm};$asm=~s/:elf/:android/;$asm}.":dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-+"android-armv7-clang","clang:-target armv7-none-linux-androideabi --gcc-toolchain=\$(ANDROID_GCC_TOOLCHAIN) --sysroot=\$(CROSS_SYSROOT) -I\$(ANDROID_DEV)/include -B\$(ANDROID_DEV)/lib -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${armv4_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-+"android-mips-clang","clang:-target mipsel-none-linux-android --gcc-toolchain=\$(ANDROID_GCC_TOOLCHAIN) --sysroot=\$(CROSS_SYSROOT) -I\$(ANDROID_DEV)/include -B\$(ANDROID_DEV)/lib -O3 -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${mips32_asm}:o32:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-+"android-armeabi-clang","clang:-target armv7-none-linux-androideabi --gcc-toolchain=\$(ANDROID_GCC_TOOLCHAIN) --sysroot=\$(CROSS_SYSROOT) -I\$(ANDROID_DEV)/include -B\$(ANDROID_DEV)/lib -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${armv4_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-+"android64-aarch64-clang","clang:-target aarch64-none-linux-android --gcc-toolchain=\$(ANDROID_GCC_TOOLCHAIN) --sysroot=\$(CROSS_SYSROOT) -I\$(ANDROID_DEV)/include -B\$(ANDROID_DEV)/lib -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${aarch64_asm}:linux64:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
++++ mod/Configure	2018-01-17 20:36:12.497485400 -0800
+@@ -471,10 +471,17 @@
+ "linux-alpha+bwx-ccc","ccc:-fast -readonly_strings -DL_ENDIAN::-D_REENTRANT:::SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_PTR DES_RISC1 DES_UNROLL:${alpha_asm}",
+ 
+ # Android: linux-* but without pointers to headers and libs.
+-"android","gcc:-mandroid -I\$(ANDROID_DEV)/include -B\$(ANDROID_DEV)/lib -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${no_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+-"android-x86","gcc:-mandroid -I\$(ANDROID_DEV)/include -B\$(ANDROID_DEV)/lib -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:".eval{my $asm=${x86_elf_asm};$asm=~s/:elf/:android/;$asm}.":dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+-"android-armv7","gcc:-march=armv7-a -mandroid -I\$(ANDROID_DEV)/include -B\$(ANDROID_DEV)/lib -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${armv4_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+-"android-mips","gcc:-mandroid -I\$(ANDROID_DEV)/include -B\$(ANDROID_DEV)/lib -O3 -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${mips32_asm}:o32:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
++"android","gcc:-mandroid --sysroot \$(ANDROID_LINK_SYSROOT) -isystem \$(ANDROID_SYSROOT)/usr/include -isystem \$(ANDROID_SYSROOT)/usr/include/\$(ANDROID_TRIPLE) -B\$(ANDROID_LINK_SYSROOT)/lib -D__ANDROID_API__=\$(ANDROID_API) -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${no_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
++"android-x86","gcc:-mandroid --sysroot \$(ANDROID_LINK_SYSROOT) -isystem \$(ANDROID_SYSROOT)/usr/include -isystem \$(ANDROID_SYSROOT)/usr/include/\$(ANDROID_TRIPLE) -B\$(ANDROID_LINK_SYSROOT)/lib -D__ANDROID_API__=\$(ANDROID_API) -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:".eval{my $asm=${x86_elf_asm};$asm=~s/:elf/:android/;$asm}.":dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
++"android-armv7","gcc:-march=armv7-a -mandroid --sysroot \$(ANDROID_LINK_SYSROOT) -isystem \$(ANDROID_SYSROOT)/usr/include -isystem \$(ANDROID_SYSROOT)/usr/include/\$(ANDROID_TRIPLE) -B\$(ANDROID_LINK_SYSROOT)/lib -D__ANDROID_API__=\$(ANDROID_API) -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${armv4_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
++"android-armeabi","gcc:-march=armv7-a -mandroid --sysroot \$(ANDROID_LINK_SYSROOT) -isystem \$(ANDROID_SYSROOT)/usr/include -isystem \$(ANDROID_SYSROOT)/usr/include/\$(ANDROID_TRIPLE) -B\$(ANDROID_LINK_SYSROOT)/lib -D__ANDROID_API__=\$(ANDROID_API) -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${armv4_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
++"android64-aarch64","gcc:-march=armv8-a -mandroid --sysroot \$(ANDROID_LINK_SYSROOT) -isystem \$(ANDROID_SYSROOT)/usr/include -isystem \$(ANDROID_SYSROOT)/usr/include/\$(ANDROID_TRIPLE) -B\$(ANDROID_LINK_SYSROOT)/lib -D__ANDROID_API__=\$(ANDROID_API) -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${aarch64_asm}:linux64:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
++"android-mips","gcc:-mandroid --sysroot \$(ANDROID_LINK_SYSROOT) -isystem \$(ANDROID_SYSROOT)/usr/include -isystem \$(ANDROID_SYSROOT)/usr/include/\$(ANDROID_TRIPLE) -B\$(ANDROID_LINK_SYSROOT)/lib -D__ANDROID_API__=\$(ANDROID_API) -O3 -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${mips32_asm}:o32:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
++"android-x86-clang","clang:-target i686-none-linux-android --gcc-toolchain=\$(ANDROID_GCC_TOOLCHAIN) --sysroot \$(ANDROID_LINK_SYSROOT) -isystem \$(ANDROID_SYSROOT)/usr/include -isystem \$(ANDROID_SYSROOT)/usr/include/\$(ANDROID_TRIPLE) -B\$(ANDROID_LINK_SYSROOT)/lib -D__ANDROID_API__=\$(ANDROID_API) -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:".eval{my $asm=${x86_elf_asm};$asm=~s/:elf/:android/;$asm}.":dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
++"android-armv7-clang","clang:-target armv7-none-linux-androideabi --gcc-toolchain=\$(ANDROID_GCC_TOOLCHAIN) --sysroot \$(ANDROID_LINK_SYSROOT) -isystem \$(ANDROID_SYSROOT)/usr/include -isystem \$(ANDROID_SYSROOT)/usr/include/\$(ANDROID_TRIPLE) -B\$(ANDROID_LINK_SYSROOT)/lib -D__ANDROID_API__=\$(ANDROID_API) -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${armv4_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
++"android-armeabi-clang","clang:-target armv7-none-linux-androideabi --gcc-toolchain=\$(ANDROID_GCC_TOOLCHAIN) --sysroot \$(ANDROID_LINK_SYSROOT) -isystem \$(ANDROID_SYSROOT)/usr/include -isystem \$(ANDROID_SYSROOT)/usr/include/\$(ANDROID_TRIPLE) -B\$(ANDROID_LINK_SYSROOT)/lib -D__ANDROID_API__=\$(ANDROID_API) -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${armv4_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
++"android64-aarch64-clang","clang:-target aarch64-none-linux-android --gcc-toolchain=\$(ANDROID_GCC_TOOLCHAIN) --sysroot \$(ANDROID_LINK_SYSROOT) -isystem \$(ANDROID_SYSROOT)/usr/include -isystem \$(ANDROID_SYSROOT)/usr/include/\$(ANDROID_TRIPLE) -B\$(ANDROID_LINK_SYSROOT)/lib -D__ANDROID_API__=\$(ANDROID_API) -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${aarch64_asm}:linux64:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
++"android-mips-clang","clang:-target mipsel-none-linux-android --gcc-toolchain=\$(ANDROID_GCC_TOOLCHAIN) --sysroot \$(ANDROID_LINK_SYSROOT) -isystem \$(ANDROID_SYSROOT)/usr/include -isystem \$(ANDROID_SYSROOT)/usr/include/\$(ANDROID_TRIPLE) -B\$(ANDROID_LINK_SYSROOT)/lib -D__ANDROID_API__=\$(ANDROID_API) -O3 -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${mips32_asm}:o32:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
  
  #### *BSD [do see comment about ${BSDthreads} above!]
  "BSD-generic32","gcc:-O3 -fomit-frame-pointer -Wall::${BSDthreads}:::BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL:${no_asm}:dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 diff -Naur org/crypto/bn/asm/armv4-gf2m.pl mod/crypto/bn/asm/armv4-gf2m.pl
 --- org/crypto/bn/asm/armv4-gf2m.pl	2017-05-25 05:54:34.000000000 -0700
-+++ mod/crypto/bn/asm/armv4-gf2m.pl	2018-01-12 19:28:26.838130000 -0800
++++ mod/crypto/bn/asm/armv4-gf2m.pl	2018-01-17 20:36:12.508421200 -0800
 @@ -213,8 +213,8 @@
  .align	5
  .LNEON:
@@ -49,7 +57,7 @@ diff -Naur org/crypto/bn/asm/armv4-gf2m.pl mod/crypto/bn/asm/armv4-gf2m.pl
  	vmov.i64	$k16, #0x000000000000ffff
 diff -Naur org/crypto/sha/asm/sha256-armv4.pl mod/crypto/sha/asm/sha256-armv4.pl
 --- org/crypto/sha/asm/sha256-armv4.pl	2017-05-25 05:54:34.000000000 -0700
-+++ mod/crypto/sha/asm/sha256-armv4.pl	2018-01-12 19:28:26.847740400 -0800
++++ mod/crypto/sha/asm/sha256-armv4.pl	2018-01-17 20:36:12.518242800 -0800
 @@ -576,6 +576,7 @@
  my @MSG=map("q$_",(8..11));
  my ($W0,$W1,$ABCD_SAVE,$EFGH_SAVE)=map("q$_",(12..15));
@@ -86,10 +94,10 @@ diff -Naur org/crypto/sha/asm/sha256-armv4.pl mod/crypto/sha/asm/sha256-armv4.pl
  .size	sha256_block_data_order_armv8,.-sha256_block_data_order_armv8
  #endif
  ___
-diff -Naur org/Makefile mod/Makefile
---- org/Makefile	2017-05-25 05:55:38.000000000 -0700
-+++ mod/Makefile	2018-01-12 19:28:26.861433400 -0800
-@@ -542,7 +542,7 @@
+diff -Naur org/Makefile.org mod/Makefile.org
+--- org/Makefile.org	2017-05-25 05:54:38.000000000 -0700
++++ mod/Makefile.org	2018-01-17 20:36:12.532553700 -0800
+@@ -540,7 +540,7 @@
  	@$(MAKE) SDIRS='$(SDIRS)' clean
  	@$(MAKE) TAR='$(TAR)' TARFLAGS='$(TARFLAGS)' $(DISTTARVARS) tar
  

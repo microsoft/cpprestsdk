@@ -1,8 +1,8 @@
 # Configuration parameters
 ANDROID_NDK = /opt/android-ndk-r10e
-ANDROID_HOST = linux-x86_64
-ANDROID_PLATFORM = android-18
+ANDROID_API = 18
 ANDROID_ABI = armeabi-v7a
+ANDROID_HOST = linux-x86_64
 ANDROID_TOOLCHAIN = gcc
 ANDROID_GCC_VERSION = 4.8
 OPENSSL_VERSION = 1.0.2k
@@ -11,15 +11,15 @@ OPENSSL_PATCH = $(OPENSSL_PACKAGE).patch
 OPENSSL_TARBALL = $(OPENSSL_PACKAGE).tar.gz
 OPENSSL_URL = https://www.openssl.org/source/$(OPENSSL_TARBALL)
 OPENSSL_OPTIONS = -no-ssl2 -no-ssl3 -no-comp -no-hw -no-engine
-OPENSSL_PREFIX = $(ANDROID_ABI)
+OPENSSL_PREFIX = android-$(ANDROID_API)-$(ANDROID_ABI)-$(ANDROID_TOOLCHAIN)
 OPENSSL_SOURCE = $(OPENSSL_PACKAGE)-$(ANDROID_ABI)
 OPENSSL_CFLAGS =
 
 # Setup target parameters from ABI
 ifneq ($(findstring armeabi,$(ANDROID_ABI)),)
 ANDROID_ARCH := arm
-ANDROID_TARGET := arm-linux-androideabi
-ANDROID_TOOLCHAIN_SUFFIX := arm-linux-androideabi-
+ANDROID_TRIPLE := arm-linux-androideabi
+ANDROID_TOOLARCH := $(ANDROID_TRIPLE)
 OPENSSL_MACHINE := armv7
 OPENSSL_SYSTEM := android
 OPENSSL_TARGET := android-armeabi
@@ -27,8 +27,8 @@ endif
 
 ifneq ($(findstring aarch64,$(ANDROID_ABI)),)
 ANDROID_ARCH := arm64
-ANDROID_TARGET := aarch64-linux-android
-ANDROID_TOOLCHAIN_SUFFIX := aarch64-linux-android-
+ANDROID_TRIPLE := aarch64-linux-android
+ANDROID_TOOLARCH := $(ANDROID_TRIPLE)
 OPENSSL_MACHINE := aarch64
 OPENSSL_SYSTEM := android64
 OPENSSL_TARGET := android64-aarch64
@@ -36,8 +36,8 @@ endif
 
 ifneq ($(findstring x86,$(ANDROID_ABI)),)
 ANDROID_ARCH := x86
-ANDROID_TARGET := x86
-ANDROID_TOOLCHAIN_SUFFIX := i686-linux-android-
+ANDROID_TRIPLE := i686-linux-android
+ANDROID_TOOLARCH := $(ANDROID_ARCH)
 OPENSSL_MACHINE := i686
 OPENSSL_SYSTEM := android
 OPENSSL_TARGET := android-x86
@@ -56,13 +56,18 @@ ifeq ($(call direxists,$(ANDROID_NDK)),"")
 $(error invalid Android NDK root directory)
 endif
 
-ANDROID_SYSROOT := $(ANDROID_NDK)/platforms/$(ANDROID_PLATFORM)/arch-$(ANDROID_ARCH)
+ANDROID_LINK_SYSROOT := $(ANDROID_NDK)/platforms/android-$(ANDROID_API)/arch-$(ANDROID_ARCH)
+ifeq ($(call direxists,$(ANDROID_LINK_SYSROOT)),"")
+$(error invalid Android ABI or API level, could not locate Android NDK sysroot directory)
+endif
+
+ANDROID_SYSROOT := $(ANDROID_NDK)/sysroot
 ifeq ($(call direxists,$(ANDROID_SYSROOT)),"")
-$(error invalid Android ABI or platform, could not locate Android NDK sysroot directory)
+ANDROID_SYSROOT := $(ANDROID_LINK_SYSROOT)
 endif
 
 ANDROID_GCC_VERSIONS := $(ANDROID_GCC_VERSION) 4.9 4.8
-ANDROID_GCC_PREBUILT_template := $(ANDROID_NDK)/toolchains/$(ANDROID_TARGET)-<<VERSION>>/prebuilt
+ANDROID_GCC_PREBUILT_template := $(ANDROID_NDK)/toolchains/$(ANDROID_TOOLARCH)-<<VERSION>>/prebuilt
 ANDROID_GCC_PREBUILT := $(call findfirstdir,$(ANDROID_GCC_PREBUILT_template),<<VERSION>>,$(ANDROID_GCC_VERSIONS))
 ifeq ($(ANDROID_GCC_PREBUILT),"")
 $(error could not determine Android NDK GCC toolchain prebuilt directory)
@@ -85,7 +90,7 @@ endif
 # Configure toolchain
 OPENSSL_CROSS_COMPILE :=
 OPENSSL_CC :=
-OPENSSL_RANLIB := $(ANDROID_GCC_TOOLCHAIN)/bin/$(ANDROID_TOOLCHAIN_SUFFIX)ranlib
+OPENSSL_RANLIB := $(ANDROID_GCC_TOOLCHAIN)/bin/$(ANDROID_TRIPLE)-ranlib
 
 ifneq ($(findstring clang,$(ANDROID_TOOLCHAIN)),)
 OPENSSL_TARGET := $(OPENSSL_TARGET)-clang
@@ -93,8 +98,12 @@ OPENSSL_CC := $(ANDROID_LLVM_TOOLCHAIN)/bin/clang
 endif
 
 ifneq ($(findstring gcc,$(ANDROID_TOOLCHAIN)),)
-OPENSSL_CROSS_COMPILE := $(ANDROID_TOOLCHAIN_SUFFIX)
-OPENSSL_CC := $(ANDROID_GCC_TOOLCHAIN)/bin/$(ANDROID_TOOLCHAIN_SUFFIX)gcc
+OPENSSL_CROSS_COMPILE := $(ANDROID_TRIPLE)-
+OPENSSL_CC := $(ANDROID_GCC_TOOLCHAIN)/bin/$(ANDROID_TRIPLE)-gcc
+endif
+
+ifeq ($(OPENSSL_CC),)
+$(error invalid toolchain specified for ANDROID_TOOLCHAIN)
 endif
 
 all: info $(OPENSSL_PREFIX)/lib/libssl.a
@@ -118,9 +127,11 @@ $(OPENSSL_PREFIX)/lib/libssl.a: $(OPENSSL_TARBALL)
 	fi
 	@echo "Building OpenSSL" && \
 	export ANDROID_NDK="$(ANDROID_NDK)" && \
-	export ANDROID_API="$(ANDROID_PLATFORM)" && \
-	export ANDROID_DEV="$(ANDROID_SYSROOT)/usr" && \
+	export ANDROID_API="$(ANDROID_API)" && \
+	export ANDROID_ARCH="$(ANDROID_ARCH)" && \
+	export ANDROID_TRIPLE="$(ANDROID_TRIPLE)" && \
 	export ANDROID_SYSROOT="$(ANDROID_SYSROOT)" && \
+	export ANDROID_LINK_SYSROOT="$(ANDROID_LINK_SYSROOT)" && \
 	export ANDROID_GCC_TOOLCHAIN="$(ANDROID_GCC_TOOLCHAIN)" && \
 	export CROSS_SYSROOT="$(ANDROID_SYSROOT)" && \
 	export SYSROOT="$(ANDROID_SYSROOT)" && \
@@ -134,8 +145,8 @@ $(OPENSSL_PREFIX)/lib/libssl.a: $(OPENSSL_TARBALL)
 		cd $(OPENSSL_SOURCE); \
 		perl Configure $(OPENSSL_TARGET) shared $(OPENSSL_OPTIONS) --prefix="`pwd`/../$(OPENSSL_PREFIX)" $(OPENSSL_CFLAGS) && \
 		make depend && \
-		make all && \
-		make install CC=$(OPENSSL_CC) RANLIB=$(OPENSSL_RANLIB); \
+		make -j8 all && \
+		make -j8 install CC=$(OPENSSL_CC) RANLIB=$(OPENSSL_RANLIB); \
 	)
 
 clean:
@@ -147,12 +158,13 @@ clean:
 info:
 	@echo "OpenSSL build options"
 	@echo "ANDROID_NDK = $(ANDROID_NDK)"
-	@echo "ANDROID_SYSROOT = $(ANDROID_SYSROOT)"
+	@echo "ANDROID_API = $(ANDROID_API)"
 	@echo "ANDROID_ABI = $(ANDROID_ABI)"
-	@echo "ANDROID_PLATFORM = $(ANDROID_PLATFORM)"
 	@echo "ANDROID_HOST = $(ANDROID_HOST)"
-	@echo "ANDROID_TARGET = $(ANDROID_TARGET)"
 	@echo "ANDROID_TOOLCHAIN = $(ANDROID_TOOLCHAIN)"
+	@echo "ANDROID_TRIPLE = $(ANDROID_TRIPLE)"
+	@echo "ANDROID_SYSROOT = $(ANDROID_SYSROOT)"
+	@echo "ANDROID_LINK_SYSROOT = $(ANDROID_LINK_SYSROOT)"
 	@echo "ANDROID_GCC_TOOLCHAIN = $(ANDROID_GCC_TOOLCHAIN)"
 	@echo "ANDROID_LLVM_TOOLCHAIN = $(ANDROID_LLVM_TOOLCHAIN)"
 	@echo "OPENSSL_VERSION = $(OPENSSL_VERSION)"

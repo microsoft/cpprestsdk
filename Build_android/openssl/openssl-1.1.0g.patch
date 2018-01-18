@@ -3,16 +3,20 @@ for Android using either Clang or GCC toolchains.
 
 diff -Naur org/Configurations/10-main.conf mod/Configurations/10-main.conf
 --- org/Configurations/10-main.conf	2017-11-02 07:29:01.000000000 -0700
-+++ mod/Configurations/10-main.conf	2018-01-11 13:13:46.858989500 -0800
-@@ -913,12 +913,24 @@
-         cflags           => add(picker(default => "-mandroid -fPIC --sysroot=\$(CROSS_SYSROOT) -Wa,--noexecstack")),
++++ mod/Configurations/10-main.conf	2018-01-18 10:59:41.675138500 -0800
+@@ -910,15 +910,27 @@
+         # systems are perfectly capable of executing binaries targeting
+         # Froyo. Keep in mind that in the nutshell Android builds are
+         # about JNI, i.e. shared libraries, not applications.
+-        cflags           => add(picker(default => "-mandroid -fPIC --sysroot=\$(CROSS_SYSROOT) -Wa,--noexecstack")),
++        cflags           => add(picker(default => "-mandroid -fPIC --sysroot=\$(ANDROID_LINK_SYSROOT) -isystem \$(ANDROID_SYSROOT)/usr/include -isystem \$(ANDROID_SYSROOT)/usr/include/\$(ANDROID_TRIPLE) -D__ANDROID_API__=\$(ANDROID_API) -Wa,--noexecstack")),
          bin_cflags       => "-pie",
      },
 +    "android-clang" => {
 +        inherit_from     => [ "linux-generic32" ],
 +        cc               => "clang",
-+        cflags           => add(picker(default => "-fPIC --sysroot=\$(CROSS_SYSROOT) --gcc-toolchain=\$(ANDROID_GCC_TOOLCHAIN) -Wextra -Wno-missing-field-initializers -Wno-unused-parameter -Qunused-arguments -Wa,--noexecstack")),
-+    },
++        cflags           => add(picker(default => "-fPIC --gcc-toolchain=\$(ANDROID_GCC_TOOLCHAIN) --sysroot=\$(ANDROID_LINK_SYSROOT) -isystem \$(ANDROID_SYSROOT)/usr/include -isystem \$(ANDROID_SYSROOT)/usr/include/\$(ANDROID_TRIPLE) -D__ANDROID_API__=\$(ANDROID_API) -Wextra -Wno-missing-field-initializers -Wno-unused-parameter -Qunused-arguments -Wa,--noexecstack")),
++},
      "android-x86" => {
          inherit_from     => [ "android", asm("x86_asm") ],
          cflags           => add(picker(release => "-fomit-frame-pointer")),
@@ -49,13 +53,14 @@ diff -Naur org/Configurations/10-main.conf mod/Configurations/10-main.conf
 +    },
      "android64" => {
          inherit_from     => [ "linux-generic64" ],
-         cflags           => add(picker(default => "-mandroid -fPIC --sysroot=\$(CROSS_SYSROOT) -Wa,--noexecstack")),
+-        cflags           => add(picker(default => "-mandroid -fPIC --sysroot=\$(CROSS_SYSROOT) -Wa,--noexecstack")),
++        cflags           => add(picker(default => "-mandroid -fPIC --sysroot=\$(ANDROID_LINK_SYSROOT) -isystem \$(ANDROID_SYSROOT)/usr/include -isystem \$(ANDROID_SYSROOT)/usr/include/\$(ANDROID_TRIPLE) -D__ANDROID_API__=\$(ANDROID_API) -Wa,--noexecstack")),
          bin_cflags       => "-pie",
      },
 +    "android64-clang" => {
 +        inherit_from     => [ "linux-generic64" ],
 +        cc               => "clang",
-+        cflags           => add(picker(default => "-fPIC --sysroot=\$(CROSS_SYSROOT) --gcc-toolchain=\$(ANDROID_GCC_TOOLCHAIN) -Wextra -Wno-missing-field-initializers -Wno-unused-parameter -Qunused-arguments -Wa,--noexecstack")),
++        cflags           => add(picker(default => "-fPIC --gcc-toolchain=\$(ANDROID_GCC_TOOLCHAIN) --sysroot=\$(ANDROID_LINK_SYSROOT) -isystem \$(ANDROID_SYSROOT)/usr/include -isystem \$(ANDROID_SYSROOT)/usr/include/\$(ANDROID_TRIPLE) -D__ANDROID_API__=\$(ANDROID_API) -Wextra -Wno-missing-field-initializers -Wno-unused-parameter -Qunused-arguments -Wa,--noexecstack")),
 +    },
      "android64-aarch64" => {
          inherit_from     => [ "android64", asm("aarch64_asm") ],

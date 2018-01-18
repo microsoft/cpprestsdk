@@ -108,8 +108,8 @@ then
     if [ ! -d "openssl" ]; then mkdir openssl; fi
     cd openssl
     cp -af "${DIR}/openssl/." .
-    make all ANDROID_NDK="${NDK_DIR}" ANDROID_ABI=armeabi-v7a
-    make all ANDROID_NDK="${NDK_DIR}" ANDROID_ABI=x86
+    make all ANDROID_NDK="${NDK_DIR}" ANDROID_ABI=armeabi-v7a OPENSSL_PREFIX=armeabi-v7a
+    make all ANDROID_NDK="${NDK_DIR}" ANDROID_ABI=x86 OPENSSL_PREFIX=x86
 )
 fi
 
