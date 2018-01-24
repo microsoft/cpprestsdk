@@ -15,6 +15,9 @@
 
 #include "stdafx.h"
 
+#undef min
+#undef max
+
 #include "cpprest/asyncrt_utils.h"
 #include "../common/internal_http_helpers.h"
 
