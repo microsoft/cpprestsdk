@@ -921,6 +921,9 @@ public:
     /// <returns>The remote IP address.</returns>
     const utility::string_t& remote_address() const { return _m_impl->remote_address(); }
 
+    CASABLANCA_DEPRECATED("Use `remote_address()` instead.")
+    const utility::string_t& get_remote_address() const { return _m_impl->remote_address(); }
+
     /// <summary>
     /// Extract the body of the request message as a string value, checking that the content type is a MIME text type.
     /// A body can only be extracted once because in some cases an optimization is made where the data is 'moved' out.
