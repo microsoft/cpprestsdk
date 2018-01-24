@@ -44,6 +44,34 @@ namespace client
 }
 
 /// <summary>
+/// Represents the HTTP protocol version of a message, as {major, minor}.
+/// </summary>
+struct http_version
+{
+    uint8_t major;
+    uint8_t minor;
+
+    inline bool operator==(const http_version& other) const { return major == other.major && minor == other.minor; }
+    inline bool operator<(const http_version& other) const { return major < other.major || (major == other.major && minor < other.minor); }
+
+    inline bool operator!=(const http_version& other) const { return !(*this == other); }
+    inline bool operator>=(const http_version& other) const { return !(*this < other); }
+    inline bool operator>(const http_version& other) const { return !(*this < other || *this == other); }
+    inline bool operator<=(const http_version& other) const { return *this < other || *this == other; }
+};
+
+/// <summary>
+/// Predefined HTTP protocol versions.
+/// </summary>
+class http_versions
+{
+public:
+    _ASYNCRTIMP static const http_version HTTP_0_9;
+    _ASYNCRTIMP static const http_version HTTP_1_0;
+    _ASYNCRTIMP static const http_version HTTP_1_1;
+};
+
+/// <summary>
 /// Predefined method strings for the standard HTTP methods mentioned in the
 /// HTTP 1.1 specification.
 /// </summary>
@@ -715,6 +743,8 @@ public:
 
     _ASYNCRTIMP void set_request_uri(const uri&);
 
+    http::http_version http_version() const { return m_http_version; }
+
     const utility::string_t& remote_address() const { return m_remote_address; }
 
     const pplx::cancellation_token &cancellation_token() const { return m_cancellationToken; }
@@ -757,6 +787,8 @@ public:
 
     void _set_base_uri(const http::uri &base_uri) { m_base_uri = base_uri; }
 
+    void _set_http_version(const http::http_version &http_version) { m_http_version = http_version; }
+
     void _set_remote_address(const utility::string_t &remote_address) { m_remote_address = remote_address; }
 
 private:
@@ -782,6 +814,8 @@ private:
     std::shared_ptr<progress_handler> m_progress_handler;
 
     pplx::task_completion_event<http_response> m_response;
+
+    http::http_version m_http_version;
 
     utility::string_t m_remote_address;
 };
@@ -876,9 +910,18 @@ public:
     const http_headers &headers() const { return _m_impl->headers(); }
 
     /// <summary>
+    /// Returns the HTTP protocol version of this request message.
+    /// </summary>
+    /// <returns>The HTTP protocol version.</returns>
+    http::http_version http_version() const { return _m_impl->http_version(); }
+
+    /// <summary>
     /// Returns a string representation of the remote IP address.
     /// </summary>
     /// <returns>The remote IP address.</returns>
+    const utility::string_t& remote_address() const { return _m_impl->remote_address(); }
+
+    CASABLANCA_DEPRECATED("Use `remote_address()` instead.")
     const utility::string_t& get_remote_address() const { return _m_impl->remote_address(); }
 
     /// <summary>
