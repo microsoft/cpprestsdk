@@ -28,6 +28,12 @@ namespace client
 {
 
 static ::utility::string_t g_subProtocolHeader = _XPLATSTR("Sec-WebSocket-Protocol");
+
+void websocket_client_config::set_user_agent(const utf8string &user_agent)
+{
+    headers().add(web::http::header_names::user_agent, utility::conversions::to_string_t(user_agent));
+}
+
 void websocket_client_config::add_subprotocol(const ::utility::string_t &name)
 {
     m_headers.add(g_subProtocolHeader, name);

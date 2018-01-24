@@ -151,6 +151,12 @@ public:
     }
 
     /// <summary>
+    /// Sets the User Agent to be used for the connection
+    /// </summary>
+    /// <param name="name">The User Agent to use, as a string.</param>
+    _ASYNCRTIMP void set_user_agent(const utf8string &user_agent);
+
+    /// <summary>
     /// Gets the headers of the HTTP request message used in the WebSocket protocol handshake.
     /// </summary>
     /// <returns>HTTP headers for the WebSocket protocol handshake.</returns>

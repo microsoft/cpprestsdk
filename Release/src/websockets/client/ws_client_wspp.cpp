@@ -316,6 +316,15 @@ public:
             shutdown_wspp_impl<WebsocketConfigType>(con_hdl, false);
         });
 
+        // Set User Agent specified by the user. This needs to happen before any connection is created
+        const auto& headers = m_config.headers();
+
+        auto user_agent_it = headers.find(web::http::header_names::user_agent);
+        if (user_agent_it != headers.end())
+        {
+            client.set_user_agent(utility::conversions::to_utf8string(user_agent_it->second));
+        }
+
         // Get the connection handle to save for later, have to create temporary
         // because type erasure occurs with connection_hdl.
         websocketpp::lib::error_code ec;
@@ -327,7 +336,6 @@ public:
         }
 
         // Add any request headers specified by the user.
-        const auto & headers = m_config.headers();
         for (const auto & header : headers)
         {
             if (!utility::details::str_icmp(header.first, g_subProtocolHeader))
