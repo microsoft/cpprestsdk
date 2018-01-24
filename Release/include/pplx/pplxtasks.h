@@ -28,18 +28,12 @@ namespace Concurrency
 /// <summary>
 /// Sets the ambient scheduler to be used by the PPL constructs.
 /// </summary>
-inline _ASYNCRTIMP void __cdecl set_cpprestsdk_ambient_scheduler(const std::shared_ptr<scheduler_interface>& _Scheduler)
-{
-    set_ambient_scheduler(_Scheduler);
-}
+_ASYNCRTIMP void __cdecl set_cpprestsdk_ambient_scheduler(const std::shared_ptr<scheduler_interface>& _Scheduler);
 
 /// <summary>
 /// Gets the ambient scheduler to be used by the PPL constructs
 /// </summary>
-inline _ASYNCRTIMP const std::shared_ptr<scheduler_interface>& __cdecl get_cpprestsdk_ambient_scheduler()
-{
-    return get_ambient_scheduler();
-}
+_ASYNCRTIMP const std::shared_ptr<scheduler_interface>& __cdecl get_cpprestsdk_ambient_scheduler();
 
 } // namespace Concurrency
 
