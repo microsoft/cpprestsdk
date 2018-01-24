@@ -995,7 +995,8 @@ details::_http_request::_http_request(http::method mtd)
   : m_method(std::move(mtd)),
     m_initiated_response(0),
     m_server_context(),
-    m_cancellationToken(pplx::cancellation_token::none())
+    m_cancellationToken(pplx::cancellation_token::none()),
+    m_http_version(http::http_version{0, 0})
 {
     if(m_method.empty())
     {
@@ -1006,13 +1007,14 @@ details::_http_request::_http_request(http::method mtd)
 details::_http_request::_http_request(std::unique_ptr<http::details::_http_server_context> server_context)
   : m_initiated_response(0),
     m_server_context(std::move(server_context)),
-    m_cancellationToken(pplx::cancellation_token::none())
+    m_cancellationToken(pplx::cancellation_token::none()),
+    m_http_version(http::http_version{0, 0})
 {
 }
 
-const http_version http_versions::HTTP_0_9{ 0, 9 };
-const http_version http_versions::HTTP_1_0{ 1, 0 };
-const http_version http_versions::HTTP_1_1{ 1, 1 };
+const http_version http_versions::HTTP_0_9 = { 0, 9 };
+const http_version http_versions::HTTP_1_0 = { 1, 0 };
+const http_version http_versions::HTTP_1_1 = { 1, 1 };
 
 #define _METHODS
 #define DAT(a,b) const method methods::a = b;

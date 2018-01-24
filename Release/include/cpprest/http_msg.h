@@ -46,7 +46,19 @@ namespace client
 /// <summary>
 /// Represents the HTTP protocol version of a message, as {major, minor}.
 /// </summary>
-typedef std::pair<uint16_t, uint16_t> http_version;
+struct http_version
+{
+    uint8_t major;
+    uint8_t minor;
+
+    inline bool operator==(const http_version& other) const { return major == other.major && minor == other.minor; }
+    inline bool operator<(const http_version& other) const { return major < other.major || (major == other.major && minor < other.minor); }
+
+    inline bool operator!=(const http_version& other) const { return !(*this == other); }
+    inline bool operator>=(const http_version& other) const { return !(*this < other); }
+    inline bool operator>(const http_version& other) const { return !(*this < other || *this == other); }
+    inline bool operator<=(const http_version& other) const { return *this < other || *this == other; }
+};
 
 /// <summary>
 /// Predefined HTTP protocol versions.
@@ -54,9 +66,9 @@ typedef std::pair<uint16_t, uint16_t> http_version;
 class http_versions
 {
 public:
-    _ASYNCRTIMP const static http_version HTTP_0_9;
-    _ASYNCRTIMP const static http_version HTTP_1_0;
-    _ASYNCRTIMP const static http_version HTTP_1_1;
+    _ASYNCRTIMP static const http_version HTTP_0_9;
+    _ASYNCRTIMP static const http_version HTTP_1_0;
+    _ASYNCRTIMP static const http_version HTTP_1_1;
 };
 
 /// <summary>
@@ -731,7 +743,7 @@ public:
 
     _ASYNCRTIMP void set_request_uri(const uri&);
 
-    const http::http_version& http_version() const { return m_http_version; }
+    http::http_version http_version() const { return m_http_version; }
 
     const utility::string_t& remote_address() const { return m_remote_address; }
 
@@ -901,7 +913,7 @@ public:
     /// Returns the HTTP protocol version of this request message.
     /// </summary>
     /// <returns>The HTTP protocol version.</returns>
-    const http::http_version& http_version() const { return _m_impl->http_version(); }
+    http::http_version http_version() const { return _m_impl->http_version(); }
 
     /// <summary>
     /// Returns a string representation of the remote IP address.
