@@ -313,10 +313,12 @@ public:
         });
 
         // Set User Agent specified by the user. This needs to happen before any connection is created
-        const auto & user_agent = m_config.user_agent();
-        if (!user_agent.empty())
+        const auto& headers = m_config.headers();
+
+        auto user_agent_it = headers.find(web::http::header_names::user_agent);
+        if (user_agent_it != headers.end())
         {
-            client.set_user_agent(user_agent);
+            client.set_user_agent(utility::conversions::to_utf8string(user_agent_it->second));
         }
 
         // Get the connection handle to save for later, have to create temporary
@@ -330,7 +332,6 @@ public:
         }
 
         // Add any request headers specified by the user.
-        const auto & headers = m_config.headers();
         for (const auto & header : headers)
         {
             if (!utility::details::str_icmp(header.first, g_subProtocolHeader))
