@@ -16,9 +16,33 @@
 #ifndef _PPLXTASKS_H
 #define _PPLXTASKS_H
 
+#include "cpprest/details/cpprest_compat.h"
+
 #if (defined(_MSC_VER) && (_MSC_VER >= 1800)) && !CPPREST_FORCE_PPLX
 #include <ppltasks.h>
 namespace pplx = Concurrency;
+
+namespace Concurrency
+{
+
+/// <summary>
+/// Sets the ambient scheduler to be used by the PPL constructs.
+/// </summary>
+inline _ASYNCRTIMP void __cdecl set_cpprestsdk_ambient_scheduler(const std::shared_ptr<scheduler_interface>& _Scheduler)
+{
+    set_ambient_scheduler(_Scheduler);
+}
+
+/// <summary>
+/// Gets the ambient scheduler to be used by the PPL constructs
+/// </summary>
+inline _ASYNCRTIMP const std::shared_ptr<scheduler_interface>& __cdecl get_cpprestsdk_ambient_scheduler()
+{
+    return get_ambient_scheduler();
+}
+
+} // namespace Concurrency
+
 #if (_MSC_VER >= 1900)
 #include <concrt.h>
 namespace Concurrency {
