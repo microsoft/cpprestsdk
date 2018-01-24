@@ -223,7 +223,7 @@ TEST(escaping_control_characters)
 
     for (int i : chars)
     {
-        ::utility::stringstream_t ss;
+        utility::stringstream_t ss;
         ss << U("\"\\u") << std::uppercase << std::setfill(U('0')) << std::setw(4) << std::hex << i << U("\"");
         const auto &str = ss.str();
         auto expectedStr = str;
@@ -257,8 +257,8 @@ TEST(escaping_control_characters)
         }
 
         // Try constructing a json string value directly.
-        ::utility::string_t schar;
-        schar.push_back(static_cast<::utility::string_t::value_type>(i));
+        utility::string_t schar;
+        schar.push_back(static_cast<utility::string_t::value_type>(i));
         const auto &sv = json::value::string(schar);
         VERIFY_ARE_EQUAL(expectedStr, sv.serialize());
 
