@@ -13,7 +13,7 @@
 
 #include "stdafx.h"
 
-#if !defined(_WIN32) || (_WIN32_WINNT >= _WIN32_WINNT_VISTA && !defined(__cplusplus_winrt))
+#if !defined(_WIN32) || (_WIN32_WINNT >= _WIN32_WINNT_VISTA && !defined(__cplusplus_winrt)) || defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
 
 using namespace web::http::experimental;
 
