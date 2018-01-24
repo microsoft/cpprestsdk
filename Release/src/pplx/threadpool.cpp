@@ -107,9 +107,9 @@ threadpool& threadpool::shared_instance()
     return s_shared;
 }
 
-#elif defined (_WIN32) && defined(_WINDLL)
+#elif defined(_WIN32)
 
-// if built as a DLL, the threadpool shared instance will be destroyed at DLL_PROCESS_DETACH,
+// if linked into a DLL, the threadpool shared instance will be destroyed at DLL_PROCESS_DETACH,
 // at which stage joining threads causes deadlock, hence this dance
 threadpool& threadpool::shared_instance()
 {
