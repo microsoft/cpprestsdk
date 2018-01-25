@@ -32,6 +32,7 @@ namespace web {
             uri_components(const uri_components &other) = default;
             uri_components & operator=(const uri_components &other) = default;
 
+            // This is for VS2013 compatibility -- replace with '= default' when VS2013 is completely dropped.
             uri_components(uri_components &&other) CPPREST_NOEXCEPT :
                 m_scheme(std::move(other.m_scheme)),
                 m_host(std::move(other.m_host)),
@@ -42,6 +43,7 @@ namespace web {
                 m_port(other.m_port)
             {}
 
+            // This is for VS2013 compatibility -- replace with '= default' when VS2013 is completely dropped.
             uri_components & operator=(uri_components &&other) CPPREST_NOEXCEPT
             {
                 if (this != &other)
@@ -217,6 +219,7 @@ namespace web {
         /// <summary>
         /// Move constructor.
         /// </summary>
+        // This is for VS2013 compatibility -- replace with '= default' when VS2013 is completely dropped.
         uri(uri &&other) CPPREST_NOEXCEPT :
             m_uri(std::move(other.m_uri)),
             m_components(std::move(other.m_components))
@@ -225,6 +228,7 @@ namespace web {
         /// <summary>
         /// Move assignment operator
         /// </summary>
+        // This is for VS2013 compatibility -- replace with '= default' when VS2013 is completely dropped.
         uri & operator=(uri &&other) CPPREST_NOEXCEPT
         {
             if (this != &other)
