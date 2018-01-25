@@ -32,8 +32,30 @@ namespace web {
             uri_components(const uri_components &other) = default;
             uri_components & operator=(const uri_components &other) = default;
 
-            uri_components(uri_components &&other) = default;
-            uri_components & operator=(uri_components &&other) = default;
+            uri_components(uri_components &&other) CPPREST_NOEXCEPT :
+                m_scheme(std::move(other.m_scheme)),
+                m_host(std::move(other.m_host)),
+                m_user_info(std::move(other.m_user_info)),
+                m_path(std::move(other.m_path)),
+                m_query(std::move(other.m_query)),
+                m_fragment(std::move(other.m_fragment)),
+                m_port(other.m_port)
+            {}
+
+            uri_components & operator=(uri_components &&other) CPPREST_NOEXCEPT
+            {
+                if (this != &other)
+                {
+                    m_scheme = std::move(other.m_scheme);
+                    m_host = std::move(other.m_host);
+                    m_user_info = std::move(other.m_user_info);
+                    m_path = std::move(other.m_path);
+                    m_query = std::move(other.m_query);
+                    m_fragment = std::move(other.m_fragment);
+                    m_port = other.m_port;
+                }
+                return *this;
+            }
 
             _ASYNCRTIMP utility::string_t join();
 
@@ -195,12 +217,23 @@ namespace web {
         /// <summary>
         /// Move constructor.
         /// </summary>
-        uri(uri &&other) = default;
+        uri(uri &&other) CPPREST_NOEXCEPT :
+            m_uri(std::move(other.m_uri)),
+            m_components(std::move(other.m_components))
+        {}
 
         /// <summary>
         /// Move assignment operator
         /// </summary>
-        uri & operator=(uri &&other) = default;
+        uri & operator=(uri &&other) CPPREST_NOEXCEPT
+        {
+            if (this != &other)
+            {
+                m_uri = std::move(other.m_uri);
+                m_components = std::move(other.m_components);
+            }
+            return *this;
+        }
 
         /// <summary>
         /// Get the scheme component of the URI as an encoded string.
