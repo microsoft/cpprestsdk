@@ -145,8 +145,8 @@ $(OPENSSL_PREFIX)/lib/libssl.a: $(OPENSSL_TARBALL)
 		cd $(OPENSSL_SOURCE); \
 		perl Configure $(OPENSSL_TARGET) shared $(OPENSSL_OPTIONS) --prefix="`pwd`/../$(OPENSSL_PREFIX)" $(OPENSSL_CFLAGS) && \
 		make depend && \
-		make -j8 all && \
-		make -j8 install CC=$(OPENSSL_CC) RANLIB=$(OPENSSL_RANLIB); \
+		make all && \
+		make install CC=$(OPENSSL_CC) RANLIB=$(OPENSSL_RANLIB); \
 	)
 
 clean:
