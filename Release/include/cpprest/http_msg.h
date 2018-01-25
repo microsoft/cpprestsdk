@@ -58,6 +58,17 @@ struct http_version
     inline bool operator>=(const http_version& other) const { return !(*this < other); }
     inline bool operator>(const http_version& other) const { return !(*this < other || *this == other); }
     inline bool operator<=(const http_version& other) const { return *this < other || *this == other; }
+
+    /// <summary>
+    /// Creates <c>http_version</c> from an HTTP-Version string, "HTTP" "/" 1*DIGIT "." 1*DIGIT.
+    /// </summary>
+    /// <returns>Returns a <c>http_version</c> of {0, 0} if not successful.</returns>
+    static _ASYNCRTIMP http_version __cdecl from_string(const utility::string_t& http_version_string);
+
+    /// <summary>
+    /// Returns the string representation of the <c>http_version</c>.
+    /// </summary>
+    _ASYNCRTIMP utility::string_t to_string() const;
 };
 
 /// <summary>

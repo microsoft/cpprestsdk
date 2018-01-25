@@ -450,6 +450,29 @@ TEST_FIXTURE(uri_address, test_leaks)
 
 TEST_FIXTURE(uri_address, http_version)
 {
+    // formatting should succeed
+    VERIFY_IS_TRUE(U("HTTP/0.9") == http_versions::HTTP_0_9.to_string());
+    VERIFY_IS_TRUE(U("HTTP/1.0") == http_versions::HTTP_1_0.to_string());
+    VERIFY_IS_TRUE(U("HTTP/1.1") == http_versions::HTTP_1_1.to_string());
+    VERIFY_IS_TRUE((U("HTTP/12.3") == http_version{ 12, 3 }.to_string()));
+    // parsing should succeed
+    VERIFY_IS_TRUE(http_version::from_string(U("HTTP/0.9")) == http_versions::HTTP_0_9);
+    VERIFY_IS_TRUE(http_version::from_string(U("HTTP/1.0")) == http_versions::HTTP_1_0);
+    VERIFY_IS_TRUE(http_version::from_string(U("HTTP/1.1")) == http_versions::HTTP_1_1);
+    VERIFY_IS_TRUE((http_version::from_string(U("HTTP/12.3")) == http_version{ 12, 3 }));
+    // parsing should fail
+    http_version unknown = { 0, 0 };
+    VERIFY_IS_TRUE(http_version::from_string(U("http/12.3")) == unknown);
+    VERIFY_IS_TRUE(http_version::from_string(U("HTTP/12.3foo")) == unknown);
+    VERIFY_IS_TRUE(http_version::from_string(U("HTTP/12.")) == unknown);
+    VERIFY_IS_TRUE(http_version::from_string(U("HTTP/12")) == unknown);
+    VERIFY_IS_TRUE(http_version::from_string(U("HTTP/.3")) == unknown);
+    VERIFY_IS_TRUE(http_version::from_string(U("HTTP/")) == unknown);
+    VERIFY_IS_TRUE(http_version::from_string(U("HTTP")) == unknown);
+    VERIFY_IS_TRUE(http_version::from_string(U("HTTP")) == unknown);
+    VERIFY_IS_TRUE(http_version::from_string(U("foo")) == unknown);
+    VERIFY_IS_TRUE(http_version::from_string(U("")) == unknown);
+
     http_listener listener(U("http://localhost:45678/path1"));
     listener.open().wait();
 
