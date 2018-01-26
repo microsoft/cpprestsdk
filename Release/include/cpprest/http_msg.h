@@ -68,7 +68,7 @@ struct http_version
     /// <summary>
     /// Returns the string representation of the <c>http_version</c>.
     /// </summary>
-    _ASYNCRTIMP utility::string_t to_string() const;
+    _ASYNCRTIMP std::string to_utf8string() const;
 };
 
 /// <summary>

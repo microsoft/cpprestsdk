@@ -257,25 +257,30 @@ void parse_headers_string(_Inout_z_ utf16char *headersStr, http_headers &headers
 http_version __cdecl http_version::from_string(const utility::string_t& http_version_string)
 {
     utility::istringstream_t str(http_version_string);
+    str.imbue(std::locale::classic());
 
-    utility::string_t http; std::getline(str, http, U('/'));
-    unsigned int major; str >> major;
-    utility::char_t dot; str >> dot;
-    unsigned int minor; str >> minor;
+    utility::string_t http; std::getline(str, http, _XPLATSTR('/'));
+    unsigned int major = 0; str >> major;
+    utility::char_t dot = _XPLATSTR('\0'); str >> dot;
+    unsigned int minor = 0; str >> minor;
 
     // check no failure, fully consumed, and correct fixed text
-    if (!str.fail() && str.eof() && U("HTTP") == http && U('.') == dot)
+    if (!str.fail() && str.eof() && _XPLATSTR("HTTP") == http && _XPLATSTR('.') == dot)
     {
         return{ (uint8_t)major, (uint8_t)minor };
     }
     return{ 0, 0 };
 }
 
-utility::string_t http_version::to_string() const
+std::string http_version::to_utf8string() const
 {
-    utility::ostringstream_t result;
-    result << U("HTTP/") << (unsigned int)major << U(".") << (unsigned int)minor;
-    return result.str();
+    std::string ret;
+    ret.reserve(8);
+    ret.append("HTTP/");
+    ret.append(std::to_string(static_cast<unsigned int>(major)));
+    ret.append(".");
+    ret.append(std::to_string(static_cast<unsigned int>(minor)));
+    return ret;
 }
 
 static const utility::char_t * stream_was_set_explicitly = _XPLATSTR("A stream was set on the message and extraction is not possible");

@@ -451,10 +451,10 @@ TEST_FIXTURE(uri_address, test_leaks)
 TEST_FIXTURE(uri_address, http_version)
 {
     // formatting should succeed
-    VERIFY_IS_TRUE(U("HTTP/0.9") == http_versions::HTTP_0_9.to_string());
-    VERIFY_IS_TRUE(U("HTTP/1.0") == http_versions::HTTP_1_0.to_string());
-    VERIFY_IS_TRUE(U("HTTP/1.1") == http_versions::HTTP_1_1.to_string());
-    VERIFY_IS_TRUE((U("HTTP/12.3") == http_version{ 12, 3 }.to_string()));
+    VERIFY_IS_TRUE("HTTP/0.9" == http_versions::HTTP_0_9.to_utf8string());
+    VERIFY_IS_TRUE("HTTP/1.0" == http_versions::HTTP_1_0.to_utf8string());
+    VERIFY_IS_TRUE("HTTP/1.1" == http_versions::HTTP_1_1.to_utf8string());
+    VERIFY_IS_TRUE("HTTP/12.3" == (http_version{ 12, 3 }).to_utf8string());
     // parsing should succeed
     VERIFY_IS_TRUE(http_version::from_string(U("HTTP/0.9")) == http_versions::HTTP_0_9);
     VERIFY_IS_TRUE(http_version::from_string(U("HTTP/1.0")) == http_versions::HTTP_1_0);
