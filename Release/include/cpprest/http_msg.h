@@ -63,7 +63,7 @@ struct http_version
     /// Creates <c>http_version</c> from an HTTP-Version string, "HTTP" "/" 1*DIGIT "." 1*DIGIT.
     /// </summary>
     /// <returns>Returns a <c>http_version</c> of {0, 0} if not successful.</returns>
-    static _ASYNCRTIMP http_version __cdecl from_string(const utility::string_t& http_version_string);
+    static _ASYNCRTIMP http_version __cdecl from_string(const std::string& http_version_string);
 
     /// <summary>
     /// Returns the string representation of the <c>http_version</c>.

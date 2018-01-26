@@ -456,22 +456,22 @@ TEST_FIXTURE(uri_address, http_version)
     VERIFY_IS_TRUE("HTTP/1.1" == http_versions::HTTP_1_1.to_utf8string());
     VERIFY_IS_TRUE("HTTP/12.3" == (http_version{ 12, 3 }).to_utf8string());
     // parsing should succeed
-    VERIFY_IS_TRUE(http_version::from_string(U("HTTP/0.9")) == http_versions::HTTP_0_9);
-    VERIFY_IS_TRUE(http_version::from_string(U("HTTP/1.0")) == http_versions::HTTP_1_0);
-    VERIFY_IS_TRUE(http_version::from_string(U("HTTP/1.1")) == http_versions::HTTP_1_1);
-    VERIFY_IS_TRUE((http_version::from_string(U("HTTP/12.3")) == http_version{ 12, 3 }));
+    VERIFY_IS_TRUE(http_version::from_string("HTTP/0.9") == http_versions::HTTP_0_9);
+    VERIFY_IS_TRUE(http_version::from_string("HTTP/1.0") == http_versions::HTTP_1_0);
+    VERIFY_IS_TRUE(http_version::from_string("HTTP/1.1") == http_versions::HTTP_1_1);
+    VERIFY_IS_TRUE((http_version::from_string("HTTP/12.3") == http_version{ 12, 3 }));
     // parsing should fail
     http_version unknown = { 0, 0 };
-    VERIFY_IS_TRUE(http_version::from_string(U("http/12.3")) == unknown);
-    VERIFY_IS_TRUE(http_version::from_string(U("HTTP/12.3foo")) == unknown);
-    VERIFY_IS_TRUE(http_version::from_string(U("HTTP/12.")) == unknown);
-    VERIFY_IS_TRUE(http_version::from_string(U("HTTP/12")) == unknown);
-    VERIFY_IS_TRUE(http_version::from_string(U("HTTP/.3")) == unknown);
-    VERIFY_IS_TRUE(http_version::from_string(U("HTTP/")) == unknown);
-    VERIFY_IS_TRUE(http_version::from_string(U("HTTP")) == unknown);
-    VERIFY_IS_TRUE(http_version::from_string(U("HTTP")) == unknown);
-    VERIFY_IS_TRUE(http_version::from_string(U("foo")) == unknown);
-    VERIFY_IS_TRUE(http_version::from_string(U("")) == unknown);
+    VERIFY_IS_TRUE(http_version::from_string("http/12.3") == unknown);
+    VERIFY_IS_TRUE(http_version::from_string("HTTP/12.3foo") == unknown);
+    VERIFY_IS_TRUE(http_version::from_string("HTTP/12.") == unknown);
+    VERIFY_IS_TRUE(http_version::from_string("HTTP/12") == unknown);
+    VERIFY_IS_TRUE(http_version::from_string("HTTP/.3") == unknown);
+    VERIFY_IS_TRUE(http_version::from_string("HTTP/") == unknown);
+    VERIFY_IS_TRUE(http_version::from_string("HTTP") == unknown);
+    VERIFY_IS_TRUE(http_version::from_string("HTTP") == unknown);
+    VERIFY_IS_TRUE(http_version::from_string("foo") == unknown);
+    VERIFY_IS_TRUE(http_version::from_string("") == unknown);
 
     http_listener listener(U("http://localhost:45678/path1"));
     listener.open().wait();
