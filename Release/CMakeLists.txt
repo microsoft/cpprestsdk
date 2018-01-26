@@ -1,17 +1,23 @@
 set(CMAKE_LEGACY_CYGWIN_WIN32 0)
 cmake_minimum_required(VERSION 3.0)
+
+CMAKE_POLICY(SET CMP0048 NEW)
+
 if(POLICY CMP0042)
   cmake_policy(SET CMP0042 NEW) # use MACOSX_RPATH
 endif()
 if(UNIX)
-  project(cpprestsdk C CXX)
+  project(cpprestsdk VERSION 2.1.10 LANGUAGES C CXX)
 else()
-  project(cpprestsdk CXX)
+  project(cpprestsdk VERSION 2.1.10 LANGUAGES CXX)
 endif()
 
 set(CPPREST_VERSION_MAJOR 2)
 set(CPPREST_VERSION_MINOR 10)
 set(CPPREST_VERSION_REVISION 1)
+set(CPPRESTSDK_VERSION_MAJOR 2)
+set(CPPRESTSDK_VERSION_MINOR 10)
+set(CPPRESTSDK_VERSION_REVISION 1)
 
 enable_testing()
 
@@ -253,3 +259,8 @@ endif()
 if(BUILD_SAMPLES)
   add_subdirectory(samples)
 endif()
+
+SET(CONF_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}")
+CONFIGURE_FILE(cpprestsdkConfig.cmake.in "${PROJECT_BINARY_DIR}/cpprestsdkConfig.cmake" @ONLY)
+CONFIGURE_FILE(cpprestsdkConfigVersion.cmake.in "${PROJECT_BINARY_DIR}/cpprestsdkConfigVersion.cmake" @ONLY)
+
