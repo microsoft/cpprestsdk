@@ -254,6 +254,35 @@ void parse_headers_string(_Inout_z_ utf16char *headersStr, http_headers &headers
 
 }
 
+http_version __cdecl http_version::from_string(const utility::string_t& http_version_string)
+{
+    utility::istringstream_t str(http_version_string);
+    str.imbue(std::locale::classic());
+
+    utility::string_t http; std::getline(str, http, _XPLATSTR('/'));
+    unsigned int major = 0; str >> major;
+    utility::char_t dot = _XPLATSTR('\0'); str >> dot;
+    unsigned int minor = 0; str >> minor;
+
+    // check no failure, fully consumed, and correct fixed text
+    if (!str.fail() && str.eof() && _XPLATSTR("HTTP") == http && _XPLATSTR('.') == dot)
+    {
+        return{ (uint8_t)major, (uint8_t)minor };
+    }
+    return{ 0, 0 };
+}
+
+std::string http_version::to_utf8string() const
+{
+    std::string ret;
+    ret.reserve(8);
+    ret.append("HTTP/");
+    ret.append(std::to_string(static_cast<unsigned int>(major)));
+    ret.append(".");
+    ret.append(std::to_string(static_cast<unsigned int>(minor)));
+    return ret;
+}
+
 static const utility::char_t * stream_was_set_explicitly = _XPLATSTR("A stream was set on the message and extraction is not possible");
 static const utility::char_t * unsupported_charset = _XPLATSTR("Charset must be iso-8859-1, utf-8, utf-16, utf-16le, or utf-16be to be extracted.");
 
