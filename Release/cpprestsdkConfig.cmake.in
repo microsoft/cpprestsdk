@@ -1,0 +1,11 @@
+# Compute paths
+get_filename_component(CPPRESTSDK_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+set(CPPRESTSDK_INCLUDE_DIRS "@CONF_INCLUDE_DIRS@")
+
+# Our library dependencies (contains definitions for IMPORTED targets)
+IF(NOT TARGET ${PROJECT_NAME} AND NOT ${PROJECT_NAME}_BINARY_DIR)
+  include("${CPPRESTSDK_CMAKE_DIR}/${PROJECT_NAME}Targets.cmake")
+ENDIF()
+
+# These are IMPORTED targets created by ${PROJECT_NAME}Targets.cmake
+SET(CPPRESTSDK_LIBRARIES ${PROJECT_NAME})
