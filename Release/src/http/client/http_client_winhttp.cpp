@@ -667,7 +667,7 @@ protected:
         }
 
         // Enable the certificate revocation check
-        if (m_secure)
+        if (m_secure && client_config().validate_certificates())
         {
             DWORD dwEnableSSLRevocOpt = WINHTTP_ENABLE_SSL_REVOCATION;
             if (!WinHttpSetOption(winhttp_context->m_request_handle, WINHTTP_OPTION_ENABLE_FEATURE, &dwEnableSSLRevocOpt, sizeof(dwEnableSSLRevocOpt)))
