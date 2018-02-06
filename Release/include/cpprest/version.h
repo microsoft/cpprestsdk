@@ -3,7 +3,7 @@
 * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 *
 */
-#define CPPREST_VERSION_REVISION 1
+#define CPPREST_VERSION_REVISION 2
 #define CPPREST_VERSION_MINOR 10
 #define CPPREST_VERSION_MAJOR 2
 
