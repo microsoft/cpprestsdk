@@ -58,11 +58,11 @@ namespace details
 
             static compression_algorithm to_compression_algorithm(const utility::string_t& alg)
             {
-                if (U("gzip") == alg)
+                if (_XPLATSTR("gzip") == alg)
                 {
                     return compression_algorithm::gzip;
                 }
-                else if (U("deflate") == alg)
+                else if (_XPLATSTR("deflate") == alg)
                 {
                     return compression_algorithm::deflate;
                 }
