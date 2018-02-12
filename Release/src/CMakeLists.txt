@@ -71,6 +71,14 @@ else()
   message(FATAL_ERROR "Invalid implementation")
 endif()
 
+# Compression component
+if(CPPREST_EXCLUDE_COMPRESSION)
+  target_compile_definitions(cpprest PRIVATE -DCPPREST_EXCLUDE_COMPRESSION=1)
+else()
+  cpprest_find_zlib()
+  target_link_libraries(cpprest PRIVATE cpprestsdk_zlib_internal)
+endif()
+
 # PPLX component
 if(CPPREST_PPLX_IMPL STREQUAL "apple")
   find_library(COREFOUNDATION CoreFoundation "/")
@@ -119,14 +127,6 @@ elseif(CPPREST_HTTP_CLIENT_IMPL STREQUAL "winrt")
   target_sources(cpprest PRIVATE http/client/http_client_winrt.cpp)
 else()
   message(FATAL_ERROR "Invalid implementation")
-endif()
-
-# Compression component
-if(CPPREST_EXCLUDE_COMPRESSION)
-  target_compile_definitions(cpprest PRIVATE -DCPPREST_EXCLUDE_COMPRESSION=1)
-else()
-  cpprest_find_zlib()
-  target_link_libraries(cpprest PRIVATE cpprestsdk_zlib_internal)
 endif()
 
 # fileio streams component
