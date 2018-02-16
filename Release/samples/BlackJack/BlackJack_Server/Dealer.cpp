@@ -47,12 +47,9 @@ BlackJackDealer::BlackJackDealer(utility::string_t url) : m_listener(url)
     m_listener.support(methods::PUT, std::bind(&BlackJackDealer::handle_put, this, std::placeholders::_1));
     m_listener.support(methods::POST, std::bind(&BlackJackDealer::handle_post, this, std::placeholders::_1));
     m_listener.support(methods::DEL, std::bind(&BlackJackDealer::handle_delete, this, std::placeholders::_1));
-    
-    utility::ostringstream_t nextIdString;
-    nextIdString << nextId;
 
     std::shared_ptr<DealerTable> tbl = std::make_shared<DealerTable>(nextId, 8, 6);
-    s_tables[nextIdString.str()] = tbl;
+    s_tables[conversions::to_string_t(std::to_string(nextId))] = tbl;
     nextId += 1;
 }
 
