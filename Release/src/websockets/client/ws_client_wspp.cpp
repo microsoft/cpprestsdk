@@ -188,81 +188,109 @@ public:
 
             // Options specific to TLS client.
             auto& client = m_client->client<websocketpp::config::asio_tls_client>();
-            client.set_tls_init_handler([this](websocketpp::connection_hdl) {
-                auto sslContext = websocketpp::lib::shared_ptr<boost::asio::ssl::context>(
-                    new boost::asio::ssl::context(boost::asio::ssl::context::sslv23));
-                sslContext->set_default_verify_paths();
-                sslContext->set_options(boost::asio::ssl::context::default_workarounds);
-                if (m_config.get_ssl_context_callback())
+            client.set_tls_init_handler(
+                [this](websocketpp::connection_hdl)
                 {
-                    m_config.get_ssl_context_callback()(*sslContext);
-                }
-                if (m_config.validate_certificates())
-                {
-                    sslContext->set_verify_mode(boost::asio::ssl::context::verify_peer);
-                }
-                else
-                {
-                    sslContext->set_verify_mode(boost::asio::ssl::context::verify_none);
-                }
-
-#ifdef CPPREST_PLATFORM_ASIO_CERT_VERIFICATION_AVAILABLE
-                m_openssl_failed = false;
-#endif
-                sslContext->set_verify_callback([this](bool preverified, boost::asio::ssl::verify_context& verifyCtx) {
-#ifdef CPPREST_PLATFORM_ASIO_CERT_VERIFICATION_AVAILABLE
-                    // Attempt to use platform certificate validation when it is available:
-                    // If OpenSSL fails we will doing verification at the end using the whole certificate chain,
-                    // so wait until the 'leaf' cert. For now return true so OpenSSL continues down the certificate
-                    // chain.
-                    if (!preverified)
+                    auto sslContext = websocketpp::lib::shared_ptr<boost::asio::ssl::context>(
+                        new boost::asio::ssl::context(boost::asio::ssl::context::sslv23));
+                    sslContext->set_default_verify_paths();
+                    sslContext->set_options(boost::asio::ssl::context::default_workarounds);
+                    if (m_config.get_ssl_context_callback())
                     {
-                        m_openssl_failed = true;
+                        m_config.get_ssl_context_callback()(*sslContext);
                     }
-                    if (m_openssl_failed)
+                    if (m_config.validate_certificates())
                     {
-                        return http::client::details::verify_cert_chain_platform_specific(
-                            verifyCtx, utility::conversions::to_utf8string(m_uri.host()));
-                    }
-#endif
-                    boost::asio::ssl::rfc2818_verification rfc2818(utility::conversions::to_utf8string(m_uri.host()));
-                    return rfc2818(preverified, verifyCtx);
-                });
-
-#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
-                // OpenSSL stores some per thread state that never will be cleaned up until
-                // the dll is unloaded. If static linking, like we do, the state isn't cleaned up
-                // at all and will be reported as leaks.
-                // See http://www.openssl.org/support/faq.html#PROG13
-                // This is necessary here because it is called on the user's thread calling connect(...)
-                // eventually through websocketpp::client::get_connection(...)
-                ERR_remove_thread_state(nullptr);
-#endif
-
-                return sslContext;
-            });
-
-            // Options specific to underlying socket.
-            client.set_socket_init_handler([this](websocketpp::connection_hdl,
-                                                  boost::asio::ssl::stream<boost::asio::ip::tcp::socket>& ssl_stream) {
-                // Support for SNI.
-                if (m_config.is_sni_enabled())
-                {
-                    // If user specified server name is empty default to use URI host name.
-                    if (!m_config.server_name().empty())
-                    {
-                        // OpenSSL runs the string parameter through a macro casting away const with a C style cast.
-                        // Do a C++ cast ourselves to avoid warnings.
-                        SSL_set_tlsext_host_name(ssl_stream.native_handle(),
-                                                 const_cast<char*>(m_config.server_name().c_str()));
+                        sslContext->set_verify_mode(boost::asio::ssl::context::verify_peer);
                     }
                     else
                     {
-                        const auto& server_name = utility::conversions::to_utf8string(m_uri.host());
-                        SSL_set_tlsext_host_name(ssl_stream.native_handle(), const_cast<char*>(server_name.c_str()));
+                        sslContext->set_verify_mode(boost::asio::ssl::context::verify_none);
                     }
-                }
-            });
+
+#ifdef CPPREST_PLATFORM_ASIO_CERT_VERIFICATION_AVAILABLE
+                    m_openssl_failed = false;
+#endif
+                    sslContext->set_verify_callback(
+                        [this](bool preverified, boost::asio::ssl::verify_context& verifyCtx)
+                        {
+#ifdef CPPREST_PLATFORM_ASIO_CERT_VERIFICATION_AVAILABLE
+                            // Attempt to use platform certificate validation when it is available:
+                            // If OpenSSL fails we will doing verification at the end using the whole certificate chain,
+                            // so wait until the 'leaf' cert. For now return true so OpenSSL continues down the
+                            // certificate chain.
+                            using namespace web::http::client::details;
+                            if (!preverified)
+                            {
+                                m_openssl_failed = true;
+                            }
+                            if (m_openssl_failed)
+                            {
+                                if (!http::client::details::is_end_certificate_in_chain(verifyCtx))
+                                {
+                                    // Continue until we get the end certificate.
+                                    return true;
+                                }
+
+                                auto chainFunc =
+                                    [this](const std::shared_ptr<http::client::certificate_info>& cert_info)
+                                { return m_config.invoke_certificate_chain_callback(cert_info); };
+
+                                return http::client::details::verify_cert_chain_platform_specific(
+                                    verifyCtx, utility::conversions::to_utf8string(m_uri.host()), chainFunc);
+                            }
+#endif
+                            boost::asio::ssl::rfc2818_verification rfc2818(
+                                utility::conversions::to_utf8string(m_uri.host()));
+                            if (!rfc2818(preverified, verifyCtx))
+                            {
+                                return false;
+                            }
+
+                            auto info = std::make_shared<http::client::certificate_info>(
+                                utility::conversions::to_utf8string(m_uri.host()),
+                                get_X509_cert_chain_encoded_data(verifyCtx));
+                            info->verified = true;
+
+                            return m_config.invoke_certificate_chain_callback(info);
+                        });
+
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+                    // OpenSSL stores some per thread state that never will be cleaned up until
+                    // the dll is unloaded. If static linking, like we do, the state isn't cleaned up
+                    // at all and will be reported as leaks.
+                    // See http://www.openssl.org/support/faq.html#PROG13
+                    // This is necessary here because it is called on the user's thread calling connect(...)
+                    // eventually through websocketpp::client::get_connection(...)
+                    ERR_remove_thread_state(nullptr);
+#endif
+
+                    return sslContext;
+                });
+
+            // Options specific to underlying socket.
+            client.set_socket_init_handler(
+                [this](websocketpp::connection_hdl, boost::asio::ssl::stream<boost::asio::ip::tcp::socket>& ssl_stream)
+                {
+                    // Support for SNI.
+                    if (m_config.is_sni_enabled())
+                    {
+                        // If user specified server name is empty default to use URI host name.
+                        if (!m_config.server_name().empty())
+                        {
+                            // OpenSSL runs the string parameter through a macro casting away const with a C style cast.
+                            // Do a C++ cast ourselves to avoid warnings.
+                            SSL_set_tlsext_host_name(ssl_stream.native_handle(),
+                                                     const_cast<char*>(m_config.server_name().c_str()));
+                        }
+                        else
+                        {
+                            const auto& server_name = utility::conversions::to_utf8string(m_uri.host());
+                            SSL_set_tlsext_host_name(ssl_stream.native_handle(),
+                                                     const_cast<char*>(server_name.c_str()));
+                        }
+                    }
+                });
 
             return connect_impl<websocketpp::config::asio_tls_client>();
         }
@@ -284,19 +312,24 @@ public:
         client.start_perpetual();
 
         _ASSERTE(m_state == CREATED);
-        client.set_open_handler([this](websocketpp::connection_hdl) {
-            _ASSERTE(m_state == CONNECTING);
-            m_state = CONNECTED;
-            m_connect_tce.set();
-        });
+        client.set_open_handler(
+            [this](websocketpp::connection_hdl)
+            {
+                _ASSERTE(m_state == CONNECTING);
+                m_state = CONNECTED;
+                m_connect_tce.set();
+            });
 
-        client.set_fail_handler([this](websocketpp::connection_hdl con_hdl) {
-            _ASSERTE(m_state == CONNECTING);
-            this->shutdown_wspp_impl<WebsocketConfigType>(con_hdl, true);
-        });
+        client.set_fail_handler(
+            [this](websocketpp::connection_hdl con_hdl)
+            {
+                _ASSERTE(m_state == CONNECTING);
+                this->shutdown_wspp_impl<WebsocketConfigType>(con_hdl, true);
+            });
 
         client.set_message_handler(
-            [this](websocketpp::connection_hdl, const websocketpp::config::asio_client::message_type::ptr& msg) {
+            [this](websocketpp::connection_hdl, const websocketpp::config::asio_client::message_type::ptr& msg)
+            {
                 if (m_external_message_handler)
                 {
                     _ASSERTE(m_state >= CONNECTED && m_state < CLOSED);
@@ -325,37 +358,43 @@ public:
                 }
             });
 
-        client.set_ping_handler([this](websocketpp::connection_hdl, const std::string& msg) {
-            if (m_external_message_handler)
+        client.set_ping_handler(
+            [this](websocketpp::connection_hdl, const std::string& msg)
             {
-                _ASSERTE(m_state >= CONNECTED && m_state < CLOSED);
-                websocket_incoming_message incoming_msg;
+                if (m_external_message_handler)
+                {
+                    _ASSERTE(m_state >= CONNECTED && m_state < CLOSED);
+                    websocket_incoming_message incoming_msg;
 
-                incoming_msg.m_msg_type = websocket_message_type::ping;
-                incoming_msg.m_body = concurrency::streams::container_buffer<std::string>(msg);
+                    incoming_msg.m_msg_type = websocket_message_type::ping;
+                    incoming_msg.m_body = concurrency::streams::container_buffer<std::string>(msg);
 
-                m_external_message_handler(incoming_msg);
-            }
-            return true;
-        });
+                    m_external_message_handler(incoming_msg);
+                }
+                return true;
+            });
 
-        client.set_pong_handler([this](websocketpp::connection_hdl, const std::string& msg) {
-            if (m_external_message_handler)
+        client.set_pong_handler(
+            [this](websocketpp::connection_hdl, const std::string& msg)
             {
-                _ASSERTE(m_state >= CONNECTED && m_state < CLOSED);
-                websocket_incoming_message incoming_msg;
+                if (m_external_message_handler)
+                {
+                    _ASSERTE(m_state >= CONNECTED && m_state < CLOSED);
+                    websocket_incoming_message incoming_msg;
 
-                incoming_msg.m_msg_type = websocket_message_type::pong;
-                incoming_msg.m_body = concurrency::streams::container_buffer<std::string>(msg);
+                    incoming_msg.m_msg_type = websocket_message_type::pong;
+                    incoming_msg.m_body = concurrency::streams::container_buffer<std::string>(msg);
 
-                m_external_message_handler(incoming_msg);
-            }
-        });
+                    m_external_message_handler(incoming_msg);
+                }
+            });
 
-        client.set_close_handler([this](websocketpp::connection_hdl con_hdl) {
-            _ASSERTE(m_state != CLOSED);
-            this->shutdown_wspp_impl<WebsocketConfigType>(con_hdl, false);
-        });
+        client.set_close_handler(
+            [this](websocketpp::connection_hdl con_hdl)
+            {
+                _ASSERTE(m_state != CLOSED);
+                this->shutdown_wspp_impl<WebsocketConfigType>(con_hdl, false);
+            });
 
         // Set User Agent specified by the user. This needs to happen before any connection is created
         const auto& headers = m_config.headers();
@@ -429,23 +468,25 @@ public:
         client.connect(con);
         {
             std::lock_guard<std::mutex> lock(m_wspp_client_lock);
-            m_thread = std::thread([&client]() {
+            m_thread = std::thread(
+                [&client]()
+                {
 #if defined(__ANDROID__)
-                crossplat::get_jvm_env();
+                    crossplat::get_jvm_env();
 #endif
-                client.run();
+                    client.run();
 #if defined(__ANDROID__)
-                crossplat::JVM.load()->DetachCurrentThread();
+                    crossplat::JVM.load()->DetachCurrentThread();
 #endif
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
-                // OpenSSL stores some per thread state that never will be cleaned up until
-                // the dll is unloaded. If static linking, like we do, the state isn't cleaned up
-                // at all and will be reported as leaks.
-                // See http://www.openssl.org/support/faq.html#PROG13
-                ERR_remove_thread_state(nullptr);
+                    // OpenSSL stores some per thread state that never will be cleaned up until
+                    // the dll is unloaded. If static linking, like we do, the state isn't cleaned up
+                    // at all and will be reported as leaks.
+                    // See http://www.openssl.org/support/faq.html#PROG13
+                    ERR_remove_thread_state(nullptr);
 #endif
-            });
+                });
         } // unlock
         return pplx::create_task(m_connect_tce);
     }
@@ -517,17 +558,20 @@ public:
                 // The stream needs to be buffered.
                 auto is_buf_istream = is_buf.create_istream();
                 msg.m_body = concurrency::streams::container_buffer<std::vector<uint8_t>>();
-                is_buf_istream.read_to_end(msg.m_body).then([this_client, msg](pplx::task<size_t> t) mutable {
-                    try
-                    {
-                        msg.m_length = t.get();
-                        this_client->send_msg(msg);
-                    }
-                    catch (...)
-                    {
-                        msg.signal_body_sent(std::current_exception());
-                    }
-                });
+                is_buf_istream.read_to_end(msg.m_body)
+                    .then(
+                        [this_client, msg](pplx::task<size_t> t) mutable
+                        {
+                            try
+                            {
+                                msg.m_length = t.get();
+                                this_client->send_msg(msg);
+                            }
+                            catch (...)
+                            {
+                                msg.signal_body_sent(std::current_exception());
+                            }
+                        });
                 // We have postponed the call to send_msg() until after the data is buffered.
                 return;
             }
@@ -556,12 +600,16 @@ public:
             // Allocate buffer to hold the data to be read from the stream.
             sp_allocated.reset(new uint8_t[length], [=](uint8_t* p) { delete[] p; });
 
-            read_task = is_buf.getn(sp_allocated.get(), length).then([length](size_t bytes_read) {
-                if (bytes_read != length)
-                {
-                    throw websocket_exception("Failed to read required length of data from the stream.");
-                }
-            });
+            read_task =
+                is_buf.getn(sp_allocated.get(), length)
+                    .then(
+                        [length](size_t bytes_read)
+                        {
+                            if (bytes_read != length)
+                            {
+                                throw websocket_exception("Failed to read required length of data from the stream.");
+                            }
+                        });
         }
         else
         {
@@ -572,67 +620,72 @@ public:
         }
 
         read_task
-            .then([this_client, msg, sp_allocated, length]() {
-                std::lock_guard<std::mutex> lock(this_client->m_wspp_client_lock);
-                if (this_client->m_state > CONNECTED)
+            .then(
+                [this_client, msg, sp_allocated, length]()
                 {
-                    // The client has already been closed.
-                    throw websocket_exception("Websocket connection is closed.");
-                }
-
-                websocketpp::lib::error_code ec;
-                if (this_client->m_client->is_tls_client())
-                {
-                    this_client->send_msg_impl<websocketpp::config::asio_tls_client>(
-                        this_client, msg, sp_allocated, length, ec);
-                }
-                else
-                {
-                    this_client->send_msg_impl<websocketpp::config::asio_client>(
-                        this_client, msg, sp_allocated, length, ec);
-                }
-                return ec;
-            })
-            .then([this_client, msg, is_buf, acquired, sp_allocated, length](
-                      pplx::task<websocketpp::lib::error_code> previousTask) mutable {
-                std::exception_ptr eptr;
-                try
-                {
-                    // Catch exceptions from previous tasks, if any and convert it to websocket exception.
-                    const auto& ec = previousTask.get();
-                    if (ec.value() != 0)
+                    std::lock_guard<std::mutex> lock(this_client->m_wspp_client_lock);
+                    if (this_client->m_state > CONNECTED)
                     {
-                        eptr = std::make_exception_ptr(websocket_exception(ec, build_error_msg(ec, "sending message")));
+                        // The client has already been closed.
+                        throw websocket_exception("Websocket connection is closed.");
                     }
-                }
-                catch (...)
-                {
-                    eptr = std::current_exception();
-                }
 
-                if (acquired)
+                    websocketpp::lib::error_code ec;
+                    if (this_client->m_client->is_tls_client())
+                    {
+                        this_client->send_msg_impl<websocketpp::config::asio_tls_client>(
+                            this_client, msg, sp_allocated, length, ec);
+                    }
+                    else
+                    {
+                        this_client->send_msg_impl<websocketpp::config::asio_client>(
+                            this_client, msg, sp_allocated, length, ec);
+                    }
+                    return ec;
+                })
+            .then(
+                [this_client, msg, is_buf, acquired, sp_allocated, length](
+                    pplx::task<websocketpp::lib::error_code> previousTask) mutable
                 {
-                    is_buf.release(sp_allocated.get(), length);
-                }
+                    std::exception_ptr eptr;
+                    try
+                    {
+                        // Catch exceptions from previous tasks, if any and convert it to websocket exception.
+                        const auto& ec = previousTask.get();
+                        if (ec.value() != 0)
+                        {
+                            eptr = std::make_exception_ptr(
+                                websocket_exception(ec, build_error_msg(ec, "sending message")));
+                        }
+                    }
+                    catch (...)
+                    {
+                        eptr = std::current_exception();
+                    }
 
-                // Set the send_task_completion_event after calling release.
-                if (eptr)
-                {
-                    msg.signal_body_sent(eptr);
-                }
-                else
-                {
-                    msg.signal_body_sent();
-                }
+                    if (acquired)
+                    {
+                        is_buf.release(sp_allocated.get(), length);
+                    }
 
-                websocket_outgoing_message next_msg;
-                bool msg_pending = this_client->m_out_queue.pop_and_peek(next_msg);
+                    // Set the send_task_completion_event after calling release.
+                    if (eptr)
+                    {
+                        msg.signal_body_sent(eptr);
+                    }
+                    else
+                    {
+                        msg.signal_body_sent();
+                    }
 
-                if (msg_pending)
-                {
-                    this_client->send_msg(next_msg);
-                }
-            });
+                    websocket_outgoing_message next_msg;
+                    bool msg_pending = this_client->m_out_queue.pop_and_peek(next_msg);
+
+                    if (msg_pending)
+                    {
+                        this_client->send_msg(next_msg);
+                    }
+                });
     }
 
     pplx::task<void> close()
@@ -679,29 +732,31 @@ private:
         client.stop_perpetual();
 
         // Can't join thread directly since it is the current thread.
-        pplx::create_task([] {}).then([this, connecting, ec, closeCode, reason]() mutable {
+        pplx::create_task([] {}).then(
+            [this, connecting, ec, closeCode, reason]() mutable
             {
-                std::lock_guard<std::mutex> lock(m_wspp_client_lock);
-                if (m_thread.joinable())
                 {
-                    m_thread.join();
-                }
-            } // unlock
+                    std::lock_guard<std::mutex> lock(m_wspp_client_lock);
+                    if (m_thread.joinable())
+                    {
+                        m_thread.join();
+                    }
+                } // unlock
 
-            if (connecting)
-            {
-                websocket_exception exc(ec, build_error_msg(ec, "set_fail_handler"));
-                m_connect_tce.set_exception(exc);
-            }
-            if (m_external_close_handler)
-            {
-                m_external_close_handler(
-                    static_cast<websocket_close_status>(closeCode), utility::conversions::to_string_t(reason), ec);
-            }
-            // Making a local copy of the TCE prevents it from being destroyed along with "this"
-            auto tceref = m_close_tce;
-            tceref.set();
-        });
+                if (connecting)
+                {
+                    websocket_exception exc(ec, build_error_msg(ec, "set_fail_handler"));
+                    m_connect_tce.set_exception(exc);
+                }
+                if (m_external_close_handler)
+                {
+                    m_external_close_handler(
+                        static_cast<websocket_close_status>(closeCode), utility::conversions::to_string_t(reason), ec);
+                }
+                // Making a local copy of the TCE prevents it from being destroyed along with "this"
+                auto tceref = m_close_tce;
+                tceref.set();
+            });
     }
 
     template<typename WebsocketClientType>
@@ -765,7 +820,7 @@ private:
     // after construction based on the URI.
     struct websocketpp_client_base
     {
-        virtual ~websocketpp_client_base() CPPREST_NOEXCEPT {}
+        virtual ~websocketpp_client_base() CPPREST_NOEXCEPT { }
         template<typename WebsocketConfig>
         websocketpp::client<WebsocketConfig>& client()
         {
@@ -784,14 +839,14 @@ private:
     };
     struct websocketpp_client : websocketpp_client_base
     {
-        ~websocketpp_client() CPPREST_NOEXCEPT {}
+        ~websocketpp_client() CPPREST_NOEXCEPT { }
         websocketpp::client<websocketpp::config::asio_client>& non_tls_client() override { return m_client; }
         bool is_tls_client() const override { return false; }
         websocketpp::client<websocketpp::config::asio_client> m_client;
     };
     struct websocketpp_tls_client : websocketpp_client_base
     {
-        ~websocketpp_tls_client() CPPREST_NOEXCEPT {}
+        ~websocketpp_tls_client() CPPREST_NOEXCEPT { }
         websocketpp::client<websocketpp::config::asio_tls_client>& tls_client() override { return m_client; }
         bool is_tls_client() const override { return true; }
         websocketpp::client<websocketpp::config::asio_tls_client> m_client;
@@ -844,3 +899,7 @@ websocket_callback_client::websocket_callback_client(websocket_client_config con
 } // namespace web
 
 #endif
+<<<<<<< HEAD
+=======
+
+>>>>>>> 917ee0eb (Add support for cert-pinning on Windows and Mac.)

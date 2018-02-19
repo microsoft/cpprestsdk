@@ -137,6 +137,7 @@ pplx::task<void> oauth2_config::_request_token(uri_builder& request_body_ub)
     // configure proxy
     http_client_config config;
     config.set_proxy(m_proxy);
+    config.set_user_certificate_chain_callback(m_certificate_chain_callback);
 
     http_client token_client(token_endpoint(), config);
 

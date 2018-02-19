@@ -15,6 +15,7 @@
 #ifndef CASA_OAUTH2_H
 #define CASA_OAUTH2_H
 
+#include "cpprest/certificate_info.h"
 #include "cpprest/details/web_utilities.h"
 #include "cpprest/http_msg.h"
 
@@ -58,8 +59,8 @@ namespace experimental
 class oauth2_exception : public std::exception
 {
 public:
-    oauth2_exception(utility::string_t msg) : m_msg(utility::conversions::to_utf8string(std::move(msg))) {}
-    ~oauth2_exception() CPPREST_NOEXCEPT {}
+    oauth2_exception(utility::string_t msg) : m_msg(utility::conversions::to_utf8string(std::move(msg))) { }
+    ~oauth2_exception() CPPREST_NOEXCEPT { }
     const char* what() const CPPREST_NOEXCEPT { return m_msg.c_str(); }
 
 private:
@@ -219,6 +220,8 @@ public:
         , m_bearer_auth(true)
         , m_http_basic_auth(true)
         , m_access_token_key(details::oauth2_strings::access_token)
+        , m_certificate_chain_callback([](const std::shared_ptr<web::http::client::certificate_info>&) -> bool
+                                       { return true; })
     {
     }
 
@@ -294,8 +297,7 @@ public:
     pplx::task<void> token_from_client_credentials()
     {
         uri_builder ub;
-        ub.append_query(
-            details::oauth2_strings::grant_type, details::oauth2_strings::client_credentials, false);
+        ub.append_query(details::oauth2_strings::grant_type, details::oauth2_strings::client_credentials, false);
         return _request_token(ub);
     }
 
@@ -480,11 +482,28 @@ public:
     /// </summary>
     void set_user_agent(utility::string_t user_agent) { m_user_agent = std::move(user_agent); }
 
+    /// <summary>
+    /// Set the certificate chain callback to be used by the http client.
+    /// </summary>
+    void set_user_certificate_chain_callback(const web::http::client::CertificateChainFunction& callback)
+    {
+        m_certificate_chain_callback = callback;
+    }
+
+    /// <summary>
+    /// Get the cert chain callback.
+    /// </summary>
+    /// <returns>A reference to cert chain callback user by the client.</returns>
+    const web::http::client::CertificateChainFunction& user_certificate_chain_callback()
+    {
+        return m_certificate_chain_callback;
+    }
+
 private:
     friend class web::http::client::http_client_config;
     friend class web::http::oauth2::details::oauth2_handler;
 
-    oauth2_config() : m_implicit_grant(false), m_bearer_auth(true), m_http_basic_auth(true) {}
+    oauth2_config() : m_implicit_grant(false), m_bearer_auth(true), m_http_basic_auth(true) { }
 
     _ASYNCRTIMP pplx::task<void> _request_token(uri_builder& request_body);
 
@@ -523,6 +542,8 @@ private:
     oauth2_token m_token;
 
     utility::nonce_generator m_state_generator;
+
+    web::http::client::CertificateChainFunction m_certificate_chain_callback;
 };
 
 } // namespace experimental
@@ -532,7 +553,7 @@ namespace details
 class oauth2_handler : public http_pipeline_stage
 {
 public:
-    oauth2_handler(std::shared_ptr<experimental::oauth2_config> cfg) : m_config(std::move(cfg)) {}
+    oauth2_handler(std::shared_ptr<experimental::oauth2_config> cfg) : m_config(std::move(cfg)) { }
 
     virtual pplx::task<http_response> propagate(http_request request) override
     {

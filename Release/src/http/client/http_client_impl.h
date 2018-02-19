@@ -53,7 +53,7 @@ class request_context
 {
 public:
     // Destructor to clean up any held resources.
-    virtual ~request_context() {}
+    virtual ~request_context() { }
 
     virtual void report_exception(std::exception_ptr exceptionPtr);
 
@@ -104,6 +104,7 @@ public:
     pplx::cancellation_token_registration m_cancellationRegistration;
 
     std::unique_ptr<web::http::compression::decompress_provider> m_decompressor;
+    bool m_certificate_chain_verification_failed {false};
 
 protected:
     request_context(const std::shared_ptr<_http_client_communicator>& client, const http_request& request);

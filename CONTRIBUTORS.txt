@@ -36,6 +36,7 @@ Gery Vessere (gery@vessere.com)
 Cisco Systems
 Gergely Lukacsy (glukacsy)
 Chris Deering (deeringc)
+Chris O'Gorman (chogorma)
 
 Ocedo GmbH
 Henning Pfeiffer (megaposer)
