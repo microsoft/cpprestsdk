@@ -1,3 +1,4 @@
+
 /***
 * Copyright (C) Microsoft. All rights reserved.
 * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
@@ -44,6 +45,7 @@
 #include "cpprest/base_uri.h"
 #include "cpprest/details/x509_cert_utilities.h"
 #include "cpprest/details/http_helpers.h"
+#include "cpprest/certificate_info.h"
 #include <unordered_set>
 #include <memory>
 
@@ -975,6 +977,9 @@ private:
         // finally by the root CA self signed certificate.
 
         const auto &host = utility::conversions::to_utf8string(m_http_client->base_uri().host());
+
+        using namespace web::http::client::details;
+
 #if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__))
         // On OS X, iOS, and Android, OpenSSL doesn't have access to where the OS
         // stores keychains. If OpenSSL fails we will doing verification at the
@@ -986,12 +991,31 @@ private:
         }
         if(m_openssl_failed)
         {
-            return verify_cert_chain_platform_specific(verifyCtx, host);
-        }
+
+            if (!is_end_certificate_in_chain(verifyCtx))
+            {
+                // Continue until we get the end certificate.
+                return true;
+            }
+
+            auto chainFunc = [this](const std::shared_ptr<certificate_info>& cert_info) {
+                return m_http_client->client_config().invoke_certificate_chain_callback(cert_info);
+            };
+
+            return http::client::details::verify_cert_chain_platform_specific(verifyCtx, utility::conversions::to_utf8string(host), chainFunc);
+            }
 #endif
 
         boost::asio::ssl::rfc2818_verification rfc2818(host);
-        return rfc2818(preverified, verifyCtx);
+        if(!rfc2818(preverified, verifyCtx))
+        {
+            return false;
+        }
+
+        auto info = std::make_shared<certificate_info>(host, get_X509_cert_chain_encoded_data(verifyCtx));
+        info->verified = true;
+
+        return m_http_client->client_config().invoke_certificate_chain_callback(info);
     }
 
     void handle_write_headers(const boost::system::error_code& ec)

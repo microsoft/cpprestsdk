@@ -196,6 +196,8 @@ public:
 #endif
                 sslContext->set_verify_callback([this](bool preverified, boost::asio::ssl::verify_context &verifyCtx)
                 {
+                    using namespace web::http::client::details;
+
 #if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__)) || defined(_WIN32)
                     // On OS X, iOS, and Android, OpenSSL doesn't have access to where the OS
                     // stores keychains. If OpenSSL fails we will doing verification at the
@@ -207,11 +209,30 @@ public:
                     }
                     if(m_openssl_failed)
                     {
-                        return http::client::details::verify_cert_chain_platform_specific(verifyCtx, utility::conversions::to_utf8string(m_uri.host()));
+
+                        if (!http::client::details::is_end_certificate_in_chain(verifyCtx))
+                        {
+                            // Continue until we get the end certificate.
+                            return true;
+                        }
+
+                        auto chainFunc = [this](const std::shared_ptr<http::client::certificate_info>& cert_info) {
+                            return m_config.invoke_certificate_chain_callback(cert_info);
+                        };
+
+                        return http::client::details::verify_cert_chain_platform_specific(verifyCtx, utility::conversions::to_utf8string(m_uri.host()), chainFunc);
                     }
 #endif
                     boost::asio::ssl::rfc2818_verification rfc2818(utility::conversions::to_utf8string(m_uri.host()));
-                    return rfc2818(preverified, verifyCtx);
+                    if (!rfc2818(preverified, verifyCtx))
+                    {
+                        return false;
+                    }
+
+                    auto info = std::make_shared<http::client::certificate_info>(utility::conversions::to_utf8string(m_uri.host()), get_X509_cert_chain_encoded_data(verifyCtx));
+                    info->verified = true;
+
+                    return m_config.invoke_certificate_chain_callback(info);
                 });
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)

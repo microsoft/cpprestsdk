@@ -35,6 +35,7 @@ typedef void* native_handle;}}}
 #include "cpprest/http_msg.h"
 #include "cpprest/json.h"
 #include "cpprest/uri.h"
+#include "cpprest/certificate_info.h"
 #include "cpprest/details/web_utilities.h"
 #include "cpprest/details/basic_types.h"
 #include "cpprest/asyncrt_utils.h"
@@ -87,6 +88,7 @@ public:
 #if !defined(__cplusplus_winrt)
         , m_validate_certificates(true)
 #endif
+        , m_certificate_chain_callback([](const std::shared_ptr<certificate_info>&)->bool { return true; })
 #if !defined(_WIN32) && !defined(__cplusplus_winrt) || defined(CPPREST_FORCE_HTTP_CLIENT_ASIO)
         , m_tlsext_sni_enabled(true)
 #endif
@@ -349,7 +351,7 @@ public:
     /// <param name="callback">A user callback allowing for customization of the request</param>
     void set_nativehandle_options(const std::function<void(native_handle)> &callback)
     {
-         m_set_user_nativehandle_options = callback;
+        m_set_user_nativehandle_options = callback;
     }
 
     /// <summary>
@@ -360,6 +362,25 @@ public:
     {
         if (m_set_user_nativehandle_options)
             m_set_user_nativehandle_options(handle);
+    }
+
+
+    /// <summary>
+    /// Set the certificate chain callback. If set, HTTP client will call this callback in a blocking manner during HTTP connection.
+    /// </summary>
+    void set_user_certificate_chain_callback(const CertificateChainFunction& callback)
+    {
+        m_certificate_chain_callback = callback;
+    }
+
+    /// <summary>
+    /// Invokes the certificate chain callback.
+    /// </summary>
+    /// <param name="certificate_info">Pointer to the certificate_info struct that has the certificate information.</param>
+    /// <returns>True if the consumer code allows the connection, false otherwise. False will terminate the HTTP connection.</returns>
+    bool invoke_certificate_chain_callback(const std::shared_ptr<certificate_info>& certificate_Info) const
+    {
+        return m_certificate_chain_callback(certificate_Info);
     }
 
 #if !defined(_WIN32) && !defined(__cplusplus_winrt) || defined(CPPREST_FORCE_HTTP_CLIENT_ASIO)
@@ -420,6 +441,7 @@ private:
     bool m_validate_certificates;
 #endif
 
+    CertificateChainFunction m_certificate_chain_callback;
     std::function<void(native_handle)> m_set_user_nativehandle_options;
 	std::function<void(native_handle)> m_set_user_nativesessionhandle_options;
 

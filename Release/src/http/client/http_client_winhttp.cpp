@@ -17,6 +17,10 @@
 #include "cpprest/http_headers.h"
 #include "http_client_impl.h"
 
+#include <wincrypt.h> // for certificate pinning logic
+#include <iomanip> // for certificate pinning logic
+
+
 #ifndef CPPREST_TARGET_XP
 #include <VersionHelpers.h>
 #endif
@@ -1217,7 +1221,7 @@ private:
 
         switch (statusCode)
         {
-        case WINHTTP_CALLBACK_STATUS_REQUEST_ERROR :
+            case WINHTTP_CALLBACK_STATUS_REQUEST_ERROR :
             {
                 WINHTTP_ASYNC_RESULT *error_result = reinterpret_cast<WINHTTP_ASYNC_RESULT *>(statusInfo);
                 const DWORD errorCode = error_result->dwError;
@@ -1234,8 +1238,122 @@ private:
                         return;
                     }
                 }
-
+                // Check if connection rejected the certificate.
+                if (p_request_context->m_certificate_chain_verification_failed)
+                {
+                    p_request_context->report_error(ERROR_WINHTTP_SECURE_FAILURE, build_error_msg(ERROR_WINHTTP_SECURE_FAILURE, "WinHttpVerificationFailed"));
+                    break;
+                }
                 p_request_context->report_error(errorCode, build_error_msg(error_result));
+                break;
+            }
+            case WINHTTP_CALLBACK_STATUS_SENDING_REQUEST:
+            {
+                // get actual URL which might be different from the original one due to redirection etc.
+                DWORD urlSize{ 0 };
+                WinHttpQueryOption(hRequestHandle, WINHTTP_OPTION_URL, NULL, &urlSize);
+                auto urlwchar = new WCHAR[urlSize / sizeof(WCHAR)];
+
+                WinHttpQueryOption(hRequestHandle, WINHTTP_OPTION_URL, (void*)urlwchar, &urlSize);
+                utility::string_t url(urlwchar);
+
+                delete[] urlwchar;
+
+                // obtain leaf cert based on which we will be able to build the certificate chain
+                PCCERT_CONTEXT pCert{ nullptr };
+                DWORD dwSize = sizeof(pCert);
+
+                WinHttpQueryOption(hRequestHandle, WINHTTP_OPTION_SERVER_CERT_CONTEXT, &pCert, &dwSize);
+
+                std::vector<std::vector<unsigned char>> cert_chain;
+                DWORD dwErrorStatus = 0;
+
+                if (pCert)
+                {
+                    CERT_ENHKEY_USAGE keyUsage = {};
+                    keyUsage.cUsageIdentifier = 0;
+                    keyUsage.rgpszUsageIdentifier = NULL;
+
+                    CERT_USAGE_MATCH certUsage = {};
+                    certUsage.dwType = USAGE_MATCH_TYPE_AND;
+                    certUsage.Usage = keyUsage;
+
+                    CERT_CHAIN_PARA chainPara = {};
+                    chainPara.cbSize = sizeof(CERT_CHAIN_PARA);
+                    chainPara.RequestedUsage = certUsage;
+
+                    PCCERT_CHAIN_CONTEXT pChainContext = {};
+
+                    // build the certificate chain relying on the actual intermediate certs returned as part of the TLS session
+                    // disable any network operations to fetch certificates
+                    auto validChain = CertGetCertificateChain(NULL, pCert, NULL, pCert->hCertStore, &chainPara,
+                        CERT_CHAIN_CACHE_ONLY_URL_RETRIEVAL |
+                        CERT_CHAIN_REVOCATION_CHECK_CACHE_ONLY |
+                        CERT_CHAIN_REVOCATION_CHECK_CHAIN |
+                        CERT_CHAIN_CACHE_END_CERT |
+                        CERT_CHAIN_DISABLE_AUTH_ROOT_AUTO_UPDATE,
+                        NULL, &pChainContext);
+
+                    if (validChain && pChainContext)
+                    {
+                        dwErrorStatus = pChainContext->TrustStatus.dwErrorStatus;
+                        cert_chain.reserve((int)pChainContext->cChain);
+                        for (size_t i = 0; i < pChainContext->cChain; ++i)
+                        {
+                            auto chain = pChainContext->rgpChain[i];
+                            for (size_t j = 0; j < chain->cElement; ++j)
+                            {
+                                auto chainElement = chain->rgpElement[j];
+                                auto cert = chainElement->pCertContext;
+                                if (cert)
+                                {
+                                    cert_chain.emplace_back(std::vector<unsigned char>(cert->pbCertEncoded, cert->pbCertEncoded + (int)cert->cbCertEncoded));
+                                }
+                            }
+                        }
+                        CertFreeCertificateChain(pChainContext);
+                    }
+                    CertFreeCertificateContext(pCert);
+                }
+
+                utility::string_t host;
+
+                try
+                {
+                    host = web::uri(url).host();
+                }
+                catch (std::exception e)
+                {
+                    host = url;
+                }
+
+                if (host.empty())
+                {
+                    host = url;
+                }
+
+                auto info = std::make_shared<certificate_info>(utility::conversions::to_utf8string(host), cert_chain, dwErrorStatus);
+
+                if (dwErrorStatus == CERT_TRUST_NO_ERROR || dwErrorStatus == CERT_TRUST_REVOCATION_STATUS_UNKNOWN || dwErrorStatus == (CERT_TRUST_IS_OFFLINE_REVOCATION | CERT_TRUST_REVOCATION_STATUS_UNKNOWN))
+                {
+                    info->verified = true;
+                }
+
+                if (p_request_context->m_http_client->client_config().invoke_certificate_chain_callback(info))
+                {
+                    if (info->verified)
+                    {
+                        p_request_context->m_certificate_chain_verification_failed = false;
+                    }
+                    else
+                    {
+                        p_request_context->m_certificate_chain_verification_failed = true;
+                    }
+                }
+                else
+                {
+                    p_request_context->m_certificate_chain_verification_failed = true;
+                }
                 break;
             }
         case WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE :
@@ -1367,6 +1485,15 @@ private:
                         return;
                     }
                 }
+                    else
+                    {
+                        // The connection is allowed, but did the client allow the connection.
+                        if (p_request_context->m_certificate_chain_verification_failed)
+                        {
+                            p_request_context->report_error(ERROR_WINHTTP_SECURE_FAILURE, build_error_msg(ERROR_WINHTTP_SECURE_FAILURE, "WinHttpVerificationFailed"));
+                            break;
+                        }
+                    }
 
                 // If the response body is compressed we will read the encoding header and create a decompressor object which will later decompress the body
                 utility::string_t encoding;
