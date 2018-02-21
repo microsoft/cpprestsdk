@@ -67,7 +67,7 @@ namespace web {
             utility::string_t m_path;
             utility::string_t m_query;
             utility::string_t m_fragment;
-            int m_port;
+            int m_port {0};
         };
     }
 
