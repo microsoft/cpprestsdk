@@ -266,7 +266,7 @@ namespace json
         /// <remarks>
         /// This overload has O(n) performance because it tries to determine if
         /// specified string has characters that should be properly escaped in JSON.
-        /// <remarks>
+        /// </remarks>
         static _ASYNCRTIMP value __cdecl string(utility::string_t value);
 
         /// <summary>
