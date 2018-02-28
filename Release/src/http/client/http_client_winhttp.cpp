@@ -557,7 +557,7 @@ protected:
         if(WINHTTP_INVALID_STATUS_CALLBACK == WinHttpSetStatusCallback(
             m_hSession,
             &winhttp_client::completion_callback,
-            WINHTTP_CALLBACK_FLAG_ALL_COMPLETIONS | WINHTTP_CALLBACK_FLAG_HANDLES | WINHTTP_CALLBACK_FLAG_SECURE_FAILURE,
+            WINHTTP_CALLBACK_FLAG_ALL_COMPLETIONS | WINHTTP_CALLBACK_FLAG_HANDLES | WINHTTP_CALLBACK_FLAG_SECURE_FAILURE | WINHTTP_CALLBACK_FLAG_SEND_REQUEST,
             0))
         {
             return report_failure(_XPLATSTR("Error registering callback"));
@@ -1341,13 +1341,13 @@ private:
 
                 if (p_request_context->m_http_client->client_config().invoke_certificate_chain_callback(info))
                 {
-                    if (info->verified)
+                    if (!info->verified && p_request_context->m_http_client->client_config().validate_certificates())
                     {
-                        p_request_context->m_certificate_chain_verification_failed = false;
+                        p_request_context->m_certificate_chain_verification_failed = true;
                     }
                     else
                     {
-                        p_request_context->m_certificate_chain_verification_failed = true;
+                        p_request_context->m_certificate_chain_verification_failed = false;
                     }
                 }
                 else
