@@ -40,6 +40,10 @@ Chris O'Gorman (chogorma)
 Ocedo GmbH
 Henning Pfeiffer (megaposer)
 
+neXenio GmbH
+Patrik Fiedler (xqp)
+René Meusel (reneme)
+
 thomasschaub
 
 Trimble
