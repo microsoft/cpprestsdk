@@ -13,7 +13,7 @@
 
 #include "stdafx.h"
 
-#if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__)) || (defined(_WIN32)  && !defined(__cplusplus_winrt) && !defined(_M_ARM) && !defined(CPPREST_EXCLUDE_WEBSOCKETS))
+#if defined(__linux__) || defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__)) || (defined(_WIN32)  && !defined(__cplusplus_winrt) && !defined(_M_ARM) && !defined(CPPREST_EXCLUDE_WEBSOCKETS))
 
 #include "cpprest/details/x509_cert_utilities.h"
 #include <vector>
@@ -39,6 +39,8 @@
 #include <iomanip>
 
 namespace web { namespace http { namespace client { namespace details {
+
+#if !defined(__linux__)
 
 bool is_end_certificate_in_chain(boost::asio::ssl::verify_context &verifyCtx)
 {
@@ -103,6 +105,8 @@ bool verify_cert_chain_platform_specific(boost::asio::ssl::verify_context &verif
 #endif
     return verify_result;
 }
+
+#endif
 
 #if defined(ANDROID) || defined(__ANDROID__)
 using namespace crossplat;
