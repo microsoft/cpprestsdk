@@ -2114,13 +2114,13 @@ private:
 
                 if (p_request_context->m_http_client->client_config().invoke_certificate_chain_callback(info))
                 {
-                    if (info->verified)
+                    if (!info->verified && p_request_context->m_http_client->client_config().validate_certificates())
                     {
-                        p_request_context->m_certificate_chain_verification_failed = false;
+                        p_request_context->m_certificate_chain_verification_failed = true;
                     }
                     else
                     {
-                        p_request_context->m_certificate_chain_verification_failed = true;
+                        p_request_context->m_certificate_chain_verification_failed = false;
                     }
                 }
                 else

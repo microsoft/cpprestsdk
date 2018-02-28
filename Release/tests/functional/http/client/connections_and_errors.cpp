@@ -60,10 +60,12 @@ static void pending_requests_after_client_impl(const uri& address)
         // send responses.
         for (size_t i = 0; i < num_requests; ++i)
         {
-            completed_requests.push_back(requests[i].then([&](test_request* request) {
-                http_asserts::assert_test_request_equals(request, mtd, U("/"));
-                VERIFY_ARE_EQUAL(0u, request->reply(status_codes::OK));
-            }));
+            completed_requests.push_back(requests[i].then(
+                [&](test_request* request)
+                {
+                    http_asserts::assert_test_request_equals(request, mtd, U("/"));
+                    VERIFY_ARE_EQUAL(0u, request->reply(status_codes::OK));
+                }));
         }
 
         // verify responses.
@@ -105,6 +107,69 @@ SUITE(connections_and_errors)
         auto t = client.request(methods::GET);
         VERIFY_THROWS(t.wait(), web::http::http_exception);
     }
+
+    TEST_FIXTURE(uri_address, cert_pinning_succeed)
+    {
+        test_http_server::scoped_server scoped(m_uri);
+
+        http_client_config client_config;
+        web::credentials cred(U("some_user"), U("some_password"));
+        client_config.set_credentials(cred);
+        pplx::cancellation_token_source source;
+
+        client_config.set_user_certificate_chain_callback(
+            [](const std::shared_ptr<certificate_info>&) -> bool
+            {
+                // accept any certificate.
+                return true;
+            });
+
+        http_client client(m_uri, client_config);
+
+        scoped.server()->next_request().then(
+            [&](test_request* p_request)
+            {
+                http_asserts::assert_test_request_equals(p_request, methods::GET, U("/"));
+                p_request->reply(200);
+            });
+
+        auto response = client.request(methods::GET, source.get_token()).get();
+
+        VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
+    }
+
+#ifdef _WIN32
+
+    TEST_FIXTURE(uri_address, cert_pinning_failed)
+    {
+        test_http_server::scoped_server scoped(m_uri);
+
+        http_client_config client_config;
+        web::credentials cred(U("some_user"), U("some_password"));
+        client_config.set_credentials(cred);
+        pplx::cancellation_token_source source;
+
+        client_config.set_user_certificate_chain_callback(
+            [](const std::shared_ptr<certificate_info>&) -> bool
+            {
+                // don't accept any certificate.
+                return false;
+            });
+
+        http_client client(m_uri, client_config);
+
+        scoped.server()->next_request().then(
+            [&](test_request* p_request)
+            {
+                http_asserts::assert_test_request_equals(p_request, methods::GET, U("/"));
+                p_request->reply(200);
+            });
+
+        auto request = client.request(methods::GET, source.get_token());
+
+        VERIFY_THROWS_HTTP_ERROR_CODE(request.wait(), ERROR_WINHTTP_SECURE_FAILURE);
+    }
+#endif
 
     TEST_FIXTURE(uri_address, server_close_without_responding)
     {
@@ -211,12 +276,14 @@ SUITE(connections_and_errors)
 
         streams::producer_consumer_buffer<uint8_t> buf;
 
-        listener.support([buf](http_request request) {
-            http_response response(200);
-            response.set_body(streams::istream(buf), U("text/plain"));
-            response.headers().add(header_names::connection, U("close"));
-            request.reply(response);
-        });
+        listener.support(
+            [buf](http_request request)
+            {
+                http_response response(200);
+                response.set_body(streams::istream(buf), U("text/plain"));
+                response.headers().add(header_names::connection, U("close"));
+                request.reply(response);
+            });
 
         {
             http_client_config config;
@@ -240,12 +307,14 @@ SUITE(connections_and_errors)
 
         streams::producer_consumer_buffer<uint8_t> buf;
 
-        listener.support([buf](http_request request) {
-            http_response response(200);
-            response.set_body(streams::istream(buf), U("text/plain"));
-            response.headers().add(header_names::connection, U("close"));
-            request.reply(response);
-        });
+        listener.support(
+            [buf](http_request request)
+            {
+                http_response response(200);
+                response.set_body(streams::istream(buf), U("text/plain"));
+                response.headers().add(header_names::connection, U("close"));
+                request.reply(response);
+            });
 
         {
             http_client_config config;
@@ -285,18 +354,20 @@ SUITE(connections_and_errors)
         pplx::cancellation_token_source source;
         pplx::extensibility::event_t ev;
 
-        listener.support([&](http_request request) {
-            streams::producer_consumer_buffer<uint8_t> buf;
-            http_response response(200);
-            response.set_body(streams::istream(buf), U("text/plain"));
-            request.reply(response);
-            ev.wait();
-            buf.putc('a').wait();
-            buf.putc('b').wait();
-            buf.putc('c').wait();
-            buf.putc('d').wait();
-            buf.close(std::ios::out).wait();
-        });
+        listener.support(
+            [&](http_request request)
+            {
+                streams::producer_consumer_buffer<uint8_t> buf;
+                http_response response(200);
+                response.set_body(streams::istream(buf), U("text/plain"));
+                request.reply(response);
+                ev.wait();
+                buf.putc('a').wait();
+                buf.putc('b').wait();
+                buf.putc('c').wait();
+                buf.putc('d').wait();
+                buf.close(std::ios::out).wait();
+            });
 
         auto responseTask = c.request(methods::GET, source.get_token());
         http_response response = responseTask.get();
@@ -378,19 +449,21 @@ SUITE(connections_and_errors)
         pplx::extensibility::event_t ev;
         pplx::extensibility::event_t ev2;
 
-        listener.support([&](http_request request) {
-            streams::producer_consumer_buffer<uint8_t> buf;
-            http_response response(200);
-            response.set_body(streams::istream(buf), U("text/plain"));
-            request.reply(response);
-            buf.putc('a').wait();
-            buf.putc('b').wait();
-            ev.set();
-            ev2.wait();
-            buf.putc('c').wait();
-            buf.putc('d').wait();
-            buf.close(std::ios::out).wait();
-        });
+        listener.support(
+            [&](http_request request)
+            {
+                streams::producer_consumer_buffer<uint8_t> buf;
+                http_response response(200);
+                response.set_body(streams::istream(buf), U("text/plain"));
+                request.reply(response);
+                buf.putc('a').wait();
+                buf.putc('b').wait();
+                ev.set();
+                ev2.wait();
+                buf.putc('c').wait();
+                buf.putc('d').wait();
+                buf.close(std::ios::out).wait();
+            });
 
         auto response = c.request(methods::GET, source.get_token()).get();
         ev.wait();
