@@ -16,7 +16,7 @@
 #include <string>
 #include "cpprest/certificate_info.h"
 
-#if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__)) || (defined(_WIN32)  && !defined(__cplusplus_winrt) && !defined(_M_ARM) && !defined(CPPREST_EXCLUDE_WEBSOCKETS))
+#if defined(__linux__) || defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__)) || (defined(_WIN32)  && !defined(__cplusplus_winrt) && !defined(_M_ARM) && !defined(CPPREST_EXCLUDE_WEBSOCKETS))
 
 #if defined(_MSC_VER)
 #pragma warning(push)
@@ -38,6 +38,7 @@ namespace web { namespace http { namespace client { namespace details {
 
 using namespace utility;
 
+#if !defined(__linux__)
 
 bool is_end_certificate_in_chain(boost::asio::ssl::verify_context &verifyCtx);
 
@@ -49,8 +50,10 @@ bool is_end_certificate_in_chain(boost::asio::ssl::verify_context &verifyCtx);
 /// <param name="hostName">Host name from the URI.</param>
 /// <returns>True if verification passed and server can be trusted, false otherwise.</returns>
 bool verify_cert_chain_platform_specific(boost::asio::ssl::verify_context &verifyCtx, const std::string &hostName, const CertificateChainFunction& func = nullptr);
-
 bool verify_X509_cert_chain(const std::vector<std::string> &certChain, const std::string &hostName, const CertificateChainFunction& func = nullptr);
+
+#endif
+
 
 std::vector<std::vector<unsigned char>> get_X509_cert_chain_encoded_data(boost::asio::ssl::verify_context &verifyCtx);
 
