@@ -122,6 +122,8 @@ bool verify_cert_chain_platform_specific(boost::asio::ssl::verify_context& verif
     return verify_result;
 }
 
+#endif
+
 #if defined(ANDROID) || defined(__ANDROID__)
 using namespace crossplat;
 
