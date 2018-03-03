@@ -117,45 +117,35 @@ fi
 # -----
 # Boost
 # -----
-# Uses the script from MysticTreeGames
+# Uses the build script from Moritz Wundke (originally MysticTreeGames)
+# https://github.com/moritz-wundke/Boost-for-Android
 
 if [ "${DO_BOOST}" == "1" ]
 then
 (
-    (
 	if [ ! -d "Boost-for-Android" ]
 	then
-	    git clone https://github.com/MysticTreeGames/Boost-for-Android.git
+	    git clone https://github.com/moritz-wundke/Boost-for-Android.git
 	fi
 	cd Boost-for-Android
 	if [ ! -e "cpprestsdk.patched.stamp" ]
 	then
-	    git checkout 1c95d349d5f92c5ac1c24e0ec6985272a3e3883c
+	    git checkout 9e3714190075f3c8565cd573c0e4e187452ee019
 	    git reset --hard HEAD
 	    git apply "$DIR/boost-for-android.patch"
 	    touch cpprestsdk.patched.stamp
 	fi
 
-	PATH="$PATH:$NDK_DIR" ./build-android.sh --boost=1.55.0 --with-libraries=random,date_time,filesystem,system,thread,chrono "${NDK_DIR}" || exit 1
-    )
-
-    (
-	if [ ! -d "Boost-for-Android-x86" ]
-	then
-	    git clone Boost-for-Android Boost-for-Android-x86
-	fi
-	cd Boost-for-Android-x86
-	if [ ! -e "cpprestsdk.patched.stamp" ]
-	then
-	    git checkout 1c95d349d5f92c5ac1c24e0ec6985272a3e3883c
-	    git reset --hard HEAD
-	    git apply "$DIR/boost-for-android-x86.patch"
-	    ln -s ../Boost-for-Android/boost_1_55_0.tar.bz2 .
-	    touch cpprestsdk.patched.stamp
-	fi
-
-	PATH="$PATH:$NDK_DIR" ./build-android.sh --boost=1.55.0 --with-libraries=atomic,random,date_time,filesystem,system,thread,chrono "${NDK_DIR}" || exit 1
-    )
+	PATH="$PATH:$NDK_DIR" \
+	CXXFLAGS="-std=gnu++11" \
+	./build-android.sh \
+		--boost=1.55.0 \
+		--arch=armeabi-v7a,x86 \
+		--with-libraries=random,date_time,filesystem,system,thread,chrono \
+		--without-supportlib \
+		--stl=gnustl_static \
+		--api=9 \
+		"${NDK_DIR}" || exit 1
 )
 fi
 
