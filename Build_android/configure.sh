@@ -117,7 +117,7 @@ fi
 # -----
 # Boost
 # -----
-# Uses the build script from Moritz Wundke (originally MysticTreeGames)
+# Uses the build script from Moritz Wundke (formerly MysticTreeGames)
 # https://github.com/moritz-wundke/Boost-for-Android
 
 if [ "${DO_BOOST}" == "1" ]
@@ -141,7 +141,7 @@ then
 	./build-android.sh \
 		--boost=1.55.0 \
 		--arch=armeabi-v7a,x86 \
-		--with-libraries=random,date_time,filesystem,system,thread,chrono \
+		--with-libraries=atomic,random,date_time,filesystem,system,thread,chrono \
 		--without-supportlib \
 		--stl=gnustl_static \
 		--api=9 \
