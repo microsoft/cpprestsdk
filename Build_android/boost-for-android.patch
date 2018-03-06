@@ -1,5 +1,5 @@
 diff --git a/build-android.sh b/build-android.sh
-index ad0707e..017c86d 100755
+index ad0707e..92d37d9 100755
 --- a/build-android.sh
 +++ b/build-android.sh
 @@ -93,16 +93,20 @@ do_download ()
@@ -27,13 +27,21 @@ index ad0707e..017c86d 100755
  register_option "--prefix=<path>" do_prefix "Prefix to be used when installing libraries and includes."
  do_prefix () {
      if [ -d $1 ]; then
-@@ -116,6 +120,14 @@ do_arch () {
+@@ -116,6 +120,22 @@ do_arch () {
    for ARCH in $(echo $1 | tr ',' '\n') ; do ARCHLIST="$ARCH ${ARCHLIST}"; done
  }
  
 +STL=libcxx_static
-+register_option "--stl=<runtime>" do_select_stl "Select the C++ runtime library. Can be one of libcxx_static, libcxx_shared, gnustl_static or gnustl_shared."
-+do_select_stl () { STL=$1; }
++register_option "--stl=<runtime>" do_select_stl "Select the C++ runtime library. Can be one of c++_static (libcxx_static), c++_shared (libcxx_shared), gnustl_static or gnustl_shared."
++do_select_stl () {
++    if [ "$1" = "c++_shared" ]; then
++        STL=libcxx_shared
++    elif [ "$1" = "c++_static" ]; then
++        STL=libcxx_static
++    else
++        STL=$1
++    fi
++}
 +
 +API=15
 +register_option "--api=<level>" do_select_api "Select the Android API Level. Default is 15 for 32-bit architectures and 21 for 64-bit architectures."
@@ -42,7 +50,7 @@ index ad0707e..017c86d 100755
  PROGRAM_PARAMETERS="<ndk-root>"
  PROGRAM_DESCRIPTION=\
  "       Boost For Android\n"\
-@@ -139,10 +151,10 @@ BUILD_DIR="./build/"
+@@ -139,10 +159,10 @@ BUILD_DIR="./build/"
  if [ $CLEAN = yes ] ; then
  	echo "Cleaning: $BUILD_DIR"
  	rm -f -r $PROGDIR/$BUILD_DIR
@@ -55,7 +63,7 @@ index ad0707e..017c86d 100755
  	echo "Cleaning: $BOOST_TAR"
  	rm -f $PROGDIR/$BOOST_TAR
  
-@@ -209,8 +221,12 @@ case "$HOST_OS" in
+@@ -209,8 +229,12 @@ case "$HOST_OS" in
          PlatformOS=linux
  esac
  
@@ -69,7 +77,7 @@ index ad0707e..017c86d 100755
      NDK_RN=`cat $NDK_RELEASE_FILE | sed 's/^r\(.*\)$/\1/g'`
  elif [ -n "${AndroidSourcesDetected}" ]; then
      if [ -f "${ANDROID_BUILD_TOP}/ndk/docs/CHANGES.html" ]; then
-@@ -233,8 +249,20 @@ else
+@@ -233,8 +257,20 @@ else
      fi
  fi
  
@@ -90,7 +98,7 @@ index ad0707e..017c86d 100755
  case "$NDK_RN" in
  	4*)
  		TOOLCHAIN=${TOOLCHAIN:-arm-eabi-4.4.0}
-@@ -277,20 +305,26 @@ case "$NDK_RN" in
+@@ -277,19 +313,25 @@ case "$NDK_RN" in
  		TOOLSET=gcc-androidR8e
  		;;
  	"10 (64-bit)"|"10b (64-bit)"|"10c (64-bit)"|"10d (64-bit)")
@@ -109,23 +117,22 @@ index ad0707e..017c86d 100755
 +		TOOLCHAIN=llvm-3.6
 +		CXXPATH=$AndroidNDKRoot/toolchains/${TOOLCHAIN}/prebuilt/${PlatformOS}-x86_64/bin/clang++
 +		TOOLSET=clang
- 		;;
--	16.*)
++		;;
 +	11*|12*|13*)
- 		TOOLCHAIN=${TOOLCHAIN:-llvm}
- 		CXXPATH=$AndroidNDKRoot/toolchains/${TOOLCHAIN}/prebuilt/${PlatformOS}-x86_64/bin/clang++
- 		TOOLSET=clang
- 		;;
-+	14*|15*|16*)
 +		TOOLCHAIN=${TOOLCHAIN:-llvm}
 +		CXXPATH=$AndroidNDKRoot/toolchains/${TOOLCHAIN}/prebuilt/${PlatformOS}-x86_64/bin/clang++
 +		TOOLSET=clang
+ 		;;
+-	16.*)
++	14*|15*|16*)
+ 		TOOLCHAIN=${TOOLCHAIN:-llvm}
+ 		CXXPATH=$AndroidNDKRoot/toolchains/${TOOLCHAIN}/prebuilt/${PlatformOS}-x86_64/bin/clang++
+ 		TOOLSET=clang
 +		UNIFIED_HEADERS=on
-+		;;
+ 		;;
  	*)
  		echo "Undefined or not supported Android NDK version: $NDK_RN"
- 		exit 1
-@@ -362,7 +396,7 @@ then
+@@ -362,7 +404,7 @@ then
    # Make the initial bootstrap
    echo "Performing boost bootstrap"
  
@@ -134,7 +141,7 @@ index ad0707e..017c86d 100755
    case "$HOST_OS" in
      windows)
          cmd //c "bootstrap.bat" 2>&1 | tee -a $PROGDIR/build.log
-@@ -377,7 +411,7 @@ then
+@@ -377,7 +419,7 @@ then
    	exit 1
    fi
    cd $PROGDIR
@@ -143,7 +150,7 @@ index ad0707e..017c86d 100755
    # -------------------------------------------------------------
    # Patching will be done only if we had a successfull bootstrap!
    # -------------------------------------------------------------
-@@ -387,17 +421,23 @@ then
+@@ -387,17 +429,23 @@ then
    PATCH_BOOST_DIR=$PROGDIR/patches/boost-${BOOST_VER}
  
    if [ "$TOOLSET" = "clang" ]; then
@@ -172,7 +179,7 @@ index ad0707e..017c86d 100755
    else
        cp configs/user-config-boost-${BOOST_VER}.jam $BOOST_DIR/tools/build/v2/user-config.jam || exit 1
    fi
-@@ -462,24 +502,38 @@ echo "Building boost for android for $ARCH"
+@@ -462,24 +510,38 @@ echo "Building boost for android for $ARCH"
  
    cd $BOOST_DIR
  
@@ -215,7 +222,7 @@ index ad0707e..017c86d 100755
        if [ "$ARCH" = "armeabi" ]; then
            if [ -z "$LIBRARIES" ]; then
                echo "Disabling boost_math library on armeabi architecture, because of broken toolchain" | tee -a $PROGDIR/build.log
-@@ -504,6 +558,7 @@ echo "Building boost for android for $ARCH"
+@@ -504,6 +566,7 @@ echo "Building boost for android for $ARCH"
           -j$NCPU                      \
           target-os=${TARGET_OS}       \
           toolset=${TOOLSET_ARCH}      \
