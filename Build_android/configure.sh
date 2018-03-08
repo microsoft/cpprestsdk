@@ -24,6 +24,9 @@ DO_BOOST=1
 DO_OPENSSL=1
 DO_CPPRESTSDK=1
 
+BOOSTVER=1.59.0
+OPENSSLVER=1.0.2k
+
 API=15
 STL=c++_static
 
@@ -33,8 +36,10 @@ function usage {
     echo "    --skip-boost          Skip fetching and compiling boost"
     echo "    --skip-openssl        Skip fetching and compiling openssl"
     echo "    --skip-cpprestsdk     Skip compiling cpprestsdk"
+    echo "    --boost <version>     Override the Boost version to build (default is ${BOOSTVER})"
+    echo "    --openssl <version>   Override the OpenSSL version to build (default is ${OPENSSLVER})"
     echo "    --ndk <android-ndk>   If specified, overrides the ANDROID_NDK environment variable"
-    echo "    --api <level>         Selects the Android API level (default is 15)"
+    echo "    --api <level>         Selects the Android API level (default is ${API})"
     echo "    --stl <runtime>       Selects the C++ runtime (c++_shared, c++_static, gnustl_shared, gnustl_static)"
     echo "    -h,--help,-?          Display this information"
 }
@@ -50,6 +55,16 @@ do
 	    ;;
 	"--skip-cpprestsdk")
 	    DO_CPPRESTSDK=0
+	    ;;
+	"--boost")
+	    shift
+	    DO_BOOST=1
+	    BOOSTVER=$1
+	    ;;
+	"--openssl")
+	    shift
+	    DO_OPENSSL=1
+	    OPENSSLVER=$1
 	    ;;
 	"--ndk")
 	    shift
@@ -120,8 +135,8 @@ then
     if [ ! -d "openssl" ]; then mkdir openssl; fi
     cd openssl
     cp -af "${DIR}/openssl/." .
-    make all ANDROID_NDK="${NDK_DIR}" ANDROID_TOOLCHAIN=clang ANDROID_GCC_VERSION=4.9 ANDROID_API=$API ANDROID_ABI=armeabi-v7a OPENSSL_PREFIX=armeabi-v7a
-    make all ANDROID_NDK="${NDK_DIR}" ANDROID_TOOLCHAIN=clang ANDROID_GCC_VERSION=4.9 ANDROID_API=$API ANDROID_ABI=x86 OPENSSL_PREFIX=x86
+    make all ANDROID_NDK="${NDK_DIR}" ANDROID_TOOLCHAIN=clang ANDROID_GCC_VERSION=4.9 ANDROID_API=$API ANDROID_ABI=armeabi-v7a OPENSSL_PREFIX=armeabi-v7a OPENSSL_VERSION=$OPENSSLVER
+    make all ANDROID_NDK="${NDK_DIR}" ANDROID_TOOLCHAIN=clang ANDROID_GCC_VERSION=4.9 ANDROID_API=$API ANDROID_ABI=x86 OPENSSL_PREFIX=x86 OPENSSL_VERSION=$OPENSSLVER
 )
 fi
 
@@ -150,7 +165,7 @@ then
 	PATH="$PATH:$NDK_DIR" \
 	CXXFLAGS="-std=gnu++11" \
 	./build-android.sh \
-		--boost=1.55.0 \
+		--boost=$BOOSTVER \
 		--arch=armeabi-v7a,x86 \
 		--with-libraries=atomic,random,date_time,filesystem,system,thread,chrono \
 		--api=$API \
