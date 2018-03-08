@@ -197,6 +197,7 @@ if [ -f "${NDK_DIR}/build/cmake/android.toolchain.cmake" ]; then
 				-DANDROID_ABI=$2 \
 				-DANDROID_PLATFORM=android-$API \
 				-DANDROID_NATIVE_API_LEVEL=android-$API \
+				-DBOOST_VERSION="${BOOSTVER}" \
 				-DCMAKE_BUILD_TYPE=$3
 			make -j 1
 		)
@@ -220,6 +221,7 @@ else
 				-DANDROID_STL_FORCE_FEATURES=ON \
 				-DANDROID_NATIVE_API_LEVEL=android-$API \
 				-DANDROID_GOLD_LINKER=OFF \
+				-DBOOST_VERSION="${BOOSTVER}" \
 				-DCMAKE_BUILD_TYPE=$3
 			make -j 1
 		)
