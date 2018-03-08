@@ -1,8 +1,19 @@
 diff --git a/build-android.sh b/build-android.sh
-index ad0707e..92d37d9 100755
+index ad0707e..f44c494 100755
 --- a/build-android.sh
 +++ b/build-android.sh
-@@ -93,16 +93,20 @@ do_download ()
+@@ -41,6 +41,10 @@ boost_version()
+     BOOST_VER1=1
+     BOOST_VER2=65
+     BOOST_VER3=1
++  elif [ "$1" = "1.59.0" ]; then
++    BOOST_VER1=1
++    BOOST_VER2=59
++    BOOST_VER3=0
+   elif [ "$1" = "1.55.0" ]; then
+     BOOST_VER1=1
+     BOOST_VER2=55
+@@ -93,16 +97,20 @@ do_download ()
  #LIBRARIES=--with-libraries=date_time,filesystem,program_options,regex,signals,system,thread,iostreams,locale
  LIBRARIES=
  register_option "--with-libraries=<list>" do_with_libraries "Comma separated list of libraries to build."
@@ -27,7 +38,7 @@ index ad0707e..92d37d9 100755
  register_option "--prefix=<path>" do_prefix "Prefix to be used when installing libraries and includes."
  do_prefix () {
      if [ -d $1 ]; then
-@@ -116,6 +120,22 @@ do_arch () {
+@@ -116,6 +124,22 @@ do_arch () {
    for ARCH in $(echo $1 | tr ',' '\n') ; do ARCHLIST="$ARCH ${ARCHLIST}"; done
  }
  
@@ -50,7 +61,7 @@ index ad0707e..92d37d9 100755
  PROGRAM_PARAMETERS="<ndk-root>"
  PROGRAM_DESCRIPTION=\
  "       Boost For Android\n"\
-@@ -139,10 +159,10 @@ BUILD_DIR="./build/"
+@@ -139,10 +163,10 @@ BUILD_DIR="./build/"
  if [ $CLEAN = yes ] ; then
  	echo "Cleaning: $BUILD_DIR"
  	rm -f -r $PROGDIR/$BUILD_DIR
@@ -63,7 +74,7 @@ index ad0707e..92d37d9 100755
  	echo "Cleaning: $BOOST_TAR"
  	rm -f $PROGDIR/$BOOST_TAR
  
-@@ -209,8 +229,12 @@ case "$HOST_OS" in
+@@ -209,8 +233,12 @@ case "$HOST_OS" in
          PlatformOS=linux
  esac
  
@@ -77,7 +88,7 @@ index ad0707e..92d37d9 100755
      NDK_RN=`cat $NDK_RELEASE_FILE | sed 's/^r\(.*\)$/\1/g'`
  elif [ -n "${AndroidSourcesDetected}" ]; then
      if [ -f "${ANDROID_BUILD_TOP}/ndk/docs/CHANGES.html" ]; then
-@@ -233,8 +257,20 @@ else
+@@ -233,8 +261,20 @@ else
      fi
  fi
  
@@ -98,7 +109,7 @@ index ad0707e..92d37d9 100755
  case "$NDK_RN" in
  	4*)
  		TOOLCHAIN=${TOOLCHAIN:-arm-eabi-4.4.0}
-@@ -277,19 +313,25 @@ case "$NDK_RN" in
+@@ -277,20 +317,26 @@ case "$NDK_RN" in
  		TOOLSET=gcc-androidR8e
  		;;
  	"10 (64-bit)"|"10b (64-bit)"|"10c (64-bit)"|"10d (64-bit)")
@@ -117,22 +128,23 @@ index ad0707e..92d37d9 100755
 +		TOOLCHAIN=llvm-3.6
 +		CXXPATH=$AndroidNDKRoot/toolchains/${TOOLCHAIN}/prebuilt/${PlatformOS}-x86_64/bin/clang++
 +		TOOLSET=clang
-+		;;
-+	11*|12*|13*)
-+		TOOLCHAIN=${TOOLCHAIN:-llvm}
-+		CXXPATH=$AndroidNDKRoot/toolchains/${TOOLCHAIN}/prebuilt/${PlatformOS}-x86_64/bin/clang++
-+		TOOLSET=clang
  		;;
 -	16.*)
-+	14*|15*|16*)
++	11*|12*|13*)
  		TOOLCHAIN=${TOOLCHAIN:-llvm}
  		CXXPATH=$AndroidNDKRoot/toolchains/${TOOLCHAIN}/prebuilt/${PlatformOS}-x86_64/bin/clang++
  		TOOLSET=clang
-+		UNIFIED_HEADERS=on
  		;;
++	14*|15*|16*)
++		TOOLCHAIN=${TOOLCHAIN:-llvm}
++		CXXPATH=$AndroidNDKRoot/toolchains/${TOOLCHAIN}/prebuilt/${PlatformOS}-x86_64/bin/clang++
++		TOOLSET=clang
++		UNIFIED_HEADERS=on
++		;;
  	*)
  		echo "Undefined or not supported Android NDK version: $NDK_RN"
-@@ -362,7 +404,7 @@ then
+ 		exit 1
+@@ -362,7 +408,7 @@ then
    # Make the initial bootstrap
    echo "Performing boost bootstrap"
  
@@ -141,7 +153,7 @@ index ad0707e..92d37d9 100755
    case "$HOST_OS" in
      windows)
          cmd //c "bootstrap.bat" 2>&1 | tee -a $PROGDIR/build.log
-@@ -377,7 +419,7 @@ then
+@@ -377,7 +423,7 @@ then
    	exit 1
    fi
    cd $PROGDIR
@@ -150,7 +162,7 @@ index ad0707e..92d37d9 100755
    # -------------------------------------------------------------
    # Patching will be done only if we had a successfull bootstrap!
    # -------------------------------------------------------------
-@@ -387,17 +429,23 @@ then
+@@ -387,17 +433,23 @@ then
    PATCH_BOOST_DIR=$PROGDIR/patches/boost-${BOOST_VER}
  
    if [ "$TOOLSET" = "clang" ]; then
@@ -179,7 +191,7 @@ index ad0707e..92d37d9 100755
    else
        cp configs/user-config-boost-${BOOST_VER}.jam $BOOST_DIR/tools/build/v2/user-config.jam || exit 1
    fi
-@@ -462,24 +510,38 @@ echo "Building boost for android for $ARCH"
+@@ -462,24 +514,38 @@ echo "Building boost for android for $ARCH"
  
    cd $BOOST_DIR
  
@@ -222,7 +234,7 @@ index ad0707e..92d37d9 100755
        if [ "$ARCH" = "armeabi" ]; then
            if [ -z "$LIBRARIES" ]; then
                echo "Disabling boost_math library on armeabi architecture, because of broken toolchain" | tee -a $PROGDIR/build.log
-@@ -504,6 +566,7 @@ echo "Building boost for android for $ARCH"
+@@ -504,6 +570,7 @@ echo "Building boost for android for $ARCH"
           -j$NCPU                      \
           target-os=${TARGET_OS}       \
           toolset=${TOOLSET_ARCH}      \
@@ -568,6 +580,240 @@ index 666d4c8..4683d9f 100644
  
 -# Configure specific Python version.
 -# using python : 3.1 : /usr/bin/python3 : /usr/include/python3.1 : /usr/lib ;
+diff --git a/configs/user-config-boost-1_59_0-arm64-v8a.jam b/configs/user-config-boost-1_59_0-arm64-v8a.jam
+new file mode 100644
+index 0000000..4ed01c8
+--- /dev/null
++++ b/configs/user-config-boost-1_59_0-arm64-v8a.jam
+@@ -0,0 +1,5 @@
++<compileflags>-gcc-toolchain
++<compileflags>$(AndroidNDKRoot)/toolchains/aarch64-linux-android-4.9/prebuilt/$(PlatformOS)-x86_64
++<compileflags>-target
++<compileflags>aarch64-none-linux-android
++<compileflags>-fpic
+diff --git a/configs/user-config-boost-1_59_0-armeabi-v7a.jam b/configs/user-config-boost-1_59_0-armeabi-v7a.jam
+new file mode 100644
+index 0000000..3c70384
+--- /dev/null
++++ b/configs/user-config-boost-1_59_0-armeabi-v7a.jam
+@@ -0,0 +1,10 @@
++<compileflags>-gcc-toolchain
++<compileflags>$(AndroidNDKRoot)/toolchains/arm-linux-androideabi-4.9/prebuilt/$(PlatformOS)-x86_64
++<compileflags>-target
++<compileflags>armv7-none-linux-androideabi
++<compileflags>-march=armv7-a
++<compileflags>-mfloat-abi=softfp
++<compileflags>-mfpu=vfpv3-d16
++<compileflags>-mthumb
++<compileflags>-fpic
++<compileflags>-fno-integrated-as
+diff --git a/configs/user-config-boost-1_59_0-armeabi.jam b/configs/user-config-boost-1_59_0-armeabi.jam
+new file mode 100644
+index 0000000..7867ef1
+--- /dev/null
++++ b/configs/user-config-boost-1_59_0-armeabi.jam
+@@ -0,0 +1,10 @@
++<compileflags>-gcc-toolchain
++<compileflags>$(AndroidNDKRoot)/toolchains/arm-linux-androideabi-4.9/prebuilt/$(PlatformOS)-x86_64
++<compileflags>-target
++<compileflags>armv5te-none-linux-androideabi
++<compileflags>-march=armv5te
++<compileflags>-mtune=xscale
++<compileflags>-msoft-float
++<compileflags>-mthumb
++<compileflags>-fpic
++<compileflags>-fno-integrated-as
+diff --git a/configs/user-config-boost-1_59_0-common.jam b/configs/user-config-boost-1_59_0-common.jam
+new file mode 100644
+index 0000000..6283038
+--- /dev/null
++++ b/configs/user-config-boost-1_59_0-common.jam
+@@ -0,0 +1,25 @@
++
++# --------------------------------------------------------------------
++
++using clang : %ARCH%
++:
++$(AndroidBinariesPath)/clang++
++:
++<archiver>$(AndroidBinariesPath)/llvm-ar
++<compileflags>-fexceptions
++<compileflags>-frtti
++<compileflags>-ffunction-sections
++<compileflags>-funwind-tables
++<compileflags>-fstack-protector-strong
++<compileflags>-Wno-invalid-command-line-argument
++<compileflags>-Wno-unused-command-line-argument
++<compileflags>-Wno-unused-local-typedef
++<compileflags>-no-canonical-prefixes
++<compileflags>-DANDROID
++<compileflags>-D__ANDROID_API__=$(AndroidApiLevel)
++<compileflags>-Wa,--noexecstack
++<compileflags>-Wformat
++<compileflags>-Werror=format-security
++<compileflags>-DNDEBUG
++<compileflags>-O2
++<compileflags>-g
+diff --git a/configs/user-config-boost-1_59_0-mips.jam b/configs/user-config-boost-1_59_0-mips.jam
+new file mode 100644
+index 0000000..a079f13
+--- /dev/null
++++ b/configs/user-config-boost-1_59_0-mips.jam
+@@ -0,0 +1,6 @@
++<compileflags>-gcc-toolchain
++<compileflags>$(AndroidNDKRoot)/toolchains/mipsel-linux-android-4.9/prebuilt/$(PlatformOS)-x86_64
++<compileflags>-target
++<compileflags>mipsel-none-linux-android
++<compileflags>-mips32
++<compileflags>-fpic
+diff --git a/configs/user-config-boost-1_59_0-mips64.jam b/configs/user-config-boost-1_59_0-mips64.jam
+new file mode 100644
+index 0000000..511f54c
+--- /dev/null
++++ b/configs/user-config-boost-1_59_0-mips64.jam
+@@ -0,0 +1,6 @@
++<compileflags>-gcc-toolchain
++<compileflags>$(AndroidNDKRoot)/toolchains/mips64el-linux-android-4.9/prebuilt/$(PlatformOS)-x86_64
++<compileflags>-target
++<compileflags>mips64el-none-linux-android
++<compileflags>-fpic
++<compileflags>-fintegrated-as
+diff --git a/configs/user-config-boost-1_59_0-toolset.jam b/configs/user-config-boost-1_59_0-toolset.jam
+new file mode 100644
+index 0000000..78979bc
+--- /dev/null
++++ b/configs/user-config-boost-1_59_0-toolset.jam
+@@ -0,0 +1,42 @@
++
++# --------------------------------------------------------------------
++
++# android-stl toolset options
++toolset.flags clang-linux.compile OPTIONS <android-stl>libcxx_shared : "-I$(AndroidLibCxxInclude) -I$(AndroidLibCxxAbiInclude)" : unchecked ;
++toolset.flags clang-linux.compile OPTIONS <android-stl>libcxx_static : "-I$(AndroidLibCxxInclude) -I$(AndroidLibCxxAbiInclude)" : unchecked ;
++toolset.flags clang-linux.compile OPTIONS <android-stl>gnustl_shared : "-I$(AndroidNDKRoot)/sources/cxx-stl/gnu-libstdc++/4.9/include" : unchecked ;
++toolset.flags clang-linux.compile OPTIONS <android-stl>gnustl_static : "-I$(AndroidNDKRoot)/sources/cxx-stl/gnu-libstdc++/4.9/include" : unchecked ;
++toolset.flags clang-linux.compile OPTIONS <android-stl>gnustl_shared/<toolset>clang-x86 : "-I$(AndroidNDKRoot)/sources/cxx-stl/gnu-libstdc++/4.9/libs/x86/include" : unchecked ;
++toolset.flags clang-linux.compile OPTIONS <android-stl>gnustl_static/<toolset>clang-x86 : "-I$(AndroidNDKRoot)/sources/cxx-stl/gnu-libstdc++/4.9/libs/x86/include" : unchecked ;
++toolset.flags clang-linux.compile OPTIONS <android-stl>gnustl_shared/<toolset>clang-x8664 : "-I$(AndroidNDKRoot)/sources/cxx-stl/gnu-libstdc++/4.9/libs/x86_64/include" : unchecked ;
++toolset.flags clang-linux.compile OPTIONS <android-stl>gnustl_static/<toolset>clang-x8664 : "-I$(AndroidNDKRoot)/sources/cxx-stl/gnu-libstdc++/4.9/libs/x86_64/include" : unchecked ;
++toolset.flags clang-linux.compile OPTIONS <android-stl>gnustl_shared/<toolset>clang-armeabi : "-I$(AndroidNDKRoot)/sources/cxx-stl/gnu-libstdc++/4.9/libs/armeabi/include" : unchecked ;
++toolset.flags clang-linux.compile OPTIONS <android-stl>gnustl_static/<toolset>clang-armeabi : "-I$(AndroidNDKRoot)/sources/cxx-stl/gnu-libstdc++/4.9/libs/armeabi/include" : unchecked ;
++toolset.flags clang-linux.compile OPTIONS <android-stl>gnustl_shared/<toolset>clang-armeabiv7a : "-I$(AndroidNDKRoot)/sources/cxx-stl/gnu-libstdc++/4.9/libs/armeabi-v7a/include" : unchecked ;
++toolset.flags clang-linux.compile OPTIONS <android-stl>gnustl_static/<toolset>clang-armeabiv7a : "-I$(AndroidNDKRoot)/sources/cxx-stl/gnu-libstdc++/4.9/libs/armeabi-v7a/include" : unchecked ;
++toolset.flags clang-linux.compile OPTIONS <android-stl>gnustl_shared/<toolset>clang-arm64v8a : "-I$(AndroidNDKRoot)/sources/cxx-stl/gnu-libstdc++/4.9/libs/arm64-v8a/include" : unchecked ;
++toolset.flags clang-linux.compile OPTIONS <android-stl>gnustl_static/<toolset>clang-arm64v8a : "-I$(AndroidNDKRoot)/sources/cxx-stl/gnu-libstdc++/4.9/libs/arm64-v8a/include" : unchecked ;
++toolset.flags clang-linux.compile OPTIONS <android-stl>gnustl_shared/<toolset>clang-mips : "-I$(AndroidNDKRoot)/sources/cxx-stl/gnu-libstdc++/4.9/libs/mips/include" : unchecked ;
++toolset.flags clang-linux.compile OPTIONS <android-stl>gnustl_static/<toolset>clang-mips : "-I$(AndroidNDKRoot)/sources/cxx-stl/gnu-libstdc++/4.9/libs/mips/include" : unchecked ;
++toolset.flags clang-linux.compile OPTIONS <android-stl>gnustl_shared/<toolset>clang-mips64 : "-I$(AndroidNDKRoot)/sources/cxx-stl/gnu-libstdc++/4.9/libs/mips64/include" : unchecked ;
++toolset.flags clang-linux.compile OPTIONS <android-stl>gnustl_static/<toolset>clang-mips64 : "-I$(AndroidNDKRoot)/sources/cxx-stl/gnu-libstdc++/4.9/libs/mips64/include" : unchecked ;
++
++# android-unified-headers toolset options
++toolset.flags clang-linux.compile OPTIONS <android-unified-headers>on/<toolset>clang-x86 : "--sysroot $(AndroidNDKRoot)/sysroot -isystem $(AndroidNDKRoot)/sysroot/usr/include/i686-linux-android" : unchecked ;
++toolset.flags clang-linux.compile OPTIONS <android-unified-headers>on/<toolset>clang-x8664 : "--sysroot $(AndroidNDKRoot)/sysroot -isystem $(AndroidNDKRoot)/sysroot/usr/include/x86_64-linux-android" : unchecked ;
++toolset.flags clang-linux.compile OPTIONS <android-unified-headers>on/<toolset>clang-armeabi : "--sysroot $(AndroidNDKRoot)/sysroot -isystem $(AndroidNDKRoot)/sysroot/usr/include/arm-linux-androideabi" : unchecked ;
++toolset.flags clang-linux.compile OPTIONS <android-unified-headers>on/<toolset>clang-armeabiv7a : "--sysroot $(AndroidNDKRoot)/sysroot -isystem $(AndroidNDKRoot)/sysroot/usr/include/arm-linux-androideabi" : unchecked ;
++toolset.flags clang-linux.compile OPTIONS <android-unified-headers>on/<toolset>clang-arm64v8a : "--sysroot $(AndroidNDKRoot)/sysroot -isystem $(AndroidNDKRoot)/sysroot/usr/include/aarch64-linux-android" : unchecked ;
++toolset.flags clang-linux.compile OPTIONS <android-unified-headers>on/<toolset>clang-mips : "--sysroot $(AndroidNDKRoot)/sysroot -isystem $(AndroidNDKRoot)/sysroot/usr/include/mipsel-linux-android" : unchecked ;
++toolset.flags clang-linux.compile OPTIONS <android-unified-headers>on/<toolset>clang-mips64 : "--sysroot $(AndroidNDKRoot)/sysroot -isystem $(AndroidNDKRoot)/sysroot/usr/include/mips64el-linux-android" : unchecked ;
++toolset.flags clang-linux.compile OPTIONS <android-unified-headers>off/<toolset>clang-x86 : "--sysroot $(AndroidNDKRoot)/platforms/android-$(AndroidApiLevel)/arch-x86" : unchecked ;
++toolset.flags clang-linux.compile OPTIONS <android-unified-headers>off/<toolset>clang-x8664 : "--sysroot $(AndroidNDKRoot)/platforms/android-$(AndroidApiLevel)/arch-x86_64" : unchecked ;
++toolset.flags clang-linux.compile OPTIONS <android-unified-headers>off/<toolset>clang-armeabi : "--sysroot $(AndroidNDKRoot)/platforms/android-$(AndroidApiLevel)/arch-arm" : unchecked ;
++toolset.flags clang-linux.compile OPTIONS <android-unified-headers>off/<toolset>clang-armeabiv7a : "--sysroot $(AndroidNDKRoot)/platforms/android-$(AndroidApiLevel)/arch-arm" : unchecked ;
++toolset.flags clang-linux.compile OPTIONS <android-unified-headers>off/<toolset>clang-arm64v8a : "--sysroot $(AndroidNDKRoot)/platforms/android-$(AndroidApiLevel)/arch-arm64" : unchecked ;
++toolset.flags clang-linux.compile OPTIONS <android-unified-headers>off/<toolset>clang-mips : "--sysroot $(AndroidNDKRoot)/platforms/android-$(AndroidApiLevel)/arch-mips" : unchecked ;
++toolset.flags clang-linux.compile OPTIONS <android-unified-headers>off/<toolset>clang-mips64 : "--sysroot $(AndroidNDKRoot)/platforms/android-$(AndroidApiLevel)/arch-mips64" : unchecked ;
++
++# android-support toolset options
++toolset.flags clang-linux.compile OPTIONS <android-support>on : "-isystem $(AndroidNDKRoot)/sources/android/support/include" : unchecked ;
++
+diff --git a/configs/user-config-boost-1_59_0-x86.jam b/configs/user-config-boost-1_59_0-x86.jam
+new file mode 100644
+index 0000000..57cbf64
+--- /dev/null
++++ b/configs/user-config-boost-1_59_0-x86.jam
+@@ -0,0 +1,6 @@
++<compileflags>-gcc-toolchain
++<compileflags>$(AndroidNDKRoot)/toolchains/x86-4.9/prebuilt/$(PlatformOS)-x86_64
++<compileflags>-target
++<compileflags>i686-none-linux-android
++<compileflags>-fPIC
++<compileflags>-mstackrealign
+diff --git a/configs/user-config-boost-1_59_0-x86_64.jam b/configs/user-config-boost-1_59_0-x86_64.jam
+new file mode 100644
+index 0000000..e343032
+--- /dev/null
++++ b/configs/user-config-boost-1_59_0-x86_64.jam
+@@ -0,0 +1,5 @@
++<compileflags>-gcc-toolchain
++<compileflags>$(AndroidNDKRoot)/toolchains/x86_64-4.9/prebuilt/$(PlatformOS)-x86_64
++<compileflags>-target
++<compileflags>x86_64-none-linux-android
++<compileflags>-fPIC
+diff --git a/configs/user-config-boost-1_59_0.jam b/configs/user-config-boost-1_59_0.jam
+new file mode 100644
+index 0000000..4683d9f
+--- /dev/null
++++ b/configs/user-config-boost-1_59_0.jam
+@@ -0,0 +1,59 @@
++# Copyright 2003, 2005 Douglas Gregor
++# Copyright 2004 John Maddock
++# Copyright 2002, 2003, 2004, 2007 Vladimir Prus
++# Distributed under the Boost Software License, Version 1.0.
++# (See accompanying file LICENSE_1_0.txt or http://www.boost.org/LICENSE_1_0.txt)
++
++#   This file is used to configure your Boost.Build installation. You can modify
++# this file in place, or you can place it in a permanent location so that it
++# does not get overwritten should you get a new version of Boost.Build. See:
++#
++#   http://www.boost.org/boost-build2/doc/html/bbv2/overview/configuration.html
++#
++# for documentation about possible permanent locations.
++
++#   This file specifies which toolsets (C++ compilers), libraries, and other
++# tools are available. Often, you should be able to just uncomment existing
++# example lines and adjust them to taste. The complete list of supported tools,
++# and configuration instructions can be found at:
++#
++#   http://boost.org/boost-build2/doc/html/bbv2/reference/tools.html
++#
++
++#   This file uses Jam language syntax to describe available tools. Mostly,
++# there are 'using' lines, that contain the name of the used tools, and
++# parameters to pass to those tools -- where paremeters are separated by
++# semicolons. Important syntax notes:
++#
++#   - Both ':' and ';' must be separated from other tokens by whitespace
++#   - The '\' symbol is a quote character, so when specifying Windows paths you
++#     should use '/' or '\\' instead.
++#
++# More details about the syntax can be found at:
++#
++#   http://boost.org/boost-build2/doc/html/bbv2/advanced.html#bbv2.advanced.jam_language
++#
++# ------------------
++# Android configurations.
++# ------------------
++
++import feature ;
++import os ;
++import toolset ;
++
++local AndroidNDKRoot = [ os.environ AndroidNDKRoot ] ;
++local AndroidApiLevel = [ os.environ AndroidApiLevel ] ;
++local AndroidBinariesPath = [ os.environ AndroidBinariesPath ] ;
++local AndroidLibCxxInclude = [ os.environ AndroidLibCxxInclude ] ;
++local AndroidLibCxxAbiInclude = [ os.environ AndroidLibCxxAbiInclude ] ;
++local PlatformOS = [ os.environ PlatformOS ] ;
++
++# selects the Android NDK C++ runtime library
++feature.feature android-stl : libcxx_static libcxx_shared gnustl_static gnustl_shared : composite propagated symmetric ;
++
++# enables use of the Android NDK unified headers
++feature.feature android-unified-headers : on off : composite propagated incidental ;
++
++# controls inclusion of the Android NDK support_lib headers
++feature.feature android-support : on off : composite propagated ;
++
 diff --git a/configs/user-config-boost-1_65_1-arm64-v8a.jam b/configs/user-config-boost-1_65_1-arm64-v8a.jam
 index c770f44..4ed01c8 100644
 --- a/configs/user-config-boost-1_65_1-arm64-v8a.jam
@@ -1010,6 +1256,24 @@ index 0a159d9..4683d9f 100644
 +# controls inclusion of the Android NDK support_lib headers
 +feature.feature android-support : on off : composite propagated ;
 +
+diff --git a/patches/boost-1_55_0/asio_resolver_query_base.patch b/patches/boost-1_55_0/asio_resolver_query_base.patch
+new file mode 100644
+index 0000000..7c59a31
+--- /dev/null
++++ b/patches/boost-1_55_0/asio_resolver_query_base.patch
+@@ -0,0 +1,12 @@
++diff -Naur boost_1_55_0/boost/asio/ip/resolver_query_base.hpp boost_1_55_0.patched/boost/asio/ip/resolver_query_base.hpp
++--- boost_1_55_0/boost/asio/ip/resolver_query_base.hpp	2013-09-22 15:13:33.000000000 -0700
+++++ boost_1_55_0.patched/boost/asio/ip/resolver_query_base.hpp	2018-03-07 19:20:24.574016300 -0800
++@@ -94,7 +94,7 @@
++ 
++   friend flags operator~(flags x)
++   {
++-    return static_cast<flags>(static_cast<unsigned int>(~x));
+++    return static_cast<flags>(~static_cast<unsigned int>(x));
++   }
++ 
++   friend flags& operator&=(flags& x, flags y)
 diff --git a/patches/boost-1_55_0/filesystem_operations.patch b/patches/boost-1_55_0/filesystem_operations.patch
 new file mode 100644
 index 0000000..c70fbd7
@@ -1127,6 +1391,112 @@ index 0000000..246aa49
 +     const char * from,
 +     const char * from_end, 
 +     std::size_t max_limit
+diff --git a/patches/boost-1_59_0/boost-1_59_0.patch b/patches/boost-1_59_0/boost-1_59_0.patch
+new file mode 100644
+index 0000000..3d54926
+--- /dev/null
++++ b/patches/boost-1_59_0/boost-1_59_0.patch
+@@ -0,0 +1,100 @@
++diff -Naur boost_1_59_0/boost/asio/detail/socket_types.hpp boost_1_59_0.patched/boost/asio/detail/socket_types.hpp
++--- boost_1_59_0/boost/asio/detail/socket_types.hpp	2015-03-23 13:24:12.000000000 -0700
+++++ boost_1_59_0.patched/boost/asio/detail/socket_types.hpp	2018-03-07 20:27:54.992509800 -0800
++@@ -278,7 +278,12 @@
++ typedef int socket_type;
++ const int invalid_socket = -1;
++ const int socket_error_retval = -1;
+++// @Moss - Some platforms do not define it (Android)
+++#if defined(INET_ADDRSTRLEN)
++ const int max_addr_v4_str_len = INET_ADDRSTRLEN;
+++#else // defined(INET_ADDRSTRLEN)
+++const int max_addr_v4_str_len = 16;
+++#endif // defined(INET_ADDRSTRLEN)
++ #if defined(INET6_ADDRSTRLEN)
++ const int max_addr_v6_str_len = INET6_ADDRSTRLEN + 1 + IF_NAMESIZE;
++ #else // defined(INET6_ADDRSTRLEN)
++diff -Naur boost_1_59_0/boost/asio/ip/impl/address_v6.ipp boost_1_59_0.patched/boost/asio/ip/impl/address_v6.ipp
++--- boost_1_59_0/boost/asio/ip/impl/address_v6.ipp	2015-03-23 13:24:12.000000000 -0700
+++++ boost_1_59_0.patched/boost/asio/ip/impl/address_v6.ipp	2018-03-07 20:27:55.002148200 -0800
++@@ -11,6 +11,23 @@
++ #ifndef BOOST_ASIO_IP_IMPL_ADDRESS_V6_IPP
++ #define BOOST_ASIO_IP_IMPL_ADDRESS_V6_IPP
++ 
+++// @Moss - Define IPv6 macros
+++#if !defined(IN6_IS_ADDR_MULTICAST) 
+++#define IN6_IS_ADDR_MULTICAST(a) (((__const uint8_t *) (a))[0] == 0xff)
+++#endif
+++
+++#if !defined(IN6_IS_ADDR_MC_NODELOCAL)
+++#define IN6_IS_ADDR_MC_NODELOCAL(a) \
+++        (IN6_IS_ADDR_MULTICAST(a) \
+++         && ((((__const uint8_t *) (a))[1] & 0xf) == 0x1))
+++#endif
+++
+++#if !defined(IN6_IS_ADDR_MC_GLOBAL)
+++#define IN6_IS_ADDR_MC_GLOBAL(a) \
+++        (IN6_IS_ADDR_MULTICAST(a) \
+++         && ((((__const uint8_t *) (a))[1] & 0xf) == 0xe))
+++#endif
+++
++ #if defined(_MSC_VER) && (_MSC_VER >= 1200)
++ # pragma once
++ #endif // defined(_MSC_VER) && (_MSC_VER >= 1200)
++diff -Naur boost_1_59_0/boost/config/user.hpp boost_1_59_0.patched/boost/config/user.hpp
++--- boost_1_59_0/boost/config/user.hpp	2015-08-04 04:44:49.000000000 -0700
+++++ boost_1_59_0.patched/boost/config/user.hpp	2018-03-07 20:27:55.011995500 -0800
++@@ -13,6 +13,14 @@
++ //  configuration policy:
++ //
++ 
+++// Android defines
+++#define _REENTRANT 1
+++#define _GLIBCXX__PTHREADS 1
+++// There is problem with std::atomic on android (and some other platforms).
+++// See this link for more info:
+++// https://code.google.com/p/android/issues/detail?id=42735#makechanges
+++#define BOOST_ASIO_DISABLE_STD_ATOMIC 1
+++
++ // define this to locate a compiler config file:
++ // #define BOOST_COMPILER_CONFIG <myheader>
++ 
++diff -Naur boost_1_59_0/libs/filesystem/src/operations.cpp boost_1_59_0.patched/libs/filesystem/src/operations.cpp
++--- boost_1_59_0/libs/filesystem/src/operations.cpp	2015-07-27 04:09:17.000000000 -0700
+++++ boost_1_59_0.patched/libs/filesystem/src/operations.cpp	2018-03-07 20:42:42.518393500 -0800
++@@ -11,6 +11,7 @@
++ //--------------------------------------------------------------------------------------// 
++ 
++ //  define 64-bit offset macros BEFORE including boost/config.hpp (see ticket #5355) 
+++#if defined(__LP64__) || !defined(__ANDROID_API__) || (__ANDROID_API__ >= 24)
++ #if !(defined(__HP_aCC) && defined(_ILP32) && !defined(_STATVFS_ACPP_PROBLEMS_FIXED))
++ #define _FILE_OFFSET_BITS 64 // at worst, these defines may have no effect,
++ #endif
++@@ -28,6 +29,7 @@
++ #else
++ #define _FILE_OFFSET_BITS 64
++ #endif
+++#endif
++ 
++ // define BOOST_FILESYSTEM_SOURCE so that <boost/filesystem/config.hpp> knows
++ // the library is being built (possibly exporting rather than importing code)
++@@ -220,7 +222,19 @@
++          || ::mkdir(to.c_str(),from_stat.st_mode)!= 0))
++ #   define BOOST_COPY_FILE(F,T,FailIfExistsBool)copy_file_api(F, T, FailIfExistsBool)
++ #   define BOOST_MOVE_FILE(OLD,NEW)(::rename(OLD, NEW)== 0)
+++#if defined(__ANDROID__) || defined(ANDROID)
+++    int BOOST_RESIZE_FILE(const char *path, off_t size)
+++    {
+++      int result = -1;
+++      int fd = open(path, O_WRONLY);
+++      if (fd != -1)
+++        result = ftruncate(fd, size);
+++      close(fd);
+++      return result;
+++    }
+++#else
++ #   define BOOST_RESIZE_FILE(P,SZ)(::truncate(P, SZ)== 0)
+++#endif
++ 
++ #   define BOOST_ERROR_NOT_SUPPORTED ENOSYS
++ #   define BOOST_ERROR_ALREADY_EXISTS EEXIST
 diff --git a/patches/boost-1_65_1/filesystem_operations.patch b/patches/boost-1_65_1/filesystem_operations.patch
 new file mode 100644
 index 0000000..7c35f4f
