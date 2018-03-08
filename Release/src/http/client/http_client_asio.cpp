@@ -1645,7 +1645,7 @@ private:
             timedout
         };
 
-#if defined(ANDROID) || defined(__ANDROID__)
+#if (defined(ANDROID) || defined(__ANDROID__)) && !defined(_LIBCPP_VERSION)
         boost::chrono::microseconds m_duration;
 #else
         std::chrono::microseconds m_duration;

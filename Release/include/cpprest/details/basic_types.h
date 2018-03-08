@@ -20,8 +20,10 @@
 #include "cpprest/details/cpprest_compat.h"
 
 #ifndef _WIN32
-# define __STDC_LIMIT_MACROS
-# include <stdint.h>
+#ifndef __STDC_LIMIT_MACROS
+#define __STDC_LIMIT_MACROS
+#endif
+#include <stdint.h>
 #else
 #include <cstdint>
 #endif
