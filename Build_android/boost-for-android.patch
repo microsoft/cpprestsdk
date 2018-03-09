@@ -1,5 +1,5 @@
 diff --git a/build-android.sh b/build-android.sh
-index ad0707e..f44c494 100755
+index ad0707e..56d44f6 100755
 --- a/build-android.sh
 +++ b/build-android.sh
 @@ -41,6 +41,10 @@ boost_version()
@@ -234,14 +234,17 @@ index ad0707e..f44c494 100755
        if [ "$ARCH" = "armeabi" ]; then
            if [ -z "$LIBRARIES" ]; then
                echo "Disabling boost_math library on armeabi architecture, because of broken toolchain" | tee -a $PROGDIR/build.log
-@@ -504,6 +570,7 @@ echo "Building boost for android for $ARCH"
+@@ -504,8 +570,10 @@ echo "Building boost for android for $ARCH"
           -j$NCPU                      \
           target-os=${TARGET_OS}       \
           toolset=${TOOLSET_ARCH}      \
 +         $ANDROID_FEATURES            \
           $cflags                      \
           $cxxflags                    \
++         variant=debug,release        \
           link=static                  \
+          threading=multi              \
+          --layout=versioned           \
 diff --git a/configs/user-config-boost-1_55_0-arm64-v8a.jam b/configs/user-config-boost-1_55_0-arm64-v8a.jam
 new file mode 100644
 index 0000000..4ed01c8
@@ -287,7 +290,7 @@ index 0000000..7867ef1
 +<compileflags>-fno-integrated-as
 diff --git a/configs/user-config-boost-1_55_0-common.jam b/configs/user-config-boost-1_55_0-common.jam
 new file mode 100644
-index 0000000..6283038
+index 0000000..56de635
 --- /dev/null
 +++ b/configs/user-config-boost-1_55_0-common.jam
 @@ -0,0 +1,25 @@
@@ -302,7 +305,7 @@ index 0000000..6283038
 +<compileflags>-fexceptions
 +<compileflags>-frtti
 +<compileflags>-ffunction-sections
-+<compileflags>-funwind-tables
++<compileflags>-fasynchronous-unwind-tables
 +<compileflags>-fstack-protector-strong
 +<compileflags>-Wno-invalid-command-line-argument
 +<compileflags>-Wno-unused-command-line-argument
@@ -625,7 +628,7 @@ index 0000000..7867ef1
 +<compileflags>-fno-integrated-as
 diff --git a/configs/user-config-boost-1_59_0-common.jam b/configs/user-config-boost-1_59_0-common.jam
 new file mode 100644
-index 0000000..6283038
+index 0000000..56de635
 --- /dev/null
 +++ b/configs/user-config-boost-1_59_0-common.jam
 @@ -0,0 +1,25 @@
@@ -640,7 +643,7 @@ index 0000000..6283038
 +<compileflags>-fexceptions
 +<compileflags>-frtti
 +<compileflags>-ffunction-sections
-+<compileflags>-funwind-tables
++<compileflags>-fasynchronous-unwind-tables
 +<compileflags>-fstack-protector-strong
 +<compileflags>-Wno-invalid-command-line-argument
 +<compileflags>-Wno-unused-command-line-argument
@@ -875,10 +878,15 @@ index f119d2a..7867ef1 100644
 -<compileflags>$(AndroidNDKRoot)/sysroot/usr/include/arm-linux-androideabi
 -<compileflags>-D__ANDROID_API__=15
 diff --git a/configs/user-config-boost-1_65_1-common.jam b/configs/user-config-boost-1_65_1-common.jam
-index 9bb70c1..6283038 100644
+index 9bb70c1..56de635 100644
 --- a/configs/user-config-boost-1_65_1-common.jam
 +++ b/configs/user-config-boost-1_65_1-common.jam
-@@ -13,11 +13,10 @@ $(AndroidBinariesPath)/clang++
+@@ -9,15 +9,14 @@ $(AndroidBinariesPath)/clang++
+ <compileflags>-fexceptions
+ <compileflags>-frtti
+ <compileflags>-ffunction-sections
+-<compileflags>-funwind-tables
++<compileflags>-fasynchronous-unwind-tables
  <compileflags>-fstack-protector-strong
  <compileflags>-Wno-invalid-command-line-argument
  <compileflags>-Wno-unused-command-line-argument
@@ -1096,10 +1104,15 @@ index f119d2a..7867ef1 100644
 -<compileflags>$(AndroidNDKRoot)/sysroot/usr/include/arm-linux-androideabi
 -<compileflags>-D__ANDROID_API__=15
 diff --git a/configs/user-config-boost-1_66_0-common.jam b/configs/user-config-boost-1_66_0-common.jam
-index 9bb70c1..6283038 100644
+index 9bb70c1..56de635 100644
 --- a/configs/user-config-boost-1_66_0-common.jam
 +++ b/configs/user-config-boost-1_66_0-common.jam
-@@ -13,11 +13,10 @@ $(AndroidBinariesPath)/clang++
+@@ -9,15 +9,14 @@ $(AndroidBinariesPath)/clang++
+ <compileflags>-fexceptions
+ <compileflags>-frtti
+ <compileflags>-ffunction-sections
+-<compileflags>-funwind-tables
++<compileflags>-fasynchronous-unwind-tables
  <compileflags>-fstack-protector-strong
  <compileflags>-Wno-invalid-command-line-argument
  <compileflags>-Wno-unused-command-line-argument
@@ -1393,10 +1406,10 @@ index 0000000..246aa49
 +     std::size_t max_limit
 diff --git a/patches/boost-1_59_0/boost-1_59_0.patch b/patches/boost-1_59_0/boost-1_59_0.patch
 new file mode 100644
-index 0000000..3d54926
+index 0000000..eaaf6c7
 --- /dev/null
 +++ b/patches/boost-1_59_0/boost-1_59_0.patch
-@@ -0,0 +1,100 @@
+@@ -0,0 +1,82 @@
 +diff -Naur boost_1_59_0/boost/asio/detail/socket_types.hpp boost_1_59_0.patched/boost/asio/detail/socket_types.hpp
 +--- boost_1_59_0/boost/asio/detail/socket_types.hpp	2015-03-23 13:24:12.000000000 -0700
 ++++ boost_1_59_0.patched/boost/asio/detail/socket_types.hpp	2018-03-07 20:27:54.992509800 -0800
@@ -1440,24 +1453,6 @@ index 0000000..3d54926
 + #if defined(_MSC_VER) && (_MSC_VER >= 1200)
 + # pragma once
 + #endif // defined(_MSC_VER) && (_MSC_VER >= 1200)
-+diff -Naur boost_1_59_0/boost/config/user.hpp boost_1_59_0.patched/boost/config/user.hpp
-+--- boost_1_59_0/boost/config/user.hpp	2015-08-04 04:44:49.000000000 -0700
-++++ boost_1_59_0.patched/boost/config/user.hpp	2018-03-07 20:27:55.011995500 -0800
-+@@ -13,6 +13,14 @@
-+ //  configuration policy:
-+ //
-+ 
-++// Android defines
-++#define _REENTRANT 1
-++#define _GLIBCXX__PTHREADS 1
-++// There is problem with std::atomic on android (and some other platforms).
-++// See this link for more info:
-++// https://code.google.com/p/android/issues/detail?id=42735#makechanges
-++#define BOOST_ASIO_DISABLE_STD_ATOMIC 1
-++
-+ // define this to locate a compiler config file:
-+ // #define BOOST_COMPILER_CONFIG <myheader>
-+ 
 +diff -Naur boost_1_59_0/libs/filesystem/src/operations.cpp boost_1_59_0.patched/libs/filesystem/src/operations.cpp
 +--- boost_1_59_0/libs/filesystem/src/operations.cpp	2015-07-27 04:09:17.000000000 -0700
 ++++ boost_1_59_0.patched/libs/filesystem/src/operations.cpp	2018-03-07 20:42:42.518393500 -0800
