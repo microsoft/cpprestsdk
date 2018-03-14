@@ -422,7 +422,7 @@ protected:
         m_io_service = io_service;
 
         if (config::enable_multithreading) {
-            m_strand = lib::make_shared<boost::asio::strand>(
+            m_strand = lib::make_shared<boost::asio::io_service::strand>(
                 lib::ref(*io_service));
 
             m_async_read_handler = m_strand->wrap(lib::bind(
