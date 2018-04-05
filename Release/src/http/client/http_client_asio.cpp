@@ -1164,6 +1164,12 @@ private:
         auto info = std::make_shared<certificate_info>(host, get_X509_cert_chain_encoded_data(verifyCtx));
         info->verified = true;
 
+        if (!is_end_certificate_in_chain(verifyCtx))
+        {
+            // Continue until we get the end certificate.
+            return true;
+        }
+
         return m_http_client->client_config().invoke_certificate_chain_callback(info);
     }
 
