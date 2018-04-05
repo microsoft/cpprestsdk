@@ -444,7 +444,7 @@ public:
     , m_needChunked(false)
     , m_timer(client->client_config().timeout<std::chrono::microseconds>())
     , m_connection(connection)
-#if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__))
+#if defined(__APPLE__) || defined(ANDROID) || defined(__ANDROID__)
     , m_openssl_failed(false)
 #endif
     {}
@@ -980,7 +980,7 @@ private:
 
         using namespace web::http::client::details;
 
-#if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__))
+#if defined(__APPLE__) || defined(ANDROID) || defined(__ANDROID__)
         // On OS X, iOS, and Android, OpenSSL doesn't have access to where the OS
         // stores keychains. If OpenSSL fails we will doing verification at the
         // end using the whole certificate chain so wait until the 'leaf' cert.
@@ -1003,7 +1003,7 @@ private:
             };
 
             return http::client::details::verify_cert_chain_platform_specific(verifyCtx, utility::conversions::to_utf8string(host), chainFunc);
-            }
+        }
 #endif
 
         boost::asio::ssl::rfc2818_verification rfc2818(host);
@@ -1014,6 +1014,12 @@ private:
 
         auto info = std::make_shared<certificate_info>(host, get_X509_cert_chain_encoded_data(verifyCtx));
         info->verified = true;
+
+        if (!is_end_certificate_in_chain(verifyCtx))
+        {
+            // Continue until we get the end certificate.
+            return true;
+        }
 
         return m_http_client->client_config().invoke_certificate_chain_callback(info);
     }
@@ -1687,7 +1693,7 @@ private:
     
     std::unique_ptr<web::http::details::compression::stream_decompressor> m_decompressor;
 
-#if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__))
+#if defined(__APPLE__) || defined(ANDROID) || defined(__ANDROID__)
     bool m_openssl_failed;
 #endif
 };
