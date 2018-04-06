@@ -38,10 +38,9 @@ namespace web { namespace http { namespace client { namespace details {
 
 using namespace utility;
 
-#if !defined(__linux__)
-
 bool is_end_certificate_in_chain(boost::asio::ssl::verify_context &verifyCtx);
 
+#if !defined(__linux__)
 /// <summary>
 /// Using platform specific APIs verifies server certificate.
 /// Currently implemented to work on iOS, Android, and OS X.

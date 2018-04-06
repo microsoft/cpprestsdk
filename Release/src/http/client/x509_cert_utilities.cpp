@@ -40,8 +40,6 @@
 
 namespace web { namespace http { namespace client { namespace details {
 
-#if !defined(__linux__)
-
 bool is_end_certificate_in_chain(boost::asio::ssl::verify_context &verifyCtx)
 {
     X509_STORE_CTX *storeContext = verifyCtx.native_handle();
@@ -52,6 +50,8 @@ bool is_end_certificate_in_chain(boost::asio::ssl::verify_context &verifyCtx)
     }
         return true;
 }
+
+#if !defined(__linux__)
 
 bool verify_cert_chain_platform_specific(boost::asio::ssl::verify_context &verifyCtx, const std::string &hostName, const CertificateChainFunction& func)
 {

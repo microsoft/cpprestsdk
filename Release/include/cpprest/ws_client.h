@@ -226,13 +226,13 @@ public:
     }
 
 private:
+    http::client::CertificateChainFunction m_certificate_chain_callback;
     web::web_proxy m_proxy;
     web::credentials m_credentials;
     web::http::http_headers m_headers;
     bool m_sni_enabled;
     utf8string m_sni_hostname;
     bool m_validate_certificates;
-    http::client::CertificateChainFunction m_certificate_chain_callback;
 };
 
 /// <summary>
