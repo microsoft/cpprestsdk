@@ -47,7 +47,7 @@
 #include <unordered_set>
 #include <memory>
 
-#if defined(__GNUC__)
+#if defined(__GNUC__) && !defined(__clang__)
 
 #if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)
 #define AND_CAPTURE_MEMBER_FUNCTION_POINTERS
