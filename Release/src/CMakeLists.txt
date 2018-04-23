@@ -250,21 +250,21 @@ if(CPPREST_INSTALL)
   install(
     TARGETS ${CPPREST_TARGETS}
     EXPORT cpprestsdk-targets
-    RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   )
 
   configure_file(../cmake/cpprestsdk-config.in.cmake "${CMAKE_CURRENT_BINARY_DIR}/cpprestsdk-config.cmake" @ONLY)
 
   install(
     FILES "${CMAKE_CURRENT_BINARY_DIR}/cpprestsdk-config.cmake"
-    DESTINATION ${CPPREST_EXPORT_DIR}
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake
   )
   install(
     EXPORT cpprestsdk-targets
     FILE cpprestsdk-targets.cmake
     NAMESPACE cpprestsdk::
-    DESTINATION ${CPPREST_EXPORT_DIR}
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake
   )
 endif()
