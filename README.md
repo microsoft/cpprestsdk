@@ -9,7 +9,7 @@ The C++ REST SDK is a Microsoft project for cloud-based client-server communicat
 [![Ubuntu 18.04 package](https://repology.org/badge/version-for-repo/ubuntu_18_04/cpprestsdk.svg)](https://repology.org/metapackage/cpprestsdk)</br>
 [![Fedora Rawhide package](https://repology.org/badge/version-for-repo/fedora_rawhide/cpprestsdk.svg)](https://repology.org/metapackage/cpprestsdk)</br>
 [![openSUSE Tumbleweed package](https://repology.org/badge/version-for-repo/opensuse_tumbleweed/cpprestsdk.svg)](https://repology.org/metapackage/cpprestsdk)</br>
-[![Debian Testing package](https://repology.org/badge/version-for-repo/debian_testing/cpprestsdk.svg)](https://repology.org/metapackage/cpprestsdk)</br>
+[![Debian Unstable package](https://repology.org/badge/version-for-repo/debian_unstable/cpprestsdk.svg)](https://repology.org/metapackage/cpprestsdk)</br>
 
 With [vcpkg](https://github.com/Microsoft/vcpkg) on Windows
 ```
