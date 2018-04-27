@@ -22,7 +22,11 @@
 #include "cpprest/details/basic_types.h"
 #include "cpprest/asyncrt_utils.h"
 
-namespace Concurrency
+#if (defined(_MSC_VER) && (_MSC_VER >= 1800)) && !CPPREST_FORCE_PPLX
+namespace Concurrency // since namespace pplx = Concurrency
+#else
+namespace pplx
+#endif
 {
     namespace details
     {
@@ -32,12 +36,16 @@ namespace Concurrency
             pplx::task<T> first = func();
             return first.then([=](bool guard) -> pplx::task<T> {
                 if (guard)
-                    return Concurrency::details::_do_while<F,T>(func);
+                    return pplx::details::_do_while<F,T>(func);
                 else
                     return first;
             });
         }
     }
+}
+
+namespace Concurrency
+{
 
 /// Library for asynchronous streams.
 namespace streams
