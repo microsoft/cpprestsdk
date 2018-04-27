@@ -48,7 +48,7 @@ void streambuf_putc(StreamBufferType& wbuf)
     size_t count = 10;
     auto seg2 = [&count](typename StreamBufferType::int_type ) { return (--count > 0); };
     auto seg1 = [&s,&wbuf, seg2]() { return wbuf.putc(s[0]).then(seg2); };
-    Concurrency::details::_do_while(seg1).wait();
+    pplx::details::_do_while(seg1).wait();
 
     VERIFY_ARE_EQUAL(s.size() + 10, wbuf.in_avail());
 
@@ -83,7 +83,7 @@ void streambuf_putc(concurrency::streams::rawptr_buffer<CharType>& wbuf)
     size_t count = 10;
     auto seg2 = [&count](typename StreamBufferType::int_type ) { return (--count > 0); };
     auto seg1 = [&s,&wbuf, seg2]() { return wbuf.putc(s[0]).then(seg2); };
-    Concurrency::details::_do_while(seg1).wait();
+    pplx::details::_do_while(seg1).wait();
 
     VERIFY_ARE_EQUAL(s.size() + 10, wbuf.block().size());
 
@@ -119,7 +119,7 @@ void streambuf_putc(concurrency::streams::container_buffer<CollectionType>& wbuf
     size_t count = 10;
     auto seg2 = [&count](typename StreamBufferType::int_type ) { return (--count > 0); };
     auto seg1 = [&s,&wbuf, seg2]() { return wbuf.putc(s[0]).then(seg2); };
-    Concurrency::details::_do_while(seg1).wait();
+    pplx::details::_do_while(seg1).wait();
 
     VERIFY_ARE_EQUAL(s.size() + 10, wbuf.collection().size());
 
@@ -150,7 +150,7 @@ void streambuf_putn(StreamBufferType& wbuf)
     int count = 10;
     auto seg2 = [&count](size_t ) { return (--count > 0); };
     auto seg1 = [&s,&wbuf, seg2]() { return wbuf.putn_nocopy(s.data(), s.size()).then(seg2); };
-    Concurrency::details::_do_while(seg1).wait();
+    pplx::details::_do_while(seg1).wait();
     VERIFY_ARE_EQUAL(s.size() * 12, wbuf.in_avail());
 
     wbuf.close().get();
@@ -180,7 +180,7 @@ void streambuf_putn(concurrency::streams::rawptr_buffer<CharType>& wbuf)
     int count = 10;
     auto seg2 = [&count](size_t ) { return (--count > 0); };
     auto seg1 = [&s,&wbuf, seg2]() { return wbuf.putn_nocopy(s.data(), s.size()).then(seg2); };
-    Concurrency::details::_do_while(seg1).wait();
+    pplx::details::_do_while(seg1).wait();
 
     wbuf.close().get();
     VERIFY_IS_FALSE(wbuf.can_write());
@@ -209,7 +209,7 @@ void streambuf_putn(concurrency::streams::container_buffer<CollectionType>& wbuf
     int count = 10;
     auto seg2 = [&count](size_t ) { return (--count > 0); };
     auto seg1 = [&s,&wbuf, seg2]() { return wbuf.putn_nocopy(s.data(), s.size()).then(seg2); };
-    Concurrency::details::_do_while(seg1).wait();
+    pplx::details::_do_while(seg1).wait();
 
     wbuf.close().get();
     VERIFY_IS_FALSE(wbuf.can_write());
@@ -1935,7 +1935,7 @@ void IStreamTest11()
     auto seg2 = [&ch](int val) { return (val != -1) && (++ch <= 'z'); };
     auto seg1 = [=,&ch,&rbuf]() { return rbuf.putc(ch).then(seg2); };
 
-    Concurrency::details::_do_while(seg1).wait();
+    pplx::details::_do_while(seg1).wait();
 
     VERIFY_ARE_EQUAL(26u, rbuf.in_avail());
 
