@@ -540,27 +540,43 @@ will_deref_and_erase_t asio_server_connection::start_request_response()
 
 void hostport_listener::on_accept(ip::tcp::socket* socket, const boost::system::error_code& ec)
 {
-    std::unique_ptr<ip::tcp::socket> usocket(std::move(socket));
+    // Listener closed
+    if (ec == boost::asio::error::operation_aborted)
+    {
+        return;
+    }
 
+    // Handle successfull accept
     if (!ec)
     {
+        std::unique_ptr<ip::tcp::socket> usocket(std::move(socket));
         auto conn = new asio_server_connection(std::move(usocket), m_p_server, this);
 
         std::lock_guard<std::mutex> lock(m_connections_lock);
         m_connections.insert(conn);
-        conn->start(m_is_https, m_ssl_context_callback);
-        if (m_connections.size() == 1)
-            m_all_connections_complete.reset();
-
-        if (m_acceptor)
+        try
         {
-            // spin off another async accept
-            auto newSocket = new ip::tcp::socket(crossplat::threadpool::shared_instance().service());
-            m_acceptor->async_accept(*newSocket, [this, newSocket](const boost::system::error_code& ec)
-            {
-                this->on_accept(newSocket, ec);
-            });
+            conn->start(m_is_https, m_ssl_context_callback);
+            if (m_connections.size() == 1)
+                m_all_connections_complete.reset();
         }
+        catch (boost::system::system_error&)
+        {
+            // boost ssl apis throw boost::system::system_error.
+            // Exception indicates something went wrong setting ssl context.
+            // Drop connection and continue handling other connections.
+            internal_erase_connection(conn);
+        }
+    }
+
+    if (m_acceptor)
+    {
+        // spin off another async accept
+        auto newSocket = new ip::tcp::socket(crossplat::threadpool::shared_instance().service());
+        m_acceptor->async_accept(*newSocket, [this, newSocket](const boost::system::error_code& ec)
+        {
+            this->on_accept(newSocket, ec);
+        });
     }
 }
 
