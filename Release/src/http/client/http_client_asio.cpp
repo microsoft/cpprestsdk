@@ -170,6 +170,30 @@ public:
     bool keep_alive() const { return m_keep_alive; }
     bool is_ssl() const { return m_ssl_stream ? true : false; }
 
+    // Check if the error code indicates that the connection was closed by the
+    // server: this is used to detect if a connection in the pool was closed during
+    // its period of inactivity and we should reopen it.
+    bool was_closed_by_server(const boost::system::error_code& ec) const
+    {
+        if (!is_reused())
+        {
+            // Don't bother reopening the connection if it's a new one: in this
+            // case, even if the connection was really lost, it's still a real
+            // error and we shouldn't try to reopen it.
+            return false;
+        }
+
+        // These errors tell if connection was closed.
+        if ((boost::asio::error::eof == ec)
+             || (boost::asio::error::connection_reset == ec)
+             || (boost::asio::error::connection_aborted == ec))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
     template <typename Iterator, typename Handler>
     void async_connect(const Iterator &begin, const Handler &handler)
     {
@@ -586,11 +610,7 @@ public:
             }
             else
             {
-                // These errors tell if connection was closed.
-                const bool socket_was_closed((boost::asio::error::eof == ec)
-                    || (boost::asio::error::connection_reset == ec)
-                    || (boost::asio::error::connection_aborted == ec));
-                if (socket_was_closed && m_context->m_connection->is_reused())
+                if (m_context->m_connection->was_closed_by_server(ec))
                 {
                     // Failed to write to socket because connection was already closed while it was in the pool.
                     // close() here ensures socket is closed in a robust way and prevents the connection from being put to the pool again.
@@ -1179,11 +1199,7 @@ private:
         }
         else
         {
-            // These errors tell if connection was closed.
-            const bool socket_was_closed((boost::asio::error::eof == ec)
-                                         || (boost::asio::error::connection_reset == ec)
-                                         || (boost::asio::error::connection_aborted == ec));
-            if (socket_was_closed && m_connection->is_reused())
+            if (m_connection->was_closed_by_server(ec))
             {
                 // Failed to write to socket because connection was already closed while it was in the pool.
                 // close() here ensures socket is closed in a robust way and prevents the connection from being put to the pool again.
