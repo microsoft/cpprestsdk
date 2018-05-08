@@ -28,6 +28,7 @@
 #endif
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
+#include <boost/asio/ssl/error.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/bind.hpp>
@@ -189,6 +190,21 @@ public:
              || (boost::asio::error::connection_aborted == ec))
         {
             return true;
+        }
+
+        if (is_ssl())
+        {
+            // For SSL connections, we can also get a different error due to
+            // incorrect secure connection shutdown if it was closed by the
+            // server due to inactivity. Unfortunately, the exact error we get
+            // in this case depends on the Boost.Asio version used.
+#if BOOST_ASIO_VERSION >= 101008
+            if (boost::asio::ssl::error::stream_truncated == ec)
+                return true;
+#else // Asio < 1.10.8 didn't have ssl::error::stream_truncated
+            if (boost::system::error_code(ERR_PACK(ERR_LIB_SSL, 0, SSL_R_SHORT_READ), boost::asio::error::get_ssl_category()) == ec)
+                return true;
+#endif
         }
 
         return false;
