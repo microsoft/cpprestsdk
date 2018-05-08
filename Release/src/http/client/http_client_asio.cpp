@@ -636,6 +636,7 @@ public:
                     // cancellation registration to maintain the old state.
                     // This also obtains a new connection from pool.
                     auto new_ctx = m_context->create_request_context(m_context->m_http_client, m_context->m_request);
+                    new_ctx->m_request._rewind_instream();
                     new_ctx->m_request_completion = m_context->m_request_completion;
                     new_ctx->m_cancellationRegistration = m_context->m_cancellationRegistration;
             
@@ -1225,6 +1226,7 @@ private:
                 // cancellation registration to maintain the old state.
                 // This also obtains a new connection from pool.
                 auto new_ctx = create_request_context(m_http_client, m_request);
+                new_ctx->m_request._rewind_instream();
                 new_ctx->m_request_completion = m_request_completion;
                 new_ctx->m_cancellationRegistration = m_cancellationRegistration;
 
