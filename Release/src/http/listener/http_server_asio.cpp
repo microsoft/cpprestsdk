@@ -540,23 +540,24 @@ will_deref_and_erase_t asio_server_connection::start_request_response()
 
 void hostport_listener::on_accept(ip::tcp::socket* socket, const boost::system::error_code& ec)
 {
-    std::lock_guard<std::mutex> lock(m_connections_lock);
-
     // Listener closed
     if (ec == boost::asio::error::operation_aborted)
     {
         return;
     }
 
-    // Handle successfull accept
+    // Handle successful accept
     if (!ec)
     {
         std::unique_ptr<ip::tcp::socket> usocket(std::move(socket));
         auto conn = new asio_server_connection(std::move(usocket), m_p_server, this);
 
-        m_connections.insert(conn);
         try
         {
+            // Take a lock here so it released before call to internal_erase_connection
+            std::lock_guard<std::mutex> lock(m_connections_lock);
+
+            m_connections.insert(conn);
             conn->start(m_is_https, m_ssl_context_callback);
             if (m_connections.size() == 1)
                 m_all_connections_complete.reset();
@@ -570,6 +571,7 @@ void hostport_listener::on_accept(ip::tcp::socket* socket, const boost::system::
         }
     }
 
+    std::lock_guard<std::mutex> lock(m_connections_lock);
     if (m_acceptor)
     {
         // spin off another async accept
