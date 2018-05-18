@@ -431,37 +431,40 @@ protected:
 #ifndef CPPREST_TARGET_XP
             if (IsWindows8Point1OrGreater())
             {
+                // Windows 8.1 and newer supports automatic proxy discovery and auto-fallback to IE proxy settings
                 access_type = WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY;
             }
-
-            // However, if it is not configured...
-            proxy_info proxyDefault;
-            if(!WinHttpGetDefaultProxyConfiguration(&proxyDefault) ||
-                proxyDefault.dwAccessType == WINHTTP_ACCESS_TYPE_NO_PROXY)
+            else
             {
-                // ... then try to fall back on the default WinINET proxy, as
-                // recommended for the desktop applications (if we're not
-                // running under a user account, the function below will just
-                // fail, so there is no real need to check for this explicitly)
-                if(WinHttpGetIEProxyConfigForCurrentUser(&proxyIE))
+                // However, if it is not configured...
+                proxy_info proxyDefault;
+                if (!WinHttpGetDefaultProxyConfiguration(&proxyDefault) ||
+                    proxyDefault.dwAccessType == WINHTTP_ACCESS_TYPE_NO_PROXY)
                 {
-                    if(proxyIE.fAutoDetect)
+                    // ... then try to fall back on the default WinINET proxy, as
+                    // recommended for the desktop applications (if we're not
+                    // running under a user account, the function below will just
+                    // fail, so there is no real need to check for this explicitly)
+                    if (WinHttpGetIEProxyConfigForCurrentUser(&proxyIE))
                     {
-                        m_proxy_auto_config = true;
-                    }
-                    else if(proxyIE.lpszAutoConfigUrl)
-                    {
-                        m_proxy_auto_config = true;
-                        m_proxy_auto_config_url = proxyIE.lpszAutoConfigUrl;
-                    }
-                    else if(proxyIE.lpszProxy)
-                    {
-                        access_type = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
-                        proxy_name = proxyIE.lpszProxy;
-
-                        if(proxyIE.lpszProxyBypass)
+                        if (proxyIE.fAutoDetect)
                         {
-                            proxy_bypass = proxyIE.lpszProxyBypass;
+                            m_proxy_auto_config = true;
+                        }
+                        else if (proxyIE.lpszAutoConfigUrl)
+                        {
+                            m_proxy_auto_config = true;
+                            m_proxy_auto_config_url = proxyIE.lpszAutoConfigUrl;
+                        }
+                        else if (proxyIE.lpszProxy)
+                        {
+                            access_type = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
+                            proxy_name = proxyIE.lpszProxy;
+
+                            if (proxyIE.lpszProxyBypass)
+                            {
+                                proxy_bypass = proxyIE.lpszProxyBypass;
+                            }
                         }
                     }
                 }
@@ -1122,10 +1125,10 @@ private:
                 try
                 {
                     web::uri current_uri(get_request_url(hRequestHandle));
-                    is_redirect = p_request_context->m_request.absolute_uri().to_string() != current_uri.to_string();	
+                    is_redirect = p_request_context->m_request.absolute_uri().to_string() != current_uri.to_string();
                 }
                 catch (const std::exception&) {}
-     
+
                 // If we have been redirected, then WinHttp needs the proxy credentials again to make the next request leg (which may be on a different server)
                 if (is_redirect || !p_request_context->m_proxy_authentication_tried)
                 {
