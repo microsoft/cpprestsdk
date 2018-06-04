@@ -115,7 +115,7 @@ set(ANDROID_STL_FLAGS)
 # Platform (not compiler) specific settings
 if(IOS)
   # The cxx_flags must be reset here, because the ios-cmake toolchain file unfortunately sets "-headerpad_max_install_names" which is not a valid clang flag.
-  set(CMAKE_CXX_FLAGS "-fvisibility=hidden -fvisibility-inlines-hidden")
+  set(CMAKE_CXX_FLAGS "-fvisibility=hidden")
 elseif(ANDROID)
   if(ARM)
     set(LIBCXX_STL "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.8/libs/armeabi-v7a/thumb/libgnustl_static.a")
