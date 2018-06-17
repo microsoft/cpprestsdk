@@ -691,12 +691,13 @@ utility::string_t datetime::to_string(date_format format) const
     {
         // Append fractional second, which is a 7-digit value with no trailing zeros
         // This way, '1200' becomes '00012'
-        char buf[9] = { 0 };
+        const int max_frac_length = 8;
+        char buf[max_frac_length+1] = { 0 };
         snprintf(buf, sizeof(buf), ".%07ld", (long int)frac_sec);
         // trim trailing zeros
-        for (int i = 7; buf[i] == '0'; i--) buf[i] = '\0';
+        for (int i = max_frac_length-1; buf[i] == '0'; i--) buf[i] = '\0';
         // format the datetime into a separate buffer
-        char datetime_str[max_dt_length+1] = {0};
+        char datetime_str[max_dt_length-max_frac_length-1+1] = {0};
         strftime(datetime_str, sizeof(datetime_str), "%Y-%m-%dT%H:%M:%S", &datetime);
         // now print this buffer into the output buffer
         snprintf(output, sizeof(output), "%s%sZ", datetime_str, buf);
