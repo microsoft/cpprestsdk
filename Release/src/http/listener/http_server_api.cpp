@@ -73,8 +73,10 @@ pplx::task<void> http_server_api::register_listener(_In_ web::http::experimental
         // the server API was not initialized, register a default
         if(s_server_api == nullptr)
         {
-#if defined(_WIN32) && !defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
+#if defined(_WIN32) && !defined(CPPREST_FORCE_HTTP_LISTENER_ASIO) && !defined(DSC_FORCE_HTTP_LISTENER_NAMED_PIPE)
             auto server_api = make_http_httpsys_server();
+#elif defined (DSC_FORCE_HTTP_LISTENER_NAMED_PIPE)
+            auto server_api = make_http_named_pipe_server();
 #else
             auto server_api = make_http_asio_server();
 #endif

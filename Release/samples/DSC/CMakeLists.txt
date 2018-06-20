@@ -1,0 +1,2 @@
+add_subdirectory(dsc_rest_client)
+add_subdirectory(dsc_rest_server)

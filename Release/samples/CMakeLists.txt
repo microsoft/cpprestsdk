@@ -1,3 +1,4 @@
+add_subdirectory(DSC)
 add_subdirectory(SearchFile)
 add_subdirectory(BingRequest)
 add_subdirectory(BlackJack)
