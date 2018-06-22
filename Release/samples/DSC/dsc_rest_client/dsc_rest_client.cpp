@@ -67,20 +67,15 @@ int main()
 {
     try
     {
-#define DSC_FORCE_HTTP_LISTENER_NAMED_PIPE 1
+        http_client np_client(U("http://pipe/dsc/metaconfiguration"));
 
-#if defined (DSC_FORCE_HTTP_LISTENER_NAMED_PIPE)
-        http_client client(U("http://pipe/dsc/metaconfiguration"));
-#else
-        http_client client(U("http://localhost:34568/metaconfiguration"));
-#endif
         http_request request(methods::PUT);
         request.headers().add(U("Content-Type"), U("application/json"));
         web::json::value body;
         body[U("hello")] = web::json::value::string(U("there"));
         request.set_body(body);
 
-        client.request(request).then([=](http_response response)
+        np_client.request(request).then([=](http_response response)
         {
             for (auto h : response.headers())
                 ucout << h.first << U(": ") << h.second << std::endl;
@@ -90,6 +85,19 @@ int main()
         {
             ucout << response << endl;
         }).wait();
+
+//#define TRY_HTTP_CLIENT 1
+#ifdef TRY_HTTP_CLIENT
+        http_client h_client(U("https://www.microsoft.com/en-us/about"));
+
+        h_client.request(methods::GET).then([=](http_response response)
+        {
+            return response.extract_string(true);
+        }).then([=](string_t response)
+        {
+            ucout << "Response length: " << response.size() << std::endl;
+        }).wait();
+#endif
     }
     catch (const std::exception &e)
     {

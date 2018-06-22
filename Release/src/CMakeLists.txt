@@ -122,7 +122,11 @@ elseif(CPPREST_HTTP_CLIENT_IMPL STREQUAL "winhttp")
     httpapi.lib
     Winhttp.lib
   )
-  target_sources(cpprest PRIVATE http/client/http_client_winhttp.cpp http/client/http_client_named_pipe.cpp)
+  target_sources(cpprest PRIVATE 
+    http/client/http_client_factory.cpp
+    http/client/http_client_winhttp.cpp 
+    http/client/http_client_named_pipe.cpp
+  )
 elseif(CPPREST_HTTP_CLIENT_IMPL STREQUAL "winrt")
   target_sources(cpprest PRIVATE http/client/http_client_winrt.cpp)
 else()

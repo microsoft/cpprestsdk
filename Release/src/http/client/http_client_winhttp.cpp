@@ -1555,14 +1555,10 @@ private:
     utility::string_t   m_proxy_auto_config_url;
 };
 
-#if !(defined (DSC_FORCE_HTTP_LISTENER_NAMED_PIPE))
-
-std::shared_ptr<_http_client_communicator> create_platform_final_pipeline_stage(uri&& base_uri, http_client_config&& client_config)
+std::shared_ptr<_http_client_communicator> create_winhttp_client(uri&& base_uri, http_client_config&& client_config)
 {
     return std::make_shared<details::winhttp_client>(std::move(base_uri), std::move(client_config));
 }
-
-#endif
 
 }}}}
 
