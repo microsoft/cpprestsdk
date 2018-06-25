@@ -22,8 +22,8 @@
 #include "http_server_named_pipe.h"
 #include "http_server_impl.h"
 #include "../common/internal_http_helpers.h"
-
 #include <boost/algorithm/string/predicate.hpp>
+#include <sddl.h>
 
 #undef min
 #undef max
@@ -95,6 +95,7 @@ named_pipe_request_context::~named_pipe_request_context()
 
     if (m_pipeHandle != nullptr)
     {
+        // TODO: Need to FlushFileBuffers before disconnecting (https://msdn.microsoft.com/en-us/library/windows/desktop/aa365598(v=vs.85).aspx)
         DisconnectNamedPipe(m_pipeHandle);
         CloseHandle(m_pipeHandle);
     }
@@ -509,6 +510,31 @@ void named_pipe_listener::async_receive_request()
 
     utility::string_t pipe_name = U("\\\\.\\pipe\\") + path[0];
 
+    //
+    // We use the following ACL for the named pipe:
+    //
+    auto acl = L"D:(A;;GA;;;BA)";
+    //
+    // The format of the string is described in https://msdn.microsoft.com/en-us/library/windows/desktop/aa379570(v=vs.85).aspx
+    //
+    //   D - Discretionary access control list
+    //   A  - Type: SDDL_ACCESS_ALLOWED
+    //   GA - Rights: SDDL_GENERIC_ALL
+    //   BA - Account SID: SDDL_BUILTIN_ADMINISTRATORS
+    // 
+    // TODO: the ACL (if any) on the named pipe should be controlled by the client instead of hardcoding it here.
+    //
+    PSECURITY_DESCRIPTOR security_descriptor = nullptr;
+    if (!ConvertStringSecurityDescriptorToSecurityDescriptorW(acl, SECURITY_DESCRIPTOR_REVISION, &security_descriptor, NULL))
+    {
+        throw http_exception(GetLastError(), "Failed to create security descriptor for the named pipe");
+    }
+
+    SECURITY_ATTRIBUTES security_attributes = { 0 };
+    security_attributes.nLength = sizeof(SECURITY_ATTRIBUTES);
+    security_attributes.lpSecurityDescriptor = security_descriptor;
+    security_attributes.bInheritHandle = false;
+
     // TODO: add exception-safe cleanup for pipe and thread pool
     auto pipeHandle = CreateNamedPipeW(
         pipe_name.c_str(),
@@ -518,12 +544,15 @@ void named_pipe_listener::async_receive_request()
         PIPE_BUFFER_SIZE,
         PIPE_BUFFER_SIZE,
         0,
-        NULL);
+        &security_attributes);
 
     if (pipeHandle == INVALID_HANDLE_VALUE)
     {
         throw http_exception(GetLastError(), "Failed to create named pipe");
     }
+
+    // TODO: exception-safe cleanup
+    LocalFree(security_descriptor);
 
     auto threadpool_io = CreateThreadpoolIo(pipeHandle, &http_overlapped::io_completion_callback, NULL, NULL);
     if (threadpool_io == nullptr)

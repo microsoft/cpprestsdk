@@ -243,6 +243,7 @@ protected:
 
         if (m_namedPipe == INVALID_HANDLE_VALUE)
         {
+            //  TODO: Can we add error code to the error?
             return report_failure(_XPLATSTR("Error opening named pipe"));
         }
         
