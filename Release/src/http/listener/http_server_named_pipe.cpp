@@ -40,6 +40,9 @@ using namespace http::experimental::details;
 #define CRLF std::string("\r\n")
 #define CRLFCRLF std::string("\r\n\r\n")
 
+// Maximum number of concurrent named pipe instances (1 instance per request).
+const DWORD MAX_NUMBER_OF_CONCURRENT_REQUESTS = 128;
+
 namespace web
 {
 namespace http
@@ -413,32 +416,36 @@ void named_pipe_request_context::async_process_response()
     }
     os << CRLF;
 
-    m_body_data.resize(named_pipe_listener::PIPE_BUFFER_SIZE);
+    if (m_response.body()) {
+        std::vector<unsigned char> body_data;
 
-    streams::rawptr_buffer<unsigned char> buf(&m_body_data[0], named_pipe_listener::PIPE_BUFFER_SIZE);
+        body_data.resize(named_pipe_listener::PIPE_BUFFER_SIZE);
 
-    auto bytes_read = m_response.body().read(buf, named_pipe_listener::PIPE_BUFFER_SIZE).then([this](pplx::task<size_t> op) -> size_t
-    {
-        size_t bytes_read = 0;
+        streams::rawptr_buffer<unsigned char> buf(&body_data[0], named_pipe_listener::PIPE_BUFFER_SIZE);
 
-        // If an exception occurs surface the error to user on the server side
-        // and cancel the request so the client sees the error.
-        try { 
-            bytes_read = op.get(); 
-        }
-        catch (...)
+        auto bytes_read = m_response.body().read(buf, named_pipe_listener::PIPE_BUFFER_SIZE).then([this](pplx::task<size_t> op) -> size_t
         {
-            cancel_request(std::current_exception());
-        }
-        if (bytes_read == 0)
-        {
-            cancel_request(std::make_exception_ptr(http_exception(_XPLATSTR("Error unexpectedly encountered the end of the response stream early"))));
-        }
-        return bytes_read;
-    }).get();
+            size_t bytes_read = 0;
 
-    for (size_t i = 0; i < bytes_read; i++)
-        os << static_cast<char>(m_body_data[i]);
+            // If an exception occurs surface the error to user on the server side
+            // and cancel the request so the client sees the error.
+            try {
+                bytes_read = op.get();
+            }
+            catch (...)
+            {
+                cancel_request(std::current_exception());
+            }
+            if (bytes_read == 0)
+            {
+                cancel_request(std::make_exception_ptr(http_exception(_XPLATSTR("Error unexpectedly encountered the end of the response stream early"))));
+            }
+            return bytes_read;
+        }).get();
+
+        for (size_t i = 0; i < bytes_read; i++)
+            os << static_cast<char>(body_data[i]);
+    }
 
     m_overlapped.set_http_io_completion([this](DWORD error, DWORD nBytes) {
         on_response_written(error, nBytes);
@@ -513,14 +520,20 @@ void named_pipe_listener::async_receive_request()
     //
     // We use the following ACL for the named pipe:
     //
-    auto acl = L"D:(A;;GA;;;BA)";
+    auto acl = L"D:(A;;GA;;;BA)(D;;GA;;;NU)";
     //
     // The format of the string is described in https://msdn.microsoft.com/en-us/library/windows/desktop/aa379570(v=vs.85).aspx
     //
     //   D - Discretionary access control list
-    //   A  - Type: SDDL_ACCESS_ALLOWED
-    //   GA - Rights: SDDL_GENERIC_ALL
-    //   BA - Account SID: SDDL_BUILTIN_ADMINISTRATORS
+    //   (A;;GA;;;BA)
+    //       A  - Type: SDDL_ACCESS_ALLOWED
+    //       GA - Rights: SDDL_GENERIC_ALL
+    //       BA - Account SID: SDDL_BUILTIN_ADMINISTRATORS
+    //
+    //  (D;;GA;;;NU)    
+    //       D  - Type: SDDL_ACCESS_DENIED
+    //       GA - Rights: SDDL_GENERIC_ALL
+    //       NU - Account SID: SDDL_NETWORK
     // 
     // TODO: the ACL (if any) on the named pipe should be controlled by the client instead of hardcoding it here.
     //
@@ -540,7 +553,7 @@ void named_pipe_listener::async_receive_request()
         pipe_name.c_str(),
         PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED,
         PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
-        PIPE_UNLIMITED_INSTANCES,
+        MAX_NUMBER_OF_CONCURRENT_REQUESTS,
         PIPE_BUFFER_SIZE,
         PIPE_BUFFER_SIZE,
         0,
