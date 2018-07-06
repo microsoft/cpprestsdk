@@ -122,7 +122,11 @@ elseif(CPPREST_HTTP_CLIENT_IMPL STREQUAL "winhttp")
     httpapi.lib
     Winhttp.lib
   )
-  target_sources(cpprest PRIVATE http/client/http_client_winhttp.cpp)
+  target_sources(cpprest PRIVATE 
+    http/client/http_client_factory.cpp
+    http/client/http_client_winhttp.cpp 
+    http/client/http_client_named_pipe.cpp
+  )
 elseif(CPPREST_HTTP_CLIENT_IMPL STREQUAL "winrt")
   target_sources(cpprest PRIVATE http/client/http_client_winrt.cpp)
 else()
@@ -149,8 +153,11 @@ if(CPPREST_HTTP_LISTENER_IMPL STREQUAL "asio")
   target_link_libraries(cpprest PUBLIC cpprestsdk_boost_internal cpprestsdk_openssl_internal)
 elseif(CPPREST_HTTP_LISTENER_IMPL STREQUAL "httpsys")
   target_sources(cpprest PRIVATE
+    http/listener/http_overlapped.h
     http/listener/http_server_httpsys.cpp
     http/listener/http_server_httpsys.h
+    http/listener/http_server_named_pipe.cpp
+    http/listener/http_server_named_pipe.h
   )
 elseif(CPPREST_HTTP_LISTENER_IMPL STREQUAL "none")
 else()
