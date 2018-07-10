@@ -227,11 +227,25 @@ protected:
         //       * config.validate_certificates is specified
         //       * config.request_compressed_response is specified
 
+        return S_OK;
+    }
+
+    // Start sending request.
+    void send_request(_In_ const std::shared_ptr<request_context> &request)
+    {
+        const auto& config = client_config();
+
+        http_request &msg = request->m_request;
+        std::shared_ptr<named_pipe_request_context> named_pipe_context = std::static_pointer_cast<named_pipe_request_context>(request);
+        std::weak_ptr<named_pipe_request_context> weak_named_pipe_context = named_pipe_context;
+
         // TODO: validate uri
         auto path = uri::split_path(base_uri().path());
 
         utility::string_t pipe_name = U("\\\\.\\pipe\\") + path[0];
 
+        // TODO: Need to close pipe handle
+        // TODO: Add timeout
         m_namedPipe = CreateFile(
             pipe_name.c_str(),
             GENERIC_READ | GENERIC_WRITE,
@@ -243,10 +257,11 @@ protected:
 
         if (m_namedPipe == INVALID_HANDLE_VALUE)
         {
-            //  TODO: Can we add error code to the error?
-            return report_failure(_XPLATSTR("Error opening named pipe"));
+            auto errorCode = GetLastError();
+            named_pipe_context->report_error(errorCode, build_error_msg(errorCode, "Error opening named pipe"));
+            return;
         }
-        
+
         DWORD readMode = PIPE_READMODE_BYTE;
         auto success = SetNamedPipeHandleState(
             m_namedPipe,
@@ -255,20 +270,12 @@ protected:
             NULL);
         if (!success)
         {
-            return report_failure(_XPLATSTR("Error setting read mode on named pipe"));
+            auto errorCode = GetLastError();
+            named_pipe_context->report_error(errorCode, build_error_msg(errorCode, "Error setting read mode on named pipe"));
+            return;
         }
 
         config._invoke_nativesessionhandle_options(m_namedPipe);
-
-        return S_OK;
-    }
-
-    // Start sending request.
-    void send_request(_In_ const std::shared_ptr<request_context> &request)
-    {
-        http_request &msg = request->m_request;
-        std::shared_ptr<named_pipe_request_context> named_pipe_context = std::static_pointer_cast<named_pipe_request_context>(request);
-        std::weak_ptr<named_pipe_request_context> weak_named_pipe_context = named_pipe_context;
 
         // Need to form uri path, query, and fragment for this request.
         // Make sure to keep any path that was specified with the uri when the http_client was created.
@@ -324,12 +331,14 @@ protected:
         //request_stream << "Connection: Keep-Alive" << CRLF << CRLF;
 
         // Add the body
-        auto rbuf = request->_get_readbuffer();
+        if (msg.body()) {
+            auto rbuf = request->_get_readbuffer();
 
-        uint8_t*  block = nullptr;
-        size_t length = 0;
-        if (rbuf.acquire(block, length)) {
-            request_stream << CRLF << std::string(reinterpret_cast<char*>(block), length);
+            uint8_t*  block = nullptr;
+            size_t length = 0;
+            if (rbuf.acquire(block, length)) {
+                request_stream << CRLF << std::string(reinterpret_cast<char*>(block), length);
+            }
         }
 
         // Register for notification on cancellation to abort this request.
@@ -354,7 +363,6 @@ protected:
             request->report_exception(std::current_exception());
             return;
         }
-
 
         _start_request_send(named_pipe_context, content_length, request_stream);
     }

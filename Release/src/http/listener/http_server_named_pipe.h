@@ -85,7 +85,6 @@ private:
     static void parse_http_headers(std::istream* request_stream, http::http_headers& headers);
 
     web::http::experimental::listener::details::http_listener_impl* m_listener;
-    std::vector<unsigned char> m_body_data;
 
     HANDLE m_pipeHandle;
     TP_IO* m_threadpool_io;
