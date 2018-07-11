@@ -245,7 +245,6 @@ public:
     // This self reference will keep us alive until finish() is called.
     std::shared_ptr<winhttp_request_context> m_self_reference;
     memory_holder m_body_data;
-    std::unique_ptr<web::http::details::compression::stream_decompressor> decompressor;
 
     virtual void cleanup()
     {
@@ -733,15 +732,13 @@ protected:
             }
         }
 
-        if(web::http::details::compression::stream_decompressor::is_supported() && client_config().request_compressed_response())
-        {
-            msg.headers().add(web::http::header_names::accept_encoding, U("deflate, gzip"));
-        }
+        utility::string_t flattened_headers = web::http::details::flatten_http_headers(msg.headers());
+
+        winhttp_context->add_accept_encoding_header(flattened_headers);
 
         // Add headers.
-        if(!msg.headers().empty())
+        if(!flattened_headers.empty())
         {
-            const utility::string_t flattened_headers = web::http::details::flatten_http_headers(msg.headers());
             if(!WinHttpAddRequestHeaders(
                 winhttp_context->m_request_handle,
                 flattened_headers.c_str(),
@@ -1371,22 +1368,10 @@ private:
                     }
                 }
 
-                // If the response body is compressed we will read the encoding header and create a decompressor object which will later decompress the body
-                utility::string_t encoding;
-                if (web::http::details::compression::stream_decompressor::is_supported() && response.headers().match(web::http::header_names::content_encoding, encoding))
+                if (!p_request_context->handle_content_encoding_compression())
                 {
-                    auto alg = web::http::details::compression::stream_decompressor::to_compression_algorithm(encoding);
-
-                    if (alg != web::http::details::compression::compression_algorithm::invalid)
-                    {
-                        p_request_context->decompressor = std::make_unique<web::http::details::compression::stream_decompressor>(alg);
-                    }
-                    else
-                    {
-                        utility::string_t error = U("Unsupported compression algorithm in the Content Encoding header: ");
-                        error += encoding;
-                        p_request_context->report_exception(http_exception(error));
-                    }
+                    // false indicates report_exception was called
+                    return;
                 }
 
                 // Signal that the headers are available.
@@ -1417,7 +1402,7 @@ private:
 
                 if(num_bytes > 0)
                 {
-                    if (p_request_context->decompressor)
+                    if (p_request_context->m_decompressor)
                     {
                         // Decompression is too slow to reliably do on this callback. Therefore we need to store it now in order to decompress it at a later stage in the flow.
                         // However, we want to eventually use the writebuf to store the decompressed body. Therefore we'll store the compressed body as an internal allocation in the request_context
@@ -1486,11 +1471,11 @@ private:
                 auto writebuf = p_request_context->_get_writebuffer();
 
                 // If we have compressed data it is stored in the local allocation of the p_request_context. We will store the decompressed buffer in the external allocation of the p_request_context.
-                if (p_request_context->decompressor)
+                if (p_request_context->m_decompressor)
                 {
-                    web::http::details::compression::data_buffer decompressed = p_request_context->decompressor->decompress(p_request_context->m_body_data.get(), bytesRead);
+                    web::http::details::compression::data_buffer decompressed = p_request_context->m_decompressor->decompress(p_request_context->m_body_data.get(), bytesRead);
 
-                    if (p_request_context->decompressor->has_error())
+                    if (p_request_context->m_decompressor->has_error())
                     {
                         p_request_context->report_exception(std::runtime_error("Failed to decompress the response body"));
                         return;

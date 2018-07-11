@@ -718,11 +718,7 @@ public:
                 extra_headers.append(ctx->generate_basic_auth_header());
             }
 
-            // Add the header needed to request a compressed response if supported on this platform and it has been specified in the config
-            if (web::http::details::compression::stream_decompressor::is_supported() && ctx->m_http_client->client_config().request_compressed_response())
-            {
-                extra_headers.append("Accept-Encoding: deflate, gzip\r\n");
-            }
+            ctx->add_accept_encoding_header(extra_headers);
 
             // Check user specified transfer-encoding.
             std::string transferencoding;
@@ -1240,25 +1236,17 @@ private:
                 m_response.headers().add(utility::conversions::to_string_t(std::move(name)), utility::conversions::to_string_t(std::move(value)));
             }
         }
-        complete_headers();
 
         m_content_length = std::numeric_limits<size_t>::max(); // Without Content-Length header, size should be same as TCP stream - set it size_t max.
         m_response.headers().match(header_names::content_length, m_content_length);
 
-        utility::string_t content_encoding;
-        if(web::http::details::compression::stream_decompressor::is_supported() && m_response.headers().match(header_names::content_encoding, content_encoding))
+        if (!this->handle_content_encoding_compression())
         {
-            auto alg = web::http::details::compression::stream_decompressor::to_compression_algorithm(content_encoding);
-
-            if (alg != web::http::details::compression::compression_algorithm::invalid)
-            {
-                m_decompressor = utility::details::make_unique<web::http::details::compression::stream_decompressor>(alg);
-            }
-            else
-            {
-                report_exception(std::runtime_error("Unsupported compression algorithm in the Content Encoding header: " + utility::conversions::to_utf8string(content_encoding)));
-            }
+            // false indicates report_exception was called
+            return;
         }
+
+        complete_headers();
 
         // Check for HEAD requests and status codes which cannot contain a
         // message body in HTTP/1.1 (see 3.3.3/1 of the RFC 7230).
@@ -1661,8 +1649,6 @@ private:
     boost::asio::streambuf m_body_buf;
     std::shared_ptr<asio_connection> m_connection;
     
-    std::unique_ptr<web::http::details::compression::stream_decompressor> m_decompressor;
-
 #if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__))
     bool m_openssl_failed;
 #endif

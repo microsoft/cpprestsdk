@@ -96,6 +96,44 @@ void request_context::report_exception(std::exception_ptr exceptionPtr)
     finish();
 }
 
+bool request_context::handle_content_encoding_compression()
+{
+    if (web::http::details::compression::stream_decompressor::is_supported() && m_http_client->client_config().request_compressed_response())
+    {
+        // If the response body is compressed we will read the encoding header and create a decompressor object which will later decompress the body
+        auto&& headers = m_response.headers();
+        auto it_ce = headers.find(web::http::header_names::content_encoding);
+        if (it_ce != headers.end())
+        {
+            auto alg = web::http::details::compression::stream_decompressor::to_compression_algorithm(it_ce->second);
+
+            if (alg != web::http::details::compression::compression_algorithm::invalid)
+            {
+                m_decompressor = std::make_unique<web::http::details::compression::stream_decompressor>(alg);
+            }
+            else
+            {
+                report_exception(
+                    http_exception("Unsupported compression algorithm in the Content-Encoding header: "
+                        + utility::conversions::to_utf8string(it_ce->second)));
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+void request_context::add_accept_encoding_header(utility::string_t& headers) const
+{
+    // Add the header needed to request a compressed response if supported on this platform and it has been specified in the config
+    if (web::http::details::compression::stream_decompressor::is_supported() && m_http_client->client_config().request_compressed_response())
+    {
+        headers.append(U("Accept-Encoding: "));
+        headers.append(web::http::details::compression::stream_decompressor::known_algorithms());
+        headers.append(U("\r\n"));
+    }
+}
+
 concurrency::streams::streambuf<uint8_t> request_context::_get_readbuffer()
 {
     auto instream = m_request.body();
