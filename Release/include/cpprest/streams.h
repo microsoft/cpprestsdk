@@ -1747,7 +1747,7 @@ public:
 
     static pplx::task<std::wstring> parse(streams::streambuf<CharType> buffer)
     {
-        return _parse_input<std::basic_string<char>,std::basic_string<wchar_t>>(buffer, _accept_char, _extract_result);
+        return base::_parse_input<std::basic_string<char>,std::basic_string<wchar_t>>(buffer, _accept_char, _extract_result);
     }
 
 private:
