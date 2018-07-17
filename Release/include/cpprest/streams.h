@@ -577,7 +577,8 @@ namespace Concurrency { namespace streams
         /// The data type of the basic element of the stream.
         /// </typeparam>
         /// <param name="buffer">A stream buffer.</param>
-        basic_istream(streams::streambuf<CharType> buffer) : m_helper(std::make_shared<details::basic_istream_helper<CharType>>(buffer))
+        template<class AlterCharType>
+        basic_istream(streams::streambuf<AlterCharType> buffer) : m_helper(std::make_shared<details::basic_istream_helper<CharType>>(std::move(buffer)))
         {
             _verify_and_throw(details::_in_streambuf_msg);
         }
