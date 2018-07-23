@@ -685,7 +685,7 @@ utility::string_t datetime::to_string(date_format format) const
     gmtime_r(&time, &datetime);
 
     const int max_dt_length = 64;
-    char output[max_dt_length+1] = {0};
+    char output[max_dt_length+10] = {0};
 
     if (format != RFC_1123 && frac_sec > 0)
     {
