@@ -482,14 +482,15 @@ public:
 
             const auto &base_uri = m_context->m_http_client->base_uri();
             const auto &host = utility::conversions::to_utf8string(base_uri.host());
-            const auto &port = base_uri.port();
+            const int portRaw = base_uri.port();
+            const int port = (portRaw != 0) ? portRaw : 443;
 
             std::ostream request_stream(&m_request);
             request_stream.imbue(std::locale::classic());
 
-            request_stream << "CONNECT " << host << ":" << ((port != 0) ? port : 443) << " HTTP/1.1" << CRLF;
-            request_stream << "Host: " << host << ":" << ((port != 0) ? port : 443) << CRLF;
-            request_stream << "Proxy-Connection: Keep-Alive" << CRLF;
+            request_stream << "CONNECT " << host << ":" << port << " HTTP/1.1\r\n";
+            request_stream << "Host: " << host << ":" << port << CRLF;
+            request_stream << "Proxy-Connection: Keep-Alive\r\n";
 
             if(m_context->m_http_client->client_config().proxy().credentials().is_set())
             {
@@ -687,7 +688,7 @@ public:
             request_stream.imbue(std::locale::classic());
             const auto &host = utility::conversions::to_utf8string(base_uri.host());
 
-            request_stream << utility::conversions::to_utf8string(method) << " " << utility::conversions::to_utf8string(encoded_resource) << " " << "HTTP/1.1" << CRLF;
+            request_stream << utility::conversions::to_utf8string(method) << " " << utility::conversions::to_utf8string(encoded_resource) << " " << "HTTP/1.1\r\n";
 
             int port = base_uri.port();
 
@@ -759,7 +760,7 @@ public:
             request_stream << utility::conversions::to_utf8string(::web::http::details::flatten_http_headers(ctx->m_request.headers()));
             request_stream << extra_headers;
             // Enforce HTTP connection keep alive (even for the old HTTP/1.0 protocol).
-            request_stream << "Connection: Keep-Alive" << CRLF << CRLF;
+            request_stream << "Connection: Keep-Alive\r\n\r\n";
 
             // Start connection timeout timer.
             if (!ctx->m_timer.has_started())
@@ -1339,7 +1340,7 @@ private:
             }
             else
             {
-                async_read_until_buffersize(octets + CRLF.size(), // + 2 for crlf
+                async_read_until_buffersize(octets + CRLF.size(),
                                             boost::bind(&asio_context::handle_chunk, shared_from_this(), boost::asio::placeholders::error, octets));
             }
         }
