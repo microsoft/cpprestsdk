@@ -134,22 +134,23 @@ public:
     ~wspp_callback_client() CPPREST_NOEXCEPT
     {
         _ASSERTE(m_state < DESTROYED);
-        std::unique_lock<std::mutex> lock(m_wspp_client_lock);
+        State localState;
+        {
+            std::lock_guard<std::mutex> lock(m_wspp_client_lock);
+            localState = m_state;
+        }   // Unlock the mutex so connect/close can use it.
 
         // Now, what states could we be in?
-        switch (m_state) {
+        switch (localState) {
         case DESTROYED:
             // This should be impossible
             std::abort();
         case CREATED:
-            lock.unlock();
             break;
         case CLOSED:
         case CONNECTING:
         case CONNECTED:
         case CLOSING:
-            // Unlock the mutex so connect/close can use it.
-            lock.unlock();
             try
             {
                 // This will do nothing in the already-connected case
@@ -806,4 +807,3 @@ websocket_callback_client::websocket_callback_client(websocket_client_config con
 }}}
 
 #endif
-
