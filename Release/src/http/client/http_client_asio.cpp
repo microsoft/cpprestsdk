@@ -82,7 +82,7 @@ using utility::conversions::details::to_string;
 using std::to_string;
 #endif
 
-#define CRLF std::string("\r\n")
+const std::string CRLF("\r\n");
 
 namespace web { namespace http
 {
