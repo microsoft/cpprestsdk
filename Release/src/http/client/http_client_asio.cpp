@@ -357,24 +357,25 @@ private:
             if (!pool)
                 return;
             auto& self = *pool;
+            auto& connections = self.m_connections;
 
             std::lock_guard<std::mutex> lock(self.m_lock);
             if (self.m_prev_epoch == self.m_epoch)
             {
-                self.m_connections.clear();
+                connections.clear();
                 self.is_timer_running = false;
                 return;
             }
             else
             {
                 auto prev_epoch = self.m_prev_epoch;
-                auto erase_end = std::find_if(self.m_connections.begin(), self.m_connections.end(),
+                auto erase_end = std::find_if(connections.begin(), connections.end(),
                     [prev_epoch](std::pair<uint64_t, std::shared_ptr<asio_connection>>& p)
                 {
                     return p.first > prev_epoch;
                 });
 
-                self.m_connections.erase(self.m_connections.begin(), erase_end);
+                connections.erase(connections.begin(), erase_end);
                 start_epoch_interval(pool);
             }
         });
