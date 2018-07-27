@@ -489,17 +489,13 @@ protected:
             }
             else
             {
+                proxy_str = uri.host();
                 if (uri.port() > 0)
                 {
-                    utility::ostringstream_t ss;
-                    ss.imbue(std::locale::classic());
-                    ss << uri.host() << _XPLATSTR(":") << uri.port();
-                    proxy_str = ss.str();
+                    proxy_str.push_back(_XPLATSTR(':'));
+                    proxy_str.append(_XPLATTOSTR(uri.port()));
                 }
-                else
-                {
-                    proxy_str = uri.host();
-                }
+
                 proxy_name = proxy_str.c_str();
             }
         }
