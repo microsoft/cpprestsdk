@@ -13,9 +13,6 @@
 
 #include "stdafx.h"
 
-#undef min
-#undef max
-
 using namespace web;
 
 bool json::details::g_keep_json_object_unsorted = false;
@@ -519,4 +516,3 @@ const web::json::details::json_error_category_impl& web::json::details::json_err
 #endif
     return instance;
 }
-

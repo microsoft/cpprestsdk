@@ -28,9 +28,6 @@ using namespace std;
 using namespace Platform;
 using namespace Microsoft::WRL;
 
-#undef min
-#undef max
-
 namespace web
 {
 namespace http

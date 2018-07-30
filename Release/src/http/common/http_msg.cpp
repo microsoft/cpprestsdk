@@ -13,9 +13,6 @@
 #include "stdafx.h"
 #include "../common/internal_http_helpers.h"
 
-#undef min
-#undef max
-
 using namespace web;
 using namespace utility;
 using namespace concurrency;
@@ -1081,4 +1078,3 @@ const http_version http_versions::HTTP_1_1 = { 1, 1 };
 #undef DAT
 #endif
 }} // namespace web::http
-
