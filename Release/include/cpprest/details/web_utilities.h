@@ -14,17 +14,6 @@
 
 namespace web
 {
-
-namespace http { namespace client { namespace details {
-class winhttp_client;
-class winrt_client;
-class asio_context;
-}}}
-namespace websockets { namespace client { namespace details {
-class winrt_callback_client;
-class wspp_callback_client;
-}}}
-
 namespace details
 {
 
