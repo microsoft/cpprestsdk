@@ -20,6 +20,7 @@ using websocketpp::lib::bind;
 using websocketpp::lib::thread;
 using websocketpp::lib::mutex;
 using websocketpp::lib::lock_guard;
+using websocketpp::lib::unique_lock;
 using websocketpp::lib::condition_variable;
 
 /* on_open insert connection_hdl into channel
@@ -71,33 +72,36 @@ public:
     }
 
     void on_open(connection_hdl hdl) {
-        lock_guard<mutex> lock(m_action_lock);
-        //std::cout << "on_open" << std::endl;
-        m_actions.push(action(SUBSCRIBE,hdl));
-        lock.unlock();
+        {
+            lock_guard<mutex> lock(m_action_lock);
+            //std::cout << "on_open" << std::endl;
+            m_actions.push(action(SUBSCRIBE,hdl));
+        } // unlock
         m_action_cond.notify_one();
     }
 
     void on_close(connection_hdl hdl) {
-        lock_guard<mutex> lock(m_action_lock);
-        //std::cout << "on_close" << std::endl;
-        m_actions.push(action(UNSUBSCRIBE,hdl));
-        lock.unlock();
+        {
+            lock_guard<mutex> lock(m_action_lock);
+            //std::cout << "on_close" << std::endl;
+            m_actions.push(action(UNSUBSCRIBE,hdl));
+        } // unlock
         m_action_cond.notify_one();
     }
 
     void on_message(connection_hdl hdl, server::message_ptr msg) {
         // queue message up for sending by processing thread
-        lock_guard<mutex> lock(m_action_lock);
-        //std::cout << "on_message" << std::endl;
-        m_actions.push(action(MESSAGE,hdl,msg));
-        lock.unlock();
+        {
+            lock_guard<mutex> lock(m_action_lock);
+            //std::cout << "on_message" << std::endl;
+            m_actions.push(action(MESSAGE,hdl,msg));
+        } // unlock
         m_action_cond.notify_one();
     }
 
     void process_messages() {
         while(1) {
-            lock_guard<mutex> lock(m_action_lock);
+            unique_lock<mutex> lock(m_action_lock);
 
             while(m_actions.empty()) {
                 m_action_cond.wait(lock);
