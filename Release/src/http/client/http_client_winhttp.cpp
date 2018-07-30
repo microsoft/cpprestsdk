@@ -180,7 +180,7 @@ enum msg_body_type
 };
 
 // Additional information necessary to track a WinHTTP request.
-class winhttp_request_context : public request_context
+class winhttp_request_context final : public request_context
 {
 public:
 
@@ -244,7 +244,7 @@ public:
     memory_holder m_body_data;
     std::unique_ptr<web::http::details::compression::stream_decompressor> decompressor;
 
-    virtual void cleanup()
+    void cleanup()
     {
         if(m_request_handle != nullptr)
         {
@@ -256,7 +256,7 @@ public:
 
 protected:
 
-    virtual void finish()
+    virtual void finish() override
     {
         request_context::finish();
         assert(m_self_reference != nullptr);
@@ -342,7 +342,7 @@ struct ie_proxy_config : WINHTTP_CURRENT_USER_IE_PROXY_CONFIG
 };
 
 // WinHTTP client.
-class winhttp_client : public _http_client_communicator
+class winhttp_client final : public _http_client_communicator
 {
 public:
     winhttp_client(http::uri address, http_client_config client_config)

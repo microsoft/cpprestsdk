@@ -297,7 +297,7 @@ private:
 ///   }
 /// </code>
 /// </remarks>
-class asio_connection_pool : public std::enable_shared_from_this<asio_connection_pool>
+class asio_connection_pool final : public std::enable_shared_from_this<asio_connection_pool>
 {
 public:
     asio_connection_pool() : m_pool_epoch_timer(crossplat::threadpool::shared_instance().service())
@@ -397,9 +397,9 @@ public:
         , m_start_with_ssl(base_uri().scheme() == U("https") && !this->client_config().proxy().is_specified())
     {}
 
-    void send_request(const std::shared_ptr<request_context> &request_ctx) override;
+    virtual void send_request(const std::shared_ptr<request_context> &request_ctx) override;
 
-    unsigned long open() override { return 0; }
+    virtual unsigned long open() override { return 0; }
 
     void release_connection(std::shared_ptr<asio_connection>& conn)
     {
@@ -429,7 +429,7 @@ private:
     const bool m_start_with_ssl;
 };
 
-class asio_context : public request_context, public std::enable_shared_from_this<asio_context>
+class asio_context final : public request_context, public std::enable_shared_from_this<asio_context>
 {
     friend class asio_client;
 public:
@@ -462,7 +462,7 @@ public:
         return ctx;
     }
 
-    class ssl_proxy_tunnel : public std::enable_shared_from_this<ssl_proxy_tunnel>
+    class ssl_proxy_tunnel final : public std::enable_shared_from_this<ssl_proxy_tunnel>
     {
     public:
         ssl_proxy_tunnel(std::shared_ptr<asio_context> context, std::function<void(std::shared_ptr<asio_context>)> ssl_tunnel_established)
