@@ -400,8 +400,6 @@ public:
 
     void send_request(const std::shared_ptr<request_context> &request_ctx) override;
 
-    unsigned long open() override { return 0; }
-
     void release_connection(std::shared_ptr<asio_connection>& conn)
     {
         m_pool->release(conn);

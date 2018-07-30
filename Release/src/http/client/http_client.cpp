@@ -129,7 +129,7 @@ request_context::request_context(const std::shared_ptr<_http_client_communicator
     responseImpl->_prepare_to_receive_data();
 }
 
-void _http_client_communicator::open_and_send_request_async(const std::shared_ptr<request_context> &request)
+void _http_client_communicator::send_request_async_impl(const std::shared_ptr<request_context> &request)
 {
     auto self = std::static_pointer_cast<_http_client_communicator>(this->shared_from_this());
     // Schedule a task to start sending.
@@ -137,7 +137,7 @@ void _http_client_communicator::open_and_send_request_async(const std::shared_pt
     {
         try
         {
-            self->open_and_send_request(request);
+            self->send_request(request);
         }
         catch (...)
         {
@@ -150,11 +150,11 @@ void _http_client_communicator::async_send_request(const std::shared_ptr<request
 {
     if (m_client_config.guarantee_order())
     {
-        pplx::extensibility::scoped_critical_section_t l(m_open_lock);
+        pplx::extensibility::scoped_critical_section_t l(m_client_lock);
 
-        if (++m_scheduled == 1)
+        if (m_requests_queue.empty())
         {
-            open_and_send_request_async(request);
+            send_request_async_impl(request);
         }
         else
         {
@@ -163,7 +163,7 @@ void _http_client_communicator::async_send_request(const std::shared_ptr<request
     }
     else
     {
-        open_and_send_request_async(request);
+        send_request_async_impl(request);
     }
 }
 
@@ -172,16 +172,14 @@ void _http_client_communicator::finish_request()
     // If guarantee order is specified we don't need to do anything.
     if (m_client_config.guarantee_order())
     {
-        pplx::extensibility::scoped_critical_section_t l(m_open_lock);
-
-        --m_scheduled;
+        pplx::extensibility::scoped_critical_section_t l(m_client_lock);
 
         if (!m_requests_queue.empty())
         {
             auto request = m_requests_queue.front();
             m_requests_queue.pop();
 
-            open_and_send_request_async(request);
+            send_request_async_impl(request);
         }
     }
 }
@@ -197,44 +195,8 @@ const uri & _http_client_communicator::base_uri() const
 }
 
 _http_client_communicator::_http_client_communicator(http::uri&& address, http_client_config&& client_config)
-    : m_uri(std::move(address)), m_client_config(std::move(client_config)), m_opened(false), m_scheduled(0)
+    : m_uri(std::move(address)), m_client_config(std::move(client_config))
 {
-}
-
-// Wraps opening the client around sending a request.
-void _http_client_communicator::open_and_send_request(const std::shared_ptr<request_context> &request)
-{
-    // First see if client needs to be opened.
-    unsigned long error = 0;
-
-    if (!m_opened)
-    {
-        pplx::extensibility::scoped_critical_section_t l(m_open_lock);
-
-        // Check again with the lock held
-        if (!m_opened)
-        {
-            error = open();
-
-            if (error == 0)
-            {
-                m_opened = true;
-            }
-        }
-    }
-
-    if (error != 0)
-    {
-        // Failed to open
-        request->report_error(error, _XPLATSTR("Open failed"));
-
-        // DO NOT TOUCH the this pointer after completing the request
-        // This object could be freed along with the request as it could
-        // be the last reference to this object
-        return;
-    }
-
-    send_request(request);
 }
 
 inline void request_context::finish()

@@ -14,6 +14,8 @@
 ****/
 #include "stdafx.h"
 
+#include <atomic>
+
 #include "cpprest/http_headers.h"
 #include "http_client_impl.h"
 
@@ -403,7 +405,7 @@ protected:
     }
 
     // Open session and connection with the server.
-    virtual unsigned long open() override
+    unsigned long open()
     {
         // This object have lifetime greater than proxy_name and proxy_bypass
         // which may point to its elements.
@@ -581,6 +583,28 @@ protected:
     // Start sending request.
     void send_request(_In_ const std::shared_ptr<request_context> &request)
     {
+        // First see if we need to be opened.
+        if (!m_opened)
+        {
+            pplx::extensibility::scoped_critical_section_t l(m_client_lock);
+
+            // Check again with the lock held
+            if (!m_opened)
+            {
+                unsigned long error = open();
+                if (error != 0)
+                {
+                    // DO NOT TOUCH the this pointer after completing the request
+                    // This object could be freed along with the request as it could
+                    // be the last reference to this object
+                    request->report_error(error, _XPLATSTR("Open failed"));
+                    return;
+                }
+
+                m_opened = true;
+            }
+        }
+
         http_request &msg = request->m_request;
         std::shared_ptr<winhttp_request_context> winhttp_context = std::static_pointer_cast<winhttp_request_context>(request);
         std::weak_ptr<winhttp_request_context> weak_winhttp_context = winhttp_context;
@@ -1545,6 +1569,8 @@ private:
             }
     }
     }
+
+    std::atomic<bool> m_opened;
 
     // WinHTTP session and connection
     HINTERNET m_hSession;
