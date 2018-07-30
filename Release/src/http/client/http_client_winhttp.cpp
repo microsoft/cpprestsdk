@@ -490,7 +490,7 @@ protected:
                 if (uri.port() > 0)
                 {
                     proxy_str.push_back(_XPLATSTR(':'));
-                    proxy_str.append(_XPLATTOSTR(uri.port()));
+                    proxy_str.append(utility::to_tstring(uri.port()));
                 }
 
                 proxy_name = proxy_str.c_str();

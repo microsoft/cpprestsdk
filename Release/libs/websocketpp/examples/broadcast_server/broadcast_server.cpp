@@ -19,7 +19,6 @@ using websocketpp::lib::bind;
 
 using websocketpp::lib::thread;
 using websocketpp::lib::mutex;
-using websocketpp::lib::lock_guard;
 using websocketpp::lib::unique_lock;
 using websocketpp::lib::condition_variable;
 
@@ -72,30 +71,27 @@ public:
     }
 
     void on_open(connection_hdl hdl) {
-        {
-            lock_guard<mutex> lock(m_action_lock);
-            //std::cout << "on_open" << std::endl;
-            m_actions.push(action(SUBSCRIBE,hdl));
-        } // unlock
+        unique_lock<mutex> lock(m_action_lock);
+        //std::cout << "on_open" << std::endl;
+        m_actions.push(action(SUBSCRIBE,hdl));
+        lock.unlock();
         m_action_cond.notify_one();
     }
 
     void on_close(connection_hdl hdl) {
-        {
-            lock_guard<mutex> lock(m_action_lock);
-            //std::cout << "on_close" << std::endl;
-            m_actions.push(action(UNSUBSCRIBE,hdl));
-        } // unlock
+        unique_lock<mutex> lock(m_action_lock);
+        //std::cout << "on_close" << std::endl;
+        m_actions.push(action(UNSUBSCRIBE,hdl));
+        lock.unlock();
         m_action_cond.notify_one();
     }
 
     void on_message(connection_hdl hdl, server::message_ptr msg) {
         // queue message up for sending by processing thread
-        {
-            lock_guard<mutex> lock(m_action_lock);
-            //std::cout << "on_message" << std::endl;
-            m_actions.push(action(MESSAGE,hdl,msg));
-        } // unlock
+        unique_lock<mutex> lock(m_action_lock);
+        //std::cout << "on_message" << std::endl;
+        m_actions.push(action(MESSAGE,hdl,msg));
+        lock.unlock();
         m_action_cond.notify_one();
     }
 
@@ -113,13 +109,13 @@ public:
             lock.unlock();
 
             if (a.type == SUBSCRIBE) {
-                lock_guard<mutex> con_lock(m_connection_lock);
+                unique_lock<mutex> con_lock(m_connection_lock);
                 m_connections.insert(a.hdl);
             } else if (a.type == UNSUBSCRIBE) {
-                lock_guard<mutex> con_lock(m_connection_lock);
+                unique_lock<mutex> con_lock(m_connection_lock);
                 m_connections.erase(a.hdl);
             } else if (a.type == MESSAGE) {
-                lock_guard<mutex> con_lock(m_connection_lock);
+                unique_lock<mutex> con_lock(m_connection_lock);
 
                 con_list::iterator it;
                 for (it = m_connections.begin(); it != m_connections.end(); ++it) {
