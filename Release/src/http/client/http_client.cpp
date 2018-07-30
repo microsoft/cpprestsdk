@@ -129,7 +129,7 @@ request_context::request_context(const std::shared_ptr<_http_client_communicator
     responseImpl->_prepare_to_receive_data();
 }
 
-void _http_client_communicator::send_request_async_impl(const std::shared_ptr<request_context> &request)
+void _http_client_communicator::async_send_request_impl(const std::shared_ptr<request_context> &request)
 {
     auto self = std::static_pointer_cast<_http_client_communicator>(this->shared_from_this());
     // Schedule a task to start sending.
@@ -152,18 +152,19 @@ void _http_client_communicator::async_send_request(const std::shared_ptr<request
     {
         pplx::extensibility::scoped_critical_section_t l(m_client_lock);
 
-        if (m_requests_queue.empty())
+        if (m_outstanding)
         {
-            send_request_async_impl(request);
+            m_requests_queue.push(request);
         }
         else
         {
-            m_requests_queue.push(request);
+            async_send_request_impl(request);
+            m_outstanding = true;
         }
     }
     else
     {
-        send_request_async_impl(request);
+        async_send_request_impl(request);
     }
 }
 
@@ -174,12 +175,16 @@ void _http_client_communicator::finish_request()
     {
         pplx::extensibility::scoped_critical_section_t l(m_client_lock);
 
-        if (!m_requests_queue.empty())
+        if (m_requests_queue.empty())
+        {
+            m_outstanding = false;
+        }
+        else
         {
             auto request = m_requests_queue.front();
             m_requests_queue.pop();
 
-            send_request_async_impl(request);
+            async_send_request_impl(request);
         }
     }
 }
@@ -195,7 +200,7 @@ const uri & _http_client_communicator::base_uri() const
 }
 
 _http_client_communicator::_http_client_communicator(http::uri&& address, http_client_config&& client_config)
-    : m_uri(std::move(address)), m_client_config(std::move(client_config))
+    : m_uri(std::move(address)), m_client_config(std::move(client_config)), m_outstanding(false)
 {
 }
 

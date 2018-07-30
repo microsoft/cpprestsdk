@@ -353,6 +353,7 @@ public:
     winhttp_client(http::uri address, http_client_config client_config)
         : _http_client_communicator(std::move(address), std::move(client_config))
         , m_secure(m_uri.scheme() == _XPLATSTR("https"))
+        , m_opened(false)
         , m_hSession(nullptr)
         , m_hConnection(nullptr) { }
 
@@ -407,6 +408,17 @@ protected:
     // Open session and connection with the server.
     unsigned long open()
     {
+        if (m_opened)
+        {
+            return 0;
+        }
+
+        pplx::extensibility::scoped_critical_section_t l(m_client_lock);
+        if (m_opened)
+        {
+            return 0;
+        }
+
         // This object have lifetime greater than proxy_name and proxy_bypass
         // which may point to its elements.
         ie_proxy_config proxyIE;
@@ -577,6 +589,7 @@ protected:
             return report_failure(_XPLATSTR("Error opening connection"));
         }
 
+        m_opened = true;
         return S_OK;
     }
 
@@ -584,25 +597,14 @@ protected:
     void send_request(_In_ const std::shared_ptr<request_context> &request)
     {
         // First see if we need to be opened.
-        if (!m_opened)
+        unsigned long error = open();
+        if (error != 0)
         {
-            pplx::extensibility::scoped_critical_section_t l(m_client_lock);
-
-            // Check again with the lock held
-            if (!m_opened)
-            {
-                unsigned long error = open();
-                if (error != 0)
-                {
-                    // DO NOT TOUCH the this pointer after completing the request
-                    // This object could be freed along with the request as it could
-                    // be the last reference to this object
-                    request->report_error(error, _XPLATSTR("Open failed"));
-                    return;
-                }
-
-                m_opened = true;
-            }
+            // DO NOT TOUCH the this pointer after completing the request
+            // This object could be freed along with the request as it could
+            // be the last reference to this object
+            request->report_error(error, _XPLATSTR("Open failed"));
+            return;
         }
 
         http_request &msg = request->m_request;
@@ -1590,4 +1592,3 @@ std::shared_ptr<_http_client_communicator> create_platform_final_pipeline_stage(
 }
 
 }}}}
-

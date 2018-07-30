@@ -129,10 +129,11 @@ private:
     http_client_config m_client_config;
 
     // Wraps opening the client around sending a request.
-    void send_request_async_impl(const std::shared_ptr<request_context> &request);
+    void async_send_request_impl(const std::shared_ptr<request_context> &request);
 
     // Queue used to guarantee ordering of requests, when applicable.
     std::queue<std::shared_ptr<request_context>> m_requests_queue;
+    bool m_outstanding;
 };
 
 /// <summary>
