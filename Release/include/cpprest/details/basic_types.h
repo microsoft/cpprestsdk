@@ -50,8 +50,6 @@ typedef uint32_t HRESULT; // Needed for PPLX
 typedef wchar_t char_t ;
 typedef std::wstring string_t;
 #define _XPLATSTR(x) L ## x
-template<typename T>
-std::wstring to_tstring(const T& x) { return std::to_wstring(x); }
 typedef std::wostringstream ostringstream_t;
 typedef std::wofstream ofstream_t;
 typedef std::wostream ostream_t;
@@ -69,8 +67,6 @@ typedef std::wstringstream stringstream_t;
 typedef char char_t;
 typedef std::string string_t;
 #define _XPLATSTR(x) x
-template<typename T>
-std::string to_tstring(const T& x) { return std::to_string(x); }
 typedef std::ostringstream ostringstream_t;
 typedef std::ofstream ofstream_t;
 typedef std::ostream ostream_t;

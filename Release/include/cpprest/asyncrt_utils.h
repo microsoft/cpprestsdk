@@ -228,7 +228,7 @@ namespace conversions
 
 #if defined(__ANDROID__)
         template<class T>
-        inline std::string to_string(const T& t)
+        inline std::string to_string(const T t)
         {
             std::ostringstream os;
             os.imbue(std::locale::classic());
@@ -238,16 +238,16 @@ namespace conversions
 #endif
 
         template<class T>
-        inline utility::string_t to_string_t(T&& t)
+        inline utility::string_t to_string_t(const T t)
         {
 #ifdef _UTF16_STRINGS
             using std::to_wstring;
-            return to_wstring(std::forward<T>(t));
+            return to_wstring(t);
 #else
 #if !defined(__ANDROID__)
             using std::to_string;
 #endif
-            return to_string(std::forward<T>(t));
+            return to_string(t);
 #endif
         }
 
