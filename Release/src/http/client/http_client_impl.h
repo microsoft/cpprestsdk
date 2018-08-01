@@ -75,7 +75,7 @@ public:
     bool handle_content_encoding_compression();
 
     /// <summary>Append an Accept-Encoding header if requested by the http_client settings</summary>
-    void add_accept_encoding_header(utility::string_t& headers) const;
+    utility::string_t get_accept_encoding_header() const;
 
     concurrency::streams::streambuf<uint8_t> _get_writebuffer();
 

@@ -759,8 +759,7 @@ protected:
         }
 
         utility::string_t flattened_headers = web::http::details::flatten_http_headers(msg.headers());
-
-        winhttp_context->add_accept_encoding_header(flattened_headers);
+        flattened_headers += winhttp_context->get_accept_encoding_header();
 
         // Add headers.
         if(!flattened_headers.empty())
