@@ -70,6 +70,13 @@ public:
         report_exception(std::make_exception_ptr(e));
     }
 
+    /// <summary>Set m_decompressor based on the response headers, or call report_exception</summary>
+    /// <returns>false on failure</returns>
+    bool handle_content_encoding_compression();
+
+    /// <summary>Append an Accept-Encoding header if requested by the http_client settings</summary>
+    void add_accept_encoding_header(utility::string_t& headers) const;
+
     concurrency::streams::streambuf<uint8_t> _get_writebuffer();
 
     // Reference to the http_client implementation.
@@ -87,6 +94,8 @@ public:
 
     // Registration for cancellation notification if enabled.
     pplx::cancellation_token_registration m_cancellationRegistration;
+
+    std::unique_ptr<web::http::details::compression::stream_decompressor> m_decompressor;
 
 protected:
 
