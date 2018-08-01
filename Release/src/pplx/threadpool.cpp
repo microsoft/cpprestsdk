@@ -140,19 +140,38 @@ typedef threadpool_impl platform_shared_threadpool;
 
 std::pair<bool, platform_shared_threadpool*> initialize_shared_threadpool(size_t num_threads)
 {
-    static std::once_flag of;
     static typename std::aligned_union<0, platform_shared_threadpool>::type storage;
-
-#if defined(__ANDROID__)
-    abort_if_no_jvm();
-#endif // __ANDROID__
     platform_shared_threadpool* const ptr =
         &reinterpret_cast<platform_shared_threadpool&>(storage);
     bool initialized_this_time = false;
+#if defined(__ANDROID__)
+    // mutex based implementation due to paranoia about (lack of) call_once support on Android
+    // remove this if/when call_once is supported
+    static std::mutex mtx;
+    static std::atomic<bool> initialized;
+    abort_if_no_jvm();
+    if (!initialized.load())
+    {
+        std::lock_guard<std::mutex> guard(mtx);
+        if (!initialized.load())
+        {
+            ::new (static_cast<void*>(ptr)) platform_shared_threadpool(num_threads);
+            initialized.store(true);
+            initialized_this_time = true;
+        }
+    }   // also unlock
+
+#else // ^^^ __ANDROID__ ^^^ // vvv !__ANDROID___ vvv //
+    static std::once_flag of;
+
+// #if defined(__ANDROID__) // if call_once can be used for android
+//     abort_if_no_jvm();
+// #endif // __ANDROID__
     std::call_once(of, [num_threads, ptr, &initialized_this_time] {
-        ::new (ptr) platform_shared_threadpool(num_threads);
+        ::new (static_cast<void*>(ptr)) platform_shared_threadpool(num_threads);
         initialized_this_time = true;
     });
+#endif // __ANDROID__
 
     return {initialized_this_time, ptr};
 }
