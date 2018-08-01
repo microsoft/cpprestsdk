@@ -123,15 +123,19 @@ bool request_context::handle_content_encoding_compression()
     return true;
 }
 
-void request_context::add_accept_encoding_header(utility::string_t& headers) const
+utility::string_t request_context::get_accept_encoding_header() const
 {
+    utility::string_t headers;
     // Add the header needed to request a compressed response if supported on this platform and it has been specified in the config
-    if (web::http::details::compression::stream_decompressor::is_supported() && m_http_client->client_config().request_compressed_response())
+    if (web::http::details::compression::stream_decompressor::is_supported()
+        && m_http_client->client_config().request_compressed_response())
     {
         headers.append(U("Accept-Encoding: "));
         headers.append(web::http::details::compression::stream_decompressor::known_algorithms());
         headers.append(U("\r\n"));
     }
+
+    return headers;
 }
 
 concurrency::streams::streambuf<uint8_t> request_context::_get_readbuffer()
