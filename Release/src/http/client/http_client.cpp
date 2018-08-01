@@ -109,7 +109,7 @@ bool request_context::handle_content_encoding_compression()
 
             if (alg != web::http::details::compression::compression_algorithm::invalid)
             {
-                m_decompressor = std::make_unique<web::http::details::compression::stream_decompressor>(alg);
+                m_decompressor = utility::details::make_unique<web::http::details::compression::stream_decompressor>(alg);
             }
             else
             {
