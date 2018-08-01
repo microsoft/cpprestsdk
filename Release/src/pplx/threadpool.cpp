@@ -42,7 +42,9 @@ static void abort_if_no_jvm()
 {
     if (JVM == nullptr)
     {
-        __android_log_print(ANDROID_LOG_ERROR, "CPPRESTSDK", "%s", "The CppREST SDK must be initialized before first use on android: https://github.com/Microsoft/cpprestsdk/wiki/How-to-build-for-Android");
+        __android_log_print(ANDROID_LOG_ERROR, "CPPRESTSDK", "%s",
+            "The CppREST SDK must be initialized before first use on android: "
+            "https://github.com/Microsoft/cpprestsdk/wiki/How-to-build-for-Android");
         std::abort();
     }
 }
@@ -75,7 +77,8 @@ struct threadpool_impl final : crossplat::threadpool
 private:
     void add_thread()
     {
-        m_threads.push_back(std::unique_ptr<boost::asio::detail::thread>(new boost::asio::detail::thread([&]{ thread_start(this); })));
+        m_threads.push_back(std::unique_ptr<boost::asio::detail::thread>(
+            new boost::asio::detail::thread([&]{ thread_start(this); })));
     }
 
 #if defined(__ANDROID__)
@@ -135,17 +138,41 @@ typedef shared_threadpool platform_shared_threadpool;
 typedef threadpool_impl platform_shared_threadpool;
 #endif
 
+std::pair<bool, platform_shared_threadpool*> initialize_shared_threadpool(size_t num_threads)
+{
+    static std::once_flag of;
+    static typename std::aligned_union<0, platform_shared_threadpool>::type storage;
+
+#if defined(__ANDROID__)
+    abort_if_no_jvm();
+#endif // __ANDROID__
+    platform_shared_threadpool* const ptr =
+        &reinterpret_cast<platform_shared_threadpool&>(storage);
+    bool initialized_this_time = false;
+    std::call_once(of, [num_threads, ptr, &initialized_this_time] {
+        ::new (ptr) platform_shared_threadpool(num_threads);
+        initialized_this_time = true;
+    });
+
+    return {initialized_this_time, ptr};
+}
 }
 
 namespace crossplat
 {
 threadpool& threadpool::shared_instance()
 {
-#if defined(__ANDROID__)
-    abort_if_no_jvm();
-#endif // __ANDROID__
-    static platform_shared_threadpool s_shared_impl(40);
-    return s_shared_impl.get_shared();
+    return initialize_shared_threadpool(40).second->get_shared();
+}
+
+
+void threadpool::initialize_with_threads(size_t num_threads)
+{
+    const auto result = initialize_shared_threadpool(num_threads);
+    if (!result.first)
+    {
+        throw std::runtime_error("the cpprestsdk threadpool has already been initialized");
+    }
 }
 }
 
