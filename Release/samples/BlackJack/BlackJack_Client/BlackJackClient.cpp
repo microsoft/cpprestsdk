@@ -13,17 +13,12 @@
 #include <iostream>
 #include <streambuf>
 #include <sstream>
+#include <locale>
 #include <fstream>
 #include "../BlackJack_Server/messagetypes.h"
 
-#ifdef _WIN32
-# define iequals(x, y) (_stricmp((x), (y))==0)
-#else
-# define iequals(x, y) boost::iequals((x), (y))
-#endif
-
 using namespace std;
-using namespace web; 
+using namespace web;
 using namespace utility;
 using namespace http;
 using namespace http::client;
@@ -134,7 +129,7 @@ void PrintTable(const http_response &response, bool &refresh)
     }
 }
 
-// 
+//
 // Entry point for the blackjack client.
 // Arguments: BlackJack_Client.exe <port>
 // If port is not specified, client will assume that the server is listening on port 34568
@@ -179,7 +174,11 @@ int main(int argc, char *argv[])
         ucout << "Enter method:";
         cin >> method;
 
-        if ( iequals(method.c_str(), "quit") )
+        const auto methodFirst = &method[0];
+        const auto methodLast = methodFirst + method.size();
+        std::use_facet<std::ctype<char>>(std::locale::classic()).tolower(methodFirst, methodLast);
+
+        if (method == "quit")
         {
             if ( !userName.empty() && !table.empty() )
             {
@@ -190,12 +189,12 @@ int main(int argc, char *argv[])
             break;
         }
 
-        if ( iequals(method.c_str(), "name") )
+        if (method == "name")
         {
             ucout << "Enter user name:";
             ucin >> userName;
         }
-        else if ( iequals(method.c_str(), "join") )
+        else if (method == "join")
         {
             ucout << "Enter table name:";
             ucin >> table;
@@ -206,16 +205,16 @@ int main(int argc, char *argv[])
             buf << table << U("?name=") << userName;
             CheckResponse("blackjack/dealer", bjDealer.request(methods::POST, buf.str()).get(), was_refresh);
         }
-        else if ( iequals(method.c_str(), "hit")
-            || iequals(method.c_str(), "stay")
-            || iequals(method.c_str(), "double") )
+        else if (method == "hit"
+            || method == "stay"
+            || method == "double")
         {
             utility::ostringstream_t buf;
             buf << table << U("?request=") << utility::conversions::to_string_t(method) << U("&name=") << userName;
             PrintTable(CheckResponse("blackjack/dealer", bjDealer.request(methods::PUT, buf.str()).get()), was_refresh);
         }
-        else if ( iequals(method.c_str(), "bet") 
-            || iequals(method.c_str(), "insure") )
+        else if (method == "bet"
+            ||method == "insure")
         {
             utility::string_t bet;
             ucout << "Enter bet:";
@@ -227,11 +226,11 @@ int main(int argc, char *argv[])
             buf << table << U("?request=") << utility::conversions::to_string_t(method) << U("&name=") << userName << U("&amount=") << bet;
             PrintTable(CheckResponse("blackjack/dealer", bjDealer.request(methods::PUT, buf.str()).get()), was_refresh);
         }
-        else if ( iequals(method.c_str(), "newtbl") )
+        else if (method == "newtbl")
         {
             CheckResponse("blackjack/dealer", bjDealer.request(methods::POST).get(), was_refresh);
         }
-        else if ( iequals(method.c_str(), "leave") )
+        else if (method == "leave")
         {
             ucout << "Enter table:";
             ucin >> table;
@@ -242,7 +241,7 @@ int main(int argc, char *argv[])
             buf << table << U("?name=") << userName;
             CheckResponse("blackjack/dealer", bjDealer.request(methods::DEL, buf.str()).get(), was_refresh);
         }
-        else if ( iequals(method.c_str(), "list") )
+        else if (method == "list")
         {
             was_refresh = false;
             http_response response = CheckResponse("blackjack/dealer", bjDealer.request(methods::GET).get());
@@ -268,4 +267,3 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-

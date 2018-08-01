@@ -12,6 +12,9 @@
 ****/
 
 #include "stdafx.h"
+#include <cpprest/asyncrt_utils.h>
+#include <algorithm>
+#include <string>
 
 #ifndef _WIN32
 #if defined(__clang__)
@@ -29,11 +32,93 @@ using namespace web;
 using namespace utility;
 using namespace utility::conversions;
 
+namespace
+{
+    struct to_lower_ch_impl
+    {
+        char operator()(char c) const CPPREST_NOEXCEPT
+        {
+            if (c >= 'A' && c <= 'Z')
+                return static_cast<char>(c - 'A' + 'a');
+            return c;
+        }
+
+        wchar_t operator()(wchar_t c) const CPPREST_NOEXCEPT
+        {
+            if (c >= L'A' && c <= L'Z')
+                return static_cast<wchar_t>(c - L'A' + L'a');
+            return c;
+        }
+    };
+
+    constexpr to_lower_ch_impl to_lower_ch;
+
+    struct eq_lower_ch_impl
+    {
+        template<class CharT>
+        inline CharT operator()(const CharT left, const CharT right) const CPPREST_NOEXCEPT
+        {
+            return to_lower_ch(left) == to_lower_ch(right);
+        }
+    };
+
+    constexpr eq_lower_ch_impl eq_lower_ch;
+
+    struct lt_lower_ch_impl
+    {
+        template<class CharT>
+        inline CharT operator()(const CharT left, const CharT right) const CPPREST_NOEXCEPT
+        {
+            return to_lower_ch(left) < to_lower_ch(right);
+        }
+    };
+
+    constexpr lt_lower_ch_impl lt_lower_ch;
+}
+
 namespace utility
 {
 
 namespace details
 {
+
+_ASYNCRTIMP bool __cdecl str_iequal(const std::string &left, const std::string &right) CPPREST_NOEXCEPT
+{
+    return left.size() == right.size()
+        && std::equal(left.cbegin(), left.cend(), right.cbegin(), eq_lower_ch);
+}
+
+_ASYNCRTIMP bool __cdecl str_iequal(const std::wstring &left, const std::wstring &right) CPPREST_NOEXCEPT
+{
+    return left.size() == right.size()
+        && std::equal(left.cbegin(), left.cend(), right.cbegin(), eq_lower_ch);
+}
+
+_ASYNCRTIMP bool __cdecl str_iless(const std::string &left, const std::string &right) CPPREST_NOEXCEPT
+{
+    return std::lexicographical_compare(left.cbegin(), left.cend(), right.cbegin(), right.cend(), lt_lower_ch);
+}
+
+_ASYNCRTIMP bool __cdecl str_iless(const std::wstring &left, const std::wstring &right) CPPREST_NOEXCEPT
+{
+    return std::lexicographical_compare(left.cbegin(), left.cend(), right.cbegin(), right.cend(), lt_lower_ch);
+}
+
+_ASYNCRTIMP void __cdecl inplace_tolower(std::string &target) CPPREST_NOEXCEPT
+{
+    for (auto& ch : target)
+    {
+        ch = to_lower_ch(ch);
+    }
+}
+
+_ASYNCRTIMP void __cdecl inplace_tolower(std::wstring &target) CPPREST_NOEXCEPT
+{
+    for (auto& ch : target)
+    {
+        ch = to_lower_ch(ch);
+    }
+}
 
 #if !defined(ANDROID) && !defined(__ANDROID__)
 std::once_flag g_c_localeFlag;
@@ -205,7 +290,7 @@ std::error_condition windows_category_impl::default_error_condition(int errorCod
     // First see if the STL implementation can handle the mapping for common cases.
     const std::error_condition errCondition = std::system_category().default_error_condition(errorCode);
     const std::string errConditionMsg = errCondition.message();
-    if(_stricmp(errConditionMsg.c_str(), "unknown error") != 0)
+    if(!utility::details::str_iequal(errConditionMsg, "unknown error"))
     {
         return errCondition;
     }
@@ -346,7 +431,7 @@ utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
     utf16string dest(count_utf8_to_utf16(s), L'\0');
     utf16string::value_type* const destData = &dest[0];
     size_t destIndex = 0;
-    
+
     for (size_t index = 0; index < srcSize; ++index)
     {
         std::string::value_type src = srcData[index];
