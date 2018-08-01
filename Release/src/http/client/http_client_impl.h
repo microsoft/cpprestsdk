@@ -126,30 +126,23 @@ public:
 protected:
     _http_client_communicator(http::uri&& address, http_client_config&& client_config);
 
-    // Method to open client.
-    virtual unsigned long open() = 0;
-
     // HTTP client implementations must implement send_request.
     virtual void send_request(_In_ const std::shared_ptr<request_context> &request) = 0;
 
     // URI to connect to.
     const http::uri m_uri;
 
+    pplx::extensibility::critical_section_t m_client_lock;
 private:
 
     http_client_config m_client_config;
 
-    std::atomic<bool> m_opened;
-
-    pplx::extensibility::critical_section_t m_open_lock;
-
     // Wraps opening the client around sending a request.
-    void open_and_send_request_async(const std::shared_ptr<request_context> &request);
-    void open_and_send_request(const std::shared_ptr<request_context> &request);
+    void async_send_request_impl(const std::shared_ptr<request_context> &request);
 
     // Queue used to guarantee ordering of requests, when applicable.
     std::queue<std::shared_ptr<request_context>> m_requests_queue;
-    int m_scheduled;
+    bool m_outstanding;
 };
 
 /// <summary>
