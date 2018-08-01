@@ -19,6 +19,7 @@
 #include <system_error>
 #include <random>
 #include <locale.h>
+#include <limits.h>
 #include "pplx/pplxtasks.h"
 #include "cpprest/details/basic_types.h"
 
@@ -356,11 +357,45 @@ namespace details
     /// Our own implementation of alpha numeric instead of std::isalnum to avoid
     /// taking global lock for performance reasons.
     /// </summary>
-    inline bool __cdecl is_alnum(char ch)
+    inline bool __cdecl is_alnum(const unsigned char uch) noexcept
+    {   // test if uch is an alnum character
+        // special casing char to avoid branches
+        static constexpr bool is_alnum_table[UCHAR_MAX + 1] =
+            {
+            /*        X0 X1 X2 X3 X4 X5 X6 X7 X8 X9 XA XB XC XD XE XF */
+            /* 0X */   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            /* 1X */   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            /* 2X */   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            /* 3X */   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, /* 0-9 */
+            /* 4X */   0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, /* A-Z */
+            /* 5X */   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0,
+            /* 6X */   0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, /* a-z */
+            /* 7X */   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0
+            /* non-ASCII values initialized to 0 */
+            };
+        return (is_alnum_table[uch]);
+    }
+
+    /// <summary>
+    /// Our own implementation of alpha numeric instead of std::isalnum to avoid
+    /// taking global lock for performance reasons.
+    /// </summary>
+    inline bool __cdecl is_alnum(const char ch) noexcept
     {
-        return (ch >= '0' && ch <= '9')
-            || (ch >= 'A' && ch <= 'Z')
-            || (ch >= 'a' && ch <= 'z');
+        return (is_alnum(static_cast<unsigned char>(ch)));
+    }
+
+    /// <summary>
+    /// Our own implementation of alpha numeric instead of std::isalnum to avoid
+    /// taking global lock for performance reasons.
+    /// </summary>
+    template<class Elem>
+    inline bool __cdecl is_alnum(Elem ch) noexcept
+    {
+        // assumes 'x' == L'x' for the ASCII range
+        typedef typename std::make_unsigned<Elem>::type UElem;
+        const auto uch = static_cast<UElem>(ch);
+        return (uch <= static_cast<UElem>('z') && is_alnum(static_cast<unsigned char>(uch)));
     }
 
     /// <summary>
