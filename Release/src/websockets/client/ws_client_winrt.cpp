@@ -86,7 +86,7 @@ public:
         {
             // Unfortunately the MessageWebSocket API throws a COMException if you try to set the
             // 'Sec-WebSocket-Protocol' header here. It requires you to go through their API instead.
-            if (!utility::details::str_icmp(header.first, protocolHeader))
+            if (!utility::details::str_iequal(header.first, protocolHeader))
             {
                 m_msg_websocket->SetRequestHeader(Platform::StringReference(header.first.c_str()), Platform::StringReference(header.second.c_str()));
             }
@@ -171,7 +171,7 @@ public:
         std::weak_ptr<winrt_callback_client> thisWeakPtr = shared_from_this();
         return pplx::create_task(m_msg_websocket->ConnectAsync(uri)).then([thisWeakPtr](pplx::task<void> result) -> pplx::task<void>
         {
-            // result.get() should happen before anything else, to make sure there is no unobserved exception 
+            // result.get() should happen before anything else, to make sure there is no unobserved exception
             // in the task chain.
             try
             {
@@ -421,7 +421,7 @@ private:
     // External callback for handling received and close event
     std::function<void(websocket_incoming_message)> m_external_message_handler;
     std::function<void(websocket_close_status, const utility::string_t&, const std::error_code&)> m_external_close_handler;
-    
+
     // Queue to track pending sends
     outgoing_msg_queue m_out_queue;
 };

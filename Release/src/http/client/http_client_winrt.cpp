@@ -375,12 +375,6 @@ public:
 
 protected:
 
-    // Method to open client.
-    virtual unsigned long open() override
-    {
-        return 0;
-    }
-
     // Start sending request.
     virtual void send_request(_In_ const std::shared_ptr<request_context> &request) override
     {

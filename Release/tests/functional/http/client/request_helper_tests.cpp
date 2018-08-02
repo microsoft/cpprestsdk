@@ -71,7 +71,7 @@ TEST_FIXTURE(uri_address, send_accept_encoding)
         config.set_request_compressed_response(true);
         http_client client(m_uri, config);
 
-        std::atomic<bool> found_accept_encoding = false;
+        std::atomic<bool> found_accept_encoding(false);
 
         server.next_request().then([&found_accept_encoding](test_request *p_request) {
             found_accept_encoding = p_request->m_headers.find(header_names::accept_encoding) != p_request->m_headers.end();
@@ -90,7 +90,7 @@ TEST_FIXTURE(uri_address, do_not_send_accept_encoding)
     auto& server = *scoped.server();
     http_client client(m_uri);
 
-    std::atomic<bool> found_accept_encoding = true;
+    std::atomic<bool> found_accept_encoding(true);
 
     server.next_request().then([&found_accept_encoding](test_request *p_request) {
         found_accept_encoding = p_request->m_headers.find(header_names::accept_encoding) != p_request->m_headers.end();

@@ -335,7 +335,7 @@ public:
         // Add any request headers specified by the user.
         for (const auto & header : headers)
         {
-            if (!utility::details::str_icmp(header.first, g_subProtocolHeader))
+            if (!utility::details::str_iequal(header.first, g_subProtocolHeader))
             {
                 con->append_header(utility::conversions::to_utf8string(header.first), utility::conversions::to_utf8string(header.second));
             }

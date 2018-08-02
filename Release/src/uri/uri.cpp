@@ -343,11 +343,7 @@ namespace
             if (scheme_begin)
             {
                 components.m_scheme.assign(scheme_begin, scheme_end);
-
-                // convert scheme to lowercase
-                std::transform(components.m_scheme.begin(), components.m_scheme.end(), components.m_scheme.begin(), [](utility::char_t c) {
-                    return (utility::char_t)tolower(c);
-                });
+                utility::details::inplace_tolower(components.m_scheme);
             }
             else
             {
@@ -362,11 +358,7 @@ namespace
             if (host_begin)
             {
                 components.m_host.assign(host_begin, host_end);
-
-                // convert host to lowercase
-                std::transform(components.m_host.begin(), components.m_host.end(), components.m_host.begin(), [](utility::char_t c) {
-                    return (utility::char_t)tolower(c);
-                });
+                utility::details::inplace_tolower(components.m_host);
             }
             else
             {
@@ -438,14 +430,9 @@ utility::string_t uri_components::join()
     // canonicalize components first
 
     // convert scheme to lowercase
-    std::transform(m_scheme.begin(), m_scheme.end(), m_scheme.begin(), [](utility::char_t c) {
-        return (utility::char_t)tolower(c);
-    });
-
+    utility::details::inplace_tolower(m_scheme);
     // convert host to lowercase
-    std::transform(m_host.begin(), m_host.end(), m_host.begin(), [](utility::char_t c) {
-        return (utility::char_t)tolower(c);
-    });
+    utility::details::inplace_tolower(m_host);
 
     // canonicalize the path to have a leading slash if it's a full uri
     if (!m_host.empty() && m_path.empty())

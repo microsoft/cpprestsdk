@@ -399,8 +399,6 @@ public:
 
     virtual void send_request(const std::shared_ptr<request_context> &request_ctx) override;
 
-    virtual unsigned long open() override { return 0; }
-
     void release_connection(std::shared_ptr<asio_connection>& conn)
     {
         m_pool->release(conn);
@@ -718,7 +716,7 @@ public:
                 extra_headers.append(ctx->generate_basic_auth_header());
             }
 
-            ctx->add_accept_encoding_header(extra_headers);
+            extra_headers += utility::conversions::to_utf8string(ctx->get_accept_encoding_header());
 
             // Check user specified transfer-encoding.
             std::string transferencoding;
