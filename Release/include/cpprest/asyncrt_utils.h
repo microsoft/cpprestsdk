@@ -29,7 +29,6 @@
 
 #ifndef _WIN32
 #include <sys/time.h>
-#include <boost/algorithm/string.hpp>
 #if !defined(ANDROID) && !defined(__ANDROID__) && defined(HAVE_XLOCALE_H) // CodePlex 269
 /* Systems using glibc: xlocale.h has been removed from glibc 2.26
    The above include of locale.h is sufficient
@@ -428,19 +427,48 @@ namespace details
     }
 
     /// <summary>
-    /// Cross platform utility function for performing case insensitive string comparision.
+    /// Cross platform utility function for performing case insensitive string equality comparision.
     /// </summary>
     /// <param name="left">First string to compare.</param>
     /// <param name="right">Second strong to compare.</param>
     /// <returns>true if the strings are equivalent, false otherwise</returns>
-    inline bool str_icmp(const utility::string_t &left, const utility::string_t &right)
-    {
-#ifdef _WIN32
-        return _wcsicmp(left.c_str(), right.c_str()) == 0;
-#else
-        return boost::iequals(left, right);
-#endif
-    }
+    _ASYNCRTIMP bool __cdecl str_iequal(const std::string &left, const std::string &right) CPPREST_NOEXCEPT;
+
+    /// <summary>
+    /// Cross platform utility function for performing case insensitive string equality comparision.
+    /// </summary>
+    /// <param name="left">First string to compare.</param>
+    /// <param name="right">Second strong to compare.</param>
+    /// <returns>true if the strings are equivalent, false otherwise</returns>
+    _ASYNCRTIMP bool __cdecl str_iequal(const std::wstring &left, const std::wstring &right) CPPREST_NOEXCEPT;
+
+    /// <summary>
+    /// Cross platform utility function for performing case insensitive string less-than comparision.
+    /// </summary>
+    /// <param name="left">First string to compare.</param>
+    /// <param name="right">Second strong to compare.</param>
+    /// <returns>true if a lowercase view of left is lexicographically less than a lowercase view of right; otherwise, false.</returns>
+    _ASYNCRTIMP bool __cdecl str_iless(const std::string &left, const std::string &right) CPPREST_NOEXCEPT;
+
+    /// <summary>
+    /// Cross platform utility function for performing case insensitive string less-than comparision.
+    /// </summary>
+    /// <param name="left">First string to compare.</param>
+    /// <param name="right">Second strong to compare.</param>
+    /// <returns>true if a lowercase view of left is lexicographically less than a lowercase view of right; otherwise, false.</returns>
+    _ASYNCRTIMP bool __cdecl str_iless(const std::wstring &left, const std::wstring &right) CPPREST_NOEXCEPT;
+
+    /// <summary>
+    /// Convert a string to lowercase in place.
+    /// </summary>
+    /// <param name="target">The string to convert to lowercase.</param>
+    _ASYNCRTIMP void __cdecl inplace_tolower(std::string &target) CPPREST_NOEXCEPT;
+
+    /// <summary>
+    /// Convert a string to lowercase in place.
+    /// </summary>
+    /// <param name="target">The string to convert to lowercase.</param>
+    _ASYNCRTIMP void __cdecl inplace_tolower(std::wstring &target) CPPREST_NOEXCEPT;
 
 #ifdef _WIN32
 
@@ -641,41 +669,6 @@ private:
     // Storing as hundreds of nanoseconds 10e-7, i.e. 1 here equals 100ns.
     interval_type m_interval;
 };
-
-#ifndef _WIN32
-
-// temporary workaround for the fact that
-// utf16char is not fully supported in GCC
-class cmp
-{
-public:
-
-    static int icmp(std::string left, std::string right)
-    {
-        size_t i;
-        for (i = 0; i < left.size(); ++i)
-        {
-            if (i == right.size()) return 1;
-
-            auto l = cmp::tolower(left[i]);
-            auto r = cmp::tolower(right[i]);
-            if (l > r) return 1;
-            if (l < r) return -1;
-        }
-        if (i < right.size()) return -1;
-        return 0;
-    }
-
-private:
-    static char tolower(char c)
-    {
-        if (c >= 'A' && c <= 'Z')
-            return static_cast<char>(c - 'A' + 'a');
-        return c;
-    }
-};
-
-#endif
 
 inline int operator- (datetime t1, datetime t2)
 {

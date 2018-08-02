@@ -68,30 +68,30 @@ public:
     {
         bool operator()(const utility::string_t &str1, const utility::string_t &str2) const
         {
-#ifdef _WIN32
-            return _wcsicmp(str1.c_str(), str2.c_str()) < 0;
-#else
-            return utility::cmp::icmp(str1, str2) < 0;
-#endif
+            return utility::details::str_iless(str1, str2);
         }
     };
+
+private:
+    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp> inner_container;
+public:
 
     /// <summary>
     /// STL-style typedefs
     /// </summary>
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp>::key_type key_type;
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp>::key_compare key_compare;
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp>::allocator_type allocator_type;
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp>::size_type size_type;
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp>::difference_type difference_type;
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp>::pointer pointer;
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp>::const_pointer const_pointer;
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp>::reference reference;
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp>::const_reference const_reference;
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp>::iterator iterator;
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp>::const_iterator const_iterator;
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp>::reverse_iterator reverse_iterator;
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp>::const_reverse_iterator const_reverse_iterator;
+    typedef typename inner_container::key_type key_type;
+    typedef typename inner_container::key_compare key_compare;
+    typedef typename inner_container::allocator_type allocator_type;
+    typedef typename inner_container::size_type size_type;
+    typedef typename inner_container::difference_type difference_type;
+    typedef typename inner_container::pointer pointer;
+    typedef typename inner_container::const_pointer const_pointer;
+    typedef typename inner_container::reference reference;
+    typedef typename inner_container::const_reference const_reference;
+    typedef typename inner_container::iterator iterator;
+    typedef typename inner_container::const_iterator const_iterator;
+    typedef typename inner_container::reverse_iterator reverse_iterator;
+    typedef typename inner_container::const_reverse_iterator const_reverse_iterator;
 
     /// <summary>
     /// Constructs an empty set of HTTP headers.
@@ -318,7 +318,7 @@ private:
     }
 
     // Headers are stored in a map with case insensitive key.
-    std::map<utility::string_t, utility::string_t, _case_insensitive_cmp> m_headers;
+    inner_container m_headers;
 };
 
 }}
