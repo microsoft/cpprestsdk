@@ -1,3 +1,12 @@
+cpprestsdk (2.10.3)
+----------------------
+* Added a root `CMakeLists.txt` to improve support for VS2017 Open Folder.
+* PR#809 improves support for `/permissive-` in MSVC
+* Issue#804 fixed a regression due to compression support; we no longer fail on unknown Content-Encoding headers if we did not set Accepts-Encoding
+* PR#813 fixes build failure with boost 1.63
+* PR#779 PR#787 suppress and fix some warnings with new versions of gcc and clang
+-- cpprestsdk team <askcasablanca@microsoft.com>  THU, 2 Aug 2018 15:52:00 -0800
+
 cpprestsdk (2.10.0)
 ----------------------
 * Removed VS2013 MSBuild files. Use CMake with the "Visual Studio 12 2013" generator.
