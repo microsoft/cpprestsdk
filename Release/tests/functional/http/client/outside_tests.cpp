@@ -173,8 +173,8 @@ static void test_ignored_ssl_cert(const uri& base_uri)
         http_client_config config;
         config.set_validate_certificates(false);
         http_client client(base_uri, config);
-        auto request = client.request(methods::GET).get();
-        VERIFY_ARE_EQUAL(status_codes::OK, request.status_code());
+        auto response = client.request(methods::GET).get();
+        VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
     });
 }
 #endif // !defined(__cplusplus_winrt)
@@ -197,6 +197,21 @@ TEST(server_hostname_mismatch)
 }
 
 #if !defined(__cplusplus_winrt)
+TEST(server_hostname_host_override,
+     "Ignore:Android", "229",
+     "Ignore:Apple", "229",
+     "Ignore:Linux", "229")
+{
+    handle_timeout([]
+    {
+        http_client client(U("https://wrong.host.badssl.com/"));
+        http_request req(methods::GET);
+        req.headers().add(U("Host"), U("badssl.com"));
+        auto response = client.request(req).get();
+        VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
+    });
+}
+
 TEST(server_hostname_mismatch_ignored)
 {
     test_ignored_ssl_cert(U("https://wrong.host.badssl.com/"));
@@ -215,7 +230,10 @@ TEST(server_cert_expired_ignored)
 }
 #endif // !defined(__cplusplus_winrt)
 
-TEST(server_cert_revoked)
+TEST(server_cert_revoked,
+    "Ignore:Android", "229",
+    "Ignore:Apple", "229",
+    "Ignore:Linux", "229")
 {
     test_failed_ssl_cert(U("https://revoked.badssl.com/"));
 }
