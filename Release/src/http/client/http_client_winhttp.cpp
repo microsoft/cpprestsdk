@@ -320,6 +320,12 @@ public:
             &bufferSize))
         {
             auto errorCode = GetLastError();
+            if (errorCode == HRESULT_CODE(WININET_E_INCORRECT_HANDLE_STATE))
+            {
+                // typically happens when given a custom host with an initially HTTP connection
+                return;
+            }
+
             report_error(errorCode, build_error_msg(errorCode,
                 "WinHttpQueryOption WINHTTP_OPTION_SERVER_CERT_CONTEXT"));
             cleanup();

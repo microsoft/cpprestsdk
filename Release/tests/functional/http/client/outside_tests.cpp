@@ -216,6 +216,15 @@ TEST(server_hostname_mismatch_ignored)
 {
     test_ignored_ssl_cert(U("https://wrong.host.badssl.com/"));
 }
+
+TEST(server_hostname_host_override_after_upgrade)
+{
+    http_client client(U("http://198.35.26.96/"));
+    http_request req(methods::GET);
+    req.headers().add(U("Host"), U("en.wikipedia.org"));
+    auto response = client.request(req).get();
+    VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
+}
 #endif // !defined(__cplusplus_winrt)
 
 TEST(server_cert_expired)
