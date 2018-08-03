@@ -14,9 +14,6 @@
 */
 #include "stdafx.h"
 
-#undef min
-#undef max
-
 #include <boost/algorithm/string/find.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/asio/read_until.hpp>
@@ -1085,7 +1082,7 @@ will_deref_and_erase_t asio_server_connection::cancel_sending_response_with_erro
 {
     auto * context = static_cast<linux_request_context*>(response._get_server_context());
     context->m_response_completed.set_exception(eptr);
-    
+
     // always terminate the connection since error happens
     return finish_request_response();
 }
@@ -1096,7 +1093,7 @@ will_deref_and_erase_t asio_server_connection::handle_write_chunked_response(con
     {
         return handle_response_written(response, ec);
     }
-        
+
     auto readbuf = response._get_impl()->instream().streambuf();
     if (readbuf.is_eof())
     {

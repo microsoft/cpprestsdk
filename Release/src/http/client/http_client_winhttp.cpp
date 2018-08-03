@@ -23,9 +23,6 @@
 #include <VersionHelpers.h>
 #endif
 
-#undef min
-#undef max
-
 namespace web
 {
 namespace http
@@ -185,7 +182,7 @@ enum msg_body_type
 };
 
 // Additional information necessary to track a WinHTTP request.
-class winhttp_request_context : public request_context
+class winhttp_request_context final : public request_context
 {
 public:
 
@@ -248,7 +245,7 @@ public:
     std::shared_ptr<winhttp_request_context> m_self_reference;
     memory_holder m_body_data;
 
-    virtual void cleanup()
+    void cleanup()
     {
         if(m_request_handle != nullptr)
         {
@@ -260,7 +257,7 @@ public:
 
 protected:
 
-    virtual void finish()
+    virtual void finish() override
     {
         request_context::finish();
         assert(m_self_reference != nullptr);
@@ -346,7 +343,7 @@ struct ie_proxy_config : WINHTTP_CURRENT_USER_IE_PROXY_CONFIG
 };
 
 // WinHTTP client.
-class winhttp_client : public _http_client_communicator
+class winhttp_client final : public _http_client_communicator
 {
 public:
     winhttp_client(http::uri address, http_client_config client_config)
@@ -502,17 +499,13 @@ protected:
             }
             else
             {
+                proxy_str = uri.host();
                 if (uri.port() > 0)
                 {
-                    utility::ostringstream_t ss;
-                    ss.imbue(std::locale::classic());
-                    ss << uri.host() << _XPLATSTR(":") << uri.port();
-                    proxy_str = ss.str();
+                    proxy_str.push_back(_XPLATSTR(':'));
+                    proxy_str.append(::utility::conversions::details::to_string_t(uri.port()));
                 }
-                else
-                {
-                    proxy_str = uri.host();
-                }
+
                 proxy_name = proxy_str.c_str();
             }
         }

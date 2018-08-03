@@ -15,9 +15,6 @@
 
 #include "stdafx.h"
 
-#undef min
-#undef max
-
 #include "cpprest/asyncrt_utils.h"
 #include "../common/internal_http_helpers.h"
 
@@ -83,7 +80,7 @@ using utility::conversions::details::to_string;
 using std::to_string;
 #endif
 
-#define CRLF std::string("\r\n")
+static const std::string CRLF("\r\n");
 
 namespace web { namespace http
 {
@@ -213,14 +210,15 @@ public:
     template <typename Iterator, typename Handler>
     void async_connect(const Iterator &begin, const Handler &handler)
     {
-        std::unique_lock<std::mutex> lock(m_socket_lock);
-        if (!m_closed)
-            m_socket.async_connect(begin, handler);
-        else
         {
-            lock.unlock();
-            handler(boost::asio::error::operation_aborted);
-        }
+            std::lock_guard<std::mutex> lock(m_socket_lock);
+            if (!m_closed) {
+                m_socket.async_connect(begin, handler);
+                return;
+            }
+        }   // unlock
+
+        handler(boost::asio::error::operation_aborted);
     }
 
     template <typename HandshakeHandler, typename CertificateHandler>
@@ -339,7 +337,7 @@ private:
 ///   }
 /// </code>
 /// </remarks>
-class asio_connection_pool : public std::enable_shared_from_this<asio_connection_pool>
+class asio_connection_pool final : public std::enable_shared_from_this<asio_connection_pool>
 {
 public:
     asio_connection_pool() : m_pool_epoch_timer(crossplat::threadpool::shared_instance().service())
@@ -396,24 +394,25 @@ private:
             if (!pool)
                 return;
             auto& self = *pool;
+            auto& connections = self.m_connections;
 
             std::lock_guard<std::mutex> lock(self.m_lock);
             if (self.m_prev_epoch == self.m_epoch)
             {
-                self.m_connections.clear();
+                connections.clear();
                 self.is_timer_running = false;
                 return;
             }
             else
             {
                 auto prev_epoch = self.m_prev_epoch;
-                auto erase_end = std::find_if(self.m_connections.begin(), self.m_connections.end(),
+                auto erase_end = std::find_if(connections.begin(), connections.end(),
                     [prev_epoch](std::pair<uint64_t, std::shared_ptr<asio_connection>>& p)
                 {
                     return p.first > prev_epoch;
                 });
 
-                self.m_connections.erase(self.m_connections.begin(), erase_end);
+                connections.erase(connections.begin(), erase_end);
                 start_epoch_interval(pool);
             }
         });
@@ -438,7 +437,7 @@ public:
         , m_start_with_ssl(base_uri().scheme() == U("https") && !this->client_config().proxy().is_specified())
     {}
 
-    void send_request(const std::shared_ptr<request_context> &request_ctx) override;
+    virtual void send_request(const std::shared_ptr<request_context> &request_ctx) override;
 
     void release_connection(std::shared_ptr<asio_connection>& conn)
     {
@@ -468,7 +467,7 @@ private:
     const bool m_start_with_ssl;
 };
 
-class asio_context : public request_context, public std::enable_shared_from_this<asio_context>
+class asio_context final : public request_context, public std::enable_shared_from_this<asio_context>
 {
     friend class asio_client;
 public:
@@ -501,7 +500,7 @@ public:
         return ctx;
     }
 
-    class ssl_proxy_tunnel : public std::enable_shared_from_this<ssl_proxy_tunnel>
+    class ssl_proxy_tunnel final : public std::enable_shared_from_this<ssl_proxy_tunnel>
     {
     public:
         ssl_proxy_tunnel(std::shared_ptr<asio_context> context, std::function<void(std::shared_ptr<asio_context>)> ssl_tunnel_established)
@@ -518,14 +517,15 @@ public:
 
             const auto &base_uri = m_context->m_http_client->base_uri();
             const auto &host = utility::conversions::to_utf8string(base_uri.host());
-            const auto &port = base_uri.port();
+            const int portRaw = base_uri.port();
+            const int port = (portRaw != 0) ? portRaw : 443;
 
             std::ostream request_stream(&m_request);
             request_stream.imbue(std::locale::classic());
 
-            request_stream << "CONNECT " << host << ":" << ((port != 0) ? port : 443) << " HTTP/1.1" << CRLF;
-            request_stream << "Host: " << host << ":" << ((port != 0) ? port : 443) << CRLF;
-            request_stream << "Proxy-Connection: Keep-Alive" << CRLF;
+            request_stream << "CONNECT " << host << ":" << port << " HTTP/1.1\r\n";
+            request_stream << "Host: " << host << ":" << port << CRLF;
+            request_stream << "Proxy-Connection: Keep-Alive\r\n";
 
             if(m_context->m_http_client->client_config().proxy().credentials().is_set())
             {
@@ -698,7 +698,7 @@ public:
             request_stream.imbue(std::locale::classic());
             const auto &host = utility::conversions::to_utf8string(base_uri.host());
 
-            request_stream << utility::conversions::to_utf8string(method) << " " << utility::conversions::to_utf8string(encoded_resource) << " " << "HTTP/1.1" << CRLF;
+            request_stream << utility::conversions::to_utf8string(method) << " " << utility::conversions::to_utf8string(encoded_resource) << " " << "HTTP/1.1\r\n";
 
             int port = base_uri.port();
 
@@ -766,7 +766,7 @@ public:
             request_stream << utility::conversions::to_utf8string(::web::http::details::flatten_http_headers(ctx->m_request.headers()));
             request_stream << extra_headers;
             // Enforce HTTP connection keep alive (even for the old HTTP/1.0 protocol).
-            request_stream << "Connection: Keep-Alive" << CRLF << CRLF;
+            request_stream << "Connection: Keep-Alive\r\n\r\n";
 
             // Start connection timeout timer.
             if (!ctx->m_timer.has_started())
@@ -1345,7 +1345,7 @@ private:
             }
             else
             {
-                async_read_until_buffersize(octets + CRLF.size(), // + 2 for crlf
+                async_read_until_buffersize(octets + CRLF.size(),
                                             boost::bind(&asio_context::handle_chunk, shared_from_this(), boost::asio::placeholders::error, octets));
             }
         }

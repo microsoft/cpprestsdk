@@ -13,9 +13,6 @@
 #include "stdafx.h"
 #include "../common/internal_http_helpers.h"
 
-#undef min
-#undef max
-
 using namespace web;
 using namespace utility;
 using namespace concurrency;

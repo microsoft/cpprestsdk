@@ -20,10 +20,6 @@
 
 #include "ws_client_impl.h"
 
-// These must be undef'ed before including websocketpp because it is not Windows.h safe.
-#undef min
-#undef max
-
 // Force websocketpp to use C++ std::error_code instead of Boost.
 #define _WEBSOCKETPP_CPP11_SYSTEM_ERROR_
 #if defined(_MSC_VER)
@@ -134,22 +130,23 @@ public:
     ~wspp_callback_client() CPPREST_NOEXCEPT
     {
         _ASSERTE(m_state < DESTROYED);
-        std::unique_lock<std::mutex> lock(m_wspp_client_lock);
+        State localState;
+        {
+            std::lock_guard<std::mutex> lock(m_wspp_client_lock);
+            localState = m_state;
+        }   // Unlock the mutex so connect/close can use it.
 
         // Now, what states could we be in?
-        switch (m_state) {
+        switch (localState) {
         case DESTROYED:
             // This should be impossible
             std::abort();
         case CREATED:
-            lock.unlock();
             break;
         case CLOSED:
         case CONNECTING:
         case CONNECTED:
         case CLOSING:
-            // Unlock the mutex so connect/close can use it.
-            lock.unlock();
             try
             {
                 // This will do nothing in the already-connected case

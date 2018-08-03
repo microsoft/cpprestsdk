@@ -20,6 +20,7 @@
 #endif
 
 #ifdef _WIN32
+#define NOMINMAX
 #ifdef CPPREST_TARGET_XP
 #include <winsdkver.h>
 #ifndef _WIN32_WINNT

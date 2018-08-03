@@ -22,9 +22,6 @@
 #include "http_server_httpsys.h"
 #include "http_server_impl.h"
 
-#undef min
-#undef max
-
 using namespace web;
 using namespace utility;
 using namespace concurrency;
@@ -482,7 +479,7 @@ windows_request_context::~windows_request_context()
     // Bug is that task_completion_event accesses internal state after setting.
     // Workaround is to use a lock incurring additional synchronization, if can acquire
     // the lock then setting of the event has completed.
-    std::unique_lock<std::mutex> lock(m_responseCompletedLock);
+    std::lock_guard<std::mutex> lock(m_responseCompletedLock);
 
     // Add a task-based continuation so no exceptions thrown from the task go 'unobserved'.
     pplx::create_task(m_response_completed).then([](pplx::task<void> t)
@@ -759,7 +756,7 @@ void windows_request_context::init_response_callbacks(ShouldWaitForBody shouldWa
         catch (...)
         {
             // Should never get here, if we do there's a chance that a circular reference will cause leaks,
-            // or worse, undefined behaviour as we don't know who owns 'this' anymore 
+            // or worse, undefined behaviour as we don't know who owns 'this' anymore
             _ASSERTE(false);
             m_response = http::http_response(status_codes::InternalError);
         }
@@ -899,7 +896,7 @@ void windows_request_context::transmit_body()
     if ( !m_sending_in_chunks && !m_transfer_encoding )
     {
         // We are done sending data.
-        std::unique_lock<std::mutex> lock(m_responseCompletedLock);
+        std::lock_guard<std::mutex> lock(m_responseCompletedLock);
         m_response_completed.set();
         return;
     }
@@ -1024,7 +1021,7 @@ void windows_request_context::send_response_body_io_completion(DWORD error_code,
 /// </summary>
 void windows_request_context::cancel_request_io_completion(DWORD, DWORD)
 {
-    std::unique_lock<std::mutex> lock(m_responseCompletedLock);
+    std::lock_guard<std::mutex> lock(m_responseCompletedLock);
     m_response_completed.set_exception(m_except_ptr);
 }
 
@@ -1047,7 +1044,7 @@ void windows_request_context::cancel_request(std::exception_ptr except_ptr)
     if(error_code != NO_ERROR && error_code != ERROR_IO_PENDING)
     {
         CancelThreadpoolIo(pServer->m_threadpool_io);
-        std::unique_lock<std::mutex> lock(m_responseCompletedLock);
+        std::lock_guard<std::mutex> lock(m_responseCompletedLock);
         m_response_completed.set_exception(except_ptr);
     }
 }
