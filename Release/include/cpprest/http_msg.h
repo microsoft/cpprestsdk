@@ -329,11 +329,6 @@ public:
     const concurrency::streams::istream & instream() const { return m_inStream; }
 
     /// <summary>
-    /// Rewind the message body stream to the beginning allowing to reuse it.
-    /// </summary>
-    void rewind_instream() { m_inStream.seek(0); }
-
-    /// <summary>
     /// Set the stream through which the message body could be written
     /// </summary>
     void set_outstream(const concurrency::streams::ostream &outstream, bool is_default)  { m_outStream = outstream; m_default_outstream = is_default; }
@@ -1366,11 +1361,6 @@ public:
     void _set_base_uri(const http::uri &base_uri)
     {
         _m_impl->_set_base_uri(base_uri);
-    }
-
-    void _rewind_instream()
-    {
-        _m_impl->rewind_instream();
     }
 
 private:

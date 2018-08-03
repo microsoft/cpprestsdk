@@ -174,7 +174,7 @@ public:
     // Check if the error code indicates that the connection was closed by the
     // server: this is used to detect if a connection in the pool was closed during
     // its period of inactivity and we should reopen it.
-    bool was_closed_by_server(const boost::system::error_code& ec) const
+    bool was_reused_and_closed_by_server(const boost::system::error_code& ec) const
     {
         if (!is_reused())
         {
@@ -618,34 +618,13 @@ public:
                     return;
                 }
 
-                m_context->m_connection->upgrade_to_ssl(m_context->m_http_client->client_config().get_ssl_context_callback());
+                m_context->upgrade_to_ssl();
 
                 m_ssl_tunnel_established(m_context);
             }
             else
             {
-                if (m_context->m_connection->was_closed_by_server(ec))
-                {
-                    // Failed to write to socket because connection was already closed while it was in the pool.
-                    // close() here ensures socket is closed in a robust way and prevents the connection from being put to the pool again.
-                    m_context->m_connection->close();
-
-                    // Create a new context and copy the request object, completion event and
-                    // cancellation registration to maintain the old state.
-                    // This also obtains a new connection from pool.
-                    auto new_ctx = m_context->create_request_context(m_context->m_http_client, m_context->m_request);
-                    new_ctx->m_request._rewind_instream();
-                    new_ctx->m_request_completion = m_context->m_request_completion;
-                    new_ctx->m_cancellationRegistration = m_context->m_cancellationRegistration;
-
-                    auto client = std::static_pointer_cast<asio_client>(m_context->m_http_client);
-                    // Resend the request using the new context.
-                    client->send_request(new_ctx);
-                }
-                else
-                {
-                    m_context->report_error("Failed to read HTTP status line from proxy", ec, httpclient_errorcode_context::readheader);
-                }
+                m_context->handle_failed_read_status_line(ec, "Failed to read HTTP status line from proxy");
             }
         }
 
@@ -655,7 +634,6 @@ public:
         boost::asio::streambuf m_request;
         boost::asio::streambuf m_response;
     };
-
 
     enum class http_proxy_type
     {
@@ -858,6 +836,11 @@ public:
     }
 
 private:
+    void upgrade_to_ssl()
+    {
+        m_connection->upgrade_to_ssl(m_http_client->client_config().get_ssl_context_callback());
+    }
+
     std::string generate_basic_auth_header()
     {
         std::string header;
@@ -1210,28 +1193,33 @@ private:
         }
         else
         {
-            if (m_connection->was_closed_by_server(ec))
-            {
-                // Failed to write to socket because connection was already closed while it was in the pool.
-                // close() here ensures socket is closed in a robust way and prevents the connection from being put to the pool again.
-                m_connection->close();
+            handle_failed_read_status_line(ec, "Failed to read HTTP status line");
+        }
+    }
 
-                // Create a new context and copy the request object, completion event and
-                // cancellation registration to maintain the old state.
-                // This also obtains a new connection from pool.
-                auto new_ctx = create_request_context(m_http_client, m_request);
-                new_ctx->m_request._rewind_instream();
-                new_ctx->m_request_completion = m_request_completion;
-                new_ctx->m_cancellationRegistration = m_cancellationRegistration;
+    void handle_failed_read_status_line(const boost::system::error_code& ec, const char* generic_error_message)
+    {
+        if (m_connection->was_reused_and_closed_by_server(ec))
+        {
+            // Failed to write to socket because connection was already closed while it was in the pool.
+            // close() here ensures socket is closed in a robust way and prevents the connection from being put to the pool again.
+            m_connection->close();
 
-                auto client = std::static_pointer_cast<asio_client>(m_http_client);
-                // Resend the request using the new context.
-                client->send_request(new_ctx);
-            }
-            else
-            {
-                report_error("Failed to read HTTP status line", ec, httpclient_errorcode_context::readheader);
-            }
+            // Create a new context and copy the request object, completion event and
+            // cancellation registration to maintain the old state.
+            // This also obtains a new connection from pool.
+            auto new_ctx = create_request_context(m_http_client, m_request);
+            new_ctx->m_request._get_impl()->instream().seek(0);
+            new_ctx->m_request_completion = m_request_completion;
+            new_ctx->m_cancellationRegistration = m_cancellationRegistration;
+
+            auto client = std::static_pointer_cast<asio_client>(m_http_client);
+            // Resend the request using the new context.
+            client->send_request(new_ctx);
+        }
+        else
+        {
+            report_error(generic_error_message, ec, httpclient_errorcode_context::readheader);
         }
     }
 
