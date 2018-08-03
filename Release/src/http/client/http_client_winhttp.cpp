@@ -14,6 +14,8 @@
 ****/
 #include "stdafx.h"
 
+#include <atomic>
+
 #include "cpprest/http_headers.h"
 #include "http_client_impl.h"
 
@@ -245,7 +247,6 @@ public:
     // This self reference will keep us alive until finish() is called.
     std::shared_ptr<winhttp_request_context> m_self_reference;
     memory_holder m_body_data;
-    std::unique_ptr<web::http::details::compression::stream_decompressor> decompressor;
 
     virtual void cleanup()
     {
@@ -351,6 +352,7 @@ public:
     winhttp_client(http::uri address, http_client_config client_config)
         : _http_client_communicator(std::move(address), std::move(client_config))
         , m_secure(m_uri.scheme() == _XPLATSTR("https"))
+        , m_opened(false)
         , m_hSession(nullptr)
         , m_hConnection(nullptr) { }
 
@@ -403,8 +405,19 @@ protected:
     }
 
     // Open session and connection with the server.
-    virtual unsigned long open() override
+    unsigned long open()
     {
+        if (m_opened)
+        {
+            return 0;
+        }
+
+        pplx::extensibility::scoped_critical_section_t l(m_client_lock);
+        if (m_opened)
+        {
+            return 0;
+        }
+
         // This object have lifetime greater than proxy_name and proxy_bypass
         // which may point to its elements.
         ie_proxy_config proxyIE;
@@ -431,37 +444,40 @@ protected:
 #ifndef CPPREST_TARGET_XP
             if (IsWindows8Point1OrGreater())
             {
+                // Windows 8.1 and newer supports automatic proxy discovery and auto-fallback to IE proxy settings
                 access_type = WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY;
             }
-
-            // However, if it is not configured...
-            proxy_info proxyDefault;
-            if(!WinHttpGetDefaultProxyConfiguration(&proxyDefault) ||
-                proxyDefault.dwAccessType == WINHTTP_ACCESS_TYPE_NO_PROXY)
+            else
             {
-                // ... then try to fall back on the default WinINET proxy, as
-                // recommended for the desktop applications (if we're not
-                // running under a user account, the function below will just
-                // fail, so there is no real need to check for this explicitly)
-                if(WinHttpGetIEProxyConfigForCurrentUser(&proxyIE))
+                // However, if it is not configured...
+                proxy_info proxyDefault;
+                if (!WinHttpGetDefaultProxyConfiguration(&proxyDefault) ||
+                    proxyDefault.dwAccessType == WINHTTP_ACCESS_TYPE_NO_PROXY)
                 {
-                    if(proxyIE.fAutoDetect)
+                    // ... then try to fall back on the default WinINET proxy, as
+                    // recommended for the desktop applications (if we're not
+                    // running under a user account, the function below will just
+                    // fail, so there is no real need to check for this explicitly)
+                    if (WinHttpGetIEProxyConfigForCurrentUser(&proxyIE))
                     {
-                        m_proxy_auto_config = true;
-                    }
-                    else if(proxyIE.lpszAutoConfigUrl)
-                    {
-                        m_proxy_auto_config = true;
-                        m_proxy_auto_config_url = proxyIE.lpszAutoConfigUrl;
-                    }
-                    else if(proxyIE.lpszProxy)
-                    {
-                        access_type = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
-                        proxy_name = proxyIE.lpszProxy;
-
-                        if(proxyIE.lpszProxyBypass)
+                        if (proxyIE.fAutoDetect)
                         {
-                            proxy_bypass = proxyIE.lpszProxyBypass;
+                            m_proxy_auto_config = true;
+                        }
+                        else if (proxyIE.lpszAutoConfigUrl)
+                        {
+                            m_proxy_auto_config = true;
+                            m_proxy_auto_config_url = proxyIE.lpszAutoConfigUrl;
+                        }
+                        else if (proxyIE.lpszProxy)
+                        {
+                            access_type = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
+                            proxy_name = proxyIE.lpszProxy;
+
+                            if (proxyIE.lpszProxyBypass)
+                            {
+                                proxy_bypass = proxyIE.lpszProxyBypass;
+                            }
                         }
                     }
                 }
@@ -572,12 +588,24 @@ protected:
             return report_failure(_XPLATSTR("Error opening connection"));
         }
 
+        m_opened = true;
         return S_OK;
     }
 
     // Start sending request.
     void send_request(_In_ const std::shared_ptr<request_context> &request)
     {
+        // First see if we need to be opened.
+        unsigned long error = open();
+        if (error != 0)
+        {
+            // DO NOT TOUCH the this pointer after completing the request
+            // This object could be freed along with the request as it could
+            // be the last reference to this object
+            request->report_error(error, _XPLATSTR("Open failed"));
+            return;
+        }
+
         http_request &msg = request->m_request;
         std::shared_ptr<winhttp_request_context> winhttp_context = std::static_pointer_cast<winhttp_request_context>(request);
         std::weak_ptr<winhttp_request_context> weak_winhttp_context = winhttp_context;
@@ -639,7 +667,7 @@ protected:
         }
 
         // Enable the certificate revocation check
-        if (m_secure)
+        if (m_secure && client_config().validate_certificates())
         {
             DWORD dwEnableSSLRevocOpt = WINHTTP_ENABLE_SSL_REVOCATION;
             if (!WinHttpSetOption(winhttp_context->m_request_handle, WINHTTP_OPTION_ENABLE_FEATURE, &dwEnableSSLRevocOpt, sizeof(dwEnableSSLRevocOpt)))
@@ -730,15 +758,12 @@ protected:
             }
         }
 
-        if(web::http::details::compression::stream_decompressor::is_supported() && client_config().request_compressed_response())
-        {
-            msg.headers().add(web::http::header_names::accept_encoding, U("deflate, gzip"));
-        }
+        utility::string_t flattened_headers = web::http::details::flatten_http_headers(msg.headers());
+        flattened_headers += winhttp_context->get_accept_encoding_header();
 
         // Add headers.
-        if(!msg.headers().empty())
+        if(!flattened_headers.empty())
         {
-            const utility::string_t flattened_headers = web::http::details::flatten_http_headers(msg.headers());
             if(!WinHttpAddRequestHeaders(
                 winhttp_context->m_request_handle,
                 flattened_headers.c_str(),
@@ -1122,10 +1147,10 @@ private:
                 try
                 {
                     web::uri current_uri(get_request_url(hRequestHandle));
-                    is_redirect = p_request_context->m_request.absolute_uri().to_string() != current_uri.to_string();	
+                    is_redirect = p_request_context->m_request.absolute_uri().to_string() != current_uri.to_string();
                 }
                 catch (const std::exception&) {}
-     
+
                 // If we have been redirected, then WinHttp needs the proxy credentials again to make the next request leg (which may be on a different server)
                 if (is_redirect || !p_request_context->m_proxy_authentication_tried)
                 {
@@ -1368,22 +1393,10 @@ private:
                     }
                 }
 
-                // If the response body is compressed we will read the encoding header and create a decompressor object which will later decompress the body
-                utility::string_t encoding;
-                if (web::http::details::compression::stream_decompressor::is_supported() && response.headers().match(web::http::header_names::content_encoding, encoding))
+                if (!p_request_context->handle_content_encoding_compression())
                 {
-                    auto alg = web::http::details::compression::stream_decompressor::to_compression_algorithm(encoding);
-
-                    if (alg != web::http::details::compression::compression_algorithm::invalid)
-                    {
-                        p_request_context->decompressor = std::make_unique<web::http::details::compression::stream_decompressor>(alg);
-                    }
-                    else
-                    {
-                        utility::string_t error = U("Unsupported compression algorithm in the Content Encoding header: ");
-                        error += encoding;
-                        p_request_context->report_exception(http_exception(error));
-                    }
+                    // false indicates report_exception was called
+                    return;
                 }
 
                 // Signal that the headers are available.
@@ -1414,7 +1427,7 @@ private:
 
                 if(num_bytes > 0)
                 {
-                    if (p_request_context->decompressor)
+                    if (p_request_context->m_decompressor)
                     {
                         // Decompression is too slow to reliably do on this callback. Therefore we need to store it now in order to decompress it at a later stage in the flow.
                         // However, we want to eventually use the writebuf to store the decompressed body. Therefore we'll store the compressed body as an internal allocation in the request_context
@@ -1483,11 +1496,11 @@ private:
                 auto writebuf = p_request_context->_get_writebuffer();
 
                 // If we have compressed data it is stored in the local allocation of the p_request_context. We will store the decompressed buffer in the external allocation of the p_request_context.
-                if (p_request_context->decompressor)
+                if (p_request_context->m_decompressor)
                 {
-                    web::http::details::compression::data_buffer decompressed = p_request_context->decompressor->decompress(p_request_context->m_body_data.get(), bytesRead);
+                    web::http::details::compression::data_buffer decompressed = p_request_context->m_decompressor->decompress(p_request_context->m_body_data.get(), bytesRead);
 
-                    if (p_request_context->decompressor->has_error())
+                    if (p_request_context->m_decompressor->has_error())
                     {
                         p_request_context->report_exception(std::runtime_error("Failed to decompress the response body"));
                         return;
@@ -1543,6 +1556,8 @@ private:
     }
     }
 
+    std::atomic<bool> m_opened;
+
     // WinHTTP session and connection
     HINTERNET m_hSession;
     HINTERNET m_hConnection;
@@ -1561,4 +1576,3 @@ std::shared_ptr<_http_client_communicator> create_platform_final_pipeline_stage(
 }
 
 }}}}
-

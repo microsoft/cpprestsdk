@@ -312,7 +312,7 @@ protected:
                 return make_error_code(transport::error::tls_short_read);
 #else
             if (ERR_GET_REASON(ec.value()) == boost::asio::ssl::error::stream_truncated) {
-                return make_error_code(boost::asio::ssl::error::stream_truncated);
+                return make_error_code(static_cast<std::errc>(boost::asio::ssl::error::stream_truncated));
 #endif
             } else {
                 // We know it is a TLS related error, but otherwise don't know
