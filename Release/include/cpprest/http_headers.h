@@ -145,13 +145,15 @@ public:
     template<typename _t1>
     void add(const key_type& name, const _t1& value)
     {
-        if (has(name))
+        auto printedValue = utility::conversions::details::print_string(value);
+        auto& mapVal = m_headers[name];
+        if (mapVal.empty())
         {
-            m_headers[name].append(_XPLATSTR(", ")).append(utility::conversions::details::print_string(value));
+            mapVal = std::move(printedValue);
         }
         else
         {
-            m_headers[name] = utility::conversions::details::print_string(value);
+            mapVal.append(_XPLATSTR(", ")).append(std::move(printedValue));
         }
     }
 
@@ -212,20 +214,12 @@ public:
     bool match(const key_type &name, _t1 &value) const
     {
         auto iter = m_headers.find(name);
-        if (iter != m_headers.end())
-        {
-            // Check to see if doesn't have a value.
-            if(iter->second.empty())
-            {
-                bind_impl(iter->second, value);
-                return true;
-            }
-            return bind_impl(iter->second, value);
-        }
-        else
+        if (iter == m_headers.end())
         {
             return false;
         }
+
+        return bind_impl(iter->second, value) || iter->second.empty();
     }
 
     /// <summary>
@@ -311,6 +305,7 @@ private:
         ref = utility::conversions::to_utf16string(text);
         return true;
     }
+
     bool bind_impl(const key_type &text, std::string &ref) const
     {
         ref = utility::conversions::to_utf8string(text);
