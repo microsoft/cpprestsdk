@@ -200,7 +200,7 @@ namespace
         }
 
     private:
-        void on_accept(boost::asio::ip::tcp::socket* socket, const boost::system::error_code& ec);
+        void on_accept(std::unique_ptr<boost::asio::ip::tcp::socket> socket, const boost::system::error_code& ec);
 
     };
 
@@ -333,7 +333,6 @@ private:
     std::unique_ptr<boost::asio::ssl::context> m_ssl_context;
     std::unique_ptr<ssl_stream> m_ssl_stream;
 
-public:
     asio_server_connection(std::unique_ptr<boost::asio::ip::tcp::socket> socket, http_linux_server* server, hostport_listener* parent)
         : m_socket(std::move(socket))
         , m_request_buf()
@@ -341,12 +340,34 @@ public:
         , m_p_server(server)
         , m_p_parent(parent)
         , m_close(false)
+        , m_chunked(false)
         , m_refs(1)
     {
     }
 
-    will_deref_and_erase_t start(bool is_https, const std::function<void(boost::asio::ssl::context&)>& ssl_context_callback)
+    struct Dereferencer
     {
+        void operator()(asio_server_connection* conn) const { conn->deref(); }
+    };
+
+public:
+    using refcount_ptr = std::unique_ptr<asio_server_connection, Dereferencer>;
+
+    static refcount_ptr create(std::unique_ptr<boost::asio::ip::tcp::socket> socket, http_linux_server* server, hostport_listener* parent)
+    {
+        return refcount_ptr(new asio_server_connection(std::move(socket), server, parent));
+    }
+
+    refcount_ptr get_reference()
+    {
+        ++m_refs;
+        return refcount_ptr(this);
+    }
+
+    will_erase_from_parent_t start_connection(bool is_https, const std::function<void(boost::asio::ssl::context&)>& ssl_context_callback)
+    {
+        auto unique_reference = this->get_reference();
+
         if (is_https)
         {
             m_ssl_context = make_unique<boost::asio::ssl::context>(boost::asio::ssl::context::sslv23);
@@ -360,11 +381,14 @@ public:
             {
                 (will_deref_and_erase_t)this->start_request_response();
             });
-            return will_deref_and_erase_t{};
+            unique_reference.release();
+            return will_erase_from_parent_t{};
         }
         else
         {
-            return start_request_response();
+            (will_deref_and_erase_t)start_request_response();
+            unique_reference.release();
+            return will_erase_from_parent_t{};
         }
     }
 
@@ -385,7 +409,7 @@ private:
     will_deref_and_erase_t dispatch_request_to_listener();
     will_erase_from_parent_t do_response()
     {
-        ++m_refs;
+        auto unique_reference = this->get_reference();
         m_request.get_response().then([=](pplx::task<http_response> r_task)
         {
             http_response response;
@@ -406,11 +430,12 @@ private:
                 (will_deref_and_erase_t)this->async_write(&asio_server_connection::handle_headers_written, response);
             });
         });
+        unique_reference.release();
         return will_erase_from_parent_t{};
     }
     will_erase_from_parent_t do_bad_response()
     {
-        ++m_refs;
+        auto unique_reference = this->get_reference();
         m_request.get_response().then([=](pplx::task<http_response> r_task)
         {
             http_response response;
@@ -428,6 +453,7 @@ private:
 
             (will_deref_and_erase_t)async_write(&asio_server_connection::handle_headers_written, response);
         });
+        unique_reference.release();
         return will_erase_from_parent_t{};
     }
 
@@ -495,10 +521,13 @@ void hostport_listener::start()
     m_acceptor->listen(0 != m_backlog ? m_backlog : socket_base::max_connections);
 
     auto socket = new ip::tcp::socket(service);
+    std::unique_ptr<ip::tcp::socket> usocket(socket);
     m_acceptor->async_accept(*socket, [this, socket](const boost::system::error_code& ec)
     {
-        this->on_accept(socket, ec);
+        std::unique_ptr<ip::tcp::socket> usocket(socket);
+        this->on_accept(std::move(usocket), ec);
     });
+    usocket.release();
 }
 
 void asio_server_connection::close()
@@ -538,7 +567,7 @@ will_deref_and_erase_t asio_server_connection::start_request_response()
     return will_deref_and_erase_t{};
 }
 
-void hostport_listener::on_accept(ip::tcp::socket* socket, const boost::system::error_code& ec)
+void hostport_listener::on_accept(std::unique_ptr<ip::tcp::socket> socket, const boost::system::error_code& ec)
 {
     // Listener closed
     if (ec == boost::asio::error::operation_aborted)
@@ -546,19 +575,21 @@ void hostport_listener::on_accept(ip::tcp::socket* socket, const boost::system::
         return;
     }
 
+    std::lock_guard<std::mutex> lock(m_connections_lock);
+
     // Handle successful accept
     if (!ec)
     {
-        std::unique_ptr<ip::tcp::socket> usocket(std::move(socket));
-        auto conn = new asio_server_connection(std::move(usocket), m_p_server, this);
+        auto conn = asio_server_connection::create(std::move(socket), m_p_server, this);
 
+        m_connections.insert(conn.get());
         try
         {
-            // Take a lock here so it released before call to internal_erase_connection
-            std::lock_guard<std::mutex> lock(m_connections_lock);
+            (will_erase_from_parent_t)conn->start_connection(m_is_https, m_ssl_context_callback);
+            // at this point an asynchronous task has been launched which will call
+            // m_connections.erase(conn.get()) eventually
 
-            m_connections.insert(conn);
-            conn->start(m_is_https, m_ssl_context_callback);
+            // the following cannot throw
             if (m_connections.size() == 1)
                 m_all_connections_complete.reset();
         }
@@ -567,19 +598,21 @@ void hostport_listener::on_accept(ip::tcp::socket* socket, const boost::system::
             // boost ssl apis throw boost::system::system_error.
             // Exception indicates something went wrong setting ssl context.
             // Drop connection and continue handling other connections.
-            internal_erase_connection(conn);
+            m_connections.erase(conn.get());
         }
     }
 
-    std::lock_guard<std::mutex> lock(m_connections_lock);
     if (m_acceptor)
     {
         // spin off another async accept
         auto newSocket = new ip::tcp::socket(crossplat::threadpool::shared_instance().service());
+        std::unique_ptr<ip::tcp::socket> usocket(newSocket);
         m_acceptor->async_accept(*newSocket, [this, newSocket](const boost::system::error_code& ec)
         {
-            this->on_accept(newSocket, ec);
+            std::unique_ptr<ip::tcp::socket> usocket(newSocket);
+            this->on_accept(std::move(usocket), ec);
         });
+        usocket.release();
     }
 }
 
