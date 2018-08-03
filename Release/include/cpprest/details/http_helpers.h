@@ -70,6 +70,8 @@ namespace details
                 return compression_algorithm::invalid;
             }
 
+            static utility::string_t known_algorithms() { return _XPLATSTR("deflate, gzip"); }
+
             _ASYNCRTIMP static bool __cdecl is_supported();
 
             _ASYNCRTIMP stream_decompressor(compression_algorithm alg);

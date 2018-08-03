@@ -18,7 +18,6 @@ set(SOURCES
   http/client/http_client.cpp
   http/client/http_client_msg.cpp
   http/client/http_client_impl.h
-  http/client/x509_cert_utilities.cpp
   http/common/internal_http_helpers.h
   http/common/http_helpers.cpp
   http/common/http_msg.cpp
@@ -31,7 +30,6 @@ set(SOURCES
   json/json.cpp
   json/json_parsing.cpp
   json/json_serialization.cpp
-  pplx/pplx.cpp
   uri/uri.cpp
   uri/uri_builder.cpp
   utilities/asyncrt_utils.cpp
@@ -84,23 +82,25 @@ if(CPPREST_PPLX_IMPL STREQUAL "apple")
   find_library(COREFOUNDATION CoreFoundation "/")
   find_library(SECURITY Security "/")
   target_link_libraries(cpprest PUBLIC ${COREFOUNDATION} ${SECURITY})
-  target_sources(cpprest PRIVATE pplx/pplxapple.cpp pplx/threadpool.cpp ../include/pplx/threadpool.h)
+  target_sources(cpprest PRIVATE pplx/pplxapple.cpp pplx/pplx.cpp pplx/threadpool.cpp ../include/pplx/threadpool.h)
   if(CPPREST_INSTALL_HEADERS)
     install(FILES ../include/pplx/threadpool.h DESTINATION include/pplx)
   endif()
 elseif(CPPREST_PPLX_IMPL STREQUAL "linux")
-  target_sources(cpprest PRIVATE pplx/pplxlinux.cpp pplx/threadpool.cpp ../include/pplx/threadpool.h)
+  target_sources(cpprest PRIVATE pplx/pplxlinux.cpp pplx/pplx.cpp pplx/threadpool.cpp ../include/pplx/threadpool.h)
   if(CPPREST_INSTALL_HEADERS)
     install(FILES ../include/pplx/threadpool.h DESTINATION include/pplx)
   endif()
 elseif(CPPREST_PPLX_IMPL STREQUAL "win")
-  target_sources(cpprest PRIVATE pplx/pplxwin.cpp pplx/threadpool.cpp ../include/pplx/threadpool.h)
-  if(CPPREST_INSTALL_HEADERS)
-    install(FILES ../include/pplx/threadpool.h DESTINATION include/pplx)
+  if(CPPREST_WEBSOCKETS_IMPL STREQUAL "wspp")
+    target_sources(cpprest PRIVATE pplx/threadpool.cpp ../include/pplx/threadpool.h)
+    if(CPPREST_INSTALL_HEADERS)
+      install(FILES ../include/pplx/threadpool.h DESTINATION include/pplx)
+    endif()
   endif()
 elseif(CPPREST_PPLX_IMPL STREQUAL "winpplx")
   target_compile_definitions(cpprest PUBLIC -DCPPREST_FORCE_PPLX=1)
-  target_sources(cpprest PRIVATE pplx/pplxwin.cpp pplx/threadpool.cpp ../include/pplx/threadpool.h)
+  target_sources(cpprest PRIVATE pplx/pplxwin.cpp pplx/pplx.cpp pplx/threadpool.cpp ../include/pplx/threadpool.h)
   if(CPPREST_INSTALL_HEADERS)
     install(FILES ../include/pplx/threadpool.h DESTINATION include/pplx)
   endif()
@@ -115,7 +115,7 @@ if(CPPREST_HTTP_CLIENT_IMPL STREQUAL "asio")
   cpprest_find_boost()
   cpprest_find_openssl()
   target_compile_definitions(cpprest PUBLIC -DCPPREST_FORCE_HTTP_CLIENT_ASIO)
-  target_sources(cpprest PRIVATE http/client/http_client_asio.cpp)
+  target_sources(cpprest PRIVATE http/client/http_client_asio.cpp http/client/x509_cert_utilities.cpp)
   target_link_libraries(cpprest PUBLIC cpprestsdk_boost_internal cpprestsdk_openssl_internal)
 elseif(CPPREST_HTTP_CLIENT_IMPL STREQUAL "winhttp")
   target_link_libraries(cpprest PRIVATE
@@ -123,6 +123,9 @@ elseif(CPPREST_HTTP_CLIENT_IMPL STREQUAL "winhttp")
     Winhttp.lib
   )
   target_sources(cpprest PRIVATE http/client/http_client_winhttp.cpp)
+  if(CPPREST_WEBSOCKETS_IMPL STREQUAL "wspp")
+    target_sources(cpprest PRIVATE http/client/x509_cert_utilities.cpp)
+  endif()
 elseif(CPPREST_HTTP_CLIENT_IMPL STREQUAL "winrt")
   target_sources(cpprest PRIVATE http/client/http_client_winrt.cpp)
 else()

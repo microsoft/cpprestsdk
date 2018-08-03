@@ -378,12 +378,6 @@ public:
 
 protected:
 
-    // Method to open client.
-    unsigned long open()
-    {
-        return 0;
-    }
-
     // Start sending request.
     void send_request(_In_ const std::shared_ptr<request_context> &request)
     {

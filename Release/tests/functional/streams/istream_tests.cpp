@@ -714,7 +714,7 @@ TEST(fstream_read_to_end_3)
             else
                 return pplx::task_from_result(false);
         };
-    Concurrency::details::_do_while([=]()-> pplx::task<bool> {
+    pplx::details::_do_while([=]()-> pplx::task<bool> {
         return stream.read().then(lambda1);
     }).wait();
 

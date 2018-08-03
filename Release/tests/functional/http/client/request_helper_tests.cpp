@@ -30,6 +30,78 @@ namespace tests { namespace functional { namespace http { namespace client {
 SUITE(request_helper_tests)
 {
 
+TEST_FIXTURE(uri_address, do_not_fail_on_content_encoding_when_not_requested)
+{
+    test_http_server::scoped_server scoped(m_uri);
+    auto& server = *scoped.server();
+    http_client client(m_uri);
+
+    server.next_request().then([](test_request *p_request) {
+        p_request->reply(200, U("OK"), { {header_names::content_encoding, U("chunked")} });
+    });
+
+    http_asserts::assert_response_equals(client.request(methods::GET).get(), status_codes::OK);
+}
+
+TEST_FIXTURE(uri_address, fail_on_content_encoding_if_unsupported)
+{
+    if (web::http::details::compression::stream_compressor::is_supported())
+    {
+        test_http_server::scoped_server scoped(m_uri);
+        auto& server = *scoped.server();
+        http_client_config config;
+        config.set_request_compressed_response(true);
+        http_client client(m_uri, config);
+
+        server.next_request().then([](test_request *p_request) {
+            p_request->reply(200, U("OK"), { {header_names::content_encoding, U("unsupported-algorithm")} });
+        });
+
+        VERIFY_THROWS(client.request(methods::GET).get(), web::http::http_exception);
+    }
+}
+
+TEST_FIXTURE(uri_address, send_accept_encoding)
+{
+    if (web::http::details::compression::stream_compressor::is_supported())
+    {
+        test_http_server::scoped_server scoped(m_uri);
+        auto& server = *scoped.server();
+        http_client_config config;
+        config.set_request_compressed_response(true);
+        http_client client(m_uri, config);
+
+        std::atomic<bool> found_accept_encoding(false);
+
+        server.next_request().then([&found_accept_encoding](test_request *p_request) {
+            found_accept_encoding = p_request->m_headers.find(header_names::accept_encoding) != p_request->m_headers.end();
+            p_request->reply(200, U("OK"));
+        });
+
+        client.request(methods::GET).get();
+
+        VERIFY_IS_TRUE(found_accept_encoding);
+    }
+}
+
+TEST_FIXTURE(uri_address, do_not_send_accept_encoding)
+{
+    test_http_server::scoped_server scoped(m_uri);
+    auto& server = *scoped.server();
+    http_client client(m_uri);
+
+    std::atomic<bool> found_accept_encoding(true);
+
+    server.next_request().then([&found_accept_encoding](test_request *p_request) {
+        found_accept_encoding = p_request->m_headers.find(header_names::accept_encoding) != p_request->m_headers.end();
+        p_request->reply(200, U("OK"));
+    });
+
+    client.request(methods::GET).get();
+
+    VERIFY_IS_FALSE(found_accept_encoding);
+}
+
 TEST_FIXTURE(uri_address, compress_and_decompress)
 {
     if (web::http::details::compression::stream_compressor::is_supported())
