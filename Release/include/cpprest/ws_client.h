@@ -184,7 +184,7 @@ public:
     /// <returns>Vector of all the subprotocols </returns>
     /// <remarks>If you want all the subprotocols in a comma separated string
     /// they can be directly looked up in the headers using 'Sec-WebSocket-Protocol'.</remarks>
-    _ASYNCRTIMP std::vector<::utility::string_t> subprotocols() const;
+    _ASYNCRTIMP std::vector< ::utility::string_t> subprotocols() const;
 	
     /// <summary>
     /// Gets the server certificate validation property.
