@@ -33,11 +33,49 @@
 #pragma warning(pop)
 #endif
 
+#if defined(_WIN32)
+#include <Wincrypt.h>
+#endif // _WIN32
+
 namespace web { namespace http { namespace client { namespace details {
+
+#if defined(_WIN32)
+struct winhttp_cert_context
+{
+    PCCERT_CONTEXT raw;
+    winhttp_cert_context() noexcept : raw(nullptr) {}
+    winhttp_cert_context(const winhttp_cert_context&) = delete;
+    winhttp_cert_context& operator=(const winhttp_cert_context&) = delete;
+    ~winhttp_cert_context()
+    {
+        // https://docs.microsoft.com/en-us/windows/desktop/api/wincrypt/nf-wincrypt-certfreecertificatecontext
+        // "The function always returns nonzero."
+        if (raw)
+        {
+            (void)CertFreeCertificateContext(raw);
+        }
+    }
+};
+
+struct winhttp_cert_chain_context
+{
+    PCCERT_CHAIN_CONTEXT raw;
+    winhttp_cert_chain_context() noexcept : raw(nullptr) {}
+    winhttp_cert_chain_context(const winhttp_cert_chain_context&) = delete;
+    winhttp_cert_chain_context& operator=(const winhttp_cert_chain_context&) = delete;
+    ~winhttp_cert_chain_context()
+    {
+        if (raw)
+        {
+            CertFreeCertificateChain(raw);
+        }
+    }
+};
+#endif // _WIN32
 
 /// <summary>
 /// Using platform specific APIs verifies server certificate.
-/// Currently implemented to work on iOS, Android, and OS X.
+/// Currently implemented to work on Windows, iOS, Android, and OS X.
 /// </summary>
 /// <param name="verifyCtx">Boost.ASIO context to get certificate chain from.</param>
 /// <param name="hostName">Host name from the URI.</param>

@@ -18,47 +18,15 @@
 #include <Wincrypt.h>
 
 #include "cpprest/http_headers.h"
+#include "cpprest/details/x509_cert_utilities.h"
 #include "http_client_impl.h"
 
 #ifndef CPPREST_TARGET_XP
 #include <VersionHelpers.h>
 #endif
 
-
 namespace
 {
-struct winhttp_cert_context
-{
-    PCERT_CONTEXT raw;
-    winhttp_cert_context() noexcept : raw(nullptr) {}
-    winhttp_cert_context(const winhttp_cert_context&) = delete;
-    winhttp_cert_context& operator=(const winhttp_cert_context&) = delete;
-    ~winhttp_cert_context()
-    {
-        // https://docs.microsoft.com/en-us/windows/desktop/api/wincrypt/nf-wincrypt-certfreecertificatecontext
-        // "The function always returns nonzero."
-        if (raw)
-        {
-            (void)CertFreeCertificateContext(raw);
-        }
-    }
-};
-
-struct winhttp_cert_chain_context
-{
-    PCCERT_CHAIN_CONTEXT raw;
-    winhttp_cert_chain_context() noexcept : raw(nullptr) {}
-    winhttp_cert_chain_context(const winhttp_cert_chain_context&) = delete;
-    winhttp_cert_chain_context& operator=(const winhttp_cert_chain_context&) = delete;
-    ~winhttp_cert_chain_context()
-    {
-        if (raw)
-        {
-            CertFreeCertificateChain(raw);
-        }
-    }
-};
-
 struct security_failure_message
 {
     std::uint32_t flag;
