@@ -847,52 +847,49 @@ protected:
         }
 
         // Check to turn off server certificate verification.
-        if (m_secure)
+        DWORD ignoredCertificateValidationSteps = 0;
+        if (client_config().validate_certificates())
         {
-            DWORD ignoredCertificateValidationSteps = 0;
-            if (client_config().validate_certificates())
-            {
-                // if we are validating certificates, also turn on revocation checking
-                DWORD dwEnableSSLRevocOpt = WINHTTP_ENABLE_SSL_REVOCATION;
-                if (!WinHttpSetOption(winhttp_context->m_request_handle, WINHTTP_OPTION_ENABLE_FEATURE,
-                    &dwEnableSSLRevocOpt, sizeof(dwEnableSSLRevocOpt)))
-                {
-                    auto errorCode = GetLastError();
-                    request->report_error(errorCode, build_error_msg(errorCode, "Error enabling SSL revocation check"));
-                    return;
-                }
-
-                // check if the user has overridden the desired Common Name with the host header
-                const auto hostHeader = headers.find(_XPLATSTR("Host"));
-                if (hostHeader != headers.end())
-                {
-                    const auto& requestHost = hostHeader->second;
-                    if (!utility::details::str_iequal(requestHost, m_uri.host()))
-                    {
-                        winhttp_context->install_custom_cn_check(requestHost);
-                        ignoredCertificateValidationSteps = SECURITY_FLAG_IGNORE_CERT_CN_INVALID;
-                    }
-                }
-            }
-            else
-            {
-                ignoredCertificateValidationSteps = SECURITY_FLAG_IGNORE_UNKNOWN_CA
-                    | SECURITY_FLAG_IGNORE_CERT_DATE_INVALID
-                    | SECURITY_FLAG_IGNORE_CERT_CN_INVALID
-                    | SECURITY_FLAG_IGNORE_CERT_WRONG_USAGE;
-            }
-
-            if(ignoredCertificateValidationSteps
-                && !WinHttpSetOption(
-                    winhttp_context->m_request_handle,
-                    WINHTTP_OPTION_SECURITY_FLAGS,
-                    &ignoredCertificateValidationSteps,
-                    sizeof(ignoredCertificateValidationSteps)))
+            // if we are validating certificates, also turn on revocation checking
+            DWORD dwEnableSSLRevocOpt = WINHTTP_ENABLE_SSL_REVOCATION;
+            if (!WinHttpSetOption(winhttp_context->m_request_handle, WINHTTP_OPTION_ENABLE_FEATURE,
+                &dwEnableSSLRevocOpt, sizeof(dwEnableSSLRevocOpt)))
             {
                 auto errorCode = GetLastError();
-                request->report_error(errorCode, build_error_msg(errorCode, "Setting ignore server certificate verification"));
+                request->report_error(errorCode, build_error_msg(errorCode, "Error enabling SSL revocation check"));
                 return;
             }
+
+            // check if the user has overridden the desired Common Name with the host header
+            const auto hostHeader = headers.find(_XPLATSTR("Host"));
+            if (hostHeader != headers.end())
+            {
+                const auto& requestHost = hostHeader->second;
+                if (!utility::details::str_iequal(requestHost, m_uri.host()))
+                {
+                    winhttp_context->install_custom_cn_check(requestHost);
+                    ignoredCertificateValidationSteps = SECURITY_FLAG_IGNORE_CERT_CN_INVALID;
+                }
+            }
+        }
+        else
+        {
+            ignoredCertificateValidationSteps = SECURITY_FLAG_IGNORE_UNKNOWN_CA
+                | SECURITY_FLAG_IGNORE_CERT_DATE_INVALID
+                | SECURITY_FLAG_IGNORE_CERT_CN_INVALID
+                | SECURITY_FLAG_IGNORE_CERT_WRONG_USAGE;
+        }
+
+        if(ignoredCertificateValidationSteps
+            && !WinHttpSetOption(
+                winhttp_context->m_request_handle,
+                WINHTTP_OPTION_SECURITY_FLAGS,
+                &ignoredCertificateValidationSteps,
+                sizeof(ignoredCertificateValidationSteps)))
+        {
+            auto errorCode = GetLastError();
+            request->report_error(errorCode, build_error_msg(errorCode, "Setting ignore server certificate verification"));
+            return;
         }
 
         const size_t content_length = msg._get_impl()->_get_content_length();
