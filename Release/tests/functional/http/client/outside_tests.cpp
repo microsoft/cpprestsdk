@@ -197,10 +197,7 @@ TEST(server_hostname_mismatch)
 }
 
 #if !defined(__cplusplus_winrt)
-TEST(server_hostname_host_override,
-     "Ignore:Android", "229",
-     "Ignore:Apple", "229",
-     "Ignore:Linux", "229")
+TEST(server_hostname_host_override)
 {
     handle_timeout([]
     {
@@ -223,7 +220,10 @@ TEST(server_hostname_host_override_after_upgrade)
     http_request req(methods::GET);
     req.headers().add(U("Host"), U("en.wikipedia.org"));
     auto response = client.request(req).get();
-    VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
+    // WinHTTP will transparently follow the HTTP 301 upgrade request redirect,
+    // ASIO does not and will return the 301 directly.
+    const auto statusCode = response.status_code();
+    CHECK(statusCode == status_codes::OK || statusCode == status_codes::MovedPermanently);
 }
 #endif // !defined(__cplusplus_winrt)
 

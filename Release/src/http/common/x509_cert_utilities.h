@@ -1,23 +1,29 @@
 /***
-* Copyright (C) Microsoft. All rights reserved.
-* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-*
-* =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*
-* Contains utility functions for helping to verify server certificates in OS X/iOS and Android.
-*
-* For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
-*
-* =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-****/
+ * Copyright (C) Microsoft. All rights reserved.
+ * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+ *
+ * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ *
+ * Contains utility functions for helping to verify server certificates in OS X/iOS and Android.
+ *
+ * For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
+ *
+ * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+ ****/
 
 #pragma once
 
 #if defined(_WIN32)
 #include <Wincrypt.h>
 
-namespace web { namespace http { namespace client { namespace details {
-
+namespace web
+{
+namespace http
+{
+namespace client
+{
+namespace details
+{
 struct winhttp_cert_context
 {
     PCCERT_CONTEXT raw;
@@ -49,12 +55,16 @@ struct winhttp_cert_chain_context
         }
     }
 };
-
-}}}} // namespaces
+}
+}
+}
+} // namespaces
 #endif // _WIN32
 
-#if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__)) || (defined(_WIN32) && !defined(__cplusplus_winrt) && !defined(_M_ARM) && !defined(CPPREST_EXCLUDE_WEBSOCKETS))
- #define CPPREST_PLATFORM_ASIO_CERT_VERIFICATION_AVAILABLE
+#if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__)) ||                                                \
+    (defined(_WIN32) && defined(CPPREST_FORCE_HTTP_CLIENT_ASIO)) ||                                                    \
+    (defined(_WIN32) && !defined(__cplusplus_winrt) && !defined(_M_ARM) && !defined(CPPREST_EXCLUDE_WEBSOCKETS))
+#define CPPREST_PLATFORM_ASIO_CERT_VERIFICATION_AVAILABLE
 #endif
 
 #ifdef CPPREST_PLATFORM_ASIO_CERT_VERIFICATION_AVAILABLE
@@ -76,8 +86,14 @@ struct winhttp_cert_chain_context
 #pragma warning(pop)
 #endif
 
-namespace web { namespace http { namespace client { namespace details {
-
+namespace web
+{
+namespace http
+{
+namespace client
+{
+namespace details
+{
 /// <summary>
 /// Using platform specific APIs verifies server certificate.
 /// Currently implemented to work on Windows, iOS, Android, and OS X.
@@ -85,8 +101,10 @@ namespace web { namespace http { namespace client { namespace details {
 /// <param name="verifyCtx">Boost.ASIO context to get certificate chain from.</param>
 /// <param name="hostName">Host name from the URI.</param>
 /// <returns>True if verification passed and server can be trusted, false otherwise.</returns>
-bool verify_cert_chain_platform_specific(boost::asio::ssl::verify_context &verifyCtx, const std::string &hostName);
-
-}}}}
+bool verify_cert_chain_platform_specific(boost::asio::ssl::verify_context& verifyCtx, const std::string& hostName);
+}
+}
+}
+}
 
 #endif // CPPREST_PLATFORM_ASIO_CERT_VERIFICATION_AVAILABLE
