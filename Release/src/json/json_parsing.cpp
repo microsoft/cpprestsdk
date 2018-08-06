@@ -823,16 +823,14 @@ bool JSON_StringParser<CharType>::CompleteStringLiteral(typename JSON_Parser<Cha
 
     while (ch != '"')
     {
-        if (ch == eof<CharType>())
+        if (ch == eof<CharType>()) {
             return false;
+        }
 
         if (ch == '\\')
         {
             const size_t numChars = m_position - start - 1;
-            const size_t prevSize = token.string_val.size();
-            token.string_val.resize(prevSize + numChars);
-            memcpy(const_cast<CharType *>(token.string_val.c_str() + prevSize), start, numChars * sizeof(CharType));
-
+            token.string_val.append(start, numChars);
             if (!JSON_StringParser<CharType>::handle_unescape_char(token))
             {
                 return false;
@@ -850,12 +848,8 @@ bool JSON_StringParser<CharType>::CompleteStringLiteral(typename JSON_Parser<Cha
     }
 
     const size_t numChars = m_position - start - 1;
-    const size_t prevSize = token.string_val.size();
-    token.string_val.resize(prevSize + numChars);
-    memcpy(const_cast<CharType *>(token.string_val.c_str() + prevSize), start, numChars * sizeof(CharType));
-
+    token.string_val.append(start, numChars);
     token.kind = JSON_Parser<CharType>::Token::TKN_StringLiteral;
-
     return true;
 }
 
