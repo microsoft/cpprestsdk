@@ -491,7 +491,7 @@ public:
         size_t output;
 
         m_dstate.avail_out = m_compress_buffer_size;
-        m_dstate.next_in = (unsigned char *)(const_cast<char *>(in.data()));
+        m_dstate.next_in = reinterpret_cast<unsigned char *>(const_cast<char *>(in.data()));
 
         do {
             // Output to local buffer

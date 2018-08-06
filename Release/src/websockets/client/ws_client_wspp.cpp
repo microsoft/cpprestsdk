@@ -239,8 +239,8 @@ public:
                     }
                     else
                     {
-                        const auto &server_name = utility::conversions::to_utf8string(m_uri.host());
-                        SSL_set_tlsext_host_name(ssl_stream.native_handle(), const_cast<char *>(server_name.c_str()));
+                        auto server_name = utility::conversions::to_utf8string(m_uri.host());
+                        SSL_set_tlsext_host_name(ssl_stream.native_handle(), &server_name[0]);
                     }
                 }
             });

@@ -108,7 +108,8 @@ int main() {
     {
         boost::timer::auto_cpu_timer t;
 
-        websocketpp::frame::word_mask_exact(reinterpret_cast<uint8_t*>(const_cast<char*>(input->get_raw_payload().data())), reinterpret_cast<uint8_t*>(const_cast<char*>(output->get_raw_payload().data())), foo, key);
+        websocketpp::frame::word_mask_exact(reinterpret_cast<uint8_t*>(&input->get_raw_payload()[0]),
+            reinterpret_cast<uint8_t*>(&output->get_raw_payload()[0]), foo, key);
     }
 
     std::cout << websocketpp::utility::to_hex(input->get_payload().c_str(),20) << std::endl;
@@ -121,7 +122,8 @@ int main() {
     {
         boost::timer::auto_cpu_timer t;
 
-        websocketpp::frame::word_mask_exact(reinterpret_cast<uint8_t*>(const_cast<char*>(input->get_raw_payload().data())), reinterpret_cast<uint8_t*>(const_cast<char*>(input->get_raw_payload().data())), foo, key);
+        websocketpp::frame::word_mask_exact(reinterpret_cast<uint8_t*>(&input->get_raw_payload()[0]),
+            reinterpret_cast<uint8_t*>(&input->get_raw_payload()[0]), foo, key);
     }
 
     std::cout << websocketpp::utility::to_hex(input->get_payload().c_str(),20) << std::endl;
