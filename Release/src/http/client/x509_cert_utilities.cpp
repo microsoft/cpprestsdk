@@ -12,10 +12,11 @@
 ****/
 
 #include "stdafx.h"
-
-#if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__)) || (defined(_WIN32)  && !defined(__cplusplus_winrt) && !defined(_M_ARM) && !defined(CPPREST_EXCLUDE_WEBSOCKETS))
-
 #include "cpprest/details/x509_cert_utilities.h"
+
+#ifdef CPPREST_PLATFORM_ASIO_CERT_VERIFICATION_AVAILABLE
+
+#include <type_traits>
 #include <vector>
 
 #if defined(ANDROID) || defined(__ANDROID__)
@@ -29,11 +30,6 @@
 #include <Security/SecCertificate.h>
 #include <Security/SecPolicy.h>
 #include <Security/SecTrust.h>
-#endif
-
-#if defined(_WIN32)
-#include <type_traits>
-#include <wincrypt.h>
 #endif
 
 namespace web { namespace http { namespace client { namespace details {

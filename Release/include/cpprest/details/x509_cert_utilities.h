@@ -13,33 +13,11 @@
 
 #pragma once
 
-#include <string>
-
-#if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__)) || (defined(_WIN32)  && !defined(__cplusplus_winrt) && !defined(_M_ARM) && !defined(CPPREST_EXCLUDE_WEBSOCKETS))
-
-#if defined(_MSC_VER)
-#pragma warning(push)
-#pragma warning(disable : 4005)
-#endif
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-local-typedef"
-#endif
-#include <boost/asio/ssl.hpp>
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif
-#if defined(_MSC_VER)
-#pragma warning(pop)
-#endif
-
 #if defined(_WIN32)
 #include <Wincrypt.h>
-#endif // _WIN32
 
 namespace web { namespace http { namespace client { namespace details {
 
-#if defined(_WIN32)
 struct winhttp_cert_context
 {
     PCCERT_CONTEXT raw;
@@ -71,7 +49,34 @@ struct winhttp_cert_chain_context
         }
     }
 };
+
+}}}} // namespaces
 #endif // _WIN32
+
+#if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__)) || (defined(_WIN32) && !defined(__cplusplus_winrt) && !defined(_M_ARM) && !defined(CPPREST_EXCLUDE_WEBSOCKETS))
+ #define CPPREST_PLATFORM_ASIO_CERT_VERIFICATION_AVAILABLE
+#endif
+
+#ifdef CPPREST_PLATFORM_ASIO_CERT_VERIFICATION_AVAILABLE
+#include <string>
+
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable : 4005)
+#endif
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-local-typedef"
+#endif
+#include <boost/asio/ssl.hpp>
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
+
+namespace web { namespace http { namespace client { namespace details {
 
 /// <summary>
 /// Using platform specific APIs verifies server certificate.
@@ -84,4 +89,4 @@ bool verify_cert_chain_platform_specific(boost::asio::ssl::verify_context &verif
 
 }}}}
 
-#endif
+#endif // CPPREST_PLATFORM_ASIO_CERT_VERIFICATION_AVAILABLE

@@ -479,7 +479,7 @@ public:
     , m_needChunked(false)
     , m_timer(client->client_config().timeout<std::chrono::microseconds>())
     , m_connection(connection)
-#if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__))
+#ifdef CPPREST_PLATFORM_ASIO_CERT_VERIFICATION_AVAILABLE
     , m_openssl_failed(false)
 #endif
     {}
@@ -989,11 +989,11 @@ private:
         // finally by the root CA self signed certificate.
 
         const auto &host = utility::conversions::to_utf8string(m_http_client->base_uri().host());
-#if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__))
-        // On OS X, iOS, and Android, OpenSSL doesn't have access to where the OS
-        // stores keychains. If OpenSSL fails we will doing verification at the
-        // end using the whole certificate chain so wait until the 'leaf' cert.
-        // For now return true so OpenSSL continues down the certificate chain.
+#ifdef CPPREST_PLATFORM_ASIO_CERT_VERIFICATION_AVAILABLE
+        // Attempt to use platform certificate validation when it is available:
+        // If OpenSSL fails we will doing verification at the end using the whole certificate chain,
+        // so wait until the 'leaf' cert. For now return true so OpenSSL continues down the certificate
+        // chain.
         if(!preverified)
         {
             m_openssl_failed = true;
@@ -1669,7 +1669,7 @@ private:
     boost::asio::streambuf m_body_buf;
     std::shared_ptr<asio_connection> m_connection;
 
-#if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__))
+#ifdef CPPREST_PLATFORM_ASIO_CERT_VERIFICATION_AVAILABLE
     bool m_openssl_failed;
 #endif
 };
