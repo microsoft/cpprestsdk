@@ -1,33 +1,33 @@
 /***
-* Copyright (C) Microsoft. All rights reserved.
-* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-*
-* =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*
-* HTTP Library: Client-side APIs.
-*
-* This file contains a cross platform implementation based on Boost.ASIO.
-*
-* For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
-*
-* =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-****/
+ * Copyright (C) Microsoft. All rights reserved.
+ * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+ *
+ * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ *
+ * HTTP Library: Client-side APIs.
+ *
+ * This file contains a cross platform implementation based on Boost.ASIO.
+ *
+ * For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
+ *
+ * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+ ****/
 
 #include "stdafx.h"
 
-#include "cpprest/asyncrt_utils.h"
 #include "../common/internal_http_helpers.h"
+#include "cpprest/asyncrt_utils.h"
 
 #if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-local-typedef"
 #pragma clang diagnostic ignored "-Winfinite-recursion"
 #endif
+#include <boost/algorithm/string.hpp>
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
 #include <boost/asio/ssl/error.hpp>
 #include <boost/asio/steady_timer.hpp>
-#include <boost/algorithm/string.hpp>
 #include <boost/bind.hpp>
 #if defined(__clang__)
 #pragma clang diagnostic pop
@@ -37,13 +37,13 @@
 #error "Cpp rest SDK requires c++11 smart pointer support from boost"
 #endif
 
-#include "pplx/threadpool.h"
-#include "http_client_impl.h"
 #include "cpprest/base_uri.h"
-#include "cpprest/details/x509_cert_utilities.h"
 #include "cpprest/details/http_helpers.h"
-#include <unordered_set>
+#include "cpprest/details/x509_cert_utilities.h"
+#include "http_client_impl.h"
+#include "pplx/threadpool.h"
 #include <memory>
+#include <unordered_set>
 
 #if defined(__GNUC__) && !defined(__clang__)
 
@@ -62,7 +62,8 @@
 #if _MSC_VER >= 1900
 #define AND_CAPTURE_MEMBER_FUNCTION_POINTERS
 #else
-// This bug also afflicts VS2013 which incorrectly reports "warning C4573: the usage of 'symbol' requires the compiler to capture 'this' but the current default capture mode does not allow it"
+// This bug also afflicts VS2013 which incorrectly reports "warning C4573: the usage of 'symbol' requires the compiler
+// to capture 'this' but the current default capture mode does not allow it"
 #define AND_CAPTURE_MEMBER_FUNCTION_POINTERS , this
 #endif
 
@@ -82,13 +83,14 @@ using std::to_string;
 
 static const std::string CRLF("\r\n");
 
-namespace web { namespace http
+namespace web
+{
+namespace http
 {
 namespace client
 {
 namespace details
 {
-
 enum class httpclient_errorcode_context
 {
     none = 0,
@@ -114,18 +116,14 @@ class asio_connection_pool;
 class asio_connection
 {
     friend class asio_client;
+
 public:
     asio_connection(boost::asio::io_service& io_service)
-        : m_socket(io_service),
-        m_is_reused(false),
-        m_keep_alive(true),
-        m_closed(false)
-    {}
-
-    ~asio_connection()
+        : m_socket(io_service), m_is_reused(false), m_keep_alive(true), m_closed(false)
     {
-        close();
     }
+
+    ~asio_connection() { close(); }
 
     // This simply instantiates the internal state to support ssl. It does not perform the handshake.
     void upgrade_to_ssl(const std::function<void(boost::asio::ssl::context&)>& ssl_context_callback)
@@ -139,7 +137,8 @@ public:
         {
             ssl_context_callback(ssl_context);
         }
-        m_ssl_stream = utility::details::make_unique<boost::asio::ssl::stream<boost::asio::ip::tcp::socket &>>(m_socket, ssl_context);
+        m_ssl_stream = utility::details::make_unique<boost::asio::ssl::stream<boost::asio::ip::tcp::socket&>>(
+            m_socket, ssl_context);
     }
 
     void close()
@@ -182,9 +181,8 @@ public:
         }
 
         // These errors tell if connection was closed.
-        if ((boost::asio::error::eof == ec)
-             || (boost::asio::error::connection_reset == ec)
-             || (boost::asio::error::connection_aborted == ec))
+        if ((boost::asio::error::eof == ec) || (boost::asio::error::connection_reset == ec) ||
+            (boost::asio::error::connection_aborted == ec))
         {
             return true;
         }
@@ -196,10 +194,10 @@ public:
             // server due to inactivity. Unfortunately, the exact error we get
             // in this case depends on the Boost.Asio version used.
 #if BOOST_ASIO_VERSION >= 101008
-            if (boost::asio::ssl::error::stream_truncated == ec)
-                return true;
+            if (boost::asio::ssl::error::stream_truncated == ec) return true;
 #else // Asio < 1.10.8 didn't have ssl::error::stream_truncated
-            if (boost::system::error_code(ERR_PACK(ERR_LIB_SSL, 0, SSL_R_SHORT_READ), boost::asio::error::get_ssl_category()) == ec)
+            if (boost::system::error_code(ERR_PACK(ERR_LIB_SSL, 0, SSL_R_SHORT_READ),
+                                          boost::asio::error::get_ssl_category()) == ec)
                 return true;
 #endif
         }
@@ -207,26 +205,27 @@ public:
         return false;
     }
 
-    template <typename Iterator, typename Handler>
-    void async_connect(const Iterator &begin, const Handler &handler)
+    template<typename Iterator, typename Handler>
+    void async_connect(const Iterator& begin, const Handler& handler)
     {
         {
             std::lock_guard<std::mutex> lock(m_socket_lock);
-            if (!m_closed) {
+            if (!m_closed)
+            {
                 m_socket.async_connect(begin, handler);
                 return;
             }
-        }   // unlock
+        } // unlock
 
         handler(boost::asio::error::operation_aborted);
     }
 
-    template <typename HandshakeHandler, typename CertificateHandler>
+    template<typename HandshakeHandler, typename CertificateHandler>
     void async_handshake(boost::asio::ssl::stream_base::handshake_type type,
-                         const http_client_config &config,
+                         const http_client_config& config,
                          const std::string& host_name,
-                         const HandshakeHandler &handshake_handler,
-                         const CertificateHandler &cert_handler)
+                         const HandshakeHandler& handshake_handler,
+                         const CertificateHandler& cert_handler)
     {
         std::lock_guard<std::mutex> lock(m_socket_lock);
         assert(is_ssl());
@@ -245,14 +244,14 @@ public:
         // Check to set host name for Server Name Indication (SNI)
         if (config.is_tlsext_sni_enabled())
         {
-            SSL_set_tlsext_host_name(m_ssl_stream->native_handle(), const_cast<char *>(host_name.data()));
+            SSL_set_tlsext_host_name(m_ssl_stream->native_handle(), const_cast<char*>(host_name.data()));
         }
 
         m_ssl_stream->async_handshake(type, handshake_handler);
     }
 
-    template <typename ConstBufferSequence, typename Handler>
-    void async_write(ConstBufferSequence &buffer, const Handler &writeHandler)
+    template<typename ConstBufferSequence, typename Handler>
+    void async_write(ConstBufferSequence& buffer, const Handler& writeHandler)
     {
         std::lock_guard<std::mutex> lock(m_socket_lock);
         if (m_ssl_stream)
@@ -265,8 +264,8 @@ public:
         }
     }
 
-    template <typename MutableBufferSequence, typename CompletionCondition, typename Handler>
-    void async_read(MutableBufferSequence &buffer, const CompletionCondition &condition, const Handler &readHandler)
+    template<typename MutableBufferSequence, typename CompletionCondition, typename Handler>
+    void async_read(MutableBufferSequence& buffer, const CompletionCondition& condition, const Handler& readHandler)
     {
         std::lock_guard<std::mutex> lock(m_socket_lock);
         if (m_ssl_stream)
@@ -279,8 +278,8 @@ public:
         }
     }
 
-    template <typename Handler>
-    void async_read_until(boost::asio::streambuf &buffer, const std::string &delim, const Handler &readHandler)
+    template<typename Handler>
+    void async_read_until(boost::asio::streambuf& buffer, const std::string& delim, const Handler& readHandler)
     {
         std::lock_guard<std::mutex> lock(m_socket_lock);
         if (m_ssl_stream)
@@ -293,10 +292,7 @@ public:
         }
     }
 
-    void start_reuse()
-    {
-        m_is_reused = true;
-    }
+    void start_reuse() { m_is_reused = true; }
 
 private:
     // Guards concurrent access to socket/ssl::stream. This is necessary
@@ -304,7 +300,7 @@ private:
     // as normal message processing.
     std::mutex m_socket_lock;
     tcp::socket m_socket;
-    std::unique_ptr<boost::asio::ssl::stream<tcp::socket &> > m_ssl_stream;
+    std::unique_ptr<boost::asio::ssl::stream<tcp::socket&>> m_ssl_stream;
 
     bool m_is_reused;
     bool m_keep_alive;
@@ -340,15 +336,13 @@ private:
 class asio_connection_pool final : public std::enable_shared_from_this<asio_connection_pool>
 {
 public:
-    asio_connection_pool() : m_pool_epoch_timer(crossplat::threadpool::shared_instance().service())
-    {}
+    asio_connection_pool() : m_pool_epoch_timer(crossplat::threadpool::shared_instance().service()) {}
 
     std::shared_ptr<asio_connection> acquire()
     {
         std::lock_guard<std::mutex> lock(m_lock);
 
-        if (m_connections.empty())
-            return nullptr;
+        if (m_connections.empty()) return nullptr;
 
         auto conn = std::move(m_connections.back().second);
         m_connections.pop_back();
@@ -360,8 +354,7 @@ public:
     {
         connection->cancel();
 
-        if (!connection->keep_alive())
-            return;
+        if (!connection->keep_alive()) return;
 
         std::lock_guard<std::mutex> lock(m_lock);
         if (!is_timer_running)
@@ -385,14 +378,11 @@ private:
 
         self.m_prev_epoch = self.m_epoch;
         pool->m_pool_epoch_timer.expires_from_now(boost::posix_time::seconds(30));
-        pool->m_pool_epoch_timer.async_wait([weak_pool](const boost::system::error_code& ec)
-        {
-            if (ec)
-                return;
+        pool->m_pool_epoch_timer.async_wait([weak_pool](const boost::system::error_code& ec) {
+            if (ec) return;
 
             auto pool = weak_pool.lock();
-            if (!pool)
-                return;
+            if (!pool) return;
             auto& self = *pool;
             auto& connections = self.m_connections;
 
@@ -406,11 +396,11 @@ private:
             else
             {
                 auto prev_epoch = self.m_prev_epoch;
-                auto erase_end = std::find_if(connections.begin(), connections.end(),
-                    [prev_epoch](std::pair<uint64_t, std::shared_ptr<asio_connection>>& p)
-                {
-                    return p.first > prev_epoch;
-                });
+                auto erase_end = std::find_if(connections.begin(),
+                                              connections.end(),
+                                              [prev_epoch](std::pair<uint64_t, std::shared_ptr<asio_connection>>& p) {
+                                                  return p.first > prev_epoch;
+                                              });
 
                 connections.erase(connections.begin(), erase_end);
                 start_epoch_interval(pool);
@@ -435,14 +425,12 @@ public:
         , m_resolver(crossplat::threadpool::shared_instance().service())
         , m_pool(std::make_shared<asio_connection_pool>())
         , m_start_with_ssl(base_uri().scheme() == U("https") && !this->client_config().proxy().is_specified())
-    {}
-
-    virtual void send_request(const std::shared_ptr<request_context> &request_ctx) override;
-
-    void release_connection(std::shared_ptr<asio_connection>& conn)
     {
-        m_pool->release(conn);
     }
+
+    virtual void send_request(const std::shared_ptr<request_context>& request_ctx) override;
+
+    void release_connection(std::shared_ptr<asio_connection>& conn) { m_pool->release(conn); }
     std::shared_ptr<asio_connection> obtain_connection()
     {
         std::shared_ptr<asio_connection> conn = m_pool->acquire();
@@ -451,8 +439,7 @@ public:
         {
             // Pool was empty. Create a new connection
             conn = std::make_shared<asio_connection>(crossplat::threadpool::shared_instance().service());
-            if (m_start_with_ssl)
-                conn->upgrade_to_ssl(this->client_config().get_ssl_context_callback());
+            if (m_start_with_ssl) conn->upgrade_to_ssl(this->client_config().get_ssl_context_callback());
         }
 
         return conn;
@@ -462,6 +449,7 @@ public:
 
 public:
     tcp::resolver m_resolver;
+
 private:
     const std::shared_ptr<asio_connection_pool> m_pool;
     const bool m_start_with_ssl;
@@ -470,19 +458,21 @@ private:
 class asio_context final : public request_context, public std::enable_shared_from_this<asio_context>
 {
     friend class asio_client;
+
 public:
-    asio_context(const std::shared_ptr<_http_client_communicator> &client,
-                 http_request &request,
-                 const std::shared_ptr<asio_connection> &connection)
-    : request_context(client, request)
-    , m_content_length(0)
-    , m_needChunked(false)
-    , m_timer(client->client_config().timeout<std::chrono::microseconds>())
-    , m_connection(connection)
+    asio_context(const std::shared_ptr<_http_client_communicator>& client,
+                 http_request& request,
+                 const std::shared_ptr<asio_connection>& connection)
+        : request_context(client, request)
+        , m_content_length(0)
+        , m_needChunked(false)
+        , m_timer(client->client_config().timeout<std::chrono::microseconds>())
+        , m_connection(connection)
 #ifdef CPPREST_PLATFORM_ASIO_CERT_VERIFICATION_AVAILABLE
-    , m_openssl_failed(false)
+        , m_openssl_failed(false)
 #endif
-    {}
+    {
+    }
 
     virtual ~asio_context()
     {
@@ -491,7 +481,8 @@ public:
         std::static_pointer_cast<asio_client>(m_http_client)->release_connection(m_connection);
     }
 
-    static std::shared_ptr<request_context> create_request_context(std::shared_ptr<_http_client_communicator> &client, http_request &request)
+    static std::shared_ptr<request_context> create_request_context(std::shared_ptr<_http_client_communicator>& client,
+                                                                   http_request& request)
     {
         auto client_cast(std::static_pointer_cast<asio_client>(client));
         auto connection(client_cast->obtain_connection());
@@ -503,9 +494,11 @@ public:
     class ssl_proxy_tunnel final : public std::enable_shared_from_this<ssl_proxy_tunnel>
     {
     public:
-        ssl_proxy_tunnel(std::shared_ptr<asio_context> context, std::function<void(std::shared_ptr<asio_context>)> ssl_tunnel_established)
+        ssl_proxy_tunnel(std::shared_ptr<asio_context> context,
+                         std::function<void(std::shared_ptr<asio_context>)> ssl_tunnel_established)
             : m_ssl_tunnel_established(ssl_tunnel_established), m_context(context)
-        {}
+        {
+        }
 
         void start_proxy_connect()
         {
@@ -515,8 +508,8 @@ public:
             utility::string_t proxy_host = proxy_uri.host();
             int proxy_port = proxy_uri.port() == -1 ? 8080 : proxy_uri.port();
 
-            const auto &base_uri = m_context->m_http_client->base_uri();
-            const auto &host = utility::conversions::to_utf8string(base_uri.host());
+            const auto& base_uri = m_context->m_http_client->base_uri();
+            const auto& host = utility::conversions::to_utf8string(base_uri.host());
             const int portRaw = base_uri.port();
             const int port = (portRaw != 0) ? portRaw : 443;
 
@@ -527,7 +520,7 @@ public:
             request_stream << "Host: " << host << ":" << port << CRLF;
             request_stream << "Proxy-Connection: Keep-Alive\r\n";
 
-            if(m_context->m_http_client->client_config().proxy().credentials().is_set())
+            if (m_context->m_http_client->client_config().proxy().credentials().is_set())
             {
                 request_stream << m_context->generate_basic_proxy_auth_header() << CRLF;
             }
@@ -539,7 +532,11 @@ public:
             tcp::resolver::query query(utility::conversions::to_utf8string(proxy_host), to_string(proxy_port));
 
             auto client = std::static_pointer_cast<asio_client>(m_context->m_http_client);
-            client->m_resolver.async_resolve(query, boost::bind(&ssl_proxy_tunnel::handle_resolve, shared_from_this(), boost::asio::placeholders::error, boost::asio::placeholders::iterator));
+            client->m_resolver.async_resolve(query,
+                                             boost::bind(&ssl_proxy_tunnel::handle_resolve,
+                                                         shared_from_this(),
+                                                         boost::asio::placeholders::error,
+                                                         boost::asio::placeholders::iterator));
         }
 
     private:
@@ -553,7 +550,11 @@ public:
             {
                 m_context->m_timer.reset();
                 auto endpoint = *endpoints;
-                m_context->m_connection->async_connect(endpoint, boost::bind(&ssl_proxy_tunnel::handle_tcp_connect, shared_from_this(), boost::asio::placeholders::error, ++endpoints));
+                m_context->m_connection->async_connect(endpoint,
+                                                       boost::bind(&ssl_proxy_tunnel::handle_tcp_connect,
+                                                                   shared_from_this(),
+                                                                   boost::asio::placeholders::error,
+                                                                   ++endpoints));
             }
         }
 
@@ -562,11 +563,15 @@ public:
             if (!ec)
             {
                 m_context->m_timer.reset();
-                m_context->m_connection->async_write(m_request, boost::bind(&ssl_proxy_tunnel::handle_write_request, shared_from_this(), boost::asio::placeholders::error));
+                m_context->m_connection->async_write(m_request,
+                                                     boost::bind(&ssl_proxy_tunnel::handle_write_request,
+                                                                 shared_from_this(),
+                                                                 boost::asio::placeholders::error));
             }
             else if (endpoints == tcp::resolver::iterator())
             {
-                m_context->report_error("Failed to connect to any resolved proxy endpoint", ec, httpclient_errorcode_context::connect);
+                m_context->report_error(
+                    "Failed to connect to any resolved proxy endpoint", ec, httpclient_errorcode_context::connect);
             }
             else
             {
@@ -576,9 +581,12 @@ public:
                 m_context->m_connection = client->obtain_connection();
 
                 auto endpoint = *endpoints;
-                m_context->m_connection->async_connect(endpoint, boost::bind(&ssl_proxy_tunnel::handle_tcp_connect, shared_from_this(), boost::asio::placeholders::error, ++endpoints));
+                m_context->m_connection->async_connect(endpoint,
+                                                       boost::bind(&ssl_proxy_tunnel::handle_tcp_connect,
+                                                                   shared_from_this(),
+                                                                   boost::asio::placeholders::error,
+                                                                   ++endpoints));
             }
-
         }
 
         void handle_write_request(const boost::system::error_code& err)
@@ -586,11 +594,16 @@ public:
             if (!err)
             {
                 m_context->m_timer.reset();
-                m_context->m_connection->async_read_until(m_response, CRLF + CRLF, boost::bind(&ssl_proxy_tunnel::handle_status_line, shared_from_this(), boost::asio::placeholders::error));
+                m_context->m_connection->async_read_until(m_response,
+                                                          CRLF + CRLF,
+                                                          boost::bind(&ssl_proxy_tunnel::handle_status_line,
+                                                                      shared_from_this(),
+                                                                      boost::asio::placeholders::error));
             }
             else
             {
-                m_context->report_error("Failed to send connect request to proxy.", err, httpclient_errorcode_context::writebody);
+                m_context->report_error(
+                    "Failed to send connect request to proxy.", err, httpclient_errorcode_context::writebody);
             }
         }
 
@@ -608,13 +621,17 @@ public:
 
                 if (!response_stream || http_version.substr(0, 5) != "HTTP/")
                 {
-                    m_context->report_error("Invalid HTTP status line during proxy connection", ec, httpclient_errorcode_context::readheader);
+                    m_context->report_error("Invalid HTTP status line during proxy connection",
+                                            ec,
+                                            httpclient_errorcode_context::readheader);
                     return;
                 }
 
                 if (status_code != 200)
                 {
-                    m_context->report_error("Expected a 200 response from proxy, received: " + to_string(status_code), ec, httpclient_errorcode_context::readheader);
+                    m_context->report_error("Expected a 200 response from proxy, received: " + to_string(status_code),
+                                            ec,
+                                            httpclient_errorcode_context::readheader);
                     return;
                 }
 
@@ -646,7 +663,8 @@ public:
     {
         if (m_request._cancellation_token().is_canceled())
         {
-            request_context::report_error(make_error_code(std::errc::operation_canceled).value(), "Request canceled by user.");
+            request_context::report_error(make_error_code(std::errc::operation_canceled).value(),
+                                          "Request canceled by user.");
             return;
         }
 
@@ -654,36 +672,40 @@ public:
         std::string proxy_host;
         int proxy_port = -1;
 
-        // There is no support for auto-detection of proxies on non-windows platforms, it must be specified explicitly from the client code.
+        // There is no support for auto-detection of proxies on non-windows platforms, it must be specified explicitly
+        // from the client code.
         if (m_http_client->client_config().proxy().is_specified())
         {
-            proxy_type = m_http_client->base_uri().scheme() == U("https") ? http_proxy_type::ssl_tunnel : http_proxy_type::http;
+            proxy_type =
+                m_http_client->base_uri().scheme() == U("https") ? http_proxy_type::ssl_tunnel : http_proxy_type::http;
             auto proxy = m_http_client->client_config().proxy();
             auto proxy_uri = proxy.address();
             proxy_port = proxy_uri.port() == -1 ? 8080 : proxy_uri.port();
             proxy_host = utility::conversions::to_utf8string(proxy_uri.host());
         }
 
-        auto start_http_request_flow = [proxy_type, proxy_host, proxy_port AND_CAPTURE_MEMBER_FUNCTION_POINTERS](std::shared_ptr<asio_context> ctx)
-        {
+        auto start_http_request_flow = [proxy_type, proxy_host, proxy_port AND_CAPTURE_MEMBER_FUNCTION_POINTERS](
+                                           std::shared_ptr<asio_context> ctx) {
             if (ctx->m_request._cancellation_token().is_canceled())
             {
-                ctx->request_context::report_error(make_error_code(std::errc::operation_canceled).value(), "Request canceled by user.");
+                ctx->request_context::report_error(make_error_code(std::errc::operation_canceled).value(),
+                                                   "Request canceled by user.");
                 return;
             }
 
-            const auto &base_uri = ctx->m_http_client->base_uri();
+            const auto& base_uri = ctx->m_http_client->base_uri();
             const auto full_uri = uri_builder(base_uri).append(ctx->m_request.relative_uri()).to_uri();
 
             // For a normal http proxy, we need to specify the full request uri, otherwise just specify the resource
-            auto encoded_resource = proxy_type == http_proxy_type::http ? full_uri.to_string() : full_uri.resource().to_string();
+            auto encoded_resource =
+                proxy_type == http_proxy_type::http ? full_uri.to_string() : full_uri.resource().to_string();
 
             if (encoded_resource.empty())
             {
                 encoded_resource = U("/");
             }
 
-            const auto &method = ctx->m_request.method();
+            const auto& method = ctx->m_request.method();
 
             // stop injection of headers via method
             // resource should be ok, since it's been encoded
@@ -696,9 +718,11 @@ public:
 
             std::ostream request_stream(&ctx->m_body_buf);
             request_stream.imbue(std::locale::classic());
-            const auto &host = utility::conversions::to_utf8string(base_uri.host());
+            const auto& host = utility::conversions::to_utf8string(base_uri.host());
 
-            request_stream << utility::conversions::to_utf8string(method) << " " << utility::conversions::to_utf8string(encoded_resource) << " " << "HTTP/1.1\r\n";
+            request_stream << utility::conversions::to_utf8string(method) << " "
+                           << utility::conversions::to_utf8string(encoded_resource) << " "
+                           << "HTTP/1.1\r\n";
 
             int port = base_uri.port();
 
@@ -711,7 +735,8 @@ public:
             if (!ctx->m_request.headers().has(header_names::host))
             {
                 request_stream << "Host: " << host;
-                if (!base_uri.is_port_default()) {
+                if (!base_uri.is_port_default())
+                {
                     request_stream << ":" << port;
                 }
                 request_stream << CRLF;
@@ -721,7 +746,8 @@ public:
             std::string extra_headers;
 
             // Add header for basic proxy authentication
-            if (proxy_type == http_proxy_type::http && ctx->m_http_client->client_config().proxy().credentials().is_set())
+            if (proxy_type == http_proxy_type::http &&
+                ctx->m_http_client->client_config().proxy().credentials().is_set())
             {
                 extra_headers.append(ctx->generate_basic_proxy_auth_header());
             }
@@ -735,7 +761,8 @@ public:
 
             // Check user specified transfer-encoding.
             std::string transferencoding;
-            if (ctx->m_request.headers().match(header_names::transfer_encoding, transferencoding) && transferencoding == "chunked")
+            if (ctx->m_request.headers().match(header_names::transfer_encoding, transferencoding) &&
+                transferencoding == "chunked")
             {
                 ctx->m_needChunked = true;
             }
@@ -758,12 +785,12 @@ public:
 
             if (proxy_type == http_proxy_type::http)
             {
-                extra_headers.append(
-                    "Cache-Control: no-store, no-cache\r\n"
-                    "Pragma: no-cache\r\n");
+                extra_headers.append("Cache-Control: no-store, no-cache\r\n"
+                                     "Pragma: no-cache\r\n");
             }
 
-            request_stream << utility::conversions::to_utf8string(::web::http::details::flatten_http_headers(ctx->m_request.headers()));
+            request_stream << utility::conversions::to_utf8string(
+                ::web::http::details::flatten_http_headers(ctx->m_request.headers()));
             request_stream << extra_headers;
             // Enforce HTTP connection keep alive (even for the old HTTP/1.0 protocol).
             request_stream << "Connection: Keep-Alive\r\n\r\n";
@@ -776,7 +803,8 @@ public:
 
             if (ctx->m_connection->is_reused() || proxy_type == http_proxy_type::ssl_tunnel)
             {
-                // If socket is a reused connection or we're connected via an ssl-tunneling proxy, try to write the request directly. In both cases we have already established a tcp connection.
+                // If socket is a reused connection or we're connected via an ssl-tunneling proxy, try to write the
+                // request directly. In both cases we have already established a tcp connection.
                 ctx->write_request();
             }
             else
@@ -790,17 +818,20 @@ public:
 
                 tcp::resolver::query query(tcp_host, to_string(tcp_port));
                 auto client = std::static_pointer_cast<asio_client>(ctx->m_http_client);
-                client->m_resolver.async_resolve(query, boost::bind(&asio_context::handle_resolve, ctx, boost::asio::placeholders::error, boost::asio::placeholders::iterator));
+                client->m_resolver.async_resolve(query,
+                                                 boost::bind(&asio_context::handle_resolve,
+                                                             ctx,
+                                                             boost::asio::placeholders::error,
+                                                             boost::asio::placeholders::iterator));
             }
 
-                // Register for notification on cancellation to abort this request.
+            // Register for notification on cancellation to abort this request.
             if (ctx->m_request._cancellation_token() != pplx::cancellation_token::none())
             {
                 // weak_ptr prevents lambda from taking shared ownership of the context.
                 // Otherwise context replacement in the handle_status_line() would leak the objects.
                 std::weak_ptr<asio_context> ctx_weak(ctx);
-                ctx->m_cancellationRegistration = ctx->m_request._cancellation_token().register_callback([ctx_weak]()
-                {
+                ctx->m_cancellationRegistration = ctx->m_request._cancellation_token().register_callback([ctx_weak]() {
                     if (auto ctx_lock = ctx_weak.lock())
                     {
                         // Shut down transmissions, close the socket and prevent connection from being pooled.
@@ -812,8 +843,10 @@ public:
 
         if (proxy_type == http_proxy_type::ssl_tunnel)
         {
-            // The ssl_tunnel_proxy keeps the context alive and then calls back once the ssl tunnel is established via 'start_http_request_flow'
-            std::shared_ptr<ssl_proxy_tunnel> ssl_tunnel = std::make_shared<ssl_proxy_tunnel>(shared_from_this(), start_http_request_flow);
+            // The ssl_tunnel_proxy keeps the context alive and then calls back once the ssl tunnel is established via
+            // 'start_http_request_flow'
+            std::shared_ptr<ssl_proxy_tunnel> ssl_tunnel =
+                std::make_shared<ssl_proxy_tunnel>(shared_from_this(), start_http_request_flow);
             ssl_tunnel->start_proxy_connect();
         }
         else
@@ -823,7 +856,7 @@ public:
     }
 
     template<typename _ExceptionType>
-    void report_exception(const _ExceptionType &e)
+    void report_exception(const _ExceptionType& e)
     {
         report_exception(std::make_exception_ptr(e));
     }
@@ -836,10 +869,7 @@ public:
     }
 
 private:
-    void upgrade_to_ssl()
-    {
-        m_connection->upgrade_to_ssl(m_http_client->client_config().get_ssl_context_callback());
-    }
+    void upgrade_to_ssl() { m_connection->upgrade_to_ssl(m_http_client->client_config().get_ssl_context_callback()); }
 
     std::string generate_basic_auth_header()
     {
@@ -859,7 +889,9 @@ private:
         return header;
     }
 
-    void report_error(const std::string &message, const boost::system::error_code &ec, httpclient_errorcode_context context = httpclient_errorcode_context::none)
+    void report_error(const std::string& message,
+                      const boost::system::error_code& ec,
+                      httpclient_errorcode_context context = httpclient_errorcode_context::none)
     {
         // By default, errorcodeValue don't need to converted
         long errorcodeValue = ec.value();
@@ -887,13 +919,13 @@ private:
                     }
                     break;
                 case httpclient_errorcode_context::readheader:
-                    if (ec.default_error_condition().value() == boost::system::errc::no_such_file_or_directory) // bug in boost error_code mapping
+                    if (ec.default_error_condition().value() ==
+                        boost::system::errc::no_such_file_or_directory) // bug in boost error_code mapping
                     {
                         errorcodeValue = make_error_code(std::errc::connection_aborted).value();
                     }
                     break;
-                default:
-                    break;
+                default: break;
             }
         }
         request_context::report_error(errorcodeValue, message);
@@ -906,7 +938,8 @@ private:
         {
             write_request();
         }
-        else if (ec.value() == boost::system::errc::operation_canceled || ec.value() == boost::asio::error::operation_aborted)
+        else if (ec.value() == boost::system::errc::operation_canceled ||
+                 ec.value() == boost::asio::error::operation_aborted)
         {
             request_context::report_error(ec.value(), "Request canceled by user.");
         }
@@ -921,7 +954,10 @@ private:
             m_connection = client->obtain_connection();
 
             auto endpoint = *endpoints;
-            m_connection->async_connect(endpoint, boost::bind(&asio_context::handle_connect, shared_from_this(), boost::asio::placeholders::error, ++endpoints));
+            m_connection->async_connect(
+                endpoint,
+                boost::bind(
+                    &asio_context::handle_connect, shared_from_this(), boost::asio::placeholders::error, ++endpoints));
         }
     }
 
@@ -935,7 +971,10 @@ private:
         {
             m_timer.reset();
             auto endpoint = *endpoints;
-            m_connection->async_connect(endpoint, boost::bind(&asio_context::handle_connect, shared_from_this(), boost::asio::placeholders::error, ++endpoints));
+            m_connection->async_connect(
+                endpoint,
+                boost::bind(
+                    &asio_context::handle_connect, shared_from_this(), boost::asio::placeholders::error, ++endpoints));
         }
     }
 
@@ -945,26 +984,28 @@ private:
         if (m_connection->is_ssl() && !m_connection->is_reused())
         {
             const auto weakCtx = std::weak_ptr<asio_context>(shared_from_this());
-            m_connection->async_handshake(boost::asio::ssl::stream_base::client,
-                                          m_http_client->client_config(),
-                                          utility::conversions::to_utf8string(m_http_client->base_uri().host()),
-                                          boost::bind(&asio_context::handle_handshake, shared_from_this(), boost::asio::placeholders::error),
+            m_connection->async_handshake(
+                boost::asio::ssl::stream_base::client,
+                m_http_client->client_config(),
+                utility::conversions::to_utf8string(m_http_client->base_uri().host()),
+                boost::bind(&asio_context::handle_handshake, shared_from_this(), boost::asio::placeholders::error),
 
-                                          // Use a weak_ptr since the verify_callback is stored until the connection is destroyed.
-                                          // This avoids creating a circular reference since we pool connection objects.
-                                          [weakCtx](bool preverified, boost::asio::ssl::verify_context &verify_context)
-                                          {
-                                              auto this_request = weakCtx.lock();
-                                              if(this_request)
-                                              {
-                                                  return this_request->handle_cert_verification(preverified, verify_context);
-                                              }
-                                              return false;
-                                          });
+                // Use a weak_ptr since the verify_callback is stored until the connection is destroyed.
+                // This avoids creating a circular reference since we pool connection objects.
+                [weakCtx](bool preverified, boost::asio::ssl::verify_context& verify_context) {
+                    auto this_request = weakCtx.lock();
+                    if (this_request)
+                    {
+                        return this_request->handle_cert_verification(preverified, verify_context);
+                    }
+                    return false;
+                });
         }
         else
         {
-            m_connection->async_write(m_body_buf, boost::bind(&asio_context::handle_write_headers, shared_from_this(), boost::asio::placeholders::error));
+            m_connection->async_write(
+                m_body_buf,
+                boost::bind(&asio_context::handle_write_headers, shared_from_this(), boost::asio::placeholders::error));
         }
     }
 
@@ -972,7 +1013,9 @@ private:
     {
         if (!ec)
         {
-            m_connection->async_write(m_body_buf, boost::bind(&asio_context::handle_write_headers, shared_from_this(), boost::asio::placeholders::error));
+            m_connection->async_write(
+                m_body_buf,
+                boost::bind(&asio_context::handle_write_headers, shared_from_this(), boost::asio::placeholders::error));
         }
         else
         {
@@ -980,7 +1023,7 @@ private:
         }
     }
 
-    bool handle_cert_verification(bool preverified, boost::asio::ssl::verify_context &verifyCtx)
+    bool handle_cert_verification(bool preverified, boost::asio::ssl::verify_context& verifyCtx)
     {
         // OpenSSL calls the verification callback once per certificate in the chain,
         // starting with the root CA certificate. The 'leaf', non-Certificate Authority (CA)
@@ -988,17 +1031,17 @@ private:
         // certificate chain, the rest are optional intermediate certificates, followed
         // finally by the root CA self signed certificate.
 
-        const auto &host = utility::conversions::to_utf8string(m_http_client->base_uri().host());
+        const auto& host = utility::conversions::to_utf8string(m_http_client->base_uri().host());
 #ifdef CPPREST_PLATFORM_ASIO_CERT_VERIFICATION_AVAILABLE
         // Attempt to use platform certificate validation when it is available:
         // If OpenSSL fails we will doing verification at the end using the whole certificate chain,
         // so wait until the 'leaf' cert. For now return true so OpenSSL continues down the certificate
         // chain.
-        if(!preverified)
+        if (!preverified)
         {
             m_openssl_failed = true;
         }
-        if(m_openssl_failed)
+        if (m_openssl_failed)
         {
             return verify_cert_chain_platform_specific(verifyCtx, host);
         }
@@ -1010,7 +1053,7 @@ private:
 
     void handle_write_headers(const boost::system::error_code& ec)
     {
-        if(ec)
+        if (ec)
         {
             report_error("Failed to write request headers", ec, httpclient_errorcode_context::writeheader);
         }
@@ -1027,7 +1070,6 @@ private:
         }
     }
 
-
     void handle_write_chunked_body(const boost::system::error_code& ec)
     {
         if (ec)
@@ -1037,53 +1079,58 @@ private:
         }
 
         m_timer.reset();
-        const auto &progress = m_request._get_impl()->_progress_handler();
+        const auto& progress = m_request._get_impl()->_progress_handler();
         if (progress)
         {
             try
             {
                 (*progress)(message_direction::upload, m_uploaded);
             }
-            catch(...)
+            catch (...)
             {
                 report_exception(std::current_exception());
                 return;
             }
         }
 
-        const auto & chunkSize = m_http_client->client_config().chunksize();
+        const auto& chunkSize = m_http_client->client_config().chunksize();
         auto readbuf = _get_readbuffer();
-        uint8_t *buf = boost::asio::buffer_cast<uint8_t *>(m_body_buf.prepare(chunkSize + http::details::chunked_encoding::additional_encoding_space));
+        uint8_t* buf = boost::asio::buffer_cast<uint8_t*>(
+            m_body_buf.prepare(chunkSize + http::details::chunked_encoding::additional_encoding_space));
         const auto this_request = shared_from_this();
-        readbuf.getn(buf + http::details::chunked_encoding::data_offset, chunkSize).then([this_request, buf, chunkSize AND_CAPTURE_MEMBER_FUNCTION_POINTERS](pplx::task<size_t> op)
-        {
-            size_t readSize = 0;
-            try
-            {
-                readSize = op.get();
-            }
-            catch (...)
-            {
-                this_request->report_exception(std::current_exception());
-                return;
-            }
+        readbuf.getn(buf + http::details::chunked_encoding::data_offset, chunkSize)
+            .then([this_request, buf, chunkSize AND_CAPTURE_MEMBER_FUNCTION_POINTERS](pplx::task<size_t> op) {
+                size_t readSize = 0;
+                try
+                {
+                    readSize = op.get();
+                }
+                catch (...)
+                {
+                    this_request->report_exception(std::current_exception());
+                    return;
+                }
 
-            const size_t offset = http::details::chunked_encoding::add_chunked_delimiters(buf, chunkSize + http::details::chunked_encoding::additional_encoding_space, readSize);
-            this_request->m_body_buf.commit(readSize + http::details::chunked_encoding::additional_encoding_space);
-            this_request->m_body_buf.consume(offset);
-            this_request->m_uploaded += static_cast<uint64_t>(readSize);
+                const size_t offset = http::details::chunked_encoding::add_chunked_delimiters(
+                    buf, chunkSize + http::details::chunked_encoding::additional_encoding_space, readSize);
+                this_request->m_body_buf.commit(readSize + http::details::chunked_encoding::additional_encoding_space);
+                this_request->m_body_buf.consume(offset);
+                this_request->m_uploaded += static_cast<uint64_t>(readSize);
 
-            if (readSize != 0)
-            {
-                this_request->m_connection->async_write(this_request->m_body_buf,
-                                                        boost::bind(&asio_context::handle_write_chunked_body, this_request, boost::asio::placeholders::error));
-            }
-            else
-            {
-                this_request->m_connection->async_write(this_request->m_body_buf,
-                                                        boost::bind(&asio_context::handle_write_body, this_request, boost::asio::placeholders::error));
-            }
-        });
+                if (readSize != 0)
+                {
+                    this_request->m_connection->async_write(this_request->m_body_buf,
+                                                            boost::bind(&asio_context::handle_write_chunked_body,
+                                                                        this_request,
+                                                                        boost::asio::placeholders::error));
+                }
+                else
+                {
+                    this_request->m_connection->async_write(
+                        this_request->m_body_buf,
+                        boost::bind(&asio_context::handle_write_body, this_request, boost::asio::placeholders::error));
+                }
+            });
     }
 
     void handle_write_large_body(const boost::system::error_code& ec)
@@ -1095,14 +1142,14 @@ private:
         }
 
         m_timer.reset();
-        const auto &progress = m_request._get_impl()->_progress_handler();
+        const auto& progress = m_request._get_impl()->_progress_handler();
         if (progress)
         {
             try
             {
                 (*progress)(message_direction::upload, m_uploaded);
             }
-            catch(...)
+            catch (...)
             {
                 report_exception(std::current_exception());
                 return;
@@ -1110,28 +1157,33 @@ private:
         }
 
         const auto this_request = shared_from_this();
-        const auto readSize = static_cast<size_t>(std::min(static_cast<uint64_t>(m_http_client->client_config().chunksize()), m_content_length - m_uploaded));
+        const auto readSize = static_cast<size_t>(
+            std::min(static_cast<uint64_t>(m_http_client->client_config().chunksize()), m_content_length - m_uploaded));
         auto readbuf = _get_readbuffer();
-        readbuf.getn(boost::asio::buffer_cast<uint8_t *>(m_body_buf.prepare(readSize)), readSize).then([this_request AND_CAPTURE_MEMBER_FUNCTION_POINTERS](pplx::task<size_t> op)
-        {
-            try
-            {
-                const auto actualReadSize = op.get();
-                if(actualReadSize == 0)
+        readbuf.getn(boost::asio::buffer_cast<uint8_t*>(m_body_buf.prepare(readSize)), readSize)
+            .then([this_request AND_CAPTURE_MEMBER_FUNCTION_POINTERS](pplx::task<size_t> op) {
+                try
                 {
-                    this_request->report_exception(http_exception("Unexpected end of request body stream encountered before Content-Length satisfied."));
+                    const auto actualReadSize = op.get();
+                    if (actualReadSize == 0)
+                    {
+                        this_request->report_exception(http_exception(
+                            "Unexpected end of request body stream encountered before Content-Length satisfied."));
+                        return;
+                    }
+                    this_request->m_uploaded += static_cast<uint64_t>(actualReadSize);
+                    this_request->m_body_buf.commit(actualReadSize);
+                    this_request->m_connection->async_write(this_request->m_body_buf,
+                                                            boost::bind(&asio_context::handle_write_large_body,
+                                                                        this_request,
+                                                                        boost::asio::placeholders::error));
+                }
+                catch (...)
+                {
+                    this_request->report_exception(std::current_exception());
                     return;
                 }
-                this_request->m_uploaded += static_cast<uint64_t>(actualReadSize);
-                this_request->m_body_buf.commit(actualReadSize);
-                this_request->m_connection->async_write(this_request->m_body_buf, boost::bind(&asio_context::handle_write_large_body, this_request, boost::asio::placeholders::error));
-            }
-            catch (...)
-            {
-                this_request->report_exception(std::current_exception());
-                return;
-            }
-        });
+            });
     }
 
     void handle_write_body(const boost::system::error_code& ec)
@@ -1139,14 +1191,14 @@ private:
         if (!ec)
         {
             m_timer.reset();
-            const auto &progress = m_request._get_impl()->_progress_handler();
+            const auto& progress = m_request._get_impl()->_progress_handler();
             if (progress)
             {
                 try
                 {
                     (*progress)(message_direction::upload, m_uploaded);
                 }
-                catch(...)
+                catch (...)
                 {
                     report_exception(std::current_exception());
                     return;
@@ -1154,7 +1206,10 @@ private:
             }
 
             // Read until the end of entire headers
-            m_connection->async_read_until(m_body_buf, CRLF + CRLF, boost::bind(&asio_context::handle_status_line, shared_from_this(), boost::asio::placeholders::error));
+            m_connection->async_read_until(
+                m_body_buf,
+                CRLF + CRLF,
+                boost::bind(&asio_context::handle_status_line, shared_from_this(), boost::asio::placeholders::error));
         }
         else
         {
@@ -1202,7 +1257,8 @@ private:
         if (m_connection->was_reused_and_closed_by_server(ec))
         {
             // Failed to write to socket because connection was already closed while it was in the pool.
-            // close() here ensures socket is closed in a robust way and prevents the connection from being put to the pool again.
+            // close() here ensures socket is closed in a robust way and prevents the connection from being put to the
+            // pool again.
             m_connection->close();
 
             // Create a new context and copy the request object, completion event and
@@ -1253,11 +1309,13 @@ private:
                     m_connection->set_keep_alive(!boost::iequals(value, U("close")));
                 }
 
-                m_response.headers().add(utility::conversions::to_string_t(std::move(name)), utility::conversions::to_string_t(std::move(value)));
+                m_response.headers().add(utility::conversions::to_string_t(std::move(name)),
+                                         utility::conversions::to_string_t(std::move(value)));
             }
         }
 
-        m_content_length = std::numeric_limits<size_t>::max(); // Without Content-Length header, size should be same as TCP stream - set it size_t max.
+        m_content_length = std::numeric_limits<size_t>::max(); // Without Content-Length header, size should be same as
+                                                               // TCP stream - set it size_t max.
         m_response.headers().match(header_names::content_length, m_content_length);
 
         if (!this->handle_content_encoding_compression())
@@ -1274,21 +1332,18 @@ private:
         // note: need to check for 'chunked' here as well, azure storage sends both
         // transfer-encoding:chunked and content-length:0 (although HTTP says not to)
         const auto status = m_response.status_code();
-        if (m_request.method() == U("HEAD")
-            || (status >= 100 && status < 200)
-            || status == status_codes::NoContent
-            || status == status_codes::NotModified
-            || (!needChunked && m_content_length == 0))
+        if (m_request.method() == U("HEAD") || (status >= 100 && status < 200) || status == status_codes::NoContent ||
+            status == status_codes::NotModified || (!needChunked && m_content_length == 0))
         {
             // we can stop early - no body
-            const auto &progress = m_request._get_impl()->_progress_handler();
+            const auto& progress = m_request._get_impl()->_progress_handler();
             if (progress)
             {
                 try
                 {
                     (*progress)(message_direction::download, 0);
                 }
-                catch(...)
+                catch (...)
                 {
                     report_exception(std::current_exception());
                     return;
@@ -1301,18 +1356,25 @@ private:
         {
             if (!needChunked)
             {
-                async_read_until_buffersize(static_cast<size_t>(std::min(m_content_length, static_cast<uint64_t>(m_http_client->client_config().chunksize()))),
-                                            boost::bind(&asio_context::handle_read_content, shared_from_this(), boost::asio::placeholders::error));
+                async_read_until_buffersize(
+                    static_cast<size_t>(
+                        std::min(m_content_length, static_cast<uint64_t>(m_http_client->client_config().chunksize()))),
+                    boost::bind(
+                        &asio_context::handle_read_content, shared_from_this(), boost::asio::placeholders::error));
             }
             else
             {
-                m_connection->async_read_until(m_body_buf, CRLF, boost::bind(&asio_context::handle_chunk_header, shared_from_this(), boost::asio::placeholders::error));
+                m_connection->async_read_until(m_body_buf,
+                                               CRLF,
+                                               boost::bind(&asio_context::handle_chunk_header,
+                                                           shared_from_this(),
+                                                           boost::asio::placeholders::error));
             }
         }
     }
 
-    template <typename ReadHandler>
-    void async_read_until_buffersize(size_t size, const ReadHandler &handler)
+    template<typename ReadHandler>
+    void async_read_until_buffersize(size_t size, const ReadHandler& handler)
     {
         size_t size_to_read = 0;
         if (m_body_buf.size() < size)
@@ -1341,12 +1403,16 @@ private:
 
             if (octetLine.fail())
             {
-                report_error("Invalid chunked response header", boost::system::error_code(), httpclient_errorcode_context::readbody);
+                report_error("Invalid chunked response header",
+                             boost::system::error_code(),
+                             httpclient_errorcode_context::readbody);
             }
             else
             {
-                async_read_until_buffersize(octets + CRLF.size(),
-                                            boost::bind(&asio_context::handle_chunk, shared_from_this(), boost::asio::placeholders::error, octets));
+                async_read_until_buffersize(
+                    octets + CRLF.size(),
+                    boost::bind(
+                        &asio_context::handle_chunk, shared_from_this(), boost::asio::placeholders::error, octets));
             }
         }
         else
@@ -1362,7 +1428,7 @@ private:
             m_timer.reset();
 
             m_downloaded += static_cast<uint64_t>(to_read);
-            const auto &progress = m_request._get_impl()->_progress_handler();
+            const auto& progress = m_request._get_impl()->_progress_handler();
             if (progress)
             {
                 try
@@ -1385,9 +1451,10 @@ private:
             {
                 auto writeBuffer = _get_writebuffer();
                 const auto this_request = shared_from_this();
-                if(m_decompressor)
+                if (m_decompressor)
                 {
-                    auto decompressed = m_decompressor->decompress(boost::asio::buffer_cast<const uint8_t *>(m_body_buf.data()), to_read);
+                    auto decompressed = m_decompressor->decompress(
+                        boost::asio::buffer_cast<const uint8_t*>(m_body_buf.data()), to_read);
 
                     if (m_decompressor->has_error())
                     {
@@ -1395,11 +1462,16 @@ private:
                         return;
                     }
 
-                    // It is valid for the decompressor to sometimes return an empty output for a given chunk, the data will be flushed when the next chunk is received
+                    // It is valid for the decompressor to sometimes return an empty output for a given chunk, the data
+                    // will be flushed when the next chunk is received
                     if (decompressed.empty())
                     {
                         m_body_buf.consume(to_read + CRLF.size()); // consume crlf
-                        m_connection->async_read_until(m_body_buf, CRLF, boost::bind(&asio_context::handle_chunk_header, this_request, boost::asio::placeholders::error));
+                        m_connection->async_read_until(m_body_buf,
+                                                       CRLF,
+                                                       boost::bind(&asio_context::handle_chunk_header,
+                                                                   this_request,
+                                                                   boost::asio::placeholders::error));
                     }
                     else
                     {
@@ -1409,38 +1481,47 @@ private:
                         auto shared_decompressed = std::make_shared<data_buffer>(std::move(decompressed));
 
                         writeBuffer.putn_nocopy(shared_decompressed->data(), shared_decompressed->size())
-                            .then([this_request, to_read, shared_decompressed AND_CAPTURE_MEMBER_FUNCTION_POINTERS](pplx::task<size_t> op)
-                        {
+                            .then([this_request, to_read, shared_decompressed AND_CAPTURE_MEMBER_FUNCTION_POINTERS](
+                                      pplx::task<size_t> op) {
+                                try
+                                {
+                                    op.get();
+                                    this_request->m_body_buf.consume(to_read + CRLF.size()); // consume crlf
+                                    this_request->m_connection->async_read_until(
+                                        this_request->m_body_buf,
+                                        CRLF,
+                                        boost::bind(&asio_context::handle_chunk_header,
+                                                    this_request,
+                                                    boost::asio::placeholders::error));
+                                }
+                                catch (...)
+                                {
+                                    this_request->report_exception(std::current_exception());
+                                    return;
+                                }
+                            });
+                    }
+                }
+                else
+                {
+                    writeBuffer.putn_nocopy(boost::asio::buffer_cast<const uint8_t*>(m_body_buf.data()), to_read)
+                        .then([this_request, to_read AND_CAPTURE_MEMBER_FUNCTION_POINTERS](pplx::task<size_t> op) {
                             try
                             {
-                                op.get();
-                                this_request->m_body_buf.consume(to_read + CRLF.size()); // consume crlf
-                                this_request->m_connection->async_read_until(this_request->m_body_buf, CRLF, boost::bind(&asio_context::handle_chunk_header, this_request, boost::asio::placeholders::error));
+                                op.wait();
                             }
                             catch (...)
                             {
                                 this_request->report_exception(std::current_exception());
                                 return;
                             }
+                            this_request->m_body_buf.consume(to_read + CRLF.size()); // consume crlf
+                            this_request->m_connection->async_read_until(this_request->m_body_buf,
+                                                                         CRLF,
+                                                                         boost::bind(&asio_context::handle_chunk_header,
+                                                                                     this_request,
+                                                                                     boost::asio::placeholders::error));
                         });
-                    }
-                }
-                else
-                {
-                    writeBuffer.putn_nocopy(boost::asio::buffer_cast<const uint8_t *>(m_body_buf.data()), to_read).then([this_request, to_read AND_CAPTURE_MEMBER_FUNCTION_POINTERS](pplx::task<size_t> op)
-                    {
-                        try
-                        {
-                            op.wait();
-                        }
-                        catch (...)
-                        {
-                            this_request->report_exception(std::current_exception());
-                            return;
-                        }
-                        this_request->m_body_buf.consume(to_read + CRLF.size()); // consume crlf
-                        this_request->m_connection->async_read_until(this_request->m_body_buf, CRLF, boost::bind(&asio_context::handle_chunk_header, this_request, boost::asio::placeholders::error));
-                    });
                 }
             }
         }
@@ -1453,7 +1534,6 @@ private:
     void handle_read_content(const boost::system::error_code& ec)
     {
         auto writeBuffer = _get_writebuffer();
-
 
         if (ec)
         {
@@ -1469,7 +1549,7 @@ private:
         }
 
         m_timer.reset();
-        const auto &progress = m_request._get_impl()->_progress_handler();
+        const auto& progress = m_request._get_impl()->_progress_handler();
         if (progress)
         {
             try
@@ -1488,11 +1568,13 @@ private:
             // more data need to be read
             const auto this_request = shared_from_this();
 
-            auto read_size = static_cast<size_t>(std::min(static_cast<uint64_t>(m_body_buf.size()), m_content_length - m_downloaded));
+            auto read_size = static_cast<size_t>(
+                std::min(static_cast<uint64_t>(m_body_buf.size()), m_content_length - m_downloaded));
 
-            if(m_decompressor)
+            if (m_decompressor)
             {
-                auto decompressed = m_decompressor->decompress(boost::asio::buffer_cast<const uint8_t *>(m_body_buf.data()), read_size);
+                auto decompressed =
+                    m_decompressor->decompress(boost::asio::buffer_cast<const uint8_t*>(m_body_buf.data()), read_size);
 
                 if (m_decompressor->has_error())
                 {
@@ -1500,15 +1582,20 @@ private:
                     return;
                 }
 
-                // It is valid for the decompressor to sometimes return an empty output for a given chunk, the data will be flushed when the next chunk is received
+                // It is valid for the decompressor to sometimes return an empty output for a given chunk, the data will
+                // be flushed when the next chunk is received
                 if (decompressed.empty())
                 {
                     try
                     {
                         this_request->m_downloaded += static_cast<uint64_t>(read_size);
 
-                        this_request->async_read_until_buffersize(static_cast<size_t>(std::min(static_cast<uint64_t>(this_request->m_http_client->client_config().chunksize()), this_request->m_content_length - this_request->m_downloaded)),
-                            boost::bind(&asio_context::handle_read_content, this_request, boost::asio::placeholders::error));
+                        this_request->async_read_until_buffersize(
+                            static_cast<size_t>(std::min(
+                                static_cast<uint64_t>(this_request->m_http_client->client_config().chunksize()),
+                                this_request->m_content_length - this_request->m_downloaded)),
+                            boost::bind(
+                                &asio_context::handle_read_content, this_request, boost::asio::placeholders::error));
                     }
                     catch (...)
                     {
@@ -1524,16 +1611,47 @@ private:
                     auto shared_decompressed = std::make_shared<data_buffer>(std::move(decompressed));
 
                     writeBuffer.putn_nocopy(shared_decompressed->data(), shared_decompressed->size())
-                        .then([this_request, read_size, shared_decompressed AND_CAPTURE_MEMBER_FUNCTION_POINTERS](pplx::task<size_t> op)
-                    {
+                        .then([this_request, read_size, shared_decompressed AND_CAPTURE_MEMBER_FUNCTION_POINTERS](
+                                  pplx::task<size_t> op) {
+                            size_t writtenSize = 0;
+                            try
+                            {
+                                writtenSize = op.get();
+                                this_request->m_downloaded += static_cast<uint64_t>(read_size);
+                                this_request->m_body_buf.consume(writtenSize);
+                                this_request->async_read_until_buffersize(
+                                    static_cast<size_t>(std::min(
+                                        static_cast<uint64_t>(this_request->m_http_client->client_config().chunksize()),
+                                        this_request->m_content_length - this_request->m_downloaded)),
+                                    boost::bind(&asio_context::handle_read_content,
+                                                this_request,
+                                                boost::asio::placeholders::error));
+                            }
+                            catch (...)
+                            {
+                                this_request->report_exception(std::current_exception());
+                                return;
+                            }
+                        });
+                }
+            }
+            else
+            {
+                writeBuffer.putn_nocopy(boost::asio::buffer_cast<const uint8_t*>(m_body_buf.data()), read_size)
+                    .then([this_request AND_CAPTURE_MEMBER_FUNCTION_POINTERS](pplx::task<size_t> op) {
                         size_t writtenSize = 0;
                         try
                         {
                             writtenSize = op.get();
-                            this_request->m_downloaded += static_cast<uint64_t>(read_size);
+                            this_request->m_downloaded += static_cast<uint64_t>(writtenSize);
                             this_request->m_body_buf.consume(writtenSize);
-                            this_request->async_read_until_buffersize(static_cast<size_t>(std::min(static_cast<uint64_t>(this_request->m_http_client->client_config().chunksize()), this_request->m_content_length - this_request->m_downloaded)),
-                                boost::bind(&asio_context::handle_read_content, this_request, boost::asio::placeholders::error));
+                            this_request->async_read_until_buffersize(
+                                static_cast<size_t>(std::min(
+                                    static_cast<uint64_t>(this_request->m_http_client->client_config().chunksize()),
+                                    this_request->m_content_length - this_request->m_downloaded)),
+                                boost::bind(&asio_context::handle_read_content,
+                                            this_request,
+                                            boost::asio::placeholders::error));
                         }
                         catch (...)
                         {
@@ -1541,28 +1659,6 @@ private:
                             return;
                         }
                     });
-                }
-            }
-            else
-            {
-                writeBuffer.putn_nocopy(boost::asio::buffer_cast<const uint8_t *>(m_body_buf.data()), read_size)
-                .then([this_request AND_CAPTURE_MEMBER_FUNCTION_POINTERS](pplx::task<size_t> op)
-                {
-                    size_t writtenSize = 0;
-                    try
-                    {
-                        writtenSize = op.get();
-                        this_request->m_downloaded += static_cast<uint64_t>(writtenSize);
-                        this_request->m_body_buf.consume(writtenSize);
-                        this_request->async_read_until_buffersize(static_cast<size_t>(std::min(static_cast<uint64_t>(this_request->m_http_client->client_config().chunksize()), this_request->m_content_length - this_request->m_downloaded)),
-                                                                  boost::bind(&asio_context::handle_read_content, this_request, boost::asio::placeholders::error));
-                    }
-                    catch (...)
-                    {
-                        this_request->report_exception(std::current_exception());
-                        return;
-                    }
-                });
             }
         }
         else
@@ -1577,17 +1673,12 @@ private:
     class timeout_timer
     {
     public:
-
-        timeout_timer(const std::chrono::microseconds& timeout) :
-        m_duration(timeout.count()),
-        m_state(created),
-        m_timer(crossplat::threadpool::shared_instance().service())
-        {}
-
-        void set_ctx(const std::weak_ptr<asio_context> &ctx)
+        timeout_timer(const std::chrono::microseconds& timeout)
+            : m_duration(timeout.count()), m_state(created), m_timer(crossplat::threadpool::shared_instance().service())
         {
-            m_ctx = ctx;
         }
+
+        void set_ctx(const std::weak_ptr<asio_context>& ctx) { m_ctx = ctx; }
 
         void start()
         {
@@ -1597,23 +1688,21 @@ private:
 
             m_timer.expires_from_now(m_duration);
             auto ctx = m_ctx;
-            m_timer.async_wait([ctx AND_CAPTURE_MEMBER_FUNCTION_POINTERS](const boost::system::error_code& ec)
-                               {
-                                   handle_timeout(ec, ctx);
-                               });
+            m_timer.async_wait([ctx AND_CAPTURE_MEMBER_FUNCTION_POINTERS](const boost::system::error_code& ec) {
+                handle_timeout(ec, ctx);
+            });
         }
 
         void reset()
         {
             assert(m_state == started || m_state == timedout);
             assert(!m_ctx.expired());
-            if(m_timer.expires_from_now(m_duration) > 0)
+            if (m_timer.expires_from_now(m_duration) > 0)
             {
                 // The existing handler was canceled so schedule a new one.
                 assert(m_state == started);
                 auto ctx = m_ctx;
-                m_timer.async_wait([ctx AND_CAPTURE_MEMBER_FUNCTION_POINTERS](const boost::system::error_code& ec)
-                {
+                m_timer.async_wait([ctx AND_CAPTURE_MEMBER_FUNCTION_POINTERS](const boost::system::error_code& ec) {
                     handle_timeout(ec, ctx);
                 });
             }
@@ -1629,10 +1718,9 @@ private:
             m_timer.cancel();
         }
 
-        static void handle_timeout(const boost::system::error_code& ec,
-                                   const std::weak_ptr<asio_context> &ctx)
+        static void handle_timeout(const boost::system::error_code& ec, const std::weak_ptr<asio_context>& ctx)
         {
-            if(!ec)
+            if (!ec)
             {
                 auto shared_ctx = ctx.lock();
                 if (shared_ctx)
@@ -1674,13 +1762,13 @@ private:
 #endif
 };
 
-
-std::shared_ptr<_http_client_communicator> create_platform_final_pipeline_stage(uri&& base_uri, http_client_config&& client_config)
+std::shared_ptr<_http_client_communicator> create_platform_final_pipeline_stage(uri&& base_uri,
+                                                                                http_client_config&& client_config)
 {
     return std::make_shared<asio_client>(std::move(base_uri), std::move(client_config));
 }
 
-void asio_client::send_request(const std::shared_ptr<request_context> &request_ctx)
+void asio_client::send_request(const std::shared_ptr<request_context>& request_ctx)
 {
     auto ctx = std::static_pointer_cast<asio_context>(request_ctx);
 
@@ -1717,5 +1805,7 @@ pplx::task<http_response> asio_client::propagate(http_request request)
 
     return result_task;
 }
-
-}}}} // namespaces
+}
+}
+}
+} // namespaces
