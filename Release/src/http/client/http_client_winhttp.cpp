@@ -298,13 +298,13 @@ public:
 
     void install_custom_cn_check(const utility::string_t& customHost)
     {
-        customCnCheck = customHost;
-        utility::details::inplace_tolower(customCnCheck);
+        m_customCnCheck = customHost;
+        utility::details::inplace_tolower(m_customCnCheck);
     }
 
     void on_send_request_validate_cn()
     {
-        if (customCnCheck.empty())
+        if (m_customCnCheck.empty())
         {
             // no custom validation selected; either we've delegated that to winhttp or
             // certificate checking is completely disabled
@@ -384,7 +384,7 @@ public:
                 | 0x00000100 /* SECURITY_FLAG_IGNORE_UNKNOWN_CA */
                 | 0x00000200 /* SECURITY_FLAG_IGNORE_WRONG_USAGE */
                 | 0x00002000 /* SECURITY_FLAG_IGNORE_CERT_DATE_INVALID */,
-            &customCnCheck[0],
+            &m_customCnCheck[0],
             };
         CERT_CHAIN_POLICY_PARA policyPara = {sizeof(policyPara)};
         policyPara.pvExtraPolicyPara = &policyData;
@@ -426,7 +426,7 @@ protected:
 
 private:
 
-    utility::string_t customCnCheck;
+    utility::string_t m_customCnCheck;
     std::vector<unsigned char> cachedEncodedCert;
 
     // Can only create on the heap using factory function.
