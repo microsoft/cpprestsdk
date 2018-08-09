@@ -1,4 +1,3 @@
----
 BasedOnStyle: WebKit
 Language: Cpp
 Standard: Cpp11
@@ -27,6 +26,6 @@ ConstructorInitializerAllOnOneLineOrOnePerLine: true
 Cpp11BracedListStyle: true
 IndentCaseLabels: true
 KeepEmptyLinesAtTheStartOfBlocks: false
-NamespaceIndentation: All
+NamespaceIndentation: None
 PenaltyReturnTypeOnItsOwnLine: 1000
 SpaceAfterTemplateKeyword: false
