@@ -18,7 +18,7 @@
 #include <Wincrypt.h>
 
 #include "cpprest/http_headers.h"
-#include "cpprest/details/x509_cert_utilities.h"
+#include "../common/x509_cert_utilities.h"
 #include "http_client_impl.h"
 
 #ifndef CPPREST_TARGET_XP

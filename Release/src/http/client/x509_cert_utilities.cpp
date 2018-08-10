@@ -11,8 +11,8 @@
  * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
  ****/
 
-#include "cpprest/details/x509_cert_utilities.h"
 #include "stdafx.h"
+#include "../common/x509_cert_utilities.h"
 
 #ifdef CPPREST_PLATFORM_ASIO_CERT_VERIFICATION_AVAILABLE
 

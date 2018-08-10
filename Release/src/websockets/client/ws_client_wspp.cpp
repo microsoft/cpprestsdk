@@ -15,7 +15,7 @@
 
 #if !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 
-#include "cpprest/details/x509_cert_utilities.h"
+#include "../../http/common/x509_cert_utilities.h"
 #include "pplx/threadpool.h"
 
 #include "ws_client_impl.h"

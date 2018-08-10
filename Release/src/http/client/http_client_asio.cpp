@@ -39,7 +39,7 @@
 
 #include "cpprest/base_uri.h"
 #include "cpprest/details/http_helpers.h"
-#include "cpprest/details/x509_cert_utilities.h"
+#include "../common/x509_cert_utilities.h"
 #include "http_client_impl.h"
 #include "pplx/threadpool.h"
 #include <memory>
