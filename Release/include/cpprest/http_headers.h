@@ -79,19 +79,19 @@ public:
     /// <summary>
     /// STL-style typedefs
     /// </summary>
-    typedef typename inner_container::key_type key_type;
-    typedef typename inner_container::key_compare key_compare;
-    typedef typename inner_container::allocator_type allocator_type;
-    typedef typename inner_container::size_type size_type;
-    typedef typename inner_container::difference_type difference_type;
-    typedef typename inner_container::pointer pointer;
-    typedef typename inner_container::const_pointer const_pointer;
-    typedef typename inner_container::reference reference;
-    typedef typename inner_container::const_reference const_reference;
-    typedef typename inner_container::iterator iterator;
-    typedef typename inner_container::const_iterator const_iterator;
-    typedef typename inner_container::reverse_iterator reverse_iterator;
-    typedef typename inner_container::const_reverse_iterator const_reverse_iterator;
+    typedef inner_container::key_type key_type;
+    typedef inner_container::key_compare key_compare;
+    typedef inner_container::allocator_type allocator_type;
+    typedef inner_container::size_type size_type;
+    typedef inner_container::difference_type difference_type;
+    typedef inner_container::pointer pointer;
+    typedef inner_container::const_pointer const_pointer;
+    typedef inner_container::reference reference;
+    typedef inner_container::const_reference const_reference;
+    typedef inner_container::iterator iterator;
+    typedef inner_container::const_iterator const_iterator;
+    typedef inner_container::reverse_iterator reverse_iterator;
+    typedef inner_container::const_reverse_iterator const_reverse_iterator;
 
     /// <summary>
     /// Constructs an empty set of HTTP headers.

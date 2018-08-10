@@ -356,7 +356,7 @@ namespace details
     /// Our own implementation of alpha numeric instead of std::isalnum to avoid
     /// taking global lock for performance reasons.
     /// </summary>
-    inline bool __cdecl is_alnum(const unsigned char uch) noexcept
+    inline bool __cdecl is_alnum(const unsigned char uch) CPPREST_NOEXCEPT
     {   // test if uch is an alnum character
         // special casing char to avoid branches
         static constexpr bool is_alnum_table[UCHAR_MAX + 1] =
@@ -379,7 +379,7 @@ namespace details
     /// Our own implementation of alpha numeric instead of std::isalnum to avoid
     /// taking global lock for performance reasons.
     /// </summary>
-    inline bool __cdecl is_alnum(const char ch) noexcept
+    inline bool __cdecl is_alnum(const char ch) CPPREST_NOEXCEPT
     {
         return (is_alnum(static_cast<unsigned char>(ch)));
     }
@@ -389,7 +389,7 @@ namespace details
     /// taking global lock for performance reasons.
     /// </summary>
     template<class Elem>
-    inline bool __cdecl is_alnum(Elem ch) noexcept
+    inline bool __cdecl is_alnum(Elem ch) CPPREST_NOEXCEPT
     {
         // assumes 'x' == L'x' for the ASCII range
         typedef typename std::make_unsigned<Elem>::type UElem;
