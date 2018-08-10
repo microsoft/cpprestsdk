@@ -12,11 +12,11 @@
  ****/
 
 #include "stdafx.h"
+#include "../common/x509_cert_utilities.h"
 
-#if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__)) ||                                                \
-    (defined(_WIN32) && !defined(__cplusplus_winrt) && !defined(_M_ARM) && !defined(CPPREST_EXCLUDE_WEBSOCKETS))
+#ifdef CPPREST_PLATFORM_ASIO_CERT_VERIFICATION_AVAILABLE
 
-#include "cpprest/details/x509_cert_utilities.h"
+#include <type_traits>
 #include <vector>
 
 #if defined(ANDROID) || defined(__ANDROID__)
@@ -30,11 +30,6 @@
 #include <Security/SecCertificate.h>
 #include <Security/SecPolicy.h>
 #include <Security/SecTrust.h>
-#endif
-
-#if defined(_WIN32)
-#include <type_traits>
-#include <wincrypt.h>
 #endif
 
 namespace web
@@ -375,55 +370,67 @@ bool verify_X509_cert_chain(const std::vector<std::string>& certChain, const std
 #endif
 
 #if defined(_WIN32)
-namespace
-{
-// Helper RAII unique_ptrs to free Windows structures.
-struct cert_free_certificate_context
-{
-    void operator()(const CERT_CONTEXT* ctx) const { CertFreeCertificateContext(ctx); }
-};
-typedef std::unique_ptr<const CERT_CONTEXT, cert_free_certificate_context> cert_context;
-struct cert_free_certificate_chain
-{
-    void operator()(const CERT_CHAIN_CONTEXT* chain) const { CertFreeCertificateChain(chain); }
-};
-typedef std::unique_ptr<const CERT_CHAIN_CONTEXT, cert_free_certificate_chain> chain_context;
-}
-
-bool verify_X509_cert_chain(const std::vector<std::string>& certChain, const std::string&)
+bool verify_X509_cert_chain(const std::vector<std::string>& certChain, const std::string& hostname)
 {
     // Create certificate context from server certificate.
-    cert_context cert(CertCreateCertificateContext(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
-                                                   reinterpret_cast<const unsigned char*>(certChain[0].c_str()),
-                                                   static_cast<DWORD>(certChain[0].size())));
-    if (cert == nullptr)
+    winhttp_cert_context cert;
+    cert.raw = CertCreateCertificateContext(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
+                                            reinterpret_cast<const unsigned char*>(certChain[0].c_str()),
+                                            static_cast<DWORD>(certChain[0].size()));
+    if (cert.raw == nullptr)
     {
         return false;
     }
 
     // Let the OS build a certificate chain from the server certificate.
-    CERT_CHAIN_PARA params;
-    ZeroMemory(&params, sizeof(params));
-    params.cbSize = sizeof(CERT_CHAIN_PARA);
-    params.RequestedUsage.dwType = USAGE_MATCH_TYPE_OR;
-    LPSTR usages[] = {(LPSTR)szOID_PKIX_KP_SERVER_AUTH,
+    char oidPkixKpServerAuth[] = szOID_PKIX_KP_SERVER_AUTH;
+    char oidServerGatedCrypto[] = szOID_SERVER_GATED_CRYPTO;
+    char oidSgcNetscape[] = szOID_SGC_NETSCAPE;
+    char* chainUses[] = {
+        oidPkixKpServerAuth,
+        oidServerGatedCrypto,
+        oidSgcNetscape,
+    };
+    CERT_CHAIN_PARA chainPara = {sizeof(chainPara)};
+    chainPara.RequestedUsage.dwType = USAGE_MATCH_TYPE_OR;
+    chainPara.RequestedUsage.Usage.cUsageIdentifier = sizeof(chainUses) / sizeof(char*);
+    chainPara.RequestedUsage.Usage.rgpszUsageIdentifier = chainUses;
 
-                      // For older servers and to match IE.
-                      (LPSTR)szOID_SERVER_GATED_CRYPTO,
-                      (LPSTR)szOID_SGC_NETSCAPE};
-    params.RequestedUsage.Usage.cUsageIdentifier = std::extent<decltype(usages)>::value;
-    params.RequestedUsage.Usage.rgpszUsageIdentifier = usages;
-    PCCERT_CHAIN_CONTEXT chainContext;
-    chain_context chain;
-    if (!CertGetCertificateChain(
-            nullptr, cert.get(), nullptr, nullptr, &params, CERT_CHAIN_REVOCATION_CHECK_CHAIN, nullptr, &chainContext))
+    winhttp_cert_chain_context chainContext;
+    if (!CertGetCertificateChain(nullptr,
+                                 cert.raw,
+                                 nullptr,
+                                 cert.raw->hCertStore,
+                                 &chainPara,
+                                 CERT_CHAIN_REVOCATION_CHECK_CHAIN,
+                                 nullptr,
+                                 &chainContext.raw))
     {
         return false;
     }
-    chain.reset(chainContext);
 
     // Check to see if the certificate chain is actually trusted.
-    if (chain->TrustStatus.dwErrorStatus != CERT_TRUST_NO_ERROR)
+    if (chainContext.raw->TrustStatus.dwErrorStatus != CERT_TRUST_NO_ERROR)
+    {
+        return false;
+    }
+
+    auto u16HostName = utility::conversions::to_utf16string(hostname);
+    HTTPSPolicyCallbackData policyData = {
+        {sizeof(policyData)},
+        AUTHTYPE_SERVER,
+        0,
+        &u16HostName[0],
+    };
+    CERT_CHAIN_POLICY_PARA policyPara = {sizeof(policyPara)};
+    policyPara.pvExtraPolicyPara = &policyData;
+    CERT_CHAIN_POLICY_STATUS policyStatus = {sizeof(policyStatus)};
+    if (!CertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_SSL, chainContext.raw, &policyPara, &policyStatus))
+    {
+        return false;
+    }
+
+    if (policyStatus.dwError)
     {
         return false;
     }

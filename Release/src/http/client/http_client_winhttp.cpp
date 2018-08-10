@@ -15,14 +15,55 @@
 #include "stdafx.h"
 
 #include <atomic>
+#include <Wincrypt.h>
 
 #include "cpprest/http_headers.h"
+#include "../common/x509_cert_utilities.h"
 #include "http_client_impl.h"
 
 #ifndef CPPREST_TARGET_XP
 #include <VersionHelpers.h>
 #endif
 
+namespace
+{
+struct security_failure_message
+{
+    std::uint32_t flag;
+    const char * text;
+};
+
+constexpr security_failure_message g_security_failure_messages[] = {
+    { WINHTTP_CALLBACK_STATUS_FLAG_CERT_REV_FAILED,
+        "WINHTTP_CALLBACK_STATUS_FLAG_CERT_REV_FAILED failed to check revocation status."},
+    { WINHTTP_CALLBACK_STATUS_FLAG_INVALID_CERT,
+        "WINHTTP_CALLBACK_STATUS_FLAG_INVALID_CERT SSL certificate is invalid."},
+    { WINHTTP_CALLBACK_STATUS_FLAG_CERT_REVOKED,
+        "WINHTTP_CALLBACK_STATUS_FLAG_CERT_REVOKED SSL certificate was revoked."},
+    { WINHTTP_CALLBACK_STATUS_FLAG_INVALID_CA,
+        "WINHTTP_CALLBACK_STATUS_FLAG_INVALID_CA SSL invalid CA."},
+    { WINHTTP_CALLBACK_STATUS_FLAG_CERT_CN_INVALID,
+        "WINHTTP_CALLBACK_STATUS_FLAG_CERT_CN_INVALID SSL common name does not match."},
+    { WINHTTP_CALLBACK_STATUS_FLAG_CERT_DATE_INVALID,
+        "WINHTTP_CALLBACK_STATUS_FLAG_CERT_DATE_INVALID SLL certificate is expired."},
+    { WINHTTP_CALLBACK_STATUS_FLAG_SECURITY_CHANNEL_ERROR,
+        "WINHTTP_CALLBACK_STATUS_FLAG_SECURITY_CHANNEL_ERROR internal error."},
+};
+
+std::string generate_security_failure_message(std::uint32_t flags)
+{
+    std::string result("SSL Error:");
+    for (const auto& message : g_security_failure_messages) {
+        if (flags & message.flag) {
+            result.push_back(' ');
+            result.append(message.text);
+        }
+    }
+
+    return result;
+}
+
+}   // unnamed namespace
 namespace web
 {
 namespace http
@@ -255,6 +296,124 @@ public:
         }
     }
 
+    void install_custom_cn_check(const utility::string_t& customHost)
+    {
+        m_customCnCheck = customHost;
+        utility::details::inplace_tolower(m_customCnCheck);
+    }
+
+    void on_send_request_validate_cn()
+    {
+        if (m_customCnCheck.empty())
+        {
+            // no custom validation selected; either we've delegated that to winhttp or
+            // certificate checking is completely disabled
+            return;
+        }
+
+        winhttp_cert_context certContext;
+        DWORD bufferSize = sizeof(certContext.raw);
+        if (!WinHttpQueryOption(
+            m_request_handle,
+            WINHTTP_OPTION_SERVER_CERT_CONTEXT,
+            &certContext.raw,
+            &bufferSize))
+        {
+            auto errorCode = GetLastError();
+            if (errorCode == HRESULT_CODE(WININET_E_INCORRECT_HANDLE_STATE))
+            {
+                // typically happens when given a custom host with an initially HTTP connection
+                return;
+            }
+
+            report_error(errorCode, build_error_msg(errorCode,
+                "WinHttpQueryOption WINHTTP_OPTION_SERVER_CERT_CONTEXT"));
+            cleanup();
+            return;
+        }
+
+        const auto encodedFirst = certContext.raw->pbCertEncoded;
+        const auto encodedLast = encodedFirst + certContext.raw->cbCertEncoded;
+        if (certContext.raw->cbCertEncoded == m_cachedEncodedCert.size()
+            && std::equal(encodedFirst, encodedLast, m_cachedEncodedCert.begin()))
+        {
+            // already validated OK
+            return;
+        }
+
+        char oidPkixKpServerAuth[] = szOID_PKIX_KP_SERVER_AUTH;
+        char oidServerGatedCrypto[] = szOID_SERVER_GATED_CRYPTO;
+        char oidSgcNetscape[] = szOID_SGC_NETSCAPE;
+        char *chainUses[] = {
+            oidPkixKpServerAuth,
+            oidServerGatedCrypto,
+            oidSgcNetscape,
+        };
+
+        winhttp_cert_chain_context chainContext;
+        CERT_CHAIN_PARA chainPara = {sizeof(chainPara)};
+        chainPara.RequestedUsage.dwType = USAGE_MATCH_TYPE_OR;
+        chainPara.RequestedUsage.Usage.cUsageIdentifier =
+            sizeof(chainUses) / sizeof(char *);
+        chainPara.RequestedUsage.Usage.rgpszUsageIdentifier = chainUses;
+
+        // note that the following chain only checks the end certificate; we
+        // assume WinHTTP already validated everything but the common name.
+        if (!CertGetCertificateChain(
+            NULL,
+            certContext.raw,
+            nullptr,
+            certContext.raw->hCertStore,
+            &chainPara,
+            CERT_CHAIN_CACHE_END_CERT,
+            NULL,
+            &chainContext.raw))
+        {
+            auto errorCode = GetLastError();
+            report_error(errorCode, build_error_msg(errorCode,
+                "CertGetCertificateChain"));
+            cleanup();
+            return;
+        }
+
+        HTTPSPolicyCallbackData policyData = {
+            {sizeof(policyData)},
+            AUTHTYPE_SERVER,
+            // we assume WinHTTP already checked these:
+            0x00000080 /* SECURITY_FLAG_IGNORE_REVOCATION */
+                | 0x00000100 /* SECURITY_FLAG_IGNORE_UNKNOWN_CA */
+                | 0x00000200 /* SECURITY_FLAG_IGNORE_WRONG_USAGE */
+                | 0x00002000 /* SECURITY_FLAG_IGNORE_CERT_DATE_INVALID */,
+            &m_customCnCheck[0],
+            };
+        CERT_CHAIN_POLICY_PARA policyPara = {sizeof(policyPara)};
+        policyPara.pvExtraPolicyPara = &policyData;
+
+        CERT_CHAIN_POLICY_STATUS policyStatus = {sizeof(policyStatus)};
+        if (!CertVerifyCertificateChainPolicy(
+            CERT_CHAIN_POLICY_SSL,
+            chainContext.raw,
+            &policyPara,
+            &policyStatus))
+        {
+            auto errorCode = GetLastError();
+            report_error(errorCode, build_error_msg(errorCode,
+                "CertVerifyCertificateChainPolicy"));
+            cleanup();
+            return;
+        }
+
+        if (policyStatus.dwError)
+        {
+            report_error(policyStatus.dwError,
+                build_error_msg(policyStatus.dwError, "Incorrect common name"));
+            cleanup();
+            return;
+        }
+
+        m_cachedEncodedCert.assign(encodedFirst, encodedLast);
+    }
+
 protected:
 
     virtual void finish() override
@@ -266,6 +425,9 @@ protected:
     }
 
 private:
+
+    utility::string_t m_customCnCheck;
+    std::vector<unsigned char> m_cachedEncodedCert;
 
     // Can only create on the heap using factory function.
     winhttp_request_context(const std::shared_ptr<_http_client_communicator> &client, const http_request &request)
@@ -393,14 +555,6 @@ public:
 
 protected:
 
-    unsigned long report_failure(const utility::string_t& errorMessage)
-    {
-        // Should we log?
-        CASABLANCA_UNREFERENCED_PARAMETER(errorMessage);
-
-        return GetLastError();
-    }
-
     // Open session and connection with the server.
     unsigned long open()
     {
@@ -519,7 +673,7 @@ protected:
             WINHTTP_FLAG_ASYNC);
         if(!m_hSession)
         {
-            return report_failure(_XPLATSTR("Error opening session"));
+            return GetLastError();
         }
 
         // Set timeouts.
@@ -531,7 +685,7 @@ protected:
             milliseconds,
             milliseconds))
         {
-            return report_failure(_XPLATSTR("Error setting timeouts"));
+            return GetLastError();
         }
 
         if(config.guarantee_order())
@@ -540,7 +694,7 @@ protected:
             DWORD maxConnections = 1;
             if(!WinHttpSetOption(m_hSession, WINHTTP_OPTION_MAX_CONNS_PER_SERVER, &maxConnections, sizeof(maxConnections)))
             {
-                return report_failure(_XPLATSTR("Error setting options"));
+                return GetLastError();
             }
         }
 
@@ -552,7 +706,7 @@ protected:
         win32_result = ::WinHttpSetOption(m_hSession, WINHTTP_OPTION_SECURE_PROTOCOLS, &secure_protocols, sizeof(secure_protocols));
         if(FALSE == win32_result)
         {
-            return report_failure(_XPLATSTR("Error setting session options"));
+            return GetLastError();
         }
 #endif
 
@@ -562,10 +716,13 @@ protected:
         if(WINHTTP_INVALID_STATUS_CALLBACK == WinHttpSetStatusCallback(
             m_hSession,
             &winhttp_client::completion_callback,
-            WINHTTP_CALLBACK_FLAG_ALL_COMPLETIONS | WINHTTP_CALLBACK_FLAG_HANDLES | WINHTTP_CALLBACK_FLAG_SECURE_FAILURE,
+            WINHTTP_CALLBACK_FLAG_ALL_COMPLETIONS
+                | WINHTTP_CALLBACK_FLAG_HANDLES
+                | WINHTTP_CALLBACK_FLAG_SECURE_FAILURE
+                | WINHTTP_CALLBACK_FLAG_SEND_REQUEST,
             0))
         {
-            return report_failure(_XPLATSTR("Error registering callback"));
+            return GetLastError();
         }
 
         // Open connection.
@@ -578,7 +735,7 @@ protected:
 
         if(m_hConnection == nullptr)
         {
-            return report_failure(_XPLATSTR("Error opening connection"));
+            return GetLastError();
         }
 
         m_opened = true;
@@ -600,6 +757,7 @@ protected:
         }
 
         http_request &msg = request->m_request;
+        http_headers &headers = msg.headers();
         std::shared_ptr<winhttp_request_context> winhttp_context = std::static_pointer_cast<winhttp_request_context>(request);
         std::weak_ptr<winhttp_request_context> weak_winhttp_context = winhttp_context;
 
@@ -659,18 +817,6 @@ protected:
             return;
         }
 
-        // Enable the certificate revocation check
-        if (m_secure && client_config().validate_certificates())
-        {
-            DWORD dwEnableSSLRevocOpt = WINHTTP_ENABLE_SSL_REVOCATION;
-            if (!WinHttpSetOption(winhttp_context->m_request_handle, WINHTTP_OPTION_ENABLE_FEATURE, &dwEnableSSLRevocOpt, sizeof(dwEnableSSLRevocOpt)))
-            {
-                auto errorCode = GetLastError();
-                request->report_error(errorCode, build_error_msg(errorCode, "Error enabling SSL revocation check"));
-                return;
-            }
-        }
-
         if(proxy_info_required)
         {
             auto result = WinHttpSetOption(
@@ -707,24 +853,49 @@ protected:
         }
 
         // Check to turn off server certificate verification.
-        if(!client_config().validate_certificates())
+        DWORD ignoredCertificateValidationSteps = 0;
+        if (client_config().validate_certificates())
         {
-            DWORD data = SECURITY_FLAG_IGNORE_UNKNOWN_CA
+            // if we are validating certificates, also turn on revocation checking
+            DWORD dwEnableSSLRevocOpt = WINHTTP_ENABLE_SSL_REVOCATION;
+            if (!WinHttpSetOption(winhttp_context->m_request_handle, WINHTTP_OPTION_ENABLE_FEATURE,
+                &dwEnableSSLRevocOpt, sizeof(dwEnableSSLRevocOpt)))
+            {
+                auto errorCode = GetLastError();
+                request->report_error(errorCode, build_error_msg(errorCode, "Error enabling SSL revocation check"));
+                return;
+            }
+
+            // check if the user has overridden the desired Common Name with the host header
+            const auto hostHeader = headers.find(_XPLATSTR("Host"));
+            if (hostHeader != headers.end())
+            {
+                const auto& requestHost = hostHeader->second;
+                if (!utility::details::str_iequal(requestHost, m_uri.host()))
+                {
+                    winhttp_context->install_custom_cn_check(requestHost);
+                    ignoredCertificateValidationSteps = SECURITY_FLAG_IGNORE_CERT_CN_INVALID;
+                }
+            }
+        }
+        else
+        {
+            ignoredCertificateValidationSteps = SECURITY_FLAG_IGNORE_UNKNOWN_CA
                 | SECURITY_FLAG_IGNORE_CERT_DATE_INVALID
                 | SECURITY_FLAG_IGNORE_CERT_CN_INVALID
                 | SECURITY_FLAG_IGNORE_CERT_WRONG_USAGE;
+        }
 
-            auto result = WinHttpSetOption(
+        if(ignoredCertificateValidationSteps
+            && !WinHttpSetOption(
                 winhttp_context->m_request_handle,
                 WINHTTP_OPTION_SECURITY_FLAGS,
-                &data,
-                sizeof(data));
-            if(!result)
-            {
-                auto errorCode = GetLastError();
-                request->report_error(errorCode, build_error_msg(errorCode, "Setting ignore server certificate verification"));
-                return;
-            }
+                &ignoredCertificateValidationSteps,
+                sizeof(ignoredCertificateValidationSteps)))
+        {
+            auto errorCode = GetLastError();
+            request->report_error(errorCode, build_error_msg(errorCode, "Setting ignore server certificate verification"));
+            return;
         }
 
         const size_t content_length = msg._get_impl()->_get_content_length();
@@ -751,7 +922,7 @@ protected:
             }
         }
 
-        utility::string_t flattened_headers = web::http::details::flatten_http_headers(msg.headers());
+        utility::string_t flattened_headers = web::http::details::flatten_http_headers(headers);
         flattened_headers += winhttp_context->get_accept_encoding_header();
 
         // Add headers.
@@ -1218,7 +1389,9 @@ private:
         std::weak_ptr<winhttp_request_context>* p_weak_request_context = reinterpret_cast<std::weak_ptr<winhttp_request_context> *>(context);
 
         if (p_weak_request_context == nullptr)
+        {
             return;
+        }
 
         if (statusCode == WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING)
         {
@@ -1230,8 +1403,10 @@ private:
 
         auto p_request_context = p_weak_request_context->lock();
         if (!p_request_context)
+        {
             // The request context was already released, probably due to cancellation
             return;
+        }
 
         switch (statusCode)
         {
@@ -1254,7 +1429,7 @@ private:
                 }
 
                 p_request_context->report_error(errorCode, build_error_msg(error_result));
-                break;
+                return;
             }
         case WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE :
             {
@@ -1288,25 +1463,15 @@ private:
                         p_request_context->report_error(errorCode, build_error_msg(errorCode, "WinHttpReceiveResponse"));
                     }
                 }
-                break;
+                return;
             }
+        case WINHTTP_CALLBACK_STATUS_SENDING_REQUEST:
+            p_request_context->on_send_request_validate_cn();
+            return;
         case WINHTTP_CALLBACK_STATUS_SECURE_FAILURE:
-        {
-            auto *flagsPtr = reinterpret_cast<std::uint32_t*>(statusInfo);
-            auto flags = *flagsPtr;
-
-            std::string err = "SSL error: ";
-            if (flags & WINHTTP_CALLBACK_STATUS_FLAG_CERT_REV_FAILED)        err += "WINHTTP_CALLBACK_STATUS_FLAG_CERT_REV_FAILED failed to check revocation status. ";
-            if (flags & WINHTTP_CALLBACK_STATUS_FLAG_INVALID_CERT)           err += "WINHTTP_CALLBACK_STATUS_FLAG_INVALID_CERT SSL certificate is invalid. ";
-            if (flags & WINHTTP_CALLBACK_STATUS_FLAG_CERT_REVOKED)           err += "WINHTTP_CALLBACK_STATUS_FLAG_CERT_REVOKED SSL certificate was revoked. ";
-            if (flags & WINHTTP_CALLBACK_STATUS_FLAG_INVALID_CA)             err += "WINHTTP_CALLBACK_STATUS_FLAG_INVALID_CA SSL invalid CA. ";
-            if (flags & WINHTTP_CALLBACK_STATUS_FLAG_CERT_CN_INVALID)        err += "WINHTTP_CALLBACK_STATUS_FLAG_CERT_CN_INVALID SSL common name does not match. ";
-            if (flags & WINHTTP_CALLBACK_STATUS_FLAG_CERT_DATE_INVALID)      err += "WINHTTP_CALLBACK_STATUS_FLAG_CERT_DATE_INVALID SLL certificate is expired. ";
-            if (flags & WINHTTP_CALLBACK_STATUS_FLAG_SECURITY_CHANNEL_ERROR) err += "WINHTTP_CALLBACK_STATUS_FLAG_SECURITY_CHANNEL_ERROR internal error. ";
-
-            p_request_context->report_exception(web::http::http_exception(std::move(err)));
-            break;
-        }
+            p_request_context->report_exception(web::http::http_exception(
+                generate_security_failure_message(*reinterpret_cast<std::uint32_t*>(statusInfo))));
+            return;
         case WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE :
             {
                 DWORD bytesWritten = *((DWORD *)statusInfo);
@@ -1347,7 +1512,7 @@ private:
                         p_request_context->report_error(errorCode, build_error_msg(errorCode, "WinHttpReceiveResponse"));
                     }
                 }
-                break;
+                return;
             }
         case WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE :
             {
@@ -1411,7 +1576,7 @@ private:
                 // http://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4.4
 
                 read_next_response_chunk(p_request_context.get(), 0, true);
-                break;
+                return;
             }
         case WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE :
             {
@@ -1459,7 +1624,7 @@ private:
 
                     p_request_context->complete_request(p_request_context->m_downloaded);
                 }
-                break;
+                return;
             }
         case WINHTTP_CALLBACK_STATUS_READ_COMPLETE :
             {
@@ -1483,7 +1648,7 @@ private:
                 if (bytesRead == 0)
                 {
                     p_request_context->complete_request(p_request_context->m_downloaded);
-                    break;
+                    return;
                 }
 
                 auto writebuf = p_request_context->_get_writebuffer();
@@ -1544,9 +1709,9 @@ private:
                         read_next_response_chunk(p_request_context.get(), bytesRead);
                     });
                 }
-                break;
+                return;
             }
-    }
+        }
     }
 
     std::atomic<bool> m_opened;

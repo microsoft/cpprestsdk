@@ -15,7 +15,7 @@
 
 #if !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 
-#include "cpprest/details/x509_cert_utilities.h"
+#include "../../http/common/x509_cert_utilities.h"
 #include "pplx/threadpool.h"
 
 #include "ws_client_impl.h"
@@ -122,7 +122,7 @@ public:
     wspp_callback_client(websocket_client_config config) :
         websocket_client_callback_impl(std::move(config)),
         m_state(CREATED)
-#if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__)) || defined(_WIN32)
+#ifdef CPPREST_PLATFORM_ASIO_CERT_VERIFICATION_AVAILABLE
         , m_openssl_failed(false)
 #endif
     {}
@@ -188,16 +188,16 @@ public:
                     sslContext->set_verify_mode(boost::asio::ssl::context::verify_none);
                 }
 
-#if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__)) || defined(_WIN32)
+#ifdef CPPREST_PLATFORM_ASIO_CERT_VERIFICATION_AVAILABLE
                 m_openssl_failed = false;
 #endif
                 sslContext->set_verify_callback([this](bool preverified, boost::asio::ssl::verify_context &verifyCtx)
                 {
-#if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__)) || defined(_WIN32)
-                    // On OS X, iOS, and Android, OpenSSL doesn't have access to where the OS
-                    // stores keychains. If OpenSSL fails we will doing verification at the
-                    // end using the whole certificate chain so wait until the 'leaf' cert.
-                    // For now return true so OpenSSL continues down the certificate chain.
+#ifdef CPPREST_PLATFORM_ASIO_CERT_VERIFICATION_AVAILABLE
+                    // Attempt to use platform certificate validation when it is available:
+                    // If OpenSSL fails we will doing verification at the end using the whole certificate chain,
+                    // so wait until the 'leaf' cert. For now return true so OpenSSL continues down the certificate
+                    // chain.
                     if(!preverified)
                     {
                         m_openssl_failed = true;
@@ -778,7 +778,7 @@ private:
     // Used to track if any of the OpenSSL server certificate verifications
     // failed. This can safely be tracked at the client level since connections
     // only happen once for each client.
-#if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__)) || defined(_WIN32)
+#ifdef CPPREST_PLATFORM_ASIO_CERT_VERIFICATION_AVAILABLE
     bool m_openssl_failed;
 #endif
 
