@@ -334,8 +334,8 @@ public:
 
         const auto encodedFirst = certContext.raw->pbCertEncoded;
         const auto encodedLast = encodedFirst + certContext.raw->cbCertEncoded;
-        if (certContext.raw->cbCertEncoded == cachedEncodedCert.size()
-            && std::equal(encodedFirst, encodedLast, cachedEncodedCert.begin()))
+        if (certContext.raw->cbCertEncoded == m_cachedEncodedCert.size()
+            && std::equal(encodedFirst, encodedLast, m_cachedEncodedCert.begin()))
         {
             // already validated OK
             return;
@@ -411,7 +411,7 @@ public:
             return;
         }
 
-        cachedEncodedCert.assign(encodedFirst, encodedLast);
+        m_cachedEncodedCert.assign(encodedFirst, encodedLast);
     }
 
 protected:
@@ -427,7 +427,7 @@ protected:
 private:
 
     utility::string_t m_customCnCheck;
-    std::vector<unsigned char> cachedEncodedCert;
+    std::vector<unsigned char> m_cachedEncodedCert;
 
     // Can only create on the heap using factory function.
     winhttp_request_context(const std::shared_ptr<_http_client_communicator> &client, const http_request &request)
