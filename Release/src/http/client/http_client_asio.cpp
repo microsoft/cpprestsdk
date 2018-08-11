@@ -344,70 +344,46 @@ private:
     bool m_closed;
 };
 
-class connection_pool_deque
+class connection_pool_stack
 {
 public:
     // attempts to acquire a connection from the deque; returns nullptr if no connection is
     // available
     std::shared_ptr<asio_connection> try_acquire() CPPREST_NOEXCEPT
     {
-        if (m_availableConnections.empty())
+        const size_t oldConnectionsSize = m_connections.size();
+        if (m_highWater > oldConnectionsSize)
         {
-            if (m_returnedConnections.empty())
-            {
-                return nullptr;
-            }
-
-            m_availableConnections.swap(m_returnedConnections);
-            std::reverse(m_availableConnections.begin(), m_availableConnections.end());
+            m_highWater = oldConnectionsSize;
         }
 
-        if (m_coldConnections)
+        if (oldConnectionsSize == 0)
         {
-            --m_coldConnections;
+            return nullptr;
         }
 
-        auto result = std::move(m_availableConnections.back());
-        m_availableConnections.pop_back();
+        auto result = std::move(m_connections.back());
+        m_connections.pop_back();
         return result;
     }
 
     // releases `released` back to the connection pool
-    void release(std::shared_ptr<asio_connection>&& released) CPPREST_NOEXCEPT
+    void release(std::shared_ptr<asio_connection>&& released)
     {
-        try
-        {
-            m_returnedConnections.push_back(std::move(released));
-        }
-        catch (...)
-        {
-            // if we didn't have enough memory to pool the connection, give up and drop it on the
-            // floor
-            auto dropped = std::move(released);
-            (void)dropped;
-        }
+        m_connections.push_back(std::move(released));
     }
 
     bool free_stale_connections() CPPREST_NOEXCEPT
     {
-        const auto availableSz = m_availableConnections.size();
-        const auto returnedSz = m_returnedConnections.size();
-        auto remaining = m_coldConnections;
-        const auto removeFromAvailable = std::min(availableSz, remaining);
-        remaining -= removeFromAvailable;
-        const auto removeFromReturned = std::min(returnedSz, remaining);
-        const auto newAvailable = availableSz - removeFromAvailable;
-        const auto newReturned = returnedSz - removeFromReturned;
-        m_availableConnections.resize(newAvailable);
-        m_returnedConnections.resize(newReturned);
-        m_coldConnections = newAvailable + newReturned;
-        return m_coldConnections != 0;
+        m_connections.erase(m_connections.begin(), m_connections.begin() + m_highWater);
+        const size_t connectionsSize = m_connections.size();
+        m_highWater = connectionsSize;
+        return (connectionsSize != 0);
     }
 
 private:
-    size_t m_coldConnections = 0;
-    std::vector<std::shared_ptr<asio_connection>> m_availableConnections; // oldest connection at the back
-    std::vector<std::shared_ptr<asio_connection>> m_returnedConnections;  // oldest connection at the front
+    size_t m_highWater = 0;
+    std::vector<std::shared_ptr<asio_connection>> m_connections;
 };
 
 /// <summary>Implements a connection pool with adaptive connection removal</summary>
@@ -517,7 +493,7 @@ private:
     }
 
     std::mutex m_lock;
-    std::map<std::string, connection_pool_deque> m_connections;
+    std::map<std::string, connection_pool_stack> m_connections;
     bool m_is_timer_running;
     boost::asio::deadline_timer m_pool_epoch_timer;
 };
