@@ -447,6 +447,12 @@ public:
         }
 
         std::lock_guard<std::mutex> lock(m_lock);
+        if (!m_is_timer_running)
+        {
+            start_epoch_interval(shared_from_this());
+            m_is_timer_running = true;
+        }
+
         m_connections[connection->cn_hostname()].release(std::move(connection));
     }
 
