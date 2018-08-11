@@ -174,7 +174,7 @@ public:
         }
         m_ssl_stream = utility::details::make_unique<boost::asio::ssl::stream<boost::asio::ip::tcp::socket&>>(
             m_socket, ssl_context);
-        m_cn_hostname = cn_hostname;
+        m_cn_hostname = std::move(cn_hostname);
     }
 
     void close()
