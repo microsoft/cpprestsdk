@@ -563,7 +563,7 @@ public:
         , m_connection(connection)
 #ifdef CPPREST_PLATFORM_ASIO_CERT_VERIFICATION_AVAILABLE
         , m_openssl_failed(false)
-#endif // CPPREST_USE_PLATFORM_VERIFICATION
+#endif // CPPREST_PLATFORM_ASIO_CERT_VERIFICATION_AVAILABLE
     {
     }
 
@@ -1142,7 +1142,7 @@ private:
         {
             return verify_cert_chain_platform_specific(verifyCtx, m_connection->cn_hostname());
         }
-#endif // CPPREST_USE_PLATFORM_VERIFICATION
+#endif // CPPREST_PLATFORM_ASIO_CERT_VERIFICATION_AVAILABLE
 
         boost::asio::ssl::rfc2818_verification rfc2818(m_connection->cn_hostname());
         return rfc2818(preverified, verifyCtx);
@@ -1856,7 +1856,7 @@ private:
 
 #ifdef CPPREST_PLATFORM_ASIO_CERT_VERIFICATION_AVAILABLE
     bool m_openssl_failed;
-#endif // CPPREST_USE_PLATFORM_VERIFICATION
+#endif // CPPREST_PLATFORM_ASIO_CERT_VERIFICATION_AVAILABLE
 };
 
 std::shared_ptr<_http_client_communicator> create_platform_final_pipeline_stage(uri&& base_uri,
