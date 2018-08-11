@@ -443,6 +443,7 @@ public:
         connection->cancel();
         if (!connection->keep_alive())
         {
+            connection.reset();
             return;
         }
 
