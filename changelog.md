@@ -1,3 +1,8 @@
+cpprestsdk (2.10.5)
+----------------------
+* Issue#842 Fix incorrect `cpprest/version.h`
+-- cpprestsdk team <askcasablanca@microsoft.com>  FRI, 17 Aug 2018 09:47:00 -0800
+
 cpprestsdk (2.10.4)
 ----------------------
 * Added a `.clang-format` to enable consistent formatting.
