@@ -240,6 +240,7 @@ namespace platform
     {
     public:
         _PPLXIMP virtual void schedule( TaskProc_t proc, _In_ void* param);
+    virtual ~linux_scheduler() {}
     };
 
 } // namespace details
