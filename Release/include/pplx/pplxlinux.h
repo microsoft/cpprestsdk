@@ -240,6 +240,11 @@ namespace platform
     {
     public:
         _PPLXIMP virtual void schedule( TaskProc_t proc, _In_ void* param);
+#if defined(__APPLE__)
+    virtual ~apple_scheduler() {}
+#else
+    virtual ~linux_scheduler() {}
+#endif
     };
 
 } // namespace details
