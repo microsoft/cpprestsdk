@@ -1,3 +1,8 @@
+cpprestsdk (2.10.6)
+----------------------
+* PR#844 Fix clang build error
+-- cpprestsdk team <askcasablanca@microsoft.com>  MON, 30 Aug 2018 16:51:00 -0800
+
 cpprestsdk (2.10.5)
 ----------------------
 * Issue#842 Fix incorrect `cpprest/version.h`

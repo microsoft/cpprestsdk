@@ -18,8 +18,10 @@
 
 #if _MSC_VER >= 1900
 #define CPPREST_NOEXCEPT noexcept
+#define CPPREST_CONSTEXPR constexpr
 #else
 #define CPPREST_NOEXCEPT
+#define CPPREST_CONSTEXPR const
 #endif
 
 #define CASABLANCA_UNREFERENCED_PARAMETER(x) (x)
@@ -36,6 +38,7 @@
 #define __assume(x) do { if (!(x)) __builtin_unreachable(); } while (false)
 #define CASABLANCA_UNREFERENCED_PARAMETER(x) (void)x
 #define CPPREST_NOEXCEPT noexcept
+#define CPPREST_CONSTEXPR constexpr
 
 #include <assert.h>
 #define _ASSERTE(x) assert(x)

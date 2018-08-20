@@ -27,7 +27,7 @@ namespace details
 struct winhttp_cert_context
 {
     PCCERT_CONTEXT raw;
-    winhttp_cert_context() noexcept : raw(nullptr) {}
+    winhttp_cert_context() CPPREST_NOEXCEPT : raw(nullptr) {}
     winhttp_cert_context(const winhttp_cert_context&) = delete;
     winhttp_cert_context& operator=(const winhttp_cert_context&) = delete;
     ~winhttp_cert_context()
@@ -44,7 +44,7 @@ struct winhttp_cert_context
 struct winhttp_cert_chain_context
 {
     PCCERT_CHAIN_CONTEXT raw;
-    winhttp_cert_chain_context() noexcept : raw(nullptr) {}
+    winhttp_cert_chain_context() CPPREST_NOEXCEPT : raw(nullptr) {}
     winhttp_cert_chain_context(const winhttp_cert_chain_context&) = delete;
     winhttp_cert_chain_context& operator=(const winhttp_cert_chain_context&) = delete;
     ~winhttp_cert_chain_context()

@@ -33,7 +33,7 @@ struct security_failure_message
     const char * text;
 };
 
-constexpr security_failure_message g_security_failure_messages[] = {
+CPPREST_CONSTEXPR security_failure_message g_security_failure_messages[] = {
     { WINHTTP_CALLBACK_STATUS_FLAG_CERT_REV_FAILED,
         "WINHTTP_CALLBACK_STATUS_FLAG_CERT_REV_FAILED failed to check revocation status."},
     { WINHTTP_CALLBACK_STATUS_FLAG_INVALID_CERT,

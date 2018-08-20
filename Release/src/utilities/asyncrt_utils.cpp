@@ -51,7 +51,7 @@ namespace
         }
     };
 
-    constexpr to_lower_ch_impl to_lower_ch{};
+    CPPREST_CONSTEXPR to_lower_ch_impl to_lower_ch{};
 
     struct eq_lower_ch_impl
     {
@@ -62,7 +62,7 @@ namespace
         }
     };
 
-    constexpr eq_lower_ch_impl eq_lower_ch{};
+    CPPREST_CONSTEXPR eq_lower_ch_impl eq_lower_ch{};
 
     struct lt_lower_ch_impl
     {
@@ -73,8 +73,8 @@ namespace
         }
     };
 
-    constexpr lt_lower_ch_impl lt_lower_ch{};
-}
+    CPPREST_CONSTEXPR lt_lower_ch_impl lt_lower_ch{};
+    }
 
 namespace utility
 {
