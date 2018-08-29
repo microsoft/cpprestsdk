@@ -63,21 +63,6 @@ details::http_listener_impl::http_listener_impl(http::uri address, http_listener
     check_listener_uri(m_uri);
 }
 
-http_listener::~http_listener()
-{
-    if(m_impl)
-    {
-        // As a safe guard close the listener if not already done.
-        // Users are required to call close, but this is just a safeguard.
-        try
-        {
-            close().wait();
-        } catch(...)
-        {
-        }
-    }
-}
-
 pplx::task<void> details::http_listener_impl::open()
 {
     // Do nothing if the open operation was already attempted
