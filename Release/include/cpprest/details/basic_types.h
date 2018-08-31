@@ -52,7 +52,11 @@ namespace utility
 typedef uint64_t size64_t;
 
 #ifndef _WIN32
-typedef uint32_t HRESULT; // Needed for PPLX
+//typedef uint32_t HRESULT; // Needed for PPLX
+#ifndef _HRESULT_DEFINED
+#define _HRESULT_DEFINED
+typedef long HRESULT; // In service fabric we define HRESULT as long
+#endif
 #endif
 
 #ifdef _UTF16_STRINGS

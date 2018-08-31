@@ -34,12 +34,12 @@ utility::string_t uri_components::join()
     // canonicalize components first
 
     // convert scheme to lowercase
-    std::transform(m_scheme.begin(), m_scheme.end(), m_scheme.begin(), [this](utility::char_t c) {
+    std::transform(m_scheme.begin(), m_scheme.end(), m_scheme.begin(), [](utility::char_t c) {
         return (utility::char_t)tolower(c);
     });
 
     // convert host to lowercase
-    std::transform(m_host.begin(), m_host.end(), m_host.begin(), [this](utility::char_t c) {
+    std::transform(m_host.begin(), m_host.end(), m_host.begin(), [](utility::char_t c) {
         return (utility::char_t)tolower(c);
     });
 
