@@ -21,6 +21,7 @@ set(SOURCES
   http/common/internal_http_helpers.h
   http/common/http_helpers.cpp
   http/common/http_msg.cpp
+  http/common/http_compression.cpp
   http/listener/http_listener.cpp
   http/listener/http_listener_msg.cpp
   http/listener/http_server_api.cpp
@@ -75,6 +76,12 @@ if(CPPREST_EXCLUDE_COMPRESSION)
 else()
   cpprest_find_zlib()
   target_link_libraries(cpprest PRIVATE cpprestsdk_zlib_internal)
+  if(CPPREST_EXCLUDE_BROTLI)
+    target_compile_definitions(cpprest PRIVATE -DCPPREST_EXCLUDE_BROTLI=1)
+  else()
+    cpprest_find_brotli()
+    target_link_libraries(cpprest PRIVATE cpprestsdk_brotli_internal)
+  endif()
 endif()
 
 # PPLX component
@@ -232,6 +239,7 @@ endif()
 if(CPPREST_INSTALL)
   set(CPPREST_USES_BOOST OFF)
   set(CPPREST_USES_ZLIB OFF)
+  set(CPPREST_USES_BROTLI OFF)
   set(CPPREST_USES_OPENSSL OFF)
 
   set(CPPREST_TARGETS cpprest)
@@ -242,6 +250,10 @@ if(CPPREST_INSTALL)
   if(TARGET cpprestsdk_zlib_internal)
     list(APPEND CPPREST_TARGETS cpprestsdk_zlib_internal)
     set(CPPREST_USES_ZLIB ON)
+  endif()
+  if(TARGET cpprestsdk_brotli_internal)
+    list(APPEND CPPREST_TARGETS cpprestsdk_brotli_internal)
+    set(CPPREST_USES_BROTLI ON)
   endif()
   if(TARGET cpprestsdk_openssl_internal)
     list(APPEND CPPREST_TARGETS cpprestsdk_openssl_internal)

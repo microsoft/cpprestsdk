@@ -503,7 +503,7 @@ _ASYNCRTIMP const std::error_category & __cdecl linux_category();
 
 /// <summary>
 /// Gets the one global instance of the current platform's error category.
-/// <summary>
+/// </summary>
 _ASYNCRTIMP const std::error_category & __cdecl platform_category();
 
 /// <summary>

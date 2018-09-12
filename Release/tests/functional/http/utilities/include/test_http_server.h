@@ -50,6 +50,15 @@ public:
         const unsigned short status_code,
         const utility::string_t &reason_phrase,
         const std::map<utility::string_t, utility::string_t> &headers,
+        const std::vector<uint8_t> &data)
+    {
+        return reply_impl(status_code, reason_phrase, headers, (void *)&data[0], data.size());
+    }
+
+    unsigned long reply(
+        const unsigned short status_code,
+        const utility::string_t &reason_phrase,
+        const std::map<utility::string_t, utility::string_t> &headers,
         const utf16string &data)
     {
         return reply_impl(status_code, reason_phrase, headers, (void *)&data[0], data.size() * sizeof(utf16char));
@@ -60,20 +69,12 @@ public:
     bool match_header(const utility::string_t & header_name, T & header_value)
     {
         auto iter = m_headers.find(header_name);
-        if (iter != m_headers.end())
-        {
-            utility::istringstream_t iss(iter->second);
-            iss >> header_value;
-            if (iss.fail() || !iss.eof())
-            {
-                return false;
-            }
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+        if (iter == m_headers.end())
+         {
+             return false;
+         }
+
+        return bind_impl(iter->second, header_value) || iter->second.empty();
     }
 
     // Request data.
@@ -93,6 +94,33 @@ private:
         const std::map<utility::string_t, utility::string_t> &headers,
         void * data,
         size_t data_length);
+
+private:
+
+    template<typename T>
+    bool bind_impl(const utility::string_t &text, T &ref) const
+    {
+        utility::istringstream_t iss(text);
+        iss.imbue(std::locale::classic());
+        iss >> ref;
+        if (iss.fail() || !iss.eof())
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    bool bind_impl(const utility::string_t &text, utf16string &ref) const
+    {
+        ref = utility::conversions::to_utf16string(text);
+        return true;
+    }
+    bool bind_impl(const utility::string_t &text, std::string &ref) const
+    {
+        ref = utility::conversions::to_utf8string(text);
+        return true;
+    }
 };
 
 /// <summary>

@@ -850,12 +850,12 @@ public:
                 extra_headers.append(ctx->generate_basic_auth_header());
             }
 
-            extra_headers += utility::conversions::to_utf8string(ctx->get_accept_encoding_header());
+            extra_headers += utility::conversions::to_utf8string(ctx->get_compression_header());
 
             // Check user specified transfer-encoding.
             std::string transferencoding;
             if (ctx->m_request.headers().match(header_names::transfer_encoding, transferencoding) &&
-                transferencoding == "chunked")
+                boost::icontains(transferencoding, U("chunked")))
             {
                 ctx->m_needChunked = true;
             }
@@ -1394,7 +1394,7 @@ private:
 
                 if (boost::iequals(name, header_names::transfer_encoding))
                 {
-                    needChunked = boost::iequals(value, U("chunked"));
+                    needChunked = boost::icontains(value, U("chunked"));
                 }
 
                 if (boost::iequals(name, header_names::connection))
@@ -1415,7 +1415,7 @@ private:
                                                                // TCP stream - set it size_t max.
         m_response.headers().match(header_names::content_length, m_content_length);
 
-        if (!this->handle_content_encoding_compression())
+        if (!this->handle_compression())
         {
             // false indicates report_exception was called
             return;
@@ -1518,6 +1518,52 @@ private:
         }
     }
 
+    bool decompress(const uint8_t* input, size_t input_size, std::vector<uint8_t>& output)
+    {
+        size_t processed;
+        size_t got;
+        size_t inbytes;
+        size_t outbytes;
+        bool done;
+
+        // Need to guard against attempting to decompress when we're already finished or encountered an error!
+        if (input == nullptr || input_size == 0)
+        {
+            return false;
+        }
+
+        inbytes = 0;
+        outbytes = 0;
+        done = false;
+        try
+        {
+            output.resize(input_size * 3);
+            do
+            {
+                if (inbytes)
+                {
+                    output.resize(output.size() + (input_size > 1024 ? input_size : 1024));
+                }
+                got = m_decompressor->decompress(input + inbytes,
+                                                 input_size - inbytes,
+                                                 output.data() + outbytes,
+                                                 output.size() - outbytes,
+                                                 web::http::compression::operation_hint::has_more,
+                                                 processed,
+                                                 &done);
+                inbytes += processed;
+                outbytes += got;
+            } while (got && !done);
+            output.resize(outbytes);
+        }
+        catch (...)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
     void handle_chunk(const boost::system::error_code& ec, int to_read)
     {
         if (!ec)
@@ -1550,10 +1596,11 @@ private:
                 const auto this_request = shared_from_this();
                 if (m_decompressor)
                 {
-                    auto decompressed = m_decompressor->decompress(
-                        boost::asio::buffer_cast<const uint8_t*>(m_body_buf.data()), to_read);
+                    std::vector<uint8_t> decompressed;
 
-                    if (m_decompressor->has_error())
+                    bool boo =
+                        decompress(boost::asio::buffer_cast<const uint8_t*>(m_body_buf.data()), to_read, decompressed);
+                    if (!boo)
                     {
                         report_exception(std::runtime_error("Failed to decompress the response body"));
                         return;
@@ -1574,8 +1621,7 @@ private:
                     {
                         // Move the decompressed buffer into a shared_ptr to keep it alive until putn_nocopy completes.
                         // When VS 2013 support is dropped, this should be changed to a unique_ptr plus a move capture.
-                        using web::http::details::compression::data_buffer;
-                        auto shared_decompressed = std::make_shared<data_buffer>(std::move(decompressed));
+                        auto shared_decompressed = std::make_shared<std::vector<uint8_t>>(std::move(decompressed));
 
                         writeBuffer.putn_nocopy(shared_decompressed->data(), shared_decompressed->size())
                             .then([this_request, to_read, shared_decompressed AND_CAPTURE_MEMBER_FUNCTION_POINTERS](
@@ -1670,10 +1716,11 @@ private:
 
             if (m_decompressor)
             {
-                auto decompressed =
-                    m_decompressor->decompress(boost::asio::buffer_cast<const uint8_t*>(m_body_buf.data()), read_size);
+                std::vector<uint8_t> decompressed;
 
-                if (m_decompressor->has_error())
+                bool boo =
+                    decompress(boost::asio::buffer_cast<const uint8_t*>(m_body_buf.data()), read_size, decompressed);
+                if (!boo)
                 {
                     this_request->report_exception(std::runtime_error("Failed to decompress the response body"));
                     return;
@@ -1704,8 +1751,7 @@ private:
                 {
                     // Move the decompressed buffer into a shared_ptr to keep it alive until putn_nocopy completes.
                     // When VS 2013 support is dropped, this should be changed to a unique_ptr plus a move capture.
-                    using web::http::details::compression::data_buffer;
-                    auto shared_decompressed = std::make_shared<data_buffer>(std::move(decompressed));
+                    auto shared_decompressed = std::make_shared<std::vector<uint8_t>>(std::move(decompressed));
 
                     writeBuffer.putn_nocopy(shared_decompressed->data(), shared_decompressed->size())
                         .then([this_request, read_size, shared_decompressed AND_CAPTURE_MEMBER_FUNCTION_POINTERS](
@@ -1715,7 +1761,7 @@ private:
                             {
                                 writtenSize = op.get();
                                 this_request->m_downloaded += static_cast<uint64_t>(read_size);
-                                this_request->m_body_buf.consume(writtenSize);
+                                this_request->m_body_buf.consume(read_size);
                                 this_request->async_read_until_buffersize(
                                     static_cast<size_t>(std::min(
                                         static_cast<uint64_t>(this_request->m_http_client->client_config().chunksize()),

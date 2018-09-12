@@ -3,6 +3,10 @@ if(@CPPREST_USES_ZLIB@)
   find_dependency(ZLIB)
 endif()
 
+if(@CPPREST_USES_BROTLI@)
+  find_dependency(UNOFFICIAL-BROTLI)
+endif()
+
 if(@CPPREST_USES_OPENSSL@)
   find_dependency(OpenSSL)
 endif()

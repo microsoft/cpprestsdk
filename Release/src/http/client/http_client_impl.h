@@ -72,10 +72,10 @@ public:
 
     /// <summary>Set m_decompressor based on the response headers, or call report_exception</summary>
     /// <returns>false on failure</returns>
-    bool handle_content_encoding_compression();
+    bool handle_compression();
 
     /// <summary>Append an Accept-Encoding header if requested by the http_client settings</summary>
-    utility::string_t get_accept_encoding_header() const;
+    utility::string_t get_compression_header() const;
 
     concurrency::streams::streambuf<uint8_t> _get_writebuffer();
 
@@ -95,7 +95,7 @@ public:
     // Registration for cancellation notification if enabled.
     pplx::cancellation_token_registration m_cancellationRegistration;
 
-    std::unique_ptr<web::http::details::compression::stream_decompressor> m_decompressor;
+    std::unique_ptr<web::http::compression::decompress_provider> m_decompressor;
 
 protected:
 

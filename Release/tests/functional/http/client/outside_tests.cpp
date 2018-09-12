@@ -58,7 +58,7 @@ TEST_FIXTURE(uri_address, outside_cnn_dot_com)
 
 TEST_FIXTURE(uri_address, outside_wikipedia_compressed_http_response)
 {
-    if (web::http::details::compression::stream_decompressor::is_supported() == false)
+    if (web::http::compression::builtin::supported() == false)
     {
         // On platforms which do not support compressed http, nothing to check.
         return;
