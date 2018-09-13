@@ -117,27 +117,27 @@ if(IOS)
   # The cxx_flags must be reset here, because the ios-cmake toolchain file unfortunately sets "-headerpad_max_install_names" which is not a valid clang flag.
   set(CMAKE_CXX_FLAGS "-fvisibility=hidden -fvisibility-inlines-hidden")
 elseif(ANDROID)
-  if(ARM)
-    set(LIBCXX_STL "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.8/libs/armeabi-v7a/thumb/libgnustl_static.a")
-  else()
-    set(LIBCXX_STL "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.8/libs/x86/libgnustl_static.a")
-  endif()
-  # These are used in the shared library case
-  set(ANDROID_STL_FLAGS
-    ${LIBCXX_STL}
-    atomic
-    dl
-    gcc
-    c
-    m
-    -nodefaultlibs
-    )
-
-  include_directories(SYSTEM
-    "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.8/include"
-    "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.8/libs/armeabi-v7a/include"
-    "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.8/include/backward"
-    )
+  #if(ARM)
+  #  set(LIBCXX_STL "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.8/libs/armeabi-v7a/thumb/libgnustl_static.a")
+  #else()
+  #  set(LIBCXX_STL "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.8/libs/x86/libgnustl_static.a")
+  #endif()
+  ## These are used in the shared library case
+  #set(ANDROID_STL_FLAGS
+  #  ${LIBCXX_STL}
+  #  atomic
+  #  dl
+  #  gcc
+  #  c
+  #  m
+  #  -nodefaultlibs
+  #  )
+#
+  #include_directories(SYSTEM
+  #  "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.8/include"
+  #  "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.8/libs/armeabi-v7a/include"
+  #  "${ANDROID_NDK}/sources/cxx-stl/gnu-libstdc++/4.8/include/backward"
+  #  )
 elseif(UNIX) # This includes OSX
 elseif(WIN32)
   add_definitions(-DUNICODE -D_UNICODE -DWIN32 -D_SCL_SECURE_NO_WARNINGS)

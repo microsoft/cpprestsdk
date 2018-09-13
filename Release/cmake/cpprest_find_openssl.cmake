@@ -14,21 +14,21 @@ function(cpprest_find_openssl)
       )
     set(_SSL_LEAK_SUPPRESS_AVAILABLE ON CACHE INTERNAL "")
   elseif(ANDROID)
-    if(ARM)
-      set(OPENSSL_INCLUDE_DIR "${CMAKE_BINARY_DIR}/../openssl/armeabi-v7a/include" CACHE INTERNAL "")
-      set(OPENSSL_LIBRARIES
-        "${CMAKE_BINARY_DIR}/../openssl/armeabi-v7a/lib/libssl.a"
-        "${CMAKE_BINARY_DIR}/../openssl/armeabi-v7a/lib/libcrypto.a"
-        CACHE INTERNAL ""
-        )
-    else()
-      set(OPENSSL_INCLUDE_DIR "${CMAKE_BINARY_DIR}/../openssl/x86/include" CACHE INTERNAL "")
-      set(OPENSSL_LIBRARIES
-        "${CMAKE_BINARY_DIR}/../openssl/x86/lib/libssl.a"
-        "${CMAKE_BINARY_DIR}/../openssl/x86/lib/libcrypto.a"
-        CACHE INTERNAL ""
-        )
-    endif()
+    #if(ARM)
+    #  set(OPENSSL_INCLUDE_DIR "${CMAKE_BINARY_DIR}/../openssl/armeabi-v7a/include" CACHE INTERNAL "")
+    #  set(OPENSSL_LIBRARIES
+    #    "${CMAKE_BINARY_DIR}/../openssl/armeabi-v7a/lib/libssl.a"
+    #    "${CMAKE_BINARY_DIR}/../openssl/armeabi-v7a/lib/libcrypto.a"
+    #    CACHE INTERNAL ""
+    #    )
+    #else()
+    #  set(OPENSSL_INCLUDE_DIR "${CMAKE_BINARY_DIR}/../openssl/x86/include" CACHE INTERNAL "")
+    #  set(OPENSSL_LIBRARIES
+    #    "${CMAKE_BINARY_DIR}/../openssl/x86/lib/libssl.a"
+    #    "${CMAKE_BINARY_DIR}/../openssl/x86/lib/libcrypto.a"
+    #    CACHE INTERNAL ""
+    #    )
+    #endif()
     set(_SSL_LEAK_SUPPRESS_AVAILABLE ON CACHE INTERNAL "")
   else()
     if(APPLE)

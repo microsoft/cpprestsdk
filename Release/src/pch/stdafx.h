@@ -59,6 +59,16 @@
 #include "boost/config/stdlib/libstdcpp3.hpp"
 #undef BOOST_NO_CXX11_SMART_PTR
 #undef BOOST_NO_CXX11_NULLPTR
+namespace std {
+        template<class T>
+        inline std::string to_string(const T& t)
+        {
+            std::ostringstream os;
+            os.imbue(std::locale::classic());
+            os << t;
+            return os.str();
+        }
+}
 #endif
 #include "boost/thread/mutex.hpp"
 #include "boost/thread/condition_variable.hpp"
