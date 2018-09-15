@@ -1,0 +1,4 @@
+.git*       text export-ignore
+
+*           text=auto
+*           whitespace=!indent,tab-in-indent,trail,space

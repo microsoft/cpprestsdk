@@ -1,0 +1,130 @@
+# Copyright 2003, 2005 Douglas Gregor
+# Copyright 2004 John Maddock
+# Copyright 2002, 2003, 2004, 2007 Vladimir Prus
+# Distributed under the Boost Software License, Version 1.0.
+# (See accompanying file LICENSE_1_0.txt or http://www.boost.org/LICENSE_1_0.txt)
+
+#   This file is used to configure your Boost.Build installation. You can modify
+# this file in place, or you can place it in a permanent location so that it
+# does not get overwritten should you get a new version of Boost.Build. See:
+#
+#   http://www.boost.org/boost-build2/doc/html/bbv2/overview/configuration.html
+#
+# for documentation about possible permanent locations.
+
+#   This file specifies which toolsets (C++ compilers), libraries, and other
+# tools are available. Often, you should be able to just uncomment existing
+# example lines and adjust them to taste. The complete list of supported tools,
+# and configuration instructions can be found at:
+#
+#   http://boost.org/boost-build2/doc/html/bbv2/reference/tools.html
+#
+
+#   This file uses Jam language syntax to describe available tools. Mostly,
+# there are 'using' lines, that contain the name of the used tools, and
+# parameters to pass to those tools -- where paremeters are separated by
+# semicolons. Important syntax notes:
+#
+#   - Both ':' and ';' must be separated from other tokens by whitespace
+#   - The '\' symbol is a quote character, so when specifying Windows paths you
+#     should use '/' or '\\' instead.
+#
+# More details about the syntax can be found at:
+#
+#   http://boost.org/boost-build2/doc/html/bbv2/advanced.html#bbv2.advanced.jam_language
+#
+# ------------------
+# Android configurations.
+# ------------------
+
+import os ;
+local AndroidNDKRoot = [ os.environ AndroidNDKRoot ] ;
+local AndroidBinariesPath = [ os.environ AndroidBinariesPath ] ;
+
+# --------------------------------------------------------------------
+# Is same for 8b, 8c and 8d
+using gcc : androidR8b
+:
+$(AndroidBinariesPath)/arm-linux-androideabi-g++
+:
+<archiver>$(AndroidBinariesPath)/arm-linux-androideabi-ar
+<compileflags>-fexceptions
+<compileflags>-frtti
+<compileflags>-fpic
+<compileflags>-ffunction-sections
+<compileflags>-funwind-tables
+<compileflags>-D__ARM_ARCH_5__
+<compileflags>-D__ARM_ARCH_5T__
+<compileflags>-D__ARM_ARCH_5E__
+<compileflags>-D__ARM_ARCH_5TE__
+<compileflags>-Wno-psabi
+<compileflags>-march=armv5te
+<compileflags>-mtune=xscale
+<compileflags>-msoft-float
+<compileflags>-mthumb
+<compileflags>-Os
+<compileflags>-fomit-frame-pointer
+<compileflags>-fno-strict-aliasing
+<compileflags>-finline-limit=64
+<compileflags>-I$(AndroidNDKRoot)/platforms/android-9/arch-arm/usr/include
+<compileflags>-Wa,--noexecstack
+<compileflags>-DANDROID
+<compileflags>-D__ANDROID__
+<compileflags>-DNDEBUG
+<compileflags>-O2
+<compileflags>-g
+<compileflags>-I$(AndroidNDKRoot)/sources/cxx-stl/gnu-libstdc++/4.6/include
+<compileflags>-I$(AndroidNDKRoot)/sources/cxx-stl/gnu-libstdc++/4.6/libs/armeabi/include
+# @Moss - Above are the 'oficial' android flags
+<architecture>arm
+<compileflags>-fvisibility=hidden
+<compileflags>-fvisibility-inlines-hidden
+<compileflags>-fdata-sections
+<cxxflags>-D__arm__
+<cxxflags>-D_REENTRANT
+<cxxflags>-D_GLIBCXX__PTHREADS
+;
+
+# --------------------------------------------------------------------
+using gcc : androidR8e
+:
+$(AndroidBinariesPath)/arm-linux-androideabi-g++
+:
+<archiver>$(AndroidBinariesPath)/arm-linux-androideabi-ar
+<compileflags>-fexceptions
+<compileflags>-frtti
+<compileflags>-fpic
+<compileflags>-ffunction-sections
+<compileflags>-funwind-tables
+<compileflags>-D__ARM_ARCH_5__
+<compileflags>-D__ARM_ARCH_5T__
+<compileflags>-D__ARM_ARCH_5E__
+<compileflags>-D__ARM_ARCH_5TE__
+<compileflags>-Wno-psabi
+<compileflags>-march=armv5te
+<compileflags>-mtune=xscale
+<compileflags>-msoft-float
+<compileflags>-mthumb
+<compileflags>-Os
+<compileflags>-fomit-frame-pointer
+<compileflags>-fno-strict-aliasing
+<compileflags>-finline-limit=64
+<compileflags>-I$(AndroidNDKRoot)/platforms/android-9/arch-arm/usr/include
+<compileflags>-Wa,--noexecstack
+<compileflags>-DANDROID
+<compileflags>-D__ANDROID__
+<compileflags>-DNDEBUG
+<compileflags>-O2
+<compileflags>-g
+<compileflags>-I$(AndroidNDKRoot)/sources/cxx-stl/gnu-libstdc++/4.6/include
+<compileflags>-I$(AndroidNDKRoot)/sources/cxx-stl/gnu-libstdc++/4.6/libs/armeabi/include
+# @Moss - Above are the 'oficial' android flags
+<architecture>arm
+<compileflags>-fvisibility=hidden
+<compileflags>-fvisibility-inlines-hidden
+<compileflags>-fdata-sections
+<cxxflags>-D__arm__
+<cxxflags>-D_REENTRANT
+<cxxflags>-D_GLIBCXX__PTHREADS
+;
+

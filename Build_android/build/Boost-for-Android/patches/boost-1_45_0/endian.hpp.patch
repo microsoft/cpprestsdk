@@ -1,0 +1,12 @@
+diff -u -r boost_1_45_0-old/boost/detail/endian.hpp boost_1_45_0/boost/detail/endian.hpp
+--- boost_1_45_0-old/boost/detail/endian.hpp	2010-11-17 11:51:56.000000000 +0200
++++ boost_1_45_0/boost/detail/endian.hpp	2011-07-28 13:51:36.988916179 +0300
+@@ -31,7 +31,7 @@
+ // GNU libc offers the helpful header <endian.h> which defines
+ // __BYTE_ORDER
+ 
+-#if defined (__GLIBC__)
++#if defined (__GLIBC__) || defined(ANDROID)
+ # include <endian.h>
+ # if (__BYTE_ORDER == __LITTLE_ENDIAN)
+ #  define BOOST_LITTLE_ENDIAN

@@ -1,0 +1,11 @@
+--- boost_1_45_0-old/boost/interprocess/detail/workaround.hpp	2010-10-12 21:18:42.000000000 +0300
++++ boost_1_45_0/boost/interprocess/detail/workaround.hpp	2011-06-06 15:29:57.797421112 +0300
+@@ -64,7 +64,7 @@
+    #endif
+ 
+    //Check for XSI shared memory objects. They are available in nearly all UNIX platforms
+-   #if !defined(__QNXNTO__)
++   #if !defined(__QNXNTO__) && !defined(ANDROID)
+    # define BOOST_INTERPROCESS_XSI_SHARED_MEMORY_OBJECTS
+    #endif
+ 

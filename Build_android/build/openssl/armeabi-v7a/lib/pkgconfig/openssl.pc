@@ -1,0 +1,9 @@
+prefix=/home/dbat/boostwitholdndk/casablanca/Build_android/build/openssl/openssl-1.0.2k-armeabi-v7a/../armeabi-v7a
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: OpenSSL
+Description: Secure Sockets Layer and cryptography libraries and tools
+Version: 1.0.2k
+Requires: libssl libcrypto

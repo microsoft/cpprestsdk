@@ -1,0 +1,31 @@
+--- boost_1_45_0-old/libs/filesystem/v2/src/v2_operations.cpp	2010-08-10 23:00:09.000000000 +0300
++++ boost_1_45_0/libs/filesystem/v2/src/v2_operations.cpp	2011-06-06 15:29:57.777421112 +0300
+@@ -58,13 +58,15 @@
+ 
+ # else // BOOST_POSIX_API
+ #   include <sys/types.h>
+-#   if !defined(__APPLE__) && !defined(__OpenBSD__)
++#   if !defined(__APPLE__) && !defined(__OpenBSD__) && !defined(__ANDROID__) && !defined(ANDROID)
+ #     include <sys/statvfs.h>
+ #     define BOOST_STATVFS statvfs
+ #     define BOOST_STATVFS_F_FRSIZE vfs.f_frsize
+ #   else
+ #ifdef __OpenBSD__
+ #     include <sys/param.h>
++#elif defined(__ANDROID__) || defined(ANDROID) // @Moss - Android messes up a bit with some headers, this one is the correct one :D
++#     include <sys/vfs.h>
+ #endif
+ #     include <sys/mount.h>
+ #     define BOOST_STATVFS statfs
+@@ -1262,7 +1264,11 @@
+         if ( max == 0 )
+         {
+           errno = 0;
++#     ifdef __ANDROID__ || ANDROID
++          long tmp = 4096;
++#     else
+           long tmp = ::pathconf( "/", _PC_NAME_MAX );
++#     endif
+           if ( tmp < 0 )
+           {
+             if ( errno == 0 ) // indeterminate

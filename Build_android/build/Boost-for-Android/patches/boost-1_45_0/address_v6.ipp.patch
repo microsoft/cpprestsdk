@@ -1,0 +1,26 @@
+--- boost_1_45_0-old/boost/asio/ip/impl/address_v6.ipp	2010-06-09 12:40:46.000000000 +0300
++++ boost_1_45_0/boost/asio/ip/impl/address_v6.ipp	2011-06-06 15:29:57.777421112 +0300
+@@ -11,6 +11,23 @@
+ #ifndef BOOST_ASIO_IP_IMPL_ADDRESS_V6_IPP
+ #define BOOST_ASIO_IP_IMPL_ADDRESS_V6_IPP
+ 
++// @Moss - Define IPv6 macros
++#if !defined(IN6_IS_ADDR_MULTICAST) 
++#define IN6_IS_ADDR_MULTICAST(a) (((__const uint8_t *) (a))[0] == 0xff)
++#endif
++
++#if !defined(IN6_IS_ADDR_MC_NODELOCAL)
++#define IN6_IS_ADDR_MC_NODELOCAL(a) \
++        (IN6_IS_ADDR_MULTICAST(a) \
++         && ((((__const uint8_t *) (a))[1] & 0xf) == 0x1))
++#endif
++
++#if !defined(IN6_IS_ADDR_MC_GLOBAL)
++#define IN6_IS_ADDR_MC_GLOBAL(a) \
++        (IN6_IS_ADDR_MULTICAST(a) \
++         && ((((__const uint8_t *) (a))[1] & 0xf) == 0xe))
++#endif
++
+ #if defined(_MSC_VER) && (_MSC_VER >= 1200)
+ # pragma once
+ #endif // defined(_MSC_VER) && (_MSC_VER >= 1200)

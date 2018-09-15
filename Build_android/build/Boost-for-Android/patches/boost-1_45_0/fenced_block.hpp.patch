@@ -1,0 +1,38 @@
+--- boost_1_45_0-old/boost/asio/detail/fenced_block.hpp	2010-07-12 02:42:34.000000000 +0300
++++ boost_1_45_0/boost/asio/detail/fenced_block.hpp	2011-06-06 15:29:57.777421112 +0300
+@@ -25,14 +25,15 @@
+ # include <boost/asio/detail/macos_fenced_block.hpp>
+ #elif defined(__sun)
+ # include <boost/asio/detail/solaris_fenced_block.hpp>
+-#elif defined(__GNUC__) && defined(__arm__)
++#elif defined(__GNUC__) && defined(__arm__) && !defined(__thumb__)
+ # include <boost/asio/detail/gcc_arm_fenced_block.hpp>
+ #elif defined(__GNUC__) && (defined(__hppa) || defined(__hppa__))
+ # include <boost/asio/detail/gcc_hppa_fenced_block.hpp>
+ #elif defined(__GNUC__) \
+   && ((__GNUC__ == 4 && __GNUC_MINOR__ >= 1) || (__GNUC__ > 4)) \
+   && !defined(__INTEL_COMPILER) && !defined(__ICL) \
+-  && !defined(__ICC) && !defined(__ECC) && !defined(__PATHSCALE__)
++  && !defined(__ICC) && !defined(__ECC) && !defined(__PATHSCALE__) \
++  && !defined(ANDROID) && !defined(__ANDROID__)
+ # include <boost/asio/detail/gcc_sync_fenced_block.hpp>
+ #elif defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
+ # include <boost/asio/detail/gcc_x86_fenced_block.hpp>
+@@ -54,14 +55,15 @@
+ typedef macos_fenced_block fenced_block;
+ #elif defined(__sun)
+ typedef solaris_fenced_block fenced_block;
+-#elif defined(__GNUC__) && defined(__arm__)
++#elif defined(__GNUC__) && defined(__arm__) && !defined(__thumb__)
+ typedef gcc_arm_fenced_block fenced_block;
+ #elif defined(__GNUC__) && (defined(__hppa) || defined(__hppa__))
+ typedef gcc_hppa_fenced_block fenced_block;
+ #elif defined(__GNUC__) \
+   && ((__GNUC__ == 4 && __GNUC_MINOR__ >= 1) || (__GNUC__ > 4)) \
+   && !defined(__INTEL_COMPILER) && !defined(__ICL) \
+-  && !defined(__ICC) && !defined(__ECC) && !defined(__PATHSCALE__)
++  && !defined(__ICC) && !defined(__ECC) && !defined(__PATHSCALE__) \
++  && !defined(ANDROID) && !defined(__ANDROID__)
+ typedef gcc_sync_fenced_block fenced_block;
+ #elif defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
+ typedef gcc_x86_fenced_block fenced_block;

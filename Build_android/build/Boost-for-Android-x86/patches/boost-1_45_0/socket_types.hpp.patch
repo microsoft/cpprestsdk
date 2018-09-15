@@ -1,0 +1,15 @@
+--- boost_1_45_0-old/boost/asio/detail/socket_types.hpp	2010-10-17 15:24:50.000000000 +0300
++++ boost_1_45_0/boost/asio/detail/socket_types.hpp	2011-06-06 15:29:57.777421112 +0300
+@@ -122,7 +122,12 @@
+ typedef int socket_type;
+ const int invalid_socket = -1;
+ const int socket_error_retval = -1;
++// @Moss - Some platforms do not define it (Android)
++#if defined(INET_ADDRSTRLEN)
+ const int max_addr_v4_str_len = INET_ADDRSTRLEN;
++#else // defined(INET_ADDRSTRLEN)
++const int max_addr_v4_str_len = 16;
++#endif // defined(INET_ADDRSTRLEN)
+ #if defined(INET6_ADDRSTRLEN)
+ const int max_addr_v6_str_len = INET6_ADDRSTRLEN + 1 + IF_NAMESIZE;
+ #else // defined(INET6_ADDRSTRLEN)

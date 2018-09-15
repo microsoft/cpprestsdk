@@ -1,0 +1,18 @@
+--- boost_1_45_0-old/boost/config/user.hpp	2004-01-10 14:10:00.000000000 +0200
++++ boost_1_45_0/boost/config/user.hpp	2011-06-06 15:29:57.797421112 +0300
+@@ -13,6 +13,15 @@
+ //  configuration policy:
+ //
+ 
++// Android defines
++#define __arm__ 1
++#define _REENTRANT 1
++#define _GLIBCXX__PTHREADS 1
++// There is problem with std::atomic on android (and some other platforms).
++// See this link for more info:
++// https://code.google.com/p/android/issues/detail?id=42735#makechanges
++#define BOOST_ASIO_DISABLE_STD_ATOMIC 1
++
+ // define this to locate a compiler config file:
+ // #define BOOST_COMPILER_CONFIG <myheader>
+ 

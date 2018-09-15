@@ -1,0 +1,2069 @@
+diff -ruN boost_1_48_0-boot/boost/asio/detail/fenced_block.hpp boost_1_48_0-patched/boost/asio/detail/fenced_block.hpp
+--- boost_1_48_0-boot/boost/asio/detail/fenced_block.hpp	2011-10-09 23:59:57.000000000 +0200
++++ boost_1_48_0-patched/boost/asio/detail/fenced_block.hpp	2012-06-16 23:59:57.000000000 +0200
+@@ -25,7 +25,7 @@
+ # include <boost/asio/detail/macos_fenced_block.hpp>
+ #elif defined(__sun)
+ # include <boost/asio/detail/solaris_fenced_block.hpp>
+-#elif defined(__GNUC__) && defined(__arm__)
++#elif defined(__GNUC__) && defined(__arm__) && !defined(__thumb__)
+ # include <boost/asio/detail/gcc_arm_fenced_block.hpp>
+ #elif defined(__GNUC__) && (defined(__hppa) || defined(__hppa__))
+ # include <boost/asio/detail/gcc_hppa_fenced_block.hpp>
+@@ -34,7 +34,8 @@
+ #elif defined(__GNUC__) \
+   && ((__GNUC__ == 4 && __GNUC_MINOR__ >= 1) || (__GNUC__ > 4)) \
+   && !defined(__INTEL_COMPILER) && !defined(__ICL) \
+-  && !defined(__ICC) && !defined(__ECC) && !defined(__PATHSCALE__)
++  && !defined(__ICC) && !defined(__ECC) && !defined(__PATHSCALE__) \
++  && !defined(ANDROID) && !defined(__ANDROID__)
+ # include <boost/asio/detail/gcc_sync_fenced_block.hpp>
+ #elif defined(BOOST_WINDOWS) && !defined(UNDER_CE)
+ # include <boost/asio/detail/win_fenced_block.hpp>
+@@ -54,7 +55,7 @@
+ typedef macos_fenced_block fenced_block;
+ #elif defined(__sun)
+ typedef solaris_fenced_block fenced_block;
+-#elif defined(__GNUC__) && defined(__arm__)
++#elif defined(__GNUC__) && defined(__arm__) && !defined(__thumb__)
+ typedef gcc_arm_fenced_block fenced_block;
+ #elif defined(__GNUC__) && (defined(__hppa) || defined(__hppa__))
+ typedef gcc_hppa_fenced_block fenced_block;
+@@ -63,7 +64,8 @@
+ #elif defined(__GNUC__) \
+   && ((__GNUC__ == 4 && __GNUC_MINOR__ >= 1) || (__GNUC__ > 4)) \
+   && !defined(__INTEL_COMPILER) && !defined(__ICL) \
+-  && !defined(__ICC) && !defined(__ECC) && !defined(__PATHSCALE__)
++  && !defined(__ICC) && !defined(__ECC) && !defined(__PATHSCALE__) \
++  && !defined(ANDROID) && !defined(__ANDROID__)
+ typedef gcc_sync_fenced_block fenced_block;
+ #elif defined(BOOST_WINDOWS) && !defined(UNDER_CE)
+ typedef win_fenced_block fenced_block;
+diff -ruN boost_1_48_0-boot/boost/asio/detail/socket_types.hpp boost_1_48_0-patched/boost/asio/detail/socket_types.hpp
+--- boost_1_48_0-boot/boost/asio/detail/socket_types.hpp	2011-06-06 01:21:43.000000000 +0200
++++ boost_1_48_0-patched/boost/asio/detail/socket_types.hpp	2012-06-16 23:55:05.000000000 +0200
+@@ -123,7 +123,12 @@
+ typedef int socket_type;
+ const int invalid_socket = -1;
+ const int socket_error_retval = -1;
++// @Moss - Some platforms do not define it (Android)
++#if defined(INET_ADDRSTRLEN)
+ const int max_addr_v4_str_len = INET_ADDRSTRLEN;
++#else // defined(INET_ADDRSTRLEN)
++const int max_addr_v4_str_len = 16;
++#endif // defined(INET_ADDRSTRLEN)
+ #if defined(INET6_ADDRSTRLEN)
+ const int max_addr_v6_str_len = INET6_ADDRSTRLEN + 1 + IF_NAMESIZE;
+ #else // defined(INET6_ADDRSTRLEN)
+diff -ruN boost_1_48_0-boot/boost/asio/ip/impl/address_v6.ipp boost_1_48_0-patched/boost/asio/ip/impl/address_v6.ipp
+--- boost_1_48_0-boot/boost/asio/ip/impl/address_v6.ipp	2011-06-06 01:21:43.000000000 +0200
++++ boost_1_48_0-patched/boost/asio/ip/impl/address_v6.ipp	2012-06-16 23:53:27.000000000 +0200
+@@ -11,6 +11,23 @@
+ #ifndef BOOST_ASIO_IP_IMPL_ADDRESS_V6_IPP
+ #define BOOST_ASIO_IP_IMPL_ADDRESS_V6_IPP
+ 
++// @Moss - Define IPv6 macros
++#if !defined(IN6_IS_ADDR_MULTICAST) 
++#define IN6_IS_ADDR_MULTICAST(a) (((__const uint8_t *) (a))[0] == 0xff)
++#endif
++
++#if !defined(IN6_IS_ADDR_MC_NODELOCAL)
++#define IN6_IS_ADDR_MC_NODELOCAL(a) \
++        (IN6_IS_ADDR_MULTICAST(a) \
++         && ((((__const uint8_t *) (a))[1] & 0xf) == 0x1))
++#endif
++
++#if !defined(IN6_IS_ADDR_MC_GLOBAL)
++#define IN6_IS_ADDR_MC_GLOBAL(a) \
++        (IN6_IS_ADDR_MULTICAST(a) \
++         && ((((__const uint8_t *) (a))[1] & 0xf) == 0xe))
++#endif
++
+ #if defined(_MSC_VER) && (_MSC_VER >= 1200)
+ # pragma once
+ #endif // defined(_MSC_VER) && (_MSC_VER >= 1200)
+diff -ruN boost_1_48_0-boot/boost/config/user.hpp boost_1_48_0-patched/boost/config/user.hpp
+--- boost_1_48_0-boot/boost/config/user.hpp	2004-01-10 13:10:00.000000000 +0100
++++ boost_1_48_0-patched/boost/config/user.hpp	2012-06-16 23:58:53.000000000 +0200
+@@ -13,6 +13,15 @@
+ //  configuration policy:
+ //
+ 
++// Android defines
++#define __arm__ 1
++#define _REENTRANT 1
++#define _GLIBCXX__PTHREADS 1
++// There is problem with std::atomic on android (and some other platforms).
++// See this link for more info:
++// https://code.google.com/p/android/issues/detail?id=42735#makechanges
++#define BOOST_ASIO_DISABLE_STD_ATOMIC 1
++
+ // define this to locate a compiler config file:
+ // #define BOOST_COMPILER_CONFIG <myheader>
+ 
+diff -ruN boost_1_48_0-boot/boost/detail/endian.hpp boost_1_48_0-patched/boost/detail/endian.hpp
+--- boost_1_48_0-boot/boost/detail/endian.hpp	2011-03-29 23:58:48.000000000 +0200
++++ boost_1_48_0-patched/boost/detail/endian.hpp	2012-06-16 23:57:19.000000000 +0200
+@@ -31,7 +31,7 @@
+ // GNU libc offers the helpful header <endian.h> which defines
+ // __BYTE_ORDER
+ 
+-#if defined (__GLIBC__)
++#if defined (__GLIBC__) || defined(ANDROID)
+ # include <endian.h>
+ # if (__BYTE_ORDER == __LITTLE_ENDIAN)
+ #  define BOOST_LITTLE_ENDIAN
+diff -ruN boost_1_48_0-boot/boost/interprocess/detail/workaround.hpp boost_1_48_0-patched/boost/interprocess/detail/workaround.hpp
+--- boost_1_48_0-boot/boost/interprocess/detail/workaround.hpp	2011-08-30 17:46:15.000000000 +0200
++++ boost_1_48_0-patched/boost/interprocess/detail/workaround.hpp	2012-06-17 00:05:30.000000000 +0200
+@@ -64,7 +64,7 @@
+    #endif
+ 
+    //Check for XSI shared memory objects. They are available in nearly all UNIX platforms
+-   #if !defined(__QNXNTO__)
++   #if !defined(__QNXNTO__) && !defined(ANDROID)
+    # define BOOST_INTERPROCESS_XSI_SHARED_MEMORY_OBJECTS
+    #endif
+ 
+diff -ruN boost_1_48_0-boot/libs/filesystem/v2/src/v2_operations.cpp boost_1_48_0-patched/libs/filesystem/v2/src/v2_operations.cpp
+--- boost_1_48_0-boot/libs/filesystem/v2/src/v2_operations.cpp	2011-07-29 21:51:24.000000000 +0200
++++ boost_1_48_0-patched/libs/filesystem/v2/src/v2_operations.cpp	2012-06-17 00:02:25.000000000 +0200
+@@ -58,13 +58,15 @@
+ 
+ # else // BOOST_POSIX_API
+ #   include <sys/types.h>
+-#   if !defined(__APPLE__) && !defined(__OpenBSD__)
++#   if !defined(__APPLE__) && !defined(__OpenBSD__) && !defined(__ANDROID__) && !defined(ANDROID)
+ #     include <sys/statvfs.h>
+ #     define BOOST_STATVFS statvfs
+ #     define BOOST_STATVFS_F_FRSIZE vfs.f_frsize
+ #   else
+ #ifdef __OpenBSD__
+ #     include <sys/param.h>
++#elif defined(__ANDROID__) || defined(ANDROID) // @Moss - Android messes up a bit with some headers, this one is the correct one :D
++#     include <sys/vfs.h>
+ #endif
+ #     include <sys/mount.h>
+ #     define BOOST_STATVFS statfs
+@@ -1265,7 +1267,11 @@
+         if ( max == 0 )
+         {
+           errno = 0;
++#     ifdef __ANDROID__ || ANDROID
++          long tmp = 4096;
++#     else
+           long tmp = ::pathconf( "/", _PC_NAME_MAX );
++#     endif
+           if ( tmp < 0 )
+           {
+             if ( errno == 0 ) // indeterminate
+diff -ruN boost_1_48_0-boot/libs/filesystem/v3/src/operations.cpp boost_1_48_0-patched/libs/filesystem/v3/src/operations.cpp
+--- boost_1_48_0-boot/libs/filesystem/v3/src/operations.cpp	2011-10-09 15:54:09.000000000 +0200
++++ boost_1_48_0-patched/libs/filesystem/v3/src/operations.cpp	2012-06-17 00:04:37.000000000 +0200
+@@ -80,13 +80,15 @@
+     const fs::path dot_path(".");
+     const fs::path dot_dot_path("..");
+ #   include <sys/types.h>
+-#   if !defined(__APPLE__) && !defined(__OpenBSD__)
++#   if !defined(__APPLE__) && !defined(__OpenBSD__) && !defined(__ANDROID__) && !defined(ANDROID)
+ #     include <sys/statvfs.h>
+ #     define BOOST_STATVFS statvfs
+ #     define BOOST_STATVFS_F_FRSIZE vfs.f_frsize
+ #   else
+ #     ifdef __OpenBSD__
+ #     include <sys/param.h>
++#     elif defined(__ANDROID__) || defined(ANDROID) // @Moss - Android messes up a bit with some headers, this one is the correct one :D
++#     include <sys/vfs.h>
+ #     endif
+ #     include <sys/mount.h>
+ #     define BOOST_STATVFS statfs
+@@ -212,7 +214,19 @@
+          || ::mkdir(to.c_str(),from_stat.st_mode)!= 0))
+ #   define BOOST_COPY_FILE(F,T,FailIfExistsBool)copy_file_api(F, T, FailIfExistsBool)
+ #   define BOOST_MOVE_FILE(OLD,NEW)(::rename(OLD, NEW)== 0)
++#if defined(__ANDROID__) || defined(ANDROID)
++    int BOOST_RESIZE_FILE(const char *path, off_t size)
++    {
++      int result = -1;
++      int fd = open(path, O_WRONLY);
++      if (fd != -1)
++	    result = ftruncate(fd, size);
++      close(fd);
++      return result;
++    }
++#else
+ #   define BOOST_RESIZE_FILE(P,SZ)(::truncate(P, SZ)== 0)
++#endif
+ 
+ #   define BOOST_ERROR_NOT_SUPPORTED ENOSYS
+ #   define BOOST_ERROR_ALREADY_EXISTS EEXIST
+diff -ruN boost_1_48_0-boot/tools/build/v2/tools/android.jam boost_1_48_0-patched/tools/build/v2/tools/android.jam
+--- boost_1_48_0-boot/tools/build/v2/tools/android.jam	1970-01-01 01:00:00.000000000 +0100
++++ boost_1_48_0-patched/tools/build/v2/tools/android.jam	2012-06-17 00:16:04.000000000 +0200
+@@ -0,0 +1,1064 @@
++# Copyright 2001 David Abrahams.
++# Copyright 2002-2006 Rene Rivera.
++# Copyright 2002-2003 Vladimir Prus.
++#  Copyright (c) 2005 Reece H. Dunn.
++# Copyright 2006 Ilya Sokolov.
++# Copyright 2007 Roland Schwarz
++# Copyright 2007 Boris Gubenko.
++# Copyright 2010 Moritz Wundke.
++#
++# Distributed under the Boost Software License, Version 1.0.
++#    (See accompanying file LICENSE_1_0.txt or copy at
++#          http://www.boost.org/LICENSE_1_0.txt)
++
++import "class" : new ;
++import common ;
++import errors ;
++import feature ;
++import generators ;
++import os ;
++import pch ;
++import property ;
++import property-set ;
++import toolset ;
++import type ;
++import rc ;
++import regex ;
++import set ;
++import unix ;
++import fortran ;
++
++
++if [ MATCH (--debug-configuration) : [ modules.peek : ARGV ] ]
++{
++    .debug-configuration = true ;
++}
++
++
++feature.extend toolset : android ;
++# feature.subfeature toolset android : flavor : : optional ;
++
++toolset.inherit-generators android : unix : unix.link unix.link.dll ;
++toolset.inherit-flags android : unix ;
++toolset.inherit-rules android : unix ;
++
++generators.override android.prebuilt : builtin.prebuilt ;
++generators.override android.searched-lib-generator : searched-lib-generator ;
++
++# Make android toolset object files use the "o" suffix on all platforms.
++type.set-generated-target-suffix OBJ : <toolset>android : o ;
++type.set-generated-target-suffix OBJ : <toolset>android <target-os>windows : o ;
++type.set-generated-target-suffix OBJ : <toolset>android <target-os>cygwin : o ;
++
++# Initializes the android toolset for the given version. If necessary, command may
++# be used to specify where the compiler is located. The parameter 'options' is a
++# space-delimited list of options, each one specified as
++# <option-name>option-value. Valid option names are: cxxflags, linkflags and
++# linker-type. Accepted linker-type values are aix, darwin, gnu, hpux, osf or
++# sun and the default value will be selected based on the current OS.
++# Example:
++#   using android : 3.4 : : <cxxflags>foo <linkflags>bar <linker-type>sun ;
++#
++rule init ( version ? : command * : options * )
++{
++    # Information about the android command...
++    #   The command.
++    local command = [ common.get-invocation-command android : g++ : $(command) ] ;
++    #   The root directory of the tool install.
++    local root = [ feature.get-values <root> : $(options) ] ;
++    #   The bin directory where to find the command to execute.
++    local bin ;
++    #   The flavor of compiler.
++    local flavor = [ feature.get-values <flavor> : $(options) ] ;
++    #   Autodetect the root and bin dir if not given.
++    if $(command)
++    {
++        bin ?= [ common.get-absolute-tool-path $(command[-1]) ] ;
++        root ?= $(bin:D) ;
++    }
++    # The 'command' variable can have multiple elements. When calling
++    # the SHELL builtin we need a single string.
++    local command-string = $(command:J=" ") ;
++    #   Autodetect the version and flavor if not given.
++    if $(command)
++    {    
++        local machine = [ MATCH "^([^ ]+)"
++            : [ SHELL "$(command-string) -dumpmachine" ] ] ;
++        version ?= [ MATCH "^([0-9.]+)"
++            : [ SHELL "$(command-string) -dumpversion" ] ] ;
++        switch $(machine:L)
++        {
++            case *mingw* : flavor ?= mingw ;
++        }
++    }
++
++    local condition ;
++    if $(flavor)
++    {
++        condition = [ common.check-init-parameters android
++            : version $(version)
++            : flavor $(flavor)
++            ] ;
++    }
++    else
++    {
++        condition = [ common.check-init-parameters android
++            : version $(version)
++            ] ;
++        condition = $(condition) ;  #/<toolset-android:flavor> ;
++    }
++
++    common.handle-options android : $(condition) : $(command) : $(options) ;
++
++    local linker = [ feature.get-values <linker-type> : $(options) ] ;
++    # The logic below should actually be keyed on <target-os>
++    if ! $(linker)
++    {
++        if [ os.name ] = OSF
++        {
++            linker = osf ;
++        }
++        else if [ os.name ] = HPUX
++        {
++            linker = hpux ;
++        }
++        else if [ os.name ] = AIX
++        {
++            linker = aix ;
++        }
++        else if [ os.name ] = SOLARIS
++        {
++            linker = sun ;
++        }        
++        else
++        {
++            linker = gnu ;
++        }
++    }
++    init-link-flags android $(linker) $(condition) ;
++
++
++    # If android is installed in non-standard location, we'd need to add
++    # LD_LIBRARY_PATH when running programs created with it (for unit-test/run
++    # rules).
++    if $(command)
++    {
++        # On multilib 64-bit boxes, there are both 32-bit and 64-bit libraries
++        # and all must be added to LD_LIBRARY_PATH. The linker will pick the
++        # right onces. Note that we don't provide a clean way to build 32-bit
++        # binary with 64-bit compiler, but user can always pass -m32 manually.
++        local lib_path = $(root)/bin $(root)/lib $(root)/lib32 $(root)/lib64 ;
++        if $(.debug-configuration)
++        {
++            ECHO notice: using android libraries :: $(condition) :: $(lib_path) ;
++        }
++        toolset.flags android.link RUN_PATH $(condition) : $(lib_path) ;
++    }
++
++    # If it's not a system android install we should adjust the various programs as
++    # needed to prefer using the install specific versions. This is essential
++    # for correct use of MinGW and for cross-compiling.
++    
++    local nl = "
++" ;
++
++    # - The archive builder.
++    local archiver = [ common.get-invocation-command android
++            : [ NORMALIZE_PATH [ MATCH "(.*)[$(nl)]+" : [ SHELL "$(command-string) -print-prog-name=ar" ] ] ]
++            : [ feature.get-values <archiver> : $(options) ] 
++            : $(bin) 
++            : search-path ] ;
++    toolset.flags android.archive .AR $(condition) : $(archiver[1]) ;
++    if $(.debug-configuration)
++    {
++        ECHO notice: using android archiver :: $(condition) :: $(archiver[1]) ;
++    }
++
++    # - Ranlib
++    local ranlib = [ common.get-invocation-command android
++            : [ NORMALIZE_PATH [ MATCH "(.*)[$(nl)]+" : [ SHELL "$(command-string) -print-prog-name=ranlib" ] ] ]
++            : [ feature.get-values <ranlib> : $(options) ] 
++            : $(bin) 
++            : search-path ] ;
++    toolset.flags android.archive .RANLIB $(condition) : $(ranlib[1]) ;
++    if $(.debug-configuration)
++    {
++        ECHO notice: using android ranlib :: $(condition) :: $(ranlib[1]) ;
++    }
++
++
++    # - The resource compiler.
++    local rc =
++        [ common.get-invocation-command-nodefault android
++            : windres : [ feature.get-values <rc> : $(options) ] : $(bin) : search-path ] ;
++    local rc-type =
++        [ feature.get-values <rc-type> : $(options) ] ;
++    rc-type ?= windres ;
++    if ! $(rc)
++    {
++        # If we can't find an RC compiler we fallback to a null RC compiler that
++        # creates empty object files. This allows the same Jamfiles to work
++        # across the board. The null RC uses the assembler to create the empty
++        # objects, so configure that.
++        rc = [ common.get-invocation-command android : as : : $(bin) : search-path ] ;
++        rc-type = null ;
++    }
++    rc.configure $(rc) : $(condition) : <rc-type>$(rc-type) ;
++}
++
++if [ os.name ] = NT
++{
++    # This causes single-line command invocation to not go through .bat files,
++    # thus avoiding command-line length limitations.
++    JAMSHELL = % ;
++}
++
++generators.register-c-compiler android.compile.c++ : CPP : OBJ : <toolset>android ;
++generators.register-c-compiler android.compile.c   : C   : OBJ : <toolset>android ;
++generators.register-c-compiler android.compile.asm : ASM : OBJ : <toolset>android ;
++generators.register-fortran-compiler android.compile.fortran : FORTRAN FORTRAN90 : OBJ : <toolset>android ;
++
++# pch support
++
++# The compiler looks for a precompiled header in each directory just before it
++# looks for the include file in that directory. The name searched for is the
++# name specified in the #include directive with ".gch" suffix appended. The
++# logic in android-pch-generator will make sure that BASE_PCH suffix is appended to
++# full name of the header.
++
++type.set-generated-target-suffix PCH : <toolset>android : gch ;
++
++# android-specific pch generator.
++class android-pch-generator : pch-generator
++{
++    import project ;
++    import property-set ;
++    import type ;
++
++    rule run-pch ( project name ? : property-set : sources + )
++    {
++        # Find the header in sources. Ignore any CPP sources.
++        local header ;
++        for local s in $(sources)
++        {
++            if [ type.is-derived [ $(s).type ] H ]
++            {
++                header = $(s) ;
++            }
++        }
++
++        # Error handling: Base header file name should be the same as the base
++        # precompiled header name.
++        local header-name = [ $(header).name ] ;
++        local header-basename = $(header-name:B) ;
++        if $(header-basename) != $(name)
++        {
++            local location = [ $(project).project-module ] ;
++            errors.user-error "in" $(location)": pch target name `"$(name)"' should be the same as the base name of header file `"$(header-name)"'" ;
++        }
++
++        local pch-file = [ generator.run $(project) $(name) : $(property-set)
++            : $(header) ] ;
++
++        # return result of base class and pch-file property as usage-requirements
++        return
++            [ property-set.create <pch-file>$(pch-file) <cflags>-Winvalid-pch ]
++            $(pch-file)
++          ;
++    }
++
++    # Calls the base version specifying source's name as the name of the created
++    # target. As result, the PCH will be named whatever.hpp.gch, and not
++    # whatever.gch.
++    rule generated-targets ( sources + : property-set : project name ? )
++    {
++        name = [ $(sources[1]).name ] ;
++        return [ generator.generated-targets $(sources)
++          : $(property-set) : $(project) $(name) ] ;
++    }
++}
++
++# Note: the 'H' source type will catch both '.h' header and '.hpp' header. The
++# latter have HPP type, but HPP type is derived from H. The type of compilation
++# is determined entirely by the destination type.
++generators.register [ new android-pch-generator android.compile.c.pch   : H :   C_PCH : <pch>on <toolset>android ] ;
++generators.register [ new android-pch-generator android.compile.c++.pch : H : CPP_PCH : <pch>on <toolset>android ] ;
++
++# Override default do-nothing generators.
++generators.override android.compile.c.pch   : pch.default-c-pch-generator   ;
++generators.override android.compile.c++.pch : pch.default-cpp-pch-generator ;
++
++toolset.flags android.compile PCH_FILE <pch>on : <pch-file> ;
++
++# Declare flags and action for compilation.
++toolset.flags android.compile OPTIONS <optimization>off   : -O0 ;
++toolset.flags android.compile OPTIONS <optimization>speed : -O3 ;
++toolset.flags android.compile OPTIONS <optimization>space : -Os ;
++
++toolset.flags android.compile OPTIONS <inlining>off  : -fno-inline ;
++toolset.flags android.compile OPTIONS <inlining>on   : -Wno-inline ;
++toolset.flags android.compile OPTIONS <inlining>full : -finline-functions -Wno-inline ;
++
++toolset.flags android.compile OPTIONS <warnings>off : -w ;
++toolset.flags android.compile OPTIONS <warnings>on  : -Wall ;
++toolset.flags android.compile OPTIONS <warnings>all : -Wall -pedantic ;
++toolset.flags android.compile OPTIONS <warnings-as-errors>on : -Werror ;
++
++toolset.flags android.compile OPTIONS <debug-symbols>on : -g ;
++toolset.flags android.compile OPTIONS <profiling>on : -pg ;
++toolset.flags android.compile OPTIONS <rtti>off : -fno-rtti ;
++
++rule setup-fpic ( targets * : sources * : properties * )
++{
++    local link = [ feature.get-values link : $(properties) ] ;
++    if $(link) = shared
++    {        
++        local target = [ feature.get-values target-os : $(properties) ] ;
++        
++        # This logic will add -fPIC for all compilations:
++        #
++        # lib a : a.cpp b ;
++        # obj b : b.cpp ;
++        # exe c : c.cpp a d ;
++        # obj d : d.cpp ;
++        #
++        # This all is fine, except that 'd' will be compiled with -fPIC even though
++        # it is not needed, as 'd' is used only in exe. However, it is hard to
++        # detect where a target is going to be used. Alternatively, we can set -fPIC
++        # only when main target type is LIB but than 'b' would be compiled without
++        # -fPIC which would lead to link errors on x86-64. So, compile everything
++        # with -fPIC.
++        #
++        # Yet another alternative would be to create a propagated <sharedable>
++        # feature and set it when building shared libraries, but that would be hard
++        # to implement and would increase the target path length even more.
++        
++        # On Windows, fPIC is default, specifying -fPIC explicitly leads to
++        # a warning.
++        if $(target) != cygwin && $(target) != windows
++        {
++            OPTIONS on $(targets) += -fPIC ;
++        }        
++    }
++}
++
++rule setup-address-model ( targets * : sources * : properties * )
++{
++    local model = [ feature.get-values address-model : $(properties) ] ;
++    if $(model)
++    {
++        local option ;
++        local os = [ feature.get-values target-os : $(properties) ] ;
++        if $(os) = aix
++        {
++            if $(model) = 32
++            {
++                option = -maix32 ;
++            }
++            else
++            {
++                option = -maix64 ;
++            }
++        }
++        else
++        {
++            if $(model) = 32
++            {
++                option = -m32 ;
++            }
++            else if $(model) = 64
++            {
++                option = -m64 ;
++            }
++            # For darwin, the model can be 32_64. darwin.jam will handle that
++            # on its own.
++        }
++        OPTIONS on $(targets) += $(option) ;
++    }    
++}
++
++
++# FIXME: this should not use os.name.
++if [ os.name ] != NT && [ os.name ] != OSF && [ os.name ] != HPUX && [ os.name ] != AIX
++{
++    # OSF does have an option called -soname but it does not seem to work as
++    # expected, therefore it has been disabled.
++    HAVE_SONAME   = "" ;
++    SONAME_OPTION = -h ;
++}
++
++# HPUX, for some reason, seem to use '+h', not '-h'.
++if [ os.name ] = HPUX
++{
++    HAVE_SONAME   = "" ;
++    SONAME_OPTION = +h ;
++}
++
++toolset.flags android.compile USER_OPTIONS <cflags> ;
++toolset.flags android.compile.c++ USER_OPTIONS <cxxflags> ;
++toolset.flags android.compile DEFINES <define> ;
++toolset.flags android.compile INCLUDES <include> ;
++toolset.flags android.compile.c++ TEMPLATE_DEPTH <c++-template-depth> ;
++toolset.flags android.compile.fortran USER_OPTIONS <fflags> ;
++
++rule compile.c++.pch ( targets * : sources * : properties * )
++{
++    setup-threading $(targets) : $(sources) : $(properties) ;
++    setup-fpic $(targets) : $(sources) : $(properties) ;
++    setup-address-model $(targets) : $(sources) : $(properties) ;
++}
++
++actions compile.c++.pch
++{
++    "$(CONFIG_COMMAND)" -x c++-header $(OPTIONS) $(USER_OPTIONS) -D$(DEFINES) -I"$(INCLUDES)" -c -o "$(<)" "$(>)"
++}
++
++rule compile.c.pch ( targets * : sources * : properties * )
++{
++    setup-threading $(targets) : $(sources) : $(properties) ;
++    setup-fpic $(targets) : $(sources) : $(properties) ;
++    setup-address-model $(targets) : $(sources) : $(properties) ;    
++}
++
++actions compile.c.pch
++{
++    "$(CONFIG_COMMAND)" -x c-header $(OPTIONS) $(USER_OPTIONS) -D$(DEFINES) -I"$(INCLUDES)" -c -o "$(<)" "$(>)"
++}
++
++rule compile.c++ ( targets * : sources * : properties * )
++{
++    setup-threading $(targets) : $(sources) : $(properties) ;
++    setup-fpic $(targets) : $(sources) : $(properties) ;
++    setup-address-model $(targets) : $(sources) : $(properties) ;
++    
++    # Some extensions are compiled as C++ by default. For others, we need to
++    # pass -x c++. We could always pass -x c++ but distcc does not work with it.
++    if ! $(>:S) in .cc .cp .cxx .cpp .c++ .C
++    {
++        LANG on $(<) = "-x c++" ;
++    }
++    DEPENDS $(<) : [ on $(<) return $(PCH_FILE) ] ;
++    
++    # Here we want to raise the template-depth parameter value to something
++    # higher than the default value of 17. Note that we could do this using the
++    # feature.set-default rule but we do not want to set the default value for
++    # all toolsets as well.
++    #
++    # TODO: This 'modified default' has been inherited from some 'older Boost
++    # Build implementation' and has most likely been added to make some Boost
++    # library parts compile correctly. We should see what exactly prompted this
++    # and whether we can get around the problem more locally.
++    local template-depth = [ on $(<) return $(TEMPLATE_DEPTH) ] ;
++    if ! $(template-depth)
++    {
++        TEMPLATE_DEPTH on $(<) = 128 ;
++    }
++}
++
++rule compile.c ( targets * : sources * : properties * )
++{
++    setup-threading $(targets) : $(sources) : $(properties) ;
++    setup-fpic $(targets) : $(sources) : $(properties) ;
++    setup-address-model $(targets) : $(sources) : $(properties) ;
++    
++    # If we use the name g++ then default file suffix -> language mapping does
++    # not work. So have to pass -x option. Maybe, we can work around this by
++    # allowing the user to specify both C and C++ compiler names.
++    #if $(>:S) != .c
++    #{
++        LANG on $(<) = "-x c" ;
++    #}
++    DEPENDS $(<) : [ on $(<) return $(PCH_FILE) ] ;
++}
++
++rule compile.fortran ( targets * : sources * : properties * )
++{
++    setup-threading $(targets) : $(sources) : $(properties) ;
++    setup-fpic $(targets) : $(sources) : $(properties) ;
++    setup-address-model $(targets) : $(sources) : $(properties) ;
++}
++
++actions compile.c++ bind PCH_FILE
++{
++    "$(CONFIG_COMMAND)" $(LANG) -ftemplate-depth-$(TEMPLATE_DEPTH) $(OPTIONS) $(USER_OPTIONS) -D$(DEFINES) -I"$(PCH_FILE:D)" -I"$(INCLUDES)" -c -o "$(<:W)" "$(>:W)"
++}
++
++actions compile.c bind PCH_FILE
++{
++    "$(CONFIG_COMMAND)" $(LANG) $(OPTIONS) $(USER_OPTIONS) -D$(DEFINES) -I"$(PCH_FILE:D)" -I"$(INCLUDES)" -c -o "$(<)" "$(>)"
++}
++
++actions compile.fortran
++{
++  "$(CONFIG_COMMAND)" $(LANG) $(OPTIONS) $(USER_OPTIONS) -D$(DEFINES) -I"$(PCH_FILE:D)" -I"$(INCLUDES)" -c -o "$(<)" "$(>)" 
++}
++
++rule compile.asm
++{
++    LANG on $(<) = "-x assembler-with-cpp" ;
++}
++
++actions compile.asm
++{
++    "$(CONFIG_COMMAND)" $(LANG) $(OPTIONS) -D$(DEFINES) -I"$(INCLUDES)" -c -o "$(<)" "$(>)"
++}
++
++# The class which check that we don't try to use the <runtime-link>static
++# property while creating or using shared library, since it's not supported by
++# android/libc.
++class android-linking-generator : unix-linking-generator
++{
++    rule run ( project name ? : property-set : sources + )
++    {
++        # TODO: Replace this with the use of a target-os property.
++        local no-static-link = ;
++        if [ modules.peek : UNIX ]
++        {
++            switch [ modules.peek : JAMUNAME ]
++            {
++                case * : no-static-link = true ;
++            }
++        }
++
++        local properties = [ $(property-set).raw ] ;
++        local reason ;
++        if $(no-static-link) && <runtime-link>static in $(properties)
++        {
++            if <link>shared in $(properties)
++            {
++                reason =
++                    "On android, DLL can't be build with '<runtime-link>static'." ;
++            }
++            else if [ type.is-derived $(self.target-types[1]) EXE ]
++            {
++                for local s in $(sources)
++                {
++                    local type = [ $(s).type ] ;
++                    if $(type) &&  [ type.is-derived $(type) SHARED_LIB ]
++                    {
++                        reason =
++                            "On android, using DLLS together with the"
++                            "<runtime-link>static options is not possible " ;
++                    }
++                }
++            }
++        }
++        if $(reason)
++        {
++            ECHO warning:
++                $(reason) ;
++            ECHO warning:
++                "It is suggested to use '<runtime-link>static' together"
++                "with '<link>static'." ;
++            return ;
++        }
++        else
++        {
++            local generated-targets = [ unix-linking-generator.run $(project)
++                $(name) : $(property-set) : $(sources) ] ;
++            return $(generated-targets) ;
++        }
++    }
++}
++
++# The set of permissible input types is different on mingw.
++# So, define two sets of generators, with mingw generators
++# selected when target-os=windows.
++
++local g ;
++g = [ new android-linking-generator android.mingw.link
++      : OBJ SEARCHED_LIB STATIC_LIB IMPORT_LIB
++      : EXE
++      : <toolset>android <target-os>windows ] ;
++$(g).set-rule-name android.link ;
++generators.register $(g) ;
++
++g = [ new android-linking-generator android.mingw.link.dll
++      : OBJ SEARCHED_LIB STATIC_LIB IMPORT_LIB
++      : IMPORT_LIB SHARED_LIB
++      : <toolset>android <target-os>windows ] ;
++$(g).set-rule-name android.link.dll ;
++generators.register $(g) ;
++
++generators.register
++  [ new android-linking-generator android.link
++      : LIB OBJ
++      : EXE
++      : <toolset>android ] ;
++generators.register
++  [ new android-linking-generator android.link.dll
++      : LIB OBJ
++      : SHARED_LIB
++      : <toolset>android ] ;
++
++generators.override android.mingw.link : android.link ;
++generators.override android.mingw.link.dll : android.link.dll ;
++
++# Cygwin is similar to msvc and mingw in that it uses import libraries.
++# While in simple cases, it can directly link to a shared library,
++# it is believed to be slower, and not always possible. Define cygwin-specific
++# generators here.
++
++g = [ new android-linking-generator android.cygwin.link
++      : OBJ SEARCHED_LIB STATIC_LIB IMPORT_LIB
++      : EXE
++      : <toolset>android <target-os>cygwin ] ;
++$(g).set-rule-name android.link ;
++generators.register $(g) ;
++
++g = [ new android-linking-generator android.cygwin.link.dll
++      : OBJ SEARCHED_LIB STATIC_LIB IMPORT_LIB
++      : IMPORT_LIB SHARED_LIB
++      : <toolset>android <target-os>cygwin ] ;
++$(g).set-rule-name android.link.dll ;
++generators.register $(g) ;
++
++generators.override android.cygwin.link : android.link ;
++generators.override android.cygwin.link.dll : android.link.dll ;
++
++# Declare flags for linking.
++# First, the common flags.
++toolset.flags android.link OPTIONS <debug-symbols>on : -g ;
++toolset.flags android.link OPTIONS <profiling>on : -pg ;
++toolset.flags android.link USER_OPTIONS <linkflags> ;
++toolset.flags android.link LINKPATH <library-path> ;
++toolset.flags android.link FINDLIBS-ST <find-static-library> ;
++toolset.flags android.link FINDLIBS-SA <find-shared-library> ;
++toolset.flags android.link LIBRARIES <library-file> ;
++
++toolset.flags android.link.dll .IMPLIB-COMMAND <target-os>windows : "-Wl,--out-implib," ;
++toolset.flags android.link.dll .IMPLIB-COMMAND <target-os>cygwin : "-Wl,--out-implib," ;
++
++# For <runtime-link>static we made sure there are no dynamic libraries in the
++# link. On HP-UX not all system libraries exist as archived libraries (for
++# example, there is no libunwind.a), so, on this platform, the -static option
++# cannot be specified.
++if [ os.name ] != HPUX
++{
++    toolset.flags android.link OPTIONS <runtime-link>static : -static ;
++}
++
++# Now, the vendor specific flags.
++# The parameter linker can be either aix, darwin, gnu, hpux, osf or sun.
++rule init-link-flags ( toolset linker condition )
++{
++    switch $(linker)
++    {
++    case aix :
++        {
++        #
++        # On AIX we *have* to use the native linker.
++        #
++        # Using -brtl, the AIX linker will look for libraries with both the .a
++        # and .so extensions, such as libfoo.a and libfoo.so. Without -brtl, the
++        # AIX linker looks only for libfoo.a. Note that libfoo.a is an archived
++        # file that may contain shared objects and is different from static libs
++        # as on Linux.
++        #
++        # The -bnoipath strips the prepending (relative) path of libraries from
++        # the loader section in the target library or executable. Hence, during
++        # load-time LIBPATH (identical to LD_LIBRARY_PATH) or a hard-coded
++        # -blibpath (*similar* to -lrpath/-lrpath-link) is searched. Without
++        # this option, the prepending (relative) path + library name is
++        # hard-coded in the loader section, causing *only* this path to be
++        # searched during load-time. Note that the AIX linker does not have an
++        # -soname equivalent, this is as close as it gets.
++        #
++        # The above options are definately for AIX 5.x, and most likely also for
++        # AIX 4.x and AIX 6.x. For details about the AIX linker see:
++        # http://download.boulder.ibm.com/ibmdl/pub/software/dw/aix/es-aix_ll.pdf
++        #
++
++        toolset.flags $(toolset).link OPTIONS : -Wl,-brtl -Wl,-bnoipath
++            : unchecked ;
++        }
++
++    case darwin :
++        {
++        # On Darwin, the -s option to ld does not work unless we pass -static,
++        # and passing -static unconditionally is a bad idea. So, don't pass -s.
++        # at all, darwin.jam will use separate 'strip' invocation.
++        toolset.flags $(toolset).link RPATH $(condition) : <dll-path> : unchecked ;
++        toolset.flags $(toolset).link RPATH_LINK $(condition) : <xdll-path> : unchecked ;
++        }
++
++    case gnu :
++        {
++        # Strip the binary when no debugging is needed. We use --strip-all flag
++        # as opposed to -s since icc (intel's compiler) is generally
++        # option-compatible with and inherits from the android toolset, but does not
++        # support -s.
++        toolset.flags $(toolset).link OPTIONS     $(condition)/<strip>on          : -Wl,--strip-all   : unchecked ;
++        toolset.flags $(toolset).link RPATH       $(condition)                    : <dll-path>        : unchecked ;
++        toolset.flags $(toolset).link RPATH_LINK  $(condition)                    : <xdll-path>       : unchecked ;
++        toolset.flags $(toolset).link START-GROUP $(condition)                    : -Wl,--start-group : unchecked ;
++        toolset.flags $(toolset).link END-GROUP   $(condition)                    : -Wl,--end-group   : unchecked ;
++
++        # gnu ld has the ability to change the search behaviour for libraries
++        # referenced by -l switch. These modifiers are -Bstatic and -Bdynamic
++        # and change search for -l switches that follow them. The following list
++        # shows the tried variants.
++        # The search stops at the first variant that has a match.
++        # *nix: -Bstatic -lxxx
++        #    libxxx.a
++        #
++        # *nix: -Bdynamic -lxxx
++        #    libxxx.so
++        #    libxxx.a
++        #
++        # windows (mingw,cygwin) -Bstatic -lxxx
++        #    libxxx.a
++        #    xxx.lib
++        #
++        # windows (mingw,cygwin) -Bdynamic -lxxx
++        #    libxxx.dll.a
++        #    xxx.dll.a
++        #    libxxx.a
++        #    xxx.lib
++        #    cygxxx.dll (*)
++        #    libxxx.dll
++        #    xxx.dll
++        #    libxxx.a
++        #
++        # (*) This is for cygwin
++        # Please note that -Bstatic and -Bdynamic are not a guarantee that a
++        # static or dynamic lib indeed gets linked in. The switches only change
++        # search patterns!
++
++        # On *nix mixing shared libs with static runtime is not a good idea.
++        toolset.flags $(toolset).link FINDLIBS-ST-PFX $(condition)/<runtime-link>shared
++            : -Wl,-Bstatic : unchecked ;
++        toolset.flags $(toolset).link FINDLIBS-SA-PFX $(condition)/<runtime-link>shared
++            : -Wl,-Bdynamic : unchecked ;
++
++        # On windows allow mixing of static and dynamic libs with static
++        # runtime.
++        toolset.flags $(toolset).link FINDLIBS-ST-PFX $(condition)/<runtime-link>static/<target-os>windows
++            : -Wl,-Bstatic : unchecked ;
++        toolset.flags $(toolset).link FINDLIBS-SA-PFX $(condition)/<runtime-link>static/<target-os>windows
++            : -Wl,-Bdynamic : unchecked ;
++        toolset.flags $(toolset).link OPTIONS $(condition)/<runtime-link>static/<target-os>windows
++            : -Wl,-Bstatic : unchecked ;
++        }
++
++    case hpux :
++        {
++        toolset.flags $(toolset).link OPTIONS $(condition)/<strip>on
++            : -Wl,-s : unchecked ;
++        toolset.flags $(toolset).link OPTIONS $(condition)/<link>shared
++            : -fPIC : unchecked ;
++        }
++
++    case osf :
++        {
++        # No --strip-all, just -s.
++        toolset.flags $(toolset).link OPTIONS $(condition)/<strip>on
++            : -Wl,-s : unchecked ;
++        toolset.flags $(toolset).link RPATH $(condition) : <dll-path>
++            : unchecked ;
++        # This does not supports -R.
++        toolset.flags $(toolset).link RPATH_OPTION $(condition) : -rpath
++            : unchecked ;
++        # -rpath-link is not supported at all.
++        }
++
++    case sun :
++        {
++        toolset.flags $(toolset).link OPTIONS $(condition)/<strip>on
++            : -Wl,-s : unchecked ;
++        toolset.flags $(toolset).link RPATH $(condition) : <dll-path>
++            : unchecked ;
++        # Solaris linker does not have a separate -rpath-link, but allows to use
++        # -L for the same purpose.
++        toolset.flags $(toolset).link LINKPATH $(condition) : <xdll-path>
++            : unchecked ;
++
++        # This permits shared libraries with non-PIC code on Solaris.
++        # VP, 2004/09/07: Now that we have -fPIC hardcode in link.dll, the
++        # following is not needed. Whether -fPIC should be hardcoded, is a
++        # separate question.
++        # AH, 2004/10/16: it is still necessary because some tests link against
++        # static libraries that were compiled without PIC.
++        toolset.flags $(toolset).link OPTIONS $(condition)/<link>shared
++            : -mimpure-text : unchecked ;
++        }
++
++    case * :
++        {
++        errors.user-error
++            "$(toolset) initialization: invalid linker '$(linker)'" :
++            "The value '$(linker)' specified for <linker> is not recognized." :
++            "Possible values are 'aix', 'darwin', 'gnu', 'hpux', 'osf' or 'sun'" ;
++        }
++    }
++}
++
++# Enclose the RPATH variable on 'targets' in (double) quotes,
++# unless it's already enclosed in single quotes.
++# This special casing is done because it's common to pass
++# '$ORIGIN' to linker -- and it has to have single quotes
++# to prevent expansion by shell -- and if we add double
++# quotes then preventing properties of single quotes disappear.
++rule quote-rpath ( targets * )
++{
++    local r = [ on $(targets[1]) return $(RPATH) ] ;
++    if ! [ MATCH "('.*')" : $(r) ] 
++    {
++        r = "\"$(r)\"" ;
++    }
++    RPATH on $(targets) = $(r) ;
++}
++
++# Declare actions for linking.
++rule link ( targets * : sources * : properties * )
++{
++    setup-threading $(targets) : $(sources) : $(properties) ;
++    setup-address-model $(targets) : $(sources) : $(properties) ;
++    SPACE on $(targets) = " " ;
++    # Serialize execution of the 'link' action, since running N links in
++    # parallel is just slower. For now, serialize only android links, it might be a
++    # good idea to serialize all links.
++    JAM_SEMAPHORE on $(targets) = <s>android-link-semaphore ;
++    quote-rpath $(targets) ;
++}
++
++actions link bind LIBRARIES
++{
++    "$(CONFIG_COMMAND)" -L"$(LINKPATH)" -Wl,$(RPATH_OPTION:E=-R)$(SPACE)-Wl,$(RPATH) -Wl,-rpath-link$(SPACE)-Wl,"$(RPATH_LINK)" -o "$(<)" $(START-GROUP) "$(>)" "$(LIBRARIES)" $(FINDLIBS-ST-PFX) -l$(FINDLIBS-ST) $(FINDLIBS-SA-PFX) -l$(FINDLIBS-SA) $(END-GROUP) $(OPTIONS) $(USER_OPTIONS)
++
++}
++
++# Default value. Mostly for the sake of intel-linux that inherits from android, but
++# does not have the same logic to set the .AR variable. We can put the same
++# logic in intel-linux, but that's hardly worth the trouble as on Linux, 'ar' is
++# always available.
++.AR = ar ;
++.RANLIB = ranlib ;
++
++toolset.flags android.archive AROPTIONS <archiveflags> ;
++
++rule archive ( targets * : sources * : properties * )
++{
++    # Always remove archive and start again. Here is the rationale from
++    #
++    # Andre Hentz:
++    #
++    # I had a file, say a1.c, that was included into liba.a. I moved a1.c to
++    # a2.c, updated my Jamfiles and rebuilt. My program was crashing with absurd
++    # errors. After some debugging I traced it back to the fact that a1.o was
++    # *still* in liba.a
++    #
++    # Rene Rivera:
++    #
++    # Originally removing the archive was done by splicing an RM onto the
++    # archive action. That makes archives fail to build on NT when they have
++    # many files because it will no longer execute the action directly and blow
++    # the line length limit. Instead we remove the file in a different action,
++    # just before building the archive.
++    #
++    local clean.a = $(targets[1])(clean) ;
++    TEMPORARY $(clean.a) ;
++    NOCARE $(clean.a) ;
++    LOCATE on $(clean.a) = [ on $(targets[1]) return $(LOCATE) ] ;
++    DEPENDS $(clean.a) : $(sources) ;
++    DEPENDS $(targets) : $(clean.a) ;
++    common.RmTemps $(clean.a) : $(targets) ;
++}
++
++# Declare action for creating static libraries.
++# The letter 'r' means to add files to the archive with replacement. Since we
++# remove archive, we don't care about replacement, but there's no option "add
++# without replacement".
++# The letter 'c' suppresses the warning in case the archive does not exists yet.
++# That warning is produced only on some platforms, for whatever reasons.
++actions piecemeal archive
++{
++    "$(.AR)" $(AROPTIONS) rc "$(<)" "$(>)"
++    "$(.RANLIB)" "$(<)"
++}
++
++rule link.dll ( targets * : sources * : properties * )
++{
++    setup-threading $(targets) : $(sources) : $(properties) ;
++    setup-address-model $(targets) : $(sources) : $(properties) ;
++    SPACE on $(targets) = " " ;
++    JAM_SEMAPHORE on $(targets) = <s>android-link-semaphore ;
++    quote-rpath $(targets) ;
++}
++
++# Differs from 'link' above only by -shared.
++actions link.dll bind LIBRARIES
++{
++    "$(CONFIG_COMMAND)" -L"$(LINKPATH)" -Wl,$(RPATH_OPTION:E=-R)$(SPACE)-Wl,$(RPATH) "$(.IMPLIB-COMMAND)$(<[1])" -o "$(<[-1])" $(HAVE_SONAME)-Wl,$(SONAME_OPTION)$(SPACE)-Wl,$(<[-1]:D=) -shared $(START-GROUP) "$(>)" "$(LIBRARIES)" $(FINDLIBS-ST-PFX) -l$(FINDLIBS-ST) $(FINDLIBS-SA-PFX) -l$(FINDLIBS-SA) $(END-GROUP) $(OPTIONS) $(USER_OPTIONS)
++}
++
++rule setup-threading ( targets * : sources * : properties * )
++{
++    local threading = [ feature.get-values threading : $(properties) ] ;
++    if $(threading) = multi
++    {        
++        local target = [ feature.get-values target-os : $(properties) ] ;
++        local option ;
++        local libs ;
++        
++        ECHO "MOSSS>>> target: $(target)" ;
++        
++        switch $(target)
++        {
++            case windows :
++            {
++                option = -mthreads ;
++            }
++            case cygwin :
++            {
++                option = -mthreads ;
++            }
++            case solaris :
++            {
++                option = -pthreads ;
++                libs = rt ;
++            }
++            case beos :
++            {            
++                # BeOS has no threading options, so do not set anything here.
++            }        
++            case *bsd :
++            {
++                option = -pthread ;
++                # There is no -lrt on BSD.
++            }
++            case sgi :
++            {
++                # android on IRIX does not support multi-threading so do not set anything
++                # here.
++            }
++            case darwin :
++            {
++                # Darwin has no threading options so do not set anything here.
++            }
++            case android :
++            {
++				# @Moss - Make Android decision here
++            }
++            case * :
++            {
++                #option = -pthread ;
++                #libs = rt ;
++            }
++        }
++    
++        if $(option)
++        {
++            OPTIONS on $(targets) += $(option) ;
++        }
++        if $(libs)
++        {
++            FINDLIBS-SA on $(targets) += $(libs) ;
++        }
++    }    
++}
++
++local rule cpu-flags ( toolset variable : architecture : instruction-set + : values + : default ? )
++{
++    if $(default)
++    {
++        toolset.flags $(toolset) $(variable)
++            <architecture>$(architecture)/<instruction-set>
++            : $(values) ;
++    }
++    toolset.flags $(toolset) $(variable)
++        <architecture>/<instruction-set>$(instruction-set)
++        <architecture>$(architecture)/<instruction-set>$(instruction-set)
++        : $(values) ;
++}
++
++# Set architecture/instruction-set options.
++#
++# x86 and compatible
++# The 'native' option appeared in android 4.2 so we cannot safely use it
++# as default. Use conservative i386 instead.
++cpu-flags android OPTIONS : x86 : native : -march=native ;
++cpu-flags android OPTIONS : x86 : i386 : -march=i386 : default ;
++cpu-flags android OPTIONS : x86 : i486 : -march=i486 ;
++cpu-flags android OPTIONS : x86 : i586 : -march=i586 ;
++cpu-flags android OPTIONS : x86 : i686 : -march=i686 ;
++cpu-flags android OPTIONS : x86 : pentium : -march=pentium ;
++cpu-flags android OPTIONS : x86 : pentium-mmx : -march=pentium-mmx ;
++cpu-flags android OPTIONS : x86 : pentiumpro : -march=pentiumpro ;
++cpu-flags android OPTIONS : x86 : pentium2 : -march=pentium2 ;
++cpu-flags android OPTIONS : x86 : pentium3 : -march=pentium3 ;
++cpu-flags android OPTIONS : x86 : pentium3m : -march=pentium3m ;
++cpu-flags android OPTIONS : x86 : pentium-m : -march=pentium-m ;
++cpu-flags android OPTIONS : x86 : pentium4 : -march=pentium4 ;
++cpu-flags android OPTIONS : x86 : pentium4m : -march=pentium4m ;
++cpu-flags android OPTIONS : x86 : prescott : -march=prescott ;
++cpu-flags android OPTIONS : x86 : nocona : -march=nocona ;
++cpu-flags android OPTIONS : x86 : core2 : -march=core2 ;
++cpu-flags android OPTIONS : x86 : k6 : -march=k6 ;
++cpu-flags android OPTIONS : x86 : k6-2 : -march=k6-2 ;
++cpu-flags android OPTIONS : x86 : k6-3 : -march=k6-3 ;
++cpu-flags android OPTIONS : x86 : athlon : -march=athlon ;
++cpu-flags android OPTIONS : x86 : athlon-tbird : -march=athlon-tbird ;
++cpu-flags android OPTIONS : x86 : athlon-4 : -march=athlon-4 ;
++cpu-flags android OPTIONS : x86 : athlon-xp : -march=athlon-xp ;
++cpu-flags android OPTIONS : x86 : athlon-mp : -march=athlon-mp ;
++##
++cpu-flags android OPTIONS : x86 : k8 : -march=k8 ;
++cpu-flags android OPTIONS : x86 : opteron : -march=opteron ;
++cpu-flags android OPTIONS : x86 : athlon64 : -march=athlon64 ;
++cpu-flags android OPTIONS : x86 : athlon-fx : -march=athlon-fx ;
++cpu-flags android OPTIONS : x86 : winchip-c6 : -march=winchip-c6 ;
++cpu-flags android OPTIONS : x86 : winchip2 : -march=winchip2 ;
++cpu-flags android OPTIONS : x86 : c3 : -march=c3 ;
++cpu-flags android OPTIONS : x86 : c3-2 : -march=c3-2 ;
++# Sparc
++cpu-flags android OPTIONS : sparc : c3 : -mcpu=c3 : default ;
++cpu-flags android OPTIONS : sparc : v7 : -mcpu=v7 ;
++cpu-flags android OPTIONS : sparc : cypress : -mcpu=cypress ;
++cpu-flags android OPTIONS : sparc : v8 : -mcpu=v8 ;
++cpu-flags android OPTIONS : sparc : supersparc : -mcpu=supersparc ;
++cpu-flags android OPTIONS : sparc : sparclite : -mcpu=sparclite ;
++cpu-flags android OPTIONS : sparc : hypersparc : -mcpu=hypersparc ;
++cpu-flags android OPTIONS : sparc : sparclite86x : -mcpu=sparclite86x ;
++cpu-flags android OPTIONS : sparc : f930 : -mcpu=f930 ;
++cpu-flags android OPTIONS : sparc : f934 : -mcpu=f934 ;
++cpu-flags android OPTIONS : sparc : sparclet : -mcpu=sparclet ;
++cpu-flags android OPTIONS : sparc : tsc701 : -mcpu=tsc701 ;
++cpu-flags android OPTIONS : sparc : v9 : -mcpu=v9 ;
++cpu-flags android OPTIONS : sparc : ultrasparc : -mcpu=ultrasparc ;
++cpu-flags android OPTIONS : sparc : ultrasparc3 : -mcpu=ultrasparc3 ;
++# RS/6000 & PowerPC
++cpu-flags android OPTIONS : power : 403 : -mcpu=403 ;
++cpu-flags android OPTIONS : power : 505 : -mcpu=505 ;
++cpu-flags android OPTIONS : power : 601 : -mcpu=601 ;
++cpu-flags android OPTIONS : power : 602 : -mcpu=602 ;
++cpu-flags android OPTIONS : power : 603 : -mcpu=603 ;
++cpu-flags android OPTIONS : power : 603e : -mcpu=603e ;
++cpu-flags android OPTIONS : power : 604 : -mcpu=604 ;
++cpu-flags android OPTIONS : power : 604e : -mcpu=604e ;
++cpu-flags android OPTIONS : power : 620 : -mcpu=620 ;
++cpu-flags android OPTIONS : power : 630 : -mcpu=630 ;
++cpu-flags android OPTIONS : power : 740 : -mcpu=740 ;
++cpu-flags android OPTIONS : power : 7400 : -mcpu=7400 ;
++cpu-flags android OPTIONS : power : 7450 : -mcpu=7450 ;
++cpu-flags android OPTIONS : power : 750 : -mcpu=750 ;
++cpu-flags android OPTIONS : power : 801 : -mcpu=801 ;
++cpu-flags android OPTIONS : power : 821 : -mcpu=821 ;
++cpu-flags android OPTIONS : power : 823 : -mcpu=823 ;
++cpu-flags android OPTIONS : power : 860 : -mcpu=860 ;
++cpu-flags android OPTIONS : power : 970 : -mcpu=970 ;
++cpu-flags android OPTIONS : power : 8540 : -mcpu=8540 ;
++cpu-flags android OPTIONS : power : power : -mcpu=power ;
++cpu-flags android OPTIONS : power : power2 : -mcpu=power2 ;
++cpu-flags android OPTIONS : power : power3 : -mcpu=power3 ;
++cpu-flags android OPTIONS : power : power4 : -mcpu=power4 ;
++cpu-flags android OPTIONS : power : power5 : -mcpu=power5 ;
++cpu-flags android OPTIONS : power : powerpc : -mcpu=powerpc ;
++cpu-flags android OPTIONS : power : powerpc64 : -mcpu=powerpc64 ;
++cpu-flags android OPTIONS : power : rios : -mcpu=rios ;
++cpu-flags android OPTIONS : power : rios1 : -mcpu=rios1 ;
++cpu-flags android OPTIONS : power : rios2 : -mcpu=rios2 ;
++cpu-flags android OPTIONS : power : rsc : -mcpu=rsc ;
++cpu-flags android OPTIONS : power : rs64a : -mcpu=rs64 ;
++# AIX variant of RS/6000 & PowerPC
++toolset.flags android AROPTIONS <address-model>64/<target-os>aix : "-X 64" ;
+diff -ruN boost_1_48_0-boot/tools/build/v2/tools/android.py boost_1_48_0-patched/tools/build/v2/tools/android.py
+--- boost_1_48_0-boot/tools/build/v2/tools/android.py	1970-01-01 01:00:00.000000000 +0100
++++ boost_1_48_0-patched/tools/build/v2/tools/android.py	2012-06-17 00:15:47.000000000 +0200
+@@ -0,0 +1,798 @@
++# Status: being ported by Steven Watanabe
++# Base revision: 47077
++# TODO: common.jam needs to be ported
++# TODO: generators.jam needs to have register_c_compiler.
++#
++# Copyright 2001 David Abrahams.
++# Copyright 2002-2006 Rene Rivera.
++# Copyright 2002-2003 Vladimir Prus.
++#  Copyright (c) 2005 Reece H. Dunn.
++# Copyright 2006 Ilya Sokolov.
++# Copyright 2007 Roland Schwarz
++# Copyright 2007 Boris Gubenko.
++# Copyright 2008 Steven Watanabe
++# Copyright 2010 Moritz Wundke.
++#
++# Distributed under the Boost Software License, Version 1.0.
++#    (See accompanying file LICENSE_1_0.txt or copy at
++#          http://www.boost.org/LICENSE_1_0.txt)
++
++import os
++import subprocess
++import re
++
++import bjam
++
++from b2.tools import unix, common, rc, pch, builtin
++from b2.build import feature, type, toolset, generators
++from b2.util.utility import os_name, on_windows
++from b2.manager import get_manager
++from b2.build.generators import Generator
++from b2.build.toolset import flags
++from b2.util.utility import to_seq
++
++__debug = None
++
++def debug():
++    global __debug
++    if __debug is None:
++        __debug = "--debug-configuration" in bjam.variable("ARGV")        
++    return __debug
++
++feature.extend('toolset', ['android'])
++
++
++toolset.inherit_generators('android', [], 'unix', ['unix.link', 'unix.link.dll'])
++toolset.inherit_flags('android', 'unix')
++toolset.inherit_rules('android', 'unix')
++
++generators.override('android.prebuilt', 'builtin.prebuilt')
++generators.override('android.searched-lib-generator', 'searched-lib-generator')
++
++# Target naming is determined by types/lib.jam and the settings below this
++# comment.
++#
++# On *nix:
++#     libxxx.a     static library
++#     libxxx.so    shared library
++#
++# On windows (mingw):
++#     libxxx.lib   static library
++#     xxx.dll      DLL
++#     xxx.lib      import library
++#
++# On windows (cygwin) i.e. <target-os>cygwin
++#     libxxx.a     static library
++#     xxx.dll      DLL
++#     libxxx.dll.a import library
++#
++# Note: user can always override by using the <tag>@rule
++#       This settings have been choosen, so that mingw
++#       is in line with msvc naming conventions. For
++#       cygwin the cygwin naming convention has been choosen.
++
++# Make the "o" suffix used for android toolset on all
++# platforms
++type.set_generated_target_suffix('OBJ', ['<toolset>android'], 'o')
++type.set_generated_target_suffix('STATIC_LIB', ['<toolset>android', '<target-os>cygwin'], 'a')
++
++type.set_generated_target_suffix('IMPORT_LIB', ['<toolset>android', '<target-os>cygwin'], 'dll.a')
++type.set_generated_target_prefix('IMPORT_LIB', ['<toolset>android', '<target-os>cygwin'], 'lib')
++
++__machine_match = re.compile('^([^ ]+)')
++__version_match = re.compile('^([0-9.]+)')
++
++def init(version = None, command = None, options = None):
++    """
++        Initializes the android toolset for the given version. If necessary, command may
++        be used to specify where the compiler is located. The parameter 'options' is a
++        space-delimited list of options, each one specified as
++        <option-name>option-value. Valid option names are: cxxflags, linkflags and
++        linker-type. Accepted linker-type values are gnu, darwin, osf, hpux or sun
++        and the default value will be selected based on the current OS.
++        Example:
++          using android : 3.4 : : <cxxflags>foo <linkflags>bar <linker-type>sun ;
++    """
++
++    options = to_seq(options)
++    command = to_seq(command)
++
++    # Information about the android command...
++    #   The command.
++    command = to_seq(common.get_invocation_command('android', 'g++', command))
++    #   The root directory of the tool install.
++    root = feature.get_values('<root>', options) ;
++    #   The bin directory where to find the command to execute.
++    bin = None
++    #   The flavor of compiler.
++    flavor = feature.get_values('<flavor>', options)
++    #   Autodetect the root and bin dir if not given.
++    if command:
++        if not bin:
++            bin = common.get_absolute_tool_path(command[-1])
++        if not root:
++            root = os.path.dirname(bin)
++    #   Autodetect the version and flavor if not given.
++    if command:
++        machine_info = subprocess.Popen(command + ['-dumpmachine'], stdout=subprocess.PIPE).communicate()[0]
++        machine = __machine_match.search(machine_info).group(1)
++
++        version_info = subprocess.Popen(command + ['-dumpversion'], stdout=subprocess.PIPE).communicate()[0]
++        version = __version_match.search(version_info).group(1)
++        if not flavor and machine.find('mingw') != -1:
++            flavor = 'mingw'
++
++    condition = None
++    if flavor:
++        condition = common.check_init_parameters('android', None,
++            ('version', version),
++            ('flavor', flavor))
++    else:
++        condition = common.check_init_parameters('android', None,
++            ('version', version))
++
++    if command:
++        command = command[0]
++
++    common.handle_options('android', condition, command, options)
++
++    linker = feature.get_values('<linker-type>', options)
++    if not linker:
++        if os_name() == 'OSF':
++            linker = 'osf'
++        elif os_name() == 'HPUX':
++            linker = 'hpux' ;
++        else:
++            linker = 'gnu'
++
++    init_link_flags('android', linker, condition)
++
++    # If android is installed in non-standard location, we'd need to add
++    # LD_LIBRARY_PATH when running programs created with it (for unit-test/run
++    # rules).
++    if command:
++        # On multilib 64-bit boxes, there are both 32-bit and 64-bit libraries
++        # and all must be added to LD_LIBRARY_PATH. The linker will pick the
++        # right onces. Note that we don't provide a clean way to build 32-bit
++        # binary with 64-bit compiler, but user can always pass -m32 manually.
++        lib_path = [os.path.join(root, 'bin'),
++                    os.path.join(root, 'lib'),
++                    os.path.join(root, 'lib32'),
++                    os.path.join(root, 'lib64')]
++        if debug():
++            print 'notice: using android libraries ::', condition, '::', lib_path
++        toolset.flags('android.link', 'RUN_PATH', condition, lib_path)
++
++    # If it's not a system android install we should adjust the various programs as
++    # needed to prefer using the install specific versions. This is essential
++    # for correct use of MinGW and for cross-compiling.
++
++    # - The archive builder.
++    archiver = common.get_invocation_command('android',
++            'ar', feature.get_values('<archiver>', options), [bin], path_last=True)
++    toolset.flags('android.archive', '.AR', condition, [archiver])
++    if debug():
++        print 'notice: using android archiver ::', condition, '::', archiver
++
++    # - The resource compiler.
++    rc_command = common.get_invocation_command_nodefault('android',
++            'windres', feature.get_values('<rc>', options), [bin], path_last=True)
++    rc_type = feature.get_values('<rc-type>', options)
++
++    if not rc_type:
++        rc_type = 'windres'
++
++    if not rc_command:
++        # If we can't find an RC compiler we fallback to a null RC compiler that
++        # creates empty object files. This allows the same Jamfiles to work
++        # across the board. The null RC uses the assembler to create the empty
++        # objects, so configure that.
++        rc_command = common.get_invocation_command('android', 'as', [], [bin], path_last=True)
++        rc_type = 'null'
++    rc.configure(rc_command, condition, '<rc-type>' + rc_type)
++
++###if [ os.name ] = NT
++###{
++###    # This causes single-line command invocation to not go through .bat files,
++###    # thus avoiding command-line length limitations.
++###    JAMSHELL = % ;
++###}
++
++#FIXME: when register_c_compiler is moved to
++# generators, these should be updated
++builtin.register_c_compiler('android.compile.c++', ['CPP'], ['OBJ'], ['<toolset>android'])
++builtin.register_c_compiler('android.compile.c', ['C'], ['OBJ'], ['<toolset>android'])
++builtin.register_c_compiler('android.compile.asm', ['ASM'], ['OBJ'], ['<toolset>android'])
++
++# pch support
++
++# The compiler looks for a precompiled header in each directory just before it
++# looks for the include file in that directory. The name searched for is the
++# name specified in the #include directive with ".gch" suffix appended. The
++# logic in android-pch-generator will make sure that BASE_PCH suffix is appended to
++# full name of the header.
++
++type.set_generated_target_suffix('PCH', ['<toolset>android'], 'gch')
++
++# android-specific pch generator.
++class androidPchGenerator(pch.PchGenerator):
++
++    # Inherit the __init__ method
++
++    def run_pch(self, project, name, prop_set, sources):
++        # Find the header in sources. Ignore any CPP sources.
++        header = None
++        for s in sources:
++            if type.is_derived(s.type, 'H'):
++                header = s
++
++        # Error handling: Base header file name should be the same as the base
++        # precompiled header name.
++        header_name = header.name
++        header_basename = os.path.basename(header_name).rsplit('.', 1)[0]
++        if header_basename != name:
++            location = project.project_module
++            ###FIXME:
++            raise Exception()
++            ### errors.user-error "in" $(location)": pch target name `"$(name)"' should be the same as the base name of header file `"$(header-name)"'" ;
++
++        pch_file = Generator.run(self, project, name, prop_set, [header])
++
++        # return result of base class and pch-file property as usage-requirements
++        # FIXME: what about multiple results from generator.run?
++        return (property_set.create('<pch-file>' + pch_file[0], '<cflags>-Winvalid-pch'),
++                pch_file)
++
++    # Calls the base version specifying source's name as the name of the created
++    # target. As result, the PCH will be named whatever.hpp.gch, and not
++    # whatever.gch.
++    def generated_targets(self, sources, prop_set, project, name = None):
++        name = sources[0].name
++        return Generator.generated_targets(self, sources,
++            prop_set, project, name)
++
++# Note: the 'H' source type will catch both '.h' header and '.hpp' header. The
++# latter have HPP type, but HPP type is derived from H. The type of compilation
++# is determined entirely by the destination type.
++generators.register(androidPchGenerator('android.compile.c.pch', False, ['H'], ['C_PCH'], ['<pch>on', '<toolset>android' ]))
++generators.register(androidPchGenerator('android.compile.c++.pch', False, ['H'], ['CPP_PCH'], ['<pch>on', '<toolset>android' ]))
++
++# Override default do-nothing generators.
++generators.override('android.compile.c.pch', 'pch.default-c-pch-generator')
++generators.override('android.compile.c++.pch', 'pch.default-cpp-pch-generator')
++
++flags('android.compile', 'PCH_FILE', ['<pch>on'], ['<pch-file>'])
++
++# Declare flags and action for compilation
++flags('android.compile', 'OPTIONS', ['<optimization>off'], ['-O0'])
++flags('android.compile', 'OPTIONS', ['<optimization>speed'], ['-O3'])
++flags('android.compile', 'OPTIONS', ['<optimization>space'], ['-Os'])
++
++flags('android.compile', 'OPTIONS', ['<inlining>off'], ['-fno-inline'])
++flags('android.compile', 'OPTIONS', ['<inlining>on'], ['-Wno-inline'])
++flags('android.compile', 'OPTIONS', ['<inlining>full'], ['-finline-functions', '-Wno-inline'])
++
++flags('android.compile', 'OPTIONS', ['<warnings>off'], ['-w'])
++flags('android.compile', 'OPTIONS', ['<warnings>on'], ['-Wall'])
++flags('android.compile', 'OPTIONS', ['<warnings>all'], ['-Wall', '-pedantic'])
++flags('android.compile', 'OPTIONS', ['<warnings-as-errors>on'], ['-Werror'])
++
++flags('android.compile', 'OPTIONS', ['<debug-symbols>on'], ['-g'])
++flags('android.compile', 'OPTIONS', ['<profiling>on'], ['-pg'])
++flags('android.compile', 'OPTIONS', ['<rtti>off'], ['-fno-rtti'])
++
++# On cygwin and mingw, android generates position independent code by default, and
++# warns if -fPIC is specified. This might not be the right way of checking if
++# we're using cygwin. For example, it's possible to run cygwin android from NT
++# shell, or using crosscompiling. But we'll solve that problem when it's time.
++# In that case we'll just add another parameter to 'init' and move this login
++# inside 'init'.
++if not os_name () in ['CYGWIN', 'NT']:
++    print "osname:", os_name()
++    # This logic will add -fPIC for all compilations:
++    #
++    # lib a : a.cpp b ;
++    # obj b : b.cpp ;
++    # exe c : c.cpp a d ;
++    # obj d : d.cpp ;
++    #
++    # This all is fine, except that 'd' will be compiled with -fPIC even though
++    # it's not needed, as 'd' is used only in exe. However, it's hard to detect
++    # where a target is going to be used. Alternative, we can set -fPIC only
++    # when main target type is LIB but than 'b' will be compiled without -fPIC.
++    # In x86-64 that will lead to link errors. So, compile everything with
++    # -fPIC.
++    #
++    # Yet another alternative would be to create propagated <sharedable>
++    # feature, and set it when building shared libraries, but that's hard to
++    # implement and will increase target path length even more.
++    flags('android.compile', 'OPTIONS', ['<link>shared'], ['-fPIC'])
++
++if os_name() != 'NT' and os_name() != 'OSF' and os_name() != 'HPUX':
++    # OSF does have an option called -soname but it doesn't seem to work as
++    # expected, therefore it has been disabled.
++    HAVE_SONAME   = ''
++    SONAME_OPTION = '-h'
++
++
++flags('android.compile', 'USER_OPTIONS', [], ['<cflags>'])
++flags('android.compile.c++', 'USER_OPTIONS',[], ['<cxxflags>'])
++flags('android.compile', 'DEFINES', [], ['<define>'])
++flags('android.compile', 'INCLUDES', [], ['<include>'])
++
++engine = get_manager().engine()
++
++engine.register_action('android.compile.c++.pch', 
++    '"$(CONFIG_COMMAND)" -x c++-header $(OPTIONS) -D$(DEFINES) -I"$(INCLUDES)" -c -o "$(<)" "$(>)"')
++
++engine.register_action('android.compile.c.pch',
++    '"$(CONFIG_COMMAND)" -x c-header $(OPTIONS) -D$(DEFINES) -I"$(INCLUDES)" -c -o "$(<)" "$(>)"')
++
++
++def android_compile_cpp(targets, sources, properties):
++    # Some extensions are compiled as C++ by default. For others, we need to
++    # pass -x c++. We could always pass -x c++ but distcc does not work with it.
++    extension = os.path.splitext (sources [0]) [1]
++    lang = ''
++    if not extension in ['.cc', '.cp', '.cxx', '.cpp', '.c++', '.C']:
++        lang = '-x c++'
++    get_manager().engine().set_target_variable (targets, 'LANG', lang)
++    engine.add_dependency(targets, bjam.call('get-target-variable', targets, 'PCH_FILE'))
++
++def android_compile_c(targets, sources, properties):
++    engine = get_manager().engine()
++    # If we use the name g++ then default file suffix -> language mapping does
++    # not work. So have to pass -x option. Maybe, we can work around this by
++    # allowing the user to specify both C and C++ compiler names.
++    #if $(>:S) != .c
++    #{
++    engine.set_target_variable (targets, 'LANG', '-x c')
++    #}
++    engine.add_dependency(targets, bjam.call('get-target-variable', targets, 'PCH_FILE'))
++    
++engine.register_action(
++    'android.compile.c++',
++    '"$(CONFIG_COMMAND)" $(LANG) -ftemplate-depth-128 $(OPTIONS) ' +
++        '$(USER_OPTIONS) -D$(DEFINES) -I"$(PCH_FILE:D)" -I"$(INCLUDES)" ' +
++        '-c -o "$(<:W)" "$(>:W)"',
++    function=android_compile_cpp,
++    bound_list=['PCH_FILE'])
++
++engine.register_action(
++    'android.compile.c',
++    '"$(CONFIG_COMMAND)" $(LANG) $(OPTIONS) $(USER_OPTIONS) -D$(DEFINES) ' +
++        '-I"$(PCH_FILE:D)" -I"$(INCLUDES)" -c -o "$(<)" "$(>)"',
++    function=android_compile_c,
++    bound_list=['PCH_FILE'])
++
++def android_compile_asm(targets, sources, properties):
++    get_manager().engine().set_target_variable(targets, 'LANG', '-x assembler-with-cpp')
++
++engine.register_action(
++    'android.compile.asm',
++    '"$(CONFIG_COMMAND)" $(LANG) $(OPTIONS) -D$(DEFINES) -I"$(INCLUDES)" -c -o "$(<)" "$(>)"',
++    function=android_compile_asm)
++
++
++class androidLinkingGenerator(unix.UnixLinkingGenerator):
++    """
++        The class which check that we don't try to use the <runtime-link>static
++        property while creating or using shared library, since it's not supported by
++        android/libc.
++    """
++    def run(self, project, name, prop_set, sources):
++        # TODO: Replace this with the use of a target-os property.
++
++        no_static_link = False
++        if bjam.variable('UNIX'):
++            no_static_link = True;
++        ##FIXME: what does this mean?
++##        {
++##            switch [ modules.peek : JAMUNAME ]
++##            {
++##                case * : no-static-link = true ;
++##            }
++##        }
++
++        properties = prop_set.raw()
++        reason = None
++        if no_static_link and '<runtime-link>static' in properties:
++            if '<link>shared' in properties:
++                reason = "On android, DLL can't be build with '<runtime-link>static'."
++            elif type.is_derived(self.target_types[0], 'EXE'):
++                for s in sources:
++                    source_type = s.type()
++                    if source_type and type.is_derived(source_type, 'SHARED_LIB'):
++                        reason = "On android, using DLLS together with the " +\
++                                 "<runtime-link>static options is not possible "
++        if reason:
++            print 'warning:', reason
++            print 'warning:',\
++                "It is suggested to use '<runtime-link>static' together",\
++                "with '<link>static'." ;
++            return
++        else:
++            generated_targets = unix.UnixLinkingGenerator.run(self, project,
++                name, prop_set, sources)
++            return generated_targets
++
++if on_windows():
++    flags('android.link.dll', '.IMPLIB-COMMAND', [], ['-Wl,--out-implib,'])
++    generators.register(
++        androidLinkingGenerator('android.link', True,
++            ['OBJ', 'SEARCHED_LIB', 'STATIC_LIB', 'IMPORT_LIB'],
++            [ 'EXE' ],
++            [ '<toolset>android' ]))
++    generators.register(
++        androidLinkingGenerator('android.link.dll', True,
++            ['OBJ', 'SEARCHED_LIB', 'STATIC_LIB', 'IMPORT_LIB'],
++            ['IMPORT_LIB', 'SHARED_LIB'],
++            ['<toolset>android']))
++else:
++    generators.register(
++        androidLinkingGenerator('android.link', True,
++            ['LIB', 'OBJ'],
++            ['EXE'],
++            ['<toolset>android']))
++    generators.register(
++        androidLinkingGenerator('android.link.dll', True,
++            ['LIB', 'OBJ'],
++            ['SHARED_LIB'],
++            ['<toolset>android']))
++
++# Declare flags for linking.
++# First, the common flags.
++flags('android.link', 'OPTIONS', ['<debug-symbols>on'], ['-g'])
++flags('android.link', 'OPTIONS', ['<profiling>on'], ['-pg'])
++flags('android.link', 'USER_OPTIONS', [], ['<linkflags>'])
++flags('android.link', 'LINKPATH', [], ['<library-path>'])
++flags('android.link', 'FINDLIBS-ST', [], ['<find-static-library>'])
++flags('android.link', 'FINDLIBS-SA', [], ['<find-shared-library>'])
++flags('android.link', 'LIBRARIES', [], ['<library-file>'])
++
++# For <runtime-link>static we made sure there are no dynamic libraries in the
++# link. On HP-UX not all system libraries exist as archived libraries (for
++# example, there is no libunwind.a), so, on this platform, the -static option
++# cannot be specified.
++if os_name() != 'HPUX':
++    flags('android.link', 'OPTIONS', ['<runtime-link>static'], ['-static'])
++
++# Now, the vendor specific flags.
++# The parameter linker can be either gnu, darwin, osf, hpux or sun.
++def init_link_flags(toolset, linker, condition):
++    """
++        Now, the vendor specific flags.
++        The parameter linker can be either gnu, darwin, osf, hpux or sun.
++    """
++    toolset_link = toolset + '.link'
++    if linker == 'gnu':
++        # Strip the binary when no debugging is needed. We use --strip-all flag
++        # as opposed to -s since icc (intel's compiler) is generally
++        # option-compatible with and inherits from the android toolset, but does not
++        # support -s.
++
++        # FIXME: what does unchecked translate to?
++        flags(toolset_link, 'OPTIONS', map(lambda x: x + '/<debug-symbols>off', condition), ['-Wl,--strip-all'])  # : unchecked ;
++        flags(toolset_link, 'RPATH',       condition,                      ['<dll-path>'])       # : unchecked ;
++        flags(toolset_link, 'RPATH_LINK',  condition,                      ['<xdll-path>'])      # : unchecked ;
++        flags(toolset_link, 'START-GROUP', condition,                      ['-Wl,--start-group'])# : unchecked ;
++        flags(toolset_link, 'END-GROUP',   condition,                      ['-Wl,--end-group'])  # : unchecked ;
++
++        # gnu ld has the ability to change the search behaviour for libraries
++        # referenced by -l switch. These modifiers are -Bstatic and -Bdynamic
++        # and change search for -l switches that follow them. The following list
++        # shows the tried variants.
++        # The search stops at the first variant that has a match.
++        # *nix: -Bstatic -lxxx
++        #    libxxx.a
++        #
++        # *nix: -Bdynamic -lxxx
++        #    libxxx.so
++        #    libxxx.a
++        #
++        # windows (mingw,cygwin) -Bstatic -lxxx
++        #    libxxx.a
++        #    xxx.lib
++        #
++        # windows (mingw,cygwin) -Bdynamic -lxxx
++        #    libxxx.dll.a
++        #    xxx.dll.a
++        #    libxxx.a
++        #    xxx.lib
++        #    cygxxx.dll (*)
++        #    libxxx.dll
++        #    xxx.dll
++        #    libxxx.a
++        #
++        # (*) This is for cygwin
++        # Please note that -Bstatic and -Bdynamic are not a guarantee that a
++        # static or dynamic lib indeed gets linked in. The switches only change
++        # search patterns!
++
++        # On *nix mixing shared libs with static runtime is not a good idea.
++        flags(toolset_link, 'FINDLIBS-ST-PFX',
++              map(lambda x: x + '/<runtime-link>shared', condition),
++            ['-Wl,-Bstatic']) # : unchecked ;
++        flags(toolset_link, 'FINDLIBS-SA-PFX',
++              map(lambda x: x + '/<runtime-link>shared', condition),
++            ['-Wl,-Bdynamic']) # : unchecked ;
++
++        # On windows allow mixing of static and dynamic libs with static
++        # runtime.
++        flags(toolset_link, 'FINDLIBS-ST-PFX',
++              map(lambda x: x + '/<runtime-link>static/<target-os>windows', condition),
++              ['-Wl,-Bstatic']) # : unchecked ;
++        flags(toolset_link, 'FINDLIBS-SA-PFX',
++              map(lambda x: x + '/<runtime-link>static/<target-os>windows', condition),
++              ['-Wl,-Bdynamic']) # : unchecked ;
++        flags(toolset_link, 'OPTIONS',
++              map(lambda x: x + '/<runtime-link>static/<target-os>windows', condition),
++              ['-Wl,-Bstatic']) # : unchecked ;
++
++    elif linker == 'darwin':
++        # On Darwin, the -s option to ld does not work unless we pass -static,
++        # and passing -static unconditionally is a bad idea. So, don't pass -s.
++        # at all, darwin.jam will use separate 'strip' invocation.
++        flags(toolset_link, 'RPATH', condition, ['<dll-path>']) # : unchecked ;
++        flags(toolset_link, 'RPATH_LINK', condition, ['<xdll-path>']) # : unchecked ;
++
++    elif linker == 'osf':
++        # No --strip-all, just -s.
++        flags(toolset_link, 'OPTIONS', map(lambda x: x + '/<debug-symbols>off', condition), ['-Wl,-s'])
++            # : unchecked ;
++        flags(toolset_link, 'RPATH', condition, ['<dll-path>']) # : unchecked ;
++        # This does not supports -R.
++        flags(toolset_link, 'RPATH_OPTION', condition, ['-rpath']) # : unchecked ;
++        # -rpath-link is not supported at all.
++
++    elif linker == 'sun':
++        flags(toolset_link, 'OPTIONS', map(lambda x: x + '/<debug-symbols>off', condition), ['-Wl,-s'])
++            # : unchecked ;
++        flags(toolset_link, 'RPATH', condition, ['<dll-path>']) # : unchecked ;
++        # Solaris linker does not have a separate -rpath-link, but allows to use
++        # -L for the same purpose.
++        flags(toolset_link, 'LINKPATH', condition, ['<xdll-path>']) # : unchecked ;
++
++        # This permits shared libraries with non-PIC code on Solaris.
++        # VP, 2004/09/07: Now that we have -fPIC hardcode in link.dll, the
++        # following is not needed. Whether -fPIC should be hardcoded, is a
++        # separate question.
++        # AH, 2004/10/16: it is still necessary because some tests link against
++        # static libraries that were compiled without PIC.
++        flags(toolset_link, 'OPTIONS', map(lambda x: x + '/<link>shared', condition), ['-mimpure-text'])
++            # : unchecked ;
++
++    elif linker == 'hpux':
++        flags(toolset_link, 'OPTIONS', map(lambda x: x + '/<debug-symbols>off', condition),
++            ['-Wl,-s']) # : unchecked ;
++        flags(toolset_link, 'OPTIONS', map(lambda x: x + '/<link>shared', condition),
++            ['-fPIC']) # : unchecked ;
++
++    else:
++        # FIXME:
++        errors.user_error(
++        "$(toolset) initialization: invalid linker '$(linker)' " +
++        "The value '$(linker)' specified for <linker> is not recognized. " +
++        "Possible values are 'gnu', 'darwin', 'osf', 'hpux' or 'sun'")
++
++# Declare actions for linking.
++def android_link(targets, sources, properties):
++    engine = get_manager().engine()
++    engine.set_target_variable(targets, 'SPACE', ' ')
++    # Serialize execution of the 'link' action, since running N links in
++    # parallel is just slower. For now, serialize only android links, it might be a
++    # good idea to serialize all links.
++    engine.set_target_variable(targets, 'JAM_SEMAPHORE', '<s>android-link-semaphore')
++
++engine.register_action(
++    'android.link',
++    '"$(CONFIG_COMMAND)" -L"$(LINKPATH)" ' +
++        '-Wl,$(RPATH_OPTION:E=-R)$(SPACE)-Wl,"$(RPATH)" ' +
++        '-Wl,-rpath-link$(SPACE)-Wl,"$(RPATH_LINK)" -o "$(<)" ' +
++        '$(START-GROUP) "$(>)" "$(LIBRARIES)" $(FINDLIBS-ST-PFX) ' +
++        '-l$(FINDLIBS-ST) $(FINDLIBS-SA-PFX) -l$(FINDLIBS-SA) $(END-GROUP) ' +
++        '$(OPTIONS) $(USER_OPTIONS)',
++    function=android_link,
++    bound_list=['LIBRARIES'])
++
++# Default value. Mostly for the sake of intel-linux that inherits from android, but
++# does not have the same logic to set the .AR variable. We can put the same
++# logic in intel-linux, but that's hardly worth the trouble as on Linux, 'ar' is
++# always available.
++__AR = 'ar'
++
++flags('android.archive', 'AROPTIONS', [], ['<archiveflags>'])
++
++def android_archive(targets, sources, properties):
++    # Always remove archive and start again. Here's rationale from
++    #
++    # Andre Hentz:
++    #
++    # I had a file, say a1.c, that was included into liba.a. I moved a1.c to
++    # a2.c, updated my Jamfiles and rebuilt. My program was crashing with absurd
++    # errors. After some debugging I traced it back to the fact that a1.o was
++    # *still* in liba.a
++    #
++    # Rene Rivera:
++    #
++    # Originally removing the archive was done by splicing an RM onto the
++    # archive action. That makes archives fail to build on NT when they have
++    # many files because it will no longer execute the action directly and blow
++    # the line length limit. Instead we remove the file in a different action,
++    # just before building the archive.
++    clean = targets[0] + '(clean)'
++    bjam.call('TEMPORARY', clean)
++    bjam.call('NOCARE', clean)
++    engine = get_manager().engine()
++    engine.set_target_variable('LOCATE', clean, bjam.call('get-target-variable', targets, 'LOCATE'))
++    engine.add_dependency(clean, sources)
++    engine.add_dependency(targets, clean)
++    engine.set_update_action('common.RmTemps', clean, targets, None)
++
++# Declare action for creating static libraries.
++# The letter 'r' means to add files to the archive with replacement. Since we
++# remove archive, we don't care about replacement, but there's no option "add
++# without replacement".
++# The letter 'c' suppresses the warning in case the archive does not exists yet.
++# That warning is produced only on some platforms, for whatever reasons.
++engine.register_action('android.archive',
++                       '"$(.AR)" $(AROPTIONS) rc "$(<)" "$(>)"',
++                       function=android_archive,
++                       flags=['piecemeal'])
++
++def android_link_dll(targets, sources, properties):
++    engine = get_manager().engine()
++    engine.set_target_variable(targets, 'SPACE', ' ')
++    engine.set_target_variable(targets, 'JAM_SEMAPHORE', '<s>android-link-semaphore')
++
++engine.register_action(
++    'android.link.dll',
++    # Differ from 'link' above only by -shared.
++    '"$(CONFIG_COMMAND)" -L"$(LINKPATH)" ' +
++        '-Wl,$(RPATH_OPTION:E=-R)$(SPACE)-Wl,"$(RPATH)" ' +
++        '"$(.IMPLIB-COMMAND)$(<[1])" -o "$(<[-1])" ' +
++        '$(HAVE_SONAME)-Wl,$(SONAME_OPTION)$(SPACE)-Wl,$(<[-1]:D=) ' +
++        '-shared $(START-GROUP) "$(>)" "$(LIBRARIES)" $(FINDLIBS-ST-PFX) ' +
++        '-l$(FINDLIBS-ST) $(FINDLIBS-SA-PFX) -l$(FINDLIBS-SA) $(END-GROUP) ' +
++        '$(OPTIONS) $(USER_OPTIONS)',
++    function = android_link_dll,
++    bound_list=['LIBRARIES'])
++
++# Set up threading support. It's somewhat contrived, so perform it at the end,
++# to avoid cluttering other code.
++
++if on_windows():
++    flags('android', 'OPTIONS', ['<threading>multi'], ['-mthreads'])
++elif bjam.variable('UNIX'):
++    jamuname = bjam.variable('JAMUNAME')
++    host_os_name = jamuname[0]
++    print "MOSSS>>> host_os_name:", host_os_name
++    if host_os_name.startswith('SunOS'):
++        #flags('android', 'OPTIONS', ['<threading>multi'], ['-pthreads'])
++        #flags('android', 'FINDLIBS-SA', [], ['rt'])
++    elif host_os_name == 'BeOS':
++        # BeOS has no threading options, don't set anything here.
++        pass
++    elif host_os_name.endswith('BSD'):
++        #flags('android', 'OPTIONS', ['<threading>multi'], ['-pthread'])
++        # there is no -lrt on BSD
++    elif host_os_name == 'DragonFly':
++        #flags('android', 'OPTIONS', ['<threading>multi'], ['-pthread'])
++        # there is no -lrt on BSD - DragonFly is a FreeBSD variant,
++        # which anoyingly doesn't say it's a *BSD.
++    elif host_os_name == 'IRIX':
++        # android on IRIX does not support multi-threading, don't set anything here.
++        pass
++    elif host_os_name == 'Darwin':
++        # Darwin has no threading options, don't set anything here.
++        pass
++    else:
++        #flags('android', 'OPTIONS', ['<threading>multi'], ['-pthread'])
++        #flags('android', 'FINDLIBS-SA', [], ['rt'])
++
++def cpu_flags(toolset, variable, architecture, instruction_set, values, default=None):
++    #FIXME: for some reason this fails.  Probably out of date feature code
++##    if default:
++##        flags(toolset, variable,
++##              ['<architecture>' + architecture + '/<instruction-set>'],
++##              values)
++    flags(toolset, variable,
++          #FIXME: same as above
++          [##'<architecture>/<instruction-set>' + instruction_set,
++           '<architecture>' + architecture + '/<instruction-set>' + instruction_set],
++          values)
++
++# Set architecture/instruction-set options.
++#
++# x86 and compatible
++flags('android', 'OPTIONS', ['<architecture>x86/<address-model>32'], ['-m32'])
++flags('android', 'OPTIONS', ['<architecture>x86/<address-model>64'], ['-m64'])
++cpu_flags('android', 'OPTIONS', 'x86', 'i386', ['-march=i386'], default=True)
++cpu_flags('android', 'OPTIONS', 'x86', 'i486', ['-march=i486'])
++cpu_flags('android', 'OPTIONS', 'x86', 'i586', ['-march=i586'])
++cpu_flags('android', 'OPTIONS', 'x86', 'i686', ['-march=i686'])
++cpu_flags('android', 'OPTIONS', 'x86', 'pentium', ['-march=pentium'])
++cpu_flags('android', 'OPTIONS', 'x86', 'pentium-mmx', ['-march=pentium-mmx'])
++cpu_flags('android', 'OPTIONS', 'x86', 'pentiumpro', ['-march=pentiumpro'])
++cpu_flags('android', 'OPTIONS', 'x86', 'pentium2', ['-march=pentium2'])
++cpu_flags('android', 'OPTIONS', 'x86', 'pentium3', ['-march=pentium3'])
++cpu_flags('android', 'OPTIONS', 'x86', 'pentium3m', ['-march=pentium3m'])
++cpu_flags('android', 'OPTIONS', 'x86', 'pentium-m', ['-march=pentium-m'])
++cpu_flags('android', 'OPTIONS', 'x86', 'pentium4', ['-march=pentium4'])
++cpu_flags('android', 'OPTIONS', 'x86', 'pentium4m', ['-march=pentium4m'])
++cpu_flags('android', 'OPTIONS', 'x86', 'prescott', ['-march=prescott'])
++cpu_flags('android', 'OPTIONS', 'x86', 'nocona', ['-march=nocona'])
++cpu_flags('android', 'OPTIONS', 'x86', 'k6', ['-march=k6'])
++cpu_flags('android', 'OPTIONS', 'x86', 'k6-2', ['-march=k6-2'])
++cpu_flags('android', 'OPTIONS', 'x86', 'k6-3', ['-march=k6-3'])
++cpu_flags('android', 'OPTIONS', 'x86', 'athlon', ['-march=athlon'])
++cpu_flags('android', 'OPTIONS', 'x86', 'athlon-tbird', ['-march=athlon-tbird'])
++cpu_flags('android', 'OPTIONS', 'x86', 'athlon-4', ['-march=athlon-4'])
++cpu_flags('android', 'OPTIONS', 'x86', 'athlon-xp', ['-march=athlon-xp'])
++cpu_flags('android', 'OPTIONS', 'x86', 'athlon-mp', ['-march=athlon-mp'])
++##
++cpu_flags('android', 'OPTIONS', 'x86', 'k8', ['-march=k8'])
++cpu_flags('android', 'OPTIONS', 'x86', 'opteron', ['-march=opteron'])
++cpu_flags('android', 'OPTIONS', 'x86', 'athlon64', ['-march=athlon64'])
++cpu_flags('android', 'OPTIONS', 'x86', 'athlon-fx', ['-march=athlon-fx'])
++cpu_flags('android', 'OPTIONS', 'x86', 'winchip-c6', ['-march=winchip-c6'])
++cpu_flags('android', 'OPTIONS', 'x86', 'winchip2', ['-march=winchip2'])
++cpu_flags('android', 'OPTIONS', 'x86', 'c3', ['-march=c3'])
++cpu_flags('android', 'OPTIONS', 'x86', 'c3-2', ['-march=c3-2'])
++# Sparc
++flags('android', 'OPTIONS', ['<architecture>sparc/<address-model>32'], ['-m32'])
++flags('android', 'OPTIONS', ['<architecture>sparc/<address-model>64'], ['-m64'])
++cpu_flags('android', 'OPTIONS', 'sparc', 'c3', ['-mcpu=c3'], default=True)
++cpu_flags('android', 'OPTIONS', 'sparc', 'v7', ['-mcpu=v7'])
++cpu_flags('android', 'OPTIONS', 'sparc', 'cypress', ['-mcpu=cypress'])
++cpu_flags('android', 'OPTIONS', 'sparc', 'v8', ['-mcpu=v8'])
++cpu_flags('android', 'OPTIONS', 'sparc', 'supersparc', ['-mcpu=supersparc'])
++cpu_flags('android', 'OPTIONS', 'sparc', 'sparclite', ['-mcpu=sparclite'])
++cpu_flags('android', 'OPTIONS', 'sparc', 'hypersparc', ['-mcpu=hypersparc'])
++cpu_flags('android', 'OPTIONS', 'sparc', 'sparclite86x', ['-mcpu=sparclite86x'])
++cpu_flags('android', 'OPTIONS', 'sparc', 'f930', ['-mcpu=f930'])
++cpu_flags('android', 'OPTIONS', 'sparc', 'f934', ['-mcpu=f934'])
++cpu_flags('android', 'OPTIONS', 'sparc', 'sparclet', ['-mcpu=sparclet'])
++cpu_flags('android', 'OPTIONS', 'sparc', 'tsc701', ['-mcpu=tsc701'])
++cpu_flags('android', 'OPTIONS', 'sparc', 'v9', ['-mcpu=v9'])
++cpu_flags('android', 'OPTIONS', 'sparc', 'ultrasparc', ['-mcpu=ultrasparc'])
++cpu_flags('android', 'OPTIONS', 'sparc', 'ultrasparc3', ['-mcpu=ultrasparc3'])
++# RS/6000 & PowerPC
++flags('android', 'OPTIONS', ['<architecture>power/<address-model>32'], ['-m32'])
++flags('android', 'OPTIONS', ['<architecture>power/<address-model>64'], ['-m64'])
++cpu_flags('android', 'OPTIONS', 'power', '403', ['-mcpu=403'])
++cpu_flags('android', 'OPTIONS', 'power', '505', ['-mcpu=505'])
++cpu_flags('android', 'OPTIONS', 'power', '601', ['-mcpu=601'])
++cpu_flags('android', 'OPTIONS', 'power', '602', ['-mcpu=602'])
++cpu_flags('android', 'OPTIONS', 'power', '603', ['-mcpu=603'])
++cpu_flags('android', 'OPTIONS', 'power', '603e', ['-mcpu=603e'])
++cpu_flags('android', 'OPTIONS', 'power', '604', ['-mcpu=604'])
++cpu_flags('android', 'OPTIONS', 'power', '604e', ['-mcpu=604e'])
++cpu_flags('android', 'OPTIONS', 'power', '620', ['-mcpu=620'])
++cpu_flags('android', 'OPTIONS', 'power', '630', ['-mcpu=630'])
++cpu_flags('android', 'OPTIONS', 'power', '740', ['-mcpu=740'])
++cpu_flags('android', 'OPTIONS', 'power', '7400', ['-mcpu=7400'])
++cpu_flags('android', 'OPTIONS', 'power', '7450', ['-mcpu=7450'])
++cpu_flags('android', 'OPTIONS', 'power', '750', ['-mcpu=750'])
++cpu_flags('android', 'OPTIONS', 'power', '801', ['-mcpu=801'])
++cpu_flags('android', 'OPTIONS', 'power', '821', ['-mcpu=821'])
++cpu_flags('android', 'OPTIONS', 'power', '823', ['-mcpu=823'])
++cpu_flags('android', 'OPTIONS', 'power', '860', ['-mcpu=860'])
++cpu_flags('android', 'OPTIONS', 'power', '970', ['-mcpu=970'])
++cpu_flags('android', 'OPTIONS', 'power', '8540', ['-mcpu=8540'])
++cpu_flags('android', 'OPTIONS', 'power', 'power', ['-mcpu=power'])
++cpu_flags('android', 'OPTIONS', 'power', 'power2', ['-mcpu=power2'])
++cpu_flags('android', 'OPTIONS', 'power', 'power3', ['-mcpu=power3'])
++cpu_flags('android', 'OPTIONS', 'power', 'power4', ['-mcpu=power4'])
++cpu_flags('android', 'OPTIONS', 'power', 'power5', ['-mcpu=power5'])
++cpu_flags('android', 'OPTIONS', 'power', 'powerpc', ['-mcpu=powerpc'])
++cpu_flags('android', 'OPTIONS', 'power', 'powerpc64', ['-mcpu=powerpc64'])
++cpu_flags('android', 'OPTIONS', 'power', 'rios', ['-mcpu=rios'])
++cpu_flags('android', 'OPTIONS', 'power', 'rios1', ['-mcpu=rios1'])
++cpu_flags('android', 'OPTIONS', 'power', 'rios2', ['-mcpu=rios2'])
++cpu_flags('android', 'OPTIONS', 'power', 'rsc', ['-mcpu=rsc'])
++cpu_flags('android', 'OPTIONS', 'power', 'rs64a', ['-mcpu=rs64'])
++# AIX variant of RS/6000 & PowerPC
++flags('android', 'OPTIONS', ['<architecture>power/<address-model>32/<target-os>aix'], ['-maix32'])
++flags('android', 'OPTIONS', ['<architecture>power/<address-model>64/<target-os>aix'], ['-maix64'])
++flags('android', 'AROPTIONS', ['<architecture>power/<address-model>64/<target-os>aix'], ['-X 64'])
