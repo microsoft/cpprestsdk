@@ -75,6 +75,7 @@ if(CPPREST_EXCLUDE_COMPRESSION)
 else()
   cpprest_find_zlib()
   target_link_libraries(cpprest PRIVATE cpprestsdk_zlib_internal)
+  target_compile_definitions(cpprest PRIVATE -DCPPREST_HTTP_COMPRESSION=1)
 endif()
 
 # PPLX component
