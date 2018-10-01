@@ -47,7 +47,7 @@ target_link_libraries(main PRIVATE cpprestsdk::cpprest)
 *   Features - HTTP client/server, JSON, URI, asynchronous streams, WebSockets client, oAuth
 *   PPL Tasks - A powerful model for composing asynchronous operations based on C++ 11 features
 *   Platforms - Windows desktop, Windows Store (UWP), Linux, OS X, Unix, iOS, and Android
-*   Support for Visual Studio 2015 and 2017 with debugger visualizers
+*   Support for [Visual Studio 2015 and 2017](https://visualstudio.microsoft.com/) with debugger visualizers
 
 ## Contribute Back!
 
