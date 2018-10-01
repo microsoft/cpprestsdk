@@ -117,13 +117,17 @@ namespace std
     }
 }
 #endif /* _MSC_VER < 1700 */
+
 #ifndef _PPLTASK_ASYNC_LOGGING
-    #if _MSC_VER >= 1800 && defined(__cplusplus_winrt)
-        #define _PPLTASK_ASYNC_LOGGING 1  // Only enable async logging under dev12 winrt
-    #else
-        #define _PPLTASK_ASYNC_LOGGING 0
-    #endif
-#endif /* !_PPLTASK_ASYNC_LOGGING */
+#define _PPLTASK_ASYNC_LOGGING 1
+#endif // #ifndef _PPLTASK_ASYNC_LOGGING
+
+#if _PPLTASK_ASYNC_LOGGING
+#pragma detect_mismatch("_PPLTASK_ASYNC_LOGGING", "1")
+#else
+#pragma detect_mismatch("_PPLTASK_ASYNC_LOGGING", "0")
+#endif // #if _PPLTASK_ASYNC_LOGGING
+
 #endif /* _MSC_VER */
 
 #pragma pack(push,_CRT_PACKING)
@@ -1441,7 +1445,7 @@ namespace details
         virtual ~_ContinuationTaskHandleBase() {}
     };
 
-#if _PPLTASK_ASYNC_LOGGING
+#if _PPLTASK_ASYNC_LOGGING && _MSC_VER >= 1800 && defined(__cplusplus_winrt)
     // GUID used for identifying causality logs from PPLTask
     const ::Platform::Guid _PPLTaskCausalityPlatformID(0x7A76B220, 0xA758, 0x4E6E, 0xB0, 0xE0, 0xD7, 0xC6, 0xD7, 0x4A, 0x88, 0xFE);
 
@@ -2360,7 +2364,7 @@ namespace details
         _Task_impl_base const & operator=(_Task_impl_base const&);
     };
 
-#if _PPLTASK_ASYNC_LOGGING
+#if _PPLTASK_ASYNC_LOGGING && _MSC_VER >= 1800 && defined(__cplusplus_winrt)
     inline void _TaskEventLogger::_LogTaskCompleted()
     {
         if (_M_scheduled)
