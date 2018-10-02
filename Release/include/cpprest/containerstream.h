@@ -56,6 +56,25 @@ namespace Concurrency { namespace streams {
         }
 
         /// <summary>
+        /// Constructor
+        /// </summary>
+        basic_container_buffer(std::ios_base::openmode mode)
+            : streambuf_state_manager<typename _CollectionType::value_type>(mode),
+            m_current_position(0) {
+            validate_mode(mode);
+        }
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        basic_container_buffer(_CollectionType data, std::ios_base::openmode mode)
+            : streambuf_state_manager<typename _CollectionType::value_type>(mode),
+            m_data(std::move(data)),
+            m_current_position((mode & std::ios_base::in) ? 0 : m_data.size()) {
+            validate_mode(mode);
+        }
+
+        /// <summary>
         /// Destructor
         /// </summary>
         virtual ~basic_container_buffer()
@@ -362,27 +381,6 @@ namespace Concurrency { namespace streams {
 
     private:
         template<typename _CollectionType1> friend class streams::container_buffer;
-
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        basic_container_buffer(std::ios_base::openmode mode)
-            : streambuf_state_manager<typename _CollectionType::value_type>(mode),
-              m_current_position(0)
-        {
-            validate_mode(mode);
-        }
-
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        basic_container_buffer(_CollectionType data, std::ios_base::openmode mode)
-            : streambuf_state_manager<typename _CollectionType::value_type>(mode),
-              m_data(std::move(data)),
-              m_current_position((mode & std::ios_base::in) ? 0 : m_data.size())
-        {
-            validate_mode(mode);
-        }
 
         static void validate_mode(std::ios_base::openmode mode)
         {

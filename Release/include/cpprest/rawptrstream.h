@@ -59,6 +59,33 @@ namespace Concurrency { namespace streams {
         }
 
         /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="data">The address (pointer to) the memory block.</param>
+        /// <param name="size">The memory block size, measured in number of characters.</param>
+        basic_rawptr_buffer(const _CharType* data, size_t size)
+            : streambuf_state_manager<_CharType>(std::ios_base::in),
+            m_data(const_cast<_CharType*>(data)),
+            m_size(size),
+            m_current_position(0) {
+            validate_mode(std::ios_base::in);
+        }
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="data">The address (pointer to) the memory block.</param>
+        /// <param name="size">The memory block size, measured in number of characters.</param>
+        /// <param name="mode">The stream mode (in, out, etc.).</param>
+        basic_rawptr_buffer(_CharType* data, size_t size, std::ios_base::openmode mode)
+            : streambuf_state_manager<_CharType>(mode),
+            m_data(data),
+            m_size(size),
+            m_current_position(0) {
+            validate_mode(mode);
+        }
+
+        /// <summary>
         /// Destructor
         /// </summary>
         virtual ~basic_rawptr_buffer()
@@ -396,35 +423,6 @@ namespace Concurrency { namespace streams {
 
     private:
         template<typename _CharType1> friend class ::concurrency::streams::rawptr_buffer;
-
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        /// <param name="data">The address (pointer to) the memory block.</param>
-        /// <param name="size">The memory block size, measured in number of characters.</param>
-        basic_rawptr_buffer(const _CharType* data, size_t size)
-            : streambuf_state_manager<_CharType>(std::ios_base::in),
-              m_data(const_cast<_CharType*>(data)),
-              m_size(size),
-              m_current_position(0)
-        {
-            validate_mode(std::ios_base::in);
-        }
-
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        /// <param name="data">The address (pointer to) the memory block.</param>
-        /// <param name="size">The memory block size, measured in number of characters.</param>
-        /// <param name="mode">The stream mode (in, out, etc.).</param>
-        basic_rawptr_buffer(_CharType* data, size_t size, std::ios_base::openmode mode)
-            : streambuf_state_manager<_CharType>(mode),
-              m_data(data),
-              m_size(size),
-              m_current_position(0)
-        {
-            validate_mode(mode);
-        }
 
         static void validate_mode(std::ios_base::openmode mode)
         {

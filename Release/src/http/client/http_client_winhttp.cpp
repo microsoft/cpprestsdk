@@ -225,7 +225,14 @@ enum msg_body_type
 // Additional information necessary to track a WinHTTP request.
 class winhttp_request_context final : public request_context
 {
+private:
+
+    struct private_constructor_cookie { };
+
 public:
+
+    explicit winhttp_request_context(private_constructor_cookie, const std::shared_ptr<_http_client_communicator> &client, const http_request &request)
+    : winhttp_request_context(client, request) { };
 
     // Factory function to create requests on the heap.
     static std::shared_ptr<request_context> create_request_context(const std::shared_ptr<_http_client_communicator> &client, const http_request &request)
