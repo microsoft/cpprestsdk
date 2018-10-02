@@ -95,7 +95,7 @@ public:
         // Add any specified subprotocols.
         if (headers.has(protocolHeader))
         {
-            const std::vector<utility::string_t> protocols = m_config.subprotocols();
+            const utility::vector<utility::string_t> protocols = m_config.subprotocols();
             for (const auto & value : protocols)
             {
                 m_msg_websocket->Control->SupportedProtocols->Append(Platform::StringReference(value.c_str()));
@@ -269,7 +269,7 @@ public:
             {
                 // The stream needs to be buffered.
                 auto is_buf_istream = is_buf.create_istream();
-                msg.m_body = concurrency::streams::container_buffer<std::vector<uint8_t>>();
+                msg.m_body = concurrency::streams::container_buffer<utility::vector<uint8_t>>();
                 is_buf_istream.read_to_end(msg.m_body).then([this_client, msg](pplx::task<size_t> t) mutable
                 {
                     try
@@ -465,7 +465,7 @@ void ReceiveContext::OnClosed(IWebSocket^ sender, WebSocketClosedEventArgs^ args
 }
 
 websocket_client_task_impl::websocket_client_task_impl(websocket_client_config config) :
-    m_callback_client(std::make_shared<details::winrt_callback_client>(std::move(config))),
+    m_callback_client(utility::make_shared<details::winrt_callback_client>(std::move(config))),
     m_client_closed(false)
 {
     set_handler();
@@ -473,11 +473,11 @@ websocket_client_task_impl::websocket_client_task_impl(websocket_client_config c
 }
 
 websocket_callback_client::websocket_callback_client() :
-    m_client(std::make_shared<details::winrt_callback_client>(websocket_client_config()))
+    m_client(utility::make_shared<details::winrt_callback_client>(websocket_client_config()))
 {}
 
 websocket_callback_client::websocket_callback_client(websocket_client_config config) :
-    m_client(std::make_shared<details::winrt_callback_client>(std::move(config)))
+    m_client(utility::make_shared<details::winrt_callback_client>(std::move(config)))
 {}
 
 }}}

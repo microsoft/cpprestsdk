@@ -17,7 +17,7 @@ utility::string_t get_default_reason_phrase(status_code code);
 
 // simple helper functions to trim whitespace.
 template<class Char>
-void trim_whitespace(std::basic_string<Char> &str)
+void trim_whitespace(utility::basic_string<Char> &str)
 {
     size_t index;
     // trim left whitespace

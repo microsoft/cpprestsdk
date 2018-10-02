@@ -58,13 +58,13 @@ void request_context::complete_request(utility::size64_t body_size)
     finish();
 }
 
-void request_context::report_error(unsigned long error_code, const std::string &errorMessage)
+void request_context::report_error(unsigned long error_code, const utility::string &errorMessage)
 {
     report_exception(http_exception(static_cast<int>(error_code), errorMessage));
 }
 
 #if defined(_WIN32)
-void request_context::report_error(unsigned long error_code, const std::wstring &errorMessage)
+void request_context::report_error(unsigned long error_code, const utility::wstring &errorMessage)
 {
     report_exception(http_exception(static_cast<int>(error_code), errorMessage));
 }
@@ -109,7 +109,7 @@ bool request_context::handle_content_encoding_compression()
 
             if (alg != web::http::details::compression::compression_algorithm::invalid)
             {
-                m_decompressor = utility::details::make_unique<web::http::details::compression::stream_decompressor>(alg);
+                m_decompressor = utility::make_unique<web::http::details::compression::stream_decompressor>(alg);
             }
             else
             {
@@ -315,7 +315,7 @@ public:
 private:
 
     // The vector of pipeline stages.
-    std::vector<std::shared_ptr<http_pipeline_stage>> m_stages;
+    utility::vector<std::shared_ptr<http_pipeline_stage>> m_stages;
 
     pplx::extensibility::recursive_lock_t m_lock;
 };
@@ -338,7 +338,7 @@ void http_client::add_handler(const std::function<pplx::task<http_response> __cd
         std::function<pplx::task<http_response>(http_request, std::shared_ptr<http::http_pipeline_stage>)> m_handler;
     };
 
-    m_pipeline->append(std::make_shared<function_pipeline_wrapper>(handler));
+    m_pipeline->append(utility::make_shared<function_pipeline_wrapper>(handler));
 }
 
 void http_client::add_handler(const std::shared_ptr<http::http_pipeline_stage> &stage)
@@ -367,15 +367,15 @@ http_client::http_client(const uri &base_uri, const http_client_config &client_c
         final_pipeline_stage = details::create_platform_final_pipeline_stage(uri(base_uri), http_client_config(client_config));
     }
 
-    m_pipeline = std::make_shared<http_pipeline>(std::move(final_pipeline_stage));
+    m_pipeline = utility::make_shared<http_pipeline>(std::move(final_pipeline_stage));
 
 #if !defined(CPPREST_TARGET_XP)
     add_handler(std::static_pointer_cast<http::http_pipeline_stage>(
-        std::make_shared<oauth1::details::oauth1_handler>(client_config.oauth1())));
+        utility::make_shared<oauth1::details::oauth1_handler>(client_config.oauth1())));
 #endif
 
     add_handler(std::static_pointer_cast<http::http_pipeline_stage>(
-        std::make_shared<oauth2::details::oauth2_handler>(client_config.oauth2())));
+        utility::make_shared<oauth2::details::oauth2_handler>(client_config.oauth2())));
 }
 
 http_client::~http_client() CPPREST_NOEXCEPT {}

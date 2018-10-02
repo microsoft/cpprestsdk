@@ -63,12 +63,12 @@ struct http_version
     /// Creates <c>http_version</c> from an HTTP-Version string, "HTTP" "/" 1*DIGIT "." 1*DIGIT.
     /// </summary>
     /// <returns>Returns a <c>http_version</c> of {0, 0} if not successful.</returns>
-    static _ASYNCRTIMP http_version __cdecl from_string(const std::string& http_version_string);
+    static _ASYNCRTIMP http_version __cdecl from_string(const utility::string& http_version_string);
 
     /// <summary>
     /// Returns the string representation of the <c>http_version</c>.
     /// </summary>
-    _ASYNCRTIMP std::string to_utf8string() const;
+    _ASYNCRTIMP utility::string to_utf8string() const;
 };
 
 /// <summary>
@@ -200,7 +200,7 @@ public:
     /// Creates an <c>http_exception</c> with just a string message and no error code.
     /// </summary>
     /// <param name="whatArg">Error message string.</param>
-    http_exception(std::string whatArg) : m_msg(std::move(whatArg)) {}
+    http_exception(utility::string whatArg) : m_msg(std::move(whatArg)) {}
 #endif
 
     /// <summary>
@@ -211,7 +211,7 @@ public:
     http_exception(int errorCode)
         : m_errorCode(utility::details::create_error_code(errorCode))
     {
-        m_msg = m_errorCode.message();
+        m_msg = m_errorCode.message().c_str();
     }
 
     /// <summary>
@@ -230,7 +230,7 @@ public:
     /// </summary>
     /// <param name="errorCode">Error code value.</param>
     /// <param name="whatArg">Message to use in what() string.</param>
-    http_exception(int errorCode, std::string whatArg) :
+    http_exception(int errorCode, utility::string whatArg) :
         m_errorCode(utility::details::create_error_code(errorCode)),
         m_msg(std::move(whatArg))
     {}
@@ -244,7 +244,7 @@ public:
     /// <param name="cat">Error category for the code.</param>
     http_exception(int errorCode, const std::error_category &cat) : m_errorCode(std::error_code(errorCode, cat))
     {
-        m_msg = m_errorCode.message();
+        m_msg = m_errorCode.message().c_str();
     }
 
     /// <summary>
@@ -267,7 +267,7 @@ public:
 
 private:
     std::error_code m_errorCode;
-    std::string m_msg;
+    utility::string m_msg;
 };
 
 namespace details
@@ -309,7 +309,7 @@ public:
     _ASYNCRTIMP utility::string_t extract_string(bool ignore_content_type = false);
 
     _ASYNCRTIMP json::value _extract_json(bool ignore_content_type = false);
-    _ASYNCRTIMP std::vector<unsigned char> _extract_vector();
+    _ASYNCRTIMP utility::vector<unsigned char> _extract_vector();
 
     virtual _ASYNCRTIMP utility::string_t to_string() const;
 
@@ -422,10 +422,10 @@ public:
 
     _http_server_context * _get_server_context() const { return m_server_context.get(); }
 
-    void _set_server_context(std::unique_ptr<details::_http_server_context> server_context) { m_server_context = std::move(server_context); }
+    void _set_server_context(utility::unique_ptr<details::_http_server_context> server_context) { m_server_context = std::move(server_context); }
 
 private:
-    std::unique_ptr<_http_server_context> m_server_context;
+    utility::unique_ptr<_http_server_context> m_server_context;
 
     http::status_code m_status_code;
     http::reason_phrase m_reason_phrase;
@@ -445,7 +445,7 @@ public:
     /// Constructs a response with an empty status code, no headers, and no body.
     /// </summary>
     /// <returns>A new HTTP response.</returns>
-    http_response() : _m_impl(std::make_shared<details::_http_response>()) { }
+    http_response() : _m_impl(utility::make_shared<details::_http_response>()) { }
 
     /// <summary>
     /// Constructs a response with given status code, no headers, and no body.
@@ -453,7 +453,7 @@ public:
     /// <param name="code">HTTP status code to use in response.</param>
     /// <returns>A new HTTP response.</returns>
     http_response(http::status_code code)
-        : _m_impl(std::make_shared<details::_http_response>(code)) { }
+        : _m_impl(utility::make_shared<details::_http_response>(code)) { }
 
     /// <summary>
     /// Gets the status code of the response message.
@@ -563,7 +563,7 @@ public:
     /// Extracts the body of the response message into a vector of bytes.
     /// </summary>
     /// <returns>The body of the message as a vector of bytes.</returns>
-    pplx::task<std::vector<unsigned char>> extract_vector() const
+    pplx::task<utility::vector<unsigned char>> extract_vector() const
     {
         auto impl = _m_impl;
         return pplx::create_task(_m_impl->_get_data_available()).then([impl](utility::size64_t) { return impl->_extract_vector(); });
@@ -581,7 +581,7 @@ public:
     void set_body(utf8string &&body_text, const utf8string &content_type = utf8string("text/plain; charset=utf-8"))
     {
         const auto length = body_text.size();
-        _m_impl->set_body(concurrency::streams::bytestream::open_istream<std::string>(std::move(body_text)), length, content_type);
+        _m_impl->set_body(concurrency::streams::bytestream::open_istream<utility::string>(std::move(body_text)), length, content_type);
     }
 
     /// <summary>
@@ -595,7 +595,7 @@ public:
     /// </remarks>
     void set_body(const utf8string &body_text, const utf8string &content_type = utf8string("text/plain; charset=utf-8"))
     {
-        _m_impl->set_body(concurrency::streams::bytestream::open_istream<std::string>(body_text), body_text.size(), content_type);
+        _m_impl->set_body(concurrency::streams::bytestream::open_istream<utility::string>(body_text), body_text.size(), content_type);
     }
 
     /// <summary>
@@ -609,17 +609,17 @@ public:
     /// </remarks>
     void set_body(const utf16string &body_text, utf16string content_type = utility::conversions::to_utf16string("text/plain"))
     {
-        if (content_type.find(::utility::conversions::to_utf16string("charset=")) != content_type.npos)
+        if (content_type.find(utility::conversions::to_utf16string("charset=")) != content_type.npos)
         {
             throw std::invalid_argument("content_type can't contain a 'charset'.");
         }
 
         auto utf8body = utility::conversions::utf16_to_utf8(body_text);
         auto length = utf8body.size();
-        _m_impl->set_body(concurrency::streams::bytestream::open_istream<std::string>(
+        _m_impl->set_body(concurrency::streams::bytestream::open_istream<utility::string>(
         		std::move(utf8body)),
         		length,
-        		std::move(content_type.append(::utility::conversions::to_utf16string("; charset=utf-8"))));
+        		std::move(content_type.append(utility::conversions::to_utf16string("; charset=utf-8"))));
     }
 
     /// <summary>
@@ -645,7 +645,7 @@ public:
     /// <remarks>
     /// This will overwrite any previously set body data.
     /// </remarks>
-    void set_body(std::vector<unsigned char> &&body_data)
+    void set_body(utility::vector<unsigned char> &&body_data)
     {
         auto length = body_data.size();
         set_body(concurrency::streams::bytestream::open_istream(std::move(body_data)), length);
@@ -659,7 +659,7 @@ public:
     /// <remarks>
     /// This will overwrite any previously set body data.
     /// </remarks>
-    void set_body(const std::vector<unsigned char> &body_data)
+    void set_body(const utility::vector<unsigned char> &body_data)
     {
         set_body(concurrency::streams::bytestream::open_istream(body_data), body_data.size());
     }
@@ -723,7 +723,7 @@ public:
     std::shared_ptr<http::details::_http_response> _get_impl() const { return _m_impl; }
 
     http::details::_http_server_context * _get_server_context() const { return _m_impl->_get_server_context(); }
-    void _set_server_context(std::unique_ptr<http::details::_http_server_context> server_context) { _m_impl->_set_server_context(std::move(server_context)); }
+    void _set_server_context(utility::unique_ptr<http::details::_http_server_context> server_context) { _m_impl->_set_server_context(std::move(server_context)); }
 
 private:
 
@@ -740,7 +740,7 @@ public:
 
     _ASYNCRTIMP _http_request(http::method mtd);
 
-    _ASYNCRTIMP _http_request(std::unique_ptr<http::details::_http_server_context> server_context);
+    _ASYNCRTIMP _http_request(utility::unique_ptr<http::details::_http_server_context> server_context);
 
     virtual ~_http_request() {}
 
@@ -783,7 +783,7 @@ public:
 
     void set_progress_handler(const progress_handler &handler)
     {
-        m_progress_handler = std::make_shared<progress_handler>(handler);
+        m_progress_handler = utility::make_shared<progress_handler>(handler);
     }
 
     const concurrency::streams::ostream & _response_stream() const { return m_response_stream; }
@@ -792,7 +792,7 @@ public:
 
     http::details::_http_server_context * _get_server_context() const { return m_server_context.get(); }
 
-    void _set_server_context(std::unique_ptr<http::details::_http_server_context> server_context) { m_server_context = std::move(server_context); }
+    void _set_server_context(utility::unique_ptr<http::details::_http_server_context> server_context) { m_server_context = std::move(server_context); }
 
     void _set_listener_path(const utility::string_t &path) { m_listener_path = path; }
 
@@ -812,7 +812,7 @@ private:
     // Tracks whether or not a response has already been started for this message.
     pplx::details::atomic_long m_initiated_response;
 
-    std::unique_ptr<http::details::_http_server_context> m_server_context;
+    utility::unique_ptr<http::details::_http_server_context> m_server_context;
 
     pplx::cancellation_token m_cancellationToken;
 
@@ -844,14 +844,14 @@ public:
     /// Constructs a new HTTP request with the 'GET' method.
     /// </summary>
     http_request()
-        : _m_impl(std::make_shared<http::details::_http_request>(methods::GET)) {}
+        : _m_impl(utility::make_shared<http::details::_http_request>(methods::GET)) {}
 
     /// <summary>
     /// Constructs a new HTTP request with the given request method.
     /// </summary>
     /// <param name="mtd">Request method.</param>
     http_request(http::method mtd)
-        : _m_impl(std::make_shared<http::details::_http_request>(std::move(mtd))) {}
+        : _m_impl(utility::make_shared<http::details::_http_request>(std::move(mtd))) {}
 
     /// <summary>
     /// Destructor frees any held resources.
@@ -987,7 +987,7 @@ public:
     /// Extract the body of the response message into a vector of bytes. Extracting a vector can be done on
     /// </summary>
     /// <returns>The body of the message as a vector of bytes.</returns>
-    pplx::task<std::vector<unsigned char>> extract_vector() const
+    pplx::task<utility::vector<unsigned char>> extract_vector() const
     {
         auto impl = _m_impl;
         return pplx::create_task(_m_impl->_get_data_available()).then([impl](utility::size64_t) { return impl->_extract_vector(); });
@@ -1005,7 +1005,7 @@ public:
     void set_body(utf8string &&body_text, const utf8string &content_type = utf8string("text/plain; charset=utf-8"))
     {
         const auto length = body_text.size();
-        _m_impl->set_body(concurrency::streams::bytestream::open_istream<std::string>(std::move(body_text)), length, content_type);
+        _m_impl->set_body(concurrency::streams::bytestream::open_istream<utility::string>(std::move(body_text)), length, content_type);
     }
 
     /// <summary>
@@ -1019,7 +1019,7 @@ public:
     /// </remarks>
     void set_body(const utf8string &body_text, const utf8string &content_type = utf8string("text/plain; charset=utf-8"))
     {
-        _m_impl->set_body(concurrency::streams::bytestream::open_istream<std::string>(body_text), body_text.size(), content_type);
+        _m_impl->set_body(concurrency::streams::bytestream::open_istream<utility::string>(body_text), body_text.size(), content_type);
     }
 
     /// <summary>
@@ -1034,7 +1034,7 @@ public:
     /// </remarks>
     void set_body(const utf16string &body_text, utf16string content_type = utility::conversions::to_utf16string("text/plain"))
     {
-        if(content_type.find(::utility::conversions::to_utf16string("charset=")) != content_type.npos)
+        if(content_type.find(utility::conversions::to_utf16string("charset=")) != content_type.npos)
         {
             throw std::invalid_argument("content_type can't contain a 'charset'.");
         }
@@ -1044,7 +1044,7 @@ public:
         _m_impl->set_body(concurrency::streams::bytestream::open_istream(
         		std::move(utf8body)),
         		length,
-        		std::move(content_type.append(::utility::conversions::to_utf16string("; charset=utf-8"))));
+        		std::move(content_type.append(utility::conversions::to_utf16string("; charset=utf-8"))));
     }
 
     /// <summary>
@@ -1070,7 +1070,7 @@ public:
     /// <remarks>
     /// This will overwrite any previously set body data.
     /// </remarks>
-    void set_body(std::vector<unsigned char> &&body_data)
+    void set_body(utility::vector<unsigned char> &&body_data)
     {
         auto length = body_data.size();
         _m_impl->set_body(concurrency::streams::bytestream::open_istream(std::move(body_data)), length, _XPLATSTR("application/octet-stream"));
@@ -1084,7 +1084,7 @@ public:
     /// <remarks>
     /// This will overwrite any previously set body data.
     /// </remarks>
-    void set_body(const std::vector<unsigned char> &body_data)
+    void set_body(const utility::vector<unsigned char> &body_data)
     {
         set_body(concurrency::streams::bytestream::open_istream(body_data), body_data.size());
     }
@@ -1341,8 +1341,8 @@ public:
     /// <summary>
     /// These are used for the initial creation of the HTTP request.
     /// </summary>
-    static http_request _create_request(std::unique_ptr<http::details::_http_server_context> server_context) { return http_request(std::move(server_context)); }
-    void _set_server_context(std::unique_ptr<http::details::_http_server_context> server_context) { _m_impl->_set_server_context(std::move(server_context)); }
+    static http_request _create_request(utility::unique_ptr<http::details::_http_server_context> server_context) { return http_request(std::move(server_context)); }
+    void _set_server_context(utility::unique_ptr<http::details::_http_server_context> server_context) { _m_impl->_set_server_context(std::move(server_context)); }
 
     void _set_listener_path(const utility::string_t &path) { _m_impl->_set_listener_path(path); }
 
@@ -1367,7 +1367,7 @@ private:
     friend class http::details::_http_request;
     friend class http::client::http_client;
 
-    http_request(std::unique_ptr<http::details::_http_server_context> server_context) : _m_impl(std::make_shared<details::_http_request>(std::move(server_context))) {}
+    http_request(utility::unique_ptr<http::details::_http_server_context> server_context) : _m_impl(utility::make_shared<details::_http_request>(std::move(server_context))) {}
 
     std::shared_ptr<http::details::_http_request> _m_impl;
 };

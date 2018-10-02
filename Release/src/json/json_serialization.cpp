@@ -32,11 +32,11 @@ using namespace utility::conversions;
 void web::json::value::serialize(std::ostream& stream) const
 {
     // This has better performance than writing directly to stream.
-    std::string str;
+    utility::string str;
     m_value->serialize_impl(str);
     stream << str;
 }
-void web::json::value::format(std::basic_string<wchar_t> &string) const
+void web::json::value::format(utility::wstring &string) const
 {
     m_value->format(string);
 }
@@ -54,13 +54,13 @@ void web::json::value::serialize(utility::ostream_t &stream) const
     stream << str;
 }
 
-void web::json::value::format(std::basic_string<char>& string) const
+void web::json::value::format(utility::string& string) const
 {
     m_value->format(string);
 }
 
 template<typename CharType>
-void web::json::details::append_escape_string(std::basic_string<CharType>& str, const std::basic_string<CharType>& escaped)
+void web::json::details::append_escape_string(utility::basic_string<CharType>& str, const utility::basic_string<CharType>& escaped)
 {
     for (const auto &ch : escaped)
     {
@@ -123,7 +123,7 @@ void web::json::details::format_string(const utility::string_t& key, utility::st
 }
 
 #ifdef _WIN32
-void web::json::details::format_string(const utility::string_t& key, std::string& str)
+void web::json::details::format_string(const utility::string_t& key, utility::string& str)
 {
     str.push_back('"');
     append_escape_string(str, utility::conversions::to_utf8string(key));
@@ -131,7 +131,7 @@ void web::json::details::format_string(const utility::string_t& key, std::string
 }
 #endif
 
-void web::json::details::_String::format(std::basic_string<char>& str) const
+void web::json::details::_String::format(utility::string& str) const
 {
     str.push_back('"');
 
@@ -147,7 +147,7 @@ void web::json::details::_String::format(std::basic_string<char>& str) const
     str.push_back('"');
 }
 
-void web::json::details::_Number::format(std::basic_string<char>& stream) const
+void web::json::details::_Number::format(utility::string& stream) const
 {
     if(m_number.m_type != number::type::double_type)
     {
@@ -194,7 +194,7 @@ void web::json::details::_Number::format(std::basic_string<char>& stream) const
 
 #ifdef _WIN32
 
-void web::json::details::_String::format(std::basic_string<wchar_t>& str) const
+void web::json::details::_String::format(utility::wstring& str) const
 {
     str.push_back(L'"');
 
@@ -210,7 +210,7 @@ void web::json::details::_String::format(std::basic_string<wchar_t>& str) const
     str.push_back(L'"');
 }
 
-void web::json::details::_Number::format(std::basic_string<wchar_t>& stream) const
+void web::json::details::_Number::format(utility::wstring& stream) const
 {
     if(m_number.m_type != number::type::double_type)
     {

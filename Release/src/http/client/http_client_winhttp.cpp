@@ -50,9 +50,9 @@ CPPREST_CONSTEXPR security_failure_message g_security_failure_messages[] = {
         "WINHTTP_CALLBACK_STATUS_FLAG_SECURITY_CHANNEL_ERROR internal error."},
 };
 
-std::string generate_security_failure_message(std::uint32_t flags)
+utility::string generate_security_failure_message(std::uint32_t flags)
 {
-    std::string result("SSL Error:");
+    utility::string result("SSL Error:");
     for (const auto& message : g_security_failure_messages) {
         if (flags & message.flag) {
             result.push_back(' ');
@@ -148,18 +148,18 @@ static void parse_winhttp_headers(HINTERNET request_handle, _In_z_ utf16char *he
 }
 
 // Helper function to build error messages.
-static std::string build_error_msg(unsigned long code, const std::string &location)
+static utility::string build_error_msg(unsigned long code, const utility::string &location)
 {
-    std::string msg(location);
+    utility::string msg(location);
     msg.append(": ");
-    msg.append(std::to_string(code));
+    msg.append(utility::conversions::details::to_string(code));
     msg.append(": ");
-    msg.append(utility::details::windows_category().message(code));
+    msg.append(utility::details::windows_category().message(code).c_str());
     return msg;
 }
 
 // Helper function to build an error message from a WinHTTP async result.
-static std::string build_error_msg(_In_ WINHTTP_ASYNC_RESULT *error_result)
+static utility::string build_error_msg(_In_ WINHTTP_ASYNC_RESULT *error_result)
 {
     switch(error_result->dwResult)
     {
@@ -181,7 +181,7 @@ static std::string build_error_msg(_In_ WINHTTP_ASYNC_RESULT *error_result)
 class memory_holder
 {
     uint8_t* m_externalData;
-    std::vector<uint8_t> m_internalData;
+    utility::vector<uint8_t> m_internalData;
 
 public:
     memory_holder() : m_externalData(nullptr)
@@ -237,7 +237,7 @@ public:
     // Factory function to create requests on the heap.
     static std::shared_ptr<request_context> create_request_context(const std::shared_ptr<_http_client_communicator> &client, const http_request &request)
     {
-        std::shared_ptr<winhttp_request_context> ret(new winhttp_request_context(client, request));
+        std::shared_ptr<winhttp_request_context> ret = utility::make_shared<winhttp_request_context>(private_constructor_cookie(), client, request);
         ret->m_self_reference = ret;
         return std::move(ret);
     }
@@ -283,7 +283,7 @@ public:
     // If the user specified that to guarantee data buffering of request data, in case of challenged authentication requests, etc...
     // Then if the request stream buffer doesn't support seeking we need to copy the body chunks as it is sent.
     concurrency::streams::istream m_readStream;
-    std::unique_ptr<concurrency::streams::container_buffer<std::vector<uint8_t>>> m_readBufferCopy;
+    utility::unique_ptr<concurrency::streams::container_buffer<utility::vector<uint8_t>>> m_readBufferCopy;
     virtual concurrency::streams::streambuf<uint8_t> _get_readbuffer()
     {
         return m_readStream.streambuf();
@@ -434,7 +434,7 @@ protected:
 private:
 
     utility::string_t m_customCnCheck;
-    std::vector<unsigned char> m_cachedEncodedCert;
+    utility::vector<unsigned char> m_cachedEncodedCert;
 
     // Can only create on the heap using factory function.
     winhttp_request_context(const std::shared_ptr<_http_client_communicator> &client, const http_request &request)
@@ -664,7 +664,7 @@ protected:
                 if (uri.port() > 0)
                 {
                     proxy_str.push_back(_XPLATSTR(':'));
-                    proxy_str.append(::utility::conversions::details::to_string_t(uri.port()));
+                    proxy_str.append(utility::conversions::details::to_string_t(uri.port()));
                 }
 
                 proxy_name = proxy_str.c_str();
@@ -975,7 +975,7 @@ protected:
         // Only need to cache the request body if user specified and the request stream doesn't support seeking.
         if (winhttp_context->m_bodyType != no_body && client_config().buffer_request() && !winhttp_context->_get_readbuffer().can_seek())
         {
-            winhttp_context->m_readBufferCopy = ::utility::details::make_unique<::concurrency::streams::container_buffer<std::vector<uint8_t>>>();
+            winhttp_context->m_readBufferCopy = utility::make_unique<::concurrency::streams::container_buffer<utility::vector<uint8_t>>>();
         }
 
         _start_request_send(winhttp_context, content_length);
@@ -988,10 +988,10 @@ private:
     void _start_request_send(const std::shared_ptr<winhttp_request_context>& winhttp_context, size_t content_length)
     {
         // WinHttp takes a context object as a void*. We therefore heap allocate a std::weak_ptr to the request context which will be destroyed during the final callback.
-        std::unique_ptr<std::weak_ptr<winhttp_request_context>> weak_context_holder;
+        utility::unique_ptr<std::weak_ptr<winhttp_request_context>> weak_context_holder;
         if (winhttp_context->m_request_context == nullptr)
         {
-            weak_context_holder = std::make_unique<std::weak_ptr<winhttp_request_context>>(winhttp_context);
+            weak_context_holder = utility::make_unique<std::weak_ptr<winhttp_request_context>>(winhttp_context);
             winhttp_context->m_request_context = weak_context_holder.get();
         }
 
@@ -1129,7 +1129,7 @@ private:
                 if (p_request_context->m_readBufferCopy)
                 {
                     // Move the saved buffer into the read buffer, which now supports seeking.
-                    p_request_context->m_readStream = concurrency::streams::container_stream<std::vector<uint8_t>>::open_istream(std::move(p_request_context->m_readBufferCopy->collection()));
+                    p_request_context->m_readStream = concurrency::streams::container_stream<utility::vector<uint8_t>>::open_istream(std::move(p_request_context->m_readBufferCopy->collection()));
                     p_request_context->m_readBufferCopy.reset();
                 }
             }
@@ -1338,13 +1338,12 @@ private:
 
             // New scope to ensure plaintext password is cleared as soon as possible.
             {
-                auto password = cred._internal_decrypt();
                 if (!WinHttpSetCredentials(
                     hRequestHandle,
                     dwAuthTarget,
                     dwSelectedScheme,
                     cred.username().c_str(),
-                    password->c_str(),
+                    cred._internal_decrypt()->c_str(),
                     nullptr))
                 {
                     return false;
@@ -1404,11 +1403,16 @@ private:
         {
             // This callback is responsible for freeing the type-erased context.
             // This particular status code indicates that this is the final callback call, suitable for context destruction.
-            delete p_weak_request_context;
+            auto lock = p_weak_request_context->lock();
+            if (lock) {
+                lock->cleanup();
+            } else {
+                utility::unique_ptr<std::weak_ptr<winhttp_request_context>> weak_context_holder(p_weak_request_context);
+            }
             return;
         }
 
-        auto p_request_context = p_weak_request_context->lock();
+        std::shared_ptr<winhttp_request_context> p_request_context = p_weak_request_context->lock();
         if (!p_request_context)
         {
             // The request context was already released, probably due to cancellation
@@ -1477,7 +1481,7 @@ private:
             return;
         case WINHTTP_CALLBACK_STATUS_SECURE_FAILURE:
             p_request_context->report_exception(web::http::http_exception(
-                generate_security_failure_message(*reinterpret_cast<std::uint32_t*>(statusInfo))));
+                generate_security_failure_message(*reinterpret_cast<std::uint32_t*>(statusInfo)).c_str()));
             return;
         case WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE :
             {
@@ -1528,7 +1532,7 @@ private:
                 query_header_length(hRequestHandle, WINHTTP_QUERY_RAW_HEADERS_CRLF, headerBufferLength);
 
                 // Now allocate buffer for headers and query for them.
-                std::vector<unsigned char> header_raw_buffer;
+                utility::vector<unsigned char> header_raw_buffer;
                 header_raw_buffer.resize(headerBufferLength);
                 utf16char * header_buffer = reinterpret_cast<utf16char *>(&header_raw_buffer[0]);
                 if(!WinHttpQueryHeaders(
@@ -1737,7 +1741,7 @@ private:
 
 std::shared_ptr<_http_client_communicator> create_platform_final_pipeline_stage(uri&& base_uri, http_client_config&& client_config)
 {
-    return std::make_shared<details::winhttp_client>(std::move(base_uri), std::move(client_config));
+    return utility::make_shared<details::winhttp_client>(std::move(base_uri), std::move(client_config));
 }
 
 }}}}

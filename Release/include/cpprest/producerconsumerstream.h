@@ -150,7 +150,7 @@ namespace Concurrency { namespace streams {
                 // easier book keeping
 
                 _ASSERTE(!m_allocBlock);
-                m_allocBlock = std::make_shared<_block>(count);
+                m_allocBlock = utility::make_shared<_block>(count);
                 return m_allocBlock->wbegin();
             }
 
@@ -379,7 +379,7 @@ namespace Concurrency { namespace streams {
                 if ( m_blocks.empty() || m_blocks.back()->wr_chars_left() < count )
                 {
                     msl::safeint3::SafeInt<size_t> alloc = m_alloc_size.Max(count);
-                    m_blocks.push_back(std::make_shared<_block>(alloc));
+                    m_blocks.push_back(utility::make_shared<_block>(alloc));
                 }
 
                 // The block at the back is always the write head
@@ -659,10 +659,10 @@ namespace Concurrency { namespace streams {
             pplx::extensibility::critical_section_t m_lock;
 
             // Memory blocks
-            std::deque<std::shared_ptr<_block>> m_blocks;
+            utility::deque<std::shared_ptr<_block>> m_blocks;
 
             // Queue of requests
-            std::queue<_request> m_requests;
+            utility::queue<_request> m_requests;
         };
 
     } // namespace details
@@ -687,7 +687,7 @@ namespace Concurrency { namespace streams {
         /// </summary>
         /// <param name="alloc_size">The internal default block size.</param>
         producer_consumer_buffer(size_t alloc_size = 512)
-            : streambuf<_CharType>(std::make_shared<details::basic_producer_consumer_buffer<_CharType>>(alloc_size))
+            : streambuf<_CharType>(utility::make_shared<details::basic_producer_consumer_buffer<_CharType>>(alloc_size))
         {
         }
     };

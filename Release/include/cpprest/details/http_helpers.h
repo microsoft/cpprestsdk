@@ -50,7 +50,7 @@ namespace details
             invalid = 9999
         };
 
-        using data_buffer = std::vector<uint8_t>;
+        using data_buffer = utility::vector<uint8_t>;
 
         class stream_decompressor
         {

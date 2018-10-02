@@ -176,7 +176,7 @@ public:
     /// </summary>
     /// <param name="name">The name of the subprotocol.</param>
     /// <remarks>If additional subprotocols have already been specified, the new one will just be added.</remarks>
-    _ASYNCRTIMP void add_subprotocol(const ::utility::string_t &name);
+    _ASYNCRTIMP void add_subprotocol(const utility::string_t &name);
 
     /// <summary>
     /// Gets list of the specified subprotocols.
@@ -184,7 +184,7 @@ public:
     /// <returns>Vector of all the subprotocols </returns>
     /// <remarks>If you want all the subprotocols in a comma separated string
     /// they can be directly looked up in the headers using 'Sec-WebSocket-Protocol'.</remarks>
-    _ASYNCRTIMP std::vector< ::utility::string_t> subprotocols() const;
+    _ASYNCRTIMP utility::vector<utility::string_t> subprotocols() const;
 	
     /// <summary>
     /// Gets the server certificate validation property.
@@ -233,7 +233,7 @@ public:
     /// Creates an <c>websocket_exception</c> with just a string message and no error code.
     /// </summary>
     /// <param name="whatArg">Error message string.</param>
-    websocket_exception(std::string whatArg) : m_msg(std::move(whatArg)) {}
+    websocket_exception(utility::string whatArg) : m_msg(std::move(whatArg)) {}
 #endif
 
     /// <summary>
@@ -244,7 +244,7 @@ public:
     websocket_exception(int errorCode)
         : m_errorCode(utility::details::create_error_code(errorCode))
     {
-        m_msg = m_errorCode.message();
+        m_msg = m_errorCode.message().c_str();
     }
 
     /// <summary>
@@ -263,7 +263,7 @@ public:
     /// </summary>
     /// <param name="errorCode">Error code value.</param>
     /// <param name="whatArg">Message to use in what() string.</param>
-    websocket_exception(int errorCode, std::string whatArg)
+    websocket_exception(int errorCode, utility::string whatArg)
         : m_errorCode(utility::details::create_error_code(errorCode)),
         m_msg(std::move(whatArg))
     {}
@@ -273,7 +273,7 @@ public:
     /// <param name="code">Error code.</param>
     /// <param name="whatArg">Message to use in what() string.</param>
     /// </summary>
-    websocket_exception(std::error_code code, std::string whatArg) :
+    websocket_exception(std::error_code code, utility::string whatArg) :
         m_errorCode(std::move(code)),
         m_msg(std::move(whatArg))
     {}
@@ -287,7 +287,7 @@ public:
     /// <param name="cat">Error category for the code.</param>
     websocket_exception(int errorCode, const std::error_category &cat) : m_errorCode(std::error_code(errorCode, cat))
     {
-        m_msg = m_errorCode.message();
+        m_msg = m_errorCode.message().c_str();
     }
 
     /// <summary>
@@ -320,7 +320,7 @@ public:
 
 private:
     std::error_code m_errorCode;
-    std::string m_msg;
+    utility::string m_msg;
 };
 
 namespace details
@@ -413,9 +413,9 @@ private:
     // m_receive_queue_lock : to guard access to the queue & m_client_closed
     std::mutex m_receive_queue_lock;
     // Queue to store incoming messages when there are no tasks waiting for a message
-    std::queue<websocket_incoming_message> m_receive_msg_queue;
+    utility::queue<websocket_incoming_message> m_receive_msg_queue;
     // Queue to maintain the receive tasks when there are no messages(yet).
-    std::queue<pplx::task_completion_event<websocket_incoming_message>> m_receive_task_queue;
+    utility::queue<pplx::task_completion_event<websocket_incoming_message>> m_receive_task_queue;
 
     // Initially set to false, becomes true if a close frame is received from the server or
     // if the underlying connection is aborted or terminated.
@@ -435,7 +435,7 @@ public:
     ///  Creates a new websocket_client.
     /// </summary>
     websocket_client() :
-        m_client(std::make_shared<details::websocket_client_task_impl>(websocket_client_config()))
+        m_client(utility::make_shared<details::websocket_client_task_impl>(websocket_client_config()))
     {}
 
     /// <summary>
@@ -443,7 +443,7 @@ public:
     /// </summary>
     /// <param name="config">The client configuration object containing the possible configuration options to initialize the <c>websocket_client</c>. </param>
     websocket_client(websocket_client_config config) :
-        m_client(std::make_shared<details::websocket_client_task_impl>(std::move(config)))
+        m_client(utility::make_shared<details::websocket_client_task_impl>(std::move(config)))
     {}
 
     /// <summary>

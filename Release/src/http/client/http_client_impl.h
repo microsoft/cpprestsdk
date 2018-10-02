@@ -58,10 +58,10 @@ public:
     /// </summary>
     void complete_request(utility::size64_t body_size);
 
-    void report_error(unsigned long error_code, const std::string &errorMessage);
+    void report_error(unsigned long error_code, const utility::string &errorMessage);
 
 #ifdef _WIN32
-    void report_error(unsigned long error_code, const std::wstring &errorMessage);
+    void report_error(unsigned long error_code, const utility::wstring &errorMessage);
 #endif
 
     template<typename _ExceptionType>
@@ -95,7 +95,7 @@ public:
     // Registration for cancellation notification if enabled.
     pplx::cancellation_token_registration m_cancellationRegistration;
 
-    std::unique_ptr<web::http::details::compression::stream_decompressor> m_decompressor;
+    utility::unique_ptr<web::http::details::compression::stream_decompressor> m_decompressor;
 
 protected:
 
@@ -141,7 +141,7 @@ private:
     void async_send_request_impl(const std::shared_ptr<request_context> &request);
 
     // Queue used to guarantee ordering of requests, when applicable.
-    std::queue<std::shared_ptr<request_context>> m_requests_queue;
+    utility::queue<std::shared_ptr<request_context>> m_requests_queue;
     bool m_outstanding;
 };
 

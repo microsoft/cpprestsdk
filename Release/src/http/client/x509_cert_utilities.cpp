@@ -40,9 +40,9 @@ namespace client
 {
 namespace details
 {
-static bool verify_X509_cert_chain(const std::vector<std::string>& certChain, const std::string& hostName);
+static bool verify_X509_cert_chain(const utility::vector<utility::string>& certChain, const utility::string& hostName);
 
-bool verify_cert_chain_platform_specific(boost::asio::ssl::verify_context& verifyCtx, const std::string& hostName)
+bool verify_cert_chain_platform_specific(boost::asio::ssl::verify_context& verifyCtx, const utility::string& hostName)
 {
     X509_STORE_CTX* storeContext = verifyCtx.native_handle();
     int currentDepth = X509_STORE_CTX_get_error_depth(storeContext);
@@ -58,7 +58,7 @@ bool verify_cert_chain_platform_specific(boost::asio::ssl::verify_context& verif
         return false;
     }
 
-    std::vector<std::string> certChain;
+    utility::vector<utility::string> certChain;
     certChain.reserve(numCerts);
     for (int i = 0; i < numCerts; ++i)
     {
@@ -71,7 +71,7 @@ bool verify_cert_chain_platform_specific(boost::asio::ssl::verify_context& verif
             return false;
         }
 
-        std::string certData;
+        utility::string certData;
         certData.resize(len);
         unsigned char* buffer = reinterpret_cast<unsigned char*>(&certData[0]);
         len = i2d_X509(cert, &buffer);
@@ -89,7 +89,7 @@ bool verify_cert_chain_platform_specific(boost::asio::ssl::verify_context& verif
 #if defined(_WIN32)
     if (verify_result)
     {
-        boost::asio::ssl::rfc2818_verification rfc2818(hostName);
+        boost::asio::ssl::rfc2818_verification rfc2818(hostName.c_str());
         verify_result = rfc2818(verify_result, verifyCtx);
     }
 #endif
@@ -140,7 +140,7 @@ static bool jni_failed(JNIEnv* env, const jmethodID& result)
 #define CHECK_JNI(env)                                                                                                 \
     if (jni_failed(env)) return false;
 
-bool verify_X509_cert_chain(const std::vector<std::string>& certChain, const std::string& hostName)
+bool verify_X509_cert_chain(const utility::vector<utility::string>& certChain, const utility::string& hostName)
 {
     JNIEnv* env = get_jvm_env();
 
@@ -310,12 +310,12 @@ private:
 };
 }
 
-bool verify_X509_cert_chain(const std::vector<std::string>& certChain, const std::string& hostName)
+bool verify_X509_cert_chain(const utility::vector<utility::string>& certChain, const utility::string& hostName)
 {
     // Build up CFArrayRef with all the certificates.
     // All this code is basically just to get into the correct structures for the Apple APIs.
     // Copies are avoided whenever possible.
-    std::vector<cf_ref<SecCertificateRef>> certs;
+    utility::vector<cf_ref<SecCertificateRef>> certs;
     for (const auto& certBuf : certChain)
     {
         cf_ref<CFDataRef> certDataRef =
@@ -370,7 +370,7 @@ bool verify_X509_cert_chain(const std::vector<std::string>& certChain, const std
 #endif
 
 #if defined(_WIN32)
-bool verify_X509_cert_chain(const std::vector<std::string>& certChain, const std::string& hostname)
+bool verify_X509_cert_chain(const utility::vector<utility::string>& certChain, const utility::string& hostname)
 {
     // Create certificate context from server certificate.
     winhttp_cert_context cert;

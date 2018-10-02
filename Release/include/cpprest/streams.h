@@ -56,9 +56,9 @@ namespace Concurrency { namespace streams
         struct Value2StringFormatter
         {
             template <typename T>
-            static std::basic_string<CharType> format(const T &val)
+            static utility::basic_string<CharType> format(const T &val)
             {
-                std::basic_ostringstream<CharType> ss;
+                utility::basic_ostringstream<CharType> ss;
                 ss << val;
                 return ss.str();
             }
@@ -68,14 +68,14 @@ namespace Concurrency { namespace streams
         struct Value2StringFormatter <uint8_t>
         {
             template <typename T>
-            static std::basic_string<uint8_t> format(const T &val)
+            static utility::basic_string<uint8_t> format(const T &val)
             {
-                std::basic_ostringstream<char> ss;
+                utility::basic_ostringstream<char> ss;
                 ss << val;
                 return reinterpret_cast<const uint8_t *>(ss.str().c_str());
             }
 
-            static std::basic_string<uint8_t> format(const utf16string &val)
+            static utility::basic_string<uint8_t> format(const utf16string &val)
             {
                 return format(utility::conversions::utf16_to_utf8(val));
             }
@@ -123,7 +123,7 @@ namespace Concurrency { namespace streams
         /// </summary>
         /// <param name="buffer">A stream buffer.</param>
         basic_ostream(streams::streambuf<CharType> buffer) :
-            m_helper(std::make_shared<details::basic_ostream_helper<CharType>>(buffer))
+            m_helper(utility::make_shared<details::basic_ostream_helper<CharType>>(buffer))
         {
             _verify_and_throw(details::_out_streambuf_msg);
         }
@@ -182,7 +182,7 @@ namespace Concurrency { namespace streams
             pplx::task<size_t> result;
             if ( !_verify_and_return_task(details::_out_stream_msg, result) ) return result;
 
-            auto copy = std::make_shared<T>(std::move(value));
+            auto copy = utility::make_shared<T>(std::move(value));
             return helper()->m_buffer.putn_nocopy((CharType*)copy.get(), sizeof(T)).then([copy](pplx::task<size_t> op) -> size_t { return op.get(); });
         }
 
@@ -262,7 +262,7 @@ namespace Concurrency { namespace streams
         /// Write the specified string to the output stream.
         /// </summary>
         /// <param name="str">Input string.</param>
-        pplx::task<size_t> print(const std::basic_string<CharType>& str) const
+        pplx::task<size_t> print(const utility::basic_string<CharType>& str) const
         {
             pplx::task<size_t> result;
             if ( !_verify_and_return_task(details::_out_stream_msg, result) ) return result;
@@ -273,7 +273,7 @@ namespace Concurrency { namespace streams
             }
             else
             {
-                auto sharedStr = std::make_shared<std::basic_string<CharType>>(str);
+                auto sharedStr = utility::make_shared<utility::basic_string<CharType>>(str);
                 return helper()->m_buffer.putn_nocopy(sharedStr->c_str(), sharedStr->size()).then([sharedStr](size_t size) { return size; });
             }
         }
@@ -578,7 +578,7 @@ namespace Concurrency { namespace streams
         /// </typeparam>
         /// <param name="buffer">A stream buffer.</param>
         template<class AlterCharType>
-        basic_istream(streams::streambuf<AlterCharType> buffer) : m_helper(std::make_shared<details::basic_istream_helper<CharType>>(std::move(buffer)))
+        basic_istream(streams::streambuf<AlterCharType> buffer) : m_helper(utility::make_shared<details::basic_istream_helper<CharType>>(std::move(buffer)))
         {
             _verify_and_throw(details::_in_streambuf_msg);
         }
@@ -663,7 +663,7 @@ namespace Concurrency { namespace streams
             pplx::task<T> result;
             if ( !_verify_and_return_task(details::_in_stream_msg, result) ) return result;
 
-            auto copy = std::make_shared<T>();
+            auto copy = utility::make_shared<T>();
             return helper()->m_buffer.getn((CharType*)copy.get(), sizeof(T)).then([copy](pplx::task<size_t>) -> T
             {
                 return std::move(*copy);
@@ -772,7 +772,7 @@ namespace Concurrency { namespace streams
 
             int_type req_async = traits::requires_async();
 
-            std::shared_ptr<_read_helper> _locals = std::make_shared<_read_helper>();
+            std::shared_ptr<_read_helper> _locals = utility::make_shared<_read_helper>();
 
             auto flush = [=]() mutable
             {
@@ -844,7 +844,7 @@ namespace Concurrency { namespace streams
 
             int_type req_async = traits::requires_async();
 
-            std::shared_ptr<_read_helper> _locals = std::make_shared<_read_helper>();
+            std::shared_ptr<_read_helper> _locals = utility::make_shared<_read_helper>();
 
             auto flush = [=]() mutable
             {
@@ -941,7 +941,7 @@ namespace Concurrency { namespace streams
 
             auto l_buffer = helper()->m_buffer;
             auto l_buf_size = this->buf_size;
-            std::shared_ptr<_read_helper> l_locals = std::make_shared<_read_helper>();
+            std::shared_ptr<_read_helper> l_locals = utility::make_shared<_read_helper>();
 
             auto copy_to_target = [l_locals, target, l_buffer, l_buf_size]() mutable -> pplx::task<bool>
             {
@@ -1173,7 +1173,7 @@ pplx::task<ReturnType> _type_parser_base<CharType>::_parse_input(
     AcceptFunctor accept_character,
     ExtractFunctor extract)
 {
-    std::shared_ptr<StateType> state = std::make_shared<StateType>();
+    std::shared_ptr<StateType> state = utility::make_shared<StateType>();
 
     auto update = [=] (pplx::task<int_type> op) -> pplx::task<bool>
     {
@@ -1223,26 +1223,26 @@ pplx::task<ReturnType> _type_parser_base<CharType>::_parse_input(
 }
 
 template<typename CharType>
-class type_parser<CharType,std::basic_string<CharType>> : public _type_parser_base<CharType>
+class type_parser<CharType,utility::basic_string<CharType>> : public _type_parser_base<CharType>
 {
     typedef _type_parser_base<CharType> base;
 public:
     typedef typename base::traits traits;
     typedef typename base::int_type int_type;
 
-    static pplx::task<std::string> parse(streams::streambuf<CharType> buffer)
+    static pplx::task<utility::string> parse(streams::streambuf<CharType> buffer)
     {
-        return base::template _parse_input<std::basic_string<CharType>, std::string>(buffer, _accept_char, _extract_result);
+        return base::template _parse_input<utility::basic_string<CharType>, utility::string>(buffer, _accept_char, _extract_result);
     }
 
 private:
-    static bool _accept_char(std::shared_ptr<std::basic_string<CharType>> state, int_type ch)
+    static bool _accept_char(std::shared_ptr<utility::basic_string<CharType>> state, int_type ch)
     {
         if ( ch == traits::eof() || isspace(ch)) return false;
         state->push_back(CharType(ch));
         return true;
     }
-    static pplx::task<std::basic_string<CharType>> _extract_result(std::shared_ptr<std::basic_string<CharType>> state)
+    static pplx::task<utility::basic_string<CharType>> _extract_result(std::shared_ptr<utility::basic_string<CharType>> state)
     {
         return pplx::task_from_result(*state);
     }
@@ -1739,26 +1739,26 @@ private:
 
 #ifdef _WIN32
 template<class CharType>
-class type_parser<CharType, std::enable_if_t<sizeof(CharType) == 1, std::basic_string<wchar_t>>> : public _type_parser_base<CharType>
+class type_parser<CharType, std::enable_if_t<sizeof(CharType) == 1, utility::basic_string<wchar_t>>> : public _type_parser_base<CharType>
 {
     typedef _type_parser_base<CharType> base;
 public:
     typedef typename base::traits traits;
     typedef typename base::int_type int_type;
 
-    static pplx::task<std::wstring> parse(streams::streambuf<CharType> buffer)
+    static pplx::task<utility::wstring> parse(streams::streambuf<CharType> buffer)
     {
-        return base::template _parse_input<std::basic_string<char>,std::basic_string<wchar_t>>(buffer, _accept_char, _extract_result);
+        return base::template _parse_input<utility::basic_string<char>,utility::basic_string<wchar_t>>(buffer, _accept_char, _extract_result);
     }
 
 private:
-    static bool _accept_char(const std::shared_ptr<std::basic_string<char>> &state, int_type ch)
+    static bool _accept_char(const std::shared_ptr<utility::basic_string<char>> &state, int_type ch)
     {
         if ( ch == concurrency::streams::char_traits<char>::eof() || isspace(ch)) return false;
         state->push_back(char(ch));
         return true;
     }
-    static pplx::task<std::basic_string<wchar_t>> _extract_result(std::shared_ptr<std::basic_string<char>> state)
+    static pplx::task<utility::basic_string<wchar_t>> _extract_result(std::shared_ptr<utility::basic_string<char>> state)
     {
         return pplx::task_from_result(utility::conversions::utf8_to_utf16(*state));
     }

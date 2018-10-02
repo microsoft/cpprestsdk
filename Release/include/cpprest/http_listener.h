@@ -208,7 +208,7 @@ public:
 
     // Handlers
     std::function<void(http::http_request)> m_all_requests;
-    std::map<http::method, std::function<void(http::http_request)>> m_supported_methods;
+    utility::map<http::method, std::function<void(http::http_request)>> m_supported_methods;
 
 private:
 
@@ -242,7 +242,7 @@ public:
     /// <remarks>The listener will not have been opened when returned.</remarks>
     /// <param name="address">URI at which the listener should accept requests.</param>
     http_listener(http::uri address)
-        : m_impl(utility::details::make_unique<details::http_listener_impl>(std::move(address)))
+        : m_impl(utility::make_unique<details::http_listener_impl>(std::move(address)))
     {
     }
 
@@ -252,7 +252,7 @@ public:
     /// <param name="address">URI at which the listener should accept requests.</param>
     /// <param name="config">Configuration to create listener with.</param>
     http_listener(http::uri address, http_listener_config config)
-        : m_impl(utility::details::make_unique<details::http_listener_impl>(std::move(address), std::move(config)))
+        : m_impl(utility::make_unique<details::http_listener_impl>(std::move(address), std::move(config)))
     {
     }
 
@@ -262,7 +262,7 @@ public:
     /// <remarks>The resulting listener cannot be used for anything, but is useful to initialize a variable
     /// that will later be overwritten with a real listener instance.</remarks>
     http_listener()
-        : m_impl(utility::details::make_unique<details::http_listener_impl>())
+        : m_impl(utility::make_unique<details::http_listener_impl>())
     {
     }
 
@@ -365,7 +365,7 @@ private:
     http_listener(const http_listener &other);
     http_listener &operator=(const http_listener &other);
 
-    std::unique_ptr<details::http_listener_impl> m_impl;
+    utility::unique_ptr<details::http_listener_impl> m_impl;
 };
 
 }}}}

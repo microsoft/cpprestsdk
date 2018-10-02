@@ -114,7 +114,7 @@ public:
     const char* what() const CPPREST_NOEXCEPT { return m_msg.c_str(); }
 
 private:
-    std::string m_msg;
+    utility::string m_msg;
 };
 
 /// <summary>
@@ -186,7 +186,7 @@ public:
     /// Retrieves any additional parameters.
     /// </summary>
     /// <returns>A map containing the additional parameters.</returns>
-    const std::map<utility::string_t, utility::string_t> &additional_parameters() const { return m_additional_parameters; }
+    const utility::map<utility::string_t, utility::string_t> &additional_parameters() const { return m_additional_parameters; }
 
     /// <summary>
     /// Sets a specific parameter additional parameter.
@@ -218,7 +218,7 @@ private:
 
     utility::string_t m_token;
     utility::string_t m_secret;
-    std::map<utility::string_t, utility::string_t> m_additional_parameters;
+    utility::map<utility::string_t, utility::string_t> m_additional_parameters;
 };
 
 /// <summary>
@@ -437,7 +437,7 @@ public:
     /// Gets map of parameters to sign.
     /// </summary>
     /// <returns>Map of parameters.</returns>
-    const std::map<utility::string_t, utility::string_t>& parameters() const { return m_parameters_to_sign; }
+    const utility::map<utility::string_t, utility::string_t>& parameters() const { return m_parameters_to_sign; }
 
     /// <summary>
     /// Adds a key value parameter.
@@ -457,7 +457,7 @@ public:
     /// Sets entire map or parameters replacing all previously values.
     /// </summary>
     /// <param name="parameters">Map of values.</param>
-    void set_parameters(const std::map<utility::string_t, utility::string_t> &parameters)
+    void set_parameters(const utility::map<utility::string_t, utility::string_t> &parameters)
     {
         m_parameters_to_sign.clear();
         m_parameters_to_sign = parameters;
@@ -504,7 +504,7 @@ private:
         return utility::conversions::details::to_string_t(utility::datetime::utc_timestamp());
     }
 
-    _ASYNCRTIMP static std::vector<unsigned char> __cdecl _hmac_sha1(const utility::string_t& key, const utility::string_t& data);
+    _ASYNCRTIMP static utility::vector<unsigned char> __cdecl _hmac_sha1(const utility::string_t& key, const utility::string_t& data);
 
     static utility::string_t _build_base_string_uri(const uri& u);
 
@@ -537,7 +537,7 @@ private:
     utility::string_t m_realm;
     oauth1_method m_method;
 
-	std::map<utility::string_t, utility::string_t> m_parameters_to_sign;
+	utility::map<utility::string_t, utility::string_t> m_parameters_to_sign;
 
     web::web_proxy m_proxy;
 

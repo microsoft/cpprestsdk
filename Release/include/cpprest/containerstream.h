@@ -518,7 +518,7 @@ namespace Concurrency { namespace streams {
         /// <param name="mode">The I/O mode that the buffer should use (in / out)</param>
         container_buffer(_CollectionType data, std::ios_base::openmode mode = std::ios_base::in)
             : streambuf<typename _CollectionType::value_type>(
-                std::shared_ptr<details::basic_container_buffer<_CollectionType>>(new streams::details::basic_container_buffer<_CollectionType>(std::move(data), mode)))
+                utility::make_shared<streams::details::basic_container_buffer<_CollectionType>>(std::move(data), mode))
         {
         }
 
@@ -528,7 +528,7 @@ namespace Concurrency { namespace streams {
         /// <param name="mode">The I/O mode that the buffer should use (in / out)</param>
         container_buffer(std::ios_base::openmode mode = std::ios_base::out)
             : streambuf<typename _CollectionType::value_type>(
-                std::shared_ptr<details::basic_container_buffer<_CollectionType>>(new details::basic_container_buffer<_CollectionType>(mode)))
+                utility::make_shared<details::basic_container_buffer<_CollectionType>>(mode))
         {
         }
 
@@ -577,7 +577,7 @@ namespace Concurrency { namespace streams {
     /// The stringstream allows an input stream to be constructed from std::string or std::wstring
     /// For output streams the underlying string container could be retrieved using <c>buf-&gt;collection().</c>
     /// </summary>
-    typedef container_stream<std::basic_string<char>> stringstream;
+    typedef container_stream<utility::basic_string<char>> stringstream;
     typedef stringstream::buffer_type stringstreambuf;
 
     typedef container_stream<utility::string_t> wstringstream;

@@ -134,7 +134,7 @@ namespace Concurrency { namespace streams {
         /// <param name="stream">The synchronous stream that this is using for its I/O</param>
         template <typename AlterCharType>
         stdio_ostream(std::basic_ostream<AlterCharType>& stream)
-            : basic_ostream<CharType>(streams::streambuf<AlterCharType>(std::shared_ptr<details::basic_stdio_buffer<AlterCharType>>(new details::basic_stdio_buffer<AlterCharType>(stream.rdbuf(), std::ios_base::out))))
+            : basic_ostream<CharType>(utility::make_shared<details::basic_stdio_buffer<AlterCharType>>(stream.rdbuf(), std::ios_base::out))
         {
         }
 
@@ -178,7 +178,7 @@ namespace Concurrency { namespace streams {
         /// <param name="stream">The synchronous stream that this is using for its I/O</param>
         template <typename AlterCharType>
         stdio_istream(std::basic_istream<AlterCharType>& stream)
-            : basic_istream<CharType>(streams::streambuf<AlterCharType>(std::shared_ptr<details::basic_stdio_buffer<AlterCharType>>(new details::basic_stdio_buffer<AlterCharType>(stream.rdbuf(), std::ios_base::in))))
+            : basic_istream<CharType>(utility::make_shared<details::basic_stdio_buffer<AlterCharType>>(stream.rdbuf(), std::ios_base::in))
         {
         }
 

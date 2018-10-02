@@ -13,15 +13,15 @@
 using namespace web;
 using namespace utility;
 
-std::vector<unsigned char> _from_base64(const utility::string_t& str);
+utility::vector<unsigned char> _from_base64(const utility::string_t& str);
 utility::string_t _to_base64(const unsigned char *ptr, size_t size);
 
-std::vector<unsigned char> __cdecl conversions::from_base64(const utility::string_t& str)
+utility::vector<unsigned char> __cdecl conversions::from_base64(const utility::string_t& str)
 {
     return _from_base64(str);
 }
 
-utility::string_t __cdecl conversions::to_base64(const std::vector<unsigned char>& input)
+utility::string_t __cdecl conversions::to_base64(const utility::vector<unsigned char>& input)
 {
     if (input.size() == 0)
     {
@@ -84,9 +84,9 @@ struct _single_byte
 // gcc is concerned about the bitfield uses in the code, something we simply need to ignore.
 #pragma GCC diagnostic ignored "-Wconversion"
 #endif
-std::vector<unsigned char> _from_base64(const utility::string_t& input)
+utility::vector<unsigned char> _from_base64(const utility::string_t& input)
 {
-    std::vector<unsigned char> result;
+    utility::vector<unsigned char> result;
 
     if ( input.empty() )
         return result;

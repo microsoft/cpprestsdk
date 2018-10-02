@@ -101,7 +101,7 @@ namespace details
 /// <param name="verifyCtx">Boost.ASIO context to get certificate chain from.</param>
 /// <param name="hostName">Host name from the URI.</param>
 /// <returns>True if verification passed and server can be trusted, false otherwise.</returns>
-bool verify_cert_chain_platform_specific(boost::asio::ssl::verify_context& verifyCtx, const std::string& hostName);
+bool verify_cert_chain_platform_specific(boost::asio::ssl::verify_context& verifyCtx, const utility::string& hostName);
 }
 }
 }

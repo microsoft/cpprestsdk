@@ -386,7 +386,7 @@ namespace compression
     }
 
     stream_decompressor::stream_decompressor(compression_algorithm alg)
-        : m_pimpl(std::make_shared<stream_decompressor::stream_decompressor_impl>(alg))
+        : m_pimpl(utility::make_shared<stream_decompressor::stream_decompressor_impl>(alg))
     {
     }
 
@@ -420,7 +420,7 @@ namespace compression
     }
 
     stream_compressor::stream_compressor(compression_algorithm alg)
-        : m_pimpl(std::make_shared<stream_compressor::stream_compressor_impl>(alg))
+        : m_pimpl(utility::make_shared<stream_compressor::stream_compressor_impl>(alg))
     {
 
     }

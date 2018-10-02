@@ -115,7 +115,7 @@ pplx::task<void> oauth2_config::_request_token(uri_builder& request_body_ub)
     if (http_basic_auth())
     {
         // Build HTTP Basic authorization header.
-        const std::string creds_utf8(to_utf8string(
+        const utility::string creds_utf8(to_utf8string(
             uri::encode_data_string(client_key()) + U(":") + uri::encode_data_string(client_secret())));
         request.headers().add(header_names::authorization, U("Basic ")
             + _to_base64(reinterpret_cast<const unsigned char*>(creds_utf8.data()), creds_utf8.size()));

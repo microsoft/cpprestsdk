@@ -278,7 +278,7 @@ namespace details {
             std::shared_ptr<_CharType> sharedCh;
             try
             {
-                sharedCh = std::make_shared<_CharType>(ch);
+                sharedCh = utility::make_shared<_CharType>(ch);
             } catch (const std::bad_alloc &)
             {
                 delete callback;
@@ -374,7 +374,7 @@ namespace details {
         {
             if (copy)
             {
-                auto sharedData = std::make_shared<std::vector<_CharType>>(ptr, ptr + count);
+                auto sharedData = utility::make_shared<utility::vector<_CharType>>(ptr, ptr + count);
                 return _putn(ptr, count).then([sharedData](size_t size)
                 {
                     return size;
@@ -715,7 +715,7 @@ namespace details {
         pplx::task<void> flush_internal()
         {
             pplx::task_completion_event<void> result_tce;
-            auto callback = utility::details::make_unique<_filestream_callback_write_b>(m_info, result_tce);
+            auto callback = utility::make_unique<_filestream_callback_write_b>(m_info, result_tce);
 
             if ( !_sync_fsb(m_info, callback.get()) )
             {
@@ -763,7 +763,7 @@ namespace details {
 
             virtual void on_opened(_In_ _file_info *info)
             {
-                m_op.set(std::shared_ptr<basic_file_buffer<_CharType>>(new basic_file_buffer<_CharType>(info)));
+                m_op.set(utility::make_shared<basic_file_buffer<_CharType>>(info));
                 delete this;
             }
 

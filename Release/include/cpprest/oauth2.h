@@ -65,7 +65,7 @@ public:
     const char* what() const CPPREST_NOEXCEPT { return m_msg.c_str(); }
 
 private:
-    std::string m_msg;
+    utility::string m_msg;
 };
 
 /// <summary>

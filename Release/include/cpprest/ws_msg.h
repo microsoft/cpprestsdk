@@ -76,18 +76,18 @@ public:
     /// Sets a UTF-8 message as the message body.
     /// </summary>
     /// <param name="data">UTF-8 String containing body of the message.</param>
-    void set_utf8_message(std::string &&data)
+    void set_utf8_message(utility::string &&data)
     {
-        this->set_message(concurrency::streams::container_buffer<std::string>(std::move(data)));
+        this->set_message(concurrency::streams::container_buffer<utility::string>(std::move(data)));
     }
 
     /// <summary>
     /// Sets a UTF-8 message as the message body.
     /// </summary>
     /// <param name="data">UTF-8 String containing body of the message.</param>
-    void set_utf8_message(const std::string &data)
+    void set_utf8_message(const utility::string &data)
     {
-        this->set_message(concurrency::streams::container_buffer<std::string>(data));
+        this->set_message(concurrency::streams::container_buffer<utility::string>(data));
     }
 
     /// <summary>
@@ -154,14 +154,14 @@ private:
 #if !defined(__cplusplus_winrt)
 	void set_message_pong()
 	{
-        concurrency::streams::container_buffer<std::string> buffer("");
+        concurrency::streams::container_buffer<utility::string> buffer("");
 		m_msg_type = websocket_message_type::pong;
 		m_length = static_cast<size_t>(buffer.size());
 		m_body = buffer;
 	}
 #endif
 
-    void set_message(const concurrency::streams::container_buffer<std::string> &buffer)
+    void set_message(const concurrency::streams::container_buffer<utility::string> &buffer)
     {
         m_msg_type = websocket_message_type::text_message;
         m_length = static_cast<size_t>(buffer.size());
@@ -188,7 +188,7 @@ public:
     /// A body can only be extracted once because in some cases an optimization is made where the data is 'moved' out.
     /// </summary>
     /// <returns>String containing body of the message.</returns>
-    _ASYNCRTIMP pplx::task<std::string> extract_string() const;
+    _ASYNCRTIMP pplx::task<utility::string> extract_string() const;
 
     /// <summary>
     /// Produces a stream which the caller may use to retrieve body from an incoming message.
@@ -242,7 +242,7 @@ private:
 
     // Store message body in a container buffer backed by a string.
     // Allows for optimization in the string message cases.
-    concurrency::streams::container_buffer<std::string> m_body;
+    concurrency::streams::container_buffer<utility::string> m_body;
     websocket_message_type m_msg_type;
 };
 

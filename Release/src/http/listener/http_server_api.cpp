@@ -26,7 +26,7 @@ namespace details
 
 pplx::extensibility::critical_section_t http_server_api::s_lock;
 
-std::unique_ptr<http_server> http_server_api::s_server_api((http_server*)nullptr);
+utility::unique_ptr<http_server> http_server_api::s_server_api((http_server*)nullptr);
 
 pplx::details::atomic_long http_server_api::s_registrations(0L);
 
@@ -35,7 +35,7 @@ bool http_server_api::has_listener()
     return s_registrations > 0L;
 }
 
-void http_server_api::register_server_api(std::unique_ptr<http_server> server_api)
+void http_server_api::register_server_api(utility::unique_ptr<http_server> server_api)
 {
     pplx::extensibility::scoped_critical_section_t lock(s_lock);
     http_server_api::unsafe_register_server_api(std::move(server_api));
@@ -53,7 +53,7 @@ void http_server_api::unregister_server_api()
     s_server_api.release();
 }
 
-void http_server_api::unsafe_register_server_api(std::unique_ptr<http_server> server_api)
+void http_server_api::unsafe_register_server_api(utility::unique_ptr<http_server> server_api)
 {
     // we assume that the lock has been taken here.
     if (http_server_api::has_listener())

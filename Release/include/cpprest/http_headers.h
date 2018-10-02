@@ -73,7 +73,7 @@ public:
     };
 
 private:
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp> inner_container;
+    typedef utility::map<utility::string_t, utility::string_t, _case_insensitive_cmp> inner_container;
 public:
 
     /// <summary>
@@ -306,7 +306,7 @@ private:
         return true;
     }
 
-    bool bind_impl(const key_type &text, std::string &ref) const
+    bool bind_impl(const key_type &text, utility::string &ref) const
     {
         ref = utility::conversions::to_utf8string(text);
         return true;

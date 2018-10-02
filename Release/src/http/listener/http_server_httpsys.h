@@ -132,10 +132,10 @@ struct windows_request_context : http::details::_http_server_context
     size_t m_remaining_to_write;
 
     HTTP_REQUEST *m_request;
-    std::unique_ptr<unsigned char[]> m_request_buffer;
+    utility::unique_ptr<unsigned char[]> m_request_buffer;
 
-    std::unique_ptr<HTTP_UNKNOWN_HEADER []> m_headers;
-    std::vector<std::string> m_headers_buffer;
+    utility::unique_ptr<HTTP_UNKNOWN_HEADER []> m_headers;
+    utility::vector<utility::string> m_headers_buffer;
 
     http_overlapped m_overlapped;
 
@@ -153,7 +153,7 @@ private:
     // Cancels this request.
     void cancel_request(std::exception_ptr except_ptr);
 
-    std::vector<unsigned char> m_body_data;
+    utility::vector<unsigned char> m_body_data;
 };
 
 /// <summary>
@@ -221,7 +221,7 @@ private:
 
     // Registered listeners
     pplx::extensibility::reader_writer_lock_t _M_listenersLock;
-    std::unordered_map<web::http::experimental::listener::details::http_listener_impl *, std::unique_ptr<listener_registration>> _M_registeredListeners;
+    utility::unordered_map<web::http::experimental::listener::details::http_listener_impl *, utility::unique_ptr<listener_registration>> _M_registeredListeners;
 
     // HTTP Server API server session id.
     HTTP_SERVER_SESSION_ID m_serverSessionId;

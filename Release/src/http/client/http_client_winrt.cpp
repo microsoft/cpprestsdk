@@ -45,7 +45,7 @@ public:
     // Factory function to create requests on the heap.
     static std::shared_ptr<request_context> create_request_context(const std::shared_ptr<_http_client_communicator> &client, http_request &request)
     {
-        return std::make_shared<winrt_request_context>(client, request);
+        return utility::make_shared<winrt_request_context>(client, request);
     }
 
     Microsoft::WRL::ComPtr<IXMLHTTPRequest2> m_hRequest;
@@ -157,7 +157,7 @@ public:
     {
         if (m_request->m_exceptionPtr == nullptr)
         {
-            std::wstring msg(L"IXMLHttpRequest2Callback::OnError: ");
+            utility::wstring msg(L"IXMLHttpRequest2Callback::OnError: ");
             msg.append(std::to_wstring(hrError));
             msg.append(L": ");
             msg.append(utility::conversions::to_string_t(utility::details::windows_category().message(hrError)));
@@ -553,7 +553,7 @@ protected:
 
 std::shared_ptr<_http_client_communicator> create_platform_final_pipeline_stage(uri&& base_uri, http_client_config&& client_config)
 {
-    return std::make_shared<details::winrt_client>(std::move(base_uri), std::move(client_config));
+    return utility::make_shared<details::winrt_client>(std::move(base_uri), std::move(client_config));
 }
 
 }}}}

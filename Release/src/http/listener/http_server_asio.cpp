@@ -59,7 +59,7 @@ using web::http::http_exception;
 using web::http::experimental::listener::details::http_listener_impl;
 using web::http::experimental::listener::http_listener_config;
 
-using utility::details::make_unique;
+using utility::make_unique;
 
 namespace
 {
@@ -84,8 +84,8 @@ namespace
         friend class asio_server_connection;
 
         pplx::extensibility::reader_writer_lock_t m_listeners_lock;
-        std::map<std::string, std::unique_ptr<hostport_listener>, iequal_to> m_listeners;
-        std::unordered_map<http_listener_impl *, std::unique_ptr<pplx::extensibility::reader_writer_lock_t>> m_registered_listeners;
+        std::map<std::string, utility::unique_ptr<hostport_listener>, iequal_to> m_listeners;
+        utility::unordered_map<http_listener_impl *, utility::unique_ptr<pplx::extensibility::reader_writer_lock_t>> m_registered_listeners;
         bool m_started;
 
     public:
@@ -124,7 +124,7 @@ namespace
     {
     private:
         int m_backlog;
-        std::unique_ptr<boost::asio::ip::tcp::acceptor> m_acceptor;
+        utility::unique_ptr<boost::asio::ip::tcp::acceptor> m_acceptor;
         std::map<std::string, http_listener_impl* > m_listeners;
         pplx::extensibility::reader_writer_lock_t m_listeners_lock;
 
@@ -197,7 +197,7 @@ namespace
         }
 
     private:
-        void on_accept(std::unique_ptr<boost::asio::ip::tcp::socket> socket, const boost::system::error_code& ec);
+        void on_accept(utility::unique_ptr<boost::asio::ip::tcp::socket> socket, const boost::system::error_code& ec);
 
     };
 
@@ -313,7 +313,7 @@ private:
 
     typedef void (asio_server_connection::*ResponseFuncPtr) (const http_response &response, const boost::system::error_code& ec);
 
-    std::unique_ptr<boost::asio::ip::tcp::socket> m_socket;
+    utility::unique_ptr<boost::asio::ip::tcp::socket> m_socket;
     boost::asio::streambuf m_request_buf;
     boost::asio::streambuf m_response_buf;
     http_linux_server* m_p_server;
@@ -327,10 +327,10 @@ private:
 
     using ssl_stream = boost::asio::ssl::stream<boost::asio::ip::tcp::socket&>;
 
-    std::unique_ptr<boost::asio::ssl::context> m_ssl_context;
-    std::unique_ptr<ssl_stream> m_ssl_stream;
+    utility::unique_ptr<boost::asio::ssl::context> m_ssl_context;
+    utility::unique_ptr<ssl_stream> m_ssl_stream;
 
-    asio_server_connection(std::unique_ptr<boost::asio::ip::tcp::socket> socket, http_linux_server* server, hostport_listener* parent)
+    asio_server_connection(utility::unique_ptr<boost::asio::ip::tcp::socket> socket, http_linux_server* server, hostport_listener* parent)
         : m_socket(std::move(socket))
         , m_request_buf()
         , m_response_buf()
@@ -348,11 +348,11 @@ private:
     };
 
 public:
-    using refcount_ptr = std::unique_ptr<asio_server_connection, Dereferencer>;
+    using refcount_ptr = utility::unique_ptr<asio_server_connection, Dereferencer>;
 
-    static refcount_ptr create(std::unique_ptr<boost::asio::ip::tcp::socket> socket, http_linux_server* server, hostport_listener* parent)
+    static refcount_ptr create(utility::unique_ptr<boost::asio::ip::tcp::socket> socket, http_linux_server* server, hostport_listener* parent)
     {
-        return refcount_ptr(new asio_server_connection(std::move(socket), server, parent));
+        return refcount_ptr(utility::make_unique<asio_server_connection>(std::move(socket), server, parent));
     }
 
     refcount_ptr get_reference()
@@ -511,17 +511,17 @@ void hostport_listener::start()
 
     tcp::endpoint endpoint = *resolver.resolve(query);
 
-    m_acceptor.reset(new tcp::acceptor(service));
+    m_acceptor = utility::make_unique<tcp::acceptor>(service);
     m_acceptor->open(endpoint.protocol());
     m_acceptor->set_option(socket_base::reuse_address(true));
     m_acceptor->bind(endpoint);
     m_acceptor->listen(0 != m_backlog ? m_backlog : socket_base::max_connections);
 
-    auto socket = new ip::tcp::socket(service);
-    std::unique_ptr<ip::tcp::socket> usocket(socket);
+    utility::unique_ptr<ip::tcp::socket> usocket = utility::make_unique<ip::tcp::socket>(socket);
+    ip::tcp::socket *socket = usocket.get();
     m_acceptor->async_accept(*socket, [this, socket](const boost::system::error_code& ec)
     {
-        std::unique_ptr<ip::tcp::socket> usocket(socket);
+        utility::unique_ptr<ip::tcp::socket> usocket(socket);
         this->on_accept(std::move(usocket), ec);
     });
     usocket.release();
@@ -564,7 +564,7 @@ will_deref_and_erase_t asio_server_connection::start_request_response()
     return will_deref_and_erase_t{};
 }
 
-void hostport_listener::on_accept(std::unique_ptr<ip::tcp::socket> socket, const boost::system::error_code& ec)
+void hostport_listener::on_accept(utility::unique_ptr<ip::tcp::socket> socket, const boost::system::error_code& ec)
 {
     // Listener closed
     if (ec == boost::asio::error::operation_aborted)
@@ -602,11 +602,11 @@ void hostport_listener::on_accept(std::unique_ptr<ip::tcp::socket> socket, const
     if (m_acceptor)
     {
         // spin off another async accept
-        auto newSocket = new ip::tcp::socket(crossplat::threadpool::shared_instance().service());
-        std::unique_ptr<ip::tcp::socket> usocket(newSocket);
+        utility::unique_ptr<ip::tcp::socket> usocket = utility::make_unique<ip::tcp::socket>(socket);
+        ip::tcp::socket *newSocket = usocket.get();
         m_acceptor->async_accept(*newSocket, [this, newSocket](const boost::system::error_code& ec)
         {
-            std::unique_ptr<ip::tcp::socket> usocket(newSocket);
+            utility::unique_ptr<ip::tcp::socket> usocket(newSocket);
             this->on_accept(std::move(usocket), ec);
         });
         usocket.release();
@@ -615,7 +615,7 @@ void hostport_listener::on_accept(std::unique_ptr<ip::tcp::socket> socket, const
 
 will_deref_and_erase_t asio_server_connection::handle_http_line(const boost::system::error_code& ec)
 {
-    m_request = http_request::_create_request(make_unique<linux_request_context>());
+    m_request = http_request::_create_request(utility::make_unique<linux_request_context>());
     if (ec)
     {
         // client closed connection
@@ -1307,13 +1307,13 @@ pplx::task<void> http_linux_server::register_listener(http_listener_impl* listen
 
         try
         {
-            m_registered_listeners[listener] = make_unique<pplx::extensibility::reader_writer_lock_t>();
+            m_registered_listeners[listener] = utility::make_unique<pplx::extensibility::reader_writer_lock_t>();
 
             auto found_hostport_listener = m_listeners.find(hostport);
             if (found_hostport_listener == m_listeners.end())
             {
                 found_hostport_listener = m_listeners.insert(
-                    std::make_pair(hostport, make_unique<hostport_listener>(this, hostport, is_https, listener->configuration()))).first;
+                    std::make_pair(hostport, utility::make_unique<hostport_listener>(this, hostport, is_https, listener->configuration()))).first;
 
                 if (m_started)
                 {
@@ -1355,7 +1355,7 @@ pplx::task<void> http_linux_server::unregister_listener(http_listener_impl* list
     }
 
     // Second remove the listener form listener collection
-    std::unique_ptr<pplx::extensibility::reader_writer_lock_t> pListenerLock = nullptr;
+    utility::unique_ptr<pplx::extensibility::reader_writer_lock_t> pListenerLock;
     {
         pplx::extensibility::scoped_rw_lock_t lock(m_listeners_lock);
         pListenerLock = std::move(m_registered_listeners[listener]);
@@ -1390,9 +1390,9 @@ namespace experimental
 namespace details
 {
 
-std::unique_ptr<http_server> make_http_asio_server()
+utility::unique_ptr<http_server> make_http_asio_server()
 {
-    return make_unique<http_linux_server>();
+    return utility::make_unique<http_linux_server>();
 }
 
 }}}}

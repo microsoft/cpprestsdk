@@ -553,7 +553,7 @@ namespace Concurrency { namespace streams {
         /// <param name="data">The address (pointer to) the memory block.</param>
         /// <param name="size">The memory block size, measured in number of characters.</param>
         rawptr_buffer(const char_type* data, size_t size)
-            : streambuf<char_type>(std::shared_ptr<details::basic_rawptr_buffer<char_type>>(new details::basic_rawptr_buffer<char_type>(data, size)))
+            : streambuf<char_type>(utility::make_shared<details::basic_rawptr_buffer<char_type>>(data, size))
         {
         }
 
@@ -563,7 +563,7 @@ namespace Concurrency { namespace streams {
         /// <param name="data">The address (pointer to) the memory block.</param>
         /// <param name="size">The memory block size, measured in number of characters.</param>
         rawptr_buffer(char_type* data, size_t size, std::ios_base::openmode mode = std::ios::out)
-            : streambuf<char_type>(std::shared_ptr<details::basic_rawptr_buffer<char_type>>(new details::basic_rawptr_buffer<char_type>(data, size, mode)))
+            : streambuf<char_type>(utility::make_shared<details::basic_rawptr_buffer<char_type>>(data, size, mode))
         {
         }
 

@@ -112,7 +112,7 @@ public:
     /// <param name="config">OAuth 1.0 configuration to set.</param>
     void set_oauth1(oauth1::experimental::oauth1_config config)
     {
-        m_oauth1 = std::make_shared<oauth1::experimental::oauth1_config>(std::move(config));
+        m_oauth1 = utility::make_shared<oauth1::experimental::oauth1_config>(std::move(config));
     }
 #endif
 
@@ -131,7 +131,7 @@ public:
     /// <param name="config">OAuth 2.0 configuration to set.</param>
     void set_oauth2(oauth2::experimental::oauth2_config config)
     {
-        m_oauth2 = std::make_shared<oauth2::experimental::oauth2_config>(std::move(config));
+        m_oauth2 = utility::make_shared<oauth2::experimental::oauth2_config>(std::move(config));
     }
 
     /// <summary>
@@ -561,7 +561,7 @@ public:
         const pplx::cancellation_token &token = pplx::cancellation_token::none())
     {
         http_request msg(mtd);
-        msg.set_request_uri(::utility::conversions::to_string_t(path_query_fragment));
+        msg.set_request_uri(utility::conversions::to_string_t(path_query_fragment));
         msg.set_body(body_data, content_type);
         return request(msg, token);
     }
@@ -584,7 +584,7 @@ public:
         const pplx::cancellation_token &token = pplx::cancellation_token::none())
     {
         http_request msg(mtd);
-        msg.set_request_uri(::utility::conversions::to_string_t(path_query_fragment));
+        msg.set_request_uri(utility::conversions::to_string_t(path_query_fragment));
         msg.set_body(std::move(body_data), content_type);
         return request(msg, token);
     }
@@ -607,7 +607,7 @@ public:
         const pplx::cancellation_token &token = pplx::cancellation_token::none())
     {
         http_request msg(mtd);
-        msg.set_request_uri(::utility::conversions::to_string_t(path_query_fragment));
+        msg.set_request_uri(utility::conversions::to_string_t(path_query_fragment));
         msg.set_body(body_data, content_type);
         return request(msg, token);
     }
@@ -646,7 +646,7 @@ public:
         const pplx::cancellation_token &token)
     {
         http_request msg(mtd);
-        msg.set_request_uri(::utility::conversions::to_string_t(path_query_fragment));
+        msg.set_request_uri(utility::conversions::to_string_t(path_query_fragment));
         msg.set_body(std::move(body_data), "text/plain; charset=utf-8");
         return request(msg, token);
     }
@@ -666,7 +666,7 @@ public:
         const utf16string &body_data,
         const pplx::cancellation_token &token)
     {
-        return request(mtd, path_query_fragment, body_data, ::utility::conversions::to_utf16string("text/plain"), token);
+        return request(mtd, path_query_fragment, body_data, utility::conversions::to_utf16string("text/plain"), token);
     }
 
 #if !defined (__cplusplus_winrt)

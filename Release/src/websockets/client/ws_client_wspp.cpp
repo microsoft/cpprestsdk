@@ -95,9 +95,9 @@ namespace details
 {
 
 // Utility function to build up error string based on error code and location.
-static std::string build_error_msg(const std::error_code &ec, const std::string &location)
+static utility::string build_error_msg(const std::error_code &ec, const utility::string &location)
 {
-    std::stringstream ss;
+    utility::stringstream ss;
     ss.imbue(std::locale::classic());
     ss << location
        << ": " << ec.value()
@@ -170,13 +170,13 @@ public:
     {
         if (m_uri.scheme() == U("wss"))
         {
-            m_client = std::unique_ptr<websocketpp_client_base>(new websocketpp_tls_client());
+            m_client = utility::make_unique<websocketpp_tls_client>();
 
             // Options specific to TLS client.
             auto &client = m_client->client<websocketpp::config::asio_tls_client>();
             client.set_tls_init_handler([this](websocketpp::connection_hdl)
             {
-                auto sslContext = websocketpp::lib::shared_ptr<boost::asio::ssl::context>(new boost::asio::ssl::context(boost::asio::ssl::context::sslv23));
+                auto sslContext = utility::make_shared<boost::asio::ssl::context>(boost::asio::ssl::context::sslv23);
                 sslContext->set_default_verify_paths();
                 sslContext->set_options(boost::asio::ssl::context::default_workarounds);
                 if (m_config.validate_certificates())
@@ -207,7 +207,7 @@ public:
                         return http::client::details::verify_cert_chain_platform_specific(verifyCtx, utility::conversions::to_utf8string(m_uri.host()));
                     }
 #endif
-                    boost::asio::ssl::rfc2818_verification rfc2818(utility::conversions::to_utf8string(m_uri.host()));
+                    boost::asio::ssl::rfc2818_verification rfc2818(utility::conversions::to_utf8string(m_uri.host()).c_str());
                     return rfc2818(preverified, verifyCtx);
                 });
 
@@ -249,7 +249,7 @@ public:
         }
         else
         {
-            m_client = std::unique_ptr<websocketpp_client_base>(new websocketpp_client());
+            m_client = utility::make_unique<websocketpp_client>();
             return connect_impl<websocketpp::config::asio_client>();
         }
     }
@@ -300,8 +300,8 @@ public:
                 }
 
                 // 'move' the payload into a container buffer to avoid any copies.
-                auto &payload = msg->get_raw_payload();
-                incoming_msg.m_body = concurrency::streams::container_buffer<std::string>(std::move(payload));
+                auto payload = utility::string(msg->get_raw_payload().c_str());
+                incoming_msg.m_body = concurrency::streams::container_buffer<utility::string>(std::move(payload));
 
                 m_external_message_handler(incoming_msg);
             }
@@ -319,13 +319,13 @@ public:
         auto user_agent_it = headers.find(web::http::header_names::user_agent);
         if (user_agent_it != headers.end())
         {
-            client.set_user_agent(utility::conversions::to_utf8string(user_agent_it->second));
+            client.set_user_agent(utility::conversions::to_utf8string(user_agent_it->second).c_str());
         }
 
         // Get the connection handle to save for later, have to create temporary
         // because type erasure occurs with connection_hdl.
         websocketpp::lib::error_code ec;
-        auto con = client.get_connection(utility::conversions::to_utf8string(m_uri.to_string()), ec);
+        auto con = client.get_connection(utility::conversions::to_utf8string(m_uri.to_string()).c_str(), ec);
         m_con = con;
         if (ec.value() != 0)
         {
@@ -337,17 +337,17 @@ public:
         {
             if (!utility::details::str_iequal(header.first, g_subProtocolHeader))
             {
-                con->append_header(utility::conversions::to_utf8string(header.first), utility::conversions::to_utf8string(header.second));
+                con->append_header(utility::conversions::to_utf8string(header.first).c_str(), utility::conversions::to_utf8string(header.second).c_str());
             }
         }
 
         // Add any specified subprotocols.
         if (headers.has(g_subProtocolHeader))
         {
-            const std::vector<utility::string_t> protocols = m_config.subprotocols();
+            const utility::vector<utility::string_t> protocols = m_config.subprotocols();
             for (const auto & value : protocols)
             {
-                con->add_subprotocol(utility::conversions::to_utf8string(value), ec);
+                con->add_subprotocol(utility::conversions::to_utf8string(value).c_str(), ec);
                 if (ec.value())
                 {
                     return pplx::task_from_exception<void>(websocket_exception(ec, build_error_msg(ec, "add_subprotocol")));
@@ -359,7 +359,7 @@ public:
         const auto &proxy = m_config.proxy();
         if (proxy.is_specified())
         {
-            con->set_proxy(utility::conversions::to_utf8string(proxy.address().to_string()), ec);
+            con->set_proxy(utility::conversions::to_utf8string(proxy.address().to_string()).c_str(), ec);
             if (ec)
             {
                 return pplx::task_from_exception<void>(websocket_exception(ec, build_error_msg(ec, "set_proxy")));
@@ -369,8 +369,8 @@ public:
             if (cred.is_set())
             {
                 con->set_proxy_basic_auth(
-                    utility::conversions::to_utf8string(cred.username()),
-                    utility::conversions::to_utf8string(*cred._internal_decrypt()),
+                    utility::conversions::to_utf8string(cred.username()).c_str(),
+                    utility::conversions::to_utf8string(cred._internal_decrypt()->c_str()).c_str(),
                     ec);
                 if (ec)
                 {
@@ -467,7 +467,7 @@ public:
             {
                 // The stream needs to be buffered.
                 auto is_buf_istream = is_buf.create_istream();
-                msg.m_body = concurrency::streams::container_buffer<std::vector<uint8_t>>();
+                msg.m_body = concurrency::streams::container_buffer<utility::vector<uint8_t>>();
                 is_buf_istream.read_to_end(msg.m_body).then([this_client, msg](pplx::task<size_t> t) mutable
                 {
                     try
@@ -644,7 +644,7 @@ private:
             }
             if (m_external_close_handler)
             {
-                m_external_close_handler(static_cast<websocket_close_status>(closeCode), utility::conversions::to_string_t(reason), ec);
+                m_external_close_handler(static_cast<websocket_close_status>(closeCode), utility::conversions::to_string_t(reason.c_str()).c_str(), ec);
             }
             // Making a local copy of the TCE prevents it from being destroyed along with "this"
             auto tceref = m_close_tce;
@@ -695,7 +695,7 @@ private:
     void close_impl(websocket_close_status status, const utility::string_t& reason, websocketpp::lib::error_code &ec)
     {
         auto &client = m_client->client<WebsocketConfig>();
-        client.close(m_con, static_cast<websocketpp::close::status::value>(status), utility::conversions::to_utf8string(reason), ec);
+        client.close(m_con, static_cast<websocketpp::close::status::value>(status), utility::conversions::to_utf8string(reason).c_str(), ec);
     }
 
     void set_message_handler(const std::function<void(const websocket_incoming_message&)>& handler)
@@ -766,7 +766,7 @@ private:
     // Used to safe guard the wspp client.
     std::mutex m_wspp_client_lock;
     State m_state;
-    std::unique_ptr<websocketpp_client_base> m_client;
+    utility::unique_ptr<websocketpp_client_base> m_client;
 
     // Queue to track pending sends
     outgoing_msg_queue m_out_queue;
@@ -786,18 +786,18 @@ private:
 
 websocket_client_task_impl::websocket_client_task_impl(websocket_client_config config) :
     m_client_closed(false),
-    m_callback_client(std::make_shared<details::wspp_callback_client>(std::move(config)))
+    m_callback_client(utility::make_shared<details::wspp_callback_client>(std::move(config)))
 {
     set_handler();
 }
 }
 
 websocket_callback_client::websocket_callback_client() :
-    m_client(std::make_shared<details::wspp_callback_client>(websocket_client_config()))
+    m_client(utility::make_shared<details::wspp_callback_client>(websocket_client_config()))
 {}
 
 websocket_callback_client::websocket_callback_client(websocket_client_config config) :
-    m_client(std::make_shared<details::wspp_callback_client>(std::move(config)))
+    m_client(utility::make_shared<details::wspp_callback_client>(std::move(config)))
 {}
 
 }}}

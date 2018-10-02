@@ -82,29 +82,29 @@ namespace utility
 namespace details
 {
 
-_ASYNCRTIMP bool __cdecl str_iequal(const std::string &left, const std::string &right) CPPREST_NOEXCEPT
+_ASYNCRTIMP bool __cdecl str_iequal(const utility::string &left, const utility::string &right) CPPREST_NOEXCEPT
 {
     return left.size() == right.size()
         && std::equal(left.cbegin(), left.cend(), right.cbegin(), eq_lower_ch);
 }
 
-_ASYNCRTIMP bool __cdecl str_iequal(const std::wstring &left, const std::wstring &right) CPPREST_NOEXCEPT
+_ASYNCRTIMP bool __cdecl str_iequal(const utility::wstring &left, const utility::wstring &right) CPPREST_NOEXCEPT
 {
     return left.size() == right.size()
         && std::equal(left.cbegin(), left.cend(), right.cbegin(), eq_lower_ch);
 }
 
-_ASYNCRTIMP bool __cdecl str_iless(const std::string &left, const std::string &right) CPPREST_NOEXCEPT
+_ASYNCRTIMP bool __cdecl str_iless(const utility::string &left, const utility::string &right) CPPREST_NOEXCEPT
 {
     return std::lexicographical_compare(left.cbegin(), left.cend(), right.cbegin(), right.cend(), lt_lower_ch);
 }
 
-_ASYNCRTIMP bool __cdecl str_iless(const std::wstring &left, const std::wstring &right) CPPREST_NOEXCEPT
+_ASYNCRTIMP bool __cdecl str_iless(const utility::wstring &left, const utility::wstring &right) CPPREST_NOEXCEPT
 {
     return std::lexicographical_compare(left.cbegin(), left.cend(), right.cbegin(), right.cend(), lt_lower_ch);
 }
 
-_ASYNCRTIMP void __cdecl inplace_tolower(std::string &target) CPPREST_NOEXCEPT
+_ASYNCRTIMP void __cdecl inplace_tolower(utility::string &target) CPPREST_NOEXCEPT
 {
     for (auto& ch : target)
     {
@@ -112,7 +112,7 @@ _ASYNCRTIMP void __cdecl inplace_tolower(std::string &target) CPPREST_NOEXCEPT
     }
 }
 
-_ASYNCRTIMP void __cdecl inplace_tolower(std::wstring &target) CPPREST_NOEXCEPT
+_ASYNCRTIMP void __cdecl inplace_tolower(utility::wstring &target) CPPREST_NOEXCEPT
 {
     for (auto& ch : target)
     {
@@ -122,7 +122,7 @@ _ASYNCRTIMP void __cdecl inplace_tolower(std::wstring &target) CPPREST_NOEXCEPT
 
 #if !defined(ANDROID) && !defined(__ANDROID__)
 std::once_flag g_c_localeFlag;
-std::unique_ptr<scoped_c_thread_locale::xplat_locale, void(*)(scoped_c_thread_locale::xplat_locale *)> g_c_locale(nullptr, [](scoped_c_thread_locale::xplat_locale *){});
+utility::unique_ptr<scoped_c_thread_locale::xplat_locale, void(*)(scoped_c_thread_locale::xplat_locale *)> g_c_locale(nullptr, [](scoped_c_thread_locale::xplat_locale *){});
 scoped_c_thread_locale::xplat_locale scoped_c_thread_locale::c_locale()
 {
     std::call_once(g_c_localeFlag, [&]()
@@ -151,7 +151,7 @@ scoped_c_thread_locale::xplat_locale scoped_c_thread_locale::c_locale()
             delete clocale;
         };
 #endif
-        g_c_locale = std::unique_ptr<scoped_c_thread_locale::xplat_locale, void(*)(scoped_c_thread_locale::xplat_locale *)>(clocale, deleter);
+        g_c_locale = utility::unique_ptr<scoped_c_thread_locale::xplat_locale, void(*)(scoped_c_thread_locale::xplat_locale *)>(clocale, deleter);
     });
     return *g_c_locale;
 }
@@ -264,7 +264,7 @@ std::string windows_category_impl::message(int errorCode) const CPPREST_NOEXCEPT
     }
 #endif
 
-    std::wstring buffer;
+    utility::wstring buffer;
     buffer.resize(buffer_size);
 
     const auto result = ::FormatMessageW(
@@ -282,14 +282,14 @@ std::string windows_category_impl::message(int errorCode) const CPPREST_NOEXCEPT
         return os.str();
     }
 
-    return utility::conversions::to_utf8string(buffer);
+    return std::string(utility::conversions::to_utf8string(buffer).c_str());
 }
 
 std::error_condition windows_category_impl::default_error_condition(int errorCode) const CPPREST_NOEXCEPT
 {
     // First see if the STL implementation can handle the mapping for common cases.
     const std::error_condition errCondition = std::system_category().default_error_condition(errorCode);
-    const std::string errConditionMsg = errCondition.message();
+    const utility::string errConditionMsg = errCondition.message().c_str();
     if(!utility::details::str_iequal(errConditionMsg, "unknown error"))
     {
         return errCondition;
@@ -347,7 +347,7 @@ const std::error_category & __cdecl linux_category()
 #define H_SURROGATE_END 0xDBFF
 #define SURROGATE_PAIR_START 0x10000
 
-inline size_t count_utf8_to_utf16(const std::string& s)
+inline size_t count_utf8_to_utf16(const utility::string& s)
 {
     const size_t sSize = s.size();
     const char* const sData = s.data();
@@ -423,18 +423,18 @@ inline size_t count_utf8_to_utf16(const std::string& s)
     return result;
 }
 
-utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
+utf16string __cdecl conversions::utf8_to_utf16(const utility::string &s)
 {
     // Save repeated heap allocations, use the length of resulting sequence.
     const size_t srcSize = s.size();
-    const std::string::value_type* const srcData = &s[0];
+    const utility::string::value_type* const srcData = &s[0];
     utf16string dest(count_utf8_to_utf16(s), L'\0');
     utf16string::value_type* const destData = &dest[0];
     size_t destIndex = 0;
 
     for (size_t index = 0; index < srcSize; ++index)
     {
-        std::string::value_type src = srcData[index];
+        utility::string::value_type src = srcData[index];
         switch (src & 0xF0)
         {
         case 0xF0: // 4 byte character, 0x10000 to 0x10FFFF
@@ -525,12 +525,12 @@ inline size_t count_utf16_to_utf8(const utf16string &w)
     return destSize;
 }
 
-std::string __cdecl conversions::utf16_to_utf8(const utf16string &w)
+utility::string __cdecl conversions::utf16_to_utf8(const utf16string &w)
 {
     const size_t srcSize = w.size();
     const utf16string::value_type* const srcData = &w[0];
-    std::string dest(count_utf16_to_utf8(w), '\0');
-    std::string::value_type* const destData = &dest[0];
+    utility::string dest(count_utf16_to_utf8(w), '\0');
+    utility::string::value_type* const destData = &dest[0];
     size_t destIndex(0);
 
     for (size_t index = 0; index < srcSize; ++index)
@@ -581,13 +581,13 @@ std::string __cdecl conversions::utf16_to_utf8(const utf16string &w)
     return dest;
 }
 
-utf16string __cdecl conversions::usascii_to_utf16(const std::string &s)
+utf16string __cdecl conversions::usascii_to_utf16(const utility::string &s)
 {
     // Ascii is a subset of UTF-8 so just convert to UTF-16
     return utf8_to_utf16(s);
 }
 
-utf16string __cdecl conversions::latin1_to_utf16(const std::string &s)
+utf16string __cdecl conversions::latin1_to_utf16(const utility::string &s)
 {
     // Latin1 is the first 256 code points in Unicode.
     // In UTF-16 encoding each of these is represented as exactly the numeric code point.
@@ -600,7 +600,7 @@ utf16string __cdecl conversions::latin1_to_utf16(const std::string &s)
     return dest;
 }
 
-utf8string __cdecl conversions::latin1_to_utf8(const std::string &s)
+utf8string __cdecl conversions::latin1_to_utf8(const utility::string &s)
 {
     return utf16_to_utf8(latin1_to_utf16(s));
 }
@@ -613,7 +613,7 @@ utility::string_t __cdecl conversions::to_string_t(utf16string &&s)
 #endif
 
 #ifdef _UTF16_STRINGS
-utility::string_t __cdecl conversions::to_string_t(std::string &&s)
+utility::string_t __cdecl conversions::to_string_t(utility::string &&s)
 {
     return utf8_to_utf16(std::move(s));
 }
@@ -627,15 +627,15 @@ utility::string_t __cdecl conversions::to_string_t(const utf16string &s)
 #endif
 
 #ifdef _UTF16_STRINGS
-utility::string_t __cdecl conversions::to_string_t(const std::string &s)
+utility::string_t __cdecl conversions::to_string_t(const utility::string &s)
 {
     return utf8_to_utf16(s);
 }
 #endif
 
-std::string __cdecl conversions::to_utf8string(const utf16string &value) { return utf16_to_utf8(value); }
+utility::string __cdecl conversions::to_utf8string(const utf16string &value) { return utf16_to_utf8(value); }
 
-utf16string __cdecl conversions::to_utf16string(const std::string &value) { return utf8_to_utf16(value); }
+utf16string __cdecl conversions::to_utf16string(const utility::string &value) { return utf8_to_utf16(value); }
 
 #ifndef WIN32
 datetime datetime::timeval_to_datetime(const timeval &time)
@@ -686,7 +686,7 @@ utility::string_t datetime::to_string(date_format format) const
         throw utility::details::create_system_error(GetLastError());
     }
 
-    std::wostringstream outStream;
+    utility::wostringstream outStream;
     outStream.imbue(std::locale::classic());
 
     if (format == RFC_1123)
@@ -794,7 +794,7 @@ utility::string_t datetime::to_string(date_format format) const
             &datetime);
     }
 
-    return std::string(output);
+    return utility::string(output);
 #endif
 }
 
@@ -873,8 +873,8 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
     {
         SYSTEMTIME sysTime = {0};
 
-        std::wstring month(3, L'\0');
-        std::wstring unused(3, L'\0');
+        utility::wstring month(3, L'\0');
+        utility::wstring unused(3, L'\0');
 
         const wchar_t * formatString = L"%3c, %2d %3c %4d %2d:%2d:%2d %3c";
         auto n = swscanf_s(dateString.c_str(), formatString,
@@ -889,8 +889,8 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
 
         if (n == 8)
         {
-            std::wstring monthnames[12] = {L"Jan", L"Feb", L"Mar", L"Apr", L"May", L"Jun", L"Jul", L"Aug", L"Sep", L"Oct", L"Nov", L"Dec"};
-            auto loc = std::find_if(monthnames, monthnames+12, [&month](const std::wstring& m) { return m == month;});
+            utility::wstring monthnames[12] = {L"Jan", L"Feb", L"Mar", L"Apr", L"May", L"Jun", L"Jul", L"Aug", L"Sep", L"Oct", L"Nov", L"Dec"};
+            auto loc = std::find_if(monthnames, monthnames+12, [&month](const utility::wstring& m) { return m == month;});
 
             if (loc != monthnames+12)
             {
@@ -978,7 +978,7 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
 
     return datetime();
 #else
-    std::string input(dateString);
+    utility::string input(dateString);
 
     struct tm output = tm();
 
@@ -1037,7 +1037,7 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
     static boost::mutex env_var_lock;
     {
         boost::lock_guard<boost::mutex> lock(env_var_lock);
-        std::string prev_env;
+        utility::string prev_env;
         auto prev_env_cstr = getenv("TZ");
         if (prev_env_cstr != nullptr)
         {

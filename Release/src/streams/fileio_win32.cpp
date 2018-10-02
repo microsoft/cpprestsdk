@@ -230,7 +230,7 @@ bool __cdecl _open_fsb_str(_In_ _filestream_callback *callback, const utility::c
     _ASSERTE(callback != nullptr);
     _ASSERTE(filename != nullptr);
 
-    std::wstring name(filename);
+    utility::wstring name(filename);
 
     pplx::create_task([=]()
     {
@@ -360,7 +360,7 @@ VOID CALLBACK _ReadFileCompletionRoutine(DWORD dwErrorCode, DWORD dwNumberOfByte
 /// <returns>0 if the write request is still outstanding, -1 if the request failed, otherwise the size of the data written</returns>
 size_t _write_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ streams::details::_filestream_callback *callback, const void *ptr, size_t count, size_t position)
 {
-    auto pOverlapped = std::unique_ptr<EXTENDED_OVERLAPPED>(new EXTENDED_OVERLAPPED(_WriteFileCompletionRoutine<streams::details::_file_info_impl>, callback));
+    auto pOverlapped = utility::make_unique<EXTENDED_OVERLAPPED>(_WriteFileCompletionRoutine<streams::details::_file_info_impl>, callback);
 
     if (position == static_cast<size_t>(-1))
     {
@@ -454,7 +454,7 @@ size_t _write_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ str
 /// <returns>0 if the read request is still outstanding, -1 if the request failed, otherwise the size of the data read into the buffer</returns>
 size_t _read_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ streams::details::_filestream_callback *callback, _Out_writes_ (count) void *ptr, _In_ size_t count, size_t offset)
 {
-    auto pOverlapped = std::unique_ptr<EXTENDED_OVERLAPPED>(new EXTENDED_OVERLAPPED(_ReadFileCompletionRoutine<streams::details::_file_info_impl>, callback));
+    auto pOverlapped = utility::make_unique<EXTENDED_OVERLAPPED>(_ReadFileCompletionRoutine<streams::details::_file_info_impl>, callback);
     pOverlapped->Offset = static_cast<DWORD>(offset);
 #ifdef _WIN64
     pOverlapped->OffsetHigh = static_cast<DWORD>(offset >> 32);

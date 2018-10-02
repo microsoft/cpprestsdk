@@ -46,7 +46,7 @@ public:
     /// <summary>
     /// Registers a HTTP server API.
     /// </summary>
-    static void __cdecl register_server_api(std::unique_ptr<http_server> server_api);
+    static void __cdecl register_server_api(utility::unique_ptr<http_server> server_api);
 
     /// <summary>
     /// Clears the http server API.
@@ -74,10 +74,10 @@ private:
     static pplx::extensibility::critical_section_t s_lock;
 
     /// Registers a server API set -- this assumes the lock has already been taken
-    static void unsafe_register_server_api(std::unique_ptr<http_server> server_api);
+    static void unsafe_register_server_api(utility::unique_ptr<http_server> server_api);
 
     // Static instance of the HTTP server API.
-    static std::unique_ptr<http_server> s_server_api;
+    static utility::unique_ptr<http_server> s_server_api;
 
     /// Number of registered listeners;
     static pplx::details::atomic_long s_registrations;
