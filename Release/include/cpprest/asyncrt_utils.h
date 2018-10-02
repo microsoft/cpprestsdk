@@ -398,41 +398,12 @@ namespace details
     }
 
     /// <summary>
-    /// Simplistic implementation of make_unique. A better implementation would be based on variadic templates
-    /// and therefore not be compatible with Dev10.
-    /// </summary>
-    template <typename _Type>
-    std::unique_ptr<_Type> make_unique() {
-        return std::unique_ptr<_Type>(new _Type());
-    }
-
-    template <typename _Type, typename _Arg1>
-    std::unique_ptr<_Type> make_unique(_Arg1&& arg1) {
-        return std::unique_ptr<_Type>(new _Type(std::forward<_Arg1>(arg1)));
-    }
-
-    template <typename _Type, typename _Arg1, typename _Arg2>
-    std::unique_ptr<_Type> make_unique(_Arg1&& arg1, _Arg2&& arg2) {
-        return std::unique_ptr<_Type>(new _Type(std::forward<_Arg1>(arg1), std::forward<_Arg2>(arg2)));
-    }
-
-    template <typename _Type, typename _Arg1, typename _Arg2, typename _Arg3>
-    std::unique_ptr<_Type> make_unique(_Arg1&& arg1, _Arg2&& arg2, _Arg3&& arg3) {
-        return std::unique_ptr<_Type>(new _Type(std::forward<_Arg1>(arg1), std::forward<_Arg2>(arg2), std::forward<_Arg3>(arg3)));
-    }
-
-    template <typename _Type, typename _Arg1, typename _Arg2, typename _Arg3, typename _Arg4>
-    std::unique_ptr<_Type> make_unique(_Arg1&& arg1, _Arg2&& arg2, _Arg3&& arg3, _Arg4&& arg4) {
-        return std::unique_ptr<_Type>(new _Type(std::forward<_Arg1>(arg1), std::forward<_Arg2>(arg2), std::forward<_Arg3>(arg3), std::forward<_Arg4>(arg4)));
-    }
-
-    /// <summary>
     /// Cross platform utility function for performing case insensitive string equality comparision.
     /// </summary>
     /// <param name="left">First string to compare.</param>
     /// <param name="right">Second strong to compare.</param>
     /// <returns>true if the strings are equivalent, false otherwise</returns>
-    _ASYNCRTIMP bool __cdecl str_iequal(const std::string &left, const std::string &right) CPPREST_NOEXCEPT;
+    _ASYNCRTIMP bool __cdecl str_iequal(const utility::string &left, const utility::string &right) CPPREST_NOEXCEPT;
 
     /// <summary>
     /// Cross platform utility function for performing case insensitive string equality comparision.
