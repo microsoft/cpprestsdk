@@ -91,7 +91,7 @@ static struct _pplx_g_sched_t
                 ::pplx::details::_Scoped_spin_lock lock(m_spinlock);
                 if (!m_scheduler)
                 {
-                    m_scheduler = std::make_shared< ::pplx::default_scheduler_t>();
+                    m_scheduler = utility::make_shared< ::pplx::default_scheduler_t>();
                 }
             }
 
@@ -99,7 +99,7 @@ static struct _pplx_g_sched_t
         default:
             // This case means the global m_scheduler is not available.
             // We spin off an individual scheduler instead.
-            return std::make_shared< ::pplx::default_scheduler_t>();
+            return utility::make_shared< ::pplx::default_scheduler_t>();
         }
     }
 
