@@ -95,12 +95,9 @@ TEST_FIXTURE(uri_address, do_not_send_accept_encoding)
     server.next_request().then([&found_accept_encoding](test_request *p_request) {
         utility::string_t header;
 
-        found_accept_encoding = p_request->match_header(header_names::accept_encoding, header);
-        if (found_accept_encoding)
-        {
-            // On Windows, someone along the way (not us!) adds "Accept-Encoding: peerdist"
-            found_accept_encoding = header != _XPLATSTR("peerdist");
-        }
+        // On Windows, someone along the way (not us!) adds "Accept-Encoding: peerdist"
+        found_accept_encoding =
+            p_request->match_header(header_names::accept_encoding, header) && header != _XPLATSTR("peerdist");
         p_request->reply(200, U("OK"));
     });
 

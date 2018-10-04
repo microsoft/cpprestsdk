@@ -72,6 +72,9 @@ endif()
 
 # Compression component
 if(CPPREST_EXCLUDE_COMPRESSION)
+  if(NOT CPPREST_EXCLUDE_BROTLI)
+    message(FATAL_ERROR "Use of Brotli requires compression to be enabled")
+  endif()
   target_compile_definitions(cpprest PRIVATE -DCPPREST_EXCLUDE_COMPRESSION=1)
 else()
   cpprest_find_zlib()

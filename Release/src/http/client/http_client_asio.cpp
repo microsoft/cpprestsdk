@@ -1520,21 +1520,18 @@ private:
 
     bool decompress(const uint8_t* input, size_t input_size, std::vector<uint8_t>& output)
     {
-        size_t processed;
-        size_t got;
-        size_t inbytes;
-        size_t outbytes;
-        bool done;
-
         // Need to guard against attempting to decompress when we're already finished or encountered an error!
         if (input == nullptr || input_size == 0)
         {
             return false;
         }
 
-        inbytes = 0;
-        outbytes = 0;
-        done = false;
+        size_t processed;
+        size_t got;
+        size_t inbytes = 0;
+        size_t outbytes = 0;
+        bool done = false;
+
         try
         {
             output.resize(input_size * 3);
@@ -1542,7 +1539,7 @@ private:
             {
                 if (inbytes)
                 {
-                    output.resize(output.size() + (input_size > 1024 ? input_size : 1024));
+                    output.resize(output.size() + std::max(input_size, static_cast<size_t>(1024)));
                 }
                 got = m_decompressor->decompress(input + inbytes,
                                                  input_size - inbytes,

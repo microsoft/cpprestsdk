@@ -219,7 +219,7 @@ public:
             return false;
         }
 
-        return bind_impl(iter->second, value) || iter->second.empty();
+        return details::bind_impl(iter->second, value) || iter->second.empty();
     }
 
     /// <summary>
@@ -285,9 +285,14 @@ public:
     _ASYNCRTIMP void set_date(const utility::datetime& date);
 
 private:
+    // Headers are stored in a map with case insensitive key.
+    inner_container m_headers;
+};
 
-    template<typename _t>
-    bool bind_impl(const key_type &text, _t &ref) const
+namespace details
+{
+    template<typename key_type, typename _t>
+    bool bind_impl(const key_type &text, _t &ref)
     {
         utility::istringstream_t iss(text);
         iss.imbue(std::locale::classic());
@@ -300,20 +305,18 @@ private:
         return true;
     }
 
-    bool bind_impl(const key_type &text, utf16string &ref) const
+    template<typename key_type>
+    bool bind_impl(const key_type &text, utf16string &ref)
     {
         ref = utility::conversions::to_utf16string(text);
         return true;
     }
 
-    bool bind_impl(const key_type &text, std::string &ref) const
+    template<typename key_type>
+    bool bind_impl(const key_type &text, std::string &ref)
     {
         ref = utility::conversions::to_utf8string(text);
         return true;
     }
-
-    // Headers are stored in a map with case insensitive key.
-    inner_container m_headers;
-};
-
+}
 }}

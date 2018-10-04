@@ -115,24 +115,20 @@ _ASYNCRTIMP bool supported();
 /// <summary>
 // String constants for each built-in compression algorithm, for convenient use with the factory functions
 /// </summary>
-class algorithm
+namespace algorithm
 {
-public:
-    _ASYNCRTIMP static const utility::string_t GZIP;
-    _ASYNCRTIMP static const utility::string_t DEFLATE;
-    _ASYNCRTIMP static const utility::string_t BROTLI;
+constexpr utility::char_t *GZIP = _XPLATSTR("gzip");
+constexpr utility::char_t *DEFLATE = _XPLATSTR("deflate");
+constexpr utility::char_t *BROTLI = _XPLATSTR("br");
 
-    /// <summary>
-    /// Test whether cpprestsdk was built with built-in compression support and
-    /// the supplied string matches a supported built-in algorithm
-    /// <param name="algorithm">The name of the algorithm to test for built-in support.</param>
-    /// <returns>True if cpprestsdk was built with built-in compression support and
-    /// the supplied string matches a supported built-in algorithm, and false if not.</returns>
-    /// <summary>
-    _ASYNCRTIMP static bool supported(const utility::string_t& algorithm);
-
-private:
-    algorithm() {}
+/// <summary>
+/// Test whether cpprestsdk was built with built-in compression support and
+/// the supplied string matches a supported built-in algorithm
+/// <param name="algorithm">The name of the algorithm to test for built-in support.</param>
+/// <returns>True if cpprestsdk was built with built-in compression support and
+/// the supplied string matches a supported built-in algorithm, and false if not.</returns>
+/// <summary>
+_ASYNCRTIMP bool supported(const utility::string_t& algorithm);
 };
 
 /// <summary>
@@ -255,12 +251,6 @@ _ASYNCRTIMP std::shared_ptr<decompress_factory> make_decompress_factory(
 
 namespace details
 {
-namespace builtin
-{
-// Internal-only helper function
-const std::vector<std::shared_ptr<decompress_factory>> get_decompress_factories();
-} // namespace builtin
-
 /// <summary>
 /// Header type enum for use with compressor and decompressor header parsing and building functions
 /// </summary>

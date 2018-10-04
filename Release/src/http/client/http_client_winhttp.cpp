@@ -182,10 +182,10 @@ class memory_holder
 {
     uint8_t* m_externalData;
     std::vector<uint8_t> m_internalData;
-    size_t m_length;
+    size_t m_size;
 
 public:
-    memory_holder() : m_externalData(nullptr), m_length(0)
+    memory_holder() : m_externalData(nullptr), m_size(0)
     {
     }
 
@@ -202,7 +202,7 @@ public:
     {
         assert(block != nullptr);
         m_externalData = block;
-        m_length = length;
+        m_size = length;
     }
 
     inline bool is_internally_allocated() const
@@ -215,9 +215,9 @@ public:
         return is_internally_allocated() ? &m_internalData[0] : m_externalData ;
     }
 
-    inline size_t length() const
+    inline size_t size() const
     {
-        return is_internally_allocated() ? m_internalData.size() : m_length;
+        return is_internally_allocated() ? m_internalData.size() : m_size;
     }
 };
 
@@ -1311,13 +1311,7 @@ private:
             {
                 uint8_t *buffer;
 
-                if (!decompressor)
-                {
-                    auto writebuf = pContext->_get_writebuffer();
-                    pContext->allocate_reply_space(writebuf.alloc(chunkSize), chunkSize);
-                    buffer = pContext->m_body_data.get();
-                }
-                else
+                if (decompressor)
                 {
                     // m_buffer holds the compressed data; we'll decompress into the caller's buffer later
                     if (pContext->m_compression_state.m_buffer.capacity() < chunkSize)
@@ -1325,6 +1319,12 @@ private:
                         pContext->m_compression_state.m_buffer.reserve(chunkSize);
                     }
                     buffer = pContext->m_compression_state.m_buffer.data();
+                }
+                else
+                {
+                    auto writebuf = pContext->_get_writebuffer();
+                    pContext->allocate_reply_space(writebuf.alloc(chunkSize), chunkSize);
+                    buffer = pContext->m_body_data.get();
                 }
 
                 if (!WinHttpReadData(
@@ -1350,15 +1350,15 @@ private:
         {
             // We could allocate less than a chunk for the compressed data here, though that
             // would result in more trips through this path for not-so-compressible data...
-            if (p_request_context->m_body_data.length() > http::details::chunked_encoding::additional_encoding_space)
+            if (p_request_context->m_body_data.size() > http::details::chunked_encoding::additional_encoding_space)
             {
                 // If we've previously allocated space for the compressed data, don't reduce it
-                chunk_size = p_request_context->m_body_data.length() - http::details::chunked_encoding::additional_encoding_space;
+                chunk_size = p_request_context->m_body_data.size() - http::details::chunked_encoding::additional_encoding_space;
             }
             else if (p_request_context->m_remaining_to_write != std::numeric_limits<size_t>::max())
             {
                 // Choose a semi-intelligent size based on how much total data is left to compress
-                chunk_size = std::min((size_t)p_request_context->m_remaining_to_write+128, p_request_context->m_http_client->client_config().chunksize());
+                chunk_size = std::min(static_cast<size_t>(p_request_context->m_remaining_to_write)+128, p_request_context->m_http_client->client_config().chunksize());
             }
             else
             {
@@ -1369,7 +1369,7 @@ private:
         else
         {
             // We're not compressing; use the smaller of the remaining data (if known) and the configured (or default) chunk size
-            chunk_size = std::min((size_t)p_request_context->m_remaining_to_write, p_request_context->m_http_client->client_config().chunksize());
+            chunk_size = std::min(static_cast<size_t>(p_request_context->m_remaining_to_write), p_request_context->m_http_client->client_config().chunksize());
         }
         p_request_context->allocate_request_space(nullptr, chunk_size + http::details::chunked_encoding::additional_encoding_space);
 
@@ -1590,7 +1590,7 @@ private:
                 }
                 else
                 {
-                    length = std::min((size_t)p_request_context->m_remaining_to_write, p_request_context->m_http_client->client_config().chunksize());
+                    length = std::min(static_cast<size_t>(p_request_context->m_remaining_to_write), p_request_context->m_http_client->client_config().chunksize());
                     if (p_request_context->m_compression_state.m_buffer.capacity() < length)
                     {
                         p_request_context->m_compression_state.m_buffer.reserve(length);
@@ -2182,7 +2182,7 @@ private:
 
                 if (p_request_context->m_decompressor)
                 {
-                    size_t chunk_size = std::max((size_t)bytesRead, p_request_context->m_http_client->client_config().chunksize());
+                    size_t chunk_size = std::max(static_cast<size_t>(bytesRead), p_request_context->m_http_client->client_config().chunksize());
                     p_request_context->m_compression_state.m_bytes_read = static_cast<size_t>(bytesRead);
                     p_request_context->m_compression_state.m_chunk_bytes = 0;
 

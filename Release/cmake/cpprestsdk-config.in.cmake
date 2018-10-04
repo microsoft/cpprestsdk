@@ -4,7 +4,7 @@ if(@CPPREST_USES_ZLIB@)
 endif()
 
 if(@CPPREST_USES_BROTLI@)
-  find_dependency(UNOFFICIAL-BROTLI)
+  find_dependency(unofficial-brotli)
 endif()
 
 if(@CPPREST_USES_OPENSSL@)

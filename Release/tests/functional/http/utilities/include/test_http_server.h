@@ -74,7 +74,7 @@ public:
              return false;
          }
 
-        return bind_impl(iter->second, header_value) || iter->second.empty();
+        return web::http::details::bind_impl(iter->second, header_value) || iter->second.empty();
     }
 
     // Request data.
@@ -94,33 +94,6 @@ private:
         const std::map<utility::string_t, utility::string_t> &headers,
         void * data,
         size_t data_length);
-
-private:
-
-    template<typename T>
-    bool bind_impl(const utility::string_t &text, T &ref) const
-    {
-        utility::istringstream_t iss(text);
-        iss.imbue(std::locale::classic());
-        iss >> ref;
-        if (iss.fail() || !iss.eof())
-        {
-            return false;
-        }
-
-        return true;
-    }
-
-    bool bind_impl(const utility::string_t &text, utf16string &ref) const
-    {
-        ref = utility::conversions::to_utf16string(text);
-        return true;
-    }
-    bool bind_impl(const utility::string_t &text, std::string &ref) const
-    {
-        ref = utility::conversions::to_utf8string(text);
-        return true;
-    }
 };
 
 /// <summary>

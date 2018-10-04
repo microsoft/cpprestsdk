@@ -383,7 +383,7 @@ public:
     /// Determine the remaining input stream length
     /// </summary>
     /// <returns>
-    /// size_t::max if the stream's remaining length cannot be determined
+    /// std::numeric_limits<size_t>::max() if the stream's remaining length cannot be determined
     /// length      if the stream's remaining length (which may be 0) can be determined
     /// </returns>
     /// <remarks>
@@ -396,7 +396,7 @@ public:
     /// Determine the content length
     /// </summary>
     /// <returns>
-    /// size_t::max if there is content with unknown length (transfer_encoding:chunked)
+    /// std::numeric_limits<size_t>::max() if there is content with unknown length (transfer_encoding:chunked)
     /// 0           if there is no content
     /// length      if there is content with known length
     /// </returns>
@@ -410,7 +410,7 @@ public:
     /// Determine the content length, and, if necessary, manage compression in the Transfer-Encoding header
     /// </summary>
     /// <returns>
-    /// size_t::max if there is content with unknown length (transfer_encoding:chunked)
+    /// std::numeric_limits<size_t>::max() if there is content with unknown length (transfer_encoding:chunked)
     /// 0           if there is no content
     /// length      if there is content with known length
     /// </returns>
@@ -739,7 +739,7 @@ public:
     /// <param name="stream">A readable, open asynchronous stream.</param>
     /// <param name="content_type">A string holding the MIME type of the message body.</param>
     /// <remarks>
-    /// This cannot be used in conjunction with any other means of setting the body of the request.
+    /// This cannot be used in conjunction with any external means of setting the body of the request.
     /// The stream will not be read until the message is sent.
     /// </remarks>
     void set_body(const concurrency::streams::istream &stream, const utility::string_t &content_type = _XPLATSTR("application/octet-stream"))
@@ -755,7 +755,7 @@ public:
     /// <param name="content_length">The size of the data to be sent in the body.</param>
     /// <param name="content_type">A string holding the MIME type of the message body.</param>
     /// <remarks>
-    /// This cannot be used in conjunction with any other means of setting the body of the request.
+    /// This cannot be used in conjunction with any external means of setting the body of the request.
     /// The stream will not be read until the message is sent.
     /// </remarks>
     void set_body(const concurrency::streams::istream &stream, utility::size64_t content_length, const utility::string_t &content_type = _XPLATSTR("application/octet-stream"))
@@ -1222,7 +1222,7 @@ public:
     /// </summary>
     /// <param name="compressor">A pointer to an instantiated compressor of the desired type.</param>
     /// <remarks>
-    /// This cannot be used in conjunction with any other means of compression.  The Transfer-Encoding
+    /// This cannot be used in conjunction with any external means of compression.  The Transfer-Encoding
     /// header will be managed internally, and must not be set by the client.
     /// </remarks>
     void set_compressor(std::unique_ptr<http::compression::compress_provider> compressor)
@@ -1238,7 +1238,7 @@ public:
     /// True if a built-in compressor was instantiated, otherwise false.
     /// </returns>
     /// <remarks>
-    /// This cannot be used in conjunction with any other means of compression.  The Transfer-Encoding
+    /// This cannot be used in conjunction with any external means of compression.  The Transfer-Encoding
     /// header will be managed internally, and must not be set by the client.
     /// </remarks>
     bool set_compressor(utility::string_t algorithm)
@@ -1297,7 +1297,7 @@ public:
     /// The collection of factory classes itself.
     /// </returns>
     /// <remarks>
-    /// This cannot be used in conjunction with any other means of decompression.  The TE
+    /// This cannot be used in conjunction with any external means of decompression.  The TE
     /// header must not be set by the client, as it will be managed internally.
     /// </remarks>
     const std::vector<std::shared_ptr<http::compression::decompress_factory>> &decompress_factories() const

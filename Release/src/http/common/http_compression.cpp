@@ -54,12 +54,15 @@ namespace builtin
 class zlib_compressor_base : public compress_provider
 {
 public:
+    static const utility::string_t GZIP;
+    static const utility::string_t DEFLATE;
+
     zlib_compressor_base(int windowBits,
                          int compressionLevel = Z_DEFAULT_COMPRESSION,
                          int method = Z_DEFLATED,
                          int strategy = Z_DEFAULT_STRATEGY,
                          int memLevel = MAX_MEM_LEVEL)
-        : m_algorithm(windowBits >= 16 ? algorithm::GZIP : algorithm::DEFLATE)
+        : m_algorithm(windowBits >= 16 ? GZIP : DEFLATE)
     {
         m_state = deflateInit2(&m_stream, compressionLevel, method, windowBits, memLevel, strategy);
     }
@@ -89,6 +92,11 @@ public:
             std::stringstream ss;
             ss << "Prior unrecoverable compression stream error " << m_state;
             throw std::runtime_error(std::move(ss.str()));
+        }
+
+        if (input_size > std::numeric_limits<uInt>::max() || output_size > std::numeric_limits<uInt>::max())
+        {
+            throw std::runtime_error("Compression input or output size out of range");
         }
 
         m_stream.next_in = const_cast<Bytef*>(input);
@@ -152,11 +160,15 @@ private:
     const utility::string_t& m_algorithm;
 };
 
+const utility::string_t zlib_compressor_base::GZIP(algorithm::GZIP);
+const utility::string_t zlib_compressor_base::DEFLATE(algorithm::DEFLATE);
+
 // A shared base class for the gzip and deflate decompressors
 class zlib_decompressor_base : public decompress_provider
 {
 public:
-    zlib_decompressor_base(int windowBits) : m_algorithm(windowBits >= 16 ? algorithm::GZIP : algorithm::DEFLATE)
+    zlib_decompressor_base(int windowBits)
+        : m_algorithm(windowBits >= 16 ? zlib_compressor_base::GZIP : zlib_compressor_base::DEFLATE)
     {
         m_state = inflateInit2(&m_stream, windowBits);
     }
@@ -186,6 +198,11 @@ public:
             std::stringstream ss;
             ss << "Prior unrecoverable decompression stream error " << m_state;
             throw std::runtime_error(std::move(ss.str()));
+        }
+
+        if (input_size > std::numeric_limits<uInt>::max() || output_size > std::numeric_limits<uInt>::max())
+        {
+            throw std::runtime_error("Compression input or output size out of range");
         }
 
         m_stream.next_in = const_cast<Bytef*>(input);
@@ -296,15 +313,17 @@ public:
 class brotli_compressor : public compress_provider
 {
 public:
+    static const utility::string_t BROTLI;
+
     brotli_compressor(uint32_t window = BROTLI_DEFAULT_WINDOW,
                       uint32_t quality = BROTLI_DEFAULT_QUALITY,
                       uint32_t mode = BROTLI_DEFAULT_MODE)
-        : m_window(window), m_quality(quality), m_mode(mode)
+        : m_algorithm(BROTLI), m_window(window), m_quality(quality), m_mode(mode)
     {
         (void)reset();
     }
 
-    const utility::string_t& algorithm() const { return algorithm::BROTLI; }
+    const utility::string_t& algorithm() const { return m_algorithm; }
 
     size_t compress(const uint8_t* input,
                     size_t input_size,
@@ -449,12 +468,15 @@ private:
     uint32_t m_window;
     uint32_t m_quality;
     uint32_t m_mode;
+    const utility::string_t& m_algorithm;
 };
+
+const utility::string_t brotli_compressor::BROTLI(algorithm::BROTLI);
 
 class brotli_decompressor : public decompress_provider
 {
 public:
-    brotli_decompressor()
+    brotli_decompressor() : m_algorithm(brotli_compressor::BROTLI)
     {
         try
         {
@@ -465,7 +487,7 @@ public:
         }
     }
 
-    const utility::string_t& algorithm() const { return algorithm::BROTLI; }
+    const utility::string_t& algorithm() const { return m_algorithm; }
 
     size_t decompress(const uint8_t* input,
                       size_t input_size,
@@ -561,13 +583,10 @@ public:
 private:
     BrotliDecoderResult m_state{BROTLI_DECODER_RESULT_ERROR};
     BrotliDecoderState* m_stream{nullptr};
+    const utility::string_t& m_algorithm;
 };
 #endif // CPPREST_BROTLI_COMPRESSION
 #endif // CPPREST_HTTP_COMPRESSION
-
-const utility::string_t algorithm::GZIP = _XPLATSTR("gzip");
-const utility::string_t algorithm::DEFLATE = _XPLATSTR("deflate");
-const utility::string_t algorithm::BROTLI = _XPLATSTR("br");
 
 // Generic internal implementation of the compress_factory API
 class generic_compress_factory : public compress_factory
@@ -575,16 +594,16 @@ class generic_compress_factory : public compress_factory
 public:
     generic_compress_factory(const utility::string_t& algorithm,
                              std::function<std::unique_ptr<compress_provider>()> make_compressor)
-        : _algorithm(algorithm), _make_compressor(make_compressor)
+        : m_algorithm(algorithm), _make_compressor(make_compressor)
     {
     }
 
-    const utility::string_t& algorithm() const { return _algorithm; }
+    const utility::string_t& algorithm() const { return m_algorithm; }
 
     std::unique_ptr<compress_provider> make_compressor() const { return _make_compressor(); }
 
 private:
-    const utility::string_t _algorithm;
+    const utility::string_t m_algorithm;
     std::function<std::unique_ptr<compress_provider>()> _make_compressor;
 };
 
@@ -595,19 +614,19 @@ public:
     generic_decompress_factory(const utility::string_t& algorithm,
                                uint16_t weight,
                                std::function<std::unique_ptr<decompress_provider>()> make_decompressor)
-        : _algorithm(algorithm), _weight(weight), _make_decompressor(make_decompressor)
+        : m_algorithm(algorithm), m_weight(weight), _make_decompressor(make_decompressor)
     {
     }
 
-    const utility::string_t& algorithm() const { return _algorithm; }
+    const utility::string_t& algorithm() const { return m_algorithm; }
 
-    const uint16_t weight() const { return _weight; }
+    const uint16_t weight() const { return m_weight; }
 
     std::unique_ptr<decompress_provider> make_decompressor() const { return _make_decompressor(); }
 
 private:
-    const utility::string_t _algorithm;
-    uint16_t _weight;
+    const utility::string_t m_algorithm;
+    uint16_t m_weight;
     std::function<std::unique_ptr<decompress_provider>()> _make_decompressor;
 };
 
@@ -654,11 +673,9 @@ bool supported() { return !g_compress_factories.empty(); }
 
 bool algorithm::supported(const utility::string_t& algorithm)
 {
-    auto size = g_compress_factories.size();
-
-    for (int i = 0; i < size; i++)
+    for (auto& factory : g_compress_factories)
     {
-        if (utility::details::str_iequal(algorithm, g_compress_factories[i]->algorithm()))
+        if (utility::details::str_iequal(algorithm, factory->algorithm()))
         {
             return true;
         }
@@ -670,11 +687,8 @@ bool algorithm::supported(const utility::string_t& algorithm)
 static std::unique_ptr<compress_provider> _make_compressor(
     const std::vector<std::shared_ptr<compress_factory>>& factories, const utility::string_t& algorithm)
 {
-    auto size = factories.size();
-
-    for (int i = 0; i < size; i++)
+    for (auto& factory : factories)
     {
-        auto factory = factories[i].get();
         if (factory && utility::details::str_iequal(algorithm, factory->algorithm()))
         {
             return factory->make_compressor();
@@ -692,11 +706,8 @@ std::unique_ptr<compress_provider> make_compressor(const utility::string_t& algo
 static std::unique_ptr<decompress_provider> _make_decompressor(
     const std::vector<std::shared_ptr<decompress_factory>>& factories, const utility::string_t& algorithm)
 {
-    auto size = factories.size();
-
-    for (int i = 0; i < size; i++)
+    for (auto& factory : factories)
     {
-        auto factory = factories[i].get();
         if (factory && utility::details::str_iequal(algorithm, factory->algorithm()))
         {
             return factory->make_decompressor();
@@ -713,13 +724,11 @@ std::unique_ptr<decompress_provider> make_decompressor(const utility::string_t& 
 
 std::shared_ptr<compress_factory> get_compress_factory(const utility::string_t& algorithm)
 {
-    auto size = g_compress_factories.size();
-
-    for (int i = 0; i < size; i++)
+    for (auto& factory : g_compress_factories)
     {
-        if (utility::details::str_iequal(algorithm, g_compress_factories[i]->algorithm()))
+        if (utility::details::str_iequal(algorithm, factory->algorithm()))
         {
-            return g_compress_factories[i];
+            return factory;
         }
     }
 
@@ -728,13 +737,11 @@ std::shared_ptr<compress_factory> get_compress_factory(const utility::string_t& 
 
 std::shared_ptr<decompress_factory> get_decompress_factory(const utility::string_t& algorithm)
 {
-    auto size = g_decompress_factories.size();
-
-    for (int i = 0; i < size; i++)
+    for (auto& factory : g_decompress_factories)
     {
-        if (utility::details::str_iequal(algorithm, g_decompress_factories[i]->algorithm()))
+        if (utility::details::str_iequal(algorithm, factory->algorithm()))
         {
-            return g_decompress_factories[i];
+            return factory;
         }
     }
 
@@ -793,7 +800,7 @@ const std::vector<std::shared_ptr<decompress_factory>> get_decompress_factories(
 }
 } // namespace builtin
 
-static bool is_http_whitespace(utility::char_t ch) { return ch == _XPLATSTR(" ")[0] || ch == _XPLATSTR("\t")[0]; }
+static bool is_http_whitespace(utility::char_t ch) { return ch == _XPLATSTR(' ') || ch == _XPLATSTR('\t'); }
 
 static void remove_surrounding_http_whitespace(const utility::string_t& encoding, size_t& start, size_t& length)
 {
@@ -840,7 +847,7 @@ std::unique_ptr<compress_provider> get_compressor_from_header(
     while (n != utility::string_t::npos)
     {
         // Tokenize by commas first
-        mark = encoding.find(_XPLATSTR(","), n);
+        mark = encoding.find(_XPLATSTR(','), n);
         t.start = n;
         t.rank = static_cast<size_t>(-1);
         if (mark == utility::string_t::npos)
@@ -858,7 +865,7 @@ std::unique_ptr<compress_provider> get_compressor_from_header(
         remove_surrounding_http_whitespace(encoding, t.start, t.length);
 
         // Next split at the semicolon, if any, and deal with rank and additional whitespace
-        mark = encoding.find(_XPLATSTR(";")[0], t.start);
+        mark = encoding.find(_XPLATSTR(';'), t.start);
         if (mark < t.start + t.length)
         {
             end = t.start + t.length - 1;
@@ -877,15 +884,15 @@ std::unique_ptr<compress_provider> get_compressor_from_header(
                     // Determine ranking; leading whitespace has been implicitly skipped by find().
                     // The ranking always starts with '1' or '0' per standard, and has at most 3 decimal places
                     mark += 1;
-                    t.rank = 1000 * (encoding.at(mark + 1) - _XPLATSTR("0")[0]);
-                    if (mark + 2 < end && encoding.at(mark + 2) == _XPLATSTR(".")[0])
+                    t.rank = 1000 * (encoding.at(mark + 1) - _XPLATSTR('0'));
+                    if (mark + 2 < end && encoding.at(mark + 2) == _XPLATSTR('.'))
                     {
                         // This is a real number rank; convert decimal part to hundreds and apply it
                         size_t factor = 100;
                         mark += 2;
                         for (size_t i = mark + 1; i <= end; i++)
                         {
-                            t.rank += (encoding.at(i) - _XPLATSTR("0")[0]) * factor;
+                            t.rank += (encoding.at(i) - _XPLATSTR('0')) * factor;
                             factor /= 10;
                         }
                     }
@@ -990,7 +997,7 @@ std::unique_ptr<decompress_provider> get_decompressor_from_header(
     while (n != utility::string_t::npos)
     {
         // Tokenize by commas first
-        comma = encoding.find(_XPLATSTR(","), n);
+        comma = encoding.find(_XPLATSTR(','), n);
         start = n;
         if (comma == utility::string_t::npos)
         {
@@ -1076,9 +1083,9 @@ utility::string_t build_supported_header(header_types type,
 
     // Add all specified algorithms and their weights to the header
     start = true;
-    for (int i = 0; i < f.size(); i++)
+    os.imbue(std::locale::classic());
+    for each (auto& factory in f)
     {
-        auto factory = f[i].get();
         if (factory)
         {
             auto weight = factory->weight();
