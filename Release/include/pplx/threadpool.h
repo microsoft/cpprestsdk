@@ -57,6 +57,17 @@ public:
 
     virtual ~threadpool() = default;
 
+    /// <summary>
+    /// Initializes the cpprestsdk threadpool with a custom number of threads
+    /// </summary>
+    /// <remarks>
+    /// This function allows an application (in their main function) to initialize the cpprestsdk
+    /// threadpool with a custom threadcount. Libraries should avoid calling this function to avoid
+    /// a diamond problem with multiple consumers attempting to customize the pool.
+    /// </remarks>
+    /// <exception cref="std::exception">Thrown if the threadpool has already been initialized</exception>
+    static void initialize_with_threads(size_t num_threads);
+
     template<typename T>
     CASABLANCA_DEPRECATED("Use `.service().post(task)` directly.")
     void schedule(T task)
@@ -73,4 +84,3 @@ protected:
 };
 
 }
-
