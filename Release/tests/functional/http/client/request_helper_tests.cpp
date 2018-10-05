@@ -45,7 +45,7 @@ TEST_FIXTURE(uri_address, do_not_fail_on_content_encoding_when_not_requested)
 
 TEST_FIXTURE(uri_address, fail_on_content_encoding_if_unsupported)
 {
-    if (web::http::details::compression::stream_compressor::is_supported())
+    if (web::http::compression::builtin::supported())
     {
         test_http_server::scoped_server scoped(m_uri);
         auto& server = *scoped.server();
@@ -63,7 +63,7 @@ TEST_FIXTURE(uri_address, fail_on_content_encoding_if_unsupported)
 
 TEST_FIXTURE(uri_address, send_accept_encoding)
 {
-    if (web::http::details::compression::stream_compressor::is_supported())
+    if (web::http::compression::builtin::supported())
     {
         test_http_server::scoped_server scoped(m_uri);
         auto& server = *scoped.server();
@@ -93,62 +93,17 @@ TEST_FIXTURE(uri_address, do_not_send_accept_encoding)
     std::atomic<bool> found_accept_encoding(true);
 
     server.next_request().then([&found_accept_encoding](test_request *p_request) {
-        found_accept_encoding = p_request->m_headers.find(header_names::accept_encoding) != p_request->m_headers.end();
+        utility::string_t header;
+
+        // On Windows, someone along the way (not us!) adds "Accept-Encoding: peerdist"
+        found_accept_encoding =
+            p_request->match_header(header_names::accept_encoding, header) && header != _XPLATSTR("peerdist");
         p_request->reply(200, U("OK"));
     });
 
     client.request(methods::GET).get();
 
     VERIFY_IS_FALSE(found_accept_encoding);
-}
-
-TEST_FIXTURE(uri_address, compress_and_decompress)
-{
-    if (web::http::details::compression::stream_compressor::is_supported())
-    {
-        auto compress_and_decompress = [](web::http::details::compression::compression_algorithm alg)
-        {
-            auto compressor = std::make_shared<web::http::details::compression::stream_compressor>(alg);
-            auto decompressor = std::make_shared<web::http::details::compression::stream_decompressor>(alg);
-
-            const size_t buffer_size = 100;
-            const size_t split_pos = buffer_size / 2;
-
-            web::http::details::compression::data_buffer input_buffer;
-            input_buffer.reserve(buffer_size);
-
-            for (size_t i = 0; i < buffer_size; ++i)
-            {
-                input_buffer.push_back(static_cast<uint8_t>(i));
-            }
-
-            web::http::details::compression::data_buffer buffer1(input_buffer.begin(), input_buffer.begin() + split_pos);
-            web::http::details::compression::data_buffer buffer2(input_buffer.begin() + split_pos, input_buffer.end());
-
-            auto compressed_data1 = compressor->compress(buffer1, false);
-            VERIFY_IS_FALSE(compressed_data1.empty());
-            VERIFY_IS_FALSE(compressor->has_error());
-
-            auto compressed_data2 = compressor->compress(buffer2, true);
-            VERIFY_IS_FALSE(compressed_data2.empty());
-            VERIFY_IS_FALSE(compressor->has_error());
-
-            auto decompressed_data1 = decompressor->decompress(compressed_data1);
-            VERIFY_IS_FALSE(decompressed_data1.empty());
-            VERIFY_IS_FALSE(decompressor->has_error());
-
-            auto decompressed_data2 = decompressor->decompress(compressed_data2);
-            VERIFY_IS_FALSE(decompressed_data2.empty());
-            VERIFY_IS_FALSE(decompressor->has_error());
-
-            decompressed_data1.insert(decompressed_data1.end(), decompressed_data2.begin(), decompressed_data2.end());
-
-            VERIFY_ARE_EQUAL(input_buffer, decompressed_data1);
-        };
-
-        compress_and_decompress(web::http::details::compression::compression_algorithm::gzip);
-        compress_and_decompress(web::http::details::compression::compression_algorithm::deflate);
-    }
 }
 
 TEST_FIXTURE(uri_address, non_rvalue_bodies)

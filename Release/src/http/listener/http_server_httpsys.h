@@ -143,6 +143,13 @@ struct windows_request_context : http::details::_http_server_context
     http_response m_response;
 
     std::exception_ptr m_except_ptr;
+
+    std::vector<uint8_t> m_compress_buffer;
+    std::unique_ptr<web::http::compression::compress_provider> m_compressor;
+    std::unique_ptr<web::http::compression::decompress_provider> m_decompressor;
+    utility::string_t m_decompress_header;
+    http::compression::details::header_types m_decompress_header_type;
+
 private:
     windows_request_context(const windows_request_context &);
     windows_request_context& operator=(const windows_request_context &);

@@ -160,7 +160,7 @@ static utility::string_t HttpServerAPIKnownHeaders[] =
     U("Proxy-Authorization"),
     U("Referer"),
     U("Range"),
-    U("Te"),
+    U("TE"),
     U("Translate"),
     U("User-Agent"),
     U("Request-Maximum"),
@@ -345,7 +345,7 @@ public:
 
         utility::string_t transfer_encoding;
         const bool has_transfer_encoding = p_test_request->match_header(U("Transfer-Encoding"), transfer_encoding);
-        if (has_transfer_encoding && transfer_encoding == U("chunked"))
+        if (has_transfer_encoding && transfer_encoding.find(U("chunked")) != std::string::npos)
         {
             content_length = 0;
             char buf[4096];

@@ -96,42 +96,57 @@ void request_context::report_exception(std::exception_ptr exceptionPtr)
     finish();
 }
 
-bool request_context::handle_content_encoding_compression()
+bool request_context::handle_compression()
 {
-    if (web::http::details::compression::stream_decompressor::is_supported() && m_http_client->client_config().request_compressed_response())
+    // If the response body is compressed we will read the encoding header and create a decompressor object which will later decompress the body
+    try
     {
-        // If the response body is compressed we will read the encoding header and create a decompressor object which will later decompress the body
-        auto&& headers = m_response.headers();
-        auto it_ce = headers.find(web::http::header_names::content_encoding);
-        if (it_ce != headers.end())
-        {
-            auto alg = web::http::details::compression::stream_decompressor::to_compression_algorithm(it_ce->second);
+        utility::string_t encoding;
+        http_headers &headers = m_response.headers();
 
-            if (alg != web::http::details::compression::compression_algorithm::invalid)
-            {
-                m_decompressor = utility::details::make_unique<web::http::details::compression::stream_decompressor>(alg);
-            }
-            else
-            {
-                report_exception(
-                    http_exception("Unsupported compression algorithm in the Content-Encoding header: "
-                        + utility::conversions::to_utf8string(it_ce->second)));
-                return false;
-            }
+        // Note that some headers, for example "Transfer-Encoding: chunked", may legitimately not produce a decompressor
+        if (m_http_client->client_config().request_compressed_response() && headers.match(web::http::header_names::content_encoding, encoding))
+        {
+            // Note that, while Transfer-Encoding (chunked only) is valid with Content-Encoding,
+            // we don't need to look for it here because winhttp de-chunks for us in that case
+            m_decompressor = compression::details::get_decompressor_from_header(encoding, compression::details::header_types::content_encoding, m_request.decompress_factories());
+        }
+        else if (!m_request.decompress_factories().empty() && headers.match(web::http::header_names::transfer_encoding, encoding))
+        {
+            m_decompressor = compression::details::get_decompressor_from_header(encoding, compression::details::header_types::transfer_encoding, m_request.decompress_factories());
         }
     }
+    catch (...)
+    {
+        report_exception(std::current_exception());
+        return false;
+    }
+
     return true;
 }
 
-utility::string_t request_context::get_accept_encoding_header() const
+utility::string_t request_context::get_compression_header() const
 {
     utility::string_t headers;
-    // Add the header needed to request a compressed response if supported on this platform and it has been specified in the config
-    if (web::http::details::compression::stream_decompressor::is_supported()
-        && m_http_client->client_config().request_compressed_response())
+
+    // Add the correct header needed to request a compressed response if supported
+    // on this platform and it has been specified in the config and/or request
+    if (m_http_client->client_config().request_compressed_response())
     {
-        headers.append(U("Accept-Encoding: "));
-        headers.append(web::http::details::compression::stream_decompressor::known_algorithms());
+        if (!m_request.decompress_factories().empty() || web::http::compression::builtin::supported())
+        {
+            // Accept-Encoding -- request Content-Encoding from the server
+            headers.append(header_names::accept_encoding + U(": "));
+            headers.append(compression::details::build_supported_header(compression::details::header_types::accept_encoding, m_request.decompress_factories()));
+            headers.append(U("\r\n"));
+        }
+    }
+    else if (!m_request.decompress_factories().empty())
+    {
+        // TE -- request Transfer-Encoding from the server
+        headers.append(header_names::connection + U(": TE\r\n") +   // Required by Section 4.3 of RFC-7230
+                       header_names::te + U(": "));
+        headers.append(compression::details::build_supported_header(compression::details::header_types::te, m_request.decompress_factories()));
         headers.append(U("\r\n"));
     }
 

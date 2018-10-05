@@ -310,34 +310,93 @@ void http_msg_base::_prepare_to_receive_data()
     // or media (like file) that the user can read from...
 }
 
-size_t http_msg_base::_get_content_length()
+size_t http_msg_base::_get_stream_length()
+{
+    auto &stream = instream();
+
+    if (stream.can_seek())
+    {
+        auto offset = stream.tell();
+        auto end = stream.seek(0, std::ios_base::end);
+        stream.seek(offset);
+        return static_cast<utility::size64_t>(end - offset);
+    }
+
+    return std::numeric_limits<size_t>::max();
+}
+
+size_t http_msg_base::_get_content_length(bool honor_compression)
 {
     // An invalid response_stream indicates that there is no body
     if ((bool)instream())
     {
-        size_t content_length = 0;
+        size_t content_length;
         utility::string_t transfer_encoding;
 
-        bool has_cnt_length = headers().match(header_names::content_length, content_length);
-        bool has_xfr_encode = headers().match(header_names::transfer_encoding, transfer_encoding);
-
-        if (has_xfr_encode)
+        if (headers().match(header_names::transfer_encoding, transfer_encoding))
         {
+            // Transfer encoding is set; it trumps any content length that may or may not be present
+            if (honor_compression && m_compressor)
+            {
+                http::http_headers tmp;
+
+                // Build a header for comparison with the existing one
+                tmp.add(header_names::transfer_encoding, m_compressor->algorithm());
+                tmp.add(header_names::transfer_encoding, _XPLATSTR("chunked"));
+
+                if (!utility::details::str_iequal(transfer_encoding, tmp[header_names::transfer_encoding]))
+                {
+                    // Some external entity added this header, and it doesn't match our
+                    // expectations; bail out, since the caller's intentions are not clear
+                    throw http_exception("Transfer-Encoding header is internally managed when compressing");
+                }
+            }
+
             return std::numeric_limits<size_t>::max();
         }
 
-        if (has_cnt_length)
+        if (honor_compression && m_compressor)
         {
+            // A compressor is set; this implies transfer encoding, since we don't know the compressed length
+            // up front for content encoding.  We return the uncompressed length if we can figure it out.
+            headers().add(header_names::transfer_encoding, m_compressor->algorithm());
+            headers().add(header_names::transfer_encoding, _XPLATSTR("chunked"));
+            return std::numeric_limits<size_t>::max();
+        }
+
+        if (headers().match(header_names::content_length, content_length))
+        {
+            // An explicit content length is set; trust it, since we
+            // may not be required to send the stream's entire contents
             return content_length;
         }
 
-        // Neither is set. Assume transfer-encoding for now (until we have the ability to determine
-        // the length of the stream).
+        content_length = _get_stream_length();
+        if (content_length != std::numeric_limits<size_t>::max())
+        {
+            // The content length wasn't explcitly set, but we figured it out;
+            // use it, since sending this way is more efficient than chunking
+            headers().add(header_names::content_length, content_length);
+            return content_length;
+        }
+
+        // We don't know the content length; we'll chunk the stream
         headers().add(header_names::transfer_encoding, _XPLATSTR("chunked"));
         return std::numeric_limits<size_t>::max();
     }
 
+    // There is no content
     return 0;
+}
+
+size_t http_msg_base::_get_content_length_and_set_compression()
+{
+    return _get_content_length(true);
+}
+
+size_t http_msg_base::_get_content_length()
+{
+    return _get_content_length(false);
 }
 
 // Helper function to inline continuation if possible.
@@ -1039,6 +1098,11 @@ details::_http_request::_http_request(std::unique_ptr<http::details::_http_serve
     m_cancellationToken(pplx::cancellation_token::none()),
     m_http_version(http::http_version{0, 0})
 {
+}
+
+void http_request::set_decompress_factories()
+{
+    return _m_impl->set_decompress_factories(compression::details::builtin::get_decompress_factories());
 }
 
 const http_version http_versions::HTTP_0_9 = { 0, 9 };

@@ -50,6 +50,15 @@ public:
         const unsigned short status_code,
         const utility::string_t &reason_phrase,
         const std::map<utility::string_t, utility::string_t> &headers,
+        const std::vector<uint8_t> &data)
+    {
+        return reply_impl(status_code, reason_phrase, headers, (void *)&data[0], data.size());
+    }
+
+    unsigned long reply(
+        const unsigned short status_code,
+        const utility::string_t &reason_phrase,
+        const std::map<utility::string_t, utility::string_t> &headers,
         const utf16string &data)
     {
         return reply_impl(status_code, reason_phrase, headers, (void *)&data[0], data.size() * sizeof(utf16char));
@@ -60,20 +69,12 @@ public:
     bool match_header(const utility::string_t & header_name, T & header_value)
     {
         auto iter = m_headers.find(header_name);
-        if (iter != m_headers.end())
-        {
-            utility::istringstream_t iss(iter->second);
-            iss >> header_value;
-            if (iss.fail() || !iss.eof())
-            {
-                return false;
-            }
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+        if (iter == m_headers.end())
+         {
+             return false;
+         }
+
+        return web::http::details::bind_impl(iter->second, header_value) || iter->second.empty();
     }
 
     // Request data.
