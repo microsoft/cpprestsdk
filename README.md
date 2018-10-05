@@ -57,7 +57,7 @@ Big or small we'd like to take your [contributions](https://github.com/Microsoft
 
 ## Having Trouble?
 
-We'd love to get your review score, whether good or bad, but even more than that, we want to fix your problem. If you submit your issue as a Review, we won't be able to respond to your problem and ask any follow-up questions that may be necessary. The most efficient way to do that is to open a an issue in our [issue tracker](https://github.com/Microsoft/cpprestsdk/issues).  
+We'd love to get your review score, whether good or bad, but even more than that, we want to fix your problem. If you submit your issue as a Review, we won't be able to respond to your problem and ask any follow-up questions that may be necessary. The most efficient way to do that is to open an issue in our [issue tracker](https://github.com/Microsoft/cpprestsdk/issues).  
 
 ### Quick Links
 
