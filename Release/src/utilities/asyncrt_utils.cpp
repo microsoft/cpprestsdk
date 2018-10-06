@@ -352,13 +352,21 @@ inline size_t count_utf8_to_utf16(const std::string& s)
     const size_t sSize = s.size();
     const char* const sData = s.data();
     size_t result{ sSize };
+
     for (size_t index = 0; index < sSize;)
     {
-        const char c{ sData[index++] };
-        if ((c & BIT8) == 0)
+        if( sData[index] > 0 )
         {
-            continue;
+            // use fast inner loop to skip single byte code points (which are
+            // expected to be the most frequent)
+            while ((++index < sSize) && (sData[index] > 0))
+                ;
+
+            if (index >= sSize) break;
         }
+
+        // start special handling for multi-byte code points
+        const char c{ sData[index++] };
 
         if ((c & BIT7) == 0)
         {
@@ -477,7 +485,14 @@ utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
             }
             break;
         default: // single byte character, 0x0 to 0x7F
-            destData[destIndex++] = static_cast<utf16string::value_type>(src);
+            // try to use a fast inner loop for following single by characters,
+            // since they quite probable
+            do
+            {
+                destData[destIndex++] = static_cast<utf16string::value_type>(srcData[index++]);
+            } while (index < srcSize && srcData[index] > 0);
+            // adjust index since it will be incremented by the for loop
+            --index;
         }
     }
     return dest;
