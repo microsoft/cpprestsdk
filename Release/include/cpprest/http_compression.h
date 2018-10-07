@@ -96,7 +96,7 @@ class decompress_factory
 {
 public:
     virtual const utility::string_t& algorithm() const = 0;
-    virtual const uint16_t weight() const = 0;
+    virtual uint16_t weight() const = 0;
     virtual std::unique_ptr<decompress_provider> make_decompressor() const = 0;
     virtual ~decompress_factory() = default;
 };
@@ -117,9 +117,9 @@ _ASYNCRTIMP bool supported();
 /// </summary>
 namespace algorithm
 {
-constexpr utility::char_t *GZIP = _XPLATSTR("gzip");
-constexpr utility::char_t *DEFLATE = _XPLATSTR("deflate");
-constexpr utility::char_t *BROTLI = _XPLATSTR("br");
+constexpr utility::char_t *GZIP = const_cast<utility::char_t *>(_XPLATSTR("gzip"));
+constexpr utility::char_t *DEFLATE = const_cast<utility::char_t *>(_XPLATSTR("deflate"));
+constexpr utility::char_t *BROTLI = const_cast<utility::char_t *>(_XPLATSTR("br"));
 
 /// <summary>
 /// Test whether cpprestsdk was built with built-in compression support and
