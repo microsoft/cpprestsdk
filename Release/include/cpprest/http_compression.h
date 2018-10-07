@@ -129,7 +129,7 @@ constexpr utility::char_t *BROTLI = const_cast<utility::char_t *>(_XPLATSTR("br"
 /// the supplied string matches a supported built-in algorithm, and false if not.</returns>
 /// <summary>
 _ASYNCRTIMP bool supported(const utility::string_t& algorithm);
-};
+}
 
 /// <summary>
 /// Factory function to instantiate a built-in compression provider with default parameters by compression algorithm
