@@ -30,17 +30,17 @@ namespace details
         {
             return false;
         }
-        
+
         return true;
     }
-    
+
     template<typename key_type>
     bool bind_impl(const key_type &text, utf16string &ref)
     {
         ref = utility::conversions::to_utf16string(text);
         return true;
     }
-    
+
     template<typename key_type>
     bool bind_impl(const key_type &text, std::string &ref)
     {
@@ -48,7 +48,7 @@ namespace details
         return true;
     }
 }
-    
+
 /// <summary>
 /// Binds an individual reference to a string value.
 /// </summary>
