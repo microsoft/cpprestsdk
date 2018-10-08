@@ -748,32 +748,54 @@ std::shared_ptr<decompress_factory> get_decompress_factory(const utility::string
     return std::shared_ptr<decompress_factory>();
 }
 
+
+#if defined(CPPREST_HTTP_COMPRESSION)
 std::unique_ptr<compress_provider> make_gzip_compressor(int compressionLevel, int method, int strategy, int memLevel)
 {
-#if defined(CPPREST_HTTP_COMPRESSION)
     return utility::details::make_unique<gzip_compressor>(compressionLevel, method, strategy, memLevel);
-#else  // CPPREST_HTTP_COMPRESSION
-    return std::unique_ptr<compress_provider>();
-#endif // CPPREST_HTTP_COMPRESSION
 }
+#else  // CPPREST_HTTP_COMPRESSION
+#if defined(__GNUC__)
+std::unique_ptr<compress_provider> make_gzip_compressor(int compressionLevel __attribute__((unused)), int method __attribute__((unused)), int strategy __attribute__((unused)), int memLevel __attribute__((unused)))
+#else   // __GNUC__
+std::unique_ptr<compress_provider> make_gzip_compressor(int compressionLevel, int method, int strategy, int memLevel)
+#endif  // __GNUC__
+{
+    return std::unique_ptr<compress_provider>();
+}
+#endif // CPPREST_HTTP_COMPRESSION
 
+#if defined(CPPREST_HTTP_COMPRESSION)
 std::unique_ptr<compress_provider> make_deflate_compressor(int compressionLevel, int method, int strategy, int memLevel)
 {
-#if defined(CPPREST_HTTP_COMPRESSION)
     return utility::details::make_unique<deflate_compressor>(compressionLevel, method, strategy, memLevel);
-#else  // CPPREST_HTTP_COMPRESSION
-    return std::unique_ptr<compress_provider>();
-#endif // CPPREST_HTTP_COMPRESSION
 }
+#else  // CPPREST_HTTP_COMPRESSION
+#if defined(__GNUC__)
+std::unique_ptr<compress_provider> make_deflate_compressor(int compressionLevel __attribute__((unused)), int method __attribute__((unused)), int strategy __attribute__((unused)), int memLevel __attribute__((unused)))
+#else   // __GNUC__
+std::unique_ptr<compress_provider> make_deflate_compressor(int compressionLevel, int method, int strategy, int memLevel)
+#endif  // __GNUC__
+{
+    return std::unique_ptr<compress_provider>();
+}
+#endif // CPPREST_HTTP_COMPRESSION
 
+#if defined(CPPREST_HTTP_COMPRESSION) && defined(CPPREST_BROTLI_COMPRESSION)
 std::unique_ptr<compress_provider> make_brotli_compressor(uint32_t window, uint32_t quality, uint32_t mode)
 {
-#if defined(CPPREST_HTTP_COMPRESSION) && defined(CPPREST_BROTLI_COMPRESSION)
     return utility::details::make_unique<brotli_compressor>(window, quality, mode);
-#else  // CPPREST_BROTLI_COMPRESSION
-    return std::unique_ptr<compress_provider>();
-#endif // CPPREST_BROTLI_COMPRESSION
 }
+#else  // CPPREST_BROTLI_COMPRESSION
+#if defined(__GNUC__)
+std::unique_ptr<compress_provider> make_brotli_compressor(uint32_t window __attribute__((unused)), uint32_t quality __attribute__((unused)), uint32_t mode __attribute__((unused)))
+#else   // __GNUC__
+std::unique_ptr<compress_provider> make_brotli_compressor(uint32_t window, uint32_t quality, uint32_t mode)
+#endif  // __GNUC__
+{
+    return std::unique_ptr<compress_provider>();
+}
+#endif // CPPREST_BROTLI_COMPRESSION
 } // namespace builtin
 
 std::shared_ptr<compress_factory> make_compress_factory(

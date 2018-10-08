@@ -1753,7 +1753,11 @@ private:
                     writeBuffer.putn_nocopy(shared_decompressed->data(), shared_decompressed->size())
                         .then([this_request, read_size, shared_decompressed AND_CAPTURE_MEMBER_FUNCTION_POINTERS](
                                   pplx::task<size_t> op) {
+#if defined(__GNUC__)                            
+                            size_t writtenSize __attribute__ ((unused)) = 0;
+#else   // __GNUC__
                             size_t writtenSize = 0;
+#endif  // __GNUC__                            
                             try
                             {
                                 writtenSize = op.get();
