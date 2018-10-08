@@ -1,0 +1,35 @@
+# CppRestSdk Azure Pipelines Configuration
+
+jobs:
+  - job: Ubuntu 16.04 Apt Debug
+    pool:
+      vmImage: 'Ubuntu 16.04'
+    steps:
+    - script: sudo apt-get install -y libboost-all-dev libwebsocketpp-dev brotli
+      displayName: Apt install dependencies
+    - script: mkdir build.debug
+      displayName: Make build.debug
+    - task: CMake@1
+      inputs:
+        workingDirectory: 'build.debug'
+        cmakeArgs: '-DCMAKE_BUILD_TYPE=Debug ..'
+    - script: |
+        cd build.debug
+        make
+      displayName: 'Run make'
+  - job: Ubuntu 16.04 Apt Release
+    pool:
+      vmImage: 'Ubuntu 16.04'
+    steps:
+    - script: sudo apt-get install -y libboost-all-dev libwebsocketpp-dev brotli
+      displayName: Apt install dependencies
+    - script: mkdir build.debug
+      displayName: Make build.debug
+    - task: CMake@1
+      inputs:
+        workingDirectory: 'build.release'
+        cmakeArgs: '-DCMAKE_BUILD_TYPE=Release ..'
+    - script: |
+        cd build.release
+        make
+      displayName: 'Run make'
