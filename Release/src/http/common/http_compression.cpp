@@ -1084,7 +1084,7 @@ utility::string_t build_supported_header(header_types type,
     // Add all specified algorithms and their weights to the header
     start = true;
     os.imbue(std::locale::classic());
-    for each (auto& factory in f)
+    for (auto& factory : f)
     {
         if (factory)
         {
