@@ -5,7 +5,7 @@ jobs:
     pool:
       vmImage: 'Ubuntu 16.04'
     steps:
-    - script: sudo apt-get install -y libboost-all-dev libwebsocketpp-dev brotli
+    - script: sudo apt-get install -y libboost-all-dev libwebsocketpp-dev brotli libssl1.0.0
       displayName: Apt install dependencies
     - script: mkdir build.debug
       displayName: Make build.debug
@@ -21,7 +21,7 @@ jobs:
     pool:
       vmImage: 'Ubuntu 16.04'
     steps:
-    - script: sudo apt-get install -y libboost-all-dev libwebsocketpp-dev brotli
+    - script: sudo apt-get install -y libboost-all-dev libwebsocketpp-dev brotli libssl1.0.0
       displayName: Apt install dependencies
     - script: mkdir build.release
       displayName: Make build.release
