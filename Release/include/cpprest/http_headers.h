@@ -18,7 +18,6 @@
 #include "cpprest/asyncrt_utils.h"
 
 namespace web { namespace http {
-
 /// <summary>
 /// Binds an individual reference to a string value.
 /// </summary>
@@ -250,7 +249,7 @@ public:
             return false;
         }
 
-        return details::bind_impl(iter->second, value) || iter->second.empty();
+        return web::http::details::bind_impl(iter->second, value) || iter->second.empty();
     }
 
     /// <summary>
