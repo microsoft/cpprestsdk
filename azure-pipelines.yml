@@ -12,7 +12,7 @@ jobs:
     - task: CMake@1
       inputs:
         workingDirectory: 'build.debug'
-        cmakeArgs: '-DCMAKE_BUILD_TYPE=Debug ..'
+        cmakeArgs: '-DCMAKE_BUILD_TYPE=Debug -DOPENSSL_INCLUDE_DIR=/usr/include/openssl-1.0 -DOPENSSL_SSL_LIBRARY=/usr/lib/openssl-1.0/libssl.so -DOPENSSL_CRYPTO_LIBRARY=/usr/lib/openssl-1.0/libcrypto.so ..'
     - script: |
         cd build.debug
         make
@@ -28,7 +28,7 @@ jobs:
     - task: CMake@1
       inputs:
         workingDirectory: 'build.release'
-        cmakeArgs: '-DCMAKE_BUILD_TYPE=Release ..'
+        cmakeArgs: '-DCMAKE_BUILD_TYPE=Release -DOPENSSL_INCLUDE_DIR=/usr/include/openssl-1.0 -DOPENSSL_SSL_LIBRARY=/usr/lib/openssl-1.0/libssl.so -DOPENSSL_CRYPTO_LIBRARY=/usr/lib/openssl-1.0/libcrypto.so ..'
     - script: |
         cd build.release
         make
