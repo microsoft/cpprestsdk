@@ -620,7 +620,7 @@ public:
 
     const utility::string_t& algorithm() const { return m_algorithm; }
 
-    const uint16_t weight() const { return m_weight; }
+    uint16_t weight() const { return m_weight; }
 
     std::unique_ptr<decompress_provider> make_decompressor() const { return _make_decompressor(); }
 
