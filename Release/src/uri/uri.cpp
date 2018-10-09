@@ -426,10 +426,10 @@ namespace
     // 5.2.3. Merge Paths https://tools.ietf.org/html/rfc3986#section-5.2.3
     utility::string_t mergePaths(const utility::string_t &base, const utility::string_t &relative)
     {
-        const auto lastSlash = base.rfind(L'/');
+        const auto lastSlash = base.rfind(_XPLATSTR('/'));
         if (lastSlash == utility::string_t::npos)
         {
-            return base + L'/' + relative;
+            return base + _XPLATSTR('/') + relative;
         }
         else if (lastSlash == base.size() - 1)
         {
@@ -442,7 +442,7 @@ namespace
     // 5.2.4. Remove Dot Segments https://tools.ietf.org/html/rfc3986#section-5.2.4
     void removeDotSegments(web::uri_builder &builder)
     {
-        if (builder.path().find(L'.') == utility::string_t::npos)
+        if (builder.path().find(_XPLATSTR('.')) == utility::string_t::npos)
             return;
 
         const auto segments = web::uri::split_path(builder.path());
@@ -464,9 +464,9 @@ namespace
         utility::stringstream_t path;
         path << result.front().get();
         for (size_t i = 1; i != result.size(); ++i)
-            path << L'/' << result[i].get();
-        if (segments.back() == L".." || segments.back() == L"." || builder.path().back() == L'/')
-            path << L'/';
+            path << _XPLATSTR('/') << result[i].get();
+        if (segments.back() == _XPLATSTR("..") || segments.back() == _XPLATSTR(".") || builder.path().back() == _XPLATSTR('/'))
+            path << _XPLATSTR('/');
 
         builder.set_path(path.str());
     }
@@ -840,7 +840,7 @@ utility::string_t uri::resolve_uri(const utility::string_t &relativeUri) const
     if (relativeUri[0] == _XPLATSTR('/'))  // starts with '/'
     {
         if (relativeUri.size() >= 2 && relativeUri[1] == _XPLATSTR('/'))  // starts with '//'
-            return scheme() + L':' + relativeUri;
+            return scheme() + _XPLATSTR(':') + relativeUri;
 
         // otherwise relative to root
         auto builder = web::uri_builder(this->authority());
@@ -858,7 +858,7 @@ utility::string_t uri::resolve_uri(const utility::string_t &relativeUri) const
 
     // relative url
     auto builder = web::uri_builder(*this);
-    if (url.path() == L"/" || url.path().empty())  // web::uri considers empty path as '/'
+    if (url.path() == _XPLATSTR("/") || url.path().empty())  // web::uri considers empty path as '/'
     {
         if (!url.query().empty())
             builder.set_query(url.query());
