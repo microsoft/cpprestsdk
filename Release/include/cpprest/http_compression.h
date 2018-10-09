@@ -117,9 +117,9 @@ _ASYNCRTIMP bool supported();
 /// </summary>
 namespace algorithm
 {
-constexpr utility::char_t *GZIP = _XPLATSTR("gzip");
-constexpr utility::char_t *DEFLATE = _XPLATSTR("deflate");
-constexpr utility::char_t *BROTLI = _XPLATSTR("br");
+constexpr const utility::char_t *GZIP = _XPLATSTR("gzip");
+constexpr const utility::char_t *DEFLATE = _XPLATSTR("deflate");
+constexpr const utility::char_t *BROTLI = _XPLATSTR("br");
 
 /// <summary>
 /// Test whether cpprestsdk was built with built-in compression support and
