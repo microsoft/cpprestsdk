@@ -274,5 +274,8 @@ namespace details
 } // namespace details
 
 } // namespace pplx
-
+#else
+namespace {
+	int DUMMY_VAR; // silences LNK4221 : This object file does not define any previously undefined public symbols, so it will not be used by any link operation that consumes this library
+}
 #endif

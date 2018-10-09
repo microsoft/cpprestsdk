@@ -142,5 +142,8 @@ _PPLXIMP void _pplx_cdecl set_ambient_scheduler(std::shared_ptr<pplx::scheduler_
 }
 
 } // namespace pplx
-
+#else
+namespace {
+	int DUMMY_VAR; // silences LNK4221 : This object file does not define any previously undefined public symbols, so it will not be used by any link operation that consumes this library
+}
 #endif
