@@ -620,7 +620,7 @@ public:
 
     const utility::string_t& algorithm() const { return m_algorithm; }
 
-    const uint16_t weight() const { return m_weight; }
+    uint16_t weight() const { return m_weight; }
 
     std::unique_ptr<decompress_provider> make_decompressor() const { return _make_decompressor(); }
 
@@ -753,6 +753,10 @@ std::unique_ptr<compress_provider> make_gzip_compressor(int compressionLevel, in
 #if defined(CPPREST_HTTP_COMPRESSION)
     return std::move(std::make_unique<gzip_compressor>(compressionLevel, method, strategy, memLevel));
 #else  // CPPREST_HTTP_COMPRESSION
+    (void)compressionLevel;
+    (void)method;
+    (void)strategy;
+    (void)memLevel;
     return std::unique_ptr<compress_provider>();
 #endif // CPPREST_HTTP_COMPRESSION
 }
@@ -762,6 +766,10 @@ std::unique_ptr<compress_provider> make_deflate_compressor(int compressionLevel,
 #if defined(CPPREST_HTTP_COMPRESSION)
     return std::move(std::make_unique<deflate_compressor>(compressionLevel, method, strategy, memLevel));
 #else  // CPPREST_HTTP_COMPRESSION
+    (void)compressionLevel;
+    (void)method;
+    (void)strategy;
+    (void)memLevel;
     return std::unique_ptr<compress_provider>();
 #endif // CPPREST_HTTP_COMPRESSION
 }
@@ -771,6 +779,9 @@ std::unique_ptr<compress_provider> make_brotli_compressor(uint32_t window, uint3
 #if defined(CPPREST_HTTP_COMPRESSION) && defined(CPPREST_BROTLI_COMPRESSION)
     return std::move(std::make_unique<brotli_compressor>(window, quality, mode));
 #else  // CPPREST_BROTLI_COMPRESSION
+    (void)window;
+    (void)quality;
+    (void)mode;
     return std::unique_ptr<compress_provider>();
 #endif // CPPREST_BROTLI_COMPRESSION
 }
@@ -800,7 +811,7 @@ const std::vector<std::shared_ptr<decompress_factory>> get_decompress_factories(
 }
 } // namespace builtin
 
-static bool is_http_whitespace(utility::char_t ch) { return ch == _XPLATSTR(' ') || ch == _XPLATSTR('\t'); }
+static bool is_http_whitespace(const utility::char_t ch) { return ch == _XPLATSTR(' ') || ch == _XPLATSTR('\t'); }
 
 static void remove_surrounding_http_whitespace(const utility::string_t& encoding, size_t& start, size_t& length)
 {
@@ -1084,7 +1095,7 @@ utility::string_t build_supported_header(header_types type,
     // Add all specified algorithms and their weights to the header
     start = true;
     os.imbue(std::locale::classic());
-    for each (auto& factory in f)
+    for (auto& factory : f)
     {
         if (factory)
         {

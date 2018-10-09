@@ -34,7 +34,7 @@ bool validate_method(const utility::string_t& method);
 
 namespace web { namespace http { namespace compression {
 
-class compression::decompress_factory;
+class decompress_factory;
 
 namespace details { namespace builtin {
 

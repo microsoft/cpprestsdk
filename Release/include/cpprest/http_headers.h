@@ -57,6 +57,37 @@ bool bind(const key_type &text, utility::string_t &ref) //const
     return true;
 }
 
+namespace details
+{
+    template<typename key_type, typename _t>
+    bool bind_impl(const key_type &text, _t &ref)
+    {
+        utility::istringstream_t iss(text);
+        iss.imbue(std::locale::classic());
+        iss >> ref;
+        if (iss.fail() || !iss.eof())
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    template<typename key_type>
+    bool bind_impl(const key_type &text, utf16string &ref)
+    {
+        ref = utility::conversions::to_utf16string(text);
+        return true;
+    }
+
+    template<typename key_type>
+    bool bind_impl(const key_type &text, std::string &ref)
+    {
+        ref = utility::conversions::to_utf8string(text);
+        return true;
+    }
+}
+
 /// <summary>
 /// Represents HTTP headers, acts like a map.
 /// </summary>
@@ -288,35 +319,4 @@ private:
     // Headers are stored in a map with case insensitive key.
     inner_container m_headers;
 };
-
-namespace details
-{
-    template<typename key_type, typename _t>
-    bool bind_impl(const key_type &text, _t &ref)
-    {
-        utility::istringstream_t iss(text);
-        iss.imbue(std::locale::classic());
-        iss >> ref;
-        if (iss.fail() || !iss.eof())
-        {
-            return false;
-        }
-
-        return true;
-    }
-
-    template<typename key_type>
-    bool bind_impl(const key_type &text, utf16string &ref)
-    {
-        ref = utility::conversions::to_utf16string(text);
-        return true;
-    }
-
-    template<typename key_type>
-    bool bind_impl(const key_type &text, std::string &ref)
-    {
-        ref = utility::conversions::to_utf8string(text);
-        return true;
-    }
-}
 }}
