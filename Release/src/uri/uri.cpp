@@ -423,6 +423,53 @@ namespace
         return encoded;
     }
 
+    // 5.2.3. Merge Paths https://tools.ietf.org/html/rfc3986#section-5.2.3
+    std::wstring mergePaths(const std::wstring &base, const std::wstring &relative)
+    {
+        const auto lastSlash = base.rfind(L'/');
+        if (lastSlash == std::wstring::npos)
+        {
+            return base + L'/' + relative;
+        }
+        else if (lastSlash == base.size() - 1)
+        {
+            return base + relative;
+        }
+        // path contains and does not end with '/', we remove segment after last '/'
+        return base.substr(0, lastSlash + 1) + relative;
+    }
+
+    // 5.2.4. Remove Dot Segments https://tools.ietf.org/html/rfc3986#section-5.2.4
+    void removeDotSegments(web::uri_builder &builder)
+    {
+        if (builder.path().find(L'.') == std::wstring::npos)
+            return;
+
+        const auto segments = web::uri::split_path(builder.path());
+        std::vector<std::reference_wrapper<const utility::string_t>> result;
+        for (auto& segment : segments)
+        {
+            if (segment == _XPLATSTR("."))
+                continue;
+            else if (segment != _XPLATSTR(".."))
+                result.push_back(segment);
+            else if (!result.empty())
+                result.pop_back();
+        }
+        if (result.empty())
+        {
+            builder.set_path(utility::string_t());
+            return;
+        }
+        utility::stringstream_t path;
+        path << result.front().get();
+        for (size_t i = 1; i != result.size(); ++i)
+            path << L'/' << result[i].get();
+        if (segments.back() == L".." || segments.back() == L"." || builder.path().back() == L'/')
+            path << L'/';
+
+        builder.set_path(path.str());
+    }
 }
 
 utility::string_t uri_components::join()
@@ -784,4 +831,47 @@ bool uri::operator == (const uri &other) const
     return true;
 }
 
+//resolving URI according to RFC3986, Section 5 https://tools.ietf.org/html/rfc3986#section-5
+utility::string_t uri::resolve_uri(const utility::string_t &relativeUri) const
+{
+    if (relativeUri.empty())
+        return to_string();
+
+    if (relativeUri[0] == _XPLATSTR('/'))  // starts with '/'
+    {
+        if (relativeUri.size() >= 2 && relativeUri[1] == _XPLATSTR('/'))  // starts with '//'
+            return scheme() + L':' + relativeUri;
+
+        // otherwise relative to root
+        auto builder = web::uri_builder(this->authority());
+        builder.append(relativeUri);
+        details::removeDotSegments(builder);
+        return builder.to_string();
+    }
+
+    const auto url = web::uri(relativeUri);
+    if (!url.scheme().empty())
+        return relativeUri;
+
+    if (!url.authority().is_empty())
+        return web::uri_builder(url).set_scheme(this->scheme()).to_string();
+
+    // relative url
+    auto builder = web::uri_builder(*this);
+    if (url.path() == L"/" || url.path().empty())  // web::uri considers empty path as '/'
+    {
+        if (!url.query().empty())
+            builder.set_query(url.query());
+    }
+    else if (!this->path().empty())
+    {
+        builder.set_path(details::mergePaths(this->path(), url.path()));
+        details::removeDotSegments(builder);
+        builder.set_query(url.query());
+    }
+
+    return builder.set_fragment(url.fragment()).to_string();
 }
+
+}
+
