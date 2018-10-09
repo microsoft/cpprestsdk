@@ -7,14 +7,13 @@ jobs:
     steps:
     - script: |
         sudo apt-get install -y libboost-all-dev libwebsocketpp-dev brotli
-        sudo apt-get install -y --reinstall libssl1.0.0
       displayName: Apt install dependencies
     - script: mkdir build.debug
       displayName: Make build.debug
     - task: CMake@1
       inputs:
         workingDirectory: 'build.debug'
-        cmakeArgs: '-DCMAKE_BUILD_TYPE=Debug ..'
+        cmakeArgs: '-DCMAKE_BUILD_TYPE=Debug -DOPENSSL_INCLUDE_DIR=/usr/include/openssl -DOPENSSL_CRYPTO_LIBRARY=/usr/lib/x86_64-linux-gnu/libcrypto.a -DOPENSSL_SSL_LIBRARY=/usr/lib/x86_64-linux-gnu/libssl.a ..'
     - script: |
         cd build.debug
         make
