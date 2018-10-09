@@ -29,8 +29,8 @@ namespace web {
         {
             uri_components() : m_path(_XPLATSTR("/")), m_port(-1) {}
 
-            uri_components(const uri_components &other) = default;
-            uri_components & operator=(const uri_components &other) = default;
+            uri_components(const uri_components &) = default;
+            uri_components & operator=(const uri_components &) = default;
 
             // This is for VS2013 compatibility -- replace with '= default' when VS2013 is completely dropped.
             uri_components(uri_components &&other) CPPREST_NOEXCEPT :
@@ -209,12 +209,12 @@ namespace web {
         /// <summary>
         /// Copy constructor.
         /// </summary>
-        uri(const uri &other) = default;
+        uri(const uri &) = default;
 
         /// <summary>
         /// Copy assignment operator.
         /// </summary>
-        uri & operator=(const uri &other) = default;
+        uri & operator=(const uri &) = default;
 
         /// <summary>
         /// Move constructor.
