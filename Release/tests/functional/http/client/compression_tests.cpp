@@ -14,7 +14,6 @@
 #include "cpprest/details/http_helpers.h"
 #include "cpprest/version.h"
 #include "cpprest/asyncrt_utils.h"
-#include "pplx/pplxinterface.h"
 #include "stdafx.h"
 #include <fstream>
 
@@ -204,7 +203,7 @@ SUITE(compression_tests)
         std::vector<uint8_t> dcmp_buffer;
         web::http::compression::operation_result r;
         std::vector<size_t> chunk_sizes;
-        Concurrency::task_group_status result;
+        pplx::task_status result;
         size_t csize;
         size_t dsize;
         size_t i;
@@ -249,7 +248,7 @@ SUITE(compression_tests)
                                     web::http::compression::operation_hint::has_more)
                          .then([&r](web::http::compression::operation_result x) { r = x; })
                          .wait();
-            VERIFY_ARE_EQUAL(result, Concurrency::task_group_status::completed);
+            VERIFY_ARE_EQUAL(result, pplx::task_status::completed);
             VERIFY_ARE_EQUAL(r.input_bytes_processed, std::min(chunk_size, buffer_size - i));
             VERIFY_ARE_EQUAL(r.done, false);
             chunk_sizes.push_back(r.output_bytes_produced);
@@ -274,7 +273,7 @@ SUITE(compression_tests)
                                         web::http::compression::operation_hint::is_last)
                              .then([&r](web::http::compression::operation_result x) { r = x; })
                              .wait();
-                VERIFY_ARE_EQUAL(result, Concurrency::task_group_status::completed);
+                VERIFY_ARE_EQUAL(result, pplx::task_status::completed);
                 VERIFY_ARE_EQUAL(r.input_bytes_processed, 0);
                 chunk_sizes.push_back(r.output_bytes_produced);
                 csize += r.output_bytes_produced;
@@ -285,7 +284,7 @@ SUITE(compression_tests)
             result = compressor->compress(NULL, 0, NULL, 0, web::http::compression::operation_hint::is_last)
                          .then([&r](web::http::compression::operation_result x) { r = x; })
                          .wait();
-            VERIFY_ARE_EQUAL(result, Concurrency::task_group_status::completed);
+            VERIFY_ARE_EQUAL(result, pplx::task_status::completed);
             VERIFY_ARE_EQUAL(r.input_bytes_processed, 0);
             VERIFY_ARE_EQUAL(r.output_bytes_produced, 0);
             VERIFY_ARE_EQUAL(r.done, true);
@@ -313,7 +312,7 @@ SUITE(compression_tests)
                                           hint)
                              .then([&r](web::http::compression::operation_result x) { r = x; })
                              .wait();
-                VERIFY_ARE_EQUAL(result, Concurrency::task_group_status::completed);
+                VERIFY_ARE_EQUAL(result, pplx::task_status::completed);
                 nn += *it;
                 dsize += r.output_bytes_produced;
             }
@@ -341,7 +340,7 @@ SUITE(compression_tests)
                                           web::http::compression::operation_hint::has_more)
                              .then([&r](web::http::compression::operation_result x) { r = x; })
                              .wait();
-                VERIFY_ARE_EQUAL(result, Concurrency::task_group_status::completed);
+                VERIFY_ARE_EQUAL(result, pplx::task_status::completed);
                 dsize += r.output_bytes_produced;
                 nn += r.input_bytes_processed;
                 n -= r.input_bytes_processed;
@@ -356,7 +355,7 @@ SUITE(compression_tests)
         result = decompressor->decompress(NULL, 0, NULL, 0, web::http::compression::operation_hint::has_more)
                      .then([&r](web::http::compression::operation_result x) { r = x; })
                      .wait();
-        VERIFY_ARE_EQUAL(result, Concurrency::task_group_status::completed);
+        VERIFY_ARE_EQUAL(result, pplx::task_status::completed);
         VERIFY_ARE_EQUAL(r.input_bytes_processed, 0);
         VERIFY_ARE_EQUAL(r.output_bytes_produced, 0);
         VERIFY_IS_TRUE(r.done);
@@ -372,7 +371,7 @@ SUITE(compression_tests)
                                   web::http::compression::operation_hint::is_last)
                      .then([&r](web::http::compression::operation_result x) { r = x; })
                      .wait();
-        VERIFY_ARE_EQUAL(result, Concurrency::task_group_status::completed);
+        VERIFY_ARE_EQUAL(result, pplx::task_status::completed);
         VERIFY_ARE_EQUAL(r.output_bytes_produced, buffer_size);
         VERIFY_ARE_EQUAL(input_buffer, dcmp_buffer);
 
