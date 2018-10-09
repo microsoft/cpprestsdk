@@ -1,0 +1,41 @@
+# CppRestSdk Azure Pipelines Configuration
+
+jobs:
+  - job: Ubuntu_1604_Apt_Debug
+    pool:
+      vmImage: 'Ubuntu 16.04'
+    steps:
+    - script: |
+        sudo apt-get install -y ppa-purge
+        sudo ppa-purge -y ppa:ondrej/php
+        sudo apt-get install -y libboost-atomic-dev libboost-thread-dev libboost-system-dev libboost-date-time-dev libboost-regex-dev libboost-filesystem-dev libboost-random-dev libboost-chrono-dev libboost-serialization-dev libwebsocketpp-dev brotli openssl libssl-dev ninja-build
+      displayName: Apt install dependencies
+    - script: mkdir build.debug
+      displayName: Make build.debug
+    - task: CMake@1
+      inputs:
+        workingDirectory: 'build.debug'
+        cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Debug ..'
+    - script: |
+        cd build.debug
+        ninja -j 2
+      displayName: 'Run ninja'
+  - job: Ubuntu_1604_Apt_Release
+    pool:
+      vmImage: 'Ubuntu 16.04'
+    steps:
+    - script: |
+        sudo apt-get install -y ppa-purge
+        sudo ppa-purge -y ppa:ondrej/php
+        sudo apt-get install -y libboost-atomic-dev libboost-thread-dev libboost-system-dev libboost-date-time-dev libboost-regex-dev libboost-filesystem-dev libboost-random-dev libboost-chrono-dev libboost-serialization-dev libwebsocketpp-dev brotli openssl libssl-dev ninja-build
+      displayName: Apt install dependencies
+    - script: mkdir build.release
+      displayName: Make build.release
+    - task: CMake@1
+      inputs:
+        workingDirectory: 'build.release'
+        cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Release ..'
+    - script: |
+        cd build.release
+        ninja -j 2
+      displayName: 'Run ninja'
