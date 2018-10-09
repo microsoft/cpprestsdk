@@ -424,10 +424,10 @@ namespace
     }
 
     // 5.2.3. Merge Paths https://tools.ietf.org/html/rfc3986#section-5.2.3
-    std::wstring mergePaths(const std::wstring &base, const std::wstring &relative)
+    utility::string_t mergePaths(const utility::string_t &base, const utility::string_t &relative)
     {
         const auto lastSlash = base.rfind(L'/');
-        if (lastSlash == std::wstring::npos)
+        if (lastSlash == utility::string_t::npos)
         {
             return base + L'/' + relative;
         }
@@ -442,7 +442,7 @@ namespace
     // 5.2.4. Remove Dot Segments https://tools.ietf.org/html/rfc3986#section-5.2.4
     void removeDotSegments(web::uri_builder &builder)
     {
-        if (builder.path().find(L'.') == std::wstring::npos)
+        if (builder.path().find(L'.') == utility::string_t::npos)
             return;
 
         const auto segments = web::uri::split_path(builder.path());
