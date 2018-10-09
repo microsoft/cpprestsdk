@@ -319,7 +319,7 @@ size_t http_msg_base::_get_stream_length()
         auto offset = stream.tell();
         auto end = stream.seek(0, std::ios_base::end);
         stream.seek(offset);
-        return static_cast<utility::size64_t>(end - offset);
+        return static_cast<size_t>(end - offset);
     }
 
     return std::numeric_limits<size_t>::max();
