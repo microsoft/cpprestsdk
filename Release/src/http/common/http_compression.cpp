@@ -755,12 +755,10 @@ std::unique_ptr<compress_provider> make_gzip_compressor(int compressionLevel, in
     return utility::details::make_unique<gzip_compressor>(compressionLevel, method, strategy, memLevel);
 }
 #else  // CPPREST_HTTP_COMPRESSION
-#if defined(__GNUC__)
-std::unique_ptr<compress_provider> make_gzip_compressor(int compressionLevel __attribute__((unused)), int method __attribute__((unused)), int strategy __attribute__((unused)), int memLevel __attribute__((unused)))
-#else   // __GNUC__
-std::unique_ptr<compress_provider> make_gzip_compressor(int compressionLevel, int method, int strategy, int memLevel)
-#endif  // __GNUC__
-{
+    (void)compressionLevel;
+    (void)method;
+    (void)strategy;
+    (void)memLevel;
     return std::unique_ptr<compress_provider>();
 }
 #endif // CPPREST_HTTP_COMPRESSION
@@ -771,12 +769,10 @@ std::unique_ptr<compress_provider> make_deflate_compressor(int compressionLevel,
     return utility::details::make_unique<deflate_compressor>(compressionLevel, method, strategy, memLevel);
 }
 #else  // CPPREST_HTTP_COMPRESSION
-#if defined(__GNUC__)
-std::unique_ptr<compress_provider> make_deflate_compressor(int compressionLevel __attribute__((unused)), int method __attribute__((unused)), int strategy __attribute__((unused)), int memLevel __attribute__((unused)))
-#else   // __GNUC__
-std::unique_ptr<compress_provider> make_deflate_compressor(int compressionLevel, int method, int strategy, int memLevel)
-#endif  // __GNUC__
-{
+    (void)compressionLevel;
+    (void)method;
+    (void)strategy;
+    (void)memLevel;
     return std::unique_ptr<compress_provider>();
 }
 #endif // CPPREST_HTTP_COMPRESSION
@@ -787,12 +783,9 @@ std::unique_ptr<compress_provider> make_brotli_compressor(uint32_t window, uint3
     return utility::details::make_unique<brotli_compressor>(window, quality, mode);
 }
 #else  // CPPREST_BROTLI_COMPRESSION
-#if defined(__GNUC__)
-std::unique_ptr<compress_provider> make_brotli_compressor(uint32_t window __attribute__((unused)), uint32_t quality __attribute__((unused)), uint32_t mode __attribute__((unused)))
-#else   // __GNUC__
-std::unique_ptr<compress_provider> make_brotli_compressor(uint32_t window, uint32_t quality, uint32_t mode)
-#endif  // __GNUC__
-{
+    (void)window;
+    (void)quality;
+    (void)mode;
     return std::unique_ptr<compress_provider>();
 }
 #endif // CPPREST_BROTLI_COMPRESSION
@@ -822,7 +815,7 @@ const std::vector<std::shared_ptr<decompress_factory>> get_decompress_factories(
 }
 } // namespace builtin
 
-static bool is_http_whitespace(utility::char_t ch) { return ch == _XPLATSTR(' ') || ch == _XPLATSTR('\t'); }
+static bool is_http_whitespace(const utility::char_t ch) { return ch == _XPLATSTR(' ') || ch == _XPLATSTR('\t'); }
 
 static void remove_surrounding_http_whitespace(const utility::string_t& encoding, size_t& start, size_t& length)
 {
