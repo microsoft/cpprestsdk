@@ -18,37 +18,6 @@
 #include "cpprest/asyncrt_utils.h"
 
 namespace web { namespace http {
-namespace details
-{
-    template<typename key_type, typename _t>
-    bool bind_impl(const key_type &text, _t &ref)
-    {
-        utility::istringstream_t iss(text);
-        iss.imbue(std::locale::classic());
-        iss >> ref;
-        if (iss.fail() || !iss.eof())
-        {
-            return false;
-        }
-
-        return true;
-    }
-
-    template<typename key_type>
-    bool bind_impl(const key_type &text, utf16string &ref)
-    {
-        ref = utility::conversions::to_utf16string(text);
-        return true;
-    }
-
-    template<typename key_type>
-    bool bind_impl(const key_type &text, std::string &ref)
-    {
-        ref = utility::conversions::to_utf8string(text);
-        return true;
-    }
-}
-
 /// <summary>
 /// Binds an individual reference to a string value.
 /// </summary>
