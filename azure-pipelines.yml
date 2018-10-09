@@ -5,7 +5,9 @@ jobs:
     pool:
       vmImage: 'Ubuntu 16.04'
     steps:
-    - script: sudo apt-get install -y libboost-all-dev libwebsocketpp-dev brotli libssl1.0.0
+    - script: |
+        sudo apt-get install -y libboost-all-dev libwebsocketpp-dev brotli
+        sudo apt-get install -y --reinstall libssl1.0.0
       displayName: Apt install dependencies
     - script: mkdir build.debug
       displayName: Make build.debug
@@ -14,8 +16,6 @@ jobs:
         workingDirectory: 'build.debug'
         cmakeArgs: '-DCMAKE_BUILD_TYPE=Debug ..'
     - script: |
-        cat /etc/apt/sources.list
-        apt-cache pkgnames
         cd build.debug
         make
       displayName: 'Run make'
