@@ -1583,7 +1583,7 @@ private:
                     else if (length > p_request_context->m_remaining_to_write)
                     {
                         // The stream grew, but we won't
-                        length = p_request_context->m_remaining_to_write;
+                        length = static_cast<size_t>(p_request_context->m_remaining_to_write);
                     }
 
                     do_compress(pplx::task_from_result<size_t>(length)).then(after_read);
