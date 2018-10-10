@@ -761,15 +761,15 @@ SUITE(compression_tests)
         // No acquire(), to force non-acquire compression client codepaths
         virtual bool acquire(_Out_ _CharType*& ptr, _Out_ size_t& count)
         {
-            ptr;
-            count;
+            (void)ptr;
+            (void)count;
             return false;
         }
 
         virtual void release(_Out_writes_(count) _CharType* ptr, _In_ size_t count)
         {
-            ptr;
-            count;
+            (void)ptr;
+            (void)count;
         }
 
         static concurrency::streams::basic_istream<_CharType> open_istream(const _CharType* data, size_t size)
