@@ -20,6 +20,10 @@ jobs:
         cd build.debug
         ninja -j 4
       displayName: 'Run ninja'
+    - script: |
+        cd build.debug/Release/Binaries
+        ./test_runner *test.so
+      displayName: 'Run Tests'
   - job: Ubuntu_1604_Apt_Release
     pool:
       vmImage: 'Ubuntu 16.04'
@@ -39,6 +43,10 @@ jobs:
         cd build.release
         ninja -j 4
       displayName: 'Run ninja'
+    - script: |
+        cd build.release/Release/Binaries
+        ./test_runner *test.so
+      displayName: 'Run Tests'
   - job: MacOS_Debug
     pool:
       vmImage: 'macOS-10.13'
@@ -55,6 +63,10 @@ jobs:
         cd build.debug
         ninja -j 4
       displayName: 'Run ninja'
+    - script: |
+        cd build.debug/Release/Binaries
+        ./test_runner *test.so
+      displayName: 'Run Tests'
   - job: MacOS_Release
     pool:
       vmImage: 'macOS-10.13'
@@ -71,3 +83,7 @@ jobs:
         cd build.release
         ninja -j 4
       displayName: 'Run ninja'
+    - script: |
+        cd build.release/Release/Binaries
+        ./test_runner *test.so
+      displayName: 'Run Tests'
