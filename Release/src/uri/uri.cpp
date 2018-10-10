@@ -19,6 +19,9 @@ namespace web { namespace details
 {
 namespace
 {
+    const ::utility::string_t dotSegment = _XPLATSTR(".");
+    const ::utility::string_t dotDotSegment = _XPLATSTR("..");
+
     /// <summary>
     /// Unreserved characters are those that are allowed in a URI but do not have a reserved purpose. They include:
     /// - A-Z
@@ -444,10 +447,6 @@ namespace
     {
         if (builder.path().find(_XPLATSTR('.')) == utility::string_t::npos)
             return;
-
-        const utility::string_t
-            dotSegment = _XPLATSTR("."),
-            dotDotSegment = _XPLATSTR("..");
 
         const auto segments = uri::split_path(builder.path());
         std::vector<std::reference_wrapper<const utility::string_t>> result;
