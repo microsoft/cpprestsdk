@@ -18,7 +18,7 @@ jobs:
         cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Debug ..'
     - script: |
         cd build.debug
-        ninja -j 2
+        ninja -j 4
       displayName: 'Run ninja'
   - job: Ubuntu_1604_Apt_Release
     pool:
@@ -37,5 +37,37 @@ jobs:
         cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Release ..'
     - script: |
         cd build.release
-        ninja -j 2
+        ninja -j 4
+      displayName: 'Run ninja'
+  - job: MacOS_Debug
+    pool:
+      vmImage: 'macOS-10.13'
+    steps:
+    - script: brew install boost openssl ninja
+      displayName: Berw install dependencies
+    - script: mkdir build.debug
+      displayName: Make build.debug
+    - task: CMake@1
+      inputs:
+        workingDirectory: 'build.debug'
+        cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Debug ..'
+    - script: |
+        cd build.debug
+        ninja -j 4
+      displayName: 'Run ninja'
+  - job: MacOS_Release
+    pool:
+      vmImage: 'macOS-10.13'
+    steps:
+    - script: brew install boost openssl ninja
+      displayName: Berw install dependencies
+    - script: mkdir build.release
+      displayName: Make build.release
+    - task: CMake@1
+      inputs:
+        workingDirectory: 'build.release'
+        cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Release ..'
+    - script: |
+        cd build.release
+        ninja -j 4
       displayName: 'Run ninja'
