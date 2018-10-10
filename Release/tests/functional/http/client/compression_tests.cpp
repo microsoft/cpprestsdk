@@ -62,7 +62,7 @@ SUITE(compression_tests)
             if (_done)
             {
                 input_bytes_processed = 0;
-                if (*done)
+                if (done)
                 {
                     *done = true;
                 }
@@ -127,7 +127,7 @@ SUITE(compression_tests)
             if (_done)
             {
                 input_bytes_processed = 0;
-                if (*done)
+                if (done)
                 {
                     *done = true;
                 }
