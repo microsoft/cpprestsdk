@@ -65,7 +65,7 @@ jobs:
       displayName: 'Run ninja'
     - script: |
         cd build.debug/Release/Binaries
-        ./test_runner *test.so
+        ./test_runner *test.dylib
       displayName: 'Run Tests'
   - job: MacOS_Release
     pool:
@@ -85,5 +85,5 @@ jobs:
       displayName: 'Run ninja'
     - script: |
         cd build.release/Release/Binaries
-        ./test_runner *test.so
+        ./test_runner *test.dylib
       displayName: 'Run Tests'
