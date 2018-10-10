@@ -470,8 +470,12 @@ namespace
             path += _XPLATSTR('/');
             path += result[i].get();
         }
-        if (segments.back() == dotDotSegment || segments.back() == dotSegment || builder.path().back() == _XPLATSTR('/'))
+        if (segments.back() == dotDotSegment
+            || segments.back() == dotSegment
+            || builder.path().back() == _XPLATSTR('/'))
+        {
             path += _XPLATSTR('/');
+        }
 
         builder.set_path(std::move(path));
     }
@@ -500,7 +504,8 @@ utility::string_t uri_components::join()
 
     if (!m_scheme.empty())
     {
-        ret.append(m_scheme).append({ _XPLATSTR(':') });
+        ret.append(m_scheme);
+        ret.push_back(_XPLATSTR(':'));
     }
 
     if (!m_host.empty())
@@ -525,7 +530,7 @@ utility::string_t uri_components::join()
         // only add the leading slash when the host is present
         if (!m_host.empty() && m_path.front() != _XPLATSTR('/'))
         {
-            ret.append({ _XPLATSTR('/') });
+            ret.push_back(_XPLATSTR('/'));
         }
 
         ret.append(m_path);
@@ -533,12 +538,14 @@ utility::string_t uri_components::join()
 
     if (!m_query.empty())
     {
-        ret.append({ _XPLATSTR('?') }).append(m_query);
+        ret.push_back(_XPLATSTR('?'));
+        ret.append(m_query);
     }
 
     if (!m_fragment.empty())
     {
-        ret.append({ _XPLATSTR('#') }).append(m_fragment);
+        ret.push_back(_XPLATSTR('#'));
+        ret.append(m_fragment);
     }
 
     return ret;
@@ -767,7 +774,7 @@ std::map<utility::string_t, utility::string_t> uri::split_query(const utility::s
             utility::string_t key(key_value_pair.begin(), key_value_pair.begin() + equals_index);
             utility::string_t value(key_value_pair.begin() + equals_index + 1, key_value_pair.end());
         results[key] = value;
-    }
+        }
     }
 
     return results;
@@ -840,12 +847,16 @@ bool uri::operator == (const uri &other) const
 utility::string_t uri::resolve_uri(const utility::string_t &relativeUri) const
 {
     if (relativeUri.empty())
+    {
         return to_string();
+    }
 
     if (relativeUri[0] == _XPLATSTR('/'))  // starts with '/'
     {
         if (relativeUri.size() >= 2 && relativeUri[1] == _XPLATSTR('/'))  // starts with '//'
+        {
             return this->scheme() + _XPLATSTR(':') + relativeUri;
+        }
 
         // otherwise relative to root
         auto builder = uri_builder(this->authority());
@@ -859,14 +870,18 @@ utility::string_t uri::resolve_uri(const utility::string_t &relativeUri) const
         return relativeUri;
 
     if (!url.authority().is_empty())
+        {
         return uri_builder(url).set_scheme(this->scheme()).to_string();
+        }
 
     // relative url
     auto builder = uri_builder(*this);
     if (url.path() == _XPLATSTR("/") || url.path().empty())   // web::uri considers empty path as '/'
     {
         if (!url.query().empty())
+        {
             builder.set_query(url.query());
+        }
     }
     else if (!this->path().empty())
     {
