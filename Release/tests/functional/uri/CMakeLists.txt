@@ -8,6 +8,7 @@ set(SOURCES
   operator_tests.cpp
   splitting_tests.cpp
   uri_builder_tests.cpp
+  resolve_uri_tests.cpp
   stdafx.cpp
 )
 

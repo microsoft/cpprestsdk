@@ -379,11 +379,19 @@ namespace web {
         /// <summary>
         /// Returns the full (encoded) URI as a string.
         /// </summary>
-         /// <returns>The full encoded URI string.</returns>
+        /// <returns>The full encoded URI string.</returns>
         utility::string_t to_string() const
         {
             return m_uri;
         }
+
+        /// <summary>
+        /// Returns an URI resolved against <c>this</c> as the base URI
+        /// according to RFC3986, Section 5 (https://tools.ietf.org/html/rfc3986#section-5).
+        /// </summary>
+        /// <param name="relativeUri">The relative URI to be resolved against <c>this</c> as base.</param>
+        /// <returns>The new resolved URI string.</returns>
+        _ASYNCRTIMP utility::string_t resolve_uri(const utility::string_t &relativeUri) const;
 
         _ASYNCRTIMP bool operator == (const uri &other) const;
 
