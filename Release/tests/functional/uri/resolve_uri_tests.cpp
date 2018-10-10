@@ -66,4 +66,3 @@ TEST(resolve_uri_abnormal)
 } // SUITE(resolve_uri_tests)
 
 }}}
-
