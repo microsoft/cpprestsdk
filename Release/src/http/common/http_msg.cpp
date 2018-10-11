@@ -253,7 +253,7 @@ void parse_headers_string(_Inout_z_ utf16char *headersStr, http_headers &headers
 
 http_version __cdecl http_version::from_string(const std::string& http_version_string)
 {
-    std::stringstream str(http_version_string);
+    std::istringstream str(http_version_string);
     str.imbue(std::locale::classic());
 
     std::string http; std::getline(str, http, '/');
@@ -1009,22 +1009,24 @@ static utility::string_t convert_body_to_string_t(const utility::string_t &conte
 //
 static utility::string_t http_headers_body_to_string(const http_headers &headers, concurrency::streams::istream instream)
 {
-    utility::ostringstream_t buffer;
-    buffer.imbue(std::locale::classic());
-
+    utility::string_t result;
     for (const auto &header : headers)
     {
-        buffer << header.first << _XPLATSTR(": ") << header.second << CRLF;
+        result += header.first;
+        result += _XPLATSTR(": ");
+        result += header.second;
+        result += CRLF;
     }
-    buffer << CRLF;
+
+    result += CRLF;
 
     utility::string_t content_type;
     if(headers.match(http::header_names::content_type, content_type))
     {
-        buffer << convert_body_to_string_t(content_type, instream);
+        result += convert_body_to_string_t(content_type, instream);
     }
 
-    return buffer.str();
+    return result;
 }
 
 utility::string_t details::http_msg_base::to_string() const

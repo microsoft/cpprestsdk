@@ -75,23 +75,19 @@ public:
                     size_t output_size,
                     operation_hint hint,
                     size_t& input_bytes_processed,
-                    bool* done)
+                    bool& done)
     {
         if (m_state == Z_STREAM_END || (hint != operation_hint::is_last && !input_size))
         {
             input_bytes_processed = 0;
-            if (done)
-            {
-                *done = (m_state == Z_STREAM_END);
-            }
+            done = (m_state == Z_STREAM_END);
             return 0;
         }
 
         if (m_state != Z_OK && m_state != Z_BUF_ERROR && m_state != Z_STREAM_ERROR)
         {
-            std::stringstream ss;
-            ss << "Prior unrecoverable compression stream error " << m_state;
-            throw std::runtime_error(std::move(ss.str()));
+            throw std::runtime_error("Prior unrecoverable compression stream error " +
+                std::to_string(m_state));
         }
 
         if (input_size > std::numeric_limits<uInt>::max() || output_size > std::numeric_limits<uInt>::max())
@@ -108,16 +104,11 @@ public:
         if (m_state != Z_OK && m_state != Z_STREAM_ERROR &&
             !(hint == operation_hint::is_last && (m_state == Z_STREAM_END || m_state == Z_BUF_ERROR)))
         {
-            std::stringstream ss;
-            ss << "Unrecoverable compression stream error " << m_state;
-            throw std::runtime_error(std::move(ss.str()));
+            throw std::runtime_error("Unrecoverable compression stream error " + std::to_string(m_state));
         }
 
         input_bytes_processed = input_size - m_stream.avail_in;
-        if (done)
-        {
-            *done = (m_state == Z_STREAM_END);
-        }
+        done = (m_state == Z_STREAM_END);
         return output_size - m_stream.avail_out;
     }
 
@@ -129,7 +120,7 @@ public:
         try
         {
             r.output_bytes_produced =
-                compress(input, input_size, output, output_size, hint, r.input_bytes_processed, &r.done);
+                compress(input, input_size, output, output_size, hint, r.input_bytes_processed, r.done);
         }
         catch (...)
         {
@@ -146,9 +137,7 @@ public:
         m_state = deflateReset(&m_stream);
         if (m_state != Z_OK)
         {
-            std::stringstream ss;
-            ss << "Failed to reset zlib compressor " << m_state;
-            throw std::runtime_error(std::move(ss.str()));
+            throw std::runtime_error("Failed to reset zlib compressor " + std::to_string(m_state));
         }
     }
 
@@ -181,23 +170,18 @@ public:
                       size_t output_size,
                       operation_hint hint,
                       size_t& input_bytes_processed,
-                      bool* done)
+                      bool& done)
     {
         if (m_state == Z_STREAM_END || !input_size)
         {
             input_bytes_processed = 0;
-            if (done)
-            {
-                *done = (m_state == Z_STREAM_END);
-            }
+            done = (m_state == Z_STREAM_END);
             return 0;
         }
 
         if (m_state != Z_OK && m_state != Z_BUF_ERROR && m_state != Z_STREAM_ERROR)
         {
-            std::stringstream ss;
-            ss << "Prior unrecoverable decompression stream error " << m_state;
-            throw std::runtime_error(std::move(ss.str()));
+            throw std::runtime_error("Prior unrecoverable decompression stream error " + std::to_string(m_state));
         }
 
         if (input_size > std::numeric_limits<uInt>::max() || output_size > std::numeric_limits<uInt>::max())
@@ -215,16 +199,11 @@ public:
         {
             // Z_BUF_ERROR is a success code for Z_FINISH, and the caller can continue as if operation_hint::is_last was
             // not given
-            std::stringstream ss;
-            ss << "Unrecoverable decompression stream error " << m_state;
-            throw std::runtime_error(std::move(ss.str()));
+            throw std::runtime_error("Unrecoverable decompression stream error " + std::to_string(m_state));
         }
 
         input_bytes_processed = input_size - m_stream.avail_in;
-        if (done)
-        {
-            *done = (m_state == Z_STREAM_END);
-        }
+        done = (m_state == Z_STREAM_END);
         return output_size - m_stream.avail_out;
     }
 
@@ -236,7 +215,7 @@ public:
         try
         {
             r.output_bytes_produced =
-                decompress(input, input_size, output, output_size, hint, r.input_bytes_processed, &r.done);
+                decompress(input, input_size, output, output_size, hint, r.input_bytes_processed, r.done);
         }
         catch (...)
         {
@@ -253,9 +232,7 @@ public:
         m_state = inflateReset(&m_stream);
         if (m_state != Z_OK)
         {
-            std::stringstream ss;
-            ss << "Failed to reset zlib decompressor " << m_state;
-            throw std::runtime_error(std::move(ss.str()));
+            throw std::runtime_error("Failed to reset zlib decompressor " + std::to_string(m_state));
         }
     }
 
@@ -331,15 +308,12 @@ public:
                     size_t output_size,
                     operation_hint hint,
                     size_t& input_bytes_processed,
-                    bool* done)
+                    bool& done)
     {
         if (m_done || (hint != operation_hint::is_last && !input_size))
         {
             input_bytes_processed = 0;
-            if (done)
-            {
-                *done = m_done;
-            }
+            done = m_done;
             return 0;
         }
 
@@ -397,10 +371,7 @@ public:
         }
 
         input_bytes_processed = input_size - avail_in;
-        if (done)
-        {
-            *done = m_done;
-        }
+        done = m_done;
         return output_size - avail_out;
     }
 
@@ -495,15 +466,12 @@ public:
                       size_t output_size,
                       operation_hint hint,
                       size_t& input_bytes_processed,
-                      bool* done)
+                      bool& done)
     {
         if (m_state == BROTLI_DECODER_RESULT_SUCCESS /* || !input_size*/)
         {
             input_bytes_processed = 0;
-            if (done)
-            {
-                *done = (m_state == BROTLI_DECODER_RESULT_SUCCESS);
-            }
+            done = (m_state == BROTLI_DECODER_RESULT_SUCCESS);
             return 0;
         }
 
@@ -529,10 +497,7 @@ public:
         }
 
         input_bytes_processed = input_size - avail_in;
-        if (done)
-        {
-            *done = (m_state == BROTLI_DECODER_RESULT_SUCCESS);
-        }
+        done = (m_state == BROTLI_DECODER_RESULT_SUCCESS);
         return output_size - avail_out;
     }
 
@@ -761,7 +726,7 @@ std::unique_ptr<compress_provider> make_gzip_compressor(int compressionLevel, in
     return std::unique_ptr<compress_provider>();
 #endif // CPPREST_HTTP_COMPRESSION
 }
-    
+
 std::unique_ptr<compress_provider> make_deflate_compressor(int compressionLevel, int method, int strategy, int memLevel)
 {
 #if defined(CPPREST_HTTP_COMPRESSION)
@@ -1088,14 +1053,13 @@ utility::string_t build_supported_header(header_types type,
 {
     const std::vector<std::shared_ptr<decompress_factory>>& f =
         factories.empty() ? web::http::compression::builtin::g_decompress_factories : factories;
-    utility::ostringstream_t os;
+    utility::string_t result;
     bool start;
 
     _ASSERTE(type == header_types::te || type == header_types::accept_encoding);
 
     // Add all specified algorithms and their weights to the header
     start = true;
-    os.imbue(std::locale::classic());
     for (auto& factory : f)
     {
         if (factory)
@@ -1104,12 +1068,15 @@ utility::string_t build_supported_header(header_types type,
 
             if (!start)
             {
-                os << _XPLATSTR(", ");
+                result += _XPLATSTR(", ");
             }
-            os << factory->algorithm();
+            result += factory->algorithm();
             if (weight <= 1000)
             {
-                os << _XPLATSTR(";q=") << weight / 1000 << _XPLATSTR(".") << weight % 1000;
+                result += _XPLATSTR(";q=");
+                result += utility::conversions::details::to_string_t(weight / 1000);
+                result += _XPLATSTR('.');
+                result += utility::conversions::details::to_string_t(weight % 1000);
             }
             start = false;
         }
@@ -1118,10 +1085,10 @@ utility::string_t build_supported_header(header_types type,
     if (start && type == header_types::accept_encoding)
     {
         // Request that no encoding be applied
-        os << _XPLATSTR("identity;q=1, *;q=0");
+        result += _XPLATSTR("identity;q=1, *;q=0");
     }
 
-    return os.str();
+    return result;
 }
 } // namespace details
 } // namespace compression

@@ -51,7 +51,7 @@ public:
                             size_t output_size,
                             operation_hint hint,
                             size_t& input_bytes_processed,
-                            bool* done = nullptr) = 0;
+                            bool& done) = 0;
     virtual pplx::task<operation_result> compress(
         const uint8_t* input, size_t input_size, uint8_t* output, size_t output_size, operation_hint hint) = 0;
     virtual void reset() = 0;
@@ -71,7 +71,7 @@ public:
                               size_t output_size,
                               operation_hint hint,
                               size_t& input_bytes_processed,
-                              bool* done = nullptr) = 0;
+                              bool& done) = 0;
     virtual pplx::task<operation_result> decompress(
         const uint8_t* input, size_t input_size, uint8_t* output, size_t output_size, operation_hint hint) = 0;
     virtual void reset() = 0;

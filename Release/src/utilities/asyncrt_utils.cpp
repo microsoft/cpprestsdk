@@ -275,11 +275,10 @@ std::string windows_category_impl::message(int errorCode) const CPPREST_NOEXCEPT
         &buffer[0],
         buffer_size,
         NULL);
+
     if (result == 0)
     {
-        std::ostringstream os;
-        os << "Unable to get an error message for error code: " << errorCode << ".";
-        return os.str();
+        return "Unable to get an error message for error code: " + std::to_string(errorCode) + ".";
     }
 
     return utility::conversions::to_utf8string(buffer);
@@ -688,80 +687,92 @@ utility::string_t datetime::to_string(date_format format) const
         throw utility::details::create_system_error(GetLastError());
     }
 
-    std::wostringstream outStream;
-    outStream.imbue(std::locale::classic());
-
+    std::wstring result;
     if (format == RFC_1123)
     {
-#if _WIN32_WINNT < _WIN32_WINNT_VISTA
-        TCHAR dateStr[18] = {0};
-        status = GetDateFormat(LOCALE_INVARIANT, 0, &systemTime, __TEXT("ddd',' dd MMM yyyy"), dateStr, sizeof(dateStr) / sizeof(TCHAR));
-#else
-        wchar_t dateStr[18] = {0};
-        status = GetDateFormatEx(LOCALE_NAME_INVARIANT, 0, &systemTime, L"ddd',' dd MMM yyyy", dateStr, sizeof(dateStr) / sizeof(wchar_t), NULL);
-#endif // _WIN32_WINNT < _WIN32_WINNT_VISTA
-        if (status == 0)
         {
-            throw utility::details::create_system_error(GetLastError());
+            wchar_t dateStr[18] = {0};
+#if _WIN32_WINNT < _WIN32_WINNT_VISTA
+            status = GetDateFormatW(LOCALE_INVARIANT, 0, &systemTime, L"ddd',' dd MMM yyyy", dateStr, sizeof(dateStr) / sizeof(wchar_t));
+#else
+            status = GetDateFormatEx(LOCALE_NAME_INVARIANT, 0, &systemTime, L"ddd',' dd MMM yyyy", dateStr, sizeof(dateStr) / sizeof(wchar_t), NULL);
+#endif // _WIN32_WINNT < _WIN32_WINNT_VISTA
+            if (status == 0)
+            {
+                throw utility::details::create_system_error(GetLastError());
+            }
+
+            result += dateStr;
+            result += L' ';
         }
 
-#if _WIN32_WINNT < _WIN32_WINNT_VISTA
-        TCHAR timeStr[10] = {0};
-        status = GetTimeFormat(LOCALE_INVARIANT, TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT, &systemTime, __TEXT("HH':'mm':'ss"), timeStr, sizeof(timeStr) / sizeof(TCHAR));
-#else
-        wchar_t timeStr[10] = {0};
-        status = GetTimeFormatEx(LOCALE_NAME_INVARIANT, TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT, &systemTime, L"HH':'mm':'ss", timeStr, sizeof(timeStr) / sizeof(wchar_t));
-#endif // _WIN32_WINNT < _WIN32_WINNT_VISTA
-        if (status == 0)
         {
-            throw utility::details::create_system_error(GetLastError());
+            wchar_t timeStr[10] = {0};
+#if _WIN32_WINNT < _WIN32_WINNT_VISTA
+            status = GetTimeFormatW(LOCALE_INVARIANT, TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT, &systemTime, L"HH':'mm':'ss", timeStr, sizeof(timeStr) / sizeof(wchar_t));
+#else
+            status = GetTimeFormatEx(LOCALE_NAME_INVARIANT, TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT, &systemTime, L"HH':'mm':'ss", timeStr, sizeof(timeStr) / sizeof(wchar_t));
+#endif // _WIN32_WINNT < _WIN32_WINNT_VISTA
+            if (status == 0)
+            {
+                throw utility::details::create_system_error(GetLastError());
+            }
+
+            result += timeStr;
+            result += L" GMT";
         }
 
-        outStream << dateStr << " " << timeStr << " " << "GMT";
     }
     else if (format == ISO_8601)
     {
         const size_t buffSize = 64;
-#if _WIN32_WINNT < _WIN32_WINNT_VISTA
-        TCHAR dateStr[buffSize] = {0};
-        status = GetDateFormat(LOCALE_INVARIANT, 0, &systemTime, __TEXT("yyyy-MM-dd"), dateStr, buffSize);
-#else
-        wchar_t dateStr[buffSize] = {0};
-        status = GetDateFormatEx(LOCALE_NAME_INVARIANT, 0, &systemTime, L"yyyy-MM-dd", dateStr, buffSize, NULL);
-#endif // _WIN32_WINNT < _WIN32_WINNT_VISTA
-        if (status == 0)
         {
-            throw utility::details::create_system_error(GetLastError());
+            wchar_t dateStr[buffSize] = {0};
+#if _WIN32_WINNT < _WIN32_WINNT_VISTA
+            status = GetDateFormatW(LOCALE_INVARIANT, 0, &systemTime, L"yyyy-MM-dd", dateStr, buffSize);
+#else
+            status = GetDateFormatEx(LOCALE_NAME_INVARIANT, 0, &systemTime, L"yyyy-MM-dd", dateStr, buffSize, NULL);
+#endif // _WIN32_WINNT < _WIN32_WINNT_VISTA
+            if (status == 0)
+            {
+                throw utility::details::create_system_error(GetLastError());
+            }
+
+            result += dateStr;
+            result += L'T';
         }
 
-#if _WIN32_WINNT < _WIN32_WINNT_VISTA
-        TCHAR timeStr[buffSize] = {0};
-        status = GetTimeFormat(LOCALE_INVARIANT, TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT, &systemTime, __TEXT("HH':'mm':'ss"), timeStr, buffSize);
-#else
-        wchar_t timeStr[buffSize] = {0};
-        status = GetTimeFormatEx(LOCALE_NAME_INVARIANT, TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT, &systemTime, L"HH':'mm':'ss", timeStr, buffSize);
-#endif // _WIN32_WINNT < _WIN32_WINNT_VISTA
-        if (status == 0)
         {
-            throw utility::details::create_system_error(GetLastError());
+            wchar_t timeStr[buffSize] = {0};
+#if _WIN32_WINNT < _WIN32_WINNT_VISTA
+            status = GetTimeFormatW(LOCALE_INVARIANT, TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT, &systemTime, L"HH':'mm':'ss", timeStr, buffSize);
+#else
+            status = GetTimeFormatEx(LOCALE_NAME_INVARIANT, TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT, &systemTime, L"HH':'mm':'ss", timeStr, buffSize);
+#endif // _WIN32_WINNT < _WIN32_WINNT_VISTA
+            if (status == 0)
+            {
+               throw utility::details::create_system_error(GetLastError());
+            }
+
+            result += timeStr;
         }
 
-        outStream << dateStr << "T" << timeStr;
+
         uint64_t frac_sec = largeInt.QuadPart % _secondTicks;
         if (frac_sec > 0)
         {
             // Append fractional second, which is a 7-digit value with no trailing zeros
             // This way, '1200' becomes '00012'
-            char buf[9] = { 0 };
-            sprintf_s(buf, sizeof(buf), ".%07ld", (long int)frac_sec);
-            // trim trailing zeros
-            for (int i = 7; buf[i] == '0'; i--) buf[i] = '\0';
-            outStream << buf;
+            wchar_t buf[9] = { 0 };
+            size_t appended = swprintf_s(buf, 9, L".%07ld", static_cast<long>(frac_sec));
+            while (buf[appended - 1] == L'0') --appended; // trim trailing zeros
+            result.append(buf, appended);
         }
-        outStream << "Z";
+
+        result += L'Z';
     }
 
-    return outStream.str();
+    return result;
 #else //LINUX
     uint64_t input = m_interval;
     uint64_t frac_sec = input % _secondTicks;
@@ -1103,33 +1114,44 @@ utility::string_t __cdecl timespan::seconds_to_xml_duration(utility::seconds dur
 
     // The format is:
     // PdaysDThoursHminutesMsecondsS
-    utility::ostringstream_t oss;
-    oss.imbue(std::locale::classic());
-
-    oss << _XPLATSTR("P");
+    utility::string_t result;
+    // (approximate mins/hours/secs as 2 digits each + 1 prefix character) + 1 for P prefix + 1 for T
+    size_t baseReserveSize = ((numHours > 0) + (numMins > 0) + (numSecs > 0)) * 3 + 1;
     if (numDays > 0)
     {
-        oss << numDays << _XPLATSTR("D");
+        utility::string_t daysStr = utility::conversions::details::to_string_t(numDays);
+        result.reserve(baseReserveSize + daysStr.size() + 1);
+        result += _XPLATSTR('P');
+        result += daysStr;
+        result += _XPLATSTR('D');
+    }
+    else
+    {
+        result.reserve(baseReserveSize);
+        result += _XPLATSTR('P');
     }
 
-    oss << _XPLATSTR("T");
+    result += _XPLATSTR('T');
 
     if (numHours > 0)
     {
-        oss << numHours << _XPLATSTR("H");
+        result += utility::conversions::details::to_string_t(numHours);
+        result += _XPLATSTR('H');
     }
 
     if (numMins > 0)
     {
-        oss << numMins << _XPLATSTR("M");
+        result += utility::conversions::details::to_string_t(numMins);
+        result += _XPLATSTR('M');
     }
 
     if (numSecs > 0)
     {
-        oss << numSecs << _XPLATSTR("S");
+        result += utility::conversions::details::to_string_t(numSecs);
+        result += _XPLATSTR('S');
     }
 
-    return oss.str();
+    return result;
 }
 
 utility::seconds __cdecl timespan::xml_duration_to_seconds(const utility::string_t &timespanString)
