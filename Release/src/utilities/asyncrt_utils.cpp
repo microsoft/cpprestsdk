@@ -15,6 +15,7 @@
 #include <cpprest/asyncrt_utils.h>
 #include <algorithm>
 #include <string>
+#include <sstream>
 
 #ifndef _WIN32
 #if defined(__clang__)

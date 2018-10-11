@@ -13,6 +13,8 @@
 
 #include "stdafx.h"
 
+#include <sstream>
+
 using namespace utility::conversions;
 
 namespace web { namespace details

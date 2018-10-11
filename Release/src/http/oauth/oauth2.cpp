@@ -13,6 +13,8 @@
 
 #include "stdafx.h"
 
+#include <sstream>
+
 using web::http::client::http_client;
 using web::http::client::http_client_config;
 using web::http::oauth2::details::oauth2_strings;

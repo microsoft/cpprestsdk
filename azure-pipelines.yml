@@ -18,7 +18,7 @@ jobs:
         cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Debug ..'
     - script: |
         cd build.debug
-        ninja -j 4
+        ninja
       displayName: 'Run ninja'
     - script: |
         cd build.debug/Release/Binaries
@@ -41,7 +41,7 @@ jobs:
         cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Release ..'
     - script: |
         cd build.release
-        ninja -j 4
+        ninja
       displayName: 'Run ninja'
     - script: |
         cd build.release/Release/Binaries
@@ -61,7 +61,7 @@ jobs:
         cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Debug ..'
     - script: |
         cd build.debug
-        ninja -j 4
+        ninja
       displayName: 'Run ninja'
     - script: |
         cd build.debug/Release/Binaries
@@ -81,7 +81,7 @@ jobs:
         cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Release ..'
     - script: |
         cd build.release
-        ninja -j 4
+        ninja
       displayName: 'Run ninja'
     - script: |
         cd build.release/Release/Binaries

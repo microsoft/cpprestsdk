@@ -13,6 +13,9 @@
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 #include "stdafx.h"
+#include <sstream>
+#include "cpprest/ws_client.h"
+#include "cpprest/ws_msg.h"
 #include "../../http/common/internal_http_helpers.h"
 
 #if !defined(CPPREST_EXCLUDE_WEBSOCKETS)

@@ -13,19 +13,16 @@
 
 #pragma once
 
-#include <string>
-#include <vector>
+#include <chrono>
 #include <cstdint>
-#include <system_error>
 #include <random>
+#include <string>
+#include <system_error>
+#include <vector>
 #include <locale.h>
 #include <limits.h>
 #include "pplx/pplxtasks.h"
 #include "cpprest/details/basic_types.h"
-
-#if !defined(_WIN32) || (_MSC_VER >= 1700)
-#include <chrono>
-#endif
 
 #ifndef _WIN32
 #include <sys/time.h>

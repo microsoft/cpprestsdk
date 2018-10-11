@@ -49,8 +49,6 @@
 #include <stdint.h>
 #include <cstdint>
 #include <string>
-#include <sstream>
-#include <thread>
 #include <atomic>
 #include <signal.h>
 #include "pthread.h"
@@ -75,32 +73,20 @@
 // This is to help track how many developers are directly building from source themselves.
 #define _CASA_BUILD_FROM_SRC
 
-#include <iostream>
-#include <fstream>
 #include <algorithm>
 #include <exception>
 #include <assert.h>
-#include <streambuf>
 #include <atomic>
 #include <mutex>
 #include <array>
 #include <vector>
 #include <memory>
-#include <thread>
-#include <set>
 
 #include "cpprest/details/cpprest_compat.h"
 #include "cpprest/details/basic_types.h"
 
 #include "pplx/pplxtasks.h"
 #include "cpprest/version.h"
-
-// streams
-#include "cpprest/streams.h"
-#include "cpprest/astreambuf.h"
-#include "cpprest/rawptrstream.h"
-#include "cpprest/interopstream.h"
-#include "cpprest/producerconsumerstream.h"
 
 // json
 #include "cpprest/json.h"
@@ -123,10 +109,6 @@
 #include "cpprest/oauth1.h"
 #endif
 #include "cpprest/oauth2.h"
-
-// websockets
-#include "cpprest/ws_client.h"
-#include "cpprest/ws_msg.h"
 
 #if !defined(__cplusplus_winrt)
 #if _WIN32_WINNT >= _WIN32_WINNT_VISTA

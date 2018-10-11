@@ -14,6 +14,7 @@
 ****/
 
 #include "stdafx.h"
+#include "cpprest/rawptrstream.h"
 
 #if _WIN32_WINNT >= _WIN32_WINNT_VISTA
 

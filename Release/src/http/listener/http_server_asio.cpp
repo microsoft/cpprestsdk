@@ -14,6 +14,8 @@
 */
 #include "stdafx.h"
 
+#include <sstream>
+#include <set>
 #include <boost/algorithm/string/find.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/asio/read_until.hpp>

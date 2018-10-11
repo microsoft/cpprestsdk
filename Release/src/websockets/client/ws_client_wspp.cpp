@@ -12,6 +12,7 @@
 ****/
 
 #include "stdafx.h"
+#include <thread>
 
 #if !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 
