@@ -1530,7 +1530,7 @@ private:
         size_t got;
         size_t inbytes = 0;
         size_t outbytes = 0;
-        bool done = false;
+        bool done;
 
         try
         {
@@ -1547,7 +1547,7 @@ private:
                                                  output.size() - outbytes,
                                                  web::http::compression::operation_hint::has_more,
                                                  processed,
-                                                 &done);
+                                                 done);
                 inbytes += processed;
                 outbytes += got;
             } while (got && !done);

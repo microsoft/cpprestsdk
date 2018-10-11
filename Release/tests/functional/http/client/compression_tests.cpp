@@ -55,17 +55,14 @@ SUITE(compression_tests)
                                   size_t output_size,
                                   web::http::compression::operation_hint hint,
                                   size_t& input_bytes_processed,
-                                  bool* done)
+                                  bool& done)
         {
             size_t bytes;
 
             if (_done)
             {
                 input_bytes_processed = 0;
-                if (done)
-                {
-                    *done = true;
-                }
+                done = true;
                 return 0;
             }
             if (_size == static_cast<size_t>(-1) || input_size > _size - _so_far)
@@ -82,10 +79,7 @@ SUITE(compression_tests)
             }
             _so_far += bytes;
             _done = (_so_far == _size);
-            if (done)
-            {
-                *done = _done;
-            }
+            done = _done;
             input_bytes_processed = bytes;
             return input_bytes_processed;
         }
@@ -102,7 +96,7 @@ SUITE(compression_tests)
             try
             {
                 r.output_bytes_produced =
-                    decompress(input, input_size, output, output_size, hint, r.input_bytes_processed, &r.done);
+                    decompress(input, input_size, output, output_size, hint, r.input_bytes_processed, r.done);
             }
             catch (...)
             {
@@ -120,17 +114,14 @@ SUITE(compression_tests)
                                 size_t output_size,
                                 web::http::compression::operation_hint hint,
                                 size_t& input_bytes_processed,
-                                bool* done)
+                                bool& done)
         {
             size_t bytes;
 
             if (_done)
             {
                 input_bytes_processed = 0;
-                if (done)
-                {
-                    *done = true;
-                }
+                done = true;
                 return 0;
             }
             if (_size == static_cast<size_t>(-1) || input_size > _size - _so_far)
@@ -147,10 +138,7 @@ SUITE(compression_tests)
             }
             _so_far += bytes;
             _done = (hint == web::http::compression::operation_hint::is_last && _so_far == _size);
-            if (done)
-            {
-                *done = _done;
-            }
+            done = _done;
             input_bytes_processed = bytes;
             return input_bytes_processed;
         }
@@ -167,7 +155,7 @@ SUITE(compression_tests)
             try
             {
                 r.output_bytes_produced =
-                    compress(input, input_size, output, output_size, hint, r.input_bytes_processed, &r.done);
+                    compress(input, input_size, output, output_size, hint, r.input_bytes_processed, r.done);
             }
             catch (...)
             {
@@ -224,14 +212,17 @@ SUITE(compression_tests)
         input_buffer.reserve(buffer_size);
         for (size_t i = 0; i < buffer_size; ++i)
         {
+            uint8_t element;
             if (compressible)
             {
-                input_buffer.push_back(static_cast<uint8_t>('a' + i % 26));
+                element = static_cast<uint8_t>('a' + i % 26);
             }
             else
             {
-                input_buffer.push_back(static_cast<uint8_t>(std::rand()));
+                element = static_cast<uint8_t>(std::rand());
             }
+
+            input_buffer.push_back(element);
         }
 
         // compress in chunks
@@ -869,7 +860,7 @@ SUITE(compression_tests)
                                                    pre.size(),
                                                    web::http::compression::operation_hint::is_last,
                                                    used,
-                                                   &done);
+                                                   done);
                             VERIFY_IS_TRUE(used == v.size());
                             VERIFY_IS_TRUE(done);
 
@@ -1019,7 +1010,7 @@ SUITE(compression_tests)
                                                                pre.size(),
                                                                web::http::compression::operation_hint::is_last,
                                                                used,
-                                                               &done);
+                                                               done);
                                         VERIFY_ARE_EQUAL(used, v.size());
                                         VERIFY_IS_TRUE(done);
 
@@ -1110,7 +1101,7 @@ SUITE(compression_tests)
                                                                         vv.size(),
                                                                         web::http::compression::operation_hint::is_last,
                                                                         used,
-                                                                        &done);
+                                                                        done);
                                                     VERIFY_ARE_EQUAL(used, p_request->m_body.size());
                                                     VERIFY_IS_TRUE(done);
                                                 }
@@ -1219,7 +1210,7 @@ SUITE(compression_tests)
                                                                   cmp.size() - extra,
                                                                   web::http::compression::operation_hint::is_last,
                                                                   used,
-                                                                  &done);
+                                                                  done);
                                                 VERIFY_ARE_EQUAL(used, v.size());
                                                 VERIFY_IS_TRUE(done);
                                             }

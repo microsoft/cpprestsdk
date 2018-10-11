@@ -97,12 +97,12 @@ namespace details
 // Utility function to build up error string based on error code and location.
 static std::string build_error_msg(const std::error_code &ec, const std::string &location)
 {
-    std::stringstream ss;
-    ss.imbue(std::locale::classic());
-    ss << location
-       << ": " << ec.value()
-       << ": " << ec.message();
-    return ss.str();
+    std::string result = location;
+    result += ": ";
+    result += std::to_string(ec.value());
+    result += ": ";
+    result += ec.message();
+    return result;
 }
 
 static utility::string_t g_subProtocolHeader(_XPLATSTR("Sec-WebSocket-Protocol"));

@@ -243,7 +243,7 @@ pplx::task<void> http_windows_server::register_listener(_In_ web::http::experime
     utility::string_t host_uri = http::uri::decode(u.to_string());
     if(host_uri.back() != U('/') && u.query().empty() && u.fragment().empty())
     {
-        host_uri.append(U("/"));
+        host_uri.push_back(U('/'));
     }
 
     // inside here we check for a few specific error types that know about
@@ -252,19 +252,16 @@ pplx::task<void> http_windows_server::register_listener(_In_ web::http::experime
     if(errorCode)
     {
         HttpCloseUrlGroup(urlGroupId);
-        utility::stringstream_t os;
-        os.imbue(std::locale::classic());
-
         if(errorCode == ERROR_ALREADY_EXISTS || errorCode == ERROR_SHARING_VIOLATION)
         {
-            os << _XPLATSTR("Address '") << pListener->uri().to_string() << _XPLATSTR("' is already in use");
-            return pplx::task_from_exception<void>(http_exception(errorCode, os.str()));
+            return pplx::task_from_exception<void>(http_exception(errorCode,
+                _XPLATSTR("Address '") + pListener->uri().to_string() + _XPLATSTR("' is already in use")));
         }
         else if (errorCode == ERROR_ACCESS_DENIED)
         {
-            os << _XPLATSTR("Access denied: attempting to add Address '") << pListener->uri().to_string() << _XPLATSTR("'. ");
-            os << _XPLATSTR("Run as administrator to listen on an hostname other than localhost, or to listen on port 80.");
-            return pplx::task_from_exception<void>(http_exception(errorCode, os.str()));
+            return pplx::task_from_exception<void>(http_exception(errorCode,
+                _XPLATSTR("Access denied: attempting to add Address '") + pListener->uri().to_string() + _XPLATSTR("'. ")
+                _XPLATSTR("Run as administrator to listen on an hostname other than localhost, or to listen on port 80.")));
         }
         else
         {
@@ -738,7 +735,8 @@ void windows_request_context::read_body_io_completion(DWORD error_code, DWORD by
                 auto body = request_body_buf.alloc(CHUNK_SIZE);
                 try
                 {
-                    got = m_decompressor->decompress(m_compress_buffer.data()+total_used, bytes_read-total_used, body, CHUNK_SIZE, http::compression::operation_hint::has_more, used, NULL);
+                    bool done_unused;
+                    got = m_decompressor->decompress(m_compress_buffer.data()+total_used, bytes_read-total_used, body, CHUNK_SIZE, http::compression::operation_hint::has_more, used, done_unused);
                 }
                 catch (...)
                 {
