@@ -19,9 +19,6 @@ namespace web { namespace details
 {
 namespace
 {
-    const ::utility::string_t dotSegment = _XPLATSTR(".");
-    const ::utility::string_t dotDotSegment = _XPLATSTR("..");
-
     /// <summary>
     /// Unreserved characters are those that are allowed in a URI but do not have a reserved purpose. They include:
     /// - A-Z
@@ -445,6 +442,9 @@ namespace
     // 5.2.4. Remove Dot Segments https://tools.ietf.org/html/rfc3986#section-5.2.4
     void removeDotSegments(uri_builder &builder)
     {
+        const ::utility::string_t dotSegment = _XPLATSTR(".");
+        const ::utility::string_t dotDotSegment = _XPLATSTR("..");
+
         if (builder.path().find(_XPLATSTR('.')) == utility::string_t::npos)
             return;
 
