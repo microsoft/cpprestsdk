@@ -9,6 +9,7 @@
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 #include "stdafx.h"
+#include "cpprest/ws_client.h"
 
 #if !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 

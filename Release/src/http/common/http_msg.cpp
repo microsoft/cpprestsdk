@@ -11,7 +11,9 @@
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 #include "stdafx.h"
+#include <sstream>
 #include "../common/internal_http_helpers.h"
+#include "cpprest/producerconsumerstream.h"
 
 using namespace web;
 using namespace utility;

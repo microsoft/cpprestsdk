@@ -15,6 +15,7 @@
 #include "pplx/pplx.h"
 #include "pplx/threadpool.h"
 #include "sys/syscall.h"
+#include <thread>
 
 #ifdef _WIN32
 #error "ERROR: This file should only be included in non-windows Build"
