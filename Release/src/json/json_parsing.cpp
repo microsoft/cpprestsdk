@@ -1026,7 +1026,7 @@ done:
         ::std::sort(elems.begin(), elems.end(), json::object::compare_pairs);
     }
 
-    return std::move(obj);
+    return obj;
 
 error:
     if (!tkn.m_error)

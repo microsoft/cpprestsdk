@@ -19,6 +19,9 @@ namespace web { namespace details
 {
 namespace
 {
+    const ::utility::string_t dotSegment = _XPLATSTR(".");
+    const ::utility::string_t dotDotSegment = _XPLATSTR("..");
+
     /// <summary>
     /// Unreserved characters are those that are allowed in a URI but do not have a reserved purpose. They include:
     /// - A-Z
@@ -423,7 +426,60 @@ namespace
         return encoded;
     }
 
-}
+    // 5.2.3. Merge Paths https://tools.ietf.org/html/rfc3986#section-5.2.3
+    utility::string_t mergePaths(const utility::string_t &base, const utility::string_t &relative)
+    {
+        const auto lastSlash = base.rfind(_XPLATSTR('/'));
+        if (lastSlash == utility::string_t::npos)
+        {
+            return base + _XPLATSTR('/') + relative;
+        }
+        else if (lastSlash == base.size() - 1)
+        {
+            return base + relative;
+        }
+        // path contains and does not end with '/', we remove segment after last '/'
+        return base.substr(0, lastSlash + 1) + relative;
+    }
+
+    // 5.2.4. Remove Dot Segments https://tools.ietf.org/html/rfc3986#section-5.2.4
+    void removeDotSegments(uri_builder &builder)
+    {
+        if (builder.path().find(_XPLATSTR('.')) == utility::string_t::npos)
+            return;
+
+        const auto segments = uri::split_path(builder.path());
+        std::vector<std::reference_wrapper<const utility::string_t>> result;
+        for (auto& segment : segments)
+        {
+            if (segment == dotSegment)
+                continue;
+            else if (segment != dotDotSegment)
+                result.push_back(segment);
+            else if (!result.empty())
+                result.pop_back();
+        }
+        if (result.empty())
+        {
+            builder.set_path(utility::string_t());
+            return;
+        }
+        utility::string_t path = result.front().get();
+        for (size_t i = 1; i != result.size(); ++i)
+        {
+            path += _XPLATSTR('/');
+            path += result[i].get();
+        }
+        if (segments.back() == dotDotSegment
+            || segments.back() == dotSegment
+            || builder.path().back() == _XPLATSTR('/'))
+        {
+            path += _XPLATSTR('/');
+        }
+
+        builder.set_path(std::move(path));
+    }
+} // namespace
 
 utility::string_t uri_components::join()
 {
@@ -448,7 +504,8 @@ utility::string_t uri_components::join()
 
     if (!m_scheme.empty())
     {
-        ret.append(m_scheme).append({ _XPLATSTR(':') });
+        ret.append(m_scheme);
+        ret.push_back(_XPLATSTR(':'));
     }
 
     if (!m_host.empty())
@@ -473,7 +530,7 @@ utility::string_t uri_components::join()
         // only add the leading slash when the host is present
         if (!m_host.empty() && m_path.front() != _XPLATSTR('/'))
         {
-            ret.append({ _XPLATSTR('/') });
+            ret.push_back(_XPLATSTR('/'));
         }
 
         ret.append(m_path);
@@ -481,17 +538,19 @@ utility::string_t uri_components::join()
 
     if (!m_query.empty())
     {
-        ret.append({ _XPLATSTR('?') }).append(m_query);
+        ret.push_back(_XPLATSTR('?'));
+        ret.append(m_query);
     }
 
     if (!m_fragment.empty())
     {
-        ret.append({ _XPLATSTR('#') }).append(m_fragment);
+        ret.push_back(_XPLATSTR('#'));
+        ret.append(m_fragment);
     }
 
     return ret;
 }
-}
+} // namespace details
 
 uri::uri(const details::uri_components &components) : m_components(components)
 {
@@ -715,7 +774,7 @@ std::map<utility::string_t, utility::string_t> uri::split_query(const utility::s
             utility::string_t key(key_value_pair.begin(), key_value_pair.begin() + equals_index);
             utility::string_t value(key_value_pair.begin() + equals_index + 1, key_value_pair.end());
         results[key] = value;
-    }
+        }
     }
 
     return results;
@@ -784,4 +843,54 @@ bool uri::operator == (const uri &other) const
     return true;
 }
 
+//resolving URI according to RFC3986, Section 5 https://tools.ietf.org/html/rfc3986#section-5
+utility::string_t uri::resolve_uri(const utility::string_t &relativeUri) const
+{
+    if (relativeUri.empty())
+    {
+        return to_string();
+    }
+
+    if (relativeUri[0] == _XPLATSTR('/'))  // starts with '/'
+    {
+        if (relativeUri.size() >= 2 && relativeUri[1] == _XPLATSTR('/'))  // starts with '//'
+        {
+            return this->scheme() + _XPLATSTR(':') + relativeUri;
+        }
+
+        // otherwise relative to root
+        auto builder = uri_builder(this->authority());
+        builder.append(relativeUri);
+        details::removeDotSegments(builder);
+        return builder.to_string();
+    }
+
+    const auto url = uri(relativeUri);
+    if (!url.scheme().empty())
+        return relativeUri;
+
+    if (!url.authority().is_empty())
+        {
+        return uri_builder(url).set_scheme(this->scheme()).to_string();
+        }
+
+    // relative url
+    auto builder = uri_builder(*this);
+    if (url.path() == _XPLATSTR("/") || url.path().empty())   // web::uri considers empty path as '/'
+    {
+        if (!url.query().empty())
+        {
+            builder.set_query(url.query());
+        }
+    }
+    else if (!this->path().empty())
+    {
+        builder.set_path(details::mergePaths(this->path(), url.path()));
+        details::removeDotSegments(builder);
+        builder.set_query(url.query());
+    }
+
+    return builder.set_fragment(url.fragment()).to_string();
 }
+
+} // namespace web

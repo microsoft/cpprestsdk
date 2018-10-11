@@ -1754,6 +1754,7 @@ private:
                         .then([this_request, read_size, shared_decompressed AND_CAPTURE_MEMBER_FUNCTION_POINTERS](
                                   pplx::task<size_t> op) {
                             size_t writtenSize = 0;
+                            (void)writtenSize;
                             try
                             {
                                 writtenSize = op.get();

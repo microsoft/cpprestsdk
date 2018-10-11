@@ -382,7 +382,7 @@ inline size_t count_utf8_to_utf16(const std::string& s)
             const char c2{ sData[index++] };
             if ((c2 & 0xC0) != BIT8)
             {
-                throw std::range_error("UTF-8 continuation byte is missing leading byte");
+                throw std::range_error("UTF-8 continuation byte is missing leading bit mask");
             }
 
             // can't require surrogates for 7FF
@@ -399,7 +399,7 @@ inline size_t count_utf8_to_utf16(const std::string& s)
             const char c3{ sData[index++] };
             if (((c2 | c3) & 0xC0) != BIT8)
             {
-                throw std::range_error("UTF-8 continuation byte is missing leading byte");
+                throw std::range_error("UTF-8 continuation byte is missing leading bit mask");
             }
 
             result -= 2;
@@ -416,7 +416,7 @@ inline size_t count_utf8_to_utf16(const std::string& s)
             const char c4{ sData[index++] };
             if (((c2 | c3 | c4) & 0xC0) != BIT8)
             {
-                throw std::range_error("UTF-8 continuation byte is missing leading byte");
+                throw std::range_error("UTF-8 continuation byte is missing leading bit mask");
             }
 
             const uint32_t codePoint = ((c & LOW_3BITS) << 18) | ((c2 & LOW_6BITS) << 12) | ((c3 & LOW_6BITS) << 6) | (c4 & LOW_6BITS);
@@ -515,7 +515,7 @@ inline size_t count_utf16_to_utf8(const utf16string &w)
             }
         }
         // Check for high surrogate.
-        else if (ch >= H_SURROGATE_START && ch <= H_SURROGATE_END) // 4 bytes need using 21 bits
+        else if (ch >= H_SURROGATE_START && ch <= H_SURROGATE_END) // 4 bytes needed (21 bits used)
         {
             ++index;
             if (index == srcSize)
@@ -570,8 +570,8 @@ std::string __cdecl conversions::utf16_to_utf8(const utf16string &w)
             const auto lowSurrogate = srcData[++index];
 
             // To get from surrogate pair to Unicode code point:
-            // - subract 0xD800 from high surrogate, this forms top ten bits
-            // - subract 0xDC00 from low surrogate, this forms low ten bits
+            // - subtract 0xD800 from high surrogate, this forms top ten bits
+            // - subtract 0xDC00 from low surrogate, this forms low ten bits
             // - add 0x10000
             // Leaves a code point in U+10000 to U+10FFFF range.
             uint32_t codePoint = highSurrogate - H_SURROGATE_START;
@@ -579,7 +579,7 @@ std::string __cdecl conversions::utf16_to_utf8(const utf16string &w)
             codePoint |= lowSurrogate - L_SURROGATE_START;
             codePoint += SURROGATE_PAIR_START;
 
-            // 4 bytes need using 21 bits
+            // 4 bytes needed (21 bits used)
             destData[destIndex++] = static_cast<char>((codePoint >> 18) | 0xF0);                 // leading 3 bits
             destData[destIndex++] = static_cast<char>(((codePoint >> 12) & LOW_6BITS) | BIT8);   // next 6 bits
             destData[destIndex++] = static_cast<char>(((codePoint >> 6) & LOW_6BITS) | BIT8);    // next 6 bits
@@ -607,6 +607,8 @@ utf16string __cdecl conversions::latin1_to_utf16(const std::string &s)
     // Latin1 is the first 256 code points in Unicode.
     // In UTF-16 encoding each of these is represented as exactly the numeric code point.
     utf16string dest;
+    // Prefer resize combined with for-loop over constructor dest(s.begin(), s.end())
+    // for faster assignment.
     dest.resize(s.size());
     for (size_t i = 0; i < s.size(); ++i)
     {

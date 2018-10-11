@@ -1,0 +1,89 @@
+# CppRestSdk Azure Pipelines Configuration
+
+jobs:
+  - job: Ubuntu_1604_Apt_Debug
+    pool:
+      vmImage: 'Ubuntu 16.04'
+    steps:
+    - script: |
+        sudo apt-get install -y ppa-purge
+        sudo ppa-purge -y ppa:ondrej/php
+        sudo apt-get install -y libboost-atomic-dev libboost-thread-dev libboost-system-dev libboost-date-time-dev libboost-regex-dev libboost-filesystem-dev libboost-random-dev libboost-chrono-dev libboost-serialization-dev libwebsocketpp-dev brotli openssl libssl-dev ninja-build
+      displayName: Apt install dependencies
+    - script: mkdir build.debug
+      displayName: Make build.debug
+    - task: CMake@1
+      inputs:
+        workingDirectory: 'build.debug'
+        cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Debug ..'
+    - script: |
+        cd build.debug
+        ninja -j 4
+      displayName: 'Run ninja'
+    - script: |
+        cd build.debug/Release/Binaries
+        ./test_runner *test.so
+      displayName: 'Run Tests'
+  - job: Ubuntu_1604_Apt_Release
+    pool:
+      vmImage: 'Ubuntu 16.04'
+    steps:
+    - script: |
+        sudo apt-get install -y ppa-purge
+        sudo ppa-purge -y ppa:ondrej/php
+        sudo apt-get install -y libboost-atomic-dev libboost-thread-dev libboost-system-dev libboost-date-time-dev libboost-regex-dev libboost-filesystem-dev libboost-random-dev libboost-chrono-dev libboost-serialization-dev libwebsocketpp-dev brotli openssl libssl-dev ninja-build
+      displayName: Apt install dependencies
+    - script: mkdir build.release
+      displayName: Make build.release
+    - task: CMake@1
+      inputs:
+        workingDirectory: 'build.release'
+        cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Release ..'
+    - script: |
+        cd build.release
+        ninja -j 4
+      displayName: 'Run ninja'
+    - script: |
+        cd build.release/Release/Binaries
+        ./test_runner *test.so
+      displayName: 'Run Tests'
+  - job: MacOS_Debug
+    pool:
+      vmImage: 'macOS-10.13'
+    steps:
+    - script: brew install boost openssl ninja
+      displayName: Berw install dependencies
+    - script: mkdir build.debug
+      displayName: Make build.debug
+    - task: CMake@1
+      inputs:
+        workingDirectory: 'build.debug'
+        cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Debug ..'
+    - script: |
+        cd build.debug
+        ninja -j 4
+      displayName: 'Run ninja'
+    - script: |
+        cd build.debug/Release/Binaries
+        ./test_runner *test.dylib
+      displayName: 'Run Tests'
+  - job: MacOS_Release
+    pool:
+      vmImage: 'macOS-10.13'
+    steps:
+    - script: brew install boost openssl ninja
+      displayName: Berw install dependencies
+    - script: mkdir build.release
+      displayName: Make build.release
+    - task: CMake@1
+      inputs:
+        workingDirectory: 'build.release'
+        cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Release ..'
+    - script: |
+        cd build.release
+        ninja -j 4
+      displayName: 'Run ninja'
+    - script: |
+        cd build.release/Release/Binaries
+        ./test_runner *test.dylib
+      displayName: 'Run Tests'

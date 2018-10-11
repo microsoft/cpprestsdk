@@ -11,6 +11,8 @@ The C++ REST SDK is a Microsoft project for cloud-based client-server communicat
 [![openSUSE Tumbleweed package](https://repology.org/badge/version-for-repo/opensuse_tumbleweed/cpprestsdk.svg)](https://repology.org/metapackage/cpprestsdk)</br>
 [![Debian Testing package](https://repology.org/badge/version-for-repo/debian_testing/cpprestsdk.svg)](https://repology.org/metapackage/cpprestsdk)</br>
 
+[![Build Status](https://dev.azure.com/vclibs/cpprestsdk/_apis/build/status/Microsoft.cpprestsdk.Ubuntu)](https://dev.azure.com/vclibs/cpprestsdk/_build/latest?definitionId=1)
+
 With [vcpkg](https://github.com/Microsoft/vcpkg) on Windows
 ```
 PS> vcpkg install cpprestsdk cpprestsdk:x64-windows
@@ -57,7 +59,7 @@ Big or small we'd like to take your [contributions](https://github.com/Microsoft
 
 ## Having Trouble?
 
-We'd love to get your review score, whether good or bad, but even more than that, we want to fix your problem. If you submit your issue as a Review, we won't be able to respond to your problem and ask any follow-up questions that may be necessary. The most efficient way to do that is to open a an issue in our [issue tracker](https://github.com/Microsoft/cpprestsdk/issues).  
+We'd love to get your review score, whether good or bad, but even more than that, we want to fix your problem. If you submit your issue as a Review, we won't be able to respond to your problem and ask any follow-up questions that may be necessary. The most efficient way to do that is to open an issue in our [issue tracker](https://github.com/Microsoft/cpprestsdk/issues).  
 
 ### Quick Links
 

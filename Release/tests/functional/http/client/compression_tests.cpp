@@ -13,6 +13,7 @@
 
 #include "cpprest/details/http_helpers.h"
 #include "cpprest/version.h"
+#include "cpprest/asyncrt_utils.h"
 #include "stdafx.h"
 #include <fstream>
 
@@ -61,7 +62,7 @@ SUITE(compression_tests)
             if (_done)
             {
                 input_bytes_processed = 0;
-                if (*done)
+                if (done)
                 {
                     *done = true;
                 }
@@ -126,7 +127,7 @@ SUITE(compression_tests)
             if (_done)
             {
                 input_bytes_processed = 0;
-                if (*done)
+                if (done)
                 {
                     *done = true;
                 }
@@ -202,7 +203,6 @@ SUITE(compression_tests)
         std::vector<uint8_t> dcmp_buffer;
         web::http::compression::operation_result r;
         std::vector<size_t> chunk_sizes;
-        Concurrency::task_group_status result;
         size_t csize;
         size_t dsize;
         size_t i;
@@ -210,8 +210,8 @@ SUITE(compression_tests)
 
         if (algorithm == fake_provider::FAKE)
         {
-            compressor = std::make_unique<fake_provider>(buffer_size);
-            decompressor = std::make_unique<fake_provider>(buffer_size);
+            compressor = utility::details::make_unique<fake_provider>(buffer_size);
+            decompressor = utility::details::make_unique<fake_provider>(buffer_size);
         }
         else
         {
@@ -239,15 +239,11 @@ SUITE(compression_tests)
         cmp_buffer.resize(buffer_size); // pessimistic (or not, for non-compressible data)
         for (i = 0; i < buffer_size; i += chunk_size)
         {
-            result = compressor
-                         ->compress(input_buffer.data() + i,
-                                    std::min(chunk_size, buffer_size - i),
-                                    cmp_buffer.data() + csize,
-                                    std::min(chunk_size, buffer_size - csize),
-                                    web::http::compression::operation_hint::has_more)
-                         .then([&r](web::http::compression::operation_result x) { r = x; })
-                         .wait();
-            VERIFY_ARE_EQUAL(result, Concurrency::task_group_status::completed);
+            r = compressor->compress(input_buffer.data() + i,
+                                     std::min(chunk_size, buffer_size - i),
+                                     cmp_buffer.data() + csize,
+                                     std::min(chunk_size, buffer_size - csize),
+                                     web::http::compression::operation_hint::has_more).get();
             VERIFY_ARE_EQUAL(r.input_bytes_processed, std::min(chunk_size, buffer_size - i));
             VERIFY_ARE_EQUAL(r.done, false);
             chunk_sizes.push_back(r.output_bytes_produced);
@@ -264,15 +260,11 @@ SUITE(compression_tests)
                     cmpsize += std::min(chunk_size, (size_t)200);
                     cmp_buffer.resize(cmpsize);
                 }
-                result = compressor
-                             ->compress(NULL,
+                r = compressor->compress(NULL,
                                         0,
                                         cmp_buffer.data() + csize,
                                         std::min(chunk_size, cmpsize - csize),
-                                        web::http::compression::operation_hint::is_last)
-                             .then([&r](web::http::compression::operation_result x) { r = x; })
-                             .wait();
-                VERIFY_ARE_EQUAL(result, Concurrency::task_group_status::completed);
+                                        web::http::compression::operation_hint::is_last).get();
                 VERIFY_ARE_EQUAL(r.input_bytes_processed, 0);
                 chunk_sizes.push_back(r.output_bytes_produced);
                 csize += r.output_bytes_produced;
@@ -280,14 +272,12 @@ SUITE(compression_tests)
             VERIFY_ARE_EQUAL(r.done, true);
 
             // once more with no input, to assure no error and done
-            result = compressor->compress(NULL, 0, NULL, 0, web::http::compression::operation_hint::is_last)
-                         .then([&r](web::http::compression::operation_result x) { r = x; })
-                         .wait();
-            VERIFY_ARE_EQUAL(result, Concurrency::task_group_status::completed);
+            r = compressor->compress(NULL, 0, NULL, 0, web::http::compression::operation_hint::is_last).get();
             VERIFY_ARE_EQUAL(r.input_bytes_processed, 0);
             VERIFY_ARE_EQUAL(r.output_bytes_produced, 0);
             VERIFY_ARE_EQUAL(r.done, true);
         }
+
         cmp_buffer.resize(csize); // actual
 
         // decompress in as-compressed chunks
@@ -303,15 +293,12 @@ SUITE(compression_tests)
                 {
                     hint = web::http::compression::operation_hint::is_last;
                 }
-                result = decompressor
-                             ->decompress(cmp_buffer.data() + nn,
-                                          *it,
-                                          dcmp_buffer.data() + dsize,
-                                          std::min(chunk_size, buffer_size - dsize),
-                                          hint)
-                             .then([&r](web::http::compression::operation_result x) { r = x; })
-                             .wait();
-                VERIFY_ARE_EQUAL(result, Concurrency::task_group_status::completed);
+
+                r = decompressor->decompress(cmp_buffer.data() + nn,
+                                            *it,
+                                            dcmp_buffer.data() + dsize,
+                                            std::min(chunk_size, buffer_size - dsize),
+                                            hint).get();
                 nn += *it;
                 dsize += r.output_bytes_produced;
             }
@@ -331,15 +318,11 @@ SUITE(compression_tests)
             size_t n = std::min(chunk_size, csize - nn);
             do
             {
-                result = decompressor
-                             ->decompress(cmp_buffer.data() + nn,
-                                          n,
-                                          dcmp_buffer.data() + dsize,
-                                          std::min(chunk_size, buffer_size - dsize),
-                                          web::http::compression::operation_hint::has_more)
-                             .then([&r](web::http::compression::operation_result x) { r = x; })
-                             .wait();
-                VERIFY_ARE_EQUAL(result, Concurrency::task_group_status::completed);
+                r = decompressor->decompress(cmp_buffer.data() + nn,
+                                             n,
+                                             dcmp_buffer.data() + dsize,
+                                             std::min(chunk_size, buffer_size - dsize),
+                                             web::http::compression::operation_hint::has_more).get();
                 dsize += r.output_bytes_produced;
                 nn += r.input_bytes_processed;
                 n -= r.input_bytes_processed;
@@ -351,10 +334,7 @@ SUITE(compression_tests)
         VERIFY_IS_TRUE(r.done);
 
         // once more with no input, to assure no error and done
-        result = decompressor->decompress(NULL, 0, NULL, 0, web::http::compression::operation_hint::has_more)
-                     .then([&r](web::http::compression::operation_result x) { r = x; })
-                     .wait();
-        VERIFY_ARE_EQUAL(result, Concurrency::task_group_status::completed);
+        r = decompressor->decompress(NULL, 0, NULL, 0, web::http::compression::operation_hint::has_more).get();
         VERIFY_ARE_EQUAL(r.input_bytes_processed, 0);
         VERIFY_ARE_EQUAL(r.output_bytes_produced, 0);
         VERIFY_IS_TRUE(r.done);
@@ -362,15 +342,11 @@ SUITE(compression_tests)
         // decompress all at once
         decompressor->reset();
         memset(dcmp_buffer.data(), 0, dcmp_buffer.size());
-        result = decompressor
-                     ->decompress(cmp_buffer.data(),
-                                  csize,
-                                  dcmp_buffer.data(),
-                                  dcmp_buffer.size(),
-                                  web::http::compression::operation_hint::is_last)
-                     .then([&r](web::http::compression::operation_result x) { r = x; })
-                     .wait();
-        VERIFY_ARE_EQUAL(result, Concurrency::task_group_status::completed);
+        r = decompressor->decompress(cmp_buffer.data(),
+                                     csize,
+                                     dcmp_buffer.data(),
+                                     dcmp_buffer.size(),
+                                     web::http::compression::operation_hint::is_last).get();
         VERIFY_ARE_EQUAL(r.output_bytes_produced, buffer_size);
         VERIFY_ARE_EQUAL(input_buffer, dcmp_buffer);
 
@@ -384,14 +360,11 @@ SUITE(compression_tests)
                 nn = 0;
                 try
                 {
-                    result = decompressor
-                                 ->decompress(cmp_buffer.data(),
+                    r = decompressor->decompress(cmp_buffer.data(),
                                               csize,
                                               dcmp_buffer.data(),
                                               dcmp_buffer.size(),
-                                              web::http::compression::operation_hint::is_last)
-                                 .then([&nn](web::http::compression::operation_result x) { nn++; })
-                                 .wait();
+                                              web::http::compression::operation_hint::is_last).get();
                     nn++;
                 }
                 catch (std::runtime_error)
@@ -448,28 +421,28 @@ SUITE(compression_tests)
 
         std::shared_ptr<web::http::compression::compress_factory> fcf = web::http::compression::make_compress_factory(
             fake_provider::FAKE, []() -> std::unique_ptr<web::http::compression::compress_provider> {
-                return std::make_unique<fake_provider>();
+                return utility::details::make_unique<fake_provider>();
             });
         std::vector<std::shared_ptr<web::http::compression::compress_factory>> fcv;
         fcv.push_back(fcf);
         std::shared_ptr<web::http::compression::decompress_factory> fdf =
             web::http::compression::make_decompress_factory(
                 fake_provider::FAKE, 800, []() -> std::unique_ptr<web::http::compression::decompress_provider> {
-                    return std::make_unique<fake_provider>();
+                    return utility::details::make_unique<fake_provider>();
                 });
         std::vector<std::shared_ptr<web::http::compression::decompress_factory>> fdv;
         fdv.push_back(fdf);
 
         std::shared_ptr<web::http::compression::compress_factory> ncf = web::http::compression::make_compress_factory(
             _NONE, []() -> std::unique_ptr<web::http::compression::compress_provider> {
-                return std::make_unique<fake_provider>();
+                return utility::details::make_unique<fake_provider>();
             });
         std::vector<std::shared_ptr<web::http::compression::compress_factory>> ncv;
         ncv.push_back(ncf);
         std::shared_ptr<web::http::compression::decompress_factory> ndf =
             web::http::compression::make_decompress_factory(
                 _NONE, 800, []() -> std::unique_ptr<web::http::compression::decompress_provider> {
-                    return std::make_unique<fake_provider>();
+                    return utility::details::make_unique<fake_provider>();
                 });
         std::vector<std::shared_ptr<web::http::compression::decompress_factory>> ndv;
         ndv.push_back(ndf);
@@ -760,15 +733,15 @@ SUITE(compression_tests)
         // No acquire(), to force non-acquire compression client codepaths
         virtual bool acquire(_Out_ _CharType*& ptr, _Out_ size_t& count)
         {
-            ptr;
-            count;
+            (void)ptr;
+            (void)count;
             return false;
         }
 
         virtual void release(_Out_writes_(count) _CharType* ptr, _In_ size_t count)
         {
-            ptr;
-            count;
+            (void)ptr;
+            (void)count;
         }
 
         static concurrency::streams::basic_istream<_CharType> open_istream(const _CharType* data, size_t size)
@@ -794,7 +767,7 @@ SUITE(compression_tests)
         {
             test_http_server* p_server = nullptr;
             std::unique_ptr<test_http_server::scoped_server> scoped =
-                std::move(std::make_unique<test_http_server::scoped_server>(m_uri));
+                std::move(utility::details::make_unique<test_http_server::scoped_server>(m_uri));
             scoped->server()->next_request().then([&skip_transfer_put](pplx::task<test_request*> op) {
                 try
                 {
@@ -810,7 +783,7 @@ SUITE(compression_tests)
 
             http_client client(m_uri);
             http_request msg(methods::PUT);
-            msg.set_compressor(std::make_unique<fake_provider>(0));
+            msg.set_compressor(utility::details::make_unique<fake_provider>(0));
             msg.set_body(concurrency::streams::rawptr_stream<uint8_t>::open_istream((const uint8_t*)nullptr, 0));
             http_response rsp = client.request(msg).get();
             rsp.content_ready().wait();
@@ -872,7 +845,7 @@ SUITE(compression_tests)
                             if (encoding.find(fake_provider::FAKE) != utility::string_t::npos)
                             {
                                 // This one won't be found in the server's default set...
-                                rsp._get_impl()->set_compressor(std::make_unique<fake_provider>(buffer_size));
+                                rsp._get_impl()->set_compressor(utility::details::make_unique<fake_provider>(buffer_size));
                             }
 #endif // _WIN32
                             rsp.set_body(
@@ -913,7 +886,7 @@ SUITE(compression_tests)
             }
             else
             {
-                scoped = std::move(std::make_unique<test_http_server::scoped_server>(m_uri));
+                scoped = std::move(utility::details::make_unique<test_http_server::scoped_server>(m_uri));
                 p_server = scoped->server();
             }
 
@@ -968,12 +941,12 @@ SUITE(compression_tests)
                     fake_provider::FAKE,
                     1000,
                     [buffer_size]() -> std::unique_ptr<web::http::compression::decompress_provider> {
-                        return std::make_unique<fake_provider>(buffer_size);
+                        return utility::details::make_unique<fake_provider>(buffer_size);
                     });
                 dfactories.push_back(dmap[fake_provider::FAKE]);
                 cfactories.push_back(web::http::compression::make_compress_factory(
                     fake_provider::FAKE, [buffer_size]() -> std::unique_ptr<web::http::compression::compress_provider> {
-                        return std::make_unique<fake_provider>(buffer_size);
+                        return utility::details::make_unique<fake_provider>(buffer_size);
                     }));
 
                 v.resize(buffer_size);
@@ -1037,7 +1010,7 @@ SUITE(compression_tests)
                                         if (algorithm == fake_provider::FAKE)
                                         {
                                             VERIFY_IS_FALSE((bool)c);
-                                            c = std::make_unique<fake_provider>(buffer_size);
+                                            c = utility::details::make_unique<fake_provider>(buffer_size);
                                         }
                                         VERIFY_IS_TRUE((bool)c);
                                         auto got = c->compress(v.data(),
@@ -1069,7 +1042,7 @@ SUITE(compression_tests)
                                             VERIFY_ARE_EQUAL(boo, algorithm != fake_provider::FAKE);
                                             if (algorithm == fake_provider::FAKE)
                                             {
-                                                msg.set_compressor(std::make_unique<fake_provider>(buffer_size));
+                                                msg.set_compressor(utility::details::make_unique<fake_provider>(buffer_size));
                                             }
                                         }
                                         else

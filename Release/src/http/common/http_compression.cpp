@@ -156,7 +156,7 @@ public:
 
 private:
     int m_state{Z_BUF_ERROR};
-    z_stream m_stream{0};
+    z_stream m_stream{};
     const utility::string_t& m_algorithm;
 };
 
@@ -263,7 +263,7 @@ public:
 
 private:
     int m_state{Z_BUF_ERROR};
-    z_stream m_stream{0};
+    z_stream m_stream{};
     const utility::string_t& m_algorithm;
 };
 
@@ -283,7 +283,7 @@ public:
 class gzip_decompressor : public zlib_decompressor_base
 {
 public:
-    gzip_decompressor::gzip_decompressor() : zlib_decompressor_base(16) // gzip auto-detect
+    gzip_decompressor() : zlib_decompressor_base(16) // gzip auto-detect
     {
     }
 };
@@ -620,7 +620,7 @@ public:
 
     const utility::string_t& algorithm() const { return m_algorithm; }
 
-    const uint16_t weight() const { return m_weight; }
+    uint16_t weight() const { return m_weight; }
 
     std::unique_ptr<decompress_provider> make_decompressor() const { return _make_decompressor(); }
 
@@ -634,14 +634,14 @@ private:
 static const std::vector<std::shared_ptr<compress_factory>> g_compress_factories
 #if defined(CPPREST_HTTP_COMPRESSION)
     = {std::make_shared<generic_compress_factory>(
-           algorithm::GZIP, []() -> std::unique_ptr<compress_provider> { return std::make_unique<gzip_compressor>(); }),
+           algorithm::GZIP, []() -> std::unique_ptr<compress_provider> { return utility::details::make_unique<gzip_compressor>(); }),
        std::make_shared<generic_compress_factory>(
            algorithm::DEFLATE,
-           []() -> std::unique_ptr<compress_provider> { return std::make_unique<deflate_compressor>(); }),
+           []() -> std::unique_ptr<compress_provider> { return utility::details::make_unique<deflate_compressor>(); }),
 #if defined(CPPREST_BROTLI_COMPRESSION)
        std::make_shared<generic_compress_factory>(
            algorithm::BROTLI,
-           []() -> std::unique_ptr<compress_provider> { return std::make_unique<brotli_compressor>(); })
+           []() -> std::unique_ptr<compress_provider> { return utility::details::make_unique<brotli_compressor>(); })
 #endif // CPPREST_BROTLI_COMPRESSION
 };
 #else  // CPPREST_HTTP_COMPRESSION
@@ -653,16 +653,16 @@ static const std::vector<std::shared_ptr<decompress_factory>> g_decompress_facto
     = {std::make_shared<generic_decompress_factory>(
            algorithm::GZIP,
            500,
-           []() -> std::unique_ptr<decompress_provider> { return std::make_unique<gzip_decompressor>(); }),
+           []() -> std::unique_ptr<decompress_provider> { return utility::details::make_unique<gzip_decompressor>(); }),
        std::make_shared<generic_decompress_factory>(
            algorithm::DEFLATE,
            500,
-           []() -> std::unique_ptr<decompress_provider> { return std::make_unique<deflate_decompressor>(); }),
+           []() -> std::unique_ptr<decompress_provider> { return utility::details::make_unique<deflate_decompressor>(); }),
 #if defined(CPPREST_BROTLI_COMPRESSION)
        std::make_shared<generic_decompress_factory>(
            algorithm::BROTLI,
            500,
-           []() -> std::unique_ptr<decompress_provider> { return std::make_unique<brotli_decompressor>(); })
+           []() -> std::unique_ptr<decompress_provider> { return utility::details::make_unique<brotli_decompressor>(); })
 #endif // CPPREST_BROTLI_COMPRESSION
 };
 #else  // CPPREST_HTTP_COMPRESSION
@@ -748,20 +748,29 @@ std::shared_ptr<decompress_factory> get_decompress_factory(const utility::string
     return std::shared_ptr<decompress_factory>();
 }
 
+
 std::unique_ptr<compress_provider> make_gzip_compressor(int compressionLevel, int method, int strategy, int memLevel)
 {
 #if defined(CPPREST_HTTP_COMPRESSION)
-    return std::move(std::make_unique<gzip_compressor>(compressionLevel, method, strategy, memLevel));
+    return utility::details::make_unique<gzip_compressor>(compressionLevel, method, strategy, memLevel);
 #else  // CPPREST_HTTP_COMPRESSION
+    (void)compressionLevel;
+    (void)method;
+    (void)strategy;
+    (void)memLevel;
     return std::unique_ptr<compress_provider>();
 #endif // CPPREST_HTTP_COMPRESSION
 }
-
+    
 std::unique_ptr<compress_provider> make_deflate_compressor(int compressionLevel, int method, int strategy, int memLevel)
 {
 #if defined(CPPREST_HTTP_COMPRESSION)
-    return std::move(std::make_unique<deflate_compressor>(compressionLevel, method, strategy, memLevel));
+    return utility::details::make_unique<deflate_compressor>(compressionLevel, method, strategy, memLevel);
 #else  // CPPREST_HTTP_COMPRESSION
+    (void)compressionLevel;
+    (void)method;
+    (void)strategy;
+    (void)memLevel;
     return std::unique_ptr<compress_provider>();
 #endif // CPPREST_HTTP_COMPRESSION
 }
@@ -769,8 +778,11 @@ std::unique_ptr<compress_provider> make_deflate_compressor(int compressionLevel,
 std::unique_ptr<compress_provider> make_brotli_compressor(uint32_t window, uint32_t quality, uint32_t mode)
 {
 #if defined(CPPREST_HTTP_COMPRESSION) && defined(CPPREST_BROTLI_COMPRESSION)
-    return std::move(std::make_unique<brotli_compressor>(window, quality, mode));
+    return utility::details::make_unique<brotli_compressor>(window, quality, mode);
 #else  // CPPREST_BROTLI_COMPRESSION
+    (void)window;
+    (void)quality;
+    (void)mode;
     return std::unique_ptr<compress_provider>();
 #endif // CPPREST_BROTLI_COMPRESSION
 }
@@ -800,7 +812,7 @@ const std::vector<std::shared_ptr<decompress_factory>> get_decompress_factories(
 }
 } // namespace builtin
 
-static bool is_http_whitespace(utility::char_t ch) { return ch == _XPLATSTR(' ') || ch == _XPLATSTR('\t'); }
+static bool is_http_whitespace(const utility::char_t ch) { return ch == _XPLATSTR(' ') || ch == _XPLATSTR('\t'); }
 
 static void remove_surrounding_http_whitespace(const utility::string_t& encoding, size_t& start, size_t& length)
 {
@@ -951,7 +963,7 @@ std::unique_ptr<compress_provider> get_compressor_from_header(
 
     if (compressor)
     {
-        return std::move(compressor);
+        return compressor;
     }
 
     // If we're here, we didn't match the caller's compressor above;
@@ -965,7 +977,7 @@ std::unique_ptr<compress_provider> get_compressor_from_header(
         auto compressor = web::http::compression::builtin::_make_compressor(f, coding);
         if (compressor)
         {
-            return std::move(compressor);
+            return compressor;
         }
         if (type == header_types::accept_encoding && utility::details::str_iequal(coding, _XPLATSTR("identity")))
         {
@@ -1068,7 +1080,7 @@ std::unique_ptr<decompress_provider> get_decompressor_from_header(
 
     // Either the response is compressed and we have a decompressor that can handle it, or
     // built-in compression is not enabled and we don't have an alternate set of decompressors
-    return std::move(decompressor);
+    return decompressor;
 }
 
 utility::string_t build_supported_header(header_types type,
@@ -1084,7 +1096,7 @@ utility::string_t build_supported_header(header_types type,
     // Add all specified algorithms and their weights to the header
     start = true;
     os.imbue(std::locale::classic());
-    for each (auto& factory in f)
+    for (auto& factory : f)
     {
         if (factory)
         {
@@ -1109,7 +1121,7 @@ utility::string_t build_supported_header(header_types type,
         os << _XPLATSTR("identity;q=1, *;q=0");
     }
 
-    return std::move(os.str());
+    return os.str();
 }
 } // namespace details
 } // namespace compression
