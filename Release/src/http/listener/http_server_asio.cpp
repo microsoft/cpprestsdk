@@ -693,7 +693,7 @@ will_deref_and_erase_t asio_server_connection::handle_http_line(const boost::sys
         // Get the path - remove the version portion and prefix space
         try
         {
-            m_request.set_request_uri(utility::conversions::details::to_string_t(
+            m_request.set_request_uri(utility::conversions::to_string_t(
                 http_path_and_version.substr(1, http_path_and_version.size() - VersionPortionSize - 1)));
         }
         catch (const std::exception& e) // may be std::range_error indicating invalid Unicode, or web::uri_exception
@@ -723,7 +723,7 @@ will_deref_and_erase_t asio_server_connection::handle_http_line(const boost::sys
         auto endpoint = m_socket->remote_endpoint(socket_ec);
         if (!socket_ec)
         {
-            m_request._get_impl()->_set_remote_address(utility::conversions::details::to_string_t(
+            m_request._get_impl()->_set_remote_address(utility::conversions::to_string_t(
                 endpoint.address().to_string()));
         }
 
@@ -744,8 +744,8 @@ will_deref_and_erase_t asio_server_connection::handle_headers()
         auto colon = header.find(':');
         if (colon != std::string::npos && colon != 0)
         {
-            auto name = utility::conversions::details::to_string_t(header.substr(0, colon));
-            auto value = utility::conversions::details::to_string_t(
+            auto name = utility::conversions::to_string_t(header.substr(0, colon));
+            auto value = utility::conversions::to_string_t(
                 header.substr(colon + 1, header.length() - (colon + 1))); // also exclude '\r'
             web::http::details::trim_whitespace(name);
             web::http::details::trim_whitespace(value);

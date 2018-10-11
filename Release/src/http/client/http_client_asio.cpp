@@ -1333,7 +1333,7 @@ private:
             m_response.set_status_code(status_code);
 
             ::web::http::details::trim_whitespace(status_message);
-            m_response.set_reason_phrase(utility::conversions::details::to_string_t(std::move(status_message)));
+            m_response.set_reason_phrase(utility::conversions::to_string_t(std::move(status_message)));
 
             if (!response_stream || http_version.substr(0, 5) != "HTTP/")
             {
@@ -1406,8 +1406,8 @@ private:
                     m_connection->set_keep_alive(!boost::iequals(value, U("close")));
                 }
 
-                m_response.headers().add(utility::conversions::details::to_string_t(std::move(name)),
-                                         utility::conversions::details::to_string_t(std::move(value)));
+                m_response.headers().add(utility::conversions::to_string_t(std::move(name)),
+                                         utility::conversions::to_string_t(std::move(value)));
             }
         }
 
@@ -1530,7 +1530,7 @@ private:
         size_t got;
         size_t inbytes = 0;
         size_t outbytes = 0;
-        bool done = false;
+        bool done;
 
         try
         {
@@ -1547,7 +1547,7 @@ private:
                                                  output.size() - outbytes,
                                                  web::http::compression::operation_hint::has_more,
                                                  processed,
-                                                 &done);
+                                                 done);
                 inbytes += processed;
                 outbytes += got;
             } while (got && !done);

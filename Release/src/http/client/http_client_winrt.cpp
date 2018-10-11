@@ -160,7 +160,7 @@ public:
             std::wstring msg(L"IXMLHttpRequest2Callback::OnError: ");
             msg.append(std::to_wstring(hrError));
             msg.append(L": ");
-            msg.append(utility::conversions::details::to_string_t(
+            msg.append(utility::conversions::to_string_t(
                 utility::details::windows_category().message(hrError)));
             m_request->report_error(hrError, msg);
         }
