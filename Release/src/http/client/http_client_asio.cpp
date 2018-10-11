@@ -1405,7 +1405,7 @@ private:
                     // to respond using 'Connection: Keep-Alive' every time.
                     m_connection->set_keep_alive(!boost::iequals(value, U("close")));
                 }
-::details
+
                 m_response.headers().add(utility::conversions::details::to_string_t(std::move(name)),
                                          utility::conversions::details::to_string_t(std::move(value)));
             }
