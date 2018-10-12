@@ -383,7 +383,7 @@ public:
         try
         {
             r.output_bytes_produced =
-                compress(input, input_size, output, output_size, hint, r.input_bytes_processed, &r.done);
+                compress(input, input_size, output, output_size, hint, r.input_bytes_processed, r.done);
         }
         catch (...)
         {
@@ -509,7 +509,7 @@ public:
         try
         {
             r.output_bytes_produced =
-                decompress(input, input_size, output, output_size, hint, r.input_bytes_processed, &r.done);
+                decompress(input, input_size, output, output_size, hint, r.input_bytes_processed, r.done);
         }
         catch (...)
         {
