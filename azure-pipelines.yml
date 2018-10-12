@@ -136,7 +136,7 @@ jobs:
     - script: |
         sudo apt-get install -y ppa-purge
         sudo ppa-purge -y ppa:ondrej/php
-        sudo apt-get install -y libboost-atomic-dev libboost-thread-dev libboost-system-dev libboost-date-time-dev libboost-regex-dev libboost-filesystem-dev libboost-random-dev libboost-chrono-dev libboost-serialization-dev libwebsocketpp-dev brotli openssl libssl-dev ninja-build
+        sudo apt-get install -y libboost-atomic-dev libboost-thread-dev libboost-system-dev libboost-date-time-dev libboost-regex-dev libboost-filesystem-dev libboost-random-dev libboost-chrono-dev libboost-serialization-dev libwebsocketpp-dev openssl libssl-dev ninja-build
       displayName: Apt install dependencies
     - script: |
         mkdir build.debug
@@ -145,11 +145,11 @@ jobs:
     - task: CMake@1
       inputs:
         workingDirectory: 'build.debug'
-        cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Debug -DCPPREST_EXCLUDE_BROTLI=OFF ..'
+        cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Debug ..'
     - task: CMake@1
       inputs:
         workingDirectory: 'build.release'
-        cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Release -DCPPREST_EXCLUDE_BROTLI=OFF ..'
+        cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Release ..'
     - script: |
         cd build.debug
         ninja
@@ -194,7 +194,7 @@ jobs:
     pool:
       vmImage: 'macOS-10.13'
     steps:
-    - script: brew install boost openssl ninja brotli
+    - script: brew install boost openssl ninja
       displayName: Brew install dependencies
     - script: |
         mkdir build.debug
@@ -204,15 +204,15 @@ jobs:
     - task: CMake@1
       inputs:
         workingDirectory: 'build.debug'
-        cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Debug -DCPPREST_EXCLUDE_BROTLI=OFF ..'
+        cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Debug ..'
     - task: CMake@1
       inputs:
         workingDirectory: 'build.release'
-        cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Release -DCPPREST_EXCLUDE_BROTLI=OFF ..'
+        cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Release ..'
     - task: CMake@1
       inputs:
         workingDirectory: 'build.release.static'
-        cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCPPREST_EXCLUDE_BROTLI=OFF ..'
+        cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF ..'
     - script: |
         cd build.debug
         ninja
