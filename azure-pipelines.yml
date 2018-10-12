@@ -7,14 +7,14 @@ jobs:
     steps:
     - script: .\vcpkg\bootstrap-vcpkg.bat
       displayName: Bootstrap vcpkg
-    - script: .\vcpkg\vcpkg.exe install zlib openssl boost-system boost-date-time boost-regex boost-interprocess websocketpp
+    - script: .\vcpkg\vcpkg.exe install zlib openssl boost-system boost-date-time boost-regex boost-interprocess websocketpp brotli
       displayName: vcpkg install dependencies
     - script: mkdir build.common
       displayName: Make Build Directory
     - task: CMake@1
       inputs:
         workingDirectory: 'build.common'
-        cmakeArgs: '-DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake ..'
+        cmakeArgs: '-DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake -DCPPREST_EXCLUDE_BROTLI=OFF ..'
     - task: MSBuild@1
       inputs:
         solution: 'build.common/ALL_BUILD.vcxproj'
@@ -38,14 +38,14 @@ jobs:
     steps:
     - script: .\vcpkg\bootstrap-vcpkg.bat
       displayName: Bootstrap vcpkg
-    - script: .\vcpkg\vcpkg.exe install zlib openssl boost-system boost-date-time boost-regex boost-interprocess websocketpp --triplet x64-windows
+    - script: .\vcpkg\vcpkg.exe install zlib openssl boost-system boost-date-time boost-regex boost-interprocess websocketpp brotli --triplet x64-windows
       displayName: vcpkg install dependencies
     - script: mkdir build.common
       displayName: Make Build Directory
     - task: CMake@1
       inputs:
         workingDirectory: 'build.common'
-        cmakeArgs: '-A x64 -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake ..'
+        cmakeArgs: '-A x64 -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake -DCPPREST_EXCLUDE_BROTLI=OFF ..'
     - task: MSBuild@1
       inputs:
         solution: 'build.common/ALL_BUILD.vcxproj'
@@ -71,14 +71,14 @@ jobs:
     steps:
     - script: .\vcpkg\bootstrap-vcpkg.bat
       displayName: Bootstrap vcpkg
-    - script: .\vcpkg\vcpkg.exe install zlib openssl boost-system boost-date-time boost-regex boost-interprocess websocketpp
+    - script: .\vcpkg\vcpkg.exe install zlib openssl boost-system boost-date-time boost-regex boost-interprocess websocketpp brotli
       displayName: vcpkg install dependencies
     - script: mkdir build.common
       displayName: Make Build Directory
     - task: CMake@1
       inputs:
         workingDirectory: 'build.common'
-        cmakeArgs: '-DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake ..'
+        cmakeArgs: '-DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake -DCPPREST_EXCLUDE_BROTLI=OFF ..'
     - task: MSBuild@1
       inputs:
         solution: 'build.common/ALL_BUILD.vcxproj'
@@ -102,14 +102,14 @@ jobs:
     steps:
     - script: .\vcpkg\bootstrap-vcpkg.bat
       displayName: Bootstrap vcpkg
-    - script: .\vcpkg\vcpkg.exe install zlib openssl boost-system boost-date-time boost-regex boost-interprocess websocketpp --triplet x64-windows
+    - script: .\vcpkg\vcpkg.exe install zlib openssl boost-system boost-date-time boost-regex boost-interprocess websocketpp brotli --triplet x64-windows
       displayName: vcpkg install dependencies
     - script: mkdir build.common
       displayName: Make Build Directory
     - task: CMake@1
       inputs:
         workingDirectory: 'build.common'
-        cmakeArgs: '-A x64 -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake ..'
+        cmakeArgs: '-A x64 -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake -DCPPREST_EXCLUDE_BROTLI=OFF ..'
     - task: MSBuild@1
       inputs:
         solution: 'build.common/ALL_BUILD.vcxproj'
@@ -136,7 +136,7 @@ jobs:
     - script: |
         sudo apt-get install -y ppa-purge
         sudo ppa-purge -y ppa:ondrej/php
-        sudo apt-get install -y libboost-atomic-dev libboost-thread-dev libboost-system-dev libboost-date-time-dev libboost-regex-dev libboost-filesystem-dev libboost-random-dev libboost-chrono-dev libboost-serialization-dev libwebsocketpp-dev brotli openssl libssl-dev ninja-build
+        sudo apt-get install -y libboost-atomic-dev libboost-thread-dev libboost-system-dev libboost-date-time-dev libboost-regex-dev libboost-filesystem-dev libboost-random-dev libboost-chrono-dev libboost-serialization-dev libwebsocketpp-dev openssl libssl-dev ninja-build
       displayName: Apt install dependencies
     - script: |
         mkdir build.debug
@@ -199,6 +199,7 @@ jobs:
     - script: |
         mkdir build.debug
         mkdir build.release
+        mkdir build.release.static
       displayName: Make Build Directories
     - task: CMake@1
       inputs:
@@ -208,6 +209,10 @@ jobs:
       inputs:
         workingDirectory: 'build.release'
         cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Release ..'
+    - task: CMake@1
+      inputs:
+        workingDirectory: 'build.release.static'
+        cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF ..'
     - script: |
         cd build.debug
         ninja
@@ -224,3 +229,7 @@ jobs:
         cd build.release/Release/Binaries
         ./test_runner *test.dylib
       displayName: 'Run tests, release'
+    - script: |
+        cd build.release.static
+        ninja
+      displayName: 'Run ninja, release static'
