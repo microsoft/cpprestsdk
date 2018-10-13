@@ -35,13 +35,13 @@ if(MSVC)
   get_target_property(_srcs httpclient_test SOURCES)
 
   if(NOT CMAKE_GENERATOR MATCHES "Visual Studio .*")
-    set_property(SOURCE stdafx.cpp APPEND PROPERTY OBJECT_OUTPUTS "${CMAKE_CURRENT_BINARY_DIR}/stdafx.pch")
-    set_property(SOURCE ${_srcs} APPEND PROPERTY OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/stdafx.pch")
+    set_property(SOURCE stdafx.cpp APPEND PROPERTY OBJECT_OUTPUTS "${CMAKE_CURRENT_BINARY_DIR}/client-tests-stdafx.pch")
+    set_property(SOURCE ${_srcs} APPEND PROPERTY OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/client-tests-stdafx.pch")
   endif()
 
-  set_source_files_properties(stdafx.cpp PROPERTIES COMPILE_FLAGS "/Ycstdafx.h")
+  set_source_files_properties(stdafx.cpp PROPERTIES COMPILE_FLAGS "/Ycstdafx.h /Fpclient-tests-stdafx.pch")
   target_sources(httpclient_test PRIVATE stdafx.cpp)
-  target_compile_options(httpclient_test PRIVATE /Yustdafx.h /Zm200)
+  target_compile_options(httpclient_test PRIVATE /Yustdafx.h /Fpclient-tests-stdafx.pch)
 endif()
 
 if(NOT WIN32)

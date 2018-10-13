@@ -180,7 +180,7 @@ if(MSVC)
 
   set_source_files_properties(pch/stdafx.cpp PROPERTIES COMPILE_FLAGS "/Ycstdafx.h")
   target_sources(cpprest PRIVATE pch/stdafx.cpp)
-  target_compile_options(cpprest PRIVATE /Yustdafx.h /Zm200)
+  target_compile_options(cpprest PRIVATE /Yustdafx.h)
 endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")
