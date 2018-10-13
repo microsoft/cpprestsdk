@@ -9,7 +9,36 @@
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 
-#include "stdafx.h"
+#ifdef _WIN32
+#include <SDKDDKVer.h>
+
+#include <stdio.h>
+#include <tchar.h>
+
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#define NOMINMAX
+#include <windows.h>
+#include <objbase.h>
+#include <winsock2.h>
+
+// ws2tcpip.h - isn't warning clean.
+#pragma warning(push)
+#pragma warning(disable : 6386)
+#include <ws2tcpip.h>
+#pragma warning(pop)
+
+#include <iphlpapi.h>
+#endif
+
+#include <map>
+#include <vector>
+#include <string>
+#include <exception>
+
+#include "cpprest/http_client.h"
+
 #include <iostream>
 #include <streambuf>
 #include <sstream>
