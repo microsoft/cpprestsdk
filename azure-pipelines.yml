@@ -173,7 +173,7 @@ jobs:
     - script: |
         sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
         sudo apt-get -y update
-        sudo apt-get install g++-7 -y
+        sudo apt-get install g++-7 ninja-build -y
         ./vcpkg/bootstrap-vcpkg.sh
         ./vcpkg/vcpkg install zlib openssl boost-system boost-date-time boost-regex websocketpp boost-thread boost-filesystem boost-random boost-chrono brotli
       displayName: Vcpkg install dependencies
@@ -253,7 +253,7 @@ jobs:
       vmImage: 'macOS-10.13'
     steps:
     - script: |
-        brew install gcc
+        brew install gcc ninja
         ./vcpkg/bootstrap-vcpkg.sh
         ./vcpkg/vcpkg install zlib openssl boost-system boost-date-time boost-regex websocketpp boost-thread boost-filesystem boost-random boost-chrono brotli
       displayName: Vcpkg install dependencies
