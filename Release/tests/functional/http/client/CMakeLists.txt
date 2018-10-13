@@ -22,7 +22,6 @@ set(SOURCES
   to_string_tests.cpp
   http_client_fuzz_tests.cpp
   compression_tests.cpp
-  stdafx.cpp
 )
 
 add_casablanca_test(httpclient_test SOURCES)

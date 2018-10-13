@@ -4,7 +4,6 @@ set(SOURCES
   memstream_tests.cpp
   ostream_tests.cpp
   stdstream_tests.cpp
-  stdafx.cpp
 )
 if(WINDOWS_STORE OR WINDOWS_PHONE)
   list(APPEND SOURCES winrt_interop_tests.cpp)

@@ -5,7 +5,6 @@ set(SOURCES
   macro_test.cpp
   nonce_generator_tests.cpp
   win32_encryption_tests.cpp
-  stdafx.cpp
 )
 
 add_casablanca_test(utils_test SOURCES)

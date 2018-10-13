@@ -9,7 +9,6 @@ set(SOURCES
   splitting_tests.cpp
   uri_builder_tests.cpp
   resolve_uri_tests.cpp
-  stdafx.cpp
 )
 
 add_casablanca_test(uri_test SOURCES)
