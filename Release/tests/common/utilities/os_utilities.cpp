@@ -4,17 +4,17 @@
 *
 * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
 *
-* os_utilities.cpp - defines an abstraction for common OS functions like Sleep, hiding the underlying platform. 
+* os_utilities.cpp - defines an abstraction for common OS functions like Sleep, hiding the underlying platform.
 *
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 
-#include "stdafx.h"
-
 #include "os_utilities.h"
 
 #ifdef WIN32
+#define NOMINMAX
 #define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
+#include <SDKDDKVer.h>
 #include <Windows.h>
 #else
 #include <unistd.h>
@@ -54,4 +54,3 @@ long os_utilities::interlocked_exchange(volatile long *target, long value)
 }
 
 }}}
-
