@@ -11,10 +11,11 @@
  * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
  ****/
 
+#include "stdafx.h"
+
 #include "cpprest/details/http_helpers.h"
 #include "cpprest/version.h"
 #include "cpprest/asyncrt_utils.h"
-#include "stdafx.h"
 #include <fstream>
 
 #ifndef __cplusplus_winrt
