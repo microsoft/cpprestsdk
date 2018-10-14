@@ -215,6 +215,32 @@ void _finish_create(HANDLE fh, _In_ _filestream_callback *callback, std::ios_bas
 }
 
 /// <summary>
+/// Create a streambuf instance representing a file handle.
+/// </summary>
+/// <param name="callback">A pointer to the callback interface to invoke when the file has been opened.</param>
+/// <param name="fh">The handle of the file</param>
+/// <param name="mode">A creation mode for the stream buffer</param>
+/// <param name="prot">A file protection mode to use for the file stream</param>
+/// <returns><c>true</c> if the opening operation could be initiated, <c>false</c> otherwise.</returns>
+/// <remarks>
+/// True does not signal that the file will eventually be successfully opened, just that the process was started.
+/// </remarks>
+bool __cdecl _open_fsb(_In_ _filestream_callback *callback, HANDLE fh, std::ios_base::openmode mode, int prot)
+{
+    _ASSERTE(callback != nullptr);
+
+    pplx::create_task([=]()
+    {
+        // TODO: Validate the flags which the file handle has been opened matches with
+        //       the protection and mode and also that the FILE_FLAG_OVERLAPPED
+        //       has been used.
+        _finish_create(fh, callback, mode, prot);
+    });
+
+    return true;
+}
+
+/// <summary>
 /// Open a file and create a streambuf instance to represent it.
 /// </summary>
 /// <param name="callback">A pointer to the callback interface to invoke when the file has been opened.</param>

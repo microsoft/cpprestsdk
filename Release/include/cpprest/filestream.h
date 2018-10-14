@@ -727,6 +727,19 @@ namespace details {
 
         basic_file_buffer(_In_ _file_info *info) : streambuf_state_manager<_CharType>(info->m_mode), m_info(info) { }
 
+#ifdef _WIN32
+        static pplx::task<std::shared_ptr<basic_streambuf<_CharType>>> open(HANDLE _FileHandle,
+            std::ios_base::openmode _Mode = std::ios_base::out,
+            int _Prot = (int)std::ios_base::_Openprot
+        )
+        {
+            auto result_tce = pplx::task_completion_event<std::shared_ptr<basic_streambuf<_CharType>>>();
+            auto callback = new _filestream_callback_open(result_tce);
+            _open_fsb(callback, _FileHandle, _Mode, _Prot);
+            return pplx::create_task(result_tce);
+        }
+#endif //_WIN32
+
 #if !defined(__cplusplus_winrt)
         static pplx::task<std::shared_ptr<basic_streambuf<_CharType>>> open(
             const utility::string_t &_Filename,
@@ -991,6 +1004,21 @@ namespace details {
                 });
         }
 #endif
+
+#ifdef _WIN32
+        static pplx::task<streambuf<_CharType>> open(
+            HANDLE file_handle,
+            std::ios_base::openmode mode = std::ios_base::out,
+            int prot = _SH_DENYRD
+        )
+        {
+            auto bfb = details::basic_file_buffer<_CharType>::open(file_handle, mode, prot);
+            return bfb.then([](pplx::task<std::shared_ptr<details::basic_streambuf<_CharType>>> op) -> streambuf<_CharType>
+            {
+                return streambuf<_CharType>(op.get());
+            });
+        }
+#endif //_WIN32
     };
 
 
@@ -1031,6 +1059,22 @@ namespace details {
                     return basic_istream<_CharType>(buf);
                 });
         }
+
+#ifdef _WIN32
+        static pplx::task<streams::basic_istream<_CharType>> open_istream(
+            HANDLE file_handle,
+            std::ios_base::openmode mode = std::ios_base::in,
+            int prot = (int)std::ios_base::_Openprot
+        )
+        {
+            mode |= std::ios_base::in;
+            return streams::file_buffer<_CharType>::open(file_handle, mode, prot)
+                .then([](streams::streambuf<_CharType> buf) -> basic_istream<_CharType>
+            {
+                return basic_istream<_CharType>(buf);
+            });
+        }
+#endif //_WIN32
 
         /// <summary>
         /// Open a new ouput stream representing the given file.
