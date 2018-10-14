@@ -175,7 +175,7 @@ jobs:
         sudo apt-get -y update
         sudo apt-get install g++-7 ninja-build -y
         ./vcpkg/bootstrap-vcpkg.sh
-        ./vcpkg/vcpkg install zlib openssl boost-system boost-date-time boost-regex websocketpp boost-thread boost-filesystem boost-random boost-chrono brotli
+        ./vcpkg/vcpkg install zlib openssl boost-system boost-date-time boost-regex websocketpp boost-thread boost-filesystem boost-random boost-chrono boost-interprocess brotli
       displayName: Vcpkg install dependencies
     - script: |
         mkdir build.debug
@@ -255,7 +255,7 @@ jobs:
     - script: |
         brew install gcc ninja
         ./vcpkg/bootstrap-vcpkg.sh
-        ./vcpkg/vcpkg install zlib openssl boost-system boost-date-time boost-regex websocketpp boost-thread boost-filesystem boost-random boost-chrono brotli
+        ./vcpkg/vcpkg install zlib openssl boost-system boost-date-time boost-regex websocketpp boost-thread boost-filesystem boost-random boost-chrono boost-interprocess brotli
       displayName: Vcpkg install dependencies
     - script: |
         mkdir build.debug
