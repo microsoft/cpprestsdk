@@ -18,10 +18,10 @@ jobs:
     - task: CMake@1
       inputs:
         workingDirectory: 'build.debug'
-        cmakeArgs: '-G Ninja -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake -DCPPREST_EXCLUDE_BROTLI=OFF ..'
+        cmakeArgs: '-G Ninja -DCMAKE_MAKE_PROGRAM=C:/ProgramData/chocolatey/lib/ninja/tools/ninja.exe -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake -DCPPREST_EXCLUDE_BROTLI=OFF ..'
     - script: |
         cd build.debug
-        ninja
+        C:\ProgramData\chocolatey\lib\ninja\tools\ninja.exe
       displayName: 'Run Ninja debug'
     - script: |
         cd build.debug\Release\Binaries
