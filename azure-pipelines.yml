@@ -166,31 +166,46 @@ jobs:
         cd build.release/Release/Binaries
         ./test_runner *test.so
       displayName: 'Run tests, release'
-
-  # vcpkg on Linux missing for now due to OpenSSL root certificates
-  # - job: Ubuntu_1604_Vcpkg_Debug
-  #   pool:
-  #     vmImage: 'Ubuntu 16.04'
-  #   steps:
-  #   - script: |
-  #       ./vcpkg/bootstrap-vcpkg.sh
-  #       ./vcpkg/vcpkg install zlib openssl boost-system boost-date-time boost-regex websocketpp boost-thread boost-filesystem boost-random boost-chrono
-  #     displayName: Apt install dependencies
-  #   - script: mkdir build.debug
-  #     displayName: Make build.debug
-  #   - task: CMake@1
-  #     inputs:
-  #       workingDirectory: 'build.debug'
-  #       cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake ..'
-  #   - script: |
-  #       cd build.debug
-  #       ninja
-  #     displayName: 'Run ninja'
-  #   - script: |
-  #       cd build.debug/Release/Binaries
-  #       ./test_runner *test.so
-  #     displayName: 'Run Tests'
-  - job: MacOS
+  - job: Ubuntu_1604_Vcpkg
+    pool:
+      vmImage: 'Ubuntu 16.04'
+    steps:
+    - script: |
+        sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+        sudo apt-get -y update
+        sudo apt-get install g++-7 ninja-build -y
+        ./vcpkg/bootstrap-vcpkg.sh
+        ./vcpkg/vcpkg install zlib openssl boost-system boost-date-time boost-regex websocketpp boost-thread boost-filesystem boost-random boost-chrono boost-interprocess brotli
+      displayName: Vcpkg install dependencies
+    - script: |
+        mkdir build.debug
+        mkdir build.release
+      displayName: Make Build Directories
+    - task: CMake@1
+      inputs:
+        workingDirectory: 'build.debug'
+        cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake ..'
+    - task: CMake@1
+      inputs:
+        workingDirectory: 'build.release'
+        cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake ..'
+    - script: |
+        cd build.debug
+        ninja
+      displayName: 'Run ninja debug'
+    - script: |
+        cd build.debug/Release/Binaries
+        ./test_runner *test.so
+      displayName: 'Run Tests debug'
+    - script: |
+        cd build.release
+        ninja
+      displayName: 'Run ninja, release'
+    - script: |
+        cd build.release/Release/Binaries
+        ./test_runner *test.so
+      displayName: 'Run tests, release'
+  - job: MacOS_Homebrew
     pool:
       vmImage: 'macOS-10.13'
     steps:
@@ -233,3 +248,40 @@ jobs:
         cd build.release.static
         ninja
       displayName: 'Run ninja, release static'
+  - job: MacOS_Vcpkg
+    pool:
+      vmImage: 'macOS-10.13'
+    steps:
+    - script: |
+        brew install gcc ninja
+        ./vcpkg/bootstrap-vcpkg.sh
+        ./vcpkg/vcpkg install zlib openssl boost-system boost-date-time boost-regex websocketpp boost-thread boost-filesystem boost-random boost-chrono boost-interprocess brotli
+      displayName: Vcpkg install dependencies
+    - script: |
+        mkdir build.debug
+        mkdir build.release
+      displayName: Make Build Directories
+    - task: CMake@1
+      inputs:
+        workingDirectory: 'build.debug'
+        cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake ..'
+    - task: CMake@1
+      inputs:
+        workingDirectory: 'build.release'
+        cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake ..'
+    - script: |
+        cd build.debug
+        ninja
+      displayName: 'Run ninja debug'
+    - script: |
+        cd build.debug/Release/Binaries
+        ./test_runner *test.dylib
+      displayName: 'Run Tests debug'
+    - script: |
+        cd build.release
+        ninja
+      displayName: 'Run ninja, release'
+    - script: |
+        cd build.release/Release/Binaries
+        ./test_runner *test.dylib
+      displayName: 'Run tests, release'
