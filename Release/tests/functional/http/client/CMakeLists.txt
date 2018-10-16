@@ -2,8 +2,11 @@ set(SOURCES
   authentication_tests.cpp
   building_request_tests.cpp
   client_construction.cpp
+  compression_tests.cpp
+  connection_pool_tests.cpp
   connections_and_errors.cpp
   header_tests.cpp
+  http_client_fuzz_tests.cpp
   http_client_tests.cpp
   http_methods_tests.cpp
   multiple_requests.cpp
@@ -20,8 +23,6 @@ set(SOURCES
   response_stream_tests.cpp
   status_code_reason_phrase_tests.cpp
   to_string_tests.cpp
-  http_client_fuzz_tests.cpp
-  compression_tests.cpp
 )
 
 add_casablanca_test(httpclient_test SOURCES)
