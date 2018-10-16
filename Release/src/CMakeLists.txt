@@ -16,12 +16,13 @@ set(SOURCES
   ${HEADERS_DETAILS}
   pch/stdafx.h
   http/client/http_client.cpp
-  http/client/http_client_msg.cpp
   http/client/http_client_impl.h
-  http/common/internal_http_helpers.h
+  http/client/http_client_msg.cpp
+  http/common/connection_pool_helpers.h
+  http/common/http_compression.cpp
   http/common/http_helpers.cpp
   http/common/http_msg.cpp
-  http/common/http_compression.cpp
+  http/common/internal_http_helpers.h
   http/listener/http_listener.cpp
   http/listener/http_listener_msg.cpp
   http/listener/http_server_api.cpp

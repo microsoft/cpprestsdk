@@ -17,6 +17,7 @@
 #include <sstream>
 
 #include "../common/internal_http_helpers.h"
+#include "../common/connection_pool_helpers.h"
 #include "cpprest/asyncrt_utils.h"
 
 #if defined(__clang__)
@@ -345,51 +346,6 @@ private:
     bool m_closed;
 };
 
-class connection_pool_stack
-{
-public:
-    // attempts to acquire a connection from the deque; returns nullptr if no connection is
-    // available
-    std::shared_ptr<asio_connection> try_acquire() CPPREST_NOEXCEPT
-    {
-        const size_t oldConnectionsSize = m_connections.size();
-        if (oldConnectionsSize == 0)
-        {
-            m_staleBefore = 0;
-            return nullptr;
-        }
-
-        const size_t newConnectionsSize = oldConnectionsSize - 1;
-        if (m_staleBefore > newConnectionsSize)
-        {
-            m_staleBefore = newConnectionsSize;
-        }
-
-        auto result = std::move(m_connections.back());
-        m_connections.pop_back();
-        return result;
-    }
-
-    // releases `released` back to the connection pool
-    void release(std::shared_ptr<asio_connection>&& released)
-    {
-        m_connections.push_back(std::move(released));
-    }
-
-    bool free_stale_connections() CPPREST_NOEXCEPT
-    {
-        assert(m_staleBefore <= m_connections.size());
-        m_connections.erase(m_connections.begin(), m_connections.begin() + m_staleBefore);
-        const size_t connectionsSize = m_connections.size();
-        m_staleBefore = connectionsSize;
-        return (connectionsSize != 0);
-    }
-
-private:
-    std::vector<std::shared_ptr<asio_connection>> m_connections;
-    size_t m_staleBefore = 0;
-};
-
 /// <summary>Implements a connection pool with adaptive connection removal</summary>
 /// <remarks>
 /// Every 30 seconds, the lambda in `start_epoch_interval` fires, triggering the
@@ -504,7 +460,7 @@ private:
     }
 
     std::mutex m_lock;
-    std::map<std::string, connection_pool_stack> m_connections;
+    std::map<std::string, connection_pool_stack<asio_connection>> m_connections;
     bool m_is_timer_running;
     boost::asio::deadline_timer m_pool_epoch_timer;
 };
