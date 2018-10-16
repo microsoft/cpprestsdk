@@ -21,6 +21,10 @@ With [apt-get](https://launchpad.net/ubuntu/+source/casablanca/2.8.0-2build2) on
 ```
 $ sudo apt-get install libcpprest-dev
 ```
+With [dnf](https://apps.fedoraproject.org/packages/cpprest) on Fedora
+```
+$ sudo dnf install cpprest-devel
+```
 With [brew](https://github.com/Homebrew/homebrew-core/blob/master/Formula/cpprestsdk.rb) on OSX
 ```
 $ brew install cpprestsdk
