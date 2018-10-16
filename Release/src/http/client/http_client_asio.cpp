@@ -353,14 +353,16 @@ public:
     std::shared_ptr<asio_connection> try_acquire() CPPREST_NOEXCEPT
     {
         const size_t oldConnectionsSize = m_connections.size();
-        if (m_highWater > oldConnectionsSize)
-        {
-            m_highWater = oldConnectionsSize;
-        }
-
         if (oldConnectionsSize == 0)
         {
+            m_staleBefore = 0;
             return nullptr;
+        }
+
+        const size_t newConnectionsSize = oldConnectionsSize - 1;
+        if (m_staleBefore > newConnectionsSize)
+        {
+            m_staleBefore = newConnectionsSize;
         }
 
         auto result = std::move(m_connections.back());
@@ -376,15 +378,16 @@ public:
 
     bool free_stale_connections() CPPREST_NOEXCEPT
     {
-        m_connections.erase(m_connections.begin(), m_connections.begin() + m_highWater);
+        assert(m_staleBefore <= m_connections.size());
+        m_connections.erase(m_connections.begin(), m_connections.begin() + m_staleBefore);
         const size_t connectionsSize = m_connections.size();
-        m_highWater = connectionsSize;
+        m_staleBefore = connectionsSize;
         return (connectionsSize != 0);
     }
 
 private:
-    size_t m_highWater = 0;
     std::vector<std::shared_ptr<asio_connection>> m_connections;
+    size_t m_staleBefore = 0;
 };
 
 /// <summary>Implements a connection pool with adaptive connection removal</summary>
