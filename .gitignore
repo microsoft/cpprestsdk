@@ -1,4 +1,4 @@
-#Visual Studio files
+# Visual Studio files
 *.o
 *.d
 *.so
@@ -38,7 +38,7 @@
 *~
 ipch/
 obj/
-#OSX files
+# OSX files
 *.xccheckout
 *.pbxuser
 *.mode1v3
@@ -67,7 +67,8 @@ Intermediate/
 # Ignore cmake building directories
 build.*/
 docs/
-# ignore NuGet artifacts
+# Ignore NuGet artifacts
 .nuget/
-
 Generated Files/
+# Ignore iOS temp build directories
+Build_iOS/Apple-Boost-BuildScript
