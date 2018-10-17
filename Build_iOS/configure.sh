@@ -3,12 +3,12 @@ set -e
 
 if [ ! -e boost.framework ]
    then
-       git clone -n https://github.com/faithfracture/Apple-Boost-BuildScript Apple-Boost-BuildScript
-       pushd Apple-Boost-BuildScript
-       git checkout 86f7570fceaef00846cc75f59c61474758fc65cb
-       BOOST_LIBS="thread chrono filesystem regex system random" ./boost.sh
+       git clone https://github.com/faithfracture/Apple-Boost-BuildScript Apple-Boost-BuildScript
+       pushd ./Apple-Boost-BuildScript
+       git checkout 1b94ec2e2b5af1ee036d9559b96e70c113846392
+       BOOST_LIBS="thread chrono filesystem regex system random" ./boost.sh -ios -tvos
        popd
-       mv Apple-Boost-BuildScript/build/boost/1.63.0/ios/framework/boost.framework .
+       mv Apple-Boost-BuildScript/build/boost/1.67.0/ios/framework/boost.framework .
        mv boost.framework/Versions/A/Headers boost.headers
        mkdir -p boost.framework/Versions/A/Headers
        mv boost.headers boost.framework/Versions/A/Headers/boost
@@ -18,26 +18,27 @@ if [ ! -e openssl/lib/libcrypto.a ]
    then
        git clone --depth=1 https://github.com/x2on/OpenSSL-for-iPhone.git
        pushd OpenSSL-for-iPhone
+       git checkout 10019638e80e8a8a5fc19642a840d8a69fac7349
        ./build-libssl.sh
        popd
        mkdir -p openssl/lib
-       cp -r OpenSSL-for-iPhone/bin/iPhoneOS9.2-armv7.sdk/include openssl
+       cp -r OpenSSL-for-iPhone/bin/iPhoneOS12.0-arm64.sdk/include openssl
        cp OpenSSL-for-iPhone/include/LICENSE openssl
        lipo -create -output openssl/lib/libssl.a OpenSSL-for-iPhone/bin/iPhone*/lib/libssl.a
        lipo -create -output openssl/lib/libcrypto.a OpenSSL-for-iPhone/bin/iPhone*/lib/libcrypto.a
 fi
 
-if [ ! -e ios-cmake/toolchain/iOS.cmake ]
+if [ ! -e ios-cmake/ios.toolchain.cmake ]
    then
-       git clone https://github.com/cristeab/ios-cmake.git
+       git clone https://github.com/leetal/ios-cmake
        pushd ios-cmake
-       git apply ../fix_ios_cmake_compiler.patch
+       git checkout 6b30f4cfeab5567041d38e79507e642056fb9fd4
        popd
 fi
 
-mkdir -p build.ios
-pushd build.ios
-cmake .. -DCMAKE_BUILD_TYPE=Release
+mkdir -p build.release.ios
+pushd build.release.ios
+cmake -DCMAKE_BUILD_TYPE=Release ..
 make
 popd
 echo "===="

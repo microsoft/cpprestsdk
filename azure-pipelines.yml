@@ -285,3 +285,11 @@ jobs:
         cd build.release/Release/Binaries
         ./test_runner *test.dylib
       displayName: 'Run tests, release'
+  - job: MacOS_iOS
+    pool:
+      vmImage: 'macOS-10.13'
+    steps:
+    - script: |
+      cd Build_iOS
+      ./configure.sh
+      displayName: 'Build for iOS'
