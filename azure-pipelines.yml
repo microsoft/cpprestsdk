@@ -290,6 +290,6 @@ jobs:
       vmImage: 'macOS-10.13'
     steps:
     - script: |
-      cd Build_iOS
-      ./configure.sh
+        cd Build_iOS
+        ./configure.sh
       displayName: 'Build for iOS'
