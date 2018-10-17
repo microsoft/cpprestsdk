@@ -26,6 +26,7 @@ then
     then
         cp -r OpenSSL-for-iPhone/bin/iPhoneOS11.4-arm64.sdk/include openssl
     elif [ -e OpenSSL-for-iPhone/bin/iPhoneOS12.0-arm64.sdk/include ]
+    then
         cp -r OpenSSL-for-iPhone/bin/iPhoneOS12.0-arm64.sdk/include openssl
     else
         echo 'Could not find OpenSSL for iPhone'
