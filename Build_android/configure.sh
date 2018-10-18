@@ -13,9 +13,8 @@
 
 set -e
 
-# Note: we require android ndk r10e available from
-# http://dl.google.com/android/ndk/android-ndk-r10e-linux-x86_64.tar.bz2
-# http://dl.google.com/android/ndk/android-ndk-r10e-windows-x86_64.zip
+# The Android NDK r10e or later may work, but we test with r17c. To download, see the following link:
+# https://developer.android.com/ndk/downloads/index.html
 
 # -----------------
 # Parse args
@@ -25,40 +24,58 @@ DO_BOOST=1
 DO_OPENSSL=1
 DO_CPPRESTSDK=1
 
+BOOSTVER=1.65.1
+OPENSSLVER=1.0.2k
+
+API=15
+STL=c++_static
+
 function usage {
     echo "Usage: $0 [--skip-boost] [--skip-openssl] [--skip-cpprestsdk] [-h] [--ndk <android-ndk>]"
     echo ""
     echo "    --skip-boost          Skip fetching and compiling boost"
     echo "    --skip-openssl        Skip fetching and compiling openssl"
     echo "    --skip-cpprestsdk     Skip compiling cpprestsdk"
-    echo "    -h,--help,-?          Display this information"
+    echo "    --boost <version>     Override the Boost version to build (default is ${BOOSTVER})"
+    echo "    --openssl <version>   Override the OpenSSL version to build (default is ${OPENSSLVER})"
     echo "    --ndk <android-ndk>   If specified, overrides the ANDROID_NDK environment variable"
+    echo "    -h,--help,-?          Display this information"
 }
 
 while [[ $# > 0 ]]
 do
     case $1 in
-	"--skip-boost")
-	    DO_BOOST=0
-	    ;;
-	"--skip-openssl")
-	    DO_OPENSSL=0
-	    ;;
-	"--skip-cpprestsdk")
-	    DO_CPPRESTSDK=0
-	    ;;
-	"-?"|"-h"|"--help")
-	    usage
-	    exit
-	    ;;
-	"--ndk")
-	    shift
-	    export ANDROID_NDK=$1
-	    ;;
-	*)
-	    usage
-	    exit 1
-	    ;;
+    "--skip-boost")
+        DO_BOOST=0
+        ;;
+    "--skip-openssl")
+        DO_OPENSSL=0
+        ;;
+    "--skip-cpprestsdk")
+        DO_CPPRESTSDK=0
+        ;;
+    "--boost")
+        shift
+        DO_BOOST=1
+        BOOSTVER=$1
+        ;;
+    "--openssl")
+        shift
+        DO_OPENSSL=1
+        OPENSSLVER=$1
+        ;;
+    "--ndk")
+        shift
+        export ANDROID_NDK=$1
+        ;;
+    "-?"|"-h"|"--help")
+        usage
+        exit
+        ;;
+    *)
+        usage
+        exit 1
+        ;;
     esac
     shift
 done
@@ -73,6 +90,13 @@ then
 fi
 NDK_DIR=`cd "${ANDROID_NDK}" && pwd`
 SRC_DIR=`pwd`
+
+if [ -z "$NCPU" ]; then
+	NCPU=4
+	if uname -s | grep -i "linux" > /dev/null ; then
+		NCPU=`cat /proc/cpuinfo | grep -c -i processor`
+	fi
+fi
 
 # -----------------------
 # Identify the script dir
@@ -102,140 +126,55 @@ fi
 
 # This steps are based on the official openssl build instructions
 # http://wiki.openssl.org/index.php/Android
-if [ "${DO_OPENSSL}" == "1" ]
-then
-(
+if [ "${DO_OPENSSL}" == "1" ]; then (
     if [ ! -d "openssl" ]; then mkdir openssl; fi
     cd openssl
-    cp "${DIR}/openssl/Makefile" .
-    export ANDROID_NDK_ROOT="${NDK_DIR}"
-    make all
-)
-fi
-
+    cp -af "${DIR}/openssl/." .
+    make all ANDROID_NDK="${NDK_DIR}" ANDROID_TOOLCHAIN=clang ANDROID_GCC_VERSION=4.9 ANDROID_ABI=armeabi-v7a OPENSSL_PREFIX=armeabi-v7a OPENSSL_VERSION=$OPENSSLVER
+    make all ANDROID_NDK="${NDK_DIR}" ANDROID_TOOLCHAIN=clang ANDROID_GCC_VERSION=4.9 ANDROID_ABI=x86 OPENSSL_PREFIX=x86 OPENSSL_VERSION=$OPENSSLVER
+) fi
 
 # -----
 # Boost
 # -----
-# Uses the script from MysticTreeGames
+# Uses the build script from Moritz Wundke (formerly MysticTreeGames)
+# https://github.com/moritz-wundke/Boost-for-Android
 
-if [ "${DO_BOOST}" == "1" ]
-then
-(
-    (
-	if [ ! -d "Boost-for-Android" ]
-	then
-	    git clone https://github.com/MysticTreeGames/Boost-for-Android.git
-	fi
-	cd Boost-for-Android
-	if [ ! -e "cpprestsdk.patched.stamp" ]
-	then
-	    git checkout 1c95d349d5f92c5ac1c24e0ec6985272a3e3883c
-	    git reset --hard HEAD
-	    git apply "$DIR/boost-for-android.patch"
-	    touch cpprestsdk.patched.stamp
-	fi
-
-	PATH="$PATH:$NDK_DIR" ./build-android.sh --boost=1.55.0 --with-libraries=random,date_time,filesystem,system,thread,chrono "${NDK_DIR}" || exit 1
-    )
-
-    (
-	if [ ! -d "Boost-for-Android-x86" ]
-	then
-	    git clone Boost-for-Android Boost-for-Android-x86
-	fi
-	cd Boost-for-Android-x86
-	if [ ! -e "cpprestsdk.patched.stamp" ]
-	then
-	    git checkout 1c95d349d5f92c5ac1c24e0ec6985272a3e3883c
-	    git reset --hard HEAD
-	    git apply "$DIR/boost-for-android-x86.patch"
-	    ln -s ../Boost-for-Android/boost_1_55_0.tar.bz2 .
-	    touch cpprestsdk.patched.stamp
-	fi
-
-	PATH="$PATH:$NDK_DIR" ./build-android.sh --boost=1.55.0 --with-libraries=atomic,random,date_time,filesystem,system,thread,chrono "${NDK_DIR}" || exit 1
-    )
-)
-fi
-
-if [ "${DO_CPPRESTSDK}" == "1" ]
-then
-(
-# -------------
-# android-cmake
-# -------------
-    if [ ! -e android-cmake ]
-    then
-	git clone https://github.com/taka-no-me/android-cmake.git
-    fi
+if [ "${DO_BOOST}" == "1" ]; then (
+    if [ ! -d 'Boost-for-Android' ]; then git clone https://github.com/moritz-wundke/Boost-for-Android; fi
+    cd Boost-for-Android
+    git checkout 1bd9aa13463be4553b1146d6a5916566c2fba69c
+    PATH="$PATH:$NDK_DIR" \
+    CXXFLAGS="-std=gnu++11" \
+    ./build-android.sh \
+        --boost=$BOOSTVER \
+        --arch=armeabi-v7a,x86 \
+        --with-libraries=atomic,random,date_time,filesystem,system,thread,chrono \
+        "${NDK_DIR}" || exit 1
+) fi
 
 # ----------
 # casablanca
 # ----------
 
-    (
-	mkdir -p build.armv7.debug
-	cd build.armv7.debug
-	cmake "$DIR/../Release/" \
-	    -DCMAKE_TOOLCHAIN_FILE=../android-cmake/android.toolchain.cmake \
-	    -DANDROID_ABI=armeabi-v7a \
-	    -DANDROID_TOOLCHAIN_NAME=arm-linux-androideabi-clang3.8 \
-	    -DANDROID_STL=none \
-	    -DANDROID_STL_FORCE_FEATURES=ON \
-            -DANDROID_NATIVE_API_LEVEL=android-9 \
-	    -DANDROID_GOLD_LINKER=OFF \
-	    -DCMAKE_BUILD_TYPE=Debug \
-	    -DANDROID_NDK="${ANDROID_NDK}"
-	make -j 1
-    )
+if [ "${DO_CPPRESTSDK}" == "1" ]; then
+    # Use the builtin CMake toolchain configuration that comes with the NDK
+    function build_cpprestsdk { (
+        mkdir -p $1
+        cd $1
+        cmake "${DIR}/.." \
+            -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" \
+            -DANDROID_NDK="${ANDROID_NDK}" \
+            -DANDROID_TOOLCHAIN=clang \
+            -DANDROID_ABI=$2 \
+            -DBOOST_VERSION="${BOOSTVER}" \
+            -DCMAKE_BUILD_TYPE=$3
+        make -j $NCPU
+    ) }
 
-    (
-	mkdir -p build.armv7.release
-	cd build.armv7.release
-	cmake "$DIR/../Release/" \
-	    -DCMAKE_TOOLCHAIN_FILE=../android-cmake/android.toolchain.cmake \
-	    -DANDROID_ABI=armeabi-v7a \
-	    -DANDROID_TOOLCHAIN_NAME=arm-linux-androideabi-clang3.8 \
-	    -DANDROID_STL=none \
-	    -DANDROID_STL_FORCE_FEATURES=ON \
-	    -DANDROID_NDK="${ANDROID_NDK}" \
-	    -DANDROID_NATIVE_API_LEVEL=android-9 \
-	    -DANDROID_GOLD_LINKER=OFF \
-	    -DCMAKE_BUILD_TYPE=Release
-	make -j 1
-    )
-
-    (
-	mkdir -p build.x86.debug
-	cd build.x86.debug
-	cmake "$DIR/../Release/" \
-	    -DCMAKE_TOOLCHAIN_FILE=../android-cmake/android.toolchain.cmake \
-	    -DANDROID_ABI=x86 \
-	    -DANDROID_TOOLCHAIN_NAME=x86-clang3.8 \
-	    -DANDROID_STL=none \
-	    -DANDROID_STL_FORCE_FEATURES=ON \
-            -DANDROID_NATIVE_API_LEVEL=android-9 \
-	    -DANDROID_GOLD_LINKER=OFF \
-	    -DCMAKE_BUILD_TYPE=Debug \
-	    -DANDROID_NDK="${ANDROID_NDK}"
-	make -j 1
-    )
-
-    (
-	mkdir -p build.x86.release
-	cd build.x86.release
-	cmake "$DIR/../Release/" \
-	    -DCMAKE_TOOLCHAIN_FILE=../android-cmake/android.toolchain.cmake \
-	    -DANDROID_ABI=x86 \
-	    -DANDROID_TOOLCHAIN_NAME=x86-clang3.8 \
-	    -DANDROID_STL=none \
-	    -DANDROID_STL_FORCE_FEATURES=ON \
-	    -DANDROID_NDK="${ANDROID_NDK}" \
-	    -DANDROID_NATIVE_API_LEVEL=android-9 \
-	    -DANDROID_GOLD_LINKER=OFF \
-	    -DCMAKE_BUILD_TYPE=Release
-	make -j 1
-    )
-)
+    # Build the cpprestsdk for each target configuration
+    build_cpprestsdk build.armv7.debug armeabi-v7a Debug
+    build_cpprestsdk build.armv7.release armeabi-v7a Release
+    build_cpprestsdk build.x86.debug x86 Debug
+    build_cpprestsdk build.x86.release x86 Release
 fi

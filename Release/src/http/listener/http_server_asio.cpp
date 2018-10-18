@@ -250,7 +250,7 @@ struct crlfcrlf_nonascii_searcher_t
         State state = State::none;
         while (cur != end)
         {
-            char c = *cur;
+            const auto c = static_cast<unsigned char>(*cur);
             if (c == '\r')
             {
                 if (state == State::crlf)
@@ -282,12 +282,7 @@ struct crlfcrlf_nonascii_searcher_t
                     state = State::none;
                 }
             }
-            else if (c <= '\x1F' && c >= '\x00')
-            {
-                ++cur;
-                return std::make_pair(cur, true);
-            }
-            else if (c <= '\xFF' && c >= '\x80')
+            else if (c <= 0x1Fu || c >= 0x80)
             {
                 ++cur;
                 return std::make_pair(cur, true);

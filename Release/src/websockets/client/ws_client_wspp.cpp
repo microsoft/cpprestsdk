@@ -24,23 +24,26 @@
 // Force websocketpp to use C++ std::error_code instead of Boost.
 #define _WEBSOCKETPP_CPP11_SYSTEM_ERROR_
 #if defined(_MSC_VER)
-#pragma warning( push )
-#pragma warning( disable : 4100 4127 4512 4996 4701 4267 )
-#define _WEBSOCKETPP_CPP11_STL_
-#define _WEBSOCKETPP_CONSTEXPR_TOKEN_
-#if _MSC_VER < 1900
-#define _WEBSOCKETPP_NOEXCEPT_TOKEN_
-#endif
-#elif defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wconversion"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic ignored "-Wignored-qualifiers"
-#pragma GCC diagnostic ignored "-Wcast-qual"
+ #pragma warning( push )
+ #pragma warning( disable : 4100 4127 4512 4996 4701 4267 )
+ #define _WEBSOCKETPP_CPP11_STL_
+ #define _WEBSOCKETPP_CONSTEXPR_TOKEN_
+ #if _MSC_VER < 1900
+  #define _WEBSOCKETPP_NOEXCEPT_TOKEN_
+ #endif
 #elif defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wconversion"
-#pragma clang diagnostic ignored "-Winfinite-recursion"
+ #pragma clang diagnostic push
+ #pragma clang diagnostic ignored "-Wconversion"
+ #pragma clang diagnostic ignored "-Winfinite-recursion"
+ #pragma clang diagnostic ignored "-Wtautological-constant-compare"
+ #pragma clang diagnostic ignored "-Wtautological-unsigned-enum-zero-compare"
+ #pragma clang diagnostic ignored "-Wcast-qual"
+#elif defined(__GNUC__)
+ #pragma GCC diagnostic push
+ #pragma GCC diagnostic ignored "-Wconversion"
+ #pragma GCC diagnostic ignored "-Wunused-parameter"
+ #pragma GCC diagnostic ignored "-Wignored-qualifiers"
+ #pragma GCC diagnostic ignored "-Wcast-qual"
 #endif
 
 #include <websocketpp/config/asio_client.hpp>
@@ -49,10 +52,10 @@
 
 #if defined(_WIN32)
 #pragma warning( pop )
-#elif defined(__GNUC__)
-#pragma GCC diagnostic pop
 #elif defined(__clang__)
 #pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#pragma GCC diagnostic pop
 #endif
 
 
