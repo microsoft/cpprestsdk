@@ -878,6 +878,9 @@ private:
     http::method m_method;
 
     // Tracks whether or not a response has already been started for this message.
+    // 0 = No reply sent
+    // 1 = Usual reply sent
+    // 2 = Reply aborted by another thread; e.g. server shutdown
     pplx::details::atomic_long m_initiated_response;
 
     std::unique_ptr<http::details::_http_server_context> m_server_context;

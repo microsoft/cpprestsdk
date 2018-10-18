@@ -1108,7 +1108,7 @@ SUITE(compression_tests)
                                                 }
                                                 else
                                                 {
-                                                    memcpy(vv.data(), v.data(), v.size());
+                                                    std::copy(v.begin(), v.end(), vv.begin());
                                                     got = v.size();
                                                 }
                                                 VERIFY_ARE_EQUAL(buffer_size, got);
