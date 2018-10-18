@@ -205,6 +205,16 @@ jobs:
         cd build.release/Release/Binaries
         ./test_runner *test.so
       displayName: 'Run tests, release'
+  - job: Android
+    pool:
+      vmImage: 'Ubuntu 16.04'
+    steps:
+    - script: |
+        mkdir Build_android/build
+        cd Build_android/build
+        export NCPU=2
+        ../configure.sh --ndk /usr/local/lib/android/sdk/ndk-bundle
+      displayName: 'Build for Android'
   - job: MacOS_Homebrew
     pool:
       vmImage: 'macOS-10.13'
