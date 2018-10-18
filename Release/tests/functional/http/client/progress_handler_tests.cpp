@@ -37,13 +37,13 @@ TEST_FIXTURE(uri_address, set_progress_handler_no_bodies)
 
     http_request msg(mtd);
     msg.set_progress_handler(
-        [&](message_direction::direction direction, utility::size64_t so_far) 
-        { 
+        [&](message_direction::direction direction, utility::size64_t so_far)
+        {
             calls += 1;
-            if (direction == message_direction::upload) 
-                upsize = so_far; 
-            else 
-                downsize = so_far; 
+            if (direction == message_direction::upload)
+                upsize = so_far;
+            else
+                downsize = so_far;
         });
 
     test_http_server::scoped_server scoped(m_uri);
@@ -123,19 +123,19 @@ TEST_FIXTURE(uri_address, set_progress_handler_download)
 
     http_client client(m_uri, config);
     const method mtd = methods::GET;
-    
+
     utility::size64_t upsize = 4711u, downsize = 4711u;
     int calls = 0;
 
     http_request msg(mtd);
     msg.set_progress_handler(
-        [&](message_direction::direction direction, utility::size64_t so_far) 
-        { 
+        [&](message_direction::direction direction, utility::size64_t so_far)
+        {
             calls += 1;
-            if (direction == message_direction::upload) 
-                upsize = so_far; 
-            else 
-                downsize = so_far; 
+            if (direction == message_direction::upload)
+                upsize = so_far;
+            else
+                downsize = so_far;
         });
 
     const size_t repeats = 6000;
@@ -179,19 +179,19 @@ TEST_FIXTURE(uri_address, set_progress_handler_upload_and_download)
     const size_t repeats = 5500;
     for (size_t i = 0; i < repeats; ++i)
         data.append(U("abcdefghihklmnopqrstuvwxyz"));
-    
+
     utility::size64_t upsize = 4711u, downsize = 4711u;
     int calls = 0;
 
     http_request msg(mtd);
     msg.set_progress_handler(
-        [&](message_direction::direction direction, utility::size64_t so_far) 
-        { 
+        [&](message_direction::direction direction, utility::size64_t so_far)
+        {
             calls += 1;
-            if (direction == message_direction::upload) 
-                upsize = so_far; 
-            else 
-                downsize = so_far; 
+            if (direction == message_direction::upload)
+                upsize = so_far;
+            else
+                downsize = so_far;
         });
 
     msg.set_body(data);
@@ -274,7 +274,7 @@ TEST_FIXTURE(uri_address, set_progress_handler_request_timeout)
     const size_t repeats = 5500;
     for (size_t i = 0; i < repeats; ++i)
         data.append(U("abcdefghihklmnopqrstuvwxyz"));
-    
+
     utility::size64_t upsize = 4711u, downsize = 4711u;
     int calls = 0;
 
@@ -282,19 +282,19 @@ TEST_FIXTURE(uri_address, set_progress_handler_request_timeout)
     // We should never see this handler called for download, but for upload should still happen, since
     // there's a server (just not a very responsive one) and we're sending data to it.
     msg.set_progress_handler(
-        [&](message_direction::direction direction, utility::size64_t so_far) 
-        { 
+        [&](message_direction::direction direction, utility::size64_t so_far)
+        {
             calls += 1;
-            if (direction == message_direction::upload) 
-                upsize = so_far; 
-            else 
-                downsize = so_far; 
+            if (direction == message_direction::upload)
+                upsize = so_far;
+            else
+                downsize = so_far;
         });
 
     msg.set_body(data);
     auto t = scoped.server()->next_request();
     auto response = client.request(msg);
-    
+
 #ifdef __APPLE__
     // CodePlex 295
     VERIFY_THROWS(response.get(), http_exception);
