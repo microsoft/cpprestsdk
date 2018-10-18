@@ -203,7 +203,7 @@ TEST(TestTasks_default_construction)
             t1.wait();
             LogFailure(L"t1.wait() should have thrown an exception");
         }
-        catch (invalid_operation) 
+        catch (invalid_operation)
         {
         }
 
@@ -212,7 +212,7 @@ TEST(TestTasks_default_construction)
             t1.get();
             LogFailure(L"t1.get() should have thrown an exception");
         }
-        catch (invalid_operation) 
+        catch (invalid_operation)
         {
         }
 
@@ -224,7 +224,7 @@ TEST(TestTasks_default_construction)
 
             LogFailure(L"t1.then() should have thrown an exception");
         }
-        catch (invalid_operation) 
+        catch (invalid_operation)
         {
         }
     }
@@ -268,7 +268,7 @@ TEST(TestTasks_void_tasks_default_construction)
             t1.wait();
             LogFailure(L"t1.wait() should have thrown an exception");
         }
-        catch (invalid_operation) 
+        catch (invalid_operation)
         {
         }
 
@@ -277,7 +277,7 @@ TEST(TestTasks_void_tasks_default_construction)
             t1.get();
             LogFailure(L"t1.get() should have thrown an exception");
         }
-        catch (invalid_operation) 
+        catch (invalid_operation)
         {
         }
 
@@ -286,7 +286,7 @@ TEST(TestTasks_void_tasks_default_construction)
             t1.then([] () { });
             LogFailure(L"t1.contiue_with() should have thrown an exception");
         }
-        catch (invalid_operation) 
+        catch (invalid_operation)
         {
         }
     }
@@ -332,7 +332,7 @@ TEST(TestTasks_constant_this)
             return 0;
         });
 
-        auto func = [t1]() -> int 
+        auto func = [t1]() -> int
         {
             t1.then([](int last) -> int {
                 return last;
@@ -344,7 +344,7 @@ TEST(TestTasks_constant_this)
         IsTrue(func() == 0, L"Tasks should be able to used inside a Lambda.");
     }
 #endif // _MSC_VER < 1700
-#endif // _MSC_VER    
+#endif // _MSC_VER
 }
 
 TEST(TestTasks_fire_and_forget)
@@ -400,7 +400,7 @@ TEST(TestTaskCompletionEvents_basic2)
     task_completion_event<void> tce;
     task<void> completion(tce);
     auto completion2 = create_task(tce);
-    
+
     task<void> setEvent([=]() {
         tce.set();
     });
@@ -496,7 +496,7 @@ TEST(TestTaskCompletionEvents_multiple_tasks)
     task<void> t1(tce);
     task<void> t2(tce);
     tce.set_exception(1);
-        
+
     t1.then([=](task<void> p) {
         try
         {
@@ -639,7 +639,7 @@ TEST(TestTaskOperators_and_or2)
         IsTrue(vec[2] == 147, L"operator&& did not produce a correct vector[2]. Expected: 147, Actual: %d", vec[2]);
         IsTrue(vec[3] == 192, L"operator&& did not produce a correct vector[3]. Expected: 192, Actual: %d", vec[3]);
         int count = 0;
-        for(unsigned i = 0; i < vec.size(); i++) 
+        for(unsigned i = 0; i < vec.size(); i++)
             count += vec[i];
         return count;
     });
@@ -674,7 +674,7 @@ TEST(TestTaskOperators_and_or3)
         IsTrue(vec[2] == 147, L"operator&& did not produce a correct vector[2]. Expected: 147, Actual: %d", vec[2]);
         IsTrue(vec[3] == 192, L"operator&& did not produce a correct vector[3]. Expected: 192, Actual: %d", vec[3]);
         int count = 0;
-        for(unsigned i = 0; i < vec.size(); i++) 
+        for(unsigned i = 0; i < vec.size(); i++)
             count += vec[i];
         return count;
     });
@@ -862,7 +862,7 @@ TEST(TestTaskOperators_cancellation)
     auto t4 = (t1 && t2 && t3).then([=](std::vector<int> vec) -> int {
         return vec[0] + vec[1] + vec[3];
     });
-        
+
     ct.cancel();
 
     tce.set();
@@ -885,7 +885,7 @@ TEST(TestTaskOperators_cancellation_and)
     task<void> t3 ([]() -> void {});
 
     auto t4 = (t1 && t2 && t3).then([=]() {});
-        
+
     ct.cancel();
 
     tce.set();
@@ -918,7 +918,7 @@ TEST(TestTaskOperators_cancellation_or)
     auto t4 = (t1 || t2 || t3).then([=](int result) -> int {
         return result;
     });
-        
+
     ct1.cancel();
     ct2.cancel();
     ct3.cancel();
@@ -945,7 +945,7 @@ TEST(TestTaskOperators_cancellation_or2)
     task<void> t3 = starter.then([]() -> void {}, ct3.get_token());
 
     auto t4 = (t1 || t2 || t3).then([=]() {});
-        
+
     ct1.cancel();
     ct2.cancel();
     ct3.cancel();
@@ -1087,7 +1087,7 @@ TEST(TestTaskOperators_cancellation_exception)
     }
 
     task<void> t3 = t1.then([&n](){
-        pplx::details::atomic_add(n, 1L); // this should NOT execute, 
+        pplx::details::atomic_add(n, 1L); // this should NOT execute,
     });
 
     task<void> t4 = t1.then([&n](task<void> taskResult){
@@ -1381,249 +1381,247 @@ static int ThrowFunc()
     throw 42;
 }
 
-TEST(TestContinuationsWithTask)
+TEST(TestContinuationsWithTask1)
 {
-    {
-        int n2 = 0;
+    int n2 = 0;
 
-        task<int> t([&]() -> int {
-            return 10;
+    task<int> t([&]() -> int {
+        return 10;
+    });
+
+    t.then([&] (task<int> ti) {
+        n2 = ti.get();
+    }).wait();
+
+    VERIFY_IS_TRUE(n2 == 10);
+}
+
+TEST(TestContinuationsWithTask2)
+{
+    int n = 0;
+
+    task<void> tt1([](){});
+    auto tt2 = tt1.then([&]()-> task<void> {
+        task<void> tt3([&](){
+            n = 1;
         });
+        return tt3;
+    });
 
-        t.then([&] (task<int> ti) {
-            n2 = ti.get();
-        }).wait();
+    tt2.get();
+    VERIFY_IS_TRUE(n == 1);
 
-        VERIFY_IS_TRUE(n2 == 10);
-    }
-
-    {
-        int n = 0;
-
-        task<void> tt1([](){});
-        auto tt2 = tt1.then([&]()-> task<void> {
-            task<void> tt3([&](){
-                n = 1;
-            });
-            return tt3;
+    task<void> tt4 = tt2.then([&]()-> task<void> {
+        task<void> tt5([&](){
+            n = 2;
         });
+        return tt5;
+    });
+    tt4.get();
+    VERIFY_IS_TRUE(n == 2);
+}
 
-        tt2.get();
-        VERIFY_IS_TRUE(n == 1);
+TEST(TestContinuationsWithTask3)
+{
+    bool gotException = true;
+    int n2 = 0;
+    task<int> t(ThrowFunc);
+    t.then([&] (task<int> ti) {
+        try
+        {
+            ti.get();
+            gotException = false;
+        }
+        catch (int)
+        {
+            n2 = 20;
+        }
+    }).wait();
 
-        task<void> tt4 = tt2.then([&]()-> task<void> {
-            task<void> tt5([&](){
-                n = 2;
-            });
-            return tt5;
+    VERIFY_IS_TRUE(gotException);
+    VERIFY_IS_TRUE(n2 == 20);
+}
+
+TEST(TestContinuationsWithTask4)
+{
+    int n2 = 0;
+
+    task<int> t([&]() -> int {
+        return 10;
+    });
+
+    t.then([&] (int n) -> task<int> {
+        task<int> t2([n]() -> int {
+            return n+10;
         });
-        tt4.get();
-        VERIFY_IS_TRUE(n == 2);
-    }
+        return t2;
+    }).then([&](int n) {
+        n2 = n;
+    }).wait();
 
-    {
-        bool gotException = true;
-        int n2 = 0;
-        task<int> t(ThrowFunc);
-        t.then([&] (task<int> ti) {
-            try
-            {
-                ti.get();
-                gotException = false;
-            }
-            catch (int)
-            {
-                n2 = 20;
-            }
-        }).wait();
+    VERIFY_IS_TRUE(n2 == 20);
+}
 
-        VERIFY_IS_TRUE(gotException);
-        VERIFY_IS_TRUE(n2 == 20);
-    }
+TEST(TestContinuationsWithTask5)
+{
+    int n2 = 0;
 
-    {
-        int n2 = 0;
+    task<int> t([&]() -> int {
+        return 10;
+    });
 
-        task<int> t([&]() -> int { 
-            return 10;
+    t.then([&] (task<int> tn) -> task<int> {
+        int n = tn.get();
+        task<int> t2([n]() -> int {
+            return n+10;
         });
+        return t2;
+    }).then([&](task<int> n) {
+        n2 = n.get();
+    }).wait();
 
-        t.then([&] (int n) -> task<int> {
-            task<int> t2([n]() -> int { 
-                return n+10;
-            });
-            return t2;
-        }).then([&](int n) {
-            n2 = n;
-        }).wait();
+    VERIFY_IS_TRUE(n2 == 20);
+}
 
-        VERIFY_IS_TRUE(n2 == 20);
-    }
+TEST(TestContinuationsWithTask6)
+{
+    pplx::details::atomic_long hit(0);
+    auto * hitptr = &hit;
+    task<int> t([](){
+        return 10;
+    });
 
-    {
-        int n2 = 0;
-
-        task<int> t([&]() -> int { 
-            return 10;
-        });
-
-        t.then([&] (task<int> tn) -> task<int> {
-            int n = tn.get();
-            task<int> t2([n]() -> int { 
-                return n+10;
-            });
-            return t2;
-        }).then([&](task<int> n) {
-            n2 = n.get();
-        }).wait();
-
-        VERIFY_IS_TRUE(n2 == 20);
-    }
-
-    { 
-        pplx::details::atomic_long hit(0);
-        auto * hitptr = &hit;
-        task<int> t([](){
-            return 10;
-        });
-
-        auto ot = t.then([hitptr](int n) -> task<int> {
-            auto hitptr1 = hitptr;
-            task<int> it([n, hitptr1]() -> int {
-                os_utilities::sleep(100);
-                pplx::details::atomic_exchange(*hitptr1, 1L);
-                return n * 2;
-            });
-
-            return it;
-        });
-
-        int value = ot.get();
-        VERIFY_IS_TRUE(value == 20 && hit != 0);
-    }
-
-    {
-        volatile long hit = 0;
-        volatile long * hitptr = &hit;
-
-        task<int> t([](){
-            return 10;
-        });
-
-        auto ot = t.then( [hitptr](int n) -> task<int> {
-            volatile long * hitptr1 = hitptr;
-            task<int> it([n, hitptr1]() -> int {
-                os_utilities::sleep(100);
-                os_utilities::interlocked_exchange(hitptr1, 1);
-                return n * 3;
-            });
-
-            // This test is needed to disable an optimizer dead-code check that
-            // winds up generating errors in VS 2010.
-            if ( n == 10 )
-                throw TestException1();
-
-            return it;
-        });
-
-        VERIFY_IS_TRUE(helpers::VerifyException<TestException1>(ot));
-    }
-
-    {
-        volatile long hit = 0;
-        volatile long * hitptr = &hit;
-
-        task<int> t([](){
-            return 10;
-        });
-
-        auto ot = t.then( [hitptr](int n) -> task<int> {
-            volatile long * hitptr1 = hitptr;
-            task<int> it([n, hitptr1]() -> int {
-                os_utilities::sleep(100);
-                os_utilities::interlocked_exchange(hitptr1, 1);
-
-                // This test is needed to disable an optimizer dead-code check that
-                // winds up generating errors in VS 2010.
-                if ( n == 10 )
-                    throw TestException2();
-
-                return n * 3;
-            });
-
-            return it;
-        });
-
-        VERIFY_IS_TRUE(helpers::VerifyException<TestException2>(ot), "(7) Inner task exception not propagated out of outer .get()");
-        VERIFY_IS_TRUE(hit != 0, "(7) Expected inner task hit marker to be set!");
-    }
-
-    {
-        volatile long hit = 0;
-        volatile long * hitptr = &hit;
-        extensibility::event_t e;
-        task<int> it;
-
-        task<int> t([](){
-            return 10;
-        });
-
-        auto ot = t.then( [hitptr, &it, &e](int n) -> task<int> {
-            volatile long * hitptr1 = hitptr;
-            it = task<int>([hitptr1, n]() -> int {
-                os_utilities::interlocked_exchange(hitptr1, 1);
-                // This test is needed to disable an optimizer dead-code check that
-                // winds up generating errors in VS 2010.
-                if ( n == 10 )
-                    throw TestException1();
-                return n * 5;
-            });
-
-            e.set();
+    auto ot = t.then([hitptr](int n) -> task<int> {
+        auto hitptr1 = hitptr;
+        task<int> it([n, hitptr1]() -> int {
             os_utilities::sleep(100);
+            pplx::details::atomic_exchange(*hitptr1, 1L);
+            return n * 2;
+        });
+
+        return it;
+    });
+
+    int value = ot.get();
+    VERIFY_IS_TRUE(value == 20 && hit != 0);
+}
+
+TEST(TestContinuationsWithTask7)
+{
+    volatile long hit = 0;
+    volatile long * hitptr = &hit;
+
+    task<int> t([](){
+        return 10;
+    });
+
+    auto ot = t.then( [hitptr](int n) -> task<int> {
+        task<int> it([n, hitptr]() -> int {
+            throw TestException1();
+        });
+
+        return it;
+    });
+
+    VERIFY_IS_TRUE(helpers::VerifyException<TestException1>(ot));
+}
+
+TEST(TestContinuationsWithTask8)
+{
+    volatile long hit = 0;
+    volatile long * hitptr = &hit;
+
+    task<int> t([](){
+        return 10;
+    });
+
+    auto ot = t.then( [hitptr](int n) -> task<int> {
+        volatile long * hitptr1 = hitptr;
+        task<int> it([n, hitptr1]() -> int {
+            os_utilities::sleep(100);
+            os_utilities::interlocked_exchange(hitptr1, 1);
+
             // This test is needed to disable an optimizer dead-code check that
             // winds up generating errors in VS 2010.
             if ( n == 10 )
                 throw TestException2();
-            return it;
+
+            return n * 3;
         });
 
-        e.wait();
+        return it;
+    });
 
-        VERIFY_IS_TRUE(helpers::VerifyException<TestException2>(ot), "(8) Outer task exception not propagated when inner task also throws");
-        VERIFY_IS_TRUE(helpers::VerifyException<TestException1>(it), "(8) Inner task exception not explicitly propgated on pass out / get");
-        VERIFY_IS_TRUE(hit != 0, "(8) Inner hit marker expected!");
-    }
+    VERIFY_IS_TRUE(helpers::VerifyException<TestException2>(ot), "(7) Inner task exception not propagated out of outer .get()");
+    VERIFY_IS_TRUE(hit != 0, "(7) Expected inner task hit marker to be set!");
+}
 
-    {
-        volatile long hit = 0;
+TEST(TestContinuationsWithTask9)
+{
+    volatile long hit = 0;
+    volatile long * hitptr = &hit;
+    extensibility::event_t e;
+    task<int> it;
 
-        task<int> t([](){
-            return 10;
+    task<int> t([](){
+        return 10;
+    });
+
+    auto ot = t.then( [hitptr, &it, &e](int n) -> task<int> {
+        volatile long * hitptr1 = hitptr;
+        it = task<int>([hitptr1, n]() -> int {
+            os_utilities::interlocked_exchange(hitptr1, 1);
+            // This test is needed to disable an optimizer dead-code check that
+            // winds up generating errors in VS 2010.
+            if ( n == 10 )
+                throw TestException1();
+            return n * 5;
         });
 
-        auto ot = t.then( [&](int n) -> task<int> {
-            task<int> it([&, n]() -> int {
-                os_utilities::sleep(100);
-                // This test is needed to disable an optimizer dead-code check that
-                // winds up generating errors in VS 2010.
-                if ( n == 10 )
-                    throw TestException1();
-                return n * 6;
-            });
-            return it;
+        e.set();
+        os_utilities::sleep(100);
+        // This test is needed to disable an optimizer dead-code check that
+        // winds up generating errors in VS 2010.
+        if ( n == 10 )
+            throw TestException2();
+        return it;
+    });
+
+    e.wait();
+
+    VERIFY_IS_TRUE(helpers::VerifyException<TestException2>(ot), "(8) Outer task exception not propagated when inner task also throws");
+    VERIFY_IS_TRUE(helpers::VerifyException<TestException1>(it), "(8) Inner task exception not explicitly propgated on pass out / get");
+    VERIFY_IS_TRUE(hit != 0, "(8) Inner hit marker expected!");
+}
+
+TEST(TestContinuationsWithTask10)
+{
+    volatile long hit = 0;
+
+    task<int> t([](){
+        return 10;
+    });
+
+    auto ot = t.then( [&](int n) -> task<int> {
+        task<int> it([&, n]() -> int {
+            os_utilities::sleep(100);
+            // This test is needed to disable an optimizer dead-code check that
+            // winds up generating errors in VS 2010.
+            if ( n == 10 )
+                throw TestException1();
+            return n * 6;
         });
+        return it;
+    });
 
-        auto otc = ot.then( [&](task<int> itp){
-            os_utilities::interlocked_exchange(&hit, 1);
-            VERIFY_IS_TRUE(helpers::VerifyException<TestException1>(itp), "(9) Outer task exception handling continuation did not get plumbed inner exception");
-        });
+    auto otc = ot.then( [&](task<int> itp){
+        os_utilities::interlocked_exchange(&hit, 1);
+        VERIFY_IS_TRUE(helpers::VerifyException<TestException1>(itp), "(9) Outer task exception handling continuation did not get plumbed inner exception");
+    });
 
-        VERIFY_IS_TRUE(helpers::VerifyException<TestException1>(ot), "(9) Inner task exception not propagated correctly");
-        helpers::ObserveException(otc);
-        VERIFY_IS_TRUE(hit != 0, "(9) Outer task exception handling continuation did not run!");
-    }
-
+    VERIFY_IS_TRUE(helpers::VerifyException<TestException1>(ot), "(9) Inner task exception not propagated correctly");
+    helpers::ObserveException(otc);
+    VERIFY_IS_TRUE(hit != 0, "(9) Outer task exception handling continuation did not run!");
 }
 
 TEST(TestUnwrappingCtors)
@@ -1734,7 +1732,7 @@ TEST(TestUnwrappingCtors)
             });
         }).get();
         VERIFY_IS_TRUE(res==1, "unexpected value in TestUnwrappingCtors, create_task, location 1");
-    
+
         create_task([]() -> task<void> {
             return create_task([]() {
             });
@@ -1748,10 +1746,10 @@ TEST(TestUnwrappingCtors)
         // Create a task that is always cancelled
         auto falseTask = create_task([]() {}, cts.get_token());
         cancellation_token ct2 = cts2.get_token();
-        create_task([falseTask]() { 
+        create_task([falseTask]() {
             // Task unwrapping!
             // This should not crash
-            return falseTask; 
+            return falseTask;
         }, ct2).then([this, falseTask, ct2](task<void> t) -> task<void> {
             VERIFY_IS_TRUE(t.wait() == canceled, "unexpected value in TestUnwrappingCtors, cancellation token, location 1");
             VERIFY_IS_TRUE(!ct2.is_canceled(), "unexpected value in TestUnwrappingCtors, cancellation token, location 2");
@@ -1776,7 +1774,7 @@ TEST(TestNestedTasks)
                 return task<int>([=]() -> int {
                     return val1 + 22;
                 });
-            }); 
+            });
         });
 
         int n = resultTask.get().get();
@@ -1789,17 +1787,17 @@ TEST(TestNestedTasks)
         int * flagptr = &flag;
         task<void> rootTask([&]() { flag++; });
 
-        task<task<void>> resultTask = rootTask.then([flagptr]() -> task<task<void>> 
+        task<task<void>> resultTask = rootTask.then([flagptr]() -> task<task<void>>
         {
             auto flag1 = flagptr;
-            return task<task<void>>([flag1]() -> task<void> 
+            return task<task<void>>([flag1]() -> task<void>
             {
                 auto flag2 = flag1;
-                return task<void>([flag2]() 
+                return task<void>([flag2]()
                 {
                     ++(flag2[0]);
                 });
-            }); 
+            });
         });
 
         resultTask.get().wait();
@@ -1809,7 +1807,7 @@ TEST(TestNestedTasks)
     {
         task<int> rootTask([]() -> int { return 234; });
 
-        task<task<task<int>>> 
+        task<task<task<int>>>
             resultTask = rootTask.then([](int value) -> task<task<task<int>>> {
             return task<task<task<int>>>([=]() -> task<task<int>> {
                 auto v1 = value;
@@ -1818,7 +1816,7 @@ TEST(TestNestedTasks)
                     return task<int>([=]() -> int {
                         return v2 + 22;
                     });
-                }); 
+                });
             });
         });
 

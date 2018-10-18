@@ -29,7 +29,8 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 #else
-#include <mutex>   
+#include <mutex>
+#include <atomic>
 #include <condition_variable>
 #endif
 
@@ -80,7 +81,7 @@ namespace platform
         static const unsigned int timeout_infinite = 0xFFFFFFFF;
 
         event_impl()
-            : _signaled(false) 
+            : _signaled(false)
         {
         }
 
@@ -209,7 +210,7 @@ namespace platform
                 _M_cs.lock();
                 _M_owner = id;
                 _M_recursionCount = 1;
-            }            
+            }
         }
 
         void unlock()
@@ -223,12 +224,12 @@ namespace platform
             {
                 _M_owner = -1;
                 _M_cs.unlock();
-            }           
+            }
         }
 
     private:
         cpprest_synchronization::mutex _M_cs;
-        volatile long _M_owner;
+        std::atomic<long> _M_owner;
         long _M_recursionCount;
     };
 
@@ -298,7 +299,7 @@ namespace extensibility
 #else
     typedef details::linux_scheduler default_scheduler_t;
 #endif
-    
+
 namespace details
 {
     /// <summary>

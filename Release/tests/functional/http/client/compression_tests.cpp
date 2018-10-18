@@ -642,7 +642,7 @@ SUITE(compression_tests)
             // Null decompressor - effectively forces no compression algorithms
             dv.push_back(std::shared_ptr<web::http::compression::decompress_factory>());
             builtin = web::http::compression::details::build_supported_header(ctype, dv);
-            VERIFY_ARE_EQUAL((bool)transfer, builtin.empty());
+            VERIFY_ARE_EQUAL(transfer != 0, builtin.empty());
             dv.pop_back();
 
             if (web::http::compression::builtin::supported())
@@ -693,17 +693,17 @@ SUITE(compression_tests)
                     if (c)
                     {
                         VERIFY_IS_TRUE(web::http::compression::builtin::supported());
-                        VERIFY_IS_FALSE((bool)fake);
+                        VERIFY_IS_FALSE(fake != 0);
                         VERIFY_ARE_EQUAL(c->algorithm(), gzip);
                     }
                     else
                     {
-                        VERIFY_IS_TRUE((bool)fake || !web::http::compression::builtin::supported());
+                        VERIFY_IS_TRUE(fake != 0 || !web::http::compression::builtin::supported());
                     }
 
                     // Supplied compressor - both matching and non-matching
                     c = web::http::compression::details::get_compressor_from_header(*te, ctype, fcv);
-                    VERIFY_ARE_EQUAL((bool)c, (bool)fake);
+                    VERIFY_ARE_EQUAL(c != 0, fake != 0);
                     if (c)
                     {
                         VERIFY_ARE_EQUAL(c->algorithm(), fake_provider::FAKE);
