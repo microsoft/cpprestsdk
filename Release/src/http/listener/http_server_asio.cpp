@@ -320,7 +320,19 @@ private:
     boost::asio::streambuf m_response_buf;
     http_linux_server* m_p_server;
     hostport_listener* m_p_parent;
-    http_request m_request;
+    mutable std::mutex m_request_mtx;
+    http_request m_request_tmp;
+
+    void set_request(http_request req) {
+        std::lock_guard<std::mutex> lck(m_request_mtx);
+        m_request_tmp = std::move(req);
+    }
+
+    http_request get_request() const {
+        std::lock_guard<std::mutex> lck(m_request_mtx);
+        return m_request_tmp;
+    }
+
     size_t m_read, m_write;
     size_t m_read_size, m_write_size;
     bool m_close;
@@ -409,7 +421,7 @@ private:
     will_erase_from_parent_t do_response()
     {
         auto unique_reference = this->get_reference();
-        m_request.get_response().then([=](pplx::task<http_response> r_task)
+        get_request().get_response().then([=](pplx::task<http_response> r_task)
         {
             http_response response;
             try
@@ -424,7 +436,7 @@ private:
             serialize_headers(response);
 
             // before sending response, the full incoming message need to be processed.
-            return m_request.content_ready().then([=](pplx::task<http_request>)
+            return get_request().content_ready().then([=](pplx::task<http_request>)
             {
                 (will_deref_and_erase_t)this->async_write(&asio_server_connection::handle_headers_written, response);
             });
@@ -435,7 +447,7 @@ private:
     will_erase_from_parent_t do_bad_response()
     {
         auto unique_reference = this->get_reference();
-        m_request.get_response().then([=](pplx::task<http_response> r_task)
+        get_request().get_response().then([=](pplx::task<http_response> r_task)
         {
             http_response response;
             try
@@ -540,7 +552,7 @@ void asio_server_connection::close()
         sock->shutdown(tcp::socket::shutdown_both, ec);
         sock->close(ec);
     }
-    m_request._reply_if_not_already(status_codes::InternalError);
+    get_request()._reply_if_not_already(status_codes::InternalError);
 }
 
 will_deref_and_erase_t asio_server_connection::start_request_response()
@@ -617,7 +629,8 @@ void hostport_listener::on_accept(std::unique_ptr<ip::tcp::socket> socket, const
 
 will_deref_and_erase_t asio_server_connection::handle_http_line(const boost::system::error_code& ec)
 {
-    m_request = http_request::_create_request(make_unique<linux_request_context>());
+    auto thisRequest = http_request::_create_request(make_unique<linux_request_context>());
+    set_request(thisRequest);
     if (ec)
     {
         // client closed connection
@@ -632,7 +645,7 @@ will_deref_and_erase_t asio_server_connection::handle_http_line(const boost::sys
         }
         else
         {
-            m_request._reply_if_not_already(status_codes::BadRequest);
+            thisRequest._reply_if_not_already(status_codes::BadRequest);
             m_close = true;
             (will_erase_from_parent_t)do_bad_response();
             (will_deref_t)deref();
@@ -669,14 +682,14 @@ will_deref_and_erase_t asio_server_connection::handle_http_line(const boost::sys
         // Check to see if there is not allowed character on the input
         if (!web::http::details::validate_method(http_verb))
         {
-            m_request.reply(status_codes::BadRequest);
+            thisRequest.reply(status_codes::BadRequest);
             m_close = true;
             (will_erase_from_parent_t)do_bad_response();
             (will_deref_t)deref();
             return will_deref_and_erase_t{};
         }
 
-        m_request.set_method(http_verb);
+        thisRequest.set_method(http_verb);
 
         std::string http_path_and_version;
         std::getline(request_stream, http_path_and_version);
@@ -685,7 +698,7 @@ will_deref_and_erase_t asio_server_connection::handle_http_line(const boost::sys
         // Make sure path and version is long enough to contain the HTTP version
         if(http_path_and_version.size() < VersionPortionSize + 2)
         {
-            m_request.reply(status_codes::BadRequest);
+            thisRequest.reply(status_codes::BadRequest);
             m_close = true;
             (will_erase_from_parent_t)do_bad_response();
             (will_deref_t)deref();
@@ -695,12 +708,12 @@ will_deref_and_erase_t asio_server_connection::handle_http_line(const boost::sys
         // Get the path - remove the version portion and prefix space
         try
         {
-            m_request.set_request_uri(utility::conversions::to_string_t(
+            thisRequest.set_request_uri(utility::conversions::to_string_t(
                 http_path_and_version.substr(1, http_path_and_version.size() - VersionPortionSize - 1)));
         }
         catch (const std::exception& e) // may be std::range_error indicating invalid Unicode, or web::uri_exception
         {
-            m_request.reply(status_codes::BadRequest, e.what());
+            thisRequest.reply(status_codes::BadRequest, e.what());
             m_close = true;
             (will_erase_from_parent_t)do_bad_response();
             (will_deref_t)deref();
@@ -710,9 +723,9 @@ will_deref_and_erase_t asio_server_connection::handle_http_line(const boost::sys
         // Get the version
         std::string http_version = http_path_and_version.substr(http_path_and_version.size() - VersionPortionSize + 1, VersionPortionSize - 2);
 
-        auto m_request_impl = m_request._get_impl().get();
+        auto requestImpl = thisRequest._get_impl().get();
         web::http::http_version parsed_version = web::http::http_version::from_string(http_version);
-        m_request_impl->_set_http_version(parsed_version);
+        requestImpl->_set_http_version(parsed_version);
 
         // if HTTP version is 1.0 then disable pipelining
         if (parsed_version == web::http::http_versions::HTTP_1_0)
@@ -725,7 +738,7 @@ will_deref_and_erase_t asio_server_connection::handle_http_line(const boost::sys
         auto endpoint = m_socket->remote_endpoint(socket_ec);
         if (!socket_ec)
         {
-            m_request._get_impl()->_set_remote_address(utility::conversions::to_string_t(
+            requestImpl->_set_remote_address(utility::conversions::to_string_t(
                 endpoint.address().to_string()));
         }
 
@@ -739,7 +752,8 @@ will_deref_and_erase_t asio_server_connection::handle_headers()
     request_stream.imbue(std::locale::classic());
     std::string header;
 
-    auto& headers = m_request.headers();
+    auto currentRequest = get_request();
+    auto& headers = currentRequest.headers();
 
     while (std::getline(request_stream, header) && header != "\r")
     {
@@ -763,7 +777,7 @@ will_deref_and_erase_t asio_server_connection::handle_headers()
         }
         else
         {
-            m_request.reply(status_codes::BadRequest);
+            currentRequest.reply(status_codes::BadRequest);
             m_close = true;
             (will_erase_from_parent_t)do_bad_response();
             (will_deref_t)deref();
@@ -774,17 +788,17 @@ will_deref_and_erase_t asio_server_connection::handle_headers()
     m_chunked = false;
     utility::string_t name;
     // check if the client has requested we close the connection
-    if (m_request.headers().match(header_names::connection, name))
+    if (currentRequest.headers().match(header_names::connection, name))
     {
         m_close = boost::iequals(name, U("close"));
     }
 
-    if (m_request.headers().match(header_names::transfer_encoding, name))
+    if (currentRequest.headers().match(header_names::transfer_encoding, name))
     {
         m_chunked = boost::ifind_first(name, U("chunked"));
     }
 
-    m_request._get_impl()->_prepare_to_receive_data();
+    currentRequest._get_impl()->_prepare_to_receive_data();
     if (m_chunked)
     {
         ++m_refs;
@@ -792,14 +806,14 @@ will_deref_and_erase_t asio_server_connection::handle_headers()
         return dispatch_request_to_listener();
     }
 
-    if (!m_request.headers().match(header_names::content_length, m_read_size))
+    if (!currentRequest.headers().match(header_names::content_length, m_read_size))
     {
         m_read_size = 0;
     }
 
     if (m_read_size == 0)
     {
-        m_request._get_impl()->_complete(0);
+        currentRequest._get_impl()->_complete(0);
     }
     else // need to read the sent data
     {
@@ -816,9 +830,10 @@ will_deref_and_erase_t asio_server_connection::handle_headers()
 
 will_deref_t asio_server_connection::handle_chunked_header(const boost::system::error_code& ec)
 {
+    auto requestImpl = get_request()._get_impl();
     if (ec)
     {
-        m_request._get_impl()->_complete(0, std::make_exception_ptr(http_exception(ec.value())));
+        requestImpl->_complete(0, std::make_exception_ptr(http_exception(ec.value())));
         return deref();
     }
     else
@@ -831,7 +846,7 @@ will_deref_t asio_server_connection::handle_chunked_header(const boost::system::
         m_read += len;
         if (len == 0)
         {
-            m_request._get_impl()->_complete(m_read);
+            requestImpl->_complete(m_read);
             return deref();
         }
         else
@@ -847,14 +862,15 @@ will_deref_t asio_server_connection::handle_chunked_header(const boost::system::
 
 will_deref_t asio_server_connection::handle_chunked_body(const boost::system::error_code& ec, int toWrite)
 {
+    auto requestImpl = get_request()._get_impl();
     if (ec)
     {
-        m_request._get_impl()->_complete(0, std::make_exception_ptr(http_exception(ec.value())));
+        requestImpl->_complete(0, std::make_exception_ptr(http_exception(ec.value())));
         return deref();
     }
     else
     {
-        auto writebuf = m_request._get_impl()->outstream().streambuf();
+        auto writebuf = requestImpl->outstream().streambuf();
         writebuf.putn_nocopy(buffer_cast<const uint8_t *>(m_request_buf.data()), toWrite).then([=](pplx::task<size_t> writeChunkTask) -> will_deref_t
         {
             try
@@ -863,7 +879,7 @@ will_deref_t asio_server_connection::handle_chunked_body(const boost::system::er
             }
             catch (...)
             {
-                m_request._get_impl()->_complete(0, std::current_exception());
+                requestImpl->_complete(0, std::current_exception());
                 return deref();
             }
 
@@ -876,16 +892,17 @@ will_deref_t asio_server_connection::handle_chunked_body(const boost::system::er
 
 will_deref_t asio_server_connection::handle_body(const boost::system::error_code& ec)
 {
+    auto requestImpl = get_request()._get_impl();
     // read body
     if (ec)
     {
-        m_request._get_impl()->_complete(0, std::make_exception_ptr(http_exception(ec.value())));
+        requestImpl->_complete(0, std::make_exception_ptr(http_exception(ec.value())));
         return deref();
     }
     else if (m_read < m_read_size)  // there is more to read
     {
-        auto writebuf = m_request._get_impl()->outstream().streambuf();
-        writebuf.putn_nocopy(boost::asio::buffer_cast<const uint8_t*>(m_request_buf.data()), std::min(m_request_buf.size(), m_read_size - m_read)).then([=](pplx::task<size_t> writtenSizeTask) -> will_deref_t
+        auto writebuf = requestImpl->outstream().streambuf();
+        writebuf.putn_nocopy(boost::asio::buffer_cast<const uint8_t*>(m_request_buf.data()), std::min(m_request_buf.size(), m_read_size - m_read)).then([this](pplx::task<size_t> writtenSizeTask) -> will_deref_t
         {
             size_t writtenSize = 0;
             try
@@ -894,7 +911,7 @@ will_deref_t asio_server_connection::handle_body(const boost::system::error_code
             }
             catch (...)
             {
-                m_request._get_impl()->_complete(0, std::current_exception());
+                get_request()._get_impl()->_complete(0, std::current_exception());
                 return deref();
             }
             m_read += writtenSize;
@@ -910,7 +927,7 @@ will_deref_t asio_server_connection::handle_body(const boost::system::error_code
     }
     else  // have read request body
     {
-        m_request._get_impl()->_complete(m_read);
+        requestImpl->_complete(m_read);
         return deref();
     }
 }
@@ -981,14 +998,14 @@ will_deref_and_erase_t asio_server_connection::dispatch_request_to_listener()
 {
     // locate the listener:
     http_listener_impl* pListener = nullptr;
-
+    auto currentRequest = get_request();
     try
     {
-        pListener = m_p_parent->find_listener(m_request.relative_uri());
+        pListener = m_p_parent->find_listener(currentRequest.relative_uri());
     }
     catch (const std::exception&) // may be web::uri_exception, or std::range_error indicating invalid Unicode
     {
-        m_request.reply(status_codes::BadRequest);
+        currentRequest.reply(status_codes::BadRequest);
         (will_erase_from_parent_t)do_response();
         (will_deref_t)deref();
         return will_deref_and_erase_t{};
@@ -996,13 +1013,13 @@ will_deref_and_erase_t asio_server_connection::dispatch_request_to_listener()
 
     if (pListener == nullptr)
     {
-        m_request.reply(status_codes::NotFound);
+        currentRequest.reply(status_codes::NotFound);
         (will_erase_from_parent_t)do_response();
         (will_deref_t)deref();
         return will_deref_and_erase_t{};
     }
 
-    m_request._set_listener_path(pListener->uri().path());
+    currentRequest._set_listener_path(pListener->uri().path());
     (will_erase_from_parent_t)do_response();
 
     // Look up the lock for the http_listener.
@@ -1013,7 +1030,7 @@ will_deref_and_erase_t asio_server_connection::dispatch_request_to_listener()
         // It is possible the listener could have unregistered.
         if(m_p_server->m_registered_listeners.find(pListener) == m_p_server->m_registered_listeners.end())
         {
-            m_request.reply(status_codes::NotFound);
+            currentRequest.reply(status_codes::NotFound);
 
             (will_deref_t)deref();
             return will_deref_and_erase_t{};
@@ -1027,13 +1044,13 @@ will_deref_and_erase_t asio_server_connection::dispatch_request_to_listener()
 
     try
     {
-        pListener->handle_request(m_request);
+        pListener->handle_request(currentRequest);
         pListenerLock->unlock();
     }
     catch(...)
     {
         pListenerLock->unlock();
-        m_request._reply_if_not_already(status_codes::InternalError);
+        currentRequest._reply_if_not_already(status_codes::InternalError);
     }
 
     (will_deref_t)deref();
