@@ -13,7 +13,7 @@
 
 set -e
 
-# The Android NDK r10e or later may work, but we test with r17c. To download, see the following link:
+# The Android NDK r10e or later may work, but we test with r18b. To download, see the following link:
 # https://developer.android.com/ndk/downloads/index.html
 
 # -----------------
@@ -143,7 +143,7 @@ if [ "${DO_OPENSSL}" == "1" ]; then (
 if [ "${DO_BOOST}" == "1" ]; then (
     if [ ! -d 'Boost-for-Android' ]; then git clone https://github.com/moritz-wundke/Boost-for-Android; fi
     cd Boost-for-Android
-    git checkout 1bd9aa13463be4553b1146d6a5916566c2fba69c
+    git checkout 84973078a3d7668067d422d4654696ef59ab9d6d
     PATH="$PATH:$NDK_DIR" \
     CXXFLAGS="-std=gnu++11" \
     ./build-android.sh \
