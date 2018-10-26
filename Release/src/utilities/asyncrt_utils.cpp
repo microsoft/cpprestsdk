@@ -347,18 +347,32 @@ const std::error_category & __cdecl linux_category()
 #define H_SURROGATE_END 0xDBFF
 #define SURROGATE_PAIR_START 0x10000
 
+// Create a dedicated type for characters to avoid the issue
+// of different platforms defaulting char to be either signed
+// or unsigned.
+using UtilCharInternal_t = signed char;
+
+
 inline size_t count_utf8_to_utf16(const std::string& s)
 {
     const size_t sSize = s.size();
-    const char* const sData = s.data();
+    auto sData = reinterpret_cast<const UtilCharInternal_t* const>(s.data());
     size_t result{ sSize };
+
     for (size_t index = 0; index < sSize;)
     {
-        const char c{ sData[index++] };
-        if ((c & BIT8) == 0)
+        if( sData[index] > 0 )
         {
-            continue;
+            // use fast inner loop to skip single byte code points (which are
+            // expected to be the most frequent)
+            while ((++index < sSize) && (sData[index] > 0))
+                ;
+
+            if (index >= sSize) break;
         }
+
+        // start special handling for multi-byte code points
+        const UtilCharInternal_t c{ sData[index++] };
 
         if ((c & BIT7) == 0)
         {
@@ -371,7 +385,7 @@ inline size_t count_utf8_to_utf16(const std::string& s)
                 throw std::range_error("UTF-8 string is missing bytes in character");
             }
 
-            const char c2{ sData[index++] };
+            const UtilCharInternal_t c2{ sData[index++] };
             if ((c2 & 0xC0) != BIT8)
             {
                 throw std::range_error("UTF-8 continuation byte is missing leading bit mask");
@@ -387,8 +401,8 @@ inline size_t count_utf8_to_utf16(const std::string& s)
                 throw std::range_error("UTF-8 string is missing bytes in character");
             }
 
-            const char c2{ sData[index++] };
-            const char c3{ sData[index++] };
+            const UtilCharInternal_t c2{ sData[index++] };
+            const UtilCharInternal_t c3{ sData[index++] };
             if (((c2 | c3) & 0xC0) != BIT8)
             {
                 throw std::range_error("UTF-8 continuation byte is missing leading bit mask");
@@ -403,9 +417,9 @@ inline size_t count_utf8_to_utf16(const std::string& s)
                 throw std::range_error("UTF-8 string is missing bytes in character");
             }
 
-            const char c2{ sData[index++] };
-            const char c3{ sData[index++] };
-            const char c4{ sData[index++] };
+            const UtilCharInternal_t c2{ sData[index++] };
+            const UtilCharInternal_t c3{ sData[index++] };
+            const UtilCharInternal_t c4{ sData[index++] };
             if (((c2 | c3 | c4) & 0xC0) != BIT8)
             {
                 throw std::range_error("UTF-8 continuation byte is missing leading bit mask");
@@ -427,21 +441,21 @@ utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
 {
     // Save repeated heap allocations, use the length of resulting sequence.
     const size_t srcSize = s.size();
-    const std::string::value_type* const srcData = &s[0];
+    auto srcData = reinterpret_cast<const UtilCharInternal_t* const>(s.data());
     utf16string dest(count_utf8_to_utf16(s), L'\0');
     utf16string::value_type* const destData = &dest[0];
     size_t destIndex = 0;
 
     for (size_t index = 0; index < srcSize; ++index)
     {
-        std::string::value_type src = srcData[index];
+        UtilCharInternal_t src = srcData[index];
         switch (src & 0xF0)
         {
         case 0xF0: // 4 byte character, 0x10000 to 0x10FFFF
             {
-                const char c2{ srcData[++index] };
-                const char c3{ srcData[++index] };
-                const char c4{ srcData[++index] };
+                const UtilCharInternal_t c2{ srcData[++index] };
+                const UtilCharInternal_t c3{ srcData[++index] };
+                const UtilCharInternal_t c4{ srcData[++index] };
                 uint32_t codePoint = ((src & LOW_3BITS) << 18) | ((c2 & LOW_6BITS) << 12) | ((c3 & LOW_6BITS) << 6) | (c4 & LOW_6BITS);
                 if (codePoint >= SURROGATE_PAIR_START)
                 {
@@ -464,20 +478,27 @@ utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
             break;
         case 0xE0: // 3 byte character, 0x800 to 0xFFFF
             {
-                const char c2{ srcData[++index] };
-                const char c3{ srcData[++index] };
+                const UtilCharInternal_t c2{ srcData[++index] };
+                const UtilCharInternal_t c3{ srcData[++index] };
                 destData[destIndex++] = static_cast<utf16string::value_type>(((src & LOW_4BITS) << 12) | ((c2 & LOW_6BITS) << 6) | (c3 & LOW_6BITS));
             }
             break;
         case 0xD0: // 2 byte character, 0x80 to 0x7FF
         case 0xC0:
             {
-                const char c2{ srcData[++index] };
+                const UtilCharInternal_t c2{ srcData[++index] };
                 destData[destIndex++] = static_cast<utf16string::value_type>(((src & LOW_5BITS) << 6) | (c2 & LOW_6BITS));
             }
             break;
         default: // single byte character, 0x0 to 0x7F
-            destData[destIndex++] = static_cast<utf16string::value_type>(src);
+            // try to use a fast inner loop for following single byte characters,
+            // since they are quite probable
+            do
+            {
+                destData[destIndex++] = static_cast<utf16string::value_type>(srcData[index++]);
+            } while (index < srcSize && srcData[index] > 0);
+            // adjust index since it will be incremented by the for loop
+            --index;
         }
     }
     return dest;

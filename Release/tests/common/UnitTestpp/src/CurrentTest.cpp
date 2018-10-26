@@ -34,7 +34,7 @@
 
 namespace {
 	std::atomic<UnitTest::TestResults *> testResults;
-	std::atomic<const UnitTest::TestDetails *> testDetails;
+	std::atomic<UnitTest::TestDetails *> testDetails; // non-const pointer to avoid VS2013 STL bug
 }
 
 namespace UnitTest {
@@ -54,7 +54,7 @@ UNITTEST_LINKAGE const TestDetails* CurrentTest::Details()
 }
 
 UNITTEST_LINKAGE void CurrentTest::SetDetails(const UnitTest::TestDetails * d) {
-	testDetails.store(d);
+	testDetails.store(const_cast<UnitTest::TestDetails *>(d));
 }
 
 }
