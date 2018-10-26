@@ -205,6 +205,31 @@ TEST(utf8_to_utf16)
 #else
     VERIFY_ARE_EQUAL(conversion.from_bytes(input), result);
 #endif
+
+
+    // 1 byte character followed by 4 byte character
+    input.clear();
+    input.push_back( 51u); // 00110011
+    // U+10000
+    input.push_back(244u); // 11110100
+    input.push_back(128u); // 10000000
+    input.push_back(128u); // 10000000
+    input.push_back(128u); // 10000000
+    // U+10FFFF
+    input.push_back(244u); // 11110100
+    input.push_back(143u); // 10001111
+    input.push_back(191u); // 10111111
+    input.push_back(191u); // 10111111
+    result = utility::conversions::utf8_to_utf16(input);
+#if defined(__GLIBCXX__)
+    VERIFY_ARE_EQUAL(51, result[0]);
+    VERIFY_ARE_EQUAL(56256, result[1]);
+    VERIFY_ARE_EQUAL(56320, result[2]);
+    VERIFY_ARE_EQUAL(56319, result[3]);
+    VERIFY_ARE_EQUAL(57343, result[4]);
+#else
+    VERIFY_ARE_EQUAL(conversion.from_bytes(input), result);
+#endif
 }
 
 TEST(utf16_to_utf8_errors)
