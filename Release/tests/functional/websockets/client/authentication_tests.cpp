@@ -162,15 +162,18 @@ TEST(sni_with_older_server_test)
 }
 
 // WinRT doesn't expose option for disabling.
-TEST(disable_sni)
+// No stable server is available to reliably test this.
+// The configuration below relies on a timeout in the success case.
+TEST(disable_sni, "Ignore", "Manual")
 {
     websocket_client_config config;
+    config.set_server_name("expired.badssl.com");
     config.disable_sni();
     websocket_client client(config);
 
     try
     {
-        client.connect(U("wss://swordsoftruth.com")).wait();
+        client.connect(U("wss://badssl.com")).wait();
 
         // Should never be reached.
         VERIFY_IS_TRUE(false);
@@ -239,3 +242,4 @@ TEST(cert_expired)
 }}}}
 
 #endif
+

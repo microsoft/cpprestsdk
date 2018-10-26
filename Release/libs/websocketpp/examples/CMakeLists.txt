@@ -1,6 +1,0 @@
-file (GLOB SDIRS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *)
-foreach (SUBDIR ${SDIRS})
-    if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${SUBDIR}/CMakeLists.txt")
-        add_subdirectory (${SUBDIR})
-    endif ()
-endforeach ()

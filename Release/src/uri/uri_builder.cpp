@@ -13,6 +13,8 @@
 
 #include "stdafx.h"
 
+#include <sstream>
+
 namespace web
 {
 

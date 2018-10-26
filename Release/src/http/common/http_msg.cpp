@@ -11,10 +11,9 @@
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 #include "stdafx.h"
+#include <sstream>
 #include "../common/internal_http_helpers.h"
-
-#undef min
-#undef max
+#include "cpprest/producerconsumerstream.h"
 
 using namespace web;
 using namespace utility;
@@ -254,6 +253,35 @@ void parse_headers_string(_Inout_z_ utf16char *headersStr, http_headers &headers
 
 }
 
+http_version __cdecl http_version::from_string(const std::string& http_version_string)
+{
+    std::istringstream str(http_version_string);
+    str.imbue(std::locale::classic());
+
+    std::string http; std::getline(str, http, '/');
+    unsigned int major = 0; str >> major;
+    char dot = '\0'; str >> dot;
+    unsigned int minor = 0; str >> minor;
+
+    // check no failure, fully consumed, and correct fixed text
+    if (!str.fail() && str.eof() && "HTTP" == http && '.' == dot)
+    {
+        return{ (uint8_t)major, (uint8_t)minor };
+    }
+    return{ 0, 0 };
+}
+
+std::string http_version::to_utf8string() const
+{
+    std::string ret;
+    ret.reserve(8);
+    ret.append("HTTP/");
+    ret.append(std::to_string(static_cast<unsigned int>(major)));
+    ret.append(".");
+    ret.append(std::to_string(static_cast<unsigned int>(minor)));
+    return ret;
+}
+
 static const utility::char_t * stream_was_set_explicitly = _XPLATSTR("A stream was set on the message and extraction is not possible");
 static const utility::char_t * unsupported_charset = _XPLATSTR("Charset must be iso-8859-1, utf-8, utf-16, utf-16le, or utf-16be to be extracted.");
 
@@ -284,34 +312,93 @@ void http_msg_base::_prepare_to_receive_data()
     // or media (like file) that the user can read from...
 }
 
-size_t http_msg_base::_get_content_length()
+size_t http_msg_base::_get_stream_length()
+{
+    auto &stream = instream();
+
+    if (stream.can_seek())
+    {
+        auto offset = stream.tell();
+        auto end = stream.seek(0, std::ios_base::end);
+        stream.seek(offset);
+        return static_cast<size_t>(end - offset);
+    }
+
+    return std::numeric_limits<size_t>::max();
+}
+
+size_t http_msg_base::_get_content_length(bool honor_compression)
 {
     // An invalid response_stream indicates that there is no body
     if ((bool)instream())
     {
-        size_t content_length = 0;
+        size_t content_length;
         utility::string_t transfer_encoding;
 
-        bool has_cnt_length = headers().match(header_names::content_length, content_length);
-        bool has_xfr_encode = headers().match(header_names::transfer_encoding, transfer_encoding);
-
-        if (has_xfr_encode)
+        if (headers().match(header_names::transfer_encoding, transfer_encoding))
         {
+            // Transfer encoding is set; it trumps any content length that may or may not be present
+            if (honor_compression && m_compressor)
+            {
+                http::http_headers tmp;
+
+                // Build a header for comparison with the existing one
+                tmp.add(header_names::transfer_encoding, m_compressor->algorithm());
+                tmp.add(header_names::transfer_encoding, _XPLATSTR("chunked"));
+
+                if (!utility::details::str_iequal(transfer_encoding, tmp[header_names::transfer_encoding]))
+                {
+                    // Some external entity added this header, and it doesn't match our
+                    // expectations; bail out, since the caller's intentions are not clear
+                    throw http_exception("Transfer-Encoding header is internally managed when compressing");
+                }
+            }
+
             return std::numeric_limits<size_t>::max();
         }
 
-        if (has_cnt_length)
+        if (honor_compression && m_compressor)
         {
+            // A compressor is set; this implies transfer encoding, since we don't know the compressed length
+            // up front for content encoding.  We return the uncompressed length if we can figure it out.
+            headers().add(header_names::transfer_encoding, m_compressor->algorithm());
+            headers().add(header_names::transfer_encoding, _XPLATSTR("chunked"));
+            return std::numeric_limits<size_t>::max();
+        }
+
+        if (headers().match(header_names::content_length, content_length))
+        {
+            // An explicit content length is set; trust it, since we
+            // may not be required to send the stream's entire contents
             return content_length;
         }
 
-        // Neither is set. Assume transfer-encoding for now (until we have the ability to determine
-        // the length of the stream).
+        content_length = _get_stream_length();
+        if (content_length != std::numeric_limits<size_t>::max())
+        {
+            // The content length wasn't explcitly set, but we figured it out;
+            // use it, since sending this way is more efficient than chunking
+            headers().add(header_names::content_length, content_length);
+            return content_length;
+        }
+
+        // We don't know the content length; we'll chunk the stream
         headers().add(header_names::transfer_encoding, _XPLATSTR("chunked"));
         return std::numeric_limits<size_t>::max();
     }
 
+    // There is no content
     return 0;
+}
+
+size_t http_msg_base::_get_content_length_and_set_compression()
+{
+    return _get_content_length(true);
+}
+
+size_t http_msg_base::_get_content_length()
+{
+    return _get_content_length(false);
 }
 
 // Helper function to inline continuation if possible.
@@ -393,7 +480,7 @@ static bool is_content_type_one_of(const utility::string_t *first, const utility
 {
     while (first != last)
     {
-        if (utility::details::str_icmp(*first, value))
+        if (utility::details::str_iequal(*first, value))
         {
             return true;
         }
@@ -431,7 +518,7 @@ static bool is_content_type_textual(const utility::string_t &content_type)
     };
 #endif
 
-    if (content_type.size() >= 4 && utility::details::str_icmp(content_type.substr(0, 4), _XPLATSTR("text")))
+    if (content_type.size() >= 4 && utility::details::str_iequal(content_type.substr(0, 4), _XPLATSTR("text")))
     {
         return true;
     }
@@ -525,7 +612,7 @@ static void parse_content_type_and_charset(const utility::string_t &content_type
     // Split and make sure 'charset'
     utility::string_t charset_key = possible_charset.substr(0, equals_index);
     trim_whitespace(charset_key);
-    if (!utility::details::str_icmp(charset_key, _XPLATSTR("charset")))
+    if (!utility::details::str_iequal(charset_key, _XPLATSTR("charset")))
     {
         charset = get_default_charset(content);
         return;
@@ -580,9 +667,9 @@ utf8string details::http_msg_base::extract_utf8string(bool ignore_content_type)
     auto buf_r = instream().streambuf();
 
     // Perform the correct character set conversion if one is necessary.
-    if (utility::details::str_icmp(charset, charset_types::utf8)
-        || utility::details::str_icmp(charset, charset_types::usascii)
-        || utility::details::str_icmp(charset, charset_types::ascii))
+    if (utility::details::str_iequal(charset, charset_types::utf8)
+        || utility::details::str_iequal(charset, charset_types::usascii)
+        || utility::details::str_iequal(charset, charset_types::ascii))
     {
         std::string body;
         body.resize((std::string::size_type)buf_r.in_avail());
@@ -591,7 +678,7 @@ utf8string details::http_msg_base::extract_utf8string(bool ignore_content_type)
     }
 
     // Latin1
-    else if (utility::details::str_icmp(charset, charset_types::latin1))
+    else if (utility::details::str_iequal(charset, charset_types::latin1))
     {
         std::string body;
         body.resize((std::string::size_type)buf_r.in_avail());
@@ -600,7 +687,7 @@ utf8string details::http_msg_base::extract_utf8string(bool ignore_content_type)
     }
 
     // utf-16
-    else if (utility::details::str_icmp(charset, charset_types::utf16))
+    else if (utility::details::str_iequal(charset, charset_types::utf16))
     {
         utf16string body;
         body.resize(buf_r.in_avail() / sizeof(utf16string::value_type));
@@ -609,7 +696,7 @@ utf8string details::http_msg_base::extract_utf8string(bool ignore_content_type)
     }
 
     // utf-16le
-    else if (utility::details::str_icmp(charset, charset_types::utf16le))
+    else if (utility::details::str_iequal(charset, charset_types::utf16le))
     {
         utf16string body;
         body.resize(buf_r.in_avail() / sizeof(utf16string::value_type));
@@ -618,7 +705,7 @@ utf8string details::http_msg_base::extract_utf8string(bool ignore_content_type)
     }
 
     // utf-16be
-    else if (utility::details::str_icmp(charset, charset_types::utf16be))
+    else if (utility::details::str_iequal(charset, charset_types::utf16be))
     {
         utf16string body;
         body.resize(buf_r.in_avail() / sizeof(utf16string::value_type));
@@ -642,7 +729,7 @@ utf16string details::http_msg_base::extract_utf16string(bool ignore_content_type
     auto buf_r = instream().streambuf();
 
     // Perform the correct character set conversion if one is necessary.
-    if (utility::details::str_icmp(charset, charset_types::utf16le))
+    if (utility::details::str_iequal(charset, charset_types::utf16le))
     {
         utf16string body;
         body.resize(buf_r.in_avail() / sizeof(utf16string::value_type));
@@ -651,9 +738,9 @@ utf16string details::http_msg_base::extract_utf16string(bool ignore_content_type
     }
 
     // utf-8, ascii
-    else if (utility::details::str_icmp(charset, charset_types::utf8)
-        || utility::details::str_icmp(charset, charset_types::usascii)
-        || utility::details::str_icmp(charset, charset_types::ascii))
+    else if (utility::details::str_iequal(charset, charset_types::utf8)
+        || utility::details::str_iequal(charset, charset_types::usascii)
+        || utility::details::str_iequal(charset, charset_types::ascii))
     {
         std::string body;
         body.resize((std::string::size_type)buf_r.in_avail());
@@ -662,7 +749,7 @@ utf16string details::http_msg_base::extract_utf16string(bool ignore_content_type
     }
 
     // Latin1
-    else if (utility::details::str_icmp(charset, charset_types::latin1))
+    else if (utility::details::str_iequal(charset, charset_types::latin1))
     {
         std::string body;
         body.resize((std::string::size_type)buf_r.in_avail());
@@ -671,7 +758,7 @@ utf16string details::http_msg_base::extract_utf16string(bool ignore_content_type
     }
 
     // utf-16
-    else if (utility::details::str_icmp(charset, charset_types::utf16))
+    else if (utility::details::str_iequal(charset, charset_types::utf16))
     {
         utf16string body;
         body.resize(buf_r.in_avail() / sizeof(utf16string::value_type));
@@ -680,7 +767,7 @@ utf16string details::http_msg_base::extract_utf16string(bool ignore_content_type
     }
 
     // utf-16be
-    else if (utility::details::str_icmp(charset, charset_types::utf16be))
+    else if (utility::details::str_iequal(charset, charset_types::utf16be))
     {
         utf16string body;
         body.resize(buf_r.in_avail() / sizeof(utf16string::value_type));
@@ -704,8 +791,8 @@ utility::string_t details::http_msg_base::extract_string(bool ignore_content_typ
     auto buf_r = instream().streambuf();
 
     // Perform the correct character set conversion if one is necessary.
-    if (utility::details::str_icmp(charset, charset_types::usascii)
-            || utility::details::str_icmp(charset, charset_types::ascii))
+    if (utility::details::str_iequal(charset, charset_types::usascii)
+            || utility::details::str_iequal(charset, charset_types::ascii))
     {
         std::string body;
         body.resize((std::string::size_type)buf_r.in_avail());
@@ -714,7 +801,7 @@ utility::string_t details::http_msg_base::extract_string(bool ignore_content_typ
     }
 
     // Latin1
-    if(utility::details::str_icmp(charset, charset_types::latin1))
+    if(utility::details::str_iequal(charset, charset_types::latin1))
     {
         std::string body;
         body.resize((std::string::size_type)buf_r.in_avail());
@@ -724,7 +811,7 @@ utility::string_t details::http_msg_base::extract_string(bool ignore_content_typ
     }
 
     // utf-8.
-    else if(utility::details::str_icmp(charset, charset_types::utf8))
+    else if(utility::details::str_iequal(charset, charset_types::utf8))
     {
         std::string body;
         body.resize((std::string::size_type)buf_r.in_avail());
@@ -733,7 +820,7 @@ utility::string_t details::http_msg_base::extract_string(bool ignore_content_typ
     }
 
     // utf-16.
-    else if(utility::details::str_icmp(charset, charset_types::utf16))
+    else if(utility::details::str_iequal(charset, charset_types::utf16))
     {
         utf16string body;
         body.resize(buf_r.in_avail() / sizeof(utf16string::value_type));
@@ -742,7 +829,7 @@ utility::string_t details::http_msg_base::extract_string(bool ignore_content_typ
     }
 
     // utf-16le
-    else if(utility::details::str_icmp(charset, charset_types::utf16le))
+    else if(utility::details::str_iequal(charset, charset_types::utf16le))
     {
         utf16string body;
         body.resize(buf_r.in_avail() / sizeof(utf16string::value_type));
@@ -751,7 +838,7 @@ utility::string_t details::http_msg_base::extract_string(bool ignore_content_typ
     }
 
     // utf-16be
-    else if(utility::details::str_icmp(charset, charset_types::utf16be))
+    else if(utility::details::str_iequal(charset, charset_types::utf16be))
     {
         utf16string body;
         body.resize(buf_r.in_avail() / sizeof(utf16string::value_type));
@@ -775,7 +862,7 @@ json::value details::http_msg_base::_extract_json(bool ignore_content_type)
     auto buf_r = instream().streambuf();
 
     // Latin1
-    if(utility::details::str_icmp(charset, charset_types::latin1))
+    if(utility::details::str_iequal(charset, charset_types::latin1))
     {
         std::string body;
         body.resize(buf_r.in_avail());
@@ -785,9 +872,9 @@ json::value details::http_msg_base::_extract_json(bool ignore_content_type)
     }
 
     // utf-8, usascii and ascii
-    else if(utility::details::str_icmp(charset, charset_types::utf8)
-            || utility::details::str_icmp(charset, charset_types::usascii)
-            || utility::details::str_icmp(charset, charset_types::ascii))
+    else if(utility::details::str_iequal(charset, charset_types::utf8)
+            || utility::details::str_iequal(charset, charset_types::usascii)
+            || utility::details::str_iequal(charset, charset_types::ascii))
     {
         std::string body;
         body.resize(buf_r.in_avail());
@@ -796,7 +883,7 @@ json::value details::http_msg_base::_extract_json(bool ignore_content_type)
     }
 
     // utf-16.
-    else if(utility::details::str_icmp(charset, charset_types::utf16))
+    else if(utility::details::str_iequal(charset, charset_types::utf16))
     {
         utf16string body;
         body.resize(buf_r.in_avail() / sizeof(utf16string::value_type));
@@ -805,7 +892,7 @@ json::value details::http_msg_base::_extract_json(bool ignore_content_type)
     }
 
     // utf-16le
-    else if(utility::details::str_icmp(charset, charset_types::utf16le))
+    else if(utility::details::str_iequal(charset, charset_types::utf16le))
     {
         utf16string body;
         body.resize(buf_r.in_avail() / sizeof(utf16string::value_type));
@@ -814,7 +901,7 @@ json::value details::http_msg_base::_extract_json(bool ignore_content_type)
     }
 
     // utf-16be
-    else if(utility::details::str_icmp(charset, charset_types::utf16be))
+    else if(utility::details::str_iequal(charset, charset_types::utf16be))
     {
         utf16string body;
         body.resize(buf_r.in_avail() / sizeof(utf16string::value_type));
@@ -869,7 +956,7 @@ static utility::string_t convert_body_to_string_t(const utility::string_t &conte
     }
 
     // Latin1
-    if(utility::details::str_icmp(charset, charset_types::latin1))
+    if(utility::details::str_iequal(charset, charset_types::latin1))
     {
         std::string body;
         body.resize(streambuf.in_avail());
@@ -878,7 +965,7 @@ static utility::string_t convert_body_to_string_t(const utility::string_t &conte
     }
 
     // utf-8.
-    else if(utility::details::str_icmp(charset, charset_types::utf8))
+    else if(utility::details::str_iequal(charset, charset_types::utf8))
     {
         std::string body;
         body.resize(streambuf.in_avail());
@@ -887,7 +974,7 @@ static utility::string_t convert_body_to_string_t(const utility::string_t &conte
     }
 
     // utf-16.
-    else if(utility::details::str_icmp(charset, charset_types::utf16))
+    else if(utility::details::str_iequal(charset, charset_types::utf16))
     {
         utf16string body;
         body.resize(streambuf.in_avail() / sizeof(utf16string::value_type));
@@ -896,7 +983,7 @@ static utility::string_t convert_body_to_string_t(const utility::string_t &conte
     }
 
     // utf-16le
-    else if(utility::details::str_icmp(charset, charset_types::utf16le))
+    else if(utility::details::str_iequal(charset, charset_types::utf16le))
     {
         utf16string body;
         body.resize(streambuf.in_avail() / sizeof(utf16string::value_type));
@@ -905,7 +992,7 @@ static utility::string_t convert_body_to_string_t(const utility::string_t &conte
     }
 
     // utf-16be
-    else if(utility::details::str_icmp(charset, charset_types::utf16be))
+    else if(utility::details::str_iequal(charset, charset_types::utf16be))
     {
         utf16string body;
         body.resize(streambuf.in_avail() / sizeof(utf16string::value_type));
@@ -924,22 +1011,24 @@ static utility::string_t convert_body_to_string_t(const utility::string_t &conte
 //
 static utility::string_t http_headers_body_to_string(const http_headers &headers, concurrency::streams::istream instream)
 {
-    utility::ostringstream_t buffer;
-    buffer.imbue(std::locale::classic());
-
+    utility::string_t result;
     for (const auto &header : headers)
     {
-        buffer << header.first << _XPLATSTR(": ") << header.second << CRLF;
+        result += header.first;
+        result += _XPLATSTR(": ");
+        result += header.second;
+        result += CRLF;
     }
-    buffer << CRLF;
+
+    result += CRLF;
 
     utility::string_t content_type;
     if(headers.match(http::header_names::content_type, content_type))
     {
-        buffer << convert_body_to_string_t(content_type, instream);
+        result += convert_body_to_string_t(content_type, instream);
     }
 
-    return buffer.str();
+    return result;
 }
 
 utility::string_t details::http_msg_base::to_string() const
@@ -998,7 +1087,8 @@ details::_http_request::_http_request(http::method mtd)
   : m_method(std::move(mtd)),
     m_initiated_response(0),
     m_server_context(),
-    m_cancellationToken(pplx::cancellation_token::none())
+    m_cancellationToken(pplx::cancellation_token::none()),
+    m_http_version(http::http_version{0, 0})
 {
     if(m_method.empty())
     {
@@ -1009,9 +1099,19 @@ details::_http_request::_http_request(http::method mtd)
 details::_http_request::_http_request(std::unique_ptr<http::details::_http_server_context> server_context)
   : m_initiated_response(0),
     m_server_context(std::move(server_context)),
-    m_cancellationToken(pplx::cancellation_token::none())
+    m_cancellationToken(pplx::cancellation_token::none()),
+    m_http_version(http::http_version{0, 0})
 {
 }
+
+void http_request::set_decompress_factories()
+{
+    return _m_impl->set_decompress_factories(compression::details::builtin::get_decompress_factories());
+}
+
+const http_version http_versions::HTTP_0_9 = { 0, 9 };
+const http_version http_versions::HTTP_1_0 = { 1, 0 };
+const http_version http_versions::HTTP_1_1 = { 1, 1 };
 
 #define _METHODS
 #define DAT(a,b) const method methods::a = b;
@@ -1046,4 +1146,3 @@ details::_http_request::_http_request(std::unique_ptr<http::details::_http_serve
 #undef DAT
 #endif
 }} // namespace web::http
-

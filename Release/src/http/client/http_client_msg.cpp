@@ -12,6 +12,7 @@
 ****/
 #include "stdafx.h"
 #include "../common/internal_http_helpers.h"
+#include "cpprest/asyncrt_utils.h"
 
 namespace web { namespace http
 {
@@ -61,29 +62,41 @@ void details::_http_request::set_request_uri(const uri& relative)
 
 utility::string_t details::_http_request::to_string() const
 {
-    utility::ostringstream_t buffer;
-    buffer.imbue(std::locale::classic());
-    buffer << m_method << _XPLATSTR(" ") << (this->m_uri.is_empty() ? _XPLATSTR("/") : this->m_uri.to_string()) << _XPLATSTR(" HTTP/1.1\r\n");
-    buffer << http_msg_base::to_string();
-    return buffer.str();
+    utility::string_t result(m_method);
+    result += _XPLATSTR(' ');
+    if (this->m_uri.is_empty())
+    {
+        result += _XPLATSTR('/');
+    }
+    else
+    {
+        result += this->m_uri.to_string();
+    }
+
+    result += _XPLATSTR(" HTTP/1.1\r\n");
+    result += http_msg_base::to_string();
+    return result;
 }
 
 utility::string_t details::_http_response::to_string() const
 {
+    utility::string_t result(_XPLATSTR("HTTP/1.1 "));
+    result += utility::conversions::details::to_string_t(m_status_code);
+    result += ' ';
     // If the user didn't explicitly set a reason phrase then we should have it default
     // if they used one of the standard known status codes.
-    auto reason_phrase = m_reason_phrase;
-    if(reason_phrase.empty())
+    if (m_reason_phrase.empty())
     {
-        reason_phrase = get_default_reason_phrase(status_code());
+        result += get_default_reason_phrase(status_code());
+    }
+    else
+    {
+        result += m_reason_phrase;
     }
 
-    utility::ostringstream_t buffer;
-    buffer.imbue(std::locale::classic());
-    buffer << _XPLATSTR("HTTP/1.1 ") << m_status_code << _XPLATSTR(" ") << reason_phrase << _XPLATSTR("\r\n");
-
-    buffer << http_msg_base::to_string();
-    return buffer.str();
+    result += _XPLATSTR("\r\n");
+    result += http_msg_base::to_string();
+    return result;
 }
 
 }} // namespace web::http

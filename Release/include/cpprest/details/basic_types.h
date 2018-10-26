@@ -20,8 +20,10 @@
 #include "cpprest/details/cpprest_compat.h"
 
 #ifndef _WIN32
-# define __STDC_LIMIT_MACROS
-# include <stdint.h>
+#ifndef __STDC_LIMIT_MACROS
+#define __STDC_LIMIT_MACROS
+#endif
+#include <stdint.h>
 #else
 #include <cstdint>
 #endif
@@ -80,6 +82,9 @@ typedef std::stringstream stringstream_t;
 #endif // endif _UTF16_STRINGS
 
 #ifndef _TURN_OFF_PLATFORM_STRING
+// The 'U' macro can be used to create a string or character literal of the platform type, i.e. utility::char_t.
+// If you are using a library causing conflicts with 'U' macro, it can be turned off by defining the macro
+// '_TURN_OFF_PLATFORM_STRING' before including the C++ REST SDK header files, and e.g. use '_XPLATSTR' instead.
 #define U(x) _XPLATSTR(x)
 #endif // !_TURN_OFF_PLATFORM_STRING
 

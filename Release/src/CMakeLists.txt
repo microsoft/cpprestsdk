@@ -16,12 +16,13 @@ set(SOURCES
   ${HEADERS_DETAILS}
   pch/stdafx.h
   http/client/http_client.cpp
-  http/client/http_client_msg.cpp
   http/client/http_client_impl.h
-  http/client/x509_cert_utilities.cpp
-  http/common/internal_http_helpers.h
+  http/client/http_client_msg.cpp
+  http/common/connection_pool_helpers.h
+  http/common/http_compression.cpp
   http/common/http_helpers.cpp
   http/common/http_msg.cpp
+  http/common/internal_http_helpers.h
   http/listener/http_listener.cpp
   http/listener/http_listener_msg.cpp
   http/listener/http_server_api.cpp
@@ -31,7 +32,6 @@ set(SOURCES
   json/json.cpp
   json/json_parsing.cpp
   json/json_serialization.cpp
-  pplx/pplx.cpp
   uri/uri.cpp
   uri/uri_builder.cpp
   utilities/asyncrt_utils.cpp
@@ -73,10 +73,19 @@ endif()
 
 # Compression component
 if(CPPREST_EXCLUDE_COMPRESSION)
+  if(NOT CPPREST_EXCLUDE_BROTLI)
+    message(FATAL_ERROR "Use of Brotli requires compression to be enabled")
+  endif()
   target_compile_definitions(cpprest PRIVATE -DCPPREST_EXCLUDE_COMPRESSION=1)
 else()
   cpprest_find_zlib()
   target_link_libraries(cpprest PRIVATE cpprestsdk_zlib_internal)
+  if(CPPREST_EXCLUDE_BROTLI)
+    target_compile_definitions(cpprest PRIVATE -DCPPREST_EXCLUDE_BROTLI=1)
+  else()
+    cpprest_find_brotli()
+    target_link_libraries(cpprest PRIVATE cpprestsdk_brotli_internal)
+  endif()
 endif()
 
 # PPLX component
@@ -84,23 +93,25 @@ if(CPPREST_PPLX_IMPL STREQUAL "apple")
   find_library(COREFOUNDATION CoreFoundation "/")
   find_library(SECURITY Security "/")
   target_link_libraries(cpprest PUBLIC ${COREFOUNDATION} ${SECURITY})
-  target_sources(cpprest PRIVATE pplx/pplxapple.cpp pplx/threadpool.cpp ../include/pplx/threadpool.h)
+  target_sources(cpprest PRIVATE pplx/pplxapple.cpp pplx/pplx.cpp pplx/threadpool.cpp ../include/pplx/threadpool.h)
   if(CPPREST_INSTALL_HEADERS)
     install(FILES ../include/pplx/threadpool.h DESTINATION include/pplx)
   endif()
 elseif(CPPREST_PPLX_IMPL STREQUAL "linux")
-  target_sources(cpprest PRIVATE pplx/pplxlinux.cpp pplx/threadpool.cpp ../include/pplx/threadpool.h)
+  target_sources(cpprest PRIVATE pplx/pplxlinux.cpp pplx/pplx.cpp pplx/threadpool.cpp ../include/pplx/threadpool.h)
   if(CPPREST_INSTALL_HEADERS)
     install(FILES ../include/pplx/threadpool.h DESTINATION include/pplx)
   endif()
 elseif(CPPREST_PPLX_IMPL STREQUAL "win")
-  target_sources(cpprest PRIVATE pplx/pplxwin.cpp pplx/threadpool.cpp ../include/pplx/threadpool.h)
-  if(CPPREST_INSTALL_HEADERS)
-    install(FILES ../include/pplx/threadpool.h DESTINATION include/pplx)
+  if(CPPREST_WEBSOCKETS_IMPL STREQUAL "wspp")
+    target_sources(cpprest PRIVATE pplx/threadpool.cpp ../include/pplx/threadpool.h)
+    if(CPPREST_INSTALL_HEADERS)
+      install(FILES ../include/pplx/threadpool.h DESTINATION include/pplx)
+    endif()
   endif()
 elseif(CPPREST_PPLX_IMPL STREQUAL "winpplx")
   target_compile_definitions(cpprest PUBLIC -DCPPREST_FORCE_PPLX=1)
-  target_sources(cpprest PRIVATE pplx/pplxwin.cpp pplx/threadpool.cpp ../include/pplx/threadpool.h)
+  target_sources(cpprest PRIVATE pplx/pplxwin.cpp pplx/pplx.cpp pplx/threadpool.cpp ../include/pplx/threadpool.h)
   if(CPPREST_INSTALL_HEADERS)
     install(FILES ../include/pplx/threadpool.h DESTINATION include/pplx)
   endif()
@@ -115,7 +126,7 @@ if(CPPREST_HTTP_CLIENT_IMPL STREQUAL "asio")
   cpprest_find_boost()
   cpprest_find_openssl()
   target_compile_definitions(cpprest PUBLIC -DCPPREST_FORCE_HTTP_CLIENT_ASIO)
-  target_sources(cpprest PRIVATE http/client/http_client_asio.cpp)
+  target_sources(cpprest PRIVATE http/client/http_client_asio.cpp http/client/x509_cert_utilities.cpp)
   target_link_libraries(cpprest PUBLIC cpprestsdk_boost_internal cpprestsdk_openssl_internal)
 elseif(CPPREST_HTTP_CLIENT_IMPL STREQUAL "winhttp")
   target_link_libraries(cpprest PRIVATE
@@ -123,6 +134,9 @@ elseif(CPPREST_HTTP_CLIENT_IMPL STREQUAL "winhttp")
     Winhttp.lib
   )
   target_sources(cpprest PRIVATE http/client/http_client_winhttp.cpp)
+  if(CPPREST_WEBSOCKETS_IMPL STREQUAL "wspp")
+    target_sources(cpprest PRIVATE http/client/x509_cert_utilities.cpp)
+  endif()
 elseif(CPPREST_HTTP_CLIENT_IMPL STREQUAL "winrt")
   target_sources(cpprest PRIVATE http/client/http_client_winrt.cpp)
 else()
@@ -167,7 +181,7 @@ if(MSVC)
 
   set_source_files_properties(pch/stdafx.cpp PROPERTIES COMPILE_FLAGS "/Ycstdafx.h")
   target_sources(cpprest PRIVATE pch/stdafx.cpp)
-  target_compile_options(cpprest PRIVATE /Yustdafx.h /Zm200)
+  target_compile_options(cpprest PRIVATE /Yustdafx.h)
 endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")
@@ -229,6 +243,7 @@ endif()
 if(CPPREST_INSTALL)
   set(CPPREST_USES_BOOST OFF)
   set(CPPREST_USES_ZLIB OFF)
+  set(CPPREST_USES_BROTLI OFF)
   set(CPPREST_USES_OPENSSL OFF)
 
   set(CPPREST_TARGETS cpprest)
@@ -240,6 +255,10 @@ if(CPPREST_INSTALL)
     list(APPEND CPPREST_TARGETS cpprestsdk_zlib_internal)
     set(CPPREST_USES_ZLIB ON)
   endif()
+  if(TARGET cpprestsdk_brotli_internal)
+    list(APPEND CPPREST_TARGETS cpprestsdk_brotli_internal)
+    set(CPPREST_USES_BROTLI ON)
+  endif()
   if(TARGET cpprestsdk_openssl_internal)
     list(APPEND CPPREST_TARGETS cpprestsdk_openssl_internal)
     set(CPPREST_USES_OPENSSL ON)
@@ -250,21 +269,21 @@ if(CPPREST_INSTALL)
   install(
     TARGETS ${CPPREST_TARGETS}
     EXPORT cpprestsdk-targets
-    RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   )
 
   configure_file(../cmake/cpprestsdk-config.in.cmake "${CMAKE_CURRENT_BINARY_DIR}/cpprestsdk-config.cmake" @ONLY)
 
   install(
     FILES "${CMAKE_CURRENT_BINARY_DIR}/cpprestsdk-config.cmake"
-    DESTINATION ${CPPREST_EXPORT_DIR}
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/${CPPREST_EXPORT_DIR}
   )
   install(
     EXPORT cpprestsdk-targets
     FILE cpprestsdk-targets.cmake
     NAMESPACE cpprestsdk::
-    DESTINATION ${CPPREST_EXPORT_DIR}
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/${CPPREST_EXPORT_DIR}
   )
 endif()

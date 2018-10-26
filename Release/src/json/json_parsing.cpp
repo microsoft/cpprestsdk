@@ -49,10 +49,13 @@ template <typename Token>
 #endif
 void CreateException(const Token &tk, const utility::string_t &message)
 {
-    utility::ostringstream_t os;
-    os << _XPLATSTR("* Line ") << tk.start.m_line << _XPLATSTR(", Column ") << tk.start.m_column << _XPLATSTR(" Syntax error: ") << message;
-    utility::string_t osStr = os.str();
-    throw web::json::json_exception(osStr.c_str());
+    std::string str("* Line ");
+    str += std::to_string(tk.start.m_line);
+    str += ", Column ";
+    str += std::to_string(tk.start.m_column);
+    str += " Syntax error: ";
+    str += utility::conversions::to_utf8string(message);
+    throw web::json::json_exception(std::move(str));
 }
 
 template <typename Token>
@@ -1026,7 +1029,7 @@ done:
         ::std::sort(elems.begin(), elems.end(), json::object::compare_pairs);
     }
 
-    return std::move(obj);
+    return std::unique_ptr<web::json::details::_Value>(obj.release());
 
 error:
     if (!tkn.m_error)
@@ -1073,7 +1076,7 @@ std::unique_ptr<web::json::details::_Value> JSON_Parser<CharType>::_ParseArray(t
     GetNextToken(tkn);
     if (tkn.m_error) return utility::details::make_unique<web::json::details::_Null>();
 
-    return std::move(result);
+    return std::unique_ptr<web::json::details::_Value>(result.release());
 }
 
 template <typename CharType>

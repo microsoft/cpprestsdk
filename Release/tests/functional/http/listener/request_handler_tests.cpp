@@ -448,6 +448,62 @@ TEST_FIXTURE(uri_address, test_leaks)
     listener.close().wait();
 }
 
+TEST_FIXTURE(uri_address, http_version)
+{
+    // formatting should succeed
+    VERIFY_IS_TRUE("HTTP/0.9" == http_versions::HTTP_0_9.to_utf8string());
+    VERIFY_IS_TRUE("HTTP/1.0" == http_versions::HTTP_1_0.to_utf8string());
+    VERIFY_IS_TRUE("HTTP/1.1" == http_versions::HTTP_1_1.to_utf8string());
+    VERIFY_IS_TRUE("HTTP/12.3" == (http_version{ 12, 3 }).to_utf8string());
+    // parsing should succeed
+    VERIFY_IS_TRUE(http_version::from_string("HTTP/0.9") == http_versions::HTTP_0_9);
+    VERIFY_IS_TRUE(http_version::from_string("HTTP/1.0") == http_versions::HTTP_1_0);
+    VERIFY_IS_TRUE(http_version::from_string("HTTP/1.1") == http_versions::HTTP_1_1);
+    VERIFY_IS_TRUE((http_version::from_string("HTTP/12.3") == http_version{ 12, 3 }));
+    // parsing should fail
+    http_version unknown = { 0, 0 };
+    VERIFY_IS_TRUE(http_version::from_string("http/12.3") == unknown);
+    VERIFY_IS_TRUE(http_version::from_string("HTTP/12.3foo") == unknown);
+    VERIFY_IS_TRUE(http_version::from_string("HTTP/12.") == unknown);
+    VERIFY_IS_TRUE(http_version::from_string("HTTP/12") == unknown);
+    VERIFY_IS_TRUE(http_version::from_string("HTTP/.3") == unknown);
+    VERIFY_IS_TRUE(http_version::from_string("HTTP/") == unknown);
+    VERIFY_IS_TRUE(http_version::from_string("HTTP") == unknown);
+    VERIFY_IS_TRUE(http_version::from_string("HTTP") == unknown);
+    VERIFY_IS_TRUE(http_version::from_string("foo") == unknown);
+    VERIFY_IS_TRUE(http_version::from_string("") == unknown);
+
+    http_listener listener(U("http://localhost:45678/path1"));
+    listener.open().wait();
+
+    test_http_client::scoped_client client(U("http://localhost:45678"));
+    test_http_client * p_client = client.client();
+
+    volatile unsigned long requestCount = 0;
+
+    listener.support(methods::GET, [&requestCount](http_request request)
+    {
+        const auto& httpVersion = request.http_version();
+
+        // All clients currently use HTTP/1.1
+        VERIFY_IS_TRUE(httpVersion == http_versions::HTTP_1_1);
+
+        os_utilities::interlocked_increment(&requestCount);
+        request.reply(status_codes::NoContent);
+    });
+
+    // Send a request to the listener
+    VERIFY_ARE_EQUAL(0, p_client->request(methods::GET, U("/path1")));
+
+    p_client->next_response().then([](test_response *p_response)
+    {
+        http_asserts::assert_test_response_equals(p_response, status_codes::NoContent);
+    }).wait();
+
+    VERIFY_IS_TRUE(requestCount >= 1);
+    listener.close().wait();
+}
+
 TEST_FIXTURE(uri_address, remote_address)
 {
     http_listener listener(U("http://localhost:45678/path1"));
@@ -460,7 +516,7 @@ TEST_FIXTURE(uri_address, remote_address)
 
     listener.support(methods::GET, [&requestCount](http_request request)
     {
-        const string_t& remoteAddr = request.get_remote_address();
+        const string_t& remoteAddr = request.remote_address();
         const string_t& localhost4 = string_t(U("127.0.0.1"));
         const string_t& localhost6 = string_t(U("::1"));
 

@@ -12,6 +12,7 @@
 ****/
 
 #include "stdafx.h"
+#include <assert.h>
 
 #if defined(_WIN32) && !defined(__cplusplus_winrt)
 #include <Wincrypt.h>
@@ -92,23 +93,28 @@ plaintext_string winrt_encryption::decrypt() const
 win32_encryption::win32_encryption(const std::wstring &data) :
     m_numCharacters(data.size())
 {
-    // Early return because CryptProtectMemory crashs with empty string
+    // Early return because CryptProtectMemory crashes with empty string
     if (m_numCharacters == 0)
     {
         return;
     }
 
-    const auto dataNumBytes = data.size() * sizeof(std::wstring::value_type);
+    if (data.size() > (std::numeric_limits<DWORD>::max)() / sizeof(wchar_t))
+    {
+        throw std::length_error("Encryption string too long");
+    }
+
+    const auto dataSizeDword = static_cast<DWORD>(data.size() * sizeof(wchar_t));
+
+    // Round up dataSizeDword to be a multiple of CRYPTPROTECTMEMORY_BLOCK_SIZE
+    static_assert(CRYPTPROTECTMEMORY_BLOCK_SIZE == 16, "Power of 2 assumptions in this bit masking violated");
+    const auto mask = static_cast<DWORD>(CRYPTPROTECTMEMORY_BLOCK_SIZE - 1u);
+    const auto dataNumBytes = (dataSizeDword & ~mask) + ((dataSizeDword & mask) != 0) * CRYPTPROTECTMEMORY_BLOCK_SIZE;
+    assert((dataNumBytes % CRYPTPROTECTMEMORY_BLOCK_SIZE) == 0);
+    assert(dataNumBytes >= dataSizeDword);
     m_buffer.resize(dataNumBytes);
     memcpy_s(m_buffer.data(), m_buffer.size(), data.c_str(), dataNumBytes);
-
-    // Buffer must be a multiple of CRYPTPROTECTMEMORY_BLOCK_SIZE
-    const auto mod = m_buffer.size() % CRYPTPROTECTMEMORY_BLOCK_SIZE;
-    if (mod != 0)
-    {
-        m_buffer.resize(m_buffer.size() + CRYPTPROTECTMEMORY_BLOCK_SIZE - mod);
-    }
-    if (!CryptProtectMemory(m_buffer.data(), static_cast<DWORD>(m_buffer.size()), CRYPTPROTECTMEMORY_SAME_PROCESS))
+    if (!CryptProtectMemory(m_buffer.data(), dataNumBytes, CRYPTPROTECTMEMORY_SAME_PROCESS))
     {
         throw ::utility::details::create_system_error(GetLastError());
     }
@@ -121,20 +127,25 @@ win32_encryption::~win32_encryption()
 
 plaintext_string win32_encryption::decrypt() const
 {
-    if (m_buffer.empty())
-        return plaintext_string(new std::wstring());
-
     // Copy the buffer and decrypt to avoid having to re-encrypt.
-    auto data = plaintext_string(new std::wstring(reinterpret_cast<const std::wstring::value_type *>(m_buffer.data()), m_buffer.size() / 2));
-    if (!CryptUnprotectMemory(
-        const_cast<std::wstring::value_type *>(data->c_str()),
-        static_cast<DWORD>(m_buffer.size()),
-        CRYPTPROTECTMEMORY_SAME_PROCESS))
-    {
-        throw ::utility::details::create_system_error(GetLastError());
+    auto result = plaintext_string(new std::wstring(
+        reinterpret_cast<const std::wstring::value_type *>(m_buffer.data()), m_buffer.size() / sizeof(wchar_t)));
+    auto& data = *result;
+    if (!m_buffer.empty()) {
+        if (!CryptUnprotectMemory(
+            &data[0],
+            static_cast<DWORD>(m_buffer.size()),
+            CRYPTPROTECTMEMORY_SAME_PROCESS))
+        {
+            throw ::utility::details::create_system_error(GetLastError());
+        }
+
+        assert(m_numCharacters <= m_buffer.size());
+        SecureZeroMemory(&data[m_numCharacters], data.size() - m_numCharacters);
+        data.erase(m_numCharacters);
     }
-    data->resize(m_numCharacters);
-    return std::move(data);
+
+    return result;
 }
 #endif
 #endif
@@ -143,9 +154,7 @@ void zero_memory_deleter::operator()(::utility::string_t *data) const
 {
     CASABLANCA_UNREFERENCED_PARAMETER(data);
 #if defined(_WIN32)
-    SecureZeroMemory(
-        const_cast<::utility::string_t::value_type *>(data->data()),
-        data->size() * sizeof(::utility::string_t::value_type));
+    SecureZeroMemory(&(*data)[0], data->size() * sizeof(::utility::string_t::value_type));
     delete data;
 #endif
 }

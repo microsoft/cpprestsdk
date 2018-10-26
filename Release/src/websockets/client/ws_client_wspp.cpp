@@ -12,38 +12,38 @@
 ****/
 
 #include "stdafx.h"
+#include <thread>
 
 #if !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 
-#include "cpprest/details/x509_cert_utilities.h"
+#include "../../http/common/x509_cert_utilities.h"
 #include "pplx/threadpool.h"
 
 #include "ws_client_impl.h"
 
-// These must be undef'ed before including websocketpp because it is not Windows.h safe.
-#undef min
-#undef max
-
 // Force websocketpp to use C++ std::error_code instead of Boost.
 #define _WEBSOCKETPP_CPP11_SYSTEM_ERROR_
 #if defined(_MSC_VER)
-#pragma warning( push )
-#pragma warning( disable : 4100 4127 4512 4996 4701 4267 )
-#define _WEBSOCKETPP_CPP11_STL_
-#define _WEBSOCKETPP_CONSTEXPR_TOKEN_
-#if _MSC_VER < 1900
-#define _WEBSOCKETPP_NOEXCEPT_TOKEN_
-#endif
-#elif defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wconversion"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic ignored "-Wignored-qualifiers"
-#pragma GCC diagnostic ignored "-Wcast-qual"
+ #pragma warning( push )
+ #pragma warning( disable : 4100 4127 4512 4996 4701 4267 )
+ #define _WEBSOCKETPP_CPP11_STL_
+ #define _WEBSOCKETPP_CONSTEXPR_TOKEN_
+ #if _MSC_VER < 1900
+  #define _WEBSOCKETPP_NOEXCEPT_TOKEN_
+ #endif
 #elif defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wconversion"
-#pragma clang diagnostic ignored "-Winfinite-recursion"
+ #pragma clang diagnostic push
+ #pragma clang diagnostic ignored "-Wconversion"
+ #pragma clang diagnostic ignored "-Winfinite-recursion"
+ #pragma clang diagnostic ignored "-Wtautological-constant-compare"
+ #pragma clang diagnostic ignored "-Wtautological-unsigned-enum-zero-compare"
+ #pragma clang diagnostic ignored "-Wcast-qual"
+#elif defined(__GNUC__)
+ #pragma GCC diagnostic push
+ #pragma GCC diagnostic ignored "-Wconversion"
+ #pragma GCC diagnostic ignored "-Wunused-parameter"
+ #pragma GCC diagnostic ignored "-Wignored-qualifiers"
+ #pragma GCC diagnostic ignored "-Wcast-qual"
 #endif
 
 #include <websocketpp/config/asio_client.hpp>
@@ -52,10 +52,10 @@
 
 #if defined(_WIN32)
 #pragma warning( pop )
-#elif defined(__GNUC__)
-#pragma GCC diagnostic pop
 #elif defined(__clang__)
 #pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#pragma GCC diagnostic pop
 #endif
 
 
@@ -101,12 +101,12 @@ namespace details
 // Utility function to build up error string based on error code and location.
 static std::string build_error_msg(const std::error_code &ec, const std::string &location)
 {
-    std::stringstream ss;
-    ss.imbue(std::locale::classic());
-    ss << location
-       << ": " << ec.value()
-       << ": " << ec.message();
-    return ss.str();
+    std::string result = location;
+    result += ": ";
+    result += std::to_string(ec.value());
+    result += ": ";
+    result += ec.message();
+    return result;
 }
 
 static utility::string_t g_subProtocolHeader(_XPLATSTR("Sec-WebSocket-Protocol"));
@@ -126,30 +126,31 @@ public:
     wspp_callback_client(websocket_client_config config) :
         websocket_client_callback_impl(std::move(config)),
         m_state(CREATED)
-#if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__)) || defined(_WIN32)
+#ifdef CPPREST_PLATFORM_ASIO_CERT_VERIFICATION_AVAILABLE
         , m_openssl_failed(false)
 #endif
     {}
 
-    ~wspp_callback_client()
+    ~wspp_callback_client() CPPREST_NOEXCEPT
     {
         _ASSERTE(m_state < DESTROYED);
-        std::unique_lock<std::mutex> lock(m_wspp_client_lock);
+        State localState;
+        {
+            std::lock_guard<std::mutex> lock(m_wspp_client_lock);
+            localState = m_state;
+        }   // Unlock the mutex so connect/close can use it.
 
         // Now, what states could we be in?
-        switch (m_state) {
+        switch (localState) {
         case DESTROYED:
             // This should be impossible
             std::abort();
         case CREATED:
-            lock.unlock();
             break;
         case CLOSED:
         case CONNECTING:
         case CONNECTED:
         case CLOSING:
-            // Unlock the mutex so connect/close can use it.
-            lock.unlock();
             try
             {
                 // This will do nothing in the already-connected case
@@ -191,16 +192,16 @@ public:
                     sslContext->set_verify_mode(boost::asio::ssl::context::verify_none);
                 }
 
-#if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__)) || defined(_WIN32)
+#ifdef CPPREST_PLATFORM_ASIO_CERT_VERIFICATION_AVAILABLE
                 m_openssl_failed = false;
 #endif
                 sslContext->set_verify_callback([this](bool preverified, boost::asio::ssl::verify_context &verifyCtx)
                 {
-#if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__)) || defined(_WIN32)
-                    // On OS X, iOS, and Android, OpenSSL doesn't have access to where the OS
-                    // stores keychains. If OpenSSL fails we will doing verification at the
-                    // end using the whole certificate chain so wait until the 'leaf' cert.
-                    // For now return true so OpenSSL continues down the certificate chain.
+#ifdef CPPREST_PLATFORM_ASIO_CERT_VERIFICATION_AVAILABLE
+                    // Attempt to use platform certificate validation when it is available:
+                    // If OpenSSL fails we will doing verification at the end using the whole certificate chain,
+                    // so wait until the 'leaf' cert. For now return true so OpenSSL continues down the certificate
+                    // chain.
                     if(!preverified)
                     {
                         m_openssl_failed = true;
@@ -316,6 +317,15 @@ public:
             shutdown_wspp_impl<WebsocketConfigType>(con_hdl, false);
         });
 
+        // Set User Agent specified by the user. This needs to happen before any connection is created
+        const auto& headers = m_config.headers();
+
+        auto user_agent_it = headers.find(web::http::header_names::user_agent);
+        if (user_agent_it != headers.end())
+        {
+            client.set_user_agent(utility::conversions::to_utf8string(user_agent_it->second));
+        }
+
         // Get the connection handle to save for later, have to create temporary
         // because type erasure occurs with connection_hdl.
         websocketpp::lib::error_code ec;
@@ -327,10 +337,9 @@ public:
         }
 
         // Add any request headers specified by the user.
-        const auto & headers = m_config.headers();
         for (const auto & header : headers)
         {
-            if (!utility::details::str_icmp(header.first, g_subProtocolHeader))
+            if (!utility::details::str_iequal(header.first, g_subProtocolHeader))
             {
                 con->append_header(utility::conversions::to_utf8string(header.first), utility::conversions::to_utf8string(header.second));
             }
@@ -734,6 +743,7 @@ private:
     };
     struct websocketpp_client : websocketpp_client_base
     {
+        ~websocketpp_client() CPPREST_NOEXCEPT {}
         websocketpp::client<websocketpp::config::asio_client> & non_tls_client() override
         {
             return m_client;
@@ -743,6 +753,7 @@ private:
     };
     struct websocketpp_tls_client : websocketpp_client_base
     {
+        ~websocketpp_tls_client() CPPREST_NOEXCEPT {}
         websocketpp::client<websocketpp::config::asio_tls_client> & tls_client() override
         {
             return m_client;
@@ -771,7 +782,7 @@ private:
     // Used to track if any of the OpenSSL server certificate verifications
     // failed. This can safely be tracked at the client level since connections
     // only happen once for each client.
-#if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__)) || defined(_WIN32)
+#ifdef CPPREST_PLATFORM_ASIO_CERT_VERIFICATION_AVAILABLE
     bool m_openssl_failed;
 #endif
 
@@ -796,4 +807,3 @@ websocket_callback_client::websocket_callback_client(websocket_client_config con
 }}}
 
 #endif
-

@@ -14,17 +14,6 @@
 
 namespace web
 {
-
-namespace http { namespace client { namespace details {
-class winhttp_client;
-class winrt_client;
-class asio_context;
-}}}
-namespace websockets { namespace client { namespace details {
-class winrt_callback_client;
-class wspp_callback_client;
-}}}
-
 namespace details
 {
 
@@ -33,7 +22,7 @@ class zero_memory_deleter
 public:
     _ASYNCRTIMP void operator()(::utility::string_t *data) const;
 };
-typedef std::unique_ptr<::utility::string_t, zero_memory_deleter> plaintext_string;
+typedef std::unique_ptr< ::utility::string_t, zero_memory_deleter> plaintext_string;
 
 #if defined(_WIN32) && !defined(CPPREST_TARGET_XP)
 #if defined(__cplusplus_winrt)

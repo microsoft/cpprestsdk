@@ -13,6 +13,9 @@
 * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ****/
 #include "stdafx.h"
+#include <sstream>
+#include "cpprest/ws_client.h"
+#include "cpprest/ws_msg.h"
 #include "../../http/common/internal_http_helpers.h"
 
 #if !defined(CPPREST_EXCLUDE_WEBSOCKETS)
@@ -28,6 +31,12 @@ namespace client
 {
 
 static ::utility::string_t g_subProtocolHeader = _XPLATSTR("Sec-WebSocket-Protocol");
+
+void websocket_client_config::set_user_agent(const utf8string &user_agent)
+{
+    headers().add(web::http::header_names::user_agent, utility::conversions::to_string_t(user_agent));
+}
+
 void websocket_client_config::add_subprotocol(const ::utility::string_t &name)
 {
     m_headers.add(g_subProtocolHeader, name);
@@ -39,7 +48,7 @@ std::vector<::utility::string_t> websocket_client_config::subprotocols() const
     auto subprotocolHeader = m_headers.find(g_subProtocolHeader);
     if (subprotocolHeader != m_headers.end())
     {
-        utility::stringstream_t header(subprotocolHeader->second);
+        utility::istringstream_t header(subprotocolHeader->second);
         utility::string_t token;
         while (std::getline(header, token, U(',')))
         {

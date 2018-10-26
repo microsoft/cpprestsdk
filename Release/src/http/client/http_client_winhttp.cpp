@@ -14,16 +14,56 @@
 ****/
 #include "stdafx.h"
 
+#include <atomic>
+#include <Wincrypt.h>
+
 #include "cpprest/http_headers.h"
+#include "../common/x509_cert_utilities.h"
 #include "http_client_impl.h"
 
 #ifndef CPPREST_TARGET_XP
 #include <VersionHelpers.h>
 #endif
 
-#undef min
-#undef max
+namespace
+{
+struct security_failure_message
+{
+    std::uint32_t flag;
+    const char * text;
+};
 
+CPPREST_CONSTEXPR security_failure_message g_security_failure_messages[] = {
+    { WINHTTP_CALLBACK_STATUS_FLAG_CERT_REV_FAILED,
+        "WINHTTP_CALLBACK_STATUS_FLAG_CERT_REV_FAILED failed to check revocation status."},
+    { WINHTTP_CALLBACK_STATUS_FLAG_INVALID_CERT,
+        "WINHTTP_CALLBACK_STATUS_FLAG_INVALID_CERT SSL certificate is invalid."},
+    { WINHTTP_CALLBACK_STATUS_FLAG_CERT_REVOKED,
+        "WINHTTP_CALLBACK_STATUS_FLAG_CERT_REVOKED SSL certificate was revoked."},
+    { WINHTTP_CALLBACK_STATUS_FLAG_INVALID_CA,
+        "WINHTTP_CALLBACK_STATUS_FLAG_INVALID_CA SSL invalid CA."},
+    { WINHTTP_CALLBACK_STATUS_FLAG_CERT_CN_INVALID,
+        "WINHTTP_CALLBACK_STATUS_FLAG_CERT_CN_INVALID SSL common name does not match."},
+    { WINHTTP_CALLBACK_STATUS_FLAG_CERT_DATE_INVALID,
+        "WINHTTP_CALLBACK_STATUS_FLAG_CERT_DATE_INVALID SLL certificate is expired."},
+    { WINHTTP_CALLBACK_STATUS_FLAG_SECURITY_CHANNEL_ERROR,
+        "WINHTTP_CALLBACK_STATUS_FLAG_SECURITY_CHANNEL_ERROR internal error."},
+};
+
+std::string generate_security_failure_message(std::uint32_t flags)
+{
+    std::string result("SSL Error:");
+    for (const auto& message : g_security_failure_messages) {
+        if (flags & message.flag) {
+            result.push_back(' ');
+            result.append(message.text);
+        }
+    }
+
+    return result;
+}
+
+}   // unnamed namespace
 namespace web
 {
 namespace http
@@ -142,9 +182,10 @@ class memory_holder
 {
     uint8_t* m_externalData;
     std::vector<uint8_t> m_internalData;
+    size_t m_size;
 
 public:
-    memory_holder() : m_externalData(nullptr)
+    memory_holder() : m_externalData(nullptr), m_size(0)
     {
     }
 
@@ -157,10 +198,11 @@ public:
         m_externalData = nullptr;
     }
 
-    inline void reassign_to(_In_opt_ uint8_t *block)
+    inline void reassign_to(_In_opt_ uint8_t *block, size_t length)
     {
         assert(block != nullptr);
         m_externalData = block;
+        m_size = length;
     }
 
     inline bool is_internally_allocated() const
@@ -171,6 +213,11 @@ public:
     inline uint8_t* get()
     {
         return is_internally_allocated() ? &m_internalData[0] : m_externalData ;
+    }
+
+    inline size_t size() const
+    {
+        return is_internally_allocated() ? m_internalData.size() : m_size;
     }
 };
 
@@ -183,7 +230,7 @@ enum msg_body_type
 };
 
 // Additional information necessary to track a WinHTTP request.
-class winhttp_request_context : public request_context
+class winhttp_request_context final : public request_context
 {
 public:
 
@@ -205,7 +252,7 @@ public:
         if (block == nullptr)
             m_body_data.allocate_space(length);
         else
-            m_body_data.reassign_to(block);
+            m_body_data.reassign_to(block, length);
     }
 
     void allocate_reply_space(_In_opt_ uint8_t *block, size_t length)
@@ -213,7 +260,7 @@ public:
         if (block == nullptr)
             m_body_data.allocate_space(length);
         else
-            m_body_data.reassign_to(block);
+            m_body_data.reassign_to(block, length);
     }
 
     bool is_externally_allocated() const
@@ -245,10 +292,255 @@ public:
     // This self reference will keep us alive until finish() is called.
     std::shared_ptr<winhttp_request_context> m_self_reference;
     memory_holder m_body_data;
-    std::unique_ptr<web::http::details::compression::stream_decompressor> decompressor;
 
-    virtual void cleanup()
+    // Compress/decompress-related processing state lives here
+    class compression_state
     {
+    public:
+        compression_state()
+            : m_acquired(nullptr), m_bytes_read(0), m_bytes_processed(0), m_needs_flush(false), m_started(false), m_done(false), m_chunked(false)
+        {
+        }
+
+#if defined(_MSC_VER) && _MSC_VER < 1900
+        compression_state(const compression_state&) = delete;
+        compression_state(compression_state&& other)
+            : m_buffer(std::move(other.m_buffer))
+            , m_acquired(other.m_acquired)
+            , m_bytes_read(other.m_bytes_read)
+            , m_bytes_processed(other.m_bytes_processed)
+            , m_needs_flush(other.m_needs_flush)
+            , m_started(other.m_started)
+            , m_done(other.m_done)
+            , m_chunked(other.m_chunked)
+            , m_chunk_bytes(other.m_chunk_bytes)
+            , m_chunk(std::move(other.m_chunk))
+        {}
+        compression_state& operator=(const compression_state&) = delete;
+        compression_state& operator=(compression_state&& other) {
+            m_buffer = std::move(other.m_buffer);
+            m_acquired = other.m_acquired;
+            m_bytes_read = other.m_bytes_read;
+            m_bytes_processed = other.m_bytes_processed;
+            m_needs_flush = other.m_needs_flush;
+            m_started = other.m_started;
+            m_done = other.m_done;
+            m_chunked = other.m_chunked;
+            m_chunk_bytes = other.m_chunk_bytes;
+            m_chunk = std::move(other.m_chunk);
+            return *this;
+        }
+#endif // defined(_MSC_VER) && _MSC_VER < 1900
+
+        // Minimal state for on-the-fly decoding of "chunked" encoded data
+        class _chunk_helper
+        {
+        public:
+            _chunk_helper()
+                : m_bytes_remaining(0), m_chunk_size(true), m_chunk_delim(false), m_expect_linefeed(false), m_ignore(false), m_trailer(false)
+            {
+            }
+
+            // Returns true if the end of chunked data has been reached, specifically whether the 0-length
+            // chunk and its trailing delimiter has been processed.  Otherwise, offset and length bound the
+            // portion of buffer that represents a contiguous (and possibly partial) chunk of consumable
+            // data; offset+length is the total number of bytes processed from the buffer on this pass.
+            bool process_buffer(uint8_t *buffer, size_t buffer_size, size_t &offset, size_t &length)
+            {
+                bool done = false;
+                size_t n = 0;
+                size_t l = 0;
+
+                while (n < buffer_size)
+                {
+                    if (m_ignore)
+                    {
+                        if (m_expect_linefeed)
+                        {
+                            _ASSERTE(m_chunk_delim && m_trailer);
+                            if (buffer[n] != '\n')
+                            {
+                                // The data stream does not conform to "chunked" encoding
+                                throw http_exception(status_codes::BadRequest, "Transfer-Encoding malformed trailer");
+                            }
+
+                            // Look for further trailer fields or the end of the stream
+                            m_expect_linefeed = false;
+                            m_trailer = false;
+                        }
+                        else if (buffer[n] == '\r')
+                        {
+                            if (!m_trailer)
+                            {
+                                // We're at the end of the data we need to ignore
+                                _ASSERTE(m_chunk_size || m_chunk_delim);
+                                m_ignore = false;
+                                m_chunk_delim = false;  // this is only set if we're at the end of the message
+                            } // else we're at the end of a trailer field
+                            m_expect_linefeed = true;
+                        }
+                        else if (m_chunk_delim)
+                        {
+                            // We're processing (and ignoring) a trailer field
+                            m_trailer = true;
+                        }
+                    }
+                    else if (m_expect_linefeed)
+                    {
+                        // We've already seen a carriage return; confirm the linefeed
+                        if (buffer[n] != '\n')
+                        {
+                            // The data stream does not conform to "chunked" encoding
+                            throw http_exception(status_codes::BadRequest, "Transfer-Encoding malformed delimiter");
+                        }
+                        if (m_chunk_size)
+                        {
+                            if (!m_bytes_remaining)
+                            {
+                                // We're processing the terminating "empty" chunk; there's
+                                // no data, we just need to confirm the final chunk delimiter,
+                                // possibly ignoring a trailer part along the way
+                                m_ignore = true;
+                                m_chunk_delim = true;
+                            } // else we move on to the chunk data itself
+                            m_chunk_size = false;
+                        }
+                        else
+                        {
+                            // Now we move on to the next chunk size
+                            _ASSERTE(!m_bytes_remaining);
+                            if (m_chunk_delim)
+                            {
+                                // We expect a chunk size next
+                                m_chunk_size = true;
+                            }
+                            else
+                            {
+                                // We just processed the end-of-input delimiter
+                                done = true;
+                            }
+                            m_chunk_delim = false;
+                        }
+                        m_expect_linefeed = false;
+                    }
+                    else if (m_chunk_delim)
+                    {
+                        // We're processing a post-chunk delimiter
+                        if (buffer[n] != '\r')
+                        {
+                            // The data stream does not conform to "chunked" encoding
+                            throw http_exception(status_codes::BadRequest, "Transfer-Encoding malformed chunk delimiter");
+                        }
+
+                        // We found the carriage return; look for the linefeed
+                        m_expect_linefeed = true;
+                    }
+                    else if (m_chunk_size)
+                    {
+                        // We're processing an ASCII hexadecimal chunk size
+                        if (buffer[n] >= 'a' && buffer[n] <= 'f')
+                        {
+                            m_bytes_remaining *= 16;
+                            m_bytes_remaining += 10 + buffer[n] - 'a';
+                        }
+                        else if (buffer[n] >= 'A' && buffer[n] <= 'F')
+                        {
+                            m_bytes_remaining *= 16;
+                            m_bytes_remaining += 10 + buffer[n] - 'A';
+                        }
+                        else if (buffer[n] >= '0' && buffer[n] <= '9')
+                        {
+                            m_bytes_remaining *= 16;
+                            m_bytes_remaining += buffer[n] - '0';
+                        }
+                        else if (buffer[n] == '\r')
+                        {
+                            // We've reached the end of the size, and there's no chunk extention
+                            m_expect_linefeed = true;
+                        }
+                        else if (buffer[n] == ';')
+                        {
+                            // We've reached the end of the size, and there's a chunk extention;
+                            // we don't support extensions, so we ignore them per RFC
+                            m_ignore = true;
+                        }
+                        else
+                        {
+                            // The data stream does not conform to "chunked" encoding
+                            throw http_exception(status_codes::BadRequest, "Transfer-Encoding malformed chunk size or extension");
+                        }
+                    }
+                    else
+                    {
+                        if (m_bytes_remaining)
+                        {
+                            // We're at the offset of a chunk of consumable data; let the caller process it
+                            l = std::min(m_bytes_remaining, buffer_size-n);
+                            m_bytes_remaining -= l;
+                            if (!m_bytes_remaining)
+                            {
+                                // We're moving on to the post-chunk delimiter
+                                m_chunk_delim = true;
+                            }
+                        }
+                        else
+                        {
+                            // We've previously processed the terminating empty chunk and its
+                            // trailing delimiter; skip the entire buffer, and inform the caller
+                            n = buffer_size;
+                            done = true;
+                        }
+
+                        // Let the caller process the result
+                        break;
+                    }
+
+                    // Move on to the next byte
+                    n++;
+                }
+
+                offset = n;
+                length = l;
+                return buffer_size ? done : (!m_bytes_remaining && !m_chunk_size && !m_chunk_delim);
+            }
+
+        private:
+            size_t m_bytes_remaining;   // the number of bytes remaining in the chunk we're currently processing
+            bool m_chunk_size;          // if true, we're processing a chunk size or its trailing delimiter
+            bool m_chunk_delim;         // if true, we're processing a delimiter between a chunk and the next chunk's size
+            bool m_expect_linefeed;     // if true, we're processing a delimiter, and we've already seen its carriage return
+            bool m_ignore;              // if true, we're processing a chunk extension or trailer, which we don't support
+            bool m_trailer;             // if true, we're processing (and ignoring) a trailer field; m_ignore is also true
+        };
+
+        std::vector<uint8_t> m_buffer;  // we read data from the stream into this before compressing
+        uint8_t *m_acquired;            // we use this in place of m_buffer if the stream has directly-accessible data available
+        size_t m_bytes_read;            // we most recently read this many bytes, which may be less than m_buffer.size()
+        size_t m_bytes_processed;       // we've compressed this many bytes of m_bytes_read so far
+        bool m_needs_flush;             // we've read and compressed all bytes, but the compressor still has compressed bytes to give us
+        bool m_started;                 // we've sent at least some number of bytes to m_decompressor
+        bool m_done;                    // we've read, compressed, and consumed all bytes
+        bool m_chunked;                 // if true, we need to decode and decompress a transfer-encoded message
+        size_t m_chunk_bytes;           // un-decompressed bytes remaining in the most-recently-obtained data from m_chunk
+        std::unique_ptr<_chunk_helper> m_chunk;
+    } m_compression_state;
+
+    void cleanup()
+    {
+        if (m_compression_state.m_acquired != nullptr)
+        {
+            // We may still hold a piece of the buffer if we encountered an exception; release it here
+            if (m_decompressor)
+            {
+                _get_writebuffer().commit(0);
+            }
+            else
+            {
+                _get_readbuffer().release(m_compression_state.m_acquired, m_compression_state.m_bytes_processed);
+            }
+            m_compression_state.m_acquired = nullptr;
+        }
+
         if(m_request_handle != nullptr)
         {
             auto tmp_handle = m_request_handle;
@@ -257,9 +549,127 @@ public:
         }
     }
 
+    void install_custom_cn_check(const utility::string_t& customHost)
+    {
+        m_customCnCheck = customHost;
+        utility::details::inplace_tolower(m_customCnCheck);
+    }
+
+    void on_send_request_validate_cn()
+    {
+        if (m_customCnCheck.empty())
+        {
+            // no custom validation selected; either we've delegated that to winhttp or
+            // certificate checking is completely disabled
+            return;
+        }
+
+        winhttp_cert_context certContext;
+        DWORD bufferSize = sizeof(certContext.raw);
+        if (!WinHttpQueryOption(
+            m_request_handle,
+            WINHTTP_OPTION_SERVER_CERT_CONTEXT,
+            &certContext.raw,
+            &bufferSize))
+        {
+            auto errorCode = GetLastError();
+            if (errorCode == HRESULT_CODE(WININET_E_INCORRECT_HANDLE_STATE))
+            {
+                // typically happens when given a custom host with an initially HTTP connection
+                return;
+            }
+
+            report_error(errorCode, build_error_msg(errorCode,
+                "WinHttpQueryOption WINHTTP_OPTION_SERVER_CERT_CONTEXT"));
+            cleanup();
+            return;
+        }
+
+        const auto encodedFirst = certContext.raw->pbCertEncoded;
+        const auto encodedLast = encodedFirst + certContext.raw->cbCertEncoded;
+        if (certContext.raw->cbCertEncoded == m_cachedEncodedCert.size()
+            && std::equal(encodedFirst, encodedLast, m_cachedEncodedCert.begin()))
+        {
+            // already validated OK
+            return;
+        }
+
+        char oidPkixKpServerAuth[] = szOID_PKIX_KP_SERVER_AUTH;
+        char oidServerGatedCrypto[] = szOID_SERVER_GATED_CRYPTO;
+        char oidSgcNetscape[] = szOID_SGC_NETSCAPE;
+        char *chainUses[] = {
+            oidPkixKpServerAuth,
+            oidServerGatedCrypto,
+            oidSgcNetscape,
+        };
+
+        winhttp_cert_chain_context chainContext;
+        CERT_CHAIN_PARA chainPara = {sizeof(chainPara)};
+        chainPara.RequestedUsage.dwType = USAGE_MATCH_TYPE_OR;
+        chainPara.RequestedUsage.Usage.cUsageIdentifier =
+            sizeof(chainUses) / sizeof(char *);
+        chainPara.RequestedUsage.Usage.rgpszUsageIdentifier = chainUses;
+
+        // note that the following chain only checks the end certificate; we
+        // assume WinHTTP already validated everything but the common name.
+        if (!CertGetCertificateChain(
+            NULL,
+            certContext.raw,
+            nullptr,
+            certContext.raw->hCertStore,
+            &chainPara,
+            CERT_CHAIN_CACHE_END_CERT,
+            NULL,
+            &chainContext.raw))
+        {
+            auto errorCode = GetLastError();
+            report_error(errorCode, build_error_msg(errorCode,
+                "CertGetCertificateChain"));
+            cleanup();
+            return;
+        }
+
+        HTTPSPolicyCallbackData policyData = {
+            {sizeof(policyData)},
+            AUTHTYPE_SERVER,
+            // we assume WinHTTP already checked these:
+            0x00000080 /* SECURITY_FLAG_IGNORE_REVOCATION */
+                | 0x00000100 /* SECURITY_FLAG_IGNORE_UNKNOWN_CA */
+                | 0x00000200 /* SECURITY_FLAG_IGNORE_WRONG_USAGE */
+                | 0x00002000 /* SECURITY_FLAG_IGNORE_CERT_DATE_INVALID */,
+            &m_customCnCheck[0],
+            };
+        CERT_CHAIN_POLICY_PARA policyPara = {sizeof(policyPara)};
+        policyPara.pvExtraPolicyPara = &policyData;
+
+        CERT_CHAIN_POLICY_STATUS policyStatus = {sizeof(policyStatus)};
+        if (!CertVerifyCertificateChainPolicy(
+            CERT_CHAIN_POLICY_SSL,
+            chainContext.raw,
+            &policyPara,
+            &policyStatus))
+        {
+            auto errorCode = GetLastError();
+            report_error(errorCode, build_error_msg(errorCode,
+                "CertVerifyCertificateChainPolicy"));
+            cleanup();
+            return;
+        }
+
+        if (policyStatus.dwError)
+        {
+            report_error(policyStatus.dwError,
+                build_error_msg(policyStatus.dwError, "Incorrect common name"));
+            cleanup();
+            return;
+        }
+
+        m_cachedEncodedCert.assign(encodedFirst, encodedLast);
+    }
+
 protected:
 
-    virtual void finish()
+    virtual void finish() override
     {
         request_context::finish();
         assert(m_self_reference != nullptr);
@@ -268,6 +678,9 @@ protected:
     }
 
 private:
+
+    utility::string_t m_customCnCheck;
+    std::vector<unsigned char> m_cachedEncodedCert;
 
     // Can only create on the heap using factory function.
     winhttp_request_context(const std::shared_ptr<_http_client_communicator> &client, const http_request &request)
@@ -345,12 +758,13 @@ struct ie_proxy_config : WINHTTP_CURRENT_USER_IE_PROXY_CONFIG
 };
 
 // WinHTTP client.
-class winhttp_client : public _http_client_communicator
+class winhttp_client final : public _http_client_communicator
 {
 public:
     winhttp_client(http::uri address, http_client_config client_config)
         : _http_client_communicator(std::move(address), std::move(client_config))
         , m_secure(m_uri.scheme() == _XPLATSTR("https"))
+        , m_opened(false)
         , m_hSession(nullptr)
         , m_hConnection(nullptr) { }
 
@@ -394,17 +808,20 @@ public:
 
 protected:
 
-    unsigned long report_failure(const utility::string_t& errorMessage)
-    {
-        // Should we log?
-        CASABLANCA_UNREFERENCED_PARAMETER(errorMessage);
-
-        return GetLastError();
-    }
-
     // Open session and connection with the server.
-    virtual unsigned long open() override
+    unsigned long open()
     {
+        if (m_opened)
+        {
+            return 0;
+        }
+
+        pplx::extensibility::scoped_critical_section_t l(m_client_lock);
+        if (m_opened)
+        {
+            return 0;
+        }
+
         // This object have lifetime greater than proxy_name and proxy_bypass
         // which may point to its elements.
         ie_proxy_config proxyIE;
@@ -431,37 +848,40 @@ protected:
 #ifndef CPPREST_TARGET_XP
             if (IsWindows8Point1OrGreater())
             {
+                // Windows 8.1 and newer supports automatic proxy discovery and auto-fallback to IE proxy settings
                 access_type = WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY;
             }
-
-            // However, if it is not configured...
-            proxy_info proxyDefault;
-            if(!WinHttpGetDefaultProxyConfiguration(&proxyDefault) ||
-                proxyDefault.dwAccessType == WINHTTP_ACCESS_TYPE_NO_PROXY)
+            else
             {
-                // ... then try to fall back on the default WinINET proxy, as
-                // recommended for the desktop applications (if we're not
-                // running under a user account, the function below will just
-                // fail, so there is no real need to check for this explicitly)
-                if(WinHttpGetIEProxyConfigForCurrentUser(&proxyIE))
+                // However, if it is not configured...
+                proxy_info proxyDefault;
+                if (!WinHttpGetDefaultProxyConfiguration(&proxyDefault) ||
+                    proxyDefault.dwAccessType == WINHTTP_ACCESS_TYPE_NO_PROXY)
                 {
-                    if(proxyIE.fAutoDetect)
+                    // ... then try to fall back on the default WinINET proxy, as
+                    // recommended for the desktop applications (if we're not
+                    // running under a user account, the function below will just
+                    // fail, so there is no real need to check for this explicitly)
+                    if (WinHttpGetIEProxyConfigForCurrentUser(&proxyIE))
                     {
-                        m_proxy_auto_config = true;
-                    }
-                    else if(proxyIE.lpszAutoConfigUrl)
-                    {
-                        m_proxy_auto_config = true;
-                        m_proxy_auto_config_url = proxyIE.lpszAutoConfigUrl;
-                    }
-                    else if(proxyIE.lpszProxy)
-                    {
-                        access_type = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
-                        proxy_name = proxyIE.lpszProxy;
-
-                        if(proxyIE.lpszProxyBypass)
+                        if (proxyIE.fAutoDetect)
                         {
-                            proxy_bypass = proxyIE.lpszProxyBypass;
+                            m_proxy_auto_config = true;
+                        }
+                        else if (proxyIE.lpszAutoConfigUrl)
+                        {
+                            m_proxy_auto_config = true;
+                            m_proxy_auto_config_url = proxyIE.lpszAutoConfigUrl;
+                        }
+                        else if (proxyIE.lpszProxy)
+                        {
+                            access_type = WINHTTP_ACCESS_TYPE_NAMED_PROXY;
+                            proxy_name = proxyIE.lpszProxy;
+
+                            if (proxyIE.lpszProxyBypass)
+                            {
+                                proxy_bypass = proxyIE.lpszProxyBypass;
+                            }
                         }
                     }
                 }
@@ -486,17 +906,13 @@ protected:
             }
             else
             {
+                proxy_str = uri.host();
                 if (uri.port() > 0)
                 {
-                    utility::ostringstream_t ss;
-                    ss.imbue(std::locale::classic());
-                    ss << uri.host() << _XPLATSTR(":") << uri.port();
-                    proxy_str = ss.str();
+                    proxy_str.push_back(_XPLATSTR(':'));
+                    proxy_str.append(::utility::conversions::details::to_string_t(uri.port()));
                 }
-                else
-                {
-                    proxy_str = uri.host();
-                }
+
                 proxy_name = proxy_str.c_str();
             }
         }
@@ -510,7 +926,7 @@ protected:
             WINHTTP_FLAG_ASYNC);
         if(!m_hSession)
         {
-            return report_failure(_XPLATSTR("Error opening session"));
+            return GetLastError();
         }
 
         // Set timeouts.
@@ -522,7 +938,7 @@ protected:
             milliseconds,
             milliseconds))
         {
-            return report_failure(_XPLATSTR("Error setting timeouts"));
+            return GetLastError();
         }
 
         if(config.guarantee_order())
@@ -531,7 +947,7 @@ protected:
             DWORD maxConnections = 1;
             if(!WinHttpSetOption(m_hSession, WINHTTP_OPTION_MAX_CONNS_PER_SERVER, &maxConnections, sizeof(maxConnections)))
             {
-                return report_failure(_XPLATSTR("Error setting options"));
+                return GetLastError();
             }
         }
 
@@ -543,7 +959,7 @@ protected:
         win32_result = ::WinHttpSetOption(m_hSession, WINHTTP_OPTION_SECURE_PROTOCOLS, &secure_protocols, sizeof(secure_protocols));
         if(FALSE == win32_result)
         {
-            return report_failure(_XPLATSTR("Error setting session options"));
+            return GetLastError();
         }
 #endif
 
@@ -553,10 +969,13 @@ protected:
         if(WINHTTP_INVALID_STATUS_CALLBACK == WinHttpSetStatusCallback(
             m_hSession,
             &winhttp_client::completion_callback,
-            WINHTTP_CALLBACK_FLAG_ALL_COMPLETIONS | WINHTTP_CALLBACK_FLAG_HANDLES | WINHTTP_CALLBACK_FLAG_SECURE_FAILURE,
+            WINHTTP_CALLBACK_FLAG_ALL_COMPLETIONS
+                | WINHTTP_CALLBACK_FLAG_HANDLES
+                | WINHTTP_CALLBACK_FLAG_SECURE_FAILURE
+                | WINHTTP_CALLBACK_FLAG_SEND_REQUEST,
             0))
         {
-            return report_failure(_XPLATSTR("Error registering callback"));
+            return GetLastError();
         }
 
         // Open connection.
@@ -569,16 +988,29 @@ protected:
 
         if(m_hConnection == nullptr)
         {
-            return report_failure(_XPLATSTR("Error opening connection"));
+            return GetLastError();
         }
 
+        m_opened = true;
         return S_OK;
     }
 
     // Start sending request.
     void send_request(_In_ const std::shared_ptr<request_context> &request)
     {
+        // First see if we need to be opened.
+        unsigned long error = open();
+        if (error != 0)
+        {
+            // DO NOT TOUCH the this pointer after completing the request
+            // This object could be freed along with the request as it could
+            // be the last reference to this object
+            request->report_error(error, _XPLATSTR("Open failed"));
+            return;
+        }
+
         http_request &msg = request->m_request;
+        http_headers &headers = msg.headers();
         std::shared_ptr<winhttp_request_context> winhttp_context = std::static_pointer_cast<winhttp_request_context>(request);
         std::weak_ptr<winhttp_request_context> weak_winhttp_context = winhttp_context;
 
@@ -638,18 +1070,6 @@ protected:
             return;
         }
 
-        // Enable the certificate revocation check
-        if (m_secure)
-        {
-            DWORD dwEnableSSLRevocOpt = WINHTTP_ENABLE_SSL_REVOCATION;
-            if (!WinHttpSetOption(winhttp_context->m_request_handle, WINHTTP_OPTION_ENABLE_FEATURE, &dwEnableSSLRevocOpt, sizeof(dwEnableSSLRevocOpt)))
-            {
-                auto errorCode = GetLastError();
-                request->report_error(errorCode, build_error_msg(errorCode, "Error enabling SSL revocation check"));
-                return;
-            }
-        }
-
         if(proxy_info_required)
         {
             auto result = WinHttpSetOption(
@@ -686,27 +1106,61 @@ protected:
         }
 
         // Check to turn off server certificate verification.
-        if(!client_config().validate_certificates())
+        DWORD ignoredCertificateValidationSteps = 0;
+        if (client_config().validate_certificates())
         {
-            DWORD data = SECURITY_FLAG_IGNORE_UNKNOWN_CA
+            // if we are validating certificates, also turn on revocation checking
+            DWORD dwEnableSSLRevocOpt = WINHTTP_ENABLE_SSL_REVOCATION;
+            if (!WinHttpSetOption(winhttp_context->m_request_handle, WINHTTP_OPTION_ENABLE_FEATURE,
+                &dwEnableSSLRevocOpt, sizeof(dwEnableSSLRevocOpt)))
+            {
+                auto errorCode = GetLastError();
+                request->report_error(errorCode, build_error_msg(errorCode, "Error enabling SSL revocation check"));
+                return;
+            }
+
+            // check if the user has overridden the desired Common Name with the host header
+            const auto hostHeader = headers.find(_XPLATSTR("Host"));
+            if (hostHeader != headers.end())
+            {
+                const auto& requestHost = hostHeader->second;
+                if (!utility::details::str_iequal(requestHost, m_uri.host()))
+                {
+                    winhttp_context->install_custom_cn_check(requestHost);
+                    ignoredCertificateValidationSteps = SECURITY_FLAG_IGNORE_CERT_CN_INVALID;
+                }
+            }
+        }
+        else
+        {
+            ignoredCertificateValidationSteps = SECURITY_FLAG_IGNORE_UNKNOWN_CA
                 | SECURITY_FLAG_IGNORE_CERT_DATE_INVALID
                 | SECURITY_FLAG_IGNORE_CERT_CN_INVALID
                 | SECURITY_FLAG_IGNORE_CERT_WRONG_USAGE;
-
-            auto result = WinHttpSetOption(
-                winhttp_context->m_request_handle,
-                WINHTTP_OPTION_SECURITY_FLAGS,
-                &data,
-                sizeof(data));
-            if(!result)
-            {
-                auto errorCode = GetLastError();
-                request->report_error(errorCode, build_error_msg(errorCode, "Setting ignore server certificate verification"));
-                return;
-            }
         }
 
-        const size_t content_length = msg._get_impl()->_get_content_length();
+        if(ignoredCertificateValidationSteps
+            && !WinHttpSetOption(
+                winhttp_context->m_request_handle,
+                WINHTTP_OPTION_SECURITY_FLAGS,
+                &ignoredCertificateValidationSteps,
+                sizeof(ignoredCertificateValidationSteps)))
+        {
+            auto errorCode = GetLastError();
+            request->report_error(errorCode, build_error_msg(errorCode, "Setting ignore server certificate verification"));
+            return;
+        }
+
+        size_t content_length;
+        try
+        {
+            content_length = msg._get_impl()->_get_content_length_and_set_compression();
+        }
+        catch (...)
+        {
+            request->report_exception(std::current_exception());
+            return;
+        }
         if (content_length > 0)
         {
             if ( msg.method() == http::methods::GET || msg.method() == http::methods::HEAD )
@@ -718,9 +1172,11 @@ protected:
             // There is a request body that needs to be transferred.
             if (content_length == std::numeric_limits<size_t>::max())
             {
-                // The content length is unknown and the application set a stream. This is an
-                // indication that we will use transfer encoding chunked.
+                // The content length is not set and the application set a stream. This is an
+                // indication that we will use transfer encoding chunked.  We still want to
+                // know that stream's effective length if possible for memory efficiency.
                 winhttp_context->m_bodyType = transfer_encoding_chunked;
+                winhttp_context->m_remaining_to_write = msg._get_impl()->_get_stream_length();
             }
             else
             {
@@ -730,15 +1186,16 @@ protected:
             }
         }
 
-        if(web::http::details::compression::stream_decompressor::is_supported() && client_config().request_compressed_response())
+        utility::string_t flattened_headers = web::http::details::flatten_http_headers(headers);
+        if (winhttp_context->m_request.method() == http::methods::GET)
         {
-            msg.headers().add(web::http::header_names::accept_encoding, U("deflate, gzip"));
+            // Prepare to request a compressed response from the server if necessary.
+            flattened_headers += winhttp_context->get_compression_header();
         }
 
         // Add headers.
-        if(!msg.headers().empty())
+        if(!flattened_headers.empty())
         {
-            const utility::string_t flattened_headers = web::http::details::flatten_http_headers(msg.headers());
             if(!WinHttpAddRequestHeaders(
                 winhttp_context->m_request_handle,
                 flattened_headers.c_str(),
@@ -873,19 +1330,36 @@ private:
         else
         {
             // If bytes read is less than the chunk size this request is done.
+            // Is it really, though?  The WinHttpReadData docs suggest that less can be returned regardless...
             const size_t chunkSize = pContext->m_http_client->client_config().chunksize();
-            if (bytesRead < chunkSize && !firstRead)
+            std::unique_ptr <compression::decompress_provider> &decompressor = pContext->m_decompressor;
+            if (!decompressor && bytesRead < chunkSize && !firstRead)
             {
                 pContext->complete_request(pContext->m_downloaded);
             }
             else
             {
-                auto writebuf = pContext->_get_writebuffer();
-                pContext->allocate_reply_space(writebuf.alloc(chunkSize), chunkSize);
+                uint8_t *buffer;
+
+                if (decompressor)
+                {
+                    // m_buffer holds the compressed data; we'll decompress into the caller's buffer later
+                    if (pContext->m_compression_state.m_buffer.capacity() < chunkSize)
+                    {
+                        pContext->m_compression_state.m_buffer.reserve(chunkSize);
+                    }
+                    buffer = pContext->m_compression_state.m_buffer.data();
+                }
+                else
+                {
+                    auto writebuf = pContext->_get_writebuffer();
+                    pContext->allocate_reply_space(writebuf.alloc(chunkSize), chunkSize);
+                    buffer = pContext->m_body_data.get();
+                }
 
                 if (!WinHttpReadData(
                     pContext->m_request_handle,
-                    pContext->m_body_data.get(),
+                    buffer,
                     static_cast<DWORD>(chunkSize),
                     nullptr))
                 {
@@ -898,11 +1372,38 @@ private:
 
     static void _transfer_encoding_chunked_write_data(_In_ winhttp_request_context * p_request_context)
     {
-        const size_t chunk_size = p_request_context->m_http_client->client_config().chunksize();
+        size_t chunk_size;
+        std::unique_ptr<compression::compress_provider> &compressor = p_request_context->m_request.compressor();
 
-        p_request_context->allocate_request_space(nullptr, chunk_size+http::details::chunked_encoding::additional_encoding_space);
+        // Set the chunk size up front; we need it before the lambda functions come into scope
+        if (compressor)
+        {
+            // We could allocate less than a chunk for the compressed data here, though that
+            // would result in more trips through this path for not-so-compressible data...
+            if (p_request_context->m_body_data.size() > http::details::chunked_encoding::additional_encoding_space)
+            {
+                // If we've previously allocated space for the compressed data, don't reduce it
+                chunk_size = p_request_context->m_body_data.size() - http::details::chunked_encoding::additional_encoding_space;
+            }
+            else if (p_request_context->m_remaining_to_write != std::numeric_limits<size_t>::max())
+            {
+                // Choose a semi-intelligent size based on how much total data is left to compress
+                chunk_size = std::min(static_cast<size_t>(p_request_context->m_remaining_to_write)+128, p_request_context->m_http_client->client_config().chunksize());
+            }
+            else
+            {
+                // Just base our allocation on the chunk size, since we don't have any other data available
+                chunk_size = p_request_context->m_http_client->client_config().chunksize();
+            }
+        }
+        else
+        {
+            // We're not compressing; use the smaller of the remaining data (if known) and the configured (or default) chunk size
+            chunk_size = std::min(static_cast<size_t>(p_request_context->m_remaining_to_write), p_request_context->m_http_client->client_config().chunksize());
+        }
+        p_request_context->allocate_request_space(nullptr, chunk_size + http::details::chunked_encoding::additional_encoding_space);
 
-        auto after_read = [p_request_context, chunk_size](pplx::task<size_t> op)
+        auto after_read = [p_request_context, chunk_size, &compressor](pplx::task<size_t> op)
         {
             size_t bytes_read;
             try
@@ -913,7 +1414,10 @@ private:
                 {
                     // We have raw memory here writing to a memory stream so it is safe to wait
                     // since it will always be non-blocking.
-                    p_request_context->m_readBufferCopy->putn_nocopy(&p_request_context->m_body_data.get()[http::details::chunked_encoding::data_offset], bytes_read).wait();
+                    if (!compressor)
+                    {
+                        p_request_context->m_readBufferCopy->putn_nocopy(&p_request_context->m_body_data.get()[http::details::chunked_encoding::data_offset], bytes_read).wait();
+                    }
                 }
             }
             catch (...)
@@ -926,7 +1430,21 @@ private:
 
             size_t offset = http::details::chunked_encoding::add_chunked_delimiters(p_request_context->m_body_data.get(), chunk_size + http::details::chunked_encoding::additional_encoding_space, bytes_read);
 
+            if (!compressor && p_request_context->m_remaining_to_write != std::numeric_limits<size_t>::max())
+            {
+                if (bytes_read == 0 && p_request_context->m_remaining_to_write)
+                {
+                    // The stream ended earlier than we detected it should
+                    http_exception ex(U("Unexpected end of request body stream encountered before expected length met."));
+                    p_request_context->report_exception(ex);
+                    return;
+                }
+                p_request_context->m_remaining_to_write -= bytes_read;
+            }
+
             // Stop writing chunks if we reached the end of the stream.
+            // Note that we could detect end-of-stream based on !m_remaining_to_write, and insert
+            // the last (0) chunk if we have enough extra space... though we currently don't.
             if (bytes_read == 0)
             {
                 p_request_context->m_bodyType = no_body;
@@ -951,7 +1469,171 @@ private:
             }
         };
 
-        p_request_context->_get_readbuffer().getn(&p_request_context->m_body_data.get()[http::details::chunked_encoding::data_offset], chunk_size).then(after_read);
+        if (compressor)
+        {
+            auto do_compress = [p_request_context, chunk_size, &compressor](pplx::task<size_t> op) -> pplx::task<size_t>
+            {
+                size_t bytes_read;
+
+                try
+                {
+                    bytes_read = op.get();
+                }
+                catch (...)
+                {
+                    return pplx::task_from_exception<size_t>(std::current_exception());
+                }
+                _ASSERTE(bytes_read >= 0);
+
+                uint8_t *buffer = p_request_context->m_compression_state.m_acquired;
+                if (buffer == nullptr)
+                {
+                    buffer = p_request_context->m_compression_state.m_buffer.data();
+                }
+
+                web::http::compression::operation_hint hint = web::http::compression::operation_hint::has_more;
+
+                if (bytes_read)
+                {
+                    // An actual read always resets compression state for the next chunk
+                    _ASSERTE(p_request_context->m_compression_state.m_bytes_processed == p_request_context->m_compression_state.m_bytes_read);
+                    _ASSERTE(!p_request_context->m_compression_state.m_needs_flush);
+                    p_request_context->m_compression_state.m_bytes_read = bytes_read;
+                    p_request_context->m_compression_state.m_bytes_processed = 0;
+                    if (p_request_context->m_readBufferCopy)
+                    {
+                        // If we've been asked to keep a copy of the raw data for restarts, do so here, pre-compression
+                        p_request_context->m_readBufferCopy->putn_nocopy(buffer, bytes_read).wait();
+                    }
+                    if (p_request_context->m_remaining_to_write == bytes_read)
+                    {
+                        // We've read to the end of the stream; finalize here if possible.  We'll
+                        // decrement the remaining count as we actually process the read buffer.
+                        hint = web::http::compression::operation_hint::is_last;
+                    }
+                }
+                else if (p_request_context->m_compression_state.m_needs_flush)
+                {
+                    // All input has been consumed, but we still need to collect additional compressed output;
+                    // this is done (in theory it can be multiple times) as a finalizing operation
+                    hint = web::http::compression::operation_hint::is_last;
+                }
+                else if (p_request_context->m_compression_state.m_bytes_processed == p_request_context->m_compression_state.m_bytes_read)
+                {
+                    if (p_request_context->m_remaining_to_write && p_request_context->m_remaining_to_write != std::numeric_limits<size_t>::max())
+                    {
+                        // The stream ended earlier than we detected it should
+                        return pplx::task_from_exception<size_t>(http_exception(U("Unexpected end of request body stream encountered before expected length met.")));
+                    }
+
+                    // We think we're done; inform the compression library so it can finalize and/or give us any pending compressed bytes.
+                    // Note that we may end up here multiple times if m_needs_flush is set, until all compressed bytes are drained.
+                    hint = web::http::compression::operation_hint::is_last;
+                }
+                // else we're still compressing bytes from the previous read
+
+                _ASSERTE(p_request_context->m_compression_state.m_bytes_processed <= p_request_context->m_compression_state.m_bytes_read);
+
+                uint8_t *in = buffer + p_request_context->m_compression_state.m_bytes_processed;
+                size_t inbytes = p_request_context->m_compression_state.m_bytes_read - p_request_context->m_compression_state.m_bytes_processed;
+                return compressor->compress(in, inbytes, &p_request_context->m_body_data.get()[http::details::chunked_encoding::data_offset], chunk_size, hint)
+                    .then([p_request_context, bytes_read, hint, chunk_size](pplx::task<http::compression::operation_result> op) -> pplx::task<size_t>
+                    {
+                        http::compression::operation_result r;
+
+                        try
+                        {
+                            r = op.get();
+                        }
+                        catch (...)
+                        {
+                            return pplx::task_from_exception<size_t>(std::current_exception());
+                        }
+
+                        if (hint == web::http::compression::operation_hint::is_last)
+                        {
+                            // We're done reading all chunks, but the compressor may still have compressed bytes to drain from previous reads
+                            _ASSERTE(r.done || r.output_bytes_produced == chunk_size);
+                            p_request_context->m_compression_state.m_needs_flush = !r.done;
+                            p_request_context->m_compression_state.m_done = r.done;
+                        }
+
+                        // Update the number of bytes compressed in this read chunk; if it's been fully compressed,
+                        // we'll reset m_bytes_processed and m_bytes_read after reading the next chunk
+                        p_request_context->m_compression_state.m_bytes_processed += r.input_bytes_processed;
+                        _ASSERTE(p_request_context->m_compression_state.m_bytes_processed <= p_request_context->m_compression_state.m_bytes_read);
+                        if (p_request_context->m_remaining_to_write != std::numeric_limits<size_t>::max())
+                        {
+                            _ASSERTE(p_request_context->m_remaining_to_write >= r.input_bytes_processed);
+                            p_request_context->m_remaining_to_write -= r.input_bytes_processed;
+                        }
+
+                        if (p_request_context->m_compression_state.m_acquired != nullptr && p_request_context->m_compression_state.m_bytes_processed == p_request_context->m_compression_state.m_bytes_read)
+                        {
+                            // Release the acquired buffer back to the streambuf at the earliest possible point
+                            p_request_context->_get_readbuffer().release(p_request_context->m_compression_state.m_acquired, p_request_context->m_compression_state.m_bytes_processed);
+                            p_request_context->m_compression_state.m_acquired = nullptr;
+                        }
+
+                        return pplx::task_from_result<size_t>(r.output_bytes_produced);
+                    });
+            };
+
+            if (p_request_context->m_compression_state.m_bytes_processed < p_request_context->m_compression_state.m_bytes_read || p_request_context->m_compression_state.m_needs_flush)
+            {
+                // We're still working on data from a previous read; continue compression without reading new data
+                do_compress(pplx::task_from_result<size_t>(0)).then(after_read);
+            }
+            else if (p_request_context->m_compression_state.m_done)
+            {
+                // We just need to send the last (zero-length) chunk; there's no sense in going through the compression path
+                after_read(pplx::task_from_result<size_t>(0));
+            }
+            else
+            {
+                size_t length;
+
+                // We need to read from the input stream, then compress before sending
+                if (p_request_context->_get_readbuffer().acquire(p_request_context->m_compression_state.m_acquired, length))
+                {
+                    if (length == 0)
+                    {
+                        if (p_request_context->_get_readbuffer().exception())
+                        {
+                            p_request_context->report_exception(p_request_context->_get_readbuffer().exception());
+                            return;
+                        }
+                        else if (p_request_context->m_remaining_to_write && p_request_context->m_remaining_to_write != std::numeric_limits<size_t>::max())
+                        {
+                            // Unexpected end-of-stream.
+                            p_request_context->report_error(GetLastError(), _XPLATSTR("Outgoing HTTP body stream ended early."));
+                            return;
+                        }
+                    }
+                    else if (length > p_request_context->m_remaining_to_write)
+                    {
+                        // The stream grew, but we won't
+                        length = static_cast<size_t>(p_request_context->m_remaining_to_write);
+                    }
+
+                    do_compress(pplx::task_from_result<size_t>(length)).then(after_read);
+                }
+                else
+                {
+                    length = std::min(static_cast<size_t>(p_request_context->m_remaining_to_write), p_request_context->m_http_client->client_config().chunksize());
+                    if (p_request_context->m_compression_state.m_buffer.capacity() < length)
+                    {
+                        p_request_context->m_compression_state.m_buffer.reserve(length);
+                    }
+                    p_request_context->_get_readbuffer().getn(p_request_context->m_compression_state.m_buffer.data(), length).then(do_compress).then(after_read);
+                }
+            }
+        }
+        else
+        {
+            // We're not compressing; just read and chunk
+            p_request_context->_get_readbuffer().getn(&p_request_context->m_body_data.get()[http::details::chunked_encoding::data_offset], chunk_size).then(after_read);
+        }
     }
 
     static void _multiple_segment_write_data(_In_ winhttp_request_context * p_request_context)
@@ -1041,6 +1723,25 @@ private:
         }
     }
 
+    static utility::string_t get_request_url(HINTERNET hRequestHandle)
+    {
+        DWORD urlSize{ 0 };
+        if(FALSE == WinHttpQueryOption(hRequestHandle, WINHTTP_OPTION_URL, nullptr, &urlSize) || urlSize == 0)
+        {
+            return U("");
+        }
+
+        auto urlwchar = new WCHAR[urlSize / sizeof(WCHAR)];
+
+        WinHttpQueryOption(hRequestHandle, WINHTTP_OPTION_URL, (void*)urlwchar, &urlSize);
+
+        utility::string_t url(urlwchar);
+
+        delete[] urlwchar;
+
+        return url;
+    }
+
     // Returns true if we handle successfully and resending the request
     // or false if we fail to handle.
     static bool handle_authentication_failure(
@@ -1064,7 +1765,21 @@ private:
             {
                 return false;
             }
+
+            // We successfully seeked back; now reset the compression state, if any, to match
+            if (p_request_context->m_request.compressor())
+            {
+                try
+                {
+                    p_request_context->m_request.compressor()->reset();
+                }
+                catch (...)
+                {
+                    return false;
+                }
+            }
         }
+        p_request_context->m_compression_state = winhttp_request_context::compression_state();
 
         //  If we got ERROR_WINHTTP_RESEND_REQUEST, the response header is not available,
         //  we cannot call WinHttpQueryAuthSchemes and WinHttpSetCredentials.
@@ -1097,10 +1812,22 @@ private:
                 cred = p_request_context->m_http_client->client_config().credentials();
                 p_request_context->m_server_authentication_tried = true;
             }
-            else if (dwAuthTarget == WINHTTP_AUTH_TARGET_PROXY && !p_request_context->m_proxy_authentication_tried)
+            else if (dwAuthTarget == WINHTTP_AUTH_TARGET_PROXY)
             {
-                cred = p_request_context->m_http_client->client_config().proxy().credentials();
-                p_request_context->m_proxy_authentication_tried = true;
+                bool is_redirect = false;
+                try
+                {
+                    web::uri current_uri(get_request_url(hRequestHandle));
+                    is_redirect = p_request_context->m_request.absolute_uri().to_string() != current_uri.to_string();
+                }
+                catch (const std::exception&) {}
+
+                // If we have been redirected, then WinHttp needs the proxy credentials again to make the next request leg (which may be on a different server)
+                if (is_redirect || !p_request_context->m_proxy_authentication_tried)
+                {
+                    cred = p_request_context->m_http_client->client_config().proxy().credentials();
+                    p_request_context->m_proxy_authentication_tried = true;
+                }
             }
 
             // No credentials found so can't resend.
@@ -1126,7 +1853,16 @@ private:
         }
 
         // Reset the request body type since it might have already started sending.
-        const size_t content_length = request._get_impl()->_get_content_length();
+        size_t content_length;
+        try
+        {
+            content_length = request._get_impl()->_get_content_length_and_set_compression();
+        }
+        catch (...)
+        {
+            return false;
+        }
+
         if (content_length > 0)
         {
             // There is a request body that needs to be transferred.
@@ -1135,6 +1871,7 @@ private:
                 // The content length is unknown and the application set a stream. This is an
                 // indication that we will need to chunk the data.
                 p_request_context->m_bodyType = transfer_encoding_chunked;
+                p_request_context->m_remaining_to_write = request._get_impl()->_get_stream_length();
             }
             else
             {
@@ -1169,7 +1906,9 @@ private:
         std::weak_ptr<winhttp_request_context>* p_weak_request_context = reinterpret_cast<std::weak_ptr<winhttp_request_context> *>(context);
 
         if (p_weak_request_context == nullptr)
+        {
             return;
+        }
 
         if (statusCode == WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING)
         {
@@ -1181,8 +1920,10 @@ private:
 
         auto p_request_context = p_weak_request_context->lock();
         if (!p_request_context)
+        {
             // The request context was already released, probably due to cancellation
             return;
+        }
 
         switch (statusCode)
         {
@@ -1205,7 +1946,7 @@ private:
                 }
 
                 p_request_context->report_error(errorCode, build_error_msg(error_result));
-                break;
+                return;
             }
         case WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE :
             {
@@ -1239,25 +1980,15 @@ private:
                         p_request_context->report_error(errorCode, build_error_msg(errorCode, "WinHttpReceiveResponse"));
                     }
                 }
-                break;
+                return;
             }
+        case WINHTTP_CALLBACK_STATUS_SENDING_REQUEST:
+            p_request_context->on_send_request_validate_cn();
+            return;
         case WINHTTP_CALLBACK_STATUS_SECURE_FAILURE:
-        {
-            auto *flagsPtr = reinterpret_cast<std::uint32_t*>(statusInfo);
-            auto flags = *flagsPtr;
-
-            std::string err = "SSL error: ";
-            if (flags & WINHTTP_CALLBACK_STATUS_FLAG_CERT_REV_FAILED)        err += "WINHTTP_CALLBACK_STATUS_FLAG_CERT_REV_FAILED failed to check revocation status. ";
-            if (flags & WINHTTP_CALLBACK_STATUS_FLAG_INVALID_CERT)           err += "WINHTTP_CALLBACK_STATUS_FLAG_INVALID_CERT SSL certificate is invalid. ";
-            if (flags & WINHTTP_CALLBACK_STATUS_FLAG_CERT_REVOKED)           err += "WINHTTP_CALLBACK_STATUS_FLAG_CERT_REVOKED SSL certificate was revoked. ";
-            if (flags & WINHTTP_CALLBACK_STATUS_FLAG_INVALID_CA)             err += "WINHTTP_CALLBACK_STATUS_FLAG_INVALID_CA SSL invalid CA. ";
-            if (flags & WINHTTP_CALLBACK_STATUS_FLAG_CERT_CN_INVALID)        err += "WINHTTP_CALLBACK_STATUS_FLAG_CERT_CN_INVALID SSL common name does not match. ";
-            if (flags & WINHTTP_CALLBACK_STATUS_FLAG_CERT_DATE_INVALID)      err += "WINHTTP_CALLBACK_STATUS_FLAG_CERT_DATE_INVALID SLL certificate is expired. ";
-            if (flags & WINHTTP_CALLBACK_STATUS_FLAG_SECURITY_CHANNEL_ERROR) err += "WINHTTP_CALLBACK_STATUS_FLAG_SECURITY_CHANNEL_ERROR internal error. ";
-
-            p_request_context->report_exception(web::http::http_exception(std::move(err)));
-            break;
-        }
+            p_request_context->report_exception(web::http::http_exception(
+                generate_security_failure_message(*reinterpret_cast<std::uint32_t*>(statusInfo))));
+            return;
         case WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE :
             {
                 DWORD bytesWritten = *((DWORD *)statusInfo);
@@ -1298,7 +2029,7 @@ private:
                         p_request_context->report_error(errorCode, build_error_msg(errorCode, "WinHttpReceiveResponse"));
                     }
                 }
-                break;
+                return;
             }
         case WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE :
             {
@@ -1337,22 +2068,16 @@ private:
                     }
                 }
 
-                // If the response body is compressed we will read the encoding header and create a decompressor object which will later decompress the body
-                utility::string_t encoding;
-                if (web::http::details::compression::stream_decompressor::is_supported() && response.headers().match(web::http::header_names::content_encoding, encoding))
+                // Check whether the request is compressed, and if so, whether we're handling it.
+                if (!p_request_context->handle_compression())
                 {
-                    auto alg = web::http::details::compression::stream_decompressor::to_compression_algorithm(encoding);
-
-                    if (alg != web::http::details::compression::compression_algorithm::invalid)
-                    {
-                        p_request_context->decompressor = std::make_unique<web::http::details::compression::stream_decompressor>(alg);
-                    }
-                    else
-                    {
-                        utility::string_t error = U("Unsupported compression algorithm in the Content Encoding header: ");
-                        error += encoding;
-                        p_request_context->report_exception(http_exception(error));
-                    }
+                    // false indicates report_exception was called
+                    return;
+                }
+                if (p_request_context->m_decompressor && !p_request_context->m_http_client->client_config().request_compressed_response())
+                {
+                    p_request_context->m_compression_state.m_chunk = std::make_unique<winhttp_request_context::compression_state::_chunk_helper>();
+                    p_request_context->m_compression_state.m_chunked = true;
                 }
 
                 // Signal that the headers are available.
@@ -1374,31 +2099,36 @@ private:
                 // http://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4.4
 
                 read_next_response_chunk(p_request_context.get(), 0, true);
-                break;
+                return;
             }
         case WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE :
             {
                 // Status information contains pointer to DWORD containing number of bytes available.
                 const DWORD num_bytes = *(PDWORD)statusInfo;
+                uint8_t *buffer;
 
-                if(num_bytes > 0)
+                if (num_bytes > 0)
                 {
-                    if (p_request_context->decompressor)
+                    if (p_request_context->m_decompressor)
                     {
-                        // Decompression is too slow to reliably do on this callback. Therefore we need to store it now in order to decompress it at a later stage in the flow.
-                        // However, we want to eventually use the writebuf to store the decompressed body. Therefore we'll store the compressed body as an internal allocation in the request_context
-                        p_request_context->allocate_reply_space(nullptr, num_bytes);
+                        // Allocate space for the compressed data; we'll decompress it into the caller stream once it's been filled in
+                        if (p_request_context->m_compression_state.m_buffer.capacity() < num_bytes)
+                        {
+                            p_request_context->m_compression_state.m_buffer.reserve(num_bytes);
+                        }
+                        buffer = p_request_context->m_compression_state.m_buffer.data();
                     }
                     else
                     {
                         auto writebuf = p_request_context->_get_writebuffer();
                         p_request_context->allocate_reply_space(writebuf.alloc(num_bytes), num_bytes);
+                        buffer = p_request_context->m_body_data.get();
                     }
 
-                    // Read in body all at once.
+                    // Read in available body data all at once.
                     if(!WinHttpReadData(
                         hRequestHandle,
-                        p_request_context->m_body_data.get(),
+                        buffer,
                         num_bytes,
                         nullptr))
                     {
@@ -1408,6 +2138,21 @@ private:
                 }
                 else
                 {
+                    if (p_request_context->m_decompressor)
+                    {
+                        if (p_request_context->m_compression_state.m_chunked)
+                        {
+                            // We haven't seen the 0-length chunk and/or trailing delimiter that indicate the end of chunked input
+                            p_request_context->report_exception(http_exception("Chunked response stream ended unexpectedly"));
+                            return;
+                        }
+                        if (p_request_context->m_compression_state.m_started && !p_request_context->m_compression_state.m_done)
+                        {
+                            p_request_context->report_exception(http_exception("Received incomplete compressed stream"));
+                            return;
+                        }
+                    }
+
                     // No more data available, complete the request.
                     auto progress = p_request_context->m_request._get_impl()->_progress_handler();
                     if (progress)
@@ -1422,7 +2167,7 @@ private:
 
                     p_request_context->complete_request(p_request_context->m_downloaded);
                 }
-                break;
+                return;
             }
         case WINHTTP_CALLBACK_STATUS_READ_COMPLETE :
             {
@@ -1445,72 +2190,246 @@ private:
                 // If no bytes have been read, then this is the end of the response.
                 if (bytesRead == 0)
                 {
+                    if (p_request_context->m_decompressor)
+                    {
+                        if (p_request_context->m_compression_state.m_chunked)
+                        {
+                            // We haven't seen the 0-length chunk and/or trailing delimiter that indicate the end of chunked input
+                            p_request_context->report_exception(http_exception("Chunked response stream ended unexpectedly"));
+                            return;
+                        }
+                        if (p_request_context->m_compression_state.m_started && !p_request_context->m_compression_state.m_done)
+                        {
+                            p_request_context->report_exception(http_exception("Received incomplete compressed stream"));
+                            return;
+                        }
+                    }
                     p_request_context->complete_request(p_request_context->m_downloaded);
-                    break;
+                    return;
                 }
 
                 auto writebuf = p_request_context->_get_writebuffer();
 
-                // If we have compressed data it is stored in the local allocation of the p_request_context. We will store the decompressed buffer in the external allocation of the p_request_context.
-                if (p_request_context->decompressor)
+                if (p_request_context->m_decompressor)
                 {
-                    web::http::details::compression::data_buffer decompressed = p_request_context->decompressor->decompress(p_request_context->m_body_data.get(), bytesRead);
+                    size_t chunk_size = std::max(static_cast<size_t>(bytesRead), p_request_context->m_http_client->client_config().chunksize());
+                    p_request_context->m_compression_state.m_bytes_read = static_cast<size_t>(bytesRead);
+                    p_request_context->m_compression_state.m_chunk_bytes = 0;
 
-                    if (p_request_context->decompressor->has_error())
+                    // Note, some servers seem to send a first chunk of body data that decompresses to nothing, but
+                    // initializes the decompression state; this produces no decompressed output.  Subsequent chunks
+                    // will then begin emitting decompressed body data.
+
+                    // Oddly enough, WinHttp doesn't de-chunk for us if "chunked" isn't the only
+                    // encoding, so we need to do so on the fly as we process the received data
+                    auto process_buffer = [chunk_size](winhttp_request_context *c, size_t bytes_produced, bool outer) -> bool
                     {
-                        p_request_context->report_exception(std::runtime_error("Failed to decompress the response body"));
-                        return;
-                    }
+                        if (!c->m_compression_state.m_chunk_bytes)
+                        {
+                            if (c->m_compression_state.m_chunked)
+                            {
+                                size_t offset;
+                                bool done;
 
-                    // We've decompressed this chunk of the body, need to now store it in the writebuffer.
-                    auto decompressed_size = decompressed.size();
+                                // Process the next portion of this piece of the transfer-encoded message
+                                done = c->m_compression_state.m_chunk->process_buffer(c->m_compression_state.m_buffer.data()+c->m_compression_state.m_bytes_processed, c->m_compression_state.m_bytes_read-c->m_compression_state.m_bytes_processed, offset, c->m_compression_state.m_chunk_bytes);
 
-                    if (decompressed_size > 0)
+                                // Skip chunk-related metadata; it isn't relevant to decompression
+                                _ASSERTE(c->m_compression_state.m_bytes_processed+offset <= c->m_compression_state.m_bytes_read);
+                                c->m_compression_state.m_bytes_processed += offset;
+
+                                if (!c->m_compression_state.m_chunk_bytes)
+                                {
+                                    if (done)
+                                    {
+                                        // We've processed/validated all bytes in this transfer-encoded message.
+                                        // Note that we currently ignore "extra" trailing bytes, i.e. c->m_compression_state.m_bytes_processed < c->m_compression_state.m_bytes_read
+                                        if (c->m_compression_state.m_done)
+                                        {
+                                            c->complete_request(c->m_downloaded);
+                                            return false;
+                                        }
+                                        else if (!outer && bytes_produced != chunk_size)
+                                        {
+                                            throw http_exception("Transfer ended before decompression completed");
+                                        }
+                                    }
+                                    else if (!outer && bytes_produced != chunk_size)
+                                    {
+                                        // There should be more data to receive; look for it
+                                        c->m_compression_state.m_bytes_processed = 0;
+                                        read_next_response_chunk(c, static_cast<DWORD>(c->m_compression_state.m_bytes_read));
+                                        return false;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                _ASSERTE(!c->m_compression_state.m_bytes_processed || c->m_compression_state.m_bytes_processed == c->m_compression_state.m_bytes_read);
+                                if (c->m_compression_state.m_done)
+                                {
+                                    // Decompression is done; complete the request
+                                    c->complete_request(c->m_downloaded);
+                                    return false;
+                                }
+                                else if (c->m_compression_state.m_bytes_processed != c->m_compression_state.m_bytes_read)
+                                {
+                                    // We still have more data to process in the current buffer
+                                    c->m_compression_state.m_chunk_bytes = c->m_compression_state.m_bytes_read - c->m_compression_state.m_bytes_processed;
+                                }
+                                else if (!outer && bytes_produced != chunk_size)
+                                {
+                                    // There should be more data to receive; look for it
+                                    c->m_compression_state.m_bytes_processed = 0;
+                                    read_next_response_chunk(c, static_cast<DWORD>(c->m_compression_state.m_bytes_read));
+                                    return false;
+                                }
+                                // Otherwise, we've processed all bytes in the input buffer, but there's a good chance that
+                                // there are still decompressed bytes to emit; we'll do so before reading the next chunk
+                            }
+                        }
+
+                        // We're still processing the current message chunk
+                        return true;
+                    };
+
+                    Concurrency::details::_do_while([p_request_context, chunk_size, process_buffer]() -> pplx::task<bool>
                     {
-                        auto p = writebuf.alloc(decompressed_size);
-                        p_request_context->allocate_reply_space(p, decompressed_size);
-                        std::memcpy(p_request_context->m_body_data.get(), &decompressed[0], decompressed_size);
-                    }
-                    // Note, some servers seem to send a first chunk of body data that decompresses to nothing but initializes the zlib decryption state. This produces no decompressed output.
-                    // Subsequent chunks will then begin emmiting decompressed body data.
+                        uint8_t *buffer;
 
-                    bytesRead = static_cast<DWORD>(decompressed_size);
-                }
+                        try
+                        {
+                            if (!process_buffer(p_request_context.get(), 0, true))
+                            {
+                                // The chunked request has been completely processed (or contains no data in the first place)
+                                return pplx::task_from_result<bool>(false);
+                            }
+                        }
+                        catch (...)
+                        {
+                            // The outer do-while requires an explicit task return to activate the then() clause
+                            return pplx::task_from_exception<bool>(std::current_exception());
+                        }
 
-                // If the data was allocated directly from the buffer then commit, otherwise we still
-                // need to write to the response stream buffer.
-                if (p_request_context->is_externally_allocated())
-                {
-                    writebuf.commit(bytesRead);
-                    read_next_response_chunk(p_request_context.get(), bytesRead);
+                        // If it's possible to know how much post-compression data we're expecting (for instance if we can discern how
+                        // much total data the ostream can support, we could allocate (or at least attempt to acquire) based on that
+                        p_request_context->m_compression_state.m_acquired = p_request_context->_get_writebuffer().alloc(chunk_size);
+                        if (p_request_context->m_compression_state.m_acquired)
+                        {
+                            buffer = p_request_context->m_compression_state.m_acquired;
+                        }
+                        else
+                        {
+                            // The streambuf couldn't accommodate our request; we'll use m_body_data's
+                            // internal vector as temporary storage, then putn() to the caller's stream
+                            p_request_context->allocate_reply_space(nullptr, chunk_size);
+                            buffer = p_request_context->m_body_data.get();
+                        }
+
+                        uint8_t *in = p_request_context->m_compression_state.m_buffer.data() + p_request_context->m_compression_state.m_bytes_processed;
+                        size_t inbytes = p_request_context->m_compression_state.m_chunk_bytes;
+                        if (inbytes)
+                        {
+                            p_request_context->m_compression_state.m_started = true;
+                        }
+                        return p_request_context->m_decompressor->decompress(in, inbytes, buffer, chunk_size, web::http::compression::operation_hint::has_more).then(
+                            [p_request_context, buffer, chunk_size, process_buffer] (pplx::task<web::http::compression::operation_result> op)
+                        {
+                            auto r = op.get();
+                            auto keep_going = [&r, process_buffer](winhttp_request_context *c) -> pplx::task<bool>
+                            {
+                                _ASSERTE(r.input_bytes_processed <= c->m_compression_state.m_chunk_bytes);
+                                c->m_compression_state.m_chunk_bytes -= r.input_bytes_processed;
+                                c->m_compression_state.m_bytes_processed += r.input_bytes_processed;
+                                c->m_compression_state.m_done = r.done;
+
+                                try
+                                {
+                                    // See if we still have more work to do for this section and/or for the response in general
+                                    return pplx::task_from_result<bool>(process_buffer(c, r.output_bytes_produced, false));
+                                }
+                                catch (...)
+                                {
+                                    return pplx::task_from_exception<bool>(std::current_exception());
+                                }
+                            };
+
+                            _ASSERTE(p_request_context->m_compression_state.m_bytes_processed+r.input_bytes_processed <= p_request_context->m_compression_state.m_bytes_read);
+
+                            if (p_request_context->m_compression_state.m_acquired != nullptr)
+                            {
+                                // We decompressed directly into the output stream
+                                p_request_context->m_compression_state.m_acquired = nullptr;
+                                p_request_context->_get_writebuffer().commit(r.output_bytes_produced);
+                                return keep_going(p_request_context.get());
+                            }
+
+                            // We decompressed into our own buffer; let the stream copy the data
+                            return p_request_context->_get_writebuffer().putn_nocopy(buffer, r.output_bytes_produced).then([p_request_context, r, keep_going](pplx::task<size_t> op) {
+                                if (op.get() != r.output_bytes_produced)
+                                {
+                                    return pplx::task_from_exception<bool>(std::runtime_error("Response stream unexpectedly failed to write the requested number of bytes"));
+                                }
+                                return keep_going(p_request_context.get());
+                            });
+                        });
+                    }).then([p_request_context](pplx::task<bool> op)
+                    {
+                        try
+                        {
+                            bool ignored = op.get();
+                        }
+                        catch (...)
+                        {
+                            // We're only here to pick up any exception that may have been thrown, and to clean up if needed
+                            if (p_request_context->m_compression_state.m_acquired)
+                            {
+                                p_request_context->_get_writebuffer().commit(0);
+                                p_request_context->m_compression_state.m_acquired = nullptr;
+                            }
+                            p_request_context->report_exception(std::current_exception());
+                        }
+                    });
                 }
                 else
                 {
-                    writebuf.putn_nocopy(p_request_context->m_body_data.get(), bytesRead).then(
-                        [hRequestHandle, p_request_context, bytesRead] (pplx::task<size_t> op)
+                    // If the data was allocated directly from the buffer then commit, otherwise we still
+                    // need to write to the response stream buffer.
+                    if (p_request_context->is_externally_allocated())
                     {
-                        size_t written = 0;
-                        try { written = op.get(); }
-                        catch (...)
-                        {
-                            p_request_context->report_exception(std::current_exception());
-                            return;
-                        }
-
-                        // If we couldn't write everything, it's time to exit.
-                        if (written != bytesRead)
-                        {
-                            p_request_context->report_exception(std::runtime_error("response stream unexpectedly failed to write the requested number of bytes"));
-                            return;
-                        }
-
+                        writebuf.commit(bytesRead);
                         read_next_response_chunk(p_request_context.get(), bytesRead);
-                    });
+                    }
+                    else
+                    {
+                        writebuf.putn_nocopy(p_request_context->m_body_data.get(), bytesRead).then(
+                            [hRequestHandle, p_request_context, bytesRead] (pplx::task<size_t> op)
+                        {
+                            size_t written = 0;
+                            try { written = op.get(); }
+                            catch (...)
+                            {
+                                p_request_context->report_exception(std::current_exception());
+                                return;
+                            }
+
+                            // If we couldn't write everything, it's time to exit.
+                            if (written != bytesRead)
+                            {
+                                p_request_context->report_exception(std::runtime_error("response stream unexpectedly failed to write the requested number of bytes"));
+                                return;
+                            }
+
+                            read_next_response_chunk(p_request_context.get(), bytesRead);
+                        });
+                    }
                 }
-                break;
+                return;
             }
+        }
     }
-    }
+
+    std::atomic<bool> m_opened;
 
     // WinHTTP session and connection
     HINTERNET m_hSession;
@@ -1530,4 +2449,3 @@ std::shared_ptr<_http_client_communicator> create_platform_final_pipeline_stage(
 }
 
 }}}}
-

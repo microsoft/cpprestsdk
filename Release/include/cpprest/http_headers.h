@@ -18,7 +18,6 @@
 #include "cpprest/asyncrt_utils.h"
 
 namespace web { namespace http {
-
 /// <summary>
 /// Binds an individual reference to a string value.
 /// </summary>
@@ -57,6 +56,37 @@ bool bind(const key_type &text, utility::string_t &ref) //const
     return true;
 }
 
+namespace details
+{
+    template<typename key_type, typename _t>
+    bool bind_impl(const key_type &text, _t &ref)
+    {
+        utility::istringstream_t iss(text);
+        iss.imbue(std::locale::classic());
+        iss >> ref;
+        if (iss.fail() || !iss.eof())
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    template<typename key_type>
+    bool bind_impl(const key_type &text, utf16string &ref)
+    {
+        ref = utility::conversions::to_utf16string(text);
+        return true;
+    }
+
+    template<typename key_type>
+    bool bind_impl(const key_type &text, std::string &ref)
+    {
+        ref = utility::conversions::to_utf8string(text);
+        return true;
+    }
+}
+
 /// <summary>
 /// Represents HTTP headers, acts like a map.
 /// </summary>
@@ -68,30 +98,30 @@ public:
     {
         bool operator()(const utility::string_t &str1, const utility::string_t &str2) const
         {
-#ifdef _WIN32
-            return _wcsicmp(str1.c_str(), str2.c_str()) < 0;
-#else
-            return utility::cmp::icmp(str1, str2) < 0;
-#endif
+            return utility::details::str_iless(str1, str2);
         }
     };
+
+private:
+    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp> inner_container;
+public:
 
     /// <summary>
     /// STL-style typedefs
     /// </summary>
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp>::key_type key_type;
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp>::key_compare key_compare;
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp>::allocator_type allocator_type;
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp>::size_type size_type;
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp>::difference_type difference_type;
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp>::pointer pointer;
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp>::const_pointer const_pointer;
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp>::reference reference;
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp>::const_reference const_reference;
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp>::iterator iterator;
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp>::const_iterator const_iterator;
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp>::reverse_iterator reverse_iterator;
-    typedef std::map<utility::string_t, utility::string_t, _case_insensitive_cmp>::const_reverse_iterator const_reverse_iterator;
+    typedef inner_container::key_type key_type;
+    typedef inner_container::key_compare key_compare;
+    typedef inner_container::allocator_type allocator_type;
+    typedef inner_container::size_type size_type;
+    typedef inner_container::difference_type difference_type;
+    typedef inner_container::pointer pointer;
+    typedef inner_container::const_pointer const_pointer;
+    typedef inner_container::reference reference;
+    typedef inner_container::const_reference const_reference;
+    typedef inner_container::iterator iterator;
+    typedef inner_container::const_iterator const_iterator;
+    typedef inner_container::reverse_iterator reverse_iterator;
+    typedef inner_container::const_reverse_iterator const_reverse_iterator;
 
     /// <summary>
     /// Constructs an empty set of HTTP headers.
@@ -145,13 +175,15 @@ public:
     template<typename _t1>
     void add(const key_type& name, const _t1& value)
     {
-        if (has(name))
+        auto printedValue = utility::conversions::details::print_string(value);
+        auto& mapVal = m_headers[name];
+        if (mapVal.empty())
         {
-            m_headers[name].append(_XPLATSTR(", ")).append(utility::conversions::details::print_string(value));
+            mapVal = std::move(printedValue);
         }
         else
         {
-            m_headers[name] = utility::conversions::details::print_string(value);
+            mapVal.append(_XPLATSTR(", ")).append(std::move(printedValue));
         }
     }
 
@@ -212,20 +244,12 @@ public:
     bool match(const key_type &name, _t1 &value) const
     {
         auto iter = m_headers.find(name);
-        if (iter != m_headers.end())
-        {
-            // Check to see if doesn't have a value.
-            if(iter->second.empty())
-            {
-                bind_impl(iter->second, value);
-                return true;
-            }
-            return bind_impl(iter->second, value);
-        }
-        else
+        if (iter == m_headers.end())
         {
             return false;
         }
+
+        return web::http::details::bind_impl(iter->second, value) || iter->second.empty();
     }
 
     /// <summary>
@@ -291,34 +315,7 @@ public:
     _ASYNCRTIMP void set_date(const utility::datetime& date);
 
 private:
-
-    template<typename _t>
-    bool bind_impl(const key_type &text, _t &ref) const
-    {
-        utility::istringstream_t iss(text);
-        iss.imbue(std::locale::classic());
-        iss >> ref;
-        if (iss.fail() || !iss.eof())
-        {
-            return false;
-        }
-
-        return true;
-    }
-
-    bool bind_impl(const key_type &text, utf16string &ref) const
-    {
-        ref = utility::conversions::to_utf16string(text);
-        return true;
-    }
-    bool bind_impl(const key_type &text, std::string &ref) const
-    {
-        ref = utility::conversions::to_utf8string(text);
-        return true;
-    }
-
     // Headers are stored in a map with case insensitive key.
-    std::map<utility::string_t, utility::string_t, _case_insensitive_cmp> m_headers;
+    inner_container m_headers;
 };
-
 }}

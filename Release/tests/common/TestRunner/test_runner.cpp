@@ -409,7 +409,7 @@ testlist_t load_all_tests(test_module_loader& module_loader)
     testlist_t testlists;
 
     // Retrieve the static tests and clear for dll loading.
-    testlists.emplace("<static>", UnitTest::GetTestList());
+    testlists.insert({ "<static>", UnitTest::GetTestList() });
     UnitTest::GetTestList().Clear();
 
     // Cycle through all the test binaries and load them
@@ -445,7 +445,7 @@ testlist_t load_all_tests(test_module_loader& module_loader)
             std::cout << "Loaded " << binary << "..." << std::endl;
 
             // Store the loaded binary into the test list map
-            testlists.emplace(binary, UnitTest::GetTestList());
+            testlists.insert({ binary, UnitTest::GetTestList() });
             UnitTest::GetTestList().Clear();
         }
     }

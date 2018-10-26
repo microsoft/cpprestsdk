@@ -29,11 +29,35 @@ namespace web {
         {
             uri_components() : m_path(_XPLATSTR("/")), m_port(-1) {}
 
-            uri_components(const uri_components &other) = default;
-            uri_components & operator=(const uri_components &other) = default;
+            uri_components(const uri_components &) = default;
+            uri_components & operator=(const uri_components &) = default;
 
-            uri_components(uri_components &&other) = default;
-            uri_components & operator=(uri_components &&other) = default;
+            // This is for VS2013 compatibility -- replace with '= default' when VS2013 is completely dropped.
+            uri_components(uri_components &&other) CPPREST_NOEXCEPT :
+                m_scheme(std::move(other.m_scheme)),
+                m_host(std::move(other.m_host)),
+                m_user_info(std::move(other.m_user_info)),
+                m_path(std::move(other.m_path)),
+                m_query(std::move(other.m_query)),
+                m_fragment(std::move(other.m_fragment)),
+                m_port(other.m_port)
+            {}
+
+            // This is for VS2013 compatibility -- replace with '= default' when VS2013 is completely dropped.
+            uri_components & operator=(uri_components &&other) CPPREST_NOEXCEPT
+            {
+                if (this != &other)
+                {
+                    m_scheme = std::move(other.m_scheme);
+                    m_host = std::move(other.m_host);
+                    m_user_info = std::move(other.m_user_info);
+                    m_path = std::move(other.m_path);
+                    m_query = std::move(other.m_query);
+                    m_fragment = std::move(other.m_fragment);
+                    m_port = other.m_port;
+                }
+                return *this;
+            }
 
             _ASYNCRTIMP utility::string_t join();
 
@@ -185,22 +209,35 @@ namespace web {
         /// <summary>
         /// Copy constructor.
         /// </summary>
-        uri(const uri &other) = default;
+        uri(const uri &) = default;
 
         /// <summary>
         /// Copy assignment operator.
         /// </summary>
-        uri & operator=(const uri &other) = default;
+        uri & operator=(const uri &) = default;
 
         /// <summary>
         /// Move constructor.
         /// </summary>
-        uri(uri &&other) = default;
+        // This is for VS2013 compatibility -- replace with '= default' when VS2013 is completely dropped.
+        uri(uri &&other) CPPREST_NOEXCEPT :
+            m_uri(std::move(other.m_uri)),
+            m_components(std::move(other.m_components))
+        {}
 
         /// <summary>
         /// Move assignment operator
         /// </summary>
-        uri & operator=(uri &&other) = default;
+        // This is for VS2013 compatibility -- replace with '= default' when VS2013 is completely dropped.
+        uri & operator=(uri &&other) CPPREST_NOEXCEPT
+        {
+            if (this != &other)
+            {
+                m_uri = std::move(other.m_uri);
+                m_components = std::move(other.m_components);
+            }
+            return *this;
+        }
 
         /// <summary>
         /// Get the scheme component of the URI as an encoded string.
@@ -342,11 +379,19 @@ namespace web {
         /// <summary>
         /// Returns the full (encoded) URI as a string.
         /// </summary>
-         /// <returns>The full encoded URI string.</returns>
+        /// <returns>The full encoded URI string.</returns>
         utility::string_t to_string() const
         {
             return m_uri;
         }
+
+        /// <summary>
+        /// Returns an URI resolved against <c>this</c> as the base URI
+        /// according to RFC3986, Section 5 (https://tools.ietf.org/html/rfc3986#section-5).
+        /// </summary>
+        /// <param name="relativeUri">The relative URI to be resolved against <c>this</c> as base.</param>
+        /// <returns>The new resolved URI string.</returns>
+        _ASYNCRTIMP utility::string_t resolve_uri(const utility::string_t &relativeUri) const;
 
         _ASYNCRTIMP bool operator == (const uri &other) const;
 

@@ -28,9 +28,6 @@ using namespace std;
 using namespace Platform;
 using namespace Microsoft::WRL;
 
-#undef min
-#undef max
-
 namespace web
 {
 namespace http
@@ -41,7 +38,7 @@ namespace details
 {
 
 // Additional information necessary to track a WinRT request.
-class winrt_request_context : public request_context
+class winrt_request_context final : public request_context
 {
 public:
 
@@ -63,7 +60,7 @@ public:
 };
 
 // Implementation of IXMLHTTPRequest2Callback.
-class HttpRequestCallback :
+class HttpRequestCallback final :
     public RuntimeClass<RuntimeClassFlags<ClassicCom>, IXMLHTTPRequest2Callback, FtmBase>
 {
 public:
@@ -163,7 +160,8 @@ public:
             std::wstring msg(L"IXMLHttpRequest2Callback::OnError: ");
             msg.append(std::to_wstring(hrError));
             msg.append(L": ");
-            msg.append(utility::conversions::to_string_t(utility::details::windows_category().message(hrError)));
+            msg.append(utility::conversions::to_string_t(
+                utility::details::windows_category().message(hrError)));
             m_request->report_error(hrError, msg);
         }
         else
@@ -190,7 +188,7 @@ private:
 /// read and write operations. The I/O will be done off the UI thread, so there is no risk
 /// of causing the UI to become unresponsive.
 /// </remarks>
-class IRequestStream
+class IRequestStream final
     : public Microsoft::WRL::RuntimeClass<Microsoft::WRL::RuntimeClassFlags<ClassicCom>, ISequentialStream>
 {
 public:
@@ -279,7 +277,7 @@ private:
 /// read and write operations. The I/O will be done off the UI thread, so there is no risk
 /// of causing the UI to become unresponsive.
 /// </remarks>
-class IResponseStream
+class IResponseStream final
     : public Microsoft::WRL::RuntimeClass<Microsoft::WRL::RuntimeClassFlags<ClassicCom>, ISequentialStream>
 {
 public:
@@ -353,7 +351,7 @@ private:
 };
 
 // WinRT client.
-class winrt_client : public _http_client_communicator
+class winrt_client final : public _http_client_communicator
 {
 public:
     winrt_client(http::uri&& address, http_client_config&& client_config)
@@ -378,14 +376,8 @@ public:
 
 protected:
 
-    // Method to open client.
-    unsigned long open()
-    {
-        return 0;
-    }
-
     // Start sending request.
-    void send_request(_In_ const std::shared_ptr<request_context> &request)
+    virtual void send_request(_In_ const std::shared_ptr<request_context> &request) override
     {
         http_request &msg = request->m_request;
         auto winrt_context = std::static_pointer_cast<winrt_request_context>(request);

@@ -26,6 +26,7 @@
 #include "cpprest/asyncrt_utils.h"
 #include "cpprest/streams.h"
 #include "cpprest/containerstream.h"
+#include "cpprest/http_compression.h"
 
 namespace web
 {
@@ -42,6 +43,45 @@ namespace client
 {
     class http_client;
 }
+
+/// <summary>
+/// Represents the HTTP protocol version of a message, as {major, minor}.
+/// </summary>
+struct http_version
+{
+    uint8_t major;
+    uint8_t minor;
+
+    inline bool operator==(const http_version& other) const { return major == other.major && minor == other.minor; }
+    inline bool operator<(const http_version& other) const { return major < other.major || (major == other.major && minor < other.minor); }
+
+    inline bool operator!=(const http_version& other) const { return !(*this == other); }
+    inline bool operator>=(const http_version& other) const { return !(*this < other); }
+    inline bool operator>(const http_version& other) const { return !(*this < other || *this == other); }
+    inline bool operator<=(const http_version& other) const { return *this < other || *this == other; }
+
+    /// <summary>
+    /// Creates <c>http_version</c> from an HTTP-Version string, "HTTP" "/" 1*DIGIT "." 1*DIGIT.
+    /// </summary>
+    /// <returns>Returns a <c>http_version</c> of {0, 0} if not successful.</returns>
+    static _ASYNCRTIMP http_version __cdecl from_string(const std::string& http_version_string);
+
+    /// <summary>
+    /// Returns the string representation of the <c>http_version</c>.
+    /// </summary>
+    _ASYNCRTIMP std::string to_utf8string() const;
+};
+
+/// <summary>
+/// Predefined HTTP protocol versions.
+/// </summary>
+class http_versions
+{
+public:
+    _ASYNCRTIMP static const http_version HTTP_0_9;
+    _ASYNCRTIMP static const http_version HTTP_1_0;
+    _ASYNCRTIMP static const http_version HTTP_1_1;
+};
 
 /// <summary>
 /// Predefined method strings for the standard HTTP methods mentioned in the
@@ -299,6 +339,38 @@ public:
     /// </summary>
     const concurrency::streams::ostream & outstream() const { return m_outStream; }
 
+    /// <summary>
+    /// Sets the compressor for the message body
+    /// </summary>
+    void set_compressor(std::unique_ptr<http::compression::compress_provider> compressor)
+    {
+        m_compressor = std::move(compressor);
+    }
+
+    /// <summary>
+    /// Gets the compressor for the message body, if any
+    /// </summary>
+    std::unique_ptr<http::compression::compress_provider> &compressor()
+    {
+        return m_compressor;
+    }
+
+    /// <summary>
+    /// Sets the collection of factory classes for decompressors for use with the message body
+    /// </summary>
+    void set_decompress_factories(const std::vector<std::shared_ptr<http::compression::decompress_factory>> &factories)
+    {
+        m_decompressors = factories;
+    }
+
+    /// <summary>
+    /// Gets the collection of factory classes for decompressors to be used to decompress the message body, if any
+    /// </summary>
+    const std::vector<std::shared_ptr<http::compression::decompress_factory>> &decompress_factories()
+    {
+        return m_decompressors;
+    }
+
     const pplx::task_completion_event<utility::size64_t> & _get_data_available() const { return m_data_available; }
 
     /// <summary>
@@ -306,11 +378,25 @@ public:
     /// </summary>
     _ASYNCRTIMP void _prepare_to_receive_data();
 
+
+    /// <summary>
+    /// Determine the remaining input stream length
+    /// </summary>
+    /// <returns>
+    /// std::numeric_limits<size_t>::max() if the stream's remaining length cannot be determined
+    /// length      if the stream's remaining length (which may be 0) can be determined
+    /// </returns>
+    /// <remarks>
+    /// This routine should only be called after a msg (request/response) has been
+    /// completely constructed.
+    /// </remarks>
+    _ASYNCRTIMP size_t _get_stream_length();
+
     /// <summary>
     /// Determine the content length
     /// </summary>
     /// <returns>
-    /// size_t::max if there is content with unknown length (transfer_encoding:chunked)
+    /// std::numeric_limits<size_t>::max() if there is content with unknown length (transfer_encoding:chunked)
     /// 0           if there is no content
     /// length      if there is content with known length
     /// </returns>
@@ -320,7 +406,26 @@ public:
     /// </remarks>
     _ASYNCRTIMP size_t _get_content_length();
 
+    /// <summary>
+    /// Determine the content length, and, if necessary, manage compression in the Transfer-Encoding header
+    /// </summary>
+    /// <returns>
+    /// std::numeric_limits<size_t>::max() if there is content with unknown length (transfer_encoding:chunked)
+    /// 0           if there is no content
+    /// length      if there is content with known length
+    /// </returns>
+    /// <remarks>
+    /// This routine is like _get_content_length, except that it adds a compression algorithm to
+    /// the Trasfer-Length header if compression is configured.  It throws if a Transfer-Encoding
+    /// header exists and does not match the one it generated.
+    /// </remarks>
+    _ASYNCRTIMP size_t _get_content_length_and_set_compression();
+
 protected:
+
+    std::unique_ptr<http::compression::compress_provider> m_compressor;
+    std::unique_ptr<http::compression::decompress_provider> m_decompressor;
+    std::vector<std::shared_ptr<http::compression::decompress_factory>> m_decompressors;
 
     /// <summary>
     /// Stream to read the message body.
@@ -347,6 +452,8 @@ protected:
 
     /// <summary> The TCE is used to signal the availability of the message body. </summary>
     pplx::task_completion_event<utility::size64_t> m_data_available;
+
+    size_t _get_content_length(bool honor_compression);
 };
 
 /// <summary>
@@ -632,7 +739,7 @@ public:
     /// <param name="stream">A readable, open asynchronous stream.</param>
     /// <param name="content_type">A string holding the MIME type of the message body.</param>
     /// <remarks>
-    /// This cannot be used in conjunction with any other means of setting the body of the request.
+    /// This cannot be used in conjunction with any external means of setting the body of the request.
     /// The stream will not be read until the message is sent.
     /// </remarks>
     void set_body(const concurrency::streams::istream &stream, const utility::string_t &content_type = _XPLATSTR("application/octet-stream"))
@@ -648,7 +755,7 @@ public:
     /// <param name="content_length">The size of the data to be sent in the body.</param>
     /// <param name="content_type">A string holding the MIME type of the message body.</param>
     /// <remarks>
-    /// This cannot be used in conjunction with any other means of setting the body of the request.
+    /// This cannot be used in conjunction with any external means of setting the body of the request.
     /// The stream will not be read until the message is sent.
     /// </remarks>
     void set_body(const concurrency::streams::istream &stream, utility::size64_t content_length, const utility::string_t &content_type = _XPLATSTR("application/octet-stream"))
@@ -715,6 +822,8 @@ public:
 
     _ASYNCRTIMP void set_request_uri(const uri&);
 
+    http::http_version http_version() const { return m_http_version; }
+
     const utility::string_t& remote_address() const { return m_remote_address; }
 
     const pplx::cancellation_token &cancellation_token() const { return m_cancellationToken; }
@@ -757,6 +866,8 @@ public:
 
     void _set_base_uri(const http::uri &base_uri) { m_base_uri = base_uri; }
 
+    void _set_http_version(const http::http_version &http_version) { m_http_version = http_version; }
+
     void _set_remote_address(const utility::string_t &remote_address) { m_remote_address = remote_address; }
 
 private:
@@ -767,6 +878,9 @@ private:
     http::method m_method;
 
     // Tracks whether or not a response has already been started for this message.
+    // 0 = No reply sent
+    // 1 = Usual reply sent
+    // 2 = Reply aborted by another thread; e.g. server shutdown
     pplx::details::atomic_long m_initiated_response;
 
     std::unique_ptr<http::details::_http_server_context> m_server_context;
@@ -782,6 +896,8 @@ private:
     std::shared_ptr<progress_handler> m_progress_handler;
 
     pplx::task_completion_event<http_response> m_response;
+
+    http::http_version m_http_version;
 
     utility::string_t m_remote_address;
 };
@@ -876,9 +992,18 @@ public:
     const http_headers &headers() const { return _m_impl->headers(); }
 
     /// <summary>
+    /// Returns the HTTP protocol version of this request message.
+    /// </summary>
+    /// <returns>The HTTP protocol version.</returns>
+    http::http_version http_version() const { return _m_impl->http_version(); }
+
+    /// <summary>
     /// Returns a string representation of the remote IP address.
     /// </summary>
     /// <returns>The remote IP address.</returns>
+    const utility::string_t& remote_address() const { return _m_impl->remote_address(); }
+
+    CASABLANCA_DEPRECATED("Use `remote_address()` instead.")
     const utility::string_t& get_remote_address() const { return _m_impl->remote_address(); }
 
     /// <summary>
@@ -1093,6 +1218,94 @@ public:
     void set_response_stream(const concurrency::streams::ostream &stream)
     {
         return _m_impl->set_response_stream(stream);
+    }
+
+    /// <summary>
+    /// Sets a compressor that will be used to compress the body of the HTTP message as it is sent.
+    /// </summary>
+    /// <param name="compressor">A pointer to an instantiated compressor of the desired type.</param>
+    /// <remarks>
+    /// This cannot be used in conjunction with any external means of compression.  The Transfer-Encoding
+    /// header will be managed internally, and must not be set by the client.
+    /// </remarks>
+    void set_compressor(std::unique_ptr<http::compression::compress_provider> compressor)
+    {
+        return _m_impl->set_compressor(std::move(compressor));
+    }
+
+    /// <summary>
+    /// Sets a compressor that will be used to compress the body of the HTTP message as it is sent.
+    /// </summary>
+    /// <param name="algorithm">The built-in compression algorithm to use.</param>
+    /// <returns>
+    /// True if a built-in compressor was instantiated, otherwise false.
+    /// </returns>
+    /// <remarks>
+    /// This cannot be used in conjunction with any external means of compression.  The Transfer-Encoding
+    /// header will be managed internally, and must not be set by the client.
+    /// </remarks>
+    bool set_compressor(utility::string_t algorithm)
+    {
+        _m_impl->set_compressor(http::compression::builtin::make_compressor(algorithm));
+        return (bool)_m_impl->compressor();
+    }
+
+    /// <summary>
+    /// Gets the compressor to be used to compress the message body, if any.
+    /// </summary>
+    /// <returns>
+    /// The compressor itself.
+    /// </returns>
+    std::unique_ptr<http::compression::compress_provider> &compressor()
+    {
+        return _m_impl->compressor();
+    }
+
+    /// <summary>
+    /// Sets the default collection of built-in factory classes for decompressors that may be used to
+    /// decompress the body of the HTTP message as it is received, effectively enabling decompression.
+    /// </summary>
+    /// <param name="factories">The collection of factory classes for allowable decompressors. The
+    /// supplied vector itself need not remain valid after the call returns.</param>
+    /// <remarks>
+    /// This default collection is implied if request_compressed_response() is set in the associated
+    /// <c>client::http_client_config</c> and neither overload of this method has been called.
+    ///
+    /// This cannot be used in conjunction with any external means of decompression.  The TE and Accept-Encoding
+    /// headers must not be set by the client, as they will be managed internally as appropriate.
+    /// </remarks>
+    _ASYNCRTIMP void set_decompress_factories();
+
+    /// <summary>
+    /// Sets a collection of factory classes for decompressors that may be used to decompress the
+    /// body of the HTTP message as it is received, effectively enabling decompression.
+    /// </summary>
+    /// <remarks>
+    /// If set, this collection takes the place of the built-in compression providers.  It may contain
+    /// custom factory classes and/or factory classes for built-in providers, and may be used to adjust
+    /// the weights of the built-in providers, which default to 500 (i.e. "q=0.500").
+    ///
+    /// This cannot be used in conjunction with any external means of decompression.  The TE and Accept-Encoding
+    /// headers must not be set by the client, as they will be managed internally as appropriate.
+    /// </remarks>
+    void set_decompress_factories(const std::vector<std::shared_ptr<http::compression::decompress_factory>> &factories)
+    {
+        return _m_impl->set_decompress_factories(factories);
+    }
+
+    /// <summary>
+    /// Gets the collection of factory classes for decompressors to be used to decompress the message body, if any.
+    /// </summary>
+    /// <returns>
+    /// The collection of factory classes itself.
+    /// </returns>
+    /// <remarks>
+    /// This cannot be used in conjunction with any external means of decompression.  The TE
+    /// header must not be set by the client, as it will be managed internally.
+    /// </remarks>
+    const std::vector<std::shared_ptr<http::compression::decompress_factory>> &decompress_factories() const
+    {
+        return _m_impl->decompress_factories();
     }
 
     /// <summary>

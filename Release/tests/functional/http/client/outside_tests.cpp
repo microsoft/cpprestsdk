@@ -58,7 +58,7 @@ TEST_FIXTURE(uri_address, outside_cnn_dot_com)
 
 TEST_FIXTURE(uri_address, outside_wikipedia_compressed_http_response)
 {
-    if (web::http::details::compression::stream_decompressor::is_supported() == false)
+    if (web::http::compression::builtin::supported() == false)
     {
         // On platforms which do not support compressed http, nothing to check.
         return;
@@ -75,7 +75,7 @@ TEST_FIXTURE(uri_address, outside_wikipedia_compressed_http_response)
 
     auto s = response.extract_utf8string().get();
     VERIFY_IS_FALSE(s.empty());
-    
+
     utility::string_t encoding;
     VERIFY_IS_TRUE(response.headers().match(web::http::header_names::content_encoding, encoding));
 
@@ -93,14 +93,14 @@ TEST_FIXTURE(uri_address, outside_google_dot_com)
         VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
     }
 }
-    
+
 TEST_FIXTURE(uri_address, multiple_https_requests)
 {
     handle_timeout([&]
     {
         // Use code.google.com instead of www.google.com, which redirects
         http_client client(U("https://code.google.com"));
-    
+
         http_response response;
         for(int i = 0; i < 5; ++i)
         {
@@ -155,37 +155,116 @@ TEST_FIXTURE(uri_address, no_transfer_encoding_content_length)
 // https://www.ssllabs.com/ssltest/
 // http://www.internetsociety.org/deploy360/resources/dane-test-sites/
 // https://onlinessl.netlock.hu/#
-TEST(server_selfsigned_cert)
+static void test_failed_ssl_cert(const uri& base_uri)
 {
-    handle_timeout([]
+    handle_timeout([&base_uri]
     {
-        http_client client(U("https://self-signed.badssl.com/"));
+        http_client client(base_uri);
         auto requestTask = client.request(methods::GET);
         VERIFY_THROWS(requestTask.get(), http_exception);
     });
 }
 
+#if !defined(__cplusplus_winrt)
+static void test_ignored_ssl_cert(const uri& base_uri)
+{
+    handle_timeout([&base_uri]
+    {
+        http_client_config config;
+        config.set_validate_certificates(false);
+        http_client client(base_uri, config);
+        auto response = client.request(methods::GET).get();
+        VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
+    });
+}
+#endif // !defined(__cplusplus_winrt)
+
+TEST(server_selfsigned_cert)
+{
+    test_failed_ssl_cert(U("https://self-signed.badssl.com/"));
+}
+
+#if !defined(__cplusplus_winrt)
+TEST(server_selfsigned_cert_ignored)
+{
+    test_ignored_ssl_cert(U("https://self-signed.badssl.com/"));
+}
+#endif // !defined(__cplusplus_winrt)
+
 TEST(server_hostname_mismatch)
+{
+    test_failed_ssl_cert(U("https://wrong.host.badssl.com/"));
+}
+
+#if !defined(__cplusplus_winrt)
+TEST(server_hostname_host_override)
 {
     handle_timeout([]
     {
         http_client client(U("https://wrong.host.badssl.com/"));
-        auto requestTask = client.request(methods::GET);
-        VERIFY_THROWS(requestTask.get(), http_exception);
+        http_request req(methods::GET);
+        req.headers().add(U("Host"), U("badssl.com"));
+        auto response = client.request(req).get();
+        VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
     });
 }
 
+TEST(server_hostname_mismatch_ignored)
+{
+    test_ignored_ssl_cert(U("https://wrong.host.badssl.com/"));
+}
+
+TEST(server_hostname_host_override_after_upgrade)
+{
+    http_client client(U("http://198.35.26.96/"));
+    http_request req(methods::GET);
+    req.headers().add(U("Host"), U("en.wikipedia.org"));
+    auto response = client.request(req).get();
+    // WinHTTP will transparently follow the HTTP 301 upgrade request redirect,
+    // ASIO does not and will return the 301 directly.
+    const auto statusCode = response.status_code();
+    CHECK(statusCode == status_codes::OK || statusCode == status_codes::MovedPermanently);
+}
+#endif // !defined(__cplusplus_winrt)
+
 TEST(server_cert_expired)
 {
-    handle_timeout([]
-    {
-        http_client_config config;
-        config.set_timeout(std::chrono::seconds(1));
-        http_client client(U("https://expired.badssl.com/"), config);
-        auto requestTask = client.request(methods::GET);
-        VERIFY_THROWS(requestTask.get(), http_exception);
-    });
+    test_failed_ssl_cert(U("https://expired.badssl.com/"));
 }
+
+#if !defined(__cplusplus_winrt)
+TEST(server_cert_expired_ignored)
+{
+    test_ignored_ssl_cert(U("https://expired.badssl.com/"));
+}
+#endif // !defined(__cplusplus_winrt)
+
+TEST(server_cert_revoked,
+    "Ignore:Android", "229",
+    "Ignore:Apple", "229",
+    "Ignore:Linux", "229")
+{
+    test_failed_ssl_cert(U("https://revoked.badssl.com/"));
+}
+
+#if !defined(__cplusplus_winrt)
+TEST(server_cert_revoked_ignored)
+{
+    test_ignored_ssl_cert(U("https://revoked.badssl.com/"));
+}
+#endif // !defined(__cplusplus_winrt)
+
+TEST(server_cert_untrusted)
+{
+    test_failed_ssl_cert(U("https://untrusted-root.badssl.com/"));
+}
+
+#if !defined(__cplusplus_winrt)
+TEST(server_cert_untrusted_ignored)
+{
+    test_ignored_ssl_cert(U("https://untrusted-root.badssl.com/"));
+}
+#endif // !defined(__cplusplus_winrt)
 
 #if !defined(__cplusplus_winrt)
 TEST(ignore_server_cert_invalid,
@@ -204,7 +283,7 @@ TEST(ignore_server_cert_invalid,
         VERIFY_ARE_EQUAL(status_codes::OK, request.status_code());
     });
 }
-#endif
+#endif // !defined(__cplusplus_winrt)
 
 TEST_FIXTURE(uri_address, outside_ssl_json)
 {

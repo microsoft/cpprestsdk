@@ -26,7 +26,8 @@ Set following entry in the hosts file:
 127.0.0.1    testhost.local
 
 */
-#include "stdafx.h"
+#include <mutex>
+#include "cpprest/http_client.h"
 
 #if defined(_WIN32) && !defined(__cplusplus_winrt)
 // Extra includes for Windows desktop.
@@ -301,4 +302,3 @@ int main(int argc, char *argv[])
     ucout << "Done." << std::endl;
     return 0;
 }
-

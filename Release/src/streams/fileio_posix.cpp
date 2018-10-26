@@ -160,7 +160,7 @@ bool _open_fsb_str(_filestream_callback *callback, const char *filename, std::io
             cmode |= O_CREAT;
         }
 
-        int f = open(name.c_str(), cmode, 0600);
+        int f = open(name.c_str(), cmode, 0666);
 
         _finish_create(f, callback, mode, prot);
     });

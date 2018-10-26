@@ -14,6 +14,7 @@
 ****/
 
 #include "stdafx.h"
+#include "cpprest/rawptrstream.h"
 
 #if _WIN32_WINNT >= _WIN32_WINNT_VISTA
 
@@ -21,9 +22,6 @@
 
 #include "http_server_httpsys.h"
 #include "http_server_impl.h"
-
-#undef min
-#undef max
 
 using namespace web;
 using namespace utility;
@@ -88,7 +86,7 @@ static utility::string_t HttpServerAPIKnownHeaders[] =
     U("Proxy-Authorization"),
     U("Referer"),
     U("Range"),
-    U("Te"),
+    U("TE"),
     U("Translate"),
     U("User-Agent"),
     U("Request-Maximum"),
@@ -246,7 +244,7 @@ pplx::task<void> http_windows_server::register_listener(_In_ web::http::experime
     utility::string_t host_uri = http::uri::decode(u.to_string());
     if(host_uri.back() != U('/') && u.query().empty() && u.fragment().empty())
     {
-        host_uri.append(U("/"));
+        host_uri.push_back(U('/'));
     }
 
     // inside here we check for a few specific error types that know about
@@ -255,19 +253,16 @@ pplx::task<void> http_windows_server::register_listener(_In_ web::http::experime
     if(errorCode)
     {
         HttpCloseUrlGroup(urlGroupId);
-        utility::stringstream_t os;
-        os.imbue(std::locale::classic());
-
         if(errorCode == ERROR_ALREADY_EXISTS || errorCode == ERROR_SHARING_VIOLATION)
         {
-            os << _XPLATSTR("Address '") << pListener->uri().to_string() << _XPLATSTR("' is already in use");
-            return pplx::task_from_exception<void>(http_exception(errorCode, os.str()));
+            return pplx::task_from_exception<void>(http_exception(errorCode,
+                _XPLATSTR("Address '") + pListener->uri().to_string() + _XPLATSTR("' is already in use")));
         }
         else if (errorCode == ERROR_ACCESS_DENIED)
         {
-            os << _XPLATSTR("Access denied: attempting to add Address '") << pListener->uri().to_string() << _XPLATSTR("'. ");
-            os << _XPLATSTR("Run as administrator to listen on an hostname other than localhost, or to listen on port 80.");
-            return pplx::task_from_exception<void>(http_exception(errorCode, os.str()));
+            return pplx::task_from_exception<void>(http_exception(errorCode,
+                _XPLATSTR("Access denied: attempting to add Address '") + pListener->uri().to_string() + _XPLATSTR("'. ")
+                _XPLATSTR("Run as administrator to listen on an hostname other than localhost, or to listen on port 80.")));
         }
         else
         {
@@ -482,7 +477,7 @@ windows_request_context::~windows_request_context()
     // Bug is that task_completion_event accesses internal state after setting.
     // Workaround is to use a lock incurring additional synchronization, if can acquire
     // the lock then setting of the event has completed.
-    std::unique_lock<std::mutex> lock(m_responseCompletedLock);
+    std::lock_guard<std::mutex> lock(m_responseCompletedLock);
 
     // Add a task-based continuation so no exceptions thrown from the task go 'unobserved'.
     pplx::create_task(m_response_completed).then([](pplx::task<void> t)
@@ -542,6 +537,7 @@ void windows_request_context::read_headers_io_completion(DWORD error_code, DWORD
     }
     else
     {
+        utility::string_t header;
         std::string badRequestMsg;
         try
         {
@@ -559,6 +555,68 @@ void windows_request_context::read_headers_io_completion(DWORD error_code, DWORD
         }
         m_msg.set_method(parse_request_method(m_request));
         parse_http_headers(m_request->Headers, m_msg.headers());
+
+        // See if we need to compress or decompress the incoming request body, and if so, prepare for it
+        try
+        {
+            if (m_msg.headers().match(header_names::transfer_encoding, header))
+            {
+                try
+                {
+                    m_decompressor = http::compression::details::get_decompressor_from_header(header, http::compression::details::header_types::transfer_encoding);
+                }
+                catch (http_exception &e)
+                {
+                    if (e.error_code().value() != status_codes::NotImplemented)
+                    {
+                        // Something is wrong with the header; we'll fail here
+                        throw;
+                    }
+                    // We could not find a decompressor; we'll see if the user's handler adds one later
+                    m_decompress_header_type = http::compression::details::header_types::transfer_encoding;
+                    m_decompress_header = std::move(header);
+                }
+            }
+            else if (m_msg.headers().match(header_names::content_encoding, header))
+            {
+                try
+                {
+                    m_decompressor = http::compression::details::get_decompressor_from_header(header, http::compression::details::header_types::content_encoding);
+                }
+                catch (http_exception &e)
+                {
+                    if (e.error_code().value() != status_codes::UnsupportedMediaType)
+                    {
+                        // Something is wrong with the header; we'll fail here
+                        throw;
+                    }
+                    // We could not find a decompressor; we'll see if the user's handler adds one later
+                    m_decompress_header_type = http::compression::details::header_types::content_encoding;
+                    m_decompress_header = std::move(header);
+                }
+            }
+            else if (m_msg.headers().match(header_names::te, header))
+            {
+                // Note that init_response_headers throws away m_msg, so we need to set our compressor here.  If
+                // the header contains all unsupported algorithms, it's not an error -- we just won't compress
+                m_compressor = http::compression::details::get_compressor_from_header(header, http::compression::details::header_types::te);
+            }
+            else if (m_msg.headers().match(header_names::accept_encoding, header))
+            {
+                // This would require pre-compression of the input stream, since we MUST send Content-Length, so we'll (legally) ignore it
+                //m_compressor = http::compression::details::get_compressor_from_header(header, http::compression::details::header_types:accept_encoding);
+            }
+        }
+        catch (http_exception &e)
+        {
+            if (badRequestMsg.empty())
+            {
+                // Respond with a reasonable message
+                badRequestMsg = e.what();
+            }
+        }
+
+        m_msg._get_impl()->_set_http_version({ (uint8_t)m_request->Version.MajorVersion, (uint8_t)m_request->Version.MinorVersion });
 
         // Retrieve the remote IP address
         std::vector<wchar_t> remoteAddressBuffer(50);
@@ -602,12 +660,24 @@ void windows_request_context::read_headers_io_completion(DWORD error_code, DWORD
 void windows_request_context::read_request_body_chunk()
 {
     auto *pServer = static_cast<http_windows_server *>(http_server_api::server_api());
+    PVOID body;
 
     // The read_body_io_completion callback function
     m_overlapped.set_http_io_completion([this](DWORD error, DWORD nBytes){ read_body_io_completion(error, nBytes);});
 
     auto request_body_buf = m_msg._get_impl()->outstream().streambuf();
-    auto body = request_body_buf.alloc(CHUNK_SIZE);
+    if (!m_decompressor)
+    {
+        body = request_body_buf.alloc(CHUNK_SIZE);
+    }
+    else
+    {
+        if (m_compress_buffer.size() < CHUNK_SIZE)
+        {
+            m_compress_buffer.resize(CHUNK_SIZE);
+        }
+        body = m_compress_buffer.data();
+    }
 
     // Once we allow users to set the output stream the following assert could fail.
     // At that time we would need compensation code that would allocate a buffer from the heap instead.
@@ -627,7 +697,10 @@ void windows_request_context::read_request_body_chunk()
     {
         // There was no more data to read.
         CancelThreadpoolIo(pServer->m_threadpool_io);
-        request_body_buf.commit(0);
+        if (!m_decompressor)
+        {
+            request_body_buf.commit(0);
+        }
         if(error_code == ERROR_HANDLE_EOF)
         {
             m_msg._get_impl()->_complete(request_body_buf.in_avail());
@@ -648,17 +721,50 @@ void windows_request_context::read_body_io_completion(DWORD error_code, DWORD by
 
     if (error_code == NO_ERROR)
     {
-        request_body_buf.commit(bytes_read);
+        if (!m_decompressor)
+        {
+            request_body_buf.commit(bytes_read);
+        }
+        else
+        {
+            size_t got;
+            size_t used;
+            size_t total_used = 0;
+
+            do
+            {
+                auto body = request_body_buf.alloc(CHUNK_SIZE);
+                try
+                {
+                    bool done_unused;
+                    got = m_decompressor->decompress(m_compress_buffer.data()+total_used, bytes_read-total_used, body, CHUNK_SIZE, http::compression::operation_hint::has_more, used, done_unused);
+                }
+                catch (...)
+                {
+                    request_body_buf.commit(0);
+                    m_msg._get_impl()->_complete(0, std::current_exception());
+                    return;
+                }
+                request_body_buf.commit(got);
+                total_used += used;
+            } while (total_used != bytes_read);
+        }
         read_request_body_chunk();
     }
     else if (error_code == ERROR_HANDLE_EOF)
     {
-        request_body_buf.commit(0);
+        if (!m_decompressor)
+        {
+            request_body_buf.commit(0);
+        }
         m_msg._get_impl()->_complete(request_body_buf.in_avail());
     }
     else
     {
-        request_body_buf.commit(0);
+        if (!m_decompressor)
+        {
+            request_body_buf.commit(0);
+        }
         m_msg._get_impl()->_complete(0, std::make_exception_ptr(http_exception(error_code)));
     }
 }
@@ -757,7 +863,7 @@ void windows_request_context::init_response_callbacks(ShouldWaitForBody shouldWa
         catch (...)
         {
             // Should never get here, if we do there's a chance that a circular reference will cause leaks,
-            // or worse, undefined behaviour as we don't know who owns 'this' anymore 
+            // or worse, undefined behaviour as we don't know who owns 'this' anymore
             _ASSERTE(false);
             m_response = http::http_response(status_codes::InternalError);
         }
@@ -801,8 +907,53 @@ void windows_request_context::async_process_response()
     const std::string reason = utf16_to_utf8(m_response.reason_phrase());
     win_api_response.pReason = reason.c_str();
     win_api_response.ReasonLength = (USHORT)reason.size();
+    size_t content_length;
 
-    size_t content_length = m_response._get_impl()->_get_content_length();
+    if (m_compressor || m_response._get_impl()->compressor())
+    {
+        if (m_response.headers().has(header_names::content_length))
+        {
+            // Content-Length should not be sent with Transfer-Encoding
+            m_response.headers().remove(header_names::content_length);
+        }
+        if (!m_response._get_impl()->compressor())
+        {
+            // Temporarily move the compressor to the reponse, so _get_content_length() will honor it
+            m_response._get_impl()->set_compressor(std::move(m_compressor));
+        } // else one was already set from a callback, and we'll (blindly) use it
+        content_length = m_response._get_impl()->_get_content_length_and_set_compression();
+        m_compressor = std::move(m_response._get_impl()->compressor());
+        m_response._get_impl()->set_compressor(nullptr);
+    }
+    else
+    {
+        if (!m_decompress_header.empty())
+        {
+            auto factories = m_response._get_impl()->decompress_factories();
+            try
+            {
+                m_decompressor = http::compression::details::get_decompressor_from_header(m_decompress_header, m_decompress_header_type, factories);
+                m_decompress_header.clear();
+                if (!m_decompressor)
+                {
+                    http::status_code code = http::status_codes::NotImplemented;
+                    if (m_decompress_header_type == http::compression::details::header_types::content_encoding)
+                    {
+                        code = status_codes::UnsupportedMediaType;
+                    }
+                    throw http_exception(code);
+                }
+            }
+            catch (http_exception &e)
+            {
+                // No matching decompressor was supplied via callback
+                CancelThreadpoolIo(pServer->m_threadpool_io);
+                cancel_request(std::make_exception_ptr(e));
+                return;
+            }
+        }
+        content_length = m_response._get_impl()->_get_content_length();
+    }
 
     m_headers = std::unique_ptr<HTTP_UNKNOWN_HEADER []>(new HTTP_UNKNOWN_HEADER[msl::safeint3::SafeInt<size_t>(m_response.headers().size())]);
     m_headers_buffer.resize(msl::safeint3::SafeInt<size_t>(m_response.headers().size()) * 2);
@@ -822,8 +973,6 @@ void windows_request_context::async_process_response()
 
     // Send response callback function
     m_overlapped.set_http_io_completion([this](DWORD error, DWORD nBytes){ send_response_io_completion(error, nBytes);});
-
-    m_remaining_to_write = content_length;
 
     // Figure out how to send the entity body of the message.
     if (content_length == 0)
@@ -855,6 +1004,12 @@ void windows_request_context::async_process_response()
     _ASSERTE(content_length > 0);
     m_sending_in_chunks = (content_length != std::numeric_limits<size_t>::max());
     m_transfer_encoding = (content_length == std::numeric_limits<size_t>::max());
+    m_remaining_to_write = content_length;
+    if (content_length == std::numeric_limits<size_t>::max())
+    {
+        // Attempt to figure out the remaining length of the input stream
+        m_remaining_to_write = m_response._get_impl()->_get_stream_length();
+    }
 
     StartThreadpoolIo(pServer->m_threadpool_io);
     const unsigned long error_code = HttpSendHttpResponse(
@@ -897,16 +1052,17 @@ void windows_request_context::transmit_body()
     if ( !m_sending_in_chunks && !m_transfer_encoding )
     {
         // We are done sending data.
-        std::unique_lock<std::mutex> lock(m_responseCompletedLock);
+        std::lock_guard<std::mutex> lock(m_responseCompletedLock);
         m_response_completed.set();
         return;
     }
 
+    msl::safeint3::SafeInt<size_t> safeCount = m_remaining_to_write;
+    size_t next_chunk_size = safeCount.Min(CHUNK_SIZE);
+
     // In both cases here we could perform optimizations to try and use acquire on the streams to avoid an extra copy.
     if ( m_sending_in_chunks )
     {
-        msl::safeint3::SafeInt<size_t> safeCount = m_remaining_to_write;
-        size_t next_chunk_size = safeCount.Min(CHUNK_SIZE);
         m_body_data.resize(CHUNK_SIZE);
 
         streams::rawptr_buffer<unsigned char> buf(&m_body_data[0], next_chunk_size);
@@ -938,33 +1094,109 @@ void windows_request_context::transmit_body()
     else
     {
         // We're transfer-encoding...
-        const size_t body_data_length = CHUNK_SIZE+http::details::chunked_encoding::additional_encoding_space;
-        m_body_data.resize(body_data_length);
-
-        streams::rawptr_buffer<unsigned char> buf(&m_body_data[http::details::chunked_encoding::data_offset], body_data_length);
-
-        m_response.body().read(buf, CHUNK_SIZE).then([this, body_data_length](pplx::task<size_t> op)
+        if (m_compressor)
         {
-            size_t bytes_read = 0;
+            // ...and compressing.  For simplicity, we allocate a buffer that's "too large to fail" while compressing.
+            const size_t body_data_length = 2*CHUNK_SIZE + http::details::chunked_encoding::additional_encoding_space;
+            m_body_data.resize(body_data_length);
 
-            // If an exception occurs surface the error to user on the server side
-            // and cancel the request so the client sees the error.
-            try
+            // We'll read into a temporary buffer before compressing
+            if (m_compress_buffer.capacity() < next_chunk_size)
             {
-                bytes_read = op.get();
-            } catch (...)
-            {
-                cancel_request(std::current_exception());
-                return;
+                m_compress_buffer.reserve(next_chunk_size);
             }
 
-            // Check whether this is the last one to send...
-            m_transfer_encoding = (bytes_read > 0);
-            size_t offset = http::details::chunked_encoding::add_chunked_delimiters(&m_body_data[0], body_data_length, bytes_read);
+            streams::rawptr_buffer<unsigned char> buf(m_compress_buffer.data(), next_chunk_size);
 
-            auto data_length = bytes_read + (http::details::chunked_encoding::additional_encoding_space-offset);
-            send_entity_body(&m_body_data[offset], data_length);
-        });
+            m_response.body().read(buf, next_chunk_size).then([this, body_data_length](pplx::task<size_t> op)
+            {
+                size_t bytes_read = 0;
+
+                // If an exception occurs surface the error to user on the server side
+                // and cancel the request so the client sees the error.
+                try
+                {
+                    bytes_read = op.get();
+                }
+                catch (...)
+                {
+                    cancel_request(std::current_exception());
+                    return;
+                }
+                _ASSERTE(bytes_read >= 0);
+
+                // Compress this chunk; if we read no data, allow the compressor to finalize its stream
+                http::compression::operation_hint hint = http::compression::operation_hint::has_more;
+                if (!bytes_read)
+                {
+                    hint = http::compression::operation_hint::is_last;
+                }
+                m_compressor->compress(m_compress_buffer.data(), bytes_read, &m_body_data[http::details::chunked_encoding::data_offset], body_data_length, hint)
+                    .then([this, bytes_read, body_data_length](pplx::task<http::compression::operation_result> op)
+                {
+                    http::compression::operation_result r;
+
+                    try
+                    {
+                        r = op.get();
+                    }
+                    catch (...)
+                    {
+                        cancel_request(std::current_exception());
+                        return;
+                    }
+
+                    if (r.input_bytes_processed != bytes_read ||
+                        r.output_bytes_produced == body_data_length - http::details::chunked_encoding::additional_encoding_space ||
+                        r.done != !bytes_read)
+                    {
+                        // We chose our parameters so that compression should
+                        // never overflow body_data_length; fail if it does
+                        cancel_request(std::make_exception_ptr(std::exception("Compressed data exceeds internal buffer size.")));
+                        return;
+                    }
+
+                    // Check whether this is the last one to send; note that this is a
+                    // few lines of near-duplicate code with the non-compression path
+                    _ASSERTE(bytes_read <= m_remaining_to_write);
+                    m_remaining_to_write -= bytes_read;
+                    m_transfer_encoding = (r.output_bytes_produced > 0);
+                    size_t offset = http::details::chunked_encoding::add_chunked_delimiters(&m_body_data[0], body_data_length, r.output_bytes_produced);
+                    send_entity_body(&m_body_data[offset], r.output_bytes_produced + http::details::chunked_encoding::additional_encoding_space - offset);
+                });
+            });
+        }
+        else
+        {
+            const size_t body_data_length = CHUNK_SIZE + http::details::chunked_encoding::additional_encoding_space;
+            m_body_data.resize(body_data_length);
+
+            streams::rawptr_buffer<unsigned char> buf(&m_body_data[http::details::chunked_encoding::data_offset], body_data_length);
+
+            m_response.body().read(buf, next_chunk_size).then([this, body_data_length](pplx::task<size_t> op)
+            {
+                size_t bytes_read = 0;
+
+                // If an exception occurs surface the error to user on the server side
+                // and cancel the request so the client sees the error.
+                try
+                {
+                    bytes_read = op.get();
+                }
+                catch (...)
+                {
+                    cancel_request(std::current_exception());
+                    return;
+                }
+
+                // Check whether this is the last one to send...
+                m_transfer_encoding = (bytes_read > 0);
+                size_t offset = http::details::chunked_encoding::add_chunked_delimiters(&m_body_data[0], body_data_length, bytes_read);
+
+                auto data_length = bytes_read + (http::details::chunked_encoding::additional_encoding_space - offset);
+                send_entity_body(&m_body_data[offset], data_length);
+            });
+        }
     }
 }
 
@@ -1022,7 +1254,7 @@ void windows_request_context::send_response_body_io_completion(DWORD error_code,
 /// </summary>
 void windows_request_context::cancel_request_io_completion(DWORD, DWORD)
 {
-    std::unique_lock<std::mutex> lock(m_responseCompletedLock);
+    std::lock_guard<std::mutex> lock(m_responseCompletedLock);
     m_response_completed.set_exception(m_except_ptr);
 }
 
@@ -1045,7 +1277,7 @@ void windows_request_context::cancel_request(std::exception_ptr except_ptr)
     if(error_code != NO_ERROR && error_code != ERROR_IO_PENDING)
     {
         CancelThreadpoolIo(pServer->m_threadpool_io);
-        std::unique_lock<std::mutex> lock(m_responseCompletedLock);
+        std::lock_guard<std::mutex> lock(m_responseCompletedLock);
         m_response_completed.set_exception(except_ptr);
     }
 }

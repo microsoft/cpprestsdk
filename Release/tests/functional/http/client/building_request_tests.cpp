@@ -113,7 +113,7 @@ TEST_FIXTURE(uri_address, body_types)
         p_request->reply(200);
     });
     http_asserts::assert_response_equals(client.request(msg).get(), status_codes::OK);
-    
+
     // string - no content type.
     msg = http_request(method);
     msg.set_body(std::move(str_move_body));
@@ -143,7 +143,7 @@ TEST(set_body_string_with_charset)
 {
     http_request request;
     VERIFY_THROWS(request.set_body(
-    		::utility::conversions::to_utf16string("body_data"), 
+    		::utility::conversions::to_utf16string("body_data"),
     		::utility::conversions::to_utf16string("text/plain;charset=utf-16")), std::invalid_argument);
 }
 
@@ -236,7 +236,7 @@ TEST_FIXTURE(uri_address, set_body_with_charset)
     http_request msg(methods::PUT);
     msg.set_body("datadatadata", "text/plain;charset=us-ascii");
     VERIFY_THROWS(msg.set_body(
-    		::utility::conversions::to_utf16string("datadatadata"), 
+    		::utility::conversions::to_utf16string("datadatadata"),
     		::utility::conversions::to_utf16string("text/plain;charset=us-ascii")), std::invalid_argument);
 }
 

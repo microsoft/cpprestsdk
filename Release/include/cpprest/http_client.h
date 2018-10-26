@@ -247,20 +247,22 @@ public:
     }
 
     /// <summary>
-    /// Checks if requesting a compressed response is turned on, the default is off.
+    /// Checks if requesting a compressed response using Content-Encoding is turned on, the default is off.
     /// </summary>
-    /// <returns>True if compressed response is enabled, false otherwise</returns>
+    /// <returns>True if a content-encoded compressed response is allowed, false otherwise</returns>
     bool request_compressed_response() const
     {
         return m_request_compressed;
     }
 
     /// <summary>
-    /// Request that the server responds with a compressed body.
-    /// If true, in cases where the server does not support compression, this will have no effect.
+    /// Request that the server respond with a compressed body using Content-Encoding; to use Transfer-Encoding, do not
+    /// set this, and specify a vector of <see cref="web::http::details::comporession::decompress_factory" /> pointers
+    /// to the set_decompress_factories method of the <see cref="web::http::http_request" /> object for the request.
+    /// If true and the server does not support compression, this will have no effect.
     /// The response body is internally decompressed before the consumer receives the data.
     /// </summary>
-    /// <param name="request_compressed">True to turn on response body compression, false otherwise.</param>
+    /// <param name="request_compressed">True to turn on content-encoded response body compression, false otherwise.</param>
     /// <remarks>Please note there is a performance cost due to copying the request data. Currently only supported on Windows and OSX.</remarks>
     void set_request_compressed_response(bool request_compressed)
     {
@@ -757,7 +759,7 @@ public:
 
 private:
 
-    std::shared_ptr<::web::http::client::http_pipeline> m_pipeline;
+    std::shared_ptr< ::web::http::client::http_pipeline> m_pipeline;
 };
 
 namespace details {

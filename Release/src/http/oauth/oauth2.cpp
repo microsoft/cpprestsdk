@@ -13,6 +13,8 @@
 
 #include "stdafx.h"
 
+#include <sstream>
+
 using web::http::client::http_client;
 using web::http::client::http_client_config;
 using web::http::oauth2::details::oauth2_strings;
@@ -71,11 +73,12 @@ pplx::task<void> oauth2_config::token_from_redirected_uri(const web::http::uri& 
     }
     if (state() != state_param->second)
     {
-        utility::ostringstream_t err;
-        err.imbue(std::locale::classic());
-        err << U("redirected URI parameter 'state'='") << state_param->second
-            << U("' does not match state='") << state() << U("'.");
-        return pplx::task_from_exception<void>(oauth2_exception(err.str()));
+        utility::string_t err(_XPLATSTR("redirected URI parameter 'state'='"));
+        err += state_param->second;
+        err += _XPLATSTR("' does not match state='");
+        err += state();
+        err += _XPLATSTR("'.");
+        return pplx::task_from_exception<void>(oauth2_exception(std::move(err)));
     }
 
     auto code_param = query.find(oauth2_strings::code);
@@ -101,7 +104,7 @@ pplx::task<void> oauth2_config::_request_token(uri_builder& request_body_ub)
     http_request request;
     request.set_method(methods::POST);
     request.set_request_uri(utility::string_t());
-    
+
     if(!user_agent().empty())
     {
         request.headers().add(web::http::header_names::user_agent, user_agent());
@@ -169,7 +172,7 @@ oauth2_token oauth2_config::_parse_token_from_json(const json::value& token_json
         // As workaround we act as if 'token_type=bearer' was received.
         result.set_token_type(oauth2_strings::bearer);
     }
-    if (!utility::details::str_icmp(result.token_type(), oauth2_strings::bearer))
+    if (!utility::details::str_iequal(result.token_type(), oauth2_strings::bearer))
     {
         throw oauth2_exception(U("only 'token_type=bearer' access tokens are currently supported: ") + token_json.serialize());
     }
@@ -189,7 +192,7 @@ oauth2_token oauth2_config::_parse_token_from_json(const json::value& token_json
 
         if (json_expires_in_val.is_number())
            result.set_expires_in(json_expires_in_val.as_number().to_int64());
-        else 
+        else
         {
             // Handle the case of a number as a JSON "string".
             // Using streams because std::stoll isn't avaliable on Android.

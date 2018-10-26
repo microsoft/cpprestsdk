@@ -31,3 +31,19 @@ void trim_whitespace(std::basic_string<Char> &str)
 bool validate_method(const utility::string_t& method);
 
 }}}
+
+namespace web { namespace http { namespace compression {
+
+class decompress_factory;
+
+namespace details { namespace builtin {
+
+/// <summary>
+/// Helper function to get the set of built-in decompress factories
+/// </summary>
+
+const std::vector<std::shared_ptr<web::http::compression::decompress_factory>> get_decompress_factories();
+
+}}
+
+}}}
