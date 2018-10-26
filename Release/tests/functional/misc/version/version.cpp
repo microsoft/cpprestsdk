@@ -20,12 +20,11 @@ TEST(VersionTest1)
 {
     // If these tests fail, this means that version.props and version.h are out of sync
     // When the version number if changed, both files must change
-    VERIFY_ARE_EQUAL(_VER_REVISION, CPPREST_VERSION_REVISION);
     VERIFY_ARE_EQUAL(_VER_MINOR, CPPREST_VERSION_MINOR);
     VERIFY_ARE_EQUAL(_VER_MAJOR, CPPREST_VERSION_MAJOR);
+    VERIFY_ARE_EQUAL(_VER_REVISION, CPPREST_VERSION_REVISION);
 }
 
 }
 
 }}}}
-
