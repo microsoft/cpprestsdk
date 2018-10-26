@@ -110,7 +110,7 @@ private:
 #if defined(_WIN32)
 struct shared_threadpool
 {
-    typename std::aligned_union<0, threadpool_impl>::type shared_storage;
+    std::aligned_union<0, threadpool_impl>::type shared_storage;
 
     threadpool_impl& get_shared()
     {
@@ -140,7 +140,7 @@ typedef threadpool_impl platform_shared_threadpool;
 
 std::pair<bool, platform_shared_threadpool*> initialize_shared_threadpool(size_t num_threads)
 {
-    static typename std::aligned_union<0, platform_shared_threadpool>::type storage;
+    static std::aligned_union<0, platform_shared_threadpool>::type storage;
     platform_shared_threadpool* const ptr =
         &reinterpret_cast<platform_shared_threadpool&>(storage);
     bool initialized_this_time = false;

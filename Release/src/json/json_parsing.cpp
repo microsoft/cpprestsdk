@@ -1029,7 +1029,7 @@ done:
         ::std::sort(elems.begin(), elems.end(), json::object::compare_pairs);
     }
 
-    return obj;
+    return std::unique_ptr<web::json::details::_Value>(obj.release());
 
 error:
     if (!tkn.m_error)
@@ -1076,7 +1076,7 @@ std::unique_ptr<web::json::details::_Value> JSON_Parser<CharType>::_ParseArray(t
     GetNextToken(tkn);
     if (tkn.m_error) return utility::details::make_unique<web::json::details::_Null>();
 
-    return std::move(result);
+    return std::unique_ptr<web::json::details::_Value>(result.release());
 }
 
 template <typename CharType>
