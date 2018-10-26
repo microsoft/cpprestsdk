@@ -302,6 +302,36 @@ public:
         {
         }
 
+#if defined(_MSC_VER) && _MSC_VER < 1900
+        compression_state(const compression_state&) = delete;
+        compression_state(compression_state&& other)
+            : m_buffer(std::move(other.m_buffer))
+            , m_acquired(other.m_acquired)
+            , m_bytes_read(other.m_bytes_read)
+            , m_bytes_processed(other.m_bytes_processed)
+            , m_needs_flush(other.m_needs_flush)
+            , m_started(other.m_started)
+            , m_done(other.m_done)
+            , m_chunked(other.m_chunked)
+            , m_chunk_bytes(other.m_chunk_bytes)
+            , m_chunk(std::move(other.m_chunk))
+        {}
+        compression_state& operator=(const compression_state&) = delete;
+        compression_state& operator=(compression_state&& other) {
+            m_buffer = std::move(other.m_buffer);
+            m_acquired = other.m_acquired;
+            m_bytes_read = other.m_bytes_read;
+            m_bytes_processed = other.m_bytes_processed;
+            m_needs_flush = other.m_needs_flush;
+            m_started = other.m_started;
+            m_done = other.m_done;
+            m_chunked = other.m_chunked;
+            m_chunk_bytes = other.m_chunk_bytes;
+            m_chunk = std::move(other.m_chunk);
+            return *this;
+        }
+#endif // defined(_MSC_VER) && _MSC_VER < 1900
+
         // Minimal state for on-the-fly decoding of "chunked" encoded data
         class _chunk_helper
         {
