@@ -117,9 +117,15 @@ _ASYNCRTIMP bool supported();
 /// </summary>
 namespace algorithm
 {
-CPPREST_CONSTEXPR utility::char_t * const GZIP = _XPLATSTR("gzip");
-CPPREST_CONSTEXPR utility::char_t * const DEFLATE = _XPLATSTR("deflate");
-CPPREST_CONSTEXPR utility::char_t * const BROTLI = _XPLATSTR("br");
+#if defined(_MSC_VER) && _MSC_VER < 1900
+const utility::char_t * const GZIP = _XPLATSTR("gzip");
+const utility::char_t * const DEFLATE = _XPLATSTR("deflate");
+const utility::char_t * const BROTLI = _XPLATSTR("br");
+#else // ^^^ VS2013 and before ^^^ // vvv VS2015+, and everything else vvv
+constexpr const utility::char_t * const GZIP = _XPLATSTR("gzip");
+constexpr const utility::char_t * const DEFLATE = _XPLATSTR("deflate");
+constexpr const utility::char_t * const BROTLI = _XPLATSTR("br");
+#endif
 
 /// <summary>
 /// Test whether cpprestsdk was built with built-in compression support and
