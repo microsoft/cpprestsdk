@@ -111,6 +111,43 @@ TEST_FIXTURE(uri_address, multiple_https_requests)
     });
 }
 
+#if (defined(_MSC_VER) && (_MSC_VER >= 1800)) && !CPPREST_FORCE_PPLX
+TEST_FIXTURE(uri_address, multiple_https_requests_sync_scheduler)
+{
+    struct sync_scheduler : public scheduler_interface
+    {
+    public:
+        virtual void schedule(TaskProc_t function, PVOID context) override
+        {
+            function(context);
+        }
+    };
+
+    // Save the current ambient scheduler
+    const auto scheduler = get_cpprestsdk_ambient_scheduler();
+
+    // Change the ambient scheduler to one that schedules synchronously
+    static std::shared_ptr<scheduler_interface> syncScheduler = std::make_shared<sync_scheduler>();
+    set_cpprestsdk_ambient_scheduler(syncScheduler);
+
+    handle_timeout([&] {
+        // Use code.google.com instead of www.google.com, which redirects
+        http_client client(U("https://code.google.com"));
+
+        http_response response;
+        for (int i = 0; i < 5; ++i)
+        {
+            response = client.request(methods::GET).get();
+            VERIFY_ARE_EQUAL(status_codes::OK, response.status_code());
+            response.content_ready().wait();
+        }
+    });
+
+    // Revert to the original scheduler
+    set_cpprestsdk_ambient_scheduler(scheduler);
+}
+#endif
+
 TEST_FIXTURE(uri_address, reading_google_stream)
 {
     handle_timeout([&]
