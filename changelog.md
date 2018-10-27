@@ -4,12 +4,13 @@ cpprestsdk (2.10.7)
 * Builds for Android and iOS were repaired, now checked in Azure Pipelines to make sure that doesn't bit-rot in the future.
 * Several race conditions in the listener were worked around; the listeners remain experimental and are unlikely to productized in their current form; the race conditions are structural, but at least the client tests pass most of the time.
 * Incorrect handling of connection pooling bug that caused segfaults on Ubuntu introduced in 2.10.4 has been repaired.
-* websocketspp checked in 0.5.1 version has been changed to a submodule and updated to 0.8.1.
+* websocketpp checked in 0.5.1 version has been changed to a submodule and updated to 0.8.1.
 * Added an API to set the number of threads in the asio thread pool, see PR#883
 * Legacy unmaintained Visual Studio project files have been deleted, please use CMake instead.
 * PR#897 added URI resolution according to RFC3986
 * PR#866 Add Transfer-Encoding compression support and extensible compression API
 * PR#892 Improve utf8_to_utf16 speed for common path
+* PR#670 Export methods to set/get the ambient scheduler in cpprest dll
 -- cpprestsdk team <askcasablanca@microsoft.com>  MON, 25 Oct 2018 19:25:00 -0800
 
 cpprestsdk (2.10.6)
