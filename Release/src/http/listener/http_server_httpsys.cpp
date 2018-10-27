@@ -420,7 +420,7 @@ void http_windows_server::receive_requests()
     // Oversubscribe since this is a blocking call and we don't want to count
     // towards the concurrency runtime's thread count. A more proper fix
     // would be to use Overlapped I/O and asynchronously call HttpReceiveHttpRequest.
-    // This requires additional work to be careful sychronizing with the listener
+    // This requires additional work to be careful synchronizing with the listener
     // shutdown. This is much easier especially given the http_listener is 'experimental'
     // and with VS2015 PPL tasks run on the threadpool.
 #if _MSC_VER < 1900
@@ -918,7 +918,7 @@ void windows_request_context::async_process_response()
         }
         if (!m_response._get_impl()->compressor())
         {
-            // Temporarily move the compressor to the reponse, so _get_content_length() will honor it
+            // Temporarily move the compressor to the response, so _get_content_length() will honor it
             m_response._get_impl()->set_compressor(std::move(m_compressor));
         } // else one was already set from a callback, and we'll (blindly) use it
         content_length = m_response._get_impl()->_get_content_length_and_set_compression();

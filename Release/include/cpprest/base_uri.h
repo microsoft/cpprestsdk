@@ -94,7 +94,7 @@ namespace web {
     /// <summary>
     /// A flexible, protocol independent URI implementation.
     ///
-    /// URI instances are immutable. Querying the various fields on an emtpy URI will return empty strings. Querying
+    /// URI instances are immutable. Querying the various fields on an empty URI will return empty strings. Querying
     /// various diagnostic members on an empty URI will return false.
     /// </summary>
     /// <remarks>
@@ -305,7 +305,7 @@ namespace web {
         /// A loopback URI is one which refers to a hostname or ip address with meaning only on the local machine.
         /// </summary>
         /// <remarks>
-        /// Examples include "locahost", or ip addresses in the loopback range (127.0.0.0/24).
+        /// Examples include "localhost", or ip addresses in the loopback range (127.0.0.0/24).
         /// </remarks>
         /// <returns><c>true</c> if this URI references the local host, <c>false</c> otherwise.</returns>
         bool is_host_loopback() const

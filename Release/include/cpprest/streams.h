@@ -496,7 +496,7 @@ namespace Concurrency { namespace streams
     };
 
     /// <summary>
-    /// Class used to handle asychronous parsing for basic_istream::extract. To support new
+    /// Class used to handle asynchronous parsing for basic_istream::extract. To support new
     /// types create a new template specialization and implement the parse function.
     /// </summary>
     template<typename CharType, typename T>

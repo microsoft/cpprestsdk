@@ -203,7 +203,7 @@ template <> class task<void>;
 /// </remarks>
 #if PPL_TASK_SAVE_FRAME_COUNT > 1
 #if defined(__cplusplus_winrt) && !defined(_DEBUG)
-#pragma message ("WARNING: Redefinning PPL_TASK_SAVE_FRAME_COUNT under Release build for non-desktop applications is not supported; only one frame will be captured!")
+#pragma message ("WARNING: Redefining PPL_TASK_SAVE_FRAME_COUNT under Release build for non-desktop applications is not supported; only one frame will be captured!")
 #define _CAPTURE_CALLSTACK() ::pplx::details::_TaskCreationCallstack::_CaptureSingleFrameCallstack(_ReturnAddress())
 #else
 #define _CAPTURE_CALLSTACK() ::pplx::details::_TaskCreationCallstack::_CaptureMultiFramesCallstack(PPL_TASK_SAVE_FRAME_COUNT)
@@ -228,7 +228,7 @@ template <> class task<void>;
 ///     the <c>canceled</c> state. If you do not respond and continue execution, or return instead of calling
 ///     <c>cancel_current_task</c>, the task will enter the <c>completed</c> state when it is done.
 ///     state.
-///     <para>A task is not cancellable if it was created without a cancellation token.</para>
+///     <para>A task is not cancelable if it was created without a cancellation token.</para>
 /// </remarks>
 /// <seealso cref="task Class"/>
 /// <seealso cref="cancellation_token_source Class"/>
@@ -758,7 +758,7 @@ namespace details
             {
                 // We determine the origin of a task continuation by looking at where .then is called, so we can tell whether
                 // to need to marshal the continuation back to the originating apartment. If an STA thread is in executing in
-                // a neutral aparment when it schedules a continuation, we will not marshal continuations back to the STA,
+                // a neutral apartment when it schedules a continuation, we will not marshal continuations back to the STA,
                 // since variables used within a neutral apartment are expected to be apartment neutral.
                 switch(_AptType)
                 {
@@ -890,13 +890,13 @@ namespace details
 
         std::vector<_Type^> Get()
         {
-            // Return vectory<T^> with the objects that are marshaled in the proper appartment
+            // Return vectory<T^> with the objects that are marshaled in the proper apartment
             std::vector<_Type^> _Return;
             _Return.reserve(_Result.size());
 
             for (auto _PTask = _Result.begin(); _PTask != _Result.end(); ++_PTask)
             {
-                _Return.push_back(_PTask->Get()); // Platform::Agile will marshal the object to appropriate appartment if neccessary
+                _Return.push_back(_PTask->Get()); // Platform::Agile will marshal the object to appropriate apartment if necessary
             }
 
             return _Return;
@@ -1147,7 +1147,7 @@ public:
     ///     The default continuation context.
     /// </returns>
     /// <remarks>
-    ///     The default context is used if you don't specifiy a continuation context when you call the <c>then</c> method. In Windows
+    ///     The default context is used if you don't specify a continuation context when you call the <c>then</c> method. In Windows
     ///     applications for Windows 7 and below, as well as desktop applications on Windows 8 and higher, the runtime determines where
     ///     task continuations will execute. However, in a Windows Store app, the default continuation context for a continuation on an
     ///     apartment aware task is the apartment where <c>then</c> is invoked.
@@ -1715,7 +1715,7 @@ namespace details
                             _M_pRegistration(nullptr), _M_Continuations(nullptr), _M_TaskCollection(_Scheduler_arg),
                             _M_taskEventLogger(this)
         {
-            // Set cancelation token
+            // Set cancellation token
             _M_pTokenState = _PTokenState;
             _ASSERTE(_M_pTokenState != nullptr);
             if (_M_pTokenState != _CancellationTokenState::_None())
@@ -1750,7 +1750,7 @@ namespace details
                 else
                 {
                     // Task Continuations are 'scheduled' *inside* the chore that is executing on the ancestors's task group. If a continuation
-                    // needs to be marshalled to a different apartment, instead of scheduling, we make a synchronous cross apartment COM
+                    // needs to be marshaled to a different apartment, instead of scheduling, we make a synchronous cross apartment COM
                     // call to execute the continuation. If it then happens to do something which waits on the ancestor (say it calls .get(), which
                     // task based continuations are wont to do), waiting on the task group results in on the chore that is making this
                     // synchronous callback, which causes a deadlock. To avoid this, we test the state ancestor's event , and we will NOT wait on
@@ -1780,8 +1780,8 @@ namespace details
                         // call to wait will receive this status. However, both cancellation and exceptions flowing through
                         // tasks set state in the task impl itself.
 
-                        // When it returns cancelled, either work chore or the cancel thread should already have set task's state
-                        // properly -- cancelled state or completed state (because there was no interruption point).
+                        // When it returns canceled, either work chore or the cancel thread should already have set task's state
+                        // properly -- canceled state or completed state (because there was no interruption point).
                         // For tasks with unwrapped tasks, we should not change the state of current task, since the unwrapped task are still running.
                         _M_TaskCollection._RunAndWait();
                     }
@@ -2246,7 +2246,7 @@ namespace details
             }
 
 #if _UITHREADCTXT_SUPPORT
-            // This method is used to throw an exepection in _Wait() if called within STA.  We
+            // This method is used to throw an exception in _Wait() if called within STA.  We
             // want the same behavior if _Wait is called on the UI thread.
             if (SUCCEEDED(CaptureUiThreadContext(nullptr)))
             {
@@ -2309,7 +2309,7 @@ namespace details
             //
             // We must ensure that continuations off _OuterTask (especially exception handling ones) continue to function in the
             // presence of an exception flowing out of the inner task _UnwrappedTask. This requires an exception handling continuation
-            // off the inner task which does the appropriate funnelling to the outer one. We use _Then instead of then to prevent
+            // off the inner task which does the appropriate funneling to the outer one. We use _Then instead of then to prevent
             // the exception from being marked as observed by our internal continuation. This continuation must be scheduled regardless
             // of whether or not the _OuterTask task is canceled.
             //
@@ -2450,7 +2450,7 @@ namespace details
 
                     if (_M_TaskState == _Canceled)
                     {
-                        // If the task has finished cancelling there should not be any continuation records in the array.
+                        // If the task has finished canceling there should not be any continuation records in the array.
                         return false;
                     }
                     else
@@ -2734,7 +2734,7 @@ public:
         {
             for( auto _TaskIt = _Tasks.begin(); _TaskIt != _Tasks.end(); ++_TaskIt )
             {
-                // If current task was cancelled by a cancellation_token, it would be in cancel pending state.
+                // If current task was canceled by a cancellation_token, it would be in cancel pending state.
                 if ((*_TaskIt)->_IsPendingCancel())
                     (*_TaskIt)->_Cancel(true);
                 else
@@ -3246,8 +3246,8 @@ public:
     ///     <c>cancellation_token_source</c> the token was obtained from. Tasks created without a cancellation token are not cancelable.</para>
     ///     <para>Tasks created from a <c>Windows::Foundation::IAsyncInfo</c> interface or a lambda that returns an <c>IAsyncInfo</c> interface
     ///     reach their terminal state when the enclosed Windows Runtime asynchronous operation or action completes. Similarly, tasks created
-    ///     from a lamda that returns a <c>task&lt;result_type&gt;</c> reach their terminal state when the inner task reaches its terminal state,
-    ///     and not when the lamda returns.</para>
+    ///     from a lambda that returns a <c>task&lt;result_type&gt;</c> reach their terminal state when the inner task reaches its terminal state,
+    ///     and not when the lambda returns.</para>
     ///     <para><c>task</c> behaves like a smart pointer and is safe to pass around by value. It can be accessed by multiple threads
     ///     without the need for locks.</para>
     ///     <para>The constructor overloads that take a Windows::Foundation::IAsyncInfo interface or a lambda returning such an interface, are only available
@@ -3287,8 +3287,8 @@ public:
     ///     <c>cancellation_token_source</c> the token was obtained from. Tasks created without a cancellation token are not cancelable.</para>
     ///     <para>Tasks created from a <c>Windows::Foundation::IAsyncInfo</c> interface or a lambda that returns an <c>IAsyncInfo</c> interface
     ///     reach their terminal state when the enclosed Windows Runtime asynchronous operation or action completes. Similarly, tasks created
-    ///     from a lamda that returns a <c>task&lt;result_type&gt;</c> reach their terminal state when the inner task reaches its terminal state,
-    ///     and not when the lamda returns.</para>
+    ///     from a lambda that returns a <c>task&lt;result_type&gt;</c> reach their terminal state when the inner task reaches its terminal state,
+    ///     and not when the lambda returns.</para>
     ///     <para><c>task</c> behaves like a smart pointer and is safe to pass around by value. It can be accessed by multiple threads
     ///     without the need for locks.</para>
     ///     <para>The constructor overloads that take a Windows::Foundation::IAsyncInfo interface or a lambda returning such an interface, are only available
@@ -3335,8 +3335,8 @@ public:
     ///     <c>cancellation_token_source</c> the token was obtained from. Tasks created without a cancellation token are not cancelable.</para>
     ///     <para>Tasks created from a <c>Windows::Foundation::IAsyncInfo</c> interface or a lambda that returns an <c>IAsyncInfo</c> interface
     ///     reach their terminal state when the enclosed Windows Runtime asynchronous operation or action completes. Similarly, tasks created
-    ///     from a lamda that returns a <c>task&lt;result_type&gt;</c> reach their terminal state when the inner task reaches its terminal state,
-    ///     and not when the lamda returns.</para>
+    ///     from a lambda that returns a <c>task&lt;result_type&gt;</c> reach their terminal state when the inner task reaches its terminal state,
+    ///     and not when the lambda returns.</para>
     ///     <para><c>task</c> behaves like a smart pointer and is safe to pass around by value. It can be accessed by multiple threads
     ///     without the need for locks.</para>
     ///     <para>The constructor overloads that take a Windows::Foundation::IAsyncInfo interface or a lambda returning such an interface, are only available
@@ -3373,8 +3373,8 @@ public:
     ///     <c>cancellation_token_source</c> the token was obtained from. Tasks created without a cancellation token are not cancelable.</para>
     ///     <para>Tasks created from a <c>Windows::Foundation::IAsyncInfo</c> interface or a lambda that returns an <c>IAsyncInfo</c> interface
     ///     reach their terminal state when the enclosed Windows Runtime asynchronous operation or action completes. Similarly, tasks created
-    ///     from a lamda that returns a <c>task&lt;result_type&gt;</c> reach their terminal state when the inner task reaches its terminal state,
-    ///     and not when the lamda returns.</para>
+    ///     from a lambda that returns a <c>task&lt;result_type&gt;</c> reach their terminal state when the inner task reaches its terminal state,
+    ///     and not when the lambda returns.</para>
     ///     <para><c>task</c> behaves like a smart pointer and is safe to pass around by value. It can be accessed by multiple threads
     ///     without the need for locks.</para>
     ///     <para>The constructor overloads that take a Windows::Foundation::IAsyncInfo interface or a lambda returning such an interface, are only available
@@ -3400,8 +3400,8 @@ public:
     ///     <c>cancellation_token_source</c> the token was obtained from. Tasks created without a cancellation token are not cancelable.</para>
     ///     <para>Tasks created from a <c>Windows::Foundation::IAsyncInfo</c> interface or a lambda that returns an <c>IAsyncInfo</c> interface
     ///     reach their terminal state when the enclosed Windows Runtime asynchronous operation or action completes. Similarly, tasks created
-    ///     from a lamda that returns a <c>task&lt;result_type&gt;</c> reach their terminal state when the inner task reaches its terminal state,
-    ///     and not when the lamda returns.</para>
+    ///     from a lambda that returns a <c>task&lt;result_type&gt;</c> reach their terminal state when the inner task reaches its terminal state,
+    ///     and not when the lambda returns.</para>
     ///     <para><c>task</c> behaves like a smart pointer and is safe to pass around by value. It can be accessed by multiple threads
     ///     without the need for locks.</para>
     ///     <para>The constructor overloads that take a Windows::Foundation::IAsyncInfo interface or a lambda returning such an interface, are only available
@@ -3692,7 +3692,7 @@ public:
     }
 
     /// <summary>
-    ///     Set the implementation of the task to be the supplied implementaion.
+    ///     Set the implementation of the task to be the supplied implementation.
     /// </summary>
     void _SetImpl(const typename details::_Task_ptr<_ReturnType>::_Type & _Impl)
     {
@@ -3701,7 +3701,7 @@ public:
     }
 
     /// <summary>
-    ///     Set the implementation of the task to be the supplied implementaion using a move instead of a copy.
+    ///     Set the implementation of the task to be the supplied implementation using a move instead of a copy.
     /// </summary>
     void _SetImpl(typename details::_Task_ptr<_ReturnType>::_Type && _Impl)
     {
@@ -3787,7 +3787,7 @@ private:
         }
 
         //
-        // Overload 1: returns IAsyncOperation<_InternalReturnType>^ (only uder /ZW)
+        // Overload 1: returns IAsyncOperation<_InternalReturnType>^ (only under /ZW)
         //                   or
         //             returns task<_InternalReturnType>
         //
@@ -3911,7 +3911,7 @@ private:
         }
 
         //
-        // Overload 0-1: _InternalReturnType -> IAsyncOperation<_TaskType>^ (only uder /ZW)
+        // Overload 0-1: _InternalReturnType -> IAsyncOperation<_TaskType>^ (only under /ZW)
         //               or
         //               _InternalReturnType -> task<_TaskType>
         //
@@ -4242,8 +4242,8 @@ public:
     ///     <c>cancellation_token_source</c> the token was obtained from. Tasks created without a cancellation token are not cancelable.</para>
     ///     <para>Tasks created from a <c>Windows::Foundation::IAsyncInfo</c> interface or a lambda that returns an <c>IAsyncInfo</c> interface
     ///     reach their terminal state when the enclosed Windows Runtime asynchronous operation or action completes. Similarly, tasks created
-    ///     from a lamda that returns a <c>task&lt;result_type&gt;</c> reach their terminal state when the inner task reaches its terminal state,
-    ///     and not when the lamda returns.</para>
+    ///     from a lambda that returns a <c>task&lt;result_type&gt;</c> reach their terminal state when the inner task reaches its terminal state,
+    ///     and not when the lambda returns.</para>
     ///     <para><c>task</c> behaves like a smart pointer and is safe to pass around by value. It can be accessed by multiple threads
     ///     without the need for locks.</para>
     ///     <para>The constructor overloads that take a Windows::Foundation::IAsyncInfo interface or a lambda returning such an interface, are only available
@@ -4279,8 +4279,8 @@ public:
     ///     <c>cancellation_token_source</c> the token was obtained from. Tasks created without a cancellation token are not cancelable.</para>
     ///     <para>Tasks created from a <c>Windows::Foundation::IAsyncInfo</c> interface or a lambda that returns an <c>IAsyncInfo</c> interface
     ///     reach their terminal state when the enclosed Windows Runtime asynchronous operation or action completes. Similarly, tasks created
-    ///     from a lamda that returns a <c>task&lt;result_type&gt;</c> reach their terminal state when the inner task reaches its terminal state,
-    ///     and not when the lamda returns.</para>
+    ///     from a lambda that returns a <c>task&lt;result_type&gt;</c> reach their terminal state when the inner task reaches its terminal state,
+    ///     and not when the lambda returns.</para>
     ///     <para><c>task</c> behaves like a smart pointer and is safe to pass around by value. It can be accessed by multiple threads
     ///     without the need for locks.</para>
     ///     <para>The constructor overloads that take a Windows::Foundation::IAsyncInfo interface or a lambda returning such an interface, are only available
@@ -4317,8 +4317,8 @@ public:
     ///     <c>cancellation_token_source</c> the token was obtained from. Tasks created without a cancellation token are not cancelable.</para>
     ///     <para>Tasks created from a <c>Windows::Foundation::IAsyncInfo</c> interface or a lambda that returns an <c>IAsyncInfo</c> interface
     ///     reach their terminal state when the enclosed Windows Runtime asynchronous operation or action completes. Similarly, tasks created
-    ///     from a lamda that returns a <c>task&lt;result_type&gt;</c> reach their terminal state when the inner task reaches its terminal state,
-    ///     and not when the lamda returns.</para>
+    ///     from a lambda that returns a <c>task&lt;result_type&gt;</c> reach their terminal state when the inner task reaches its terminal state,
+    ///     and not when the lambda returns.</para>
     ///     <para><c>task</c> behaves like a smart pointer and is safe to pass around by value. It can be accessed by multiple threads
     ///     without the need for locks.</para>
     ///     <para>The constructor overloads that take a Windows::Foundation::IAsyncInfo interface or a lambda returning such an interface, are only available
@@ -4344,8 +4344,8 @@ public:
     ///     <c>cancellation_token_source</c> the token was obtained from. Tasks created without a cancellation token are not cancelable.</para>
     ///     <para>Tasks created from a <c>Windows::Foundation::IAsyncInfo</c> interface or a lambda that returns an <c>IAsyncInfo</c> interface
     ///     reach their terminal state when the enclosed Windows Runtime asynchronous operation or action completes. Similarly, tasks created
-    ///     from a lamda that returns a <c>task&lt;result_type&gt;</c> reach their terminal state when the inner task reaches its terminal state,
-    ///     and not when the lamda returns.</para>
+    ///     from a lambda that returns a <c>task&lt;result_type&gt;</c> reach their terminal state when the inner task reaches its terminal state,
+    ///     and not when the lambda returns.</para>
     ///     <para><c>task</c> behaves like a smart pointer and is safe to pass around by value. It can be accessed by multiple threads
     ///     without the need for locks.</para>
     ///     <para>The constructor overloads that take a Windows::Foundation::IAsyncInfo interface or a lambda returning such an interface, are only available
@@ -4570,7 +4570,7 @@ public:
     }
 
     /// <summary>
-    ///     Set the implementation of the task to be the supplied implementaion.
+    ///     Set the implementation of the task to be the supplied implementation.
     /// </summary>
     void _SetImpl(const details::_Task_ptr<details::_Unit_type>::_Type & _Impl)
     {
@@ -4578,7 +4578,7 @@ public:
     }
 
     /// <summary>
-    ///     Set the implementation of the task to be the supplied implementaion using a move instead of a copy.
+    ///     Set the implementation of the task to be the supplied implementation using a move instead of a copy.
     /// </summary>
     void _SetImpl(details::_Task_ptr<details::_Unit_type>::_Type && _Impl)
     {
@@ -4691,7 +4691,7 @@ namespace details
     template<typename _Ty>
     _Ty _GetUnwrappedType(task<_Ty>);
 
-    // Unwrap all supportted types
+    // Unwrap all supported types
     template<typename _Ty>
     auto _GetUnwrappedReturnType(_Ty _Arg, int) -> decltype(_GetUnwrappedType(_Arg));
     // fallback
@@ -5721,7 +5721,7 @@ namespace details
                 _AsyncStatusInternal _Current = _M_currentStatus;
 
                 //
-                // Map our internal cancel pending to cancelled. This way "pending cancelled" looks to the outside as "cancelled" but
+                // Map our internal cancel pending to canceled. This way "pending canceled" looks to the outside as "canceled" but
                 // can still transition to "completed" if the operation completes without acknowledging the cancellation request
                 //
                 switch(_Current)
@@ -6244,7 +6244,7 @@ namespace details
 ///     The return type of the lambda determines whether the construct is an action or an operation.
 ///     <para>Lambdas that return void cause the creation of actions. Lambdas that return a result of type <c>TResult</c> cause the creation of
 ///     operations of TResult.</para>
-///     <para>The lambda may also return a <c>task&lt;TResult&gt;</c> which encapsulates the aysnchronous work within itself or is the continuation of
+///     <para>The lambda may also return a <c>task&lt;TResult&gt;</c> which encapsulates the asynchronous work within itself or is the continuation of
 ///     a chain of tasks that represent the asynchronous work. In this case, the lambda itself is executed inline, since the tasks are the ones that
 ///     execute asynchronously, and the return type of the lambda is unwrapped to produce the asynchronous construct returned by <c>create_async</c>.
 ///     This implies that a lambda that returns a task&lt;void&gt; will cause the creation of actions, and a lambda that returns a task&lt;TResult&gt; will
@@ -6255,10 +6255,10 @@ namespace details
 ///     construct which reports progress of type TProgress each time the <c>report</c> method of the progress_reporter object is called. A lambda that
 ///     takes a cancellation_token may use that token to check for cancellation, or pass it to tasks that it creates so that cancellation of the
 ///     asynchronous construct causes cancellation of those tasks.</para>
-///     <para>If the body of the lambda or function object returns a result (and not a task&lt;TResult&gt;), the lamdba will be executed
+///     <para>If the body of the lambda or function object returns a result (and not a task&lt;TResult&gt;), the lambda will be executed
 ///     asynchronously within the process MTA in the context of a task the Runtime implicitly creates for it. The <c>IAsyncInfo::Cancel</c> method will
 ///     cause cancellation of the implicit task.</para>
-///     <para>If the body of the lambda returns a task, the lamba executes inline, and by declaring the lambda to take an argument of type
+///     <para>If the body of the lambda returns a task, the lambda executes inline, and by declaring the lambda to take an argument of type
 ///     <c>cancellation_token</c> you can trigger cancellation of any tasks you create within the lambda by passing that token in when you create them.
 ///     You may also use the <c>register_callback</c> method on the token to cause the Runtime to invoke a callback when you call <c>IAsyncInfo::Cancel</c> on
 ///     the async operation or action produced..</para>
@@ -6674,13 +6674,13 @@ namespace details
 ///     The position of the first element beyond the range of elements to be combined into the resulting task.
 /// </param>
 /// <returns>
-///     A task that completes sucessfully when all of the input tasks have completed successfully. If the input tasks are of type <c>T</c>,
+///     A task that completes successfully when all of the input tasks have completed successfully. If the input tasks are of type <c>T</c>,
 ///     the output of this function will be a <c>task&lt;std::vector&lt;T&gt;&gt;</c>. If the input tasks are of type <c>void</c> the output
 ///     task will also be a <c>task&lt;void&gt;</c>.
 /// </returns>
 /// <remarks>
 ///     If one of the tasks is canceled or throws an exception, the returned task will complete early, in the canceled state, and the exception,
-///     if one is encoutered, will be thrown if you call <c>get()</c> or <c>wait()</c> on that task.
+///     if one is encountered, will be thrown if you call <c>get()</c> or <c>wait()</c> on that task.
 /// </remarks>
 /// <seealso cref="Task Parallelism (Concurrency Runtime)"/>
 /**/
@@ -6693,7 +6693,7 @@ auto when_all(_Iterator _Begin, _Iterator _End, const task_options& _TaskOptions
 }
 
 /// <summary>
-///     Creates a task that will complete succesfully when both of the tasks supplied as arguments complete successfully.
+///     Creates a task that will complete successfully when both of the tasks supplied as arguments complete successfully.
 /// </summary>
 /// <typeparam name="_ReturnType">
 ///     The type of the returned task.
@@ -6713,7 +6713,7 @@ auto when_all(_Iterator _Begin, _Iterator _End, const task_options& _TaskOptions
 /// </returns>
 /// <remarks>
 ///     If one of the tasks is canceled or throws an exception, the returned task will complete early, in the canceled state, and the exception,
-///     if one is encoutered, will be thrown if you call <c>get()</c> or <c>wait()</c> on that task.
+///     if one is encountered, will be thrown if you call <c>get()</c> or <c>wait()</c> on that task.
 /// </remarks>
 /// <seealso cref="Task Parallelism (Concurrency Runtime)"/>
 /**/
@@ -6725,7 +6725,7 @@ auto operator&&(const task<_ReturnType> & _Lhs, const task<_ReturnType> & _Rhs) 
 }
 
 /// <summary>
-///     Creates a task that will complete succesfully when both of the tasks supplied as arguments complete successfully.
+///     Creates a task that will complete successfully when both of the tasks supplied as arguments complete successfully.
 /// </summary>
 /// <typeparam name="_ReturnType">
 ///     The type of the returned task.
@@ -6745,7 +6745,7 @@ auto operator&&(const task<_ReturnType> & _Lhs, const task<_ReturnType> & _Rhs) 
 /// </returns>
 /// <remarks>
 ///     If one of the tasks is canceled or throws an exception, the returned task will complete early, in the canceled state, and the exception,
-///     if one is encoutered, will be thrown if you call <c>get()</c> or <c>wait()</c> on that task.
+///     if one is encountered, will be thrown if you call <c>get()</c> or <c>wait()</c> on that task.
 /// </remarks>
 /// <seealso cref="Task Parallelism (Concurrency Runtime)"/>
 /**/
@@ -6756,7 +6756,7 @@ auto operator&&(const task<std::vector<_ReturnType>> & _Lhs, const task<_ReturnT
 }
 
 /// <summary>
-///     Creates a task that will complete succesfully when both of the tasks supplied as arguments complete successfully.
+///     Creates a task that will complete successfully when both of the tasks supplied as arguments complete successfully.
 /// </summary>
 /// <typeparam name="_ReturnType">
 ///     The type of the returned task.
@@ -6776,7 +6776,7 @@ auto operator&&(const task<std::vector<_ReturnType>> & _Lhs, const task<_ReturnT
 /// </returns>
 /// <remarks>
 ///     If one of the tasks is canceled or throws an exception, the returned task will complete early, in the canceled state, and the exception,
-///     if one is encoutered, will be thrown if you call <c>get()</c> or <c>wait()</c> on that task.
+///     if one is encountered, will be thrown if you call <c>get()</c> or <c>wait()</c> on that task.
 /// </remarks>
 /// <seealso cref="Task Parallelism (Concurrency Runtime)"/>
 /**/
@@ -6787,7 +6787,7 @@ auto operator&&(const task<_ReturnType> & _Lhs, const task<std::vector<_ReturnTy
 }
 
 /// <summary>
-///     Creates a task that will complete succesfully when both of the tasks supplied as arguments complete successfully.
+///     Creates a task that will complete successfully when both of the tasks supplied as arguments complete successfully.
 /// </summary>
 /// <typeparam name="_ReturnType">
 ///     The type of the returned task.
@@ -6807,7 +6807,7 @@ auto operator&&(const task<_ReturnType> & _Lhs, const task<std::vector<_ReturnTy
 /// </returns>
 /// <remarks>
 ///     If one of the tasks is canceled or throws an exception, the returned task will complete early, in the canceled state, and the exception,
-///     if one is encoutered, will be thrown if you call <c>get()</c> or <c>wait()</c> on that task.
+///     if one is encountered, will be thrown if you call <c>get()</c> or <c>wait()</c> on that task.
 /// </remarks>
 /// <seealso cref="Task Parallelism (Concurrency Runtime)"/>
 /**/
@@ -7089,7 +7089,7 @@ auto when_any(_Iterator _Begin, _Iterator _End, cancellation_token _Cancellation
 ///     The second task to combine into the resulting task.
 /// </param>
 /// <returns>
-///     A task that completes sucessfully when either of the input tasks has completed successfully. If the input tasks are of type <c>T</c>,
+///     A task that completes successfully when either of the input tasks has completed successfully. If the input tasks are of type <c>T</c>,
 ///     the output of this function will be a <c>task&lt;std::vector&lt;T&gt;</c>. If the input tasks are of type <c>void</c> the output task
 ///     will also be a <c>task&lt;void&gt;</c>.
 ///     <para> To allow for a construct of the sort taskA || taskB &amp;&amp; taskC, which are combined in pairs, with &amp;&amp; taking precedence
@@ -7150,7 +7150,7 @@ task<_ReturnType> operator||(const task<_ReturnType> & _Lhs, const task<_ReturnT
 ///     The second task to combine into the resulting task.
 /// </param>
 /// <returns>
-///     A task that completes sucessfully when either of the input tasks has completed successfully. If the input tasks are of type <c>T</c>,
+///     A task that completes successfully when either of the input tasks has completed successfully. If the input tasks are of type <c>T</c>,
 ///     the output of this function will be a <c>task&lt;std::vector&lt;T&gt;</c>. If the input tasks are of type <c>void</c> the output task
 ///     will also be a <c>task&lt;void&gt;</c>.
 ///     <para> To allow for a construct of the sort taskA || taskB &amp;&amp; taskC, which are combined in pairs, with &amp;&amp; taking precedence
@@ -7224,7 +7224,7 @@ task<std::vector<_ReturnType>> operator||(const task<std::vector<_ReturnType>> &
 ///     The second task to combine into the resulting task.
 /// </param>
 /// <returns>
-///     A task that completes sucessfully when either of the input tasks has completed successfully. If the input tasks are of type <c>T</c>,
+///     A task that completes successfully when either of the input tasks has completed successfully. If the input tasks are of type <c>T</c>,
 ///     the output of this function will be a <c>task&lt;std::vector&lt;T&gt;</c>. If the input tasks are of type <c>void</c> the output task
 ///     will also be a <c>task&lt;void&gt;</c>.
 ///     <para> To allow for a construct of the sort taskA || taskB &amp;&amp; taskC, which are combined in pairs, with &amp;&amp; taking precedence
@@ -7256,7 +7256,7 @@ auto operator||(const task<_ReturnType> & _Lhs, const task<std::vector<_ReturnTy
 ///     The second task to combine into the resulting task.
 /// </param>
 /// <returns>
-///     A task that completes sucessfully when either of the input tasks has completed successfully. If the input tasks are of type <c>T</c>,
+///     A task that completes successfully when either of the input tasks has completed successfully. If the input tasks are of type <c>T</c>,
 ///     the output of this function will be a <c>task&lt;std::vector&lt;T&gt;</c>. If the input tasks are of type <c>void</c> the output task
 ///     will also be a <c>task&lt;void&gt;</c>.
 ///     <para> To allow for a construct of the sort taskA || taskB &amp;&amp; taskC, which are combined in pairs, with &amp;&amp; taking precedence

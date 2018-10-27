@@ -424,7 +424,7 @@ namespace details
     }
 
     /// <summary>
-    /// Cross platform utility function for performing case insensitive string equality comparision.
+    /// Cross platform utility function for performing case insensitive string equality comparison.
     /// </summary>
     /// <param name="left">First string to compare.</param>
     /// <param name="right">Second strong to compare.</param>
@@ -432,7 +432,7 @@ namespace details
     _ASYNCRTIMP bool __cdecl str_iequal(const std::string &left, const std::string &right) CPPREST_NOEXCEPT;
 
     /// <summary>
-    /// Cross platform utility function for performing case insensitive string equality comparision.
+    /// Cross platform utility function for performing case insensitive string equality comparison.
     /// </summary>
     /// <param name="left">First string to compare.</param>
     /// <param name="right">Second strong to compare.</param>
@@ -440,7 +440,7 @@ namespace details
     _ASYNCRTIMP bool __cdecl str_iequal(const std::wstring &left, const std::wstring &right) CPPREST_NOEXCEPT;
 
     /// <summary>
-    /// Cross platform utility function for performing case insensitive string less-than comparision.
+    /// Cross platform utility function for performing case insensitive string less-than comparison.
     /// </summary>
     /// <param name="left">First string to compare.</param>
     /// <param name="right">Second strong to compare.</param>
@@ -448,7 +448,7 @@ namespace details
     _ASYNCRTIMP bool __cdecl str_iless(const std::string &left, const std::string &right) CPPREST_NOEXCEPT;
 
     /// <summary>
-    /// Cross platform utility function for performing case insensitive string less-than comparision.
+    /// Cross platform utility function for performing case insensitive string less-than comparison.
     /// </summary>
     /// <param name="left">First string to compare.</param>
     /// <param name="right">Second strong to compare.</param>
