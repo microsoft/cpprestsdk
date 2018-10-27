@@ -540,7 +540,7 @@ size_t __cdecl _putn_fsb(_In_ Concurrency::streams::details::_file_info *info, _
 
 
     // In most of the time, we preserve the writer so that it would have better performance.
-    // However, after uer call seek, we will despose old writer. By doing so, users could
+    // However, after user call seek, we will dispose old writer. By doing so, users could
     // write to new writer in new position while the old writer is still flushing data into stream.
     if (fInfo->m_writer == nullptr)
     {

@@ -524,14 +524,14 @@ public:
         /// Compares two JSON values for equality.
         /// </summary>
         /// <param name="other">The JSON value to compare with.</param>
-        /// <returns>True iff the values are equal.</returns>
+        /// <returns>True if the values are equal.</returns>
         _ASYNCRTIMP bool operator==(const value& other) const;
 
         /// <summary>
         /// Compares two JSON values for inequality.
         /// </summary>
         /// <param name="other">The JSON value to compare with.</param>
-        /// <returns>True iff the values are unequal.</returns>
+        /// <returns>True if the values are unequal.</returns>
         bool operator!=(const value& other) const
         {
             return !((*this) == other);
@@ -1226,7 +1226,7 @@ public:
         /// <summary>
         /// Checks if there are any elements in the JSON object.
         /// </summary>
-        /// <returns>True iff empty.</returns>
+        /// <returns>True if empty.</returns>
         bool empty() const
         {
             return m_elements.empty();
@@ -1374,7 +1374,7 @@ public:
         /// <summary>
         /// Converts the JSON number to unsigned int32.
         /// </summary>
-        /// <returns>An usigned int32 representation of the number</returns>
+        /// <returns>An unsigned int32 representation of the number</returns>
         uint32_t to_uint32() const
         {
             if (m_type == double_type)
@@ -1420,7 +1420,7 @@ public:
         /// Compares two JSON numbers for equality.
         /// </summary>
         /// <param name="other">The JSON number to compare with.</param>
-        /// <returns>True iff the numbers are equal.</returns>
+        /// <returns>True if the numbers are equal.</returns>
         bool operator==(const number &other) const
         {
             if (m_type != other.m_type)
@@ -1689,7 +1689,7 @@ public:
 
             utility::string_t m_string;
 
-            // There are significant performance gains that can be made by knowning whether
+            // There are significant performance gains that can be made by knowing whether
             // or not a character that requires escaping is present.
             bool m_has_escape_char;
             static bool has_escape_chars(const _String &str);
@@ -1797,7 +1797,7 @@ public:
                 for(auto iter = m_object.begin(); iter != m_object.end(); ++iter)
                 {
                     reserveSize += iter->first.length() + 2;    // 2 for quotes
-                    size_t valueSize = iter->second.size() * 20; // Multipler by each object/array element
+                    size_t valueSize = iter->second.size() * 20; // Multiply by each object/array element
                     if(valueSize == 0)
                     {
                         if(iter->second.type() == json::value::String)

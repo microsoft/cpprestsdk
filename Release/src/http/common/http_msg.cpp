@@ -376,7 +376,7 @@ size_t http_msg_base::_get_content_length(bool honor_compression)
         content_length = _get_stream_length();
         if (content_length != std::numeric_limits<size_t>::max())
         {
-            // The content length wasn't explcitly set, but we figured it out;
+            // The content length wasn't explicitly set, but we figured it out;
             // use it, since sending this way is more efficient than chunking
             headers().add(header_names::content_length, content_length);
             return content_length;

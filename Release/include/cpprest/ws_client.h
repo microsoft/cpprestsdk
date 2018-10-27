@@ -142,7 +142,7 @@ public:
     }
 
     /// <summary>
-    /// Gets the server host name to usefor TLS Server Name Indication (SNI).
+    /// Gets the server host name to use for TLS Server Name Indication (SNI).
     /// </summary>
     /// <returns>Host name as a string.</returns>
     const utf8string & server_name() const

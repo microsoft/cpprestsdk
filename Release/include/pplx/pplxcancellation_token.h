@@ -506,7 +506,7 @@ namespace details
 
                 //
                 // If a cancellation has occurred, the registration list is guaranteed to be empty if we've observed it under the auspices of the
-                // lock.  In this case, we must synchronize with the cancelling thread to guarantee that the cancellation is finished by the time
+                // lock.  In this case, we must synchronize with the canceling thread to guarantee that the cancellation is finished by the time
                 // we return from this method.
                 //
                 if (!_M_registrations.empty())

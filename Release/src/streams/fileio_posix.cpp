@@ -54,7 +54,7 @@ struct _file_info_impl : _file_info
     bool m_buffer_reads;
 
     /// <summary>
-    /// A list of callback waiting to be signalled that there are no outstanding writes.
+    /// A list of callback waiting to be signaled that there are no outstanding writes.
     /// </summary>
     std::vector<_filestream_callback *> m_sync_waiters;
 

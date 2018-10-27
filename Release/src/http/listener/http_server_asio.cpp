@@ -1342,7 +1342,7 @@ pplx::task<void> http_linux_server::register_listener(http_listener_impl* listen
         }
         catch (...)
         {
-            // Future improvement - really this API should entirely be asychronously.
+            // Future improvement - really this API should entirely be asynchronously.
             // the hostport_listener::start() method should be made to return a task
             // throwing the exception.
             m_registered_listeners.erase(listener);
