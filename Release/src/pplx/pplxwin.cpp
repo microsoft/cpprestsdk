@@ -275,4 +275,19 @@ namespace details
 
 } // namespace pplx
 
+#else
+namespace Concurrency
+{
+
+void __cdecl set_cpprestsdk_ambient_scheduler(const std::shared_ptr<scheduler_interface>& _Scheduler)
+{
+    pplx::set_ambient_scheduler(_Scheduler);
+}
+
+const std::shared_ptr<scheduler_interface>& __cdecl get_cpprestsdk_ambient_scheduler()
+{
+    return pplx::get_ambient_scheduler();
+}
+
+} // namespace pplx
 #endif
