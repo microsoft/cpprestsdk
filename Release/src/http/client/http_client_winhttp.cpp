@@ -2293,7 +2293,7 @@ private:
                         return true;
                     };
 
-                    Concurrency::details::_do_while([p_request_context, chunk_size, process_buffer]() -> pplx::task<bool>
+                    pplx::details::_do_while([p_request_context, chunk_size, process_buffer]() -> pplx::task<bool>
                     {
                         uint8_t *buffer;
 
