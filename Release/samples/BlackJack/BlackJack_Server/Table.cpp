@@ -456,8 +456,7 @@ void DealerTable::FillShoe(size_t decks)
     //
     // Stack the decks.
     //
-    std::shared_ptr<int> ss(new int[decks * 52]);
-    auto shoe = ss.get();
+    std::vector<int> shoe(decks * 52);
 
     for (size_t d = 0; d < decks ; d++)
     {
