@@ -12,8 +12,8 @@
 ****/
 #pragma once
 
-#ifndef _CASA_HTTP_CLIENT_H
-#define _CASA_HTTP_CLIENT_H
+#ifndef CASA_HTTP_CLIENT_H
+#define CASA_HTTP_CLIENT_H
 
 #if defined (__cplusplus_winrt)
 #if !defined(__WRL_NO_DEFAULT_LIB__)
