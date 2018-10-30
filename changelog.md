@@ -11,6 +11,7 @@ cpprestsdk (2.10.7)
 * PR#866 Add Transfer-Encoding compression support and extensible compression API
 * PR#892 Improve utf8_to_utf16 speed for common path
 * PR#670 Export methods to set/get the ambient scheduler in cpprest dll
+* PR#936 Use pplx namespace consistently
 -- cpprestsdk team <askcasablanca@microsoft.com>  MON, 25 Oct 2018 19:25:00 -0800
 
 cpprestsdk (2.10.6)
