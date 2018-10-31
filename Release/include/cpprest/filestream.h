@@ -12,8 +12,8 @@
 ****/
 #pragma once
 
-#ifndef _CASA_FILE_STREAMS_H
-#define _CASA_FILE_STREAMS_H
+#ifndef CASA_FILE_STREAMS_H
+#define CASA_FILE_STREAMS_H
 
 #include "cpprest/details/fileio.h"
 #include "cpprest/astreambuf.h"

@@ -12,8 +12,8 @@
 ****/
 #pragma once
 
-#ifndef _CASA_OAUTH1_H
-#define _CASA_OAUTH1_H
+#ifndef CASA_OAUTH1_H
+#define CASA_OAUTH1_H
 
 #include "cpprest/http_msg.h"
 #include "cpprest/details/web_utilities.h"

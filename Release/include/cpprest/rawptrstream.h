@@ -13,8 +13,8 @@
 ****/
 #pragma once
 
-#ifndef _CASA_RAWPTR_STREAMS_H
-#define _CASA_RAWPTR_STREAMS_H
+#ifndef CASA_RAWPTR_STREAMS_H
+#define CASA_RAWPTR_STREAMS_H
 
 #include <vector>
 #include <queue>

@@ -12,8 +12,8 @@
 ****/
 #pragma once
 
-#ifndef _CASA_JSON_H
-#define _CASA_JSON_H
+#ifndef CASA_JSON_H
+#define CASA_JSON_H
 
 #include <memory>
 #include <string>

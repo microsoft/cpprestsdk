@@ -13,8 +13,8 @@
 ****/
 #pragma once
 
-#ifndef _CASA_PRODUCER_CONSUMER_STREAMS_H
-#define _CASA_PRODUCER_CONSUMER_STREAMS_H
+#ifndef CASA_PRODUCER_CONSUMER_STREAMS_H
+#define CASA_PRODUCER_CONSUMER_STREAMS_H
 
 #include <vector>
 #include <queue>

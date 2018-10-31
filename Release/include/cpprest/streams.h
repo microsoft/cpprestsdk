@@ -12,8 +12,8 @@
 ****/
 #pragma once
 
-#ifndef _CASA_STREAMS_H
-#define _CASA_STREAMS_H
+#ifndef CASA_STREAMS_H
+#define CASA_STREAMS_H
 
 #include "cpprest/astreambuf.h"
 #include <iosfwd>

@@ -10,8 +10,8 @@
 ****/
 #pragma once
 
-#ifndef _CASA_HTTP_LISTENER_H
-#define _CASA_HTTP_LISTENER_H
+#ifndef CASA_HTTP_LISTENER_H
+#define CASA_HTTP_LISTENER_H
 
 #include <limits>
 #include <functional>
