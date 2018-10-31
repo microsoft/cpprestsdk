@@ -10,8 +10,8 @@
 ****/
 #pragma once
 
-#ifndef _CASA_HTTP_LISTENER_H
-#define _CASA_HTTP_LISTENER_H
+#ifndef CASA_HTTP_LISTENER_H
+#define CASA_HTTP_LISTENER_H
 
 #include <limits>
 #include <functional>
@@ -270,7 +270,16 @@ public:
     /// Destructor frees any held resources.
     /// </summary>
     /// <remarks>Call close() before allowing a listener to be destroyed.</remarks>
-    _ASYNCRTIMP ~http_listener();
+    ~http_listener() {
+        if (m_impl) {
+            // As a safe guard close the listener if not already done.
+            // Users are required to call close, but this is just a safeguard.
+            try {
+                m_impl->close().wait();
+            } catch (...) {
+            }
+        }
+    }
 
     /// <summary>
     /// Asynchronously open the listener, i.e. start accepting requests.

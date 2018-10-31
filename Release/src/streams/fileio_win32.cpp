@@ -414,11 +414,11 @@ size_t _write_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ str
     DWORD error = GetLastError();
 
     // 1. If WriteFile returned true, it must be because the operation completed immediately.
-    // The xp threadpool immediatly creates a workerthread to run "_WriteFileCompletionRoutine".
+    // The xp threadpool immediately creates a workerthread to run "_WriteFileCompletionRoutine".
     // If this function return value > 0, the condition "if (written == sizeof(_CharType))" in the filestreams.h "_getcImpl()" function will be satisfied.
     // The main thread will delete the input "callback", while the threadpool workerthread is accessing this "callback"; there will be a race condition and AV error.
     // We directly return 0 and leave all the completion callbacks working on the workerthread.
-    // We do not need to call GetOverlappedResult, the workerthread will call the "on_error()" if the WriteFaile falied.
+    // We do not need to call GetOverlappedResult, the workerthread will call the "on_error()" if the WriteFaile failed.
     // "req" is deleted in "_WriteFileCompletionRoutine, "pOverlapped" is deleted in io_scheduler::FileIOCompletionRoutine.
     if (wrResult == TRUE)
     {
@@ -508,11 +508,11 @@ size_t _read_file_async(_In_ streams::details::_file_info_impl *fInfo, _In_ stre
     DWORD error = GetLastError();
 
     // 1. If ReadFile returned true, it must be because the operation completed immediately.
-    // The xp threadpool immediatly creates a workerthread to run "_WriteFileCompletionRoutine".
+    // The xp threadpool immediately creates a workerthread to run "_WriteFileCompletionRoutine".
     // If this function return value > 0, the condition "if ( ch == sizeof(_CharType) )" in the filestreams.h "_getcImpl()" function will be satisfied.
     // The main thread will delete the input "callback", while the threadpool workerthread is accessing this "callback"; there will be a race condition and AV error.
     // We can directly return 0 and leave all the completion callbacks working on the workerthread.
-    // We do not need to call GetOverlappedResult, the workerthread will call the "on_error()" if the ReadFile falied.
+    // We do not need to call GetOverlappedResult, the workerthread will call the "on_error()" if the ReadFile failed.
     // "req" is deleted in "_ReadFileCompletionRoutine, "pOverlapped" is deleted in io_scheduler::FileIOCompletionRoutine.
     if (wrResult == TRUE)
     {

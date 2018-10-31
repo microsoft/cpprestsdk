@@ -12,8 +12,8 @@
 ****/
 #pragma once
 
-#ifndef _CASA_STREAMS_H
-#define _CASA_STREAMS_H
+#ifndef CASA_STREAMS_H
+#define CASA_STREAMS_H
 
 #include "cpprest/astreambuf.h"
 #include <iosfwd>
@@ -496,7 +496,7 @@ namespace Concurrency { namespace streams
     };
 
     /// <summary>
-    /// Class used to handle asychronous parsing for basic_istream::extract. To support new
+    /// Class used to handle asynchronous parsing for basic_istream::extract. To support new
     /// types create a new template specialization and implement the parse function.
     /// </summary>
     template<typename CharType, typename T>

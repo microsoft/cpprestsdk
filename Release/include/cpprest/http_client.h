@@ -12,8 +12,8 @@
 ****/
 #pragma once
 
-#ifndef _CASA_HTTP_CLIENT_H
-#define _CASA_HTTP_CLIENT_H
+#ifndef CASA_HTTP_CLIENT_H
+#define CASA_HTTP_CLIENT_H
 
 #if defined (__cplusplus_winrt)
 #if !defined(__WRL_NO_DEFAULT_LIB__)
@@ -257,7 +257,7 @@ public:
 
     /// <summary>
     /// Request that the server respond with a compressed body using Content-Encoding; to use Transfer-Encoding, do not
-    /// set this, and specify a vector of <see cref="web::http::details::comporession::decompress_factory" /> pointers
+    /// set this, and specify a vector of <see cref="web::http::details::compression::decompress_factory" /> pointers
     /// to the set_decompress_factories method of the <see cref="web::http::http_request" /> object for the request.
     /// If true and the server does not support compression, this will have no effect.
     /// The response body is internally decompressed before the consumer receives the data.

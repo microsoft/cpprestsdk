@@ -13,8 +13,8 @@
 ****/
 #pragma once
 
-#ifndef _CASA_RAWPTR_STREAMS_H
-#define _CASA_RAWPTR_STREAMS_H
+#ifndef CASA_RAWPTR_STREAMS_H
+#define CASA_RAWPTR_STREAMS_H
 
 #include <vector>
 #include <queue>
@@ -205,7 +205,7 @@ namespace Concurrency { namespace streams {
         /// Gets a pointer to the next already allocated contiguous block of data.
         /// </summary>
         /// <param name="ptr">A reference to a pointer variable that will hold the address of the block on success.</param>
-        /// <param name="count">The number of contiguous characters available at the address in 'ptr.'</param>
+        /// <param name="count">The number of contiguous characters available at the address in 'ptr'.</param>
         /// <returns><c>true</c> if the operation succeeded, <c>false</c> otherwise.</returns>
         /// <remarks>
         /// A return of false does not necessarily indicate that a subsequent read operation would fail, only that

@@ -455,12 +455,12 @@ public:
                         }
                         else if (buffer[n] == '\r')
                         {
-                            // We've reached the end of the size, and there's no chunk extention
+                            // We've reached the end of the size, and there's no chunk extension
                             m_expect_linefeed = true;
                         }
                         else if (buffer[n] == ';')
                         {
-                            // We've reached the end of the size, and there's a chunk extention;
+                            // We've reached the end of the size, and there's a chunk extension;
                             // we don't support extensions, so we ignore them per RFC
                             m_ignore = true;
                         }
@@ -1318,7 +1318,7 @@ private:
     {
         const bool defaultChunkSize = pContext->m_http_client->client_config().is_default_chunksize();
 
-        // If user specified a chunk size then read in chunks instead of using query data avaliable.
+        // If user specified a chunk size then read in chunks instead of using query data available.
         if (defaultChunkSize)
         {
             if (!WinHttpQueryDataAvailable(pContext->m_request_handle, nullptr))
@@ -2293,7 +2293,7 @@ private:
                         return true;
                     };
 
-                    Concurrency::details::_do_while([p_request_context, chunk_size, process_buffer]() -> pplx::task<bool>
+                    pplx::details::_do_while([p_request_context, chunk_size, process_buffer]() -> pplx::task<bool>
                     {
                         uint8_t *buffer;
 

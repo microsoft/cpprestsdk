@@ -59,7 +59,7 @@ namespace platform
     _PPLXIMP void _pplx_cdecl YieldExecution();
 
     /// <summary>
-    /// Caputeres the callstack
+    /// Captures the callstack
     /// </summary>
     __declspec(noinline) inline static size_t CaptureCallstack(void **, size_t, size_t)
     {
