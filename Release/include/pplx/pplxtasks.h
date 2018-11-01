@@ -13,8 +13,8 @@
 
 #pragma once
 
-#ifndef _PPLXTASKS_H
-#define _PPLXTASKS_H
+#ifndef PPLXTASKS_H
+#define PPLXTASKS_H
 
 #include "cpprest/details/cpprest_compat.h"
 
@@ -113,9 +113,9 @@ void cpprest_init(JavaVM*);
     #include <uithreadctxt.h>
 #endif  /* _UITHREADCTXT_SUPPORT */
 
-    #pragma detect_mismatch("_PPLTASKS_WITH_WINRT", "1")
+    #pragma detect_mismatch("PPLXTASKS_WITH_WINRT", "1")
 #else /* defined(__cplusplus_winrt) */
-    #pragma detect_mismatch("_PPLTASKS_WITH_WINRT", "0")
+    #pragma detect_mismatch("PPLXTASKS_WITH_WINRT", "0")
 #endif /* defined(__cplusplus_winrt) */
 #endif /* defined(_MSC_VER) */
 
@@ -136,17 +136,13 @@ namespace std
     }
 }
 #endif /* _MSC_VER < 1700 */
-
-#ifndef _PPLTASK_ASYNC_LOGGING
-#define _PPLTASK_ASYNC_LOGGING 1
-#endif // #ifndef _PPLTASK_ASYNC_LOGGING
-
-#if _PPLTASK_ASYNC_LOGGING
-#pragma detect_mismatch("_PPLTASK_ASYNC_LOGGING", "1")
-#else
-#pragma detect_mismatch("_PPLTASK_ASYNC_LOGGING", "0")
-#endif // #if _PPLTASK_ASYNC_LOGGING
-
+#ifndef PPLX_TASK_ASYNC_LOGGING
+    #if _MSC_VER >= 1800 && defined(__cplusplus_winrt)
+        #define PPLX_TASK_ASYNC_LOGGING 1  // Only enable async logging under dev12 winrt
+    #else
+        #define PPLX_TASK_ASYNC_LOGGING 0
+    #endif
+#endif /* !PPLX_TASK_ASYNC_LOGGING */
 #endif /* _MSC_VER */
 
 #pragma pack(push,_CRT_PACKING)
@@ -189,11 +185,11 @@ template <typename _Type> class task;
 template <> class task<void>;
 
 // In debug builds, default to 10 frames, unless this is overridden prior to #includ'ing ppltasks.h.  In retail builds, default to only one frame.
-#ifndef PPL_TASK_SAVE_FRAME_COUNT
+#ifndef PPLX_TASK_SAVE_FRAME_COUNT
 #ifdef _DEBUG
-#define PPL_TASK_SAVE_FRAME_COUNT 10
+#define PPLX_TASK_SAVE_FRAME_COUNT 10
 #else
-#define PPL_TASK_SAVE_FRAME_COUNT 1
+#define PPLX_TASK_SAVE_FRAME_COUNT 1
 #endif
 #endif
 
@@ -205,15 +201,15 @@ template <> class task<void>;
 /// This needs to be defined as a macro rather than a function so that if we're only gathering one frame, _ReturnAddress()
 /// will evaluate to client code, rather than a helper function inside of _TaskCreationCallstack, itself.
 /// </remarks>
-#if PPL_TASK_SAVE_FRAME_COUNT > 1
+#if PPLX_TASK_SAVE_FRAME_COUNT > 1
 #if defined(__cplusplus_winrt) && !defined(_DEBUG)
-#pragma message ("WARNING: Redefining PPL_TASK_SAVE_FRAME_COUNT under Release build for non-desktop applications is not supported; only one frame will be captured!")
-#define _CAPTURE_CALLSTACK() ::pplx::details::_TaskCreationCallstack::_CaptureSingleFrameCallstack(_ReturnAddress())
+#pragma message ("WARNING: Redefining PPLX_TASK_SAVE_FRAME_COUNT under Release build for non-desktop applications is not supported; only one frame will be captured!")
+#define PPLX_CAPTURE_CALLSTACK() ::pplx::details::_TaskCreationCallstack::_CaptureSingleFrameCallstack(_ReturnAddress())
 #else
-#define _CAPTURE_CALLSTACK() ::pplx::details::_TaskCreationCallstack::_CaptureMultiFramesCallstack(PPL_TASK_SAVE_FRAME_COUNT)
+#define PPLX_CAPTURE_CALLSTACK() ::pplx::details::_TaskCreationCallstack::_CaptureMultiFramesCallstack(PPLX_TASK_SAVE_FRAME_COUNT)
 #endif
 #else
-#define _CAPTURE_CALLSTACK() ::pplx::details::_TaskCreationCallstack::_CaptureSingleFrameCallstack(_ReturnAddress())
+#define PPLX_CAPTURE_CALLSTACK() ::pplx::details::_TaskCreationCallstack::_CaptureSingleFrameCallstack(_ReturnAddress())
 #endif
 
 
@@ -1464,7 +1460,7 @@ namespace details
         virtual ~_ContinuationTaskHandleBase() {}
     };
 
-#if _PPLTASK_ASYNC_LOGGING && _MSC_VER >= 1800 && defined(__cplusplus_winrt)
+#if PPLX_TASK_ASYNC_LOGGING
     // GUID used for identifying causality logs from PPLTask
     const ::Platform::Guid _PPLTaskCausalityPlatformID(0x7A76B220, 0xA758, 0x4E6E, 0xB0, 0xE0, 0xD7, 0xC6, 0xD7, 0x4A, 0x88, 0xFE);
 
@@ -2383,7 +2379,7 @@ namespace details
         _Task_impl_base const & operator=(_Task_impl_base const&);
     };
 
-#if _PPLTASK_ASYNC_LOGGING && _MSC_VER >= 1800 && defined(__cplusplus_winrt)
+#if PPLX_TASK_ASYNC_LOGGING
     inline void _TaskEventLogger::_LogTaskCompleted()
     {
         if (_M_scheduled)
@@ -2763,8 +2759,8 @@ public:
     __declspec(noinline) // Ask for no inlining so that the _ReturnAddress intrinsic gives us the expected result
     bool set_exception(_E _Except) const // 'const' (even though it's not deep) allows to safely pass events by value into lambdas
     {
-        // It is important that _CAPTURE_CALLSTACK() evaluate to the instruction after the call instruction for set_exception.
-        return _Cancel(std::make_exception_ptr(_Except), _CAPTURE_CALLSTACK());
+        // It is important that PPLX_CAPTURE_CALLSTACK() evaluate to the instruction after the call instruction for set_exception.
+        return _Cancel(std::make_exception_ptr(_Except), PPLX_CAPTURE_CALLSTACK());
     }
 
     /// <summary>
@@ -2774,11 +2770,11 @@ public:
     ///     The exception_ptr that indicates the exception to set this event with.
     /// </param>
     /**/
-    __declspec(noinline) // Ask for no inlining so that the _CAPTURE_CALLSTACK gives us the expected result
+    __declspec(noinline) // Ask for no inlining so that the PPLX_CAPTURE_CALLSTACK gives us the expected result
     bool set_exception(std::exception_ptr _ExceptionPtr) const // 'const' (even though it's not deep) allows to safely pass events by value into lambdas
     {
-        // It is important that _CAPTURE_CALLSTACK() evaluate to the instruction after the call instruction for set_exception.
-        return _Cancel(_ExceptionPtr, _CAPTURE_CALLSTACK());
+        // It is important that PPLX_CAPTURE_CALLSTACK() evaluate to the instruction after the call instruction for set_exception.
+        return _Cancel(_ExceptionPtr, PPLX_CAPTURE_CALLSTACK());
     }
 
     /// <summary>
@@ -2968,7 +2964,7 @@ public:
     __declspec(noinline) // Ask for no inlining so that the _ReturnAddress intrinsic gives us the expected result
     bool set_exception(_E _Except) const // 'const' (even though it's not deep) allows to safely pass events by value into lambdas
     {
-        return _M_unitEvent._Cancel(std::make_exception_ptr(_Except), _CAPTURE_CALLSTACK());
+        return _M_unitEvent._Cancel(std::make_exception_ptr(_Except), PPLX_CAPTURE_CALLSTACK());
     }
 
     /// <summary>
@@ -2978,11 +2974,11 @@ public:
     ///     The exception_ptr that indicates the exception to set this event with.
     /// </param>
     /**/
-    __declspec(noinline) // Ask for no inlining so that the _CAPTURE_CALLSTACK intrinsic gives us the expected result
+    __declspec(noinline) // Ask for no inlining so that the PPLX_CAPTURE_CALLSTACK intrinsic gives us the expected result
     bool set_exception(std::exception_ptr _ExceptionPtr) const // 'const' (even though it's not deep) allows to safely pass events by value into lambdas
     {
-        // It is important that _CAPTURE_CALLSTACK() evaluate to the instruction after the call instruction for set_exception.
-        return _M_unitEvent._Cancel(_ExceptionPtr, _CAPTURE_CALLSTACK());
+        // It is important that PPLX_CAPTURE_CALLSTACK() evaluate to the instruction after the call instruction for set_exception.
+        return _M_unitEvent._Cancel(_ExceptionPtr, PPLX_CAPTURE_CALLSTACK());
     }
 
     /// <summary>
@@ -3301,15 +3297,15 @@ public:
     /// </remarks>
     /**/
     template<typename _Ty>
-    __declspec(noinline) // Ask for no inlining so that the _CAPTURE_CALLSTACK gives us the expected result
+    __declspec(noinline) // Ask for no inlining so that the PPLX_CAPTURE_CALLSTACK gives us the expected result
     explicit task(_Ty _Param)
     {
         task_options _TaskOptions;
         details::_ValidateTaskConstructorArgs<_ReturnType,_Ty>(_Param);
 
         _CreateImpl(_TaskOptions.get_cancellation_token()._GetImplValue(), _TaskOptions.get_scheduler());
-        // Do not move the next line out of this function. It is important that _CAPTURE_CALLSTACK() evaluate to the the call site of the task constructor.
-        _SetTaskCreationCallstack(_CAPTURE_CALLSTACK());
+        // Do not move the next line out of this function. It is important that PPLX_CAPTURE_CALLSTACK() evaluate to the the call site of the task constructor.
+        _SetTaskCreationCallstack(PPLX_CAPTURE_CALLSTACK());
 
         _TaskInitMaybeFunctor(_Param, details::_IsCallable(_Param,0));
     }
@@ -3349,14 +3345,14 @@ public:
     /// </remarks>
     /**/
     template<typename _Ty>
-    __declspec(noinline) // Ask for no inlining so that the _CAPTURE_CALLSTACK gives us the expected result
+    __declspec(noinline) // Ask for no inlining so that the PPLX_CAPTURE_CALLSTACK gives us the expected result
     explicit task(_Ty _Param, const task_options &_TaskOptions)
     {
         details::_ValidateTaskConstructorArgs<_ReturnType,_Ty>(_Param);
 
         _CreateImpl(_TaskOptions.get_cancellation_token()._GetImplValue(), _TaskOptions.get_scheduler());
-        // Do not move the next line out of this function. It is important that _CAPTURE_CALLSTACK() evaluate to the the call site of the task constructor.
-        _SetTaskCreationCallstack(details::_get_internal_task_options(_TaskOptions)._M_hasPresetCreationCallstack ? details::_get_internal_task_options(_TaskOptions)._M_presetCreationCallstack : _CAPTURE_CALLSTACK());
+        // Do not move the next line out of this function. It is important that PPLX_CAPTURE_CALLSTACK() evaluate to the the call site of the task constructor.
+        _SetTaskCreationCallstack(details::_get_internal_task_options(_TaskOptions)._M_hasPresetCreationCallstack ? details::_get_internal_task_options(_TaskOptions)._M_presetCreationCallstack : PPLX_CAPTURE_CALLSTACK());
 
         _TaskInitMaybeFunctor(_Param, details::_IsCallable(_Param,0));
     }
@@ -3476,11 +3472,11 @@ public:
     /// </remarks>
     /**/
     template<typename _Function>
-    __declspec(noinline) // Ask for no inlining so that the _CAPTURE_CALLSTACK gives us the expected result
+    __declspec(noinline) // Ask for no inlining so that the PPLX_CAPTURE_CALLSTACK gives us the expected result
     auto then(_Function&& _Func) const -> typename details::_ContinuationTypeTraits<_Function, _ReturnType>::_TaskOfType
     {
         task_options _TaskOptions;
-        details::_get_internal_task_options(_TaskOptions)._set_creation_callstack(_CAPTURE_CALLSTACK());
+        details::_get_internal_task_options(_TaskOptions)._set_creation_callstack(PPLX_CAPTURE_CALLSTACK());
         return _ThenImpl<_ReturnType, _Function>(std::forward<_Function>(_Func), _TaskOptions);
     }
 
@@ -3509,10 +3505,10 @@ public:
     /// </remarks>
     /**/
     template<typename _Function>
-    __declspec(noinline) // Ask for no inlining so that the _CAPTURE_CALLSTACK gives us the expected result
+    __declspec(noinline) // Ask for no inlining so that the PPLX_CAPTURE_CALLSTACK gives us the expected result
     auto then(_Function&& _Func, task_options _TaskOptions) const -> typename details::_ContinuationTypeTraits<_Function, _ReturnType>::_TaskOfType
     {
-        details::_get_internal_task_options(_TaskOptions)._set_creation_callstack(_CAPTURE_CALLSTACK());
+        details::_get_internal_task_options(_TaskOptions)._set_creation_callstack(PPLX_CAPTURE_CALLSTACK());
         return _ThenImpl<_ReturnType, _Function>(std::forward<_Function>(_Func), _TaskOptions);
     }
 
@@ -3545,11 +3541,11 @@ public:
     /// </remarks>
     /**/
     template<typename _Function>
-    __declspec(noinline) // Ask for no inlining so that the _CAPTURE_CALLSTACK gives us the expected result
+    __declspec(noinline) // Ask for no inlining so that the PPLX_CAPTURE_CALLSTACK gives us the expected result
     auto then(_Function&& _Func, cancellation_token _CancellationToken, task_continuation_context _ContinuationContext) const -> typename details::_ContinuationTypeTraits<_Function, _ReturnType>::_TaskOfType
     {
         task_options _TaskOptions(_CancellationToken, _ContinuationContext);
-        details::_get_internal_task_options(_TaskOptions)._set_creation_callstack(_CAPTURE_CALLSTACK());
+        details::_get_internal_task_options(_TaskOptions)._set_creation_callstack(PPLX_CAPTURE_CALLSTACK());
         return _ThenImpl<_ReturnType, _Function>(std::forward<_Function>(_Func), _TaskOptions);
     }
 
@@ -3741,7 +3737,7 @@ public:
         // inherit from antecedent
         auto _Scheduler = _GetImpl()->_GetScheduler();
 
-        return _ThenImpl<_ReturnType, _Function>(std::forward<_Function>(_Func), _PTokenState, task_continuation_context::use_default(), _Scheduler, _CAPTURE_CALLSTACK(), _InliningMode);
+        return _ThenImpl<_ReturnType, _Function>(std::forward<_Function>(_Func), _PTokenState, task_continuation_context::use_default(), _Scheduler, PPLX_CAPTURE_CALLSTACK(), _InliningMode);
     }
 
 private:
@@ -4293,14 +4289,14 @@ public:
     /// </remarks>
     /**/
     template<typename _Ty>
-    __declspec(noinline) // Ask for no inlining so that the _CAPTURE_CALLSTACK gives us the expected result
+    __declspec(noinline) // Ask for no inlining so that the PPLX_CAPTURE_CALLSTACK gives us the expected result
     explicit task(_Ty _Param, const task_options& _TaskOptions = task_options())
     {
         details::_ValidateTaskConstructorArgs<void,_Ty>(_Param);
 
         _M_unitTask._CreateImpl(_TaskOptions.get_cancellation_token()._GetImplValue(), _TaskOptions.get_scheduler());
-        // Do not move the next line out of this function. It is important that _CAPTURE_CALLSTACK() evaluate to the the call site of the task constructor.
-        _M_unitTask._SetTaskCreationCallstack(details::_get_internal_task_options(_TaskOptions)._M_hasPresetCreationCallstack ? details::_get_internal_task_options(_TaskOptions)._M_presetCreationCallstack : _CAPTURE_CALLSTACK());
+        // Do not move the next line out of this function. It is important that PPLX_CAPTURE_CALLSTACK() evaluate to the the call site of the task constructor.
+        _M_unitTask._SetTaskCreationCallstack(details::_get_internal_task_options(_TaskOptions)._M_hasPresetCreationCallstack ? details::_get_internal_task_options(_TaskOptions)._M_presetCreationCallstack : PPLX_CAPTURE_CALLSTACK());
 
         _TaskInitMaybeFunctor(_Param, details::_IsCallable(_Param,0));
     }
@@ -4424,10 +4420,10 @@ public:
     /// </remarks>
     /**/
     template<typename _Function>
-    __declspec(noinline) // Ask for no inlining so that the _CAPTURE_CALLSTACK gives us the expected result
+    __declspec(noinline) // Ask for no inlining so that the PPLX_CAPTURE_CALLSTACK gives us the expected result
     auto then(_Function&& _Func, task_options _TaskOptions = task_options()) const -> typename details::_ContinuationTypeTraits<_Function, void>::_TaskOfType
     {
-        details::_get_internal_task_options(_TaskOptions)._set_creation_callstack(_CAPTURE_CALLSTACK());
+        details::_get_internal_task_options(_TaskOptions)._set_creation_callstack(PPLX_CAPTURE_CALLSTACK());
         return _M_unitTask._ThenImpl<void, _Function>(std::forward<_Function>(_Func), _TaskOptions);
     }
 
@@ -4460,11 +4456,11 @@ public:
     /// </remarks>
     /**/
     template<typename _Function>
-    __declspec(noinline) // Ask for no inlining so that the _CAPTURE_CALLSTACK gives us the expected result
+    __declspec(noinline) // Ask for no inlining so that the PPLX_CAPTURE_CALLSTACK gives us the expected result
     auto then(_Function&& _Func, cancellation_token _CancellationToken, task_continuation_context _ContinuationContext) const -> typename details::_ContinuationTypeTraits<_Function, void>::_TaskOfType
     {
         task_options _TaskOptions(_CancellationToken, _ContinuationContext);
-        details::_get_internal_task_options(_TaskOptions)._set_creation_callstack(_CAPTURE_CALLSTACK());
+        details::_get_internal_task_options(_TaskOptions)._set_creation_callstack(PPLX_CAPTURE_CALLSTACK());
         return _M_unitTask._ThenImpl<void, _Function>(std::forward<_Function>(_Func), _TaskOptions);
     }
 
@@ -4615,7 +4611,7 @@ public:
         // inherit from antecedent
         auto _Scheduler = _GetImpl()->_GetScheduler();
 
-        return _M_unitTask._ThenImpl<void, _Function>(std::forward<_Function>(_Func), _PTokenState, task_continuation_context::use_default(), _Scheduler, _CAPTURE_CALLSTACK(), _InliningMode);
+        return _M_unitTask._ThenImpl<void, _Function>(std::forward<_Function>(_Func), _PTokenState, task_continuation_context::use_default(), _Scheduler, PPLX_CAPTURE_CALLSTACK(), _InliningMode);
     }
 
 private:
@@ -4776,7 +4772,7 @@ auto create_task(_Ty _Param, task_options _TaskOptions = task_options()) -> task
             "incorrect argument for create_task; can be a callable object or a task_completion_event"
 #endif  /* defined (__cplusplus_winrt) */
     );
-    details::_get_internal_task_options(_TaskOptions)._set_creation_callstack(_CAPTURE_CALLSTACK());
+    details::_get_internal_task_options(_TaskOptions)._set_creation_callstack(PPLX_CAPTURE_CALLSTACK());
     task<typename details::_TaskTypeFromParam<_Ty>::_Type> _CreatedTask(_Param, _TaskOptions);
     return _CreatedTask;
 }
@@ -6278,7 +6274,7 @@ details::_AsyncTaskGeneratorThunk<_Function> ^create_async(const _Function& _Fun
 {
     static_assert(std::is_same<decltype(details::_IsValidCreateAsync(_Func,0,0,0,0)),std::true_type>::value,
         "argument to create_async must be a callable object taking zero, one or two arguments");
-    return ref new details::_AsyncTaskGeneratorThunk<_Function>(_Func, _CAPTURE_CALLSTACK());
+    return ref new details::_AsyncTaskGeneratorThunk<_Function>(_Func, PPLX_CAPTURE_CALLSTACK());
 }
 
 #endif  /* defined (__cplusplus_winrt) */
@@ -7354,4 +7350,4 @@ namespace concurrency = Concurrency;
 #endif
 #endif
 
-#endif // _PPLXTASKS_H
+#endif // PPLXTASKS_H
