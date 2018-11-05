@@ -84,7 +84,6 @@ else()
     target_compile_definitions(cpprest PRIVATE -DCPPREST_EXCLUDE_BROTLI=1)
   else()
     cpprest_find_brotli()
-    target_link_libraries(cpprest PRIVATE cpprestsdk_brotli_internal)
   endif()
 endif()
 
