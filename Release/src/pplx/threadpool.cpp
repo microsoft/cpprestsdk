@@ -84,7 +84,7 @@ private:
 #if defined(__ANDROID__)
     static void detach_from_java(void*)
     {
-        crossplat::JVM.load()->DetachCurrentThread();
+        JVM.load()->DetachCurrentThread();
     }
 #endif // __ANDROID__
 
@@ -92,7 +92,7 @@ private:
     {
 #if defined(__ANDROID__)
         // Calling get_jvm_env() here forces the thread to be attached.
-        crossplat::get_jvm_env();
+        get_jvm_env();
         pthread_cleanup_push(detach_from_java, nullptr);
 #endif // __ANDROID__
         threadpool_impl* _this = reinterpret_cast<threadpool_impl*>(arg);
@@ -197,7 +197,7 @@ void threadpool::initialize_with_threads(size_t num_threads)
 
 #if defined(__ANDROID__)
 void cpprest_init(JavaVM* vm) {
-    crossplat::JVM = vm;
+    JVM = vm;
 }
 #endif
 
