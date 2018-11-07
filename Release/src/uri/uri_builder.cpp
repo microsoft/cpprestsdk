@@ -55,7 +55,7 @@ uri_builder &uri_builder::append_path(const utility::string_t &path, bool is_enc
     return *this;
 }
 
-uri_builder &uri_builder::append_path_literal(const utility::string_t &path, bool is_encode)
+uri_builder &uri_builder::append_path_raw(const utility::string_t &path, bool is_encode)
 {
     if(path.empty())
     {

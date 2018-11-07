@@ -271,28 +271,28 @@ TEST(append_path_string)
     VERIFY_ARE_EQUAL(U("/path1/path2/path3/path4"), builder.path());
 }
 
-TEST(append_path_literal_string)
+TEST(append_path_raw_string)
 {
     // empty uri builder path
     uri_builder builder;
-    builder.append_path_literal(U("path1"));
+    builder.append_path_raw(U("path1"));
     VERIFY_ARE_EQUAL(U("/path1"), builder.path());
 
     // empty append path
-    builder.append_path_literal(U(""));
+    builder.append_path_raw(U(""));
     VERIFY_ARE_EQUAL(U("/path1"), builder.path());
     
     // uri builder with slash
-    builder.append_path_literal(U("/"));
-    builder.append_path_literal(U("path2"));
+    builder.append_path_raw(U("/"));
+    builder.append_path_raw(U("path2"));
     VERIFY_ARE_EQUAL(U("/path1///path2"), builder.path());
 
     // both with slash
-    builder.append_path_literal(U("/path3"));
+    builder.append_path_raw(U("/path3"));
     VERIFY_ARE_EQUAL(U("/path1///path2//path3"), builder.path());
 
     // both without slash
-    builder.append_path_literal(U("path4"));
+    builder.append_path_raw(U("path4"));
     VERIFY_ARE_EQUAL(U("/path1///path2//path3/path4"), builder.path());
 }
 
