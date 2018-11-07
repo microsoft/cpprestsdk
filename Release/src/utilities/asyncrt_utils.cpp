@@ -356,7 +356,7 @@ using UtilCharInternal_t = signed char;
 inline size_t count_utf8_to_utf16(const std::string& s)
 {
     const size_t sSize = s.size();
-    auto sData = reinterpret_cast<const UtilCharInternal_t* const>(s.data());
+    auto const sData = reinterpret_cast<const UtilCharInternal_t*>(s.data());
     size_t result{ sSize };
 
     for (size_t index = 0; index < sSize;)
@@ -441,7 +441,7 @@ utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
 {
     // Save repeated heap allocations, use the length of resulting sequence.
     const size_t srcSize = s.size();
-    auto srcData = reinterpret_cast<const UtilCharInternal_t* const>(s.data());
+    auto const srcData = reinterpret_cast<const UtilCharInternal_t*>(s.data());
     utf16string dest(count_utf8_to_utf16(s), L'\0');
     utf16string::value_type* const destData = &dest[0];
     size_t destIndex = 0;
