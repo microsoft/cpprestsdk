@@ -287,13 +287,14 @@ TEST(append_path_raw_string)
     builder.append_path_raw(U("path2"));
     VERIFY_ARE_EQUAL(U("/path1///path2"), builder.path());
 
-    // both with slash
+    // leading slash (should result in "//")
     builder.append_path_raw(U("/path3"));
     VERIFY_ARE_EQUAL(U("/path1///path2//path3"), builder.path());
 
-    // both without slash
-    builder.append_path_raw(U("path4"));
-    VERIFY_ARE_EQUAL(U("/path1///path2//path3/path4"), builder.path());
+    // trailing slash
+    builder.append_path_raw(U("path4/"));
+     builder.append_path_raw(U("path5"));
+   VERIFY_ARE_EQUAL(U("/path1///path2//path3/path4//path5"), builder.path());
 }
 
 TEST(append_query_string)
