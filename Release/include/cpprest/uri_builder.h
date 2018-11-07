@@ -189,6 +189,20 @@ namespace web
         _ASYNCRTIMP uri_builder &append_path(const utility::string_t &path, bool do_encoding = false);
 
         /// <summary>
+        /// Appends the raw contents of the path argument to the path of this uri_builder with no separator de-duplication. 
+        /// </summary>
+        /// <remarks>
+        /// The path argument is appended after adding a '/' separator without regards to the contents of path. If an empty string 
+        /// is provided, this function will immediately return without changes to the stored path value.
+        /// For example: if the current contents are "/abc" and path="/xyz", the result will be "/abc//xyz".
+        /// </remarks>
+        /// <param name="path">Path to append as a already encoded string.</param>
+        /// <param name="do_encoding">Specify whether to apply URI encoding to the given string.</param>
+        /// <returns>A reference to this uri_builder to support chaining.</returns>
+        _ASYNCRTIMP uri_builder &append_path_raw(const utility::string_t &path, bool do_encoding = false);
+
+
+        /// <summary>
         /// Appends another query to the query of this uri_builder.
         /// </summary>
         /// <param name="query">Query to append as a decoded string.</param>

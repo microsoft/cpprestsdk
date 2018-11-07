@@ -55,6 +55,26 @@ uri_builder &uri_builder::append_path(const utility::string_t &path, bool is_enc
     return *this;
 }
 
+uri_builder &uri_builder::append_path_literal(const utility::string_t &path, bool is_encode)
+{
+    if(path.empty())
+    {
+        return *this;
+    }
+
+    auto encoded_path = is_encode ? uri::encode_uri(path, uri::components::path) : path;
+    auto thisPath = this->path();
+    if(thisPath.empty())
+    {
+        set_path(_XPLATSTR('/') + encoded_path);
+    }
+    else
+    {
+        set_path(thisPath + _XPLATSTR('/') + encoded_path);
+    }
+    return *this;
+}
+
 uri_builder &uri_builder::append_query(const utility::string_t &query, bool is_encode)
 {
     if(query.empty())
