@@ -11,7 +11,9 @@ fi
 
 ## Configuration
 DEFAULT_BOOST_VERSION=1.67.0
+DEFAULT_OPENSSL_VERSION=1.0.2o
 BOOST_VERSION=${BOOST_VERSION:-${DEFAULT_BOOST_VERSION}}
+OPENSSL_VERSION=${OPENSSL_VERSION:-${DEFAULT_OPENSSL_VERSION}}
 CPPRESTSDK_BUILD_TYPE=${CPPRESTSDK_BUILD_TYPE:-Release}
 
 ############################ No need to edit anything below this line
@@ -48,7 +50,7 @@ if [ ! -e ${ABS_PATH}/openssl/lib/libcrypto.a ]; then
     fi
     pushd ${ABS_PATH}/OpenSSL-for-iPhone
     git checkout 10019638e80e8a8a5fc19642a840d8a69fac7349
-    ./build-libssl.sh
+    ./build-libssl.sh --version=${OPENSSL_VERSION}
     popd
     mkdir -p ${ABS_PATH}/openssl/lib
     if [ -e ${ABS_PATH}/OpenSSL-for-iPhone/bin/iPhoneOS${IOS_SDK_VERSION}-arm64.sdk/include ]
