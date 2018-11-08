@@ -65,6 +65,25 @@ jobs:
         cd build.common\Release\Binaries\Release
         .\test_runner.exe *test.dll
       displayName: 'Run tests, release'
+  - job: Windows_VS2017_UWP
+    pool:
+      vmImage: 'vs2017-win2016'
+    steps:
+    - script: .\vcpkg\bootstrap-vcpkg.bat
+      displayName: Bootstrap vcpkg
+    - script: .\vcpkg\vcpkg.exe install zlib --triplet x64-uwp
+      displayName: vcpkg install dependencies
+    - script: mkdir build.common
+      displayName: Make Build Directory
+    - task: CMake@1
+      inputs:
+        workingDirectory: 'build.common'
+        cmakeArgs: '-A x64 -DCMAKE_TOOLCHAIN_FILE=../vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_SYSTEM_NAME=WindowsStore -DCMAKE_SYSTEM_VERSION=10.0 ..'
+    - task: MSBuild@1
+      inputs:
+        solution: 'build.common/ALL_BUILD.vcxproj'
+        maximumCpuCount: true
+        platform: 'x64'
   - job: Windows_VS2015_x86
     pool:
       vmImage: 'vs2015-win2012r2'

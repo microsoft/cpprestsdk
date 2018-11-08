@@ -17,6 +17,7 @@
 ****/
 #include "stdafx.h"
 #include "cpprest/details/fileio.h"
+#include "cpprest/interopstream.h"
 #include "robuffer.h"
 
 using namespace ::Windows::Foundation;
