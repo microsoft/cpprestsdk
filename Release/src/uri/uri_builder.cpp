@@ -64,7 +64,7 @@ uri_builder &uri_builder::append_path_raw(const utility::string_t &path, bool is
 
     auto encoded_path = is_encode ? uri::encode_uri(path, uri::components::path) : path;
     auto thisPath = this->path();
-    if(thisPath.empty())
+    if(thisPath.empty() || thisPath == _XPLATSTR("/"))
     {
         set_path(_XPLATSTR('/') + encoded_path);
     }
