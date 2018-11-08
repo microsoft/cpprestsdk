@@ -51,7 +51,12 @@ bool verify_cert_chain_platform_specific(boost::asio::ssl::verify_context& verif
         return true;
     }
 
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
     STACK_OF(X509)* certStack = X509_STORE_CTX_get_chain(storeContext);
+#else 
+    STACK_OF(X509)* certStack = X509_STORE_CTX_get0_chain(storeContext);
+#endif
+    
     const int numCerts = sk_X509_num(certStack);
     if (numCerts < 0)
     {
