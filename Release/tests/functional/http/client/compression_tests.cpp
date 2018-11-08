@@ -13,9 +13,9 @@
 
 #include "stdafx.h"
 
+#include "cpprest/asyncrt_utils.h"
 #include "cpprest/details/http_helpers.h"
 #include "cpprest/version.h"
-#include "cpprest/asyncrt_utils.h"
 #include <fstream>
 
 #ifndef __cplusplus_winrt
@@ -26,6 +26,7 @@ using namespace web;
 using namespace utility;
 using namespace web::http;
 using namespace web::http::client;
+using namespace web::http::compression;
 
 using namespace tests::functional::http::utilities;
 
@@ -40,8 +41,7 @@ namespace client
 SUITE(compression_tests)
 {
     // A fake "pass-through" compressor/decompressor for testing
-    class fake_provider : public web::http::compression::compress_provider,
-                          public web::http::compression::decompress_provider
+    class fake_provider : public compress_provider, public decompress_provider
     {
     public:
         static const utility::string_t FAKE;
@@ -54,7 +54,7 @@ SUITE(compression_tests)
                                   size_t input_size,
                                   uint8_t* output,
                                   size_t output_size,
-                                  web::http::compression::operation_hint hint,
+                                  operation_hint hint,
                                   size_t& input_bytes_processed,
                                   bool& done)
         {
@@ -85,14 +85,10 @@ SUITE(compression_tests)
             return input_bytes_processed;
         }
 
-        virtual pplx::task<web::http::compression::operation_result> decompress(
-            const uint8_t* input,
-            size_t input_size,
-            uint8_t* output,
-            size_t output_size,
-            web::http::compression::operation_hint hint)
+        virtual pplx::task<operation_result> decompress(
+            const uint8_t* input, size_t input_size, uint8_t* output, size_t output_size, operation_hint hint)
         {
-            web::http::compression::operation_result r;
+            operation_result r;
 
             try
             {
@@ -101,19 +97,19 @@ SUITE(compression_tests)
             }
             catch (...)
             {
-                pplx::task_completion_event<web::http::compression::operation_result> ev;
+                pplx::task_completion_event<operation_result> ev;
                 ev.set_exception(std::current_exception());
                 return pplx::create_task(ev);
             }
 
-            return pplx::task_from_result<web::http::compression::operation_result>(r);
+            return pplx::task_from_result<operation_result>(r);
         }
 
         virtual size_t compress(const uint8_t* input,
                                 size_t input_size,
                                 uint8_t* output,
                                 size_t output_size,
-                                web::http::compression::operation_hint hint,
+                                operation_hint hint,
                                 size_t& input_bytes_processed,
                                 bool& done)
         {
@@ -138,20 +134,16 @@ SUITE(compression_tests)
                 memcpy(output, input, bytes);
             }
             _so_far += bytes;
-            _done = (hint == web::http::compression::operation_hint::is_last && _so_far == _size);
+            _done = (hint == operation_hint::is_last && _so_far == _size);
             done = _done;
             input_bytes_processed = bytes;
             return input_bytes_processed;
         }
 
-        virtual pplx::task<web::http::compression::operation_result> compress(
-            const uint8_t* input,
-            size_t input_size,
-            uint8_t* output,
-            size_t output_size,
-            web::http::compression::operation_hint hint)
+        virtual pplx::task<operation_result> compress(
+            const uint8_t* input, size_t input_size, uint8_t* output, size_t output_size, operation_hint hint)
         {
-            web::http::compression::operation_result r;
+            operation_result r;
 
             try
             {
@@ -160,12 +152,12 @@ SUITE(compression_tests)
             }
             catch (...)
             {
-                pplx::task_completion_event<web::http::compression::operation_result> ev;
+                pplx::task_completion_event<operation_result> ev;
                 ev.set_exception(std::current_exception());
                 return pplx::create_task(ev);
             }
 
-            return pplx::task_from_result<web::http::compression::operation_result>(r);
+            return pplx::task_from_result<operation_result>(r);
         }
 
         virtual void reset()
@@ -182,33 +174,23 @@ SUITE(compression_tests)
 
     const utility::string_t fake_provider::FAKE = _XPLATSTR("fake");
 
-    void compress_and_decompress(
-        const utility::string_t& algorithm, const size_t buffer_size, const size_t chunk_size, bool compressible)
+    void compress_and_decompress(std::unique_ptr<compress_provider> compressor,
+                                 std::unique_ptr<decompress_provider> decompressor,
+                                 const size_t buffer_size,
+                                 const size_t chunk_size,
+                                 bool compressible)
     {
-        std::unique_ptr<web::http::compression::compress_provider> compressor;
-        std::unique_ptr<web::http::compression::decompress_provider> decompressor;
         std::vector<uint8_t> input_buffer;
         std::vector<uint8_t> cmp_buffer;
         std::vector<uint8_t> dcmp_buffer;
-        web::http::compression::operation_result r;
+        operation_result r;
         std::vector<size_t> chunk_sizes;
         size_t csize;
         size_t dsize;
         size_t i;
         size_t nn;
 
-        if (algorithm == fake_provider::FAKE)
-        {
-            compressor = utility::details::make_unique<fake_provider>(buffer_size);
-            decompressor = utility::details::make_unique<fake_provider>(buffer_size);
-        }
-        else
-        {
-            compressor = web::http::compression::builtin::make_compressor(algorithm);
-            decompressor = web::http::compression::builtin::make_decompressor(algorithm);
-        }
-        VERIFY_IS_TRUE((bool)compressor);
-        VERIFY_IS_TRUE((bool)decompressor);
+        VERIFY_ARE_EQUAL(compressor->algorithm(), decompressor->algorithm());
 
         input_buffer.reserve(buffer_size);
         for (size_t i = 0; i < buffer_size; ++i)
@@ -231,11 +213,13 @@ SUITE(compression_tests)
         cmp_buffer.resize(buffer_size); // pessimistic (or not, for non-compressible data)
         for (i = 0; i < buffer_size; i += chunk_size)
         {
-            r = compressor->compress(input_buffer.data() + i,
-                                     std::min(chunk_size, buffer_size - i),
-                                     cmp_buffer.data() + csize,
-                                     std::min(chunk_size, buffer_size - csize),
-                                     web::http::compression::operation_hint::has_more).get();
+            r = compressor
+                    ->compress(input_buffer.data() + i,
+                               std::min(chunk_size, buffer_size - i),
+                               cmp_buffer.data() + csize,
+                               std::min(chunk_size, buffer_size - csize),
+                               operation_hint::has_more)
+                    .get();
             VERIFY_ARE_EQUAL(r.input_bytes_processed, std::min(chunk_size, buffer_size - i));
             VERIFY_ARE_EQUAL(r.done, false);
             chunk_sizes.push_back(r.output_bytes_produced);
@@ -252,11 +236,13 @@ SUITE(compression_tests)
                     cmpsize += std::min(chunk_size, (size_t)200);
                     cmp_buffer.resize(cmpsize);
                 }
-                r = compressor->compress(NULL,
-                                        0,
-                                        cmp_buffer.data() + csize,
-                                        std::min(chunk_size, cmpsize - csize),
-                                        web::http::compression::operation_hint::is_last).get();
+                r = compressor
+                        ->compress(NULL,
+                                   0,
+                                   cmp_buffer.data() + csize,
+                                   std::min(chunk_size, cmpsize - csize),
+                                   operation_hint::is_last)
+                        .get();
                 VERIFY_ARE_EQUAL(r.input_bytes_processed, 0);
                 chunk_sizes.push_back(r.output_bytes_produced);
                 csize += r.output_bytes_produced;
@@ -264,7 +250,7 @@ SUITE(compression_tests)
             VERIFY_ARE_EQUAL(r.done, true);
 
             // once more with no input, to assure no error and done
-            r = compressor->compress(NULL, 0, NULL, 0, web::http::compression::operation_hint::is_last).get();
+            r = compressor->compress(NULL, 0, NULL, 0, operation_hint::is_last).get();
             VERIFY_ARE_EQUAL(r.input_bytes_processed, 0);
             VERIFY_ARE_EQUAL(r.output_bytes_produced, 0);
             VERIFY_ARE_EQUAL(r.done, true);
@@ -280,17 +266,19 @@ SUITE(compression_tests)
         {
             if (*it)
             {
-                auto hint = web::http::compression::operation_hint::has_more;
+                auto hint = operation_hint::has_more;
                 if (it == chunk_sizes.begin())
                 {
-                    hint = web::http::compression::operation_hint::is_last;
+                    hint = operation_hint::is_last;
                 }
 
-                r = decompressor->decompress(cmp_buffer.data() + nn,
-                                            *it,
-                                            dcmp_buffer.data() + dsize,
-                                            std::min(chunk_size, buffer_size - dsize),
-                                            hint).get();
+                r = decompressor
+                        ->decompress(cmp_buffer.data() + nn,
+                                     *it,
+                                     dcmp_buffer.data() + dsize,
+                                     std::min(chunk_size, buffer_size - dsize),
+                                     hint)
+                        .get();
                 nn += *it;
                 dsize += r.output_bytes_produced;
             }
@@ -310,11 +298,13 @@ SUITE(compression_tests)
             size_t n = std::min(chunk_size, csize - nn);
             do
             {
-                r = decompressor->decompress(cmp_buffer.data() + nn,
-                                             n,
-                                             dcmp_buffer.data() + dsize,
-                                             std::min(chunk_size, buffer_size - dsize),
-                                             web::http::compression::operation_hint::has_more).get();
+                r = decompressor
+                        ->decompress(cmp_buffer.data() + nn,
+                                     n,
+                                     dcmp_buffer.data() + dsize,
+                                     std::min(chunk_size, buffer_size - dsize),
+                                     operation_hint::has_more)
+                        .get();
                 dsize += r.output_bytes_produced;
                 nn += r.input_bytes_processed;
                 n -= r.input_bytes_processed;
@@ -326,7 +316,7 @@ SUITE(compression_tests)
         VERIFY_IS_TRUE(r.done);
 
         // once more with no input, to assure no error and done
-        r = decompressor->decompress(NULL, 0, NULL, 0, web::http::compression::operation_hint::has_more).get();
+        r = decompressor->decompress(NULL, 0, NULL, 0, operation_hint::has_more).get();
         VERIFY_ARE_EQUAL(r.input_bytes_processed, 0);
         VERIFY_ARE_EQUAL(r.output_bytes_produced, 0);
         VERIFY_IS_TRUE(r.done);
@@ -334,15 +324,13 @@ SUITE(compression_tests)
         // decompress all at once
         decompressor->reset();
         memset(dcmp_buffer.data(), 0, dcmp_buffer.size());
-        r = decompressor->decompress(cmp_buffer.data(),
-                                     csize,
-                                     dcmp_buffer.data(),
-                                     dcmp_buffer.size(),
-                                     web::http::compression::operation_hint::is_last).get();
+        r = decompressor
+                ->decompress(cmp_buffer.data(), csize, dcmp_buffer.data(), dcmp_buffer.size(), operation_hint::is_last)
+                .get();
         VERIFY_ARE_EQUAL(r.output_bytes_produced, buffer_size);
         VERIFY_ARE_EQUAL(input_buffer, dcmp_buffer);
 
-        if (algorithm != fake_provider::FAKE)
+        if (decompressor->algorithm() != fake_provider::FAKE)
         {
             // invalid decompress buffer, first and subsequent tries
             cmp_buffer[0] = ~cmp_buffer[1];
@@ -352,22 +340,23 @@ SUITE(compression_tests)
                 nn = 0;
                 try
                 {
-                    r = decompressor->decompress(cmp_buffer.data(),
-                                              csize,
-                                              dcmp_buffer.data(),
-                                              dcmp_buffer.size(),
-                                              web::http::compression::operation_hint::is_last).get();
-                    nn++;
+                    r = decompressor
+                            ->decompress(cmp_buffer.data(),
+                                         csize,
+                                         dcmp_buffer.data(),
+                                         dcmp_buffer.size(),
+                                         operation_hint::is_last)
+                            .get();
+                    VERIFY_IS_FALSE(r.done && r.output_bytes_produced == buffer_size);
                 }
                 catch (std::runtime_error)
                 {
                 }
-                VERIFY_ARE_EQUAL(nn, 0);
             }
         }
     }
 
-    void compress_test(const utility::string_t& algorithm)
+    void compress_test(std::shared_ptr<compress_factory> cfactory, std::shared_ptr<decompress_factory> dfactory)
     {
         size_t tuples[][2] = {{7999, 8192},
                               {8192, 8192},
@@ -382,25 +371,41 @@ SUITE(compression_tests)
         {
             for (int j = 0; j < 2; j++)
             {
-                compress_and_decompress(algorithm, tuples[i][0], tuples[i][1], !!j);
+                if (!cfactory)
+                {
+                    auto size = tuples[i][0];
+                    compress_and_decompress(utility::details::make_unique<fake_provider>(tuples[i][0]),
+                                            utility::details::make_unique<fake_provider>(tuples[i][0]),
+                                            tuples[i][0],
+                                            tuples[i][1],
+                                            !!j);
+                }
+                else
+                {
+                    compress_and_decompress(
+                        cfactory->make_compressor(), dfactory->make_decompressor(), tuples[i][0], tuples[i][1], !!j);
+                }
             }
         }
     }
 
     TEST_FIXTURE(uri_address, compress_and_decompress)
     {
-        compress_test(fake_provider::FAKE);
-        if (web::http::compression::builtin::algorithm::supported(web::http::compression::builtin::algorithm::GZIP))
+        compress_test(nullptr, nullptr); // FAKE
+        if (builtin::algorithm::supported(builtin::algorithm::GZIP))
         {
-            compress_test(web::http::compression::builtin::algorithm::GZIP);
+            compress_test(builtin::get_compress_factory(builtin::algorithm::GZIP),
+                          builtin::get_decompress_factory(builtin::algorithm::GZIP));
         }
-        if (web::http::compression::builtin::algorithm::supported(web::http::compression::builtin::algorithm::DEFLATE))
+        if (builtin::algorithm::supported(builtin::algorithm::DEFLATE))
         {
-            compress_test(web::http::compression::builtin::algorithm::DEFLATE);
+            compress_test(builtin::get_compress_factory(builtin::algorithm::DEFLATE),
+                          builtin::get_decompress_factory(builtin::algorithm::DEFLATE));
         }
-        if (web::http::compression::builtin::algorithm::supported(web::http::compression::builtin::algorithm::BROTLI))
+        if (builtin::algorithm::supported(builtin::algorithm::BROTLI))
         {
-            compress_test(web::http::compression::builtin::algorithm::BROTLI);
+            compress_test(builtin::get_compress_factory(builtin::algorithm::BROTLI),
+                          builtin::get_decompress_factory(builtin::algorithm::BROTLI));
         }
     }
 
@@ -408,50 +413,44 @@ SUITE(compression_tests)
     {
         const utility::string_t _NONE = _XPLATSTR("none");
 
-        std::unique_ptr<web::http::compression::compress_provider> c;
-        std::unique_ptr<web::http::compression::decompress_provider> d;
+        std::unique_ptr<compress_provider> c;
+        std::unique_ptr<decompress_provider> d;
 
-        std::shared_ptr<web::http::compression::compress_factory> fcf = web::http::compression::make_compress_factory(
-            fake_provider::FAKE, []() -> std::unique_ptr<web::http::compression::compress_provider> {
+        std::shared_ptr<compress_factory> fcf =
+            make_compress_factory(fake_provider::FAKE, []() -> std::unique_ptr<compress_provider> {
                 return utility::details::make_unique<fake_provider>();
             });
-        std::vector<std::shared_ptr<web::http::compression::compress_factory>> fcv;
+        std::vector<std::shared_ptr<compress_factory>> fcv;
         fcv.push_back(fcf);
-        std::shared_ptr<web::http::compression::decompress_factory> fdf =
-            web::http::compression::make_decompress_factory(
-                fake_provider::FAKE, 800, []() -> std::unique_ptr<web::http::compression::decompress_provider> {
-                    return utility::details::make_unique<fake_provider>();
-                });
-        std::vector<std::shared_ptr<web::http::compression::decompress_factory>> fdv;
+        std::shared_ptr<decompress_factory> fdf =
+            make_decompress_factory(fake_provider::FAKE, 800, []() -> std::unique_ptr<decompress_provider> {
+                return utility::details::make_unique<fake_provider>();
+            });
+        std::vector<std::shared_ptr<decompress_factory>> fdv;
         fdv.push_back(fdf);
 
-        std::shared_ptr<web::http::compression::compress_factory> ncf = web::http::compression::make_compress_factory(
-            _NONE, []() -> std::unique_ptr<web::http::compression::compress_provider> {
+        std::shared_ptr<compress_factory> ncf =
+            make_compress_factory(_NONE, []() -> std::unique_ptr<compress_provider> {
                 return utility::details::make_unique<fake_provider>();
             });
-        std::vector<std::shared_ptr<web::http::compression::compress_factory>> ncv;
+        std::vector<std::shared_ptr<compress_factory>> ncv;
         ncv.push_back(ncf);
-        std::shared_ptr<web::http::compression::decompress_factory> ndf =
-            web::http::compression::make_decompress_factory(
-                _NONE, 800, []() -> std::unique_ptr<web::http::compression::decompress_provider> {
-                    return utility::details::make_unique<fake_provider>();
-                });
-        std::vector<std::shared_ptr<web::http::compression::decompress_factory>> ndv;
+        std::shared_ptr<decompress_factory> ndf =
+            make_decompress_factory(_NONE, 800, []() -> std::unique_ptr<decompress_provider> {
+                return utility::details::make_unique<fake_provider>();
+            });
+        std::vector<std::shared_ptr<decompress_factory>> ndv;
         ndv.push_back(ndf);
 
         // Supported algorithms
-        VERIFY_ARE_EQUAL(
-            web::http::compression::builtin::supported(),
-            web::http::compression::builtin::algorithm::supported(web::http::compression::builtin::algorithm::GZIP));
-        VERIFY_ARE_EQUAL(
-            web::http::compression::builtin::supported(),
-            web::http::compression::builtin::algorithm::supported(web::http::compression::builtin::algorithm::DEFLATE));
-        if (web::http::compression::builtin::algorithm::supported(web::http::compression::builtin::algorithm::BROTLI))
+        VERIFY_ARE_EQUAL(builtin::supported(), builtin::algorithm::supported(builtin::algorithm::GZIP));
+        VERIFY_ARE_EQUAL(builtin::supported(), builtin::algorithm::supported(builtin::algorithm::DEFLATE));
+        if (builtin::algorithm::supported(builtin::algorithm::BROTLI))
         {
-            VERIFY_IS_TRUE(web::http::compression::builtin::supported());
+            VERIFY_IS_TRUE(builtin::supported());
         }
-        VERIFY_IS_FALSE(web::http::compression::builtin::algorithm::supported(_XPLATSTR("")));
-        VERIFY_IS_FALSE(web::http::compression::builtin::algorithm::supported(_XPLATSTR("foo")));
+        VERIFY_IS_FALSE(builtin::algorithm::supported(_XPLATSTR("")));
+        VERIFY_IS_FALSE(builtin::algorithm::supported(_XPLATSTR("foo")));
 
         // Strings that double as both Transfer-Encoding and TE
         std::vector<utility::string_t> encodings = {_XPLATSTR("gzip"),
@@ -493,19 +492,17 @@ SUITE(compression_tests)
         // Accept-Encoding)
         for (int transfer = 0; transfer < 2; transfer++)
         {
-            web::http::compression::details::header_types ctype =
-                transfer ? web::http::compression::details::header_types::te
-                         : web::http::compression::details::header_types::accept_encoding;
-            web::http::compression::details::header_types dtype =
-                transfer ? web::http::compression::details::header_types::transfer_encoding
-                         : web::http::compression::details::header_types::content_encoding;
+            compression::details::header_types ctype =
+                transfer ? compression::details::header_types::te : compression::details::header_types::accept_encoding;
+            compression::details::header_types dtype = transfer ? compression::details::header_types::transfer_encoding
+                                                                : compression::details::header_types::content_encoding;
 
             // No compression - Transfer-Encoding
-            d = web::http::compression::details::get_decompressor_from_header(
-                _XPLATSTR(" chunked "), web::http::compression::details::header_types::transfer_encoding);
+            d = compression::details::get_decompressor_from_header(
+                _XPLATSTR(" chunked "), compression::details::header_types::transfer_encoding);
             VERIFY_IS_FALSE((bool)d);
 
-            utility::string_t gzip(web::http::compression::builtin::algorithm::GZIP);
+            utility::string_t gzip(builtin::algorithm::GZIP);
             for (auto encoding = encodings.begin(); encoding != encodings.end(); encoding++)
             {
                 bool has_comma = false;
@@ -513,8 +510,8 @@ SUITE(compression_tests)
                 has_comma = encoding->find(_XPLATSTR(",")) != utility::string_t::npos;
 
                 // Built-in only
-                c = web::http::compression::details::get_compressor_from_header(*encoding, ctype);
-                VERIFY_ARE_EQUAL((bool)c, web::http::compression::builtin::supported());
+                c = compression::details::get_compressor_from_header(*encoding, ctype);
+                VERIFY_ARE_EQUAL((bool)c, builtin::supported());
                 if (c)
                 {
                     VERIFY_ARE_EQUAL(c->algorithm(), gzip);
@@ -522,8 +519,8 @@ SUITE(compression_tests)
 
                 try
                 {
-                    d = web::http::compression::details::get_decompressor_from_header(*encoding, dtype);
-                    VERIFY_ARE_EQUAL((bool)d, web::http::compression::builtin::supported());
+                    d = compression::details::get_decompressor_from_header(*encoding, dtype);
+                    VERIFY_ARE_EQUAL((bool)d, builtin::supported());
                     if (d)
                     {
                         VERIFY_ARE_EQUAL(d->algorithm(), gzip);
@@ -542,13 +539,13 @@ SUITE(compression_tests)
                 has_comma = encoding->find(_XPLATSTR(",")) != utility::string_t::npos;
 
                 // Supplied compressor/decompressor
-                c = web::http::compression::details::get_compressor_from_header(*encoding, ctype, fcv);
+                c = compression::details::get_compressor_from_header(*encoding, ctype, fcv);
                 VERIFY_IS_TRUE((bool)c);
                 VERIFY_IS_TRUE(c->algorithm() == fcf->algorithm());
 
                 try
                 {
-                    d = web::http::compression::details::get_decompressor_from_header(*encoding, dtype, fdv);
+                    d = compression::details::get_decompressor_from_header(*encoding, dtype, fdv);
                     VERIFY_IS_TRUE((bool)d);
                     VERIFY_IS_TRUE(d->algorithm() == fdf->algorithm());
                 }
@@ -558,12 +555,12 @@ SUITE(compression_tests)
                 }
 
                 // No matching compressor
-                c = web::http::compression::details::get_compressor_from_header(*encoding, ctype, ncv);
+                c = compression::details::get_compressor_from_header(*encoding, ctype, ncv);
                 VERIFY_IS_FALSE((bool)c);
 
                 try
                 {
-                    d = web::http::compression::details::get_decompressor_from_header(*encoding, dtype, ndv);
+                    d = compression::details::get_decompressor_from_header(*encoding, dtype, ndv);
                     VERIFY_IS_FALSE(true);
                 }
                 catch (http_exception)
@@ -576,7 +573,7 @@ SUITE(compression_tests)
             {
                 try
                 {
-                    c = web::http::compression::details::get_compressor_from_header(*encoding, ctype);
+                    c = compression::details::get_compressor_from_header(*encoding, ctype);
                     VERIFY_IS_TRUE(encoding->find(_XPLATSTR(",")) == utility::string_t::npos);
                     VERIFY_IS_FALSE((bool)c);
                 }
@@ -586,9 +583,8 @@ SUITE(compression_tests)
 
                 try
                 {
-                    d = web::http::compression::details::get_decompressor_from_header(*encoding, dtype);
-                    VERIFY_IS_TRUE(!web::http::compression::builtin::supported() &&
-                                   encoding->find(_XPLATSTR(",")) == utility::string_t::npos);
+                    d = compression::details::get_decompressor_from_header(*encoding, dtype);
+                    VERIFY_IS_TRUE(!builtin::supported() && encoding->find(_XPLATSTR(",")) == utility::string_t::npos);
                     VERIFY_IS_FALSE((bool)d);
                 }
                 catch (http_exception)
@@ -599,12 +595,12 @@ SUITE(compression_tests)
             // Negative tests - empty headers
             for (auto encoding = empty.begin(); encoding != empty.end(); encoding++)
             {
-                c = web::http::compression::details::get_compressor_from_header(*encoding, ctype);
+                c = compression::details::get_compressor_from_header(*encoding, ctype);
                 VERIFY_IS_FALSE((bool)c);
 
                 try
                 {
-                    d = web::http::compression::details::get_decompressor_from_header(*encoding, dtype);
+                    d = compression::details::get_decompressor_from_header(*encoding, dtype);
                     VERIFY_IS_FALSE(true);
                 }
                 catch (http_exception)
@@ -617,7 +613,7 @@ SUITE(compression_tests)
             {
                 try
                 {
-                    c = web::http::compression::details::get_compressor_from_header(*te, ctype);
+                    c = compression::details::get_compressor_from_header(*te, ctype);
                     VERIFY_IS_FALSE(true);
                 }
                 catch (http_exception)
@@ -626,13 +622,13 @@ SUITE(compression_tests)
             }
 
             utility::string_t builtin;
-            std::vector<std::shared_ptr<web::http::compression::decompress_factory>> dv;
+            std::vector<std::shared_ptr<decompress_factory>> dv;
 
             // Builtins
-            builtin = web::http::compression::details::build_supported_header(ctype);
+            builtin = compression::details::build_supported_header(ctype);
             if (transfer)
             {
-                VERIFY_ARE_EQUAL(!builtin.empty(), web::http::compression::builtin::supported());
+                VERIFY_ARE_EQUAL(!builtin.empty(), builtin::supported());
             }
             else
             {
@@ -640,16 +636,15 @@ SUITE(compression_tests)
             }
 
             // Null decompressor - effectively forces no compression algorithms
-            dv.push_back(std::shared_ptr<web::http::compression::decompress_factory>());
-            builtin = web::http::compression::details::build_supported_header(ctype, dv);
+            dv.push_back(std::shared_ptr<decompress_factory>());
+            builtin = compression::details::build_supported_header(ctype, dv);
             VERIFY_ARE_EQUAL(transfer != 0, builtin.empty());
             dv.pop_back();
 
-            if (web::http::compression::builtin::supported())
+            if (builtin::supported())
             {
-                dv.push_back(web::http::compression::builtin::get_decompress_factory(
-                    web::http::compression::builtin::algorithm::GZIP));
-                builtin = web::http::compression::details::build_supported_header(ctype, dv); // --> "gzip;q=1.0"
+                dv.push_back(builtin::get_decompress_factory(builtin::algorithm::GZIP));
+                builtin = compression::details::build_supported_header(ctype, dv); // --> "gzip;q=1.0"
                 VERIFY_IS_FALSE(builtin.empty());
             }
             else
@@ -672,16 +667,14 @@ SUITE(compression_tests)
                 if (fake)
                 {
                     // Switch built-in vs. supplied results the second time around
-                    for (auto &te : tes)
+                    for (auto& te : tes)
                     {
-                        te.replace(te.find(web::http::compression::builtin::algorithm::GZIP),
-                                       gzip.size(),
-                                       fake_provider::FAKE);
-                        if (te.find(web::http::compression::builtin::algorithm::DEFLATE) != utility::string_t::npos)
+                        te.replace(te.find(builtin::algorithm::GZIP), gzip.size(), fake_provider::FAKE);
+                        if (te.find(builtin::algorithm::DEFLATE) != utility::string_t::npos)
                         {
-                            te.replace(te.find(web::http::compression::builtin::algorithm::DEFLATE),
-                                           utility::string_t(web::http::compression::builtin::algorithm::DEFLATE).size(),
-                                           _NONE);
+                            te.replace(te.find(builtin::algorithm::DEFLATE),
+                                       utility::string_t(builtin::algorithm::DEFLATE).size(),
+                                       _NONE);
                         }
                     }
                 }
@@ -689,20 +682,20 @@ SUITE(compression_tests)
                 for (auto te = tes.begin(); te != tes.end(); te++)
                 {
                     // Built-in only
-                    c = web::http::compression::details::get_compressor_from_header(*te, ctype);
+                    c = compression::details::get_compressor_from_header(*te, ctype);
                     if (c)
                     {
-                        VERIFY_IS_TRUE(web::http::compression::builtin::supported());
+                        VERIFY_IS_TRUE(builtin::supported());
                         VERIFY_IS_FALSE(fake != 0);
                         VERIFY_ARE_EQUAL(c->algorithm(), gzip);
                     }
                     else
                     {
-                        VERIFY_IS_TRUE(fake != 0 || !web::http::compression::builtin::supported());
+                        VERIFY_IS_TRUE(fake != 0 || !builtin::supported());
                     }
 
                     // Supplied compressor - both matching and non-matching
-                    c = web::http::compression::details::get_compressor_from_header(*te, ctype, fcv);
+                    c = compression::details::get_compressor_from_header(*te, ctype, fcv);
                     VERIFY_ARE_EQUAL(c != 0, fake != 0);
                     if (c)
                     {
@@ -751,8 +744,8 @@ SUITE(compression_tests)
 
         size_t buffer_sizes[] = {0, 1, 3, 4, 4096, 65536, 100000, 157890};
 
-        std::vector<std::shared_ptr<web::http::compression::decompress_factory>> dfactories;
-        std::vector<std::shared_ptr<web::http::compression::compress_factory>> cfactories;
+        std::vector<std::shared_ptr<decompress_factory>> dfactories;
+        std::vector<std::shared_ptr<compress_factory>> cfactories;
 
 #if defined(_WIN32) && !defined(CPPREST_FORCE_HTTP_CLIENT_ASIO)
         // Run a quick test to see if we're dealing with older/broken winhttp for compressed transfer encoding
@@ -790,6 +783,8 @@ SUITE(compression_tests)
         }
 #endif // _WIN32
 
+        auto extra_size = [](size_t bufsz) -> size_t { return std::max(static_cast<size_t>(128), bufsz / 1000); };
+
         // Test decompression both explicitly through the test server and implicitly through the listener;
         // this is the top-level loop in order to avoid thrashing the listeners more than necessary
         for (int real = 0; real < 2; real++)
@@ -823,7 +818,8 @@ SUITE(compression_tests)
                     request.reply(rsp);
                 });
                 listener.support(
-                    methods::GET, [&v, &buffer_size, &cfactories, &processed, &transfer](http_request request) {
+                    methods::GET,
+                    [&v, &buffer_size, &cfactories, &processed, &transfer, &extra_size](http_request request) {
                         utility::string_t encoding;
                         http_response rsp;
                         bool done;
@@ -837,7 +833,8 @@ SUITE(compression_tests)
                             if (encoding.find(fake_provider::FAKE) != utility::string_t::npos)
                             {
                                 // This one won't be found in the server's default set...
-                                rsp._get_impl()->set_compressor(utility::details::make_unique<fake_provider>(buffer_size));
+                                rsp._get_impl()->set_compressor(
+                                    utility::details::make_unique<fake_provider>(buffer_size));
                             }
 #endif // _WIN32
                             rsp.set_body(
@@ -845,23 +842,18 @@ SUITE(compression_tests)
                         }
                         else
                         {
-                            std::unique_ptr<web::http::compression::compress_provider> c;
+                            std::unique_ptr<compress_provider> c;
                             std::vector<uint8_t> pre;
                             size_t used;
 
                             done = request.headers().match(web::http::header_names::accept_encoding, encoding);
                             VERIFY_IS_TRUE(done);
-                            pre.resize(v.size() + 128);
-                            c = web::http::compression::details::get_compressor_from_header(
-                                encoding, web::http::compression::details::header_types::accept_encoding, cfactories);
+                            pre.resize(v.size() + extra_size(buffer_size));
+                            c = compression::details::get_compressor_from_header(
+                                encoding, compression::details::header_types::accept_encoding, cfactories);
                             VERIFY_IS_TRUE((bool)c);
-                            auto got = c->compress(v.data(),
-                                                   v.size(),
-                                                   pre.data(),
-                                                   pre.size(),
-                                                   web::http::compression::operation_hint::is_last,
-                                                   used,
-                                                   done);
+                            auto got = c->compress(
+                                v.data(), v.size(), pre.data(), pre.size(), operation_hint::is_last, used, done);
                             VERIFY_IS_TRUE(used == v.size());
                             VERIFY_IS_TRUE(done);
 
@@ -886,7 +878,8 @@ SUITE(compression_tests)
             for (int sz = 0; sz < sizeof(buffer_sizes) / sizeof(buffer_sizes[0]); sz++)
             {
                 std::vector<utility::string_t> algorithms;
-                std::map<utility::string_t, std::shared_ptr<web::http::compression::decompress_factory>> dmap;
+                std::map<utility::string_t, std::shared_ptr<decompress_factory>> dmap;
+                std::map<utility::string_t, std::shared_ptr<compress_factory>> cmap;
 
                 buffer_size = buffer_sizes[sz];
 
@@ -895,51 +888,45 @@ SUITE(compression_tests)
 
                 // Re-build the sets of compress and decompress factories, to account for the buffer size in our "fake"
                 // ones
-                if (web::http::compression::builtin::algorithm::supported(
-                        web::http::compression::builtin::algorithm::GZIP))
+                if (builtin::algorithm::supported(builtin::algorithm::GZIP))
                 {
-                    algorithms.push_back(web::http::compression::builtin::algorithm::GZIP);
-                    dmap[web::http::compression::builtin::algorithm::GZIP] =
-                        web::http::compression::builtin::get_decompress_factory(
-                            web::http::compression::builtin::algorithm::GZIP);
-                    dfactories.push_back(dmap[web::http::compression::builtin::algorithm::GZIP]);
-                    cfactories.push_back(web::http::compression::builtin::get_compress_factory(
-                        web::http::compression::builtin::algorithm::GZIP));
+                    algorithms.push_back(builtin::algorithm::GZIP);
+                    dmap[builtin::algorithm::GZIP] = builtin::get_decompress_factory(builtin::algorithm::GZIP);
+                    cmap[builtin::algorithm::GZIP] = builtin::get_compress_factory(builtin::algorithm::GZIP);
+                    dfactories.push_back(dmap[builtin::algorithm::GZIP]);
+                    cfactories.push_back(cmap[builtin::algorithm::GZIP]);
                 }
-                if (web::http::compression::builtin::algorithm::supported(
-                        web::http::compression::builtin::algorithm::DEFLATE))
+                if (builtin::algorithm::supported(builtin::algorithm::DEFLATE))
                 {
-                    algorithms.push_back(web::http::compression::builtin::algorithm::DEFLATE);
-                    dmap[web::http::compression::builtin::algorithm::DEFLATE] =
-                        web::http::compression::builtin::get_decompress_factory(
-                            web::http::compression::builtin::algorithm::DEFLATE);
-                    dfactories.push_back(dmap[web::http::compression::builtin::algorithm::DEFLATE]);
-                    cfactories.push_back(web::http::compression::builtin::get_compress_factory(
-                        web::http::compression::builtin::algorithm::DEFLATE));
+                    algorithms.push_back(builtin::algorithm::DEFLATE);
+                    dmap[builtin::algorithm::DEFLATE] = builtin::get_decompress_factory(builtin::algorithm::DEFLATE);
+                    cmap[builtin::algorithm::DEFLATE] = builtin::get_compress_factory(builtin::algorithm::DEFLATE);
+                    dfactories.push_back(dmap[builtin::algorithm::DEFLATE]);
+                    cfactories.push_back(cmap[builtin::algorithm::DEFLATE]);
                 }
-                if (web::http::compression::builtin::algorithm::supported(
-                        web::http::compression::builtin::algorithm::BROTLI))
+                if (builtin::algorithm::supported(builtin::algorithm::BROTLI))
                 {
-                    algorithms.push_back(web::http::compression::builtin::algorithm::BROTLI);
-                    dmap[web::http::compression::builtin::algorithm::BROTLI] =
-                        web::http::compression::builtin::get_decompress_factory(
-                            web::http::compression::builtin::algorithm::BROTLI);
-                    dfactories.push_back(dmap[web::http::compression::builtin::algorithm::BROTLI]);
-                    cfactories.push_back(web::http::compression::builtin::get_compress_factory(
-                        web::http::compression::builtin::algorithm::BROTLI));
+                    algorithms.push_back(builtin::algorithm::BROTLI);
+                    dmap[builtin::algorithm::BROTLI] = builtin::get_decompress_factory(builtin::algorithm::BROTLI);
+                    cmap[builtin::algorithm::BROTLI] =
+                        make_compress_factory(builtin::algorithm::BROTLI, []() -> std::unique_ptr<compress_provider> {
+                            // Use a memory-constrained Brotli instance in some cases for code coverage
+                            return builtin::make_brotli_compressor(10, 11, 0, 16, 0, 0);
+                        });
+                    dfactories.push_back(dmap[builtin::algorithm::BROTLI]);
+                    cfactories.push_back(builtin::get_compress_factory(builtin::algorithm::BROTLI));
                 }
                 algorithms.push_back(fake_provider::FAKE);
-                dmap[fake_provider::FAKE] = web::http::compression::make_decompress_factory(
-                    fake_provider::FAKE,
-                    1000,
-                    [buffer_size]() -> std::unique_ptr<web::http::compression::decompress_provider> {
+                dmap[fake_provider::FAKE] = make_decompress_factory(
+                    fake_provider::FAKE, 1000, [buffer_size]() -> std::unique_ptr<decompress_provider> {
+                        return utility::details::make_unique<fake_provider>(buffer_size);
+                    });
+                cmap[fake_provider::FAKE] =
+                    make_compress_factory(fake_provider::FAKE, [buffer_size]() -> std::unique_ptr<compress_provider> {
                         return utility::details::make_unique<fake_provider>(buffer_size);
                     });
                 dfactories.push_back(dmap[fake_provider::FAKE]);
-                cfactories.push_back(web::http::compression::make_compress_factory(
-                    fake_provider::FAKE, [buffer_size]() -> std::unique_ptr<web::http::compression::compress_provider> {
-                        return utility::details::make_unique<fake_provider>(buffer_size);
-                    }));
+                cfactories.push_back(cmap[fake_provider::FAKE]);
 
                 v.resize(buffer_size);
 
@@ -996,9 +983,9 @@ SUITE(compression_tests)
                                     {
                                         bool done;
                                         size_t used;
-                                        pre.resize(v.size() + 128);
+                                        pre.resize(v.size() + extra_size(buffer_size));
 
-                                        auto c = web::http::compression::builtin::make_compressor(algorithm);
+                                        auto c = builtin::make_compressor(algorithm);
                                         if (algorithm == fake_provider::FAKE)
                                         {
                                             VERIFY_IS_FALSE((bool)c);
@@ -1009,7 +996,7 @@ SUITE(compression_tests)
                                                                v.size(),
                                                                pre.data(),
                                                                pre.size(),
-                                                               web::http::compression::operation_hint::is_last,
+                                                               operation_hint::is_last,
                                                                used,
                                                                done);
                                         VERIFY_ARE_EQUAL(used, v.size());
@@ -1021,7 +1008,7 @@ SUITE(compression_tests)
                                             pre.data(), got));
                                     }
 
-                                    for (auto &stream : streams)
+                                    for (auto& stream : streams)
                                     {
                                         http_request msg(methods::PUT);
 
@@ -1030,11 +1017,19 @@ SUITE(compression_tests)
                                         msg.set_body(stream);
                                         if (transfer)
                                         {
-                                            bool boo = msg.set_compressor(algorithm);
-                                            VERIFY_ARE_EQUAL(boo, algorithm != fake_provider::FAKE);
-                                            if (algorithm == fake_provider::FAKE)
+                                            if (real)
                                             {
-                                                msg.set_compressor(utility::details::make_unique<fake_provider>(buffer_size));
+                                                bool boo = msg.set_compressor(algorithm);
+                                                VERIFY_ARE_EQUAL(boo, algorithm != fake_provider::FAKE);
+                                                if (algorithm == fake_provider::FAKE)
+                                                {
+                                                    msg.set_compressor(
+                                                        utility::details::make_unique<fake_provider>(buffer_size));
+                                                }
+                                            }
+                                            else
+                                            {
+                                                msg.set_compressor(cmap[algorithm]->make_compressor());
                                             }
                                         }
                                         else
@@ -1047,7 +1042,7 @@ SUITE(compression_tests)
                                             // We implement the decompression path in the server, to prove that valid,
                                             // compressed data is sent
                                             p_server->next_request().then([&](test_request* p_request) {
-                                                std::unique_ptr<web::http::compression::decompress_provider> d;
+                                                std::unique_ptr<decompress_provider> d;
                                                 std::vector<uint8_t> vv;
                                                 utility::string_t header;
                                                 size_t used;
@@ -1064,10 +1059,9 @@ SUITE(compression_tests)
                                                     done = p_request->match_header(header_names::transfer_encoding,
                                                                                    header);
                                                     VERIFY_IS_TRUE(done);
-                                                    d = web::http::compression::details::get_decompressor_from_header(
+                                                    d = compression::details::get_decompressor_from_header(
                                                         header,
-                                                        web::http::compression::details::header_types::
-                                                            transfer_encoding,
+                                                        compression::details::header_types::transfer_encoding,
                                                         dfactories);
                                                 }
                                                 else
@@ -1082,9 +1076,9 @@ SUITE(compression_tests)
                                                     done =
                                                         p_request->match_header(header_names::content_encoding, header);
                                                     VERIFY_IS_TRUE(done);
-                                                    d = web::http::compression::details::get_decompressor_from_header(
+                                                    d = compression::details::get_decompressor_from_header(
                                                         header,
-                                                        web::http::compression::details::header_types::content_encoding,
+                                                        compression::details::header_types::content_encoding,
                                                         dfactories);
                                                 }
 #if defined(_WIN32) && !defined(__cplusplus_winrt) && !defined(CPPREST_FORCE_HTTP_CLIENT_ASIO)
@@ -1093,14 +1087,14 @@ SUITE(compression_tests)
                                                 VERIFY_ARE_NOT_EQUAL((bool)d, !!transfer);
 #endif // _WIN32
 
-                                                vv.resize(buffer_size + 128);
+                                                vv.resize(buffer_size + extra_size(buffer_size));
                                                 if (d)
                                                 {
                                                     got = d->decompress(p_request->m_body.data(),
                                                                         p_request->m_body.size(),
                                                                         vv.data(),
                                                                         vv.size(),
-                                                                        web::http::compression::operation_hint::is_last,
+                                                                        operation_hint::is_last,
                                                                         used,
                                                                         done);
                                                     VERIFY_ARE_EQUAL(used, p_request->m_body.size());
@@ -1136,11 +1130,10 @@ SUITE(compression_tests)
                                                                                                    buffer_size);
                                     http_request msg(methods::GET);
 
-                                    std::vector<std::shared_ptr<web::http::compression::decompress_factory>> df = {
-                                        dmap[algorithm]};
+                                    std::vector<std::shared_ptr<decompress_factory>> df = {dmap[algorithm]};
                                     msg.set_decompress_factories(df);
 
-                                    vv.resize(buffer_size + 128); // extra to ensure no overflow
+                                    vv.resize(buffer_size + extra_size(buffer_size)); // extra to ensure no overflow
 
                                     concurrency::streams::rawptr_buffer<uint8_t> buf(
                                         vv.data(), vv.size(), std::ios::out);
@@ -1149,7 +1142,7 @@ SUITE(compression_tests)
                                     {
                                         p_server->next_request().then([&](test_request* p_request) {
                                             std::map<utility::string_t, utility::string_t> headers;
-                                            std::unique_ptr<web::http::compression::compress_provider> c;
+                                            std::unique_ptr<compress_provider> c;
                                             utility::string_t header;
                                             std::vector<uint8_t> cmp;
                                             size_t used;
@@ -1174,10 +1167,8 @@ SUITE(compression_tests)
                                                 done = p_request->match_header(header_names::te, header);
                                                 if (done)
                                                 {
-                                                    c = web::http::compression::details::get_compressor_from_header(
-                                                        header,
-                                                        web::http::compression::details::header_types::te,
-                                                        cfactories);
+                                                    c = compression::details::get_compressor_from_header(
+                                                        header, compression::details::header_types::te, cfactories);
                                                 }
 
                                                 // Account for space for the chunk header and delimiters, plus a chunk
@@ -1192,9 +1183,9 @@ SUITE(compression_tests)
                                                 VERIFY_IS_FALSE(p_request->match_header(header_names::te, header));
                                                 done = p_request->match_header(header_names::accept_encoding, header);
                                                 VERIFY_IS_TRUE(done);
-                                                c = web::http::compression::details::get_compressor_from_header(
+                                                c = compression::details::get_compressor_from_header(
                                                     header,
-                                                    web::http::compression::details::header_types::accept_encoding,
+                                                    compression::details::header_types::accept_encoding,
                                                     cfactories);
                                             }
 #if !defined __cplusplus_winrt
@@ -1202,14 +1193,14 @@ SUITE(compression_tests)
 #else  // __cplusplus_winrt
                                             VERIFY_ARE_NOT_EQUAL((bool)c, !!transfer);
 #endif // __cplusplus_winrt
-                                            cmp.resize(extra + buffer_size + 128);
+                                            cmp.resize(extra + buffer_size + extra_size(buffer_size));
                                             if (c)
                                             {
                                                 got = c->compress(v.data(),
                                                                   v.size(),
                                                                   cmp.data() + skip,
                                                                   cmp.size() - extra,
-                                                                  web::http::compression::operation_hint::is_last,
+                                                                  operation_hint::is_last,
                                                                   used,
                                                                   done);
                                                 VERIFY_ARE_EQUAL(used, v.size());
@@ -1338,7 +1329,7 @@ SUITE(compression_tests)
                                         }
                                     }
 
-                                    size_t offset;
+                                    size_t offset = 0;
                                     VERIFY_NO_THROWS(offset = rsp.body().read_to_end(buf).get());
                                     VERIFY_ARE_EQUAL(offset, buffer_size);
                                     VERIFY_ARE_EQUAL(offset, static_cast<size_t>(buf.getpos(std::ios::out)));

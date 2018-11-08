@@ -423,6 +423,16 @@ namespace details
         return std::unique_ptr<_Type>(new _Type(std::forward<_Arg1>(arg1), std::forward<_Arg2>(arg2), std::forward<_Arg3>(arg3), std::forward<_Arg4>(arg4)));
     }
 
+    template <typename _Type, typename _Arg1, typename _Arg2, typename _Arg3, typename _Arg4, typename _Arg5>
+    std::unique_ptr<_Type> make_unique(_Arg1&& arg1, _Arg2&& arg2, _Arg3&& arg3, _Arg4&& arg4, _Arg5&& arg5) {
+        return std::unique_ptr<_Type>(new _Type(std::forward<_Arg1>(arg1), std::forward<_Arg2>(arg2), std::forward<_Arg3>(arg3), std::forward<_Arg4>(arg4), std::forward<_Arg5>(arg5)));
+    }
+
+    template <typename _Type, typename _Arg1, typename _Arg2, typename _Arg3, typename _Arg4, typename _Arg5, typename _Arg6>
+    std::unique_ptr<_Type> make_unique(_Arg1&& arg1, _Arg2&& arg2, _Arg3&& arg3, _Arg4&& arg4, _Arg5&& arg5, _Arg6&& arg6) {
+        return std::unique_ptr<_Type>(new _Type(std::forward<_Arg1>(arg1), std::forward<_Arg2>(arg2), std::forward<_Arg3>(arg3), std::forward<_Arg4>(arg4), std::forward<_Arg5>(arg5), std::forward<_Arg6>(arg6)));
+    }
+
     /// <summary>
     /// Cross platform utility function for performing case insensitive string equality comparison.
     /// </summary>
