@@ -22,6 +22,12 @@ uri_builder& uri_builder::append_path(const utility::string_t& toAppend, bool do
     if (!toAppend.empty() && toAppend != oneSlash)
     {
         auto& thisPath = m_uri.m_path;
+        if (&thisPath == &toAppend)
+        {
+            auto appendCopy = toAppend;
+            return append_path(appendCopy, do_encode);
+        }
+
         if (thisPath.empty() || thisPath == oneSlash)
         {
             thisPath.clear();
@@ -61,6 +67,12 @@ uri_builder& uri_builder::append_path_raw(const utility::string_t& toAppend, boo
     if (!toAppend.empty())
     {
         auto& thisPath = m_uri.m_path;
+        if (&thisPath == &toAppend)
+        {
+            auto appendCopy = toAppend;
+            return append_path_raw(appendCopy, do_encode);
+        }
+
         if (thisPath != oneSlash)
         {
             thisPath.push_back(_XPLATSTR('/'));
@@ -84,6 +96,12 @@ uri_builder& uri_builder::append_query(const utility::string_t& toAppend, bool d
     if (!toAppend.empty())
     {
         auto& thisQuery = m_uri.m_query;
+        if (&thisQuery == &toAppend)
+        {
+            auto appendCopy = toAppend;
+            return append_query(appendCopy, do_encode);
+        }
+
         if (thisQuery.empty())
         {
             thisQuery.clear();

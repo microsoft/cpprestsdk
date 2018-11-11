@@ -282,6 +282,19 @@ TEST(append_path_string)
     builder.clear();
     builder.append_path(U("encode%things"), true);
     VERIFY_ARE_EQUAL(U("/encode%25things"), builder.path());
+
+    // self references
+    builder.set_path(U("example"));
+    builder.append_path(builder.path());
+    VERIFY_ARE_EQUAL(U("example/example"), builder.path());
+
+    builder.set_path(U("/example"));
+    builder.append_path(builder.path());
+    VERIFY_ARE_EQUAL(U("/example/example"), builder.path());
+
+    builder.set_path(U("/example/"));
+    builder.append_path(builder.path());
+    VERIFY_ARE_EQUAL(U("/example/example/"), builder.path());
 }
 
 TEST(append_path_raw_string)
@@ -321,6 +334,19 @@ TEST(append_path_raw_string)
     builder.clear();
     builder.append_path_raw(U("encode%things"), true);
     VERIFY_ARE_EQUAL(U("/encode%25things"), builder.path());
+
+    // self references
+    builder.set_path(U("example"));
+    builder.append_path_raw(builder.path());
+    VERIFY_ARE_EQUAL(U("example/example"), builder.path());
+
+    builder.set_path(U("/example"));
+    builder.append_path_raw(builder.path());
+    VERIFY_ARE_EQUAL(U("/example//example"), builder.path());
+
+    builder.set_path(U("/example/"));
+    builder.append_path_raw(builder.path());
+    VERIFY_ARE_EQUAL(U("/example///example/"), builder.path());
 }
 
 TEST(append_query_string)
@@ -359,6 +385,19 @@ TEST(append_query_string)
     // key and value separate with '=', '&', and ';'
     builder.append_query(U("key=&;"), U("=&;value"));
     VERIFY_ARE_EQUAL(U("key1=value1&key2=value2&key3=value3&key4=value4&key5=1&key6=val6&key%3D%26%3B=%3D%26%3Bvalue"), builder.query());
+
+    // self references
+    builder.set_query(U("example"));
+    builder.append_query(builder.query());
+    VERIFY_ARE_EQUAL(U("example&example"), builder.query());
+
+    builder.set_query(U("&example"));
+    builder.append_query(builder.query());
+    VERIFY_ARE_EQUAL(U("&example&example"), builder.query());
+
+    builder.set_query(U("&example&"));
+    builder.append_query(builder.query());
+    VERIFY_ARE_EQUAL(U("&example&example&"), builder.query());
 }
 
 TEST(append_query_string_no_encode)
