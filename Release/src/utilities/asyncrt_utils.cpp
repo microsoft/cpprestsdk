@@ -265,8 +265,7 @@ std::string windows_category_impl::message(int errorCode) const CPPREST_NOEXCEPT
     }
 #endif
 
-    std::wstring buffer;
-    buffer.resize(buffer_size);
+    std::wstring buffer(buffer_size, 0);
 
     const auto result = ::FormatMessageW(
         dwFlags,
@@ -277,10 +276,14 @@ std::string windows_category_impl::message(int errorCode) const CPPREST_NOEXCEPT
         buffer_size,
         NULL);
 
+
     if (result == 0)
     {
         return "Unable to get an error message for error code: " + std::to_string(errorCode) + ".";
     }
+
+    // strip exceeding characters of the initial resize call
+    buffer.resize(result);
 
     return utility::conversions::to_utf8string(buffer);
 }
