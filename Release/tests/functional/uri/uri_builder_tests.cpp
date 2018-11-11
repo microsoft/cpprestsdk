@@ -269,6 +269,19 @@ TEST(append_path_string)
     // both without slash
     builder.append_path(U("path4"));
     VERIFY_ARE_EQUAL(U("/path1/path2/path3/path4"), builder.path());
+
+    // encoding
+    builder.clear();
+    builder.append_path(U("encode%things"));
+    VERIFY_ARE_EQUAL(U("/encode%things"), builder.path());
+
+    builder.clear();
+    builder.append_path(U("encode%things"), false);
+    VERIFY_ARE_EQUAL(U("/encode%things"), builder.path());
+
+    builder.clear();
+    builder.append_path(U("encode%things"), true);
+    VERIFY_ARE_EQUAL(U("/encode%25things"), builder.path());
 }
 
 TEST(append_path_raw_string)

@@ -1,15 +1,15 @@
 /***
-* Copyright (C) Microsoft. All rights reserved.
-* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-*
-* =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*
-* Builder for constructing URIs.
-*
-* For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
-*
-* =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-****/
+ * Copyright (C) Microsoft. All rights reserved.
+ * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+ *
+ * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ *
+ * Builder for constructing URIs.
+ *
+ * For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
+ *
+ * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+ ****/
 
 #include "stdafx.h"
 
@@ -17,40 +17,42 @@ static const utility::string_t oneSlash = _XPLATSTR("/");
 
 namespace web
 {
-uri_builder& uri_builder::append_path(const utility::string_t& path, bool do_encode)
+uri_builder& uri_builder::append_path(const utility::string_t& toAppend, bool do_encode)
 {
-    if (path.empty() || path == oneSlash)
+    if (!toAppend.empty() && toAppend != oneSlash)
     {
-        return *this;
-    }
-
-    auto encoded_path = do_encode ? uri::encode_uri(path, uri::components::path) : path;
-    auto thisPath = this->path();
-    if (thisPath.empty() || thisPath == oneSlash)
-    {
-        if (encoded_path.front() != _XPLATSTR('/'))
+        auto& thisPath = m_uri.m_path;
+        if (thisPath.empty() || thisPath == oneSlash)
         {
-            set_path(oneSlash + encoded_path);
+            thisPath.clear();
+            if (toAppend.front() != _XPLATSTR('/'))
+            {
+                thisPath.push_back(_XPLATSTR('/'));
+            }
+        }
+        else if (thisPath.back() == _XPLATSTR('/') && toAppend.front() == _XPLATSTR('/'))
+        {
+            thisPath.pop_back();
+        }
+        else if (thisPath.back() != _XPLATSTR('/') && toAppend.front() != _XPLATSTR('/'))
+        {
+            thisPath.push_back(_XPLATSTR('/'));
         }
         else
         {
-            set_path(encoded_path);
+            // Only one slash.
+        }
+
+        if (do_encode)
+        {
+            thisPath.append(uri::encode_uri(toAppend, uri::components::path));
+        }
+        else
+        {
+            thisPath.append(toAppend);
         }
     }
-    else if (thisPath.back() == _XPLATSTR('/') && encoded_path.front() == _XPLATSTR('/'))
-    {
-        thisPath.pop_back();
-        set_path(thisPath + encoded_path);
-    }
-    else if (thisPath.back() != _XPLATSTR('/') && encoded_path.front() != _XPLATSTR('/'))
-    {
-        set_path(thisPath + oneSlash + encoded_path);
-    }
-    else
-    {
-        // Only one slash.
-        set_path(thisPath + encoded_path);
-    }
+
     return *this;
 }
 
