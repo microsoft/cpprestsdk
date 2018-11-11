@@ -79,33 +79,38 @@ uri_builder& uri_builder::append_path_raw(const utility::string_t& toAppend, boo
     return *this;
 }
 
-uri_builder& uri_builder::append_query(const utility::string_t& query, bool do_encode)
+uri_builder& uri_builder::append_query(const utility::string_t& toAppend, bool do_encode)
 {
-    if (query.empty())
+    if (!toAppend.empty())
     {
-        return *this;
+        auto& thisQuery = m_uri.m_query;
+        if (thisQuery.empty())
+        {
+            thisQuery.clear();
+        }
+        else if (thisQuery.back() == _XPLATSTR('&') && toAppend.front() == _XPLATSTR('&'))
+        {
+            thisQuery.pop_back();
+        }
+        else if (thisQuery.back() != _XPLATSTR('&') && toAppend.front() != _XPLATSTR('&'))
+        {
+            thisQuery.push_back(_XPLATSTR('&'));
+        }
+        else
+        {
+            // Only one ampersand.
+        }
+
+        if (do_encode)
+        {
+            thisQuery.append(uri::encode_uri(toAppend, uri::components::query));
+        }
+        else
+        {
+            thisQuery.append(toAppend);
+        }
     }
 
-    auto encoded_query = do_encode ? uri::encode_uri(query, uri::components::query) : query;
-    auto thisQuery = this->query();
-    if (thisQuery.empty())
-    {
-        this->set_query(encoded_query);
-    }
-    else if (thisQuery.back() == _XPLATSTR('&') && encoded_query.front() == _XPLATSTR('&'))
-    {
-        thisQuery.pop_back();
-        this->set_query(thisQuery + encoded_query);
-    }
-    else if (thisQuery.back() != _XPLATSTR('&') && encoded_query.front() != _XPLATSTR('&'))
-    {
-        this->set_query(thisQuery + _XPLATSTR("&") + encoded_query);
-    }
-    else
-    {
-        // Only one ampersand.
-        this->set_query(thisQuery + encoded_query);
-    }
     return *this;
 }
 
