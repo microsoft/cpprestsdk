@@ -129,7 +129,7 @@ TEST(component_assignment)
     const utility::string_t path(U("jklajsd"));
     const utility::string_t query(U("key1=val1"));
     const utility::string_t fragment(U("last"));
-    
+
     builder.set_scheme(scheme);
     builder.set_user_info(uinfo);
     builder.set_host(host);
@@ -152,7 +152,7 @@ TEST(component_assignment_encode)
         const utility::string_t path(U("jklajsd/yes no"));
         const utility::string_t query(U("key1=va%l1"));
         const utility::string_t fragment(U("las t"));
-    
+
         builder.set_scheme(scheme);
         builder.set_user_info(uinfo, true);
         builder.set_host(host, true);
@@ -162,13 +162,13 @@ TEST(component_assignment_encode)
         builder.set_fragment(fragment, true);
 
         VERIFY_URI_BUILDER(
-            builder, 
-            scheme, 
-            utility::string_t(U("johndoe:test")), 
-            utility::string_t(U("localhost")), 
-            port, 
-            utility::string_t(U("jklajsd/yes%20no")), 
-            utility::string_t(U("key1=va%25l1")), 
+            builder,
+            scheme,
+            utility::string_t(U("johndoe:test")),
+            utility::string_t(U("localhost")),
+            port,
+            utility::string_t(U("jklajsd/yes%20no")),
+            utility::string_t(U("key1=va%25l1")),
             utility::string_t(U("las%20t")));
     }
     {
@@ -180,7 +180,7 @@ TEST(component_assignment_encode)
         const utility::string_t path(U("jklajsd/yes no"));
         const utility::string_t query(U("key1=va%l1"));
         const utility::string_t fragment(U("las t"));
-    
+
         builder.set_scheme(scheme);
         builder.set_user_info(uinfo, true);
         builder.set_host(host, true);
@@ -190,13 +190,13 @@ TEST(component_assignment_encode)
         builder.set_fragment(fragment, true);
 
         VERIFY_URI_BUILDER(
-            builder, 
-            scheme, 
-            utility::string_t(U("johndoe:test")), 
-            utility::string_t(U("localhost")), 
-            port, 
-            utility::string_t(U("jklajsd/yes%20no")), 
-            utility::string_t(U("key1=va%25l1")), 
+            builder,
+            scheme,
+            utility::string_t(U("johndoe:test")),
+            utility::string_t(U("localhost")),
+            port,
+            utility::string_t(U("jklajsd/yes%20no")),
+            utility::string_t(U("key1=va%25l1")),
             utility::string_t(U("las%20t")));
     }
 }
@@ -255,7 +255,7 @@ TEST(append_path_string)
     // empty append path
     builder.append_path(U(""));
     VERIFY_ARE_EQUAL(U("/path1"), builder.path());
-    
+
     // uri builder with slash
     builder.append_path(U("/"));
     builder.append_path(U("path2"));
@@ -269,6 +269,84 @@ TEST(append_path_string)
     // both without slash
     builder.append_path(U("path4"));
     VERIFY_ARE_EQUAL(U("/path1/path2/path3/path4"), builder.path());
+
+    // encoding
+    builder.clear();
+    builder.append_path(U("encode%things"));
+    VERIFY_ARE_EQUAL(U("/encode%things"), builder.path());
+
+    builder.clear();
+    builder.append_path(U("encode%things"), false);
+    VERIFY_ARE_EQUAL(U("/encode%things"), builder.path());
+
+    builder.clear();
+    builder.append_path(U("encode%things"), true);
+    VERIFY_ARE_EQUAL(U("/encode%25things"), builder.path());
+
+    // self references
+    builder.set_path(U("example"));
+    builder.append_path(builder.path());
+    VERIFY_ARE_EQUAL(U("example/example"), builder.path());
+
+    builder.set_path(U("/example"));
+    builder.append_path(builder.path());
+    VERIFY_ARE_EQUAL(U("/example/example"), builder.path());
+
+    builder.set_path(U("/example/"));
+    builder.append_path(builder.path());
+    VERIFY_ARE_EQUAL(U("/example/example/"), builder.path());
+}
+
+TEST(append_path_raw_string)
+{
+    // empty uri builder path
+    uri_builder builder;
+    builder.append_path_raw(U("path1"));
+    VERIFY_ARE_EQUAL(U("/path1"), builder.path());
+
+    // empty append path
+    builder.append_path_raw(U(""));
+    VERIFY_ARE_EQUAL(U("/path1"), builder.path());
+
+    // uri builder with slash
+    builder.append_path_raw(U("/"));
+    builder.append_path_raw(U("path2"));
+    VERIFY_ARE_EQUAL(U("/path1///path2"), builder.path());
+
+    // leading slash (should result in "//")
+    builder.append_path_raw(U("/path3"));
+    VERIFY_ARE_EQUAL(U("/path1///path2//path3"), builder.path());
+
+    // trailing slash
+    builder.append_path_raw(U("path4/"));
+    builder.append_path_raw(U("path5"));
+    VERIFY_ARE_EQUAL(U("/path1///path2//path3/path4//path5"), builder.path());
+
+    // encoding
+    builder.clear();
+    builder.append_path_raw(U("encode%things"));
+    VERIFY_ARE_EQUAL(U("/encode%things"), builder.path());
+
+    builder.clear();
+    builder.append_path_raw(U("encode%things"), false);
+    VERIFY_ARE_EQUAL(U("/encode%things"), builder.path());
+
+    builder.clear();
+    builder.append_path_raw(U("encode%things"), true);
+    VERIFY_ARE_EQUAL(U("/encode%25things"), builder.path());
+
+    // self references
+    builder.set_path(U("example"));
+    builder.append_path_raw(builder.path());
+    VERIFY_ARE_EQUAL(U("example/example"), builder.path());
+
+    builder.set_path(U("/example"));
+    builder.append_path_raw(builder.path());
+    VERIFY_ARE_EQUAL(U("/example//example"), builder.path());
+
+    builder.set_path(U("/example/"));
+    builder.append_path_raw(builder.path());
+    VERIFY_ARE_EQUAL(U("/example///example/"), builder.path());
 }
 
 TEST(append_query_string)
@@ -281,7 +359,7 @@ TEST(append_query_string)
     // empty append query
     builder.append_query(U(""));
     VERIFY_ARE_EQUAL(U("key1=value1"), builder.query());
-    
+
     // uri builder with ampersand
     builder.append_query(U("&"));
     builder.append_query(U("key2=value2"));
@@ -307,6 +385,19 @@ TEST(append_query_string)
     // key and value separate with '=', '&', and ';'
     builder.append_query(U("key=&;"), U("=&;value"));
     VERIFY_ARE_EQUAL(U("key1=value1&key2=value2&key3=value3&key4=value4&key5=1&key6=val6&key%3D%26%3B=%3D%26%3Bvalue"), builder.query());
+
+    // self references
+    builder.set_query(U("example"));
+    builder.append_query(builder.query());
+    VERIFY_ARE_EQUAL(U("example&example"), builder.query());
+
+    builder.set_query(U("&example"));
+    builder.append_query(builder.query());
+    VERIFY_ARE_EQUAL(U("&example&example"), builder.query());
+
+    builder.set_query(U("&example&"));
+    builder.append_query(builder.query());
+    VERIFY_ARE_EQUAL(U("&example&example&"), builder.query());
 }
 
 TEST(append_query_string_no_encode)
@@ -398,8 +489,8 @@ TEST(host_encoding)
 
     uri_builder ub1;
     ub1.set_scheme(U("http")).set_host(U("????dfasddsf!@#$%^&*()_+")).set_port(80);
- 
-    VERIFY_IS_FALSE(ub1.is_valid()); 
+
+    VERIFY_IS_FALSE(ub1.is_valid());
 }
 
 TEST(clear)

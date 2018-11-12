@@ -14,10 +14,9 @@
 #pragma once
 
 #include <map>
-#include <memory>
 #include <string>
 #include <vector>
-#include <functional>
+#include <utility>
 
 #include "cpprest/asyncrt_utils.h"
 #include "cpprest/details/basic_types.h"

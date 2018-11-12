@@ -373,6 +373,17 @@ TEST(scan_string_locale, "Ignore:Android", "Locale unsupported on Android")
     }
 }
 
+
+#ifdef _WIN32
+TEST(windows_category_message)
+{
+   // Ensure the error message string returned by windows_category doesn't contain trailing zeros.
+   std::string error_message = utility::details::windows_category().message( 0 );
+   std::string zero_terminated_copy = error_message.c_str();
+   VERIFY_ARE_EQUAL( zero_terminated_copy, error_message );
+}
+#endif // _WIN32
+
 }
     
 }}} //namespaces
