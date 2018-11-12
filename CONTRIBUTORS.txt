@@ -1,4 +1,4 @@
-Contributors should submit an update to this file with a commit in order to receive recognition. Thank you for your contributions. 
+Contributors should submit an update to this file with a commit in order to receive recognition. Thank you for your contributions.
 
 
 List of Contributors
@@ -17,7 +17,7 @@ intercommiura
 halex2005
 simonlep
 jracle
-gandziej 
+gandziej
 adish
 LeonidCSIT
 kreuzerkrieg
@@ -49,3 +49,5 @@ Rami Abughazaleh (icnocop)
 
 TastenTrick
 Christian Deneke (chris0x44)
+
+leetal
