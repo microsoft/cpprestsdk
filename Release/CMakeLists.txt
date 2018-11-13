@@ -116,10 +116,7 @@ set(WARNINGS)
 set(ANDROID_LIBS)
 
 # Platform (not compiler) specific settings
-if(IOS)
-  # The cxx_flags must be reset here, because the ios-cmake toolchain file unfortunately sets "-headerpad_max_install_names" which is not a valid clang flag.
-  set(CMAKE_CXX_FLAGS "-fvisibility=hidden")
-elseif(ANDROID)
+if(ANDROID)
   # These are used in the shared library case
   set(ANDROID_LIBS atomic dl)
 elseif(UNIX) # This includes OSX

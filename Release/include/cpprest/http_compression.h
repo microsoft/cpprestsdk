@@ -206,7 +206,8 @@ _ASYNCRTIMP std::unique_ptr<compress_provider> make_deflate_compressor(int compr
 /// A caller-owned pointer to a Brotli compression provider, or to nullptr if the library was built without built-in
 /// compression support.
 /// </returns>
-_ASYNCRTIMP std::unique_ptr<compress_provider> make_brotli_compressor(uint32_t window, uint32_t quality, uint32_t mode);
+_ASYNCRTIMP std::unique_ptr<compress_provider> make_brotli_compressor(
+    uint32_t window, uint32_t quality, uint32_t mode, uint32_t block, uint32_t nomodel, uint32_t hint);
 } // namespace builtin
 
 /// <summary>
