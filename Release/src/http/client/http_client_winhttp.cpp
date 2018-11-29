@@ -1728,7 +1728,11 @@ private:
         DWORD urlSize{ 0 };
         if(FALSE == WinHttpQueryOption(hRequestHandle, WINHTTP_OPTION_URL, nullptr, &urlSize) || urlSize == 0)
         {
-            return U("");
+            // Ignore 'ERROR_INSUFFICIENT_BUFFER' because it is expected when passing a null 'lpBuffer' to query 'lpdwBufferLength'
+            if (ERROR_INSUFFICIENT_BUFFER != GetLastError())
+            {
+                return U("");
+            }
         }
 
         auto urlwchar = new WCHAR[urlSize / sizeof(WCHAR)];
