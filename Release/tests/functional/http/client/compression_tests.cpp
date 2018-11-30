@@ -181,19 +181,12 @@ SUITE(compression_tests)
                                  bool compressible)
     {
         std::vector<uint8_t> input_buffer;
-        std::vector<uint8_t> cmp_buffer;
-        std::vector<uint8_t> dcmp_buffer;
-        operation_result r;
-        std::vector<size_t> chunk_sizes;
-        size_t csize;
-        size_t dsize;
         size_t i;
-        size_t nn;
 
         VERIFY_ARE_EQUAL(compressor->algorithm(), decompressor->algorithm());
 
         input_buffer.reserve(buffer_size);
-        for (size_t i = 0; i < buffer_size; ++i)
+        for (i = 0; i < buffer_size; ++i)
         {
             uint8_t element;
             if (compressible)
@@ -209,59 +202,52 @@ SUITE(compression_tests)
         }
 
         // compress in chunks
-        csize = 0;
-        cmp_buffer.resize(buffer_size); // pessimistic (or not, for non-compressible data)
-        for (i = 0; i < buffer_size; i += chunk_size)
+        std::vector<size_t> chunk_sizes;
+        std::vector<uint8_t> cmp_buffer(buffer_size);
+        size_t cmpsize = buffer_size;
+        size_t csize = 0;
+        operation_result r = {0};
+        operation_hint hint = operation_hint::has_more;
+        for (i = 0; i < buffer_size || csize == cmpsize || !r.done; i += r.input_bytes_processed)
         {
+            if (i == buffer_size)
+            {
+                // the entire input buffer has been consumed by the compressor
+                hint = operation_hint::is_last;
+            }
+            if (csize == cmpsize)
+            {
+                // extend the output buffer if there may be more compressed bytes to retrieve
+                cmpsize += std::min(chunk_size, (size_t)200);
+                cmp_buffer.resize(cmpsize);
+            }
             r = compressor
                     ->compress(input_buffer.data() + i,
                                std::min(chunk_size, buffer_size - i),
                                cmp_buffer.data() + csize,
-                               std::min(chunk_size, buffer_size - csize),
-                               operation_hint::has_more)
+                               std::min(chunk_size, cmpsize - csize),
+                               hint)
                     .get();
-            VERIFY_ARE_EQUAL(r.input_bytes_processed, std::min(chunk_size, buffer_size - i));
-            VERIFY_ARE_EQUAL(r.done, false);
+            VERIFY_IS_TRUE(r.input_bytes_processed == std::min(chunk_size, buffer_size - i) ||
+                           r.output_bytes_produced == std::min(chunk_size, cmpsize - csize));
+            VERIFY_IS_TRUE(hint == operation_hint::is_last || !r.done);
             chunk_sizes.push_back(r.output_bytes_produced);
             csize += r.output_bytes_produced;
         }
-        if (i >= buffer_size)
-        {
-            size_t cmpsize = buffer_size;
-            do
-            {
-                if (csize == cmpsize)
-                {
-                    // extend the output buffer if there may be more compressed bytes to retrieve
-                    cmpsize += std::min(chunk_size, (size_t)200);
-                    cmp_buffer.resize(cmpsize);
-                }
-                r = compressor
-                        ->compress(NULL,
-                                   0,
-                                   cmp_buffer.data() + csize,
-                                   std::min(chunk_size, cmpsize - csize),
-                                   operation_hint::is_last)
-                        .get();
-                VERIFY_ARE_EQUAL(r.input_bytes_processed, 0);
-                chunk_sizes.push_back(r.output_bytes_produced);
-                csize += r.output_bytes_produced;
-            } while (csize == cmpsize);
-            VERIFY_ARE_EQUAL(r.done, true);
+        VERIFY_ARE_EQUAL(r.done, true);
 
-            // once more with no input, to assure no error and done
-            r = compressor->compress(NULL, 0, NULL, 0, operation_hint::is_last).get();
-            VERIFY_ARE_EQUAL(r.input_bytes_processed, 0);
-            VERIFY_ARE_EQUAL(r.output_bytes_produced, 0);
-            VERIFY_ARE_EQUAL(r.done, true);
-        }
+        // once more with no input or output, to assure no error and done
+        r = compressor->compress(NULL, 0, NULL, 0, operation_hint::is_last).get();
+        VERIFY_ARE_EQUAL(r.input_bytes_processed, 0);
+        VERIFY_ARE_EQUAL(r.output_bytes_produced, 0);
+        VERIFY_ARE_EQUAL(r.done, true);
 
         cmp_buffer.resize(csize); // actual
 
         // decompress in as-compressed chunks
-        nn = 0;
-        dsize = 0;
-        dcmp_buffer.resize(buffer_size);
+        std::vector<uint8_t> dcmp_buffer(buffer_size);
+        size_t dsize = 0;
+        size_t nn = 0;
         for (std::vector<size_t>::iterator it = chunk_sizes.begin(); it != chunk_sizes.end(); ++it)
         {
             if (*it)
@@ -358,7 +344,8 @@ SUITE(compression_tests)
 
     void compress_test(std::shared_ptr<compress_factory> cfactory, std::shared_ptr<decompress_factory> dfactory)
     {
-        size_t tuples[][2] = {{7999, 8192},
+        size_t tuples[][2] = {{3, 1024},
+                              {7999, 8192},
                               {8192, 8192},
                               {16001, 8192},
                               {16384, 8192},
