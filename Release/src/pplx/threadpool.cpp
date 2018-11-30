@@ -10,6 +10,7 @@
 #include <boost/asio/detail/thread.hpp>
 #include <new>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 #if defined(__ANDROID__)
@@ -127,10 +128,40 @@ typedef shared_threadpool platform_shared_threadpool;
 typedef threadpool_impl platform_shared_threadpool;
 #endif
 
+namespace
+{
+template<class T>
+struct uninitialized
+{
+    union {
+        T storage;
+    };
+
+    bool initialized;
+
+    uninitialized() CPPREST_NOEXCEPT : initialized(false) {}
+    uninitialized(const uninitialized&) = delete;
+    uninitialized& operator=(const uninitialized&) = delete;
+    ~uninitialized()
+    {
+        if (initialized)
+        {
+            storage.~T();
+        }
+    }
+
+    template<class... Args>
+    void construct(Args&&... vals)
+    {
+        ::new (static_cast<void*>(&storage)) T(std::forward<Args>(vals)...);
+        initialized = true;
+    }
+};
+} // unnamed namespace
+
 std::pair<bool, platform_shared_threadpool*> initialize_shared_threadpool(size_t num_threads)
 {
-    static alignas(platform_shared_threadpool) unsigned char storage[sizeof(platform_shared_threadpool)];
-    platform_shared_threadpool* const ptr = &reinterpret_cast<platform_shared_threadpool&>(storage);
+    static uninitialized<platform_shared_threadpool> uninit_threadpool;
     bool initialized_this_time = false;
 #if defined(__ANDROID__)
     // mutex based implementation due to paranoia about (lack of) call_once support on Android
@@ -155,13 +186,13 @@ std::pair<bool, platform_shared_threadpool*> initialize_shared_threadpool(size_t
     // #if defined(__ANDROID__) // if call_once can be used for android
     //     abort_if_no_jvm();
     // #endif // __ANDROID__
-    std::call_once(of, [num_threads, ptr, &initialized_this_time] {
-        ::new (static_cast<void*>(ptr)) platform_shared_threadpool(num_threads);
+    std::call_once(of, [num_threads, &initialized_this_time] {
+        uninit_threadpool.construct(num_threads);
         initialized_this_time = true;
     });
 #endif // __ANDROID__
 
-    return {initialized_this_time, ptr};
+    return {initialized_this_time, &uninit_threadpool.storage};
 }
 }
 
