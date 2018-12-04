@@ -1723,23 +1723,27 @@ private:
         }
     }
 
-    static utility::string_t get_request_url(HINTERNET hRequestHandle)
+    static std::wstring get_request_url(HINTERNET hRequestHandle)
     {
-        DWORD urlSize{ 0 };
-        if(FALSE == WinHttpQueryOption(hRequestHandle, WINHTTP_OPTION_URL, nullptr, &urlSize) || urlSize == 0)
+        std::wstring url;
+        auto urlSize = static_cast<unsigned long>(url.capacity()) * 2; // use initial small string optimization capacity
+        for (;;)
         {
-            return U("");
+            url.resize(urlSize / sizeof(wchar_t));
+            if (WinHttpQueryOption(hRequestHandle, WINHTTP_OPTION_URL, &url[0], &urlSize))
+            {
+                url.resize(wcslen(url.c_str()));
+                return url;
+            }
+
+            const auto lastError = GetLastError();
+            if (lastError != ERROR_INSUFFICIENT_BUFFER || urlSize == 0)
+            {
+                url.clear();
+                url.shrink_to_fit();
+                return url;
+            }
         }
-
-        auto urlwchar = new WCHAR[urlSize / sizeof(WCHAR)];
-
-        WinHttpQueryOption(hRequestHandle, WINHTTP_OPTION_URL, (void*)urlwchar, &urlSize);
-
-        utility::string_t url(urlwchar);
-
-        delete[] urlwchar;
-
-        return url;
     }
 
     // Returns true if we handle successfully and resending the request
