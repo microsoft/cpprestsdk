@@ -211,7 +211,7 @@ TEST(object_construction)
     f.push_back(std::make_pair(U("abc"), json::value(true)));
     f.push_back(std::make_pair(U("xyz"), json::value(44)));
     json::value obj = json::value::object(f);
-    
+
     VERIFY_ARE_EQUAL(f.size(), obj.size());
 
     obj[U("abc")] = json::value::string(U("str"));
@@ -320,7 +320,7 @@ TEST(array_construction)
 TEST(array_test)
 {
     json::value arr = json::value::array();
-    const json::value& carr = arr; 
+    const json::value& carr = arr;
     arr[0] = json::value(3.14);
     arr[1] = json::value(true);
     arr[2] = json::value("Yes");
@@ -486,7 +486,11 @@ TEST(object_test)
     VERIFY_ARE_EQUAL(cobject.size(), count);
 }
 
+TEST(github_asan_989)
+{
+    ::web::json::value::parse( R"([ { "k1" : "v" }, { "k2" : "v" }, { "k3" : "v" }, { "k4" : "v" } ])" );
+}
+
 } // SUITE(construction_tests)
 
 }}}
-
