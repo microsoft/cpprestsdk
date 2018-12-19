@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 set -e
 
+usage() {
+    echo "Usage: configure.sh [-build_type type] [-deployment_target version] [-config_only] [-include_32bit] [-no_bitcode]"
+    echo "       -build_type defines the CMAKE_BUILD_TYPE used. Defaults to Release."
+    echo "       -deployment_target defines minimum iOS Deployment Target. The default is dependent on ios.toolchain.cmake and currently defaults to 8.0"
+    echo "       -config_only only configures cmake (no make invoked)."
+    echo "       -include_32bit includes the 32-bit arm architectures."
+    echo "       -no_bitcode disables bitcode"
+}
+
 ABS_PATH="`dirname \"$0\"`"                 # relative
 ABS_PATH="`( cd \"${ABS_PATH}\" && pwd )`"  # absolutized and normalized
 # Make sure that the path to this file exists and can be retrieved!
@@ -8,6 +17,54 @@ if [ -z "${ABS_PATH}" ]; then
   echo "Could not fetch the ABS_PATH."
   exit 1
 fi
+
+CONFIG_ONLY=0
+INCLUDE_32BIT=""
+DISABLE_BITCODE=""
+DEPLOYMENT_TARGET=""
+
+# Command line argument parsing
+while (( "$#" )); do
+    case "$1" in
+        -build_type)
+            if [ "$#" -lt 2 ] || [[ "$2" == -* ]] ; then
+                usage
+                echo "Error: argument $1 expecting a value to follow."
+                exit 1
+            fi
+
+            CPPRESTSDK_BUILD_TYPE=$2
+            shift 2
+            ;;
+        -deployment_target)
+            if [ "$#" -lt 2 ] || [[ "$2" == -* ]] ; then
+                usage
+                echo "Error: argument $1 expecting a value to follow."
+                exit 1
+            fi
+
+            DEPLOYMENT_TARGET="-DDEPLOYMENT_TARGET=$2"
+            shift 2
+            ;;
+        -config_only)
+            CONFIG_ONLY=1
+            shift 1
+            ;;
+        -include_32bit)
+            INCLUDE_32BIT="-DINCLUDE_32BIT=ON"
+            shift 1
+            ;;
+        -no_bitcode)
+            DISABLE_BITCODE="-DDISABLE_BITCODE=ON"
+            shift 1
+            ;;
+        *)
+            usage
+            echo "Error: unsupported argument $1"
+            exit 1
+            ;;
+    esac
+done
 
 ## Configuration
 DEFAULT_BOOST_VERSION=1.67.0
@@ -28,7 +85,7 @@ git submodule update --init
 
 ## Build Boost
 
-if [ ! -e $ABS_PATH/boost.framework ]; then
+if [ ! -e $ABS_PATH/boost.framework ] && [ ! -d $ABS_PATH/boost ]; then
     if [ ! -d "${ABS_PATH}/Apple-Boost-BuildScript" ]; then
         git clone https://github.com/faithfracture/Apple-Boost-BuildScript ${ABS_PATH}/Apple-Boost-BuildScript
     fi
@@ -80,9 +137,11 @@ fi
 
 mkdir -p ${ABS_PATH}/build.${CPPRESTSDK_BUILD_TYPE}.ios
 pushd ${ABS_PATH}/build.${CPPRESTSDK_BUILD_TYPE}.ios
-cmake -DCMAKE_BUILD_TYPE=${CPPRESTSDK_BUILD_TYPE} ..
-make
+cmake -DCMAKE_BUILD_TYPE=${CPPRESTSDK_BUILD_TYPE} .. ${INCLUDE_32BIT} ${DISABLE_BITCODE} ${DEPLOYMENT_TARGET}
+if [ "$CONFIG_ONLY" -eq 0 ]; then
+    make
+fi
 popd
 printf "\n\n===================================================================================\n"
-echo ">>>> The final library is available in 'build.${CPPRESTSDK_BUILD_TYPE}.ios/libcpprest.a'"
+echo ">>>> The final library is available in 'build.${CPPRESTSDK_BUILD_TYPE}.ios/lib/libcpprest.a'"
 printf "===================================================================================\n\n"
