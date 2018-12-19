@@ -572,6 +572,11 @@ TEST(append_query_locale, "Ignore:Android", "Locale unsupported on Android")
     VERIFY_ARE_EQUAL(expected, builder.query());
 }
 
+TEST(github_crash_994)
+{
+    web::uri uri(U("http://127.0.0.1:34568/"));
+}
+
 } // SUITE(uri_builder_tests)
 
 }}}
