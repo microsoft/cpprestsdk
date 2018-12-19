@@ -488,7 +488,7 @@ TEST(object_test)
 
 TEST(github_asan_989)
 {
-    ::web::json::value::parse( R"([ { "k1" : "v" }, { "k2" : "v" }, { "k3" : "v" }, { "k4" : "v" } ])" );
+    ::web::json::value::parse( _XPLATSTR(R"([ { "k1" : "v" }, { "k2" : "v" }, { "k3" : "v" }, { "k4" : "v" } ])") );
 }
 
 } // SUITE(construction_tests)
