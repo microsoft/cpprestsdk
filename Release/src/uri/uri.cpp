@@ -127,7 +127,7 @@ namespace
     /// - The percent character ('%'), and thus any percent-endcoded octet
     /// - The sub-delimiters
     /// - ':' (colon)
-    /// - '@' (ampersand)
+    /// - '@' (at sign)
     /// </summary>
     inline bool is_path_character(int c)
     {
