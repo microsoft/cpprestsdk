@@ -1,33 +1,35 @@
 /***
-* Copyright (C) Microsoft. All rights reserved.
-* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-*
-* =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*
-* HTTP Library: Request and reply message definitions (client side).
-*
-* For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
-*
-* =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-****/
+ * Copyright (C) Microsoft. All rights reserved.
+ * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+ *
+ * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ *
+ * HTTP Library: Request and reply message definitions (client side).
+ *
+ * For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
+ *
+ * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+ ****/
 #include "stdafx.h"
+
 #include "../common/internal_http_helpers.h"
 #include "cpprest/asyncrt_utils.h"
 
-namespace web { namespace http
+namespace web
 {
-
+namespace http
+{
 uri details::_http_request::relative_uri() const
 {
     // If the listener path is empty, then just return the request URI.
-    if(m_listener_path.empty() || m_listener_path == _XPLATSTR("/"))
+    if (m_listener_path.empty() || m_listener_path == _XPLATSTR("/"))
     {
         return m_uri.resource();
     }
 
     utility::string_t prefix = uri::decode(m_listener_path);
     utility::string_t path = uri::decode(m_uri.resource().to_string());
-    if(path.empty())
+    if (path.empty())
     {
         path = _XPLATSTR("/");
     }
@@ -55,10 +57,7 @@ uri details::_http_request::absolute_uri() const
     }
 }
 
-void details::_http_request::set_request_uri(const uri& relative)
-{
-    m_uri = relative;
-}
+void details::_http_request::set_request_uri(const uri& relative) { m_uri = relative; }
 
 utility::string_t details::_http_request::to_string() const
 {
@@ -99,4 +98,5 @@ utility::string_t details::_http_response::to_string() const
     return result;
 }
 
-}} // namespace web::http
+} // namespace http
+} // namespace web

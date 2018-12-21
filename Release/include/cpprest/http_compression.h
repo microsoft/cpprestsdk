@@ -2,13 +2,13 @@
  * Copyright (C) Microsoft. All rights reserved.
  * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
  *
- * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
  *
  * HTTP Library: Compression and decompression interfaces
  *
  * For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
  *
- * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+ * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
  ****/
 #pragma once
 
@@ -118,13 +118,13 @@ _ASYNCRTIMP bool supported();
 namespace algorithm
 {
 #if defined(_MSC_VER) && _MSC_VER < 1900
-const utility::char_t * const GZIP = _XPLATSTR("gzip");
-const utility::char_t * const DEFLATE = _XPLATSTR("deflate");
-const utility::char_t * const BROTLI = _XPLATSTR("br");
+const utility::char_t* const GZIP = _XPLATSTR("gzip");
+const utility::char_t* const DEFLATE = _XPLATSTR("deflate");
+const utility::char_t* const BROTLI = _XPLATSTR("br");
 #else // ^^^ VS2013 and before ^^^ // vvv VS2015+, and everything else vvv
-constexpr const utility::char_t * const GZIP = _XPLATSTR("gzip");
-constexpr const utility::char_t * const DEFLATE = _XPLATSTR("deflate");
-constexpr const utility::char_t * const BROTLI = _XPLATSTR("br");
+constexpr const utility::char_t* const GZIP = _XPLATSTR("gzip");
+constexpr const utility::char_t* const DEFLATE = _XPLATSTR("deflate");
+constexpr const utility::char_t* const BROTLI = _XPLATSTR("br");
 #endif
 
 /// <summary>
@@ -135,7 +135,7 @@ constexpr const utility::char_t * const BROTLI = _XPLATSTR("br");
 /// the supplied string matches a supported built-in algorithm, and false if not.</returns>
 /// <summary>
 _ASYNCRTIMP bool supported(const utility::string_t& algorithm);
-}
+} // namespace algorithm
 
 /// <summary>
 /// Factory function to instantiate a built-in compression provider with default parameters by compression algorithm

@@ -1,17 +1,18 @@
 /***
-* Copyright (C) Microsoft. All rights reserved.
-* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-*
-* =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*
-* HTTP Library: Oauth 1.0
-*
-* For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
-*
-* =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-****/
+ * Copyright (C) Microsoft. All rights reserved.
+ * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+ *
+ * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ *
+ * HTTP Library: Oauth 1.0
+ *
+ * For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
+ *
+ * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+ ****/
 
 #include "stdafx.h"
+
 #include "cpprest/asyncrt_utils.h"
 
 #if !defined(CPPREST_TARGET_XP)
@@ -22,30 +23,31 @@ using web::http::client::http_client_config;
 using web::http::oauth1::details::oauth1_state;
 using web::http::oauth1::details::oauth1_strings;
 
-namespace web { namespace http { namespace oauth1
+namespace web
 {
-
+namespace http
+{
+namespace oauth1
+{
 namespace details
 {
-
 #define _OAUTH1_STRINGS
 #define DAT(a_, b_) const oauth1_string oauth1_strings::a_(_XPLATSTR(b_));
 #include "cpprest/details/http_constants.dat"
 #undef _OAUTH1_STRINGS
 #undef DAT
 
-} // namespace web::http::oauth1::details
+} // namespace details
 
 namespace experimental
 {
-
 //
 // Start of platform-dependent _hmac_sha1() block...
 //
 #if defined(_WIN32) && !defined(__cplusplus_winrt) // Windows desktop
 
-#include <winternl.h>
 #include <bcrypt.h>
+#include <winternl.h>
 
 // Code analysis complains even though there is no bug.
 #pragma warning(push)
@@ -60,27 +62,27 @@ std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t& ke
     DWORD hash_len = 0;
     ULONG result_len = 0;
 
-    const auto &key_c = conversions::utf16_to_utf8(key);
-    const auto &data_c = conversions::utf16_to_utf8(data);
+    const auto& key_c = conversions::utf16_to_utf8(key);
+    const auto& data_c = conversions::utf16_to_utf8(data);
 
     status = BCryptOpenAlgorithmProvider(&alg_handle, BCRYPT_SHA1_ALGORITHM, nullptr, BCRYPT_ALG_HANDLE_HMAC_FLAG);
     if (!NT_SUCCESS(status))
     {
         goto cleanup;
     }
-    status = BCryptGetProperty(alg_handle, BCRYPT_HASH_LENGTH, (PBYTE) &hash_len, sizeof(hash_len), &result_len, 0);
+    status = BCryptGetProperty(alg_handle, BCRYPT_HASH_LENGTH, (PBYTE)&hash_len, sizeof(hash_len), &result_len, 0);
     if (!NT_SUCCESS(status))
     {
         goto cleanup;
     }
     hash.resize(hash_len);
 
-    status = BCryptCreateHash(alg_handle, &hash_handle, nullptr, 0, (PBYTE) key_c.c_str(), (ULONG) key_c.length(), 0);
+    status = BCryptCreateHash(alg_handle, &hash_handle, nullptr, 0, (PBYTE)key_c.c_str(), (ULONG)key_c.length(), 0);
     if (!NT_SUCCESS(status))
     {
         goto cleanup;
     }
-    status = BCryptHashData(hash_handle, (PBYTE) data_c.c_str(), (ULONG) data_c.length(), 0);
+    status = BCryptHashData(hash_handle, (PBYTE)data_c.c_str(), (ULONG)data_c.length(), 0);
     if (!NT_SUCCESS(status))
     {
         goto cleanup;
@@ -113,17 +115,17 @@ using namespace Windows::Storage::Streams;
 
 std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t& key, const utility::string_t& data)
 {
-    Platform::String^ data_str = ref new Platform::String(data.c_str());
-    Platform::String^ key_str = ref new Platform::String(key.c_str());
+    Platform::String ^ data_str = ref new Platform::String(data.c_str());
+    Platform::String ^ key_str = ref new Platform::String(key.c_str());
 
-    MacAlgorithmProvider^ HMACSha1Provider = MacAlgorithmProvider::OpenAlgorithm(MacAlgorithmNames::HmacSha1);
-    IBuffer^ content_buffer = CryptographicBuffer::ConvertStringToBinary(data_str, BinaryStringEncoding::Utf8);
-    IBuffer^ key_buffer = CryptographicBuffer::ConvertStringToBinary(key_str, BinaryStringEncoding::Utf8);
+    MacAlgorithmProvider ^ HMACSha1Provider = MacAlgorithmProvider::OpenAlgorithm(MacAlgorithmNames::HmacSha1);
+    IBuffer ^ content_buffer = CryptographicBuffer::ConvertStringToBinary(data_str, BinaryStringEncoding::Utf8);
+    IBuffer ^ key_buffer = CryptographicBuffer::ConvertStringToBinary(key_str, BinaryStringEncoding::Utf8);
 
     auto signature_key = HMACSha1Provider->CreateKey(key_buffer);
     auto signed_buffer = CryptographicEngine::Sign(signature_key, content_buffer);
 
-    Platform::Array<unsigned char, 1>^ arr;
+    Platform::Array<unsigned char, 1> ^ arr;
     CryptographicBuffer::CopyToByteArray(signed_buffer, &arr);
     return std::vector<unsigned char>(arr->Data, arr->Data + arr->Length);
 }
@@ -137,9 +139,13 @@ std::vector<unsigned char> oauth1_config::_hmac_sha1(const utility::string_t& ke
     unsigned char digest[HMAC_MAX_MD_CBLOCK];
     unsigned int digest_len = 0;
 
-    HMAC(EVP_sha1(), key.c_str(), static_cast<int>(key.length()),
-            (const unsigned char*) data.c_str(), data.length(),
-            digest, &digest_len);
+    HMAC(EVP_sha1(),
+         key.c_str(),
+         static_cast<int>(key.length()),
+         (const unsigned char*)data.c_str(),
+         data.length(),
+         digest,
+         &digest_len);
 
     return std::vector<unsigned char>(digest, digest + digest_len);
 }
@@ -216,7 +222,7 @@ utility::string_t oauth1_config::_build_normalized_parameters(web::http::uri u, 
     return uri::encode_data_string(result);
 }
 
-static bool is_application_x_www_form_urlencoded (http_request &request)
+static bool is_application_x_www_form_urlencoded(http_request& request)
 {
     const auto content_type(request.headers()[header_names::content_type]);
     return 0 == content_type.find(web::http::details::mime_types::application_x_www_form_urlencoded);
@@ -229,11 +235,11 @@ utility::string_t oauth1_config::_build_signature_base_string(http_request reque
     result += _XPLATSTR('&');
     result += _build_base_string_uri(u);
 
-	// http://oauth.net/core/1.0a/#signing_process
-	// 9.1.1.  Normalize Request Parameters
-	// The request parameters are collected, sorted and concatenated into a normalized string:
-	//	- Parameters in the OAuth HTTP Authorization header excluding the realm parameter.
-	//	- Parameters in the HTTP POST request body (with a content-type of application/x-www-form-urlencoded).
+    // http://oauth.net/core/1.0a/#signing_process
+    // 9.1.1.  Normalize Request Parameters
+    // The request parameters are collected, sorted and concatenated into a normalized string:
+    //	- Parameters in the OAuth HTTP Authorization header excluding the realm parameter.
+    //	- Parameters in the HTTP POST request body (with a content-type of application/x-www-form-urlencoded).
     //	- HTTP GET parameters added to the URLs in the query part (as defined by [RFC3986] section 3).
     result += _XPLATSTR('&');
     if (is_application_x_www_form_urlencoded(request))
@@ -282,50 +288,47 @@ pplx::task<void> oauth1_config::_request_token(oauth1_state state, bool is_temp_
     http_client client(endpoint, config);
 
     return client.request(req)
-    .then([](http_response resp)
-    {
-        return resp.extract_string();
-    })
-    .then([this, is_temp_token_request](utility::string_t body) -> void
-    {
-        auto query(uri::split_query(body));
+        .then([](http_response resp) { return resp.extract_string(); })
+        .then([this, is_temp_token_request](utility::string_t body) -> void {
+            auto query(uri::split_query(body));
 
-        if (is_temp_token_request)
-        {
-            auto callback_confirmed_param = query.find(oauth1_strings::callback_confirmed);
-            if (callback_confirmed_param == query.end())
+            if (is_temp_token_request)
             {
-                throw oauth1_exception(U("parameter 'oauth_callback_confirmed' is missing from response: ") + body
-                    + U(". the service may be using obsoleted and insecure OAuth Core 1.0 protocol."));
+                auto callback_confirmed_param = query.find(oauth1_strings::callback_confirmed);
+                if (callback_confirmed_param == query.end())
+                {
+                    throw oauth1_exception(
+                        U("parameter 'oauth_callback_confirmed' is missing from response: ") + body +
+                        U(". the service may be using obsoleted and insecure OAuth Core 1.0 protocol."));
+                }
             }
-        }
 
-        auto token_param = query.find(oauth1_strings::token);
-        if (token_param == query.end())
-        {
-            throw oauth1_exception(U("parameter 'oauth_token' missing from response: ") + body);
-        }
+            auto token_param = query.find(oauth1_strings::token);
+            if (token_param == query.end())
+            {
+                throw oauth1_exception(U("parameter 'oauth_token' missing from response: ") + body);
+            }
 
-        auto token_secret_param = query.find(oauth1_strings::token_secret);
-        if (token_secret_param == query.end())
-        {
-            throw oauth1_exception(U("parameter 'oauth_token_secret' missing from response: ") + body);
-        }
+            auto token_secret_param = query.find(oauth1_strings::token_secret);
+            if (token_secret_param == query.end())
+            {
+                throw oauth1_exception(U("parameter 'oauth_token_secret' missing from response: ") + body);
+            }
 
-        // Here the token can be either temporary or access token.
-        // The authorization is complete if it is access token.
-        m_is_authorization_completed = !is_temp_token_request;
-        m_token = oauth1_token(web::uri::decode(token_param->second), web::uri::decode(token_secret_param->second));
+            // Here the token can be either temporary or access token.
+            // The authorization is complete if it is access token.
+            m_is_authorization_completed = !is_temp_token_request;
+            m_token = oauth1_token(web::uri::decode(token_param->second), web::uri::decode(token_secret_param->second));
 
-		for (const auto& qa : query)
-        {
-            if (qa.first == oauth1_strings::token || qa.first == oauth1_strings::token_secret) continue ;
-            m_token.set_additional_parameter(web::uri::decode(qa.first), web::uri::decode(qa.second));
-        }
-    });
+            for (const auto& qa : query)
+            {
+                if (qa.first == oauth1_strings::token || qa.first == oauth1_strings::token_secret) continue;
+                m_token.set_additional_parameter(web::uri::decode(qa.first), web::uri::decode(qa.second));
+            }
+        });
 }
 
-void oauth1_config::_authenticate_request(http_request &request, oauth1_state state)
+void oauth1_config::_authenticate_request(http_request& request, oauth1_state state)
 {
     utility::string_t authHeader(_XPLATSTR("OAuth "));
     if (!realm().empty())
@@ -340,7 +343,7 @@ void oauth1_config::_authenticate_request(http_request &request, oauth1_state st
     authHeader += _XPLATSTR("=\"1.0\", ");
     authHeader += oauth1_strings::consumer_key;
     authHeader += _XPLATSTR("=\"");
-    authHeader += web::uri::encode_data_string (consumer_key());
+    authHeader += web::uri::encode_data_string(consumer_key());
 
     if (!m_token.access_token().empty())
     {
@@ -382,10 +385,10 @@ void oauth1_config::_authenticate_request(http_request &request, oauth1_state st
 
 pplx::task<utility::string_t> oauth1_config::build_authorization_uri()
 {
-    pplx::task<void> temp_token_req = _request_token(_generate_auth_state(oauth1_strings::callback, callback_uri()), true);
+    pplx::task<void> temp_token_req =
+        _request_token(_generate_auth_state(oauth1_strings::callback, callback_uri()), true);
 
-    return temp_token_req.then([this]
-    {
+    return temp_token_req.then([this] {
         uri_builder ub(auth_endpoint());
         ub.append_query(oauth1_strings::token, m_token.access_token());
         return ub.to_string();
@@ -399,20 +402,21 @@ pplx::task<void> oauth1_config::token_from_redirected_uri(const web::http::uri& 
     auto token_param = query.find(oauth1_strings::token);
     if (token_param == query.end())
     {
-        return pplx::task_from_exception<void>(oauth1_exception(U("parameter 'oauth_token' missing from redirected URI.")));
+        return pplx::task_from_exception<void>(
+            oauth1_exception(U("parameter 'oauth_token' missing from redirected URI.")));
     }
     if (m_token.access_token() != token_param->second)
     {
         return pplx::task_from_exception<void>(oauth1_exception(
-            _XPLATSTR("redirected URI parameter 'oauth_token'='") + token_param->second
-            + _XPLATSTR("' does not match temporary token='") + m_token.access_token() + _XPLATSTR("'.")
-        ));
+            _XPLATSTR("redirected URI parameter 'oauth_token'='") + token_param->second +
+            _XPLATSTR("' does not match temporary token='") + m_token.access_token() + _XPLATSTR("'.")));
     }
 
     auto verifier_param = query.find(oauth1_strings::verifier);
     if (verifier_param == query.end())
     {
-        return pplx::task_from_exception<void>(oauth1_exception(U("parameter 'oauth_verifier' missing from redirected URI.")));
+        return pplx::task_from_exception<void>(
+            oauth1_exception(U("parameter 'oauth_verifier' missing from redirected URI.")));
     }
 
     return token_from_verifier(verifier_param->second);
@@ -441,11 +445,14 @@ const oauth1_token& oauth1_config::token() const
 }
 
 #define _OAUTH1_METHODS
-#define DAT(a,b) const oauth1_method oauth1_methods::a = b;
+#define DAT(a, b) const oauth1_method oauth1_methods::a = b;
 #include "cpprest/details/http_constants.dat"
 #undef _OAUTH1_METHODS
 #undef DAT
 
-}}}}
+} // namespace experimental
+} // namespace oauth1
+} // namespace http
+} // namespace web
 
 #endif

@@ -2,13 +2,13 @@
  * Copyright (C) Microsoft. All rights reserved.
  * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
  *
- * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
  *
  * HTTP Library: Compression and decompression interfaces
  *
  * For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
  *
- * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+ * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
  ****/
 
 #include "stdafx.h"
@@ -92,11 +92,11 @@ public:
 #if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wtautological-constant-compare"
-#endif  // __clang__
+#endif // __clang__
         if (input_size > std::numeric_limits<uInt>::max() || output_size > std::numeric_limits<uInt>::max())
 #if defined(__clang__)
 #pragma clang diagnostic pop
-#endif  // __clang__
+#endif // __clang__
         {
             throw std::runtime_error("Compression input or output size out of range");
         }
@@ -150,8 +150,8 @@ public:
     ~zlib_compressor_base() { (void)deflateEnd(&m_stream); }
 
 private:
-    int m_state{Z_BUF_ERROR};
-    z_stream m_stream{};
+    int m_state {Z_BUF_ERROR};
+    z_stream m_stream {};
     const utility::string_t& m_algorithm;
 };
 
@@ -193,11 +193,11 @@ public:
 #if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wtautological-constant-compare"
-#endif  // __clang__
+#endif // __clang__
         if (input_size > std::numeric_limits<uInt>::max() || output_size > std::numeric_limits<uInt>::max())
 #if defined(__clang__)
 #pragma clang diagnostic pop
-#endif  // __clang__
+#endif // __clang__
         {
             throw std::runtime_error("Compression input or output size out of range");
         }
@@ -252,8 +252,8 @@ public:
     ~zlib_decompressor_base() { (void)inflateEnd(&m_stream); }
 
 private:
-    int m_state{Z_BUF_ERROR};
-    z_stream m_stream{};
+    int m_state {Z_BUF_ERROR};
+    z_stream m_stream {};
     const utility::string_t& m_algorithm;
 };
 
@@ -472,9 +472,9 @@ public:
     }
 
 private:
-    BROTLI_BOOL m_state{BROTLI_FALSE};
-    BrotliEncoderState* m_stream{nullptr};
-    bool m_done{false};
+    BROTLI_BOOL m_state {BROTLI_FALSE};
+    BrotliEncoderState* m_stream {nullptr};
+    bool m_done {false};
     uint32_t m_window;
     uint32_t m_quality;
     uint32_t m_mode;
@@ -589,8 +589,8 @@ public:
     }
 
 private:
-    BrotliDecoderResult m_state{BROTLI_DECODER_RESULT_ERROR};
-    BrotliDecoderState* m_stream{nullptr};
+    BrotliDecoderResult m_state {BROTLI_DECODER_RESULT_ERROR};
+    BrotliDecoderState* m_stream {nullptr};
     const utility::string_t& m_algorithm;
 };
 #endif // CPPREST_BROTLI_COMPRESSION

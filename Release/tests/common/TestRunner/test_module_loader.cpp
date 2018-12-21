@@ -1,9 +1,9 @@
 /***
-* Copyright (C) Microsoft. All rights reserved.
-* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-*
-* =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*/
+ * Copyright (C) Microsoft. All rights reserved.
+ * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+ *
+ * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ */
 #ifdef WIN32
 #include <Windows.h>
 #else
@@ -27,13 +27,14 @@ public:
         auto ptr = dlsym(m_handle, "GetTestList");
         if (ptr == nullptr)
         {
-            std::cerr << "couldn't find GetTestList" <<
+            std::cerr << "couldn't find GetTestList"
+                      <<
 #ifdef __APPLE__
                 " " << dlerror() <<
 #endif
                 std::endl;
         }
-        return (GetTestsFunc)ptr; 
+        return (GetTestsFunc)ptr;
 #endif
     }
 
@@ -43,10 +44,8 @@ public:
         {
 #if defined(_WIN32)
             // Make sure ends in .dll
-            if (*(m_dllName.end() - 1) != 'l'
-                || *(m_dllName.end() - 2) != 'l'
-                || *(m_dllName.end() - 3) != 'd'
-                || *(m_dllName.end() - 4) != '.')
+            if (*(m_dllName.end() - 1) != 'l' || *(m_dllName.end() - 2) != 'l' || *(m_dllName.end() - 3) != 'd' ||
+                *(m_dllName.end() - 4) != '.')
             {
                 return (unsigned long)-1;
             }
@@ -110,37 +109,35 @@ private:
     void* m_handle;
 #endif
 
-    test_module(const test_module &) = delete;
-    test_module & operator=(const test_module &) = delete;
+    test_module(const test_module&) = delete;
+    test_module& operator=(const test_module&) = delete;
 };
 
-test_module_loader::test_module_loader()
-{
-}
+test_module_loader::test_module_loader() {}
 
 test_module_loader::~test_module_loader()
 {
-    for(auto iter = m_modules.begin(); iter != m_modules.end(); ++iter)
+    for (auto iter = m_modules.begin(); iter != m_modules.end(); ++iter)
     {
         iter->second->unload();
         delete iter->second;
     }
 }
 
-unsigned long test_module_loader::load(const std::string &dllName)
+unsigned long test_module_loader::load(const std::string& dllName)
 {
     // Check if the module is already loaded.
-    if(m_modules.find(dllName) != m_modules.end())
+    if (m_modules.find(dllName) != m_modules.end())
     {
         return 0;
     }
 
-    test_module *pModule;
+    test_module* pModule;
     pModule = new test_module(dllName);
 
     // Load dll.
     const unsigned long error_code = pModule->load();
-    if(error_code != 0)
+    if (error_code != 0)
     {
         delete pModule;
         return error_code;
@@ -154,13 +151,13 @@ unsigned long test_module_loader::load(const std::string &dllName)
 
 UnitTest::TestList g_list;
 
-UnitTest::TestList& test_module_loader::get_test_list(const std::string &dllName)
+UnitTest::TestList& test_module_loader::get_test_list(const std::string& dllName)
 {
     GetTestsFunc getTestsFunc = m_modules[dllName]->get_test_list();
 
     // If there is no GetTestList function then it must be a dll without any tests.
     // Simply return an empty TestList.
-    if(getTestsFunc == nullptr)
+    if (getTestsFunc == nullptr)
     {
         return g_list;
     }

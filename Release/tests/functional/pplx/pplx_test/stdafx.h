@@ -1,13 +1,13 @@
 /***
-* Copyright (C) Microsoft. All rights reserved.
-* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-*
-* =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*
-* Pre-compiled headers
-*
-* =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-****/
+ * Copyright (C) Microsoft. All rights reserved.
+ * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+ *
+ * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ *
+ * Pre-compiled headers
+ *
+ * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+ ****/
 
 #pragma once
 
@@ -16,13 +16,12 @@
 #include <Windows.h>
 #endif
 
-#include <vector>
+#include "pplx/pplxtasks.h"
 #include <fstream>
 #include <memory>
 #include <stdio.h>
 #include <time.h>
-
-#include "pplx/pplxtasks.h"
+#include <vector>
 
 #if defined(_WIN32)
 #include "pplx/pplxconv.h"
@@ -31,5 +30,5 @@
 #endif
 
 #include "cpprest/asyncrt_utils.h"
-#include "unittestpp.h"
 #include "os_utilities.h"
+#include "unittestpp.h"

@@ -1,16 +1,18 @@
 /***
-* Copyright (C) Microsoft. All rights reserved.
-* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-*
-* =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*
-* Table.xaml.cpp: Implementation of the Table.xaml class.
-*
-* =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-****/
+ * Copyright (C) Microsoft. All rights reserved.
+ * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+ *
+ * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ *
+ * Table.xaml.cpp: Implementation of the Table.xaml class.
+ *
+ * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+ ****/
 
 #include "pch.h"
+
 #include "PlayingTable.xaml.h"
+
 #include "cpprest/asyncrt_utils.h"
 
 using namespace BlackjackClient;
@@ -29,15 +31,16 @@ using namespace Windows::UI::Xaml::Navigation;
 using namespace Windows::Networking;
 
 #include "CardShape.xaml.h"
-#include <string>
 #include "cpprest/json.h"
+#include <string>
 
 using namespace Windows::UI::Xaml;
 using namespace Windows::UI::Xaml::Controls;
 using namespace Windows::UI::Xaml::Data;
 using namespace BlackjackClient;
 
-PlayingTable::PlayingTable() : m_dealerResource(L"dealer"), m_alreadyInsured(false), m_client(L"http://localhost:34568/blackjack/")
+PlayingTable::PlayingTable()
+    : m_dealerResource(L"dealer"), m_alreadyInsured(false), m_client(L"http://localhost:34568/blackjack/")
 {
     InitializeComponent();
 
@@ -63,9 +66,7 @@ PlayingTable::PlayingTable() : m_dealerResource(L"dealer"), m_alreadyInsured(fal
     DisableInsurance();
 }
 
-PlayingTable::~PlayingTable()
-{
-}
+PlayingTable::~PlayingTable() {}
 
 void BlackjackClient::PlayingTable::AddDealerCard(Card card)
 {
@@ -91,16 +92,12 @@ void BlackjackClient::PlayingTable::AddDealerCard(Card card)
 
 bool BlackjackClient::PlayingTable::InterpretError(HRESULT hr)
 {
-    if ( hr == S_OK ) return false;
+    if (hr == S_OK) return false;
 
-    switch(hr)
+    switch (hr)
     {
-    case 0x800C0005:
-        this->resultLabel->Text = L"Error communicating with server";
-        break;
-    default:
-        this->resultLabel->Text = L"Internal error";
-        break;
+        case 0x800C0005: this->resultLabel->Text = L"Error communicating with server"; break;
+        default: this->resultLabel->Text = L"Internal error"; break;
     }
 
     return true;
@@ -111,43 +108,44 @@ void BlackjackClient::PlayingTable::Refresh()
     this->resultLabel->Text = L"Waiting for other players";
 
     std::wostringstream buf;
-    buf << _tableId << L"?request=refresh&name=" << uri::encode_uri(m_name,uri::components::path);
-    
+    buf << _tableId << L"?request=refresh&name=" << uri::encode_uri(m_name, uri::components::path);
+
     auto request = m_client.request(methods::PUT, buf.str());
 
     auto ctx = pplx::task_continuation_context::use_current();
 
-    request.then([this](pplx::task<http_response> tsk) {
+    request.then(
+        [this](pplx::task<http_response> tsk) {
+            this->resultLabel->Text = L"";
 
-        this->resultLabel->Text = L"";
-
-        try
-        {
-            auto response = tsk.get();
-            InterpretResponse(response);
-        }
-        catch (const http_exception &exc)
-        {
-            InterpretError(exc.error_code().value());
-            this->resultLabel->Text = L"Waiting for other players";
-            Refresh(); 
-        }
-    }, ctx);
+            try
+            {
+                auto response = tsk.get();
+                InterpretResponse(response);
+            }
+            catch (const http_exception& exc)
+            {
+                InterpretError(exc.error_code().value());
+                this->resultLabel->Text = L"Waiting for other players";
+                Refresh();
+            }
+        },
+        ctx);
 }
 
-void BlackjackClient::PlayingTable::InterpretResponse(http_response &response)
+void BlackjackClient::PlayingTable::InterpretResponse(http_response& response)
 {
-    if ( response.headers().content_type() != L"application/json" ) return;
+    if (response.headers().content_type() != L"application/json") return;
 
     this->resultLabel->Text = L"";
 
     response.extract_json().then(
-        [this,response](json::value jsonResponse)
-        {
-            BlackjackClient::PlayingTable ^_this = this;
+        [this, response](json::value jsonResponse) {
+            BlackjackClient::PlayingTable ^ _this = this;
             http_response r = response;
             _this->InterpretResponse(jsonResponse);
-        }, pplx::task_continuation_context::use_current());
+        },
+        pplx::task_continuation_context::use_current());
 }
 
 void BlackjackClient::PlayingTable::InterpretResponse(json::value jsonResponse)
@@ -160,13 +158,14 @@ void BlackjackClient::PlayingTable::InterpretResponse(json::value jsonResponse)
 
     size_t i = 0;
 
-    for (auto iter = players.as_array().begin(); iter != players.as_array().end() && i < _playerSpaces.size(); ++iter,i++)
+    for (auto iter = players.as_array().begin(); iter != players.as_array().end() && i < _playerSpaces.size();
+         ++iter, i++)
     {
         Player player = Player::FromJSON(*iter);
 
-        if ( player.Name == DEALER )
+        if (player.Name == DEALER)
         {
-            if ( player.Hand.cards.size() == 1  && _dealerCards.size() == 2)
+            if (player.Hand.cards.size() == 1 && _dealerCards.size() == 2)
             {
                 // The cards are already shown.
                 continue;
@@ -179,68 +178,71 @@ void BlackjackClient::PlayingTable::InterpretResponse(json::value jsonResponse)
                 AddDealerCard(player.Hand.cards[j]);
             }
 
-            if ( player.Hand.cards.size() == 1 )
+            if (player.Hand.cards.size() == 1)
             {
                 // Add a dummy card that isn't shown.
                 AddDealerCard(Card(CardSuit::CS_Club, CardValue::CV_Ace, false));
-                if ( player.Hand.cards[0].value == CardValue::CV_Ace && !m_alreadyInsured )
-                    allow_insurance = true;
+                if (player.Hand.cards[0].value == CardValue::CV_Ace && !m_alreadyInsured) allow_insurance = true;
             }
             continue;
         }
 
-        if ( uri::decode(player.Name) == m_name )
+        if (uri::decode(player.Name) == m_name)
         {
             allow_double = (player.Hand.cards.size() == 2);
         }
 
-        _playerSpaces[i-1]->Update(player);
+        _playerSpaces[i - 1]->Update(player);
 
-        for (size_t j = _playerSpaces[i-1]->CardsHeld(); j < player.Hand.cards.size(); j++)
+        for (size_t j = _playerSpaces[i - 1]->CardsHeld(); j < player.Hand.cards.size(); j++)
         {
-            _playerSpaces[i-1]->AddCard(player.Hand.cards[j]);
+            _playerSpaces[i - 1]->AddCard(player.Hand.cards[j]);
         }
 
         if (player.Hand.result != BJHandResult::HR_None)
         {
-            _playerSpaces[i-1]->ShowResult(player.Hand.result);
+            _playerSpaces[i - 1]->ShowResult(player.Hand.result);
         }
     }
 
     switch (answer.Status)
     {
-    case ST_PlaceBet:
-        this->resultLabel->Text = L"Place your bet!";
-        EnableBetting();
-        DisableHit();
-        DisableInsurance();
-        EnableExit();
-        EnableDisconnecting();
-        break;
-    case ST_YourTurn:
-        this->resultLabel->Text = L"Your turn!";
-        DisableExit();
-        DisableDisconnecting();
-        DisableBetting();
-        EnableHit();
-        doubleButton->Visibility = allow_double ? Windows::UI::Xaml::Visibility::Visible : Windows::UI::Xaml::Visibility::Collapsed;
-        if (allow_insurance) EnableInsurance(); else DisableInsurance();
-        break;
-    case ST_Refresh:
-        this->resultLabel->Text = L"Waiting for other players";
-        DisableExit();
-        DisableDisconnecting();
-        DisableHit();
-        DisableBetting();
-        Refresh();
-        break;
+        case ST_PlaceBet:
+            this->resultLabel->Text = L"Place your bet!";
+            EnableBetting();
+            DisableHit();
+            DisableInsurance();
+            EnableExit();
+            EnableDisconnecting();
+            break;
+        case ST_YourTurn:
+            this->resultLabel->Text = L"Your turn!";
+            DisableExit();
+            DisableDisconnecting();
+            DisableBetting();
+            EnableHit();
+            doubleButton->Visibility =
+                allow_double ? Windows::UI::Xaml::Visibility::Visible : Windows::UI::Xaml::Visibility::Collapsed;
+            if (allow_insurance)
+                EnableInsurance();
+            else
+                DisableInsurance();
+            break;
+        case ST_Refresh:
+            this->resultLabel->Text = L"Waiting for other players";
+            DisableExit();
+            DisableDisconnecting();
+            DisableHit();
+            DisableBetting();
+            Refresh();
+            break;
     }
 }
 
-void BlackjackClient::PlayingTable::BetButton_Click(Platform::Object^ sender, Windows::UI::Xaml::Input::TappedRoutedEventArgs^ e)
+void BlackjackClient::PlayingTable::BetButton_Click(Platform::Object ^ sender,
+                                                    Windows::UI::Xaml::Input::TappedRoutedEventArgs ^ e)
 {
-    if ( _tableId.empty() || m_name.empty() )
-        return;
+    if (_tableId.empty() || m_name.empty()) return;
 
     ClearPlayerCards();
     ClearDealerCards();
@@ -254,35 +256,37 @@ void BlackjackClient::PlayingTable::BetButton_Click(Platform::Object^ sender, Wi
     this->resultLabel->Text = L"Waiting for a response";
 
     std::wostringstream buf;
-    buf << _tableId << L"?request=bet&amount=" << betText << "&name=" << uri::encode_uri(m_name,uri::components::query);
-    
+    buf << _tableId << L"?request=bet&amount=" << betText
+        << "&name=" << uri::encode_uri(m_name, uri::components::query);
+
     auto request = m_client.request(methods::PUT, buf.str());
 
     auto ctx = pplx::task_continuation_context::use_current();
 
-    request.then([this](pplx::task<http_response> tsk) {
+    request.then(
+        [this](pplx::task<http_response> tsk) {
+            this->resultLabel->Text = L"";
 
-        this->resultLabel->Text = L"";
-
-        try
-        {
-            auto response = tsk.get();
-            InterpretResponse(response);
-        }
-        catch (const http_exception &exc)
-        {
-            InterpretError(exc.error_code().value());
-            EnableExit(); 
-            EnableDisconnecting();
-            EnableBetting();
-        }
-    }, ctx);
+            try
+            {
+                auto response = tsk.get();
+                InterpretResponse(response);
+            }
+            catch (const http_exception& exc)
+            {
+                InterpretError(exc.error_code().value());
+                EnableExit();
+                EnableDisconnecting();
+                EnableBetting();
+            }
+        },
+        ctx);
 }
 
-void BlackjackClient::PlayingTable::InsuranceButton_Click(Platform::Object^ sender, Windows::UI::Xaml::Input::TappedRoutedEventArgs^ e)
+void BlackjackClient::PlayingTable::InsuranceButton_Click(Platform::Object ^ sender,
+                                                          Windows::UI::Xaml::Input::TappedRoutedEventArgs ^ e)
 {
-    if ( _tableId.empty() || m_name.empty() )
-        return;
+    if (_tableId.empty() || m_name.empty()) return;
 
     ClearTable();
     DisableHit();
@@ -294,35 +298,36 @@ void BlackjackClient::PlayingTable::InsuranceButton_Click(Platform::Object^ send
     this->resultLabel->Text = L"Waiting for a response";
 
     std::wostringstream buf;
-    buf << _tableId << L"?request=insure&amount=" << betText << "&name=" << uri::encode_uri(m_name,uri::components::query);
-    
+    buf << _tableId << L"?request=insure&amount=" << betText
+        << "&name=" << uri::encode_uri(m_name, uri::components::query);
+
     auto request = m_client.request(methods::PUT, buf.str());
 
     auto ctx = pplx::task_continuation_context::use_current();
 
-    request.then([this](pplx::task<http_response> tsk) {
+    request.then(
+        [this](pplx::task<http_response> tsk) {
+            this->resultLabel->Text = L"";
 
-        this->resultLabel->Text = L"";
-
-        try
-        {
-            auto response = tsk.get();
-            InterpretResponse(response);
-        }
-        catch (const http_exception &exc)
-        {
-            InterpretError(exc.error_code().value());
-            EnableHit();
-            EnableInsurance();
-        }
-    }, ctx);
+            try
+            {
+                auto response = tsk.get();
+                InterpretResponse(response);
+            }
+            catch (const http_exception& exc)
+            {
+                InterpretError(exc.error_code().value());
+                EnableHit();
+                EnableInsurance();
+            }
+        },
+        ctx);
 }
 
-
-void BlackjackClient::PlayingTable::DoubleButton_Click(Platform::Object^ sender, Windows::UI::Xaml::Input::TappedRoutedEventArgs^ e)
+void BlackjackClient::PlayingTable::DoubleButton_Click(Platform::Object ^ sender,
+                                                       Windows::UI::Xaml::Input::TappedRoutedEventArgs ^ e)
 {
-    if ( _tableId.empty() || m_name.empty() )
-        return;
+    if (_tableId.empty() || m_name.empty()) return;
 
     DisableHit();
     DisableInsurance();
@@ -330,34 +335,34 @@ void BlackjackClient::PlayingTable::DoubleButton_Click(Platform::Object^ sender,
     this->resultLabel->Text = L"Waiting for a response";
 
     std::wostringstream buf;
-    buf << _tableId << L"?request=double&name=" << uri::encode_uri(m_name,uri::components::query);
-    
+    buf << _tableId << L"?request=double&name=" << uri::encode_uri(m_name, uri::components::query);
+
     auto request = m_client.request(methods::PUT, buf.str());
 
     auto ctx = pplx::task_continuation_context::use_current();
 
-    request.then([this](pplx::task<http_response> tsk) {
+    request.then(
+        [this](pplx::task<http_response> tsk) {
+            this->resultLabel->Text = L"";
 
-        this->resultLabel->Text = L"";
-
-        try
-        {
-            auto response = tsk.get();
-            InterpretResponse(response);
-        }
-        catch (const http_exception &exc)
-        {
-            InterpretError(exc.error_code().value());
-            EnableHit();
-        }
-    }, ctx);
+            try
+            {
+                auto response = tsk.get();
+                InterpretResponse(response);
+            }
+            catch (const http_exception& exc)
+            {
+                InterpretError(exc.error_code().value());
+                EnableHit();
+            }
+        },
+        ctx);
 }
 
-
-void BlackjackClient::PlayingTable::StayButton_Click(Platform::Object^ sender, Windows::UI::Xaml::Input::TappedRoutedEventArgs^ e)
+void BlackjackClient::PlayingTable::StayButton_Click(Platform::Object ^ sender,
+                                                     Windows::UI::Xaml::Input::TappedRoutedEventArgs ^ e)
 {
-    if ( _tableId.empty() || m_name.empty() )
-        return;
+    if (_tableId.empty() || m_name.empty()) return;
 
     DisableHit();
     DisableInsurance();
@@ -365,66 +370,66 @@ void BlackjackClient::PlayingTable::StayButton_Click(Platform::Object^ sender, W
     this->resultLabel->Text = L"Waiting for a response";
 
     std::wostringstream buf;
-    buf << _tableId << L"?request=stay&name=" << uri::encode_uri(m_name,uri::components::query);
-    
+    buf << _tableId << L"?request=stay&name=" << uri::encode_uri(m_name, uri::components::query);
+
     auto request = m_client.request(methods::PUT, buf.str());
 
     auto ctx = pplx::task_continuation_context::use_current();
 
-    request.then([this](pplx::task<http_response> tsk) {
+    request.then(
+        [this](pplx::task<http_response> tsk) {
+            this->resultLabel->Text = L"";
 
-        this->resultLabel->Text = L"";
-
-        try
-        {
-            auto response = tsk.get();
-            InterpretResponse(response);
-        }
-        catch (const http_exception &exc)
-        {
-            InterpretError(exc.error_code().value());
-            EnableHit();
-        }
-    }, ctx);
+            try
+            {
+                auto response = tsk.get();
+                InterpretResponse(response);
+            }
+            catch (const http_exception& exc)
+            {
+                InterpretError(exc.error_code().value());
+                EnableHit();
+            }
+        },
+        ctx);
 }
 
-
-void BlackjackClient::PlayingTable::HitButton_Click(Platform::Object^ sender, Windows::UI::Xaml::Input::TappedRoutedEventArgs^ e)
+void BlackjackClient::PlayingTable::HitButton_Click(Platform::Object ^ sender,
+                                                    Windows::UI::Xaml::Input::TappedRoutedEventArgs ^ e)
 {
-    if ( _tableId.empty() || m_name.empty() )
-        return;
+    if (_tableId.empty() || m_name.empty()) return;
 
     DisableInsurance();
 
     this->resultLabel->Text = L"Waiting for a response";
 
     std::wostringstream buf;
-    buf << _tableId << L"?request=hit&name=" << uri::encode_uri(m_name,uri::components::query);
-    
+    buf << _tableId << L"?request=hit&name=" << uri::encode_uri(m_name, uri::components::query);
+
     auto request = m_client.request(methods::PUT, buf.str());
 
     auto ctx = pplx::task_continuation_context::use_current();
 
-    request.then([this](pplx::task<http_response> tsk) {
+    request.then(
+        [this](pplx::task<http_response> tsk) {
+            this->resultLabel->Text = L"";
 
-        this->resultLabel->Text = L"";
-
-        try
-        {
-            auto response = tsk.get();
-            InterpretResponse(response);
-        }
-        catch (const http_exception &exc)
-        {
-            InterpretError(exc.error_code().value());
-        }
-    }, ctx);
+            try
+            {
+                auto response = tsk.get();
+                InterpretResponse(response);
+            }
+            catch (const http_exception& exc)
+            {
+                InterpretError(exc.error_code().value());
+            }
+        },
+        ctx);
 }
 
-
-void BlackjackClient::PlayingTable::ExitButton_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+void BlackjackClient::PlayingTable::ExitButton_Click(Platform::Object ^ sender, Windows::UI::Xaml::RoutedEventArgs ^ e)
 {
-    if ( _tableId.empty() || m_name.empty() )
+    if (_tableId.empty() || m_name.empty())
     {
         Windows::ApplicationModel::Core::CoreApplication::Exit();
     }
@@ -436,36 +441,37 @@ void BlackjackClient::PlayingTable::ExitButton_Click(Platform::Object^ sender, W
         auto ctx = pplx::task_continuation_context::use_current();
 
         std::wostringstream buf;
-        buf << _tableId << L"?name=" << uri::encode_uri(m_name,uri::components::query);
-    
+        buf << _tableId << L"?name=" << uri::encode_uri(m_name, uri::components::query);
+
         auto request = m_client.request(methods::DEL, buf.str());
 
-        request.then([this](pplx::task<http_response> tsk) {
-
-            EnableExit(); 
-
-            this->resultLabel->Text = L"";
-
-            try
-            {
-                auto response = tsk.get();
-            }
-            catch (const http_exception &exc)
-            {
-                InterpretError(exc.error_code().value());
+        request.then(
+            [this](pplx::task<http_response> tsk) {
                 EnableExit();
-            }
 
-            Windows::ApplicationModel::Core::CoreApplication::Exit();
-        }, ctx);
+                this->resultLabel->Text = L"";
+
+                try
+                {
+                    auto response = tsk.get();
+                }
+                catch (const http_exception& exc)
+                {
+                    InterpretError(exc.error_code().value());
+                    EnableExit();
+                }
+
+                Windows::ApplicationModel::Core::CoreApplication::Exit();
+            },
+            ctx);
     }
 }
 
-void BlackjackClient::PlayingTable::JoinButton_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+void BlackjackClient::PlayingTable::JoinButton_Click(Platform::Object ^ sender, Windows::UI::Xaml::RoutedEventArgs ^ e)
 {
     m_name = this->playerName->Text->Data();
 
-    if ( m_name.size() == 0 ) 
+    if (m_name.size() == 0)
     {
         this->resultLabel->Text = L"Please state your name!";
         return;
@@ -483,40 +489,40 @@ void BlackjackClient::PlayingTable::JoinButton_Click(Platform::Object^ sender, W
     m_client = http_client(bldr.to_string());
 
     std::wostringstream buf;
-    buf << _tableId << L"?name=" << uri::encode_uri(m_name,uri::components::query);
-    
+    buf << _tableId << L"?name=" << uri::encode_uri(m_name, uri::components::query);
+
     auto request = m_client.request(methods::POST, buf.str());
 
     auto ctx = pplx::task_continuation_context::use_current();
 
-    request.then([this](pplx::task<http_response> tsk) {
+    request.then(
+        [this](pplx::task<http_response> tsk) {
+            EnableExit();
 
-        EnableExit(); 
+            this->resultLabel->Text = L"";
 
-        this->resultLabel->Text = L"";
+            try
+            {
+                auto response = tsk.get();
 
-        try
-        {
-            auto response = tsk.get();
+                this->resultLabel->Text = L"Place your bet!";
 
-            this->resultLabel->Text = L"Place your bet!";
+                EnableDisconnecting();
+                EnableBetting();
 
-            EnableDisconnecting();
-            EnableBetting();
-
-            InterpretResponse(response);
-        }
-        catch (const http_exception &exc)
-        {
-            InterpretError(exc.error_code().value());
-            EnableConnecting(); 
-            _tableId = L"";
-        }
-    }, ctx);
+                InterpretResponse(response);
+            }
+            catch (const http_exception& exc)
+            {
+                InterpretError(exc.error_code().value());
+                EnableConnecting();
+                _tableId = L"";
+            }
+        },
+        ctx);
 }
 
-
-void BlackjackClient::PlayingTable::LeaveButton_Click(Platform::Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e)
+void BlackjackClient::PlayingTable::LeaveButton_Click(Platform::Object ^ sender, Windows::UI::Xaml::RoutedEventArgs ^ e)
 {
     this->resultLabel->Text = L"Leaving table";
 
@@ -527,35 +533,34 @@ void BlackjackClient::PlayingTable::LeaveButton_Click(Platform::Object^ sender, 
     auto ctx = pplx::task_continuation_context::use_current();
 
     std::wostringstream buf;
-    buf << _tableId << L"?name=" << uri::encode_uri(m_name,uri::components::query);
-    
+    buf << _tableId << L"?name=" << uri::encode_uri(m_name, uri::components::query);
+
     auto request = m_client.request(methods::DEL, buf.str());
 
-    request.then([this](pplx::task<http_response> tsk) {
+    request.then(
+        [this](pplx::task<http_response> tsk) {
+            EnableExit();
 
-        EnableExit(); 
+            try
+            {
+                auto response = tsk.get();
 
-        try
-        {
-            auto response = tsk.get();
+                EnableConnecting();
+                ClearDealerCards();
+                ClearTable();
 
-            EnableConnecting();
-            ClearDealerCards();
-            ClearTable();
+                this->resultLabel->Text = L"Thanks for playing!";
 
-            this->resultLabel->Text = L"Thanks for playing!";
-
-            _tableId = L"";
-        }
-        catch (const http_exception &exc)
-        {
-            InterpretError(exc.error_code().value());
-            EnableBetting(); 
-            EnableDisconnecting(); 
-        }
-    }, ctx);
+                _tableId = L"";
+            }
+            catch (const http_exception& exc)
+            {
+                InterpretError(exc.error_code().value());
+                EnableBetting();
+                EnableDisconnecting();
+            }
+        },
+        ctx);
 }
 
-void PlayingTable::OnNavigatedTo(NavigationEventArgs^ e)
-{
-}
+void PlayingTable::OnNavigatedTo(NavigationEventArgs ^ e) {}

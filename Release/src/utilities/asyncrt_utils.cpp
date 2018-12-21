@@ -1,21 +1,22 @@
 /***
-* Copyright (C) Microsoft. All rights reserved.
-* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-*
-* =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*
-* Utilities
-*
-* For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
-*
-* =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-****/
+ * Copyright (C) Microsoft. All rights reserved.
+ * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+ *
+ * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ *
+ * Utilities
+ *
+ * For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
+ *
+ * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+ ****/
 
 #include "stdafx.h"
-#include <cpprest/asyncrt_utils.h>
+
 #include <algorithm>
-#include <string>
+#include <cpprest/asyncrt_utils.h>
 #include <sstream>
+#include <string>
 
 #ifndef _WIN32
 #if defined(__clang__)
@@ -35,77 +36,71 @@ using namespace utility::conversions;
 
 namespace
 {
-    struct to_lower_ch_impl
+struct to_lower_ch_impl
+{
+    char operator()(char c) const CPPREST_NOEXCEPT
     {
-        char operator()(char c) const CPPREST_NOEXCEPT
-        {
-            if (c >= 'A' && c <= 'Z')
-                return static_cast<char>(c - 'A' + 'a');
-            return c;
-        }
-
-        wchar_t operator()(wchar_t c) const CPPREST_NOEXCEPT
-        {
-            if (c >= L'A' && c <= L'Z')
-                return static_cast<wchar_t>(c - L'A' + L'a');
-            return c;
-        }
-    };
-
-    CPPREST_CONSTEXPR to_lower_ch_impl to_lower_ch{};
-
-    struct eq_lower_ch_impl
-    {
-        template<class CharT>
-        inline CharT operator()(const CharT left, const CharT right) const CPPREST_NOEXCEPT
-        {
-            return to_lower_ch(left) == to_lower_ch(right);
-        }
-    };
-
-    CPPREST_CONSTEXPR eq_lower_ch_impl eq_lower_ch{};
-
-    struct lt_lower_ch_impl
-    {
-        template<class CharT>
-        inline CharT operator()(const CharT left, const CharT right) const CPPREST_NOEXCEPT
-        {
-            return to_lower_ch(left) < to_lower_ch(right);
-        }
-    };
-
-    CPPREST_CONSTEXPR lt_lower_ch_impl lt_lower_ch{};
+        if (c >= 'A' && c <= 'Z') return static_cast<char>(c - 'A' + 'a');
+        return c;
     }
+
+    wchar_t operator()(wchar_t c) const CPPREST_NOEXCEPT
+    {
+        if (c >= L'A' && c <= L'Z') return static_cast<wchar_t>(c - L'A' + L'a');
+        return c;
+    }
+};
+
+CPPREST_CONSTEXPR to_lower_ch_impl to_lower_ch {};
+
+struct eq_lower_ch_impl
+{
+    template<class CharT>
+    inline CharT operator()(const CharT left, const CharT right) const CPPREST_NOEXCEPT
+    {
+        return to_lower_ch(left) == to_lower_ch(right);
+    }
+};
+
+CPPREST_CONSTEXPR eq_lower_ch_impl eq_lower_ch {};
+
+struct lt_lower_ch_impl
+{
+    template<class CharT>
+    inline CharT operator()(const CharT left, const CharT right) const CPPREST_NOEXCEPT
+    {
+        return to_lower_ch(left) < to_lower_ch(right);
+    }
+};
+
+CPPREST_CONSTEXPR lt_lower_ch_impl lt_lower_ch {};
+} // namespace
 
 namespace utility
 {
-
 namespace details
 {
-
-_ASYNCRTIMP bool __cdecl str_iequal(const std::string &left, const std::string &right) CPPREST_NOEXCEPT
+_ASYNCRTIMP bool __cdecl str_iequal(const std::string& left, const std::string& right) CPPREST_NOEXCEPT
 {
-    return left.size() == right.size()
-        && std::equal(left.cbegin(), left.cend(), right.cbegin(), eq_lower_ch);
+    return left.size() == right.size() && std::equal(left.cbegin(), left.cend(), right.cbegin(), eq_lower_ch);
 }
 
-_ASYNCRTIMP bool __cdecl str_iequal(const std::wstring &left, const std::wstring &right) CPPREST_NOEXCEPT
+_ASYNCRTIMP bool __cdecl str_iequal(const std::wstring& left, const std::wstring& right) CPPREST_NOEXCEPT
 {
-    return left.size() == right.size()
-        && std::equal(left.cbegin(), left.cend(), right.cbegin(), eq_lower_ch);
+    return left.size() == right.size() && std::equal(left.cbegin(), left.cend(), right.cbegin(), eq_lower_ch);
 }
 
-_ASYNCRTIMP bool __cdecl str_iless(const std::string &left, const std::string &right) CPPREST_NOEXCEPT
+_ASYNCRTIMP bool __cdecl str_iless(const std::string& left, const std::string& right) CPPREST_NOEXCEPT
 {
     return std::lexicographical_compare(left.cbegin(), left.cend(), right.cbegin(), right.cend(), lt_lower_ch);
 }
 
-_ASYNCRTIMP bool __cdecl str_iless(const std::wstring &left, const std::wstring &right) CPPREST_NOEXCEPT
+_ASYNCRTIMP bool __cdecl str_iless(const std::wstring& left, const std::wstring& right) CPPREST_NOEXCEPT
 {
     return std::lexicographical_compare(left.cbegin(), left.cend(), right.cbegin(), right.cend(), lt_lower_ch);
 }
 
-_ASYNCRTIMP void __cdecl inplace_tolower(std::string &target) CPPREST_NOEXCEPT
+_ASYNCRTIMP void __cdecl inplace_tolower(std::string& target) CPPREST_NOEXCEPT
 {
     for (auto& ch : target)
     {
@@ -113,7 +108,7 @@ _ASYNCRTIMP void __cdecl inplace_tolower(std::string &target) CPPREST_NOEXCEPT
     }
 }
 
-_ASYNCRTIMP void __cdecl inplace_tolower(std::wstring &target) CPPREST_NOEXCEPT
+_ASYNCRTIMP void __cdecl inplace_tolower(std::wstring& target) CPPREST_NOEXCEPT
 {
     for (auto& ch : target)
     {
@@ -123,20 +118,19 @@ _ASYNCRTIMP void __cdecl inplace_tolower(std::wstring &target) CPPREST_NOEXCEPT
 
 #if !defined(ANDROID) && !defined(__ANDROID__)
 std::once_flag g_c_localeFlag;
-std::unique_ptr<scoped_c_thread_locale::xplat_locale, void(*)(scoped_c_thread_locale::xplat_locale *)> g_c_locale(nullptr, [](scoped_c_thread_locale::xplat_locale *){});
+std::unique_ptr<scoped_c_thread_locale::xplat_locale, void (*)(scoped_c_thread_locale::xplat_locale*)> g_c_locale(
+    nullptr, [](scoped_c_thread_locale::xplat_locale*) {});
 scoped_c_thread_locale::xplat_locale scoped_c_thread_locale::c_locale()
 {
-    std::call_once(g_c_localeFlag, [&]()
-    {
-        scoped_c_thread_locale::xplat_locale *clocale = new scoped_c_thread_locale::xplat_locale();
+    std::call_once(g_c_localeFlag, [&]() {
+        scoped_c_thread_locale::xplat_locale* clocale = new scoped_c_thread_locale::xplat_locale();
 #ifdef _WIN32
         *clocale = _create_locale(LC_ALL, "C");
         if (clocale == nullptr || *clocale == nullptr)
         {
             throw std::runtime_error("Unable to create 'C' locale.");
         }
-        auto deleter = [](scoped_c_thread_locale::xplat_locale *clocale)
-        {
+        auto deleter = [](scoped_c_thread_locale::xplat_locale* clocale) {
             _free_locale(*clocale);
             delete clocale;
         };
@@ -152,17 +146,18 @@ scoped_c_thread_locale::xplat_locale scoped_c_thread_locale::c_locale()
             delete clocale;
         };
 #endif
-        g_c_locale = std::unique_ptr<scoped_c_thread_locale::xplat_locale, void(*)(scoped_c_thread_locale::xplat_locale *)>(clocale, deleter);
+        g_c_locale =
+            std::unique_ptr<scoped_c_thread_locale::xplat_locale, void (*)(scoped_c_thread_locale::xplat_locale*)>(
+                clocale, deleter);
     });
     return *g_c_locale;
 }
 #endif
 
 #ifdef _WIN32
-scoped_c_thread_locale::scoped_c_thread_locale()
-    : m_prevLocale(), m_prevThreadSetting(-1)
+scoped_c_thread_locale::scoped_c_thread_locale() : m_prevLocale(), m_prevThreadSetting(-1)
 {
-    char *prevLocale = setlocale(LC_ALL, nullptr);
+    char* prevLocale = setlocale(LC_ALL, nullptr);
     if (prevLocale == nullptr)
     {
         throw std::runtime_error("Unable to retrieve current locale.");
@@ -178,8 +173,8 @@ scoped_c_thread_locale::scoped_c_thread_locale()
         }
         if (setlocale(LC_ALL, "C") == nullptr)
         {
-             _configthreadlocale(m_prevThreadSetting);
-             throw std::runtime_error("Unable to set locale");
+            _configthreadlocale(m_prevThreadSetting);
+            throw std::runtime_error("Unable to set locale");
         }
     }
 }
@@ -196,10 +191,9 @@ scoped_c_thread_locale::~scoped_c_thread_locale()
 scoped_c_thread_locale::scoped_c_thread_locale() {}
 scoped_c_thread_locale::~scoped_c_thread_locale() {}
 #else
-scoped_c_thread_locale::scoped_c_thread_locale()
-    : m_prevLocale(nullptr)
+scoped_c_thread_locale::scoped_c_thread_locale() : m_prevLocale(nullptr)
 {
-    char *prevLocale = setlocale(LC_ALL, nullptr);
+    char* prevLocale = setlocale(LC_ALL, nullptr);
     if (prevLocale == nullptr)
     {
         throw std::runtime_error("Unable to retrieve current locale.");
@@ -223,12 +217,11 @@ scoped_c_thread_locale::~scoped_c_thread_locale()
     }
 }
 #endif
-}
+} // namespace details
 
 namespace details
 {
-
-const std::error_category & __cdecl platform_category()
+const std::error_category& __cdecl platform_category()
 {
 #ifdef _WIN32
     return windows_category();
@@ -243,7 +236,7 @@ const std::error_category & __cdecl platform_category()
 #if _MSC_VER < 1900
 static details::windows_category_impl instance;
 #endif
-const std::error_category & __cdecl windows_category()
+const std::error_category& __cdecl windows_category()
 {
 #if _MSC_VER >= 1900
     static details::windows_category_impl instance;
@@ -267,15 +260,7 @@ std::string windows_category_impl::message(int errorCode) const CPPREST_NOEXCEPT
 
     std::wstring buffer(buffer_size, 0);
 
-    const auto result = ::FormatMessageW(
-        dwFlags,
-        lpSource,
-        errorCode,
-        0,
-        &buffer[0],
-        buffer_size,
-        NULL);
-
+    const auto result = ::FormatMessageW(dwFlags, lpSource, errorCode, 0, &buffer[0], buffer_size, NULL);
 
     if (result == 0)
     {
@@ -293,30 +278,23 @@ std::error_condition windows_category_impl::default_error_condition(int errorCod
     // First see if the STL implementation can handle the mapping for common cases.
     const std::error_condition errCondition = std::system_category().default_error_condition(errorCode);
     const std::string errConditionMsg = errCondition.message();
-    if(!utility::details::str_iequal(errConditionMsg, "unknown error"))
+    if (!utility::details::str_iequal(errConditionMsg, "unknown error"))
     {
         return errCondition;
     }
 
-    switch(errorCode)
+    switch (errorCode)
     {
 #ifndef __cplusplus_winrt
-    case ERROR_WINHTTP_TIMEOUT:
-        return std::errc::timed_out;
-    case ERROR_WINHTTP_CANNOT_CONNECT:
-        return std::errc::host_unreachable;
-    case ERROR_WINHTTP_CONNECTION_ERROR:
-        return std::errc::connection_aborted;
+        case ERROR_WINHTTP_TIMEOUT: return std::errc::timed_out;
+        case ERROR_WINHTTP_CANNOT_CONNECT: return std::errc::host_unreachable;
+        case ERROR_WINHTTP_CONNECTION_ERROR: return std::errc::connection_aborted;
 #endif
-    case INET_E_RESOURCE_NOT_FOUND:
-    case INET_E_CANNOT_CONNECT:
-        return std::errc::host_unreachable;
-    case INET_E_CONNECTION_TIMEOUT:
-        return std::errc::timed_out;
-    case INET_E_DOWNLOAD_FAILURE:
-        return std::errc::connection_aborted;
-    default:
-        break;
+        case INET_E_RESOURCE_NOT_FOUND:
+        case INET_E_CANNOT_CONNECT: return std::errc::host_unreachable;
+        case INET_E_CONNECTION_TIMEOUT: return std::errc::timed_out;
+        case INET_E_DOWNLOAD_FAILURE: return std::errc::connection_aborted;
+        default: break;
     }
 
     return std::error_condition(errorCode, *this);
@@ -324,7 +302,7 @@ std::error_condition windows_category_impl::default_error_condition(int errorCod
 
 #else
 
-const std::error_category & __cdecl linux_category()
+const std::error_category& __cdecl linux_category()
 {
     // On Linux we are using boost error codes which have the exact same
     // mapping and are equivalent with std::generic_category error codes.
@@ -333,7 +311,7 @@ const std::error_category & __cdecl linux_category()
 
 #endif
 
-}
+} // namespace details
 
 #define LOW_3BITS 0x7
 #define LOW_4BITS 0xF
@@ -355,16 +333,15 @@ const std::error_category & __cdecl linux_category()
 // or unsigned.
 using UtilCharInternal_t = signed char;
 
-
 inline size_t count_utf8_to_utf16(const std::string& s)
 {
     const size_t sSize = s.size();
     auto const sData = reinterpret_cast<const UtilCharInternal_t*>(s.data());
-    size_t result{ sSize };
+    size_t result {sSize};
 
     for (size_t index = 0; index < sSize;)
     {
-        if( sData[index] > 0 )
+        if (sData[index] > 0)
         {
             // use fast inner loop to skip single byte code points (which are
             // expected to be the most frequent)
@@ -375,7 +352,7 @@ inline size_t count_utf8_to_utf16(const std::string& s)
         }
 
         // start special handling for multi-byte code points
-        const UtilCharInternal_t c{ sData[index++] };
+        const UtilCharInternal_t c {sData[index++]};
 
         if ((c & BIT7) == 0)
         {
@@ -388,7 +365,7 @@ inline size_t count_utf8_to_utf16(const std::string& s)
                 throw std::range_error("UTF-8 string is missing bytes in character");
             }
 
-            const UtilCharInternal_t c2{ sData[index++] };
+            const UtilCharInternal_t c2 {sData[index++]};
             if ((c2 & 0xC0) != BIT8)
             {
                 throw std::range_error("UTF-8 continuation byte is missing leading bit mask");
@@ -404,8 +381,8 @@ inline size_t count_utf8_to_utf16(const std::string& s)
                 throw std::range_error("UTF-8 string is missing bytes in character");
             }
 
-            const UtilCharInternal_t c2{ sData[index++] };
-            const UtilCharInternal_t c3{ sData[index++] };
+            const UtilCharInternal_t c2 {sData[index++]};
+            const UtilCharInternal_t c3 {sData[index++]};
             if (((c2 | c3) & 0xC0) != BIT8)
             {
                 throw std::range_error("UTF-8 continuation byte is missing leading bit mask");
@@ -420,15 +397,16 @@ inline size_t count_utf8_to_utf16(const std::string& s)
                 throw std::range_error("UTF-8 string is missing bytes in character");
             }
 
-            const UtilCharInternal_t c2{ sData[index++] };
-            const UtilCharInternal_t c3{ sData[index++] };
-            const UtilCharInternal_t c4{ sData[index++] };
+            const UtilCharInternal_t c2 {sData[index++]};
+            const UtilCharInternal_t c3 {sData[index++]};
+            const UtilCharInternal_t c4 {sData[index++]};
             if (((c2 | c3 | c4) & 0xC0) != BIT8)
             {
                 throw std::range_error("UTF-8 continuation byte is missing leading bit mask");
             }
 
-            const uint32_t codePoint = ((c & LOW_3BITS) << 18) | ((c2 & LOW_6BITS) << 12) | ((c3 & LOW_6BITS) << 6) | (c4 & LOW_6BITS);
+            const uint32_t codePoint =
+                ((c & LOW_3BITS) << 18) | ((c2 & LOW_6BITS) << 12) | ((c3 & LOW_6BITS) << 6) | (c4 & LOW_6BITS);
             result -= (3 - (codePoint >= SURROGATE_PAIR_START));
         }
         else
@@ -440,7 +418,7 @@ inline size_t count_utf8_to_utf16(const std::string& s)
     return result;
 }
 
-utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
+utf16string __cdecl conversions::utf8_to_utf16(const std::string& s)
 {
     // Save repeated heap allocations, use the length of resulting sequence.
     const size_t srcSize = s.size();
@@ -454,12 +432,13 @@ utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
         UtilCharInternal_t src = srcData[index];
         switch (src & 0xF0)
         {
-        case 0xF0: // 4 byte character, 0x10000 to 0x10FFFF
+            case 0xF0: // 4 byte character, 0x10000 to 0x10FFFF
             {
-                const UtilCharInternal_t c2{ srcData[++index] };
-                const UtilCharInternal_t c3{ srcData[++index] };
-                const UtilCharInternal_t c4{ srcData[++index] };
-                uint32_t codePoint = ((src & LOW_3BITS) << 18) | ((c2 & LOW_6BITS) << 12) | ((c3 & LOW_6BITS) << 6) | (c4 & LOW_6BITS);
+                const UtilCharInternal_t c2 {srcData[++index]};
+                const UtilCharInternal_t c3 {srcData[++index]};
+                const UtilCharInternal_t c4 {srcData[++index]};
+                uint32_t codePoint =
+                    ((src & LOW_3BITS) << 18) | ((c2 & LOW_6BITS) << 12) | ((c3 & LOW_6BITS) << 6) | (c4 & LOW_6BITS);
                 if (codePoint >= SURROGATE_PAIR_START)
                 {
                     // In UTF-16 U+10000 to U+10FFFF are represented as two 16-bit code units, surrogate pairs.
@@ -468,49 +447,51 @@ utf16string __cdecl conversions::utf8_to_utf16(const std::string &s)
                     //  - low surrogate is 0xDC00 added to the low ten bits
                     codePoint -= SURROGATE_PAIR_START;
                     destData[destIndex++] = static_cast<utf16string::value_type>((codePoint >> 10) | H_SURROGATE_START);
-                    destData[destIndex++] = static_cast<utf16string::value_type>((codePoint & 0x3FF) | L_SURROGATE_START);
+                    destData[destIndex++] =
+                        static_cast<utf16string::value_type>((codePoint & 0x3FF) | L_SURROGATE_START);
                 }
                 else
                 {
-                    // In UTF-16 U+0000 to U+D7FF and U+E000 to U+FFFF are represented exactly as the Unicode code point value.
-                    // U+D800 to U+DFFF are not valid characters, for simplicity we assume they are not present but will encode
-                    // them if encountered.
+                    // In UTF-16 U+0000 to U+D7FF and U+E000 to U+FFFF are represented exactly as the Unicode code point
+                    // value. U+D800 to U+DFFF are not valid characters, for simplicity we assume they are not present
+                    // but will encode them if encountered.
                     destData[destIndex++] = static_cast<utf16string::value_type>(codePoint);
                 }
             }
             break;
-        case 0xE0: // 3 byte character, 0x800 to 0xFFFF
+            case 0xE0: // 3 byte character, 0x800 to 0xFFFF
             {
-                const UtilCharInternal_t c2{ srcData[++index] };
-                const UtilCharInternal_t c3{ srcData[++index] };
-                destData[destIndex++] = static_cast<utf16string::value_type>(((src & LOW_4BITS) << 12) | ((c2 & LOW_6BITS) << 6) | (c3 & LOW_6BITS));
+                const UtilCharInternal_t c2 {srcData[++index]};
+                const UtilCharInternal_t c3 {srcData[++index]};
+                destData[destIndex++] = static_cast<utf16string::value_type>(
+                    ((src & LOW_4BITS) << 12) | ((c2 & LOW_6BITS) << 6) | (c3 & LOW_6BITS));
             }
             break;
-        case 0xD0: // 2 byte character, 0x80 to 0x7FF
-        case 0xC0:
+            case 0xD0: // 2 byte character, 0x80 to 0x7FF
+            case 0xC0:
             {
-                const UtilCharInternal_t c2{ srcData[++index] };
-                destData[destIndex++] = static_cast<utf16string::value_type>(((src & LOW_5BITS) << 6) | (c2 & LOW_6BITS));
+                const UtilCharInternal_t c2 {srcData[++index]};
+                destData[destIndex++] =
+                    static_cast<utf16string::value_type>(((src & LOW_5BITS) << 6) | (c2 & LOW_6BITS));
             }
             break;
-        default: // single byte character, 0x0 to 0x7F
-            // try to use a fast inner loop for following single byte characters,
-            // since they are quite probable
-            do
-            {
-                destData[destIndex++] = static_cast<utf16string::value_type>(srcData[index++]);
-            } while (index < srcSize && srcData[index] > 0);
-            // adjust index since it will be incremented by the for loop
-            --index;
+            default: // single byte character, 0x0 to 0x7F
+                // try to use a fast inner loop for following single byte characters,
+                // since they are quite probable
+                do
+                {
+                    destData[destIndex++] = static_cast<utf16string::value_type>(srcData[index++]);
+                } while (index < srcSize && srcData[index] > 0);
+                // adjust index since it will be incremented by the for loop
+                --index;
         }
     }
     return dest;
 }
 
-
-inline size_t count_utf16_to_utf8(const utf16string &w)
+inline size_t count_utf16_to_utf8(const utf16string& w)
 {
-    const utf16string::value_type * const srcData = &w[0];
+    const utf16string::value_type* const srcData = &w[0];
     const size_t srcSize = w.size();
     size_t destSize(srcSize);
     for (size_t index = 0; index < srcSize; ++index)
@@ -549,7 +530,7 @@ inline size_t count_utf16_to_utf8(const utf16string &w)
     return destSize;
 }
 
-std::string __cdecl conversions::utf16_to_utf8(const utf16string &w)
+std::string __cdecl conversions::utf16_to_utf8(const utf16string& w)
 {
     const size_t srcSize = w.size();
     const utf16string::value_type* const srcData = &w[0];
@@ -568,8 +549,8 @@ std::string __cdecl conversions::utf16_to_utf8(const utf16string &w)
             }
             else // 2 bytes needed (11 bits used)
             {
-                destData[destIndex++] = static_cast<char>(char((src >> 6) | 0xC0));               // leading 5 bits
-                destData[destIndex++] = static_cast<char>(char((src & LOW_6BITS) | BIT8));        // trailing 6 bits
+                destData[destIndex++] = static_cast<char>(char((src >> 6) | 0xC0));        // leading 5 bits
+                destData[destIndex++] = static_cast<char>(char((src & LOW_6BITS) | BIT8)); // trailing 6 bits
             }
         }
         // Check for high surrogate.
@@ -589,10 +570,10 @@ std::string __cdecl conversions::utf16_to_utf8(const utf16string &w)
             codePoint += SURROGATE_PAIR_START;
 
             // 4 bytes needed (21 bits used)
-            destData[destIndex++] = static_cast<char>((codePoint >> 18) | 0xF0);                 // leading 3 bits
-            destData[destIndex++] = static_cast<char>(((codePoint >> 12) & LOW_6BITS) | BIT8);   // next 6 bits
-            destData[destIndex++] = static_cast<char>(((codePoint >> 6) & LOW_6BITS) | BIT8);    // next 6 bits
-            destData[destIndex++] = static_cast<char>((codePoint & LOW_6BITS) | BIT8);           // trailing 6 bits
+            destData[destIndex++] = static_cast<char>((codePoint >> 18) | 0xF0);               // leading 3 bits
+            destData[destIndex++] = static_cast<char>(((codePoint >> 12) & LOW_6BITS) | BIT8); // next 6 bits
+            destData[destIndex++] = static_cast<char>(((codePoint >> 6) & LOW_6BITS) | BIT8);  // next 6 bits
+            destData[destIndex++] = static_cast<char>((codePoint & LOW_6BITS) | BIT8);         // trailing 6 bits
         }
         else // 3 bytes needed (16 bits used)
         {
@@ -605,13 +586,13 @@ std::string __cdecl conversions::utf16_to_utf8(const utf16string &w)
     return dest;
 }
 
-utf16string __cdecl conversions::usascii_to_utf16(const std::string &s)
+utf16string __cdecl conversions::usascii_to_utf16(const std::string& s)
 {
     // Ascii is a subset of UTF-8 so just convert to UTF-16
     return utf8_to_utf16(s);
 }
 
-utf16string __cdecl conversions::latin1_to_utf16(const std::string &s)
+utf16string __cdecl conversions::latin1_to_utf16(const std::string& s)
 {
     // Latin1 is the first 256 code points in Unicode.
     // In UTF-16 encoding each of these is represented as exactly the numeric code point.
@@ -626,49 +607,34 @@ utf16string __cdecl conversions::latin1_to_utf16(const std::string &s)
     return dest;
 }
 
-utf8string __cdecl conversions::latin1_to_utf8(const std::string &s)
-{
-    return utf16_to_utf8(latin1_to_utf16(s));
-}
+utf8string __cdecl conversions::latin1_to_utf8(const std::string& s) { return utf16_to_utf8(latin1_to_utf16(s)); }
 
 #ifndef _UTF16_STRINGS
-utility::string_t __cdecl conversions::to_string_t(utf16string &&s)
-{
-    return utf16_to_utf8(std::move(s));
-}
+utility::string_t __cdecl conversions::to_string_t(utf16string&& s) { return utf16_to_utf8(std::move(s)); }
 #endif
 
 #ifdef _UTF16_STRINGS
-utility::string_t __cdecl conversions::to_string_t(std::string &&s)
-{
-    return utf8_to_utf16(std::move(s));
-}
+utility::string_t __cdecl conversions::to_string_t(std::string&& s) { return utf8_to_utf16(std::move(s)); }
 #endif
 
 #ifndef _UTF16_STRINGS
-utility::string_t __cdecl conversions::to_string_t(const utf16string &s)
-{
-    return utf16_to_utf8(s);
-}
+utility::string_t __cdecl conversions::to_string_t(const utf16string& s) { return utf16_to_utf8(s); }
 #endif
 
 #ifdef _UTF16_STRINGS
-utility::string_t __cdecl conversions::to_string_t(const std::string &s)
-{
-    return utf8_to_utf16(s);
-}
+utility::string_t __cdecl conversions::to_string_t(const std::string& s) { return utf8_to_utf16(s); }
 #endif
 
-std::string __cdecl conversions::to_utf8string(const utf16string &value) { return utf16_to_utf8(value); }
+std::string __cdecl conversions::to_utf8string(const utf16string& value) { return utf16_to_utf8(value); }
 
-utf16string __cdecl conversions::to_utf16string(const std::string &value) { return utf8_to_utf16(value); }
+utf16string __cdecl conversions::to_utf16string(const std::string& value) { return utf8_to_utf16(value); }
 
 #ifndef WIN32
-datetime datetime::timeval_to_datetime(const timeval &time)
+datetime datetime::timeval_to_datetime(const timeval& time)
 {
     const uint64_t epoch_offset = 11644473600LL; // diff between windows and unix epochs (seconds)
     uint64_t result = epoch_offset + time.tv_sec;
-    result *= _secondTicks; // convert to 10e-7
+    result *= _secondTicks;      // convert to 10e-7
     result += time.tv_usec * 10; // convert and add microseconds, 10e-6 to 10e-7
     return datetime(result);
 }
@@ -687,7 +653,7 @@ datetime __cdecl datetime::utc_now()
     largeInt.HighPart = fileTime.dwHighDateTime;
 
     return datetime(largeInt.QuadPart);
-#else //LINUX
+#else // LINUX
     struct timeval time;
     gettimeofday(&time, nullptr);
     return timeval_to_datetime(time);
@@ -707,7 +673,7 @@ utility::string_t datetime::to_string(date_format format) const
     ft.dwLowDateTime = largeInt.LowPart;
 
     SYSTEMTIME systemTime;
-    if (!FileTimeToSystemTime((const FILETIME *)&ft, &systemTime))
+    if (!FileTimeToSystemTime((const FILETIME*)&ft, &systemTime))
     {
         throw utility::details::create_system_error(GetLastError());
     }
@@ -718,9 +684,16 @@ utility::string_t datetime::to_string(date_format format) const
         {
             wchar_t dateStr[18] = {0};
 #if _WIN32_WINNT < _WIN32_WINNT_VISTA
-            status = GetDateFormatW(LOCALE_INVARIANT, 0, &systemTime, L"ddd',' dd MMM yyyy", dateStr, sizeof(dateStr) / sizeof(wchar_t));
+            status = GetDateFormatW(
+                LOCALE_INVARIANT, 0, &systemTime, L"ddd',' dd MMM yyyy", dateStr, sizeof(dateStr) / sizeof(wchar_t));
 #else
-            status = GetDateFormatEx(LOCALE_NAME_INVARIANT, 0, &systemTime, L"ddd',' dd MMM yyyy", dateStr, sizeof(dateStr) / sizeof(wchar_t), NULL);
+            status = GetDateFormatEx(LOCALE_NAME_INVARIANT,
+                                     0,
+                                     &systemTime,
+                                     L"ddd',' dd MMM yyyy",
+                                     dateStr,
+                                     sizeof(dateStr) / sizeof(wchar_t),
+                                     NULL);
 #endif // _WIN32_WINNT < _WIN32_WINNT_VISTA
             if (status == 0)
             {
@@ -734,9 +707,19 @@ utility::string_t datetime::to_string(date_format format) const
         {
             wchar_t timeStr[10] = {0};
 #if _WIN32_WINNT < _WIN32_WINNT_VISTA
-            status = GetTimeFormatW(LOCALE_INVARIANT, TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT, &systemTime, L"HH':'mm':'ss", timeStr, sizeof(timeStr) / sizeof(wchar_t));
+            status = GetTimeFormatW(LOCALE_INVARIANT,
+                                    TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT,
+                                    &systemTime,
+                                    L"HH':'mm':'ss",
+                                    timeStr,
+                                    sizeof(timeStr) / sizeof(wchar_t));
 #else
-            status = GetTimeFormatEx(LOCALE_NAME_INVARIANT, TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT, &systemTime, L"HH':'mm':'ss", timeStr, sizeof(timeStr) / sizeof(wchar_t));
+            status = GetTimeFormatEx(LOCALE_NAME_INVARIANT,
+                                     TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT,
+                                     &systemTime,
+                                     L"HH':'mm':'ss",
+                                     timeStr,
+                                     sizeof(timeStr) / sizeof(wchar_t));
 #endif // _WIN32_WINNT < _WIN32_WINNT_VISTA
             if (status == 0)
             {
@@ -746,7 +729,6 @@ utility::string_t datetime::to_string(date_format format) const
             result += timeStr;
             result += L" GMT";
         }
-
     }
     else if (format == ISO_8601)
     {
@@ -770,27 +752,37 @@ utility::string_t datetime::to_string(date_format format) const
         {
             wchar_t timeStr[buffSize] = {0};
 #if _WIN32_WINNT < _WIN32_WINNT_VISTA
-            status = GetTimeFormatW(LOCALE_INVARIANT, TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT, &systemTime, L"HH':'mm':'ss", timeStr, buffSize);
+            status = GetTimeFormatW(LOCALE_INVARIANT,
+                                    TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT,
+                                    &systemTime,
+                                    L"HH':'mm':'ss",
+                                    timeStr,
+                                    buffSize);
 #else
-            status = GetTimeFormatEx(LOCALE_NAME_INVARIANT, TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT, &systemTime, L"HH':'mm':'ss", timeStr, buffSize);
+            status = GetTimeFormatEx(LOCALE_NAME_INVARIANT,
+                                     TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT,
+                                     &systemTime,
+                                     L"HH':'mm':'ss",
+                                     timeStr,
+                                     buffSize);
 #endif // _WIN32_WINNT < _WIN32_WINNT_VISTA
             if (status == 0)
             {
-               throw utility::details::create_system_error(GetLastError());
+                throw utility::details::create_system_error(GetLastError());
             }
 
             result += timeStr;
         }
-
 
         uint64_t frac_sec = largeInt.QuadPart % _secondTicks;
         if (frac_sec > 0)
         {
             // Append fractional second, which is a 7-digit value with no trailing zeros
             // This way, '1200' becomes '00012'
-            wchar_t buf[9] = { 0 };
+            wchar_t buf[9] = {0};
             size_t appended = swprintf_s(buf, 9, L".%07ld", static_cast<long>(frac_sec));
-            while (buf[appended - 1] == L'0') --appended; // trim trailing zeros
+            while (buf[appended - 1] == L'0')
+                --appended; // trim trailing zeros
             result.append(buf, appended);
         }
 
@@ -798,38 +790,38 @@ utility::string_t datetime::to_string(date_format format) const
     }
 
     return result;
-#else //LINUX
+#else // LINUX
     uint64_t input = m_interval;
     uint64_t frac_sec = input % _secondTicks;
-    input /= _secondTicks; // convert to seconds
-    time_t time = (time_t)input - (time_t)11644473600LL;// diff between windows and unix epochs (seconds)
+    input /= _secondTicks;                               // convert to seconds
+    time_t time = (time_t)input - (time_t)11644473600LL; // diff between windows and unix epochs (seconds)
 
     struct tm datetime;
     gmtime_r(&time, &datetime);
 
     const int max_dt_length = 64;
-    char output[max_dt_length+1] = {0};
+    char output[max_dt_length + 1] = {0};
 
     if (format != RFC_1123 && frac_sec > 0)
     {
         // Append fractional second, which is a 7-digit value with no trailing zeros
         // This way, '1200' becomes '00012'
         const int max_frac_length = 8;
-        char buf[max_frac_length+1] = { 0 };
+        char buf[max_frac_length + 1] = {0};
         snprintf(buf, sizeof(buf), ".%07ld", (long int)frac_sec);
         // trim trailing zeros
-        for (int i = max_frac_length-1; buf[i] == '0'; i--) buf[i] = '\0';
+        for (int i = max_frac_length - 1; buf[i] == '0'; i--)
+            buf[i] = '\0';
         // format the datetime into a separate buffer
-        char datetime_str[max_dt_length-max_frac_length-1+1] = {0};
+        char datetime_str[max_dt_length - max_frac_length - 1 + 1] = {0};
         strftime(datetime_str, sizeof(datetime_str), "%Y-%m-%dT%H:%M:%S", &datetime);
         // now print this buffer into the output buffer
         snprintf(output, sizeof(output), "%s%sZ", datetime_str, buf);
     }
     else
     {
-        strftime(output, sizeof(output),
-            format == RFC_1123 ? "%a, %d %b %Y %H:%M:%S GMT" : "%Y-%m-%dT%H:%M:%SZ",
-            &datetime);
+        strftime(
+            output, sizeof(output), format == RFC_1123 ? "%a, %d %b %Y %H:%M:%S GMT" : "%Y-%m-%dT%H:%M:%SZ", &datetime);
     }
 
     return std::string(output);
@@ -837,7 +829,7 @@ utility::string_t datetime::to_string(date_format format) const
 }
 
 #ifdef _WIN32
-bool __cdecl datetime::system_type_to_datetime(void* pvsysTime, uint64_t seconds, datetime * pdt)
+bool __cdecl datetime::system_type_to_datetime(void* pvsysTime, uint64_t seconds, datetime* pdt)
 {
     SYSTEMTIME* psysTime = (SYSTEMTIME*)pvsysTime;
     FILETIME fileTime;
@@ -876,7 +868,9 @@ uint64_t timeticks_from_second(StringIterator begin, StringIterator end)
     return ufrac_second;
 }
 
-void extract_fractional_second(const utility::string_t& dateString, utility::string_t& resultString, uint64_t& ufrac_second)
+void extract_fractional_second(const utility::string_t& dateString,
+                               utility::string_t& resultString,
+                               uint64_t& ufrac_second)
 {
     resultString = dateString;
     // First, the string must be strictly longer than 2 characters, and the trailing character must be 'Z'
@@ -914,25 +908,31 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
         std::wstring month(3, L'\0');
         std::wstring unused(3, L'\0');
 
-        const wchar_t * formatString = L"%3c, %2d %3c %4d %2d:%2d:%2d %3c";
-        auto n = swscanf_s(dateString.c_str(), formatString,
-            unused.data(), unused.size(),
-            &sysTime.wDay,
-            month.data(), month.size(),
-            &sysTime.wYear,
-            &sysTime.wHour,
-            &sysTime.wMinute,
-            &sysTime.wSecond,
-            unused.data(), unused.size());
+        const wchar_t* formatString = L"%3c, %2d %3c %4d %2d:%2d:%2d %3c";
+        auto n = swscanf_s(dateString.c_str(),
+                           formatString,
+                           unused.data(),
+                           unused.size(),
+                           &sysTime.wDay,
+                           month.data(),
+                           month.size(),
+                           &sysTime.wYear,
+                           &sysTime.wHour,
+                           &sysTime.wMinute,
+                           &sysTime.wSecond,
+                           unused.data(),
+                           unused.size());
 
         if (n == 8)
         {
-            std::wstring monthnames[12] = {L"Jan", L"Feb", L"Mar", L"Apr", L"May", L"Jun", L"Jul", L"Aug", L"Sep", L"Oct", L"Nov", L"Dec"};
-            auto loc = std::find_if(monthnames, monthnames+12, [&month](const std::wstring& m) { return m == month;});
+            std::wstring monthnames[12] = {
+                L"Jan", L"Feb", L"Mar", L"Apr", L"May", L"Jun", L"Jul", L"Aug", L"Sep", L"Oct", L"Nov", L"Dec"};
+            auto loc =
+                std::find_if(monthnames, monthnames + 12, [&month](const std::wstring& m) { return m == month; });
 
-            if (loc != monthnames+12)
+            if (loc != monthnames + 12)
             {
-                sysTime.wMonth = (short) ((loc - monthnames) + 1);
+                sysTime.wMonth = (short)((loc - monthnames) + 1);
                 if (system_type_to_datetime(&sysTime, ufrac_second, &result))
                 {
                     return result;
@@ -949,15 +949,16 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
         utility::string_t input;
         extract_fractional_second(dateString, input, ufrac_second);
         {
-            SYSTEMTIME sysTime = { 0 };
-            const wchar_t * formatString = L"%4d-%2d-%2dT%2d:%2d:%2dZ";
-            auto n = swscanf_s(input.c_str(), formatString,
-                &sysTime.wYear,
-                &sysTime.wMonth,
-                &sysTime.wDay,
-                &sysTime.wHour,
-                &sysTime.wMinute,
-                &sysTime.wSecond);
+            SYSTEMTIME sysTime = {0};
+            const wchar_t* formatString = L"%4d-%2d-%2dT%2d:%2d:%2dZ";
+            auto n = swscanf_s(input.c_str(),
+                               formatString,
+                               &sysTime.wYear,
+                               &sysTime.wMonth,
+                               &sysTime.wDay,
+                               &sysTime.wHour,
+                               &sysTime.wMinute,
+                               &sysTime.wSecond);
 
             if (n == 3 || n == 6)
             {
@@ -971,12 +972,8 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
             SYSTEMTIME sysTime = {0};
             DWORD date = 0;
 
-            const wchar_t * formatString = L"%8dT%2d:%2d:%2dZ";
-            auto n = swscanf_s(input.c_str(), formatString,
-                &date,
-                &sysTime.wHour,
-                &sysTime.wMinute,
-                &sysTime.wSecond);
+            const wchar_t* formatString = L"%8dT%2d:%2d:%2dZ";
+            auto n = swscanf_s(input.c_str(), formatString, &date, &sysTime.wHour, &sysTime.wMinute, &sysTime.wSecond);
 
             if (n == 1 || n == 4)
             {
@@ -994,15 +991,12 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
         }
         {
             SYSTEMTIME sysTime = {0};
-            GetSystemTime(&sysTime);    // Fill date portion with today's information
+            GetSystemTime(&sysTime); // Fill date portion with today's information
             sysTime.wSecond = 0;
             sysTime.wMilliseconds = 0;
 
-            const wchar_t * formatString = L"%2d:%2d:%2dZ";
-            auto n = swscanf_s(input.c_str(), formatString,
-                &sysTime.wHour,
-                &sysTime.wMinute,
-                &sysTime.wSecond);
+            const wchar_t* formatString = L"%2d:%2d:%2dZ";
+            auto n = swscanf_s(input.c_str(), formatString, &sysTime.wHour, &sysTime.wMinute, &sysTime.wSecond);
 
             if (n == 3)
             {
@@ -1117,7 +1111,7 @@ utility::string_t __cdecl timespan::seconds_to_xml_duration(utility::seconds dur
     auto numSecs = durationSecs.count();
 
     // Find the number of minutes
-    auto numMins =  numSecs / 60;
+    auto numMins = numSecs / 60;
     if (numMins > 0)
     {
         numSecs = numSecs % 60;
@@ -1179,7 +1173,7 @@ utility::string_t __cdecl timespan::seconds_to_xml_duration(utility::seconds dur
     return result;
 }
 
-utility::seconds __cdecl timespan::xml_duration_to_seconds(const utility::string_t &timespanString)
+utility::seconds __cdecl timespan::xml_duration_to_seconds(const utility::string_t& timespanString)
 {
     // The format is:
     // PnDTnHnMnS
@@ -1208,13 +1202,16 @@ utility::seconds __cdecl timespan::xml_duration_to_seconds(const utility::string
             if (c == '.')
             {
                 // decimal point is not handled
-                do { c = is.get(); } while(is_digit((utility::char_t)c));
+                do
+                {
+                    c = is.get();
+                } while (is_digit((utility::char_t)c));
             }
         }
 
         if (c == L'D') numSecs += val * 24 * 3600; // days
-        if (c == L'H') numSecs += val * 3600; // Hours
-        if (c == L'M') numSecs += val * 60; // Minutes
+        if (c == L'H') numSecs += val * 3600;      // Hours
+        if (c == L'M') numSecs += val * 60;        // Minutes
         if (c == L'S' || c == eof)
         {
             numSecs += val; // seconds
@@ -1225,16 +1222,16 @@ utility::seconds __cdecl timespan::xml_duration_to_seconds(const utility::string
     return utility::seconds(numSecs);
 }
 
-const utility::string_t nonce_generator::c_allowed_chars(_XPLATSTR("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"));
+const utility::string_t nonce_generator::c_allowed_chars(
+    _XPLATSTR("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"));
 
 utility::string_t nonce_generator::generate()
 {
     std::uniform_int_distribution<> distr(0, static_cast<int>(c_allowed_chars.length() - 1));
     utility::string_t result;
     result.reserve(length());
-    std::generate_n(std::back_inserter(result), length(), [&]() { return c_allowed_chars[distr(m_random)]; } );
+    std::generate_n(std::back_inserter(result), length(), [&]() { return c_allowed_chars[distr(m_random)]; });
     return result;
 }
 
-
-}
+} // namespace utility

@@ -1,16 +1,16 @@
 /***
-* Copyright (C) Microsoft. All rights reserved.
-* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-*
-* =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*
-* Standard macros and definitions.
-* This header has minimal dependency on windows headers and is safe for use in the public API
-*
-* For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
-*
-* =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-****/
+ * Copyright (C) Microsoft. All rights reserved.
+ * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+ *
+ * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ *
+ * Standard macros and definitions.
+ * This header has minimal dependency on windows headers and is safe for use in the public API
+ *
+ * For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
+ *
+ * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+ ****/
 
 #pragma once
 
@@ -30,10 +30,14 @@
 
 #else // ^^^ _WIN32 ^^^ // vvv !_WIN32 vvv
 
-#define __declspec(x) __attribute__ ((x))
+#define __declspec(x) __attribute__((x))
 #define dllimport
 #define novtable /* no novtable equivalent */
-#define __assume(x) do { if (!(x)) __builtin_unreachable(); } while (false)
+#define __assume(x)                                                                                                    \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        if (!(x)) __builtin_unreachable();                                                                             \
+    } while (false)
 #define CASABLANCA_UNREFERENCED_PARAMETER(x) (void)x
 #define CPPREST_NOEXCEPT noexcept
 #define CPPREST_CONSTEXPR constexpr
@@ -46,7 +50,7 @@
 
 #if not defined __cdecl
 #if defined cdecl
-#define __cdecl __attribute__ ((cdecl))
+#define __cdecl __attribute__((cdecl))
 #else // ^^^ defined cdecl ^^^ // vvv !defined cdecl vvv
 #define __cdecl
 #endif // defined cdecl
@@ -67,7 +71,6 @@
 #include <cstdio>
 #endif // __clang__
 #endif // _WIN32
-
 
 #ifdef _NO_ASYNCRTIMP
 #define _ASYNCRTIMP

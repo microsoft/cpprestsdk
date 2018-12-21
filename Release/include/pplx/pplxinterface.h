@@ -1,15 +1,15 @@
 /***
-* Copyright (C) Microsoft. All rights reserved.
-* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-*
-* =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*
-* PPL interfaces
-*
-* For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
-*
-* =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-****/
+ * Copyright (C) Microsoft. All rights reserved.
+ * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+ *
+ * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ *
+ * PPL interfaces
+ *
+ * For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
+ *
+ * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+ ****/
 
 #pragma once
 
@@ -38,20 +38,19 @@
 
 namespace pplx
 {
-
 /// <summary>
-///     An elementary abstraction for a task, defined as <c>void (__cdecl * TaskProc_t)(void *)</c>. A <c>TaskProc</c> is called to
-///     invoke the body of a task.
+///     An elementary abstraction for a task, defined as <c>void (__cdecl * TaskProc_t)(void *)</c>. A <c>TaskProc</c>
+///     is called to invoke the body of a task.
 /// </summary>
 /**/
-typedef void (_pplx_cdecl * TaskProc_t)(void *);
+typedef void(_pplx_cdecl* TaskProc_t)(void*);
 
 /// <summary>
 ///     Scheduler Interface
 /// </summary>
 struct __declspec(novtable) scheduler_interface
 {
-    virtual void schedule( TaskProc_t, _In_ void* ) = 0;
+    virtual void schedule(TaskProc_t, _In_ void*) = 0;
 };
 
 /// <summary>
@@ -72,25 +71,17 @@ struct scheduler_ptr
     /// <summary>
     /// Creates a scheduler pointer from raw pointer to scheduler
     /// </summary>
-    explicit scheduler_ptr(_In_opt_ scheduler_interface * pScheduler) : m_scheduler(pScheduler)
-    {
-    }
+    explicit scheduler_ptr(_In_opt_ scheduler_interface* pScheduler) : m_scheduler(pScheduler) {}
 
     /// <summary>
     /// Behave like a pointer
     /// </summary>
-    scheduler_interface *operator->() const
-    {
-        return get();
-    }
+    scheduler_interface* operator->() const { return get(); }
 
     /// <summary>
     ///  Returns the raw pointer to the scheduler
     /// </summary>
-    scheduler_interface * get() const
-    {
-        return m_scheduler;
-    }
+    scheduler_interface* get() const { return m_scheduler; }
 
     /// <summary>
     /// Test whether the scheduler pointer is non-null
@@ -98,15 +89,13 @@ struct scheduler_ptr
     operator bool() const { return get() != nullptr; }
 
 private:
-
     std::shared_ptr<scheduler_interface> m_sharedScheduler;
-    scheduler_interface * m_scheduler;
+    scheduler_interface* m_scheduler;
 };
 
-
 /// <summary>
-///     Describes the execution status of a <c>task_group</c> or <c>structured_task_group</c> object.  A value of this type is returned
-///     by numerous methods that wait on tasks scheduled to a task group to complete.
+///     Describes the execution status of a <c>task_group</c> or <c>structured_task_group</c> object.  A value of this
+///     type is returned by numerous methods that wait on tasks scheduled to a task group to complete.
 /// </summary>
 /// <seealso cref="task_group Class"/>
 /// <seealso cref="task_group::wait Method"/>
@@ -118,8 +107,8 @@ private:
 enum task_group_status
 {
     /// <summary>
-    ///     The tasks queued to the <c>task_group</c> object have not completed.  Note that this value is not presently returned by
-    ///     the Concurrency Runtime.
+    ///     The tasks queued to the <c>task_group</c> object have not completed.  Note that this value is not presently
+    ///     returned by the Concurrency Runtime.
     /// </summary>
     /**/
     not_complete,
@@ -131,7 +120,8 @@ enum task_group_status
     completed,
 
     /// <summary>
-    ///     The <c>task_group</c> or <c>structured_task_group</c> object was canceled.  One or more tasks may not have executed.
+    ///     The <c>task_group</c> or <c>structured_task_group</c> object was canceled.  One or more tasks may not have
+    ///     executed.
     /// </summary>
     /**/
     canceled
@@ -189,54 +179,49 @@ inline T atomic_exchange(T volatile& _Target, T _Value)
     return _InterlockedExchange(&_Target, _Value);
 }
 
-inline long atomic_increment(long volatile & _Target)
-{
-    return _InterlockedIncrement(&_Target);
-}
+inline long atomic_increment(long volatile& _Target) { return _InterlockedIncrement(&_Target); }
 
-inline long atomic_add(long volatile & _Target, long value)
-{
-    return _InterlockedExchangeAdd(&_Target, value) + value;
-}
+inline long atomic_add(long volatile& _Target, long value) { return _InterlockedExchangeAdd(&_Target, value) + value; }
 
-inline size_t atomic_increment(size_t volatile & _Target)
+inline size_t atomic_increment(size_t volatile& _Target)
 {
 #if (defined(_M_IX86) || defined(_M_ARM))
-    return static_cast<size_t>(_InterlockedIncrement(reinterpret_cast<long volatile *>(&_Target)));
+    return static_cast<size_t>(_InterlockedIncrement(reinterpret_cast<long volatile*>(&_Target)));
 #else
-    return static_cast<size_t>(_InterlockedIncrement64(reinterpret_cast<__int64 volatile *>(&_Target)));
+    return static_cast<size_t>(_InterlockedIncrement64(reinterpret_cast<__int64 volatile*>(&_Target)));
 #endif
 }
 
-inline long atomic_decrement(long volatile & _Target)
-{
-    return _InterlockedDecrement(&_Target);
-}
+inline long atomic_decrement(long volatile& _Target) { return _InterlockedDecrement(&_Target); }
 
-inline size_t atomic_decrement(size_t volatile & _Target)
+inline size_t atomic_decrement(size_t volatile& _Target)
 {
 #if (defined(_M_IX86) || defined(_M_ARM))
-    return static_cast<size_t>(_InterlockedDecrement(reinterpret_cast<long volatile *>(&_Target)));
+    return static_cast<size_t>(_InterlockedDecrement(reinterpret_cast<long volatile*>(&_Target)));
 #else
-    return static_cast<size_t>(_InterlockedDecrement64(reinterpret_cast<__int64 volatile *>(&_Target)));
+    return static_cast<size_t>(_InterlockedDecrement64(reinterpret_cast<__int64 volatile*>(&_Target)));
 #endif
 }
 
-inline long atomic_compare_exchange(long volatile & _Target, long _Exchange, long _Comparand)
+inline long atomic_compare_exchange(long volatile& _Target, long _Exchange, long _Comparand)
 {
     return _InterlockedCompareExchange(&_Target, _Exchange, _Comparand);
 }
 
-inline size_t atomic_compare_exchange(size_t volatile & _Target, size_t _Exchange, size_t _Comparand)
+inline size_t atomic_compare_exchange(size_t volatile& _Target, size_t _Exchange, size_t _Comparand)
 {
 #if (defined(_M_IX86) || defined(_M_ARM))
-    return static_cast<size_t>(_InterlockedCompareExchange(reinterpret_cast<long volatile *>(_Target), static_cast<long>(_Exchange), static_cast<long>(_Comparand)));
+    return static_cast<size_t>(_InterlockedCompareExchange(
+        reinterpret_cast<long volatile*>(_Target), static_cast<long>(_Exchange), static_cast<long>(_Comparand)));
 #else
-    return static_cast<size_t>(_InterlockedCompareExchange64(reinterpret_cast<__int64 volatile *>(_Target), static_cast<__int64>(_Exchange), static_cast<__int64>(_Comparand)));
+    return static_cast<size_t>(_InterlockedCompareExchange64(reinterpret_cast<__int64 volatile*>(_Target),
+                                                             static_cast<__int64>(_Exchange),
+                                                             static_cast<__int64>(_Comparand)));
 #endif
 }
 #endif // _USE_REAL_ATOMICS
 
-}} // namespace pplx
+} // namespace details
+} // namespace pplx
 
 #endif // _PPLXINTERFACE_H

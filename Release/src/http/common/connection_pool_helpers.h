@@ -1,8 +1,8 @@
 #pragma once
 
 #include "cpprest/details/cpprest_compat.h"
-#include <stddef.h>
 #include <memory>
+#include <stddef.h>
 #include <vector>
 
 namespace web
@@ -13,7 +13,6 @@ namespace client
 {
 namespace details
 {
-
 template<class ConnectionIsh>
 class connection_pool_stack
 {
@@ -41,10 +40,7 @@ public:
     }
 
     // releases `released` back to the connection pool
-    void release(std::shared_ptr<ConnectionIsh>&& released)
-    {
-        m_connections.push_back(std::move(released));
-    }
+    void release(std::shared_ptr<ConnectionIsh>&& released) { m_connections.push_back(std::move(released)); }
 
     bool free_stale_connections() CPPREST_NOEXCEPT
     {
@@ -60,7 +56,7 @@ private:
     size_t m_staleBefore = 0;
 };
 
-} // details
-} // client
-} // http
-} // web
+} // namespace details
+} // namespace client
+} // namespace http
+} // namespace web

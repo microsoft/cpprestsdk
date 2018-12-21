@@ -1,22 +1,24 @@
 /***
-* Copyright (C) Microsoft. All rights reserved.
-* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-*
-* =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*
-* Websocket library: Client-side APIs.
-*
-* This file contains the websocket message implementation
-*
-* For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
-*
-* =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-****/
+ * Copyright (C) Microsoft. All rights reserved.
+ * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+ *
+ * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ *
+ * Websocket library: Client-side APIs.
+ *
+ * This file contains the websocket message implementation
+ *
+ * For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
+ *
+ * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+ ****/
 #include "stdafx.h"
-#include <sstream>
-#include "cpprest/ws_client.h"
+
 #include "cpprest/ws_msg.h"
+
 #include "../../http/common/internal_http_helpers.h"
+#include "cpprest/ws_client.h"
+#include <sstream>
 
 #if !defined(CPPREST_EXCLUDE_WEBSOCKETS)
 
@@ -29,15 +31,14 @@ namespace websockets
 {
 namespace client
 {
-
 static ::utility::string_t g_subProtocolHeader = _XPLATSTR("Sec-WebSocket-Protocol");
 
-void websocket_client_config::set_user_agent(const utf8string &user_agent)
+void websocket_client_config::set_user_agent(const utf8string& user_agent)
 {
     headers().add(web::http::header_names::user_agent, utility::conversions::to_string_t(user_agent));
 }
 
-void websocket_client_config::add_subprotocol(const ::utility::string_t &name)
+void websocket_client_config::add_subprotocol(const ::utility::string_t& name)
 {
     m_headers.add(g_subProtocolHeader, name);
 }
@@ -71,6 +72,8 @@ pplx::task<std::string> websocket_incoming_message::extract_string() const
     return pplx::task_from_result(std::move(m_body.collection()));
 }
 
-}}}
+} // namespace client
+} // namespace websockets
+} // namespace web
 
 #endif
