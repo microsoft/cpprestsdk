@@ -63,7 +63,7 @@ void BlackJackDealer::handle_get(http_request message)
     auto paths = http::uri::split_path(http::uri::decode(message.relative_uri().path()));
     if (paths.empty())
     {
-        message.reply(status_codes::OK, TablesAsJSON(U("Available Tables"), s_tables));
+        message.reply(status_codes::OK, TablesAsJSON(s_tables));
         return;
     }
 

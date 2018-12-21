@@ -54,7 +54,7 @@ SUITE(compression_tests)
                                   size_t input_size,
                                   uint8_t* output,
                                   size_t output_size,
-                                  operation_hint hint,
+                                  operation_hint,
                                   size_t& input_bytes_processed,
                                   bool& done)
         {
@@ -252,7 +252,7 @@ SUITE(compression_tests)
         {
             if (*it)
             {
-                auto hint = operation_hint::has_more;
+                hint = operation_hint::has_more;
                 if (it == chunk_sizes.begin())
                 {
                     hint = operation_hint::is_last;
@@ -360,7 +360,6 @@ SUITE(compression_tests)
             {
                 if (!cfactory)
                 {
-                    auto size = tuples[i][0];
                     compress_and_decompress(utility::details::make_unique<fake_provider>(tuples[i][0]),
                                             utility::details::make_unique<fake_provider>(tuples[i][0]),
                                             tuples[i][0],
@@ -649,9 +648,9 @@ SUITE(compression_tests)
                 _XPLATSTR("gzip,deflate;q=0.7"),
                 _XPLATSTR("trailers,gzip,deflate;q=0.7")};
 
-            for (int fake = 0; fake < 2; fake++)
+            for (int fake2 = 0; fake2 < 2; fake2++)
             {
-                if (fake)
+                if (fake2)
                 {
                     // Switch built-in vs. supplied results the second time around
                     for (auto& te : tes)
@@ -673,17 +672,17 @@ SUITE(compression_tests)
                     if (c)
                     {
                         VERIFY_IS_TRUE(builtin::supported());
-                        VERIFY_IS_FALSE(fake != 0);
+                        VERIFY_IS_FALSE(fake2 != 0);
                         VERIFY_ARE_EQUAL(c->algorithm(), gzip);
                     }
                     else
                     {
-                        VERIFY_IS_TRUE(fake != 0 || !builtin::supported());
+                        VERIFY_IS_TRUE(fake2 != 0 || !builtin::supported());
                     }
 
                     // Supplied compressor - both matching and non-matching
                     c = compression::details::get_compressor_from_header(*te, ctype, fcv);
-                    VERIFY_ARE_EQUAL(c != 0, fake != 0);
+                    VERIFY_ARE_EQUAL(c != 0, fake2 != 0);
                     if (c)
                     {
                         VERIFY_ARE_EQUAL(c->algorithm(), fake_provider::FAKE);
@@ -737,7 +736,6 @@ SUITE(compression_tests)
 #if defined(_WIN32) && !defined(CPPREST_FORCE_HTTP_CLIENT_ASIO)
         // Run a quick test to see if we're dealing with older/broken winhttp for compressed transfer encoding
         {
-            test_http_server* p_server = nullptr;
             std::unique_ptr<test_http_server::scoped_server> scoped =
                 std::move(utility::details::make_unique<test_http_server::scoped_server>(m_uri));
             scoped->server()->next_request().then([&skip_transfer_put](pplx::task<test_request*> op) {
@@ -1233,6 +1231,7 @@ SUITE(compression_tests)
                                                     web::http::details::chunked_encoding::additional_encoding_space -
                                                             7 ==
                                                         5);
+                                                (void)offset2;
                                                 memcpy(cmp.data() + web::http::details::chunked_encoding::data_offset -
                                                            2,
                                                        ext.data(),

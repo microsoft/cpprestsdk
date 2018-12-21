@@ -50,13 +50,13 @@ using namespace utility;
 using namespace http;
 using namespace http::client;
 
-http_response CheckResponse(const std::string& url, const http_response& response)
+http_response CheckResponse(const http_response& response)
 {
     ucout << response.to_string() << endl;
     return response;
 }
 
-http_response CheckResponse(const std::string& url, const http_response& response, bool& refresh)
+http_response CheckResponse(const http_response& response, bool& refresh)
 {
     ucout << response.to_string() << endl;
     BJPutResponse answer = BJPutResponse::FromJSON(response.extract_json().get());
@@ -191,7 +191,7 @@ int main(int argc, char* argv[])
             was_refresh = false;
             utility::ostringstream_t buf;
             buf << table << U("?request=refresh&name=") << userName;
-            PrintTable(CheckResponse("blackjack/dealer", bjDealer.request(methods::PUT, buf.str()).get()), was_refresh);
+            PrintTable(CheckResponse(bjDealer.request(methods::PUT, buf.str()).get()), was_refresh);
         }
 
         std::string method;
@@ -208,7 +208,7 @@ int main(int argc, char* argv[])
             {
                 utility::ostringstream_t buf;
                 buf << table << U("?name=") << userName;
-                CheckResponse("blackjack/dealer", bjDealer.request(methods::DEL, buf.str()).get());
+                CheckResponse(bjDealer.request(methods::DEL, buf.str()).get());
             }
             break;
         }
@@ -231,13 +231,13 @@ int main(int argc, char* argv[])
 
             utility::ostringstream_t buf;
             buf << table << U("?name=") << userName;
-            CheckResponse("blackjack/dealer", bjDealer.request(methods::POST, buf.str()).get(), was_refresh);
+            CheckResponse(bjDealer.request(methods::POST, buf.str()).get(), was_refresh);
         }
         else if (method == "hit" || method == "stay" || method == "double")
         {
             utility::ostringstream_t buf;
             buf << table << U("?request=") << utility::conversions::to_string_t(method) << U("&name=") << userName;
-            PrintTable(CheckResponse("blackjack/dealer", bjDealer.request(methods::PUT, buf.str()).get()), was_refresh);
+            PrintTable(CheckResponse(bjDealer.request(methods::PUT, buf.str()).get()), was_refresh);
         }
         else if (method == "bet" || method == "insure")
         {
@@ -254,11 +254,11 @@ int main(int argc, char* argv[])
             utility::ostringstream_t buf;
             buf << table << U("?request=") << utility::conversions::to_string_t(method) << U("&name=") << userName
                 << U("&amount=") << bet;
-            PrintTable(CheckResponse("blackjack/dealer", bjDealer.request(methods::PUT, buf.str()).get()), was_refresh);
+            PrintTable(CheckResponse(bjDealer.request(methods::PUT, buf.str()).get()), was_refresh);
         }
         else if (method == "newtbl")
         {
-            CheckResponse("blackjack/dealer", bjDealer.request(methods::POST).get(), was_refresh);
+            CheckResponse(bjDealer.request(methods::POST).get(), was_refresh);
         }
         else if (method == "leave")
         {
@@ -273,12 +273,12 @@ int main(int argc, char* argv[])
 
             utility::ostringstream_t buf;
             buf << table << U("?name=") << userName;
-            CheckResponse("blackjack/dealer", bjDealer.request(methods::DEL, buf.str()).get(), was_refresh);
+            CheckResponse(bjDealer.request(methods::DEL, buf.str()).get(), was_refresh);
         }
         else if (method == "list")
         {
             was_refresh = false;
-            http_response response = CheckResponse("blackjack/dealer", bjDealer.request(methods::GET).get());
+            http_response response = CheckResponse(bjDealer.request(methods::GET).get());
 
             if (response.status_code() == status_codes::OK)
             {

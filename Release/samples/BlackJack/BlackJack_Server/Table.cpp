@@ -54,7 +54,7 @@ void DealerTable::Deal()
 
     for (size_t player = m_currentPlayer + 1; player < Players.size(); player++)
     {
-        m_currentPlayer = (int)player;
+        m_currentPlayer = player;
 
         if (Players[player].Hand.bet == 0) continue;
 
@@ -166,9 +166,9 @@ void DealerTable::Wait(http_request message)
     else
         name = itr->second;
 
-    int playerIdx = FindPlayer(name);
+    size_t playerIdx = FindPlayer(name);
 
-    if (playerIdx > 0)
+    if (playerIdx != SIZE_MAX)
     {
         pplx::extensibility::scoped_critical_section_t lck(m_resplock);
 
@@ -201,15 +201,15 @@ void DealerTable::Bet(http_request message)
     ss >> amount;
     name = itrName->second;
 
-    int playerIdx = FindPlayer(name);
+    size_t playerIdx = FindPlayer(name);
 
-    if (playerIdx > 0)
+    if (playerIdx != SIZE_MAX)
     {
         Players[playerIdx].Balance -= amount;
         Players[playerIdx].Hand.bet += amount;
     }
 
-    m_betsMade += 1;
+    ++m_betsMade;
 
     m_responses[playerIdx] = message_wrapper(new http_request(message));
 
@@ -245,9 +245,9 @@ void DealerTable::Insure(http_request message)
     utility::istringstream_t ss(itrAmount->second);
     ss >> amount;
     name = itrName->second;
-    int playerIdx = FindPlayer(name);
+    size_t playerIdx = FindPlayer(name);
 
-    if (playerIdx > 0)
+    if (playerIdx != SIZE_MAX)
     {
         const BJHand& dealer = Players[0].Hand;
         if (Players[playerIdx].Hand.insurance > 0.0)
@@ -275,8 +275,6 @@ void DealerTable::Stay(http_request message)
 
     if (Players[m_currentPlayer].Hand.state == HR_Active) Players[m_currentPlayer].Hand.state = HR_Held;
 
-    // int idx = m_currentPlayer;
-
     message.reply(status_codes::OK, BJPutResponse(ST_Refresh, this->AsJSON()).AsJSON());
 
     NextPlayer(message);
@@ -298,7 +296,7 @@ void DealerTable::NextPlayer(http_request message)
         }
     }
 
-    m_currentPlayer = (int)player;
+    m_currentPlayer = player;
 
     if (m_currentPlayer == Players.size()) m_currentPlayer = 0;
 
@@ -424,9 +422,9 @@ bool DealerTable::AddPlayer(const Player& player)
 {
     pplx::extensibility::scoped_critical_section_t lck(m_resplock);
 
-    int idx = FindPlayer(player.Name);
+    size_t idx = FindPlayer(player.Name);
 
-    if (idx > 0) return false;
+    if (idx != SIZE_MAX) return false;
 
     Players.push_back(player);
     m_responses.push_back(message_wrapper());
@@ -511,13 +509,11 @@ void DealerTable::FillShoe(size_t decks)
         card.value = (CardValue)(shoe[i] % 16);
         m_shoe.push(card);
     }
-
-    m_stopAt = uniform_int_distribution<int>(26, 52)(eng);
 }
 
-int DealerTable::FindPlayer(const utility::string_t& name)
+size_t DealerTable::FindPlayer(const utility::string_t& name)
 {
-    int idx = 0;
+    size_t idx = 0;
     for (auto iter = Players.begin(); iter != Players.end(); iter++, idx++)
     {
         if (iter->Name == name)
@@ -525,5 +521,6 @@ int DealerTable::FindPlayer(const utility::string_t& name)
             return idx;
         }
     }
-    return -1;
+
+    return SIZE_MAX;
 }

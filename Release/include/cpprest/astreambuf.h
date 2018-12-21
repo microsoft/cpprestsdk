@@ -679,8 +679,9 @@ protected:
     virtual pplx::task<size_t> _putn(const _CharType* ptr, size_t count, bool)
     {
         // Default to no copy, only the file streams API overloads and performs a copy.
-        return _putn(ptr, count);
+        return this->_putn(ptr, count);
     }
+
     virtual pplx::task<size_t> _putn(const _CharType* ptr, size_t count) = 0;
 
     virtual pplx::task<int_type> _bumpc() = 0;

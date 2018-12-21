@@ -661,16 +661,16 @@ static const std::vector<std::shared_ptr<decompress_factory>> g_decompress_facto
 #if defined(CPPREST_HTTP_COMPRESSION)
     = {std::make_shared<generic_decompress_factory>(
            algorithm::GZIP,
-           500,
+           static_cast<uint16_t>(500),
            []() -> std::unique_ptr<decompress_provider> { return utility::details::make_unique<gzip_decompressor>(); }),
        std::make_shared<generic_decompress_factory>(algorithm::DEFLATE,
-                                                    500,
+                                                    static_cast<uint16_t>(500),
                                                     []() -> std::unique_ptr<decompress_provider> {
                                                         return utility::details::make_unique<deflate_decompressor>();
                                                     }),
 #if defined(CPPREST_BROTLI_COMPRESSION)
        std::make_shared<generic_decompress_factory>(algorithm::BROTLI,
-                                                    500,
+                                                    static_cast<uint16_t>(500),
                                                     []() -> std::unique_ptr<decompress_provider> {
                                                         return utility::details::make_unique<brotli_decompressor>();
                                                     })
@@ -937,7 +937,9 @@ std::unique_ptr<compress_provider> get_compressor_from_header(
                 // An entirely empty header is OK per RFC, but an extraneous comma is not
                 throw http_exception(status_codes::BadRequest, "Empty field in header");
             }
-            return std::unique_ptr<compress_provider>();
+
+            compressor = std::unique_ptr<compress_provider>();
+            return compressor;
         }
 
         if (!compressor)
@@ -982,25 +984,27 @@ std::unique_ptr<compress_provider> get_compressor_from_header(
 
     // If we're here, we didn't match the caller's compressor above;
     // try any that we saved off in order of highest to lowest rank
-    for (auto t = tokens.rbegin(); t != tokens.rend(); t++)
+    for (auto t2 = tokens.rbegin(); t2 != tokens.rend(); t2++)
     {
-        auto coding = encoding.substr(t->start, t->length);
+        auto coding = encoding.substr(t2->start, t2->length);
 
         // N.B for TE, "trailers" will simply fail to instantiate a
         // compressor; ditto for "*" and "identity" for Accept-Encoding
-        auto compressor = web::http::compression::builtin::_make_compressor(f, coding);
+        compressor = web::http::compression::builtin::_make_compressor(f, coding);
         if (compressor)
         {
             return compressor;
         }
+
         if (type == header_types::accept_encoding && utility::details::str_iequal(coding, _XPLATSTR("identity")))
         {
             // The client specified a preference for "no encoding" vs. anything else we might still have
-            return std::unique_ptr<compress_provider>();
+            break;
         }
     }
 
-    return std::unique_ptr<compress_provider>();
+    compressor = std::unique_ptr<compress_provider>();
+    return compressor;
 }
 
 std::unique_ptr<decompress_provider> get_decompressor_from_header(

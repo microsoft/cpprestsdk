@@ -264,6 +264,7 @@ SUITE(response_stream_tests)
 
     protected:
         pplx::task<int_type> _putc(CharType) override { throw std::runtime_error("error"); }
+        pplx::task<size_t> _putn(const CharType*, size_t, bool) override { throw std::runtime_error("error"); }
         pplx::task<size_t> _putn(const CharType*, size_t) override { throw std::runtime_error("error"); }
         pplx::task<int_type> _bumpc() override { throw std::runtime_error("error"); }
         int_type _sbumpc() override { throw std::runtime_error("error"); }

@@ -32,8 +32,11 @@
 #pragma clang diagnostic ignored "-Winfinite-recursion"
 #endif
 
+#pragma warning(push)
+#pragma warning(disable: 4244) // conversion from 'int' to 'char', possible loss of data
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
+#pragma warning(pop)
 
 #if defined(__clang__)
 #pragma clang diagnostic pop

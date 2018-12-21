@@ -54,7 +54,7 @@ private:
     void PayUp(size_t playerId);
     void NextPlayer(web::http::http_request);
 
-    int FindPlayer(const utility::string_t& name);
+    size_t FindPlayer(const utility::string_t& name);
 
     void _init()
     {
@@ -62,7 +62,6 @@ private:
         m_pendingrefresh.push_back(ST_None);
     }
 
-    int m_stopAt;
     std::queue<Card> m_shoe;
 
     bool m_betting;
@@ -74,6 +73,6 @@ private:
     std::vector<BJStatus> m_pendingrefresh;
     std::vector<message_wrapper> m_responses;
 
-    int m_currentPlayer;
-    int m_betsMade;
+    size_t m_currentPlayer;
+    size_t m_betsMade;
 };

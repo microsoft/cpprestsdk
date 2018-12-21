@@ -1358,11 +1358,8 @@ public:
     virtual value get_field(const utility::string_t&) const { throw json_exception("not an object"); }
     virtual value get_element(array::size_type) const { throw json_exception("not an array"); }
 
-    virtual value& index(const utility::string_t&) { throw json_exception("not an object"); }
-    virtual value& index(array::size_type) { throw json_exception("not an array"); }
-
-    virtual const value& cnst_index(const utility::string_t&) const { throw json_exception("not an object"); }
-    virtual const value& cnst_index(array::size_type) const { throw json_exception("not an array"); }
+    virtual value& index(const utility::string_t&) = 0;
+    virtual value& index(array::size_type) = 0;
 
     // Common function used for serialization to strings and streams.
     virtual void serialize_impl(std::string& str) const { format(str); }
@@ -1412,6 +1409,8 @@ class _Null : public _Value
 public:
     virtual std::unique_ptr<_Value> _copy_value() { return utility::details::make_unique<_Null>(); }
     virtual json::value::value_type type() const { return json::value::Null; }
+    virtual value& index(const utility::string_t&) override { throw json_exception("not an object"); }
+    virtual value& index(array::size_type) override { throw json_exception("not an array"); }
 };
 
 class _Number : public _Value
@@ -1426,6 +1425,9 @@ public:
     virtual std::unique_ptr<_Value> _copy_value() { return utility::details::make_unique<_Number>(*this); }
 
     virtual json::value::value_type type() const { return json::value::Number; }
+
+    virtual value& index(const utility::string_t&) override { throw json_exception("not an object"); }
+    virtual value& index(array::size_type) override { throw json_exception("not an array"); }
 
     virtual bool is_integer() const { return m_number.is_integral(); }
     virtual bool is_double() const { return !m_number.is_integral(); }
@@ -1456,6 +1458,9 @@ public:
     virtual std::unique_ptr<_Value> _copy_value() { return utility::details::make_unique<_Boolean>(*this); }
 
     virtual json::value::value_type type() const { return json::value::Boolean; }
+
+    virtual value& index(const utility::string_t&) override { throw json_exception("not an object"); }
+    virtual value& index(array::size_type) override { throw json_exception("not an array"); }
 
     virtual bool as_bool() const { return m_value; }
 
@@ -1493,6 +1498,9 @@ public:
     virtual std::unique_ptr<_Value> _copy_value() { return utility::details::make_unique<_String>(*this); }
 
     virtual json::value::value_type type() const { return json::value::String; }
+
+    virtual value& index(const utility::string_t&) override { throw json_exception("not an object"); }
+    virtual value& index(array::size_type) override { throw json_exception("not an array"); }
 
     virtual const utility::string_t& as_string() const;
 
@@ -1558,7 +1566,8 @@ public:
 
     virtual bool has_field(const utility::string_t&) const;
 
-    virtual json::value& index(const utility::string_t& key);
+    virtual json::value& index(const utility::string_t& key) override;
+    virtual value& index(array::size_type) override { throw json_exception("not an array"); }
 
     bool is_equal(const _Object* other) const
     {
@@ -1657,7 +1666,8 @@ public:
     virtual json::array& as_array() { return m_array; }
     virtual const json::array& as_array() const { return m_array; }
 
-    virtual json::value& index(json::array::size_type index) { return m_array[index]; }
+    virtual value& index(const utility::string_t&) override { throw json_exception("not an object"); }
+    virtual json::value& index(json::array::size_type index) override { return m_array[index]; }
 
     bool is_equal(const _Array* other) const
     {

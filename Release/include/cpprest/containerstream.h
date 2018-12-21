@@ -124,7 +124,13 @@ protected:
         return pplx::task_from_result<int_type>(retVal);
     }
 
-    virtual pplx::task<size_t> _putn(const _CharType* ptr, size_t count)
+    virtual pplx::task<size_t> _putn(const _CharType* ptr, size_t count, bool)
+    {
+        // Default to no copy, only the file streams API overloads and performs a copy.
+        return this->_putn(ptr, count);
+    }
+
+    virtual pplx::task<size_t> _putn(const _CharType* ptr, size_t count) override
     {
         return pplx::task_from_result<size_t>(this->write(ptr, count));
     }

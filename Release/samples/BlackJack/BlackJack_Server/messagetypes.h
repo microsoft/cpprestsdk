@@ -389,15 +389,14 @@ struct BJPutResponse
     }
 };
 
-inline web::json::value TablesAsJSON(const utility::string_t& name,
-                                     const std::map<utility::string_t, std::shared_ptr<BJTable>>& tables)
+inline web::json::value TablesAsJSON(const std::map<utility::string_t, std::shared_ptr<BJTable>>& tables)
 {
     web::json::value result = web::json::value::array();
 
     size_t idx = 0;
-    for (auto tbl = tables.begin(); tbl != tables.end(); tbl++)
+    for (auto&& tbl : tables)
     {
-        result[idx++] = tbl->second->AsJSON();
+        result[idx++] = tbl.second->AsJSON();
     }
     return result;
 }

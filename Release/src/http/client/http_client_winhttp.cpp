@@ -2414,7 +2414,7 @@ private:
                         .then([p_request_context](pplx::task<bool> op) {
                             try
                             {
-                                bool ignored = op.get();
+                                (void)op.get();
                             }
                             catch (...)
                             {

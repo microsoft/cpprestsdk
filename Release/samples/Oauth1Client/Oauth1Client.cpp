@@ -62,7 +62,7 @@ static void open_browser(utility::string_t auth_uri)
 {
 #if defined(_WIN32) && !defined(__cplusplus_winrt)
     // NOTE: Windows desktop only.
-    auto r = ShellExecuteA(NULL, "open", conversions::utf16_to_utf8(auth_uri).c_str(), NULL, NULL, SW_SHOWNORMAL);
+    (void)ShellExecuteA(NULL, "open", conversions::utf16_to_utf8(auth_uri).c_str(), NULL, NULL, SW_SHOWNORMAL);
 #elif defined(__APPLE__)
     // NOTE: OS X only.
     string_t browser_cmd(U("open \"") + auth_uri + U("\""));
@@ -279,11 +279,7 @@ protected:
     }
 };
 
-#ifdef _WIN32
-int wmain(int argc, wchar_t* argv[])
-#else
-int main(int argc, char* argv[])
-#endif
+int main()
 {
     ucout << "Running OAuth 1.0 client sample..." << std::endl;
 

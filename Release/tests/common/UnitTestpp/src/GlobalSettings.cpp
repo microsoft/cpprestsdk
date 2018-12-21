@@ -38,12 +38,10 @@
 
 namespace UnitTest
 {
-static std::string to_lower(const std::string& str)
+static std::string to_lower(std::string str)
 {
-    std::string retVal;
-    retVal.resize(str.size());
-    std::transform(str.begin(), str.end(), retVal.begin(), ::tolower);
-    return retVal;
+    std::use_facet<std::ctype<char>>(std::locale::classic()).tolower(&str[0], &str[str.size()]);
+    return str;
 }
 
 std::map<std::string, std::string> g_settings;

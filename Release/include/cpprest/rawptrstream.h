@@ -153,6 +153,12 @@ protected:
         return pplx::task_from_result<int_type>(retVal);
     }
 
+    virtual pplx::task<size_t> _putn(const _CharType* ptr, size_t count, bool) override
+    {
+        // Default to no copy, only the file streams API overloads and performs a copy.
+        return this->_putn(ptr, count);
+    }
+
     virtual pplx::task<size_t> _putn(const _CharType* ptr, size_t count)
     {
         msl::safeint3::SafeInt<size_t> newSize = msl::safeint3::SafeInt<size_t>(count) + m_current_position;

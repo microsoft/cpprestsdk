@@ -12,6 +12,7 @@
  ****/
 
 #include "stdafx.h"
+#include "cpprest/json.h"
 
 using namespace web;
 

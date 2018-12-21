@@ -79,6 +79,13 @@ private:
     virtual pplx::task<bool> _sync() { return pplx::task_from_result(m_buffer->pubsync() == 0); }
 
     virtual pplx::task<int_type> _putc(_CharType ch) { return pplx::task_from_result(m_buffer->sputc(ch)); }
+
+    virtual pplx::task<size_t> _putn(const _CharType* ptr, size_t count, bool) override
+    {
+        // Default to no copy, only the file streams API overloads and performs a copy.
+        return this->_putn(ptr, count);
+    }
+
     virtual pplx::task<size_t> _putn(const _CharType* ptr, size_t size)
     {
         return pplx::task_from_result((size_t)m_buffer->sputn(ptr, size));

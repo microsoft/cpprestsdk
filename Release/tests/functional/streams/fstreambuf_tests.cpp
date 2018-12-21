@@ -328,8 +328,8 @@ SUITE(file_buffer_tests)
         {
             for (int i = 0; i < 1000; i++)
             {
-                t.push_back(istreamBuf.getc().then([i, this](char c) { VERIFY_ARE_EQUAL(i % 26 + 'a', c); }));
-                t.push_back(istreamBuf.bumpc().then([i, this](char c) { VERIFY_ARE_EQUAL(i % 26 + 'a', c); }));
+                t.push_back(istreamBuf.getc().then([i, this](int c) { VERIFY_ARE_EQUAL(i % 26 + 'a', c); }));
+                t.push_back(istreamBuf.bumpc().then([i, this](int c) { VERIFY_ARE_EQUAL(i % 26 + 'a', c); }));
                 char* buffer = new char[11];
                 t.push_back(istreamBuf.getn(buffer, 10).then([=](size_t n) {
                     VERIFY_ARE_EQUAL(10u, n);
