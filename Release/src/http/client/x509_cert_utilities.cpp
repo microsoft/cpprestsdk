@@ -2,16 +2,17 @@
  * Copyright (C) Microsoft. All rights reserved.
  * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
  *
- * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
  *
  * Contains utility functions for helping to verify server certificates in OS X/iOS.
  *
  * For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
  *
- * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+ * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
  ****/
 
 #include "stdafx.h"
+
 #include "../common/x509_cert_utilities.h"
 
 #ifdef CPPREST_PLATFORM_ASIO_CERT_VERIFICATION_AVAILABLE
@@ -53,10 +54,10 @@ bool verify_cert_chain_platform_specific(boost::asio::ssl::verify_context& verif
 
 #if (OPENSSL_VERSION_NUMBER < 0x10100000L)
     STACK_OF(X509)* certStack = X509_STORE_CTX_get_chain(storeContext);
-#else 
+#else
     STACK_OF(X509)* certStack = X509_STORE_CTX_get0_chain(storeContext);
 #endif
-    
+
     const int numCerts = sk_X509_num(certStack);
     if (numCerts < 0)
     {
@@ -313,7 +314,7 @@ private:
     cf_ref& operator=(const cf_ref&);
     T value;
 };
-}
+} // namespace
 
 bool verify_X509_cert_chain(const std::vector<std::string>& certChain, const std::string& hostName)
 {
@@ -443,9 +444,9 @@ bool verify_X509_cert_chain(const std::vector<std::string>& certChain, const std
     return true;
 }
 #endif
-}
-}
-}
-}
+} // namespace details
+} // namespace client
+} // namespace http
+} // namespace web
 
 #endif

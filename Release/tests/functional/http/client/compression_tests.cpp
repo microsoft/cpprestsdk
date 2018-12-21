@@ -2,13 +2,13 @@
  * Copyright (C) Microsoft. All rights reserved.
  * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
  *
- * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
  *
  * compression_tests.cpp
  *
  * Tests cases, including client/server, for the web::http::compression namespace.
  *
- * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+ * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
  ****/
 
 #include "stdafx.h"
@@ -1338,7 +1338,7 @@ SUITE(compression_tests)
         }
     }
 } // SUITE(request_helper_tests)
-}
-}
-}
-}
+} // namespace client
+} // namespace http
+} // namespace functional
+} // namespace tests

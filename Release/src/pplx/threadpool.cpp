@@ -6,7 +6,6 @@
 
 #if !defined(CPPREST_EXCLUDE_WEBSOCKETS) || !defined(_WIN32)
 #include "pplx/threadpool.h"
-
 #include <boost/asio/detail/thread.hpp>
 #include <new>
 #include <type_traits>
@@ -165,9 +164,9 @@ std::pair<bool, platform_shared_threadpool*> initialize_shared_threadpool(size_t
     bool initialized_this_time = false;
     static std::once_flag of;
 
-    #if defined(__ANDROID__)
-        abort_if_no_jvm();
-    #endif // __ANDROID__
+#if defined(__ANDROID__)
+    abort_if_no_jvm();
+#endif // __ANDROID__
 
     std::call_once(of, [num_threads, &initialized_this_time] {
         uninit_threadpool.construct(num_threads);
@@ -176,7 +175,7 @@ std::pair<bool, platform_shared_threadpool*> initialize_shared_threadpool(size_t
 
     return {initialized_this_time, &uninit_threadpool.storage};
 }
-}
+} // namespace
 
 namespace crossplat
 {
@@ -190,7 +189,7 @@ void threadpool::initialize_with_threads(size_t num_threads)
         throw std::runtime_error("the cpprestsdk threadpool has already been initialized");
     }
 }
-}
+} // namespace crossplat
 
 #if defined(__ANDROID__)
 void cpprest_init(JavaVM* vm) { JVM = vm; }

@@ -1,17 +1,17 @@
 /***
-* ==++==
-*
-* Copyright (c) Microsoft Corporation.  All rights reserved.
-*
-* ==--==
-* =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*
-* listener_construction_tests.cpp
-*
-* Tests cases for covering creating http_listeners in various ways.
-*
-* =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-****/
+ * ==++==
+ *
+ * Copyright (c) Microsoft Corporation.  All rights reserved.
+ *
+ * ==--==
+ * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ *
+ * listener_construction_tests.cpp
+ *
+ * Tests cases for covering creating http_listeners in various ways.
+ *
+ * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+ ****/
 
 #include "stdafx.h"
 
@@ -21,420 +21,415 @@ using namespace web::http::experimental::listener;
 using namespace tests::common::utilities;
 using namespace tests::functional::http::utilities;
 
-namespace tests { namespace functional { namespace http { namespace listener {
-
+namespace tests
+{
+namespace functional
+{
+namespace http
+{
+namespace listener
+{
 SUITE(listener_construction_tests)
 {
-
-TEST_FIXTURE(uri_address, default_constructor)
-{
-    // Test that the default ctor works.
-    http_listener listener;
-
-    VERIFY_IS_TRUE(listener.uri().is_empty());
-    VERIFY_THROWS(listener.open().wait(), std::invalid_argument);
-}
-
-TEST_FIXTURE(uri_address, move_operations)
-{
-    http_listener listener(m_uri);
-    listener.open().wait();
-    test_http_client::scoped_client client(m_uri);
-    test_http_client * p_client = client.client();
-
-    // move constructor
-    http_listener listener2 = std::move(listener);
-    listener2.support(methods::PUT, [](http_request request)
+    TEST_FIXTURE(uri_address, default_constructor)
     {
-        http_asserts::assert_request_equals(request, U("PUT"), U("/"));
-        request.reply(status_codes::OK);
-    });
-    VERIFY_ARE_EQUAL(0, p_client->request(U("PUT"), U("/")));
-    p_client->next_response().then([](test_response *p_response)
+        // Test that the default ctor works.
+        http_listener listener;
+
+        VERIFY_IS_TRUE(listener.uri().is_empty());
+        VERIFY_THROWS(listener.open().wait(), std::invalid_argument);
+    }
+
+    TEST_FIXTURE(uri_address, move_operations)
     {
-        http_asserts::assert_test_response_equals(p_response, status_codes::OK);
-    }).wait();
+        http_listener listener(m_uri);
+        listener.open().wait();
+        test_http_client::scoped_client client(m_uri);
+        test_http_client* p_client = client.client();
 
-    // move assignment
-    listener = std::move(listener2);
-    listener.support(methods::PUT, [](http_request request)
+        // move constructor
+        http_listener listener2 = std::move(listener);
+        listener2.support(methods::PUT, [](http_request request) {
+            http_asserts::assert_request_equals(request, U("PUT"), U("/"));
+            request.reply(status_codes::OK);
+        });
+        VERIFY_ARE_EQUAL(0, p_client->request(U("PUT"), U("/")));
+        p_client->next_response()
+            .then([](test_response* p_response) {
+                http_asserts::assert_test_response_equals(p_response, status_codes::OK);
+            })
+            .wait();
+
+        // move assignment
+        listener = std::move(listener2);
+        listener.support(methods::PUT, [](http_request request) {
+            http_asserts::assert_request_equals(request, U("PUT"), U("/"));
+            request.reply(status_codes::OK);
+        });
+        VERIFY_ARE_EQUAL(0, p_client->request(U("PUT"), U("/")));
+        p_client->next_response()
+            .then([](test_response* p_response) {
+                http_asserts::assert_test_response_equals(p_response, status_codes::OK);
+            })
+            .wait();
+
+        listener.close().wait();
+    }
+
+    TEST_FIXTURE(uri_address, various_uris)
     {
-        http_asserts::assert_request_equals(request, U("PUT"), U("/"));
-        request.reply(status_codes::OK);
-    });
-    VERIFY_ARE_EQUAL(0, p_client->request(U("PUT"), U("/")));
-    p_client->next_response().then([](test_response *p_response)
+        http_listener listener(web::http::uri_builder(m_uri).append_path(U("path1")).to_uri());
+        listener.open().wait();
+        test_http_client::scoped_client client(m_uri);
+        test_http_client* p_client = client.client();
+
+        // Path that matches exactly
+        listener.support([](http_request request) {
+            http_asserts::assert_request_equals(request, U("GET"), U(""));
+            request.reply(status_codes::OK);
+        });
+        VERIFY_ARE_EQUAL(0, p_client->request(methods::GET, U("/path1/")));
+        p_client->next_response()
+            .then([](test_response* p_response) {
+                http_asserts::assert_test_response_equals(p_response, status_codes::OK);
+            })
+            .wait();
+
+        // Path that matches but is more specific.
+        listener.support([](http_request request) {
+            http_asserts::assert_request_equals(request, U("GET"), U("/path2"));
+            request.reply(status_codes::OK);
+        });
+        VERIFY_ARE_EQUAL(0, p_client->request(methods::GET, U("/path1/path2")));
+        p_client->next_response()
+            .then([](test_response* p_response) {
+                http_asserts::assert_test_response_equals(p_response, status_codes::OK);
+            })
+            .wait();
+
+        // Try a request with a path that doesn't match.
+        VERIFY_ARE_EQUAL(0, p_client->request(methods::GET, U("/path3/path2")));
+        p_client->next_response()
+            .then([](test_response* p_response) {
+                http_asserts::assert_test_response_equals(p_response, status_codes::NotFound);
+            })
+            .wait();
+
+        listener.close().wait();
+    }
+
+    TEST_FIXTURE(uri_address, uri_routing)
     {
-        http_asserts::assert_test_response_equals(p_response, status_codes::OK);
-    }).wait();
+        http_listener listener1(web::http::uri_builder(m_uri).append_path(U("path1")).to_uri());
+        http_listener listener2(web::http::uri_builder(m_uri).append_path(U("path2")).to_uri());
+        http_listener listener3(web::http::uri_builder(m_uri).append_path(U("path1/path2")).to_uri());
 
-    listener.close().wait();
-}
+        test_http_client::scoped_client client(m_uri);
+        test_http_client* p_client = client.client();
 
-TEST_FIXTURE(uri_address, various_uris)
-{
-    http_listener listener(web::http::uri_builder(m_uri).append_path(U("path1")).to_uri());
-    listener.open().wait();
-    test_http_client::scoped_client client(m_uri);
-    test_http_client * p_client = client.client();
+        // Path that matches exactly
+        listener1.support([](http_request request) { request.reply(status_codes::OK); });
+        listener1.open().wait();
 
-    // Path that matches exactly
-    listener.support([](http_request request)
+        listener2.support([](http_request request) { request.reply(status_codes::Created); });
+        listener2.open().wait();
+
+        listener3.support([](http_request request) { request.reply(status_codes::Accepted); });
+        listener3.open().wait();
+
+        VERIFY_ARE_EQUAL(0, p_client->request(methods::GET, U("/path1/")));
+        p_client->next_response()
+            .then([](test_response* p_response) {
+                http_asserts::assert_test_response_equals(p_response, status_codes::OK);
+            })
+            .wait();
+        VERIFY_ARE_EQUAL(0, p_client->request(methods::GET, U("/path2")));
+        p_client->next_response()
+            .then([](test_response* p_response) {
+                http_asserts::assert_test_response_equals(p_response, status_codes::Created);
+            })
+            .wait();
+        VERIFY_ARE_EQUAL(0, p_client->request(methods::GET, U("/path1/path2")));
+        p_client->next_response()
+            .then([](test_response* p_response) {
+                http_asserts::assert_test_response_equals(p_response, status_codes::Accepted);
+            })
+            .wait();
+
+        // Try a request with a path that doesn't match.
+        VERIFY_ARE_EQUAL(0, p_client->request(methods::GET, U("/path3/path2")));
+        p_client->next_response()
+            .then([](test_response* p_response) {
+                http_asserts::assert_test_response_equals(p_response, status_codes::NotFound);
+            })
+            .wait();
+
+        listener1.close().wait();
+        listener2.close().wait();
+        listener3.close().wait();
+    }
+
+    TEST_FIXTURE(uri_address, uri_error_cases)
     {
-        http_asserts::assert_request_equals(request, U("GET"), U(""));
-        request.reply(status_codes::OK);
-    });
-    VERIFY_ARE_EQUAL(0, p_client->request(methods::GET, U("/path1/")));
-    p_client->next_response().then([](test_response *p_response)
+        // non HTTP scheme
+        VERIFY_THROWS(http_listener(U("ftp://localhost:456/")), std::invalid_argument);
+
+        // empty HTTP host
+        VERIFY_THROWS(http_listener(U("http://:456/")), std::invalid_argument);
+
+        // try specifying a query
+        VERIFY_THROWS(http_listener(U("http://localhost:45678/path?key1=value")), std::invalid_argument);
+
+        // try specifing a fragment
+        VERIFY_THROWS(http_listener(U("http://localhost:4563/path?key1=value#frag")), std::invalid_argument);
+    }
+
+    TEST_FIXTURE(uri_address, create_listener_get)
     {
-        http_asserts::assert_test_response_equals(p_response, status_codes::OK);
-    }).wait();
+        http_listener listener(m_uri);
 
-    // Path that matches but is more specific.
-    listener.support([](http_request request)
-    {
-        http_asserts::assert_request_equals(request, U("GET"), U("/path2"));
-        request.reply(status_codes::OK);
-    });
-    VERIFY_ARE_EQUAL(0, p_client->request(methods::GET, U("/path1/path2")));
-    p_client->next_response().then([](test_response *p_response)
-    {
-        http_asserts::assert_test_response_equals(p_response, status_codes::OK);
-    }).wait();
-
-    // Try a request with a path that doesn't match.
-    VERIFY_ARE_EQUAL(0, p_client->request(methods::GET, U("/path3/path2")));
-    p_client->next_response().then([](test_response *p_response)
-    {
-        http_asserts::assert_test_response_equals(p_response, status_codes::NotFound);
-    }).wait();
-
-    listener.close().wait();
-}
-
-TEST_FIXTURE(uri_address, uri_routing)
-{
-    http_listener listener1(web::http::uri_builder(m_uri).append_path(U("path1")).to_uri());
-    http_listener listener2(web::http::uri_builder(m_uri).append_path(U("path2")).to_uri());
-    http_listener listener3(web::http::uri_builder(m_uri).append_path(U("path1/path2")).to_uri());
-
-    test_http_client::scoped_client client(m_uri);
-    test_http_client * p_client = client.client();
-
-    // Path that matches exactly
-    listener1.support([](http_request request)
-    {
-        request.reply(status_codes::OK);
-    });
-    listener1.open().wait();
-
-    listener2.support([](http_request request)
-    {
-        request.reply(status_codes::Created);
-    });
-    listener2.open().wait();
-
-    listener3.support([](http_request request)
-    {
-        request.reply(status_codes::Accepted);
-    });
-    listener3.open().wait();
-
-    VERIFY_ARE_EQUAL(0, p_client->request(methods::GET, U("/path1/")));
-    p_client->next_response().then([](test_response *p_response)
-    {
-        http_asserts::assert_test_response_equals(p_response, status_codes::OK);
-    }).wait();
-    VERIFY_ARE_EQUAL(0, p_client->request(methods::GET, U("/path2")));
-    p_client->next_response().then([](test_response *p_response)
-    {
-        http_asserts::assert_test_response_equals(p_response, status_codes::Created);
-    }).wait();
-    VERIFY_ARE_EQUAL(0, p_client->request(methods::GET, U("/path1/path2")));
-    p_client->next_response().then([](test_response *p_response)
-    {
-        http_asserts::assert_test_response_equals(p_response, status_codes::Accepted);
-    }).wait();
-
-    // Try a request with a path that doesn't match.
-    VERIFY_ARE_EQUAL(0, p_client->request(methods::GET, U("/path3/path2")));
-    p_client->next_response().then([](test_response *p_response)
-    {
-        http_asserts::assert_test_response_equals(p_response, status_codes::NotFound);
-    }).wait();
-
-    listener1.close().wait();
-    listener2.close().wait();
-    listener3.close().wait();
-}
-
-TEST_FIXTURE(uri_address, uri_error_cases)
-{
-    // non HTTP scheme
-    VERIFY_THROWS(http_listener(U("ftp://localhost:456/")), std::invalid_argument);
-
-    // empty HTTP host
-    VERIFY_THROWS(http_listener(U("http://:456/")), std::invalid_argument);
-
-    // try specifying a query
-    VERIFY_THROWS(http_listener(U("http://localhost:45678/path?key1=value")), std::invalid_argument);
-
-    // try specifing a fragment
-    VERIFY_THROWS(http_listener(U("http://localhost:4563/path?key1=value#frag")), std::invalid_argument);
-}
-
-TEST_FIXTURE(uri_address, create_listener_get)
-{
-    http_listener listener(m_uri);
-    
-    listener.support(methods::GET,
-        [](http_request request)
-        {
+        listener.support(methods::GET, [](http_request request) {
             http_asserts::assert_request_equals(request, methods::GET, U("/"));
             request.reply(status_codes::OK);
         });
-    
-    listener.open().wait();
-    test_http_client::scoped_client client(m_uri);
-    test_http_client * p_client = client.client();
 
-    VERIFY_ARE_EQUAL(0, p_client->request(methods::GET, U("/")));
-    p_client->next_response().then([](test_response *p_response)
+        listener.open().wait();
+        test_http_client::scoped_client client(m_uri);
+        test_http_client* p_client = client.client();
+
+        VERIFY_ARE_EQUAL(0, p_client->request(methods::GET, U("/")));
+        p_client->next_response()
+            .then([](test_response* p_response) {
+                http_asserts::assert_test_response_equals(p_response, status_codes::OK);
+            })
+            .wait();
+        VERIFY_ARE_EQUAL(0, p_client->request(methods::PUT, U("/")));
+        p_client->next_response()
+            .then([](test_response* p_response) {
+                http_asserts::assert_test_response_equals(p_response, status_codes::MethodNotAllowed);
+            })
+            .wait();
+
+        listener.close().wait();
+    }
+
+    TEST_FIXTURE(uri_address, create_listener_get_put)
     {
-        http_asserts::assert_test_response_equals(p_response, status_codes::OK);
-    }).wait();
-    VERIFY_ARE_EQUAL(0, p_client->request(methods::PUT, U("/")));
-    p_client->next_response().then([](test_response *p_response)
-    {
-        http_asserts::assert_test_response_equals(p_response, status_codes::MethodNotAllowed);
-    }).wait();
+        http_listener listener(m_uri);
 
-    listener.close().wait();
-}
-
-TEST_FIXTURE(uri_address, create_listener_get_put)
-{
-    http_listener listener(m_uri);
-    
-    listener.support(methods::GET,
-        [](http_request request)
-        {
+        listener.support(methods::GET, [](http_request request) {
             http_asserts::assert_request_equals(request, methods::GET, U("/"));
             request.reply(status_codes::OK);
         });
-    
-        listener.support(methods::PUT,
-            [](http_request request)
-        {
+
+        listener.support(methods::PUT, [](http_request request) {
             http_asserts::assert_request_equals(request, methods::PUT, U("/"));
             request.reply(status_codes::OK);
         });
-    
-    listener.open().wait();
-    test_http_client::scoped_client client(m_uri);
-    test_http_client * p_client = client.client();
 
-    VERIFY_ARE_EQUAL(0, p_client->request(methods::GET, U("/")));
-    p_client->next_response().then([](test_response *p_response)
-    {
-        http_asserts::assert_test_response_equals(p_response, status_codes::OK);
-    }).wait();
-    VERIFY_ARE_EQUAL(0, p_client->request(methods::PUT, U("/")));
-    p_client->next_response().then([](test_response *p_response)
-    {
-        http_asserts::assert_test_response_equals(p_response, status_codes::OK);
-    }).wait();
-    VERIFY_ARE_EQUAL(0, p_client->request(methods::POST, U("/")));
-    p_client->next_response().then([](test_response *p_response)
-    {
-        http_asserts::assert_test_response_equals(p_response, status_codes::MethodNotAllowed);
-    }).wait();
+        listener.open().wait();
+        test_http_client::scoped_client client(m_uri);
+        test_http_client* p_client = client.client();
 
-    listener.close().wait();
-}
+        VERIFY_ARE_EQUAL(0, p_client->request(methods::GET, U("/")));
+        p_client->next_response()
+            .then([](test_response* p_response) {
+                http_asserts::assert_test_response_equals(p_response, status_codes::OK);
+            })
+            .wait();
+        VERIFY_ARE_EQUAL(0, p_client->request(methods::PUT, U("/")));
+        p_client->next_response()
+            .then([](test_response* p_response) {
+                http_asserts::assert_test_response_equals(p_response, status_codes::OK);
+            })
+            .wait();
+        VERIFY_ARE_EQUAL(0, p_client->request(methods::POST, U("/")));
+        p_client->next_response()
+            .then([](test_response* p_response) {
+                http_asserts::assert_test_response_equals(p_response, status_codes::MethodNotAllowed);
+            })
+            .wait();
 
-TEST_FIXTURE(uri_address, create_listener_get_put_post)
-{
-    http_listener listener(m_uri);
-    
-    listener.support(methods::GET,
-        [](http_request request)
-        {
+        listener.close().wait();
+    }
+
+    TEST_FIXTURE(uri_address, create_listener_get_put_post)
+    {
+        http_listener listener(m_uri);
+
+        listener.support(methods::GET, [](http_request request) {
             http_asserts::assert_request_equals(request, methods::GET, U("/"));
             request.reply(status_codes::OK);
         });
-    
-    listener.support(methods::PUT,
-        [](http_request request)
-        {
+
+        listener.support(methods::PUT, [](http_request request) {
             http_asserts::assert_request_equals(request, methods::PUT, U("/"));
             request.reply(status_codes::OK);
         });
-    
-    listener.support(methods::POST,
-        [](http_request request)
-        {
+
+        listener.support(methods::POST, [](http_request request) {
             http_asserts::assert_request_equals(request, methods::POST, U("/"));
             request.reply(status_codes::OK);
         });
-    
-    listener.open().wait();
-    test_http_client::scoped_client client(m_uri);
-    test_http_client * p_client = client.client();
 
-    VERIFY_ARE_EQUAL(0, p_client->request(methods::GET, U("/")));
-    p_client->next_response().then([](test_response *p_response)
-    {
-        http_asserts::assert_test_response_equals(p_response, status_codes::OK);
-    }).wait();
-    VERIFY_ARE_EQUAL(0, p_client->request(methods::PUT, U("/")));
-    p_client->next_response().then([](test_response *p_response)
-    {
-        http_asserts::assert_test_response_equals(p_response, status_codes::OK);
-    }).wait();
-    VERIFY_ARE_EQUAL(0, p_client->request(methods::POST, U("/")));
-    p_client->next_response().then([](test_response *p_response)
-    {
-        http_asserts::assert_test_response_equals(p_response, status_codes::OK);
-    }).wait();
-    VERIFY_ARE_EQUAL(0, p_client->request(methods::DEL, U("/")));
-    p_client->next_response().then([](test_response *p_response)
-    {
-        http_asserts::assert_test_response_equals(p_response, status_codes::MethodNotAllowed);
-    }).wait();
+        listener.open().wait();
+        test_http_client::scoped_client client(m_uri);
+        test_http_client* p_client = client.client();
 
-    listener.close().wait();
-}
+        VERIFY_ARE_EQUAL(0, p_client->request(methods::GET, U("/")));
+        p_client->next_response()
+            .then([](test_response* p_response) {
+                http_asserts::assert_test_response_equals(p_response, status_codes::OK);
+            })
+            .wait();
+        VERIFY_ARE_EQUAL(0, p_client->request(methods::PUT, U("/")));
+        p_client->next_response()
+            .then([](test_response* p_response) {
+                http_asserts::assert_test_response_equals(p_response, status_codes::OK);
+            })
+            .wait();
+        VERIFY_ARE_EQUAL(0, p_client->request(methods::POST, U("/")));
+        p_client->next_response()
+            .then([](test_response* p_response) {
+                http_asserts::assert_test_response_equals(p_response, status_codes::OK);
+            })
+            .wait();
+        VERIFY_ARE_EQUAL(0, p_client->request(methods::DEL, U("/")));
+        p_client->next_response()
+            .then([](test_response* p_response) {
+                http_asserts::assert_test_response_equals(p_response, status_codes::MethodNotAllowed);
+            })
+            .wait();
 
-TEST_FIXTURE(uri_address, create_listener_get_put_post_delete)
-{
-    http_listener listener(m_uri);
-    
-    listener.support(methods::GET,
-        [](http_request request)
-    {
-        http_asserts::assert_request_equals(request, methods::GET, U("/"));
-        request.reply(status_codes::OK);
-    });
-    
-    listener.support(methods::PUT,
-        [](http_request request)
-    {
-        http_asserts::assert_request_equals(request, methods::PUT, U("/"));
-        request.reply(status_codes::OK);
-    });
-    
-    listener.support(methods::POST,
-        [](http_request request)
-    {
-        http_asserts::assert_request_equals(request, methods::POST, U("/"));
-        request.reply(status_codes::OK);
-    });
-    
-    listener.support(methods::DEL,
-        [](http_request request)
-    {
-        http_asserts::assert_request_equals(request, methods::DEL, U("/"));
-        request.reply(status_codes::OK);
-    });
-    
-    listener.open().wait();
-    test_http_client::scoped_client client(m_uri);
-    test_http_client * p_client = client.client();
+        listener.close().wait();
+    }
 
-    VERIFY_ARE_EQUAL(0, p_client->request(methods::GET, U("/")));
-    p_client->next_response().then([](test_response *p_response)
-    {
-        http_asserts::assert_test_response_equals(p_response, status_codes::OK);
-    }).wait();
-    VERIFY_ARE_EQUAL(0, p_client->request(methods::PUT, U("/")));
-    p_client->next_response().then([](test_response *p_response)
-    {
-        http_asserts::assert_test_response_equals(p_response, status_codes::OK);
-    }).wait();
-    VERIFY_ARE_EQUAL(0, p_client->request(methods::POST, U("/")));
-    p_client->next_response().then([](test_response *p_response)
-    {
-        http_asserts::assert_test_response_equals(p_response, status_codes::OK);
-    }).wait();
-    VERIFY_ARE_EQUAL(0, p_client->request(methods::DEL, U("/")));
-    p_client->next_response().then([](test_response *p_response)
-    {
-        http_asserts::assert_test_response_equals(p_response, status_codes::OK);
-    }).wait();
-    VERIFY_ARE_EQUAL(0, p_client->request(methods::HEAD, U("/")));
-    p_client->next_response().then([](test_response *p_response)
-    {
-        http_asserts::assert_test_response_equals(p_response, status_codes::MethodNotAllowed);
-    }).wait();
-
-    listener.close().wait();
-}
-
-TEST_FIXTURE(uri_address, get_listener_config)
-{
-    // Verify default configuration.
+    TEST_FIXTURE(uri_address, create_listener_get_put_post_delete)
     {
         http_listener listener(m_uri);
-        VERIFY_ARE_EQUAL(utility::seconds(120), listener.configuration().timeout());
+
+        listener.support(methods::GET, [](http_request request) {
+            http_asserts::assert_request_equals(request, methods::GET, U("/"));
+            request.reply(status_codes::OK);
+        });
+
+        listener.support(methods::PUT, [](http_request request) {
+            http_asserts::assert_request_equals(request, methods::PUT, U("/"));
+            request.reply(status_codes::OK);
+        });
+
+        listener.support(methods::POST, [](http_request request) {
+            http_asserts::assert_request_equals(request, methods::POST, U("/"));
+            request.reply(status_codes::OK);
+        });
+
+        listener.support(methods::DEL, [](http_request request) {
+            http_asserts::assert_request_equals(request, methods::DEL, U("/"));
+            request.reply(status_codes::OK);
+        });
+
         listener.open().wait();
+        test_http_client::scoped_client client(m_uri);
+        test_http_client* p_client = client.client();
+
+        VERIFY_ARE_EQUAL(0, p_client->request(methods::GET, U("/")));
+        p_client->next_response()
+            .then([](test_response* p_response) {
+                http_asserts::assert_test_response_equals(p_response, status_codes::OK);
+            })
+            .wait();
+        VERIFY_ARE_EQUAL(0, p_client->request(methods::PUT, U("/")));
+        p_client->next_response()
+            .then([](test_response* p_response) {
+                http_asserts::assert_test_response_equals(p_response, status_codes::OK);
+            })
+            .wait();
+        VERIFY_ARE_EQUAL(0, p_client->request(methods::POST, U("/")));
+        p_client->next_response()
+            .then([](test_response* p_response) {
+                http_asserts::assert_test_response_equals(p_response, status_codes::OK);
+            })
+            .wait();
+        VERIFY_ARE_EQUAL(0, p_client->request(methods::DEL, U("/")));
+        p_client->next_response()
+            .then([](test_response* p_response) {
+                http_asserts::assert_test_response_equals(p_response, status_codes::OK);
+            })
+            .wait();
+        VERIFY_ARE_EQUAL(0, p_client->request(methods::HEAD, U("/")));
+        p_client->next_response()
+            .then([](test_response* p_response) {
+                http_asserts::assert_test_response_equals(p_response, status_codes::MethodNotAllowed);
+            })
+            .wait();
+
         listener.close().wait();
     }
 
-    // Verify specified config values.
+    TEST_FIXTURE(uri_address, get_listener_config)
     {
-        http_listener_config config;
-        utility::seconds t(1);
-        config.set_timeout(t);
-        http_listener listener(m_uri, config);
-        listener.open().wait();
-        listener.close().wait();
-        VERIFY_ARE_EQUAL(t, listener.configuration().timeout());
-    }
-}
+        // Verify default configuration.
+        {
+            http_listener listener(m_uri);
+            VERIFY_ARE_EQUAL(utility::seconds(120), listener.configuration().timeout());
+            listener.open().wait();
+            listener.close().wait();
+        }
 
-TEST_FIXTURE(uri_address, listener_config_creation)
-{
-    // copy constructor
-    {
-        http_listener_config config;
-        config.set_timeout(utility::seconds(2));
-        http_listener_config copy(config);
-        VERIFY_ARE_EQUAL(utility::seconds(2), copy.timeout());
-    }
-
-    // move constructor
-    {
-        http_listener_config config;
-        config.set_timeout(utility::seconds(2));
-        http_listener_config ctorMove(std::move(config));
-        VERIFY_ARE_EQUAL(utility::seconds(2), ctorMove.timeout());
+        // Verify specified config values.
+        {
+            http_listener_config config;
+            utility::seconds t(1);
+            config.set_timeout(t);
+            http_listener listener(m_uri, config);
+            listener.open().wait();
+            listener.close().wait();
+            VERIFY_ARE_EQUAL(t, listener.configuration().timeout());
+        }
     }
 
-    // assignment
+    TEST_FIXTURE(uri_address, listener_config_creation)
     {
-        http_listener_config config;
-        config.set_timeout(utility::seconds(2));
-        http_listener_config assign;
-        assign = config;
-        VERIFY_ARE_EQUAL(utility::seconds(2), assign.timeout());
-    }
+        // copy constructor
+        {
+            http_listener_config config;
+            config.set_timeout(utility::seconds(2));
+            http_listener_config copy(config);
+            VERIFY_ARE_EQUAL(utility::seconds(2), copy.timeout());
+        }
 
-    // move assignment
-    {
-        http_listener_config config;
-        config.set_timeout(utility::seconds(2));
-        http_listener_config assignMove;
-        assignMove = std::move(config);
-        VERIFY_ARE_EQUAL(utility::seconds(2), assignMove.timeout());
+        // move constructor
+        {
+            http_listener_config config;
+            config.set_timeout(utility::seconds(2));
+            http_listener_config ctorMove(std::move(config));
+            VERIFY_ARE_EQUAL(utility::seconds(2), ctorMove.timeout());
+        }
+
+        // assignment
+        {
+            http_listener_config config;
+            config.set_timeout(utility::seconds(2));
+            http_listener_config assign;
+            assign = config;
+            VERIFY_ARE_EQUAL(utility::seconds(2), assign.timeout());
+        }
+
+        // move assignment
+        {
+            http_listener_config config;
+            config.set_timeout(utility::seconds(2));
+            http_listener_config assignMove;
+            assignMove = std::move(config);
+            VERIFY_ARE_EQUAL(utility::seconds(2), assignMove.timeout());
+        }
     }
-}
 
 #if !defined(_WIN32) && !defined(__cplusplus_winrt) || defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
 
-TEST_FIXTURE(uri_address, create_https_listener_get, "Ignore", "github 209")
-{
-    const char * self_signed_cert = R"(
+    TEST_FIXTURE(uri_address, create_https_listener_get, "Ignore", "github 209")
+    {
+        const char* self_signed_cert = R"(
 -----BEGIN CERTIFICATE-----
 MIIDlzCCAn+gAwIBAgIJAP9ZV+1X94UjMA0GCSqGSIb3DQEBBQUAMGIxCzAJBgNV
 BAYTAkNOMQswCQYDVQQIDAJTSDELMAkGA1UEBwwCU0gxEjAQBgNVBAoMCU1JQ1JP
@@ -458,7 +453,7 @@ aNAom7bdENU8uivd+vrLnG2fKvFSssjVfaXpFLKAICfTJY9A3/CWnZ1AcbE5El7A
 adctopihoUrlAb0=
 -----END CERTIFICATE-----
         )";
-    const char * private_key = R"(
+        const char* private_key = R"(
 -----BEGIN PRIVATE KEY-----
 MIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQCy7+wAD2vuMGKW
 vt7anPRyB4YfJL/zKVdg5vqChtu4h8zroDDQD6i8zAGlgsw0csNuyPoz0t6cwALu
@@ -489,58 +484,55 @@ XzJTD4slrGSJrcpLt/g/Jqqdjg==
 -----END PRIVATE KEY-----
         )";
 
-    auto body = utility::string_t{U("body content")};
-    http_headers all_headers;
-    all_headers.add(U("Accept"), U("text/plain"));
-    all_headers.add(U("Accept-Charset"), U("utf-8"));
-    all_headers.add(U("Accept-Encoding"), U("gzip, deflate"));
-    all_headers.add(U("Accept-Language"), U("en-US"));
-    all_headers.add(U("Accept-Datetime"), U("Thu, 31 May 2007 20:35:00 GMT"));
-    all_headers.add(U("Authorization"), U("Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=="));
-    all_headers.add(U("Cache-Control"), U("no-cache"));
-    all_headers.add(U("Cookie"), U("$Version=1; Skin=new;"));
-    all_headers.add(U("Content-Length"), body.size());
-    all_headers.add(U("Content-MD5"), U("Q2hlY2sgSW50ZWdyaXR5IQ=="));
-    all_headers.add(U("Content-Type"), U("application/x-www-form-urlencoded"));
-    all_headers.add(U("Date"), U("Tue, 15 Nov 1994 08:12:31 GMT"));
-    all_headers.add(U("Expect"), U("100-continue"));
-    all_headers.add(U("Forwarded"), U("for=192.0.2.60;proto=http;by=203.0.113.43Forwarded: for=192.0.2.43, for=198.51.100.17"));
-    all_headers.add(U("From"), U("user@example.com"));
-    all_headers.add(U("Host"), U("en.wikipedia.org"));
-    all_headers.add(U("If-Match"), U("\"737060cd8c284d8af7ad3082f209582d\""));
-    all_headers.add(U("If-Modified-Since"), U("Sat, 29 Oct 1994 19:43:31 GMT"));
-    all_headers.add(U("If-None-Match"), U("\"737060cd8c284d8af7ad3082f209582d\""));
-    all_headers.add(U("If-Range"), U("\"737060cd8c284d8af7ad3082f209582d\""));
-    all_headers.add(U("If-Unmodified-Since"), U("Sat, 29 Oct 1994 19:43:31 GMT"));
-    all_headers.add(U("Max-Forwards"), U("10"));
-    all_headers.add(U("Origin"), U("http://www.example-social-network.com"));
-    all_headers.add(U("Pragma"), U("no-cache"));
-    all_headers.add(U("Proxy-Authorization"), U("Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=="));
-    all_headers.add(U("Range"), U("bytes=500-999"));
-    all_headers.add(U("Referer"), U("http://en.wikipedia.org/wiki/Main_Page"));
-    all_headers.add(U("TE"), U("trailers, deflate"));
-    all_headers.add(U("User-Agent"), U("Mozilla/5.0 (X11; Linux x86_64; rv:12.0) Gecko/20100101 Firefox/21.0"));
-    all_headers.add(U("Upgrade"), U("HTTP/2.0, SHTTP/1.3, IRC/6.9, RTA/x11"));
-    all_headers.add(U("Via"), U("1.0 fred, 1.1 example.com (Apache/1.1)"));
-    all_headers.add(U("Warning"), U("199 Miscellaneous warning"));
+        auto body = utility::string_t {U("body content")};
+        http_headers all_headers;
+        all_headers.add(U("Accept"), U("text/plain"));
+        all_headers.add(U("Accept-Charset"), U("utf-8"));
+        all_headers.add(U("Accept-Encoding"), U("gzip, deflate"));
+        all_headers.add(U("Accept-Language"), U("en-US"));
+        all_headers.add(U("Accept-Datetime"), U("Thu, 31 May 2007 20:35:00 GMT"));
+        all_headers.add(U("Authorization"), U("Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=="));
+        all_headers.add(U("Cache-Control"), U("no-cache"));
+        all_headers.add(U("Cookie"), U("$Version=1; Skin=new;"));
+        all_headers.add(U("Content-Length"), body.size());
+        all_headers.add(U("Content-MD5"), U("Q2hlY2sgSW50ZWdyaXR5IQ=="));
+        all_headers.add(U("Content-Type"), U("application/x-www-form-urlencoded"));
+        all_headers.add(U("Date"), U("Tue, 15 Nov 1994 08:12:31 GMT"));
+        all_headers.add(U("Expect"), U("100-continue"));
+        all_headers.add(U("Forwarded"),
+                        U("for=192.0.2.60;proto=http;by=203.0.113.43Forwarded: for=192.0.2.43, for=198.51.100.17"));
+        all_headers.add(U("From"), U("user@example.com"));
+        all_headers.add(U("Host"), U("en.wikipedia.org"));
+        all_headers.add(U("If-Match"), U("\"737060cd8c284d8af7ad3082f209582d\""));
+        all_headers.add(U("If-Modified-Since"), U("Sat, 29 Oct 1994 19:43:31 GMT"));
+        all_headers.add(U("If-None-Match"), U("\"737060cd8c284d8af7ad3082f209582d\""));
+        all_headers.add(U("If-Range"), U("\"737060cd8c284d8af7ad3082f209582d\""));
+        all_headers.add(U("If-Unmodified-Since"), U("Sat, 29 Oct 1994 19:43:31 GMT"));
+        all_headers.add(U("Max-Forwards"), U("10"));
+        all_headers.add(U("Origin"), U("http://www.example-social-network.com"));
+        all_headers.add(U("Pragma"), U("no-cache"));
+        all_headers.add(U("Proxy-Authorization"), U("Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=="));
+        all_headers.add(U("Range"), U("bytes=500-999"));
+        all_headers.add(U("Referer"), U("http://en.wikipedia.org/wiki/Main_Page"));
+        all_headers.add(U("TE"), U("trailers, deflate"));
+        all_headers.add(U("User-Agent"), U("Mozilla/5.0 (X11; Linux x86_64; rv:12.0) Gecko/20100101 Firefox/21.0"));
+        all_headers.add(U("Upgrade"), U("HTTP/2.0, SHTTP/1.3, IRC/6.9, RTA/x11"));
+        all_headers.add(U("Via"), U("1.0 fred, 1.1 example.com (Apache/1.1)"));
+        all_headers.add(U("Warning"), U("199 Miscellaneous warning"));
 
-    boost::asio::const_buffer cert(self_signed_cert, std::strlen(self_signed_cert));
-    boost::asio::const_buffer key(private_key, std::strlen(private_key));
+        boost::asio::const_buffer cert(self_signed_cert, std::strlen(self_signed_cert));
+        boost::asio::const_buffer key(private_key, std::strlen(private_key));
 
-    http_listener_config server_config;
-    server_config.set_ssl_context_callback(
-        [&](boost::asio::ssl::context& ctx)
-        {
+        http_listener_config server_config;
+        server_config.set_ssl_context_callback([&](boost::asio::ssl::context& ctx) {
             ctx.set_options(boost::asio::ssl::context::default_workarounds);
             ctx.use_certificate_chain(cert);
             ctx.use_private_key(key, boost::asio::ssl::context::pem);
         });
 
-    http_listener listener(m_secure_uri, server_config);
+        http_listener listener(m_secure_uri, server_config);
 
-    listener.support(methods::GET,
-        [&](http_request request)
-        {
+        listener.support(methods::GET, [&](http_request request) {
             http_asserts::assert_request_equals(request, methods::GET, U("/"));
 
             for (auto&& h : all_headers)
@@ -554,27 +546,27 @@ XzJTD4slrGSJrcpLt/g/Jqqdjg==
             request.reply(status_codes::OK);
         });
 
-    listener.open().wait();
+        listener.open().wait();
 
-    client::http_client_config client_config;
-    client_config.set_ssl_context_callback(
-        [&](boost::asio::ssl::context& ctx)
-        {
-            ctx.add_certificate_authority(cert);
-        });
+        client::http_client_config client_config;
+        client_config.set_ssl_context_callback(
+            [&](boost::asio::ssl::context& ctx) { ctx.add_certificate_authority(cert); });
 
-    client::http_client client(m_secure_uri, client_config);
-    http_request msg(methods::GET);
-    msg.set_request_uri(U("/"));
+        client::http_client client(m_secure_uri, client_config);
+        http_request msg(methods::GET);
+        msg.set_request_uri(U("/"));
 
-    msg.headers() = all_headers;
-    msg.set_body(body);
+        msg.headers() = all_headers;
+        msg.set_body(body);
 
-    http_asserts::assert_response_equals(client.request(msg).get(), status_codes::OK);
+        http_asserts::assert_response_equals(client.request(msg).get(), status_codes::OK);
 
-    listener.close().wait();
-}
+        listener.close().wait();
+    }
 #endif
 }
 
-}}}}
+} // namespace listener
+} // namespace http
+} // namespace functional
+} // namespace tests

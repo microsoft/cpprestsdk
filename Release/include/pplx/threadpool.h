@@ -1,14 +1,14 @@
 /***
-* Copyright (C) Microsoft. All rights reserved.
-* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-*
-*
-* Simple Linux implementation of a static thread pool.
-*
-* For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
-*
-* =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-***/
+ * Copyright (C) Microsoft. All rights reserved.
+ * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+ *
+ *
+ * Simple Linux implementation of a static thread pool.
+ *
+ * For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
+ *
+ * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ ***/
 #pragma once
 
 #if defined(__clang__)
@@ -23,15 +23,15 @@
 #endif
 
 #if defined(__ANDROID__)
+#include "pplx/pplx.h"
 #include <atomic>
 #include <jni.h>
-#include "pplx/pplx.h"
 #endif
 
 #include "cpprest/details/cpprest_compat.h"
 
-namespace crossplat {
-
+namespace crossplat
+{
 #if defined(__ANDROID__)
 // IDEA: Break this section into a separate android/jni header
 extern std::atomic<JavaVM*> JVM;
@@ -39,10 +39,7 @@ JNIEnv* get_jvm_env();
 
 struct java_local_ref_deleter
 {
-    void operator()(jobject lref) const
-    {
-        crossplat::get_jvm_env()->DeleteLocalRef(lref);
-    }
+    void operator()(jobject lref) const { crossplat::get_jvm_env()->DeleteLocalRef(lref); }
 };
 
 template<class T>
@@ -83,4 +80,4 @@ protected:
     boost::asio::io_service m_service;
 };
 
-}
+} // namespace crossplat

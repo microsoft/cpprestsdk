@@ -2,7 +2,7 @@
  * Copyright (C) Microsoft. All rights reserved.
  * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
  *
- * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
  *
  * HTTP Library: Client-side APIs.
  *
@@ -10,15 +10,15 @@
  *
  * For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
  *
- * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+ * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
  ****/
 
 #include "stdafx.h"
-#include <sstream>
 
-#include "../common/internal_http_helpers.h"
 #include "../common/connection_pool_helpers.h"
+#include "../common/internal_http_helpers.h"
 #include "cpprest/asyncrt_utils.h"
+#include <sstream>
 
 #if defined(__clang__)
 #pragma clang diagnostic push
@@ -39,9 +39,9 @@
 #error "Cpp rest SDK requires c++11 smart pointer support from boost"
 #endif
 
+#include "../common/x509_cert_utilities.h"
 #include "cpprest/base_uri.h"
 #include "cpprest/details/http_helpers.h"
-#include "../common/x509_cert_utilities.h"
 #include "http_client_impl.h"
 #include "pplx/threadpool.h"
 #include <memory>
@@ -1906,7 +1906,7 @@ pplx::task<http_response> asio_client::propagate(http_request request)
 
     return result_task;
 }
-}
-}
-}
-} // namespaces
+} // namespace details
+} // namespace client
+} // namespace http
+} // namespace web

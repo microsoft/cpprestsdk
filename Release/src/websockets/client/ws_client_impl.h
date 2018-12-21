@@ -1,9 +1,9 @@
 #pragma once
 
-#include <queue>
-#include <mutex>
 #include "cpprest/ws_client.h"
 #include "cpprest/ws_msg.h"
+#include <mutex>
+#include <queue>
 
 namespace web
 {
@@ -13,7 +13,6 @@ namespace client
 {
 namespace details
 {
-
 struct outgoing_msg_queue
 {
     enum class state
@@ -54,5 +53,7 @@ private:
     std::queue<websocket_outgoing_message> m_queue;
 };
 
-
-}}}}
+} // namespace details
+} // namespace client
+} // namespace websockets
+} // namespace web

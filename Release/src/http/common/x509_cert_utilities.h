@@ -2,13 +2,13 @@
  * Copyright (C) Microsoft. All rights reserved.
  * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
  *
- * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
  *
  * Contains utility functions for helping to verify server certificates in OS X/iOS and Android.
  *
  * For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
  *
- * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+ * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
  ****/
 
 #pragma once
@@ -55,10 +55,10 @@ struct winhttp_cert_chain_context
         }
     }
 };
-}
-}
-}
-} // namespaces
+} // namespace details
+} // namespace client
+} // namespace http
+} // namespace web
 #endif // _WIN32
 
 #if defined(__APPLE__) || (defined(ANDROID) || defined(__ANDROID__)) ||                                                \
@@ -102,9 +102,9 @@ namespace details
 /// <param name="hostName">Host name from the URI.</param>
 /// <returns>True if verification passed and server can be trusted, false otherwise.</returns>
 bool verify_cert_chain_platform_specific(boost::asio::ssl::verify_context& verifyCtx, const std::string& hostName);
-}
-}
-}
-}
+} // namespace details
+} // namespace client
+} // namespace http
+} // namespace web
 
 #endif // CPPREST_PLATFORM_ASIO_CERT_VERIFICATION_AVAILABLE

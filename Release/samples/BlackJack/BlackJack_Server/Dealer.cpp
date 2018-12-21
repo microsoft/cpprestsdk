@@ -1,20 +1,21 @@
 /***
-* Copyright (C) Microsoft. All rights reserved.
-* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-*
-* =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*
-* Dealer.cpp : Contains the main logic of the black jack dealer
-*
-* =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-****/
+ * Copyright (C) Microsoft. All rights reserved.
+ * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+ *
+ * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ *
+ * Dealer.cpp : Contains the main logic of the black jack dealer
+ *
+ * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+ ****/
 
 #include "stdafx.h"
-#include "messagetypes.h"
+
 #include "Table.h"
+#include "messagetypes.h"
 
 using namespace std;
-using namespace web; 
+using namespace web;
 using namespace utility;
 using namespace http;
 using namespace web::http::experimental::listener;
@@ -25,20 +26,19 @@ int nextId = 1;
 class BlackJackDealer
 {
 public:
-    BlackJackDealer() { }
+    BlackJackDealer() {}
     BlackJackDealer(utility::string_t url);
 
     pplx::task<void> open() { return m_listener.open(); }
     pplx::task<void> close() { return m_listener.close(); }
 
 private:
-
     void handle_get(http_request message);
     void handle_put(http_request message);
     void handle_post(http_request message);
     void handle_delete(http_request message);
-    
-    http_listener m_listener;   
+
+    http_listener m_listener;
 };
 
 BlackJackDealer::BlackJackDealer(utility::string_t url) : m_listener(url)
@@ -55,10 +55,10 @@ BlackJackDealer::BlackJackDealer(utility::string_t url) : m_listener(url)
 
 //
 // A GET of the dealer resource produces a list of existing tables.
-// 
+//
 void BlackJackDealer::handle_get(http_request message)
 {
-    ucout <<  message.to_string() << endl;
+    ucout << message.to_string() << endl;
 
     auto paths = http::uri::split_path(http::uri::decode(message.relative_uri().path()));
     if (paths.empty())
@@ -85,13 +85,13 @@ void BlackJackDealer::handle_get(http_request message)
 //
 // A POST of the dealer resource creates a new table and returns a resource for
 // that table.
-// 
+//
 void BlackJackDealer::handle_post(http_request message)
 {
-    ucout <<  message.to_string() << endl;
+    ucout << message.to_string() << endl;
 
     auto paths = uri::split_path(uri::decode(message.relative_uri().path()));
-    
+
     if (paths.empty())
     {
         utility::ostringstream_t nextIdString;
@@ -117,9 +117,10 @@ void BlackJackDealer::handle_post(http_request message)
 
     auto table = std::static_pointer_cast<DealerTable>(found->second);
 
-    if ( table->Players.size() < table->Capacity )
+    if (table->Players.size() < table->Capacity)
     {
-        std::map<utility::string_t, utility::string_t> query = uri::split_query(uri::decode(message.request_uri().query()));
+        std::map<utility::string_t, utility::string_t> query =
+            uri::split_query(uri::decode(message.request_uri().query()));
 
         auto cntEntry = query.find(QUERY_NAME);
 
@@ -143,13 +144,13 @@ void BlackJackDealer::handle_post(http_request message)
 
 //
 // A DELETE of the player resource leaves the table.
-// 
+//
 void BlackJackDealer::handle_delete(http_request message)
 {
-    ucout <<  message.to_string() << endl;
+    ucout << message.to_string() << endl;
 
     auto paths = uri::split_path(uri::decode(message.relative_uri().path()));
-    
+
     if (paths.empty())
     {
         message.reply(status_codes::Forbidden, U("TableId is required."));
@@ -173,9 +174,9 @@ void BlackJackDealer::handle_delete(http_request message)
 
     auto cntEntry = query.find(QUERY_NAME);
 
-    if ( cntEntry != query.end() )
+    if (cntEntry != query.end())
     {
-        if ( table->RemovePlayer(cntEntry->second) )
+        if (table->RemovePlayer(cntEntry->second))
         {
             message.reply(status_codes::OK);
         }
@@ -190,13 +191,12 @@ void BlackJackDealer::handle_delete(http_request message)
     }
 };
 
-
 //
 // A PUT to a table resource makes a card request (hit / stay).
-// 
+//
 void BlackJackDealer::handle_put(http_request message)
 {
-    ucout <<  message.to_string() << endl;
+    ucout << message.to_string() << endl;
 
     auto paths = uri::split_path(uri::decode(message.relative_uri().path()));
     auto query = uri::split_query(uri::decode(message.relative_uri().query()));
@@ -211,38 +211,38 @@ void BlackJackDealer::handle_put(http_request message)
 
     // Get information on a specific table.
     auto found = s_tables.find(table_id);
-    if ( found == s_tables.end() )
+    if (found == s_tables.end())
     {
         message.reply(status_codes::NotFound);
     }
 
     auto table = std::static_pointer_cast<DealerTable>(found->second);
 
-    if ( request == BET )
+    if (request == BET)
     {
         table->Bet(message);
     }
-    else if ( request == DOUBLE )
+    else if (request == DOUBLE)
     {
         table->DoubleDown(message);
     }
-    else if ( request == INSURE )
+    else if (request == INSURE)
     {
         table->Insure(message);
     }
-    else if ( request == HIT )
+    else if (request == HIT)
     {
         table->Hit(message);
     }
-    else if ( request == STAY )
+    else if (request == STAY)
     {
         table->Stay(message);
     }
-    else if ( request == REFRESH )
+    else if (request == REFRESH)
     {
         table->Wait(message);
     }
-    else 
+    else
     {
         message.reply(status_codes::Forbidden, U("Unrecognized request"));
     }

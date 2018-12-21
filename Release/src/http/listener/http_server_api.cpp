@@ -1,39 +1,39 @@
 /***
-* Copyright (C) Microsoft. All rights reserved.
-* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-*
-* =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*
-* HTTP Library: exposes the entry points to the http server transport apis.
-*
-* =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-****/
+ * Copyright (C) Microsoft. All rights reserved.
+ * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+ *
+ * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ *
+ * HTTP Library: exposes the entry points to the http server transport apis.
+ *
+ * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+ ****/
 
 #include "stdafx.h"
 
-#if !defined(_WIN32) || (_WIN32_WINNT >= _WIN32_WINNT_VISTA && !defined(__cplusplus_winrt)) || defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
+#if !defined(_WIN32) || (_WIN32_WINNT >= _WIN32_WINNT_VISTA && !defined(__cplusplus_winrt)) ||                         \
+    defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
 #include "http_server_impl.h"
 
 using namespace web;
 using namespace utility;
 using namespace web::http::experimental::listener;
 
-namespace web { namespace http
+namespace web
 {
-namespace experimental {
+namespace http
+{
+namespace experimental
+{
 namespace details
 {
-
 pplx::extensibility::critical_section_t http_server_api::s_lock;
 
 std::unique_ptr<http_server> http_server_api::s_server_api((http_server*)nullptr);
 
 pplx::details::atomic_long http_server_api::s_registrations(0L);
 
-bool http_server_api::has_listener()
-{
-    return s_registrations > 0L;
-}
+bool http_server_api::has_listener() { return s_registrations > 0L; }
 
 void http_server_api::register_server_api(std::unique_ptr<http_server> server_api)
 {
@@ -64,14 +64,14 @@ void http_server_api::unsafe_register_server_api(std::unique_ptr<http_server> se
     s_server_api.swap(server_api);
 }
 
-pplx::task<void> http_server_api::register_listener(_In_ web::http::experimental::listener::details::http_listener_impl *listener)
+pplx::task<void> http_server_api::register_listener(
+    _In_ web::http::experimental::listener::details::http_listener_impl* listener)
 {
-    return pplx::create_task([listener]()
-    {
+    return pplx::create_task([listener]() {
         pplx::extensibility::scoped_critical_section_t lock(s_lock);
 
         // the server API was not initialized, register a default
-        if(s_server_api == nullptr)
+        if (s_server_api == nullptr)
         {
 #if defined(_WIN32) && !defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
             auto server_api = make_http_httpsys_server();
@@ -94,13 +94,14 @@ pplx::task<void> http_server_api::register_listener(_In_ web::http::experimental
 
             // register listener
             s_server_api->register_listener(listener).wait();
-        } catch(...)
+        }
+        catch (...)
         {
             except = std::current_exception();
         }
 
         // Registration failed, need to decrement registration count.
-        if(except != nullptr)
+        if (except != nullptr)
         {
             if (pplx::details::atomic_decrement(s_registrations) == 0L)
             {
@@ -108,7 +109,8 @@ pplx::task<void> http_server_api::register_listener(_In_ web::http::experimental
                 {
                     server_api()->stop().wait();
                     http_server_api::unsafe_register_server_api(nullptr);
-                } catch(...)
+                }
+                catch (...)
                 {
                     // ignore this exception since we want to report the original one
                 }
@@ -118,10 +120,10 @@ pplx::task<void> http_server_api::register_listener(_In_ web::http::experimental
     });
 }
 
-pplx::task<void> http_server_api::unregister_listener(_In_ web::http::experimental::listener::details::http_listener_impl *pListener)
+pplx::task<void> http_server_api::unregister_listener(
+    _In_ web::http::experimental::listener::details::http_listener_impl* pListener)
 {
-    return pplx::create_task([pListener]()
-    {
+    return pplx::create_task([pListener]() {
         pplx::extensibility::scoped_critical_section_t lock(s_lock);
 
         // unregister listener
@@ -129,7 +131,8 @@ pplx::task<void> http_server_api::unregister_listener(_In_ web::http::experiment
         try
         {
             server_api()->unregister_listener(pListener).wait();
-        } catch(...)
+        }
+        catch (...)
         {
             except = std::current_exception();
         }
@@ -142,28 +145,29 @@ pplx::task<void> http_server_api::unregister_listener(_In_ web::http::experiment
                 server_api()->stop().wait();
                 http_server_api::unsafe_register_server_api(nullptr);
             }
-        } catch(...)
+        }
+        catch (...)
         {
             // save the original exception from unregister listener
-            if(except == nullptr)
+            if (except == nullptr)
             {
                 except = std::current_exception();
             }
         }
 
         // rethrow exception if one occurred
-        if(except != nullptr)
+        if (except != nullptr)
         {
             std::rethrow_exception(except);
         }
     });
 }
 
-http_server *http_server_api::server_api()
-{
-    return s_server_api.get();
-}
+http_server* http_server_api::server_api() { return s_server_api.get(); }
 
-}}}}
+} // namespace details
+} // namespace experimental
+} // namespace http
+} // namespace web
 
 #endif

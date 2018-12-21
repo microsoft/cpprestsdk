@@ -1,13 +1,14 @@
 /***
-* Copyright (C) Microsoft. All rights reserved.
-* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-*
-* =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*
-* Tests cases for covering issues dealing with http_client lifetime, underlying TCP connections, and general connection errors.
-*
-* =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-****/
+ * Copyright (C) Microsoft. All rights reserved.
+ * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+ *
+ * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ *
+ * Tests cases for covering issues dealing with http_client lifetime, underlying TCP connections, and general connection
+ *errors.
+ *
+ * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+ ****/
 
 #include "stdafx.h"
 
@@ -26,10 +27,16 @@ using namespace web::http::client;
 
 using namespace tests::functional::http::utilities;
 
-namespace tests { namespace functional { namespace http { namespace client {
-
+namespace tests
+{
+namespace functional
+{
+namespace http
+{
+namespace client
+{
 // Test implementation for pending_requests_after_client.
-static void pending_requests_after_client_impl(const uri &address)
+static void pending_requests_after_client_impl(const uri& address)
 {
     std::vector<pplx::task<void>> completed_requests;
     {
@@ -53,8 +60,7 @@ static void pending_requests_after_client_impl(const uri &address)
         // send responses.
         for (size_t i = 0; i < num_requests; ++i)
         {
-            completed_requests.push_back(requests[i].then([&](test_request *request)
-            {
+            completed_requests.push_back(requests[i].then([&](test_request* request) {
                 http_asserts::assert_test_request_equals(request, mtd, U("/"));
                 VERIFY_ARE_EQUAL(0u, request->reply(status_codes::OK));
             }));
@@ -79,374 +85,372 @@ static void pending_requests_after_client_impl(const uri &address)
 
 SUITE(connections_and_errors)
 {
+    // Tests requests still outstanding after the http_client has been destroyed.
+    TEST_FIXTURE(uri_address, pending_requests_after_client) { pending_requests_after_client_impl(m_uri); }
 
-// Tests requests still outstanding after the http_client has been destroyed.
-TEST_FIXTURE(uri_address, pending_requests_after_client)
-{
-    pending_requests_after_client_impl(m_uri);
-}
+    TEST_FIXTURE(uri_address, server_doesnt_exist)
+    {
+        http_client_config config;
+        config.set_timeout(std::chrono::seconds(1));
+        http_client client(m_uri, config);
+        VERIFY_THROWS(client.request(methods::GET).wait(), web::http::http_exception);
+    }
 
-TEST_FIXTURE(uri_address, server_doesnt_exist)
-{
-    http_client_config config;
-    config.set_timeout(std::chrono::seconds(1));
-    http_client client(m_uri, config);
-    VERIFY_THROWS(client.request(methods::GET).wait(), web::http::http_exception);
-}
+    TEST_FIXTURE(uri_address, open_failure)
+    {
+        http_client client(U("http://localhost323:-1"));
 
-TEST_FIXTURE(uri_address, open_failure)
-{
-    http_client client(U("http://localhost323:-1"));
+        // This API should not throw. The exception should be surfaced
+        // during task.wait/get
+        auto t = client.request(methods::GET);
+        VERIFY_THROWS(t.wait(), web::http::http_exception);
+    }
 
-    // This API should not throw. The exception should be surfaced
-    // during task.wait/get
-    auto t = client.request(methods::GET);
-    VERIFY_THROWS(t.wait(), web::http::http_exception);
-}
+    TEST_FIXTURE(uri_address, server_close_without_responding)
+    {
+        http_client_config config;
+        config.set_timeout(utility::seconds(1));
 
-TEST_FIXTURE(uri_address, server_close_without_responding)
-{
-    http_client_config config;
-    config.set_timeout(utility::seconds(1));
+        http_client client(m_uri, config);
+        test_http_server::scoped_server server(m_uri);
+        auto t = server.server()->next_request();
 
-    http_client client(m_uri, config);
-    test_http_server::scoped_server server(m_uri);
-    auto t = server.server()->next_request();
+        // Send request.
+        auto response = client.request(methods::PUT);
 
-    // Send request.
-    auto response = client.request(methods::PUT);
+        // Wait for request
+        VERIFY_NO_THROWS(t.get());
 
-    // Wait for request
-    VERIFY_NO_THROWS(t.get());
+        // Close server connection.
+        server.server()->close();
 
-    // Close server connection.
-    server.server()->close();
+        VERIFY_THROWS_HTTP_ERROR_CODE(response.wait(), std::errc::connection_aborted);
 
-    VERIFY_THROWS_HTTP_ERROR_CODE(response.wait(), std::errc::connection_aborted);
+        // Try sending another request.
+        VERIFY_THROWS(client.request(methods::GET).wait(), web::http::http_exception);
+    }
 
-    // Try sending another request.
-    VERIFY_THROWS(client.request(methods::GET).wait(), web::http::http_exception);
-}
-
-TEST_FIXTURE(uri_address, request_timeout)
-{
-    test_http_server::scoped_server scoped(m_uri);
-    auto t = scoped.server()->next_request();
-    http_client_config config;
-    config.set_timeout(utility::seconds(1));
-
-    http_client client(m_uri, config);
-    auto responseTask = client.request(methods::GET);
-    
-#ifdef __APPLE__
-    // CodePlex 295
-    VERIFY_THROWS(responseTask.get(), http_exception);
-#else
-    VERIFY_THROWS_HTTP_ERROR_CODE(responseTask.get(), std::errc::timed_out);
-#endif
-    t.get();
-}
-
-TEST_FIXTURE(uri_address, request_timeout_microsecond)
-{
-    pplx::task<test_request*> t;
+    TEST_FIXTURE(uri_address, request_timeout)
     {
         test_http_server::scoped_server scoped(m_uri);
-        t = scoped.server()->next_request();
+        auto t = scoped.server()->next_request();
         http_client_config config;
-        config.set_timeout(std::chrono::microseconds(500));
+        config.set_timeout(utility::seconds(1));
 
         http_client client(m_uri, config);
         auto responseTask = client.request(methods::GET);
+
 #ifdef __APPLE__
         // CodePlex 295
         VERIFY_THROWS(responseTask.get(), http_exception);
 #else
         VERIFY_THROWS_HTTP_ERROR_CODE(responseTask.get(), std::errc::timed_out);
 #endif
+        t.get();
     }
-    try { t.get(); }
-    catch (...) {}
-}
 
-TEST_FIXTURE(uri_address, invalid_method)
-{
-    web::http::uri uri(U("http://www.bing.com/"));
-    http_client client(uri);
-    string_t invalid_chars = U("\a\b\f\v\n\r\t\x20\x7f");
-
-    for (auto iter = invalid_chars.begin(); iter < invalid_chars.end(); iter++)
+    TEST_FIXTURE(uri_address, request_timeout_microsecond)
     {
-        string_t method = U("my method");
-        method[2] = *iter;
-        VERIFY_THROWS(client.request(method).get(), http_exception);
+        pplx::task<test_request*> t;
+        {
+            test_http_server::scoped_server scoped(m_uri);
+            t = scoped.server()->next_request();
+            http_client_config config;
+            config.set_timeout(std::chrono::microseconds(500));
+
+            http_client client(m_uri, config);
+            auto responseTask = client.request(methods::GET);
+#ifdef __APPLE__
+            // CodePlex 295
+            VERIFY_THROWS(responseTask.get(), http_exception);
+#else
+            VERIFY_THROWS_HTTP_ERROR_CODE(responseTask.get(), std::errc::timed_out);
+#endif
+        }
+        try
+        {
+            t.get();
+        }
+        catch (...)
+        {
+        }
     }
-}
 
-// This test sends an SSL request to a non-SSL server and should fail on handshaking
-TEST_FIXTURE(uri_address, handshake_fail)
-{
-    web::http::uri ssl_uri(U("https://localhost:34568/"));
+    TEST_FIXTURE(uri_address, invalid_method)
+    {
+        web::http::uri uri(U("http://www.bing.com/"));
+        http_client client(uri);
+        string_t invalid_chars = U("\a\b\f\v\n\r\t\x20\x7f");
 
-    test_http_server::scoped_server scoped(m_uri);
+        for (auto iter = invalid_chars.begin(); iter < invalid_chars.end(); iter++)
+        {
+            string_t method = U("my method");
+            method[2] = *iter;
+            VERIFY_THROWS(client.request(method).get(), http_exception);
+        }
+    }
 
-    http_client client(ssl_uri);
-    auto request = client.request(methods::GET);
+    // This test sends an SSL request to a non-SSL server and should fail on handshaking
+    TEST_FIXTURE(uri_address, handshake_fail)
+    {
+        web::http::uri ssl_uri(U("https://localhost:34568/"));
 
-    VERIFY_THROWS(request.get(), http_exception);
-}
+        test_http_server::scoped_server scoped(m_uri);
+
+        http_client client(ssl_uri);
+        auto request = client.request(methods::GET);
+
+        VERIFY_THROWS(request.get(), http_exception);
+    }
 
 #if !defined(__cplusplus_winrt)
-TEST_FIXTURE(uri_address, content_ready_timeout)
-{
-    web::http::experimental::listener::http_listener listener(m_uri);
-    listener.open().wait();
-
-    streams::producer_consumer_buffer<uint8_t> buf;
-
-    listener.support([buf](http_request request)
+    TEST_FIXTURE(uri_address, content_ready_timeout)
     {
-        http_response response(200);
-        response.set_body(streams::istream(buf), U("text/plain"));
-        response.headers().add(header_names::connection, U("close"));
-        request.reply(response);
-    });
+        web::http::experimental::listener::http_listener listener(m_uri);
+        listener.open().wait();
 
-    {
-        http_client_config config;
-        config.set_timeout(utility::seconds(1));
-        http_client client(m_uri, config);
-        http_request msg(methods::GET);
-        http_response rsp = client.request(msg).get();
+        streams::producer_consumer_buffer<uint8_t> buf;
 
-        // The response body should timeout and we should receive an exception
+        listener.support([buf](http_request request) {
+            http_response response(200);
+            response.set_body(streams::istream(buf), U("text/plain"));
+            response.headers().add(header_names::connection, U("close"));
+            request.reply(response);
+        });
+
+        {
+            http_client_config config;
+            config.set_timeout(utility::seconds(1));
+            http_client client(m_uri, config);
+            http_request msg(methods::GET);
+            http_response rsp = client.request(msg).get();
+
+            // The response body should timeout and we should receive an exception
 #ifndef _WIN32
-        // CodePlex 295
-        VERIFY_THROWS(rsp.content_ready().wait(), http_exception);
+            // CodePlex 295
+            VERIFY_THROWS(rsp.content_ready().wait(), http_exception);
 #else
-        VERIFY_THROWS_HTTP_ERROR_CODE(rsp.content_ready().wait(), std::errc::timed_out);
+            VERIFY_THROWS_HTTP_ERROR_CODE(rsp.content_ready().wait(), std::errc::timed_out);
 #endif
+        }
+
+        buf.close(std::ios_base::out).wait();
+        listener.close().wait();
     }
 
-    buf.close(std::ios_base::out).wait();
-    listener.close().wait();
-}
-
-TEST_FIXTURE(uri_address, stream_timeout)
-{
-    web::http::experimental::listener::http_listener listener(m_uri);
-    listener.open().wait();
-
-    streams::producer_consumer_buffer<uint8_t> buf;
-
-    listener.support([buf](http_request request)
+    TEST_FIXTURE(uri_address, stream_timeout)
     {
-        http_response response(200);
-        response.set_body(streams::istream(buf), U("text/plain"));
-        response.headers().add(header_names::connection, U("close"));
-        request.reply(response);
-    });
+        web::http::experimental::listener::http_listener listener(m_uri);
+        listener.open().wait();
 
-    {
-        http_client_config config;
-        config.set_timeout(utility::seconds(1));
-        http_client client(m_uri, config);
-        http_request msg(methods::GET);
-        http_response rsp = client.request(msg).get();
+        streams::producer_consumer_buffer<uint8_t> buf;
 
-        // The response body should timeout and we should receive an exception
-        auto readTask = rsp.body().read_to_end(streams::producer_consumer_buffer<uint8_t>());
+        listener.support([buf](http_request request) {
+            http_response response(200);
+            response.set_body(streams::istream(buf), U("text/plain"));
+            response.headers().add(header_names::connection, U("close"));
+            request.reply(response);
+        });
+
+        {
+            http_client_config config;
+            config.set_timeout(utility::seconds(1));
+            http_client client(m_uri, config);
+            http_request msg(methods::GET);
+            http_response rsp = client.request(msg).get();
+
+            // The response body should timeout and we should receive an exception
+            auto readTask = rsp.body().read_to_end(streams::producer_consumer_buffer<uint8_t>());
 #ifndef _WIN32
-        // CodePlex 295
-        VERIFY_THROWS(readTask.get(), http_exception);
+            // CodePlex 295
+            VERIFY_THROWS(readTask.get(), http_exception);
 #else
-        VERIFY_THROWS_HTTP_ERROR_CODE(readTask.wait(), std::errc::timed_out);
+            VERIFY_THROWS_HTTP_ERROR_CODE(readTask.wait(), std::errc::timed_out);
 #endif
+        }
+
+        buf.close(std::ios_base::out).wait();
+        listener.close().wait();
     }
-
-    buf.close(std::ios_base::out).wait();
-    listener.close().wait();
-}
 #endif
 
-TEST_FIXTURE(uri_address, cancel_before_request)
-{
-    test_http_server::scoped_server scoped(m_uri);
-    http_client c(m_uri);
-    pplx::cancellation_token_source source;
-    source.cancel();
+    TEST_FIXTURE(uri_address, cancel_before_request)
+    {
+        test_http_server::scoped_server scoped(m_uri);
+        http_client c(m_uri);
+        pplx::cancellation_token_source source;
+        source.cancel();
 
-    auto responseTask = c.request(methods::PUT, U("/"), source.get_token());
-    VERIFY_THROWS_HTTP_ERROR_CODE(responseTask.get(), std::errc::operation_canceled);
-}
+        auto responseTask = c.request(methods::PUT, U("/"), source.get_token());
+        VERIFY_THROWS_HTTP_ERROR_CODE(responseTask.get(), std::errc::operation_canceled);
+    }
 
 // This test can't be implemented with our test server so isn't available on WinRT.
 #ifndef __cplusplus_winrt
-TEST_FIXTURE(uri_address, cancel_after_headers)
-{
-    web::http::experimental::listener::http_listener listener(m_uri);
-    listener.open().wait();
-    http_client c(m_uri);
-    pplx::cancellation_token_source source;
-    pplx::extensibility::event_t ev;
-
-    listener.support([&](http_request request)
+    TEST_FIXTURE(uri_address, cancel_after_headers)
     {
-        streams::producer_consumer_buffer<uint8_t> buf;
-        http_response response(200);
-        response.set_body(streams::istream(buf), U("text/plain"));
-        request.reply(response);
-        ev.wait();
-        buf.putc('a').wait();
-        buf.putc('b').wait();
-        buf.putc('c').wait();
-        buf.putc('d').wait();
-        buf.close(std::ios::out).wait();
-    });
-
-    auto responseTask = c.request(methods::GET, source.get_token());
-    http_response response = responseTask.get();
-    source.cancel();
-    ev.set();
-
-    VERIFY_THROWS_HTTP_ERROR_CODE(response.extract_string().get(), std::errc::operation_canceled);
-    
-    // Codeplex 328.
-#if !defined(_WIN32)
-    tests::common::utilities::os_utilities::sleep(1000);
-#endif
-    
-    listener.close().wait();
-}
-#endif
-
-TEST_FIXTURE(uri_address, cancel_after_body)
-{
-    test_http_server::scoped_server scoped(m_uri);
-    test_http_server * p_server = scoped.server();
-    http_client c(m_uri);
-    pplx::cancellation_token_source source;
-    std::map<utility::string_t, utility::string_t> headers;
-    headers[U("Content-Type")] = U("text/plain; charset=utf-8");
-    std::string bodyData("Hello");
-
-    p_server->next_request().then([&](test_request *r)
-    {
-        VERIFY_ARE_EQUAL(0u, r->reply(status_codes::OK, U("OK"), headers, bodyData)); 
-    });
-
-    auto response = c.request(methods::PUT, U("/"), U("data"), source.get_token()).get();
-    VERIFY_ARE_EQUAL(utility::conversions::to_string_t(bodyData), response.extract_string().get());
-    source.cancel();
-    response.content_ready().wait();
-}
-
-TEST_FIXTURE(uri_address, cancel_with_error)
-{
-    http_client c(m_uri);
-    pplx::task<http_response> responseTask;
-    {
-        test_http_server::scoped_server server(m_uri);
+        web::http::experimental::listener::http_listener listener(m_uri);
+        listener.open().wait();
+        http_client c(m_uri);
         pplx::cancellation_token_source source;
+        pplx::extensibility::event_t ev;
 
-        responseTask = c.request(methods::GET, U("/"), source.get_token());
+        listener.support([&](http_request request) {
+            streams::producer_consumer_buffer<uint8_t> buf;
+            http_response response(200);
+            response.set_body(streams::istream(buf), U("text/plain"));
+            request.reply(response);
+            ev.wait();
+            buf.putc('a').wait();
+            buf.putc('b').wait();
+            buf.putc('c').wait();
+            buf.putc('d').wait();
+            buf.close(std::ios::out).wait();
+        });
+
+        auto responseTask = c.request(methods::GET, source.get_token());
+        http_response response = responseTask.get();
         source.cancel();
+        ev.set();
+
+        VERIFY_THROWS_HTTP_ERROR_CODE(response.extract_string().get(), std::errc::operation_canceled);
+
+        // Codeplex 328.
+#if !defined(_WIN32)
+        tests::common::utilities::os_utilities::sleep(1000);
+#endif
+
+        listener.close().wait();
+    }
+#endif
+
+    TEST_FIXTURE(uri_address, cancel_after_body)
+    {
+        test_http_server::scoped_server scoped(m_uri);
+        test_http_server* p_server = scoped.server();
+        http_client c(m_uri);
+        pplx::cancellation_token_source source;
+        std::map<utility::string_t, utility::string_t> headers;
+        headers[U("Content-Type")] = U("text/plain; charset=utf-8");
+        std::string bodyData("Hello");
+
+        p_server->next_request().then(
+            [&](test_request* r) { VERIFY_ARE_EQUAL(0u, r->reply(status_codes::OK, U("OK"), headers, bodyData)); });
+
+        auto response = c.request(methods::PUT, U("/"), U("data"), source.get_token()).get();
+        VERIFY_ARE_EQUAL(utility::conversions::to_string_t(bodyData), response.extract_string().get());
+        source.cancel();
+        response.content_ready().wait();
     }
 
-    // All errors after cancellation are ignored.
-    VERIFY_THROWS_HTTP_ERROR_CODE(responseTask.get(), std::errc::operation_canceled);
-}
+    TEST_FIXTURE(uri_address, cancel_with_error)
+    {
+        http_client c(m_uri);
+        pplx::task<http_response> responseTask;
+        {
+            test_http_server::scoped_server server(m_uri);
+            pplx::cancellation_token_source source;
 
-TEST_FIXTURE(uri_address, cancel_while_uploading_data)
-{
-    test_http_server::scoped_server scoped(m_uri);
-    http_client c(m_uri);
-    pplx::cancellation_token_source source;
+            responseTask = c.request(methods::GET, U("/"), source.get_token());
+            source.cancel();
+        }
 
-    auto buf = streams::producer_consumer_buffer<uint8_t>();
-    buf.putc('A').wait();
-    auto responseTask = c.request(methods::PUT, U("/"), buf.create_istream(), 2, source.get_token());
-    source.cancel();
-    buf.putc('B').wait();
-    buf.close(std::ios::out).wait();
-    VERIFY_THROWS_HTTP_ERROR_CODE(responseTask.get(), std::errc::operation_canceled);
-}
+        // All errors after cancellation are ignored.
+        VERIFY_THROWS_HTTP_ERROR_CODE(responseTask.get(), std::errc::operation_canceled);
+    }
+
+    TEST_FIXTURE(uri_address, cancel_while_uploading_data)
+    {
+        test_http_server::scoped_server scoped(m_uri);
+        http_client c(m_uri);
+        pplx::cancellation_token_source source;
+
+        auto buf = streams::producer_consumer_buffer<uint8_t>();
+        buf.putc('A').wait();
+        auto responseTask = c.request(methods::PUT, U("/"), buf.create_istream(), 2, source.get_token());
+        source.cancel();
+        buf.putc('B').wait();
+        buf.close(std::ios::out).wait();
+        VERIFY_THROWS_HTTP_ERROR_CODE(responseTask.get(), std::errc::operation_canceled);
+    }
 
 // This test can't be implemented with our test server since it doesn't stream data so isn't avaliable on WinRT.
 #ifndef __cplusplus_winrt
-TEST_FIXTURE(uri_address, cancel_while_downloading_data)
-{
-    web::http::experimental::listener::http_listener listener(m_uri);
-    listener.open().wait();
-    http_client c(m_uri);
-    pplx::cancellation_token_source source;
-
-    pplx::extensibility::event_t ev;
-    pplx::extensibility::event_t ev2;
-
-    listener.support([&](http_request request)
+    TEST_FIXTURE(uri_address, cancel_while_downloading_data)
     {
-        streams::producer_consumer_buffer<uint8_t> buf;
-        http_response response(200);
-        response.set_body(streams::istream(buf), U("text/plain"));
-        request.reply(response);
-        buf.putc('a').wait();
-        buf.putc('b').wait();
-        ev.set();
-        ev2.wait();
-        buf.putc('c').wait();
-        buf.putc('d').wait();
-        buf.close(std::ios::out).wait();
-    });
+        web::http::experimental::listener::http_listener listener(m_uri);
+        listener.open().wait();
+        http_client c(m_uri);
+        pplx::cancellation_token_source source;
 
-    auto response = c.request(methods::GET, source.get_token()).get();
-    ev.wait();
-    source.cancel();
-    ev2.set();
+        pplx::extensibility::event_t ev;
+        pplx::extensibility::event_t ev2;
 
-    VERIFY_THROWS_HTTP_ERROR_CODE(response.extract_string().get(), std::errc::operation_canceled);
+        listener.support([&](http_request request) {
+            streams::producer_consumer_buffer<uint8_t> buf;
+            http_response response(200);
+            response.set_body(streams::istream(buf), U("text/plain"));
+            request.reply(response);
+            buf.putc('a').wait();
+            buf.putc('b').wait();
+            ev.set();
+            ev2.wait();
+            buf.putc('c').wait();
+            buf.putc('d').wait();
+            buf.close(std::ios::out).wait();
+        });
 
-    // Codeplex 328.
+        auto response = c.request(methods::GET, source.get_token()).get();
+        ev.wait();
+        source.cancel();
+        ev2.set();
+
+        VERIFY_THROWS_HTTP_ERROR_CODE(response.extract_string().get(), std::errc::operation_canceled);
+
+        // Codeplex 328.
 #if !defined(_WIN32)
-    tests::common::utilities::os_utilities::sleep(1000);
-#endif
-    
-    listener.close().wait();
-}
+        tests::common::utilities::os_utilities::sleep(1000);
 #endif
 
-// Try to connect to a server on a closed port and cancel the operation.
-TEST_FIXTURE(uri_address, cancel_bad_port)
-{
-    // http_client_asio had a bug where, when canceled, it would cancel only the
-    // current connection but then go and try the next address from the list of
-    // resolved addresses, i.e., it wouldn't actually cancel as long as there
-    // are more addresses to try. Consequently, it would not report the task as
-    // being canceled. This was easiest to observe when trying to connect to a
-    // server that does not respond on a certain port, otherwise the timing
-    // might be tricky.
+        listener.close().wait();
+    }
+#endif
 
-    // We need to connect to a URI for which there are multiple addresses
-    // associated (i.e., multiple A records).
-    web::http::uri uri(U("https://microsoft.com:442/"));
+    // Try to connect to a server on a closed port and cancel the operation.
+    TEST_FIXTURE(uri_address, cancel_bad_port)
+    {
+        // http_client_asio had a bug where, when canceled, it would cancel only the
+        // current connection but then go and try the next address from the list of
+        // resolved addresses, i.e., it wouldn't actually cancel as long as there
+        // are more addresses to try. Consequently, it would not report the task as
+        // being canceled. This was easiest to observe when trying to connect to a
+        // server that does not respond on a certain port, otherwise the timing
+        // might be tricky.
 
-    // Send request.
-    http_client_config config;
-    config.set_timeout(std::chrono::milliseconds(1000));
-    http_client c(uri, config);
-    web::http::http_request r;
-    auto cts = pplx::cancellation_token_source();
-    auto ct = cts.get_token();
-    auto t = c.request(r, ct);
+        // We need to connect to a URI for which there are multiple addresses
+        // associated (i.e., multiple A records).
+        web::http::uri uri(U("https://microsoft.com:442/"));
 
-    // Make sure that the client already finished resolving before canceling,
-    // otherwise the bug might not be triggered.
-    std::this_thread::sleep_for(std::chrono::milliseconds(400));
-    cts.cancel();
+        // Send request.
+        http_client_config config;
+        config.set_timeout(std::chrono::milliseconds(1000));
+        http_client c(uri, config);
+        web::http::http_request r;
+        auto cts = pplx::cancellation_token_source();
+        auto ct = cts.get_token();
+        auto t = c.request(r, ct);
 
-    VERIFY_THROWS_HTTP_ERROR_CODE(t.get(), std::errc::operation_canceled);
-}
+        // Make sure that the client already finished resolving before canceling,
+        // otherwise the bug might not be triggered.
+        std::this_thread::sleep_for(std::chrono::milliseconds(400));
+        cts.cancel();
+
+        VERIFY_THROWS_HTTP_ERROR_CODE(t.get(), std::errc::operation_canceled);
+    }
 
 } // SUITE(connections_and_errors)
 
-}}}}
+} // namespace client
+} // namespace http
+} // namespace functional
+} // namespace tests

@@ -1,15 +1,15 @@
 /***
-* Copyright (C) Microsoft. All rights reserved.
-* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-*
-* =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*
-* Parallel Patterns Library implementation (common code across platforms)
-*
-* For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
-*
-* =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-****/
+ * Copyright (C) Microsoft. All rights reserved.
+ * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+ *
+ * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ *
+ * Parallel Patterns Library implementation (common code across platforms)
+ *
+ * For the latest on this and related APIs, please see: https://github.com/Microsoft/cpprestsdk
+ *
+ * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+ ****/
 
 #include "stdafx.h"
 
@@ -19,93 +19,82 @@
 
 // Disable false alarm code analyze warning
 #if defined(_MSC_VER)
-#pragma warning (disable : 26165 26110)
+#pragma warning(disable : 26165 26110)
 #endif
 
 namespace pplx
 {
-
-
 namespace details
 {
-    /// <summary>
-    /// Spin lock to allow for locks to be used in global scope
-    /// </summary>
-    class _Spin_lock
+/// <summary>
+/// Spin lock to allow for locks to be used in global scope
+/// </summary>
+class _Spin_lock
+{
+public:
+    _Spin_lock() : _M_lock(0) {}
+
+    void lock()
     {
-    public:
-
-        _Spin_lock()
-            : _M_lock(0)
+        if (details::atomic_compare_exchange(_M_lock, 1l, 0l) != 0l)
         {
-        }
-
-        void lock()
-        {
-            if ( details::atomic_compare_exchange(_M_lock, 1l, 0l) != 0l )
+            do
             {
-                do
-                {
-                    pplx::details::platform::YieldExecution();
+                pplx::details::platform::YieldExecution();
 
-                } while ( details::atomic_compare_exchange(_M_lock, 1l, 0l) != 0l );
-            }
+            } while (details::atomic_compare_exchange(_M_lock, 1l, 0l) != 0l);
         }
+    }
 
-        void unlock()
-        {
-            // fence for release semantics
-            details::atomic_exchange(_M_lock, 0l);
-        }
+    void unlock()
+    {
+        // fence for release semantics
+        details::atomic_exchange(_M_lock, 0l);
+    }
 
-    private:
-        atomic_long _M_lock;
-    };
+private:
+    atomic_long _M_lock;
+};
 
-    typedef ::pplx::scoped_lock<_Spin_lock> _Scoped_spin_lock;
+typedef ::pplx::scoped_lock<_Spin_lock> _Scoped_spin_lock;
 } // namespace details
 
 static struct _pplx_g_sched_t
 {
     typedef std::shared_ptr<pplx::scheduler_interface> sched_ptr;
 
-    _pplx_g_sched_t()
-    {
-        m_state = post_ctor;
-    }
+    _pplx_g_sched_t() { m_state = post_ctor; }
 
-    ~_pplx_g_sched_t()
-    {
-        m_state = post_dtor;
-    }
+    ~_pplx_g_sched_t() { m_state = post_dtor; }
 
     sched_ptr get_scheduler()
     {
         switch (m_state)
         {
-        case post_ctor:
-            // This is the 99.9% case.
+            case post_ctor:
+                // This is the 99.9% case.
 
-            if (!m_scheduler)
-            {
-                ::pplx::details::_Scoped_spin_lock lock(m_spinlock);
                 if (!m_scheduler)
                 {
-                    m_scheduler = std::make_shared< ::pplx::default_scheduler_t>();
+                    ::pplx::details::_Scoped_spin_lock lock(m_spinlock);
+                    if (!m_scheduler)
+                    {
+                        m_scheduler = std::make_shared<::pplx::default_scheduler_t>();
+                    }
                 }
-            }
 
-            return m_scheduler;
-        default:
-            // This case means the global m_scheduler is not available.
-            // We spin off an individual scheduler instead.
-            return std::make_shared< ::pplx::default_scheduler_t>();
+                return m_scheduler;
+            default:
+                // This case means the global m_scheduler is not available.
+                // We spin off an individual scheduler instead.
+                return std::make_shared<::pplx::default_scheduler_t>();
         }
     }
 
     void set_scheduler(sched_ptr scheduler)
     {
-        if (m_state == pre_ctor || m_state == post_dtor) {
+        if (m_state == pre_ctor || m_state == post_dtor)
+        {
             throw invalid_operation("Scheduler cannot be initialized now");
         }
 

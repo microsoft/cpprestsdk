@@ -1,28 +1,77 @@
 /***
-* Copyright (C) Microsoft. All rights reserved.
-* Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-*
-* =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
-*
-* messagetypes.h
-*
-* =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-****/
+ * Copyright (C) Microsoft. All rights reserved.
+ * Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+ *
+ * =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+
+ *
+ * messagetypes.h
+ *
+ * =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+ ****/
 
 #pragma once
 #include "cpprest/json.h"
 
-enum BJHandResult { HR_None, HR_PlayerBlackJack, HR_PlayerWin, HR_ComputerWin, HR_Push };
+enum BJHandResult
+{
+    HR_None,
+    HR_PlayerBlackJack,
+    HR_PlayerWin,
+    HR_ComputerWin,
+    HR_Push
+};
 
-enum BJHandState { HR_Empty, HR_BlackJack, HR_Active, HR_Held, HR_Busted };
+enum BJHandState
+{
+    HR_Empty,
+    HR_BlackJack,
+    HR_Active,
+    HR_Held,
+    HR_Busted
+};
 
-enum BJPossibleMoves { PM_None = 0x0, PM_Hit = 0x1, PM_DoubleDown = 0x2, PM_Split = 0x4, PM_All = 0x7 };
+enum BJPossibleMoves
+{
+    PM_None = 0x0,
+    PM_Hit = 0x1,
+    PM_DoubleDown = 0x2,
+    PM_Split = 0x4,
+    PM_All = 0x7
+};
 
-enum CardSuit { CS_Heart, CS_Diamond, CS_Club, CS_Spade };
-    
-enum CardValue { CV_None, CV_Ace, CV_Two, CV_Three, CV_Four, CV_Five, CV_Six, CV_Seven, CV_Eight, CV_Nine, CV_Ten, CV_Jack, CV_Queen, CV_King };
+enum CardSuit
+{
+    CS_Heart,
+    CS_Diamond,
+    CS_Club,
+    CS_Spade
+};
 
-enum BJStatus { ST_PlaceBet, ST_Refresh, ST_YourTurn, ST_None };
+enum CardValue
+{
+    CV_None,
+    CV_Ace,
+    CV_Two,
+    CV_Three,
+    CV_Four,
+    CV_Five,
+    CV_Six,
+    CV_Seven,
+    CV_Eight,
+    CV_Nine,
+    CV_Ten,
+    CV_Jack,
+    CV_Queen,
+    CV_King
+};
+
+enum BJStatus
+{
+    ST_PlaceBet,
+    ST_Refresh,
+    ST_YourTurn,
+    ST_None
+};
 
 #define STATE L"state"
 #define BET L"bet"
@@ -53,12 +102,12 @@ struct Card
 {
     CardSuit suit;
     CardValue value;
-	bool      visible;
+    bool visible;
 
-	Card(CardSuit suit, CardValue value, bool show = true) : suit(suit), value(value), visible(show) {}
-	Card(const Card &other) : suit(other.suit), value(other.value), visible(other.visible) {}
+    Card(CardSuit suit, CardValue value, bool show = true) : suit(suit), value(value), visible(show) {}
+    Card(const Card& other) : suit(other.suit), value(other.value), visible(other.visible) {}
 
-	Card(web::json::value object) : visible(true)
+    Card(web::json::value object) : visible(true)
     {
         suit = (CardSuit)(int)object[SUIT].as_double();
         value = (CardValue)(int)object[VALUE].as_double();
@@ -85,18 +134,24 @@ struct BJHand
 
     BJHand() : state(HR_Empty), result(HR_None), bet(0.0), insurance(0), revealBoth(true) {}
 
-    void Clear() { cards.clear(); state = HR_Empty; result = HR_None; insurance = 0.0; }
+    void Clear()
+    {
+        cards.clear();
+        state = HR_Empty;
+        result = HR_None;
+        insurance = 0.0;
+    }
 
     void AddCard(Card card)
-    { 
-        cards.push_back(card); 
+    {
+        cards.push_back(card);
         NumericHandValues value = GetNumericValues();
 
-        if ( cards.size() == 2 && value.high == 21 )
+        if (cards.size() == 2 && value.high == 21)
         {
             state = HR_BlackJack;
         }
-        else if ( value.low > 21 )
+        else if (value.low > 21)
         {
             state = HR_Busted;
         }
@@ -116,7 +171,7 @@ struct BJHand
 
         for (auto iter = cards.begin(); iter != cards.end(); ++iter)
         {
-            if ( iter->value == CV_Ace ) hasAces = true;
+            if (iter->value == CV_Ace) hasAces = true;
 
             r.low += (iter->value < 10) ? iter->value : 10;
         }
@@ -124,23 +179,23 @@ struct BJHand
         return r;
     }
 
-	BJHand(web::json::value object)
+    BJHand(web::json::value object)
     {
         web::json::value l_cards = object[CARDS];
 
         for (auto iter = l_cards.as_array().begin(); iter != l_cards.as_array().end(); ++iter)
         {
-            if ( !iter->is_null() )
+            if (!iter->is_null())
             {
                 Card card(*iter);
                 this->cards.push_back(card);
             }
         }
-        
-        state     = (BJHandState)(int)object[STATE].as_double();
-        bet       = object[BET].as_double();
+
+        state = (BJHandState)(int)object[STATE].as_double();
+        bet = object[BET].as_double();
         insurance = object[INSURANCE].as_double();
-        result    = (BJHandResult)(int)object[RESULT].as_double();
+        result = (BJHandResult)(int)object[RESULT].as_double();
     }
 };
 
@@ -151,23 +206,22 @@ struct Player
     double Balance;
 
     Player() {}
-    Player(const std::wstring &name) : Name(name), Balance(1000.0) {}
+    Player(const std::wstring& name) : Name(name), Balance(1000.0) {}
 
-	static Player FromJSON(web::json::value object)
+    static Player FromJSON(web::json::value object)
     {
-		Player result;
+        Player result;
 
-        const web::json::value &name = object[NAME];
-        const web::json::value &balance = object[BALANCE];
-        const web::json::value &hand = object[HAND];
+        const web::json::value& name = object[NAME];
+        const web::json::value& balance = object[BALANCE];
+        const web::json::value& hand = object[HAND];
 
         result.Name = name.as_string();
         result.Balance = balance.as_double();
         result.Hand = BJHand(hand);
 
-		return result;
+        return result;
     }
-
 };
 
 struct BJTable
@@ -177,7 +231,11 @@ struct BJTable
     std::vector<Player> Players;
 
     BJTable() : Capacity(0) {}
-    BJTable(int id, size_t capacity) : Id(id), Capacity(capacity) { Player tmp(DEALER); Players.push_back(tmp); }
+    BJTable(int id, size_t capacity) : Id(id), Capacity(capacity)
+    {
+        Player tmp(DEALER);
+        Players.push_back(tmp);
+    }
 
     BJTable(web::json::value object)
     {
@@ -195,19 +253,19 @@ struct BJTable
 
 struct BJPutResponse
 {
-    BJStatus    Status;
+    BJStatus Status;
     web::json::value Data;
 
     BJPutResponse() {}
-    BJPutResponse(BJStatus status, web::json::value data) : Status(status), Data(data) { }
+    BJPutResponse(BJStatus status, web::json::value data) : Status(status), Data(data) {}
 
     static BJPutResponse FromJSON(web::json::value object)
     {
         BJPutResponse result((BJStatus)(int)object[STATUS].as_double(), object[DATA]);
-		return result;
+        return result;
     }
 
-    web::json::value AsJSON() const 
+    web::json::value AsJSON() const
     {
         web::json::value result = web::json::value::object();
         result[STATUS] = web::json::value::number((double)Status);
