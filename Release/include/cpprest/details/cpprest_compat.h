@@ -48,8 +48,8 @@
 // No SAL on non Windows platforms
 #include "cpprest/details/nosal.h"
 
-#if not defined __cdecl
-#if defined cdecl
+#if !defined(__cdecl)
+#if defined(cdecl)
 #define __cdecl __attribute__((cdecl))
 #else // ^^^ defined cdecl ^^^ // vvv !defined cdecl vvv
 #define __cdecl
