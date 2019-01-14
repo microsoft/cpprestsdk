@@ -8,6 +8,7 @@ usage() {
     echo "       -config_only only configures cmake (no make invoked)."
     echo "       -include_32bit includes the 32-bit arm architectures."
     echo "       -no_bitcode disables bitcode"
+    echo "       -clean deletes build directory prior to configuring"
 }
 
 ABS_PATH="`dirname \"$0\"`"                 # relative
@@ -22,6 +23,7 @@ CONFIG_ONLY=0
 INCLUDE_32BIT=""
 DISABLE_BITCODE=""
 DEPLOYMENT_TARGET=""
+CLEAN=0
 
 # Command line argument parsing
 while (( "$#" )); do
@@ -56,6 +58,10 @@ while (( "$#" )); do
             ;;
         -no_bitcode)
             DISABLE_BITCODE="-DDISABLE_BITCODE=ON"
+            shift 1
+            ;;
+        -clean)
+            CLEAN=1
             shift 1
             ;;
         *)
@@ -134,14 +140,26 @@ if [ ! -e ${ABS_PATH}/ios-cmake/ios.toolchain.cmake ]; then
 fi
 
 ## Build CPPRestSDK
+if [ -d "${ABS_PATH}/build.${CPPRESTSDK_BUILD_TYPE}.ios" ]; then
+    if [ "$CLEAN" -eq 1 ]; then
+        echo "Removing directory ${ABS_PATH}/build.${CPPRESTSDK_BUILD_TYPE}.ios prior to configuring."
+        rm -rf "${ABS_PATH}/build.${CPPRESTSDK_BUILD_TYPE}.ios"
+    else
+        printf "WARNING: Running configure on an already existing configuration.\nAny changes to the existing configuration will not be picked up.\nEither remove the directory and re-run configure or run configure with the -clean flag.\n\n"
+    fi
+fi
 
 mkdir -p ${ABS_PATH}/build.${CPPRESTSDK_BUILD_TYPE}.ios
 pushd ${ABS_PATH}/build.${CPPRESTSDK_BUILD_TYPE}.ios
 cmake -DCMAKE_BUILD_TYPE=${CPPRESTSDK_BUILD_TYPE} .. ${INCLUDE_32BIT} ${DISABLE_BITCODE} ${DEPLOYMENT_TARGET}
 if [ "$CONFIG_ONLY" -eq 0 ]; then
     make
+    printf "\n\n===================================================================================\n"
+    echo ">>>> The final library is available in 'build.${CPPRESTSDK_BUILD_TYPE}.ios/lib/libcpprest.a'"
+    printf "===================================================================================\n\n"
+else
+    printf "\n\n===================================================================================\n"
+    echo ">>>> Configuration complete. Run 'make' in 'build.${CPPRESTSDK_BUILD_TYPE}.ios' to build."
+    printf "===================================================================================\n\n"
 fi
 popd
-printf "\n\n===================================================================================\n"
-echo ">>>> The final library is available in 'build.${CPPRESTSDK_BUILD_TYPE}.ios/lib/libcpprest.a'"
-printf "===================================================================================\n\n"
