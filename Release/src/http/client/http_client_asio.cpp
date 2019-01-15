@@ -1327,7 +1327,7 @@ private:
             // replay the just-failed request. Otherwise we assume that no data
             // was sent in the first place.
             const auto& instream = new_ctx->m_request._get_impl()->instream();
-            if (instream) {
+            if (instream && instream.can_seek()) {
                 try {
                     // As stated in the commit message of f4f2348, we might
                     // encounter streams that are not capable of rewinding. In
