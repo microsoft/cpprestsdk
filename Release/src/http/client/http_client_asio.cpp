@@ -1327,16 +1327,21 @@ private:
             // replay the just-failed request. Otherwise we assume that no data
             // was sent in the first place.
             const auto& instream = new_ctx->m_request._get_impl()->instream();
-            if (instream && instream.can_seek()) {
-                try {
+            if (instream && instream.can_seek())
+            {
+                try
+                {
                     // As stated in the commit message of f4f2348, we might
                     // encounter streams that are not capable of rewinding. In
                     // case there is an exception we report it to the user and
                     // give up.
                     instream.seek(0);
-                } catch (const std::exception &ex) {
+                }
+                catch (const std::exception& ex)
+                {
                     report_error(std::string("failed to rewind input stream: ") + ex.what(),
-                                 ec, httpclient_errorcode_context::readheader);
+                                 ec,
+                                 httpclient_errorcode_context::readheader);
                 }
             }
 
