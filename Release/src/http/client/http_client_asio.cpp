@@ -1322,7 +1322,39 @@ private:
             // cancellation registration to maintain the old state.
             // This also obtains a new connection from pool.
             auto new_ctx = create_request_context(m_http_client, m_request);
-            new_ctx->m_request._get_impl()->instream().seek(0);
+
+            // If the request contains a valid instream, we try to rewind it to
+            // replay the just-failed request. Otherwise we assume that no data
+            // was sent in the first place.
+            const auto& instream = new_ctx->m_request._get_impl()->instream();
+            if (instream)
+            {
+                // As stated in the commit message of f4f2348, we might encounter
+                // streams that are not capable of rewinding and hence resending the
+                // request is not possible. We cannot recover from this condition and
+                // need to escalate it to the using code.
+                if (!instream.can_seek())
+                {
+                    report_error("cannot rewind input stream for connection re-establishment",
+                                 ec,
+                                 httpclient_errorcode_context::readheader);
+                    return;
+                }
+
+                try
+                {
+                    // Rewinding the stream might throw, in which case we cannot do the
+                    // connection re-establishment transparently. I.e. report the exception
+                    // to the calling code.
+                    instream.seek(0);
+                }
+                catch (...)
+                {
+                    report_exception(std::current_exception());
+                    return;
+                }
+            }
+
             new_ctx->m_request_completion = m_request_completion;
             new_ctx->m_cancellationRegistration = m_cancellationRegistration;
 
