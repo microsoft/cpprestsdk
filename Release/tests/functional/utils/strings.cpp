@@ -153,6 +153,14 @@ SUITE(strings)
         auto result = utility::conversions::utf8_to_utf16(input);
         VERIFY_ARE_EQUAL(0x7F, result[0]);
 
+        // null byte
+        input.clear();
+        input.push_back(0);
+        input.push_back(0);
+        result = utility::conversions::utf8_to_utf16(input);
+        VERIFY_ARE_EQUAL(0, result[0]);
+        VERIFY_ARE_EQUAL(0, result[1]);
+
         // 2 byte character
         input.clear();
         // U+80
