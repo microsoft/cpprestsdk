@@ -341,11 +341,11 @@ inline size_t count_utf8_to_utf16(const std::string& s)
 
     for (size_t index = 0; index < sSize;)
     {
-        if (sData[index] > 0)
+        if (sData[index] >= 0)
         {
             // use fast inner loop to skip single byte code points (which are
             // expected to be the most frequent)
-            while ((++index < sSize) && (sData[index] > 0))
+            while ((++index < sSize) && (sData[index] >= 0))
                 ;
 
             if (index >= sSize) break;
