@@ -139,6 +139,7 @@ protected:
 
     virtual bool CompleteComment(Token& token);
     virtual bool CompleteStringLiteral(Token& token);
+    int convert_unicode_to_code_point();
     bool handle_unescape_char(Token& token);
 
 private:
@@ -652,7 +653,15 @@ bool JSON_StringParser<CharType>::CompleteComment(typename JSON_Parser<CharType>
     return true;
 }
 
-void convert_append_unicode_code_unit(JSON_Parser<wchar_t>::Token& token, utf16char value)
+void convert_append_unicode_code_unit(JSON_Parser<utf16char>::Token& token, utf16string value)
+{
+    token.string_val.append(value);
+}
+void convert_append_unicode_code_unit(JSON_Parser<char>::Token& token, utf16string value)
+{
+    token.string_val.append(::utility::conversions::utf16_to_utf8(value));
+}
+void convert_append_unicode_code_unit(JSON_Parser<utf16char>::Token& token, utf16char value)
 {
     token.string_val.push_back(value);
 }
@@ -661,6 +670,37 @@ void convert_append_unicode_code_unit(JSON_Parser<char>::Token& token, utf16char
     utf16string utf16(reinterpret_cast<utf16char*>(&value), 1);
     token.string_val.append(::utility::conversions::utf16_to_utf8(utf16));
 }
+
+template<typename CharType>
+int JSON_Parser<CharType>::convert_unicode_to_code_point()
+{
+    // A four-hexdigit Unicode character.
+    // Transform into a 16 bit code point.
+    int decoded = 0;
+    for (int i = 0; i < 4; ++i)
+    {
+        auto ch = NextCharacter();
+        int ch_int = static_cast<int>(ch);
+        if (ch_int < 0 || ch_int > 127) return -1;
+#ifdef _WIN32
+        const int isxdigitResult = _isxdigit_l(ch_int, utility::details::scoped_c_thread_locale::c_locale());
+#else
+        const int isxdigitResult = isxdigit(ch_int);
+#endif
+        if (!isxdigitResult) return -1;
+
+        int val = _hexval[static_cast<size_t>(ch_int)];
+
+        _ASSERTE(val != -1);
+
+        // Add the input char to the decoded number
+        decoded |= (val << (4 * (3 - i)));
+    }
+    return decoded;
+}
+
+#define H_SURROGATE_START 0xD800
+#define H_SURROGATE_END 0xDBFF
 
 template<typename CharType>
 inline bool JSON_Parser<CharType>::handle_unescape_char(Token& token)
@@ -682,26 +722,31 @@ inline bool JSON_Parser<CharType>::handle_unescape_char(Token& token)
         case 't': token.string_val.push_back('\t'); return true;
         case 'u':
         {
-            // A four-hexdigit Unicode character.
-            // Transform into a 16 bit code point.
-            int decoded = 0;
-            for (int i = 0; i < 4; ++i)
+            int decoded = convert_unicode_to_code_point();
+            if (decoded == -1)
             {
-                ch = NextCharacter();
-                int ch_int = static_cast<int>(ch);
-                if (ch_int < 0 || ch_int > 127) return false;
-#ifdef _WIN32
-                const int isxdigitResult = _isxdigit_l(ch_int, utility::details::scoped_c_thread_locale::c_locale());
-#else
-                const int isxdigitResult = isxdigit(ch_int);
-#endif
-                if (!isxdigitResult) return false;
+                return false;
+            }
 
-                int val = _hexval[static_cast<size_t>(ch_int)];
-                _ASSERTE(val != -1);
+            // handle multi-block characters that start with a high-surrogate
+            if (decoded > H_SURROGATE_START && decoded < H_SURROGATE_END)
+            {
+                // skip escape character '\u'
+                if (NextCharacter() != '\\' || NextCharacter() != 'u')
+                {
+                    return false;
+                }
+                int decoded2 = convert_unicode_to_code_point();
 
-                // Add the input char to the decoded number
-                decoded |= (val << (4 * (3 - i)));
+                if (decoded2 == -1)
+                {
+                    return false;
+                }
+
+                utf16string compoundUTF16 = {static_cast<utf16char>(decoded), static_cast<utf16char>(decoded2)};
+                convert_append_unicode_code_unit(token, compoundUTF16);
+
+                return true;
             }
 
             // Construct the character based on the decoded number
@@ -1015,9 +1060,13 @@ std::unique_ptr<web::json::details::_Value> JSON_Parser<CharType>::_ParseValue(
 {
     switch (tkn.kind)
     {
-        case JSON_Parser<CharType>::Token::TKN_OpenBrace: { return _ParseObject(tkn);
+        case JSON_Parser<CharType>::Token::TKN_OpenBrace:
+        {
+            return _ParseObject(tkn);
         }
-        case JSON_Parser<CharType>::Token::TKN_OpenBracket: { return _ParseArray(tkn);
+        case JSON_Parser<CharType>::Token::TKN_OpenBracket:
+        {
+            return _ParseArray(tkn);
         }
         case JSON_Parser<CharType>::Token::TKN_StringLiteral:
         {
