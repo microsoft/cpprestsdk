@@ -600,6 +600,7 @@ private:
 class generic_compress_factory : public compress_factory
 {
 public:
+    ~generic_compress_factory() CPPREST_NOEXCEPT {}
     generic_compress_factory(const utility::string_t& algorithm,
                              std::function<std::unique_ptr<compress_provider>()> make_compressor)
         : m_algorithm(algorithm), _make_compressor(make_compressor)
@@ -619,6 +620,7 @@ private:
 class generic_decompress_factory : public decompress_factory
 {
 public:
+    ~generic_decompress_factory() CPPREST_NOEXCEPT {}
     generic_decompress_factory(const utility::string_t& algorithm,
                                uint16_t weight,
                                std::function<std::unique_ptr<decompress_provider>()> make_decompressor)
