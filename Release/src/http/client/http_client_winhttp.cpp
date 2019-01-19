@@ -244,7 +244,8 @@ public:
     bool is_externally_allocated() const { return !m_body_data.is_internally_allocated(); }
 
     HINTERNET m_request_handle;
-    std::weak_ptr<winhttp_request_context>* m_request_context;
+    std::weak_ptr<winhttp_request_context>*
+        m_request_handle_context; // owned by m_request_handle to be delete'd by WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING
 
     bool m_proxy_authentication_tried;
     bool m_server_authentication_tried;
@@ -532,9 +533,7 @@ public:
 
         if (m_request_handle != nullptr)
         {
-            auto tmp_handle = m_request_handle;
-            m_request_handle = nullptr;
-            WinHttpCloseHandle(tmp_handle);
+            WinHttpCloseHandle(m_request_handle);
         }
     }
 
@@ -660,7 +659,6 @@ private:
     winhttp_request_context(const std::shared_ptr<_http_client_communicator>& client, const http_request& request)
         : request_context(client, request)
         , m_request_handle(nullptr)
-        , m_request_context(nullptr)
         , m_bodyType(no_body)
         , m_startingPosition(std::char_traits<uint8_t>::eof())
         , m_body_data()
@@ -1004,6 +1002,8 @@ protected:
             http::uri_builder(m_uri).append(msg.relative_uri()).to_uri().resource().to_string();
 
         // Open the request.
+        winhttp_context->m_request_handle_context = new std::weak_ptr<winhttp_request_context>(winhttp_context);
+
         winhttp_context->m_request_handle =
             WinHttpOpenRequest(m_hConnection,
                                msg.method().c_str(),
@@ -1015,7 +1015,21 @@ protected:
         if (winhttp_context->m_request_handle == nullptr)
         {
             auto errorCode = GetLastError();
+            delete winhttp_context->m_request_handle_context;
+            winhttp_context->m_request_handle_context = 0;
             request->report_error(errorCode, build_error_msg(errorCode, "WinHttpOpenRequest"));
+            return;
+        }
+
+        if (!WinHttpSetOption(winhttp_context->m_request_handle,
+                              WINHTTP_OPTION_CONTEXT_VALUE,
+                              &winhttp_context->m_request_handle_context,
+                              sizeof(void*)))
+        {
+            auto errorCode = GetLastError();
+            delete winhttp_context->m_request_handle_context;
+            winhttp_context->m_request_handle_context = 0;
+            request->report_error(errorCode, build_error_msg(errorCode, "WinHttpSetOption request context"));
             return;
         }
 
@@ -1194,69 +1208,36 @@ protected:
 private:
     void _start_request_send(const std::shared_ptr<winhttp_request_context>& winhttp_context, size_t content_length)
     {
-        // WinHttp takes a context object as a void*. We therefore heap allocate a std::weak_ptr to the request context
-        // which will be destroyed during the final callback.
-        std::unique_ptr<std::weak_ptr<winhttp_request_context>> weak_context_holder;
-        if (winhttp_context->m_request_context == nullptr)
-        {
-            weak_context_holder = std::make_unique<std::weak_ptr<winhttp_request_context>>(winhttp_context);
-            winhttp_context->m_request_context = weak_context_holder.get();
-        }
-
+        DWORD totalLength;
         if (winhttp_context->m_bodyType == no_body)
         {
-            if (!WinHttpSendRequest(winhttp_context->m_request_handle,
-                                    WINHTTP_NO_ADDITIONAL_HEADERS,
-                                    0,
-                                    nullptr,
-                                    0,
-                                    0,
-                                    (DWORD_PTR)winhttp_context->m_request_context))
-            {
-                if (weak_context_holder) winhttp_context->m_request_context = nullptr;
-
-                auto errorCode = GetLastError();
-                winhttp_context->report_error(errorCode, build_error_msg(errorCode, "WinHttpSendRequest"));
-            }
-            else
-            {
-                // Ownership of the weak_context_holder was accepted by the callback, so release the pointer without
-                // freeing.
-                weak_context_holder.release();
-            }
-
-            return;
-        }
-
-        // Capture the current read position of the stream.
-        auto rbuf = winhttp_context->_get_readbuffer();
-
-        // Record starting position in case request is challenged for authorization
-        // and needs to seek back to where reading is started from.
-        winhttp_context->m_startingPosition = rbuf.getpos(std::ios_base::in);
-
-        // If we find ourselves here, we either don't know how large the message
-        // body is, or it is larger than our threshold.
-        if (!WinHttpSendRequest(winhttp_context->m_request_handle,
-                                WINHTTP_NO_ADDITIONAL_HEADERS,
-                                0,
-                                nullptr,
-                                0,
-                                winhttp_context->m_bodyType == content_length_chunked
-                                    ? (DWORD)content_length
-                                    : WINHTTP_IGNORE_REQUEST_TOTAL_LENGTH,
-                                (DWORD_PTR)winhttp_context->m_request_context))
-        {
-            if (weak_context_holder) winhttp_context->m_request_context = nullptr;
-
-            auto errorCode = GetLastError();
-            winhttp_context->report_error(errorCode, build_error_msg(errorCode, "WinHttpSendRequest chunked"));
+            totalLength = 0;
         }
         else
         {
-            // Ownership of the weak_context_holder was accepted by the callback, so release the pointer without
-            // freeing.
-            weak_context_holder.release();
+            // Capture the current read position of the stream.
+            auto rbuf = winhttp_context->_get_readbuffer();
+
+            // Record starting position in case request is challenged for authorization
+            // and needs to seek back to where reading is started from.
+            winhttp_context->m_startingPosition = rbuf.getpos(std::ios_base::in);
+
+            // If we find ourselves here, we either don't know how large the message
+            totalLength = winhttp_context->m_bodyType == content_length_chunked ? (DWORD)content_length
+                                                                                : WINHTTP_IGNORE_REQUEST_TOTAL_LENGTH;
+        }
+
+        const auto requestSuccess = WinHttpSendRequest(winhttp_context->m_request_handle,
+                                                       WINHTTP_NO_ADDITIONAL_HEADERS,
+                                                       0,
+                                                       nullptr,
+                                                       0,
+                                                       totalLength,
+                                                       (DWORD_PTR)winhttp_context->m_request_handle_context);
+        if (!requestSuccess)
+        {
+            auto errorCode = GetLastError();
+            winhttp_context->report_error(errorCode, build_error_msg(errorCode, "WinHttpSendRequest"));
         }
     }
 
