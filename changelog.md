@@ -1,3 +1,17 @@
+cpprestsdk (2.10.9)
+----------------------
+* PR#973  Address gcc warnings-as-errors in compression code, test improvements
+* PR#986  Prevent infinite loop during proxy authentication
+* PR#987  Remove use of aligned_union that broke CentOS 7.
+* PR#1004 #993, #1002: Add flexibility for iOS building. Adds command line args…
+* PR#1009 gcc: Fix compilation with -fno-operator-names
+* PR#1019 FIX: crash with std::logic_error when reusing a connection that timed out on the server
+* PR#1021 handle null bytes when parsing utf8
+* PR#1017 Add in support for adding i386 slice when building for 32-bit targets. Also improve messaging and add means to clean
+* PR#1024 http_compression.cpp: fix build with gcc 4.7
+* PR#1022 Resolve double free when WinHttpSendRequest fails
+-- cpprestsdk team <askcasablanca@microsoft.com>  FRI, 18 Jan 2019 16:58:00 -0800
+
 cpprestsdk (2.10.8)
 ----------------------
 * PR#938 Allow ppltasks.h and pplxtasks.h to co-exist
