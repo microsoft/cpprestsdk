@@ -244,6 +244,8 @@ public:
     bool is_externally_allocated() const { return !m_body_data.is_internally_allocated(); }
 
     HINTERNET m_request_handle;
+    std::weak_ptr<winhttp_request_context>*
+        m_request_handle_context; // owned by m_request_handle to be delete'd by WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING
 
     bool m_proxy_authentication_tried;
     bool m_server_authentication_tried;
@@ -531,9 +533,7 @@ public:
 
         if (m_request_handle != nullptr)
         {
-            auto tmp_handle = m_request_handle;
-            m_request_handle = nullptr;
-            WinHttpCloseHandle(tmp_handle);
+            WinHttpCloseHandle(m_request_handle);
         }
     }
 
@@ -1002,6 +1002,8 @@ protected:
             http::uri_builder(m_uri).append(msg.relative_uri()).to_uri().resource().to_string();
 
         // Open the request.
+        winhttp_context->m_request_handle_context = new std::weak_ptr<winhttp_request_context>(winhttp_context);
+
         winhttp_context->m_request_handle =
             WinHttpOpenRequest(m_hConnection,
                                msg.method().c_str(),
@@ -1013,7 +1015,21 @@ protected:
         if (winhttp_context->m_request_handle == nullptr)
         {
             auto errorCode = GetLastError();
+            delete winhttp_context->m_request_handle_context;
+            winhttp_context->m_request_handle_context = 0;
             request->report_error(errorCode, build_error_msg(errorCode, "WinHttpOpenRequest"));
+            return;
+        }
+
+        if (!WinHttpSetOption(winhttp_context->m_request_handle,
+                              WINHTTP_OPTION_CONTEXT_VALUE,
+                              &winhttp_context->m_request_handle_context,
+                              sizeof(void*)))
+        {
+            auto errorCode = GetLastError();
+            delete winhttp_context->m_request_handle_context;
+            winhttp_context->m_request_handle_context = 0;
+            request->report_error(errorCode, build_error_msg(errorCode, "WinHttpSetOption request context"));
             return;
         }
 
@@ -1192,15 +1208,13 @@ protected:
 private:
     void _start_request_send(const std::shared_ptr<winhttp_request_context>& winhttp_context, size_t content_length)
     {
-        // WinHttp takes a context object as a void*. We therefore heap allocate a std::weak_ptr to the request context
-        // which will be destroyed during the final callback.
-        std::unique_ptr<std::weak_ptr<winhttp_request_context>> weak_context_holder
-            = std::make_unique<std::weak_ptr<winhttp_request_context>>(winhttp_context);
-
         DWORD totalLength;
-        if (winhttp_context->m_bodyType == no_body) {
+        if (winhttp_context->m_bodyType == no_body)
+        {
             totalLength = 0;
-        } else {
+        }
+        else
+        {
             // Capture the current read position of the stream.
             auto rbuf = winhttp_context->_get_readbuffer();
 
@@ -1209,19 +1223,17 @@ private:
             winhttp_context->m_startingPosition = rbuf.getpos(std::ios_base::in);
 
             // If we find ourselves here, we either don't know how large the message
-            totalLength = winhttp_context->m_bodyType == content_length_chunked
-                                    ? (DWORD)content_length
-                                    : WINHTTP_IGNORE_REQUEST_TOTAL_LENGTH;
+            totalLength = winhttp_context->m_bodyType == content_length_chunked ? (DWORD)content_length
+                                                                                : WINHTTP_IGNORE_REQUEST_TOTAL_LENGTH;
         }
 
         const auto requestSuccess = WinHttpSendRequest(winhttp_context->m_request_handle,
-                                WINHTTP_NO_ADDITIONAL_HEADERS,
-                                0,
-                                nullptr,
-                                0,
-                                totalLength,
-                                (DWORD_PTR)weak_context_holder.get());
-        weak_context_holder.release(); // to be freed in WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING
+                                                       WINHTTP_NO_ADDITIONAL_HEADERS,
+                                                       0,
+                                                       nullptr,
+                                                       0,
+                                                       totalLength,
+                                                       (DWORD_PTR)winhttp_context->m_request_handle_context);
         if (!requestSuccess)
         {
             auto errorCode = GetLastError();
