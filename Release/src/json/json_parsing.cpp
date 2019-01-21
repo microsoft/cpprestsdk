@@ -729,7 +729,7 @@ inline bool JSON_Parser<CharType>::handle_unescape_char(Token& token)
             }
 
             // handle multi-block characters that start with a high-surrogate
-            if (decoded > H_SURROGATE_START && decoded < H_SURROGATE_END)
+            if (decoded >= H_SURROGATE_START && decoded <= H_SURROGATE_END)
             {
                 // skip escape character '\u'
                 if (NextCharacter() != '\\' || NextCharacter() != 'u')
