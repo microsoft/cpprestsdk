@@ -225,8 +225,8 @@ pplx::task<void> http_windows_server::register_listener(
             return pplx::task_from_exception<void>(
                 http_exception(errorCode,
                                _XPLATSTR("Access denied: attempting to add Address '") + pListener->uri().to_string() +
-                                   _XPLATSTR("'. ") _XPLATSTR("Run as administrator to listen on an hostname other "
-                                                              "than localhost, or to listen on port 80.")));
+                                   _XPLATSTR("'. Run as administrator to listen on an hostname other ")
+                                       _XPLATSTR("than localhost, or to listen on port 80.")));
         }
         else
         {
