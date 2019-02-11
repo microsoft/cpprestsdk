@@ -803,7 +803,12 @@ protected:
             access_type = WINHTTP_ACCESS_TYPE_DEFAULT_PROXY;
             proxy_name = WINHTTP_NO_PROXY_NAME;
 
-#ifndef CPPREST_TARGET_XP
+#ifdef CPPREST_TARGET_XP
+            if (config.proxy().is_auto_discovery())
+            {
+                m_proxy_auto_config = true;
+            }
+#else  // ^^^ CPPREST_TARGET_XP ^^^ // vvv !CPPREST_TARGET_XP vvv
             if (IsWindows8Point1OrGreater())
             {
                 // Windows 8.1 and newer supports automatic proxy discovery and auto-fallback to IE proxy settings
@@ -843,13 +848,13 @@ protected:
                         }
                     }
                 }
-            }
-#endif
 
-            if (config.proxy().is_auto_discovery())
-            {
-                m_proxy_auto_config = true;
+                if (config.proxy().is_auto_discovery())
+                {
+                    m_proxy_auto_config = true;
+                }
             }
+#endif // CPPREST_TARGET_XP
         }
         else
         {
