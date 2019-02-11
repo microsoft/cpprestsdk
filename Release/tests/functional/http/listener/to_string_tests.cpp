@@ -36,8 +36,8 @@ SUITE(to_string_tests)
         // to string
         http_response resp(status_codes::PartialContent);
         resp.set_body(U("data"));
-        VERIFY_ARE_EQUAL(U("HTTP/1.1 206 Partial Content\r\nContent-Length: 4\r\nContent-Type: text/plain; "
-                           "charset=utf-8\r\n\r\ndata"),
+        VERIFY_ARE_EQUAL(U("HTTP/1.1 206 Partial Content\r\nContent-Length: 4\r\nContent-Type: text/plain; ")
+                         U("charset=utf-8\r\n\r\ndata"),
                          resp.to_string());
     }
 

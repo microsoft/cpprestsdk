@@ -179,9 +179,9 @@ if(MSVC)
     set_property(SOURCE ${_srcs} APPEND PROPERTY OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/stdafx.pch")
   endif()
 
-  set_source_files_properties(pch/stdafx.cpp PROPERTIES COMPILE_FLAGS "/Ycstdafx.h")
+  set_source_files_properties(pch/stdafx.cpp PROPERTIES COMPILE_FLAGS "/Ycstdafx.h /Zm120")
   target_sources(cpprest PRIVATE pch/stdafx.cpp)
-  target_compile_options(cpprest PRIVATE /Yustdafx.h)
+  target_compile_options(cpprest PRIVATE /Yustdafx.h /Zm120)
 endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")

@@ -58,6 +58,9 @@ struct threadpool_impl final : crossplat::threadpool
             add_thread();
     }
 
+    threadpool_impl(const threadpool_impl&) = delete;
+    threadpool_impl& operator=(const threadpool_impl&) = delete;
+
     ~threadpool_impl()
     {
         m_service.stop();
@@ -102,6 +105,13 @@ private:
 #if defined(_WIN32)
 struct shared_threadpool
 {
+#if defined(_MSC_VER) && _MSC_VER < 1900
+    std::aligned_storage<sizeof(threadpool_impl)>::type shared_storage;
+
+    threadpool_impl& get_shared() { return reinterpret_cast<threadpool_impl&>(shared_storage); }
+
+    shared_threadpool(size_t n) { ::new (static_cast<void*>(&shared_storage)) threadpool_impl(n); }
+#else  // ^^^ VS2013 ^^^ // vvv everything else vvv
     union {
         threadpool_impl shared_storage;
     };
@@ -109,6 +119,7 @@ struct shared_threadpool
     threadpool_impl& get_shared() { return shared_storage; }
 
     shared_threadpool(size_t n) : shared_storage(n) {}
+#endif // defined(_MSC_VER) && _MSC_VER < 1900
 
     ~shared_threadpool()
     {
@@ -132,15 +143,21 @@ namespace
 template<class T>
 struct uninitialized
 {
+#if defined(_MSC_VER) && _MSC_VER < 1900
+    typename std::aligned_storage<sizeof(T)>::type storage;
+
+    ~uninitialized()
+    {
+        if (initialized)
+        {
+            reinterpret_cast<T&>(storage).~T();
+        }
+    }
+#else  // ^^^ VS2013 ^^^ // vvv everything else vvv
     union {
         T storage;
     };
 
-    bool initialized;
-
-    uninitialized() CPPREST_NOEXCEPT : initialized(false) {}
-    uninitialized(const uninitialized&) = delete;
-    uninitialized& operator=(const uninitialized&) = delete;
     ~uninitialized()
     {
         if (initialized)
@@ -148,6 +165,12 @@ struct uninitialized
             storage.~T();
         }
     }
+#endif // defined(_MSC_VER) && _MSC_VER < 1900
+
+    bool initialized;
+    uninitialized() CPPREST_NOEXCEPT : initialized(false) {}
+    uninitialized(const uninitialized&) = delete;
+    uninitialized& operator=(const uninitialized&) = delete;
 
     template<class... Args>
     void construct(Args&&... vals)
@@ -173,7 +196,15 @@ std::pair<bool, platform_shared_threadpool*> initialize_shared_threadpool(size_t
         initialized_this_time = true;
     });
 
-    return {initialized_this_time, &uninit_threadpool.storage};
+    return
+    {
+        initialized_this_time,
+#if defined(_MSC_VER) && _MSC_VER < 1900
+            reinterpret_cast<platform_shared_threadpool*>(&uninit_threadpool.storage)
+#else  // ^^^ VS2013 ^^^ // vvv everything else vvv
+            &uninit_threadpool.storage
+#endif // defined(_MSC_VER) && _MSC_VER < 1900
+    };
 }
 } // namespace
 

@@ -159,7 +159,7 @@ SUITE(parsing_tests)
             input.append(2, ch);
             json::value val = json::value::parse(input);
             VERIFY_IS_TRUE(val.is_object());
-        VERIFY_ARE_EQUAL(U("2"), val[U("1"]).serialize());
+            VERIFY_ARE_EQUAL(U("2"), val[U("1")].serialize());
         }
     }
 
@@ -212,6 +212,12 @@ SUITE(parsing_tests)
         // Euro sign as a hexidecmial UTF-8
         const auto euro = to_string_t("\xE2\x82\xAC");
         VERIFY_ARE_EQUAL(euro, str.as_string());
+
+        // UTF-16 character with surrogate pair
+        str = json::value::parse(U("\"\\ud83d\\ude00\""));
+        // Grinning Face emoji as a hexadecimal UTF-8
+        const auto emoji = to_string_t("\xF0\x9F\x98\x80");
+        VERIFY_ARE_EQUAL(emoji, str.as_string());
 
         VERIFY_PARSING_THROW(json::value::parse(U("\"\\u0klB\"")));
     }

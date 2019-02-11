@@ -123,6 +123,7 @@ SUITE(oauth1_tests)
 
 #undef TEST_ACCESSOR
 
+    // clang-format off
     TEST_FIXTURE(oauth1_token_setup, oauth1_signature_base_string)
     {
         // Basic base string generation.
@@ -137,9 +138,9 @@ SUITE(oauth1_tests)
 
             utility::string_t base_string = m_oauth1_config._build_signature_base_string(r, state);
             utility::string_t correct_base_string(
-                U("POST&http%3A%2F%2Fexample.com%2Frequest&a%3Db%26c%3Dd%26oauth_consumer_key%3Dtest_key%26oauth_nonce%"
-                  "3DABCDEFGH%26oauth_signature_method%3DHMAC-SHA1%26oauth_timestamp%3D12345678%26oauth_token%3Dtest_"
-                  "token%26oauth_version%3D1.0"));
+                U("POST&http%3A%2F%2Fexample.com%2Frequest&a%3Db%26c%3Dd%26oauth_consumer_key%3Dtest_key%26oauth_nonce%")
+                U("3DABCDEFGH%26oauth_signature_method%3DHMAC-SHA1%26oauth_timestamp%3D12345678%26oauth_token%3Dtest_")
+                U("token%26oauth_version%3D1.0"));
             VERIFY_ARE_EQUAL(correct_base_string, base_string);
         }
 
@@ -155,9 +156,9 @@ SUITE(oauth1_tests)
 
             utility::string_t base_string = m_oauth1_config._build_signature_base_string(r, state);
             utility::string_t correct_base_string(
-                U("POST&http%3A%2F%2Fexample.com%2Frequest&a%3Db%26c%3Dd%26oauth_consumer_key%3Dtest_key%26oauth_nonce%"
-                  "3DABCDEFGH%26oauth_signature_method%3DHMAC-SHA1%26oauth_test%3Dxyzzy%26oauth_timestamp%3D12345678%"
-                  "26oauth_token%3Dtest_token%26oauth_version%3D1.0"));
+                U("POST&http%3A%2F%2Fexample.com%2Frequest&a%3Db%26c%3Dd%26oauth_consumer_key%3Dtest_key%26oauth_nonce%")
+                U("3DABCDEFGH%26oauth_signature_method%3DHMAC-SHA1%26oauth_test%3Dxyzzy%26oauth_timestamp%3D12345678%")
+                U("26oauth_token%3Dtest_token%26oauth_version%3D1.0"));
             VERIFY_ARE_EQUAL(correct_base_string, base_string);
         }
 
@@ -173,9 +174,9 @@ SUITE(oauth1_tests)
 
             utility::string_t base_string = m_oauth1_config._build_signature_base_string(r, state);
             utility::string_t correct_base_string(
-                U("POST&http%3A%2F%2Fexample.com%2Frequest&a%3Db%26c%3Dd%26MyVariableOne%3DValueOne%26%26MyVariableTwo%"
-                  "3DValueTwo%26oauth_consumer_key%3Dtest_key%26oauth_nonce%3DABCDEFGH%26oauth_signature_method%3DHMAC-"
-                  "SHA1%26oauth_timestamp%3D12345678%26oauth_token%3Dtest_token%26oauth_version%3D1.0"));
+                U("POST&http%3A%2F%2Fexample.com%2Frequest&a%3Db%26c%3Dd%26MyVariableOne%3DValueOne%26%26MyVariableTwo%")
+                U("3DValueTwo%26oauth_consumer_key%3Dtest_key%26oauth_nonce%3DABCDEFGH%26oauth_signature_method%3DHMAC-")
+                U("SHA1%26oauth_timestamp%3D12345678%26oauth_token%3Dtest_token%26oauth_version%3D1.0"));
         }
     }
 
@@ -214,8 +215,8 @@ SUITE(oauth1_tests)
         m_server.server()->next_request().then([](test_request* request) {
             const utility::string_t header_authorization(request->m_headers[header_names::authorization]);
             const utility::string_t prefix(
-                U("OAuth oauth_version=\"1.0\", oauth_consumer_key=\"test_key\", oauth_token=\"test_token\", "
-                  "oauth_signature_method=\"HMAC-SHA1\", oauth_timestamp=\""));
+                U("OAuth oauth_version=\"1.0\", oauth_consumer_key=\"test_key\", oauth_token=\"test_token\", ")
+                U("oauth_signature_method=\"HMAC-SHA1\", oauth_timestamp=\""));
             VERIFY_ARE_EQUAL(0, header_authorization.find(prefix));
             request->reply(status_codes::OK);
         });
@@ -237,8 +238,8 @@ SUITE(oauth1_tests)
         m_server.server()->next_request().then([](test_request* request) {
             const utility::string_t header_authorization(request->m_headers[header_names::authorization]);
             const utility::string_t prefix(
-                U("OAuth oauth_version=\"1.0\", oauth_consumer_key=\"test_key\", oauth_token=\"test_token\", "
-                  "oauth_signature_method=\"PLAINTEXT\", oauth_timestamp=\""));
+                U("OAuth oauth_version=\"1.0\", oauth_consumer_key=\"test_key\", oauth_token=\"test_token\", ")
+                U("oauth_signature_method=\"PLAINTEXT\", oauth_timestamp=\""));
             VERIFY_ARE_EQUAL(0, header_authorization.find(prefix));
             request->reply(status_codes::OK);
         });
@@ -254,8 +255,8 @@ SUITE(oauth1_tests)
             const utility::string_t header_authorization(request->m_headers[header_names::authorization]);
 
             // Verify prefix, and without 'oauth_token'.
-            const utility::string_t prefix(U("OAuth oauth_version=\"1.0\", oauth_consumer_key=\"test_key\", "
-                                             "oauth_signature_method=\"HMAC-SHA1\", oauth_timestamp=\""));
+            const utility::string_t prefix(U("OAuth oauth_version=\"1.0\", oauth_consumer_key=\"test_key\", ")
+                                           U("oauth_signature_method=\"HMAC-SHA1\", oauth_timestamp=\""));
             VERIFY_ARE_EQUAL(0, header_authorization.find(prefix));
 
             // Verify suffix with proper 'oauth_callback'.
@@ -285,8 +286,8 @@ SUITE(oauth1_tests)
 
             // Verify temporary token prefix.
             const utility::string_t prefix(
-                U("OAuth oauth_version=\"1.0\", oauth_consumer_key=\"test_key\", oauth_token=\"xyzzy\", "
-                  "oauth_signature_method=\"HMAC-SHA1\", oauth_timestamp=\""));
+                U("OAuth oauth_version=\"1.0\", oauth_consumer_key=\"test_key\", oauth_token=\"xyzzy\", ")
+                U("oauth_signature_method=\"HMAC-SHA1\", oauth_timestamp=\""));
             VERIFY_ARE_EQUAL(0, header_authorization.find(prefix));
 
             // Verify suffix with 'oauth_verifier'.
@@ -312,6 +313,8 @@ SUITE(oauth1_tests)
         VERIFY_ARE_EQUAL(m_oauth1_config.token().access_token(), U("test"));
         VERIFY_ARE_EQUAL(m_oauth1_config.token().secret(), U("bar"));
     }
+
+    // clang-format on
 
 } // SUITE(oauth1_tests)
 

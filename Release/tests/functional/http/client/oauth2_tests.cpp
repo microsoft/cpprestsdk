@@ -130,16 +130,16 @@ SUITE(oauth2_tests)
             config.set_client_key(U("4567abcd"));
             config.set_auth_endpoint(U("https://test1"));
             config.set_redirect_uri(U("http://localhost:8080"));
-            VERIFY_ARE_EQUAL(U("https://test1/?response_type=code&client_id=4567abcd&redirect_uri=http://"
-                               "localhost:8080&state=xyzzy&scope=testing_123"),
+            VERIFY_ARE_EQUAL(U("https://test1/?response_type=code&client_id=4567abcd&redirect_uri=http://")
+                                 U("localhost:8080&state=xyzzy&scope=testing_123"),
                              config.build_authorization_uri(false));
         }
 
         // Verify again with implicit grant.
         {
             config.set_implicit_grant(true);
-            VERIFY_ARE_EQUAL(U("https://test1/?response_type=token&client_id=4567abcd&redirect_uri=http://"
-                               "localhost:8080&state=xyzzy&scope=testing_123"),
+            VERIFY_ARE_EQUAL(U("https://test1/?response_type=token&client_id=4567abcd&redirect_uri=http://")
+                                 U("localhost:8080&state=xyzzy&scope=testing_123"),
                              config.build_authorization_uri(false));
         }
 
@@ -190,8 +190,8 @@ SUITE(oauth2_tests)
 
                 VERIFY_ARE_EQUAL(U(""), request->m_headers[header_names::authorization]);
 
-                VERIFY_ARE_EQUAL(to_body_data(U("grant_type=authorization_code&code=789GHI&redirect_uri=https%3A%2F%"
-                                                "2Fbar&client_id=123ABC&client_secret=456DEF")),
+                VERIFY_ARE_EQUAL(to_body_data(U("grant_type=authorization_code&code=789GHI&redirect_uri=https%3A%2F%")
+                                                  U("2Fbar&client_id=123ABC&client_secret=456DEF")),
                                  request->m_body);
 
                 VERIFY_ARE_EQUAL(U("test_user_agent"), get_request_user_agent(request));

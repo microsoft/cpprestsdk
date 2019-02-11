@@ -1,3 +1,9 @@
+cpprestsdk (2.10.10)
+----------------------
+* PR#1023 Handle multi-byte unicode characters in json parsing
+* PR#1033 Temporary fix for VS2013. Note that VS2013 is still not in support.
+-- cpprestsdk team <askcasablanca@microsoft.com>  TUE, 29 Jan 2019 22:38:00 -0800
+
 cpprestsdk (2.10.9)
 ----------------------
 * PR#973  Address gcc warnings-as-errors in compression code, test improvements
