@@ -116,7 +116,7 @@ SUITE(outside_tests)
         });
     }
 
-#if (defined(_MSC_VER) && (_MSC_VER >= 1800)) && !CPPREST_FORCE_PPLX
+#if (defined(_MSC_VER) && (_MSC_VER >= 1900)) && !CPPREST_FORCE_PPLX
     TEST_FIXTURE(uri_address, multiple_https_requests_sync_scheduler)
     {
         struct sync_scheduler : public scheduler_interface
@@ -175,9 +175,8 @@ SUITE(outside_tests)
     TEST_FIXTURE(uri_address, no_transfer_encoding_content_length)
     {
         handle_timeout([] {
-            http_client client(
-                U("http://ws.audioscrobbler.com/2.0/"
-                  "?method=artist.gettoptracks&artist=cher&api_key=6fcd59047568e89b1615975081258990&format=json"));
+            http_client client(U("http://ws.audioscrobbler.com/2.0/") U(
+                "?method=artist.gettoptracks&artist=cher&api_key=6fcd59047568e89b1615975081258990&format=json"));
 
             client.request(methods::GET)
                 .then([](http_response response) {

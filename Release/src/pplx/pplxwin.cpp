@@ -41,7 +41,7 @@ _PPLXIMP size_t __cdecl CaptureCallstack(void** stackData, size_t skipFrames, si
 #if !defined(__cplusplus_winrt)
     capturedFrames = RtlCaptureStackBackTrace(
         static_cast<DWORD>(skipFrames + 1), static_cast<DWORD>(captureFrames), stackData, nullptr);
-#endif
+#endif // !__cplusplus_winrt
     return capturedFrames;
 }
 
@@ -64,9 +64,9 @@ void InitializeCriticalSection(LPCRITICAL_SECTION _cs)
     {
         throw ::std::bad_alloc();
     }
-#else
+#else  // ^^^ __cplusplus_winrt ^^^ // vvv !__cplusplus_winrt vvv
     InitializeCriticalSectionEx(_cs, 0, 0);
-#endif // !__cplusplus_winrt
+#endif // __cplusplus_winrt
 }
 
 } // namespace platform
@@ -169,7 +169,7 @@ _PPLXIMP void windows_scheduler::schedule(TaskProc_t proc, _In_ void* param)
 
     Windows::System::Threading::ThreadPool::RunAsync(workItemHandler);
 }
-#else
+#else // ^^^ __cplusplus_winrt ^^^ // vvv !__cplusplus_winrt vvv
 
 #if _WIN32_WINNT < _WIN32_WINNT_VISTA
 struct _Scheduler_Param
@@ -202,7 +202,7 @@ _PPLXIMP void windows_scheduler::schedule(TaskProc_t proc, _In_ void* param)
         throw utility::details::create_system_error(GetLastError());
     }
 }
-#else
+#else  // ^^^ _WIN32_WINNT < _WIN32_WINNT_VISTA ^^^ // vvv _WIN32_WINNT >= _WIN32_WINNT_VISTA vvv
 struct _Scheduler_Param
 {
     TaskProc_t m_proc;
@@ -236,12 +236,12 @@ _PPLXIMP void windows_scheduler::schedule(TaskProc_t proc, _In_ void* param)
 }
 #endif // _WIN32_WINNT < _WIN32_WINNT_VISTA
 
-#endif
+#endif // __cplusplus_winrt
 } // namespace details
 
 } // namespace pplx
 
-#else
+#else // ^^^ !defined(_WIN32) || CPPREST_FORCE_PPLX ^^^ // vvv defined(_WIN32) && !CPPREST_FORCE_PPLX vvv
 namespace Concurrency
 {
 void __cdecl set_cpprestsdk_ambient_scheduler(const std::shared_ptr<scheduler_interface>& _Scheduler)
@@ -251,7 +251,9 @@ void __cdecl set_cpprestsdk_ambient_scheduler(const std::shared_ptr<scheduler_in
 
 const std::shared_ptr<scheduler_interface>& __cdecl get_cpprestsdk_ambient_scheduler()
 {
-    return pplx::get_ambient_scheduler();
+    const auto& tmp = pplx::get_ambient_scheduler(); // putting this in a temporary reference variable to workaround
+                                                     // VS2013 compiler bugs
+    return tmp;
 }
 
 } // namespace Concurrency
