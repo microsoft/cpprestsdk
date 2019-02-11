@@ -1301,6 +1301,15 @@ private:
                 return;
             }
 
+            web::http::http_version parsed_version = web::http::http_version::from_string(http_version);
+            m_response._get_impl()->_set_http_version(parsed_version);
+
+            // if HTTP version is 1.0 then disable 'Keep-Alive' by default
+            if (parsed_version == web::http::http_versions::HTTP_1_0)
+            {
+                m_connection->set_keep_alive(false);
+            }
+
             read_headers();
         }
         else
@@ -1391,11 +1400,14 @@ private:
 
                 if (boost::iequals(name, header_names::connection))
                 {
-                    // This assumes server uses HTTP/1.1 so that 'Keep-Alive' is the default,
+                    // If the server uses HTTP/1.1, then 'Keep-Alive' is the default,
                     // so connection is explicitly closed only if we get "Connection: close".
-                    // We don't handle HTTP/1.0 server here. HTTP/1.0 server would need
-                    // to respond using 'Connection: Keep-Alive' every time.
-                    m_connection->set_keep_alive(!boost::iequals(value, U("close")));
+                    // If the server uses HTTP/1.0, it would need to respond using
+                    // 'Connection: Keep-Alive' every time.
+                    if (m_response._get_impl()->http_version() != web::http::http_versions::HTTP_1_0)
+                        m_connection->set_keep_alive(!boost::iequals(value, U("close")));
+                    else
+                        m_connection->set_keep_alive(boost::iequals(value, U("Keep-Alive")));
                 }
 
                 m_response.headers().add(utility::conversions::to_string_t(std::move(name)),

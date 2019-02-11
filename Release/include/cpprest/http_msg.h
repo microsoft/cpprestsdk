@@ -281,6 +281,8 @@ public:
 
     virtual ~http_msg_base() {}
 
+    http::http_version http_version() const { return m_http_version; }
+
     http_headers& headers() { return m_headers; }
 
     _ASYNCRTIMP void set_body(const concurrency::streams::istream& instream, const utf8string& contentType);
@@ -419,6 +421,8 @@ public:
     /// </remarks>
     _ASYNCRTIMP size_t _get_content_length_and_set_compression();
 
+    void _set_http_version(const http::http_version& http_version) { m_http_version = http_version; }
+
 protected:
     std::unique_ptr<http::compression::compress_provider> m_compressor;
     std::unique_ptr<http::compression::decompress_provider> m_decompressor;
@@ -444,6 +448,7 @@ protected:
     /// </summary>
     concurrency::streams::ostream m_outStream;
 
+    http::http_version m_http_version;
     http_headers m_headers;
     bool m_default_outstream;
 
@@ -838,8 +843,6 @@ public:
 
     _ASYNCRTIMP void set_request_uri(const uri&);
 
-    http::http_version http_version() const { return m_http_version; }
-
     const utility::string_t& remote_address() const { return m_remote_address; }
 
     const pplx::cancellation_token& cancellation_token() const { return m_cancellationToken; }
@@ -876,8 +879,6 @@ public:
 
     void _set_base_uri(const http::uri& base_uri) { m_base_uri = base_uri; }
 
-    void _set_http_version(const http::http_version& http_version) { m_http_version = http_version; }
-
     void _set_remote_address(const utility::string_t& remote_address) { m_remote_address = remote_address; }
 
 private:
@@ -905,8 +906,6 @@ private:
     std::shared_ptr<progress_handler> m_progress_handler;
 
     pplx::task_completion_event<http_response> m_response;
-
-    http::http_version m_http_version;
 
     utility::string_t m_remote_address;
 };

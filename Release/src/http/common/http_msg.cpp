@@ -287,7 +287,11 @@ static const utility::char_t* stream_was_set_explicitly =
 static const utility::char_t* unsupported_charset =
     _XPLATSTR("Charset must be iso-8859-1, utf-8, utf-16, utf-16le, or utf-16be to be extracted.");
 
-http_msg_base::http_msg_base() : m_headers(), m_default_outstream(false) {}
+http_msg_base::http_msg_base()
+    : m_http_version(http::http_version{ 0, 0 })
+    , m_headers()
+    , m_default_outstream(false)
+{}
 
 void http_msg_base::_prepare_to_receive_data()
 {
@@ -1122,7 +1126,6 @@ details::_http_request::_http_request(http::method mtd)
     , m_initiated_response(0)
     , m_server_context()
     , m_cancellationToken(pplx::cancellation_token::none())
-    , m_http_version(http::http_version {0, 0})
 {
     if (m_method.empty())
     {
@@ -1134,7 +1137,6 @@ details::_http_request::_http_request(std::unique_ptr<http::details::_http_serve
     : m_initiated_response(0)
     , m_server_context(std::move(server_context))
     , m_cancellationToken(pplx::cancellation_token::none())
-    , m_http_version(http::http_version {0, 0})
 {
 }
 
