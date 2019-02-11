@@ -28,7 +28,7 @@ BOOSTVER=1.65.1
 OPENSSLVER=1.0.2k
 
 API=15
-STL=c++_static
+STL=c++_shared
 
 function usage {
     echo "Usage: $0 [--skip-boost] [--skip-openssl] [--skip-cpprestsdk] [-h] [--ndk <android-ndk>]"
@@ -143,7 +143,7 @@ if [ "${DO_OPENSSL}" == "1" ]; then (
 if [ "${DO_BOOST}" == "1" ]; then (
     if [ ! -d 'Boost-for-Android' ]; then git clone https://github.com/moritz-wundke/Boost-for-Android; fi
     cd Boost-for-Android
-    git checkout 84973078a3d7668067d422d4654696ef59ab9d6d
+    git checkout 1356b87fed389b4abf1ff671adec0b899877174b
     PATH="$PATH:$NDK_DIR" \
     CXXFLAGS="-std=gnu++11" \
     ./build-android.sh \
