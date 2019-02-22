@@ -28,6 +28,17 @@
 #include <memory>
 #include <mutex>
 
+#if !defined(_WIN32) || !defined(__cplusplus_winrt)
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconversion"
+#endif
+#include "boost/asio/ssl.hpp"
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
+#endif
+
 namespace web
 {
 // For backwards compatibility for when in the experimental namespace.
@@ -168,6 +179,26 @@ public:
     /// caution.</remarks>
     void set_validate_certificates(bool validate_certs) { m_validate_certificates = validate_certs; }
 
+#if !defined(_WIN32) || !defined(__cplusplus_winrt)
+    /// <summary>
+    /// Sets a callback to enable custom setting of the ssl context, at construction time.
+    /// </summary>
+    /// <param name="callback">A user callback allowing for customization of the ssl context at construction
+    /// time.</param>
+    void set_ssl_context_callback(const std::function<void(boost::asio::ssl::context&)>& callback)
+    {
+        m_ssl_context_callback = callback;
+    }
+
+    /// <summary>
+    /// Gets the user's callback to allow for customization of the ssl context.
+    /// </summary>
+    const std::function<void(boost::asio::ssl::context&)>& get_ssl_context_callback() const
+    {
+        return m_ssl_context_callback;
+    }
+#endif
+
 private:
     web::web_proxy m_proxy;
     web::credentials m_credentials;
@@ -175,6 +206,9 @@ private:
     bool m_sni_enabled;
     utf8string m_sni_hostname;
     bool m_validate_certificates;
+#if !defined(_WIN32) || !defined(__cplusplus_winrt)
+    std::function<void(boost::asio::ssl::context&)> m_ssl_context_callback;
+#endif
 };
 
 /// <summary>

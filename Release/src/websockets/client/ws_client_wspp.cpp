@@ -189,6 +189,10 @@ public:
                     new boost::asio::ssl::context(boost::asio::ssl::context::sslv23));
                 sslContext->set_default_verify_paths();
                 sslContext->set_options(boost::asio::ssl::context::default_workarounds);
+                if (m_config.get_ssl_context_callback())
+                {
+                    m_config.get_ssl_context_callback()(*sslContext);
+                }
                 if (m_config.validate_certificates())
                 {
                     sslContext->set_verify_mode(boost::asio::ssl::context::verify_peer);
