@@ -87,12 +87,11 @@ namespace
 {
 const std::string CRLF("\r\n");
 
-std::string calc_cn_host(const bool secure,
-                         const web::http::uri& baseUri,
+std::string calc_cn_host(const web::http::uri& baseUri,
                          const web::http::http_headers& requestHeaders)
 {
     std::string result;
-    if (secure)
+    if (baseUri.scheme() == U("https"))
     {
         const utility::string_t* encResult;
         const auto hostHeader = requestHeaders.find(_XPLATSTR("Host"));
@@ -472,7 +471,6 @@ public:
         : _http_client_communicator(std::move(address), std::move(client_config))
         , m_resolver(crossplat::threadpool::shared_instance().service())
         , m_pool(std::make_shared<asio_connection_pool>())
-        , m_start_with_ssl(base_uri().scheme() == U("https") && !this->client_config().proxy().is_specified())
     {
     }
 
@@ -482,13 +480,13 @@ public:
 
     std::shared_ptr<asio_connection> obtain_connection(const http_request& req)
     {
-        std::string cn_host = calc_cn_host(m_start_with_ssl, base_uri(), req.headers());
+        std::string cn_host = calc_cn_host(base_uri(), req.headers());
         std::shared_ptr<asio_connection> conn = m_pool->try_acquire(cn_host);
         if (conn == nullptr)
         {
             // Pool was empty. Create a new connection
             conn = std::make_shared<asio_connection>(crossplat::threadpool::shared_instance().service());
-            if (m_start_with_ssl)
+            if (base_uri().scheme() == U("https") && !this->client_config().proxy().is_specified())
             {
                 conn->upgrade_to_ssl(std::move(cn_host), this->client_config().get_ssl_context_callback());
             }
@@ -499,13 +497,10 @@ public:
 
     virtual pplx::task<http_response> propagate(http_request request) override;
 
-    bool start_with_ssl() const CPPREST_NOEXCEPT { return m_start_with_ssl; }
-
     tcp::resolver m_resolver;
 
 private:
     const std::shared_ptr<asio_connection_pool> m_pool;
-    const bool m_start_with_ssl;
 };
 
 class asio_context final : public request_context, public std::enable_shared_from_this<asio_context>
@@ -941,7 +936,7 @@ private:
     void upgrade_to_ssl()
     {
         auto& client = static_cast<asio_client&>(*m_http_client);
-        m_connection->upgrade_to_ssl(calc_cn_host(client.start_with_ssl(), client.base_uri(), m_request.headers()),
+        m_connection->upgrade_to_ssl(calc_cn_host(client.base_uri(), m_request.headers()),
                                      client.client_config().get_ssl_context_callback());
     }
 
