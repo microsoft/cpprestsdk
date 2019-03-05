@@ -249,6 +249,28 @@ public:
     }
 
     /// <summary>
+    /// Creates an <c>http_exception</c> with from a error code with a category, and a string message.
+    /// </summary>
+    /// <param name="errorCode">Error code value.</param>
+    /// <param name="whatArg">Error message string.</param>
+    http_exception(std::error_code errorCode, const utility::string_t& whatArg)
+        : m_errorCode(std::move(errorCode)), m_msg(utility::conversions::to_utf8string(whatArg))
+    {
+    }
+
+#ifdef _WIN32
+    /// <summary>
+    /// Creates an <c>http_exception</c> with from a error code with a category, and a string message.
+    /// </summary>
+    /// <param name="errorCode">Error code value.</param>
+    /// <param name="whatArg">Error message string.</param>
+    http_exception(std::error_code errorCode, std::string whatArg)
+        : m_errorCode(std::move(errorCode)), m_msg(std::move(whatArg))
+    {
+    }
+#endif
+
+    /// <summary>
     /// Gets a string identifying the cause of the exception.
     /// </summary>
     /// <returns>A null terminated character string.</returns>
