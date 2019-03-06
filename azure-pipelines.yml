@@ -7,7 +7,7 @@ jobs:
     steps:
     - script: .\vcpkg\bootstrap-vcpkg.bat
       displayName: Bootstrap vcpkg
-    - script: .\vcpkg\vcpkg.exe install zlib openssl boost-system boost-date-time boost-regex boost-interprocess websocketpp brotli
+    - script: .\vcpkg\vcpkg.exe install zlib openssl boost-system boost-date-time boost-regex boost-interprocess websocketpp brotli --vcpkg-root=.\vcpkg
       displayName: vcpkg install dependencies
     - script: mkdir build.common
       displayName: Make Build Directory
@@ -38,7 +38,7 @@ jobs:
     steps:
     - script: .\vcpkg\bootstrap-vcpkg.bat
       displayName: Bootstrap vcpkg
-    - script: .\vcpkg\vcpkg.exe install zlib openssl boost-system boost-date-time boost-regex boost-interprocess websocketpp brotli --triplet x64-windows
+    - script: .\vcpkg\vcpkg.exe install zlib openssl boost-system boost-date-time boost-regex boost-interprocess websocketpp brotli --triplet x64-windows --vcpkg-root=.\vcpkg
       displayName: vcpkg install dependencies
     - script: mkdir build.common
       displayName: Make Build Directory
@@ -90,7 +90,7 @@ jobs:
     steps:
     - script: .\vcpkg\bootstrap-vcpkg.bat
       displayName: Bootstrap vcpkg
-    - script: .\vcpkg\vcpkg.exe install zlib openssl boost-system boost-date-time boost-regex boost-interprocess websocketpp brotli
+    - script: .\vcpkg\vcpkg.exe install zlib openssl boost-system boost-date-time boost-regex boost-interprocess websocketpp brotli --vcpkg-root=.\vcpkg
       displayName: vcpkg install dependencies
     - script: mkdir build.common
       displayName: Make Build Directory
@@ -121,7 +121,7 @@ jobs:
     steps:
     - script: .\vcpkg\bootstrap-vcpkg.bat
       displayName: Bootstrap vcpkg
-    - script: .\vcpkg\vcpkg.exe install zlib openssl boost-system boost-date-time boost-regex boost-interprocess websocketpp brotli --triplet x64-windows
+    - script: .\vcpkg\vcpkg.exe install zlib openssl boost-system boost-date-time boost-regex boost-interprocess websocketpp brotli --triplet x64-windows --vcpkg-root=.\vcpkg
       displayName: vcpkg install dependencies
     - script: mkdir build.common
       displayName: Make Build Directory
@@ -194,7 +194,7 @@ jobs:
         sudo apt-get -y update
         sudo apt-get install g++-7 ninja-build -y
         ./vcpkg/bootstrap-vcpkg.sh
-        ./vcpkg/vcpkg install zlib openssl boost-system boost-date-time boost-regex websocketpp boost-thread boost-filesystem boost-random boost-chrono boost-interprocess brotli
+        ./vcpkg/vcpkg install zlib openssl boost-system boost-date-time boost-regex websocketpp boost-thread boost-filesystem boost-random boost-chrono boost-interprocess brotli --vcpkg-root=./vcpkg
       displayName: Vcpkg install dependencies
     - script: |
         mkdir build.debug
@@ -284,7 +284,7 @@ jobs:
     - script: |
         brew install gcc ninja
         ./vcpkg/bootstrap-vcpkg.sh
-        ./vcpkg/vcpkg install zlib openssl boost-system boost-date-time boost-regex websocketpp boost-thread boost-filesystem boost-random boost-chrono boost-interprocess brotli
+        ./vcpkg/vcpkg install zlib openssl boost-system boost-date-time boost-regex websocketpp boost-thread boost-filesystem boost-random boost-chrono boost-interprocess brotli  --vcpkg-root=./vcpkg
       displayName: Vcpkg install dependencies
     - script: |
         mkdir build.debug
