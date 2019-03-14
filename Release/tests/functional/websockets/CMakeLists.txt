@@ -28,6 +28,7 @@ if (NOT CPPREST_EXCLUDE_WEBSOCKETS)
   )
 
   add_casablanca_test(websocketsclient_test SOURCES)
+  target_include_directories(websocketsclient_test PUBLIC utilities)
   if(NOT TEST_LIBRARY_TARGET_TYPE STREQUAL "OBJECT")
     target_link_libraries(websocketsclient_test PRIVATE websockettest_utilities)
   endif()

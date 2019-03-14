@@ -1,0 +1,81 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>X509_get_subject_name</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#RETURN-VALUES">RETURN VALUES</a></li>
+  <li><a href="#HISTORY">HISTORY</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>X509_get_subject_name, X509_set_subject_name, X509_get_issuer_name, X509_set_issuer_name, X509_REQ_get_subject_name, X509_REQ_set_subject_name, X509_CRL_get_issuer, X509_CRL_set_issuer_name - get and set issuer or subject names</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;openssl/x509.h&gt;
+
+ X509_NAME *X509_get_subject_name(const X509 *x);
+ int X509_set_subject_name(X509 *x, X509_NAME *name);
+
+ X509_NAME *X509_get_issuer_name(const X509 *x);
+ int X509_set_issuer_name(X509 *x, X509_NAME *name);
+
+ X509_NAME *X509_REQ_get_subject_name(const X509_REQ *req);
+ int X509_REQ_set_subject_name(X509_REQ *req, X509_NAME *name);
+
+ X509_NAME *X509_CRL_get_issuer(const X509_CRL *crl);
+ int X509_CRL_set_issuer_name(X509_CRL *x, X509_NAME *name);</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>X509_get_subject_name() returns the subject name of certificate <b>x</b>. The returned value is an internal pointer which <b>MUST NOT</b> be freed.</p>
+
+<p>X509_set_subject_name() sets the issuer name of certificate <b>x</b> to <b>name</b>. The <b>name</b> parameter is copied internally and should be freed up when it is no longer needed.</p>
+
+<p>X509_get_issuer_name() and X509_set_issuer_name() are identical to X509_get_subject_name() and X509_set_subject_name() except the get and set the issuer name of <b>x</b>.</p>
+
+<p>Similarly X509_REQ_get_subject_name(), X509_REQ_set_subject_name(), X509_CRL_get_issuer() and X509_CRL_set_issuer_name() get or set the subject or issuer names of certificate requests of CRLs respectively.</p>
+
+<h1 id="RETURN-VALUES">RETURN VALUES</h1>
+
+<p>X509_get_subject_name(), X509_get_issuer_name(), X509_REQ_get_subject_name() and X509_CRL_get_issuer() return an <b>X509_NAME</b> pointer.</p>
+
+<p>X509_set_subject_name(), X509_set_issuer_name(), X509_REQ_set_subject_name() and X509_CRL_set_issuer_name() return 1 for success and 0 for failure.</p>
+
+<h1 id="HISTORY">HISTORY</h1>
+
+<p>X509_REQ_get_subject_name() is a function in OpenSSL 1.1.0 and a macro in earlier versions.</p>
+
+<p>X509_CRL_get_issuer() is a function in OpenSSL 1.1.0. It was first added to OpenSSL 1.0.0 as a macro.</p>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man3/d2i_X509.html>d2i_X509(3)</a>, <a href="../man3/ERR_get_error.html>ERR_get_error(3)</a>, <a href="../man3/d2i_X509.html>d2i_X509(3)</a> <a href="../man3/X509_CRL_get0_by_serial.html>X509_CRL_get0_by_serial(3)</a>, <a href="../man3/X509_get0_signature.html>X509_get0_signature(3)</a>, <a href="../man3/X509_get_ext_d2i.html>X509_get_ext_d2i(3)</a>, <a href="../man3/X509_get_extension_flags.html>X509_get_extension_flags(3)</a>, <a href="../man3/X509_get_pubkey.html>X509_get_pubkey(3)</a>, <a href="../man3/X509_NAME_add_entry_by_txt.html>X509_NAME_add_entry_by_txt(3)</a>, <a href="../man3/X509_NAME_ENTRY_get_object.html>X509_NAME_ENTRY_get_object(3)</a>, <a href="../man3/X509_NAME_get_index_by_NID.html>X509_NAME_get_index_by_NID(3)</a>, <a href="../man3/X509_NAME_print_ex.html>X509_NAME_print_ex(3)</a>, <a href="../man3/X509_new.html>X509_new(3)</a>, <a href="../man3/X509_sign.html>X509_sign(3)</a>, <a href="../man3/X509V3_get_d2i.html>X509V3_get_d2i(3)</a>, <a href="../man3/X509_verify_cert.html>X509_verify_cert(3)</a></p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

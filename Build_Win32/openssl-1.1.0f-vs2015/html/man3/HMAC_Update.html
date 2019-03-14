@@ -1,0 +1,131 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>HMAC</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#RETURN-VALUES">RETURN VALUES</a></li>
+  <li><a href="#CONFORMING-TO">CONFORMING TO</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#HISTORY">HISTORY</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>HMAC, HMAC_CTX_new, HMAC_CTX_reset, HMAC_CTX_free, HMAC_Init, HMAC_Init_ex, HMAC_Update, HMAC_Final, HMAC_CTX_copy, HMAC_CTX_set_flags, HMAC_CTX_get_md - HMAC message authentication code</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;openssl/hmac.h&gt;
+
+ unsigned char *HMAC(const EVP_MD *evp_md, const void *key,
+               int key_len, const unsigned char *d, int n,
+               unsigned char *md, unsigned int *md_len);
+
+ HMAC_CTX *HMAC_CTX_new(void);
+ int HMAC_CTX_reset(HMAC_CTX *ctx);
+
+ int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int key_len,
+                   const EVP_MD *md, ENGINE *impl);
+ int HMAC_Update(HMAC_CTX *ctx, const unsigned char *data, int len);
+ int HMAC_Final(HMAC_CTX *ctx, unsigned char *md, unsigned int *len);
+
+ void HMAC_CTX_free(HMAC_CTX *ctx);
+
+ int HMAC_CTX_copy(HMAC_CTX *dctx, HMAC_CTX *sctx);
+ void HMAC_CTX_set_flags(HMAC_CTX *ctx, unsigned long flags);
+ const EVP_MD *HMAC_CTX_get_md(const HMAC_CTX *ctx);</code></pre>
+
+<p>Deprecated:</p>
+
+<pre><code> #if OPENSSL_API_COMPAT &lt; 0x10100000L
+ int HMAC_Init(HMAC_CTX *ctx, const void *key, int key_len,
+               const EVP_MD *md);
+ #endif</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>HMAC is a MAC (message authentication code), i.e. a keyed hash function used for message authentication, which is based on a hash function.</p>
+
+<p>HMAC() computes the message authentication code of the <b>n</b> bytes at <b>d</b> using the hash function <b>evp_md</b> and the key <b>key</b> which is <b>key_len</b> bytes long.</p>
+
+<p>It places the result in <b>md</b> (which must have space for the output of the hash function, which is no more than <b>EVP_MAX_MD_SIZE</b> bytes). If <b>md</b> is NULL, the digest is placed in a static array. The size of the output is placed in <b>md_len</b>, unless it is <b>NULL</b>.</p>
+
+<p><b>evp_md</b> can be EVP_sha1(), EVP_ripemd160() etc.</p>
+
+<p>HMAC_CTX_new() creates a new HMAC_CTX in heap memory.</p>
+
+<p>HMAC_CTX_reset() zeroes an existing <b>HMAC_CTX</b> and associated resources, making it suitable for new computations as if it was newly created with HMAC_CTX_new().</p>
+
+<p>HMAC_CTX_free() erases the key and other data from the <b>HMAC_CTX</b>, releases any associated resources and finally frees the <b>HMAC_CTX</b> itself.</p>
+
+<p>The following functions may be used if the message is not completely stored in memory:</p>
+
+<p>HMAC_Init() initializes a <b>HMAC_CTX</b> structure to use the hash function <b>evp_md</b> and the key <b>key</b> which is <b>key_len</b> bytes long. It is deprecated and only included for backward compatibility with OpenSSL 0.9.6b.</p>
+
+<p>HMAC_Init_ex() initializes or reuses a <b>HMAC_CTX</b> structure to use the hash function <b>evp_md</b> and key <b>key</b>. If both are NULL (or <b>evp_md</b> is the same as the previous digest used by <b>ctx</b> and <b>key</b> is NULL) the existing key is reused. <b>ctx</b> must have been created with HMAC_CTX_new() before the first use of an <b>HMAC_CTX</b> in this function. <b>N.B. HMAC_Init() had this undocumented behaviour in previous versions of OpenSSL - failure to switch to HMAC_Init_ex() in programs that expect it will cause them to stop working</b>.</p>
+
+<p><b>NOTE:</b> If HMAC_Init_ex() is called with <b>key</b> NULL and <b>evp_md</b> is not the same as the previous digest used by <b>ctx</b> then an error is returned because reuse of an existing key with a different digest is not supported.</p>
+
+<p>HMAC_Update() can be called repeatedly with chunks of the message to be authenticated (<b>len</b> bytes at <b>data</b>).</p>
+
+<p>HMAC_Final() places the message authentication code in <b>md</b>, which must have space for the hash function output.</p>
+
+<p>HMAC_CTX_copy() copies all of the internal state from <b>sctx</b> into <b>dctx</b>.</p>
+
+<p>HMAC_CTX_set_flags() applies the specified flags to the internal EVP_MD_CTXs. These flags have the same meaning as for <a href="../man3/EVP_MD_CTX_set_flags.html>EVP_MD_CTX_set_flags(3)</a>.</p>
+
+<p>HMAC_CTX_get_md() returns the EVP_MD that has previously been set for the supplied HMAC_CTX.</p>
+
+<h1 id="RETURN-VALUES">RETURN VALUES</h1>
+
+<p>HMAC() returns a pointer to the message authentication code or NULL if an error occurred.</p>
+
+<p>HMAC_CTX_new() returns a pointer to a new <b>HMAC_CTX</b> on success or <b>NULL</b> if an error occurred.</p>
+
+<p>HMAC_CTX_reset(), HMAC_Init_ex(), HMAC_Update(), HMAC_Final() and HMAC_CTX_copy() return 1 for success or 0 if an error occurred.</p>
+
+<p>HMAC_CTX_get_md() return the EVP_MD previously set for the supplied HMAC_CTX or NULL if no EVP_MD has been set.</p>
+
+<h1 id="CONFORMING-TO">CONFORMING TO</h1>
+
+<p>RFC 2104</p>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man3/sha.html>sha(3)</a>, <a href="../man3/evp.html>evp(3)</a></p>
+
+<h1 id="HISTORY">HISTORY</h1>
+
+<p>HMAC_CTX_init() was replaced with HMAC_CTX_reset() in OpenSSL versions 1.1.0.</p>
+
+<p>HMAC_CTX_cleanup() existed in OpenSSL versions before 1.1.0.</p>
+
+<p>HMAC_CTX_new(), HMAC_CTX_free() and HMAC_CTX_get_md() are new in OpenSSL version 1.1.0.</p>
+
+<p>HMAC_Init_ex(), HMAC_Update() and HMAC_Final() did not return values in versions of OpenSSL before 1.0.0.</p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

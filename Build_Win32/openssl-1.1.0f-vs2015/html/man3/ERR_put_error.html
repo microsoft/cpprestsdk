@@ -1,0 +1,80 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>ERR_put_error</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a>
+    <ul>
+      <li><a href="#Reporting-errors">Reporting errors</a></li>
+    </ul>
+  </li>
+  <li><a href="#RETURN-VALUES">RETURN VALUES</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>ERR_put_error, ERR_add_error_data - record an error</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;openssl/err.h&gt;
+
+ void ERR_put_error(int lib, int func, int reason, const char *file,
+         int line);
+
+ void ERR_add_error_data(int num, ...);
+ void ERR_add_error_data(int num, va_list arg);</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>ERR_put_error() adds an error code to the thread&#39;s error queue. It signals that the error of reason code <b>reason</b> occurred in function <b>func</b> of library <b>lib</b>, in line number <b>line</b> of <b>file</b>. This function is usually called by a macro.</p>
+
+<p>ERR_add_error_data() associates the concatenation of its <b>num</b> string arguments with the error code added last. ERR_add_error_vdata() is similar except the argument is a <b>va_list</b>.</p>
+
+<p><a href="../man3/ERR_load_strings.html>ERR_load_strings(3)</a> can be used to register error strings so that the application can a generate human-readable error messages for the error code.</p>
+
+<h2 id="Reporting-errors">Reporting errors</h2>
+
+<p>Each sub-library has a specific macro XXXerr() that is used to report errors. Its first argument is a function code <b>XXX_F_...</b>, the second argument is a reason code <b>XXX_R_...</b>. Function codes are derived from the function names; reason codes consist of textual error descriptions. For example, the function ssl3_read_bytes() reports a &quot;handshake failure&quot; as follows:</p>
+
+<pre><code> SSLerr(SSL_F_SSL3_READ_BYTES, SSL_R_SSL_HANDSHAKE_FAILURE);</code></pre>
+
+<p>Function and reason codes should consist of upper case characters, numbers and underscores only. The error file generation script translates function codes into function names by looking in the header files for an appropriate function name, if none is found it just uses the capitalized form such as &quot;SSL3_READ_BYTES&quot; in the above example.</p>
+
+<p>The trailing section of a reason code (after the &quot;_R_&quot;) is translated into lower case and underscores changed to spaces.</p>
+
+<p>Although a library will normally report errors using its own specific XXXerr macro, another library&#39;s macro can be used. This is normally only done when a library wants to include ASN1 code which must use the ASN1err() macro.</p>
+
+<h1 id="RETURN-VALUES">RETURN VALUES</h1>
+
+<p>ERR_put_error() and ERR_add_error_data() return no values.</p>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man3/ERR_load_strings.html>ERR_load_strings(3)</a></p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

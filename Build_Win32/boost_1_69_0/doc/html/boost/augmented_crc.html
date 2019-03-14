@@ -1,0 +1,135 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<title>Function template augmented_crc</title>
+<link rel="stylesheet" href="../../../doc/src/boostbook.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="../index.html" title="The Boost C++ Libraries BoostBook Documentation Subset">
+<link rel="up" href="../crc/reference.html#header.boost.crc_hpp" title="Header &lt;boost/crc.hpp&gt;">
+<link rel="prev" href="crc.html" title="Function template crc">
+<link rel="next" href="../BOOST_CRC_PARM_TYPE.html" title="Macro BOOST_CRC_PARM_TYPE">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<table cellpadding="2" width="100%"><tr>
+<td valign="top"><img alt="Boost C++ Libraries" width="277" height="86" src="../../../boost.png"></td>
+<td align="center"><a href="../../../index.html">Home</a></td>
+<td align="center"><a href="../../../libs/libraries.htm">Libraries</a></td>
+<td align="center"><a href="http://www.boost.org/users/people.html">People</a></td>
+<td align="center"><a href="http://www.boost.org/users/faq.html">FAQ</a></td>
+<td align="center"><a href="../../../more/index.htm">More</a></td>
+</tr></table>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="crc.html"><img src="../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../crc/reference.html#header.boost.crc_hpp"><img src="../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="../BOOST_CRC_PARM_TYPE.html"><img src="../../../doc/src/images/next.png" alt="Next"></a>
+</div>
+<div class="refentry">
+<a name="boost.augmented_crc"></a><div class="titlepage"></div>
+<div class="refnamediv">
+<h2><span class="refentrytitle">Function template augmented_crc</span></h2>
+<p>boost::augmented_crc &#8212; Compute the CRC of a memory block, with any augmentation provided by user. </p>
+</div>
+<h2 xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" class="refsynopsisdiv-title">Synopsis</h2>
+<div xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" class="refsynopsisdiv"><pre class="synopsis"><span class="comment">// In header: &lt;<a class="link" href="../crc/reference.html#header.boost.crc_hpp" title="Header &lt;boost/crc.hpp&gt;">boost/crc.hpp</a>&gt;
+
+</span>
+<span class="keyword">template</span><span class="special">&lt;</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> Bits<span class="special">,</span> <span class="keyword">typename</span><span class="special">::</span><span class="identifier">boost</span><span class="special">::</span><span class="identifier">uint_t</span><span class="special">&lt;</span> <span class="identifier">Bits</span> <span class="special">&gt;</span><span class="special">::</span><span class="identifier">fast</span> TruncPoly<span class="special">&gt;</span> 
+  <span class="identifier">uint_t</span><span class="special">&lt;</span> <span class="identifier">Bits</span> <span class="special">&gt;</span><span class="special">::</span><span class="identifier">fast</span> 
+  <span class="identifier">augmented_crc</span><span class="special">(</span><span class="keyword">void</span> <span class="keyword">const</span> <span class="special">*</span> buffer<span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> byte_count<span class="special">,</span> 
+                <span class="keyword">typename</span> <span class="identifier">uint_t</span><span class="special">&lt;</span> <span class="identifier">Bits</span> <span class="special">&gt;</span><span class="special">::</span><span class="identifier">fast</span> initial_remainder <span class="special">=</span> <span class="number">0u</span><span class="special">)</span><span class="special">;</span></pre></div>
+<div class="refsect1">
+<a name="id-1.3.13.11.2.12.4"></a><h2>Description</h2>
+<p>Computes the polynomial remainder of a CRC run, assuming that <span class="emphasis"><em>buffer</em></span> and <span class="emphasis"><em>byte_count</em></span> describe a memory block representing the polynomial dividend. The first byte is considered the highest order, going down for subsequent bytes. Within a byte, the highest-order bit is read first (corresponding to <span class="emphasis"><em>RefIn</em></span> = <code class="computeroutput">False</code> in the RMCA). Check the other parts of this function's documentation to see how a checksum can be gained and/or used.</p>
+<p>
+
+
+
+</p>
+<div class="note"><table border="0" summary="Note">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="../../../doc/src/images/note.png"></td>
+<th align="left">Note</th>
+</tr>
+<tr><td align="left" valign="top">
+<p>Augmented-style CRC runs use straight-up modulo-2 polynomial division. Since data is being read byte-wise, a table of pre-computed remainder changes (as XOR masks) can be used to speed computation. </p>
+<p>Reading just a memory block will yield an interim remainder, and not the final checksum. To get that checksum, allocate <span class="emphasis"><em>Bits</em></span> / <code class="computeroutput">CHAR_BIT</code> bytes directly after the block and fill them with zero values, then extend <span class="emphasis"><em>byte_count</em></span> to include those extra bytes. A data block is corrupt if the return value doesn't equal your separately given checksum. </p>
+<p>Another way to perform a check is use the zero-byte extension method, but replace the zero values with your separately-given checksum. The checksum must be loaded in big-endian order. Here corruption, in either the data block or the given checksum, is confirmed if the return value is not zero. </p>
+<p>The two checksum techniques assume the CRC-run is performed bit-wise, while this function works byte-wise. That means that the techniques can be used only if <code class="computeroutput">CHAR_BIT</code> divides <span class="emphasis"><em>Bits</em></span> evenly! </p>
+</td></tr>
+</table></div>
+<p>
+</p>
+<div class="variablelist"><table border="0" class="variablelist compact">
+<colgroup>
+<col align="left" valign="top">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td><p><span class="term">Parameters:</span></p></td>
+<td><div class="variablelist"><table border="0" class="variablelist compact">
+<colgroup>
+<col align="left" valign="top">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td><p><span class="term"><code class="computeroutput">buffer</code></span></p></td>
+<td><p>The address where the memory block begins. </p></td>
+</tr>
+<tr>
+<td><p><span class="term"><code class="computeroutput">byte_count</code></span></p></td>
+<td><p>The number of bytes in the memory block. </p></td>
+</tr>
+<tr>
+<td><p><span class="term"><code class="computeroutput">initial_remainder</code></span></p></td>
+<td><p>The initial state of the polynomial remainder, defaulting to zero if omitted. If you are reading a memory block in multiple runs, put the return value of the previous run here. (Note that initial-remainders given by RMCA parameter lists, as <span class="emphasis"><em>Init</em></span>, assume that the initial remainder is in its <span class="bold"><strong>unaugmented</strong></span> state, so you would need to convert the value to make it suitable for this function. I currently don't provide a conversion routine.)</p></td>
+</tr>
+</tbody>
+</table></div></td>
+</tr>
+<tr>
+<td><p><span class="term">Template Parameters:</span></p></td>
+<td><div class="variablelist"><table border="0" class="variablelist compact">
+<colgroup>
+<col align="left" valign="top">
+<col>
+</colgroup>
+<tbody>
+<tr>
+<td><p><span class="term"><code class="computeroutput">Bits</code></span></p></td>
+<td><p>The order of the modulo-2 polynomial divisor. (<span class="emphasis"><em>Width</em></span> from the RMCA) </p></td>
+</tr>
+<tr>
+<td><p><span class="term"><code class="computeroutput">TruncPoly</code></span></p></td>
+<td><p>The lowest coefficients of the divisor polynomial. The highest-order coefficient is omitted and always assumed to be 1. (<span class="emphasis"><em>Poly</em></span> from the RMCA)</p></td>
+</tr>
+</tbody>
+</table></div></td>
+</tr>
+<tr>
+<td><p><span class="term">Requires:</span></p></td>
+<td><p>0 &lt; <span class="emphasis"><em>Bits</em></span> &lt;= <code class="computeroutput">std::numeric_limit&lt;uintmax_t&gt;::digits</code> </p></td>
+</tr>
+<tr>
+<td><p><span class="term">Returns:</span></p></td>
+<td><p>The interim remainder, if no augmentation is used. A special value if augmentation is used (see the notes). No output processing is done on the value. (In RMCA terms, <span class="emphasis"><em>RefOut</em></span> is <code class="computeroutput">False</code> and <span class="emphasis"><em>XorOut</em></span> is <code class="computeroutput">0</code>.)</p></td>
+</tr>
+</tbody>
+</table></div>
+</div>
+</div>
+<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
+<td align="left"></td>
+<td align="right"><div class="copyright-footer">Copyright &#169; 2001, 2003, 2012 Daryle Walker<p>
+        Distributed under the Boost Software License, Version 1.0. (See the accompanying
+        file LICENSE_1_0.txt or a copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
+      </p>
+</div></td>
+</tr></table>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="crc.html"><img src="../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../crc/reference.html#header.boost.crc_hpp"><img src="../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="../BOOST_CRC_PARM_TYPE.html"><img src="../../../doc/src/images/next.png" alt="Next"></a>
+</div>
+</body>
+</html>

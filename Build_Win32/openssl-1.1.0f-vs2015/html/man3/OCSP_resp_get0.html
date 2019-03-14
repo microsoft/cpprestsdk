@@ -1,0 +1,114 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>OCSP_resp_find_status</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#RETURN-VALUES">RETURN VALUES</a></li>
+  <li><a href="#NOTES">NOTES</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>OCSP_resp_get0_certs, OCSP_resp_get0_id, OCSP_resp_get0_produced_at, OCSP_resp_find_status, OCSP_resp_count, OCSP_resp_get0, OCSP_resp_find, OCSP_single_get0_status, OCSP_check_validity - OCSP response utility functions</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;openssl/ocsp.h&gt;
+
+ int OCSP_resp_find_status(OCSP_BASICRESP *bs, OCSP_CERTID *id, int *status,
+                           int *reason,
+                           ASN1_GENERALIZEDTIME **revtime,
+                           ASN1_GENERALIZEDTIME **thisupd,
+                           ASN1_GENERALIZEDTIME **nextupd);
+
+ int OCSP_resp_count(OCSP_BASICRESP *bs);
+ OCSP_SINGLERESP *OCSP_resp_get0(OCSP_BASICRESP *bs, int idx);
+ int OCSP_resp_find(OCSP_BASICRESP *bs, OCSP_CERTID *id, int last);
+ int OCSP_single_get0_status(OCSP_SINGLERESP *single, int *reason,
+                             ASN1_GENERALIZEDTIME **revtime,
+                             ASN1_GENERALIZEDTIME **thisupd,
+                             ASN1_GENERALIZEDTIME **nextupd);
+
+ const ASN1_GENERALIZEDTIME *OCSP_resp_get0_produced_at(
+                             const OCSP_BASICRESP* single);
+
+ const STACK_OF(X509) *OCSP_resp_get0_certs(const OCSP_BASICRESP *bs);
+
+ int OCSP_resp_get0_id(const OCSP_BASICRESP *bs,
+                       const ASN1_OCTET_STRING **pid,
+                       const X509_NAME **pname);
+
+ int OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd,
+                         ASN1_GENERALIZEDTIME *nextupd,
+                         long sec, long maxsec);</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>OCSP_resp_find_status() searches <b>bs</b> for an OCSP response for <b>id</b>. If it is successful the fields of the response are returned in <b>*status</b>, <b>*reason</b>, <b>*revtime</b>, <b>*thisupd</b> and <b>*nextupd</b>. The <b>*status</b> value will be one of <b>V_OCSP_CERTSTATUS_GOOD</b>, <b>V_OCSP_CERTSTATUS_REVOKED</b> or <b>V_OCSP_CERTSTATUS_UNKNOWN</b>. The <b>*reason</b> and <b>*revtime</b> fields are only set if the status is <b>V_OCSP_CERTSTATUS_REVOKED</b>. If set the <b>*reason</b> field will be set to the revocation reason which will be one of <b>OCSP_REVOKED_STATUS_NOSTATUS</b>, <b>OCSP_REVOKED_STATUS_UNSPECIFIED</b>, <b>OCSP_REVOKED_STATUS_KEYCOMPROMISE</b>, <b>OCSP_REVOKED_STATUS_CACOMPROMISE</b>, <b>OCSP_REVOKED_STATUS_AFFILIATIONCHANGED</b>, <b>OCSP_REVOKED_STATUS_SUPERSEDED</b>, <b>OCSP_REVOKED_STATUS_CESSATIONOFOPERATION</b>, <b>OCSP_REVOKED_STATUS_CERTIFICATEHOLD</b> or <b>OCSP_REVOKED_STATUS_REMOVEFROMCRL</b>.</p>
+
+<p>OCSP_resp_count() returns the number of <b>OCSP_SINGLERESP</b> structures in <b>bs</b>.</p>
+
+<p>OCSP_resp_get0() returns the <b>OCSP_SINGLERESP</b> structure in <b>bs</b> corresponding to index <b>idx</b>. Where <b>idx</b> runs from 0 to OCSP_resp_count(bs) - 1.</p>
+
+<p>OCSP_resp_find() searches <b>bs</b> for <b>id</b> and returns the index of the first matching entry after <b>last</b> or starting from the beginning if <b>last</b> is -1.</p>
+
+<p>OCSP_single_get0_status() extracts the fields of <b>single</b> in <b>*reason</b>, <b>*revtime</b>, <b>*thisupd</b> and <b>*nextupd</b>.</p>
+
+<p>OCSP_resp_get0_produced_at() extracts the <b>producedAt</b> field from the single response <b>bs</b>.</p>
+
+<p>OCSP_resp_get0_certs() returns any certificates included in <b>bs</b>.</p>
+
+<p>OCSP_resp_get0_id() gets the responder id of &lt;bs&gt;. If the responder ID is a name then &lt;*pname&gt; is set to the name and <b>*pid</b> is set to NULL. If the responder ID is by key ID then <b>*pid</b> is set to the key ID and <b>*pname</b> is set to NULL.</p>
+
+<p>OCSP_check_validity() checks the validity of <b>thisupd</b> and <b>nextupd</b> values which will be typically obtained from OCSP_resp_find_status() or OCSP_single_get0_status(). If <b>sec</b> is non-zero it indicates how many seconds leeway should be allowed in the check. If <b>maxsec</b> is positive it indicates the maximum age of <b>thisupd</b> in seconds.</p>
+
+<h1 id="RETURN-VALUES">RETURN VALUES</h1>
+
+<p>OCSP_resp_find_status() returns 1 if <b>id</b> is found in <b>bs</b> and 0 otherwise.</p>
+
+<p>OCSP_resp_count() returns the total number of <b>OCSP_SINGLERESP</b> fields in <b>bs</b>.</p>
+
+<p>OCSP_resp_get0() returns a pointer to an <b>OCSP_SINGLERESP</b> structure or <b>NULL</b> if <b>idx</b> is out of range.</p>
+
+<p>OCSP_resp_find() returns the index of <b>id</b> in <b>bs</b> (which may be 0) or -1 if <b>id</b> was not found.</p>
+
+<p>OCSP_single_get0_status() returns the status of <b>single</b> or -1 if an error occurred.</p>
+
+<h1 id="NOTES">NOTES</h1>
+
+<p>Applications will typically call OCSP_resp_find_status() using the certificate ID of interest and then check its validity using OCSP_check_validity(). They can then take appropriate action based on the status of the certificate.</p>
+
+<p>An OCSP response for a certificate contains <b>thisUpdate</b> and <b>nextUpdate</b> fields. Normally the current time should be between these two values. To account for clock skew the <b>maxsec</b> field can be set to non-zero in OCSP_check_validity(). Some responders do not set the <b>nextUpdate</b> field, this would otherwise mean an ancient response would be considered valid: the <b>maxsec</b> parameter to OCSP_check_validity() can be used to limit the permitted age of responses.</p>
+
+<p>The values written to <b>*revtime</b>, <b>*thisupd</b> and <b>*nextupd</b> by OCSP_resp_find_status() and OCSP_single_get0_status() are internal pointers which <b>MUST NOT</b> be freed up by the calling application. Any or all of these parameters can be set to NULL if their value is not required.</p>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man3/crypto.html>crypto(3)</a>, <a href="../man3/OCSP_cert_to_id.html>OCSP_cert_to_id(3)</a>, <a href="../man3/OCSP_request_add1_nonce.html>OCSP_request_add1_nonce(3)</a>, <a href="../man3/OCSP_REQUEST_new.html>OCSP_REQUEST_new(3)</a>, <a href="../man3/OCSP_response_status.html>OCSP_response_status(3)</a>, <a href="../man3/OCSP_sendreq_new.html>OCSP_sendreq_new(3)</a></p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

@@ -1,0 +1,170 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>crl</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#OPTIONS">OPTIONS</a></li>
+  <li><a href="#NOTES">NOTES</a></li>
+  <li><a href="#EXAMPLES">EXAMPLES</a></li>
+  <li><a href="#BUGS">BUGS</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>crl - CRL utility</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<p><b>openssl</b> <b>crl</b> [<b>-help</b>] [<b>-inform PEM|DER</b>] [<b>-outform PEM|DER</b>] [<b>-text</b>] [<b>-in filename</b>] [<b>-out filename</b>] [<b>-nameopt option</b>] [<b>-noout</b>] [<b>-hash</b>] [<b>-issuer</b>] [<b>-lastupdate</b>] [<b>-nextupdate</b>] [<b>-CAfile file</b>] [<b>-CApath dir</b>]</p>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>The <b>crl</b> command processes CRL files in DER or PEM format.</p>
+
+<h1 id="OPTIONS">OPTIONS</h1>
+
+<dl>
+
+<dt id="help"><b>-help</b></dt>
+<dd>
+
+<p>Print out a usage message.</p>
+
+</dd>
+<dt id="inform-DER-PEM"><b>-inform DER|PEM</b></dt>
+<dd>
+
+<p>This specifies the input format. <b>DER</b> format is DER encoded CRL structure. <b>PEM</b> (the default) is a base64 encoded version of the DER form with header and footer lines.</p>
+
+</dd>
+<dt id="outform-DER-PEM"><b>-outform DER|PEM</b></dt>
+<dd>
+
+<p>This specifies the output format, the options have the same meaning as the <b>-inform</b> option.</p>
+
+</dd>
+<dt id="in-filename"><b>-in filename</b></dt>
+<dd>
+
+<p>This specifies the input filename to read from or standard input if this option is not specified.</p>
+
+</dd>
+<dt id="out-filename"><b>-out filename</b></dt>
+<dd>
+
+<p>specifies the output filename to write to or standard output by default.</p>
+
+</dd>
+<dt id="text"><b>-text</b></dt>
+<dd>
+
+<p>print out the CRL in text form.</p>
+
+</dd>
+<dt id="nameopt-option"><b>-nameopt option</b></dt>
+<dd>
+
+<p>option which determines how the subject or issuer names are displayed. See the description of <b>-nameopt</b> in <a href="../man1/x509.html>x509(1)</a>.</p>
+
+</dd>
+<dt id="noout"><b>-noout</b></dt>
+<dd>
+
+<p>don&#39;t output the encoded version of the CRL.</p>
+
+</dd>
+<dt id="hash"><b>-hash</b></dt>
+<dd>
+
+<p>output a hash of the issuer name. This can be use to lookup CRLs in a directory by issuer name.</p>
+
+</dd>
+<dt id="hash_old"><b>-hash_old</b></dt>
+<dd>
+
+<p>outputs the &quot;hash&quot; of the CRL issuer name using the older algorithm as used by OpenSSL versions before 1.0.0.</p>
+
+</dd>
+<dt id="issuer"><b>-issuer</b></dt>
+<dd>
+
+<p>output the issuer name.</p>
+
+</dd>
+<dt id="lastupdate"><b>-lastupdate</b></dt>
+<dd>
+
+<p>output the lastUpdate field.</p>
+
+</dd>
+<dt id="nextupdate"><b>-nextupdate</b></dt>
+<dd>
+
+<p>output the nextUpdate field.</p>
+
+</dd>
+<dt id="CAfile-file"><b>-CAfile file</b></dt>
+<dd>
+
+<p>verify the signature on a CRL by looking up the issuing certificate in <b>file</b></p>
+
+</dd>
+<dt id="CApath-dir"><b>-CApath dir</b></dt>
+<dd>
+
+<p>verify the signature on a CRL by looking up the issuing certificate in <b>dir</b>. This directory must be a standard certificate directory: that is a hash of each subject name (using <b>x509 -hash</b>) should be linked to each certificate.</p>
+
+</dd>
+</dl>
+
+<h1 id="NOTES">NOTES</h1>
+
+<p>The PEM CRL format uses the header and footer lines:</p>
+
+<pre><code> -----BEGIN X509 CRL-----
+ -----END X509 CRL-----</code></pre>
+
+<h1 id="EXAMPLES">EXAMPLES</h1>
+
+<p>Convert a CRL file from PEM to DER:</p>
+
+<pre><code> openssl crl -in crl.pem -outform DER -out crl.der</code></pre>
+
+<p>Output the text form of a DER encoded certificate:</p>
+
+<pre><code> openssl crl -in crl.der -text -noout</code></pre>
+
+<h1 id="BUGS">BUGS</h1>
+
+<p>Ideally it should be possible to create a CRL using appropriate options and files too.</p>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man1/crl2pkcs7.html>crl2pkcs7(1)</a>, <a href="../man1/ca.html>ca(1)</a>, <a href="../man1/x509.html>x509(1)</a></p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

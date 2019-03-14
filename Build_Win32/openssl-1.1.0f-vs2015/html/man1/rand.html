@@ -1,0 +1,86 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>rand</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#OPTIONS">OPTIONS</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>rand - generate pseudo-random bytes</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<p><b>openssl rand</b> [<b>-help</b>] [<b>-out</b> <i>file</i>] [<b>-rand</b> <i>file(s)</i>] [<b>-base64</b>] [<b>-hex</b>] <i>num</i></p>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>The <b>rand</b> command outputs <i>num</i> pseudo-random bytes after seeding the random number generator once. As in other <b>openssl</b> command line tools, PRNG seeding uses the file <i>$HOME/</i><b>.rnd</b> or <b>.rnd</b> in addition to the files given in the <b>-rand</b> option. A new <i>$HOME</i>/<b>.rnd</b> or <b>.rnd</b> file will be written back if enough seeding was obtained from these sources.</p>
+
+<h1 id="OPTIONS">OPTIONS</h1>
+
+<dl>
+
+<dt id="help"><b>-help</b></dt>
+<dd>
+
+<p>Print out a usage message.</p>
+
+</dd>
+<dt id="out-file"><b>-out</b> <i>file</i></dt>
+<dd>
+
+<p>Write to <i>file</i> instead of standard output.</p>
+
+</dd>
+<dt id="rand-file-s"><b>-rand</b> <i>file(s)</i></dt>
+<dd>
+
+<p>Use specified file or files or EGD socket (see <a href="../man3/RAND_egd.html>RAND_egd(3)</a>) for seeding the random number generator. Multiple files can be specified separated by an OS-dependent character. The separator is <b>;</b> for MS-Windows, <b>,</b> for OpenVMS, and <b>:</b> for all others.</p>
+
+</dd>
+<dt id="base64"><b>-base64</b></dt>
+<dd>
+
+<p>Perform base64 encoding on the output.</p>
+
+</dd>
+<dt id="hex"><b>-hex</b></dt>
+<dd>
+
+<p>Show the output as a hex string.</p>
+
+</dd>
+</dl>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man3/RAND_bytes.html>RAND_bytes(3)</a></p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

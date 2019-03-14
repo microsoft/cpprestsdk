@@ -1,0 +1,73 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PEM_read_CMS</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#RETURN-VALUES">RETURN VALUES</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>DECLARE_PEM_rw, PEM_read_CMS, PEM_read_bio_CMS, PEM_write_CMS, PEM_write_bio_CMS, PEM_write_DHxparams, PEM_write_bio_DHxparams, PEM_read_ECPKParameters, PEM_read_bio_ECPKParameters, PEM_write_ECPKParameters, PEM_write_bio_ECPKParameters, PEM_read_ECPrivateKey, PEM_write_ECPrivateKey, PEM_write_bio_ECPrivateKey, PEM_read_EC_PUBKEY, PEM_read_bio_EC_PUBKEY, PEM_write_EC_PUBKEY, PEM_write_bio_EC_PUBKEY, PEM_read_NETSCAPE_CERT_SEQUENCE, PEM_read_bio_NETSCAPE_CERT_SEQUENCE, PEM_write_NETSCAPE_CERT_SEQUENCE, PEM_write_bio_NETSCAPE_CERT_SEQUENCE, PEM_read_PKCS8, PEM_read_bio_PKCS8, PEM_write_PKCS8, PEM_write_bio_PKCS8, PEM_write_PKCS8_PRIV_KEY_INFO, PEM_read_bio_PKCS8_PRIV_KEY_INFO, PEM_read_PKCS8_PRIV_KEY_INFO, PEM_write_bio_PKCS8_PRIV_KEY_INFO, PEM_read_SSL_SESSION, PEM_read_bio_SSL_SESSION, PEM_write_SSL_SESSION, PEM_write_bio_SSL_SESSION - PEM object encoding routines</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;openssl/pem.h&gt;
+
+ DECLARE_PEM_rw(name, TYPE)
+
+ TYPE *PEM_read_TYPE(FILE *fp, TYPE **a, pem_password_cb *cb, void *u);
+ TYPE *PEM_read_bio_TYPE(BIO *bp, TYPE **a, pem_password_cb *cb, void *u);
+ int PEM_write_TYPE(FILE *fp, const TYPE *a);
+ int PEM_write_bio_TYPE(BIO *bp, const TYPE *a);</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>In the description below, <i>TYPE</i> is used as a placeholder for any of the OpenSSL datatypes, such as <i>X509</i>. The macro <b>DECLARE_PEM_rw</b> expands to the set of declarations shown in the next four lines of the synopsis.</p>
+
+<p>These routines convert between local instances of ASN1 datatypes and the PEM encoding. For more information on the templates, see <a href="../man3/ASN1_ITEM.html>ASN1_ITEM(3)</a>. For more information on the lower-level routines used by the functions here, see <a href="../man3/PEM_read.html>PEM_read(3)</a>.</p>
+
+<p>PEM_read_TYPE() reads a PEM-encoded object of <i>TYPE</i> from the file <b>fp</b> and returns it. The <b>cb</b> and <b>u</b> parameters are as described in <a href="../man3/pem_password_cb.html>pem_password_cb(3)</a>.</p>
+
+<p>PEM_read_bio_TYPE() is similar to PEM_read_TYPE() but reads from the BIO <b>bp</b>.</p>
+
+<p>PEM_write_TYPE() writes the PEM encoding of the object <b>a</b> to the file <b>fp</b>.</p>
+
+<p>PEM_write_bio_TYPE() similarly writes to the BIO <b>bp</b>.</p>
+
+<h1 id="RETURN-VALUES">RETURN VALUES</h1>
+
+<p>PEM_read_TYPE() and PEM_read_bio_TYPE() return a pointer to an allocated object, which should be released by calling TYPE_free(), or NULL on error.</p>
+
+<p>PEM_write_TYPE() and PEM_write_bio_TYPE() return the number of bytes written or zero on error.</p>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man3/PEM_read.html>PEM_read(3)</a></p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 1998-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

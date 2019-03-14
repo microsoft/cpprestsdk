@@ -1,0 +1,208 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>rsa</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#OPTIONS">OPTIONS</a></li>
+  <li><a href="#NOTES">NOTES</a></li>
+  <li><a href="#EXAMPLES">EXAMPLES</a></li>
+  <li><a href="#BUGS">BUGS</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>rsa - RSA key processing tool</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<p><b>openssl</b> <b>rsa</b> [<b>-help</b>] [<b>-inform PEM|NET|DER</b>] [<b>-outform PEM|NET|DER</b>] [<b>-in filename</b>] [<b>-passin arg</b>] [<b>-out filename</b>] [<b>-passout arg</b>] [<b>-aes128</b>] [<b>-aes192</b>] [<b>-aes256</b>] [<b>-camellia128</b>] [<b>-camellia192</b>] [<b>-camellia256</b>] [<b>-des</b>] [<b>-des3</b>] [<b>-idea</b>] [<b>-text</b>] [<b>-noout</b>] [<b>-modulus</b>] [<b>-check</b>] [<b>-pubin</b>] [<b>-pubout</b>] [<b>-RSAPublicKey_in</b>] [<b>-RSAPublicKey_out</b>] [<b>-engine id</b>]</p>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>The <b>rsa</b> command processes RSA keys. They can be converted between various forms and their components printed out. <b>Note</b> this command uses the traditional SSLeay compatible format for private key encryption: newer applications should use the more secure PKCS#8 format using the <b>pkcs8</b> utility.</p>
+
+<h1 id="OPTIONS">OPTIONS</h1>
+
+<dl>
+
+<dt id="help"><b>-help</b></dt>
+<dd>
+
+<p>Print out a usage message.</p>
+
+</dd>
+<dt id="inform-DER-NET-PEM"><b>-inform DER|NET|PEM</b></dt>
+<dd>
+
+<p>This specifies the input format. The <b>DER</b> option uses an ASN1 DER encoded form compatible with the PKCS#1 RSAPrivateKey or SubjectPublicKeyInfo format. The <b>PEM</b> form is the default format: it consists of the <b>DER</b> format base64 encoded with additional header and footer lines. On input PKCS#8 format private keys are also accepted. The <b>NET</b> form is a format is described in the <b>NOTES</b> section.</p>
+
+</dd>
+<dt id="outform-DER-NET-PEM"><b>-outform DER|NET|PEM</b></dt>
+<dd>
+
+<p>This specifies the output format, the options have the same meaning as the <b>-inform</b> option.</p>
+
+</dd>
+<dt id="in-filename"><b>-in filename</b></dt>
+<dd>
+
+<p>This specifies the input filename to read a key from or standard input if this option is not specified. If the key is encrypted a pass phrase will be prompted for.</p>
+
+</dd>
+<dt id="passin-arg"><b>-passin arg</b></dt>
+<dd>
+
+<p>the input file password source. For more information about the format of <b>arg</b> see the <b>PASS PHRASE ARGUMENTS</b> section in <a href="../man1/openssl.html>openssl(1)</a>.</p>
+
+</dd>
+<dt id="out-filename"><b>-out filename</b></dt>
+<dd>
+
+<p>This specifies the output filename to write a key to or standard output if this option is not specified. If any encryption options are set then a pass phrase will be prompted for. The output filename should <b>not</b> be the same as the input filename.</p>
+
+</dd>
+<dt id="passout-password"><b>-passout password</b></dt>
+<dd>
+
+<p>the output file password source. For more information about the format of <b>arg</b> see the <b>PASS PHRASE ARGUMENTS</b> section in <a href="../man1/openssl.html>openssl(1)</a>.</p>
+
+</dd>
+<dt id="aes128--aes192--aes256--camellia128--camellia192--camellia256--des--des3--idea"><b>-aes128|-aes192|-aes256|-camellia128|-camellia192|-camellia256|-des|-des3|-idea</b></dt>
+<dd>
+
+<p>These options encrypt the private key with the specified cipher before outputting it. A pass phrase is prompted for. If none of these options is specified the key is written in plain text. This means that using the <b>rsa</b> utility to read in an encrypted key with no encryption option can be used to remove the pass phrase from a key, or by setting the encryption options it can be use to add or change the pass phrase. These options can only be used with PEM format output files.</p>
+
+</dd>
+<dt id="text"><b>-text</b></dt>
+<dd>
+
+<p>prints out the various public or private key components in plain text in addition to the encoded version.</p>
+
+</dd>
+<dt id="noout"><b>-noout</b></dt>
+<dd>
+
+<p>this option prevents output of the encoded version of the key.</p>
+
+</dd>
+<dt id="modulus"><b>-modulus</b></dt>
+<dd>
+
+<p>this option prints out the value of the modulus of the key.</p>
+
+</dd>
+<dt id="check"><b>-check</b></dt>
+<dd>
+
+<p>this option checks the consistency of an RSA private key.</p>
+
+</dd>
+<dt id="pubin"><b>-pubin</b></dt>
+<dd>
+
+<p>by default a private key is read from the input file: with this option a public key is read instead.</p>
+
+</dd>
+<dt id="pubout"><b>-pubout</b></dt>
+<dd>
+
+<p>by default a private key is output: with this option a public key will be output instead. This option is automatically set if the input is a public key.</p>
+
+</dd>
+<dt id="RSAPublicKey_in--RSAPublicKey_out"><b>-RSAPublicKey_in</b>, <b>-RSAPublicKey_out</b></dt>
+<dd>
+
+<p>like <b>-pubin</b> and <b>-pubout</b> except <b>RSAPublicKey</b> format is used instead.</p>
+
+</dd>
+<dt id="engine-id"><b>-engine id</b></dt>
+<dd>
+
+<p>specifying an engine (by its unique <b>id</b> string) will cause <b>rsa</b> to attempt to obtain a functional reference to the specified engine, thus initialising it if needed. The engine will then be set as the default for all available algorithms.</p>
+
+</dd>
+</dl>
+
+<h1 id="NOTES">NOTES</h1>
+
+<p>The PEM private key format uses the header and footer lines:</p>
+
+<pre><code> -----BEGIN RSA PRIVATE KEY-----
+ -----END RSA PRIVATE KEY-----</code></pre>
+
+<p>The PEM public key format uses the header and footer lines:</p>
+
+<pre><code> -----BEGIN PUBLIC KEY-----
+ -----END PUBLIC KEY-----</code></pre>
+
+<p>The PEM <b>RSAPublicKey</b> format uses the header and footer lines:</p>
+
+<pre><code> -----BEGIN RSA PUBLIC KEY-----
+ -----END RSA PUBLIC KEY-----</code></pre>
+
+<p>The <b>NET</b> form is a format compatible with older Netscape servers and Microsoft IIS .key files, this uses unsalted RC4 for its encryption. It is not very secure and so should only be used when necessary.</p>
+
+<p>Some newer version of IIS have additional data in the exported .key files. To use these with the utility, view the file with a binary editor and look for the string &quot;private-key&quot;, then trace back to the byte sequence 0x30, 0x82 (this is an ASN1 SEQUENCE). Copy all the data from this point onwards to another file and use that as the input to the <b>rsa</b> utility with the <b>-inform NET</b> option.</p>
+
+<h1 id="EXAMPLES">EXAMPLES</h1>
+
+<p>To remove the pass phrase on an RSA private key:</p>
+
+<pre><code> openssl rsa -in key.pem -out keyout.pem</code></pre>
+
+<p>To encrypt a private key using triple DES:</p>
+
+<pre><code> openssl rsa -in key.pem -des3 -out keyout.pem</code></pre>
+
+<p>To convert a private key from PEM to DER format:</p>
+
+<pre><code> openssl rsa -in key.pem -outform DER -out keyout.der</code></pre>
+
+<p>To print out the components of a private key to standard output:</p>
+
+<pre><code> openssl rsa -in key.pem -text -noout</code></pre>
+
+<p>To just output the public part of a private key:</p>
+
+<pre><code> openssl rsa -in key.pem -pubout -out pubkey.pem</code></pre>
+
+<p>Output the public part of a private key in <b>RSAPublicKey</b> format:</p>
+
+<pre><code> openssl rsa -in key.pem -RSAPublicKey_out -out pubkey.pem</code></pre>
+
+<h1 id="BUGS">BUGS</h1>
+
+<p>The command line password arguments don&#39;t currently work with <b>NET</b> format.</p>
+
+<p>There should be an option that automatically handles .key files, without having to manually edit them.</p>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man1/pkcs8.html>pkcs8(1)</a>, <a href="../man1/dsa.html>dsa(1)</a>, <a href="../man1/genrsa.html>genrsa(1)</a>, <a href="../man1/gendsa.html>gendsa(1)</a></p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

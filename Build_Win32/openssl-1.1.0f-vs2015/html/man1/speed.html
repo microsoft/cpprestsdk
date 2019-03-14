@@ -1,0 +1,87 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>speed</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#OPTIONS">OPTIONS</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>speed - test library performance</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<p><b>openssl speed</b> [<b>-help</b>] [<b>-engine id</b>] [<b>-elapsed</b>] [<b>-evp algo</b>] [<b>-decrypt</b>] [<b>algorithm...</b>]</p>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>This command is used to test the performance of cryptographic algorithms. To see the list of supported algorithms, use the <i>list --digest-commands</i> or <i>list --cipher-commands</i> command.</p>
+
+<h1 id="OPTIONS">OPTIONS</h1>
+
+<dl>
+
+<dt id="help"><b>-help</b></dt>
+<dd>
+
+<p>Print out a usage message.</p>
+
+</dd>
+<dt id="engine-id"><b>-engine id</b></dt>
+<dd>
+
+<p>specifying an engine (by its unique <b>id</b> string) will cause <b>speed</b> to attempt to obtain a functional reference to the specified engine, thus initialising it if needed. The engine will then be set as the default for all available algorithms.</p>
+
+</dd>
+<dt id="elapsed"><b>-elapsed</b></dt>
+<dd>
+
+<p>Measure time in real time instead of CPU time. It can be useful when testing speed of hardware engines.</p>
+
+</dd>
+<dt id="evp-algo"><b>-evp algo</b></dt>
+<dd>
+
+<p>Use the specified cipher or message digest algorithm via the EVP interface.</p>
+
+</dd>
+<dt id="decrypt"><b>-decrypt</b></dt>
+<dd>
+
+<p>Time the decryption instead of encryption. Affects only the EVP testing.</p>
+
+</dd>
+<dt id="zero-or-more-test-algorithms"><b>[zero or more test algorithms]</b></dt>
+<dd>
+
+<p>If any options are given, <b>speed</b> tests those algorithms, otherwise all of the above are tested.</p>
+
+</dd>
+</dl>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

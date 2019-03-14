@@ -1,0 +1,92 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>SSL_set_bio</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#RETURN-VALUES">RETURN VALUES</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#HISTORY">HISTORY</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>SSL_set_bio, SSL_set0_rbio, SSL_set0_wbio - connect the SSL object with a BIO</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;openssl/ssl.h&gt;
+
+ void SSL_set_bio(SSL *ssl, BIO *rbio, BIO *wbio);
+ void SSL_set0_rbio(SSL *s, BIO *rbio);
+ void SSL_set0_wbio(SSL *s, BIO *wbio);</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>SSL_set0_rbio() connects the BIO <b>rbio</b> for the read operations of the <b>ssl</b> object. The SSL engine inherits the behaviour of <b>rbio</b>. If the BIO is non-blocking then the <b>ssl</b> object will also have non-blocking behaviour. This function transfers ownership of <b>rbio</b> to <b>ssl</b>. It will be automatically freed using <a href="../man3/BIO_free_all.html>BIO_free_all(3)</a> when the <b>ssl</b> is freed. On calling this function, any existing <b>rbio</b> that was previously set will also be freed via a call to <a href="../man3/BIO_free_all.html>BIO_free_all(3)</a> (this includes the case where the <b>rbio</b> is set to the same value as previously).</p>
+
+<p>SSL_set0_wbio() works in the same as SSL_set0_rbio() except that it connects the BIO <b>wbio</b> for the write operations of the <b>ssl</b> object. Note that if the rbio and wbio are the same then SSL_set0_rbio() and SSL_set0_wbio() each take ownership of one reference. Therefore it may be necessary to increment the number of references available using <a href="../man3/BIO_up_ref.html>BIO_up_ref(3)</a> before calling the set0 functions.</p>
+
+<p>SSL_set_bio() does a similar job as SSL_set0_rbio() and SSL_set0_wbio() except that it connects both the <b>rbio</b> and the <b>wbio</b> at the same time. This function transfers the ownership of <b>rbio</b> and <b>wbio</b> to <b>ssl</b> except that the rules for this are much more complex. For this reason this function is considered a legacy function and SSL_set0_rbio() and SSL_set0_wbio() should be used in preference. The ownership rules are as follows:</p>
+
+<ul>
+
+<li><p>If neither the rbio or wbio have changed from their previous values then nothing is done.</p>
+
+</li>
+<li><p>If the rbio and wbio parameters are different and both are different to their previously set values then one reference is consumed for the rbio and one reference is consumed for the wbio.</p>
+
+</li>
+<li><p>If the rbio and wbio parameters are the same and the rbio is not the same as the previously set value then one reference is consumed.</p>
+
+</li>
+<li><p>If the rbio and wbio parameters are the same and the rbio is the same as the previously set value, then no additional references are consumed.</p>
+
+</li>
+<li><p>If the rbio and wbio parameters are different and the rbio is the same as the previously set value then one reference is consumed for the wbio and no references are consumed for the rbio.</p>
+
+</li>
+<li><p>If the rbio and wbio parameters are different and the wbio is the same as the previously set value and the old rbio and wbio values were the same as each other then one reference is consumed for the rbio and no references are consumed for the wbio.</p>
+
+</li>
+<li><p>If the rbio and wbio parameters are different and the wbio is the same as the previously set value and the old rbio and wbio values were different to each other then one reference is consumed for the rbio and one reference is consumed for the wbio.</p>
+
+</li>
+</ul>
+
+<h1 id="RETURN-VALUES">RETURN VALUES</h1>
+
+<p>SSL_set_bio(), SSL_set_rbio() and SSL_set_wbio() cannot fail.</p>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man3/SSL_get_rbio.html>SSL_get_rbio(3)</a>, <a href="../man3/SSL_connect.html>SSL_connect(3)</a>, <a href="../man3/SSL_accept.html>SSL_accept(3)</a>, <a href="../man3/SSL_shutdown.html>SSL_shutdown(3)</a>, <a href="../man7/ssl.html>ssl(7)</a>, <a href="../man7/bio.html>bio(7)</a></p>
+
+<h1 id="HISTORY">HISTORY</h1>
+
+<p>SSL_set0_rbio() and SSL_set0_wbio() were added in OpenSSL 1.1.0.</p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

@@ -1,0 +1,541 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>ts</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#OPTIONS">OPTIONS</a>
+    <ul>
+      <li><a href="#Time-Stamp-Request-generation">Time Stamp Request generation</a></li>
+      <li><a href="#Time-Stamp-Response-generation">Time Stamp Response generation</a></li>
+      <li><a href="#Time-Stamp-Response-verification">Time Stamp Response verification</a></li>
+    </ul>
+  </li>
+  <li><a href="#CONFIGURATION-FILE-OPTIONS">CONFIGURATION FILE OPTIONS</a></li>
+  <li><a href="#EXAMPLES">EXAMPLES</a>
+    <ul>
+      <li><a href="#Time-Stamp-Request">Time Stamp Request</a></li>
+      <li><a href="#Time-Stamp-Response">Time Stamp Response</a></li>
+      <li><a href="#Time-Stamp-Verification">Time Stamp Verification</a></li>
+    </ul>
+  </li>
+  <li><a href="#BUGS">BUGS</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>ts - Time Stamping Authority tool (client/server)</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<p><b>openssl</b> <b>ts</b> <b>-query</b> [<b>-rand</b> file:file...] [<b>-config</b> configfile] [<b>-data</b> file_to_hash] [<b>-digest</b> digest_bytes] [<b>-[digest]</b>] [<b>-tspolicy</b> object_id] [<b>-no_nonce</b>] [<b>-cert</b>] [<b>-in</b> request.tsq] [<b>-out</b> request.tsq] [<b>-text</b>]</p>
+
+<p><b>openssl</b> <b>ts</b> <b>-reply</b> [<b>-config</b> configfile] [<b>-section</b> tsa_section] [<b>-queryfile</b> request.tsq] [<b>-passin</b> password_src] [<b>-signer</b> tsa_cert.pem] [<b>-inkey</b> file_or_id] [<b>-sha1|-sha224|-sha256|-sha384|-sha512</b>] [<b>-chain</b> certs_file.pem] [<b>-tspolicy</b> object_id] [<b>-in</b> response.tsr] [<b>-token_in</b>] [<b>-out</b> response.tsr] [<b>-token_out</b>] [<b>-text</b>] [<b>-engine</b> id]</p>
+
+<p><b>openssl</b> <b>ts</b> <b>-verify</b> [<b>-data</b> file_to_hash] [<b>-digest</b> digest_bytes] [<b>-queryfile</b> request.tsq] [<b>-in</b> response.tsr] [<b>-token_in</b>] [<b>-CApath</b> trusted_cert_path] [<b>-CAfile</b> trusted_certs.pem] [<b>-untrusted</b> cert_file.pem] [<i>verify options</i>]</p>
+
+<p><i>verify options:</i> [-attime timestamp] [-check_ss_sig] [-crl_check] [-crl_check_all] [-explicit_policy] [-extended_crl] [-ignore_critical] [-inhibit_any] [-inhibit_map] [-issuer_checks] [-no_alt_chains] [-no_check_time] [-partial_chain] [-policy arg] [-policy_check] [-policy_print] [-purpose purpose] [-suiteB_128] [-suiteB_128_only] [-suiteB_192] [-trusted_first] [-use_deltas] [-auth_level num] [-verify_depth num] [-verify_email email] [-verify_hostname hostname] [-verify_ip ip] [-verify_name name] [-x509_strict]</p>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>The <b>ts</b> command is a basic Time Stamping Authority (TSA) client and server application as specified in RFC 3161 (Time-Stamp Protocol, TSP). A TSA can be part of a PKI deployment and its role is to provide long term proof of the existence of a certain datum before a particular time. Here is a brief description of the protocol:</p>
+
+<ol>
+
+<li><p>The TSA client computes a one-way hash value for a data file and sends the hash to the TSA.</p>
+
+</li>
+<li><p>The TSA attaches the current date and time to the received hash value, signs them and sends the time stamp token back to the client. By creating this token the TSA certifies the existence of the original data file at the time of response generation.</p>
+
+</li>
+<li><p>The TSA client receives the time stamp token and verifies the signature on it. It also checks if the token contains the same hash value that it had sent to the TSA.</p>
+
+</li>
+</ol>
+
+<p>There is one DER encoded protocol data unit defined for transporting a time stamp request to the TSA and one for sending the time stamp response back to the client. The <b>ts</b> command has three main functions: creating a time stamp request based on a data file, creating a time stamp response based on a request, verifying if a response corresponds to a particular request or a data file.</p>
+
+<p>There is no support for sending the requests/responses automatically over HTTP or TCP yet as suggested in RFC 3161. The users must send the requests either by ftp or e-mail.</p>
+
+<h1 id="OPTIONS">OPTIONS</h1>
+
+<h2 id="Time-Stamp-Request-generation">Time Stamp Request generation</h2>
+
+<p>The <b>-query</b> switch can be used for creating and printing a time stamp request with the following options:</p>
+
+<dl>
+
+<dt id="rand-file:file"><b>-rand</b> file:file...</dt>
+<dd>
+
+<p>The files containing random data for seeding the random number generator. Multiple files can be specified, the separator is <b>;</b> for MS-Windows, <b>,</b> for VMS and <b>:</b> for all other platforms. (Optional)</p>
+
+</dd>
+<dt id="config-configfile"><b>-config</b> configfile</dt>
+<dd>
+
+<p>The configuration file to use. Optional; for a description of the default value, see <a href="../man1/openssl.html>&quot;COMMAND SUMMARY&quot; in openssl(1)</a>.</p>
+
+</dd>
+<dt id="data-file_to_hash"><b>-data</b> file_to_hash</dt>
+<dd>
+
+<p>The data file for which the time stamp request needs to be created. stdin is the default if neither the <b>-data</b> nor the <b>-digest</b> parameter is specified. (Optional)</p>
+
+</dd>
+<dt id="digest-digest_bytes"><b>-digest</b> digest_bytes</dt>
+<dd>
+
+<p>It is possible to specify the message imprint explicitly without the data file. The imprint must be specified in a hexadecimal format, two characters per byte, the bytes optionally separated by colons (e.g. 1A:F6:01:... or 1AF601...). The number of bytes must match the message digest algorithm in use. (Optional)</p>
+
+</dd>
+<dt id="digest"><b>-[digest]</b></dt>
+<dd>
+
+<p>The message digest to apply to the data file. Any digest supported by the OpenSSL <b>dgst</b> command can be used. The default is SHA-1. (Optional)</p>
+
+</dd>
+<dt id="tspolicy-object_id"><b>-tspolicy</b> object_id</dt>
+<dd>
+
+<p>The policy that the client expects the TSA to use for creating the time stamp token. Either the dotted OID notation or OID names defined in the config file can be used. If no policy is requested the TSA will use its own default policy. (Optional)</p>
+
+</dd>
+<dt id="no_nonce"><b>-no_nonce</b></dt>
+<dd>
+
+<p>No nonce is specified in the request if this option is given. Otherwise a 64 bit long pseudo-random none is included in the request. It is recommended to use nonce to protect against replay-attacks. (Optional)</p>
+
+</dd>
+<dt id="cert"><b>-cert</b></dt>
+<dd>
+
+<p>The TSA is expected to include its signing certificate in the response. (Optional)</p>
+
+</dd>
+<dt id="in-request.tsq"><b>-in</b> request.tsq</dt>
+<dd>
+
+<p>This option specifies a previously created time stamp request in DER format that will be printed into the output file. Useful when you need to examine the content of a request in human-readable format. (Optional)</p>
+
+</dd>
+<dt id="out-request.tsq"><b>-out</b> request.tsq</dt>
+<dd>
+
+<p>Name of the output file to which the request will be written. Default is stdout. (Optional)</p>
+
+</dd>
+<dt id="text"><b>-text</b></dt>
+<dd>
+
+<p>If this option is specified the output is human-readable text format instead of DER. (Optional)</p>
+
+</dd>
+</dl>
+
+<h2 id="Time-Stamp-Response-generation">Time Stamp Response generation</h2>
+
+<p>A time stamp response (TimeStampResp) consists of a response status and the time stamp token itself (ContentInfo), if the token generation was successful. The <b>-reply</b> command is for creating a time stamp response or time stamp token based on a request and printing the response/token in human-readable format. If <b>-token_out</b> is not specified the output is always a time stamp response (TimeStampResp), otherwise it is a time stamp token (ContentInfo).</p>
+
+<dl>
+
+<dt id="config-configfile1"><b>-config</b> configfile</dt>
+<dd>
+
+<p>The configuration file to use. Optional; for a description of the default value, see <a href="../man1/openssl.html>&quot;COMMAND SUMMARY&quot; in openssl(1)</a>. See <b>CONFIGURATION FILE OPTIONS</b> for configurable variables.</p>
+
+</dd>
+<dt id="section-tsa_section"><b>-section</b> tsa_section</dt>
+<dd>
+
+<p>The name of the config file section containing the settings for the response generation. If not specified the default TSA section is used, see <b>CONFIGURATION FILE OPTIONS</b> for details. (Optional)</p>
+
+</dd>
+<dt id="queryfile-request.tsq"><b>-queryfile</b> request.tsq</dt>
+<dd>
+
+<p>The name of the file containing a DER encoded time stamp request. (Optional)</p>
+
+</dd>
+<dt id="passin-password_src"><b>-passin</b> password_src</dt>
+<dd>
+
+<p>Specifies the password source for the private key of the TSA. See <b>PASS PHRASE ARGUMENTS</b> in <a href="../man1/openssl.html>openssl(1)</a>. (Optional)</p>
+
+</dd>
+<dt id="signer-tsa_cert.pem"><b>-signer</b> tsa_cert.pem</dt>
+<dd>
+
+<p>The signer certificate of the TSA in PEM format. The TSA signing certificate must have exactly one extended key usage assigned to it: timeStamping. The extended key usage must also be critical, otherwise the certificate is going to be refused. Overrides the <b>signer_cert</b> variable of the config file. (Optional)</p>
+
+</dd>
+<dt id="inkey-file_or_id"><b>-inkey</b> file_or_id</dt>
+<dd>
+
+<p>The signer private key of the TSA in PEM format. Overrides the <b>signer_key</b> config file option. (Optional) If no engine is used, the argument is taken as a file; if an engine is specified, the argument is given to the engine as a key identifier.</p>
+
+</dd>
+<dt id="sha1--sha224--sha256--sha384--sha512"><b>-sha1|-sha224|-sha256|-sha384|-sha512</b></dt>
+<dd>
+
+<p>Signing digest to use. Overrides the <b>signer_digest</b> config file option. (Optional)</p>
+
+</dd>
+<dt id="chain-certs_file.pem"><b>-chain</b> certs_file.pem</dt>
+<dd>
+
+<p>The collection of certificates in PEM format that will all be included in the response in addition to the signer certificate if the <b>-cert</b> option was used for the request. This file is supposed to contain the certificate chain for the signer certificate from its issuer upwards. The <b>-reply</b> command does not build a certificate chain automatically. (Optional)</p>
+
+</dd>
+<dt id="tspolicy-object_id1"><b>-tspolicy</b> object_id</dt>
+<dd>
+
+<p>The default policy to use for the response unless the client explicitly requires a particular TSA policy. The OID can be specified either in dotted notation or with its name. Overrides the <b>default_policy</b> config file option. (Optional)</p>
+
+</dd>
+<dt id="in-response.tsr"><b>-in</b> response.tsr</dt>
+<dd>
+
+<p>Specifies a previously created time stamp response or time stamp token (if <b>-token_in</b> is also specified) in DER format that will be written to the output file. This option does not require a request, it is useful e.g. when you need to examine the content of a response or token or you want to extract the time stamp token from a response. If the input is a token and the output is a time stamp response a default &#39;granted&#39; status info is added to the token. (Optional)</p>
+
+</dd>
+<dt id="token_in"><b>-token_in</b></dt>
+<dd>
+
+<p>This flag can be used together with the <b>-in</b> option and indicates that the input is a DER encoded time stamp token (ContentInfo) instead of a time stamp response (TimeStampResp). (Optional)</p>
+
+</dd>
+<dt id="out-response.tsr"><b>-out</b> response.tsr</dt>
+<dd>
+
+<p>The response is written to this file. The format and content of the file depends on other options (see <b>-text</b>, <b>-token_out</b>). The default is stdout. (Optional)</p>
+
+</dd>
+<dt id="token_out"><b>-token_out</b></dt>
+<dd>
+
+<p>The output is a time stamp token (ContentInfo) instead of time stamp response (TimeStampResp). (Optional)</p>
+
+</dd>
+<dt id="text1"><b>-text</b></dt>
+<dd>
+
+<p>If this option is specified the output is human-readable text format instead of DER. (Optional)</p>
+
+</dd>
+<dt id="engine-id"><b>-engine</b> id</dt>
+<dd>
+
+<p>Specifying an engine (by its unique <b>id</b> string) will cause <b>ts</b> to attempt to obtain a functional reference to the specified engine, thus initialising it if needed. The engine will then be set as the default for all available algorithms. Default is builtin. (Optional)</p>
+
+</dd>
+</dl>
+
+<h2 id="Time-Stamp-Response-verification">Time Stamp Response verification</h2>
+
+<p>The <b>-verify</b> command is for verifying if a time stamp response or time stamp token is valid and matches a particular time stamp request or data file. The <b>-verify</b> command does not use the configuration file.</p>
+
+<dl>
+
+<dt id="data-file_to_hash1"><b>-data</b> file_to_hash</dt>
+<dd>
+
+<p>The response or token must be verified against file_to_hash. The file is hashed with the message digest algorithm specified in the token. The <b>-digest</b> and <b>-queryfile</b> options must not be specified with this one. (Optional)</p>
+
+</dd>
+<dt id="digest-digest_bytes1"><b>-digest</b> digest_bytes</dt>
+<dd>
+
+<p>The response or token must be verified against the message digest specified with this option. The number of bytes must match the message digest algorithm specified in the token. The <b>-data</b> and <b>-queryfile</b> options must not be specified with this one. (Optional)</p>
+
+</dd>
+<dt id="queryfile-request.tsq1"><b>-queryfile</b> request.tsq</dt>
+<dd>
+
+<p>The original time stamp request in DER format. The <b>-data</b> and <b>-digest</b> options must not be specified with this one. (Optional)</p>
+
+</dd>
+<dt id="in-response.tsr1"><b>-in</b> response.tsr</dt>
+<dd>
+
+<p>The time stamp response that needs to be verified in DER format. (Mandatory)</p>
+
+</dd>
+<dt id="token_in1"><b>-token_in</b></dt>
+<dd>
+
+<p>This flag can be used together with the <b>-in</b> option and indicates that the input is a DER encoded time stamp token (ContentInfo) instead of a time stamp response (TimeStampResp). (Optional)</p>
+
+</dd>
+<dt id="CApath-trusted_cert_path"><b>-CApath</b> trusted_cert_path</dt>
+<dd>
+
+<p>The name of the directory containing the trusted CA certificates of the client. See the similar option of <a href="../man1/verify.html>verify(1)</a> for additional details. Either this option or <b>-CAfile</b> must be specified. (Optional)</p>
+
+</dd>
+<dt id="CAfile-trusted_certs.pem"><b>-CAfile</b> trusted_certs.pem</dt>
+<dd>
+
+<p>The name of the file containing a set of trusted self-signed CA certificates in PEM format. See the similar option of <a href="../man1/verify.html>verify(1)</a> for additional details. Either this option or <b>-CApath</b> must be specified. (Optional)</p>
+
+</dd>
+<dt id="untrusted-cert_file.pem"><b>-untrusted</b> cert_file.pem</dt>
+<dd>
+
+<p>Set of additional untrusted certificates in PEM format which may be needed when building the certificate chain for the TSA&#39;s signing certificate. This file must contain the TSA signing certificate and all intermediate CA certificates unless the response includes them. (Optional)</p>
+
+</dd>
+<dt id="verify-options"><i>verify options</i></dt>
+<dd>
+
+<p>The options <b>-attime timestamp</b>, <b>-check_ss_sig</b>, <b>-crl_check</b>, <b>-crl_check_all</b>, <b>-explicit_policy</b>, <b>-extended_crl</b>, <b>-ignore_critical</b>, <b>-inhibit_any</b>, <b>-inhibit_map</b>, <b>-issuer_checks</b>, <b>-no_alt_chains</b>, <b>-no_check_time</b>, <b>-partial_chain</b>, <b>-policy</b>, <b>-policy_check</b>, <b>-policy_print</b>, <b>-purpose</b>, <b>-suiteB_128</b>, <b>-suiteB_128_only</b>, <b>-suiteB_192</b>, <b>-trusted_first</b>, <b>-use_deltas</b>, <b>-auth_level</b>, <b>-verify_depth</b>, <b>-verify_email</b>, <b>-verify_hostname</b>, <b>-verify_ip</b>, <b>-verify_name</b>, and <b>-x509_strict</b> can be used to control timestamp verification. See <a href="../man1/verify.html>verify(1)</a>.</p>
+
+</dd>
+</dl>
+
+<h1 id="CONFIGURATION-FILE-OPTIONS">CONFIGURATION FILE OPTIONS</h1>
+
+<p>The <b>-query</b> and <b>-reply</b> commands make use of a configuration file. See <a href="../man5/config.html>config(5)</a> for a general description of the syntax of the config file. The <b>-query</b> command uses only the symbolic OID names section and it can work without it. However, the <b>-reply</b> command needs the config file for its operation.</p>
+
+<p>When there is a command line switch equivalent of a variable the switch always overrides the settings in the config file.</p>
+
+<dl>
+
+<dt id="tsa-section-default_tsa"><b>tsa</b> section, <b>default_tsa</b></dt>
+<dd>
+
+<p>This is the main section and it specifies the name of another section that contains all the options for the <b>-reply</b> command. This default section can be overridden with the <b>-section</b> command line switch. (Optional)</p>
+
+</dd>
+<dt id="oid_file"><b>oid_file</b></dt>
+<dd>
+
+<p>See <a href="../man1/ca.html>ca(1)</a> for description. (Optional)</p>
+
+</dd>
+<dt id="oid_section"><b>oid_section</b></dt>
+<dd>
+
+<p>See <a href="../man1/ca.html>ca(1)</a> for description. (Optional)</p>
+
+</dd>
+<dt id="RANDFILE"><b>RANDFILE</b></dt>
+<dd>
+
+<p>See <a href="../man1/ca.html>ca(1)</a> for description. (Optional)</p>
+
+</dd>
+<dt id="serial"><b>serial</b></dt>
+<dd>
+
+<p>The name of the file containing the hexadecimal serial number of the last time stamp response created. This number is incremented by 1 for each response. If the file does not exist at the time of response generation a new file is created with serial number 1. (Mandatory)</p>
+
+</dd>
+<dt id="crypto_device"><b>crypto_device</b></dt>
+<dd>
+
+<p>Specifies the OpenSSL engine that will be set as the default for all available algorithms. The default value is builtin, you can specify any other engines supported by OpenSSL (e.g. use chil for the NCipher HSM). (Optional)</p>
+
+</dd>
+<dt id="signer_cert"><b>signer_cert</b></dt>
+<dd>
+
+<p>TSA signing certificate in PEM format. The same as the <b>-signer</b> command line option. (Optional)</p>
+
+</dd>
+<dt id="certs"><b>certs</b></dt>
+<dd>
+
+<p>A file containing a set of PEM encoded certificates that need to be included in the response. The same as the <b>-chain</b> command line option. (Optional)</p>
+
+</dd>
+<dt id="signer_key"><b>signer_key</b></dt>
+<dd>
+
+<p>The private key of the TSA in PEM format. The same as the <b>-inkey</b> command line option. (Optional)</p>
+
+</dd>
+<dt id="signer_digest"><b>signer_digest</b></dt>
+<dd>
+
+<p>Signing digest to use. The same as the <b>-sha1|-sha224|-sha256|-sha384|-sha512</b> command line option. (Optional)</p>
+
+</dd>
+<dt id="default_policy"><b>default_policy</b></dt>
+<dd>
+
+<p>The default policy to use when the request does not mandate any policy. The same as the <b>-tspolicy</b> command line option. (Optional)</p>
+
+</dd>
+<dt id="other_policies"><b>other_policies</b></dt>
+<dd>
+
+<p>Comma separated list of policies that are also acceptable by the TSA and used only if the request explicitly specifies one of them. (Optional)</p>
+
+</dd>
+<dt id="digests"><b>digests</b></dt>
+<dd>
+
+<p>The list of message digest algorithms that the TSA accepts. At least one algorithm must be specified. (Mandatory)</p>
+
+</dd>
+<dt id="accuracy"><b>accuracy</b></dt>
+<dd>
+
+<p>The accuracy of the time source of the TSA in seconds, milliseconds and microseconds. E.g. secs:1, millisecs:500, microsecs:100. If any of the components is missing zero is assumed for that field. (Optional)</p>
+
+</dd>
+<dt id="clock_precision_digits"><b>clock_precision_digits</b></dt>
+<dd>
+
+<p>Specifies the maximum number of digits, which represent the fraction of seconds, that need to be included in the time field. The trailing zeroes must be removed from the time, so there might actually be fewer digits, or no fraction of seconds at all. Supported only on UNIX platforms. The maximum value is 6, default is 0. (Optional)</p>
+
+</dd>
+<dt id="ordering"><b>ordering</b></dt>
+<dd>
+
+<p>If this option is yes the responses generated by this TSA can always be ordered, even if the time difference between two responses is less than the sum of their accuracies. Default is no. (Optional)</p>
+
+</dd>
+<dt id="tsa_name"><b>tsa_name</b></dt>
+<dd>
+
+<p>Set this option to yes if the subject name of the TSA must be included in the TSA name field of the response. Default is no. (Optional)</p>
+
+</dd>
+<dt id="ess_cert_id_chain"><b>ess_cert_id_chain</b></dt>
+<dd>
+
+<p>The SignedData objects created by the TSA always contain the certificate identifier of the signing certificate in a signed attribute (see RFC 2634, Enhanced Security Services). If this option is set to yes and either the <b>certs</b> variable or the <b>-chain</b> option is specified then the certificate identifiers of the chain will also be included in the SigningCertificate signed attribute. If this variable is set to no, only the signing certificate identifier is included. Default is no. (Optional)</p>
+
+</dd>
+</dl>
+
+<h1 id="EXAMPLES">EXAMPLES</h1>
+
+<p>All the examples below presume that <b>OPENSSL_CONF</b> is set to a proper configuration file, e.g. the example configuration file openssl/apps/openssl.cnf will do.</p>
+
+<h2 id="Time-Stamp-Request">Time Stamp Request</h2>
+
+<p>To create a time stamp request for design1.txt with SHA-1 without nonce and policy and no certificate is required in the response:</p>
+
+<pre><code>  openssl ts -query -data design1.txt -no_nonce \
+        -out design1.tsq</code></pre>
+
+<p>To create a similar time stamp request with specifying the message imprint explicitly:</p>
+
+<pre><code>  openssl ts -query -digest b7e5d3f93198b38379852f2c04e78d73abdd0f4b \
+         -no_nonce -out design1.tsq</code></pre>
+
+<p>To print the content of the previous request in human readable format:</p>
+
+<pre><code>  openssl ts -query -in design1.tsq -text</code></pre>
+
+<p>To create a time stamp request which includes the MD-5 digest of design2.txt, requests the signer certificate and nonce, specifies a policy id (assuming the tsa_policy1 name is defined in the OID section of the config file):</p>
+
+<pre><code>  openssl ts -query -data design2.txt -md5 \
+        -tspolicy tsa_policy1 -cert -out design2.tsq</code></pre>
+
+<h2 id="Time-Stamp-Response">Time Stamp Response</h2>
+
+<p>Before generating a response a signing certificate must be created for the TSA that contains the <b>timeStamping</b> critical extended key usage extension without any other key usage extensions. You can add the &#39;extendedKeyUsage = critical,timeStamping&#39; line to the user certificate section of the config file to generate a proper certificate. See <a href="../man1/req.html>req(1)</a>, <a href="../man1/ca.html>ca(1)</a>, <a href="../man1/x509.html>x509(1)</a> for instructions. The examples below assume that cacert.pem contains the certificate of the CA, tsacert.pem is the signing certificate issued by cacert.pem and tsakey.pem is the private key of the TSA.</p>
+
+<p>To create a time stamp response for a request:</p>
+
+<pre><code>  openssl ts -reply -queryfile design1.tsq -inkey tsakey.pem \
+        -signer tsacert.pem -out design1.tsr</code></pre>
+
+<p>If you want to use the settings in the config file you could just write:</p>
+
+<pre><code>  openssl ts -reply -queryfile design1.tsq -out design1.tsr</code></pre>
+
+<p>To print a time stamp reply to stdout in human readable format:</p>
+
+<pre><code>  openssl ts -reply -in design1.tsr -text</code></pre>
+
+<p>To create a time stamp token instead of time stamp response:</p>
+
+<pre><code>  openssl ts -reply -queryfile design1.tsq -out design1_token.der -token_out</code></pre>
+
+<p>To print a time stamp token to stdout in human readable format:</p>
+
+<pre><code>  openssl ts -reply -in design1_token.der -token_in -text -token_out</code></pre>
+
+<p>To extract the time stamp token from a response:</p>
+
+<pre><code>  openssl ts -reply -in design1.tsr -out design1_token.der -token_out</code></pre>
+
+<p>To add &#39;granted&#39; status info to a time stamp token thereby creating a valid response:</p>
+
+<pre><code>  openssl ts -reply -in design1_token.der -token_in -out design1.tsr</code></pre>
+
+<h2 id="Time-Stamp-Verification">Time Stamp Verification</h2>
+
+<p>To verify a time stamp reply against a request:</p>
+
+<pre><code>  openssl ts -verify -queryfile design1.tsq -in design1.tsr \
+        -CAfile cacert.pem -untrusted tsacert.pem</code></pre>
+
+<p>To verify a time stamp reply that includes the certificate chain:</p>
+
+<pre><code>  openssl ts -verify -queryfile design2.tsq -in design2.tsr \
+        -CAfile cacert.pem</code></pre>
+
+<p>To verify a time stamp token against the original data file: openssl ts -verify -data design2.txt -in design2.tsr \ -CAfile cacert.pem</p>
+
+<p>To verify a time stamp token against a message imprint: openssl ts -verify -digest b7e5d3f93198b38379852f2c04e78d73abdd0f4b \ -in design2.tsr -CAfile cacert.pem</p>
+
+<p>You could also look at the &#39;test&#39; directory for more examples.</p>
+
+<h1 id="BUGS">BUGS</h1>
+
+<p>If you find any bugs or you have suggestions please write to Zoltan Glozik &lt;zglozik@opentsa.org&gt;. Known issues:</p>
+
+<ul>
+
+<li><p>No support for time stamps over SMTP, though it is quite easy to implement an automatic e-mail based TSA with <a href="../man1/procmail.html>procmail(1)</a> and <a href="../man1/perl.html>perl(1)</a>. HTTP server support is provided in the form of a separate apache module. HTTP client support is provided by <a href="../man1/tsget.html>tsget(1)</a>. Pure TCP/IP protocol is not supported.</p>
+
+</li>
+<li><p>The file containing the last serial number of the TSA is not locked when being read or written. This is a problem if more than one instance of <a href="../man1/openssl.html>openssl(1)</a> is trying to create a time stamp response at the same time. This is not an issue when using the apache server module, it does proper locking.</p>
+
+</li>
+<li><p>Look for the FIXME word in the source files.</p>
+
+</li>
+<li><p>The source code should really be reviewed by somebody else, too.</p>
+
+</li>
+<li><p>More testing is needed, I have done only some basic tests (see test/testtsa).</p>
+
+</li>
+</ul>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man1/tsget.html>tsget(1)</a>, <a href="../man1/openssl.html>openssl(1)</a>, <a href="../man1/req.html>req(1)</a>, <a href="../man1/x509.html>x509(1)</a>, <a href="../man1/ca.html>ca(1)</a>, <a href="../man1/genrsa.html>genrsa(1)</a>, <a href="../man5/config.html>config(5)</a></p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2006-2017 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

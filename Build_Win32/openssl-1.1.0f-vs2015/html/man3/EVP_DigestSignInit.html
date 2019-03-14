@@ -1,0 +1,87 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>EVP_DigestSignInit</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#RETURN-VALUES">RETURN VALUES</a></li>
+  <li><a href="#NOTES">NOTES</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#HISTORY">HISTORY</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>EVP_DigestSignInit, EVP_DigestSignUpdate, EVP_DigestSignFinal - EVP signing functions</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;openssl/evp.h&gt;
+
+ int EVP_DigestSignInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
+                        const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey);
+ int EVP_DigestSignUpdate(EVP_MD_CTX *ctx, const void *d, size_t cnt);
+ int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sig, size_t *siglen);</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>The EVP signature routines are a high level interface to digital signatures.</p>
+
+<p>EVP_DigestSignInit() sets up signing context <b>ctx</b> to use digest <b>type</b> from ENGINE <b>impl</b> and private key <b>pkey</b>. <b>ctx</b> must be created with EVP_MD_CTX_new() before calling this function. If <b>pctx</b> is not NULL the EVP_PKEY_CTX of the signing operation will be written to <b>*pctx</b>: this can be used to set alternative signing options.</p>
+
+<p>EVP_DigestSignUpdate() hashes <b>cnt</b> bytes of data at <b>d</b> into the signature context <b>ctx</b>. This function can be called several times on the same <b>ctx</b> to include additional data. This function is currently implemented using a macro.</p>
+
+<p>EVP_DigestSignFinal() signs the data in <b>ctx</b> places the signature in <b>sig</b>. If <b>sig</b> is <b>NULL</b> then the maximum size of the output buffer is written to the <b>siglen</b> parameter. If <b>sig</b> is not <b>NULL</b> then before the call the <b>siglen</b> parameter should contain the length of the <b>sig</b> buffer, if the call is successful the signature is written to <b>sig</b> and the amount of data written to <b>siglen</b>.</p>
+
+<h1 id="RETURN-VALUES">RETURN VALUES</h1>
+
+<p>EVP_DigestSignInit() EVP_DigestSignUpdate() and EVP_DigestSignaFinal() return 1 for success and 0 or a negative value for failure. In particular a return value of -2 indicates the operation is not supported by the public key algorithm.</p>
+
+<p>The error codes can be obtained from <a href="../man3/ERR_get_error.html>ERR_get_error(3)</a>.</p>
+
+<h1 id="NOTES">NOTES</h1>
+
+<p>The <b>EVP</b> interface to digital signatures should almost always be used in preference to the low level interfaces. This is because the code then becomes transparent to the algorithm used and much more flexible.</p>
+
+<p>In previous versions of OpenSSL there was a link between message digest types and public key algorithms. This meant that &quot;clone&quot; digests such as EVP_dss1() needed to be used to sign using SHA1 and DSA. This is no longer necessary and the use of clone digest is now discouraged.</p>
+
+<p>For some key types and parameters the random number generator must be seeded or the operation will fail.</p>
+
+<p>The call to EVP_DigestSignFinal() internally finalizes a copy of the digest context. This means that calls to EVP_DigestSignUpdate() and EVP_DigestSignFinal() can be called later to digest and sign additional data.</p>
+
+<p>Since only a copy of the digest context is ever finalized the context must be cleaned up after use by calling EVP_MD_CTX_cleanup() or a memory leak will occur.</p>
+
+<p>The use of EVP_PKEY_size() with these functions is discouraged because some signature operations may have a signature length which depends on the parameters set. As a result EVP_PKEY_size() would have to return a value which indicates the maximum possible signature for any set of parameters.</p>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man3/EVP_DigestVerifyInit.html>EVP_DigestVerifyInit(3)</a>, <a href="../man3/EVP_DigestInit.html>EVP_DigestInit(3)</a>, <a href="../man7/evp.html>evp(7)</a>, <a href="../man3/HMAC.html>HMAC(3)</a>, <a href="../man3/MD2.html>MD2(3)</a>, <a href="../man3/MD5.html>MD5(3)</a>, <a href="../man3/MDC2.html>MDC2(3)</a>, <a href="../man3/RIPEMD160.html>RIPEMD160(3)</a>, <a href="../man3/SHA1.html>SHA1(3)</a>, <a href="../man1/dgst.html>dgst(1)</a></p>
+
+<h1 id="HISTORY">HISTORY</h1>
+
+<p>EVP_DigestSignInit(), EVP_DigestSignUpdate() and EVP_DigestSignFinal() were first added to OpenSSL 1.0.0.</p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2006-2017 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

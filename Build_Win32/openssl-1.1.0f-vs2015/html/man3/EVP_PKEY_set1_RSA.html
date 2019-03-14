@@ -1,0 +1,108 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>EVP_PKEY_set1_RSA</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#NOTES">NOTES</a></li>
+  <li><a href="#RETURN-VALUES">RETURN VALUES</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>EVP_PKEY_set1_RSA, EVP_PKEY_set1_DSA, EVP_PKEY_set1_DH, EVP_PKEY_set1_EC_KEY, EVP_PKEY_get1_RSA, EVP_PKEY_get1_DSA, EVP_PKEY_get1_DH, EVP_PKEY_get1_EC_KEY, EVP_PKEY_get0_RSA, EVP_PKEY_get0_DSA, EVP_PKEY_get0_DH, EVP_PKEY_get0_EC_KEY, EVP_PKEY_assign_RSA, EVP_PKEY_assign_DSA, EVP_PKEY_assign_DH, EVP_PKEY_assign_EC_KEY, EVP_PKEY_get0_hmac, EVP_PKEY_type, EVP_PKEY_id, EVP_PKEY_base_id - EVP_PKEY assignment functions</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;openssl/evp.h&gt;
+
+ int EVP_PKEY_set1_RSA(EVP_PKEY *pkey, RSA *key);
+ int EVP_PKEY_set1_DSA(EVP_PKEY *pkey, DSA *key);
+ int EVP_PKEY_set1_DH(EVP_PKEY *pkey, DH *key);
+ int EVP_PKEY_set1_EC_KEY(EVP_PKEY *pkey, EC_KEY *key);
+
+ RSA *EVP_PKEY_get1_RSA(EVP_PKEY *pkey);
+ DSA *EVP_PKEY_get1_DSA(EVP_PKEY *pkey);
+ DH *EVP_PKEY_get1_DH(EVP_PKEY *pkey);
+ EC_KEY *EVP_PKEY_get1_EC_KEY(EVP_PKEY *pkey);
+
+ const unsigned char *EVP_PKEY_get0_hmac(const EVP_PKEY *pkey, size_t *len);
+ RSA *EVP_PKEY_get0_RSA(EVP_PKEY *pkey);
+ DSA *EVP_PKEY_get0_DSA(EVP_PKEY *pkey);
+ DH *EVP_PKEY_get0_DH(EVP_PKEY *pkey);
+ EC_KEY *EVP_PKEY_get0_EC_KEY(EVP_PKEY *pkey);
+
+ int EVP_PKEY_assign_RSA(EVP_PKEY *pkey, RSA *key);
+ int EVP_PKEY_assign_DSA(EVP_PKEY *pkey, DSA *key);
+ int EVP_PKEY_assign_DH(EVP_PKEY *pkey, DH *key);
+ int EVP_PKEY_assign_EC_KEY(EVP_PKEY *pkey, EC_KEY *key);
+
+ int EVP_PKEY_id(const EVP_PKEY *pkey);
+ int EVP_PKEY_base_id(const EVP_PKEY *pkey);
+ int EVP_PKEY_type(int type);</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>EVP_PKEY_set1_RSA(), EVP_PKEY_set1_DSA(), EVP_PKEY_set1_DH() and EVP_PKEY_set1_EC_KEY() set the key referenced by <b>pkey</b> to <b>key</b>.</p>
+
+<p>EVP_PKEY_get1_RSA(), EVP_PKEY_get1_DSA(), EVP_PKEY_get1_DH() and EVP_PKEY_get1_EC_KEY() return the referenced key in <b>pkey</b> or <b>NULL</b> if the key is not of the correct type.</p>
+
+<p>EVP_PKEY_get0_hmac(), EVP_PKEY_get0_RSA(), EVP_PKEY_get0_DSA(), EVP_PKEY_get0_DH() and EVP_PKEY_get0_EC_KEY() also return the referenced key in <b>pkey</b> or <b>NULL</b> if the key is not of the correct type but the reference count of the returned key is <b>not</b> incremented and so must not be freed up after use.</p>
+
+<p>EVP_PKEY_assign_RSA(), EVP_PKEY_assign_DSA(), EVP_PKEY_assign_DH() and EVP_PKEY_assign_EC_KEY() also set the referenced key to <b>key</b> however these use the supplied <b>key</b> internally and so <b>key</b> will be freed when the parent <b>pkey</b> is freed.</p>
+
+<p>EVP_PKEY_base_id() returns the type of <b>pkey</b>. For example an RSA key will return <b>EVP_PKEY_RSA</b>.</p>
+
+<p>EVP_PKEY_id() returns the actual OID associated with <b>pkey</b>. Historically keys using the same algorithm could use different OIDs. For example an RSA key could use the OIDs corresponding to the NIDs <b>NID_rsaEncryption</b> (equivalent to <b>EVP_PKEY_RSA</b>) or <b>NID_rsa</b> (equivalent to <b>EVP_PKEY_RSA2</b>). The use of alternative non-standard OIDs is now rare so <b>EVP_PKEY_RSA2</b> et al are not often seen in practice.</p>
+
+<p>EVP_PKEY_type() returns the underlying type of the NID <b>type</b>. For example EVP_PKEY_type(EVP_PKEY_RSA2) will return <b>EVP_PKEY_RSA</b>.</p>
+
+<h1 id="NOTES">NOTES</h1>
+
+<p>In accordance with the OpenSSL naming convention the key obtained from or assigned to the <b>pkey</b> using the <b>1</b> functions must be freed as well as <b>pkey</b>.</p>
+
+<p>EVP_PKEY_assign_RSA(), EVP_PKEY_assign_DSA(), EVP_PKEY_assign_DH() and EVP_PKEY_assign_EC_KEY() are implemented as macros.</p>
+
+<p>Most applications wishing to know a key type will simply call EVP_PKEY_base_id() and will not care about the actual type: which will be identical in almost all cases.</p>
+
+<p>Previous versions of this document suggested using EVP_PKEY_type(pkey-&gt;type) to determine the type of a key. Since <b>EVP_PKEY</b> is now opaque this is no longer possible: the equivalent is EVP_PKEY_base_id(pkey).</p>
+
+<h1 id="RETURN-VALUES">RETURN VALUES</h1>
+
+<p>EVP_PKEY_set1_RSA(), EVP_PKEY_set1_DSA(), EVP_PKEY_set1_DH() and EVP_PKEY_set1_EC_KEY() return 1 for success or 0 for failure.</p>
+
+<p>EVP_PKEY_get1_RSA(), EVP_PKEY_get1_DSA(), EVP_PKEY_get1_DH() and EVP_PKEY_get1_EC_KEY() return the referenced key or <b>NULL</b> if an error occurred.</p>
+
+<p>EVP_PKEY_assign_RSA(), EVP_PKEY_assign_DSA(), EVP_PKEY_assign_DH() and EVP_PKEY_assign_EC_KEY() return 1 for success and 0 for failure.</p>
+
+<p>EVP_PKEY_base_id(), EVP_PKEY_id() and EVP_PKEY_type() return a key type or <b>NID_undef</b> (equivalently <b>EVP_PKEY_NONE</b>) on error.</p>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man3/EVP_PKEY_new.html>EVP_PKEY_new(3)</a></p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

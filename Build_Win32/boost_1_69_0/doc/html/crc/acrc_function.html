@@ -1,0 +1,138 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<title>Augmented-CRC Function</title>
+<link rel="stylesheet" href="../../../doc/src/boostbook.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="../index.html" title="The Boost C++ Libraries BoostBook Documentation Subset">
+<link rel="up" href="../crc.html" title="Chapter&#160;12.&#160;Boost.CRC 1.5">
+<link rel="prev" href="crc_function.html" title="CRC Function">
+<link rel="next" href="crc_samples.html" title="Pre-Defined CRC Samples">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<table cellpadding="2" width="100%"><tr>
+<td valign="top"><img alt="Boost C++ Libraries" width="277" height="86" src="../../../boost.png"></td>
+<td align="center"><a href="../../../index.html">Home</a></td>
+<td align="center"><a href="../../../libs/libraries.htm">Libraries</a></td>
+<td align="center"><a href="http://www.boost.org/users/people.html">People</a></td>
+<td align="center"><a href="http://www.boost.org/users/faq.html">FAQ</a></td>
+<td align="center"><a href="../../../more/index.htm">More</a></td>
+</tr></table>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="crc_function.html"><img src="../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../crc.html"><img src="../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="crc_samples.html"><img src="../../../doc/src/images/next.png" alt="Next"></a>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="crc.acrc_function"></a><a class="link" href="acrc_function.html" title="Augmented-CRC Function">Augmented-CRC Function</a>
+</h2></div></div></div>
+<pre class="programlisting"><span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">boost</span><span class="special">/</span><span class="identifier">cstdint</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>  <span class="comment">// for boost::uintmax_t</span>
+<span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">boost</span><span class="special">/</span><span class="identifier">integer</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>  <span class="comment">// for boost::uint_t</span>
+<span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">cstddef</span><span class="special">&gt;</span>            <span class="comment">// for std::size_t</span>
+
+<span class="keyword">namespace</span> <span class="identifier">boost</span>
+<span class="special">{</span>
+    <span class="keyword">template</span> <span class="special">&lt;</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> <span class="identifier">Bits</span><span class="special">,</span> <span class="identifier">uintmax_t</span> <span class="identifier">TruncPoly</span> <span class="special">&gt;</span>
+    <span class="keyword">typename</span> <span class="identifier">uint_t</span><span class="special">&lt;</span><span class="identifier">Bits</span><span class="special">&gt;::</span><span class="identifier">fast</span>  <span class="identifier">augmented_crc</span><span class="special">(</span> <span class="keyword">void</span> <span class="keyword">const</span> <span class="special">*</span><span class="identifier">buffer</span><span class="special">,</span>
+     <span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> <span class="identifier">byte_count</span><span class="special">,</span> <span class="keyword">typename</span> <span class="identifier">uint_t</span><span class="special">&lt;</span><span class="identifier">Bits</span><span class="special">&gt;::</span><span class="identifier">fast</span> <span class="identifier">initial_remainder</span>
+     <span class="special">=</span> <span class="number">0u</span>  <span class="special">);</span>
+<span class="special">}</span>
+</pre>
+<p>
+      The <span class="bold"><strong><code class="computeroutput"><span class="identifier">boost</span><span class="special">::</span><span class="identifier">augmented_crc</span></code></strong></span>
+      function computes the augmented-style CRC of a data block. Like <code class="computeroutput"><span class="identifier">boost</span><span class="special">::</span><span class="identifier">crc</span></code>,
+      the first two template parameters are the <span class="emphasis"><em>WIDTH</em></span> and <span class="emphasis"><em>POLY</em></span>.
+      However, the <span class="emphasis"><em>INIT</em></span> has moved to being a function parameter,
+      after the data block's starting address and byte length, defaulting to zero
+      if not given.
+    </p>
+<p>
+      This function uses modulo-2 division at its most raw, and so forfeits the
+      <span class="emphasis"><em>REFIN</em></span>, <span class="emphasis"><em>REFOUT</em></span>, and <span class="emphasis"><em>XOROUT</em></span>
+      attributes, setting them to <code class="computeroutput"><span class="number">0</span></code> or
+      <code class="computeroutput"><span class="keyword">false</span></code>. Another difference from
+      <code class="computeroutput"><span class="identifier">boost</span><span class="special">::</span><span class="identifier">crc</span></code> is that a non-zero <span class="emphasis"><em>INIT</em></span>
+      has to be skewed when used with this function. (No conversion functions are
+      currently given.)
+    </p>
+<p>
+      The <code class="computeroutput"><span class="identifier">augmented_crc</span></code> function
+      can compute CRCs from distributed data, too:
+    </p>
+<p>
+</p>
+<pre class="programlisting"><span class="keyword">unsigned</span>  <span class="identifier">combined_acrc_16</span><span class="special">(</span> <span class="keyword">int</span> <span class="identifier">block_count</span><span class="special">,</span> <span class="special">...</span> <span class="special">)</span>
+<span class="special">{</span>
+    <a class="co" name="crc.acrc_function.c0" href="acrc_function.html#crc.acrc_function.c1"><img src="../../../doc/src/images/callouts/1.png" alt="1" border="0"></a><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="identifier">std</span><span class="special">;</span>
+
+    <span class="identifier">va_list</span>   <span class="identifier">ap</span><span class="special">;</span>
+    <span class="keyword">unsigned</span>  <span class="identifier">result</span> <span class="special">=</span> <span class="number">0u</span><span class="special">;</span>
+
+    <span class="identifier">va_start</span><span class="special">(</span> <span class="identifier">ap</span><span class="special">,</span> <span class="identifier">block_count</span> <span class="special">);</span>
+    <span class="keyword">if</span> <span class="special">(</span> <span class="identifier">block_count</span> <span class="special">&lt;=</span> <span class="number">0</span> <span class="special">)</span>
+        <span class="keyword">goto</span> <span class="identifier">finish</span><span class="special">;</span>
+
+    <span class="keyword">void</span> <span class="keyword">const</span> <span class="special">*</span>  <span class="identifier">bs</span> <span class="special">=</span> <span class="identifier">va_arg</span><span class="special">(</span> <span class="identifier">ap</span><span class="special">,</span> <span class="keyword">void</span> <span class="keyword">const</span> <span class="special">*</span> <span class="special">);</span>
+    <span class="identifier">size_t</span>        <span class="identifier">bl</span> <span class="special">=</span> <span class="identifier">va_arg</span><span class="special">(</span> <span class="identifier">ap</span><span class="special">,</span> <span class="identifier">size_t</span> <span class="special">);</span>
+
+    <a class="co" name="crc.acrc_function.c2" href="acrc_function.html#crc.acrc_function.c3"><img src="../../../doc/src/images/callouts/2.png" alt="2" border="0"></a><span class="identifier">result</span> <span class="special">=</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">augmented_crc</span><span class="special">&lt;</span><span class="number">16</span><span class="special">,</span> <span class="number">0x1021u</span><span class="special">&gt;(</span> <span class="identifier">bs</span><span class="special">,</span> <span class="identifier">bl</span> <span class="special">);</span>
+    <span class="keyword">while</span> <span class="special">(</span> <span class="special">--</span><span class="identifier">block_count</span> <span class="special">)</span>
+    <span class="special">{</span>
+        <span class="identifier">bs</span> <span class="special">=</span> <span class="identifier">va_arg</span><span class="special">(</span> <span class="identifier">ap</span><span class="special">,</span> <span class="keyword">void</span> <span class="keyword">const</span> <span class="special">*</span> <span class="special">);</span>
+        <span class="identifier">bl</span> <span class="special">=</span> <span class="identifier">va_arg</span><span class="special">(</span> <span class="identifier">ap</span><span class="special">,</span> <span class="identifier">size_t</span> <span class="special">);</span>
+        <span class="identifier">result</span> <span class="special">=</span> <span class="identifier">boost</span><span class="special">::</span><span class="identifier">augmented_crc</span><span class="special">&lt;</span><span class="number">16</span><span class="special">,</span> <span class="number">0x1021u</span><span class="special">&gt;(</span> <span class="identifier">bs</span><span class="special">,</span> <span class="identifier">bl</span><span class="special">,</span> <span class="identifier">result</span> <span class="special">);</span>
+    <span class="special">}</span>
+
+<span class="identifier">finish</span><span class="special">:</span>
+    <span class="identifier">va_end</span><span class="special">(</span> <span class="identifier">ap</span> <span class="special">);</span>
+    <span class="keyword">return</span> <span class="identifier">result</span><span class="special">;</span>
+<span class="special">}</span>
+</pre>
+<p>
+    </p>
+<p>
+      No CRC operation throws, so there is no need for extra protection between the
+      varargs macro calls. Feeding the result from the previous run as the initial
+      remainder for the next run works easily because there's no output reflection
+      or XOR mask.
+    </p>
+<div class="calloutlist"><table border="0" summary="Callout list">
+<tr>
+<td width="5%" valign="top" align="left"><p><a name="crc.acrc_function.c1"></a><a href="#crc.acrc_function.c0"><img src="../../../doc/src/images/callouts/1.png" alt="1" border="0"></a> </p></td>
+<td valign="top" align="left"><p>
+          C-style variable-argument routines are or may be macros.
+        </p></td>
+</tr>
+<tr>
+<td width="5%" valign="top" align="left"><p><a name="crc.acrc_function.c3"></a><a href="#crc.acrc_function.c2"><img src="../../../doc/src/images/callouts/2.png" alt="2" border="0"></a> </p></td>
+<td valign="top" align="left"><p>
+          The parameters are based on <code class="computeroutput"><span class="identifier">boost</span><span class="special">::</span><span class="identifier">crc_xmodem_t</span></code>.
+        </p></td>
+</tr>
+</table></div>
+<p>
+      Since <code class="computeroutput"><span class="identifier">augmented_crc</span></code> doesn't
+      know when your data ends, you must supply the augment, either <span class="emphasis"><em>WIDTH</em></span>
+      zero bits or the expected checksum. The augment can be either at the end of
+      last data block or from an extra call. Remember that if an expected checksum
+      is used as the augment, its bits must be arranged in big-endian order. Because
+      <code class="computeroutput"><span class="identifier">augmented_crc</span></code> reads byte-wise,
+      while augments assume bit-wise reading, augmentations are valid only when
+      <span class="emphasis"><em>WIDTH</em></span> is a multiple of the bits-per-byte ratio (<code class="computeroutput"><span class="identifier">CHAR_BIT</span></code>).
+    </p>
+</div>
+<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
+<td align="left"></td>
+<td align="right"><div class="copyright-footer">Copyright &#169; 2001, 2003, 2012 Daryle Walker<p>
+        Distributed under the Boost Software License, Version 1.0. (See the accompanying
+        file LICENSE_1_0.txt or a copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
+      </p>
+</div></td>
+</tr></table>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="crc_function.html"><img src="../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../crc.html"><img src="../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="crc_samples.html"><img src="../../../doc/src/images/next.png" alt="Next"></a>
+</div>
+</body>
+</html>

@@ -1,0 +1,98 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>BIO_push</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#NOTES">NOTES</a></li>
+  <li><a href="#EXAMPLES">EXAMPLES</a></li>
+  <li><a href="#RETURN-VALUES">RETURN VALUES</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#HISTORY">HISTORY</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>BIO_push, BIO_pop, BIO_set_next - add and remove BIOs from a chain</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;openssl/bio.h&gt;
+
+ BIO *BIO_push(BIO *b, BIO *append);
+ BIO *BIO_pop(BIO *b);
+ void BIO_set_next(BIO *b, BIO *next);</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>The BIO_push() function appends the BIO <b>append</b> to <b>b</b>, it returns <b>b</b>.</p>
+
+<p>BIO_pop() removes the BIO <b>b</b> from a chain and returns the next BIO in the chain, or NULL if there is no next BIO. The removed BIO then becomes a single BIO with no association with the original chain, it can thus be freed or attached to a different chain.</p>
+
+<p>BIO_set_next() replaces the existing next BIO in a chain with the BIO pointed to by <b>next</b>. The new chain may include some of the same BIOs from the old chain or it may be completely different.</p>
+
+<h1 id="NOTES">NOTES</h1>
+
+<p>The names of these functions are perhaps a little misleading. BIO_push() joins two BIO chains whereas BIO_pop() deletes a single BIO from a chain, the deleted BIO does not need to be at the end of a chain.</p>
+
+<p>The process of calling BIO_push() and BIO_pop() on a BIO may have additional consequences (a control call is made to the affected BIOs) any effects will be noted in the descriptions of individual BIOs.</p>
+
+<h1 id="EXAMPLES">EXAMPLES</h1>
+
+<p>For these examples suppose <b>md1</b> and <b>md2</b> are digest BIOs, <b>b64</b> is a base64 BIO and <b>f</b> is a file BIO.</p>
+
+<p>If the call:</p>
+
+<pre><code> BIO_push(b64, f);</code></pre>
+
+<p>is made then the new chain will be <b>b64-f</b>. After making the calls</p>
+
+<pre><code> BIO_push(md2, b64);
+ BIO_push(md1, md2);</code></pre>
+
+<p>the new chain is <b>md1-md2-b64-f</b>. Data written to <b>md1</b> will be digested by <b>md1</b> and <b>md2</b>, <b>base64</b> encoded and written to <b>f</b>.</p>
+
+<p>It should be noted that reading causes data to pass in the reverse direction, that is data is read from <b>f</b>, base64 <b>decoded</b> and digested by <b>md1</b> and <b>md2</b>. If the call:</p>
+
+<pre><code> BIO_pop(md2);</code></pre>
+
+<p>The call will return <b>b64</b> and the new chain will be <b>md1-b64-f</b> data can be written to <b>md1</b> as before.</p>
+
+<h1 id="RETURN-VALUES">RETURN VALUES</h1>
+
+<p>BIO_push() returns the end of the chain, <b>b</b>.</p>
+
+<p>BIO_pop() returns the next BIO in the chain, or NULL if there is no next BIO.</p>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="/crypto/bio.html">bio</a></p>
+
+<h1 id="HISTORY">HISTORY</h1>
+
+<p>The BIO_set_next() function was added in OpenSSL version 1.1.0.</p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

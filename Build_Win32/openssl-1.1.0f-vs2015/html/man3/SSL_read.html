@@ -1,0 +1,94 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>SSL_read</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#NOTES">NOTES</a></li>
+  <li><a href="#WARNING">WARNING</a></li>
+  <li><a href="#RETURN-VALUES">RETURN VALUES</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>SSL_read - read bytes from a TLS/SSL connection</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;openssl/ssl.h&gt;
+
+ int SSL_read(SSL *ssl, void *buf, int num);</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>SSL_read() tries to read <b>num</b> bytes from the specified <b>ssl</b> into the buffer <b>buf</b>.</p>
+
+<h1 id="NOTES">NOTES</h1>
+
+<p>If necessary, SSL_read() will negotiate a TLS/SSL session, if not already explicitly performed by <a href="../man3/SSL_connect.html>SSL_connect(3)</a> or <a href="../man3/SSL_accept.html>SSL_accept(3)</a>. If the peer requests a re-negotiation, it will be performed transparently during the SSL_read() operation. The behaviour of SSL_read() depends on the underlying BIO.</p>
+
+<p>For the transparent negotiation to succeed, the <b>ssl</b> must have been initialized to client or server mode. This is being done by calling <a href="../man3/SSL_set_connect_state.html>SSL_set_connect_state(3)</a> or SSL_set_accept_state() before the first call to an SSL_read() or <a href="../man3/SSL_write.html>SSL_write(3)</a> function.</p>
+
+<p>SSL_read() works based on the SSL/TLS records. The data are received in records (with a maximum record size of 16kB for SSLv3/TLSv1). Only when a record has been completely received, it can be processed (decryption and check of integrity). Therefore data that was not retrieved at the last call of SSL_read() can still be buffered inside the SSL layer and will be retrieved on the next call to SSL_read(). If <b>num</b> is higher than the number of bytes buffered, SSL_read() will return with the bytes buffered. If no more bytes are in the buffer, SSL_read() will trigger the processing of the next record. Only when the record has been received and processed completely, SSL_read() will return reporting success. At most the contents of the record will be returned. As the size of an SSL/TLS record may exceed the maximum packet size of the underlying transport (e.g. TCP), it may be necessary to read several packets from the transport layer before the record is complete and SSL_read() can succeed.</p>
+
+<p>If the underlying BIO is <b>blocking</b>, SSL_read() will only return, once the read operation has been finished or an error occurred, except when a renegotiation take place, in which case a SSL_ERROR_WANT_READ may occur. This behaviour can be controlled with the SSL_MODE_AUTO_RETRY flag of the <a href="../man3/SSL_CTX_set_mode.html>SSL_CTX_set_mode(3)</a> call.</p>
+
+<p>If the underlying BIO is <b>non-blocking</b>, SSL_read() will also return when the underlying BIO could not satisfy the needs of SSL_read() to continue the operation. In this case a call to <a href="../man3/SSL_get_error.html>SSL_get_error(3)</a> with the return value of SSL_read() will yield <b>SSL_ERROR_WANT_READ</b> or <b>SSL_ERROR_WANT_WRITE</b>. As at any time a re-negotiation is possible, a call to SSL_read() can also cause write operations! The calling process then must repeat the call after taking appropriate action to satisfy the needs of SSL_read(). The action depends on the underlying BIO. When using a non-blocking socket, nothing is to be done, but select() can be used to check for the required condition. When using a buffering BIO, like a BIO pair, data must be written into or retrieved out of the BIO before being able to continue.</p>
+
+<p><a href="../man3/SSL_pending.html>SSL_pending(3)</a> can be used to find out whether there are buffered bytes available for immediate retrieval. In this case SSL_read() can be called without blocking or actually receiving new data from the underlying socket.</p>
+
+<h1 id="WARNING">WARNING</h1>
+
+<p>When an SSL_read() operation has to be repeated because of <b>SSL_ERROR_WANT_READ</b> or <b>SSL_ERROR_WANT_WRITE</b>, it must be repeated with the same arguments.</p>
+
+<h1 id="RETURN-VALUES">RETURN VALUES</h1>
+
+<p>The following return values can occur:</p>
+
+<dl>
+
+<dt id="pod0">&gt; 0</dt>
+<dd>
+
+<p>The read operation was successful. The return value is the number of bytes actually read from the TLS/SSL connection.</p>
+
+</dd>
+<dt id="pod-0">&lt;= 0</dt>
+<dd>
+
+<p>The read operation was not successful, because either the connection was closed, an error occurred or action must be taken by the calling process. Call <a href="../man3/SSL_get_error.html>SSL_get_error(3)</a> with the return value <b>ret</b> to find out the reason.</p>
+
+<p>Old documentation indicated a difference between 0 and -1, and that -1 was retryable. You should instead call SSL_get_error() to find out if it&#39;s retryable.</p>
+
+</dd>
+</dl>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man3/SSL_get_error.html>SSL_get_error(3)</a>, <a href="../man3/SSL_write.html>SSL_write(3)</a>, <a href="../man3/SSL_CTX_set_mode.html>SSL_CTX_set_mode(3)</a>, <a href="../man3/SSL_CTX_new.html>SSL_CTX_new(3)</a>, <a href="../man3/SSL_connect.html>SSL_connect(3)</a>, <a href="../man3/SSL_accept.html>SSL_accept(3)</a> <a href="../man3/SSL_set_connect_state.html>SSL_set_connect_state(3)</a>, <a href="../man3/SSL_pending.html>SSL_pending(3)</a>, <a href="../man3/SSL_shutdown.html>SSL_shutdown(3)</a>, <a href="../man3/SSL_set_shutdown.html>SSL_set_shutdown(3)</a>, <a href="../man3/ssl.html>ssl(3)</a>, <a href="../man3/bio.html>bio(3)</a></p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

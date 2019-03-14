@@ -6,4 +6,5 @@ add_subdirectory(Oauth2Client)
 
 add_custom_target(samples
   DEPENDS SearchFile BingRequest blackjackclient blackjackserver oauth1client oauth2client
+  DEPENDS SearchFile BingRequest oauth1client oauth2client
   )

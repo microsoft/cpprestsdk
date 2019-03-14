@@ -1,0 +1,198 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>CA.pl</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#OPTIONS">OPTIONS</a></li>
+  <li><a href="#EXAMPLES">EXAMPLES</a></li>
+  <li><a href="#DSA-CERTIFICATES">DSA CERTIFICATES</a></li>
+  <li><a href="#NOTES">NOTES</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>CA.pl - friendlier interface for OpenSSL certificate programs</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<p><b>CA.pl</b> <b>-?</b> | <b>-h</b> | <b>-help</b></p>
+
+<p><b>CA.pl</b> <b>-newcert</b> | <b>-newreq</b> | <b>-newreq-nodes</b> | <b>-xsign</b> | <b>-sign</b> | <b>-signCA</b> | <b>-signcert</b> | <b>-crl</b> | <b>-newca</b> [<b>-extra-cmd</b> extra-params]</p>
+
+<p><b>CA.pl</b> <b>-pkcs12</b> [<b>-extra-pkcs12</b> extra-params] [<b>certname</b>]</p>
+
+<p><b>CA.pl</b> <b>-verify</b> [<b>-extra-verify</b> extra-params] <b>certfile</b>...</p>
+
+<p><b>CA.pl</b> <b>-revoke</b> [<b>-extra-ca</b> extra-params] <b>certfile</b> [<b>reason</b>]</p>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>The <b>CA.pl</b> script is a perl script that supplies the relevant command line arguments to the <b>openssl</b> command for some common certificate operations. It is intended to simplify the process of certificate creation and management by the use of some simple options.</p>
+
+<h1 id="OPTIONS">OPTIONS</h1>
+
+<dl>
+
+<dt id="h--help"><b>?</b>, <b>-h</b>, <b>-help</b></dt>
+<dd>
+
+<p>prints a usage message.</p>
+
+</dd>
+<dt id="newcert"><b>-newcert</b></dt>
+<dd>
+
+<p>creates a new self signed certificate. The private key is written to the file &quot;newkey.pem&quot; and the request written to the file &quot;newreq.pem&quot;. This argument invokes <b>openssl req</b> command.</p>
+
+</dd>
+<dt id="newreq"><b>-newreq</b></dt>
+<dd>
+
+<p>creates a new certificate request. The private key is written to the file &quot;newkey.pem&quot; and the request written to the file &quot;newreq.pem&quot;. Executes <b>openssl req</b> command below the hood.</p>
+
+</dd>
+<dt id="newreq-nodes"><b>-newreq-nodes</b></dt>
+<dd>
+
+<p>is like <b>-newreq</b> except that the private key will not be encrypted. Uses <b>openssl req</b> command.</p>
+
+</dd>
+<dt id="newca"><b>-newca</b></dt>
+<dd>
+
+<p>creates a new CA hierarchy for use with the <b>ca</b> program (or the <b>-signcert</b> and <b>-xsign</b> options). The user is prompted to enter the filename of the CA certificates (which should also contain the private key) or by hitting ENTER details of the CA will be prompted for. The relevant files and directories are created in a directory called &quot;demoCA&quot; in the current directory. <b>openssl req</b> and <b>openssl ca</b> commands are get invoked.</p>
+
+</dd>
+<dt id="pkcs12"><b>-pkcs12</b></dt>
+<dd>
+
+<p>create a PKCS#12 file containing the user certificate, private key and CA certificate. It expects the user certificate and private key to be in the file &quot;newcert.pem&quot; and the CA certificate to be in the file demoCA/cacert.pem, it creates a file &quot;newcert.p12&quot;. This command can thus be called after the <b>-sign</b> option. The PKCS#12 file can be imported directly into a browser. If there is an additional argument on the command line it will be used as the &quot;friendly name&quot; for the certificate (which is typically displayed in the browser list box), otherwise the name &quot;My Certificate&quot; is used. Delegates work to <b>openssl pkcs12</b> command.</p>
+
+</dd>
+<dt id="sign--signcert--xsign"><b>-sign</b>, <b>-signcert</b>, <b>-xsign</b></dt>
+<dd>
+
+<p>calls the <b>ca</b> program to sign a certificate request. It expects the request to be in the file &quot;newreq.pem&quot;. The new certificate is written to the file &quot;newcert.pem&quot; except in the case of the <b>-xsign</b> option when it is written to standard output. Leverages <b>openssl ca</b> command.</p>
+
+</dd>
+<dt id="signCA"><b>-signCA</b></dt>
+<dd>
+
+<p>this option is the same as the <b>-signreq</b> option except it uses the configuration file section <b>v3_ca</b> and so makes the signed request a valid CA certificate. This is useful when creating intermediate CA from a root CA. Extra params are passed on to <b>openssl ca</b> command.</p>
+
+</dd>
+<dt id="signcert"><b>-signcert</b></dt>
+<dd>
+
+<p>this option is the same as <b>-sign</b> except it expects a self signed certificate to be present in the file &quot;newreq.pem&quot;. Extra params are passed on to <b>openssl x509</b> and <b>openssl ca</b> commands.</p>
+
+</dd>
+<dt id="crl"><b>-crl</b></dt>
+<dd>
+
+<p>generate a CRL. Executes <b>openssl ca</b> command.</p>
+
+</dd>
+<dt id="revoke-certfile-reason"><b>-revoke certfile [reason]</b></dt>
+<dd>
+
+<p>revoke the certificate contained in the specified <b>certfile</b>. An optional reason may be specified, and must be one of: <b>unspecified</b>, <b>keyCompromise</b>, <b>CACompromise</b>, <b>affiliationChanged</b>, <b>superseded</b>, <b>cessationOfOperation</b>, <b>certificateHold</b>, or <b>removeFromCRL</b>. Leverages <b>openssl ca</b> command.</p>
+
+</dd>
+<dt id="verify"><b>-verify</b></dt>
+<dd>
+
+<p>verifies certificates against the CA certificate for &quot;demoCA&quot;. If no certificates are specified on the command line it tries to verify the file &quot;newcert.pem&quot;. Invokes <b>openssl verify</b> command.</p>
+
+</dd>
+<dt id="extra-req--extra-ca--extra-pkcs12--extra-x509--extra-verify-extra-params"><b>-extra-req</b> | <b>-extra-ca</b> | <b>-extra-pkcs12</b> | <b>-extra-x509</b> | <b>-extra-verify</b> &lt;extra-params&gt;</dt>
+<dd>
+
+<p>The purpose of these parameters is to allow optional parameters to be supplied to <b>openssl</b> that this command executes. The <b>-extra-cmd</b> are specific to the option being used and the <b>openssl</b> command getting invoked. For example when this command invokes <b>openssl req</b> extra parameters can be passed on with the <b>-extra-req</b> parameter. The <b>openssl</b> commands being invoked per option are documented below. Users should consult <b>openssl</b> command documentation for more information.</p>
+
+</dd>
+</dl>
+
+<h1 id="EXAMPLES">EXAMPLES</h1>
+
+<p>Create a CA hierarchy:</p>
+
+<pre><code> CA.pl -newca</code></pre>
+
+<p>Complete certificate creation example: create a CA, create a request, sign the request and finally create a PKCS#12 file containing it.</p>
+
+<pre><code> CA.pl -newca
+ CA.pl -newreq
+ CA.pl -signreq
+ CA.pl -pkcs12 &quot;My Test Certificate&quot;</code></pre>
+
+<h1 id="DSA-CERTIFICATES">DSA CERTIFICATES</h1>
+
+<p>Although the <b>CA.pl</b> creates RSA CAs and requests it is still possible to use it with DSA certificates and requests using the <a href="../man1/req.html>req(1)</a> command directly. The following example shows the steps that would typically be taken.</p>
+
+<p>Create some DSA parameters:</p>
+
+<pre><code> openssl dsaparam -out dsap.pem 1024</code></pre>
+
+<p>Create a DSA CA certificate and private key:</p>
+
+<pre><code> openssl req -x509 -newkey dsa:dsap.pem -keyout cacert.pem -out cacert.pem</code></pre>
+
+<p>Create the CA directories and files:</p>
+
+<pre><code> CA.pl -newca</code></pre>
+
+<p>enter cacert.pem when prompted for the CA file name.</p>
+
+<p>Create a DSA certificate request and private key (a different set of parameters can optionally be created first):</p>
+
+<pre><code> openssl req -out newreq.pem -newkey dsa:dsap.pem</code></pre>
+
+<p>Sign the request:</p>
+
+<pre><code> CA.pl -signreq</code></pre>
+
+<h1 id="NOTES">NOTES</h1>
+
+<p>Most of the filenames mentioned can be modified by editing the <b>CA.pl</b> script.</p>
+
+<p>If the demoCA directory already exists then the <b>-newca</b> command will not overwrite it and will do nothing. This can happen if a previous call using the <b>-newca</b> option terminated abnormally. To get the correct behaviour delete the demoCA directory if it already exists.</p>
+
+<p>Under some environments it may not be possible to run the <b>CA.pl</b> script directly (for example Win32) and the default configuration file location may be wrong. In this case the command:</p>
+
+<pre><code> perl -S CA.pl</code></pre>
+
+<p>can be used and the <b>OPENSSL_CONF</b> environment variable changed to point to the correct path of the configuration file.</p>
+
+<p>The script is intended as a simple front end for the <b>openssl</b> program for use by a beginner. Its behaviour isn&#39;t always what is wanted. For more control over the behaviour of the certificate commands call the <b>openssl</b> command directly.</p>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man1/x509.html>x509(1)</a>, <a href="../man1/ca.html>ca(1)</a>, <a href="../man1/req.html>req(1)</a>, <a href="../man1/pkcs12.html>pkcs12(1)</a>, <a href="../man5/config.html>config(5)</a></p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

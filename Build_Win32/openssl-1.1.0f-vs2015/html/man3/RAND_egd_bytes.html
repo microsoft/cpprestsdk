@@ -1,0 +1,76 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>RAND_egd</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#NOTES">NOTES</a></li>
+  <li><a href="#RETURN-VALUE">RETURN VALUE</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>RAND_egd, RAND_egd_bytes, RAND_query_egd_bytes - query entropy gathering daemon</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;openssl/rand.h&gt;
+
+ int RAND_egd(const char *path);
+ int RAND_egd_bytes(const char *path, int bytes);
+
+ int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes);</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>RAND_egd() queries the entropy gathering daemon EGD on socket <b>path</b>. It queries 255 bytes and uses <a href="../man3/RAND_add.html>RAND_add(3)</a> to seed the OpenSSL built-in PRNG. RAND_egd(path) is a wrapper for RAND_egd_bytes(path, 255);</p>
+
+<p>RAND_egd_bytes() queries the entropy gathering daemon EGD on socket <b>path</b>. It queries <b>bytes</b> bytes and uses <a href="../man3/RAND_add.html>RAND_add(3)</a> to seed the OpenSSL built-in PRNG. This function is more flexible than RAND_egd(). When only one secret key must be generated, it is not necessary to request the full amount 255 bytes from the EGD socket. This can be advantageous, since the amount of entropy that can be retrieved from EGD over time is limited.</p>
+
+<p>RAND_query_egd_bytes() performs the actual query of the EGD daemon on socket <b>path</b>. If <b>buf</b> is given, <b>bytes</b> bytes are queried and written into <b>buf</b>. If <b>buf</b> is NULL, <b>bytes</b> bytes are queried and used to seed the OpenSSL built-in PRNG using <a href="../man3/RAND_add.html>RAND_add(3)</a>.</p>
+
+<h1 id="NOTES">NOTES</h1>
+
+<p>On systems without /dev/*random devices providing entropy from the kernel, the EGD entropy gathering daemon can be used to collect entropy. It provides a socket interface through which entropy can be gathered in chunks up to 255 bytes. Several chunks can be queried during one connection.</p>
+
+<p>EGD is available from http://www.lothar.com/tech/crypto/ (<code>perl Makefile.PL; make; make install</code> to install). It is run as <b>egd</b> <i>path</i>, where <i>path</i> is an absolute path designating a socket. When RAND_egd() is called with that path as an argument, it tries to read random bytes that EGD has collected. RAND_egd() retrieves entropy from the daemon using the daemon&#39;s &quot;non-blocking read&quot; command which shall be answered immediately by the daemon without waiting for additional entropy to be collected. The write and read socket operations in the communication are blocking.</p>
+
+<p>Alternatively, the EGD-interface compatible daemon PRNGD can be used. It is available from http://prngd.sourceforge.net/ . PRNGD does employ an internal PRNG itself and can therefore never run out of entropy.</p>
+
+<p>OpenSSL automatically queries EGD when entropy is requested via RAND_bytes() or the status is checked via RAND_status() for the first time, if the socket is located at /var/run/egd-pool, /dev/egd-pool or /etc/egd-pool.</p>
+
+<h1 id="RETURN-VALUE">RETURN VALUE</h1>
+
+<p>RAND_egd() and RAND_egd_bytes() return the number of bytes read from the daemon on success, and -1 if the connection failed or the daemon did not return enough data to fully seed the PRNG.</p>
+
+<p>RAND_query_egd_bytes() returns the number of bytes read from the daemon on success, and -1 if the connection failed. The PRNG state is not considered.</p>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man3/rand.html>rand(3)</a>, <a href="../man3/RAND_add.html>RAND_add(3)</a>, <a href="../man3/RAND_cleanup.html>RAND_cleanup(3)</a></p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

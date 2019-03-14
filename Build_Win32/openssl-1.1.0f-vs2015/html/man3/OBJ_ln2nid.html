@@ -1,0 +1,170 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>OBJ_nid2obj</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#NOTES">NOTES</a></li>
+  <li><a href="#EXAMPLES">EXAMPLES</a></li>
+  <li><a href="#BUGS">BUGS</a></li>
+  <li><a href="#RETURN-VALUES">RETURN VALUES</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#HISTORY">HISTORY</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>i2t_ASN1_OBJECT, OBJ_length, OBJ_get0_data, OBJ_nid2obj, OBJ_nid2ln, OBJ_nid2sn, OBJ_obj2nid, OBJ_txt2nid, OBJ_ln2nid, OBJ_sn2nid, OBJ_cmp, OBJ_dup, OBJ_txt2obj, OBJ_obj2txt, OBJ_create, OBJ_cleanup - ASN1 object utility functions</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;openssl/objects.h&gt;
+
+ ASN1_OBJECT *OBJ_nid2obj(int n);
+ const char *OBJ_nid2ln(int n);
+ const char *OBJ_nid2sn(int n);
+
+ int OBJ_obj2nid(const ASN1_OBJECT *o);
+ int OBJ_ln2nid(const char *ln);
+ int OBJ_sn2nid(const char *sn);
+
+ int OBJ_txt2nid(const char *s);
+
+ ASN1_OBJECT *OBJ_txt2obj(const char *s, int no_name);
+ int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name);
+
+ int i2t_ASN1_OBJECT(char *buf, int buf_len, const ASN1_OBJECT *a);
+
+ int OBJ_cmp(const ASN1_OBJECT *a, const ASN1_OBJECT *b);
+ ASN1_OBJECT *OBJ_dup(const ASN1_OBJECT *o);
+
+ int OBJ_create(const char *oid, const char *sn, const char *ln);
+
+ size_t OBJ_length(const ASN1_OBJECT *obj);
+ const unsigned char *OBJ_get0_data(const ASN1_OBJECT *obj);</code></pre>
+
+<p>Deprecated:</p>
+
+<pre><code> #if OPENSSL_API_COMPAT &lt; 0x10100000L
+ void OBJ_cleanup(void)
+ #endif</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>The ASN1 object utility functions process ASN1_OBJECT structures which are a representation of the ASN1 OBJECT IDENTIFIER (OID) type. For convenience, OIDs are usually represented in source code as numeric identifiers, or <b>NID</b>s. OpenSSL has an internal table of OIDs that are generated when the library is built, and their corresponding NIDs are available as defined constants. For the functions below, application code should treat all returned values -- OIDs, NIDs, or names -- as constants.</p>
+
+<p>OBJ_nid2obj(), OBJ_nid2ln() and OBJ_nid2sn() convert the NID <b>n</b> to an ASN1_OBJECT structure, its long name and its short name respectively, or <b>NULL</b> is an error occurred.</p>
+
+<p>OBJ_obj2nid(), OBJ_ln2nid(), OBJ_sn2nid() return the corresponding NID for the object <b>o</b>, the long name &lt;ln&gt; or the short name &lt;sn&gt; respectively or NID_undef if an error occurred.</p>
+
+<p>OBJ_txt2nid() returns NID corresponding to text string &lt;s&gt;. <b>s</b> can be a long name, a short name or the numerical representation of an object.</p>
+
+<p>OBJ_txt2obj() converts the text string <b>s</b> into an ASN1_OBJECT structure. If <b>no_name</b> is 0 then long names and short names will be interpreted as well as numerical forms. If <b>no_name</b> is 1 only the numerical form is acceptable.</p>
+
+<p>OBJ_obj2txt() converts the <b>ASN1_OBJECT</b> <b>a</b> into a textual representation. The representation is written as a null terminated string to <b>buf</b> at most <b>buf_len</b> bytes are written, truncating the result if necessary. The total amount of space required is returned. If <b>no_name</b> is 0 then if the object has a long or short name then that will be used, otherwise the numerical form will be used. If <b>no_name</b> is 1 then the numerical form will always be used.</p>
+
+<p>i2t_ASN1_OBJECT() is the same as OBJ_obj2txt() with the <b>no_name</b> set to zero.</p>
+
+<p>OBJ_cmp() compares <b>a</b> to <b>b</b>. If the two are identical 0 is returned.</p>
+
+<p>OBJ_dup() returns a copy of <b>o</b>.</p>
+
+<p>OBJ_create() adds a new object to the internal table. <b>oid</b> is the numerical form of the object, <b>sn</b> the short name and <b>ln</b> the long name. A new NID is returned for the created object.</p>
+
+<p>OBJ_length() returns the size of the content octets of <b>obj</b>.</p>
+
+<p>OBJ_get0_data() returns a pointer to the content octets of <b>obj</b>. The returned pointer is an internal pointer which <b>must not</b> be freed.</p>
+
+<p>In OpenSSL versions prior to 1.1.0 OBJ_cleanup() cleaned up OpenSSLs internal object table and was called before an application exits if any new objects were added using OBJ_create(). This function is deprecated in version 1.1.0 and now does nothing if called. No explicit de-initialisation is now required. See <a href="../man3/OPENSSL_init_crypto.html>OPENSSL_init_crypto(3)</a> for further information.</p>
+
+<h1 id="NOTES">NOTES</h1>
+
+<p>Objects in OpenSSL can have a short name, a long name and a numerical identifier (NID) associated with them. A standard set of objects is represented in an internal table. The appropriate values are defined in the header file <b>objects.h</b>.</p>
+
+<p>For example the OID for commonName has the following definitions:</p>
+
+<pre><code> #define SN_commonName                   &quot;CN&quot;
+ #define LN_commonName                   &quot;commonName&quot;
+ #define NID_commonName                  13</code></pre>
+
+<p>New objects can be added by calling OBJ_create().</p>
+
+<p>Table objects have certain advantages over other objects: for example their NIDs can be used in a C language switch statement. They are also static constant structures which are shared: that is there is only a single constant structure for each table object.</p>
+
+<p>Objects which are not in the table have the NID value NID_undef.</p>
+
+<p>Objects do not need to be in the internal tables to be processed, the functions OBJ_txt2obj() and OBJ_obj2txt() can process the numerical form of an OID.</p>
+
+<p>Some objects are used to represent algorithms which do not have a corresponding ASN.1 OBJECT IDENTIFIER encoding (for example no OID currently exists for a particular algorithm). As a result they <b>cannot</b> be encoded or decoded as part of ASN.1 structures. Applications can determine if there is a corresponding OBJECT IDENTIFIER by checking OBJ_length() is not zero.</p>
+
+<p>These functions cannot return <b>const</b> because an <b>ASN1_OBJECT</b> can represent both an internal, constant, OID and a dynamically-created one. The latter cannot be constant because it needs to be freed after use.</p>
+
+<h1 id="EXAMPLES">EXAMPLES</h1>
+
+<p>Create an object for <b>commonName</b>:</p>
+
+<pre><code> ASN1_OBJECT *o;
+ o = OBJ_nid2obj(NID_commonName);</code></pre>
+
+<p>Check if an object is <b>commonName</b></p>
+
+<pre><code> if (OBJ_obj2nid(obj) == NID_commonName)
+        /* Do something */</code></pre>
+
+<p>Create a new NID and initialize an object from it:</p>
+
+<pre><code> int new_nid;
+ ASN1_OBJECT *obj;
+
+ new_nid = OBJ_create(&quot;1.2.3.4&quot;, &quot;NewOID&quot;, &quot;New Object Identifier&quot;);
+
+ obj = OBJ_nid2obj(new_nid);</code></pre>
+
+<p>Create a new object directly:</p>
+
+<pre><code> obj = OBJ_txt2obj(&quot;1.2.3.4&quot;, 1);</code></pre>
+
+<h1 id="BUGS">BUGS</h1>
+
+<p>OBJ_obj2txt() is awkward and messy to use: it doesn&#39;t follow the convention of other OpenSSL functions where the buffer can be set to <b>NULL</b> to determine the amount of data that should be written. Instead <b>buf</b> must point to a valid buffer and <b>buf_len</b> should be set to a positive value. A buffer length of 80 should be more than enough to handle any OID encountered in practice.</p>
+
+<h1 id="RETURN-VALUES">RETURN VALUES</h1>
+
+<p>OBJ_nid2obj() returns an <b>ASN1_OBJECT</b> structure or <b>NULL</b> is an error occurred.</p>
+
+<p>OBJ_nid2ln() and OBJ_nid2sn() returns a valid string or <b>NULL</b> on error.</p>
+
+<p>OBJ_obj2nid(), OBJ_ln2nid(), OBJ_sn2nid() and OBJ_txt2nid() return a NID or <b>NID_undef</b> on error.</p>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man3/ERR_get_error.html>ERR_get_error(3)</a></p>
+
+<h1 id="HISTORY">HISTORY</h1>
+
+<p>OBJ_cleanup() was deprecated in OpenSSL 1.1.0.</p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

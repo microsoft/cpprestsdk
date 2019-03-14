@@ -1,0 +1,130 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>RSA_padding_add_PKCS1_type_1</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#RETURN-VALUES">RETURN VALUES</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>RSA_padding_add_PKCS1_type_1, RSA_padding_check_PKCS1_type_1, RSA_padding_add_PKCS1_type_2, RSA_padding_check_PKCS1_type_2, RSA_padding_add_PKCS1_OAEP, RSA_padding_check_PKCS1_OAEP, RSA_padding_add_SSLv23, RSA_padding_check_SSLv23, RSA_padding_add_none, RSA_padding_check_none - asymmetric encryption padding</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;openssl/rsa.h&gt;
+
+ int RSA_padding_add_PKCS1_type_1(unsigned char *to, int tlen,
+    unsigned char *f, int fl);
+
+ int RSA_padding_check_PKCS1_type_1(unsigned char *to, int tlen,
+    unsigned char *f, int fl, int rsa_len);
+
+ int RSA_padding_add_PKCS1_type_2(unsigned char *to, int tlen,
+    unsigned char *f, int fl);
+
+ int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
+    unsigned char *f, int fl, int rsa_len);
+
+ int RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,
+    unsigned char *f, int fl, unsigned char *p, int pl);
+
+ int RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
+    unsigned char *f, int fl, int rsa_len, unsigned char *p, int pl);
+
+ int RSA_padding_add_SSLv23(unsigned char *to, int tlen,
+    unsigned char *f, int fl);
+
+ int RSA_padding_check_SSLv23(unsigned char *to, int tlen,
+    unsigned char *f, int fl, int rsa_len);
+
+ int RSA_padding_add_none(unsigned char *to, int tlen,
+    unsigned char *f, int fl);
+
+ int RSA_padding_check_none(unsigned char *to, int tlen,
+    unsigned char *f, int fl, int rsa_len);</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>The RSA_padding_xxx_xxx() functions are called from the RSA encrypt, decrypt, sign and verify functions. Normally they should not be called from application programs.</p>
+
+<p>However, they can also be called directly to implement padding for other asymmetric ciphers. RSA_padding_add_PKCS1_OAEP() and RSA_padding_check_PKCS1_OAEP() may be used in an application combined with <b>RSA_NO_PADDING</b> in order to implement OAEP with an encoding parameter.</p>
+
+<p>RSA_padding_add_xxx() encodes <b>fl</b> bytes from <b>f</b> so as to fit into <b>tlen</b> bytes and stores the result at <b>to</b>. An error occurs if <b>fl</b> does not meet the size requirements of the encoding method.</p>
+
+<p>The following encoding methods are implemented:</p>
+
+<dl>
+
+<dt id="PKCS1_type_1">PKCS1_type_1</dt>
+<dd>
+
+<p>PKCS #1 v2.0 EMSA-PKCS1-v1_5 (PKCS #1 v1.5 block type 1); used for signatures</p>
+
+</dd>
+<dt id="PKCS1_type_2">PKCS1_type_2</dt>
+<dd>
+
+<p>PKCS #1 v2.0 EME-PKCS1-v1_5 (PKCS #1 v1.5 block type 2)</p>
+
+</dd>
+<dt id="PKCS1_OAEP">PKCS1_OAEP</dt>
+<dd>
+
+<p>PKCS #1 v2.0 EME-OAEP</p>
+
+</dd>
+<dt id="SSLv23">SSLv23</dt>
+<dd>
+
+<p>PKCS #1 EME-PKCS1-v1_5 with SSL-specific modification</p>
+
+</dd>
+<dt id="none">none</dt>
+<dd>
+
+<p>simply copy the data</p>
+
+</dd>
+</dl>
+
+<p>The random number generator must be seeded prior to calling RSA_padding_add_xxx().</p>
+
+<p>RSA_padding_check_xxx() verifies that the <b>fl</b> bytes at <b>f</b> contain a valid encoding for a <b>rsa_len</b> byte RSA key in the respective encoding method and stores the recovered data of at most <b>tlen</b> bytes (for <b>RSA_NO_PADDING</b>: of size <b>tlen</b>) at <b>to</b>.</p>
+
+<p>For RSA_padding_xxx_OAEP(), <b>p</b> points to the encoding parameter of length <b>pl</b>. <b>p</b> may be <b>NULL</b> if <b>pl</b> is 0.</p>
+
+<h1 id="RETURN-VALUES">RETURN VALUES</h1>
+
+<p>The RSA_padding_add_xxx() functions return 1 on success, 0 on error. The RSA_padding_check_xxx() functions return the length of the recovered data, -1 on error. Error codes can be obtained by calling <a href="../man3/ERR_get_error.html>ERR_get_error(3)</a>.</p>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man3/RSA_public_encrypt.html>RSA_public_encrypt(3)</a>, <a href="../man3/RSA_private_decrypt.html>RSA_private_decrypt(3)</a>, <a href="../man3/RSA_sign.html>RSA_sign(3)</a>, <a href="../man3/RSA_verify.html>RSA_verify(3)</a></p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

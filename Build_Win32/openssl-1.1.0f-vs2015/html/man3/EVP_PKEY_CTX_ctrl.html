@@ -1,0 +1,112 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>EVP_PKEY_CTX_ctrl</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#RETURN-VALUES">RETURN VALUES</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#HISTORY">HISTORY</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>EVP_PKEY_CTX_ctrl, EVP_PKEY_CTX_ctrl_str, EVP_PKEY_CTX_set_signature_md, EVP_PKEY_CTX_set_rsa_padding, EVP_PKEY_CTX_set_rsa_pss_saltlen, EVP_PKEY_CTX_set_rsa_rsa_keygen_bits, EVP_PKEY_CTX_set_rsa_keygen_pubexp, EVP_PKEY_CTX_set_dsa_paramgen_bits, EVP_PKEY_CTX_set_dh_paramgen_prime_len, EVP_PKEY_CTX_set_dh_paramgen_generator, EVP_PKEY_CTX_set_ec_paramgen_curve_nid, EVP_PKEY_CTX_set_ec_param_enc - algorithm specific control operations</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;openssl/evp.h&gt;
+
+ int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype,
+                                int cmd, int p1, void *p2);
+ int EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx, const char *type,
+                                                const char *value);
+
+ #include &lt;openssl/rsa.h&gt;
+
+ int EVP_PKEY_CTX_set_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD *md);
+
+ int EVP_PKEY_CTX_set_rsa_padding(EVP_PKEY_CTX *ctx, int pad);
+ int EVP_PKEY_CTX_set_rsa_pss_saltlen(EVP_PKEY_CTX *ctx, int len);
+ int EVP_PKEY_CTX_set_rsa_rsa_keygen_bits(EVP_PKEY_CTX *ctx, int mbits);
+ int EVP_PKEY_CTX_set_rsa_keygen_pubexp(EVP_PKEY_CTX *ctx, BIGNUM *pubexp);
+
+ #include &lt;openssl/dsa.h&gt;
+ int EVP_PKEY_CTX_set_dsa_paramgen_bits(EVP_PKEY_CTX *ctx, int nbits);
+
+ #include &lt;openssl/dh.h&gt;
+ int EVP_PKEY_CTX_set_dh_paramgen_prime_len(EVP_PKEY_CTX *ctx, int len);
+ int EVP_PKEY_CTX_set_dh_paramgen_generator(EVP_PKEY_CTX *ctx, int gen);
+
+ #include &lt;openssl/ec.h&gt;
+ int EVP_PKEY_CTX_set_ec_paramgen_curve_nid(EVP_PKEY_CTX *ctx, int nid);
+ int EVP_PKEY_CTX_set_ec_param_enc(EVP_PKEY_CTX *ctx, int param_enc);</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>The function EVP_PKEY_CTX_ctrl() sends a control operation to the context <b>ctx</b>. The key type used must match <b>keytype</b> if it is not -1. The parameter <b>optype</b> is a mask indicating which operations the control can be applied to. The control command is indicated in <b>cmd</b> and any additional arguments in <b>p1</b> and <b>p2</b>.</p>
+
+<p>Applications will not normally call EVP_PKEY_CTX_ctrl() directly but will instead call one of the algorithm specific macros below.</p>
+
+<p>The function EVP_PKEY_CTX_ctrl_str() allows an application to send an algorithm specific control operation to a context <b>ctx</b> in string form. This is intended to be used for options specified on the command line or in text files. The commands supported are documented in the openssl utility command line pages for the option <b>-pkeyopt</b> which is supported by the <b>pkeyutl</b>, <b>genpkey</b> and <b>req</b> commands.</p>
+
+<p>All the remaining &quot;functions&quot; are implemented as macros.</p>
+
+<p>The EVP_PKEY_CTX_set_signature_md() macro sets the message digest type used in a signature. It can be used with any public key algorithm supporting signature operations.</p>
+
+<p>The macro EVP_PKEY_CTX_set_rsa_padding() sets the RSA padding mode for <b>ctx</b>. The <b>pad</b> parameter can take the value RSA_PKCS1_PADDING for PKCS#1 padding, RSA_SSLV23_PADDING for SSLv23 padding, RSA_NO_PADDING for no padding, RSA_PKCS1_OAEP_PADDING for OAEP padding (encrypt and decrypt only), RSA_X931_PADDING for X9.31 padding (signature operations only) and RSA_PKCS1_PSS_PADDING (sign and verify only).</p>
+
+<p>Two RSA padding modes behave differently if EVP_PKEY_CTX_set_signature_md() is used. If this macro is called for PKCS#1 padding the plaintext buffer is an actual digest value and is encapsulated in a DigestInfo structure according to PKCS#1 when signing and this structure is expected (and stripped off) when verifying. If this control is not used with RSA and PKCS#1 padding then the supplied data is used directly and not encapsulated. In the case of X9.31 padding for RSA the algorithm identifier byte is added or checked and removed if this control is called. If it is not called then the first byte of the plaintext buffer is expected to be the algorithm identifier byte.</p>
+
+<p>The EVP_PKEY_CTX_set_rsa_pss_saltlen() macro sets the RSA PSS salt length to <b>len</b> as its name implies it is only supported for PSS padding. Two special values are supported: -1 sets the salt length to the digest length. When signing -2 sets the salt length to the maximum permissible value. When verifying -2 causes the salt length to be automatically determined based on the <b>PSS</b> block structure. If this macro is not called a salt length value of -2 is used by default.</p>
+
+<p>The EVP_PKEY_CTX_set_rsa_rsa_keygen_bits() macro sets the RSA key length for RSA key generation to <b>bits</b>. If not specified 1024 bits is used.</p>
+
+<p>The EVP_PKEY_CTX_set_rsa_keygen_pubexp() macro sets the public exponent value for RSA key generation to <b>pubexp</b> currently it should be an odd integer. The <b>pubexp</b> pointer is used internally by this function so it should not be modified or free after the call. If this macro is not called then 65537 is used.</p>
+
+<p>The macro EVP_PKEY_CTX_set_dsa_paramgen_bits() sets the number of bits used for DSA parameter generation to <b>bits</b>. If not specified 1024 is used.</p>
+
+<p>The macro EVP_PKEY_CTX_set_dh_paramgen_prime_len() sets the length of the DH prime parameter <b>p</b> for DH parameter generation. If this macro is not called then 1024 is used.</p>
+
+<p>The EVP_PKEY_CTX_set_dh_paramgen_generator() macro sets DH generator to <b>gen</b> for DH parameter generation. If not specified 2 is used.</p>
+
+<p>The EVP_PKEY_CTX_set_ec_paramgen_curve_nid() sets the EC curve for EC parameter generation to <b>nid</b>. For EC parameter generation this macro must be called or an error occurs because there is no default curve. This function can also be called to set the curve explicitly when generating an EC key.</p>
+
+<p>The EVP_PKEY_CTX_set_ec_param_enc() sets the EC parameter encoding to <b>param_enc</b> when generating EC parameters or an EC key. The encoding can be <b>OPENSSL_EC_EXPLICIT_CURVE</b> for explicit parameters (the default in versions of OpenSSL before 1.1.0) or <b>OPENSSL_EC_NAMED_CURVE</b> to use named curve form. For maximum compatibility the named curve form should be used. Note: the <b>OPENSSL_EC_NAMED_CURVE</b> value was only added to OpenSSL 1.1.0; previous versions should use 0 instead.</p>
+
+<h1 id="RETURN-VALUES">RETURN VALUES</h1>
+
+<p>EVP_PKEY_CTX_ctrl() and its macros return a positive value for success and 0 or a negative value for failure. In particular a return value of -2 indicates the operation is not supported by the public key algorithm.</p>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man3/EVP_PKEY_CTX_new.html>EVP_PKEY_CTX_new(3)</a>, <a href="../man3/EVP_PKEY_encrypt.html>EVP_PKEY_encrypt(3)</a>, <a href="../man3/EVP_PKEY_decrypt.html>EVP_PKEY_decrypt(3)</a>, <a href="../man3/EVP_PKEY_sign.html>EVP_PKEY_sign(3)</a>, <a href="../man3/EVP_PKEY_verify.html>EVP_PKEY_verify(3)</a>, <a href="../man3/EVP_PKEY_verify_recover.html>EVP_PKEY_verify_recover(3)</a>, <a href="../man3/EVP_PKEY_derive.html>EVP_PKEY_derive(3)</a> <a href="../man3/EVP_PKEY_keygen.html>EVP_PKEY_keygen(3)</a></p>
+
+<h1 id="HISTORY">HISTORY</h1>
+
+<p>These functions were first added to OpenSSL 1.0.0.</p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

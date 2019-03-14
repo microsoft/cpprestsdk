@@ -1,0 +1,71 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>ERR_remove_state</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#RETURN-VALUE">RETURN VALUE</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#HISTORY">HISTORY</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>ERR_remove_thread_state, ERR_remove_state - DEPRECATED</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<p>Deprecated:</p>
+
+<pre><code> #if OPENSSL_API_COMPAT &lt; 0x10000000L
+ void ERR_remove_state(unsigned long pid);
+ #endif
+
+ #if OPENSSL_API_COMPAT &lt; 0x10100000L
+ void ERR_remove_thread_state(void *);
+ #endif</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>The functions described here were used to free the error queue associated with the current or specified thread.</p>
+
+<p>They are now deprecated and do nothing, as the OpenSSL libraries now normally do all thread initialisation and deinitialisation automatically (see <a href="../man3/OPENSSL_init_crypto.html>OPENSSL_init_crypto(3)</a>).</p>
+
+<h1 id="RETURN-VALUE">RETURN VALUE</h1>
+
+<p>The functions described here return no value.</p>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p>L<a href="../man3/OPENSSL_init_crypto.html>OPENSSL_init_crypto(3)</a></p>
+
+<h1 id="HISTORY">HISTORY</h1>
+
+<p>ERR_remove_state() was deprecated in OpenSSL 1.0.0 when ERR_remove_thread_state() was introduced.</p>
+
+<p>ERR_remove_thread_state() was deprecated in OpenSSL 1.1.0 when the thread handling functionality was entirely rewritten.</p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

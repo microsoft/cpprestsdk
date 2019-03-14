@@ -1,0 +1,63 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>BN_cmp</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#RETURN-VALUES">RETURN VALUES</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>BN_cmp, BN_ucmp, BN_is_zero, BN_is_one, BN_is_word, BN_is_odd - BIGNUM comparison and test functions</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;openssl/bn.h&gt;
+
+ int BN_cmp(BIGNUM *a, BIGNUM *b);
+ int BN_ucmp(BIGNUM *a, BIGNUM *b);
+
+ int BN_is_zero(BIGNUM *a);
+ int BN_is_one(BIGNUM *a);
+ int BN_is_word(BIGNUM *a, BN_ULONG w);
+ int BN_is_odd(BIGNUM *a);</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>BN_cmp() compares the numbers <b>a</b> and <b>b</b>. BN_ucmp() compares their absolute values.</p>
+
+<p>BN_is_zero(), BN_is_one() and BN_is_word() test if <b>a</b> equals 0, 1, or <b>w</b> respectively. BN_is_odd() tests if a is odd.</p>
+
+<p>BN_is_zero(), BN_is_one(), BN_is_word() and BN_is_odd() are macros.</p>
+
+<h1 id="RETURN-VALUES">RETURN VALUES</h1>
+
+<p>BN_cmp() returns -1 if <b>a</b> &lt; <b>b</b>, 0 if <b>a</b> == <b>b</b> and 1 if <b>a</b> &gt; <b>b</b>. BN_ucmp() is the same using the absolute values of <b>a</b> and <b>b</b>.</p>
+
+<p>BN_is_zero(), BN_is_one() BN_is_word() and BN_is_odd() return 1 if the condition is true, 0 otherwise.</p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

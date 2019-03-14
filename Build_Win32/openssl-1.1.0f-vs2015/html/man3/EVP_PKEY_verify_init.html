@@ -1,0 +1,107 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>EVP_PKEY_verify</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#NOTES">NOTES</a></li>
+  <li><a href="#RETURN-VALUES">RETURN VALUES</a></li>
+  <li><a href="#EXAMPLE">EXAMPLE</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#HISTORY">HISTORY</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>EVP_PKEY_verify_init, EVP_PKEY_verify - signature verification using a public key algorithm</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;openssl/evp.h&gt;
+
+ int EVP_PKEY_verify_init(EVP_PKEY_CTX *ctx);
+ int EVP_PKEY_verify(EVP_PKEY_CTX *ctx,
+                        const unsigned char *sig, size_t siglen,
+                        const unsigned char *tbs, size_t tbslen);</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>The EVP_PKEY_verify_init() function initializes a public key algorithm context using key <b>pkey</b> for a signature verification operation.</p>
+
+<p>The EVP_PKEY_verify() function performs a public key verification operation using <b>ctx</b>. The signature is specified using the <b>sig</b> and <b>siglen</b> parameters. The verified data (i.e. the data believed originally signed) is specified using the <b>tbs</b> and <b>tbslen</b> parameters.</p>
+
+<h1 id="NOTES">NOTES</h1>
+
+<p>After the call to EVP_PKEY_verify_init() algorithm specific control operations can be performed to set any appropriate parameters for the operation.</p>
+
+<p>The function EVP_PKEY_verify() can be called more than once on the same context if several operations are performed using the same parameters.</p>
+
+<h1 id="RETURN-VALUES">RETURN VALUES</h1>
+
+<p>EVP_PKEY_verify_init() and EVP_PKEY_verify() return 1 if the verification was successful and 0 if it failed. Unlike other functions the return value 0 from EVP_PKEY_verify() only indicates that the signature did not not verify successfully (that is tbs did not match the original data or the signature was of invalid form) it is not an indication of a more serious error.</p>
+
+<p>A negative value indicates an error other that signature verification failure. In particular a return value of -2 indicates the operation is not supported by the public key algorithm.</p>
+
+<h1 id="EXAMPLE">EXAMPLE</h1>
+
+<p>Verify signature using PKCS#1 and SHA256 digest:</p>
+
+<pre><code> #include &lt;openssl/evp.h&gt;
+ #include &lt;openssl/rsa.h&gt;
+
+ EVP_PKEY_CTX *ctx;
+ unsigned char *md, *sig;
+ size_t mdlen, siglen;
+ EVP_PKEY *verify_key;
+ /* NB: assumes verify_key, sig, siglen md and mdlen are already set up
+  * and that verify_key is an RSA public key
+  */
+ ctx = EVP_PKEY_CTX_new(verify_key);
+ if (!ctx)
+        /* Error occurred */
+ if (EVP_PKEY_verify_init(ctx) &lt;= 0)
+        /* Error */
+ if (EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_PADDING) &lt;= 0)
+        /* Error */
+ if (EVP_PKEY_CTX_set_signature_md(ctx, EVP_sha256()) &lt;= 0)
+        /* Error */
+
+ /* Perform operation */
+ ret = EVP_PKEY_verify(ctx, sig, siglen, md, mdlen);
+
+ /* ret == 1 indicates success, 0 verify failure and &lt; 0 for some
+  * other error.
+  */</code></pre>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man3/EVP_PKEY_CTX_new.html>EVP_PKEY_CTX_new(3)</a>, <a href="../man3/EVP_PKEY_encrypt.html>EVP_PKEY_encrypt(3)</a>, <a href="../man3/EVP_PKEY_decrypt.html>EVP_PKEY_decrypt(3)</a>, <a href="../man3/EVP_PKEY_sign.html>EVP_PKEY_sign(3)</a>, <a href="../man3/EVP_PKEY_verify_recover.html>EVP_PKEY_verify_recover(3)</a>, <a href="../man3/EVP_PKEY_derive.html>EVP_PKEY_derive(3)</a></p>
+
+<h1 id="HISTORY">HISTORY</h1>
+
+<p>These functions were first added to OpenSSL 1.0.0.</p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

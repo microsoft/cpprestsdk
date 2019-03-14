@@ -1,0 +1,127 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>OPENSSL_VERSION_NUMBER</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#RETURN-VALUE">RETURN VALUE</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>OPENSSL_VERSION_NUMBER, OpenSSL_version, OpenSSL_version_num - get OpenSSL version number</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;openssl/opensslv.h&gt;
+ #define OPENSSL_VERSION_NUMBER 0xnnnnnnnnnL
+
+ #include &lt;openssl/crypto.h&gt;
+
+ unsigned long OpenSSL_version_num();
+ const char *OpenSSL_version(int t);</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>OPENSSL_VERSION_NUMBER is a numeric release version identifier:</p>
+
+<pre><code> MNNFFPPS: major minor fix patch status</code></pre>
+
+<p>The status nibble has one of the values 0 for development, 1 to e for betas 1 to 14, and f for release.</p>
+
+<p>for example</p>
+
+<pre><code> 0x000906000 == 0.9.6 dev
+ 0x000906023 == 0.9.6b beta 3
+ 0x00090605f == 0.9.6e release</code></pre>
+
+<p>Versions prior to 0.9.3 have identifiers &lt; 0x0930. Versions between 0.9.3 and 0.9.5 had a version identifier with this interpretation:</p>
+
+<pre><code> MMNNFFRBB major minor fix final beta/patch</code></pre>
+
+<p>for example</p>
+
+<pre><code> 0x000904100 == 0.9.4 release
+ 0x000905000 == 0.9.5 dev</code></pre>
+
+<p>Version 0.9.5a had an interim interpretation that is like the current one, except the patch level got the highest bit set, to keep continuity. The number was therefore 0x0090581f.</p>
+
+<p>OpenSSL_version_num() returns the version number.</p>
+
+<p>OpenSSL_version() returns different strings depending on <b>t</b>:</p>
+
+<dl>
+
+<dt id="OPENSSL_VERSION">OPENSSL_VERSION</dt>
+<dd>
+
+<p>The text variant of the version number and the release date. For example, &quot;OpenSSL 1.0.1a 15 Oct 2015&quot;.</p>
+
+</dd>
+<dt id="OPENSSL_CFLAGS">OPENSSL_CFLAGS</dt>
+<dd>
+
+<p>The compiler flags set for the compilation process in the form &quot;compiler: ...&quot; if available or &quot;compiler: information not available&quot; otherwise.</p>
+
+</dd>
+<dt id="OPENSSL_BUILT_ON">OPENSSL_BUILT_ON</dt>
+<dd>
+
+<p>The date of the build process in the form &quot;built on: ...&quot; if available or &quot;built on: date not available&quot; otherwise.</p>
+
+</dd>
+<dt id="OPENSSL_PLATFORM">OPENSSL_PLATFORM</dt>
+<dd>
+
+<p>The &quot;Configure&quot; target of the library build in the form &quot;platform: ...&quot; if available or &quot;platform: information not available&quot; otherwise.</p>
+
+</dd>
+<dt id="OPENSSL_DIR">OPENSSL_DIR</dt>
+<dd>
+
+<p>The &quot;OPENSSLDIR&quot; setting of the library build in the form &quot;OPENSSLDIR: &quot;...&quot;&quot; if available or &quot;OPENSSLDIR: N/A&quot; otherwise.</p>
+
+</dd>
+<dt id="OPENSSL_ENGINES_DIR">OPENSSL_ENGINES_DIR</dt>
+<dd>
+
+<p>The &quot;ENGINESDIR&quot; setting of the library build in the form &quot;ENGINESDIR: &quot;...&quot;&quot; if available or &quot;ENGINESDIR: N/A&quot; otherwise.</p>
+
+</dd>
+</dl>
+
+<p>For an unknown <b>t</b>, the text &quot;not available&quot; is returned.</p>
+
+<h1 id="RETURN-VALUE">RETURN VALUE</h1>
+
+<p>The version number.</p>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man3/crypto.html>crypto(3)</a></p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

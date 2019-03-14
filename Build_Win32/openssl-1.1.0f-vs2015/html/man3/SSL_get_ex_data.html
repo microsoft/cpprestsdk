@@ -1,0 +1,64 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>SSL_CTX_set_ex_data</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#RETURN-VALUES">RETURN VALUES</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>SSL_CTX_get_ex_data, SSL_CTX_set_ex_data, SSL_get_ex_data, SSL_set_ex_data - Store and retrieve extra data from the SSL_CTX, SSL or SSL_SESSION</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;openssl/ssl.h&gt;
+
+ void *SSL_CTX_get_ex_data(const SSL_CTX *s, int idx);
+
+ int SSL_CTX_set_ex_data(SSL_CTX *s, int idx, void *arg);
+
+ void *SSL_get_ex_data(const SSL *s, int idx);
+
+ int SSL_set_ex_data(SSL *s, int idx, void *arg);</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>SSL*_set_ex_data() functions can be used to store arbitrary user data into the <b>SSL_CTX</b>, or <b>SSL</b> object. The user must supply a unique index which they can subsequently use to retrieve the data using SSL*_get_ex_data().</p>
+
+<p>For more detailed information see <a href="../man3/CRYPTO_get_ex_data.html>CRYPTO_get_ex_data(3)</a> and <a href="../man3/CRYPTO_set_ex_data.html>CRYPTO_set_ex_data(3)</a> which implement these functions and <a href="../man3/CRYPTO_get_ex_new_index.html>CRYPTO_get_ex_new_index(3)</a> for generating a unique index.</p>
+
+<h1 id="RETURN-VALUES">RETURN VALUES</h1>
+
+<p>The SSL*_set_ex_data() functions return 1 if the item is successfully stored and 0 if it is not. The SSL*_get_ex_data() functions return the ex_data pointer if successful, otherwise NULL.</p>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man3/CRYPTO_get_ex_data.html>CRYPTO_get_ex_data(3)</a>, <a href="../man3/CRYPTO_set_ex_data.html>CRYPTO_set_ex_data(3)</a>, <a href="../man3/CRYPTO_get_ex_new_index.html>CRYPTO_get_ex_new_index(3)</a></p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

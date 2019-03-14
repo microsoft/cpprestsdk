@@ -1,0 +1,190 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>tsget</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#OPTIONS">OPTIONS</a></li>
+  <li><a href="#ENVIRONMENT-VARIABLES">ENVIRONMENT VARIABLES</a></li>
+  <li><a href="#EXAMPLES">EXAMPLES</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>tsget - Time Stamping HTTP/HTTPS client</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<p><b>tsget</b> <b>-h</b> server_url [<b>-e</b> extension] [<b>-o</b> output] [<b>-v</b>] [<b>-d</b>] [<b>-k</b> private_key.pem] [<b>-p</b> key_password] [<b>-c</b> client_cert.pem] [<b>-C</b> CA_certs.pem] [<b>-P</b> CA_path] [<b>-r</b> file:file...] [<b>-g</b> EGD_socket] [request]...</p>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>The <b>tsget</b> command can be used for sending a time stamp request, as specified in <b>RFC 3161</b>, to a time stamp server over HTTP or HTTPS and storing the time stamp response in a file. This tool cannot be used for creating the requests and verifying responses, you can use the OpenSSL <b>ts(1)</b> command to do that. <b>tsget</b> can send several requests to the server without closing the TCP connection if more than one requests are specified on the command line.</p>
+
+<p>The tool sends the following HTTP request for each time stamp request:</p>
+
+<pre><code>        POST url HTTP/1.1
+        User-Agent: OpenTSA tsget.pl/&lt;version&gt;
+        Host: &lt;host&gt;:&lt;port&gt;
+        Pragma: no-cache
+        Content-Type: application/timestamp-query
+        Accept: application/timestamp-reply
+        Content-Length: length of body
+
+        ...binary request specified by the user...</code></pre>
+
+<p><b>tsget</b> expects a response of type application/timestamp-reply, which is written to a file without any interpretation.</p>
+
+<h1 id="OPTIONS">OPTIONS</h1>
+
+<dl>
+
+<dt id="h-server_url"><b>-h</b> server_url</dt>
+<dd>
+
+<p>The URL of the HTTP/HTTPS server listening for time stamp requests.</p>
+
+</dd>
+<dt id="e-extension"><b>-e</b> extension</dt>
+<dd>
+
+<p>If the <b>-o</b> option is not given this argument specifies the extension of the output files. The base name of the output file will be the same as those of the input files. Default extension is &#39;.tsr&#39;. (Optional)</p>
+
+</dd>
+<dt id="o-output"><b>-o</b> output</dt>
+<dd>
+
+<p>This option can be specified only when just one request is sent to the server. The time stamp response will be written to the given output file. &#39;-&#39; means standard output. In case of multiple time stamp requests or the absence of this argument the names of the output files will be derived from the names of the input files and the default or specified extension argument. (Optional)</p>
+
+</dd>
+<dt id="v"><b>-v</b></dt>
+<dd>
+
+<p>The name of the currently processed request is printed on standard error. (Optional)</p>
+
+</dd>
+<dt id="d"><b>-d</b></dt>
+<dd>
+
+<p>Switches on verbose mode for the underlying <b>curl</b> library. You can see detailed debug messages for the connection. (Optional)</p>
+
+</dd>
+<dt id="k-private_key.pem"><b>-k</b> private_key.pem</dt>
+<dd>
+
+<p>(HTTPS) In case of certificate-based client authentication over HTTPS &lt;private_key.pem&gt; must contain the private key of the user. The private key file can optionally be protected by a passphrase. The <b>-c</b> option must also be specified. (Optional)</p>
+
+</dd>
+<dt id="p-key_password"><b>-p</b> key_password</dt>
+<dd>
+
+<p>(HTTPS) Specifies the passphrase for the private key specified by the <b>-k</b> argument. If this option is omitted and the key is passphrase protected <b>tsget</b> will ask for it. (Optional)</p>
+
+</dd>
+<dt id="c-client_cert.pem"><b>-c</b> client_cert.pem</dt>
+<dd>
+
+<p>(HTTPS) In case of certificate-based client authentication over HTTPS &lt;client_cert.pem&gt; must contain the X.509 certificate of the user. The <b>-k</b> option must also be specified. If this option is not specified no certificate-based client authentication will take place. (Optional)</p>
+
+</dd>
+<dt id="C-CA_certs.pem"><b>-C</b> CA_certs.pem</dt>
+<dd>
+
+<p>(HTTPS) The trusted CA certificate store. The certificate chain of the peer&#39;s certificate must include one of the CA certificates specified in this file. Either option <b>-C</b> or option <b>-P</b> must be given in case of HTTPS. (Optional)</p>
+
+</dd>
+<dt id="P-CA_path"><b>-P</b> CA_path</dt>
+<dd>
+
+<p>(HTTPS) The path containing the trusted CA certificates to verify the peer&#39;s certificate. The directory must be prepared with the <b>c_rehash</b> OpenSSL utility. Either option <b>-C</b> or option <b>-P</b> must be given in case of HTTPS. (Optional)</p>
+
+</dd>
+<dt id="rand-file:file"><b>-rand</b> file:file...</dt>
+<dd>
+
+<p>The files containing random data for seeding the random number generator. Multiple files can be specified, the separator is <b>;</b> for MS-Windows, <b>,</b> for VMS and <b>:</b> for all other platforms. (Optional)</p>
+
+</dd>
+<dt id="g-EGD_socket"><b>-g</b> EGD_socket</dt>
+<dd>
+
+<p>The name of an EGD socket to get random data from. (Optional)</p>
+
+</dd>
+<dt id="request">[request]...</dt>
+<dd>
+
+<p>List of files containing <b>RFC 3161</b> DER-encoded time stamp requests. If no requests are specified only one request will be sent to the server and it will be read from the standard input. (Optional)</p>
+
+</dd>
+</dl>
+
+<h1 id="ENVIRONMENT-VARIABLES">ENVIRONMENT VARIABLES</h1>
+
+<p>The <b>TSGET</b> environment variable can optionally contain default arguments. The content of this variable is added to the list of command line arguments.</p>
+
+<h1 id="EXAMPLES">EXAMPLES</h1>
+
+<p>The examples below presume that <b>file1.tsq</b> and <b>file2.tsq</b> contain valid time stamp requests, tsa.opentsa.org listens at port 8080 for HTTP requests and at port 8443 for HTTPS requests, the TSA service is available at the /tsa absolute path.</p>
+
+<p>Get a time stamp response for file1.tsq over HTTP, output is written to file1.tsr:</p>
+
+<pre><code>  tsget -h http://tsa.opentsa.org:8080/tsa file1.tsq</code></pre>
+
+<p>Get a time stamp response for file1.tsq and file2.tsq over HTTP showing progress, output is written to file1.reply and file2.reply respectively:</p>
+
+<pre><code>  tsget -h http://tsa.opentsa.org:8080/tsa -v -e .reply \
+        file1.tsq file2.tsq</code></pre>
+
+<p>Create a time stamp request, write it to file3.tsq, send it to the server and write the response to file3.tsr:</p>
+
+<pre><code>  openssl ts -query -data file3.txt -cert | tee file3.tsq \
+        | tsget -h http://tsa.opentsa.org:8080/tsa \
+        -o file3.tsr</code></pre>
+
+<p>Get a time stamp response for file1.tsq over HTTPS without client authentication:</p>
+
+<pre><code>  tsget -h https://tsa.opentsa.org:8443/tsa \
+        -C cacerts.pem file1.tsq</code></pre>
+
+<p>Get a time stamp response for file1.tsq over HTTPS with certificate-based client authentication (it will ask for the passphrase if client_key.pem is protected):</p>
+
+<pre><code>  tsget -h https://tsa.opentsa.org:8443/tsa -C cacerts.pem \
+        -k client_key.pem -c client_cert.pem file1.tsq</code></pre>
+
+<p>You can shorten the previous command line if you make use of the <b>TSGET</b> environment variable. The following commands do the same as the previous example:</p>
+
+<pre><code>  TSGET=&#39;-h https://tsa.opentsa.org:8443/tsa -C cacerts.pem \
+        -k client_key.pem -c client_cert.pem&#39;
+  export TSGET
+  tsget file1.tsq</code></pre>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man1/openssl.html>openssl(1)</a>, <a href="../man1/ts.html>ts(1)</a>, <a href="../man1/curl.html>curl(1)</a>, <b>RFC 3161</b></p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

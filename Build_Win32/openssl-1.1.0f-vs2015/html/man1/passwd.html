@@ -1,0 +1,120 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>passwd</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#OPTIONS">OPTIONS</a></li>
+  <li><a href="#EXAMPLES">EXAMPLES</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>passwd - compute password hashes</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<p><b>openssl passwd</b> [<b>-help</b>] [<b>-crypt</b>] [<b>-1</b>] [<b>-apr1</b>] [<b>-salt</b> <i>string</i>] [<b>-in</b> <i>file</i>] [<b>-stdin</b>] [<b>-noverify</b>] [<b>-quiet</b>] [<b>-table</b>] {<i>password</i>}</p>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>The <b>passwd</b> command computes the hash of a password typed at run-time or the hash of each password in a list. The password list is taken from the named file for option <b>-in file</b>, from stdin for option <b>-stdin</b>, or from the command line, or from the terminal otherwise. The Unix standard algorithm <b>crypt</b> and the MD5-based BSD password algorithm <b>1</b> and its Apache variant <b>apr1</b> are available.</p>
+
+<h1 id="OPTIONS">OPTIONS</h1>
+
+<dl>
+
+<dt id="help"><b>-help</b></dt>
+<dd>
+
+<p>Print out a usage message.</p>
+
+</dd>
+<dt id="crypt"><b>-crypt</b></dt>
+<dd>
+
+<p>Use the <b>crypt</b> algorithm (default).</p>
+
+</dd>
+<dt id="pod-1"><b>-1</b></dt>
+<dd>
+
+<p>Use the MD5 based BSD password algorithm <b>1</b>.</p>
+
+</dd>
+<dt id="apr1"><b>-apr1</b></dt>
+<dd>
+
+<p>Use the <b>apr1</b> algorithm (Apache variant of the BSD algorithm).</p>
+
+</dd>
+<dt id="salt-string"><b>-salt</b> <i>string</i></dt>
+<dd>
+
+<p>Use the specified salt. When reading a password from the terminal, this implies <b>-noverify</b>.</p>
+
+</dd>
+<dt id="in-file"><b>-in</b> <i>file</i></dt>
+<dd>
+
+<p>Read passwords from <i>file</i>.</p>
+
+</dd>
+<dt id="stdin"><b>-stdin</b></dt>
+<dd>
+
+<p>Read passwords from <b>stdin</b>.</p>
+
+</dd>
+<dt id="noverify"><b>-noverify</b></dt>
+<dd>
+
+<p>Don&#39;t verify when reading a password from the terminal.</p>
+
+</dd>
+<dt id="quiet"><b>-quiet</b></dt>
+<dd>
+
+<p>Don&#39;t output warnings when passwords given at the command line are truncated.</p>
+
+</dd>
+<dt id="table"><b>-table</b></dt>
+<dd>
+
+<p>In the output list, prepend the cleartext password and a TAB character to each password hash.</p>
+
+</dd>
+</dl>
+
+<h1 id="EXAMPLES">EXAMPLES</h1>
+
+<p><b>openssl passwd -crypt -salt xx password</b> prints <b>xxj31ZMTZzkVA</b>.</p>
+
+<p><b>openssl passwd -1 -salt xxxxxxxx password</b> prints <b>$1$xxxxxxxx$UYCIxa628.9qXjpQCjM4a.</b>.</p>
+
+<p><b>openssl passwd -apr1 -salt xxxxxxxx password</b> prints <b>$apr1$xxxxxxxx$dxHfLAsjHkDRmG83UXe8K0</b>.</p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

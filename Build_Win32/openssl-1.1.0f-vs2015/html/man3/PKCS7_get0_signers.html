@@ -1,0 +1,109 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PKCS7_verify</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#VERIFY-PROCESS">VERIFY PROCESS</a></li>
+  <li><a href="#NOTES">NOTES</a></li>
+  <li><a href="#RETURN-VALUES">RETURN VALUES</a></li>
+  <li><a href="#BUGS">BUGS</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>PKCS7_verify, PKCS7_get0_signers - verify a PKCS#7 signedData structure</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;openssl/pkcs7.h&gt;
+
+ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store, BIO *indata, BIO *out, int flags);
+
+ STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, STACK_OF(X509) *certs, int flags);</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>PKCS7_verify() verifies a PKCS#7 signedData structure. <b>p7</b> is the PKCS7 structure to verify. <b>certs</b> is a set of certificates in which to search for the signer&#39;s certificate. <b>store</b> is a trusted certificate store (used for chain verification). <b>indata</b> is the signed data if the content is not present in <b>p7</b> (that is it is detached). The content is written to <b>out</b> if it is not NULL.</p>
+
+<p><b>flags</b> is an optional set of flags, which can be used to modify the verify operation.</p>
+
+<p>PKCS7_get0_signers() retrieves the signer&#39;s certificates from <b>p7</b>, it does <b>not</b> check their validity or whether any signatures are valid. The <b>certs</b> and <b>flags</b> parameters have the same meanings as in PKCS7_verify().</p>
+
+<h1 id="VERIFY-PROCESS">VERIFY PROCESS</h1>
+
+<p>Normally the verify process proceeds as follows.</p>
+
+<p>Initially some sanity checks are performed on <b>p7</b>. The type of <b>p7</b> must be signedData. There must be at least one signature on the data and if the content is detached <b>indata</b> cannot be <b>NULL</b>. If the content is not detached and <b>indata</b> is not <b>NULL</b>, then the structure has both embedded and external content. To treat this as an error, use the flag <b>PKCS7_NO_DUAL_CONTENT</b>. The default behavior allows this, for compatibility with older versions of OpenSSL.</p>
+
+<p>An attempt is made to locate all the signer&#39;s certificates, first looking in the <b>certs</b> parameter (if it is not <b>NULL</b>) and then looking in any certificates contained in the <b>p7</b> structure itself. If any signer&#39;s certificates cannot be located the operation fails.</p>
+
+<p>Each signer&#39;s certificate is chain verified using the <b>smimesign</b> purpose and the supplied trusted certificate store. Any internal certificates in the message are used as untrusted CAs. If any chain verify fails an error code is returned.</p>
+
+<p>Finally the signed content is read (and written to <b>out</b> is it is not NULL) and the signature&#39;s checked.</p>
+
+<p>If all signature&#39;s verify correctly then the function is successful.</p>
+
+<p>Any of the following flags (ored together) can be passed in the <b>flags</b> parameter to change the default verify behaviour. Only the flag <b>PKCS7_NOINTERN</b> is meaningful to PKCS7_get0_signers().</p>
+
+<p>If <b>PKCS7_NOINTERN</b> is set the certificates in the message itself are not searched when locating the signer&#39;s certificate. This means that all the signers certificates must be in the <b>certs</b> parameter.</p>
+
+<p>If the <b>PKCS7_TEXT</b> flag is set MIME headers for type <b>text/plain</b> are deleted from the content. If the content is not of type <b>text/plain</b> then an error is returned.</p>
+
+<p>If <b>PKCS7_NOVERIFY</b> is set the signer&#39;s certificates are not chain verified.</p>
+
+<p>If <b>PKCS7_NOCHAIN</b> is set then the certificates contained in the message are not used as untrusted CAs. This means that the whole verify chain (apart from the signer&#39;s certificate) must be contained in the trusted store.</p>
+
+<p>If <b>PKCS7_NOSIGS</b> is set then the signatures on the data are not checked.</p>
+
+<h1 id="NOTES">NOTES</h1>
+
+<p>One application of <b>PKCS7_NOINTERN</b> is to only accept messages signed by a small number of certificates. The acceptable certificates would be passed in the <b>certs</b> parameter. In this case if the signer is not one of the certificates supplied in <b>certs</b> then the verify will fail because the signer cannot be found.</p>
+
+<p>Care should be taken when modifying the default verify behaviour, for example setting <b>PKCS7_NOVERIFY|PKCS7_NOSIGS</b> will totally disable all verification and any signed message will be considered valid. This combination is however useful if one merely wishes to write the content to <b>out</b> and its validity is not considered important.</p>
+
+<p>Chain verification should arguably be performed using the signing time rather than the current time. However since the signing time is supplied by the signer it cannot be trusted without additional evidence (such as a trusted timestamp).</p>
+
+<h1 id="RETURN-VALUES">RETURN VALUES</h1>
+
+<p>PKCS7_verify() returns one for a successful verification and zero if an error occurs.</p>
+
+<p>PKCS7_get0_signers() returns all signers or <b>NULL</b> if an error occurred.</p>
+
+<p>The error can be obtained from <a href="../man3/ERR_get_error.html>ERR_get_error(3)</a></p>
+
+<h1 id="BUGS">BUGS</h1>
+
+<p>The trusted certificate store is not searched for the signers certificate, this is primarily due to the inadequacies of the current <b>X509_STORE</b> functionality.</p>
+
+<p>The lack of single pass processing and need to hold all data in memory as mentioned in PKCS7_sign() also applies to PKCS7_verify().</p>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man3/ERR_get_error.html>ERR_get_error(3)</a>, <a href="../man3/PKCS7_sign.html>PKCS7_sign(3)</a></p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

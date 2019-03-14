@@ -1,0 +1,90 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>X509_get0_signature</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#NOTES">NOTES</a></li>
+  <li><a href="#RETURN-VALUES">RETURN VALUES</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#HISTORY">HISTORY</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>X509_get0_signature, X509_get_signature_nid, X509_get0_tbs_sigalg, X509_REQ_get0_signature, X509_REQ_get_signature_nid, X509_CRL_get0_signature, X509_CRL_get_signature_nid - signature information</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;openssl/x509.h&gt;
+
+ void X509_get0_signature(const ASN1_BIT_STRING **psig,
+                          const X509_ALGOR **palg,
+                          const X509 *x);
+ int X509_get_signature_nid(const X509 *x);
+ const X509_ALGOR *X509_get0_tbs_sigalg(const X509 *x);
+
+ void X509_REQ_get0_signature(const X509_REQ *crl,
+                              const ASN1_BIT_STRING **psig,
+                              const X509_ALGOR **palg);
+ int X509_REQ_get_signature_nid(const X509_REQ *crl);
+
+ void X509_CRL_get0_signature(const X509_CRL *crl,
+                              const ASN1_BIT_STRING **psig,
+                              const X509_ALGOR **palg);
+ int X509_CRL_get_signature_nid(const X509_CRL *crl);</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>X509_get0_signature() sets <b>*psig</b> to the signature of <b>x</b> and <b>*palg</b> to the signature algorithm of <b>x</b>. The values returned are internal pointers which <b>MUST NOT</b> be freed up after the call.</p>
+
+<p>X509_get0_tbs_sigalg() returns the signature algorithm in the signed portion of <b>x</b>.</p>
+
+<p>X509_get_signature_nid() returns the NID corresponding to the signature algorithm of <b>x</b>.</p>
+
+<p>X509_REQ_get0_signature(), X509_REQ_get_signature_nid() X509_CRL_get0_signature() and X509_CRL_get_signature_nid() perform the same function for certificate requests and CRLs.</p>
+
+<h1 id="NOTES">NOTES</h1>
+
+<p>These functions provide lower level access to signatures in certificates where an application wishes to analyse or generate a signature in a form where X509_sign() et al is not appropriate (for example a non standard or unsupported format).</p>
+
+<h1 id="RETURN-VALUES">RETURN VALUES</h1>
+
+<p>X509_get_signature_nid(), X509_REQ_get_signature_nid() and X509_CRL_get_signature_nid() return a NID.</p>
+
+<p>X509_get0_signature(), X509_REQ_get0_signature() and X509_CRL_get0_signature() do not return values.</p>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man3/d2i_X509.html>d2i_X509(3)</a>, <a href="../man3/ERR_get_error.html>ERR_get_error(3)</a>, <a href="../man3/X509_CRL_get0_by_serial.html>X509_CRL_get0_by_serial(3)</a>, <a href="../man3/X509_get_ext_d2i.html>X509_get_ext_d2i(3)</a>, <a href="../man3/X509_get_extension_flags.html>X509_get_extension_flags(3)</a>, <a href="../man3/X509_get_pubkey.html>X509_get_pubkey(3)</a>, <a href="../man3/X509_get_subject_name.html>X509_get_subject_name(3)</a>, <a href="../man3/X509_get_version.html>X509_get_version(3)</a>, <a href="../man3/X509_NAME_add_entry_by_txt.html>X509_NAME_add_entry_by_txt(3)</a>, <a href="../man3/X509_NAME_ENTRY_get_object.html>X509_NAME_ENTRY_get_object(3)</a>, <a href="../man3/X509_NAME_get_index_by_NID.html>X509_NAME_get_index_by_NID(3)</a>, <a href="../man3/X509_NAME_print_ex.html>X509_NAME_print_ex(3)</a>, <a href="../man3/X509_new.html>X509_new(3)</a>, <a href="../man3/X509_sign.html>X509_sign(3)</a>, <a href="../man3/X509V3_get_d2i.html>X509V3_get_d2i(3)</a>, <a href="../man3/X509_verify_cert.html>X509_verify_cert(3)</a></p>
+
+<h1 id="HISTORY">HISTORY</h1>
+
+<p>X509_get0_signature() and X509_get_signature_nid() were first added to OpenSSL 1.0.2.</p>
+
+<p>X509_REQ_get0_signature(), X509_REQ_get_signature_nid(), X509_CRL_get0_signature() and X509_CRL_get_signature_nid() were first added to OpenSSL 1.1.0.</p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

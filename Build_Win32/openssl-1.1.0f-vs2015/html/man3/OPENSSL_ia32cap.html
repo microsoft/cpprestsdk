@@ -1,0 +1,178 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>OPENSSL_ia32cap</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>OPENSSL_ia32cap - the x86[_64] processor capabilities vector</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> env OPENSSL_ia32cap=... &lt;application&gt;</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>OpenSSL supports a range of x86[_64] instruction set extensions. These extensions are denoted by individual bits in capability vector returned by processor in EDX:ECX register pair after executing CPUID instruction with EAX=1 input value (see Intel Application Note #241618). This vector is copied to memory upon toolkit initialization and used to choose between different code paths to provide optimal performance across wide range of processors. For the moment of this writing following bits are significant:</p>
+
+<dl>
+
+<dt id="bit-4-denoting-presence-of-Time-Stamp-Counter">bit #4 denoting presence of Time-Stamp Counter.</dt>
+<dd>
+
+</dd>
+<dt id="bit-19-denoting-availability-of-CLFLUSH-instruction">bit #19 denoting availability of CLFLUSH instruction;</dt>
+<dd>
+
+</dd>
+<dt id="bit-20-reserved-by-Intel-is-used-to-choose-among-RC4-code-paths">bit #20, reserved by Intel, is used to choose among RC4 code paths;</dt>
+<dd>
+
+</dd>
+<dt id="bit-23-denoting-MMX-support">bit #23 denoting MMX support;</dt>
+<dd>
+
+</dd>
+<dt id="bit-24-FXSR-bit-denoting-availability-of-XMM-registers">bit #24, FXSR bit, denoting availability of XMM registers;</dt>
+<dd>
+
+</dd>
+<dt id="bit-25-denoting-SSE-support">bit #25 denoting SSE support;</dt>
+<dd>
+
+</dd>
+<dt id="bit-26-denoting-SSE2-support">bit #26 denoting SSE2 support;</dt>
+<dd>
+
+</dd>
+<dt id="bit-28-denoting-Hyperthreading-which-is-used-to-distinguish-cores-with-shared-cache">bit #28 denoting Hyperthreading, which is used to distinguish cores with shared cache;</dt>
+<dd>
+
+</dd>
+<dt id="bit-30-reserved-by-Intel-denotes-specifically-Intel-CPUs">bit #30, reserved by Intel, denotes specifically Intel CPUs;</dt>
+<dd>
+
+</dd>
+<dt id="bit-33-denoting-availability-of-PCLMULQDQ-instruction">bit #33 denoting availability of PCLMULQDQ instruction;</dt>
+<dd>
+
+</dd>
+<dt id="bit-41-denoting-SSSE3-Supplemental-SSE3-support">bit #41 denoting SSSE3, Supplemental SSE3, support;</dt>
+<dd>
+
+</dd>
+<dt id="bit-43-denoting-AMD-XOP-support-forced-to-zero-on-non-AMD-CPUs">bit #43 denoting AMD XOP support (forced to zero on non-AMD CPUs);</dt>
+<dd>
+
+</dd>
+<dt id="bit-54-denoting-availability-of-MOVBE-instruction">bit #54 denoting availability of MOVBE instruction;</dt>
+<dd>
+
+</dd>
+<dt id="bit-57-denoting-AES-NI-instruction-set-extension">bit #57 denoting AES-NI instruction set extension;</dt>
+<dd>
+
+</dd>
+<dt id="bit-58-XSAVE-bit-lack-of-which-in-combination-with-MOVBE-is-used-to-identify-Atom-Silvermont-core">bit #58, XSAVE bit, lack of which in combination with MOVBE is used to identify Atom Silvermont core;</dt>
+<dd>
+
+</dd>
+<dt id="bit-59-OSXSAVE-bit-denoting-availability-of-YMM-registers">bit #59, OSXSAVE bit, denoting availability of YMM registers;</dt>
+<dd>
+
+</dd>
+<dt id="bit-60-denoting-AVX-extension">bit #60 denoting AVX extension;</dt>
+<dd>
+
+</dd>
+<dt id="bit-62-denoting-availability-of-RDRAND-instruction">bit #62 denoting availability of RDRAND instruction;</dt>
+<dd>
+
+</dd>
+</dl>
+
+<p>For example, in 32-bit application context clearing bit #26 at run-time disables high-performance SSE2 code present in the crypto library, while clearing bit #24 disables SSE2 code operating on 128-bit XMM register bank. You might have to do the latter if target OpenSSL application is executed on SSE2 capable CPU, but under control of OS that does not enable XMM registers. Historically address of the capability vector copy was exposed to application through OPENSSL_ia32cap_loc(), but not anymore. Now the only way to affect the capability detection is to set OPENSSL_ia32cap environment variable prior target application start. To give a specific example, on Intel P4 processor &#39;env OPENSSL_ia32cap=0x16980010 apps/openssl&#39;, or better yet &#39;env OPENSSL_ia32cap=~0x1000000 apps/openssl&#39; would achieve the desired effect. Alternatively you can reconfigure the toolkit with no-sse2 option and recompile.</p>
+
+<p>Less intuitive is clearing bit #28, or ~0x10000000 in the &quot;environment variable&quot; terms. The truth is that it&#39;s not copied from CPUID output verbatim, but is adjusted to reflect whether or not the data cache is actually shared between logical cores. This in turn affects the decision on whether or not expensive countermeasures against cache-timing attacks are applied, most notably in AES assembler module.</p>
+
+<p>The capability vector is further extended with EBX value returned by CPUID with EAX=7 and ECX=0 as input. Following bits are significant:</p>
+
+<dl>
+
+<dt id="bit-64-3-denoting-availability-of-BMI1-instructions-e.g.-ANDN">bit #64+3 denoting availability of BMI1 instructions, e.g. ANDN;</dt>
+<dd>
+
+</dd>
+<dt id="bit-64-5-denoting-availability-of-AVX2-instructions">bit #64+5 denoting availability of AVX2 instructions;</dt>
+<dd>
+
+</dd>
+<dt id="bit-64-8-denoting-availability-of-BMI2-instructions-e.g.-MULX-and-RORX">bit #64+8 denoting availability of BMI2 instructions, e.g. MULX and RORX;</dt>
+<dd>
+
+</dd>
+<dt id="bit-64-16-denoting-availability-of-AVX512F-extension">bit #64+16 denoting availability of AVX512F extension;</dt>
+<dd>
+
+</dd>
+<dt id="bit-64-18-denoting-availability-of-RDSEED-instruction">bit #64+18 denoting availability of RDSEED instruction;</dt>
+<dd>
+
+</dd>
+<dt id="bit-64-19-denoting-availability-of-ADCX-and-ADOX-instructions">bit #64+19 denoting availability of ADCX and ADOX instructions;</dt>
+<dd>
+
+</dd>
+<dt id="bit-64-29-denoting-availability-of-SHA-extension">bit #64+29 denoting availability of SHA extension;</dt>
+<dd>
+
+</dd>
+<dt id="bit-64-30-denoting-availability-of-AVX512BW-extension">bit #64+30 denoting availability of AVX512BW extension;</dt>
+<dd>
+
+</dd>
+<dt id="bit-64-31-denoting-availability-of-AVX512VL-extension">bit #64+31 denoting availability of AVX512VL extension;</dt>
+<dd>
+
+</dd>
+</dl>
+
+<p>To control this extended capability word use &#39;:&#39; as delimiter when setting up OPENSSL_ia32cap environment variable. For example assigning &#39;:~0x20&#39; would disable AVX2 code paths, and &#39;:0&#39; - all post-AVX extensions.</p>
+
+<p>It should be noted that whether or not some of the most &quot;fancy&quot; extension code paths are actually assembled depends on current assembler version. Base minimum of AES-NI/PCLMULQDQ, SSSE3 and SHA extension code paths are always assembled. Besides that, minimum assembler version requirements are summarized in below table:</p>
+
+<pre><code>   Extension   | GNU as | nasm   | llvm
+   ------------+--------+--------+--------
+   AVX         | 2.19   | 2.09   | 3.0
+   AVX2        | 2.22   | 2.10   | 3.1
+   AVX512      | 2.25   | 2.11.8 | 3.6</code></pre>
+
+<p><b>OPENSSL_ia32cap</b> is a macro returning the first word of the vector.</p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2004-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

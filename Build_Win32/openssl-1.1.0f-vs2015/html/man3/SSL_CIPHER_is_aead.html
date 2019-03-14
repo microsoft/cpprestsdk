@@ -1,0 +1,138 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>SSL_CIPHER_get_name</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#HISTORY">HISTORY</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>SSL_CIPHER_get_cipher_nid, SSL_CIPHER_get_digest_nid, SSL_CIPHER_get_kx_nid, SSL_CIPHER_get_auth_nid, SSL_CIPHER_is_aead, SSL_CIPHER_get_name, SSL_CIPHER_get_bits, SSL_CIPHER_get_version, SSL_CIPHER_description - get SSL_CIPHER properties</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;openssl/ssl.h&gt;
+
+ const char *SSL_CIPHER_get_name(const SSL_CIPHER *cipher);
+ int SSL_CIPHER_get_bits(const SSL_CIPHER *cipher, int *alg_bits);
+ char *SSL_CIPHER_get_version(const SSL_CIPHER *cipher);
+ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int size);
+ int SSL_CIPHER_get_cipher_nid(const SSL_CIPHER *c);
+ int SSL_CIPHER_get_digest_nid(const SSL_CIPHER *c);
+ int SSL_CIPHER_get_kx_nid(const SSL_CIPHER *c);
+ int SSL_CIPHER_get_auth_nid(const SSL_CIPHER *c);
+ int SSL_CIPHER_is_aead(const SSL_CIPHER *c);</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>SSL_CIPHER_get_name() returns a pointer to the name of <b>cipher</b>. If the <b>cipher</b> is NULL, it returns &quot;(NONE)&quot;.</p>
+
+<p>SSL_CIPHER_get_bits() returns the number of secret bits used for <b>cipher</b>. If <b>cipher</b> is NULL, 0 is returned.</p>
+
+<p>SSL_CIPHER_get_version() returns string which indicates the SSL/TLS protocol version that first defined the cipher. It returns &quot;(NONE)&quot; if <b>cipher</b> is NULL.</p>
+
+<p>SSL_CIPHER_get_cipher_nid() returns the cipher NID corresponding to <b>c</b>. If there is no cipher (e.g. for ciphersuites with no encryption) then <b>NID_undef</b> is returned.</p>
+
+<p>SSL_CIPHER_get_digest_nid() returns the digest NID corresponding to the MAC used by <b>c</b>. If there is no digest (e.g. for AEAD ciphersuites) then <b>NID_undef</b> is returned.</p>
+
+<p>SSL_CIPHER_get_kx_nid() returns the key exchange NID corresponding to the method used by <b>c</b>. If there is no key exchange, then <b>NID_undef</b> is returned. Examples (not comprehensive):</p>
+
+<pre><code> NID_kx_rsa
+ NID_kx_ecdhe
+ NID_kx_dhe
+ NID_kx_psk</code></pre>
+
+<p>SSL_CIPHER_get_auth_nid() returns the authentication NID corresponding to the method used by <b>c</b>. If there is no authentication, then <b>NID_undef</b> is returned. Examples (not comprehensive):</p>
+
+<pre><code> NID_auth_rsa
+ NID_auth_ecdsa
+ NID_auth_psk</code></pre>
+
+<p>SSL_CIPHER_is_aead() returns 1 if the cipher <b>c</b> is AEAD (e.g. GCM or ChaCha20/Poly1305), and 0 if it is not AEAD.</p>
+
+<p>SSL_CIPHER_description() returns a textual description of the cipher used into the buffer <b>buf</b> of length <b>len</b> provided. If <b>buf</b> is provided, it must be at least 128 bytes, otherwise a buffer will be allocated using OPENSSL_malloc(). If the provided buffer is too small, or the allocation fails, <b>NULL</b> is returned.</p>
+
+<p>The string returned by SSL_CIPHER_description() consists of several fields separated by whitespace:</p>
+
+<dl>
+
+<dt id="ciphername">&lt;ciphername&gt;</dt>
+<dd>
+
+<p>Textual representation of the cipher name.</p>
+
+</dd>
+<dt id="protocol-version">&lt;protocol version&gt;</dt>
+<dd>
+
+<p>Protocol version, such as <b>TLSv1.2</b>, when the cipher was first defined.</p>
+
+</dd>
+<dt id="Kx-key-exchange">Kx=&lt;key exchange&gt;</dt>
+<dd>
+
+<p>Key exchange method such as <b>RSA</b>, <b>ECDHE</b>, etc.</p>
+
+</dd>
+<dt id="Au-authentication">Au=&lt;authentication&gt;</dt>
+<dd>
+
+<p>Authentication method such as <b>RSA</b>, <b>None</b>, etc.. None is the representation of anonymous ciphers.</p>
+
+</dd>
+<dt id="Enc-symmetric-encryption-method">Enc=&lt;symmetric encryption method&gt;</dt>
+<dd>
+
+<p>Encryption method, with number of secret bits, such as <b>AESGCM(128)</b>.</p>
+
+</dd>
+<dt id="Mac-message-authentication-code">Mac=&lt;message authentication code&gt;</dt>
+<dd>
+
+<p>Message digest, such as <b>SHA256</b>.</p>
+
+</dd>
+</dl>
+
+<p>Some examples for the output of SSL_CIPHER_description():</p>
+
+<pre><code> ECDHE-RSA-AES256-GCM-SHA256 TLSv1.2 Kx=ECDH     Au=RSA  Enc=AESGCM(256) Mac=AEAD
+ RSA-PSK-AES256-CBC-SHA384 TLSv1.0 Kx=RSAPSK   Au=RSA  Enc=AES(256)  Mac=SHA384</code></pre>
+
+<h1 id="HISTORY">HISTORY</h1>
+
+<p>SSL_CIPHER_get_version() was updated to always return the correct protocol string in OpenSSL 1.1.</p>
+
+<p>SSL_CIPHER_description() was changed to return <b>NULL</b> on error, rather than a fixed string, in OpenSSL 1.1</p>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man3/ssl.html>ssl(3)</a>, <a href="../man3/SSL_get_current_cipher.html>SSL_get_current_cipher(3)</a>, <a href="../man3/SSL_get_ciphers.html>SSL_get_ciphers(3)</a>, <a href="../man1/ciphers.html>ciphers(1)</a></p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

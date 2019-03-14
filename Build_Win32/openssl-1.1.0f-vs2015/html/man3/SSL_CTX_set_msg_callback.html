@@ -1,0 +1,108 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>SSL_CTX_set_msg_callback</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#NOTES">NOTES</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>SSL_CTX_set_msg_callback, SSL_CTX_set_msg_callback_arg, SSL_set_msg_callback, SSL_set_msg_callback_arg - install callback for observing protocol messages</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;openssl/ssl.h&gt;
+
+ void SSL_CTX_set_msg_callback(SSL_CTX *ctx, void (*cb)(int write_p, int version, int content_type, const void *buf, size_t len, SSL *ssl, void *arg));
+ void SSL_CTX_set_msg_callback_arg(SSL_CTX *ctx, void *arg);
+
+ void SSL_set_msg_callback(SSL *ssl, void (*cb)(int write_p, int version, int content_type, const void *buf, size_t len, SSL *ssl, void *arg));
+ void SSL_set_msg_callback_arg(SSL *ssl, void *arg);</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>SSL_CTX_set_msg_callback() or SSL_set_msg_callback() can be used to define a message callback function <i>cb</i> for observing all SSL/TLS protocol messages (such as handshake messages) that are received or sent. SSL_CTX_set_msg_callback_arg() and SSL_set_msg_callback_arg() can be used to set argument <i>arg</i> to the callback function, which is available for arbitrary application use.</p>
+
+<p>SSL_CTX_set_msg_callback() and SSL_CTX_set_msg_callback_arg() specify default settings that will be copied to new <b>SSL</b> objects by <a href="../man3/SSL_new.html>SSL_new(3)</a>. SSL_set_msg_callback() and SSL_set_msg_callback_arg() modify the actual settings of an <b>SSL</b> object. Using a <b>0</b> pointer for <i>cb</i> disables the message callback.</p>
+
+<p>When <i>cb</i> is called by the SSL/TLS library for a protocol message, the function arguments have the following meaning:</p>
+
+<dl>
+
+<dt id="write_p"><i>write_p</i></dt>
+<dd>
+
+<p>This flag is <b>0</b> when a protocol message has been received and <b>1</b> when a protocol message has been sent.</p>
+
+</dd>
+<dt id="version"><i>version</i></dt>
+<dd>
+
+<p>The protocol version according to which the protocol message is interpreted by the library. Currently, this is one of <b>SSL2_VERSION</b>, <b>SSL3_VERSION</b> and <b>TLS1_VERSION</b> (for SSL 2.0, SSL 3.0 and TLS 1.0, respectively).</p>
+
+</dd>
+<dt id="content_type"><i>content_type</i></dt>
+<dd>
+
+<p>In the case of SSL 2.0, this is always <b>0</b>. In the case of SSL 3.0 or TLS 1.0, this is one of the <b>ContentType</b> values defined in the protocol specification (<b>change_cipher_spec(20)</b>, <b>alert(21)</b>, <b>handshake(22)</b>; but never <b>application_data(23)</b> because the callback will only be called for protocol messages).</p>
+
+</dd>
+<dt id="buf-len"><i>buf</i>, <i>len</i></dt>
+<dd>
+
+<p><i>buf</i> points to a buffer containing the protocol message, which consists of <i>len</i> bytes. The buffer is no longer valid after the callback function has returned.</p>
+
+</dd>
+<dt id="ssl"><i>ssl</i></dt>
+<dd>
+
+<p>The <b>SSL</b> object that received or sent the message.</p>
+
+</dd>
+<dt id="arg"><i>arg</i></dt>
+<dd>
+
+<p>The user-defined argument optionally defined by SSL_CTX_set_msg_callback_arg() or SSL_set_msg_callback_arg().</p>
+
+</dd>
+</dl>
+
+<h1 id="NOTES">NOTES</h1>
+
+<p>Protocol messages are passed to the callback function after decryption and fragment collection where applicable. (Thus record boundaries are not visible.)</p>
+
+<p>If processing a received protocol message results in an error, the callback function may not be called. For example, the callback function will never see messages that are considered too large to be processed.</p>
+
+<p>Due to automatic protocol version negotiation, <i>version</i> is not necessarily the protocol version used by the sender of the message: If a TLS 1.0 ClientHello message is received by an SSL 3.0-only server, <i>version</i> will be <b>SSL3_VERSION</b>.</p>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man3/ssl.html>ssl(3)</a>, <a href="../man3/SSL_new.html>SSL_new(3)</a></p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

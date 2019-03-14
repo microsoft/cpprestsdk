@@ -1,0 +1,160 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>EVP_PKEY_keygen</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#NOTES">NOTES</a></li>
+  <li><a href="#RETURN-VALUES">RETURN VALUES</a></li>
+  <li><a href="#EXAMPLES">EXAMPLES</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#HISTORY">HISTORY</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>EVP_PKEY_keygen_init, EVP_PKEY_keygen, EVP_PKEY_paramgen_init, EVP_PKEY_paramgen, EVP_PKEY_CTX_set_cb, EVP_PKEY_CTX_get_cb, EVP_PKEY_CTX_get_keygen_info, EVP_PKEY_CTX_set_app_data, EVP_PKEY_CTX_get_app_data, EVP_PKEY_gen_cb - key and parameter generation functions</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;openssl/evp.h&gt;
+
+ int EVP_PKEY_keygen_init(EVP_PKEY_CTX *ctx);
+ int EVP_PKEY_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey);
+ int EVP_PKEY_paramgen_init(EVP_PKEY_CTX *ctx);
+ int EVP_PKEY_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey);
+
+ typedef int (*EVP_PKEY_gen_cb)(EVP_PKEY_CTX *ctx);
+
+ void EVP_PKEY_CTX_set_cb(EVP_PKEY_CTX *ctx, EVP_PKEY_gen_cb *cb);
+ EVP_PKEY_gen_cb *EVP_PKEY_CTX_get_cb(EVP_PKEY_CTX *ctx);
+
+ int EVP_PKEY_CTX_get_keygen_info(EVP_PKEY_CTX *ctx, int idx);
+
+ void EVP_PKEY_CTX_set_app_data(EVP_PKEY_CTX *ctx, void *data);
+ void *EVP_PKEY_CTX_get_app_data(EVP_PKEY_CTX *ctx);</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>The EVP_PKEY_keygen_init() function initializes a public key algorithm context using key <b>pkey</b> for a key generation operation.</p>
+
+<p>The EVP_PKEY_keygen() function performs a key generation operation, the generated key is written to <b>ppkey</b>.</p>
+
+<p>The functions EVP_PKEY_paramgen_init() and EVP_PKEY_paramgen() are similar except parameters are generated.</p>
+
+<p>The function EVP_PKEY_set_cb() sets the key or parameter generation callback to <b>cb</b>. The function EVP_PKEY_CTX_get_cb() returns the key or parameter generation callback.</p>
+
+<p>The function EVP_PKEY_CTX_get_keygen_info() returns parameters associated with the generation operation. If <b>idx</b> is -1 the total number of parameters available is returned. Any non negative value returns the value of that parameter. EVP_PKEY_CTX_gen_keygen_info() with a non-negative value for <b>idx</b> should only be called within the generation callback.</p>
+
+<p>If the callback returns 0 then the key generation operation is aborted and an error occurs. This might occur during a time consuming operation where a user clicks on a &quot;cancel&quot; button.</p>
+
+<p>The functions EVP_PKEY_CTX_set_app_data() and EVP_PKEY_CTX_get_app_data() set and retrieve an opaque pointer. This can be used to set some application defined value which can be retrieved in the callback: for example a handle which is used to update a &quot;progress dialog&quot;.</p>
+
+<h1 id="NOTES">NOTES</h1>
+
+<p>After the call to EVP_PKEY_keygen_init() or EVP_PKEY_paramgen_init() algorithm specific control operations can be performed to set any appropriate parameters for the operation.</p>
+
+<p>The functions EVP_PKEY_keygen() and EVP_PKEY_paramgen() can be called more than once on the same context if several operations are performed using the same parameters.</p>
+
+<p>The meaning of the parameters passed to the callback will depend on the algorithm and the specific implementation of the algorithm. Some might not give any useful information at all during key or parameter generation. Others might not even call the callback.</p>
+
+<p>The operation performed by key or parameter generation depends on the algorithm used. In some cases (e.g. EC with a supplied named curve) the &quot;generation&quot; option merely sets the appropriate fields in an EVP_PKEY structure.</p>
+
+<p>In OpenSSL an EVP_PKEY structure containing a private key also contains the public key components and parameters (if any). An OpenSSL private key is equivalent to what some libraries call a &quot;key pair&quot;. A private key can be used in functions which require the use of a public key or parameters.</p>
+
+<h1 id="RETURN-VALUES">RETURN VALUES</h1>
+
+<p>EVP_PKEY_keygen_init(), EVP_PKEY_paramgen_init(), EVP_PKEY_keygen() and EVP_PKEY_paramgen() return 1 for success and 0 or a negative value for failure. In particular a return value of -2 indicates the operation is not supported by the public key algorithm.</p>
+
+<h1 id="EXAMPLES">EXAMPLES</h1>
+
+<p>Generate a 2048 bit RSA key:</p>
+
+<pre><code> #include &lt;openssl/evp.h&gt;
+ #include &lt;openssl/rsa.h&gt;
+
+ EVP_PKEY_CTX *ctx;
+ EVP_PKEY *pkey = NULL;
+ ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, NULL);
+ if (!ctx)
+        /* Error occurred */
+ if (EVP_PKEY_keygen_init(ctx) &lt;= 0)
+        /* Error */
+ if (EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, 2048) &lt;= 0)
+        /* Error */
+
+ /* Generate key */
+ if (EVP_PKEY_keygen(ctx, &amp;pkey) &lt;= 0)
+        /* Error */</code></pre>
+
+<p>Generate a key from a set of parameters:</p>
+
+<pre><code> #include &lt;openssl/evp.h&gt;
+ #include &lt;openssl/rsa.h&gt;
+
+ EVP_PKEY_CTX *ctx;
+ EVP_PKEY *pkey = NULL, *param;
+ /* Assumed param is set up already */
+ ctx = EVP_PKEY_CTX_new(param);
+ if (!ctx)
+        /* Error occurred */
+ if (EVP_PKEY_keygen_init(ctx) &lt;= 0)
+        /* Error */
+
+ /* Generate key */
+ if (EVP_PKEY_keygen(ctx, &amp;pkey) &lt;= 0)
+        /* Error */</code></pre>
+
+<p>Example of generation callback for OpenSSL public key implementations:</p>
+
+<pre><code> /* Application data is a BIO to output status to */
+
+ EVP_PKEY_CTX_set_app_data(ctx, status_bio);
+
+ static int genpkey_cb(EVP_PKEY_CTX *ctx)
+        {
+        char c = &#39;*&#39;;
+        BIO *b = EVP_PKEY_CTX_get_app_data(ctx);
+        int p;
+        p = EVP_PKEY_CTX_get_keygen_info(ctx, 0);
+        if (p == 0) c = &#39;.&#39;;
+        if (p == 1) c = &#39;+&#39;;
+        if (p == 2) c = &#39;*&#39;;
+        if (p == 3) c = &#39;\n&#39;;
+        BIO_write(b, &amp;c, 1);
+        (void)BIO_flush(b);
+        return 1;
+        }</code></pre>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man3/EVP_PKEY_CTX_new.html>EVP_PKEY_CTX_new(3)</a>, <a href="../man3/EVP_PKEY_encrypt.html>EVP_PKEY_encrypt(3)</a>, <a href="../man3/EVP_PKEY_decrypt.html>EVP_PKEY_decrypt(3)</a>, <a href="../man3/EVP_PKEY_sign.html>EVP_PKEY_sign(3)</a>, <a href="../man3/EVP_PKEY_verify.html>EVP_PKEY_verify(3)</a>, <a href="../man3/EVP_PKEY_verify_recover.html>EVP_PKEY_verify_recover(3)</a>, <a href="../man3/EVP_PKEY_derive.html>EVP_PKEY_derive(3)</a></p>
+
+<h1 id="HISTORY">HISTORY</h1>
+
+<p>These functions were first added to OpenSSL 1.0.0.</p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

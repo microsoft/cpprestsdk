@@ -1,0 +1,317 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<title>Introduction</title>
+<link rel="stylesheet" href="../../../doc/src/boostbook.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="../index.html" title="The Boost C++ Libraries BoostBook Documentation Subset">
+<link rel="up" href="../crc.html" title="Chapter&#160;12.&#160;Boost.CRC 1.5">
+<link rel="prev" href="../crc.html" title="Chapter&#160;12.&#160;Boost.CRC 1.5">
+<link rel="next" href="crc_basic.html" title="Theoretical CRC Computer">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<table cellpadding="2" width="100%"><tr>
+<td valign="top"><img alt="Boost C++ Libraries" width="277" height="86" src="../../../boost.png"></td>
+<td align="center"><a href="../../../index.html">Home</a></td>
+<td align="center"><a href="../../../libs/libraries.htm">Libraries</a></td>
+<td align="center"><a href="http://www.boost.org/users/people.html">People</a></td>
+<td align="center"><a href="http://www.boost.org/users/faq.html">FAQ</a></td>
+<td align="center"><a href="../../../more/index.htm">More</a></td>
+</tr></table>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="../crc.html"><img src="../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../crc.html"><img src="../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="crc_basic.html"><img src="../../../doc/src/images/next.png" alt="Next"></a>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="crc.introduction"></a><a class="link" href="introduction.html" title="Introduction">Introduction</a>
+</h2></div></div></div>
+<div class="toc"><dl class="toc"><dt><span class="section"><a href="introduction.html#crc.introduction.intro_crcs">CRCs</a></span></dt></dl></div>
+<div class="note"><table border="0" summary="Note">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="../../../doc/src/images/note.png"></td>
+<th align="left">Note</th>
+</tr>
+<tr><td align="left" valign="top"><p>
+        Some of the introductory material is based on <a href="http://www.ross.net/crc/download/crc_v3.txt" target="_top"><span class="emphasis"><em>A
+        Painless Guide to CRC Error Detection Algorithms</em></span></a> by Ross
+        N. Williams at his <a href="http://www.ross.net/crc/" target="_top"><span class="bold"><strong>The
+        CRC Pitstop</strong></span></a> site.
+      </p></td></tr>
+</table></div>
+<p>
+      When binary data is transmitted, usually electronically, there is a chance
+      that the data gets corrupted. One method to pick up said corruption is to generate
+      some value that is coded from the original data, send said value to the receiver,
+      then confirm that the received data generates the same value when it's coded
+      at the destination.
+    </p>
+<p>
+      There are several possibilities after the receiver's check:
+    </p>
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; ">
+<li class="listitem">
+          The check value matches at both places and the data was transmitted intact.
+        </li>
+<li class="listitem">
+          The data got corrupted and the check values do not match.
+        </li>
+<li class="listitem">
+          The data is intact, but the check value got corrupted. This can't the distinguished
+          from the previous case, but is a (relatively) safe false positive.
+        </li>
+<li class="listitem">
+          Either the data and/or check value gets corrupted, but such that the results
+          of the check-coding are still consistent. This is a dangerous false negative!
+        </li>
+</ul></div>
+<p>
+      The way to minimize false negatives is to choose coding algorithms that cause
+      a lot of churn per input, especially a variable amount.
+    </p>
+<p>
+      The check values are known as <span class="bold"><strong>checksum</strong></span>s because
+      they are used to <span class="emphasis"><em>check</em></span> for data consistency and the first
+      coding algorithms were addition- (i.e. <span class="emphasis"><em>sum</em></span>ming-) based.
+    </p>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="crc.introduction.intro_crcs"></a><a class="link" href="introduction.html#crc.introduction.intro_crcs" title="CRCs">CRCs</a>
+</h3></div></div></div>
+<div class="toc"><dl class="toc">
+<dt><span class="section"><a href="introduction.html#crc.introduction.intro_crcs.intro_crcs_impl">CRC Implementation</a></span></dt>
+<dt><span class="section"><a href="introduction.html#crc.introduction.intro_crcs.intro_crcs_augment">Message
+        Augmentation</a></span></dt>
+<dt><span class="section"><a href="introduction.html#crc.introduction.intro_crcs.intro_crcs_param">Other
+        CRC Parameters</a></span></dt>
+<dt><span class="section"><a href="introduction.html#crc.introduction.intro_crcs.intro_crcs_rmca">Compact
+        CRC Parameter Specification</a></span></dt>
+</dl></div>
+<p>
+        <span class="bold"><strong>Cyclic Redundancy Codes</strong></span> are a type of consistency
+        check that treats the message data as a (long) dividend of a modulo-2 polynomial
+        division. Modulo-2 arithmetic doesn't use carries/borrows when combining
+        numbers. A specific CRC defines a set number of bits to work on at a time,
+        where said number is also the degree of a fixed polynomial (with modulo-2
+        coefficients) used as a divisor.
+      </p>
+<p>
+        Since ordering doesn't apply to modulo arithmetic, the check between the
+        current high part of the dividend and the trial partial product (of the divisor
+        and the trial new quotient coefficient) is done by seeing if the highest-degree
+        coefficient of the dividend is one. (The highest-degree coefficient of the
+        divisor must be one by definition, since it's the only non-zero choice.)
+        The remainder after the division is finished is used as the basis of the
+        CRC checksum.
+      </p>
+<div class="section">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="crc.introduction.intro_crcs.intro_crcs_impl"></a><a class="link" href="introduction.html#crc.introduction.intro_crcs.intro_crcs_impl" title="CRC Implementation">CRC Implementation</a>
+</h4></div></div></div>
+<p>
+          For a given degree <span class="emphasis"><em>x</em></span> for the modulo-2 polynomial divisor,
+          the remainder will have at most <span class="emphasis"><em>x</em></span> terms (from degree
+          <span class="emphasis"><em>x</em></span> - 1 down to the constant term). The coefficients
+          are modulo-2, which means that they can be represented by 0's and 1's.
+          So a remainder can be modeled by an (unsigned) integer of at least <span class="emphasis"><em>x</em></span>
+          bits in <span class="bold"><strong>width</strong></span>.
+        </p>
+<p>
+          The divisor must have its <span class="emphasis"><em>x</em></span> degree term be one, which
+          means it is always known and can be implied instead of having to explicitly
+          include in representations. Its lower <span class="emphasis"><em>x</em></span> terms must
+          be specified, so a divisor can be modeled the same way as remainders. With
+          such a modeling, the divisor representation could be said to be truncated
+          since the uppermost term's value is implied and not stored.
+        </p>
+<p>
+          The remainder and <span class="bold"><strong>(truncated) divisor polynomial</strong></span>s
+          are stored as basic computer integers. This is in contrast to the dividend,
+          which is modeled from the input stream of data bits, where each new incoming
+          bit is the next lower term of the dividend polynomial. Long division can
+          be processed in piecemeal, reading new upper terms as needed. This maps
+          to reading the data a byte (or bit) at a time, generating updated remainders
+          just-in-time, without needing to read (and/or store(!)) the entire data
+          message at once.
+        </p>
+<p>
+          Long division involves appending new dividend terms after the previous
+          terms have been processed into the (interim) remainder. So the remainder
+          it the only thing that has to change during each division step; a new input
+          byte (or bit) is combined with the remainder to make the interim dividend,
+          and then combined with the partial product (based on the divisor and top
+          dividend bit(s)) to become a remainder again.
+        </p>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="crc.introduction.intro_crcs.intro_crcs_augment"></a><a class="link" href="introduction.html#crc.introduction.intro_crcs.intro_crcs_augment" title="Message Augmentation">Message
+        Augmentation</a>
+</h4></div></div></div>
+<p>
+          When all of the input data has been read during division, the last <span class="emphasis"><em>x</em></span>
+          bits are still stuck in the interim remainder. They have not been pushed
+          through the division steps; to do so, <span class="emphasis"><em>x</em></span> zero-valued
+          extra bits must be passed into the system. This ensures all of the message's
+          data bits get processed. The post-processed remainder is the checksum.
+          The system requires the message to be <span class="bold"><strong>augmented</strong></span>
+          with <span class="emphasis"><em>x</em></span> extra bits to get results.
+        </p>
+<p>
+          Alternatively, if the post-division augmentation bits are the expected
+          checksum instead, then the remainder will "subtract" the checksum
+          with itself, giving zero as the final remainder. The remainder will end
+          up non-zero if bit errors exist in either the data or checksum or both.
+          This option requires the checksum to be fed from highest-order bit first
+          on down (i.e. big endian).
+        </p>
+<p>
+          Exploiting the properties of how the division is carried out, the steps
+          can be rearranged such that the post-processing zero-valued bits are not
+          needed; their effect is merged into the start of the process. Such systems
+          read <span class="bold"><strong>unaugmented</strong></span> messages and expose the
+          checksum directly from the interim remainder afterwards. (You can't use
+          the "augment-message-with-checksum-and-zero-check" technique
+          with this, of course.)
+        </p>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="crc.introduction.intro_crcs.intro_crcs_param"></a><a class="link" href="introduction.html#crc.introduction.intro_crcs.intro_crcs_param" title="Other CRC Parameters">Other
+        CRC Parameters</a>
+</h4></div></div></div>
+<p>
+          Since long division proceeds from the uppermost terms on down, it's easiest
+          to treat an incoming byte as the uppermost unprocessed terms, and to read
+          the bits within that byte as the highest-order bit is the uppermost unprocessed
+          term and go down. However, some hardware implementations have an easier
+          time reading each byte from the lowest-order bit and go up. To simulate
+          those systems in software, the program needs to be flagged that <span class="bold"><strong>input reflection</strong></span> needs to be applied. Reflecting
+          a built-in integer reverses the order of its bits, such that the lowest-
+          and highest-order bits swap states, the next-lowest- and next-highest-order
+          bits swap, etc. The input reflection can be done by reflecting each byte
+          as it comes in or keeping the bytes unchanged but reflect the other internal
+          functioning. The latter sounds harder, but what it usually done in the
+          real world, since it's a one-time cost, unlike reflecting the bytes.
+        </p>
+<p>
+          Similarly, the final remainder is processed by some hardware in reverse
+          order, which means software that simulate such systems need to flag that
+          <span class="bold"><strong>output reflection</strong></span> is in effect.
+        </p>
+<p>
+          Some CRCs don't return the remainder directly (reflected or not), but add
+          an extra step complementing the output bits. Complementing turns 1 values
+          into 0 values and vice versa. This can simulated by using a XOR (exclusive-or)
+          bit mask of all 1-values (of the same bit length as the remainder). Some
+          systems use a <span class="bold"><strong>final XOR mask</strong></span> that isn't
+          all 1-values, for variety. (This mask takes place <span class="emphasis"><em>after</em></span>
+          any output reflection.)
+        </p>
+<p>
+          At the other end, the built-in-integer register normally starts at zero
+          as the first bytes are read. Instead of just doing nothing but load input
+          bits for <span class="emphasis"><em>x</em></span> steps, some CRC systems use a non-zero
+          <span class="bold"><strong>initial remainder</strong></span> to add extra processing.
+          This initial value has to be different for the augmented versus un-augmented
+          versions of the same system, due to possible incorporation with the zero-valued
+          augment bits.
+        </p>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="crc.introduction.intro_crcs.intro_crcs_rmca"></a><a class="link" href="introduction.html#crc.introduction.intro_crcs.intro_crcs_rmca" title="Compact CRC Parameter Specification">Compact
+        CRC Parameter Specification</a>
+</h4></div></div></div>
+<p>
+          The Rocksoft&#8482; Model CRC Algorithm, or RMCA for short, was designed
+          by Ross Williams to describe all the specification points of a given CRC
+          system (quoted):
+        </p>
+<div class="variablelist">
+<p class="title"><b>RMCA Parameters</b></p>
+<dl class="variablelist">
+<dt><span class="term">WIDTH</span></dt>
+<dd><p>
+                This is the width of the algorithm expressed in bits. This is one
+                less than the width of the Poly.
+              </p></dd>
+<dt><span class="term">POLY</span></dt>
+<dd><p>
+                This parameter is the poly. This is a binary value that should be
+                specified as a hexadecimal number. The top bit of the poly should
+                be omitted. For example, if the poly is 10110, you should specify
+                06. An important aspect of this parameter is that it represents the
+                unreflected poly; the bottom bit of this parameter is always the
+                LSB of the divisor during the division regardless of whether the
+                algorithm being modelled is reflected.
+              </p></dd>
+<dt><span class="term">INIT</span></dt>
+<dd><p>
+                This parameter specifies the initial value of the register when the
+                algorithm starts. This is the value that is to be assigned to the
+                register in the direct table algorithm. In the table algorithm, we
+                may think of the register always commencing with the value zero,
+                and this value being XORed into the register after the N'th bit iteration.
+                This parameter should be specified as a hexadecimal number.
+              </p></dd>
+<dt><span class="term">REFIN</span></dt>
+<dd><p>
+                This is a boolean parameter. If it is FALSE, input bytes are processed
+                with bit 7 being treated as the most significant bit (MSB) and bit
+                0 being treated as the least significant bit. If this parameter is
+                FALSE, each byte is reflected before being processed.
+              </p></dd>
+<dt><span class="term">REFOUT</span></dt>
+<dd><p>
+                This is a boolean parameter. If it is set to FALSE, the final value
+                in the register is fed into the XOROUT stage directly, otherwise,
+                if this parameter is TRUE, the final register value is reflected
+                first.
+              </p></dd>
+<dt><span class="term">XOROUT</span></dt>
+<dd><p>
+                This is an W-bit value that should be specified as a hexadecimal
+                number. It is XORed to the final register value (after the REFOUT)
+                stage before the value is returned as the official checksum.
+              </p></dd>
+</dl>
+</div>
+<p>
+          His description assumes an octet-sized byte. The <span class="emphasis"><em>POLY</em></span>
+          is the (truncated) divisor. The <span class="emphasis"><em>INIT</em></span> is the initial
+          remainder, assuming the unaugmented version of CRC processing is used.
+          (If you're using an augmented-style CRC, you have to undo the effect of
+          the built-in zero-augment before initialization.)
+        </p>
+</div>
+<p>
+        The two function templates and two class templates in this library provide
+        ways to carry out CRC computations. You give the various Rocksoft&#8482;
+        Model CRC Algorithm parameters as template parameters and/or constructor
+        parameters. You then submit all the message data bytes at once (for the functions)
+        or piecemeal (for the class objects).
+      </p>
+</div>
+<p>
+      Note that some error-detection techniques merge their checksum results within
+      the message data, while CRC checksums are either at the end (when augmented,
+      without either kind of reflection, with a bit-width that's a multiple of byte
+      size, and no XOR mask) or out-of-band.
+    </p>
+</div>
+<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
+<td align="left"></td>
+<td align="right"><div class="copyright-footer">Copyright &#169; 2001, 2003, 2012 Daryle Walker<p>
+        Distributed under the Boost Software License, Version 1.0. (See the accompanying
+        file LICENSE_1_0.txt or a copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
+      </p>
+</div></td>
+</tr></table>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="../crc.html"><img src="../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../crc.html"><img src="../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="crc_basic.html"><img src="../../../doc/src/images/next.png" alt="Next"></a>
+</div>
+</body>
+</html>

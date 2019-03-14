@@ -1,0 +1,121 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>SSL_CTX_set_tmp_dh_callback</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#NOTES">NOTES</a></li>
+  <li><a href="#EXAMPLES">EXAMPLES</a></li>
+  <li><a href="#RETURN-VALUES">RETURN VALUES</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>SSL_CTX_set_tmp_dh_callback, SSL_CTX_set_tmp_dh, SSL_set_tmp_dh_callback, SSL_set_tmp_dh - handle DH keys for ephemeral key exchange</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;openssl/ssl.h&gt;
+
+ void SSL_CTX_set_tmp_dh_callback(SSL_CTX *ctx,
+            DH *(*tmp_dh_callback)(SSL *ssl, int is_export, int keylength));
+ long SSL_CTX_set_tmp_dh(SSL_CTX *ctx, DH *dh);
+
+ void SSL_set_tmp_dh_callback(SSL *ctx,
+            DH *(*tmp_dh_callback)(SSL *ssl, int is_export, int keylength));
+ long SSL_set_tmp_dh(SSL *ssl, DH *dh)</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>SSL_CTX_set_tmp_dh_callback() sets the callback function for <b>ctx</b> to be used when a DH parameters are required to <b>tmp_dh_callback</b>. The callback is inherited by all <b>ssl</b> objects created from <b>ctx</b>.</p>
+
+<p>SSL_CTX_set_tmp_dh() sets DH parameters to be used to be <b>dh</b>. The key is inherited by all <b>ssl</b> objects created from <b>ctx</b>.</p>
+
+<p>SSL_set_tmp_dh_callback() sets the callback only for <b>ssl</b>.</p>
+
+<p>SSL_set_tmp_dh() sets the parameters only for <b>ssl</b>.</p>
+
+<p>These functions apply to SSL/TLS servers only.</p>
+
+<h1 id="NOTES">NOTES</h1>
+
+<p>When using a cipher with RSA authentication, an ephemeral DH key exchange can take place. Ciphers with DSA keys always use ephemeral DH keys as well. In these cases, the session data are negotiated using the ephemeral/temporary DH key and the key supplied and certified by the certificate chain is only used for signing. Anonymous ciphers (without a permanent server key) also use ephemeral DH keys.</p>
+
+<p>Using ephemeral DH key exchange yields forward secrecy, as the connection can only be decrypted, when the DH key is known. By generating a temporary DH key inside the server application that is lost when the application is left, it becomes impossible for an attacker to decrypt past sessions, even if he gets hold of the normal (certified) key, as this key was only used for signing.</p>
+
+<p>In order to perform a DH key exchange the server must use a DH group (DH parameters) and generate a DH key. The server will always generate a new DH key during the negotiation.</p>
+
+<p>As generating DH parameters is extremely time consuming, an application should not generate the parameters on the fly but supply the parameters. DH parameters can be reused, as the actual key is newly generated during the negotiation. The risk in reusing DH parameters is that an attacker may specialize on a very often used DH group. Applications should therefore generate their own DH parameters during the installation process using the openssl <a href="../man1/dhparam.html>dhparam(1)</a> application. This application guarantees that &quot;strong&quot; primes are used.</p>
+
+<p>Files dh2048.pem, and dh4096.pem in the &#39;apps&#39; directory of the current version of the OpenSSL distribution contain the &#39;SKIP&#39; DH parameters, which use safe primes and were generated verifiably pseudo-randomly. These files can be converted into C code using the <b>-C</b> option of the <a href="../man1/dhparam.html>dhparam(1)</a> application. Generation of custom DH parameters during installation should still be preferred to stop an attacker from specializing on a commonly used group. File dh1024.pem contains old parameters that must not be used by applications.</p>
+
+<p>An application may either directly specify the DH parameters or can supply the DH parameters via a callback function.</p>
+
+<p>Previous versions of the callback used <b>is_export</b> and <b>keylength</b> parameters to control parameter generation for export and non-export cipher suites. Modern servers that do not support export ciphersuites are advised to either use SSL_CTX_set_tmp_dh() or alternatively, use the callback but ignore <b>keylength</b> and <b>is_export</b> and simply supply at least 2048-bit parameters in the callback.</p>
+
+<h1 id="EXAMPLES">EXAMPLES</h1>
+
+<p>Setup DH parameters with a key length of 2048 bits. (Error handling partly left out.)</p>
+
+<pre><code> Command-line parameter generation:
+ $ openssl dhparam -out dh_param_2048.pem 2048
+
+ Code for setting up parameters during server initialization:
+
+ ...
+ SSL_CTX ctx = SSL_CTX_new();
+ ...
+
+ /* Set up ephemeral DH parameters. */
+ DH *dh_2048 = NULL;
+ FILE *paramfile;
+ paramfile = fopen(&quot;dh_param_2048.pem&quot;, &quot;r&quot;);
+ if (paramfile) {
+   dh_2048 = PEM_read_DHparams(paramfile, NULL, NULL, NULL);
+   fclose(paramfile);
+ } else {
+   /* Error. */
+ }
+ if (dh_2048 == NULL) {
+   /* Error. */
+ }
+ if (SSL_CTX_set_tmp_dh(ctx, dh_2048) != 1) {
+   /* Error. */
+ }
+ ...</code></pre>
+
+<h1 id="RETURN-VALUES">RETURN VALUES</h1>
+
+<p>SSL_CTX_set_tmp_dh_callback() and SSL_set_tmp_dh_callback() do not return diagnostic output.</p>
+
+<p>SSL_CTX_set_tmp_dh() and SSL_set_tmp_dh() do return 1 on success and 0 on failure. Check the error queue to find out the reason of failure.</p>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man3/ssl.html>ssl(3)</a>, <a href="../man3/SSL_CTX_set_cipher_list.html>SSL_CTX_set_cipher_list(3)</a>, <a href="../man3/SSL_CTX_set_options.html>SSL_CTX_set_options(3)</a>, <a href="../man1/ciphers.html>ciphers(1)</a>, <a href="../man1/dhparam.html>dhparam(1)</a></p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

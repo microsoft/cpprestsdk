@@ -1,0 +1,61 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>SSL_SESSION_get_ex_data</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#RETURN-VALUES">RETURN VALUES</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>SSL_SESSION_set_ex_data, SSL_SESSION_get_ex_data - get and set application specific data on a session</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;openssl/ssl.h&gt;
+
+ int SSL_SESSION_set_ex_data(SSL_SESSION *ss, int idx, void *data);
+ void *SSL_SESSION_get_ex_data(const SSL_SESSION *s, int idx);</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>SSL_SESSION_set_ex_data() enables an application to store arbitrary application specific data <b>data</b> in an SSL_SESSION structure <b>ss</b>. The index <b>idx</b> should be a value previously returned from a call to <a href="../man3/CRYPTO_get_ex_new_index.html>CRYPTO_get_ex_new_index(3)</a>.</p>
+
+<p>SSL_SESSION_get_ex_data() retrieves application specific data previously stored in an SSL_SESSION structure <b>s</b>. The <b>idx</b> value should be the same as that used when originally storing the data.</p>
+
+<h1 id="RETURN-VALUES">RETURN VALUES</h1>
+
+<p>SSL_SESSION_set_ex_data() returns 1 for success or 0 for failure.</p>
+
+<p>SSL_SESSION_get_ex_data() returns the previously stored value or NULL on failure. NULL may also be a valid value.</p>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man3/ssl.html>ssl(3)</a>, <a href="../man3/CRYPTO_get_ex_new_index.html>CRYPTO_get_ex_new_index(3)</a></p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

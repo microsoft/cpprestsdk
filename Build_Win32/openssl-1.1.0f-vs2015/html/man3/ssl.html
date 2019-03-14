@@ -1,0 +1,1240 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>ssl</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#DATA-STRUCTURES">DATA STRUCTURES</a></li>
+  <li><a href="#HEADER-FILES">HEADER FILES</a></li>
+  <li><a href="#API-FUNCTIONS">API FUNCTIONS</a>
+    <ul>
+      <li><a href="#Dealing-with-Protocol-Methods">Dealing with Protocol Methods</a></li>
+      <li><a href="#Dealing-with-Ciphers">Dealing with Ciphers</a></li>
+      <li><a href="#Dealing-with-Protocol-Contexts">Dealing with Protocol Contexts</a></li>
+      <li><a href="#Dealing-with-Sessions">Dealing with Sessions</a></li>
+      <li><a href="#Dealing-with-Connections">Dealing with Connections</a></li>
+    </ul>
+  </li>
+  <li><a href="#RETURN-VALUES">RETURN VALUES</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#HISTORY">HISTORY</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>ssl - OpenSSL SSL/TLS library</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<p>See the individual manual pages for details.</p>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>The OpenSSL <b>ssl</b> library implements the Secure Sockets Layer (SSL v2/v3) and Transport Layer Security (TLS v1) protocols. It provides a rich API which is documented here.</p>
+
+<p>Then an <b>SSL_CTX</b> object is created as a framework to establish TLS/SSL enabled connections (see <a href="../man3/SSL_CTX_new.html>SSL_CTX_new(3)</a>). Various options regarding certificates, algorithms etc. can be set in this object.</p>
+
+<p>When a network connection has been created, it can be assigned to an <b>SSL</b> object. After the <b>SSL</b> object has been created using <a href="../man3/SSL_new.html>SSL_new(3)</a>, <a href="../man3/SSL_set_fd.html>SSL_set_fd(3)</a> or <a href="../man3/SSL_set_bio.html>SSL_set_bio(3)</a> can be used to associate the network connection with the object.</p>
+
+<p>Then the TLS/SSL handshake is performed using <a href="../man3/SSL_accept.html>SSL_accept(3)</a> or <a href="../man3/SSL_connect.html>SSL_connect(3)</a> respectively. <a href="../man3/SSL_read.html>SSL_read(3)</a> and <a href="../man3/SSL_write.html>SSL_write(3)</a> are used to read and write data on the TLS/SSL connection. <a href="../man3/SSL_shutdown.html>SSL_shutdown(3)</a> can be used to shut down the TLS/SSL connection.</p>
+
+<h1 id="DATA-STRUCTURES">DATA STRUCTURES</h1>
+
+<p>Currently the OpenSSL <b>ssl</b> library functions deals with the following data structures:</p>
+
+<dl>
+
+<dt id="SSL_METHOD-SSL-Method"><b>SSL_METHOD</b> (SSL Method)</dt>
+<dd>
+
+<p>That&#39;s a dispatch structure describing the internal <b>ssl</b> library methods/functions which implement the various protocol versions (SSLv3 TLSv1, ...). It&#39;s needed to create an <b>SSL_CTX</b>.</p>
+
+</dd>
+<dt id="SSL_CIPHER-SSL-Cipher"><b>SSL_CIPHER</b> (SSL Cipher)</dt>
+<dd>
+
+<p>This structure holds the algorithm information for a particular cipher which are a core part of the SSL/TLS protocol. The available ciphers are configured on a <b>SSL_CTX</b> basis and the actually used ones are then part of the <b>SSL_SESSION</b>.</p>
+
+</dd>
+<dt id="SSL_CTX-SSL-Context"><b>SSL_CTX</b> (SSL Context)</dt>
+<dd>
+
+<p>That&#39;s the global context structure which is created by a server or client once per program life-time and which holds mainly default values for the <b>SSL</b> structures which are later created for the connections.</p>
+
+</dd>
+<dt id="SSL_SESSION-SSL-Session"><b>SSL_SESSION</b> (SSL Session)</dt>
+<dd>
+
+<p>This is a structure containing the current TLS/SSL session details for a connection: <b>SSL_CIPHER</b>s, client and server certificates, keys, etc.</p>
+
+</dd>
+<dt id="SSL-SSL-Connection"><b>SSL</b> (SSL Connection)</dt>
+<dd>
+
+<p>That&#39;s the main SSL/TLS structure which is created by a server or client per established connection. This actually is the core structure in the SSL API. Under run-time the application usually deals with this structure which has links to mostly all other structures.</p>
+
+</dd>
+</dl>
+
+<h1 id="HEADER-FILES">HEADER FILES</h1>
+
+<p>Currently the OpenSSL <b>ssl</b> library provides the following C header files containing the prototypes for the data structures and functions:</p>
+
+<dl>
+
+<dt id="ssl.h"><b>ssl.h</b></dt>
+<dd>
+
+<p>That&#39;s the common header file for the SSL/TLS API. Include it into your program to make the API of the <b>ssl</b> library available. It internally includes both more private SSL headers and headers from the <b>crypto</b> library. Whenever you need hard-core details on the internals of the SSL API, look inside this header file.</p>
+
+</dd>
+<dt id="ssl2.h"><b>ssl2.h</b></dt>
+<dd>
+
+<p>Unused. Present for backwards compatibility only.</p>
+
+</dd>
+<dt id="ssl3.h"><b>ssl3.h</b></dt>
+<dd>
+
+<p>That&#39;s the sub header file dealing with the SSLv3 protocol only. <i>Usually you don&#39;t have to include it explicitly because it&#39;s already included by ssl.h</i>.</p>
+
+</dd>
+<dt id="tls1.h"><b>tls1.h</b></dt>
+<dd>
+
+<p>That&#39;s the sub header file dealing with the TLSv1 protocol only. <i>Usually you don&#39;t have to include it explicitly because it&#39;s already included by ssl.h</i>.</p>
+
+</dd>
+</dl>
+
+<h1 id="API-FUNCTIONS">API FUNCTIONS</h1>
+
+<p>Currently the OpenSSL <b>ssl</b> library exports 214 API functions. They are documented in the following:</p>
+
+<h2 id="Dealing-with-Protocol-Methods">Dealing with Protocol Methods</h2>
+
+<p>Here we document the various API functions which deal with the SSL/TLS protocol methods defined in <b>SSL_METHOD</b> structures.</p>
+
+<dl>
+
+<dt id="const-SSL_METHOD-TLS_method-void">const SSL_METHOD *<b>TLS_method</b>(void);</dt>
+<dd>
+
+<p>Constructor for the <i>version-flexible</i> SSL_METHOD structure for clients, servers or both. See <a href="../man3/SSL_CTX_new.html>SSL_CTX_new(3)</a> for details.</p>
+
+</dd>
+<dt id="const-SSL_METHOD-TLS_client_method-void">const SSL_METHOD *<b>TLS_client_method</b>(void);</dt>
+<dd>
+
+<p>Constructor for the <i>version-flexible</i> SSL_METHOD structure for clients.</p>
+
+</dd>
+<dt id="const-SSL_METHOD-TLS_server_method-void">const SSL_METHOD *<b>TLS_server_method</b>(void);</dt>
+<dd>
+
+<p>Constructor for the <i>version-flexible</i> SSL_METHOD structure for servers.</p>
+
+</dd>
+<dt id="const-SSL_METHOD-TLSv1_2_method-void">const SSL_METHOD *<b>TLSv1_2_method</b>(void);</dt>
+<dd>
+
+<p>Constructor for the TLSv1.2 SSL_METHOD structure for clients, servers or both.</p>
+
+</dd>
+<dt id="const-SSL_METHOD-TLSv1_2_client_method-void">const SSL_METHOD *<b>TLSv1_2_client_method</b>(void);</dt>
+<dd>
+
+<p>Constructor for the TLSv1.2 SSL_METHOD structure for clients.</p>
+
+</dd>
+<dt id="const-SSL_METHOD-TLSv1_2_server_method-void">const SSL_METHOD *<b>TLSv1_2_server_method</b>(void);</dt>
+<dd>
+
+<p>Constructor for the TLSv1.2 SSL_METHOD structure for servers.</p>
+
+</dd>
+<dt id="const-SSL_METHOD-TLSv1_1_method-void">const SSL_METHOD *<b>TLSv1_1_method</b>(void);</dt>
+<dd>
+
+<p>Constructor for the TLSv1.1 SSL_METHOD structure for clients, servers or both.</p>
+
+</dd>
+<dt id="const-SSL_METHOD-TLSv1_1_client_method-void">const SSL_METHOD *<b>TLSv1_1_client_method</b>(void);</dt>
+<dd>
+
+<p>Constructor for the TLSv1.1 SSL_METHOD structure for clients.</p>
+
+</dd>
+<dt id="const-SSL_METHOD-TLSv1_1_server_method-void">const SSL_METHOD *<b>TLSv1_1_server_method</b>(void);</dt>
+<dd>
+
+<p>Constructor for the TLSv1.1 SSL_METHOD structure for servers.</p>
+
+</dd>
+<dt id="const-SSL_METHOD-TLSv1_method-void">const SSL_METHOD *<b>TLSv1_method</b>(void);</dt>
+<dd>
+
+<p>Constructor for the TLSv1 SSL_METHOD structure for clients, servers or both.</p>
+
+</dd>
+<dt id="const-SSL_METHOD-TLSv1_client_method-void">const SSL_METHOD *<b>TLSv1_client_method</b>(void);</dt>
+<dd>
+
+<p>Constructor for the TLSv1 SSL_METHOD structure for clients.</p>
+
+</dd>
+<dt id="const-SSL_METHOD-TLSv1_server_method-void">const SSL_METHOD *<b>TLSv1_server_method</b>(void);</dt>
+<dd>
+
+<p>Constructor for the TLSv1 SSL_METHOD structure for servers.</p>
+
+</dd>
+<dt id="const-SSL_METHOD-SSLv3_method-void">const SSL_METHOD *<b>SSLv3_method</b>(void);</dt>
+<dd>
+
+<p>Constructor for the SSLv3 SSL_METHOD structure for clients, servers or both.</p>
+
+</dd>
+<dt id="const-SSL_METHOD-SSLv3_client_method-void">const SSL_METHOD *<b>SSLv3_client_method</b>(void);</dt>
+<dd>
+
+<p>Constructor for the SSLv3 SSL_METHOD structure for clients.</p>
+
+</dd>
+<dt id="const-SSL_METHOD-SSLv3_server_method-void">const SSL_METHOD *<b>SSLv3_server_method</b>(void);</dt>
+<dd>
+
+<p>Constructor for the SSLv3 SSL_METHOD structure for servers.</p>
+
+</dd>
+</dl>
+
+<h2 id="Dealing-with-Ciphers">Dealing with Ciphers</h2>
+
+<p>Here we document the various API functions which deal with the SSL/TLS ciphers defined in <b>SSL_CIPHER</b> structures.</p>
+
+<dl>
+
+<dt id="char-SSL_CIPHER_description-SSL_CIPHER-cipher-char-buf-int-len">char *<b>SSL_CIPHER_description</b>(SSL_CIPHER *cipher, char *buf, int len);</dt>
+<dd>
+
+<p>Write a string to <i>buf</i> (with a maximum size of <i>len</i>) containing a human readable description of <i>cipher</i>. Returns <i>buf</i>.</p>
+
+</dd>
+<dt id="int-SSL_CIPHER_get_bits-SSL_CIPHER-cipher-int-alg_bits">int <b>SSL_CIPHER_get_bits</b>(SSL_CIPHER *cipher, int *alg_bits);</dt>
+<dd>
+
+<p>Determine the number of bits in <i>cipher</i>. Because of export crippled ciphers there are two bits: The bits the algorithm supports in general (stored to <i>alg_bits</i>) and the bits which are actually used (the return value).</p>
+
+</dd>
+<dt id="const-char-SSL_CIPHER_get_name-SSL_CIPHER-cipher">const char *<b>SSL_CIPHER_get_name</b>(SSL_CIPHER *cipher);</dt>
+<dd>
+
+<p>Return the internal name of <i>cipher</i> as a string. These are the various strings defined by the <i>SSL3_TXT_xxx</i> and <i>TLS1_TXT_xxx</i> definitions in the header files.</p>
+
+</dd>
+<dt id="const-char-SSL_CIPHER_get_version-SSL_CIPHER-cipher">const char *<b>SSL_CIPHER_get_version</b>(SSL_CIPHER *cipher);</dt>
+<dd>
+
+<p>Returns a string like &quot;<code>SSLv3</code>&quot; or &quot;<code>TLSv1.2</code>&quot; which indicates the SSL/TLS protocol version to which <i>cipher</i> belongs (i.e. where it was defined in the specification the first time).</p>
+
+</dd>
+</dl>
+
+<h2 id="Dealing-with-Protocol-Contexts">Dealing with Protocol Contexts</h2>
+
+<p>Here we document the various API functions which deal with the SSL/TLS protocol context defined in the <b>SSL_CTX</b> structure.</p>
+
+<dl>
+
+<dt id="int-SSL_CTX_add_client_CA-SSL_CTX-ctx-X509-x">int <b>SSL_CTX_add_client_CA</b>(SSL_CTX *ctx, X509 *x);</dt>
+<dd>
+
+</dd>
+<dt id="long-SSL_CTX_add_extra_chain_cert-SSL_CTX-ctx-X509-x509">long <b>SSL_CTX_add_extra_chain_cert</b>(SSL_CTX *ctx, X509 *x509);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_add_session-SSL_CTX-ctx-SSL_SESSION-c">int <b>SSL_CTX_add_session</b>(SSL_CTX *ctx, SSL_SESSION *c);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_check_private_key-const-SSL_CTX-ctx">int <b>SSL_CTX_check_private_key</b>(const SSL_CTX *ctx);</dt>
+<dd>
+
+</dd>
+<dt id="long-SSL_CTX_ctrl-SSL_CTX-ctx-int-cmd-long-larg-char-parg">long <b>SSL_CTX_ctrl</b>(SSL_CTX *ctx, int cmd, long larg, char *parg);</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_CTX_flush_sessions-SSL_CTX-s-long-t">void <b>SSL_CTX_flush_sessions</b>(SSL_CTX *s, long t);</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_CTX_free-SSL_CTX-a">void <b>SSL_CTX_free</b>(SSL_CTX *a);</dt>
+<dd>
+
+</dd>
+<dt id="char-SSL_CTX_get_app_data-SSL_CTX-ctx">char *<b>SSL_CTX_get_app_data</b>(SSL_CTX *ctx);</dt>
+<dd>
+
+</dd>
+<dt id="X509_STORE-SSL_CTX_get_cert_store-SSL_CTX-ctx">X509_STORE *<b>SSL_CTX_get_cert_store</b>(SSL_CTX *ctx);</dt>
+<dd>
+
+</dd>
+<dt id="STACK-SSL_CTX_get_ciphers-const-SSL_CTX-ctx">STACK *<b>SSL_CTX_get_ciphers</b>(const SSL_CTX *ctx);</dt>
+<dd>
+
+</dd>
+<dt id="STACK-SSL_CTX_get_client_CA_list-const-SSL_CTX-ctx">STACK *<b>SSL_CTX_get_client_CA_list</b>(const SSL_CTX *ctx);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_get_client_cert_cb-SSL_CTX-ctx-SSL-ssl-X509-x509-EVP_PKEY-pkey">int (*<b>SSL_CTX_get_client_cert_cb</b>(SSL_CTX *ctx))(SSL *ssl, X509 **x509, EVP_PKEY **pkey);</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_CTX_get_default_read_ahead-SSL_CTX-ctx">void <b>SSL_CTX_get_default_read_ahead</b>(SSL_CTX *ctx);</dt>
+<dd>
+
+</dd>
+<dt id="char-SSL_CTX_get_ex_data-const-SSL_CTX-s-int-idx">char *<b>SSL_CTX_get_ex_data</b>(const SSL_CTX *s, int idx);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_get_ex_new_index-long-argl-char-argp-int-new_func-void-int-dup_func-void-void-free_func-void">int <b>SSL_CTX_get_ex_new_index</b>(long argl, char *argp, int (*new_func);(void), int (*dup_func)(void), void (*free_func)(void))</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_CTX_get_info_callback-SSL_CTX-ctx-SSL-ssl-int-cb-int-ret">void (*<b>SSL_CTX_get_info_callback</b>(SSL_CTX *ctx))(SSL *ssl, int cb, int ret);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_get_quiet_shutdown-const-SSL_CTX-ctx">int <b>SSL_CTX_get_quiet_shutdown</b>(const SSL_CTX *ctx);</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_CTX_get_read_ahead-SSL_CTX-ctx">void <b>SSL_CTX_get_read_ahead</b>(SSL_CTX *ctx);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_get_session_cache_mode-SSL_CTX-ctx">int <b>SSL_CTX_get_session_cache_mode</b>(SSL_CTX *ctx);</dt>
+<dd>
+
+</dd>
+<dt id="long-SSL_CTX_get_timeout-const-SSL_CTX-ctx">long <b>SSL_CTX_get_timeout</b>(const SSL_CTX *ctx);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_get_verify_callback-const-SSL_CTX-ctx-int-ok-X509_STORE_CTX-ctx">int (*<b>SSL_CTX_get_verify_callback</b>(const SSL_CTX *ctx))(int ok, X509_STORE_CTX *ctx);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_get_verify_mode-SSL_CTX-ctx">int <b>SSL_CTX_get_verify_mode</b>(SSL_CTX *ctx);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_load_verify_locations-SSL_CTX-ctx-const-char-CAfile-const-char-CApath">int <b>SSL_CTX_load_verify_locations</b>(SSL_CTX *ctx, const char *CAfile, const char *CApath);</dt>
+<dd>
+
+</dd>
+<dt id="SSL_CTX-SSL_CTX_new-const-SSL_METHOD-meth">SSL_CTX *<b>SSL_CTX_new</b>(const SSL_METHOD *meth);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_up_ref-SSL_CTX-ctx">int SSL_CTX_up_ref(SSL_CTX *ctx);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_remove_session-SSL_CTX-ctx-SSL_SESSION-c">int <b>SSL_CTX_remove_session</b>(SSL_CTX *ctx, SSL_SESSION *c);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_sess_accept-SSL_CTX-ctx">int <b>SSL_CTX_sess_accept</b>(SSL_CTX *ctx);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_sess_accept_good-SSL_CTX-ctx">int <b>SSL_CTX_sess_accept_good</b>(SSL_CTX *ctx);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_sess_accept_renegotiate-SSL_CTX-ctx">int <b>SSL_CTX_sess_accept_renegotiate</b>(SSL_CTX *ctx);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_sess_cache_full-SSL_CTX-ctx">int <b>SSL_CTX_sess_cache_full</b>(SSL_CTX *ctx);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_sess_cb_hits-SSL_CTX-ctx">int <b>SSL_CTX_sess_cb_hits</b>(SSL_CTX *ctx);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_sess_connect-SSL_CTX-ctx">int <b>SSL_CTX_sess_connect</b>(SSL_CTX *ctx);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_sess_connect_good-SSL_CTX-ctx">int <b>SSL_CTX_sess_connect_good</b>(SSL_CTX *ctx);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_sess_connect_renegotiate-SSL_CTX-ctx">int <b>SSL_CTX_sess_connect_renegotiate</b>(SSL_CTX *ctx);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_sess_get_cache_size-SSL_CTX-ctx">int <b>SSL_CTX_sess_get_cache_size</b>(SSL_CTX *ctx);</dt>
+<dd>
+
+</dd>
+<dt id="SSL_SESSION-SSL_CTX_sess_get_get_cb-SSL_CTX-ctx-SSL-ssl-unsigned-char-data-int-len-int-copy">SSL_SESSION *(*<b>SSL_CTX_sess_get_get_cb</b>(SSL_CTX *ctx))(SSL *ssl, unsigned char *data, int len, int *copy);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_sess_get_new_cb-SSL_CTX-ctx-SSL-ssl-SSL_SESSION-sess">int (*<b>SSL_CTX_sess_get_new_cb</b>(SSL_CTX *ctx)(SSL *ssl, SSL_SESSION *sess);</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_CTX_sess_get_remove_cb-SSL_CTX-ctx-SSL_CTX-ctx-SSL_SESSION-sess">void (*<b>SSL_CTX_sess_get_remove_cb</b>(SSL_CTX *ctx)(SSL_CTX *ctx, SSL_SESSION *sess);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_sess_hits-SSL_CTX-ctx">int <b>SSL_CTX_sess_hits</b>(SSL_CTX *ctx);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_sess_misses-SSL_CTX-ctx">int <b>SSL_CTX_sess_misses</b>(SSL_CTX *ctx);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_sess_number-SSL_CTX-ctx">int <b>SSL_CTX_sess_number</b>(SSL_CTX *ctx);</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_CTX_sess_set_cache_size-SSL_CTX-ctx-t">void <b>SSL_CTX_sess_set_cache_size</b>(SSL_CTX *ctx, t);</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_CTX_sess_set_get_cb-SSL_CTX-ctx-SSL_SESSION-cb-SSL-ssl-unsigned-char-data-int-len-int-copy">void <b>SSL_CTX_sess_set_get_cb</b>(SSL_CTX *ctx, SSL_SESSION *(*cb)(SSL *ssl, unsigned char *data, int len, int *copy));</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_CTX_sess_set_new_cb-SSL_CTX-ctx-int-cb-SSL-ssl-SSL_SESSION-sess">void <b>SSL_CTX_sess_set_new_cb</b>(SSL_CTX *ctx, int (*cb)(SSL *ssl, SSL_SESSION *sess));</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_CTX_sess_set_remove_cb-SSL_CTX-ctx-void-cb-SSL_CTX-ctx-SSL_SESSION-sess">void <b>SSL_CTX_sess_set_remove_cb</b>(SSL_CTX *ctx, void (*cb)(SSL_CTX *ctx, SSL_SESSION *sess));</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_sess_timeouts-SSL_CTX-ctx">int <b>SSL_CTX_sess_timeouts</b>(SSL_CTX *ctx);</dt>
+<dd>
+
+</dd>
+<dt id="LHASH-SSL_CTX_sessions-SSL_CTX-ctx">LHASH *<b>SSL_CTX_sessions</b>(SSL_CTX *ctx);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_set_app_data-SSL_CTX-ctx-void-arg">int <b>SSL_CTX_set_app_data</b>(SSL_CTX *ctx, void *arg);</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_CTX_set_cert_store-SSL_CTX-ctx-X509_STORE-cs">void <b>SSL_CTX_set_cert_store</b>(SSL_CTX *ctx, X509_STORE *cs);</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_CTX_set1_cert_store-SSL_CTX-ctx-X509_STORE-cs">void <b>SSL_CTX_set1_cert_store</b>(SSL_CTX *ctx, X509_STORE *cs);</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_CTX_set_cert_verify_cb-SSL_CTX-ctx-int-cb-char-arg">void <b>SSL_CTX_set_cert_verify_cb</b>(SSL_CTX *ctx, int (*cb)(), char *arg)</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_set_cipher_list-SSL_CTX-ctx-char-str">int <b>SSL_CTX_set_cipher_list</b>(SSL_CTX *ctx, char *str);</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_CTX_set_client_CA_list-SSL_CTX-ctx-STACK-list">void <b>SSL_CTX_set_client_CA_list</b>(SSL_CTX *ctx, STACK *list);</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_CTX_set_client_cert_cb-SSL_CTX-ctx-int-cb-SSL-ssl-X509-x509-EVP_PKEY-pkey">void <b>SSL_CTX_set_client_cert_cb</b>(SSL_CTX *ctx, int (*cb)(SSL *ssl, X509 **x509, EVP_PKEY **pkey));</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_set_ct_validation_callback-SSL_CTX-ctx-ssl_ct_validation_cb-callback-void-arg">int <b>SSL_CTX_set_ct_validation_callback</b>(SSL_CTX *ctx, ssl_ct_validation_cb callback, void *arg);</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_CTX_set_default_passwd_cb-SSL_CTX-ctx-int-cb-void">void <b>SSL_CTX_set_default_passwd_cb</b>(SSL_CTX *ctx, int (*cb);(void))</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_CTX_set_default_read_ahead-SSL_CTX-ctx-int-m">void <b>SSL_CTX_set_default_read_ahead</b>(SSL_CTX *ctx, int m);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_set_default_verify_paths-SSL_CTX-ctx">int <b>SSL_CTX_set_default_verify_paths</b>(SSL_CTX *ctx);</dt>
+<dd>
+
+<p>Use the default paths to locate trusted CA certificates. There is one default directory path and one default file path. Both are set via this call.</p>
+
+</dd>
+<dt id="int-SSL_CTX_set_default_verify_dir-SSL_CTX-ctx">int <b>SSL_CTX_set_default_verify_dir</b>(SSL_CTX *ctx)</dt>
+<dd>
+
+<p>Use the default directory path to locate trusted CA certificates.</p>
+
+</dd>
+<dt id="int-SSL_CTX_set_default_verify_file-SSL_CTX-ctx">int <b>SSL_CTX_set_default_verify_file</b>(SSL_CTX *ctx)</dt>
+<dd>
+
+<p>Use the file path to locate trusted CA certificates.</p>
+
+</dd>
+<dt id="int-SSL_CTX_set_ex_data-SSL_CTX-s-int-idx-char-arg">int <b>SSL_CTX_set_ex_data</b>(SSL_CTX *s, int idx, char *arg);</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_CTX_set_info_callback-SSL_CTX-ctx-void-cb-SSL-ssl-int-cb-int-ret">void <b>SSL_CTX_set_info_callback</b>(SSL_CTX *ctx, void (*cb)(SSL *ssl, int cb, int ret));</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_CTX_set_msg_callback-SSL_CTX-ctx-void-cb-int-write_p-int-version-int-content_type-const-void-buf-size_t-len-SSL-ssl-void-arg">void <b>SSL_CTX_set_msg_callback</b>(SSL_CTX *ctx, void (*cb)(int write_p, int version, int content_type, const void *buf, size_t len, SSL *ssl, void *arg));</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_CTX_set_msg_callback_arg-SSL_CTX-ctx-void-arg">void <b>SSL_CTX_set_msg_callback_arg</b>(SSL_CTX *ctx, void *arg);</dt>
+<dd>
+
+</dd>
+<dt id="unsigned-long-SSL_CTX_clear_options-SSL_CTX-ctx-unsigned-long-op">unsigned long <b>SSL_CTX_clear_options</b>(SSL_CTX *ctx, unsigned long op);</dt>
+<dd>
+
+</dd>
+<dt id="unsigned-long-SSL_CTX_get_options-SSL_CTX-ctx">unsigned long <b>SSL_CTX_get_options</b>(SSL_CTX *ctx);</dt>
+<dd>
+
+</dd>
+<dt id="unsigned-long-SSL_CTX_set_options-SSL_CTX-ctx-unsigned-long-op">unsigned long <b>SSL_CTX_set_options</b>(SSL_CTX *ctx, unsigned long op);</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_CTX_set_quiet_shutdown-SSL_CTX-ctx-int-mode">void <b>SSL_CTX_set_quiet_shutdown</b>(SSL_CTX *ctx, int mode);</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_CTX_set_read_ahead-SSL_CTX-ctx-int-m">void <b>SSL_CTX_set_read_ahead</b>(SSL_CTX *ctx, int m);</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_CTX_set_session_cache_mode-SSL_CTX-ctx-int-mode">void <b>SSL_CTX_set_session_cache_mode</b>(SSL_CTX *ctx, int mode);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_set_ssl_version-SSL_CTX-ctx-const-SSL_METHOD-meth">int <b>SSL_CTX_set_ssl_version</b>(SSL_CTX *ctx, const SSL_METHOD *meth);</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_CTX_set_timeout-SSL_CTX-ctx-long-t">void <b>SSL_CTX_set_timeout</b>(SSL_CTX *ctx, long t);</dt>
+<dd>
+
+</dd>
+<dt id="long-SSL_CTX_set_tmp_dh-SSL_CTX-ctx-DH-dh">long <b>SSL_CTX_set_tmp_dh</b>(SSL_CTX* ctx, DH *dh);</dt>
+<dd>
+
+</dd>
+<dt id="long-SSL_CTX_set_tmp_dh_callback-SSL_CTX-ctx-DH-cb-void">long <b>SSL_CTX_set_tmp_dh_callback</b>(SSL_CTX *ctx, DH *(*cb)(void));</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_CTX_set_verify-SSL_CTX-ctx-int-mode-int-cb-void">void <b>SSL_CTX_set_verify</b>(SSL_CTX *ctx, int mode, int (*cb);(void))</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_use_PrivateKey-SSL_CTX-ctx-EVP_PKEY-pkey">int <b>SSL_CTX_use_PrivateKey</b>(SSL_CTX *ctx, EVP_PKEY *pkey);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_use_PrivateKey_ASN1-int-type-SSL_CTX-ctx-unsigned-char-d-long-len">int <b>SSL_CTX_use_PrivateKey_ASN1</b>(int type, SSL_CTX *ctx, unsigned char *d, long len);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_use_PrivateKey_file-SSL_CTX-ctx-const-char-file-int-type">int <b>SSL_CTX_use_PrivateKey_file</b>(SSL_CTX *ctx, const char *file, int type);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_use_RSAPrivateKey-SSL_CTX-ctx-RSA-rsa">int <b>SSL_CTX_use_RSAPrivateKey</b>(SSL_CTX *ctx, RSA *rsa);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_use_RSAPrivateKey_ASN1-SSL_CTX-ctx-unsigned-char-d-long-len">int <b>SSL_CTX_use_RSAPrivateKey_ASN1</b>(SSL_CTX *ctx, unsigned char *d, long len);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_use_RSAPrivateKey_file-SSL_CTX-ctx-const-char-file-int-type">int <b>SSL_CTX_use_RSAPrivateKey_file</b>(SSL_CTX *ctx, const char *file, int type);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_use_certificate-SSL_CTX-ctx-X509-x">int <b>SSL_CTX_use_certificate</b>(SSL_CTX *ctx, X509 *x);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_use_certificate_ASN1-SSL_CTX-ctx-int-len-unsigned-char-d">int <b>SSL_CTX_use_certificate_ASN1</b>(SSL_CTX *ctx, int len, unsigned char *d);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_use_certificate_file-SSL_CTX-ctx-const-char-file-int-type">int <b>SSL_CTX_use_certificate_file</b>(SSL_CTX *ctx, const char *file, int type);</dt>
+<dd>
+
+</dd>
+<dt id="X509-SSL_CTX_get0_certificate-const-SSL_CTX-ctx">X509 *<b>SSL_CTX_get0_certificate</b>(const SSL_CTX *ctx);</dt>
+<dd>
+
+</dd>
+<dt id="EVP_PKEY-SSL_CTX_get0_privatekey-const-SSL_CTX-ctx">EVP_PKEY *<b>SSL_CTX_get0_privatekey</b>(const SSL_CTX *ctx);</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_CTX_set_psk_client_callback-SSL_CTX-ctx-unsigned-int-callback-SSL-ssl-const-char-hint-char-identity-unsigned-int-max_identity_len-unsigned-char-psk-unsigned-int-max_psk_len">void <b>SSL_CTX_set_psk_client_callback</b>(SSL_CTX *ctx, unsigned int (*callback)(SSL *ssl, const char *hint, char *identity, unsigned int max_identity_len, unsigned char *psk, unsigned int max_psk_len));</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_CTX_use_psk_identity_hint-SSL_CTX-ctx-const-char-hint">int <b>SSL_CTX_use_psk_identity_hint</b>(SSL_CTX *ctx, const char *hint);</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_CTX_set_psk_server_callback-SSL_CTX-ctx-unsigned-int-callback-SSL-ssl-const-char-identity-unsigned-char-psk-int-max_psk_len">void <b>SSL_CTX_set_psk_server_callback</b>(SSL_CTX *ctx, unsigned int (*callback)(SSL *ssl, const char *identity, unsigned char *psk, int max_psk_len));</dt>
+<dd>
+
+</dd>
+</dl>
+
+<h2 id="Dealing-with-Sessions">Dealing with Sessions</h2>
+
+<p>Here we document the various API functions which deal with the SSL/TLS sessions defined in the <b>SSL_SESSION</b> structures.</p>
+
+<dl>
+
+<dt id="int-SSL_SESSION_cmp-const-SSL_SESSION-a-const-SSL_SESSION-b">int <b>SSL_SESSION_cmp</b>(const SSL_SESSION *a, const SSL_SESSION *b);</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_SESSION_free-SSL_SESSION-ss">void <b>SSL_SESSION_free</b>(SSL_SESSION *ss);</dt>
+<dd>
+
+</dd>
+<dt id="char-SSL_SESSION_get_app_data-SSL_SESSION-s">char *<b>SSL_SESSION_get_app_data</b>(SSL_SESSION *s);</dt>
+<dd>
+
+</dd>
+<dt id="char-SSL_SESSION_get_ex_data-const-SSL_SESSION-s-int-idx">char *<b>SSL_SESSION_get_ex_data</b>(const SSL_SESSION *s, int idx);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_SESSION_get_ex_new_index-long-argl-char-argp-int-new_func-void-int-dup_func-void-void-free_func-void">int <b>SSL_SESSION_get_ex_new_index</b>(long argl, char *argp, int (*new_func);(void), int (*dup_func)(void), void (*free_func)(void))</dt>
+<dd>
+
+</dd>
+<dt id="long-SSL_SESSION_get_time-const-SSL_SESSION-s">long <b>SSL_SESSION_get_time</b>(const SSL_SESSION *s);</dt>
+<dd>
+
+</dd>
+<dt id="long-SSL_SESSION_get_timeout-const-SSL_SESSION-s">long <b>SSL_SESSION_get_timeout</b>(const SSL_SESSION *s);</dt>
+<dd>
+
+</dd>
+<dt id="unsigned-long-SSL_SESSION_hash-const-SSL_SESSION-a">unsigned long <b>SSL_SESSION_hash</b>(const SSL_SESSION *a);</dt>
+<dd>
+
+</dd>
+<dt id="SSL_SESSION-SSL_SESSION_new-void">SSL_SESSION *<b>SSL_SESSION_new</b>(void);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_SESSION_print-BIO-bp-const-SSL_SESSION-x">int <b>SSL_SESSION_print</b>(BIO *bp, const SSL_SESSION *x);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_SESSION_print_fp-FILE-fp-const-SSL_SESSION-x">int <b>SSL_SESSION_print_fp</b>(FILE *fp, const SSL_SESSION *x);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_SESSION_set_app_data-SSL_SESSION-s-char-a">int <b>SSL_SESSION_set_app_data</b>(SSL_SESSION *s, char *a);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_SESSION_set_ex_data-SSL_SESSION-s-int-idx-char-arg">int <b>SSL_SESSION_set_ex_data</b>(SSL_SESSION *s, int idx, char *arg);</dt>
+<dd>
+
+</dd>
+<dt id="long-SSL_SESSION_set_time-SSL_SESSION-s-long-t">long <b>SSL_SESSION_set_time</b>(SSL_SESSION *s, long t);</dt>
+<dd>
+
+</dd>
+<dt id="long-SSL_SESSION_set_timeout-SSL_SESSION-s-long-t">long <b>SSL_SESSION_set_timeout</b>(SSL_SESSION *s, long t);</dt>
+<dd>
+
+</dd>
+</dl>
+
+<h2 id="Dealing-with-Connections">Dealing with Connections</h2>
+
+<p>Here we document the various API functions which deal with the SSL/TLS connection defined in the <b>SSL</b> structure.</p>
+
+<dl>
+
+<dt id="int-SSL_accept-SSL-ssl">int <b>SSL_accept</b>(SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_add_dir_cert_subjects_to_stack-STACK-stack-const-char-dir">int <b>SSL_add_dir_cert_subjects_to_stack</b>(STACK *stack, const char *dir);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_add_file_cert_subjects_to_stack-STACK-stack-const-char-file">int <b>SSL_add_file_cert_subjects_to_stack</b>(STACK *stack, const char *file);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_add_client_CA-SSL-ssl-X509-x">int <b>SSL_add_client_CA</b>(SSL *ssl, X509 *x);</dt>
+<dd>
+
+</dd>
+<dt id="char-SSL_alert_desc_string-int-value">char *<b>SSL_alert_desc_string</b>(int value);</dt>
+<dd>
+
+</dd>
+<dt id="char-SSL_alert_desc_string_long-int-value">char *<b>SSL_alert_desc_string_long</b>(int value);</dt>
+<dd>
+
+</dd>
+<dt id="char-SSL_alert_type_string-int-value">char *<b>SSL_alert_type_string</b>(int value);</dt>
+<dd>
+
+</dd>
+<dt id="char-SSL_alert_type_string_long-int-value">char *<b>SSL_alert_type_string_long</b>(int value);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_check_private_key-const-SSL-ssl">int <b>SSL_check_private_key</b>(const SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_clear-SSL-ssl">void <b>SSL_clear</b>(SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="long-SSL_clear_num_renegotiations-SSL-ssl">long <b>SSL_clear_num_renegotiations</b>(SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_connect-SSL-ssl">int <b>SSL_connect</b>(SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_copy_session_id-SSL-t-const-SSL-f">int <b>SSL_copy_session_id</b>(SSL *t, const SSL *f);</dt>
+<dd>
+
+<p>Sets the session details for <b>t</b> to be the same as in <b>f</b>. Returns 1 on success or 0 on failure.</p>
+
+</dd>
+<dt id="long-SSL_ctrl-SSL-ssl-int-cmd-long-larg-char-parg">long <b>SSL_ctrl</b>(SSL *ssl, int cmd, long larg, char *parg);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_do_handshake-SSL-ssl">int <b>SSL_do_handshake</b>(SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="SSL-SSL_dup-SSL-ssl">SSL *<b>SSL_dup</b>(SSL *ssl);</dt>
+<dd>
+
+<p>SSL_dup() allows applications to configure an SSL handle for use in multiple SSL connections, and then duplicate it prior to initiating each connection with the duplicated handle. Use of SSL_dup() avoids the need to repeat the configuration of the handles for each connection.</p>
+
+<p>For SSL_dup() to work, the connection MUST be in its initial state and MUST NOT have not yet have started the SSL handshake. For connections that are not in their initial state SSL_dup() just increments an internal reference count and returns the <i>same</i> handle. It may be possible to use <a href="../man3/SSL_clear.html>SSL_clear(3)</a> to recycle an SSL handle that is not in its initial state for re-use, but this is best avoided. Instead, save and restore the session, if desired, and construct a fresh handle for each connection.</p>
+
+</dd>
+<dt id="STACK-SSL_dup_CA_list-STACK-sk">STACK *<b>SSL_dup_CA_list</b>(STACK *sk);</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_free-SSL-ssl">void <b>SSL_free</b>(SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="SSL_CTX-SSL_get_SSL_CTX-const-SSL-ssl">SSL_CTX *<b>SSL_get_SSL_CTX</b>(const SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="char-SSL_get_app_data-SSL-ssl">char *<b>SSL_get_app_data</b>(SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="X509-SSL_get_certificate-const-SSL-ssl">X509 *<b>SSL_get_certificate</b>(const SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="const-char-SSL_get_cipher-const-SSL-ssl">const char *<b>SSL_get_cipher</b>(const SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_is_dtls-const-SSL-ssl">int <b>SSL_is_dtls</b>(const SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_get_cipher_bits-const-SSL-ssl-int-alg_bits">int <b>SSL_get_cipher_bits</b>(const SSL *ssl, int *alg_bits);</dt>
+<dd>
+
+</dd>
+<dt id="char-SSL_get_cipher_list-const-SSL-ssl-int-n">char *<b>SSL_get_cipher_list</b>(const SSL *ssl, int n);</dt>
+<dd>
+
+</dd>
+<dt id="char-SSL_get_cipher_name-const-SSL-ssl">char *<b>SSL_get_cipher_name</b>(const SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="char-SSL_get_cipher_version-const-SSL-ssl">char *<b>SSL_get_cipher_version</b>(const SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="STACK-SSL_get_ciphers-const-SSL-ssl">STACK *<b>SSL_get_ciphers</b>(const SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="STACK-SSL_get_client_CA_list-const-SSL-ssl">STACK *<b>SSL_get_client_CA_list</b>(const SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="SSL_CIPHER-SSL_get_current_cipher-SSL-ssl">SSL_CIPHER *<b>SSL_get_current_cipher</b>(SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="long-SSL_get_default_timeout-const-SSL-ssl">long <b>SSL_get_default_timeout</b>(const SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_get_error-const-SSL-ssl-int-i">int <b>SSL_get_error</b>(const SSL *ssl, int i);</dt>
+<dd>
+
+</dd>
+<dt id="char-SSL_get_ex_data-const-SSL-ssl-int-idx">char *<b>SSL_get_ex_data</b>(const SSL *ssl, int idx);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_get_ex_data_X509_STORE_CTX_idx-void">int <b>SSL_get_ex_data_X509_STORE_CTX_idx</b>(void);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_get_ex_new_index-long-argl-char-argp-int-new_func-void-int-dup_func-void-void-free_func-void">int <b>SSL_get_ex_new_index</b>(long argl, char *argp, int (*new_func);(void), int (*dup_func)(void), void (*free_func)(void))</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_get_fd-const-SSL-ssl">int <b>SSL_get_fd</b>(const SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_get_info_callback-const-SSL-ssl">void (*<b>SSL_get_info_callback</b>(const SSL *ssl);)()</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_get_key_update_type-SSL-s">int <b>SSL_get_key_update_type</b>(SSL *s);</dt>
+<dd>
+
+</dd>
+<dt id="STACK-SSL_get_peer_cert_chain-const-SSL-ssl">STACK *<b>SSL_get_peer_cert_chain</b>(const SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="X509-SSL_get_peer_certificate-const-SSL-ssl">X509 *<b>SSL_get_peer_certificate</b>(const SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="const-STACK_OF-SCT-SSL_get0_peer_scts-SSL-s">const STACK_OF(SCT) *<b>SSL_get0_peer_scts</b>(SSL *s);</dt>
+<dd>
+
+</dd>
+<dt id="EVP_PKEY-SSL_get_privatekey-const-SSL-ssl">EVP_PKEY *<b>SSL_get_privatekey</b>(const SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_get_quiet_shutdown-const-SSL-ssl">int <b>SSL_get_quiet_shutdown</b>(const SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="BIO-SSL_get_rbio-const-SSL-ssl">BIO *<b>SSL_get_rbio</b>(const SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_get_read_ahead-const-SSL-ssl">int <b>SSL_get_read_ahead</b>(const SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="SSL_SESSION-SSL_get_session-const-SSL-ssl">SSL_SESSION *<b>SSL_get_session</b>(const SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="char-SSL_get_shared_ciphers-const-SSL-ssl-char-buf-int-len">char *<b>SSL_get_shared_ciphers</b>(const SSL *ssl, char *buf, int len);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_get_shutdown-const-SSL-ssl">int <b>SSL_get_shutdown</b>(const SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="const-SSL_METHOD-SSL_get_ssl_method-SSL-ssl">const SSL_METHOD *<b>SSL_get_ssl_method</b>(SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_get_state-const-SSL-ssl">int <b>SSL_get_state</b>(const SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="long-SSL_get_time-const-SSL-ssl">long <b>SSL_get_time</b>(const SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="long-SSL_get_timeout-const-SSL-ssl">long <b>SSL_get_timeout</b>(const SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_get_verify_callback-const-SSL-ssl-int-X509_STORE_CTX">int (*<b>SSL_get_verify_callback</b>(const SSL *ssl))(int, X509_STORE_CTX *)</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_get_verify_mode-const-SSL-ssl">int <b>SSL_get_verify_mode</b>(const SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="long-SSL_get_verify_result-const-SSL-ssl">long <b>SSL_get_verify_result</b>(const SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="char-SSL_get_version-const-SSL-ssl">char *<b>SSL_get_version</b>(const SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="BIO-SSL_get_wbio-const-SSL-ssl">BIO *<b>SSL_get_wbio</b>(const SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_in_accept_init-SSL-ssl">int <b>SSL_in_accept_init</b>(SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_in_before-SSL-ssl">int <b>SSL_in_before</b>(SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_in_connect_init-SSL-ssl">int <b>SSL_in_connect_init</b>(SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_in_init-SSL-ssl">int <b>SSL_in_init</b>(SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_is_init_finished-SSL-ssl">int <b>SSL_is_init_finished</b>(SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_key_update-SSL-s-int-updatetype">int <b>SSL_key_update</b>(SSL *s, int updatetype);</dt>
+<dd>
+
+</dd>
+<dt id="STACK-SSL_load_client_CA_file-const-char-file">STACK *<b>SSL_load_client_CA_file</b>(const char *file);</dt>
+<dd>
+
+</dd>
+<dt id="SSL-SSL_new-SSL_CTX-ctx">SSL *<b>SSL_new</b>(SSL_CTX *ctx);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_up_ref-SSL-s">int SSL_up_ref(SSL *s);</dt>
+<dd>
+
+</dd>
+<dt id="long-SSL_num_renegotiations-SSL-ssl">long <b>SSL_num_renegotiations</b>(SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_peek-SSL-ssl-void-buf-int-num">int <b>SSL_peek</b>(SSL *ssl, void *buf, int num);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_pending-const-SSL-ssl">int <b>SSL_pending</b>(const SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_read-SSL-ssl-void-buf-int-num">int <b>SSL_read</b>(SSL *ssl, void *buf, int num);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_renegotiate-SSL-ssl">int <b>SSL_renegotiate</b>(SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="char-SSL_rstate_string-SSL-ssl">char *<b>SSL_rstate_string</b>(SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="char-SSL_rstate_string_long-SSL-ssl">char *<b>SSL_rstate_string_long</b>(SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="long-SSL_session_reused-SSL-ssl">long <b>SSL_session_reused</b>(SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_set_accept_state-SSL-ssl">void <b>SSL_set_accept_state</b>(SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_set_app_data-SSL-ssl-char-arg">void <b>SSL_set_app_data</b>(SSL *ssl, char *arg);</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_set_bio-SSL-ssl-BIO-rbio-BIO-wbio">void <b>SSL_set_bio</b>(SSL *ssl, BIO *rbio, BIO *wbio);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_set_cipher_list-SSL-ssl-char-str">int <b>SSL_set_cipher_list</b>(SSL *ssl, char *str);</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_set_client_CA_list-SSL-ssl-STACK-list">void <b>SSL_set_client_CA_list</b>(SSL *ssl, STACK *list);</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_set_connect_state-SSL-ssl">void <b>SSL_set_connect_state</b>(SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_set_ct_validation_callback-SSL-ssl-ssl_ct_validation_cb-callback-void-arg">int <b>SSL_set_ct_validation_callback</b>(SSL *ssl, ssl_ct_validation_cb callback, void *arg);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_set_ex_data-SSL-ssl-int-idx-char-arg">int <b>SSL_set_ex_data</b>(SSL *ssl, int idx, char *arg);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_set_fd-SSL-ssl-int-fd">int <b>SSL_set_fd</b>(SSL *ssl, int fd);</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_set_info_callback-SSL-ssl-void-cb-void">void <b>SSL_set_info_callback</b>(SSL *ssl, void (*cb);(void))</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_set_msg_callback-SSL-ctx-void-cb-int-write_p-int-version-int-content_type-const-void-buf-size_t-len-SSL-ssl-void-arg">void <b>SSL_set_msg_callback</b>(SSL *ctx, void (*cb)(int write_p, int version, int content_type, const void *buf, size_t len, SSL *ssl, void *arg));</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_set_msg_callback_arg-SSL-ctx-void-arg">void <b>SSL_set_msg_callback_arg</b>(SSL *ctx, void *arg);</dt>
+<dd>
+
+</dd>
+<dt id="unsigned-long-SSL_clear_options-SSL-ssl-unsigned-long-op">unsigned long <b>SSL_clear_options</b>(SSL *ssl, unsigned long op);</dt>
+<dd>
+
+</dd>
+<dt id="unsigned-long-SSL_get_options-SSL-ssl">unsigned long <b>SSL_get_options</b>(SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="unsigned-long-SSL_set_options-SSL-ssl-unsigned-long-op">unsigned long <b>SSL_set_options</b>(SSL *ssl, unsigned long op);</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_set_quiet_shutdown-SSL-ssl-int-mode">void <b>SSL_set_quiet_shutdown</b>(SSL *ssl, int mode);</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_set_read_ahead-SSL-ssl-int-yes">void <b>SSL_set_read_ahead</b>(SSL *ssl, int yes);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_set_rfd-SSL-ssl-int-fd">int <b>SSL_set_rfd</b>(SSL *ssl, int fd);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_set_session-SSL-ssl-SSL_SESSION-session">int <b>SSL_set_session</b>(SSL *ssl, SSL_SESSION *session);</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_set_shutdown-SSL-ssl-int-mode">void <b>SSL_set_shutdown</b>(SSL *ssl, int mode);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_set_ssl_method-SSL-ssl-const-SSL_METHOD-meth">int <b>SSL_set_ssl_method</b>(SSL *ssl, const SSL_METHOD *meth);</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_set_time-SSL-ssl-long-t">void <b>SSL_set_time</b>(SSL *ssl, long t);</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_set_timeout-SSL-ssl-long-t">void <b>SSL_set_timeout</b>(SSL *ssl, long t);</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_set_verify-SSL-ssl-int-mode-int-callback-void">void <b>SSL_set_verify</b>(SSL *ssl, int mode, int (*callback);(void))</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_set_verify_result-SSL-ssl-long-arg">void <b>SSL_set_verify_result</b>(SSL *ssl, long arg);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_set_wfd-SSL-ssl-int-fd">int <b>SSL_set_wfd</b>(SSL *ssl, int fd);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_shutdown-SSL-ssl">int <b>SSL_shutdown</b>(SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="OSSL_HANDSHAKE_STATE-SSL_get_state-const-SSL-ssl">OSSL_HANDSHAKE_STATE <b>SSL_get_state</b>(const SSL *ssl);</dt>
+<dd>
+
+<p>Returns the current handshake state.</p>
+
+</dd>
+<dt id="char-SSL_state_string-const-SSL-ssl">char *<b>SSL_state_string</b>(const SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="char-SSL_state_string_long-const-SSL-ssl">char *<b>SSL_state_string_long</b>(const SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="long-SSL_total_renegotiations-SSL-ssl">long <b>SSL_total_renegotiations</b>(SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_use_PrivateKey-SSL-ssl-EVP_PKEY-pkey">int <b>SSL_use_PrivateKey</b>(SSL *ssl, EVP_PKEY *pkey);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_use_PrivateKey_ASN1-int-type-SSL-ssl-unsigned-char-d-long-len">int <b>SSL_use_PrivateKey_ASN1</b>(int type, SSL *ssl, unsigned char *d, long len);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_use_PrivateKey_file-SSL-ssl-const-char-file-int-type">int <b>SSL_use_PrivateKey_file</b>(SSL *ssl, const char *file, int type);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_use_RSAPrivateKey-SSL-ssl-RSA-rsa">int <b>SSL_use_RSAPrivateKey</b>(SSL *ssl, RSA *rsa);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_use_RSAPrivateKey_ASN1-SSL-ssl-unsigned-char-d-long-len">int <b>SSL_use_RSAPrivateKey_ASN1</b>(SSL *ssl, unsigned char *d, long len);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_use_RSAPrivateKey_file-SSL-ssl-const-char-file-int-type">int <b>SSL_use_RSAPrivateKey_file</b>(SSL *ssl, const char *file, int type);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_use_certificate-SSL-ssl-X509-x">int <b>SSL_use_certificate</b>(SSL *ssl, X509 *x);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_use_certificate_ASN1-SSL-ssl-int-len-unsigned-char-d">int <b>SSL_use_certificate_ASN1</b>(SSL *ssl, int len, unsigned char *d);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_use_certificate_file-SSL-ssl-const-char-file-int-type">int <b>SSL_use_certificate_file</b>(SSL *ssl, const char *file, int type);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_version-const-SSL-ssl">int <b>SSL_version</b>(const SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_want-const-SSL-ssl">int <b>SSL_want</b>(const SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_want_nothing-const-SSL-ssl">int <b>SSL_want_nothing</b>(const SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_want_read-const-SSL-ssl">int <b>SSL_want_read</b>(const SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_want_write-const-SSL-ssl">int <b>SSL_want_write</b>(const SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_want_x509_lookup-const-SSL-ssl">int <b>SSL_want_x509_lookup</b>(const SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_write-SSL-ssl-const-void-buf-int-num">int <b>SSL_write</b>(SSL *ssl, const void *buf, int num);</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_set_psk_client_callback-SSL-ssl-unsigned-int-callback-SSL-ssl-const-char-hint-char-identity-unsigned-int-max_identity_len-unsigned-char-psk-unsigned-int-max_psk_len">void <b>SSL_set_psk_client_callback</b>(SSL *ssl, unsigned int (*callback)(SSL *ssl, const char *hint, char *identity, unsigned int max_identity_len, unsigned char *psk, unsigned int max_psk_len));</dt>
+<dd>
+
+</dd>
+<dt id="int-SSL_use_psk_identity_hint-SSL-ssl-const-char-hint">int <b>SSL_use_psk_identity_hint</b>(SSL *ssl, const char *hint);</dt>
+<dd>
+
+</dd>
+<dt id="void-SSL_set_psk_server_callback-SSL-ssl-unsigned-int-callback-SSL-ssl-const-char-identity-unsigned-char-psk-int-max_psk_len">void <b>SSL_set_psk_server_callback</b>(SSL *ssl, unsigned int (*callback)(SSL *ssl, const char *identity, unsigned char *psk, int max_psk_len));</dt>
+<dd>
+
+</dd>
+<dt id="const-char-SSL_get_psk_identity_hint-SSL-ssl">const char *<b>SSL_get_psk_identity_hint</b>(SSL *ssl);</dt>
+<dd>
+
+</dd>
+<dt id="const-char-SSL_get_psk_identity-SSL-ssl">const char *<b>SSL_get_psk_identity</b>(SSL *ssl);</dt>
+<dd>
+
+</dd>
+</dl>
+
+<h1 id="RETURN-VALUES">RETURN VALUES</h1>
+
+<p>See the individual manual pages for details.</p>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man1/openssl.html>openssl(1)</a>, <a href="../man7/crypto.html>crypto(7)</a>, <a href="../man3/CRYPTO_get_ex_new_index.html>CRYPTO_get_ex_new_index(3)</a>, <a href="../man3/SSL_accept.html>SSL_accept(3)</a>, <a href="../man3/SSL_clear.html>SSL_clear(3)</a>, <a href="../man3/SSL_connect.html>SSL_connect(3)</a>, <a href="../man3/SSL_CIPHER_get_name.html>SSL_CIPHER_get_name(3)</a>, <a href="../man3/SSL_COMP_add_compression_method.html>SSL_COMP_add_compression_method(3)</a>, <a href="../man3/SSL_CTX_add_extra_chain_cert.html>SSL_CTX_add_extra_chain_cert(3)</a>, <a href="../man3/SSL_CTX_add_session.html>SSL_CTX_add_session(3)</a>, <a href="../man3/SSL_CTX_ctrl.html>SSL_CTX_ctrl(3)</a>, <a href="../man3/SSL_CTX_flush_sessions.html>SSL_CTX_flush_sessions(3)</a>, <a href="../man3/SSL_CTX_get_verify_mode.html>SSL_CTX_get_verify_mode(3)</a>, <a href="../man3/SSL_CTX_load_verify_locations.html>SSL_CTX_load_verify_locations(3)</a> <a href="../man3/SSL_CTX_new.html>SSL_CTX_new(3)</a>, <a href="../man3/SSL_CTX_sess_number.html>SSL_CTX_sess_number(3)</a>, <a href="../man3/SSL_CTX_sess_set_cache_size.html>SSL_CTX_sess_set_cache_size(3)</a>, <a href="../man3/SSL_CTX_sess_set_get_cb.html>SSL_CTX_sess_set_get_cb(3)</a>, <a href="../man3/SSL_CTX_sessions.html>SSL_CTX_sessions(3)</a>, <a href="../man3/SSL_CTX_set_cert_store.html>SSL_CTX_set_cert_store(3)</a>, <a href="../man3/SSL_CTX_set_cert_verify_callback.html>SSL_CTX_set_cert_verify_callback(3)</a>, <a href="../man3/SSL_CTX_set_cipher_list.html>SSL_CTX_set_cipher_list(3)</a>, <a href="../man3/SSL_CTX_set_client_CA_list.html>SSL_CTX_set_client_CA_list(3)</a>, <a href="../man3/SSL_CTX_set_client_cert_cb.html>SSL_CTX_set_client_cert_cb(3)</a>, <a href="../man3/SSL_CTX_set_default_passwd_cb.html>SSL_CTX_set_default_passwd_cb(3)</a>, <a href="../man3/SSL_CTX_set_generate_session_id.html>SSL_CTX_set_generate_session_id(3)</a>, <a href="../man3/SSL_CTX_set_info_callback.html>SSL_CTX_set_info_callback(3)</a>, <a href="../man3/SSL_CTX_set_max_cert_list.html>SSL_CTX_set_max_cert_list(3)</a>, <a href="../man3/SSL_CTX_set_mode.html>SSL_CTX_set_mode(3)</a>, <a href="../man3/SSL_CTX_set_msg_callback.html>SSL_CTX_set_msg_callback(3)</a>, <a href="../man3/SSL_CTX_set_options.html>SSL_CTX_set_options(3)</a>, <a href="../man3/SSL_CTX_set_quiet_shutdown.html>SSL_CTX_set_quiet_shutdown(3)</a>, <a href="../man3/SSL_CTX_set_read_ahead.html>SSL_CTX_set_read_ahead(3)</a>, <a href="../man3/SSL_CTX_set_security_level.html>SSL_CTX_set_security_level(3)</a>, <a href="../man3/SSL_CTX_set_session_cache_mode.html>SSL_CTX_set_session_cache_mode(3)</a>, <a href="../man3/SSL_CTX_set_session_id_context.html>SSL_CTX_set_session_id_context(3)</a>, <a href="../man3/SSL_CTX_set_ssl_version.html>SSL_CTX_set_ssl_version(3)</a>, <a href="../man3/SSL_CTX_set_timeout.html>SSL_CTX_set_timeout(3)</a>, <a href="../man3/SSL_CTX_set_tmp_dh_callback.html>SSL_CTX_set_tmp_dh_callback(3)</a>, <a href="../man3/SSL_CTX_set_verify.html>SSL_CTX_set_verify(3)</a>, <a href="../man3/SSL_CTX_use_certificate.html>SSL_CTX_use_certificate(3)</a>, <a href="../man3/SSL_alert_type_string.html>SSL_alert_type_string(3)</a>, <a href="../man3/SSL_do_handshake.html>SSL_do_handshake(3)</a>, <a href="../man3/SSL_enable_ct.html>SSL_enable_ct(3)</a>, <a href="../man3/SSL_get_SSL_CTX.html>SSL_get_SSL_CTX(3)</a>, <a href="../man3/SSL_get_ciphers.html>SSL_get_ciphers(3)</a>, <a href="../man3/SSL_get_client_CA_list.html>SSL_get_client_CA_list(3)</a>, <a href="../man3/SSL_get_default_timeout.html>SSL_get_default_timeout(3)</a>, <a href="../man3/SSL_get_error.html>SSL_get_error(3)</a>, <a href="../man3/SSL_get_ex_data_X509_STORE_CTX_idx.html>SSL_get_ex_data_X509_STORE_CTX_idx(3)</a>, <a href="../man3/SSL_get_fd.html>SSL_get_fd(3)</a>, <a href="../man3/SSL_get_peer_cert_chain.html>SSL_get_peer_cert_chain(3)</a>, <a href="../man3/SSL_get_rbio.html>SSL_get_rbio(3)</a>, <a href="../man3/SSL_get_session.html>SSL_get_session(3)</a>, <a href="../man3/SSL_get_verify_result.html>SSL_get_verify_result(3)</a>, <a href="../man3/SSL_get_version.html>SSL_get_version(3)</a>, <a href="../man3/SSL_load_client_CA_file.html>SSL_load_client_CA_file(3)</a>, <a href="../man3/SSL_new.html>SSL_new(3)</a>, <a href="../man3/SSL_pending.html>SSL_pending(3)</a>, <a href="../man3/SSL_read_ex.html>SSL_read_ex(3)</a>, <a href="../man3/SSL_read.html>SSL_read(3)</a>, <a href="../man3/SSL_rstate_string.html>SSL_rstate_string(3)</a>, <a href="../man3/SSL_session_reused.html>SSL_session_reused(3)</a>, <a href="../man3/SSL_set_bio.html>SSL_set_bio(3)</a>, <a href="../man3/SSL_set_connect_state.html>SSL_set_connect_state(3)</a>, <a href="../man3/SSL_set_fd.html>SSL_set_fd(3)</a>, <a href="../man3/SSL_set_session.html>SSL_set_session(3)</a>, <a href="../man3/SSL_set_shutdown.html>SSL_set_shutdown(3)</a>, <a href="../man3/SSL_shutdown.html>SSL_shutdown(3)</a>, <a href="../man3/SSL_state_string.html>SSL_state_string(3)</a>, <a href="../man3/SSL_want.html>SSL_want(3)</a>, <a href="../man3/SSL_write_ex.html>SSL_write_ex(3)</a>, <a href="../man3/SSL_write.html>SSL_write(3)</a>, <a href="../man3/SSL_SESSION_free.html>SSL_SESSION_free(3)</a>, <a href="../man3/SSL_SESSION_get_time.html>SSL_SESSION_get_time(3)</a>, <a href="../man3/d2i_SSL_SESSION.html>d2i_SSL_SESSION(3)</a>, <a href="../man3/SSL_CTX_set_psk_client_callback.html>SSL_CTX_set_psk_client_callback(3)</a>, <a href="../man3/SSL_CTX_use_psk_identity_hint.html>SSL_CTX_use_psk_identity_hint(3)</a>, <a href="../man3/SSL_get_psk_identity.html>SSL_get_psk_identity(3)</a>, <a href="../man3/DTLSv1_listen.html>DTLSv1_listen(3)</a></p>
+
+<h1 id="HISTORY">HISTORY</h1>
+
+<p><b>SSLv2_client_method</b>, <b>SSLv2_server_method</b> and <b>SSLv2_method</b> where removed in OpenSSL 1.1.0.</p>
+
+<p>The return type of <b>SSL_copy_session_id</b> was changed from void to int in OpenSSL 1.1.0.</p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

@@ -1,0 +1,75 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>EVP_PKEY_print_private</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#NOTES">NOTES</a></li>
+  <li><a href="#RETURN-VALUES">RETURN VALUES</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#HISTORY">HISTORY</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>EVP_PKEY_print_public, EVP_PKEY_print_private, EVP_PKEY_print_params - public key algorithm printing routines</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;openssl/evp.h&gt;
+
+ int EVP_PKEY_print_public(BIO *out, const EVP_PKEY *pkey,
+                                int indent, ASN1_PCTX *pctx);
+ int EVP_PKEY_print_private(BIO *out, const EVP_PKEY *pkey,
+                                int indent, ASN1_PCTX *pctx);
+ int EVP_PKEY_print_params(BIO *out, const EVP_PKEY *pkey,
+                                int indent, ASN1_PCTX *pctx);</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>The functions EVP_PKEY_print_public(), EVP_PKEY_print_private() and EVP_PKEY_print_params() print out the public, private or parameter components of key <b>pkey</b> respectively. The key is sent to BIO <b>out</b> in human readable form. The parameter <b>indent</b> indicated how far the printout should be indented.</p>
+
+<p>The <b>pctx</b> parameter allows the print output to be finely tuned by using ASN1 printing options. If <b>pctx</b> is set to NULL then default values will be used.</p>
+
+<h1 id="NOTES">NOTES</h1>
+
+<p>Currently no public key algorithms include any options in the <b>pctx</b> parameter parameter.</p>
+
+<p>If the key does not include all the components indicated by the function then only those contained in the key will be printed. For example passing a public key to EVP_PKEY_print_private() will only print the public components.</p>
+
+<h1 id="RETURN-VALUES">RETURN VALUES</h1>
+
+<p>These functions all return 1 for success and 0 or a negative value for failure. In particular a return value of -2 indicates the operation is not supported by the public key algorithm.</p>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man3/EVP_PKEY_CTX_new.html>EVP_PKEY_CTX_new(3)</a>, <a href="../man3/EVP_PKEY_keygen.html>EVP_PKEY_keygen(3)</a></p>
+
+<h1 id="HISTORY">HISTORY</h1>
+
+<p>These functions were first added to OpenSSL 1.0.0.</p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

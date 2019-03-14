@@ -1,0 +1,347 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>enc</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#OPTIONS">OPTIONS</a></li>
+  <li><a href="#NOTES">NOTES</a></li>
+  <li><a href="#SUPPORTED-CIPHERS">SUPPORTED CIPHERS</a></li>
+  <li><a href="#EXAMPLES">EXAMPLES</a></li>
+  <li><a href="#BUGS">BUGS</a></li>
+  <li><a href="#HISTORY">HISTORY</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>enc - symmetric cipher routines</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<p><b>openssl enc -ciphername</b> [<b>-help</b>] [<b>-ciphers</b>] [<b>-in filename</b>] [<b>-out filename</b>] [<b>-pass arg</b>] [<b>-e</b>] [<b>-d</b>] [<b>-a/-base64</b>] [<b>-A</b>] [<b>-k password</b>] [<b>-kfile filename</b>] [<b>-K key</b>] [<b>-iv IV</b>] [<b>-S salt</b>] [<b>-salt</b>] [<b>-nosalt</b>] [<b>-z</b>] [<b>-md digest</b>] [<b>-p</b>] [<b>-P</b>] [<b>-bufsize number</b>] [<b>-nopad</b>] [<b>-debug</b>] [<b>-none</b>] [<b>-engine id</b>]</p>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>The symmetric cipher commands allow data to be encrypted or decrypted using various block and stream ciphers using keys based on passwords or explicitly provided. Base64 encoding or decoding can also be performed either by itself or in addition to the encryption or decryption.</p>
+
+<h1 id="OPTIONS">OPTIONS</h1>
+
+<dl>
+
+<dt id="help"><b>-help</b></dt>
+<dd>
+
+<p>Print out a usage message.</p>
+
+</dd>
+<dt id="ciphers"><b>-ciphers</b></dt>
+<dd>
+
+<p>List all supported ciphers.</p>
+
+</dd>
+<dt id="in-filename"><b>-in filename</b></dt>
+<dd>
+
+<p>the input filename, standard input by default.</p>
+
+</dd>
+<dt id="out-filename"><b>-out filename</b></dt>
+<dd>
+
+<p>the output filename, standard output by default.</p>
+
+</dd>
+<dt id="pass-arg"><b>-pass arg</b></dt>
+<dd>
+
+<p>the password source. For more information about the format of <b>arg</b> see the <b>PASS PHRASE ARGUMENTS</b> section in <a href="../man1/openssl.html>openssl(1)</a>.</p>
+
+</dd>
+<dt id="e"><b>-e</b></dt>
+<dd>
+
+<p>encrypt the input data: this is the default.</p>
+
+</dd>
+<dt id="d"><b>-d</b></dt>
+<dd>
+
+<p>decrypt the input data.</p>
+
+</dd>
+<dt id="a"><b>-a</b></dt>
+<dd>
+
+<p>base64 process the data. This means that if encryption is taking place the data is base64 encoded after encryption. If decryption is set then the input data is base64 decoded before being decrypted.</p>
+
+</dd>
+<dt id="base64"><b>-base64</b></dt>
+<dd>
+
+<p>same as <b>-a</b></p>
+
+</dd>
+<dt id="A"><b>-A</b></dt>
+<dd>
+
+<p>if the <b>-a</b> option is set then base64 process the data on one line.</p>
+
+</dd>
+<dt id="k-password"><b>-k password</b></dt>
+<dd>
+
+<p>the password to derive the key from. This is for compatibility with previous versions of OpenSSL. Superseded by the <b>-pass</b> argument.</p>
+
+</dd>
+<dt id="kfile-filename"><b>-kfile filename</b></dt>
+<dd>
+
+<p>read the password to derive the key from the first line of <b>filename</b>. This is for compatibility with previous versions of OpenSSL. Superseded by the <b>-pass</b> argument.</p>
+
+</dd>
+<dt id="md-digest"><b>-md digest</b></dt>
+<dd>
+
+<p>Use the specified digest to create the key from the passphrase. The default algorithm is sha-256.</p>
+
+</dd>
+<dt id="nosalt"><b>-nosalt</b></dt>
+<dd>
+
+<p>don&#39;t use a salt in the key derivation routines. This option <b>SHOULD NOT</b> be used except for test purposes or compatibility with ancient versions of OpenSSL.</p>
+
+</dd>
+<dt id="salt"><b>-salt</b></dt>
+<dd>
+
+<p>use salt (randomly generated or provide with <b>-S</b> option) when encrypting (this is the default).</p>
+
+</dd>
+<dt id="S-salt"><b>-S salt</b></dt>
+<dd>
+
+<p>the actual salt to use: this must be represented as a string of hex digits.</p>
+
+</dd>
+<dt id="K-key"><b>-K key</b></dt>
+<dd>
+
+<p>the actual key to use: this must be represented as a string comprised only of hex digits. If only the key is specified, the IV must additionally specified using the <b>-iv</b> option. When both a key and a password are specified, the key given with the <b>-K</b> option will be used and the IV generated from the password will be taken. It probably does not make much sense to specify both key and password.</p>
+
+</dd>
+<dt id="iv-IV"><b>-iv IV</b></dt>
+<dd>
+
+<p>the actual IV to use: this must be represented as a string comprised only of hex digits. When only the key is specified using the <b>-K</b> option, the IV must explicitly be defined. When a password is being specified using one of the other options, the IV is generated from this password.</p>
+
+</dd>
+<dt id="p"><b>-p</b></dt>
+<dd>
+
+<p>print out the key and IV used.</p>
+
+</dd>
+<dt id="P"><b>-P</b></dt>
+<dd>
+
+<p>print out the key and IV used then immediately exit: don&#39;t do any encryption or decryption.</p>
+
+</dd>
+<dt id="bufsize-number"><b>-bufsize number</b></dt>
+<dd>
+
+<p>set the buffer size for I/O</p>
+
+</dd>
+<dt id="nopad"><b>-nopad</b></dt>
+<dd>
+
+<p>disable standard block padding</p>
+
+</dd>
+<dt id="debug"><b>-debug</b></dt>
+<dd>
+
+<p>debug the BIOs used for I/O.</p>
+
+</dd>
+<dt id="z"><b>-z</b></dt>
+<dd>
+
+<p>Compress or decompress clear text using zlib before encryption or after decryption. This option exists only if OpenSSL with compiled with zlib or zlib-dynamic option.</p>
+
+</dd>
+<dt id="none"><b>-none</b></dt>
+<dd>
+
+<p>Use NULL cipher (no encryption or decryption of input).</p>
+
+</dd>
+</dl>
+
+<h1 id="NOTES">NOTES</h1>
+
+<p>The program can be called either as <b>openssl ciphername</b> or <b>openssl enc -ciphername</b>. But the first form doesn&#39;t work with engine-provided ciphers, because this form is processed before the configuration file is read and any ENGINEs loaded.</p>
+
+<p>Engines which provide entirely new encryption algorithms (such as ccgost engine which provides gost89 algorithm) should be configured in the configuration file. Engines, specified in the command line using -engine options can only be used for hardware-assisted implementations of ciphers, which are supported by OpenSSL core or other engine, specified in the configuration file.</p>
+
+<p>When enc command lists supported ciphers, ciphers provided by engines, specified in the configuration files are listed too.</p>
+
+<p>A password will be prompted for to derive the key and IV if necessary.</p>
+
+<p>The <b>-salt</b> option should <b>ALWAYS</b> be used if the key is being derived from a password unless you want compatibility with previous versions of OpenSSL.</p>
+
+<p>Without the <b>-salt</b> option it is possible to perform efficient dictionary attacks on the password and to attack stream cipher encrypted data. The reason for this is that without the salt the same password always generates the same encryption key. When the salt is being used the first eight bytes of the encrypted data are reserved for the salt: it is generated at random when encrypting a file and read from the encrypted file when it is decrypted.</p>
+
+<p>Some of the ciphers do not have large keys and others have security implications if not used correctly. A beginner is advised to just use a strong block cipher in CBC mode such as bf or des3.</p>
+
+<p>All the block ciphers normally use PKCS#5 padding also known as standard block padding: this allows a rudimentary integrity or password check to be performed. However since the chance of random data passing the test is better than 1 in 256 it isn&#39;t a very good test.</p>
+
+<p>If padding is disabled then the input data must be a multiple of the cipher block length.</p>
+
+<p>All RC2 ciphers have the same key and effective key length.</p>
+
+<p>Blowfish and RC5 algorithms use a 128 bit key.</p>
+
+<h1 id="SUPPORTED-CIPHERS">SUPPORTED CIPHERS</h1>
+
+<p>Note that some of these ciphers can be disabled at compile time and some are available only if an appropriate engine is configured in the configuration file. The output of the <b>enc</b> command run with unsupported options (for example <b>openssl enc -help</b>) includes a list of ciphers, supported by your version of OpenSSL, including ones provided by configured engines.</p>
+
+<p>The <b>enc</b> program does not support authenticated encryption modes like CCM and GCM. The utility does not store or retrieve the authentication tag.</p>
+
+<pre><code> base64             Base 64
+
+ bf-cbc             Blowfish in CBC mode
+ bf                 Alias for bf-cbc
+ bf-cfb             Blowfish in CFB mode
+ bf-ecb             Blowfish in ECB mode
+ bf-ofb             Blowfish in OFB mode
+
+ cast-cbc           CAST in CBC mode
+ cast               Alias for cast-cbc
+ cast5-cbc          CAST5 in CBC mode
+ cast5-cfb          CAST5 in CFB mode
+ cast5-ecb          CAST5 in ECB mode
+ cast5-ofb          CAST5 in OFB mode
+
+ des-cbc            DES in CBC mode
+ des                Alias for des-cbc
+ des-cfb            DES in CBC mode
+ des-ofb            DES in OFB mode
+ des-ecb            DES in ECB mode
+
+ des-ede-cbc        Two key triple DES EDE in CBC mode
+ des-ede            Two key triple DES EDE in ECB mode
+ des-ede-cfb        Two key triple DES EDE in CFB mode
+ des-ede-ofb        Two key triple DES EDE in OFB mode
+
+ des-ede3-cbc       Three key triple DES EDE in CBC mode
+ des-ede3           Three key triple DES EDE in ECB mode
+ des3               Alias for des-ede3-cbc
+ des-ede3-cfb       Three key triple DES EDE CFB mode
+ des-ede3-ofb       Three key triple DES EDE in OFB mode
+
+ desx               DESX algorithm.
+
+ gost89             GOST 28147-89 in CFB mode (provided by ccgost engine)
+ gost89-cnt        `GOST 28147-89 in CNT mode (provided by ccgost engine)
+
+ idea-cbc           IDEA algorithm in CBC mode
+ idea               same as idea-cbc
+ idea-cfb           IDEA in CFB mode
+ idea-ecb           IDEA in ECB mode
+ idea-ofb           IDEA in OFB mode
+
+ rc2-cbc            128 bit RC2 in CBC mode
+ rc2                Alias for rc2-cbc
+ rc2-cfb            128 bit RC2 in CFB mode
+ rc2-ecb            128 bit RC2 in ECB mode
+ rc2-ofb            128 bit RC2 in OFB mode
+ rc2-64-cbc         64 bit RC2 in CBC mode
+ rc2-40-cbc         40 bit RC2 in CBC mode
+
+ rc4                128 bit RC4
+ rc4-64             64 bit RC4
+ rc4-40             40 bit RC4
+
+ rc5-cbc            RC5 cipher in CBC mode
+ rc5                Alias for rc5-cbc
+ rc5-cfb            RC5 cipher in CFB mode
+ rc5-ecb            RC5 cipher in ECB mode
+ rc5-ofb            RC5 cipher in OFB mode
+
+ aes-[128|192|256]-cbc  128/192/256 bit AES in CBC mode
+ aes[128|192|256]       Alias for aes-[128|192|256]-cbc
+ aes-[128|192|256]-cfb  128/192/256 bit AES in 128 bit CFB mode
+ aes-[128|192|256]-cfb1 128/192/256 bit AES in 1 bit CFB mode
+ aes-[128|192|256]-cfb8 128/192/256 bit AES in 8 bit CFB mode
+ aes-[128|192|256]-ecb  128/192/256 bit AES in ECB mode
+ aes-[128|192|256]-ofb  128/192/256 bit AES in OFB mode</code></pre>
+
+<h1 id="EXAMPLES">EXAMPLES</h1>
+
+<p>Just base64 encode a binary file:</p>
+
+<pre><code> openssl base64 -in file.bin -out file.b64</code></pre>
+
+<p>Decode the same file</p>
+
+<pre><code> openssl base64 -d -in file.b64 -out file.bin</code></pre>
+
+<p>Encrypt a file using triple DES in CBC mode using a prompted password:</p>
+
+<pre><code> openssl des3 -salt -in file.txt -out file.des3</code></pre>
+
+<p>Decrypt a file using a supplied password:</p>
+
+<pre><code> openssl des3 -d -salt -in file.des3 -out file.txt -k mypassword</code></pre>
+
+<p>Encrypt a file then base64 encode it (so it can be sent via mail for example) using Blowfish in CBC mode:</p>
+
+<pre><code> openssl bf -a -salt -in file.txt -out file.bf</code></pre>
+
+<p>Base64 decode a file then decrypt it:</p>
+
+<pre><code> openssl bf -d -salt -a -in file.bf -out file.txt</code></pre>
+
+<p>Decrypt some data using a supplied 40 bit RC4 key:</p>
+
+<pre><code> openssl rc4-40 -in file.rc4 -out file.txt -K 0102030405</code></pre>
+
+<h1 id="BUGS">BUGS</h1>
+
+<p>The <b>-A</b> option when used with large files doesn&#39;t work properly.</p>
+
+<p>There should be an option to allow an iteration count to be included.</p>
+
+<p>The <b>enc</b> program only supports a fixed number of algorithms with certain parameters. So if, for example, you want to use RC2 with a 76 bit key or RC4 with an 84 bit key you can&#39;t use this program.</p>
+
+<h1 id="HISTORY">HISTORY</h1>
+
+<p>The default digest was changed from MD5 to SHA256 in Openssl 1.1.</p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

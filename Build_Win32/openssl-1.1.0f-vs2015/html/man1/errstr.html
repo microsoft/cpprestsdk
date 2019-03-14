@@ -1,0 +1,64 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>errstr</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#OPTIONS">OPTIONS</a></li>
+  <li><a href="#EXAMPLE">EXAMPLE</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>errstr - lookup error codes</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<p><b>openssl errstr error_code</b></p>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>Sometimes an application will not load error message and only numerical forms will be available. The <b>errstr</b> utility can be used to display the meaning of the hex code. The hex code is the hex digits after the second colon.</p>
+
+<h1 id="OPTIONS">OPTIONS</h1>
+
+<p>None.</p>
+
+<h1 id="EXAMPLE">EXAMPLE</h1>
+
+<p>The error code:</p>
+
+<pre><code> 27594:error:2006D080:lib(32):func(109):reason(128):bss_file.c:107:</code></pre>
+
+<p>can be displayed with:</p>
+
+<pre><code> openssl errstr 2006D080</code></pre>
+
+<p>to produce the error message:</p>
+
+<pre><code> error:2006D080:BIO routines:BIO_new_file:no such file</code></pre>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2004-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

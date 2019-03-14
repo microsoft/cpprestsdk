@@ -1,0 +1,213 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>EVP_DigestInit</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#RETURN-VALUES">RETURN VALUES</a></li>
+  <li><a href="#NOTES">NOTES</a></li>
+  <li><a href="#EXAMPLE">EXAMPLE</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#HISTORY">HISTORY</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>EVP_MD_CTX_new, EVP_MD_CTX_reset, EVP_MD_CTX_free, EVP_MD_CTX_copy_ex, EVP_DigestInit_ex, EVP_DigestUpdate, EVP_DigestFinal_ex, EVP_DigestInit, EVP_DigestFinal, EVP_MD_CTX_copy, EVP_MD_type, EVP_MD_pkey_type, EVP_MD_size, EVP_MD_block_size, EVP_MD_CTX_md, EVP_MD_CTX_size, EVP_MD_CTX_block_size, EVP_MD_CTX_type, EVP_md_null, EVP_md2, EVP_md5, EVP_sha1, EVP_sha224, EVP_sha256, EVP_sha384, EVP_sha512, EVP_mdc2, EVP_ripemd160, EVP_blake2b512, EVP_blake2s256, EVP_get_digestbyname, EVP_get_digestbynid, EVP_get_digestbyobj - EVP digest routines</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;openssl/evp.h&gt;
+
+ EVP_MD_CTX *EVP_MD_CTX_new(void);
+ int EVP_MD_CTX_reset(EVP_MD_CTX *ctx);
+ void EVP_MD_CTX_free(EVP_MD_CTX *ctx);
+
+ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl);
+ int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *d, size_t cnt);
+ int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md,
+        unsigned int *s);
+
+ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in);
+
+ int EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type);
+ int EVP_DigestFinal(EVP_MD_CTX *ctx, unsigned char *md,
+        unsigned int *s);
+
+ int EVP_MD_CTX_copy(EVP_MD_CTX *out, EVP_MD_CTX *in);
+
+ int EVP_MD_type(const EVP_MD *md);
+ int EVP_MD_pkey_type(const EVP_MD *md);
+ int EVP_MD_size(const EVP_MD *md);
+ int EVP_MD_block_size(const EVP_MD *md);
+
+ const EVP_MD *EVP_MD_CTX_md(const EVP_MD_CTX *ctx);
+ int EVP_MD_CTX_size(const EVP_MD *ctx);
+ int EVP_MD_CTX_block_size(const EVP_MD *ctx);
+ int EVP_MD_CTX_type(const EVP_MD *ctx);
+
+ const EVP_MD *EVP_md_null(void);
+ const EVP_MD *EVP_md2(void);
+ const EVP_MD *EVP_md5(void);
+ const EVP_MD *EVP_sha1(void);
+ const EVP_MD *EVP_mdc2(void);
+ const EVP_MD *EVP_ripemd160(void);
+ const EVP_MD *EVP_blake2b512(void);
+ const EVP_MD *EVP_blake2s256(void);
+
+ const EVP_MD *EVP_sha224(void);
+ const EVP_MD *EVP_sha256(void);
+ const EVP_MD *EVP_sha384(void);
+ const EVP_MD *EVP_sha512(void);
+
+ const EVP_MD *EVP_get_digestbyname(const char *name);
+ const EVP_MD *EVP_get_digestbynid(int type);
+ const EVP_MD *EVP_get_digestbyobj(const ASN1_OBJECT *o);</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>The EVP digest routines are a high level interface to message digests, and should be used instead of the cipher-specific functions.</p>
+
+<p>EVP_MD_CTX_new() allocates, initializes and returns a digest context.</p>
+
+<p>EVP_MD_CTX_reset() resets the digest context <b>ctx</b>. This can be used to reuse an already existing context.</p>
+
+<p>EVP_MD_CTX_free() cleans up digest context <b>ctx</b> and frees up the space allocated to it.</p>
+
+<p>EVP_DigestInit_ex() sets up digest context <b>ctx</b> to use a digest <b>type</b> from ENGINE <b>impl</b>. <b>ctx</b> must be initialized before calling this function. <b>type</b> will typically be supplied by a function such as EVP_sha1(). If <b>impl</b> is NULL then the default implementation of digest <b>type</b> is used.</p>
+
+<p>EVP_DigestUpdate() hashes <b>cnt</b> bytes of data at <b>d</b> into the digest context <b>ctx</b>. This function can be called several times on the same <b>ctx</b> to hash additional data.</p>
+
+<p>EVP_DigestFinal_ex() retrieves the digest value from <b>ctx</b> and places it in <b>md</b>. If the <b>s</b> parameter is not NULL then the number of bytes of data written (i.e. the length of the digest) will be written to the integer at <b>s</b>, at most <b>EVP_MAX_MD_SIZE</b> bytes will be written. After calling EVP_DigestFinal_ex() no additional calls to EVP_DigestUpdate() can be made, but EVP_DigestInit_ex() can be called to initialize a new digest operation.</p>
+
+<p>EVP_MD_CTX_copy_ex() can be used to copy the message digest state from <b>in</b> to <b>out</b>. This is useful if large amounts of data are to be hashed which only differ in the last few bytes. <b>out</b> must be initialized before calling this function.</p>
+
+<p>EVP_DigestInit() behaves in the same way as EVP_DigestInit_ex() except the passed context <b>ctx</b> does not have to be initialized, and it always uses the default digest implementation.</p>
+
+<p>EVP_DigestFinal() is similar to EVP_DigestFinal_ex() except the digest context <b>ctx</b> is automatically cleaned up.</p>
+
+<p>EVP_MD_CTX_copy() is similar to EVP_MD_CTX_copy_ex() except the destination <b>out</b> does not have to be initialized.</p>
+
+<p>EVP_MD_size() and EVP_MD_CTX_size() return the size of the message digest when passed an <b>EVP_MD</b> or an <b>EVP_MD_CTX</b> structure, i.e. the size of the hash.</p>
+
+<p>EVP_MD_block_size() and EVP_MD_CTX_block_size() return the block size of the message digest when passed an <b>EVP_MD</b> or an <b>EVP_MD_CTX</b> structure.</p>
+
+<p>EVP_MD_type() and EVP_MD_CTX_type() return the NID of the OBJECT IDENTIFIER representing the given message digest when passed an <b>EVP_MD</b> structure. For example EVP_MD_type(EVP_sha1()) returns <b>NID_sha1</b>. This function is normally used when setting ASN1 OIDs.</p>
+
+<p>EVP_MD_CTX_md() returns the <b>EVP_MD</b> structure corresponding to the passed <b>EVP_MD_CTX</b>.</p>
+
+<p>EVP_MD_pkey_type() returns the NID of the public key signing algorithm associated with this digest. For example EVP_sha1() is associated with RSA so this will return <b>NID_sha1WithRSAEncryption</b>. Since digests and signature algorithms are no longer linked this function is only retained for compatibility reasons.</p>
+
+<p>EVP_md2(), EVP_md5(), EVP_sha1(), EVP_sha224(), EVP_sha256(), EVP_sha384(), EVP_sha512(), EVP_mdc2(), EVP_ripemd160(), EVP_blake2b512(), and EVP_blake2s256() return <b>EVP_MD</b> structures for the MD2, MD5, SHA1, SHA224, SHA256, SHA384, SHA512, MDC2, RIPEMD160, BLAKE2b-512, and BLAKE2s-256 digest algorithms respectively.</p>
+
+<p>EVP_md_null() is a &quot;null&quot; message digest that does nothing: i.e. the hash it returns is of zero length.</p>
+
+<p>EVP_get_digestbyname(), EVP_get_digestbynid() and EVP_get_digestbyobj() return an <b>EVP_MD</b> structure when passed a digest name, a digest NID or an ASN1_OBJECT structure respectively.</p>
+
+<h1 id="RETURN-VALUES">RETURN VALUES</h1>
+
+<p>EVP_DigestInit_ex(), EVP_DigestUpdate() and EVP_DigestFinal_ex() return 1 for success and 0 for failure.</p>
+
+<p>EVP_MD_CTX_copy_ex() returns 1 if successful or 0 for failure.</p>
+
+<p>EVP_MD_type(), EVP_MD_pkey_type() and EVP_MD_type() return the NID of the corresponding OBJECT IDENTIFIER or NID_undef if none exists.</p>
+
+<p>EVP_MD_size(), EVP_MD_block_size(), EVP_MD_CTX_size() and EVP_MD_CTX_block_size() return the digest or block size in bytes.</p>
+
+<p>EVP_md_null(), EVP_md2(), EVP_md5(), EVP_sha1(), EVP_mdc2(), EVP_ripemd160(), EVP_blake2b512(), and EVP_blake2s256() return pointers to the corresponding EVP_MD structures.</p>
+
+<p>EVP_get_digestbyname(), EVP_get_digestbynid() and EVP_get_digestbyobj() return either an <b>EVP_MD</b> structure or NULL if an error occurs.</p>
+
+<h1 id="NOTES">NOTES</h1>
+
+<p>The <b>EVP</b> interface to message digests should almost always be used in preference to the low level interfaces. This is because the code then becomes transparent to the digest used and much more flexible.</p>
+
+<p>New applications should use the SHA2 digest algorithms such as SHA256. The other digest algorithms are still in common use.</p>
+
+<p>For most applications the <b>impl</b> parameter to EVP_DigestInit_ex() will be set to NULL to use the default digest implementation.</p>
+
+<p>The functions EVP_DigestInit(), EVP_DigestFinal() and EVP_MD_CTX_copy() are obsolete but are retained to maintain compatibility with existing code. New applications should use EVP_DigestInit_ex(), EVP_DigestFinal_ex() and EVP_MD_CTX_copy_ex() because they can efficiently reuse a digest context instead of initializing and cleaning it up on each call and allow non default implementations of digests to be specified.</p>
+
+<p>If digest contexts are not cleaned up after use memory leaks will occur.</p>
+
+<p>EVP_MD_CTX_size(), EVP_MD_CTX_block_size(), EVP_MD_CTX_type(), EVP_get_digestbynid() and EVP_get_digestbyobj() are defined as macros.</p>
+
+<h1 id="EXAMPLE">EXAMPLE</h1>
+
+<p>This example digests the data &quot;Test Message\n&quot; and &quot;Hello World\n&quot;, using the digest name passed on the command line.</p>
+
+<pre><code> #include &lt;stdio.h&gt;
+ #include &lt;openssl/evp.h&gt;
+
+ main(int argc, char *argv[])
+ {
+ EVP_MD_CTX *mdctx;
+ const EVP_MD *md;
+ char mess1[] = &quot;Test Message\n&quot;;
+ char mess2[] = &quot;Hello World\n&quot;;
+ unsigned char md_value[EVP_MAX_MD_SIZE];
+ int md_len, i;
+
+ if(!argv[1]) {
+        printf(&quot;Usage: mdtest digestname\n&quot;);
+        exit(1);
+ }
+
+ md = EVP_get_digestbyname(argv[1]);
+
+ if(!md) {
+        printf(&quot;Unknown message digest %s\n&quot;, argv[1]);
+        exit(1);
+ }
+
+ mdctx = EVP_MD_CTX_new();
+ EVP_DigestInit_ex(mdctx, md, NULL);
+ EVP_DigestUpdate(mdctx, mess1, strlen(mess1));
+ EVP_DigestUpdate(mdctx, mess2, strlen(mess2));
+ EVP_DigestFinal_ex(mdctx, md_value, &amp;md_len);
+ EVP_MD_CTX_free(mdctx);
+
+ printf(&quot;Digest is: &quot;);
+ for (i = 0; i &lt; md_len; i++)
+        printf(&quot;%02x&quot;, md_value[i]);
+ printf(&quot;\n&quot;);
+
+ exit(0);
+ }</code></pre>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man1/dgst.html>dgst(1)</a>, <a href="../man7/evp.html>evp(7)</a></p>
+
+<h1 id="HISTORY">HISTORY</h1>
+
+<p><b>EVP_MD_CTX</b> became opaque in OpenSSL 1.1. Consequently, stack allocated <b>EVP_MD_CTX</b>s are no longer supported.</p>
+
+<p>EVP_MD_CTX_create() and EVP_MD_CTX_destroy() were renamed to EVP_MD_CTX_new() and EVP_MD_CTX_free() in OpenSSL 1.1.</p>
+
+<p>The link between digests and signing algorithms was fixed in OpenSSL 1.0 and later, so now EVP_sha1() can be used with RSA and DSA. The legacy EVP_dss1() was removed in OpenSSL 1.1.0</p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

@@ -1,0 +1,84 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>BIO_ADDRINFO</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#RETURN-VALUES">RETURN VALUES</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>BIO_lookup_type, BIO_ADDRINFO, BIO_ADDRINFO_next, BIO_ADDRINFO_free, BIO_ADDRINFO_family, BIO_ADDRINFO_socktype, BIO_ADDRINFO_protocol, BIO_ADDRINFO_address, BIO_lookup - BIO_ADDRINFO type and routines</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;sys/types.h&gt;
+ #include &lt;openssl/bio.h&gt;
+
+ typedef union bio_addrinfo_st BIO_ADDRINFO;
+
+ enum BIO_lookup_type {
+     BIO_LOOKUP_CLIENT, BIO_LOOKUP_SERVER
+ };
+ int BIO_lookup(const char *node, const char *service,
+                enum BIO_lookup_type lookup_type,
+                int family, int socktype, BIO_ADDRINFO **res);
+
+ const BIO_ADDRINFO *BIO_ADDRINFO_next(const BIO_ADDRINFO *bai);
+ int BIO_ADDRINFO_family(const BIO_ADDRINFO *bai);
+ int BIO_ADDRINFO_socktype(const BIO_ADDRINFO *bai);
+ int BIO_ADDRINFO_protocol(const BIO_ADDRINFO *bai);
+ const BIO_ADDR *BIO_ADDRINFO_address(const BIO_ADDRINFO *bai);
+ void BIO_ADDRINFO_free(BIO_ADDRINFO *bai);</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>The <b>BIO_ADDRINFO</b> type is a wrapper for address information types provided on your platform.</p>
+
+<p><b>BIO_ADDRINFO</b> normally forms a chain of several that can be picked at one by one.</p>
+
+<p>BIO_lookup() looks up a specified <b>host</b> and <b>service</b>, and uses <b>lookup_type</b> to determine what the default address should be if <b>host</b> is <b>NULL</b>. <b>family</b>, <b>socktype</b> are used to determine what protocol family and protocol should be used for the lookup. <b>family</b> can be any of AF_INET, AF_INET6, AF_UNIX and AF_UNSPEC, and <b>socktype</b> can be SOCK_STREAM or SOCK_DGRAM. <b>res</b> points at a pointer to hold the start of a <b>BIO_ADDRINFO</b> chain. For the family <b>AF_UNIX</b>, BIO_lookup() will ignore the <b>service</b> parameter and expects the <b>node</b> parameter to hold the path to the socket file.</p>
+
+<p>BIO_ADDRINFO_family() returns the family of the given <b>BIO_ADDRINFO</b>. The result will be one of the constants AF_INET, AF_INET6 and AF_UNIX.</p>
+
+<p>BIO_ADDRINFO_socktype() returns the socket type of the given <b>BIO_ADDRINFO</b>. The result will be one of the constants SOCK_STREAM and SOCK_DGRAM.</p>
+
+<p>BIO_ADDRINFO_protocol() returns the protocol id of the given <b>BIO_ADDRINFO</b>. The result will be one of the constants IPPROTO_TCP and IPPROTO_UDP.</p>
+
+<p>BIO_ADDRINFO_address() returns the underlying <b>BIO_ADDR</b> of the given <b>BIO_ADDRINFO</b>.</p>
+
+<p>BIO_ADDRINFO_next() returns the next <b>BIO_ADDRINFO</b> in the chain from the given one.</p>
+
+<p>BIO_ADDRINFO_free() frees the chain of <b>BIO_ADDRINFO</b> starting with the given one.</p>
+
+<h1 id="RETURN-VALUES">RETURN VALUES</h1>
+
+<p>BIO_lookup() returns 1 on success and 0 when an error occurred, and will leave an error indication on the OpenSSL error stack in that case.</p>
+
+<p>All other functions described here return 0 or <b>NULL</b> when the information they should return isn&#39;t available.</p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

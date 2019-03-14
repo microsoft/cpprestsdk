@@ -1,0 +1,106 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<title>Reference</title>
+<link rel="stylesheet" href="../../../doc/src/boostbook.css" type="text/css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="../index.html" title="The Boost C++ Libraries BoostBook Documentation Subset">
+<link rel="up" href="../crc.html" title="Chapter&#160;12.&#160;Boost.CRC 1.5">
+<link rel="prev" href="end.html" title="End Matter">
+<link rel="next" href="../boost/crc_basic.html" title="Class template crc_basic">
+</head>
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
+<table cellpadding="2" width="100%"><tr>
+<td valign="top"><img alt="Boost C++ Libraries" width="277" height="86" src="../../../boost.png"></td>
+<td align="center"><a href="../../../index.html">Home</a></td>
+<td align="center"><a href="../../../libs/libraries.htm">Libraries</a></td>
+<td align="center"><a href="http://www.boost.org/users/people.html">People</a></td>
+<td align="center"><a href="http://www.boost.org/users/faq.html">FAQ</a></td>
+<td align="center"><a href="../../../more/index.htm">More</a></td>
+</tr></table>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="end.html"><img src="../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../crc.html"><img src="../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="../boost/crc_basic.html"><img src="../../../doc/src/images/next.png" alt="Next"></a>
+</div>
+<div class="section">
+<div class="titlepage"><div><div><h2 class="title" style="clear: both">
+<a name="crc.reference"></a>Reference</h2></div></div></div>
+<div class="toc"><dl class="toc"><dt><span class="section"><a href="reference.html#header.boost.crc_hpp">Header &lt;boost/crc.hpp&gt;</a></span></dt></dl></div>
+<div class="section">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="header.boost.crc_hpp"></a>Header &lt;<a href="../../../boost/crc.hpp" target="_top">boost/crc.hpp</a>&gt;</h3></div></div></div>
+<p>A collection of function templates and class templates that compute various forms of Cyclic Redundancy Codes (CRCs). </p>
+<p>Daryle Walker</p>
+<p>
+</p>
+<p>1.5</p>
+<p>
+</p>
+<p>Boost Software License, version 1.0</p>
+<p>
+Contains the declarations (and definitions) of various kinds of CRC computation functions, function object types, and encapsulated policy types.</p>
+<div class="warning"><table border="0" summary="Warning">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Warning]" src="../../../doc/src/images/warning.png"></td>
+<th align="left">Warning</th>
+</tr>
+<tr><td align="left" valign="top"><p>The sample CRC-computer types were just checked against the <a href="http://regregex.bbcmicro.net/crc-catalogue.htm" target="_top">Catalogue of parametrised CRC algorithms</a>. New type aliases were added where I got a standard wrong. However, the mistaken <code class="computeroutput">typedef</code>s are still there for backwards compatibility. </p></td></tr>
+</table></div>
+<p>
+</p>
+<div class="note"><table border="0" summary="Note">
+<tr>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="../../../doc/src/images/note.png"></td>
+<th align="left">Note</th>
+</tr>
+<tr><td align="left" valign="top"><p>There are references to the <span class="emphasis"><em>Rocksoft<span class="trademark"></span>&#8482; Model CRC Algorithm</em></span>, as described within "A Painless Guide to CRC Error Detection Algorithms," linked from "<a href="http://www.ross.net/crc/crcpaper.html" target="_top">CRC: A Paper On CRCs</a>" by Ross Williams. It will be abbreviated "RMCA" in other documentation blocks. </p></td></tr>
+</table></div>
+<p>
+</p>
+<pre class="synopsis">
+
+<a class="link" href="../BOOST_CRC_PARM_TYPE.html" title="Macro BOOST_CRC_PARM_TYPE">BOOST_CRC_PARM_TYPE</a>
+<a class="link" href="../BOOST_CRC_OPTIMAL_NAME.html" title="Macro BOOST_CRC_OPTIMAL_NAME">BOOST_CRC_OPTIMAL_NAME</a></pre>
+<pre class="synopsis"><span class="keyword">namespace</span> <span class="identifier">boost</span> <span class="special">{</span>
+  <span class="keyword">template</span><span class="special">&lt;</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> Bits<span class="special">&gt;</span> <span class="keyword">class</span> <a class="link" href="../boost/crc_basic.html" title="Class template crc_basic">crc_basic</a><span class="special">;</span>
+  <span class="keyword">template</span><span class="special">&lt;</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> Bits<span class="special">,</span> 
+           <span class="keyword">typename</span><span class="special">::</span><span class="identifier">boost</span><span class="special">::</span><span class="identifier">uint_t</span><span class="special">&lt;</span> <span class="identifier">Bits</span> <span class="special">&gt;</span><span class="special">::</span><span class="identifier">fast</span> TruncPoly <span class="special">=</span> <span class="number">0u</span><span class="special">,</span> 
+           <span class="keyword">typename</span><span class="special">::</span><span class="identifier">boost</span><span class="special">::</span><span class="identifier">uint_t</span><span class="special">&lt;</span> <span class="identifier">Bits</span> <span class="special">&gt;</span><span class="special">::</span><span class="identifier">fast</span> InitRem <span class="special">=</span> <span class="number">0u</span><span class="special">,</span> 
+           <span class="keyword">typename</span><span class="special">::</span><span class="identifier">boost</span><span class="special">::</span><span class="identifier">uint_t</span><span class="special">&lt;</span> <span class="identifier">Bits</span> <span class="special">&gt;</span><span class="special">::</span><span class="identifier">fast</span> FinalXor <span class="special">=</span> <span class="number">0u</span><span class="special">,</span> 
+           <span class="keyword">bool</span> ReflectIn <span class="special">=</span> <span class="keyword">false</span><span class="special">,</span> <span class="keyword">bool</span> ReflectRem <span class="special">=</span> <span class="keyword">false</span><span class="special">&gt;</span> 
+    <span class="keyword">class</span> <a class="link" href="../boost/crc_optimal.html" title="Class template crc_optimal">crc_optimal</a><span class="special">;</span>
+
+  <span class="keyword">typedef</span> <a class="link" href="../boost/crc_optimal.html" title="Class template crc_optimal">crc_optimal</a><span class="special">&lt;</span> <span class="number">16</span><span class="special">,</span> <span class="number">0x8005</span><span class="special">,</span> <span class="number">0</span><span class="special">,</span> <span class="number">0</span><span class="special">,</span> <span class="keyword">true</span><span class="special">,</span> <span class="keyword">true</span> <span class="special">&gt;</span> <a name="boost.crc_16_type"></a><span class="identifier">crc_16_type</span><span class="special">;</span>  <span class="comment">// Computation type for ARC|CRC-16|CRC-IBM|CRC-16/ARC|CRC-16/LHA standard. </span>
+  <span class="keyword">typedef</span> <a class="link" href="../boost/crc_optimal.html" title="Class template crc_optimal">crc_optimal</a><span class="special">&lt;</span> <span class="number">16</span><span class="special">,</span> <span class="number">0x1021</span><span class="special">,</span> <span class="number">0xFFFF</span><span class="special">,</span> <span class="number">0</span><span class="special">,</span> <span class="keyword">false</span><span class="special">,</span> <span class="keyword">false</span> <span class="special">&gt;</span> <a name="boost.crc_ccitt_false_t"></a><span class="identifier">crc_ccitt_false_t</span><span class="special">;</span>  <span class="comment">// Computation type for CRC-16/CCITT-FALSE standard. </span>
+  <span class="keyword">typedef</span> <a class="link" href="reference.html#boost.crc_ccitt_false_t">crc_ccitt_false_t</a> <a name="boost.crc_ccitt_type"></a><span class="identifier">crc_ccitt_type</span><span class="special">;</span>  <span class="comment">// Computation type for the CRC mistakenly called the CCITT standard. </span>
+  <span class="keyword">typedef</span> <a class="link" href="../boost/crc_optimal.html" title="Class template crc_optimal">crc_optimal</a><span class="special">&lt;</span> <span class="number">16</span><span class="special">,</span> <span class="number">0x1021</span><span class="special">,</span> <span class="number">0</span><span class="special">,</span> <span class="number">0</span><span class="special">,</span> <span class="keyword">true</span><span class="special">,</span> <span class="keyword">true</span> <span class="special">&gt;</span> <a class="link" href="../boost/crc_ccitt_true_t.html" title="Type definition crc_ccitt_true_t"><span class="identifier">crc_ccitt_true_t</span></a><span class="special">;</span>
+  <span class="keyword">typedef</span> <a class="link" href="../boost/crc_optimal.html" title="Class template crc_optimal">crc_optimal</a><span class="special">&lt;</span> <span class="number">16</span><span class="special">,</span> <span class="number">0x8408</span><span class="special">,</span> <span class="number">0</span><span class="special">,</span> <span class="number">0</span><span class="special">,</span> <span class="keyword">true</span><span class="special">,</span> <span class="keyword">true</span> <span class="special">&gt;</span> <a class="link" href="../boost/crc_xmodem_type.html" title="Type definition crc_xmodem_type"><span class="identifier">crc_xmodem_type</span></a><span class="special">;</span>
+  <span class="keyword">typedef</span> <a class="link" href="../boost/crc_optimal.html" title="Class template crc_optimal">crc_optimal</a><span class="special">&lt;</span> <span class="number">16</span><span class="special">,</span> <span class="number">0x1021</span><span class="special">,</span> <span class="number">0</span><span class="special">,</span> <span class="number">0</span><span class="special">,</span> <span class="keyword">false</span><span class="special">,</span> <span class="keyword">false</span> <span class="special">&gt;</span> <a name="boost.crc_xmodem_t"></a><span class="identifier">crc_xmodem_t</span><span class="special">;</span>  <span class="comment">// Computation type for the actual XMODEM|ZMODEM|CRC-16/ACORN standard. </span>
+  <span class="keyword">typedef</span> <a class="link" href="../boost/crc_optimal.html" title="Class template crc_optimal">crc_optimal</a><span class="special">&lt;</span> <span class="number">32</span><span class="special">,</span> <span class="number">0x04C11DB7</span><span class="special">,</span> <span class="number">0xFFFFFFFF</span><span class="special">,</span> <span class="number">0xFFFFFFFF</span><span class="special">,</span> <span class="keyword">true</span><span class="special">,</span> <span class="keyword">true</span> <span class="special">&gt;</span> <a name="boost.crc_32_type"></a><span class="identifier">crc_32_type</span><span class="special">;</span>  <span class="comment">// Computation type for CRC-32|CRC-32/ADCCP|PKZIP standard. </span>
+  <span class="keyword">template</span><span class="special">&lt;</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> Bits<span class="special">,</span> <span class="keyword">typename</span><span class="special">::</span><span class="identifier">boost</span><span class="special">::</span><span class="identifier">uint_t</span><span class="special">&lt;</span> <span class="identifier">Bits</span> <span class="special">&gt;</span><span class="special">::</span><span class="identifier">fast</span> TruncPoly<span class="special">,</span> 
+           <span class="keyword">typename</span><span class="special">::</span><span class="identifier">boost</span><span class="special">::</span><span class="identifier">uint_t</span><span class="special">&lt;</span> <span class="identifier">Bits</span> <span class="special">&gt;</span><span class="special">::</span><span class="identifier">fast</span> InitRem<span class="special">,</span> 
+           <span class="keyword">typename</span><span class="special">::</span><span class="identifier">boost</span><span class="special">::</span><span class="identifier">uint_t</span><span class="special">&lt;</span> <span class="identifier">Bits</span> <span class="special">&gt;</span><span class="special">::</span><span class="identifier">fast</span> FinalXor<span class="special">,</span> <span class="keyword">bool</span> ReflectIn<span class="special">,</span> 
+           <span class="keyword">bool</span> ReflectRem<span class="special">&gt;</span> 
+    <span class="identifier">uint_t</span><span class="special">&lt;</span> <span class="identifier">Bits</span> <span class="special">&gt;</span><span class="special">::</span><span class="identifier">fast</span> <a class="link" href="../boost/crc.html" title="Function template crc"><span class="identifier">crc</span></a><span class="special">(</span><span class="keyword">void</span> <span class="keyword">const</span> <span class="special">*</span><span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span><span class="special">)</span><span class="special">;</span>
+  <span class="keyword">template</span><span class="special">&lt;</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> Bits<span class="special">,</span> <span class="keyword">typename</span><span class="special">::</span><span class="identifier">boost</span><span class="special">::</span><span class="identifier">uint_t</span><span class="special">&lt;</span> <span class="identifier">Bits</span> <span class="special">&gt;</span><span class="special">::</span><span class="identifier">fast</span> TruncPoly<span class="special">&gt;</span> 
+    <span class="identifier">uint_t</span><span class="special">&lt;</span> <span class="identifier">Bits</span> <span class="special">&gt;</span><span class="special">::</span><span class="identifier">fast</span> 
+    <a class="link" href="../boost/augmented_crc.html" title="Function template augmented_crc"><span class="identifier">augmented_crc</span></a><span class="special">(</span><span class="keyword">void</span> <span class="keyword">const</span> <span class="special">*</span><span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span><span class="special">,</span> 
+                  <span class="keyword">typename</span> <span class="identifier">uint_t</span><span class="special">&lt;</span> <span class="identifier">Bits</span> <span class="special">&gt;</span><span class="special">::</span><span class="identifier">fast</span> <span class="special">=</span> <span class="number">0u</span><span class="special">)</span><span class="special">;</span>
+<span class="special">}</span></pre>
+</div>
+</div>
+<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
+<td align="left"></td>
+<td align="right"><div class="copyright-footer">Copyright &#169; 2001, 2003, 2012 Daryle Walker<p>
+        Distributed under the Boost Software License, Version 1.0. (See the accompanying
+        file LICENSE_1_0.txt or a copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
+      </p>
+</div></td>
+</tr></table>
+<hr>
+<div class="spirit-nav">
+<a accesskey="p" href="end.html"><img src="../../../doc/src/images/prev.png" alt="Prev"></a><a accesskey="u" href="../crc.html"><img src="../../../doc/src/images/up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../../../doc/src/images/home.png" alt="Home"></a><a accesskey="n" href="../boost/crc_basic.html"><img src="../../../doc/src/images/next.png" alt="Next"></a>
+</div>
+</body>
+</html>

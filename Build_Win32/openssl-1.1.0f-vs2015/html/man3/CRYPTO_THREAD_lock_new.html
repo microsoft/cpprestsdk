@@ -1,0 +1,159 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>CRYPTO_THREAD_run_once</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#RETURN-VALUES">RETURN VALUES</a></li>
+  <li><a href="#NOTES">NOTES</a></li>
+  <li><a href="#EXAMPLE">EXAMPLE</a></li>
+  <li><a href="#NOTES1">NOTES</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>CRYPTO_THREAD_run_once, CRYPTO_THREAD_lock_new, CRYPTO_THREAD_read_lock, CRYPTO_THREAD_write_lock, CRYPTO_THREAD_unlock, CRYPTO_THREAD_lock_free, CRYPTO_atomic_add - OpenSSL thread support</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;openssl/crypto.h&gt;
+
+ CRYPTO_ONCE CRYPTO_ONCE_STATIC_INIT;
+ int CRYPTO_THREAD_run_once(CRYPTO_ONCE *once, void (*init)(void));
+
+ CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void);
+ int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock);
+ int CRYPTO_THREAD_write_lock(CRYPTO_RWLOCK *lock);
+ int CRYPTO_THREAD_unlock(CRYPTO_RWLOCK *lock);
+ void CRYPTO_THREAD_lock_free(CRYPTO_RWLOCK *lock);
+
+ int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock);</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>OpenSSL can be safely used in multi-threaded applications provided that support for the underlying OS threading API is built-in. Currently, OpenSSL supports the pthread and Windows APIs. OpenSSL can also be built without any multi-threading support, for example on platforms that don&#39;t provide any threading support or that provide a threading API that is not yet supported by OpenSSL.</p>
+
+<p>The following multi-threading function are provided:</p>
+
+<ul>
+
+<li><p>CRYPTO_THREAD_run_once() can be used to perform one-time initialization. The <b>once</b> argument must be a pointer to a static object of type <b>CRYPTO_ONCE</b> that was statically initialized to the value <b>CRYPTO_ONCE_STATIC_INIT</b>. The <b>init</b> argument is a pointer to a function that performs the desired exactly once initialization. In particular, this can be used to allocate locks in a thread-safe manner, which can then be used with the locking functions below.</p>
+
+</li>
+<li><p>CRYPTO_THREAD_lock_new() allocates, initializes and returns a new read/write lock.</p>
+
+</li>
+<li><p>CRYPTO_THREAD_read_lock() locks the provided <b>lock</b> for reading.</p>
+
+</li>
+<li><p>CRYPTO_THREAD_write_lock() locks the provided <b>lock</b> for writing.</p>
+
+</li>
+<li><p>CRYPTO_THREAD_unlock() unlocks the previously locked <b>lock</b>.</p>
+
+</li>
+<li><p>CRYPTO_THREAD_lock_frees() frees the provided <b>lock</b>.</p>
+
+</li>
+<li><p>CRYPTO_atomic_add() atomically adds <b>amount</b> to <b>val</b> and returns the result of the operation in <b>ret</b>. <b>lock</b> will be locked, unless atomic operations are supported on the specific platform. Because of this, if a variable is modified by CRYPTO_atomic_add() then CRYPTO_atomic_add() must be the only way that the variable is modified.</p>
+
+</li>
+</ul>
+
+<h1 id="RETURN-VALUES">RETURN VALUES</h1>
+
+<p>CRYPTO_THREAD_run_once() returns 1 on success, or 0 on error.</p>
+
+<p>CRYPTO_THREAD_lock_new() returns the allocated lock, or NULL on error.</p>
+
+<p>CRYPTO_THREAD_lock_frees() returns no value.</p>
+
+<p>The other functions return 1 on success or 0 on error.</p>
+
+<h1 id="NOTES">NOTES</h1>
+
+<p>On Windows platforms the CRYPTO_THREAD_* types and functions in the openssl/crypto.h header are dependent on some of the types customarily made available by including windows.h. The application developer is likely to require control over when the latter is included, commonly as one of the first included headers. Therefore it is defined as an application developer&#39;s responsibility to include windows.h prior to crypto.h where use of CRYPTO_THREAD_* types and functions is required.</p>
+
+<h1 id="EXAMPLE">EXAMPLE</h1>
+
+<p>This example safely initializes and uses a lock.</p>
+
+<pre><code>  #ifdef _WIN32
+  # include &lt;windows.h&gt;
+  #endif
+  #include &lt;openssl/crypto.h&gt;
+
+  static CRYPTO_ONCE once = CRYPTO_ONCE_STATIC_INIT;
+  static CRYPTO_RWLOCK *lock;
+
+  static void myinit(void)
+  {
+      lock = CRYPTO_THREAD_lock_new();
+  }
+
+  static int mylock(void)
+  {
+      if (!CRYPTO_THREAD_run_once(&amp;once, void init) || lock == NULL)
+          return 0;
+      return CRYPTO_THREAD_write_lock(lock);
+  }
+
+  static int myunlock(void)
+  {
+      return CRYPTO_THREAD_unlock(lock);
+  }
+
+  int serialized(void)
+  {
+      int ret = 0;
+
+      if (mylock()) {
+          /* Your code here, do not return without releasing the lock! */
+          ret = ... ;
+      }
+      myunlock();
+      return ret;
+  }</code></pre>
+
+<p>Finalization of locks is an advanced topic, not covered in this example. This can only be done at process exit or when a dynamically loaded library is no longer in use and is unloaded. The simplest solution is to just &quot;leak&quot; the lock in applications and not repeatedly load/unload shared libraries that allocate locks.</p>
+
+<h1 id="NOTES1">NOTES</h1>
+
+<p>You can find out if OpenSSL was configured with thread support:</p>
+
+<pre><code> #include &lt;openssl/opensslconf.h&gt;
+ #if defined(OPENSSL_THREADS)
+   // thread support enabled
+ #else
+   // no thread support
+ #endif</code></pre>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man7/crypto.html>crypto(7)</a></p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

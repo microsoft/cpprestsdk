@@ -1,0 +1,89 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>SSL_CTX_set1_curves</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#NOTES">NOTES</a></li>
+  <li><a href="#RETURN-VALUES">RETURN VALUES</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#HISTORY">HISTORY</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>SSL_CTX_set1_curves, SSL_CTX_set1_curves_list, SSL_set1_curves, SSL_set1_curves_list, SSL_get1_curves, SSL_get_shared_curve - EC supported curve functions</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;openssl/ssl.h&gt;
+
+ int SSL_CTX_set1_curves(SSL_CTX *ctx, int *clist, int clistlen);
+ int SSL_CTX_set1_curves_list(SSL_CTX *ctx, char *list);
+
+ int SSL_set1_curves(SSL *ssl, int *clist, int clistlen);
+ int SSL_set1_curves_list(SSL *ssl, char *list);
+
+ int SSL_get1_curves(SSL *ssl, int *curves);
+ int SSL_get_shared_curve(SSL *s, int n);</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>SSL_CTX_set1_curves() sets the supported curves for <b>ctx</b> to <b>clistlen</b> curves in the array <b>clist</b>. The array consist of all NIDs of curves in preference order. For a TLS client the curves are used directly in the supported curves extension. For a TLS server the curves are used to determine the set of shared curves.</p>
+
+<p>SSL_CTX_set1_curves_list() sets the supported curves for <b>ctx</b> to string <b>list</b>. The string is a colon separated list of curve NIDs or names, for example &quot;P-521:P-384:P-256&quot;.</p>
+
+<p>SSL_set1_curves() and SSL_set1_curves_list() are similar except they set supported curves for the SSL structure <b>ssl</b>.</p>
+
+<p>SSL_get1_curves() returns the set of supported curves sent by a client in the supported curves extension. It returns the total number of supported curves. The <b>curves</b> parameter can be <b>NULL</b> to simply return the number of curves for memory allocation purposes. The <b>curves</b> array is in the form of a set of curve NIDs in preference order. It can return zero if the client did not send a supported curves extension.</p>
+
+<p>SSL_get_shared_curve() returns shared curve <b>n</b> for a server-side SSL <b>ssl</b>. If <b>n</b> is -1 then the total number of shared curves is returned, which may be zero. Other than for diagnostic purposes, most applications will only be interested in the first shared curve so <b>n</b> is normally set to zero. If the value <b>n</b> is out of range, NID_undef is returned.</p>
+
+<p>All these functions are implemented as macros.</p>
+
+<h1 id="NOTES">NOTES</h1>
+
+<p>If an application wishes to make use of several of these functions for configuration purposes either on a command line or in a file it should consider using the SSL_CONF interface instead of manually parsing options.</p>
+
+<h1 id="RETURN-VALUES">RETURN VALUES</h1>
+
+<p>SSL_CTX_set1_curves(), SSL_CTX_set1_curves_list(), SSL_set1_curves() and SSL_set1_curves_list(), return 1 for success and 0 for failure.</p>
+
+<p>SSL_get1_curves() returns the number of curves, which may be zero.</p>
+
+<p>SSL_get_shared_curve() returns the NID of shared curve <b>n</b> or NID_undef if there is no shared curve <b>n</b>; or the total number of shared curves if <b>n</b> is -1.</p>
+
+<p>When called on a client <b>ssl</b>, SSL_get_shared_curve() has no meaning and returns -1.</p>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man3/SSL_CTX_add_extra_chain_cert.html>SSL_CTX_add_extra_chain_cert(3)</a></p>
+
+<h1 id="HISTORY">HISTORY</h1>
+
+<p>These functions were first added to OpenSSL 1.0.2.</p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2013-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

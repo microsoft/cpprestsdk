@@ -1,0 +1,94 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>SSL_write</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#NOTES">NOTES</a></li>
+  <li><a href="#WARNING">WARNING</a></li>
+  <li><a href="#RETURN-VALUES">RETURN VALUES</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>SSL_write - write bytes to a TLS/SSL connection</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;openssl/ssl.h&gt;
+
+ int SSL_write(SSL *ssl, const void *buf, int num);</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>SSL_write() writes <b>num</b> bytes from the buffer <b>buf</b> into the specified <b>ssl</b> connection.</p>
+
+<h1 id="NOTES">NOTES</h1>
+
+<p>If necessary, SSL_write() will negotiate a TLS/SSL session, if not already explicitly performed by <a href="../man3/SSL_connect.html>SSL_connect(3)</a> or <a href="../man3/SSL_accept.html>SSL_accept(3)</a>. If the peer requests a re-negotiation, it will be performed transparently during the SSL_write() operation. The behaviour of SSL_write() depends on the underlying BIO.</p>
+
+<p>For the transparent negotiation to succeed, the <b>ssl</b> must have been initialized to client or server mode. This is being done by calling <a href="../man3/SSL_set_connect_state.html>SSL_set_connect_state(3)</a> or SSL_set_accept_state() before the first call to an <a href="../man3/SSL_read.html>SSL_read(3)</a> or SSL_write() function.</p>
+
+<p>If the underlying BIO is <b>blocking</b>, SSL_write() will only return, once the write operation has been finished or an error occurred, except when a renegotiation take place, in which case a SSL_ERROR_WANT_READ may occur. This behaviour can be controlled with the SSL_MODE_AUTO_RETRY flag of the <a href="../man3/SSL_CTX_set_mode.html>SSL_CTX_set_mode(3)</a> call.</p>
+
+<p>If the underlying BIO is <b>non-blocking</b>, SSL_write() will also return, when the underlying BIO could not satisfy the needs of SSL_write() to continue the operation. In this case a call to <a href="../man3/SSL_get_error.html>SSL_get_error(3)</a> with the return value of SSL_write() will yield <b>SSL_ERROR_WANT_READ</b> or <b>SSL_ERROR_WANT_WRITE</b>. As at any time a re-negotiation is possible, a call to SSL_write() can also cause read operations! The calling process then must repeat the call after taking appropriate action to satisfy the needs of SSL_write(). The action depends on the underlying BIO. When using a non-blocking socket, nothing is to be done, but select() can be used to check for the required condition. When using a buffering BIO, like a BIO pair, data must be written into or retrieved out of the BIO before being able to continue.</p>
+
+<p>SSL_write() will only return with success, when the complete contents of <b>buf</b> of length <b>num</b> has been written. This default behaviour can be changed with the SSL_MODE_ENABLE_PARTIAL_WRITE option of <a href="../man3/SSL_CTX_set_mode.html>SSL_CTX_set_mode(3)</a>. When this flag is set, SSL_write() will also return with success, when a partial write has been successfully completed. In this case the SSL_write() operation is considered completed. The bytes are sent and a new SSL_write() operation with a new buffer (with the already sent bytes removed) must be started. A partial write is performed with the size of a message block, which is 16kB for SSLv3/TLSv1.</p>
+
+<h1 id="WARNING">WARNING</h1>
+
+<p>When an SSL_write() operation has to be repeated because of <b>SSL_ERROR_WANT_READ</b> or <b>SSL_ERROR_WANT_WRITE</b>, it must be repeated with the same arguments.</p>
+
+<p>When calling SSL_write() with num=0 bytes to be sent the behaviour is undefined.</p>
+
+<h1 id="RETURN-VALUES">RETURN VALUES</h1>
+
+<p>The following return values can occur:</p>
+
+<dl>
+
+<dt id="pod0">&gt; 0</dt>
+<dd>
+
+<p>The write operation was successful, the return value is the number of bytes actually written to the TLS/SSL connection.</p>
+
+</dd>
+<dt id="pod-0">&lt;= 0</dt>
+<dd>
+
+<p>The write operation was not successful, because either the connection was closed, an error occurred or action must be taken by the calling process. Call SSL_get_error() with the return value <b>ret</b> to find out the reason.</p>
+
+<p>Old documentation indicated a difference between 0 and -1, and that -1 was retryable. You should instead call SSL_get_error() to find out if it&#39;s retryable.</p>
+
+</dd>
+</dl>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man3/SSL_get_error.html>SSL_get_error(3)</a>, <a href="../man3/SSL_read.html>SSL_read(3)</a>, <a href="../man3/SSL_CTX_set_mode.html>SSL_CTX_set_mode(3)</a>, <a href="../man3/SSL_CTX_new.html>SSL_CTX_new(3)</a>, <a href="../man3/SSL_connect.html>SSL_connect(3)</a>, <a href="../man3/SSL_accept.html>SSL_accept(3)</a> <a href="../man3/SSL_set_connect_state.html>SSL_set_connect_state(3)</a>, <a href="../man3/ssl.html>ssl(3)</a>, <a href="../man3/bio.html>bio(3)</a></p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

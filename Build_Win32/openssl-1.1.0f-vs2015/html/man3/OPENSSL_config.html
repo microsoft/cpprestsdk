@@ -1,0 +1,75 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>OPENSSL_config</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#NOTES">NOTES</a></li>
+  <li><a href="#RETURN-VALUES">RETURN VALUES</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#HISTORY">HISTORY</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>OPENSSL_config, OPENSSL_no_config - simple OpenSSL configuration functions</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;openssl/conf.h&gt;
+
+ #if OPENSSL_API_COMPAT &lt; 0x10100000L
+ void OPENSSL_config(const char *appname);
+ void OPENSSL_no_config(void);
+ #endif</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>OPENSSL_config() configures OpenSSL using the standard <b>openssl.cnf</b> and reads from the application section <b>appname</b>. If <b>appname</b> is NULL then the default section, <b>openssl_conf</b>, will be used. Errors are silently ignored. Multiple calls have no effect.</p>
+
+<p>OPENSSL_no_config() disables configuration. If called before OPENSSL_config() no configuration takes place.</p>
+
+<p>If the application is built with <b>OPENSSL_LOAD_CONF</b> defined, then a call to OpenSSL_add_all_algorithms() will implicitly call OPENSSL_config() first.</p>
+
+<h1 id="NOTES">NOTES</h1>
+
+<p>The OPENSSL_config() function is designed to be a very simple &quot;call it and forget it&quot; function. It is however <b>much</b> better than nothing. Applications which need finer control over their configuration functionality should use the configuration functions such as CONF_modules_load() directly. This function is deprecated and its use should be avoided. Applications should instead call CONF_modules_load() during initialization (that is before starting any threads).</p>
+
+<p>There are several reasons why calling the OpenSSL configuration routines is advisable. For example, to load dynamic ENGINEs from shared libraries (DSOs). However very few applications currently support the control interface and so very few can load and use dynamic ENGINEs. Equally in future more sophisticated ENGINEs will require certain control operations to customize them. If an application calls OPENSSL_config() it doesn&#39;t need to know or care about ENGINE control operations because they can be performed by editing a configuration file.</p>
+
+<h1 id="RETURN-VALUES">RETURN VALUES</h1>
+
+<p>Neither OPENSSL_config() nor OPENSSL_no_config() return a value.</p>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man5/conf.html>conf(5)</a>, <a href="../man3/CONF_modules_load_file.html>CONF_modules_load_file(3)</a></p>
+
+<h1 id="HISTORY">HISTORY</h1>
+
+<p>The OPENSSL_no_config() and OPENSSL_config() functions were deprecated in OpenSSL 1.1.0 by OPENSSL_init_crypto().</p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2004-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

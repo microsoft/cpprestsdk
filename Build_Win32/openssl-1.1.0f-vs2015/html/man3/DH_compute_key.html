@@ -1,0 +1,66 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>DH_generate_key</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#RETURN-VALUES">RETURN VALUES</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>DH_generate_key, DH_compute_key - perform Diffie-Hellman key exchange</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;openssl/dh.h&gt;
+
+ int DH_generate_key(DH *dh);
+
+ int DH_compute_key(unsigned char *key, BIGNUM *pub_key, DH *dh);</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>DH_generate_key() performs the first step of a Diffie-Hellman key exchange by generating private and public DH values. By calling DH_compute_key(), these are combined with the other party&#39;s public value to compute the shared key.</p>
+
+<p>DH_generate_key() expects <b>dh</b> to contain the shared parameters <b>dh-&gt;p</b> and <b>dh-&gt;g</b>. It generates a random private DH value unless <b>dh-&gt;priv_key</b> is already set, and computes the corresponding public value <b>dh-&gt;pub_key</b>, which can then be published.</p>
+
+<p>DH_compute_key() computes the shared secret from the private DH value in <b>dh</b> and the other party&#39;s public value in <b>pub_key</b> and stores it in <b>key</b>. <b>key</b> must point to <b>DH_size(dh)</b> bytes of memory.</p>
+
+<h1 id="RETURN-VALUES">RETURN VALUES</h1>
+
+<p>DH_generate_key() returns 1 on success, 0 otherwise.</p>
+
+<p>DH_compute_key() returns the size of the shared secret on success, -1 on error.</p>
+
+<p>The error codes can be obtained by <a href="../man3/ERR_get_error.html>ERR_get_error(3)</a>.</p>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man3/dh.html>dh(3)</a>, <a href="../man3/ERR_get_error.html>ERR_get_error(3)</a>, <a href="../man3/rand.html>rand(3)</a>, <a href="../man3/DH_size.html>DH_size(3)</a></p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

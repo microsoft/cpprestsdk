@@ -1,0 +1,77 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>EVP_PKEY_cmp</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#NOTES">NOTES</a></li>
+  <li><a href="#RETURN-VALUES">RETURN VALUES</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>EVP_PKEY_copy_parameters, EVP_PKEY_missing_parameters, EVP_PKEY_cmp_parameters, EVP_PKEY_cmp - public key parameter and comparison functions</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;openssl/evp.h&gt;
+
+ int EVP_PKEY_missing_parameters(const EVP_PKEY *pkey);
+ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from);
+
+ int EVP_PKEY_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b);
+ int EVP_PKEY_cmp(const EVP_PKEY *a, const EVP_PKEY *b);</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>The function EVP_PKEY_missing_parameters() returns 1 if the public key parameters of <b>pkey</b> are missing and 0 if they are present or the algorithm doesn&#39;t use parameters.</p>
+
+<p>The function EVP_PKEY_copy_parameters() copies the parameters from key <b>from</b> to key <b>to</b>. An error is returned if the parameters are missing in <b>from</b> or present in both <b>from</b> and <b>to</b> and mismatch. If the parameters in <b>from</b> and <b>to</b> are both present and match this function has no effect.</p>
+
+<p>The function EVP_PKEY_cmp_parameters() compares the parameters of keys <b>a</b> and <b>b</b>.</p>
+
+<p>The function EVP_PKEY_cmp() compares the public key components and parameters (if present) of keys <b>a</b> and <b>b</b>.</p>
+
+<h1 id="NOTES">NOTES</h1>
+
+<p>The main purpose of the functions EVP_PKEY_missing_parameters() and EVP_PKEY_copy_parameters() is to handle public keys in certificates where the parameters are sometimes omitted from a public key if they are inherited from the CA that signed it.</p>
+
+<p>Since OpenSSL private keys contain public key components too the function EVP_PKEY_cmp() can also be used to determine if a private key matches a public key.</p>
+
+<h1 id="RETURN-VALUES">RETURN VALUES</h1>
+
+<p>The function EVP_PKEY_missing_parameters() returns 1 if the public key parameters of <b>pkey</b> are missing and 0 if they are present or the algorithm doesn&#39;t use parameters.</p>
+
+<p>These functions EVP_PKEY_copy_parameters() returns 1 for success and 0 for failure.</p>
+
+<p>The function EVP_PKEY_cmp_parameters() and EVP_PKEY_cmp() return 1 if the keys match, 0 if they don&#39;t match, -1 if the key types are different and -2 if the operation is not supported.</p>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man3/EVP_PKEY_CTX_new.html>EVP_PKEY_CTX_new(3)</a>, <a href="../man3/EVP_PKEY_keygen.html>EVP_PKEY_keygen(3)</a></p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

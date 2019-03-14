@@ -1,0 +1,298 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>genpkey</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#OPTIONS">OPTIONS</a></li>
+  <li><a href="#KEY-GENERATION-OPTIONS">KEY GENERATION OPTIONS</a></li>
+  <li><a href="#RSA-KEY-GENERATION-OPTIONS">RSA KEY GENERATION OPTIONS</a></li>
+  <li><a href="#DSA-PARAMETER-GENERATION-OPTIONS">DSA PARAMETER GENERATION OPTIONS</a></li>
+  <li><a href="#DH-PARAMETER-GENERATION-OPTIONS">DH PARAMETER GENERATION OPTIONS</a></li>
+  <li><a href="#EC-PARAMETER-GENERATION-OPTIONS">EC PARAMETER GENERATION OPTIONS</a></li>
+  <li><a href="#GOST2001-KEY-GENERATION-AND-PARAMETER-OPTIONS">GOST2001 KEY GENERATION AND PARAMETER OPTIONS</a></li>
+  <li><a href="#X25519-KEY-GENERATION-OPTIONS">X25519 KEY GENERATION OPTIONS</a></li>
+  <li><a href="#NOTES">NOTES</a></li>
+  <li><a href="#EXAMPLES">EXAMPLES</a></li>
+  <li><a href="#HISTORY">HISTORY</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>genpkey - generate a private key</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<p><b>openssl</b> <b>genpkey</b> [<b>-help</b>] [<b>-out filename</b>] [<b>-outform PEM|DER</b>] [<b>-pass arg</b>] [<b>-cipher</b>] [<b>-engine id</b>] [<b>-paramfile file</b>] [<b>-algorithm alg</b>] [<b>-pkeyopt opt:value</b>] [<b>-genparam</b>] [<b>-text</b>]</p>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>The <b>genpkey</b> command generates a private key.</p>
+
+<h1 id="OPTIONS">OPTIONS</h1>
+
+<dl>
+
+<dt id="help"><b>-help</b></dt>
+<dd>
+
+<p>Print out a usage message.</p>
+
+</dd>
+<dt id="out-filename"><b>-out filename</b></dt>
+<dd>
+
+<p>Output the key to the specified file. If this argument is not specified then standard output is used.</p>
+
+</dd>
+<dt id="outform-DER-PEM"><b>-outform DER|PEM</b></dt>
+<dd>
+
+<p>This specifies the output format DER or PEM.</p>
+
+</dd>
+<dt id="pass-arg"><b>-pass arg</b></dt>
+<dd>
+
+<p>the output file password source. For more information about the format of <b>arg</b> see the <b>PASS PHRASE ARGUMENTS</b> section in <a href="../man1/openssl.html>openssl(1)</a>.</p>
+
+</dd>
+<dt id="cipher"><b>-cipher</b></dt>
+<dd>
+
+<p>This option encrypts the private key with the supplied cipher. Any algorithm name accepted by EVP_get_cipherbyname() is acceptable such as <b>des3</b>.</p>
+
+</dd>
+<dt id="engine-id"><b>-engine id</b></dt>
+<dd>
+
+<p>specifying an engine (by its unique <b>id</b> string) will cause <b>genpkey</b> to attempt to obtain a functional reference to the specified engine, thus initialising it if needed. The engine will then be set as the default for all available algorithms. If used this option should precede all other options.</p>
+
+</dd>
+<dt id="algorithm-alg"><b>-algorithm alg</b></dt>
+<dd>
+
+<p>public key algorithm to use such as RSA, DSA or DH. If used this option must precede any <b>-pkeyopt</b> options. The options <b>-paramfile</b> and <b>-algorithm</b> are mutually exclusive.</p>
+
+</dd>
+<dt id="pkeyopt-opt:value"><b>-pkeyopt opt:value</b></dt>
+<dd>
+
+<p>set the public key algorithm option <b>opt</b> to <b>value</b>. The precise set of options supported depends on the public key algorithm used and its implementation. See <b>KEY GENERATION OPTIONS</b> below for more details.</p>
+
+</dd>
+<dt id="genparam"><b>-genparam</b></dt>
+<dd>
+
+<p>generate a set of parameters instead of a private key. If used this option must precede any <b>-algorithm</b>, <b>-paramfile</b> or <b>-pkeyopt</b> options.</p>
+
+</dd>
+<dt id="paramfile-filename"><b>-paramfile filename</b></dt>
+<dd>
+
+<p>Some public key algorithms generate a private key based on a set of parameters. They can be supplied using this option. If this option is used the public key algorithm used is determined by the parameters. If used this option must precede any <b>-pkeyopt</b> options. The options <b>-paramfile</b> and <b>-algorithm</b> are mutually exclusive.</p>
+
+</dd>
+<dt id="text"><b>-text</b></dt>
+<dd>
+
+<p>Print an (unencrypted) text representation of private and public keys and parameters along with the PEM or DER structure.</p>
+
+</dd>
+</dl>
+
+<h1 id="KEY-GENERATION-OPTIONS">KEY GENERATION OPTIONS</h1>
+
+<p>The options supported by each algorithm and indeed each implementation of an algorithm can vary. The options for the OpenSSL implementations are detailed below.</p>
+
+<h1 id="RSA-KEY-GENERATION-OPTIONS">RSA KEY GENERATION OPTIONS</h1>
+
+<dl>
+
+<dt id="rsa_keygen_bits:numbits"><b>rsa_keygen_bits:numbits</b></dt>
+<dd>
+
+<p>The number of bits in the generated key. If not specified 1024 is used.</p>
+
+</dd>
+<dt id="rsa_keygen_pubexp:value"><b>rsa_keygen_pubexp:value</b></dt>
+<dd>
+
+<p>The RSA public exponent value. This can be a large decimal or hexadecimal value if preceded by <b>0x</b>. Default value is 65537.</p>
+
+</dd>
+</dl>
+
+<h1 id="DSA-PARAMETER-GENERATION-OPTIONS">DSA PARAMETER GENERATION OPTIONS</h1>
+
+<dl>
+
+<dt id="dsa_paramgen_bits:numbits"><b>dsa_paramgen_bits:numbits</b></dt>
+<dd>
+
+<p>The number of bits in the generated parameters. If not specified 1024 is used.</p>
+
+</dd>
+</dl>
+
+<h1 id="DH-PARAMETER-GENERATION-OPTIONS">DH PARAMETER GENERATION OPTIONS</h1>
+
+<dl>
+
+<dt id="dh_paramgen_prime_len:numbits"><b>dh_paramgen_prime_len:numbits</b></dt>
+<dd>
+
+<p>The number of bits in the prime parameter <b>p</b>.</p>
+
+</dd>
+<dt id="dh_paramgen_generator:value"><b>dh_paramgen_generator:value</b></dt>
+<dd>
+
+<p>The value to use for the generator <b>g</b>.</p>
+
+</dd>
+<dt id="dh_rfc5114:num"><b>dh_rfc5114:num</b></dt>
+<dd>
+
+<p>If this option is set then the appropriate RFC5114 parameters are used instead of generating new parameters. The value <b>num</b> can take the values 1, 2 or 3 corresponding to RFC5114 DH parameters consisting of 1024 bit group with 160 bit subgroup, 2048 bit group with 224 bit subgroup and 2048 bit group with 256 bit subgroup as mentioned in RFC5114 sections 2.1, 2.2 and 2.3 respectively.</p>
+
+</dd>
+</dl>
+
+<h1 id="EC-PARAMETER-GENERATION-OPTIONS">EC PARAMETER GENERATION OPTIONS</h1>
+
+<p>The EC parameter generation options below can also be supplied as EC key generation options. This can (for example) generate a key from a named curve without the need to use an explicit parameter file.</p>
+
+<dl>
+
+<dt id="ec_paramgen_curve:curve"><b>ec_paramgen_curve:curve</b></dt>
+<dd>
+
+<p>the EC curve to use. OpenSSL supports NIST curve names such as &quot;P-256&quot;.</p>
+
+</dd>
+<dt id="ec_param_enc:encoding"><b>ec_param_enc:encoding</b></dt>
+<dd>
+
+<p>the encoding to use for parameters. The &quot;encoding&quot; parameter must be either &quot;named_curve&quot; or &quot;explicit&quot;.</p>
+
+</dd>
+</dl>
+
+<h1 id="GOST2001-KEY-GENERATION-AND-PARAMETER-OPTIONS">GOST2001 KEY GENERATION AND PARAMETER OPTIONS</h1>
+
+<p>Gost 2001 support is not enabled by default. To enable this algorithm, one should load the ccgost engine in the OpenSSL configuration file. See README.gost file in the engines/ccgost directory of the source distribution for more details.</p>
+
+<p>Use of a parameter file for the GOST R 34.10 algorithm is optional. Parameters can be specified during key generation directly as well as during generation of parameter file.</p>
+
+<dl>
+
+<dt id="paramset:name"><b>paramset:name</b></dt>
+<dd>
+
+<p>Specifies GOST R 34.10-2001 parameter set according to RFC 4357. Parameter set can be specified using abbreviated name, object short name or numeric OID. Following parameter sets are supported:</p>
+
+<pre><code>  paramset   OID               Usage
+  A          1.2.643.2.2.35.1  Signature
+  B          1.2.643.2.2.35.2  Signature
+  C          1.2.643.2.2.35.3  Signature
+  XA         1.2.643.2.2.36.0  Key exchange
+  XB         1.2.643.2.2.36.1  Key exchange
+  test       1.2.643.2.2.35.0  Test purposes</code></pre>
+
+</dd>
+</dl>
+
+<h1 id="X25519-KEY-GENERATION-OPTIONS">X25519 KEY GENERATION OPTIONS</h1>
+
+<p>The X25519 algorithm does not currently support any key generation options.</p>
+
+<h1 id="NOTES">NOTES</h1>
+
+<p>The use of the genpkey program is encouraged over the algorithm specific utilities because additional algorithm options and ENGINE provided algorithms can be used.</p>
+
+<h1 id="EXAMPLES">EXAMPLES</h1>
+
+<p>Generate an RSA private key using default parameters:</p>
+
+<pre><code> openssl genpkey -algorithm RSA -out key.pem</code></pre>
+
+<p>Encrypt output private key using 128 bit AES and the passphrase &quot;hello&quot;:</p>
+
+<pre><code> openssl genpkey -algorithm RSA -out key.pem -aes-128-cbc -pass pass:hello</code></pre>
+
+<p>Generate a 2048 bit RSA key using 3 as the public exponent:</p>
+
+<pre><code> openssl genpkey -algorithm RSA -out key.pem -pkeyopt rsa_keygen_bits:2048 \
+                                                -pkeyopt rsa_keygen_pubexp:3</code></pre>
+
+<p>Generate 1024 bit DSA parameters:</p>
+
+<pre><code> openssl genpkey -genparam -algorithm DSA -out dsap.pem \
+                                                -pkeyopt dsa_paramgen_bits:1024</code></pre>
+
+<p>Generate DSA key from parameters:</p>
+
+<pre><code> openssl genpkey -paramfile dsap.pem -out dsakey.pem</code></pre>
+
+<p>Generate 1024 bit DH parameters:</p>
+
+<pre><code> openssl genpkey -genparam -algorithm DH -out dhp.pem \
+                                        -pkeyopt dh_paramgen_prime_len:1024</code></pre>
+
+<p>Output RFC5114 2048 bit DH parameters with 224 bit subgroup:</p>
+
+<pre><code> openssl genpkey -genparam -algorithm DH -out dhp.pem -pkeyopt dh_rfc5114:2</code></pre>
+
+<p>Generate DH key from parameters:</p>
+
+<pre><code> openssl genpkey -paramfile dhp.pem -out dhkey.pem</code></pre>
+
+<p>Generate EC parameters:</p>
+
+<pre><code> openssl genpkey -genparam -algorithm EC -out ecp.pem \
+        -pkeyopt ec_paramgen_curve:secp384r1 \
+        -pkeyopt ec_param_enc:named_curve</code></pre>
+
+<p>Generate EC key from parameters:</p>
+
+<pre><code> openssl genpkey -paramfile ecp.pem -out eckey.pem</code></pre>
+
+<p>Generate EC key directly:</p>
+
+<pre><code> openssl genpkey -algorithm EC -out eckey.pem \
+        -pkeyopt ec_paramgen_curve:P-384 \
+        -pkeyopt ec_param_enc:named_curve</code></pre>
+
+<p>Generate an X25519 private key:</p>
+
+<pre><code> openssl genpkey -algorithm X25519 -out xkey.pem</code></pre>
+
+<h1 id="HISTORY">HISTORY</h1>
+
+<p>The ability to use NIST curve names, and to generate an EC key directly, were added in OpenSSL 1.0.2.</p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

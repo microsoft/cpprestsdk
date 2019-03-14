@@ -1,0 +1,70 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>X509_verify_cert</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#RETURN-VALUES">RETURN VALUES</a></li>
+  <li><a href="#NOTES">NOTES</a></li>
+  <li><a href="#BUGS">BUGS</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>X509_verify_cert - discover and verify X509 certificate chain</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;openssl/x509.h&gt;
+
+ int X509_verify_cert(X509_STORE_CTX *ctx);</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>The X509_verify_cert() function attempts to discover and validate a certificate chain based on parameters in <b>ctx</b>. A complete description of the process is contained in the <a href="../man1/verify.html>verify(1)</a> manual page.</p>
+
+<h1 id="RETURN-VALUES">RETURN VALUES</h1>
+
+<p>If a complete chain can be built and validated this function returns 1, otherwise it return zero, in exceptional circumstances it can also return a negative code.</p>
+
+<p>If the function fails additional error information can be obtained by examining <b>ctx</b> using, for example X509_STORE_CTX_get_error().</p>
+
+<h1 id="NOTES">NOTES</h1>
+
+<p>Applications rarely call this function directly but it is used by OpenSSL internally for certificate validation, in both the S/MIME and SSL/TLS code.</p>
+
+<p>A negative return value from X509_verify_cert() can occur if it is invoked incorrectly, such as with no certificate set in <b>ctx</b>, or when it is called twice in succession without reinitialising <b>ctx</b> for the second call. A negative return value can also happen due to internal resource problems or if a retry operation is requested during internal lookups (which never happens with standard lookup methods). Applications must check for &lt;= 0 return value on error.</p>
+
+<h1 id="BUGS">BUGS</h1>
+
+<p>This function uses the header <b>x509.h</b> as opposed to most chain verification functions which use <b>x509_vfy.h</b>.</p>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man3/X509_STORE_CTX_get_error.html>X509_STORE_CTX_get_error(3)</a></p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2009-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

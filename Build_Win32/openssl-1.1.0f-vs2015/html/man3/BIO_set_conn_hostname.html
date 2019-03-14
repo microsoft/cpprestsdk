@@ -1,0 +1,158 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>BIO_s_connect</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#NOTES">NOTES</a></li>
+  <li><a href="#RETURN-VALUES">RETURN VALUES</a></li>
+  <li><a href="#EXAMPLE">EXAMPLE</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>BIO_set_conn_address, BIO_get_conn_address, BIO_s_connect, BIO_new_connect, BIO_set_conn_hostname, BIO_set_conn_port, BIO_get_conn_hostname, BIO_get_conn_port, BIO_set_nbio, BIO_do_connect - connect BIO</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;openssl/bio.h&gt;
+
+ const BIO_METHOD * BIO_s_connect(void);
+
+ BIO *BIO_new_connect(char *name);
+
+ long BIO_set_conn_hostname(BIO *b, char *name);
+ long BIO_set_conn_port(BIO *b, char *port);
+ long BIO_set_conn_address(BIO *b, BIO_ADDR *addr);
+ const char *BIO_get_conn_hostname(BIO *b);
+ const char *BIO_get_conn_port(BIO *b);
+ const BIO_ADDR *BIO_get_conn_address(BIO *b);
+
+ long BIO_set_nbio(BIO *b, long n);
+
+ int BIO_do_connect(BIO *b);</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>BIO_s_connect() returns the connect BIO method. This is a wrapper round the platform&#39;s TCP/IP socket connection routines.</p>
+
+<p>Using connect BIOs, TCP/IP connections can be made and data transferred using only BIO routines. In this way any platform specific operations are hidden by the BIO abstraction.</p>
+
+<p>Read and write operations on a connect BIO will perform I/O on the underlying connection. If no connection is established and the port and hostname (see below) is set up properly then a connection is established first.</p>
+
+<p>Connect BIOs support BIO_puts() but not BIO_gets().</p>
+
+<p>If the close flag is set on a connect BIO then any active connection is shutdown and the socket closed when the BIO is freed.</p>
+
+<p>Calling BIO_reset() on a connect BIO will close any active connection and reset the BIO into a state where it can connect to the same host again.</p>
+
+<p>BIO_get_fd() places the underlying socket in <b>c</b> if it is not NULL, it also returns the socket . If <b>c</b> is not NULL it should be of type (int *).</p>
+
+<p>BIO_set_conn_hostname() uses the string <b>name</b> to set the hostname. The hostname can be an IP address; if the address is an IPv6 one, it must be enclosed with brackets. The hostname can also include the port in the form hostname:port.</p>
+
+<p>BIO_set_conn_port() sets the port to <b>port</b>. <b>port</b> can be the numerical form or a string such as &quot;http&quot;. A string will be looked up first using getservbyname() on the host platform but if that fails a standard table of port names will be used. This internal list is http, telnet, socks, https, ssl, ftp, and gopher.</p>
+
+<p>BIO_set_conn_address() sets the address and port information using a BIO_ADDR(3ssl).</p>
+
+<p>BIO_get_conn_hostname() returns the hostname of the connect BIO or NULL if the BIO is initialized but no hostname is set. This return value is an internal pointer which should not be modified.</p>
+
+<p>BIO_get_conn_port() returns the port as a string. This return value is an internal pointer which should not be modified.</p>
+
+<p>BIO_get_conn_address() returns the address information as a BIO_ADDR. This return value is an internal pointer which should not be modified.</p>
+
+<p>BIO_set_nbio() sets the non blocking I/O flag to <b>n</b>. If <b>n</b> is zero then blocking I/O is set. If <b>n</b> is 1 then non blocking I/O is set. Blocking I/O is the default. The call to BIO_set_nbio() should be made before the connection is established because non blocking I/O is set during the connect process.</p>
+
+<p>BIO_new_connect() combines BIO_new() and BIO_set_conn_hostname() into a single call: that is it creates a new connect BIO with <b>name</b>.</p>
+
+<p>BIO_do_connect() attempts to connect the supplied BIO. It returns 1 if the connection was established successfully. A zero or negative value is returned if the connection could not be established, the call BIO_should_retry() should be used for non blocking connect BIOs to determine if the call should be retried.</p>
+
+<h1 id="NOTES">NOTES</h1>
+
+<p>If blocking I/O is set then a non positive return value from any I/O call is caused by an error condition, although a zero return will normally mean that the connection was closed.</p>
+
+<p>If the port name is supplied as part of the host name then this will override any value set with BIO_set_conn_port(). This may be undesirable if the application does not wish to allow connection to arbitrary ports. This can be avoided by checking for the presence of the &#39;:&#39; character in the passed hostname and either indicating an error or truncating the string at that point.</p>
+
+<p>The values returned by BIO_get_conn_hostname(), BIO_get_conn_port(), BIO_get_conn_ip() and BIO_get_conn_int_port() are updated when a connection attempt is made. Before any connection attempt the values returned are those set by the application itself.</p>
+
+<p>Applications do not have to call BIO_do_connect() but may wish to do so to separate the connection process from other I/O processing.</p>
+
+<p>If non blocking I/O is set then retries will be requested as appropriate.</p>
+
+<p>It addition to BIO_should_read() and BIO_should_write() it is also possible for BIO_should_io_special() to be true during the initial connection process with the reason BIO_RR_CONNECT. If this is returned then this is an indication that a connection attempt would block, the application should then take appropriate action to wait until the underlying socket has connected and retry the call.</p>
+
+<p>BIO_set_conn_hostname(), BIO_set_conn_port(), BIO_set_conn_ip(), BIO_set_conn_int_port(), BIO_get_conn_hostname(), BIO_get_conn_port(), BIO_get_conn_ip(), BIO_get_conn_int_port(), BIO_set_nbio() and BIO_do_connect() are macros.</p>
+
+<h1 id="RETURN-VALUES">RETURN VALUES</h1>
+
+<p>BIO_s_connect() returns the connect BIO method.</p>
+
+<p>BIO_get_fd() returns the socket or -1 if the BIO has not been initialized.</p>
+
+<p>BIO_set_conn_hostname(), BIO_set_conn_port(), BIO_set_conn_ip() and BIO_set_conn_int_port() always return 1.</p>
+
+<p>BIO_get_conn_hostname() returns the connected hostname or NULL is none was set.</p>
+
+<p>BIO_get_conn_port() returns a string representing the connected port or NULL if not set.</p>
+
+<p>BIO_get_conn_ip() returns a pointer to the connected IP address in binary form or all zeros if not set.</p>
+
+<p>BIO_get_conn_int_port() returns the connected port or 0 if none was set.</p>
+
+<p>BIO_set_nbio() always returns 1.</p>
+
+<p>BIO_do_connect() returns 1 if the connection was successfully established and 0 or -1 if the connection failed.</p>
+
+<h1 id="EXAMPLE">EXAMPLE</h1>
+
+<p>This is example connects to a webserver on the local host and attempts to retrieve a page and copy the result to standard output.</p>
+
+<pre><code> BIO *cbio, *out;
+ int len;
+ char tmpbuf[1024];
+
+ cbio = BIO_new_connect(&quot;localhost:http&quot;);
+ out = BIO_new_fp(stdout, BIO_NOCLOSE);
+ if (BIO_do_connect(cbio) &lt;= 0) {
+     fprintf(stderr, &quot;Error connecting to server\n&quot;);
+     ERR_print_errors_fp(stderr);
+     exit(1);
+ }
+ BIO_puts(cbio, &quot;GET / HTTP/1.0\n\n&quot;);
+ for ( ; ; ) {
+     len = BIO_read(cbio, tmpbuf, 1024);
+     if (len &lt;= 0)
+         break;
+     BIO_write(out, tmpbuf, len);
+ }
+ BIO_free(cbio);
+ BIO_free(out);</code></pre>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man3/BIO_ADDR.html>BIO_ADDR(3)</a></p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

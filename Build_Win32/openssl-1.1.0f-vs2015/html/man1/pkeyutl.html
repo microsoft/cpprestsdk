@@ -1,0 +1,292 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>pkeyutl</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#OPTIONS">OPTIONS</a></li>
+  <li><a href="#NOTES">NOTES</a></li>
+  <li><a href="#RSA-ALGORITHM">RSA ALGORITHM</a></li>
+  <li><a href="#DSA-ALGORITHM">DSA ALGORITHM</a></li>
+  <li><a href="#DH-ALGORITHM">DH ALGORITHM</a></li>
+  <li><a href="#EC-ALGORITHM">EC ALGORITHM</a></li>
+  <li><a href="#X25519-ALGORITHM">X25519 ALGORITHM</a></li>
+  <li><a href="#EXAMPLES">EXAMPLES</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>pkeyutl - public key algorithm utility</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<p><b>openssl</b> <b>pkeyutl</b> [<b>-help</b>] [<b>-in file</b>] [<b>-out file</b>] [<b>-sigfile file</b>] [<b>-inkey file</b>] [<b>-keyform PEM|DER|ENGINE</b>] [<b>-passin arg</b>] [<b>-peerkey file</b>] [<b>-peerform PEM|DER|ENGINE</b>] [<b>-pubin</b>] [<b>-certin</b>] [<b>-rev</b>] [<b>-sign</b>] [<b>-verify</b>] [<b>-verifyrecover</b>] [<b>-encrypt</b>] [<b>-decrypt</b>] [<b>-derive</b>] [<b>-kdf algorithm</b>] [<b>-kdflen length</b>] [<b>-pkeyopt opt:value</b>] [<b>-hexdump</b>] [<b>-asn1parse</b>] [<b>-engine id</b>] [<b>-engine_impl</b>]</p>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>The <b>pkeyutl</b> command can be used to perform public key operations using any supported algorithm.</p>
+
+<h1 id="OPTIONS">OPTIONS</h1>
+
+<dl>
+
+<dt id="help"><b>-help</b></dt>
+<dd>
+
+<p>Print out a usage message.</p>
+
+</dd>
+<dt id="in-filename"><b>-in filename</b></dt>
+<dd>
+
+<p>This specifies the input filename to read data from or standard input if this option is not specified.</p>
+
+</dd>
+<dt id="out-filename"><b>-out filename</b></dt>
+<dd>
+
+<p>specifies the output filename to write to or standard output by default.</p>
+
+</dd>
+<dt id="sigfile-file"><b>-sigfile file</b></dt>
+<dd>
+
+<p>Signature file, required for <b>verify</b> operations only</p>
+
+</dd>
+<dt id="inkey-file"><b>-inkey file</b></dt>
+<dd>
+
+<p>the input key file, by default it should be a private key.</p>
+
+</dd>
+<dt id="keyform-PEM-DER-ENGINE"><b>-keyform PEM|DER|ENGINE</b></dt>
+<dd>
+
+<p>the key format PEM, DER or ENGINE. Default is PEM.</p>
+
+</dd>
+<dt id="passin-arg"><b>-passin arg</b></dt>
+<dd>
+
+<p>the input key password source. For more information about the format of <b>arg</b> see the <b>PASS PHRASE ARGUMENTS</b> section in <a href="../man1/openssl.html>openssl(1)</a>.</p>
+
+</dd>
+<dt id="peerkey-file"><b>-peerkey file</b></dt>
+<dd>
+
+<p>the peer key file, used by key derivation (agreement) operations.</p>
+
+</dd>
+<dt id="peerform-PEM-DER-ENGINE"><b>-peerform PEM|DER|ENGINE</b></dt>
+<dd>
+
+<p>the peer key format PEM, DER or ENGINE. Default is PEM.</p>
+
+</dd>
+<dt id="pubin"><b>-pubin</b></dt>
+<dd>
+
+<p>the input file is a public key.</p>
+
+</dd>
+<dt id="certin"><b>-certin</b></dt>
+<dd>
+
+<p>the input is a certificate containing a public key.</p>
+
+</dd>
+<dt id="rev"><b>-rev</b></dt>
+<dd>
+
+<p>reverse the order of the input buffer. This is useful for some libraries (such as CryptoAPI) which represent the buffer in little endian format.</p>
+
+</dd>
+<dt id="sign"><b>-sign</b></dt>
+<dd>
+
+<p>sign the input data and output the signed result. This requires a private key.</p>
+
+</dd>
+<dt id="verify"><b>-verify</b></dt>
+<dd>
+
+<p>verify the input data against the signature file and indicate if the verification succeeded or failed.</p>
+
+</dd>
+<dt id="verifyrecover"><b>-verifyrecover</b></dt>
+<dd>
+
+<p>verify the input data and output the recovered data.</p>
+
+</dd>
+<dt id="encrypt"><b>-encrypt</b></dt>
+<dd>
+
+<p>encrypt the input data using a public key.</p>
+
+</dd>
+<dt id="decrypt"><b>-decrypt</b></dt>
+<dd>
+
+<p>decrypt the input data using a private key.</p>
+
+</dd>
+<dt id="derive"><b>-derive</b></dt>
+<dd>
+
+<p>derive a shared secret using the peer key.</p>
+
+</dd>
+<dt id="kdf-algorithm"><b>-kdf algorithm</b></dt>
+<dd>
+
+<p>Use key derivation function <b>algorithm</b>. The supported algorithms are at present <b>TLS1-PRF</b> and <b>HKDF</b>. Note: additional parameters and the KDF output length will normally have to be set for this to work. See <a href="../man3/EVP_PKEY_CTX_set_hkdf_md.html>EVP_PKEY_CTX_set_hkdf_md(3)</a> and <a href="../man3/EVP_PKEY_CTX_set_tls1_prf_md.html>EVP_PKEY_CTX_set_tls1_prf_md(3)</a> for the supported string parameters of each algorithm.</p>
+
+</dd>
+<dt id="kdflen-length"><b>-kdflen length</b></dt>
+<dd>
+
+<p>Set the output length for KDF.</p>
+
+</dd>
+<dt id="pkeyopt-opt:value"><b>-pkeyopt opt:value</b></dt>
+<dd>
+
+<p>Public key options specified as opt:value. See NOTES below for more details.</p>
+
+</dd>
+<dt id="hexdump"><b>-hexdump</b></dt>
+<dd>
+
+<p>hex dump the output data.</p>
+
+</dd>
+<dt id="asn1parse"><b>-asn1parse</b></dt>
+<dd>
+
+<p>asn1parse the output data, this is useful when combined with the <b>-verifyrecover</b> option when an ASN1 structure is signed.</p>
+
+</dd>
+<dt id="engine-id"><b>-engine id</b></dt>
+<dd>
+
+<p>specifying an engine (by its unique <b>id</b> string) will cause <b>pkeyutl</b> to attempt to obtain a functional reference to the specified engine, thus initialising it if needed. The engine will then be set as the default for all available algorithms.</p>
+
+</dd>
+<dt id="engine_impl"><b>-engine_impl</b></dt>
+<dd>
+
+<p>When used with the <b>-engine</b> option, it specifies to also use engine <b>id</b> for crypto operations.</p>
+
+</dd>
+</dl>
+
+<h1 id="NOTES">NOTES</h1>
+
+<p>The operations and options supported vary according to the key algorithm and its implementation. The OpenSSL operations and options are indicated below.</p>
+
+<p>Unless otherwise mentioned all algorithms support the <b>digest:alg</b> option which specifies the digest in use for sign, verify and verifyrecover operations. The value <b>alg</b> should represent a digest name as used in the EVP_get_digestbyname() function for example <b>sha1</b>. This value is used only for sanity-checking the lengths of data passed in to the <b>pkeyutl</b> and for creating the structures that make up the signature (e.g. <b>DigestInfo</b> in RSASSA PKCS#1 v1.5 signatures). In case of RSA, ECDSA and DSA signatures, this utility will not perform hashing on input data but rather use the data directly as input of signature algorithm. Depending on key type, signature type and mode of padding, the maximum acceptable lengths of input data differ. In general, with RSA the signed data can&#39;t be longer than the key modulus, in case of ECDSA and DSA the data shouldn&#39;t be longer than field size, otherwise it will be silently truncated to field size.</p>
+
+<p>In other words, if the value of digest is <b>sha1</b> the input should be 20 bytes long binary encoding of SHA-1 hash function output.</p>
+
+<h1 id="RSA-ALGORITHM">RSA ALGORITHM</h1>
+
+<p>The RSA algorithm generally supports the encrypt, decrypt, sign, verify and verifyrecover operations. However, some padding modes support only a subset of these operations. The following additional <b>pkeyopt</b> values are supported:</p>
+
+<dl>
+
+<dt id="rsa_padding_mode:mode"><b>rsa_padding_mode:mode</b></dt>
+<dd>
+
+<p>This sets the RSA padding mode. Acceptable values for <b>mode</b> are <b>pkcs1</b> for PKCS#1 padding, <b>sslv23</b> for SSLv23 padding, <b>none</b> for no padding, <b>oaep</b> for <b>OAEP</b> mode, <b>x931</b> for X9.31 mode and <b>pss</b> for PSS.</p>
+
+<p>In PKCS#1 padding if the message digest is not set then the supplied data is signed or verified directly instead of using a <b>DigestInfo</b> structure. If a digest is set then the a <b>DigestInfo</b> structure is used and its the length must correspond to the digest type.</p>
+
+<p>For <b>oaep</b> mode only encryption and decryption is supported.</p>
+
+<p>For <b>x931</b> if the digest type is set it is used to format the block data otherwise the first byte is used to specify the X9.31 digest ID. Sign, verify and verifyrecover are can be performed in this mode.</p>
+
+<p>For <b>pss</b> mode only sign and verify are supported and the digest type must be specified.</p>
+
+</dd>
+<dt id="rsa_pss_saltlen:len"><b>rsa_pss_saltlen:len</b></dt>
+<dd>
+
+<p>For <b>pss</b> mode only this option specifies the salt length. Two special values are supported: -1 sets the salt length to the digest length. When signing -2 sets the salt length to the maximum permissible value. When verifying -2 causes the salt length to be automatically determined based on the <b>PSS</b> block structure.</p>
+
+</dd>
+</dl>
+
+<h1 id="DSA-ALGORITHM">DSA ALGORITHM</h1>
+
+<p>The DSA algorithm supports signing and verification operations only. Currently there are no additional options other than <b>digest</b>. Only the SHA1 digest can be used and this digest is assumed by default.</p>
+
+<h1 id="DH-ALGORITHM">DH ALGORITHM</h1>
+
+<p>The DH algorithm only supports the derivation operation and no additional options.</p>
+
+<h1 id="EC-ALGORITHM">EC ALGORITHM</h1>
+
+<p>The EC algorithm supports sign, verify and derive operations. The sign and verify operations use ECDSA and derive uses ECDH. Currently there are no additional options other than <b>digest</b>. Only the SHA1 digest can be used and this digest is assumed by default.</p>
+
+<h1 id="X25519-ALGORITHM">X25519 ALGORITHM</h1>
+
+<p>The X25519 algorithm supports key derivation only. Currently there are no additional options.</p>
+
+<h1 id="EXAMPLES">EXAMPLES</h1>
+
+<p>Sign some data using a private key:</p>
+
+<pre><code> openssl pkeyutl -sign -in file -inkey key.pem -out sig</code></pre>
+
+<p>Recover the signed data (e.g. if an RSA key is used):</p>
+
+<pre><code> openssl pkeyutl -verifyrecover -in sig -inkey key.pem</code></pre>
+
+<p>Verify the signature (e.g. a DSA key):</p>
+
+<pre><code> openssl pkeyutl -verify -in file -sigfile sig -inkey key.pem</code></pre>
+
+<p>Sign data using a message digest value (this is currently only valid for RSA):</p>
+
+<pre><code> openssl pkeyutl -sign -in file -inkey key.pem -out sig -pkeyopt digest:sha256</code></pre>
+
+<p>Derive a shared secret value:</p>
+
+<pre><code> openssl pkeyutl -derive -inkey key.pem -peerkey pubkey.pem -out secret</code></pre>
+
+<p>Hexdump 48 bytes of TLS1 PRF using digest <b>SHA256</b> and shared secret and seed consisting of the single byte 0xFF:</p>
+
+<pre><code> openssl pkeyutl -kdf TLS1-PRF -kdflen 48 -pkeyopt md:SHA256 \
+    -pkeyopt hexsecret:ff -pkeyopt hexseed:ff -hexdump</code></pre>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man1/genpkey.html>genpkey(1)</a>, <a href="../man1/pkey.html>pkey(1)</a>, <a href="../man1/rsautl.html>rsautl(1)</a> <a href="../man1/dgst.html>dgst(1)</a>, <a href="../man1/rsa.html>rsa(1)</a>, <a href="../man1/genrsa.html>genrsa(1)</a>, <a href="../man3/EVP_PKEY_CTX_set_hkdf_md.html>EVP_PKEY_CTX_set_hkdf_md(3)</a>, <a href="../man3/EVP_PKEY_CTX_set_tls1_prf_md.html>EVP_PKEY_CTX_set_tls1_prf_md(3)</a></p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

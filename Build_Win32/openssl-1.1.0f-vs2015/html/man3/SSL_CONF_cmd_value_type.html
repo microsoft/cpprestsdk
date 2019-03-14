@@ -1,0 +1,477 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>SSL_CONF_cmd</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#SUPPORTED-COMMAND-LINE-COMMANDS">SUPPORTED COMMAND LINE COMMANDS</a></li>
+  <li><a href="#SUPPORTED-CONFIGURATION-FILE-COMMANDS">SUPPORTED CONFIGURATION FILE COMMANDS</a></li>
+  <li><a href="#SUPPORTED-COMMAND-TYPES">SUPPORTED COMMAND TYPES</a></li>
+  <li><a href="#NOTES">NOTES</a></li>
+  <li><a href="#EXAMPLES">EXAMPLES</a></li>
+  <li><a href="#RETURN-VALUES">RETURN VALUES</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#HISTORY">HISTORY</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>SSL_CONF_cmd_value_type, SSL_CONF_finish, SSL_CONF_cmd - send configuration command</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;openssl/ssl.h&gt;
+
+ int SSL_CONF_cmd(SSL_CONF_CTX *cctx, const char *cmd, const char *value);
+ int SSL_CONF_cmd_value_type(SSL_CONF_CTX *cctx, const char *cmd);
+ int SSL_CONF_finish(SSL_CONF_CTX *cctx);</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>The function SSL_CONF_cmd() performs configuration operation <b>cmd</b> with optional parameter <b>value</b> on <b>ctx</b>. Its purpose is to simplify application configuration of <b>SSL_CTX</b> or <b>SSL</b> structures by providing a common framework for command line options or configuration files.</p>
+
+<p>SSL_CONF_cmd_value_type() returns the type of value that <b>cmd</b> refers to.</p>
+
+<p>The function SSL_CONF_finish() must be called after all configuration operations have been completed. It is used to finalise any operations or to process defaults.</p>
+
+<h1 id="SUPPORTED-COMMAND-LINE-COMMANDS">SUPPORTED COMMAND LINE COMMANDS</h1>
+
+<p>Currently supported <b>cmd</b> names for command lines (i.e. when the flag <b>SSL_CONF_CMDLINE</b> is set) are listed below. Note: all <b>cmd</b> names are case sensitive. Unless otherwise stated commands can be used by both clients and servers and the <b>value</b> parameter is not used. The default prefix for command line commands is <b>-</b> and that is reflected below.</p>
+
+<dl>
+
+<dt id="sigalgs"><b>-sigalgs</b></dt>
+<dd>
+
+<p>This sets the supported signature algorithms for TLS v1.2. For clients this value is used directly for the supported signature algorithms extension. For servers it is used to determine which signature algorithms to support.</p>
+
+<p>The <b>value</b> argument should be a colon separated list of signature algorithms in order of decreasing preference of the form <b>algorithm+hash</b>. <b>algorithm</b> is one of <b>RSA</b>, <b>DSA</b> or <b>ECDSA</b> and <b>hash</b> is a supported algorithm OID short name such as <b>SHA1</b>, <b>SHA224</b>, <b>SHA256</b>, <b>SHA384</b> of <b>SHA512</b>. Note: algorithm and hash names are case sensitive.</p>
+
+<p>If this option is not set then all signature algorithms supported by the OpenSSL library are permissible.</p>
+
+</dd>
+<dt id="client_sigalgs"><b>-client_sigalgs</b></dt>
+<dd>
+
+<p>This sets the supported signature algorithms associated with client authentication for TLS v1.2. For servers the value is used in the supported signature algorithms field of a certificate request. For clients it is used to determine which signature algorithm to with the client certificate. If a server does not request a certificate this option has no effect.</p>
+
+<p>The syntax of <b>value</b> is identical to <b>-sigalgs</b>. If not set then the value set for <b>-sigalgs</b> will be used instead.</p>
+
+</dd>
+<dt id="curves"><b>-curves</b></dt>
+<dd>
+
+<p>This sets the supported elliptic curves. For clients the curves are sent using the supported curves extension. For servers it is used to determine which curve to use. This setting affects curves used for both signatures and key exchange, if applicable.</p>
+
+<p>The <b>value</b> argument is a colon separated list of curves. The curve can be either the <b>NIST</b> name (e.g. <b>P-256</b>) or an OpenSSL OID name (e.g <b>prime256v1</b>). Curve names are case sensitive.</p>
+
+</dd>
+<dt id="named_curve"><b>-named_curve</b></dt>
+<dd>
+
+<p>This sets the temporary curve used for ephemeral ECDH modes. Only used by servers</p>
+
+<p>The <b>value</b> argument is a curve name or the special value <b>auto</b> which picks an appropriate curve based on client and server preferences. The curve can be either the <b>NIST</b> name (e.g. <b>P-256</b>) or an OpenSSL OID name (e.g <b>prime256v1</b>). Curve names are case sensitive.</p>
+
+</dd>
+<dt id="cipher"><b>-cipher</b></dt>
+<dd>
+
+<p>Sets the cipher suite list to <b>value</b>. Note: syntax checking of <b>value</b> is currently not performed unless a <b>SSL</b> or <b>SSL_CTX</b> structure is associated with <b>cctx</b>.</p>
+
+</dd>
+<dt id="cert"><b>-cert</b></dt>
+<dd>
+
+<p>Attempts to use the file <b>value</b> as the certificate for the appropriate context. It currently uses SSL_CTX_use_certificate_chain_file() if an <b>SSL_CTX</b> structure is set or SSL_use_certificate_file() with filetype PEM if an <b>SSL</b> structure is set. This option is only supported if certificate operations are permitted.</p>
+
+</dd>
+<dt id="key"><b>-key</b></dt>
+<dd>
+
+<p>Attempts to use the file <b>value</b> as the private key for the appropriate context. This option is only supported if certificate operations are permitted. Note: if no <b>-key</b> option is set then a private key is not loaded unless the flag <b>SSL_CONF_FLAG_REQUIRE_PRIVATE</b> is set.</p>
+
+</dd>
+<dt id="dhparam"><b>-dhparam</b></dt>
+<dd>
+
+<p>Attempts to use the file <b>value</b> as the set of temporary DH parameters for the appropriate context. This option is only supported if certificate operations are permitted.</p>
+
+</dd>
+<dt id="min_protocol--max_protocol"><b>-min_protocol</b>, <b>-max_protocol</b></dt>
+<dd>
+
+<p>Sets the minimum and maximum supported protocol. Currently supported protocol values are <b>SSLv3</b>, <b>TLSv1</b>, <b>TLSv1.1</b>, <b>TLSv1.2</b> for TLS and <b>DTLSv1</b>, <b>DTLSv1.2</b> for DTLS, and <b>None</b> for no limit. If the either bound is not specified then only the other bound applies, if specified. To restrict the supported protocol versions use these commands rather than the deprecated alternative commands below.</p>
+
+</dd>
+<dt id="no_ssl3--no_tls1--no_tls1_1--no_tls1_2"><b>-no_ssl3</b>, <b>-no_tls1</b>, <b>-no_tls1_1</b>, <b>-no_tls1_2</b></dt>
+<dd>
+
+<p>Disables protocol support for SSLv3, TLSv1.0, TLSv1.1 or TLSv1.2 by setting the corresponding options <b>SSL_OP_NO_SSLv3</b>, <b>SSL_OP_NO_TLSv1</b>, <b>SSL_OP_NO_TLSv1_1</b> and <b>SSL_OP_NO_TLSv1_2</b> respectively. These options are deprecated, instead use <b>-min_protocol</b> and <b>-max_protocol</b>.</p>
+
+</dd>
+<dt id="bugs"><b>-bugs</b></dt>
+<dd>
+
+<p>Various bug workarounds are set, same as setting <b>SSL_OP_ALL</b>.</p>
+
+</dd>
+<dt id="comp"><b>-comp</b></dt>
+<dd>
+
+<p>Enables support for SSL/TLS compression, same as clearing <b>SSL_OP_NO_COMPRESSION</b>. This command was introduced in OpenSSL 1.1.0. As of OpenSSL 1.1.0, compression is off by default.</p>
+
+</dd>
+<dt id="no_comp"><b>-no_comp</b></dt>
+<dd>
+
+<p>Disables support for SSL/TLS compression, same as setting <b>SSL_OP_NO_COMPRESSION</b>. As of OpenSSL 1.1.0, compression is off by default.</p>
+
+</dd>
+<dt id="no_ticket"><b>-no_ticket</b></dt>
+<dd>
+
+<p>Disables support for session tickets, same as setting <b>SSL_OP_NO_TICKET</b>.</p>
+
+</dd>
+<dt id="serverpref"><b>-serverpref</b></dt>
+<dd>
+
+<p>Use server and not client preference order when determining which cipher suite, signature algorithm or elliptic curve to use for an incoming connection. Equivalent to <b>SSL_OP_CIPHER_SERVER_PREFERENCE</b>. Only used by servers.</p>
+
+</dd>
+<dt id="no_resumption_on_reneg"><b>-no_resumption_on_reneg</b></dt>
+<dd>
+
+<p>set SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION flag. Only used by servers.</p>
+
+</dd>
+<dt id="legacyrenegotiation"><b>-legacyrenegotiation</b></dt>
+<dd>
+
+<p>permits the use of unsafe legacy renegotiation. Equivalent to setting <b>SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION</b>.</p>
+
+</dd>
+<dt id="legacy_server_connect--no_legacy_server_connect"><b>-legacy_server_connect</b>, <b>-no_legacy_server_connect</b></dt>
+<dd>
+
+<p>permits or prohibits the use of unsafe legacy renegotiation for OpenSSL clients only. Equivalent to setting or clearing <b>SSL_OP_LEGACY_SERVER_CONNECT</b>. Set by default.</p>
+
+</dd>
+<dt id="strict"><b>-strict</b></dt>
+<dd>
+
+<p>enables strict mode protocol handling. Equivalent to setting <b>SSL_CERT_FLAG_TLS_STRICT</b>.</p>
+
+</dd>
+</dl>
+
+<h1 id="SUPPORTED-CONFIGURATION-FILE-COMMANDS">SUPPORTED CONFIGURATION FILE COMMANDS</h1>
+
+<p>Currently supported <b>cmd</b> names for configuration files (i.e. when the flag <b>SSL_CONF_FLAG_FILE</b> is set) are listed below. All configuration file <b>cmd</b> names are case insensitive so <b>signaturealgorithms</b> is recognised as well as <b>SignatureAlgorithms</b>. Unless otherwise stated the <b>value</b> names are also case insensitive.</p>
+
+<p>Note: the command prefix (if set) alters the recognised <b>cmd</b> values.</p>
+
+<dl>
+
+<dt id="CipherString"><b>CipherString</b></dt>
+<dd>
+
+<p>Sets the cipher suite list to <b>value</b>. Note: syntax checking of <b>value</b> is currently not performed unless an <b>SSL</b> or <b>SSL_CTX</b> structure is associated with <b>cctx</b>.</p>
+
+</dd>
+<dt id="Certificate"><b>Certificate</b></dt>
+<dd>
+
+<p>Attempts to use the file <b>value</b> as the certificate for the appropriate context. It currently uses SSL_CTX_use_certificate_chain_file() if an <b>SSL_CTX</b> structure is set or SSL_use_certificate_file() with filetype PEM if an <b>SSL</b> structure is set. This option is only supported if certificate operations are permitted.</p>
+
+</dd>
+<dt id="PrivateKey"><b>PrivateKey</b></dt>
+<dd>
+
+<p>Attempts to use the file <b>value</b> as the private key for the appropriate context. This option is only supported if certificate operations are permitted. Note: if no <b>PrivateKey</b> option is set then a private key is not loaded unless the <b>SSL_CONF_FLAG_REQUIRE_PRIVATE</b> is set.</p>
+
+</dd>
+<dt id="ChainCAFile-ChainCAPath-VerifyCAFile-VerifyCAPath"><b>ChainCAFile</b>, <b>ChainCAPath</b>, <b>VerifyCAFile</b>, <b>VerifyCAPath</b></dt>
+<dd>
+
+<p>These options indicate a file or directory used for building certificate chains or verifying certificate chains. These options are only supported if certificate operations are permitted.</p>
+
+</dd>
+<dt id="ServerInfoFile"><b>ServerInfoFile</b></dt>
+<dd>
+
+<p>Attempts to use the file <b>value</b> in the &quot;serverinfo&quot; extension using the function SSL_CTX_use_serverinfo_file.</p>
+
+</dd>
+<dt id="DHParameters"><b>DHParameters</b></dt>
+<dd>
+
+<p>Attempts to use the file <b>value</b> as the set of temporary DH parameters for the appropriate context. This option is only supported if certificate operations are permitted.</p>
+
+</dd>
+<dt id="SignatureAlgorithms"><b>SignatureAlgorithms</b></dt>
+<dd>
+
+<p>This sets the supported signature algorithms for TLS v1.2. For clients this value is used directly for the supported signature algorithms extension. For servers it is used to determine which signature algorithms to support.</p>
+
+<p>The <b>value</b> argument should be a colon separated list of signature algorithms in order of decreasing preference of the form <b>algorithm+hash</b>. <b>algorithm</b> is one of <b>RSA</b>, <b>DSA</b> or <b>ECDSA</b> and <b>hash</b> is a supported algorithm OID short name such as <b>SHA1</b>, <b>SHA224</b>, <b>SHA256</b>, <b>SHA384</b> of <b>SHA512</b>. Note: algorithm and hash names are case sensitive.</p>
+
+<p>If this option is not set then all signature algorithms supported by the OpenSSL library are permissible.</p>
+
+</dd>
+<dt id="ClientSignatureAlgorithms"><b>ClientSignatureAlgorithms</b></dt>
+<dd>
+
+<p>This sets the supported signature algorithms associated with client authentication for TLS v1.2. For servers the value is used in the supported signature algorithms field of a certificate request. For clients it is used to determine which signature algorithm to with the client certificate.</p>
+
+<p>The syntax of <b>value</b> is identical to <b>SignatureAlgorithms</b>. If not set then the value set for <b>SignatureAlgorithms</b> will be used instead.</p>
+
+</dd>
+<dt id="Curves"><b>Curves</b></dt>
+<dd>
+
+<p>This sets the supported elliptic curves. For clients the curves are sent using the supported curves extension. For servers it is used to determine which curve to use. This setting affects curves used for both signatures and key exchange, if applicable.</p>
+
+<p>The <b>value</b> argument is a colon separated list of curves. The curve can be either the <b>NIST</b> name (e.g. <b>P-256</b>) or an OpenSSL OID name (e.g <b>prime256v1</b>). Curve names are case sensitive.</p>
+
+</dd>
+<dt id="MinProtocol"><b>MinProtocol</b></dt>
+<dd>
+
+<p>This sets the minimum supported SSL, TLS or DTLS version.</p>
+
+<p>Currently supported protocol values are <b>SSLv3</b>, <b>TLSv1</b>, <b>TLSv1.1</b>, <b>TLSv1.2</b>, <b>DTLSv1</b> and <b>DTLSv1.2</b>. The value <b>None</b> will disable the limit.</p>
+
+</dd>
+<dt id="MaxProtocol"><b>MaxProtocol</b></dt>
+<dd>
+
+<p>This sets the maximum supported SSL, TLS or DTLS version.</p>
+
+<p>Currently supported protocol values are <b>SSLv3</b>, <b>TLSv1</b>, <b>TLSv1.1</b>, <b>TLSv1.2</b>, <b>DTLSv1</b> and <b>DTLSv1.2</b>. The value <b>None</b> will disable the limit.</p>
+
+</dd>
+<dt id="Protocol"><b>Protocol</b></dt>
+<dd>
+
+<p>This can be used to enable or disable certain versions of the SSL, TLS or DTLS protocol.</p>
+
+<p>The <b>value</b> argument is a comma separated list of supported protocols to enable or disable. If a protocol is preceded by <b>-</b> that version is disabled.</p>
+
+<p>All protocol versions are enabled by default. You need to disable at least one protocol version for this setting have any effect. Only enabling some protocol versions does not disable the other protocol versions.</p>
+
+<p>Currently supported protocol values are <b>SSLv3</b>, <b>TLSv1</b>, <b>TLSv1.1</b>, <b>TLSv1.2</b>, <b>DTLSv1</b> and <b>DTLSv1.2</b>. The special value <b>ALL</b> refers to all supported versions.</p>
+
+<p>This can&#39;t enable protocols that are disabled using <b>MinProtocol</b> or <b>MaxProtocol</b>, but can disable protocols that are still allowed by them.</p>
+
+<p>The <b>Protocol</b> command is fragile and deprecated; do not use it. Use <b>MinProtocol</b> and <b>MaxProtocol</b> instead. If you do use <b>Protocol</b>, make sure that the resulting range of enabled protocols has no &quot;holes&quot;, e.g. if TLS 1.0 and TLS 1.2 are both enabled, make sure to also leave TLS 1.1 enabled.</p>
+
+</dd>
+<dt id="Options"><b>Options</b></dt>
+<dd>
+
+<p>The <b>value</b> argument is a comma separated list of various flags to set. If a flag string is preceded <b>-</b> it is disabled. See the <a href="../man3/SSL_CTX_set_options.html>SSL_CTX_set_options(3)</a> function for more details of individual options.</p>
+
+<p>Each option is listed below. Where an operation is enabled by default the <b>-flag</b> syntax is needed to disable it.</p>
+
+<p><b>SessionTicket</b>: session ticket support, enabled by default. Inverse of <b>SSL_OP_NO_TICKET</b>: that is <b>-SessionTicket</b> is the same as setting <b>SSL_OP_NO_TICKET</b>.</p>
+
+<p><b>Compression</b>: SSL/TLS compression support, enabled by default. Inverse of <b>SSL_OP_NO_COMPRESSION</b>.</p>
+
+<p><b>EmptyFragments</b>: use empty fragments as a countermeasure against a SSL 3.0/TLS 1.0 protocol vulnerability affecting CBC ciphers. It is set by default. Inverse of <b>SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS</b>.</p>
+
+<p><b>Bugs</b>: enable various bug workarounds. Same as <b>SSL_OP_ALL</b>.</p>
+
+<p><b>DHSingle</b>: enable single use DH keys, set by default. Inverse of <b>SSL_OP_DH_SINGLE</b>. Only used by servers.</p>
+
+<p><b>ECDHSingle</b> enable single use ECDH keys, set by default. Inverse of <b>SSL_OP_ECDH_SINGLE</b>. Only used by servers.</p>
+
+<p><b>ServerPreference</b> use server and not client preference order when determining which cipher suite, signature algorithm or elliptic curve to use for an incoming connection. Equivalent to <b>SSL_OP_CIPHER_SERVER_PREFERENCE</b>. Only used by servers.</p>
+
+<p><b>NoResumptionOnRenegotiation</b> set <b>SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION</b> flag. Only used by servers.</p>
+
+<p><b>UnsafeLegacyRenegotiation</b> permits the use of unsafe legacy renegotiation. Equivalent to <b>SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION</b>.</p>
+
+<p><b>UnsafeLegacyServerConnect</b> permits the use of unsafe legacy renegotiation for OpenSSL clients only. Equivalent to <b>SSL_OP_LEGACY_SERVER_CONNECT</b>. Set by default.</p>
+
+</dd>
+<dt id="VerifyMode"><b>VerifyMode</b></dt>
+<dd>
+
+<p>The <b>value</b> argument is a comma separated list of flags to set.</p>
+
+<p><b>Peer</b> enables peer verification: for clients only.</p>
+
+<p><b>Request</b> requests but does not require a certificate from the client. Servers only.</p>
+
+<p><b>Require</b> requests and requires a certificate from the client: an error occurs if the client does not present a certificate. Servers only.</p>
+
+<p><b>Once</b> requests a certificate from a client only on the initial connection: not when renegotiating. Servers only.</p>
+
+</dd>
+<dt id="ClientCAFile-ClientCAPath"><b>ClientCAFile</b>, <b>ClientCAPath</b></dt>
+<dd>
+
+<p>A file or directory of certificates in PEM format whose names are used as the set of acceptable names for client CAs. Servers only. This option is only supported if certificate operations are permitted.</p>
+
+</dd>
+</dl>
+
+<h1 id="SUPPORTED-COMMAND-TYPES">SUPPORTED COMMAND TYPES</h1>
+
+<p>The function SSL_CONF_cmd_value_type() currently returns one of the following types:</p>
+
+<dl>
+
+<dt id="SSL_CONF_TYPE_UNKNOWN"><b>SSL_CONF_TYPE_UNKNOWN</b></dt>
+<dd>
+
+<p>The <b>cmd</b> string is unrecognised, this return value can be use to flag syntax errors.</p>
+
+</dd>
+<dt id="SSL_CONF_TYPE_STRING"><b>SSL_CONF_TYPE_STRING</b></dt>
+<dd>
+
+<p>The value is a string without any specific structure.</p>
+
+</dd>
+<dt id="SSL_CONF_TYPE_FILE"><b>SSL_CONF_TYPE_FILE</b></dt>
+<dd>
+
+<p>The value is a file name.</p>
+
+</dd>
+<dt id="SSL_CONF_TYPE_DIR"><b>SSL_CONF_TYPE_DIR</b></dt>
+<dd>
+
+<p>The value is a directory name.</p>
+
+</dd>
+<dt id="SSL_CONF_TYPE_NONE"><b>SSL_CONF_TYPE_NONE</b></dt>
+<dd>
+
+<p>The value string is not used e.g. a command line option which doesn&#39;t take an argument.</p>
+
+</dd>
+</dl>
+
+<h1 id="NOTES">NOTES</h1>
+
+<p>The order of operations is significant. This can be used to set either defaults or values which cannot be overridden. For example if an application calls:</p>
+
+<pre><code> SSL_CONF_cmd(ctx, &quot;Protocol&quot;, &quot;-SSLv3&quot;);
+ SSL_CONF_cmd(ctx, userparam, uservalue);</code></pre>
+
+<p>it will disable SSLv3 support by default but the user can override it. If however the call sequence is:</p>
+
+<pre><code> SSL_CONF_cmd(ctx, userparam, uservalue);
+ SSL_CONF_cmd(ctx, &quot;Protocol&quot;, &quot;-SSLv3&quot;);</code></pre>
+
+<p>SSLv3 is <b>always</b> disabled and attempt to override this by the user are ignored.</p>
+
+<p>By checking the return code of SSL_CTX_cmd() it is possible to query if a given <b>cmd</b> is recognised, this is useful is SSL_CTX_cmd() values are mixed with additional application specific operations.</p>
+
+<p>For example an application might call SSL_CTX_cmd() and if it returns -2 (unrecognised command) continue with processing of application specific commands.</p>
+
+<p>Applications can also use SSL_CTX_cmd() to process command lines though the utility function SSL_CTX_cmd_argv() is normally used instead. One way to do this is to set the prefix to an appropriate value using SSL_CONF_CTX_set1_prefix(), pass the current argument to <b>cmd</b> and the following argument to <b>value</b> (which may be NULL).</p>
+
+<p>In this case if the return value is positive then it is used to skip that number of arguments as they have been processed by SSL_CTX_cmd(). If -2 is returned then <b>cmd</b> is not recognised and application specific arguments can be checked instead. If -3 is returned a required argument is missing and an error is indicated. If 0 is returned some other error occurred and this can be reported back to the user.</p>
+
+<p>The function SSL_CONF_cmd_value_type() can be used by applications to check for the existence of a command or to perform additional syntax checking or translation of the command value. For example if the return value is <b>SSL_CONF_TYPE_FILE</b> an application could translate a relative pathname to an absolute pathname.</p>
+
+<h1 id="EXAMPLES">EXAMPLES</h1>
+
+<p>Set supported signature algorithms:</p>
+
+<pre><code> SSL_CONF_cmd(ctx, &quot;SignatureAlgorithms&quot;, &quot;ECDSA+SHA256:RSA+SHA256:DSA+SHA256&quot;);</code></pre>
+
+<p>There are various ways to select the supported protocols.</p>
+
+<p>This set the minimum protocol version to TLSv1, and so disables SSLv3. This is the recommended way to disable protocols.</p>
+
+<pre><code> SSL_CONF_cmd(ctx, &quot;MinProtocol&quot;, &quot;TLSv1&quot;);</code></pre>
+
+<p>The following also disables SSLv3:</p>
+
+<pre><code> SSL_CONF_cmd(ctx, &quot;Protocol&quot;, &quot;-SSLv3&quot;);</code></pre>
+
+<p>The following will first enable all protocols, and then disable SSLv3. If no protocol versions were disabled before this has the same effect as &quot;-SSLv3&quot;, but if some versions were disables this will re-enable them before disabling SSLv3.</p>
+
+<pre><code> SSL_CONF_cmd(ctx, &quot;Protocol&quot;, &quot;ALL,-SSLv3&quot;);</code></pre>
+
+<p>Only enable TLSv1.2:</p>
+
+<pre><code> SSL_CONF_cmd(ctx, &quot;MinProtocol&quot;, &quot;TLSv1.2&quot;);
+ SSL_CONF_cmd(ctx, &quot;MaxProtocol&quot;, &quot;TLSv1.2&quot;);</code></pre>
+
+<p>This also only enables TLSv1.2:</p>
+
+<pre><code> SSL_CONF_cmd(ctx, &quot;Protocol&quot;, &quot;-ALL,TLSv1.2&quot;);</code></pre>
+
+<p>Disable TLS session tickets:</p>
+
+<pre><code> SSL_CONF_cmd(ctx, &quot;Options&quot;, &quot;-SessionTicket&quot;);</code></pre>
+
+<p>Enable compression:</p>
+
+<pre><code> SSL_CONF_cmd(ctx, &quot;Options&quot;, &quot;Compression&quot;);</code></pre>
+
+<p>Set supported curves to P-256, P-384:</p>
+
+<pre><code> SSL_CONF_cmd(ctx, &quot;Curves&quot;, &quot;P-256:P-384&quot;);</code></pre>
+
+<p>Set automatic support for any elliptic curve for key exchange:</p>
+
+<pre><code> SSL_CONF_cmd(ctx, &quot;ECDHParameters&quot;, &quot;Automatic&quot;);</code></pre>
+
+<h1 id="RETURN-VALUES">RETURN VALUES</h1>
+
+<p>SSL_CONF_cmd() returns 1 if the value of <b>cmd</b> is recognised and <b>value</b> is <b>NOT</b> used and 2 if both <b>cmd</b> and <b>value</b> are used. In other words it returns the number of arguments processed. This is useful when processing command lines.</p>
+
+<p>A return value of -2 means <b>cmd</b> is not recognised.</p>
+
+<p>A return value of -3 means <b>cmd</b> is recognised and the command requires a value but <b>value</b> is NULL.</p>
+
+<p>A return code of 0 indicates that both <b>cmd</b> and <b>value</b> are valid but an error occurred attempting to perform the operation: for example due to an error in the syntax of <b>value</b> in this case the error queue may provide additional information.</p>
+
+<p>SSL_CONF_finish() returns 1 for success and 0 for failure.</p>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man3/SSL_CONF_CTX_new.html>SSL_CONF_CTX_new(3)</a>, <a href="../man3/SSL_CONF_CTX_set_flags.html>SSL_CONF_CTX_set_flags(3)</a>, <a href="../man3/SSL_CONF_CTX_set1_prefix.html>SSL_CONF_CTX_set1_prefix(3)</a>, <a href="../man3/SSL_CONF_CTX_set_ssl_ctx.html>SSL_CONF_CTX_set_ssl_ctx(3)</a>, <a href="../man3/SSL_CONF_cmd_argv.html>SSL_CONF_cmd_argv(3)</a>, <a href="../man3/SSL_CTX_set_options.html>SSL_CTX_set_options(3)</a></p>
+
+<h1 id="HISTORY">HISTORY</h1>
+
+<p>SSL_CONF_cmd() was first added to OpenSSL 1.0.2</p>
+
+<p><b>SSL_OP_NO_SSL2</b> doesn&#39;t have effect since 1.1.0, but the macro is retained for backwards compatibility.</p>
+
+<p><b>SSL_CONF_TYPE_NONE</b> was first added to OpenSSL 1.1.0. In earlier versions of OpenSSL passing a command which didn&#39;t take an argument would return <b>SSL_CONF_TYPE_UNKNOWN</b>.</p>
+
+<p><b>MinProtocol</b> and <b>MaxProtocol</b> where added in OpenSSL 1.1.0.</p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2012-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

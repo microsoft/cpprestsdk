@@ -1,0 +1,84 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>RAND_add</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#RETURN-VALUES">RETURN VALUES</a></li>
+  <li><a href="#HISTORY">HISTORY</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>RAND_add, RAND_seed, RAND_status, RAND_event, RAND_screen - add entropy to the PRNG</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;openssl/rand.h&gt;
+
+ void RAND_seed(const void *buf, int num);
+
+ void RAND_add(const void *buf, int num, double entropy);
+
+ int  RAND_status(void);
+
+ #if OPENSSL_API_COMPAT &lt; 0x10100000L
+ int  RAND_event(UINT iMsg, WPARAM wParam, LPARAM lParam);
+ void RAND_screen(void);
+ #endif</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>RAND_add() mixes the <b>num</b> bytes at <b>buf</b> into the PRNG state. Thus, if the data at <b>buf</b> are unpredictable to an adversary, this increases the uncertainty about the state and makes the PRNG output less predictable. Suitable input comes from user interaction (random key presses, mouse movements) and certain hardware events. The <b>entropy</b> argument is (the lower bound of) an estimate of how much randomness is contained in <b>buf</b>, measured in bytes. Details about sources of randomness and how to estimate their entropy can be found in the literature, e.g. RFC 1750.</p>
+
+<p>RAND_add() may be called with sensitive data such as user entered passwords. The seed values cannot be recovered from the PRNG output.</p>
+
+<p>OpenSSL makes sure that the PRNG state is unique for each thread. On systems that provide <code>/dev/urandom</code>, the randomness device is used to seed the PRNG transparently. However, on all other systems, the application is responsible for seeding the PRNG by calling RAND_add(), <a href="../man3/RAND_egd.html>RAND_egd(3)</a> or <a href="../man3/RAND_load_file.html>RAND_load_file(3)</a>.</p>
+
+<p>RAND_seed() is equivalent to RAND_add() when <b>num == entropy</b>.</p>
+
+<p>RAND_event() and RAND_screen() are deprecated and should not be called.</p>
+
+<h1 id="RETURN-VALUES">RETURN VALUES</h1>
+
+<p>RAND_status() returns 1 if the PRNG has been seeded with enough data, 0 otherwise.</p>
+
+<p>RAND_event() calls RAND_poll() and returns RAND_status().</p>
+
+<p>RAND_screen calls RAND_poll().</p>
+
+<p>The other functions do not return values.</p>
+
+<h1 id="HISTORY">HISTORY</h1>
+
+<p>RAND_event() and RAND_screen() are deprecated since OpenSSL 1.1.0. Use the functions described above instead.</p>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man3/rand.html>rand(3)</a>, <a href="../man3/RAND_egd.html>RAND_egd(3)</a>, <a href="../man3/RAND_load_file.html>RAND_load_file(3)</a>, <a href="../man3/RAND_cleanup.html>RAND_cleanup(3)</a></p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+

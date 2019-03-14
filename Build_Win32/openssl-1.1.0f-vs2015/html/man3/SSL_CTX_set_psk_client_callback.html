@@ -1,0 +1,73 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>SSL_CTX_set_psk_client_callback</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#NOTES">NOTES</a></li>
+  <li><a href="#RETURN-VALUES">RETURN VALUES</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>SSL_CTX_set_psk_client_callback, SSL_set_psk_client_callback - set PSK client callback</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;openssl/ssl.h&gt;
+
+ void SSL_CTX_set_psk_client_callback(SSL_CTX *ctx,
+        unsigned int (*callback)(SSL *ssl, const char *hint,
+        char *identity, unsigned int max_identity_len,
+        unsigned char *psk, unsigned int max_psk_len));
+ void SSL_set_psk_client_callback(SSL *ssl,
+        unsigned int (*callback)(SSL *ssl, const char *hint,
+        char *identity, unsigned int max_identity_len,
+        unsigned char *psk, unsigned int max_psk_len));</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>A client application must provide a callback function which is called when the client is sending the ClientKeyExchange message to the server.</p>
+
+<p>The purpose of the callback function is to select the PSK identity and the pre-shared key to use during the connection setup phase.</p>
+
+<p>The callback is set using functions SSL_CTX_set_psk_client_callback() or SSL_set_psk_client_callback(). The callback function is given the connection in parameter <b>ssl</b>, a <b>NULL</b>-terminated PSK identity hint sent by the server in parameter <b>hint</b>, a buffer <b>identity</b> of length <b>max_identity_len</b> bytes where the resulting <b>NULL</b>-terminated identity is to be stored, and a buffer <b>psk</b> of length <b>max_psk_len</b> bytes where the resulting pre-shared key is to be stored.</p>
+
+<h1 id="NOTES">NOTES</h1>
+
+<p>Note that parameter <b>hint</b> given to the callback may be <b>NULL</b>.</p>
+
+<h1 id="RETURN-VALUES">RETURN VALUES</h1>
+
+<p>Return values from the client callback are interpreted as follows:</p>
+
+<p>On success (callback found a PSK identity and a pre-shared key to use) the length (&gt; 0) of <b>psk</b> in bytes is returned.</p>
+
+<p>Otherwise or on errors callback should return 0. In this case the connection setup fails.</p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+<p>Copyright 2005 Nokia.</p>
+
+
+</body>
+
+</html>
+
+

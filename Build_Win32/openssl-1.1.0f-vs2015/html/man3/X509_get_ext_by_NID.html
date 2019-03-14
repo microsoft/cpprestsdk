@@ -1,0 +1,121 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>X509v3_get_ext_by_NID</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:" />
+</head>
+
+<body>
+
+
+
+<ul id="index">
+  <li><a href="#NAME">NAME</a></li>
+  <li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+  <li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+  <li><a href="#NOTES">NOTES</a></li>
+  <li><a href="#RETURN-VALUES">RETURN VALUES</a></li>
+  <li><a href="#SEE-ALSO">SEE ALSO</a></li>
+  <li><a href="#COPYRIGHT">COPYRIGHT</a></li>
+</ul>
+
+<h1 id="NAME">NAME</h1>
+
+<p>X509v3_get_ext_count, X509v3_get_ext, X509v3_get_ext_by_NID, X509v3_get_ext_by_OBJ, X509v3_get_ext_by_critical, X509v3_delete_ext, X509v3_add_ext, X509_get_ext_count, X509_get_ext, X509_get_ext_by_NID, X509_get_ext_by_OBJ, X509_get_ext_by_critical, X509_delete_ext, X509_add_ext, X509_CRL_get_ext_count, X509_CRL_get_ext, X509_CRL_get_ext_by_NID, X509_CRL_get_ext_by_OBJ, X509_CRL_get_ext_by_critical, X509_CRL_delete_ext, X509_CRL_add_ext, X509_REVOKED_get_ext_count, X509_REVOKED_get_ext, X509_REVOKED_get_ext_by_NID, X509_REVOKED_get_ext_by_OBJ, X509_REVOKED_get_ext_by_critical, X509_REVOKED_delete_ext, X509_REVOKED_add_ext - extension stack utility functions</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS</h1>
+
+<pre><code> #include &lt;openssl/x509.h&gt;
+
+ int X509v3_get_ext_count(const STACK_OF(X509_EXTENSION) *x);
+ X509_EXTENSION *X509v3_get_ext(const STACK_OF(X509_EXTENSION) *x, int loc);
+
+ int X509v3_get_ext_by_NID(const STACK_OF(X509_EXTENSION) *x,
+                           int nid, int lastpos);
+ int X509v3_get_ext_by_OBJ(const STACK_OF(X509_EXTENSION) *x,
+                           const ASN1_OBJECT *obj, int lastpos);
+ int X509v3_get_ext_by_critical(const STACK_OF(X509_EXTENSION) *x,
+                                int crit, int lastpos);
+ X509_EXTENSION *X509v3_delete_ext(STACK_OF(X509_EXTENSION) *x, int loc);
+ STACK_OF(X509_EXTENSION) *X509v3_add_ext(STACK_OF(X509_EXTENSION) **x,
+                                          X509_EXTENSION *ex, int loc);
+
+ int X509_get_ext_count(const X509 *x);
+ X509_EXTENSION *X509_get_ext(const X509 *x, int loc);
+ int X509_get_ext_by_NID(const X509 *x, int nid, int lastpos);
+ int X509_get_ext_by_OBJ(const X509 *x, const ASN1_OBJECT *obj, int lastpos);
+ int X509_get_ext_by_critical(const X509 *x, int crit, int lastpos);
+ X509_EXTENSION *X509_delete_ext(X509 *x, int loc);
+ int X509_add_ext(X509 *x, X509_EXTENSION *ex, int loc);
+
+ int X509_CRL_get_ext_count(const X509_CRL *x);
+ X509_EXTENSION *X509_CRL_get_ext(const X509_CRL *x, int loc);
+ int X509_CRL_get_ext_by_NID(const X509_CRL *x, int nid, int lastpos);
+ int X509_CRL_get_ext_by_OBJ(const X509_CRL *x, const ASN1_OBJECT *obj, int lastpos);
+ int X509_CRL_get_ext_by_critical(const X509_CRL *x, int crit, int lastpos);
+ X509_EXTENSION *X509_CRL_delete_ext(X509_CRL *x, int loc);
+ int X509_CRL_add_ext(X509_CRL *x, X509_EXTENSION *ex, int loc);
+
+ int X509_REVOKED_get_ext_count(const X509_REVOKED *x);
+ X509_EXTENSION *X509_REVOKED_get_ext(const X509_REVOKED *x, int loc);
+ int X509_REVOKED_get_ext_by_NID(const X509_REVOKED *x, int nid, int lastpos);
+ int X509_REVOKED_get_ext_by_OBJ(const X509_REVOKED *x, const ASN1_OBJECT *obj,
+                                int lastpos);
+ int X509_REVOKED_get_ext_by_critical(const X509_REVOKED *x, int crit, int lastpos);
+ X509_EXTENSION *X509_REVOKED_delete_ext(X509_REVOKED *x, int loc);
+ int X509_REVOKED_add_ext(X509_REVOKED *x, X509_EXTENSION *ex, int loc);</code></pre>
+
+<h1 id="DESCRIPTION">DESCRIPTION</h1>
+
+<p>X509v3_get_ext_count() retrieves the number of extensions in <b>x</b>.</p>
+
+<p>X509v3_get_ext() retrieves extension <b>loc</b> from <b>x</b>. The index <b>loc</b> can take any value from <b>0</b> to X509_get_ext_count(x) - 1. The returned extension is an internal pointer which <b>must not</b> be freed up by the application.</p>
+
+<p>X509v3_get_ext_by_NID() and X509v3_get_ext_by_OBJ() look for an extension with <b>nid</b> or <b>obj</b> from extension stack <b>x</b>. The search starts from the extension after <b>lastpos</b> or from the beginning if &lt;lastpos&gt; is <b>-1</b>. If the extension is found its index is returned otherwise <b>-1</b> is returned.</p>
+
+<p>X509v3_get_ext_by_critical() is similar to X509v3_get_ext_by_NID() except it looks for an extension of criticality <b>crit</b>. A zero value for <b>crit</b> looks for a non-critical extension a non-zero value looks for a critical extension.</p>
+
+<p>X509v3_delete_ext() deletes the extension with index <b>loc</b> from <b>x</b>. The deleted extension is returned and must be freed by the caller. If <b>loc</b> is in invalid index value <b>NULL</b> is returned.</p>
+
+<p>X509v3_add_ext() adds extension <b>ex</b> to stack <b>*x</b> at position <b>loc</b>. If <b>loc</b> is <b>-1</b> the new extension is added to the end. If <b>*x</b> is <b>NULL</b> a new stack will be allocated. The passed extension <b>ex</b> is duplicated internally so it must be freed after use.</p>
+
+<p>X509_get_ext_count(), X509_get_ext(), X509_get_ext_by_NID(), X509_get_ext_by_OBJ(), X509_get_ext_by_critical(), X509_delete_ext() and X509_add_ext() operate on the extensions of certificate <b>x</b> they are otherwise identical to the X509v3 functions.</p>
+
+<p>X509_CRL_get_ext_count(), X509_CRL_get_ext(), X509_CRL_get_ext_by_NID(), X509_CRL_get_ext_by_OBJ(), X509_CRL_get_ext_by_critical(), X509_CRL_delete_ext() and X509_CRL_add_ext() operate on the extensions of CRL <b>x</b> they are otherwise identical to the X509v3 functions.</p>
+
+<p>X509_REVOKED_get_ext_count(), X509_REVOKED_get_ext(), X509_REVOKED_get_ext_by_NID(), X509_REVOKED_get_ext_by_OBJ(), X509_REVOKED_get_ext_by_critical(), X509_REVOKED_delete_ext() and X509_REVOKED_add_ext() operate on the extensions of CRL entry <b>x</b> they are otherwise identical to the X509v3 functions.</p>
+
+<h1 id="NOTES">NOTES</h1>
+
+<p>These functions are used to examine stacks of extensions directly. Many applications will want to parse or encode and add an extension: they should use the extension encode and decode functions instead such as X509_add1_ext_i2d() and X509_get_ext_d2i().</p>
+
+<p>Extension indices start from zero, so a zero index return value is <b>not</b> an error. These search functions start from the extension <b>after</b> the <b>lastpos</b> parameter so it should initially be set to <b>-1</b>, if it is set to zero the initial extension will not be checked.</p>
+
+<h1 id="RETURN-VALUES">RETURN VALUES</h1>
+
+<p>X509v3_get_ext_count() returns the extension count.</p>
+
+<p>X509v3_get_ext() and X509v3_delete_ext() return an <b>X509_EXTENSION</b> pointer or <b>NULL</b> if an error occurs.</p>
+
+<p>X509v3_get_ext_by_NID() X509v3_get_ext_by_OBJ() and X509v3_get_ext_by_critical() return the an extension index or <b>-1</b> if an error occurs.</p>
+
+<p>X509v3_add_ext() returns a stack of extensions or <b>NULL</b> on error.</p>
+
+<h1 id="SEE-ALSO">SEE ALSO</h1>
+
+<p><a href="../man3/X509V3_get_d2i.html>X509V3_get_d2i(3)</a></p>
+
+<h1 id="COPYRIGHT">COPYRIGHT</h1>
+
+<p>Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.</p>
+
+<p>Licensed under the OpenSSL license (the &quot;License&quot;). You may not use this file except in compliance with the License. You can obtain a copy in the file LICENSE in the source distribution or at <a href="https://www.openssl.org/source/license.html">https://www.openssl.org/source/license.html</a>.</p>
+
+
+</body>
+
+</html>
+
+
