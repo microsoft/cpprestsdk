@@ -427,14 +427,25 @@ void http_msg_base::_complete(utility::size64_t body_size, const std::exception_
 {
     const auto& completionEvent = _get_data_available();
     auto closeTask = pplx::task_from_result();
+    if (m_default_outstream)
+    {
+        // if the outstream is one we created by default on the customer's behalf, try to close it
+        auto& out = outstream();
+        if (out.is_valid())
+        {
+            if (exceptionPtr == std::exception_ptr())
+            {
+                closeTask = out.close();
+            }
+            else
+            {
+                closeTask = out.close(exceptionPtr);
+            }
+        }
+    }
 
     if (exceptionPtr == std::exception_ptr())
     {
-        if (m_default_outstream)
-        {
-            closeTask = outstream().close();
-        }
-
         inline_continuation(closeTask, [completionEvent, body_size](pplx::task<void> t) {
             try
             {
@@ -459,11 +470,6 @@ void http_msg_base::_complete(utility::size64_t body_size, const std::exception_
     }
     else
     {
-        if (outstream().is_valid())
-        {
-            closeTask = outstream().close(exceptionPtr);
-        }
-
         inline_continuation(closeTask, [completionEvent, exceptionPtr](pplx::task<void> t) {
             // If closing stream throws an exception ignore since we already have an error.
             try
