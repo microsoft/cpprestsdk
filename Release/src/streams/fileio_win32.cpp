@@ -905,11 +905,26 @@ size_t __cdecl _seekrdtoend_fsb(_In_ streams::details::_file_info* info, int64_t
         fInfo->m_bufoff = fInfo->m_buffill = fInfo->m_bufsize = 0;
     }
 
+#ifdef _WIN64
+    LARGE_INTEGER filesize;
+    filesize.QuadPart = 0;
+
+    BOOL result = GetFileSizeEx(fInfo->m_handle, &filesize);
+    if (FALSE == result)
+    {
+        return static_cast<size_t>(-1);
+    }
+    else
+    {
+        fInfo->m_rdpos = static_cast<size_t>(filesize.QuadPart) / char_size;
+    }
+#else
     auto newpos = SetFilePointer(fInfo->m_handle, (LONG)(offset * char_size), nullptr, FILE_END);
 
     if (newpos == INVALID_SET_FILE_POINTER) return static_cast<size_t>(-1);
 
     fInfo->m_rdpos = static_cast<size_t>(newpos) / char_size;
+#endif
 
     return fInfo->m_rdpos;
 }

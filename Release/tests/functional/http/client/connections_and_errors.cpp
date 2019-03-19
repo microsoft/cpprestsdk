@@ -226,12 +226,7 @@ SUITE(connections_and_errors)
             http_response rsp = client.request(msg).get();
 
             // The response body should timeout and we should receive an exception
-#ifndef _WIN32
-            // CodePlex 295
-            VERIFY_THROWS(rsp.content_ready().wait(), http_exception);
-#else
             VERIFY_THROWS_HTTP_ERROR_CODE(rsp.content_ready().wait(), std::errc::timed_out);
-#endif
         }
 
         buf.close(std::ios_base::out).wait();
@@ -261,12 +256,7 @@ SUITE(connections_and_errors)
 
             // The response body should timeout and we should receive an exception
             auto readTask = rsp.body().read_to_end(streams::producer_consumer_buffer<uint8_t>());
-#ifndef _WIN32
-            // CodePlex 295
-            VERIFY_THROWS(readTask.get(), http_exception);
-#else
             VERIFY_THROWS_HTTP_ERROR_CODE(readTask.wait(), std::errc::timed_out);
-#endif
         }
 
         buf.close(std::ios_base::out).wait();
