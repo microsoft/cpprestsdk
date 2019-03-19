@@ -71,7 +71,7 @@ jobs:
     steps:
     - script: .\vcpkg\bootstrap-vcpkg.bat
       displayName: Bootstrap vcpkg
-    - script: .\vcpkg\vcpkg.exe install zlib --triplet x64-uwp
+    - script: .\vcpkg\vcpkg.exe install zlib --triplet x64-uwp --vcpkg-root .\vcpkg
       displayName: vcpkg install dependencies
     - script: mkdir build.common
       displayName: Make Build Directory
