@@ -140,8 +140,8 @@ if [ "${DO_OPENSSL}" == "1" ]; then (
     if [ ! -d "openssl" ]; then mkdir openssl; fi
     cd openssl
     cp -af "${DIR}/openssl/." .
-    make all ANDROID_NDK="${NDK_DIR}" ANDROID_TOOLCHAIN=clang ANDROID_ABI=armeabi-v7a OPENSSL_PREFIX=armeabi-v7a OPENSSL_VERSION=$OPENSSLVER
-    make all ANDROID_NDK="${NDK_DIR}" ANDROID_TOOLCHAIN=clang ANDROID_ABI=x86 OPENSSL_PREFIX=x86 OPENSSL_VERSION=$OPENSSLVER
+    make all ANDROID_NDK="${NDK_DIR}" ANDROID_TOOLCHAIN=clang ANDROID_ABI=armeabi-v7a OPENSSL_PREFIX=armeabi-v7a OPENSSL_VERSION=$OPENSSLVER -j $NCPU
+    make all ANDROID_NDK="${NDK_DIR}" ANDROID_TOOLCHAIN=clang ANDROID_ABI=x86 OPENSSL_PREFIX=x86 OPENSSL_VERSION=$OPENSSLVER -j $NCPU
 ) fi
 
 # -----
@@ -185,7 +185,7 @@ if [ "${DO_CPPRESTSDK}" == "1" ]; then
     # Use the builtin CMake toolchain configuration that comes with the NDK
     function build_cpprestsdk { (
 	rm -rf $1
-        ./cmake-${CMAKEVER}/bin/cmake -G Ninja \
+        ./cmake-${CMAKEVER}/bin/cmake \
             -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" \
             -DANDROID_NDK="${ANDROID_NDK}" \
             -DANDROID_TOOLCHAIN=clang \
@@ -194,7 +194,7 @@ if [ "${DO_CPPRESTSDK}" == "1" ]; then
             -DCMAKE_BUILD_TYPE=$3 \
 	    -S "${DIR}/.." \
 	    -B $1
-        ninja -C $1
+        make -j $NCPU -C $1
     ) }
 
     # Build the cpprestsdk for each target configuration
