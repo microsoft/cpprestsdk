@@ -22,10 +22,12 @@ set -e
 
 DO_BOOST=1
 DO_OPENSSL=1
+DO_CMAKE=1
 DO_CPPRESTSDK=1
 
 BOOSTVER=1.69.0
 OPENSSLVER=1.1.0j
+CMAKEVER=3.14.0
 
 API=15
 STL=c++_shared
@@ -51,6 +53,9 @@ do
     "--skip-openssl")
         DO_OPENSSL=0
         ;;
+    "--skip-cmake")
+	DO_CMAKE=0
+	;;
     "--skip-cpprestsdk")
         DO_CPPRESTSDK=0
         ;;
@@ -58,6 +63,11 @@ do
         shift
         DO_BOOST=1
         BOOSTVER=$1
+        ;;
+    "--cmake")
+        shift
+        DO_CMAKE=1
+        CMAKEVER=$1
         ;;
     "--openssl")
         shift
@@ -153,6 +163,20 @@ if [ "${DO_BOOST}" == "1" ]; then (
         "${NDK_DIR}" || exit 1
 ) fi
 
+# ------
+# CMake
+# ------
+# We update CMake because the version included with Ubuntu is too old to handle Boost 1.69.
+
+if [ "${DO_CMAKE}" == "1" ]; then (
+    if [ ! -d "cmake-${CMAKEVER}" ]; then wget https://github.com/Kitware/CMake/releases/download/v${CMAKEVER}/cmake-${CMAKEVER}-Linux-x86_64.sh; fi
+    chmod +x cmake-${CMAKEVER}-Linux-x86_64.sh
+    rm -rf cmake-${CMAKEVER}
+    mkdir cmake-${CMAKEVER}
+    cd cmake-${CMAKEVER}
+    ../cmake-${CMAKEVER}-Linux-x86_64.sh --skip-license
+) fi
+
 # ----------
 # casablanca
 # ----------
@@ -160,16 +184,17 @@ if [ "${DO_BOOST}" == "1" ]; then (
 if [ "${DO_CPPRESTSDK}" == "1" ]; then
     # Use the builtin CMake toolchain configuration that comes with the NDK
     function build_cpprestsdk { (
-        mkdir -p $1
-        cd $1
-        cmake "${DIR}/.." \
+	rm -rf $1
+        ./cmake-${CMAKEVER}/bin/cmake -G Ninja \
             -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" \
             -DANDROID_NDK="${ANDROID_NDK}" \
             -DANDROID_TOOLCHAIN=clang \
             -DANDROID_ABI=$2 \
             -DBOOST_VERSION="${BOOSTVER}" \
-            -DCMAKE_BUILD_TYPE=$3
-        make -j $NCPU
+            -DCMAKE_BUILD_TYPE=$3 \
+	    -S "${DIR}/.." \
+	    -B $1
+        ninja -C $1
     ) }
 
     # Build the cpprestsdk for each target configuration
