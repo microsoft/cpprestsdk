@@ -695,12 +695,12 @@ utility::string_t datetime::to_string(date_format format) const
     struct tm t;
 #ifdef _MSC_VER
     if (gmtime_s(&t, &time) != 0)
-    {
-        throw std::invalid_argument("gmtime_s failed on the time supplied");
-    }
 #else // ^^^ _MSC_VER ^^^ // vvv !_MSC_VER vvv
-    const struct tm* t = gmtime(&time);
-#endif _MSC_VER
+    if (gmtime_r(&time, &t) == 0)
+#endif // _MSC_VER
+    {
+        throw std::invalid_argument("gmtime_r/s failed on the time supplied");
+    }
 
     char outBuffer[38]; // Thu, 01 Jan 1970 00:00:00.1234567 GMT\0
     char* outCursor = outBuffer;
