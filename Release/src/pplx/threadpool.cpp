@@ -21,11 +21,9 @@ namespace
 {
 #if defined(__ANDROID__)
 // This pointer will be 0-initialized by default (at load time).
-std::atomic<JavaVM*> JVM;
-
 static void abort_if_no_jvm()
 {
-    if (JVM == nullptr)
+    if (crossplat::JVM == nullptr)
     {
         __android_log_print(ANDROID_LOG_ERROR,
                             "CPPRESTSDK",
@@ -34,19 +32,6 @@ static void abort_if_no_jvm()
                             "https://github.com/Microsoft/cpprestsdk/wiki/How-to-build-for-Android");
         std::abort();
     }
-}
-
-JNIEnv* get_jvm_env()
-{
-    abort_if_no_jvm();
-    JNIEnv* env = nullptr;
-    auto result = JVM.load()->AttachCurrentThread(&env, nullptr);
-    if (result != JNI_OK)
-    {
-        throw std::runtime_error("Could not attach to JVM");
-    }
-
-    return env;
 }
 #endif // __ANDROID__
 
@@ -80,14 +65,14 @@ private:
     }
 
 #if defined(__ANDROID__)
-    static void detach_from_java(void*) { JVM.load()->DetachCurrentThread(); }
+    static void detach_from_java(void*) { crossplat::JVM.load()->DetachCurrentThread(); }
 #endif // __ANDROID__
 
     static void* thread_start(void* arg) CPPREST_NOEXCEPT
     {
 #if defined(__ANDROID__)
         // Calling get_jvm_env() here forces the thread to be attached.
-        get_jvm_env();
+        crossplat::get_jvm_env();
         pthread_cleanup_push(detach_from_java, nullptr);
 #endif // __ANDROID__
         threadpool_impl* _this = reinterpret_cast<threadpool_impl*>(arg);
@@ -220,11 +205,28 @@ void threadpool::initialize_with_threads(size_t num_threads)
         throw std::runtime_error("the cpprestsdk threadpool has already been initialized");
     }
 }
+
+#if defined(__ANDROID__)
+std::atomic<JavaVM*> JVM;
+
+JNIEnv* get_jvm_env()
+{
+    abort_if_no_jvm();
+    JNIEnv* env = nullptr;
+    auto result = crossplat::JVM.load()->AttachCurrentThread(&env, nullptr);
+    if (result != JNI_OK)
+    {
+        throw std::runtime_error("Could not attach to JVM");
+    }
+
+    return env;
+}
+#endif // defined(__ANDROID__)
 } // namespace crossplat
 
 #if defined(__ANDROID__)
-void cpprest_init(JavaVM* vm) { JVM = vm; }
-#endif
+void cpprest_init(JavaVM* vm) { crossplat::JVM = vm; }
+#endif // defined(__ANDROID__)
 
 std::unique_ptr<crossplat::threadpool> crossplat::threadpool::construct(size_t num_threads)
 {
