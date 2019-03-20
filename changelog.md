@@ -1,3 +1,18 @@
+cpprestsdk (2.10.11)
+* PR##1073 Move get_jvm_env back into the crossplat namespace
+* PR##1049 Add the missing ssl::context callback in websocket_client_config
+* PR##1072 Gate stdext::checked_array_iterator usage on _ITERATOR_DEBUG_LEVEL
+* PR##1051 Fix http_client_asio "https" with a proxy
+* PR##1071 Add --vcpkg-root to repair UWP.
+* PR##1041 Update Boost_for_android for Android R19
+* PR##1064 Enable testing from root directory
+* PR##1057 Returns int64 value in function of seeking to file end on x64 Windows.
+* PR##1068 Don't close the output stream when reporting errors reading the body.
+* PR##1053 Update vcpkg.
+* PR##1032 Fix HTTP/1.0 'Keep-Alive' handling in http_client
+* PR##1040 Disable WINHTTP_AUTOPROXY_OPTIONS machinery when using WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY.
+-- cpprestsdk team <askcasablanca@microsoft.com>  WED, 20 Mar 2019 02:30:00 -0800
+
 cpprestsdk (2.10.10)
 ----------------------
 * PR#1023 Handle multi-byte unicode characters in json parsing
