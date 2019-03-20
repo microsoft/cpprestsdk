@@ -399,7 +399,7 @@ private:
         auto readBegin = std::begin(m_data) + m_current_position;
         auto readEnd = std::begin(m_data) + newPos;
 
-#ifdef _WIN32
+#if defined(_ITERATOR_DEBUG_LEVEL) && _ITERATOR_DEBUG_LEVEL != 0
         // Avoid warning C4996: Use checked iterators under SECURE_SCL
         std::copy(readBegin, readEnd, stdext::checked_array_iterator<_CharType*>(ptr, count));
 #else
