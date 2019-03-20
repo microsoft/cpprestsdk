@@ -677,7 +677,7 @@ static char* format_fractional_seconds(const int fractionalSeconds, char* const 
 #ifdef _MSC_VER
     size_t appended = sprintf_s(output, 9, ".%07d", fractionalSeconds);
 #else  // ^^^ _MSC_VER // !_MSC_VER vvv
-    size_t appended = sprintf(output, 9, ".%07d", fractionalSeconds);
+    size_t appended = sprintf(output,".%07d", fractionalSeconds);
 #endif // _MSC_VER
     while (output[appended - 1] == '0')
     {
