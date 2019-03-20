@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <cpprest/asyncrt_utils.h>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 
 #ifndef _WIN32
@@ -660,172 +661,107 @@ datetime __cdecl datetime::utc_now()
 #endif
 }
 
+static const char dayNames[] = "Sun\0Mon\0Tue\0Wed\0Thu\0Fri\0Sat";
+static const char monthNames[] = "Jan\0Feb\0Mar\0Apr\0May\0Jun\0Jul\0Aug\0Sep\0Oct\0Nov\0Dec";
+
+static char* format_fractional_seconds(const int fractionalSeconds, char* const output)
+{
+    // pre: output has 9 available chars
+    if (fractionalSeconds == 0)
+    {
+        return output;
+    }
+
+    // Append fractional second, which is a 7-digit value with no trailing zeros
+    // This way, '1200' becomes '00012'
+#ifdef _MSC_VER
+    size_t appended = sprintf_s(output, 9, ".%07d", fractionalSeconds);
+#else  // ^^^ _MSC_VER // !_MSC_VER vvv
+    size_t appended = sprintf(output, 9, ".%07d", fractionalSeconds);
+#endif // _MSC_VER
+    while (output[appended - 1] == '0')
+    {
+        --appended; // trim trailing zeros
+    }
+
+    return output + appended;
+}
+
 utility::string_t datetime::to_string(date_format format) const
 {
-#ifdef _WIN32
-    int status;
-
-    ULARGE_INTEGER largeInt;
-    largeInt.QuadPart = m_interval;
-
-    FILETIME ft;
-    ft.dwHighDateTime = largeInt.HighPart;
-    ft.dwLowDateTime = largeInt.LowPart;
-
-    SYSTEMTIME systemTime;
-    if (!FileTimeToSystemTime((const FILETIME*)&ft, &systemTime))
+    const uint64_t input = m_interval / _secondTicks; // convert to seconds
+    const int frac_sec = static_cast<int>(m_interval % _secondTicks);
+    const time_t time = static_cast<time_t>(input - 11644473600U); // diff between windows and unix epochs (seconds)
+    struct tm t;
+#ifdef _MSC_VER
+    if (gmtime_s(&t, &time) != 0)
     {
-        throw utility::details::create_system_error(GetLastError());
+        throw std::invalid_argument("gmtime_s failed on the time supplied");
     }
+#else // ^^^ _MSC_VER ^^^ // vvv !_MSC_VER vvv
+    const struct tm* t = gmtime(&time);
+#endif _MSC_VER
 
-    std::wstring result;
-    if (format == RFC_1123)
+    char outBuffer[38]; // Thu, 01 Jan 1970 00:00:00.1234567 GMT\0
+    char* outCursor = outBuffer;
+    switch (format)
     {
-        {
-            wchar_t dateStr[18] = {0};
-#if _WIN32_WINNT < _WIN32_WINNT_VISTA
-            status = GetDateFormatW(
-                LOCALE_INVARIANT, 0, &systemTime, L"ddd',' dd MMM yyyy", dateStr, sizeof(dateStr) / sizeof(wchar_t));
-#else
-            status = GetDateFormatEx(LOCALE_NAME_INVARIANT,
-                                     0,
-                                     &systemTime,
-                                     L"ddd',' dd MMM yyyy",
-                                     dateStr,
-                                     sizeof(dateStr) / sizeof(wchar_t),
-                                     NULL);
-#endif // _WIN32_WINNT < _WIN32_WINNT_VISTA
-            if (status == 0)
-            {
-                throw utility::details::create_system_error(GetLastError());
-            }
-
-            result += dateStr;
-            result += L' ';
-        }
-
-        {
-            wchar_t timeStr[10] = {0};
-#if _WIN32_WINNT < _WIN32_WINNT_VISTA
-            status = GetTimeFormatW(LOCALE_INVARIANT,
-                                    TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT,
-                                    &systemTime,
-                                    L"HH':'mm':'ss",
-                                    timeStr,
-                                    sizeof(timeStr) / sizeof(wchar_t));
-#else
-            status = GetTimeFormatEx(LOCALE_NAME_INVARIANT,
-                                     TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT,
-                                     &systemTime,
-                                     L"HH':'mm':'ss",
-                                     timeStr,
-                                     sizeof(timeStr) / sizeof(wchar_t));
-#endif // _WIN32_WINNT < _WIN32_WINNT_VISTA
-            if (status == 0)
-            {
-                throw utility::details::create_system_error(GetLastError());
-            }
-
-            result += timeStr;
-            result += L" GMT";
-        }
+        case RFC_1123:
+#ifdef _MSC_VER
+            sprintf_s(outCursor,
+                      26,
+                      "%s, %02d %s %04d %02d:%02d:%02d",
+                      dayNames + 4 * t.tm_wday,
+                      t.tm_mday,
+                      monthNames + 4 * t.tm_mon,
+                      t.tm_year + 1900,
+                      t.tm_hour,
+                      t.tm_min,
+                      t.tm_sec);
+#else  // ^^^ _MSC_VER // !_MSC_VER vvv
+            sprintf(outCursor,
+                    "%s, %02d %s %04d %02d:%02d:%02d",
+                    dayNames + 4 * t.tm_wday,
+                    t.tm_mday,
+                    monthNames + 4 * t.tm_mon,
+                    t.tm_year + 1900,
+                    t.tm_hour,
+                    t.tm_min,
+                    t.tm_sec);
+#endif // _MSC_VER
+            outCursor += 25;
+            outCursor = format_fractional_seconds(frac_sec, outCursor);
+            memcpy(outCursor, " GMT", 4);
+            outCursor += 4;
+            return utility::string_t(outBuffer, outCursor);
+        case ISO_8601:
+#ifdef _MSC_VER
+            sprintf_s(outCursor,
+                      20,
+                      "%04d-%02d-%02dT%02d:%02d:%02d",
+                      t.tm_year + 1900,
+                      t.tm_mon + 1,
+                      t.tm_mday,
+                      t.tm_hour,
+                      t.tm_min,
+                      t.tm_sec);
+#else  // ^^^ _MSC_VER // !_MSC_VER vvv
+            sprintf(outCursor,
+                    "%04d-%02d-%02dT%02d:%02d:%02d",
+                    t.tm_year + 1900,
+                    t.tm_mon + 1,
+                    t.tm_mday,
+                    t.tm_hour,
+                    t.tm_min,
+                    t.tm_sec);
+#endif // _MSC_VER
+            outCursor += 19;
+            outCursor = format_fractional_seconds(frac_sec, outCursor);
+            *outCursor = 'Z';
+            ++outCursor;
+            return utility::string_t(outBuffer, outCursor);
+        default: throw std::invalid_argument("Unrecognized date format.");
     }
-    else if (format == ISO_8601)
-    {
-        const size_t buffSize = 64;
-        {
-            wchar_t dateStr[buffSize] = {0};
-#if _WIN32_WINNT < _WIN32_WINNT_VISTA
-            status = GetDateFormatW(LOCALE_INVARIANT, 0, &systemTime, L"yyyy-MM-dd", dateStr, buffSize);
-#else
-            status = GetDateFormatEx(LOCALE_NAME_INVARIANT, 0, &systemTime, L"yyyy-MM-dd", dateStr, buffSize, NULL);
-#endif // _WIN32_WINNT < _WIN32_WINNT_VISTA
-            if (status == 0)
-            {
-                throw utility::details::create_system_error(GetLastError());
-            }
-
-            result += dateStr;
-            result += L'T';
-        }
-
-        {
-            wchar_t timeStr[buffSize] = {0};
-#if _WIN32_WINNT < _WIN32_WINNT_VISTA
-            status = GetTimeFormatW(LOCALE_INVARIANT,
-                                    TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT,
-                                    &systemTime,
-                                    L"HH':'mm':'ss",
-                                    timeStr,
-                                    buffSize);
-#else
-            status = GetTimeFormatEx(LOCALE_NAME_INVARIANT,
-                                     TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT,
-                                     &systemTime,
-                                     L"HH':'mm':'ss",
-                                     timeStr,
-                                     buffSize);
-#endif // _WIN32_WINNT < _WIN32_WINNT_VISTA
-            if (status == 0)
-            {
-                throw utility::details::create_system_error(GetLastError());
-            }
-
-            result += timeStr;
-        }
-
-        uint64_t frac_sec = largeInt.QuadPart % _secondTicks;
-        if (frac_sec > 0)
-        {
-            // Append fractional second, which is a 7-digit value with no trailing zeros
-            // This way, '1200' becomes '00012'
-            wchar_t buf[9] = {0};
-            size_t appended = swprintf_s(buf, 9, L".%07ld", static_cast<long>(frac_sec));
-            while (buf[appended - 1] == L'0')
-                --appended; // trim trailing zeros
-            result.append(buf, appended);
-        }
-
-        result += L'Z';
-    }
-
-    return result;
-#else // LINUX
-    uint64_t input = m_interval;
-    uint64_t frac_sec = input % _secondTicks;
-    input /= _secondTicks;                               // convert to seconds
-    time_t time = (time_t)input - (time_t)11644473600LL; // diff between windows and unix epochs (seconds)
-
-    struct tm datetime;
-    gmtime_r(&time, &datetime);
-
-    const int max_dt_length = 64;
-    char output[max_dt_length + 1] = {0};
-
-    if (format != RFC_1123 && frac_sec > 0)
-    {
-        // Append fractional second, which is a 7-digit value with no trailing zeros
-        // This way, '1200' becomes '00012'
-        const int max_frac_length = 8;
-        char buf[max_frac_length + 1] = {0};
-        snprintf(buf, sizeof(buf), ".%07ld", (long int)frac_sec);
-        // trim trailing zeros
-        for (int i = max_frac_length - 1; buf[i] == '0'; i--)
-            buf[i] = '\0';
-        // format the datetime into a separate buffer
-        char datetime_str[max_dt_length - max_frac_length - 1 + 1] = {0};
-        strftime(datetime_str, sizeof(datetime_str), "%Y-%m-%dT%H:%M:%S", &datetime);
-        // now print this buffer into the output buffer
-        snprintf(output, sizeof(output), "%s%sZ", datetime_str, buf);
-    }
-    else
-    {
-        strftime(
-            output, sizeof(output), format == RFC_1123 ? "%a, %d %b %Y %H:%M:%S GMT" : "%Y-%m-%dT%H:%M:%SZ", &datetime);
-    }
-
-    return std::string(output);
-#endif
 }
 
 #ifdef _WIN32
@@ -893,6 +829,179 @@ void extract_fractional_second(const utility::string_t& dateString,
         }
     }
 }
+
+template<class CharT>
+static bool string_starts_with(const CharT* haystack, const CharT* needle)
+{
+    while (*needle)
+    {
+        if (*haystack != *needle)
+        {
+            return false;
+        }
+
+        ++haystack;
+        ++needle;
+    }
+
+    return true;
+}
+
+#define ascii_isdigit(c) ((unsigned char)((unsigned char)(c) - '0') <= 9)
+#define ascii_isdigit6(c) ((unsigned char)((unsigned char)(c) - '0') <= 6)
+#define ascii_isdigit5(c) ((unsigned char)((unsigned char)(c) - '0') <= 5)
+#define ascii_isdigit3(c) ((unsigned char)((unsigned char)(c) - '0') <= 3)
+#define ascii_isdigit2(c) ((unsigned char)((unsigned char)(c) - '0') <= 2)
+#define ascii_isdigit1(c) ((unsigned char)((unsigned char)(c) - '0') <= 1)
+
+static const unsigned char max_days_in_month[12] = {
+    31, // Jan
+    00, // Feb, special handling for leap years
+    31, // Mar
+    30, // Apr
+    31, // May
+    30, // Jun
+    31, // Jul
+    31, // Aug
+    30, // Sep
+    31, // Oct
+    30, // Nov
+    31  // Dec
+};
+
+static bool validate_day_month(int day, int month, int year)
+{
+    int maxDaysThisMonth;
+    if (month == 1)
+    { // Feb needs leap year testing
+        maxDaysThisMonth = 28 + (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0));
+    }
+    else
+    {
+        maxDaysThisMonth = max_days_in_month[month];
+    }
+
+    return day >= 1 && day <= maxDaysThisMonth;
+}
+
+template<class CharT>
+static int atoi2(const CharT* str) { return (static_cast<unsigned char>(str[0]) - '0') * 10
+    + (static_cast<unsigned char>(str[1]) - '0'); }
+
+static const time_t maxTimeT = sizeof(time_t) == 4 ? (time_t)INT_MAX : (time_t)LLONG_MAX;
+
+static time_t timezone_adjust(time_t result, unsigned char chSign, int adjustHours, int adjustMinutes)
+{
+    if (adjustHours > 23)
+    {
+        return (time_t)-1;
+    }
+
+    // adjustMinutes > 59 is impossible due to digit 5 check
+    const int tzAdjust = adjustMinutes * 60 + adjustHours * 60 * 60;
+    if (chSign == '-')
+    {
+        if (maxTimeT - result < tzAdjust)
+        {
+            return (time_t)-1;
+        }
+
+        result += tzAdjust;
+    }
+    else
+    {
+        if (tzAdjust > result)
+        {
+            return (time_t)-1;
+        }
+
+        result -= tzAdjust;
+    }
+
+    return result;
+}
+
+static time_t make_gm_time(struct tm* t) {
+#ifdef _MSC_VER
+    return _mkgmtime(t);
+#elif (defined(ANDROID) || defined(__ANDROID__))
+    // HACK: The (nonportable?) POSIX function timegm is not available in
+    //       bionic. As a workaround[1][2], we set the C library timezone to
+    //       UTC, call mktime, then set the timezone back. However, the C
+    //       environment is fundamentally a shared global resource and thread-
+    //       unsafe. We can protect our usage here, however any other code might
+    //       manipulate the environment at the same time.
+    //
+    // [1] http://linux.die.net/man/3/timegm
+    // [2] http://www.gnu.org/software/libc/manual/html_node/Broken_002ddown-Time.html
+    time_t time;
+    static boost::mutex env_var_lock;
+    {
+        boost::lock_guard<boost::mutex> lock(env_var_lock);
+        std::string prev_env;
+        auto prev_env_cstr = getenv("TZ");
+        if (prev_env_cstr != nullptr)
+        {
+            prev_env = prev_env_cstr;
+        }
+        setenv("TZ", "UTC", 1);
+
+        time = mktime(&output);
+
+        if (prev_env_cstr)
+        {
+            setenv("TZ", prev_env.c_str(), 1);
+        }
+        else
+        {
+            unsetenv("TZ");
+        }
+    }
+    return time;
+#else // ^^^ ANDROID // Other POSIX platforms vvv
+    return timegm(t);
+#endif // _MSC_VER
+}
+
+/*
+https://tools.ietf.org/html/rfc822
+https://tools.ietf.org/html/rfc1123
+
+date-time   =  [ day "," ] date time        ; dd mm yy
+                                            ;  hh:mm:ss zzz
+
+day         =  "Mon"  / "Tue" /  "Wed"  / "Thu"
+            /  "Fri"  / "Sat" /  "Sun"
+
+date        =  1*2DIGIT month 2DIGIT        ; day month year
+                                            ;  e.g. 20 Jun 82
+RFC1123 changes this to:
+date        =  1*2DIGIT month 2*4DIGIT        ; day month year
+                                              ;  e.g. 20 Jun 1982
+This implementation only accepts 4 digit years.
+
+month       =  "Jan"  /  "Feb" /  "Mar"  /  "Apr"
+            /  "May"  /  "Jun" /  "Jul"  /  "Aug"
+            /  "Sep"  /  "Oct" /  "Nov"  /  "Dec"
+
+time        =  hour zone                    ; ANSI and Military
+
+hour        =  2DIGIT ":" 2DIGIT [":" 2DIGIT]
+                                            ; 00:00:00 - 23:59:59
+
+zone        =  "UT"  / "GMT"                ; Universal Time
+                                            ; North American : UT
+            /  "EST" / "EDT"                ;  Eastern:  - 5/ - 4
+            /  "CST" / "CDT"                ;  Central:  - 6/ - 5
+            /  "MST" / "MDT"                ;  Mountain: - 7/ - 6
+            /  "PST" / "PDT"                ;  Pacific:  - 8/ - 7
+
+// military time deleted by RFC 1123
+
+            / ( ("+" / "-") 4DIGIT )        ; Local differential
+                                            ;  hours+min. (HHMM)
+*/
+
 
 datetime __cdecl datetime::from_string(const utility::string_t& dateString, date_format format)
 {
@@ -1054,43 +1163,7 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
         }
     }
 
-#if (defined(ANDROID) || defined(__ANDROID__))
-    // HACK: The (nonportable?) POSIX function timegm is not available in
-    //       bionic. As a workaround[1][2], we set the C library timezone to
-    //       UTC, call mktime, then set the timezone back. However, the C
-    //       environment is fundamentally a shared global resource and thread-
-    //       unsafe. We can protect our usage here, however any other code might
-    //       manipulate the environment at the same time.
-    //
-    // [1] http://linux.die.net/man/3/timegm
-    // [2] http://www.gnu.org/software/libc/manual/html_node/Broken_002ddown-Time.html
-    time_t time;
-
-    static boost::mutex env_var_lock;
-    {
-        boost::lock_guard<boost::mutex> lock(env_var_lock);
-        std::string prev_env;
-        auto prev_env_cstr = getenv("TZ");
-        if (prev_env_cstr != nullptr)
-        {
-            prev_env = prev_env_cstr;
-        }
-        setenv("TZ", "UTC", 1);
-
-        time = mktime(&output);
-
-        if (prev_env_cstr)
-        {
-            setenv("TZ", prev_env.c_str(), 1);
-        }
-        else
-        {
-            unsetenv("TZ");
-        }
-    }
-#else
-    time_t time = timegm(&output);
-#endif
+    time_t time = make_gm_time(&output);
 
     struct timeval tv = timeval();
     tv.tv_sec = time;
