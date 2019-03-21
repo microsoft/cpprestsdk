@@ -17,6 +17,7 @@
 #include <cpprest/asyncrt_utils.h>
 #include <stdexcept>
 #include <string>
+#include <time.h>
 
 using namespace web;
 using namespace utility;
