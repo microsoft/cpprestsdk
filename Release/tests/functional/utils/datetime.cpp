@@ -300,10 +300,6 @@ SUITE(datetime)
         for (const auto& str : bad_strings)
         {
             auto dt = utility::datetime::from_string(str, utility::datetime::RFC_1123);
-            if (dt.to_interval() != 0)
-            {
-                _putws(str.c_str());
-            }
             VERIFY_ARE_EQUAL(0, dt.to_interval());
         }
     }

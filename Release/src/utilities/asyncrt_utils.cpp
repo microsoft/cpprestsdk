@@ -932,7 +932,7 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
     datetime result;
     time_t seconds;
     uint64_t frac_sec = 0;
-    struct tm t = {0};
+    struct tm t{};
     auto str = dateString.c_str();
     if (format == RFC_1123)
     {
