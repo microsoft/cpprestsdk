@@ -15,7 +15,6 @@
 
 #include <algorithm>
 #include <cpprest/asyncrt_utils.h>
-#include <sstream>
 #include <stdexcept>
 #include <string>
 
@@ -1372,38 +1371,32 @@ utility::seconds __cdecl timespan::xml_duration_to_seconds(const utility::string
     // The final S could be omitted
 
     int64_t numSecs = 0;
-
-    utility::istringstream_t is(timespanString);
-    is.imbue(std::locale::classic());
-    auto eof = std::char_traits<utility::char_t>::eof();
-
-    std::basic_istream<utility::char_t>::int_type c;
-    c = is.get(); // P
-
-    while (c != eof)
+    auto cursor = timespanString.c_str();
+    auto c = *cursor++; // skip 'P'
+    while (c)
     {
         int val = 0;
-        c = is.get();
+        c = *cursor++;
 
-        while (is_digit((utility::char_t)c))
+        while (ascii_isdigit(c))
         {
-            val = val * 10 + (c - L'0');
-            c = is.get();
+            val = val * 10 + (c - _XPLATSTR('0'));
+            c = *cursor++;
 
-            if (c == '.')
+            if (c == _XPLATSTR('.'))
             {
                 // decimal point is not handled
                 do
                 {
-                    c = is.get();
-                } while (is_digit((utility::char_t)c));
+                    c = *cursor++;
+                } while (ascii_isdigit(c));
             }
         }
 
-        if (c == L'D') numSecs += val * 24 * 3600; // days
-        if (c == L'H') numSecs += val * 3600;      // Hours
-        if (c == L'M') numSecs += val * 60;        // Minutes
-        if (c == L'S' || c == eof)
+        if (c == _XPLATSTR('D')) numSecs += val * 24 * 3600; // days
+        if (c == _XPLATSTR('H')) numSecs += val * 3600;      // Hours
+        if (c == _XPLATSTR('M')) numSecs += val * 60;        // Minutes
+        if (c == _XPLATSTR('S') || c == _XPLATSTR('\0'))
         {
             numSecs += val; // seconds
             break;
