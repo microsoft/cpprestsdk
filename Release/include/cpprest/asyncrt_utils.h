@@ -630,15 +630,6 @@ private:
     static const interval_type _hourTicks = 60 * 60 * _secondTicks;
     static const interval_type _dayTicks = 24 * 60 * 60 * _secondTicks;
 
-#ifdef _WIN32
-    // void* to avoid pulling in windows.h
-    static _ASYNCRTIMP bool __cdecl system_type_to_datetime(/*SYSTEMTIME*/ void* psysTime,
-                                                            uint64_t seconds,
-                                                            datetime* pdt);
-#else
-    static datetime timeval_to_datetime(const timeval& time);
-#endif
-
     // Private constructor. Use static methods to create an instance.
     datetime(interval_type interval) : m_interval(interval) {}
 
@@ -699,7 +690,6 @@ public:
     void set_length(int length) { m_length = length; }
 
 private:
-    static const utility::string_t c_allowed_chars;
     std::mt19937 m_random;
     int m_length;
 };
