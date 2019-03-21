@@ -629,8 +629,6 @@ std::string __cdecl conversions::to_utf8string(const utf16string& value) { retur
 
 utf16string __cdecl conversions::to_utf16string(const std::string& value) { return utf8_to_utf16(value); }
 
-static bool is_digit(utility::char_t c) { return c >= _XPLATSTR('0') && c <= _XPLATSTR('9'); }
-
 static const uint64_t ntToUnixOffsetSeconds = 11644473600U; // diff between windows and unix epochs (seconds)
 
 datetime __cdecl datetime::utc_now()
