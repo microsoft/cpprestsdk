@@ -856,7 +856,7 @@ static time_t make_gm_time(struct tm* t)
         }
         setenv("TZ", "UTC", 1);
 
-        time = mktime(&output);
+        time = mktime(t);
 
         if (prev_env_cstr)
         {
