@@ -18,18 +18,6 @@
 #include <stdexcept>
 #include <string>
 
-#ifndef _WIN32
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-local-typedef"
-#endif
-#include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/date_time/posix_time/posix_time_io.hpp>
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif
-#endif
-
 using namespace web;
 using namespace utility;
 using namespace utility::conversions;
