@@ -396,6 +396,7 @@ public:
 
         m_state = CONNECTING;
         client.connect(con);
+        std::unique_lock<std::mutex> lock(m_wspp_client_lock);
         m_thread = std::thread([&client]() {
 #if defined(__ANDROID__)
             crossplat::get_jvm_env();
@@ -413,6 +414,7 @@ public:
             ERR_remove_thread_state(nullptr);
 #endif
         });
+        lock.unlock();
         return pplx::create_task(m_connect_tce);
     }
 
@@ -644,9 +646,12 @@ private:
 
         // Can't join thread directly since it is the current thread.
         pplx::create_task([this, connecting, ec, closeCode, reason] {
-            if (m_thread.joinable())
             {
-                m_thread.join();
+                std::lock_guard<std::mutex> lock(m_wspp_client_lock);
+                if (m_thread.joinable())
+                {
+                    m_thread.join();
+                }
             }
 
             // Delete client to make sure Websocketpp cleans up all Boost.Asio portions.
