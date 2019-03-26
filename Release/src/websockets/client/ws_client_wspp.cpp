@@ -400,23 +400,26 @@ public:
 
         m_state = CONNECTING;
         client.connect(con);
-        m_thread = std::thread([&client]() {
+        {
+            std::lock_guard<std::mutex> lock(m_wspp_client_lock);
+            m_thread = std::thread([&client]() {
 #if defined(__ANDROID__)
-            crossplat::get_jvm_env();
+                crossplat::get_jvm_env();
 #endif
-            client.run();
+                client.run();
 #if defined(__ANDROID__)
-            crossplat::JVM.load()->DetachCurrentThread();
+                crossplat::JVM.load()->DetachCurrentThread();
 #endif
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
-            // OpenSSL stores some per thread state that never will be cleaned up until
-            // the dll is unloaded. If static linking, like we do, the state isn't cleaned up
-            // at all and will be reported as leaks.
-            // See http://www.openssl.org/support/faq.html#PROG13
-            ERR_remove_thread_state(nullptr);
+                // OpenSSL stores some per thread state that never will be cleaned up until
+                // the dll is unloaded. If static linking, like we do, the state isn't cleaned up
+                // at all and will be reported as leaks.
+                // See http://www.openssl.org/support/faq.html#PROG13
+                ERR_remove_thread_state(nullptr);
 #endif
-        });
+            });
+        } // unlock
         return pplx::create_task(m_connect_tce);
     }
 
@@ -648,10 +651,13 @@ private:
 
         // Can't join thread directly since it is the current thread.
         pplx::create_task([this, connecting, ec, closeCode, reason] {
-            if (m_thread.joinable())
             {
-                m_thread.join();
-            }
+                std::lock_guard<std::mutex> lock(m_wspp_client_lock);
+                if (m_thread.joinable())
+                {
+                    m_thread.join();
+                }
+            } // unlock
 
             // Delete client to make sure Websocketpp cleans up all Boost.Asio portions.
             m_client.reset();
