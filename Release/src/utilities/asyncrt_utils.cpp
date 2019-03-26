@@ -1393,15 +1393,16 @@ utility::seconds __cdecl timespan::xml_duration_to_seconds(const utility::string
     return utility::seconds(numSecs);
 }
 
-static const utility::char_t c_allowed_chars[] =
-    _XPLATSTR("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789");
+static const char c_allowed_chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+static const int chars_count = static_cast<int>(sizeof(c_allowed_chars) - 1);
 
 utility::string_t nonce_generator::generate()
 {
-    std::uniform_int_distribution<> distr(0, static_cast<int>(sizeof(c_allowed_chars) / sizeof(utility::char_t)) - 1);
+    std::uniform_int_distribution<> distr(0, chars_count - 1);
     utility::string_t result;
     result.reserve(length());
-    std::generate_n(std::back_inserter(result), length(), [&]() { return c_allowed_chars[distr(m_random)]; });
+    std::generate_n(std::back_inserter(result), length(),
+		[&] { return static_cast<utility::char_t>(c_allowed_chars[distr(m_random)]); });
     return result;
 }
 
