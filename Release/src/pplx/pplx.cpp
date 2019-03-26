@@ -50,14 +50,14 @@ static struct _pplx_g_sched_t
 {
     typedef std::shared_ptr<pplx::scheduler_interface> sched_ptr;
 
-    _pplx_g_sched_t() { m_state.store(post_ctor, memory_order_relaxed); }
+    _pplx_g_sched_t() { m_state.store(post_ctor, std::memory_order_relaxed); }
 
-    ~_pplx_g_sched_t() { m_state.store(post_dtor, memory_order_relaxed); }
+    ~_pplx_g_sched_t() { m_state.store(post_dtor, std::memory_order_relaxed); }
 
     sched_ptr get_scheduler()
     {
         sched_ptr result;
-        switch (m_state.load(memory_order_relaxed))
+        switch (m_state.load(std::memory_order_relaxed))
         {
             case post_ctor:
                 // This is the 99.9% case.
@@ -84,7 +84,7 @@ static struct _pplx_g_sched_t
 
     void set_scheduler(sched_ptr scheduler)
     {
-        const auto localState = m_state.load(memory_order_relaxed);
+        const auto localState = m_state.load(std::memory_order_relaxed);
         if (localState == pre_ctor || localState == post_dtor)
         {
             throw invalid_operation("Scheduler cannot be initialized now");
@@ -108,7 +108,7 @@ static struct _pplx_g_sched_t
     };
 
 private:
-    atomic<m_state_values> m_state;
+    std::atomic<m_state_values> m_state;
     pplx::details::_Spin_lock m_spinlock;
     sched_ptr m_scheduler;
 } _pplx_g_sched;
