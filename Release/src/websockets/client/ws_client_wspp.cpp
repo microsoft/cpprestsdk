@@ -62,6 +62,10 @@
 #pragma warning(disable : 4503)
 #endif
 
+// Workaround data-race on websocketpp's _htonll function, see
+// https://github.com/Microsoft/cpprestsdk/pull/1082
+auto avoidDataRaceOnHtonll = websocketpp::lib::net::_htonll(0);
+
 // This is a hack to avoid memory leak reports from the debug MSVC CRT for all
 // programs using the library: ASIO calls SSL_library_init() which calls
 // SSL_COMP_get_compression_methods(), which allocates some heap memory and the
