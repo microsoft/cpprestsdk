@@ -15,6 +15,7 @@
 
 #if !defined(_WIN32) || CPPREST_FORCE_PPLX
 
+#include <atomic>
 #include "pplx/pplx.h"
 
 // Disable false alarm code analyze warning
@@ -63,61 +64,37 @@ static struct _pplx_g_sched_t
 {
     typedef std::shared_ptr<pplx::scheduler_interface> sched_ptr;
 
-    _pplx_g_sched_t() { m_state = post_ctor; }
-
-    ~_pplx_g_sched_t() { m_state = post_dtor; }
-
     sched_ptr get_scheduler()
     {
-        switch (m_state)
+        sched_ptr sptr = m_scheduler.load(std::memory_order_consume);
+        if (!sptr)
         {
-            case post_ctor:
-                // This is the 99.9% case.
-
-                if (!m_scheduler)
-                {
-                    ::pplx::details::_Scoped_spin_lock lock(m_spinlock);
-                    if (!m_scheduler)
-                    {
-                        m_scheduler = std::make_shared<::pplx::default_scheduler_t>();
-                    }
-                }
-
-                return m_scheduler;
-            default:
-                // This case means the global m_scheduler is not available.
-                // We spin off an individual scheduler instead.
-                return std::make_shared<::pplx::default_scheduler_t>();
+            ::pplx::details::_Scoped_spin_lock lock(m_spinlock);
+            sptr = m_scheduler.load(std::memory_order_relaxed);
+            if (!sptr)
+            {
+                sptr = std::make_shared<::pplx::default_scheduler_t>();
+                m_scheduler.store(sptr, std::memory_order_release);
+            }
         }
+
+        return sptr;
     }
 
     void set_scheduler(sched_ptr scheduler)
     {
-        if (m_state == pre_ctor || m_state == post_dtor)
-        {
-            throw invalid_operation("Scheduler cannot be initialized now");
-        }
-
-        ::pplx::details::_Scoped_spin_lock lock(m_spinlock);
-
-        if (m_scheduler != nullptr)
+        if (m_scheduler.load(std::memory_order_consume) != nullptr)
         {
             throw invalid_operation("Scheduler is already initialized");
         }
 
-        m_scheduler = std::move(scheduler);
+        ::pplx::details::_Scoped_spin_lock lock(m_spinlock);
+        m_scheduler.store(std::move(scheduler), std::memory_order_relaxed);
     }
-
-    enum
-    {
-        pre_ctor = 0,
-        post_ctor = 1,
-        post_dtor = 2
-    } m_state;
 
 private:
     pplx::details::_Spin_lock m_spinlock;
-    sched_ptr m_scheduler;
+    std::atomic<sched_ptr> m_scheduler;
 } _pplx_g_sched;
 
 _PPLXIMP std::shared_ptr<pplx::scheduler_interface> _pplx_cdecl get_ambient_scheduler()
