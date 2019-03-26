@@ -65,36 +65,36 @@ static struct _pplx_g_sched_t
     typedef std::shared_ptr<pplx::scheduler_interface> sched_ptr;
 
     sched_ptr get_scheduler()
-    {
-        sched_ptr sptr = m_scheduler.load(std::memory_order_consume);
+    {        
+        sched_ptr sptr = std::atomic_load_explicit(&m_scheduler, std::memory_order_consume);
         if (!sptr)
         {
             ::pplx::details::_Scoped_spin_lock lock(m_spinlock);
-            sptr = m_scheduler.load(std::memory_order_relaxed);
+            sptr = std::atomic_load_explicit(&m_scheduler, std::memory_order_relaxed);
             if (!sptr)
             {
                 sptr = std::make_shared<::pplx::default_scheduler_t>();
-                m_scheduler.store(sptr, std::memory_order_release);
+                std::atomic_store_explicit(&m_scheduler, sptr, std::memory_order_release);
             }
         }
 
-        return sptr;
+        return m_scheduler;
     }
 
     void set_scheduler(sched_ptr scheduler)
     {
-        if (m_scheduler.load(std::memory_order_consume) != nullptr)
+        if (std::atomic_load_explicit(&m_scheduler, std::memory_order_consume) != nullptr)
         {
             throw invalid_operation("Scheduler is already initialized");
         }
 
         ::pplx::details::_Scoped_spin_lock lock(m_spinlock);
-        m_scheduler.store(std::move(scheduler), std::memory_order_relaxed);
+        std::atomic_store_explicit(&m_scheduler, scheduler, std::memory_order_release);
     }
 
 private:
     pplx::details::_Spin_lock m_spinlock;
-    std::atomic<sched_ptr> m_scheduler;
+    sched_ptr m_scheduler;
 } _pplx_g_sched;
 
 _PPLXIMP std::shared_ptr<pplx::scheduler_interface> _pplx_cdecl get_ambient_scheduler()
