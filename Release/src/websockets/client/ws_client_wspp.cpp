@@ -653,9 +653,6 @@ private:
                 m_thread.join();
             }
 
-            // Delete client to make sure Websocketpp cleans up all Boost.Asio portions.
-            m_client.reset();
-
             if (connecting)
             {
                 websocket_exception exc(ec, build_error_msg(ec, "set_fail_handler"));
