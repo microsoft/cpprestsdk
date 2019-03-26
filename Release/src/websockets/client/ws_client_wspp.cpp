@@ -62,7 +62,8 @@
 #pragma warning(disable : 4503)
 #endif
 
-// workaround data-race on websocketpp's _htonll function
+// Workaround data-race on websocketpp's _htonll function, see
+// https://github.com/Microsoft/cpprestsdk/pull/1082
 auto avoidDataRaceOnHtonll = websocketpp::lib::net::_htonll(0);
 
 // This is a hack to avoid memory leak reports from the debug MSVC CRT for all
