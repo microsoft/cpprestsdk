@@ -1,3 +1,11 @@
+cpprestsdk (2.10.12)
+* PR#1088 Fix data race, GitHub #1085
+* PR#1084 Fix oauth nonces containing nulls.
+* PR#1082 Workaround data-race on websocketpp's _htonll function
+* PR#1080 Fix thread not joined
+* PR#1076 Rewrite date formatting and parsing
+-- cpprestsdk team <askcasablanca@microsoft.com>  TUE, 26 Mar 2019 11:57:00 -0800
+
 cpprestsdk (2.10.11)
 * PR##1073 Move get_jvm_env back into the crossplat namespace
 * PR##1049 Add the missing ssl::context callback in websocket_client_config
