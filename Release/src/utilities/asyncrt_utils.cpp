@@ -618,7 +618,7 @@ std::string __cdecl conversions::to_utf8string(const utf16string& value) { retur
 
 utf16string __cdecl conversions::to_utf16string(const std::string& value) { return utf8_to_utf16(value); }
 
-static const uint64_t ntToUnixOffsetSeconds = 11644473600U; // diff between windows and unix epochs (seconds)
+static const int64_t ntToUnixOffsetSeconds = 11644473600; // diff between windows and unix epochs (seconds)
 
 datetime __cdecl datetime::utc_now()
 {
@@ -634,10 +634,10 @@ datetime __cdecl datetime::utc_now()
 #else // LINUX
     struct timeval time;
     gettimeofday(&time, nullptr);
-    uint64_t result = ntToUnixOffsetSeconds + time.tv_sec;
+    int64_t result = ntToUnixOffsetSeconds + time.tv_sec;
     result *= _secondTicks;      // convert to 10e-7
     result += time.tv_usec * 10; // convert and add microseconds, 10e-6 to 10e-7
-    return datetime(result);
+    return datetime(static_cast<interval_type>(result));
 #endif
 }
 
@@ -646,7 +646,7 @@ static const char monthNames[] = "Jan\0Feb\0Mar\0Apr\0May\0Jun\0Jul\0Aug\0Sep\0O
 
 utility::string_t datetime::to_string(date_format format) const
 {
-    const uint64_t input = m_interval / _secondTicks; // convert to seconds
+    const int64_t input = static_cast<int64_t>(m_interval / _secondTicks); // convert to seconds
     const int frac_sec = static_cast<int>(m_interval % _secondTicks);
     const time_t time = static_cast<time_t>(input - ntToUnixOffsetSeconds);
     struct tm t;
@@ -797,22 +797,20 @@ static int atoi2(const CharT* str)
     return (static_cast<unsigned char>(str[0]) - '0') * 10 + (static_cast<unsigned char>(str[1]) - '0');
 }
 
-static const time_t maxTimeT = sizeof(time_t) == 4 ? (time_t)INT_MAX : (time_t)LLONG_MAX;
-
-static time_t timezone_adjust(time_t result, unsigned char chSign, int adjustHours, int adjustMinutes)
+static int64_t timezone_adjust(int64_t result, unsigned char chSign, int adjustHours, int adjustMinutes)
 {
     if (adjustHours > 23)
     {
-        return (time_t)-1;
+        return -1;
     }
 
     // adjustMinutes > 59 is impossible due to digit 5 check
     const int tzAdjust = adjustMinutes * 60 + adjustHours * 60 * 60;
     if (chSign == '-')
     {
-        if (maxTimeT - result < tzAdjust)
+        if (INT64_MAX - result < tzAdjust)
         {
-            return (time_t)-1;
+            return -1;
         }
 
         result += tzAdjust;
@@ -821,7 +819,7 @@ static time_t timezone_adjust(time_t result, unsigned char chSign, int adjustHou
     {
         if (tzAdjust > result)
         {
-            return (time_t)-1;
+            return -1;
         }
 
         result -= tzAdjust;
@@ -830,10 +828,10 @@ static time_t timezone_adjust(time_t result, unsigned char chSign, int adjustHou
     return result;
 }
 
-static time_t make_gm_time(struct tm* t)
+static int64_t make_gm_time(struct tm* t)
 {
 #ifdef _MSC_VER
-    return _mkgmtime(t);
+    return static_cast<int64_t>(_mkgmtime(t));
 #elif (defined(ANDROID) || defined(__ANDROID__))
     // HACK: The (nonportable?) POSIX function timegm is not available in
     //       bionic. As a workaround[1][2], we set the C library timezone to
@@ -867,9 +865,9 @@ static time_t make_gm_time(struct tm* t)
             unsetenv("TZ");
         }
     }
-    return time;
+    return static_cast<int64_t>(time);
 #else  // ^^^ ANDROID // Other POSIX platforms vvv
-    return timegm(t);
+    return static_cast<int64_t>(timegm(t));
 #endif // _MSC_VER
 }
 
@@ -916,7 +914,7 @@ zone        =  "UT"  / "GMT"                ; Universal Time
 datetime __cdecl datetime::from_string(const utility::string_t& dateString, date_format format)
 {
     datetime result;
-    time_t seconds;
+    int64_t seconds;
     uint64_t frac_sec = 0;
     struct tm t{};
     auto str = dateString.c_str();
