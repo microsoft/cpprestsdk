@@ -27,7 +27,7 @@ namespace details
 class _Spin_lock
 {
 public:
-    _Spin_lock() : _M_lock(0) {}
+    _Spin_lock() : _M_lock() {}
 
     void lock()
     {
