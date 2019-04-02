@@ -1010,7 +1010,7 @@ private:
         else if (ec.value() == boost::system::errc::operation_canceled ||
                  ec.value() == boost::asio::error::operation_aborted)
         {
-            request_context::report_error(ec.value(), "Request canceled by user.");
+            report_error("Request canceled by user.", ec, httpclient_errorcode_context::connect);
         }
         else if (endpoints == tcp::resolver::iterator())
         {
