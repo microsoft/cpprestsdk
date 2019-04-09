@@ -156,7 +156,7 @@ SUITE(connections_and_errors)
             test_http_server::scoped_server scoped(m_uri);
             t = scoped.server()->next_request();
             http_client_config config;
-            config.set_timeout(std::chrono::microseconds(500));
+            config.set_timeout(std::chrono::microseconds(900));
 
             http_client client(m_uri, config);
             auto responseTask = client.request(methods::GET);
