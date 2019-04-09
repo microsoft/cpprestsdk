@@ -649,6 +649,10 @@ utility::string_t datetime::to_string(date_format format) const
     const int64_t input = static_cast<int64_t>(m_interval / _secondTicks); // convert to seconds
     const int frac_sec = static_cast<int>(m_interval % _secondTicks);
     const time_t time = static_cast<time_t>(input - ntToUnixOffsetSeconds);
+    if (static_cast<uint64_t>(time) > 253370764800ull) {
+        throw std::out_of_range("The requested year exceeds the year 9999.");
+    }
+
     struct tm t;
 #ifdef _MSC_VER
     if (gmtime_s(&t, &time) != 0)
