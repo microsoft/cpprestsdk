@@ -25,12 +25,19 @@
 #pragma clang diagnostic ignored "-Wunused-local-typedef"
 #pragma clang diagnostic ignored "-Winfinite-recursion"
 #endif
+
 #include <boost/algorithm/string.hpp>
+#include <boost/asio/steady_timer.hpp>
+#include <boost/bind.hpp>
+
+#if defined(CPPREST_BOTAN_SSL)
+#include <botan/asio_stream.h>
+#else
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
 #include <boost/asio/ssl/error.hpp>
-#include <boost/asio/steady_timer.hpp>
-#include <boost/bind.hpp>
+#endif
+
 #if defined(__clang__)
 #pragma clang diagnostic pop
 #endif
@@ -87,8 +94,7 @@ namespace
 {
 const std::string CRLF("\r\n");
 
-std::string calc_cn_host(const web::http::uri& baseUri,
-                         const web::http::http_headers& requestHeaders)
+std::string calc_cn_host(const web::http::uri& baseUri, const web::http::http_headers& requestHeaders)
 {
     std::string result;
     if (baseUri.scheme() == U("https"))
@@ -142,9 +148,20 @@ static std::string generate_base64_userpass(const ::web::credentials& creds)
 
 class asio_connection_pool;
 
+#if defined(CPPREST_BOTAN_SSL)
+using ssl_stream_t = Botan::TLS::Stream<tcp::socket&>;
+using ssl_handshake_type_t = Botan::TLS::Connection_Side;
+const ssl_handshake_type_t ssl_handshake_client_side = ssl_handshake_type_t::CLIENT;
+#else
+using ssl_stream_t = boost::asio::ssl::stream<tcp::socket&>;
+using ssl_handshake_type_t = boost::asio::ssl::stream_base::handshake_type;
+const ssl_handshake_type_t ssl_handshake_client_side = ssl_handshake_type_t::client;
+#endif
+
 class asio_connection
 {
     friend class asio_client;
+    using ssl_context_t = http_client::ssl_context;
 
 public:
     asio_connection(boost::asio::io_service& io_service)
@@ -161,11 +178,16 @@ public:
     ~asio_connection() { close(); }
 
     // This simply instantiates the internal state to support ssl. It does not perform the handshake.
-    void upgrade_to_ssl(std::string&& cn_hostname,
-                        const std::function<void(boost::asio::ssl::context&)>& ssl_context_callback)
+    void upgrade_to_ssl(std::string&& cn_hostname, const std::function<void(ssl_context_t&)>& ssl_context_callback)
     {
         std::lock_guard<std::mutex> lock(m_socket_lock);
         assert(!is_ssl());
+        m_cn_hostname = std::move(cn_hostname);
+#if defined(CPPREST_BOTAN_SSL)
+        Botan::TLS::Context ssl_context;
+        ssl_context_callback(ssl_context);
+        ssl_context.serverInfo = Botan::TLS::Server_Information(m_cn_hostname);
+#else
         boost::asio::ssl::context ssl_context(boost::asio::ssl::context::sslv23);
         ssl_context.set_default_verify_paths();
         ssl_context.set_options(boost::asio::ssl::context::default_workarounds);
@@ -173,9 +195,8 @@ public:
         {
             ssl_context_callback(ssl_context);
         }
-        m_ssl_stream = utility::details::make_unique<boost::asio::ssl::stream<boost::asio::ip::tcp::socket&>>(
-            m_socket, ssl_context);
-        m_cn_hostname = std::move(cn_hostname);
+#endif
+        m_ssl_stream = utility::details::make_unique<ssl_stream_t>(m_socket, ssl_context);
     }
 
     void close()
@@ -232,6 +253,7 @@ public:
             // server due to inactivity. Unfortunately, the exact error we get
             // in this case depends on the Boost.Asio version used.
 #if BOOST_ASIO_VERSION >= 101008
+            // TODO
             if (boost::asio::ssl::error::stream_truncated == ec) return true;
 #else // Asio < 1.10.8 didn't have ssl::error::stream_truncated
             if (boost::system::error_code(ERR_PACK(ERR_LIB_SSL, 0, SSL_R_SHORT_READ),
@@ -258,14 +280,27 @@ public:
         handler(boost::asio::error::operation_aborted);
     }
 
+
+#if defined(CPPREST_BOTAN_SSL)
+    template<typename HandshakeHandler>
+    void async_handshake(ssl_handshake_type_t type,
+                         const http_client_config&,
+                         const HandshakeHandler& handshake_handler)
+    {
+        std::lock_guard<std::mutex> lock(m_socket_lock);
+        assert(is_ssl());
+        m_ssl_stream->async_handshake(type, handshake_handler);
+    }
+#else
     template<typename HandshakeHandler, typename CertificateHandler>
-    void async_handshake(boost::asio::ssl::stream_base::handshake_type type,
+    void async_handshake(ssl_handshake_type_t type,
                          const http_client_config& config,
                          const HandshakeHandler& handshake_handler,
                          const CertificateHandler& cert_handler)
     {
         std::lock_guard<std::mutex> lock(m_socket_lock);
         assert(is_ssl());
+        // This is configured via the Botan::TLS::Context callback in the Botan case
 
         // Check to turn on/off server certificate verification.
         if (config.validate_certificates())
@@ -283,9 +318,9 @@ public:
         {
             SSL_set_tlsext_host_name(m_ssl_stream->native_handle(), &m_cn_hostname[0]);
         }
-
         m_ssl_stream->async_handshake(type, handshake_handler);
     }
+#endif
 
     template<typename ConstBufferSequence, typename Handler>
     void async_write(ConstBufferSequence& buffer, const Handler& writeHandler)
@@ -337,7 +372,7 @@ private:
     // as normal message processing.
     std::mutex m_socket_lock;
     tcp::socket m_socket;
-    std::unique_ptr<boost::asio::ssl::stream<tcp::socket&>> m_ssl_stream;
+    std::unique_ptr<ssl_stream_t> m_ssl_stream;
     std::string m_cn_hostname;
 
     bool m_is_reused;
@@ -1062,21 +1097,23 @@ private:
         {
             const auto weakCtx = std::weak_ptr<asio_context>(shared_from_this());
             m_connection->async_handshake(
-                boost::asio::ssl::stream_base::client,
+                ssl_handshake_client_side,
                 m_http_client->client_config(),
-                boost::bind(&asio_context::handle_handshake, shared_from_this(), boost::asio::placeholders::error),
-
+                boost::bind(&asio_context::handle_handshake, shared_from_this(), boost::asio::placeholders::error)
+#if !defined(CPPREST_BOTAN_SSL)
                 // Use a weak_ptr since the verify_callback is stored until the connection is
                 // destroyed. This avoids creating a circular reference since we pool connection
                 // objects.
-                [weakCtx](bool preverified, boost::asio::ssl::verify_context& verify_context) {
+                , [weakCtx](bool preverified, boost::asio::ssl::verify_context& verify_context) {
                     auto this_request = weakCtx.lock();
                     if (this_request)
                     {
                         return this_request->handle_cert_verification(preverified, verify_context);
                     }
                     return false;
-                });
+                }
+#endif
+            );
         }
         else
         {
@@ -1096,7 +1133,7 @@ private:
         }
         else
         {
-            report_error("Error in SSL handshake", ec, httpclient_errorcode_context::handshake);
+            report_error("Error in SSL handshake: " + ec.message(), ec, httpclient_errorcode_context::handshake);
         }
     }
 

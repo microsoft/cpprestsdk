@@ -425,7 +425,7 @@ SUITE(listener_construction_tests)
         }
     }
 
-#if !defined(_WIN32) && !defined(__cplusplus_winrt) || defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)
+#if (!defined(_WIN32) && !defined(__cplusplus_winrt) || defined(CPPREST_FORCE_HTTP_LISTENER_ASIO)) && !defined(CPPREST_BOTAN_SSL)
 
     TEST_FIXTURE(uri_address, create_https_listener_get, "Ignore", "github 209")
     {

@@ -61,6 +61,11 @@ typedef void* native_handle;
 #include "cpprest/oauth2.h"
 
 #if !defined(_WIN32) && !defined(__cplusplus_winrt) || defined(CPPREST_FORCE_HTTP_CLIENT_ASIO)
+
+#if defined(CPPREST_BOTAN_SSL)
+#include <botan/asio_context.h>
+#else  // CPPREST_BOTAN_SSL
+
 #if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wconversion"
@@ -69,6 +74,9 @@ typedef void* native_handle;
 #if defined(__clang__)
 #pragma clang diagnostic pop
 #endif
+
+#endif  // CPPREST_BOTAN_SSL
+
 #endif
 
 /// The web namespace contains functionality common to multiple protocols like HTTP and WebSockets.
@@ -85,6 +93,12 @@ namespace client
 // Please use the web::credentials and web::web_proxy class going forward.
 using web::credentials;
 using web::web_proxy;
+
+#if defined(CPPREST_BOTAN_SSL)
+using ssl_context_t = Botan::TLS::Context;
+#else
+using ssl_context_t = boost::asio::ssl::context;
+#endif
 
 /// <summary>
 /// HTTP client configuration class, used to set the possible configuration options
@@ -334,7 +348,7 @@ public:
     /// </summary>
     /// <param name="callback">A user callback allowing for customization of the ssl context at construction
     /// time.</param>
-    void set_ssl_context_callback(const std::function<void(boost::asio::ssl::context&)>& callback)
+    void set_ssl_context_callback(const std::function<void(ssl_context_t&)>& callback)
     {
         m_ssl_context_callback = callback;
     }
@@ -342,7 +356,7 @@ public:
     /// <summary>
     /// Gets the user's callback to allow for customization of the ssl context.
     /// </summary>
-    const std::function<void(boost::asio::ssl::context&)>& get_ssl_context_callback() const
+    const std::function<void(ssl_context_t&)>& get_ssl_context_callback() const
     {
         return m_ssl_context_callback;
     }
@@ -386,7 +400,7 @@ private:
     std::function<void(native_handle)> m_set_user_nativesessionhandle_options;
 
 #if !defined(_WIN32) && !defined(__cplusplus_winrt) || defined(CPPREST_FORCE_HTTP_CLIENT_ASIO)
-    std::function<void(boost::asio::ssl::context&)> m_ssl_context_callback;
+    std::function<void(ssl_context_t&)> m_ssl_context_callback;
     bool m_tlsext_sni_enabled;
 #endif
 #if defined(_WIN32) && !defined(__cplusplus_winrt)
@@ -402,6 +416,8 @@ class http_pipeline;
 class http_client
 {
 public:
+    using ssl_context = ssl_context_t;
+
     /// <summary>
     /// Creates a new http_client connected to specified uri.
     /// </summary>

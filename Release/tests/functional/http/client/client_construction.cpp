@@ -181,7 +181,7 @@ SUITE(client_construction)
         http_client_config config;
         bool called = false;
 
-        config.set_ssl_context_callback([&called](boost::asio::ssl::context& ctx) { called = true; });
+        config.set_ssl_context_callback([&called](http_client::ssl_context& ctx) { called = true; });
 
         http_client client("https://www.google.com/", config);
 
@@ -202,7 +202,7 @@ SUITE(client_construction)
         http_client_config config;
         bool called = false;
 
-        config.set_ssl_context_callback([&called](boost::asio::ssl::context& ctx) { called = true; });
+        config.set_ssl_context_callback([&called](http_client::ssl_context& ctx) { called = true; });
 
         http_client client("http://www.google.com/", config);
 
