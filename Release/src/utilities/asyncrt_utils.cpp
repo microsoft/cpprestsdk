@@ -620,6 +620,79 @@ utf16string __cdecl conversions::to_utf16string(const std::string& value) { retu
 
 static const int64_t ntToUnixOffsetSeconds = 11644473600; // diff between windows and unix epochs (seconds)
 
+static bool year_is_leap_year(int year) { return (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)); }
+
+static const int64_t SecondsInMinute = 60;
+static const int64_t SecondsInHour = SecondsInMinute * 60;
+static const int64_t SecondsInDay = SecondsInHour * 24;
+
+static const int64_t DaysInYear = 365;
+static const int64_t DaysIn4Years = DaysInYear * 4 + 1;
+static const int64_t DaysIn100Years = DaysIn4Years * 25 - 1;
+static const int64_t DaysIn400Years = DaysIn100Years * 4 + 1;
+
+static const int64_t SecondsInYear = SecondsInDay * DaysInYear;
+static const int64_t SecondsIn4Years = SecondsInDay * DaysIn4Years;
+static const int64_t SecondsIn100Years = SecondsInDay * DaysIn100Years;
+static const int64_t SecondsIn400Years = SecondsInDay * DaysIn400Years;
+static const int64_t SecondsFrom1900To2001 = 3187296000;
+
+static const int64_t Jan11900InNT = INT64_C(0x014F373BFDE04000);
+
+static int count_leap_years(int yearsSince1900)
+{
+    int result = 0;
+    if (yearsSince1900 > 101) {
+        result += 25;
+        yearsSince1900 -= 101;
+    }
+
+    int year400 = yearsSince1900 / 400;
+    yearsSince1900 -= year400 * 400;
+    result += year400 * 97;
+
+    int year100 = yearsSince1900 / 100;
+    yearsSince1900 -= year100 * 100;
+    result += year100 * 24;
+
+    int year4 = yearsSince1900 / 4;
+    yearsSince1900 -= year4 * 4;
+    result += year4;
+
+    return result;
+}
+
+// The following table assumes no leap year; leap year is added separately
+static const unsigned short cumulative_days_to_month[12] = {
+    0,   // Jan
+    31,  // Feb
+    59,  // Mar
+    90,  // Apr
+    120, // May
+    151, // Jun
+    181, // Jul
+    212, // Aug
+    243, // Sep
+    273, // Oct
+    304, // Nov
+    334  // Dec
+};
+
+static const unsigned short cumulative_days_to_month_leap[12] = {
+    0,   // Jan
+    31,  // Feb
+    60,  // Mar
+    91,  // Apr
+    121, // May
+    152, // Jun
+    182, // Jul
+    213, // Aug
+    244, // Sep
+    274, // Oct
+    305, // Nov
+    335  // Dec
+};
+
 datetime __cdecl datetime::utc_now()
 {
 #ifdef _WIN32
@@ -644,25 +717,67 @@ datetime __cdecl datetime::utc_now()
 static const char dayNames[] = "Sun\0Mon\0Tue\0Wed\0Thu\0Fri\0Sat";
 static const char monthNames[] = "Jan\0Feb\0Mar\0Apr\0May\0Jun\0Jul\0Aug\0Sep\0Oct\0Nov\0Dec";
 
+struct compute_year_result
+{
+    int year;
+    int secondsLeftThisYear;
+};
+
+static compute_year_result compute_year(int64_t secondsSince1900)
+{
+    int year = 0;
+    int64_t secondsLeft = secondsSince1900;
+    if (secondsSince1900 >= SecondsFrom1900To2001) {
+        // After year 2001, shift there and start normal 400 year cycle
+        year += 101;
+        secondsLeft -= SecondsFrom1900To2001;
+    }
+
+    int year400 = static_cast<int>(secondsLeft / SecondsIn400Years);
+    secondsLeft -= year400 * SecondsIn400Years;
+
+    int year100 = static_cast<int>(secondsLeft / SecondsIn100Years);
+    secondsLeft -= year100 * SecondsIn100Years;
+
+    int year4 = static_cast<int>(secondsLeft / SecondsIn4Years);
+    int secondsInt = static_cast<int>(secondsLeft - year4 * SecondsIn4Years);
+
+    int year1 = secondsInt / SecondsInYear;
+    secondsInt -= year1 * SecondsInYear;
+
+    year += year400 * 400 + year100 * 100 + year4 * 4 + year1;
+    return {year, secondsInt};
+}
+
 utility::string_t datetime::to_string(date_format format) const
 {
-    const int64_t input = static_cast<int64_t>(m_interval / _secondTicks); // convert to seconds
-    const int frac_sec = static_cast<int>(m_interval % _secondTicks);
-    const time_t time = static_cast<time_t>(input - ntToUnixOffsetSeconds);
-    if (static_cast<uint64_t>(time) > 253370764800ull)
+    if (m_interval > INT64_C(2650467743990000000))
     {
         throw std::out_of_range("The requested year exceeds the year 9999.");
     }
 
-    struct tm t;
-#ifdef _MSC_VER
-    if (gmtime_s(&t, &time) != 0)
-#else  // ^^^ _MSC_VER ^^^ // vvv !_MSC_VER vvv
-    if (gmtime_r(&time, &t) == 0)
-#endif // _MSC_VER
+    const int64_t epochAdjusted = static_cast<int64_t>(m_interval) - Jan11900InNT;
+    const int64_t secondsSince1900 = static_cast<int64_t>(epochAdjusted / _secondTicks); // convert to seconds
+    const int frac_sec = static_cast<int>(epochAdjusted % _secondTicks);
+
+    const auto yearData = compute_year(secondsSince1900);
+    const int year = yearData.year;
+    const int yearDay = yearData.secondsLeftThisYear / SecondsInDay;
+    int leftover = yearData.secondsLeftThisYear % SecondsInDay;
+    const int hour = leftover / SecondsInHour;
+    leftover = leftover % SecondsInHour;
+    const int minute = leftover / SecondsInMinute;
+    leftover = leftover % SecondsInMinute;
+
+    const auto& monthTable = year_is_leap_year(year) ? cumulative_days_to_month_leap : cumulative_days_to_month;
+    int month = 0;
+    while (month < 11 && monthTable[month + 1] <= yearDay)
     {
-        throw std::invalid_argument("gmtime_r/s failed on the time supplied");
+        ++month;
     }
+
+    const int monthDay = yearDay - monthTable[month] + 1;
+    const int weekday = (secondsSince1900 / SecondsInDay + 3) % 7;
 
     char outBuffer[38]; // Thu, 01 Jan 1970 00:00:00 GMT\0
                         // 1970-01-01T00:00:00.1234567Z\0
@@ -674,23 +789,23 @@ utility::string_t datetime::to_string(date_format format) const
             sprintf_s(outCursor,
                       26,
                       "%s, %02d %s %04d %02d:%02d:%02d",
-                      dayNames + 4 * t.tm_wday,
-                      t.tm_mday,
-                      monthNames + 4 * t.tm_mon,
-                      t.tm_year + 1900,
-                      t.tm_hour,
-                      t.tm_min,
-                      t.tm_sec);
+                      dayNames + 4 * weekday,
+                      monthDay,
+                      monthNames + 4 * month,
+                      year + 1900,
+                      hour,
+                      minute,
+                      leftover);
 #else  // ^^^ _MSC_VER // !_MSC_VER vvv
             sprintf(outCursor,
                     "%s, %02d %s %04d %02d:%02d:%02d",
-                    dayNames + 4 * t.tm_wday,
-                    t.tm_mday,
-                    monthNames + 4 * t.tm_mon,
-                    t.tm_year + 1900,
-                    t.tm_hour,
-                    t.tm_min,
-                    t.tm_sec);
+                    dayNames + 4 * weekday,
+                    monthDay,
+                    monthNames + 4 * month,
+                    year + 1900,
+                    hour,
+                    minute,
+                    leftover);
 #endif // _MSC_VER
             outCursor += 25;
             memcpy(outCursor, " GMT", 4);
@@ -701,21 +816,15 @@ utility::string_t datetime::to_string(date_format format) const
             sprintf_s(outCursor,
                       20,
                       "%04d-%02d-%02dT%02d:%02d:%02d",
-                      t.tm_year + 1900,
-                      t.tm_mon + 1,
-                      t.tm_mday,
-                      t.tm_hour,
-                      t.tm_min,
-                      t.tm_sec);
+                      year + 1900,
+                      month + 1,
+                      monthDay,
+                      hour,
+                      minute,
+                      leftover);
 #else  // ^^^ _MSC_VER // !_MSC_VER vvv
-            sprintf(outCursor,
-                    "%04d-%02d-%02dT%02d:%02d:%02d",
-                    t.tm_year + 1900,
-                    t.tm_mon + 1,
-                    t.tm_mday,
-                    t.tm_hour,
-                    t.tm_min,
-                    t.tm_sec);
+            sprintf(
+                outCursor, "%04d-%02d-%02dT%02d:%02d:%02d", year + 1900, month + 1, monthDay, hour, minute, leftover);
 #endif // _MSC_VER
             outCursor += 19;
             if (frac_sec != 0)
@@ -781,24 +890,6 @@ static const unsigned char max_days_in_month[12] = {
     31  // Dec
 };
 
-// The following table assumes no leap year; leap year is added separately
-static const unsigned short cumulative_days_to_month[12] = {
-    0,   // Jan
-    31,  // Feb
-    59,  // Mar
-    90,  // Apr
-    120, // May
-    151, // Jun
-    181, // Jul
-    212, // Aug
-    243, // Sep
-    273, // Oct
-    304, // Nov
-    334  // Dec
-};
-
-static bool year_is_leap_year(int year) { return (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)); }
-
 static bool validate_day_month(int day, int month, int year)
 {
     int maxDaysThisMonth;
@@ -814,11 +905,6 @@ static bool validate_day_month(int day, int month, int year)
     return day >= 1 && day <= maxDaysThisMonth;
 }
 
-static int64_t count_leap_years(int64_t years_since_1900)
-{
-    return ((years_since_1900 - 1) / 4) - ((years_since_1900 - 1) / 100) + ((years_since_1900 + 299) / 400);
-}
-
 static int get_year_day(int month, int monthDay, int year)
 {
     return cumulative_days_to_month[month] + monthDay + (year_is_leap_year(year) && month > 1) - 1;
@@ -829,14 +915,6 @@ static int atoi2(const CharT* str)
 {
     return (static_cast<unsigned char>(str[0]) - '0') * 10 + (static_cast<unsigned char>(str[1]) - '0');
 }
-
-static const int64_t SecondsInMinute = 60;
-static const int64_t SecondsInHour = SecondsInMinute * 60;
-static const int64_t SecondsInDay = SecondsInHour * 24;
-
-static const int64_t DaysInYear = 365;
-
-static const int64_t Jan11900InNT = INT64_C(0x014F373BFDE04000);
 
 static int64_t timezone_adjust(int64_t result, unsigned char chSign, int adjustHours, int adjustMinutes)
 {

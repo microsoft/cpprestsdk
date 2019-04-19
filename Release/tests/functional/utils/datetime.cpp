@@ -121,6 +121,16 @@ SUITE(datetime)
         TestDateTimeRoundtrip(_XPLATSTR("2013-11-19T14:30:59.5Z"));
     }
 
+    TEST(parsing_time_roundtrip_year_1900)
+    {
+        TestDateTimeRoundtrip(_XPLATSTR("1900-01-01T00:00:00Z"));
+    }
+
+    TEST(parsing_time_roundtrip_year_9999)
+    {
+        TestDateTimeRoundtrip(_XPLATSTR("9999-12-31T23:59:59Z"));
+    }
+
     void TestRfc1123IsTimeT(const utility::char_t* str, time_t t)
     {
         datetime dt = datetime::from_string(str, utility::datetime::RFC_1123);
