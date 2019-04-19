@@ -445,14 +445,12 @@ SUITE(request_handler_tests)
             headers[U("Request")] = U("Upload");
             headers[U("ImgNr")] = U("1");
 
-            utility::char_t* pdata = new utility::char_t[nbytes];
+            char* pdata = new char[nbytes];
 
             // this help recognizing the leaked memory in the CRT/VLD dump
+            std::string data;
             for (int j = 0; j < nbytes; j++)
-                pdata[j] = U('a') + (j % 26);
-            std::string data(pdata, pdata + nbytes);
-            delete[] pdata;
-
+                data.push_back('a' + (j % 26));
             VERIFY_ARE_EQUAL(0, p_client->request(methods::PUT, U("/path1"), headers, data));
             p_client->next_response()
                 .then([](test_response* p_response) {

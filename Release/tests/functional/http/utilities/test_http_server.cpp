@@ -404,6 +404,7 @@ public:
         HTTP_RESPONSE response;
         ZeroMemory(&response, sizeof(HTTP_RESPONSE));
         response.StatusCode = status_code;
+#pragma warning(suppress: 4244) // intentionally narrow wchar_t -> char
         std::string reason(reason_phrase.begin(), reason_phrase.end());
         response.pReason = reason.c_str();
         response.ReasonLength = (USHORT)reason.length();
