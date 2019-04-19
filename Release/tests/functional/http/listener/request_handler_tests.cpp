@@ -445,8 +445,6 @@ SUITE(request_handler_tests)
             headers[U("Request")] = U("Upload");
             headers[U("ImgNr")] = U("1");
 
-            char* pdata = new char[nbytes];
-
             // this help recognizing the leaked memory in the CRT/VLD dump
             std::string data;
             for (int j = 0; j < nbytes; j++)
