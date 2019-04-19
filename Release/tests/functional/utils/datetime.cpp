@@ -268,8 +268,7 @@ SUITE(datetime)
             _XPLATSTR("Thu, 01 Jan 1970 00:00:00 G"),
             _XPLATSTR("Thu, 01 Jan 1970 00:00:00 GM"),
             _XPLATSTR("Fri, 01 Jan 1970 00:00:00 GMT"), // wrong day
-            _XPLATSTR("01 Jan 4970 00:00:00 GMT"),      // year too big
-            _XPLATSTR("01 Jan 3001 00:00:00 GMT"),
+            _XPLATSTR("01 Jan 1899 00:00:00 GMT"), // year too small
             _XPLATSTR("01 Xxx 1971 00:00:00 GMT"), // month bad
             _XPLATSTR("00 Jan 1971 00:00:00 GMT"), // day too small
             _XPLATSTR("32 Jan 1971 00:00:00 GMT"), // day too big
@@ -290,13 +289,14 @@ SUITE(datetime)
             _XPLATSTR("01 Jan 1971 00:60:00 GMT"), // minute too big
             _XPLATSTR("01 Jan 1971 00:00:70 GMT"), // second too big
             _XPLATSTR("01 Jan 1971 00:00:61 GMT"),
-            _XPLATSTR("01 Jan 1969 00:00:00 GMT"),   // underflow
-            _XPLATSTR("01 Jan 1969 00:00:00 CEST"),  // bad tz
+            _XPLATSTR("01 Jan 1899 00:00:00 GMT"), // underflow
+            _XPLATSTR("01 Jan 1969 00:00:00 CEST"), // bad tz
             _XPLATSTR("01 Jan 1970 00:00:00 +2400"), // bad tzoffsets
             _XPLATSTR("01 Jan 1970 00:00:00 -3000"),
             _XPLATSTR("01 Jan 1970 00:00:00 +2160"),
             _XPLATSTR("01 Jan 1970 00:00:00 -2400"),
             _XPLATSTR("01 Jan 1970 00:00:00 -2160"),
+            _XPLATSTR("00 Jan 1971 00:00:00 GMT"), // zero month day
         };
 
         for (const auto& str : bad_strings)
@@ -435,8 +435,7 @@ SUITE(datetime)
             _XPLATSTR("1970-01-01T00:00:"),
             _XPLATSTR("1970-01-01T00:00:0"),
             // _XPLATSTR("1970-01-01T00:00:00"), // accepted as invalid timezone above
-            _XPLATSTR("4970-01-01T00:00:00Z"), // year too big
-            _XPLATSTR("3001-01-01T00:00:00Z"),
+            _XPLATSTR("1899-01-01T00:00:00Z"), // year too small
             _XPLATSTR("1971-00-01T00:00:00Z"), // month too small
             _XPLATSTR("1971-20-01T00:00:00Z"), // month too big
             _XPLATSTR("1971-13-01T00:00:00Z"),
@@ -459,15 +458,15 @@ SUITE(datetime)
             _XPLATSTR("1971-01-01T00:60:00Z"), // minute too big
             _XPLATSTR("1971-01-01T00:00:70Z"), // second too big
             _XPLATSTR("1971-01-01T00:00:61Z"),
-            _XPLATSTR("1969-01-01T00:00:00Z"),      // underflow
-            _XPLATSTR("3001-01-01T00:00:00Z"),      // overflow
-            _XPLATSTR("1970-01-01T00:00:00+00:01"), // time zone underflow
+            _XPLATSTR("1899-01-01T00:00:00Z"), // underflow
+            _XPLATSTR("1900-01-01T00:00:00+00:01"), // time zone underflow
             // _XPLATSTR("1970-01-01T00:00:00.Z"), // accepted as invalid timezone above
             _XPLATSTR("1970-01-01T00:00:00+24:00"), // bad tzoffsets
             _XPLATSTR("1970-01-01T00:00:00-30:00"),
             _XPLATSTR("1970-01-01T00:00:00+21:60"),
             _XPLATSTR("1970-01-01T00:00:00-24:00"),
             _XPLATSTR("1970-01-01T00:00:00-21:60"),
+            _XPLATSTR("1971-01-00"), // zero month day
         };
 
         for (const auto& str : bad_strings)

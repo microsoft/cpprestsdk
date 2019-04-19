@@ -649,7 +649,8 @@ utility::string_t datetime::to_string(date_format format) const
     const int64_t input = static_cast<int64_t>(m_interval / _secondTicks); // convert to seconds
     const int frac_sec = static_cast<int>(m_interval % _secondTicks);
     const time_t time = static_cast<time_t>(input - ntToUnixOffsetSeconds);
-    if (static_cast<uint64_t>(time) > 253370764800ull) {
+    if (static_cast<uint64_t>(time) > 253370764800ull)
+    {
         throw std::out_of_range("The requested year exceeds the year 9999.");
     }
 
@@ -780,12 +781,30 @@ static const unsigned char max_days_in_month[12] = {
     31  // Dec
 };
 
+// The following table assumes no leap year; leap year is added separately
+static const unsigned short cumulative_days_to_month[12] = {
+    0,   // Jan
+    31,  // Feb
+    59,  // Mar
+    90,  // Apr
+    120, // May
+    151, // Jun
+    181, // Jul
+    212, // Aug
+    243, // Sep
+    273, // Oct
+    304, // Nov
+    334  // Dec
+};
+
+static bool year_is_leap_year(int year) { return (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)); }
+
 static bool validate_day_month(int day, int month, int year)
 {
     int maxDaysThisMonth;
     if (month == 1)
     { // Feb needs leap year testing
-        maxDaysThisMonth = 28 + (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0));
+        maxDaysThisMonth = 28 + year_is_leap_year(year);
     }
     else
     {
@@ -795,11 +814,29 @@ static bool validate_day_month(int day, int month, int year)
     return day >= 1 && day <= maxDaysThisMonth;
 }
 
+static int64_t count_leap_years(int64_t years_since_1900)
+{
+    return ((years_since_1900 - 1) / 4) - ((years_since_1900 - 1) / 100) + ((years_since_1900 + 299) / 400);
+}
+
+static int get_year_day(int month, int monthDay, int year)
+{
+    return cumulative_days_to_month[month] + monthDay + (year_is_leap_year(year) && month > 1) - 1;
+}
+
 template<class CharT>
 static int atoi2(const CharT* str)
 {
     return (static_cast<unsigned char>(str[0]) - '0') * 10 + (static_cast<unsigned char>(str[1]) - '0');
 }
+
+static const int64_t SecondsInMinute = 60;
+static const int64_t SecondsInHour = SecondsInMinute * 60;
+static const int64_t SecondsInDay = SecondsInHour * 24;
+
+static const int64_t DaysInYear = 365;
+
+static const int64_t Jan11900InNT = INT64_C(0x014F373BFDE04000);
 
 static int64_t timezone_adjust(int64_t result, unsigned char chSign, int adjustHours, int adjustMinutes)
 {
@@ -830,49 +867,6 @@ static int64_t timezone_adjust(int64_t result, unsigned char chSign, int adjustH
     }
 
     return result;
-}
-
-static int64_t make_gm_time(struct tm* t)
-{
-#ifdef _MSC_VER
-    return static_cast<int64_t>(_mkgmtime(t));
-#elif (defined(ANDROID) || defined(__ANDROID__))
-    // HACK: The (nonportable?) POSIX function timegm is not available in
-    //       bionic. As a workaround[1][2], we set the C library timezone to
-    //       UTC, call mktime, then set the timezone back. However, the C
-    //       environment is fundamentally a shared global resource and thread-
-    //       unsafe. We can protect our usage here, however any other code might
-    //       manipulate the environment at the same time.
-    //
-    // [1] http://linux.die.net/man/3/timegm
-    // [2] http://www.gnu.org/software/libc/manual/html_node/Broken_002ddown-Time.html
-    time_t time;
-    static boost::mutex env_var_lock;
-    {
-        boost::lock_guard<boost::mutex> lock(env_var_lock);
-        std::string prev_env;
-        auto prev_env_cstr = getenv("TZ");
-        if (prev_env_cstr != nullptr)
-        {
-            prev_env = prev_env_cstr;
-        }
-        setenv("TZ", "UTC", 1);
-
-        time = mktime(t);
-
-        if (prev_env_cstr)
-        {
-            setenv("TZ", prev_env.c_str(), 1);
-        }
-        else
-        {
-            unsetenv("TZ");
-        }
-    }
-    return static_cast<int64_t>(time);
-#else  // ^^^ ANDROID // Other POSIX platforms vvv
-    return static_cast<int64_t>(timegm(t));
-#endif // _MSC_VER
 }
 
 /*
@@ -918,31 +912,31 @@ zone        =  "UT"  / "GMT"                ; Universal Time
 datetime __cdecl datetime::from_string(const utility::string_t& dateString, date_format format)
 {
     datetime result;
-    int64_t seconds;
+    int64_t secondsSince1900;
     uint64_t frac_sec = 0;
-    struct tm t{};
     auto str = dateString.c_str();
     if (format == RFC_1123)
     {
-        int parsedWeekday = -1;
-        for (int day = 0; day < 7; ++day)
+        int parsedWeekday = 0;
+        for (; parsedWeekday < 7; ++parsedWeekday)
         {
-            if (string_starts_with(str, dayNames + day * 4) && str[3] == _XPLATSTR(',') && str[4] == _XPLATSTR(' '))
+            if (string_starts_with(str, dayNames + parsedWeekday * 4) && str[3] == _XPLATSTR(',') &&
+                str[4] == _XPLATSTR(' '))
             {
-                parsedWeekday = day;
                 str += 5; // parsed day of week
                 break;
             }
         }
 
+        int monthDay;
         if (ascii_isdigit3(str[0]) && ascii_isdigit(str[1]) && str[2] == _XPLATSTR(' '))
         {
-            t.tm_mday = atoi2(str); // validity checked later
-            str += 3;               // parsed day
+            monthDay = atoi2(str); // validity checked later
+            str += 3;              // parsed day
         }
         else if (ascii_isdigit(str[0]) && str[1] == _XPLATSTR(' '))
         {
-            t.tm_mday = str[0] - _XPLATSTR('0');
+            monthDay = str[0] - _XPLATSTR('0');
             str += 2; // parsed day
         }
         else
@@ -950,44 +944,54 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
             return result;
         }
 
-        t.tm_mon = -1;
-        for (int month = 0; month < 12; ++month)
+        if (monthDay == 0)
+        {
+            return result;
+        }
+
+        int month = 0;
+        for (;;)
         {
             if (string_starts_with(str, monthNames + month * 4))
             {
-                t.tm_mon = month;
                 break;
+            }
+
+            ++month;
+            if (month == 12)
+            {
+                return result;
             }
         }
 
-        if (t.tm_mon == -1 || str[3] != _XPLATSTR(' '))
+        if (str[3] != _XPLATSTR(' '))
         {
             return result;
         }
 
         str += 4; // parsed month
 
-        if (!ascii_isdigit3(str[0]) || !ascii_isdigit(str[1]) || !ascii_isdigit(str[2]) || !ascii_isdigit(str[3]) ||
+        if (!ascii_isdigit(str[0]) || !ascii_isdigit(str[1]) || !ascii_isdigit(str[2]) || !ascii_isdigit(str[3]) ||
             str[4] != ' ')
         {
             return result;
         }
 
-        t.tm_year = (str[0] - _XPLATSTR('0')) * 1000 + (str[1] - _XPLATSTR('0')) * 100 +
-                    (str[2] - _XPLATSTR('0')) * 10 + (str[3] - _XPLATSTR('0'));
-        if (t.tm_year < 1970 || t.tm_year > 3000)
+        int year = (str[0] - _XPLATSTR('0')) * 1000 + (str[1] - _XPLATSTR('0')) * 100 + (str[2] - _XPLATSTR('0')) * 10 +
+                   (str[3] - _XPLATSTR('0'));
+        if (year < 1900)
         {
             return result;
         }
 
         // days in month validity check
-        if (!validate_day_month(t.tm_mday, t.tm_mon, t.tm_year))
+        if (!validate_day_month(monthDay, month, year))
         {
             return result;
         }
 
-        t.tm_year -= 1900;
         str += 5; // parsed year
+        const int64_t yearDay = get_year_day(month, monthDay, year);
 
         if (!ascii_isdigit2(str[0]) || !ascii_isdigit(str[1]) || str[2] != _XPLATSTR(':') || !ascii_isdigit5(str[3]) ||
             !ascii_isdigit(str[4]))
@@ -995,16 +999,17 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
             return result;
         }
 
-        t.tm_hour = atoi2(str);
-        if (t.tm_hour > 23)
+        const int hour = atoi2(str);
+        if (hour > 23)
         {
             return result;
         }
 
         str += 3; // parsed hour
-        t.tm_min = atoi2(str);
+        const int minute = atoi2(str);
         str += 2; // parsed mins
 
+        int sec;
         if (str[0] == ':')
         {
             if (!ascii_isdigit6(str[1]) || !ascii_isdigit(str[2]) || str[3] != _XPLATSTR(' '))
@@ -1012,12 +1017,12 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
                 return result;
             }
 
-            t.tm_sec = atoi2(str + 1);
+            sec = atoi2(str + 1);
             str += 4; // parsed seconds
         }
         else if (str[0] == _XPLATSTR(' '))
         {
-            t.tm_sec = 0;
+            sec = 0;
             str += 1; // parsed seconds
         }
         else
@@ -1025,22 +1030,25 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
             return result;
         }
 
-        if (t.tm_sec > 60)
+        if (sec > 60)
         { // 60 to allow leap seconds
             return result;
         }
 
-        t.tm_isdst = 0;
-        seconds = make_gm_time(&t);
-        if (seconds < 0)
+        year -= 1900;
+        int64_t daysSince1900 = year * DaysInYear + count_leap_years(year) + yearDay;
+
+        if (parsedWeekday != 7)
         {
-            return result;
+            const int actualWeekday = (daysSince1900 + 1) % 7;
+
+            if (parsedWeekday != actualWeekday)
+            {
+                return result;
+            }
         }
 
-        if (parsedWeekday >= 0 && parsedWeekday != t.tm_wday)
-        {
-            return result;
-        }
+        secondsSince1900 = daysSince1900 * SecondsInDay + hour * SecondsInHour + minute * SecondsInMinute + sec;
 
         if (!string_starts_with(str, "GMT") && !string_starts_with(str, "UT"))
         {
@@ -1080,8 +1088,8 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
                 return result;
             }
 
-            seconds = timezone_adjust(seconds, static_cast<unsigned char>(tzCh), tzHours, tzMinutes);
-            if (seconds < 0)
+            secondsSince1900 = timezone_adjust(secondsSince1900, static_cast<unsigned char>(tzCh), tzHours, tzMinutes);
+            if (secondsSince1900 < 0)
             {
                 return result;
             }
@@ -1090,14 +1098,14 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
     else if (format == ISO_8601)
     {
         // parse year
-        if (!ascii_isdigit3(str[0]) || !ascii_isdigit(str[1]) || !ascii_isdigit(str[2]) || !ascii_isdigit(str[3]))
+        if (!ascii_isdigit(str[0]) || !ascii_isdigit(str[1]) || !ascii_isdigit(str[2]) || !ascii_isdigit(str[3]))
         {
             return result;
         }
 
-        t.tm_year = (str[0] - _XPLATSTR('0')) * 1000 + (str[1] - _XPLATSTR('0')) * 100 +
-                    (str[2] - _XPLATSTR('0')) * 10 + (str[3] - _XPLATSTR('0'));
-        if (t.tm_year < 1970 || t.tm_year > 3000)
+        int year = (str[0] - _XPLATSTR('0')) * 1000 + (str[1] - _XPLATSTR('0')) * 100 + (str[2] - _XPLATSTR('0')) * 10 +
+                   (str[3] - _XPLATSTR('0'));
+        if (year < 1900)
         {
             return result;
         }
@@ -1114,13 +1122,13 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
             return result;
         }
 
-        t.tm_mon = atoi2(str);
-        if (t.tm_mon < 1 || t.tm_mon > 12)
+        int month = atoi2(str);
+        if (month < 1 || month > 12)
         {
             return result;
         }
 
-        t.tm_mon -= 1;
+        month -= 1;
         str += 2;
 
         if (*str == _XPLATSTR('-'))
@@ -1134,26 +1142,24 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
             return result;
         }
 
-        t.tm_mday = atoi2(str);
-        if (!validate_day_month(t.tm_mday, t.tm_mon, t.tm_year))
+        int monthDay = atoi2(str);
+        if (!validate_day_month(monthDay, month, year))
         {
             return result;
         }
 
-        t.tm_year -= 1900;
+        const int yearDay = get_year_day(month, monthDay, year);
+
         str += 2;
+        year -= 1900;
+        int64_t daysSince1900 = year * DaysInYear + count_leap_years(year) + yearDay;
 
         if (str[0] != _XPLATSTR('T') && str[0] != _XPLATSTR('t'))
         {
             // No time
-            seconds = make_gm_time(&t);
-            if (seconds < 0)
-            {
-                return result;
-            }
+            secondsSince1900 = daysSince1900 * SecondsInDay;
 
-            seconds += ntToUnixOffsetSeconds;
-            result.m_interval = static_cast<interval_type>(seconds) * _secondTicks;
+            result.m_interval = static_cast<interval_type>(secondsSince1900 * _secondTicks + frac_sec + Jan11900InNT);
             return result;
         }
 
@@ -1165,9 +1171,9 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
             return result;
         }
 
-        t.tm_hour = atoi2(str);
+        const int hour = atoi2(str);
         str += 2;
-        if (t.tm_hour > 23)
+        if (hour > 23)
         {
             return result;
         }
@@ -1182,8 +1188,9 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
         {
             return result;
         }
-        t.tm_min = atoi2(str);
-        // t.tm_min > 59 is impossible because we checked that the first digit is <= 5 in the basic format
+
+        const int minute = atoi2(str);
+        // minute > 59 is impossible because we checked that the first digit is <= 5 in the basic format
         // check above
 
         str += 2;
@@ -1199,9 +1206,9 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
             return result;
         }
 
-        t.tm_sec = atoi2(str);
+        const int sec = atoi2(str);
         // We allow 60 to account for leap seconds
-        if (t.tm_sec > 60)
+        if (sec > 60)
         {
             return result;
         }
@@ -1241,11 +1248,7 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
             }
         }
 
-        seconds = make_gm_time(&t);
-        if (seconds < 0)
-        {
-            return result;
-        }
+        secondsSince1900 = daysSince1900 * SecondsInDay + hour * SecondsInHour + minute * SecondsInMinute + sec;
 
         if (str[0] == _XPLATSTR('Z') || str[0] == _XPLATSTR('z'))
         {
@@ -1260,8 +1263,8 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
                 return result;
             }
 
-            seconds = timezone_adjust(seconds, offsetDirection, atoi2(str + 1), atoi2(str + 4));
-            if (seconds < 0)
+            secondsSince1900 = timezone_adjust(secondsSince1900, offsetDirection, atoi2(str + 1), atoi2(str + 4));
+            if (secondsSince1900 < 0)
             {
                 return result;
             }
@@ -1276,8 +1279,7 @@ datetime __cdecl datetime::from_string(const utility::string_t& dateString, date
         throw std::invalid_argument("unrecognized date format");
     }
 
-    seconds += ntToUnixOffsetSeconds;
-    result.m_interval = static_cast<interval_type>(seconds) * _secondTicks + frac_sec;
+    result.m_interval = static_cast<interval_type>(secondsSince1900 * _secondTicks + frac_sec + Jan11900InNT);
     return result;
 }
 
@@ -1403,8 +1405,9 @@ utility::string_t nonce_generator::generate()
     std::uniform_int_distribution<> distr(0, chars_count - 1);
     utility::string_t result;
     result.reserve(length());
-    std::generate_n(std::back_inserter(result), length(),
-		[&] { return static_cast<utility::char_t>(c_allowed_chars[distr(m_random)]); });
+    std::generate_n(std::back_inserter(result), length(), [&] {
+        return static_cast<utility::char_t>(c_allowed_chars[distr(m_random)]);
+    });
     return result;
 }
 
