@@ -759,7 +759,7 @@ utility::string_t datetime::to_string(date_format format) const
     }
 
     const int64_t epochAdjusted = static_cast<int64_t>(m_interval) - NtTo1900OffsetInterval;
-    const int64_t secondsSince1900 = static_cast<int64_t>(epochAdjusted / _secondTicks); // convert to seconds
+    const int64_t secondsSince1900 = epochAdjusted / _secondTicks; // convert to seconds
     const int fracSec = static_cast<int>(epochAdjusted % _secondTicks);
 
     const auto yearData = compute_year(secondsSince1900);
