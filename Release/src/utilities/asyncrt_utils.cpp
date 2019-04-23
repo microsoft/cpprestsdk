@@ -779,7 +779,7 @@ utility::string_t datetime::to_string(date_format format) const
     }
 
     const auto monthDay = yearDay - monthTable[month] + 1;
-    const auto weekday = static_cast<int>((secondsSince1900 / SecondsInDay + 3) % 7);
+    const auto weekday = static_cast<int>((secondsSince1900 / SecondsInDay + 1) % 7);
 
     char outBuffer[38]; // Thu, 01 Jan 1970 00:00:00 GMT\0
                         // 1970-01-01T00:00:00.1234567Z\0

@@ -10,6 +10,8 @@
  ****/
 
 #include "stdafx.h"
+#include <stdint.h>
+#include <string>
 
 using namespace utility;
 
@@ -129,6 +131,13 @@ SUITE(datetime)
     TEST(parsing_time_roundtrip_year_9999)
     {
         TestDateTimeRoundtrip(_XPLATSTR("9999-12-31T23:59:59Z"));
+    }
+
+    TEST(emitting_time_correct_day) {
+        const auto test = utility::datetime() + UINT64_C(132004507640000000); // 2019-04-22T23:52:44 is a Monday
+        const auto actual = test.to_string(utility::datetime::RFC_1123);
+        const utility::string_t expected(_XPLATSTR("Mon"));
+        VERIFY_ARE_EQUAL(actual.substr(0, 3), expected);
     }
 
     void TestRfc1123IsTimeT(const utility::char_t* str, uint64_t t)
