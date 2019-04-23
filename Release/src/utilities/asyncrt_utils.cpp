@@ -639,26 +639,22 @@ static const int64_t SecondsFrom1900To2001 = INT64_C(3187296000);
 
 static const int64_t NtTo1900OffsetInterval = INT64_C(0x014F373BFDE04000);
 
-static int count_leap_years(int yearsSince1900)
+static int count_leap_years(const int yearsSince1900)
 {
-    int result = 0;
-    if (yearsSince1900 > 101)
-    {
-        result += 25;
-        yearsSince1900 -= 101;
-    }
+    int tmpYears = yearsSince1900 + 299; // shift into 1601, the first 400 year cycle including 1900
 
-    int year400 = yearsSince1900 / 400;
-    yearsSince1900 -= year400 * 400;
-    result += year400 * 97;
+    int year400 = tmpYears / 400;
+    tmpYears -= year400 * 400;
+    int result = year400 * 97;
 
-    int year100 = yearsSince1900 / 100;
-    yearsSince1900 -= year100 * 100;
+    int year100 = tmpYears / 100;
+    tmpYears -= year100 * 100;
     result += year100 * 24;
 
-    int year4 = yearsSince1900 / 4;
-    yearsSince1900 -= year4 * 4;
-    result += year4;
+    result += tmpYears / 4;
+
+    // subtract off leap years from 1601
+    result -= 72;
 
     return result;
 }
@@ -724,16 +720,12 @@ struct compute_year_result
     int secondsLeftThisYear;
 };
 
+static const int64_t secondsFrom1601To1900 = INT64_C(9435484800);
+
 static compute_year_result compute_year(int64_t secondsSince1900)
 {
     int year = 0;
-    int64_t secondsLeft = secondsSince1900;
-    if (secondsSince1900 >= SecondsFrom1900To2001)
-    {
-        // After year 2001, shift there and start normal 400 year cycle
-        year += 101;
-        secondsLeft -= SecondsFrom1900To2001;
-    }
+    int64_t secondsLeft = secondsSince1900 + secondsFrom1601To1900; // shift to start of this 400 year cycle
 
     int year400 = static_cast<int>(secondsLeft / SecondsIn400Years);
     secondsLeft -= year400 * SecondsIn400Years;
@@ -747,8 +739,8 @@ static compute_year_result compute_year(int64_t secondsSince1900)
     int year1 = secondsInt / SecondsInYear;
     secondsInt -= year1 * SecondsInYear;
 
-    year += year400 * 400 + year100 * 100 + year4 * 4 + year1;
-    return {year, secondsInt};
+    // shift back to 1900 base from 1601:
+    return {year400 * 400 + year100 * 100 + year4 * 4 + year1 - 299, secondsInt};
 }
 
 utility::string_t datetime::to_string(date_format format) const
