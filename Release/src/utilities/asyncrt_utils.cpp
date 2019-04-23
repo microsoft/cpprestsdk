@@ -724,7 +724,6 @@ static const int64_t secondsFrom1601To1900 = INT64_C(9435484800);
 
 static compute_year_result compute_year(int64_t secondsSince1900)
 {
-    int year = 0;
     int64_t secondsLeft = secondsSince1900 + secondsFrom1601To1900; // shift to start of this 400 year cycle
 
     int year400 = static_cast<int>(secondsLeft / SecondsIn400Years);
