@@ -1,3 +1,13 @@
+cpprestsdk (2.10.13)
+* PR#1120 Fix off by one error in leap years before year 2000, and bad day names
+* PR#1117 Parse and emit years from 1900 to 9999, and remove environment variable dependence on Android
+* PR#1106 Paranoia for overflow of sprintf buffer in the year 10000
+* PR#1101 Update request_timeout_microsecond timeout
+* PR#1097 Allow error handling for time out in http_client_asio handle_connect
+* PR#1094 Avoid tripping over 32 bit time_t mistakes.
+* PR#1093 Don't initialize atomic_flag with 0.
+-- cpprestsdk team <askcasablanca@microsoft.com>  WED, 24 Apr 2019 10:57:00 -0800
+
 cpprestsdk (2.10.12)
 * PR#1088 Fix data race, GitHub #1085
 * PR#1084 Fix oauth nonces containing nulls.
