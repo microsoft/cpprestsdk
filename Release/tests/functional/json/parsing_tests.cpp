@@ -469,6 +469,12 @@ SUITE(parsing_tests)
         VERIFY_ARE_EQUAL(0u, arr.size());
     }
 
+    TEST(bug_object_field_key_no_value)
+    {
+        VERIFY_PARSING_THROW(json::value::parse(U("{\"meow\"}")));
+        VERIFY_PARSING_THROW(json::value::parse(U("{\"meow\": 42, \"purr\": 57, \"hiss\"}")));
+    }
+
     TEST(bug_416116)
     {
         json::value data2 = json::value::parse(U("\"δοκιμή\""));
