@@ -965,7 +965,7 @@ std::unique_ptr<web::json::details::_Value> JSON_Parser<CharType>::_ParseObject(
             if (tkn.m_error) goto error;
 
             // State 2: Looking for a colon.
-            if (tkn.kind != JSON_Parser<CharType>::Token::TKN_Colon) goto done;
+            if (tkn.kind != JSON_Parser<CharType>::Token::TKN_Colon) goto error;
 
             GetNextToken(tkn);
             if (tkn.m_error) goto error;
