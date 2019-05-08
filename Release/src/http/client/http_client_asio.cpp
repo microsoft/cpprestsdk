@@ -32,11 +32,11 @@
 
 #if defined(CPPREST_BOTAN_SSL)
 #include <botan/asio_stream.h>
-#else
+#else // ^^^ CPPREST_BOTAN_SSL // !CPPREST_BOTAN_SSL vvv
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
 #include <boost/asio/ssl/error.hpp>
-#endif
+#endif // CPPREST_BOTAN_SSL
 
 #if defined(__clang__)
 #pragma clang diagnostic pop
@@ -187,7 +187,7 @@ public:
         Botan::TLS::Context ssl_context;
         ssl_context_callback(ssl_context);
         ssl_context.serverInfo = Botan::TLS::Server_Information(m_cn_hostname);
-#else
+#else // ^^^ CPPREST_BOTAN_SSL // !CPPREST_BOTAN_SSL vvv
         boost::asio::ssl::context ssl_context(boost::asio::ssl::context::sslv23);
         ssl_context.set_default_verify_paths();
         ssl_context.set_options(boost::asio::ssl::context::default_workarounds);
@@ -195,7 +195,7 @@ public:
         {
             ssl_context_callback(ssl_context);
         }
-#endif
+#endif // CPPREST_BOTAN_SSL
         m_ssl_stream = utility::details::make_unique<ssl_stream_t>(m_socket, ssl_context);
     }
 
@@ -291,7 +291,7 @@ public:
         assert(is_ssl());
         m_ssl_stream->async_handshake(type, handshake_handler);
     }
-#else
+#else // ^^^ CPPREST_BOTAN_SSL // !CPPREST_BOTAN_SSL vvv
     template<typename HandshakeHandler, typename CertificateHandler>
     void async_handshake(ssl_handshake_type_t type,
                          const http_client_config& config,
@@ -320,7 +320,7 @@ public:
         }
         m_ssl_stream->async_handshake(type, handshake_handler);
     }
-#endif
+#endif // CPPREST_BOTAN_SSL
 
     template<typename ConstBufferSequence, typename Handler>
     void async_write(ConstBufferSequence& buffer, const Handler& writeHandler)
