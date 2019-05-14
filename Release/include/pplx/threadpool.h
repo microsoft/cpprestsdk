@@ -46,6 +46,41 @@ template<class T>
 using java_local_ref = std::unique_ptr<typename std::remove_pointer<T>::type, java_local_ref_deleter>;
 #endif
 
+#if defined(_Win32)
+template <int Major = 2, int Minor = 0>
+class winsock_init_helper
+{
+public:
+    winsock_init_helper()
+    {
+
+        if (InterlockedIncrement(&m_data.init_count_) == 1)
+        {
+            WSADATA wsa_data;
+            long result = ::WSAStartup(MAKEWORD(major, minor), &wsa_data);
+            InterlockedExchange(&m_data.result_, result);
+        }
+    }
+
+    ~winsock_init_helper()
+    {
+        if (InterlockedDecrement(&m_data.init_count_) == 0)
+        {
+            WSACleanup();
+        }
+    }
+
+private:
+    struct data
+    {
+        long init_count_ = 0;
+        long result_ = 0;
+    };
+
+    static data m_data;
+};
+#endif
+
 class threadpool
 {
 public:
@@ -77,6 +112,9 @@ public:
 protected:
     threadpool(size_t num_threads) : m_service(static_cast<int>(num_threads)) {}
 
+#if defined(_Win32)
+    winsock_init_helper<> m_init_helper;
+#endif
     boost::asio::io_service m_service;
 };
 
