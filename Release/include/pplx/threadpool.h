@@ -54,17 +54,17 @@ public:
     winsock_init_helper()
     {
 
-        if (InterlockedIncrement(&m_data.init_count_) == 1)
+        if (InterlockedIncrement(&m_data.init_count) == 1)
         {
             WSADATA wsa_data;
-            long result = ::WSAStartup(MAKEWORD(major, minor), &wsa_data);
-            InterlockedExchange(&m_data.result_, result);
+            long result = WSAStartup(MAKEWORD(Major, Minor), &wsa_data);
+            InterlockedExchange(&m_data.result, result);
         }
     }
 
     ~winsock_init_helper()
     {
-        if (InterlockedDecrement(&m_data.init_count_) == 0)
+        if (InterlockedDecrement(&m_data.init_count) == 0)
         {
             WSACleanup();
         }
@@ -73,8 +73,8 @@ public:
 private:
     struct data
     {
-        long init_count_ = 0;
-        long result_ = 0;
+        long init_count = 0;
+        long result = 0;
     };
 
     static data m_data;
