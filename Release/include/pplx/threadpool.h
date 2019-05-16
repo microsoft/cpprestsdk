@@ -47,13 +47,13 @@ using java_local_ref = std::unique_ptr<typename std::remove_pointer<T>::type, ja
 #endif
 
 #if defined(_Win32)
+ // manually init Winsock
 template <int Major = 2, int Minor = 0>
 class winsock_init_helper
 {
 public:
     winsock_init_helper()
     {
-
         if (InterlockedIncrement(&m_data.init_count) == 1)
         {
             WSADATA wsa_data;

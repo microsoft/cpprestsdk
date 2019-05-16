@@ -8,15 +8,18 @@
 #include "pplx/threadpool.h"
 #include <boost/asio/detail/thread.hpp>
 #ifdef _WIN32
-    #ifdef _MSC_VER
-        #pragma warning(push)
-        #pragma warning(disable : 4073)
-        #pragma init_seg(lib)
-        boost::asio::detail::winsock_init<>::manual manual_winsock_init;
-        #pragma warning(pop)
-    #else // using MinGw (gcc)
-        boost::asio::detail::winsock_init<>::manual manual_winsock_init __attribute__((init_priority(101)));
-    #endif
+// On windows it might be not safe to initialise Winsock from global object
+// constructors, since calling WSAStartup in DLLMain is not safe.
+// Boost asio propose this as a way to manage initialization manually.
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4073)
+#pragma init_seg(lib)
+boost::asio::detail::winsock_init<>::manual manual_winsock_init;
+#pragma warning(pop)
+#else // using MinGw (gcc)
+boost::asio::detail::winsock_init<>::manual manual_winsock_init __attribute__((init_priority(101)));
+#endif
 #endif
 #include <new>
 #include <type_traits>
