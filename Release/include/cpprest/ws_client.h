@@ -135,6 +135,7 @@ public:
     /// <param name="name">The User Agent to use, as a string.</param>
     _ASYNCRTIMP void set_user_agent(const utf8string& user_agent);
 
+#if !defined(__cplusplus_winrt)
     /// <summary>
     /// Sets the pong timeout to be used for the connection
     /// </summary>
@@ -146,6 +147,7 @@ public:
     /// </summary>
     /// <returns>Pong timeout value.</returns>
     uint32_t pong_timeout() {  return m_pong_timeout; }
+#endif
 
     /// <summary>
     /// Gets the headers of the HTTP request message used in the WebSocket protocol handshake.
@@ -216,9 +218,11 @@ private:
     web::credentials m_credentials;
     web::http::http_headers m_headers;
     bool m_sni_enabled;
-    uint32_t m_pong_timeout;
     utf8string m_sni_hostname;
     bool m_validate_certificates;
+#if !defined(__cplusplus_winrt)
+    uint32_t m_pong_timeout;
+#endif
 #if !defined(_WIN32) || !defined(__cplusplus_winrt)
     std::function<void(boost::asio::ssl::context&)> m_ssl_context_callback;
 #endif
@@ -341,8 +345,10 @@ public:
 
     virtual void set_message_handler(const std::function<void(const websocket_incoming_message&)>& handler) = 0;
 
+#if !defined(__cplusplus_winrt)
     virtual void set_pong_timeout_handler(const std::function<void(const std::string&)>& handler) = 0;
-
+#endif
+    
     virtual pplx::task<void> close() = 0;
 
     virtual pplx::task<void> close(websocket_close_status close_status,
