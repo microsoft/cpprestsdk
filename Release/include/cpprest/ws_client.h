@@ -79,7 +79,7 @@ public:
     /// <summary>
     /// Creates a websocket client configuration with default settings.
     /// </summary>
-    websocket_client_config() : m_sni_enabled(true), m_validate_certificates(true) {}
+    websocket_client_config() : m_sni_enabled(true), m_validate_certificates(true), m_pong_timeout(0) {}
 
     /// <summary>
     /// Get the web proxy object
@@ -134,6 +134,18 @@ public:
     /// </summary>
     /// <param name="name">The User Agent to use, as a string.</param>
     _ASYNCRTIMP void set_user_agent(const utf8string& user_agent);
+
+    /// <summary>
+    /// Sets the pong timeout to be used for the connection
+    /// </summary>
+    /// <param name="timeout">The timeout to use, as an unsigned integer. Default is the one of Websockettpp</param>
+    void set_pong_timeout(const uint32_t timeout) { m_pong_timeout = timeout; }
+
+    /// <summary>
+    /// Gets the pong timeout to be used for the connection
+    /// </summary>
+    /// <returns>Pong timeout value.</returns>
+    uint32_t pong_timeout() {  return m_pong_timeout; }
 
     /// <summary>
     /// Gets the headers of the HTTP request message used in the WebSocket protocol handshake.
@@ -204,6 +216,7 @@ private:
     web::credentials m_credentials;
     web::http::http_headers m_headers;
     bool m_sni_enabled;
+    uint32_t m_pong_timeout;
     utf8string m_sni_hostname;
     bool m_validate_certificates;
 #if !defined(_WIN32) || !defined(__cplusplus_winrt)
@@ -327,6 +340,8 @@ public:
     virtual pplx::task<void> send(websocket_outgoing_message& msg) = 0;
 
     virtual void set_message_handler(const std::function<void(const websocket_incoming_message&)>& handler) = 0;
+
+    virtual void set_pong_timeout_handler(const std::function<void(const std::string&)>& handler) = 0;
 
     virtual pplx::task<void> close() = 0;
 
@@ -549,6 +564,18 @@ public:
     void set_message_handler(const std::function<void(const websocket_incoming_message& msg)>& handler)
     {
         m_client->set_message_handler(handler);
+    }
+
+    /// <summary>
+    /// Set the pong timeout handler for notification of client websocket messages.
+    /// </summary>
+    /// <param name="handler">A function representing the incoming websocket pong timeout handler. It's parameters are:
+    ///    msg:  a <c>std::string</c> value indicating the missed pong message
+    /// </param>
+    /// <remarks>If this handler is not set before connecting incoming messages will be missed.</remarks>
+    void set_pong_timeout_handler(const std::function<void(const std::string& msg)>& handler)
+    {
+        m_client->set_pong_timeout_handler(handler);
     }
 
     /// <summary>
