@@ -79,7 +79,7 @@ public:
     /// <summary>
     /// Creates a websocket client configuration with default settings.
     /// </summary>
-    websocket_client_config() : m_sni_enabled(true), m_validate_certificates(true), m_pong_timeout(0) {}
+    websocket_client_config() : m_sni_enabled(true), m_validate_certificates(true) {}
 
     /// <summary>
     /// Get the web proxy object
