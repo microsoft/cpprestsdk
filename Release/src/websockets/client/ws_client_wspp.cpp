@@ -354,26 +354,10 @@ public:
                 }
             });
 
-        client.set_pong_timeout_handler(
-            [this](websocketpp::connection_hdl, const std::string& msg) {
-                if (m_external_pong_timeout_handler)
-                {
-                    _ASSERTE(m_state >= CONNECTED && m_state < CLOSED);
-                    
-                    m_external_pong_timeout_handler(msg);
-                }
-            });
-
         client.set_close_handler([this](websocketpp::connection_hdl con_hdl) {
             _ASSERTE(m_state != CLOSED);
             shutdown_wspp_impl<WebsocketConfigType>(con_hdl, false);
         });
-
-        // Set the pong timeout if set
-        if (m_config.pong_timeout() > 0)
-        {
-            client.set_pong_timeout(m_config.pong_timeout());
-        }
 
         // Set User Agent specified by the user. This needs to happen before any connection is created
         const auto& headers = m_config.headers();
@@ -761,11 +745,6 @@ private:
     void set_message_handler(const std::function<void(const websocket_incoming_message&)>& handler)
     {
         m_external_message_handler = handler;
-    }
-
-    void set_pong_timeout_handler(const std::function<void(const std::string&)>& handler)
-    {
-        m_external_pong_timeout_handler = handler;
     }
 
     void set_close_handler(

@@ -135,20 +135,6 @@ public:
     /// <param name="name">The User Agent to use, as a string.</param>
     _ASYNCRTIMP void set_user_agent(const utf8string& user_agent);
 
-#if !defined(__cplusplus_winrt)
-    /// <summary>
-    /// Sets the pong timeout to be used for the connection
-    /// </summary>
-    /// <param name="timeout">The timeout to use, as an unsigned integer. Default is the one of Websockettpp</param>
-    void set_pong_timeout(const uint32_t timeout) { m_pong_timeout = timeout; }
-
-    /// <summary>
-    /// Gets the pong timeout to be used for the connection
-    /// </summary>
-    /// <returns>Pong timeout value.</returns>
-    uint32_t pong_timeout() {  return m_pong_timeout; }
-#endif
-
     /// <summary>
     /// Gets the headers of the HTTP request message used in the WebSocket protocol handshake.
     /// </summary>
@@ -220,9 +206,6 @@ private:
     bool m_sni_enabled;
     utf8string m_sni_hostname;
     bool m_validate_certificates;
-#if !defined(__cplusplus_winrt)
-    uint32_t m_pong_timeout;
-#endif
 #if !defined(_WIN32) || !defined(__cplusplus_winrt)
     std::function<void(boost::asio::ssl::context&)> m_ssl_context_callback;
 #endif
@@ -344,10 +327,6 @@ public:
     virtual pplx::task<void> send(websocket_outgoing_message& msg) = 0;
 
     virtual void set_message_handler(const std::function<void(const websocket_incoming_message&)>& handler) = 0;
-
-#if !defined(__cplusplus_winrt)
-    virtual void set_pong_timeout_handler(const std::function<void(const std::string&)>& handler) = 0;
-#endif
     
     virtual pplx::task<void> close() = 0;
 
@@ -570,18 +549,6 @@ public:
     void set_message_handler(const std::function<void(const websocket_incoming_message& msg)>& handler)
     {
         m_client->set_message_handler(handler);
-    }
-
-    /// <summary>
-    /// Set the pong timeout handler for notification of client websocket messages.
-    /// </summary>
-    /// <param name="handler">A function representing the incoming websocket pong timeout handler. It's parameters are:
-    ///    msg:  a <c>std::string</c> value indicating the missed pong message
-    /// </param>
-    /// <remarks>If this handler is not set before connecting incoming messages will be missed.</remarks>
-    void set_pong_timeout_handler(const std::function<void(const std::string& msg)>& handler)
-    {
-        m_client->set_pong_timeout_handler(handler);
     }
 
     /// <summary>
