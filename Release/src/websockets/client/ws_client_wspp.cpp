@@ -808,7 +808,6 @@ private:
     std::function<void(websocket_incoming_message)> m_external_message_handler;
     std::function<void(websocket_close_status, const utility::string_t&, const std::error_code&)>
         m_external_close_handler;
-    std::function<void(const std::string&)> m_external_pong_timeout_handler;
 
     // Used to track if any of the OpenSSL server certificate verifications
     // failed. This can safely be tracked at the client level since connections
