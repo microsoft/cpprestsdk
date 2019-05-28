@@ -327,7 +327,7 @@ public:
     virtual pplx::task<void> send(websocket_outgoing_message& msg) = 0;
 
     virtual void set_message_handler(const std::function<void(const websocket_incoming_message&)>& handler) = 0;
-    
+
     virtual pplx::task<void> close() = 0;
 
     virtual pplx::task<void> close(websocket_close_status close_status,
