@@ -2708,7 +2708,7 @@ public:
     {
         // Subsequent sets are ignored. This makes races to set benign: the first setter wins and all others are
         // ignored.
-        if (_IsTriggered())
+        if (_IsTriggered() || _M_Impl->_HasUserException())
         {
             return false;
         }
@@ -2718,7 +2718,7 @@ public:
         {
             ::pplx::extensibility::scoped_critical_section_t _LockHolder(_M_Impl->_M_taskListCritSec);
 
-            if (!_IsTriggered())
+            if (!_IsTriggered() && !_M_Impl->_HasUserException())
             {
                 _M_Impl->_M_value.Set(_Result);
                 _M_Impl->_M_fHasValue = true;
