@@ -337,7 +337,7 @@ public:
 
                     m_external_message_handler(incoming_msg);
                 }
-                return true;
+                return m_config.is_auto_pong_enabled();
             });
 
         client.set_pong_handler(
