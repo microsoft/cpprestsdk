@@ -724,8 +724,8 @@ private:
             case websocket_message_type::binary_message:
                 client.send(this_client->m_con, sp_allocated.get(), length, websocketpp::frame::opcode::binary, ec);
                 break;
-            case websocket_message_type::ping: client.ping(this_client->m_con, "", ec); break;
-            case websocket_message_type::pong: client.pong(this_client->m_con, "", ec); break;
+            case websocket_message_type::ping: client.ping(this_client->m_con, *(std::string*)sp_allocated.get(), ec); break;
+            case websocket_message_type::pong: client.pong(this_client->m_con, *(std::string*)sp_allocated.get(), ec); break;
             default:
                 // This case should have already been filtered above.
                 std::abort();
