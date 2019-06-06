@@ -79,7 +79,7 @@ public:
     /// <summary>
     /// Creates a websocket client configuration with default settings.
     /// </summary>
-    websocket_client_config() : m_sni_enabled(true), m_validate_certificates(true), m_auto_pong_enabled(false) {}
+    websocket_client_config() : m_sni_enabled(true), m_validate_certificates(true) {}
 
     /// <summary>
     /// Get the web proxy object
@@ -104,17 +104,6 @@ public:
     /// </summary>
     /// <param name="cred">The client credentials.</param>
     void set_credentials(const web::credentials& cred) { m_credentials = cred; }
-
-    /// <summary>
-    /// Turn on automatic pong answer to incoming ping request
-    /// </summary>
-    void enable_auto_pong() { m_auto_pong_enabled = true; }
-
-    /// <summary>
-    /// Determines if the automatic Pong answer to Ping is enabled.
-    /// </summary>
-    /// <returns>True if enabled, false otherwise.</returns>
-    bool is_auto_pong_enabled() const { return m_auto_pong_enabled; }
 
     /// <summary>
     /// Disables Server Name Indication (SNI). Default is on.
@@ -217,7 +206,6 @@ private:
     bool m_sni_enabled;
     utf8string m_sni_hostname;
     bool m_validate_certificates;
-    bool m_auto_pong_enabled;
 #if !defined(_WIN32) || !defined(__cplusplus_winrt)
     std::function<void(boost::asio::ssl::context&)> m_ssl_context_callback;
 #endif

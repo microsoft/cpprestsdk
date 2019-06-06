@@ -337,7 +337,7 @@ public:
 
                     m_external_message_handler(incoming_msg);
                 }
-                return m_config.is_auto_pong_enabled();
+                return true;
             });
 
         client.set_pong_handler(
@@ -724,8 +724,18 @@ private:
             case websocket_message_type::binary_message:
                 client.send(this_client->m_con, sp_allocated.get(), length, websocketpp::frame::opcode::binary, ec);
                 break;
-            case websocket_message_type::ping: client.ping(this_client->m_con, *(std::string*)sp_allocated.get(), ec); break;
-            case websocket_message_type::pong: client.pong(this_client->m_con, *(std::string*)sp_allocated.get(), ec); break;
+            case websocket_message_type::ping:
+            {
+                std::string s(reinterpret_cast<char*>(sp_allocated.get()), length);
+                client.ping(this_client->m_con, s, ec);
+                break;
+            }
+            case websocket_message_type::pong:
+            {
+                std::string s(reinterpret_cast<char*>(sp_allocated.get()), length);
+                client.pong(this_client->m_con, s, ec);
+                break;
+            }
             default:
                 // This case should have already been filtered above.
                 std::abort();
