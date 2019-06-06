@@ -104,16 +104,32 @@ SUITE(send_msg_tests)
     }
 
     template<class SocketClientClass>
-    pplx::task<void> send_pong_msg_helper(SocketClientClass & client, web::uri uri, test_websocket_server & server)
+    pplx::task<void> send_ping_msg_helper(SocketClientClass & client, web::uri uri, test_websocket_server & server,
+                                          const std::string& body = "")
     {
         server.next_message(
-            [](test_websocket_msg msg) // Handler to verify the message sent by the client.
-            { websocket_asserts::assert_message_equals(msg, "", test_websocket_message_type::WEB_SOCKET_PONG_TYPE); });
+            [body](test_websocket_msg msg) // Handler to verify the message sent by the client.
+            { websocket_asserts::assert_message_equals(msg, body, test_websocket_message_type::WEB_SOCKET_PING_TYPE); });
 
         client.connect(uri).wait();
 
         websocket_outgoing_message msg;
-        msg.set_pong_message();
+        msg.set_ping_message(body);
+        return client.send(msg);
+    }
+
+    template<class SocketClientClass>
+    pplx::task<void> send_pong_msg_helper(SocketClientClass & client, web::uri uri, test_websocket_server & server,
+                                          const std::string& body = "")
+    {
+        server.next_message(
+            [body](test_websocket_msg msg) // Handler to verify the message sent by the client.
+            { websocket_asserts::assert_message_equals(msg, body, test_websocket_message_type::WEB_SOCKET_PONG_TYPE); });
+
+        client.connect(uri).wait();
+
+        websocket_outgoing_message msg;
+        msg.set_pong_message(body);
         return client.send(msg);
     }
 
@@ -493,12 +509,39 @@ SUITE(send_msg_tests)
     }
 
 #if !defined(__cplusplus_winrt)
+    // Send a ping message to the server
+    TEST_FIXTURE(uri_address, send_ping_msg)
+    {
+        test_websocket_server server;
+        websocket_client client;
+        send_ping_msg_helper(client, m_uri, server).wait();
+        client.close().wait();
+    }
+
+    // Send a ping message to the server with a body
+    TEST_FIXTURE(uri_address, send_ping_msg_body)
+    {
+        test_websocket_server server;
+        websocket_client client;
+        send_ping_msg_helper(client, m_uri, server, "abcdefghijklmnopqrstuvwxyz").wait();
+        client.close().wait();
+    }
+
     // Send an unsolicited pong message to the server
     TEST_FIXTURE(uri_address, send_pong_msg)
     {
         test_websocket_server server;
         websocket_client client;
         send_pong_msg_helper(client, m_uri, server).wait();
+        client.close().wait();
+    }
+
+    // Send an unsolicited pong message to the server with a body
+    TEST_FIXTURE(uri_address, send_pong_msg_body)
+    {
+        test_websocket_server server;
+        websocket_client client;
+        send_pong_msg_helper(client, m_uri, server, "abcdefghijklmnopqrstuvwxyz").wait();
         client.close().wait();
     }
 

@@ -122,6 +122,20 @@ public:
             m_server_connected.set_exception(std::runtime_error("Connection attempt failed."));
         });
 
+        m_srv.set_ping_handler([this](websocketpp::connection_hdl hdl, std::string input) {
+            auto fn = m_test_srv->get_next_message_handler();
+            assert(fn);
+
+            test_websocket_msg wsmsg;
+
+            wsmsg.set_data(std::vector<uint8_t>(input.begin(), input.end()));
+
+            wsmsg.set_msg_type(WEB_SOCKET_PING_TYPE);
+            fn(wsmsg);
+
+            return true;
+        });
+
         m_srv.set_pong_handler([this](websocketpp::connection_hdl hdl, std::string input) {
             auto fn = m_test_srv->get_next_message_handler();
             assert(fn);
