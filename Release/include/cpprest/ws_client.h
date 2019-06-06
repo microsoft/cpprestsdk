@@ -108,7 +108,7 @@ public:
     /// <summary>
     /// Turn on automatic pong answer to incoming ping request
     /// </summary>
-    void set_auto_pong_enabled() { m_auto_pong_enabled = true; }
+    void enable_auto_pong() { m_auto_pong_enabled = true; }
 
     /// <summary>
     /// Determines if the automatic Pong answer to Ping is enabled.
