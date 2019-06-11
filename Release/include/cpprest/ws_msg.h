@@ -64,7 +64,7 @@ public:
     /// This is useful when the client side wants to check whether the server is alive.
     /// </summary>
     /// <param name="data">UTF-8 String containing the optional ping message.</param>
-    void set_ping_message(const std::string& data = "")
+    void set_ping_message(const std::string& data = std::string())
     {
         this->set_message_ping(concurrency::streams::container_buffer<std::string>(data));
     }
@@ -73,7 +73,7 @@ public:
     /// Sets the outgoing message to be an unsolicited pong message.
     /// </summary>
     /// <param name="data">UTF-8 String containing the optional pong message.</param>
-    void set_pong_message(const std::string& data = "")
+    void set_pong_message(const std::string& data = std::string())
     { 
         this->set_message_pong(concurrency::streams::container_buffer<std::string>(data));
     }
