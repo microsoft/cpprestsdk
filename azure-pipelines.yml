@@ -161,12 +161,18 @@ jobs:
         mkdir build.debug
         cd build.debug
         /usr/local/bin/cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug ..
-        ninja
         cd ..
         mkdir build.release
         cd build.release
         /usr/local/bin/cmake -G Ninja -DCMAKE_BUILD_TYPE=Release ..
-        ninja
+        cd ..
+        ninja -C build.debug
+        ninja -C build.release
+        cd build.debug
+        ./test_runner *test.so
+        cd ..
+        cd build.release
+        ./test_runner *test.so
       displayName: Run build
   - job: Ubuntu_1604_Vcpkg
     pool:
