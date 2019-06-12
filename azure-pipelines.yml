@@ -168,10 +168,9 @@ jobs:
         cd ..
         ninja -C build.debug
         ninja -C build.release
-        cd build.debug
+        cd build.debug/Release/Binaries
         ./test_runner *test.so
-        cd ..
-        cd build.release
+        cd ../../../build.release/Release/Binaries
         ./test_runner *test.so
       displayName: Run build
   - job: Ubuntu_1604_Vcpkg
