@@ -156,36 +156,18 @@ jobs:
         sudo apt -y remove php*
         sudo apt install -y ppa-purge
         sudo ppa-purge -y ppa:ondrej/php
+        unset BOOST_ROOT
         sudo apt install -y libboost-atomic-dev libboost-thread-dev libboost-system-dev libboost-date-time-dev libboost-regex-dev libboost-filesystem-dev libboost-random-dev libboost-chrono-dev libboost-serialization-dev libwebsocketpp-dev openssl libssl-dev ninja-build
-      displayName: Apt install dependencies
-    - script: |
         mkdir build.debug
-        mkdir build.release
-      displayName: Make Build Directories
-    - task: CMake@1
-      inputs:
-        workingDirectory: 'build.debug'
-        cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Debug ..'
-    - task: CMake@1
-      inputs:
-        workingDirectory: 'build.release'
-        cmakeArgs: '-G Ninja -DCMAKE_BUILD_TYPE=Release ..'
-    - script: |
         cd build.debug
+        /usr/local/bin/cmake -G Ninja -DCMAKE_BUILD_TYPE=Debug ..
         ninja
-      displayName: 'Run ninja, debug'
-    - script: |
-        cd build.debug/Release/Binaries
-        ./test_runner *test.so
-      displayName: 'Run tests, debug'
-    - script: |
+        cd ..
+        mkdir build.release
         cd build.release
+        /usr/local/bin/cmake -G Ninja -DCMAKE_BUILD_TYPE=Release ..
         ninja
-      displayName: 'Run ninja, release'
-    - script: |
-        cd build.release/Release/Binaries
-        ./test_runner *test.so
-      displayName: 'Run tests, release'
+      displayName: Run build
   - job: Ubuntu_1604_Vcpkg
     pool:
       vmImage: 'Ubuntu 16.04'
