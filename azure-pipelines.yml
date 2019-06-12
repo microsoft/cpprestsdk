@@ -153,9 +153,10 @@ jobs:
       vmImage: 'Ubuntu 16.04'
     steps:
     - script: |
-        sudo apt-get install -y ppa-purge
+        sudo apt -y remove php*
+        sudo apt install -y ppa-purge
         sudo ppa-purge -y ppa:ondrej/php
-        sudo apt-get install -y libboost-atomic-dev libboost-thread-dev libboost-system-dev libboost-date-time-dev libboost-regex-dev libboost-filesystem-dev libboost-random-dev libboost-chrono-dev libboost-serialization-dev libwebsocketpp-dev openssl libssl-dev ninja-build
+        sudo apt install -y libboost-atomic-dev libboost-thread-dev libboost-system-dev libboost-date-time-dev libboost-regex-dev libboost-filesystem-dev libboost-random-dev libboost-chrono-dev libboost-serialization-dev libwebsocketpp-dev openssl libssl-dev ninja-build
       displayName: Apt install dependencies
     - script: |
         mkdir build.debug
@@ -191,8 +192,8 @@ jobs:
     steps:
     - script: |
         sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
-        sudo apt-get -y update
-        sudo apt-get install g++-7 ninja-build -y
+        sudo apt -y update
+        sudo apt install g++-9 ninja-build -y
         ./vcpkg/bootstrap-vcpkg.sh
         ./vcpkg/vcpkg install zlib openssl boost-system boost-date-time boost-regex websocketpp boost-thread boost-filesystem boost-random boost-chrono boost-interprocess brotli --vcpkg-root ./vcpkg
       displayName: Vcpkg install dependencies
@@ -236,7 +237,7 @@ jobs:
       displayName: 'Build for Android'
   - job: MacOS_Homebrew
     pool:
-      vmImage: 'macOS-10.13'
+      vmImage: 'macOS-10.14'
     steps:
     - script: brew install boost openssl ninja
       displayName: Brew install dependencies
@@ -279,7 +280,7 @@ jobs:
       displayName: 'Run ninja, release static'
   - job: MacOS_Vcpkg
     pool:
-      vmImage: 'macOS-10.13'
+      vmImage: 'macOS-10.14'
     steps:
     - script: |
         brew install gcc ninja
@@ -316,7 +317,7 @@ jobs:
       displayName: 'Run tests, release'
   - job: MacOS_iOS
     pool:
-      vmImage: 'macOS-10.13'
+      vmImage: 'macOS-10.14'
     steps:
     - script: |
         cd Build_iOS
